@@ -118,7 +118,7 @@ function Harness(
         }}
         layout={layout.map((entry) => ({
           ...entry,
-          title: OVERVIEW_WIDGETS.find((widget) => widget.id === entry.id)!.title,
+          titleKey: OVERVIEW_WIDGETS.find((widget) => widget.id === entry.id)!.titleKey,
         }))}
         customising={customising}
         onCustomise={() => setCustomising(true)}
@@ -446,18 +446,17 @@ describe("the admin group page's overview widgets", () => {
 })
 
 describe("the group overview in another language", () => {
-  /** A widget's words, which its aggregate owns: here already in the pseudo-language. */
+  /** A widget's words, which its aggregate owns: keys the pseudo-language wraps. */
   const VIEW: WidgetView = {
-    loadingLabel: "⟦loading⟧",
-    errorMessage: "⟦failed⟧",
+    loadingKey: "NoteWidgets.totalLoading",
+    errorKey: "NoteWidgets.totalError",
     draw: () => ({ status: "ready", content: "⟦31⟧" }),
   }
 
-  it("shows no English outside the catalogs: an en-XA render of the page, its widgets' states and Customise is all pseudo-language or data", async () => {
+  it("shows no English outside the catalogs: an en-XA render of the page, its widgets' states and titles, and Customise is all pseudo-language or data", async () => {
+    // The real widgets, so each title comes from its aggregate's definition, as in the apps.
     const widget = (id: string, load: OverviewWidgetLoad): OverviewWidget => ({
-      id,
-      title: `⟦${id}⟧`,
-      size: "stat",
+      ...OVERVIEW_WIDGETS.find((candidate) => candidate.id === id)!,
       load,
     })
     const page = (props: Partial<OverviewScreenProps>) => (
@@ -473,14 +472,14 @@ describe("the group overview in another language", () => {
             now={NOW}
             onRangeChange={() => {}}
             widgets={[
-              widget("a", { status: "loading" }),
-              widget("b", { status: "error" }),
-              widget("c", { status: "ready", data: {}, savedAt: NOW.getTime() }),
+              widget(total, { status: "loading" }),
+              widget(added, { status: "error" }),
+              widget(series, { status: "ready", data: {}, savedAt: NOW.getTime() }),
             ]}
-            views={{ a: VIEW, b: VIEW, c: VIEW }}
+            views={{ [total]: VIEW, [added]: VIEW, [series]: VIEW }}
             onRetry={() => {}}
             onHide={() => {}}
-            layout={[{ id: "a", hidden: false, title: "⟦a⟧" }]}
+            layout={OVERVIEW_WIDGETS.map(({ id, titleKey }) => ({ id, hidden: false, titleKey }))}
             customising
             onCustomise={() => {}}
             onCloseCustomise={() => {}}
@@ -514,6 +513,12 @@ describe("the group overview in another language", () => {
     }
     // A widget drawn from the device's saved copy says when that copy was taken.
     expect(text).toContain(PSEUDO.t("OverviewScreen.asOf", { time: "10:00" }))
+    // Each widget's name, on its card and in the Customise list.
+    const customise = document.querySelector("[data-e2e=overview-customiser]")?.textContent ?? ""
+    for (const { id, titleKey } of OVERVIEW_WIDGETS) {
+      expect(document.querySelector(card(id))?.textContent).toContain(PSEUDO.t(titleKey))
+      expect(customise).toContain(PSEUDO.t(titleKey))
+    }
 
     await act(() => render(page({ widgets: [], customising: false, emptyGroup: null }), root!))
     expect(untranslated(document.body, data)).toEqual([])

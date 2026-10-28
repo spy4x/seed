@@ -17,7 +17,8 @@ export type WidgetSize = "stat" | "full"
 export interface WidgetDefinition {
   /** Stable: it is what a person's saved layout keeps, so it never changes once shipped. */
   id: string
-  title: string
+  /** The `app` catalog key of the widget's name, which its card and the Customise list show. */
+  titleKey: string
   size: WidgetSize
   /** Whether a member of this role sees the widget at all. A hidden one is neither drawn nor listed. */
   canView(role: GroupRole): boolean

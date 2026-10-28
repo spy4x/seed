@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX, RefObject } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
@@ -9,9 +8,17 @@ import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { IconEllipsisVertical, IconPlus } from "@spy4x/preact-icons"
-import { ListCard, ListEmpty, MENU_TRIGGER_CLASSES, type NotesGroup } from "./notes-screen.tsx"
+import {
+  ListCard,
+  ListEmpty,
+  MENU_TRIGGER_CLASSES,
+  NoGroup,
+  type NotesGroup,
+} from "./notes-screen.tsx"
 import { noteCountText, TagBadge, tagDeleteMessage, type TagRow } from "./tag-parts.tsx"
-import { type Navigate, NOTE_PATHS, SCREEN_PATHS, TAG_PATHS } from "./progressive.tsx"
+import { type Navigate, NOTE_PATHS, TAG_PATHS } from "./progressive.tsx"
+import { useAppText } from "./i18n.ts"
+import { type Message, messageText } from "./message.ts"
 
 export type { TagRow }
 
@@ -21,7 +28,7 @@ export interface TagsScreenProps {
   tags: readonly TagRow[]
   loading: boolean
   /** The error of the list itself, such as a failed read or a refused delete. */
-  listError: string | null
+  listError: Message | null
   /** Deletes a tag from its row's menu, after the person confirms. Left out, rows offer no delete. */
   onDelete?: (id: string) => void
   navigate?: Navigate
@@ -35,6 +42,7 @@ export interface TagsScreenProps {
  */
 export function TagsScreen(props: TagsScreenProps): JSX.Element {
   const { group, tags, navigate } = props
+  const t = useAppText()
   const [deleting, setDeleting] = useState<TagRow | null>(null)
   const [focusAfter, setFocusAfter] = useState<{ id: string; index: number } | null>(null)
   const page = useRef<HTMLDivElement>(null)
@@ -55,15 +63,8 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
   if (!group) {
     return (
       <TagsPage>
-        <PageHeader title="Tags" />
-        <ListEmpty
-          title={props.loading ? "Loading the group…" : "This group does not exist."}
-          action={!props.loading && (
-            <Button href={SCREEN_PATHS.groups} navigate={navigate} variant="outline">
-              Back to groups
-            </Button>
-          )}
-        />
+        <PageHeader title={t.t(`Tags.title`)} />
+        <NoGroup loading={props.loading} navigate={navigate} />
       </TagsPage>
     )
   }
@@ -71,12 +72,12 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
   return (
     <TagsPage page={page}>
       <PageHeader
-        title="Tags"
+        title={t.t(`Tags.title`)}
         subtitle={group.name}
         subtitleDataE2E="tags-group"
         action={canWrite && (
           <PageAction
-            label="New tag"
+            label={t.t(`Tags.new`)}
             Icon={IconPlus}
             href={TAG_PATHS.new}
             navigate={navigate}
@@ -87,20 +88,18 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
       <Stack>
         {!canWrite && (
           <p class="text-sm text-muted" data-e2e="tags-read-only">
-            You can see these tags. Only an editor can change them.
+            {t.t(`Tags.readOnly`)}
           </p>
         )}
-        <ErrorState message={props.listError} />
+        <ErrorState message={messageText(t, props.listError)} />
         {tags.length === 0
           ? (
             <ListEmpty
-              title={props.loading ? "Loading tags…" : "No tags yet"}
-              description={props.loading || !canWrite
-                ? undefined
-                : "Tags label notes, so a group can find them again."}
+              title={props.loading ? t.t(`Tags.loading`) : t.t(`Tags.empty`)}
+              description={props.loading || !canWrite ? undefined : t.t(`Tags.emptyHint`)}
               action={!props.loading && canWrite && (
                 <Button href={TAG_PATHS.new} navigate={navigate} data-e2e="tag-new-empty">
-                  New tag
+                  {t.t(`Tags.new`)}
                 </Button>
               )}
             />
@@ -120,7 +119,7 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
                           href={TAG_PATHS.tag(tag.id)}
                           navigate={navigate}
                           class="flex min-h-11 w-full min-w-0 items-center rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
-                          aria-label={`Edit ${tag.name}`}
+                          aria-label={t.t(`Tags.edit`, { name: tag.name })}
                           data-e2e="tag-edit"
                         >
                           <TagBadge tag={tag} />
@@ -132,7 +131,7 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
                     tag.noteCount === 0
                       ? (
                         <span class="shrink-0 text-sm text-muted" data-e2e="tag-note-count">
-                          No notes
+                          {t.t(`TagParts.noNotes`)}
                         </span>
                       )
                       : (
@@ -140,12 +139,13 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
                           href={NOTE_PATHS.tagged(tag.id)}
                           navigate={navigate}
                           class="pc-link inline-flex min-h-11 shrink-0 items-center text-sm"
-                          aria-label={tag.noteCount === 1
-                            ? `Show the note tagged ${tag.name}`
-                            : `Show the ${tag.noteCount} notes tagged ${tag.name}`}
+                          aria-label={t.t(`Tags.showNotes`, {
+                            count: tag.noteCount,
+                            name: tag.name,
+                          })}
                           data-e2e="tag-note-count"
                         >
-                          {noteCountText(tag.noteCount)}
+                          {noteCountText(t, tag.noteCount)}
                         </Link>
                       )
                   )}
@@ -153,7 +153,7 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
                     <div class="relative -my-2 -mr-2 shrink-0">
                       <Dropdown
                         trigger={<IconEllipsisVertical class="size-5" />}
-                        triggerLabel={`Actions for ${tag.name}`}
+                        triggerLabel={t.t(`Tags.actions`, { name: tag.name })}
                         triggerClasses={MENU_TRIGGER_CLASSES}
                         triggerDataE2E="tag-menu"
                       >
@@ -162,10 +162,10 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
                           navigate={navigate}
                           dataE2E="tag-menu-edit"
                         >
-                          Edit tag
+                          {t.t(`Tags.editTag`)}
                         </DropdownItem>
                         <DropdownItem onClick={() => setDeleting(tag)} danger dataE2E="tag-delete">
-                          Delete tag
+                          {t.t(`Tags.deleteTag`)}
                         </DropdownItem>
                       </Dropdown>
                     </div>
@@ -177,16 +177,19 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
       </Stack>
       {deleting && (
         <ConfirmDialog
-          title={`Delete tag "${deleting.name}"?`}
-          message={tagDeleteMessage(deleting.noteCount)}
-          confirmLabel="Delete tag"
-          cancelLabel="Cancel"
+          title={t.t(`Tags.deleteTitle`, { name: deleting.name })}
+          message={tagDeleteMessage(t, deleting.noteCount)}
+          confirmLabel={t.t(`Tags.deleteTag`)}
+          cancelLabel={t.t(`Tags.cancel`)}
           tone="danger"
           dataE2E="tag-delete-dialog"
           onCancel={() => setDeleting(null)}
           onConfirm={() => {
             setDeleting(null)
-            setFocusAfter({ id: deleting.id, index: tags.findIndex((t) => t.id === deleting.id) })
+            setFocusAfter({
+              id: deleting.id,
+              index: tags.findIndex((tag) => tag.id === deleting.id),
+            })
             props.onDelete?.(deleting.id)
           }}
         />

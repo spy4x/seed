@@ -5,6 +5,8 @@ import { keyFaces } from "@spy4x/preact-ui/kbd"
 import { isApplePlatform } from "@spy4x/platform/browser/hotkeys"
 import type { notesStore } from "../state/notes.ts"
 import { toasts } from "../state/toasts.ts"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAppText } from "@ui/i18n.ts"
 
 /** The key that takes a deleted note back while its toast shows. */
 export const UNDO_KEYS = "mod+z"
@@ -14,11 +16,11 @@ export const UNDO_KEYS = "mod+z"
  * nothing on a device without a fine pointer, where a keyboard is unlikely. Read when the toast is
  * pushed, in the browser, never during render.
  */
-function undoKeyHint(): string {
+function undoKeyHint(t: Translator<string>): string {
   if (globalThis.matchMedia?.("(pointer: fine)").matches === false) return ""
   const apple = isApplePlatform()
   const key = keyFaces(UNDO_KEYS, apple).map((face) => face.text).join(apple ? "" : "+")
-  return ` Press ${key} to undo.`
+  return ` ${t.t(`UndoToast.keyHint`, { key })}`
 }
 
 /**
@@ -31,6 +33,7 @@ function undoKeyHint(): string {
  */
 export function useUndoToast(store: typeof notesStore): void {
   const offer = store.undo.value
+  const t = useAppText()
   useHotkeys([{ keys: UNDO_KEYS, handler: () => void store.undoDelete() }], {
     enabled: offer !== null,
   })
@@ -40,12 +43,18 @@ export function useUndoToast(store: typeof notesStore): void {
     if (left <= 0) return
     toasts.info({
       id: offer.id,
-      title: "Note deleted",
-      body: (offer.title ? `"${offer.title}" was deleted.` : "The note was deleted.") +
-        undoKeyHint(),
+      title: t.t(`UndoToast.title`),
+      body: (offer.title
+        ? t.t(`UndoToast.deleted`, { title: offer.title })
+        : t.t(`UndoToast.deletedUntitled`)) + undoKeyHint(t),
       duration: left,
       dataE2E: "note-undo-toast",
-      action: { label: "Undo", dataE2E: "note-undo", onAction: () => void store.undoDelete() },
+      action: {
+        label: t.t(`UndoToast.undo`),
+        dataE2E: "note-undo",
+        onAction: () =>
+          void store.undoDelete(),
+      },
     })
     // Dismiss and the toast's own timer take it off the list: that ends the offer too, so it does
     // not come back when the person returns to the list.

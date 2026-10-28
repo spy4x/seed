@@ -17,7 +17,7 @@ import { notificationsStore } from "../state/notifications.ts"
 import { createNoteSearch } from "../state/search.ts"
 import { selectionStore } from "../state/selection.ts"
 import { newNoteStore } from "../state/new-note.ts"
-import { spaShortcutRows } from "./shortcuts.ts"
+import { pageCommands, spaShortcutRows } from "./shortcuts.ts"
 import { hasFinePointer, singleKeys, useShortcuts } from "@platform/shortcuts.ts"
 import type { SessionUser } from "../state/session.ts"
 import {
@@ -42,24 +42,9 @@ import { guestRefusal } from "../state/guest-refusal.ts"
 import { GuestRefusalDialog } from "@ui/guest-profile.tsx"
 import { overviewPageActions } from "./OverviewView.tsx"
 import { noteEditorPageActions } from "./NoteEditorView.tsx"
+import { useAppText } from "@ui/i18n.ts"
 
-/** The overview's commands in the palette, while the overview is open. */
-const OVERVIEW_COMMANDS = [
-  { id: "overview-range", label: "Change date range" },
-  { id: "overview-customise", label: "Customise overview" },
-] as const
-
-/** The note page's command in the palette, while a note an editor can change is open. */
-const NOTE_COMMANDS = [{ id: "note-attach", label: "Attach files to this note" }] as const
-
-/** The open page's commands in the palette, if it has any. */
-function pageCommands() {
-  if (overviewPageActions.value) return OVERVIEW_COMMANDS
-  if (noteEditorPageActions.value) return NOTE_COMMANDS
-  return undefined
-}
-
-/** Runs the page command `id` of {@link pageCommands} on the open page. */
+/** Runs the page command `id` of `pageCommands` on the open page. */
 function runPageCommand(id: string): void {
   const actions = overviewPageActions.value
   if (id === "overview-range") actions?.openRange()
@@ -216,6 +201,7 @@ export function AppShell(
   },
 ) {
   const [location, navigate] = useLocation()
+  const t = useAppText()
   const guest = isGuestSession(user)
   const { onSignOut, dialog } = useSignOut(guest)
   // Hidden on this browser once dismissed; the profile keeps its own entry to the same page.
@@ -252,7 +238,10 @@ export function AppShell(
             ? { id: current.id, name: current.name, canWrite: canMutateNotes(current.role) }
             : null}
           online={wsStatus === "open"}
-          pageCommands={pageCommands()}
+          pageCommands={pageCommands(t, {
+            overview: Boolean(overviewPageActions.value),
+            noteEditor: Boolean(noteEditorPageActions.value),
+          })}
           onSelect={(choice) => void open(choice)}
           slashKey={singleKeys.on.value}
           guest={guest}

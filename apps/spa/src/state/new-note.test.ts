@@ -1,7 +1,13 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { NewNoteErrors } from "@ui/new-note-dialog.tsx"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import app from "@i18n/app/en.json" with { type: "json" }
+import { messageText } from "@ui/message.ts"
 import { createNewNoteStore } from "./new-note.ts"
+
+/** The `app` catalog's English, as the dialog shows the store's message. */
+const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
 import type { NoteItem } from "./notes.ts"
 
 const ACME = { id: "0190a000-0000-7000-8000-000000000001", name: "Acme" }
@@ -62,7 +68,7 @@ describe("new note store", () => {
     const { newNote, calls } = store()
     newNote.title.value = "Buy milk"
     expect(await newNote.add(null)).toBeNull()
-    expect(newNote.errors.value.group).toBe("Choose a group for this note.")
+    expect(messageText(EN, newNote.errors.value.group)).toBe("Choose a group for this note.")
     expect(calls).toEqual([])
   })
 

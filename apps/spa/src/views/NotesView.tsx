@@ -19,6 +19,7 @@ import { personName, personPicture } from "./note-people.ts"
 import { movedToast } from "./note-toasts.ts"
 import { OfflineStatus } from "../modules.ts"
 import { OnboardingView } from "./OnboardingView.tsx"
+import { useAppText } from "@ui/i18n.ts"
 
 /** The filter parameters "Clear filters" takes out of the address; search and sort stay. */
 const FILTER_PARAMS = ["tag", "match", "author", "mine"]
@@ -33,6 +34,7 @@ const FILTER_PARAMS = ["tag", "match", "author", "mine"]
  */
 export function NotesView() {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const store = notesStore
   useUndoToast(store)
   const groupId = selectionStore.groupId.value
@@ -131,7 +133,7 @@ export function NotesView() {
         notes={store.notes.value.map((note) => ({
           ...note,
           authorId: note.createdByUserId === null ? null : String(note.createdByUserId),
-          authorName: personName(note.createdByUserId, youId, members),
+          authorName: personName(t, note.createdByUserId, youId, members),
           authorPictureUrl: personPicture(note.createdByUserId, members, sessionState.value.user),
           authorAvatarName: note.createdByUserId === youId
             ? members?.find((member) => member.userId === youId)?.name.trim() || undefined
@@ -158,7 +160,7 @@ export function NotesView() {
           })}
         authors={(members ?? []).map((member) => ({
           id: String(member.userId),
-          name: personName(member.userId, null, members) ?? member.name,
+          name: personName(t, member.userId, null, members) ?? member.name,
           isYou: member.userId === youId,
         }))}
         youId={youId === null ? null : String(youId)}
@@ -169,7 +171,7 @@ export function NotesView() {
           if (!await store.move(toGroupId, noteIds)) return
           const target = moveTargets.find((group) => group.id === toGroupId)
           toasts.success({
-            ...movedToast(noteIds.length, target?.name ?? "the other group"),
+            ...movedToast(t, noteIds.length, target?.name),
             dataE2E: "note-moved",
           })
         }}
@@ -182,14 +184,16 @@ export function NotesView() {
           )
           if (copied) {
             toasts.success({
-              title: "Link copied",
-              body: `Only people in ${membership?.name ?? "this group"} can open it.`,
+              title: t.t(`NotesView.linkCopied`),
+              body: membership
+                ? t.t(`NotesView.linkCopiedGroup`, { group: membership.name })
+                : t.t(`NotesView.linkCopiedThisGroup`),
               dataE2E: "note-link-copied",
             })
           } else {
             toasts.error({
-              title: "Could not copy the link",
-              body: "Your browser did not allow it. Open the note and copy the address instead.",
+              title: t.t(`NotesView.copyFailed`),
+              body: t.t(`NotesView.copyFailedHint`),
             })
           }
         }}
@@ -201,8 +205,10 @@ export function NotesView() {
           const title = store.deletedNotes.value.find((deleted) => deleted.id === note.id)?.title
           if (await store.restore(note.id)) {
             toasts.success({
-              title: "Note restored",
-              body: title ? `"${title}" is back in the list.` : "The note is back in the list.",
+              title: t.t(`NotesView.restoredTitle`),
+              body: title
+                ? t.t(`NotesView.restored`, { title })
+                : t.t(`NotesView.restoredUntitled`),
               dataE2E: "note-restored",
             })
           }

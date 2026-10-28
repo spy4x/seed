@@ -8,6 +8,7 @@ import {
   rankOptions,
 } from "@spy4x/preact-ui/command-palette"
 import { hotkeyClickBinding, useHotkeys } from "@spy4x/preact-ui/hotkeys"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 import { type GroupRole } from "@domain/groups"
 import { ROLE_TEXT } from "./groups-screen.tsx"
 import {
@@ -19,6 +20,8 @@ import {
 } from "./progressive.tsx"
 import { DATA_EXPORT_ANCHOR } from "./profile-export.tsx"
 import { PICTURE_BUTTON_ID, PICTURE_RULE } from "./profile-picture.tsx"
+import { useAppText } from "./i18n.ts"
+import { englishText, type KeyedMessage, messageText } from "./message.ts"
 
 /** One note a search found, as the palette lists it. */
 export interface SearchNote {
@@ -59,7 +62,10 @@ export type SearchChoice =
 /** A command of the open page that the palette lists, such as "Change date range". */
 export interface PageCommand {
   id: string
+  /** What the palette lists, in the person's language. */
   label: string
+  /** Other words that find it, such as its English label. */
+  aliases?: readonly string[]
 }
 
 /** Props of {@link SearchPalette}. */
@@ -117,20 +123,15 @@ interface SearchOption extends CommandPaletteOption {
   choice: SearchChoice
 }
 
-const HEADINGS = {
-  notes: "Notes",
-  notesOnDevice: "Notes on this device",
-  groups: "Groups",
-  actions: "Actions",
-} as const
-
 /** The palette's fixed words; the no-results line is set per answer. */
-const LABELS: Omit<CommandPaletteLabels, "empty"> = {
-  search: "Search",
-  placeholder: "Search notes and groups",
-  close: "Close search",
-  loading: "Searching…",
-  error: "Could not search. Change the text to try again.",
+function labels(t: Translator<string>): Omit<CommandPaletteLabels, "empty"> {
+  return {
+    search: t.t(`Search.search`),
+    placeholder: t.t(`Search.placeholder`),
+    close: t.t(`Search.close`),
+    loading: t.t(`Search.loading`),
+    error: t.t(`Search.error`),
+  }
 }
 
 /** `query` trimmed and cut to {@link QUOTED_MAX} characters, an emoji counting as one. */
@@ -145,13 +146,15 @@ export function quoted(query: string): string {
  * The no-results line for a query too short to search notes: groups and actions were matched, the
  * notes were not, so it must not say that no note matches.
  */
-export const SHORT_QUERY_LABEL = `Type at least ${NOTE_QUERY_MIN} characters to search notes.`
+function shortQueryLabel(t: Translator<string>): string {
+  return t.t(`Search.tooShort`, { count: NOTE_QUERY_MIN })
+}
 
 /** The no-results line for `query`, which says where the search looked. */
-export function emptyLabel(query: string, onDevice: boolean): string {
+export function emptyLabel(t: Translator<string>, query: string, onDevice: boolean): string {
   return onDevice
-    ? `Nothing on this device matches “${quoted(query)}”. Search again when you are back online.`
-    : `No notes or groups match “${quoted(query)}”.`
+    ? t.t(`Search.emptyOnDevice`, { query: quoted(query) })
+    : t.t(`Search.empty`, { query: quoted(query) })
 }
 
 /**
@@ -176,13 +179,17 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
       hotkeyClickBinding(keys, () => trigger(root.current), () => root.current)
     ),
   )
-  const [empty, setEmpty] = useState(emptyLabel("", false))
+  const t = useAppText()
+  const [empty, setEmpty] = useState(emptyLabel(t, "", false))
   // The search runs inside the palette, after a render; it reads the latest props through this.
   const latest = useRef(props)
   latest.current = props
+  const words = useRef(t)
+  words.current = t
 
   const search = async (query: string, signal: AbortSignal): Promise<SearchOption[]> => {
     const { groups, currentGroup, online, guest = false, pageCommands = [] } = latest.current
+    const t = words.current
     const text = query.trim()
     const asksNotes = text === "" || Array.from(text).length >= NOTE_QUERY_MIN
     const answer = asksNotes
@@ -191,12 +198,12 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     // The recent notes are all the current group's, so only a query's rows name their group.
     const namesGroup = text !== "" && groups.length > 1
     const groupName = new Map(groups.map((group) => [group.id, group.name]))
-    const notesHeading = answer.onDevice ? HEADINGS.notesOnDevice : HEADINGS.notes
+    const notesHeading = answer.onDevice ? t.t(`Search.notesOnDevice`) : t.t(`Search.notes`)
     const notes = answer.notes.slice(0, text === "" ? RECENT_NOTES : undefined).map((
       note,
     ): SearchOption => ({
       id: `note-${note.id}`,
-      label: note.title.trim() || "Untitled note",
+      label: note.title.trim() || t.t(`Search.untitled`),
       detail: noteDetail(note, namesGroup ? groupName.get(note.groupId) : undefined),
       group: notesHeading,
       choice: { kind: "note", noteId: note.id, groupId: note.groupId },
@@ -208,15 +215,16 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
       id: `group-${group.id}`,
       label: group.name,
       detail: ROLE_TEXT[group.role],
-      hint: group.id === currentGroup?.id ? "Current" : undefined,
-      group: HEADINGS.groups,
+      hint: group.id === currentGroup?.id ? t.t(`Search.current`) : undefined,
+      group: t.t(`Search.groups`),
       choice: { kind: "group", groupId: group.id },
     }))
-    // Actions match their aliases too, in any word order, with a typo or in the other layout.
-    const actions = matchOptions(actionOptions(currentGroup, online, pageCommands, guest), text)
+    // Actions match their aliases too (their English label among them, so English words find
+    // them in every language), in any word order, with a typo or in the other layout.
+    const actions = matchOptions(actionOptions(t, currentGroup, online, pageCommands, guest), text)
     // A stale answer is dropped by the palette; its words must not replace the current ones.
     if (!signal.aborted) {
-      setEmpty(asksNotes ? emptyLabel(text, answer.onDevice) : SHORT_QUERY_LABEL)
+      setEmpty(asksNotes ? emptyLabel(t, text, answer.onDevice) : shortQueryLabel(t))
     }
     return [...notes, ...groupRows, ...actions]
   }
@@ -228,7 +236,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
         onSelect={(option) => props.onSelect(option.choice)}
         // Bound above, so they work while the trigger is hidden.
         hotkeys={[]}
-        labels={{ ...LABELS, empty }}
+        labels={{ ...labels(t), empty }}
         dataE2E="search"
         class="hidden"
       />
@@ -257,71 +265,83 @@ function noteDetail(note: SearchNote, groupName: string | undefined): string | u
 
 /** The actions a person can take now, in the order the palette lists them. */
 function actionOptions(
+  t: Translator<string>,
   currentGroup: SearchPaletteProps["currentGroup"],
   online: boolean,
   pageCommands: readonly PageCommand[],
   guest = false,
 ): SearchOption[] {
+  // An action is found by its label and its detail in English too, so a person who types the
+  // English word ("password", "ZIP") finds it in every language. A detail given as text (another
+  // screen's words) is matched as it is.
   const page = (
     id: string,
-    label: string,
+    key: string,
     href: string,
-    detail?: string,
-    aliases?: readonly string[],
+    detail?: KeyedMessage | string,
+    aliases: readonly string[] = [],
   ): SearchOption => ({
     id: `action-${id}`,
-    label,
-    detail,
-    aliases,
-    group: HEADINGS.actions,
+    label: t.t(key),
+    detail: typeof detail === `string` ? detail : messageText(t, detail) ?? undefined,
+    aliases: [
+      englishText(key),
+      ...(detail && typeof detail !== `string` ? [englishText(detail.key, detail.values)] : []),
+      ...aliases,
+    ],
+    group: t.t(`Search.actions`),
     choice: { kind: "page", href },
   })
-  const inGroup = currentGroup?.canWrite ? `In ${currentGroup.name}` : null
+  const inGroup: KeyedMessage | null = currentGroup?.canWrite
+    ? { key: `Search.inGroup`, values: { group: currentGroup.name } }
+    : null
   return [
     ...(guest
       ? [page(
         "keep",
-        "Keep your account",
+        `Search.keep`,
         "/keep",
-        "Sign up, register or save this guest account with a sign-in method",
+        { key: `Search.keepDetail` },
       )]
       : []),
     ...pageCommands.map((command): SearchOption => ({
       id: `command-${command.id}`,
       label: command.label,
-      group: HEADINGS.actions,
+      aliases: command.aliases,
+      group: t.t(`Search.actions`),
       choice: { kind: "command", id: command.id },
     })),
     // The same dialog as `n`: the note is added without leaving the page.
     ...(inGroup
       ? [{
         id: "action-new-note",
-        label: "New note",
-        detail: inGroup,
-        group: HEADINGS.actions,
+        label: t.t(`Search.newNote`),
+        aliases: [englishText(`Search.newNote`), englishText(inGroup.key, inGroup.values)],
+        detail: messageText(t, inGroup) ?? undefined,
+        group: t.t(`Search.actions`),
         choice: { kind: "new-note" } as const,
       }]
       : []),
-    ...(inGroup ? [page("new-tag", "New tag", TAG_PATHS.new, inGroup)] : []),
-    ...(online ? [page("new-group", "New group", GROUP_PATHS.new)] : []),
-    ...(currentGroup ? [page("overview", "Open overview", OVERVIEW_PATHS.root)] : []),
-    page("notifications", "Open notifications", SCREEN_PATHS.notifications),
+    ...(inGroup ? [page("new-tag", `Search.newTag`, TAG_PATHS.new, inGroup)] : []),
+    ...(online ? [page("new-group", `Search.newGroup`, GROUP_PATHS.new)] : []),
+    ...(currentGroup ? [page("overview", `Search.openOverview`, OVERVIEW_PATHS.root)] : []),
+    page("notifications", `Search.openNotifications`, SCREEN_PATHS.notifications),
     page(
       "profile",
-      "Open profile",
+      `Search.openProfile`,
       SCREEN_PATHS.profile,
-      "Name, e-mail address, password, two-factor sign-in",
+      { key: `Search.profileDetail` },
     ),
     page(
       "download-data",
-      "Download my data",
+      `Search.downloadData`,
       `${profilePath("account")}#${DATA_EXPORT_ANCHOR}`,
-      "A ZIP of your profile, groups and notes",
+      { key: `Search.downloadDetail` },
       [`export my data`, `GDPR`, `archive`, `takeout`, `скачать данные`, `экспорт данных`],
     ),
     page(
       "change-picture",
-      "Change profile picture",
+      `Search.changePicture`,
       `${profilePath("account")}#${PICTURE_BUTTON_ID}`,
       PICTURE_RULE,
       [`avatar`, `photo`, `upload picture`, `фото`, `аватар`],

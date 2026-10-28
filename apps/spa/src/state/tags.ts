@@ -41,15 +41,19 @@ export interface TagsDependencies {
   readLocal?(groupId: string): Promise<readonly TagItem[]>
 }
 
+/**
+ * What the store says went wrong, as keys of the `app` catalog: the screen shows each in the
+ * person's language (`libs/ui/message.ts`).
+ */
 export const TAG_MESSAGES = {
-  nameRequired: "Enter a name.",
-  nameTaken: "This group already has a tag with that name.",
-  conflict: "Someone changed this tag since you opened it. It is shown as it is now.",
-  gone: "This tag was deleted.",
-  load: "Could not load the tags",
-  create: "Could not create the tag. Try again.",
-  save: "Could not save the tag. Try again.",
-  delete: "Could not delete the tag",
+  nameRequired: `TagMessages.nameRequired`,
+  nameTaken: `TagMessages.nameTaken`,
+  conflict: `TagMessages.conflict`,
+  gone: `TagMessages.gone`,
+  load: `TagMessages.load`,
+  create: `TagMessages.create`,
+  save: `TagMessages.save`,
+  delete: `TagMessages.delete`,
 } as const
 
 /** The state of the tag editor: the tag being created or edited, or none. */

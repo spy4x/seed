@@ -14,6 +14,7 @@ import { toasts } from "../state/toasts.ts"
 import { currentLayer, OfflineStatus } from "../modules.ts"
 import { isSpaPath } from "./spa-paths.ts"
 import { deleteAndAnnounce } from "./tag-delete.ts"
+import { useAppText } from "@ui/i18n.ts"
 
 const network = createOnlineStatus()
 
@@ -25,6 +26,7 @@ const network = createOnlineStatus()
  */
 export function TagEditorView({ tagId = null }: { tagId?: string | null }) {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const store = tagsStore
   const groupId = selectionStore.groupId.value
   useEffect(() => network.watch(), [])
@@ -83,10 +85,12 @@ export function TagEditorView({ tagId = null }: { tagId?: string | null }) {
           const created = tagId === null
           const result = await store.save()
           if (!result) return
-          const name = `"${result.name}"`
+          const name = result.name
           toasts.success({
-            title: created ? "Tag created" : "Tag saved",
-            body: created ? `${name} created.` : `${name} saved.`,
+            title: created ? t.t(`TagEditorView.createdTitle`) : t.t(`TagEditorView.savedTitle`),
+            body: created
+              ? t.t(`TagEditorView.created`, { name })
+              : t.t(`TagEditorView.saved`, { name }),
             dataE2E: created ? "tag-created" : "tag-saved",
           })
           if (created) navigate(TAG_PATHS.tag(result.id), { replace: true })
@@ -95,7 +99,9 @@ export function TagEditorView({ tagId = null }: { tagId?: string | null }) {
         deleting={store.deleting.value !== null}
         onDelete={canWrite && tag
           ? async () => {
-            if (await deleteAndAnnounce(store, tag.id, notesStore, toasts)) navigate(TAG_PATHS.list)
+            if (await deleteAndAnnounce(t, store, tag.id, notesStore, toasts)) {
+              navigate(TAG_PATHS.list)
+            }
           }
           : undefined}
         offline={!network.online.value && currentLayer() !== null}
@@ -106,12 +112,12 @@ export function TagEditorView({ tagId = null }: { tagId?: string | null }) {
         owns={(url) => isSpaPath(url.pathname)}
         navigate={navigate}
         labels={{
-          title: "Discard your changes?",
+          title: t.t(`TagEditorView.discardTitle`),
           message: tag
-            ? `Your changes to "${tag.name}" are not saved.`
-            : "This tag is not created yet.",
-          leave: "Discard changes",
-          stay: "Keep editing",
+            ? t.t(`TagEditorView.discard`, { name: tag.name })
+            : t.t(`TagEditorView.discardNew`),
+          leave: t.t(`TagEditorView.discardLeave`),
+          stay: t.t(`TagEditorView.discardStay`),
         }}
         onDiscard={() => store.closeForm()}
       />

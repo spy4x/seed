@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
@@ -13,9 +12,12 @@ import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { ColorField } from "@spy4x/preact-ui/color-field"
 import { TAG_NAME_MAX_LENGTH, type TagColor } from "@domain/tags"
-import { ListEmpty, type NotesGroup } from "./notes-screen.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { ListEmpty, NoGroup, type NotesGroup, userValue } from "./notes-screen.tsx"
 import { TagBadge, tagDeleteMessage, type TagRow } from "./tag-parts.tsx"
-import { type Navigate, SCREEN_PATHS, ScreenForm, TAG_PATHS } from "./progressive.tsx"
+import { type Navigate, ScreenForm, TAG_PATHS } from "./progressive.tsx"
+import { useAppText } from "./i18n.ts"
+import { type Message, messageText } from "./message.ts"
 
 /** What the tag's fields show: what the person typed, or the tag as saved. */
 export interface TagFormValue {
@@ -25,8 +27,8 @@ export interface TagFormValue {
 
 /** The errors of the tag editor: on the name field, and for the form as a whole. */
 export interface TagFormErrors {
-  name: string | null
-  form: string | null
+  name: Message | null
+  form: Message | null
 }
 
 export interface TagEditorScreenProps {
@@ -69,7 +71,10 @@ export interface TagEditorScreenProps {
 const LOADING_DELAY_MS = 300
 
 /** The header's back link: to the list, which `navigate` follows without a page load. */
-const BACK = { href: TAG_PATHS.list, label: "Back to tags" }
+function useBack(): { href: string; label: string } {
+  const t = useAppText()
+  return { href: TAG_PATHS.list, label: t.t(`TagEditor.back`) }
+}
 
 /**
  * One tag on a page of its own, at `/tags/new` and `/tags/:tagId`: the same form creates and
@@ -79,35 +84,30 @@ const BACK = { href: TAG_PATHS.list, label: "Back to tags" }
  */
 export function TagEditorScreen(props: TagEditorScreenProps): JSX.Element {
   const { group, navigate } = props
+  const t = useAppText()
+  const back = useBack()
   const waited = useWaited(props.loading)
   if (!group) {
     return (
       <EditorPage>
-        <PageHeader back={BACK} navigate={navigate} title="Tag" />
-        {props.loading ? waited && <Loading label="Loading the group…" /> : (
-          <ListEmpty
-            title="This group does not exist."
-            action={
-              <Button href={SCREEN_PATHS.groups} navigate={navigate} variant="outline">
-                Back to groups
-              </Button>
-            }
-          />
-        )}
+        <PageHeader back={back} navigate={navigate} title={t.t(`TagEditor.title`)} />
+        {props.loading
+          ? waited && <Loading label={t.t(`NoGroup.loading`)} />
+          : <NoGroup loading={false} navigate={navigate} />}
       </EditorPage>
     )
   }
   if (props.notFound) {
     return (
       <EditorPage>
-        <PageHeader back={BACK} navigate={navigate} title="Tag" />
+        <PageHeader back={back} navigate={navigate} title={t.t(`TagEditor.title`)} />
         <div data-e2e="tag-not-found">
           <ListEmpty
-            title="This tag does not exist."
-            description={props.errors.form ?? "It may have been deleted."}
+            title={t.t(`TagEditor.notFound`)}
+            description={messageText(t, props.errors.form) ?? t.t(`TagEditor.notFoundHint`)}
             action={
               <Button href={TAG_PATHS.list} navigate={navigate} variant="outline">
-                Back to tags
+                {t.t(`TagEditor.back`)}
               </Button>
             }
           />
@@ -119,8 +119,13 @@ export function TagEditorScreen(props: TagEditorScreenProps): JSX.Element {
   if (props.loading && !props.tag) {
     return (
       <EditorPage>
-        <PageHeader back={BACK} navigate={navigate} title="Tag" subtitle={group.name} />
-        {waited && <Loading label="Loading the tag…" />}
+        <PageHeader
+          back={back}
+          navigate={navigate}
+          title={t.t(`TagEditor.title`)}
+          subtitle={group.name}
+        />
+        {waited && <Loading label={t.t(`TagEditor.loading`)} />}
       </EditorPage>
     )
   }
@@ -163,6 +168,7 @@ type WithGroup = TagEditorScreenProps & { group: NotesGroup }
 
 function Editor(props: WithGroup): JSX.Element {
   const { group, tag, value, onChange, errors, saving, navigate } = props
+  const t = useAppText()
   const canWrite = group.canWrite
   const [asking, setAsking] = useState(false)
   const name = useRef<HTMLInputElement>(null)
@@ -191,9 +197,9 @@ function Editor(props: WithGroup): JSX.Element {
   return (
     <EditorPage>
       <PageHeader
-        back={BACK}
+        back={useBack()}
         navigate={navigate}
-        title={tag ? tag.name : "New tag"}
+        title={tag ? tag.name : t.t(`TagEditor.new`)}
         titleDataE2E="tag-title"
         subtitle={group.name}
         subtitleDataE2E="tags-group"
@@ -205,20 +211,20 @@ function Editor(props: WithGroup): JSX.Element {
             danger
             dataE2E="tag-editor-delete"
           >
-            Delete tag
+            {t.t(`Tags.deleteTag`)}
           </DropdownItem>
         )}
       />
       {canWrite && props.offline && (
         <div data-e2e="tag-offline">
-          <Notice title="You are offline">
-            Your changes are saved on this device and sent when you are back online.
+          <Notice title={t.t(`TagEditor.offlineTitle`)}>
+            {t.t(`TagEditor.offline`)}
           </Notice>
         </div>
       )}
       {!canWrite && (
         <p class="text-sm text-muted" data-e2e="tag-read-only">
-          Only an editor can change tags in this group.
+          {t.t(`TagEditor.readOnly`)}
         </p>
       )}
       <ScreenForm
@@ -234,9 +240,14 @@ function Editor(props: WithGroup): JSX.Element {
             <Stack>
               <Field
                 id="tag-name"
-                label="Name"
-                hint={`Everyone in ${group.name} sees this tag.`}
-                error={errors.name}
+                label={t.t(`TagEditor.name`)}
+                hint={
+                  <Rich
+                    parts={t.parts(`TagEditor.nameHint`, { group: group.name })}
+                    tags={{ group: userValue }}
+                  />
+                }
+                error={messageText(t, errors.name)}
                 required
               >
                 <Input
@@ -259,13 +270,18 @@ function Editor(props: WithGroup): JSX.Element {
                   }}
                   // The chip as the lists will draw it, with the name typed so far.
                   preview={() => (
-                    <TagBadge tag={{ name: value.name.trim() || "Tag name", color: value.color }} />
+                    <TagBadge
+                      tag={{
+                        name: value.name.trim() || t.t(`TagEditor.namePlaceholder`),
+                        color: value.color,
+                      }}
+                    />
                   )}
                 />
               </div>
             </Stack>
           </fieldset>
-          <ErrorState message={errors.form} />
+          <ErrorState message={messageText(t, errors.form)} />
           {
             // The form's footer. On a phone the primary button is on top at full width, Cancel
             // under it; from `sm` up they are a row at the right, the primary button last.
@@ -281,7 +297,7 @@ function Editor(props: WithGroup): JSX.Element {
                     data-e2e="tag-cancel"
                     onClick={props.onRevert}
                   >
-                    Cancel
+                    {t.t(`Tags.cancel`)}
                   </Button>
                 )
                 : (
@@ -292,7 +308,7 @@ function Editor(props: WithGroup): JSX.Element {
                     class="min-h-11 w-full sm:min-h-9 sm:w-auto"
                     data-e2e="tag-cancel"
                   >
-                    Cancel
+                    {t.t(`Tags.cancel`)}
                   </Button>
                 )}
               <Button
@@ -300,9 +316,9 @@ function Editor(props: WithGroup): JSX.Element {
                 class="min-h-11 w-full sm:min-h-9 sm:w-auto"
                 data-e2e="tag-save"
                 busy={saving}
-                busyLabel={tag ? "Saving…" : "Creating…"}
+                busyLabel={tag ? t.t(`TagEditor.saving`) : t.t(`TagEditor.creating`)}
               >
-                {tag ? "Save tag" : "Create tag"}
+                {tag ? t.t(`TagEditor.save`) : t.t(`TagEditor.create`)}
               </Button>
             </div>
           )}
@@ -310,10 +326,10 @@ function Editor(props: WithGroup): JSX.Element {
       </ScreenForm>
       {asking && tag && (
         <ConfirmDialog
-          title={`Delete tag "${tag.name}"?`}
-          message={tagDeleteMessage(tag.noteCount)}
-          confirmLabel="Delete tag"
-          cancelLabel="Cancel"
+          title={t.t(`Tags.deleteTitle`, { name: tag.name })}
+          message={tagDeleteMessage(t, tag.noteCount)}
+          confirmLabel={t.t(`Tags.deleteTag`)}
+          cancelLabel={t.t(`Tags.cancel`)}
           tone="danger"
           dataE2E="tag-delete-dialog"
           onConfirm={() => {

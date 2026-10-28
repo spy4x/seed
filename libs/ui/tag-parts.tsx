@@ -1,10 +1,11 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { badgeClasses } from "@spy4x/preact-ui/badge"
 import { COLOR_PRESETS } from "@spy4x/preact-ui/color-field"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import { isHexColor, readableTextColor } from "@spy4x/platform/universal/color"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 import { DEFAULT_TAG_COLOR, type TagColor } from "@domain/tags"
+import { useAppText } from "./i18n.ts"
 
 /** One tag as the screens show it. */
 export interface TagRow {
@@ -40,6 +41,7 @@ export function TagBadge({ tag }: { tag: Pick<TagRow, "name" | "color"> }): JSX.
       class={badgeClasses("gray", "filled", "max-w-full normal-case")}
       style={colorStyle(tag.color)}
       title={tag.name}
+      translate={false}
     >
       <span class="min-w-0 truncate">{tag.name}</span>
     </span>
@@ -47,18 +49,18 @@ export function TagBadge({ tag }: { tag: Pick<TagRow, "name" | "color"> }): JSX.
 }
 
 /** "3 notes", "1 note" or "No notes": a tag's note count in words. */
-export function noteCountText(count: number): string {
-  return count === 0 ? "No notes" : count === 1 ? "1 note" : `${count} notes`
+export function noteCountText(t: Translator<string>, count: number): string {
+  return count === 0 ? t.t(`TagParts.noNotes`) : t.t(`TagParts.noteCount`, { count })
 }
 
 /**
  * What the confirmation of a tag's delete says: how many notes lose it, when the count is known,
  * and that the notes themselves stay.
  */
-export function tagDeleteMessage(noteCount: number | undefined): string {
-  if (noteCount === 0) return "No note carries it."
-  if (noteCount === undefined) return "It comes off every note that has it. The notes stay."
-  return `It comes off ${noteCountText(noteCount)}. The notes stay.`
+export function tagDeleteMessage(t: Translator<string>, noteCount: number | undefined): string {
+  if (noteCount === 0) return t.t(`TagParts.deleteNone`)
+  if (noteCount === undefined) return t.t(`TagParts.deleteUnknown`)
+  return t.t(`TagParts.deleteCount`, { count: noteCount })
 }
 
 /**
@@ -72,12 +74,17 @@ export function NoteTags(
     max?: number
   },
 ): JSX.Element | null {
+  const t = useAppText()
   const all = tags.filter((tag) => tagIds?.includes(tag.id))
   if (all.length === 0) return null
   const shown = max === undefined ? all : all.slice(0, max)
   const rest = all.slice(shown.length)
   return (
-    <ul class="flex flex-wrap items-center gap-1" aria-label="Tags" data-e2e="note-tags">
+    <ul
+      class="flex flex-wrap items-center gap-1"
+      aria-label={t.t(`TagParts.list`)}
+      data-e2e="note-tags"
+    >
       {shown.map((tag) => (
         <li key={tag.id} data-e2e="note-tag">
           <TagBadge tag={tag} />
@@ -90,7 +97,9 @@ export function NoteTags(
           data-e2e="note-tags-more"
         >
           <span aria-hidden="true">+{rest.length}</span>
-          <span class="sr-only">and {rest.map((tag) => tag.name).join(", ")}</span>
+          <span class="sr-only">
+            {t.t(`TagParts.more`, { names: rest.map((tag) => tag.name).join(", ") })}
+          </span>
         </li>
       )}
     </ul>

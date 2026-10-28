@@ -3,6 +3,11 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { PictureState } from "@domain/identity"
 import { personName, personPicture } from "./note-people.ts"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import app from "@i18n/app/en.json" with { type: "json" }
+
+/** The `app` catalog's English, as a screen without a provider reads it. */
+const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
 
 const members = [
   { userId: 1, name: "Anna Bell" },
@@ -13,26 +18,26 @@ const members = [
 
 describe("personName", () => {
   it("names the person themselves You, even before the members are read", () => {
-    expect(personName(1, 1, members)).toBe("You")
-    expect(personName(1, 1, null)).toBe("You")
+    expect(personName(EN, 1, 1, members)).toBe("You")
+    expect(personName(EN, 1, 1, null)).toBe("You")
   })
 
   it("names another member by the name the group knows", () => {
-    expect(personName(7, 1, members)).toBe("Maya Chen")
-    expect(personName(9, 1, members)).toBe("Leo Park")
+    expect(personName(EN, 7, 1, members)).toBe("Maya Chen")
+    expect(personName(EN, 9, 1, members)).toBe("Leo Park")
   })
 
   it("names a member who set no name Unnamed member, as the members list does", () => {
-    expect(personName(5, 1, members)).toBe("Unnamed member")
+    expect(personName(EN, 5, 1, members)).toBe("Unnamed member")
   })
 
   it("names an account that left the group or is gone Former member", () => {
-    expect(personName(42, 1, members)).toBe("Former member")
-    expect(personName(null, 1, members)).toBe("Former member")
+    expect(personName(EN, 42, 1, members)).toBe("Former member")
+    expect(personName(EN, null, 1, members)).toBe("Former member")
   })
 
   it("names nobody while the members are not read yet, rather than a wrong name", () => {
-    expect(personName(7, 1, null)).toBeUndefined()
+    expect(personName(EN, 7, 1, null)).toBeUndefined()
   })
 })
 

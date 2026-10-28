@@ -31,7 +31,7 @@ import {
   TAG_PATHS,
 } from "./progressive.tsx"
 import { openSearch, searchHotkeys } from "./search-palette.tsx"
-import { SHORTCUT_TEXT, ShortcutsList, type ShortcutsProps } from "./shortcuts.tsx"
+import { ShortcutsList, type ShortcutsProps } from "./shortcuts.tsx"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAppText } from "./i18n.ts"
 
@@ -120,7 +120,7 @@ export interface FrameShortcuts extends ShortcutsProps {
  */
 export function shortcutsMenuItems(
   shortcuts: FrameShortcuts | undefined,
-  label: string = SHORTCUT_TEXT.menuEntry,
+  label: string,
 ) {
   return shortcuts?.inMenu
     ? [{

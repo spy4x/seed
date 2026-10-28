@@ -1,3 +1,4 @@
+import type { Translator } from "@spy4x/platform/universal/i18n"
 import type { notesStore } from "../state/notes.ts"
 import type { tagsStore } from "../state/tags.ts"
 import type { toasts } from "../state/toasts.ts"
@@ -9,6 +10,7 @@ import type { toasts } from "../state/toasts.ts"
  * no "Undo". Resolves to whether the tag was deleted.
  */
 export async function deleteAndAnnounce(
+  t: Translator<string>,
   tags: Pick<typeof tagsStore, "remove" | "byId">,
   id: string,
   notes: Pick<typeof notesStore, "groupId" | "notes" | "loading">,
@@ -18,12 +20,12 @@ export async function deleteAndAnnounce(
   const known = tag && notes.groupId.value === tag.groupId && !notes.loading.value
   const count = known ? notes.notes.value.filter((note) => note.tagIds.includes(id)).length : 0
   if (!tag || !await tags.remove(id)) return false
-  const name = `"${tag.name}"`
+  const name = tag.name
   notices.success({
-    title: "Tag deleted",
+    title: t.t(`TagToasts.deletedTitle`),
     body: count === 0
-      ? `${name} was deleted.`
-      : `${name} was deleted and taken off ${count} ${count === 1 ? "note" : "notes"}.`,
+      ? t.t(`TagToasts.deleted`, { name })
+      : t.t(`TagToasts.deletedFromNotes`, { name, count }),
     dataE2E: "tag-deleted",
   })
   return true

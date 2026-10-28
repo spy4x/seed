@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useRef, useState } from "preact/hooks"
 import { type AttachmentItem, AttachmentList } from "@spy4x/preact-ui/attachment-list"
@@ -9,8 +8,12 @@ import { useFocusFallback } from "@spy4x/preact-ui/use-focus-after-removal"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
 import type { PlanRefusal } from "@domain/billing"
 import { ATTACHMENT_TYPES, type AttachmentUsage } from "@domain/notes"
+import { Rich } from "@spy4x/preact-ui/i18n"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import type { Navigate } from "./progressive.tsx"
+import { useAppText } from "./i18n.ts"
+import { type KeyedMessage, type Message, messageText } from "./message.ts"
+import { userValue } from "./notes-screen.tsx"
 
 /** The id of the "Attach files" button, which the palette's "Attach files to this note" presses. */
 export const ATTACH_BUTTON_ID = "note-attachments-attach"
@@ -33,11 +36,11 @@ export interface NoteAttachmentsProps {
   /** The group's room and its plan's rules; `null` until read. */
   usage: AttachmentUsage | null
   /** Files refused before upload, one sentence each. */
-  refusals: readonly string[]
+  refusals: readonly Message[]
   /** The group's plan refused a file. */
   plan: PlanRefusal | null
   /** The last finished upload, such as "scan.pdf uploaded", for the status region. */
-  announcement: string
+  announcement: Message
   /** A viewer's page: the list only, with no "Attach files" and no "Remove". */
   readOnly?: boolean
   /** The note is not created yet: a waiting file reads "Uploads when you create the note". */
@@ -48,30 +51,60 @@ export interface NoteAttachmentsProps {
   onCancel?: (id: string) => void
   onRetry?: (id: string) => void
   /** Removes a confirmed file; resolves to the sentence to show, or `null`. */
-  onRemove?: (id: string) => Promise<string | null>
+  onRemove?: (id: string) => Promise<Message | null>
   /** Downloads a confirmed file; resolves to the sentence to show, or `null`. */
-  onDownload?: (id: string) => Promise<string | null>
+  onDownload?: (id: string) => Promise<Message | null>
   navigate?: Navigate
 }
 
 /**
- * The quota line: "Family uses 37 of 100 files and 41 MB of 200 MB." A cap the plan does not set
- * is left out. `warn` is true from 90 % of either cap.
+ * The quota line: "Family uses 37 of 100 files and 41 MB of 200 MB.", as a message of the `app`
+ * catalog whose `<group>` span is the group's name. A cap the plan does not set is left out.
+ * `warn` is true from 90 % of either cap. Sizes are written for `language`, the interface
+ * language, as the file rows above write theirs.
  */
 export function quotaLine(
   groupName: string,
   usage: AttachmentUsage,
-): { text: string; warn: boolean } {
-  const files = usage.maxFiles === null
-    ? `${usage.files} ${usage.files === 1 ? "file" : "files"}`
-    : `${usage.files} of ${usage.maxFiles} files`
-  const bytes = usage.maxBytes === null
-    ? formatBytes(usage.bytes)
-    : `${formatBytes(usage.bytes)} of ${formatBytes(usage.maxBytes)}`
+  language: string,
+): { message: KeyedMessage; warn: boolean } {
+  const bytes = formatBytes(usage.bytes, language)
   const near = (used: number, cap: number | null) => cap !== null && cap > 0 && used >= cap * 0.9
+  const warn = near(usage.files, usage.maxFiles) || near(usage.bytes, usage.maxBytes)
+  const group = groupName
+  if (usage.maxFiles === null) {
+    return {
+      message: usage.maxBytes === null
+        ? { key: `NoteAttachments.quotaNoCaps`, values: { group, count: usage.files, bytes } }
+        : {
+          key: `NoteAttachments.quotaNoFileCap`,
+          values: {
+            group,
+            count: usage.files,
+            bytes,
+            maxBytes: formatBytes(usage.maxBytes, language),
+          },
+        },
+      warn,
+    }
+  }
   return {
-    text: `${groupName} uses ${files} and ${bytes}.`,
-    warn: near(usage.files, usage.maxFiles) || near(usage.bytes, usage.maxBytes),
+    message: usage.maxBytes === null
+      ? {
+        key: `NoteAttachments.quotaNoByteCap`,
+        values: { group, files: usage.files, count: usage.maxFiles, bytes },
+      }
+      : {
+        key: `NoteAttachments.quota`,
+        values: {
+          group,
+          files: usage.files,
+          count: usage.maxFiles,
+          bytes,
+          maxBytes: formatBytes(usage.maxBytes, language),
+        },
+      },
+    warn,
   }
 }
 
@@ -84,9 +117,10 @@ export function quotaLine(
  */
 export function NoteAttachments(props: NoteAttachmentsProps): JSX.Element | null {
   const { items, usage, readOnly } = props
+  const t = useAppText()
   const [asking, setAsking] = useState<AttachmentItem | null>(null)
   const [removingId, setRemovingId] = useState<string | null>(null)
-  const [problem, setProblem] = useState<string | null>(null)
+  const [problem, setProblem] = useState<Message | null>(null)
   const [dragging, setDragging] = useState(false)
   const section = useRef<HTMLElement>(null)
   // One choice arrives as its accepted files, then its refused ones: they are added as one batch,
@@ -115,7 +149,7 @@ export function NoteAttachments(props: NoteAttachmentsProps): JSX.Element | null
   if (readOnly && items.length === 0) return null
   const perNote = usage?.maxPerNote ?? DEFAULT_PER_NOTE
   const placed = items.filter((item) => item.status !== "failed").length
-  const quota = usage && !readOnly ? quotaLine(props.groupName, usage) : null
+  const quota = usage && !readOnly ? quotaLine(props.groupName, usage, t.language) : null
   const attachButton = () => section.current?.querySelector<HTMLElement>(`#${ATTACH_BUTTON_ID}`)
 
   const download = async (item: AttachmentItem) => {
@@ -156,9 +190,9 @@ export function NoteAttachments(props: NoteAttachmentsProps): JSX.Element | null
     >
       <div class="flex min-h-11 items-center justify-between gap-3">
         <h2 id="note-attachments-heading" class="text-sm font-medium">
-          Attachments{" "}
+          {t.t(`NoteAttachments.title`)}{" "}
           <span class="font-normal text-muted" data-e2e="note-attachments-count">
-            {placed} of {perNote}
+            {t.t(`NoteAttachments.count`, { count: placed, max: perNote })}
           </span>
         </h2>
         {!readOnly && (
@@ -167,7 +201,7 @@ export function NoteAttachments(props: NoteAttachmentsProps): JSX.Element | null
             appearance="button"
             multiple
             accept={ACCEPT}
-            label="Attach files"
+            label={t.t(`NoteAttachments.attach`)}
             onFiles={take}
             onReject={(refused) => take(refused.map((rejection) => rejection.file))}
           />
@@ -181,11 +215,11 @@ export function NoteAttachments(props: NoteAttachmentsProps): JSX.Element | null
             }`}
             data-e2e="note-attachments-empty"
           >
-            <p class="text-sm">Attach images or PDFs: drop them here or choose files.</p>
+            <p class="text-sm">{t.t(`NoteAttachments.empty`)}</p>
             <p class="mt-1 text-sm text-muted">
-              JPEG, PNG, WebP, GIF or PDF, up to {formatBytes(usage?.maxFileBytes ?? 2 * 1024 ** 2)}
-              {" "}
-              each.
+              {t.t(`NoteAttachments.types`, {
+                size: formatBytes(usage?.maxFileBytes ?? 2 * 1024 ** 2, t.language),
+              })}
             </p>
           </div>
         )
@@ -202,15 +236,15 @@ export function NoteAttachments(props: NoteAttachmentsProps): JSX.Element | null
             onRetry={readOnly ? undefined : (item) => props.onRetry?.(item.id)}
             removingId={removingId}
             focusAfterLast={attachButton}
-            labels={props.creating ? { waiting: "Uploads when you create the note" } : undefined}
+            labels={props.creating ? { waiting: t.t(`NoteAttachments.waitingCreate`) } : undefined}
           />
         )}
       <ErrorState
-        message={props.refusals.join("\n")}
+        message={props.refusals.map((refusal) => messageText(t, refusal)).join("\n")}
         class={INLINE_ERROR}
         dataE2E="note-attachments-refusals"
       />
-      <ErrorState message={problem} class={INLINE_ERROR} focusOnAppear />
+      <ErrorState message={messageText(t, problem)} class={INLINE_ERROR} focusOnAppear />
       {props.plan && (
         <PlanRefusalNotice
           groupId={props.groupId}
@@ -224,18 +258,26 @@ export function NoteAttachments(props: NoteAttachmentsProps): JSX.Element | null
           class={`text-sm ${quota.warn ? "text-warning" : "text-muted"}`}
           data-e2e="note-attachments-quota"
         >
-          {quota.warn && <strong class="font-medium">Almost full.</strong>} {quota.text}
+          {quota.warn && <strong class="font-medium">{t.t(`NoteAttachments.almostFull`)}</strong>}
+          {quota.warn && " "}
+          <Rich
+            parts={t.parts(quota.message.key, quota.message.values)}
+            tags={{ group: userValue }}
+          />
         </p>
       )}
       <p role="status" class="sr-only" data-e2e="note-attachments-status">
-        {props.announcement}
+        {messageText(t, props.announcement)}
       </p>
       {asking && (
         <ConfirmDialog
-          title="Remove this file?"
-          message={`"${asking.name}" will be removed from this note for everyone in ${props.groupName}.`}
-          confirmLabel="Remove file"
-          cancelLabel="Cancel"
+          title={t.t(`NoteAttachments.removeTitle`)}
+          message={t.t(`NoteAttachments.removeMessage`, {
+            name: asking.name,
+            group: props.groupName,
+          })}
+          confirmLabel={t.t(`NoteAttachments.removeConfirm`)}
+          cancelLabel={t.t(`NoteAttachments.cancel`)}
           tone="danger"
           dataE2E="note-attachment-remove-dialog"
           onConfirm={() => void remove(asking)}

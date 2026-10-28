@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 /**
  * The New note dialog in a browser DOM (happy-dom): where focus goes when it opens, after an
  * error and after an add; what Enter and Ctrl Enter ask for; and what it shows with no group, one
@@ -10,7 +9,7 @@ import { Window } from "happy-dom"
 import { render } from "preact"
 import { act } from "preact/test-utils"
 import {
-  NEW_NOTE_TEXT,
+  CHOOSE_GROUP_ERROR,
   type NewNoteAdded,
   NewNoteDialog,
   type NewNoteDialogProps,
@@ -75,6 +74,7 @@ async function draw(props: Partial<NewNoteDialogProps> = {}, calls?: Calls): Pro
         groups={[ACME]}
         groupId={ACME.id}
         onGroupChange={() => {}}
+        // deno-lint-ignore ui-text/no-literal -- the person's own title, typed in the test
         title="Buy milk"
         onTitleChange={() => {}}
         pending={false}
@@ -182,11 +182,11 @@ describe("the New note dialog", () => {
     expect(find<HTMLSelectElement>("[data-e2e=new-note-group]").value).toBe(HOME.id)
     expect(find("dialog").textContent).not.toContain("In Home")
     await draw(
-      { groups: [ACME, HOME], groupId: null, errors: { group: NEW_NOTE_TEXT.chooseGroupError } },
+      { groups: [ACME, HOME], groupId: null, errors: { group: CHOOSE_GROUP_ERROR } },
       calls,
     )
     expect(focused()).toBe("new-note-group")
-    expect(find("dialog").textContent).toContain(NEW_NOTE_TEXT.chooseGroupError)
+    expect(find("dialog").textContent).toContain("Choose a group for this note.")
   })
 
   it("says what it added in a live region, with a link that opens the note", async () => {
@@ -195,7 +195,9 @@ describe("the New note dialog", () => {
     const status = find("[data-e2e=new-note-added]")
     expect(status.getAttribute("role")).toBe("status")
     expect(status.textContent).toContain("Added “Buy milk” to Acme.")
-    expect(status.textContent).not.toContain(NEW_NOTE_TEXT.onDevice)
+    expect(status.textContent).not.toContain(
+      "Saved on this device. It will be sent when you are back online.",
+    )
     expect(focused()).toBe("new-note-title")
     const link = find<HTMLAnchorElement>("[data-e2e=new-note-open]")
     expect(link.getAttribute("href")).toBe(NOTE_PATHS.note(ADDED.noteId))
@@ -213,13 +215,17 @@ describe("the New note dialog", () => {
 
   it("says a note made offline is saved on this device", async () => {
     await draw({ added: { ...ADDED, onDevice: true } })
-    expect(find("[data-e2e=new-note-added]").textContent).toContain(NEW_NOTE_TEXT.onDevice)
+    expect(find("[data-e2e=new-note-added]").textContent).toContain(
+      "Saved on this device. It will be sent when you are back online.",
+    )
   })
 
   it("offers New group instead of the form when the person can write to no group", async () => {
     const calls = await draw({ groups: [], groupId: null })
     expect(document.querySelector("[data-e2e=new-note-title]")).toBeNull()
-    expect(find("[data-e2e=new-note-no-group]").textContent).toBe(NEW_NOTE_TEXT.noGroup)
+    expect(find("[data-e2e=new-note-no-group]").textContent).toBe(
+      "Notes live in a group you can write to. Create one to start.",
+    )
     const button = find<HTMLAnchorElement>("[data-e2e=new-note-new-group]")
     expect(button.getAttribute("href")).toBe(GROUP_PATHS.new)
     await act(() => {

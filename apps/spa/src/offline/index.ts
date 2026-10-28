@@ -23,6 +23,7 @@ import { type NotesCollection, notesCollection } from "./notes-collection.ts"
 import { openTagsCache, type TagEntry, type TagPayload, type TagsCache } from "./tags-cache.ts"
 import { type TagsCollection, tagsCollection } from "./tags-collection.ts"
 import type { TagItem } from "../state/tags.ts"
+import type { Message } from "@ui/message.ts"
 
 /**
  * The local-data module's entry point (ADR 003). Only `apps/spa/src/modules.ts` imports this
@@ -82,9 +83,10 @@ export interface OfflineLayer {
   tagEntries: Signal<readonly TagEntry[]>
   /**
    * What the layer did without asking: a tag that will never exist was taken off queued notes.
-   * The screen shows each message until the person dismisses it.
+   * Each is a key of the `app` catalog with its values; the screen shows it in the person's
+   * language until they dismiss it.
    */
-  notices: Signal<readonly string[]>
+  notices: Signal<readonly Message[]>
   /** Sends the queue on start, reconnect, visibility and focus, retrying with backoff. */
   runner: SyncRunner
 }
@@ -172,7 +174,7 @@ export function startOffline(
   if (layer) void stopOffline({ forget: true }).catch(() => {})
   const cache = storage.openNotes(userId)
   const tagsCache = storage.openTags(userId)
-  const notices = signal<readonly string[]>([])
+  const notices = signal<readonly Message[]>([])
   const tagsDefinition = tagsCollection({
     userId,
     cache: tagsCache,
@@ -187,12 +189,7 @@ export function startOffline(
     lock: withBrowserLock(userId),
     onReferenceRemoved({ children }) {
       const count = children.length
-      notices.value = [
-        ...notices.value,
-        `A tag you created offline could not be saved, so it was taken off ${count} ${
-          count === 1 ? "note" : "notes"
-        }. The ${count === 1 ? "note is" : "notes are"} saved without it.`,
-      ]
+      notices.value = [...notices.value, { key: `OfflineStatus.tagTakenOff`, values: { count } }]
     },
   })
   const tags = collections.get(tagsDefinition)

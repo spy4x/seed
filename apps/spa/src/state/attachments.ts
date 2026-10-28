@@ -10,6 +10,7 @@ import {
   type AttachmentUsage,
   type SignedAttachmentUpload,
 } from "@domain/notes"
+import type { KeyedMessage, Message } from "@ui/message.ts"
 import { callCommand, callQuery, canCall } from "../modules.ts"
 
 /** Where a row stands: the same words as preact-ui's `AttachmentList`. */
@@ -34,7 +35,7 @@ export interface AttachmentRow {
   src?: string
   thumbnailSrc?: string
   /** Why the upload failed, in the danger tone. */
-  error?: string
+  error?: Message
   /** Who attached a confirmed file: `null` for a former member, absent before it is confirmed. */
   createdByUserId?: number | null
 }
@@ -70,17 +71,26 @@ const DEFAULT_RULES = PLANS[0].attachments
 
 const TYPES: readonly string[] = ATTACHMENT_TYPES
 
-/** What a file claims to be, for "invoice.pdf is not really a PDF". */
-const KINDS: Record<string, string> = {
-  "application/pdf": `a PDF`,
-  "image/jpeg": `a JPEG image`,
-  "image/png": `a PNG image`,
-  "image/webp": `a WebP image`,
-  "image/gif": `a GIF image`,
+/**
+ * "invoice.pdf is not really a PDF", by what the file claims to be: keys of the `app` catalog, one
+ * whole sentence each.
+ */
+const NOT_REALLY: Record<string, string> = {
+  "application/pdf": `AttachmentMessages.notReallyPdf`,
+  "image/jpeg": `AttachmentMessages.notReallyJpeg`,
+  "image/png": `AttachmentMessages.notReallyPng`,
+  "image/webp": `AttachmentMessages.notReallyWebp`,
+  "image/gif": `AttachmentMessages.notReallyGif`,
 }
 
+/** The upload failed, for no reason the API named; a key of the `app` catalog. */
+const UPLOAD_FAILED = `AttachmentMessages.uploadFailed`
+
+/** The download link could not be made; a key of the `app` catalog. */
+const LINK_EXPIRED = `AttachmentMessages.linkExpired`
+
 /** The sentence the screen shows for a file the server refused, by the API's code. */
-function refusalOf(error: unknown, name: string, size: number): string {
+function refusalOf(error: unknown, name: string, size: number): Message {
   const details = error instanceof RealtimeRequestError
     ? error.details as { code?: unknown; limit?: unknown } | undefined
     : undefined
@@ -91,23 +101,27 @@ function refusalOf(error: unknown, name: string, size: number): string {
     case `FILE_TOO_LARGE`:
       return sizeError(name, size, limit ?? DEFAULT_RULES.maxFileBytes)
     case `NOTE_FULL`:
-      return `A note holds up to ${
-        limit ?? DEFAULT_RULES.maxPerNote
-      } files. ${name} was not attached.`
+      return {
+        key: `AttachmentMessages.noteFull`,
+        values: { count: limit ?? DEFAULT_RULES.maxPerNote, name },
+      }
     case `UPLOADS_PENDING`:
-      return `${name} waits: finish the uploads already started first.`
+      return { key: `AttachmentMessages.pending`, values: { name } }
     case `UPLOAD_BUDGET`:
-      return `${name} was not attached: you have uploaded as much as an hour allows. Try again later.`
+      return { key: `AttachmentMessages.budget`, values: { name } }
   }
-  return error instanceof Error && error.message ? error.message : `Upload failed.`
+  return error instanceof Error && error.message ? error.message : UPLOAD_FAILED
 }
 
-function typeError(name: string): string {
-  return `${name} cannot be attached. Only JPEG, PNG, WebP and GIF images and PDF files can be.`
+function typeError(name: string): KeyedMessage {
+  return { key: `AttachmentMessages.type`, values: { name } }
 }
 
-function sizeError(name: string, size: number, max: number): string {
-  return `${name} is ${formatBytes(size)}. Each file can be up to ${formatBytes(max)}.`
+function sizeError(name: string, size: number, max: number): KeyedMessage {
+  return {
+    key: `AttachmentMessages.size`,
+    values: { name, size: formatBytes(size), max: formatBytes(max) },
+  }
 }
 
 /** A confirmed file as a row. */
@@ -143,13 +157,13 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
   const rows = signal<readonly AttachmentRow[]>([])
   const usage = signal<AttachmentUsage | null>(null)
   const loading = signal(false)
-  const error = signal<string | null>(null)
+  const error = signal<Message | null>(null)
   /** Files refused before upload, one sentence each; cleared by the next choice. */
-  const refusals = signal<readonly string[]>([])
+  const refusals = signal<readonly Message[]>([])
   /** The group's plan refused a file: the notice to show, or `null`. */
   const plan = signal<PlanRefusal | null>(null)
   /** The last finished upload, for one `role="status"` region: "scan.pdf uploaded". */
-  const announcement = signal(``)
+  const announcement = signal<Message>(``)
   const files = new Map<string, File>()
   const aborts = new Map<string, AbortController>()
   /** The signed upload of each row that has one and is not confirmed yet. */
@@ -219,7 +233,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
       void linkImages(read, group)
     } catch (cause) {
       if (!isCurrent(read)) return
-      error.value = cause instanceof Error ? cause.message : `Could not load the files`
+      error.value = cause instanceof Error ? cause.message : `AttachmentMessages.load`
     } finally {
       if (isCurrent(read)) loading.value = false
     }
@@ -252,7 +266,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
    */
   function add(chosen: readonly File[]): void {
     const rules = usage.value ?? DEFAULT_RULES
-    const problems: string[] = []
+    const problems: Message[] = []
     const overflow: string[] = []
     let places = rules.maxPerNote - rows.value.filter(takesPlace).length
     plan.value = null
@@ -275,12 +289,10 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
       }
     }
     if (overflow.length > 0) {
-      const count = overflow.length === 1 ? `1 was` : `${overflow.length} were`
-      problems.push(
-        `A note holds up to ${rules.maxPerNote} files. ${count} not attached: ${
-          overflow.join(`, `)
-        }.`,
-      )
+      problems.push({
+        key: `AttachmentMessages.overflow`,
+        values: { count: overflow.length, max: rules.maxPerNote, names: overflow.join(`, `) },
+      })
     }
     refusals.value = problems
     void flush()
@@ -332,7 +344,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
           bytes: usage.value.bytes + attachment.size,
         }
       }
-      announcement.value = `${attachment.name} uploaded`
+      announcement.value = { key: `AttachmentMessages.uploaded`, values: { name: attachment.name } }
       void linkImages(read, group)
     } catch (cause) {
       if (!isCurrent(read) || abort.signal.aborted) return
@@ -348,7 +360,9 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
       if (code === `FILE_CONTENT`) {
         refusals.value = [
           ...refusals.value,
-          `${file.name} is not really ${KINDS[file.type]}, so it was not attached.`,
+          NOT_REALLY[file.type]
+            ? { key: NOT_REALLY[file.type], values: { name: file.name } }
+            : typeError(file.name),
         ]
         drop(id)
         return
@@ -379,7 +393,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
    * Removes a confirmed file for everyone in the group. Returns `null`, or the sentence to show
    * when the server could not be reached or refused.
    */
-  async function remove(id: string): Promise<string | null> {
+  async function remove(id: string): Promise<Message | null> {
     const row = rows.value.find((item) => item.id === id)
     const group = groupId.value
     if (!row || row.status !== `ready` || group === null) return null
@@ -391,7 +405,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
         : undefined
       // Someone else removed it a moment ago: the row goes all the same.
       if (code !== `ATTACHMENT_NOT_FOUND`) {
-        return `Could not remove ${row.name}. Check your connection and try again.`
+        return { key: `AttachmentMessages.remove`, values: { name: row.name } }
       }
     }
     drop(id)
@@ -411,11 +425,11 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
   async function link(id: string): Promise<string> {
     const group = groupId.value
     const row = rows.value.find((item) => item.id === id)
-    if (group === null) throw new Error(`This link expired. Try again.`)
+    if (group === null) throw new Error(LINK_EXPIRED)
     try {
       return (await dependencies.download({ groupId: group, id: row?.fileId ?? id })).url
     } catch {
-      throw new Error(`This link expired. Try again.`)
+      throw new Error(LINK_EXPIRED)
     }
   }
 
@@ -460,10 +474,8 @@ export function putWithProgress(
       if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100))
     }
     request.onload = () =>
-      request.status >= 200 && request.status < 300
-        ? resolve()
-        : reject(new Error(`Upload failed.`))
-    request.onerror = () => reject(new Error(`Upload failed.`))
+      request.status >= 200 && request.status < 300 ? resolve() : reject(new Error(UPLOAD_FAILED))
+    request.onerror = () => reject(new Error(UPLOAD_FAILED))
     request.onabort = () => reject(new DOMException(`Upload canceled`, `AbortError`))
     signal.addEventListener(`abort`, () => request.abort(), { once: true })
     request.send(file)
