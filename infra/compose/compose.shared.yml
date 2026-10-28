@@ -819,6 +819,11 @@ services:
       - CATALOG=${CATALOG:-}
       - CATALOG_CURRENCY=${CATALOG_CURRENCY:-}
       - CATALOG_LANGUAGES=${CATALOG_LANGUAGES:-}
+      # The catalog's tracking links: the item address, and Umami to count clicks (a secret token).
+      # Unset Umami → links go straight to the item; see docs/catalog.md.
+      - CATALOG_ITEM_PATH=${CATALOG_ITEM_PATH:-}
+      - UMAMI_API_URL=${UMAMI_API_URL:-}
+      - UMAMI_API_TOKEN=${UMAMI_API_TOKEN:-}
       # Mail subscriptions: the API checks the links the worker signs. Unset → off in production.
       - SUBSCRIBERS_SECRET=${SUBSCRIBERS_SECRET:-}
       - SUBSCRIBERS_PREVIOUS_SECRETS=${SUBSCRIBERS_PREVIOUS_SECRETS:-}

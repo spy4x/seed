@@ -62,6 +62,19 @@ const category = {
   version: 1,
 }
 
+const SOURCE = `019a2f6c-0c00-7000-8000-00000000c004`
+const source = {
+  id: SOURCE,
+  name: `Zalo group A`,
+  slug: `zalo-a`,
+  position: 0,
+  linkCount: 0,
+  createdAt: NOW,
+  updatedAt: NOW,
+  version: 1,
+}
+const link = { sourceId: SOURCE, url: `https://shop.example/s/AbCdEfGhIjK`, createdAt: NOW }
+
 /** The operator of every test, with the request id the test session gives. */
 const ACTOR = { userId: 7, requestId: `req-test-1` }
 
@@ -76,6 +89,7 @@ const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0
 function buildApp(
   auth: APIContext["Variables"]["auth"] = operator(),
   fail: Error | null = null,
+  { tracking = true, linkAnswer = link as typeof link | null } = {},
 ) {
   const calls: unknown[][] = []
   const record = <T>(name: string, answer: T) => (...args: unknown[]) => {
@@ -84,8 +98,11 @@ function buildApp(
   }
   const catalog: AdminCatalogService = {
     settings: SETTINGS,
-    read: record(`read`, { categories: [category], items: [] }),
+    tracking,
+    read: record(`read`, { categories: [category], items: [], sources: [source] }),
     getItem: record(`getItem`, item),
+    itemLinks: record(`itemLinks`, [link]),
+    trackingLink: record(`trackingLink`, linkAnswer),
     createItem: record(`createItem`, item),
     updateItem: record(`updateItem`, item),
     setStatus: record(`setStatus`, item),
@@ -99,6 +116,10 @@ function buildApp(
     updateCategory: record(`updateCategory`, category),
     deleteCategory: record(`deleteCategory`, undefined),
     reorderCategories: record(`reorderCategories`, [category]),
+    createSource: record(`createSource`, source),
+    updateSource: record(`updateSource`, source),
+    deleteSource: record(`deleteSource`, undefined),
+    reorderSources: record(`reorderSources`, [source]),
   }
   const route = createAdminRoute({
     auth: testSessionGuards(),
@@ -170,6 +191,11 @@ const ROUTES: { method: string; path: string; body?: unknown; headers?: Record<s
       body: { version: 1, slug: `t`, name: { vi: `Á` } },
     },
     { method: `POST`, path: `/categories/${ID}/delete`, body: { version: 1 } },
+    { method: `POST`, path: `/items/${ID}/links`, body: { sourceId: SOURCE } },
+    { method: `POST`, path: `/sources`, body: { id: SOURCE, name: `Zalo`, slug: `zalo-a` } },
+    { method: `POST`, path: `/sources/order`, body: { ids: [SOURCE] } },
+    { method: `POST`, path: `/sources/${SOURCE}`, body: { version: 1, name: `Z`, slug: `z` } },
+    { method: `POST`, path: `/sources/${SOURCE}/delete`, body: { version: 1 } },
   ]
 
 describe(`operator area: catalog routes`, () => {
@@ -210,7 +236,66 @@ describe(`operator area: catalog routes`, () => {
   it(`answers the catalog's currency and languages with its lists`, async () => {
     const { app } = buildApp()
     const answer = await (await request(app, `GET`, ``)).json()
-    expect(answer).toEqual({ settings: SETTINGS, categories: [category], items: [] })
+    expect(answer).toEqual({
+      settings: SETTINGS,
+      tracking: true,
+      categories: [category],
+      items: [],
+      sources: [source],
+    })
+  })
+
+  it(`answers an item with its tracking links`, async () => {
+    const { app, calls } = buildApp()
+    const answer = await (await request(app, `GET`, `/items/${ID}`)).json()
+    expect(answer).toEqual({ item, links: [link] })
+    expect(calls).toEqual([[`getItem`, ID], [`itemLinks`, ID]])
+  })
+
+  it(`answers the item's link for a source, with the operator as actor`, async () => {
+    const { app, calls } = buildApp()
+    const response = await request(app, `POST`, `/items/${ID}/links`, {
+      sourceId: SOURCE,
+    })
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ link })
+    expect(calls).toEqual([[`trackingLink`, ID, SOURCE, ACTOR]])
+  })
+
+  it(`answers 404 to a link for an item or a source that is gone`, async () => {
+    const { app } = buildApp(operator(), null, { linkAnswer: null })
+    const response = await request(app, `POST`, `/items/${ID}/links`, { sourceId: SOURCE })
+    expect(response.status).toBe(404)
+    expect((await apiError(response)).reason).toBe(`SOURCE_NOT_FOUND`)
+  })
+
+  it(`answers 409 TRACKING_OFF while the website has no address, and makes no link`, async () => {
+    const { app, calls } = buildApp(operator(), null, { tracking: false })
+    const response = await request(app, `POST`, `/items/${ID}/links`, { sourceId: SOURCE })
+    expect(response.status).toBe(409)
+    expect((await apiError(response)).reason).toBe(`TRACKING_OFF`)
+    expect(calls).toEqual([])
+  })
+
+  it(`adds a source with its name trimmed and refuses one with no utm_source`, async () => {
+    const { app, calls } = buildApp()
+    const added = await request(app, `POST`, `/sources`, {
+      id: SOURCE,
+      name: `  Zalo group A `,
+      slug: `zalo-a`,
+    })
+    expect(added.status).toBe(201)
+    expect(calls).toEqual([[
+      `createSource`,
+      SOURCE,
+      { name: `Zalo group A`, slug: `zalo-a` },
+      ACTOR,
+    ]])
+
+    const refused = await request(app, `POST`, `/sources`, { id: SOURCE, name: `Zalo`, slug: `` })
+    expect(refused.status).toBe(400)
+    expect((await apiError(refused)).details).toEqual({ field: `slug` })
+    expect(calls).toHaveLength(1)
   })
 
   it(`adds an item with its texts trimmed and the operator as actor`, async () => {

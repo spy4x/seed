@@ -17,8 +17,10 @@ import {
   readPublicCatalog,
   readPublicItem,
   readPublicPhotoFile,
+  readTrackingTarget,
 } from "@server/catalog/public-catalog.ts"
-import { seedSampleCatalog } from "@server/catalog/sample-catalog.ts"
+import { SAMPLE_CATALOG_SOURCES, seedSampleCatalog } from "@server/catalog/sample-catalog.ts"
+import type { UmamiLinks } from "@server/catalog/tracking.ts"
 import { IMAGE_PROCESS_JOB } from "@server/files/images.ts"
 import { createAdminCatalog } from "../../apps/api/routes/admin/catalog.ts"
 import { applyMigrations } from "./migrations.ts"
@@ -445,5 +447,147 @@ Deno.test(`the sample catalog seeds once, with five published items`, async () =
     expect(items.filter((item) => item.status === `published`)).toHaveLength(5)
     expect(items.filter((item) => item.stock === `sold-out`)).toHaveLength(1)
     expect(await catalog.listCategories()).toHaveLength(3)
+    expect(await catalog.listSources()).toHaveLength(SAMPLE_CATALOG_SOURCES.length)
+  })
+})
+
+Deno.test(`sources keep their order and utm_source, and a deleted one takes its links`, async () => {
+  await withSchema(async (sql) => {
+    const actor = await operator(sql)
+    const catalog = new PostgresCatalog(sql)
+    const [zalo, insta] = [uuidV7(), uuidV7()]
+    await catalog.createSource(zalo, { name: `Zalo group A`, slug: `zalo-a` }, actor)
+    // A retried create answers the first; another source with the same utm_source is refused.
+    await catalog.createSource(zalo, { name: `Zalo group A`, slug: `zalo-a` }, actor)
+    await catalog.createSource(insta, { name: `Instagram`, slug: `instagram` }, actor)
+    await expect(catalog.createSource(uuidV7(), { name: `Again`, slug: `zalo-a` }, actor))
+      .rejects.toMatchObject({ code: `SLUG_TAKEN`, field: `slug` })
+    const reordered = await catalog.reorderSources([insta, zalo], actor)
+    expect(reordered.map((source) => [source.slug, source.position])).toEqual([
+      [`instagram`, 0],
+      [`zalo-a`, 1],
+    ])
+    const saved = await catalog.updateSource(
+      zalo,
+      1,
+      { name: `Zalo group B`, slug: `zalo-b` },
+      actor,
+    )
+    expect(saved).toMatchObject({ name: `Zalo group B`, slug: `zalo-b`, version: 2 })
+    await expect(catalog.updateSource(zalo, 1, { name: `x`, slug: `x` }, actor)).rejects
+      .toBeInstanceOf(CatalogVersionConflictError)
+
+    const item = await catalog.createItem(uuidV7(), jacket().fields, actor)
+    await catalog.trackingLink(item.id, zalo, { id: uuidV7(), code: `AbCdEfGh_-1` }, actor)
+    await catalog.deleteSource(zalo, 2, actor)
+    expect((await catalog.listSources()).map((source) => [source.slug, source.position])).toEqual([
+      [`instagram`, 0],
+    ])
+    expect(await catalog.itemLinks(item.id)).toEqual([])
+    expect((await auditKinds(sql)).filter((kind) => kind.includes(`source`))).toEqual([
+      CATALOG_AUDIT_KINDS.sourceCreated,
+      CATALOG_AUDIT_KINDS.sourceCreated,
+      CATALOG_AUDIT_KINDS.sourcesReordered,
+      CATALOG_AUDIT_KINDS.sourceUpdated,
+      CATALOG_AUDIT_KINDS.sourceDeleted,
+    ])
+  })
+})
+
+Deno.test(`"Copy link" makes one link per item and source, however often it is pressed`, async () => {
+  await withSchema(async (sql) => {
+    const actor = await operator(sql)
+    const catalog = new PostgresCatalog(sql)
+    const source = uuidV7()
+    await catalog.createSource(source, { name: `Zalo group A`, slug: `zalo-a` }, actor)
+    const item = await catalog.createItem(uuidV7(), jacket().fields, actor)
+    const created: { id: string; name: string; url: string; slug: string }[] = []
+    let umamiUp = false
+    const umami: UmamiLinks = {
+      create: (link) => {
+        created.push(link)
+        return Promise.resolve(umamiUp)
+      },
+      address: (slug) => `https://stats.example/q/${slug}`,
+      isUp: () => Promise.resolve(true),
+    }
+    const service = createAdminCatalog(sql, {
+      settings: { currency: `VND`, languages: [`en`] },
+      files: {
+        put: () => Promise.resolve(),
+        delete: () => Promise.resolve(),
+        read: () => Promise.resolve(null),
+      },
+      tracking: { siteUrl: `https://shop.example`, itemPath: `/{category}/{slug}`, umami: null },
+      umami,
+    })
+
+    // Two presses at once, then one more: one row, one audit row, one address.
+    const answers = await Promise.all([
+      service.trackingLink(item.id, source, actor),
+      service.trackingLink(item.id, source, actor),
+    ])
+    answers.push(await service.trackingLink(item.id, source, actor))
+    const urls = new Set(answers.map((answer) => answer?.url))
+    expect(urls.size).toBe(1)
+    const url = [...urls][0]!
+    expect(url).toMatch(/^https:\/\/shop\.example\/s\/[A-Za-z0-9_-]{11}$/)
+    const [{ rows }] = await sql<{ rows: number }[]>`
+      SELECT count(*)::int AS rows FROM catalog_tracking_links
+    `
+    expect(rows).toBe(1)
+    expect((await auditKinds(sql)).filter((kind) => kind === CATALOG_AUDIT_KINDS.linkCreated))
+      .toHaveLength(1)
+
+    // Umami was down for those presses: each offered it the link again, with the link's own id.
+    const code = url.split(`/s/`)[1]
+    expect(created).toHaveLength(3)
+    expect(new Set(created.map((link) => link.id)).size).toBe(1)
+    expect(created[0]).toMatchObject({
+      name: `Zip jacket · Zalo group A`,
+      url: `https://shop.example/s/${code}?counted=1`,
+      slug: code,
+    })
+    // Once Umami holds it, the link says so and Umami is not asked again.
+    umamiUp = true
+    await service.trackingLink(item.id, source, actor)
+    await service.trackingLink(item.id, source, actor)
+    expect(created).toHaveLength(4)
+    const [stored] = await catalog.itemLinks(item.id)
+    expect(stored.umamiLinkId).toBe(stored.id)
+    expect(await service.itemLinks(item.id)).toEqual([
+      { sourceId: source, url, createdAt: stored.createdAt.toISOString() },
+    ])
+
+    // A source or item that is gone makes no link.
+    expect(await service.trackingLink(item.id, uuidV7(), actor)).toBeNull()
+    expect(await service.trackingLink(uuidV7(), source, actor)).toBeNull()
+  })
+})
+
+Deno.test(`a link leads only to a published item, by the item's own slug`, async () => {
+  await withSchema(async (sql) => {
+    const actor = await operator(sql)
+    const catalog = new PostgresCatalog(sql)
+    const category = uuidV7()
+    await catalog.createCategory(category, { slug: `jackets`, name: { en: `Jackets` } }, actor)
+    const source = uuidV7()
+    await catalog.createSource(source, { name: `Friends`, slug: `friends` }, actor)
+    const item = await catalog.createItem(uuidV7(), jacket({ categoryId: category }).fields, actor)
+    const code = `AbCdEfGh_-1`
+    await catalog.trackingLink(item.id, source, { id: uuidV7(), code }, actor)
+
+    expect(await readTrackingTarget(sql, code)).toBeNull()
+    const published = await catalog.setStatus(item.id, item.version, `published`, actor)
+    expect(await readTrackingTarget(sql, code)).toEqual({
+      code,
+      umamiLinkId: null,
+      itemSlug: `zip-jacket`,
+      categorySlug: `jackets`,
+      sourceSlug: `friends`,
+    })
+    expect(await readTrackingTarget(sql, `ZZZZZZZZZZZ`)).toBeNull()
+    await catalog.setStatus(item.id, published.version, `hidden`, actor)
+    expect(await readTrackingTarget(sql, code)).toBeNull()
   })
 })

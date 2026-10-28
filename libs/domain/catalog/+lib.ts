@@ -41,6 +41,10 @@ export const CATALOG_ITEMS_MAX = 1000
 export const CATALOG_PRICE_MAX = 1_000_000_000_000
 /** The most languages a catalog keeps its texts in. */
 export const CATALOG_LANGUAGES_MAX = 10
+/** A tracking link source's name, such as `Zalo group A` (#483). */
+export const CATALOG_SOURCE_NAME_MAX_LENGTH = 60
+/** The most sources the catalog keeps: one per place the shop shares its items in. */
+export const CATALOG_SOURCES_MAX = 50
 
 /** The photos the admin uploads: what a phone takes, iPhone HEIC included. */
 export const CATALOG_PHOTO_TYPES = [`image/jpeg`, `image/png`, `image/webp`, `image/heic`] as const
@@ -252,6 +256,38 @@ export interface AdminCatalogResponse {
   settings: CatalogSettings
   categories: CatalogCategory[]
   items: CatalogItemRow[]
+  /** The tracking links' sources, in order (#483). */
+  sources: CatalogLinkSource[]
+  /**
+   * Whether items get tracking links: the website's address (`MPA_DOMAIN`) is set. Off, the item
+   * page shows no "Share links" and the sources page says what to set.
+   */
+  tracking: boolean
+}
+
+/**
+ * A place the shop shares its items in, such as a Zalo group (#483). Its `slug` is the
+ * `utm_source` of its tracking links.
+ */
+export interface CatalogLinkSource {
+  id: string
+  name: string
+  slug: string
+  /** 0 first. */
+  position: number
+  /** How many items have a link for it. */
+  linkCount: number
+  createdAt: string
+  updatedAt: string
+  version: number
+}
+
+/** An item's tracking link for one source, made the first time "Copy link" is pressed. */
+export interface CatalogTrackingLink {
+  sourceId: string
+  /** The short address on the website, `https://<site>/s/<code>`. */
+  url: string
+  createdAt: string
 }
 
 /** One stored width of a published photo, for `responsiveImage` of `@spy4x/platform`. */
@@ -321,6 +357,8 @@ export type CatalogErrorCode =
   | `SLUG_TAKEN`
   | `CATEGORY_REQUIRED`
   | `CATEGORY_NOT_EMPTY`
+  | `SOURCE_NOT_FOUND`
+  | `TRACKING_OFF`
   | `NOT_PUBLISHED`
   | `TOO_MANY`
   | `ORDER_STALE`
@@ -428,6 +466,24 @@ export const catalogCategoryUpdateSchema = type({
   ...categoryFields,
   "+": `reject`,
 })
+
+const sourceFields = { slug: `string`, name: `string` } as const
+
+/** `POST /api/admin/catalog/sources`: a client-made id, so a retry cannot add a second one. */
+export const catalogSourceCreateSchema = type({ id: uuid, ...sourceFields, "+": `reject` })
+export type CatalogSourceCreateRequest = typeof catalogSourceCreateSchema.infer
+
+/** `POST /api/admin/catalog/sources/:id`: every field and the version edited. */
+export const catalogSourceUpdateSchema = type({ ...versionField, ...sourceFields, "+": `reject` })
+
+/** `POST /api/admin/catalog/sources/order`: every id, in the new order. */
+export const catalogSourceOrderSchema = type({
+  ids: uuid.array().atMostLength(CATALOG_SOURCES_MAX),
+  "+": `reject`,
+})
+
+/** `POST /api/admin/catalog/items/:id/links`: the item's link for one source, made when missing. */
+export const catalogTrackingLinkSchema = type({ sourceId: uuid, "+": `reject` })
 
 // #endregion
 
@@ -708,6 +764,66 @@ export function parseCatalogCategoryFields(
   return { slug, name }
 }
 
+/** A tracking link source's fields, checked. */
+export interface CatalogSourceFields {
+  name: string
+  slug: string
+}
+
+/** Trims and checks a source's fields. Throws {@link CatalogError} with the field. */
+export function parseCatalogSourceFields(
+  input: Omit<CatalogSourceCreateRequest, `id`>,
+): CatalogSourceFields {
+  const name = input.name.trim()
+  if (name === ``) invalid(`name`, `Add the name.`)
+  if (hasUnstorableTextCharacters(name)) {
+    invalid(`name`, `Remove the NUL or broken character from this field.`)
+  }
+  if (characters(name) > CATALOG_SOURCE_NAME_MAX_LENGTH) {
+    invalid(`name`, `Keep the name to ${CATALOG_SOURCE_NAME_MAX_LENGTH} characters.`)
+  }
+  const slug = input.slug.trim()
+  const slugProblem = catalogSlugProblem(slug)
+  if (slugProblem) invalid(`slug`, slugProblem)
+  return { name, slug }
+}
+
+/** A tracking link's code: the random, public part of `/s/<code>`. */
+export const CATALOG_LINK_CODE_PATTERN = /^[A-Za-z0-9_-]{8,32}$/
+
+/**
+ * The address a tracking link sends a visitor to: the item's page on the website, tagged with the
+ * source as `utm_source`, `share` as `utm_medium` and the item as `utm_campaign`. `itemPath` is the
+ * website's item address with `{category}` and `{slug}` in it, such as `/{category}/{slug}`.
+ * Answers `null` when the address would leave `siteUrl`, so a link can never send a visitor to
+ * another site.
+ */
+export function catalogTaggedItemUrl(
+  siteUrl: string,
+  itemPath: string,
+  { itemSlug, categorySlug, sourceSlug }: {
+    itemSlug: string
+    categorySlug: string | null
+    sourceSlug: string
+  },
+): string | null {
+  const path = itemPath
+    .replaceAll(`{category}`, encodeURIComponent(categorySlug ?? ``))
+    .replaceAll(`{slug}`, encodeURIComponent(itemSlug))
+    .replace(/\/{2,}/g, `/`)
+  let url: URL
+  try {
+    url = new URL(path, siteUrl)
+  } catch {
+    return null
+  }
+  if (!path.startsWith(`/`) || url.origin !== new URL(siteUrl).origin) return null
+  url.searchParams.set(`utm_source`, sourceSlug)
+  url.searchParams.set(`utm_medium`, `share`)
+  url.searchParams.set(`utm_campaign`, itemSlug)
+  return url.href
+}
+
 /** What a photo shows, checked against the catalog's languages. */
 export function parseCatalogPhotoAlt(alt: CatalogText, languages: readonly string[]): CatalogText {
   return parseCatalogText(alt, languages, {
@@ -739,6 +855,7 @@ export function catalogPhotoObjectKey(id: string): string {
 
 export const CATALOG_ITEM_ENTITY = `catalog_item`
 export const CATALOG_CATEGORY_ENTITY = `catalog_category`
+export const CATALOG_SOURCE_ENTITY = `catalog_link_source`
 
 /** The `audit_events.event_kind` of each operator change. */
 export const CATALOG_AUDIT_KINDS = {
@@ -755,6 +872,11 @@ export const CATALOG_AUDIT_KINDS = {
   categoryUpdated: `catalog.category_updated`,
   categoryDeleted: `catalog.category_deleted`,
   categoriesReordered: `catalog.categories_reordered`,
+  sourceCreated: `catalog.source_created`,
+  sourceUpdated: `catalog.source_updated`,
+  sourceDeleted: `catalog.source_deleted`,
+  sourcesReordered: `catalog.sources_reordered`,
+  linkCreated: `catalog.link_created`,
 } as const
 
 export type CatalogAuditKind = typeof CATALOG_AUDIT_KINDS[keyof typeof CATALOG_AUDIT_KINDS]

@@ -17,11 +17,21 @@ import { lastSignIn } from "../state/last-sign-in.ts"
 import { sessionState } from "../state/session.ts"
 import { isGuestSession } from "../state/guest.ts"
 import { emailStore } from "../state/email.ts"
+import { useAppText } from "@ui/i18n.ts"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 
-/** The message of a refused request for a link, or the offline one when it never left. */
-export function linkRequestFailure(answer: SignInLinkRequestAnswer): string {
+/**
+ * The message of a refused request for a link, or the offline one when it never left, in the
+ * language of `t`.
+ */
+export function linkRequestFailure(
+  t: Translator<string>,
+  answer: SignInLinkRequestAnswer,
+): string {
   if (answer.ok) return ""
-  return answer.offline ? SIGN_UP_OFFLINE : answer.error || SIGN_IN_LINK_MESSAGES.sendFailed
+  return answer.offline
+    ? t.t(SIGN_UP_OFFLINE)
+    : answer.error || t.t(SIGN_IN_LINK_MESSAGES.sendFailed)
 }
 
 /**
@@ -33,6 +43,7 @@ export function linkRequestFailure(answer: SignInLinkRequestAnswer): string {
 export function LinkRequestView() {
   const [, navigate] = useLocation()
   const next = readNext(new URLSearchParams(useSearch()))
+  const t = useAppText()
   const [sent, setSent] = useState(readSentLink)
   const [email, setEmail] = useState(() => takeHandedOffAddress() ?? sent?.email ?? "")
   const [fieldError, setFieldError] = useState<string | null>(null)
@@ -56,8 +67,8 @@ export function LinkRequestView() {
     const answer = await send(email.trim())
     setPending(false)
     if (answer.ok) return
-    if (answer.field) setFieldError(answer.error || SIGN_IN_LINK_MESSAGES.sendFailed)
-    else setError(linkRequestFailure(answer))
+    if (answer.field) setFieldError(answer.error || t.t(SIGN_IN_LINK_MESSAGES.sendFailed))
+    else setError(linkRequestFailure(t, answer))
   }
 
   const resend = async () => {
@@ -66,7 +77,7 @@ export function LinkRequestView() {
     setResending(true)
     const answer = await send(sent.email)
     setResending(false)
-    if (!answer.ok) setError(linkRequestFailure(answer))
+    if (!answer.ok) setError(linkRequestFailure(t, answer))
   }
 
   return (
@@ -110,6 +121,7 @@ export function tokenOf(hash: string): string | null {
  */
 export function LinkOpenView() {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const [token] = useState(() => tokenOf(location.hash))
   const [state, setState] = useState<LinkOpenState>(token ? "ready" : "incomplete")
   const [busy, setBusy] = useState(false)
@@ -154,8 +166,8 @@ export function LinkOpenView() {
     } else {
       setError(
         result.offline
-          ? SIGN_IN_LINK_MESSAGES.unreachable
-          : result.error || SIGN_IN_LINK_MESSAGES.openFailed,
+          ? t.t(SIGN_IN_LINK_MESSAGES.unreachable)
+          : result.error || t.t(SIGN_IN_LINK_MESSAGES.openFailed),
       )
     }
   }

@@ -20,19 +20,42 @@ import {
   type CatalogItemFields,
   catalogItemStatusSchema,
   catalogItemUpdateSchema,
+  type CatalogLinkSource,
   catalogOrderSchema,
   type CatalogPhoto,
   catalogPhotoObjectKey,
   catalogPhotoUpdateSchema,
   type CatalogSettings,
+  catalogSourceCreateSchema,
+  type CatalogSourceFields,
+  catalogSourceOrderSchema,
+  catalogSourceUpdateSchema,
   type CatalogText,
+  catalogText,
+  type CatalogTrackingLink,
+  catalogTrackingLinkSchema,
   CatalogVersionConflictError,
   catalogVersionSchema,
   parseCatalogCategoryFields,
   parseCatalogItemFields,
   parseCatalogPhotoAlt,
+  parseCatalogSourceFields,
 } from "@domain/catalog"
-import { type CatalogActor, PostgresCatalog } from "@server/catalog/postgres-catalog.ts"
+import {
+  type CatalogActor,
+  PostgresCatalog,
+  type StoredTrackingLink,
+} from "@server/catalog/postgres-catalog.ts"
+import {
+  createUmamiLinks,
+  newLinkCode,
+  trackingLinkUrl,
+  type TrackingSetup,
+  umamiLinkName,
+  type UmamiLinks,
+  umamiTargetUrl,
+} from "@server/catalog/tracking.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import type { ServerFiles } from "@server/files/files.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
@@ -44,8 +67,22 @@ export const CATALOG_BODY_MAX_BYTES = 256 * 1024
 /** What the catalog routes call. Who may call it is the route's business. */
 export interface AdminCatalogService {
   settings: CatalogSettings
-  read(): Promise<Omit<AdminCatalogResponse, `settings`>>
+  /** Whether items get tracking links: the website's address is set (#483). */
+  tracking: boolean
+  read(): Promise<Omit<AdminCatalogResponse, `settings` | `tracking`>>
   getItem(id: string): Promise<CatalogItem | null>
+  /** The item's tracking links, one per source that has one. */
+  itemLinks(itemId: string): Promise<CatalogTrackingLink[]>
+  /**
+   * The item's link for the source, made the first time; `null` when the item or the source does
+   * not exist. Umami is asked to count it when it does not hold it yet; a failure there still
+   * answers the link, which then goes straight to the item.
+   */
+  trackingLink(
+    itemId: string,
+    sourceId: string,
+    actor: CatalogActor,
+  ): Promise<CatalogTrackingLink | null>
   createItem(id: string, fields: CatalogItemFields, actor: CatalogActor): Promise<CatalogItem>
   updateItem(
     id: string,
@@ -94,6 +131,19 @@ export interface AdminCatalogService {
   ): Promise<CatalogCategory>
   deleteCategory(id: string, version: number, actor: CatalogActor): Promise<void>
   reorderCategories(ids: readonly string[], actor: CatalogActor): Promise<CatalogCategory[]>
+  createSource(
+    id: string,
+    fields: CatalogSourceFields,
+    actor: CatalogActor,
+  ): Promise<CatalogLinkSource>
+  updateSource(
+    id: string,
+    version: number,
+    fields: CatalogSourceFields,
+    actor: CatalogActor,
+  ): Promise<CatalogLinkSource>
+  deleteSource(id: string, version: number, actor: CatalogActor): Promise<void>
+  reorderSources(ids: readonly string[], actor: CatalogActor): Promise<CatalogLinkSource[]>
 }
 
 /** What the catalog routes need. */
@@ -134,6 +184,7 @@ function statusOf(error: CatalogError): 400 | 404 | 409 | 413 | 415 {
   switch (error.code) {
     case `ITEM_NOT_FOUND`:
     case `PHOTO_NOT_FOUND`:
+    case `SOURCE_NOT_FOUND`:
       return 404
     case `CATEGORY_NOT_FOUND`:
       // A category picked in the item's form is a bad field; one in the path does not exist.
@@ -187,6 +238,10 @@ const TOO_LARGE = `A photo can be up to ${CATALOG_PHOTO_MAX_BYTES / 1024 / 1024}
  *   lists: this host's `img-src 'self'` cannot load the file store.
  * - `POST /catalog/categories` adds one (201); `/categories/order` takes `{ ids }`;
  *   `/categories/:id` saves `{ version, slug, name }`; `/categories/:id/delete` takes `{ version }`.
+ * - `POST /catalog/sources` adds a tracking link source (201); `/sources/order`, `/sources/:id` and
+ *   `/sources/:id/delete` work as the categories' do (#483).
+ * - `POST /catalog/items/:id/links` takes `{ sourceId }` and answers the item's link for that
+ *   source, made the first time. 409 `TRACKING_OFF` while the website's address is unset.
  *
  * A refusal answers the API's error shape, with `field` when it is about one field and
  * `currentVersion` on a version conflict.
@@ -207,6 +262,8 @@ export function createAdminCatalogRoutes(
     idOf(c, `photoId`, new CatalogError(`PHOTO_NOT_FOUND`, `This photo does not exist.`))
   const categoryId = (c: Context<APIContext>) =>
     idOf(c, `id`, new CatalogError(`CATEGORY_NOT_FOUND`, `This category does not exist.`))
+  const sourceId = (c: Context<APIContext>) =>
+    idOf(c, `id`, new CatalogError(`SOURCE_NOT_FOUND`, `This source does not exist.`))
 
   const route = new Hono<APIContext>()
   route.onError((error, c) => {
@@ -231,13 +288,33 @@ export function createAdminCatalogRoutes(
 
   return route
     .get(`/catalog`, limit, async (c) => {
-      const answer: AdminCatalogResponse = { settings: catalog.settings, ...await catalog.read() }
+      const answer: AdminCatalogResponse = {
+        settings: catalog.settings,
+        tracking: catalog.tracking,
+        ...await catalog.read(),
+      }
       return c.json(answer)
     })
     .get(`/catalog/items/:id`, limit, async (c) => {
-      const item = await catalog.getItem(itemId(c))
+      const id = itemId(c)
+      const item = await catalog.getItem(id)
       if (!item) throw new CatalogError(`ITEM_NOT_FOUND`, `This item does not exist.`)
-      return c.json({ item })
+      return c.json({ item, links: await catalog.itemLinks(id) })
+    })
+    .post(`/catalog/items/:id/links`, limit, async (c) => {
+      const id = itemId(c)
+      const { sourceId } = await readBody(c, catalogTrackingLinkSchema)
+      if (!catalog.tracking) {
+        throw new CatalogError(
+          `TRACKING_OFF`,
+          `Tracking links need the website's address. Set MPA_DOMAIN and deploy.`,
+        )
+      }
+      const link = await catalog.trackingLink(id, sourceId.toLowerCase(), actorOf(c))
+      if (!link) {
+        throw new CatalogError(`SOURCE_NOT_FOUND`, `This item or source does not exist any more.`)
+      }
+      return c.json({ link })
     })
     .post(`/catalog/items`, limit, async (c) => {
       const { id, ...input } = await readBody(c, catalogItemCreateSchema)
@@ -340,27 +417,89 @@ export function createAdminCatalogRoutes(
       await catalog.deleteCategory(id, version, actorOf(c))
       return c.json({ deleted: true })
     })
+    .post(`/catalog/sources`, limit, async (c) => {
+      const { id, ...input } = await readBody(c, catalogSourceCreateSchema)
+      const fields = parseCatalogSourceFields(input)
+      const source = await catalog.createSource(id.toLowerCase(), fields, actorOf(c))
+      return c.json({ source }, 201)
+    })
+    .post(`/catalog/sources/order`, limit, async (c) => {
+      const { ids } = await readBody(c, catalogSourceOrderSchema)
+      const ordered = ids.map((id) => id.toLowerCase())
+      return c.json({ sources: await catalog.reorderSources(ordered, actorOf(c)) })
+    })
+    .post(`/catalog/sources/:id`, limit, async (c) => {
+      const id = sourceId(c)
+      const { version, ...input } = await readBody(c, catalogSourceUpdateSchema)
+      const fields = parseCatalogSourceFields(input)
+      return c.json({ source: await catalog.updateSource(id, version, fields, actorOf(c)) })
+    })
+    .post(`/catalog/sources/:id/delete`, limit, async (c) => {
+      const id = sourceId(c)
+      const { version } = await readBody(c, catalogVersionSchema)
+      await catalog.deleteSource(id, version, actorOf(c))
+      return c.json({ deleted: true })
+    })
 }
 
 /** What the service needs besides the database: the settings and the file store. */
 export interface AdminCatalogSetup {
   settings: CatalogSettings
   files: Pick<ServerFiles, `put` | `delete` | `read`>
+  /** How tracking links are made, or `null` while the website's address is unset (#483). */
+  tracking?: TrackingSetup | null
+  /** Umami, while it is set up; `null` makes links that go straight to the item. */
+  umami?: UmamiLinks | null
+  /** A new link's id; UUID v7. */
+  newId?: () => string
 }
 
 /** The service over the app's database and file store. */
 export function createAdminCatalog(
   sql: postgres.Sql,
-  { settings, files }: AdminCatalogSetup,
+  { settings, files, tracking = null, umami = null, newId = uuidV7 }: AdminCatalogSetup,
 ): AdminCatalogService {
   const repository = new PostgresCatalog(sql)
+  const toLink = (site: string, link: StoredTrackingLink): CatalogTrackingLink => ({
+    sourceId: link.sourceId,
+    url: trackingLinkUrl(site, link.code),
+    createdAt: link.createdAt.toISOString(),
+  })
   return {
     settings,
+    tracking: tracking !== null,
     read: async () => ({
       categories: await repository.listCategories(),
       items: await repository.listItems(),
+      sources: await repository.listSources(),
     }),
     getItem: (id) => repository.getItem(id),
+    async itemLinks(itemId) {
+      if (tracking === null) return []
+      return (await repository.itemLinks(itemId)).map((link) => toLink(tracking.siteUrl, link))
+    },
+    async trackingLink(itemId, sourceId, actor) {
+      if (tracking === null) return null
+      const made = await repository.trackingLink(
+        itemId,
+        sourceId,
+        { id: newId(), code: newLinkCode() },
+        actor,
+      )
+      if (!made) return null
+      const { link, names } = made
+      // A link made while Umami was down or unset is offered to Umami again on the next press.
+      if (umami !== null && link.umamiLinkId === null) {
+        const counted = await umami.create({
+          id: link.id,
+          name: umamiLinkName(catalogText(names.item, settings.languages), names.source),
+          url: umamiTargetUrl(tracking.siteUrl, link.code),
+          slug: link.code,
+        })
+        if (counted) await repository.markUmamiLinked(link.id)
+      }
+      return toLink(tracking.siteUrl, link)
+    },
     createItem: (id, fields, actor) => repository.createItem(id, fields, actor),
     updateItem: (id, version, fields, actor) => repository.updateItem(id, version, fields, actor),
     setStatus: (id, version, status, actor) => repository.setStatus(id, version, status, actor),
@@ -396,6 +535,11 @@ export function createAdminCatalog(
       repository.updateCategory(id, version, fields, actor),
     deleteCategory: (id, version, actor) => repository.deleteCategory(id, version, actor),
     reorderCategories: (ids, actor) => repository.reorderCategories(ids, actor),
+    createSource: (id, fields, actor) => repository.createSource(id, fields, actor),
+    updateSource: (id, version, fields, actor) =>
+      repository.updateSource(id, version, fields, actor),
+    deleteSource: (id, version, actor) => repository.deleteSource(id, version, actor),
+    reorderSources: (ids, actor) => repository.reorderSources(ids, actor),
   }
 }
 
@@ -409,6 +553,11 @@ export const catalogAdminModule: AdminApiModule = {
   routes: ({ sql, limit, catalog, files }) =>
     createAdminCatalogRoutes({
       limit,
-      catalog: createAdminCatalog(sql, { settings: catalog.settings, files }),
+      catalog: createAdminCatalog(sql, {
+        settings: catalog.settings,
+        files,
+        tracking: catalog.tracking ?? null,
+        umami: catalog.tracking?.umami ? createUmamiLinks(catalog.tracking.umami) : null,
+      }),
     }),
 }

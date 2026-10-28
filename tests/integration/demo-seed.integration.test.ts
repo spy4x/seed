@@ -51,7 +51,7 @@ import {
   listAdminNewsletterSends,
   readAdminNewsletterStats,
 } from "@server/subscribers/admin-newsletter.ts"
-import { SAMPLE_CATALOG_ITEMS } from "@server/catalog/sample-catalog.ts"
+import { SAMPLE_CATALOG_ITEMS, SAMPLE_CATALOG_SOURCES } from "@server/catalog/sample-catalog.ts"
 
 /**
  * The public demo's seed, sample groups, wipe and reset (docs/demo.md) against a real Postgres with every
@@ -341,6 +341,12 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
       SELECT COUNT(*)::int AS items FROM catalog_items
     `
     expect(items).toBe(SAMPLE_CATALOG_ITEMS.length)
+    // Its tracking link sources (#483); the links are made by an operator's "Copy link".
+    const [{ sources, links }] = await sql<{ sources: number; links: number }[]>`
+      SELECT (SELECT COUNT(*)::int FROM catalog_link_sources) AS sources,
+        (SELECT COUNT(*)::int FROM catalog_tracking_links) AS links
+    `
+    expect({ sources, links }).toEqual({ sources: SAMPLE_CATALOG_SOURCES.length, links: 0 })
   })
 })
 

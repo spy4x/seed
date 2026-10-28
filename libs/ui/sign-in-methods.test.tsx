@@ -4,6 +4,8 @@
  * auth pages, the question before a provider creates an account, and the profile's sign-in
  * methods. What is offered, what asks first, what the app receives and where focus goes.
  */
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import appEn from "@i18n/app/en.json" with { type: "json" }
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
@@ -22,6 +24,9 @@ import {
 } from "./sign-in-methods.tsx"
 import { SCREEN_PATHS } from "./progressive.tsx"
 import { providerProofOf } from "./provider-proof.tsx"
+
+/** The product's English, as a screen without a provider reads it. */
+const EN = createTranslator({ language: "en", catalogs: [{ source: appEn }] })
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -735,16 +740,20 @@ describe("SignInMethods", () => {
 
     const section = find("[data-e2e=sign-in-methods]").textContent ?? ""
     expect(find("[data-e2e=sign-in-methods-load-error]").textContent)
-      .toContain(SIGN_IN_METHODS_LOAD_FAILURE)
-    expect(section).not.toContain(SIGN_IN_METHODS_FAILURE)
+      .toContain(EN.t(SIGN_IN_METHODS_LOAD_FAILURE))
+    expect(section).not.toContain(EN.t(SIGN_IN_METHODS_FAILURE))
     expect(section).not.toContain("Loading your sign-in methods…")
     expect(find("[data-e2e=sign-in-methods-retry]").textContent).toContain("Try again")
   })
 
   it("says a failed change failed, with no Try again", async () => {
-    await mount(<SignInMethods {...methodsProps([], { error: SIGN_IN_METHODS_FAILURE })} />)
+    await mount(
+      <SignInMethods {...methodsProps([], { error: { key: SIGN_IN_METHODS_FAILURE } })} />,
+    )
 
-    expect(find("[data-e2e=sign-in-methods-error]").textContent).toContain(SIGN_IN_METHODS_FAILURE)
+    expect(find("[data-e2e=sign-in-methods-error]").textContent).toContain(
+      EN.t(SIGN_IN_METHODS_FAILURE),
+    )
     expect(document.querySelector("[data-e2e=sign-in-methods-load-error]") !== null).toBe(false)
     expect(document.querySelector("[data-e2e=sign-in-methods-retry]") !== null).toBe(false)
   })
@@ -1090,8 +1099,8 @@ describe("ProfileScreen for an account without a password", () => {
 
   it("names every provider of an account that has two and no password", () => {
     const github = { ...google, id: 9, kind: "github" as const }
-    expect(providerOnlyNames([onlyGoogle, github])).toBe("Google and GitHub")
-    expect(providerOnlyNames(null)).toBe(null)
-    expect(providerOnlyNames([])).toBe(null)
+    expect(providerOnlyNames(EN, [onlyGoogle, github])).toBe("Google and GitHub")
+    expect(providerOnlyNames(EN, null)).toBe(null)
+    expect(providerOnlyNames(EN, [])).toBe(null)
   })
 })

@@ -117,6 +117,11 @@ const ACTIVITY_LABELS: Record<string, string> = {
   [CATALOG_AUDIT_KINDS.categoryUpdated]: "Catalog category saved",
   [CATALOG_AUDIT_KINDS.categoryDeleted]: "Catalog category deleted",
   [CATALOG_AUDIT_KINDS.categoriesReordered]: "Catalog categories reordered",
+  [CATALOG_AUDIT_KINDS.sourceCreated]: "Link source added",
+  [CATALOG_AUDIT_KINDS.sourceUpdated]: "Link source saved",
+  [CATALOG_AUDIT_KINDS.sourceDeleted]: "Link source deleted",
+  [CATALOG_AUDIT_KINDS.sourcesReordered]: "Link sources reordered",
+  [CATALOG_AUDIT_KINDS.linkCreated]: "Tracking link made",
 }
 
 /**

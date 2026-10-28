@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { IconLockClosed } from "@spy4x/preact-icons"
@@ -12,19 +11,22 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
-import { GUEST_DELETE_WORD, GUEST_REFUSAL_MESSAGE, type GuestLimitedAction } from "@domain/identity"
-import { GUEST_PATHS, KEEP_LABEL } from "./guest-screens.tsx"
+import { GUEST_DELETE_WORD, type GuestLimitedAction } from "@domain/identity"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { GUEST_PATHS } from "./guest-screens.tsx"
+import { useAppText } from "./i18n.ts"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
 /** The Profile's parts for a guest account (#224): what it is, its missing ways in, deleting it. */
 
 /** The first row of the Account group for a guest; a full account shows none. */
 export function GuestAccountRow({ navigate }: { navigate?: Navigate }): JSX.Element {
+  const t = useAppText()
   return (
     <SettingRow
-      label="Account type"
+      label={t.t(`GuestProfile.accountType`)}
       dataE2E="profile-account-type"
-      value="Guest account. Only this browser can open it."
+      value={t.t(`GuestProfile.guestAccount`)}
       action={
         <Button
           href={GUEST_PATHS.keep}
@@ -34,7 +36,7 @@ export function GuestAccountRow({ navigate }: { navigate?: Navigate }): JSX.Elem
           class={TOUCH_TARGET}
           data-e2e="profile-keep"
         >
-          {KEEP_LABEL}
+          {t.t(`GuestScreens.keep`)}
         </Button>
       }
     />
@@ -46,15 +48,16 @@ export function GuestAccountRow({ navigate }: { navigate?: Navigate }): JSX.Elem
  * nor a method to list: one empty state that leads to `/keep`.
  */
 export function GuestSignInMethods({ navigate }: { navigate?: Navigate }): JSX.Element {
+  const t = useAppText()
   return (
-    <SettingGroup title="Sign-in methods">
+    <SettingGroup title={t.t(`GuestProfile.methods`)}>
       <Card>
         <EmptyState
           icon={<IconLockClosed class="size-6" />}
-          title="No sign-in methods yet"
+          title={t.t(`GuestProfile.noMethods`)}
           headingLevel={3}
           inset
-          description="Add one so you can sign in on another device."
+          description={t.t(`GuestProfile.noMethodsText`)}
           action={
             <Button
               href={GUEST_PATHS.keep}
@@ -62,7 +65,7 @@ export function GuestSignInMethods({ navigate }: { navigate?: Navigate }): JSX.E
               variant="secondary"
               data-e2e="methods-keep"
             >
-              {KEEP_LABEL}
+              {t.t(`GuestScreens.keep`)}
             </Button>
           }
         />
@@ -89,6 +92,7 @@ export interface GuestAccountDeleteProps {
 export function GuestAccountDelete(
   { pending, error, onDelete }: GuestAccountDeleteProps,
 ): JSX.Element {
+  const t = useAppText()
   const [open, setOpen] = useState(false)
   const [word, setWord] = useState("")
   const field = useRef<HTMLInputElement>(null)
@@ -101,11 +105,11 @@ export function GuestAccountDelete(
   }
   const typed = word.trim().toLowerCase() === GUEST_DELETE_WORD
   return (
-    <SettingGroup title="Danger zone">
+    <SettingGroup title={t.t(`GuestProfile.danger`)}>
       <SettingList>
         <SettingRow
-          label="Delete my account"
-          value="Deletes this guest account and everything in it, right away."
+          label={t.t(`AccountDelete.title`)}
+          value={t.t(`GuestProfile.deleteSummary`)}
           action={
             <Button
               type="button"
@@ -115,7 +119,10 @@ export function GuestAccountDelete(
               data-e2e="guest-delete-open"
               onClick={() => setOpen(true)}
             >
-              Delete <span class="sr-only">my account</span>
+              <Rich
+                parts={t.parts(`AccountDelete.deleteHidden`)}
+                tags={{ hidden: (text) => <span class="sr-only">{text}</span> }}
+              />
             </Button>
           }
         />
@@ -123,20 +130,17 @@ export function GuestAccountDelete(
       <Modal
         open={open}
         onClose={close}
-        title="Delete this guest account?"
-        cancelLabel="Close"
+        title={t.t(`GuestProfile.deleteTitle`)}
+        cancelLabel={t.t(`EmailScreen.close`)}
         tone="danger"
         dataE2E="guest-delete-dialog"
       >
         <ScreenForm pending={pending} onSubmit={() => typed && onDelete(word.trim())}>
           <Stack>
-            <p class="text-sm text-muted">
-              Its notes and groups are deleted now, and nobody can bring them back: a guest account
-              has no sign-in method to restore it with. Export a group first to keep a copy.
-            </p>
+            <p class="text-sm text-muted">{t.t(`GuestProfile.deleteText`)}</p>
             <Field
               id="guest-delete-word"
-              label={`Type "${GUEST_DELETE_WORD}" to confirm`}
+              label={t.t(`GuestProfile.typeWord`, { word: GUEST_DELETE_WORD })}
               error={error}
             >
               <Input
@@ -149,14 +153,16 @@ export function GuestAccountDelete(
               />
             </Field>
             <DialogActions>
-              <Button type="button" variant="ghost" onClick={close}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={close}>
+                {t.t(`EmailScreen.cancel`)}
+              </Button>
               <Button
                 type="submit"
                 variant="danger"
                 disabled={!typed || pending}
                 data-e2e="guest-delete-confirm"
               >
-                Delete for good
+                {t.t(`GuestProfile.deleteForGood`)}
               </Button>
             </DialogActions>
           </Stack>
@@ -166,35 +172,16 @@ export function GuestAccountDelete(
   )
 }
 
-/** What a refusal says for each action a guest cannot take yet (#224); `other` for the rest. */
+/** The catalog keys of each refusal's title and text (#224); `other` for the rest. */
 export const GUEST_REFUSALS: Record<GuestLimitedAction | "other", { title: string; text: string }> =
   {
-    invite: {
-      title: "Inviting needs a sign-in method",
-      text:
-        "The people you invite see who invited them, and a guest account could vanish with this browser's data. Add a sign-in method first.",
-    },
-    push: {
-      title: "Notifications on this device need a sign-in method",
-      text: "Add one, then turn them on here.",
-    },
-    "api-token": {
-      title: "API tokens need a sign-in method",
-      text: "A token opens this account from outside the browser. Add a sign-in method first.",
-    },
-    upload: {
-      title: "Importing needs a sign-in method",
-      text: "Add one to your account first, then import the file.",
-    },
-    billing: {
-      title: "Paid plans need a sign-in method",
-      text: "A plan is billed to an account you can sign in to again. Add a sign-in method first.",
-    },
-    telegram: {
-      title: "Telegram needs a sign-in method",
-      text: "A linked chat acts as you from outside the browser. Add a sign-in method first.",
-    },
-    other: { title: "This needs a sign-in method", text: GUEST_REFUSAL_MESSAGE },
+    invite: { title: `GuestProfile.inviteTitle`, text: `GuestProfile.inviteText` },
+    push: { title: `GuestProfile.pushTitle`, text: `GuestProfile.pushText` },
+    "api-token": { title: `GuestProfile.apiTokenTitle`, text: `GuestProfile.apiTokenText` },
+    upload: { title: `GuestProfile.uploadTitle`, text: `GuestProfile.uploadText` },
+    billing: { title: `GuestProfile.billingTitle`, text: `GuestProfile.billingText` },
+    telegram: { title: `GuestProfile.telegramTitle`, text: `GuestProfile.telegramText` },
+    other: { title: `GuestProfile.otherTitle`, text: `GuestProfile.otherText` },
   }
 
 /**
@@ -208,19 +195,20 @@ export function GuestRefusalDialog(
     navigate?: Navigate
   },
 ): JSX.Element {
+  const t = useAppText()
   const copy = GUEST_REFUSALS[action]
   return (
     <Modal
       open
-      title={copy.title}
+      title={t.t(copy.title)}
       ariaDescribedBy="guest-refusal-text"
       onClose={onClose}
-      cancelLabel="Close"
+      cancelLabel={t.t(`EmailScreen.close`)}
       dataE2E="guest-refusal"
       footer={
         <>
           <Button type="button" variant="ghost" onClick={onClose} data-e2e="guest-refusal-close">
-            Not now
+            {t.t(`GuestProfile.notNow`)}
           </Button>
           <Button
             href={GUEST_PATHS.keep}
@@ -228,12 +216,12 @@ export function GuestRefusalDialog(
             onClick={onClose}
             data-e2e="guest-refusal-keep"
           >
-            {KEEP_LABEL}
+            {t.t(`GuestScreens.keep`)}
           </Button>
         </>
       }
     >
-      <p id="guest-refusal-text">{copy.text}</p>
+      <p id="guest-refusal-text">{t.t(copy.text)}</p>
     </Modal>
   )
 }
