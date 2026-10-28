@@ -162,7 +162,11 @@ export function AdminCatalogScreen(props: AdminCatalogScreenProps): JSX.Element 
                 title="Start with a category"
                 description="Every item on the website sits in a category, such as T-shirts or Hoodies. Add one, then add items to it."
                 action={
-                  <Button href={ADMIN_CATALOG_PATHS.categoryCreate} navigate={navigate}>
+                  <Button
+                    href={ADMIN_CATALOG_PATHS.categoryCreate}
+                    navigate={navigate}
+                    variant="outline"
+                  >
                     Add category
                   </Button>
                 }
@@ -173,7 +177,7 @@ export function AdminCatalogScreen(props: AdminCatalogScreenProps): JSX.Element 
                 title="No items yet"
                 description="Add an item with its photos, colours and sizes. It stays a draft until you publish it."
                 action={
-                  <Button href={ADMIN_CATALOG_PATHS.create} navigate={navigate}>
+                  <Button href={ADMIN_CATALOG_PATHS.create} navigate={navigate} variant="outline">
                     Add item
                   </Button>
                 }
@@ -314,7 +318,11 @@ export function AdminCatalogCategoriesScreen(
               title="No categories yet"
               description="Add the groups your items go in, such as T-shirts, Hoodies or Accessories."
               action={
-                <Button href={ADMIN_CATALOG_PATHS.categoryCreate} navigate={navigate}>
+                <Button
+                  href={ADMIN_CATALOG_PATHS.categoryCreate}
+                  navigate={navigate}
+                  variant="outline"
+                >
                   Add category
                 </Button>
               }

@@ -6,7 +6,7 @@ import { IconGlobe, IconPlus, IconTrashBin } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card, CardBody, CardHeader } from "@spy4x/preact-ui/card"
 import { Checkbox } from "@spy4x/preact-ui/checkbox"
-import { ColorField } from "@spy4x/preact-ui/color-field"
+import { ColorField, type ColorPreset } from "@spy4x/preact-ui/color-field"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
@@ -690,12 +690,14 @@ function Colours({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Ed
                     <div class="flex flex-wrap items-end justify-between gap-3">
                       <ColorField
                         legend="Swatch"
+                        presets={CATALOG_SWATCHES}
                         value={colour.swatch}
                         onChange={(swatch) => setColour(colour.id, { swatch: swatch ?? `#000000` })}
                       />
                       <Button
                         variant="ghost"
                         size="sm"
+                        class="ml-auto"
                         data-e2e="catalog-item-remove-colour"
                         onClick={() =>
                           edit({ colours: value.colours.filter((one) => one.id !== colour.id) })}
@@ -712,6 +714,18 @@ function Colours({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Ed
     </Card>
   )
 }
+
+/** Garment colours a shop picks most, in one row; any other comes from the picker or a hex code. */
+const CATALOG_SWATCHES: readonly ColorPreset[] = [
+  { value: `#111827`, label: `Black` },
+  { value: `#f9fafb`, label: `White` },
+  { value: `#6b7280`, label: `Grey` },
+  { value: `#1e3a5f`, label: `Navy` },
+  { value: `#d8c7a3`, label: `Beige` },
+  { value: `#7c4a2d`, label: `Brown` },
+  { value: `#b91c1c`, label: `Red` },
+  { value: `#2f5d3a`, label: `Green` },
+]
 
 function Sizes({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit }) {
   const { value, errors } = props
@@ -786,38 +800,36 @@ function Sizes({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit
                   class="flex flex-col gap-3 py-4 first:pt-0 last:pb-0"
                   data-e2e="catalog-item-size"
                 >
-                  <fieldset
-                    class="grid grid-cols-2 gap-3 sm:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]"
-                    aria-describedby={errors[field] ? `${catalogFieldId(field)}-error` : undefined}
-                  >
-                    <legend class="sr-only">{label}</legend>
-                    <label class="col-span-2 flex flex-col gap-1 text-sm sm:col-span-1">
-                      <span class="text-muted">Size</span>
-                      <Input
-                        id={catalogFieldId(field)}
-                        data-e2e="catalog-item-size-label"
-                        autocomplete="off"
-                        maxLength={CATALOG_SIZE_LABEL_MAX_LENGTH}
-                        value={size.label}
-                        onInput={(event) => setSize(size.id, { label: event.currentTarget.value })}
-                        required
-                      />
-                    </label>
-                    {number(size, `heightMin`, `Height from, cm`, CATALOG_HEIGHT_MAX_CM)}
-                    {number(size, `heightMax`, `Height to, cm`, CATALOG_HEIGHT_MAX_CM)}
-                    {number(size, `weightMin`, `Weight from, kg`, CATALOG_WEIGHT_MAX_KG)}
-                    {number(size, `weightMax`, `Weight to, kg`, CATALOG_WEIGHT_MAX_KG)}
-                  </fieldset>
-                  <div class="flex flex-wrap items-center justify-between gap-2">
-                    {errors[field] && (
-                      <p id={`${catalogFieldId(field)}-error`} class="text-sm text-danger">
-                        {errors[field]}
-                      </p>
-                    )}
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                    <fieldset
+                      class="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]"
+                      aria-describedby={errors[field]
+                        ? `${catalogFieldId(field)}-error`
+                        : undefined}
+                    >
+                      <legend class="sr-only">{label}</legend>
+                      <label class="col-span-2 flex flex-col gap-1 text-sm sm:col-span-1">
+                        <span class="text-muted">Size</span>
+                        <Input
+                          id={catalogFieldId(field)}
+                          data-e2e="catalog-item-size-label"
+                          autocomplete="off"
+                          maxLength={CATALOG_SIZE_LABEL_MAX_LENGTH}
+                          value={size.label}
+                          onInput={(event) =>
+                            setSize(size.id, { label: event.currentTarget.value })}
+                          required
+                        />
+                      </label>
+                      {number(size, `heightMin`, `Height from, cm`, CATALOG_HEIGHT_MAX_CM)}
+                      {number(size, `heightMax`, `Height to, cm`, CATALOG_HEIGHT_MAX_CM)}
+                      {number(size, `weightMin`, `Weight from, kg`, CATALOG_WEIGHT_MAX_KG)}
+                      {number(size, `weightMax`, `Weight to, kg`, CATALOG_WEIGHT_MAX_KG)}
+                    </fieldset>
                     <Button
                       variant="ghost"
                       size="sm"
-                      class="ml-auto"
+                      class="self-end"
                       data-e2e="catalog-item-remove-size"
                       onClick={() =>
                         edit({ sizes: value.sizes.filter((one) => one.id !== size.id) })}
@@ -825,6 +837,11 @@ function Sizes({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit
                       <IconTrashBin class="size-4" aria-hidden="true" /> Remove {label}
                     </Button>
                   </div>
+                  {errors[field] && (
+                    <p id={`${catalogFieldId(field)}-error`} class="text-sm text-danger">
+                      {errors[field]}
+                    </p>
+                  )}
                 </li>
               )
             })}
