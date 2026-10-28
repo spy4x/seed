@@ -28,6 +28,7 @@ import {
   type GroupDraft,
   type GroupEditorErrors,
 } from "@ui/group-editor-screen.tsx"
+import { appText } from "./app-text.ts"
 
 /** A group as the API sends it: dates are ISO strings, the sequence a decimal string. */
 export interface GroupItem {
@@ -86,14 +87,15 @@ export type GroupAction = "save" | "delete" | "restore" | "moveAll"
 
 export { EMPTY_GROUP_DRAFT, type GroupDraft, type GroupEditorErrors }
 
+/** The keys of the editor's own messages in the `app` catalog; {@link appText} reads them. */
 export const GROUP_MESSAGES = {
-  nameRequired: "Enter a name.",
-  nameInvalid: "Use at most 100 characters, with no line breaks or hidden characters.",
-  descriptionTooLong: `Use at most ${GROUP_DESCRIPTION_MAX} characters.`,
-  emojiInvalid: "Use a single emoji, such as 🏕️, or leave it empty.",
-  create: "Could not create the group. Try again.",
-  createOffline: "Creating a group needs a connection. Try again when you are back online.",
-  saveOffline: "Saving a group needs a connection. Try again when you are back online.",
+  nameRequired: `GroupEditor.nameRequired`,
+  nameInvalid: `GroupEditor.nameInvalid`,
+  descriptionTooLong: `GroupEditor.descriptionTooLong`,
+  emojiInvalid: `GroupEditor.emojiInvalid`,
+  create: `GroupEditor.createFailed`,
+  createOffline: `GroupEditor.createOffline`,
+  saveOffline: `GroupEditor.saveOffline`,
 } as const
 
 /** The editor's fields for a saved group. */
@@ -145,10 +147,12 @@ export function checkGroupDraft(
       name: name
         ? null
         : draft.name.trim() === ""
-        ? GROUP_MESSAGES.nameRequired
-        : GROUP_MESSAGES.nameInvalid,
-      description: description ? null : GROUP_MESSAGES.descriptionTooLong,
-      emoji: emoji ? null : GROUP_MESSAGES.emojiInvalid,
+        ? appText(GROUP_MESSAGES.nameRequired)
+        : appText(GROUP_MESSAGES.nameInvalid),
+      description: description
+        ? null
+        : appText(GROUP_MESSAGES.descriptionTooLong, { count: GROUP_DESCRIPTION_MAX }),
+      emoji: emoji ? null : appText(GROUP_MESSAGES.emojiInvalid),
     },
   }
 }
@@ -235,7 +239,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
         loadError.value = null
       },
       (cause) => {
-        loadError.value = describeError(cause, "Could not load the groups")
+        loadError.value = describeError(cause, appText(`Groups.loadFailed`))
         throw cause
       },
     ).finally(() => {
@@ -265,7 +269,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
     try {
       await refresh("socket")
     } catch (cause) {
-      error.value = describeError(cause, "Could not load the groups")
+      error.value = describeError(cause, appText(`Groups.loadFailed`))
     }
   }
 
@@ -337,8 +341,8 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
     } catch (cause) {
       editorErrors.value = {
         form: cause instanceof RealtimeRequestError
-          ? describeError(cause, GROUP_MESSAGES.create)
-          : GROUP_MESSAGES.createOffline,
+          ? describeError(cause, appText(GROUP_MESSAGES.create))
+          : appText(GROUP_MESSAGES.createOffline),
       }
       return null
     } finally {
@@ -407,7 +411,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
         merge((await dependencies.updateDetails({ groupId, ...details })).group)
       }
       // A failure that is not the server's answer means the server was not reached.
-    }, GROUP_MESSAGES.saveOffline)
+    }, appText(GROUP_MESSAGES.saveOffline))
     const failure = actionError.value
     if (done) {
       if (editor.value?.groupId === groupId) editor.value = null
@@ -423,7 +427,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
       const { group } = await dependencies.remove({ groupId })
       groups.value = groups.value.filter((existing) => existing.id !== groupId)
       deleted.value = [group, ...deleted.value.filter((existing) => existing.id !== groupId)]
-    }, "Could not delete the group")
+    }, appText(`Groups.deleteFailed`))
   }
 
   async function restore(groupId: string): Promise<boolean> {
@@ -431,7 +435,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
       const { group } = await dependencies.restore({ groupId })
       deleted.value = deleted.value.filter((existing) => existing.id !== groupId)
       groups.value = [group, ...groups.value.filter((existing) => existing.id !== groupId)]
-    }, "Could not restore the group")
+    }, appText(`Groups.restoreFailed`))
   }
 
   /**
@@ -448,7 +452,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
         count: result.counts.notes ?? 0,
         tags: result.counts.tags ?? 0,
       }
-    }, "Could not move the data")
+    }, appText(`GroupMoveAll.failed`))
   }
 
   /** Forgets a finished move and a refused one, when their dialog closes. */

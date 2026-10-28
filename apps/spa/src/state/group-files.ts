@@ -11,6 +11,7 @@ import type { GroupImportState } from "@ui/group-import-screen.tsx"
 import { downloadResponseAsFile } from "@spy4x/platform/browser/download"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { fetchAsUser } from "./realtime-call.ts"
+import { appText } from "./app-text.ts"
 
 /** What the export and import stores need from the platform; tests pass fakes. */
 export interface GroupFilePorts {
@@ -178,7 +179,7 @@ export function createGroupImportStore(ports: GroupFilePorts = browserPorts) {
       if (response.ok) return body as unknown as GroupImportResult
       const error = readApiError(body)
       if (error?.reason === "INVALID_REQUEST") {
-        nameError.value = "Give the group a name of 1 to 100 characters."
+        nameError.value = appText(`GroupImport.nameInvalid`)
         return null
       }
       const refused = refusal(error)

@@ -1,4 +1,4 @@
-import type { Hono } from "hono"
+import { Hono } from "hono"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule, AdminModuleContext } from "./module.ts"
 import { dashboardAdminModule } from "./dashboard.ts"
@@ -8,6 +8,7 @@ import { billingAdminModule } from "./billing.ts"
 import { newsletterAdminModule } from "./newsletter.ts"
 import { blogAdminModule } from "./blog.ts"
 import { contactLinksAdminModule } from "./contact-links.ts"
+import { catalogAdminModule } from "./catalog.ts"
 import { auditAdminModule } from "./audit.ts"
 import { jobsAdminModule } from "./jobs.ts"
 import { systemAdminModule } from "./system.ts"
@@ -25,13 +26,27 @@ export const ADMIN_API_MODULES: readonly AdminApiModule[] = [
   newsletterAdminModule,
   blogAdminModule,
   contactLinksAdminModule,
+  catalogAdminModule,
   auditAdminModule,
   jobsAdminModule,
   systemAdminModule,
   apiTokensAdminModule,
 ]
 
-/** The routes of every registered module, built over `context`. */
+/** The modules that are on over `context`: every one without `enabled`, and those it allows. */
+export function enabledAdminModules(context: AdminModuleContext): AdminApiModule[] {
+  return ADMIN_API_MODULES.filter((module) => module.enabled?.(context) ?? true)
+}
+
+/**
+ * The routes of every module that is on, built over `context`, and `GET /modules`: the ids of
+ * those modules, so the admin app shows only them.
+ */
 export function adminModuleRoutes(context: AdminModuleContext): Hono<APIContext>[] {
-  return ADMIN_API_MODULES.map((module) => module.routes(context))
+  const modules = enabledAdminModules(context)
+  const ids = modules.map((module) => module.id)
+  return [
+    new Hono<APIContext>().get(`/modules`, context.limit, (c) => c.json({ ids })),
+    ...modules.map((module) => module.routes(context)),
+  ]
 }

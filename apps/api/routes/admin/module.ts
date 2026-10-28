@@ -1,4 +1,5 @@
-import type { FileStore } from "@server/files/files.ts"
+import type { FileStore, ServerFiles } from "@server/files/files.ts"
+import type { CatalogSetup } from "@server/catalog/setup.ts"
 import type { Hono, MiddlewareHandler } from "hono"
 import type { RateLimitDecision } from "@spy4x/platform/rate-limit"
 import type postgres from "postgres"
@@ -52,6 +53,10 @@ export interface AdminModuleContext {
     graceDays: number
     dashboardUrl: string | null
   }
+  /** Whether the catalog is on (`CATALOG=true`), with its currency and languages (#466). */
+  catalog: CatalogSetup
+  /** The file store's server-side writes, for files that pass through the API (#466). */
+  files: Pick<ServerFiles, `put` | `read` | `delete`>
 }
 
 /**
@@ -62,5 +67,10 @@ export interface AdminModuleContext {
 export interface AdminApiModule {
   /** The same id as the admin app's module (`apps/admin/src/modules/`). */
   id: string
+  /**
+   * Whether the module is on, for a module a product turns on with a setting. Off, its routes are
+   * not mounted and `GET /api/admin/modules` leaves it out, so the admin app hides it. Omitted: on.
+   */
+  enabled?(context: AdminModuleContext): boolean
   routes(context: AdminModuleContext): Hono<APIContext>
 }
