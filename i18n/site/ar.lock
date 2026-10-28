@@ -282,7 +282,6 @@ FeatureLanguages.fact4	b8f667ff35b49452
 FeatureLanguages.lead	e17661d67bc6c160
 FeatureLanguages.nav	318655cea4bd2096
 FeatureLanguages.notYet1	d66af5eb38cd0549
-FeatureLanguages.notYet2	efb77048bf69dca4
 FeatureLanguages.notYet3	60b667facc617a29
 FeatureLanguages.title	8d27ffb996044eba
 FeatureOffline.code	c788735f6c08c6a1
@@ -516,7 +515,7 @@ HomeStatus.guests	f47cf850d0d8d77f
 HomeStatus.languages	4163d9c2a6f47158
 HomeStatus.lead	af2021dec5423c17
 HomeStatus.notBuilt	45ecacee6d987c49
-HomeStatus.notBuiltMail	5748e5b15c298eb3
+HomeStatus.notBuiltMail	e1063328ab3a6a86
 HomeStatus.notBuiltRtl	3b0640abbb1f8070
 HomeStatus.realtime	97cc9b606c25d718
 HomeStatus.signIn	c6488e740702fe75
