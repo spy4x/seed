@@ -59,9 +59,10 @@ reason.
 `fields` has two sources. A body a schema refused gives arktype's errors (`fieldErrors` in
 `@spy4x/validation`), never its `.summary`, with arktype's own codes (`required`, `domain`,
 `maxLength`, `pattern`, `predicate`…). A feature's own check, carried by its domain error, adds
-`unsafeCharacters`, `unstorableCharacters`, `hexColor`, `singleEmoji`, `noteTags`, `contactValue`,
-`overviewRange` and `timeZone`. Either way `values` holds only the rule (`rule`, `exclusive`),
-never the value sent.
+codes of its own, such as `unsafeCharacters`, `hexColor`, `slug`, `httpsUrl` and `range`; the
+`errors` catalog (`i18n/errors/en.json`, `Field.*`) has a sentence for each. `values` holds the
+rule (`rule`, `exclusive`, or `min` and `max` for a range), and for `unknownLanguage` the language
+tag the request sent.
 
 ## Building one
 
