@@ -15,7 +15,9 @@ import {
   type GroupBilling,
   PRO_PLAN_ID,
 } from "@domain/billing"
+import { FormatContext } from "@spy4x/preact-ui/format"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { createFormatters } from "@spy4x/time/format"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { PSEUDO, untranslated } from "./i18n-testing.ts"
 import {
@@ -82,15 +84,22 @@ const own = { document: globalThis.document }
 
 let root: HTMLElement | null = null
 
+/** The person's format, pinned, so dates and prices read the same whatever the machine's locale. */
+const FORMAT = createFormatters({ locale: `en-GB`, timeZone: `UTC`, hourCycle: null })
+
+const withFormat = (node: VNode) => (
+  <FormatContext.Provider value={FORMAT}>{node}</FormatContext.Provider>
+)
+
 async function mount(node: VNode): Promise<HTMLElement> {
   root = document.createElement("div")
   document.body.append(root)
-  await act(() => render(node, root!))
+  await act(() => render(withFormat(node), root!))
   return root
 }
 
 async function rerender(node: VNode): Promise<void> {
-  await act(() => render(node, root!))
+  await act(() => render(withFormat(node), root!))
 }
 
 function find<T extends Element = HTMLElement>(selector: string): T {
