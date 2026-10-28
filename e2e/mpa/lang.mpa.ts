@@ -94,6 +94,20 @@ test.describe(`the website in every language, without JavaScript`, () => {
 
     expect((await request.get(`/xx/pricing`, { maxRedirects: 0 })).status()).toBe(404)
   })
+
+  test(`an address with a trailing slash answers 301 to the address without it`, async ({ request }) => {
+    for (
+      const [path, target] of [[`/pricing/`, `/pricing`], [`/de/pricing/`, `/de/pricing`], [
+        `/de/`,
+        `/de`,
+      ]]
+    ) {
+      const answer = await request.get(path, { maxRedirects: 0 })
+      expect(answer.status(), path).toBe(301)
+      expect(answer.headers()[`location`], path).toBe(target)
+      expect((await request.get(target, { maxRedirects: 0 })).status(), target).toBe(200)
+    }
+  })
 })
 
 // axe-core runs in the page, so this check needs JavaScript.
