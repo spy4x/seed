@@ -21,6 +21,7 @@ import {
 import { DATA_EXPORT_ANCHOR } from "./profile-export.tsx"
 import { PICTURE_BUTTON_ID, PICTURE_RULE } from "./profile-picture.tsx"
 import { useAppText } from "./i18n.ts"
+import { englishText } from "./message.ts"
 
 /** One note a search found, as the palette lists it. */
 export interface SearchNote {
@@ -63,6 +64,8 @@ export interface PageCommand {
   id: string
   /** What the palette lists, in the person's language. */
   label: string
+  /** Other words that find it, such as its English label. */
+  aliases?: readonly string[]
 }
 
 /** Props of {@link SearchPalette}. */
@@ -216,7 +219,8 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
       group: t.t(`Search.groups`),
       choice: { kind: "group", groupId: group.id },
     }))
-    // Actions match their aliases too, in any word order, with a typo or in the other layout.
+    // Actions match their aliases too (their English label among them, so English words find
+    // them in every language), in any word order, with a typo or in the other layout.
     const actions = matchOptions(actionOptions(t, currentGroup, online, pageCommands, guest), text)
     // A stale answer is dropped by the palette; its words must not replace the current ones.
     if (!signal.aborted) {
@@ -269,15 +273,15 @@ function actionOptions(
 ): SearchOption[] {
   const page = (
     id: string,
-    label: string,
+    key: string,
     href: string,
     detail?: string,
-    aliases?: readonly string[],
+    aliases: readonly string[] = [],
   ): SearchOption => ({
     id: `action-${id}`,
-    label,
+    label: t.t(key),
     detail,
-    aliases,
+    aliases: [englishText(key), ...aliases],
     group: t.t(`Search.actions`),
     choice: { kind: "page", href },
   })
@@ -288,7 +292,7 @@ function actionOptions(
     ...(guest
       ? [page(
         "keep",
-        t.t(`Search.keep`),
+        `Search.keep`,
         "/keep",
         t.t(`Search.keepDetail`),
       )]
@@ -296,6 +300,7 @@ function actionOptions(
     ...pageCommands.map((command): SearchOption => ({
       id: `command-${command.id}`,
       label: command.label,
+      aliases: command.aliases,
       group: t.t(`Search.actions`),
       choice: { kind: "command", id: command.id },
     })),
@@ -304,31 +309,32 @@ function actionOptions(
       ? [{
         id: "action-new-note",
         label: t.t(`Search.newNote`),
+        aliases: [englishText(`Search.newNote`)],
         detail: inGroup,
         group: t.t(`Search.actions`),
         choice: { kind: "new-note" } as const,
       }]
       : []),
-    ...(inGroup ? [page("new-tag", t.t(`Search.newTag`), TAG_PATHS.new, inGroup)] : []),
-    ...(online ? [page("new-group", t.t(`Search.newGroup`), GROUP_PATHS.new)] : []),
-    ...(currentGroup ? [page("overview", t.t(`Search.openOverview`), OVERVIEW_PATHS.root)] : []),
-    page("notifications", t.t(`Search.openNotifications`), SCREEN_PATHS.notifications),
+    ...(inGroup ? [page("new-tag", `Search.newTag`, TAG_PATHS.new, inGroup)] : []),
+    ...(online ? [page("new-group", `Search.newGroup`, GROUP_PATHS.new)] : []),
+    ...(currentGroup ? [page("overview", `Search.openOverview`, OVERVIEW_PATHS.root)] : []),
+    page("notifications", `Search.openNotifications`, SCREEN_PATHS.notifications),
     page(
       "profile",
-      t.t(`Search.openProfile`),
+      `Search.openProfile`,
       SCREEN_PATHS.profile,
       t.t(`Search.profileDetail`),
     ),
     page(
       "download-data",
-      t.t(`Search.downloadData`),
+      `Search.downloadData`,
       `${profilePath("account")}#${DATA_EXPORT_ANCHOR}`,
       t.t(`Search.downloadDetail`),
       [`export my data`, `GDPR`, `archive`, `takeout`, `скачать данные`, `экспорт данных`],
     ),
     page(
       "change-picture",
-      t.t(`Search.changePicture`),
+      `Search.changePicture`,
       `${profilePath("account")}#${PICTURE_BUTTON_ID}`,
       PICTURE_RULE,
       [`avatar`, `photo`, `upload picture`, `фото`, `аватар`],

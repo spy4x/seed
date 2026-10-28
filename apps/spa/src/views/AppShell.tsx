@@ -7,6 +7,7 @@ import { pictureUrl, shownPictureId } from "@domain/identity"
 import { GROUP_PATHS, NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
 import { EmailBanner, showsEmailBanner } from "@ui/email-screen.tsx"
+import { englishText } from "@ui/message.ts"
 import { type SearchChoice, SearchPalette } from "@ui/search-palette.tsx"
 import { NewNoteDialog } from "@ui/new-note-dialog.tsx"
 import { emailStore } from "../state/email.ts"
@@ -61,7 +62,11 @@ function pageCommands(t: Translator<string>) {
     : noteEditorPageActions.value
     ? NOTE_COMMANDS
     : undefined
-  return commands?.map((command) => ({ id: command.id, label: t.t(command.label) }))
+  return commands?.map((command) => ({
+    id: command.id,
+    label: t.t(command.label),
+    aliases: [englishText(command.label)],
+  }))
 }
 
 /** Runs the page command `id` of {@link pageCommands} on the open page. */

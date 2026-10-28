@@ -18,10 +18,14 @@ import {
   type SearchPaletteProps,
 } from "./search-palette.tsx"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
 import app from "@i18n/app/en.json" with { type: "json" }
+import appRu from "@i18n/app/ru.json" with { type: "json" }
 
 /** The `app` catalog's English, as a screen without a provider reads it. */
 const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
+/** The `app` catalog in Russian, as the SPA reads it for a person who chose Russian. */
+const RU = createTranslator({ language: `ru`, catalogs: [{ source: app, translation: appRu }] })
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -218,6 +222,38 @@ describe("SearchPalette", () => {
       row.dispatchEvent(new window.MouseEvent("click", { bubbles: true }) as unknown as Event)
     })
     expect(picked).toEqual([{ kind: "command", id: "overview-customise" }])
+  })
+
+  it("finds an action by its English words in another language, and by its own words", async () => {
+    root = document.createElement("div")
+    document.body.append(root)
+    await act(() =>
+      render(
+        <I18nContext.Provider value={RU}>
+          <SearchPalette
+            searchNotes={() => Promise.resolve({ notes: [], onDevice: false })}
+            groups={[HOME]}
+            currentGroup={{ id: HOME.id, name: HOME.name, canWrite: true }}
+            online
+            pageCommands={[{
+              id: "overview-range",
+              label: "Изменить период",
+              aliases: ["Change date range"],
+            }]}
+            onSelect={() => {}}
+          />
+        </I18nContext.Provider>,
+        root!,
+      )
+    )
+    await open()
+
+    await type("notifications")
+    expect(listed()).toContain("Открыть уведомления")
+    await type("уведомления")
+    expect(listed()).toContain("Открыть уведомления")
+    await type("date range")
+    expect(listed()).toContain("Изменить период")
   })
 
   it("offers Open overview only while there is a current group", async () => {
