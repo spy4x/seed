@@ -825,8 +825,9 @@ describe("the item editor in en-XA", () => {
       )
       left.push(...englishLeft(document.body, data))
     }
-    // A new item: no photos yet, and a colour and a size with no names.
+    // A new item: no photos yet, then a colour and a size with no names.
     await mount(pseudo(<ItemEditor key="new" calls={calls} shareLinks={{ ...emptyShare }} />))
+    left.push(...englishLeft(document.body, data))
     await clickOn(find("[data-e2e=catalog-item-add-colour]"))
     await clickOn(find("[data-e2e=catalog-item-add-size]"))
     left.push(...englishLeft(document.body, data))
