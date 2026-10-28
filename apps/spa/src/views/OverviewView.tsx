@@ -112,7 +112,8 @@ export function OverviewView({ groupId }: { groupId: string }) {
   }
 
   async function hide(id: string): Promise<void> {
-    const title = available.find((widget) => widget.id === id)?.title ?? t.t(`OverviewView.widget`)
+    const widget = available.find((candidate) => candidate.id === id)
+    const title = widget ? t.t(widget.titleKey) : t.t(`OverviewView.widget`)
     const before = layout
     if (await saveLayout(setLayoutHidden(layout, id, true))) {
       offerUndo(`overview-hidden-${id}`, t.t(`OverviewView.hidden`, { widget: title }), before)
@@ -149,7 +150,7 @@ export function OverviewView({ groupId }: { groupId: string }) {
       }}
       widgets={shown.map((widget) => ({
         id: widget.id,
-        title: widget.title,
+        titleKey: widget.titleKey,
         size: widget.size,
         load: loads[widget.id] ?? { status: "loading" },
       }))}
@@ -158,7 +159,7 @@ export function OverviewView({ groupId }: { groupId: string }) {
       onHide={(id) => void hide(id)}
       layout={layout.flatMap((entry) => {
         const widget = available.find((candidate) => candidate.id === entry.id)
-        return widget ? [{ ...entry, title: widget.title }] : []
+        return widget ? [{ ...entry, titleKey: widget.titleKey }] : []
       })}
       customising={customising}
       onCustomise={() => setCustomising(true)}

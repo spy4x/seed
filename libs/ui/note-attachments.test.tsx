@@ -15,6 +15,15 @@ import {
   type NoteAttachmentsProps,
   quotaLine,
 } from "./note-attachments.tsx"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import app from "@i18n/app/en.json" with { type: "json" }
+import appRu from "@i18n/app/ru.json" with { type: "json" }
+
+/** The `app` catalog's English, as a screen without a provider reads it. */
+const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
+/** The `app` catalog in Russian, as the SPA reads it for a person who chose Russian. */
+const RU = createTranslator({ language: `ru`, catalogs: [{ source: app, translation: appRu }] })
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -250,6 +259,19 @@ describe(`note attachments section`, () => {
     )
   })
 
+  it(`writes the storage line's sizes in the person's language, as the file rows do`, async () => {
+    await mount(
+      <I18nContext.Provider value={RU}>
+        <NoteAttachments {...base} items={[pdf]} />
+      </I18nContext.Provider>,
+    )
+    const line = find(`[data-e2e=note-attachments-quota]`).textContent ?? ``
+    expect(line).toContain(`41 МБ`)
+    expect(line).toContain(`200 МБ`)
+    expect(line).not.toContain(` MB`)
+    expect(find(`[data-e2e=note-attachments]`).textContent).toContain(`1 МБ`)
+  })
+
   it(`names each refused file and announces a finished upload`, async () => {
     await mount(
       <NoteAttachments
@@ -266,21 +288,27 @@ describe(`note attachments section`, () => {
 
 describe(`quota line`, () => {
   it(`names the group, its files and its bytes against the plan's caps`, () => {
-    expect(quotaLine(`Family`, base.usage!)).toEqual({
-      text: `Family uses 37 of 100 files and 41 MB of 200 MB.`,
-      warn: false,
-    })
+    const { message, warn } = quotaLine(`Family`, base.usage!, `en`)
+    expect(EN.t(message.key, message.values)).toBe(
+      `Family uses 37 of 100 files and 41 MB of 200 MB.`,
+    )
+    expect(warn).toBe(false)
   })
 
   it(`turns to the warning tone from 90 % of either cap`, () => {
-    expect(quotaLine(`Family`, { ...base.usage!, files: 90 }).warn).toBe(true)
-    expect(quotaLine(`Family`, { ...base.usage!, bytes: 180 * MB }).warn).toBe(true)
-    expect(quotaLine(`Family`, { ...base.usage!, files: 89, bytes: 179 * MB }).warn).toBe(false)
+    expect(quotaLine(`Family`, { ...base.usage!, files: 90 }, `en`).warn).toBe(true)
+    expect(quotaLine(`Family`, { ...base.usage!, bytes: 180 * MB }, `en`).warn).toBe(true)
+    expect(quotaLine(`Family`, { ...base.usage!, files: 89, bytes: 179 * MB }, `en`).warn).toBe(
+      false,
+    )
   })
 
   it(`leaves out a cap the plan does not set`, () => {
-    expect(quotaLine(`Family`, { ...base.usage!, maxFiles: null, maxBytes: null }).text).toBe(
-      `Family uses 37 files and 41 MB.`,
+    const { message } = quotaLine(
+      `Family`,
+      { ...base.usage!, maxFiles: null, maxBytes: null },
+      `en`,
     )
+    expect(EN.t(message.key, message.values)).toBe(`Family uses 37 files and 41 MB.`)
   })
 })

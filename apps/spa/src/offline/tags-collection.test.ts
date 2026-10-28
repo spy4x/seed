@@ -12,6 +12,7 @@ import type { NotePayload } from "./notes-cache.ts"
 import { notesCollection } from "./notes-collection.ts"
 import type { TagPayload } from "./tags-cache.ts"
 import { tagsCollection } from "./tags-collection.ts"
+import { englishText } from "@ui/message.ts"
 
 const groupId = "g-1"
 
@@ -273,7 +274,9 @@ describe("tag failures", () => {
 
     const [entry] = tags.outbox.entries()
     expect(entry.status).toBe("conflict")
-    expect(entry.conflict?.message).toBe("Someone changed this tag while you were offline.")
+    expect(englishText(entry.conflict?.message ?? ``)).toBe(
+      "Someone changed this tag while you were offline.",
+    )
   })
 
   it("say the tag was deleted when someone deleted it meanwhile", async () => {
@@ -296,7 +299,9 @@ describe("tag failures", () => {
     const [entry] = tags.outbox.entries()
     expect(entry.status).toBe("conflict")
     expect(entry.conflict?.reason).toBe("gone")
-    expect(entry.conflict?.message).toBe("This tag was deleted while you were offline.")
+    expect(englishText(entry.conflict?.message ?? ``)).toBe(
+      "This tag was deleted while you were offline.",
+    )
   })
 
   it("keep a tag queued while the server says the session ended", async () => {

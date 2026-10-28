@@ -8,11 +8,7 @@ import { type DateRangePreset, rangeForPreset } from "@spy4x/preact-ui/date-rang
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { useFormat } from "@spy4x/preact-ui/format"
-import {
-  LayoutCustomiser,
-  type LayoutCustomiserItem,
-  type LayoutEntry,
-} from "@spy4x/preact-ui/layout-customiser"
+import { LayoutCustomiser, type LayoutEntry } from "@spy4x/preact-ui/layout-customiser"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { DashboardGrid, WidgetCard, type WidgetSize } from "@spy4x/preact-ui/widget-card"
@@ -75,7 +71,8 @@ export type OverviewWidgetLoad =
 /** One widget the overview draws, in the person's order. */
 export interface OverviewWidget {
   id: string
-  title: string
+  /** The `app` catalog key of the widget's name (`WidgetDefinition.titleKey`). */
+  titleKey: string
   size: WidgetSize
   load: OverviewWidgetLoad
 }
@@ -104,8 +101,11 @@ export interface OverviewScreenProps {
   views: Readonly<Record<string, WidgetView>>
   onRetry: (id: string) => void
   onHide: (id: string) => void
-  /** Every widget the person's role sees, hidden ones included, for the Customise dialog. */
-  layout: readonly LayoutCustomiserItem[]
+  /**
+   * Every widget the person's role sees, hidden ones included, for the Customise dialog, each
+   * named by the `app` catalog key of its name.
+   */
+  layout: readonly (LayoutEntry & { titleKey: string })[]
   customising: boolean
   onCustomise: () => void
   onCloseCustomise: () => void
@@ -291,7 +291,7 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
           onClose={props.onCloseCustomise}
           title={t.t(`OverviewScreen.customise`)}
           description={t.t(`OverviewScreen.customiseText`)}
-          items={props.layout}
+          items={props.layout.map(({ titleKey, ...entry }) => ({ ...entry, title: t.t(titleKey) }))}
           onChange={props.onLayoutChange}
           onReset={props.onResetLayout}
           error={props.layoutError}
@@ -417,17 +417,17 @@ function OverviewWidgetCard(
   const savedAt = load.status === "ready" ? load.savedAt : null
   return (
     <WidgetCard
-      title={widget.title}
+      title={t.t(widget.titleKey)}
       // An empty chart is one line: it takes a number's height, not the chart's.
       size={drawing?.status === "empty" ? "stat" : widget.size}
       status={drawing ? drawing.status : load.status === "error" ? "error" : "loading"}
       caption={savedAt === null
         ? drawing?.caption
         : t.t(`OverviewScreen.asOf`, { time: format.time(savedAt) })}
-      loadingLabel={view.loadingLabel}
-      errorMessage={view.errorMessage}
+      loadingLabel={t.t(view.loadingKey)}
+      errorMessage={t.t(view.errorKey)}
       onRetry={onRetry}
-      emptyLabel={drawing?.emptyLabel}
+      emptyLabel={drawing?.emptyKey && t.t(drawing.emptyKey)}
       menu={onHide && (
         <DropdownItem onClick={onHide} dataE2E="overview-widget-hide">
           {t.t(`OverviewScreen.hide`)}

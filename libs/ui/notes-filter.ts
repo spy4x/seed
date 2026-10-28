@@ -7,17 +7,24 @@ export type NoteSort = "updated" | "created" | "title"
 /** Whether a note needs any of the chosen tags (the default) or all of them. */
 export type TagMatch = "any" | "all"
 
-const DATE_DIRECTIONS = { asc: "Oldest first", desc: "Newest first" }
+const DATE_DIRECTIONS = { asc: `NotesFilter.oldestFirst`, desc: `NotesFilter.newestFirst` }
 
-/** The orders the list offers, with the words the sort menu shows for them and their directions. */
+/**
+ * The orders the list offers, with the keys in the `app` catalog of the words the sort menu shows
+ * for them and their directions.
+ */
 export const NOTE_SORTS: readonly {
   value: NoteSort
   label: string
   directions: Record<SortDirection, string>
 }[] = [
-  { value: "updated", label: "Last updated", directions: DATE_DIRECTIONS },
-  { value: "created", label: "Date created", directions: DATE_DIRECTIONS },
-  { value: "title", label: "Title", directions: { asc: "A–Z", desc: "Z–A" } },
+  { value: "updated", label: `NotesFilter.sortUpdated`, directions: DATE_DIRECTIONS },
+  { value: "created", label: `NotesFilter.sortCreated`, directions: DATE_DIRECTIONS },
+  {
+    value: "title",
+    label: `NotesFilter.sortTitle`,
+    directions: { asc: `NotesFilter.aToZ`, desc: `NotesFilter.zToA` },
+  },
 ]
 
 /** The direction an order starts in: dates newest first, titles A to Z. */

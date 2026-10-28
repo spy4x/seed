@@ -17,6 +17,15 @@ import {
   SearchPalette,
   type SearchPaletteProps,
 } from "./search-palette.tsx"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import app from "@i18n/app/en.json" with { type: "json" }
+import appRu from "@i18n/app/ru.json" with { type: "json" }
+
+/** The `app` catalog's English, as a screen without a provider reads it. */
+const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
+/** The `app` catalog in Russian, as the SPA reads it for a person who chose Russian. */
+const RU = createTranslator({ language: `ru`, catalogs: [{ source: app, translation: appRu }] })
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -215,6 +224,41 @@ describe("SearchPalette", () => {
     expect(picked).toEqual([{ kind: "command", id: "overview-customise" }])
   })
 
+  it("finds an action by its English label or detail in another language, and by its own words", async () => {
+    root = document.createElement("div")
+    document.body.append(root)
+    await act(() =>
+      render(
+        <I18nContext.Provider value={RU}>
+          <SearchPalette
+            searchNotes={() => Promise.resolve({ notes: [], onDevice: false })}
+            groups={[HOME]}
+            currentGroup={{ id: HOME.id, name: HOME.name, canWrite: true }}
+            online
+            pageCommands={[{
+              id: "overview-range",
+              label: "Изменить период",
+              aliases: ["Change date range"],
+            }]}
+            onSelect={() => {}}
+          />
+        </I18nContext.Provider>,
+        root!,
+      )
+    )
+    await open()
+
+    await type("notifications")
+    expect(listed()).toContain("Открыть уведомления")
+    await type("уведомления")
+    expect(listed()).toContain("Открыть уведомления")
+    await type("date range")
+    expect(listed()).toContain("Изменить период")
+    // The English detail finds its action too.
+    await type("password")
+    expect(listed().some((row) => row.startsWith("Открыть профиль"))).toBe(true)
+  })
+
   it("offers Open overview only while there is a current group", async () => {
     await mount({ currentGroup: null })
     await open()
@@ -273,7 +317,7 @@ describe("SearchPalette", () => {
     await type(`${"x".repeat(45)}`)
 
     expect(status()).toBe(`No notes or groups match “${"x".repeat(40)}…”.`)
-    expect(emptyLabel("  ab  ", false)).toBe("No notes or groups match “ab”.")
+    expect(emptyLabel(EN, "  ab  ", false)).toBe("No notes or groups match “ab”.")
   })
 
   it("does not search notes for a single character, but still matches groups", async () => {

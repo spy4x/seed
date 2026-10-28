@@ -2,7 +2,14 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import type { Attachment, AttachmentListResult } from "@domain/notes"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import app from "@i18n/app/en.json" with { type: "json" }
+import { messageText } from "@ui/message.ts"
 import { type AttachmentDependencies, createAttachmentsStore } from "./attachments.ts"
+
+/** The store's message as an English screen shows it. */
+const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
+const english = (message: Parameters<typeof messageText>[1]) => messageText(EN, message)
 
 const GROUP = `0199c3a0-0000-7000-8000-000000000001`
 const NOTE = `0199c3a0-0000-7000-8000-000000000002`
@@ -139,7 +146,7 @@ describe(`note attachments store`, () => {
       `confirm 0199c3a0-0000-7000-8000-000000000101`,
     ])
     expect(store.usage.value).toMatchObject({ files: 4, bytes: 5 * MB + 1000 })
-    expect(store.announcement.value).toBe(`scan.pdf uploaded`)
+    expect(english(store.announcement.value)).toBe(`scan.pdf uploaded`)
   })
 
   it(`keeps an uploaded file's row id after its confirm, and links and removes it by the stored id`, async () => {
@@ -183,7 +190,7 @@ describe(`note attachments store`, () => {
     ])
     await settle()
 
-    expect(store.refusals.value).toEqual([
+    expect(store.refusals.value.map(english)).toEqual([
       `photo.heic cannot be attached. Only JPEG, PNG, WebP and GIF images and PDF files can be.`,
       `big.pdf is 2 MB. Each file can be up to 2 MB.`,
       `A note holds up to 10 files. 2 were not attached: a.png, b.png.`,
@@ -279,7 +286,7 @@ describe(`note attachments store`, () => {
     store.add([file(`invoice.pdf`)])
     await settle()
 
-    expect(store.refusals.value).toEqual([
+    expect(store.refusals.value.map(english)).toEqual([
       `invoice.pdf is not really a PDF, so it was not attached.`,
     ])
     expect(store.rows.value).toEqual([])
@@ -370,12 +377,12 @@ describe(`note attachments store`, () => {
     const store = createAttachmentsStore(dependencies)
     await store.open(GROUP, NOTE)
 
-    expect(await store.remove(pdf.id)).toBe(
+    expect(english(await store.remove(pdf.id))).toBe(
       `Could not remove scan.pdf. Check your connection and try again.`,
     )
     expect(store.rows.value.length).toBe(1)
     fail = false
-    expect(await store.remove(pdf.id)).toBe(null)
+    expect(english(await store.remove(pdf.id))).toBe(null)
     expect(store.rows.value).toEqual([])
     expect(store.usage.value).toMatchObject({ files: 2, bytes: 5 * MB - 1000 })
   })
@@ -391,7 +398,7 @@ describe(`note attachments store`, () => {
     })
     const store = createAttachmentsStore(dependencies)
     await store.open(GROUP, NOTE)
-    expect(await store.remove(pdf.id)).toBe(null)
+    expect(english(await store.remove(pdf.id))).toBe(null)
     expect(store.rows.value).toEqual([])
   })
 
@@ -426,6 +433,7 @@ describe(`note attachments store`, () => {
     await store.open(GROUP, NOTE)
     expect(await store.link(`abc`)).toBe(`https://files.test/abc`)
     fail = true
-    await expect(store.link(`abc`)).rejects.toThrow(`This link expired. Try again.`)
+    const expired = await store.link(`abc`).then(() => null, (cause: Error) => cause.message)
+    expect(english(expired)).toBe(`This link expired. Try again.`)
   })
 })

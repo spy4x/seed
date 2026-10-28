@@ -34,21 +34,21 @@ export const NOTE_WIDGET_IDS = {
 export const NOTE_WIDGETS: readonly WidgetDefinition[] = [
   {
     id: NOTE_WIDGET_IDS.total,
-    title: "Notes",
+    titleKey: "NoteWidgets.totalTitle",
     size: "stat",
     canView: canRead,
     operation: "note.widget.total",
   },
   {
     id: NOTE_WIDGET_IDS.added,
-    title: "Notes added",
+    titleKey: "NoteWidgets.addedTitle",
     size: "stat",
     canView: canRead,
     operation: "note.widget.added",
   },
   {
     id: NOTE_WIDGET_IDS.series,
-    title: "Notes over time",
+    titleKey: "NoteWidgets.seriesTitle",
     size: "full",
     canView: canRead,
     operation: "note.widget.series",

@@ -17,6 +17,7 @@ import { createMemoryTagsCache } from "./memory-tags-cache.ts"
 import { tagsCollection } from "./tags-collection.ts"
 import type { TagPayload } from "./tags-cache.ts"
 import type { TagItem } from "../state/tags.ts"
+import { englishText } from "@ui/message.ts"
 
 const groupId = "g-1"
 
@@ -573,7 +574,7 @@ describe("outbox conflicts found after a reconnect", () => {
 
     const [entry] = h.outbox.entries()
     expect(entry.conflict?.reason).toBe("gone")
-    expect(entry.conflict?.message).toContain("moved to another group")
+    expect(englishText(entry.conflict?.message ?? ``)).toContain("moved to another group")
     expect(entry.payload).toMatchObject({ title: "Mine", body: "my body" })
   })
 
@@ -792,10 +793,11 @@ describe("notes outbox wiring", () => {
     h.state.current = note("n", 1, "Other")
     h.state.online = true
     await h.outbox.flush()
-    expect(h.outbox.entries()[0].conflict).toMatchObject({
-      reason: "version",
-      message: "Someone changed this note while you were offline.",
-    })
+    const conflict = h.outbox.entries()[0].conflict
+    expect(conflict).toMatchObject({ reason: "version" })
+    expect(englishText(conflict?.message ?? ``)).toBe(
+      "Someone changed this note while you were offline.",
+    )
   })
 
   it("removes a note from the local copy once the server took its delete", async () => {

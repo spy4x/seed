@@ -163,7 +163,7 @@ function GroupView(
           onRangeChange={setRange}
           widgets={OVERVIEW_WIDGETS.map((widget) => ({
             id: widget.id,
-            title: widget.title,
+            titleKey: widget.titleKey,
             size: widget.size,
             load: loads[widget.id] ?? { status: `loading` },
           }))}

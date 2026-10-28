@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX, Ref } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Avatar } from "@spy4x/preact-ui/avatar"
@@ -19,7 +18,11 @@ import type { PlanRefusal } from "@domain/billing"
 import { canMutateNotes, type GroupRole } from "@domain/groups"
 import { NOTE_RESTORE_DAYS } from "@domain/notes"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
+import { useAppText } from "./i18n.ts"
+import { type Message, messageText } from "./message.ts"
 import { NoteTags, type TagRow } from "./tag-parts.tsx"
 import { type Navigate, NOTE_PATHS, SCREEN_PATHS, ScreenForm, TAG_PATHS } from "./progressive.tsx"
 import {
@@ -83,8 +86,8 @@ export interface NoteDraft {
 
 /** The errors of one note form: on the title field, and for the form as a whole. */
 export interface NoteFormErrors {
-  title: string | null
-  form: string | null
+  title: Message | null
+  form: Message | null
   /** The group's plan refused the write: shown as an upgrade prompt in place of `form`. */
   plan?: PlanRefusal | null
 }
@@ -128,7 +131,7 @@ export interface NotesScreenProps {
   notes: readonly NoteRow[]
   loading: boolean
   /** The error of the list itself, such as a failed read. */
-  listError: string | null
+  listError: Message | null
   /**
    * The other groups the person may move notes to. Empty (or left out) hides every move, so a
    * person with nowhere to move to sees a plain list.
@@ -138,7 +141,7 @@ export interface NotesScreenProps {
   onMove?: (input: { toGroupId: string; noteIds: string[] }) => void
   moving?: boolean
   /** The refusal of the last move. */
-  moveError?: string | null
+  moveError?: Message | null
   /**
    * Deletes a note from its row's menu at once: the app offers Undo in a toast, so there is no
    * confirmation. Left out, rows offer no delete.
@@ -189,9 +192,29 @@ export interface NotesScreenProps {
   intro?: ComponentChildren
 }
 
-/** "1 note", "42 notes". */
-function noteCount(count: number): string {
-  return count === 1 ? "1 note" : `${count} notes`
+/**
+ * What the page shows while it has no group: the group still loading, or a group that does not
+ * exist, with the way back to the groups. The notes, note, tags and tag pages share it.
+ */
+export function NoGroup(
+  { loading, navigate }: { loading: boolean; navigate?: Navigate },
+): JSX.Element {
+  const t = useAppText()
+  return (
+    <ListEmpty
+      title={loading ? t.t(`NoGroup.loading`) : t.t(`NoGroup.title`)}
+      action={!loading && (
+        <Button href={SCREEN_PATHS.groups} navigate={navigate} variant="outline">
+          {t.t(`NoGroup.back`)}
+        </Button>
+      )}
+    />
+  )
+}
+
+/** A user value inside a sentence: kept apart from the text around it, and never translated. */
+export function userValue(text: string): JSX.Element {
+  return <bdi translate={false}>{text}</bdi>
 }
 
 /**
@@ -205,6 +228,7 @@ function noteCount(count: number): string {
  */
 export function NotesScreen(props: NotesScreenProps): JSX.Element {
   const { group, loading, navigate } = props
+  const t = useAppText()
   const allNotes = props.notes
   const tags = props.tags ?? []
   const filters = props.filters ?? NO_NOTE_FILTERS
@@ -268,16 +292,9 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
   if (!group) {
     return (
       <ListPage>
-        <PageHeader title="Notes" />
+        <PageHeader title={t.t(`Notes.title`)} />
         {props.intro}
-        <ListEmpty
-          title={loading ? "Loading the group…" : "This group does not exist."}
-          action={!loading && (
-            <Button href={SCREEN_PATHS.groups} navigate={navigate} variant="outline">
-              Back to groups
-            </Button>
-          )}
-        />
+        <NoGroup loading={loading} navigate={navigate} />
       </ListPage>
     )
   }
@@ -335,10 +352,13 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
           data-e2e={`note-${note.id}`}
         >
           <div class="flex min-w-0 flex-1 flex-col gap-1">
-            <h2 class={ROW_TITLE} data-e2e="note-item-title">{note.title}</h2>
+            <h2 class={ROW_TITLE} data-e2e="note-item-title" translate={false}>{note.title}</h2>
             {note.updatedAt && (
               <p class="text-sm text-muted">
-                Deleted <When at={note.updatedAt} />
+                <Rich
+                  parts={t.parts(`Notes.deleted`, { date: `` })}
+                  tags={{ date: () => <When at={note.updatedAt!} /> }}
+                />
               </p>
             )}
           </div>
@@ -347,9 +367,9 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
               type="button"
               variant="outline"
               class="min-h-11 shrink-0"
-              aria-label={`Restore ${note.title}`}
+              aria-label={t.t(`Notes.restoreNote`, { title: note.title })}
               busy={props.restoring === note.id}
-              busyLabel="Restoring…"
+              busyLabel={t.t(`Notes.restoring`)}
               disabled={Boolean(props.restoring)}
               data-e2e="note-restore"
               onClick={() => {
@@ -357,7 +377,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
                 onRestore({ id: note.id })
               }}
             >
-              Restore
+              {t.t(`Notes.restore`)}
             </Button>
           )}
         </li>
@@ -369,8 +389,8 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
   const emptyList = query !== ""
     ? (
       <ListEmpty
-        title={`No notes match "${query}"`}
-        description="Check the spelling or search for fewer words."
+        title={t.t(`Notes.noMatch`, { query })}
+        description={t.t(`Notes.noMatchHint`)}
         action={
           <Button
             type="button"
@@ -378,15 +398,15 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
             onClick={() => change({ q: "" })}
             data-e2e="notes-search-clear"
           >
-            Clear search
+            {t.t(`Notes.clearSearch`)}
           </Button>
         }
       />
     )
     : (
       <ListEmpty
-        title="No notes match these filters"
-        description="Try fewer tags or another author."
+        title={t.t(`Notes.noFilterMatch`)}
+        description={t.t(`Notes.noFilterMatchHint`)}
         action={
           <Button
             type="button"
@@ -397,7 +417,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
                 : change({ tagIds: [], match: "any", author: null, mine: false })}
             data-e2e="notes-filters-clear"
           >
-            Clear filters
+            {t.t(`Notes.clearFilters`)}
           </Button>
         }
       />
@@ -406,12 +426,12 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
   return (
     <ListPage pageRef={page}>
       <PageHeader
-        title="Notes"
+        title={t.t(`Notes.title`)}
         subtitle={group.name}
         subtitleDataE2E="notes-group"
         action={group.canWrite && (
           <PageAction
-            label="New note"
+            label={t.t(`Notes.new`)}
             Icon={IconPlus}
             href={NOTE_PATHS.new}
             navigate={navigate}
@@ -426,16 +446,16 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
                 onClick={() => props.onShowDeletedChange?.(!deletedMode)}
                 dataE2E="notes-show-deleted"
               >
-                {deletedMode ? "Show notes" : "Show deleted notes"}
+                {deletedMode ? t.t(`Notes.showLive`) : t.t(`Notes.showDeleted`)}
               </DropdownItem>
             )}
             {canSelect && !selecting && !deletedMode && (
               <DropdownItem onClick={() => setSelecting(true)} dataE2E="notes-select">
-                Select notes
+                {t.t(`Notes.select`)}
               </DropdownItem>
             )}
             <DropdownItem href={TAG_PATHS.list} navigate={navigate} dataE2E="notes-tags">
-              Manage tags
+              {t.t(`Notes.manageTags`)}
             </DropdownItem>
           </>
         }
@@ -444,7 +464,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
       <Stack>
         {!group.canWrite && (
           <p class="text-sm text-muted" data-e2e="notes-read-only">
-            You can read these notes. Only an editor can change them.
+            {t.t(`Notes.readOnly`)}
           </p>
         )}
         {showBar && (
@@ -456,18 +476,18 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
             tags={tags}
             authors={props.authors ?? []}
             youId={props.youId ?? null}
-            count={noteCount(notes.length)}
+            count={t.t(`Notes.count`, { count: notes.length })}
           />
         )}
-        <ErrorState message={props.listError} />
-        {!selecting && !deletedMode && <ErrorState message={props.moveError ?? null} />}
+        <ErrorState message={messageText(t, props.listError)} />
+        {!selecting && !deletedMode && <ErrorState message={messageText(t, props.moveError)} />}
         {deletedMode && (
           <div
             class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-subtle bg-surface p-3"
             data-e2e="notes-deleted-banner"
           >
             <p class="min-w-0 flex-1 text-sm">
-              Deleted notes stay here for {NOTE_RESTORE_DAYS} days, then they are removed for good.
+              {t.t(`Notes.deletedBanner`, { count: NOTE_RESTORE_DAYS })}
             </p>
             <Button
               type="button"
@@ -476,7 +496,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
               onClick={() => props.onShowDeletedChange?.(false)}
               data-e2e="notes-show-live"
             >
-              Back to notes
+              {t.t(`Notes.backToNotes`)}
             </Button>
           </div>
         )}
@@ -488,12 +508,14 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
               navigate={navigate}
             />
           )
-          : <ErrorState message={props.restoreError?.form ?? null} />}
+          : <ErrorState message={messageText(t, props.restoreError?.form)} />}
         {deletedMode
           ? deletedNotes.length === 0
             ? (
               <ListEmpty
-                title={props.deletedLoading ? "Loading deleted notes…" : "No deleted notes"}
+                title={props.deletedLoading
+                  ? t.t(`Notes.deletedLoading`)
+                  : t.t(`Notes.deletedEmpty`)}
               />
             )
             : deletedList
@@ -502,13 +524,13 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
           : notes.length === 0
           ? (
             <ListEmpty
-              title={loading ? "Loading notes…" : "No notes yet"}
+              title={loading ? t.t(`Notes.loading`) : t.t(`Notes.empty`)}
               description={loading || !group.canWrite
                 ? undefined
-                : `Notes you write here are shared with everyone in ${group.name}.`}
+                : t.t(`Notes.emptyHint`, { group: group.name })}
               action={!loading && group.canWrite && (
                 <Button href={NOTE_PATHS.new} navigate={navigate} data-e2e="note-new-empty">
-                  New note
+                  {t.t(`Notes.new`)}
                 </Button>
               )}
             />
@@ -529,7 +551,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
                   count={shown.length}
                   moveTargets={moveTargets}
                   moving={props.moving}
-                  moveError={props.moveError ?? null}
+                  moveError={messageText(t, props.moveError)}
                   onCancel={stopSelecting}
                 />
               </Stack>
@@ -554,6 +576,15 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
   )
 }
 
+/** The orders the sort menu offers, in the translator's language. */
+function noteSorts(t: Translator<string>) {
+  return NOTE_SORTS.map((sort) => ({
+    value: sort.value,
+    label: t.t(sort.label),
+    directions: { asc: t.t(sort.directions.asc), desc: t.t(sort.directions.desc) },
+  }))
+}
+
 /**
  * The bar over the list: search, the "Tags" and "Author" menus, "Created by me", the order, the
  * active filters as chips and how many notes show.
@@ -570,12 +601,13 @@ function NotesFilterBar(
     count: string
   },
 ): JSX.Element {
+  const t = useAppText()
   const menus: FilterBarMenu[] = []
   if (tags.length > 0) {
     menus.push({
       id: "tags",
-      label: "Tags",
-      chipLabel: "Tag",
+      label: t.t(`NotesFilter.tags`),
+      chipLabel: t.t(`NotesFilter.tag`),
       multiple: true,
       options: tags.map((tag) => ({
         value: tag.id,
@@ -584,7 +616,7 @@ function NotesFilterBar(
       })),
       value: filters.tagIds.filter((id) => tags.some((tag) => tag.id === id)),
       onChange: (tagIds) => onChange({ tagIds }),
-      headerLabel: "Show notes with",
+      headerLabel: t.t(`NotesFilter.showWith`),
       header: (
         <>
           <DropdownItem
@@ -593,7 +625,7 @@ function NotesFilterBar(
             onClick={() => onChange({ match: "any" })}
             dataE2E="notes-tags-any"
           >
-            Any of these tags
+            {t.t(`NotesFilter.anyTag`)}
           </DropdownItem>
           <DropdownItem
             checked={filters.match === "all"}
@@ -601,7 +633,7 @@ function NotesFilterBar(
             onClick={() => onChange({ match: "all" })}
             dataE2E="notes-tags-all"
           >
-            All of these tags
+            {t.t(`NotesFilter.allTags`)}
           </DropdownItem>
         </>
       ),
@@ -614,10 +646,10 @@ function NotesFilterBar(
   if (authors.length > 0) {
     menus.push({
       id: "author",
-      label: "Author",
-      anyLabel: "Anyone",
+      label: t.t(`NotesFilter.author`),
+      anyLabel: t.t(`NotesFilter.anyone`),
       options: [
-        ...(you ? [{ value: you.id, label: "You" }] : []),
+        ...(you ? [{ value: you.id, label: t.t(`NotesFilter.you`) }] : []),
         ...others.map((author) => ({ value: author.id, label: author.name })),
       ],
       value: filters.author,
@@ -630,17 +662,17 @@ function NotesFilterBar(
         search={{
           value: filters.q,
           onChange: (q) => onChange({ q }),
-          label: "Search notes",
+          label: t.t(`NotesFilter.search`),
         }}
         filters={menus}
         toggles={youId === null ? [] : [{
           id: "mine",
-          label: "Created by me",
+          label: t.t(`NotesFilter.mine`),
           pressed: filters.mine,
           onChange: (mine) => onChange({ mine }),
         }]}
         sort={{
-          options: [...NOTE_SORTS],
+          options: noteSorts(t),
           value: filters.sort,
           // A new order starts in its own direction, so Title after a date is not Z–A.
           onChange: (sort) =>
@@ -727,6 +759,7 @@ function SelectionBar(
     onCancel: () => void
   },
 ): JSX.Element {
+  const t = useAppText()
   return (
     <div
       class="flex flex-col gap-3 md:sticky md:bottom-0 rounded-lg border border-subtle bg-surface p-3 shadow-sm"
@@ -734,7 +767,7 @@ function SelectionBar(
     >
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
         <p class="min-w-0 flex-1 text-sm font-medium" aria-live="polite">
-          {count === 0 ? "Tick the notes to move" : `${count} selected`}
+          {count === 0 ? t.t(`Notes.tickToMove`) : t.t(`Notes.selected`, { count })}
         </p>
         <Button
           type="button"
@@ -743,11 +776,11 @@ function SelectionBar(
           onClick={onCancel}
           data-e2e="notes-select-cancel"
         >
-          Cancel
+          {t.t(`Notes.cancelSelect`)}
         </Button>
         {count > 0 && (
           <div class="flex w-full items-center gap-3 sm:w-auto">
-            <label class="sr-only" for="notes-move-to">Move to group</label>
+            <label class="sr-only" for="notes-move-to">{t.t(`Notes.moveTo`)}</label>
             <Select
               id="notes-move-to"
               name="toGroupId"
@@ -759,9 +792,9 @@ function SelectionBar(
               type="submit"
               data-e2e="notes-move-submit"
               busy={moving}
-              busyLabel="Moving…"
+              busyLabel={t.t(`Notes.moving`)}
             >
-              Move
+              {t.t(`Notes.move`)}
             </Button>
           </div>
         )}
@@ -771,13 +804,16 @@ function SelectionBar(
   )
 }
 
+/** The sentences of a {@link Stamp}, by what happened to the note. */
+const STAMP_KEYS = { updated: `Notes.updated`, created: `Notes.created` } as const
+
 /**
  * A moment as "Updated 3 hours ago" or "Created 12 Mar 2026". Its hover text is the exact moment,
  * and a screen reader hears the exact moment too, not only the rough distance.
  */
 function Stamp(
-  { label, at, day, class: className }: {
-    label: string
+  { kind, at, day, class: className }: {
+    kind: keyof typeof STAMP_KEYS
     at: string
     /** Shows the calendar day instead of the distance from now. */
     day?: boolean
@@ -785,12 +821,16 @@ function Stamp(
   },
 ): JSX.Element {
   const format = useFormat()
+  const t = useAppText()
   return (
     <span class={className}>
       <span aria-hidden="true">
-        {label} {day ? <OnDay at={at} /> : <When at={at} />}
+        <Rich
+          parts={t.parts(STAMP_KEYS[kind], { date: `` })}
+          tags={{ date: () => day ? <OnDay at={at} /> : <When at={at} /> }}
+        />
       </span>
-      <span class="sr-only">{label} {format.exact(at)}</span>
+      <span class="sr-only">{t.t(STAMP_KEYS[kind], { date: format.exact(at) })}</span>
     </span>
   )
 }
@@ -811,14 +851,15 @@ function NoteItem(
     menu: ComponentChildren
   },
 ): JSX.Element {
+  const t = useAppText()
   const edited = note.updatedAt !== undefined && note.updatedAt !== note.createdAt
   const phoneStamp = edited
-    ? { label: "Updated", at: note.updatedAt }
-    : { label: "Created", at: note.createdAt ?? note.updatedAt }
+    ? { kind: "updated" as const, at: note.updatedAt }
+    : { kind: "created" as const, at: note.createdAt ?? note.updatedAt }
   const summary = (
     <div class="flex min-w-0 flex-1 gap-4">
       <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <h2 class={ROW_TITLE} data-e2e="note-item-title">
+        <h2 class={ROW_TITLE} data-e2e="note-item-title" translate={false}>
           {selecting ? note.title : (
             <Link
               href={NOTE_PATHS.note(note.id)}
@@ -847,7 +888,9 @@ function NoteItem(
                   size="xs"
                   class="size-5 text-[10px]"
                 />
-                <span class="truncate" data-e2e="note-author">{note.authorName}</span>
+                <span class="truncate" data-e2e="note-author" translate={false}>
+                  {note.authorName}
+                </span>
               </span>
             )}
             {note.authorName && phoneStamp.at && (
@@ -856,15 +899,15 @@ function NoteItem(
               </span>
             )}
             {phoneStamp.at && (
-              <Stamp label={phoneStamp.label} at={phoneStamp.at} class="shrink-0 sm:hidden" />
+              <Stamp kind={phoneStamp.kind} at={phoneStamp.at} class="shrink-0 sm:hidden" />
             )}
           </span>
           <NoteTags tagIds={note.tagIds} tags={tags} max={ROW_TAGS} />
         </div>
       </div>
       <div class="hidden shrink-0 flex-col items-end gap-1 text-right text-sm text-muted sm:flex">
-        {note.updatedAt && <Stamp label="Updated" at={note.updatedAt} />}
-        {note.createdAt && <Stamp label="Created" at={note.createdAt} day />}
+        {note.updatedAt && <Stamp kind="updated" at={note.updatedAt} />}
+        {note.createdAt && <Stamp kind="created" at={note.createdAt} day />}
       </div>
     </div>
   )
@@ -881,7 +924,7 @@ function NoteItem(
             value={note.id}
             checked={ticked}
             onChange={(event) => onTick(event.currentTarget.checked)}
-            aria-label={`Tick ${note.title}`}
+            aria-label={t.t(`Notes.tick`, { title: note.title })}
             labelClass="flex min-h-14 w-full cursor-pointer px-4 py-3 sm:px-6"
             data-e2e="note-select"
           >
@@ -924,27 +967,32 @@ function NoteRowMenu(
     disabled?: boolean
   },
 ): JSX.Element {
+  const t = useAppText()
   return (
     <Dropdown
       trigger={<IconEllipsisVertical class="size-5" />}
-      triggerLabel={`Actions for ${note.title}`}
+      triggerLabel={t.t(`Notes.actions`, { title: note.title })}
       triggerClasses={MENU_TRIGGER_CLASSES}
       triggerDataE2E="note-menu"
     >
       <DropdownItem href={NOTE_PATHS.note(note.id)} navigate={navigate} dataE2E="note-open">
-        Open
+        {t.t(`Notes.open`)}
       </DropdownItem>
       {onMove && (
         <DropdownItem onClick={onMove} disabled={disabled} dataE2E="note-move">
-          Move to group…
+          {t.t(`Notes.moveToGroup`)}
         </DropdownItem>
       )}
       {onCopyLink && (
-        <DropdownItem onClick={onCopyLink} dataE2E="note-copy-link">Copy link</DropdownItem>
+        <DropdownItem onClick={onCopyLink} dataE2E="note-copy-link">
+          {t.t(`Notes.copyLink`)}
+        </DropdownItem>
       )}
       {onDelete && MENU_DIVIDER}
       {onDelete && (
-        <DropdownItem onClick={onDelete} danger dataE2E="note-delete">Delete</DropdownItem>
+        <DropdownItem onClick={onDelete} danger dataE2E="note-delete">
+          {t.t(`Notes.delete`)}
+        </DropdownItem>
       )}
     </Dropdown>
   )
@@ -962,23 +1010,27 @@ export function MoveNoteDialog(
     onCancel: () => void
   },
 ): JSX.Element {
+  const t = useAppText()
   return (
     <Modal
       open
-      title="Move to group"
-      cancelLabel="Cancel"
+      title={t.t(`MoveNote.title`)}
+      cancelLabel={t.t(`MoveNote.cancel`)}
       onClose={onCancel}
       ariaDescribedBy="note-move-question"
       dataE2E="note-move-dialog"
       footer={
         <Button type="button" variant="ghost" onClick={onCancel} data-e2e="note-move-cancel">
-          Cancel
+          {t.t(`MoveNote.cancel`)}
         </Button>
       }
     >
       <Stack gap="md">
         <p id="note-move-question" class="text-sm text-muted">
-          Choose the group "{note.title}" moves to. Everyone in that group will see it.
+          <Rich
+            parts={t.parts(`MoveNote.question`, { title: note.title })}
+            tags={{ title: userValue }}
+          />
         </p>
         <ul class="flex flex-col gap-2">
           {moveTargets.map((target) => (
@@ -990,7 +1042,7 @@ export function MoveNoteDialog(
                 onClick={() => onMove(target.id)}
                 data-e2e="note-move-target"
               >
-                {target.name}
+                <span translate={false}>{target.name}</span>
               </Button>
             </li>
           ))}

@@ -9,8 +9,7 @@
   // its DOM attributes. A file with such text not translated yet starts with
   // `// deno-lint-ignore-file ui-text/no-literal`; #275 removes those comments group by group, and
   // `deno lint` reports the comment as unused once its file is clean. The rule does not see English
-  // kept in constants or passed to a component's own props, which these files still have (#275's
-  // list): note-widgets.tsx, notes-filter.ts, search-palette.tsx and shortcuts.tsx.
+  // kept in constants or passed to a component's own props: the en-XA tests catch those (#275).
   "lint": {
     "plugins": ["jsr:@spy4x/preact-theme@10.12.0/lint"]
   }

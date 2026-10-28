@@ -452,7 +452,8 @@ A widget shows counts only, never an item's content or who did it.
 
 1. **Definition.** Add the widget to the aggregate's list in its domain package, as `NOTE_WIDGETS`
    in `libs/domain/notes/overview.ts` does: a stable `id` (a saved layout keeps it, so it never
-   changes), a `title`, a `size` (`stat` for a number, `full` for a chart), `canView(role)` and the
+   changes), a `titleKey` (the `app` catalog key of its name, translated as `i18n/TRANSLATING.md`
+   says), a `size` (`stat` for a number, `full` for a chart), `canView(role)` and the
    `operation` that answers it. Answer a number with `CountWidgetResult` and a chart with
    `SeriesWidgetResult` from `@domain/groups`, both with the period before the range, or `null`
    when the group did not exist for all of it.

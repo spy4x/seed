@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { isApplePlatform, matchesHotkey, parseHotkey } from "@spy4x/platform/browser/hotkeys"
@@ -14,8 +13,12 @@ import { Kbd } from "@spy4x/preact-ui/kbd"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
 import { Modal } from "@spy4x/preact-ui/modal"
+import { Rich } from "@spy4x/preact-ui/i18n"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { GROUP_PATHS, type Navigate, NOTE_PATHS, ScreenForm } from "./progressive.tsx"
+import { useAppText } from "./i18n.ts"
+import { type Message, messageText } from "./message.ts"
+import { userValue } from "./notes-screen.tsx"
 
 /** A group the person may add notes to. */
 export interface NewNoteGroup {
@@ -35,33 +38,16 @@ export interface NewNoteAdded {
 
 /** Why the last add failed, by where it is shown. */
 export interface NewNoteErrors {
-  title?: string | null
-  group?: string | null
+  title?: Message | null
+  group?: Message | null
   /** Shown under the form: the notes store's create error, or the offline message. */
-  form?: string | null
+  form?: Message | null
   /** The group's plan refused the note; shown under the form with its link to the plans. */
   plan?: PlanRefusal | null
 }
 
-/** The words of the New note dialog that are not data. */
-export const NEW_NOTE_TEXT = {
-  title: "New note",
-  titleLabel: "Title",
-  groupLabel: "Group",
-  chooseGroup: "Choose a group",
-  add: "Add note",
-  adding: "Adding…",
-  open: "Open note",
-  chooseGroupError: "Choose a group for this note.",
-  noGroup: "Notes live in a group you can write to. Create one to start.",
-  newGroup: "New group",
-  onDevice: "Saved on this device. It will be sent when you are back online.",
-} as const
-
-/** "Added “Buy milk” to Acme." */
-export function addedText(added: NewNoteAdded): string {
-  return `Added “${added.title}” to ${added.groupName}.`
-}
+/** The refusal of an add with no group chosen, a key of the `app` catalog. */
+export const CHOOSE_GROUP_ERROR = `NewNote.chooseGroupError`
 
 /** Props of {@link NewNoteDialog}. */
 export interface NewNoteDialogProps {
@@ -101,6 +87,7 @@ export interface NewNoteDialogProps {
  */
 export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
   const { open, onClose, groups, groupId, pending, errors, added, navigate } = props
+  const t = useAppText()
   const title = useRef<HTMLInputElement>(null)
   const group = useRef<HTMLSelectElement>(null)
   const openAfter = useRef(false)
@@ -143,15 +130,17 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
     <Modal
       open={open}
       onClose={onClose}
-      title={NEW_NOTE_TEXT.title}
-      cancelLabel="Close"
+      title={t.t(`NewNote.title`)}
+      cancelLabel={t.t(`NewNote.close`)}
       dataE2E="new-note-dialog"
       class="mt-16 sm:mt-auto sm:max-w-120"
     >
       {groups.length === 0
         ? (
           <Stack>
-            <p class="text-sm text-muted" data-e2e="new-note-no-group">{NEW_NOTE_TEXT.noGroup}</p>
+            <p class="text-sm text-muted" data-e2e="new-note-no-group">
+              {t.t(`NewNote.noGroup`)}
+            </p>
             <DialogActions>
               <Button
                 href={GROUP_PATHS.new}
@@ -161,7 +150,7 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
                 }}
                 data-e2e="new-note-new-group"
               >
-                {NEW_NOTE_TEXT.newGroup}
+                {t.t(`NewNote.newGroup`)}
               </Button>
             </DialogActions>
           </Stack>
@@ -179,14 +168,14 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
               {groups.length > 1 && (
                 <Field
                   id="new-note-group"
-                  label={NEW_NOTE_TEXT.groupLabel}
-                  error={errors.group}
+                  label={t.t(`NewNote.groupLabel`)}
+                  error={messageText(t, errors.group)}
                 >
                   <Select
                     ref={group}
                     name="groupId"
                     data-e2e="new-note-group"
-                    placeholder={NEW_NOTE_TEXT.chooseGroup}
+                    placeholder={t.t(`NewNote.chooseGroup`)}
                     options={groups.map((option) => ({ value: option.id, label: option.name }))}
                     value={chosen?.id ?? ""}
                     onChange={(event) => props.onGroupChange(event.currentTarget.value || null)}
@@ -195,9 +184,11 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
               )}
               <Field
                 id="new-note-title"
-                label={NEW_NOTE_TEXT.titleLabel}
-                error={errors.title}
-                hint={groups.length === 1 ? `In ${groups[0].name}` : undefined}
+                label={t.t(`NewNote.titleLabel`)}
+                error={messageText(t, errors.title)}
+                hint={groups.length === 1
+                  ? t.t(`NewNote.inGroup`, { group: groups[0].name })
+                  : undefined}
               >
                 <Input
                   ref={title}
@@ -211,8 +202,14 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
                   onKeyDown={onKeyDown}
                 />
               </Field>
-              <p class="hidden items-center gap-1 text-xs text-muted pointer-fine:flex">
-                <Kbd keys="enter" /> adds · <Kbd keys="mod+enter" /> adds and opens
+              <p class="hidden text-xs leading-6 text-muted pointer-fine:block">
+                <Rich
+                  parts={t.parts(`NewNote.keys`)}
+                  tags={{
+                    add: () => <Kbd keys="enter" />,
+                    open: () => <Kbd keys="mod+enter" />,
+                  }}
+                />
               </p>
             </Stack>
             <div
@@ -227,14 +224,21 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
                     aria-hidden="true"
                   />
                   <span>
-                    {addedText(added)} {added.onDevice && `${NEW_NOTE_TEXT.onDevice} `}
+                    <Rich
+                      parts={t.parts(`NewNote.added`, {
+                        title: added.title,
+                        group: added.groupName,
+                      })}
+                      tags={{ title: userValue, group: userValue }}
+                    />{" "}
+                    {added.onDevice && `${t.t(`NewNote.onDevice`)} `}
                     <Link
                       href={NOTE_PATHS.note(added.noteId)}
                       navigate={() => props.onOpenNote(added.noteId)}
                       class="font-medium underline underline-offset-2"
                       data-e2e="new-note-open"
                     >
-                      {NEW_NOTE_TEXT.open}
+                      {t.t(`NewNote.open`)}
                     </Link>
                   </span>
                 </p>
@@ -250,15 +254,15 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
                     navigate={navigate}
                   />
                 )
-                : <ErrorState message={errors.form ?? null} />}
+                : <ErrorState message={messageText(t, errors.form)} />}
               <DialogActions>
                 <Button
                   type="submit"
                   data-e2e="new-note-submit"
                   busy={pending}
-                  busyLabel={NEW_NOTE_TEXT.adding}
+                  busyLabel={t.t(`NewNote.adding`)}
                 >
-                  {NEW_NOTE_TEXT.add}
+                  {t.t(`NewNote.add`)}
                 </Button>
               </DialogActions>
             </Stack>
