@@ -113,16 +113,21 @@ describe(`createOperator`, () => {
     }
   })
 
-  it(`prints the address and the user, never the password`, async () => {
-    const before: Record<string, UserRole>[] = [{}, { "seller@example.com": UserRole.VIEWER }]
-    for (const people of before) {
-      const { ports } = fakeDatabase({ ...people })
+  it(`prints the address and the role, and never the password, whatever happened`, async () => {
+    const runs: [Record<string, UserRole>, string][] = [
+      [{}, PASSWORD],
+      [{ "seller@example.com": UserRole.VIEWER }, PASSWORD],
+      [{}, `short`],
+    ]
+    for (const [people, password] of runs) {
+      const { ports } = fakeDatabase({ ...people }, password)
       const result = await createOperator(`seller@example.com`, ports)
       const message = operatorCreateMessage(`seller@example.com`, result)
 
+      expect(message).not.toContain(password)
+      if (`error` in result) continue
       expect(message).toContain(`seller@example.com`)
       expect(message).toContain(`administrator`)
-      expect(message).not.toContain(PASSWORD)
     }
   })
 })
