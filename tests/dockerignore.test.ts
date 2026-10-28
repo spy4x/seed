@@ -123,3 +123,15 @@ Deno.test("reads a rule the way Docker does, not as a general glob", () => {
     expect({ rule, ignored: isIgnored(rule, path) }).toEqual({ rule, ignored })
   }
 })
+
+Deno.test("deploys every folder the image builds from", async () => {
+  // A folder the build context lets in but rsync never copies breaks the build on the server only.
+  const rules = await Deno.readTextFile(`${ROOT}.dockerignore`)
+  const include = (await Deno.readTextFile(`${ROOT}infra/deploy/include.txt`)).split("\n")
+  const folders = [...rules.matchAll(/^!([\w-]+)\/\*\*$/gm)].map((match) => match[1])
+  expect(folders.length).toBeGreaterThan(0)
+  for (const folder of folders) {
+    expect({ folder, deployed: include.includes(`${folder}/***`) })
+      .toEqual({ folder, deployed: true })
+  }
+})

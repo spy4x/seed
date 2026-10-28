@@ -5,6 +5,8 @@ import { Router } from "wouter-preact"
 import { type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import { GroupTab } from "@ui/group-editor-screen.tsx"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import appEn from "@i18n/app/en.json" with { type: "json" }
 import { billingStore } from "../state/billing.ts"
 import { groupsStore } from "../state/groups.ts"
 import { invitationsStore } from "../state/invitations.ts"
@@ -232,6 +234,9 @@ describe("transferAndRefresh", () => {
   })
 })
 
+/** The toasts' English, as an app without another language reads it. */
+const EN = createTranslator({ language: `en`, catalogs: [{ source: appEn }] })
+
 describe("createAndOpen", () => {
   const created = { ...known, name: "Trip" }
 
@@ -244,6 +249,7 @@ describe("createAndOpen", () => {
       { select: (id: string) => Promise.resolve(void selected.push(id)) },
       (to, options) => visits.push([to, options]),
       { success: (notice) => String(notices.push(notice)) },
+      EN,
     )
 
     expect(done).toBe(true)
@@ -265,6 +271,7 @@ describe("createAndOpen", () => {
       { select: (id: string) => Promise.resolve(void selected.push(id)) },
       (to) => visits.push(to),
       { success: (notice) => String(notices.push(notice)) },
+      EN,
     )
 
     expect(done).toBe(false)
@@ -283,7 +290,7 @@ describe("saveAndAnnounce", () => {
     const notices: unknown[] = []
     const done = await saveAndAnnounce(groups(true), known.id, {
       success: (notice) => String(notices.push(notice)),
-    })
+    }, EN)
 
     expect(done).toBe(true)
     expect(notices).toEqual([{
@@ -297,7 +304,7 @@ describe("saveAndAnnounce", () => {
     const notices: unknown[] = []
     const done = await saveAndAnnounce(groups(false), known.id, {
       success: (notice) => String(notices.push(notice)),
-    })
+    }, EN)
 
     expect(done).toBe(false)
     expect(notices).toEqual([])

@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useRef, useState } from "preact/hooks"
 import { Avatar } from "@spy4x/preact-ui/avatar"
@@ -7,9 +6,12 @@ import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import type { PlanRefusal } from "@domain/billing"
-import { assignableRoles, canRemoveMember, type GroupRole } from "@domain/groups"
+import { assignableRoles, canRemoveMember, GroupRole } from "@domain/groups"
 import { pictureUrl } from "@domain/identity"
-import { ROLE_TEXT } from "./groups-screen.tsx"
+import { roleName } from "./groups-screen.tsx"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { useAppText } from "./i18n.ts"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { useFreshError } from "@spy4x/preact-ui/use-fresh-error"
 import { useFocusAfterRemoval } from "@spy4x/preact-ui/use-focus-after-removal"
@@ -42,9 +44,20 @@ export interface GroupMemberRow {
   isYou: boolean
 }
 
+/** Each role's "Make …" item, by its key in the `app` catalog: the owner is never offered. */
+const MAKE_KEYS: Record<GroupRole, string> = {
+  [GroupRole.VIEWER]: `GroupMembers.makeViewer`,
+  [GroupRole.EDITOR]: `GroupMembers.makeEditor`,
+  [GroupRole.ADMIN]: `GroupMembers.makeAdmin`,
+  [GroupRole.OWNER]: `GroupMembers.makeOwner`,
+}
+
 /** What a member is called on the page: their name, else their address, else a placeholder. */
-export function memberLabel(member: Pick<GroupMemberRow, "name" | "email">): string {
-  return member.name.trim() || member.email || "Unnamed member"
+export function memberLabel(
+  t: Translator<string>,
+  member: Pick<GroupMemberRow, "name" | "email">,
+): string {
+  return member.name.trim() || member.email || t.t(`GroupMembers.unnamed`)
 }
 
 /** A member change that was refused, shown under that member's row. */
@@ -105,6 +118,7 @@ export function GroupMembersSection(
     children,
   }: GroupMembersSectionProps,
 ): JSX.Element {
+  const t = useAppText()
   const total = members ? Math.max(memberCount ?? 0, members.length) : null
   const header = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLUListElement>(null)
@@ -131,7 +145,7 @@ export function GroupMembersSection(
     >
       <div ref={header} class="flex min-h-11 items-center justify-between gap-3">
         <h2 id="group-members" class="text-sm font-semibold text-foreground" tabIndex={-1}>
-          Members{total === null ? "" : ` (${total})`}
+          {total === null ? t.t(`GroupMembers.title`) : t.t(`GroupMembers.titleCount`, { total })}
         </h2>
         {action}
       </div>
@@ -140,7 +154,7 @@ export function GroupMembersSection(
         : members === null
         ? (
           <p class="text-sm text-muted" data-e2e="group-members-loading">
-            Loading the members…
+            {t.t(`GroupMembers.loading`)}
           </p>
         )
         : (
@@ -165,7 +179,7 @@ export function GroupMembersSection(
         )}
       {members && total !== null && total > members.length && (
         <p class="text-sm text-muted" data-e2e="group-members-cut-off">
-          Showing the first {members.length} of {total} members.
+          {t.t(`GroupMembers.cutOff`, { shown: members.length, count: total })}
         </p>
       )}
       {children}
@@ -186,7 +200,9 @@ function MemberItem(
     onRemove?: (userId: number) => void
   },
 ): JSX.Element {
-  const label = memberLabel(member)
+  const t = useAppText()
+  const label = memberLabel(t, member)
+  const named = member.name.trim() !== `` || Boolean(member.email)
   const roles = assignableRoles(actorRole, member.role)
   const removable = canRemoveMember(actorRole, member.role)
   const [removing, setRemoving] = useState(false)
@@ -206,27 +222,38 @@ function MemberItem(
             <span
               class="line-clamp-2 break-words font-medium"
               title={label}
+              translate={named ? false : undefined}
               data-e2e="group-member-name"
             >
               {label}
             </span>
-            {member.isYou && <span class="shrink-0 text-xs text-muted">you</span>}
+            {member.isYou && (
+              <span class="shrink-0 text-xs text-muted">{t.t(`GroupMembers.you`)}</span>
+            )}
           </span>
           {member.name.trim() && member.email && (
-            <span class="truncate text-sm text-muted" title={member.email}>{member.email}</span>
+            <span class="truncate text-sm text-muted" title={member.email} translate={false}>
+              {member.email}
+            </span>
           )}
           {member.lastSeenAt && (
             <span class="text-sm text-muted" data-e2e="group-member-last-seen">
-              Last seen <When at={member.lastSeenAt} />
+              <Rich
+                parts={t.parts(`GroupMembers.lastSeen`)}
+                tags={{ value: () => <When at={member.lastSeenAt!} /> }}
+              />
             </span>
           )}
         </div>
         <span class="shrink-0 text-sm text-muted" data-e2e="group-member-role">
-          {pending ? "Saving…" : ROLE_TEXT[member.role]}
+          {pending ? t.t(`GroupMembers.saving`) : roleName(t, member.role)}
         </span>
         {roles.length > 0 || removable
           ? (
-            <MoreMenu label={`Actions for ${label}`} dataE2E="group-member-menu">
+            <MoreMenu
+              label={t.t(`GroupMembers.actions`, { name: label })}
+              dataE2E="group-member-menu"
+            >
               {roles.map((role) => (
                 <DropdownItem
                   key={role}
@@ -234,7 +261,7 @@ function MemberItem(
                   dataE2E="group-member-make"
                   onClick={() => onRoleChange?.(member.userId, role)}
                 >
-                  Make {ROLE_TEXT[role]}
+                  {t.t(MAKE_KEYS[role])}
                 </DropdownItem>
               ))}
               {removable && (
@@ -247,7 +274,7 @@ function MemberItem(
                     setRemoving(true)
                   }}
                 >
-                  Remove from group
+                  {t.t(`GroupMembers.remove`)}
                 </DropdownItem>
               )}
             </MoreMenu>
@@ -260,9 +287,9 @@ function MemberItem(
         : <ErrorState focusOnAppear message={error} dataE2E="group-member-error" />)}
       {removing && (
         <ConfirmDialog
-          title={`Remove ${label}?`}
-          confirmLabel="Remove member"
-          cancelLabel="Cancel"
+          title={t.t(`GroupMembers.removeTitle`, { name: label })}
+          confirmLabel={t.t(`GroupMembers.removeConfirm`)}
+          cancelLabel={t.t(`GroupMembers.cancel`)}
           tone="danger"
           dataE2E="group-member-remove-dialog"
           onConfirm={() => {
@@ -273,9 +300,7 @@ function MemberItem(
         >
           <div class="flex flex-col gap-4">
             <p class="text-sm text-muted">
-              They lose access right away, on every device. What they wrote stays in the group. If
-              this is their only group, they get a new empty one named "Personal". An invitation
-              link they still hold lets them back in from another account, so revoke such links too.
+              {t.t(`GroupMembers.removeConfirmation`)}
             </p>
             <ErrorState focusOnAppear message={removeError} dataE2E="group-member-remove-error" />
           </div>

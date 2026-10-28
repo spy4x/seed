@@ -25,6 +25,7 @@ COPY libs/domain/api-tokens/deno.json ./libs/domain/api-tokens/deno.json
 COPY libs/domain/billing/deno.json ./libs/domain/billing/deno.json
 COPY libs/domain/blog/deno.json ./libs/domain/blog/deno.json
 COPY libs/domain/contact-links/deno.json ./libs/domain/contact-links/deno.json
+COPY libs/domain/catalog/deno.json ./libs/domain/catalog/deno.json
 COPY libs/domain/groups/deno.json ./libs/domain/groups/deno.json
 COPY libs/domain/identity/deno.json ./libs/domain/identity/deno.json
 COPY libs/domain/notes/deno.json ./libs/domain/notes/deno.json
@@ -37,6 +38,7 @@ COPY libs/server/auth/deno.json ./libs/server/auth/deno.json
 COPY libs/server/billing/deno.json ./libs/server/billing/deno.json
 COPY libs/server/blog/deno.json ./libs/server/blog/deno.json
 COPY libs/server/contact-links/deno.json ./libs/server/contact-links/deno.json
+COPY libs/server/catalog/deno.json ./libs/server/catalog/deno.json
 COPY libs/server/files/deno.json ./libs/server/files/deno.json
 COPY libs/server/groups/deno.json ./libs/server/groups/deno.json
 COPY libs/server/jobs/deno.json ./libs/server/jobs/deno.json

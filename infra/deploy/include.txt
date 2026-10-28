@@ -1,5 +1,7 @@
 apps/***
 libs/***
+# The language catalogs both apps build from (i18n/TRANSLATING.md).
+i18n/***
 infra/***
 # The MPA renders the API reference from this file (apps/mpa/api-docs.ts).
 docs/

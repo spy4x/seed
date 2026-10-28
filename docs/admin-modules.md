@@ -20,10 +20,16 @@ each side holds them to that (`apps/admin/src/modules/registry.test.ts`,
 | `newsletter` | Newsletter    | `/newsletter`             |                                     | `/api/admin/newsletter/*` |
 | `blog`       | Blog          | `/blog`, `/blog/new`, `/blog/:id` |                                     | `/api/admin/blog/*`     |
 | `contact-links` | Contact links | `/contact-links`, `/contact-links/new`, `/contact-links/:id` | | `/api/admin/contact-links*` |
+| `catalog`    | Catalog       | `/catalog`, `/catalog/:id`, `/catalog/categories`, `/catalog/categories/:id` | | `/api/admin/catalog*` |
 | `audit`      | Audit log     | `/audit`                  |                                     | `/api/admin/audit*`     |
 | `jobs`       | Jobs          | `/jobs`, `/jobs/:id`      |                                     | `/api/admin/jobs*`      |
 | `system`     | System        | `/system`                 |                                     | `/api/admin/system*`    |
 | `api-tokens` | API tokens    | `/api-tokens`             | API tokens, Devices, Notifications  | `/api/admin/api-tokens*` |
+
+An optional module is on only when the product turns it on. Its API module has `enabled(context)`;
+off, its routes are not mounted and `GET /api/admin/modules`, which lists the ids of the modules
+that are on, leaves it out. Its admin module has `optional: true`, and the app shows it once that
+list names it. The catalog is the one optional module (`CATALOG=true`, [catalog.md](catalog.md)).
 
 A module marked "none yet" is registered with a "coming soon" page (and tabs), so the icon rail
 shows the whole plan. Its own lane fills it in.

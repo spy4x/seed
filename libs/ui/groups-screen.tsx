@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { IconChevronDown, IconChevronRight, IconPlus } from "@spy4x/preact-icons"
@@ -9,10 +8,13 @@ import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
+import { Rich } from "@spy4x/preact-ui/i18n"
 import { GROUP_RESTORE_DAYS, type GroupColor, GroupRole } from "@domain/groups"
 import { GroupMark } from "./group-appearance.tsx"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { GROUP_PATHS, type Navigate } from "./progressive.tsx"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAppText } from "./i18n.ts"
 
 /** The page that creates a group: the same editor as a group's own page, with empty fields. */
 export const NEW_GROUP_PATH = GROUP_PATHS.new
@@ -71,7 +73,23 @@ export interface GroupsScreenProps {
   invitations?: ComponentChildren
 }
 
-/** What a role is called on screen. */
+/** Each role's name, by its key in the `app` catalog. */
+const ROLE_KEYS: Record<GroupRole, string> = {
+  [GroupRole.VIEWER]: `Groups.roleViewer`,
+  [GroupRole.EDITOR]: `Groups.roleEditor`,
+  [GroupRole.ADMIN]: `Groups.roleAdmin`,
+  [GroupRole.OWNER]: `Groups.roleOwner`,
+}
+
+/** What a role is called on screen, in the person's language. */
+export function roleName(t: Translator<string>, role: GroupRole): string {
+  return t.t(ROLE_KEYS[role])
+}
+
+/**
+ * What a role is called, in English. Only the search palette reads it, until its own screens are
+ * translated (#275); every group screen uses {@link roleName}.
+ */
 export const ROLE_TEXT: Record<GroupRole, string> = {
   [GroupRole.VIEWER]: "Viewer",
   [GroupRole.EDITOR]: "Editor",
@@ -101,6 +119,7 @@ export function GroupsScreen(
     invitations,
   }: GroupsScreenProps,
 ): JSX.Element {
+  const t = useAppText()
   // A refused restore has no field to fix, so focus lands on the message above the list. The
   // disclosure opens for it, or the message would be hidden.
   const restoreMessage = useRef<HTMLDivElement>(null)
@@ -118,10 +137,10 @@ export function GroupsScreen(
   return (
     <Stack gap="xl">
       <PageHeader
-        title="Groups"
+        title={t.t(`Groups.title`)}
         action={!readFailed && (
           <PageAction
-            label="New group"
+            label={t.t(`Groups.new`)}
             Icon={IconPlus}
             href={NEW_GROUP_PATH}
             navigate={navigate}
@@ -131,7 +150,7 @@ export function GroupsScreen(
         // Rare actions go in the menu: "New group" stays the page's one primary action.
         menu={
           <DropdownItem href={GROUP_PATHS.import} navigate={navigate} dataE2E="group-import-open">
-            Import a group…
+            {t.t(`Groups.import`)}
           </DropdownItem>
         }
         menuDataE2E="groups-menu"
@@ -147,11 +166,11 @@ export function GroupsScreen(
               variant="secondary"
               class="min-h-11 sm:min-h-9"
               busy={loading}
-              busyLabel="Loading groups…"
+              busyLabel={t.t(`Groups.loading`)}
               onClick={onRetry}
               data-e2e="groups-retry"
             >
-              Try again
+              {t.t(`Groups.retry`)}
             </Button>
           </div>
         )
@@ -161,13 +180,11 @@ export function GroupsScreen(
             <EmptyState
               headingLevel={2}
               inset
-              title={loading ? "Loading groups…" : "No groups yet"}
-              description={loading
-                ? undefined
-                : error ?? `Everything you put in a group is shared with the people you invite.`}
+              title={loading ? t.t(`Groups.loading`) : t.t(`Groups.empty`)}
+              description={loading ? undefined : error ?? t.t(`Groups.emptyHint`)}
               action={!loading && (
                 <Button href={NEW_GROUP_PATH} navigate={navigate} data-e2e="group-new-empty">
-                  New group
+                  {t.t(`Groups.new`)}
                 </Button>
               )}
             />
@@ -175,7 +192,11 @@ export function GroupsScreen(
         )
         : (
           <Card>
-            <ul class="divide-y divide-subtle" data-e2e="group-list" aria-label="Your groups">
+            <ul
+              class="divide-y divide-subtle"
+              data-e2e="group-list"
+              aria-label={t.t(`Groups.listLabel`)}
+            >
               {groups.map((group) => (
                 <GroupItem
                   key={group.id}
@@ -192,7 +213,7 @@ export function GroupsScreen(
         <details ref={disclosure} class="group/deleted" data-e2e="deleted-groups">
           {/* The chevron stands in for the marker a flex summary loses, and turns when it opens. */}
           <summary class="flex min-h-11 cursor-pointer items-center gap-2 rounded-md text-sm font-semibold text-foreground">
-            Deleted groups ({deleted.length})
+            {t.t(`Groups.deleted`, { count: deleted.length })}
             <IconChevronDown
               aria-hidden="true"
               class="size-4 shrink-0 transition-transform group-open/deleted:rotate-180"
@@ -200,8 +221,7 @@ export function GroupsScreen(
           </summary>
           <Stack gap="sm" class="mt-2">
             <p class="text-sm text-muted">
-              A deleted group and everything in it can be restored for {GROUP_RESTORE_DAYS}{" "}
-              days. After that it is deleted for good.
+              {t.t(`Groups.deletedHint`, { count: GROUP_RESTORE_DAYS })}
             </p>
             <div ref={restoreMessage} tabIndex={-1} data-e2e="group-restore-error">
               <ErrorState message={restoreError} />
@@ -219,15 +239,22 @@ export function GroupsScreen(
                         <span
                           class="line-clamp-2 break-words text-sm font-medium"
                           title={group.name}
+                          translate={false}
                           data-e2e="deleted-group-name"
                         >
                           {group.name}
                         </span>
                         <span class="text-sm text-muted">
-                          Restorable until{" "}
-                          <time dateTime={restorableUntil(group.deletedAt)}>
-                            {restorableUntil(group.deletedAt).slice(0, 10)}
-                          </time>
+                          <Rich
+                            parts={t.parts(`Groups.restorableUntil`, {
+                              date: restorableUntil(group.deletedAt).slice(0, 10),
+                            })}
+                            tags={{
+                              value: (date) => (
+                                <time dateTime={restorableUntil(group.deletedAt)}>{date}</time>
+                              ),
+                            }}
+                          />
                         </span>
                       </div>
                       <Button
@@ -235,14 +262,14 @@ export function GroupsScreen(
                         variant="outline"
                         size="sm"
                         class="min-h-11 sm:min-h-9"
-                        aria-label={`Restore ${group.name}`}
+                        aria-label={t.t(`Groups.restoreNamed`, { name: group.name })}
                         data-e2e="group-restore"
                         busy={restoringId === group.id}
-                        busyLabel="Restoring…"
+                        busyLabel={t.t(`Groups.restoring`)}
                         disabled={restoringId !== null}
                         onClick={() => onRestore?.(group.id)}
                       >
-                        Restore
+                        {t.t(`Groups.restore`)}
                       </Button>
                     </li>
                   ))}
@@ -257,8 +284,8 @@ export function GroupsScreen(
 }
 
 /** How many people a group has, for its row: "Only you" for a group of one. */
-function membersText(count: number): string {
-  return count === 1 ? "Only you" : `${count} members`
+function membersText(t: Translator<string>, count: number): string {
+  return count === 1 ? t.t(`Groups.onlyYou`) : t.t(`Groups.members`, { count })
 }
 
 /**
@@ -269,6 +296,7 @@ function membersText(count: number): string {
 function GroupItem(
   { group, current, navigate }: { group: GroupRow; current: boolean; navigate?: Navigate },
 ): JSX.Element {
+  const t = useAppText()
   return (
     <li class="relative transition-colors hover:bg-hover" data-e2e={`group-${group.id}`}>
       <div class="flex min-h-14 items-center gap-3 px-4 py-3 sm:px-6">
@@ -278,26 +306,29 @@ function GroupItem(
             <Link
               href={GROUP_PATHS.settings(group.id)}
               navigate={navigate}
-              aria-label={current ? `${group.name}, current group` : undefined}
+              aria-label={current ? t.t(`Groups.currentNamed`, { name: group.name }) : undefined}
               class="line-clamp-2 min-w-0 break-words text-sm font-medium text-foreground after:absolute after:inset-0 focus-visible:outline-hidden focus-visible:after:ring-2 focus-visible:after:ring-focus focus-visible:after:ring-inset"
               title={group.name}
               data-e2e="group-open"
             >
-              <span data-e2e="group-item-name">{group.name}</span>
+              <span translate={false} data-e2e="group-item-name">{group.name}</span>
             </Link>
             {current && (
               <span class="shrink-0 text-sm text-muted" aria-hidden="true" data-e2e="group-current">
-                Current
+                {t.t(`Groups.current`)}
               </span>
             )}
           </span>
           <span class="line-clamp-2 max-w-full text-sm text-muted">
-            {ROLE_TEXT[group.role]}
+            {roleName(t, group.role)}
             {group.memberCount !== undefined && (
-              <span data-e2e="group-item-members">{` · ${membersText(group.memberCount)}`}</span>
+              <span data-e2e="group-item-members">{` · ${membersText(t, group.memberCount)}`}</span>
             )}
             {group.description && (
-              <span data-e2e="group-item-description">{` · ${group.description}`}</span>
+              <span data-e2e="group-item-description">
+                {` · `}
+                <bdi translate={false}>{group.description}</bdi>
+              </span>
             )}
           </span>
         </div>

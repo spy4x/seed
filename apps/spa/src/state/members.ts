@@ -13,6 +13,7 @@ import { readApiError } from "@domain/errors"
 import { callCommand, type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"
+import { appText } from "./app-text.ts"
 
 /** A member as the API sends them: `joinedAt` is an ISO string. */
 export interface MemberItem {
@@ -106,7 +107,7 @@ export function createMembersStore(
       loadError.value = null
     } catch (cause) {
       if (read !== reads || groupId.value !== id) return
-      loadError.value = describeError(cause, "Could not load the members")
+      loadError.value = describeError(cause, appText(`GroupMembers.loadFailed`))
     }
   }
 
@@ -152,7 +153,7 @@ export function createMembersStore(
     return change(userId, async (id) => {
       const { member } = await dependencies.setRole({ groupId: id, userId, role })
       members.value = members.value?.map((m) => m.userId === userId ? member : m) ?? null
-    }, "Could not change the role")
+    }, appText(`GroupMembers.roleFailed`))
   }
 
   /** Removes a member from the group. Resolves to whether it worked. */
@@ -161,7 +162,7 @@ export function createMembersStore(
       await dependencies.removeMember({ groupId: id, userId })
       members.value = members.value?.filter((m) => m.userId !== userId) ?? null
       if (memberCount.value !== null) memberCount.value--
-    }, "Could not remove the member")
+    }, appText(`GroupMembers.removeFailed`))
   }
 
   /** Leaves the open group. Resolves to whether it worked, so the page can move on. */
@@ -174,7 +175,7 @@ export function createMembersStore(
       await dependencies.leave({ groupId: id })
       return true
     } catch (cause) {
-      leaveError.value = describeError(cause, "Could not leave the group")
+      leaveError.value = describeError(cause, appText(`GroupMembers.leaveFailed`))
       return false
     } finally {
       leaving.value = false
@@ -201,7 +202,7 @@ export function createMembersStore(
     } catch (cause) {
       transferError.value = cause instanceof TransferRefused
         ? { field: transferErrorField(cause.code), message: cause.message }
-        : { field: null, message: "Could not transfer the group" }
+        : { field: null, message: appText(`GroupTransfer.failed`) }
       return false
     } finally {
       transferring.value = false
@@ -271,7 +272,7 @@ export const membersHttp: MembersDependencies = {
         body: JSON.stringify(body),
       })
     } catch (_unreachable) {
-      throw new TransferRefused("The server is out of reach. Try again.", undefined)
+      throw new TransferRefused(appText(`GroupTransfer.unreachable`), undefined)
     }
     if (response.ok) return
     const error = readApiError(await response.json().catch(() => null))
@@ -281,8 +282,8 @@ export const membersHttp: MembersDependencies = {
       error?.reason !== undefined
         ? error.message
         : response.status === 429
-        ? "Too many attempts. Wait a few minutes, then try again."
-        : "Something went wrong. Try again.",
+        ? appText(`GroupTransfer.tooManyAttempts`)
+        : appText(`GroupTransfer.somethingWrong`),
       error?.reason,
     )
   },

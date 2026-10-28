@@ -7,7 +7,6 @@ import {
   createGroupsStore,
   type DeletedGroupItem,
   EMPTY_GROUP_DRAFT,
-  GROUP_MESSAGES,
   type GroupItem,
   type GroupPage,
   type GroupsDependencies,
@@ -228,7 +227,9 @@ describe("groups store", () => {
 
     await store.create()
 
-    expect(store.editorErrors.value.form).toBe(GROUP_MESSAGES.createOffline)
+    expect(store.editorErrors.value.form).toBe(
+      "Creating a group needs a connection. Try again when you are back online.",
+    )
   })
 
   it("tells each wrong field before sending, and sends nothing", async () => {
@@ -239,9 +240,9 @@ describe("groups store", () => {
 
     expect(created).toEqual([])
     expect(store.editorErrors.value).toEqual({
-      name: GROUP_MESSAGES.nameRequired,
-      description: GROUP_MESSAGES.descriptionTooLong,
-      emoji: GROUP_MESSAGES.emojiInvalid,
+      name: "Enter a name.",
+      description: "Use at most 500 characters.",
+      emoji: "Use a single emoji, such as 🏕️, or leave it empty.",
     })
   })
 
@@ -364,7 +365,7 @@ describe("groups store", () => {
     store.edit("a", { ...store.draft("a"), name: "   " })
 
     expect(await store.save("a")).toBe(false)
-    expect(store.editorErrors.value.name).toBe(GROUP_MESSAGES.nameRequired)
+    expect(store.editorErrors.value.name).toBe("Enter a name.")
     store.edit("other", { ...store.draft("a"), name: "Other" })
     expect(await store.save("other")).toBe(false)
 

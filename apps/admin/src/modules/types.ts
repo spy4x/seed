@@ -57,6 +57,11 @@ export interface AdminModule {
   /** The same id as the API module. */
   id: string
   /**
+   * A module a product turns on with a setting, such as the catalog (`CATALOG=true`). The app shows
+   * it only once `GET /api/admin/modules` lists it, and it adds no person tabs.
+   */
+  optional?: true
+  /**
    * The rail entry; its `href` is the module's first page. `name` is a catalog key, translated
    * where the rail and shortcuts show it.
    */

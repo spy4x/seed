@@ -11,6 +11,7 @@ export const ADMIN_GO_KEYS: Readonly<Record<string, string>> = {
   newsletter: "m",
   blog: "p",
   "contact-links": "l",
+  catalog: "c",
   audit: "a",
   jobs: "j",
   system: "s",
@@ -29,8 +30,9 @@ export const LIST_FILTER_MODULES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * A page's own actions, by the page's address: `c` writes a new post from the blog's list and
- * adds a link from the contact links. Each description is a catalog key.
+ * A page's own actions, by the page's address: `c` writes a new post from the blog's list, adds a
+ * link from the contact links, and adds an item or a category from the catalog's lists. Each
+ * description is a catalog key.
  */
 export const ADMIN_PAGE_ACTIONS: Readonly<
   Record<string, readonly { keys: string; description: string; href: string }[]>
@@ -41,10 +43,17 @@ export const ADMIN_PAGE_ACTIONS: Readonly<
     description: `AdminShortcuts.addLink`,
     href: "/contact-links/new",
   }],
+  "/catalog": [{ keys: "c", description: `AdminShortcuts.addItem`, href: "/catalog/new" }],
+  "/catalog/categories": [
+    { keys: "c", description: `AdminShortcuts.addCategory`, href: "/catalog/categories/new" },
+  ],
 }
 
-/** The pages whose save button takes Ctrl S (Command S on a Mac): the blog's editor. */
-const SAVE_PAGES = /^\/blog\/[^/]+$/
+/**
+ * The pages whose save button takes Ctrl S (Command S on a Mac): the blog's editor and the
+ * catalog's item editor.
+ */
+const SAVE_PAGES = /^\/(blog|catalog)\/(?!categories(\/|$))[^/]+$/
 
 /** What the admin app's shortcuts act on. */
 export interface AdminShortcutPorts {
@@ -96,7 +105,9 @@ export function adminShortcutRows(ports: AdminShortcutPorts): ShortcutRow[] {
   const save: ShortcutRow[] = SAVE_PAGES.test(ports.path)
     ? [{
       keys: "mod+s",
-      description: ports.t.t(`AdminShortcuts.savePost`),
+      description: ports.t.t(
+        ports.path.startsWith(`/catalog/`) ? `AdminShortcuts.saveItem` : `AdminShortcuts.savePost`,
+      ),
       group: SHORTCUT_GROUPS.page,
     }]
     : []

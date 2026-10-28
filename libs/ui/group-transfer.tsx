@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
@@ -10,6 +9,7 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { canTransfer, type GroupRole } from "@domain/groups"
 import { type GroupMemberRow, memberLabel } from "./group-members.tsx"
 import { ScreenForm } from "./progressive.tsx"
+import { useAppText } from "./i18n.ts"
 
 /** What the owner has filled in to hand the group over. */
 export interface TransferDraft {
@@ -73,6 +73,7 @@ export function GroupTransferForm(
     onCancel,
   }: GroupTransferFormProps,
 ): JSX.Element | null {
+  const t = useAppText()
   const nameInput = useRef<HTMLInputElement>(null)
   const passwordInput = useRef<HTMLInputElement>(null)
   const message = useRef<HTMLDivElement>(null)
@@ -114,25 +115,23 @@ export function GroupTransferForm(
     <ScreenForm pending={transferring} onSubmit={onTransfer}>
       <Stack data-e2e="group-section-transfer">
         <p class="text-sm text-muted" data-e2e="group-transfer-explanation">
-          They become the owner and you become an admin. Only the owner can delete the group, manage
-          its plan or transfer it again. Before you can delete your account, transfer every group
-          you share with others.
+          {t.t(`GroupTransfer.explanation`)}
         </p>
-        <Field id="group-transfer-member" label="New owner">
+        <Field id="group-transfer-member" label={t.t(`GroupTransfer.newOwner`)}>
           <Select
             name="userId"
             data-e2e="group-transfer-member"
             value={String(userId)}
             options={candidates.map((member) => ({
               value: member.userId,
-              label: memberLabel(member),
+              label: memberLabel(t, member),
             }))}
             onChange={(e) => change({ userId: Number(e.currentTarget.value) })}
           />
         </Field>
         <Field
           id="group-transfer-name"
-          label={`Type "${groupName}" to confirm`}
+          label={t.t(`GroupTransfer.typeName`, { name: groupName })}
           error={errorOf("name")}
           required
         >
@@ -149,7 +148,7 @@ export function GroupTransferForm(
         </Field>
         <Field
           id="group-transfer-password"
-          label="Your password"
+          label={t.t(`GroupTransfer.password`)}
           error={errorOf("password")}
           required
         >
@@ -169,15 +168,17 @@ export function GroupTransferForm(
           <ErrorState message={error && error.field === null ? error.message : null} />
         </div>
         <DialogActions>
-          <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            {t.t(`GroupTransfer.cancel`)}
+          </Button>
           <Button
             type="submit"
             variant="danger"
             data-e2e="group-transfer"
             busy={transferring}
-            busyLabel="Transferring…"
+            busyLabel={t.t(`GroupTransfer.transferring`)}
           >
-            Transfer ownership
+            {t.t(`GroupTransfer.transfer`)}
           </Button>
         </DialogActions>
       </Stack>

@@ -17,6 +17,7 @@ import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import { BLOG_AUDIT_KINDS } from "@domain/blog"
 import { CONTACT_LINK_AUDIT_KINDS } from "@domain/contact-links"
+import { CATALOG_AUDIT_KINDS } from "@domain/catalog"
 import { ACTIVITY_KINDS } from "@domain/groups"
 import {
   accountAuditEvent,
@@ -109,6 +110,19 @@ const ACTIVITY_LABELS: Record<string, string> = {
   [CONTACT_LINK_AUDIT_KINDS.updated]: `AdminAuditEvent.contactLinkUpdated`,
   [CONTACT_LINK_AUDIT_KINDS.deleted]: `AdminAuditEvent.contactLinkDeleted`,
   [CONTACT_LINK_AUDIT_KINDS.reordered]: `AdminAuditEvent.contactLinksReordered`,
+  [CATALOG_AUDIT_KINDS.itemCreated]: `AdminAuditEvent.catalogItemCreated`,
+  [CATALOG_AUDIT_KINDS.itemUpdated]: `AdminAuditEvent.catalogItemUpdated`,
+  [CATALOG_AUDIT_KINDS.itemPublished]: `AdminAuditEvent.catalogItemPublished`,
+  [CATALOG_AUDIT_KINDS.itemHidden]: `AdminAuditEvent.catalogItemHidden`,
+  [CATALOG_AUDIT_KINDS.itemDeleted]: `AdminAuditEvent.catalogItemDeleted`,
+  [CATALOG_AUDIT_KINDS.photoAdded]: `AdminAuditEvent.catalogPhotoAdded`,
+  [CATALOG_AUDIT_KINDS.photoUpdated]: `AdminAuditEvent.catalogPhotoUpdated`,
+  [CATALOG_AUDIT_KINDS.photoRemoved]: `AdminAuditEvent.catalogPhotoRemoved`,
+  [CATALOG_AUDIT_KINDS.photosReordered]: `AdminAuditEvent.catalogPhotosReordered`,
+  [CATALOG_AUDIT_KINDS.categoryCreated]: `AdminAuditEvent.catalogCategoryCreated`,
+  [CATALOG_AUDIT_KINDS.categoryUpdated]: `AdminAuditEvent.catalogCategoryUpdated`,
+  [CATALOG_AUDIT_KINDS.categoryDeleted]: `AdminAuditEvent.catalogCategoryDeleted`,
+  [CATALOG_AUDIT_KINDS.categoriesReordered]: `AdminAuditEvent.catalogCategoriesReordered`,
 }
 
 /**
