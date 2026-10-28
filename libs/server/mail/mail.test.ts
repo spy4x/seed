@@ -4,11 +4,13 @@ import type { Sql } from "@spy4x/server/db"
 import { BillingNoticeKind, PRO_PLAN_ID } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import { LANGUAGES } from "@domain/identity"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
 import {
   accountDeletionMail,
   accountRestoredMail,
   apiTokenCreatedMail,
   billingNoticeMail,
+  compose,
   createMailSender,
   dataExportReadyMail,
   emailCodeMail,
@@ -16,6 +18,7 @@ import {
   mailOffWarning,
   type MailReader,
   MailTransport,
+  messageHtml,
   passwordResetMail,
   readMailSetup,
   signInLinkMail,
@@ -25,6 +28,9 @@ import {
 
 /** An English reader in UTC with a 24-hour clock: the dates these tests pin. */
 const EN: MailReader = { language: "en", locale: "en-US", timeZone: "UTC", hourCycle: "h23" }
+
+/** A value as a mail's text part writes it: isolated between FSI and PDI. */
+const iso = (value: string) => `\u2068${value}\u2069`
 
 const env = (values: Record<string, string>) => ({ get: (name: string) => values[name] })
 
@@ -200,9 +206,9 @@ describe("apiTokenCreatedMail", () => {
   it("names the token, its group, what it can do and when it expires", () => {
     expect(mail.to).toBe("ann@example.com")
     expect(mail.subject).toBe("An API token was created")
-    expect(mail.text).toContain(`An API token named "Zapier <script>" was created`)
+    expect(mail.text).toContain(`An API token named "${iso("Zapier <script>")}" was created`)
     expect(mail.text).toContain(
-      `It can read and write the group "Family & co" and expires on January 2, 2027.`,
+      `It can read and write the group "${iso("Family & co")}" and expires on January 2, 2027.`,
     )
   })
 
@@ -212,7 +218,9 @@ describe("apiTokenCreatedMail", () => {
       canWrite: false,
       expiresAt: null,
     })
-    expect(readOnly.text).toContain(`It can read the group "Family & co" and never expires.`)
+    expect(readOnly.text).toContain(
+      `It can read the group "${iso("Family & co")}" and never expires.`,
+    )
   })
 
   it("says what to do if it was someone else: revoke it and change the password", () => {
@@ -275,9 +283,11 @@ describe("signInMethodChangedMail", () => {
     expect(mail.to).toBe("ann@example.com")
     expect(mail.subject).toBe("Google was linked to your account")
     expect(mail.text).toContain(
-      "Google was linked to your account at app.example.com on October 15, 2026 at 14:03.",
+      `${
+        iso("Google")
+      } was linked to your account at app.example.com on October 15, 2026 at 14:03.`,
     )
-    expect(mail.text).toContain("If this wasn't you, unlink Google on your profile page")
+    expect(mail.text).toContain(`If this wasn't you, unlink ${iso("Google")} on your profile page`)
     expect(mail.html).toContain(`href="https://app.example.com/"`)
   })
 
@@ -291,10 +301,12 @@ describe("signInMethodChangedMail", () => {
     })
     expect(mail.subject).toBe("GitHub was unlinked from your account")
     expect(mail.text).toContain(
-      "GitHub was unlinked from your account at app.example.com on October 15, 2026 at 14:03.",
+      `${
+        iso("GitHub")
+      } was unlinked from your account at app.example.com on October 15, 2026 at 14:03.`,
     )
     expect(mail.text).toContain(
-      "If this wasn't you, sign in, change your password and link GitHub again.",
+      `If this wasn't you, sign in, change your password and link ${iso("GitHub")} again.`,
     )
   })
 })
@@ -373,7 +385,9 @@ describe("invitationMail", () => {
     expect(mail.to).toBe("bo@example.com")
     expect(mail.subject).toBe(`Invitation to join "<b>Team</b> "A""`)
     expect(mail.text).toContain(link)
-    expect(mail.text).toContain(`Ann invited you to join "<b>Team</b> "A"" at app.example.com`)
+    expect(mail.text).toContain(
+      `${iso("Ann")} invited you to join "${iso(`<b>Team</b> "A"`)}" at app.example.com`,
+    )
     expect(mail.text).toContain("with the role Editor")
     expect(mail.text).toContain("7 days")
     expect(mail.html).toContain(`href="${link}"`)
@@ -397,7 +411,7 @@ describe("invitationMail", () => {
         validDays: 1,
       },
     )
-    expect(anonymous.text).toMatch(/^You are invited to join "Team"/)
+    expect(anonymous.text).toMatch(/^You are invited to join "\u2068Team\u2069"/)
   })
 })
 
@@ -694,7 +708,7 @@ describe("mail and a hostile value (#277)", () => {
       // The only links are the template's: the invitation and the brand.
       expect(mail.html?.match(/href="/g)).toHaveLength(3)
       // The inviter's name is the one bold span the catalog allows, and stays text inside it.
-      expect(mail.html).toContain("<strong>Team Bcc: victim@example.com &lt;img")
+      expect(mail.html).toContain("<strong><bdi>Team Bcc: victim@example.com &lt;img")
     }
   })
 
@@ -709,6 +723,125 @@ describe("mail and a hostile value (#277)", () => {
       reader: EN,
     })
     // The quotes around the group's name are the catalog's, not the value's.
-    expect(mail.html).toContain("join &quot;Team&quot; at")
+    expect(mail.html).toContain("join &quot;<bdi>Team</bdi>&quot; at")
+  })
+})
+
+describe("mail and a full stop after a date (#277)", () => {
+  /** Each language with a region format of its own, whose long date may end in a full stop. */
+  const LOCALES = { en: "en-US", ru: "ru-RU", es: "es-ES", de: "de-DE", "pt-BR": "pt-BR", ar: "ar" }
+  /** A letter's full stop, then the sentence's, with only closing tags or a PDI between them. */
+  const DOUBLED = /\p{L}\.(?:<\/\w+>|\u2069)*\.(?!\.)/u
+
+  it("writes one full stop after a Russian date that ends in «г.»", () => {
+    const [deletion] = everyMail({ ...EN, language: "ru", locale: "ru-RU" }).slice(4)
+    expect(deletion.text).toContain("удалён 15 октября 2026 г.")
+    expect(deletion.text).not.toContain("г..")
+    expect(deletion.html).toContain("<strong>15 октября 2026 г.</strong></p>")
+  })
+
+  for (const [language, locale] of Object.entries(LOCALES)) {
+    it(`writes no doubled full stop after a date in ${language}`, () => {
+      for (
+        const mail of everyMail({ ...EN, language: language as MailReader["language"], locale })
+      ) {
+        expect(`${mail.subject}\n${mail.text}`).not.toMatch(DOUBLED)
+        expect(mail.html).not.toMatch(DOUBLED)
+      }
+    })
+  }
+
+  it("leaves an ellipsis alone", () => {
+    const t = createTranslator({ language: "en", catalogs: [{ source: { "T.x": "Wait..." } }] })
+    expect(messageHtml(t, "T.x")).toBe("Wait...")
+  })
+})
+
+describe("mail and a value in another direction (#277)", () => {
+  const value = "Team (EU)!"
+  const ar: MailReader = { ...EN, language: "ar", locale: "ar" }
+  const mails = () => [
+    invitationMail(brand, {
+      to: "a@example.com",
+      link: "https://app.example.com/x",
+      groupName: value,
+      inviterName: value,
+      role: GroupRole.VIEWER,
+      validDays: 7,
+      reader: ar,
+    }),
+    apiTokenCreatedMail(brand, {
+      to: "a@example.com",
+      name: value,
+      groupName: value,
+      canWrite: false,
+      expiresAt: null,
+      reader: ar,
+    }),
+    signInMethodChangedMail(brand, {
+      to: "a@example.com",
+      provider: value,
+      linked: true,
+      at: AT,
+      reader: ar,
+    }),
+    billingNoticeMail(brand, {
+      to: "a@example.com",
+      kind: BillingNoticeKind.PlanEnding,
+      groupName: value,
+      planId: PRO_PLAN_ID,
+      at: AT,
+      link: "https://app.example.com/x",
+      planKeptUntil: null,
+      trialHasCard: true,
+      reader: ar,
+    }),
+  ]
+
+  it("isolates a person's value in Arabic mail: bdi in the HTML, FSI and PDI in the text", () => {
+    for (const mail of mails()) {
+      expect(mail.html).toContain(`<bdi>${value}</bdi>`)
+      expect(mail.html).not.toMatch(/[\u2066-\u2069]/)
+      expect(mail.text).toContain(`\u2068${value}\u2069`)
+      // Every value is isolated: no copy of it stands outside the marks.
+      expect(mail.text!.replaceAll(`\u2068${value}\u2069`, ``)).not.toContain(value)
+    }
+  })
+
+  it("keeps isolate marks out of the subject, which some mail clients draw as boxes", () => {
+    for (const mail of mails()) expect(mail.subject).not.toMatch(/[\u2066-\u2069]/)
+    expect(mails()[0].subject).toContain(value)
+  })
+
+  it("lets no value close its isolation early, and still escapes it", () => {
+    const mail = invitationMail(brand, {
+      to: "a@example.com",
+      link: "https://app.example.com/x",
+      groupName: "Team\u2069 <i>(EU)</i>!\u2068",
+      inviterName: "",
+      role: GroupRole.VIEWER,
+      validDays: 7,
+      reader: ar,
+    })
+    expect(mail.html).toContain("<bdi>Team &lt;i&gt;(EU)&lt;/i&gt;!</bdi>")
+    expect(mail.text).toContain("\u2068Team <i>(EU)</i>!\u2069")
+  })
+})
+
+describe("mail and the catalog's own markup (#277)", () => {
+  it("draws only strong from a message's tags, and every other tag as its text", () => {
+    const t = createTranslator({
+      language: "en",
+      catalogs: [{
+        source: { "T.x": "<strong>{v}</strong> <em>{v}</em> <a>{v}</a> <script>{v}</script>" },
+      }],
+    })
+    expect(messageHtml(t, "T.x", { v: "x" })).toBe("<strong>x</strong> x x x")
+  })
+
+  it("writes a subject on one line, even when the translation has a line break", () => {
+    const t = createTranslator({ language: "en", catalogs: [{ source: {} }] })
+    const mail = compose(brand, t, "a@example.com", "First\r\nBcc: b@example.com\u2028end", [])
+    expect(mail.subject).toBe("First Bcc: b@example.com end")
   })
 })

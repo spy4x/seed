@@ -203,8 +203,36 @@ export function oneLine(value: string): string {
   return value.replace(/[\p{Cc}\u2028\u2029]+/gu, ` `).trim()
 }
 
+/** The four bidirectional isolate marks, LRI, RLI, FSI and PDI. */
+const ISOLATE_MARKS = /[\u2066-\u2069]/g
+
+/**
+ * A value a person typed (a name, a group), on one line and isolated between FSI and PDI, so its
+ * own direction cannot reorder the sentence around it: "Team (EU)!" inside Arabic keeps its
+ * bracket and "!" where they were typed. The text part keeps the marks; the HTML part draws them
+ * as `<bdi>`; the subject drops them. Isolate marks inside the value are removed, so it cannot
+ * close its isolation early.
+ */
+export function isolate(value: string): string {
+  return `\u2068${oneLine(value).replace(ISOLATE_MARKS, ``)}\u2069`
+}
+
+/** An isolated value in escaped HTML, drawn as `<bdi>`. A stray mark stays an invisible mark. */
+function isolatesAsBdi(html: string): string {
+  return html.replace(/\u2068([^\u2068\u2069]*)\u2069/g, `<bdi>$1</bdi>`)
+}
+
+/**
+ * A full stop the sentence puts right after a value that already ends in one, such as the Russian
+ * long date's «г.», is dropped, so the reader sees one stop. A closing tag or an isolation's end
+ * between the two is kept; an ellipsis is left alone.
+ */
+function oneStop(text: string): string {
+  return text.replace(/(?<=\p{L}\.)((?:<\/\w+>|\u2069)*)\.(?!\.)/gu, `$1`)
+}
+
 /** One block of a mail's body, drawn the same way in the text part and the HTML part. */
-type Block =
+export type Block =
   /** A paragraph from the catalog; a `<strong>` span in it is drawn bold in the HTML. */
   | { key: string; values?: Record<string, string | number> }
   /** A link the template made: plain in the text, a link in the HTML. */
@@ -214,36 +242,46 @@ type Block =
   /** A code to type: alone on its line, large in the HTML. */
   | { code: string }
 
-/** The tags a catalog message may use, and the element each draws. Any other is plain text. */
+/**
+ * The tags a catalog message may use, and the element each draws. Any other is plain text. The
+ * HTML part also draws an isolated value (see {@link isolate}) as `<bdi>`.
+ */
 const TAGS: Record<string, string> = { strong: `strong` }
 
 /**
  * A catalog message as HTML. Every part is escaped, the catalog's own words included, so neither
- * a value nor a translation can add markup: the only elements are the ones {@link TAGS} names.
+ * a value nor a translation can add markup: the only elements are the ones {@link TAGS} names,
+ * and `<bdi>` around an isolated value. Exported for its tests.
  */
-function messageHtml(t: Translator<string>, key: string, values?: Record<string, string | number>) {
-  return t.parts(key, values).map((part) => {
-    if (typeof part === `string`) return escapeHtml(part)
-    const element = Object.hasOwn(TAGS, part.tag) ? TAGS[part.tag] : null
-    return element ? `<${element}>${escapeHtml(part.text)}</${element}>` : escapeHtml(part.text)
-  }).join(``)
+export function messageHtml(
+  t: Translator<string>,
+  key: string,
+  values?: Record<string, string | number>,
+): string {
+  return oneStop(isolatesAsBdi(
+    t.parts(key, values).map((part) => {
+      if (typeof part === `string`) return escapeHtml(part)
+      const element = Object.hasOwn(TAGS, part.tag) ? TAGS[part.tag] : null
+      return element ? `<${element}>${escapeHtml(part.text)}</${element}>` : escapeHtml(part.text)
+    }).join(``),
+  ))
 }
 
 /**
- * A whole mail in the reader's language: the subject on one line, the text part, and the HTML
- * part in the shared shell, with `lang` and `dir` so Arabic reads right to left.
+ * A whole mail in `t`'s language: the subject on one line without isolate marks, which some mail
+ * clients would draw as boxes, the text part, and the HTML part in the shared shell, with `lang`
+ * and `dir` so Arabic reads right to left. Exported for its tests.
  */
-function compose(
+export function compose(
   brand: MailBrand,
-  w: Writer,
+  t: Translator<string>,
   to: string,
   subject: string,
   blocks: readonly Block[],
 ): EmailMessage {
-  const { t } = w
   const text = blocks.map((block) =>
     `key` in block
-      ? t.t(block.key, block.values)
+      ? oneStop(t.t(block.key, block.values))
       : `code` in block
       ? block.code
       : `link` in block
@@ -270,7 +308,7 @@ function compose(
   })
   return {
     to,
-    subject: oneLine(subject),
+    subject: oneStop(oneLine(subject).replace(ISOLATE_MARKS, ``)),
     text: `${text.join(`\n\n`)}\n`,
     html: mailHtml(brand, html.join(`\n`), t),
   }
@@ -307,7 +345,7 @@ export function passwordResetMail(
   },
 ): EmailMessage {
   const w = writerFor(reader)
-  return compose(brand, w, to, w.t.t(`PasswordResetMail.subject`), [
+  return compose(brand, w.t, to, w.t.t(`PasswordResetMail.subject`), [
     { key: `PasswordResetMail.asked`, values: { host: hostOf(brand) } },
     { key: `PasswordResetMail.open`, values: { count: validMinutes } },
     { link, label: w.t.t(`PasswordResetMail.button`) },
@@ -333,7 +371,7 @@ export function signInLinkMail(
 ): EmailMessage {
   const w = writerFor(reader)
   const host = hostOf(brand)
-  return compose(brand, w, to, w.t.t(`SignInLinkMail.subject`, { host }), [
+  return compose(brand, w.t, to, w.t.t(`SignInLinkMail.subject`, { host }), [
     { key: `SignInLinkMail.asked`, values: { host, when: w.moment(at) } },
     { key: `SignInLinkMail.open`, values: { count: validMinutes } },
     { button: link, label: w.t.t(`SignInLinkMail.button`, { host }) },
@@ -356,7 +394,7 @@ export function emailCodeMail(
   },
 ): EmailMessage {
   const w = writerFor(reader)
-  return compose(brand, w, to, w.t.t(`EmailCodeMail.subject`), [
+  return compose(brand, w.t, to, w.t.t(`EmailCodeMail.subject`), [
     { key: `EmailCodeMail.asked`, values: { host: hostOf(brand) } },
     { code },
     { key: `EmailCodeMail.valid`, values: { count: validMinutes } },
@@ -392,10 +430,10 @@ export function invitationMail(
   },
 ): EmailMessage {
   const w = writerFor(reader)
-  const group = oneLine(groupName)
-  const who = oneLine(inviterName)
+  const group = isolate(groupName)
+  const who = oneLine(inviterName) ? isolate(inviterName) : ``
   const values = { who, group, host: hostOf(brand), role: w.t.t(ROLE_KEYS[role]) }
-  return compose(brand, w, to, w.t.t(`InvitationMail.subject`, { group }), [
+  return compose(brand, w.t, to, w.t.t(`InvitationMail.subject`, { group }), [
     { key: who ? `InvitationMail.invited` : `InvitationMail.invitedNoName`, values },
     { key: `InvitationMail.open`, values: { count: validDays } },
     { link, label: w.t.t(`InvitationMail.button`) },
@@ -414,7 +452,7 @@ export function accountDeletionMail(
 ): EmailMessage {
   const w = writerFor(reader)
   const date = w.day(deleteAfter)
-  return compose(brand, w, to, w.t.t(`AccountDeletionMail.subject`, { date }), [
+  return compose(brand, w.t, to, w.t.t(`AccountDeletionMail.subject`, { date }), [
     { key: `AccountDeletionMail.asked`, values: { host: hostOf(brand), date } },
     { key: `AccountDeletionMail.keep` },
     { link: new URL(`/sign-in`, brand.webAppUrl).href, label: w.t.t(`Mail.signIn`) },
@@ -431,7 +469,7 @@ export function accountRestoredMail(
   { to, reader }: { to: string; reader: MailReader },
 ): EmailMessage {
   const w = writerFor(reader)
-  return compose(brand, w, to, w.t.t(`AccountRestoredMail.subject`), [
+  return compose(brand, w.t, to, w.t.t(`AccountRestoredMail.subject`), [
     { key: `AccountRestoredMail.restored`, values: { host: hostOf(brand) } },
     { key: `AccountRestoredMail.notYou` },
     { link: new URL(`/sign-in`, brand.webAppUrl).href, label: w.t.t(`Mail.signIn`) },
@@ -447,7 +485,7 @@ export function dataExportReadyMail(
   { to, expiresAt, reader }: { to: string; expiresAt: Date; reader: MailReader },
 ): EmailMessage {
   const w = writerFor(reader)
-  return compose(brand, w, to, w.t.t(`DataExportReadyMail.subject`), [
+  return compose(brand, w.t, to, w.t.t(`DataExportReadyMail.subject`), [
     { key: `DataExportReadyMail.ready`, values: { date: w.day(expiresAt) } },
     {
       link: new URL(`/profile/account#your-data`, brand.webAppUrl).href,
@@ -481,7 +519,7 @@ export function signInMethodChangedMail(
   { to, provider, linked, at, passkey = false, reader }: SignInMethodChangedMailInput,
 ): EmailMessage {
   const w = writerFor(reader)
-  const values = { host: hostOf(brand), when: w.moment(at), provider: oneLine(provider) }
+  const values = { host: hostOf(brand), when: w.moment(at), provider: isolate(provider) }
   const [subject, changed, notYou] = passkey
     ? linked
       ? [
@@ -505,7 +543,7 @@ export function signInMethodChangedMail(
       `SignInMethodMail.unlinked`,
       `SignInMethodMail.unlinkedNotYou`,
     ]
-  return compose(brand, w, to, w.t.t(subject, values), [
+  return compose(brand, w.t, to, w.t.t(subject, values), [
     { key: changed, values },
     { key: notYou, values },
     // The profile is the web app's first page.
@@ -539,11 +577,11 @@ export function apiTokenCreatedMail(
     : expiresAt
     ? `ApiTokenMail.readUntil`
     : `ApiTokenMail.readForever`
-  return compose(brand, w, to, w.t.t(`ApiTokenMail.subject`), [
-    { key: `ApiTokenMail.created`, values: { name: oneLine(name), host: hostOf(brand) } },
+  return compose(brand, w.t, to, w.t.t(`ApiTokenMail.subject`), [
+    { key: `ApiTokenMail.created`, values: { name: isolate(name), host: hostOf(brand) } },
     {
       key: can,
-      values: { group: oneLine(groupName), date: expiresAt ? w.day(expiresAt) : `` },
+      values: { group: isolate(groupName), date: expiresAt ? w.day(expiresAt) : `` },
     },
     { key: `ApiTokenMail.notYou` },
     // The profile is the web app's first page.
@@ -599,7 +637,7 @@ export function billingNoticeMail(
   const plan = planId && PLAN_KEYS[planId]
     ? w.t.t(PLAN_KEYS[planId])
     : findPlan(planId ?? ``)?.name ?? w.t.t(`BillingNoticeMail.paidPlan`)
-  const values = { plan, group: oneLine(groupName), date: utc.date(at, `long`) }
+  const values = { plan, group: isolate(groupName), date: utc.date(at, `long`) }
   const [subject, what, next] = {
     [BillingNoticeKind.TrialEnding]: [
       `BillingNoticeMail.trialSubject`,
@@ -618,7 +656,7 @@ export function billingNoticeMail(
     ],
   }[kind]
   const kept = planKeptUntil ? utc.date(planKeptUntil, `long`) : ``
-  return compose(brand, w, to, w.t.t(subject, values), [
+  return compose(brand, w.t, to, w.t.t(subject, values), [
     { key: what, values },
     { key: next, values: { ...values, date: kept || values.date } },
     { link, label: w.t.t(`Mail.openGroup`) },
