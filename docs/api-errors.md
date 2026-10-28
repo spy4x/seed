@@ -21,7 +21,7 @@ shows `message`, which stays English.
 | `code`      | yes    | One of the eight codes below. The status follows from it unless a route says other. |
 | `message`   | yes    | One English sentence for API clients, logs and a screen not translated yet.         |
 | `reason`    | no     | The feature's finer name for the refusal, such as `GROUP_NOT_FOUND` or `TOO_SOON`.  |
-| `fields`    | no     | For a body a schema refused: each failed field's arktype code and rule, by path.    |
+| `fields`    | no     | Each failed field's code and rule, by path: from a schema or a feature's own check. |
 | `details`   | no     | JSON a client acts on, such as the plan a refusal names or a file's problems.       |
 | `requestId` | no     | The request log's id for this request, to find it in the logs.                      |
 
@@ -56,9 +56,12 @@ reason.
 
 ## Fields
 
-`fields` comes from arktype's errors (`fieldErrors` in `@spy4x/validation`), never from its
-`.summary`. Each code is arktype's own (`required`, `domain`, `maxLength`, `pattern`,
-`predicate`…), and `values` holds only the rule (`rule`, `exclusive`), never the value sent.
+`fields` has two sources. A body a schema refused gives arktype's errors (`fieldErrors` in
+`@spy4x/validation`), never its `.summary`, with arktype's own codes (`required`, `domain`,
+`maxLength`, `pattern`, `predicate`…). A feature's own check, carried by its domain error, adds
+`unsafeCharacters`, `unstorableCharacters`, `hexColor`, `singleEmoji`, `noteTags`, `contactValue`,
+`overviewRange` and `timeZone`. Either way `values` holds only the rule (`rule`, `exclusive`),
+never the value sent.
 
 ## Building one
 
