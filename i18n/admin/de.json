@@ -187,6 +187,8 @@
   "AdminAuditEvent.telegramLinked": "Telegram-Konto verbunden",
   "AdminAuditEvent.telegramUnlinked": "Telegram-Konto getrennt",
   "AdminAuditEvent.pictureRemoved": "Profilbild von einem Operator entfernt",
+  "AdminAuditEvent.pictureChanged": "Profilbild geändert",
+  "AdminAuditEvent.pictureRemovedByPerson": "Profilbild entfernt",
   "AdminAuditEvent.signedInWithLink": "Mit einem E-Mail-Link angemeldet",
   "AdminAuditEvent.signedUpWithLink": "Mit einem E-Mail-Link registriert",
   "AdminAuditEvent.paymentRefunded": "Zahlung von einem Operator erstattet",

@@ -207,6 +207,8 @@
   "AdminAuditEvent.telegramLinked": "رُبط حساب Telegram",
   "AdminAuditEvent.telegramUnlinked": "فُصل حساب Telegram",
   "AdminAuditEvent.pictureRemoved": "أزال مشغّل صورة الملف الشخصي",
+  "AdminAuditEvent.pictureChanged": "غيّر صورة الملف الشخصي",
+  "AdminAuditEvent.pictureRemovedByPerson": "أزال صورة الملف الشخصي",
   "AdminAuditEvent.signedInWithLink": "سجّل الدخول برابط من البريد الإلكتروني",
   "AdminAuditEvent.signedUpWithLink": "أنشأ حسابًا برابط من البريد الإلكتروني",
   "AdminAuditEvent.paymentRefunded": "استرد مشغّل الدفعة",

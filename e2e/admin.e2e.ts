@@ -84,6 +84,14 @@ test.describe("the admin app", () => {
       // On a phone the person's column keeps its width, so the name does not wrap letter by letter.
       const cell = await row.locator("xpath=ancestor::td").boundingBox()
       expect(cell?.width ?? 0).toBeGreaterThanOrEqual(192)
+      // On a phone the table shows that column alone, with the role and status under the name, so
+      // nothing is cut at its edge (#453).
+      const table = ops.locator("[data-e2e=admin-users-list] table")
+      expect(await table.evaluate((t) => t.scrollWidth - (t.parentElement?.clientWidth ?? 0)))
+        .toBeLessThanOrEqual(0)
+      const badges = ops.locator("[data-e2e=admin-user-phone-badges]")
+      await expect(badges).toBeVisible()
+      await expect(badges).toContainText("Viewer")
       await ops.evaluate(() => globalThis.scrollTo(0, document.body.scrollHeight))
       await expect.poll(() => ops.evaluate(() => globalThis.scrollY)).toBeGreaterThan(0)
       await row.click()

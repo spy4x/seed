@@ -146,9 +146,13 @@ function SystemBody(
       <div data-e2e="admin-system-summary" data-health={HEALTH[snapshot.health]?.name}>
         <Notice tone={summary.tone}>{t.t(summary.key)}</Notice>
       </div>
+      {
+        /* Two columns at most: a third left each card so narrow that its labels wrapped and the
+          newest migration's name broke mid-word at 1440 px (#453). */
+      }
       <section
         aria-label={t.t(`AdminSystem.services`)}
-        class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+        class="grid gap-4 lg:grid-cols-2"
         data-e2e="admin-system-cards"
       >
         <StatusCard
@@ -264,7 +268,7 @@ function SystemBody(
         <StatusCard
           title={t.t(`AdminSystem.build`)}
           dataE2E="admin-system-build"
-          class="sm:col-span-2 xl:col-span-3"
+          class="lg:col-span-2"
           facts={[
             {
               label: t.t(`AdminSystem.version`),

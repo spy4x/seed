@@ -89,6 +89,17 @@ test.describe("the admin System page", () => {
       await answered
       await expect(badge("admin-system-database")).toHaveAttribute("data-health", "ok")
 
+      // At 1440 px each label and the newest migration's name stay on one line (#453).
+      await ops.setViewportSize({ width: 1440, height: 900 })
+      const wrapped = await ops.locator(
+        "[data-e2e=admin-system-cards] dt, [data-e2e=admin-system-migrations] dd",
+      ).evaluateAll((all) =>
+        all.filter((el) =>
+          el.getBoundingClientRect().height > 1.5 * parseFloat(getComputedStyle(el).lineHeight)
+        ).map((el) => el.textContent)
+      )
+      expect(wrapped).toEqual([])
+
       // On a phone the cards stack and the page never scrolls sideways.
       await ops.setViewportSize({ width: 390, height: 800 })
       expect(await ops.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(

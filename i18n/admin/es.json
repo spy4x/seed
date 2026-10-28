@@ -192,6 +192,8 @@
   "AdminAuditEvent.telegramLinked": "Cuenta de Telegram vinculada",
   "AdminAuditEvent.telegramUnlinked": "Cuenta de Telegram desvinculada",
   "AdminAuditEvent.pictureRemoved": "Foto de perfil quitada por un operador",
+  "AdminAuditEvent.pictureChanged": "Foto de perfil cambiada",
+  "AdminAuditEvent.pictureRemovedByPerson": "Foto de perfil quitada",
   "AdminAuditEvent.signedInWithLink": "Inició sesión con un enlace por correo",
   "AdminAuditEvent.signedUpWithLink": "Se registró con un enlace por correo",
   "AdminAuditEvent.paymentRefunded": "Pago reembolsado por un operador",

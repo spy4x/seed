@@ -6,6 +6,7 @@ import { expectNoPayload } from "@spy4x/realtime"
 import {
   type Actor,
   parsePictureRequest,
+  PICTURE_AUDIT,
   PICTURE_MAX_BYTES,
   PICTURE_TYPES,
   PictureCancelCommand,
@@ -53,8 +54,13 @@ export interface PictureHandlerDependencies {
 
 const RULE = fileRule(PICTURE_TYPES, PICTURE_MAX_BYTES)
 
-/** The audit row's `identifier` for the person's own change of picture. */
-export const PICTURE_AUDIT_IDENTIFIER = `picture`
+/** The ledger's `name` for a picture's upload. */
+export const PICTURE_AUDIT_IDENTIFIER = PICTURE_AUDIT.changed
+
+/** The audit row's `identifier` for the person's own change of picture: a new one, or none. */
+export function pictureAuditIdentifier(picture: StoredPicture | null): string {
+  return picture === null ? PICTURE_AUDIT.removed : PICTURE_AUDIT.changed
+}
 
 /** The file store's refusal, as the picture's error. */
 function refusalError(refusal: FileRefusal): PictureError {
