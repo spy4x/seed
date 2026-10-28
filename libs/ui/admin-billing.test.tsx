@@ -578,14 +578,12 @@ describe("the billing screens in en-XA", () => {
   it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
     await mount(
       <I18nContext.Provider value={ADMIN_PSEUDO}>
-        <>
-          <AdminBillingListScreen {...listProps([])} />
-          <AdminBillingCustomerScreen {...customerProps([], { dialog: `cancel` })} />
-          <AdminBillingCustomerScreen {...customerProps([], { dialog: `time` })} />
-          <AdminBillingCustomerScreen
-            {...customerProps([], { operator: supervisor, dialog: `refund` })}
-          />
-        </>
+        <AdminBillingListScreen {...listProps([])} />
+        <AdminBillingCustomerScreen {...customerProps([], { dialog: `cancel` })} />
+        <AdminBillingCustomerScreen {...customerProps([], { dialog: `time` })} />
+        <AdminBillingCustomerScreen
+          {...customerProps([], { operator: supervisor, dialog: `refund` })}
+        />
       </I18nContext.Provider>,
     )
     expect(englishLeft(document.body, [`Acme Studio`, `Ada Lovelace`, `ada@acme.test`])).toEqual([])

@@ -390,13 +390,11 @@ describe("the person's actions in en-XA", () => {
   it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
     await mount(
       <I18nContext.Provider value={ADMIN_PSEUDO}>
-        <>
-          <AdminUserScreen {...userProps([], { dialog: "password-reset" })} />
-          <AdminUserScreen {...userProps([], { operator: administrator, dialog: "change-role" })} />
-          <AdminUserScreen {...userProps([], { dialog: "end-session", dialogSessionId: 9 })} />
-          <AdminUserScreen {...userProps([], { dialog: "block" })} />
-          <AdminUserScreen {...userProps([], { dialog: "end-sessions" })} />
-        </>
+        <AdminUserScreen {...userProps([], { dialog: "password-reset" })} />
+        <AdminUserScreen {...userProps([], { operator: administrator, dialog: "change-role" })} />
+        <AdminUserScreen {...userProps([], { dialog: "end-session", dialogSessionId: 9 })} />
+        <AdminUserScreen {...userProps([], { dialog: "block" })} />
+        <AdminUserScreen {...userProps([], { dialog: "end-sessions" })} />
       </I18nContext.Provider>,
     )
     expect(

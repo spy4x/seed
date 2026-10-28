@@ -448,10 +448,8 @@ describe("the audit log in en-XA", () => {
   it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
     await mount(
       <I18nContext.Provider value={ADMIN_PSEUDO}>
-        <>
-          <AdminAuditScreen {...props([])} />
-          <AdminAuditScreen {...props([], { view: "timeline" })} />
-        </>
+        <AdminAuditScreen {...props([])} />
+        <AdminAuditScreen {...props([], { view: "timeline" })} />
       </I18nContext.Provider>,
     )
     expect(

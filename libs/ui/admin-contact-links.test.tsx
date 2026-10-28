@@ -254,10 +254,8 @@ describe("the contact links screens in en-XA", () => {
   it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
     await mount(
       <I18nContext.Provider value={ADMIN_PSEUDO}>
-        <>
-          <AdminContactLinksScreen {...listProps([])} />
-          <AdminContactLinkEditorScreen {...editorProps([])} />
-        </>
+        <AdminContactLinksScreen {...listProps([])} />
+        <AdminContactLinkEditorScreen {...editorProps([])} />
       </I18nContext.Provider>,
     )
     expect(englishLeft(document.body, [

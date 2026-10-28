@@ -859,16 +859,14 @@ describe("the group screens in en-XA", () => {
   it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
     await mount(
       <I18nContext.Provider value={ADMIN_PSEUDO}>
-        <>
-          <AdminGroupsListScreen {...listProps([])} />
-          <AdminGroupScreen {...groupProps([], { tab: `overview` })} />
-          <AdminGroupScreen {...groupProps([], { tab: `members` })} />
-          <AdminGroupScreen {...groupProps([], { tab: `invitations` })} />
-          <AdminGroupScreen {...groupProps([], { tab: `activity` })} />
-          <AdminGroupScreen
-            {...groupProps([], { tab: `files`, dialog: { kind: `removeFile`, fileId: FILE_ID } })}
-          />
-        </>
+        <AdminGroupsListScreen {...listProps([])} />
+        <AdminGroupScreen {...groupProps([], { tab: `overview` })} />
+        <AdminGroupScreen {...groupProps([], { tab: `members` })} />
+        <AdminGroupScreen {...groupProps([], { tab: `invitations` })} />
+        <AdminGroupScreen {...groupProps([], { tab: `activity` })} />
+        <AdminGroupScreen
+          {...groupProps([], { tab: `files`, dialog: { kind: `removeFile`, fileId: FILE_ID } })}
+        />
       </I18nContext.Provider>,
     )
     expect(englishLeft(document.body, [

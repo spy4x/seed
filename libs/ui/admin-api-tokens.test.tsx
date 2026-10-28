@@ -468,30 +468,28 @@ describe("the API tokens screens in en-XA", () => {
   it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
     await mount(
       <I18nContext.Provider value={ADMIN_PSEUDO}>
-        <>
-          {tokensPage().node}
-          <AdminPersonTokensPanel
-            data={[live, revoked]}
-            error={null}
-            userId={42}
-            {...actions([])}
-          />
-          <AdminPersonNotificationsPanel
-            data={{
-              notifications: [
-                {
-                  id: "2",
-                  kind: "group.removed",
-                  createdAt: "2026-10-15T10:00:00.000Z",
-                  readAt: null,
-                },
-              ],
-              total: 60,
-              unread: 1,
-            }}
-            error={null}
-          />
-        </>
+        {tokensPage().node}
+        <AdminPersonTokensPanel
+          data={[live, revoked]}
+          error={null}
+          userId={42}
+          {...actions([])}
+        />
+        <AdminPersonNotificationsPanel
+          data={{
+            notifications: [
+              {
+                id: "2",
+                kind: "group.removed",
+                createdAt: "2026-10-15T10:00:00.000Z",
+                readAt: null,
+              },
+            ],
+            total: 60,
+            unread: 1,
+          }}
+          error={null}
+        />
       </I18nContext.Provider>,
     )
     expect(

@@ -804,15 +804,13 @@ describe("the dashboard and the people in en-XA", () => {
   it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
     await mount(
       <I18nContext.Provider value={ADMIN_PSEUDO}>
-        <>
-          <AdminDashboardScreen stats={stats} error={null} onRetry={() => {}} />
-          <AdminUsersScreen {...listProps([])} />
-          <AdminUserScreen {...userProps([])} />
-          <AdminUserScreen {...userProps([], { tab: "methods" })} />
-          <AdminUserScreen {...userProps([], { tab: "sessions" })} />
-          <AdminUserScreen {...userProps([], { tab: "groups" })} />
-          <AdminUserScreen {...userProps([], { tab: "activity" })} />
-        </>
+        <AdminDashboardScreen stats={stats} error={null} onRetry={() => {}} />
+        <AdminUsersScreen {...listProps([])} />
+        <AdminUserScreen {...userProps([])} />
+        <AdminUserScreen {...userProps([], { tab: "methods" })} />
+        <AdminUserScreen {...userProps([], { tab: "sessions" })} />
+        <AdminUserScreen {...userProps([], { tab: "groups" })} />
+        <AdminUserScreen {...userProps([], { tab: "activity" })} />
       </I18nContext.Provider>,
     )
     expect(englishLeft(document.body, [

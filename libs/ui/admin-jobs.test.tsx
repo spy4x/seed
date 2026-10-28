@@ -419,11 +419,9 @@ describe("the jobs screens in en-XA", () => {
   it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
     await mount(
       <I18nContext.Provider value={ADMIN_PSEUDO}>
-        <>
-          {jobsPage().node}
-          {jobsPage({ tab: "repeating" }).node}
-          {jobPage({ dialog: "retry" }).node}
-        </>
+        {jobsPage().node}
+        {jobsPage({ tab: "repeating" }).node}
+        {jobPage({ dialog: "retry" }).node}
       </I18nContext.Provider>,
     )
     expect(englishLeft(document.body, [

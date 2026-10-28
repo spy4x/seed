@@ -356,12 +356,10 @@ describe("the newsletter screen in en-XA", () => {
   it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
     await mount(
       <I18nContext.Provider value={ADMIN_PSEUDO}>
-        <>
-          <AdminNewsletterScreen
-            {...props([], { dialog: { action: "remove", email: "ann@example.com" } })}
-          />
-          <AdminNewsletterScreen {...props([], { tab: "sends" })} />
-        </>
+        <AdminNewsletterScreen
+          {...props([], { dialog: { action: "remove", email: "ann@example.com" } })}
+        />
+        <AdminNewsletterScreen {...props([], { tab: "sends" })} />
       </I18nContext.Provider>,
     )
     expect(
