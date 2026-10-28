@@ -153,10 +153,11 @@ test.describe(`without JavaScript`, () => {
     }
   })
 
-  test(`the page lists the eleven modules, the three roles and what is not built yet`, async ({ page }) => {
+  test(`the page lists the twelve modules, the three roles and what is not built yet`, async ({ page }) => {
     await page.goto(`/admin`)
     await expect(page.locator(`[data-e2e=admin-modules] h3`)).toHaveText([
       `Dashboard`,
+      `Stats`,
       `Users`,
       `Groups`,
       `Billing`,
