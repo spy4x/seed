@@ -12,6 +12,7 @@ import {
 import { createOutboxProcessor } from "@server/jobs/wiring.ts"
 import {
   enqueueSubscriberMail,
+  rememberSubscriberLanguage,
   removeStaleSubscriptionRequests,
   SUBSCRIBER_CONFIRM_MAIL_JOB,
   SUBSCRIBER_WELCOME_MAIL_JOB,
@@ -96,6 +97,75 @@ async function captureLines(body: (log: (line: string) => void) => Promise<void>
   }
   return lines
 }
+
+Deno.test(`a subscriber's mails are written in the language of the page they signed up on (#527)`, async (t) => {
+  await withSchema(async (sql) => {
+    const setup = { ...SETUP, siteUrl: `https://www.example.com` }
+    const sender = recordingSender()
+    const processor = createOutboxProcessor(
+      sql,
+      { store: createPostgresAuthStore(sql), sender, brand: BRAND, log: () => {} },
+      null,
+      setup,
+    )
+
+    await t.step(
+      `an address that asked on an English page gets the English confirm mail`,
+      async () => {
+        await enqueueSubscriberMail(
+          sql,
+          SUBSCRIBER_CONFIRM_MAIL_JOB,
+          `news`,
+          `ann@example.com`,
+          `en`,
+        )
+        await processor.drainOnce()
+
+        expect(sender.sent.at(-1)?.subject).toBe(`Confirm your subscription to app.example.com`)
+        linkIn(sender.sent.at(-1)!, `https://www.example.com/subscribe/confirm?`)
+      },
+    )
+
+    await t.step(
+      `one that asked on a Spanish page gets it in Spanish, linking the Spanish page`,
+      async () => {
+        await enqueueSubscriberMail(
+          sql,
+          SUBSCRIBER_CONFIRM_MAIL_JOB,
+          `news`,
+          `eva@example.com`,
+          `es`,
+        )
+        await processor.drainOnce()
+
+        expect(sender.sent.at(-1)?.subject).toBe(`Confirma tu suscripción a app.example.com`)
+        linkIn(sender.sent.at(-1)!, `https://www.example.com/es/subscribe/confirm?`)
+      },
+    )
+
+    await t.step(
+      `the welcome follows the language it confirmed in, which the list keeps`,
+      async () => {
+        const crypto = await createListCrypto(setup, `news`)
+        await sql`INSERT INTO subscribers (list_id, email, key, subscribed_at)
+        VALUES ('news', 'eva@example.com', ${await crypto.subscriberKey(`eva@example.com`)}, now())`
+        await rememberSubscriberLanguage(sql, `news`, `eva@example.com`, `de`)
+        await enqueueSubscriberMail(
+          sql,
+          SUBSCRIBER_WELCOME_MAIL_JOB,
+          `news`,
+          `eva@example.com`,
+          `de`,
+        )
+        await processor.drainOnce()
+
+        expect(sender.sent.at(-1)?.subject).toBe(`Du hast app.example.com abonniert`)
+        expect(await sql`SELECT language FROM subscribers WHERE email = 'eva@example.com'`)
+          .toEqual([{ language: `de` }])
+      },
+    )
+  })
+})
 
 Deno.test(`mail subscriptions go through the worker's queue and Postgres`, async (t) => {
   await withSchema(async (sql) => {

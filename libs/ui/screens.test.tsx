@@ -225,10 +225,22 @@ describe("SubscriptionConfirmScreen without JavaScript", () => {
     }
   })
 
-  it("asks nothing more once the subscription is confirmed", () => {
+  it("asks nothing more once the subscription is confirmed, and links nowhere unless told", () => {
     const surface = noScriptSurface(<SubscriptionConfirmScreen {...props} state="done" />)
     expect(surface.forms).toEqual([])
     expect(surface.links).toEqual([])
+  })
+
+  it("links onward once the subscription is confirmed when given a link", () => {
+    const node = (
+      <SubscriptionConfirmScreen
+        {...props}
+        state="done"
+        onward={{ href: "/catalog", label: "Back to the catalog" }}
+      />
+    )
+    expect(noScriptSurface(node).links).toEqual(["/catalog"])
+    expect(renderToString(node)).toContain("Back to the catalog")
   })
 })
 

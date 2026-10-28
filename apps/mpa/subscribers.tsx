@@ -76,8 +76,8 @@ function speech(ctx: FreshContext<State>) {
 }
 
 /**
- * `GET` shows the subscribe form; `POST` asks the API for a confirm link and 303s to this page,
- * which then says the link is sent. A refusal is shown with the API's status and message, and the
+ * `GET` shows the subscribe form; `POST` asks the API for a confirm link, in the page's language,
+ * and 303s to this page, which then says the link is sent. A refusal is shown with the API's status and message, and the
  * address stays in the form. While subscriptions are off, neither shows a form.
  */
 export const subscribeHandlers = define.handlers({
@@ -105,8 +105,9 @@ export const subscribeHandlers = define.handlers({
 })
 
 /**
- * `GET` shows what the confirm link holds, asking for a click; `POST` confirms it and 303s to this
- * page without the token, so a reload or the history holds no live link.
+ * `GET` shows what the confirm link holds, asking for a click; `POST` confirms it, with the page's
+ * language for the subscriber's mails, and 303s to this page without the token, so a reload or the
+ * history holds no live link.
  */
 export const subscriptionConfirmHandlers = define.handlers({
   async GET(ctx) {
@@ -131,7 +132,7 @@ export const subscriptionConfirmHandlers = define.handlers({
   },
   async POST(ctx) {
     if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribeConfirm, tokenPageHead)
-    const body = API_BODIES.subscriptionToken(await readFormBody(ctx.req, FORM_LIMITS))
+    const body = API_BODIES.subscriptionConfirm(await readFormBody(ctx.req, FORM_LIMITS))
     const answer = await ctx.state.api.call("POST", "/api/subscribers/confirm", body)
     const step = stepOf(answer, CONFIRM_STATES)
     if (step.state === "done") {
@@ -139,7 +140,8 @@ export const subscriptionConfirmHandlers = define.handlers({
     }
     return renderConfirm(ctx, {
       ...step,
-      ...body,
+      list: body.list,
+      token: body.token,
       status: answer.status,
       retryAfter: answer.retryAfter,
     })
@@ -288,6 +290,7 @@ function renderSubscribe(
                 error={page.error}
                 pending={false}
                 localize={href}
+                language={ctx.state.language}
               />
             </div>
             {page.sent && <AnalyticsView name="newsletter-sent" />}
@@ -368,6 +371,7 @@ function renderConfirm(
             error={null}
             pending={false}
             localize={href}
+            language={ctx.state.language}
           />
           {page.state === "done" && <AnalyticsView name="newsletter-confirmed" />}
         </NewsletterBand>

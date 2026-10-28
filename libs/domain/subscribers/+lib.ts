@@ -4,6 +4,7 @@ import {
   type AdminDailyCount,
   type AdminStatChange,
   EMAIL_INPUT_MAX_LENGTH,
+  LANGUAGES,
 } from "@domain/identity"
 
 /**
@@ -24,23 +25,33 @@ export function isSubscriberList(value: unknown): value is SubscriberList {
 /** Longest token a link or form may carry. A real one is a few hundred characters. */
 export const SUBSCRIBER_TOKEN_MAX_LENGTH = 2048
 
-/** The body of a subscribe request: the address to confirm and the list to join. */
+/**
+ * The language of the page a subscribe or confirm request came from (#527), one the apps ship:
+ * the mails to the address are written in it. Left out, they are in the product's main language.
+ */
+const pageLanguage = { "language?": type.enumerated(...LANGUAGES) } as const
+
+/** The body of a subscribe request: the address to confirm, the list to join, the page's language. */
 export const subscribeSchema = type({
   email: `string <= ${EMAIL_INPUT_MAX_LENGTH}`,
   list: `string <= 64`,
+  ...pageLanguage,
 })
 export type Subscribe = typeof subscribeSchema.infer
 
-/** The body of a confirm: the list and the token from the confirm link. */
-export const subscriptionConfirmSchema = type({
+/** The fields of the unsubscribe form: the list and the token from the unsubscribe link. */
+export const unsubscribeSchema = type({
   list: `string <= 64`,
   token: `string <= ${SUBSCRIBER_TOKEN_MAX_LENGTH}`,
 })
-export type SubscriptionConfirm = typeof subscriptionConfirmSchema.infer
+export type Unsubscribe = typeof unsubscribeSchema.infer
 
-/** The fields of the unsubscribe form: the same list and token, from the unsubscribe link. */
-export const unsubscribeSchema = subscriptionConfirmSchema
-export type Unsubscribe = SubscriptionConfirm
+/**
+ * The body of a confirm: the list and the token from the confirm link, and the language of the
+ * page it was confirmed on, which the subscriber keeps.
+ */
+export const subscriptionConfirmSchema = unsubscribeSchema.and(pageLanguage)
+export type SubscriptionConfirm = typeof subscriptionConfirmSchema.infer
 
 /**
  * What a confirm link page shows. `confirm` asks for the click; `done` follows it. `expired` and

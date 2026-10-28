@@ -82,5 +82,14 @@
   "BillingNoticeMail.paymentFree": "O grupo agora está no plano gratuito. Atualize o cartão na página do grupo para ter o plano de volta.",
   "BillingNoticeMail.planSubject": "Seu plano {plan} termina em {date}",
   "BillingNoticeMail.planWhat": "O plano {plan} de “{group}” foi cancelado e termina em <strong>{date}</strong>; depois o grupo passa para o plano gratuito.",
-  "BillingNoticeMail.planNext": "Mudou de ideia? Renove-o na página do grupo antes dessa data."
+  "BillingNoticeMail.planNext": "Mudou de ideia? Renove-o na página do grupo antes dessa data.",
+  "SubscriberConfirmMail.subject": "Confirme sua inscrição em {host}",
+  "SubscriberConfirmMail.asked": "Alguém pediu para receber as novidades de {host} neste endereço.",
+  "SubscriberConfirmMail.within": "Confirme em até três dias para começar a recebê-las.",
+  "SubscriberConfirmMail.button": "Confirmar",
+  "SubscriberConfirmMail.ignore": "Se você não pediu isso, ignore este e-mail: nada será enviado a você.",
+  "SubscriberWelcomeMail.subject": "Você se inscreveu em {host}",
+  "SubscriberWelcomeMail.subscribed": "Você vai receber as novidades de {host}.",
+  "SubscriberWelcomeMail.reason": "Você recebe este e-mail porque se inscreveu em {host}.",
+  "SubscriberWelcomeMail.unsubscribe": "Cancelar inscrição"
 }

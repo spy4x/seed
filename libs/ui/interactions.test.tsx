@@ -302,13 +302,14 @@ describe("SubscribeForm in the browser", () => {
     expect(send.calls).toHaveLength(1)
   })
 
-  it("posts the address and the list natively when the app takes nothing over", async () => {
-    await mount(<SubscribeForm {...subscribeDefaults} email="ada@example.com" />)
+  it("posts the address, the list and the page's language natively when the app takes nothing over", async () => {
+    await mount(<SubscribeForm {...subscribeDefaults} email="ada@example.com" language="de" />)
 
     const form = find<HTMLFormElement>(`form[action="${FORM_ACTIONS.subscribe}"]`)
     expect(Object.fromEntries(new FormData(form))).toEqual({
       list: "news",
       email: "ada@example.com",
+      language: "de",
     })
     expect(await submit(`form[action="${FORM_ACTIONS.subscribe}"]`)).toBe(false)
   })
@@ -359,12 +360,12 @@ describe("SubscriptionConfirmScreen in the browser", () => {
     expect(confirm.calls).toHaveLength(1)
   })
 
-  it("posts the link's list and token natively when the app takes nothing over", async () => {
-    await mount(<SubscriptionConfirmScreen {...confirmDefaults} />)
+  it("posts the link's list and token and the page's language natively when the app takes nothing over", async () => {
+    await mount(<SubscriptionConfirmScreen {...confirmDefaults} language="en" />)
 
     const form = find<HTMLFormElement>(`form[action="${FORM_ACTIONS.subscribeConfirm}"]`)
     expect(Object.fromEntries(new FormData(form)))
-      .toEqual({ list: "news", token: "token-from-the-link" })
+      .toEqual({ list: "news", token: "token-from-the-link", language: "en" })
     expect(await submit(`form[action="${FORM_ACTIONS.subscribeConfirm}"]`)).toBe(false)
   })
 
