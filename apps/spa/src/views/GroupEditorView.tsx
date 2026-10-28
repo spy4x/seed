@@ -3,6 +3,8 @@ import { useLocation } from "wouter-preact"
 import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { GroupEditorScreen, GroupTab, groupTabOf } from "@ui/group-editor-screen.tsx"
 import { memberLabel } from "@ui/group-members.tsx"
+import { useAppText } from "@ui/i18n.ts"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 import { PendingInvitations } from "@ui/group-invitations.tsx"
 import { GroupTransferForm } from "@ui/group-transfer.tsx"
 import { canManageInvitations, GroupRole } from "@domain/groups"
@@ -52,6 +54,7 @@ export async function createAndOpen(
   selection: Pick<typeof selectionStore, "select">,
   navigate: (to: string, options: { replace: boolean }) => void,
   notices: Pick<typeof toasts, "success">,
+  t: Translator<string>,
 ): Promise<boolean> {
   const group = await groups.create()
   if (!group) return false
@@ -59,8 +62,8 @@ export async function createAndOpen(
   navigate(GROUP_PATHS.settings(group.id), { replace: true })
   void selection.select(group.id)
   notices.success({
-    title: "Group created",
-    body: `"${group.name}" is now your current group.`,
+    title: t.t(`GroupEditor.created`),
+    body: t.t(`GroupEditor.createdBody`, { name: group.name }),
     dataE2E: "group-created",
   })
   return true
@@ -74,12 +77,15 @@ export async function saveAndAnnounce(
   groups: Pick<typeof groupsStore, "save" | "groups">,
   groupId: string,
   notices: Pick<typeof toasts, "success">,
+  t: Translator<string>,
 ): Promise<boolean> {
   if (!await groups.save(groupId)) return false
   const saved = groups.groups.value.find((candidate) => candidate.id === groupId)
   notices.success({
-    title: "Group saved",
-    body: saved ? `"${saved.name}" saved.` : "The group is saved.",
+    title: t.t(`GroupEditor.saved`),
+    body: saved
+      ? t.t(`GroupEditor.savedBody`, { name: saved.name })
+      : t.t(`GroupEditor.savedBodyUnnamed`),
     dataE2E: "group-saved",
   })
   return true
@@ -140,6 +146,7 @@ export function GroupEditorView(
   { groupId = null, tab = GroupTab.GENERAL }: { groupId?: string | null; tab?: GroupTab },
 ) {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const store = groupsStore
   useEffect(() => store.openEditor(groupId), [groupId])
   useEffect(() => network.watch(), [])
@@ -151,14 +158,10 @@ export function GroupEditorView(
         owns={(url) => isSpaPath(url.pathname)}
         navigate={navigate}
         labels={{
-          title: "Discard your changes?",
-          message: groupId === null
-            ? "This group is not created yet."
-            : `Your changes to "${
-              store.groups.value.find((group) => group.id === groupId)?.name ?? "this group"
-            }" are not saved.`,
-          leave: "Discard changes",
-          stay: "Keep editing",
+          title: t.t(`GroupEditor.discardTitle`),
+          message: discardMessage(t, groupId),
+          leave: t.t(`GroupEditor.discardLeave`),
+          stay: t.t(`GroupEditor.discardStay`),
         }}
         onDiscard={() => store.discard()}
       />
@@ -166,9 +169,19 @@ export function GroupEditorView(
   )
 }
 
+/** What the unsaved-changes guard says about the group being left. */
+function discardMessage(t: Translator<string>, groupId: string | null): string {
+  if (groupId === null) return t.t(`GroupEditor.discardNew`)
+  const name = groupsStore.groups.value.find((group) => group.id === groupId)?.name
+  return name
+    ? t.t(`GroupEditor.discardExisting`, { name })
+    : t.t(`GroupEditor.discardExistingUnnamed`)
+}
+
 /** `/groups/new`: the editor with empty fields and "Create group". */
 function NewGroup() {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const store = groupsStore
   useEffect(() => void billingStore.loadTrial(), [])
   return (
@@ -182,7 +195,7 @@ function NewGroup() {
       errors={store.editorErrors.value}
       saving={store.creating.value}
       offline={offlineNow()}
-      onSave={() => void createAndOpen(store, selectionStore, navigate, toasts)}
+      onSave={() => void createAndOpen(store, selectionStore, navigate, toasts, t)}
       navigate={navigate}
       trial={billingStore.trial.value}
     />
@@ -192,6 +205,7 @@ function NewGroup() {
 /** `/groups/:groupId` and its tabs: the group's details, members, invitations, plan and log. */
 function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const store = groupsStore
   const team = membersStore
   const invites = invitationsStore
@@ -237,7 +251,7 @@ function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
       dirty={store.unsaved(groupId)}
       saving={working?.groupId === groupId && working.action === "save"}
       offline={offlineNow()}
-      onSave={() => void saveAndAnnounce(store, groupId, toasts)}
+      onSave={() => void saveAndAnnounce(store, groupId, toasts, t)}
       onExport={() => void groupExportStore.download(groupId)}
       exporting={groupExportStore.exporting.value === groupId}
       exportFailed={groupExportStore.failed.value === groupId}
@@ -279,7 +293,7 @@ function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
         {
           count: movedAll.count,
           tags: movedAll.tags,
-          toName: movedTo?.name ?? "the other group",
+          toName: movedTo?.name ?? t.t(`GroupMoveAll.otherGroup`),
         }}
       moveAllRefusal={failure?.action === "moveAll" ? failure.plan ?? null : null}
       onMoveAllTargetChange={() => store.forgetMoveAll()}
@@ -289,7 +303,7 @@ function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
           groupId={groupId}
           groupName={group.name}
           memberCount={ours ? team.memberCount.value ?? memberRows?.length ?? null : null}
-          ownerName={owner ? memberLabel(owner) : null}
+          ownerName={owner ? memberLabel(t, owner) : null}
         />
       )}
       activity={<GroupActivityView groupId={groupId} />}

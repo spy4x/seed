@@ -26,7 +26,6 @@ import {
   MyInvitationsSection,
   PendingInvitations,
   type PendingInvitationsProps,
-  VIEWERS_ONLY_HINT,
 } from "./group-invitations.tsx"
 import {
   type GroupMemberRow,
@@ -50,7 +49,8 @@ import {
   type TransferDraft,
 } from "./group-transfer.tsx"
 import { GroupsScreen, type GroupsScreenProps, NEW_GROUP_PATH } from "./groups-screen.tsx"
-import { INVITATION_OFFLINE, InvitationNewScreen } from "./invitation-new-screen.tsx"
+import { InvitationNewScreen } from "./invitation-new-screen.tsx"
+import appEn from "@i18n/app/en.json" with { type: "json" }
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { GROUP_PATHS, SCREEN_PATHS } from "./progressive.tsx"
 
@@ -971,9 +971,9 @@ describe("GroupMembersSection", () => {
 
   it("counts every member in the heading and says when the list is cut off", async () => {
     await mount(<GroupMembersSection {...props} memberCount={1200} />)
-    expect(find("#group-members").textContent).toBe("Members (1200)")
+    expect(find("#group-members").textContent).toBe("Members (1,200)")
     expect(find("[data-e2e=group-members-cut-off]").textContent)
-      .toBe("Showing the first 3 of 1200 members.")
+      .toBe("Showing the first 3 of 1,200 members.")
   })
 
   it("gives the owner a menu on each other member's row to change the role", async () => {
@@ -1147,7 +1147,7 @@ describe("InviteForm", () => {
     const drafts = spy<[InvitationDraft]>()
     await mount(<InviteForm {...defaults} memberRoles={false} onDraftChange={drafts.fn} />)
     expect(texts("[data-e2e=invitation-role] option")).toEqual(["Viewer"])
-    expect(root!.textContent).toContain(VIEWERS_ONLY_HINT)
+    expect(root!.textContent).toContain(appEn["GroupInvitations.viewersOnly"])
     expect(drafts.calls).toEqual([[{ ...EMPTY_INVITATION_DRAFT, role: GroupRole.VIEWER }]])
   })
 
@@ -1284,7 +1284,9 @@ describe("InvitationNewScreen", () => {
     expect(find("[data-e2e=invitation-offline]").textContent).toContain("You are offline")
     expect(has("[data-e2e=invitation-error]")).toBe(false)
     await rerender(<InvitationNewScreen {...page} offline refusedOffline />)
-    expect(find("[data-e2e=invitation-error]").textContent).toContain(INVITATION_OFFLINE)
+    expect(find("[data-e2e=invitation-error]").textContent).toContain(
+      appEn["InvitationNew.offline"],
+    )
   })
 
   it("draws a placeholder only after 300 ms while the group is read, and says it is loading", async () => {

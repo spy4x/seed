@@ -3,6 +3,10 @@ import { describe, it } from "@std/testing/bdd"
 import { GroupRole } from "@domain/groups"
 import { GROUP_PATHS } from "@ui/progressive.tsx"
 import { openImported } from "./GroupImportView.tsx"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import appEn from "@i18n/app/en.json" with { type: "json" }
+
+const EN = createTranslator({ language: `en`, catalogs: [{ source: appEn }] })
 
 describe("openImported", () => {
   it("reads the groups first, then puts the new group's page in place of the import page, makes it current and says what came in", async () => {
@@ -31,6 +35,7 @@ describe("openImported", () => {
       { select: (id) => Promise.resolve(void steps.push(`select ${id}`)) },
       (to, options) => void steps.push(`navigate ${to} ${options.replace}`),
       { success: (notice) => String(notices.push(notice)) },
+      EN,
     )
     expect(steps).toEqual([
       "refresh",
