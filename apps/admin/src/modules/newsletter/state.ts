@@ -10,7 +10,7 @@ import {
   type AdminSubscriberListResponse,
 } from "@domain/subscribers"
 import type { AdminSubscriberAction, AdminSubscriberDialog } from "@ui/admin-newsletter-screen.tsx"
-import { adminFailure, type AdminFetch, post } from "../../state.ts"
+import { adminFailure, type AdminFetch, post, refusalText } from "../../state.ts"
 import { adminText } from "../../i18n.ts"
 import { readApiError } from "@domain/errors"
 
@@ -172,8 +172,7 @@ export function createNewsletterState(
           headers: { "content-type": `application/json` },
         })
         if (!response.ok) {
-          const message = readApiError(await response.json().catch(() => null))?.message ??
-            adminFailure()
+          const message = refusalText(readApiError(await response.json().catch(() => null)))
           toasts.error({ body: message, dataE2E: `admin-export-error` })
           return
         }

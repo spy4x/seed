@@ -1,9 +1,11 @@
 import { expect } from "@std/expect"
 import { it } from "@std/testing/bdd"
+import { languages } from "./i18n.ts"
 import { type User, UserMFAStatus, UserRole } from "@domain/identity"
 import {
   type AdminApi,
   type AdminApiResult,
+  adminFetch,
   createAdminStore,
   operatorName,
   readOperatorEmail,
@@ -136,4 +138,29 @@ it("reads the operator's address from the API, and none when the call fails", as
 
   const down = fakeApi({ fetch: () => Promise.reject(new TypeError(`Failed to fetch`)) })
   expect(await readOperatorEmail(down.api.fetch)).toBe(null)
+})
+
+it("answers a refusal in the operator's language, by its reason", async () => {
+  const real = globalThis.fetch
+  globalThis.fetch = () =>
+    Promise.resolve(
+      new Response(
+        JSON.stringify({
+          error: { code: "not_found", reason: "GROUP_NOT_FOUND", message: "Group not found" },
+        }),
+        { status: 404, headers: { "content-type": "application/json" } },
+      ),
+    )
+  try {
+    expect(await languages.use("de")).toBe(true)
+    const answer = await adminFetch("/api/admin/groups/g-1")
+    expect(answer.ok ? null : [answer.status, answer.error.reason, answer.error.message]).toEqual([
+      404,
+      "GROUP_NOT_FOUND",
+      "Diese Gruppe gibt es nicht, oder du bist nicht mehr darin.",
+    ])
+  } finally {
+    globalThis.fetch = real
+    await languages.use("en")
+  }
 })
