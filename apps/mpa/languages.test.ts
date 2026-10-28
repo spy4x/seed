@@ -47,8 +47,8 @@ const routed = new App<State>()
   .get("/:lang", languageMiddleware, (ctx) => ctx.text(`home`))
   .handler()
 
-async function get(app: typeof guarded, path: string, method = `GET`) {
-  const response = await app(new Request(`${site}${path}`, { method }), info)
+async function get(app: typeof guarded, path: string) {
+  const response = await app(new Request(`${site}${path}`), info)
   return {
     status: response.status,
     location: response.headers.get(`location`),
@@ -179,7 +179,15 @@ describe("an address that ends in a slash", () => {
   })
 
   it("leaves a POST alone, since a 301 would turn it into a GET", async () => {
-    expect((await get(routed, `/pricing/`, `POST`)).status).not.toBe(301)
+    const post = new Request(`${site}/pricing/`, {
+      method: `POST`,
+      headers: { origin: site, "sec-fetch-site": `same-origin` },
+    })
+
+    const response = await routed(post, info)
+
+    expect(response.status).not.toBe(403)
+    expect(response.status).not.toBe(301)
   })
 })
 

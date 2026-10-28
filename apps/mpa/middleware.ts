@@ -111,7 +111,7 @@ export function pageMiddleware(
     }
     const { pathname, search } = ctx.url
     if (pathname.endsWith(`/`) && pathname !== `/` && READS.includes(ctx.req.method)) {
-      // `ctx.redirect` collapses repeated slashes, so `//evil.com/` cannot leave the site.
+      // `ctx.url` and `ctx.redirect` both collapse repeated slashes, so `//evil.com/` stays here.
       return withPageHeaders(
         ctx.redirect(`${pathname.replace(/\/+$/, ``) || `/`}${search}`, 301),
         pathname,
