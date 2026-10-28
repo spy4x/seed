@@ -87,6 +87,10 @@ export async function securityHeadersMiddleware(config: MpaConfig) {
  *    back/forward cache working), and keeps every newsletter answer out of all caches
  *    (`no-store`), since the newsletter pages carry a token in their address.
  *
+ * Between steps 1 and 2, a `GET` or `HEAD` of an address that ends in a slash answers 301 to the
+ * same address without it, query kept (`/de/pricing/` → `/de/pricing`). Fresh's own
+ * `trailingSlashes("never")` would answer 302.
+ *
  * Framing is forbidden by {@link securityHeadersMiddleware}, which runs before this one.
  */
 export function pageMiddleware(
@@ -105,7 +109,15 @@ export function pageMiddleware(
         ctx.url.pathname,
       )
     }
-    ctx.state.language = pathLanguage(ctx.url.pathname).language
+    const { pathname, search } = ctx.url
+    if (pathname.endsWith(`/`) && pathname !== `/` && READS.includes(ctx.req.method)) {
+      // `ctx.redirect` collapses repeated slashes, so `//evil.com/` cannot leave the site.
+      return withPageHeaders(
+        ctx.redirect(`${pathname.replace(/\/+$/, ``) || `/`}${search}`, 301),
+        pathname,
+      )
+    }
+    ctx.state.language = pathLanguage(pathname).language
     ctx.state.webAppOrigin = config.webAppOrigin
     ctx.state.spaOrigin = config.apiOrigin
     ctx.state.api = createApi({
@@ -150,6 +162,9 @@ function remoteAddress(info: Deno.ServeHandlerInfo): string {
   const address = info.remoteAddr
   return address.transport === "tcp" || address.transport === "udp" ? address.hostname : ""
 }
+
+/** The methods a trailing slash is redirected for: a 301 would turn a `POST` into a `GET`. */
+const READS = [`GET`, `HEAD`]
 
 const NEWSLETTER_PATHS: string[] = Object.values(FORM_ACTIONS)
 

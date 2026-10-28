@@ -38,8 +38,17 @@ const pages = new App<State>()
   .route("{/:lang}?/terms", { component: view(Terms) })
   .handler()
 
-async function get(app: typeof guarded, path: string) {
-  const response = await app(new Request(`${site}${path}`), info)
+/** The guard behind the website's middleware, with the home page at both its addresses. */
+const routed = new App<State>()
+  .use(pageMiddleware(config, () => Promise.reject(new Error(`no API`)), () => true))
+  .get("/", (ctx) => ctx.text(`home`))
+  .get("{/:lang}?/pricing", languageMiddleware, (ctx) => ctx.text(`pricing`))
+  .post("{/:lang}?/pricing", languageMiddleware, (ctx) => ctx.text(`posted`))
+  .get("/:lang", languageMiddleware, (ctx) => ctx.text(`home`))
+  .handler()
+
+async function get(app: typeof guarded, path: string, method = `GET`) {
+  const response = await app(new Request(`${site}${path}`, { method }), info)
   return {
     status: response.status,
     location: response.headers.get(`location`),
@@ -143,6 +152,34 @@ describe("languageMiddleware", () => {
   it("serves /../pricing as /pricing, since the URL parser resolves the dot segment first", async () => {
     expect(new URL(`${site}/%2E%2E/pricing`).pathname).toBe(`/pricing`)
     expect((await get(guarded, `/%2E%2E/pricing`)).status).toBe(200)
+  })
+})
+
+describe("an address that ends in a slash", () => {
+  it("answers 301 to the address without the slash, keeping the query, and that address answers 200", async () => {
+    for (
+      const [path, target] of [
+        [`/pricing/`, `/pricing`],
+        [`/de/pricing/?plan=team`, `/de/pricing?plan=team`],
+        [`/de/`, `/de`],
+      ]
+    ) {
+      const { status, location } = await get(routed, path)
+      expect(status, path).toBe(301)
+      expect(location, path).toBe(target)
+      expect((await get(routed, target)).status, target).toBe(200)
+    }
+  })
+
+  it("keeps the redirect on this site when the address starts with two slashes", async () => {
+    const { status, location } = await get(routed, `//evil.com/`)
+
+    expect(status).toBe(301)
+    expect(location).toBe(`/evil.com`)
+  })
+
+  it("leaves a POST alone, since a 301 would turn it into a GET", async () => {
+    expect((await get(routed, `/pricing/`, `POST`)).status).not.toBe(301)
   })
 })
 
