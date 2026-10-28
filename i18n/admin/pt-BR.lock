@@ -647,6 +647,7 @@ AdminCatalogItem.noLinkYet	2cc657e1a5fe5f70
 AdminCatalogItem.noPhotos	484a7ea3db77aaa8
 AdminCatalogItem.notFound	1df7c3875d11b407
 AdminCatalogItem.notFoundText	992276f72e41846e
+AdminCatalogItem.openPhoto	e9b13857525db46f
 AdminCatalogItem.photoColour	7002c162972122cc
 AdminCatalogItem.photoLeftOut	b6eccbe6492412e7
 AdminCatalogItem.photoNumber	21e78e26e8afb4a8
@@ -1036,6 +1037,7 @@ AdminJobs.notFound	7e60bc5f76a619e0
 AdminJobs.notYet	a9549d7d06368d83
 AdminJobs.nothingLinked	8e2bf16efc1bb52c
 AdminJobs.pages	c1d23e816b4f74f7
+AdminJobs.photoOf	9de4f5253c74db92
 AdminJobs.repeating	544d9e42216c2ac0
 AdminJobs.repeatingCaption	8ff78c42e640ed58
 AdminJobs.repeats	92ee0233f01396ac

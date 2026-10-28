@@ -659,6 +659,61 @@ describe("the item editor", () => {
     expect(row?.querySelector("img")?.getAttribute("src")).toContain(PHOTOS[1])
   })
 
+  it("marks the cover with a badge and a ring, and names its thumbnail as the cover", async () => {
+    await mount(<ItemEditor calls={[]} item={ITEM_SAVED} />)
+    const rows = [...document.querySelectorAll("[data-e2e=catalog-item-photo]")]
+    const open = rows.map((row) => row.querySelector("[data-e2e=catalog-item-photo-open]")!)
+
+    expect(open.map((one) => one.getAttribute("aria-label"))).toEqual([
+      "Open full size: Photo 1, the cover",
+      "Open full size: Photo 2",
+    ])
+    expect(rows.map((row) => row.querySelector("[data-e2e=catalog-item-photo-cover-badge]")))
+      .toEqual([expect.anything(), null])
+    expect(rows[0].querySelector("[data-e2e=catalog-item-photo-cover-badge]")!.textContent)
+      .toBe("Cover")
+    expect(open.map((one) => one.className.includes("ring-accent"))).toEqual([true, false])
+  })
+
+  it("opens a photo full size, moves with the arrow keys, and gives focus back on close", async () => {
+    await mount(<ItemEditor calls={[]} item={ITEM_SAVED} />)
+    const second = document.querySelectorAll<HTMLElement>("[data-e2e=catalog-item-photo-open]")[1]
+    second.focus()
+    await clickOn(second)
+    const dialog = find<HTMLDialogElement>("dialog[open]")
+    const shown = () => dialog.querySelector("img")?.getAttribute("src")
+    expect(shown()).toBe(`/api/admin/catalog/photos/${PHOTOS[1]}/full`)
+    // A browser moves focus into the dialog; happy-dom does not, so the test does.
+    dialog.querySelector("button")!.focus()
+
+    await act(() => {
+      dialog.dispatchEvent(
+        new window.KeyboardEvent("keydown", {
+          key: "ArrowRight",
+          bubbles: true,
+        }) as unknown as Event,
+      )
+    })
+    expect(shown()).toBe(`/api/admin/catalog/photos/${PHOTOS[0]}/full`)
+    expect(dialog.getAttribute("aria-label")).toBe("Photo 1, the cover")
+
+    await act(() => dialog.close())
+    await settle()
+    expect(document.querySelector("dialog[open]")).toBeNull()
+    expect(document.activeElement).toBe(second)
+  })
+
+  it("opens no lightbox for a photo still being prepared", async () => {
+    const preparing = { ...ITEM_SAVED.photos[1], state: "preparing" as const }
+    await mount(
+      <ItemEditor calls={[]} item={{ ...ITEM_SAVED, photos: [ITEM_SAVED.photos[0], preparing] }} />,
+    )
+    const rows = [...document.querySelectorAll("[data-e2e=catalog-item-photo]")]
+    expect(rows.map((row) => row.querySelector("[data-e2e=catalog-item-photo-open]") !== null))
+      .toEqual([true, false])
+    expect(rows[1].textContent).toContain("Preparing")
+  })
+
   it("gives the stock boxes and the small buttons a 44px tap area on a phone", async () => {
     await mount(<ItemEditor calls={[]} item={ITEM_SAVED} />)
     const box = find("[data-e2e=catalog-item-in-stock]").closest("label")!
