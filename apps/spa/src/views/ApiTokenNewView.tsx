@@ -4,6 +4,7 @@ import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
 import { API_TOKEN_OFFLINE, ApiTokenNewScreen } from "@ui/api-token-new-screen.tsx"
 import { profilePath } from "@ui/progressive.tsx"
+import { useAppText } from "@ui/i18n.ts"
 import { siteOrigin } from "../state/demo.ts"
 import { apiDocsHref } from "./api-docs-href.ts"
 import { apiTokensHttp, type ApiTokensStore, createApiTokensStore } from "../state/api-tokens.ts"
@@ -25,6 +26,7 @@ export function ApiTokenNewView(
   { store: given }: { store?: ApiTokensStore } = {},
 ) {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const [store] = useState(() => given ?? createApiTokensStore(apiTokensHttp))
   useEffect(() => network.watch(), [])
   // The form opens empty; once the groups are known, for the first of them.
@@ -90,16 +92,16 @@ export function ApiTokenNewView(
         navigate={navigate}
         labels={created
           ? {
-            title: "Leave without copying?",
-            message: "You will not be able to see this token again.",
-            leave: "Leave",
-            stay: "Stay",
+            title: t.t(`ApiTokenNewView.leaveTitle`),
+            message: t.t(`ApiTokenNewView.leaveMessage`),
+            leave: t.t(`ApiTokenNewView.leave`),
+            stay: t.t(`ApiTokenNewView.stay`),
           }
           : {
-            title: "Discard your changes?",
-            message: "This token is not created yet.",
-            leave: "Discard changes",
-            stay: "Keep editing",
+            title: t.t(`ApiTokenNewView.discardTitle`),
+            message: t.t(`ApiTokenNewView.discardMessage`),
+            leave: t.t(`ApiTokenNewView.discard`),
+            stay: t.t(`ApiTokenNewView.keepEditing`),
           }}
         onDiscard={() => store.dismissSecret()}
       />

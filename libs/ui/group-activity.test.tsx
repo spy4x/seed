@@ -58,8 +58,10 @@ describe("group activity panel", () => {
         row(1),
       ],
     })
-    expect(page).toContain("Ada moved 3 notes to Work")
-    expect(page).toContain("Ada renamed the group from “Home” to “Family”")
+    // Names and what members typed sit in `<bdi>`: the sentence is the text around them.
+    const text = page.replaceAll(/<\/?bdi[^>]*>/g, "")
+    expect(text).toContain("Ada moved 3 notes to Work")
+    expect(text).toContain("Ada renamed the group from “Home” to “Family”")
     expect(page).toContain("3 hours ago")
     expect(page).toContain(`data-e2e="activity-2"`)
   })

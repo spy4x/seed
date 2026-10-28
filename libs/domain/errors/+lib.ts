@@ -17,6 +17,7 @@ import { fieldErrorsSchema } from "@spy4x/validation"
 import type { ApiTokenErrorCode } from "@domain/api-tokens"
 import type { BillingErrorCode, PlanErrorCode } from "@domain/billing"
 import type { BlogErrorCode } from "@domain/blog"
+import type { CatalogErrorCode } from "@domain/catalog"
 import type { ContactLinkErrorCode } from "@domain/contact-links"
 import type { GroupErrorCode, InvitationErrorCode } from "@domain/groups"
 import type {
@@ -74,6 +75,7 @@ export type ErrorReason =
   | ApiTokenErrorCode
   | BillingErrorCode
   | BlogErrorCode
+  | CatalogErrorCode
   | ContactLinkErrorCode
   | GroupErrorCode
   | InvitationErrorCode

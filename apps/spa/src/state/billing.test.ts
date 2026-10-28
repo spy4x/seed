@@ -1,6 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { ApiResult } from "@spy4x/platform/api"
+import { BILLING_MESSAGES } from "@ui/billing-screen.tsx"
 import { createBillingStore } from "./billing.ts"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
@@ -100,7 +101,7 @@ describe("billing store", () => {
     await store.load(groupId)
 
     expect(store.current.value).toBeNull()
-    expect(store.error.value?.message).toBe("The plan could not be read.")
+    expect(store.error.value?.message).toBe(BILLING_MESSAGES.unreadable)
   })
 
   it("posts the chosen plan to the checkout and leaves for the provider's page", async () => {
@@ -180,9 +181,7 @@ describe("billing store", () => {
     await store.portal(groupId)
 
     expect(left).toEqual([])
-    expect(store.error.value?.message).toBe(
-      "The payment provider answered with an address this app does not open.",
-    )
+    expect(store.error.value?.message).toBe(BILLING_MESSAGES.unsafePage)
     expect(store.pending.value).toBe(false)
   })
 
@@ -190,15 +189,11 @@ describe("billing store", () => {
     const { store } = harness(new TypeError("Failed to fetch"))
 
     await store.portal(groupId)
-    expect(store.error.value?.message).toBe(
-      "Could not open Stripe's billing page. Check your connection and try again.",
-    )
+    expect(store.error.value?.message).toBe(BILLING_MESSAGES.portalUnreachable)
     expect(store.pending.value).toBe(false)
 
     await store.checkout(groupId, "pro")
-    expect(store.error.value?.message).toBe(
-      "Could not open Stripe's checkout. Check your connection and try again.",
-    )
+    expect(store.error.value?.message).toBe(BILLING_MESSAGES.checkoutUnreachable)
     expect(store.pending.value).toBe(false)
   })
 

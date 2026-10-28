@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX, RefObject } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { IconLink, IconMail } from "@spy4x/preact-icons"
@@ -27,17 +26,15 @@ import {
   INVITATION_MAX_DAYS,
   INVITATION_MAX_USES,
 } from "@domain/groups"
-import { ROLE_TEXT } from "./groups-screen.tsx"
+import { roleName } from "./groups-screen.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { useAppText } from "./i18n.ts"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { useFreshError } from "@spy4x/preact-ui/use-fresh-error"
 import { useFocusAfterRemoval } from "@spy4x/preact-ui/use-focus-after-removal"
 import { MoreMenu } from "@spy4x/preact-ui/page-header"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { GROUP_PATHS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
-
-/** Why the role picker offers a viewer only, on a plan without `memberRoles`. */
-export const VIEWERS_ONLY_HINT =
-  "This group's plan lets an invitation add viewers only. A paid plan lets you invite editors and admins too."
 
 /** A pending invitation as the group's Invitations section lists it. */
 export interface InvitationRow {
@@ -141,6 +138,7 @@ export function InviteForm(
     navigate,
   }: InviteFormProps,
 ): JSX.Element {
+  const t = useAppText()
   const emailInput = useRef<HTMLInputElement>(null)
   useEffect(() => {
     if (createError && !createRefusal) emailInput.current?.focus()
@@ -166,13 +164,17 @@ export function InviteForm(
     return (
       <div ref={createdBox} class="flex flex-col gap-4" data-e2e="invitation-created">
         <p class="text-sm">
-          Copy this link now: it is not shown again.
-          {created.mailAsked &&
-            (created.mailSent
-              ? " It was also sent by e-mail."
-              : " The e-mail could not be sent, so share the link yourself.")}
+          {!created.mailAsked
+            ? t.t(`GroupInvitations.copyNow`)
+            : created.mailSent
+            ? t.t(`GroupInvitations.copyNowMailed`)
+            : t.t(`GroupInvitations.copyNowMailFailed`)}
         </p>
-        <CopyBlock text={created.link} copyLabel="Copy invitation link" copiedLabel="Link copied" />
+        <CopyBlock
+          text={created.link}
+          copyLabel={t.t(`GroupInvitations.copyLink`)}
+          copiedLabel={t.t(`GroupInvitations.linkCopied`)}
+        />
         <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
           <Button
             type="button"
@@ -180,7 +182,7 @@ export function InviteForm(
             onClick={onDone}
             data-e2e="invitation-done"
           >
-            Done
+            {t.t(`GroupInvitations.done`)}
           </Button>
         </div>
       </div>
@@ -190,22 +192,25 @@ export function InviteForm(
     <ScreenForm pending={creating} onSubmit={onCreate}>
       <Stack data-e2e="invitation-form">
         <p class="text-sm text-muted">
-          Anyone with the link can join with its role until it expires or is used up. Pending
-          invitations do not count toward the plan's member limit; accepting one does.
+          {t.t(`GroupInvitations.formHint`)}
         </p>
-        <Field id="invitation-role" label="Role" hint={memberRoles ? undefined : VIEWERS_ONLY_HINT}>
+        <Field
+          id="invitation-role"
+          label={t.t(`GroupInvitations.role`)}
+          hint={memberRoles ? undefined : t.t(`GroupInvitations.viewersOnly`)}
+        >
           <Select
             name="role"
             data-e2e="invitation-role"
             value={String(role)}
-            options={roles.map((value) => ({ value, label: ROLE_TEXT[value] }))}
+            options={roles.map((value) => ({ value, label: roleName(t, value) }))}
             onChange={(e) => change({ role: Number(e.currentTarget.value) as GroupRole })}
           />
         </Field>
         <Field
           id="invitation-email"
-          label="E-mail address (optional)"
-          hint="Only the account that proved this address can accept. It lets in one person."
+          label={t.t(`GroupInvitations.email`)}
+          hint={t.t(`GroupInvitations.emailHint`)}
           error={createRefusal ? null : createError}
         >
           <Input
@@ -231,11 +236,11 @@ export function InviteForm(
             checked={draft.sendEmail}
             onChange={(e) => change({ sendEmail: e.currentTarget.checked })}
           >
-            Send the link to this address
+            {t.t(`GroupInvitations.sendEmail`)}
           </Checkbox>
         )}
         <div class="grid grid-cols-2 gap-4">
-          <Field id="invitation-days" label="Expires after (days)">
+          <Field id="invitation-days" label={t.t(`GroupInvitations.days`)}>
             <Input
               type="number"
               name="expiresInDays"
@@ -247,7 +252,7 @@ export function InviteForm(
               required
             />
           </Field>
-          <Field id="invitation-uses" label="People it lets in">
+          <Field id="invitation-uses" label={t.t(`GroupInvitations.uses`)}>
             <Input
               type="number"
               name="maxUses"
@@ -278,16 +283,16 @@ export function InviteForm(
             class="min-h-11 w-full sm:min-h-9 sm:w-auto"
             data-e2e="invitation-cancel"
           >
-            Cancel
+            {t.t(`GroupInvitations.cancel`)}
           </Button>
           <Button
             type="submit"
             class="min-h-11 w-full sm:min-h-9 sm:w-auto"
             data-e2e="invitation-create"
             busy={creating}
-            busyLabel="Creating…"
+            busyLabel={t.t(`GroupInvitations.creating`)}
           >
-            Create invitation
+            {t.t(`GroupInvitations.create`)}
           </Button>
         </div>
       </Stack>
@@ -359,6 +364,7 @@ function InvitationList(
     & Pick<PendingInvitationsProps, "actorRole" | "revokingId" | "revokeError" | "onRevoke">
     & { list: RefObject<HTMLUListElement>; invitations: readonly InvitationRow[] },
 ): JSX.Element {
+  const t = useAppText()
   return (
     <section
       aria-labelledby="group-invitations"
@@ -366,7 +372,7 @@ function InvitationList(
       data-e2e="group-section-invitations"
     >
       <h3 id="group-invitations" class="text-sm font-semibold text-foreground">
-        Pending invitations
+        {t.t(`GroupInvitations.pending`)}
       </h3>
       <Card>
         <ul ref={list} class="divide-y divide-subtle">
@@ -399,7 +405,8 @@ function InvitationItem(
   const [revoking, setRevoking] = useState(false)
   useSucceeded(pending, error !== null, () => setRevoking(false))
   const [revokeError, opened] = useFreshError(error, pending)
-  const who = invitation.email ?? "Anyone with the link"
+  const t = useAppText()
+  const who = invitation.email ?? t.t(`GroupInvitations.anyone`)
   return (
     <li
       class="flex min-h-14 items-center gap-3 px-4 py-3 sm:px-6"
@@ -416,22 +423,40 @@ function InvitationItem(
         <span
           class="line-clamp-2 break-words text-sm font-medium"
           title={who}
+          translate={invitation.email ? false : undefined}
           data-e2e="invitation-who"
         >
           {who}
         </span>
         <span class="text-sm text-muted">
-          {`used ${invitation.uses} of ${invitation.maxUses} · expires `}
-          <time dateTime={invitation.expiresAt}>{invitation.expiresAt.slice(0, 10)}</time>
-          {invitation.createdBy.name.trim() && ` · by ${invitation.createdBy.name}`}
+          <Rich
+            parts={t.parts(
+              invitation.createdBy.name.trim()
+                ? `GroupInvitations.usageBy`
+                : `GroupInvitations.usage`,
+              {
+                uses: invitation.uses,
+                count: invitation.maxUses,
+                date: invitation.expiresAt.slice(0, 10),
+                name: invitation.createdBy.name,
+              },
+            )}
+            tags={{
+              value: (date) => <time dateTime={invitation.expiresAt}>{date}</time>,
+              name: (name) => <bdi translate={false}>{name}</bdi>,
+            }}
+          />
         </span>
       </div>
       <span class="shrink-0 text-sm text-muted" data-e2e="invitation-role-text">
-        {ROLE_TEXT[invitation.role]}
+        {roleName(t, invitation.role)}
       </span>
       {canRevoke
         ? (
-          <MoreMenu label={`Actions for the invitation for ${who}`} dataE2E="invitation-menu">
+          <MoreMenu
+            label={t.t(`GroupInvitations.actions`, { who })}
+            dataE2E="invitation-menu"
+          >
             <DropdownItem
               danger
               disabled={pending}
@@ -441,16 +466,16 @@ function InvitationItem(
                 setRevoking(true)
               }}
             >
-              Revoke
+              {t.t(`GroupInvitations.revoke`)}
             </DropdownItem>
           </MoreMenu>
         )
         : <span class="w-11 shrink-0 sm:w-9" aria-hidden="true" />}
       {revoking && (
         <ConfirmDialog
-          title="Revoke this invitation?"
-          confirmLabel="Revoke"
-          cancelLabel="Cancel"
+          title={t.t(`GroupInvitations.revokeTitle`)}
+          confirmLabel={t.t(`GroupInvitations.revoke`)}
+          cancelLabel={t.t(`GroupInvitations.cancel`)}
           tone="danger"
           dataE2E="invitation-revoke-dialog"
           onConfirm={() => {
@@ -460,7 +485,15 @@ function InvitationItem(
         >
           <div class="flex flex-col gap-4">
             <p class="text-sm text-muted">
-              The link for {who} stops working right away. People who joined with it stay.
+              <Rich
+                parts={t.parts(
+                  invitation.email
+                    ? `GroupInvitations.revokeConfirmation`
+                    : `GroupInvitations.revokeConfirmationLink`,
+                  { email: invitation.email ?? `` },
+                )}
+                tags={{ value: (email) => <bdi translate={false}>{email}</bdi> }}
+              />
             </p>
             <ErrorState focusOnAppear message={revokeError} dataE2E="invitation-error" />
           </div>
@@ -520,13 +553,14 @@ export function InvitationScreen(
     navigate,
   }: InvitationScreenProps,
 ): JSX.Element {
+  const t = useAppText()
   if (!invitation) {
     return (
       <Card>
         <EmptyState
           headingLevel={1}
           inset
-          title={loading ? "Opening the invitation…" : "This invitation cannot be used"}
+          title={loading ? t.t(`GroupInvitations.opening`) : t.t(`GroupInvitations.unusable`)}
           description={loading ? undefined : error ?? undefined}
           action={!loading && (
             <Button
@@ -535,14 +569,14 @@ export function InvitationScreen(
               variant="outline"
               class="min-h-11 sm:min-h-9"
             >
-              Go to your groups
+              {t.t(`GroupInvitations.toGroups`)}
             </Button>
           )}
         />
       </Card>
     )
   }
-  const inviter = invitation.inviterName.trim() || "Someone"
+  const inviter = invitation.inviterName.trim()
   return (
     <Card>
       <CardBody>
@@ -554,15 +588,38 @@ export function InvitationScreen(
           <Avatar name={invitation.groupName} alt="" size="lg" />
           <div class="flex w-full min-w-0 flex-col gap-2">
             <p class="text-sm text-muted">
-              <span data-e2e="invitation-inviter">{inviter}</span> invited you to join
+              <Rich
+                parts={t.parts(
+                  inviter ? `GroupInvitations.invitedYou` : `GroupInvitations.invitedYouSomeone`,
+                  { name: inviter },
+                )}
+                tags={{
+                  name: (name) => (
+                    <bdi translate={inviter ? false : undefined} data-e2e="invitation-inviter">
+                      {name}
+                    </bdi>
+                  ),
+                }}
+              />
             </p>
-            <h1 class="break-words text-xl font-semibold" data-e2e="invitation-group">
+            <h1
+              class="break-words text-xl font-semibold"
+              translate={false}
+              data-e2e="invitation-group"
+            >
               {invitation.groupName}
             </h1>
             <p class="text-sm text-muted">
-              as <span class="font-medium text-foreground">{ROLE_TEXT[invitation.role]}</span>
-              {" · expires "}
-              <time dateTime={invitation.expiresAt}>{invitation.expiresAt.slice(0, 10)}</time>
+              <Rich
+                parts={t.parts(`GroupInvitations.asRole`, {
+                  role: roleName(t, invitation.role),
+                  date: invitation.expiresAt.slice(0, 10),
+                })}
+                tags={{
+                  role: (role) => <span class="font-medium text-foreground">{role}</span>,
+                  value: (date) => <time dateTime={invitation.expiresAt}>{date}</time>,
+                }}
+              />
             </p>
           </div>
           {invitation.forYou
@@ -573,10 +630,10 @@ export function InvitationScreen(
                   class="min-h-11 w-full justify-center sm:min-h-9 sm:w-auto"
                   data-e2e="invitation-accept"
                   busy={answering}
-                  busyLabel="Joining…"
+                  busyLabel={t.t(`GroupInvitations.joining`)}
                   onClick={() => !answering && onAccept?.()}
                 >
-                  Accept invitation
+                  {t.t(`GroupInvitations.accept`)}
                 </Button>
                 <Button
                   type="button"
@@ -586,7 +643,7 @@ export function InvitationScreen(
                   disabled={answering}
                   onClick={onDecline}
                 >
-                  Decline
+                  {t.t(`GroupInvitations.decline`)}
                 </Button>
               </div>
             )
@@ -624,6 +681,7 @@ export function MyInvitationsSection(
   { invitations, answeringId = null, answerError = null, onAccept, onDecline, navigate }:
     MyInvitationsSectionProps,
 ): JSX.Element | null {
+  const t = useAppText()
   const list = useRef<HTMLUListElement>(null)
   // The section goes with its last row, so what holds it is remembered while it is drawn.
   const around = useRef<Element | null>(null)
@@ -636,13 +694,13 @@ export function MyInvitationsSection(
   })
   if (invitations.length === 0) return null
   return (
-    <SettingGroup title="Invitations for you" dataE2E="my-invitations">
+    <SettingGroup title={t.t(`GroupInvitations.forYou`)} dataE2E="my-invitations">
       <Card>
         <ul ref={list} class="divide-y divide-subtle">
           {invitations.map((invitation) => {
             const failed = answerError?.invitationId === invitation.id ? answerError : null
             const answering = answeringId === invitation.id
-            const inviter = invitation.inviterName.trim() || "Someone"
+            const inviter = invitation.inviterName.trim()
             return (
               <li
                 key={invitation.id}
@@ -655,13 +713,30 @@ export function MyInvitationsSection(
                     <h3
                       class="line-clamp-2 break-words text-sm font-medium"
                       title={invitation.groupName}
+                      translate={false}
                       data-e2e="invitation-group"
                     >
                       {invitation.groupName}
                     </h3>
                     <p class="text-sm text-muted">
-                      <span data-e2e="invitation-inviter">{inviter}</span> invited you as{" "}
-                      {ROLE_TEXT[invitation.role]}
+                      <Rich
+                        parts={t.parts(
+                          inviter
+                            ? `GroupInvitations.invitedYouAs`
+                            : `GroupInvitations.invitedYouAsSomeone`,
+                          { name: inviter, role: roleName(t, invitation.role) },
+                        )}
+                        tags={{
+                          name: (name) => (
+                            <bdi
+                              translate={inviter ? false : undefined}
+                              data-e2e="invitation-inviter"
+                            >
+                              {name}
+                            </bdi>
+                          ),
+                        }}
+                      />
                     </p>
                   </div>
                   {invitation.forYou && (
@@ -672,23 +747,27 @@ export function MyInvitationsSection(
                         size="sm"
                         class="min-h-11 sm:min-h-9"
                         data-e2e="invitation-decline"
-                        aria-label={`Decline the invitation to ${invitation.groupName}`}
+                        aria-label={t.t(`GroupInvitations.declineNamed`, {
+                          name: invitation.groupName,
+                        })}
                         disabled={answering}
                         onClick={() => onDecline?.(invitation.id)}
                       >
-                        Decline
+                        {t.t(`GroupInvitations.decline`)}
                       </Button>
                       <Button
                         type="button"
                         size="sm"
                         class="min-h-11 sm:min-h-9"
                         data-e2e="invitation-accept"
-                        aria-label={`Accept the invitation to ${invitation.groupName}`}
+                        aria-label={t.t(`GroupInvitations.acceptNamed`, {
+                          name: invitation.groupName,
+                        })}
                         busy={answering}
-                        busyLabel="Joining…"
+                        busyLabel={t.t(`GroupInvitations.joining`)}
                         onClick={() => !answering && onAccept?.(invitation.id)}
                       >
-                        Accept
+                        {t.t(`GroupInvitations.acceptShort`)}
                       </Button>
                     </Cluster>
                   )}
@@ -716,6 +795,7 @@ export function MyInvitationsSection(
 function AddressRefusalNotice(
   { message, navigate }: { message: string; navigate?: Navigate },
 ): JSX.Element {
+  const t = useAppText()
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => box.current?.focus(), [message])
   return (
@@ -731,7 +811,7 @@ function AddressRefusalNotice(
             class="min-h-11 sm:min-h-9"
             data-e2e="invitation-verify-email"
           >
-            Verify e-mail
+            {t.t(`GroupInvitations.verifyEmail`)}
           </Button>
         }
       >
@@ -743,11 +823,17 @@ function AddressRefusalNotice(
 
 /** Why the person cannot answer an invitation sent to another address. */
 function NotForYou({ navigate }: { navigate?: Navigate }): JSX.Element {
+  const t = useAppText()
   return (
     <p class="text-sm text-muted" data-e2e="invitation-not-for-you">
-      This invitation was sent to another e-mail address. If the address is yours, confirm it in
-      your <Link href={SCREEN_PATHS.email} navigate={navigate} class="pc-link">profile</Link>{" "}
-      first, or sign in with the account that uses it.
+      <Rich
+        parts={t.parts(`GroupInvitations.notForYou`)}
+        tags={{
+          link: (text) => (
+            <Link href={SCREEN_PATHS.email} navigate={navigate} class="pc-link">{text}</Link>
+          ),
+        }}
+      />
     </p>
   )
 }

@@ -26,6 +26,7 @@ import {
 } from "./api-tokens.ts"
 import { ADMIN_OUTRANKED, ADMIN_SELF, ADMIN_USER_NOT_FOUND } from "./users.ts"
 import { ADMIN_API_MODULES } from "./registry.ts"
+import { CATALOG_DEFAULT_SETTINGS } from "@domain/catalog"
 import type { AdminModuleContext } from "./module.ts"
 import { apiError } from "../../_testing/api-error.ts"
 
@@ -92,6 +93,7 @@ function buildApp(
     limit: passThrough,
     emit: (event: PushDevicesUpdatedEvent | UserSignedOutEvent) => emitted.push(event),
     now: () => new Date("2026-10-16T09:00:00.000Z"),
+    catalog: { on: true, settings: CATALOG_DEFAULT_SETTINGS },
   }
   // The real registry, with this module's service faked; the other modules never reach a database
   // in these requests.

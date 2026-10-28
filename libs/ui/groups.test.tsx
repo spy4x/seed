@@ -26,7 +26,6 @@ import {
   MyInvitationsSection,
   PendingInvitations,
   type PendingInvitationsProps,
-  VIEWERS_ONLY_HINT,
 } from "./group-invitations.tsx"
 import {
   type GroupMemberRow,
@@ -50,9 +49,23 @@ import {
   type TransferDraft,
 } from "./group-transfer.tsx"
 import { GroupsScreen, type GroupsScreenProps, NEW_GROUP_PATH } from "./groups-screen.tsx"
-import { INVITATION_OFFLINE, InvitationNewScreen } from "./invitation-new-screen.tsx"
+import { InvitationNewScreen } from "./invitation-new-screen.tsx"
+import appEn from "@i18n/app/en.json" with { type: "json" }
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { GROUP_PATHS, SCREEN_PATHS } from "./progressive.tsx"
+import {
+  type Catalog,
+  createTranslator,
+  type MessageValues,
+  pseudoLocalize,
+} from "@spy4x/platform/universal/i18n"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import uiEn from "@spy4x/preact-ui/i18n/en"
+import systemEn from "@spy4x/preact-system/i18n/en"
+import { type ActivityRow, GroupActivityPanel } from "./group-activity-panel.tsx"
+import { GroupImportScreen, type GroupImportState } from "./group-import-screen.tsx"
+import { GroupMoveAllForm } from "./group-move-all.tsx"
+import { GroupSheet } from "./group-picker.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -583,7 +596,7 @@ describe("GroupEditorScreen header", () => {
       }))
       const dialog = find("[data-e2e=group-move-all-dialog]")
       expect(find("[data-e2e=plan-refusal]").textContent).toContain(
-        "Archive has reached its note limit",
+        "\u2068Archive\u2069 has reached its note limit",
       )
       expect(dialog.textContent).not.toContain("not this one's")
       expect(find("[data-e2e=plan-refusal] a").getAttribute("href")).toContain("g2")
@@ -619,9 +632,13 @@ describe("GroupEditorScreen header", () => {
       expect(changed.calls).toHaveLength(1)
       // The refusal is still passed in, but it was Archive's: no notice names or links Home.
       expect(has("[data-e2e=plan-refusal]")).toBe(false)
-      expect(find("[data-e2e=group-move-all-dialog]").textContent).not.toContain("Home has reached")
+      expect(find("[data-e2e=group-move-all-dialog]").textContent).not.toContain(
+        "\u2068Home\u2069 has reached",
+      )
       await choose("[data-e2e=group-move-all-to]", "g2")
-      expect(find("[data-e2e=plan-refusal]").textContent).toContain("Archive has reached")
+      expect(find("[data-e2e=plan-refusal]").textContent).toContain(
+        "\u2068Archive\u2069 has reached",
+      )
       expect(find("[data-e2e=plan-refusal] a").getAttribute("href")).toContain("g2")
       await choose("[data-e2e=group-move-all-to]", "g3")
       // The app answers the callback by clearing the refusal.
@@ -971,9 +988,9 @@ describe("GroupMembersSection", () => {
 
   it("counts every member in the heading and says when the list is cut off", async () => {
     await mount(<GroupMembersSection {...props} memberCount={1200} />)
-    expect(find("#group-members").textContent).toBe("Members (1200)")
+    expect(find("#group-members").textContent).toBe("Members (1,200)")
     expect(find("[data-e2e=group-members-cut-off]").textContent)
-      .toBe("Showing the first 3 of 1200 members.")
+      .toBe("Showing the first 3 of 1,200 members.")
   })
 
   it("gives the owner a menu on each other member's row to change the role", async () => {
@@ -1147,7 +1164,7 @@ describe("InviteForm", () => {
     const drafts = spy<[InvitationDraft]>()
     await mount(<InviteForm {...defaults} memberRoles={false} onDraftChange={drafts.fn} />)
     expect(texts("[data-e2e=invitation-role] option")).toEqual(["Viewer"])
-    expect(root!.textContent).toContain(VIEWERS_ONLY_HINT)
+    expect(root!.textContent).toContain(appEn["GroupInvitations.viewersOnly"])
     expect(drafts.calls).toEqual([[{ ...EMPTY_INVITATION_DRAFT, role: GroupRole.VIEWER }]])
   })
 
@@ -1284,7 +1301,9 @@ describe("InvitationNewScreen", () => {
     expect(find("[data-e2e=invitation-offline]").textContent).toContain("You are offline")
     expect(has("[data-e2e=invitation-error]")).toBe(false)
     await rerender(<InvitationNewScreen {...page} offline refusedOffline />)
-    expect(find("[data-e2e=invitation-error]").textContent).toContain(INVITATION_OFFLINE)
+    expect(find("[data-e2e=invitation-error]").textContent).toContain(
+      appEn["InvitationNew.offline"],
+    )
   })
 
   it("draws a placeholder only after 300 ms while the group is read, and says it is loading", async () => {
@@ -1947,5 +1966,424 @@ describe("group editor, as the server draws it", () => {
     for (const name of ["No colour", "Gray", "Yellow", "Pink", "Pick a custom colour"]) {
       expect(form).toMatch(new RegExp(`>${name}</`))
     }
+  })
+})
+
+/**
+ * Every group screen in the `en-XA` pseudo-language, which wraps each catalog message in `⟦ ⟧`. A
+ * word the screen shows outside those marks is English left in the code, past the catalog, unless
+ * it is data: a group's or a person's name, an address, a date, a number.
+ */
+describe("the group screens in the en-XA pseudo-language", () => {
+  const PSEUDO = createTranslator({
+    language: `en-XA`,
+    catalogs: [uiEn, systemEn, appEn].map((source) => ({
+      source: source as Catalog,
+      translation: pseudoLocalize(source as Catalog),
+    })),
+  })
+
+  /** What members typed and who they are: the screens show it as it is. */
+  const DATA = [
+    `Team`,
+    `Family`,
+    `Work`,
+    `Plan`,
+    `Olga Owner`,
+    `Eddie Editor`,
+    `olga@example.com`,
+    `eddie@example.com`,
+    `vic@example.com`,
+    `Ada`,
+    `https://invite.example/x`,
+    `OO`,
+    `EE`,
+    `VE`,
+  ]
+
+  /**
+   * What a person reads that is English outside the pseudo-language's marks: every text node, and
+   * the names and hints in attributes. A `<time>` shows a date, which is data.
+   */
+  function english(): string[] {
+    const texts: string[] = []
+    const walker = document.createTreeWalker(document.body, 4 /* NodeFilter.SHOW_TEXT */)
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (node.parentElement?.closest(`script, style, time`)) continue
+      texts.push(node.textContent ?? ``)
+    }
+    for (const element of document.body.querySelectorAll(`*`)) {
+      if (element.closest(`time`)) continue
+      for (const name of [`aria-label`, `placeholder`, `title`, `label`]) {
+        const value = element.getAttribute(name)
+        if (value) texts.push(value)
+      }
+    }
+    return texts.filter((text) => {
+      let rest = text
+      for (const data of DATA) rest = rest.replaceAll(data, ``)
+      // Whole messages, innermost first: a message can hold another as a value.
+      for (let before = ``; before !== rest;) {
+        before = rest
+        rest = rest.replaceAll(/⟦[^⟦⟧]*⟧/g, ``)
+      }
+      // A message split around a tag spans several nodes, and each part is pseudo-text, whose
+      // vowels carry accents. English is a word of plain letters only.
+      return /(?<!\p{L})[A-Za-z]{2,}(?!\p{L})/u.test(rest)
+    })
+  }
+
+  /** Mounts `node` in the pseudo-language and checks that every word is the catalog's. */
+  async function expectTranslated(
+    node: VNode,
+    keys: (string | [string, MessageValues])[],
+  ): Promise<void> {
+    await mount(<I18nContext.Provider value={PSEUDO}>{node}</I18nContext.Provider>)
+    expect(english()).toEqual([])
+    // The render reached each part: its pseudo-text is on the page.
+    const page = document.body.textContent ?? ``
+    for (const key of keys) {
+      expect(page).toContain(typeof key === `string` ? PSEUDO.t(key) : PSEUDO.t(...key))
+    }
+  }
+
+  const groups = [
+    { ...team, description: `Work`, memberCount: 3 },
+    { id: `g-2`, name: `Family`, role: GroupRole.VIEWER, memberCount: 1 },
+  ]
+
+  it("the groups page, with deleted groups and a refused restore", async () => {
+    await expectTranslated(
+      <GroupsScreen
+        groups={groups}
+        selectedId={groupId}
+        loading={false}
+        error={null}
+        deleted={[{ id: `g-3`, name: `Work`, deletedAt: `2026-01-01T00:00:00.000Z` }]}
+        restoreError="⟦refused⟧"
+      />,
+      [`Groups.title`, `Groups.current`, `Groups.restore`, `Groups.roleOwner`, `Groups.onlyYou`],
+    )
+  })
+
+  it("the groups page while it loads, and when it has none", async () => {
+    await expectTranslated(
+      <>
+        <GroupsScreen groups={[]} selectedId={null} loading error={null} />
+        <GroupsScreen groups={[]} selectedId={null} loading={false} error={null} />
+        <GroupsScreen groups={[]} selectedId={null} loading={false} error={null} loadError="⟦x⟧" />
+      </>,
+      [`Groups.loading`, `Groups.empty`, `Groups.emptyHint`, `Groups.retry`],
+    )
+  })
+
+  it("a group's General tab with its menu, offline, and the create page", async () => {
+    const page = {
+      group: team,
+      current: true,
+      loading: false,
+      value: teamDraft,
+      members: [owner, editor, viewer],
+      transfer: () => <p>⟦transfer⟧</p>,
+      onExport: () => {},
+      exportFailed: true,
+      moveTargets: [{ id: `g-2`, name: `Family` }],
+      onMoveAll: () => {},
+      onSwitch: () => {},
+      hasSubscription: true,
+      dirty: true,
+      offline: true,
+    }
+    await expectTranslated(
+      <>
+        <GroupEditorScreen {...page} current={false} />
+        <GroupEditorScreen
+          creating
+          group={null}
+          current={false}
+          loading={false}
+          value={EMPTY_GROUP_DRAFT}
+          offline
+          trial={{ enabled: true, used: false, groupId: null, days: 14 }}
+        />
+        <GroupEditorScreen group={null} current={false} loading={false} value={EMPTY_GROUP_DRAFT} />
+        <GroupEditorScreen
+          group={{ ...team, role: GroupRole.VIEWER, description: `Work` }}
+          current
+          loading={false}
+          value={teamDraft}
+        />
+      </>,
+      [
+        `GroupEditor.switch`,
+        `GroupEditor.transfer`,
+        `GroupEditor.export`,
+        `GroupEditor.moveAll`,
+        `GroupEditor.delete`,
+        `GroupEditor.cancelSubscriptionFirst`,
+        `GroupEditor.exportFailed`,
+        `GroupEditor.offlineSave`,
+        `GroupEditor.offlineCreate`,
+        `GroupEditor.discard`,
+        `GroupEditor.create`,
+        `GroupEditor.missing`,
+        `GroupEditor.readOnly`,
+      ],
+    )
+  })
+
+  it("the leave, delete and move dialogs, and a finished move", async () => {
+    const page = {
+      group: { ...team, role: GroupRole.ADMIN },
+      current: true,
+      loading: false,
+      value: teamDraft,
+      moveTargets: [{ id: `g-2`, name: `Family` }],
+      onMoveAll: () => {},
+    }
+    await expectTranslated(<GroupEditorScreen {...page} />, [`GroupEditor.leave`])
+    await click(`[data-e2e=group-leave-open]`)
+    expect(english()).toEqual([])
+    expect(document.body.textContent).toContain(PSEUDO.t(`GroupEditor.leaveConfirmation`))
+    await act(() => render(null, root!))
+    await expectTranslated(<GroupEditorScreen {...page} group={team} />, [])
+    await click(`[data-e2e=group-delete-open]`)
+    expect(english()).toEqual([])
+    await act(() => render(null, root!))
+    await expectTranslated(<GroupEditorScreen {...page} />, [])
+    await click(`[data-e2e=group-move-all-open]`)
+    expect(english()).toEqual([])
+    expect(document.body.textContent).toContain(PSEUDO.t(`GroupMoveAll.submit`))
+    await act(() => render(null, root!))
+    await expectTranslated(
+      <GroupMoveAllForm
+        groupName="Team"
+        targets={[{ id: `g-2`, name: `Family` }]}
+        result={{ count: 3, tags: 1, toName: `Family` }}
+        onDelete={() => {}}
+      />,
+      [`GroupMoveAll.keep`],
+    )
+  })
+
+  it("the members, with an owner's menu, a cut-off list and the pending invitations", async () => {
+    const invitations: InvitationRow[] = [
+      {
+        id: `i-1`,
+        role: GroupRole.EDITOR,
+        email: null,
+        maxUses: 2,
+        uses: 1,
+        expiresAt: `2026-02-01T00:00:00.000Z`,
+        createdBy: { name: `Olga Owner` },
+      },
+      {
+        id: `i-2`,
+        role: GroupRole.VIEWER,
+        email: `vic@example.com`,
+        maxUses: 1,
+        uses: 0,
+        expiresAt: `2026-02-01T00:00:00.000Z`,
+        createdBy: { name: `` },
+      },
+    ]
+    await expectTranslated(
+      <>
+        <GroupEditorScreen
+          group={team}
+          tab={GroupTab.MEMBERS}
+          current
+          loading={false}
+          value={teamDraft}
+          members={[owner, editor, viewer]}
+          memberCount={1200}
+          pendingInvitations={
+            <PendingInvitations actorRole={GroupRole.OWNER} invitations={invitations} />
+          }
+        />
+        <GroupMembersSection groupId={groupId} actorRole={GroupRole.OWNER} members={null} />
+      </>,
+      [
+        `GroupEditor.invite`,
+        `GroupMembers.you`,
+        `GroupMembers.makeAdmin`,
+        `GroupMembers.remove`,
+        `GroupInvitations.pending`,
+        `GroupInvitations.anyone`,
+        `GroupInvitations.revoke`,
+        `GroupMembers.loading`,
+      ],
+    )
+    await click(`[data-e2e=group-member-remove-open]`)
+    expect(english()).toEqual([])
+    expect(document.body.textContent).toContain(PSEUDO.t(`GroupMembers.removeConfirmation`))
+  })
+
+  it("the transfer form and the invitation forms, before and after a create", async () => {
+    await expectTranslated(
+      <>
+        <GroupTransferForm
+          groupName="Team"
+          role={GroupRole.OWNER}
+          members={[owner, editor]}
+          draft={EMPTY_TRANSFER_DRAFT}
+        />
+        <InvitationNewScreen
+          groupId={groupId}
+          group={{ name: `Team`, role: GroupRole.OWNER }}
+          loading={false}
+          memberRoles={false}
+          draft={{ ...EMPTY_INVITATION_DRAFT, email: `vic@example.com` }}
+          offline
+          refusedOffline
+          addressRefusal="⟦verify⟧"
+        />
+        <InviteForm
+          groupId={groupId}
+          actorRole={GroupRole.OWNER}
+          draft={EMPTY_INVITATION_DRAFT}
+          created={{ link: `https://invite.example/x`, mailAsked: true, mailSent: false }}
+        />
+        <InvitationNewScreen
+          groupId={groupId}
+          group={{ name: `Team`, role: GroupRole.VIEWER }}
+          loading={false}
+          draft={EMPTY_INVITATION_DRAFT}
+        />
+        <InvitationNewScreen
+          groupId={groupId}
+          group={null}
+          loading={false}
+          draft={EMPTY_INVITATION_DRAFT}
+        />
+      </>,
+      [
+        `GroupTransfer.explanation`,
+        `GroupInvitations.viewersOnly`,
+        `GroupInvitations.sendEmail`,
+        `InvitationNew.offline`,
+        `GroupInvitations.copyNowMailFailed`,
+        `InvitationNew.notAllowed`,
+        `InvitationNew.missing`,
+        `GroupInvitations.verifyEmail`,
+      ],
+    )
+  })
+
+  it("an invitation as the person invited sees it", async () => {
+    await expectTranslated(
+      <>
+        <InvitationScreen invitation={preview} loading={false} />
+        <InvitationScreen
+          invitation={{ ...preview, inviterName: ``, forYou: false }}
+          loading={false}
+        />
+        <InvitationScreen invitation={null} loading={false} error="⟦gone⟧" />
+        <MyInvitationsSection invitations={[preview, { ...preview, id: `i-2`, inviterName: `` }]} />
+      </>,
+      [
+        `GroupInvitations.accept`,
+        `GroupInvitations.notForYou`,
+        `GroupInvitations.unusable`,
+        `GroupInvitations.forYou`,
+      ],
+    )
+  })
+
+  it("the group switcher and the phone's group list", async () => {
+    const picker = { groups, selectedId: groupId, onSelect: () => {} }
+    await expectTranslated(
+      <>
+        <GroupPicker {...picker} />
+        <GroupSheet {...picker} />
+      </>,
+      [`GroupPicker.all`, `GroupPicker.new`, `GroupPicker.sheetHeading`],
+    )
+  })
+
+  it("the import page at each step", async () => {
+    const steps: GroupImportState[] = [
+      { step: `checking` },
+      {
+        step: `checked`,
+        summary: {
+          name: `Family`,
+          parts: [{ kind: `notes`, count: 3, one: `note`, other: `notes` }],
+        },
+      },
+      { step: `refused`, problems: [{ kind: `not_export` }, { kind: `newer_version` }], total: 4 },
+      {
+        step: `plan`,
+        refusal: { entitlement: `notes`, limit: 100 } as unknown as PlanRefusal,
+        notes: 300,
+      },
+      { step: `unchecked` },
+    ]
+    await expectTranslated(
+      <>
+        {steps.map((state) => (
+          <GroupImportScreen
+            state={state}
+            name="Family"
+            maxBytes={5 * 1024 * 1024}
+            offline
+            importFailed
+          />
+        ))}
+      </>,
+      [
+        `GroupImport.title`,
+        `GroupImport.checking`,
+        [`GroupImport.more`, { count: 2 }],
+        `GroupImport.planTitle`,
+      ],
+    )
+  })
+
+  it("the activity log, one sentence per kind of event", async () => {
+    const at = `2026-01-01T00:00:00.000Z`
+    const events: ActivityRow[] = [
+      [`group.created`, {}],
+      [`group.renamed`, { from: `Team`, to: `Work` }],
+      [`group.member_role_changed`, { from: GroupRole.VIEWER, to: GroupRole.EDITOR }],
+      [`group.member_removed`, {}],
+      [`group.invitation_created`, { role: GroupRole.EDITOR }],
+      [`group.data_moved_out`, { count: 3, groupName: `Family` }],
+      [`group.imported`, {}],
+      [`note.created`, { title: `Plan` }],
+      [`note.moved_out`, { count: 1 }],
+      [`note.attachment.added`, { name: `Plan`, title: `Work` }],
+      [`tag.updated`, { name: `Work`, color: `red` }],
+      [`tag.deleted`, { name: `Work`, notes: 2 }],
+      [`something.new`, {}],
+    ].map(([kind, details], index) => ({
+      id: String(index),
+      kind: kind as string,
+      at,
+      actor: index === 0 ? { userId: null, name: `` } : { userId: 1, name: `Ada` },
+      target: index === 2 ? { userId: 2, name: `Olga Owner` } : null,
+      entity: kind === `note.created` ? { type: `note`, id: `n-1`, exists: true } : null,
+      details: details as ActivityRow["details"],
+    }))
+    await expectTranslated(
+      <>
+        <GroupActivityPanel
+          events={events}
+          loading={false}
+          error={null}
+          hasMore
+          onLoadMore={() => {}}
+        />
+        <GroupActivityPanel events={[]} loading={false} error={null} />
+        <GroupActivityPanel events={[]} loading={false} error={null} forbidden />
+      </>,
+      [
+        `GroupActivity.deletedUser`,
+        `GroupActivity.loadMore`,
+        `GroupActivity.empty`,
+        `GroupActivity.forbidden`,
+        `GroupActivity.openNote`,
+      ],
+    )
   })
 })

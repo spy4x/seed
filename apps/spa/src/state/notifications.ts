@@ -1,5 +1,5 @@
 import { signal } from "@preact/signals"
-import type { NotificationRow } from "@ui/notifications-screen.tsx"
+import { NOTIFICATION_MESSAGES, type NotificationRow } from "@ui/notifications-screen.tsx"
 import { apiFetch } from "./api.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
@@ -69,7 +69,7 @@ export function createNotificationsStore(
       error.value = null
     } catch (cause) {
       if (read !== reads) return
-      error.value = cause instanceof Error ? cause.message : "Could not load the notifications"
+      error.value = cause instanceof Error ? cause.message : NOTIFICATION_MESSAGES.load
     } finally {
       if (read === reads) loading.value = false
     }
@@ -123,7 +123,7 @@ export function createNotificationsStore(
       unreadCount.value = page.unreadCount
     } catch (cause) {
       if (read !== reads) return
-      error.value = cause instanceof Error ? cause.message : "Could not load more notifications"
+      error.value = cause instanceof Error ? cause.message : NOTIFICATION_MESSAGES.loadMore
     } finally {
       if (read === reads) loadingMore.value = false
     }
@@ -153,7 +153,7 @@ export function createNotificationsStore(
       unreadCount.value = await dependencies.markRead(id)
     } catch (cause) {
       notifications.value = before
-      error.value = cause instanceof Error ? cause.message : "Could not mark it as read"
+      error.value = cause instanceof Error ? cause.message : NOTIFICATION_MESSAGES.read
     }
     if (reread && watching) await readFirstPage()
   }
@@ -168,7 +168,7 @@ export function createNotificationsStore(
       unreadCount.value = await dependencies.markAllRead()
     } catch (cause) {
       notifications.value = before
-      error.value = cause instanceof Error ? cause.message : "Could not mark them as read"
+      error.value = cause instanceof Error ? cause.message : NOTIFICATION_MESSAGES.readAll
     }
     if (reread && watching) await readFirstPage()
   }

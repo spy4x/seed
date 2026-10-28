@@ -8,7 +8,17 @@ import { Window } from "happy-dom"
 import { render } from "preact"
 import { act } from "preact/test-utils"
 import type { OnboardingSteps } from "@domain/identity"
-import { OnboardingCard, type OnboardingCardProps, TOUR_STEPS } from "./onboarding-card.tsx"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import {
+  ONBOARDING_FAILURE,
+  OnboardingCard,
+  type OnboardingCardProps,
+  tourSteps,
+} from "./onboarding-card.tsx"
+import { ENGLISH, PSEUDO, untranslated } from "./i18n-testing.ts"
+
+const TOUR_STEPS = tourSteps(ENGLISH)
 
 const window = new Window({ url: "http://app.localhost/" })
 const NAMES = [
@@ -74,7 +84,7 @@ interface Calls {
  * The card on a page, with the app's part played by the test: `props` is what the app passes, and
  * `update` renders the card again with what the app would pass next.
  */
-async function mount(props: Partial<OnboardingCardProps> = {}) {
+async function mount(props: Partial<OnboardingCardProps> = {}, language?: Translator<string>) {
   const calls: Calls = { log: [], routed: [] }
   let current: OnboardingCardProps = {
     steps: NONE,
@@ -91,7 +101,19 @@ async function mount(props: Partial<OnboardingCardProps> = {}) {
   }
   root = window.document.createElement("div") as unknown as HTMLElement
   window.document.body.appendChild(root as never)
-  const draw = () => act(() => render(<OnboardingCard {...current} />, root!))
+  const draw = () =>
+    act(() =>
+      render(
+        language
+          ? (
+            <I18nContext.Provider value={language}>
+              <OnboardingCard {...current} />
+            </I18nContext.Provider>
+          )
+          : <OnboardingCard {...current} />,
+        root!,
+      )
+    )
   await draw()
   return {
     calls,
@@ -405,5 +427,20 @@ describe("first-steps tour", () => {
     const finished = await mount({ tourOpen: true, tourIndex: TOUR_STEPS.length - 1 })
     await press("Done")
     expect(finished.calls.log).toEqual(["tour end"])
+  })
+})
+
+describe("first-steps card in another language", () => {
+  it("shows no English outside the catalogs: an en-XA render of the card and the tour is all pseudo-language", async () => {
+    await mount({ tourOpen: true, error: ONBOARDING_FAILURE }, PSEUDO)
+
+    expect(untranslated(document.body)).toEqual([])
+    // The render reached the card, its error and the tour: each one's pseudo-text is on the page.
+    const page = document.body.textContent ?? ""
+    for (
+      const key of ["OnboardingCard.title", "OnboardingCard.failed", "OnboardingCard.tourNotesText"]
+    ) {
+      expect(page).toContain(PSEUDO.t(key))
+    }
   })
 })

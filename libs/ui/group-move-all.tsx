@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
@@ -11,6 +10,8 @@ import { ErrorState } from "@spy4x/preact-ui/error-state"
 import type { MoveTarget } from "./notes-screen.tsx"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { useAppText } from "./i18n.ts"
 
 /** What a finished move tells the person: how many notes and tags went, and where. */
 export interface MoveAllResult {
@@ -71,6 +72,7 @@ export function GroupMoveAllForm(
     onDelete,
   }: GroupMoveAllFormProps,
 ): JSX.Element {
+  const t = useAppText()
   const [toGroupId, setToGroupId] = useState(targets[0]?.id ?? ``)
   // The refusal belongs to the group the form last submitted to; it is shown only while that
   // group is still picked, under that group's name and pricing link.
@@ -89,11 +91,12 @@ export function GroupMoveAllForm(
     >
       <Stack gap="lg">
         <p class="text-sm text-muted" data-e2e="group-move-all-explanation">
-          Every note and tag in "{groupName}" moves to the group you pick, and its members stop
-          seeing them. Members of the other group see them right away. Each note keeps its edit
-          history. Nothing moves if any of it fails.
+          <Rich
+            parts={t.parts(`GroupMoveAll.explanation`, { name: groupName })}
+            tags={{ value: (name) => <bdi translate={false}>{name}</bdi> }}
+          />
         </p>
-        <Field id="group-move-all-to" label="Move everything to">
+        <Field id="group-move-all-to" label={t.t(`GroupMoveAll.to`)}>
           <Select
             name="toGroupId"
             data-e2e="group-move-all-to"
@@ -123,16 +126,16 @@ export function GroupMoveAllForm(
             onClick={onCancel}
             data-e2e="group-move-all-cancel"
           >
-            Cancel
+            {t.t(`GroupMoveAll.cancel`)}
           </Button>
           <Button
             type="submit"
             class="min-h-11 sm:min-h-9"
             busy={moving}
-            busyLabel="Moving…"
+            busyLabel={t.t(`GroupMoveAll.moving`)}
             data-e2e="group-move-all-submit"
           >
-            Move everything
+            {t.t(`GroupMoveAll.submit`)}
           </Button>
         </DialogActions>
       </Stack>
@@ -149,18 +152,27 @@ function Done(
     onDelete?: () => void
   },
 ): JSX.Element {
+  const t = useAppText()
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => {
     box.current?.querySelector<HTMLElement>("[data-e2e=group-move-all-keep]")?.focus()
   }, [])
+  const notes = t.t(`GroupMoveAll.notes`, { count: result.count })
+  const names = { from: groupName, to: result.toName }
   return (
     <div ref={box}>
       <Stack gap="lg">
         <p class="text-sm" role="status" data-e2e="group-move-all-done">
-          Moved {result.count} {result.count === 1 ? `note` : `notes`}
-          {result.tags ? ` and ${result.tags} ${result.tags === 1 ? `tag` : `tags`}` : ``} from "
-          {groupName}" to "
-          {result.toName}". Notes you deleted earlier stay in this group and are deleted with it.
+          <Rich
+            parts={result.tags
+              ? t.parts(`GroupMoveAll.doneWithTags`, {
+                ...names,
+                notes,
+                tags: t.t(`GroupMoveAll.tags`, { count: result.tags }),
+              })
+              : t.parts(`GroupMoveAll.done`, { ...names, notes })}
+            tags={{ value: (name) => <bdi translate={false}>{name}</bdi> }}
+          />
         </p>
         <DialogActions>
           <Button
@@ -170,7 +182,7 @@ function Done(
             onClick={onCancel}
             data-e2e="group-move-all-keep"
           >
-            Keep the group
+            {t.t(`GroupMoveAll.keep`)}
           </Button>
           {onDelete && (
             <Button
@@ -180,7 +192,7 @@ function Done(
               onClick={onDelete}
               data-e2e="group-move-all-delete"
             >
-              Delete "{groupName}"...
+              {t.t(`GroupMoveAll.delete`, { name: groupName })}
             </Button>
           )}
         </DialogActions>

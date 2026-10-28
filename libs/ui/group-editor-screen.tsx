@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { IconPlus } from "@spy4x/preact-icons"
@@ -31,7 +30,9 @@ import {
   GroupRole,
 } from "@domain/groups"
 import { GroupMark } from "./group-appearance.tsx"
-import { type GroupRow, ROLE_TEXT } from "./groups-screen.tsx"
+import { type GroupRow, roleName } from "./groups-screen.tsx"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAppText } from "./i18n.ts"
 import { type GroupMemberRow, GroupMembersSection, type MemberError } from "./group-members.tsx"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { useFreshError } from "@spy4x/preact-ui/use-fresh-error"
@@ -214,7 +215,10 @@ enum Dialog {
   MOVE_ALL = 5,
 }
 
-const BACK = { href: SCREEN_PATHS.groups, label: "Back to groups" }
+/** The header's way back to the groups page. */
+function back(t: Translator<string>) {
+  return { href: SCREEN_PATHS.groups, label: t.t(`GroupEditor.back`) }
+}
 
 /**
  * One group's page, and the page that creates one: the same form in both. `/groups/new` shows the
@@ -227,16 +231,17 @@ const BACK = { href: SCREEN_PATHS.groups, label: "Back to groups" }
  */
 export function GroupEditorScreen(props: GroupEditorScreenProps): JSX.Element {
   const { group, navigate } = props
+  const t = useAppText()
   const waited = useWaited(props.loading && !group)
   if (props.creating) {
     return (
       <Stack gap="xl">
         <PageHeader
-          title="New group"
+          title={t.t(`GroupEditor.newTitle`)}
           titleDataE2E="group-new-title"
           // The colour and emoji chosen so far, as the group's mark will show them.
           mark={<GroupMark color={props.value.color} emoji={props.value.emoji.trim() || null} />}
-          back={BACK}
+          back={back(t)}
           navigate={navigate}
         />
         <GroupForm {...props} creating />
@@ -246,13 +251,13 @@ export function GroupEditorScreen(props: GroupEditorScreenProps): JSX.Element {
   if (!group) {
     return (
       <Stack gap="xl">
-        <PageHeader title="Group" back={BACK} navigate={navigate} />
+        <PageHeader title={t.t(`GroupEditor.title`)} back={back(t)} navigate={navigate} />
         {props.error ? <ErrorState message={props.error} /> : props.loading
           ? (
             // Nothing for a short read, so a fast one does not flash; a placeholder after that.
             waited && (
               <div data-e2e="group-loading">
-                <p role="status" class="sr-only">Loading the group…</p>
+                <p role="status" class="sr-only">{t.t(`GroupEditor.loading`)}</p>
                 <LoadingSkeleton rows={1} class={FORM_WIDTH} />
               </div>
             )
@@ -262,11 +267,11 @@ export function GroupEditorScreen(props: GroupEditorScreenProps): JSX.Element {
               <EmptyState
                 inset
                 headingLevel={2}
-                title="This group does not exist."
-                description="It may have been deleted, or you are not a member."
+                title={t.t(`GroupEditor.missing`)}
+                description={t.t(`GroupEditor.missingHint`)}
                 action={
                   <Button href={SCREEN_PATHS.groups} navigate={navigate} variant="outline">
-                    Back to groups
+                    {t.t(`GroupEditor.back`)}
                   </Button>
                 }
               />
@@ -318,6 +323,7 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
     exportFailed = false,
     offline = false,
   } = props
+  const t = useAppText()
   const [dialog, setDialog] = useState<Dialog | null>(null)
   const close = () => {
     if (dialog === Dialog.MOVE_ALL) onMoveAllClose?.()
@@ -340,8 +346,9 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
   // Only the owner has candidates: `transferCandidates` asks `canTransfer`, which needs the owner.
   const canHandOver = transfer !== undefined &&
     transferCandidates(group.role, members).length > 0
-  const subscriptionBlocks = hasSubscription ? "Cancel its subscription first" : null
-  const deleteBlocked = isLastGroup ? "It is your only group" : subscriptionBlocks
+  const subscriptionBlocks = hasSubscription ? t.t(`GroupEditor.cancelSubscriptionFirst`) : null
+  const onlyGroup = t.t(`GroupEditor.onlyGroup`)
+  const deleteBlocked = isLastGroup ? onlyGroup : subscriptionBlocks
 
   const canMoveAll = onMoveAll !== undefined && moveTargets.length > 0 &&
     canMutateNotes(group.role)
@@ -350,7 +357,7 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
   const going = [
     !current && onSwitch && (
       <DropdownItem key="switch" dataE2E="group-switch" onClick={onSwitch}>
-        Switch to this group
+        {t.t(`GroupEditor.switch`)}
       </DropdownItem>
     ),
   ].filter(Boolean)
@@ -363,7 +370,7 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
         onClick={() => setDialog(Dialog.TRANSFER)}
       >
         <MenuText
-          text="Transfer ownership"
+          text={t.t(`GroupEditor.transfer`)}
           hint={subscriptionBlocks}
           hintDataE2E="group-transfer-why"
         />
@@ -377,8 +384,8 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
         onClick={onExport}
       >
         <MenuText
-          text={exporting ? "Preparing…" : "Export group…"}
-          hint={offline ? "You are offline" : null}
+          text={exporting ? t.t(`GroupEditor.exporting`) : t.t(`GroupEditor.export`)}
+          hint={offline ? t.t(`GroupEditor.offline`) : null}
           hintDataE2E="group-export-why"
         />
       </DropdownItem>
@@ -389,7 +396,7 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
         dataE2E="group-move-all-open"
         onClick={() => setDialog(Dialog.MOVE_ALL)}
       >
-        Move all data…
+        {t.t(`GroupEditor.moveAll`)}
       </DropdownItem>
     ),
   ].filter(Boolean)
@@ -406,8 +413,8 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
         }}
       >
         <MenuText
-          text="Leave group"
-          hint={isLastGroup ? "It is your only group" : null}
+          text={t.t(`GroupEditor.leave`)}
+          hint={isLastGroup ? onlyGroup : null}
           hintDataE2E="group-leave-why"
         />
       </DropdownItem>
@@ -423,7 +430,11 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
           setDialog(Dialog.DELETE)
         }}
       >
-        <MenuText text="Delete group" hint={deleteBlocked} hintDataE2E="group-delete-why" />
+        <MenuText
+          text={t.t(`GroupEditor.delete`)}
+          hint={deleteBlocked}
+          hintDataE2E="group-delete-why"
+        />
       </DropdownItem>
     ),
   ].filter(Boolean)
@@ -449,14 +460,14 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
   const count = memberCount ?? members?.length ?? group.memberCount
   const countText = count === undefined || count === null
     ? null
-    : `${count} ${count === 1 ? "member" : "members"}`
+    : t.t(`GroupEditor.memberCount`, { count })
   const tabs = [
-    { id: GroupTab.GENERAL, label: "General" },
-    { id: GroupTab.MEMBERS, label: "Members" },
-    { id: GroupTab.BILLING, label: "Plan and billing" },
+    { id: GroupTab.GENERAL, label: t.t(`GroupEditor.tabGeneral`) },
+    { id: GroupTab.MEMBERS, label: t.t(`GroupEditor.tabMembers`) },
+    { id: GroupTab.BILLING, label: t.t(`GroupEditor.tabBilling`) },
     // Left out for a role that may not read the log, unless its address was opened anyway.
     ...(canViewActivity(group.role) || tab === GroupTab.ACTIVITY
-      ? [{ id: GroupTab.ACTIVITY, label: "Activity" }]
+      ? [{ id: GroupTab.ACTIVITY, label: t.t(`GroupEditor.tabActivity`) }]
       : []),
   ].map((item) => ({
     id: `group-tab-${item.id}`,
@@ -499,7 +510,7 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
             : <GroupMark color={group.color} emoji={group.emoji} />}
           subtitle={
             <>
-              <span data-e2e="group-general-role">{ROLE_TEXT[group.role]}</span>
+              <span data-e2e="group-general-role">{roleName(t, group.role)}</span>
               {countText && (
                 <>
                   {" · "}
@@ -510,7 +521,7 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
                         href={GROUP_PATHS.billing(group.id)}
                         navigate={navigate}
                         class="pc-link"
-                        aria-label={`${countText}: see the plan and billing`}
+                        aria-label={t.t(`GroupEditor.memberCountLink`, { count: count! })}
                         data-e2e="group-member-count"
                       >
                         {countText}
@@ -518,14 +529,16 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
                     )}
                 </>
               )}
-              {current && <span data-e2e="group-current">&nbsp;· your current group</span>}
+              {current && (
+                <span data-e2e="group-current">&nbsp;· {t.t(`GroupEditor.currentGroup`)}</span>
+              )}
             </>
           }
-          back={BACK}
+          back={back(t)}
           navigate={navigate}
           action={tab === GroupTab.MEMBERS && canManageInvitations(group.role) && (
             <PageAction
-              label="Invite"
+              label={t.t(`GroupEditor.invite`)}
               Icon={IconPlus}
               href={GROUP_PATHS.invite(group.id)}
               navigate={navigate}
@@ -544,11 +557,11 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
             urgent
             action={onExport && (
               <Button size="sm" variant="secondary" disabled={offline} onClick={onExport}>
-                Try again
+                {t.t(`GroupEditor.exportRetry`)}
               </Button>
             )}
           >
-            We could not prepare the file. Nothing in your group changed.
+            {t.t(`GroupEditor.exportFailed`)}
           </Notice>
         </div>
       )}
@@ -561,7 +574,7 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
           onChange={(id) =>
             navigate?.(GROUP_TAB_PATHS[id.replace("group-tab-", "") as GroupTab](group.id))}
           lazy
-          label={`About ${group.name}`}
+          label={t.t(`GroupEditor.tabsLabel`, { name: group.name })}
           listClass="flex-nowrap overflow-x-auto pb-px"
           panelClass="pt-6"
           tabDataE2E="group-tab"
@@ -571,8 +584,8 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
       {dialog === Dialog.TRANSFER && canHandOver && (
         <Modal
           open
-          title={`Transfer "${group.name}"`}
-          cancelLabel="Close"
+          title={t.t(`GroupEditor.transferTitle`, { name: group.name })}
+          cancelLabel={t.t(`GroupEditor.close`)}
           closeOnBackdrop={false}
           onClose={close}
           dataE2E="group-transfer-dialog"
@@ -584,8 +597,8 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
       {dialog === Dialog.MOVE_ALL && canMoveAll && (
         <Modal
           open
-          title={`Move all data of "${group.name}"`}
-          cancelLabel="Close"
+          title={t.t(`GroupEditor.moveAllTitle`, { name: group.name })}
+          cancelLabel={t.t(`GroupEditor.close`)}
           closeOnBackdrop={false}
           onClose={close}
           dataE2E="group-move-all-dialog"
@@ -614,9 +627,9 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
 
       {dialog === Dialog.LEAVE && (
         <ConfirmDialog
-          title={`Leave "${group.name}"?`}
-          confirmLabel="Leave group"
-          cancelLabel="Cancel"
+          title={t.t(`GroupEditor.leaveTitle`, { name: group.name })}
+          confirmLabel={t.t(`GroupEditor.leave`)}
+          cancelLabel={t.t(`GroupEditor.cancel`)}
           tone="danger"
           dataE2E="group-leave-dialog"
           onConfirm={() => {
@@ -626,8 +639,7 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
         >
           <div class="flex flex-col gap-4">
             <p class="text-sm text-muted" data-e2e="group-leave-confirmation">
-              You lose access right away, on every device. What you wrote stays in the group. To
-              come back, someone must add you again.
+              {t.t(`GroupEditor.leaveConfirmation`)}
             </p>
             <ErrorState focusOnAppear message={freshLeaveError} dataE2E="group-leave-error" />
           </div>
@@ -636,9 +648,9 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
 
       {dialog === Dialog.DELETE && (
         <ConfirmDialog
-          title={`Delete "${group.name}"?`}
-          confirmLabel="Delete group"
-          cancelLabel="Cancel"
+          title={t.t(`GroupEditor.deleteTitle`, { name: group.name })}
+          confirmLabel={t.t(`GroupEditor.delete`)}
+          cancelLabel={t.t(`GroupEditor.cancel`)}
           tone="danger"
           dataE2E="group-delete-dialog"
           onConfirm={() => {
@@ -648,11 +660,7 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
         >
           <div class="flex flex-col gap-4">
             <p class="text-sm text-muted" data-e2e="group-delete-confirmation">
-              It disappears for every member right away, with everything in it. Members who have it
-              open are switched to another of their groups, and anyone left with no group gets a new
-              empty one named "Personal". You can restore it from the Groups page for{" "}
-              {GROUP_RESTORE_DAYS}{" "}
-              days. After that it and everything in it are deleted for good and cannot be recovered.
+              {t.t(`GroupEditor.deleteConfirmation`, { count: GROUP_RESTORE_DAYS })}
             </p>
             <ErrorState focusOnAppear message={freshDeleteError} dataE2E="group-delete-error" />
           </div>
@@ -714,23 +722,22 @@ function GroupForm(
     if (active && box.current?.contains(active)) return
     box.current?.querySelector<HTMLElement>("[name=name]")?.focus()
   }, [showFooter, saving, group?.id])
+  const t = useAppText()
   const change = (patch: Partial<GroupDraft>) => onChange?.({ ...value, ...patch })
-  const optional = <span class="ml-2 font-normal text-muted">Optional</span>
+  const optional = <span class="ml-2 font-normal text-muted">{t.t(`GroupEditor.optional`)}</span>
   return (
     <>
       {offline && (
         <div data-e2e="group-offline" class={FORM_WIDTH}>
-          <Notice title="You are offline">
-            {creating
-              ? "You can fill this in now. Creating the group needs a connection."
-              : "This is the copy saved on this device. Saving changes needs a connection."}
+          <Notice title={t.t(`GroupEditor.offline`)}>
+            {creating ? t.t(`GroupEditor.offlineCreate`) : t.t(`GroupEditor.offlineSave`)}
           </Notice>
         </div>
       )}
       <ScreenForm pending={saving} onSubmit={onSave}>
         <div ref={box} class={FORM_WIDTH}>
           <Stack>
-            <Field id="group-name" label="Name" error={errors.name} required>
+            <Field id="group-name" label={t.t(`GroupEditor.name`)} error={errors.name} required>
               <Input
                 data-e2e="group-name"
                 name="name"
@@ -743,26 +750,27 @@ function GroupForm(
             </Field>
             <Field
               id="group-description"
-              label={<>Description {optional}</>}
+              label={<>{t.t(`GroupEditor.description`)} {optional}</>}
               error={errors.description}
-              hint={`${
-                Array.from(value.description).length
-              } of ${GROUP_DESCRIPTION_MAX} characters`}
+              hint={t.t(`GroupEditor.descriptionCount`, {
+                used: Array.from(value.description).length,
+                count: GROUP_DESCRIPTION_MAX,
+              })}
             >
               <Textarea
                 data-e2e="group-description"
                 name="description"
                 rows={3}
-                placeholder="What is this group for?"
+                placeholder={t.t(`GroupEditor.descriptionPlaceholder`)}
                 value={value.description}
                 onInput={(e) => change({ description: e.currentTarget.value })}
               />
             </Field>
             <Field
               id="group-emoji"
-              label={<>Emoji {optional}</>}
+              label={<>{t.t(`GroupEditor.emoji`)} {optional}</>}
               error={errors.emoji}
-              hint="Shown before the group's name."
+              hint={t.t(`GroupEditor.emojiHint`)}
             >
               <Input
                 data-e2e="group-emoji"
@@ -776,16 +784,16 @@ function GroupForm(
             </Field>
             <div data-e2e="group-color">
               <ColorField
-                legend={<>Colour {optional}</>}
+                legend={<>{t.t(`GroupEditor.colour`)} {optional}</>}
                 name="color"
                 allowNone
-                hint="Shown behind the group's mark."
+                hint={t.t(`GroupEditor.colourHint`)}
                 value={value.color}
                 onChange={(color) => change({ color })}
               />
             </div>
-            {creating && trialText(trial) && (
-              <p class="text-sm text-muted" data-e2e="group-trial">{trialText(trial)}</p>
+            {creating && trialText(t, trial) && (
+              <p class="text-sm text-muted" data-e2e="group-trial">{trialText(t, trial)}</p>
             )}
             <ErrorState focusOnAppear message={errors.form ?? null} dataE2E="group-form-error" />
             {showFooter && (
@@ -801,7 +809,7 @@ function GroupForm(
                       class="min-h-11 w-full sm:min-h-9 sm:w-auto"
                       data-e2e="group-cancel"
                     >
-                      Cancel
+                      {t.t(`GroupEditor.cancel`)}
                     </Button>
                   )
                   : (
@@ -813,7 +821,7 @@ function GroupForm(
                       disabled={saving}
                       onClick={onDiscard}
                     >
-                      Discard
+                      {t.t(`GroupEditor.discard`)}
                     </Button>
                   )}
                 <Button
@@ -821,9 +829,9 @@ function GroupForm(
                   class="min-h-11 w-full sm:min-h-9 sm:w-auto"
                   data-e2e={creating ? "group-create" : "group-save"}
                   busy={saving}
-                  busyLabel={creating ? "Creating…" : "Saving…"}
+                  busyLabel={creating ? t.t(`GroupEditor.creating`) : t.t(`GroupEditor.saving`)}
                 >
-                  {creating ? "Create group" : "Save group"}
+                  {creating ? t.t(`GroupEditor.create`) : t.t(`GroupEditor.save`)}
                 </Button>
               </div>
             )}
@@ -838,28 +846,29 @@ function GroupForm(
  * What the create page says about the trial, or `null` to say nothing: billing is off, or no plan
  * has a trial and the person never used one. One trial per person (#205), so it names the rule.
  */
-export function trialText(trial: PersonTrial | null): string | null {
+export function trialText(t: Translator<string>, trial: PersonTrial | null): string | null {
   if (!trial?.enabled) return null
-  if (trial.used) {
-    return "New groups start on the free plan. You have used your free trial, so a paid plan " +
-      "here is charged from the first day."
-  }
+  if (trial.used) return t.t(`GroupEditor.trialUsed`)
   if (trial.days <= 0) return null
-  return `New groups start on the free plan. Your ${trial.days}-day free trial of a paid plan ` +
-    `goes to the first group you choose a paid plan for.`
+  return t.t(`GroupEditor.trial`, { count: trial.days })
 }
 
 /** The details as text, for a member who may not change them, with who may. */
 function GroupDetailsText({ group }: { group: GroupRow }): JSX.Element {
+  const t = useAppText()
   return (
     <Stack gap="sm">
       {group.description && (
-        <p class="whitespace-pre-line break-words text-sm" data-e2e="group-general-description">
+        <p
+          class="whitespace-pre-line break-words text-sm"
+          translate={false}
+          data-e2e="group-general-description"
+        >
           {group.description}
         </p>
       )}
       <p class="text-sm text-muted" data-e2e="group-read-only">
-        Only an admin or the owner can change this group's details.
+        {t.t(`GroupEditor.readOnly`)}
       </p>
     </Stack>
   )

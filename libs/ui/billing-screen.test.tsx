@@ -15,11 +15,18 @@ import {
   type GroupBilling,
   PRO_PLAN_ID,
 } from "@domain/billing"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { createFormatters } from "@spy4x/time/format"
+import { PlanRefusalNotice } from "./plan-refusal.tsx"
+import { PSEUDO, untranslated } from "./i18n-testing.ts"
 import {
+  BILLING_MESSAGES,
   BillingState,
   billingState,
   GroupBillingPanel,
   type GroupBillingPanelProps,
+  SeatPriceConfirm,
 } from "./billing-screen.tsx"
 
 const NOW = new Date("2026-10-21T12:00:00Z")
@@ -77,15 +84,22 @@ const own = { document: globalThis.document }
 
 let root: HTMLElement | null = null
 
+/** The person's format, pinned, so dates and prices read the same whatever the machine's locale. */
+const FORMAT = createFormatters({ locale: `en-GB`, timeZone: `UTC`, hourCycle: null })
+
+const withFormat = (node: VNode) => (
+  <FormatContext.Provider value={FORMAT}>{node}</FormatContext.Provider>
+)
+
 async function mount(node: VNode): Promise<HTMLElement> {
   root = document.createElement("div")
   document.body.append(root)
-  await act(() => render(node, root!))
+  await act(() => render(withFormat(node), root!))
   return root
 }
 
 async function rerender(node: VNode): Promise<void> {
-  await act(() => render(node, root!))
+  await act(() => render(withFormat(node), root!))
 }
 
 function find<T extends Element = HTMLElement>(selector: string): T {
@@ -239,11 +253,11 @@ describe("GroupBillingPanel", () => {
     await mount(panel(TRIAL_OWNER, app.props))
     expect(find("[data-e2e=billing-status]").textContent).toBe("· Trial")
     expect(find("[data-e2e=billing-trial]").textContent).toBe(
-      "The trial ends in 10 days, on October 31, 2026. Then Team pays €54.00 a month unless you cancel.",
+      "The trial ends in 10 days, on 31 October 2026. Then Team pays €54.00 a month unless you cancel.",
     )
     expect(has("[data-e2e=billing-checkout]")).toBe(false)
     expect(find("[data-e2e=billing-row-cancel]").textContent).toContain(
-      "Nothing is charged if you cancel before October 31, 2026.",
+      "Nothing is charged if you cancel before 31 October 2026.",
     )
     await click("[data-e2e=billing-portal-cancel]")
     expect(app.portals).toBe(1)
@@ -253,7 +267,7 @@ describe("GroupBillingPanel", () => {
     const app = calls()
     await mount(panel(PRO_OWNER, app.props))
     expect(find("[data-e2e=billing-plan-name]").textContent).toBe("Pro")
-    expect(find("[data-e2e=billing-status]").textContent).toBe("· Renews on November 4, 2026")
+    expect(find("[data-e2e=billing-status]").textContent).toBe("· Renews on 4 November 2026")
     expect(find("[data-e2e=billing-seats]").textContent).toBe(
       "€54.00 a month, for 6 members at €9.00 each, the owner included.",
     )
@@ -273,9 +287,9 @@ describe("GroupBillingPanel", () => {
   it("tells the owner of a cancelled plan when Pro ends and renews it in Stripe, with no Cancel plan", async () => {
     const app = calls()
     await mount(panel(ENDING_OWNER, app.props))
-    expect(find("[data-e2e=billing-status]").textContent).toBe("· Ends on November 4, 2026")
+    expect(find("[data-e2e=billing-status]").textContent).toBe("· Ends on 4 November 2026")
     expect(find("[data-e2e=billing-ending]").textContent).toBe(
-      "Pro ends on November 4, 2026. The group then moves to the free plan.",
+      "Pro ends on 4 November 2026. The group then moves to the free plan.",
     )
     expect(has("[data-e2e=billing-row-cancel]")).toBe(false)
     await click("[data-e2e=billing-renew]")
@@ -287,7 +301,7 @@ describe("GroupBillingPanel", () => {
     await mount(panel(PAST_DUE_OWNER, app.props))
     expect(find("[data-e2e=billing-status]").textContent).toBe("· Payment failed")
     expect(find("[data-e2e=billing-notice]").textContent).toBe(
-      "A payment failed. Update the card with Change card within 7 days, by October 28, 2026, to keep Pro.",
+      "A payment failed. Update the card with Change card within 7 days, by 28 October 2026, to keep Pro.",
     )
     // Cancelling is still in Stripe's page, but the tab offers no row that says Pro is kept.
     expect(has("[data-e2e=billing-row-cancel]")).toBe(false)
@@ -366,5 +380,66 @@ describe("GroupBillingPanel", () => {
     await rerender(panel(null, { error: "The plan could not be read." }))
     expect(text()).toContain("The plan could not be read.")
     expect(has("[data-e2e=billing-plan]")).toBe(false)
+  })
+
+  it("shows no English outside the catalogs in any state: an en-XA render of each, the seat price and the plan refusals is all pseudo-language or data", async () => {
+    const off = { ...FREE_OWNER, enabled: false }
+    const used = { enabled: true, used: true, groupId: OTHER_GROUP_ID, days: 14 }
+    await mount(
+      <I18nContext.Provider value={PSEUDO}>
+        {panel(FREE_OWNER, { trial: used, error: BILLING_MESSAGES.portalUnreachable })}
+        {panel(FREE_OWNER, { confirming: true })}
+        {panel(TRIAL_OWNER)}
+        {panel(PRO_OWNER)}
+        {panel(ENDING_OWNER)}
+        {panel(PAST_DUE_OWNER)}
+        {panel(asMember(PRO_OWNER))}
+        {panel(asMember(PRO_OWNER), { ownerName: null })}
+        {panel(off)}
+        {panel(null)}
+        <SeatPriceConfirm seatPrice={{ seats: 6, amount: 900, currency: "EUR" }} checked={false} />
+        {(["maxNotes", "maxMembers", "maxAttachments", "storageBytes", "memberRoles"] as const).map(
+          (entitlement) => (
+            <PlanRefusalNotice
+              key={entitlement}
+              groupId={GROUP_ID}
+              groupName="Team"
+              refusal={{ code: "PLAN_LIMIT_REACHED", entitlement, limit: 10, canUpgrade: false }}
+            />
+          ),
+        )}
+        <PlanRefusalNotice
+          groupId={GROUP_ID}
+          refusal={{
+            code: "PLAN_LIMIT_REACHED",
+            entitlement: "maxNotes",
+            limit: 1,
+            canUpgrade: true,
+          }}
+        />
+      </I18nContext.Provider>,
+    )
+
+    // Data: the group's and the owner's names, money and dates.
+    expect(untranslated(document.body, ["Team", "Maya Chen", "October", "November"])).toEqual([])
+    // The render reached every state: each one's pseudo-text is on the page.
+    const page = document.body.textContent ?? ""
+    for (
+      const key of [
+        "GroupBillingPanel.trialUsed",
+        "GroupBillingPanel.portalUnreachable",
+        "GroupBillingPanel.confirming",
+        "GroupBillingPanel.statusTrial",
+        "GroupBillingPanel.statusPaymentFailed",
+        "GroupBillingPanel.ownerOnlyUnknown",
+        "GroupBillingPanel.off",
+        "SeatPriceConfirm.accept",
+        "PlanRefusalNotice.rolesText",
+        "PlanRefusalNotice.notesTitleUnnamed",
+        "PlanRefusalNotice.askOwner",
+      ]
+    ) {
+      expect(page).toContain(PSEUDO.t(key))
+    }
   })
 })
