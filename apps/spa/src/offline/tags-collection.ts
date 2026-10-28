@@ -63,11 +63,9 @@ export function tagsCollection(
     toQuery: (id, payload) => ({ name: "tag.get", payload: { groupId: payload.groupId, id } }),
     entityFrom: (answer) => (answer as { tag?: TagItem } | undefined)?.tag,
     classify: classifyTagError,
-    messages: {
-      version: "Someone changed this tag while you were offline.",
-      gone: "This tag was deleted while you were offline.",
-      rejected: "The server did not accept this tag.",
-    },
+    // Keys of the `app` catalog, kept with the queued write: a screen shows them in the person's
+    // language at the time, and an entry queued in English before #275 still shows as it is.
+    messages: { version: `TagSync.version`, gone: `TagSync.gone`, rejected: `TagSync.rejected` },
     cache: {
       put: (tag) => cache.putTag(tag),
       remove: (tagId) => cache.removeTag(tagId),

@@ -137,6 +137,8 @@
   "NotePeople.you": "Tú",
   "NotePeople.former": "Exmiembro",
   "NotePeople.unnamed": "Miembro sin nombre",
+  "NoteSync.gone": "Mientras estabas sin conexión, alguien eliminó esta nota o la movió a otro grupo.",
+  "NoteSync.version": "Alguien cambió esta nota mientras estabas sin conexión.",
   "Notes.title": "Notas",
   "Notes.new": "Nueva nota",
   "Notes.count": {
@@ -382,6 +384,9 @@
     "many": "Se quitará de {count} notas. Las notas se quedan.",
     "other": "Se quitará de {count} notas. Las notas se quedan."
   },
+  "TagSync.gone": "Alguien eliminó esta etiqueta mientras estabas sin conexión.",
+  "TagSync.rejected": "El servidor no aceptó esta etiqueta.",
+  "TagSync.version": "Alguien cambió esta etiqueta mientras estabas sin conexión.",
   "Tags.title": "Etiquetas",
   "Tags.new": "Nueva etiqueta",
   "Tags.readOnly": "Puedes ver estas etiquetas. Solo un editor puede cambiarlas.",

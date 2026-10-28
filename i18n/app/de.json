@@ -131,6 +131,8 @@
   "NotePeople.you": "Du",
   "NotePeople.former": "Ehemaliges Mitglied",
   "NotePeople.unnamed": "Mitglied ohne Namen",
+  "NoteSync.gone": "Während du offline warst, wurde diese Notiz gelöscht oder in eine andere Gruppe verschoben.",
+  "NoteSync.version": "Während du offline warst, hat jemand diese Notiz geändert.",
   "Notes.title": "Notizen",
   "Notes.new": "Neue Notiz",
   "Notes.count": {
@@ -365,6 +367,9 @@
     "one": "Er wird von {count} Notiz entfernt. Die Notizen bleiben.",
     "other": "Er wird von {count} Notizen entfernt. Die Notizen bleiben."
   },
+  "TagSync.gone": "Während du offline warst, wurde dieser Tag gelöscht.",
+  "TagSync.rejected": "Der Server hat diesen Tag nicht angenommen.",
+  "TagSync.version": "Während du offline warst, hat jemand diesen Tag geändert.",
   "Tags.title": "Tags",
   "Tags.new": "Neuer Tag",
   "Tags.readOnly": "Du kannst diese Tags sehen. Nur Bearbeiter können sie ändern.",

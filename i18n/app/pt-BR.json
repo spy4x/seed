@@ -137,6 +137,8 @@
   "NotePeople.you": "Você",
   "NotePeople.former": "Ex-membro",
   "NotePeople.unnamed": "Membro sem nome",
+  "NoteSync.gone": "Enquanto você estava offline, esta nota foi excluída ou movida para outro grupo.",
+  "NoteSync.version": "Alguém alterou esta nota enquanto você estava offline.",
   "Notes.title": "Notas",
   "Notes.new": "Nova nota",
   "Notes.count": {
@@ -382,6 +384,9 @@
     "many": "Ela sai de {count} notas. As notas continuam.",
     "other": "Ela sai de {count} notas. As notas continuam."
   },
+  "TagSync.gone": "Esta tag foi excluída enquanto você estava offline.",
+  "TagSync.rejected": "O servidor não aceitou esta tag.",
+  "TagSync.version": "Alguém alterou esta tag enquanto você estava offline.",
   "Tags.title": "Tags",
   "Tags.new": "Nova tag",
   "Tags.readOnly": "Você pode ver estas tags. Só um editor pode alterá-las.",

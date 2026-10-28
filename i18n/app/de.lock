@@ -112,6 +112,8 @@ NoteMessages.titleRequired	8b33880c49b7c754
 NotePeople.former	1ef1541722cf6680
 NotePeople.unnamed	aab150636b979b37
 NotePeople.you	08b041935798fbf6
+NoteSync.gone	86c9b552d175813f
+NoteSync.version	5cd26eb9db6ed796
 NoteToasts.moved	5424e6438bdccb89
 NoteToasts.movedElsewhere	1f376c4d0d0dff94
 NoteToasts.movedTitle	f33bae8ac587ea18
@@ -313,6 +315,9 @@ TagParts.list	1331275bc537b4c2
 TagParts.more	cb4a793afb34df59
 TagParts.noNotes	efe1cde677846130
 TagParts.noteCount	5919666aa1168829
+TagSync.gone	85fe5c6369c4a75d
+TagSync.rejected	9b3edbe9b6d03cf5
+TagSync.version	f7604c051b7f7e80
 TagToasts.deleted	1b90a9dc0e231b17
 TagToasts.deletedFromNotes	23e164749cc35055
 TagToasts.deletedTitle	6d4f1ec37b2c0a14

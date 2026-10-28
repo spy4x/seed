@@ -131,6 +131,8 @@
   "NotePeople.you": "You",
   "NotePeople.former": "Former member",
   "NotePeople.unnamed": "Unnamed member",
+  "NoteSync.gone": "This note was deleted, or moved to another group, while you were offline.",
+  "NoteSync.version": "Someone changed this note while you were offline.",
   "Notes.title": "Notes",
   "Notes.new": "New note",
   "Notes.count": {
@@ -365,6 +367,9 @@
     "one": "It comes off {count} note. The notes stay.",
     "other": "It comes off {count} notes. The notes stay."
   },
+  "TagSync.gone": "This tag was deleted while you were offline.",
+  "TagSync.rejected": "The server did not accept this tag.",
+  "TagSync.version": "Someone changed this tag while you were offline.",
   "Tags.title": "Tags",
   "Tags.new": "New tag",
   "Tags.readOnly": "You can see these tags. Only an editor can change them.",

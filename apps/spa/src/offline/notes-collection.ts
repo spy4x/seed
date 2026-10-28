@@ -72,10 +72,9 @@ export function notesCollection(
     toQuery: (id, payload) => ({ name: "note.get", payload: { groupId: payload.groupId, id } }),
     entityFrom: (answer) => (answer as { note?: NoteItem } | undefined)?.note,
     classify: classifyNoteError,
-    messages: {
-      version: "Someone changed this note while you were offline.",
-      gone: "This note was deleted, or moved to another group, while you were offline.",
-    },
+    // Keys of the `app` catalog, kept with the queued write: a screen shows them in the person's
+    // language at the time, and an entry queued in English before #275 still shows as it is.
+    messages: { version: `NoteSync.version`, gone: `NoteSync.gone` },
     cache: {
       put: (note) => cache.putNote(note),
       remove: (noteId) => cache.removeNote(noteId),
