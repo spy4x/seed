@@ -256,7 +256,7 @@
   "GroupInvitations.emailHint": "Nur das Konto, das diese Adresse bestätigt hat, kann annehmen. Sie lässt eine Person herein.",
   "GroupInvitations.sendEmail": "Link an diese Adresse senden",
   "GroupInvitations.days": "Läuft ab nach (Tagen)",
-  "GroupInvitations.uses": "So viele Personen lässt er herein",
+  "GroupInvitations.uses": "Max. Personen",
   "GroupInvitations.cancel": "Abbrechen",
   "GroupInvitations.creating": "Wird erstellt …",
   "GroupInvitations.create": "Einladung erstellen",

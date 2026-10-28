@@ -159,7 +159,7 @@
   "GroupEditor.tabGeneral": "Общее",
   "GroupEditor.tabMembers": "Участники",
   "GroupEditor.tabBilling": "Тариф и оплата",
-  "GroupEditor.tabActivity": "События",
+  "GroupEditor.tabActivity": "Активность",
   "GroupEditor.tabsLabel": "О группе {name}",
   "GroupEditor.currentGroup": "ваша текущая группа",
   "GroupEditor.invite": "Пригласить",
@@ -294,23 +294,23 @@
   "GroupInvitations.emailHint": "Принять приглашение сможет только аккаунт, подтвердивший этот адрес. Оно впустит одного человека.",
   "GroupInvitations.sendEmail": "Отправить ссылку на этот адрес",
   "GroupInvitations.days": "Действует (дней)",
-  "GroupInvitations.uses": "Сколько людей впустит",
+  "GroupInvitations.uses": "Сколько человек",
   "GroupInvitations.cancel": "Отмена",
   "GroupInvitations.creating": "Создаём…",
   "GroupInvitations.create": "Создать приглашение",
   "GroupInvitations.pending": "Ожидающие приглашения",
   "GroupInvitations.anyone": "Любой, у кого есть ссылка",
   "GroupInvitations.usage": {
-    "one": "использовано {uses} из {count} · действует до <value>{date}</value>",
-    "few": "использовано {uses} из {count} · действует до <value>{date}</value>",
-    "many": "использовано {uses} из {count} · действует до <value>{date}</value>",
-    "other": "использовано {uses} из {count} · действует до <value>{date}</value>"
+    "one": "Использовано {uses} из {count} · действует до <value>{date}</value>",
+    "few": "Использовано {uses} из {count} · действует до <value>{date}</value>",
+    "many": "Использовано {uses} из {count} · действует до <value>{date}</value>",
+    "other": "Использовано {uses} из {count} · действует до <value>{date}</value>"
   },
   "GroupInvitations.usageBy": {
-    "one": "использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>",
-    "few": "использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>",
-    "many": "использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>",
-    "other": "использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>"
+    "one": "Использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>",
+    "few": "Использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>",
+    "many": "Использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>",
+    "other": "Использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>"
   },
   "GroupInvitations.actions": "Действия с приглашением для {who}",
   "GroupInvitations.revoke": "Отозвать",
