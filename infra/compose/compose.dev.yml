@@ -75,6 +75,7 @@ services:
     volumes:
       - ../../apps:/app/apps:z
       - ../../libs:/app/libs:z
+      - ../../i18n:/app/i18n:z
       - ../../deno.jsonc:/app/deno.jsonc:z
     security_opt:
       - label=disable

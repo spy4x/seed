@@ -6,6 +6,7 @@ import preact from "@preact/preset-vite"
 import tailwindcss from "@tailwindcss/vite"
 import { themeBootstrapScript } from "@spy4x/preact-signals/theme"
 import {
+  denoJsonModules,
   denoModuleIds,
   npmSpecifiers,
   preactThemeCss,
@@ -62,6 +63,9 @@ export default defineConfig({
     // One id per Deno module, so a context such as the date format's loads once and the screens
     // read the copy the app provides (spy4x/preact-components#785). It must come before `deno()`.
     denoModuleIds(),
+    // The dev server loads the library's JSON catalogs (`en.json` in a JSR package) as JSON, which
+    // `vite:json` would otherwise fail to parse (spy4x/preact-components#1035). Before `deno()`.
+    denoJsonModules(),
     npmSpecifiers({ readTextFile: Deno.readTextFile }),
     deno(),
     preact(),
@@ -150,6 +154,11 @@ export default defineConfig({
     alias: [{
       find: /^@ui\//,
       replacement: fromFileUrl(new URL("../../libs/ui/", import.meta.url)),
+    }, {
+      // The catalogs (#216): Vite reads JSON itself; the Deno plugin's dev server answers a JSON
+      // module of the workspace with an error.
+      find: /^@i18n\//,
+      replacement: fromFileUrl(new URL("../../i18n/", import.meta.url)),
     }],
   },
   optimizeDeps: {
@@ -167,6 +176,7 @@ export default defineConfig({
         "!../../libs/domain/**",
         "!../../libs/platform/**",
         "!../../libs/ui/**",
+        "!../../i18n/**",
       ],
     },
   },

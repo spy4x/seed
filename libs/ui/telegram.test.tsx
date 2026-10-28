@@ -212,7 +212,13 @@ function detail(linked: boolean): AdminUserDetail {
     groups: [],
     audits: [],
     trialUsedAt: null,
-    preferences: { value: DEFAULT_PREFERENCES, version: 0, updatedAt: null, firstTimeZone: null },
+    preferences: {
+      value: DEFAULT_PREFERENCES,
+      version: 0,
+      updatedAt: null,
+      firstTimeZone: null,
+      firstLocale: null,
+    },
   }
 }
 

@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX, RefObject } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Avatar } from "@spy4x/preact-ui/avatar"

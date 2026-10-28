@@ -23,6 +23,7 @@ interface PreferencesRow extends postgres.Row {
   version: number
   updatedAt: Date | null
   firstTimeZone: string | null
+  firstLocale: string | null
 }
 
 /** The stored record of `userId`, or `null` when nothing was ever stored for them. */
@@ -103,7 +104,7 @@ export async function readAdminPreferences(
   userId: number,
 ): Promise<AdminUserPreferences> {
   const [row] = await sql<PreferencesRow[]>`
-    SELECT value, version, updated_at, first_time_zone FROM user_preferences
+    SELECT value, version, updated_at, first_time_zone, first_locale FROM user_preferences
     WHERE user_id = ${userId}
   `
   const resolved = preferencesDefinition.resolve(
@@ -114,5 +115,6 @@ export async function readAdminPreferences(
     version: resolved.version,
     updatedAt: row?.updatedAt?.toISOString() ?? null,
     firstTimeZone: row?.firstTimeZone ?? null,
+    firstLocale: row?.firstLocale ?? null,
   }
 }

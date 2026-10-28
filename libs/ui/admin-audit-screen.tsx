@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useState } from "preact/hooks"
 import { IconDownload } from "@spy4x/preact-icons"

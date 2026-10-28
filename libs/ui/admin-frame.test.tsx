@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 /**
  * The admin app's frames, driven in a browser DOM (happy-dom): what the rail holds,
  * what the operator's menu offers and what reaches the app's callbacks.
@@ -250,6 +251,41 @@ describe("AdminShell", () => {
 
     expect(theme.chosen).toEqual(["dark"])
     expect(signedOut).toEqual([true, true])
+  })
+
+  it("offers the operator Language with the one in use, in the menu and the sheet, opening the language dialog", async () => {
+    const chosen: (string | null)[] = []
+    await mount(
+      <AdminShell
+        navItems={modules}
+        currentPath="/"
+        operator={operator}
+        onSignOut={() => {}}
+        language={{
+          languages: ["en", "ru", "de", "ar"],
+          current: null,
+          automatic: "ru",
+          onSelect: (tag) => void chosen.push(tag),
+        }}
+      >
+        page
+      </AdminShell>,
+    )
+    // The rail menu's entry and the phone sheet's, each with the language in its own name.
+    const entries = document.querySelectorAll<HTMLElement>(
+      "[data-e2e=account-menu-language], [data-e2e=app-shell-sheet-language]",
+    )
+    expect(entries).toHaveLength(2)
+    for (const entry of entries) {
+      expect(entry.querySelector("[lang=ru]")?.textContent).toBe("Русский")
+    }
+
+    await act(() => entries[1].click())
+    const dialog = find("[data-e2e=language-dialog]")
+    const german = [...dialog.querySelectorAll<HTMLElement>("[role=radio]")]
+      .find((row) => row.textContent?.includes("Deutsch"))!
+    await act(() => german.click())
+    expect(chosen).toEqual(["de"])
   })
 })
 

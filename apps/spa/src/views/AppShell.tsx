@@ -28,6 +28,7 @@ import {
   watchUnsentChanges,
 } from "../modules.ts"
 import { signOutRedirect } from "./sign-in-gate.ts"
+import { languageChoice } from "./language-choice.ts"
 import { UnsentSignOut } from "./UnsentSignOut.tsx"
 import { GUEST_PATHS, GuestBanner, GuestSignOutDialog } from "@ui/guest-screens.tsx"
 import {
@@ -305,6 +306,7 @@ export function AppShell(
       currentPath={location}
       navigate={navigate}
       onSignOut={onSignOut}
+      language={languageChoice()}
     >
       {children}
       {dialog}
@@ -332,6 +334,7 @@ export function PublicFrame(
       canSignOut={canSignOut}
       navigate={navigate}
       onSignOut={onSignOut}
+      language={languageChoice()}
     >
       {children}
     </PublicFrameScreen>

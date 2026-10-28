@@ -6,6 +6,7 @@ import preact from "@preact/preset-vite"
 import tailwindcss from "@tailwindcss/vite"
 import { themeBootstrapScript } from "@spy4x/preact-signals/theme"
 import {
+  denoJsonModules,
   denoModuleIds,
   npmSpecifiers,
   preactThemeCss,
@@ -41,6 +42,8 @@ export default defineConfig({
   plugins: [
     // One id per Deno module, as in the SPA (apps/spa/vite.config.ts says why). Before `deno()`.
     denoModuleIds(),
+    // The library's JSON catalogs in the dev server, as in the SPA. Before `deno()`.
+    denoJsonModules(),
     npmSpecifiers({ readTextFile: Deno.readTextFile }),
     deno(),
     preact(),
@@ -79,6 +82,11 @@ export default defineConfig({
     alias: [{
       find: /^@ui\//,
       replacement: fromFileUrl(new URL("../../libs/ui/", import.meta.url)),
+    }, {
+      // The catalogs (#216): Vite reads JSON itself; the Deno plugin's dev server answers a JSON
+      // module of the workspace with an error.
+      find: /^@i18n\//,
+      replacement: fromFileUrl(new URL("../../i18n/", import.meta.url)),
     }],
   },
   optimizeDeps: {
@@ -95,6 +103,7 @@ export default defineConfig({
         "!../../libs/domain/**",
         "!../../libs/platform/**",
         "!../../libs/ui/**",
+        "!../../i18n/**",
       ],
     },
   },

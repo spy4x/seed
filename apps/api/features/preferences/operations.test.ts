@@ -27,6 +27,7 @@ const actor = actorOf(7)
 const signal = new AbortController().signal
 const berlin: Preferences = {
   theme: `dark`,
+  language: null,
   locale: `de-DE`,
   timeZone: `Europe/Berlin`,
   hourCycle: `h23`,
@@ -144,6 +145,42 @@ describe(`preferences operations`, () => {
     expect(result.reason).toBe(`invalid`)
     expect(rows.size).toBe(0)
     expect(hints).toEqual([])
+  })
+
+  it(`stores a listed language, and refuses one off the list as invalid, writing nothing`, async () => {
+    const { call, rows } = harness()
+
+    for (const language of [`../../etc/passwd`, `fr`, `__proto__`]) {
+      const refused = await call(`preferences.save`, {
+        version: 0,
+        value: { ...berlin, language },
+      }) as { ok: boolean; reason: string }
+      expect(refused).toMatchObject({ ok: false, reason: `invalid` })
+    }
+    expect(rows.size).toBe(0)
+
+    expect(await call(`preferences.save`, { version: 0, value: { ...berlin, language: `ar` } }))
+      .toMatchObject({ ok: true })
+    expect(await call(`preferences.get`, undefined)).toEqual({
+      version: 1,
+      value: { ...berlin, language: `ar` },
+    })
+  })
+
+  it(`saves a record without a language, from a tab loaded before it existed, keeping the stored one`, async () => {
+    const { call } = harness()
+    await call(`preferences.save`, { version: 0, value: { ...berlin, language: `de` } })
+    const { language: _, ...old } = berlin
+
+    expect(await call(`preferences.save`, { version: 1, value: { ...old, theme: `light` } }))
+      .toEqual({
+        ok: true,
+        settings: { version: 2, value: { ...berlin, theme: `light`, language: `de` } },
+      })
+    // A person who never saved: the default, automatic.
+    const fresh = harness()
+    expect(await fresh.call(`preferences.save`, { version: 0, value: old }))
+      .toEqual({ ok: true, settings: { version: 1, value: berlin } })
   })
 
   it(`writes only the session's person, whatever id the payload names`, async () => {

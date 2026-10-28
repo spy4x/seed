@@ -5,7 +5,7 @@ import { isValidTimeZone } from "@spy4x/time/tz"
 
 /**
  * A person's display preferences (#163): one record per person, kept on the server with a version,
- * so every device shows the same theme, region format, time zone and clock.
+ * so every device shows the same theme, language, region format, time zone and clock.
  *
  * `null` means "automatic": each device uses its own region format or zone. A zone or format the
  * person picks is stored and follows them everywhere.
@@ -24,6 +24,20 @@ const timeZoneSchema = type(`string <= ${NAME_MAX_LENGTH}`).narrow((value, conte
 /** A region format from the picker's list, such as `de-DE`. */
 const localeSchema = type.enumerated(...REGION_FORMAT_LOCALES)
 
+/**
+ * The interface languages the apps ship (#216), English first. `language` in the preferences is
+ * one of these or `null`; a catalog import is picked only by a member of this list.
+ */
+export const LANGUAGES = [`en`, `ru`, `es`, `de`, `pt-BR`, `ar`] as const
+
+/** An interface language the apps ship. */
+export type Language = typeof LANGUAGES[number]
+
+/** True for a member of {@link LANGUAGES}, compared exactly. */
+export function isLanguage(value: unknown): value is Language {
+  return typeof value === `string` && (LANGUAGES as readonly string[]).includes(value)
+}
+
 /** The most entries a group overview layout keeps: far more widgets than any product has. */
 export const OVERVIEW_LAYOUT_MAX_ENTRIES = 32
 
@@ -39,6 +53,8 @@ const overviewLayoutSchema = type({ id: `string <= ${NAME_MAX_LENGTH}`, hidden: 
 /** The record's shape. Every key has a default, so a record saved before a key existed reads. */
 export const preferencesSchema = type({
   theme: `'system' | 'light' | 'dark'`,
+  /** The interface language; `null` follows each device (#216). */
+  language: type.enumerated(...LANGUAGES).or(`null`),
   locale: localeSchema.or(`null`),
   timeZone: timeZoneSchema.or(`null`),
   hourCycle: `'h12' | 'h23' | null`,
@@ -53,6 +69,7 @@ export type ThemePreference = Preferences["theme"]
 /** What a person has before their first save: the system theme, everything else automatic. */
 export const DEFAULT_PREFERENCES: Preferences = {
   theme: `system`,
+  language: null,
   locale: null,
   timeZone: null,
   hourCycle: null,
@@ -85,6 +102,8 @@ export interface AdminUserPreferences {
   updatedAt: string | null
   /** The zone of the first device the person used: the one they signed up with. */
   firstTimeZone: string | null
+  /** The region format of that first device, from the picker's list; `null` when unknown. */
+  firstLocale: string | null
 }
 
 /** The body of `preferences.device`: the zone and region format of the device that is open. */

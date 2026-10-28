@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 /**
  * The app frame and the account screens (profile, e-mail address, sign-in) driven in a browser DOM
  * (happy-dom): what opens, what the app's callbacks receive, and where focus goes.
@@ -251,6 +252,27 @@ const ACCOUNT = "[data-e2e=rail-shell-bottom] [data-e2e=account-menu-button]"
 /** The account section of the phone's sheet. */
 const SHEET_ACCOUNT = "[data-e2e=rail-shell-dialog] [data-e2e=app-shell-sheet-account]"
 
+/** The account's Language entries: the rail menu's and the phone sheet's. */
+const LANGUAGE_ENTRIES = "[data-e2e=account-menu-language], [data-e2e=app-shell-sheet-language]"
+
+/** A language setting with each choice recorded: German chosen, Russian the device's. */
+function languageSetting(chosen: (string | null)[] = []) {
+  return {
+    languages: ["en", "ru", "de", "ar"],
+    current: "de",
+    automatic: "ru",
+    onSelect: (tag: string | null) => void chosen.push(tag),
+  }
+}
+
+/** Picks the dialog's row for `name`, not "Automatic", as a person taps it. */
+async function pickLanguage(name: string): Promise<void> {
+  const row = [...document.querySelectorAll<HTMLElement>("[data-e2e=language-dialog] [role=radio]")]
+    .findLast((candidate) => candidate.textContent?.includes(name))
+  if (!row) throw new Error(`the language dialog has no ${name} row`)
+  await act(() => row.click())
+}
+
 describe("AppFrame", () => {
   const groups = [
     { id: "g-1", name: "Home", role: GroupRole.OWNER },
@@ -275,6 +297,37 @@ describe("AppFrame", () => {
     expect(find('[data-e2e=rail-shell-bottom] a[href="/notifications"]')).not.toBe(null)
     expect(find(ACCOUNT)).not.toBe(null)
     expect(find("#page").closest("main")).not.toBe(null)
+  })
+
+  it("offers Language with the one in use, in the rail's menu and the phone's sheet, opening the language dialog", async () => {
+    const chosen: (string | null)[] = []
+    await mount(
+      <AppFrame user={ada} onSignOut={() => {}} language={languageSetting(chosen)}>page</AppFrame>,
+    )
+    // One in the rail's menu, one in the phone's sheet, drawn by the library's shell.
+    const entries = document.querySelectorAll<HTMLElement>(LANGUAGE_ENTRIES)
+    expect(entries).toHaveLength(2)
+    for (const entry of entries) {
+      expect(entry.textContent).toContain("Language")
+      expect(entry.querySelector("[lang=de]")?.textContent).toBe("Deutsch")
+    }
+    expect(document.querySelector("[data-e2e=language-dialog]")).toBe(null)
+
+    await act(() => (entries[0] as HTMLElement).click())
+    await pickLanguage("العربية")
+    expect(chosen).toEqual(["ar"])
+
+    await act(() =>
+      (document.querySelector("[data-e2e=language-dialog-done]") as HTMLElement).click()
+    )
+    expect(document.querySelector("[data-e2e=language-dialog]")).toBe(null)
+    await act(() => (entries[1] as HTMLElement).click())
+    expect(document.querySelector("[data-e2e=language-dialog]")).not.toBe(null)
+  })
+
+  it("has no Language entry without a language setting", async () => {
+    await mount(<AppFrame user={ada} onSignOut={() => {}}>page</AppFrame>)
+    expect(document.querySelector(LANGUAGE_ENTRIES)).toBe(null)
   })
 
   it("leaves the bell out while the unread count is unknown", async () => {
@@ -714,6 +767,23 @@ describe("PublicFrame", () => {
     expect(await click('a[href="/"]')).toBe(true)
     expect(navigate.calls).toEqual([["/"]])
   })
+  it("offers the language before sign-in, by its own name, and passes a choice on", async () => {
+    const chosen: (string | null)[] = []
+    await mount(
+      <PublicFrame canSignOut={false} onSignOut={() => {}} language={languageSetting(chosen)}>
+        page
+      </PublicFrame>,
+    )
+    const switcher = find("header [data-e2e=public-language]")
+    // Named "Language Deutsch", the language in its own `lang`.
+    expect(switcher.textContent?.replace(/\s+/g, " ").trim()).toBe("Language Deutsch")
+    expect(switcher.querySelector("[lang=de]")?.textContent).toBe("Deutsch")
+
+    await act(() => switcher.click())
+    await pickLanguage("Русский")
+    expect(chosen).toEqual(["ru"])
+  })
+
   it("shows the product's sprout mark above the signed-out pages, named by its text", async () => {
     await mount(<PublicFrame canSignOut={false} onSignOut={() => {}}>page</PublicFrame>)
 

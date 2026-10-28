@@ -1,7 +1,7 @@
 import type { ComponentChildren, ComponentType, JSX } from "preact"
 import type { IconProps } from "@spy4x/preact-icons"
 import { type AuthCredentials, AuthForm } from "@spy4x/preact-system/auth-form"
-import { AccountTag } from "@spy4x/preact-system/account-menu"
+import { type AccountMenuLanguage, AccountTag } from "@spy4x/preact-system/account-menu"
 import { AppShell } from "@spy4x/preact-system/app-shell"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
@@ -14,6 +14,8 @@ import { AuthCard } from "./auth-screen.tsx"
 import { type FrameShortcuts, type FrameTheme, shortcutsMenuItems } from "./frame.tsx"
 import { ShortcutsList } from "./shortcuts.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { useAdminText } from "./i18n.ts"
+import { Rich } from "@spy4x/preact-ui/i18n"
 
 /**
  * The pages of the admin app (`apps/admin`, #146) that its screens link to. It runs on a host of
@@ -32,7 +34,10 @@ export const ADMIN_PATHS = {
 /** The product's name, the last part of every admin page's title. */
 export const ADMIN_PRODUCT = "Seed"
 
-/** The word that marks the operator area: the account cell's badge and the titles' middle part. */
+/**
+ * The word that marks the operator area, in English: the titles' middle part where no translator
+ * is at hand. The badge and the titles read `AdminFrame.tag` in the operator's language.
+ */
 const ADMIN_TAG = "Admin"
 
 /**
@@ -41,6 +46,7 @@ const ADMIN_TAG = "Admin"
  * badge sits under the operator's avatar in the rail instead.
  */
 function AdminBrand({ navigate }: { navigate?: Navigate }): JSX.Element {
+  const t = useAdminText()
   return (
     <Link
       href={ADMIN_PATHS.dashboard}
@@ -49,7 +55,7 @@ function AdminBrand({ navigate }: { navigate?: Navigate }): JSX.Element {
     >
       <span class="text-base font-semibold text-foreground">{ADMIN_PRODUCT}</span>
       <span data-e2e="admin-mark">
-        <AccountTag tag={ADMIN_TAG} />
+        <AccountTag tag={t.t("AdminFrame.tag")} />
       </span>
     </Link>
   )
@@ -83,7 +89,7 @@ export interface AdminNavItem {
  * language and `docs/design/ui-layout.md` rule 6 give a page of tables and dashboards.
  */
 export function AdminShell(
-  { navItems, currentPath, operator, theme, onSignOut, navigate, shortcuts, children }: {
+  { navItems, currentPath, operator, theme, onSignOut, navigate, shortcuts, language, children }: {
     navItems: readonly AdminNavItem[]
     /** The address of the page shown; the entry whose page it is, or is under, is marked. */
     currentPath: string
@@ -94,9 +100,12 @@ export function AdminShell(
     navigate?: Navigate
     /** The admin app's keyboard shortcuts and their dialog. Left out, the shell binds none. */
     shortcuts?: FrameShortcuts
+    /** The interface language and its switch: the operator's menu's "Language" entry. */
+    language?: AccountMenuLanguage
     children: ComponentChildren
   },
 ): JSX.Element {
+  const t = useAdminText()
   return (
     <AppShell
       items={navItems.map(({ name, href, Icon }) => ({ key: href, label: name, href, Icon }))}
@@ -108,14 +117,15 @@ export function AdminShell(
           name: operator.name,
           email: operator.email && operator.email !== operator.name ? operator.email : undefined,
         },
-        items: shortcutsMenuItems(shortcuts),
+        items: shortcutsMenuItems(shortcuts, t.t("AdminFrame.shortcuts")),
         theme: theme?.preference.value,
         onThemeChange: theme && ((choice) => theme.set(choice)),
-        signOut: { label: "Sign out", onClick: onSignOut },
-        tag: ADMIN_TAG,
+        signOut: { label: t.t("AdminFrame.signOut"), onClick: onSignOut },
+        tag: t.t("AdminFrame.tag"),
+        language,
       }}
       width="wide"
-      labels={{ nav: "Admin sections" }}
+      labels={{ nav: t.t("AdminFrame.sections") }}
     >
       {children}
       {shortcuts && <ShortcutsList {...shortcuts} />}
@@ -126,15 +136,16 @@ export function AdminShell(
 /**
  * The browser tab's title for an admin page: `Users · Admin · Seed`, named after the entry whose
  * page it is or is under, so the tab itself says it is the operator area. A page under no entry
- * reads `Admin · Seed`.
+ * reads `Admin · Seed`. `tag` is "Admin" in the operator's language.
  */
 export function adminPageTitle(
   navItems: readonly Pick<AdminNavItem, "href" | "name">[],
   path: string,
+  tag: string = ADMIN_TAG,
 ): string {
   const href = adminNavPath(navItems, path)
   const page = navItems.find((item) => item.href === href)?.name
-  return [page, ADMIN_TAG, ADMIN_PRODUCT].filter(Boolean).join(" · ")
+  return [page, tag, ADMIN_PRODUCT].filter(Boolean).join(" · ")
 }
 
 /**
@@ -164,10 +175,15 @@ export function AdminComingSoon(
     Icon?: ComponentType<IconProps>
   },
 ): JSX.Element {
+  const t = useAdminText()
   return (
     <Stack>
       <PageHeader title={title} titleDataE2E="admin-module-title" />
-      <ComingSoonPanel title={`${title} is coming soon`} description={description} Icon={Icon} />
+      <ComingSoonPanel
+        title={t.t("AdminFrame.comingSoon", { title })}
+        description={description}
+        Icon={Icon}
+      />
     </Stack>
   )
 }
@@ -213,6 +229,7 @@ export function AdminFrame(
   },
 ): JSX.Element {
   const column = wide ? "max-w-5xl" : "max-w-md"
+  const t = useAdminText()
   return (
     <div class="flex min-h-dvh flex-col">
       <header
@@ -221,13 +238,18 @@ export function AdminFrame(
         <AdminBrand navigate={navigate} />
         <div class="flex min-w-0 items-center gap-2">
           {operatorName && (
-            <span class="hidden truncate text-sm text-muted sm:inline" data-e2e="admin-operator">
+            <span
+              class="hidden truncate text-sm text-muted sm:inline"
+              data-e2e="admin-operator"
+            >
               {operatorName}
             </span>
           )}
           {canSignOut && (
             <ScreenForm onSubmit={onSignOut}>
-              <Button type="submit" variant="ghost" data-e2e="admin-signout">Sign out</Button>
+              <Button type="submit" variant="ghost" data-e2e="admin-signout">
+                {t.t("AdminFrame.signOut")}
+              </Button>
             </ScreenForm>
           )}
         </div>
@@ -282,14 +304,18 @@ export function AdminSignInScreen(
  * refuses them on its own; this page only says so.
  */
 export function AdminNoAccess(): JSX.Element {
+  const t = useAdminText()
   return (
     <AuthCard
-      title="No access"
-      description="This account is not an operator. Sign out, then sign in with an operator's account."
+      title={t.t("AdminFrame.noAccess")}
+      description={t.t("AdminFrame.noAccessDescription")}
       e2e="admin-no-access"
     >
       <p class="text-sm text-muted">
-        An administrator gives the role with <code>deno task user:role</code>.
+        <Rich
+          parts={t.parts("AdminFrame.noAccessHint", { command: "deno task user:role" })}
+          tags={{ code: (text) => <code>{text}</code> }}
+        />
       </p>
     </AuthCard>
   )

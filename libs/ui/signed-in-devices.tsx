@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useState } from "preact/hooks"
 import { Badge } from "@spy4x/preact-ui/badge"
