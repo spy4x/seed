@@ -151,7 +151,7 @@ Deno.test(`an item keeps its colours, sizes and sold-out sizes, with one audit r
   })
 })
 
-Deno.test(`a save names the version it saw, and a removed colour takes its sold-out rows`, async () => {
+Deno.test(`a save names the version it saw, and keeps only the sold-out sizes it was sent`, async () => {
   await withSchema(async (sql) => {
     const catalog = new PostgresCatalog(sql)
     const actor = await operator(sql)
@@ -172,6 +172,8 @@ Deno.test(`a save names the version it saw, and a removed colour takes its sold-
     expect(saved.soldOut).toEqual([{ colourId: blue, sizeId: small }])
     // The photo showed the removed colour: it now shows every colour.
     expect(saved.photos[0].colourId).toBeNull()
+    const restocked = await catalog.updateItem(item.id, 2, { ...onlyBlue, soldOut: [] }, actor)
+    expect(restocked.soldOut).toEqual([])
 
     await expect(catalog.updateItem(item.id, 1, onlyBlue, actor)).rejects.toThrow(
       CatalogVersionConflictError,
@@ -179,7 +181,7 @@ Deno.test(`a save names the version it saw, and a removed colour takes its sold-
     // Another item's colour id is never taken over.
     const other = await catalog.createItem(uuidV7(), jacket({ slug: `other` }).fields, actor)
     const stolen = { ...onlyBlue, colours: [{ ...other.colours[0] }], soldOut: [] }
-    expect(await refusal(() => catalog.updateItem(item.id, 2, stolen, actor))).toBe(
+    expect(await refusal(() => catalog.updateItem(item.id, 3, stolen, actor))).toBe(
       `INVALID_REQUEST`,
     )
     expect((await catalog.getItem(other.id))!.colours).toEqual(other.colours)
