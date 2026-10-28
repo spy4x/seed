@@ -43,9 +43,14 @@ export const ADMIN_PSEUDO: Translator<string> = createTranslator({
  * What `Intl` writes in the operator's region format, which is theirs to choose apart from the
  * language: dates, times, relative times and sizes. A test's formatter is English.
  */
+const MONTH = `(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\\.?`
+const TIME = `\\d{1,2}:\\d{2}(:\\d{2})?( ?[aApP]\\.?[mM]\\.?)?( [A-Z]{2,5}([+−-]\\d+)?)?`
 const FORMATTED: readonly RegExp[] = [
-  /\b\d{1,2} [A-Z][a-z]{2,8}( \d{4})?(, \d{1,2}:\d{2}(:\d{2})?( ?[ap]m)?)?( (UTC|GMT[+−-]?\d*))?/g,
-  /\b\d{1,2}:\d{2}(:\d{2})?( ?[ap]m)?/g,
+  // Day first (en-GB, "1 Oct 2026, 10:00:00 UTC") and month first (en-US, "Oct 1, 2026, 6:00 AM
+  // EDT"): the host's locale and time zone pick the form, so both count.
+  new RegExp(`\\b\\d{1,2} ${MONTH}( \\d{4})?(,? ${TIME})?`, `g`),
+  new RegExp(`\\b${MONTH} \\d{1,2}(, \\d{4})?(,? ${TIME})?`, `g`),
+  new RegExp(`\\b${TIME}`, `g`),
   /\b(\d+|an?) (second|minute|hour|day|week|month|year)s? ago\b/g,
   /\bin (\d+|an?) (second|minute|hour|day|week|month|year)s?\b/g,
   /\b(yesterday|today|tomorrow|now)\b/gi,
