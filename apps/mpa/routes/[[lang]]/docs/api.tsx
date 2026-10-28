@@ -1,7 +1,10 @@
+// deno-lint-ignore-file ui-text/no-literal
+// This page is English at every language's address: a translated reference could say something the
+// English does not, so it is not translated (#276). The frame around it is.
 import { Prose } from "@spy4x/preact-ui/prose"
-import { API_DOCS_HEAD, API_DOCS_PATH, API_DOCS_SOURCE, renderApiDocs } from "../../api-docs.ts"
-import { LegalPage, REPOSITORY_URL } from "../../site.tsx"
-import { define } from "../../utils.ts"
+import { API_DOCS_HEAD, API_DOCS_PATH, API_DOCS_SOURCE, renderApiDocs } from "../../../api-docs.ts"
+import { LegalPage, REPOSITORY_URL } from "../../../site.tsx"
+import { define } from "../../../utils.ts"
 
 /**
  * The API reference: how a personal API token reaches a group's notes. Its text is

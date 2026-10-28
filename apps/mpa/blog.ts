@@ -11,6 +11,7 @@ import { createApiFlag } from "./api-flag.ts"
 import type { MpaConfig } from "./config.ts"
 import { SITE_NAME } from "./brand.ts"
 import { define } from "./utils.ts"
+import { siteEnglishText } from "@ui/site-text.ts"
 
 /** The blog's index page. */
 export const BLOG_PATH = `/blog`
@@ -19,11 +20,11 @@ export const BLOG_PATH = `/blog`
 export const RSS_PATH = `/rss.xml`
 
 // Seed's own site: see docs/start-a-product.md
-/** The blog's name, as the feed, the JSON-LD and the RSS link's title call it. */
-export const BLOG_NAME = `${SITE_NAME} blog`
+/** The blog's name in English, as the feed and the sitemap call it. */
+export const BLOG_NAME = siteEnglishText().t(`Blog.name`, { site: SITE_NAME })
 
-/** The one line under the blog's heading, and its meta description. */
-export const BLOG_INTRO = `What we are building, and what we learn on the way.`
+/** The one line under the blog's heading in English, for the feed and the sitemap. */
+export const BLOG_INTRO = siteEnglishText().t(`Blog.intro`)
 
 /** A post's address on this website. */
 export function postPath(slug: string): string {

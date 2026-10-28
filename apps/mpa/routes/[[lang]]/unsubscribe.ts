@@ -1,3 +1,3 @@
-import { unsubscribeHandlers } from "../subscribers.tsx"
+import { unsubscribeHandlers } from "../../subscribers.tsx"
 
 export const handler = unsubscribeHandlers

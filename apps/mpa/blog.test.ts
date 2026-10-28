@@ -2,10 +2,11 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { App } from "fresh"
 import type { PublicBlogPost, PublicBlogPostSummary } from "@domain/blog"
+import Layout from "./routes/_layout.tsx"
 import AppWrapper from "./routes/_app.tsx"
 import Home from "./routes/index.tsx"
-import { handler as blogIndex } from "./routes/blog/index.tsx"
-import { handler as blogPost, POST_NOT_FOUND } from "./routes/blog/[slug].tsx"
+import { handler as blogIndex } from "./routes/[[lang]]/blog/index.tsx"
+import { handler as blogPost, POST_NOT_FOUND } from "./routes/[[lang]]/blog/[slug].tsx"
 import { handler as rss } from "./routes/rss.xml.ts"
 import { handler as sitemap } from "./routes/sitemap.xml.ts"
 import { handler as llms } from "./routes/llms.txt.ts"
@@ -101,9 +102,10 @@ async function blogSite(answers: Answers, { newsletter = true } = {}) {
     .use(pageMiddleware(config, api.fetch, () => newsletter))
     .use(await blogLinkMiddleware(config, api.fetch))
     .appWrapper(view(AppWrapper))
+    .layout("*", view(Layout))
     .route("/", { component: view(Home) })
-    .get("/blog", blogIndex.GET!)
-    .get("/blog/:slug", blogPost.GET!)
+    .get("{/:lang}?/blog", blogIndex.GET!)
+    .get("{/:lang}?/blog/:slug", blogPost.GET!)
     .get("/rss.xml", rss.GET!)
     .get("/sitemap.xml", sitemap.GET!)
     .get("/llms.txt", llms.GET!)
@@ -252,6 +254,34 @@ describe("a blog post", () => {
     )
     expect(text).toContain(`In short One table holds every job. A failed job is tried again.`)
     expect(body).toContain(`<p>The worker <strong>wakes</strong> every second.</p>`)
+  })
+
+  it("shows a post in its own English inside a translated frame, with an English canonical and no alternates (#276)", async () => {
+    const { get } = await blogSite(answers(FULL))
+    const { status, body } = await get("/de/blog/cron-jobs")
+
+    expect(status).toBe(200)
+    expect(body).toContain(`<html lang="de" dir="ltr"`)
+    expect(textOf(body)).toContain(`Diesen Beitrag gibt es nur auf Englisch.`)
+    expect(canonical(body)).toBe(`${site}/blog/cron-jobs`)
+    expect(body).not.toContain(`rel="alternate" hreflang=`)
+    expect(body).toMatch(/<h1[^>]*lang="en"[^>]*>\s*Cron jobs without a cron\s*<\/h1>/)
+    expect(body).toMatch(
+      /<div lang="en" dir="ltr" class="contents">[\s\S]*The worker <strong>wakes<\/strong>/,
+    )
+    expect(body).toMatch(/<nav aria-label="Brotkrümelnavigation"[\s\S]*?href="\/de\/blog"/)
+  })
+
+  it("translates the blog index's frame and says the posts are in English (#276)", async () => {
+    const { get } = await blogSite(listing([NEWER, OLDER]))
+    const { status, body } = await get("/ar/blog")
+
+    expect(status).toBe(200)
+    expect(body).toContain(`<html lang="ar" dir="rtl"`)
+    expect(textOf(body)).toContain(`المقالات مكتوبة بالإنجليزية.`)
+    expect(canonical(body)).toBe(`${site}/ar/blog`)
+    expect(body).toContain(`<link rel="alternate" hreflang="de" href="${site}/de/blog"`)
+    expect(body).toContain(`href="/ar/blog/cron-jobs"`)
   })
 
   it("says Updated only for a post that was updated", async () => {
@@ -438,6 +468,16 @@ describe("the blog in the sitemap and llms.txt", () => {
     expect(body).toContain(
       `<loc>${site}/blog/hello-world</loc>\n    <lastmod>2026-10-02T09:00:00.000Z</lastmod>`,
     )
+  })
+
+  it("lists the blog in every language and each post at its English address only (#276)", async () => {
+    const { get } = await blogSite(listing([NEWER, OLDER]))
+    const { body } = await get("/sitemap.xml")
+
+    for (const prefix of ["", "/ru", "/es", "/de", "/pt-BR", "/ar"]) {
+      expect(body).toContain(`<loc>${site}${prefix}/blog</loc>`)
+    }
+    expect(body).not.toMatch(/<loc>[^<]*\/(?:ru|es|de|pt-BR|ar)\/blog\/[^<]+<\/loc>/)
   })
 
   it("leaves the blog out of both while no post is live, and while the API cannot answer", async () => {

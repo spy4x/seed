@@ -1,3 +1,3 @@
-import { subscriptionConfirmHandlers } from "../../subscribers.tsx"
+import { subscriptionConfirmHandlers } from "../../../subscribers.tsx"
 
 export const handler = subscriptionConfirmHandlers

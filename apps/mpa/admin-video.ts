@@ -24,12 +24,6 @@ export const ADMIN_VIDEO = {
   mp4Size: `5 MB`,
   /** When the recording was published, with its timezone, for the JSON-LD and the sitemap. */
   uploadDate: `2026-10-23T23:46:43+07:00`,
-  /** What a viewer hears, in the line under the player, in its label and above the transcript. */
-  sound: {
-    line: `Music, no speech`,
-    label: `with music and no speech`,
-    transcript: `Music plays under the video. There is no speech.`,
-  },
   /** What the video shows, one sentence per shot, for a reader who cannot watch it. */
   transcript: [
     `A title card: "Seed's admin panel, built for support work."`,

@@ -1,29 +1,30 @@
 // Seed's own site: see docs/start-a-product.md
+import { appAddress } from "../../brand.ts"
 import type { JSX } from "preact"
 import { IconArrowRight, IconGitHub } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { FaqList } from "@spy4x/preact-ui/faq-list"
 import { faqPageJsonLd } from "@spy4x/platform/universal/seo"
-import { Band } from "../components/band.tsx"
-import { CtaBand } from "../components/cta-band.tsx"
+import { Band } from "../../components/band.tsx"
+import { CtaBand } from "../../components/cta-band.tsx"
 import {
   FeatureSection,
   type FeatureSectionProps,
   FeatureTier,
   type FeatureTierProps,
-} from "../components/features-section.tsx"
+} from "../../components/features-section.tsx"
 import {
   AggregateFiles,
   DeployVisual,
   OfflinePair,
   OutboxDiagram,
   RealtimePair,
-} from "../components/features-visuals.tsx"
-import { AdminVideoStill } from "../components/admin-video.tsx"
-import { ADMIN_VIDEO } from "../admin-video.ts"
-import { OnThisPage } from "../components/on-this-page.tsx"
-import { SectionIntro } from "../components/section-intro.tsx"
-import { Shot } from "../components/shot.tsx"
+} from "../../components/features-visuals.tsx"
+import { AdminVideoStill } from "../../components/admin-video.tsx"
+import { ADMIN_VIDEO } from "../../admin-video.ts"
+import { OnThisPage } from "../../components/on-this-page.tsx"
+import { SectionIntro } from "../../components/section-intro.tsx"
+import { Shot } from "../../components/shot.tsx"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
 import {
@@ -37,8 +38,12 @@ import {
   spaLinks,
   TRY_ENTRY,
   TRY_REL,
-} from "../site.tsx"
-import { define } from "../utils.ts"
+} from "../../site.tsx"
+import { languageList } from "../../languages.ts"
+import { type Site, useSite } from "../../use-site.tsx"
+import { define } from "../../utils.ts"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { siteEnglishText } from "@ui/site-text.ts"
 
 /**
  * The day this page's feature list or wording last changed: the hero's "Updated" line and the
@@ -46,12 +51,13 @@ import { define } from "../utils.ts"
  */
 export const FEATURES_UPDATED = `2026-10-28`
 
-/** The page's title and description, as search results and social previews show them. */
-export const FEATURES_HEAD = {
-  title: `Seed features: auth, groups, billing, offline, admin`,
-  description: `What Seed ships: 2FA and social sign-in, groups with roles, per-member Stripe ` +
-    `billing, realtime, an offline app, an admin area, monitoring and backups.`,
-} as const
+/** The page's title and description in the language of `t`. */
+export function featuresHead(t: Translator<string>): { title: string; description: string } {
+  return { title: t.t(`Features.title`), description: t.t(`Features.description`) }
+}
+
+/** The page's head in English, for the page list. */
+export const FEATURES_HEAD = featuresHead(siteEnglishText())
 
 /** A file or folder of the repository on GitHub, for the "where in the code" links. */
 function source(path: string): string {
@@ -76,377 +82,365 @@ interface Tier extends Omit<FeatureTierProps, "children"> {
  * Every claim below was checked against the code on 2026-10-16; the "where in the code" link of each
  * section points at it. Issue numbers are the open issues that track what is missing.
  */
-const TIERS: readonly Tier[] = [
-  {
-    id: `settled`,
-    eyebrow: `Settled for you`,
-    title: `A SaaS starter with groups and billing already wired`,
-    lead: `Accounts, groups and money: the parts every product needs before its first feature, ` +
-      `and the ones that are easiest to get wrong.`,
-    status: `Tested in CI. Google and GitHub sign-in and Stripe need your own keys, so they are ` +
-      `off in the demo.`,
-    features: [
-      {
-        id: `sign-in`,
-        nav: `Accounts and sign-in`,
-        eyebrow: `Accounts`,
-        title: `Sign-in that is done`,
-        lead:
-          `People sign up with an email address and a password, prove the address with a code ` +
-          `sent by email, reset a forgotten password, continue with Google or GitHub, get a ` +
-          `sign-in link by email that also signs them up, or sign in ` +
-          `with a passkey, or try the app first in a guest account and add a sign-in method later. ` +
-          `An authenticator app adds two-factor authentication (2FA). They see every device they are signed in on ` +
-          `and can sign the others out. Changing a sign-in method asks for proof and sends a mail.`,
-        facts: [
-          `Passwords hashed with PBKDF2-SHA-256 through Web Crypto, 600,000 rounds by default`,
-          `Signed session cookies, and an audit trail of every sign-in event`,
-          `Personal API tokens, stored only as keyed hashes`,
-          `Passkeys: only the public key is stored, and each sign-in challenge works once`,
-          `Magic links: one link signs in or signs up, works once, for 15 minutes, and is stored ` +
-          `only as a hash`,
-          `Guest accounts (anonymous sign-in): a visitor starts with one click and no sign-in ` +
-          `method, then adds an email and password, Google, GitHub or a passkey to the same account`,
-          `Wrong passwords counted per sign-in name, with a short lock, from any network address`,
-        ],
-        code: { label: `Read the sign-in code`, href: source(`apps/api/services/sign-in.ts`) },
-        visual: (
-          <WindowFrame variant="browser" title="app.seedsaas.com/profile/security">
-            <Shot
-              name="profile-security"
-              alt="The security page of a profile: the sign-in methods, two-factor authentication (2FA) and the open sessions."
-              sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
-            />
-          </WindowFrame>
-        ),
-      },
-      {
-        id: `teams`,
-        nav: `Groups and roles`,
-        eyebrow: `Groups`,
-        title: `Groups with roles, from the first minute`,
-        lead: `Every account gets a personal group at sign-up. People make shared groups, invite ` +
-          `others, give them roles from viewer to owner and hand ownership over in one step. A ` +
-          `deleted group can be brought back for 30 days, and each group keeps an activity log.`,
-        facts: [
-          `The group is the one tenancy boundary: personal and shared data pass the same check`,
-          `The app, its code and this site all call it a group`,
-          `No second permission model to keep in sync with the first`,
-          `Invitations, role changes and ownership transfer, each with its own tests`,
-        ],
-        code: { label: `Read the groups domain`, href: source(`libs/domain/groups/`) },
-        visual: (
-          <WindowFrame variant="browser" title="app.seedsaas.com/groups">
-            <Shot
-              name="activity"
-              alt="A group's activity log: who added which note or tag, and when, with a link to open each note."
-              sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
-            />
-          </WindowFrame>
-        ),
-      },
-      {
-        id: `overview`,
-        nav: `Group overview`,
-        eyebrow: `Overview`,
-        title: `Overview for each group`,
-        lead: `Key numbers and a chart for any date range. Each person hides and reorders the ` +
-          `widgets, and the layout follows them to their other devices.`,
-        facts: [
-          `Each number is compared with the period before, without a colour verdict`,
-          `Counts only: no note's text and no ranking of people`,
-          `Each widget loads, fails and retries on its own`,
-          `A new aggregate adds its own widgets, and the admin area shows them too`,
-        ],
-        code: { label: `Read the overview widgets`, href: source(`libs/domain/notes/overview.ts`) },
-      },
-      {
-        id: `billing`,
-        nav: `Per-member billing`,
-        eyebrow: `Money`,
-        title: `Per-member billing, through Stripe`,
-        lead:
-          `People see a pricing table, a free plan with limits and a 14-day trial of the paid ` +
-          `plan. The owner sees what one more member costs before inviting them, and a clear ` +
-          `notice with a date when a card fails.`,
-        facts: [
-          `Stripe Checkout and the customer portal; the webhook is the only source of the plan`,
-          `Quantities that follow the member count`,
-          `A grace period after a failed payment, 7 days by default`,
-          `Plan limits checked on the server, not only in the app`,
-          <span key="catalog">
-            Plans live in one catalog file;{" "}
-            <a href="/pricing" class="text-primary underline">the pricing page</a> reads it
-          </span>,
-        ],
-        notYet: [{ label: `Payment providers other than Stripe` }],
-        code: { label: `Read docs/billing.md`, href: source(`docs/billing.md`) },
-        visual: (
-          <WindowFrame variant="browser" title="app.seedsaas.com/groups">
-            <Shot
-              name="billing"
-              alt="A sample group's plan and billing tab, at the demo's example prices: Pro plan with its renewal date, €36.00 a month, for 4 members at €9.00 each, the owner included, with buttons to change the card, view invoices and cancel the plan."
-              sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
-            />
-          </WindowFrame>
-        ),
-      },
-      {
-        id: `privacy`,
-        nav: `Privacy`,
-        eyebrow: `Privacy`,
-        title: `Accounts people can leave`,
-        lead:
-          `People download a copy of their data and delete their account from the profile, with ` +
-          `7 days to change their mind. Read notifications are deleted after 90 days.`,
-        facts: [
-          `Download my data: a ZIP of JSON and CSV files, prepared in the background, kept 7 days`,
-          `Deletion waits 7 days; signing in again cancels it`,
-          `Nightly clean-up of read notifications, dead invitations and old audit events`,
-        ],
-        notYet: [
-          { label: `Translations: the app is English only`, issue: issue(216) },
-        ],
-        code: {
-          label: `Read the account deletion code`,
-          href: source(`libs/server/auth/account-deletion.ts`),
+function tiers({ t, href, rich, language }: Site): readonly Tier[] {
+  return [
+    {
+      id: `settled`,
+      eyebrow: t.t(`FeatureTierSettled.eyebrow`),
+      title: t.t(`FeatureTierSettled.title`),
+      lead: t.t(`FeatureTierSettled.lead`),
+      status: t.t(`FeatureTierSettled.status`),
+      features: [
+        {
+          id: `sign-in`,
+          nav: t.t(`FeatureSignIn.nav`),
+          eyebrow: t.t(`FeatureSignIn.eyebrow`),
+          title: t.t(`FeatureSignIn.title`),
+          lead: t.t(`FeatureSignIn.lead`),
+          facts: [
+            t.t(`FeatureSignIn.fact1`),
+            t.t(`FeatureSignIn.fact2`),
+            t.t(`FeatureSignIn.fact3`),
+            t.t(`FeatureSignIn.fact4`),
+            t.t(`FeatureSignIn.fact5`),
+            t.t(`FeatureSignIn.fact6`),
+            t.t(`FeatureSignIn.fact7`),
+          ],
+          code: { label: t.t(`FeatureSignIn.code`), href: source(`apps/api/services/sign-in.ts`) },
+          visual: (
+            <WindowFrame variant="browser" title={appAddress(`/profile/security`)}>
+              <Shot
+                name="profile-security"
+                alt={t.t(`HomeFeatures.signInAlt`)}
+                sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
+              />
+            </WindowFrame>
+          ),
         },
-      },
-      {
-        id: `export`,
-        nav: `Export and import`,
-        eyebrow: `Export`,
-        title: `Your data leaves with you`,
-        lead: `Export any group to an open JSON file, and import it later as a new group. The ` +
-          `original group is never overwritten.`,
-        facts: [
-          `The owner exports; anyone who may create a group imports`,
-          `The whole file is checked before anything is written, then imported in one step`,
-          `Every note and tag gets a new id, so an import never collides with what is there`,
-          `Each aggregate registers its own part of the file`,
-        ],
-        code: { label: `Read the export code`, href: source(`libs/server/groups/portable.ts`) },
-      },
-    ],
-  },
-  {
-    id: `ready`,
-    eyebrow: `Ready when you need it`,
-    title: `Realtime, offline and background work`,
-    lead: `The parts most starters leave out, because they are hard: live updates, an app that ` +
-      `works with no network, and work that must not get lost.`,
-    status: `Offline writing covers notes and tags; every other list opens offline with what it ` +
-      `last showed.`,
-    features: [
-      {
-        id: `realtime`,
-        nav: `Realtime`,
-        eyebrow: `Realtime`,
-        title: `Changes show up without a reload`,
-        lead: `A member's change appears in every open tab of the group, and a laptop that wakes ` +
-          `from sleep catches up on what it missed.`,
-        facts: [
-          `A standard WebSocket, with a sequence on every change`,
-          `A tab shown again after sleep reconnects and pulls what it missed`,
-          `Realtime can be switched off: the app then polls on a timer and works the same`,
-        ],
-        code: {
-          label: `Read the realtime design`,
-          href: source(`docs/decisions/002-realtime-transport-and-sync.md`),
+        {
+          id: `teams`,
+          nav: t.t(`FeatureTeams.nav`),
+          eyebrow: t.t(`FeatureTeams.eyebrow`),
+          title: t.t(`FeatureTeams.title`),
+          lead: t.t(`FeatureTeams.lead`),
+          facts: [
+            t.t(`FeatureTeams.fact1`),
+            t.t(`FeatureTeams.fact2`),
+            t.t(`FeatureTeams.fact3`),
+            t.t(`FeatureTeams.fact4`),
+          ],
+          code: { label: t.t(`FeatureTeams.code`), href: source(`libs/domain/groups/`) },
+          visual: (
+            <WindowFrame variant="browser" title={appAddress(`/groups`)}>
+              <Shot
+                name="activity"
+                alt={t.t(`FeatureTeams.alt`)}
+                sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
+              />
+            </WindowFrame>
+          ),
         },
-        visual: <RealtimePair />,
-      },
-      {
-        id: `offline`,
-        nav: `Offline app`,
-        eyebrow: `Offline`,
-        title: `An app that opens with no network`,
-        lead:
-          `The app installs like a native one, opens with no network and sends queued changes ` +
-          `when the network returns. A stale change shows as a conflict to settle, never as a ` +
-          `silent overwrite.`,
-        facts: [
-          `An IndexedDB copy of each list and a write queue with idempotency keys`,
-          `“Keep mine” or “Use the server's” for each conflict`,
-          `Turned off with one setting, or removed by deleting one folder and following a written list`,
-        ],
-        code: { label: `Read docs/offline.md`, href: source(`docs/offline.md`) },
-        visual: <OfflinePair />,
-      },
-      {
-        id: `shortcuts`,
-        nav: `Keyboard shortcuts`,
-        eyebrow: `Keyboard`,
-        title: `Keyboard shortcuts in the app and the admin area`,
-        lead:
-          `Press ? to see every shortcut. N adds a note from any page without leaving it, and ` +
-          `G then a letter opens a section. Shortcuts stay out of the way while you type in a ` +
-          `field.`,
-        facts: [
-          `Ctrl K (⌘K on a Mac) or / opens search`,
-          `One list per app binds the keys and fills the ? dialog, so it never shows a key that does nothing`,
-          `Single-key shortcuts can be turned off on a device; Ctrl K and Escape keep working`,
-          `In the admin area, G then a letter opens each module`,
-        ],
-        code: { label: `Read the shortcuts code`, href: source(`libs/ui/shortcuts.tsx`) },
-      },
-      {
-        id: `push`,
-        nav: `Notifications`,
-        eyebrow: `Notifications`,
-        title: `Notifications in the app, on the phone, the desktop and Telegram`,
-        lead: `People get a notice when they are invited, given a new role or handed a group, in ` +
-          `the app, as a web push on their phone or desktop, and in Telegram once they link it.`,
-        facts: [
-          `Web push with your own keys, made by one task: deno task vapid-key:create`,
-          `An unread count in the app, and "Mark all as read"`,
-          `Each device's push subscription listed on the profile`,
-          `A Telegram bot, off until you set its token: linked with a one-time code, and your ` +
-          `product's own commands added in one file`,
-        ],
-        code: {
-          label: `Read the web push service`,
-          href: source(`apps/api/services/web-push-service.ts`),
+        {
+          id: `overview`,
+          nav: t.t(`FeatureOverview.nav`),
+          eyebrow: t.t(`FeatureOverview.eyebrow`),
+          title: t.t(`FeatureOverview.title`),
+          lead: t.t(`FeatureOverview.lead`),
+          facts: [
+            t.t(`FeatureOverview.fact1`),
+            t.t(`FeatureOverview.fact2`),
+            t.t(`FeatureOverview.fact3`),
+            t.t(`FeatureOverview.fact4`),
+          ],
+          code: {
+            label: t.t(`FeatureOverview.code`),
+            href: source(`libs/domain/notes/overview.ts`),
+          },
         },
-        visual: (
-          <WindowFrame variant="browser" title="app.seedsaas.com/notifications">
-            <Shot
-              name="notifications"
-              alt="The notifications page: three unread notices about a new group owner, a role change and an invitation, each row opening what it is about."
-              sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
-            />
-          </WindowFrame>
-        ),
-      },
-      {
-        id: `worker`,
-        nav: `Background work`,
-        eyebrow: `Background work`,
-        title: `Work that survives a crash`,
-        lead: `Mail and notifications go out even when the server restarts halfway, because the ` +
-          `work is saved before it is done. Your own jobs run now, later or on a schedule.`,
-        facts: [
-          `Each command writes its event in the same database transaction as the change`,
-          `A worker drains that outbox and sends mail, push and live updates`,
-          `A job is one definition: a name, a handler and, if it repeats, its schedule`,
-          `A failed attempt is retried with growing waits; operators see every run in the admin`,
-        ],
-        code: { label: `Read docs/jobs.md`, href: source(`docs/jobs.md`) },
-        visual: <OutboxDiagram />,
-      },
-      {
-        id: `your-feature`,
-        nav: `Your own features`,
-        eyebrow: `Your product`,
-        title: `Add a feature by copying one`,
-        lead: `Notes is a complete feature in every layer: database, API, screen, offline and ` +
-          `tests. A new feature copies it, file by file, from a list that names each file in order.`,
-        facts: [
-          `One shape for every feature, so the code stays easy to find`,
-          `Each layer has its own tests to copy with it`,
-          `Every id is a time-ordered UUID (version 7)`,
-        ],
-        code: { label: `Read docs/aggregates.md`, href: source(`docs/aggregates.md`) },
-        visual: <AggregateFiles />,
-      },
-    ],
-  },
-  {
-    id: `operations`,
-    eyebrow: `Operations`,
-    title: `Run it, watch it, support the people on it`,
-    lead: `One server you rent, the tools to see what it does, and an area where your operators ` +
-      `help the people who use your product.`,
-    status: `Every module below ships today. What is not built yet is listed under each.`,
-    features: [
-      {
-        id: `admin`,
-        nav: `Admin area`,
-        eyebrow: `Support`,
-        title: `An admin area for your operators`,
-        lead: (
-          <>
-            Your operators find a person by name or address and see their sign-in methods, sessions,
-            groups and history. From the same place they manage groups, refund a payment, look after
-            the newsletter's subscribers, see every background job, run a failed one again and check
-            the system's health.{" "}
-            <a
-              href="/admin"
-              class="font-medium text-primary underline"
-              data-e2e="features-admin-watch"
-              data-umami-event="features-admin-video"
-              data-umami-event-from="lead"
-            >
-              Watch it in {ADMIN_VIDEO.seconds} seconds
-            </a>.
-          </>
-        ),
-        facts: [
-          `A separate app on its own host, with its own session cookie`,
-          `Nine modules, from the dashboard to API tokens`,
-          `Risky actions ask first, and every action is written to the audit log`,
-        ],
-        notYet: [
-          { label: `Translations: the admin app is English only`, issue: issue(275) },
-          { label: `Signing in as a person to see what they see` },
-        ],
-        code: { label: `Read the admin app`, href: source(`apps/admin/`) },
-        visual: <AdminVideoStill />,
-      },
-      {
-        id: `deploy`,
-        nav: `Deploy and monitoring`,
-        eyebrow: `Deploy`,
-        title: `One server, one command`,
-        lead: `Seed runs on any Linux server you rent, with Docker Compose for development and ` +
-          `production alike. Several products can share one server.`,
-        facts: [
-          `Traefik in front, with automatic certificates`,
-          `Postgres and Valkey beside the apps`,
-          `Garage, an S3 file store: notes keep images and PDFs in it, and people their profile pictures, uploaded on signed links and checked by their bytes. A photo, HEIC included, becomes small AVIF and WebP widths with its location and other metadata stripped`,
-          `VictoriaMetrics, VictoriaLogs and Grafana, with alerts`,
-          `An opt-in daily encrypted restic backup of the database, and a written restore`,
-          `Release images published from CI when you push a version tag`,
-        ],
-        code: { label: `Read the Compose files`, href: source(`infra/compose/`) },
-        visual: <DeployVisual />,
-      },
-      {
-        id: `website`,
-        nav: `Public website`,
-        eyebrow: `Website`,
-        title: `A public website to adapt`,
-        lead: `This site: fast, server-rendered and usable with JavaScript turned off, with ` +
-          `pricing, legal pages, a blog and a newsletter.`,
-        facts: [
-          `Fresh on the server; every action a real link or form`,
-          `Pricing read from the app's plan catalog`,
-          `A newsletter with double opt-in and one-click unsubscribe`,
-          `A blog written in the admin panel, with topics, an RSS feed and article structured data`,
-          `Contact links set in the admin panel, shown in the footer and the structured data`,
-          `An optional catalog for a shop, edited in the admin panel: items with photos, colours, sizes, a size chart and sold-out sizes, in every language you sell in, with a short tracking link per item and place you share it`,
-          `sitemap.xml, robots.txt, canonical links and Open Graph images`,
-          `Optional cookieless analytics in your own Umami, with an event on every call to action`,
-        ],
-        code: { label: `Read the website's code`, href: source(`apps/mpa/`) },
-      },
-      {
-        id: `quality`,
-        nav: `Tests`,
-        eyebrow: `Quality`,
-        title: `Tested where it matters`,
-        lead: `Counted on 16 October 2026: 34 browser test suites for the app, plus unit and ` +
-          `screen tests, all run in CI. Every change goes through a pull request and a review before it merges.`,
-        facts: [
-          `Browser tests with Playwright, against the real API and database`,
-          `Unit and screen tests next to the code they test`,
-          `Integration tests against Postgres`,
-        ],
-        code: { label: `Read the browser tests`, href: source(`e2e/`) },
-      },
-    ],
-  },
-]
+        {
+          id: `billing`,
+          nav: t.t(`FeatureBilling.nav`),
+          eyebrow: t.t(`FeatureBilling.eyebrow`),
+          title: t.t(`FeatureBilling.title`),
+          lead: t.t(`FeatureBilling.lead`),
+          facts: [
+            t.t(`FeatureBilling.fact1`),
+            t.t(`FeatureBilling.fact2`),
+            t.t(`FeatureBilling.fact3`),
+            t.t(`FeatureBilling.fact4`),
+            <span key="catalog">
+              {rich(`FeatureBilling.catalog`, {
+                pricing: (text) => (
+                  <a href={href(`/pricing`)} class="text-primary underline">{text}</a>
+                ),
+              })}
+            </span>,
+          ],
+          notYet: [{ label: t.t(`FeatureBilling.notYet1`) }],
+          code: { label: t.t(`FeatureBilling.code`), href: source(`docs/billing.md`) },
+          visual: (
+            <WindowFrame variant="browser" title={appAddress(`/groups`)}>
+              <Shot
+                name="billing"
+                alt={t.t(`FeatureBilling.alt`)}
+                sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
+              />
+            </WindowFrame>
+          ),
+        },
+        {
+          id: `privacy`,
+          nav: t.t(`FeaturePrivacy.nav`),
+          eyebrow: t.t(`FeaturePrivacy.eyebrow`),
+          title: t.t(`FeaturePrivacy.title`),
+          lead: t.t(`FeaturePrivacy.lead`),
+          facts: [
+            t.t(`FeaturePrivacy.fact1`),
+            t.t(`FeaturePrivacy.fact2`),
+            t.t(`FeaturePrivacy.fact3`),
+          ],
+          code: {
+            label: t.t(`FeaturePrivacy.code`),
+            href: source(`libs/server/auth/account-deletion.ts`),
+          },
+        },
+        {
+          id: `export`,
+          nav: t.t(`FeatureExport.nav`),
+          eyebrow: t.t(`FeatureExport.eyebrow`),
+          title: t.t(`FeatureExport.title`),
+          lead: t.t(`FeatureExport.lead`),
+          facts: [
+            t.t(`FeatureExport.fact1`),
+            t.t(`FeatureExport.fact2`),
+            t.t(`FeatureExport.fact3`),
+            t.t(`FeatureExport.fact4`),
+          ],
+          code: {
+            label: t.t(`FeatureExport.code`),
+            href: source(`libs/server/groups/portable.ts`),
+          },
+        },
+        {
+          id: `languages`,
+          nav: t.t(`FeatureLanguages.nav`),
+          eyebrow: t.t(`FeatureLanguages.eyebrow`),
+          title: t.t(`FeatureLanguages.title`),
+          lead: t.t(`FeatureLanguages.lead`, { languages: languageList(language) }),
+          facts: [
+            t.t(`FeatureLanguages.fact1`),
+            t.t(`FeatureLanguages.fact2`),
+            t.t(`FeatureLanguages.fact3`),
+            t.t(`FeatureLanguages.fact4`),
+          ],
+          notYet: [
+            { label: t.t(`FeatureLanguages.notYet1`), issue: issue(277) },
+            { label: t.t(`FeatureLanguages.notYet2`), issue: issue(275) },
+            { label: t.t(`FeatureLanguages.notYet3`), issue: issue(215) },
+          ],
+          code: { label: t.t(`FeatureLanguages.code`), href: source(`i18n/TRANSLATING.md`) },
+        },
+      ],
+    },
+    {
+      id: `ready`,
+      eyebrow: t.t(`FeatureTierReady.eyebrow`),
+      title: t.t(`FeatureTierReady.title`),
+      lead: t.t(`FeatureTierReady.lead`),
+      status: t.t(`FeatureTierReady.status`),
+      features: [
+        {
+          id: `realtime`,
+          nav: t.t(`FeatureRealtime.nav`),
+          eyebrow: t.t(`FeatureRealtime.eyebrow`),
+          title: t.t(`FeatureRealtime.title`),
+          lead: t.t(`FeatureRealtime.lead`),
+          facts: [
+            t.t(`FeatureRealtime.fact1`),
+            t.t(`FeatureRealtime.fact2`),
+            t.t(`FeatureRealtime.fact3`),
+          ],
+          code: {
+            label: t.t(`FeatureRealtime.code`),
+            href: source(`docs/decisions/002-realtime-transport-and-sync.md`),
+          },
+          visual: <RealtimePair />,
+        },
+        {
+          id: `offline`,
+          nav: t.t(`FeatureOffline.nav`),
+          eyebrow: t.t(`FeatureOffline.eyebrow`),
+          title: t.t(`FeatureOffline.title`),
+          lead: t.t(`FeatureOffline.lead`),
+          facts: [
+            t.t(`FeatureOffline.fact1`),
+            t.t(`FeatureOffline.fact2`),
+            t.t(`FeatureOffline.fact3`),
+          ],
+          code: { label: t.t(`FeatureOffline.code`), href: source(`docs/offline.md`) },
+          visual: <OfflinePair />,
+        },
+        {
+          id: `shortcuts`,
+          nav: t.t(`FeatureShortcuts.nav`),
+          eyebrow: t.t(`FeatureShortcuts.eyebrow`),
+          title: t.t(`FeatureShortcuts.title`),
+          lead: t.t(`FeatureShortcuts.lead`),
+          facts: [
+            t.t(`FeatureShortcuts.fact1`),
+            t.t(`FeatureShortcuts.fact2`),
+            t.t(`FeatureShortcuts.fact3`),
+            t.t(`FeatureShortcuts.fact4`),
+          ],
+          code: { label: t.t(`FeatureShortcuts.code`), href: source(`libs/ui/shortcuts.tsx`) },
+        },
+        {
+          id: `push`,
+          nav: t.t(`FeaturePush.nav`),
+          eyebrow: t.t(`FeaturePush.eyebrow`),
+          title: t.t(`FeaturePush.title`),
+          lead: t.t(`FeaturePush.lead`),
+          facts: [
+            t.t(`FeaturePush.fact1`),
+            t.t(`FeaturePush.fact2`),
+            t.t(`FeaturePush.fact3`),
+            t.t(`FeaturePush.fact4`),
+          ],
+          code: {
+            label: t.t(`FeaturePush.code`),
+            href: source(`apps/api/services/web-push-service.ts`),
+          },
+          visual: (
+            <WindowFrame variant="browser" title={appAddress(`/notifications`)}>
+              <Shot
+                name="notifications"
+                alt={t.t(`FeaturePush.alt`)}
+                sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
+              />
+            </WindowFrame>
+          ),
+        },
+        {
+          id: `worker`,
+          nav: t.t(`FeatureWorker.nav`),
+          eyebrow: t.t(`FeatureWorker.eyebrow`),
+          title: t.t(`FeatureWorker.title`),
+          lead: t.t(`FeatureWorker.lead`),
+          facts: [
+            t.t(`FeatureWorker.fact1`),
+            t.t(`FeatureWorker.fact2`),
+            t.t(`FeatureWorker.fact3`),
+            t.t(`FeatureWorker.fact4`),
+          ],
+          code: { label: t.t(`FeatureWorker.code`), href: source(`docs/jobs.md`) },
+          visual: <OutboxDiagram />,
+        },
+        {
+          id: `your-feature`,
+          nav: t.t(`FeatureYourFeature.nav`),
+          eyebrow: t.t(`FeatureYourFeature.eyebrow`),
+          title: t.t(`FeatureYourFeature.title`),
+          lead: t.t(`FeatureYourFeature.lead`),
+          facts: [
+            t.t(`FeatureYourFeature.fact1`),
+            t.t(`FeatureYourFeature.fact2`),
+            t.t(`FeatureYourFeature.fact3`),
+          ],
+          code: { label: t.t(`FeatureYourFeature.code`), href: source(`docs/aggregates.md`) },
+          visual: <AggregateFiles />,
+        },
+      ],
+    },
+    {
+      id: `operations`,
+      eyebrow: t.t(`FeatureTierOperations.eyebrow`),
+      title: t.t(`FeatureTierOperations.title`),
+      lead: t.t(`FeatureTierOperations.lead`),
+      status: t.t(`FeatureTierOperations.status`),
+      features: [
+        {
+          id: `admin`,
+          nav: t.t(`FeatureAdmin.nav`),
+          eyebrow: t.t(`FeatureAdmin.eyebrow`),
+          title: t.t(`FeatureAdmin.title`),
+          lead: (
+            <>
+              {t.t(`FeatureAdmin.lead`)}{" "}
+              <a
+                href={href(`/admin`)}
+                class="font-medium text-primary underline"
+                data-e2e="features-admin-watch"
+                data-umami-event="features-admin-video"
+                data-umami-event-from="lead"
+              >
+                {t.t(`FeatureAdmin.watch`, { seconds: ADMIN_VIDEO.seconds })}
+              </a>.
+            </>
+          ),
+          facts: [
+            t.t(`FeatureAdmin.fact1`),
+            t.t(`FeatureAdmin.fact2`),
+            t.t(`FeatureAdmin.fact3`),
+          ],
+          notYet: [
+            { label: t.t(`FeatureAdmin.notYet1`) },
+          ],
+          code: { label: t.t(`FeatureAdmin.code`), href: source(`apps/admin/`) },
+          visual: <AdminVideoStill />,
+        },
+        {
+          id: `deploy`,
+          nav: t.t(`FeatureDeploy.nav`),
+          eyebrow: t.t(`FeatureDeploy.eyebrow`),
+          title: t.t(`FeatureDeploy.title`),
+          lead: t.t(`FeatureDeploy.lead`),
+          facts: [
+            t.t(`FeatureDeploy.fact1`),
+            t.t(`FeatureDeploy.fact2`),
+            t.t(`FeatureDeploy.fact3`),
+            t.t(`FeatureDeploy.fact4`),
+            t.t(`FeatureDeploy.fact5`),
+            t.t(`FeatureDeploy.fact6`),
+          ],
+          code: { label: t.t(`FeatureDeploy.code`), href: source(`infra/compose/`) },
+          visual: <DeployVisual />,
+        },
+        {
+          id: `website`,
+          nav: t.t(`FeatureWebsite.nav`),
+          eyebrow: t.t(`FeatureWebsite.eyebrow`),
+          title: t.t(`FeatureWebsite.title`),
+          lead: t.t(`FeatureWebsite.lead`),
+          facts: [
+            t.t(`FeatureWebsite.fact1`),
+            t.t(`FeatureWebsite.fact2`),
+            t.t(`FeatureWebsite.fact3`),
+            t.t(`FeatureWebsite.fact4`),
+            t.t(`FeatureWebsite.fact5`),
+            t.t(`FeatureWebsite.fact6`),
+            t.t(`FeatureWebsite.fact7`),
+            t.t(`FeatureWebsite.fact8`),
+            t.t(`FeatureWebsite.fact9`),
+          ],
+          code: { label: t.t(`FeatureWebsite.code`), href: source(`apps/mpa/`) },
+        },
+        {
+          id: `quality`,
+          nav: t.t(`FeatureQuality.nav`),
+          eyebrow: t.t(`FeatureQuality.eyebrow`),
+          title: t.t(`FeatureQuality.title`),
+          lead: t.t(`FeatureQuality.lead`),
+          facts: [
+            t.t(`FeatureQuality.fact1`),
+            t.t(`FeatureQuality.fact2`),
+            t.t(`FeatureQuality.fact3`),
+          ],
+          code: { label: t.t(`FeatureQuality.code`), href: source(`e2e/`) },
+        },
+      ],
+    },
+  ]
+}
 
 /**
  * What a visitor asks that the sections above do not answer, with each answer as plain text for the
@@ -455,52 +449,54 @@ const TIERS: readonly Tier[] = [
 const FAQ = [
   {
     id: `faq-serverless`,
-    question: `Can Seed run on Vercel or serverless functions?`,
-    answerText: `No. Seed runs as long-lived containers with Docker Compose on one Linux server ` +
-      `you rent, because the API keeps WebSocket connections open and a worker drains a queue.`,
+    question: `FeaturesFaq.serverlessQuestion`,
+    answer: `FeaturesFaq.serverlessAnswer`,
   },
   {
     id: `faq-runtime`,
-    question: `Can Seed run on Node.js or Bun?`,
-    answerText: `Not today. Seed's servers run on Deno 2 in Docker, and its tasks and tests use ` +
-      `Deno. The code is built on web standards such as fetch, Request and Web Crypto.`,
+    question: `FeaturesFaq.runtimeQuestion`,
+    answer: `FeaturesFaq.runtimeAnswer`,
   },
   {
     id: `faq-database`,
-    question: `Can Seed use a database other than Postgres?`,
-    answerText: `No. Seed is built on Postgres: its migrations, queries and integration tests ` +
-      `assume it.`,
+    question: `FeaturesFaq.databaseQuestion`,
+    answer: `FeaturesFaq.databaseAnswer`,
   },
-  {
-    id: `faq-native`,
-    question: `Can Seed ship as a mobile or desktop app?`,
-    answerText: `Not as a store app yet. Today the web app installs from the browser on phones ` +
-      `and desktops and opens with no network; Android and desktop apps are planned.`,
-  },
+  { id: `faq-native`, question: `FeaturesFaq.nativeQuestion`, answer: `FeaturesFaq.nativeAnswer` },
 ] as const
 
+/** The questions in the language of `t`, each answer as plain text for the structured data. */
+function faqItems(t: Translator<string>) {
+  return FAQ.map(({ id, question, answer }) => ({
+    id,
+    question: t.t(question),
+    answerText: t.t(answer),
+  }))
+}
+
 /** The page's structured data: the software, its questions, and the page's place. */
-function featuresJsonLd(origin: string): unknown[] {
+function featuresJsonLd(site: Site, origin: string): unknown[] {
   return [
     softwareJsonLd(origin, {
-      featureList: TIERS.flatMap((tier) => tier.features.map((feature) => feature.nav)),
+      featureList: tiers(site).flatMap((tier) => tier.features.map((feature) => feature.nav)),
     }),
     PERSON_JSON_LD,
-    faqPageJsonLd(FAQ),
-    siteBreadcrumbsJsonLd(origin, `/features`, `Features`),
+    faqPageJsonLd(faqItems(site.t)),
+    siteBreadcrumbsJsonLd(origin, `/features`, site.t.t(`SiteNav.features`), site.language),
   ]
 }
 
 function Hero({ demoHref }: { demoHref: string }): JSX.Element {
+  const { t } = useSite()
   return (
     <PageHero
       class="site-glow"
-      eyebrow="Features"
-      title="Everything Seed ships, and what it does not yet"
-      lead="Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, passkeys, magic links, guest accounts, 2FA, groups with roles, per-member Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code."
+      eyebrow={t.t(`SiteNav.features`)}
+      title={t.t(`FeaturesHero.title`)}
+      lead={t.t(`FeaturesHero.lead`)}
       author={SITE_AUTHOR}
       updated={FEATURES_UPDATED}
-      note='Seed is a work in progress, built in public. What is not built yet is marked "Not built yet" next to the claim it limits, with its issue when one is open.'
+      note={t.t(`FeaturesHero.note`)}
     >
       <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
         <Button
@@ -511,7 +507,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
           data-umami-event="try-demo"
           data-umami-event-from="hero"
         >
-          {TRY_ENTRY.label}
+          {t.t(TRY_ENTRY.label)}
         </Button>
         <Button
           href={REPOSITORY_URL}
@@ -520,7 +516,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
           data-umami-event="github"
           data-umami-event-from="hero"
         >
-          <IconGitHub class="size-5" aria-hidden="true" /> View on GitHub
+          <IconGitHub class="size-5" aria-hidden="true" /> {t.t(`HomeHero.github`)}
         </Button>
       </div>
     </PageHero>
@@ -532,17 +528,20 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
  * developer gets, what is not built yet and a link to the code. One ask: try the demo.
  */
 export default define.page(function Features({ state }) {
+  const site = useSite()
+  const { t, href } = site
   const spa = spaLinks(state.spaOrigin)
   const head: SitePageHead = {
-    ...FEATURES_HEAD,
+    ...featuresHead(t),
     og: `features`,
-    jsonLd: featuresJsonLd(state.webAppOrigin),
+    jsonLd: featuresJsonLd(site, state.webAppOrigin),
   }
+  const sections = tiers(site)
   const nav = [
-    ...TIERS.flatMap((tier) =>
+    ...sections.flatMap((tier) =>
       tier.features.map((feature) => ({ label: feature.nav, href: `#${feature.id}` }))
     ),
-    { label: `Questions`, href: `#faq` },
+    { label: t.t(`HomeFaq.eyebrow`), href: `#faq` },
   ]
   return (
     <SiteFrame state={state} path="/features" head={head}>
@@ -552,7 +551,7 @@ export default define.page(function Features({ state }) {
           <OnThisPage links={nav} />
         </div>
         <div class="flex min-w-0 flex-col gap-16 lg:col-span-9 xl:col-span-10">
-          {TIERS.map(({ features, ...tier }) => (
+          {sections.map(({ features, ...tier }) => (
             <FeatureTier key={tier.id} {...tier}>
               {features.map(({ nav: _nav, ...feature }, index) => (
                 <FeatureSection key={feature.id} {...feature} flip={index % 2 === 1} />
@@ -561,19 +560,24 @@ export default define.page(function Features({ state }) {
           ))}
           {/* Seed's own site: see docs/start-a-product.md */}
           <a
-            href="/compare"
+            href={href(`/compare`)}
             class="inline-flex items-center gap-1 self-start py-2 text-lg font-medium text-primary hover:underline"
             data-e2e="features-compare"
           >
-            How Seed compares <IconArrowRight class="size-5" aria-hidden="true" />
+            {t.t(`Features.compare`)}{" "}
+            <IconArrowRight class="size-5 rtl:-scale-x-100" aria-hidden="true" />
           </a>
         </div>
       </div>
       <Band tone="alt" id="faq" labelledBy="faq-title" width="3xl">
         <div class="flex flex-col gap-8">
-          <SectionIntro id="faq-title" eyebrow="Questions" title="Can Seed do that?" />
+          <SectionIntro
+            id="faq-title"
+            eyebrow={t.t(`HomeFaq.eyebrow`)}
+            title={t.t(`FeaturesFaq.title`)}
+          />
           <FaqList
-            items={FAQ.map((item) => ({
+            items={faqItems(t).map((item) => ({
               id: item.id,
               question: item.question,
               answer: <p>{item.answerText}</p>,

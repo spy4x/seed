@@ -4,30 +4,37 @@ import { App } from "fresh"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { PLANS } from "@domain/billing"
 import AppWrapper from "./routes/_app.tsx"
-import Admin, { ADMIN_HEAD } from "./routes/admin.tsx"
-import Compare from "./routes/compare.tsx"
-import Features from "./routes/features.tsx"
+import Admin, { ADMIN_HEAD } from "./routes/[[lang]]/admin.tsx"
+import Compare from "./routes/[[lang]]/compare.tsx"
+import Features from "./routes/[[lang]]/features.tsx"
 import Home, { AI_PROMPT, HOME_HEAD, QUICK_START } from "./routes/index.tsx"
-import Pricing, { handler as pricing, PRICING_HEAD } from "./routes/pricing.tsx"
-import Privacy, { PRIVACY_HEAD } from "./routes/privacy.tsx"
-import Terms, { TERMS_HEAD } from "./routes/terms.tsx"
+import Pricing, { handler as pricing, PRICING_HEAD } from "./routes/[[lang]]/pricing.tsx"
+import Privacy, { PRIVACY_HEAD } from "./routes/[[lang]]/privacy.tsx"
+import Terms, { TERMS_HEAD } from "./routes/[[lang]]/terms.tsx"
 import { handler as mvp } from "./routes/mvp.ts"
-import ApiDocs from "./routes/docs/api.tsx"
-import { handler as docs } from "./routes/docs/index.ts"
+import ApiDocs from "./routes/[[lang]]/docs/api.tsx"
+import { handler as docs } from "./routes/[[lang]]/docs/index.ts"
 import { handler as robots } from "./routes/robots.txt.ts"
-import { handler as subscribe } from "./routes/subscribe/index.ts"
+import { handler as subscribe } from "./routes/[[lang]]/subscribe/index.ts"
 import { handler as theme } from "./routes/theme.js.ts"
 import { handler as sitemap } from "./routes/sitemap.xml.ts"
 import { handler as videoSitemap } from "./routes/video-sitemap.xml.ts"
 import { handler as llms } from "./routes/llms.txt.ts"
-import { handler as unsubscribe } from "./routes/unsubscribe.ts"
+import { handler as unsubscribe } from "./routes/[[lang]]/unsubscribe.ts"
 import { pageMiddleware } from "./middleware.ts"
 // Seed's own site: see docs/start-a-product.md
 import { HIRE_PAGE_URL } from "./hire.ts"
 import { ogImageAlt, type OgImageKey, REPOSITORY_URL } from "./site.tsx"
-import { SITE_PAGES } from "./pages.ts"
+import { SITE_PAGES, type SitePage } from "./pages.ts"
+import { localePath, pathLanguage, SITE_LANGUAGES } from "./languages.ts"
 import type { MpaConfig } from "./config.ts"
 import type { State } from "./utils.ts"
+
+/** Every address of `pages` the sitemap lists, in its order: each language of a translated page. */
+const everyLanguage = (pages: readonly SitePage[]) =>
+  pages.flatMap(({ path, oneLanguage }) =>
+    oneLanguage ? [path] : SITE_LANGUAGES.map((language) => localePath(language, path))
+  )
 
 /** The website on its own domain, so a link to the website and a link to the SPA differ. */
 const config = {
@@ -464,11 +471,14 @@ describe("the public website", () => {
       .map(([, href, number]) => ({ href, number }))
     expect(links.length).toBeGreaterThan(0)
     for (const { href, number } of links) expect(href).toBe(`${REPOSITORY_URL}/issues/${number}`)
-    // Translations are not built yet, and their issue is the place to follow them.
-    expect(html).toMatch(
-      new RegExp(
-        `Translations: the app is English only \\(<a href="${REPOSITORY_URL}/issues/216"[^>]*>issue #216</a>\\)`,
-      ),
+  })
+
+  it("says on /features that Seed is translated, and names every language (#276)", async () => {
+    const { html } = await page("/features")
+
+    expect(html).toContain(`In six languages from the start`)
+    expect(html).toContain(
+      `speak English, Russian, Spanish, German, Brazilian Portuguese, and Arabic.`,
     )
   })
 
@@ -829,7 +839,9 @@ describe("the public website", () => {
 
     const locs = [...(await response.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
     expect(locs).toEqual(
-      SITE_PAGES.filter(({ path }) => path !== "/subscribe").map(({ path }) => `${site}${path}`),
+      everyLanguage(SITE_PAGES.filter(({ path }) => path !== "/subscribe")).map((path) =>
+        `${site}${path}`
+      ),
     )
   })
 
@@ -852,15 +864,46 @@ describe("the public website", () => {
 
     expect(response.headers.get("content-type")).toBe("application/xml; charset=utf-8")
     const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1])
+    // A translated page is listed in every language; an English-only one once.
     expect(locs).toEqual(
       [
         "/",
+        "/ru",
+        "/es",
+        "/de",
+        "/pt-BR",
+        "/ar",
         "/features",
+        "/ru/features",
+        "/es/features",
+        "/de/features",
+        "/pt-BR/features",
+        "/ar/features",
         "/admin",
+        "/ru/admin",
+        "/es/admin",
+        "/de/admin",
+        "/pt-BR/admin",
+        "/ar/admin",
         "/compare",
+        "/ru/compare",
+        "/es/compare",
+        "/de/compare",
+        "/pt-BR/compare",
+        "/ar/compare",
         "/pricing",
+        "/ru/pricing",
+        "/es/pricing",
+        "/de/pricing",
+        "/pt-BR/pricing",
+        "/ar/pricing",
         "/docs/api",
         "/subscribe",
+        "/ru/subscribe",
+        "/es/subscribe",
+        "/de/subscribe",
+        "/pt-BR/subscribe",
+        "/ar/subscribe",
         "/privacy",
         "/terms",
       ]
@@ -875,7 +918,13 @@ describe("the public website", () => {
         .map((match) => [match[1].slice(site.length), match[2]]),
     )
 
-    expect(lastmods).toEqual({
+    // Every language of a page carries the English page's date: the translation says the same.
+    expect(lastmods["/de/pricing"]).toBe("2026-10-21T00:00:00.000Z")
+    expect(lastmods["/ar"]).toBeUndefined()
+    const english = Object.fromEntries(
+      Object.entries(lastmods).filter(([path]) => pathLanguage(path).language === "en"),
+    )
+    expect(english).toEqual({
       "/": undefined,
       "/features": "2026-10-28T00:00:00.000Z",
       "/admin": "2026-10-28T00:00:00.000Z",

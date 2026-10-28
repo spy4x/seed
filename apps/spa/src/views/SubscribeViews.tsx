@@ -11,11 +11,13 @@ import {
   SubscriptionConfirmScreen,
   UnsubscribeScreen,
 } from "@ui/subscribe-screen.tsx"
+import { useSiteText } from "@ui/site-text.ts"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { subscribersApi, type TokenStep } from "../state/subscribers.ts"
 
 /** Wires `SubscribeForm` to `subscribersApi.subscribe`, for the default list. */
 export function SubscribeView() {
+  const { t } = useSiteText()
   const [email, setEmail] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -27,7 +29,7 @@ export function SubscribeView() {
     const result = await subscribersApi.subscribe(email, DEFAULT_SUBSCRIBER_LIST)
     setPending(false)
     if (!result.ok) {
-      setError(result.error || SUBSCRIBE_FAILURES.subscribe)
+      setError(result.error || t(SUBSCRIBE_FAILURES.subscribe))
       return
     }
     setSent(true)

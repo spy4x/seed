@@ -7,7 +7,8 @@ import { AUTHOR_URL } from "./brand.ts"
  */
 export const HIRE_PRICES = {
   mvpFrom: `$8,000`,
-  mvpWeeks: `3 weeks`,
+  /** Weeks from the start to a live product, at the least. */
+  mvpWeeks: 3,
   hourly: `$150`,
   retainerFrom: `$3,000`,
   strategySession: `$150`,

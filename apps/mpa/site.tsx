@@ -1,25 +1,38 @@
 import type { ComponentChildren, JSX } from "preact"
 import { Head } from "fresh/runtime"
 import type { PublicContactLink } from "@domain/contact-links"
+import type { Language } from "@domain/identity"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { IconGitHub, IconSprout } from "@spy4x/preact-icons"
 import { BrandMark } from "@spy4x/preact-ui/brand-mark"
 import { Button } from "@spy4x/preact-ui/button"
 import { FormatContext } from "@spy4x/preact-ui/format"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { LanguagePicker } from "@spy4x/preact-ui/language-picker"
 import { Input } from "@spy4x/preact-ui/input"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { SEOHead } from "@spy4x/preact-system/seo-head"
 import { SiteFooter, type SiteFooterGroup } from "@spy4x/preact-system/site-footer"
 import { SiteHeader } from "@spy4x/preact-system/site-header"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
-import { createFormatters } from "@spy4x/time/format"
+import { createFormatters, type Formatters } from "@spy4x/time/format"
 import { FORM_ACTIONS, SCREEN_PATHS } from "@ui/progressive.tsx"
-import { BLOG_NAME, BLOG_PATH, RSS_PATH } from "./blog.ts"
+import { siteEnglishText } from "@ui/site-text.ts"
+import { BLOG_PATH, RSS_PATH } from "./blog.ts"
 import { AUTHOR_URL, REPOSITORY_URL, SITE_NAME, TRY_ENTRY } from "./brand.ts"
 import { API_DOCS_PATH } from "./api-docs.ts"
 import { OnThisPage } from "./components/on-this-page.tsx"
 import { contactFooterLinks } from "./contact-links.ts"
 import { HIRE_PAGE_URL } from "./hire.ts"
+import {
+  DEFAULT_LANGUAGE,
+  isSiteLanguage,
+  localePath,
+  ogLocale,
+  SITE_LANGUAGES,
+} from "./languages.ts"
+import { useSite } from "./use-site.tsx"
 import type { State } from "./utils.ts"
 
 export { AUTHOR_URL, REPOSITORY_URL, SITE_NAME, TRY_ENTRY }
@@ -117,12 +130,6 @@ export const PERSON_JSON_LD = {
 /** The author a dated page names in its hero, linked to their own site. */
 export const SITE_AUTHOR = { name: PERSON_JSON_LD.name, href: AUTHOR_URL } as const
 
-/**
- * How the website writes a date, `16 Oct 2026`: British English like its prose, in UTC, so the
- * server's own locale and zone never change what a page says.
- */
-const SITE_FORMAT = createFormatters({ locale: `en-GB`, timeZone: `UTC` })
-
 /** What Seed is, in the words of the home page's lead, for the product's structured data. */
 const SOFTWARE_DESCRIPTION = `Seed is a free, MIT-licensed SaaS starter with sign-in and ` +
   `two-factor authentication (2FA), groups with roles, per-member Stripe billing, realtime, an ` +
@@ -158,10 +165,15 @@ export function softwareJsonLd(origin: string, extra: Record<string, unknown> = 
   }
 }
 
-/** A page's breadcrumb trail, always rooted at the home page's full address. */
-export function siteBreadcrumbsJsonLd(origin: string, path: string, name: string): unknown {
-  return breadcrumbListJsonLd(`${origin}${path}`, [
-    { name: SITE_NAME, href: `${origin}/` },
+/** A page's breadcrumb trail, always rooted at the home page's full address in the page's language. */
+export function siteBreadcrumbsJsonLd(
+  origin: string,
+  path: string,
+  name: string,
+  language: Language = DEFAULT_LANGUAGE,
+): unknown {
+  return breadcrumbListJsonLd(`${origin}${localePath(language, path)}`, [
+    { name: SITE_NAME, href: `${origin}${localePath(language, `/`)}` },
     { name },
   ])
 }
@@ -172,6 +184,12 @@ export interface SitePageHead {
   description: string
   /** Keeps the page out of search results, as for a page reached only through a mailed link. */
   noindex?: boolean
+  /**
+   * The page's main content exists in the default language only, such as a legal page or a blog
+   * post: every language's address shows it in the page's frame, its canonical address is the
+   * default language's, and it names no other language version.
+   */
+  oneLanguage?: boolean
   /** Which Open Graph image the page shares with. Defaults to the home page's. */
   og?: OgImageKey
   /**
@@ -193,6 +211,25 @@ export function pageTitle(title: string): string {
   return title.includes(SITE_NAME) ? title : `${title} · ${SITE_NAME}`
 }
 
+/**
+ * The language versions of the page at `path`, as `hreflang` alternates: every served language at
+ * its own address, then `x-default`, the default language's. Empty for a page that names none.
+ */
+export function languageAlternates(
+  origin: string,
+  path: string,
+  head: Pick<SitePageHead, "noindex" | "oneLanguage">,
+): { hreflang: string; href: string }[] {
+  if (head.noindex || head.oneLanguage) return []
+  return [
+    ...SITE_LANGUAGES.map((language) => ({
+      hreflang: language,
+      href: `${origin}${localePath(language, path)}`,
+    })),
+    { hreflang: `x-default`, href: `${origin}${localePath(DEFAULT_LANGUAGE, path)}` },
+  ]
+}
+
 /** What every page hands {@link SiteFrame}. */
 export interface SiteFrameProps {
   /**
@@ -200,7 +237,10 @@ export interface SiteFrameProps {
    * whether the footer offers the newsletter.
    */
   state: Pick<State, "webAppOrigin" | "spaOrigin" | "newsletter" | "blog" | "contactLinks">
-  /** The page's path on this website, such as `/pricing`, for its canonical address. */
+  /**
+   * The page's path on this website in the default language, such as `/pricing`. The frame puts
+   * the page's language in front of it for the canonical address and the links.
+   */
   path: string
   head: SitePageHead
   /**
@@ -212,75 +252,87 @@ export interface SiteFrameProps {
 }
 
 // Seed's own site: see docs/start-a-product.md (the hire link)
-/** The header's links, in display order. The Blog link joins them once a post is live. */
+/** The header's links, in display order, by catalog key. The Blog link joins them once a post is live. */
 export const NAV_LINKS = [
-  { label: `Features`, href: `/features` },
-  { label: `Blog`, href: BLOG_PATH },
-  { label: `Compare`, href: `/compare` }, // Seed's own site: see docs/start-a-product.md
-  { label: `Pricing`, href: `/pricing` },
+  { label: `SiteNav.features`, href: `/features` },
+  { label: `SiteNav.blog`, href: BLOG_PATH },
+  { label: `SiteNav.compare`, href: `/compare` }, // Seed's own site: see docs/start-a-product.md
+  { label: `SiteNav.pricing`, href: `/pricing` },
   {
-    label: `Hire me`,
+    label: `SiteNav.hire`,
     href: HIRE_PAGE_URL,
     external: true,
-    externalHint: `(opens antonshubin.com)`,
+    externalHint: `SiteNav.hireHint`,
   },
-  { label: `GitHub`, href: REPOSITORY_URL, Icon: IconGitHub },
+  { label: `SiteNav.github`, href: REPOSITORY_URL, Icon: IconGitHub },
 ] as const
 
 /**
  * The frame of every page of the public website: its head tags, a link that skips to the content,
  * the header with the way into the demo, the content as full-width bands, and the footer with the
- * legal pages and, while the API takes subscriptions, the newsletter form. Every link and form
- * works with JavaScript turned off.
+ * legal pages, the language picker and, while the API takes subscriptions, the newsletter form.
+ * Every link and form works with JavaScript turned off, and every link to another page of the site
+ * keeps the page's language.
  */
 export function SiteFrame(
   { state, path, head, footerNewsletter = true, children }: SiteFrameProps,
 ): JSX.Element {
+  const { t, language, href } = useSite()
   const spa = spaLinks(state.spaOrigin)
   const og = head.og ?? `home`
   const blog = state.blog === true
+  const origin = state.webAppOrigin
+  const navLinks = blog ? NAV_LINKS : NAV_LINKS.filter((link) => link.href !== BLOG_PATH)
   return (
     <>
       <Head>
         <SEOHead
           title={pageTitle(head.title)}
           description={head.description}
-          canonical={`${state.webAppOrigin}${path}`}
+          canonical={`${origin}${localePath(head.oneLanguage ? DEFAULT_LANGUAGE : language, path)}`}
           ogType={head.ogType}
-          ogImage={head.image?.url ?? `${state.webAppOrigin}/og/${og}.png`}
+          ogImage={head.image?.url ?? `${origin}/og/${og}.png`}
           imageAlt={head.image?.alt ?? ogImageAlt(og)}
           imageWidth={head.image ? undefined : OG_IMAGE_SIZE.width}
           imageHeight={head.image ? undefined : OG_IMAGE_SIZE.height}
           siteName={SITE_NAME}
-          locale="en_US"
+          locale={ogLocale(language)}
           noindex={head.noindex}
           jsonLd={head.jsonLd}
         />
+        {languageAlternates(origin, path, head).map((alternate) => (
+          <link rel="alternate" hreflang={alternate.hreflang} href={alternate.href} />
+        ))}
         {blog && (
           <link
             rel="alternate"
             type="application/rss+xml"
-            title={BLOG_NAME}
-            href={`${state.webAppOrigin}${RSS_PATH}`}
+            title={t.t(`Blog.name`, { site: SITE_NAME })}
+            href={`${origin}${RSS_PATH}`}
           />
         )}
       </Head>
       <a
         href="#main"
-        class="sr-only rounded-control bg-primary px-4 py-2 font-medium text-primary-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50"
+        class="sr-only rounded-control bg-primary px-4 py-2 font-medium text-primary-foreground focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50"
         data-e2e="skip-link"
       >
-        Skip to content
+        {t.t(`SiteFrame.skip`)}
       </a>
       <SiteHeader
         class="lg:sticky lg:top-0 lg:z-20"
-        currentPath={path}
+        currentPath={href(path)}
         brand={
-          <a href="/" class="rounded-control" data-e2e="site-brand">
-            <BrandMark Icon={IconSprout} name="Seed" />
+          <a href={href(`/`)} class="rounded-control" data-e2e="site-brand">
+            <BrandMark Icon={IconSprout} name={SITE_NAME} />
           </a>
         }
-        links={blog ? NAV_LINKS : NAV_LINKS.filter(({ href }) => href !== BLOG_PATH)}
+        links={navLinks.map((link) => ({
+          ...link,
+          label: t.t(link.label),
+          href: link.href.startsWith(`/`) ? href(link.href) : link.href,
+          ...(`externalHint` in link ? { externalHint: t.t(link.externalHint) } : {}),
+        }))}
         actions={
           <Button
             href={spa.try}
@@ -290,36 +342,64 @@ export function SiteFrame(
             data-umami-event="try-demo"
             data-umami-event-from="header"
           >
-            Try the demo
+            {t.t(`SiteFrame.tryDemo`)}
           </Button>
         }
       />
       <main id="main" tabIndex={-1} class="outline-none">
-        <FormatContext.Provider value={SITE_FORMAT}>{children}</FormatContext.Provider>
+        <FormatContext.Provider value={siteFormat(language)}>{children}</FormatContext.Provider>
       </main>
       <SiteFooter
         brand={
           <div class="flex max-w-sm flex-col gap-3">
-            <BrandMark Icon={IconSprout} name="Seed" />
-            <p class="text-sm text-muted">
-              The groundwork of your SaaS, open source under the MIT licence.
-            </p>
+            <BrandMark Icon={IconSprout} name={SITE_NAME} />
+            <p class="text-sm text-muted">{t.t(`SiteFooter.pitch`)}</p>
           </div>
         }
-        groups={footerGroups(spa, blog, state.contactLinks ?? [])}
+        groups={footerGroups(t, href, spa, blog, state.contactLinks ?? [])}
         aside={state.newsletter && footerNewsletter ? <FooterNewsletter /> : undefined}
         bottom={
-          <p>
-            {/* Seed's own site: see docs/start-a-product.md */}
-            Built in public by{" "}
-            <a href={AUTHOR_URL} class="underline hover:text-foreground">Anton Shubin</a>. MIT
-            licence.
-          </p>
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <p>
+              {/* Seed's own site: see docs/start-a-product.md */}
+              <Rich
+                parts={t.parts(`SiteFooter.builtBy`, { name: SITE_AUTHOR.name })}
+                tags={{
+                  author: (text) => (
+                    <a href={AUTHOR_URL} class="underline hover:text-foreground">{text}</a>
+                  ),
+                }}
+              />
+            </p>
+            <div data-e2e="site-languages">
+              <LanguagePicker
+                mode="links"
+                languages={SITE_LANGUAGES}
+                current={language}
+                href={(tag) => localePath(isSiteLanguage(tag) ? tag : DEFAULT_LANGUAGE, path)}
+              />
+            </div>
+          </div>
         }
       />
     </>
   )
 }
+
+/**
+ * How the website writes a date and a number in `language`, in UTC, so the server's own locale and
+ * zone never change what a page says. English is British English, like its prose: `16 Oct 2026`.
+ */
+function siteFormat(language: Language): Formatters {
+  let format = SITE_FORMATS.get(language)
+  if (!format) {
+    format = createFormatters({ locale: language === `en` ? `en-GB` : language, timeZone: `UTC` })
+    SITE_FORMATS.set(language, format)
+  }
+  return format
+}
+
+const SITE_FORMATS = new Map<Language, Formatters>()
 
 /** What a legal page hands {@link LegalPage}: its frame's props, with its title and summary. */
 export interface LegalPageProps extends Omit<SiteFrameProps, "head"> {
@@ -354,6 +434,7 @@ function legalPageJsonLd(
       url,
       name,
       description,
+      inLanguage: DEFAULT_LANGUAGE,
       isPartOf: { "@id": `${origin}/#website` },
     },
     siteBreadcrumbsJsonLd(origin, path, crumb),
@@ -361,13 +442,18 @@ function legalPageJsonLd(
 }
 
 /**
- * A legal page of the demo: its title, a notice that it is a template a product must adapt (or
- * `lead` in its place), and its text in one reading column. Headings, lists and links inside
- * `children` get the page's prose styles.
+ * A page whose text exists in the default language only: a legal page of the demo, or the API
+ * reference. Its title, a notice that it is a template a product must adapt (or `lead` in its
+ * place), and its text in one reading column, marked as the default language's. At another
+ * language's address the frame speaks that language, a line says the text is in English only, and
+ * the canonical address is the default language's: a machine translation of a contract is a legal
+ * risk. Headings, lists and links inside `children` get the page's prose styles.
  */
 export function LegalPage(
   { state, path, title, headTitle, description, updated, sections, lead, children }: LegalPageProps,
 ): JSX.Element {
+  const { t, language } = useSite()
+  const en = siteEnglishText()
   return (
     <SiteFrame
       state={state}
@@ -375,27 +461,35 @@ export function LegalPage(
       head={{
         title: headTitle ?? title,
         description,
+        oneLanguage: true,
         jsonLd: legalPageJsonLd(state.webAppOrigin, path, title, headTitle ?? title, description),
       }}
     >
       <div class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-        <header class="flex max-w-3xl flex-col gap-4">
-          <h1 class="text-3xl font-semibold tracking-tight lg:text-4xl">{title}</h1>
-          <p class="font-mono text-sm text-muted">Last changed {updated}</p>
-          {lead ?? (
-            <Notice title="A starting point, not legal advice">
-              This page covers the live demo of {SITE_NAME}. A product built on {SITE_NAME}{" "}
-              must adapt it to what it really stores and does, and have it checked.
-            </Notice>
-          )}
-        </header>
-        <div class="grid gap-8 lg:grid-cols-4">
-          <div class="lg:order-2">
-            <OnThisPage links={sections} />
+        {language !== DEFAULT_LANGUAGE && (
+          <p class="text-sm text-muted" data-e2e="english-only">{t.t(`LegalPage.englishOnly`)}</p>
+        )}
+        {/* A box, not `contents`: the column lays out left to right only if it is its own flex. */}
+        <div lang={DEFAULT_LANGUAGE} dir="ltr" class="flex flex-col gap-8">
+          <header class="flex max-w-3xl flex-col gap-4">
+            <h1 class="text-3xl font-semibold tracking-tight lg:text-4xl">{title}</h1>
+            <p class="font-mono text-sm text-muted">
+              {en.t(`LegalPage.updated`, { date: updated })}
+            </p>
+            {lead ?? (
+              <Notice title={en.t(`LegalPage.noticeTitle`)}>
+                {en.t(`LegalPage.notice`, { site: SITE_NAME })}
+              </Notice>
+            )}
+          </header>
+          <div class="grid gap-8 lg:grid-cols-4">
+            <div class="lg:order-2">
+              <OnThisPage links={sections} label={en.t(`OnThisPage.title`)} />
+            </div>
+            <article class="flex min-w-0 max-w-3xl flex-col gap-4 lg:order-1 lg:col-span-3 [&_a]:text-primary [&_a]:underline [&_h2]:mt-6 [&_h2]:scroll-mt-16 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:tracking-tight [&_li]:text-pretty [&_p]:text-pretty [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:ps-6">
+              {children}
+            </article>
           </div>
-          <article class="flex min-w-0 max-w-3xl flex-col gap-4 lg:order-1 lg:col-span-3 [&_a]:text-primary [&_a]:underline [&_h2]:mt-6 [&_h2]:scroll-mt-16 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:tracking-tight [&_li]:text-pretty [&_p]:text-pretty [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6">
-            {children}
-          </article>
         </div>
       </div>
     </SiteFrame>
@@ -407,45 +501,48 @@ export function LegalPage(
  * operator has added any, the contact links. The Blog link is there once a post is live.
  */
 function footerGroups(
+  t: Translator<string>,
+  href: (path: string) => string,
   spa: { signIn: string; try: string },
   blog: boolean,
   contactLinks: readonly PublicContactLink[],
 ): SiteFooterGroup[] {
   const contact: SiteFooterGroup[] = contactLinks.length > 0
-    ? [{ title: `Contact`, links: contactFooterLinks(contactLinks) }]
+    ? [{ title: t.t(`SiteFooter.contact`), links: contactFooterLinks(contactLinks) }]
     : []
   return [
     {
-      title: `Product`,
+      title: t.t(`SiteFooter.product`),
       links: [
-        { label: `Features`, href: `/features` },
-        { label: `Admin panel`, href: `/admin` },
-        ...(blog ? [{ label: `Blog`, href: BLOG_PATH }] : []),
-        { label: `Compare`, href: `/compare` }, // Seed's own site: see docs/start-a-product.md
-        { label: `Pricing`, href: `/pricing` },
+        { label: t.t(`SiteNav.features`), href: href(`/features`) },
+        { label: t.t(`SiteFooter.admin`), href: href(`/admin`) },
+        ...(blog ? [{ label: t.t(`SiteNav.blog`), href: href(BLOG_PATH) }] : []),
+        // Seed's own site: see docs/start-a-product.md
+        { label: t.t(`SiteNav.compare`), href: href(`/compare`) },
+        { label: t.t(`SiteNav.pricing`), href: href(`/pricing`) },
         // The library's footer links take no `rel`; the app's robots.txt keeps crawlers off `/try`.
-        { label: `Try the demo`, href: spa.try },
-        { label: `Sign in`, href: spa.signIn },
+        { label: t.t(`SiteFrame.tryDemo`), href: spa.try },
+        { label: t.t(`SiteFooter.signIn`), href: spa.signIn },
       ],
     },
     {
-      title: `Open source`,
+      title: t.t(`SiteFooter.openSource`),
       links: [
-        { label: `Source on GitHub`, href: REPOSITORY_URL, external: true },
-        { label: `Report an issue`, href: `${REPOSITORY_URL}/issues`, external: true },
-        { label: `Quick start`, href: `/#quick-start` },
-        { label: `API docs`, href: API_DOCS_PATH },
-        { label: `What works today`, href: `/#status` },
+        { label: t.t(`SiteFooter.source`), href: REPOSITORY_URL, external: true },
+        { label: t.t(`SiteFooter.issue`), href: `${REPOSITORY_URL}/issues`, external: true },
+        { label: t.t(`SiteFooter.quickStart`), href: href(`/#quick-start`) },
+        { label: t.t(`SiteFooter.apiDocs`), href: href(API_DOCS_PATH) },
+        { label: t.t(`SiteFooter.status`), href: href(`/#status`) },
       ],
     },
     {
       // Seed's own site: see docs/start-a-product.md
-      title: `Company`,
+      title: t.t(`SiteFooter.company`),
       links: [
-        { label: `Hire me for an MVP`, href: HIRE_PAGE_URL, external: true },
-        { label: `About Anton`, href: AUTHOR_URL, external: true },
-        { label: `Privacy`, href: `/privacy` },
-        { label: `Terms`, href: `/terms` },
+        { label: t.t(`SiteFooter.hire`), href: HIRE_PAGE_URL, external: true },
+        { label: t.t(`SiteFooter.about`), href: AUTHOR_URL, external: true },
+        { label: t.t(`SiteFooter.privacy`), href: href(`/privacy`) },
+        { label: t.t(`SiteFooter.terms`), href: href(`/terms`) },
       ],
     },
     ...contact,
@@ -454,44 +551,44 @@ function footerGroups(
 
 /** The footer's newsletter: a heading, one line on what it sends, and {@link NewsletterForm}. */
 function FooterNewsletter(): JSX.Element {
+  const { t } = useSite()
   return (
     <section aria-labelledby="footer-news" class="flex flex-col gap-3">
-      <h2 id="footer-news" class="text-sm font-semibold">Newsletter</h2>
-      <p class="text-sm text-muted">
-        A short email when {SITE_NAME} changes. You confirm by email first; one click unsubscribes.
-      </p>
+      <h2 id="footer-news" class="text-sm font-semibold">{t.t(`FooterNewsletter.title`)}</h2>
+      <p class="text-sm text-muted">{t.t(`FooterNewsletter.lead`, { site: SITE_NAME })}</p>
       <NewsletterForm id="footer" />
     </section>
   )
 }
 
 /**
- * The newsletter's one-field form: a real `<form method="post">` to the subscribe page, so it
- * works without JavaScript. `id` names its field (`<id>-email`) and its `data-e2e` hooks, so two
- * forms never share an id; a page shows at most one besides the footer's, and hides the footer's
- * then (`SiteFrameProps.footerNewsletter`).
+ * The newsletter's one-field form: a real `<form method="post">` to the subscribe page in the
+ * page's language, so it works without JavaScript and answers in that language. `id` names its
+ * field (`<id>-email`) and its `data-e2e` hooks, so two forms never share an id; a page shows at
+ * most one besides the footer's, and hides the footer's then (`SiteFrameProps.footerNewsletter`).
  */
 export function NewsletterForm({ id }: { id: string }): JSX.Element {
+  const { t, href } = useSite()
   return (
     <form
       method="post"
-      action={FORM_ACTIONS.subscribe}
+      action={href(FORM_ACTIONS.subscribe)}
       class="flex gap-2"
       data-analytics-submit="newsletter-subscribe"
     >
       <input type="hidden" name="list" value={DEFAULT_SUBSCRIBER_LIST} />
-      <label for={`${id}-email`} class="sr-only">Email address</label>
+      <label for={`${id}-email`} class="sr-only">{t.t(`NewsletterForm.email`)}</label>
       <Input
         id={`${id}-email`}
         name="email"
         type="email"
         autocomplete="email"
-        placeholder="you@example.com"
+        placeholder={t.t(`NewsletterForm.placeholder`)}
         required
         data-e2e={`${id}-subscribe-email`}
       />
       <Button type="submit" variant="secondary" data-e2e={`${id}-subscribe-submit`}>
-        Subscribe
+        {t.t(`NewsletterForm.submit`)}
       </Button>
     </form>
   )

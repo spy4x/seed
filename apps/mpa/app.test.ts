@@ -4,9 +4,9 @@ import { App } from "fresh"
 import { setBuildCache } from "fresh/internal"
 import { asset } from "fresh/runtime"
 import { h } from "preact"
-import { handler as subscribe } from "./routes/subscribe/index.ts"
-import { handler as subscriptionConfirm } from "./routes/subscribe/confirm.ts"
-import { handler as unsubscribe } from "./routes/unsubscribe.ts"
+import { handler as subscribe } from "./routes/[[lang]]/subscribe/index.ts"
+import { handler as subscriptionConfirm } from "./routes/[[lang]]/subscribe/confirm.ts"
+import { handler as unsubscribe } from "./routes/[[lang]]/unsubscribe.ts"
 import {
   newsletterPageMiddleware,
   pageMiddleware,
