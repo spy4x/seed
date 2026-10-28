@@ -461,7 +461,8 @@ describe(`what the server answered, said in the screen's own words`, () => {
     expect(card.querySelector(`[role=status]`)!.textContent).toBe(
       appDe[`PasswordResetScreen.sent`],
     )
-    expect(document.activeElement).toBe(card.querySelector(`h1`))
+    expect(document.activeElement?.tagName).toBe(`H1`)
+    expect(card.contains(document.activeElement)).toBe(true)
   })
 
   it(`a new code: the German sentence names the address, kept apart from the text`, async () => {
