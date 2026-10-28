@@ -1173,6 +1173,10 @@ function Availability({ props, edit }: { props: AdminCatalogItemScreenProps; edi
   )
 }
 
+/** The cover's thumbnail ring, in the colour of its "Cover" badge. */
+const COVER_RING =
+  `ring-2 ring-[var(--color-selected,var(--color-accent-900))] ring-offset-2 ring-offset-surface`
+
 /** What a photo not shown yet says instead of its description: a key of the `admin` catalog. */
 const PHOTO_STATE_WORDS: Record<CatalogPhoto[`state`], string | null> = {
   preparing: `AdminCatalogItem.preparing`,
@@ -1265,9 +1269,7 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
                           <button
                             type="button"
                             class={`shrink-0 cursor-zoom-in rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
-                              cover
-                                ? `ring-2 ring-[var(--color-selected,var(--color-accent-900))] ring-offset-2 ring-offset-surface`
-                                : ``
+                              cover ? COVER_RING : ``
                             }`}
                             aria-label={t.t(`AdminCatalogItem.openPhoto`, {
                               photo: photoLabel(photo),
@@ -1280,11 +1282,7 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
                         )
                         : (
                           <span
-                            class={`shrink-0 rounded-md ${
-                              cover
-                                ? `ring-2 ring-[var(--color-selected,var(--color-accent-900))] ring-offset-2 ring-offset-surface`
-                                : ``
-                            }`}
+                            class={`shrink-0 rounded-md ${cover ? COVER_RING : ``}`}
                           >
                             <CatalogThumbnail photoId={null} size="size-16" />
                           </span>
