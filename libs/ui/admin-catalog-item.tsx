@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
@@ -19,6 +18,7 @@ import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
+import { Rich } from "@spy4x/preact-ui/i18n"
 import { FileInput } from "@spy4x/preact-ui/file-input"
 import { Input, Select, Textarea } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
@@ -68,6 +68,7 @@ import {
 } from "./admin-catalog.tsx"
 import { ListEmpty, MENU_TRIGGER_CLASSES } from "./notes-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { useAdminText } from "./i18n.ts"
 
 // #region Draft
 
@@ -246,7 +247,7 @@ export interface CatalogShareLinksState {
   onCopy: (sourceId: string) => void
 }
 
-const BACK = { href: ADMIN_CATALOG_PATHS.list, label: `Back to the catalog` }
+const BACK_HREF = ADMIN_CATALOG_PATHS.list
 
 /** The fields in page order, so focus goes to the first refused one. */
 function fieldOrder(draft: CatalogItemDraft, languages: readonly string[]): string[] {
@@ -273,26 +274,28 @@ function fieldOrder(draft: CatalogItemDraft, languages: readonly string[]): stri
  */
 export function AdminCatalogItemScreen(props: AdminCatalogItemScreenProps): JSX.Element {
   const { item, navigate } = props
+  const t = useAdminText()
   if (props.notFound || (props.loading && !item)) {
+    const back = { href: BACK_HREF, label: t.t(`AdminCatalogItem.back`) }
     return (
       <Stack gap="xl">
-        <PageHeader back={BACK} navigate={navigate} title="Item" />
+        <PageHeader back={back} navigate={navigate} title={t.t(`AdminCatalogItem.title`)} />
         {props.notFound
           ? (
             <div data-e2e="catalog-item-not-found">
               <ListEmpty
-                title="This item does not exist"
-                description="It may have been deleted."
+                title={t.t(`AdminCatalogItem.notFound`)}
+                description={t.t(`AdminCatalogItem.notFoundText`)}
                 action={
-                  <Button href={BACK.href} navigate={navigate} variant="outline">
-                    Back to the catalog
+                  <Button href={BACK_HREF} navigate={navigate} variant="outline">
+                    {t.t(`AdminCatalogItem.back`)}
                   </Button>
                 }
               />
             </div>
           )
           : (
-            <div role="status" aria-label="Loading the item">
+            <div role="status" aria-label={t.t(`AdminCatalogItem.loading`)}>
               <LoadingSkeleton rows={6} />
             </div>
           )}
@@ -309,6 +312,8 @@ type Asking = `publish` | `hide` | `delete` | null
 
 function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
   const { item, settings, value, errors, navigate } = props
+  const t = useAdminText()
+  const back = { href: BACK_HREF, label: t.t(`AdminCatalogItem.back`) }
   const languages = settings.languages
   const [language, setLanguage] = useState(languages[0])
   const [asking, setAsking] = useState<Asking>(null)
@@ -333,17 +338,17 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
   }
 
   const status = item?.status ?? `draft`
-  const title = item ? catalogText(item.name, languages) : `New item`
+  const title = item ? catalogText(item.name, languages) : t.t(`AdminCatalogItem.newTitle`)
   const busy = props.saving
   const menu = item && (
     <>
       {status === `published` && (
         <DropdownItem onClick={() => setAsking(`hide`)} dataE2E="catalog-item-hide">
-          Hide from the website…
+          {t.t(`AdminCatalogItem.hide`)}
         </DropdownItem>
       )}
       <DropdownItem danger onClick={() => setAsking(`delete`)} dataE2E="catalog-item-delete">
-        Delete item…
+        {t.t(`AdminCatalogItem.delete`)}
       </DropdownItem>
     </>
   )
@@ -353,11 +358,11 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
       variant={status === `published` ? `primary` : `secondary`}
       class="min-h-11 flex-1 sm:min-h-9 sm:flex-none"
       busy={busy}
-      busyLabel="Saving…"
+      busyLabel={t.t(`AdminCatalogItem.saving`)}
       hotkey="mod+s"
       data-e2e="catalog-item-save"
     >
-      {item ? `Save changes` : `Save draft`}
+      {item ? t.t(`AdminCatalogItem.saveChanges`) : t.t(`AdminCatalogItem.saveDraft`)}
     </Button>
   )
 
@@ -366,7 +371,7 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
       <ScreenForm pending={busy} onSubmit={props.onSave}>
         <Stack gap="xl">
           <PageHeader
-            back={BACK}
+            back={back}
             navigate={navigate}
             title={title}
             titleDataE2E="catalog-item-title"
@@ -374,7 +379,7 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
             action={item && status !== `published`
               ? (
                 <PageAction
-                  label="Publish…"
+                  label={t.t(`AdminCatalogItem.publish`)}
                   Icon={IconGlobe}
                   disabled={busy}
                   onClick={() => setAsking(`publish`)}
@@ -387,18 +392,22 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
           />
 
           <Card>
-            <CardHeader title="Texts" headingLevel={2} />
+            <CardHeader title={t.t(`AdminCatalogItem.texts`)} headingLevel={2} />
             <CardBody>
               {languages.length === 1 ? <Texts {...{ props, language, setText }} /> : (
                 <Tabs
-                  label="Language"
+                  label={t.t(`AdminCatalogItem.language`)}
                   lazy
                   active={`${LANGUAGE_TAB}${language}`}
                   onChange={(id) => setLanguage(id.slice(LANGUAGE_TAB.length))}
                   tabDataE2E="catalog-item-language"
                   tabs={languages.map((tag, index) => ({
                     id: `${LANGUAGE_TAB}${tag}`,
-                    label: `${catalogLanguageName(tag)}${index === 0 ? ` (default)` : ``}`,
+                    label: index === 0
+                      ? t.t(`AdminCatalogItem.defaultLanguage`, {
+                        language: catalogLanguageName(tag),
+                      })
+                      : catalogLanguageName(tag),
                     content: <Texts {...{ props, language: tag, setText }} />,
                   }))}
                 />
@@ -407,15 +416,15 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
           </Card>
 
           <Card>
-            <CardHeader title="Price and place" headingLevel={2} />
+            <CardHeader title={t.t(`AdminCatalogItem.priceAndPlace`)} headingLevel={2} />
             <CardBody>
               <div class="grid gap-4 sm:grid-cols-3">
                 <Field
                   id={catalogFieldId(`price`)}
-                  label={`Price (${settings.currency})`}
-                  hint={value.price === null
-                    ? undefined
-                    : `Shown as ${formatMoney(value.price, settings.currency)}`}
+                  label={t.t(`AdminCatalogItem.price`, { currency: settings.currency })}
+                  hint={value.price === null ? undefined : t.t(`AdminCatalogItem.priceShown`, {
+                    price: formatMoney(value.price, settings.currency),
+                  })}
                   error={errors.price}
                   required
                 >
@@ -432,8 +441,8 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
                 </Field>
                 <Field
                   id={catalogFieldId(`categoryId`)}
-                  label="Category"
-                  hint="An item goes on the website only in a category."
+                  label={t.t(`AdminCatalogItem.category`)}
+                  hint={t.t(`AdminCatalogItem.categoryHint`)}
                   error={errors.categoryId}
                 >
                   <Select
@@ -441,7 +450,7 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
                     data-e2e="catalog-item-category"
                     value={value.categoryId}
                     options={[
-                      { value: ``, label: `No category` },
+                      { value: ``, label: t.t(`AdminCatalogItem.noCategory`) },
                       ...props.categories.map((category) => ({
                         value: category.id,
                         label: catalogText(category.name, languages),
@@ -452,8 +461,8 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
                 </Field>
                 <Field
                   id={catalogFieldId(`slug`)}
-                  label="Address"
-                  hint="Part of the website's address. It follows the name until you change it."
+                  label={t.t(`AdminCatalogItem.slug`)}
+                  hint={t.t(`AdminCatalogItem.slugHint`)}
                   error={errors.slug}
                   required
                 >
@@ -476,10 +485,10 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
           <Availability {...{ props, edit }} />
           {item ? <Photos {...props} item={item} /> : (
             <Card>
-              <CardHeader title="Photos" headingLevel={2} />
+              <CardHeader title={t.t(`AdminCatalogItem.photos`)} headingLevel={2} />
               <CardBody>
                 <p class="text-sm text-muted" data-e2e="catalog-item-photos-later">
-                  Save the draft first, then add its photos here.
+                  {t.t(`AdminCatalogItem.photosLater`)}
                 </p>
               </CardBody>
             </Card>
@@ -499,12 +508,12 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
             data-e2e="catalog-item-footer"
           >
             <Button
-              href={BACK.href}
+              href={BACK_HREF}
               navigate={navigate}
               variant="ghost"
               class="min-h-11 sm:min-h-9"
             >
-              Cancel
+              {t.t(`AdminCatalogItem.cancel`)}
             </Button>
             {saveButton}
           </div>
@@ -512,12 +521,12 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
       </ScreenForm>
       {asking === `publish` && item && (
         <ConfirmDialog
-          title={`Publish "${title}"?`}
+          title={t.t(`AdminCatalogItem.publishTitle`, { name: title })}
           message={value.categoryId
-            ? `The website shows it in its category, with your changes saved first.`
-            : `Pick a category first: the website shows items only in one.`}
-          confirmLabel="Publish"
-          cancelLabel="Cancel"
+            ? t.t(`AdminCatalogItem.publishText`)
+            : t.t(`AdminCatalogItem.publishNoCategory`)}
+          confirmLabel={t.t(`AdminCatalogItem.publishConfirm`)}
+          cancelLabel={t.t(`AdminCatalogItem.cancel`)}
           dataE2E="catalog-item-publish-dialog"
           onCancel={() => setAsking(null)}
           onConfirm={() => {
@@ -528,10 +537,10 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
       )}
       {asking === `hide` && (
         <ConfirmDialog
-          title={`Hide "${title}"?`}
-          message="The website stops showing it within a minute. You can publish it again."
-          confirmLabel="Hide"
-          cancelLabel="Cancel"
+          title={t.t(`AdminCatalogItem.hideTitle`, { name: title })}
+          message={t.t(`AdminCatalogItem.hideText`)}
+          confirmLabel={t.t(`AdminCatalogItem.hideConfirm`)}
+          cancelLabel={t.t(`AdminCatalogItem.cancel`)}
           dataE2E="catalog-item-hide-dialog"
           onCancel={() => setAsking(null)}
           onConfirm={() => {
@@ -542,10 +551,10 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
       )}
       {asking === `delete` && (
         <ConfirmDialog
-          title={`Delete "${title}"?`}
-          message="Its photos are deleted too. This cannot be undone."
-          confirmLabel="Delete item"
-          cancelLabel="Cancel"
+          title={t.t(`AdminCatalogItem.deleteTitle`, { name: title })}
+          message={t.t(`AdminCatalogItem.deleteText`)}
+          confirmLabel={t.t(`AdminCatalogItem.deleteConfirm`)}
+          cancelLabel={t.t(`AdminCatalogItem.cancel`)}
           tone="danger"
           dataE2E="catalog-item-delete-dialog"
           onCancel={() => setAsking(null)}
@@ -570,10 +579,11 @@ function ShareLinks(
     navigate?: Navigate
   },
 ): JSX.Element {
+  const t = useAdminText()
   return (
     <Card>
       <CardHeader
-        title="Share links"
+        title={t.t(`AdminCatalogItem.shareLinks`)}
         headingLevel={2}
         action={state.sources.length > 0 && (
           <Button
@@ -583,7 +593,7 @@ function ShareLinks(
             class="min-h-11 sm:min-h-9"
             data-e2e="catalog-item-sources"
           >
-            Edit sources
+            {t.t(`AdminCatalogItem.editSources`)}
           </Button>
         )}
       />
@@ -591,9 +601,9 @@ function ShareLinks(
         <Stack>
           <p class="text-sm text-muted">
             {state.sources.length === 0
-              ? `Add the places you share items in, such as a Facebook group or a Zalo group. Each gets its own link to this item, so you see which brings visitors.`
-              : `Share each place's own link, so you see which brings visitors.`}
-            {!published && ` The links open the item once it is on the website.`}
+              ? t.t(`AdminCatalogItem.sourcesEmpty`)
+              : t.t(`AdminCatalogItem.sourcesText`)}
+            {!published && ` ${t.t(`AdminCatalogItem.linksOpenLater`)}`}
           </p>
           {state.sources.length === 0
             ? (
@@ -605,7 +615,7 @@ function ShareLinks(
                   class="min-h-11 sm:min-h-9"
                   data-e2e="catalog-item-source-new"
                 >
-                  Add a source
+                  {t.t(`AdminCatalogItem.addSource`)}
                 </Button>
               </div>
             )
@@ -624,29 +634,29 @@ function ShareLinks(
                       data-e2e="catalog-item-link"
                     >
                       <div class="flex min-w-0 flex-1 flex-col gap-1">
-                        <span class="font-medium wrap-anywhere">{source.name}</span>
+                        <bdi class="font-medium wrap-anywhere" translate={false}>{source.name}</bdi>
                         <span
                           class={`text-sm text-muted ${
                             link ? `break-all select-all` : `wrap-anywhere`
                           }`}
                           data-e2e="catalog-item-link-url"
                         >
-                          {link ?? `No link yet · utm_source=${source.slug}`}
+                          {link ?? t.t(`AdminCatalogItem.noLinkYet`, { source: source.slug })}
                         </span>
                       </div>
                       <Button
                         type="button"
                         variant="secondary"
                         class="min-h-11 shrink-0 sm:min-h-9"
-                        aria-label={`Copy link for ${source.name}`}
+                        aria-label={t.t(`AdminCatalogItem.copyLinkFor`, { name: source.name })}
                         busy={copying}
-                        busyLabel="Copying…"
+                        busyLabel={t.t(`AdminCatalogItem.copying`)}
                         disabled={state.copying !== null && !copying}
                         onClick={() => state.onCopy(source.id)}
                         data-e2e="catalog-item-link-copy"
                       >
                         <IconCopy class="size-4" aria-hidden="true" />
-                        Copy link
+                        {t.t(`AdminCatalogItem.copyLink`)}
                       </Button>
                     </li>
                   )
@@ -659,11 +669,22 @@ function ShareLinks(
   )
 }
 
+/** The optional texts after the name, each with its label's key in the `admin` catalog. */
 const TEXT_FIELDS = [
-  { field: `description`, label: `Description`, max: CATALOG_DESCRIPTION_MAX_LENGTH, rows: 4 },
-  { field: `material`, label: `Material`, max: CATALOG_DETAIL_MAX_LENGTH, rows: 1 },
-  { field: `fit`, label: `Fit`, max: CATALOG_DETAIL_MAX_LENGTH, rows: 1 },
-  { field: `care`, label: `Care`, max: CATALOG_DETAIL_MAX_LENGTH, rows: 1 },
+  {
+    field: `description`,
+    label: `AdminCatalogItem.description`,
+    max: CATALOG_DESCRIPTION_MAX_LENGTH,
+    rows: 4,
+  },
+  {
+    field: `material`,
+    label: `AdminCatalogItem.material`,
+    max: CATALOG_DETAIL_MAX_LENGTH,
+    rows: 1,
+  },
+  { field: `fit`, label: `AdminCatalogItem.fit`, max: CATALOG_DETAIL_MAX_LENGTH, rows: 1 },
+  { field: `care`, label: `AdminCatalogItem.care`, max: CATALOG_DETAIL_MAX_LENGTH, rows: 1 },
 ] as const
 
 /** The item's texts in one language. */
@@ -675,15 +696,14 @@ function Texts(
   },
 ): JSX.Element {
   const { value, errors, settings } = props
+  const t = useAdminText()
   const main = language === settings.languages[0]
   return (
     <Stack>
       <Field
         id={catalogFieldId(`name:${language}`)}
-        label={main ? `Name` : `Name (optional)`}
-        hint={main && settings.languages.length > 1
-          ? `Shown in every language that has no name of its own.`
-          : undefined}
+        label={main ? t.t(`AdminCatalogItem.name`) : t.t(`AdminCatalogItem.nameOptional`)}
+        hint={main && settings.languages.length > 1 ? t.t(`AdminCatalogItem.nameHint`) : undefined}
         error={errors[`name:${language}`]}
         required={main}
       >
@@ -702,7 +722,7 @@ function Texts(
         <Field
           key={field}
           id={catalogFieldId(`${field}:${language}`)}
-          label={`${label} (optional)`}
+          label={t.t(label)}
           error={errors[`${field}:${language}`]}
         >
           {rows === 1
@@ -753,6 +773,7 @@ function useFocusAdded(): [(id: string) => void, (element: HTMLElement | null) =
 
 function Colours({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit }) {
   const { value, errors, settings } = props
+  const t = useAdminText()
   const [markAdded, focusAdded] = useFocusAdded()
   const languages = settings.languages
   const setColour = (id: string, patch: Partial<CatalogColourDraft>) =>
@@ -762,7 +783,7 @@ function Colours({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Ed
   return (
     <Card>
       <CardHeader
-        title="Colours"
+        title={t.t(`AdminCatalogItem.colours`)}
         headingLevel={2}
         action={value.colours.length < CATALOG_COLOURS_MAX && (
           <Button
@@ -776,18 +797,18 @@ function Colours({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Ed
               edit({ colours: [...value.colours, { id, name: {}, swatch: `#1f2937` }] })
             }}
           >
-            <IconPlus class="size-4" aria-hidden="true" /> Add colour
+            <IconPlus class="size-4" aria-hidden="true" /> {t.t(`AdminCatalogItem.addColour`)}
           </Button>
         )}
       />
       <CardBody>
         {value.colours.length === 0
-          ? <p class="text-sm text-muted">One colour only? Leave this empty.</p>
+          ? <p class="text-sm text-muted">{t.t(`AdminCatalogItem.coloursEmpty`)}</p>
           : (
             <ul class="flex flex-col divide-y divide-subtle">
               {value.colours.map((colour, index) => {
                 const field = `colour:${colour.id}`
-                const label = catalogText(colour.name, languages) || `Colour ${index + 1}`
+                const name = catalogText(colour.name, languages)
                 return (
                   <li
                     key={colour.id}
@@ -804,8 +825,10 @@ function Colours({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Ed
                             ? catalogFieldId(field)
                             : `${catalogFieldId(field)}-${language}`}
                           label={languages.length === 1
-                            ? `Name`
-                            : `Name in ${catalogLanguageName(language)}`}
+                            ? t.t(`AdminCatalogItem.colourName`)
+                            : t.t(`AdminCatalogItem.colourNameIn`, {
+                              language: catalogLanguageName(language),
+                            })}
                           required={at === 0}
                           error={at === 0 ? errors[field] : undefined}
                         >
@@ -826,8 +849,11 @@ function Colours({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Ed
                     </div>
                     <div class="flex flex-wrap items-end justify-between gap-3">
                       <ColorField
-                        legend="Swatch"
-                        presets={CATALOG_SWATCHES}
+                        legend={t.t(`AdminCatalogItem.swatch`)}
+                        presets={CATALOG_SWATCHES.map(({ value, key }) => ({
+                          value,
+                          label: t.t(key),
+                        }))}
                         value={colour.swatch}
                         onChange={(swatch) => setColour(colour.id, { swatch: swatch ?? `#000000` })}
                       />
@@ -839,7 +865,12 @@ function Colours({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Ed
                         onClick={() =>
                           edit({ colours: value.colours.filter((one) => one.id !== colour.id) })}
                       >
-                        <IconTrashBin class="size-4" aria-hidden="true" /> Remove {label}
+                        <IconTrashBin class="size-4" aria-hidden="true" />
+                        {` `}
+                        <RemoveLabel
+                          name={name}
+                          fallback={t.t(`AdminCatalogItem.colourNumber`, { number: index + 1 })}
+                        />
                       </Button>
                     </div>
                   </li>
@@ -858,20 +889,38 @@ const TAP_CLASS = `size-11 justify-center sm:size-auto`
 /** A row menu's item: a 44px tap target on a phone. */
 const MENU_ITEM_CLASS = `min-h-11 sm:min-h-0`
 
-/** Garment colours a shop picks most, in one row; any other comes from the picker or a hex code. */
-const CATALOG_SWATCHES: readonly ColorPreset[] = [
-  { value: `#111827`, label: `Black` },
-  { value: `#f9fafb`, label: `White` },
-  { value: `#6b7280`, label: `Grey` },
-  { value: `#1e3a5f`, label: `Navy` },
-  { value: `#d8c7a3`, label: `Beige` },
-  { value: `#7c4a2d`, label: `Brown` },
-  { value: `#b91c1c`, label: `Red` },
-  { value: `#2f5d3a`, label: `Green` },
+/**
+ * Garment colours a shop picks most, in one row, each with its name's key in the `admin` catalog;
+ * any other comes from the picker or a hex code.
+ */
+const CATALOG_SWATCHES: readonly { value: ColorPreset[`value`]; key: string }[] = [
+  { value: `#111827`, key: `AdminCatalogItem.swatchBlack` },
+  { value: `#f9fafb`, key: `AdminCatalogItem.swatchWhite` },
+  { value: `#6b7280`, key: `AdminCatalogItem.swatchGrey` },
+  { value: `#1e3a5f`, key: `AdminCatalogItem.swatchNavy` },
+  { value: `#d8c7a3`, key: `AdminCatalogItem.swatchBeige` },
+  { value: `#7c4a2d`, key: `AdminCatalogItem.swatchBrown` },
+  { value: `#b91c1c`, key: `AdminCatalogItem.swatchRed` },
+  { value: `#2f5d3a`, key: `AdminCatalogItem.swatchGreen` },
 ]
+
+/**
+ * A row's "Remove" button text: the name the operator gave it, kept as typed, or its place in the
+ * list while it has none.
+ */
+function RemoveLabel({ name, fallback }: { name: string; fallback: string }): JSX.Element {
+  const t = useAdminText()
+  return (
+    <Rich
+      parts={t.parts(`AdminCatalogItem.remove`, { name: name || fallback })}
+      tags={{ name: (text) => name ? <bdi translate={false}>{text}</bdi> : text }}
+    />
+  )
+}
 
 function Sizes({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit }) {
   const { value, errors } = props
+  const t = useAdminText()
   const [markAdded, focusAdded] = useFocusAdded()
   const setSize = (id: string, patch: Partial<CatalogSizeDraft>) =>
     edit({ sizes: value.sizes.map((size) => size.id === id ? { ...size, ...patch } : size) })
@@ -899,7 +948,7 @@ function Sizes({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit
   return (
     <Card>
       <CardHeader
-        title="Sizes"
+        title={t.t(`AdminCatalogItem.sizes`)}
         headingLevel={2}
         action={value.sizes.length < CATALOG_SIZES_MAX && (
           <Button
@@ -922,20 +971,18 @@ function Sizes({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit
               })
             }}
           >
-            <IconPlus class="size-4" aria-hidden="true" /> Add size
+            <IconPlus class="size-4" aria-hidden="true" /> {t.t(`AdminCatalogItem.addSize`)}
           </Button>
         )}
       />
       <CardBody>
-        <p class="mb-4 text-sm text-muted">
-          Smallest first. Give a size the heights and weights it fits, and the website suggests a
-          size from a shopper's height and weight.
-        </p>
+        <p class="mb-4 text-sm text-muted">{t.t(`AdminCatalogItem.sizesHint`)}</p>
         {value.sizes.length > 0 && (
           <ul class="flex flex-col divide-y divide-subtle">
             {value.sizes.map((size, index) => {
               const field = `size:${size.id}`
-              const label = size.label.trim() || `Size ${index + 1}`
+              const numbered = t.t(`AdminCatalogItem.sizeNumber`, { number: index + 1 })
+              const name = size.label.trim()
               return (
                 <li
                   key={size.id}
@@ -951,9 +998,9 @@ function Sizes({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit
                         ? `${catalogFieldId(field)}-error`
                         : undefined}
                     >
-                      <legend class="sr-only">{label}</legend>
+                      <legend class="sr-only">{name || numbered}</legend>
                       <label class="col-span-2 flex flex-col gap-1 text-sm sm:col-span-1">
-                        <span class="text-muted">Size</span>
+                        <span class="text-muted">{t.t(`AdminCatalogItem.size`)}</span>
                         <Input
                           id={catalogFieldId(field)}
                           data-e2e="catalog-item-size-label"
@@ -965,10 +1012,30 @@ function Sizes({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit
                           required
                         />
                       </label>
-                      {number(size, `heightMin`, `Height from, cm`, CATALOG_HEIGHT_MAX_CM)}
-                      {number(size, `heightMax`, `Height to, cm`, CATALOG_HEIGHT_MAX_CM)}
-                      {number(size, `weightMin`, `Weight from, kg`, CATALOG_WEIGHT_MAX_KG)}
-                      {number(size, `weightMax`, `Weight to, kg`, CATALOG_WEIGHT_MAX_KG)}
+                      {number(
+                        size,
+                        `heightMin`,
+                        t.t(`AdminCatalogItem.heightFrom`),
+                        CATALOG_HEIGHT_MAX_CM,
+                      )}
+                      {number(
+                        size,
+                        `heightMax`,
+                        t.t(`AdminCatalogItem.heightTo`),
+                        CATALOG_HEIGHT_MAX_CM,
+                      )}
+                      {number(
+                        size,
+                        `weightMin`,
+                        t.t(`AdminCatalogItem.weightFrom`),
+                        CATALOG_WEIGHT_MAX_KG,
+                      )}
+                      {number(
+                        size,
+                        `weightMax`,
+                        t.t(`AdminCatalogItem.weightTo`),
+                        CATALOG_WEIGHT_MAX_KG,
+                      )}
                     </fieldset>
                     <Button
                       variant="ghost"
@@ -978,7 +1045,9 @@ function Sizes({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit
                       onClick={() =>
                         edit({ sizes: value.sizes.filter((one) => one.id !== size.id) })}
                     >
-                      <IconTrashBin class="size-4" aria-hidden="true" /> Remove {label}
+                      <IconTrashBin class="size-4" aria-hidden="true" />
+                      {` `}
+                      <RemoveLabel name={name} fallback={numbered} />
                     </Button>
                   </div>
                   {errors[field] && (
@@ -999,24 +1068,25 @@ function Sizes({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit
 /** What is in stock, colour by size: every box starts ticked, and an unticked one is sold out. */
 function Availability({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit }) {
   const { value, settings } = props
+  const t = useAdminText()
   const sold = new Set(value.soldOut)
   const colours = value.colours.length > 0 ? value.colours : [null]
   const sizes = value.sizes.length > 0 ? value.sizes : [null]
   const colourName = (colour: CatalogColourDraft | null) =>
-    colour ? catalogText(colour.name, settings.languages) || `Unnamed colour` : `Every colour`
+    colour
+      ? catalogText(colour.name, settings.languages) || t.t(`AdminCatalogItem.unnamedColour`)
+      : t.t(`AdminCatalogItem.everyColour`)
   const sizeName = (size: CatalogSizeDraft | null) =>
-    size ? size.label || `Unnamed size` : `In stock`
+    size ? size.label || t.t(`AdminCatalogItem.unnamedSize`) : t.t(`AdminCatalogItem.inStockColumn`)
   const toggle = (key: string, inStock: boolean) =>
     edit({
       soldOut: inStock ? value.soldOut.filter((one) => one !== key) : [...value.soldOut, key],
     })
   return (
     <Card>
-      <CardHeader title="In stock" headingLevel={2} />
+      <CardHeader title={t.t(`AdminCatalogItem.inStock`)} headingLevel={2} />
       <CardBody>
-        <p class="mb-4 text-sm text-muted">
-          Untick what is sold out. The website shows it, and an item with nothing left as sold out.
-        </p>
+        <p class="mb-4 text-sm text-muted">{t.t(`AdminCatalogItem.stockHint`)}</p>
         <div class="overflow-x-auto" id={catalogFieldId(`soldOut`)} tabIndex={-1}>
           <table class="text-sm" data-e2e="catalog-item-stock">
             <thead>
@@ -1024,7 +1094,7 @@ function Availability({ props, edit }: { props: AdminCatalogItemScreenProps; edi
                 <td />
                 {sizes.map((size) => (
                   <th key={size?.id ?? `-`} scope="col" class="px-3 pb-2 text-left font-medium">
-                    {sizeName(size)}
+                    <bdi translate={size ? false : undefined}>{sizeName(size)}</bdi>
                   </th>
                 ))}
               </tr>
@@ -1041,7 +1111,7 @@ function Availability({ props, edit }: { props: AdminCatalogItemScreenProps; edi
                           aria-hidden="true"
                         />
                       )}
-                      {colourName(colour)}
+                      <bdi translate={colour ? false : undefined}>{colourName(colour)}</bdi>
                     </span>
                   </th>
                   {sizes.map((size) => {
@@ -1054,7 +1124,10 @@ function Availability({ props, edit }: { props: AdminCatalogItemScreenProps; edi
                         <Checkbox
                           labelClass={TAP_CLASS}
                           checked={!sold.has(key)}
-                          aria-label={`${colourName(colour)}, ${sizeName(size)}: in stock`}
+                          aria-label={t.t(`AdminCatalogItem.inStockLabel`, {
+                            colour: colourName(colour),
+                            size: sizeName(size),
+                          })}
                           data-e2e="catalog-item-in-stock"
                           onChange={(event) => toggle(key, event.currentTarget.checked)}
                         />
@@ -1072,15 +1145,17 @@ function Availability({ props, edit }: { props: AdminCatalogItemScreenProps; edi
   )
 }
 
+/** What a photo not shown yet says instead of its description: a key of the `admin` catalog. */
 const PHOTO_STATE_WORDS: Record<CatalogPhoto[`state`], string | null> = {
-  preparing: `Preparing…`,
+  preparing: `AdminCatalogItem.preparing`,
   ready: null,
-  refused: `This file could not be read as an image. Remove it and upload another.`,
+  refused: `AdminCatalogItem.refused`,
 }
 
 /** The photos of a saved item: upload, order, cover, details and removal. */
 function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX.Element {
   const { item, photos, settings } = props
+  const t = useAdminText()
   const languages = settings.languages
   const [editing, setEditing] = useState<CatalogPhoto | null>(null)
   const [removing, setRemoving] = useState<CatalogPhoto | null>(null)
@@ -1091,7 +1166,9 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
     return colour ? catalogText(colour.name, languages) : null
   }
   const photoLabel = (photo: CatalogPhoto) =>
-    `Photo ${item.photos.indexOf(photo) + 1}${item.photos[0] === photo ? `, the cover` : ``}`
+    t.t(item.photos[0] === photo ? `AdminCatalogItem.coverLabel` : `AdminCatalogItem.photoNumber`, {
+      number: item.photos.indexOf(photo) + 1,
+    })
   // After "Make cover", focus follows the photo to its new place, once the new order is drawn.
   const [focusOn, setFocusOn] = useState<string | null>(null)
   const list = useRef<HTMLDivElement>(null)
@@ -1105,7 +1182,7 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
   return (
     <Card>
       <CardHeader
-        title="Photos"
+        title={t.t(`AdminCatalogItem.photos`)}
         headingLevel={2}
         action={!full && (
           <FileInput
@@ -1114,9 +1191,9 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
             multiple
             accept={CATALOG_PHOTO_TYPES.join(`,`) + `,.heic`}
             maxSize={CATALOG_PHOTO_MAX_BYTES}
-            label="Add photos"
+            label={t.t(`AdminCatalogItem.addPhotos`)}
             busy={photos.uploading > 0}
-            busyLabel={`Uploading ${photos.uploading}…`}
+            busyLabel={t.t(`AdminCatalogItem.uploading`, { count: photos.uploading })}
             onFiles={props.onUpload}
             onReject={(refused) => props.onUpload(refused.map((rejection) => rejection.file))}
           />
@@ -1125,8 +1202,10 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
       <CardBody>
         <Stack>
           <p class="text-sm text-muted">
-            JPEG, PNG, WebP or HEIC, up to {CATALOG_PHOTO_MAX_BYTES / 1024 / 1024} MB each, at most
-            {` ${CATALOG_PHOTOS_MAX}`}. Drag to reorder: the first is the cover.
+            {t.t(`AdminCatalogItem.photosRule`, {
+              size: CATALOG_PHOTO_MAX_BYTES / 1024 / 1024,
+              count: CATALOG_PHOTOS_MAX,
+            })}
           </p>
           <ErrorState message={photos.error} />
           {item.photos.length > 0 && (
@@ -1147,21 +1226,34 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
                       <div class="flex min-w-0 flex-1 flex-col gap-1">
                         <span class="font-medium">
                           {item.photos[0] === photo
-                            ? `Cover`
-                            : `Photo ${item.photos.indexOf(photo) + 1}`}
-                          {colour && <span class="font-normal text-muted">{` · ${colour}`}</span>}
+                            ? t.t(`AdminCatalogItem.cover`)
+                            : t.t(`AdminCatalogItem.photoNumber`, {
+                              number: item.photos.indexOf(photo) + 1,
+                            })}
+                          {colour && (
+                            <span class="font-normal text-muted">
+                              {` · `}
+                              <bdi translate={false}>{colour}</bdi>
+                            </span>
+                          )}
                         </span>
                         <span
                           class={`text-sm ${
                             photo.state === `refused` ? `text-danger` : `text-muted`
                           }`}
                         >
-                          {words ?? (alt || `No description yet`)}
+                          {words
+                            ? t.t(words)
+                            : alt
+                            ? <bdi translate={false}>{alt}</bdi>
+                            : t.t(`AdminCatalogItem.noDescription`)}
                         </span>
                       </div>
                       <Dropdown
                         trigger={<IconEllipsisVertical class="size-5" />}
-                        triggerLabel={`More actions for ${photoLabel(photo)}`}
+                        triggerLabel={t.t(`AdminCatalogItem.moreActionsFor`, {
+                          photo: photoLabel(photo),
+                        })}
                         triggerClasses={MENU_TRIGGER_CLASSES}
                         triggerDataE2E="catalog-item-photo-menu"
                       >
@@ -1175,7 +1267,12 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
                               props.onPhotoMove(item.photos.indexOf(photo), 0)
                             }}
                           >
-                            Make cover<span class="sr-only">: {photoLabel(photo)}</span>
+                            <Rich
+                              parts={t.parts(`AdminCatalogItem.makeCover`, {
+                                photo: photoLabel(photo),
+                              })}
+                              tags={{ hidden: (text) => <span class="sr-only">{text}</span> }}
+                            />
                           </DropdownItem>
                         )}
                         <DropdownItem
@@ -1184,7 +1281,12 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
                           dataE2E="catalog-item-photo-edit"
                           onClick={() => setEditing(photo)}
                         >
-                          Describe<span class="sr-only">: {photoLabel(photo)}</span>
+                          <Rich
+                            parts={t.parts(`AdminCatalogItem.describe`, {
+                              photo: photoLabel(photo),
+                            })}
+                            tags={{ hidden: (text) => <span class="sr-only">{text}</span> }}
+                          />
                         </DropdownItem>
                         <DropdownItem
                           class={MENU_ITEM_CLASS}
@@ -1193,7 +1295,12 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
                           dataE2E="catalog-item-photo-remove"
                           onClick={() => setRemoving(photo)}
                         >
-                          Remove<span class="sr-only">: {photoLabel(photo)}</span>
+                          <Rich
+                            parts={t.parts(`AdminCatalogItem.removePhotoItem`, {
+                              photo: photoLabel(photo),
+                            })}
+                            tags={{ hidden: (text) => <span class="sr-only">{text}</span> }}
+                          />
                         </DropdownItem>
                       </Dropdown>
                     </div>
@@ -1204,7 +1311,7 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
           )}
           {item.photos.length === 0 && photos.uploading === 0 && (
             <p class="text-sm" data-e2e="catalog-item-no-photos">
-              No photos yet. The website shows a placeholder until you add some.
+              {t.t(`AdminCatalogItem.noPhotos`)}
             </p>
           )}
         </Stack>
@@ -1214,7 +1321,7 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
           photo={editing}
           item={item}
           languages={languages}
-          title={`Describe the photo of ${name}`}
+          title={t.t(`AdminCatalogItem.describeTitle`, { name })}
           onClose={() => setEditing(null)}
           onSave={(change) => {
             setEditing(null)
@@ -1224,10 +1331,10 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
       )}
       {removing && (
         <ConfirmDialog
-          title="Remove this photo?"
-          message="The website stops showing it, and its file is deleted."
-          confirmLabel="Remove photo"
-          cancelLabel="Cancel"
+          title={t.t(`AdminCatalogItem.removePhotoTitle`)}
+          message={t.t(`AdminCatalogItem.removePhotoText`)}
+          confirmLabel={t.t(`AdminCatalogItem.removePhotoConfirm`)}
+          cancelLabel={t.t(`AdminCatalogItem.cancel`)}
           tone="danger"
           dataE2E="catalog-item-photo-remove-dialog"
           onCancel={() => setRemoving(null)}
@@ -1252,6 +1359,7 @@ function PhotoDialog(
     onSave: (change: { alt: CatalogText; colourId: string | null }) => void
   },
 ): JSX.Element {
+  const t = useAdminText()
   const [alt, setAlt] = useState<CatalogText>({ ...photo.alt })
   const [colourId, setColourId] = useState(photo.colourId ?? ``)
   return (
@@ -1262,12 +1370,12 @@ function PhotoDialog(
       dataE2E="catalog-item-photo-dialog"
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>{t.t(`AdminCatalogItem.cancel`)}</Button>
           <Button
             data-e2e="catalog-item-photo-save"
             onClick={() => onSave({ alt, colourId: colourId || null })}
           >
-            Save photo
+            {t.t(`AdminCatalogItem.savePhoto`)}
           </Button>
         </>
       }
@@ -1278,11 +1386,9 @@ function PhotoDialog(
             key={language}
             id={`catalog-photo-alt-${language}`}
             label={languages.length === 1
-              ? `What it shows`
-              : `What it shows, in ${catalogLanguageName(language)}`}
-            hint={language === languages[0]
-              ? `For people who cannot see it, such as "Brown hoodie, front, on a hanger".`
-              : undefined}
+              ? t.t(`AdminCatalogItem.alt`)
+              : t.t(`AdminCatalogItem.altIn`, { language: catalogLanguageName(language) })}
+            hint={language === languages[0] ? t.t(`AdminCatalogItem.altHint`) : undefined}
           >
             <Input
               lang={language}
@@ -1294,18 +1400,19 @@ function PhotoDialog(
           </Field>
         ))}
         {item.colours.length > 0 && (
-          <Field id="catalog-photo-colour" label="Colour it shows">
+          <Field id="catalog-photo-colour" label={t.t(`AdminCatalogItem.photoColour`)}>
             <Select
               data-e2e="catalog-item-photo-colour"
               value={colourId}
               options={[
-                { value: ``, label: `Every colour` },
+                { value: ``, label: t.t(`AdminCatalogItem.everyColour`) },
                 ...item.colours.map((colour) => ({
                   value: colour.id,
                   label: catalogText(colour.name, languages),
                 })),
               ]}
-              onChange={(event) => setColourId(event.currentTarget.value)}
+              onChange={(event) =>
+                setColourId(event.currentTarget.value)}
             />
           </Field>
         )}
