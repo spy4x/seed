@@ -17,6 +17,8 @@ const CATALOG: AdminCatalogResponse = {
   settings: { currency: `VND`, languages: [`vi`, `en`] },
   categories: [],
   items: [],
+  sources: [],
+  tracking: true,
 }
 
 const ITEM: CatalogItem = {
@@ -41,7 +43,10 @@ const ITEM: CatalogItem = {
 }
 
 /** A state over a fake API that answers each `METHOD path` from `answers`, recording every call. */
-function build(answers: Record<string, () => AdminApiResult<unknown>> = {}) {
+function build(
+  answers: Record<string, () => AdminApiResult<unknown>> = {},
+  copied: string[] | null = [],
+) {
   const calls: string[] = []
   const request = ((path: string, init?: RequestInit) => {
     const key = `${init?.method ?? `GET`} ${path.split(`?`)[0]}`
@@ -59,8 +64,11 @@ function build(answers: Record<string, () => AdminApiResult<unknown>> = {}) {
           : ok({ item: { ...ITEM, version: 3 } }))
     return Promise.resolve(answer())
   }) as AdminFetch
-  const state = createCatalogState(request, createToastStore(), () => NEW)
-  return { state, calls }
+  const toasts = createToastStore()
+  // `null` stands for a clipboard that refuses.
+  const copy = (text: string) => Promise.resolve(copied ? (copied.push(text), true) : false)
+  const state = createCatalogState(request, toasts, () => NEW, copy)
+  return { state, calls, toasts }
 }
 
 it(`refuses an item without a name in the default language before it asks the API`, async () => {
@@ -155,4 +163,72 @@ it(`makes a photo the cover by sending it first in the order`, async () => {
 
   expect(await state.movePhoto(2, 0)).toBe(true)
   expect(calls[0]).toBe(`POST /api/admin/catalog/items/${ID}/photos/order {"ids":["c","a","b"]}`)
+})
+
+const SOURCE = `0195f0b4-3c1e-7a00-8000-0000000000e1`
+const LINK = `https://shop.example/s/AbCdEfGh_-1`
+
+it(`copies an item's link for a source and keeps it in its row`, async () => {
+  const copied: string[] = []
+  const { state, calls } = build({
+    [`POST /api/admin/catalog/items/${ID}/links`]: () =>
+      ok({ link: { sourceId: SOURCE, url: LINK, createdAt: NOW } }),
+  }, copied)
+  await state.openItem(ID)
+  calls.length = 0
+  expect(await state.copyLink(SOURCE)).toBe(true)
+  expect(calls).toEqual([`POST /api/admin/catalog/items/${ID}/links {"sourceId":"${SOURCE}"}`])
+  expect(copied).toEqual([LINK])
+  expect(state.itemEditor.value.links).toEqual({ [SOURCE]: LINK })
+  expect(state.itemEditor.value.copying).toBeNull()
+})
+
+it(`shows the link in its row when the clipboard refuses it`, async () => {
+  const { state, toasts } = build({
+    [`POST /api/admin/catalog/items/${ID}/links`]: () =>
+      ok({ link: { sourceId: SOURCE, url: LINK, createdAt: NOW } }),
+  }, null)
+  await state.openItem(ID)
+  expect(await state.copyLink(SOURCE)).toBe(false)
+  expect(state.itemEditor.value.links).toEqual({ [SOURCE]: LINK })
+  expect(toasts.list.value.at(-1)?.title).toBe(`Could not copy the link`)
+})
+
+it(`asks for one link at a time, and says why one was refused`, async () => {
+  const { state, calls, toasts } = build({
+    [`POST /api/admin/catalog/items/${ID}/links`]: () => fail(409, `Set MPA_DOMAIN and deploy.`),
+  })
+  await state.openItem(ID)
+  calls.length = 0
+  const [first, second] = await Promise.all([state.copyLink(SOURCE), state.copyLink(SOURCE)])
+  expect([first, second]).toEqual([false, false])
+  expect(calls).toHaveLength(1)
+  expect(toasts.list.value.at(-1)?.body).toBe(`Set MPA_DOMAIN and deploy.`)
+  expect(state.itemEditor.value.copying).toBeNull()
+})
+
+it(`reads an item's links with the item`, async () => {
+  const { state } = build({
+    [`GET /api/admin/catalog/items/${ID}`]: () =>
+      ok({ item: ITEM, links: [{ sourceId: SOURCE, url: LINK, createdAt: NOW }] }),
+  })
+  await state.openItem(ID)
+  expect(state.itemEditor.value.links).toEqual({ [SOURCE]: LINK })
+})
+
+it(`adds a source with a client-made id after checking it, and names a refused field`, async () => {
+  const { state, calls } = build()
+  await state.load()
+  state.openSource(null)
+  state.editSource({ name: `Zalo group A`, slug: `Zalo A`, slugEdited: true })
+  calls.length = 0
+  expect(await state.saveSource()).toBe(false)
+  expect(calls).toEqual([])
+  expect(Object.keys(state.sourceEditor.value.errors)).toEqual([`slug`])
+
+  state.editSource({ name: `Zalo group A`, slug: `zalo-a`, slugEdited: true })
+  expect(await state.saveSource()).toBe(true)
+  expect(calls[0]).toBe(
+    `POST /api/admin/catalog/sources {"id":"${NEW}","name":"Zalo group A","slug":"zalo-a"}`,
+  )
 })

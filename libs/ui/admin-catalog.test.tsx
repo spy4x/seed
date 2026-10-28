@@ -1,7 +1,8 @@
 /**
  * The catalog's admin pages (#466), driven in a browser DOM (happy-dom): the list and its empty
- * states, the categories' menus and editor, and the item editor's language tabs, address,
- * stock grid, sizes, publishing and photos, with where focus goes.
+ * states, the categories' menus and editor, the tracking link sources' menus and editor (#483),
+ * and the item editor's language tabs, address, stock grid, sizes, publishing, photos and share
+ * links, with where focus goes.
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
@@ -14,6 +15,7 @@ import type {
   CatalogCategory,
   CatalogItem,
   CatalogItemRow,
+  CatalogLinkSource,
 } from "@domain/catalog"
 import {
   ADMIN_CATALOG_NO_FILTER,
@@ -31,7 +33,14 @@ import {
   type CatalogItemDraft,
   catalogItemDraft,
   catalogItemFields,
+  type CatalogShareLinksState,
 } from "./admin-catalog-item.tsx"
+import {
+  AdminCatalogSourceEditorScreen,
+  AdminCatalogSourcesScreen,
+  type AdminCatalogSourcesScreenProps,
+  TRACKING_OFF_NOTICE,
+} from "./admin-catalog-sources.tsx"
 
 const window = new Window({ url: "http://admin.localhost/catalog" })
 const own = {
@@ -182,6 +191,8 @@ describe("the catalog list", () => {
     settings: SETTINGS,
     categories: [categoryOf()],
     items: [ROW],
+    sources: [],
+    tracking: true,
     ...patch,
   })
 
@@ -338,13 +349,14 @@ const ITEM_SAVED: CatalogItem = {
 
 /** The item editor over its own state, recording every call but `onChange`. */
 function ItemEditor(
-  { calls, item = null, errors = {}, draft, reorder = false }: {
+  { calls, item = null, errors = {}, draft, reorder = false, shareLinks }: {
     calls: unknown[][]
     item?: CatalogItem | null
     errors?: Record<string, string>
     draft?: (value: CatalogItemDraft) => void
     /** Moves the photos as the app does, instead of only recording the move. */
     reorder?: boolean
+    shareLinks?: CatalogShareLinksState
   },
 ) {
   const [value, setValue] = useState(catalogItemDraft(item))
@@ -385,9 +397,158 @@ function ItemEditor(
     },
     onPhotoSave: (id, change) => calls.push(["photo", id, change]),
     onPhotoRemove: (id) => calls.push(["remove", id]),
+    shareLinks,
   }
   return <AdminCatalogItemScreen {...props} />
 }
+
+const ZALO = "0195f0b4-3c1e-7a00-8000-0000000000e1"
+const FRIENDS = "0195f0b4-3c1e-7a00-8000-0000000000e2"
+
+function sourceOf(overrides: Partial<CatalogLinkSource> = {}): CatalogLinkSource {
+  return {
+    id: ZALO,
+    name: "Zalo group A",
+    slug: "zalo-a",
+    position: 0,
+    linkCount: 3,
+    createdAt: NOW,
+    updatedAt: NOW,
+    version: 1,
+    ...overrides,
+  }
+}
+
+describe("the link sources list", () => {
+  function props(calls: unknown[][], patch: Partial<AdminCatalogSourcesScreenProps> = {}) {
+    return {
+      sources: [
+        sourceOf(),
+        sourceOf({ id: FRIENDS, name: "Friends", slug: "friends", position: 1, linkCount: 0 }),
+      ],
+      tracking: true,
+      error: null,
+      busy: false,
+      onRetry: () => {},
+      onMove: (id: string, by: -1 | 1) => calls.push(["move", id, by]),
+      onDelete: (source: CatalogLinkSource) => calls.push(["delete", source.id]),
+      ...patch,
+    }
+  }
+  const row = (index: number) => document.querySelectorAll("[data-e2e=catalog-source-row]")[index]
+
+  it("names each source's utm_source and how many links it has", async () => {
+    await mount(<AdminCatalogSourcesScreen {...props([])} />)
+    expect(row(0).textContent).toContain("Zalo group A")
+    expect(row(0).textContent).toContain("utm_source=zalo-a · 3 links")
+    expect(row(1).textContent).toContain("utm_source=friends · 0 links")
+    expect(document.body.textContent).not.toContain(TRACKING_OFF_NOTICE)
+  })
+
+  it("deletes a source only after the dialog says its shared links stop working", async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminCatalogSourcesScreen {...props(calls)} />)
+    await clickOn(row(0).querySelector("[data-e2e=catalog-source-menu]")!)
+    await clickOn(row(0).querySelector("[data-e2e=catalog-source-delete]")!)
+    expect(find("dialog[open]").textContent).toContain(`Delete "Zalo group A"?`)
+    expect(find("dialog[open]").textContent).toContain("Its 3 links stop working")
+    expect(calls).toEqual([])
+    await clickOn(button("Delete source"))
+    expect(calls).toEqual([["delete", ZALO]])
+  })
+
+  it("moves a source down from its menu", async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminCatalogSourcesScreen {...props(calls)} />)
+    await clickOn(row(0).querySelector("[data-e2e=catalog-source-menu]")!)
+    expect(row(0).querySelector("[data-e2e=catalog-source-up]")).toBeNull()
+    await clickOn(row(0).querySelector("[data-e2e=catalog-source-down]")!)
+    expect(calls).toEqual([["move", ZALO, 1]])
+  })
+
+  it("says what to set while items get no links, and offers a first source", async () => {
+    await mount(<AdminCatalogSourcesScreen {...props([], { tracking: false, sources: [] })} />)
+    expect(find("[data-e2e=catalog-sources-tracking-off]").textContent).toBe(TRACKING_OFF_NOTICE)
+    expect(document.body.textContent).toContain("No sources yet")
+  })
+})
+
+describe("the link source editor", () => {
+  it("fills the source tag from the name until it is typed, and focuses a refused field", async () => {
+    function Harness({ errors }: { errors: Record<string, string> }) {
+      const [value, setValue] = useState({ name: "", slug: "", slugEdited: false })
+      return (
+        <AdminCatalogSourceEditorScreen
+          source={null}
+          loading={false}
+          notFound={false}
+          value={value}
+          onChange={setValue}
+          errors={errors}
+          saving={false}
+          onSave={() => {}}
+        />
+      )
+    }
+    await mount(<Harness errors={{}} />)
+    const name = find<HTMLInputElement>("[data-e2e=catalog-source-name]")
+    const slug = find<HTMLInputElement>("[data-e2e=catalog-source-slug]")
+    await type(name, "Nhóm Zalo A")
+    expect(slug.value).toBe("nhom-zalo-a")
+    await type(slug, "zalo-a")
+    await type(name, "Zalo group A")
+    expect(slug.value).toBe("zalo-a")
+    await mount(<Harness errors={{ slug: "Another source has this utm_source. Pick another." }} />)
+    expect(document.activeElement).toBe(slug)
+  })
+})
+
+describe("the item editor's share links", () => {
+  const LINK = "https://shop.example/s/AbCdEfGh_-1"
+  const share = (calls: unknown[][], patch: Partial<CatalogShareLinksState> = {}) => ({
+    sources: [sourceOf(), sourceOf({ id: FRIENDS, name: "Friends", slug: "friends" })],
+    links: { [ZALO]: LINK },
+    copying: null,
+    onCopy: (sourceId: string) => calls.push(["copy", sourceId]),
+    ...patch,
+  })
+  const rows = () => [...document.querySelectorAll("[data-e2e=catalog-item-link]")]
+
+  it("copies a source's link with its own named button, and shows a link once made", async () => {
+    const calls: unknown[][] = []
+    await mount(<ItemEditor calls={calls} item={ITEM_SAVED} shareLinks={share(calls)} />)
+    const [zalo, friends] = rows()
+    expect(zalo.querySelector("[data-e2e=catalog-item-link-url]")!.textContent).toBe(LINK)
+    expect(friends.querySelector("[data-e2e=catalog-item-link-url]")!.textContent)
+      .toBe("utm_source=friends")
+    const copy = friends.querySelector<HTMLButtonElement>("[data-e2e=catalog-item-link-copy]")!
+    expect(copy.getAttribute("aria-label")).toBe("Copy the link for Friends")
+    expect(copy.type).toBe("button")
+    await clickOn(copy)
+    expect(calls).toEqual([["copy", FRIENDS]])
+  })
+
+  it("lets the other buttons wait while one link is being made", async () => {
+    const calls: unknown[][] = []
+    await mount(
+      <ItemEditor calls={calls} item={ITEM_SAVED} shareLinks={share(calls, { copying: ZALO })} />,
+    )
+    const friends = rows()[1].querySelector<HTMLButtonElement>("[data-e2e=catalog-item-link-copy]")!
+    expect(friends.disabled).toBe(true)
+    expect(document.body.textContent).toContain(
+      "The links open the item once it is on the website.",
+    )
+  })
+
+  it("offers a first source when there are none, and shows nothing on a new item", async () => {
+    await mount(<ItemEditor calls={[]} item={ITEM_SAVED} shareLinks={share([], { sources: [] })} />)
+    expect(find("[data-e2e=catalog-item-source-new]").getAttribute("href"))
+      .toBe("/catalog/sources/new")
+    await act(() => render(null, root!))
+    await mount(<ItemEditor calls={[]} item={null} shareLinks={share([])} />)
+    expect(document.querySelector("[data-e2e=catalog-item-links]") === null).toBe(true)
+  })
+})
 
 describe("the item editor", () => {
   it("keeps the name per language and fills the address from the default one", async () => {

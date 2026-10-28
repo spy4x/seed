@@ -1,6 +1,7 @@
 import { signal } from "@preact/signals"
 import type { ToastStore } from "@spy4x/preact-signals/toast"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { copyToClipboard } from "@spy4x/platform/browser/clipboard"
 import {
   type AdminCatalogResponse,
   CATALOG_PHOTO_MAX_BYTES,
@@ -9,11 +10,15 @@ import {
   type CatalogCategory,
   CatalogError,
   type CatalogItem,
+  type CatalogLinkSource,
   type CatalogPhoto,
   catalogPhotoContentType,
   type CatalogText,
+  type CatalogTrackingLink,
   parseCatalogCategoryFields,
+  parseCatalogSourceFields,
 } from "@domain/catalog"
+import type { CatalogSourceDraft } from "@ui/admin-catalog-sources.tsx"
 import {
   ADMIN_CATALOG_NO_FILTER,
   type AdminCatalogFilter,
@@ -45,6 +50,10 @@ export interface CatalogItemEditorState {
   errors: CatalogFormErrors
   saving: boolean
   photos: CatalogPhotosState
+  /** The item's tracking links' addresses, by source id (#483). */
+  links: Record<string, string>
+  /** The source whose link is being made and copied. */
+  copying: string | null
 }
 
 /** The category editor. */
@@ -63,6 +72,20 @@ function categoryDraft(category: CatalogCategory | null): CatalogCategoryDraft {
     : BLANK_CATEGORY
 }
 
+/** The source editor. */
+export interface CatalogSourceEditorState {
+  id: string | null
+  value: CatalogSourceDraft
+  errors: CatalogFormErrors
+  saving: boolean
+}
+
+const BLANK_SOURCE: CatalogSourceDraft = { name: ``, slug: ``, slugEdited: false }
+
+function sourceDraft(source: CatalogLinkSource | null): CatalogSourceDraft {
+  return source ? { name: source.name, slug: source.slug, slugEdited: true } : BLANK_SOURCE
+}
+
 const NO_PHOTO_WORK: CatalogPhotosState = { uploading: 0, busy: false, error: null }
 
 /**
@@ -76,6 +99,7 @@ export function createCatalogState(
   request: AdminFetch,
   toasts: ToastStore,
   newId: () => string = uuidV7,
+  copy: (text: string) => Promise<boolean> = copyToClipboard,
 ) {
   const catalog = signal<AdminCatalogResponse | null>(null)
   const error = signal<string | null>(null)
@@ -86,6 +110,12 @@ export function createCatalogState(
   const categoryEditor = signal<CatalogCategoryEditorState>({
     id: null,
     value: BLANK_CATEGORY,
+    errors: {},
+    saving: false,
+  })
+  const sourceEditor = signal<CatalogSourceEditorState>({
+    id: null,
+    value: BLANK_SOURCE,
     errors: {},
     saving: false,
   })
@@ -101,6 +131,8 @@ export function createCatalogState(
       errors: {},
       saving: false,
       photos: NO_PHOTO_WORK,
+      links: {},
+      copying: null,
     }
   }
 
@@ -123,6 +155,7 @@ export function createCatalogState(
     busy,
     itemEditor,
     categoryEditor,
+    sourceEditor,
 
     async load(): Promise<void> {
       const result = await request<AdminCatalogResponse>(API)
@@ -144,7 +177,9 @@ export function createCatalogState(
 
     /** Reads the open item again; the fields follow it unless they hold unsaved changes. */
     async readItem(id: string): Promise<void> {
-      const result = await request<{ item: CatalogItem }>(`${API}/items/${id}`)
+      const result = await request<{ item: CatalogItem; links?: CatalogTrackingLink[] }>(
+        `${API}/items/${id}`,
+      )
       const open = itemEditor.value
       if (open.id !== id) return
       if (!result.ok) {
@@ -158,7 +193,45 @@ export function createCatalogState(
         loading: false,
         notFound: false,
         value: unsaved ? open.value : catalogItemDraft(result.data.item),
+        links: Object.fromEntries(
+          (result.data.links ?? []).map((link) => [link.sourceId, link.url]),
+        ),
       })
+    },
+
+    /**
+     * Copies the open item's link for the source, made on the API the first time; a second press
+     * gets the same link. The link shows in its row even when the clipboard refuses it.
+     */
+    async copyLink(sourceId: string): Promise<boolean> {
+      const { id, copying } = itemEditor.value
+      if (id === null || copying !== null) return false
+      patchItem(id, { copying: sourceId })
+      const result = await request<{ link: CatalogTrackingLink }>(
+        `${API}/items/${id}/links`,
+        post({ sourceId }),
+      )
+      if (!result.ok) {
+        patchItem(id, { copying: null })
+        toasts.error({
+          title: `Link not made`,
+          body: result.error.message,
+          dataE2E: `catalog-toast`,
+        })
+        return false
+      }
+      const { url } = result.data.link
+      patchItem(id, { copying: null, links: { ...itemEditor.value.links, [sourceId]: url } })
+      if (await copy(url)) {
+        toasts.success({ title: `Link copied`, body: url, dataE2E: `catalog-link-copied` })
+        return true
+      }
+      toasts.error({
+        title: `Could not copy the link`,
+        body: `Select it in the list and copy it yourself.`,
+        dataE2E: `catalog-toast`,
+      })
+      return false
     },
 
     /**
@@ -449,6 +522,83 @@ export function createCatalogState(
       if (!result.ok) error.value = result.error.message
       busy.value = false
       return result.ok
+    },
+    // #endregion
+
+    // #region Sources
+
+    /** The source with `id`, once the catalog is read. */
+    findSource(id: string): CatalogLinkSource | null {
+      return catalog.value?.sources.find((source) => source.id === id) ?? null
+    },
+
+    /** Opens the source editor on `id`, or on a new source when it is `null`. */
+    openSource(id: string | null): void {
+      sourceEditor.value = {
+        id,
+        value: sourceDraft(id === null ? null : state.findSource(id)),
+        errors: {},
+        saving: false,
+      }
+    },
+
+    editSource(value: CatalogSourceDraft): void {
+      sourceEditor.value = { ...sourceEditor.value, value }
+    },
+
+    sourceUnsaved(): boolean {
+      const { id, value, saving } = sourceEditor.value
+      if (saving) return false
+      const saved = sourceDraft(id === null ? null : state.findSource(id))
+      return value.name !== saved.name || value.slug !== saved.slug
+    },
+
+    /** Adds or saves the source. Answers whether it went through. */
+    async saveSource(): Promise<boolean> {
+      const open = sourceEditor.value
+      if (open.saving) return false
+      const body = { name: open.value.name, slug: open.value.slug }
+      try {
+        parseCatalogSourceFields(body)
+      } catch (refusal) {
+        if (!(refusal instanceof CatalogError)) throw refusal
+        sourceEditor.value = { ...open, errors: { [refusal.field ?? `form`]: refusal.message } }
+        return false
+      }
+      sourceEditor.value = { ...open, errors: {}, saving: true }
+      const source = open.id === null ? null : state.findSource(open.id)
+      const id = source?.id ?? newId()
+      const result = source
+        ? await request(`${API}/sources/${id}`, post({ ...body, version: source.version }))
+        : await request(`${API}/sources`, post({ id, ...body }))
+      if (!result.ok) {
+        sourceEditor.value = { ...sourceEditor.value, saving: false, errors: refusalErrors(result) }
+        return false
+      }
+      await state.load()
+      state.openSource(id)
+      toast(source ? `Source saved.` : `Source added.`)
+      return true
+    },
+
+    /** Moves the source one place up or down. */
+    async moveSource(id: string, by: -1 | 1): Promise<void> {
+      const list = catalog.value?.sources
+      const from = list?.findIndex((source) => source.id === id) ?? -1
+      if (!list || from < 0 || busy.value) return
+      const to = from + by
+      if (to < 0 || to >= list.length) return
+      const ids = list.map((source) => source.id)
+      ;[ids[from], ids[to]] = [ids[to], ids[from]]
+      await state.write(`${API}/sources/order`, { ids })
+    },
+
+    deleteSource(source: CatalogLinkSource): Promise<boolean> {
+      return state.write(
+        `${API}/sources/${source.id}/delete`,
+        { version: source.version },
+        `Source deleted.`,
+      )
     },
     // #endregion
   }
