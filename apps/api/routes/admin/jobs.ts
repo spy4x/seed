@@ -10,6 +10,8 @@ import {
   type AdminJobDetail,
   type AdminJobFilter,
   type AdminJobListResponse,
+  type AdminJobPhoto,
+  type AdminJobRow,
   type AdminRepeatingJob,
   parseAdminJobFilter,
 } from "@domain/identity"
@@ -45,6 +47,11 @@ export interface AdminJobsStore {
   job(id: string): Promise<AdminJobRecord | null>
   user(table: string, aggregateId: string): Promise<{ id: number; name: string } | null>
   group(groupId: string): Promise<{ id: string; name: string } | null>
+  /** The catalog photos among these images, by image id, named in the first of `languages`. */
+  photos(
+    imageIds: readonly string[],
+    languages: readonly string[],
+  ): Promise<Map<string, AdminJobPhoto>>
   repeating(kinds: readonly string[]): Promise<RepeatingJobRuns[]>
   retry(id: string, operatorId: number, requestId: string | null): Promise<AdminJobActionOutcome>
   retryAll(operatorId: number, requestId: string | null, limit: number): Promise<number>
@@ -63,6 +70,8 @@ export interface AdminJobsRouteDependencies {
   jobs: AdminJobsStore
   /** The job registry; {@link JOBS} unless a test passes its own. */
   registry?: readonly JobDefinition[]
+  /** The catalog's languages, the default first: an image job names its item in the first. */
+  languages: readonly string[]
 }
 
 /**
@@ -95,13 +104,29 @@ export function jobMatch(query: string, registry: readonly JobDefinition[]): Adm
  * Every action writes an audit entry naming the operator, the request and the job's kind.
  */
 export function createAdminJobsRoutes(dependencies: AdminJobsRouteDependencies): Hono<APIContext> {
-  const { limit, jobs } = dependencies
+  const { limit, jobs, languages } = dependencies
   const registry = dependencies.registry ?? JOBS
   const definition = (kind: string) => registry.find((job) => job.kind === kind)
+
+  /** The records as rows: each with its name, and an image job with its catalog photo. */
+  async function rows(records: readonly AdminJobRecord[]): Promise<AdminJobRow[]> {
+    const ofImage = (record: AdminJobRecord) => {
+      const about = definition(record.kind)?.about
+      return about !== undefined && `image` in about
+    }
+    const imageIds = [...new Set(records.filter(ofImage).map((record) => record.aggregateId))]
+    const photos = imageIds.length > 0 ? await jobs.photos(imageIds, languages) : new Map()
+    return records.map(({ aggregateId, ...row }) => ({
+      ...row,
+      label: definition(row.kind)?.label ?? row.kind,
+      photo: ofImage({ aggregateId, ...row }) ? photos.get(aggregateId) ?? null : null,
+    }))
+  }
 
   async function about(record: AdminJobRecord): Promise<AdminJobAbout | null> {
     const target = definition(record.kind)?.about
     if (!target) return null
+    if (`image` in target) return null
     if (`group` in target) {
       const group = await jobs.group(record.aggregateId)
       return group && { type: `group`, ...group }
@@ -111,11 +136,10 @@ export function createAdminJobsRoutes(dependencies: AdminJobsRouteDependencies):
   }
 
   async function detail(record: AdminJobRecord): Promise<AdminJobDetail> {
-    const { aggregateId: _, ...row } = record
+    const [row] = await rows([record])
     const job = definition(record.kind)
     return {
       ...row,
-      label: job?.label ?? record.kind,
       repeats: job?.repeat ? describeRepeat(job.repeat) : null,
       sendsMail: job?.sendsMail === true,
       cancellable: !job?.cannotCancel,
@@ -158,10 +182,7 @@ export function createAdminJobsRoutes(dependencies: AdminJobsRouteDependencies):
       const filter = parseAdminJobFilter(new URL(c.req.url).searchParams)
       const page = await jobs.list(filter, jobMatch(filter.query, registry))
       const body: AdminJobListResponse = {
-        jobs: page.jobs.map(({ aggregateId: _, ...row }) => ({
-          ...row,
-          label: definition(row.kind)?.label ?? row.kind,
-        })),
+        jobs: await rows(page.jobs),
         counts: page.counts,
         total: page.total,
         page: filter.page,
@@ -226,15 +247,17 @@ export function createAdminJobsRoutes(dependencies: AdminJobsRouteDependencies):
 /** The Jobs module: every job's runs, the repeating jobs, and run again, run now and cancel. */
 export const jobsAdminModule: AdminApiModule = {
   id: `jobs`,
-  routes: ({ db, limit }) =>
+  routes: ({ db, limit, catalog }) =>
     createAdminJobsRoutes({
       limit,
+      languages: catalog.settings.languages,
       // Read at call time: the routes are built before any request, and with no database in tests.
       jobs: {
         list: (filter, match) => db.adminJobs.list(filter, match),
         job: (id) => db.adminJobs.job(id),
         user: (table, aggregateId) => db.adminJobs.user(table, aggregateId),
         group: (groupId) => db.adminJobs.group(groupId),
+        photos: (imageIds, languages) => db.adminJobs.photos(imageIds, languages),
         repeating: (kinds) => db.adminJobs.repeating(kinds),
         retry: (id, operatorId, requestId) =>
           db.begin((tx) => tx.adminJobs.retry(id, operatorId, requestId)),

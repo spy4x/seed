@@ -11,6 +11,7 @@ import {
   IconPlus,
   IconTrashBin,
 } from "@spy4x/preact-icons"
+import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card, CardBody, CardHeader } from "@spy4x/preact-ui/card"
 import { Checkbox } from "@spy4x/preact-ui/checkbox"
@@ -23,6 +24,7 @@ import { Rich } from "@spy4x/preact-ui/i18n"
 import { FileInput } from "@spy4x/preact-ui/file-input"
 import { Input, Select, Textarea } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
+import { Lightbox } from "@spy4x/preact-ui/lightbox"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { MoneyInput } from "@spy4x/preact-ui/money-input"
@@ -1171,6 +1173,10 @@ function Availability({ props, edit }: { props: AdminCatalogItemScreenProps; edi
   )
 }
 
+/** The cover's thumbnail ring, in the colour of its "Cover" badge. */
+const COVER_RING =
+  `ring-2 ring-[var(--color-selected,var(--color-accent-900))] ring-offset-2 ring-offset-surface`
+
 /** What a photo not shown yet says instead of its description: a key of the `admin` catalog. */
 const PHOTO_STATE_WORDS: Record<CatalogPhoto[`state`], string | null> = {
   preparing: `AdminCatalogItem.preparing`,
@@ -1178,7 +1184,11 @@ const PHOTO_STATE_WORDS: Record<CatalogPhoto[`state`], string | null> = {
   refused: `AdminCatalogItem.refused`,
 }
 
-/** The photos of a saved item: upload, order, cover, details and removal. */
+/**
+ * The photos of a saved item: upload, order, cover, details and removal. A shown photo opens full
+ * size in the lightbox, which the arrow keys move through and Escape closes (#514). The cover wears
+ * a ring and a badge, and its thumbnail's name says it is the cover.
+ */
 function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX.Element {
   const { item, photos, settings } = props
   const t = useAdminText()
@@ -1195,6 +1205,13 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
     t.t(item.photos[0] === photo ? `AdminCatalogItem.coverLabel` : `AdminCatalogItem.photoNumber`, {
       number: item.photos.indexOf(photo) + 1,
     })
+  // The lightbox moves through the photos that can be shown, in the list's order.
+  const shown = item.photos.filter((photo) => photo.state === `ready`)
+  const [viewing, setViewing] = useState<number | null>(null)
+  const lightboxImages = shown.map((photo) => ({
+    src: ADMIN_CATALOG_PATHS.full(photo.id),
+    alt: catalogText(photo.alt, languages) || photoLabel(photo),
+  }))
   // After "Make cover", focus follows the photo to its new place, once the new order is drawn.
   const [focusOn, setFocusOn] = useState<string | null>(null)
   const list = useRef<HTMLDivElement>(null)
@@ -1243,23 +1260,49 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
                 renderItem={(photo) => {
                   const words = PHOTO_STATE_WORDS[photo.state]
                   const colour = colourName(photo.colourId)
+                  const cover = item.photos[0] === photo
                   const alt = catalogText(photo.alt, languages)
                   return (
                     <div class="flex items-center gap-3 py-1" data-e2e="catalog-item-photo">
                       {photo.state === `ready`
-                        ? <CatalogThumbnail photoId={photo.id} alt={alt} size="size-16" />
-                        : <CatalogThumbnail photoId={null} size="size-16" />}
+                        ? (
+                          <button
+                            type="button"
+                            class={`shrink-0 cursor-zoom-in rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
+                              cover ? COVER_RING : ``
+                            }`}
+                            aria-label={t.t(`AdminCatalogItem.openPhoto`, {
+                              photo: photoLabel(photo),
+                            })}
+                            data-e2e="catalog-item-photo-open"
+                            onClick={() => setViewing(shown.indexOf(photo))}
+                          >
+                            <CatalogThumbnail photoId={photo.id} size="size-16" />
+                          </button>
+                        )
+                        : (
+                          <span
+                            class={`shrink-0 rounded-md ${cover ? COVER_RING : ``}`}
+                          >
+                            <CatalogThumbnail photoId={null} size="size-16" />
+                          </span>
+                        )}
                       <div class="flex min-w-0 flex-1 flex-col gap-1">
-                        <span class="font-medium">
-                          {item.photos[0] === photo
-                            ? t.t(`AdminCatalogItem.cover`)
-                            : t.t(`AdminCatalogItem.photoNumber`, {
+                        <span class="flex flex-wrap items-center gap-x-2 gap-y-1 font-medium">
+                          <span>
+                            {t.t(`AdminCatalogItem.photoNumber`, {
                               number: item.photos.indexOf(photo) + 1,
                             })}
-                          {colour && (
-                            <span class="font-normal text-muted">
-                              {` · `}
-                              <bdi translate={false}>{colour}</bdi>
+                            {colour && (
+                              <span class="font-normal text-muted">
+                                {` · `}
+                                <bdi translate={false}>{colour}</bdi>
+                              </span>
+                            )}
+                          </span>
+                          {cover && (
+                            <span data-e2e="catalog-item-photo-cover-badge">
+                              <Badge text={t.t(`AdminCatalogItem.cover`)} />
                             </span>
                           )}
                         </span>
@@ -1342,6 +1385,14 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
           )}
         </Stack>
       </CardBody>
+      <Lightbox
+        images={lightboxImages}
+        index={Math.min(viewing ?? 0, Math.max(lightboxImages.length - 1, 0))}
+        open={viewing !== null && lightboxImages.length > 0}
+        onClose={() => setViewing(null)}
+        onIndexChange={setViewing}
+        label={(image) => image.alt}
+      />
       {editing && (
         <PhotoDialog
           photo={editing}

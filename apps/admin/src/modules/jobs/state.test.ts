@@ -24,6 +24,7 @@ const job: AdminJobDetail = {
   startedAt: `2026-10-20T10:00:00.000Z`,
   finishedAt: `2026-10-20T11:00:00.000Z`,
   errorCode: `MailSendError`,
+  photo: null,
   repeats: null,
   sendsMail: true,
   cancellable: true,

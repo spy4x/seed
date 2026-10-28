@@ -35,8 +35,8 @@ admin app shows no Catalog entry. The tables exist either way.
   `some-sold-out` or `sold-out`.
 - **Photos** are images of the file store's image pipeline ([files.md](files.md)): the admin app
   sends the bytes to the API, which checks the type by the bytes, stores them at `catalog/<id>` and
-  queues `files.image-process`; the worker makes AVIF and WebP widths. The first photo is the
-  cover. A photo may name the colour it shows. Deleting a photo or its item deletes the `images`
+  queues `files.image-process`; the worker makes AVIF and WebP widths, the narrowest first, which
+  the admin shows about a second after the upload (#514). The first photo is the cover. A photo may name the colour it shows. Deleting a photo or its item deletes the `images`
   row, which queues every object for deletion.
 
 ## The size chart and the size calculator

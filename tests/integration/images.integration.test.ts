@@ -4,7 +4,13 @@ import type postgres from "postgres"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { ImageRefusal, type processImage } from "@spy4x/server/images"
 import type { ServerFiles } from "@server/files/files.ts"
-import { imageProcessJob, type ImageScratch } from "@server/files/images.ts"
+import {
+  IMAGE_WIDTHS_JOB,
+  imageProcessJob,
+  type ImageProcessJobDeps,
+  type ImageScratch,
+  imageWidthsJob,
+} from "@server/files/images.ts"
 import { readablePicture, setUserPicture } from "@server/auth/profile-pictures.ts"
 import { listenForPictureStates } from "@server/auth/picture-state.ts"
 import { PictureState } from "@domain/identity"
@@ -49,17 +55,21 @@ function memoryScratch() {
   return { scratch, written }
 }
 
-/** A fake `processImage` that writes AVIF and WebP 960 and 480 px wide, or refuses the input. */
+/**
+ * A fake `processImage` for a photo 960 px wide: AVIF and WebP at each width it is asked for, none
+ * wider than 960, or the refusal.
+ */
 function fakeProcess(
   written: Map<string, Uint8Array>,
   refusal: ImageRefusal | null = null,
   during: () => Promise<void> = () => Promise.resolve(),
 ): typeof processImage {
-  return async (_input, dir) => {
+  return async (_input, dir, options) => {
     await during()
     if (refusal !== null) return { success: false, error: refusal }
+    const widths = [...new Set((options?.widths ?? [480, 960]).map((w) => Math.min(w, 960)))]
     const output = (["avif", "webp"] as const).flatMap((extension) =>
-      [960, 480].map((width) => {
+      widths.map((width) => {
         const path = `${dir}/${width}.${extension}`
         written.set(path, new TextEncoder().encode(`${extension} bytes`))
         return { path, type: `image/${extension}` as const, width, height: width * 3 / 4 }
@@ -80,6 +90,13 @@ async function personWithPicture(sql: postgres.Sql, stored: Map<string, Uint8Arr
     id,
     event: { aggregateId: id } as Parameters<ReturnType<typeof imageProcessJob>>[0],
   }
+}
+
+/** Both jobs, one after the other, as the worker runs them. */
+async function processBoth(deps: ImageProcessJobDeps, event: { aggregateId: string }) {
+  const job = event as Parameters<ReturnType<typeof imageProcessJob>>[0]
+  await imageProcessJob(deps)(job)
+  await imageWidthsJob(deps)(job)
 }
 
 async function stateOf(sql: postgres.Sql, userId: number) {
@@ -108,7 +125,7 @@ Deno.test("a new picture is queued, and the job stores its variants and deletes 
     `
     expect(queued.count).toBe(1)
 
-    await imageProcessJob({ sql, files, scratch, process: fakeProcess(written) })(event)
+    await processBoth({ sql, files, scratch, process: fakeProcess(written) }, event)
 
     expect([...stored.keys()].sort()).toEqual([
       `pictures/${id}/480.avif`,
@@ -123,6 +140,51 @@ Deno.test("a new picture is queued, and the job stores its variants and deletes 
       { objectKey: `pictures/${id}/960.webp`, contentType: `image/webp`, width: 960 },
     ])
     expect(written.size).toBe(0)
+  })
+})
+
+/** How many runs of the wider widths' job wait for image `id`. */
+async function widthsQueued(sql: postgres.Sql, id: string) {
+  const [row] = await sql<{ count: number }[]>`
+    SELECT count(*)::int AS count FROM outbox_events
+    WHERE event_kind = ${IMAGE_WIDTHS_JOB} AND aggregate_id = ${id} AND processed_at IS NULL
+  `
+  return row.count
+}
+
+Deno.test("the first job makes only the narrowest width, keeps the original and queues the rest", async () => {
+  await withSchema(async (sql) => {
+    const { files, stored } = memoryFiles()
+    const { scratch, written } = memoryScratch()
+    const { userId, id, event } = await personWithPicture(sql, stored)
+
+    await imageProcessJob({ sql, files, scratch, process: fakeProcess(written) })(event)
+
+    expect([...stored.keys()].sort()).toEqual([
+      `pictures/${id}`,
+      `pictures/${id}/480.avif`,
+      `pictures/${id}/480.webp`,
+    ])
+    expect((await variantsOf(sql, id)).map((variant) => variant.width)).toEqual([480, 480])
+    expect(await widthsQueued(sql, id)).toBe(1)
+    expect(await stateOf(sql, userId)).toBe(PictureState.Preparing)
+    // Shown already: the narrowest WebP is what a thumbnail asks for.
+    expect((await readablePicture(sql, id, userId))?.objectKey).toBe(`pictures/${id}/480.webp`)
+  })
+})
+
+Deno.test("the first job run again stores nothing again and queues the rest only once", async () => {
+  await withSchema(async (sql) => {
+    const { files, stored, puts } = memoryFiles()
+    const { scratch, written } = memoryScratch()
+    const { id, event } = await personWithPicture(sql, stored)
+    const first = imageProcessJob({ sql, files, scratch, process: fakeProcess(written) })
+
+    await first(event)
+    await first(event)
+
+    expect(puts.length).toBe(2)
+    expect(await widthsQueued(sql, id)).toBe(1)
   })
 })
 
@@ -147,10 +209,10 @@ Deno.test("running the job twice stores nothing again and adds no row", async ()
     const { files, stored, puts } = memoryFiles()
     const { scratch, written } = memoryScratch()
     const { id, event } = await personWithPicture(sql, stored)
-    const job = imageProcessJob({ sql, files, scratch, process: fakeProcess(written) })
+    const deps = { sql, files, scratch, process: fakeProcess(written) }
 
-    await job(event)
-    await job(event)
+    await processBoth(deps, event)
+    await processBoth(deps, event)
 
     expect(puts.length).toBe(4)
     expect((await variantsOf(sql, id)).length).toBe(4)
@@ -203,7 +265,7 @@ Deno.test("a picture is served as its narrowest WebP once processed, never as it
     const { userId, id, event } = await personWithPicture(sql, stored)
     expect(await readablePicture(sql, id, userId)).toBeNull()
 
-    await imageProcessJob({ sql, files, scratch, process: fakeProcess(written) })(event)
+    await processBoth({ sql, files, scratch, process: fakeProcess(written) }, event)
 
     expect(await readablePicture(sql, id, userId)).toEqual({
       id,
@@ -232,7 +294,7 @@ Deno.test("replacing a processed picture queues its original and every variant f
     const { files, stored } = memoryFiles()
     const { scratch, written } = memoryScratch()
     const { userId, id, event } = await personWithPicture(sql, stored)
-    await imageProcessJob({ sql, files, scratch, process: fakeProcess(written) })(event)
+    await processBoth({ sql, files, scratch, process: fakeProcess(written) }, event)
 
     await sql.begin((tx) => setUserPicture(tx, userId, null))
 
@@ -262,7 +324,7 @@ Deno.test("a processed picture becomes ready, and the person's open pages are to
       if (id === userId) told.resolve()
     })
     try {
-      await imageProcessJob({ sql, files, scratch, process: fakeProcess(written) })(event)
+      await processBoth({ sql, files, scratch, process: fakeProcess(written) }, event)
       const timer = setTimeout(() => told.reject(new Error(`no announcement within 5 s`)), 5000)
       await told.promise.finally(() => clearTimeout(timer))
     } finally {
@@ -288,7 +350,7 @@ Deno.test("a group lists a member's picture only once it is ready", async () => 
 
     expect(await pictureOf()).toBeNull()
     const event = { aggregateId: id } as Parameters<ReturnType<typeof imageProcessJob>>[0]
-    await imageProcessJob({ sql, files, scratch, process: fakeProcess(written) })(event)
+    await processBoth({ sql, files, scratch, process: fakeProcess(written) }, event)
     expect(await pictureOf()).toBe(id)
   })
 })

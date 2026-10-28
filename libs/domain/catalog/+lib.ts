@@ -177,7 +177,10 @@ export interface CatalogCombination {
   sizeId: string | null
 }
 
-/** A photo's processing (#464): the worker makes its widths in seconds, or refuses it. */
+/**
+ * A photo's processing (#464): `ready` once the worker stored its narrowest width, which the admin
+ * shows, about a second after the upload (#514). The website shows it once every width is made.
+ */
 export type CatalogPhotoState = `preparing` | `ready` | `refused`
 
 /** One photo of an item, as the admin app reads it. The first is the item's cover. */
