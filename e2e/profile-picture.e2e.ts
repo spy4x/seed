@@ -142,15 +142,16 @@ test.describe("the profile picture", () => {
 
       // The browser says PNG; the bytes are text. The server reads them and refuses.
       await choose(row, "photo.png", "image/png", Buffer.from("not an image at all"))
+      // The file name is isolated from the sentence around it, so a right-to-left page keeps it whole.
       await expect(error).toContainText(
-        "photo.png is not really an image, so it was not used. Choose another file.",
+        "\u2068photo.png\u2069 is not really an image, so it was not used. Choose another file.",
       )
       await expect(error).toBeFocused()
       expect(await pictureId(page)).toBeNull()
 
       await choose(row, "photo.gif", "image/gif", Buffer.from("GIF89a"))
       await expect(error).toContainText(
-        "photo.gif is not a JPEG, PNG or WebP image. Choose one of those.",
+        "\u2068photo.gif\u2069 is not a JPEG, PNG, WebP or HEIC image. Choose one of those.",
       )
 
       // The API refuses a type the row would not offer, whatever the browser sends.
