@@ -51,6 +51,7 @@ import {
   listAdminNewsletterSends,
   readAdminNewsletterStats,
 } from "@server/subscribers/admin-newsletter.ts"
+import { SAMPLE_CATALOG_ITEMS } from "@server/catalog/sample-catalog.ts"
 
 /**
  * The public demo's seed, sample groups, wipe and reset (docs/demo.md) against a real Postgres with every
@@ -335,6 +336,11 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
         AND event_type = ${AuthAuditEventType.SIGN_IN_METHOD_LINKED}
     `
     expect(linked).toHaveLength(FAKE_PASSKEYS)
+    // The shop's sample items, for a product that turns the catalog on.
+    const [{ items }] = await sql<{ items: number }[]>`
+      SELECT COUNT(*)::int AS items FROM catalog_items
+    `
+    expect(items).toBe(SAMPLE_CATALOG_ITEMS.length)
   })
 })
 

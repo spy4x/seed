@@ -11,6 +11,7 @@ import {
   IconHome,
   IconKey,
   IconMail,
+  IconPackage,
   IconServer,
   IconShieldCheck,
   IconUsers,
@@ -50,7 +51,7 @@ export const ADMIN_HERO = {
 } as const
 
 /** The day this page last changed, for the sitemap's `lastmod`. */
-export const ADMIN_UPDATED = `2026-10-21`
+export const ADMIN_UPDATED = `2026-10-28`
 
 /** The admin app's code on GitHub. */
 const ADMIN_CODE = {
@@ -97,6 +98,13 @@ const MODULES: readonly { name: string; Icon: ComponentType<IconProps>; text: st
     Icon: IconChatBubble,
     text: `Where people reach you: Telegram, Zalo, WhatsApp, a phone, an email. The website's ` +
       `footer shows them within a minute, with no deploy.`,
+  },
+  {
+    name: `Catalog`,
+    Icon: IconPackage,
+    text: `Items for a shop, off until you turn it on: names and texts in each language, a ` +
+      `price, colours, sizes with a size chart, what is sold out, and photos you upload at once ` +
+      `and drag into order.`,
   },
   {
     name: `Audit log`,

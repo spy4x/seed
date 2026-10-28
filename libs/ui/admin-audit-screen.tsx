@@ -20,6 +20,7 @@ import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import type { BillingAuditEvent } from "@domain/billing"
 import { BLOG_AUDIT_KINDS } from "@domain/blog"
 import { CONTACT_LINK_AUDIT_KINDS } from "@domain/contact-links"
+import { CATALOG_AUDIT_KINDS } from "@domain/catalog"
 import { ACTIVITY_KINDS } from "@domain/groups"
 import {
   accountAuditEvent,
@@ -103,6 +104,19 @@ const ACTIVITY_LABELS: Record<string, string> = {
   [CONTACT_LINK_AUDIT_KINDS.updated]: "Contact link changed",
   [CONTACT_LINK_AUDIT_KINDS.deleted]: "Contact link removed",
   [CONTACT_LINK_AUDIT_KINDS.reordered]: "Contact links reordered",
+  [CATALOG_AUDIT_KINDS.itemCreated]: "Catalog item added",
+  [CATALOG_AUDIT_KINDS.itemUpdated]: "Catalog item saved",
+  [CATALOG_AUDIT_KINDS.itemPublished]: "Catalog item published",
+  [CATALOG_AUDIT_KINDS.itemHidden]: "Catalog item hidden",
+  [CATALOG_AUDIT_KINDS.itemDeleted]: "Catalog item deleted",
+  [CATALOG_AUDIT_KINDS.photoAdded]: "Catalog photo added",
+  [CATALOG_AUDIT_KINDS.photoUpdated]: "Catalog photo described",
+  [CATALOG_AUDIT_KINDS.photoRemoved]: "Catalog photo removed",
+  [CATALOG_AUDIT_KINDS.photosReordered]: "Catalog photos reordered",
+  [CATALOG_AUDIT_KINDS.categoryCreated]: "Catalog category added",
+  [CATALOG_AUDIT_KINDS.categoryUpdated]: "Catalog category saved",
+  [CATALOG_AUDIT_KINDS.categoryDeleted]: "Catalog category deleted",
+  [CATALOG_AUDIT_KINDS.categoriesReordered]: "Catalog categories reordered",
 }
 
 /**
