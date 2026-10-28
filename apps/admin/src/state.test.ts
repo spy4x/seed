@@ -164,3 +164,27 @@ it("answers a refusal in the operator's language, by its reason", async () => {
     await languages.use("en")
   }
 })
+
+it("words a refusal with no reason by its code in Russian, and keeps the server's sentence in English", async () => {
+  const real = globalThis.fetch
+  globalThis.fetch = () =>
+    Promise.resolve(
+      new Response(JSON.stringify({ error: { code: "not_found", message: "Group not found" } }), {
+        status: 404,
+        headers: { "content-type": "application/json" },
+      }),
+    )
+  try {
+    expect(await languages.use("ru")).toBe(true)
+    const russian = await adminFetch("/api/admin/groups/g-1")
+    expect(russian.ok ? null : russian.error.message).toBe(
+      "Этого нет, или у вас нет к этому доступа.",
+    )
+    expect(await languages.use("en")).toBe(true)
+    const english = await adminFetch("/api/admin/groups/g-1")
+    expect(english.ok ? null : english.error.message).toBe("Group not found")
+  } finally {
+    globalThis.fetch = real
+    await languages.use("en")
+  }
+})

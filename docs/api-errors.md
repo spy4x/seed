@@ -1,8 +1,10 @@
 # API errors
 
 Every answer of the API that is not a success has one body, on every transport: REST, the calls
-route (`/api/call/<name>`) and the socket. A screen translates `reason ?? code`; until it does, it
-shows `message`, which stays English.
+route (`/api/call/<name>`) and the socket. The apps word it in the person's language from the
+`errors` catalog (`errorText` in `libs/ui/message.ts`): the first failed field, else the reason,
+else the code. In English, a refusal with no field and no known reason shows `message` instead,
+which often says more than its code.
 
 ```json
 {

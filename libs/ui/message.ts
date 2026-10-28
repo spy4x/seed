@@ -67,7 +67,7 @@ export function englishText(key: string, values?: MessageValues): string {
  * `RealtimeRequestError` and a body `readApiError` read all have this shape.
  */
 export interface ErrorAnswer {
-  /** The server's English sentence: shown only for a code the `errors` catalog lacks. */
+  /** The server's English sentence: shown when nothing finer is known ({@link errorText}). */
   message: string
   /** One of the eight protocol codes; absent for a body that is not the API's, such as a proxy's. */
   code?: string
@@ -116,22 +116,40 @@ export function fieldTexts(
   return texts
 }
 
+/** The protocol code of an answer that is not the API's own, such as a proxy's page. */
+const STATUS_CODES: Readonly<Record<number, string>> = {
+  400: `bad_request`,
+  401: `unauthorized`,
+  403: `forbidden`,
+  404: `not_found`,
+  408: `timeout`,
+  409: `conflict`,
+  429: `rate_limited`,
+  504: `timeout`,
+}
+
+function codeOf(error: ErrorAnswer): string | null {
+  if (error.code !== undefined) return error.code
+  if (error.status === undefined) return null
+  return STATUS_CODES[error.status] ?? (error.status >= 500 ? `internal` : null)
+}
+
 /**
  * A refusal in the translator's language. The first failed field says what to fix when the answer
- * names one; else the text of its `reason`. A failure on the server's side (`internal`, `timeout`,
- * or a 5xx page that is not the API's) says so in general words, since its message names nothing.
- * Any other answer keeps the server's own `message`, which stays English: a reason the catalog
- * lacks, and a refusal with no reason, whose sentence is often the only thing that says what went
- * wrong. Every part is plain text: a screen renders it as text, never as markup.
+ * names one; else the text of its `reason`; else the general sentence of its code. In English, a
+ * refusal with neither a field nor a known reason keeps the server's own `message`, which often
+ * says more than its code, unless the server failed (`internal`, `timeout`), whose message names
+ * nothing. Every part is plain text: a screen renders it as text, never as markup.
  */
 export function errorText(t: Translator<string>, error: ErrorAnswer): string {
   const [first] = Object.values(error.fields ?? {})
   if (first) return fieldText(t, first)
-  if (error.reason !== undefined) {
-    return known(`Reason.${error.reason}`) ? t.t(`Reason.${error.reason}`) : error.message
+  if (error.reason !== undefined && known(`Reason.${error.reason}`)) {
+    return t.t(`Reason.${error.reason}`)
   }
-  const code = error.code ?? (error.status !== undefined && error.status >= 500 ? `internal` : null)
-  return code !== null && known(`Code.${code}`) ? t.t(`Code.${code}`) : error.message
+  const code = codeOf(error)
+  const general = t.language !== `en` || code === `internal` || code === `timeout`
+  return general && code !== null && known(`Code.${code}`) ? t.t(`Code.${code}`) : error.message
 }
 
 /** `error` with its `message` in the translator's language ({@link errorText}). */

@@ -2,6 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import type { ErrorReason } from "@domain/errors"
+import { REALTIME_ERROR_CODES } from "@spy4x/realtime"
 import errors from "@i18n/errors/en.json" with { type: "json" }
 import errorsRu from "@i18n/errors/ru.json" with { type: "json" }
 import { errorText, fieldText, fieldTexts, known } from "./message.ts"
@@ -126,14 +127,28 @@ describe(`errors`, () => {
     )
   })
 
-  it(`a reason the catalog lacks keeps the server's sentence`, () => {
-    const refusal = { code: `conflict`, reason: `SOMETHING_NEW`, message: `A new refusal` }
-    expect(errorText(RUSSIAN, refusal)).toBe(`A new refusal`)
+  it(`in English, a refusal with no known reason keeps the server's sentence`, () => {
+    const unknown = { code: `conflict`, reason: `SOMETHING_NEW`, message: `A new refusal` }
+    expect(errorText(ENGLISH, unknown)).toBe(`A new refusal`)
+    const reasonless = { code: `bad_request`, message: `Enter a valid e-mail address` }
+    expect(errorText(ENGLISH, reasonless)).toBe(`Enter a valid e-mail address`)
   })
 
-  it(`a refusal with no reason keeps the server's sentence`, () => {
-    const refusal = { code: `bad_request`, message: `Enter a valid e-mail address` }
-    expect(errorText(RUSSIAN, refusal)).toBe(`Enter a valid e-mail address`)
+  it(`in another language, a refusal with no known reason says its code, never the server's English`, () => {
+    const reasonless = { code: `not_found`, message: `Group not found` }
+    expect(errorText(RUSSIAN, reasonless)).toBe(`Этого нет, или у вас нет к этому доступа.`)
+    const unknown = { code: `conflict`, reason: `SOMETHING_NEW`, message: `A new refusal` }
+    expect(errorText(RUSSIAN, unknown)).toBe(
+      `За это время здесь что-то изменилось. Обновите страницу и попробуйте ещё раз.`,
+    )
+    expect(errorText(RUSSIAN, { message: `Too Many Requests`, status: 429 })).toBe(
+      `Слишком много попыток. Подождите немного и попробуйте ещё раз.`,
+    )
+  })
+
+  it(`every protocol code has a sentence in the errors catalog`, () => {
+    const missing = REALTIME_ERROR_CODES.filter((code) => !known(`Code.${code}`))
+    expect(missing).toEqual([])
   })
 
   it(`a failure on the server's side says so in general words`, () => {
@@ -143,7 +158,7 @@ describe(`errors`, () => {
     expect(errorText(RUSSIAN, { message: `Bad Gateway`, status: 502 })).toBe(
       `У нас что-то пошло не так. Попробуйте ещё раз.`,
     )
-    expect(errorText(RUSSIAN, { message: `Not found`, status: 404 })).toBe(`Not found`)
+    expect(errorText(ENGLISH, { message: `Not found`, status: 404 })).toBe(`Not found`)
   })
 
   it(`a failed field says what to fix, before the refusal's reason`, () => {
