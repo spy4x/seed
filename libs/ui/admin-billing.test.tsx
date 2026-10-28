@@ -29,7 +29,7 @@ import {
   AdminBillingCustomerScreen,
   type AdminBillingCustomerScreenProps,
 } from "./admin-billing-detail.tsx"
-import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
+import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
 
 /** A day as the screens write it on this device: the default formatter, with no person's settings. */
 const day = (at: string) => createFormatters().date(at)

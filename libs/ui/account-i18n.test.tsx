@@ -8,12 +8,7 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
-import {
-  type Catalog,
-  createTranslator,
-  pseudoLocalize,
-  type Translator,
-} from "@spy4x/platform/universal/i18n"
+import { type Catalog, createTranslator, type Translator } from "@spy4x/platform/universal/i18n"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { createFormatters } from "@spy4x/time/format"
@@ -30,6 +25,7 @@ import {
   UserMFAStatus,
 } from "@domain/identity"
 import { AuthScreen } from "./auth-screen.tsx"
+import { englishLeft as pageEnglish, PSEUDO } from "./i18n-testing.ts"
 import { ConfirmSignUpScreen } from "./confirm-sign-up-screen.tsx"
 import { SignUpCodeScreen } from "./sign-up-code-screen.tsx"
 import { LinkOpenScreen, LinkRequestScreen } from "./sign-in-link-screen.tsx"
@@ -89,10 +85,6 @@ async function mount(node: VNode, t: Translator<string> = PSEUDO): Promise<void>
 }
 
 const english = [uiEn, systemEn, appEn] as Catalog[]
-const PSEUDO: Translator<string> = createTranslator({
-  language: `en-XA`,
-  catalogs: english.map((source) => ({ source, translation: pseudoLocalize(source) })),
-})
 const GERMAN: Translator<string> = createTranslator({
   language: `de`,
   catalogs: english.map((source, index) => ({
@@ -101,24 +93,6 @@ const GERMAN: Translator<string> = createTranslator({
   })),
 })
 const FORMAT = createFormatters({ locale: `en-GB`, timeZone: `Europe/Berlin`, hourCycle: `h23` })
-
-/** What a person reads: every text node, and the names and hints in attributes. */
-function readable(): string[] {
-  const texts: string[] = []
-  const walker = document.createTreeWalker(document.body, 4 /* NodeFilter.SHOW_TEXT */)
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    // A date or a relative time is the formatters' data, in their own locale.
-    if (node.parentElement?.closest(`script, style, time`)) continue
-    texts.push(node.textContent ?? ``)
-  }
-  for (const element of document.body.querySelectorAll(`:not(time)`)) {
-    for (const name of [`aria-label`, `placeholder`, `title`]) {
-      const value = element.getAttribute(name)
-      if (value) texts.push(value)
-    }
-  }
-  return texts.map((text) => text.trim()).filter(Boolean)
-}
 
 /**
  * Data the screens show as it is: names, addresses, devices, brands, a code. Longest first, so a
@@ -156,15 +130,7 @@ const DATA = [
 
 /** Every text the page shows that still has English in it, past the pseudo-language and data. */
 function englishLeft(): string[] {
-  return readable().filter((text) => {
-    // A message split around a value spans several nodes: `⟦… ` before it, ` …⟧` after.
-    let rest = text.replaceAll(/⟦[^⟧]*(⟧|$)/g, ``).replace(/^[^⟦]*⟧/, ``)
-    // A tag's text inside a message (a link, a bold name) has no marks of its own: its accented
-    // words are the pseudo-language, as English never has them.
-    rest = rest.replaceAll(/\S*[\u00c0-\u024f]\S*/g, ``)
-    for (const data of DATA) rest = rest.replaceAll(data, ``)
-    return /[A-Za-z]{2,}/.test(rest)
-  })
+  return pageEnglish(document.body, DATA)
 }
 
 const NOW = new Date(`2026-10-17T12:05:00Z`)

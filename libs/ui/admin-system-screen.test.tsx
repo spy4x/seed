@@ -10,7 +10,7 @@ import { act } from "preact/test-utils"
 import { AdminHealth, type AdminSystemSnapshot } from "@domain/identity"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import { AdminSystemScreen, type AdminSystemScreenProps } from "./admin-system-screen.tsx"
-import { ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
+import { ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
 
 const window = new Window({ url: "http://admin.localhost/system" })
 const own = {

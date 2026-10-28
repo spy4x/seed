@@ -8,10 +8,9 @@ import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { type ApiToken, ApiTokenAccess } from "@domain/api-tokens"
-import { ENGLISH } from "./i18n-testing.ts"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import { API_TOKEN_MESSAGES } from "./api-tokens.tsx"
-import { PSEUDO, untranslated } from "./i18n-testing.ts"
+import { ENGLISH, englishLeft, PSEUDO } from "./i18n-testing.ts"
 import {
   API_TOKEN_OFFLINE,
   ApiTokenNewScreen,
@@ -316,7 +315,7 @@ describe("ApiTokenNewScreen in another language", () => {
         form: API_TOKEN_MESSAGES.createFailed,
       },
     }))
-    expect(untranslated(document.body, ["Personal"])).toEqual([])
+    expect(englishLeft(document.body, ["Personal"])).toEqual([])
     let page = document.body.textContent ?? ""
     for (
       const key of [
@@ -331,12 +330,12 @@ describe("ApiTokenNewScreen in another language", () => {
     }
 
     await mount(inPseudo({ created: { token, secret: SECRET } }))
-    expect(untranslated(document.body, [SECRET, "Authorization: Bearer"])).toEqual([])
+    expect(englishLeft(document.body, [SECRET, "Authorization: Bearer"])).toEqual([])
     page = document.body.textContent ?? ""
     expect(page).toContain(PSEUDO.t("ApiTokenNewScreen.copyNow"))
 
     await mount(inPseudo({ groups: [] }))
-    expect(untranslated(document.body)).toEqual([])
+    expect(englishLeft(document.body)).toEqual([])
     expect(document.body.textContent).toContain(PSEUDO.t("ApiTokenNewScreen.noGroup"))
   })
 })

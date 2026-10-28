@@ -51,18 +51,11 @@ import {
 import { GroupsScreen, type GroupsScreenProps, NEW_GROUP_PATH } from "./groups-screen.tsx"
 import { InvitationNewScreen } from "./invitation-new-screen.tsx"
 import appEn from "@i18n/app/en.json" with { type: "json" }
-import errorsEn from "@i18n/errors/en.json" with { type: "json" }
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { GROUP_PATHS, SCREEN_PATHS } from "./progressive.tsx"
-import {
-  type Catalog,
-  createTranslator,
-  type MessageValues,
-  pseudoLocalize,
-} from "@spy4x/platform/universal/i18n"
+import type { MessageValues } from "@spy4x/platform/universal/i18n"
+import { englishLeft, PSEUDO } from "./i18n-testing.ts"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
-import uiEn from "@spy4x/preact-ui/i18n/en"
-import systemEn from "@spy4x/preact-system/i18n/en"
 import { type ActivityRow, GroupActivityPanel } from "./group-activity-panel.tsx"
 import { GroupImportScreen, type GroupImportState } from "./group-import-screen.tsx"
 import { GroupMoveAllForm } from "./group-move-all.tsx"
@@ -1976,14 +1969,6 @@ describe("group editor, as the server draws it", () => {
  * it is data: a group's or a person's name, an address, a date, a number.
  */
 describe("the group screens in the en-XA pseudo-language", () => {
-  const PSEUDO = createTranslator({
-    language: `en-XA`,
-    catalogs: [uiEn, systemEn, appEn, errorsEn].map((source) => ({
-      source: source as Catalog,
-      translation: pseudoLocalize(source as Catalog),
-    })),
-  })
-
   /** What members typed and who they are: the screens show it as it is. */
   const DATA = [
     `Team`,
@@ -2002,36 +1987,9 @@ describe("the group screens in the en-XA pseudo-language", () => {
     `VE`,
   ]
 
-  /**
-   * What a person reads that is English outside the pseudo-language's marks: every text node, and
-   * the names and hints in attributes. A `<time>` shows a date, which is data.
-   */
+  /** What a person reads that is English outside the pseudo-language's marks. */
   function english(): string[] {
-    const texts: string[] = []
-    const walker = document.createTreeWalker(document.body, 4 /* NodeFilter.SHOW_TEXT */)
-    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-      if (node.parentElement?.closest(`script, style, time`)) continue
-      texts.push(node.textContent ?? ``)
-    }
-    for (const element of document.body.querySelectorAll(`*`)) {
-      if (element.closest(`time`)) continue
-      for (const name of [`aria-label`, `placeholder`, `title`, `label`]) {
-        const value = element.getAttribute(name)
-        if (value) texts.push(value)
-      }
-    }
-    return texts.filter((text) => {
-      let rest = text
-      for (const data of DATA) rest = rest.replaceAll(data, ``)
-      // Whole messages, innermost first: a message can hold another as a value.
-      for (let before = ``; before !== rest;) {
-        before = rest
-        rest = rest.replaceAll(/⟦[^⟦⟧]*⟧/g, ``)
-      }
-      // A message split around a tag spans several nodes, and each part is pseudo-text, whose
-      // vowels carry accents. English is a word of plain letters only.
-      return /(?<!\p{L})[A-Za-z]{2,}(?!\p{L})/u.test(rest)
-    })
+    return englishLeft(document.body, DATA)
   }
 
   /** Mounts `node` in the pseudo-language and checks that every word is the catalog's. */

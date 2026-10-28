@@ -14,7 +14,7 @@ import { API_TOKEN_MESSAGES, ApiTokens, type ApiTokensProps } from "./api-tokens
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { createFormatters } from "@spy4x/time/format"
-import { PSEUDO, untranslated } from "./i18n-testing.ts"
+import { englishLeft, PSEUDO } from "./i18n-testing.ts"
 import { ProfileScreen } from "./profile-screen.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -318,7 +318,7 @@ describe("ApiTokens in another language", () => {
 
     await mount(inPseudo({ error: API_TOKEN_MESSAGES.failed, savedAt: Date.now() }))
     await click(`[data-e2e=api-token-revoke-${reader.id}]`)
-    expect(untranslated(document.body, data())).toEqual([])
+    expect(englishLeft(document.body, data())).toEqual([])
     const page = document.body.textContent ?? ""
     for (
       const key of ["ApiTokens.failed", "ApiTokens.savedCopyTitle", "ApiTokens.revokeMessage"]
@@ -327,11 +327,11 @@ describe("ApiTokens in another language", () => {
     }
 
     await mount(inPseudo({ tokens: [] }))
-    expect(untranslated(document.body, data())).toEqual([])
+    expect(englishLeft(document.body, data())).toEqual([])
     expect(document.body.textContent).toContain(PSEUDO.t("ApiTokens.emptyText"))
 
     await mount(inPseudo({ tokens: null }))
-    expect(untranslated(document.body, data())).toEqual([])
+    expect(englishLeft(document.body, data())).toEqual([])
     expect(document.body.textContent).toContain(PSEUDO.t("ApiTokens.loading"))
   })
 })

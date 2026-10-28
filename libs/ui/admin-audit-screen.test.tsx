@@ -24,7 +24,7 @@ import {
   type AdminAuditScreenProps,
   auditEventLabel,
 } from "./admin-audit-screen.tsx"
-import { ADMIN_ENGLISH as T, ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
+import { ADMIN_ENGLISH as T, ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 const window = new Window({ url: "http://admin.localhost/audit" })
