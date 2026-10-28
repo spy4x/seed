@@ -583,7 +583,7 @@ describe("GroupEditorScreen header", () => {
       }))
       const dialog = find("[data-e2e=group-move-all-dialog]")
       expect(find("[data-e2e=plan-refusal]").textContent).toContain(
-        "Archive has reached its note limit",
+        "\u2068Archive\u2069 has reached its note limit",
       )
       expect(dialog.textContent).not.toContain("not this one's")
       expect(find("[data-e2e=plan-refusal] a").getAttribute("href")).toContain("g2")
@@ -619,9 +619,13 @@ describe("GroupEditorScreen header", () => {
       expect(changed.calls).toHaveLength(1)
       // The refusal is still passed in, but it was Archive's: no notice names or links Home.
       expect(has("[data-e2e=plan-refusal]")).toBe(false)
-      expect(find("[data-e2e=group-move-all-dialog]").textContent).not.toContain("Home has reached")
+      expect(find("[data-e2e=group-move-all-dialog]").textContent).not.toContain(
+        "\u2068Home\u2069 has reached",
+      )
       await choose("[data-e2e=group-move-all-to]", "g2")
-      expect(find("[data-e2e=plan-refusal]").textContent).toContain("Archive has reached")
+      expect(find("[data-e2e=plan-refusal]").textContent).toContain(
+        "\u2068Archive\u2069 has reached",
+      )
       expect(find("[data-e2e=plan-refusal] a").getAttribute("href")).toContain("g2")
       await choose("[data-e2e=group-move-all-to]", "g3")
       // The app answers the callback by clearing the refusal.

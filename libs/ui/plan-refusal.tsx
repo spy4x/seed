@@ -1,51 +1,58 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { Notice } from "@spy4x/preact-ui/notice"
 import type { FeatureKey, LimitKey, PlanRefusal } from "@domain/billing"
 import { GROUP_PATHS, type Navigate } from "./progressive.tsx"
+import { useAppText } from "./i18n.ts"
 
 /**
- * What a refusal says, per entitlement: a title, and what the plan allows. `who` is what the title
- * calls the group: its name, or "This group".
+ * What a refusal says, per entitlement, by key in the `app` catalog: the title when the group's name
+ * is known (`named`) and when it is not (`unnamed`), and what the plan allows. A message with a limit
+ * is a plural on it.
  */
-const REFUSAL_TEXT: Record<
+const REFUSAL_KEYS: Record<
   FeatureKey | LimitKey,
-  (limit: number | null, who: string) => {
-    title: string
-    message: string
-  }
+  { named: string; unnamed: string; message: string }
 > = {
-  maxNotes: (limit, who) => ({
-    title: `${who} has reached its note limit`,
-    message: `Its plan holds up to ${limit} notes. Every note it has stays readable and editable.`,
-  }),
-  maxMembers: (limit, who) => ({
-    title: `${who} has reached its member limit`,
-    message: `Its plan allows up to ${limit} members.`,
-  }),
-  maxAttachments: (limit, who) => ({
-    title: `${who} has reached its file limit`,
-    message:
-      `Its plan holds up to ${limit} files across all notes. Remove a file from any note to make room.`,
-  }),
-  storageBytes: (_limit, who) => ({
-    title: `${who} has used all its storage`,
-    message: "Its plan has no room for more files.",
-  }),
-  memberRoles: () => ({
-    title: "Promoting members needs a paid plan",
-    message:
-      "On this group's plan, a member can be given a lower role or removed, but not promoted.",
-  }),
+  maxNotes: {
+    named: `PlanRefusalNotice.notesTitle`,
+    unnamed: `PlanRefusalNotice.notesTitleUnnamed`,
+    message: `PlanRefusalNotice.notesText`,
+  },
+  maxMembers: {
+    named: `PlanRefusalNotice.membersTitle`,
+    unnamed: `PlanRefusalNotice.membersTitleUnnamed`,
+    message: `PlanRefusalNotice.membersText`,
+  },
+  maxAttachments: {
+    named: `PlanRefusalNotice.filesTitle`,
+    unnamed: `PlanRefusalNotice.filesTitleUnnamed`,
+    message: `PlanRefusalNotice.filesText`,
+  },
+  storageBytes: {
+    named: `PlanRefusalNotice.storageTitle`,
+    unnamed: `PlanRefusalNotice.storageTitleUnnamed`,
+    message: `PlanRefusalNotice.storageText`,
+  },
+  memberRoles: {
+    named: `PlanRefusalNotice.rolesTitle`,
+    unnamed: `PlanRefusalNotice.rolesTitle`,
+    message: `PlanRefusalNotice.rolesText`,
+  },
 }
+
+/** A value inside a plain-text sentence, isolated from its direction: what `<bdi>` does in markup. */
+const isolate = (text: string) => `\u2068${text}\u2069`
 
 export interface PlanRefusalNoticeProps {
   groupId: string
   /** The refusal the API sent with its 402, or the socket with its `forbidden`. */
   refusal: PlanRefusal
-  /** The group's name, for the title ("Family has reached its note limit"). Left out: "This group". */
+  /**
+   * The group's name, for the title ("Family has reached its note limit"). Left out, the title says
+   * "This group".
+   */
   groupName?: string
   navigate?: Navigate
 }
@@ -60,7 +67,12 @@ export function PlanRefusalNotice(
 ): JSX.Element {
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => box.current?.focus(), [refusal])
-  const text = REFUSAL_TEXT[refusal.entitlement](refusal.limit, groupName ?? "This group")
+  const t = useAppText()
+  const keys = REFUSAL_KEYS[refusal.entitlement]
+  const title = groupName === undefined
+    ? t.t(keys.unnamed)
+    : t.t(keys.named, { group: isolate(groupName) })
+  const message = t.t(keys.message, { count: refusal.limit ?? 0 })
   return (
     <div
       ref={box}
@@ -70,16 +82,16 @@ export function PlanRefusalNotice(
     >
       <Notice
         tone="warning"
-        title={text.title}
+        title={title}
         action={refusal.canUpgrade && (
           <Button href={GROUP_PATHS.billing(groupId)} navigate={navigate} size="sm">
-            Open Plan and billing
+            {t.t(`PlanRefusalNotice.openBilling`)}
           </Button>
         )}
       >
-        {refusal.canUpgrade ? text.message : (
+        {refusal.canUpgrade ? message : (
           <span data-e2e="plan-refusal-ask-owner">
-            {text.message} Ask the group's owner to upgrade the plan.
+            {message} {t.t(`PlanRefusalNotice.askOwner`)}
           </span>
         )}
       </Notice>
