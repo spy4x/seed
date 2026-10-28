@@ -14,7 +14,12 @@ import {
   type CatalogText,
   parseCatalogCategoryFields,
 } from "@domain/catalog"
-import type { CatalogCategoryDraft, CatalogFormErrors } from "@ui/admin-catalog.tsx"
+import {
+  ADMIN_CATALOG_NO_FILTER,
+  type AdminCatalogFilter,
+  type CatalogCategoryDraft,
+  type CatalogFormErrors,
+} from "@ui/admin-catalog.tsx"
 import {
   type CatalogItemDraft,
   catalogItemDraft,
@@ -75,6 +80,8 @@ export function createCatalogState(
   const catalog = signal<AdminCatalogResponse | null>(null)
   const error = signal<string | null>(null)
   const busy = signal(false)
+  /** The list's search and chips, kept while the operator opens an item and comes back. */
+  const listFilter = signal<AdminCatalogFilter>(ADMIN_CATALOG_NO_FILTER)
   const itemEditor = signal<CatalogItemEditorState>(blankItem(null))
   const categoryEditor = signal<CatalogCategoryEditorState>({
     id: null,
@@ -111,6 +118,7 @@ export function createCatalogState(
 
   const state = {
     catalog,
+    listFilter,
     error,
     busy,
     itemEditor,

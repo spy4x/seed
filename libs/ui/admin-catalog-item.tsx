@@ -1,14 +1,15 @@
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
+import { formatMoney } from "@spy4x/platform/universal/money"
 import { slugify } from "@spy4x/platform/universal/text"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
-import { IconGlobe, IconPlus, IconTrashBin } from "@spy4x/preact-icons"
+import { IconEllipsisVertical, IconGlobe, IconPlus, IconTrashBin } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card, CardBody, CardHeader } from "@spy4x/preact-ui/card"
 import { Checkbox } from "@spy4x/preact-ui/checkbox"
 import { ColorField, type ColorPreset } from "@spy4x/preact-ui/color-field"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
-import { DropdownItem } from "@spy4x/preact-ui/dropdown"
+import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { FileInput } from "@spy4x/preact-ui/file-input"
@@ -57,7 +58,7 @@ import {
   CatalogStatusBadge,
   CatalogThumbnail,
 } from "./admin-catalog.tsx"
-import { ListEmpty } from "./notes-screen.tsx"
+import { ListEmpty, MENU_TRIGGER_CLASSES } from "./notes-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
 // #region Draft
@@ -329,7 +330,7 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
     <Button
       type="submit"
       variant={status === `published` ? `primary` : `secondary`}
-      class="min-h-11 w-full sm:min-h-9 sm:w-auto"
+      class="min-h-11 flex-1 sm:min-h-9 sm:flex-none"
       busy={busy}
       busyLabel="Saving…"
       hotkey="mod+s"
@@ -391,6 +392,9 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
                 <Field
                   id={catalogFieldId(`price`)}
                   label={`Price (${settings.currency})`}
+                  hint={value.price === null
+                    ? undefined
+                    : `Shown as ${formatMoney(value.price, settings.currency)}`}
                   error={errors.price}
                   required
                 >
@@ -461,12 +465,15 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
           )}
 
           <ErrorState message={errors.form ?? null} />
-          <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div
+            class={`flex gap-2 sm:justify-end ${FOOTER_PHONE_CLASS}`}
+            data-e2e="catalog-item-footer"
+          >
             <Button
               href={BACK.href}
               navigate={navigate}
               variant="ghost"
-              class="min-h-11 w-full sm:min-h-9 sm:w-auto"
+              class="min-h-11 flex-1 sm:min-h-9 sm:flex-none"
             >
               Cancel
             </Button>
@@ -632,6 +639,7 @@ function Colours({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Ed
           <Button
             variant="secondary"
             size="sm"
+            class="min-h-11 sm:min-h-0"
             data-e2e="catalog-item-add-colour"
             onClick={() => {
               const id = uuidV7()
@@ -697,7 +705,7 @@ function Colours({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Ed
                       <Button
                         variant="ghost"
                         size="sm"
-                        class="ml-auto"
+                        class="ml-auto min-h-11 sm:min-h-0"
                         data-e2e="catalog-item-remove-colour"
                         onClick={() =>
                           edit({ colours: value.colours.filter((one) => one.id !== colour.id) })}
@@ -714,6 +722,19 @@ function Colours({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Ed
     </Card>
   )
 }
+
+/**
+ * The editor's footer on a phone: it sticks above the rail's tab bar (its 64 px row, 1 px rule, the
+ * 24 px fade band and the device's bottom inset), so Save stays in reach on a long item.
+ */
+const FOOTER_PHONE_CLASS =
+  `max-md:sticky max-md:bottom-[calc(5.5rem+1px+env(safe-area-inset-bottom,0px))] max-md:z-[5] max-md:-mx-4 max-md:border-t max-md:border-subtle max-md:bg-canvas max-md:px-4 max-md:py-3`
+
+/** A checkbox's label as a 44px tap target on a phone, the box in its middle. */
+const TAP_CLASS = `size-11 justify-center sm:size-auto`
+
+/** A row menu's item: a 44px tap target on a phone. */
+const MENU_ITEM_CLASS = `min-h-11 sm:min-h-0`
 
 /** Garment colours a shop picks most, in one row; any other comes from the picker or a hex code. */
 const CATALOG_SWATCHES: readonly ColorPreset[] = [
@@ -762,6 +783,7 @@ function Sizes({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit
           <Button
             variant="secondary"
             size="sm"
+            class="min-h-11 sm:min-h-0"
             data-e2e="catalog-item-add-size"
             onClick={() => {
               const id = uuidV7()
@@ -829,7 +851,7 @@ function Sizes({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Edit
                     <Button
                       variant="ghost"
                       size="sm"
-                      class="self-end"
+                      class="min-h-11 self-end sm:min-h-0"
                       data-e2e="catalog-item-remove-size"
                       onClick={() =>
                         edit({ sizes: value.sizes.filter((one) => one.id !== size.id) })}
@@ -906,8 +928,9 @@ function Availability({ props, edit }: { props: AdminCatalogItemScreenProps; edi
                       sizeId: size?.id ?? null,
                     })
                     return (
-                      <td key={key} class="px-3 py-2">
+                      <td key={key} class="p-0 sm:px-3 sm:py-2">
                         <Checkbox
+                          labelClass={TAP_CLASS}
                           checked={!sold.has(key)}
                           aria-label={`${colourName(colour)}, ${sizeName(size)}: in stock`}
                           data-e2e="catalog-item-in-stock"
@@ -947,6 +970,16 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
   }
   const photoLabel = (photo: CatalogPhoto) =>
     `Photo ${item.photos.indexOf(photo) + 1}${item.photos[0] === photo ? `, the cover` : ``}`
+  // After "Make cover", focus follows the photo to its new place, once the new order is drawn.
+  const [focusOn, setFocusOn] = useState<string | null>(null)
+  const list = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!focusOn || photos.busy) return
+    const at = item.photos.findIndex((photo) => photo.id === focusOn)
+    if (at < 0) return setFocusOn(null)
+    list.current?.querySelectorAll<HTMLElement>(`[data-e2e=catalog-item-photo-menu]`)[at]?.focus()
+    setFocusOn(null)
+  }, [focusOn, item.photos, photos.busy])
   return (
     <Card>
       <CardHeader
@@ -975,72 +1008,77 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
           </p>
           <ErrorState message={photos.error} />
           {item.photos.length > 0 && (
-            <SortableList
-              items={item.photos}
-              itemLabel={photoLabel}
-              onMove={props.onPhotoMove}
-              renderItem={(photo) => {
-                const words = PHOTO_STATE_WORDS[photo.state]
-                const colour = colourName(photo.colourId)
-                const alt = catalogText(photo.alt, languages)
-                return (
-                  <div class="flex items-center gap-3 py-1" data-e2e="catalog-item-photo">
-                    {photo.state === `ready`
-                      ? <CatalogThumbnail photoId={photo.id} alt={alt} size="size-16" />
-                      : <CatalogThumbnail photoId={null} size="size-16" />}
-                    <div class="flex min-w-0 flex-1 flex-col gap-1">
-                      <span class="font-medium">
-                        {item.photos[0] === photo
-                          ? `Cover`
-                          : `Photo ${item.photos.indexOf(photo) + 1}`}
-                        {colour && <span class="font-normal text-muted">{` · ${colour}`}</span>}
-                      </span>
-                      <span
-                        class={`text-sm ${
-                          photo.state === `refused` ? `text-danger` : `text-muted`
-                        }`}
-                      >
-                        {words ?? (alt || `No description yet`)}
-                      </span>
-                    </div>
-                    <div class="flex shrink-0 flex-wrap justify-end gap-1">
-                      {item.photos[0] !== photo && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={photos.busy}
-                          data-e2e="catalog-item-photo-cover"
-                          aria-label={`Make ${photoLabel(photo)} the cover`}
-                          onClick={() => props.onPhotoMove(item.photos.indexOf(photo), 0)}
+            <div ref={list}>
+              <SortableList
+                items={item.photos}
+                itemLabel={photoLabel}
+                onMove={props.onPhotoMove}
+                renderItem={(photo) => {
+                  const words = PHOTO_STATE_WORDS[photo.state]
+                  const colour = colourName(photo.colourId)
+                  const alt = catalogText(photo.alt, languages)
+                  return (
+                    <div class="flex items-center gap-3 py-1" data-e2e="catalog-item-photo">
+                      {photo.state === `ready`
+                        ? <CatalogThumbnail photoId={photo.id} alt={alt} size="size-16" />
+                        : <CatalogThumbnail photoId={null} size="size-16" />}
+                      <div class="flex min-w-0 flex-1 flex-col gap-1">
+                        <span class="font-medium">
+                          {item.photos[0] === photo
+                            ? `Cover`
+                            : `Photo ${item.photos.indexOf(photo) + 1}`}
+                          {colour && <span class="font-normal text-muted">{` · ${colour}`}</span>}
+                        </span>
+                        <span
+                          class={`text-sm ${
+                            photo.state === `refused` ? `text-danger` : `text-muted`
+                          }`}
                         >
-                          Make cover
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={photos.busy}
-                        data-e2e="catalog-item-photo-edit"
-                        aria-label={`Describe ${photoLabel(photo)}`}
-                        onClick={() => setEditing(photo)}
+                          {words ?? (alt || `No description yet`)}
+                        </span>
+                      </div>
+                      <Dropdown
+                        trigger={<IconEllipsisVertical class="size-5" />}
+                        triggerLabel={`More actions for ${photoLabel(photo)}`}
+                        triggerClasses={MENU_TRIGGER_CLASSES}
+                        triggerDataE2E="catalog-item-photo-menu"
                       >
-                        Describe
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={photos.busy}
-                        data-e2e="catalog-item-photo-remove"
-                        aria-label={`Remove ${photoLabel(photo)}`}
-                        onClick={() => setRemoving(photo)}
-                      >
-                        <IconTrashBin class="size-4" aria-hidden="true" />
-                      </Button>
+                        {item.photos[0] !== photo && (
+                          <DropdownItem
+                            class={MENU_ITEM_CLASS}
+                            disabled={photos.busy}
+                            dataE2E="catalog-item-photo-cover"
+                            onClick={() => {
+                              setFocusOn(photo.id)
+                              props.onPhotoMove(item.photos.indexOf(photo), 0)
+                            }}
+                          >
+                            Make cover<span class="sr-only">: {photoLabel(photo)}</span>
+                          </DropdownItem>
+                        )}
+                        <DropdownItem
+                          class={MENU_ITEM_CLASS}
+                          disabled={photos.busy}
+                          dataE2E="catalog-item-photo-edit"
+                          onClick={() => setEditing(photo)}
+                        >
+                          Describe<span class="sr-only">: {photoLabel(photo)}</span>
+                        </DropdownItem>
+                        <DropdownItem
+                          class={MENU_ITEM_CLASS}
+                          danger
+                          disabled={photos.busy}
+                          dataE2E="catalog-item-photo-remove"
+                          onClick={() => setRemoving(photo)}
+                        >
+                          Remove<span class="sr-only">: {photoLabel(photo)}</span>
+                        </DropdownItem>
+                      </Dropdown>
                     </div>
-                  </div>
-                )
-              }}
-            />
+                  )
+                }}
+              />
+            </div>
           )}
           {item.photos.length === 0 && photos.uploading === 0 && (
             <p class="text-sm" data-e2e="catalog-item-no-photos">

@@ -38,6 +38,8 @@ function CatalogView({ context }: { context: AdminContext }): JSX.Element {
       catalog={state.catalog.value}
       error={state.error.value}
       onRetry={() => void state.load()}
+      filter={state.listFilter.value}
+      onFilter={(filter) => (state.listFilter.value = filter)}
       navigate={context.navigate}
     />
   )

@@ -16,11 +16,14 @@ import type {
   CatalogItemRow,
 } from "@domain/catalog"
 import {
+  ADMIN_CATALOG_NO_FILTER,
   AdminCatalogCategoriesScreen,
   type AdminCatalogCategoriesScreenProps,
   AdminCatalogCategoryEditorScreen,
+  type AdminCatalogFilter,
   AdminCatalogScreen,
   catalogSettingsLine,
+  filterCatalogItems,
 } from "./admin-catalog.tsx"
 import {
   AdminCatalogItemScreen,
@@ -138,6 +141,42 @@ const ROW: CatalogItemRow = {
   updatedAt: NOW,
 }
 
+/** The list screen over its own filter. */
+function ListScreen({ catalog }: { catalog: AdminCatalogResponse }) {
+  const [filter, setFilter] = useState<AdminCatalogFilter>(ADMIN_CATALOG_NO_FILTER)
+  return (
+    <AdminCatalogScreen
+      catalog={catalog}
+      error={null}
+      onRetry={() => {}}
+      filter={filter}
+      onFilter={setFilter}
+    />
+  )
+}
+
+/** Three items: a sold-out tee on the website, a draft hat with no category, a hidden jacket. */
+const ROWS: CatalogItemRow[] = [
+  ROW,
+  {
+    ...ROW,
+    id: RED,
+    slug: "mu-len",
+    name: { vi: "Mũ len", en: "Wool hat" },
+    categoryId: null,
+    status: "draft",
+    stock: "in-stock",
+  },
+  {
+    ...ROW,
+    id: SMALL,
+    slug: "ao-khoac",
+    name: { vi: "Áo khoác" },
+    status: "hidden",
+    stock: "some-sold-out",
+  },
+]
+
 describe("the catalog list", () => {
   const catalog = (patch: Partial<AdminCatalogResponse> = {}): AdminCatalogResponse => ({
     settings: SETTINGS,
@@ -147,7 +186,7 @@ describe("the catalog list", () => {
   })
 
   it("names each item's category, price, photos and stock, and its status", async () => {
-    await mount(<AdminCatalogScreen catalog={catalog()} error={null} onRetry={() => {}} />)
+    await mount(<ListScreen catalog={catalog()} />)
     const row = find("[data-e2e=catalog-row]")
     expect(row.textContent).toContain("Áo thun")
     expect(row.textContent).toContain("Áo · ₫250,000 · 2 photos · Sold out")
@@ -156,14 +195,51 @@ describe("the catalog list", () => {
 
   it("sends a new catalog to its categories first", async () => {
     await mount(
-      <AdminCatalogScreen
-        catalog={catalog({ categories: [], items: [] })}
-        error={null}
-        onRetry={() => {}}
-      />,
+      <ListScreen catalog={catalog({ categories: [], items: [] })} />,
     )
     expect(document.body.textContent).toContain("Start with a category")
     expect(find("a[href='/catalog/categories/new']").textContent).toBe("Add category")
+  })
+
+  it("filters by status, sold-out sizes and a search that ignores accents, case and word order", () => {
+    const all = catalog({ items: ROWS })
+    const ids = (filter: Partial<AdminCatalogFilter>) =>
+      filterCatalogItems(all, { ...ADMIN_CATALOG_NO_FILTER, ...filter }).items.map((one) =>
+        one.slug
+      )
+
+    expect(filterCatalogItems(all, ADMIN_CATALOG_NO_FILTER).counts).toEqual({
+      all: 3,
+      draft: 1,
+      published: 1,
+      hidden: 1,
+      soldOut: 2,
+    })
+    expect(ids({ query: "AO" })).toEqual(["ao-thun", "ao-khoac"])
+    expect(ids({ query: "thun ao" })).toEqual(["ao-thun"])
+    expect(ids({ query: "wool" })).toEqual(["mu-len"])
+    expect(ids({ query: "tops" })).toEqual(["ao-thun", "ao-khoac"])
+    expect(ids({ query: "mu-len" })).toEqual(["mu-len"])
+    expect(ids({ status: "draft" })).toEqual(["mu-len"])
+    expect(ids({ soldOut: true })).toEqual(["ao-thun", "ao-khoac"])
+    // Each chip counts what it would show beside the other filters.
+    expect(filterCatalogItems(all, { ...ADMIN_CATALOG_NO_FILTER, soldOut: true }).counts.draft)
+      .toBe(0)
+    expect(filterCatalogItems(all, { ...ADMIN_CATALOG_NO_FILTER, status: "hidden" }).counts.soldOut)
+      .toBe(1)
+  })
+
+  it("counts on its chips, and clears filters that match nothing", async () => {
+    await mount(<ListScreen catalog={catalog({ items: ROWS })} />)
+    expect(find("[data-e2e=catalog-status]").textContent).toContain("On the website 1")
+    expect(find("[data-e2e=catalog-sold-out]").textContent).toContain("Sold-out sizes 2")
+    expect(find("[data-e2e=catalog-filters]").getAttribute("role")).toBe("search")
+
+    await type(find("[data-e2e=catalog-search]"), "nothing like this")
+    expect(find("[data-e2e=catalog-count]").textContent).toBe("0 items")
+    await clickOn(find("[data-e2e=catalog-clear]"))
+    expect(document.querySelectorAll("[data-e2e=catalog-row]")).toHaveLength(3)
+    expect(find<HTMLInputElement>("[data-e2e=catalog-search]").value).toBe("")
   })
 
   it("says the catalog's currency and languages in words", () => {
@@ -261,16 +337,20 @@ const ITEM_SAVED: CatalogItem = {
 
 /** The item editor over its own state, recording every call but `onChange`. */
 function ItemEditor(
-  { calls, item = null, errors = {}, draft }: {
+  { calls, item = null, errors = {}, draft, reorder = false }: {
     calls: unknown[][]
     item?: CatalogItem | null
     errors?: Record<string, string>
     draft?: (value: CatalogItemDraft) => void
+    /** Moves the photos as the app does, instead of only recording the move. */
+    reorder?: boolean
   },
 ) {
   const [value, setValue] = useState(catalogItemDraft(item))
+  const [current, setCurrent] = useState(item)
+  const [busy, setBusy] = useState(false)
   const props: AdminCatalogItemScreenProps = {
-    item,
+    item: current,
     settings: SETTINGS,
     categories: [categoryOf()],
     loading: false,
@@ -286,9 +366,22 @@ function ItemEditor(
     onPublish: () => calls.push(["publish"]),
     onHide: () => calls.push(["hide"]),
     onDelete: () => calls.push(["delete"]),
-    photos: { uploading: 0, busy: false, error: null },
+    photos: { uploading: 0, busy, error: null },
     onUpload: (files) => calls.push(["upload", files.length]),
-    onPhotoMove: (from, to) => calls.push(["move", from, to]),
+    onPhotoMove: (from, to) => {
+      calls.push(["move", from, to])
+      if (!reorder || !current) return
+      // As the app does: busy while the API answers, then the new order. A browser drops focus
+      // from a node it moves, so the moved row loses it here too.
+      setBusy(true)
+      setTimeout(() => {
+        ;(document.activeElement as HTMLElement | null)?.blur()
+        const photos = [...current.photos]
+        photos.splice(to, 0, ...photos.splice(from, 1))
+        setCurrent({ ...current, photos })
+        setBusy(false)
+      })
+    },
     onPhotoSave: (id, change) => calls.push(["photo", id, change]),
     onPhotoRemove: (id) => calls.push(["remove", id]),
   }
@@ -351,13 +444,58 @@ describe("the item editor", () => {
     expect(calls).toEqual([["publish"]])
   })
 
-  it("makes a photo the cover by moving it first", async () => {
+  it("makes a photo the cover from its row's menu, named for the photo, and keeps focus on it", async () => {
     const calls: unknown[][] = []
-    await mount(<ItemEditor calls={calls} item={ITEM_SAVED} />)
-    const covers = document.querySelectorAll("[data-e2e=catalog-item-photo-cover]")
-    expect(covers).toHaveLength(1)
-    await clickOn(covers[0])
+    await mount(<ItemEditor calls={calls} item={ITEM_SAVED} reorder />)
+    const menus = () => [...document.querySelectorAll("[data-e2e=catalog-item-photo-menu]")]
+    expect(menus().map((menu) => menu.getAttribute("aria-label"))).toEqual([
+      "More actions for Photo 1, the cover",
+      "More actions for Photo 2",
+    ])
+    const second = menus()[1].closest("[data-e2e=catalog-item-photo]")!
+    await clickOn(menus()[1])
+    const cover = second.querySelector("[data-e2e=catalog-item-photo-cover]")!
+    expect(cover.textContent).toBe("Make cover: Photo 2")
+    expect(second.querySelector("[data-e2e=catalog-item-photo-remove]")?.textContent).toBe(
+      "Remove: Photo 2",
+    )
+    await clickOn(cover)
+    await settle()
+    await settle()
+
     expect(calls).toEqual([["move", 1, 0]])
+    const row = document.activeElement?.closest("[data-e2e=catalog-item-photo]")
+    expect(document.activeElement).toBe(menus()[0])
+    expect(row?.querySelector("img")?.getAttribute("src")).toContain(PHOTOS[1])
+  })
+
+  it("gives the stock boxes and the small buttons a 44px tap area on a phone", async () => {
+    await mount(<ItemEditor calls={[]} item={ITEM_SAVED} />)
+    const box = find("[data-e2e=catalog-item-in-stock]").closest("label")!
+    expect(box.className).toContain("size-11")
+    for (
+      const hook of [
+        "catalog-item-add-colour",
+        "catalog-item-add-size",
+        "catalog-item-remove-colour",
+        "catalog-item-remove-size",
+      ]
+    ) {
+      expect(find(`[data-e2e=${hook}]`).className).toContain("min-h-11")
+    }
+    expect(find("[data-e2e=catalog-item-photo-menu]").className).toContain("size-11")
+  })
+
+  it("shows the price as the website will, with its separators", async () => {
+    await mount(<ItemEditor calls={[]} item={ITEM_SAVED} />)
+    expect(document.body.textContent).toContain("Shown as ₫250,000")
+  })
+
+  it("keeps Save in reach above the phone's tab bar", async () => {
+    await mount(<ItemEditor calls={[]} item={ITEM_SAVED} />)
+    const footer = find("[data-e2e=catalog-item-footer]")
+    expect(footer.className).toContain("max-md:sticky")
+    expect(footer.querySelector("[data-e2e=catalog-item-save]")).not.toBeNull()
   })
 })
 

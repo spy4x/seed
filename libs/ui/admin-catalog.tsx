@@ -1,12 +1,14 @@
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
-import { slugify } from "@spy4x/platform/universal/text"
+import { search, searchWords, slugify } from "@spy4x/platform/universal/text"
 import { IconEllipsisVertical, IconImage, IconPlus } from "@spy4x/preact-icons"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { Card } from "@spy4x/preact-ui/card"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
+import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
@@ -14,6 +16,7 @@ import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
+import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import {
   type AdminCatalogResponse,
   CATALOG_NAME_MAX_LENGTH,
@@ -96,11 +99,80 @@ export function CatalogThumbnail(
     )
 }
 
+/** What the list shows: one status or every item, only items with something sold out, and a search. */
+export interface AdminCatalogFilter {
+  status: CatalogItemStatus | null
+  soldOut: boolean
+  query: string
+}
+
+export const ADMIN_CATALOG_NO_FILTER: AdminCatalogFilter = {
+  status: null,
+  soldOut: false,
+  query: ``,
+}
+
+/** The longest search the list's box takes. */
+export const ADMIN_CATALOG_SEARCH_MAX_LENGTH = 100
+
+const NUMBER = new Intl.NumberFormat(`en`)
+
+const STATUS_CHIPS: { value: CatalogItemStatus | `all`; label: string }[] = [
+  { value: `all`, label: `All` },
+  { value: `draft`, label: `Drafts` },
+  { value: `published`, label: `On the website` },
+  { value: `hidden`, label: `Hidden` },
+]
+
+/** The items a filter shows, and the counts of its chips. */
+export interface CatalogListView {
+  items: CatalogItemRow[]
+  /** Each status chip's count, and "Sold-out sizes"'s, under the other filters. */
+  counts: Record<CatalogItemStatus | `all` | `soldOut`, number>
+}
+
+/**
+ * Filters the catalog's items: every word of the search must occur, accents and case ignored, in
+ * the item's name in any language, its address or its category's name. A status chip's count
+ * follows the search and the sold-out filter; the sold-out count follows the search and the status.
+ */
+export function filterCatalogItems(
+  catalog: AdminCatalogResponse,
+  filter: AdminCatalogFilter,
+): CatalogListView {
+  const categories = new Map(catalog.categories.map((category) => [category.id, category]))
+  const words = searchWords(filter.query)
+  const found = catalog.items.filter((item) => {
+    const category = item.categoryId ? categories.get(item.categoryId) : undefined
+    const values = [
+      ...Object.values(item.name),
+      item.slug,
+      ...Object.values(category?.name ?? {}),
+    ]
+    return words.every((word) => values.some((value) => search(value, word)))
+  })
+  const soldOut = (item: CatalogItemRow) => item.stock !== `in-stock`
+  const ofStatus = (item: CatalogItemRow) => filter.status === null || item.status === filter.status
+  const forChips = filter.soldOut ? found.filter(soldOut) : found
+  return {
+    items: forChips.filter(ofStatus),
+    counts: {
+      all: forChips.length,
+      draft: forChips.filter((item) => item.status === `draft`).length,
+      published: forChips.filter((item) => item.status === `published`).length,
+      hidden: forChips.filter((item) => item.status === `hidden`).length,
+      soldOut: found.filter(ofStatus).filter(soldOut).length,
+    },
+  }
+}
+
 export interface AdminCatalogScreenProps {
   /** The catalog, or `null` while it loads or when it failed. */
   catalog: AdminCatalogResponse | null
   error: string | null
   onRetry: () => void
+  filter: AdminCatalogFilter
+  onFilter: (filter: AdminCatalogFilter) => void
   navigate?: Navigate
 }
 
@@ -112,8 +184,6 @@ export interface AdminCatalogScreenProps {
  */
 export function AdminCatalogScreen(props: AdminCatalogScreenProps): JSX.Element {
   const { catalog, navigate } = props
-  const categories = new Map(catalog?.categories.map((category) => [category.id, category]))
-  const languages = catalog?.settings.languages ?? []
   return (
     <div class="flex flex-col gap-8">
       <PageHeader
@@ -184,21 +254,115 @@ export function AdminCatalogScreen(props: AdminCatalogScreenProps): JSX.Element 
               />
             )
           : (
-            <ListCard dataE2E="catalog-list">
-              {catalog.items.map((item) => (
-                <ItemRow
-                  key={item.id}
-                  item={item}
-                  category={item.categoryId ? categories.get(item.categoryId) ?? null : null}
-                  currency={catalog.settings.currency}
-                  languages={languages}
-                  navigate={navigate}
-                />
-              ))}
-            </ListCard>
+            <CatalogList
+              catalog={catalog}
+              filter={props.filter}
+              onFilter={props.onFilter}
+              navigate={navigate}
+            />
           )}
       </Stack>
     </div>
+  )
+}
+
+/** The search, the chips and the rows of a catalog that has items. */
+function CatalogList(
+  { catalog, filter, onFilter, navigate }: {
+    catalog: AdminCatalogResponse
+    filter: AdminCatalogFilter
+    onFilter: (filter: AdminCatalogFilter) => void
+    navigate?: Navigate
+  },
+): JSX.Element {
+  const categories = new Map(catalog.categories.map((category) => [category.id, category]))
+  const languages = catalog.settings.languages
+  const view = filterCatalogItems(catalog, filter)
+  const filtered = filter.query !== `` || filter.status !== null || filter.soldOut
+  const count = `${NUMBER.format(view.items.length)} ${view.items.length === 1 ? `item` : `items`}`
+  return (
+    <>
+      <div class="flex flex-col gap-3" role="search" data-e2e="catalog-filters">
+        <div class="max-w-md">
+          <Field id="catalog-q" label="Name, address or category">
+            <Input
+              type="search"
+              data-e2e="catalog-search"
+              value={filter.query}
+              maxLength={ADMIN_CATALOG_SEARCH_MAX_LENGTH}
+              autocomplete="off"
+              onInput={(event) => onFilter({ ...filter, query: event.currentTarget.value })}
+            />
+          </Field>
+        </div>
+        {/* One row that scrolls sideways on a phone rather than wrapping. */}
+        <div class="-mx-4 flex max-w-[calc(100%+2rem)] items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:flex-wrap sm:px-0">
+          <div data-e2e="catalog-status">
+            <ToggleChips
+              mode="single"
+              label="Status"
+              class="flex-nowrap sm:flex-wrap"
+              options={STATUS_CHIPS.map((chip) => ({
+                value: chip.value,
+                label: `${chip.label} ${NUMBER.format(view.counts[chip.value])}`,
+              }))}
+              value={filter.status ?? `all`}
+              onChange={(value) =>
+                onFilter({
+                  ...filter,
+                  status: value === null || value === `all` ? null : value as CatalogItemStatus,
+                })}
+            />
+          </div>
+          <div data-e2e="catalog-sold-out">
+            <ToggleChips
+              label="Stock"
+              color="red"
+              options={[{
+                value: `soldOut`,
+                label: `Sold-out sizes ${NUMBER.format(view.counts.soldOut)}`,
+              }]}
+              value={filter.soldOut ? [`soldOut`] : []}
+              onChange={(value) => onFilter({ ...filter, soldOut: value.length > 0 })}
+            />
+          </div>
+        </div>
+      </div>
+      <h2 class="text-sm text-muted" aria-live="polite" data-e2e="catalog-count">{count}</h2>
+      {view.items.length === 0
+        ? (
+          <Card data-e2e="catalog-nothing">
+            <EmptyState
+              inset
+              title="Nothing matches"
+              description="Try another name, or clear the filters."
+              action={filtered && (
+                <Button
+                  variant="ghost"
+                  data-e2e="catalog-clear"
+                  onClick={() => onFilter(ADMIN_CATALOG_NO_FILTER)}
+                >
+                  Clear filters
+                </Button>
+              )}
+            />
+          </Card>
+        )
+        : (
+          <ListCard dataE2E="catalog-list">
+            {view.items.map((item) => (
+              <ItemRow
+                key={item.id}
+                item={item}
+                category={item.categoryId ? categories.get(item.categoryId) ?? null : null}
+                currency={catalog.settings.currency}
+                languages={languages}
+                navigate={navigate}
+              />
+            ))}
+          </ListCard>
+        )}
+    </>
   )
 }
 
