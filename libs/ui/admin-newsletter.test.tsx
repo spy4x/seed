@@ -24,6 +24,8 @@ import {
 const day = (at: string) => createFormatters().date(at)
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { languageName } from "@spy4x/preact-ui/language-picker"
+import { LANGUAGES } from "@domain/identity"
 import { ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
 const window = new Window({ url: "http://admin.localhost/newsletter" })
 const own = {
@@ -116,12 +118,14 @@ const ann: AdminSubscriberRow = {
   status: "confirmed",
   requestedAt: null,
   confirmedAt: "2026-10-01T10:00:00.000Z",
+  language: "en",
 }
 const cat: AdminSubscriberRow = {
   email: "cat@example.com",
   status: "pending",
   requestedAt: "2026-10-15T10:00:00.000Z",
   confirmedAt: null,
+  language: "de",
 }
 const stats: AdminNewsletterStats = {
   generatedAt: "2026-10-16T09:00:00.000Z",
@@ -187,13 +191,18 @@ describe("operator area: newsletter page", () => {
     const calls: unknown[][] = []
     await mount(
       <AdminNewsletterScreen
-        {...props(calls, { filter: { query: "", status: "pending", page: 3 } })}
+        {...props(calls, { filter: { query: "", status: "pending", language: "any", page: 3 } })}
       />,
     )
 
     await type("[data-e2e=admin-newsletter-search]", "  cat@ ")
     await submit("[data-e2e=admin-newsletter-submit]")
-    expect(calls).toEqual([["search", { query: "cat@", status: "pending", page: 1 }]])
+    expect(calls).toEqual([["search", {
+      query: "cat@",
+      status: "pending",
+      language: "any",
+      page: 1,
+    }]])
   })
 
   it("filters by status with a chip, and clears every filter", async () => {
@@ -201,17 +210,35 @@ describe("operator area: newsletter page", () => {
     await mount(<AdminNewsletterScreen {...props(calls)} />)
 
     await press("[data-e2e=admin-newsletter-status]", "Confirmed")
-    expect(calls).toEqual([["search", { query: "", status: "confirmed", page: 1 }]])
+    expect(calls).toEqual([["search", {
+      query: "",
+      status: "confirmed",
+      language: "any",
+      page: 1,
+    }]])
     expect(has("[data-e2e=admin-newsletter-clear]")).toBe(false)
 
     calls.length = 0
     await mount(
       <AdminNewsletterScreen
-        {...props(calls, { filter: { query: "x", status: "pending", page: 2 } })}
+        {...props(calls, { filter: { query: "x", status: "pending", language: "de", page: 2 } })}
       />,
     )
     await clickOn(find("[data-e2e=admin-newsletter-clear]"))
     expect(calls).toEqual([["search", ADMIN_SUBSCRIBERS_NO_FILTER]])
+  })
+
+  it("shows each address's language, and filters by language with a chip (#527)", async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminNewsletterScreen {...props(calls)} />)
+
+    const rows = findAll("[data-e2e=admin-newsletter-list] tbody tr")
+    expect(rows.map((row) => row.querySelector("[lang]")?.textContent)).toEqual([
+      "Deutsch",
+      "English",
+    ])
+    await press("[data-e2e=admin-newsletter-language]", "Deutsch")
+    expect(calls).toEqual([["search", { query: "", status: "any", language: "de", page: 1 }]])
   })
 
   it("offers Resend only to a pending address and Remove to every one", async () => {
@@ -302,7 +329,10 @@ describe("operator area: newsletter page", () => {
 
     await mount(
       <AdminNewsletterScreen
-        {...props([], { list: empty, filter: { query: "zz", status: "any", page: 1 } })}
+        {...props([], {
+          list: empty,
+          filter: { query: "zz", status: "any", language: "any", page: 1 },
+        })}
       />,
     )
     expect(find("[data-e2e=admin-newsletter-list]").textContent).toContain("Nobody matches")
@@ -368,6 +398,8 @@ describe("the newsletter screen in en-XA", () => {
         `cat@example.com`,
         `First issue`,
         `2026-10-first`,
+        // A language is named in its own language, as every language picker does: data.
+        ...LANGUAGES.map((language) => languageName(language)),
       ]),
     ).toEqual([])
   })

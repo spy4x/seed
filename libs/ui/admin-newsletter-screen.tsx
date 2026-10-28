@@ -19,7 +19,13 @@ import { Notice } from "@spy4x/preact-ui/notice"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { Tabs } from "@spy4x/preact-ui/tabs"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
-import { ADMIN_SEARCH_MAX_LENGTH, ADMIN_STATS_DAYS } from "@domain/identity"
+import { languageName } from "@spy4x/preact-ui/language-picker"
+import {
+  ADMIN_SEARCH_MAX_LENGTH,
+  ADMIN_STATS_DAYS,
+  type Language,
+  LANGUAGES,
+} from "@domain/identity"
 import type {
   AdminNewsletterSend,
   AdminNewsletterStats,
@@ -286,7 +292,7 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
     seen.current = { page, done }
   }, [page, done])
 
-  const filtered = filter.query !== "" || filter.status !== "any"
+  const filtered = filter.query !== "" || filter.status !== "any" || filter.language !== "any"
   return (
     <Stack>
       <Notice tone="info" title={t.t(`AdminNewsletter.notKeptTitle`)}>
@@ -341,12 +347,28 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
                 })}
             />
           </div>
+          <div class="flex flex-wrap items-center gap-2" data-e2e="admin-newsletter-language">
+            <span class="text-sm text-muted" aria-hidden="true">
+              {t.t(`AdminNewsletter.language`)}
+            </span>
+            <ToggleChips
+              mode="single"
+              label={t.t(`AdminNewsletter.language`)}
+              options={LANGUAGES.map((language) => ({
+                value: language,
+                label: languageName(language),
+              }))}
+              value={filter.language === "any" ? null : filter.language}
+              onChange={(value) =>
+                onSearch({ ...filter, language: (value ?? "any") as Language | "any", page: 1 })}
+            />
+          </div>
           {filtered && (
             <Button
               variant="ghost"
               size="sm"
               data-e2e="admin-newsletter-clear"
-              onClick={() => onSearch({ query: "", status: "any", page: 1 })}
+              onClick={() => onSearch({ query: "", status: "any", language: "any", page: 1 })}
             >
               {t.t(`AdminNewsletter.clear`)}
             </Button>
@@ -408,7 +430,7 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
   )
 }
 
-/** The table's columns: the address with its actions, its status and its dates. */
+/** The table's columns: the address with its actions, its status, its language and its dates. */
 function subscriberColumns(
   t: Translator<string>,
   onOpenDialog: (dialog: AdminSubscriberDialog) => void,
@@ -463,6 +485,13 @@ function subscriberColumns(
         status === "confirmed"
           ? <Badge text={t.t(`AdminNewsletter.confirmed`)} color="green" />
           : <Badge text={t.t(`AdminNewsletter.pending`)} color="orange" type="outline" />,
+    },
+    {
+      id: "language",
+      header: t.t(`AdminNewsletter.language`),
+      render: ({ language }) => (
+        <span class="whitespace-nowrap text-sm" lang={language}>{languageName(language)}</span>
+      ),
     },
     {
       id: "since",

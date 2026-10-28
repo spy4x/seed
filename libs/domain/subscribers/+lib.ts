@@ -4,6 +4,8 @@ import {
   type AdminDailyCount,
   type AdminStatChange,
   EMAIL_INPUT_MAX_LENGTH,
+  isLanguage,
+  type Language,
   LANGUAGES,
 } from "@domain/identity"
 
@@ -95,12 +97,21 @@ export interface AdminSubscriberRow {
   requestedAt: string | null
   /** When the address confirmed; `null` while it is pending. */
   confirmedAt: string | null
+  /**
+   * The language its mails are written in (#527): the page it signed up on. One with none counts as
+   * the main language's.
+   */
+  language: Language
 }
 
-/** What the operator's list shows: a search in the address, a status and a page. */
+/**
+ * What the operator's list shows: a search in the address, a status, a language (`any`: every one)
+ * and a page.
+ */
 export interface AdminSubscriberFilter {
   query: string
   status: AdminSubscriberStatusFilter
+  language: Language | `any`
   page: number
 }
 
@@ -108,21 +119,27 @@ export interface AdminSubscriberFilter {
 export const ADMIN_SUBSCRIBERS_NO_FILTER: AdminSubscriberFilter = {
   query: ``,
   status: `any`,
+  language: `any`,
   page: 1,
 }
 
-/** Reads the filter from a query string (`q`, `status`, `page`); anything unusable is the default. */
+/**
+ * Reads the filter from a query string (`q`, `status`, `language`, `page`); anything unusable is the
+ * default.
+ */
 export function parseAdminSubscriberFilter(params: URLSearchParams): AdminSubscriberFilter {
   const query = (params.get(`q`) ?? ``).trim().slice(0, ADMIN_SEARCH_MAX_LENGTH)
   const rawStatus = params.get(`status`)
   const status: AdminSubscriberStatusFilter = rawStatus === `confirmed` || rawStatus === `pending`
     ? rawStatus
     : `any`
+  const rawLanguage = params.get(`language`)
+  const language = isLanguage(rawLanguage) ? rawLanguage : `any`
   const pageNumber = Number(params.get(`page`))
   const page = Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= 100_000
     ? pageNumber
     : 1
-  return { query, status, page }
+  return { query, status, language, page }
 }
 
 /** The query string of `filter`, leaving out every part at its default. No leading `?`. */
@@ -130,6 +147,7 @@ export function adminSubscriberFilterQuery(filter: AdminSubscriberFilter): strin
   const params = new URLSearchParams()
   if (filter.query !== ``) params.set(`q`, filter.query)
   if (filter.status !== `any`) params.set(`status`, filter.status)
+  if (filter.language !== `any`) params.set(`language`, filter.language)
   if (filter.page !== 1) params.set(`page`, String(filter.page))
   return params.toString()
 }

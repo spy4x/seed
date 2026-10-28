@@ -37,12 +37,14 @@ const confirmed: AdminSubscriberRow = {
   status: `confirmed`,
   requestedAt: null,
   confirmedAt: `2026-10-01T10:00:00.000Z`,
+  language: `en`,
 }
 const pending: AdminSubscriberRow = {
   email: `bob@example.com`,
   status: `pending`,
   requestedAt: `2026-10-15T10:00:00.000Z`,
   confirmedAt: null,
+  language: `de`,
 }
 /** An address a spreadsheet would run as a formula if the CSV did not guard it. */
 const formula: AdminSubscriberRow = {
@@ -50,6 +52,7 @@ const formula: AdminSubscriberRow = {
   status: `confirmed`,
   requestedAt: null,
   confirmedAt: `2026-10-02T10:00:00.000Z`,
+  language: `en`,
 }
 
 const stats: AdminNewsletterStats = {
@@ -118,7 +121,7 @@ function buildApp(
 }
 
 const ACTION_BODY = JSON.stringify({ email: pending.email })
-const SEARCH_BODY = JSON.stringify({ q: `ada`, status: `pending`, page: `2` })
+const SEARCH_BODY = JSON.stringify({ q: `ada`, status: `pending`, language: `de`, page: `2` })
 
 /** Every path of the newsletter module. */
 const ROUTES = [
@@ -205,7 +208,7 @@ describe(`operator area: newsletter routes`, () => {
       page: 2,
       pageSize: 25,
     })
-    expect(calls).toEqual([[`list`, { query: `ada`, status: `pending`, page: 2 }]])
+    expect(calls).toEqual([[`list`, { query: `ada`, status: `pending`, language: `de`, page: 2 }]])
   })
 
   it(`ignores a search put in the URL`, async () => {
@@ -217,7 +220,7 @@ describe(`operator area: newsletter routes`, () => {
     })
 
     expect(response.status).toBe(200)
-    expect(calls).toEqual([[`list`, { query: ``, status: `any`, page: 1 }]])
+    expect(calls).toEqual([[`list`, { query: ``, status: `any`, language: `any`, page: 1 }]])
   })
 
   it(`no longer lists subscribers on a GET, which would carry the search in its URL`, async () => {
@@ -357,8 +360,8 @@ describe(`operator area: newsletter routes`, () => {
     expect(response.headers.get(`cache-control`)).toBe(`no-store`)
     const text = new TextDecoder().decode(await response.arrayBuffer())
     const lines = text.replace(/^﻿/, ``).trim().split(/\r?\n/)
-    expect(lines[0]).toBe(`Address,Status,Requested at,Confirmed at`)
-    expect(lines[1]).toBe(`ada@example.com,confirmed,,2026-10-01T10:00:00.000Z`)
+    expect(lines[0]).toBe(`Address,Status,Requested at,Confirmed at,Language`)
+    expect(lines[1]).toBe(`ada@example.com,confirmed,,2026-10-01T10:00:00.000Z,en`)
     // The guard puts a quote in front, so the cell starts with text, never with `=`.
     expect(lines[2].startsWith(`"'=HYPERLINK`)).toBe(true)
     expect(audits.map((row) => [row.userId, row.eventType, row.identifier])).toEqual([
