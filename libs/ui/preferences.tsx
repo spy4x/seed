@@ -499,13 +499,13 @@ export function LanguageLabel(
   return theirs === own ? ownName : <>{theirs} ({ownName})</>
 }
 
+/** Stands for a value in a message, so an element can be drawn where the value lands. */
+const MARK = `\u0000`
+
 /**
  * The "Language" row above Formats: the language in use, by its own name, and the button that
  * opens `LanguageDialog`. Each choice there applies at once.
  */
-/** Stands for a value in a message, so an element can be drawn where the value lands. */
-const MARK = `\u0000`
-
 function LanguageRow({ language }: { language: AccountMenuLanguage }): JSX.Element {
   const t = useAppText()
   const [open, setOpen] = useState(false)
