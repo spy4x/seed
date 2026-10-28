@@ -202,7 +202,7 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
                   onKeyDown={onKeyDown}
                 />
               </Field>
-              <p class="hidden items-center gap-1 text-xs text-muted pointer-fine:flex">
+              <p class="hidden text-xs leading-6 text-muted pointer-fine:block">
                 <Rich
                   parts={t.parts(`NewNote.keys`)}
                   tags={{
