@@ -11,9 +11,12 @@ import {
 } from "@domain/identity"
 import type { AdminJobAction, AdminJobsConfirm } from "@ui/admin-jobs-screen.tsx"
 import { type AdminFetch, post } from "../../state.ts"
+import { adminText } from "../../i18n.ts"
 
 /** What the toast says when an action failed for no reason the API gave. */
-export const JOB_ACTION_FAILED = `That did not work. Try again in a moment.`
+function actionFailed(): string {
+  return adminText().t(`AdminJobs.actionFailed`)
+}
 
 export interface JobsListState {
   /** The filter of the page the list shows, or is loading. */
@@ -119,10 +122,13 @@ export function createJobsState(request: AdminFetch, toasts: ToastStore) {
       )
       repeating.value = { ...repeating.value, starting: null }
       if (result.ok) {
-        toasts.success({ body: `${target.label} started.`, dataE2E: `admin-job-toast` })
+        toasts.success({
+          body: adminText().t(`AdminJobs.doneStarted`, { job: target.label }),
+          dataE2E: `admin-job-toast`,
+        })
       } else {
         toasts.error({
-          body: result.status === 409 ? result.error.message : JOB_ACTION_FAILED,
+          body: result.status === 409 ? result.error.message : actionFailed(),
           dataE2E: `admin-job-toast`,
         })
       }
@@ -151,13 +157,13 @@ export function createJobsState(request: AdminFetch, toasts: ToastStore) {
       }
       const result = await request<AdminJobRetryAllResponse>(`/api/admin/jobs/retry-failed`, post())
       if (!result.ok) {
-        confirm.value = { confirm: open, pending: false, error: JOB_ACTION_FAILED }
+        confirm.value = { confirm: open, pending: false, error: actionFailed() }
         return
       }
       confirm.value = NO_CONFIRM
       const count = result.data.retried
       toasts.success({
-        body: `${count} failed ${count === 1 ? `job` : `jobs`} started again.`,
+        body: adminText().t(`AdminJobs.doneRetriedAll`, { count }),
         dataE2E: `admin-job-toast`,
       })
       if (list.value.filter) await state.loadList(list.value.filter)
@@ -188,7 +194,10 @@ export function createJobsState(request: AdminFetch, toasts: ToastStore) {
       if (result.ok) {
         dialog.value = NO_DIALOG
         toasts.success({
-          body: `${detail.label} ${action === `cancel` ? `cancelled` : `started`}.`,
+          body: adminText().t(
+            action === `cancel` ? `AdminJobs.doneCancelled` : `AdminJobs.doneStarted`,
+            { job: detail.label },
+          ),
           dataE2E: `admin-job-toast`,
         })
         if (job.value.id === id && result.data.job) {
@@ -203,11 +212,11 @@ export function createJobsState(request: AdminFetch, toasts: ToastStore) {
         return
       }
       if (dialog.value.dialog) {
-        dialog.value = { ...dialog.value, pending: false, error: JOB_ACTION_FAILED }
+        dialog.value = { ...dialog.value, pending: false, error: actionFailed() }
         return
       }
       dialog.value = NO_DIALOG
-      toasts.error({ body: JOB_ACTION_FAILED, dataE2E: `admin-job-toast` })
+      toasts.error({ body: actionFailed(), dataE2E: `admin-job-toast` })
     },
   }
   return state

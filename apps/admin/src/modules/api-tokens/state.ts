@@ -11,6 +11,7 @@ import type { AdminPushDevice, AdminPushDevicesResponse } from "@domain/identity
 import type { AdminNotificationsResponse } from "@domain/notifications"
 import type { AdminTokensConfirm, AdminTokensConfirmState } from "@ui/admin-api-tokens-screen.tsx"
 import { type AdminFetch, post } from "../../state.ts"
+import { adminText } from "../../i18n.ts"
 
 export interface TokensListState {
   /** The filter of the page the list shows, or is loading. */
@@ -138,7 +139,7 @@ export function createApiTokensState(request: AdminFetch, toasts: ToastStore) {
       confirm.value = NO_CONFIRM
       if (target.kind === "revoke") {
         toasts.success({
-          body: `${target.token.name} is revoked.`,
+          body: adminText().t(`AdminApiTokens.tokenRevoked`, { token: target.token.name }),
           dataE2E: "admin-api-tokens-toast",
         })
         const reads: Promise<void>[] = []
@@ -150,7 +151,7 @@ export function createApiTokensState(request: AdminFetch, toasts: ToastStore) {
         return
       }
       toasts.success({
-        body: `Device ${target.label} is removed.`,
+        body: adminText().t(`AdminApiTokens.deviceRemoved`, { device: target.label }),
         dataE2E: "admin-api-tokens-toast",
       })
       await state.loadDevices(target.userId)

@@ -9,6 +9,7 @@ import {
   AdminJobsScreen,
   type AdminJobsTab,
 } from "@ui/admin-jobs-screen.tsx"
+import { useAdminText } from "@ui/i18n.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { createJobsState, type JobsState } from "./state.ts"
 
@@ -80,6 +81,7 @@ function JobsView({ context }: { context: AdminContext }): JSX.Element {
 function JobView(
   { context, params }: { context: AdminContext; params: Record<string, string> },
 ): JSX.Element {
+  const t = useAdminText()
   const state = jobsState(context)
   const raw = params.id ?? ``
   const id = UUID.test(raw) ? raw.toLowerCase() : null
@@ -93,7 +95,7 @@ function JobView(
   return (
     <AdminJobScreen
       job={current ? job.detail : null}
-      error={id === null ? `No job has this id.` : current ? job.error : null}
+      error={id === null ? t.t(`AdminJobs.notFound`) : current ? job.error : null}
       onReload={() => id !== null && state.loadJob(id)}
       dialog={dialog.dialog}
       pending={dialog.pending}
@@ -104,9 +106,9 @@ function JobView(
       onCopyId={async (jobId) => {
         try {
           await navigator.clipboard.writeText(jobId)
-          context.toasts.success({ body: `Job id copied.`, dataE2E: `admin-job-toast` })
+          context.toasts.success({ body: t.t(`AdminJobs.idCopied`), dataE2E: `admin-job-toast` })
         } catch {
-          context.toasts.error({ body: `The id could not be copied.`, dataE2E: `admin-job-toast` })
+          context.toasts.error({ body: t.t(`AdminJobs.idNotCopied`), dataE2E: `admin-job-toast` })
         }
       }}
       navigate={context.navigate}
@@ -117,7 +119,7 @@ function JobView(
 /** Every background job's runs, the repeating jobs, and run again, run now and cancel (#394). */
 export const jobsModule: AdminModule = {
   id: `jobs`,
-  nav: { name: `Jobs`, href: ADMIN_JOB_PATHS.list, Icon: IconClock },
+  nav: { name: `AdminNav.jobs`, href: ADMIN_JOB_PATHS.list, Icon: IconClock },
   routes: [
     { path: ADMIN_JOB_PATHS.list, View: JobsView },
     { path: `/jobs/:id`, View: JobView },

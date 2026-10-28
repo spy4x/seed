@@ -69,6 +69,6 @@ function AuditView({ context }: { context: AdminContext }): JSX.Element {
 /** Every audit entry across the product, filtered, paged and exported as CSV (#429). */
 export const auditModule: AdminModule = {
   id: `audit`,
-  nav: { name: `Audit log`, href: AUDIT_PATH, Icon: IconShieldCheck },
+  nav: { name: `AdminNav.auditLog`, href: AUDIT_PATH, Icon: IconShieldCheck },
   routes: [{ path: AUDIT_PATH, View: AuditView }],
 }

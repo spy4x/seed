@@ -28,6 +28,6 @@ function DashboardView({ context }: { context: AdminContext }): JSX.Element {
 /** The operator area's first page (#424): stat cards and two 30-day charts. */
 export const dashboardModule: AdminModule = {
   id: `dashboard`,
-  nav: { name: `Dashboard`, href: ADMIN_PATHS.dashboard, Icon: IconHome },
+  nav: { name: `AdminNav.dashboard`, href: ADMIN_PATHS.dashboard, Icon: IconHome },
   routes: [{ path: ADMIN_PATHS.dashboard, View: DashboardView }],
 }

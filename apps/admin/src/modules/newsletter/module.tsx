@@ -98,6 +98,6 @@ function NewsletterView({ context }: { context: AdminContext }): JSX.Element {
 /** The newsletter's subscribers, numbers and sent issues, with remove, resend and export (#428). */
 export const newsletterModule: AdminModule = {
   id: `newsletter`,
-  nav: { name: `Newsletter`, href: PATH, Icon: IconMail },
+  nav: { name: `AdminNav.newsletter`, href: PATH, Icon: IconMail },
   routes: [{ path: PATH, View: NewsletterView }],
 }

@@ -11,6 +11,7 @@ import signals from "@spy4x/preact-signals/i18n/en"
 import charts from "@spy4x/preact-charts/i18n/en"
 import own from "@i18n/admin/en.json" with { type: "json" }
 import errors from "@i18n/errors/en.json" with { type: "json" }
+import type { Translator } from "@spy4x/platform/universal/i18n"
 import { LANGUAGES } from "@domain/identity"
 import { type CatalogList, createLanguages, keptLanguage } from "@platform/i18n.ts"
 
@@ -33,3 +34,11 @@ export const languages = createLanguages({
 
 /** The language chosen on this device, kept for the next start and the sign-in page. */
 export const kept = keptLanguage(() => globalThis.localStorage)
+
+/**
+ * The page's translator right now, for words built outside a screen: a toast, or a message a
+ * module's state keeps. Read when the message is made, so it is in the language shown then.
+ */
+export function adminText(): Translator<string> {
+  return languages.translator.value
+}

@@ -108,7 +108,7 @@ it(`checks the fields before it sends anything`, async () => {
   state.openNew()
   expect(await state.save()).toBe(null)
   expect(calls).toEqual([])
-  expect(state.editor.value.errors.title).toBe(`Add a title.`)
+  expect(state.editor.value.errors.title).toBe(`AdminBlogEditor.addTitle`)
 })
 
 it(`marks a conflict on 409 and saves nothing more until reloaded`, async () => {
@@ -149,7 +149,7 @@ it(`shows a taken slug on the slug field`, async () => {
   await state.openPost(ID)
   state.edit({ ...state.editor.value.value, title: `Mine` })
   await state.save()
-  expect(state.editor.value.errors).toEqual({ slug: `Another post already uses this slug.` })
+  expect(state.editor.value.errors).toEqual({ slug: `AdminBlogEditor.slugTaken` })
 })
 
 it(`saves unsaved changes before publishing, and always names the list, null for none`, async () => {
@@ -193,7 +193,7 @@ it(`opens no publish dialog for an empty post, and says why on the body`, async 
   await state.openPost(ID)
   state.openDialog(`publish`)
   expect(state.dialog.value.dialog).toBe(null)
-  expect(state.editor.value.errors).toEqual({ bodyMd: `The post is empty.` })
+  expect(state.editor.value.errors).toEqual({ bodyMd: `AdminBlogEditor.emptyPost` })
 })
 
 it(`keeps a refused action's dialog open with the reason`, async () => {

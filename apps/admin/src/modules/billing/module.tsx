@@ -10,6 +10,7 @@ import {
 import { ADMIN_BILLING_PATHS, AdminBillingListScreen } from "@ui/admin-billing-list.tsx"
 import { AdminBillingCustomerScreen } from "@ui/admin-billing-detail.tsx"
 import { operatorOf } from "../../state.ts"
+import { useAdminText } from "@ui/i18n.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { type BillingState, createBillingState } from "./state.ts"
 
@@ -68,6 +69,7 @@ function BillingView({ context }: { context: AdminContext }): JSX.Element {
 function CustomerView(
   { context, params }: { context: AdminContext; params: Record<string, string> },
 ): JSX.Element {
+  const t = useAdminText()
   const state = billingState(context)
   const id = params.groupId ?? ``
   const groupId = UUID.test(id) ? id.toLowerCase() : null
@@ -84,7 +86,11 @@ function CustomerView(
   return (
     <AdminBillingCustomerScreen
       detail={current ? customer.detail : null}
-      error={groupId === null ? `No customer with this group id.` : current ? customer.error : null}
+      error={groupId === null
+        ? t.t(`AdminBillingCustomer.notFound`)
+        : current
+        ? customer.error
+        : null}
       payment={current ? customer.payment : { payment: undefined, error: null }}
       operator={operatorOf(context.operator)}
       now={new Date()}
@@ -105,7 +111,7 @@ function CustomerView(
 /** Who pays and what, and the support actions on one customer (#196). */
 export const billingModule: AdminModule = {
   id: `billing`,
-  nav: { name: `Billing`, href: ADMIN_BILLING_PATHS.list, Icon: IconCreditCard },
+  nav: { name: `AdminNav.billing`, href: ADMIN_BILLING_PATHS.list, Icon: IconCreditCard },
   routes: [
     { path: ADMIN_BILLING_PATHS.list, View: BillingView },
     { path: `/billing/:groupId`, View: CustomerView },

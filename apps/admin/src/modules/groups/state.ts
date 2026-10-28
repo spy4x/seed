@@ -15,7 +15,8 @@ import {
 import { readApiError } from "@domain/errors"
 import type { AdminGroupAction, AdminGroupDialog } from "@ui/admin-groups-detail.tsx"
 import { adminGroupPersonName } from "@ui/admin-groups-list.tsx"
-import { ADMIN_FAILURE, type AdminFetch, post } from "../../state.ts"
+import { adminFailure, type AdminFetch, post } from "../../state.ts"
+import { adminText } from "../../i18n.ts"
 
 export interface GroupsListState {
   /** The filter of the page the list shows, or is loading. */
@@ -53,7 +54,7 @@ const browserFiles: GroupsFilePorts = {
 }
 
 /** The notice when the file to download is gone: the same words as the API's 404 on a removal. */
-export const FILE_GONE = `This file is gone. Someone may have removed it already.`
+const FILE_GONE = `AdminGroup.fileGone`
 
 const NO_FILES: GroupsFilesState = {
   groupId: null,
@@ -88,20 +89,21 @@ function actionRequest(action: AdminGroupAction): { path: string; body?: unknown
 
 /** What the toast says after an action went through, naming whom it touched. */
 function actionDone(action: AdminGroupAction, detail: AdminGroupDetail | null): string {
-  const group = detail?.group.name ?? `the group`
+  const t = adminText()
+  const group = detail?.group.name ?? t.t(`AdminGroup.theGroup`)
   const member = (userId: number) => {
     const found = detail?.members.find((row) => row.id === userId)
-    return found ? adminGroupPersonName(found) : `The member`
+    return found ? adminGroupPersonName(t, found) : t.t(`AdminGroup.theMember`)
   }
   switch (action.kind) {
     case `remove`:
-      return `${member(action.userId)} is no longer in ${group}.`
+      return t.t(`AdminGroup.doneRemove`, { member: member(action.userId), group })
     case `revoke`:
-      return `The invitation to ${group} is revoked.`
+      return t.t(`AdminGroup.doneRevoke`, { group })
     case `transfer`:
-      return `${member(action.userId)} now owns ${group}.`
+      return t.t(`AdminGroup.doneTransfer`, { member: member(action.userId), group })
     case `removeFile`:
-      return `The file is removed from ${group}.`
+      return t.t(`AdminGroup.doneRemoveFile`, { group })
   }
 }
 
@@ -195,13 +197,13 @@ export function createGroupsState(
         }
         if (response.status === 401) return signedOut()
         notice = response.status === 404
-          ? FILE_GONE
-          : readApiError(await response.json().catch(() => null))?.message ?? ADMIN_FAILURE
+          ? adminText().t(FILE_GONE)
+          : readApiError(await response.json().catch(() => null))?.message ?? adminFailure()
         if (response.status === 404 && files.value.groupId === groupId && files.value.filter) {
           await loadFiles(groupId, files.value.filter)
         }
       } catch {
-        notice = ADMIN_FAILURE
+        notice = adminFailure()
       }
       if (files.value.groupId === groupId) files.value = { ...files.value, notice }
     },

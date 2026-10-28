@@ -18,6 +18,7 @@ import type { Formatters } from "@spy4x/time/format"
 import type { AdminApiResult, AdminFetch } from "../../state.ts"
 import { guardNavigate } from "../../leave.ts"
 import { adminShortcutRows } from "../../shortcuts.ts"
+import { adminText } from "../../i18n.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { blogModule } from "./module.tsx"
 
@@ -142,6 +143,7 @@ async function openEditor() {
   })
   const rows = adminShortcutRows({
     modules: [blogModule, users],
+    t: adminText(),
     path: `/blog/${ID}`,
     navigate,
     openShortcuts: () => {},

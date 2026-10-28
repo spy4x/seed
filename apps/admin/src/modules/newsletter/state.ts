@@ -10,15 +10,16 @@ import {
   type AdminSubscriberListResponse,
 } from "@domain/subscribers"
 import type { AdminSubscriberAction, AdminSubscriberDialog } from "@ui/admin-newsletter-screen.tsx"
-import { ADMIN_FAILURE, type AdminFetch, post } from "../../state.ts"
+import { adminFailure, type AdminFetch, post } from "../../state.ts"
+import { adminText } from "../../i18n.ts"
 import { readApiError } from "@domain/errors"
 
 const API = `/api/admin/newsletter`
 
 /** What the toast says after each action went through. */
-const ACTION_DONE: Record<AdminSubscriberAction, (email: string) => string> = {
-  remove: (email) => `${email} no longer gets the newsletter.`,
-  resend: (email) => `A new confirm mail to ${email} is on its way.`,
+const ACTION_DONE: Record<AdminSubscriberAction, string> = {
+  remove: `AdminNewsletter.doneRemove`,
+  resend: `AdminNewsletter.doneResend`,
 }
 
 export interface NewsletterListState {
@@ -151,7 +152,10 @@ export function createNewsletterState(
         return
       }
       dialog.value = NO_DIALOG
-      toasts.success({ body: ACTION_DONE[open.action](open.email), dataE2E: `admin-action-toast` })
+      toasts.success({
+        body: adminText().t(ACTION_DONE[open.action], { email: open.email }),
+        dataE2E: `admin-action-toast`,
+      })
       done.value += 1
       const filter = list.value.filter
       await Promise.all([filter ? state.loadList(filter) : undefined, state.loadStats()])
@@ -169,14 +173,14 @@ export function createNewsletterState(
         })
         if (!response.ok) {
           const message = readApiError(await response.json().catch(() => null))?.message ??
-            ADMIN_FAILURE
+            adminFailure()
           toasts.error({ body: message, dataE2E: `admin-export-error` })
           return
         }
         const day = ports.now().toISOString().slice(0, 10)
         await ports.save(response, `newsletter-subscribers-${day}.csv`)
       } catch {
-        toasts.error({ body: ADMIN_FAILURE, dataE2E: `admin-export-error` })
+        toasts.error({ body: adminFailure(), dataE2E: `admin-export-error` })
       } finally {
         exporting.value = false
       }

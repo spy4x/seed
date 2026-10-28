@@ -20,6 +20,7 @@ import { rangeForPreset } from "@spy4x/preact-ui/date-range"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { createAdminOverviewState } from "./overview.ts"
 import { operatorOf } from "../../state.ts"
+import { useAdminText } from "@ui/i18n.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { createGroupsState, type GroupsState } from "./state.ts"
 
@@ -77,6 +78,7 @@ function GroupsView({ context }: { context: AdminContext }): JSX.Element {
 function GroupView(
   { context, params }: { context: AdminContext; params: Record<string, string> },
 ): JSX.Element {
+  const t = useAdminText()
   const state = groupsState(context)
   const [path] = useLocation()
   const search = useSearch()
@@ -128,7 +130,7 @@ function GroupView(
   return (
     <AdminGroupScreen
       detail={current ? group.detail : null}
-      error={groupId === null ? `Group not found` : current ? group.error : null}
+      error={groupId === null ? t.t(`AdminGroup.notFound`) : current ? group.error : null}
       operator={operatorOf(context.operator)}
       files={shownFiles?.files ?? null}
       filesError={shownFiles?.error ?? null}
@@ -177,7 +179,7 @@ function GroupView(
 /** Every group, and one group's page with its members, invitations, files and activity (#426). */
 export const groupsModule: AdminModule = {
   id: `groups`,
-  nav: { name: `Groups`, href: ADMIN_GROUP_PATHS.list, Icon: IconFolder },
+  nav: { name: `AdminNav.groups`, href: ADMIN_GROUP_PATHS.list, Icon: IconFolder },
   routes: [
     { path: ADMIN_GROUP_PATHS.list, View: GroupsView },
     { path: `/groups/:id`, View: GroupView },
