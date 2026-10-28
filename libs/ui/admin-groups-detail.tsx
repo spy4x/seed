@@ -36,7 +36,6 @@ import {
   type AdminGroupInvitation,
   type AdminGroupMember,
   type AdminInvitationState,
-  describeActivity,
   GroupRole,
 } from "@domain/groups"
 import { ADMIN_PICTURE_PATH, pictureUrl, type UserRole } from "@domain/identity"
@@ -49,6 +48,7 @@ import {
   planLabel,
 } from "./admin-groups-list.tsx"
 import { roleColor, roleLabel } from "./admin-users-screen.tsx"
+import { ActivitySentence } from "./group-activity-panel.tsx"
 import { GroupMark } from "./group-appearance.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useFormat, When } from "@spy4x/preact-ui/format"
@@ -873,7 +873,7 @@ function Activity({ events }: { events: readonly AdminGroupActivityEvent[] }): J
       dataE2E="admin-group-activity"
       items={events.map((event) => ({
         id: event.id,
-        title: describeActivity(event),
+        title: <ActivitySentence event={event} />,
         at: event.at,
         when: <When at={event.at} />,
         description: event.byOperator ? t.t(`AdminGroup.byOperator`) : undefined,
