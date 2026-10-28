@@ -20,6 +20,7 @@ import {
 } from "@server/catalog/public-catalog.ts"
 import { seedSampleCatalog } from "@server/catalog/sample-catalog.ts"
 import { IMAGE_PROCESS_JOB } from "@server/files/images.ts"
+import { createAdminCatalog } from "../../apps/api/routes/admin/catalog.ts"
 import { applyMigrations } from "./migrations.ts"
 
 /**
@@ -88,7 +89,15 @@ function jacket(patch: Partial<CatalogItemFields> = {}) {
       { id: red, name: { en: `Red` }, swatch: `#aa0000` },
       { id: blue, name: { en: `Blue` }, swatch: `#0000aa` },
     ],
-    sizes: [{ id: small, label: `S` }, { id: medium, label: `M` }],
+    sizes: [
+      {
+        id: small,
+        label: `S`,
+        heightCm: { min: 150, max: 162 },
+        weightKg: { min: 40, max: 52 },
+      },
+      { id: medium, label: `M`, heightCm: null, weightKg: null },
+    ],
     soldOut: [{ colourId: red, sizeId: small }],
     ...patch,
   }
@@ -289,6 +298,43 @@ Deno.test(`an item keeps ${CATALOG_PHOTOS_MAX} photos at most`, async () => {
       await refusal(() => catalog.addPhoto(item.id, extra, catalogPhotoObjectKey(extra), actor)),
     ).toBe(`TOO_MANY`)
     expect(await catalog.addPhoto(uuidV7(), extra, catalogPhotoObjectKey(extra), actor)).toBeNull()
+  })
+})
+
+Deno.test(`an uploaded photo's bytes are stored once, and deleted when the photo is not kept`, async () => {
+  await withSchema(async (sql) => {
+    const stored: string[] = []
+    const deleted: string[] = []
+    const files = {
+      put: (key: string) => (stored.push(key), Promise.resolve()),
+      delete: (key: string) => (deleted.push(key), Promise.resolve()),
+      read: () => Promise.resolve(null),
+    }
+    const settings = { currency: `USD`, languages: [`en`, `vi`] }
+    const catalog = createAdminCatalog(sql, { settings, files })
+    const actor = await operator(sql)
+    const bytes = new Uint8Array([1])
+    const first = uuidV7()
+
+    expect(await catalog.addPhoto(uuidV7(), first, bytes, actor)).toBeNull()
+    expect(stored).toEqual([])
+
+    const item = await catalog.createItem(uuidV7(), jacket().fields, actor)
+    expect(await catalog.addPhoto(item.id, first, bytes, actor)).toMatchObject({ id: first })
+    // A retry answers the same photo and leaves the first bytes alone.
+    expect(await catalog.addPhoto(item.id, first, bytes, actor)).toMatchObject({ id: first })
+    expect({ stored, deleted }).toEqual({ stored: [catalogPhotoObjectKey(first)], deleted: [] })
+
+    for (let n = 1; n < CATALOG_PHOTOS_MAX; n++) {
+      await catalog.addPhoto(item.id, uuidV7(), bytes, actor)
+    }
+    const extra = uuidV7()
+    stored.length = 0
+    await expect(catalog.addPhoto(item.id, extra, bytes, actor)).rejects.toThrow(CatalogError)
+    expect({ stored, deleted }).toEqual({
+      stored: [catalogPhotoObjectKey(extra)],
+      deleted: [catalogPhotoObjectKey(extra)],
+    })
   })
 })
 

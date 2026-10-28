@@ -111,6 +111,29 @@ function fieldsOf(item: CatalogItem): CatalogItemFields {
   }
 }
 
+/** An item's sizes in its order, each with its size chart's ranges. */
+export async function readCatalogSizes(sql: postgres.Sql, itemId: string): Promise<CatalogSize[]> {
+  const rows = await sql<{
+    id: string
+    label: string
+    heightMinCm: number | null
+    heightMaxCm: number | null
+    weightMinKg: number | null
+    weightMaxKg: number | null
+  }[]>`
+    SELECT id, label, height_min_cm, height_max_cm, weight_min_kg, weight_max_kg
+    FROM catalog_item_sizes WHERE item_id = ${itemId} ORDER BY position
+  `
+  const range = (min: number | null, max: number | null) =>
+    min === null || max === null ? null : { min, max }
+  return rows.map((row) => ({
+    id: row.id,
+    label: row.label,
+    heightCm: range(row.heightMinCm, row.heightMaxCm),
+    weightKg: range(row.weightMinKg, row.weightMaxKg),
+  }))
+}
+
 /** Reads an item with its colours, sizes, sold-out combinations and photos, or `null`. */
 export async function readCatalogItem(sql: postgres.Sql, id: string): Promise<CatalogItem | null> {
   const [row] = await sql<ItemRowRaw[]>`
@@ -120,9 +143,7 @@ export async function readCatalogItem(sql: postgres.Sql, id: string): Promise<Ca
   const colours = await sql<CatalogColour[]>`
     SELECT id, name, swatch FROM catalog_item_colours WHERE item_id = ${id} ORDER BY position
   `
-  const sizes = await sql<CatalogSize[]>`
-    SELECT id, label FROM catalog_item_sizes WHERE item_id = ${id} ORDER BY position
-  `
+  const sizes = await readCatalogSizes(sql, id)
   const soldOut = await sql<CatalogCombination[]>`
     SELECT o.colour_id, o.size_id FROM catalog_sold_out o
     LEFT JOIN catalog_item_colours c ON c.id = o.colour_id
@@ -149,7 +170,7 @@ export async function readCatalogItem(sql: postgres.Sql, id: string): Promise<Ca
     status: row.status,
     publishedAt: row.publishedAt?.toISOString() ?? null,
     colours: colours.map(({ id, name, swatch }) => ({ id, name, swatch })),
-    sizes: sizes.map(({ id, label }) => ({ id, label })),
+    sizes,
     soldOut: soldOut.map(({ colourId, sizeId }) => ({ colourId, sizeId })),
     photos: photos.map(({ id, colourId, alt, ...image }) => ({
       id,
@@ -677,9 +698,13 @@ async function writeParts(tx: Tx, itemId: string, fields: CatalogItemFields): Pr
   }
   for (const [position, size] of fields.sizes.entries()) {
     const written = await tx`
-      INSERT INTO catalog_item_sizes (id, item_id, label, position)
-      VALUES (${size.id}, ${itemId}, ${size.label}, ${position})
-      ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, position = EXCLUDED.position
+      INSERT INTO catalog_item_sizes (id, item_id, label, position, height_min_cm, height_max_cm,
+        weight_min_kg, weight_max_kg)
+      VALUES (${size.id}, ${itemId}, ${size.label}, ${position}, ${size.heightCm?.min ?? null},
+        ${size.heightCm?.max ?? null}, ${size.weightKg?.min ?? null}, ${size.weightKg?.max ?? null})
+      ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, position = EXCLUDED.position,
+        height_min_cm = EXCLUDED.height_min_cm, height_max_cm = EXCLUDED.height_max_cm,
+        weight_min_kg = EXCLUDED.weight_min_kg, weight_max_kg = EXCLUDED.weight_max_kg
       WHERE catalog_item_sizes.item_id = EXCLUDED.item_id
       RETURNING id
     `

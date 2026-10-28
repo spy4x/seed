@@ -3,6 +3,7 @@ import type {
   CatalogCategoryFields,
   CatalogItemFields,
   CatalogItemStatus,
+  CatalogSize,
   CatalogText,
 } from "@domain/catalog"
 import { type CatalogActor, PostgresCatalog } from "./postgres-catalog.ts"
@@ -28,9 +29,22 @@ function partId(item: number, n: number): string {
   }`
 }
 
-/** Sizes S to XL of sample item `item`. */
-function apparelSizes(item: number) {
-  return [`S`, `M`, `L`, `XL`].map((label, n) => ({ id: partId(item, 10 + n), label }))
+/** The sample size chart: the heights (cm) and weights (kg) each size fits. */
+const SIZE_CHART = [
+  { label: `S`, heightCm: { min: 150, max: 162 }, weightKg: { min: 40, max: 52 } },
+  { label: `M`, heightCm: { min: 163, max: 170 }, weightKg: { min: 53, max: 62 } },
+  { label: `L`, heightCm: { min: 171, max: 178 }, weightKg: { min: 63, max: 72 } },
+  { label: `XL`, heightCm: { min: 179, max: 190 }, weightKg: { min: 73, max: 90 } },
+] as const
+
+/** Sizes S to XL of sample item `item`, with {@link SIZE_CHART}. */
+function apparelSizes(item: number): CatalogSize[] {
+  return SIZE_CHART.map((size, n) => ({
+    id: partId(item, 10 + n),
+    label: size.label,
+    heightCm: { ...size.heightCm },
+    weightKg: { ...size.weightKg },
+  }))
 }
 
 /** One sample item: its id, fields and status. */
@@ -121,7 +135,7 @@ export const SAMPLE_CATALOG_ITEMS: readonly SampleCatalogItem[] = [
       ...texts(`Our first hoodie, now sold out.`, `100% cotton`, `Oversized fit.`, ``),
       price: 5200,
       colours: [],
-      sizes: [{ id: partId(4, 10), label: `Free size` }],
+      sizes: [{ id: partId(4, 10), label: `Free size`, heightCm: null, weightKg: null }],
       soldOut: [{ colourId: null, sizeId: partId(4, 10) }],
     },
   },

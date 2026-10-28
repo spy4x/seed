@@ -3,7 +3,6 @@ import type {
   CatalogColour,
   CatalogCombination,
   CatalogSettings,
-  CatalogSize,
   CatalogText,
   PublicCatalogCategory,
   PublicCatalogItem,
@@ -12,7 +11,7 @@ import type {
   PublicCatalogResponse,
 } from "@domain/catalog"
 import { catalogPhotoObjectKey } from "@domain/catalog"
-import { STOCK_COUNTS, stockOf } from "./postgres-catalog.ts"
+import { readCatalogSizes, STOCK_COUNTS, stockOf } from "./postgres-catalog.ts"
 
 /**
  * The website's reads of the catalog (#466): published items only, in categories, with the photos
@@ -141,9 +140,7 @@ export async function readPublicItem(
   const colours = await sql<CatalogColour[]>`
     SELECT id, name, swatch FROM catalog_item_colours WHERE item_id = ${row.id} ORDER BY position
   `
-  const sizes = await sql<CatalogSize[]>`
-    SELECT id, label FROM catalog_item_sizes WHERE item_id = ${row.id} ORDER BY position
-  `
+  const sizes = await readCatalogSizes(sql, row.id)
   const soldOut = await sql<CatalogCombination[]>`
     SELECT colour_id, size_id FROM catalog_sold_out WHERE item_id = ${row.id}
   `
@@ -155,7 +152,7 @@ export async function readPublicItem(
     fit: texts.fit,
     care: texts.care,
     colours: colours.map(({ id, name, swatch }) => ({ id, name, swatch })),
-    sizes: sizes.map(({ id, label }) => ({ id, label })),
+    sizes,
     soldOut: soldOut.map(({ colourId, sizeId }) => ({ colourId, sizeId })),
     photos,
   }

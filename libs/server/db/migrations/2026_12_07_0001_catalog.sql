@@ -80,6 +80,17 @@ CREATE TABLE catalog_item_sizes (
     item_id UUID NOT NULL REFERENCES catalog_items (id) ON DELETE CASCADE,
     label VARCHAR(40) NOT NULL,
     position INT4 NOT NULL,
+    -- The size chart (docs/catalog.md): the heights and weights the size fits, both ends kept.
+    height_min_cm INT2,
+    height_max_cm INT2,
+    weight_min_kg INT2,
+    weight_max_kg INT2,
+    CONSTRAINT catalog_item_sizes_height_check CHECK (
+        (height_min_cm IS NULL) = (height_max_cm IS NULL) AND height_min_cm <= height_max_cm
+    ),
+    CONSTRAINT catalog_item_sizes_weight_check CHECK (
+        (weight_min_kg IS NULL) = (weight_max_kg IS NULL) AND weight_min_kg <= weight_max_kg
+    ),
     CONSTRAINT catalog_item_sizes_position_unique
         UNIQUE (item_id, position) DEFERRABLE INITIALLY DEFERRED
 );

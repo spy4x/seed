@@ -13,6 +13,7 @@ import {
   parseCatalogItemFields,
   parseCatalogLanguages,
   parseCatalogText,
+  recommendSize,
 } from "./+lib.ts"
 
 const RED = `0199f0a0-0000-7000-8000-00000000000a`
@@ -182,6 +183,63 @@ describe(`stock`, () => {
     expect(item(catalogCombinations(colours, sizes))).toBe(`sold-out`)
     expect(catalogStock({ colours: [], sizes: [], soldOut: [{ colourId: null, sizeId: null }] }))
       .toBe(`sold-out`)
+  })
+})
+
+describe(`size chart`, () => {
+  const L = `0199f0a0-0000-7000-8000-00000000000e`
+  const size = (id: string, label: string, height: [number, number], weight: [number, number]) => ({
+    id,
+    label,
+    heightCm: { min: height[0], max: height[1] },
+    weightKg: { min: weight[0], max: weight[1] },
+  })
+  const chart = [
+    size(S, `S`, [150, 160], [40, 50]),
+    size(M, `M`, [161, 170], [51, 60]),
+    size(L, `L`, [171, 180], [61, 70]),
+  ]
+  const label = (advice: ReturnType<typeof recommendSize>) =>
+    advice === null
+      ? null
+      : advice.kind === `size`
+      ? advice.size.label
+      : `${advice.smaller.label}-${advice.larger.label}`
+
+  it(`keeps a size's height and weight ranges, and none when they are left out`, () => {
+    const sizes = [{ ...chart[0], id: S }, { id: M, label: `M`, heightCm: null }]
+    expect(parseCatalogItemFields(input({ sizes }), [`vi`, `en`]).sizes).toEqual([
+      chart[0],
+      { id: M, label: `M`, heightCm: null, weightKg: null },
+    ])
+  })
+
+  it(`refuses a range upside down, below 1 or past the chart's top`, () => {
+    for (const heightCm of [{ min: 170, max: 160 }, { min: 0, max: 160 }, { min: 1, max: 251 }]) {
+      const sizes = [{ id: S, label: `S`, heightCm }]
+      expect(refusedField(() => parseCatalogItemFields(input({ sizes }), [`vi`, `en`]))).toBe(
+        `size:${S}`,
+      )
+    }
+  })
+
+  it(`recommends the size whose ranges hold both the height and the weight`, () => {
+    expect(label(recommendSize(chart, { heightCm: 165, weightKg: 55 }))).toBe(`M`)
+  })
+
+  it(`answers between two sizes when the height and the weight point at different ones`, () => {
+    expect(label(recommendSize(chart, { heightCm: 175, weightKg: 45 }))).toBe(`S-L`)
+  })
+
+  it(`recommends nothing for a person outside the chart, or an item without one`, () => {
+    expect(recommendSize(chart, { heightCm: 190, weightKg: 55 })).toBeNull()
+    const plain = chart.map((one) => ({ ...one, heightCm: null, weightKg: null }))
+    expect(recommendSize(plain, { heightCm: 165, weightKg: 55 })).toBeNull()
+  })
+
+  it(`goes by height alone when no size has a weight range`, () => {
+    const heights = chart.map((one) => ({ ...one, weightKg: null }))
+    expect(label(recommendSize(heights, { heightCm: 172, weightKg: 999 }))).toBe(`L`)
   })
 })
 

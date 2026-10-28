@@ -141,10 +141,26 @@ export interface CatalogColour {
   swatch: string
 }
 
-/** One size an item comes in, such as `M` or `Free size`. */
+/** An inclusive range of whole numbers, such as heights of 160 to 170 cm. */
+export interface CatalogRange {
+  min: number
+  max: number
+}
+
+/** The tallest height a size chart takes, in centimetres. */
+export const CATALOG_HEIGHT_MAX_CM = 250
+/** The heaviest weight a size chart takes, in kilograms. */
+export const CATALOG_WEIGHT_MAX_KG = 300
+
+/**
+ * One size an item comes in, such as `M` or `Free size`, with the heights and weights it fits
+ * when the item has a size chart: the size calculator's input (`recommendSize`).
+ */
 export interface CatalogSize {
   id: string
   label: string
+  heightCm: CatalogRange | null
+  weightKg: CatalogRange | null
 }
 
 /**
@@ -344,6 +360,7 @@ export class CatalogVersionConflictError extends CatalogError {
 
 const text = type({ "[string]": `string` })
 const uuid = type(UUID_PATTERN)
+const range = type({ min: `number.integer`, max: `number.integer`, "+": `reject` })
 
 const itemFields = {
   slug: `string`,
@@ -356,7 +373,13 @@ const itemFields = {
   price: `number.integer`,
   colours: type({ id: uuid, name: text, swatch: `string`, "+": `reject` }).array()
     .atMostLength(CATALOG_COLOURS_MAX),
-  sizes: type({ id: uuid, label: `string`, "+": `reject` }).array().atMostLength(CATALOG_SIZES_MAX),
+  sizes: type({
+    id: uuid,
+    label: `string`,
+    "heightCm?": range.or(`null`),
+    "weightKg?": range.or(`null`),
+    "+": `reject`,
+  }).array().atMostLength(CATALOG_SIZES_MAX),
   soldOut: type({ colourId: uuid.or(`null`), sizeId: uuid.or(`null`), "+": `reject` }).array()
     .atMostLength((CATALOG_COLOURS_MAX + 1) * (CATALOG_SIZES_MAX + 1)),
 } as const
@@ -498,7 +521,11 @@ export function catalogCombinationKey(combination: CatalogCombination): string {
 
 /** Whether none, some or all of the item's combinations are sold out. */
 export function catalogStock(
-  item: Pick<CatalogItemFields, `colours` | `sizes` | `soldOut`>,
+  item: {
+    colours: readonly Pick<CatalogColour, `id`>[]
+    sizes: readonly Pick<CatalogSize, `id`>[]
+    soldOut: readonly CatalogCombination[]
+  },
 ): CatalogStock {
   const all = catalogCombinations(item.colours, item.sizes)
   const sold = new Set(item.soldOut.map(catalogCombinationKey))
@@ -506,11 +533,62 @@ export function catalogStock(
   return count === 0 ? `in-stock` : count === all.length ? `sold-out` : `some-sold-out`
 }
 
+/** A size's height or weight range, checked: whole numbers from 1 to `top`, lowest first. */
+function parseRange(
+  input: CatalogRange | null | undefined,
+  field: string,
+  noun: string,
+  unit: string,
+  top: number,
+): CatalogRange | null {
+  if (!input) return null
+  const { min, max } = input
+  if (min < 1 || max > top) invalid(field, `Enter a ${noun} from 1 to ${top} ${unit}.`)
+  if (min > max) invalid(field, `Put the lower ${noun} first.`)
+  return { min, max }
+}
+
+/** What the size calculator answers (`recommendSize`). */
+export type CatalogSizeAdvice =
+  | { kind: `size`; size: CatalogSize }
+  | { kind: `between`; smaller: CatalogSize; larger: CatalogSize }
+
+/**
+ * The size calculator: which of `sizes` fits a person of `heightCm` and `weightKg`. The sizes are
+ * in the item's order, smallest first. The rule:
+ *
+ * 1. A measure no size has a range for is left out. No size has either range: `null`.
+ * 2. A measure some size has a range for, whose value falls in none of them: `null`. The person is
+ *    outside the chart, and a guess from the other measure would mislead.
+ * 3. A size whose ranges hold every measure that is left: that size, the first one when ranges
+ *    overlap.
+ * 4. Otherwise the height and the weight point at different sizes (the first size holding each):
+ *    `between` those two, the one earlier in the list as `smaller`.
+ */
+export function recommendSize(
+  sizes: readonly CatalogSize[],
+  { heightCm, weightKg }: { heightCm: number; weightKg: number },
+): CatalogSizeAdvice | null {
+  const measures = ([[`heightCm`, heightCm], [`weightKg`, weightKg]] as const)
+    .filter(([key]) => sizes.some((size) => size[key]))
+  if (measures.length === 0) return null
+  const holds = (size: CatalogSize, key: `heightCm` | `weightKg`, value: number) => {
+    const range = size[key]
+    return range !== null && range.min <= value && value <= range.max
+  }
+  const firsts = measures.map(([key, value]) => sizes.findIndex((size) => holds(size, key, value)))
+  if (firsts.includes(-1)) return null
+  const fits = sizes.find((size) => measures.every(([key, value]) => holds(size, key, value)))
+  if (fits) return { kind: `size`, size: fits }
+  const [smaller, larger] = firsts.toSorted((a, b) => a - b)
+  return { kind: `between`, smaller: sizes[smaller], larger: sizes[larger] }
+}
+
 /**
  * Trims and checks an item's fields against the catalog's `languages`. Throws
  * {@link CatalogError} with the field it is about: no name in the default language, a slug that is
  * no slug, a price that is negative or too high, a colour without a name or with a swatch that is
- * no `#rrggbb`, a size without a label or named twice, a colour or size id used twice, or a sold-out
+ * no `#rrggbb`, a size without a label or named twice, a height or weight range out of bounds or upside down, a colour or size id used twice, or a sold-out
  * combination of a colour or size the item does not have.
  */
 export function parseCatalogItemFields(
@@ -573,7 +651,9 @@ export function parseCatalogItemFields(
     }
     if (labels.has(label.toLowerCase())) invalid(field, `This size is in the list already.`)
     labels.add(label.toLowerCase())
-    return { id: size.id.toLowerCase(), label }
+    const heightCm = parseRange(size.heightCm, field, `height`, `cm`, CATALOG_HEIGHT_MAX_CM)
+    const weightKg = parseRange(size.weightKg, field, `weight`, `kg`, CATALOG_WEIGHT_MAX_KG)
+    return { id: size.id.toLowerCase(), label, heightCm, weightKg }
   })
 
   const known = new Set(catalogCombinations(colours, sizes).map(catalogCombinationKey))
