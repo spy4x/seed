@@ -1,5 +1,6 @@
 import type { SubscriptionConfirmState, UnsubscribeState } from "@domain/subscribers"
 import { readApiError } from "@domain/errors"
+import { apiErrorText } from "./app-text.ts"
 
 /** The `fetch` these calls use; tests pass a fake. */
 export type SubscribersFetch = (url: string, init?: RequestInit) => Promise<Response>
@@ -57,10 +58,8 @@ export function createSubscribersApi(fetcher: SubscribersFetch = (url, init) => 
           body: JSON.stringify({ email, list }),
         })
         if (response.ok) return { ok: true }
-        return {
-          ok: false,
-          error: readApiError(await response.json().catch(() => null))?.message ?? "",
-        }
+        const refusal = readApiError(await response.json().catch(() => null))
+        return { ok: false, error: refusal ? apiErrorText(refusal) : "" }
       } catch {
         return { ok: false, error: "" }
       }

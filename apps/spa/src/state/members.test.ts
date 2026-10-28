@@ -268,7 +268,7 @@ describe("handing a group over by REST", () => {
     }
   }
 
-  it("keeps the API's sentence and reason, and words a guard's refusal in its own", async () => {
+  it("words a refusal by its reason, and a guard's refusal in the dialog's own words", async () => {
     const named = await refusalOf(400, {
       error: { code: "bad_request", message: "Type the name", reason: "NAME_MISMATCH" },
     })
@@ -276,7 +276,10 @@ describe("handing a group over by REST", () => {
       error: { code: "rate_limited", message: "Too many requests" },
     })
 
-    expect([named.message, named.code]).toEqual(["Type the name", "NAME_MISMATCH"])
+    expect([named.message, named.code]).toEqual([
+      "The name you typed is not the group's name.",
+      "NAME_MISMATCH",
+    ])
     expect([limited.message, limited.code]).toEqual([
       "Too many attempts. Wait a few minutes, then try again.",
       undefined,

@@ -282,7 +282,7 @@ describe("a saved copy and the answer of the server", () => {
     await store.load()
 
     expect(store.tokens.value).toBeNull()
-    expect(store.errors.value.list).toBe("Request failed")
+    expect(store.errors.value.list).toBe("Something went wrong on our side. Try again.")
   })
 })
 
