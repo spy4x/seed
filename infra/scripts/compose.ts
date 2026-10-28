@@ -205,9 +205,14 @@ if (import.meta.main) {
     readEnv: readEnvFile,
     facts: () => readPostgresDataFacts(),
     ensureProxyNetwork: (plan) => ensureProxyNetwork(plan.engine, runContainerCli),
+    // stdin too, so `exec -T worker … < file` and an interactive prompt reach the container.
     run: async (engine, args) =>
-      (await new Deno.Command(engine, { args, stdout: "inherit", stderr: "inherit" }).output())
-        .code,
+      (await new Deno.Command(engine, {
+        args,
+        stdin: "inherit",
+        stdout: "inherit",
+        stderr: "inherit",
+      }).output()).code,
     ask: async (engine, args) => {
       const text = new TextDecoder();
       const { code, stdout, stderr } = await new Deno.Command(engine, { args }).output();
