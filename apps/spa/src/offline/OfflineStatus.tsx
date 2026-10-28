@@ -129,7 +129,15 @@ function Sides({ view }: { view: ConflictView }) {
  * reread. The words and the keyboard behaviour come from `SyncStatus` and `ConflictChooser`.
  */
 export function OfflineStatus(
-  { groupId, onResolved }: { groupId: string; onResolved: () => void },
+  { groupId, onResolved, underHeader = false }: {
+    groupId: string
+    onResolved: () => void
+    /**
+     * Drawn under the page header, inside a page whose own gap spaces it (Notes). Left out, it sits
+     * above the header and brings its own gap.
+     */
+    underHeader?: boolean
+  },
 ) {
   const t = useAppText()
   const layer = activeLayer.value
@@ -177,9 +185,13 @@ export function OfflineStatus(
   }
 
   return (
-    // It sits above the page's header, as the shell's banner does: a section gap (`Page`'s gap-8)
-    // keeps a conflict card off the header.
-    <section class="mb-8 w-full" aria-label={t.t(`OfflineStatus.sync`)} data-e2e="offline-status">
+    // Above the page's header, as the shell's banner does, a section gap (`Page`'s gap-8) keeps a
+    // conflict card off the header. Under it, the page's own gap does.
+    <section
+      class={underHeader ? "w-full" : "mb-8 w-full"}
+      aria-label={t.t(`OfflineStatus.sync`)}
+      data-e2e="offline-status"
+    >
       <SyncStatus
         online={network.online.value}
         pending={pending}
