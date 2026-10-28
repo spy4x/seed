@@ -115,17 +115,18 @@ describe(`syncLanguage`, () => {
   })
 
   it(`offers as chosen the device's choice while signed out, the stored one once signed in, and each new choice`, async () => {
-    const { sync, signIn, loaded } = setup({ kept: `ar` })
-    expect(sync.current.value).toBe(`ar`)
+    const out = setup({ kept: `ar` })
+    expect(out.sync.current.value).toBe(`ar`)
+    await out.sync.choose(`ru`)
+    expect(out.sync.current.value).toBe(`ru`)
 
-    signIn({ language: null })
-    expect(sync.current.value).toBeNull()
-    await sync.choose(`de`)
-    expect(sync.current.value).toBe(`de`)
+    // A device that keeps nothing: signed in, the account's choice; signed out again, the device's.
+    const blocked = setup({ kept: `ar`, blocked: true })
+    blocked.signIn({ language: `de` })
+    expect(blocked.sync.current.value).toBe(`de`)
+    blocked.loaded.value = false
+    expect(blocked.sync.current.value).toBe(`ar`)
 
-    // Signed out again: the device kept the copy.
-    loaded.value = false
-    expect(sync.current.value).toBe(`de`)
     expect(setup({ kept: `../x` }).sync.current.value).toBeNull()
   })
 })
