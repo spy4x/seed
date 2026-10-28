@@ -14,6 +14,7 @@ import {
   IconPackage,
   IconServer,
   IconShieldCheck,
+  IconTrendingUp,
   IconUsers,
 } from "@spy4x/preact-icons"
 import type { IconProps } from "@spy4x/preact-icons"
@@ -69,6 +70,12 @@ const MODULES: readonly { name: string; Icon: ComponentType<IconProps>; text: st
     Icon: IconHome,
     text: `The product at a glance over the last 30 days: people, sign-ups, who is active, ` +
       `groups and notes.`,
+  },
+  {
+    name: `Stats`,
+    Icon: IconTrendingUp,
+    text: `The website's visits from your Umami: where they come from, which items people order ` +
+      `or only look at, and which order button they press. Totals only, never a visitor.`,
   },
   {
     name: `Users`,

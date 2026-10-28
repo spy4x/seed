@@ -83,13 +83,14 @@ Deleting a source deletes its links, after a confirm that says how many.
 
 | Variable            | What                                                                                       |
 | ------------------- | ------------------------------------------------------------------------------------------ |
-| `MPA_DOMAIN`        | The website's host. Without it, tracking links are off: the item page shows no Share links card and the Link sources page says why. |
+| `MPA_DOMAIN`        | The website's host. Without it, tracking links are off: the item page shows no Share links card and the Sources page says why. |
 | `CATALOG_ITEM_PATH` | The website's item address, with `{slug}` and optionally `{category}`. Default `/{category}/{slug}`. |
 | `UMAMI_API_URL`     | The self-hosted Umami, such as `https://stats.example.com`. Set with the token or not at all. |
-| `UMAMI_API_TOKEN`   | A token of an Umami user who may create links. A secret: env only, never logged.          |
+| `UMAMI_API_TOKEN`   | A token of an Umami user who may create links and read the website (Stats). A secret: env only, never logged. |
 
-The Umami client is `@spy4x/integrations/umami` (`ts-libs`). How many clicks each link had is
-[#485](https://github.com/spy4x/seed/issues/485).
+The Umami client is `@spy4x/integrations/umami` (`ts-libs`). The admin app's Stats page reads the
+visits and order clicks of each source and item back from Umami
+([analytics.md](analytics.md#stats-in-the-admin-app)).
 
 ### Order buttons
 
@@ -106,7 +107,7 @@ as `data-umami-event-item`.
 | `libs/server/catalog/setup.ts`                  | `readCatalogSetup`: the switch and the settings.                         |
 | `libs/server/catalog/postgres-catalog.ts`       | The admin's reads and writes, each write with its audit row.            |
 | `libs/server/catalog/public-catalog.ts`         | The website's reads: published items only.                               |
-| `libs/server/catalog/sample-catalog.ts`         | Three categories, six items and four link sources for development and the demo. |
+| `libs/server/catalog/sample-catalog.ts`         | Three categories, six items and four sources for development and the demo. |
 | `libs/server/catalog/tracking.ts`               | Tracking links: the env, Umami, and where `/s/<code>` leads.             |
 | `apps/api/routes/admin/catalog.ts`              | `/api/admin/catalog*`, behind the operator gate.                         |
 | `apps/api/routes/catalog.ts`                    | `/api/catalog*`, public, mounted only while the catalog is on.           |
@@ -118,7 +119,7 @@ as `data-umami-event-item`.
 
 Admin, operator only, every write audited (`catalog.*` kinds in the audit log):
 
-- `GET /api/admin/catalog`: the settings, every category, every item, the link sources, and
+- `GET /api/admin/catalog`: the settings, every category, every item, the sources, and
   whether tracking links are on.
 - `GET /api/admin/catalog/items/:id` (the item and its tracking links); `POST /api/admin/catalog/items` (a client-made UUID v7
   `id` and the fields); `POST .../items/:id` (the fields at `version`); `.../status`
