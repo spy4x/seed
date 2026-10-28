@@ -794,3 +794,61 @@ describe("the link sources in en-XA", () => {
     expect(englishLeft(document.body, data)).toEqual([])
   })
 })
+
+describe("the item editor in en-XA", () => {
+  const pseudo = (node: VNode) =>
+    <I18nContext.Provider value={ADMIN_PSEUDO}>{node}</I18nContext.Provider>
+  // The item's, the category's, the colour's and the sources' own words, the languages' names in
+  // their own language, and the links and their utm_source tags.
+  const data = [
+    /Áo thun|Đỏ|English|Tiếng Việt|Zalo group A|Friends|VND/g,
+    /https:\/\/\S+/g,
+    /utm_source=[a-z-]+/g,
+  ]
+
+  it("shows no English outside the catalog, from loading to a saved item's menus and dialogs", async () => {
+    const calls: unknown[][] = []
+    const left: string[] = []
+    const props = { item: null, settings: SETTINGS, categories: [], value: catalogItemDraft(null) }
+    const screen = { ...props, onChange: () => {}, errors: {}, saving: false, onSave: () => {} }
+    const actions = { onPublish: () => {}, onHide: () => {}, onDelete: () => {} }
+    const photos = {
+      photos: { uploading: 2, busy: false, error: null },
+      onUpload: () => {},
+      onPhotoMove: () => {},
+      onPhotoSave: () => {},
+      onPhotoRemove: () => {},
+    }
+    for (const state of [{ loading: true, notFound: false }, { loading: false, notFound: true }]) {
+      await mount(
+        pseudo(<AdminCatalogItemScreen {...screen} {...actions} {...photos} {...state} />),
+      )
+      left.push(...englishLeft(document.body, data))
+    }
+    // A new item: no photos yet, then a colour and a size with no names.
+    await mount(pseudo(<ItemEditor key="new" calls={calls} shareLinks={{ ...emptyShare }} />))
+    left.push(...englishLeft(document.body, data))
+    await clickOn(find("[data-e2e=catalog-item-add-colour]"))
+    await clickOn(find("[data-e2e=catalog-item-add-size]"))
+    left.push(...englishLeft(document.body, data))
+    // A saved draft with its share links, the menu of a photo, then the publish dialog.
+    const sources = [sourceOf(), sourceOf({ id: FRIENDS, name: "Friends", slug: "friends" })]
+    const share = { ...emptyShare, sources, links: { [ZALO]: "https://shop.example/s/AbCd" } }
+    await mount(
+      pseudo(<ItemEditor key="saved" calls={calls} item={ITEM_SAVED} shareLinks={share} />),
+    )
+    await clickOn(document.querySelectorAll("[data-e2e=catalog-item-photo-menu]")[1])
+    left.push(...englishLeft(document.body, data))
+    await clickOn(find("[data-e2e=catalog-item-publish]"))
+    expect(document.querySelector("dialog[open]")).not.toBeNull()
+    left.push(...englishLeft(document.body, data))
+    expect(left).toEqual([])
+  })
+})
+
+const emptyShare: CatalogShareLinksState = {
+  sources: [],
+  links: {},
+  copying: null,
+  onCopy: () => {},
+}

@@ -563,6 +563,8 @@
   "OnboardingCard.tourOffer": "New here? A short tour shows you around.",
   "OnboardingCard.tourStart": "Take the tour",
   "OnboardingCard.tourSkip": "Skip the tour",
+  "OnboardingCard.keep": "Keep your account",
+  "OnboardingCard.keepText": "Add a sign-in method so you can open this account on any device.",
   "OverviewScreen.last7Days": "Last 7 days",
   "OverviewScreen.last30Days": "Last 30 days",
   "OverviewScreen.last90Days": "Last 90 days",
@@ -1464,6 +1466,7 @@
     "one": "\"{name}\" was deleted and taken off {count} note.",
     "other": "\"{name}\" was deleted and taken off {count} notes."
   },
+  "TelegramNotification.open": "Open",
   "UndoToast.title": "Note deleted",
   "UndoToast.deleted": "\"{title}\" was deleted.",
   "UndoToast.deletedUntitled": "The note was deleted.",

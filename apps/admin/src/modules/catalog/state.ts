@@ -370,12 +370,20 @@ export function createCatalogState(
       for (const file of files) {
         const type = catalogPhotoContentType(file)
         if (!(CATALOG_PHOTO_TYPES as readonly string[]).includes(type)) {
-          problems.push(`${file.name} is not a JPEG, PNG, WebP or HEIC photo.`)
+          problems.push(adminText().t(`AdminCatalogItem.photoWrongType`, { file: file.name }))
         } else if (file.size > CATALOG_PHOTO_MAX_BYTES) {
-          problems.push(`${file.name} is larger than ${CATALOG_PHOTO_MAX_BYTES / 1024 / 1024} MB.`)
+          problems.push(
+            adminText().t(`AdminCatalogItem.photoTooLarge`, {
+              file: file.name,
+              size: CATALOG_PHOTO_MAX_BYTES / 1024 / 1024,
+            }),
+          )
         } else if (take.length >= room) {
           problems.push(
-            `${file.name} was left out: an item keeps ${CATALOG_PHOTOS_MAX} photos at most.`,
+            adminText().t(`AdminCatalogItem.photoLeftOut`, {
+              file: file.name,
+              count: CATALOG_PHOTOS_MAX,
+            }),
           )
         } else take.push(file)
       }

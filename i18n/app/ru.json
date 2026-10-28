@@ -633,6 +633,8 @@
   "OnboardingCard.tourOffer": "Вы здесь впервые? Короткий тур всё покажет.",
   "OnboardingCard.tourStart": "Пройти тур",
   "OnboardingCard.tourSkip": "Пропустить тур",
+  "OnboardingCard.keep": "Сохранить аккаунт",
+  "OnboardingCard.keepText": "Добавьте способ входа, чтобы открывать этот аккаунт на любом устройстве.",
   "OverviewScreen.last7Days": "Последние 7 дней",
   "OverviewScreen.last30Days": "Последние 30 дней",
   "OverviewScreen.last90Days": "Последние 90 дней",
@@ -1612,6 +1614,7 @@
     "many": "«{name}» удалён и снят с {count} заметок.",
     "other": "«{name}» удалён и снят с {count} заметки."
   },
+  "TelegramNotification.open": "Открыть",
   "UndoToast.title": "Заметка удалена",
   "UndoToast.deleted": "«{title}» удалена.",
   "UndoToast.deletedUntitled": "Заметка удалена.",

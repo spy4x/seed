@@ -1,10 +1,10 @@
 import { render } from "preact"
 import { createThemeStore } from "@spy4x/preact-signals/theme"
-import { createToastStore } from "@spy4x/preact-signals/toast"
 import { ErrorBoundary } from "@spy4x/preact-ui/error-boundary"
 import { App } from "./app.tsx"
 import { adminHttp, createAdminStore } from "./state.ts"
 import { kept, languages } from "./i18n.ts"
+import { createAdminToasts } from "./toasts.ts"
 import { pickLanguage } from "@platform/i18n.ts"
 import { LANGUAGES } from "@domain/identity"
 
@@ -22,7 +22,7 @@ await languages.use(pickLanguage(LANGUAGES, null, kept.read(), navigator.languag
 
 render(
   <ErrorBoundary dataE2E="render-error">
-    <App store={store} theme={theme} toasts={createToastStore()} />
+    <App store={store} theme={theme} toasts={createAdminToasts()} />
   </ErrorBoundary>,
   document.getElementById("app") as HTMLElement,
 )
