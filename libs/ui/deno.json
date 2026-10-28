@@ -13,6 +13,6 @@
   // list): admin-frame.tsx (AdminSignInScreen, the coming-soon badge), note-widgets.tsx,
   // notes-filter.ts, search-palette.tsx and shortcuts.tsx.
   "lint": {
-    "plugins": ["jsr:@spy4x/preact-theme@10.11.0/lint"]
+    "plugins": ["jsr:@spy4x/preact-theme@10.12.0/lint"]
   }
 }
