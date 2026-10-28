@@ -13,6 +13,7 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { AuthScreen, type AuthScreenProps } from "./auth-screen.tsx"
 import { FORM_ACTIONS } from "./progressive.tsx"
+import { siteEnglishText } from "./site-text.ts"
 import {
   ForgotPasswordScreen,
   type ForgotPasswordScreenProps,
@@ -374,7 +375,7 @@ describe("SubscriptionConfirmScreen in the browser", () => {
     await rerender(<SubscriptionConfirmScreen {...confirmDefaults} state="error" />)
 
     expect(find("[data-e2e=subscription-confirm-error]").textContent)
-      .toBe(SUBSCRIBE_FAILURES.confirm)
+      .toBe(siteEnglishText().t(SUBSCRIBE_FAILURES.confirm))
     expect(focused()).toBe("subscription-confirm-error")
   })
 
@@ -420,7 +421,9 @@ describe("UnsubscribeScreen in the browser", () => {
 
     await rerender(<UnsubscribeScreen {...unsubscribeDefaults} state="error" />)
 
-    expect(find("[data-e2e=unsubscribe-error]").textContent).toBe(SUBSCRIBE_FAILURES.unsubscribe)
+    expect(find("[data-e2e=unsubscribe-error]").textContent).toBe(
+      siteEnglishText().t(SUBSCRIBE_FAILURES.unsubscribe),
+    )
     expect(focused()).toBe("unsubscribe-error")
   })
 
