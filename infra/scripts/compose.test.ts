@@ -209,7 +209,7 @@ Deno.test("with SPA=false a deploy starts the product without the SPA and keeps 
   expect(base.ran).toEqual([
     "proxy network",
     "build deno-base",
-    "up --scale spa=0 -d --build db migrate api",
+    "up --scale spa=0 -d --build db migrate api spa",
     "up --scale spa=0 -d --build",
   ]);
 });
