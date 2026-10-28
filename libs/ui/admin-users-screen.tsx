@@ -438,6 +438,20 @@ function PersonCell(
             ? <Badge text={t.t(`AdminUsers.blocked`)} color="red" />
             : <Badge text={t.t(`AdminUsers.active`)} color="green" type="outline" />}
         </span>
+        {/* The Last seen and Created columns' facts, shown here only where those columns are hidden. */}
+        <span
+          class="flex flex-wrap gap-x-3 text-sm text-muted sm:hidden"
+          data-e2e="admin-user-phone-dates"
+        >
+          <span class="flex gap-1">
+            <span>{t.t(`AdminUsers.lastSeen`)}</span>
+            {user.lastSeenAt ? <When at={user.lastSeenAt} /> : t.t(`AdminUsers.never`)}
+          </span>
+          <span class="flex gap-1">
+            <span>{t.t(`AdminUsers.created`)}</span>
+            <OnDay at={user.createdAt} />
+          </span>
+        </span>
       </div>
     </div>
   )

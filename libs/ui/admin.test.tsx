@@ -238,6 +238,14 @@ describe("the admin user list", () => {
     }]])
   })
 
+  it("keeps each person's last sign-in and join date under the name, for a phone", async () => {
+    await mount(<AdminUsersScreen {...listProps([])} />)
+    const dates = find("[data-e2e=admin-user-phone-dates]").textContent ?? ""
+    expect(dates).toContain("Last seen")
+    expect(dates).toContain("Created")
+    expect(dates).toContain("2026")
+  })
+
   it("offers no sorting by status, which the server cannot sort by", async () => {
     await mount(<AdminUsersScreen {...listProps([])} />)
     const status = [...document.querySelectorAll("th")]
