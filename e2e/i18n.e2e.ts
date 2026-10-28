@@ -8,6 +8,7 @@ import { signUpWithCode } from "./fixtures/sign-up.ts"
  * The interface language (#216): a browser's languages pick the first frame's language, a choice
  * kept on the device before sign-up becomes the account's, the account's language follows the
  * person to a new device and into the admin app, and an operator sees it on the person's screen.
+ * The preferences' Language row and the operator's menu switch the page at once.
  * The screens' own switching at once is covered by `libs/ui/i18n.test.tsx`.
  */
 
@@ -90,6 +91,28 @@ test.describe("the interface language", () => {
       await expect(ops.locator("[data-e2e=admin-user-preferences-formats]")).toContainText(
         "registriert mit",
       )
+
+      // Choosing Arabic in the preferences switches the page at once, right to left, unreloaded.
+      await page.goto(`${appBase}/profile/region`)
+      await page.locator("html").evaluate((html) => html.setAttribute("data-unreloaded", "yes"))
+      await page.locator("[data-e2e=preferences-language-change]").click()
+      const dialog = page.locator("[data-e2e=language-dialog]")
+      await dialog.getByRole("radio", { name: "العربية", exact: true }).click()
+      await expect(page.locator("html")).toHaveAttribute("lang", "ar")
+      await expect(page.locator("html")).toHaveAttribute("dir", "rtl")
+      await expect(page.locator("html")).toHaveAttribute("data-unreloaded", "yes")
+      await expect(page.locator("[data-e2e=preferences-language-name]")).toHaveText("العربية")
+      await dialog.locator("[data-e2e=language-dialog-done]").click()
+      await expect(dialog).toBeHidden()
+
+      // The operator's own menu sets the admin app's language on this device, over the account's.
+      await ops.locator("[data-e2e=rail-shell-bottom] [data-e2e=account-menu-button]").click()
+      await ops.locator("[data-e2e=account-language]:visible").click()
+      await ops.locator("[data-e2e=language-dialog]").getByRole("radio", {
+        name: "Español",
+        exact: true,
+      }).click()
+      await expect(ops.locator("html")).toHaveAttribute("lang", "es")
     } finally {
       for (const device of devices) await device.close()
       const response = await request.post(`${appBase}/api/test/cleanup-user`, {
