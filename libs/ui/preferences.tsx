@@ -212,7 +212,12 @@ export function RegionSection(props: PreferencesProps): JSX.Element {
 
   return (
     <div ref={form} class="flex flex-col gap-6" data-e2e="preferences">
-      {props.language && <LanguageRow language={props.language} />}
+      {props.language && (
+        // As wide as the fields under it.
+        <div class="max-w-md">
+          <LanguageRow language={props.language} />
+        </div>
+      )}
       <p class="text-sm text-muted" data-e2e="preferences-example">
         <Rich
           parts={t.parts(`Preferences.example`, { date: format.dateTime(now, `full`) })}
