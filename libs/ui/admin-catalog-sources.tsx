@@ -341,8 +341,10 @@ export function AdminCatalogSourceEditorScreen(
             </Field>
             {source && source.linkCount > 0 && (
               <p class="text-sm text-muted" data-e2e="catalog-source-links-note">
-                Its {links(source.linkCount)}{" "}
-                keep their addresses; a new tag applies from the next visit.
+                {source.linkCount === 1
+                  ? `Its link keeps its address`
+                  : `Its ${links(source.linkCount)} keep their addresses`}; a new tag applies from
+                the next visit.
               </p>
             )}
             <ErrorState message={errors.form ?? null} />

@@ -501,6 +501,28 @@ describe("the link source editor", () => {
     await mount(<Harness errors={{ slug: "Another source has this utm_source. Pick another." }} />)
     expect(document.activeElement).toBe(slug)
   })
+
+  it("says a used source's links keep their addresses, in the right number", async () => {
+    const editor = (linkCount: number) => (
+      <AdminCatalogSourceEditorScreen
+        source={sourceOf({ linkCount })}
+        loading={false}
+        notFound={false}
+        value={{ name: "Zalo group A", slug: "zalo-a", slugEdited: true }}
+        onChange={() => {}}
+        errors={{}}
+        saving={false}
+        onSave={() => {}}
+      />
+    )
+    const note = () => document.querySelector("[data-e2e=catalog-source-links-note]")
+    await mount(editor(1))
+    expect(note()?.textContent).toContain("Its link keeps its address")
+    await mount(editor(3))
+    expect(note()?.textContent).toContain("Its 3 links keep their addresses")
+    await mount(editor(0))
+    expect(note() === null).toBe(true)
+  })
 })
 
 describe("the item editor's share links", () => {
@@ -520,7 +542,7 @@ describe("the item editor's share links", () => {
     const [zalo, friends] = rows()
     expect(zalo.querySelector("[data-e2e=catalog-item-link-url]")!.textContent).toBe(LINK)
     expect(friends.querySelector("[data-e2e=catalog-item-link-url]")!.textContent)
-      .toBe("utm_source=friends")
+      .toBe("No link yet · utm_source=friends")
     const copy = friends.querySelector<HTMLButtonElement>("[data-e2e=catalog-item-link-copy]")!
     expect(copy.getAttribute("aria-label")).toBe("Copy the link for Friends")
     expect(copy.type).toBe("button")

@@ -631,7 +631,7 @@ function ShareLinks(
                           }`}
                           data-e2e="catalog-item-link-url"
                         >
-                          {link ?? `utm_source=${source.slug}`}
+                          {link ?? `No link yet · utm_source=${source.slug}`}
                         </span>
                       </div>
                       <Button
