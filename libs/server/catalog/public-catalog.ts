@@ -46,12 +46,23 @@ async function readSummaries(sql: postgres.Sql, slug?: string): Promise<SummaryR
 
 /**
  * The ready photos of the items `itemIds`, in each item's order, with every width: AVIF before
- * WebP, narrowest first. A photo still being prepared or refused is left out.
+ * WebP, narrowest first. A photo still being prepared or refused is left out. With `coversOnly`,
+ * each item's cover alone.
  */
 async function readPhotos(
   sql: postgres.Sql,
   itemIds: readonly string[],
+  coversOnly = false,
 ): Promise<Map<string, PublicCatalogPhoto[]>> {
+  // The cover is the item's first ready photo: the list reads no other.
+  const cover = coversOnly
+    ? sql`AND p.id = (
+      SELECT c.id FROM catalog_photos c
+      JOIN images ci ON ci.id = c.id AND ci.processed_at IS NOT NULL AND ci.refused IS NULL
+      WHERE c.item_id = p.item_id
+      ORDER BY c.position LIMIT 1
+    )`
+    : sql``
   const rows = await sql<{
     itemId: string
     id: string
@@ -66,7 +77,7 @@ async function readPhotos(
     FROM catalog_photos p
     JOIN images im ON im.id = p.id AND im.processed_at IS NOT NULL AND im.refused IS NULL
     JOIN image_variants v ON v.image_id = p.id
-    WHERE p.item_id = ANY(${sql.array([...itemIds])}::uuid[])
+    WHERE p.item_id = ANY(${sql.array([...itemIds])}::uuid[]) ${cover}
     ORDER BY p.item_id, p.position, v.content_type, v.width
   `
   const byItem = new Map<string, PublicCatalogPhoto[]>()
@@ -110,7 +121,7 @@ export async function readPublicCatalog(
   settings: CatalogSettings,
 ): Promise<PublicCatalogResponse> {
   const rows = await readSummaries(sql)
-  const photos = await readPhotos(sql, rows.map((row) => row.id))
+  const photos = await readPhotos(sql, rows.map((row) => row.id), true)
   const categories = await sql<PublicCatalogCategory[]>`
     SELECT c.slug, c.name FROM catalog_categories c
     WHERE EXISTS (

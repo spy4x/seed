@@ -389,12 +389,14 @@ Deno.test(`the website reads published items only, with the photos that are read
       jacket({ slug: `draft`, categoryId: empty.id }).fields,
       actor,
     )
-    const [ready, waiting, drafted] = [uuidV7(), uuidV7(), uuidV7()]
+    const [ready, waiting, drafted, later] = [uuidV7(), uuidV7(), uuidV7(), uuidV7()]
     await catalog.addPhoto(live.id, waiting, catalogPhotoObjectKey(waiting), actor)
     await catalog.addPhoto(live.id, ready, catalogPhotoObjectKey(ready), actor)
+    await catalog.addPhoto(live.id, later, catalogPhotoObjectKey(later), actor)
     await catalog.addPhoto(draft.id, drafted, catalogPhotoObjectKey(drafted), actor)
     await process(sql, ready)
     await process(sql, drafted)
+    await process(sql, later)
 
     const settings = { currency: `VND`, languages: [`vi`, `en`] }
     const site = await readPublicCatalog(sql, settings)
@@ -416,7 +418,7 @@ Deno.test(`the website reads published items only, with the photos that are read
     expect(JSON.stringify(site)).not.toContain(live.id)
 
     const page = await readPublicItem(sql, `zip-jacket`)
-    expect(page?.photos.map((photo) => photo.id)).toEqual([ready])
+    expect(page?.photos.map((photo) => photo.id)).toEqual([ready, later])
     expect(page?.sizes.map((size) => size.label)).toEqual([`S`, `M`])
     expect(await readPublicItem(sql, `draft`)).toBeNull()
 
