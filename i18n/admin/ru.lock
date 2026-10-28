@@ -1019,7 +1019,7 @@ AdminUser.doneEndSessions	02ef43a9b0d80103
 AdminUser.donePasswordReset	6d08aec90947f96f
 AdminUser.doneRemovePicture	e2fb55cc5303cf09
 AdminUser.doneRole	05ec879e3293818e
-AdminUser.doneRoleAdmin	db9d86c6299f2975
+AdminUser.doneRoleAdmin	1a1caf003ef05631
 AdminUser.doneRoleOperator	2a390e61be75dffd
 AdminUser.doneRoleSupervisor	65a7cd36e8191590
 AdminUser.doneRoleViewer	2ef955f6416951a6

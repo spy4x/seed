@@ -56,8 +56,10 @@ export interface AdminPersonTab {
 export interface AdminModule {
   /** The same id as the API module. */
   id: string
-  /** The sidebar entry; its `href` is the module's first page. */
-  /** The rail entry; `name` is a catalog key, translated where the rail and shortcuts show it. */
+  /**
+   * The rail entry; its `href` is the module's first page. `name` is a catalog key, translated
+   * where the rail and shortcuts show it.
+   */
   nav: { name: string; href: string; Icon: ComponentType<IconProps> }
   routes: readonly AdminRoute[]
   personTabs?: readonly AdminPersonTab[]

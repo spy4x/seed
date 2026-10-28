@@ -1166,7 +1166,7 @@
   "AdminUser.doneEndSessions": "Todas as sessões de {name} foram encerradas.",
   "AdminUser.doneEndSession": "Uma sessão de {name} foi encerrada.",
   "AdminUser.doneRole": "{name} tem uma nova função.",
-  "AdminUser.doneRoleViewer": "{name} agora é leitor.",
+  "AdminUser.doneRoleViewer": "{name} agora é usuário.",
   "AdminUser.doneRoleOperator": "{name} agora é operador.",
   "AdminUser.doneRoleSupervisor": "{name} agora é supervisor.",
   "AdminUser.doneRoleAdmin": "{name} agora é administrador.",
