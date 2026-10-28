@@ -1466,6 +1466,7 @@
     "one": "„{name}“ wurde gelöscht und von {count} Notiz entfernt.",
     "other": "„{name}“ wurde gelöscht und von {count} Notizen entfernt."
   },
+  "TelegramNotification.open": "Öffnen",
   "UndoToast.title": "Notiz gelöscht",
   "UndoToast.deleted": "„{title}“ wurde gelöscht.",
   "UndoToast.deletedUntitled": "Die Notiz wurde gelöscht.",

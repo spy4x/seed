@@ -1540,6 +1540,7 @@
     "many": "Se eliminó «{name}» y se quitó de {count} notas.",
     "other": "Se eliminó «{name}» y se quitó de {count} notas."
   },
+  "TelegramNotification.open": "Abrir",
   "UndoToast.title": "Nota eliminada",
   "UndoToast.deleted": "Se eliminó «{title}».",
   "UndoToast.deletedUntitled": "La nota se eliminó.",

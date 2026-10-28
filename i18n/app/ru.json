@@ -1614,6 +1614,7 @@
     "many": "«{name}» удалён и снят с {count} заметок.",
     "other": "«{name}» удалён и снят с {count} заметки."
   },
+  "TelegramNotification.open": "Открыть",
   "UndoToast.title": "Заметка удалена",
   "UndoToast.deleted": "«{title}» удалена.",
   "UndoToast.deletedUntitled": "Заметка удалена.",

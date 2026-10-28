@@ -17,7 +17,7 @@ export const NOTIFICATION_UNREAD_RETENTION_DAYS = 365
 
 /**
  * The kinds of notification the app writes, as they are stored in `notifications.kind`. Each has a
- * sentence in {@link describeNotification}; the writers live next to the change that causes them.
+ * sentence in {@link notificationMessage}; the writers live next to the change that causes them.
  */
 export const NotificationKind = {
   /** An invitation was sent to an address the person has proven. */
@@ -158,56 +158,75 @@ export function parseNotificationLimit(value: string | undefined): number {
   return limit
 }
 
-function text(value: unknown, fallback: string): string {
-  return typeof value === "string" && value.trim() !== "" ? value.trim() : fallback
+/** A payload field as text, or `null` when it is missing or blank. */
+function text(value: unknown): string | null {
+  return typeof value === "string" && value.trim() !== "" ? value.trim() : null
 }
 
-/** A day as a notification sentence writes it: `30 Oct 2026`. */
-const EXPORT_DAY = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  timeZone: "UTC",
-})
-
-function article(word: string): string {
-  return /^[aeiou]/.test(word) ? "an" : "a"
+/** The sentence of an invitation and of a role change, by the role word the payload names. */
+const ROLE_SENTENCES: Record<string, { invited: string; role: string }> = {
+  viewer: { invited: `NotificationsScreen.invitedViewer`, role: `NotificationsScreen.roleViewer` },
+  editor: { invited: `NotificationsScreen.invitedEditor`, role: `NotificationsScreen.roleEditor` },
+  admin: { invited: `NotificationsScreen.invitedAdmin`, role: `NotificationsScreen.roleAdmin` },
+  owner: { invited: `NotificationsScreen.invitedOwner`, role: `NotificationsScreen.roleOwner` },
+  member: { invited: `NotificationsScreen.invitedMember`, role: `NotificationsScreen.roleMember` },
 }
 
 /**
- * One notification in plain language: `You were invited to join “Family” as an editor.` A kind this
+ * A guest reminder's sentence, by the English title the server stored in its payload (#224): the
+ * payload names no reminder kind, so its fixed title picks the translation.
+ */
+const GUEST_REMINDER_KEYS: Record<string, string> = {
+  "Keep the note you just wrote": `NotificationsScreen.reminderFirstNote`,
+  "Open this account on your other devices": `NotificationsScreen.reminderThirdVisit`,
+  "Add a sign-in method to invite people": `NotificationsScreen.reminderInvite`,
+}
+
+/**
+ * One notification's sentence: its key in the `app` catalog, and the facts the sentence fills in.
+ * The inbox and the Telegram message both say it, each in the person's language.
+ */
+export interface NotificationMessage {
+  key: string
+  /**
+   * The group's name, which the sentence names as `{group}`: set for the kinds about a group, and
+   * `null` when the payload lost it (the sentence then says `NotificationsScreen.someGroup`).
+   */
+  group?: string | null
+  /** The last day the data export can be downloaded, which the sentence names as `{date}`. */
+  until?: Date
+}
+
+/**
+ * What to say for one notification: `You were invited to join “Family” as an editor.` A kind this
  * code does not know (a row written by a newer version) reads as a neutral line instead of failing.
  */
-export function describeNotification(
-  notification: Pick<Notification, "kind" | "payload">,
-): string {
-  const { kind, payload } = notification
-  const group = `“${text(payload.groupName, "a group")}”`
+export function notificationMessage(
+  { kind, payload }: Pick<Notification, "kind" | "payload">,
+): NotificationMessage {
+  const group = text(payload.groupName)
+  const role = (word: unknown) => ROLE_SENTENCES[text(word) ?? `member`]
   switch (kind) {
-    case NotificationKind.InvitationReceived: {
-      const role = text(payload.role, "member")
-      return `You were invited to join ${group} as ${article(role)} ${role}.`
-    }
-    case NotificationKind.RoleChanged: {
-      const role = text(payload.to, "member")
-      return `Your role in ${group} is now ${article(role)} ${role}.`
-    }
+    case NotificationKind.InvitationReceived:
+      return { key: role(payload.role)?.invited ?? `NotificationsScreen.invited`, group }
+    case NotificationKind.RoleChanged:
+      return { key: role(payload.to)?.role ?? `NotificationsScreen.roleChanged`, group }
     case NotificationKind.RemovedFromGroup:
-      return `You were removed from ${group}.`
+      return { key: `NotificationsScreen.removed`, group }
     case NotificationKind.OwnershipReceived:
-      return `You now own ${group}.`
+      return { key: `NotificationsScreen.owned`, group }
     case NotificationKind.GuestReminder:
-      return `${text(payload.title, "Keep your account")}. ${
-        text(payload.text, "Add a sign-in method to keep it.")
-      }`
+      return {
+        key: GUEST_REMINDER_KEYS[text(payload.title) ?? ``] ?? `NotificationsScreen.reminderKeep`,
+      }
     case NotificationKind.DataExportReady: {
-      const until = new Date(text(payload.expiresAt, ""))
+      const until = new Date(text(payload.expiresAt) ?? ``)
       return Number.isNaN(until.getTime())
-        ? "Your data is ready. Download it from your profile."
-        : `Your data is ready. Download it from your profile until ${EXPORT_DAY.format(until)}.`
+        ? { key: `NotificationsScreen.exportReady` }
+        : { key: `NotificationsScreen.exportReadyUntil`, until }
     }
     default:
-      return "You have a new notification."
+      return { key: `NotificationsScreen.unknown` }
   }
 }
 

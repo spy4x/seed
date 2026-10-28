@@ -1540,6 +1540,7 @@
     "many": "“{name}” foi excluída e retirada de {count} notas.",
     "other": "“{name}” foi excluída e retirada de {count} notas."
   },
+  "TelegramNotification.open": "Abrir",
   "UndoToast.title": "Nota excluída",
   "UndoToast.deleted": "“{title}” foi excluída.",
   "UndoToast.deletedUntitled": "A nota foi excluída.",

@@ -1762,6 +1762,7 @@
     "many": "حُذف «{name}» وأُزيل من {count} ملاحظة.",
     "other": "حُذف «{name}» وأُزيل من {count} ملاحظة."
   },
+  "TelegramNotification.open": "فتح",
   "UndoToast.title": "حُذفت الملاحظة",
   "UndoToast.deleted": "حُذفت «{title}».",
   "UndoToast.deletedUntitled": "حُذفت الملاحظة.",
