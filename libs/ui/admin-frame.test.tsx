@@ -251,6 +251,38 @@ describe("AdminShell", () => {
     expect(theme.chosen).toEqual(["dark"])
     expect(signedOut).toEqual([true, true])
   })
+
+  it("offers the operator Language with the one in use, in the menu and the sheet, opening the language dialog", async () => {
+    const chosen: (string | null)[] = []
+    await mount(
+      <AdminShell
+        navItems={modules}
+        currentPath="/"
+        operator={operator}
+        onSignOut={() => {}}
+        language={{
+          languages: ["en", "ru", "de", "ar"],
+          current: null,
+          automatic: "ru",
+          onSelect: (tag) => void chosen.push(tag),
+        }}
+      >
+        page
+      </AdminShell>,
+    )
+    const entries = document.querySelectorAll<HTMLElement>("[data-e2e=account-language]")
+    expect([...entries].map((entry) => entry.textContent?.trim())).toEqual([
+      "Language: Русский",
+      "Language: Русский",
+    ])
+
+    await act(() => entries[1].click())
+    const dialog = find("[data-e2e=language-dialog]")
+    const german = [...dialog.querySelectorAll<HTMLElement>("[role=radio]")]
+      .find((row) => row.textContent?.includes("Deutsch"))!
+    await act(() => german.click())
+    expect(chosen).toEqual(["de"])
+  })
 })
 
 describe("adminPageTitle", () => {

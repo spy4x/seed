@@ -1,5 +1,5 @@
 import type { JSX } from "preact"
-import { useEffect, useMemo, useRef } from "preact/hooks"
+import { useEffect, useMemo, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { Combobox } from "@spy4x/preact-ui/combobox"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
@@ -16,6 +16,9 @@ import { timeZoneOptions, zoneCity, zoneLabel, zoneOffsetLabel } from "@spy4x/ti
 import type { AdminUserPreferences, Preferences, ThemePreference } from "@domain/identity"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { Rich } from "@spy4x/preact-ui/i18n"
+import { LanguageDialog, languageName } from "@spy4x/preact-ui/language-picker"
+import type { AccountMenuLanguage } from "@spy4x/preact-system/account-menu"
+import { textDirection } from "@spy4x/platform/universal/i18n"
 import { useAdminText, useAppText } from "./i18n.ts"
 
 /** The fields "Language and region" edits; the theme is under Appearance. */
@@ -54,6 +57,11 @@ export interface PreferencesProps {
   announcement: string
   /** The moment the examples and the zones' offsets are read at. */
   now: Date
+  /**
+   * The interface language: what is chosen, what loads, and the switch. Left out, the section has
+   * no Language row.
+   */
+  language?: AccountMenuLanguage
   onTheme(theme: ThemePreference): void
   /**
    * Save the region values on `baseVersion`, the version they were made on, so a change another
@@ -204,6 +212,7 @@ export function RegionSection(props: PreferencesProps): JSX.Element {
 
   return (
     <div ref={form} class="flex flex-col gap-6" data-e2e="preferences">
+      {props.language && <LanguageRow language={props.language} />}
       <p class="text-sm text-muted" data-e2e="preferences-example">
         <Rich
           parts={t.parts(`Preferences.example`, { date: format.dateTime(now, `full`) })}
@@ -432,7 +441,7 @@ export function AdminPreferencesGroup(
           dataE2E="admin-user-preferences-language"
           value={value.language === null
             ? t.t(`AdminPreferences.automatic`)
-            : <span lang={value.language}>{languageName(value.language, t.language)}</span>}
+            : <LanguageLabel language={value.language} inLanguage={t.language} />}
         />
         <SettingRow
           label={t.t(`AdminPreferences.formats`)}
@@ -466,19 +475,63 @@ export function AdminPreferencesGroup(
 }
 
 /**
- * A language's name in `inLanguage`, `German` for an English reader, with its own name after it
- * when the two differ: `German (Deutsch)`, so an operator who reads neither still recognises it.
+ * A language's name for a reader of `inLanguage`, with the name in the language itself after it
+ * when the two differ, in that language: `German (Deutsch)`, so an operator who reads neither
+ * still recognises it.
  */
-export function languageName(language: string, inLanguage: string): string {
-  const name = (tag: string, display: string) => {
-    try {
-      const text = new Intl.DisplayNames([display], { type: `language` }).of(tag) ?? tag
-      return text.charAt(0).toLocaleUpperCase(display) + text.slice(1)
-    } catch {
-      return tag
-    }
+export function LanguageLabel(
+  { language, inLanguage }: { language: string; inLanguage: string },
+): JSX.Element {
+  const own = languageName(language)
+  let theirs = own
+  try {
+    const text = new Intl.DisplayNames([inLanguage], { type: `language` }).of(language) ?? language
+    theirs = text.charAt(0).toLocaleUpperCase(inLanguage) + text.slice(1)
+  } catch {
+    // A tag `Intl` cannot read: its own name alone.
   }
-  const theirs = name(language, inLanguage)
-  const own = name(language, language)
-  return theirs === own ? own : `${theirs} (${own})`
+  const ownName = <span lang={language} dir={textDirection(language)}>{own}</span>
+  return theirs === own ? ownName : <>{theirs} ({ownName})</>
+}
+
+/**
+ * The "Language" row above Formats: the language in use, by its own name, and the button that
+ * opens `LanguageDialog`. Each choice there applies at once.
+ */
+/** Stands for a value in a message, so an element can be drawn where the value lands. */
+const MARK = `\u0000`
+
+function LanguageRow({ language }: { language: AccountMenuLanguage }): JSX.Element {
+  const t = useAppText()
+  const [open, setOpen] = useState(false)
+  const inUse = language.current ?? language.automatic ?? t.language
+  const name = (
+    <span lang={inUse} dir={textDirection(inUse)} data-e2e="preferences-language-name">
+      {languageName(inUse)}
+    </span>
+  )
+  // "Automatic: Deutsch", with the name drawn where the message puts it, in its own language.
+  const [before, after = ``] = t.t(`Preferences.automatic`, { value: MARK }).split(MARK)
+  return (
+    <>
+      <SettingList>
+        <SettingRow
+          label={t.t(`Preferences.language`)}
+          dataE2E="preferences-language"
+          value={language.current === null ? <>{before}{name}{after}</> : name}
+          action={
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setOpen(true)}
+              data-e2e="preferences-language-change"
+            >
+              {t.t(`Preferences.changeLanguage`)}
+            </Button>
+          }
+        />
+      </SettingList>
+      <LanguageDialog {...language} open={open} onClose={() => setOpen(false)} />
+    </>
+  )
 }

@@ -22,8 +22,8 @@ import { ADMIN_MODULES, adminPersonTabs } from "./modules/registry.ts"
 import type { AdminContext, AdminModule } from "./modules/types.ts"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { I18nContext, useT } from "@spy4x/preact-ui/i18n"
-import { LANGUAGES } from "@domain/identity"
-import { pickLanguage } from "@platform/i18n.ts"
+import { isLanguage, LANGUAGES } from "@domain/identity"
+import { languageSetting, pickLanguage } from "@platform/i18n.ts"
 import { kept, languages as pageLanguages } from "./i18n.ts"
 import { createOperatorFormat, type OperatorFormat } from "./preferences.ts"
 import { adminShortcutRows, focusListFilter } from "./shortcuts.ts"
@@ -46,7 +46,10 @@ export interface AppProps {
   /** The single-key shortcuts' switch; this device's by default. Tests pass their own. */
   singleKeys?: ReturnType<typeof createSingleKeysSetting>
   /** The page's languages; the build's by default. Tests pass their own. */
-  languages?: Pick<typeof pageLanguages, "translator" | "use" | "setNumberLocale">
+  languages?: Pick<
+    typeof pageLanguages,
+    "translator" | "use" | "setNumberLocale" | "loading" | "failed"
+  >
 }
 
 /**
@@ -98,13 +101,29 @@ function Operator(
     if (user) void own.load()
     else own.reset()
   }, [user?.id])
-  // The operator's language follows their preferences once read; signed out, this device's.
+  // The operator's language: one chosen in this admin app on this device, else their account's,
+  // else the browser's. The account's is set in the product's app; the admin app only reads it.
   const chosen = own.language.value
+  const [deviceChoice, setDeviceChoice] = useState(() => {
+    const value = kept.read()
+    return isLanguage(value) ? value : null
+  })
+  const requested = globalThis.navigator?.languages
   useEffect(() => {
-    void languages.use(
-      pickLanguage(LANGUAGES, chosen, kept.read(), globalThis.navigator?.languages),
-    )
-  }, [chosen])
+    void languages.use(pickLanguage(LANGUAGES, deviceChoice, chosen, requested))
+  }, [chosen, deviceChoice])
+  const language = languageSetting({
+    languages: LANGUAGES,
+    current: deviceChoice,
+    // "Automatic" is what the account and the browser give without a choice here.
+    automatic: pickLanguage(LANGUAGES, chosen, null, requested),
+    loading: languages.loading.value,
+    failed: languages.failed.value,
+    choose: (tag) => {
+      kept.write(tag)
+      setDeviceChoice(tag)
+    },
+  })
   // Numbers inside messages follow the operator's region format.
   const numberLocale = own.format.value.locale
   useEffect(() => languages.setNumberLocale(numberLocale), [numberLocale])
@@ -192,6 +211,7 @@ function Operator(
         currentPath={path}
         operator={{ name: operatorName(user, email), email }}
         theme={theme}
+        language={language}
         onSignOut={store.signOut}
         navigate={leave}
         shortcuts={{

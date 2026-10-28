@@ -1,6 +1,12 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { createLanguages, keptLanguage, LANGUAGE_STORAGE_KEY, pickLanguage } from "./i18n.ts"
+import {
+  createLanguages,
+  keptLanguage,
+  LANGUAGE_STORAGE_KEY,
+  languageSetting,
+  pickLanguage,
+} from "./i18n.ts"
 
 const LANGUAGES = [`en`, `ru`, `de`, `ar`] as const
 
@@ -132,5 +138,32 @@ describe(`createLanguages`, () => {
     })
     languages.setNumberLocale(`de-DE`)
     expect(languages.translator.value.t(`count`, { count: 1234.5 })).toBe(`1.234,5 notes`)
+  })
+})
+
+describe(`languageSetting`, () => {
+  /** A setting over `LANGUAGES`, recording what reaches `choose`. */
+  function setup(loading: (typeof LANGUAGES)[number] | null = null) {
+    const chosen: (string | null)[] = []
+    const setting = languageSetting({
+      languages: LANGUAGES,
+      current: `de`,
+      automatic: `ru`,
+      loading,
+      failed: null,
+      choose: (language) => void chosen.push(language),
+    })
+    return { setting, chosen }
+  }
+
+  it(`passes a listed language or Automatic on, and nothing else`, () => {
+    const { setting, chosen } = setup()
+    for (const tag of [`ar`, null, `__proto__`, `../de`, `DE`, `fr`]) setting.onSelect(tag)
+    expect(chosen).toEqual([`ar`, null])
+  })
+
+  it(`says nothing is loading when nothing is, rather than "Automatic is loading"`, () => {
+    expect(setup().setting.pending).toBeUndefined()
+    expect(setup(`ar`).setting.pending).toBe(`ar`)
   })
 })

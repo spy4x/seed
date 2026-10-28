@@ -2,6 +2,7 @@ import { useState } from "preact/hooks"
 import type { PreferencesFailure, PreferencesProps } from "@ui/preferences.tsx"
 import { preferencesState } from "../state/preferences.ts"
 import { themeStore } from "../state/theme.ts"
+import { languageChoice } from "./language-choice.ts"
 
 /**
  * The props of the profile's "Language and region" and "Appearance" sections, wired to the
@@ -25,6 +26,7 @@ export function usePreferencesProps(): PreferencesProps {
     error,
     announcement: state.announcement.value,
     now: new Date(),
+    language: languageChoice(),
     onTheme: (theme) => themeStore.set(theme as Parameters<typeof themeStore.set>[0]),
     onSave: async (next, baseVersion) => {
       setError(null)

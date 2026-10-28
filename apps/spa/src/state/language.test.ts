@@ -113,4 +113,19 @@ describe(`syncLanguage`, () => {
     expect(signedIn.saves).toEqual([{ language: `de` }])
     expect(signedIn.shown.at(-1)).toBe(`de`)
   })
+
+  it(`offers as chosen the device's choice while signed out, the stored one once signed in, and each new choice`, async () => {
+    const { sync, signIn, loaded } = setup({ kept: `ar` })
+    expect(sync.current.value).toBe(`ar`)
+
+    signIn({ language: null })
+    expect(sync.current.value).toBeNull()
+    await sync.choose(`de`)
+    expect(sync.current.value).toBe(`de`)
+
+    // Signed out again: the device kept the copy.
+    loaded.value = false
+    expect(sync.current.value).toBe(`de`)
+    expect(setup({ kept: `../x` }).sync.current.value).toBeNull()
+  })
 })

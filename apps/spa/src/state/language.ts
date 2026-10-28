@@ -1,4 +1,4 @@
-import { effect, type ReadonlySignal, untracked } from "@preact/signals"
+import { effect, type ReadonlySignal, signal, untracked } from "@preact/signals"
 import type { SettingsSaveOutcome } from "@spy4x/preact-signals/settings"
 import { isLanguage, type Language, LANGUAGES, type Preferences } from "@domain/identity"
 import { type KeptLanguage, pickLanguage } from "@platform/i18n.ts"
@@ -31,12 +31,15 @@ export interface LanguageSyncDependencies {
  * speaks it too. A record never saved (version `0`, a new account) takes the choice this device made
  * before signing in, as the theme does.
  *
- * @returns `choose`, which the language setting calls, and a disposer.
+ * @returns `current`, the choice the language setting shows checked (`null`: follow this device),
+ *   `choose`, which the setting calls, and a disposer.
  */
 export function syncLanguage(dependencies: LanguageSyncDependencies) {
   const { preferences, kept } = dependencies
   const show = (stored: Language | null) =>
     dependencies.use(pickLanguage(LANGUAGES, stored, kept.read(), dependencies.requested()))
+  const listed = (value: string | null) => isLanguage(value) ? value : null
+  const current = signal<Language | null>(listed(kept.read()))
   /** Whether this sign-in already offered the device's choice to a record never saved. */
   let offered = false
 
@@ -47,6 +50,7 @@ export function syncLanguage(dependencies: LanguageSyncDependencies) {
     untracked(() => {
       if (!loaded) {
         offered = false
+        current.value = listed(kept.read())
         return void show(null)
       }
       const local = kept.read()
@@ -58,6 +62,7 @@ export function syncLanguage(dependencies: LanguageSyncDependencies) {
         return
       }
       if (version > 0 && stored !== local) kept.write(stored)
+      current.value = stored
       void show(stored)
     })
   })
@@ -70,11 +75,13 @@ export function syncLanguage(dependencies: LanguageSyncDependencies) {
    */
   function choose(language: Language | null): Promise<boolean> {
     kept.write(language)
+    current.value = language
     if (preferences.loaded.peek()) void preferences.save({ language })
     return show(language)
   }
 
   return {
+    current: current as ReadonlySignal<Language | null>,
     choose,
     stop: () => {
       stopRecord()

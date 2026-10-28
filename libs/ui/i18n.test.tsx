@@ -98,6 +98,14 @@ const ARABIC = translator(`ar`, [uiAr, systemAr, appAr, adminAr] as Catalog[])
 const NOW = new Date(Date.UTC(2026, 9, 17, 12, 5))
 const FORMAT = createFormatters({ locale: `en-GB`, timeZone: `Europe/Berlin`, hourCycle: `h23` })
 
+/** The language setting every frame and the preferences offer: German chosen. */
+const language = {
+  languages: [`en`, `ru`, `de`, `ar`],
+  current: `de`,
+  automatic: `ru`,
+  onSelect: () => {},
+}
+
 const preferences: PreferencesProps = {
   value: { ...DEFAULT_PREFERENCES, timeZone: `Asia/Tokyo` },
   device: { locale: `en-GB`, timeZone: `Europe/Berlin` },
@@ -113,6 +121,7 @@ const preferences: PreferencesProps = {
   onSave: () => {},
   onUseDeviceZone: () => {},
   onKeepZone: () => {},
+  language,
 }
 
 /** Every frame and the preferences, in one page: what the pseudo-language must cover. */
@@ -136,6 +145,7 @@ function Everything({ t }: { t: Translator<string> }): VNode {
           onSignOut={() => {}}
           search={<span />}
           shortcuts={shortcuts}
+          language={language}
         >
           {page(
             <>
@@ -144,13 +154,16 @@ function Everything({ t }: { t: Translator<string> }): VNode {
             </>,
           )}
         </AppFrame>
-        <PublicFrame canSignOut onSignOut={() => {}}>{page(null)}</PublicFrame>
+        <PublicFrame canSignOut onSignOut={() => {}} language={language}>
+          {page(null)}
+        </PublicFrame>
         <AdminShell
           navItems={[{ name: `⟦Users⟧`, href: `/users`, Icon: IconUsers }]}
           currentPath="/users"
           operator={{ name: `Ada Lovelace`, email: `ada@example.com` }}
           onSignOut={() => {}}
           shortcuts={shortcuts}
+          language={language}
         >
           {page(
             <AdminPreferencesGroup
@@ -228,7 +241,14 @@ describe(`the frames and the preferences`, () => {
     expect(english).toEqual([])
     // The render did reach every part: each one's pseudo-text is on the page.
     const page = document.body.textContent ?? ``
-    for (const key of [`Frame.signOut`, `Preferences.formatsHint`, `AdminPreferences.language`]) {
+    for (
+      const key of [
+        `Frame.signOut`,
+        `Preferences.formatsHint`,
+        `Preferences.changeLanguage`,
+        `AdminPreferences.language`,
+      ]
+    ) {
       expect(page).toContain(PSEUDO.t(key))
     }
   })

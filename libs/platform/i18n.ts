@@ -157,3 +157,50 @@ export function createLanguages<Language extends string>(options: LanguagesOptio
 }
 
 export type Languages = ReturnType<typeof createLanguages>
+
+/**
+ * What the language setting (`LanguageDialog`, the account menu's entry) reads and calls: the
+ * shape of `AccountMenuLanguage` from `@spy4x/preact-system/account-menu`.
+ */
+export interface LanguageSetting<Language extends string> {
+  languages: readonly Language[]
+  /** The language chosen, or `null` when it follows the device. */
+  current: Language | null
+  /** What "Automatic" shows now. */
+  automatic: Language
+  /** The language loading after a choice; left out while none is. */
+  pending?: Language
+  /** The language that failed to load (offline, say), named in an error. */
+  failed?: Language
+  onSelect(tag: string | null): void
+}
+
+/**
+ * The language setting's props, from the app's choice and its {@link createLanguages}. A tag the
+ * picker passes is checked against the list again: only a listed language or `null` (Automatic)
+ * reaches `choose`.
+ */
+export function languageSetting<Language extends string>(
+  { languages, current, automatic, loading, failed, choose }: {
+    languages: readonly Language[]
+    current: Language | null
+    automatic: Language
+    loading: Language | null
+    failed: Language | null
+    choose(language: Language | null): void
+  },
+): LanguageSetting<Language> {
+  return {
+    languages,
+    current,
+    automatic,
+    // The picker reads `null` as "Automatic is loading": nothing loading is `undefined`.
+    pending: loading ?? undefined,
+    failed: failed ?? undefined,
+    onSelect(tag) {
+      if (tag === null) return choose(null)
+      const listed = languages.find((language) => language === tag)
+      if (listed) choose(listed)
+    },
+  }
+}

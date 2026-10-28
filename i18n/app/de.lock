@@ -1,5 +1,6 @@
 Frame.activity	38da1505ca837328
 Frame.groups	39bbb719fa2b9d22
+Frame.language	c09c83fed7aa493f
 Frame.notes	8a7525b1492fb848
 Frame.overview	d4b1ea5708dd5329
 Frame.search	49c266baaaa70981
@@ -9,6 +10,7 @@ Frame.tags	1331275bc537b4c2
 Frame.user	b512d97e7cbf97c2
 Preferences.automatic	c044e100ce55ec00
 Preferences.automaticSearch	f74ea8715a05f0f9
+Preferences.changeLanguage	009ed110badf6e7b
 Preferences.clock	93ff9273de4b131b
 Preferences.clock12	c3a5f14163163396
 Preferences.clock24	0a56a0dde3d908c7
@@ -24,6 +26,7 @@ Preferences.formatsEmpty	4367519347063a56
 Preferences.formatsHint	5f7bbd21fbb5f2c0
 Preferences.formatsPlaceholder	e569e15ced0b4fdd
 Preferences.keepZone	daadf0f2ab41c9ec
+Preferences.language	a4fe65264ef7dbb3
 Preferences.theme	efb52e7172b77731
 Preferences.themeDark	60acc53f13a5d1bf
 Preferences.themeLight	dbcd5e7bb7a0f538
