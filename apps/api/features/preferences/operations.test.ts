@@ -167,6 +167,22 @@ describe(`preferences operations`, () => {
     })
   })
 
+  it(`saves a record without a language, from a tab loaded before it existed, keeping the stored one`, async () => {
+    const { call } = harness()
+    await call(`preferences.save`, { version: 0, value: { ...berlin, language: `de` } })
+    const { language: _, ...old } = berlin
+
+    expect(await call(`preferences.save`, { version: 1, value: { ...old, theme: `light` } }))
+      .toEqual({
+        ok: true,
+        settings: { version: 2, value: { ...berlin, theme: `light`, language: `de` } },
+      })
+    // A person who never saved: the default, automatic.
+    const fresh = harness()
+    expect(await fresh.call(`preferences.save`, { version: 0, value: old }))
+      .toEqual({ ok: true, settings: { version: 1, value: berlin } })
+  })
+
   it(`writes only the session's person, whatever id the payload names`, async () => {
     const { call, rows } = harness()
 
