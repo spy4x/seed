@@ -910,11 +910,14 @@ const CATALOG_SWATCHES: readonly { value: ColorPreset[`value`]; key: string }[] 
  */
 function RemoveLabel({ name, fallback }: { name: string; fallback: string }): JSX.Element {
   const t = useAdminText()
+  // One element, so a flex button spaces it from its icon only, not inside the sentence.
   return (
-    <Rich
-      parts={t.parts(`AdminCatalogItem.remove`, { name: name || fallback })}
-      tags={{ name: (text) => name ? <bdi translate={false}>{text}</bdi> : text }}
-    />
+    <span>
+      <Rich
+        parts={t.parts(`AdminCatalogItem.remove`, { name: name || fallback })}
+        tags={{ name: (text) => name ? <bdi translate={false}>{text}</bdi> : text }}
+      />
+    </span>
   )
 }
 
