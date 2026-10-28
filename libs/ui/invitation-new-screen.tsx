@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
@@ -12,10 +11,7 @@ import { canManageInvitations, type GroupRole } from "@domain/groups"
 import { InviteForm, type InviteFormProps } from "./group-invitations.tsx"
 import { GROUP_PATHS, SCREEN_PATHS } from "./progressive.tsx"
 import { FORM_WIDTH, useWaited } from "./tag-editor-screen.tsx"
-
-/** The words an invitation needs a connection for; the notice and a refused submit say the same. */
-export const INVITATION_OFFLINE =
-  "Creating an invitation needs a connection. Try again when you are back online."
+import { useAppText } from "./i18n.ts"
 
 export interface InvitationNewScreenProps
   extends Omit<InviteFormProps, "groupId" | "actorRole" | "formError"> {
@@ -41,15 +37,18 @@ export interface InvitationNewScreenProps
  */
 export function InvitationNewScreen(props: InvitationNewScreenProps): JSX.Element {
   const { groupId, group, loading, error = null, offline = false, created, navigate } = props
+  const t = useAppText()
   const waited = useWaited(loading && !group)
-  const back = { href: GROUP_PATHS.members(groupId), label: "Back to the members" }
+  const back = { href: GROUP_PATHS.members(groupId), label: t.t(`InvitationNew.back`) }
+  // The notice and a refused submit say the same words.
+  const offlineText = t.t(`InvitationNew.offline`)
   if (group && created) {
     return (
       <Stack gap="xl">
         <PageHeader
-          title="Copy your invitation link"
+          title={t.t(`InvitationNew.copyTitle`)}
           titleDataE2E="invitation-new-title"
-          subtitle={group.name}
+          subtitle={<span translate={false}>{group.name}</span>}
         />
         <div class={FORM_WIDTH}>
           <InviteForm {...props} groupId={groupId} actorRole={group.role} />
@@ -60,9 +59,9 @@ export function InvitationNewScreen(props: InvitationNewScreenProps): JSX.Elemen
   return (
     <Stack gap="xl">
       <PageHeader
-        title="New invitation"
+        title={t.t(`InvitationNew.title`)}
         titleDataE2E="invitation-new-title"
-        subtitle={group?.name}
+        subtitle={group && <span translate={false}>{group.name}</span>}
         back={back}
         navigate={navigate}
       />
@@ -72,7 +71,7 @@ export function InvitationNewScreen(props: InvitationNewScreenProps): JSX.Elemen
             <>
               {offline && (
                 <div data-e2e="invitation-offline" class={FORM_WIDTH}>
-                  <Notice title="You are offline">{INVITATION_OFFLINE}</Notice>
+                  <Notice title={t.t(`InvitationNew.offlineTitle`)}>{offlineText}</Notice>
                 </div>
               )}
               <div class={FORM_WIDTH}>
@@ -80,7 +79,7 @@ export function InvitationNewScreen(props: InvitationNewScreenProps): JSX.Elemen
                   {...props}
                   groupId={groupId}
                   actorRole={group.role}
-                  formError={props.refusedOffline && offline ? INVITATION_OFFLINE : null}
+                  formError={props.refusedOffline && offline ? offlineText : null}
                 />
               </div>
             </>
@@ -91,10 +90,10 @@ export function InvitationNewScreen(props: InvitationNewScreenProps): JSX.Elemen
                 <EmptyState
                   inset
                   headingLevel={2}
-                  title="Only an admin or the owner can invite people."
+                  title={t.t(`InvitationNew.notAllowed`)}
                   action={
                     <Button href={back.href} navigate={navigate} variant="outline">
-                      Back to the group
+                      {t.t(`InvitationNew.backToGroup`)}
                     </Button>
                   }
                 />
@@ -108,7 +107,7 @@ export function InvitationNewScreen(props: InvitationNewScreenProps): JSX.Elemen
           // Nothing for a short read, so a fast one does not flash; a placeholder after that.
           waited && (
             <div data-e2e="invitation-loading">
-              <p role="status" class="sr-only">Loading the group…</p>
+              <p role="status" class="sr-only">{t.t(`InvitationNew.loading`)}</p>
               <LoadingSkeleton rows={1} class={FORM_WIDTH} />
             </div>
           )
@@ -119,11 +118,11 @@ export function InvitationNewScreen(props: InvitationNewScreenProps): JSX.Elemen
               <EmptyState
                 inset
                 headingLevel={2}
-                title="This group does not exist."
-                description="It may have been deleted, or you are not a member."
+                title={t.t(`InvitationNew.missing`)}
+                description={t.t(`InvitationNew.missingHint`)}
                 action={
                   <Button href={SCREEN_PATHS.groups} navigate={navigate} variant="outline">
-                    Back to groups
+                    {t.t(`InvitationNew.backToGroups`)}
                   </Button>
                 }
               />

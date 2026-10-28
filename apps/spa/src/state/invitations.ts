@@ -15,6 +15,7 @@ import { guestRefusal, refusedAction } from "./guest-refusal.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"
+import { appText } from "./app-text.ts"
 
 /** `fetch`, or a test's stand-in for it. */
 export type InvitationFetch = (url: string, init?: RequestInit) => Promise<Response>
@@ -36,8 +37,6 @@ type Outcome<T> =
 
 /** Which invitation an answer is for: the token of a link, or the id of one sent to an address. */
 export type InvitationRef = { token: string } | { invitationId: string }
-
-const OFFLINE = "The server is out of reach. Try again."
 
 function groupPath(groupId: string, rest = ""): string {
   return `/api/groups/${encodeURIComponent(groupId)}/invitations${rest}`
@@ -76,7 +75,9 @@ export function createInvitationsStore(
     const code = error?.reason ?? null
     // A refusal without a reason comes from the shared guards or the catch-all, whose sentence
     // was not written for these screens.
-    const message = code !== null && error ? error.message : "Something went wrong. Try again."
+    const message = code !== null && error
+      ? error.message
+      : appText(`GroupInvitations.somethingWrong`)
     // A guest refused an invite (#224): the frame shows the refusal, as `apiFetch` does for others.
     if (code === GUEST_REFUSAL_CODE) guestRefusal.value = refusedAction(url) ?? "other"
     return {
@@ -86,17 +87,18 @@ export function createInvitationsStore(
     }
   }
 
-  const unreachable: Outcome<never> = {
+  /** The outcome of a call that never reached the server, in the page's language now. */
+  const unreachable = (): Outcome<never> => ({
     ok: false,
-    failure: { message: OFFLINE, code: null, plan: null },
-  }
+    failure: { message: appText(`GroupInvitations.unreachable`), code: null, plan: null },
+  })
 
-  /** One call whose every failure is an outcome: an unreachable server reads as {@link OFFLINE}. */
+  /** One call whose every failure is an outcome: an unreachable server says so. */
   async function call<T>(method: string, url: string, body?: unknown): Promise<Outcome<T>> {
     try {
       return await request<T>(method, url, body)
     } catch (_unreachable) {
-      return unreachable
+      return unreachable()
     }
   }
 
@@ -121,7 +123,7 @@ export function createInvitationsStore(
     } catch (cause) {
       return cause instanceof ReadRefused
         ? { ok: false, failure: cause.failure as InvitationFailure }
-        : unreachable
+        : unreachable()
     }
   }
 

@@ -2,7 +2,9 @@ import { useEffect } from "preact/hooks"
 import { useLocation } from "wouter-preact"
 import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { GROUP_IMPORT_MAX_BYTES, type GroupImportResult } from "@domain/groups"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 import { fileContents, GroupImportScreen } from "@ui/group-import-screen.tsx"
+import { useAppText } from "@ui/i18n.ts"
 import { GROUP_PATHS } from "@ui/progressive.tsx"
 import { groupImportStore } from "../state/group-files.ts"
 import { groupsStore } from "../state/groups.ts"
@@ -22,13 +24,17 @@ export async function openImported(
   selection: Pick<typeof selectionStore, "select">,
   navigate: (to: string, options: { replace: boolean }) => void,
   notices: Pick<typeof toasts, "success">,
+  t: Translator<string>,
 ): Promise<void> {
   await groups.refreshFromUser().catch(() => {})
   navigate(GROUP_PATHS.settings(result.group.id), { replace: true })
   void selection.select(result.group.id)
   notices.success({
-    title: "Group imported",
-    body: `Imported ${fileContents(result.parts, " and ")} into "${result.group.name}".`,
+    title: t.t(`GroupImport.imported`),
+    body: t.t(`GroupImport.importedBody`, {
+      contents: fileContents(t, result.parts, `list`),
+      name: result.group.name,
+    }),
     dataE2E: "group-imported",
   })
 }
@@ -36,6 +42,7 @@ export async function openImported(
 /** `/groups/import`: wires the import page to the import store. Leaving the page forgets the file. */
 export function GroupImportView() {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const store = groupImportStore
   useEffect(() => network.watch(), [])
   useEffect(() => () => store.reset(), [])
@@ -55,7 +62,9 @@ export function GroupImportView() {
       onChooseAnother={() => store.reset()}
       onImport={() =>
         void store.importNow().then((result) => {
-          if (result) return openImported(result, groupsStore, selectionStore, navigate, toasts)
+          if (result) {
+            return openImported(result, groupsStore, selectionStore, navigate, toasts, t)
+          }
         })}
       navigate={navigate}
     />
