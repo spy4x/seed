@@ -26,11 +26,13 @@ import {
   type AdminJobDetail,
   type AdminJobFilter,
   type AdminJobListResponse,
+  type AdminJobPhoto,
   type AdminJobRow,
   AdminJobState,
   type AdminJobStateFilter,
   type AdminRepeatingJob,
 } from "@domain/identity"
+import { ADMIN_CATALOG_PATHS, CatalogThumbnail } from "./admin-catalog.tsx"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { ADMIN_GROUP_PATHS } from "./admin-groups-list.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
@@ -209,6 +211,32 @@ const TABLE_CLASS = [
   `max-sm:[&_:is(th,td):nth-child(n+2)]:hidden`,
 ].join(` `)
 
+/** "Photo of Zip jacket", the item name a link to its page: what an image job processes (#514). */
+function PhotoOf(
+  { photo, t, navigate }: { photo: AdminJobPhoto; t: Translator<string>; navigate?: Navigate },
+): JSX.Element {
+  return (
+    <span class="text-sm">
+      <Rich
+        parts={t.parts(`AdminJobs.photoOf`, { item: photo.itemName })}
+        tags={{
+          link: (text) => (
+            <Link
+              href={ADMIN_CATALOG_PATHS.item(photo.itemId)}
+              navigate={navigate}
+              class="pc-link"
+              translate={false}
+              data-e2e="admin-job-photo-item"
+            >
+              {text}
+            </Link>
+          ),
+        }}
+      />
+    </span>
+  )
+}
+
 function runColumns(
   t: Translator<string>,
   navigate?: Navigate,
@@ -218,26 +246,32 @@ function runColumns(
       id: `job`,
       header: t.t(`AdminJobs.job`),
       render: (job) => (
-        <div class="flex min-w-0 flex-col gap-1">
-          <Link
-            href={ADMIN_JOB_PATHS.job(job.id)}
-            navigate={navigate}
-            class="pc-link line-clamp-2 font-medium"
-            data-e2e={`admin-job-${job.id}`}
-          >
-            {job.label}
-          </Link>
-          <span class="font-mono text-xs text-muted wrap-anywhere">{job.kind}</span>
-          {job.errorCode && (
-            <span class="font-mono text-xs text-danger wrap-anywhere" data-e2e="admin-job-error">
-              {job.errorCode}
-            </span>
+        <div class="flex min-w-0 items-start gap-3">
+          {job.photo && (
+            <CatalogThumbnail photoId={job.photo.ready ? job.photo.id : null} size="size-10" />
           )}
-          <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted sm:hidden">
-            <JobStateBadge state={job.state} />
-            <span>{attemptsLine(t, job)}</span>
-            <WhenCell job={job} />
-          </span>
+          <div class="flex min-w-0 flex-col gap-1">
+            <Link
+              href={ADMIN_JOB_PATHS.job(job.id)}
+              navigate={navigate}
+              class="pc-link line-clamp-2 font-medium"
+              data-e2e={`admin-job-${job.id}`}
+            >
+              {job.label}
+            </Link>
+            <span class="font-mono text-xs text-muted wrap-anywhere">{job.kind}</span>
+            {job.errorCode && (
+              <span class="font-mono text-xs text-danger wrap-anywhere" data-e2e="admin-job-error">
+                {job.errorCode}
+              </span>
+            )}
+            {job.photo && <PhotoOf photo={job.photo} t={t} navigate={navigate} />}
+            <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted sm:hidden">
+              <JobStateBadge state={job.state} />
+              <span>{attemptsLine(t, job)}</span>
+              <WhenCell job={job} />
+            </span>
+          </div>
         </div>
       ),
     },
@@ -851,7 +885,17 @@ export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
               },
               {
                 label: t.t(`AdminJobs.about`),
-                value: job.about
+                value: job.photo
+                  ? (
+                    <span class="flex items-center gap-3">
+                      <CatalogThumbnail
+                        photoId={job.photo.ready ? job.photo.id : null}
+                        size="size-12"
+                      />
+                      <PhotoOf photo={job.photo} t={t} navigate={navigate} />
+                    </span>
+                  )
+                  : job.about
                   ? (
                     <Link
                       href={job.about.type === `user`
