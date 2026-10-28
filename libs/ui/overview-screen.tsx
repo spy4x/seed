@@ -424,10 +424,10 @@ function OverviewWidgetCard(
       caption={savedAt === null
         ? drawing?.caption
         : t.t(`OverviewScreen.asOf`, { time: format.time(savedAt) })}
-      loadingLabel={view.loadingLabel}
-      errorMessage={view.errorMessage}
+      loadingLabel={t.t(view.loadingKey)}
+      errorMessage={t.t(view.errorKey)}
       onRetry={onRetry}
-      emptyLabel={drawing?.emptyLabel}
+      emptyLabel={drawing?.emptyKey && t.t(drawing.emptyKey)}
       menu={onHide && (
         <DropdownItem onClick={onHide} dataE2E="overview-widget-hide">
           {t.t(`OverviewScreen.hide`)}

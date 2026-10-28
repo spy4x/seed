@@ -446,10 +446,10 @@ describe("the admin group page's overview widgets", () => {
 })
 
 describe("the group overview in another language", () => {
-  /** A widget's words, which its aggregate owns: here already in the pseudo-language. */
+  /** A widget's words, which its aggregate owns: keys the pseudo-language wraps. */
   const VIEW: WidgetView = {
-    loadingLabel: "⟦loading⟧",
-    errorMessage: "⟦failed⟧",
+    loadingKey: "NoteWidgets.totalLoading",
+    errorKey: "NoteWidgets.totalError",
     draw: () => ({ status: "ready", content: "⟦31⟧" }),
   }
 

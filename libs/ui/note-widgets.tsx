@@ -8,7 +8,6 @@ import type { Translator } from "@spy4x/platform/universal/i18n"
 import type { CountWidgetResult, OverviewPeriods, SeriesWidgetResult } from "@domain/groups"
 import { NOTE_WIDGET_IDS } from "@domain/notes"
 import { useAppText } from "./i18n.ts"
-import { englishText } from "./message.ts"
 
 /** What a widget's drawing knows besides its data. */
 export interface WidgetDrawContext {
@@ -21,39 +20,23 @@ export interface WidgetDrawContext {
 
 /** A widget drawn from its data: what its card shows when the data has arrived. */
 export interface WidgetDrawing {
-  /** `empty` shows `emptyLabel` in place of the content. */
+  /** `empty` shows the words of `emptyKey` in place of the content. */
   status: "ready" | "empty"
   caption?: ComponentChildren
   content?: ComponentChildren
-  emptyLabel?: string
-  /** The key of `emptyLabel` in the `app` catalog, for a screen that words it itself. */
+  /** The `app` catalog key of what an empty widget says. */
   emptyKey?: string
 }
 
 /**
- * How the overview draws one widget. Its caption and content translate themselves when drawn.
- * The card's own lines (loading, failing, empty) are strings the card shows as given, so each
- * comes as a key of the `app` catalog for a screen with a translator, and in English for one
- * without.
+ * How the overview draws one widget. Its caption and content translate themselves when drawn;
+ * the card's own lines (loading, failing, empty) are strings the card shows as given, so they come
+ * as keys of the `app` catalog that the overview translates.
  */
 export interface WidgetView {
   loadingKey: string
   errorKey: string
-  /** `loadingKey` in English. */
-  loadingLabel: string
-  /** `errorKey` in English. */
-  errorMessage: string
   draw(data: unknown, context: WidgetDrawContext): WidgetDrawing
-}
-
-/** The card's loading and failing lines of a widget: their keys and their English. */
-function cardLines(loadingKey: string, errorKey: string): Omit<WidgetView, "draw"> {
-  return {
-    loadingKey,
-    errorKey,
-    loadingLabel: englishText(loadingKey),
-    errorMessage: englishText(errorKey),
-  }
 }
 
 /**
@@ -118,7 +101,8 @@ function comparison(
 }
 
 const total: WidgetView = {
-  ...cardLines(`NoteWidgets.totalLoading`, `NoteWidgets.totalError`),
+  loadingKey: `NoteWidgets.totalLoading`,
+  errorKey: `NoteWidgets.totalError`,
   draw(data, context) {
     const { periods, endsToday, format } = context
     const result = data as CountWidgetResult
@@ -147,7 +131,8 @@ const total: WidgetView = {
 }
 
 const added: WidgetView = {
-  ...cardLines(`NoteWidgets.addedLoading`, `NoteWidgets.addedError`),
+  loadingKey: `NoteWidgets.addedLoading`,
+  errorKey: `NoteWidgets.addedError`,
   draw(data, context) {
     const { format } = context
     const result = data as CountWidgetResult
@@ -183,13 +168,13 @@ function seriesSummary(t: Translator<string>, format: Formatters, current: numbe
 }
 
 const series: WidgetView = {
-  ...cardLines(`NoteWidgets.seriesLoading`, `NoteWidgets.seriesError`),
+  loadingKey: `NoteWidgets.seriesLoading`,
+  errorKey: `NoteWidgets.seriesError`,
   draw(data, { periods, format }) {
     const result = data as SeriesWidgetResult
     const values = [...result.current, ...(result.previous ?? [])]
     if (values.every((value) => value === 0)) {
-      const emptyKey = `NoteWidgets.seriesEmpty`
-      return { status: "empty", emptyKey, emptyLabel: englishText(emptyKey) }
+      return { status: "empty", emptyKey: `NoteWidgets.seriesEmpty` }
     }
     const axis = countAxis(Math.max(...values))
     return {

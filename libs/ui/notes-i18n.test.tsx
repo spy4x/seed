@@ -375,10 +375,9 @@ describe(`the notes, tags, search and shortcuts screens in en-XA`, () => {
     )
     expect(english()).toEqual([])
     expectReached([`NoteWidgets.addedNone`])
-    // The card's own lines come as keys, with their English for a screen that has no translator.
+    // The card's own lines come as keys of the catalog, which the overview translates.
     const total = NOTE_WIDGET_VIEWS[NOTE_WIDGET_IDS.total]
-    expect(total.loadingKey).toBe(`NoteWidgets.totalLoading`)
     expect(PSEUDO.t(total.loadingKey)).toContain(`⟦`)
-    expect(total.loadingLabel).not.toContain(`NoteWidgets`)
+    expect(PSEUDO.t(total.errorKey)).toContain(`⟦`)
   })
 })
