@@ -499,7 +499,7 @@ describe("the link source editor", () => {
     await type(name, "Zalo group A")
     expect(slug.value).toBe("zalo-a")
     await mount(<Harness errors={{ slug: "Another source has this utm_source. Pick another." }} />)
-    expect(document.activeElement).toBe(slug)
+    expect(document.activeElement === slug).toBe(true)
   })
 
   it("says a used source's links keep their addresses, in the right number", async () => {
