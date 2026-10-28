@@ -87,17 +87,6 @@ export function roleName(t: Translator<string>, role: GroupRole): string {
 }
 
 /**
- * What a role is called, in English. Only the search palette reads it, until its own screens are
- * translated (#275); every group screen uses {@link roleName}.
- */
-export const ROLE_TEXT: Record<GroupRole, string> = {
-  [GroupRole.VIEWER]: "Viewer",
-  [GroupRole.EDITOR]: "Editor",
-  [GroupRole.ADMIN]: "Admin",
-  [GroupRole.OWNER]: "Owner",
-}
-
-/**
  * The groups page: one row per group, the whole row a link to the group's page, with the person's
  * role and "Current" on the group the notes show. "New group" in the header opens the create page;
  * its "More actions" menu opens the import page.

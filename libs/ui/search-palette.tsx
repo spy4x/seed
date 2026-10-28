@@ -10,7 +10,7 @@ import {
 import { hotkeyClickBinding, useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { type GroupRole } from "@domain/groups"
-import { ROLE_TEXT } from "./groups-screen.tsx"
+import { roleName } from "./groups-screen.tsx"
 import {
   GROUP_PATHS,
   OVERVIEW_PATHS,
@@ -214,7 +214,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     ).map(({ group }): SearchOption => ({
       id: `group-${group.id}`,
       label: group.name,
-      detail: ROLE_TEXT[group.role],
+      detail: roleName(t, group.role),
       hint: group.id === currentGroup?.id ? t.t(`Search.current`) : undefined,
       group: t.t(`Search.groups`),
       choice: { kind: "group", groupId: group.id },
