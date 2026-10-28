@@ -52,7 +52,8 @@ const WORLD: World = {
   visits: { all: 130, "zalo-a": 60, facebook: 45, friends: 5 },
   previousVisits: 100,
   events: {
-    all: [{ x: `order-zalo`, y: 7 }, { x: `order-telegram`, y: 3 }, { x: `newsletter`, y: 9 }],
+    // Umami's order, not the screen's: the channels are ranked by their clicks.
+    all: [{ x: `order-telegram`, y: 3 }, { x: `order-zalo`, y: 7 }, { x: `newsletter`, y: 9 }],
     "zalo-a": [{ x: `order-zalo`, y: 2 }],
     facebook: [{ x: `order-zalo`, y: 4 }, { x: `order-telegram`, y: 1 }],
     friends: [{ x: `order-telegram`, y: 1 }],
@@ -62,6 +63,7 @@ const WORLD: World = {
     { x: `/shirts/linen`, y: 40 },
     { x: `/shirts/silk`, y: 25 },
     { x: `/hats/straw`, y: 3 },
+    { x: `/hats/wool`, y: MIN_ITEM_VIEWS - 1 },
   ],
   itemClicks: {
     "order-zalo": [{ value: `linen`, total: 5 }, { value: `straw`, total: 1 }],
@@ -76,6 +78,8 @@ const ITEMS: StatsItem[] = [
   { id: `i1`, slug: `linen`, path: `/shirts/linen`, name: `Linen shirt`, coverId: `p1` },
   { id: `i2`, slug: `silk`, path: `/shirts/silk`, name: `Silk blouse`, coverId: null },
   { id: `i3`, slug: `straw`, path: `/hats/straw`, name: `Straw hat`, coverId: null },
+  // Too few views to call it "viewed, not ordered".
+  { id: `i4`, slug: `wool`, path: `/hats/wool`, name: `Wool hat`, coverId: null },
 ]
 
 const SOURCES = [
