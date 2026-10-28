@@ -32,6 +32,7 @@ import {
   writeOperator,
   writePeople,
 } from "./history.ts"
+import { seedSampleCatalog } from "@server/catalog/sample-catalog.ts"
 
 /** Who the audit rows of the seeded roles name (#425). */
 export const SEED_ACTOR = `development seed`
@@ -128,6 +129,8 @@ export async function seedDemo(
   )
   const subscriptions = await writeBilling(sql, data, groupIds, at)
   if (options.subscribers) await writeNewsletter(sql, data, options.subscribers, at)
+  // The shop's sample items, for a product that turns the catalog on (docs/catalog.md).
+  await seedSampleCatalog(sql, at(0))
   if (admin) {
     await writeOperator(sql, admin.id, admin.created, data, userIds, subscriptions, at)
     await writeDevelopmentBackup(sql, at)

@@ -174,13 +174,18 @@ const SEED: CatalogActor = { userId: null, requestId: null }
 
 /**
  * Adds {@link SAMPLE_CATALOG_CATEGORIES} and {@link SAMPLE_CATALOG_ITEMS} through the admin's own
- * repository, skipping the ones that exist, and publishes the published ones.
+ * repository, skipping the ones that exist, and publishes the published ones. With `at`, the rows
+ * it adds and their audit rows are dated then: the demo's seed writes its past at a `now` of its
+ * own, and no row may be later than it.
  */
-export async function seedSampleCatalog(sql: postgres.Sql): Promise<void> {
+export async function seedSampleCatalog(sql: postgres.Sql, at?: Date): Promise<void> {
   const catalog = new PostgresCatalog(sql)
   const categories = new Set((await catalog.listCategories()).map((category) => category.id))
+  const added: string[] = []
   for (const { id, ...fields } of SAMPLE_CATALOG_CATEGORIES) {
-    if (!categories.has(id)) await catalog.createCategory(id, fields, SEED)
+    if (categories.has(id)) continue
+    await catalog.createCategory(id, fields, SEED)
+    added.push(id)
   }
   for (const sample of SAMPLE_CATALOG_ITEMS) {
     if (await catalog.getItem(sample.id)) continue
@@ -188,5 +193,17 @@ export async function seedSampleCatalog(sql: postgres.Sql): Promise<void> {
     if (sample.status === `published`) {
       await catalog.setStatus(item.id, item.version, `published`, SEED)
     }
+    added.push(sample.id)
   }
+  if (!at || added.length === 0) return
+  const ids = sql.array(added)
+  await sql`
+    UPDATE catalog_categories SET created_at = ${at}, updated_at = ${at} WHERE id = ANY(${ids}::uuid[])
+  `
+  await sql`
+    UPDATE catalog_items SET created_at = ${at}, updated_at = ${at},
+      published_at = CASE WHEN published_at IS NULL THEN NULL ELSE ${at}::timestamptz END
+    WHERE id = ANY(${ids}::uuid[])
+  `
+  await sql`UPDATE audit_events SET created_at = ${at} WHERE entity_id = ANY(${ids}::uuid[])`
 }
