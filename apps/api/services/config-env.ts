@@ -44,6 +44,8 @@ export const envSchema = type({
   "ERROR_REPORT_DSN?": "string",
   /** Guest accounts (#224, docs/guests.md): on unless `false`. */
   "GUEST_MODE?": "string",
+  /** The SPA (docs/deploy.md, "Without the SPA"): on unless `false`. */
+  "SPA?": "string",
   /**
    * What one person may upload to note attachments per hour (docs/files.md, "Upload budget"):
    * whole numbers, unset or empty for 50 files and 52428800 bytes.

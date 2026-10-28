@@ -26,7 +26,8 @@ import {
  * limits count it under (`requireProxyForForwardedHeaders`).
  *
  * The admin host gate stands there too: the admin app's host reaches the operator area and its
- * own sign-in only, and no other host reaches the operator area (`createAdminHostGate`).
+ * own sign-in only, and no other host reaches the operator area (`createAdminHostGate`). Without
+ * the SPA (`spa: false`) no host but the admin host reaches the account routes either.
  *
  * The security headers go first, so no middleware can answer in front of them: they are on a
  * route's answer, on the refusal of the page-user check, on the 404 of an unknown address and on
@@ -38,9 +39,14 @@ import {
  * (`libraryRefusals`), so a client never meets a second error shape.
  */
 export async function createApiApp(
-  options: BaseMiddlewareOptions & { adminHost?: string | null; isProxyPeer: IsProxyPeer },
+  options: BaseMiddlewareOptions & {
+    adminHost?: string | null
+    /** Whether the SPA runs (`SPA`); `false` closes its account routes. */
+    spa?: boolean
+    isProxyPeer: IsProxyPeer
+  },
 ): Promise<Hono<APIContext>> {
-  const { adminHost = null, isProxyPeer, ...base } = options
+  const { adminHost = null, spa = true, isProxyPeer, ...base } = options
   const app = new Hono<APIContext>().basePath("/api")
   app.use("*", await securityHeaders())
   app.use("*", libraryRefusals)
@@ -52,7 +58,7 @@ export async function createApiApp(
     "*",
     requireProxyForForwardedHeaders<APIContext>(isProxyPeer, { remoteAddr: denoServeRemoteAddr }),
   )
-  app.use("*", createAdminHostGate(adminHost))
+  app.use("*", createAdminHostGate(adminHost, { spa }))
   app.use("*", requireBoundUser)
   return app
 }

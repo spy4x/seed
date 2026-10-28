@@ -78,12 +78,17 @@ export async function runCompose(args: string[], host: ComposeHost): Promise<num
     return 1;
   }
 
-  const project = startsWholeProject(args)
+  const described = startsWholeProject(args)
     ? parseProject(
       (await ask("config", "--format", "json"))?.stdout,
       (await ask("config", "--no-interpolate", "--format", "json"))?.stdout,
     )
     : undefined;
+  // A service kept off (`SPA=false`) is neither started first nor reported as not up.
+  const project = described && {
+    ...described,
+    services: described.services.filter((service) => !plan.off.includes(service)),
+  };
 
   // A taken port fails the start after Compose has recreated the product's containers.
   const containers = project &&

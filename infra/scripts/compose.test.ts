@@ -201,3 +201,15 @@ Deno.test("a start that names a service, and any other command, asks the engine 
     expect(h.ran.at(-1)).toBe(args.join(" "));
   }
 });
+
+Deno.test("with SPA=false a deploy starts the product without the SPA and keeps the SPA at no container", async () => {
+  const base = host({}, { config: CONFIG, ps: "" });
+  const h = { ...base, readEnv: () => Promise.resolve({ ...ENV, SPA: "false" }) };
+  expect(await runCompose(["up", "-d", "--build"], h)).toBe(0);
+  expect(base.ran).toEqual([
+    "proxy network",
+    "build deno-base",
+    "up --scale spa=0 -d --build db migrate api",
+    "up --scale spa=0 -d --build",
+  ]);
+});

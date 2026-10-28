@@ -235,4 +235,24 @@ describe("the API's app", () => {
     // And the admin host cannot reach another route by escaping its letters.
     expect((await app.request("http://admin.local/api/%6eotifications")).status).toBe(404)
   })
+
+  it("answers 404 to sign-up on every host without the SPA, and keeps the admin host's sign-in", async () => {
+    const app = await createApiApp({
+      write: () => {},
+      parseAuth: async (_c, next) => await next(),
+      adminHost: "admin.local",
+      spa: false,
+      isProxyPeer: noProxy,
+    })
+    app.post("/auth/password/sign-up", (c) => c.json({ success: true }))
+    app.post("/auth/password/check", (c) => c.json({ success: true }))
+    app.get("/blog", (c) => c.json({ posts: [] }))
+    const status = async (url: string) => (await app.request(url, { method: "POST" })).status
+
+    expect(await status("http://local/api/auth/password/sign-up")).toBe(404)
+    expect(await status("http://admin.local/api/auth/password/sign-up")).toBe(404)
+    expect(await status("http://local/api/auth/password/check")).toBe(404)
+    expect(await status("http://admin.local/api/auth/password/check")).toBe(200)
+    expect((await app.request("http://local/api/blog")).status).toBe(200)
+  })
 })

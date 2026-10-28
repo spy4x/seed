@@ -33,6 +33,11 @@ export class Config {
   authSessionDurationMin = 60 * 24 * 30 * 2 // 2 months
   /** "Try it now": one click into the app as a guest (#224). On unless `GUEST_MODE=false`. */
   guestMode = env.GUEST_MODE !== "false"
+  /**
+   * Whether the SPA runs (docs/deploy.md, "Without the SPA"). On unless `SPA=false`, which closes
+   * every account route on every host but the admin host, sign-up among them.
+   */
+  spa = env.SPA !== "false"
   /** What one person may upload to note attachments per hour (docs/files.md, "Upload budget"). */
   attachmentUploadBudget = {
     files: wholeNumber(

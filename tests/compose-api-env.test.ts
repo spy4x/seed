@@ -148,3 +148,8 @@ Deno.test("the worker container receives the demo administrator's password and t
   expect(names).toContain("AUTH_PEPPER")
   expect(await environmentOf("api")).not.toContain("DEMO_ADMIN_PASSWORD")
 })
+
+// Without it the API would keep sign-up open while Compose keeps the SPA off.
+Deno.test("the api container receives the SPA switch", async () => {
+  expect(await environmentOf("api")).toContain("SPA")
+})

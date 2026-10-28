@@ -172,12 +172,14 @@ Deno.test("the API's router drops a client's CF-Connecting-IP header, in product
 })
 
 Deno.test("in production plain HTTP for the SPA's and the MPA's hosts redirects to HTTPS for good", async () => {
-  const { spa, mpa } = await services("prod")
+  const { api, spa, mpa } = await services("prod")
   const middleware = "https-redirect-${PROJECT}"
-  expect(label(spa, `traefik.http.middlewares.${middleware}.redirectscheme.scheme`)).toBe("https")
-  expect(label(spa, `traefik.http.middlewares.${middleware}.redirectscheme.permanent`)).toBe("true")
+  // On the API, which always runs: with SPA=false the SPA has no container and so no labels.
+  expect(label(api, `traefik.http.middlewares.${middleware}.redirectscheme.scheme`)).toBe("https")
+  expect(label(api, `traefik.http.middlewares.${middleware}.redirectscheme.permanent`)).toBe("true")
+  expect(spa?.labels?.filter((entry) => entry.includes("https-redirect"))).toEqual([])
   const hosts: [ComposeService, string, string][] = [
-    [spa, "http-${PROJECT}", "Host(`${DOMAIN}`)"],
+    [api, "http-${PROJECT}", "Host(`${DOMAIN}`)"],
     [mpa, "http-mpa-${PROJECT}", "Host(`${MPA_DOMAIN:-}`)"],
   ]
   for (const [service, name, rule] of hosts) {
