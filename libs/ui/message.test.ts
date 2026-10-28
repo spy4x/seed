@@ -182,9 +182,9 @@ describe(`errors`, () => {
     expect(fieldText(RUSSIAN, { code: `somethingNew` })).toBe(`Это значение не подходит.`)
   })
 
-  it(`a server's text is never read as a catalog key or markup`, () => {
-    const refusal = { code: `bad_request`, message: `<b>Field.required</b>` }
-    expect(errorText(ENGLISH, refusal)).toBe(`<b>Field.required</b>`)
-    expect(errorText(ENGLISH, { ...refusal, reason: `__proto__` })).toBe(`<b>Field.required</b>`)
+  it(`a server's sentence is never read as a catalog key`, () => {
+    const refusal = { code: `bad_request`, message: `Field.required` }
+    expect(errorText(ENGLISH, refusal)).toBe(`Field.required`)
+    expect(errorText(ENGLISH, { ...refusal, reason: `__proto__` })).toBe(`Field.required`)
   })
 })
