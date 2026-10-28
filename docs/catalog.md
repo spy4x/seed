@@ -54,6 +54,50 @@ set per item, on the item's sizes, because sizes belong to the item. `recommendS
 
 The storefront's calculator is built by each product; Seed's website has none yet.
 
+## Tracking links
+
+An operator shares one item in many places: a Facebook group, a Zalo group, Instagram, friends.
+Each place is a **link source**, edited in the admin panel under Catalog → More actions → Link
+sources: a name, a source tag (its `utm_source`, lowercase letters, digits and hyphens) and an
+order. The item page has a **Share links** card with one row per source and a **Copy link**
+button. The first press makes the item's link for that source, `https://<MPA_DOMAIN>/s/<code>`,
+and copies it; every later press copies the same link. Pressing twice at once still makes one
+link (`catalog_tracking_links` is unique per item and source). Making a link, and every change to
+the sources, writes an audit row.
+
+The short link answers on the website (`apps/mpa/routes/s/[code].ts`) with a `302`:
+
+- **With Umami set**, to `<UMAMI_API_URL>/q/<code>`: Umami counts the click and sends the visitor
+  back to `/s/<code>?counted=1`, which goes on to the item. Umami's link holds only the short
+  address, never the item's, so renaming the item or its source never leaves it pointing at an
+  old page.
+- **Without Umami, or while it does not answer its heartbeat** (asked at most once a minute, 1.5
+  seconds at most), straight to the item: `<MPA_DOMAIN><CATALOG_ITEM_PATH>?utm_source=<source
+  tag>&utm_medium=share&utm_campaign=<item slug>`. The Umami tracker on the item page still counts
+  the visit by its `utm_source`.
+
+The address is always built on the server from the item's own slug and the website's origin, never
+from the request: only a code in the table leads anywhere, and only to the website or the
+configured Umami. A link of a hidden or draft item, or one whose source was deleted, answers 404.
+Deleting a source deletes its links, after a confirm that says how many.
+
+| Variable            | What                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------ |
+| `MPA_DOMAIN`        | The website's host. Without it, tracking links are off: the item page shows no Share links card and the Link sources page says why. |
+| `CATALOG_ITEM_PATH` | The website's item address, with `{slug}` and optionally `{category}`. Default `/{category}/{slug}`. |
+| `UMAMI_API_URL`     | The self-hosted Umami, such as `https://stats.example.com`. Set with the token or not at all. |
+| `UMAMI_API_TOKEN`   | A token of an Umami user who may create links. A secret: env only, never logged.          |
+
+The Umami client is `@spy4x/integrations/umami` (`ts-libs`). How many clicks each link had is
+[#485](https://github.com/spy4x/seed/issues/485).
+
+### Order buttons
+
+Seed's website draws no order buttons. A product whose item page has them names their clicks so
+Umami's report on a `utm_source` shows orders next to visits: `order-telegram` and `order-zalo`
+(and `order-<channel>` for another), with `data-umami-event="order-telegram"` and the item's slug
+as `data-umami-event-item`.
+
 ## Where it lives
 
 | Where                                           | What                                                                     |
@@ -62,18 +106,21 @@ The storefront's calculator is built by each product; Seed's website has none ye
 | `libs/server/catalog/setup.ts`                  | `readCatalogSetup`: the switch and the settings.                         |
 | `libs/server/catalog/postgres-catalog.ts`       | The admin's reads and writes, each write with its audit row.            |
 | `libs/server/catalog/public-catalog.ts`         | The website's reads: published items only.                               |
-| `libs/server/catalog/sample-catalog.ts`         | Three categories and six items for development and the public demo.      |
+| `libs/server/catalog/sample-catalog.ts`         | Three categories, six items and four link sources for development and the demo. |
+| `libs/server/catalog/tracking.ts`               | Tracking links: the env, Umami, and where `/s/<code>` leads.             |
 | `apps/api/routes/admin/catalog.ts`              | `/api/admin/catalog*`, behind the operator gate.                         |
 | `apps/api/routes/catalog.ts`                    | `/api/catalog*`, public, mounted only while the catalog is on.           |
-| `apps/admin/src/modules/catalog/`               | The admin pages: the list, the item editor, the categories.              |
-| `libs/ui/admin-catalog.tsx`, `admin-catalog-item.tsx` | Their screens.                                                     |
+| `apps/admin/src/modules/catalog/`               | The admin pages: the list, the item editor, the categories, the sources. |
+| `libs/ui/admin-catalog.tsx`, `admin-catalog-item.tsx`, `admin-catalog-sources.tsx` | Their screens.                          |
+| `apps/mpa/routes/s/[code].ts`                   | The website's `/s/<code>` redirect.                                      |
 
 ## The API
 
 Admin, operator only, every write audited (`catalog.*` kinds in the audit log):
 
-- `GET /api/admin/catalog`: the settings, every category and every item.
-- `GET /api/admin/catalog/items/:id`; `POST /api/admin/catalog/items` (a client-made UUID v7
+- `GET /api/admin/catalog`: the settings, every category, every item, the link sources, and
+  whether tracking links are on.
+- `GET /api/admin/catalog/items/:id` (the item and its tracking links); `POST /api/admin/catalog/items` (a client-made UUID v7
   `id` and the fields); `POST .../items/:id` (the fields at `version`); `.../status`
   (`published` or `hidden`); `.../delete`.
 - `POST .../items/:id/photos?id=<photo id>`: one photo's bytes, its type as `Content-Type` (JPEG,
@@ -83,6 +130,10 @@ Admin, operator only, every write audited (`catalog.*` kinds in the audit log):
   admin's lists: its host loads images from itself only).
 - `POST .../categories`, `.../categories/order`, `.../categories/:id`, `.../categories/:id/delete`
   (only an empty one).
+- `POST .../items/:id/links` (`{ sourceId }`): the item's link for that source, made the first
+  time. `409 TRACKING_OFF` without `MPA_DOMAIN`.
+- `POST .../sources` (a client-made UUID v7 `id`, `name`, `slug`), `.../sources/order`,
+  `.../sources/:id` (at `version`), `.../sources/:id/delete` (with its links).
 
 Public, no session:
 
@@ -91,6 +142,8 @@ Public, no session:
 - `GET /api/catalog/items/:slug`: one published item with its texts, colours, sizes and size
   chart, what is sold out and its photos with every width.
 - `GET /api/catalog/photos/:id/:file`: one width, such as `960.webp`, of a published item's photo.
+- `GET /api/catalog/links/:code` (`?counted=1` after Umami): `{ location }`, where the website's
+  `/s/<code>` sends the visitor.
 
 ## Not built yet
 

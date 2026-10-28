@@ -12,6 +12,8 @@ import type { AccountDeleteErrors, AccountDeleteValues } from "@ui/account-delet
 import { EMAIL_FAILURES, type EmailMessages, type EmailValues } from "@ui/email-screen.tsx"
 import { isProfileSection, type ProfileSectionId, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { TwoFactorProof } from "@ui/two-factor.ts"
+import { OAUTH_NOTICE_KEYS, say } from "@ui/app-text.ts"
+import { useAppText } from "@ui/i18n.ts"
 import {
   changePassword,
   deleteAccount,
@@ -40,8 +42,8 @@ import {
   authPasswordChangeSchema,
   authPasswordSchema,
   authPasswordSetSchema,
+  emailToVerify,
   OAUTH_NOTICE_PARAM,
-  OAUTH_NOTICES,
   oauthNotice,
   UserMFAStatus,
   userProfileBaseSchema,
@@ -76,7 +78,7 @@ const NO_DELETE_VALUES: AccountDeleteValues = { password: "", otp: "" }
 const NO_EMAIL_VALUES: EmailValues = { code: "", email: "", password: "" }
 const NO_EMAIL_MESSAGES: EmailMessages = { verify: null, send: null, change: null }
 const NO_DELETE_ERRORS: AccountDeleteErrors = { form: null }
-const CODE_MISSING = "Enter the code from your authenticator app"
+const CODE_MISSING = `ProfileView.codeMissing`
 
 /** Adding a passkey needs the server: the card says so while the device is offline. */
 const network = createOnlineStatus()
@@ -99,6 +101,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   const search = useSearch()
   const session = sessionState.value
   const preferences = usePreferencesProps()
+  const t = useAppText()
   const [emailValues, setEmailValues] = useState(NO_EMAIL_VALUES)
   const [emailErrors, setEmailErrors] = useState(NO_EMAIL_MESSAGES)
   const [emailSendNotice, setEmailSendNotice] = useState<string | null>(null)
@@ -143,8 +146,8 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     createTelegramStore(telegramHttp, {
       onLinked: () =>
         toasts.success({
-          title: "Telegram linked",
-          body: "Your notifications come to Telegram now.",
+          title: t.t(`ProfileView.telegramLinked`),
+          body: t.t(`ProfileView.telegramLinkedBody`),
           dataE2E: "telegram-linked",
         }),
     })
@@ -241,10 +244,10 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     const moved = Number(query.get("moved"))
     if (query.has("moved")) {
       toasts.success({
-        title: "Signed in to your account",
+        title: t.t(`ProfileView.switched`),
         body: moved > 0
-          ? `${moved} ${moved === 1 ? "group" : "groups"} moved from your guest account.`
-          : "Your guest account was deleted.",
+          ? t.t(`ProfileView.switchedMoved`, { count: moved })
+          : t.t(`ProfileView.switchedDeleted`),
         dataE2E: "guest-switched",
       })
       navigate(SCREEN_PATHS.profile, { replace: true })
@@ -252,11 +255,11 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     }
     const notice = oauthNotice(query.get(OAUTH_NOTICE_PARAM))
     if (!notice) return
-    const toast = { body: OAUTH_NOTICES[notice], dataE2E: `sign-in-method-${notice}` }
-    if (notice === "linked") toasts.success({ title: "Sign-in method linked", ...toast })
+    const toast = { body: t.t(OAUTH_NOTICE_KEYS[notice]), dataE2E: `sign-in-method-${notice}` }
+    if (notice === "linked") toasts.success({ title: t.t(`ProfileView.methodLinked`), ...toast })
     else if (notice === "link-exists") {
-      toasts.info({ title: "Sign-in method already linked", ...toast })
-    } else toasts.error({ title: "Sign-in method not linked", ...toast })
+      toasts.info({ title: t.t(`ProfileView.methodAlreadyLinked`), ...toast })
+    } else toasts.error({ title: t.t(`ProfileView.methodNotLinked`), ...toast })
     navigate(path, { replace: true })
   }, [search])
 
@@ -273,8 +276,10 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     // The devices that signed in with it were signed out.
     void loadDevices()
     toasts.success({
-      title: method ? `${signInMethodName(method.kind)} unlinked` : "Sign-in method unlinked",
-      body: "The devices that signed in with it were signed out.",
+      title: method
+        ? t.t(`ProfileView.unlinked`, { method: signInMethodName(t, method.kind) })
+        : t.t(`ProfileView.methodUnlinked`),
+      body: t.t(`ProfileView.unlinkedBody`),
       dataE2E: "sign-in-method-unlinked",
     })
   }
@@ -290,10 +295,10 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     setDevicesBusy(false)
     await loadDevices()
     if (!result.ok) {
-      devices.error.value = result.error || SESSIONS_FAILURE
+      devices.error.value = result.error || t.t(SESSIONS_FAILURE)
       return
     }
-    toasts.success({ title: "Signed out", body, dataE2E: "sessions-ended" })
+    toasts.success({ title: t.t(`ProfileView.signedOut`), body, dataE2E: "sessions-ended" })
   }
 
   /**
@@ -313,12 +318,12 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     const result = await profileStore.saveProfile(values.firstName, values.lastName)
     setBusyProfile(false)
     if (!result.ok) {
-      setProfileError(result.error || PROFILE_FAILURES.profile)
+      setProfileError(result.error || t.t(PROFILE_FAILURES.profile))
       return
     }
     toasts.success({
-      title: "Profile saved",
-      body: "Your profile was updated.",
+      title: t.t(`ProfileView.profileSaved`),
+      body: t.t(`ProfileView.profileSavedBody`),
       dataE2E: "profile-saved",
     })
   }
@@ -336,7 +341,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     const result = await changePassword(values.currentPassword, values.newPassword, signOutOthers)
     setBusyPassword(false)
     if (!result.ok) {
-      setPasswordError(result.error || PROFILE_FAILURES.password)
+      setPasswordError(result.error || t.t(PROFILE_FAILURES.password))
       return
     }
     setValues((current) => ({ ...current, currentPassword: "", newPassword: "" }))
@@ -346,8 +351,8 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     // The change revoked every API token of the person: the list is read again.
     if (result.revokedTokens) void tokens.load()
     toasts.success({
-      title: "Password changed",
-      body: passwordChangedMessage(signOutOthers, result.revokedTokens ?? 0),
+      title: t.t(`ProfileView.passwordChanged`),
+      body: passwordChangedMessage(t, signOutOthers, result.revokedTokens ?? 0),
       dataE2E: "password-saved",
     })
   }
@@ -360,7 +365,9 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     const problems: ProfileFieldErrors = {
       ...refusedFields(authPasswordSetSchema, { newPassword: values.newPassword }),
     }
-    if (twoFactor && !/^[0-9]{6}$/.test(values.passwordOtp)) problems.passwordOtp = CODE_MISSING
+    if (twoFactor && !/^[0-9]{6}$/.test(values.passwordOtp)) {
+      problems.passwordOtp = t.t(CODE_MISSING)
+    }
     if (!fieldsPass(Object.keys(problems).length > 0 ? problems : null)) return
     setBusyPassword(true)
     const result = await setPassword(
@@ -371,13 +378,13 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     // Read again either way: a refusal may mean the provider sign-in is no longer recent.
     await methods.load()
     if (!result.ok) {
-      setPasswordError(result.error || PROFILE_FAILURES.passwordSet)
+      setPasswordError(result.error || t.t(PROFILE_FAILURES.passwordSet))
       return
     }
     setValues((current) => ({ ...current, newPassword: "", passwordOtp: "" }))
     toasts.success({
-      title: "Password set",
-      body: "You can now sign in with your e-mail address and this password too.",
+      title: t.t(`ProfileView.passwordSet`),
+      body: t.t(`ProfileView.passwordSetBody`),
       dataE2E: "password-set",
     })
   }
@@ -413,7 +420,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     const result = await totpConnectFinish(values.otp)
     setTotpBusy(false)
     if (!result.ok) {
-      setTotpError(result.error || PROFILE_FAILURES.totpFinish)
+      setTotpError(result.error || t.t(PROFILE_FAILURES.totpFinish))
       return
     }
     setEnrolment(null)
@@ -434,7 +441,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     )
     setTotpBusy(false)
     if (!result.ok) {
-      setTotpError(result.error || PROFILE_FAILURES.totpDisable)
+      setTotpError(result.error || t.t(PROFILE_FAILURES.totpDisable))
       return
     }
     setValue("twoFactorProof", "")
@@ -459,9 +466,9 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
         uuidV7(),
         subscriptionToPayload(subscription),
       )
-      if (!result.ok) setPushError(result.error || PROFILE_FAILURES.push)
+      if (!result.ok) setPushError(result.error || t.t(PROFILE_FAILURES.push))
     } catch (_error) {
-      setPushError(PROFILE_FAILURES.push)
+      setPushError(t.t(PROFILE_FAILURES.push))
     } finally {
       setPushBusy(false)
     }
@@ -472,7 +479,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     setPushBusy(true)
     const result = await profileStore.removePush(deviceId)
     setPushBusy(false)
-    if (!result.ok) setPushError(result.error || PROFILE_FAILURES.pushRemove)
+    if (!result.ok) setPushError(result.error || t.t(PROFILE_FAILURES.pushRemove))
   }
 
   /** Runs one e-mail form's call: clears its message, marks it busy, then shows what came back. */
@@ -486,7 +493,10 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     const outcome = await call()
     setEmailPending((current) => ({ ...current, [form]: false }))
     if (!outcome.ok) {
-      setEmailErrors((current) => ({ ...current, [form]: outcome.error || EMAIL_FAILURES[form] }))
+      setEmailErrors((current) => ({
+        ...current,
+        [form]: outcome.error || t.t(EMAIL_FAILURES[form]),
+      }))
       return
     }
     onDone(outcome.message)
@@ -515,7 +525,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       setDeleteErrors({
         form: null,
         password: problems?.password,
-        otp: otpMissing ? CODE_MISSING : problems?.otp,
+        otp: otpMissing ? t.t(CODE_MISSING) : problems?.otp,
       })
       return
     }
@@ -536,10 +546,10 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       return
     }
     toasts.success({
-      title: "Account deleted",
-      body: `It goes for good on ${
-        preferencesState.format.value.date(result.deleteAfter, "long")
-      }. Sign in before then to keep it.`,
+      title: t.t(`ProfileView.accountDeleted`),
+      body: t.t(`ProfileView.accountDeletedBody`, {
+        day: preferencesState.format.value.date(result.deleteAfter, "long"),
+      }),
       dataE2E: "account-deleted",
     })
   }
@@ -549,11 +559,11 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     setDeleteBusy(true)
     const result = await deleteGuestAccount(confirm)
     setDeleteBusy(false)
-    if (!result.ok) return setGuestDeleteError(result.error)
+    if (!result.ok) return setGuestDeleteError(say(t, result.error))
     navigate(SCREEN_PATHS.signUp, { replace: true })
     toasts.success({
-      title: "Guest account deleted",
-      body: "Everything in it is gone.",
+      title: t.t(`ProfileView.guestDeleted`),
+      body: t.t(`ProfileView.guestDeletedBody`),
       dataE2E: "guest-deleted",
     })
   }
@@ -581,13 +591,22 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
             setEmailValues(NO_EMAIL_VALUES)
             setEmailSendNotice(null)
             toasts.success({
-              title: "E-mail verified",
-              body: "Your e-mail address is verified.",
+              title: t.t(`ProfileView.emailVerified`),
+              body: t.t(`ProfileView.emailVerifiedBody`),
               dataE2E: "email-verified",
             })
           }),
         onSend: () =>
-          void runEmail("send", () => emailStore.send(), (message) => setEmailSendNotice(message)),
+          void runEmail(
+            "send",
+            () => emailStore.send(),
+            // Said in the screen's words with the address the code went to: the API's message is
+            // English only.
+            () => {
+              const status = emailStore.status.value
+              setEmailSendNotice((status && emailToVerify(status)) ?? "")
+            },
+          ),
         onChange: () =>
           void runEmail(
             "change",
@@ -651,7 +670,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
         emailLink: methods.emailLink.value,
         available: methods.available.value,
         pending: methods.pending.value,
-        error: methods.error.value === "" ? SIGN_IN_METHODS_FAILURE : methods.error.value,
+        error: methods.error.value === "" ? { key: SIGN_IN_METHODS_FAILURE } : methods.error.value,
         loadError: methods.loadError.value,
         loading: methods.loading.value,
         onRetry: () => void methods.load(),
@@ -666,10 +685,10 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       devices={{
         sessions: devices.sessions.value,
         pending: devicesBusy,
-        error: devices.error.value === "" ? SESSIONS_FAILURE : devices.error.value,
+        error: devices.error.value === "" ? t.t(SESSIONS_FAILURE) : devices.error.value,
         savedAt: devices.savedAt.value,
-        onEnd: (id) => void endDevices(() => endSession(id), "That device was signed out."),
-        onEndOthers: () => void endDevices(endOtherSessions, "Every other device was signed out."),
+        onEnd: (id) => void endDevices(() => endSession(id), t.t(`ProfileView.deviceSignedOut`)),
+        onEndOthers: () => void endDevices(endOtherSessions, t.t(`ProfileView.othersSignedOut`)),
       }}
       apiTokens={{
         tokens: tokens.tokens.value,
@@ -684,8 +703,8 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
           void tokens.revoke(id).then((revoked) => {
             if (revoked) {
               toasts.success({
-                title: "Token revoked",
-                body: "That token no longer works.",
+                title: t.t(`ProfileView.tokenRevoked`),
+                body: t.t(`ProfileView.tokenRevokedBody`),
                 dataE2E: "api-token-revoked",
               })
             }

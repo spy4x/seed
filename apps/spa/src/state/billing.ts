@@ -11,17 +11,18 @@ import { apiFetch } from "./api.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"
+import { BILLING_MESSAGES } from "@ui/billing-screen.tsx"
 
 /** `apiFetch`, or a test's stand-in for it. */
 export type BillingFetch = <T>(url: string, init?: RequestInit) => Promise<ApiResult<T>>
 
-const OFFLINE = "The server is out of reach. Try again."
-const UNREADABLE = "The plan could not be read."
-const UNSAFE_PAGE = "The payment provider answered with an address this app does not open."
-const CHECKOUT_UNREACHABLE =
-  "Could not open Stripe's checkout. Check your connection and try again."
-const PORTAL_UNREACHABLE =
-  "Could not open Stripe's billing page. Check your connection and try again."
+const {
+  offline: OFFLINE,
+  unreadable: UNREADABLE,
+  unsafePage: UNSAFE_PAGE,
+  checkoutUnreachable: CHECKOUT_UNREACHABLE,
+  portalUnreachable: PORTAL_UNREACHABLE,
+} = BILLING_MESSAGES
 
 function billingPath(groupId: string, action = ""): string {
   return `/api/groups/${encodeURIComponent(groupId)}/billing${action}`

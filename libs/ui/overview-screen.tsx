@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
@@ -18,20 +17,51 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { DashboardGrid, WidgetCard, type WidgetSize } from "@spy4x/preact-ui/widget-card"
 import type { Formatters } from "@spy4x/time/format"
+import {
+  createTranslator,
+  type MessageValues,
+  type Translator,
+} from "@spy4x/platform/universal/i18n"
+import app from "@i18n/app/en.json" with { type: "json" }
 import { type OverviewPeriods, overviewPeriods } from "@domain/groups"
 import type { WidgetView } from "./note-widgets.tsx"
 import { type Navigate, NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"
+import { useAppText } from "./i18n.ts"
 
-/** The ranges the overview offers, in the picker's order. "Last 30 days" is the default. */
-export const OVERVIEW_PRESETS: readonly DateRangePresetOption[] = [
-  { preset: "last-7-days", label: "Last 7 days" },
-  { preset: "last-30-days", label: "Last 30 days" },
-  { preset: "last-90-days", label: "Last 90 days" },
-  { preset: "last-12-months", label: "Last 12 months" },
-  { preset: "this-month", label: "This month" },
-  { preset: "last-month", label: "Last month" },
-  { preset: "custom", label: "Custom…" },
+/**
+ * The ranges the overview offers, in the picker's order, each with its label's key in the `app`
+ * catalog. "Last 30 days" is the default.
+ */
+export const OVERVIEW_PRESETS: readonly { preset: DateRangePreset; key: string }[] = [
+  { preset: "last-7-days", key: `OverviewScreen.last7Days` },
+  { preset: "last-30-days", key: `OverviewScreen.last30Days` },
+  { preset: "last-90-days", key: `OverviewScreen.last90Days` },
+  { preset: "last-12-months", key: `OverviewScreen.last12Months` },
+  { preset: "this-month", key: `OverviewScreen.thisMonth` },
+  { preset: "last-month", key: `OverviewScreen.lastMonth` },
+  { preset: "custom", key: `OverviewScreen.custom` },
 ]
+
+let english: Translator<string> | undefined
+
+/**
+ * The words of the overview's range row and grid. The admin app draws both too (the admin group
+ * page), and its translator holds no `app` keys: a key it does not know reads in English there,
+ * instead of as the key itself.
+ */
+function useOverviewText(): Translator<string> {
+  const t = useAppText()
+  const pick = (key: string, values?: MessageValues) =>
+    t.t(key, values) !== key
+      ? t
+      : english ??= createTranslator({ language: `en`, catalogs: [{ source: app }] })
+  return {
+    language: t.language,
+    dir: t.dir,
+    t: (key, values) => pick(key, values).t(key, values),
+    parts: (key, values) => pick(key, values).parts(key, values),
+  }
+}
 
 /** The range an address without one shows. */
 export const OVERVIEW_DEFAULT_PRESET = "last-30-days" satisfies Exclude<DateRangePreset, "custom">
@@ -95,17 +125,24 @@ export interface OverviewScreenProps {
   navigate?: Navigate
 }
 
-/** "22 Sep – 21 Oct, compared with the 30 days before": the days the widgets count. */
-export function periodLine(periods: OverviewPeriods, format: Formatters): string {
+/** "22 Sep – 21 Oct": the days the widgets count. */
+export function periodRange(periods: OverviewPeriods, format: Formatters): string {
   const { from, to } = periods.current
   const utc = format.utc()
   const at = (iso: string) => `${iso}T00:00:00Z`
   const sameYear = from.slice(0, 4) === to.slice(0, 4)
   const start = sameYear ? utc.dayMonth(at(from)) : utc.date(at(from))
   const end = sameYear ? utc.dayMonth(at(to)) : utc.date(at(to))
-  const days = from === to ? start : `${start} – ${end}`
-  const before = periods.days === 1 ? "the day before" : `the ${periods.days} days before`
-  return `${days}, compared with ${before}`
+  return from === to ? start : `${start} – ${end}`
+}
+
+/** "22 Sep – 21 Oct, compared with the 30 days before": the days counted, and what they are compared with. */
+export function periodLine(
+  t: Translator<string>,
+  periods: OverviewPeriods,
+  format: Formatters,
+): string {
+  return t.t(`OverviewScreen.period`, { range: periodRange(periods, format), count: periods.days })
 }
 
 /** The calendar day `now` falls on in `timeZone`, `YYYY-MM-DD`. */
@@ -134,6 +171,7 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
       page.current.querySelector<HTMLElement>("[data-e2e=overview-all-hidden-customise]")
     next?.focus()
   }, [props.widgets.length])
+  const t = useAppText()
   const hide = (id: string) => {
     hidden.current = props.widgets.findIndex((widget) => widget.id === id)
     props.onHide(id)
@@ -142,21 +180,21 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
     <div ref={page}>
       <Stack gap="xl">
         <PageHeader
-          title="Overview"
-          subtitle={group?.name}
+          title={t.t(`OverviewScreen.title`)}
+          subtitle={group && <span translate={false}>{group.name}</span>}
           subtitleDataE2E="overview-group"
           navigate={navigate}
           menuDataE2E="overview-menu"
           menu={group && (
             <>
               <DropdownItem onClick={props.onCustomise} dataE2E="overview-customise">
-                Customise overview
+                {t.t(`OverviewScreen.customise`)}
               </DropdownItem>
               <DropdownItem onClick={props.onResetLayout} dataE2E="overview-reset">
-                Reset layout
+                {t.t(`OverviewScreen.reset`)}
               </DropdownItem>
               <DropdownItem onClick={props.onCopyLink} dataE2E="overview-copy-link">
-                Copy link to this view
+                {t.t(`OverviewScreen.copyLink`)}
               </DropdownItem>
             </>
           )}
@@ -167,7 +205,7 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
               <EmptyState
                 headingLevel={2}
                 inset
-                title={props.loading ? "Loading the group…" : "This group does not exist."}
+                title={t.t(props.loading ? `OverviewScreen.loading` : `OverviewScreen.missing`)}
                 action={!props.loading && (
                   <Button
                     href={SCREEN_PATHS.groups}
@@ -175,7 +213,7 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
                     variant="outline"
                     class="min-h-11 sm:min-h-9"
                   >
-                    Back to groups
+                    {t.t(`OverviewScreen.backToGroups`)}
                   </Button>
                 )}
               />
@@ -195,8 +233,8 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
                   <EmptyState
                     headingLevel={2}
                     inset
-                    title={`No notes in ${group.name} yet`}
-                    description="The overview fills in as people in the group add notes."
+                    title={t.t(`OverviewScreen.emptyGroup`, { group: `\u2068${group.name}\u2069` })}
+                    description={t.t(`OverviewScreen.emptyGroupText`)}
                     action={props.emptyGroup.canCreate && (
                       // A labelled button, not the header's PageAction, which shrinks to an icon
                       // on a phone.
@@ -207,7 +245,7 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
                         class="min-h-11 sm:min-h-9"
                         data-e2e="overview-new-note"
                       >
-                        New note
+                        {t.t(`OverviewScreen.newNote`)}
                       </Button>
                     )}
                   />
@@ -219,8 +257,8 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
                     <EmptyState
                       headingLevel={2}
                       inset
-                      title="All widgets are hidden"
-                      description="Choose the ones you want to see."
+                      title={t.t(`OverviewScreen.allHidden`)}
+                      description={t.t(`OverviewScreen.allHiddenText`)}
                       action={
                         <Button
                           variant="outline"
@@ -228,7 +266,7 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
                           onClick={props.onCustomise}
                           data-e2e="overview-all-hidden-customise"
                         >
-                          Customise overview
+                          {t.t(`OverviewScreen.customise`)}
                         </Button>
                       }
                     />
@@ -236,7 +274,7 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
                 )
                 : (
                   <OverviewGrid
-                    label={`Overview of ${group.name}`}
+                    label={t.t(`OverviewScreen.gridLabel`, { group: group.name })}
                     widgets={props.widgets}
                     views={props.views}
                     range={props.range}
@@ -251,13 +289,13 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
         <LayoutCustomiser
           open={props.customising}
           onClose={props.onCloseCustomise}
-          title="Customise overview"
-          description="Choose which widgets you see and their order. The layout is yours and follows you to your other devices."
+          title={t.t(`OverviewScreen.customise`)}
+          description={t.t(`OverviewScreen.customiseText`)}
           items={props.layout}
           onChange={props.onLayoutChange}
           onReset={props.onResetLayout}
           error={props.layoutError}
-          labels={{ list: "Widgets" }}
+          labels={{ list: t.t(`OverviewScreen.widgets`) }}
           dataE2E="overview-customiser"
         />
       </Stack>
@@ -281,6 +319,7 @@ export interface OverviewRangeRowProps {
  */
 export function OverviewRangeRow(props: OverviewRangeRowProps): JSX.Element {
   const format = useFormat()
+  const t = useOverviewText()
   const periods = overviewPeriods(props.range.range)
   const preset = OVERVIEW_PRESETS.find((option) => option.preset === props.range.preset)
   return (
@@ -291,20 +330,23 @@ export function OverviewRangeRow(props: OverviewRangeRowProps): JSX.Element {
         class="[&>button]:min-h-11 sm:[&>button]:min-h-9"
         range={props.range.range}
         selectedPreset={props.range.preset}
-        presets={OVERVIEW_PRESETS}
+        presets={OVERVIEW_PRESETS.map(({ preset, key }): DateRangePresetOption => ({
+          preset,
+          label: t.t(key),
+        }))}
         timeZone={props.timeZone}
         now={props.now}
         onChange={(range, chosen) => props.onRangeChange({ range, preset: chosen })}
         formatRange={() =>
           preset && preset.preset !== "custom"
-            ? preset.label
+            ? t.t(preset.key)
             : periods
-            ? periodLine(periods, format).split(",")[0]
-            : "Custom range"}
+            ? periodRange(periods, format)
+            : t.t(`OverviewScreen.customRange`)}
         dataE2E={props.dataE2E ?? "overview-range"}
       />
       <p class="text-sm text-muted" data-e2e="overview-period">
-        {periods ? periodLine(periods, format) : "Choose a range of a year or less."}
+        {periods ? periodLine(t, periods, format) : t.t(`OverviewScreen.rangeTooLong`)}
       </p>
     </div>
   )
@@ -331,6 +373,7 @@ export function OverviewGrid(props: OverviewGridProps): JSX.Element | null {
   if (!periods) return null
   const endsToday = periods.current.to === today(props.now, props.timeZone)
   const { onHide } = props
+  const t = useOverviewText()
   return (
     <DashboardGrid
       label={props.label}
@@ -344,6 +387,7 @@ export function OverviewGrid(props: OverviewGridProps): JSX.Element | null {
             periods={periods}
             endsToday={endsToday}
             format={format}
+            t={t}
             onRetry={() => props.onRetry(widget.id)}
             onHide={onHide && (() => onHide(widget.id))}
           />
@@ -355,12 +399,13 @@ export function OverviewGrid(props: OverviewGridProps): JSX.Element | null {
 
 /** One widget's card: its state from the load, its drawing from the view. */
 function OverviewWidgetCard(
-  { widget, view, periods, endsToday, format, onRetry, onHide }: {
+  { widget, view, periods, endsToday, format, t, onRetry, onHide }: {
     widget: OverviewWidget
     view: WidgetView
     periods: OverviewPeriods
     endsToday: boolean
     format: Formatters
+    t: Translator<string>
     onRetry: () => void
     onHide?: () => void
   },
@@ -376,14 +421,16 @@ function OverviewWidgetCard(
       // An empty chart is one line: it takes a number's height, not the chart's.
       size={drawing?.status === "empty" ? "stat" : widget.size}
       status={drawing ? drawing.status : load.status === "error" ? "error" : "loading"}
-      caption={savedAt === null ? drawing?.caption : `As of ${format.time(savedAt)}`}
+      caption={savedAt === null
+        ? drawing?.caption
+        : t.t(`OverviewScreen.asOf`, { time: format.time(savedAt) })}
       loadingLabel={view.loadingLabel}
       errorMessage={view.errorMessage}
       onRetry={onRetry}
       emptyLabel={drawing?.emptyLabel}
       menu={onHide && (
         <DropdownItem onClick={onHide} dataE2E="overview-widget-hide">
-          Hide widget
+          {t.t(`OverviewScreen.hide`)}
         </DropdownItem>
       )}
       dataE2E={`overview-widget-${widget.id}`}

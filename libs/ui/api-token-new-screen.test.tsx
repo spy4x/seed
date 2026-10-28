@@ -8,6 +8,10 @@ import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { type ApiToken, ApiTokenAccess } from "@domain/api-tokens"
+import { ENGLISH } from "./i18n-testing.ts"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { API_TOKEN_MESSAGES } from "./api-tokens.tsx"
+import { PSEUDO, untranslated } from "./i18n-testing.ts"
 import {
   API_TOKEN_OFFLINE,
   ApiTokenNewScreen,
@@ -269,8 +273,8 @@ describe("ApiTokenNewScreen", () => {
     )
 
     expect(find("[data-e2e=api-token-offline]").textContent).toContain("You are offline")
-    expect(find("[data-e2e=api-token-offline]").textContent).toContain(API_TOKEN_OFFLINE)
-    expect(find("[data-e2e=api-token-error]").textContent).toContain(API_TOKEN_OFFLINE)
+    expect(find("[data-e2e=api-token-offline]").textContent).toContain(ENGLISH.t(API_TOKEN_OFFLINE))
+    expect(find("[data-e2e=api-token-error]").textContent).toContain(ENGLISH.t(API_TOKEN_OFFLINE))
   })
 
   it("says when the person is in no group to make a token for, with a way back", async () => {
@@ -291,5 +295,48 @@ describe("ApiTokenNewScreen", () => {
     expect(find("[data-e2e=api-token-loading] [role=status]").textContent).toBe(
       "Loading your groups…",
     )
+  })
+})
+
+describe("ApiTokenNewScreen in another language", () => {
+  it("shows no English outside the catalogs: an en-XA render of the form, its errors and the secret is all pseudo-language or data", async () => {
+    const inPseudo = (props: Partial<ApiTokenNewScreenProps>) => (
+      <I18nContext.Provider value={PSEUDO}>
+        <ApiTokenNewScreen
+          {...pageProps([], { docsHref: "https://example.com/api", ...props })}
+        />
+      </I18nContext.Provider>
+    )
+
+    await mount(inPseudo({
+      offline: true,
+      errors: {
+        name: API_TOKEN_MESSAGES.nameMissing,
+        password: API_TOKEN_MESSAGES.passwordMissing,
+        form: API_TOKEN_MESSAGES.createFailed,
+      },
+    }))
+    expect(untranslated(document.body, ["Personal"])).toEqual([])
+    let page = document.body.textContent ?? ""
+    for (
+      const key of [
+        "ApiTokenNewScreen.offline",
+        "ApiTokenNewScreen.nameMissing",
+        "ApiTokenNewScreen.passwordMissing",
+        "ApiTokenNewScreen.createFailed",
+        "ApiTokenNewScreen.expiresAfter",
+      ]
+    ) {
+      expect(page).toContain(PSEUDO.t(key))
+    }
+
+    await mount(inPseudo({ created: { token, secret: SECRET } }))
+    expect(untranslated(document.body, [SECRET, "Authorization: Bearer"])).toEqual([])
+    page = document.body.textContent ?? ""
+    expect(page).toContain(PSEUDO.t("ApiTokenNewScreen.copyNow"))
+
+    await mount(inPseudo({ groups: [] }))
+    expect(untranslated(document.body)).toEqual([])
+    expect(document.body.textContent).toContain(PSEUDO.t("ApiTokenNewScreen.noGroup"))
   })
 })

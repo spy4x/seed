@@ -1,8 +1,15 @@
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import appEn from "@i18n/app/en.json" with { type: "json" }
+import { type Said, say } from "@ui/app-text.ts"
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import type { User } from "@domain/identity"
 import { createPictureStore, type PictureDependencies } from "./profile-picture.ts"
+
+const EN = createTranslator({ language: "en", catalogs: [{ source: appEn }] })
+/** What the person reads, in English, for a message the store keeps as a key. */
+const read = (said: Said | null) => said && say(EN, said)
 
 const PICTURE = `0199c3a0-0000-7000-8000-0000000000a1`
 const file = (name = `photo.jpg`, type = `image/jpeg`, size = 1000) =>
@@ -61,7 +68,7 @@ describe(`profile picture store`, () => {
       `release blob:preview`,
     ])
     expect(users.map((user) => user.pictureId)).toEqual([PICTURE])
-    expect(store.announcement.value).toBe(`Profile picture saved.`)
+    expect(read(store.announcement.value)).toBe(`Profile picture saved.`)
     expect([store.status.value, store.preview.value, store.error.value]).toEqual([
       `idle`,
       null,
@@ -82,8 +89,8 @@ describe(`profile picture store`, () => {
     })
     await store.choose(file())
 
-    expect(store.error.value).toBe(
-      `photo.jpg is not really an image, so it was not used. Choose another file.`,
+    expect(read(store.error.value)).toBe(
+      `\u2068photo.jpg\u2069 is not really an image, so it was not used. Choose another file.`,
     )
     expect(calls).toContain(`cancel ${PICTURE}`)
     expect(users).toEqual([])
@@ -93,7 +100,7 @@ describe(`profile picture store`, () => {
     const { store, calls } = setUp({ put: () => Promise.reject(new TypeError(`failed`)) })
     await store.choose(file())
 
-    expect(store.error.value).toBe(
+    expect(read(store.error.value)).toBe(
       `Could not upload your picture. Check your connection and try again.`,
     )
     expect(calls).toContain(`cancel ${PICTURE}`)
@@ -104,7 +111,7 @@ describe(`profile picture store`, () => {
     const { store, calls } = setUp({ online: () => false })
     await store.choose(file())
 
-    expect(store.error.value).toBe(
+    expect(read(store.error.value)).toBe(
       `You are offline. Upload your picture once you are back online.`,
     )
     expect(calls).toEqual([])
@@ -113,22 +120,24 @@ describe(`profile picture store`, () => {
   it(`names the file and the rule when the browser refuses it`, () => {
     const { store } = setUp()
     store.reject({ file: file(`photo.gif`, `image/gif`), reason: `wrong-type` })
-    expect(store.error.value).toBe(
-      `photo.gif is not a JPEG, PNG, WebP or HEIC image. Choose one of those.`,
+    expect(read(store.error.value)).toBe(
+      `\u2068photo.gif\u2069 is not a JPEG, PNG, WebP or HEIC image. Choose one of those.`,
     )
     store.reject({ file: file(`photo.jpg`, `image/jpeg`, 12.4 * 1024 * 1024), reason: `too-large` })
-    expect(store.error.value).toBe(`photo.jpg is 12.4 MB. Choose an image of 10 MB or less.`)
+    expect(read(store.error.value)).toBe(
+      `\u2068photo.jpg\u2069 is 12.4 MB. Choose an image of 10 MB or less.`,
+    )
   })
 
   it(`removes the picture and says so, or says the removal failed`, async () => {
     const removed = setUp()
     await removed.store.remove()
     expect(removed.users.map((user) => user.pictureId)).toEqual([null])
-    expect(removed.store.announcement.value).toBe(`Profile picture removed.`)
+    expect(read(removed.store.announcement.value)).toBe(`Profile picture removed.`)
 
     const failed = setUp({ remove: () => Promise.reject(new TypeError(`failed`)) })
     await failed.store.remove()
-    expect(failed.store.error.value).toBe(
+    expect(read(failed.store.error.value)).toBe(
       `Could not remove your picture. Check your connection and try again.`,
     )
     expect(failed.users).toEqual([])

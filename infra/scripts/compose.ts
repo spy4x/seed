@@ -169,7 +169,9 @@ export async function runCompose(args: string[], host: ComposeHost): Promise<num
   const optional = project.services.filter((service) => !product.includes(service));
   if (product.length > 0 && optional.length > 0) {
     host.log(`Starting the product first: ${product.join(", ")}`);
-    const productCode = await run([...plan.command, ...product]);
+    // A service kept off is named too: Compose refuses `--scale <service>=0` for a service the
+    // command leaves out ("no such service"), and naming it at no container stops one that runs.
+    const productCode = await run([...plan.command, ...product, ...plan.off]);
     if (productCode !== 0) {
       host.error("Error starting the product. The other services were not started.");
       return productCode;

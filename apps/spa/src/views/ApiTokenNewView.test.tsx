@@ -17,6 +17,7 @@ import { API_TOKEN_OFFLINE } from "@ui/api-token-new-screen.tsx"
 import { createApiTokensStore } from "../state/api-tokens.ts"
 import { groupsStore } from "../state/groups.ts"
 import { sessionState } from "../state/session.ts"
+import { ENGLISH } from "@ui/i18n-testing.ts"
 import { ApiTokenNewView } from "./ApiTokenNewView.tsx"
 
 const window = new Window({ url: "http://app.localhost/tokens/new" })
@@ -177,6 +178,6 @@ describe("ApiTokenNewView", () => {
 
     expect(sent).toEqual([])
     expect(find("[data-e2e=api-token-offline]").textContent).toContain("You are offline")
-    expect(find("[data-e2e=api-token-error]").textContent).toContain(API_TOKEN_OFFLINE)
+    expect(find("[data-e2e=api-token-error]").textContent).toContain(ENGLISH.t(API_TOKEN_OFFLINE))
   })
 })

@@ -9,6 +9,7 @@ import {
   type User,
 } from "@domain/identity"
 import { callCommand } from "../modules.ts"
+import type { AppText } from "@ui/app-text.ts"
 import { putWithProgress } from "./attachments.ts"
 import { sessionState } from "./session.ts"
 
@@ -29,22 +30,31 @@ export interface PictureDependencies {
   setUser(user: User): void
 }
 
-const NETWORK = `Could not upload your picture. Check your connection and try again.`
-const OFFLINE = `You are offline. Upload your picture once you are back online.`
-const REMOVE_FAILED = `Could not remove your picture. Check your connection and try again.`
+const NETWORK: AppText = { key: `ProfilePicture.network` }
+const OFFLINE: AppText = { key: `ProfilePicture.offline` }
+const REMOVE_FAILED: AppText = { key: `ProfilePicture.removeFailed` }
 
-function typeError(name: string): string {
-  return `${name} is not a JPEG, PNG, WebP or HEIC image. Choose one of those.`
+/**
+ * A file name inside a sentence, between Unicode isolates: the plain-text `<bdi>`, so a name in
+ * another script keeps its own direction in an Arabic sentence and the other way round.
+ */
+function isolated(name: string): string {
+  return `\u2068${name}\u2069`
 }
 
-function sizeError(name: string, size: number): string {
-  return `${name} is ${formatBytes(size)}. Choose an image of ${
-    formatBytes(PICTURE_MAX_BYTES)
-  } or less.`
+function typeError(name: string): AppText {
+  return { key: `ProfilePicture.type`, values: { name: isolated(name) } }
 }
 
-/** The server's refusal of `file`, in the row's words. */
-function refusalOf(error: unknown, file: File): string {
+function sizeError(name: string, size: number): AppText {
+  return {
+    key: `ProfilePicture.size`,
+    values: { name: isolated(name), size: formatBytes(size), max: formatBytes(PICTURE_MAX_BYTES) },
+  }
+}
+
+/** The server's refusal of `file`, in the row's words, by their key in `app`. */
+function refusalOf(error: unknown, file: File): AppText {
   const code = error instanceof RealtimeRequestError
     ? (error.details as { code?: unknown } | undefined)?.code
     : undefined
@@ -54,11 +64,11 @@ function refusalOf(error: unknown, file: File): string {
     case `FILE_TOO_LARGE`:
       return sizeError(file.name, file.size)
     case `FILE_CONTENT`:
-      return `${file.name} is not really an image, so it was not used. Choose another file.`
+      return { key: `ProfilePicture.content`, values: { name: isolated(file.name) } }
     case `UPLOADS_PENDING`:
-      return `Finish the uploads already started first, then try again.`
+      return { key: `ProfilePicture.pending` }
     case `UPLOAD_BUDGET`:
-      return `You have uploaded as much as an hour allows. Try again later.`
+      return { key: `ProfilePicture.budget` }
   }
   return NETWORK
 }
@@ -71,13 +81,14 @@ function refusalOf(error: unknown, file: File): string {
  */
 export function createPictureStore(dependencies: PictureDependencies) {
   const status = signal<`idle` | `uploading` | `removing`>(`idle`)
-  const error = signal<string | null>(null)
-  const announcement = signal(``)
+  const error = signal<AppText | null>(null)
+  /** What a screen reader hears once a change went through; `null` while there is nothing new. */
+  const announcement = signal<AppText | null>(null)
   /** The chosen image while it uploads; `null` otherwise. */
   const preview = signal<string | null>(null)
 
-  function refuse(message: string): void {
-    announcement.value = ``
+  function refuse(message: AppText): void {
+    announcement.value = null
     error.value = message
   }
 
@@ -85,7 +96,7 @@ export function createPictureStore(dependencies: PictureDependencies) {
     if (status.value !== `idle`) return
     if (!dependencies.online()) return refuse(OFFLINE)
     error.value = null
-    announcement.value = ``
+    announcement.value = null
     status.value = `uploading`
     const shown = dependencies.preview(file)
     preview.value = shown
@@ -96,7 +107,7 @@ export function createPictureStore(dependencies: PictureDependencies) {
       const { user } = await dependencies.confirm({ id: signed.id })
       signed = null
       dependencies.setUser(user)
-      announcement.value = `Profile picture saved.`
+      announcement.value = { key: `ProfilePicture.saved` }
     } catch (cause) {
       refuse(refusalOf(cause, file))
     } finally {
@@ -119,12 +130,12 @@ export function createPictureStore(dependencies: PictureDependencies) {
   async function remove(): Promise<void> {
     if (status.value !== `idle`) return
     error.value = null
-    announcement.value = ``
+    announcement.value = null
     status.value = `removing`
     try {
       const { user } = await dependencies.remove()
       dependencies.setUser(user)
-      announcement.value = `Profile picture removed.`
+      announcement.value = { key: `ProfilePicture.removed` }
     } catch {
       refuse(REMOVE_FAILED)
     } finally {

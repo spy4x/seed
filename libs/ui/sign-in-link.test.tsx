@@ -3,6 +3,8 @@
  * button on sign-in and sign-up, the last-sign-in hint, and the proof an account with only a link
  * confirms a step with. Typing, pressing through the app's callbacks, and where focus goes.
  */
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import appEn from "@i18n/app/en.json" with { type: "json" }
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
@@ -17,6 +19,9 @@ import {
 } from "./sign-in-link-screen.tsx"
 import { ProviderProofNotice, providerProofOf } from "./provider-proof.tsx"
 import { providerOnlyNames } from "./profile-screen.tsx"
+
+/** The product's English, as a screen without a provider reads it. */
+const EN = createTranslator({ language: "en", catalogs: [{ source: appEn }] })
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -405,8 +410,8 @@ describe("an account that signs in only with a link", () => {
     const proof = providerProofOf([], false, true)
     expect(proof).toEqual({ providers: [], passkeys: false, emailLink: true, fresh: false })
     expect(providerProofOf([], false)).toBe(null)
-    expect(providerOnlyNames([], true)).toBe("a sign-in link")
-    expect(providerOnlyNames([], false)).toBe(null)
+    expect(providerOnlyNames(EN, [], true)).toBe("a sign-in link")
+    expect(providerOnlyNames(EN, [], false)).toBe(null)
 
     await mount(<ProviderProofNotice proof={proof!} next="/profile/danger-zone" />)
 

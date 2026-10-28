@@ -79,7 +79,8 @@ updates the demo in the same PR:
 - **The catalog is demo data**: the wipe empties its tables (its photos' files are queued with
   every other image's), and the seed writes the sample catalog again
   (`libs/server/catalog/sample-catalog.ts`): three categories and six items with colours, sizes and
-  a size chart, one of them sold out and one a draft, without photos. The template's own site
+  a size chart, one of them sold out and one a draft, without photos, and four link sources. No
+  tracking link is seeded: the first "Copy link" makes one. The template's own site
   keeps the catalog off; a product that turns it on and runs the demo gets the sample items.
 - **The seed** writes what a visitor should see. A new feature gets fake rows in
   `apps/worker/demo/fake-data.ts` and `seed.ts`, written through the feature's own repository, so

@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { IconBell } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
@@ -10,6 +9,8 @@ import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import type { UserPushTokenPublic } from "@domain/identity"
 import { ScreenForm } from "./progressive.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { useAppText } from "./i18n.ts"
 
 /** What {@link PushDevicesSection} takes. */
 export interface PushDevicesSectionProps {
@@ -34,6 +35,7 @@ export function PushDevicesSection(
   { devices, error, pending, onRegister, onRemove }: PushDevicesSectionProps,
 ): JSX.Element {
   const format = useFormat()
+  const t = useAppText()
   return (
     <div class="flex flex-col gap-4" data-e2e="push-devices">
       <ErrorState message={error} />
@@ -42,10 +44,10 @@ export function PushDevicesSection(
           <Card>
             <EmptyState
               icon={<IconBell class="size-6" />}
-              title="No devices yet"
+              title={t.t(`ProfileNotifications.emptyTitle`)}
               headingLevel={3}
               inset
-              description="Add this browser to get notifications on it."
+              description={t.t(`ProfileNotifications.emptyText`)}
               action={onRegister && <AddDevice onClick={onRegister} busy={pending} />}
             />
           </Card>
@@ -57,8 +59,10 @@ export function PushDevicesSection(
                 <SettingRow
                   key={device.id}
                   dataE2E={`push-device-${device.deviceId}`}
-                  label={`Device ${device.deviceId.slice(-8)}`}
-                  value={`Added ${format.dateTime(device.createdAt)}`}
+                  label={t.t(`ProfileNotifications.device`, { id: device.deviceId.slice(-8) })}
+                  value={t.t(`ProfileNotifications.added`, {
+                    date: format.dateTime(device.createdAt),
+                  })}
                   action={
                     <ScreenForm pending={pending} onSubmit={() => onRemove(device.deviceId)}>
                       <Button
@@ -69,7 +73,12 @@ export function PushDevicesSection(
                         data-e2e={`push-remove-${device.deviceId}`}
                         disabled={pending}
                       >
-                        Remove <span class="sr-only">device {device.deviceId.slice(-8)}</span>
+                        <Rich
+                          parts={t.parts(`ProfileNotifications.remove`, {
+                            id: device.deviceId.slice(-8),
+                          })}
+                          tags={{ hidden: (text) => <span class="sr-only">{text}</span> }}
+                        />
                       </Button>
                     </ScreenForm>
                   }
@@ -88,6 +97,7 @@ export function PushDevicesSection(
 }
 
 function AddDevice({ onClick, busy }: { onClick: () => void; busy: boolean }): JSX.Element {
+  const t = useAppText()
   return (
     <Button
       type="button"
@@ -95,9 +105,9 @@ function AddDevice({ onClick, busy }: { onClick: () => void; busy: boolean }): J
       data-e2e="push-register"
       onClick={onClick}
       busy={busy}
-      busyLabel="Working…"
+      busyLabel={t.t(`ProfileNotifications.working`)}
     >
-      Add this device
+      {t.t(`ProfileNotifications.add`)}
     </Button>
   )
 }

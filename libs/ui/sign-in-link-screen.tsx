@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
@@ -11,17 +10,22 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { useFocusOnError } from "@spy4x/preact-ui/use-focus-on-error"
 import { SIGN_IN_LINK_MINUTES } from "@domain/identity"
+import { Rich } from "@spy4x/preact-ui/i18n"
 import { AuthCard } from "./auth-screen.tsx"
+import { useAppText } from "./i18n.ts"
 import { type Navigate, SCREEN_PATHS, ScreenForm, withNext } from "./progressive.tsx"
 
-/** The messages of the sign-in link pages (#391) that the API does not word itself. */
+/**
+ * The messages of the sign-in link pages (#391) that the API does not word itself, by their keys
+ * in `app`.
+ */
 export const SIGN_IN_LINK_MESSAGES = {
   /** Sending the link failed for a reason the API did not name. */
-  sendFailed: "Could not send the link. Try again in a moment.",
+  sendFailed: `SignInLinkScreen.sendFailed`,
   /** The link page could not reach the API. The link is not spent. */
-  unreachable: "Could not reach the server. Check your connection and press Continue again.",
+  unreachable: `SignInLinkScreen.unreachable`,
   /** The link page's request failed for a reason the API did not name. */
-  openFailed: "Signing in failed. Press Continue to try again, or ask for a new link.",
+  openFailed: `SignInLinkScreen.openFailed`,
 } as const
 
 /** How long after a link was sent a new one may be asked for, in seconds. */
@@ -65,6 +69,7 @@ export interface LinkRequestScreenProps {
 export function LinkRequestScreen(props: LinkRequestScreenProps): JSX.Element {
   const { email, onEmailChange, sentTo, fieldError, error, pending, onSubmit, next = null } = props
   const field = useFocusOnError(fieldError)
+  const t = useAppText()
   useEffect(() => {
     // Focus starts in the field, with an address handed back selected so typing replaces it.
     if (sentTo !== null) return
@@ -76,27 +81,36 @@ export function LinkRequestScreen(props: LinkRequestScreenProps): JSX.Element {
   if (sentTo !== null) return <CheckInbox {...props} sentTo={sentTo} />
   return (
     <AuthCard
-      title="Sign in with a link"
-      description="We e-mail you a link that signs you in. If no account uses the address yet, the link creates one."
+      title={t.t(`SignInLinkScreen.title`)}
+      description={t.t(`SignInLinkScreen.description`)}
       e2e="sign-in-link"
       after={
-        <>
-          Rather use a password?{" "}
-          <Link
-            href={withNext(SCREEN_PATHS.signIn, next)}
-            navigate={props.navigate}
-            onClick={props.onBackToSignIn}
-            class="pc-link font-medium"
-            data-e2e="sign-in-link-back"
-          >
-            Back to sign in
-          </Link>
-        </>
+        <Rich
+          parts={t.parts(`SignInLinkScreen.ratherPassword`)}
+          tags={{
+            link: (text) => (
+              <Link
+                href={withNext(SCREEN_PATHS.signIn, next)}
+                navigate={props.navigate}
+                onClick={props.onBackToSignIn}
+                class="pc-link font-medium"
+                data-e2e="sign-in-link-back"
+              >
+                {text}
+              </Link>
+            ),
+          }}
+        />
       }
     >
       <ScreenForm pending={pending} onSubmit={onSubmit}>
         <Stack>
-          <Field id="sign-in-link-email" label="E-mail" error={fieldError} required>
+          <Field
+            id="sign-in-link-email"
+            label={t.t(`AuthScreen.email`)}
+            error={fieldError}
+            required
+          >
             <Input
               ref={field}
               data-e2e="sign-in-link-email"
@@ -108,8 +122,13 @@ export function LinkRequestScreen(props: LinkRequestScreenProps): JSX.Element {
               required
             />
           </Field>
-          <Button type="submit" data-e2e="sign-in-link-submit" busy={pending} busyLabel="Sending…">
-            Email me a link
+          <Button
+            type="submit"
+            data-e2e="sign-in-link-submit"
+            busy={pending}
+            busyLabel={t.t(`AuthScreen.sending`)}
+          >
+            {t.t(`SignInLinkScreen.submit`)}
           </Button>
           <ErrorState message={error} focusOnAppear dataE2E="sign-in-link-error" />
         </Stack>
@@ -124,46 +143,53 @@ function CheckInbox(
     & LinkRequestScreenProps
     & { sentTo: string },
 ): JSX.Element {
+  const t = useAppText()
   return (
     <AuthCard
-      title="Check your inbox"
+      title={t.t(`SignUpCodeScreen.title`)}
       focusTitle
       description={
-        <>
-          We sent a sign-in link to{" "}
-          <strong class="wrap-anywhere font-medium">{sentTo}</strong>. It works once, for{" "}
-          {SIGN_IN_LINK_MINUTES} minutes.
-        </>
+        <Rich
+          parts={t.parts(`SignInLinkScreen.sent`, { email: sentTo, count: SIGN_IN_LINK_MINUTES })}
+          tags={{
+            email: (text) => (
+              <strong class="wrap-anywhere font-medium" translate={false}>
+                <bdi>{text}</bdi>
+              </strong>
+            ),
+          }}
+        />
       }
       e2e="sign-in-link-sent"
       after={
-        <>
-          Wrong address?{" "}
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            class={TOUCH_TARGET}
-            data-e2e="sign-in-link-different-address"
-            onClick={onDifferentAddress}
-          >
-            Use a different address
-          </Button>
-        </>
+        <Rich
+          parts={t.parts(`SignUpCodeScreen.wrongAddress`)}
+          tags={{
+            button: (text) => (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                class={TOUCH_TARGET}
+                data-e2e="sign-in-link-different-address"
+                onClick={onDifferentAddress}
+              >
+                {text}
+              </Button>
+            ),
+          }}
+        />
       }
     >
-      <p class="text-sm">Open it on this device to sign in here.</p>
+      <p class="text-sm">{t.t(`SignInLinkScreen.openHere`)}</p>
       <div class="flex flex-col gap-3">
         <ResendButton
           onResend={onResend}
           busy={resending}
           readyAt={readyAt}
-          label="Send a new link"
-          waitingText={(seconds) =>
-            `Not there? Check your spam folder. You can send a new link in ${seconds} ${
-              seconds === 1 ? "second" : "seconds"
-            }.`}
-          sentText="A new link is on its way. Earlier links still work until one is used."
+          label={t.t(`SignInLinkScreen.newLink`)}
+          waitingText={(seconds) => t.t(`SignInLinkScreen.waiting`, { count: seconds })}
+          sentText={t.t(`SignInLinkScreen.resent`)}
         />
         <ErrorState message={error} focusOnAppear dataE2E="sign-in-link-error" />
       </div>
@@ -182,24 +208,22 @@ export type LinkOpenState =
   /** The address carries no token. */
   | "incomplete"
 
-/** The words of each state of the link page that offers only a new link. */
+/** The words of each state of the link page that offers only a new link, by their keys in `app`. */
 const LINK_DEAD_ENDS = {
   refused: {
     e2e: "sign-in-link-refused",
-    title: "This link no longer works",
-    description:
-      `Sign-in links work once, for ${SIGN_IN_LINK_MINUTES} minutes. Ask for a new one and use the newest mail.`,
+    title: `SignInLinkScreen.refusedTitle`,
+    description: `SignInLinkScreen.refused`,
   },
   askedElsewhere: {
     e2e: "sign-in-link-elsewhere",
-    title: "This link was asked for in another browser",
-    description:
-      "It did not sign you in, and your guest account is as it was. Ask for a new link in this browser to sign in here.",
+    title: `SignInLinkScreen.elsewhereTitle`,
+    description: `SignInLinkScreen.elsewhere`,
   },
   incomplete: {
     e2e: "sign-in-link-incomplete",
-    title: "This link is incomplete",
-    description: "Open the link from the mail again, or ask for a new one.",
+    title: `SignInLinkScreen.incompleteTitle`,
+    description: `SignInLinkScreen.incomplete`,
   },
 } as const
 
@@ -228,6 +252,7 @@ export function LinkOpenScreen(
     LinkOpenScreenProps,
 ): JSX.Element {
   const primary = useRef<HTMLDivElement>(null)
+  const t = useAppText()
   useEffect(() => {
     // After the app's route announcer, which focuses the page's heading in the same flush.
     queueMicrotask(() => primary.current?.querySelector<HTMLElement>("a, button")?.focus())
@@ -237,18 +262,18 @@ export function LinkOpenScreen(
     const { e2e, title, description } = LINK_DEAD_ENDS[state]
     return (
       <AuthCard
-        title={title}
-        description={description}
+        title={t.t(title)}
+        description={t.t(description, { count: SIGN_IN_LINK_MINUTES })}
         e2e={e2e}
         after={state === "refused"
           ? (
             <Link href={SCREEN_PATHS.signIn} navigate={navigate} class="pc-link font-medium">
-              Back to sign in
+              {t.t(`ConfirmSignUpScreen.backToSignIn`)}
             </Link>
           )
           : state === "askedElsewhere" && (
             <Link href={SCREEN_PATHS.home} navigate={navigate} class="pc-link font-medium">
-              Back to the app
+              {t.t(`SignInLinkScreen.backToApp`)}
             </Link>
           )}
       >
@@ -259,7 +284,7 @@ export function LinkOpenScreen(
             class="w-full"
             data-e2e="sign-in-link-new"
           >
-            Send a new link
+            {t.t(`SignInLinkScreen.newLink`)}
           </Button>
         </div>
       </AuthCard>
@@ -267,22 +292,27 @@ export function LinkOpenScreen(
   }
   return (
     <AuthCard
-      title="Finish signing in"
-      description="Continue to sign in on this device. If the address is new, this creates your account."
+      title={t.t(`SignInLinkScreen.finishTitle`)}
+      description={t.t(`SignInLinkScreen.finish`)}
       e2e="sign-in-link-open"
     >
       {signedInAs !== null && (
         <p class="text-sm" data-e2e="sign-in-link-signed-in-as">
-          You are signed in as{" "}
-          <strong class="wrap-anywhere font-medium">{signedInAs}</strong>. Continuing signs you in
-          with the link's account instead.
+          <Rich
+            parts={t.parts(`SignInLinkScreen.signedInAs`, { email: signedInAs })}
+            tags={{
+              email: (text) => (
+                <strong class="wrap-anywhere font-medium" translate={false}>
+                  <bdi>{text}</bdi>
+                </strong>
+              ),
+            }}
+          />
         </p>
       )}
       {guest && (
         <p class="text-sm" data-e2e="sign-in-link-guest">
-          You are using the app as a guest. If you asked for this link in this browser, continuing
-          keeps this guest account under the link's address, or asks you first if that address
-          already has an account.
+          {t.t(`SignInLinkScreen.guest`)}
         </p>
       )}
       <ScreenForm pending={busy} onSubmit={onContinue}>
@@ -290,10 +320,10 @@ export function LinkOpenScreen(
           <Button
             type="submit"
             busy={busy}
-            busyLabel="Signing in…"
+            busyLabel={t.t(`SignInLinkScreen.signingIn`)}
             data-e2e="sign-in-link-continue"
           >
-            Continue
+            {t.t(`AuthScreen.continue`)}
           </Button>
           {signedInAs !== null && (
             <Button
@@ -303,7 +333,7 @@ export function LinkOpenScreen(
               class="w-full"
               data-e2e="sign-in-link-stay"
             >
-              Stay signed in
+              {t.t(`SignInLinkScreen.stay`)}
             </Button>
           )}
         </div>

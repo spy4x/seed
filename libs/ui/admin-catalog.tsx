@@ -43,6 +43,9 @@ export const ADMIN_CATALOG_PATHS = {
   categories: `/catalog/categories`,
   categoryCreate: `/catalog/categories/new`,
   category: (id: string) => `/catalog/categories/${encodeURIComponent(id)}`,
+  sources: `/catalog/sources`,
+  sourceCreate: `/catalog/sources/new`,
+  source: (id: string) => `/catalog/sources/${encodeURIComponent(id)}`,
   /** A photo's narrowest width, served by the API on this host (`img-src 'self'`). */
   thumbnail: (photoId: string) =>
     `/api/admin/catalog/photos/${encodeURIComponent(photoId)}/thumbnail`,
@@ -197,13 +200,22 @@ export function AdminCatalogScreen(props: AdminCatalogScreenProps): JSX.Element 
           />
         }
         menu={
-          <DropdownItem
-            href={ADMIN_CATALOG_PATHS.categories}
-            navigate={navigate}
-            dataE2E="catalog-categories"
-          >
-            {t.t(`AdminCatalog.categories`)}
-          </DropdownItem>
+          <>
+            <DropdownItem
+              href={ADMIN_CATALOG_PATHS.categories}
+              navigate={navigate}
+              dataE2E="catalog-categories"
+            >
+              {t.t(`AdminCatalog.categories`)}
+            </DropdownItem>
+            <DropdownItem
+              href={ADMIN_CATALOG_PATHS.sources}
+              navigate={navigate}
+              dataE2E="catalog-sources"
+            >
+              {t.t(`AdminCatalog.sources`)}
+            </DropdownItem>
+          </>
         }
         menuDataE2E="catalog-menu"
       />

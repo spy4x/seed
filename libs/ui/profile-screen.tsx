@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { IconLockClosed } from "@spy4x/preact-icons"
 import { Avatar } from "@spy4x/preact-ui/avatar"
@@ -46,17 +45,17 @@ import { SignedInDevices, type SignedInDevicesProps } from "./signed-in-devices.
 import { signInMethodName, type SignInMethodsProps } from "./sign-in-methods.tsx"
 import type { TwoFactorProof } from "./two-factor.ts"
 import { useAppText } from "./i18n.ts"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 
-/** The messages shown when an action failed without a message of its own. */
+/** The messages shown when an action failed without one of its own, by their keys in `app`. */
 export const PROFILE_FAILURES = {
-  profile: "Could not save your name. Check your connection and try again.",
-  password: "Could not change your password. Check your connection and try again.",
-  passwordSet: "Could not set your password. Check your connection and try again.",
-  totpFinish: "Could not turn on two-factor sign-in. Check the code in your app and try again.",
-  totpDisable: "Could not turn off two-factor sign-in. Check your connection and try again.",
-  push:
-    "Could not add this device. Allow notifications for this site in your browser, then try again.",
-  pushRemove: "Could not remove this device. Check your connection and try again.",
+  profile: `ProfileScreen.profileFailed`,
+  password: `ProfileScreen.passwordFailed`,
+  passwordSet: `ProfileScreen.passwordSetFailed`,
+  totpFinish: `ProfileScreen.totpFinishFailed`,
+  totpDisable: `ProfileScreen.totpDisableFailed`,
+  push: `ProfileScreen.pushFailed`,
+  pushRemove: `ProfileScreen.pushRemoveFailed`,
 } as const
 
 /** What the user has typed into the profile forms. */
@@ -108,33 +107,21 @@ export interface TotpEnrolment {
   secret: string
 }
 
-/** Each section's name in the navigation, and the line under its heading. */
+/** Each section's name in the navigation, and the line under its heading, by their keys in `app`. */
 export const PROFILE_SECTION_TEXT: Record<
   ProfileSectionId,
   { label: string; description: string }
 > = {
-  account: { label: "Account", description: "Your name, e-mail address and a copy of your data." },
-  security: {
-    label: "Sign-in and security",
-    description: "How you sign in, and where your account is signed in.",
-  },
-  region: {
-    label: "Language and region",
-    description: "Your language, and how dates, times and numbers look.",
-  },
-  appearance: { label: "Appearance", description: "How the app looks on this device." },
+  account: { label: `ProfileScreen.account`, description: `ProfileScreen.accountText` },
+  security: { label: `ProfileScreen.security`, description: `ProfileScreen.securityText` },
+  region: { label: `ProfileScreen.region`, description: `ProfileScreen.regionText` },
+  appearance: { label: `ProfileScreen.appearance`, description: `ProfileScreen.appearanceText` },
   notifications: {
-    label: "Notifications",
-    description: "Where you get a notice when something changes in your groups.",
+    label: `ProfileScreen.notifications`,
+    description: `ProfileScreen.notificationsText`,
   },
-  "api-tokens": {
-    label: "API tokens",
-    description: "Let a script or another service use one of your groups without your password.",
-  },
-  "danger-zone": {
-    label: "Delete account",
-    description: "Delete your account and everything only you can see.",
-  },
+  "api-tokens": { label: `ProfileScreen.apiTokens`, description: `ProfileScreen.apiTokensText` },
+  "danger-zone": { label: `ProfileScreen.dangerZone`, description: `ProfileScreen.dangerZoneText` },
 }
 
 export interface ProfileScreenProps {
@@ -254,12 +241,12 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
     return (
       <EmptyState
         icon={<IconLockClosed class="size-6" />}
-        title="Enter your one-time code"
+        title={t.t(`ProfileScreen.codeTitle`)}
         headingLevel={1}
-        description="Your profile opens once you enter the code from your authenticator app."
+        description={t.t(`ProfileScreen.codeText`)}
         action={
           <Button href={SCREEN_PATHS.oneTimeCode} navigate={navigate}>
-            Enter the code
+            {t.t(`EmailScreen.enterCode`)}
           </Button>
         }
       />
@@ -271,14 +258,16 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
       <div data-e2e="signin-required">
         <EmptyState
           icon={<IconLockClosed class="size-6" />}
-          title="Sign in to see your profile"
+          title={t.t(`ProfileScreen.signInTitle`)}
           headingLevel={1}
-          description="Your name, password and devices are here once you sign in."
+          description={t.t(`ProfileScreen.signInText`)}
           action={
             <Cluster justify="center">
-              <Button href={SCREEN_PATHS.signIn} navigate={navigate}>Sign in</Button>
+              <Button href={SCREEN_PATHS.signIn} navigate={navigate}>
+                {t.t(`PasswordResetScreen.signIn`)}
+              </Button>
               <Button href={SCREEN_PATHS.signUp} navigate={navigate} variant="outline">
-                Create an account
+                {t.t(`ProfileScreen.createAccount`)}
               </Button>
             </Cluster>
           }
@@ -288,19 +277,22 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
   }
 
   const name = `${user.firstName} ${user.lastName}`.trim()
-  const providerOnly = providerOnlyNames(methods?.methods, methods?.emailLink)
+  const providerOnly = providerOnlyNames(t, methods?.methods, methods?.emailLink)
   const providerProof = props.providerProof !== undefined
     ? props.providerProof
     : providerProofOf(methods?.methods, props.providerProofFresh ?? false, methods?.emailLink)
   const twoFactorOn = user.mfa === UserMFAStatus.CONFIGURED
   const sections: SettingsSection[] = PROFILE_SECTIONS.map((id) => ({
     id,
-    ...PROFILE_SECTION_TEXT[id],
+    label: t.t(PROFILE_SECTION_TEXT[id].label),
+    description: t.t(PROFILE_SECTION_TEXT[id].description),
     href: profilePath(id),
     tone: id === "danger-zone" ? "danger" : undefined,
     // A guest has no two-factor to turn on (#224).
     value: id === "security"
-      ? props.guest ? undefined : twoFactorOn ? "Two-factor on" : "Two-factor off"
+      ? props.guest
+        ? undefined
+        : t.t(twoFactorOn ? `ProfileScreen.twoFactorOn` : `ProfileScreen.twoFactorOff`)
       : id === "appearance" && props.preferences
       ? themeName(t, props.preferences.value.theme)
       : undefined,
@@ -308,7 +300,7 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
 
   return (
     <SettingsLayout
-      title="Profile"
+      title={t.t(`ProfileScreen.title`)}
       href={SCREEN_PATHS.profile}
       sections={sections}
       current={section}
@@ -318,8 +310,20 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
         <div class="flex min-w-0 items-center gap-3" data-e2e="profile-intro">
           <Avatar name={name || email?.email} src={props.picture?.src} size="md" alt="" />
           <div class="flex min-w-0 flex-col">
-            <span class="truncate text-sm font-medium text-foreground">{name || "No name"}</span>
-            {email?.email && <span class="truncate text-sm text-muted">{email.email}</span>}
+            {name
+              ? (
+                <span class="truncate text-sm font-medium text-foreground" translate={false}>
+                  {name}
+                </span>
+              )
+              : (
+                <span class="truncate text-sm font-medium text-foreground">
+                  {t.t(`ProfileScreen.noName`)}
+                </span>
+              )}
+            {email?.email && (
+              <span class="truncate text-sm text-muted" translate={false}>{email.email}</span>
+            )}
           </div>
         </div>
       }
@@ -351,6 +355,7 @@ function ProfileSection(
   },
 ): JSX.Element | null {
   const { section, user, values, errors, pending, providerOnly, providerProof } = props
+  const t = useAppText()
   switch (section) {
     case "account":
       return (
@@ -368,6 +373,7 @@ function ProfileSection(
           }}
           email={props.email ?? null}
           providerOnly={providerOnly === null ? null : providerOnlyNames(
+            t,
             props.methods?.methods?.filter((method) => method.kind !== "passkey"),
             props.methods?.emailLink,
           ) ?? ""}
@@ -424,8 +430,8 @@ function ProfileSection(
       return (
         <>
           <SettingGroup
-            title="Push notifications"
-            description="Browsers and phones that show a notice even while the app is closed."
+            title={t.t(`ProfileScreen.push`)}
+            description={t.t(`ProfileScreen.pushText`)}
           >
             <PushDevicesSection
               devices={props.pushDevices}
@@ -461,17 +467,18 @@ function ProfileSection(
  * no linked method signs in with "a sign-in link" when `emailLink` says one reaches it (#391).
  */
 export function providerOnlyNames(
+  t: Translator<string>,
   methods: readonly SignInMethod[] | null | undefined,
   emailLink = false,
 ): string | null {
   if (!methods) return null
-  if (methods.length === 0) return emailLink ? "a sign-in link" : null
+  if (methods.length === 0) return emailLink ? t.t(`ProviderProof.link`) : null
   if (methods.some((method) => method.kind === "password")) return null
   const passkeys = methods.filter((method) => method.kind === "passkey").length
-  return [
+  return new Intl.ListFormat(t.language, { type: `conjunction` }).format([
     ...methods.flatMap((method) =>
-      method.kind === "passkey" ? [] : [signInMethodName(method.kind)]
+      method.kind === "passkey" ? [] : [signInMethodName(t, method.kind)]
     ),
-    ...(passkeys === 0 ? [] : [passkeys === 1 ? "a passkey" : "passkeys"]),
-  ].join(" and ")
+    ...(passkeys === 0 ? [] : [t.t(`ProfileScreen.passkeys`, { count: passkeys })]),
+  ])
 }

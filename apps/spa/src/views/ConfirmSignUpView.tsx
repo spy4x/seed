@@ -4,6 +4,7 @@ import type { PendingSignUp } from "@domain/identity"
 import { AUTH_PATHS } from "@ui/auth-screen.tsx"
 import { CONFIRM_SIGN_UP_FAILURE, ConfirmSignUpScreen } from "@ui/confirm-sign-up-screen.tsx"
 import { afterSignIn, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { useAppText } from "@ui/i18n.ts"
 import { confirmProviderSignUp } from "../state/auth.ts"
 import { cancelSignUp, readPendingSignUp } from "../state/sign-in-methods.ts"
 
@@ -13,6 +14,7 @@ import { cancelSignUp, readPendingSignUp } from "../state/sign-in-methods.ts"
  */
 export function ConfirmSignUpView() {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const [pending, setPending] = useState<PendingSignUp | null | undefined>(undefined)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -42,7 +44,7 @@ export function ConfirmSignUpView() {
     }))
     setBusy(false)
     if (!result.ok) {
-      setError(result.error || CONFIRM_SIGN_UP_FAILURE)
+      setError(result.error || t.t(CONFIRM_SIGN_UP_FAILURE))
       return
     }
     location.href = result.mfaRequired ? AUTH_PATHS["one-time-code"] : afterSignIn(null)

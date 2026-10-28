@@ -8,10 +8,12 @@ import {
   catalogItemCreateSchema,
   catalogPhotoContentType,
   catalogStock,
+  catalogTaggedItemUrl,
   catalogText,
   parseCatalogCurrency,
   parseCatalogItemFields,
   parseCatalogLanguages,
+  parseCatalogSourceFields,
   parseCatalogText,
   recommendSize,
 } from "./+lib.ts"
@@ -247,5 +249,55 @@ describe(`photos`, () => {
   it(`uploads a .heic file without a type as HEIC`, () => {
     expect(catalogPhotoContentType({ name: `IMG_0001.HEIC`, type: `` })).toBe(`image/heic`)
     expect(catalogPhotoContentType({ name: `a.png`, type: `image/png` })).toBe(`image/png`)
+  })
+})
+
+describe(`tracking links`, () => {
+  const SITE = `https://shop.example`
+  const zalo = { itemSlug: `linen-shirt`, categorySlug: `shirts`, sourceSlug: `zalo-a` }
+
+  it(`tags the item's page with the source, share and the item`, () => {
+    expect(catalogTaggedItemUrl(SITE, `/{category}/{slug}`, zalo)).toBe(
+      `https://shop.example/shirts/linen-shirt?utm_source=zalo-a&utm_medium=share&utm_campaign=linen-shirt`,
+    )
+    expect(catalogTaggedItemUrl(SITE, `/items/{slug}`, zalo)).toBe(
+      `https://shop.example/items/linen-shirt?utm_source=zalo-a&utm_medium=share&utm_campaign=linen-shirt`,
+    )
+  })
+
+  it(`folds the empty category of an item without one`, () => {
+    expect(catalogTaggedItemUrl(SITE, `/{category}/{slug}`, { ...zalo, categorySlug: null }))
+      .toMatch(/^https:\/\/shop\.example\/linen-shirt\?/)
+  })
+
+  it(`never builds an address on another site`, () => {
+    for (
+      const path of [
+        `//evil.example/{slug}`,
+        `/\\evil.example/{slug}`,
+        `https://evil.example/{slug}`,
+      ]
+    ) {
+      const url = catalogTaggedItemUrl(SITE, path, zalo)
+      if (url !== null) expect(new URL(url).origin).toBe(SITE)
+    }
+    expect(catalogTaggedItemUrl(SITE, `https://evil.example/{slug}`, zalo)).toBeNull()
+    expect(catalogTaggedItemUrl(SITE, `/\\evil.example/{slug}`, zalo)).toBeNull()
+  })
+
+  it(`checks a source's name and its utm_source`, () => {
+    expect(parseCatalogSourceFields({ name: `  Zalo group A `, slug: ` zalo-a ` }))
+      .toEqual({ name: `Zalo group A`, slug: `zalo-a` })
+    const refusal = (input: { name: string; slug: string }) => {
+      try {
+        parseCatalogSourceFields(input)
+      } catch (error) {
+        return error instanceof CatalogError ? error.field : `not a catalog error`
+      }
+      return null
+    }
+    expect(refusal({ name: ` `, slug: `zalo-a` })).toBe(`name`)
+    expect(refusal({ name: `x`.repeat(61), slug: `zalo-a` })).toBe(`name`)
+    expect(refusal({ name: `Zalo`, slug: `Zalo A` })).toBe(`slug`)
   })
 })

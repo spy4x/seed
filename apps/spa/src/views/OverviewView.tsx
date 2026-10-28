@@ -10,6 +10,7 @@ import { NOTE_WIDGET_IDS } from "@domain/notes"
 import { OVERVIEW_DEFAULT_PRESET, OVERVIEW_PRESETS, OverviewScreen } from "@ui/overview-screen.tsx"
 import { OVERVIEW_VIEWS, OVERVIEW_WIDGETS } from "@ui/overview-widgets.ts"
 import { OVERVIEW_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { useAppText } from "@ui/i18n.ts"
 import { groupsStore } from "../state/groups.ts"
 import { overviewStore } from "../state/overview.ts"
 import { preferencesState } from "../state/preferences.ts"
@@ -24,19 +25,20 @@ export const overviewPageActions = signal<{ openRange(): void; openCustomise(): 
 /** The `data-e2e` of the range picker's button, which `d` presses. */
 const RANGE_E2E = "overview-range"
 
-/** The message under the Customise list when a change did not reach the server. */
-const SAVE_FAILED = "We could not save your layout. Check your connection and try again."
+/** The message under the Customise list when a change did not reach the server, by its key. */
+const SAVE_FAILED = `OverviewView.saveFailed`
 
 /** `/overview`: the selected group's overview, once the selection is known. */
 export function OverviewRedirect() {
   const [, navigate] = useLocation()
   const selected = selectionStore.groupId.value
   const loading = groupsStore.loading.value
+  const t = useAppText()
   useEffect(() => {
     if (selected !== null) navigate(OVERVIEW_PATHS.group(selected), { replace: true })
     else if (!loading) navigate(SCREEN_PATHS.groups, { replace: true })
   }, [selected, loading])
-  return <LoadingSpinner size="lg" label="Opening the overview…" class="min-h-[50vh]" />
+  return <LoadingSpinner size="lg" label={t.t(`OverviewView.opening`)} class="min-h-[50vh]" />
 }
 
 /**
@@ -52,6 +54,7 @@ export function OverviewView({ groupId }: { groupId: string }) {
   const timeZone = format.timeZone
   const [customising, setCustomising] = useState(false)
   const [layoutError, setLayoutError] = useState<string | null>(null)
+  const t = useAppText()
   // One clock per range read: a render a minute later must not move "Last 30 days" under the page.
   const now = useMemo(() => new Date(), [search, timeZone])
   const choice = rangeFromSearch(new URLSearchParams(search), {
@@ -90,7 +93,7 @@ export function OverviewView({ groupId }: { groupId: string }) {
   /** Saves `next` as the layout; a failure stays under the Customise list until the next save. */
   async function saveLayout(next: LayoutEntry[]): Promise<boolean> {
     const outcome = await preferencesState.save({ overview: next })
-    setLayoutError(outcome.ok ? null : SAVE_FAILED)
+    setLayoutError(outcome.ok ? null : t.t(SAVE_FAILED))
     return outcome.ok
   }
 
@@ -100,23 +103,27 @@ export function OverviewView({ groupId }: { groupId: string }) {
       body: title,
       duration: 8000,
       dataE2E: "overview-undo-toast",
-      action: { label: "Undo", dataE2E: "overview-undo", onAction: () => void saveLayout(before) },
+      action: {
+        label: t.t(`OverviewView.undo`),
+        dataE2E: "overview-undo",
+        onAction: () => void saveLayout(before),
+      },
     })
   }
 
   async function hide(id: string): Promise<void> {
-    const title = available.find((widget) => widget.id === id)?.title ?? "Widget"
+    const title = available.find((widget) => widget.id === id)?.title ?? t.t(`OverviewView.widget`)
     const before = layout
     if (await saveLayout(setLayoutHidden(layout, id, true))) {
-      offerUndo(`overview-hidden-${id}`, `${title} hidden.`, before)
+      offerUndo(`overview-hidden-${id}`, t.t(`OverviewView.hidden`, { widget: title }), before)
     } else {
-      toasts.error({ body: SAVE_FAILED, dataE2E: "overview-save-failed" })
+      toasts.error({ body: t.t(SAVE_FAILED), dataE2E: "overview-save-failed" })
     }
   }
 
   async function reset(): Promise<void> {
     const before = layout
-    if (await saveLayout([])) offerUndo("overview-reset", "Default layout restored.", before)
+    if (await saveLayout([])) offerUndo("overview-reset", t.t(`OverviewView.restored`), before)
   }
 
   const loads = overviewStore.loads.value
@@ -161,7 +168,11 @@ export function OverviewView({ groupId }: { groupId: string }) {
       layoutError={layoutError}
       onCopyLink={() =>
         void navigator.clipboard.writeText(globalThis.location.href).then(
-          () => toasts.success({ body: "Link copied", dataE2E: "overview-link-copied" }),
+          () =>
+            toasts.success({
+              body: t.t(`OverviewView.linkCopied`),
+              dataE2E: "overview-link-copied",
+            }),
           () => {},
         )}
       emptyGroup={totalNow === 0 && membership

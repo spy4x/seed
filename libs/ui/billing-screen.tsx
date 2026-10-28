@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { IconArrowUpRight } from "@spy4x/preact-icons"
@@ -11,8 +10,11 @@ import { Notice } from "@spy4x/preact-ui/notice"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { formatMoney } from "@spy4x/platform/universal/money"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useFormat } from "@spy4x/preact-ui/format"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Formatters } from "@spy4x/time/format"
 import {
-  billingDate,
   type BillingNotice,
   BillingNoticeKind,
   BillingStatus,
@@ -21,20 +23,31 @@ import {
   type GroupBilling,
   PAID_PLANS,
   type PersonTrial,
+  PRO_PLAN_ID,
   type SeatPrice,
 } from "@domain/billing"
+import { useAppText } from "./i18n.ts"
 
 /** The paid plan the tab offers. The catalog has one, Pro, billed per member. */
 const PRO = PAID_PLANS[0]
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-function days(count: number): string {
-  return count === 1 ? "1 day" : `${count} days`
+/** The plans' names, by plan id and key in the `app` catalog; another id shows the catalog's name. */
+const PLAN_NAME_KEYS: Record<string, string> = {
+  [FREE_PLAN_ID]: `GroupBillingPanel.planFree`,
+  [PRO_PLAN_ID]: `GroupBillingPanel.planPro`,
 }
 
-function members(count: number): string {
-  return count === 1 ? "1 member" : `${count} members`
+/** A plan's name in the person's language. */
+export function planName(t: Translator<string>, planId: string): string {
+  const key = PLAN_NAME_KEYS[planId]
+  return key ? t.t(key) : findPlan(planId)?.name ?? planId
+}
+
+/** A billing date as the person's format writes it: in UTC, the same on the server and here. */
+function day(format: Formatters, date: Date): string {
+  return format.utc().date(date, `long`)
 }
 
 /**
@@ -42,12 +55,19 @@ function members(count: number): string {
  * dropped to the free plan until they do. The other notices (a trial or a cancelled plan that ends
  * soon) say what the tab's plan text already says, so only this one is drawn.
  */
-export function paymentFailedText(notice: BillingNotice, planName: string): string {
+export function paymentFailedText(
+  t: Translator<string>,
+  format: Formatters,
+  notice: BillingNotice,
+  plan: string,
+): string {
   return notice.daysLeft > 0
-    ? `A payment failed. Update the card with Change card within ${days(notice.daysLeft)}, by ` +
-      `${billingDate(notice.at)}, to keep ${planName}.`
-    : `A payment failed, so the group is on the free plan. Update the card with Change card to ` +
-      `get ${planName} back.`
+    ? t.t(`GroupBillingPanel.paymentFailed`, {
+      count: notice.daysLeft,
+      date: day(format, notice.at),
+      plan,
+    })
+    : t.t(`GroupBillingPanel.paymentFailedFree`, { plan })
 }
 
 /** Which of the tab's states a group's billing is in; `data-state` names it for the tests. */
@@ -90,7 +110,10 @@ export interface GroupBillingPanelProps {
    * tab says the page updates by itself.
    */
   confirming?: boolean
-  /** Why the billing could not be read, or the checkout or the portal could not be opened. */
+  /**
+   * Why the billing could not be read, or the checkout or the portal could not be opened: one of
+   * {@link BILLING_MESSAGES}, or the API's own message.
+   */
   error?: string | null
   /** New on every refusal, so focus moves to the message even when its text repeats. */
   errorId?: number
@@ -104,6 +127,17 @@ export interface GroupBillingPanelProps {
   onPortal?: () => void
 }
 
+/** The messages the billing store sets when the API gave none, by their key in the `app` catalog. */
+export const BILLING_MESSAGES = {
+  offline: `GroupBillingPanel.offline`,
+  unreadable: `GroupBillingPanel.unreadable`,
+  unsafePage: `GroupBillingPanel.unsafePage`,
+  checkoutUnreachable: `GroupBillingPanel.checkoutUnreachable`,
+  portalUnreachable: `GroupBillingPanel.portalUnreachable`,
+} as const
+
+const MESSAGE_KEYS: readonly string[] = Object.values(BILLING_MESSAGES)
+
 /**
  * A group's Plan and billing tab: what the group pays, when, and for the owner the one way to
  * change it. A free group's owner starts the trial or upgrades (the provider's checkout); a paying
@@ -112,7 +146,11 @@ export interface GroupBillingPanelProps {
  * server's: the plan's price times the members.
  */
 export function GroupBillingPanel(props: GroupBillingPanelProps): JSX.Element {
-  const { billing, groupName, error = null, errorId } = props
+  const { billing, groupName, errorId } = props
+  const t = useAppText()
+  const error = props.error && MESSAGE_KEYS.includes(props.error)
+    ? t.t(props.error)
+    : props.error ?? null
   const message = useRef<HTMLDivElement>(null)
   // A refused checkout or portal has no field to fix, so focus lands on the message.
   useEffect(() => {
@@ -120,15 +158,20 @@ export function GroupBillingPanel(props: GroupBillingPanelProps): JSX.Element {
   }, [error, errorId])
   return (
     <SettingGroup
-      title="Plan and billing"
-      description={`What ${groupName} pays each month. Billing is handled by Stripe.`}
+      title={t.t(`GroupBillingPanel.title`)}
+      description={
+        <Rich
+          parts={t.parts(`GroupBillingPanel.description`, { group: groupName })}
+          tags={{ group: (text) => <bdi translate={false}>{text}</bdi> }}
+        />
+      }
       dataE2E="group-section-billing"
     >
       {billing === null
         ? (error
           ? <ErrorState message={error} />
           : (
-            <div role="status" aria-label="Loading the plan">
+            <div role="status" aria-label={t.t(`GroupBillingPanel.loading`)}>
               <LoadingSkeleton rows={2} />
             </div>
           ))
@@ -139,7 +182,7 @@ export function GroupBillingPanel(props: GroupBillingPanelProps): JSX.Element {
             data-plan={billing.planId}
             data-state={billingState(billing)}
           >
-            <PlanSummary {...props} billing={billing} />
+            <PlanSummary {...props} error={error} billing={billing} />
             {billing.canManage && <PortalRows {...props} billing={billing} />}
             <div ref={message} tabIndex={-1} data-e2e="billing-error">
               <ErrorState message={billing ? error : null} />
@@ -156,34 +199,50 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
   const { pending = false, now = new Date(), onCheckout, onPortal } = props
   const state = billingState(billing)
   const owner = billing.canManage
-  const name = findPlan(billing.planId)?.name ?? billing.planId
-  const money = (amount: number) => formatMoney(amount, PRO.currency)
+  const t = useAppText()
+  const format = useFormat()
+  const name = planName(t, billing.planId)
+  const pro = planName(t, PRO.id)
+  const money = (amount: number) => formatMoney(amount, PRO.currency, format.locale)
   const seats = billing.seatPrice
-  const total = seats && formatMoney(seats.amount * seats.seats, seats.currency)
-  const periodEnd = billing.currentPeriodEnd && billingDate(billing.currentPeriodEnd)
+  const total = seats && formatMoney(seats.amount * seats.seats, seats.currency, format.locale)
+  const periodEnd = billing.currentPeriodEnd && day(format, billing.currentPeriodEnd)
+  /** The group's name inside a sentence: the person's data, isolated and never translated. */
+  const group = (key: string, values: Record<string, string | number>) => (
+    <Rich
+      parts={t.parts(key, { ...values, group: groupName })}
+      tags={{ group: (text) => <bdi translate={false}>{text}</bdi> }}
+    />
+  )
+  const opensStripe = <span class="sr-only">{t.t(`GroupBillingPanel.opensStripe`)}</span>
 
   // The renewal date and a failed payment are the owner's business, as the payment notice is.
   const status = !owner
     ? null
     : state === BillingState.TRIAL
-    ? "Trial"
+    ? t.t(`GroupBillingPanel.statusTrial`)
     : state === BillingState.PRO && periodEnd
-    ? `Renews on ${periodEnd}`
+    ? t.t(`GroupBillingPanel.statusRenews`, { date: periodEnd })
     : state === BillingState.ENDING && periodEnd
-    ? `Ends on ${periodEnd}`
+    ? t.t(`GroupBillingPanel.statusEnds`, { date: periodEnd })
     : state === BillingState.PAST_DUE
-    ? "Payment failed"
+    ? t.t(`GroupBillingPanel.statusPaymentFailed`)
     : null
 
   let body: ComponentChildren = null
   let action: ComponentChildren = null
   let fine: ComponentChildren = null
   if (state === BillingState.OFF) {
-    body = <p data-e2e="billing-off">Every group is on the free plan.</p>
+    body = <p data-e2e="billing-off">{t.t(`GroupBillingPanel.off`)}</p>
   } else if (!owner) {
     body = (
       <p data-e2e="billing-owner-only">
-        Only {ownerName ?? "the owner"}, the group's owner, can change its plan or see invoices.
+        {ownerName === null ? t.t(`GroupBillingPanel.ownerOnlyUnknown`) : (
+          <Rich
+            parts={t.parts(`GroupBillingPanel.ownerOnly`, { name: ownerName })}
+            tags={{ name: (text) => <bdi translate={false}>{text}</bdi> }}
+          />
+        )}
       </p>
     )
   } else if (state === BillingState.FREE) {
@@ -193,11 +252,16 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
     const withTrial = PRO.trialDays > 0 && !trialUsed && !billing.hasCustomer
     body = (
       <p>
-        {PRO.name} costs {money(PRO.amount)} per member a month.
-        {memberCount !== null &&
-          ` With ${members(memberCount)}, ${groupName} would pay ${
-            money(PRO.amount * memberCount)
-          } a month.`}
+        {t.t(`GroupBillingPanel.price`, { plan: pro, price: money(PRO.amount) })}
+        {memberCount !== null && (
+          <>
+            {" "}
+            {group(`GroupBillingPanel.priceForGroup`, {
+              count: memberCount,
+              total: money(PRO.amount * memberCount),
+            })}
+          </>
+        )}
       </p>
     )
     // Back from the checkout, the payment is on its way: a second checkout could be paid twice.
@@ -205,24 +269,25 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
       <Button
         class="min-h-11 w-full sm:min-h-9 sm:w-auto"
         busy={pending}
-        busyLabel="Opening Stripe…"
+        busyLabel={t.t(`GroupBillingPanel.opening`)}
         data-e2e="billing-checkout"
         onClick={() => {
           if (!pending) onCheckout?.(PRO.id)
         }}
       >
-        {withTrial ? `Start ${PRO.trialDays}-day free trial` : `Upgrade to ${PRO.name}`}{" "}
-        <span class="sr-only">(opens Stripe)</span>
+        {withTrial
+          ? t.t(`GroupBillingPanel.startTrial`, { count: PRO.trialDays })
+          : t.t(`GroupBillingPanel.upgrade`, { plan: pro })} {opensStripe}
       </Button>
     )
     fine = !billing.subscribed && !confirming && (
       <>
         {trialUsed && (
           <span class="block" data-e2e="billing-trial-used">
-            You have used your free trial on another group.
+            {t.t(`GroupBillingPanel.trialUsed`)}
           </span>
         )}
-        Billed monthly per member. Cancel any time; you keep {PRO.name} until the period ends.
+        {t.t(`GroupBillingPanel.finePrint`, { plan: pro })}
       </>
     )
   } else if (state === BillingState.TRIAL) {
@@ -230,35 +295,40 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
     const left = end ? Math.max(0, Math.ceil((end.getTime() - now.getTime()) / DAY_MS)) : null
     body = (
       <p data-e2e="billing-trial">
-        {end && left !== null && `The trial ends in ${days(left)}, on ${billingDate(end)}. `}
-        {total ? `Then ${groupName} pays ${total} a month unless you cancel.` : null}
+        {end && left !== null &&
+          `${t.t(`GroupBillingPanel.trialEnds`, { count: left, date: day(format, end) })} `}
+        {total ? group(`GroupBillingPanel.trialThen`, { total }) : null}
       </p>
     )
   } else if (state === BillingState.PRO) {
     body = seats && (
       <p data-e2e="billing-seats">
-        {total} a month, for {members(seats.seats)} at {money(seats.amount)}{" "}
-        each, the owner included.
+        {t.t(`GroupBillingPanel.seats`, {
+          total: total ?? ``,
+          count: seats.seats,
+          price: money(seats.amount),
+        })}
       </p>
     )
   } else if (state === BillingState.ENDING) {
     body = (
       <p data-e2e="billing-ending">
-        {name} ends on{" "}
-        {periodEnd ?? "the end of the period"}. The group then moves to the free plan.
+        {periodEnd
+          ? t.t(`GroupBillingPanel.ending`, { plan: name, date: periodEnd })
+          : t.t(`GroupBillingPanel.endingNoDate`, { plan: name })}
       </p>
     )
     action = (
       <Button
         class="min-h-11 w-full sm:min-h-9 sm:w-auto"
         busy={pending}
-        busyLabel="Opening Stripe…"
+        busyLabel={t.t(`GroupBillingPanel.opening`)}
         data-e2e="billing-renew"
         onClick={() => {
           if (!pending) onPortal?.()
         }}
       >
-        Renew {name} <span class="sr-only">(opens Stripe)</span>
+        {t.t(`GroupBillingPanel.renew`, { plan: name })} {opensStripe}
       </Button>
     )
   } else if (
@@ -266,7 +336,7 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
   ) {
     body = (
       <Notice tone="warning" data-e2e="billing-notice" data-kind={billing.notice.kind}>
-        {paymentFailedText(billing.notice, PRO.name)}
+        {paymentFailedText(t, format, billing.notice, pro)}
       </Notice>
     )
   }
@@ -275,7 +345,10 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
     <Card>
       <div class="flex flex-col gap-3 px-4 py-4 sm:px-6">
         <h3 class="text-base font-medium text-foreground">
-          <span data-e2e="billing-plan-name">{name}</span> plan{" "}
+          <Rich
+            parts={t.parts(`GroupBillingPanel.planHeading`, { plan: name })}
+            tags={{ plan: (text) => <span data-e2e="billing-plan-name">{text}</span> }}
+          />{" "}
           {status && (
             <span class="font-normal text-muted" data-e2e="billing-status">· {status}</span>
           )}
@@ -283,7 +356,7 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
         {body && <div class="text-sm text-muted">{body}</div>}
         {confirming && state === BillingState.FREE && (
           <p role="status" class="text-sm text-muted" data-e2e="billing-confirming">
-            Stripe is confirming your plan. This page updates by itself.
+            {t.t(`GroupBillingPanel.confirming`)}
           </p>
         )}
         {action && <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">{action}</div>}
@@ -304,6 +377,9 @@ function PortalRows(props: GroupBillingPanelProps & { billing: GroupBilling }): 
   const { billing, pending = false, onPortal } = props
   if (!billing.subscribed && !billing.hasCustomer) return null
   const state = billingState(billing)
+  const t = useAppText()
+  const format = useFormat()
+  const pro = planName(t, PRO.id)
   const trialEnd = billing.trialEnd ?? billing.currentPeriodEnd
   const portal = (label: string, dataE2E: string) => (
     <Button
@@ -316,7 +392,7 @@ function PortalRows(props: GroupBillingPanelProps & { billing: GroupBilling }): 
         if (!pending) onPortal?.()
       }}
     >
-      {label} <span class="sr-only">(opens Stripe)</span>
+      {label} <span class="sr-only">{t.t(`GroupBillingPanel.opensStripe`)}</span>
       <IconArrowUpRight class="size-4" aria-hidden="true" />
     </Button>
   )
@@ -324,25 +400,25 @@ function PortalRows(props: GroupBillingPanelProps & { billing: GroupBilling }): 
     <SettingList>
       {billing.subscribed && (
         <SettingRow
-          label="Payment method"
-          value="The card Stripe charges each month."
-          action={portal("Change card", "billing-portal-card")}
+          label={t.t(`GroupBillingPanel.paymentMethod`)}
+          value={t.t(`GroupBillingPanel.paymentMethodText`)}
+          action={portal(t.t(`GroupBillingPanel.changeCard`), "billing-portal-card")}
           dataE2E="billing-row-card"
         />
       )}
       <SettingRow
-        label="Invoices"
-        value="Every invoice and receipt, to read or download."
-        action={portal("View invoices", "billing-portal-invoices")}
+        label={t.t(`GroupBillingPanel.invoices`)}
+        value={t.t(`GroupBillingPanel.invoicesText`)}
+        action={portal(t.t(`GroupBillingPanel.viewInvoices`), "billing-portal-invoices")}
         dataE2E="billing-row-invoices"
       />
       {(state === BillingState.TRIAL || state === BillingState.PRO) && (
         <SettingRow
-          label={`Cancel ${PRO.name}`}
+          label={t.t(`GroupBillingPanel.cancelTitle`, { plan: pro })}
           value={state === BillingState.TRIAL && trialEnd
-            ? `Nothing is charged if you cancel before ${billingDate(trialEnd)}.`
-            : `You keep ${PRO.name} until the period ends.`}
-          action={portal("Cancel plan", "billing-portal-cancel")}
+            ? t.t(`GroupBillingPanel.cancelFree`, { date: day(format, trialEnd) })
+            : t.t(`GroupBillingPanel.cancelKeep`, { plan: pro })}
+          action={portal(t.t(`GroupBillingPanel.cancelPlan`), "billing-portal-cancel")}
           dataE2E="billing-row-cancel"
         />
       )}
@@ -374,15 +450,19 @@ export function SeatPriceConfirm(
     if (error) box.current?.focus()
   }, [error])
   const { seats, amount, currency } = seatPrice
-  const money = (value: number) => formatMoney(value, currency)
+  const t = useAppText()
+  const format = useFormat()
+  const money = (value: number) => formatMoney(value, currency, format.locale)
   return (
     <div data-e2e="seat-price">
       <Field
         id="invitation-seat-price"
         error={error}
-        hint={`Each person who joins adds ${money(amount)} a month: with one more member the ` +
-          `group pays ${money(amount * (seats + 1))} instead of ${money(amount * seats)}. ` +
-          `The provider bills the difference for the rest of this period on the next invoice.`}
+        hint={t.t(`SeatPriceConfirm.hint`, {
+          price: money(amount),
+          next: money(amount * (seats + 1)),
+          now: money(amount * seats),
+        })}
       >
         <Checkbox
           ref={box}
@@ -392,7 +472,7 @@ export function SeatPriceConfirm(
           checked={checked}
           onChange={(e) => onChange?.(e.currentTarget.checked)}
         >
-          I accept the higher price for each person who joins
+          {t.t(`SeatPriceConfirm.accept`)}
         </Checkbox>
       </Field>
     </div>

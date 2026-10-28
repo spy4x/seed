@@ -123,6 +123,11 @@ const ACTIVITY_LABELS: Record<string, string> = {
   [CATALOG_AUDIT_KINDS.categoryUpdated]: `AdminAuditEvent.catalogCategoryUpdated`,
   [CATALOG_AUDIT_KINDS.categoryDeleted]: `AdminAuditEvent.catalogCategoryDeleted`,
   [CATALOG_AUDIT_KINDS.categoriesReordered]: `AdminAuditEvent.catalogCategoriesReordered`,
+  [CATALOG_AUDIT_KINDS.sourceCreated]: `AdminAuditEvent.catalogSourceCreated`,
+  [CATALOG_AUDIT_KINDS.sourceUpdated]: `AdminAuditEvent.catalogSourceUpdated`,
+  [CATALOG_AUDIT_KINDS.sourceDeleted]: `AdminAuditEvent.catalogSourceDeleted`,
+  [CATALOG_AUDIT_KINDS.sourcesReordered]: `AdminAuditEvent.catalogSourcesReordered`,
+  [CATALOG_AUDIT_KINDS.linkCreated]: `AdminAuditEvent.catalogLinkCreated`,
 }
 
 /**

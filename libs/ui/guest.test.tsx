@@ -4,6 +4,8 @@
  * `/keep/taken`, the sign-out question, the refusal of a limited action, the Profile's delete and
  * the first steps for a guest. What each shows, what the app receives and where focus goes.
  */
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import appEn from "@i18n/app/en.json" with { type: "json" }
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
@@ -25,6 +27,10 @@ import {
 } from "./guest-screens.tsx"
 import { GuestAccountDelete, GuestRefusalDialog } from "./guest-profile.tsx"
 import { onboardingSteps } from "./onboarding-card.tsx"
+import { ENGLISH } from "./i18n-testing.ts"
+
+/** The product's English, as a screen without a provider reads it. */
+const EN = createTranslator({ language: "en", catalogs: [{ source: appEn }] })
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -318,7 +324,7 @@ describe("GuestBanner", () => {
 
 describe("demoWipeLine", () => {
   it("keeps the wipe time on one line", () => {
-    expect(demoWipeLine("2:00 PM")).toContain("at 2:00\u00a0PM,")
+    expect(demoWipeLine(EN, "2:00 PM")).toContain("at 2:00\u00a0PM,")
   })
 })
 
@@ -374,11 +380,11 @@ describe("onboardingSteps for a guest", () => {
   }
 
   it("puts Keep your account first and leaves out the steps a guest is refused", () => {
-    expect(onboardingSteps(steps, null, undefined, true).map((step) => step.id)).toEqual([
+    expect(onboardingSteps(ENGLISH, steps, null, undefined, true).map((step) => step.id)).toEqual([
       "keep",
       "note",
     ])
-    expect(onboardingSteps(steps, null).map((step) => step.id)).toEqual([
+    expect(onboardingSteps(ENGLISH, steps, null).map((step) => step.id)).toEqual([
       "email",
       "note",
       "invite",
