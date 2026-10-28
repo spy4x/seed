@@ -1,5 +1,4 @@
-// deno-lint-ignore-file ui-text/no-literal
-import type { JSX } from "preact"
+import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
@@ -12,8 +11,11 @@ import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { Rich } from "@spy4x/preact-ui/i18n"
 import { type GuestSwitchState, OAUTH_PROVIDER_NAMES, type OAuthProviderId } from "@domain/identity"
 import { AuthCard } from "./auth-screen.tsx"
+import { useAppText } from "./i18n.ts"
 import { type Navigate, SCREEN_PATHS, ScreenForm, withNext } from "./progressive.tsx"
 import { FORM_WIDTH, useWaited } from "./tag-editor-screen.tsx"
 
@@ -27,22 +29,11 @@ export const GUEST_PATHS = {
   keepTaken: "/keep/taken",
 } as const
 
-/** The one name of the action, on every button, link, banner and reminder. */
+/**
+ * The one name of the action, in English, for the onboarding card's step (another #275 lane moves
+ * that card into the catalog). This file's screens show `GuestScreens.keep`, the same words.
+ */
 export const KEEP_LABEL = "Keep your account"
-
-/** The line under "Try it now", wherever it is offered. */
-export const TRY_LINE = "No account needed. Add a sign-in method later to keep your work."
-
-/** The line under the guest entry on the sign-in page, so nobody mistakes it for their account. */
-export const TRY_FROM_SIGN_IN_LINE =
-  "This opens a new, empty account in this browser. It does not sign you in to an existing one."
-
-/** The same line on the public demo, where a new account starts with sample data. */
-export const TRY_FROM_SIGN_IN_DEMO_LINE =
-  "This opens a new account with sample data. It does not sign you in to an existing one."
-
-/** The line under "Try it now" on sign-up: by going on, the person agrees to the legal pages. */
-export const TRY_TERMS_LINE = "By continuing you agree to the terms and privacy notice."
 
 /** What `/try` shows while and after it starts a guest account. */
 export type TryState =
@@ -69,6 +60,7 @@ export interface TryScreenProps {
  */
 export function TryScreen({ state, onRetry, navigate }: TryScreenProps): JSX.Element | null {
   const waited = useWaited(state.kind === "working")
+  const t = useAppText()
   const signUp = (variant: "primary" | "ghost") => (
     <Button
       href={SCREEN_PATHS.signUp}
@@ -77,24 +69,24 @@ export function TryScreen({ state, onRetry, navigate }: TryScreenProps): JSX.Ele
       class="w-full"
       data-e2e="try-sign-up"
     >
-      {variant === "primary" ? "Create an account" : "Create an account instead"}
+      {t.t(variant === "primary" ? `GuestScreens.createAccount` : `GuestScreens.createInstead`)}
     </Button>
   )
   switch (state.kind) {
     case "working":
       if (!waited) return null
       return (
-        <AuthCard title="Try the app" e2e="try-working">
+        <AuthCard title={t.t(`GuestScreens.tryTitle`)} e2e="try-working">
           <p role="status" class="flex items-center gap-3 text-sm">
             <LoadingSpinner size="sm" />
-            Opening the app…
+            {t.t(`GuestScreens.opening`)}
           </p>
         </AuthCard>
       )
     case "rate-limited":
       return (
         <AuthCard
-          title="Too many new accounts from your network"
+          title={t.t(`GuestScreens.rateLimited`)}
           description={state.message}
           e2e="try-rate-limited"
         >
@@ -104,13 +96,13 @@ export function TryScreen({ state, onRetry, navigate }: TryScreenProps): JSX.Ele
     case "failed":
       return (
         <AuthCard
-          title="The app could not be opened"
-          description="Check your connection and try again."
+          title={t.t(`GuestScreens.failed`)}
+          description={t.t(`GuestScreens.failedText`)}
           e2e="try-failed"
         >
           <Stack gap="sm">
             <Button type="button" class="w-full" onClick={onRetry} data-e2e="try-again">
-              Try again
+              {t.t(`GuestScreens.tryAgain`)}
             </Button>
             {signUp("ghost")}
           </Stack>
@@ -119,20 +111,20 @@ export function TryScreen({ state, onRetry, navigate }: TryScreenProps): JSX.Ele
     case "signed-in":
       return (
         <AuthCard
-          title="You are already signed in"
-          description="Your account is open in this browser. Sign out first to try the app as a guest."
+          title={t.t(`GuestScreens.signedIn`)}
+          description={t.t(`GuestScreens.signedInText`)}
           e2e="try-signed-in"
         >
           <Button href={SCREEN_PATHS.profile} navigate={navigate} class="w-full">
-            Open the app
+            {t.t(`GuestScreens.openApp`)}
           </Button>
         </AuthCard>
       )
     case "off":
       return (
         <AuthCard
-          title="Create an account to start"
-          description="Trying the app without an account is turned off here."
+          title={t.t(`GuestScreens.off`)}
+          description={t.t(`GuestScreens.offText`)}
           e2e="try-off"
         >
           {signUp("primary")}
@@ -157,15 +149,29 @@ export interface TryLegalLinks {
 
 /** The line under "Try it now", with the legal pages as links when the website is known. */
 function TryTermsLine({ legal }: { legal: TryLegalLinks | null }): JSX.Element {
-  if (!legal) return <p class="text-xs text-muted">{TRY_TERMS_LINE}</p>
+  const t = useAppText()
+  if (!legal) {
+    return (
+      <p class="text-xs text-muted">
+        <Rich parts={t.parts(`GuestScreens.terms`)} tags={{ terms: plain, privacy: plain }} />
+      </p>
+    )
+  }
+  const link = (href: string) => (text: string) => (
+    <a href={href} class="underline hover:text-foreground">{text}</a>
+  )
   return (
     <p class="text-xs text-muted" data-e2e="try-terms">
-      By continuing you agree to the{" "}
-      <a href={legal.terms} class="underline hover:text-foreground">terms</a> and{" "}
-      <a href={legal.privacy} class="underline hover:text-foreground">privacy notice</a>.
+      <Rich
+        parts={t.parts(`GuestScreens.terms`)}
+        tags={{ terms: link(legal.terms), privacy: link(legal.privacy) }}
+      />
     </p>
   )
 }
+
+/** A tag's text with nothing around it. */
+const plain = (text: string) => text
 
 /** The "Try it now" block at the top of the sign-up card: the page's one accent button. */
 export function TryItNow(
@@ -175,12 +181,13 @@ export function TryItNow(
     legal?: TryLegalLinks | null
   },
 ): JSX.Element {
+  const t = useAppText()
   return (
     <div class="flex flex-col gap-2" data-e2e="try-it-now">
       <Button href={withNext(GUEST_PATHS.try, next)} navigate={navigate} class="w-full">
-        Try it now
+        {t.t(`GuestScreens.tryNow`)}
       </Button>
-      <p class="text-sm text-muted">{TRY_LINE}</p>
+      <p class="text-sm text-muted">{t.t(`GuestScreens.tryLine`)}</p>
       <TryTermsLine legal={legal} />
     </div>
   )
@@ -205,13 +212,14 @@ export function WordDivider({ children }: { children: string }): JSX.Element {
 export function NoAccountYet(
   { demo, navigate, next = null }: { demo: boolean; navigate?: Navigate; next?: string | null },
 ): JSX.Element {
+  const t = useAppText()
   return (
     <section
       class="flex flex-col items-center gap-2 border-t border-subtle pt-6 text-center"
       aria-labelledby="no-account-yet"
       data-e2e="no-account-yet"
     >
-      <p id="no-account-yet" class="text-sm font-medium">No account yet?</p>
+      <p id="no-account-yet" class="text-sm font-medium">{t.t(`GuestScreens.noAccount`)}</p>
       <Button
         href={withNext(GUEST_PATHS.try, next)}
         navigate={navigate}
@@ -219,23 +227,20 @@ export function NoAccountYet(
         class="w-full"
         data-e2e="try-from-sign-in"
       >
-        Try it without an account
+        {t.t(`GuestScreens.tryWithout`)}
       </Button>
-      <p class="text-sm text-muted">{demo ? TRY_FROM_SIGN_IN_DEMO_LINE : TRY_FROM_SIGN_IN_LINE}</p>
+      <p class="text-sm text-muted">
+        {t.t(demo ? `GuestScreens.tryFromSignInDemo` : `GuestScreens.tryFromSignIn`)}
+      </p>
     </section>
   )
 }
 
 /** The sentence a demo guest reads in the banner: when the wipe comes, in their own time. */
-export function demoWipeLine(wipeTime: string): string {
+export function demoWipeLine(t: Translator<string>, wipeTime: string): string {
   // A no-break space keeps "2:00 PM" on one line.
-  const time = wipeTime.replace(/\s/g, "\u00a0")
-  return `This is a guest account on a public demo. Everything here is wiped every night at ${time}, with or without a sign-in method. Add one to see how keeping an account works.`
+  return t.t(`GuestScreens.demoWipe`, { time: wipeTime.replace(/\s/g, "\u00a0") })
 }
-
-/** The banner's sentence for a guest account outside the demo. */
-export const GUEST_BANNER_TEXT =
-  "This account lives only in this browser. If this browser's data is cleared, the account is gone. Add a sign-in method to keep it."
 
 /**
  * The guest banner (#224), in the frame's banner slot: what a guest account is, and the way to
@@ -250,6 +255,7 @@ export function GuestBanner(
   },
 ): JSX.Element {
   const format = useFormat()
+  const t = useAppText()
   const box = useRef<HTMLDivElement>(null)
   const dismiss = () => {
     const page = box.current?.ownerDocument
@@ -263,7 +269,7 @@ export function GuestBanner(
         live={false}
         data-e2e="guest-banner"
         onDismiss={dismiss}
-        dismissLabel="Hide this message"
+        dismissLabel={t.t(`GuestScreens.hide`)}
         action={
           <Button
             href={GUEST_PATHS.keep}
@@ -272,11 +278,11 @@ export function GuestBanner(
             size="sm"
             data-e2e="guest-banner-keep"
           >
-            {KEEP_LABEL}
+            {t.t(`GuestScreens.keep`)}
           </Button>
         }
       >
-        {wipeAt ? demoWipeLine(format.time(wipeAt)) : GUEST_BANNER_TEXT}
+        {wipeAt ? demoWipeLine(t, format.time(wipeAt)) : t.t(`GuestScreens.banner`)}
       </Notice>
     </div>
   )
@@ -285,11 +291,11 @@ export function GuestBanner(
 /** A way to keep the account, as `KeepScreen` names it while it runs. */
 export type KeepMethod = OAuthProviderId | "passkey" | "email"
 
-/** What each method is called in "You can now sign in with …". */
-const KEPT_WITH: Record<KeepMethod, string> = {
-  ...OAUTH_PROVIDER_NAMES,
-  passkey: "a passkey",
-  email: "your e-mail address",
+/** "You can now sign in with …", for each method. */
+function keptLine(t: Translator<string>, method: KeepMethod): string {
+  if (method === "passkey") return t.t(`GuestScreens.keptPasskey`)
+  if (method === "email") return t.t(`GuestScreens.keptEmail`)
+  return t.t(`GuestScreens.keptProvider`, { provider: OAUTH_PROVIDER_NAMES[method] })
 }
 
 export interface KeepScreenProps {
@@ -323,6 +329,7 @@ export interface KeepScreenProps {
  */
 export function KeepScreen(props: KeepScreenProps): JSX.Element {
   const { isGuest, providers, passkeys, busy, error, kept, navigate } = props
+  const t = useAppText()
   const status = useRef<HTMLDivElement>(null)
   const failure = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -335,16 +342,13 @@ export function KeepScreen(props: KeepScreenProps): JSX.Element {
   if (kept) {
     return (
       <Stack gap="xl">
-        <PageHeader title="Sign-in method added" titleDataE2E="keep-title" />
+        <PageHeader title={t.t(`GuestScreens.added`)} titleDataE2E="keep-title" />
         <div ref={status} tabIndex={-1} role="status" class={FORM_WIDTH} data-e2e="keep-done">
           <Stack gap="lg">
-            <p>
-              You can now sign in with {KEPT_WITH[kept]}{" "}
-              on any device. Nothing in your account changed.
-            </p>
+            <p>{keptLine(t, kept)}</p>
             <Cluster>
               <Button type="button" onClick={props.onDone} data-e2e="keep-done-button">
-                Done
+                {t.t(`GuestScreens.done`)}
               </Button>
             </Cluster>
           </Stack>
@@ -355,12 +359,12 @@ export function KeepScreen(props: KeepScreenProps): JSX.Element {
   if (!isGuest) {
     return (
       <Stack gap="xl">
-        <PageHeader title="Your account is kept" titleDataE2E="keep-title" />
+        <PageHeader title={t.t(`GuestScreens.isKept`)} titleDataE2E="keep-title" />
         <Stack gap="lg" class={FORM_WIDTH}>
-          <p>It has a sign-in method, so it opens on any device.</p>
+          <p>{t.t(`GuestScreens.isKeptText`)}</p>
           <Cluster>
             <Button href={SCREEN_PATHS.profile} navigate={navigate} variant="outline">
-              Open your profile
+              {t.t(`AuthScreen.openProfile`)}
             </Button>
           </Cluster>
         </Stack>
@@ -371,14 +375,11 @@ export function KeepScreen(props: KeepScreenProps): JSX.Element {
   return (
     <Stack gap="xl">
       <Stack gap="sm">
-        <PageHeader title={KEEP_LABEL} titleDataE2E="keep-title" />
-        <p class="text-sm text-muted">
-          Add a way to sign in, and you can open this account on any device. Your notes and groups
-          stay as they are.
-        </p>
+        <PageHeader title={t.t(`GuestScreens.keep`)} titleDataE2E="keep-title" />
+        <p class="text-sm text-muted">{t.t(`GuestScreens.keepText`)}</p>
       </Stack>
       <Stack gap="lg" class={FORM_WIDTH}>
-        <ul class="flex flex-col gap-3" aria-label="Ways to sign in">
+        <ul class="flex flex-col gap-3" aria-label={t.t(`GuestScreens.ways`)}>
           {providers.map((provider) => (
             <li key={provider}>
               <Button
@@ -386,12 +387,14 @@ export function KeepScreen(props: KeepScreenProps): JSX.Element {
                 variant="secondary"
                 class="w-full"
                 busy={busy === provider}
-                busyLabel={`Opening ${OAUTH_PROVIDER_NAMES[provider]}…`}
+                busyLabel={t.t(`GuestScreens.openingProvider`, {
+                  provider: OAUTH_PROVIDER_NAMES[provider],
+                })}
                 disabled={waiting}
                 onClick={() => props.onProvider(provider)}
                 data-e2e={`keep-${provider}`}
               >
-                Continue with {OAUTH_PROVIDER_NAMES[provider]}
+                {t.t(`AuthScreen.continueWith`, { provider: OAUTH_PROVIDER_NAMES[provider] })}
               </Button>
             </li>
           ))}
@@ -402,18 +405,18 @@ export function KeepScreen(props: KeepScreenProps): JSX.Element {
                 variant="secondary"
                 class="w-full"
                 busy={busy === "passkey"}
-                busyLabel="Waiting for your device…"
+                busyLabel={t.t(`AuthScreen.waitingDevice`)}
                 disabled={waiting}
                 onClick={props.onPasskey}
                 data-e2e="keep-passkey"
               >
-                Add a passkey
+                {t.t(`GuestScreens.addPasskey`)}
               </Button>
             </li>
           )}
         </ul>
         {(providers.length > 0 || passkeys) && (
-          <WordDivider>or use an e-mail address and password</WordDivider>
+          <WordDivider>{t.t(`GuestScreens.orEmail`)}</WordDivider>
         )}
         <EmailForm {...props} />
         {error && (
@@ -430,6 +433,7 @@ export function KeepScreen(props: KeepScreenProps): JSX.Element {
 function EmailForm(
   { busy, fieldErrors = {}, onEmail }: Pick<KeepScreenProps, "busy" | "fieldErrors" | "onEmail">,
 ): JSX.Element {
+  const t = useAppText()
   return (
     <ScreenForm
       pending={busy !== null}
@@ -437,7 +441,7 @@ function EmailForm(
         onEmail(String(data.get("email") ?? ""), String(data.get("password") ?? ""))}
     >
       <Stack gap="md">
-        <Field id="keep-email" label="E-mail address" error={fieldErrors.email} required>
+        <Field id="keep-email" label={t.t(`GuestScreens.email`)} error={fieldErrors.email} required>
           <Input
             name="email"
             type="email"
@@ -448,8 +452,8 @@ function EmailForm(
         </Field>
         <Field
           id="keep-password"
-          label="Password"
-          hint="At least 8 characters."
+          label={t.t(`SignInMethods.password`)}
+          hint={t.t(`GuestScreens.passwordHint`, { count: 8 })}
           error={fieldErrors.password}
           required
         >
@@ -466,10 +470,10 @@ function EmailForm(
           <Button
             type="submit"
             busy={busy === "email"}
-            busyLabel="Saving…"
+            busyLabel={t.t(`GuestScreens.saving`)}
             data-e2e="keep-email-submit"
           >
-            {KEEP_LABEL}
+            {t.t(`GuestScreens.keep`)}
           </Button>
         </Cluster>
       </Stack>
@@ -494,29 +498,40 @@ export interface GuestTakenScreenProps {
   navigate?: Navigate
 }
 
+/** A user's address or name inside a sentence: kept apart from the text, never translated. */
+const address = (text: string) => <bdi translate={false}>{text}</bdi>
+
 /**
  * "Google", "GitHub", a passkey, or the address, as the first line names the other account. It is
  * a sentence under the title, not the title: a page title stays on one line and truncates.
  */
-function takenWho(state: GuestSwitchState): string {
+function TakenWho({ state }: { state: GuestSwitchState }): JSX.Element {
+  const t = useAppText()
   const provider = state.method in OAUTH_PROVIDER_NAMES
     ? OAUTH_PROVIDER_NAMES[state.method as OAuthProviderId]
     : null
-  if (provider) return `${provider} is already linked to another account`
-  return `${state.maskedEmail ?? "That address"} already has an account`
+  if (provider) return <>{t.t(`GuestScreens.takenProvider`, { provider })}</>
+  if (!state.maskedEmail) return <>{t.t(`GuestScreens.takenAddress`)}</>
+  return (
+    <Rich
+      parts={t.parts(`GuestScreens.takenEmail`, { email: state.maskedEmail })}
+      tags={{ email: address }}
+    />
+  )
 }
 
 /** How the move option names what moves: the one group by name, or how many. */
-function moveHint(state: GuestSwitchState): string {
-  const what = state.groups.length === 1
-    ? `move "${state.groups[0].name}" into it`
-    : `move ${state.groups.length} groups from this guest account into it`
-  return `Sign in to that account and ${what}. The guest account is then deleted.`
-}
-
-/** "1 note" or "3 notes". */
-function count(n: number, one: string, many: string): string {
-  return `${n} ${n === 1 ? one : many}`
+function MoveHint({ state }: { state: GuestSwitchState }): JSX.Element {
+  const t = useAppText()
+  if (state.groups.length !== 1) {
+    return <>{t.t(`GuestScreens.moveMany`, { count: state.groups.length })}</>
+  }
+  return (
+    <Rich
+      parts={t.parts(`GuestScreens.moveOne`, { name: state.groups[0].name })}
+      tags={{ name: address }}
+    />
+  )
 }
 
 /**
@@ -527,6 +542,7 @@ function count(n: number, one: string, many: string): string {
  */
 export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
   const { state, busy, error, navigate } = props
+  const t = useAppText()
   const [choice, setChoice] = useState<GuestTakenChoice | null>(null)
   const [missing, setMissing] = useState(false)
   const choiceGroup = useRef<HTMLDivElement>(null)
@@ -539,22 +555,20 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
   if (state === undefined) {
     return (
       <Stack gap="xl">
-        <PageHeader title="Checking…" titleDataE2E="taken-title" />
-        <p role="status" class="sr-only">Loading…</p>
+        <PageHeader title={t.t(`GuestScreens.checking`)} titleDataE2E="taken-title" />
+        <p role="status" class="sr-only">{t.t(`GuestScreens.loading`)}</p>
       </Stack>
     )
   }
   if (state === null) {
     return (
       <Stack gap="xl">
-        <PageHeader title="Nothing waits here" titleDataE2E="taken-title" />
+        <PageHeader title={t.t(`GuestScreens.nothing`)} titleDataE2E="taken-title" />
         <Stack gap="lg" class={FORM_WIDTH}>
-          <p data-e2e="taken-none">
-            This choice has timed out, or was already made. Your guest account was not changed.
-          </p>
+          <p data-e2e="taken-none">{t.t(`GuestScreens.nothingText`)}</p>
           <Cluster>
             <Button href={GUEST_PATHS.keep} navigate={navigate} variant="outline">
-              {KEEP_LABEL}
+              {t.t(`GuestScreens.keep`)}
             </Button>
           </Cluster>
         </Stack>
@@ -581,14 +595,14 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
   const options = [
     {
       value: "move",
-      label: <OptionLabel title="Switch and move my groups" hint={moveHint(state)} />,
+      label: <OptionLabel title={t.t(`GuestScreens.move`)} hint={<MoveHint state={state} />} />,
     },
     {
       value: "delete",
       label: (
         <OptionLabel
-          title="Switch and delete guest data"
-          hint="Sign in to that account and delete this guest account with everything in it."
+          title={t.t(`GuestScreens.delete`)}
+          hint={t.t(`GuestScreens.deleteHint`)}
         />
       ),
     },
@@ -596,33 +610,34 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
       value: "keep",
       label: (
         <OptionLabel
-          title="Keep the guest account"
-          hint="Nothing changes. You can add a different sign-in method."
+          title={t.t(`GuestScreens.keepGuest`)}
+          hint={t.t(`GuestScreens.keepGuestHint`)}
         />
       ),
     },
   ]
-  const label = choice === "delete"
-    ? "Switch and delete guest data"
-    : choice === "keep"
-    ? "Keep the guest account"
-    : choice === "move"
-    ? "Switch and move my groups"
-    : "Continue"
+  const label = t.t(
+    choice === "delete"
+      ? `GuestScreens.delete`
+      : choice === "keep"
+      ? `GuestScreens.keepGuest`
+      : choice === "move"
+      ? `GuestScreens.move`
+      : `AuthScreen.continue`,
+  )
   return (
     <Stack gap="xl">
       <Stack gap="sm">
-        <PageHeader title="Linked to another account" titleDataE2E="taken-title" />
+        <PageHeader title={t.t(`GuestScreens.linked`)} titleDataE2E="taken-title" />
         <p class="text-sm text-muted" data-e2e="taken-who">
-          {takenWho(state)}. Your guest account was not changed. Choose what happens to what you
-          made as a guest.
+          <TakenWho state={state} /> {t.t(`GuestScreens.takenRest`)}
         </p>
       </Stack>
       <ScreenForm pending={busy} onSubmit={submit} class={FORM_WIDTH}>
         <Stack gap="lg">
           <div ref={choiceGroup}>
             <RadioGroup
-              legend="What happens to this guest account"
+              legend={t.t(`GuestScreens.legend`)}
               name="choice"
               value={choice}
               options={options}
@@ -635,15 +650,17 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
             />
             {missing && (
               <p id="taken-choice-missing" class="mt-2 text-sm text-danger" role="alert">
-                Choose what happens to this guest's work.
+                {t.t(`GuestScreens.choose`)}
               </p>
             )}
           </div>
           {switching && state.needsPassword && (
             <Field
               id="taken-password"
-              label="Password"
-              hint={`The password of ${state.maskedEmail ?? "that account"}.`}
+              label={t.t(`SignInMethods.password`)}
+              hint={state.maskedEmail
+                ? t.t(`GuestScreens.passwordOf`, { email: state.maskedEmail })
+                : t.t(`GuestScreens.passwordOfThat`)}
               required
             >
               <Input
@@ -658,8 +675,8 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
           {switching && state.needsCode && (
             <Field
               id="taken-otp"
-              label="Code from that account's authenticator app"
-              hint="Six digits."
+              label={t.t(`GuestScreens.otp`)}
+              hint={t.t(`GuestScreens.sixDigits`)}
               required
             >
               <Input
@@ -683,7 +700,7 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
               type="submit"
               variant={choice === "delete" ? "danger" : choice === "keep" ? "secondary" : "primary"}
               busy={busy}
-              busyLabel="Working…"
+              busyLabel={t.t(`ProfileNotifications.working`)}
               data-e2e="taken-submit"
             >
               {label}
@@ -693,10 +710,10 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
       </ScreenForm>
       {confirming && (
         <ConfirmDialog
-          title="Delete this guest account?"
+          title={t.t(`GuestProfile.deleteTitle`)}
           tone="danger"
-          confirmLabel="Delete and switch"
-          cancelLabel="Cancel"
+          confirmLabel={t.t(`GuestScreens.deleteAndSwitch`)}
+          cancelLabel={t.t(`EmailScreen.cancel`)}
           busy={busy}
           dataE2E="taken-confirm"
           onCancel={() => setConfirming(null)}
@@ -705,11 +722,19 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
             setConfirming(null)
             props.onSwitch("delete", given.password, given.otp)
           }}
-          message={`Its ${count(state.notes, "note", "notes")} and ${
-            count(state.groups.length, "group", "groups")
-          } are deleted, and you are signed in to ${
-            state.maskedEmail ?? "that account"
-          }. This cannot be undone.`}
+          message={
+            <Rich
+              parts={t.parts(
+                state.maskedEmail ? `GuestScreens.confirmEmail` : `GuestScreens.confirmAccount`,
+                {
+                  notes: t.t(`GuestScreens.notes`, { count: state.notes }),
+                  groups: t.t(`GuestScreens.groups`, { count: state.groups.length }),
+                  email: state.maskedEmail ?? ``,
+                },
+              )}
+              tags={{ email: address }}
+            />
+          }
         />
       )}
     </Stack>
@@ -717,7 +742,9 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
 }
 
 /** An option's title and the sentence under it, read together as its name. */
-function OptionLabel({ title, hint }: { title: string; hint: string }): JSX.Element {
+function OptionLabel(
+  { title, hint }: { title: string; hint: ComponentChildren },
+): JSX.Element {
   return (
     <span class="flex flex-col">
       <span class="font-medium">{title}</span>
@@ -726,7 +753,10 @@ function OptionLabel({ title, hint }: { title: string; hint: string }): JSX.Elem
   )
 }
 
-/** What the inbox and the first-steps card say for a guest (#224), with the action's words. */
+/**
+ * What the inbox and the first-steps card say for a guest (#224), with the action's words, in
+ * English for the onboarding card's lane of #275 to move into the catalog.
+ */
 export const KEEP_STEP = {
   title: KEEP_LABEL,
   text: "Add a sign-in method so you can open this account on any device.",
@@ -743,18 +773,19 @@ export function GuestSignOutDialog(
     onCancel: () => void
   },
 ): JSX.Element {
+  const t = useAppText()
   return (
     <Modal
       open
-      title="Sign out of a guest account?"
+      title={t.t(`GuestScreens.signOutTitle`)}
       ariaDescribedBy="guest-sign-out-text"
       onClose={onCancel}
-      cancelLabel="Cancel"
+      cancelLabel={t.t(`EmailScreen.cancel`)}
       dataE2E="guest-sign-out"
       footer={
         <>
           <Button type="button" variant="ghost" onClick={onCancel} data-e2e="guest-sign-out-cancel">
-            Cancel
+            {t.t(`EmailScreen.cancel`)}
           </Button>
           <Button
             type="button"
@@ -762,18 +793,15 @@ export function GuestSignOutDialog(
             onClick={onSignOut}
             data-e2e="guest-sign-out-anyway"
           >
-            Sign out anyway
+            {t.t(`GuestScreens.signOutAnyway`)}
           </Button>
           <Button type="button" onClick={onKeep} data-e2e="guest-sign-out-keep">
-            {KEEP_LABEL}
+            {t.t(`GuestScreens.keep`)}
           </Button>
         </>
       }
     >
-      <p id="guest-sign-out-text">
-        This account has no sign-in method, so you cannot sign back in. Everything in it is lost for
-        you.
-      </p>
+      <p id="guest-sign-out-text">{t.t(`GuestScreens.signOutText`)}</p>
     </Modal>
   )
 }

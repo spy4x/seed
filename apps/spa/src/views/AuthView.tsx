@@ -2,20 +2,12 @@ import { useEffect, useRef, useState } from "preact/hooks"
 import { supportsPasskeyAutofill, supportsPasskeys } from "@spy4x/platform/browser/passkey"
 import { useLocation, useSearch } from "wouter-preact"
 import type { AuthCredentials } from "@spy4x/preact-system/auth-form"
-import {
-  AUTH_PATHS,
-  authFailureMessage,
-  AuthScreen,
-  type AuthScreenKind,
-} from "@ui/auth-screen.tsx"
+import { AUTH_PATHS, authFailureKey, AuthScreen, type AuthScreenKind } from "@ui/auth-screen.tsx"
+import { OAUTH_NOTICE_KEYS } from "@ui/app-text.ts"
+import { useAppText } from "@ui/i18n.ts"
 import { afterSignIn, readNext, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
 import { SIGN_UP_OFFLINE } from "@ui/sign-up-code-screen.tsx"
-import {
-  OAUTH_NOTICE_PARAM,
-  OAUTH_NOTICES,
-  oauthNotice,
-  type OAuthProviderId,
-} from "@domain/identity"
+import { OAUTH_NOTICE_PARAM, oauthNotice, type OAuthProviderId } from "@domain/identity"
 import {
   checkTotp,
   type PasskeySignInAnswer,
@@ -44,10 +36,12 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
   const [, navigate] = useLocation()
   const query = new URLSearchParams(useSearch())
   const next = readNext(query)
+  const t = useAppText()
+  const failed = () => t.t(authFailureKey(screen))
   // A provider sign-in that failed comes back here with `?oauth=`, and the page says so.
   const [error, setError] = useState<string | null>(() => {
     const notice = oauthNotice(query.get(OAUTH_NOTICE_PARAM))
-    return notice && OAUTH_NOTICES[notice]
+    return notice && t.t(OAUTH_NOTICE_KEYS[notice])
   })
   const [busy, setBusy] = useState(false)
   const [last, setLast] = useState(() => lastSignInHint())
@@ -91,7 +85,7 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
         : afterSignIn(next)
       return true
     }
-    if (!answer.cancelled) setError(answer.error || authFailureMessage(screen))
+    if (!answer.cancelled) setError(answer.error || failed())
     return false
   }
   const waitForAutofill = () => {
@@ -145,7 +139,7 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
     const result = await run()
     setBusy(false)
     if (!result.ok) {
-      setError(result.error || authFailureMessage(screen))
+      setError(result.error || failed())
       return
     }
     location.href = result.mfaRequired
@@ -165,8 +159,8 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
     }
     setError(
       !answer.expired && answer.offline
-        ? SIGN_UP_OFFLINE
-        : (!answer.expired && answer.error) || authFailureMessage(screen),
+        ? t.t(SIGN_UP_OFFLINE)
+        : (!answer.expired && answer.error) || failed(),
     )
   }
 
@@ -185,7 +179,7 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
     const answer = await requestSignInLink(login, next)
     setLinkBusy(false)
     if (!answer.ok) {
-      setError(linkRequestFailure(answer))
+      setError(linkRequestFailure(t, answer))
       return
     }
     rememberSentLink({ email: login, sentAt: Date.now() })

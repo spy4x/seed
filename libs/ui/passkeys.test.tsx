@@ -4,6 +4,8 @@
  * passkey proof of an account without a password. What is offered, what asks first, what the app
  * receives and where focus goes.
  */
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import appEn from "@i18n/app/en.json" with { type: "json" }
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
@@ -19,6 +21,9 @@ import {
   SignInMethods,
   type SignInMethodsProps,
 } from "./sign-in-methods.tsx"
+
+/** The product's English, as a screen without a provider reads it. */
+const EN = createTranslator({ language: "en", catalogs: [{ source: appEn }] })
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -314,7 +319,7 @@ describe("SignInMethods with passkeys", () => {
     await type("[data-e2e=passkey-name-12] input", "Home")
     await press("[data-e2e=passkey-name-12] input", "Enter")
     expect(find("[data-e2e=passkey-name-12] input").getAttribute("aria-invalid")).toBe("true")
-    expect(find("[data-e2e=passkey-name-12]").textContent).toContain(PASSKEY_RENAME_FAILURE)
+    expect(find("[data-e2e=passkey-name-12]").textContent).toContain(EN.t(PASSKEY_RENAME_FAILURE))
   })
 
   it("asks before removing a passkey, naming it and the sign-out, then hands over the password", async () => {
@@ -415,8 +420,8 @@ describe("the proof of an account without a password, with a passkey", () => {
       fresh: false,
     })
     expect(providerProofOf([password, laptop], false)).toBe(null)
-    expect(providerOnlyNames([google, laptop])).toBe("Google and a passkey")
-    expect(providerOnlyNames([laptop, { ...laptop, id: 13 }])).toBe("passkeys")
+    expect(providerOnlyNames(EN, [google, laptop])).toBe("Google and a passkey")
+    expect(providerOnlyNames(EN, [laptop, { ...laptop, id: 13 }])).toBe("passkeys")
   })
 
   it("offers to sign in again with a passkey on the spot", async () => {

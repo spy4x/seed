@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
@@ -23,6 +22,8 @@ import { profilePath, ScreenForm } from "./progressive.tsx"
 import type { ProviderProof } from "./provider-proof.tsx"
 import { DataExportErrorState, DataExportRow, type DataExportRowProps } from "./profile-export.tsx"
 import { PictureErrorState, PictureRow, type PictureRowProps } from "./profile-picture.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { useAppText } from "./i18n.ts"
 
 /** What the name dialog shows: the typed names, their errors and whether a save is in flight. */
 export interface NameEditProps {
@@ -98,6 +99,8 @@ export function AccountSection(
   }: AccountSectionProps,
 ): JSX.Element {
   const [editingName, setEditingName] = useState(false)
+  const t = useAppText()
+  const hidden = (text: string) => <span class="sr-only">{text}</span>
   const firstName = useRef<HTMLInputElement>(null)
   const lastName = useRef<HTMLInputElement>(null)
   const target = email ? emailToVerify(email) : null
@@ -128,8 +131,10 @@ export function AccountSection(
         {guestRow}
         {picture && <PictureRow {...picture} />}
         <SettingRow
-          label="Name"
-          value={<span data-e2e="profile-name">{name || "Not set"}</span>}
+          label={t.t(`ProfileAccount.name`)}
+          value={name
+            ? <span data-e2e="profile-name" translate={false}>{name}</span>
+            : <span data-e2e="profile-name">{t.t(`ProfileAccount.notSet`)}</span>}
           action={
             <Button
               type="button"
@@ -139,13 +144,13 @@ export function AccountSection(
               data-e2e="profile-edit"
               onClick={() => setEditingName(true)}
             >
-              Edit <span class="sr-only">name</span>
+              <Rich parts={t.parts(`ProfileAccount.editName`)} tags={{ hidden }} />
             </Button>
           }
         />
         {guestRow || (!email && onRetryEmail) ? null : (
           <SettingRow
-            label="E-mail address"
+            label={t.t(`ProfileAccount.email`)}
             value={<EmailValue email={email} provider={providerOnly} />}
             action={email && emailChange && (
               <Cluster gap="sm" justify="end">
@@ -157,7 +162,7 @@ export function AccountSection(
                     data-e2e="email-code-open"
                     onClick={() => setEmailStep("code")}
                   >
-                    Enter code
+                    {t.t(`ProfileAccount.enterCode`)}
                   </Button>
                 )}
                 <Button
@@ -168,8 +173,14 @@ export function AccountSection(
                   data-e2e="email-change-open"
                   onClick={() => setEmailStep("address")}
                 >
-                  {email.email === null ? "Add" : "Change"}{" "}
-                  <span class="sr-only">e-mail address</span>
+                  <Rich
+                    parts={t.parts(
+                      email.email === null
+                        ? `ProfileAccount.addEmail`
+                        : `ProfileAccount.changeEmail`,
+                    )}
+                    tags={{ hidden }}
+                  />
                 </Button>
               </Cluster>
             )}
@@ -184,15 +195,15 @@ export function AccountSection(
       <Modal
         open={editingName}
         onClose={cancelName}
-        title="Edit name"
-        cancelLabel="Close"
+        title={t.t(`ProfileAccount.editTitle`)}
+        cancelLabel={t.t(`EmailScreen.close`)}
         dataE2E="profile-dialog"
       >
         <ScreenForm pending={nameEdit.pending} onSubmit={nameEdit.onSave}>
           <Stack>
             <Field
               id="profile-first-name"
-              label="First name"
+              label={t.t(`ProfileAccount.firstName`)}
               error={nameEdit.fieldErrors.firstName}
               required
             >
@@ -208,7 +219,7 @@ export function AccountSection(
             </Field>
             <Field
               id="profile-last-name"
-              label="Last name"
+              label={t.t(`ProfileAccount.lastName`)}
               error={nameEdit.fieldErrors.lastName}
               required
             >
@@ -224,14 +235,16 @@ export function AccountSection(
             </Field>
             <ErrorState message={nameEdit.error} />
             <DialogActions>
-              <Button type="button" variant="ghost" onClick={cancelName}>Cancel</Button>
+              <Button type="button" variant="ghost" onClick={cancelName}>
+                {t.t(`EmailScreen.cancel`)}
+              </Button>
               <Button
                 type="submit"
                 data-e2e="profile-save"
                 busy={nameEdit.pending}
-                busyLabel="Saving…"
+                busyLabel={t.t(`PasswordResetScreen.saving`)}
               >
-                Save
+                {t.t(`ProfileAccount.save`)}
               </Button>
             </DialogActions>
           </Stack>
@@ -256,20 +269,21 @@ export function AccountSection(
 function EmailValue(
   { email, provider }: { email: EmailStatus | null; provider: string | null },
 ): JSX.Element {
+  const t = useAppText()
   if (!email) return <span>…</span>
   if (email.email === null) {
     return (
       <span data-e2e="email-current">
-        {provider === null ? "None. You sign in with your username." : provider === ""
+        {provider === null ? t.t(`ProfileAccount.noneUsername`) : provider === ""
           // A passkey carries no address (#222).
-          ? "None."
-          : `None. ${provider} shared no verified address.`}
+          ? t.t(`ProfileAccount.none`)
+          : t.t(`ProfileAccount.noneProvider`, { provider })}
       </span>
     )
   }
   return (
     <span class="flex flex-wrap items-center gap-2">
-      <span class="wrap-anywhere" data-e2e="email-current">{email.email}</span>
+      <span class="wrap-anywhere" data-e2e="email-current" translate={false}>{email.email}</span>
       <EmailState proven={email.proven} />
     </span>
   )

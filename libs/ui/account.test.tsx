@@ -1887,7 +1887,7 @@ describe("EmailBanner", () => {
     const status = { email: "ann.lee@mail.example.com", proven: false, pending: null }
     const html = renderToString(<EmailBanner status={status} />)
     expect(html).toContain(
-      '<strong class="wrap-anywhere">ann<wbr/>.lee@<wbr/>mail<wbr/>.example<wbr/>.com</strong>',
+      '<strong class="wrap-anywhere"><bdi>ann<wbr/>.lee@<wbr/>mail<wbr/>.example<wbr/>.com</bdi></strong>',
     )
   })
 

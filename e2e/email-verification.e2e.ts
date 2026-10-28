@@ -2,7 +2,7 @@ import type { APIRequestContext, Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { lastMail, nextCode } from "./fixtures/sign-up.ts"
+import { lastMail, nextCode, signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const password = "Passw0rd!"
@@ -95,6 +95,35 @@ test("a new account proves its address with the mailed code before it exists, th
     await page.locator("[data-e2e=auth-form-submit]").click()
     await expect(page.getByText("Invalid e-mail, username or password")).toBeVisible()
     await signIn(page, next, password)
+  } finally {
+    await cleanup(request, email, true)
+    await cleanup(request, next, true)
+  }
+})
+
+test("a new code's notice is in the page's language, not the server's English", async ({ page, request }) => {
+  const id = uuidV7().slice(-8)
+  const email = `e2e-resend-${id}@example.com`
+  const next = `e2e-resend-next-${id}@example.com`
+  try {
+    const signUp = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
+      headers: { origin: apiBase, "sec-fetch-site": "same-origin" },
+      data: { email, password },
+    })
+    expect(signUp.ok(), await signUp.text()).toBe(true)
+    await page.addInitScript(() => localStorage.setItem("language", "de"))
+    await signIn(page, email, password)
+    await gotoApp(page, "/profile/account", page.locator("[data-e2e=email-change-open]"))
+    await page.locator("[data-e2e=email-change-open]").click()
+    await page.locator("[data-e2e=email-new]").fill(next)
+    await page.locator("[data-e2e=email-password]").fill(password)
+    await page.locator("[data-e2e=email-change]").click()
+    await expect(page.locator("[data-e2e=email-code]")).toBeFocused()
+
+    await page.locator("[data-e2e=email-send]").click()
+    await expect(page.locator("[data-e2e=email-send-notice]")).toHaveText(
+      `Ein neuer Code ist unterwegs an ${next}.`,
+    )
   } finally {
     await cleanup(request, email, true)
     await cleanup(request, next, true)

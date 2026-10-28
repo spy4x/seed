@@ -6,6 +6,7 @@ import {
   isGuest,
   type User,
 } from "@domain/identity"
+import type { Said } from "@ui/app-text.ts"
 import { apiFetch } from "./api.ts"
 import { bootstrapSession } from "./auth.ts"
 import { sessionState } from "./session.ts"
@@ -79,7 +80,7 @@ export async function switchFromGuest(
   choice: "move" | "delete",
   password?: string,
   otp?: string,
-): Promise<{ ok: true; result: GuestSwitchResult } | { ok: false; error: string }> {
+): Promise<{ ok: true; result: GuestSwitchResult } | { ok: false; error: Said }> {
   let result
   try {
     result = await apiFetch<GuestSwitchResult>("/api/auth/guest/switch", {
@@ -87,7 +88,7 @@ export async function switchFromGuest(
       body: JSON.stringify({ choice, password, otp }),
     })
   } catch (_unreachable) {
-    return { ok: false, error: "You are offline. Connect and try again." }
+    return { ok: false, error: { key: `GuestScreens.offline` } }
   }
   if (!result.ok) return { ok: false, error: result.error.message }
   await bootstrapSession()
@@ -106,7 +107,7 @@ export async function cancelGuestSwitch(): Promise<boolean> {
 /** Deletes the guest account at once, confirmed by the typed word; the page is signed out. */
 export async function deleteGuestAccount(
   confirm: string,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true } | { ok: false; error: Said }> {
   let result
   try {
     result = await apiFetch("/api/auth/guest/delete", {
@@ -114,7 +115,7 @@ export async function deleteGuestAccount(
       body: JSON.stringify({ confirm }),
     })
   } catch (_unreachable) {
-    return { ok: false, error: "You are offline. Connect and try again." }
+    return { ok: false, error: { key: `GuestScreens.offline` } }
   }
   if (!result.ok) return { ok: false, error: result.error.message }
   sessionState.value = { ...sessionState.value, user: null, isMfaRequired: false }
