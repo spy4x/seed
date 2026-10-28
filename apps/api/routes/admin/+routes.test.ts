@@ -27,6 +27,7 @@ import { createAdminRoute } from "./+routes.ts"
 import { ADMIN_OUTRANKED, ADMIN_SELF, createAdminUsersRoutes } from "./users.ts"
 import { createAdminStatsRoutes } from "./dashboard.ts"
 import { ADMIN_API_MODULES } from "./registry.ts"
+import { CATALOG_DEFAULT_SETTINGS } from "@domain/catalog"
 import type { AdminModuleContext } from "./module.ts"
 import { apiError } from "../../_testing/api-error.ts"
 
@@ -104,6 +105,7 @@ function buildApp(
     limit: passThrough,
     emit: (event: UserSignedOutEvent) => emitted.push(event),
     now: () => new Date(stats.generatedAt),
+    catalog: { on: true, settings: CATALOG_DEFAULT_SETTINGS },
   }
   // The real registry, with the two modules that read data swapped for fakes of their services.
   const modules = ADMIN_API_MODULES.map((module) => {
@@ -167,6 +169,12 @@ const ROUTES = [
   { method: "GET", path: "/admin/contact-links" },
   { method: "POST", path: "/admin/contact-links/order" },
   { method: "POST", path: "/admin/contact-links/0199f0a0-0000-7000-8000-000000000001/delete" },
+  { method: "GET", path: "/admin/catalog" },
+  { method: "POST", path: "/admin/catalog/items" },
+  { method: "POST", path: "/admin/catalog/items/0199f0a0-0000-7000-8000-000000000001/status" },
+  { method: "POST", path: "/admin/catalog/items/0199f0a0-0000-7000-8000-000000000001/photos" },
+  { method: "GET", path: "/admin/catalog/photos/0199f0a0-0000-7000-8000-000000000001/thumbnail" },
+  { method: "POST", path: "/admin/catalog/categories/order" },
   { method: "GET", path: "/admin/groups/0199f0a0-0000-7000-8000-000000000001/files" },
   {
     method: "POST",
@@ -281,6 +289,7 @@ describe("operator area routes", () => {
       "newsletter",
       "blog",
       "contact-links",
+      "catalog",
       "audit",
       "jobs",
       "system",

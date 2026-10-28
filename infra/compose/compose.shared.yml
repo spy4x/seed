@@ -815,6 +815,10 @@ services:
       - STRIPE_PRICE_PRO=${STRIPE_PRICE_PRO:-}
       - BILLING_GRACE_DAYS=${BILLING_GRACE_DAYS:-}
       - BILLING_TRIAL_REQUIRES_CARD=${BILLING_TRIAL_REQUIRES_CARD:-}
+      # Catalog. Unset → off; see docs/catalog.md.
+      - CATALOG=${CATALOG:-}
+      - CATALOG_CURRENCY=${CATALOG_CURRENCY:-}
+      - CATALOG_LANGUAGES=${CATALOG_LANGUAGES:-}
       # Mail subscriptions: the API checks the links the worker signs. Unset → off in production.
       - SUBSCRIBERS_SECRET=${SUBSCRIBERS_SECRET:-}
       - SUBSCRIBERS_PREVIOUS_SECRETS=${SUBSCRIBERS_PREVIOUS_SECRETS:-}
