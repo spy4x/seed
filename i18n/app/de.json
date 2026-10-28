@@ -1101,7 +1101,7 @@
   "ProfileScreen.pushFailed": "Dieses Gerät konnte nicht hinzugefügt werden. Erlaube Benachrichtigungen für diese Seite in deinem Browser und versuche es dann noch einmal.",
   "ProfileScreen.pushRemoveFailed": "Dieses Gerät konnte nicht entfernt werden. Prüfe deine Verbindung und versuche es noch einmal.",
   "ProfileScreen.account": "Konto",
-  "ProfileScreen.accountText": "Dein Name, deine E-Mail-Adresse und eine Kopie deiner Daten.",
+  "ProfileScreen.accountText": "Dein Bild, dein Name, deine E-Mail-Adresse und eine Kopie deiner Daten.",
   "ProfileScreen.security": "Anmeldung und Sicherheit",
   "ProfileScreen.securityText": "Wie du dich anmeldest und wo dein Konto angemeldet ist.",
   "ProfileScreen.region": "Sprache und Region",
