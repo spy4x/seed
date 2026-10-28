@@ -63,8 +63,10 @@ export function tagsCollection(
     toQuery: (id, payload) => ({ name: "tag.get", payload: { groupId: payload.groupId, id } }),
     entityFrom: (answer) => (answer as { tag?: TagItem } | undefined)?.tag,
     classify: classifyTagError,
-    // Keys of the `app` catalog, kept with the queued write: a screen shows them in the person's
-    // language at the time, and an entry queued in English before #275 still shows as it is.
+    // Keys of the `app` catalog, kept with the queued write. `OfflineStatus` shows the one a
+    // conflict holds through `messageText`, in the person's language at that time; an entry queued
+    // in English before #275 holds English, which it shows as it is. A refusal that carries the
+    // server's own words keeps those instead of `rejected`, and they show as they came.
     messages: { version: `TagSync.version`, gone: `TagSync.gone`, rejected: `TagSync.rejected` },
     cache: {
       put: (tag) => cache.putTag(tag),

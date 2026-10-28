@@ -3,7 +3,10 @@ import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { ConflictChooser, type ConflictItem } from "@spy4x/preact-system/conflict-chooser"
 import { SyncStatus } from "@spy4x/preact-system/sync-status"
 import { Button } from "@spy4x/preact-ui/button"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 import { colorName } from "@ui/tag-parts.tsx"
+import { useAppText } from "@ui/i18n.ts"
+import { type Message, messageText } from "@ui/message.ts"
 import { activeLayer } from "./index.ts"
 import type { NoteEntry } from "./notes-cache.ts"
 import type { TagEntry } from "./tags-cache.ts"
@@ -17,61 +20,78 @@ interface ConflictView {
   seq: number
   label: string
   reason: "version" | "gone" | "rejected"
+  /**
+   * What the queue kept about the conflict: a key of the `app` catalog, or the server's own words
+   * for a refusal. An entry queued before the keys holds English, shown as it is.
+   */
+  message: Message | null
   mine: string
   theirs: string
   canKeepMine: boolean
 }
 
-function noteView(entry: NoteEntry): ConflictView {
+function noteView(t: Translator<string>, entry: NoteEntry): ConflictView {
   const server = entry.conflict?.server
   return {
     kind: "note",
     seq: entry.seq!,
-    label: entry.kind === "delete" ? "Deleted note" : entry.payload.title || "Untitled note",
+    label: entry.kind === "delete"
+      ? t.t(`OfflineStatus.deletedNote`)
+      : entry.payload.title || t.t(`OfflineStatus.untitledNote`),
     reason: entry.conflict?.reason ?? "version",
+    message: entry.conflict?.message ?? null,
     mine: entry.kind === "delete"
-      ? "You deleted this note."
+      ? t.t(`OfflineStatus.youDeletedNote`)
       : `${entry.payload.title}\n${entry.payload.body}`.trim(),
-    theirs: server
-      ? `${server.title}\n${server.body}`.trim()
-      : "The note is no longer in this group.",
+    theirs: server ? `${server.title}\n${server.body}`.trim() : t.t(`OfflineStatus.noteGone`),
     // A server that no longer has the note has nothing to keep mine against.
     canKeepMine: Boolean(server),
   }
 }
 
-function tagView(entry: TagEntry): ConflictView {
+function tagView(t: Translator<string>, entry: TagEntry): ConflictView {
   const server = entry.conflict?.server
   return {
     kind: "tag",
     seq: entry.seq!,
     label: entry.kind === "delete"
-      ? "Deleted tag"
-      : `Tag ${entry.payload.name || "without a name"}`,
+      ? t.t(`OfflineStatus.deletedTag`)
+      : entry.payload.name
+      ? t.t(`OfflineStatus.tag`, { name: entry.payload.name })
+      : t.t(`OfflineStatus.tagNoName`),
     reason: entry.conflict?.reason ?? "version",
+    message: entry.conflict?.message ?? null,
     mine: entry.kind === "delete"
-      ? "You deleted this tag."
+      ? t.t(`OfflineStatus.youDeletedTag`)
       : `${entry.payload.name} (${colorName(entry.payload.color)})`,
-    theirs: server
-      ? `${server.name} (${colorName(server.color)})`
-      : "The tag is no longer in this group.",
+    theirs: server ? `${server.name} (${colorName(server.color)})` : t.t(`OfflineStatus.tagGone`),
     canKeepMine: Boolean(server),
   }
 }
 
-/** Both sides of one conflict, and a way to keep this person's text before choosing. */
+/**
+ * What happened, as the queue kept it, then both sides of one conflict, and a way to keep this
+ * person's text before choosing. The chooser shows this in place of its own explanation.
+ */
 function Sides({ view }: { view: ConflictView }) {
+  const t = useAppText()
   // The entry's seq when the copy worked, its negative when the browser refused.
   const [copied, setCopied] = useState(0)
+  const said = messageText(t, view.message)
   return (
     <div class="mt-2 grid gap-3 sm:grid-cols-2" data-e2e={`${view.kind}-sync-conflict`}>
+      {said && <p class="text-sm sm:col-span-2" data-e2e="conflict-message">{said}</p>}
       <div>
-        <h3 class="text-sm font-semibold">Your version</h3>
-        <p class="whitespace-pre-wrap text-sm" data-e2e="conflict-mine">{view.mine}</p>
+        <h3 class="text-sm font-semibold">{t.t(`OfflineStatus.mine`)}</h3>
+        <p class="whitespace-pre-wrap text-sm" data-e2e="conflict-mine" translate={false}>
+          {view.mine}
+        </p>
       </div>
       <div>
-        <h3 class="text-sm font-semibold">Server's version</h3>
-        <p class="whitespace-pre-wrap text-sm" data-e2e="conflict-theirs">{view.theirs}</p>
+        <h3 class="text-sm font-semibold">{t.t(`OfflineStatus.theirs`)}</h3>
+        <p class="whitespace-pre-wrap text-sm" data-e2e="conflict-theirs" translate={false}>
+          {view.theirs}
+        </p>
       </div>
       <div class="flex flex-wrap items-center gap-3 sm:col-span-2">
         <Button
@@ -88,11 +108,13 @@ function Sides({ view }: { view: ConflictView }) {
             }
           }}
         >
-          Copy my text
+          {t.t(`OfflineStatus.copy`)}
         </Button>
-        {copied === view.seq && <span role="status" class="text-sm">Copied.</span>}
+        {copied === view.seq && (
+          <span role="status" class="text-sm">{t.t(`OfflineStatus.copied`)}</span>
+        )}
         {copied === -view.seq && (
-          <span role="status" class="text-sm">Could not copy: select the text above.</span>
+          <span role="status" class="text-sm">{t.t(`OfflineStatus.copyFailed`)}</span>
         )}
       </div>
     </div>
@@ -109,6 +131,7 @@ function Sides({ view }: { view: ConflictView }) {
 export function OfflineStatus(
   { groupId, onResolved }: { groupId: string; onResolved: () => void },
 ) {
+  const t = useAppText()
   const layer = activeLayer.value
   const [runner, setRunner] = useState(() => layer?.runner.getState())
   useEffect(() => {
@@ -125,8 +148,8 @@ export function OfflineStatus(
   const tagEntries = layer.tagEntries.value.filter((entry) => entry.payload.groupId === groupId)
   const pending = [...entries, ...tagEntries].filter((entry) => entry.status === "pending").length
   const conflicts = [
-    ...tagEntries.filter((entry) => entry.status === "conflict").map(tagView),
-    ...entries.filter((entry) => entry.status === "conflict").map(noteView),
+    ...tagEntries.filter((entry) => entry.status === "conflict").map((entry) => tagView(t, entry)),
+    ...entries.filter((entry) => entry.status === "conflict").map((entry) => noteView(t, entry)),
   ]
   // Notes that wait for the person's choice about a tag they name.
   const held = layer.collections.waiting().filter((w) => w.onPerson).length
@@ -156,7 +179,7 @@ export function OfflineStatus(
   return (
     // It sits above the page's header, as the shell's banner does: a section gap (`Page`'s gap-8)
     // keeps a conflict card off the header.
-    <section class="mb-8 w-full" aria-label="Sync" data-e2e="offline-status">
+    <section class="mb-8 w-full" aria-label={t.t(`OfflineStatus.sync`)} data-e2e="offline-status">
       <SyncStatus
         online={network.online.value}
         pending={pending}
@@ -168,13 +191,12 @@ export function OfflineStatus(
       />
       {held > 0 && (
         <p class="mt-2 text-sm" role="status" data-e2e="sync-waiting">
-          {held === 1 ? "A note is" : `${held} notes are`}{" "}
-          waiting for your choice about a tag below. Nothing is lost.
+          {t.t(`OfflineStatus.held`, { count: held })}
         </p>
       )}
-      {notices.map((message) => (
-        <p key={message} class="mt-2 text-sm" role="status" data-e2e="sync-notice">
-          {message}{" "}
+      {notices.map((message, index) => (
+        <p key={index} class="mt-2 text-sm" role="status" data-e2e="sync-notice">
+          {messageText(t, message)}{" "}
           <Button
             type="button"
             size="sm"
@@ -185,7 +207,7 @@ export function OfflineStatus(
                 m !== message
               )}
           >
-            Dismiss
+            {t.t(`OfflineStatus.dismiss`)}
           </Button>
         </p>
       ))}
@@ -194,7 +216,7 @@ export function OfflineStatus(
           conflicts={items}
           onKeepMine={(id) => choose(id, "keepMine")}
           onUseTheirs={(id) => choose(id, "useTheirs")}
-          labels={{ useTheirs: { version: "Use the server's" } }}
+          labels={{ useTheirs: { version: t.t(`OfflineStatus.useServers`) } }}
         />
       )}
     </section>
