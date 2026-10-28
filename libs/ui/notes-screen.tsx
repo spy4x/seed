@@ -188,7 +188,7 @@ export interface NotesScreenProps {
   /** The person's own id, for "Created by me". Left out, there is no such toggle. */
   youId?: string | null
   navigate?: Navigate
-  /** Drawn right under the page header, above the list: the app's first-steps card. */
+  /** Drawn right under the page header, above the list: the app's offline status and first steps. */
   intro?: ComponentChildren
 }
 
@@ -529,7 +529,12 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
                 ? undefined
                 : t.t(`Notes.emptyHint`, { group: group.name })}
               action={!loading && group.canWrite && (
-                <Button href={NOTE_PATHS.new} navigate={navigate} data-e2e="note-new-empty">
+                <Button
+                  href={NOTE_PATHS.new}
+                  navigate={navigate}
+                  variant="secondary"
+                  data-e2e="note-new-empty"
+                >
                   {t.t(`Notes.new`)}
                 </Button>
               )}
