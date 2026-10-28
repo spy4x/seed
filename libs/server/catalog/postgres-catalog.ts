@@ -77,12 +77,18 @@ export const STOCK_COUNTS = `
     AS combinations,
   (SELECT count(*)::int FROM catalog_sold_out o WHERE o.item_id = i.id) AS sold_out_count`
 
-/** A photo's state from its image's row. */
+/** Whether an image has a stored width the admin can show yet, as SQL on `im`, an `images` row. */
+const SHOWN = `EXISTS (SELECT 1 FROM image_variants v WHERE v.image_id = im.id)`
+
+/**
+ * A photo's state from its image's row: ready for the admin once its narrowest width is stored
+ * (#514), while the worker still makes the wider ones the website waits for.
+ */
 function photoState(
-  image: { processedAt: Date | null; refused: number | null },
+  image: { shown: boolean; refused: number | null },
 ): CatalogPhotoState {
   if (image.refused !== null) return `refused`
-  return image.processedAt ? `ready` : `preparing`
+  return image.shown ? `ready` : `preparing`
 }
 
 /** The text of `value` with its keys sorted, so two equal objects give the same text. */
@@ -155,9 +161,9 @@ export async function readCatalogItem(sql: postgres.Sql, id: string): Promise<Ca
     WHERE o.item_id = ${id} ORDER BY c.position NULLS FIRST, s.position NULLS FIRST
   `
   const photos = await sql<
-    (Omit<CatalogPhoto, `state`> & { processedAt: Date | null; refused: number | null })[]
+    (Omit<CatalogPhoto, `state`> & { shown: boolean; refused: number | null })[]
   >`
-    SELECT p.id, p.colour_id, p.alt, im.processed_at, im.refused
+    SELECT p.id, p.colour_id, p.alt, ${sql.unsafe(SHOWN)} AS shown, im.refused
     FROM catalog_photos p JOIN images im ON im.id = p.id
     WHERE p.item_id = ${id} ORDER BY p.position
   `
@@ -241,8 +247,8 @@ export class PostgresCatalog {
         (SELECT count(*)::int FROM catalog_photos p WHERE p.item_id = i.id) AS photo_count,
         (
           SELECT p.id FROM catalog_photos p JOIN images im ON im.id = p.id
-          WHERE p.item_id = i.id AND p.position = 0 AND im.processed_at IS NOT NULL
-            AND im.refused IS NULL
+          WHERE p.item_id = i.id AND p.position = 0 AND im.refused IS NULL
+            AND ${this.sql.unsafe(SHOWN)}
         ) AS cover_id,
         ${this.sql.unsafe(STOCK_COUNTS)}
       FROM catalog_items i
@@ -989,14 +995,14 @@ async function readCategories(sql: postgres.Sql, id?: string): Promise<CatalogCa
 /** One photo as the admin reads it. */
 async function readPhoto(sql: postgres.Sql, id: string): Promise<CatalogPhoto | null> {
   const [row] = await sql<
-    (Omit<CatalogPhoto, `state`> & { processedAt: Date | null; refused: number | null })[]
+    (Omit<CatalogPhoto, `state`> & { shown: boolean; refused: number | null })[]
   >`
-    SELECT p.id, p.colour_id, p.alt, im.processed_at, im.refused
+    SELECT p.id, p.colour_id, p.alt, ${sql.unsafe(SHOWN)} AS shown, im.refused
     FROM catalog_photos p JOIN images im ON im.id = p.id WHERE p.id = ${id}
   `
   if (!row) return null
-  const { processedAt, refused, ...photo } = row
-  return { ...photo, state: photoState({ processedAt, refused }) }
+  const { shown, refused, ...photo } = row
+  return { ...photo, state: photoState({ shown, refused }) }
 }
 
 /** Marks the item changed, for the website's sitemap, without moving its version. */

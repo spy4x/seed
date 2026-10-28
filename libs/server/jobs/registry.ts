@@ -8,7 +8,13 @@
  * @module
  */
 
-import { IMAGE_PROCESS_JOB, imageProcessJob, type ImageScratch } from "../files/images.ts"
+import {
+  IMAGE_PROCESS_JOB,
+  IMAGE_WIDTHS_JOB,
+  imageProcessJob,
+  type ImageScratch,
+  imageWidthsJob,
+} from "../files/images.ts"
 import type postgres from "postgres"
 import { stepsJob } from "@spy4x/server/outbox"
 import { describeCron, parseCron } from "@spy4x/time/cron"
@@ -96,10 +102,11 @@ export type JobRepeat =
   | { cron: string }
 
 /**
- * What a job's `aboutId` names, so the admin can link it: a group, or a row of a table whose
- * `user_id` is a person. A job about neither leaves it out.
+ * What a job's `aboutId` names, so the admin can link it: a group, a row of a table whose
+ * `user_id` is a person, or an `images` row, which the admin shows with the catalog item its photo
+ * belongs to (#514). A job about none of these leaves it out.
  */
-export type JobAbout = { group: true } | { userIn: string }
+export type JobAbout = { group: true } | { userIn: string } | { image: true }
 
 /** One background job: see {@link defineJob}. */
 export interface JobDefinition {
@@ -256,9 +263,17 @@ export const JOBS: readonly JobDefinition[] = [
   }),
   defineJob({
     kind: IMAGE_PROCESS_JOB,
-    label: `Image processing`,
+    label: `Image processing: preview`,
+    about: { image: true },
     handler: ({ sql, files, imageScratch }) =>
       imageProcessJob({ sql, files, scratch: imageScratch }),
+  }),
+  defineJob({
+    kind: IMAGE_WIDTHS_JOB,
+    label: `Image processing: larger sizes`,
+    about: { image: true },
+    handler: ({ sql, files, imageScratch }) =>
+      imageWidthsJob({ sql, files, scratch: imageScratch }),
   }),
   defineJob({
     kind: DATA_EXPORT_BUILD_JOB,

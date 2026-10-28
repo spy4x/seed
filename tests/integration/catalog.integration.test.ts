@@ -288,6 +288,36 @@ Deno.test(`a photo queues its processing, keeps its order, and takes its image w
   })
 })
 
+Deno.test(`a photo is ready for the admin once its narrowest width is stored, before the website shows it`, async () => {
+  await withSchema(async (sql) => {
+    const catalog = new PostgresCatalog(sql)
+    const actor = await operator(sql)
+    const category = await catalog.createCategory(uuidV7(), {
+      slug: `jackets`,
+      name: { en: `Jackets` },
+    }, actor)
+    const item = await catalog.createItem(
+      uuidV7(),
+      jacket({ categoryId: category.id }).fields,
+      actor,
+    )
+    const photo = uuidV7()
+    await catalog.addPhoto(item.id, photo, catalogPhotoObjectKey(photo), actor)
+    await catalog.setStatus(item.id, item.version, `published`, actor)
+
+    // What the first image job stores: the narrowest width, with the image not processed yet.
+    const key = catalogPhotoObjectKey(photo)
+    await sql`
+      INSERT INTO image_variants (object_key, image_id, content_type, width, height) VALUES
+        (${`${key}/480.webp`}, ${photo}, 'image/webp', 480, 640)
+    `
+
+    expect((await catalog.getItem(item.id))!.photos[0].state).toBe(`ready`)
+    expect((await catalog.listItems())[0].coverId).toBe(photo)
+    expect((await readPublicItem(sql, `zip-jacket`))!.photos).toEqual([])
+  })
+})
+
 Deno.test(`an item keeps ${CATALOG_PHOTOS_MAX} photos at most`, async () => {
   await withSchema(async (sql) => {
     const catalog = new PostgresCatalog(sql)
