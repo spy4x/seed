@@ -1,6 +1,8 @@
 // Seed's own site: see docs/start-a-product.md
+import { appAddress } from "../brand.ts"
 import type { JSX } from "preact"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
+import { TerminalText, useSite } from "../use-site.tsx"
 import { Shot } from "./shot.tsx"
 
 /** The realtime pair is captured half a desktop wide, at 640 and 320 px, 4:5. */
@@ -43,18 +45,19 @@ export function PairShot(
 
 /** Two windows side by side: a note saved in one is already in the list of the other. */
 export function RealtimePair(): JSX.Element {
+  const { t } = useSite()
   return (
     <div class="grid grid-cols-2 gap-4">
-      <WindowFrame variant="browser" title="Window 1">
+      <WindowFrame variant="browser" title={t.t(`FeatureVisuals.window1`)}>
         <PairShot
           name="realtime-a"
-          alt="First window: the note editor, with the title changed to “Q4 roadmap: onboarding, billing and invoices”."
+          alt={t.t(`FeatureVisuals.realtimeA`)}
         />
       </WindowFrame>
-      <WindowFrame variant="browser" title="Window 2">
+      <WindowFrame variant="browser" title={t.t(`FeatureVisuals.window2`)}>
         <PairShot
           name="realtime-b"
-          alt="Second window, a separate sign-in: right after Save, its notes list shows the new title at the top, without a reload."
+          alt={t.t(`FeatureVisuals.realtimeB`)}
         />
       </WindowFrame>
     </div>
@@ -63,16 +66,17 @@ export function RealtimePair(): JSX.Element {
 
 /** The conflict chooser in a browser, with the installed app on a phone beside it. */
 export function OfflinePair(): JSX.Element {
+  const { t } = useSite()
   return (
     <div class="grid items-end gap-4 sm:grid-cols-3">
       <WindowFrame
         variant="browser"
-        title="app.seedsaas.com/notes"
+        title={appAddress(`/notes`)}
         class="sm:col-span-2"
       >
         <Shot
           name="offline-conflict"
-          alt="A change made offline meets a newer one on the server: “1 change needs your choice” shows both versions of the note side by side, with “Keep mine” and “Use the server's”."
+          alt={t.t(`FeatureVisuals.offline`)}
           sizes="(min-width: 1280px) 300px, (min-width: 640px) 448px, 100vw"
         />
       </WindowFrame>
@@ -80,7 +84,7 @@ export function OfflinePair(): JSX.Element {
         <Shot
           name="notes"
           kind="mobile"
-          alt="The same app installed on a phone, showing the group's notes with a search box and filters, each note with its author, when it was created and its tags."
+          alt={t.t(`FeatureVisuals.phone`)}
           sizes="160px"
         />
       </WindowFrame>
@@ -100,12 +104,12 @@ interface Box {
 const BOX_HEIGHT = 56
 
 const BOXES: readonly Box[] = [
-  { x: 20, y: 24, w: 170, title: "The change", note: "a note, a member" },
-  { x: 210, y: 24, w: 170, title: "Its event", note: "an outbox row" },
-  { x: 115, y: 168, w: 170, title: "Worker", note: "drains the outbox", accent: true },
-  { x: 8, y: 280, w: 120, title: "Mail", note: "codes, notices" },
-  { x: 140, y: 280, w: 120, title: "Push", note: "phone, desktop" },
-  { x: 272, y: 280, w: 120, title: "Live", note: "other tabs" },
+  { x: 20, y: 24, w: 170, title: "Outbox.change", note: "Outbox.changeNote" },
+  { x: 210, y: 24, w: 170, title: "Outbox.event", note: "Outbox.eventNote" },
+  { x: 115, y: 168, w: 170, title: "Architecture.worker", note: "Outbox.workerNote", accent: true },
+  { x: 8, y: 280, w: 120, title: "Outbox.mail", note: "Outbox.mailNote" },
+  { x: 140, y: 280, w: 120, title: "Outbox.push", note: "Outbox.pushNote" },
+  { x: 272, y: 280, w: 120, title: "Outbox.live", note: "Outbox.liveNote" },
 ]
 
 const ARROWS = [
@@ -119,17 +123,17 @@ const ARROWS = [
  * What the diagram shows, for a screen reader. An `aria-label`, not an SVG `<title>`: Fresh treats
  * every `<title>` it renders as the page's.
  */
-const OUTBOX_LABEL =
-  `The outbox: a change and its event are written in one database transaction; ` +
-  `the worker reads the event and sends mail, push notifications and live updates to other tabs.`
+const OUTBOX_LABEL = `Outbox.label`
 
 /** A change and its event in one transaction, then the worker fanning out to mail, push and tabs. */
 export function OutboxDiagram(): JSX.Element {
+  const { t } = useSite()
   return (
     <svg
+      dir="ltr"
       viewBox="0 0 400 352"
       role="img"
-      aria-label={OUTBOX_LABEL}
+      aria-label={t.t(OUTBOX_LABEL)}
       class="mx-auto h-auto w-full max-w-md text-foreground"
     >
       <defs>
@@ -146,9 +150,7 @@ export function OutboxDiagram(): JSX.Element {
         </marker>
       </defs>
       <rect x="8" y="8" width="384" height="88" rx="14" class="arch-frame" />
-      <text x="16" y="118" class="arch-note text-[14px]">
-        One transaction: both are saved, or neither
-      </text>
+      <text x="16" y="118" class="arch-note text-[14px]">{t.t(`Outbox.transaction`)}</text>
       {ARROWS.map((d) => (
         <path
           key={d}
@@ -170,9 +172,9 @@ export function OutboxDiagram(): JSX.Element {
             class={box.accent ? "arch-box arch-accent" : "arch-box"}
           />
           <text x={box.x + 14} y={box.y + 23} class="fill-current text-[17px] font-semibold">
-            {box.title}
+            {t.t(box.title)}
           </text>
-          <text x={box.x + 14} y={box.y + 44} class="arch-note text-[14px]">{box.note}</text>
+          <text x={box.x + 14} y={box.y + 44} class="arch-note text-[14px]">{t.t(box.note)}</text>
         </g>
       ))}
     </svg>
@@ -191,11 +193,16 @@ const AGGREGATE_FILES = [
   `e2e/notes.e2e.ts`,
 ] as const
 
+/** The guide the file list comes from, the terminal's title: a path, the same in every language. */
+const AGGREGATES_DOC = `docs/aggregates.md`
+
 /** The file list a new aggregate copies, numbered, as a terminal shows it. */
 export function AggregateFiles(): JSX.Element {
   return (
-    <WindowFrame variant="terminal" title="docs/aggregates.md">
-      {AGGREGATE_FILES.map((path, index) => `${index + 1}  ${path}`).join(`\n`)}
+    <WindowFrame variant="terminal" title={AGGREGATES_DOC}>
+      <TerminalText>
+        {AGGREGATE_FILES.map((path, index) => `${index + 1}  ${path}`).join(`\n`)}
+      </TerminalText>
     </WindowFrame>
   )
 }
@@ -225,16 +232,17 @@ const SERVICES = [
 
 /** The deploy's output in a terminal, and the services it starts as a row of labels. */
 export function DeployVisual(): JSX.Element {
+  const { t } = useSite()
   return (
     <div class="flex flex-col gap-4">
       <WindowFrame
         variant="terminal"
-        title="Terminal"
-        caption="Shortened: the rsync and Compose output between the steps is left out."
+        title={t.t(`HomeQuickStart.terminal`)}
+        caption={t.t(`FeatureVisuals.deployCaption`)}
       >
-        {DEPLOY_OUTPUT.join(`\n`)}
+        <TerminalText>{DEPLOY_OUTPUT.join(`\n`)}</TerminalText>
       </WindowFrame>
-      <ul aria-label="Services on the server" class="flex flex-wrap gap-2">
+      <ul aria-label={t.t(`FeatureVisuals.services`)} class="flex flex-wrap gap-2">
         {SERVICES.map((service) => (
           <li
             key={service}

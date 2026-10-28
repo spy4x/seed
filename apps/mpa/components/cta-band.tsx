@@ -3,6 +3,7 @@ import { Button } from "@spy4x/preact-ui/button"
 import { IconArrowRight, IconGitHub } from "@spy4x/preact-icons"
 import { TRY_ENTRY, TRY_REL } from "../site.tsx"
 import { REPOSITORY_URL } from "../brand.ts"
+import { useSite } from "../use-site.tsx"
 import { Band } from "./band.tsx"
 import { SectionIntro } from "./section-intro.tsx"
 
@@ -29,11 +30,8 @@ export type CtaBandProps = DemoAsk | CodeAsk
 
 /** The closing call to action of a developer page: try the demo, or read the code. */
 export function CtaBand(props: CtaBandProps): JSX.Element {
-  const {
-    title = "See it working in a minute",
-    lead =
-      "The demo is the app you get on day one. Open it without signing up and start in groups full of sample notes.",
-  } = props
+  const { t } = useSite()
+  const { title = t.t(`CtaBand.title`), lead = t.t(`CtaBand.lead`) } = props
   const github = (variant: "primary" | "outline") => (
     <Button
       href={REPOSITORY_URL}
@@ -43,7 +41,7 @@ export function CtaBand(props: CtaBandProps): JSX.Element {
       data-umami-event="github"
       data-umami-event-from="cta"
     >
-      <IconGitHub class="size-5" aria-hidden="true" /> View on GitHub
+      <IconGitHub class="size-5" aria-hidden="true" /> {t.t(`HomeHero.github`)}
     </Button>
   )
   return (
@@ -61,7 +59,8 @@ export function CtaBand(props: CtaBandProps): JSX.Element {
                 data-umami-event="read-code"
                 data-umami-event-from="cta"
               >
-                {props.code.label} <IconArrowRight class="size-4" aria-hidden="true" />
+                {props.code.label}{" "}
+                <IconArrowRight class="size-4 rtl:-scale-x-100" aria-hidden="true" />
               </a>
             </div>
           )
@@ -74,7 +73,7 @@ export function CtaBand(props: CtaBandProps): JSX.Element {
                 data-umami-event="try-demo"
                 data-umami-event-from="cta"
               >
-                {TRY_ENTRY.label}
+                {t.t(TRY_ENTRY.label)}
               </Button>
               {github("outline")}
             </div>

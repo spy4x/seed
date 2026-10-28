@@ -1,12 +1,16 @@
 // Seed's own site: see docs/start-a-product.md
+import type { JSX } from "preact"
 import { type FreshContext, HttpError } from "fresh"
 import { Button } from "@spy4x/preact-ui/button"
 import { HIRE_PAGE_URL } from "./hire.ts"
+import { pathLanguage } from "./languages.ts"
+import { SiteLanguage, useSite } from "./use-site.tsx"
 import { REPOSITORY_URL, SiteFrame, spaLinks, TRY_ENTRY, TRY_REL } from "./site.tsx"
 import type { State } from "./utils.ts"
 
 /**
- * The page for an error no route handled, inside the site's frame: "Page not found" for the 404 of
+ * The page for an error no route handled, inside the site's frame and in the language of its
+ * address: "Page not found" for the 404 of
  * an unknown address, "Something went wrong" for anything else. `pageMiddleware` renders it, not a
  * `routes/_error.tsx`: Fresh would render that one outside every middleware, without the security
  * headers.
@@ -17,18 +21,25 @@ import type { State } from "./utils.ts"
 export function renderErrorPage(ctx: FreshContext<State>, error: unknown): Promise<Response> {
   const status = error instanceof HttpError ? error.status : 500
   if (status >= 500) console.error(`${ctx.req.method} ${ctx.url.pathname} failed:`, error)
-  const notFound = status === 404
-  const title = notFound ? `Page not found` : `Something went wrong`
-  const description = notFound
-    ? `There is no page at this address.`
-    : `The page could not be shown. Try again in a minute.`
-  const spa = spaLinks(ctx.state.spaOrigin)
+  const { language, path } = pathLanguage(ctx.url.pathname)
   return Promise.resolve(ctx.render(
-    <SiteFrame
-      state={ctx.state}
-      path={ctx.url.pathname}
-      head={{ title, description, noindex: true }}
-    >
+    <SiteLanguage language={language}>
+      <ErrorPage state={ctx.state} path={path} notFound={status === 404} />
+    </SiteLanguage>,
+    { status },
+  ))
+}
+
+/** The error page's content, in the language of the address that failed. */
+function ErrorPage(
+  { state, path, notFound }: { state: State; path: string; notFound: boolean },
+): JSX.Element {
+  const { t, href, rich } = useSite()
+  const title = t.t(notFound ? `ErrorPage.notFoundTitle` : `ErrorPage.errorTitle`)
+  const description = t.t(notFound ? `ErrorPage.notFoundDescription` : `ErrorPage.errorDescription`)
+  const spa = spaLinks(state.spaOrigin)
+  return (
+    <SiteFrame state={state} path={path} head={{ title, description, noindex: true }}>
       <section
         aria-labelledby="error-title"
         class="site-glow flex min-h-[60vh] items-center"
@@ -41,9 +52,7 @@ export function renderErrorPage(ctx: FreshContext<State>, error: unknown): Promi
           </p>
           <h1 id="error-title" class="text-3xl font-semibold tracking-tight">{title}</h1>
           <p class="text-muted text-pretty">
-            {notFound
-              ? `The link may be old, or the page moved when this site was rebuilt. Here is where most people are headed:`
-              : description}
+            {notFound ? t.t(`ErrorPage.notFoundLead`) : description}
           </p>
           {notFound
             ? (
@@ -55,13 +64,15 @@ export function renderErrorPage(ctx: FreshContext<State>, error: unknown): Promi
                     data-umami-event="try-demo"
                     data-umami-event-from="not-found"
                   >
-                    {TRY_ENTRY.label}
+                    {t.t(TRY_ENTRY.label)}
                   </Button>
-                  <Button href="/" variant="outline">Back to the home page</Button>
+                  <Button href={href(`/`)} variant="outline">{t.t(`ErrorPage.home`)}</Button>
                 </div>
                 <ul class="flex flex-wrap gap-x-6 gap-y-2 font-medium">
                   <li>
-                    <a href="/features" class="text-primary underline">See the features</a>
+                    <a href={href(`/features`)} class="text-primary underline">
+                      {t.t(`ErrorPage.features`)}
+                    </a>
                   </li>
                   <li>
                     <a
@@ -70,25 +81,27 @@ export function renderErrorPage(ctx: FreshContext<State>, error: unknown): Promi
                       data-umami-event="hire-me"
                       data-umami-event-from="not-found"
                     >
-                      Hire me to build your MVP
+                      {t.t(`ErrorPage.hire`)}
                     </a>
                   </li>
                 </ul>
                 <p class="text-sm text-muted">
-                  If a link on this site sent you here,{" "}
-                  <a href={`${REPOSITORY_URL}/issues`} class="underline">tell me on GitHub</a>.
+                  {rich(`ErrorPage.report`, {
+                    issues: (text) => (
+                      <a href={`${REPOSITORY_URL}/issues`} class="underline">{text}</a>
+                    ),
+                  })}
                 </p>
               </>
             )
             : (
               <div class="flex w-full flex-col gap-4 sm:flex-row">
-                <Button href={ctx.url.pathname}>Try again</Button>
-                <Button href="/" variant="outline">Back to the home page</Button>
+                <Button href={href(path)}>{t.t(`ErrorPage.retry`)}</Button>
+                <Button href={href(`/`)} variant="outline">{t.t(`ErrorPage.home`)}</Button>
               </div>
             )}
         </div>
       </section>
-    </SiteFrame>,
-    { status },
-  ))
+    </SiteFrame>
+  )
 }

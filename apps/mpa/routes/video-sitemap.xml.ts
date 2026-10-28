@@ -1,6 +1,6 @@
 import { ADMIN_VIDEO } from "../admin-video.ts"
 import { define } from "../utils.ts"
-import { ADMIN_HERO } from "./admin.tsx"
+import { ADMIN_HERO } from "./[[lang]]/admin.tsx"
 
 /** Escapes the five characters XML gives a meaning to. */
 function xml(text: string): string {

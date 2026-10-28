@@ -1,6 +1,7 @@
 import type { ComponentChildren, JSX } from "preact"
 import { IconArrowRight, IconCheck, IconMinus } from "@spy4x/preact-icons"
 import { StatusMark } from "@spy4x/preact-ui/status-mark"
+import { useSite } from "../use-site.tsx"
 
 /** A part of a feature that is not built yet, with the open issue that tracks it when one exists. */
 export interface NotYet {
@@ -67,7 +68,7 @@ export function FeatureSection(
           data-umami-event="read-code"
           data-umami-event-from={id}
         >
-          {code.label} <IconArrowRight class="size-4" aria-hidden="true" />
+          {code.label} <IconArrowRight class="size-4 rtl:-scale-x-100" aria-hidden="true" />
         </a>
       </div>
       {visual && (
@@ -81,9 +82,10 @@ export function FeatureSection(
 
 /** The parts not built yet, in a dashed box: a status word and shape, never colour alone. */
 export function NotYetList({ items }: { items: readonly NotYet[] }): JSX.Element {
+  const { t } = useSite()
   return (
     <div class="flex flex-col gap-2 rounded-card border border-dashed border-strong p-4 text-sm">
-      <StatusMark status="wip" label="Not built yet" class="font-medium" />
+      <StatusMark status="wip" label={t.t(`HomeStatus.notBuilt`)} class="font-medium" />
       <ul class="flex flex-col gap-1 text-muted">
         {items.map((item) => (
           <li key={item.label} class="flex items-start gap-2">
@@ -94,7 +96,7 @@ export function NotYetList({ items }: { items: readonly NotYet[] }): JSX.Element
                 <>
                   {" ("}
                   <a href={item.issue} class="underline hover:text-foreground">
-                    issue #{item.issue.split(`/`).pop()}
+                    {t.t(`FeatureSection.issue`, { number: item.issue.split(`/`).pop() ?? `` })}
                   </a>
                   {")"}
                 </>
@@ -125,6 +127,7 @@ export interface FeatureTierProps {
 export function FeatureTier(
   { id, eyebrow, title, lead, status, children }: FeatureTierProps,
 ): JSX.Element {
+  const { t } = useSite()
   const headingId = `${id}-title`
   return (
     <section id={id} aria-labelledby={headingId} class="flex scroll-mt-16 flex-col gap-12">
@@ -138,7 +141,7 @@ export function FeatureTier(
         </h2>
         <p class="max-w-2xl text-lg text-muted text-pretty">{lead}</p>
         <p class="flex max-w-2xl flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-          <StatusMark status="ready" label="Works today" class="font-medium" />
+          <StatusMark status="ready" label={t.t(`HomeStatus.works`)} class="font-medium" />
           <span class="text-muted text-pretty">{status}</span>
         </p>
       </div>

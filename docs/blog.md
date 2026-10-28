@@ -17,7 +17,7 @@ Operators write posts in the admin app; the public website shows the published o
 | `apps/admin/src/modules/blog/`             | The admin pages: the list (`/blog`) and the editor (`/blog/new`, `/blog/:id`).        |
 | `libs/ui/admin-blog-*.tsx`                 | Their screens: the list, the editor and its dialogs.                                  |
 | `apps/api/routes/blog.ts`                  | `/api/blog/*`, public: `posts?topic=`, `posts/:slug`, `topics`, `feed`.               |
-| `apps/mpa/routes/blog/`, `apps/mpa/blog.ts` | The public pages, below.                                                             |
+| `apps/mpa/routes/[[lang]]/blog/`, `apps/mpa/blog.ts` | The public pages, below.                                                             |
 
 ## The life of a post
 

@@ -1,6 +1,9 @@
 // Seed's own site: see docs/start-a-product.md
-import { AUTHOR_URL, LegalPage, REPOSITORY_URL } from "../site.tsx"
-import { define } from "../utils.ts"
+// deno-lint-ignore-file ui-text/no-literal
+// This page is English at every language's address: a translated contract could say something the
+// English does not, so it is not translated (#276). The frame around it is.
+import { AUTHOR_URL, LegalPage, REPOSITORY_URL } from "../../site.tsx"
+import { define } from "../../utils.ts"
 
 const TERMS_SECTIONS = [
   { label: `What the demo is`, href: `#what` },

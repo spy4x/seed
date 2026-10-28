@@ -1,5 +1,6 @@
 // Seed's own site: see docs/start-a-product.md
 import type { JSX } from "preact"
+import { useSite } from "../use-site.tsx"
 
 /** A page of another product's site that the comparison was checked against. */
 export interface AlternativeSource {
@@ -33,6 +34,7 @@ export interface CompareAlternativesProps {
  * who should pick it instead, and the pages the facts were read on. Server-rendered, plain links.
  */
 export function CompareAlternatives({ items, checkedOn }: CompareAlternativesProps): JSX.Element {
+  const { t } = useSite()
   return (
     <ul class="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
       {items.map((item) => (
@@ -45,21 +47,21 @@ export function CompareAlternatives({ items, checkedOn }: CompareAlternativesPro
           >
             <h3 id={`${item.id}-title`} class="text-lg font-semibold">{item.name}</h3>
             <p class="text-pretty">
-              <span class="font-medium">Pick it when</span> {item.pickWhen}
+              <span class="font-medium">{t.t(`CompareAlt.pickWhen`)}</span> {item.pickWhen}
             </p>
             <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-              <dt class="text-muted">Price</dt>
+              <dt class="text-muted">{t.t(`CompareAlt.price`)}</dt>
               <dd>{item.price}</dd>
-              <dt class="text-muted">Licence</dt>
+              <dt class="text-muted">{t.t(`CompareAlt.licence`)}</dt>
               <dd>{item.licence}</dd>
-              <dt class="text-muted">Stack</dt>
+              <dt class="text-muted">{t.t(`CompareAlt.stack`)}</dt>
               <dd>{item.stack}</dd>
-              <dt class="text-muted">Hosting</dt>
+              <dt class="text-muted">{t.t(`CompareAlt.hosting`)}</dt>
               <dd>{item.hosting}</dd>
             </dl>
             {item.sources.length > 0 && (
               <div class="mt-auto flex flex-col gap-1 border-t border-subtle pt-4 text-sm">
-                <p class="text-muted">Pages read on {checkedOn}:</p>
+                <p class="text-muted">{t.t(`CompareAlt.pagesRead`, { date: checkedOn })}</p>
                 <ul class="flex flex-wrap gap-x-4">
                   {item.sources.map((source) => (
                     <li key={source.href}>

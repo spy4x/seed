@@ -11,7 +11,12 @@
         "http://127.0.0.1:48411/docs/api",
         "http://127.0.0.1:48411/subscribe",
         "http://127.0.0.1:48411/blog",
-        "http://127.0.0.1:48411/blog/hello-world"
+        "http://127.0.0.1:48411/blog/hello-world",
+        "http://127.0.0.1:48411/de",
+        "http://127.0.0.1:48411/ar",
+        "http://127.0.0.1:48411/ru/features",
+        "http://127.0.0.1:48411/es/pricing",
+        "http://127.0.0.1:48411/pt-BR/compare"
       ],
       "numberOfRuns": 3,
       "settings": {
