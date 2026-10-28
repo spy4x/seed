@@ -137,7 +137,6 @@ function CheckInbox(
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
                 class={TOUCH_TARGET}
                 data-e2e="sign-up-different-address"
                 onClick={onDifferentAddress}
