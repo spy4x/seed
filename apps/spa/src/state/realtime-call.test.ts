@@ -167,7 +167,7 @@ describe("refusals in the page's language", () => {
     ])
   })
 
-  it("words a REST refusal by its reason, and keeps a reasonless one's own sentence", async () => {
+  it("words a REST refusal by its reason, and a reasonless one by its code", async () => {
     const answer = (error: { code: string; message: string; reason?: string }) =>
       (() =>
         Promise.resolve({
@@ -196,7 +196,9 @@ describe("refusals in the page's language", () => {
     )
 
     expect(named.ok ? null : named.error.message).toBe("Тег с таким названием уже есть.")
-    expect(plain.ok ? null : plain.error.message).toBe("Enter another name")
+    expect(plain.ok ? null : plain.error.message).toBe(
+      "За это время здесь что-то изменилось. Обновите страницу и попробуйте ещё раз.",
+    )
   })
 })
 

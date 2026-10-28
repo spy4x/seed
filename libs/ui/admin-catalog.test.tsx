@@ -701,6 +701,7 @@ describe("the item editor's checks", () => {
       ok: false,
       field: `size:${SMALL}`,
       message: "Enter both ends of the height, or neither.",
+      failed: { [`size:${SMALL}`]: { code: "heightBothEnds" } },
     })
     const whole = catalogItemFields(
       draft({ sizes: [{ ...size, heightMax: "162" }] }),
