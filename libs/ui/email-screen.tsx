@@ -125,7 +125,6 @@ export interface EmailChangeProps {
   values: EmailValues
   onValueChange: (field: keyof EmailValues, value: string) => void
   errors: EmailMessages
-  /** What the API said when it accepted "Send a new code". */
   /** The address a new code just went to, said in the screen's own words; `null` for none. */
   notices: Pick<EmailMessages, "send">
   pending: Record<keyof EmailMessages, boolean>
