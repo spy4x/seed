@@ -307,6 +307,24 @@ const screens: Record<string, VNode> = {
     <SignUpCodeScreen
       isSignedIn={false}
       pending={{ email: `ada@example.com`, expiresAt: `2026-10-17T12:15:00.000Z` }}
+      exists={null}
+      minutes={10}
+      busy={false}
+      error={null}
+      resending={false}
+      resendNotice={null}
+      resendError={null}
+      onSubmit={nothing}
+      onResend={nothing}
+      onDifferentAddress={nothing}
+      onSignInInstead={nothing}
+      onForgotPassword={nothing}
+    />
+  ),
+  "sign-up code, an account exists": (
+    <SignUpCodeScreen
+      isSignedIn={false}
+      pending={{ email: `ada@example.com`, expiresAt: `2026-10-17T12:15:00.000Z` }}
       exists={{ email: `ada@example.com`, password: true, providers: [`google`] }}
       minutes={10}
       busy={false}
