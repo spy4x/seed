@@ -651,8 +651,10 @@ Deno.test("creating a token queues one mail to its owner, which names the token 
     await sql`UPDATE auth_keys SET proven_at = now() WHERE user_id = ${ada.userId}`
     await job(event)
     expect(sent.map((mail) => mail.to)).toEqual(["ada@example.com"])
-    expect(sent[0].text).toContain(`An API token named "Zapier" was created`)
-    expect(sent[0].text).toContain(`It can read and write the group "Personal" and never expires.`)
+    expect(sent[0].text).toContain(`An API token named "\u2068Zapier\u2069" was created`)
+    expect(sent[0].text).toContain(
+      `It can read and write the group "\u2068Personal\u2069" and never expires.`,
+    )
     expect(JSON.stringify(sent)).not.toContain(token.secret)
     expect(JSON.stringify(sent)).not.toContain(token.secret.slice(4))
   })
