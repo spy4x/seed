@@ -252,6 +252,9 @@ const ACCOUNT = "[data-e2e=rail-shell-bottom] [data-e2e=account-menu-button]"
 /** The account section of the phone's sheet. */
 const SHEET_ACCOUNT = "[data-e2e=rail-shell-dialog] [data-e2e=app-shell-sheet-account]"
 
+/** The account's Language entries: the rail menu's and the phone sheet's. */
+const LANGUAGE_ENTRIES = "[data-e2e=account-menu-language], [data-e2e=app-shell-sheet-language]"
+
 /** A language setting with each choice recorded: German chosen, Russian the device's. */
 function languageSetting(chosen: (string | null)[] = []) {
   return {
@@ -301,12 +304,13 @@ describe("AppFrame", () => {
     await mount(
       <AppFrame user={ada} onSignOut={() => {}} language={languageSetting(chosen)}>page</AppFrame>,
     )
-    const entries = document.querySelectorAll("[data-e2e=account-language]")
-    // One in the rail's menu, one in the phone's sheet.
-    expect([...entries].map((entry) => entry.textContent?.trim())).toEqual([
-      "Language: Deutsch",
-      "Language: Deutsch",
-    ])
+    // One in the rail's menu, one in the phone's sheet, drawn by the library's shell.
+    const entries = document.querySelectorAll<HTMLElement>(LANGUAGE_ENTRIES)
+    expect(entries).toHaveLength(2)
+    for (const entry of entries) {
+      expect(entry.textContent).toContain("Language")
+      expect(entry.querySelector("[lang=de]")?.textContent).toBe("Deutsch")
+    }
     expect(document.querySelector("[data-e2e=language-dialog]")).toBe(null)
 
     await act(() => (entries[0] as HTMLElement).click())
@@ -323,7 +327,7 @@ describe("AppFrame", () => {
 
   it("has no Language entry without a language setting", async () => {
     await mount(<AppFrame user={ada} onSignOut={() => {}}>page</AppFrame>)
-    expect(document.querySelector("[data-e2e=account-language]")).toBe(null)
+    expect(document.querySelector(LANGUAGE_ENTRIES)).toBe(null)
   })
 
   it("leaves the bell out while the unread count is unknown", async () => {
@@ -771,7 +775,8 @@ describe("PublicFrame", () => {
       </PublicFrame>,
     )
     const switcher = find("header [data-e2e=public-language]")
-    expect(switcher.getAttribute("aria-label")).toBe("Language: Deutsch")
+    // Named "Language Deutsch", the language in its own `lang`.
+    expect(switcher.textContent?.replace(/\s+/g, " ").trim()).toBe("Language Deutsch")
     expect(switcher.querySelector("[lang=de]")?.textContent).toBe("Deutsch")
 
     await act(() => switcher.click())

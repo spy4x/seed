@@ -6,7 +6,6 @@
   "Frame.search": "Поиск",
   "Frame.tags": "Теги",
   "Frame.shortcuts": "Быстрые клавиши",
-  "Frame.language": "Язык: {language}",
   "Frame.signOut": "Выйти",
   "Frame.user": "Пользователь",
   "Preferences.example": "Даты и время выглядят так: <value>{date}</value>.",

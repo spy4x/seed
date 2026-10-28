@@ -1,11 +1,10 @@
 import type { ComponentChildren, JSX } from "preact"
-import { useRef, useState } from "preact/hooks"
+import { useRef } from "preact/hooks"
 import { canViewActivity } from "@domain/groups"
 import {
   IconChartPie,
   IconClock,
   IconDocumentText,
-  IconGlobe,
   IconSearch,
   IconSprout,
   IconUsers,
@@ -19,9 +18,8 @@ import { RailEntry, type RailItem } from "@spy4x/preact-system/rail"
 import { BrandMark } from "@spy4x/preact-ui/brand-mark"
 import { Button } from "@spy4x/preact-ui/button"
 import { Link } from "@spy4x/preact-ui/link"
-import { LanguageDialog, languageName } from "@spy4x/preact-ui/language-picker"
-import { textDirection } from "@spy4x/platform/universal/i18n"
-import type { AccountMenuItem, AccountMenuLanguage } from "@spy4x/preact-system/account-menu"
+import { LanguageButton } from "@spy4x/preact-ui/language-picker"
+import type { AccountMenuLanguage } from "@spy4x/preact-system/account-menu"
 import { GroupPicker, type GroupPickerData, GroupSheet } from "./group-picker.tsx"
 import {
   GROUP_PATHS,
@@ -136,30 +134,6 @@ export function shortcutsMenuItems(
 }
 
 /**
- * The account menu's "Language" entry and the `LanguageDialog` it opens, when the frame is given
- * the language choice. `label` names the entry with the language in use, in the person's language:
- * "Language: Deutsch". The dialog is drawn by the frame, so it works from the rail's menu and from
- * the phone's sheet alike.
- */
-export function useLanguageEntry(
-  language: AccountMenuLanguage | undefined,
-  label: (name: string) => string,
-): { items: AccountMenuItem[]; dialog: JSX.Element | null } {
-  const [open, setOpen] = useState(false)
-  if (!language) return { items: [], dialog: null }
-  // The picker always offers the device's language as Automatic; English only without one.
-  const inUse = language.current ?? language.automatic ?? `en`
-  return {
-    items: [{
-      label: label(languageName(inUse)),
-      onClick: () => setOpen(true),
-      dataE2E: `account-language`,
-    }],
-    dialog: <LanguageDialog {...language} open={open} onClose={() => setOpen(false)} />,
-  }
-}
-
-/**
  * The signed-in frame: the library's `AppShell`, which draws every piece of chrome the same way in
  * every app, fed with this product's data.
  *
@@ -236,10 +210,6 @@ export function AppFrame(
   const searchItem = searchEntry(shortcuts?.singleKeys ?? true, t.t("Frame.search"))
   const searchRoot = useRef<HTMLDivElement>(null)
   const sheetSearch = useRef<HTMLDivElement>(null)
-  const languageEntry = useLanguageEntry(
-    language,
-    (name) => t.t("Frame.language", { language: name }),
-  )
   const open = () => openSearch(searchRoot.current)
   const openFromSheet = () => {
     const sheet = sheetSearch.current?.closest("dialog")
@@ -285,10 +255,10 @@ export function AppFrame(
         headerHref: SCREEN_PATHS.profile,
         items: [
           { label: t.t("Frame.tags"), href: TAG_PATHS.list },
-          ...languageEntry.items,
           ...shortcutsMenuItems(shortcuts, t.t("Frame.shortcuts")),
         ],
         signOut: { label: t.t("Frame.signOut"), onClick: onSignOut },
+        language,
       }}
       connection={connection}
       banner={banner}
@@ -297,7 +267,6 @@ export function AppFrame(
       {children}
       {hasSearch && <div ref={searchRoot}>{search}</div>}
       {shortcuts && <ShortcutsList {...shortcuts} />}
-      {languageEntry.dialog}
     </AppShell>
   )
 }
@@ -331,31 +300,6 @@ function SignOutForm({ onSignOut }: { onSignOut: () => void }): JSX.Element {
 }
 
 /**
- * The signed-out header's language switch: a globe and the language in use, by its own name,
- * opening `LanguageDialog`. Its name says what it is in the page's language: "Language: Deutsch".
- */
-function LanguageButton({ language }: { language: AccountMenuLanguage }): JSX.Element {
-  const t = useAppText()
-  const [open, setOpen] = useState(false)
-  const inUse = language.current ?? language.automatic ?? `en`
-  const name = languageName(inUse)
-  return (
-    <>
-      <Button
-        variant="ghost"
-        onClick={() => setOpen(true)}
-        aria-label={t.t("Frame.language", { language: name })}
-        data-e2e="public-language"
-      >
-        <IconGlobe class="size-4" aria-hidden="true" />
-        <span lang={inUse} dir={textDirection(inUse)}>{name}</span>
-      </Button>
-      <LanguageDialog {...language} open={open} onClose={() => setOpen(false)} />
-    </>
-  )
-}
-
-/**
  * The frame for sign-in, sign-up, the second factor and the other signed-out pages: the brand above
  * a narrow, centred column, aligned with it. A user who passed the password step but not the second
  * factor also gets Sign out. With `language`, the header offers the language too, by its own name, so
@@ -376,7 +320,7 @@ export function PublicFrame(
       <header class="mx-auto flex w-full max-w-md items-center justify-between gap-4 px-4 pt-8 pb-6 sm:pt-16">
         <Brand navigate={navigate} />
         <div class="flex items-center gap-2">
-          {language && <LanguageButton language={language} />}
+          {language && <LanguageButton {...language} buttonDataE2E="public-language" />}
           {canSignOut && <SignOutForm onSignOut={onSignOut} />}
         </div>
       </header>

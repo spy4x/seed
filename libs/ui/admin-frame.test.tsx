@@ -271,11 +271,14 @@ describe("AdminShell", () => {
         page
       </AdminShell>,
     )
-    const entries = document.querySelectorAll<HTMLElement>("[data-e2e=account-language]")
-    expect([...entries].map((entry) => entry.textContent?.trim())).toEqual([
-      "Language: Русский",
-      "Language: Русский",
-    ])
+    // The rail menu's entry and the phone sheet's, each with the language in its own name.
+    const entries = document.querySelectorAll<HTMLElement>(
+      "[data-e2e=account-menu-language], [data-e2e=app-shell-sheet-language]",
+    )
+    expect(entries).toHaveLength(2)
+    for (const entry of entries) {
+      expect(entry.querySelector("[lang=ru]")?.textContent).toBe("Русский")
+    }
 
     await act(() => entries[1].click())
     const dialog = find("[data-e2e=language-dialog]")

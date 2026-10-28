@@ -6,7 +6,6 @@
   "Frame.search": "Buscar",
   "Frame.tags": "Etiquetas",
   "Frame.shortcuts": "Atajos de teclado",
-  "Frame.language": "Idioma: {language}",
   "Frame.signOut": "Cerrar sesión",
   "Frame.user": "Usuario",
   "Preferences.example": "Las fechas y horas se ven así: <value>{date}</value>.",

@@ -107,7 +107,7 @@ test.describe("the interface language", () => {
 
       // The operator's own menu sets the admin app's language on this device, over the account's.
       await ops.locator("[data-e2e=rail-shell-bottom] [data-e2e=account-menu-button]").click()
-      await ops.locator("[data-e2e=account-language]:visible").click()
+      await ops.locator("[data-e2e=account-menu-language]").click()
       await ops.locator("[data-e2e=language-dialog]").getByRole("radio", {
         name: "Español",
         exact: true,

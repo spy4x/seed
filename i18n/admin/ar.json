@@ -2,7 +2,6 @@
   "AdminFrame.tag": "المشرف",
   "AdminFrame.sections": "أقسام الإدارة",
   "AdminFrame.shortcuts": "اختصارات لوحة المفاتيح",
-  "AdminFrame.language": "اللغة: {language}",
   "AdminFrame.signOut": "تسجيل الخروج",
   "AdminFrame.comingSoon": "قسم «{title}» قادم قريبًا",
   "AdminFrame.noAccess": "لا يوجد وصول",

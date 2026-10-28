@@ -11,12 +11,7 @@ import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { AuthCard } from "./auth-screen.tsx"
-import {
-  type FrameShortcuts,
-  type FrameTheme,
-  shortcutsMenuItems,
-  useLanguageEntry,
-} from "./frame.tsx"
+import { type FrameShortcuts, type FrameTheme, shortcutsMenuItems } from "./frame.tsx"
 import { ShortcutsList } from "./shortcuts.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useAdminText } from "./i18n.ts"
@@ -111,10 +106,6 @@ export function AdminShell(
   },
 ): JSX.Element {
   const t = useAdminText()
-  const languageEntry = useLanguageEntry(
-    language,
-    (name) => t.t("AdminFrame.language", { language: name }),
-  )
   return (
     <AppShell
       items={navItems.map(({ name, href, Icon }) => ({ key: href, label: name, href, Icon }))}
@@ -126,21 +117,18 @@ export function AdminShell(
           name: operator.name,
           email: operator.email && operator.email !== operator.name ? operator.email : undefined,
         },
-        items: [
-          ...languageEntry.items,
-          ...shortcutsMenuItems(shortcuts, t.t("AdminFrame.shortcuts")),
-        ],
+        items: shortcutsMenuItems(shortcuts, t.t("AdminFrame.shortcuts")),
         theme: theme?.preference.value,
         onThemeChange: theme && ((choice) => theme.set(choice)),
         signOut: { label: t.t("AdminFrame.signOut"), onClick: onSignOut },
         tag: t.t("AdminFrame.tag"),
+        language,
       }}
       width="wide"
       labels={{ nav: t.t("AdminFrame.sections") }}
     >
       {children}
       {shortcuts && <ShortcutsList {...shortcuts} />}
-      {languageEntry.dialog}
     </AppShell>
   )
 }

@@ -2,7 +2,6 @@
   "AdminFrame.tag": "Admin",
   "AdminFrame.sections": "Admin sections",
   "AdminFrame.shortcuts": "Keyboard shortcuts",
-  "AdminFrame.language": "Language: {language}",
   "AdminFrame.signOut": "Sign out",
   "AdminFrame.comingSoon": "{title} is coming soon",
   "AdminFrame.noAccess": "No access",

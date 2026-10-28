@@ -2,7 +2,6 @@
   "AdminFrame.tag": "Админ",
   "AdminFrame.sections": "Разделы админки",
   "AdminFrame.shortcuts": "Быстрые клавиши",
-  "AdminFrame.language": "Язык: {language}",
   "AdminFrame.signOut": "Выйти",
   "AdminFrame.comingSoon": "Раздел «{title}» скоро появится",
   "AdminFrame.noAccess": "Нет доступа",
