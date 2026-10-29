@@ -114,6 +114,15 @@ describe("the profile's Telegram row", () => {
     expect(find("[data-e2e=telegram-code]").textContent).toContain(`/link ${CODE.code}`)
   })
 
+  it("names the bot's Link button in the dialog's step, and breaks the code where its box ends, not early at a hyphen", async () => {
+    await mount(<TelegramLink {...linkProps([], { code: CODE })} />)
+    expect(find("[data-e2e=telegram-code-dialog]").textContent).toContain(
+      "press Start, then Link. This window closes once your account is linked.",
+    )
+    // `word-break` is inherited, so the class on the block reaches the code inside it.
+    expect(find("[data-e2e=telegram-code] > div").classList.contains("break-all")).toBe(true)
+  })
+
   it("returns focus to Link Telegram when the code dialog closes", async () => {
     await mount(<TelegramLink {...linkProps([])} />)
     find("[data-e2e=telegram-link]").focus()

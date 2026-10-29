@@ -54,10 +54,17 @@ export function fakeTelegram(answer: FakeTelegramAnswer = OK) {
 
 let nextUpdate = 1
 
+/** Who sends an update, where, and in which interface language (`language_code`). */
+interface Sender {
+  from?: number
+  chat?: string
+  language?: string
+}
+
 /** A text message from {@link TELEGRAM_USER_ID}, in a private chat unless `chat` says otherwise. */
 export function textUpdate(
   text: string,
-  { from = TELEGRAM_USER_ID, chat = `private` }: { from?: number; chat?: string } = {},
+  { from = TELEGRAM_USER_ID, chat = `private`, language }: Sender = {},
 ): TelegramUpdate {
   return {
     update_id: nextUpdate++,
@@ -65,7 +72,7 @@ export function textUpdate(
       message_id: nextUpdate,
       date: 1_790_000_000,
       chat: { id: chat === `private` ? from : -100_200, type: chat },
-      from: { id: from, is_bot: false, first_name: `Ada` },
+      from: { id: from, is_bot: false, first_name: `Ada`, language_code: language },
       text,
     },
   } as TelegramUpdate
@@ -74,13 +81,13 @@ export function textUpdate(
 /** A press of the button carrying `data`, by {@link TELEGRAM_USER_ID} unless `from` says. */
 export function callbackUpdate(
   data: string,
-  { from = TELEGRAM_USER_ID, chat = `private` }: { from?: number; chat?: string } = {},
+  { from = TELEGRAM_USER_ID, chat = `private`, language }: Sender = {},
 ): TelegramUpdate {
   return {
     update_id: nextUpdate++,
     callback_query: {
       id: String(nextUpdate),
-      from: { id: from, is_bot: false, first_name: `Ada` },
+      from: { id: from, is_bot: false, first_name: `Ada`, language_code: language },
       data,
       message: {
         message_id: nextUpdate,

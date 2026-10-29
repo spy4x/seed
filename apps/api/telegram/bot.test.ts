@@ -4,7 +4,7 @@ import { GroupSelectedQuery } from "@domain/groups"
 import { type Actor, UserMFAStatus } from "@domain/identity"
 import { NoteListQuery } from "@domain/notes"
 import type { TelegramAccountLabel } from "@server/auth/telegram.ts"
-import { BOT_TEXT, createSeedBot, menuCommands, type TelegramLinkService } from "./bot.ts"
+import { botText, createSeedBot, menuCommands, type TelegramLinkService } from "./bot.ts"
 import { createTelegramProduct } from "./commands.ts"
 import type { TelegramProduct } from "./extension.ts"
 import { callbackUpdate, fakeTelegram, TELEGRAM_USER_ID, textUpdate } from "./fake-telegram.ts"
@@ -15,6 +15,9 @@ const groupId = `7b6d8d6c-1af5-7f04-8ae4-b1ee5d111002`
 const ADA: TelegramAccountLabel = { firstName: `Ada`, maskedAddress: `a•••@example.com` }
 const ASK =
   `Press "Link" only if it is your own account. If you did not ask for this, ignore this message.`
+const BOT_TEXT = botText(`en`)
+/** A value as the bot isolates it inside a message: between FSI and PDI. */
+const iso = (value: string) => `\u2068${value}\u2069`
 
 /**
  * Links kept in memory: a code works once and only from its Telegram user's "Link" press, as the
@@ -40,7 +43,7 @@ function memoryLinks(linked = false, label = ADA) {
     },
     spend: (code) => (codes.delete(code), Promise.resolve()),
     link: (token, telegramUserId) => {
-      if (tokens.get(token) !== telegramUserId) return Promise.resolve(`invalid`)
+      if (tokens.get(token) !== telegramUserId) return Promise.resolve(`stale`)
       tokens.delete(token)
       owner = telegramUserId
       return Promise.resolve(`linked`)
@@ -79,8 +82,10 @@ function bot(
   return {
     ...telegram,
     button,
-    handle: (text: string, chat?: string) => seed.handleUpdate(textUpdate(text, { chat })),
-    press: (data: string, from?: number) => seed.handleUpdate(callbackUpdate(data, { from })),
+    handle: (text: string, chat?: string, language?: string) =>
+      seed.handleUpdate(textUpdate(text, { chat, language })),
+    press: (data: string, from?: number, language?: string) =>
+      seed.handleUpdate(callbackUpdate(data, { from, language })),
   }
 }
 
@@ -92,7 +97,9 @@ describe(`Seed's Telegram bot`, () => {
     await handle(`/start ${CODE}`)
     expect(links.linked()).toBe(false)
     expect(sent()).toEqual([
-      `Link this Telegram to Ada's account on app.example.com (a•••@example.com)? ${ASK}`,
+      `Link this Telegram to ${iso(`Ada`)}'s account on ${iso(`app.example.com`)} (${
+        iso(`a•••@example.com`)
+      })? ${ASK}`,
     ])
 
     await press(button())
@@ -107,8 +114,86 @@ describe(`Seed's Telegram bot`, () => {
 
     await handle(`/start ${CODE}`)
     expect(sent()).toEqual([
-      `Link this Telegram to an account on app.example.com with no name or address? ${ASK}`,
+      `Link this Telegram to an account on ${
+        iso(`app.example.com`)
+      } with no name or address? ${ASK}`,
     ])
+  })
+
+  it(`names an account with an address and no first name by the masked address alone`, async () => {
+    const { handle, sent } = bot({
+      links: memoryLinks(false, { firstName: ``, maskedAddress: `a•••@example.com` }),
+    })
+
+    await handle(`/start ${CODE}`)
+    expect(sent()).toEqual([
+      `Link this Telegram to an account on ${iso(`app.example.com`)} (${
+        iso(`a•••@example.com`)
+      })? ${ASK}`,
+    ])
+  })
+
+  it(`names an account with a first name and no address by the name alone`, async () => {
+    const { handle, sent } = bot({
+      links: memoryLinks(false, { firstName: `Ada`, maskedAddress: null }),
+    })
+
+    await handle(`/start ${CODE}`)
+    expect(sent()).toEqual([
+      `Link this Telegram to ${iso(`Ada`)}'s account on ${iso(`app.example.com`)}? ${ASK}`,
+    ])
+  })
+
+  it(`asks and labels the Link button in the Telegram user's language`, async () => {
+    const { handle, sent, calls } = bot()
+
+    await handle(`/start ${CODE}`, undefined, `ru`)
+
+    expect(sent()).toEqual([botText(`ru`).confirm(ADA, `app.example.com`)])
+    expect(sent()[0]).toContain(`«Привязать»`)
+    const markup = calls.at(-1)?.params.reply_markup as { inline_keyboard: { text: string }[][] }
+    expect(markup.inline_keyboard[0][0].text).toBe(`Привязать`)
+  })
+
+  it(`answers in English when Telegram reports a language the app does not offer`, async () => {
+    const { handle, sent } = bot()
+
+    await handle(`/link`, undefined, `ja`)
+
+    expect(sent()).toEqual([BOT_TEXT.howToLink(`https://app.example.com/profile/notifications`)])
+  })
+
+  it(`answers a used Link button as a stale button, not as a mistyped code, and links nothing more`, async () => {
+    const links = memoryLinks()
+    const { handle, press, button, sent } = bot({ links })
+    await handle(`/link ${CODE}`)
+    const used = button()
+    await press(used)
+    await links.unlink(TELEGRAM_USER_ID)
+
+    await press(used)
+
+    expect(links.linked()).toBe(false)
+    expect(sent().at(-1)).toBe(BOT_TEXT.stale)
+    expect(BOT_TEXT.stale).not.toBe(BOT_TEXT.invalid)
+  })
+
+  it(`takes the Link button off its message once it is pressed, whatever the press ends in`, async () => {
+    const links = memoryLinks()
+    const { handle, press, button, calls } = bot({ links })
+    await handle(`/link ${CODE}`)
+    const data = button()
+
+    await press(data)
+    await press(data)
+
+    const removals = calls.filter((call) => call.method === `editMessageReplyMarkup`)
+    expect(removals).toHaveLength(2)
+    for (const removal of removals) {
+      expect(removal.params.chat_id).toBe(TELEGRAM_USER_ID)
+      expect(typeof removal.params.message_id).toBe(`number`)
+      expect(removal.params.reply_markup).toBeUndefined()
+    }
   })
 
   it(`links nothing when another Telegram user presses the Link button`, async () => {
@@ -119,7 +204,7 @@ describe(`Seed's Telegram bot`, () => {
     await press(button(), TELEGRAM_USER_ID + 1)
 
     expect(links.linked()).toBe(false)
-    expect(sent().at(-1)).toBe(BOT_TEXT.invalid)
+    expect(sent().at(-1)).toBe(BOT_TEXT.stale)
   })
 
   it(`refuses a code used once already, and offers no Link button for it`, async () => {

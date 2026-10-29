@@ -1175,7 +1175,7 @@
   "ProfileTelegram.link": "Link Telegram",
   "ProfileTelegram.unlinkTitle": "Unlink Telegram?",
   "ProfileTelegram.unlinkText": "Your notifications stop reaching Telegram, and {bot} can no longer act for you there. To link it again you need a new code.",
-  "ProfileTelegram.open": "Open the chat with <strong>{bot}</strong> and press Start, then Link. This window closes once your account is linked.",
+  "ProfileTelegram.open": "Open the chat with <strong>{bot}</strong> and press Start, then {button}. This window closes once your account is linked.",
   "ProfileTelegram.openButton": "Open Telegram",
   "ProfileTelegram.elsewhere": "Telegram on another device? Send {bot} this message:",
   "ProfileTelegram.message": "Message to send",
@@ -1467,6 +1467,29 @@
     "other": "\"{name}\" was deleted and taken off {count} notes."
   },
   "TelegramNotification.open": "Open",
+  "TelegramBot.linkButton": "Link",
+  "TelegramBot.confirmNameAddress": "Link this Telegram to {name}'s account on {app} ({address})? Press \"{button}\" only if it is your own account. If you did not ask for this, ignore this message.",
+  "TelegramBot.confirmName": "Link this Telegram to {name}'s account on {app}? Press \"{button}\" only if it is your own account. If you did not ask for this, ignore this message.",
+  "TelegramBot.confirmAddress": "Link this Telegram to an account on {app} ({address})? Press \"{button}\" only if it is your own account. If you did not ask for this, ignore this message.",
+  "TelegramBot.confirmAnonymous": "Link this Telegram to an account on {app} with no name or address? Press \"{button}\" only if it is your own account. If you did not ask for this, ignore this message.",
+  "TelegramBot.linked": "Done: this chat is linked to your account. Your notifications come here now. Send /help to see what I can do.",
+  "TelegramBot.already": "This Telegram account is already linked to your account.",
+  "TelegramBot.taken": "This Telegram account is linked to another account. Send /unlink first, then the code again.",
+  "TelegramBot.invalid": {
+    "one": "That code does not work. It may be mistyped, used already or older than {count} minute. Make a new one in the app.",
+    "other": "That code does not work. It may be mistyped, used already or older than {count} minutes. Make a new one in the app."
+  },
+  "TelegramBot.stale": {
+    "one": "This button no longer works. It was used already, a newer one replaced it, or it is older than {count} minute. To link this chat, make a new code in the app.",
+    "other": "This button no longer works. It was used already, a newer one replaced it, or it is older than {count} minutes. To link this chat, make a new code in the app."
+  },
+  "TelegramBot.privateOnly": "Send me that in a private chat.",
+  "TelegramBot.codeSpent": "That code was sent where others can read it, so it no longer works. Make a new one in the app and send it to me in a private chat.",
+  "TelegramBot.unlinked": "Unlinked. This chat gets no more notifications from your account.",
+  "TelegramBot.notLinked": "This Telegram account is not linked to an account.",
+  "TelegramBot.howToLink": "To link your account, open {url}, choose \"{action}\" and send me the code it shows.",
+  "TelegramBot.hello": "Hi! Your account is linked. Send /help to see what I can do.",
+  "TelegramBot.helloName": "Hi {name}! Your account is linked. Send /help to see what I can do.",
   "UndoToast.title": "Note deleted",
   "UndoToast.deleted": "\"{title}\" was deleted.",
   "UndoToast.deletedUntitled": "The note was deleted.",

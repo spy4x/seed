@@ -42,6 +42,11 @@ a token of its own: one token takes updates by polling or by webhook, never both
   app closes the dialog. A wrong, used or expired code is refused, and so is a Telegram account
   linked to someone else. Linking a second Telegram account replaces the first, with an unlink
   row for it.
+- Every press takes the "Link" button off its message. A button that no longer works (used,
+  replaced by a newer one, expired, or pressed by another Telegram user) gets its own answer, not
+  the one for a wrong code, and links nothing.
+- The bot answers in the language Telegram reports for the person (`language_code`) when the app
+  offers it, else in English. Its words are the `TelegramBot.*` keys of the `app` catalog.
 - A code sent in a group is spent without linking, because others in the group could read it.
 - `/unlink` in the chat, "Unlink" on the profile (after a confirmation), or an operator's "Unlink
   Telegram" in the admin panel ends it, each with an audit row. A password reset or change ends
