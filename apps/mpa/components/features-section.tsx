@@ -68,7 +68,7 @@ export function FeatureSection(
           data-umami-event="read-code"
           data-umami-event-from={id}
         >
-          {code.label} <IconArrowRight class="size-4 rtl:-scale-x-100" aria-hidden="true" />
+          {code.label} <IconArrowRight class="size-4" aria-hidden="true" />
         </a>
       </div>
       {visual && (
