@@ -9,6 +9,7 @@ import { NEW_GROUP_PATH, roleName } from "./groups-screen.tsx"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAppText } from "./i18n.ts"
 import { type Navigate, SCREEN_PATHS } from "./progressive.tsx"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /** One group of the switcher: its name, and the person's role in it. */
 export interface PickerGroup {
@@ -55,7 +56,7 @@ export function switcherLabel(t: Translator<string>, selected: PickerGroup | nul
 /** The switcher's tooltip: the group's name and the person's role there, `Home · Owner`. */
 export function switcherTip(t: Translator<string>, selected: PickerGroup | null): string {
   return selected
-    ? t.t(`GroupPicker.tip`, { name: selected.name, role: roleName(t, selected.role) })
+    ? t.t(`GroupPicker.tip`, { name: isolate(selected.name), role: roleName(t, selected.role) })
     : t.t(`GroupPicker.choose`)
 }
 
@@ -90,9 +91,9 @@ export function GroupPicker(
         triggerLabel={switcherLabel(t, selected)}
         triggerDataE2E="group-picker"
         triggerClasses={`flex size-12 cursor-pointer items-center justify-center rounded-[var(--radius-primary,0.5rem)] hover:bg-canvas ${railFocusRing}`}
-        containerClasses="relative flex text-left"
-        panelClasses="z-30 w-60 max-w-[calc(100vw-5rem)] left-[calc(100%+1.25rem)] top-0 mt-0"
-        horizontal="left"
+        containerClasses="relative flex text-start"
+        panelClasses="z-30 w-60 max-w-[calc(100vw-5rem)] start-[calc(100%+1.25rem)] top-0 mt-0"
+        horizontal="start"
         vertical="down"
         menuLabel={t.t(`GroupPicker.menu`)}
       >
@@ -123,7 +124,7 @@ export function GroupPicker(
 }
 
 const sheetRow =
-  "flex min-h-11 w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-canvas"
+  "flex min-h-11 w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-start text-sm hover:bg-canvas"
 
 /** "All groups" and "New group": rows like the sheet's own (Profile, Sign out), with an icon. */
 const sheetLink = `${sheetRow} ${railFocusRing} font-medium text-muted hover:text-foreground`

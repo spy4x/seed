@@ -23,6 +23,7 @@ import { GroupActivityView } from "./GroupActivityView.tsx"
 import { toasts } from "../state/toasts.ts"
 import { isSpaPath } from "./spa-paths.ts"
 import { currentLayer } from "../modules.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 const network = createOnlineStatus()
 
@@ -63,7 +64,7 @@ export async function createAndOpen(
   void selection.select(group.id)
   notices.success({
     title: t.t(`GroupEditor.created`),
-    body: t.t(`GroupEditor.createdBody`, { name: group.name }),
+    body: t.t(`GroupEditor.createdBody`, { name: isolate(group.name) }),
     dataE2E: "group-created",
   })
   return true
@@ -84,7 +85,7 @@ export async function saveAndAnnounce(
   notices.success({
     title: t.t(`GroupEditor.saved`),
     body: saved
-      ? t.t(`GroupEditor.savedBody`, { name: saved.name })
+      ? t.t(`GroupEditor.savedBody`, { name: isolate(saved.name) })
       : t.t(`GroupEditor.savedBodyUnnamed`),
     dataE2E: "group-saved",
   })
@@ -174,7 +175,7 @@ function discardMessage(t: Translator<string>, groupId: string | null): string {
   if (groupId === null) return t.t(`GroupEditor.discardNew`)
   const name = groupsStore.groups.value.find((group) => group.id === groupId)?.name
   return name
-    ? t.t(`GroupEditor.discardExisting`, { name })
+    ? t.t(`GroupEditor.discardExisting`, { name: isolate(name) })
     : t.t(`GroupEditor.discardExistingUnnamed`)
 }
 

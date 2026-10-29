@@ -2,6 +2,7 @@ import type { Translator } from "@spy4x/platform/universal/i18n"
 import type { notesStore } from "../state/notes.ts"
 import type { tagsStore } from "../state/tags.ts"
 import type { toasts } from "../state/toasts.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /**
  * Deletes a tag and, when it worked, says so in a toast that names it and how many notes lost it.
@@ -24,8 +25,8 @@ export async function deleteAndAnnounce(
   notices.success({
     title: t.t(`TagToasts.deletedTitle`),
     body: count === 0
-      ? t.t(`TagToasts.deleted`, { name })
-      : t.t(`TagToasts.deletedFromNotes`, { name, count }),
+      ? t.t(`TagToasts.deleted`, { name: isolate(name) })
+      : t.t(`TagToasts.deletedFromNotes`, { name: isolate(name), count }),
     dataE2E: "tag-deleted",
   })
   return true

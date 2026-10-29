@@ -134,7 +134,7 @@ describe("OfflineStatus", () => {
     expect(root!.querySelector("[data-e2e=tag-sync-conflict]")).not.toBeNull()
     expect(root!.querySelector("[data-e2e=conflict-mine]")?.textContent).toBe("Mine (Red)")
     expect(root!.querySelector("[data-e2e=conflict-theirs]")?.textContent).toBe("Theirs (Blue)")
-    expect(text()).toContain("Tag Mine")
+    expect(text()).toContain("Tag \u2068Mine\u2069")
   })
 
   it("keeps a section gap between itself and the page header under it", async () => {
@@ -183,7 +183,7 @@ describe("OfflineStatus", () => {
     )
     expect(text()).toContain("Ваша версия")
     expect(text()).toContain("Версия на сервере")
-    expect(text()).toContain("Тег Mine")
+    expect(text()).toContain("Тег \u2068Mine\u2069")
     expect(text()).not.toContain("Your version")
   })
 

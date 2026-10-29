@@ -33,6 +33,7 @@ import {
   type NoteFilters,
   type NoteSort,
 } from "./notes-filter.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /**
  * Where focus goes once the list changes: after the row of note `id` (at `index`) leaves, the row
@@ -527,7 +528,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
               title={loading ? t.t(`Notes.loading`) : t.t(`Notes.empty`)}
               description={loading || !group.canWrite
                 ? undefined
-                : t.t(`Notes.emptyHint`, { group: group.name })}
+                : t.t(`Notes.emptyHint`, { group: isolate(group.name) })}
               action={!loading && group.canWrite && (
                 <Button
                   href={NOTE_PATHS.new}
@@ -910,7 +911,7 @@ function NoteItem(
           <NoteTags tagIds={note.tagIds} tags={tags} max={ROW_TAGS} />
         </div>
       </div>
-      <div class="hidden shrink-0 flex-col items-end gap-1 text-right text-sm text-muted sm:flex">
+      <div class="hidden shrink-0 flex-col items-end gap-1 text-end text-sm text-muted sm:flex">
         {note.updatedAt && <Stamp kind="updated" at={note.updatedAt} />}
         {note.createdAt && <Stamp kind="created" at={note.createdAt} day />}
       </div>
@@ -942,13 +943,13 @@ function NoteItem(
           // clear of it.
           <>
             <div
-              class={`relative flex min-w-0 flex-1 py-3 pl-4 sm:pl-6 ${
-                menu ? "pr-2" : "pr-4 sm:pr-6"
+              class={`relative flex min-w-0 flex-1 py-3 ps-4 sm:ps-6 ${
+                menu ? "pe-2" : "pe-4 sm:pe-6"
               }`}
             >
               {summary}
             </div>
-            {menu && <div class="flex shrink-0 items-center px-2 sm:pr-4">{menu}</div>}
+            {menu && <div class="flex shrink-0 items-center px-2 sm:pe-4">{menu}</div>}
           </>
         )}
     </li>

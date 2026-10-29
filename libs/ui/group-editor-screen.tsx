@@ -43,6 +43,7 @@ import { GroupMoveAllForm, type MoveAllResult } from "./group-move-all.tsx"
 import type { MoveTarget } from "./notes-screen.tsx"
 import { GROUP_PATHS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { FORM_WIDTH, useWaited } from "./tag-editor-screen.tsx"
+import { Isolated } from "@spy4x/preact-ui/bdi"
 
 /** What the editor's fields hold. The emoji is the text typed, an empty string for none. */
 export interface GroupDraft {
@@ -584,7 +585,12 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
       {dialog === Dialog.TRANSFER && canHandOver && (
         <Modal
           open
-          title={t.t(`GroupEditor.transferTitle`, { name: group.name })}
+          title={
+            <Isolated
+              message={(name) => t.t(`GroupEditor.transferTitle`, { name })}
+              value={group.name}
+            />
+          }
           cancelLabel={t.t(`GroupEditor.close`)}
           closeOnBackdrop={false}
           onClose={close}
@@ -597,7 +603,12 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
       {dialog === Dialog.MOVE_ALL && canMoveAll && (
         <Modal
           open
-          title={t.t(`GroupEditor.moveAllTitle`, { name: group.name })}
+          title={
+            <Isolated
+              message={(name) => t.t(`GroupEditor.moveAllTitle`, { name })}
+              value={group.name}
+            />
+          }
           cancelLabel={t.t(`GroupEditor.close`)}
           closeOnBackdrop={false}
           onClose={close}
@@ -627,7 +638,12 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
 
       {dialog === Dialog.LEAVE && (
         <ConfirmDialog
-          title={t.t(`GroupEditor.leaveTitle`, { name: group.name })}
+          title={
+            <Isolated
+              message={(name) => t.t(`GroupEditor.leaveTitle`, { name })}
+              value={group.name}
+            />
+          }
           confirmLabel={t.t(`GroupEditor.leave`)}
           cancelLabel={t.t(`GroupEditor.cancel`)}
           tone="danger"
@@ -648,7 +664,12 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
 
       {dialog === Dialog.DELETE && (
         <ConfirmDialog
-          title={t.t(`GroupEditor.deleteTitle`, { name: group.name })}
+          title={
+            <Isolated
+              message={(name) => t.t(`GroupEditor.deleteTitle`, { name })}
+              value={group.name}
+            />
+          }
           confirmLabel={t.t(`GroupEditor.delete`)}
           cancelLabel={t.t(`GroupEditor.cancel`)}
           tone="danger"
@@ -724,7 +745,7 @@ function GroupForm(
   }, [showFooter, saving, group?.id])
   const t = useAppText()
   const change = (patch: Partial<GroupDraft>) => onChange?.({ ...value, ...patch })
-  const optional = <span class="ml-2 font-normal text-muted">{t.t(`GroupEditor.optional`)}</span>
+  const optional = <span class="ms-2 font-normal text-muted">{t.t(`GroupEditor.optional`)}</span>
   return (
     <>
       {offline && (
@@ -879,7 +900,7 @@ function MenuText(
   { text, hint, hintDataE2E }: { text: string; hint: string | null; hintDataE2E: string },
 ): JSX.Element {
   return (
-    <span class="flex flex-col items-start gap-1 text-left">
+    <span class="flex flex-col items-start gap-1 text-start">
       <span>{text}</span>
       {hint && <span class="text-xs text-muted" data-e2e={hintDataE2E}>{hint}</span>}
     </span>

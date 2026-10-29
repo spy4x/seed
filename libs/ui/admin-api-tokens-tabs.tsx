@@ -173,7 +173,7 @@ export function AdminPersonDevicesPanel(
               />
             </span>
             {!own && (
-              <span class="ml-auto">
+              <span class="ms-auto">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -236,7 +236,7 @@ export function AdminPersonNotificationsPanel(
               <span class="text-sm text-muted">
                 <Ago at={notification.createdAt} />
               </span>
-              <span class="ml-auto">
+              <span class="ms-auto">
                 {notification.readAt
                   ? <Badge text={t.t(`AdminPersonTabs.read`)} color="gray" type="outline" />
                   : <Badge text={t.t(`AdminPersonTabs.unread`)} color="blue" />}

@@ -184,3 +184,24 @@ it(`reads the last payment again after a refund instead of waiting for a webhook
   expect(calls.at(-1)?.path).toBe(`/api/admin/billing/${GROUP_ID}/payment`)
   expect(state.customer.value.waiting).toBe(null)
 })
+
+it(`keeps the group's name whole in the refund and free time toasts that name an amount or a date`, async () => {
+  const toasts = createToastStore()
+  const fake = fakeRequest((path, init) =>
+    init?.method !== `POST`
+      ? undefined
+      : path.endsWith(`/refund`)
+      ? ok({ detail: detail(BEFORE), refunded: { amount: 1200, currency: `usd` } })
+      : ok({ detail: detail(AFTER), until: `2026-12-12T12:00:00.000Z` })
+  )
+  const state = createBillingState(fake.request, toasts, fakeClock())
+  await state.loadCustomer(GROUP_ID)
+  state.openDialog(`refund`)
+  await state.act({ kind: `refund`, paymentId: `pi_1`, note: `` })
+  state.openDialog(`time`)
+  await state.act({ kind: `time`, length: `1m`, note: `` })
+
+  const said = toasts.list.value.map((toast) => String(toast.body))
+  expect(said).toHaveLength(2)
+  for (const body of said) expect(body).toContain(`⁨Acme⁩`)
+})

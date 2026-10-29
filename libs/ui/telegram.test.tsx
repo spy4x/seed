@@ -114,6 +114,16 @@ describe("the profile's Telegram row", () => {
     expect(find("[data-e2e=telegram-code]").textContent).toContain(`/link ${CODE.code}`)
   })
 
+  it("keeps the bot's @name whole in a right-to-left sentence, its @ at the start", async () => {
+    await mount(<TelegramLink {...linkProps([], { code: CODE })} />)
+    expect(find("[data-e2e=telegram]").textContent).toContain(
+      "Get your notifications in a chat with \u2068@seed_bot\u2069, and use",
+    )
+    expect(find("[data-e2e=telegram-code-dialog]").textContent).toContain(
+      "Send \u2068@seed_bot\u2069 this message:",
+    )
+  })
+
   it("names the bot's Link button in the dialog's step, and keeps the code left to right, breaking where its box ends, not early at a hyphen", async () => {
     await mount(<TelegramLink {...linkProps([], { code: CODE })} />)
     expect(find("[data-e2e=telegram-code-dialog]").textContent).toContain(

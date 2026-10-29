@@ -54,6 +54,7 @@ import { useFormat, When as Ago } from "@spy4x/preact-ui/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /** How the log is drawn: a dense table, or a timeline that reads like a story. */
 export type AdminAuditView = "table" | "timeline"
@@ -324,7 +325,10 @@ function FilterForm(
   const operatorOptions: SelectOption[] = operators.map((operator) => ({
     value: String(operator.id),
     label: operator.email
-      ? t.t(`AdminAudit.operatorOption`, { name: operator.name, email: operator.email })
+      ? t.t(`AdminAudit.operatorOption`, {
+        name: isolate(operator.name),
+        email: isolate(operator.email),
+      })
       : operator.name,
   }))
   return (
@@ -470,12 +474,12 @@ function detailOf(t: Translator<string>, entry: AdminAuditEntry): string | null 
   const event = parseAuditEvent(entry.event)
   const eventType = event?.source === "account" ? event.eventType : null
   const parts = [
-    entry.group && t.t(`AdminAudit.detailGroup`, { name: entry.group.name }),
+    entry.group && t.t(`AdminAudit.detailGroup`, { name: isolate(entry.group.name) }),
     // A link or picture row's title already says what the identifier would.
     entry.identifier && !identifiedAuditTitle(eventType, entry.identifier) &&
     auditDetail(t, eventType, entry.identifier),
     entry.jobKind && t.t(`AdminAudit.detailJob`, { kind: entry.jobKind }),
-    entry.fileName && t.t(`AdminAudit.detailFile`, { name: entry.fileName }),
+    entry.fileName && t.t(`AdminAudit.detailFile`, { name: isolate(entry.fileName) }),
   ].filter(Boolean)
   return parts.length > 0 ? parts.join(" · ") : null
 }

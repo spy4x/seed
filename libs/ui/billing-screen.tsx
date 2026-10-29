@@ -360,9 +360,7 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
           </p>
         )}
         {action && <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">{action}</div>}
-        {fine && (
-          <p class="text-sm text-muted sm:text-right" data-e2e="billing-fine-print">{fine}</p>
-        )}
+        {fine && <p class="text-sm text-muted sm:text-end" data-e2e="billing-fine-print">{fine}</p>}
       </div>
     </Card>
   )

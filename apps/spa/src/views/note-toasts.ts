@@ -1,4 +1,5 @@
 import type { Translator } from "@spy4x/platform/universal/i18n"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /**
  * The toast after a move: "The note was moved to Home." or "3 notes were moved to Home." Without
@@ -13,6 +14,6 @@ export function movedToast(
     title: t.t(`NoteToasts.movedTitle`, { count }),
     body: groupName === undefined
       ? t.t(`NoteToasts.movedElsewhere`, { count })
-      : t.t(`NoteToasts.moved`, { count, group: groupName }),
+      : t.t(`NoteToasts.moved`, { count, group: isolate(groupName) }),
   }
 }

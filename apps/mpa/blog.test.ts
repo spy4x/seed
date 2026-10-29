@@ -204,6 +204,16 @@ describe("the blog index", () => {
     expect(jsonLdGraph(german).find((node) => node["@type"] === `Blog`)?.inLanguage).toBe(`de`)
   })
 
+  it("marks each listed post's title and description with the post's language (#215)", async () => {
+    const { get } = await blogSite(listing([NEWER, GERMAN]))
+    const body = (await get("/de/blog")).body
+
+    expect(body).toMatch(
+      /<a href="\/de\/blog\/hallo-welt"[^>]* lang="de" dir="auto">\s*Hallo, Welt</,
+    )
+    expect(body).toMatch(/ lang="de" dir="auto">Warum wir das gebaut haben\.</)
+  })
+
   it("lists the live posts newest first with their date, reading time and link", async () => {
     const { get } = await blogSite(listing([NEWER, OLDER]))
     const { status, body } = await get("/blog")
@@ -446,7 +456,7 @@ describe("a blog post", () => {
 
     const readNext = body.match(/data-e2e="blog-read-next"[\s\S]*?<\/section>/)?.[0] ?? ``
     expect(textOf(readNext)).toContain(`Read next`)
-    expect(readNext).toContain(`href="/blog/hello-world"`)
+    expect(readNext).toMatch(/href="\/blog\/hello-world"[^>]* lang="en" dir="auto"/)
     expect(linkNamed(readNext, `All posts`)).toContain(`href="/blog"`)
   })
 

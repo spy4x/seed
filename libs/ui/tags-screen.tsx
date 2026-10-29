@@ -19,6 +19,7 @@ import { noteCountText, TagBadge, tagDeleteMessage, type TagRow } from "./tag-pa
 import { type Navigate, NOTE_PATHS, TAG_PATHS } from "./progressive.tsx"
 import { useAppText } from "./i18n.ts"
 import { type Message, messageText } from "./message.ts"
+import { Isolated } from "@spy4x/preact-ui/bdi"
 
 export type { TagRow }
 
@@ -150,7 +151,7 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
                       )
                   )}
                   {canWrite && props.onDelete && (
-                    <div class="relative -my-2 -mr-2 shrink-0">
+                    <div class="relative -my-2 -me-2 shrink-0">
                       <Dropdown
                         trigger={<IconEllipsisVertical class="size-5" />}
                         triggerLabel={t.t(`Tags.actions`, { name: tag.name })}
@@ -177,7 +178,9 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
       </Stack>
       {deleting && (
         <ConfirmDialog
-          title={t.t(`Tags.deleteTitle`, { name: deleting.name })}
+          title={
+            <Isolated message={(name) => t.t(`Tags.deleteTitle`, { name })} value={deleting.name} />
+          }
           message={tagDeleteMessage(t, deleting.noteCount)}
           confirmLabel={t.t(`Tags.deleteTag`)}
           cancelLabel={t.t(`Tags.cancel`)}

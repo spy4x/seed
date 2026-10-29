@@ -23,6 +23,7 @@ import { billingDate } from "@ui/admin-billing-list.tsx"
 import { createFormatters, type Formatters } from "@spy4x/time/format"
 import type { AdminApiResult, AdminFetch } from "../../state.ts"
 import { adminText } from "../../i18n.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /**
  * What an action's dialog says when no clear answer came back: the action may have happened in
@@ -139,26 +140,26 @@ function actionDone(
       return answer.refunded
         ? t.t(`AdminBillingCustomer.doneRefundAmount`, {
           amount: formatMoney(answer.refunded.amount, answer.refunded.currency),
-          group,
+          group: isolate(group),
         })
-        : t.t(`AdminBillingCustomer.doneRefund`, { group })
+        : t.t(`AdminBillingCustomer.doneRefund`, { group: isolate(group) })
     case `time`:
       return answer.until
         ? t.t(`AdminBillingCustomer.doneTimeUntil`, {
-          group,
+          group: isolate(group),
           date: billingDate(answer.until, format),
         })
-        : t.t(`AdminBillingCustomer.doneTime`, { group })
+        : t.t(`AdminBillingCustomer.doneTime`, { group: isolate(group) })
     case `cancel`:
       return action.when === `now`
-        ? t.t(`AdminBillingCustomer.doneCancelNow`, { group })
+        ? t.t(`AdminBillingCustomer.doneCancelNow`, { group: isolate(group) })
         : periodEnd
-        ? t.t(`AdminBillingCustomer.doneCancelOn`, { group, date: periodEnd })
-        : t.t(`AdminBillingCustomer.doneCancelEnd`, { group })
+        ? t.t(`AdminBillingCustomer.doneCancelOn`, { group: isolate(group), date: periodEnd })
+        : t.t(`AdminBillingCustomer.doneCancelEnd`, { group: isolate(group) })
     case `undo`:
       return periodEnd
-        ? t.t(`AdminBillingCustomer.doneUndoOn`, { group, date: periodEnd })
-        : t.t(`AdminBillingCustomer.doneUndo`, { group })
+        ? t.t(`AdminBillingCustomer.doneUndoOn`, { group: isolate(group), date: periodEnd })
+        : t.t(`AdminBillingCustomer.doneUndo`, { group: isolate(group) })
   }
 }
 

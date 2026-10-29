@@ -34,6 +34,7 @@ import { ListCard, ListEmpty, MENU_TRIGGER_CLASSES } from "./notes-screen.tsx"
 import { useAdminText } from "./i18n.ts"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import type { Translator } from "@spy4x/platform/universal/i18n"
+import { Isolated } from "@spy4x/preact-ui/bdi"
 
 /** The catalog module's pages in the admin app, and the one file address its pages load. */
 export const ADMIN_CATALOG_PATHS = {
@@ -531,7 +532,7 @@ export function AdminCatalogCategoriesScreen(
                       {` · ${t.t(`AdminCatalogCategories.items`, { count: category.itemCount })}`}
                     </span>
                   </div>
-                  <div class="relative -my-2 -mr-2 shrink-0">
+                  <div class="relative -my-2 -me-2 shrink-0">
                     <Dropdown
                       trigger={<IconEllipsisVertical class="size-5" />}
                       triggerLabel={t.t(`AdminCatalogCategories.actionsFor`, {
@@ -591,7 +592,12 @@ export function AdminCatalogCategoriesScreen(
       </Stack>
       {deleting && categories && (
         <ConfirmDialog
-          title={t.t(`AdminCatalogCategories.deleteTitle`, { name: nameOf(deleting) })}
+          title={
+            <Isolated
+              message={(name) => t.t(`AdminCatalogCategories.deleteTitle`, { name })}
+              value={nameOf(deleting)}
+            />
+          }
           message={t.t(`AdminCatalogCategories.deleteText`)}
           confirmLabel={t.t(`AdminCatalogCategories.delete`)}
           cancelLabel={t.t(`AdminCatalogCategories.cancel`)}

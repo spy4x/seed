@@ -27,6 +27,7 @@ import { ListCard, ListEmpty, MENU_TRIGGER_CLASSES } from "./notes-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAdminText } from "./i18n.ts"
+import { Isolated } from "@spy4x/preact-ui/bdi"
 
 /** The contact-links module's pages in the admin app. */
 export const ADMIN_CONTACT_LINKS_PATHS = {
@@ -161,7 +162,7 @@ export function AdminContactLinksScreen(props: AdminContactLinksScreenProps): JS
                       {link.label !== null && <>{` · `}{literal(link.value)}</>}
                     </span>
                   </div>
-                  <div class="relative -my-2 -mr-2 shrink-0">
+                  <div class="relative -my-2 -me-2 shrink-0">
                     <Dropdown
                       trigger={<IconEllipsisVertical class="size-5" />}
                       triggerLabel={t.t(`AdminContactLinks.actionsFor`, {
@@ -240,7 +241,12 @@ function RemoveDialog(
   const t = useAdminText()
   return (
     <ConfirmDialog
-      title={t.t(`AdminContactLinks.removeTitle`, { name: contactLinkText(link) })}
+      title={
+        <Isolated
+          message={(name) => t.t(`AdminContactLinks.removeTitle`, { name })}
+          value={contactLinkText(link)}
+        />
+      }
       message={t.t(`AdminContactLinks.removeText`, { kind: CONTACT_KIND_NAMES[link.kind] })}
       confirmLabel={t.t(`AdminContactLinks.remove`)}
       cancelLabel={t.t(`AdminContactLinks.cancel`)}

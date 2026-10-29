@@ -20,6 +20,7 @@ import { movedToast } from "./note-toasts.ts"
 import { OfflineStatus } from "../modules.ts"
 import { OnboardingView } from "./OnboardingView.tsx"
 import { useAppText } from "@ui/i18n.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /** The filter parameters "Clear filters" takes out of the address; search and sort stay. */
 const FILTER_PARAMS = ["tag", "match", "author", "mine"]
@@ -191,7 +192,7 @@ export function NotesView() {
           toasts.success({
             title: t.t(`NotesView.linkCopied`),
             body: membership
-              ? t.t(`NotesView.linkCopiedGroup`, { group: membership.name })
+              ? t.t(`NotesView.linkCopiedGroup`, { group: isolate(membership.name) })
               : t.t(`NotesView.linkCopiedThisGroup`),
             dataE2E: "note-link-copied",
           })
@@ -211,7 +212,9 @@ export function NotesView() {
         if (await store.restore(note.id)) {
           toasts.success({
             title: t.t(`NotesView.restoredTitle`),
-            body: title ? t.t(`NotesView.restored`, { title }) : t.t(`NotesView.restoredUntitled`),
+            body: title
+              ? t.t(`NotesView.restored`, { title: isolate(title) })
+              : t.t(`NotesView.restoredUntitled`),
             dataE2E: "note-restored",
           })
         }

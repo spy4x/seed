@@ -42,6 +42,7 @@ import { AdminPreferencesGroup } from "./preferences.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /** What an operator can do to a person; each is confirmed in a dialog first. */
 export type AdminAction =
@@ -639,7 +640,7 @@ function Methods({ detail }: { detail: AdminUserDetail }): JSX.Element {
               </span>
             )
             : (
-              <span class="ml-auto">
+              <span class="ms-auto">
                 {method.provenAt
                   ? <Badge text={t.t(`AdminUser.proven`)} color="green" type="outline" />
                   : <Badge text={t.t(`AdminUser.notProven`)} color="orange" type="outline" />}
@@ -671,7 +672,7 @@ function Sessions(
             {sessionName(t, session.deviceName)}
           </span>
           {session.ipHint && <span class="text-sm text-muted">{session.ipHint}</span>}
-          <span class="ml-auto text-xs text-muted">
+          <span class="ms-auto text-xs text-muted">
             <Rich
               parts={t.parts(`AdminUser.lastActive`)}
               tags={{ when: () => <When at={session.lastUsedAt} /> }}
@@ -735,7 +736,7 @@ function Groups(
           >
             {group.name}
           </Link>
-          <span class="ml-auto">
+          <span class="ms-auto">
             <Badge text={groupRoleLabel(t, group.role)} color="gray" type="outline" />
           </span>
         </li>
@@ -759,9 +760,11 @@ export function auditDetail(
 ): string {
   const renamed = eventType === AuthAuditEventType.SIGN_IN_METHOD_RENAMED &&
     PASSKEY_RENAMED.exec(identifier)
-  if (renamed) return t.t(`AdminUser.passkeyRenamed`, { from: renamed[2], to: renamed[1] })
+  if (renamed) {
+    return t.t(`AdminUser.passkeyRenamed`, { from: isolate(renamed[2]), to: isolate(renamed[1]) })
+  }
   const named = PASSKEY_NAMED.exec(identifier)
-  return named ? t.t(`AdminUser.passkeyNamed`, { name: named[1] }) : identifier
+  return named ? t.t(`AdminUser.passkeyNamed`, { name: isolate(named[1]) }) : identifier
 }
 
 /**

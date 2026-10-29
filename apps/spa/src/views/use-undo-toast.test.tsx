@@ -90,7 +90,7 @@ describe("useUndoToast", () => {
 
     const [toast] = toasts.list.value
     expect(toasts.list.value).toHaveLength(1)
-    expect(toast.body).toBe(`"Milk" was deleted. Press Ctrl+Z to undo.`)
+    expect(toast.body).toBe(`"\u2068Milk\u2069" was deleted. Press Ctrl+Z to undo.`)
     expect(toast.dataE2E).toBe("note-undo-toast")
     expect(toast.duration).toBeGreaterThan(9_000)
     expect(toast.duration).toBeLessThanOrEqual(10_000)

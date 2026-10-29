@@ -55,6 +55,7 @@ import { useFormat, When } from "@spy4x/preact-ui/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
+import { isolate, Isolated } from "@spy4x/preact-ui/bdi"
 
 /** The signed-in operator, as far as the page needs them. */
 export interface AdminGroupOperatorView {
@@ -255,7 +256,9 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
     <Stack>
       <PageHeader
         title={group.name}
-        subtitle={t.t(`AdminGroup.ownedBy`, { owner: adminGroupPersonName(t, group.owner) })}
+        subtitle={t.t(`AdminGroup.ownedBy`, {
+          owner: isolate(adminGroupPersonName(t, group.owner)),
+        })}
         mark={<GroupMark color={group.color} emoji={group.emoji} />}
         back={back}
         navigate={navigate}
@@ -457,13 +460,13 @@ function RowMenu(
   { label, dataE2E, children }: { label: string; dataE2E: string; children: ComponentChildren },
 ): JSX.Element {
   return (
-    <div class="relative -my-2 -mr-2 ml-auto shrink-0">
+    <div class="relative -my-2 -me-2 ms-auto shrink-0">
       <Dropdown
         trigger={<IconEllipsisVertical class="size-5" />}
         triggerLabel={label}
         triggerClasses={MENU_TRIGGER}
         triggerDataE2E={dataE2E}
-        horizontal="right"
+        horizontal="end"
       >
         {children}
       </Dropdown>
@@ -890,7 +893,7 @@ function dialogCopy(
   dialog: AdminGroupDialog,
   detail: AdminGroupDetail,
   files: AdminGroupFiles | null,
-): { title: string; text: ComponentChildren; submit: string; busy: string } {
+): { title: ComponentChildren; text: ComponentChildren; submit: string; busy: string } {
   const group = detail.group.name
   const sentence = (key: string, values: Record<string, string> = {}) => (
     <Rich parts={t.parts(key, { group, ...values })} tags={{ group: isolated, name: isolated }} />
@@ -902,7 +905,7 @@ function dialogCopy(
       return {
         title: name === null
           ? t.t(`AdminGroup.removeTitleUnknown`)
-          : t.t(`AdminGroup.removeTitle`, { name }),
+          : <Isolated message={(name) => t.t(`AdminGroup.removeTitle`, { name })} value={name} />,
         text: name === null
           ? sentence(`AdminGroup.removeTextUnknown`)
           : sentence(`AdminGroup.removeText`, { name }),
@@ -921,7 +924,12 @@ function dialogCopy(
       const file = files?.files.find((row) => row.id === dialog.fileId)
       return {
         title: file
-          ? t.t(`AdminGroup.removeFileTitle`, { name: clipped(file.name) })
+          ? (
+            <Isolated
+              message={(name) => t.t(`AdminGroup.removeFileTitle`, { name })}
+              value={clipped(file.name)}
+            />
+          )
           : t.t(`AdminGroup.removeFileTitleUnknown`),
         text: sentence(`AdminGroup.removeFileText`),
         submit: t.t(`AdminGroup.removeFile`),
@@ -930,7 +938,9 @@ function dialogCopy(
     }
     case `transfer`:
       return {
-        title: t.t(`AdminGroup.transferTitle`, { group }),
+        title: (
+          <Isolated message={(group) => t.t(`AdminGroup.transferTitle`, { group })} value={group} />
+        ),
         text: sentence(`AdminGroup.transferText`, {
           name: adminGroupPersonName(t, detail.group.owner),
         }),

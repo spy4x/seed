@@ -10,6 +10,7 @@ import { billingStore } from "../state/billing.ts"
 import { groupsStore } from "../state/groups.ts"
 import { toasts } from "../state/toasts.ts"
 import { preferencesState } from "../state/preferences.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /** The query the checkout's success address carries, so the tab knows the owner just paid. */
 export const CHECKOUT_DONE = "checkout=done"
@@ -26,7 +27,7 @@ export function checkoutDoneToast(
   groupName: string,
 ): { title: string; body: string } {
   const plan = planName(t, billing.planId)
-  const group = `\u2068${groupName}\u2069`
+  const group = isolate(groupName)
   const trialEnd = billing.status === BillingStatus.Trialing
     ? billing.trialEnd ?? billing.currentPeriodEnd
     : null

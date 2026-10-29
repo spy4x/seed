@@ -15,6 +15,7 @@ import { currentLayer, OfflineStatus } from "../modules.ts"
 import { isSpaPath } from "./spa-paths.ts"
 import { deleteAndAnnounce } from "./tag-delete.ts"
 import { useAppText } from "@ui/i18n.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 const network = createOnlineStatus()
 
@@ -89,8 +90,8 @@ export function TagEditorView({ tagId = null }: { tagId?: string | null }) {
           toasts.success({
             title: created ? t.t(`TagEditorView.createdTitle`) : t.t(`TagEditorView.savedTitle`),
             body: created
-              ? t.t(`TagEditorView.created`, { name })
-              : t.t(`TagEditorView.saved`, { name }),
+              ? t.t(`TagEditorView.created`, { name: isolate(name) })
+              : t.t(`TagEditorView.saved`, { name: isolate(name) }),
             dataE2E: created ? "tag-created" : "tag-saved",
           })
           if (created) navigate(TAG_PATHS.tag(result.id), { replace: true })
@@ -114,7 +115,7 @@ export function TagEditorView({ tagId = null }: { tagId?: string | null }) {
         labels={{
           title: t.t(`TagEditorView.discardTitle`),
           message: tag
-            ? t.t(`TagEditorView.discard`, { name: tag.name })
+            ? t.t(`TagEditorView.discard`, { name: isolate(tag.name) })
             : t.t(`TagEditorView.discardNew`),
           leave: t.t(`TagEditorView.discardLeave`),
           stay: t.t(`TagEditorView.discardStay`),

@@ -618,7 +618,7 @@ describe("AppFrame", () => {
     expect(tile.textContent).toBe("H")
     // The rail's own tooltip, hidden from a screen reader: the button's name already says it.
     const tip = trigger.closest("[data-rail-cell]")!.querySelector("[data-e2e=rail-shell-tooltip]")!
-    expect(tip.textContent).toBe("Home · Owner")
+    expect(tip.textContent).toBe("\u2068Home\u2069 · Owner")
     expect(tip.getAttribute("aria-hidden")).toBe("true")
     // The rail's keyboard focus ring, not the browser's.
     for (const name of railFocusRing.split(" ")) expect(trigger.classList.contains(name)).toBe(true)

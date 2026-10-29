@@ -13,4 +13,6 @@ registerSpacingTests({
   directories: ["apps", "libs"],
   // An empty walk would pass silently, so require a file the SPA cannot lose.
   requiredFiles: ["apps/spa/src/app.tsx"],
+  // The SPA and the admin app show Arabic, so a class must follow the page's `dir` (#215).
+  logicalDirection: true,
 })

@@ -1,6 +1,7 @@
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
+import { isolate } from "@spy4x/preact-ui/bdi"
 import { Card } from "@spy4x/preact-ui/card"
 import { DateRangePicker, type DateRangePresetOption } from "@spy4x/preact-ui/date-range-picker"
 import type { DateRangeChoice } from "@spy4x/preact-ui/date-range-search"
@@ -260,7 +261,7 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
                   <EmptyState
                     headingLevel={2}
                     inset
-                    title={t.t(`OverviewScreen.emptyGroup`, { group: `\u2068${group.name}\u2069` })}
+                    title={t.t(`OverviewScreen.emptyGroup`, { group: isolate(group.name) })}
                     description={t.t(`OverviewScreen.emptyGroupText`)}
                     action={props.emptyGroup.canCreate && (
                       // A labelled button, not the header's PageAction, which shrinks to an icon

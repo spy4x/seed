@@ -141,7 +141,7 @@ describe("the New note dialog", () => {
     await draw()
     expect(focused()).toBe("new-note-title")
     expect(document.querySelector("[data-e2e=new-note-group]")).toBeNull()
-    expect(find("dialog").textContent).toContain("In Acme")
+    expect(find("dialog").textContent).toContain("In \u2068Acme\u2069")
     expect(find<HTMLInputElement>("[data-e2e=new-note-title]").value).toBe("Buy milk")
   })
 

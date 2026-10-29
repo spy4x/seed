@@ -257,7 +257,7 @@ describe("createAndOpen", () => {
     expect(selected).toEqual([known.id])
     expect(notices).toEqual([{
       title: "Group created",
-      body: `"Trip" is now your current group.`,
+      body: `"\u2068Trip\u2069" is now your current group.`,
       dataE2E: "group-created",
     }])
   })
@@ -295,7 +295,7 @@ describe("saveAndAnnounce", () => {
     expect(done).toBe(true)
     expect(notices).toEqual([{
       title: "Group saved",
-      body: `"Crew" saved.`,
+      body: `"\u2068Crew\u2069" saved.`,
       dataE2E: "group-saved",
     }])
   })

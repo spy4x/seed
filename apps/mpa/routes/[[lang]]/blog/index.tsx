@@ -122,6 +122,7 @@ export const handler = define.handlers({
                       description: post.description,
                       publishedAt: post.publishedAt,
                       readMinutes: post.readingMinutes,
+                      lang: post.language,
                     }))}
                   />
                 )}

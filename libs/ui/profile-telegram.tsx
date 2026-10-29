@@ -15,6 +15,7 @@ import {
   type TelegramStatusResponse,
 } from "@domain/identity"
 import { Rich } from "@spy4x/preact-ui/i18n"
+import { isolate } from "@spy4x/preact-ui/bdi"
 import { type Message, say } from "./message.ts"
 import { useAppText } from "./i18n.ts"
 
@@ -78,7 +79,7 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
 
   if (!status) return shown ? <ErrorState message={shown} /> : null
   if (!status.enabled && !linkedAt) return null
-  const bot = status.botUsername ? `@${status.botUsername}` : t.t(`ProfileTelegram.theBot`)
+  const bot = status.botUsername ? isolate(`@${status.botUsername}`) : t.t(`ProfileTelegram.theBot`)
   const strong = (text: string) => <strong class="text-foreground">{text}</strong>
   return (
     <SettingGroup

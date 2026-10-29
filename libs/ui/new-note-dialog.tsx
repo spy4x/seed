@@ -19,6 +19,7 @@ import { GROUP_PATHS, type Navigate, NOTE_PATHS, ScreenForm } from "./progressiv
 import { useAppText } from "./i18n.ts"
 import { type Message, messageText } from "./message.ts"
 import { userValue } from "./notes-screen.tsx"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /** A group the person may add notes to. */
 export interface NewNoteGroup {
@@ -187,7 +188,7 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
                 label={t.t(`NewNote.titleLabel`)}
                 error={messageText(t, errors.title)}
                 hint={groups.length === 1
-                  ? t.t(`NewNote.inGroup`, { group: groups[0].name })
+                  ? t.t(`NewNote.inGroup`, { group: isolate(groups[0].name) })
                   : undefined}
               >
                 <Input

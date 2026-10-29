@@ -18,6 +18,7 @@ import { AuthCard } from "./auth-screen.tsx"
 import { useAppText } from "./i18n.ts"
 import { type Navigate, SCREEN_PATHS, ScreenForm, withNext } from "./progressive.tsx"
 import { FORM_WIDTH, useWaited } from "./tag-editor-screen.tsx"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /** The pages of guest accounts (#224). */
 export const GUEST_PATHS = {
@@ -653,7 +654,7 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
               id="taken-password"
               label={t.t(`SignInMethods.password`)}
               hint={state.maskedEmail
-                ? t.t(`GuestScreens.passwordOf`, { email: state.maskedEmail })
+                ? t.t(`GuestScreens.passwordOf`, { email: isolate(state.maskedEmail) })
                 : t.t(`GuestScreens.passwordOfThat`)}
               required
             >

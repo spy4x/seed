@@ -741,7 +741,7 @@ function Settings(
     >
       <button
         type="button"
-        class="flex min-h-11 items-center justify-between rounded-primary border border-subtle bg-surface px-4 text-left font-medium text-foreground hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus lg:hidden"
+        class="flex min-h-11 items-center justify-between rounded-primary border border-subtle bg-surface px-4 text-start font-medium text-foreground hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus lg:hidden"
         aria-expanded={props.open}
         aria-controls="blog-settings"
         data-e2e="admin-blog-settings-toggle"
