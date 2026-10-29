@@ -12,7 +12,7 @@ import { gotoApp } from "./app.ts"
  * ask for it in (#277): `EmailCodeMail.subject` of `i18n/mail/<language>.ts`.
  */
 export const CODE_SUBJECTS: Record<string, string> = {
-  en: `Your code to confirm your e-mail address`,
+  en: `Your code to confirm your email`,
   ru: `Код для подтверждения адреса электронной почты`,
   es: `Tu código para confirmar tu correo electrónico`,
   de: `Dein Code zur Bestätigung deiner E-Mail-Adresse`,

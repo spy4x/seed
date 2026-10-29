@@ -898,7 +898,7 @@ Deno.test("deleting one's own account", async (t) => {
       await job({ aggregateId: raeRestore.id } as OutboxEvent)
 
       expect(sent.map((mail) => [mail.to, mail.subject])).toEqual([
-        ["rae@example.com", "Your account was restored"],
+        ["rae@example.com", "Your account won't be deleted"],
       ])
       expect(logged).toEqual([
         "warn: an account restored mail was not sent: the account has no proven address",

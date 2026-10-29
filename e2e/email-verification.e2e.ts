@@ -6,7 +6,7 @@ import { lastMail, nextCode, signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const password = "Passw0rd!"
-const CODE_SUBJECT = "Your code to confirm your e-mail address"
+const CODE_SUBJECT = "Your code to confirm your email"
 
 async function cleanup(request: APIRequestContext, email: string, soft = false): Promise<void> {
   const response = await request.post(`${apiBase}/api/test/cleanup-user`, {

@@ -52,7 +52,7 @@ export function uuidV7() {
 }
 
 /** The subject of the mail that carries a sign-up code (`e2e/fixtures/sign-up.ts`). */
-const CODE_SUBJECT = `Your code to confirm your e-mail address`
+const CODE_SUBJECT = `Your code to confirm your email`
 
 /** How many sign-ups run at once in {@link signUpUsers}. */
 const SIGN_UP_BATCH = 25
