@@ -217,7 +217,7 @@
   "AdminAuditEvent.catalogSourceCreated": "Origen de enlaces añadido",
   "AdminAuditEvent.catalogSourceUpdated": "Origen de enlaces guardado",
   "AdminAuditEvent.catalogSourceDeleted": "Origen de enlaces eliminado",
-  "AdminAuditEvent.catalogSourcesReordered": "Orígenes de enlaces reordenados",
+  "AdminAuditEvent.catalogSourcesReordered": "Orígenes reordenados",
   "AdminAuditEvent.catalogLinkCreated": "Enlace de seguimiento creado",
   "AdminBilling.listError": "No se pudieron cargar los clientes. Revisa tu conexión e inténtalo de nuevo.",
   "AdminBilling.offText": "Todos los grupos están en el plan gratuito. Para activar la facturación, añade los ajustes de Stripe.",
@@ -621,7 +621,7 @@
   },
   "AdminCatalog.donePublished": "Publicado. El sitio lo muestra en menos de un minuto.",
   "AdminCatalog.doneHidden": "Oculto. El sitio deja de mostrarlo en menos de un minuto.",
-  "AdminCatalog.sources": "Orígenes de enlaces",
+  "AdminCatalog.sources": "Orígenes",
   "AdminCatalog.linkNotMade": "Enlace no creado",
   "AdminCatalog.linkCopied": "Enlace copiado",
   "AdminCatalog.copyFailed": "No se pudo copiar el enlace",
@@ -781,7 +781,7 @@
     "many": "{file} se omitió: un artículo tiene como máximo {count} fotos.",
     "other": "{file} se omitió: un artículo tiene como máximo {count} fotos."
   },
-  "AdminCatalogSource.back": "Volver a los orígenes de enlaces",
+  "AdminCatalogSource.back": "Volver a los orígenes",
   "AdminCatalogSource.title": "Origen",
   "AdminCatalogSource.notFound": "Este origen no existe",
   "AdminCatalogSource.notFoundText": "Puede que se haya eliminado.",
@@ -801,7 +801,7 @@
   "AdminCatalogSource.save": "Guardar origen",
   "AdminCatalogSources.trackingOff": "Los enlaces necesitan la dirección del sitio. Define MPA_DOMAIN en el archivo env del servidor y despliega.",
   "AdminCatalogSources.back": "Volver al catálogo",
-  "AdminCatalogSources.title": "Orígenes de enlaces",
+  "AdminCatalogSources.title": "Orígenes",
   "AdminCatalogSources.subtitle": "Cada sitio donde compartes artículos tiene su propio enlace, así ves cuál trae visitantes.",
   "AdminCatalogSources.add": "Añadir origen",
   "AdminCatalogSources.loading": "Cargando los orígenes",
@@ -919,6 +919,119 @@
   "AdminDashboard.noneStarted": "Aún no se inició ninguna",
   "AdminDashboard.cleanedUp": "Eliminadas",
   "AdminDashboard.cleanedUpHint": "Vacías tras 7 días o sin uso durante un año",
+  "AdminStats.title": "Estadísticas",
+  "AdminStats.subtitle": {
+    "one": "Último {count} día",
+    "many": "Últimos {count} días",
+    "other": "Últimos {count} días"
+  },
+  "AdminStats.subtitleUpdated": {
+    "one": "Último {count} día · actualizado {ago}",
+    "many": "Últimos {count} días · actualizado {ago}",
+    "other": "Últimos {count} días · actualizado {ago}"
+  },
+  "AdminStats.period": "Periodo",
+  "AdminStats.periodDays": {
+    "one": "{count} día",
+    "many": "{count} días",
+    "other": "{count} días"
+  },
+  "AdminStats.refresh": "Actualizar cifras",
+  "AdminStats.openUmami": "Abrir en Umami",
+  "AdminStats.editSources": "Editar orígenes",
+  "AdminStats.loadError": "No se pudieron cargar las estadísticas. Revisa tu conexión e inténtalo de nuevo.",
+  "AdminStats.tryAgain": "Reintentar",
+  "AdminStats.problemTitle": "No se pueden mostrar las estadísticas",
+  "AdminStats.tokenRefused": "Umami no aceptó el token de UMAMI_API_TOKEN. Crea un token nuevo en Umami, ponlo en el archivo env del servidor y despliega.",
+  "AdminStats.unknownWebsite": "Umami no tiene ningún sitio con el id de MPA_UMAMI_WEBSITE_ID. Copia el id de los ajustes del sitio en Umami.",
+  "AdminStats.unreachable": "Umami no responde, así que no se pueden mostrar las cifras. Inténtalo de nuevo en unos minutos. Si sigue pasando, comprueba que Umami esté en marcha.",
+  "AdminStats.stale": "Cifras de las {time}. Umami no responde ahora mismo.",
+  "AdminStats.loading": "Cargando las estadísticas",
+  "AdminStats.offTitle": "Las estadísticas están desactivadas",
+  "AdminStats.offText": "Las estadísticas vienen de tu Umami. Para activarlas, define UMAMI_API_URL, UMAMI_API_TOKEN y MPA_UMAMI_WEBSITE_ID en el archivo env del servidor y despliega.",
+  "AdminStats.offSome": {
+    "one": "Las estadísticas necesitan los tres ajustes. Falta: {missing}. Añádelo al archivo env del servidor y despliega.",
+    "many": "Las estadísticas necesitan los tres ajustes. Faltan: {missing}. Añádelos al archivo env del servidor y despliega.",
+    "other": "Las estadísticas necesitan los tres ajustes. Faltan: {missing}. Añádelos al archivo env del servidor y despliega."
+  },
+  "AdminStats.readSetup": "Leer cómo activar las estadísticas",
+  "AdminStats.newTab": "{label} (se abre en una pestaña nueva)",
+  "AdminStats.rateChange": {
+    "one": "{change} puntos frente al {count} día anterior",
+    "many": "{change} puntos frente a los {count} días anteriores",
+    "other": "{change} puntos frente a los {count} días anteriores"
+  },
+  "AdminStats.noVisitsTitle": "Aún no hay visitas",
+  "AdminStats.noVisitsText": "Las visitas aparecen aquí cuando alguien abre el sitio web. Comparte el enlace de un artículo desde su página para ver qué origen las trae.",
+  "AdminStats.openCatalog": "Abrir el catálogo",
+  "AdminStats.fewVisits": "Pocas visitas por ahora, así que las tasas pueden cambiar mucho.",
+  "AdminStats.keyNumbers": "Cifras clave",
+  "AdminStats.visits": "Visitas",
+  "AdminStats.orderClicks": "Clics de pedido",
+  "AdminStats.orderRate": "Tasa de pedido",
+  "AdminStats.orderRateHint": "Clics de pedido por cada 100 visitas",
+  "AdminStats.orderClickMeans": "Un clic de pedido es un toque en un botón de pedido de {channels}. El pedido en sí ocurre en el chat.",
+  "AdminStats.orderClickMeansAny": "Un clic de pedido es un toque en un botón de pedido. El pedido en sí ocurre en el chat.",
+  "AdminStats.sourcesTitle": "De dónde vienen las visitas",
+  "AdminStats.sourcesIntro": "Primero los que más clics de pedido traen. Pulsa un origen para verlo en el gráfico.",
+  "AdminStats.sourcesLabel": {
+    "one": "Visitas por origen, el último {count} día",
+    "many": "Visitas por origen, los últimos {count} días",
+    "other": "Visitas por origen, los últimos {count} días"
+  },
+  "AdminStats.source": "Origen",
+  "AdminStats.noSource": "Sin origen",
+  "AdminStats.noSourceHint": "Escribió la dirección o llegó por un enlace sin origen.",
+  "AdminStats.noSources": "Aún no hay orígenes. Añade los sitios donde compartes artículos, como un grupo de Facebook, y luego comparte el enlace propio de cada artículo.",
+  "AdminStats.sourcesQuiet": {
+    "one": "Ninguna visita desde tus orígenes en el último {count} día. Comparte el enlace de un artículo desde su página para empezar.",
+    "many": "Ninguna visita desde tus orígenes en los últimos {count} días. Comparte el enlace de un artículo desde su página para empezar.",
+    "other": "Ninguna visita desde tus orígenes en los últimos {count} días. Comparte el enlace de un artículo desde su página para empezar."
+  },
+  "AdminStats.channelsTitle": "Canal de pedido",
+  "AdminStats.channelsLabel": {
+    "one": "Clics de pedido por canal, el último {count} día",
+    "many": "Clics de pedido por canal, los últimos {count} días",
+    "other": "Clics de pedido por canal, los últimos {count} días"
+  },
+  "AdminStats.noOrderClicks": "Aún no hay clics de pedido.",
+  "AdminStats.limits": "Algunos visitantes bloquean los rastreadores, así que las cifras reales son algo más altas. Los clics de pedido de un origen cuentan solo los toques en la página que abrió su enlace para compartir.",
+  "AdminStats.chartTitle": "Visitas por día",
+  "AdminStats.chartTitleWeekly": "Visitas por semana",
+  "AdminStats.chartSummary": {
+    "one": "{total} visitas en {count} día",
+    "many": "{total} visitas en {count} días",
+    "other": "{total} visitas en {count} días"
+  },
+  "AdminStats.allSources": "Todos los orígenes",
+  "AdminStats.previousSeries": {
+    "one": "{count} día anterior",
+    "many": "{count} días anteriores",
+    "other": "{count} días anteriores"
+  },
+  "AdminStats.chartLabel": {
+    "one": "Visitas, el último {count} día",
+    "many": "Visitas, los últimos {count} días",
+    "other": "Visitas, los últimos {count} días"
+  },
+  "AdminStats.mostlyFrom": "sobre todo {source}",
+  "AdminStats.itemsTitle": "Artículos",
+  "AdminStats.itemsIntro": "Lo que se pide y lo que solo se mira.",
+  "AdminStats.mostOrdered": "Los más pedidos",
+  "AdminStats.item": "Artículo",
+  "AdminStats.views": "Vistas",
+  "AdminStats.notOrdered": "Vistos, no pedidos",
+  "AdminStats.allOrdered": "Cada artículo visto tuvo al menos un clic de pedido.",
+  "AdminStats.noItemViews": {
+    "one": "Ninguna vista de artículos en el último {count} día.",
+    "many": "Ninguna vista de artículos en los últimos {count} días.",
+    "other": "Ninguna vista de artículos en los últimos {count} días."
+  },
+  "AdminStats.notOrderedIntro": {
+    "one": "Artículos con al menos {count} vista y ningún clic de pedido, primero los más vistos.",
+    "many": "Artículos con al menos {count} vistas y ningún clic de pedido, primero los más vistos.",
+    "other": "Artículos con al menos {count} vistas y ningún clic de pedido, primero los más vistos."
+  },
   "AdminDataExports.loading": "Cargando exportaciones de datos",
   "AdminDataExports.empty": "No hay exportaciones de datos.",
   "AdminDataExports.requested": "Solicitada <when></when>",
@@ -1230,6 +1343,7 @@
   "AdminJobs.cancelling": "Cancelando…",
   "AdminJobs.keepIt": "Mantenerla",
   "AdminNav.dashboard": "Panel",
+  "AdminNav.stats": "Estadísticas",
   "AdminNav.system": "Sistema",
   "AdminNav.users": "Usuarios",
   "AdminNav.groups": "Grupos",

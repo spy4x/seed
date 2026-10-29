@@ -5,6 +5,7 @@ import type { AdminModule } from "./modules/types.ts"
 /** The second key of each module's "Go to" sequence, by module id: `g u` opens Users. */
 export const ADMIN_GO_KEYS: Readonly<Record<string, string>> = {
   dashboard: "d",
+  stats: "t",
   users: "u",
   groups: "g",
   billing: "b",

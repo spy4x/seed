@@ -68,7 +68,7 @@ export function createTelegramLinkService(
           telegramUserId,
           now(),
         )
-        if (userId === null) return `invalid`
+        if (userId === null) return `stale`
         const { outcome, released } = await tx.telegram.link(userId, telegramUserId)
         // The Telegram account this one replaces, or one an account awaiting deletion let go.
         for (const gone of released) {
@@ -92,7 +92,7 @@ export function createTelegramLinkService(
         if (outcome === TelegramLinkOutcome.Linked) return `linked`
         if (outcome === TelegramLinkOutcome.AlreadyLinked) return `already`
         if (outcome === TelegramLinkOutcome.Taken) return `taken`
-        return `invalid`
+        return `stale`
       }),
 
     unlink: (telegramUserId) =>

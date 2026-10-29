@@ -1,10 +1,15 @@
 import type { FileStore, ServerFiles } from "@server/files/files.ts"
 import type { CatalogSetup } from "@server/catalog/setup.ts"
+import type { WebsiteStatsContext } from "./stats.ts"
 import type { Hono, MiddlewareHandler } from "hono"
 import type { RateLimitDecision } from "@spy4x/platform/rate-limit"
 import type postgres from "postgres"
 import type { BillingProvider } from "@spy4x/billing"
-import type { PushDevicesUpdatedEvent, UserSignedOutEvent } from "@api/cqrs/events.ts"
+import type {
+  PushDevicesUpdatedEvent,
+  UserProfileUpdatedEvent,
+  UserSignedOutEvent,
+} from "@api/cqrs/events.ts"
 import type { AppDbBase } from "@api/services/db-base.ts"
 import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { APIContext } from "../../_types.ts"
@@ -28,9 +33,9 @@ export interface AdminModuleContext {
   resetByAddress(email: string): Promise<RateLimitDecision>
   /**
    * Closes a person's sockets after their sessions end, or tells their open tabs that their push
-   * devices changed.
+   * devices or their profile changed.
    */
-  emit(event: UserSignedOutEvent | PushDevicesUpdatedEvent): void
+  emit(event: UserSignedOutEvent | PushDevicesUpdatedEvent | UserProfileUpdatedEvent): void
   now(): Date
   /** The secret that signs the audit log's page cursors (#429), the one note cursors use. */
   cursorSecret: string
@@ -57,6 +62,8 @@ export interface AdminModuleContext {
   catalog: CatalogSetup
   /** The file store's server-side writes, for files that pass through the API (#466). */
   files: Pick<ServerFiles, `put` | `read` | `delete`>
+  /** Stats' Umami settings, or which are missing, and the website's item address (#485). */
+  websiteStats: WebsiteStatsContext
 }
 
 /**

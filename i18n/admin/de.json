@@ -212,7 +212,7 @@
   "AdminAuditEvent.catalogSourceCreated": "Linkquelle hinzugefügt",
   "AdminAuditEvent.catalogSourceUpdated": "Linkquelle gespeichert",
   "AdminAuditEvent.catalogSourceDeleted": "Linkquelle gelöscht",
-  "AdminAuditEvent.catalogSourcesReordered": "Linkquellen neu sortiert",
+  "AdminAuditEvent.catalogSourcesReordered": "Quellen neu sortiert",
   "AdminAuditEvent.catalogLinkCreated": "Tracking-Link erstellt",
   "AdminBilling.listError": "Kunden konnten nicht geladen werden. Prüfe deine Verbindung und versuche es noch einmal.",
   "AdminBilling.offText": "Alle Gruppen sind im kostenlosen Tarif. Um die Abrechnung einzuschalten, füge die Stripe-Einstellungen hinzu.",
@@ -604,7 +604,7 @@
   },
   "AdminCatalog.donePublished": "Veröffentlicht. Die Website zeigt ihn innerhalb einer Minute.",
   "AdminCatalog.doneHidden": "Ausgeblendet. Die Website zeigt ihn innerhalb einer Minute nicht mehr.",
-  "AdminCatalog.sources": "Linkquellen",
+  "AdminCatalog.sources": "Quellen",
   "AdminCatalog.linkNotMade": "Link nicht erstellt",
   "AdminCatalog.linkCopied": "Link kopiert",
   "AdminCatalog.copyFailed": "Der Link konnte nicht kopiert werden",
@@ -762,7 +762,7 @@
     "one": "{file} wurde weggelassen: Ein Artikel hat höchstens {count} Foto.",
     "other": "{file} wurde weggelassen: Ein Artikel hat höchstens {count} Fotos."
   },
-  "AdminCatalogSource.back": "Zurück zu den Linkquellen",
+  "AdminCatalogSource.back": "Zurück zu den Quellen",
   "AdminCatalogSource.title": "Quelle",
   "AdminCatalogSource.notFound": "Diese Quelle gibt es nicht",
   "AdminCatalogSource.notFoundText": "Vielleicht wurde sie gelöscht.",
@@ -781,7 +781,7 @@
   "AdminCatalogSource.save": "Quelle speichern",
   "AdminCatalogSources.trackingOff": "Links brauchen die Adresse der Website. Setz MPA_DOMAIN in der env-Datei des Servers und deploye.",
   "AdminCatalogSources.back": "Zurück zum Katalog",
-  "AdminCatalogSources.title": "Linkquellen",
+  "AdminCatalogSources.title": "Quellen",
   "AdminCatalogSources.subtitle": "Jeder Ort, an dem du Artikel teilst, bekommt einen eigenen Link, damit du siehst, welcher Besucher bringt.",
   "AdminCatalogSources.add": "Quelle hinzufügen",
   "AdminCatalogSources.loading": "Quellen werden geladen",
@@ -891,6 +891,106 @@
   "AdminDashboard.noneStarted": "Noch keines gestartet",
   "AdminDashboard.cleanedUp": "Aufgeräumt",
   "AdminDashboard.cleanedUpHint": "Nach 7 Tagen leer oder ein Jahr ungenutzt",
+  "AdminStats.title": "Statistik",
+  "AdminStats.subtitle": {
+    "one": "Letzter {count} Tag",
+    "other": "Letzte {count} Tage"
+  },
+  "AdminStats.subtitleUpdated": {
+    "one": "Letzter {count} Tag · aktualisiert {ago}",
+    "other": "Letzte {count} Tage · aktualisiert {ago}"
+  },
+  "AdminStats.period": "Zeitraum",
+  "AdminStats.periodDays": {
+    "one": "{count} Tag",
+    "other": "{count} Tage"
+  },
+  "AdminStats.refresh": "Zahlen neu laden",
+  "AdminStats.openUmami": "In Umami öffnen",
+  "AdminStats.editSources": "Quellen bearbeiten",
+  "AdminStats.loadError": "Die Statistik konnte nicht geladen werden. Prüfe deine Verbindung und versuche es noch einmal.",
+  "AdminStats.tryAgain": "Erneut versuchen",
+  "AdminStats.problemTitle": "Die Statistik kann nicht angezeigt werden",
+  "AdminStats.tokenRefused": "Umami hat das Token in UMAMI_API_TOKEN nicht akzeptiert. Erstelle in Umami ein neues Token, trage es in die env-Datei des Servers ein und deploye.",
+  "AdminStats.unknownWebsite": "Umami hat keine Website mit der ID in MPA_UMAMI_WEBSITE_ID. Kopiere die ID aus den Einstellungen der Website in Umami.",
+  "AdminStats.unreachable": "Umami antwortet nicht, daher können die Zahlen nicht angezeigt werden. Versuche es in ein paar Minuten noch einmal. Wenn das öfter passiert, prüfe, ob Umami läuft.",
+  "AdminStats.stale": "Zahlen von {time}. Umami antwortet gerade nicht.",
+  "AdminStats.loading": "Statistik wird geladen",
+  "AdminStats.offTitle": "Die Statistik ist aus",
+  "AdminStats.offText": "Die Statistik kommt aus deinem Umami. Um sie einzuschalten, setze UMAMI_API_URL, UMAMI_API_TOKEN und MPA_UMAMI_WEBSITE_ID in der env-Datei des Servers und deploye.",
+  "AdminStats.offSome": {
+    "one": "Die Statistik braucht alle drei Einstellungen. Es fehlt: {missing}. Trage sie in die env-Datei des Servers ein und deploye.",
+    "other": "Die Statistik braucht alle drei Einstellungen. Es fehlen: {missing}. Trage sie in die env-Datei des Servers ein und deploye."
+  },
+  "AdminStats.readSetup": "Einrichtung der Statistik lesen",
+  "AdminStats.newTab": "{label} (öffnet in einem neuen Tab)",
+  "AdminStats.rateChange": {
+    "one": "{change} Punkte ggü. dem {count} Tag davor",
+    "other": "{change} Punkte ggü. den {count} Tagen davor"
+  },
+  "AdminStats.noVisitsTitle": "Noch keine Besuche",
+  "AdminStats.noVisitsText": "Besuche erscheinen hier, sobald jemand die Website öffnet. Teile den Link eines Artikels von seiner Seite, um zu sehen, welche Quelle Besuche bringt.",
+  "AdminStats.openCatalog": "Katalog öffnen",
+  "AdminStats.fewVisits": "Bisher wenige Besuche, daher können sich die Quoten stark ändern.",
+  "AdminStats.keyNumbers": "Kennzahlen",
+  "AdminStats.visits": "Besuche",
+  "AdminStats.orderClicks": "Bestellklicks",
+  "AdminStats.orderRate": "Bestellquote",
+  "AdminStats.orderRateHint": "Bestellklicks pro 100 Besuche",
+  "AdminStats.orderClickMeans": "Ein Bestellklick ist ein Tippen auf einen Bestellknopf für {channels}. Die Bestellung selbst passiert im Chat.",
+  "AdminStats.orderClickMeansAny": "Ein Bestellklick ist ein Tippen auf einen Bestellknopf. Die Bestellung selbst passiert im Chat.",
+  "AdminStats.sourcesTitle": "Woher die Besuche kommen",
+  "AdminStats.sourcesIntro": "Die meisten Bestellklicks zuerst. Wähle eine Quelle, um sie im Diagramm zu sehen.",
+  "AdminStats.sourcesLabel": {
+    "one": "Besuche nach Quelle, der letzte {count} Tag",
+    "other": "Besuche nach Quelle, die letzten {count} Tage"
+  },
+  "AdminStats.source": "Quelle",
+  "AdminStats.noSource": "Keine Quelle",
+  "AdminStats.noSourceHint": "Adresse eingetippt oder über einen Link ohne Quelle gekommen.",
+  "AdminStats.noSources": "Noch keine Quellen. Füge die Orte hinzu, an denen du Artikel teilst, etwa eine Facebook-Gruppe, und teile dann den eigenen Link jedes Artikels.",
+  "AdminStats.sourcesQuiet": {
+    "one": "Keine Besuche über deine Quellen im letzten {count} Tag. Teile den Link eines Artikels von seiner Seite, um anzufangen.",
+    "other": "Keine Besuche über deine Quellen in den letzten {count} Tagen. Teile den Link eines Artikels von seiner Seite, um anzufangen."
+  },
+  "AdminStats.channelsTitle": "Bestellkanal",
+  "AdminStats.channelsLabel": {
+    "one": "Bestellklicks nach Kanal, der letzte {count} Tag",
+    "other": "Bestellklicks nach Kanal, die letzten {count} Tage"
+  },
+  "AdminStats.noOrderClicks": "Noch keine Bestellklicks.",
+  "AdminStats.limits": "Manche Besucher blockieren Tracker, die echten Zahlen sind also etwas höher. Die Bestellklicks einer Quelle zählen nur Tipps auf der Seite, die ihr Teilen-Link geöffnet hat.",
+  "AdminStats.chartTitle": "Besuche pro Tag",
+  "AdminStats.chartTitleWeekly": "Besuche pro Woche",
+  "AdminStats.chartSummary": {
+    "one": "{total} Besuche in {count} Tag",
+    "other": "{total} Besuche in {count} Tagen"
+  },
+  "AdminStats.allSources": "Alle Quellen",
+  "AdminStats.previousSeries": {
+    "one": "Vorheriger {count} Tag",
+    "other": "Vorherige {count} Tage"
+  },
+  "AdminStats.chartLabel": {
+    "one": "Besuche, der letzte {count} Tag",
+    "other": "Besuche, die letzten {count} Tage"
+  },
+  "AdminStats.mostlyFrom": "meist {source}",
+  "AdminStats.itemsTitle": "Artikel",
+  "AdminStats.itemsIntro": "Was bestellt wird und was nur angesehen wird.",
+  "AdminStats.mostOrdered": "Am meisten bestellt",
+  "AdminStats.item": "Artikel",
+  "AdminStats.views": "Aufrufe",
+  "AdminStats.notOrdered": "Angesehen, nicht bestellt",
+  "AdminStats.allOrdered": "Jeder angesehene Artikel hat mindestens einen Bestellklick.",
+  "AdminStats.noItemViews": {
+    "one": "Keine Artikelaufrufe im letzten {count} Tag.",
+    "other": "Keine Artikelaufrufe in den letzten {count} Tagen."
+  },
+  "AdminStats.notOrderedIntro": {
+    "one": "Artikel mit mindestens {count} Aufruf und ohne Bestellklick, die meistgesehenen zuerst.",
+    "other": "Artikel mit mindestens {count} Aufrufen und ohne Bestellklick, die meistgesehenen zuerst."
+  },
   "AdminDataExports.loading": "Datenexporte werden geladen",
   "AdminDataExports.empty": "Keine Datenexporte.",
   "AdminDataExports.requested": "Angefordert <when></when>",
@@ -1192,6 +1292,7 @@
   "AdminJobs.cancelling": "Wird abgebrochen…",
   "AdminJobs.keepIt": "Behalten",
   "AdminNav.dashboard": "Übersicht",
+  "AdminNav.stats": "Statistik",
   "AdminNav.system": "System",
   "AdminNav.users": "Nutzer",
   "AdminNav.groups": "Gruppen",

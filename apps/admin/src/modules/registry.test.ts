@@ -11,11 +11,12 @@ it("registers every module once, with the API's ids in the API's order", () => {
   expect(ids).toEqual(ADMIN_API_MODULES.map((module) => module.id))
 })
 
-it("puts the dashboard first and the users second in the sidebar", () => {
+it("puts the dashboard first, stats second and the users third in the sidebar", () => {
   expect(
-    ADMIN_MODULES.slice(0, 2).map((module) => [adminText().t(module.nav.name), module.nav.href]),
+    ADMIN_MODULES.slice(0, 3).map((module) => [adminText().t(module.nav.name), module.nav.href]),
   ).toEqual([
     ["Dashboard", "/"],
+    ["Stats", "/stats"],
     ["Users", "/users"],
   ])
 })

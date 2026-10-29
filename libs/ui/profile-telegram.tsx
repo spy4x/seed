@@ -167,7 +167,13 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
         {code && (
           <Stack>
             <p class="text-sm text-muted">
-              <Rich parts={t.parts(`ProfileTelegram.open`, { bot })} tags={{ strong }} />
+              <Rich
+                parts={t.parts(`ProfileTelegram.open`, {
+                  bot,
+                  button: t.t(`TelegramBot.linkButton`),
+                })}
+                tags={{ strong }}
+              />
             </p>
             <Button
               href={code.url}
@@ -179,8 +185,11 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
               {t.t(`ProfileTelegram.openButton`)}
             </Button>
             <p class="text-sm text-muted">{t.t(`ProfileTelegram.elsewhere`, { bot })}</p>
-            <div data-e2e="telegram-code">
+            {/* A command reads left to right in every language; in Arabic, its "/" and "-" moved. */}
+            <div data-e2e="telegram-code" dir="ltr">
+              {/* The code breaks where its box ends, not early after a "-", which reads as a hyphen. */}
               <CopyBlock
+                class="break-all"
                 text={`/link ${code.code}`}
                 textLabel={t.t(`ProfileTelegram.message`)}
                 copyLabel={t.t(`ProfileTelegram.copy`)}

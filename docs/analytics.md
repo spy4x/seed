@@ -95,6 +95,38 @@ These exist in the Umami of seedsaas.com. A product built on Seed creates its ow
 The demo's sign-up page is not a funnel step: the SPA loads no tracker, so Umami never sees it.
 `try-demo` is the last step the website can see.
 
+## Stats in the admin app
+
+The admin app's Stats page (`/stats`, `g t`) reads the website's numbers back from the same Umami,
+so the operator never has to open Umami for the everyday questions: where visits come from, which
+items people order or only look at, and which order button they press. It is on once the server
+has three settings, and says which are missing while it is not:
+
+```
+UMAMI_API_URL=https://stats.example.com
+UMAMI_API_TOKEN=<a token of an Umami user who may read the website>
+MPA_UMAMI_WEBSITE_ID=<the website id, the same as above>
+```
+
+`UMAMI_API_URL` and `UMAMI_API_TOKEN` are the ones tracking links use
+([catalog.md](catalog.md)); the token is a secret, read by the API only and never sent to the
+browser. The page also names a refused token and an unknown website id.
+
+- **What it shows**: visits, order clicks and the order rate over 7, 30 or 90 days, each against
+  the period before; visits per day for every source or one; visits and order clicks per source,
+  with "No source" for the rest; the most-ordered items and the items viewed but not ordered; and
+  the order clicks per channel. Totals only: no visitor, session, place or address.
+- **Names**: a visit is an Umami session; an item's views are the visitors who opened its page; an
+  order click is an `order-<channel>` event, and the channel's name comes from the event's.
+- **Small samples**: a source with fewer than 20 visits, or an item with fewer than 10 views, shows
+  its counts with "–" for its rate (`MIN_SOURCE_VISITS`, `MIN_ITEM_VIEWS` in
+  `apps/api/services/website-stats.ts`).
+- **A source's order clicks** count only the clicks on the page its share link opened, because
+  Umami ties an event to the address it happened on. A visitor who came from a share link and
+  ordered from another page counts as "No source" there. The page says so.
+- **Freshness**: the API keeps each answer for 5 minutes, one copy for every operator, and shows the
+  last one with a warning while Umami does not answer. "Refresh numbers" reads past it.
+
 ## Where the code is
 
 | What                                          | File                                     |
@@ -103,4 +135,6 @@ The demo's sign-up page is not a funnel step: the SPA loads no tracker, so Umami
 | The policy's extra origin                     | `apps/mpa/middleware.ts`                 |
 | The two script tags                           | `apps/mpa/routes/_app.tsx`               |
 | Forms, pages shown, the video, unnamed links  | `apps/mpa/static/analytics.js`           |
+| The admin Stats page: reads and cache         | `apps/api/services/website-stats.ts`, `apps/api/routes/admin/stats.ts` |
+| The admin Stats page: the screen              | `libs/ui/admin-stats-screen.tsx`, `apps/admin/src/modules/stats/` |
 | Tests                                         | `apps/mpa/config.test.ts`, `apps/mpa/app.test.ts`, `apps/mpa/site.test.ts`, `e2e/mpa/analytics.mpa.ts` |

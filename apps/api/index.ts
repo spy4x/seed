@@ -78,7 +78,8 @@ import { isCacheConnected, kv } from "./services/cache.ts"
 import { files } from "./services/files.ts"
 import { s3ServerFiles } from "@server/files/files.ts"
 import { readCatalogSetup } from "@server/catalog/setup.ts"
-import { createUmamiLinks, readTrackingSetup } from "@server/catalog/tracking.ts"
+import { createUmamiLinks, DEFAULT_ITEM_PATH, readTrackingSetup } from "@server/catalog/tracking.ts"
+import { readWebsiteStatsSetup } from "./services/website-stats.ts"
 import { createPublicCatalogReads, createPublicCatalogRoute } from "./routes/catalog.ts"
 import { createRedisRateLimitStore } from "@spy4x/server/kv"
 import { enqueuePasswordResetMail } from "@server/jobs/password-reset-mail.ts"
@@ -270,6 +271,12 @@ const siteUrl = readSiteUrl(Deno.env, config.isDev ? "dev" : "prod")
 const catalogSwitch = readCatalogSetup(Deno.env)
 const trackingSetup = catalogSwitch.on ? readTrackingSetup(Deno.env, siteUrl) : null
 const catalogSetup = { ...catalogSwitch, tracking: trackingSetup }
+// Stats (#485): the website's numbers from Umami, off until its three settings are set.
+const websiteStats = {
+  ...readWebsiteStatsSetup(Deno.env),
+  itemPath: trackingSetup?.itemPath ??
+    (Deno.env.get("CATALOG_ITEM_PATH")?.trim() || DEFAULT_ITEM_PATH),
+}
 const serverFiles = s3ServerFiles(config.files)
 // The operator area (#146) and its modules (#424). The gate answers 404 to anyone below operator.
 app.route(
@@ -294,6 +301,7 @@ app.route(
       billing: billingSetup,
       catalog: catalogSetup,
       files: serverFiles,
+      websiteStats,
     }).concat(
       createAdminOwnPreferencesRoute({
         limit: rateLimits.normal,

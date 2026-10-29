@@ -94,6 +94,7 @@ function buildApp(
     emit: (event: PushDevicesUpdatedEvent | UserSignedOutEvent) => emitted.push(event),
     now: () => new Date("2026-10-16T09:00:00.000Z"),
     catalog: { on: true, settings: CATALOG_DEFAULT_SETTINGS },
+    websiteStats: { setup: null, missing: [], itemPath: `/{slug}` },
   }
   // The real registry, with this module's service faked; the other modules never reach a database
   // in these requests.

@@ -1191,6 +1191,7 @@ export function adminUsersExportPath(filter: AdminUserFilter): string {
 // #429: the audit log and the System page of the operator area.
 export * from "./admin-audit.ts"
 export * from "./admin-system.ts"
+export * from "./admin-website-stats.ts"
 export * from "./admin-jobs.ts"
 export * from "./preferences.ts"
 export * from "./guests.ts"

@@ -212,7 +212,7 @@
   "AdminAuditEvent.catalogSourceCreated": "Link source added",
   "AdminAuditEvent.catalogSourceUpdated": "Link source saved",
   "AdminAuditEvent.catalogSourceDeleted": "Link source deleted",
-  "AdminAuditEvent.catalogSourcesReordered": "Link sources reordered",
+  "AdminAuditEvent.catalogSourcesReordered": "Sources reordered",
   "AdminAuditEvent.catalogLinkCreated": "Tracking link made",
   "AdminBilling.listError": "Could not load customers. Check your connection and try again.",
   "AdminBilling.offText": "Every group is on the Free plan. To turn billing on, add the Stripe settings.",
@@ -604,7 +604,7 @@
   },
   "AdminCatalog.donePublished": "Published. The website shows it within a minute.",
   "AdminCatalog.doneHidden": "Hidden. The website stops showing it within a minute.",
-  "AdminCatalog.sources": "Link sources",
+  "AdminCatalog.sources": "Sources",
   "AdminCatalog.linkNotMade": "Link not made",
   "AdminCatalog.linkCopied": "Link copied",
   "AdminCatalog.copyFailed": "Could not copy the link",
@@ -762,7 +762,7 @@
     "one": "{file} was left out: an item keeps {count} photo at most.",
     "other": "{file} was left out: an item keeps {count} photos at most."
   },
-  "AdminCatalogSource.back": "Back to link sources",
+  "AdminCatalogSource.back": "Back to sources",
   "AdminCatalogSource.title": "Source",
   "AdminCatalogSource.notFound": "This source does not exist",
   "AdminCatalogSource.notFoundText": "It may have been deleted.",
@@ -781,7 +781,7 @@
   "AdminCatalogSource.save": "Save source",
   "AdminCatalogSources.trackingOff": "Links need the website's address. Set MPA_DOMAIN in the server's env file and deploy.",
   "AdminCatalogSources.back": "Back to the catalog",
-  "AdminCatalogSources.title": "Link sources",
+  "AdminCatalogSources.title": "Sources",
   "AdminCatalogSources.subtitle": "Each place you share items in gets its own link, so you see which brings visitors.",
   "AdminCatalogSources.add": "Add source",
   "AdminCatalogSources.loading": "Loading the sources",
@@ -891,6 +891,106 @@
   "AdminDashboard.noneStarted": "None started yet",
   "AdminDashboard.cleanedUp": "Cleaned up",
   "AdminDashboard.cleanedUpHint": "Empty after 7 days, or unused for a year",
+  "AdminStats.title": "Stats",
+  "AdminStats.subtitle": {
+    "one": "Last {count} day",
+    "other": "Last {count} days"
+  },
+  "AdminStats.subtitleUpdated": {
+    "one": "Last {count} day · updated {ago}",
+    "other": "Last {count} days · updated {ago}"
+  },
+  "AdminStats.period": "Period",
+  "AdminStats.periodDays": {
+    "one": "{count} day",
+    "other": "{count} days"
+  },
+  "AdminStats.refresh": "Refresh numbers",
+  "AdminStats.openUmami": "Open in Umami",
+  "AdminStats.editSources": "Edit sources",
+  "AdminStats.loadError": "Could not load the stats. Check your connection and try again.",
+  "AdminStats.tryAgain": "Try again",
+  "AdminStats.problemTitle": "Stats cannot be shown",
+  "AdminStats.tokenRefused": "Umami did not accept the token in UMAMI_API_TOKEN. Make a new token in Umami, put it in the server's env file and deploy.",
+  "AdminStats.unknownWebsite": "Umami has no website with the id in MPA_UMAMI_WEBSITE_ID. Copy the id from the website's settings in Umami.",
+  "AdminStats.unreachable": "Umami is not answering, so the numbers cannot be shown. Try again in a few minutes. If it keeps happening, check that Umami is running.",
+  "AdminStats.stale": "Showing numbers from {time}. Umami is not answering right now.",
+  "AdminStats.loading": "Loading the stats",
+  "AdminStats.offTitle": "Stats are off",
+  "AdminStats.offText": "Stats come from your Umami. To turn them on, set UMAMI_API_URL, UMAMI_API_TOKEN and MPA_UMAMI_WEBSITE_ID in the server's env file and deploy.",
+  "AdminStats.offSome": {
+    "one": "Stats need all three settings. Missing: {missing}. Add it to the server's env file and deploy.",
+    "other": "Stats need all three settings. Missing: {missing}. Add them to the server's env file and deploy."
+  },
+  "AdminStats.readSetup": "Read the stats setup",
+  "AdminStats.newTab": "{label} (opens in a new tab)",
+  "AdminStats.rateChange": {
+    "one": "{change} points vs previous {count} day",
+    "other": "{change} points vs previous {count} days"
+  },
+  "AdminStats.noVisitsTitle": "No visits yet",
+  "AdminStats.noVisitsText": "Visits show here once people open the website. Share an item's link from its page to see which source brings them.",
+  "AdminStats.openCatalog": "Open the catalog",
+  "AdminStats.fewVisits": "Few visits so far, so rates can change a lot.",
+  "AdminStats.keyNumbers": "Key numbers",
+  "AdminStats.visits": "Visits",
+  "AdminStats.orderClicks": "Order clicks",
+  "AdminStats.orderRate": "Order rate",
+  "AdminStats.orderRateHint": "Order clicks per 100 visits",
+  "AdminStats.orderClickMeans": "An order click is a tap on a {channels} order button. The order itself happens in the chat.",
+  "AdminStats.orderClickMeansAny": "An order click is a tap on an order button. The order itself happens in the chat.",
+  "AdminStats.sourcesTitle": "Where visits come from",
+  "AdminStats.sourcesIntro": "Most order clicks first. Press a source to see it on the chart.",
+  "AdminStats.sourcesLabel": {
+    "one": "Visits by source, the last {count} day",
+    "other": "Visits by source, the last {count} days"
+  },
+  "AdminStats.source": "Source",
+  "AdminStats.noSource": "No source",
+  "AdminStats.noSourceHint": "Typed the address, or came from a link without a source.",
+  "AdminStats.noSources": "No sources yet. Add the places you share items in, such as a Facebook group, then share each item's own link.",
+  "AdminStats.sourcesQuiet": {
+    "one": "No visits from your sources in the last {count} day. Share an item's link from its page to start.",
+    "other": "No visits from your sources in the last {count} days. Share an item's link from its page to start."
+  },
+  "AdminStats.channelsTitle": "Order channel",
+  "AdminStats.channelsLabel": {
+    "one": "Order clicks by channel, the last {count} day",
+    "other": "Order clicks by channel, the last {count} days"
+  },
+  "AdminStats.noOrderClicks": "No order clicks yet.",
+  "AdminStats.limits": "Some visitors block trackers, so the real numbers are a little higher. A source's order clicks count only taps on the page its share link opened.",
+  "AdminStats.chartTitle": "Visits per day",
+  "AdminStats.chartTitleWeekly": "Visits per week",
+  "AdminStats.chartSummary": {
+    "one": "{total} visits in {count} day",
+    "other": "{total} visits in {count} days"
+  },
+  "AdminStats.allSources": "All sources",
+  "AdminStats.previousSeries": {
+    "one": "Previous {count} day",
+    "other": "Previous {count} days"
+  },
+  "AdminStats.chartLabel": {
+    "one": "Visits, the last {count} day",
+    "other": "Visits, the last {count} days"
+  },
+  "AdminStats.mostlyFrom": "mostly {source}",
+  "AdminStats.itemsTitle": "Items",
+  "AdminStats.itemsIntro": "What people order, and what they only look at.",
+  "AdminStats.mostOrdered": "Most ordered",
+  "AdminStats.item": "Item",
+  "AdminStats.views": "Views",
+  "AdminStats.notOrdered": "Viewed, not ordered",
+  "AdminStats.allOrdered": "Every viewed item got at least one order click.",
+  "AdminStats.noItemViews": {
+    "one": "No item views in the last {count} day.",
+    "other": "No item views in the last {count} days."
+  },
+  "AdminStats.notOrderedIntro": {
+    "one": "Items with at least {count} view and no order click, most viewed first.",
+    "other": "Items with at least {count} views and no order click, most viewed first."
+  },
   "AdminDataExports.loading": "Loading data exports",
   "AdminDataExports.empty": "No data exports.",
   "AdminDataExports.requested": "Requested <when></when>",
@@ -1192,6 +1292,7 @@
   "AdminJobs.cancelling": "Cancelling…",
   "AdminJobs.keepIt": "Keep it",
   "AdminNav.dashboard": "Dashboard",
+  "AdminNav.stats": "Stats",
   "AdminNav.system": "System",
   "AdminNav.users": "Users",
   "AdminNav.groups": "Groups",

@@ -210,10 +210,24 @@ Deno.test(`telegram: a code names the account it links by first name and masked 
       .toEqual({ firstName: `Ada`, maskedAddress: `a•••@example.com` })
     expect(await linkedTelegram(sql, ada)).toEqual([])
 
-    expect(await links.link(prepared!.token, TG + 1)).toBe(`invalid`)
+    expect(await links.link(prepared!.token, TG + 1)).toBe(`stale`)
     expect(await linkedTelegram(sql, ada)).toEqual([])
     expect(await links.link(prepared!.token, TG)).toBe(`linked`)
     expect(await linkedTelegram(sql, ada)).toEqual([String(TG)])
+  })
+})
+
+Deno.test(`telegram: a Link button a newer one replaced is stale and links nothing`, async () => {
+  await withSchema(async (sql) => {
+    const { accounts, links } = services(sql, { now: T0 })
+    const ada = await insertUser(sql)
+
+    const first = await links.prepare((await accounts.issueCode(ada))!.code, TG)
+    const second = await links.prepare((await accounts.issueCode(ada))!.code, TG)
+
+    expect(await links.link(first!.token, TG)).toBe(`stale`)
+    expect(await linkedTelegram(sql, ada)).toEqual([])
+    expect(await links.link(second!.token, TG)).toBe(`linked`)
   })
 })
 
@@ -347,7 +361,7 @@ Deno.test(`telegram: a password reset and a password change each end the link, w
       eventType: AuthAuditEventType.TELEGRAM_UNLINKED,
       identifier: `password-reset telegram:${TG}`,
     })
-    expect(await links.link(adaLater.press, TG + 2)).toBe(`invalid`)
+    expect(await links.link(adaLater.press, TG + 2)).toBe(`stale`)
     expect(await linkWith(links, adaLater.code, TG + 3)).toBe(`invalid`)
     expect(await linkedTelegram(sql, ada)).toEqual([])
 
@@ -356,7 +370,7 @@ Deno.test(`telegram: a password reset and a password change each end the link, w
     const bobLater = await prepareForLater(accounts, links, bob, TG + 4)
     expect((await app.request(`http://local/change/${bob}`, { method: `POST` })).status).toBe(200)
     expect(await links.account(TG + 1)).toBeNull()
-    expect(await links.link(bobLater.press, TG + 4)).toBe(`invalid`)
+    expect(await links.link(bobLater.press, TG + 4)).toBe(`stale`)
     expect(await linkWith(links, bobLater.code, TG + 5)).toBe(`invalid`)
     expect(await linkedTelegram(sql, bob)).toEqual([])
     expect(

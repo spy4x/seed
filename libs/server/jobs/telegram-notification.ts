@@ -1,16 +1,10 @@
 import type postgres from "postgres"
 import type { TelegramClient } from "@spy4x/integrations/telegram"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
-import { type Catalog, createTranslator, type Translator } from "@spy4x/platform/universal/i18n"
 import { createFormatters } from "@spy4x/time/format"
-import { isLanguage, type Language, TELEGRAM_METHOD } from "@domain/identity"
+import { isLanguage, TELEGRAM_METHOD } from "@domain/identity"
 import { notificationMessage, type NotificationPayload } from "@domain/notifications"
-import en from "@i18n/app/en.json" with { type: "json" }
-import ru from "@i18n/app/ru.json" with { type: "json" }
-import es from "@i18n/app/es.json" with { type: "json" }
-import de from "@i18n/app/de.json" with { type: "json" }
-import ptBR from "@i18n/app/pt-BR.json" with { type: "json" }
-import ar from "@i18n/app/ar.json" with { type: "json" }
+import { translatorFor } from "../telegram/words.ts"
 import { enqueueJob, type JobHandler, OUTBOX_RETENTION_DAYS } from "./jobs.ts"
 
 /**
@@ -61,23 +55,6 @@ interface MessageRow extends postgres.Row {
   language: string | null
   /** The person's saved region format, `null` when it follows each device. */
   locale: string | null
-}
-
-/** The inbox's words, the `app` catalog, in every language: the chat says what the inbox says. */
-const CATALOGS: Record<Language, Catalog> = { en, ru, es, de, "pt-BR": ptBR, ar }
-const translators = new Map<Language, Translator<string>>()
-
-/** The `app` catalog in `language`, made on first use. */
-function translatorFor(language: Language): Translator<string> {
-  let translator = translators.get(language)
-  if (!translator) {
-    translator = createTranslator({
-      language,
-      catalogs: [{ source: en, translation: language === `en` ? undefined : CATALOGS[language] }],
-    })
-    translators.set(language, translator)
-  }
-  return translator
 }
 
 /**

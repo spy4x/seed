@@ -18,12 +18,23 @@ import {
   type TelegramStepHandler,
 } from "@spy4x/integrations/telegram"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
-import { TELEGRAM_LINK_MINUTES, type UserMFAStatus } from "@domain/identity"
+import { negotiateLanguage } from "@spy4x/platform/universal/i18n"
+import {
+  type Language,
+  LANGUAGES,
+  TELEGRAM_LINK_MINUTES,
+  type UserMFAStatus,
+} from "@domain/identity"
 import type { TelegramAccountLabel } from "@server/auth/telegram.ts"
+import { isolate } from "@server/mail/mail.ts"
+import { translatorFor } from "@server/telegram/words.ts"
 import type { TelegramAccount, TelegramAccountHandler, TelegramProduct } from "./extension.ts"
 
-/** How a link code sent to the bot ended. */
-export type TelegramLinkResult = `linked` | `already` | `taken` | `invalid`
+/**
+ * How a "Link" press ended. `stale`: the button no longer works, because it was used, a newer one
+ * replaced it, it expired, someone else pressed it, or the account is gone.
+ */
+export type TelegramLinkResult = `linked` | `already` | `taken` | `stale`
 
 /** A code the bot checked: whose account it links, and the token of its "Link" button. */
 export interface TelegramPreparedLink extends TelegramAccountLabel {
@@ -68,30 +79,52 @@ export const LINK_CALLBACK = `tglink`
 /** Where the person makes a link code in the app. */
 export const TELEGRAM_SETTINGS_PATH = `/profile/notifications`
 
-/** The bot's own words, so a test can name them. */
-export const BOT_TEXT = {
-  linked:
-    `Done: this chat is linked to your account. Your notifications come here now. Send /help to see what I can do.`,
-  already: `This Telegram account is already linked to your account.`,
-  taken:
-    `This Telegram account is linked to another account. Send /unlink first, then the code again.`,
-  invalid:
-    `That code does not work. It may be mistyped, used already or older than ${TELEGRAM_LINK_MINUTES} minutes. Make a new one in the app.`,
-  privateOnly: `Send me that in a private chat.`,
-  codeSpent:
-    `That code was sent where others can read it, so it no longer works. Make a new one in the app and send it to me in a private chat.`,
-  /** `app` is the app's host name, as the mails name the product. */
-  confirm: ({ firstName, maskedAddress }: TelegramAccountLabel, app: string) =>
-    `Link this Telegram to ${firstName ? `${firstName}'s account` : `an account`} on ${app}${
-      maskedAddress ? ` (${maskedAddress})` : firstName ? `` : ` with no name or address`
-    }? Press "Link" only if it is your own account. If you did not ask for this, ignore this message.`,
-  unlinked: `Unlinked. This chat gets no more notifications from your account.`,
-  notLinked: `This Telegram account is not linked to an account.`,
-  howToLink: (settingsUrl: string) =>
-    `To link your account, open ${settingsUrl}, choose "Link Telegram" and send me the code it shows.`,
-  hello: (name: string) =>
-    `Hi${name ? ` ${name}` : ``}! Your account is linked. Send /help to see what I can do.`,
-} as const
+/**
+ * The bot's own words in `language`, from the `app` catalog, so a test can name them. A name or an
+ * address inside a message is isolated, so it reads in its own direction inside Arabic.
+ */
+export function botText(language: Language) {
+  const t = translatorFor(language)
+  const minutes = { count: TELEGRAM_LINK_MINUTES }
+  const button = t.t(`TelegramBot.linkButton`)
+  return {
+    /** The label of the "Link" button, which the confirm message names. */
+    linkButton: button,
+    linked: t.t(`TelegramBot.linked`),
+    already: t.t(`TelegramBot.already`),
+    taken: t.t(`TelegramBot.taken`),
+    /** A link code that does not work. */
+    invalid: t.t(`TelegramBot.invalid`, minutes),
+    /** A "Link" button that no longer works. */
+    stale: t.t(`TelegramBot.stale`, minutes),
+    privateOnly: t.t(`TelegramBot.privateOnly`),
+    codeSpent: t.t(`TelegramBot.codeSpent`),
+    /** `app` is the app's host name, as the mails name the product. */
+    confirm: ({ firstName, maskedAddress }: TelegramAccountLabel, app: string) => {
+      const values = {
+        app: isolate(app),
+        button,
+        ...(firstName ? { name: isolate(firstName) } : {}),
+        ...(maskedAddress ? { address: isolate(maskedAddress) } : {}),
+      }
+      if (firstName && maskedAddress) return t.t(`TelegramBot.confirmNameAddress`, values)
+      if (firstName) return t.t(`TelegramBot.confirmName`, values)
+      if (maskedAddress) return t.t(`TelegramBot.confirmAddress`, values)
+      return t.t(`TelegramBot.confirmAnonymous`, values)
+    },
+    unlinked: t.t(`TelegramBot.unlinked`),
+    notLinked: t.t(`TelegramBot.notLinked`),
+    howToLink: (settingsUrl: string) =>
+      t.t(`TelegramBot.howToLink`, { url: settingsUrl, action: t.t(`ProfileTelegram.link`) }),
+    hello: (name: string) =>
+      name ? t.t(`TelegramBot.helloName`, { name: isolate(name) }) : t.t(`TelegramBot.hello`),
+  }
+}
+
+/** The bot's words in the language of the Telegram user behind `ctx`, else English. */
+function textOf(ctx: TelegramContext): ReturnType<typeof botText> {
+  return botText(negotiateLanguage(ctx.from?.language_code, LANGUAGES, `en`))
+}
 
 /** Seed's commands, listed after the product's in the command menu and `/help`. */
 const SEED_COMMANDS: readonly TelegramBotCommand[] = [
@@ -137,13 +170,14 @@ export function createSeedBot(deps: SeedBotDeps): TelegramBot {
   /** The linked person behind `ctx`, or `null` after telling them why not. */
   async function accountOf(ctx: TelegramContext): Promise<TelegramAccount | null> {
     if (!ctx.from) return null
+    const text = textOf(ctx)
     if (!isPrivate(ctx)) {
-      await ctx.reply(BOT_TEXT.privateOnly)
+      await ctx.reply(text.privateOnly)
       return null
     }
     const found = await links.account(ctx.from.id)
     if (!found) {
-      await ctx.reply(`${BOT_TEXT.notLinked} ${BOT_TEXT.howToLink(settingsUrl)}`)
+      await ctx.reply(`${text.notLinked} ${text.howToLink(settingsUrl)}`)
       return null
     }
     return {
@@ -165,16 +199,34 @@ export function createSeedBot(deps: SeedBotDeps): TelegramBot {
   /** Checks a code and asks for a "Link" press that names the account; never links at once. */
   async function prepare(ctx: TelegramContext, code: string): Promise<void> {
     if (!ctx.from) return
+    const text = textOf(ctx)
     if (!isPrivate(ctx)) {
       await links.spend(code)
-      return void await ctx.reply(BOT_TEXT.codeSpent)
+      return void await ctx.reply(text.codeSpent)
     }
     const prepared = await links.prepare(code, ctx.from.id)
-    if (!prepared) return void await ctx.reply(BOT_TEXT.invalid)
-    await ctx.reply(BOT_TEXT.confirm(prepared, app), {
+    if (!prepared) return void await ctx.reply(text.invalid)
+    await ctx.reply(text.confirm(prepared, app), {
       reply_markup: {
-        inline_keyboard: [[{ text: `Link`, callback_data: `${LINK_CALLBACK}:${prepared.token}` }]],
+        inline_keyboard: [[{
+          text: text.linkButton,
+          callback_data: `${LINK_CALLBACK}:${prepared.token}`,
+        }]],
       },
+    })
+  }
+
+  /**
+   * Takes the "Link" button off the message it was pressed on, so a used or stale button is not
+   * pressed again. Telegram refusing it (the button is gone already) changes nothing, so the
+   * answer is not checked.
+   */
+  async function removeButton(ctx: TelegramContext): Promise<void> {
+    const message = ctx.update.callback_query?.message
+    if (!message) return
+    await client.call(`editMessageReplyMarkup`, {
+      chat_id: message.chat.id,
+      message_id: message.message_id,
     })
   }
 
@@ -197,24 +249,28 @@ export function createSeedBot(deps: SeedBotDeps): TelegramBot {
   return bot
     .callback(LINK_CALLBACK, async (ctx) => {
       if (!ctx.from || !isPrivate(ctx)) return
-      await ctx.reply(BOT_TEXT[await links.link(ctx.args, ctx.from.id)])
+      const result = await links.link(ctx.args, ctx.from.id)
+      await removeButton(ctx)
+      await ctx.reply(textOf(ctx)[result])
     })
     .command(`start`, async (ctx) => {
       // `t.me/<bot>?start=<code>` sends the code this way.
       if (ctx.args) return await prepare(ctx, ctx.args)
       if (!ctx.from || !isPrivate(ctx)) return
       const account = await links.account(ctx.from.id)
-      await ctx.reply(account ? BOT_TEXT.hello(account.firstName) : BOT_TEXT.howToLink(settingsUrl))
+      const text = textOf(ctx)
+      await ctx.reply(account ? text.hello(account.firstName) : text.howToLink(settingsUrl))
     })
     .command(`link`, async (ctx) => {
       if (ctx.args) return await prepare(ctx, ctx.args)
-      await ctx.reply(BOT_TEXT.howToLink(settingsUrl))
+      await ctx.reply(textOf(ctx).howToLink(settingsUrl))
     })
     .command(`unlink`, async (ctx) => {
       if (!ctx.from) return
-      if (!isPrivate(ctx)) return void await ctx.reply(BOT_TEXT.privateOnly)
+      const text = textOf(ctx)
+      if (!isPrivate(ctx)) return void await ctx.reply(text.privateOnly)
       await ctx.conversation.end()
-      await ctx.reply((await links.unlink(ctx.from.id)) ? BOT_TEXT.unlinked : BOT_TEXT.notLinked)
+      await ctx.reply((await links.unlink(ctx.from.id)) ? text.unlinked : text.notLinked)
     })
     .command(`help`, async (ctx) => {
       await ctx.reply(
