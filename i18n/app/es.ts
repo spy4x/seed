@@ -1353,7 +1353,7 @@ export default {
     "No se pudo quitar este dispositivo. Revisa tu conexión y vuelve a intentarlo.",
   "ProfileScreen.account": "Cuenta",
   "ProfileScreen.accountText": "Tu foto, tu nombre, tu correo y una copia de tus datos.",
-  "ProfileScreen.security": "Inicio de sesión y seguridad",
+  "ProfileScreen.security": "Acceso y seguridad",
   "ProfileScreen.securityText": "Cómo inicias sesión y dónde está abierta tu cuenta.",
   "ProfileScreen.region": "Idioma y región",
   "ProfileScreen.regionText": "Tu idioma y cómo se ven las fechas, las horas y los números.",
