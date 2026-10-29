@@ -29,6 +29,7 @@ const view = (component: unknown) => component as Parameters<App<State>["appWrap
 
 const NEWER: PublicBlogPostSummary = {
   slug: `cron-jobs`,
+  language: `en`,
   title: `Cron jobs without a cron`,
   description: `How the worker runs repeating jobs.`,
   topic: `Engineering`,
@@ -38,6 +39,7 @@ const NEWER: PublicBlogPostSummary = {
 }
 const OLDER: PublicBlogPostSummary = {
   slug: `hello-world`,
+  language: `en`,
   title: `Hello, world`,
   description: `Why we built this.`,
   topic: `Product`,
@@ -56,6 +58,32 @@ const FULL: PublicBlogPost = {
   html: `<p>The worker <strong>wakes</strong> every second.</p>`,
   headings: [{ id: `why`, text: `Why`, depth: 2 }],
   authorName: `Ada Lovelace`,
+  translations: [],
+}
+
+/** A German post of its own. */
+const GERMAN: PublicBlogPostSummary = {
+  slug: `hallo-welt`,
+  language: `de`,
+  title: `Hallo, Welt`,
+  description: `Warum wir das gebaut haben.`,
+  topic: `Produkt`,
+  publishedAt: `2026-10-03T09:00:00.000Z`,
+  updatedAt: null,
+  readingMinutes: 2,
+}
+
+/** {@link GERMAN} as the API answers it in full. */
+const GERMAN_FULL: PublicBlogPost = {
+  ...GERMAN,
+  seoTitle: null,
+  tldr: [],
+  coverUrl: null,
+  coverAlt: null,
+  html: `<p>Hallo.</p>`,
+  headings: [],
+  authorName: null,
+  translations: [],
 }
 
 /** A long post with two sections: long enough for "On this page". */
@@ -115,6 +143,7 @@ async function blogSite(answers: Answers, { newsletter = true } = {}) {
     return {
       status: response.status,
       type: response.headers.get("content-type"),
+      location: response.headers.get("location"),
       body: await response.text(),
     }
   }
@@ -161,6 +190,20 @@ const header = (html: string) => html.match(/<header[\s\S]*?<\/header>/)?.[0] ??
 const footer = (html: string) => html.match(/<footer[\s\S]*?<\/footer>/)?.[0] ?? ``
 
 describe("the blog index", () => {
+  it("lists only the posts written in the page's language, and names the languages with posts (#527)", async () => {
+    const { get } = await blogSite(listing([NEWER, GERMAN]))
+    const german = (await get("/de/blog")).body
+    const english = (await get("/blog")).body
+
+    expect(german).toContain(`href="/de/blog/hallo-welt"`)
+    expect(german).not.toContain(`cron-jobs`)
+    expect(english).toContain(`href="/blog/cron-jobs"`)
+    expect(english).not.toContain(`hallo-welt`)
+    expect(english).toContain(`<link rel="alternate" hreflang="de" href="${site}/de/blog"`)
+    expect(english).not.toContain(`<link rel="alternate" hreflang="ru"`)
+    expect(jsonLdGraph(german).find((node) => node["@type"] === `Blog`)?.inLanguage).toBe(`de`)
+  })
+
   it("lists the live posts newest first with their date, reading time and link", async () => {
     const { get } = await blogSite(listing([NEWER, OLDER]))
     const { status, body } = await get("/blog")
@@ -256,32 +299,53 @@ describe("a blog post", () => {
     expect(body).toContain(`<p>The worker <strong>wakes</strong> every second.</p>`)
   })
 
-  it("shows a post in its own English inside a translated frame, with an English canonical and no alternates (#276)", async () => {
-    const { get } = await blogSite(answers(FULL))
-    const { status, body } = await get("/de/blog/cron-jobs")
+  it("shows a German post at its German address in German, as inLanguage de, with no alternate (#527)", async () => {
+    const { get } = await blogSite({
+      ...listing([NEWER, GERMAN]),
+      [`/api/blog/posts/hallo-welt`]: () => Response.json({ post: GERMAN_FULL, readNext: [] }),
+    })
+    const { status, body } = await get("/de/blog/hallo-welt")
 
     expect(status).toBe(200)
     expect(body).toContain(`<html lang="de" dir="ltr"`)
-    expect(textOf(body)).toContain(`Diesen Beitrag gibt es nur auf Englisch.`)
-    expect(canonical(body)).toBe(`${site}/blog/cron-jobs`)
+    expect(canonical(body)).toBe(`${site}/de/blog/hallo-welt`)
     expect(body).not.toContain(`rel="alternate" hreflang=`)
-    expect(body).toMatch(/<h1[^>]*lang="en"[^>]*>\s*Cron jobs without a cron\s*<\/h1>/)
-    expect(body).toMatch(
-      /<div lang="en" dir="ltr" class="contents">[\s\S]*The worker <strong>wakes<\/strong>/,
-    )
+    const posting = jsonLdGraph(body).find((node) => node["@type"] === `BlogPosting`)
+    expect(posting?.inLanguage).toBe(`de`)
+    expect(posting).toMatchObject({ mainEntityOfPage: { "@id": `${site}/de/blog/hallo-welt` } })
     expect(body).toMatch(/<nav aria-label="Brotkrümelnavigation"[\s\S]*?href="\/de\/blog"/)
   })
 
-  it("translates the blog index's frame and says the posts are in English (#276)", async () => {
-    const { get } = await blogSite(listing([NEWER, OLDER]))
-    const { status, body } = await get("/ar/blog")
+  it("links a post and its translation to each other as language versions (#527)", async () => {
+    const english = { ...FULL, translations: [{ language: `de` as const, slug: `hallo-welt` }] }
+    const german = {
+      ...GERMAN_FULL,
+      translations: [{ language: `en` as const, slug: `cron-jobs` }],
+    }
+    const { get } = await blogSite({
+      ...listing([NEWER, GERMAN]),
+      [`/api/blog/posts/cron-jobs`]: () => Response.json({ post: english, readNext: [] }),
+      [`/api/blog/posts/hallo-welt`]: () => Response.json({ post: german, readNext: [] }),
+    })
+    const alternates = (html: string) =>
+      [...html.matchAll(/<link rel="alternate" hreflang="([^"]+)" href="([^"]+)"/g)]
+        .map(([, hreflang, href]) => `${hreflang} ${href}`)
+    const versions = [
+      `en ${site}/blog/cron-jobs`,
+      `de ${site}/de/blog/hallo-welt`,
+      `x-default ${site}/blog/cron-jobs`,
+    ]
 
-    expect(status).toBe(200)
-    expect(body).toContain(`<html lang="ar" dir="rtl"`)
-    expect(textOf(body)).toContain(`المقالات مكتوبة بالإنجليزية.`)
-    expect(canonical(body)).toBe(`${site}/ar/blog`)
-    expect(body).toContain(`<link rel="alternate" hreflang="de" href="${site}/de/blog"`)
-    expect(body).toContain(`href="/ar/blog/cron-jobs"`)
+    expect(alternates((await get("/blog/cron-jobs")).body)).toEqual(versions)
+    expect(alternates((await get("/de/blog/hallo-welt")).body).sort()).toEqual(versions.sort())
+  })
+
+  it("sends a post's address in another language to its own for good (#527)", async () => {
+    const { get } = await blogSite(answers(FULL))
+    const { status, location } = await get("/de/blog/cron-jobs")
+
+    expect(status).toBe(301)
+    expect(location).toBe(`/blog/cron-jobs`)
   })
 
   it("says Updated only for a post that was updated", async () => {
@@ -470,14 +534,20 @@ describe("the blog in the sitemap and llms.txt", () => {
     )
   })
 
-  it("lists the blog in every language and each post at its English address only (#276)", async () => {
-    const { get } = await blogSite(listing([NEWER, OLDER]))
+  it("lists the blog of each language with a post, and each post once at its own address (#527)", async () => {
+    const { get } = await blogSite(listing([NEWER, OLDER, GERMAN]))
     const { body } = await get("/sitemap.xml")
+    const blogAddresses = [...body.matchAll(/<loc>([^<]*\/blog[^<]*)<\/loc>/g)].map(([, loc]) =>
+      loc
+    )
 
-    for (const prefix of ["", "/ru", "/es", "/de", "/pt-BR", "/ar"]) {
-      expect(body).toContain(`<loc>${site}${prefix}/blog</loc>`)
-    }
-    expect(body).not.toMatch(/<loc>[^<]*\/(?:ru|es|de|pt-BR|ar)\/blog\/[^<]+<\/loc>/)
+    expect(blogAddresses.sort()).toEqual([
+      `${site}/blog`,
+      `${site}/blog/cron-jobs`,
+      `${site}/blog/hello-world`,
+      `${site}/de/blog`,
+      `${site}/de/blog/hallo-welt`,
+    ])
   })
 
   it("leaves the blog out of both while no post is live, and while the API cannot answer", async () => {
@@ -513,6 +583,14 @@ describe("the Blog link", () => {
     expect(body).toContain(
       `<link rel="alternate" type="application/rss+xml" title="Seed blog" href="${site}/rss.xml"`,
     )
+  })
+
+  it("is hidden on a language's pages while that language has no live post (#527)", async () => {
+    const { get } = await blogSite(listing([NEWER]))
+    const { body } = await get("/de/blog")
+
+    expect(header(body)).not.toContain(`href="/de/blog"`)
+    expect(body).not.toContain(`application/rss+xml`)
   })
 
   it("is hidden while no post is live, and while the API has never answered", async () => {

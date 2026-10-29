@@ -10,7 +10,8 @@ import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { useFormat } from "@spy4x/preact-ui/format"
-import { Input, Textarea } from "@spy4x/preact-ui/input"
+import { Input, Select, Textarea } from "@spy4x/preact-ui/input"
+import { languageName } from "@spy4x/preact-ui/language-picker"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { ListField } from "@spy4x/preact-ui/list-field"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
@@ -34,9 +35,11 @@ import {
   type BlogField,
   type BlogNewsletterResponse,
   type BlogPost,
+  blogPostPath,
   type BlogPostStatus,
   isHttpsUrl,
 } from "@domain/blog"
+import { DEFAULT_LANGUAGE, type Language, LANGUAGES } from "@domain/identity"
 import { ADMIN_BLOG_PATHS, BlogStatusBadge } from "./admin-blog-list.tsx"
 import { Dialogs } from "./admin-blog-dialogs.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
@@ -57,6 +60,9 @@ export interface BlogDraft {
   coverUrl: string
   coverAlt: string
   bodyMd: string
+  language: Language
+  /** The id of the post this one translates, or `` for a post of its own. */
+  translationOf: string
 }
 
 /** The editor's messages: one per field, `at` for the publish time, `form` for the rest. */
@@ -71,6 +77,8 @@ export const BLOG_FIELD_ORDER: readonly BlogField[] = [
   `seoTitle`,
   `tldr`,
   `topic`,
+  `language`,
+  `translationOf`,
   `coverUrl`,
   `coverAlt`,
 ]
@@ -82,6 +90,8 @@ const SETTINGS_FIELDS: ReadonlySet<BlogField> = new Set([
   `seoTitle`,
   `tldr`,
   `topic`,
+  `language`,
+  `translationOf`,
   `coverUrl`,
   `coverAlt`,
 ])
@@ -103,6 +113,8 @@ export function emptyBlogDraft(): BlogDraft {
     coverUrl: ``,
     coverAlt: ``,
     bodyMd: ``,
+    language: DEFAULT_LANGUAGE,
+    translationOf: ``,
   }
 }
 
@@ -118,6 +130,8 @@ export function blogDraftOf(post: BlogPost): BlogDraft {
     coverUrl: post.coverUrl ?? ``,
     coverAlt: post.coverAlt ?? ``,
     bodyMd: post.bodyMd,
+    language: post.language,
+    translationOf: post.translationOf ?? ``,
   }
 }
 
@@ -205,6 +219,13 @@ export function blogFieldId(field: BlogField): string {
 
 // #endregion
 
+/** A post another one may translate, as the "Translation of" field names it. */
+export interface BlogOriginal {
+  id: string
+  title: string
+  language: Language
+}
+
 /** Which dialog is open. `publish-now` and `reschedule` are the publish dialog on a scheduled post. */
 export type BlogDialog =
   | `publish`
@@ -256,6 +277,11 @@ export interface AdminBlogEditorScreenProps {
   onSignificantUpdate: (value: boolean) => void
   /** The topics other posts use, offered as suggestions. */
   topics: readonly string[]
+  /**
+   * The posts this one may translate: posts of their own, not translations, besides this one. The
+   * field offers those in another language than the draft's.
+   */
+  originals: readonly BlogOriginal[]
   /** Whether a post can be emailed, the lists, and the website's address; `null` while it loads. */
   newsletter: BlogNewsletterResponse | null
   /** The public website's address, for "View on website", or `null` when it is not set. */
@@ -492,7 +518,7 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
         <>
           {props.siteUrl && (
             <DropdownItem
-              href={`${props.siteUrl}/blog/${post.slug}`}
+              href={`${props.siteUrl}${blogPostPath(post)}`}
               dataE2E="admin-blog-view"
             >
               {t.t(`AdminBlogEditor.viewOnSite`)}
@@ -739,7 +765,7 @@ function Settings(
           hint={locked ? t.t(`AdminBlogEditor.slugLocked`) : (
             <Rich
               parts={t.parts(`AdminBlogEditor.slugHint`, {
-                path: `/blog/${value.slug || `{slug}`}`,
+                path: blogPostPath({ language: value.language, slug: value.slug || `{slug}` }),
               })}
               tags={{ path: (text: string) => <bdi translate={false}>{text}</bdi> }}
             />
@@ -828,6 +854,45 @@ function Settings(
         <datalist id="blog-topics">
           {props.topics.map((topic) => <option key={topic} value={topic} />)}
         </datalist>
+        <Field
+          id={blogFieldId(`language`)}
+          label={t.t(`AdminBlogEditor.language`)}
+          hint={t.t(`AdminBlogEditor.languageHint`)}
+          error={message(`language`)}
+        >
+          <Select
+            data-e2e="admin-blog-language"
+            value={value.language}
+            options={LANGUAGES.map((language) => ({
+              value: language,
+              label: languageName(language),
+            }))}
+            onChange={(e) => edit({ language: e.currentTarget.value as Language })}
+          />
+        </Field>
+        <Field
+          id={blogFieldId(`translationOf`)}
+          label={t.t(`AdminBlogEditor.translationOf`)}
+          hint={t.t(`AdminBlogEditor.translationOfHint`)}
+          error={message(`translationOf`)}
+        >
+          <Select
+            data-e2e="admin-blog-translation-of"
+            value={value.translationOf}
+            options={[
+              { value: ``, label: t.t(`AdminBlogEditor.translationNone`) },
+              ...props.originals
+                .filter((original) =>
+                  original.language !== value.language || original.id === value.translationOf
+                )
+                .map((original) => ({
+                  value: original.id,
+                  label: `${original.title} (${languageName(original.language)})`,
+                })),
+            ]}
+            onChange={(e) => edit({ translationOf: e.currentTarget.value })}
+          />
+        </Field>
         <Field
           id={blogFieldId(`coverUrl`)}
           label={t.t(`AdminBlogEditor.coverUrl`)}

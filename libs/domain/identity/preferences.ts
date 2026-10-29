@@ -33,6 +33,22 @@ export const LANGUAGES = [`en`, `ru`, `es`, `de`, `pt-BR`, `ar`] as const
 /** An interface language the apps ship. */
 export type Language = typeof LANGUAGES[number]
 
+/**
+ * The product's main language: the public website serves it without a prefix, and a blog post is
+ * written in it unless the operator picks another. A product whose main language is not English
+ * changes it here.
+ */
+export const DEFAULT_LANGUAGE: Language = `en`
+
+/**
+ * The public website's address of the page at `path` in `language`, as the website serves it:
+ * `/blog/hello` in the main language, `/de/blog/hello` in German. Not for the home page, `/`; an
+ * empty `path` gives the language's prefix alone.
+ */
+export function sitePath(language: Language, path: string): string {
+  return language === DEFAULT_LANGUAGE ? path : `/${language}${path}`
+}
+
 /** True for a member of {@link LANGUAGES}, compared exactly. */
 export function isLanguage(value: unknown): value is Language {
   return typeof value === `string` && (LANGUAGES as readonly string[]).includes(value)

@@ -334,6 +334,24 @@ describe("the subscription pages", () => {
     expect(apiCalls()).toHaveLength(1)
   })
 
+  it("names the page's language in the subscribe form and forwards it to the API, so the mails use it (#527)", async () => {
+    const { apiCalls, fetch } = subscribersApi(() => Response.json({}, { status: 202 }))
+    const app = appWith(fetch)
+
+    const page = await (await app(new Request(`${config.webAppOrigin}/de/subscribe`), info)).text()
+    expect(page).toMatch(/<input[^>]*name="language"[^>]*value="de"/)
+    await app(
+      formPost("/de/subscribe", { email: "ada@example.com", list: "news", language: "de" }),
+      info,
+    )
+
+    expect(apiCalls()).toEqual([{
+      method: "POST",
+      url: "/api/subscribers",
+      body: { email: "ada@example.com", list: "news", language: "de" },
+    }])
+  })
+
   const refusals: { status: number; code: string; error: string; retryAfter: string | null }[] = [
     { status: 400, code: "bad_request", error: "Enter a valid e-mail address", retryAfter: null },
     { status: 429, code: "rate_limited", error: "Too many requests", retryAfter: "30" },
@@ -392,6 +410,18 @@ describe("the subscription pages", () => {
     expect(apiCalls()).toEqual([{ method: "POST", url: "/api/subscribers/confirm", body: token }])
     expect(response.status).toBe(303)
     expect(response.headers.get("location")).toBe("/subscribe/confirm?state=done")
+  })
+
+  it("confirms with the language of the confirm page, so the welcome mail uses it (#527)", async () => {
+    const { apiCalls, fetch } = subscribersApi(() => Response.json({ state: "done" }))
+
+    await appWith(fetch)(formPost("/es/subscribe/confirm", { ...token, language: "es" }), info)
+
+    expect(apiCalls()).toEqual([{
+      method: "POST",
+      url: "/api/subscribers/confirm",
+      body: { ...token, language: "es" },
+    }])
   })
 
   it("shows an expired confirm link with the API's status and offers a new one", async () => {

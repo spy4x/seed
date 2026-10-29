@@ -45,14 +45,19 @@ export const NEWSLETTER_OFF = `Mail subscriptions are off`
 /** An action's body is one address: 4 KiB holds any real one. */
 const ACTION_MAX_BYTES = 4 * 1024
 
-/** A search's body is the filter's three short fields: 4 KiB holds any the page sends. */
+/** A search's body is the filter's four short fields: 4 KiB holds any the page sends. */
 const SEARCH_MAX_BYTES = 4 * 1024
 
 /**
- * The body of a search: the list's query-string fields (`q`, `status`, `page`), each as text and
+ * The body of a search: the list's query-string fields (`q`, `status`, `language`, `page`), each as text and
  * each optional, so `parseAdminSubscriberFilter` reads them by the same rules as before.
  */
-const searchBodySchema = type({ "q?": `string`, "status?": `string`, "page?": `string` })
+const searchBodySchema = type({
+  "q?": `string`,
+  "status?": `string`,
+  "language?": `string`,
+  "page?": `string`,
+})
 
 /** What a search answers when its body is not the filter's fields. */
 export const NEWSLETTER_INVALID_SEARCH = `This search could not be read`
@@ -94,7 +99,7 @@ export interface AdminNewsletterRouteDependencies {
  * same-origin guard.
  *
  * - `GET /newsletter/stats` answers {@link AdminNewsletterStats}: counts only.
- * - `POST /newsletter/subscribers/search` takes `{ q?, status?, page? }`, each as text, and lists
+ * - `POST /newsletter/subscribers/search` takes `{ q?, status?, language?, page? }`, each as text, and lists
  *   the matching addresses, newest first. A `POST`, so the search text never sits in a URL, where
  *   access logs and the browser's history would keep it.
  * - `GET /newsletter/sends` lists the issues sent, newest first, with their counts.
@@ -135,8 +140,8 @@ export function createAdminNewsletterRoutes(
       if (checked.error) {
         return errorResponse(c, `bad_request`, { message: NEWSLETTER_INVALID_SEARCH })
       }
-      const { q = ``, status = ``, page = `` } = checked.data
-      const filter = parseAdminSubscriberFilter(new URLSearchParams({ q, status, page }))
+      const { q = ``, status = ``, language = ``, page = `` } = checked.data
+      const filter = parseAdminSubscriberFilter(new URLSearchParams({ q, status, language, page }))
       return c.json(await newsletter.list(filter))
     })
     .get(`/newsletter/sends`, limit, async (c) => c.json(await newsletter.sends()))

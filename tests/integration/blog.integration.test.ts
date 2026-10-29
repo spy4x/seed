@@ -26,7 +26,9 @@ import { createOutboxProcessor } from "@server/jobs/wiring.ts"
 import { cancelJob, runJobNow } from "@server/jobs/admin-jobs.ts"
 import { AdminJobActionOutcome } from "@domain/identity"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
-import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
+import { createListCrypto, type SubscribersSetup } from "@server/subscribers/subscribers.ts"
+import type { EmailMessage } from "@spy4x/email/message"
+import type { EmailSender } from "@spy4x/email/sender"
 import { createAdminBlog } from "../../apps/api/routes/admin/blog.ts"
 import { applyMigrations } from "./migrations.ts"
 
@@ -91,6 +93,8 @@ function fields(slug: string, extra: Partial<BlogPostFields> = {}): BlogPostFiel
     coverUrl: null,
     coverAlt: null,
     bodyMd: `Hello <b>there</b>.`,
+    language: `en`,
+    translationOf: null,
     ...extra,
   }
 }
@@ -327,6 +331,73 @@ Deno.test(`blog: read next puts the same topic first`, async () => {
   })
 })
 
+Deno.test(`blog: a post and its live translations name each other, and read next keeps to the language (#527)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const [english, german, spanish, other] = [uuidV7(), uuidV7(), uuidV7(), uuidV7()]
+    await blog.create(english, fields(`hello`), maya)
+    await blog.create(german, fields(`hallo`, { language: `de`, translationOf: english }), maya)
+    await blog.create(spanish, fields(`hola`, { language: `es`, translationOf: english }), maya)
+    await blog.create(other, fields(`anderes`, { language: `de` }), maya)
+    for (const id of [english, german, other]) await blog.publish(id, 1, null, null, maya)
+
+    const original = await readPublicPost(sql, `hello`)
+    expect(original!.post.language).toBe(`en`)
+    // The Spanish one is a draft, so it is not named.
+    expect(original!.post.translations).toEqual([{ language: `de`, slug: `hallo` }])
+    expect(original!.readNext).toEqual([])
+    const translation = await readPublicPost(sql, `hallo`)
+    expect(translation!.post.translations).toEqual([{ language: `en`, slug: `hello` }])
+    expect(translation!.readNext.map((post) => post.slug)).toEqual([`anderes`])
+    expect((await readPublicPost(sql, `anderes`))!.post.translations).toEqual([])
+  })
+})
+
+Deno.test(`blog: refuses a translation that does not name a post in another language (#527)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const [english, german] = [uuidV7(), uuidV7()]
+    await blog.create(english, fields(`hello`), maya)
+    await blog.create(german, fields(`hallo`, { language: `de`, translationOf: english }), maya)
+    const refused = async (id: string, extra: Partial<BlogPostFields>) => {
+      const error = await rejection(blog.create(id, fields(`p-${id}`, extra), maya))
+      return [error.code, error.field]
+    }
+    const refusal = [`TRANSLATION_INVALID`, `translationOf`]
+
+    await t.step(`a post that does not exist`, async () => {
+      expect(await refused(uuidV7(), { language: `es`, translationOf: uuidV7() })).toEqual(refusal)
+    })
+    await t.step(`a post in the same language`, async () => {
+      expect(await refused(uuidV7(), { translationOf: english })).toEqual(refusal)
+    })
+    await t.step(`a post that is itself a translation`, async () => {
+      expect(await refused(uuidV7(), { language: `es`, translationOf: german })).toEqual(refusal)
+    })
+    await t.step(`a second translation into a language the post has`, async () => {
+      expect(await refused(uuidV7(), { language: `de`, translationOf: english })).toEqual(refusal)
+    })
+    await t.step(`itself`, async () => {
+      const id = uuidV7()
+      await blog.create(id, fields(`alone`, { language: `es` }), maya)
+      const error = await rejection(
+        blog.update(id, 1, fields(`alone`, { language: `ru`, translationOf: id }), false, maya),
+      )
+      expect([error.code, error.field]).toEqual(refusal)
+    })
+    await t.step(`a post that others translate`, async () => {
+      const ru = uuidV7()
+      await blog.create(ru, fields(`privet`, { language: `ru` }), maya)
+      const error = await rejection(
+        blog.update(english, 1, fields(`hello`, { translationOf: ru }), false, maya),
+      )
+      expect([error.code, error.field]).toEqual(refusal)
+    })
+  })
+})
+
 Deno.test(`blog: a scheduled post goes live through its job, and is emailed once ever`, async (t) => {
   await withSchema(async (sql) => {
     const blog = new PostgresBlogRepository(sql)
@@ -395,6 +466,58 @@ Deno.test(`blog: a scheduled post goes live through its job, and is emailed once
   })
 })
 
+Deno.test(`blog: a post's issue goes only to the subscribers of its language, written in it (#527)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const crypto = await createListCrypto(SETUP, `news`)
+    // Ada signed up before #527 and has no language: she reads the main language, English.
+    for (
+      const [email, language] of [[`ada@example.com`, null], [`bob@example.com`, `de`], [
+        `cat@example.com`,
+        `es`,
+      ]]
+    ) {
+      await sql`INSERT INTO subscribers (list_id, email, key, subscribed_at, language)
+        VALUES ('news', ${email}, ${await crypto.subscriberKey(email!)}, now(), ${language})`
+    }
+    const sent: EmailMessage[] = []
+    const sender = {
+      send: (message: EmailMessage) => {
+        sent.push(message)
+        return Promise.resolve({ ok: true as const, id: String(sent.length) })
+      },
+    } as unknown as EmailSender
+    const processor = createOutboxProcessor(
+      sql,
+      { store: createPostgresAuthStore(sql), sender, brand: BRAND, log: () => {} },
+      null,
+      SETUP,
+    )
+    const german = uuidV7()
+    const english = uuidV7()
+    await blog.create(german, fields(`hallo`, { language: `de`, title: `Hallo` }), maya)
+    await blog.create(english, fields(`hello`, { title: `Hello` }), maya)
+    await blog.publish(german, 1, null, `news`, maya)
+    await blog.publish(english, 1, null, `news`, maya)
+    for (let run = 0; run < 3; run++) await processor.drainOnce()
+
+    expect((await blog.get(german))!.newsletterRecipients).toBe(1)
+    expect((await blog.get(english))!.newsletterRecipients).toBe(1)
+    const byIssue = (subject: string) => sent.filter((mail) => mail.subject === subject)
+    expect(byIssue(`Hallo`).map((mail) => mail.to)).toEqual([`bob@example.com`])
+    expect(byIssue(`Hallo`)[0].text).toContain(`Beitrag lesen`)
+    expect(byIssue(`Hallo`)[0].text).toContain(`Du bekommst diese Mail`)
+    expect(byIssue(`Hallo`)[0].text).toContain(`Abbestellen`)
+    expect(byIssue(`Hallo`)[0].text).not.toContain(`Unsubscribe`)
+    expect(byIssue(`Hallo`)[0].text).not.toContain(`Read the post`)
+    expect(byIssue(`Hallo`)[0].text).toContain(`https://www.example.com/de/blog/hallo`)
+    expect(byIssue(`Hello`).map((mail) => mail.to)).toEqual([`ada@example.com`])
+    expect(byIssue(`Hello`)[0].text).toContain(`Read the post`)
+    expect(sent.map((mail) => mail.to)).not.toContain(`cat@example.com`)
+  })
+})
+
 Deno.test(`blog: a job left over from an earlier time does not publish early`, async () => {
   await withSchema(async (sql) => {
     const blog = new PostgresBlogRepository(sql)
@@ -446,7 +569,15 @@ Deno.test(`blog: lost jobs come back once, and the sample posts seed once`, asyn
     expect(await seedSamplePosts(sql, maya.userId, now)).toBe(SAMPLE_POSTS.length)
     expect(await seedSamplePosts(sql, maya.userId, now)).toBe(0)
     const published = await listPublicPosts(sql, null)
-    expect(published.map((post) => post.slug)).toEqual([`hello-world`])
+    // The published one in English, and its translation into each other language.
+    expect(published.map((post) => `${post.language} ${post.slug}`).sort()).toEqual([
+      `ar marhaban-bialalam`,
+      `de hallo-welt`,
+      `en hello-world`,
+      `es hola-mundo`,
+      `pt-BR ola-mundo`,
+      `ru privet-mir`,
+    ])
 
     // The demo's wipe empties the job table but keeps the posts.
     await sql`DELETE FROM outbox_events`
@@ -455,13 +586,17 @@ Deno.test(`blog: lost jobs come back once, and the sample posts seed once`, asyn
   })
 })
 
-Deno.test(`blog: the admin reads the confirmed subscribers of every list`, async () => {
+Deno.test(`blog: the admin reads the confirmed subscribers of every list, in each language`, async () => {
   await withSchema(async (sql) => {
     await sql`INSERT INTO subscribers (list_id, email, key, subscribed_at)
       VALUES ('news', 'ada@example.com', 'k1', now()), ('other', 'bob@example.com', 'k2', now())`
 
+    await sql`INSERT INTO subscribers (list_id, email, key, subscribed_at, language)
+      VALUES ('news', 'cat@example.com', 'k3', now(), 'de'), ('news', 'dan@example.com', 'k4', now(), 'en')`
+
+    // One with no language counts as the main language's, as the issue's send does (#527).
     expect(await createAdminBlog(sql).confirmedSubscribers()).toEqual([
-      { list: `news`, confirmed: 1 },
+      { list: `news`, byLanguage: { en: 2, de: 1 } },
     ])
   })
 })

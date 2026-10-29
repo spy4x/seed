@@ -10,7 +10,8 @@ import {
   renderLetter,
   UNSUBSCRIBE_PLACEHOLDER,
 } from "@spy4x/email/letter"
-import type { MailBrand } from "../mail/mail.ts"
+import { DEFAULT_LANGUAGE, type Language } from "@domain/identity"
+import { type MailBrand, translatorFor } from "../mail/mail.ts"
 import { enqueueJob } from "./jobs.ts"
 import { SUBSCRIBER_SEND_ISSUE_JOB } from "./subscriber-mail.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
@@ -42,11 +43,21 @@ export interface RenderedIssue {
   id: string
   subject: string
   letter: Letter
+  /** The issue's language: only the subscribers of it get the issue. `null`: the whole list. */
+  language: Language | null
 }
 
-/** Renders `issue` with the app's footer and the placeholder `sendIssue` fills per recipient. */
-export function renderSubscriberIssue(brand: MailBrand, issue: SubscriberIssue): RenderedIssue {
+/**
+ * Renders `issue` with the app's footer, in `language` (`null`: the main language, for an issue to
+ * the whole list), and the placeholder `sendIssue` fills per recipient.
+ */
+export function renderSubscriberIssue(
+  brand: MailBrand,
+  issue: SubscriberIssue,
+  language: Language | null = null,
+): RenderedIssue {
   const host = new URL(brand.webAppUrl).host
+  const t = translatorFor(language ?? DEFAULT_LANGUAGE)
   const blocks = issue.blocks.map((block): LetterBlock => {
     if (`heading` in block) return heading(block.heading)
     if (`paragraph` in block) return paragraph(block.paragraph)
@@ -56,16 +67,17 @@ export function renderSubscriberIssue(brand: MailBrand, issue: SubscriberIssue):
   const letter = renderLetter({
     blocks,
     footer: {
-      reason: `You get this mail because you subscribed at ${host}.`,
+      reason: t.t(`SubscriberIssue.reason`, { host }),
+      unsubscribeLabel: t.t(`SubscriberWelcomeMail.unsubscribe`),
       unsubscribeLink: UNSUBSCRIBE_PLACEHOLDER,
     },
     ...(issue.preheader ? { preheader: issue.preheader } : {}),
   })
-  return { id: issue.id, subject: issue.subject, letter }
+  return { id: issue.id, subject: issue.subject, letter, language }
 }
 
 /**
- * Stores the rendered issue for `list` and queues its send. The same id again replaces the stored
+ * Stores the rendered issue for `list`, with its language, and queues its send. The same id again replaces the stored
  * content and queues another run, which mails only whom the earlier runs did not reach.
  */
 export async function queueSubscriberIssue(
@@ -74,13 +86,14 @@ export async function queueSubscriberIssue(
   issue: RenderedIssue,
 ): Promise<void> {
   const [row] = await sql<{ id: string }[]>`
-    INSERT INTO subscriber_issue_content (id, list_id, issue_id, subject, html, text)
+    INSERT INTO subscriber_issue_content (id, list_id, issue_id, subject, html, text, language)
     VALUES (
       ${uuidV7()}, ${list}, ${issue.id}, ${issue.subject}, ${issue.letter.html},
-      ${issue.letter.text}
+      ${issue.letter.text}, ${issue.language}
     )
     ON CONFLICT (list_id, issue_id) DO UPDATE
-      SET subject = EXCLUDED.subject, html = EXCLUDED.html, text = EXCLUDED.text
+      SET subject = EXCLUDED.subject, html = EXCLUDED.html, text = EXCLUDED.text,
+        language = EXCLUDED.language
     RETURNING id
   `
   await enqueueJob(sql, SUBSCRIBER_SEND_ISSUE_JOB, row.id, { inMs: 0 })

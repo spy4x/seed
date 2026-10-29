@@ -78,5 +78,16 @@
   "BillingNoticeMail.paymentFree": "Die Gruppe ist jetzt im kostenlosen Tarif. Aktualisiere die Karte auf der Seite der Gruppe, um den Tarif zurückzubekommen.",
   "BillingNoticeMail.planSubject": "Dein Tarif {plan} endet am {date}",
   "BillingNoticeMail.planWhat": "Der Tarif {plan} von „{group}“ wurde gekündigt und endet am <strong>{date}</strong>; danach wechselt die Gruppe in den kostenlosen Tarif.",
-  "BillingNoticeMail.planNext": "Doch anders entschieden? Verlängere ihn vorher auf der Seite der Gruppe."
+  "BillingNoticeMail.planNext": "Doch anders entschieden? Verlängere ihn vorher auf der Seite der Gruppe.",
+  "SubscriberConfirmMail.subject": "Bestätige dein Abo von {host}",
+  "SubscriberConfirmMail.asked": "Jemand hat Neuigkeiten von {host} an diese Adresse angefordert.",
+  "SubscriberConfirmMail.within": "Bestätige innerhalb von drei Tagen, um sie zu bekommen.",
+  "SubscriberConfirmMail.button": "Bestätigen",
+  "SubscriberConfirmMail.ignore": "Wenn du das nicht warst, ignoriere diese Mail: Dir wird nichts geschickt.",
+  "SubscriberWelcomeMail.subject": "Du hast {host} abonniert",
+  "SubscriberWelcomeMail.subscribed": "Du bekommst jetzt Neuigkeiten von {host}.",
+  "SubscriberWelcomeMail.reason": "Du bekommst diese Mail, weil du dich bei {host} angemeldet hast.",
+  "SubscriberWelcomeMail.unsubscribe": "Abbestellen",
+  "SubscriberIssue.reason": "Du bekommst diese Mail, weil du dich bei {host} angemeldet hast.",
+  "SubscriberIssue.readPost": "Beitrag lesen"
 }

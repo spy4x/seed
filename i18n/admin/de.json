@@ -458,6 +458,7 @@
     "other": "Diesen Beitrag auch an {count} bestätigte Abonnenten von <list>{list}</list> senden"
   },
   "AdminBlogDialogs.sentOnce": "Wird einmal gesendet, wenn der Beitrag live geht. Das lässt sich nicht zurücknehmen.",
+  "AdminBlogDialogs.postLanguageOnly": "Die Mail geht nur an die Abonnenten, die sich in der Sprache des Beitrags angemeldet haben.",
   "AdminBlogEditor.leaveMessage": "Deine Änderungen an diesem Beitrag gehen verloren.",
   "AdminBlogEditor.doneScheduled": "Geplant für {at}.",
   "AdminBlogEditor.donePublished": "Veröffentlicht.",
@@ -1254,6 +1255,7 @@
   "AdminNewsletter.searching": "Wird gesucht…",
   "AdminNewsletter.search": "Suchen",
   "AdminNewsletter.status": "Status",
+  "AdminNewsletter.language": "Sprache",
   "AdminNewsletter.clear": "Filter zurücksetzen",
   "AdminNewsletter.count": {
     "one": "{count} Adresse",
@@ -1541,5 +1543,10 @@
   "AdminUsers.created": "Erstellt",
   "AdminUsers.guest": "Gast",
   "AdminUsers.you": "Du",
-  "AdminUsers.noName": "Kein Name"
+  "AdminUsers.noName": "Kein Name",
+  "AdminBlogEditor.language": "Sprache",
+  "AdminBlogEditor.languageHint": "Die Sprache, in der der Beitrag geschrieben ist. Die Website zeigt ihn im Blog dieser Sprache.",
+  "AdminBlogEditor.translationOf": "Übersetzung von",
+  "AdminBlogEditor.translationOfHint": "Der Beitrag, den dieser übersetzt. Sobald beide live sind, verknüpft die Website sie als Sprachversionen.",
+  "AdminBlogEditor.translationNone": "Keiner: ein eigener Beitrag"
 }

@@ -1,6 +1,6 @@
 import type { SubscriptionConfirmState, UnsubscribeState } from "@domain/subscribers"
 import { readApiError } from "@domain/errors"
-import { apiErrorText } from "../i18n.ts"
+import { apiErrorText, languages } from "../i18n.ts"
 
 /** The `fetch` these calls use; tests pass a fake. */
 export type SubscribersFetch = (url: string, init?: RequestInit) => Promise<Response>
@@ -55,7 +55,8 @@ export function createSubscribersApi(fetcher: SubscribersFetch = (url, init) => 
           method: "POST",
           credentials: "include",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ email, list }),
+          // The mails are written in the language the page shows now (#527).
+          body: JSON.stringify({ email, list, language: languages.translator.peek().language }),
         })
         if (response.ok) return { ok: true }
         const refusal = readApiError(await response.json().catch(() => null))
@@ -76,7 +77,7 @@ export function createSubscribersApi(fetcher: SubscribersFetch = (url, init) => 
       return tokenStep(fetcher, "/api/subscribers/confirm", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ list, token }),
+        body: JSON.stringify({ list, token, language: languages.translator.peek().language }),
       }, CONFIRM_STATES)
     },
 

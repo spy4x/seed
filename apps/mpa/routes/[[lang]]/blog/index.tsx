@@ -4,10 +4,10 @@ import { IconCheck } from "@spy4x/preact-icons"
 import { badgeClasses } from "@spy4x/preact-ui/badge"
 import { PostList } from "@spy4x/preact-ui/post-list"
 import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
-import { BLOG_PATH, blogId, listPosts, postPath, RSS_PATH } from "../../../blog.ts"
+import { BLOG_PATH, blogId, listPosts, postAddress, RSS_PATH } from "../../../blog.ts"
 import { NewsletterForm, PERSON_JSON_LD, SITE_NAME, SiteFrame } from "../../../site.tsx"
 import { define } from "../../../utils.ts"
-import { DEFAULT_LANGUAGE, localePath, siteTranslator } from "../../../languages.ts"
+import { localePath, siteTranslator } from "../../../languages.ts"
 import { useSite } from "../../../use-site.tsx"
 import { siteEnglishText } from "@ui/site-text.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
@@ -34,19 +34,20 @@ function topicHref(href: (path: string) => string, topic: string | null): string
 }
 
 /**
- * The blog's index: every live post, newest first, with the topics as plain links (`?topic=`), so
- * it works without JavaScript. With no live post it says so, keeps out of search results and offers
+ * The blog's index of the address's language: every live post written in it, newest first, with
+ * the topics as plain links (`?topic=`), so it works without JavaScript. With no live post it says so, keeps out of search results and offers
  * the newsletter; a topic without posts links back to all posts.
  */
 export const handler = define.handlers({
   async GET(ctx) {
-    const all = await listPosts(ctx.state.api)
+    const language = ctx.state.language
+    const every = await listPosts(ctx.state.api)
+    const all = every.filter((post) => post.language === language)
     const topic = ctx.url.searchParams.get(`topic`)?.trim() || null
     const posts = topic === null ? all : all.filter((post) => post.topic === topic)
     const origin = ctx.state.webAppOrigin
     const empty = all.length === 0
     const offerNewsletter = empty && ctx.state.newsletter
-    const language = ctx.state.language
     const t = siteTranslator(language)
     const head = blogHead(t)
     const href = (path: string) => localePath(language, path)
@@ -58,10 +59,13 @@ export const handler = define.handlers({
           ...head,
           // Nothing to list yet, or a topic with nothing on it: no page worth a search result.
           noindex: posts.length === 0,
+          // The indexes of the languages that have posts are this page's language versions.
+          alternates: [...new Set(every.map((post) => post.language))]
+            .map((version) => ({ language: version, path: BLOG_PATH })),
           jsonLd: [
             {
               "@type": `Blog`,
-              "@id": blogId(origin),
+              "@id": blogId(origin, language),
               name: t.t(`Blog.name`, { site: SITE_NAME }),
               url: `${origin}${href(BLOG_PATH)}`,
               description: head.description,
@@ -97,9 +101,6 @@ export const handler = define.handlers({
               )}
             </div>
             <p class="text-lg text-muted text-pretty lg:text-xl">{head.description}</p>
-            {language !== DEFAULT_LANGUAGE && !empty && (
-              <p class="text-sm text-muted" data-e2e="blog-english">{t.t(`Blog.englishPosts`)}</p>
-            )}
           </header>
           {empty ? <NoPosts newsletter={offerNewsletter} /> : (
             <>
@@ -116,7 +117,7 @@ export const handler = define.handlers({
                 : (
                   <PostList
                     posts={posts.map((post) => ({
-                      href: href(postPath(post.slug)),
+                      href: postAddress(post),
                       title: post.title,
                       description: post.description,
                       publishedAt: post.publishedAt,

@@ -5,6 +5,7 @@ import { createKvStore, type RateLimitStore } from "@spy4x/platform/rate-limit"
 import type { SubscriberStore } from "@spy4x/server/subscribers"
 import { createMemorySubscriberStore } from "@spy4x/server/subscribers/memory"
 import type { SubscriberList } from "@domain/subscribers"
+import type { Language } from "@domain/identity"
 import {
   createListCrypto,
   createRecipientLimitKey,
@@ -50,8 +51,10 @@ function memoryStore(): RateLimitStore {
 interface Built {
   app: ReturnType<typeof mountRoute>
   store: SubscriberStore
-  confirmMails: [SubscriberList, string][]
-  welcomeMails: [SubscriberList, string][]
+  confirmMails: [SubscriberList, string, Language | null][]
+  welcomeMails: [SubscriberList, string, Language | null][]
+  /** Every language kept for a subscriber, with its list and address. */
+  remembered: [SubscriberList, string, Language][]
   logged: string[]
 }
 
@@ -62,8 +65,9 @@ function buildApp(
     store?: SubscriberStore
   } = {},
 ): Built {
-  const confirmMails: [SubscriberList, string][] = []
-  const welcomeMails: [SubscriberList, string][] = []
+  const confirmMails: Built["confirmMails"] = []
+  const welcomeMails: Built["welcomeMails"] = []
+  const remembered: Built["remembered"] = []
   const logged: string[] = []
   const line = (...args: unknown[]) => void logged.push(args.map(String).join(` `))
   const route = createSubscribersRoute({
@@ -76,11 +80,22 @@ function buildApp(
       store: memoryStore,
       recipientKey: async (email) => await (await createRecipientLimitKey(SETUP))(email),
     }),
-    requestConfirmMail: (list, email) => Promise.resolve(void confirmMails.push([list, email])),
-    requestWelcomeMail: (list, email) => Promise.resolve(void welcomeMails.push([list, email])),
+    requestConfirmMail: (list, email, language) =>
+      Promise.resolve(void confirmMails.push([list, email, language])),
+    requestWelcomeMail: (list, email, language) =>
+      Promise.resolve(void welcomeMails.push([list, email, language])),
+    rememberLanguage: (list, email, language) =>
+      Promise.resolve(void remembered.push([list, email, language])),
     log: { error: line, warn: line },
   })
-  return { app: mountRoute(`/subscribers`, route, null), store, confirmMails, welcomeMails, logged }
+  return {
+    app: mountRoute(`/subscribers`, route, null),
+    store,
+    confirmMails,
+    welcomeMails,
+    remembered,
+    logged,
+  }
 }
 
 function subscribe(app: Built["app"], body: unknown, headers = sameOriginWithoutCookieHeaders) {
@@ -117,7 +132,36 @@ describe(`POST /api/subscribers`, () => {
 
     expect([known.status, fresh.status]).toEqual([202, 202])
     expect(await known.text()).toBe(await fresh.text())
-    expect(confirmMails).toEqual([[`news`, `known@example.com`], [`news`, `new@example.com`]])
+    expect(confirmMails).toEqual([
+      [`news`, `known@example.com`, null],
+      [`news`, `new@example.com`, null],
+    ])
+  })
+
+  it(`queues the confirm mail in the language of the page that asked`, async () => {
+    const { app, confirmMails } = buildApp()
+
+    const response = await subscribe(app, {
+      email: `ada@example.com`,
+      list: `news`,
+      language: `de`,
+    })
+
+    expect(response.status).toBe(202)
+    expect(confirmMails).toEqual([[`news`, `ada@example.com`, `de`]])
+  })
+
+  it(`refuses a language the apps do not ship, queueing nothing`, async () => {
+    const { app, confirmMails } = buildApp()
+
+    const response = await subscribe(app, {
+      email: `ada@example.com`,
+      list: `news`,
+      language: `xx`,
+    })
+
+    expect(response.status).toBe(400)
+    expect(confirmMails).toEqual([])
   })
 
   it(`refuses an address with a display name and a list it does not have, queueing nothing`, async () => {
@@ -240,7 +284,18 @@ describe(`confirming a subscription`, () => {
     expect(await first.json()).toEqual({ state: `done` })
     expect(await again.json()).toEqual({ state: `done` })
     expect((await store.list()).map((row) => row.email)).toEqual([`ada@example.com`])
-    expect(welcomeMails).toEqual([[`news`, `ada@example.com`]])
+    expect(welcomeMails).toEqual([[`news`, `ada@example.com`, null]])
+  })
+
+  it(`keeps the language of the page the address confirmed on, and welcomes it in that language`, async () => {
+    const { app, welcomeMails, remembered } = buildApp()
+    const token = await (await createListCrypto(SETUP, `news`)).confirmToken(`ada@example.com`)
+
+    const response = await confirm(app, { list: `news`, token, language: `es` })
+
+    expect(await response.json()).toEqual({ state: `done` })
+    expect(welcomeMails).toEqual([[`news`, `ada@example.com`, `es`]])
+    expect(remembered).toEqual([[`news`, `ada@example.com`, `es`]])
   })
 
   it(`refuses a cross-site post and one without browser headers, storing nothing`, async () => {

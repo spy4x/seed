@@ -1,11 +1,12 @@
 import { signal } from "@preact/signals"
 import type { ToastStore } from "@spy4x/preact-signals/toast"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
-import type {
-  AdminBlogListResponse,
-  BlogNewsletterResponse,
-  BlogPost,
-  BlogTopic,
+import {
+  type AdminBlogListResponse,
+  type BlogNewsletterResponse,
+  type BlogPost,
+  blogPostPath,
+  type BlogTopic,
 } from "@domain/blog"
 import type { AdminBlogFilter } from "@ui/admin-blog-list.tsx"
 import {
@@ -14,6 +15,7 @@ import {
   blogDraftErrors,
   blogDraftOf,
   type BlogFormErrors,
+  type BlogOriginal,
   type BlogPreview,
   type BlogPublishChoice,
   type BlogSaveStatus,
@@ -118,6 +120,8 @@ function fieldsOf(draft: BlogDraft) {
     coverUrl: draft.coverUrl,
     coverAlt: draft.coverAlt,
     bodyMd: draft.bodyMd,
+    language: draft.language,
+    translationOf: draft.translationOf === `` ? null : draft.translationOf,
   }
 }
 
@@ -128,6 +132,7 @@ function refusal(result: AdminApiResult<unknown>): Partial<BlogEditorState> {
   if (reason === `VERSION_CONFLICT`) return { conflict: true }
   if (reason === `SLUG_TAKEN`) return { errors: { slug: `AdminBlogEditor.slugTaken` } }
   if (reason === `SLUG_LOCKED`) return { errors: { slug: message } }
+  if (reason === `TRANSLATION_INVALID`) return { errors: { translationOf: message } }
   return { errors: { form: message } }
 }
 
@@ -150,6 +155,8 @@ export function createBlogState(
   const dialog = signal<BlogDialogState>(NO_DIALOG)
   const preview = signal<BlogPreviewState>(NO_PREVIEW)
   const topics = signal<readonly string[]>([])
+  /** Every post of its own, which a post may translate; the editor leaves out the open one. */
+  const originals = signal<readonly BlogOriginal[]>([])
   const newsletter = signal<BlogNewsletterResponse | null>(null)
 
   /** Whether `id` is still the post the editor has open, after an await. */
@@ -195,6 +202,7 @@ export function createBlogState(
     dialog,
     preview,
     topics,
+    originals,
     newsletter,
 
     /** Reads the posts of `filter`, with each status's count. */
@@ -240,13 +248,22 @@ export function createBlogState(
       else editor.value = { ...editor.value, loading: false, loadError: result.error.message }
     },
 
-    /** Reads the topics in use and whether a post can be emailed, for the fields and dialog. */
+    /**
+     * Reads the topics in use, the posts a post may translate and whether a post can be emailed,
+     * for the fields and dialog.
+     */
     async loadExtras(): Promise<void> {
-      const [topicsResult, newsletterResult] = await Promise.all([
+      const [topicsResult, postsResult, newsletterResult] = await Promise.all([
         request<{ topics: BlogTopic[] }>(`${API}/topics`),
+        request<AdminBlogListResponse>(`${API}/posts`),
         request<BlogNewsletterResponse>(`${API}/newsletter`),
       ])
       if (topicsResult.ok) topics.value = topicsResult.data.topics.map((entry) => entry.topic)
+      if (postsResult.ok) {
+        originals.value = postsResult.data.posts
+          .filter((post) => post.translationOf === null)
+          .map(({ id, title, language }) => ({ id, title, language }))
+      }
       if (newsletterResult.ok) newsletter.value = newsletterResult.data
     },
 
@@ -387,7 +404,7 @@ export function createBlogState(
           ...(site && {
             action: {
               label: adminText().t(`AdminBlogEditor.viewPost`),
-              onAction: () => ports.open(`${site}/blog/${published.slug}`),
+              onAction: () => ports.open(`${site}${blogPostPath(published)}`),
               dataE2E: `admin-blog-toast-view`,
             },
           }),
@@ -418,7 +435,9 @@ export function createBlogState(
     async changeUrl(slug: string): Promise<void> {
       if (await act(`change-url`, { slug })) {
         toasts.success({
-          body: adminText().t(`AdminBlogEditor.doneUrl`, { path: `/blog/${slug}` }),
+          body: adminText().t(`AdminBlogEditor.doneUrl`, {
+            path: blogPostPath({ language: editor.value.value.language, slug }),
+          }),
           dataE2E: `admin-blog-toast`,
         })
       }

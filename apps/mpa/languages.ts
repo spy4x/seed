@@ -4,13 +4,14 @@
  * other language under its own prefix, `/de/pricing`. No cookie, no redirect by the browser's
  * language, so a shared link opens in the language it was shared in and crawlers see every version.
  *
- * A product whose main language is not English, or that adds one, changes {@link SITE_LANGUAGES}
- * and {@link DEFAULT_LANGUAGE} here, and gives each language a catalog set in {@link CATALOGS}.
+ * A product whose main language is not English, or that adds one, changes `LANGUAGES` and
+ * `DEFAULT_LANGUAGE` in `libs/domain/identity/preferences.ts`, and gives each language a catalog
+ * set in {@link CATALOGS} here.
  *
  * @module
  */
 import { type Catalog, createTranslator, type Translator } from "@spy4x/platform/universal/i18n"
-import { type Language, LANGUAGES } from "@domain/identity"
+import { DEFAULT_LANGUAGE, type Language, LANGUAGES } from "@domain/identity"
 import uiEn from "@spy4x/preact-ui/i18n/en"
 import uiRu from "@spy4x/preact-ui/i18n/ru"
 import uiEs from "@spy4x/preact-ui/i18n/es"
@@ -33,8 +34,11 @@ import siteAr from "@i18n/site/ar.json" with { type: "json" }
 /** The languages the website is served in, the default first. */
 export const SITE_LANGUAGES: readonly Language[] = LANGUAGES
 
-/** The language served without a prefix, and the one `x-default` points at. */
-export const DEFAULT_LANGUAGE: Language = `en`
+/**
+ * The language served without a prefix, and the one `x-default` points at: the product's main
+ * language, set in `libs/domain/identity/preferences.ts`.
+ */
+export { DEFAULT_LANGUAGE }
 
 /** The website's own catalogs per language: the components' words, then the site's. */
 const CATALOGS: Record<Language, readonly [Catalog, Catalog, Catalog]> = {

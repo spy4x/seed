@@ -71,8 +71,11 @@ updates the demo in the same PR:
   posts. A post keeps its author's name in `author_name`, with no foreign key to `users`, so the
   wipe never takes it along. The wipe empties the job table and the audit log, so the worker
   queues a scheduled post's `blog.publish` job again after it (`queueDueBlogJobs`), and the
-  operators' audit rows about posts last a day. `deno task db:seed` in development adds three
-  sample posts ([blog.md](blog.md)).
+  operators' audit rows about posts last a day. `deno task db:seed` in development adds the
+  sample posts: three in English and a translation of the published one into every other
+  language ([blog.md](blog.md)). A post's `language` and `translation_of` stay with it; a
+  subscriber's `language` is emptied with the rest, and the seeded subscribers have none, so their
+  mails use the main language.
 - **The contact links survive the wipe** for the same reason: `contact_links` holds the
   website's real contact channels, and the demo seeds none. `deno task db:seed` in development
   adds three sample links (`libs/server/contact-links/sample-links.ts`).

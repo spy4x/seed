@@ -19,9 +19,18 @@ describe("subscriber lists", () => {
 })
 
 describe("the operator's subscriber filter", () => {
-  it("reads the search, the status and the page from the query string", () => {
-    const params = new URLSearchParams(`q=+ada+&status=pending&page=3`)
-    expect(parseAdminSubscriberFilter(params)).toEqual({ query: `ada`, status: `pending`, page: 3 })
+  it("reads the search, the status, the language and the page from the query string", () => {
+    const params = new URLSearchParams(`q=+ada+&status=pending&language=pt-BR&page=3`)
+    expect(parseAdminSubscriberFilter(params)).toEqual({
+      query: `ada`,
+      status: `pending`,
+      language: `pt-BR`,
+      page: 3,
+    })
+  })
+
+  it("reads a language the apps do not ship as every language (#527)", () => {
+    expect(parseAdminSubscriberFilter(new URLSearchParams(`language=xx`)).language).toBe(`any`)
   })
 
   it("falls back to the default for a status or page it does not know", () => {
@@ -39,9 +48,9 @@ describe("the operator's subscriber filter", () => {
 
   it("writes back only what differs from the default, so a reload reads the same filter", () => {
     expect(adminSubscriberFilterQuery(ADMIN_SUBSCRIBERS_NO_FILTER)).toBe(``)
-    const filter = { query: `a b`, status: `confirmed` as const, page: 2 }
+    const filter = { query: `a b`, status: `confirmed` as const, language: `de` as const, page: 2 }
     const query = adminSubscriberFilterQuery(filter)
-    expect(query).toBe(`q=a+b&status=confirmed&page=2`)
+    expect(query).toBe(`q=a+b&status=confirmed&language=de&page=2`)
     expect(parseAdminSubscriberFilter(new URLSearchParams(query))).toEqual(filter)
   })
 })

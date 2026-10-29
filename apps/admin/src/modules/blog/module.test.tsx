@@ -69,6 +69,8 @@ const post: BlogPost = {
   coverUrl: null,
   coverAlt: null,
   bodyMd: `Text.`,
+  language: `en`,
+  translationOf: null,
   status: `draft`,
   publishAt: null,
   publishedAt: null,

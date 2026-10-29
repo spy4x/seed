@@ -190,6 +190,17 @@ export interface SitePageHead {
    * default language's, and it names no other language version.
    */
   oneLanguage?: boolean
+  /**
+   * The page's language versions, itself included, when they are not every served language at
+   * the same path, such as a blog post and its translations: each language with its path in the
+   * default language's form (`/blog/hallo-welt`). A page with no other version names none.
+   */
+  alternates?: readonly { language: Language; path: string }[]
+  /**
+   * With {@link alternates}: where the language picker sends a language the page has no version
+   * in, such as the blog's index. Without it, the page's own path in that language.
+   */
+  elsewhere?: string
   /** Which Open Graph image the page shares with. Defaults to the home page's. */
   og?: OgImageKey
   /**
@@ -213,20 +224,28 @@ export function pageTitle(title: string): string {
 
 /**
  * The language versions of the page at `path`, as `hreflang` alternates: every served language at
- * its own address, then `x-default`, the default language's. Empty for a page that names none.
+ * its own address, or the page's own {@link SitePageHead.alternates}, then `x-default`, the default
+ * language's when there is one. Empty for a page that names none, and for a page whose only
+ * version is itself.
  */
 export function languageAlternates(
   origin: string,
   path: string,
-  head: Pick<SitePageHead, "noindex" | "oneLanguage">,
+  head: Pick<SitePageHead, "noindex" | "oneLanguage" | "alternates">,
 ): { hreflang: string; href: string }[] {
   if (head.noindex || head.oneLanguage) return []
+  const versions = head.alternates ??
+    SITE_LANGUAGES.map((language) => ({ language, path }))
+  if (versions.length < 2) return []
+  const fallback = versions.find(({ language }) => language === DEFAULT_LANGUAGE)
   return [
-    ...SITE_LANGUAGES.map((language) => ({
-      hreflang: language,
-      href: `${origin}${localePath(language, path)}`,
+    ...versions.map((version) => ({
+      hreflang: version.language,
+      href: `${origin}${localePath(version.language, version.path)}`,
     })),
-    { hreflang: `x-default`, href: `${origin}${localePath(DEFAULT_LANGUAGE, path)}` },
+    ...(fallback
+      ? [{ hreflang: `x-default`, href: `${origin}${localePath(DEFAULT_LANGUAGE, fallback.path)}` }]
+      : []),
   ]
 }
 
@@ -376,7 +395,14 @@ export function SiteFrame(
                 mode="links"
                 languages={SITE_LANGUAGES}
                 current={language}
-                href={(tag) => localePath(isSiteLanguage(tag) ? tag : DEFAULT_LANGUAGE, path)}
+                href={(tag) => {
+                  const target = isSiteLanguage(tag) ? tag : DEFAULT_LANGUAGE
+                  const version = head.alternates?.find(({ language }) => language === target)
+                  return localePath(
+                    target,
+                    version?.path ?? (head.alternates && head.elsewhere) ?? path,
+                  )
+                }}
               />
             </div>
           </div>
@@ -568,7 +594,7 @@ function FooterNewsletter(): JSX.Element {
  * most one besides the footer's, and hides the footer's then (`SiteFrameProps.footerNewsletter`).
  */
 export function NewsletterForm({ id }: { id: string }): JSX.Element {
-  const { t, href } = useSite()
+  const { t, href, language } = useSite()
   return (
     <form
       method="post"
@@ -577,6 +603,7 @@ export function NewsletterForm({ id }: { id: string }): JSX.Element {
       data-analytics-submit="newsletter-subscribe"
     >
       <input type="hidden" name="list" value={DEFAULT_SUBSCRIBER_LIST} />
+      <input type="hidden" name="language" value={language} />
       <label for={`${id}-email`} class="sr-only">{t.t(`NewsletterForm.email`)}</label>
       <Input
         id={`${id}-email`}

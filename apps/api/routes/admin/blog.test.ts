@@ -32,6 +32,8 @@ const post: BlogPost = {
   coverUrl: null,
   coverAlt: null,
   bodyMd: `Hi`,
+  language: `en`,
+  translationOf: null,
   status: `draft`,
   publishAt: null,
   publishedAt: null,
@@ -94,7 +96,8 @@ function buildApp(
       ...args
     ) => (calls.push([`delete`, ...args]), fail ? Promise.reject(fail) : Promise.resolve()),
     confirmedSubscribers:
-      () => (calls.push([`confirmed`]), Promise.resolve([{ list: `news`, confirmed: 12 }])),
+      () => (calls.push([`confirmed`]),
+        Promise.resolve([{ list: `news`, byLanguage: { en: 12 } }])),
   }
   const route = createAdminRoute({
     auth: testSessionGuards(),
@@ -194,6 +197,8 @@ describe(`operator area: blog routes`, () => {
       topic: null,
       coverUrl: null,
       coverAlt: null,
+      language: `en`,
+      translationOf: null,
     }, ACTOR]])
   })
 
@@ -313,7 +318,7 @@ describe(`operator area: blog routes`, () => {
     const on = buildApp()
     expect(await (await request(on.app, `GET`, `/newsletter`)).json()).toEqual({
       enabled: true,
-      lists: [{ list: `news`, confirmed: 12 }],
+      lists: [{ list: `news`, byLanguage: { en: 12 } }],
       siteUrl: `https://www.example.com`,
     })
     const off = buildApp(operator(), { newsletterEnabled: false })

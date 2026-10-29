@@ -97,7 +97,9 @@ Deno.test(`operator area: the newsletter module on a real database`, async (t) =
     // Ann confirmed 40 days ago, Bea 5 days ago; Cat waits for her confirm mail.
     await subscribe(`ann@example.com`, new Date(NOW.getTime() - 40 * DAY_MS))
     await subscribe(`bea@example.com`, new Date(NOW.getTime() - 5 * DAY_MS))
-    await enqueueSubscriberMail(sql, SUBSCRIBER_CONFIRM_MAIL_JOB, `news`, `cat@example.com`)
+    await enqueueSubscriberMail(sql, SUBSCRIBER_CONFIRM_MAIL_JOB, `news`, `cat@example.com`, `es`)
+    // Bea confirmed on a German page; Ann before #527, with no language.
+    await sql`UPDATE subscribers SET language = 'de' WHERE email = 'bea@example.com'`
     // Neither is pending: Ann is listed already, and Dan's mail is a welcome.
     await enqueueSubscriberMail(sql, SUBSCRIBER_CONFIRM_MAIL_JOB, `news`, `ann@example.com`)
     await enqueueSubscriberMail(sql, SUBSCRIBER_WELCOME_MAIL_JOB, `news`, `dan@example.com`)
@@ -176,6 +178,23 @@ Deno.test(`operator area: the newsletter module on a real database`, async (t) =
       expect((await listed({ q: `%` })).total).toBe(0)
     })
 
+    await t.step(`shows each address's language and filters by it (#527)`, async () => {
+      expect((await listed()).subscribers.map((row) => [row.email, row.language])).toEqual([
+        [`cat@example.com`, `es`],
+        [`bea@example.com`, `de`],
+        [`ann@example.com`, `en`],
+      ])
+      expect((await listed({ language: `de` })).subscribers.map((row) => row.email)).toEqual([
+        `bea@example.com`,
+      ])
+      expect((await listed({ language: `es` })).subscribers.map((row) => row.email)).toEqual([
+        `cat@example.com`,
+      ])
+      expect((await listed({ language: `en` })).subscribers.map((row) => row.email)).toEqual([
+        `ann@example.com`,
+      ])
+    })
+
     await t.step(`pages the list and counts every match`, async () => {
       const second = await listAdminSubscribers(
         sql,
@@ -226,23 +245,31 @@ Deno.test(`operator area: the newsletter module on a real database`, async (t) =
       expect((await (await get(`stats`)).json()).issues).toBe(1)
     })
 
-    await t.step(`queues a new confirm mail to a pending address and audits it`, async () => {
-      const before = await sql`SELECT 1 FROM subscription_requests WHERE email = 'cat@example.com'`
-      const response = await post(`resend`, { email: `cat@example.com` })
+    await t.step(
+      `queues a new confirm mail to a pending address, in its language, and audits it`,
+      async () => {
+        const before =
+          await sql`SELECT 1 FROM subscription_requests WHERE email = 'cat@example.com'`
+        const response = await post(`resend`, { email: `cat@example.com` })
 
-      expect(response.status).toBe(202)
-      const after = await sql`
+        expect(response.status).toBe(202)
+        const after = await sql`
         SELECT 1 FROM subscription_requests r
         JOIN outbox_events o ON o.aggregate_id = r.id AND o.event_kind = ${SUBSCRIBER_CONFIRM_MAIL_JOB}
         WHERE r.email = 'cat@example.com'
       `
-      expect(after.length).toBe(before.length + 1)
-      expect((await listed({ status: `pending` })).total).toBe(1)
-      expect((await audits()).at(-1)).toEqual({
-        eventType: AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT,
-        identifier: `news:c***@e***.com`,
-      })
-    })
+        expect(after.length).toBe(before.length + 1)
+        // The new mail keeps the language Cat asked in (#527).
+        expect(
+          await sql`SELECT DISTINCT language FROM subscription_requests WHERE email = 'cat@example.com'`,
+        ).toEqual([{ language: `es` }])
+        expect((await listed({ status: `pending` })).total).toBe(1)
+        expect((await audits()).at(-1)).toEqual({
+          eventType: AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT,
+          identifier: `news:c***@e***.com`,
+        })
+      },
+    )
 
     await t.step(
       `removes a confirmed address so no earlier confirm link adds it back`,

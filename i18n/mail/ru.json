@@ -86,5 +86,16 @@
   "BillingNoticeMail.paymentFree": "Группа перешла на бесплатный тариф. Обновите карту на странице группы, чтобы вернуть тариф.",
   "BillingNoticeMail.planSubject": "Ваш тариф {plan} заканчивается {date}",
   "BillingNoticeMail.planWhat": "Тариф {plan} в «{group}» отменён и заканчивается <strong>{date}</strong>; затем группа перейдёт на бесплатный тариф.",
-  "BillingNoticeMail.planNext": "Передумали? Продлите его на странице группы до этой даты."
+  "BillingNoticeMail.planNext": "Передумали? Продлите его на странице группы до этой даты.",
+  "SubscriberConfirmMail.subject": "Подтвердите подписку на {host}",
+  "SubscriberConfirmMail.asked": "Кто-то попросил присылать новости {host} на этот адрес.",
+  "SubscriberConfirmMail.within": "Подтвердите в течение трёх дней, чтобы начать их получать.",
+  "SubscriberConfirmMail.button": "Подтвердить",
+  "SubscriberConfirmMail.ignore": "Если вы об этом не просили, просто проигнорируйте письмо: вам ничего не придёт.",
+  "SubscriberWelcomeMail.subject": "Вы подписаны на {host}",
+  "SubscriberWelcomeMail.subscribed": "Вы подписаны на новости {host}.",
+  "SubscriberWelcomeMail.reason": "Вы получили это письмо, потому что подписались на {host}.",
+  "SubscriberWelcomeMail.unsubscribe": "Отписаться",
+  "SubscriberIssue.reason": "Вы получили это письмо, потому что подписались на {host}.",
+  "SubscriberIssue.readPost": "Читать запись"
 }

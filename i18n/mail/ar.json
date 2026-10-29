@@ -94,5 +94,16 @@
   "BillingNoticeMail.paymentFree": "المجموعة الآن على الخطة المجانية. حدّث البطاقة من صفحة المجموعة لتستعيد الخطة.",
   "BillingNoticeMail.planSubject": "تنتهي خطة {plan} في {date}",
   "BillingNoticeMail.planWhat": "أُلغيت خطة {plan} للمجموعة «{group}» وتنتهي في <strong>{date}</strong>؛ ثم تنتقل المجموعة إلى الخطة المجانية.",
-  "BillingNoticeMail.planNext": "غيّرت رأيك؟ جدّدها من صفحة المجموعة قبل ذلك التاريخ."
+  "BillingNoticeMail.planNext": "غيّرت رأيك؟ جدّدها من صفحة المجموعة قبل ذلك التاريخ.",
+  "SubscriberConfirmMail.subject": "أكّد اشتراكك في {host}",
+  "SubscriberConfirmMail.asked": "طلب أحدهم إرسال أخبار {host} إلى هذا العنوان.",
+  "SubscriberConfirmMail.within": "أكّد خلال ثلاثة أيام لتبدأ في تلقيها.",
+  "SubscriberConfirmMail.button": "تأكيد",
+  "SubscriberConfirmMail.ignore": "إن لم تطلب ذلك، فتجاهل هذه الرسالة: لن يُرسَل إليك شيء.",
+  "SubscriberWelcomeMail.subject": "اشتركت في {host}",
+  "SubscriberWelcomeMail.subscribed": "اشتركت في أخبار {host}.",
+  "SubscriberWelcomeMail.reason": "تصلك هذه الرسالة لأنك اشتركت في {host}.",
+  "SubscriberWelcomeMail.unsubscribe": "إلغاء الاشتراك",
+  "SubscriberIssue.reason": "تصلك هذه الرسالة لأنك اشتركت في {host}.",
+  "SubscriberIssue.readPost": "اقرأ المقالة"
 }

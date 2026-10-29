@@ -3,10 +3,12 @@ import {
   BLOG_FEED_COUNT,
   BLOG_READ_NEXT_COUNT,
   type BlogTopic,
+  type BlogTranslation,
   type PublicBlogFeedItem,
   type PublicBlogPost,
   type PublicBlogPostSummary,
 } from "@domain/blog"
+import type { Language } from "@domain/identity"
 import { blogBodyLength, renderBlogBody } from "./render.ts"
 
 /**
@@ -17,6 +19,7 @@ import { blogBodyLength, renderBlogBody } from "./render.ts"
 
 interface SummaryRow {
   slug: string
+  language: Language
   title: string
   description: string
   topic: string | null
@@ -26,11 +29,18 @@ interface SummaryRow {
 }
 
 interface PostRow extends SummaryRow {
+  id: string
+  translationOf: string | null
   seoTitle: string | null
   tldr: string[]
   coverUrl: string | null
   coverAlt: string | null
   authorName: string | null
+}
+
+/** The columns of a summary. */
+function summaryColumns(sql: postgres.Sql) {
+  return sql`slug, language, title, description, topic, published_at, content_updated_at, body_md`
 }
 
 /** The condition every public read starts from. */
@@ -41,6 +51,7 @@ function live(sql: postgres.Sql) {
 function toSummary(row: SummaryRow): PublicBlogPostSummary {
   return {
     slug: row.slug,
+    language: row.language,
     title: row.title,
     description: row.description,
     topic: row.topic,
@@ -50,14 +61,14 @@ function toSummary(row: SummaryRow): PublicBlogPostSummary {
   }
 }
 
-/** Every live post, newest first; with `topic`, only the posts on it. */
+/** Every live post in every language, newest first; with `topic`, only the posts on it. */
 export async function listPublicPosts(
   sql: postgres.Sql,
   topic: string | null,
 ): Promise<PublicBlogPostSummary[]> {
   const onTopic = topic === null ? sql`TRUE` : sql`topic = ${topic}`
   const rows = await sql<SummaryRow[]>`
-    SELECT slug, title, description, topic, published_at, content_updated_at, body_md
+    SELECT ${summaryColumns(sql)}
     FROM blog_posts
     WHERE ${live(sql)} AND ${onTopic}
     ORDER BY published_at DESC, id DESC
@@ -66,24 +77,32 @@ export async function listPublicPosts(
 }
 
 /**
- * The live post at `slug`, rendered, and up to {@link BLOG_READ_NEXT_COUNT} others to read next:
- * the newest on its topic first, then the newest of the rest. `null` when no live post has it.
+ * The live post at `slug`, rendered, with its live language versions, and up to
+ * {@link BLOG_READ_NEXT_COUNT} others in its language to read next: the newest on its topic first,
+ * then the newest of the rest. `null` when no live post has it.
  */
 export async function readPublicPost(
   sql: postgres.Sql,
   slug: string,
 ): Promise<{ post: PublicBlogPost; readNext: PublicBlogPostSummary[] } | null> {
   const [row] = await sql<PostRow[]>`
-    SELECT slug, title, seo_title, description, tldr, topic, cover_url, cover_alt, body_md,
-      published_at, content_updated_at, author_name
+    SELECT id, translation_of, slug, language, title, seo_title, description, tldr, topic,
+      cover_url, cover_alt, body_md, published_at, content_updated_at, author_name
     FROM blog_posts
     WHERE slug = ${slug} AND ${live(sql)}
   `
   if (!row) return null
+  // The post and its translations share one original: the post itself, or the one it translates.
+  const original = row.translationOf ?? row.id
+  const translations = await sql<BlogTranslation[]>`
+    SELECT language, slug FROM blog_posts
+    WHERE ${live(sql)} AND id <> ${row.id} AND (id = ${original} OR translation_of = ${original})
+    ORDER BY language
+  `
   const next = await sql<SummaryRow[]>`
-    SELECT slug, title, description, topic, published_at, content_updated_at, body_md
+    SELECT ${summaryColumns(sql)}
     FROM blog_posts
-    WHERE ${live(sql)} AND slug <> ${slug}
+    WHERE ${live(sql)} AND slug <> ${slug} AND language = ${row.language}
     ORDER BY (topic = ${row.topic}) IS TRUE DESC, published_at DESC, id DESC
     LIMIT ${BLOG_READ_NEXT_COUNT}
   `
@@ -99,6 +118,7 @@ export async function readPublicPost(
       html: body.html,
       headings: body.headings,
       authorName: row.authorName,
+      translations: translations.map(({ language, slug }) => ({ language, slug })),
     },
     readNext: next.map(toSummary),
   }
@@ -117,8 +137,7 @@ export async function listPublicTopics(sql: postgres.Sql): Promise<BlogTopic[]> 
 /** The {@link BLOG_FEED_COUNT} newest live posts with their full HTML, for the RSS feed. */
 export async function listPublicFeed(sql: postgres.Sql): Promise<PublicBlogFeedItem[]> {
   const rows = await sql<(SummaryRow & { coverUrl: string | null; authorName: string | null })[]>`
-    SELECT slug, title, description, topic, published_at, content_updated_at, body_md, cover_url,
-      author_name
+    SELECT ${summaryColumns(sql)}, cover_url, author_name
     FROM blog_posts
     WHERE ${live(sql)}
     ORDER BY published_at DESC, id DESC
