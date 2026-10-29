@@ -584,7 +584,7 @@ function Items(
     lowSample: item.lowSample,
     image: item.coverId ? { src: ADMIN_CATALOG_PATHS.thumbnail(item.coverId), alt: `` } : undefined,
     note: item.topSource ? t.t(`AdminStats.mostlyFrom`, { source: item.topSource }) : undefined,
-    onSelect: navigate ? () => navigate(ADMIN_CATALOG_PATHS.item(item.id)) : undefined,
+    href: ADMIN_CATALOG_PATHS.item(item.id),
   })
   return (
     <section aria-labelledby="admin-stats-items-title" data-e2e="admin-stats-items">
@@ -606,6 +606,7 @@ function Items(
                 ],
               }}
               format={(value) => NUMBER.format(value)}
+              navigate={navigate}
               data={items.mostOrdered.map((item) =>
                 row(item, item.orderClicks, [item.views, item.rate])
               )}
@@ -623,6 +624,7 @@ function Items(
                 extra: [{ label: t.t(`AdminStats.orderClicks`) }],
               }}
               format={(value) => NUMBER.format(value)}
+              navigate={navigate}
               data={items.viewedNotOrdered.map((item) => row(item, item.views, [item.orderClicks]))}
               emptyLabel={items.mostOrdered.length > 0
                 ? t.t(`AdminStats.allOrdered`)

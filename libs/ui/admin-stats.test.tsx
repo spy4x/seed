@@ -84,6 +84,14 @@ function button(text: string, scope: ParentNode = document): HTMLElement {
   return found as unknown as HTMLElement
 }
 
+function link(text: string, scope: ParentNode = document): HTMLAnchorElement {
+  const found = [...scope.querySelectorAll("a")].find((element) =>
+    element.textContent?.trim() === text
+  )
+  if (!found) throw new Error(`no link reads ${text}`)
+  return found as unknown as HTMLAnchorElement
+}
+
 /** The text of each cell of every body row of the table inside `selector`. */
 function rows(selector: string): string[][] {
   return [...document.querySelectorAll(`${selector} tbody tr`)].map((row) =>
@@ -258,11 +266,15 @@ describe("stats screen", () => {
     expect(calls).toEqual([["refresh", true]])
   })
 
-  it("opens an item's page from its row in either list", async () => {
+  it("links each row of either list to its item's page, opened in the app", async () => {
     const calls: unknown[][] = []
     await mount(<AdminStatsScreen {...props(calls)} />)
-    await clickOn(button("Linen dress", find("[data-e2e=admin-stats-most-ordered]")))
-    await clickOn(button("Silk scarf", find("[data-e2e=admin-stats-not-ordered]")))
+    const ordered = link("Linen dress", find("[data-e2e=admin-stats-most-ordered]"))
+    const viewed = link("Silk scarf", find("[data-e2e=admin-stats-not-ordered]"))
+    expect(ordered.getAttribute("href")).toBe("/catalog/item-1")
+    expect(viewed.getAttribute("href")).toBe("/catalog/item-2")
+    await clickOn(ordered)
+    await clickOn(viewed)
     expect(calls).toEqual([
       ["navigate", "/catalog/item-1"],
       ["navigate", "/catalog/item-2"],
