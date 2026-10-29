@@ -48,6 +48,11 @@ operator the reset tolerates: any other makes the worker wipe and seed again wit
 so does the administrator missing while the setting is on. The reset seeds no operator history
 or backup for it, so the admin panel shows the demo as it is. Unset, the demo has no operator.
 
+Its Stats page says "Stats are off" and names `UMAMI_API_URL` and `UMAMI_API_TOKEN`: the demo's
+server sets only the website's tracker (`MPA_UMAMI_ORIGIN`, `MPA_UMAMI_WEBSITE_ID`), and the demo
+has no fake Umami to read ([analytics.md](analytics.md#stats-in-the-admin-app)). Stats adds no
+table, so the wipe and the seed are unchanged.
+
 In development, `deno task db:seed` adds `admin@example.com`, an administrator, so the admin app
 can be tried locally, with what an operator did over the weeks (blocks, a reset mail, a refund,
 time given, exports) and a finished backup, so the System page shows a healthy server. The
@@ -82,7 +87,7 @@ updates the demo in the same PR:
 - **The catalog is demo data**: the wipe empties its tables (its photos' files are queued with
   every other image's), and the seed writes the sample catalog again
   (`libs/server/catalog/sample-catalog.ts`): three categories and six items with colours, sizes and
-  a size chart, one of them sold out and one a draft, without photos, and four link sources. No
+  a size chart, one of them sold out and one a draft, without photos, and four sources. No
   tracking link is seeded: the first "Copy link" makes one. The template's own site
   keeps the catalog off; a product that turns it on and runs the demo gets the sample items.
 - **The seed** writes what a visitor should see. A new feature gets fake rows in

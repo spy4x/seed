@@ -39,6 +39,8 @@ AdminTour.rolesEyebrow	c25337055464f8d3
 AdminTour.rolesLead	997fd25df0248196
 AdminTour.rolesTitle	acf733c5a7b7c87f
 AdminTour.sampleData	1a301a851a8a7c65
+AdminTour.stats	b4a7365740ef880b
+AdminTour.statsText	130c282f3640f318
 AdminTour.supervisor	9de790933254b865
 AdminTour.supervisorText	957173569b5bc1ea
 AdminTour.system	6725e7bbcd28f3a8
@@ -394,7 +396,7 @@ FeatureWebsite.fact4	fe35b38844e6641e
 FeatureWebsite.fact5	743829c03392abee
 FeatureWebsite.fact6	e948ba89ff09389e
 FeatureWebsite.fact7	38b1ff82a6bd2c9a
-FeatureWebsite.fact8	eba7771c49bd2bf3
+FeatureWebsite.fact8	b1e563f97de66459
 FeatureWebsite.fact9	5c692c2b0a20451b
 FeatureWebsite.lead	1922c3aaba55d98e
 FeatureWebsite.nav	528afaa2ffbfd914

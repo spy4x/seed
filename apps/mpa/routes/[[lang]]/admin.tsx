@@ -14,6 +14,7 @@ import {
   IconPackage,
   IconServer,
   IconShieldCheck,
+  IconTrendingUp,
   IconUsers,
 } from "@spy4x/preact-icons"
 import type { IconProps } from "@spy4x/preact-icons"
@@ -75,6 +76,7 @@ const MODULES: readonly {
   text: string
 }[] = [
   { id: `dashboard`, name: `AdminTour.dashboard`, Icon: IconHome, text: `AdminTour.dashboardText` },
+  { id: `stats`, name: `AdminTour.stats`, Icon: IconTrendingUp, text: `AdminTour.statsText` },
   { id: `users`, name: `AdminTour.users`, Icon: IconUsers, text: `AdminTour.usersText` },
   { id: `groups`, name: `AdminTour.groups`, Icon: IconFolder, text: `AdminTour.groupsText` },
   { id: `billing`, name: `AdminTour.billing`, Icon: IconCreditCard, text: `AdminTour.billingText` },

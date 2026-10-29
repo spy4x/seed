@@ -844,6 +844,20 @@ export function parseCatalogSourceFields(
 export const CATALOG_LINK_CODE_PATTERN = /^[A-Za-z0-9_-]{8,32}$/
 
 /**
+ * An item's path on the website: `itemPath` (such as `/{category}/{slug}`) with the item's slug
+ * and its category's, each encoded, and doubled slashes made one.
+ */
+export function catalogItemPath(
+  itemPath: string,
+  { itemSlug, categorySlug }: { itemSlug: string; categorySlug: string | null },
+): string {
+  return itemPath
+    .replaceAll(`{category}`, encodeURIComponent(categorySlug ?? ``))
+    .replaceAll(`{slug}`, encodeURIComponent(itemSlug))
+    .replace(/\/{2,}/g, `/`)
+}
+
+/**
  * The address a tracking link sends a visitor to: the item's page on the website, tagged with the
  * source as `utm_source`, `share` as `utm_medium` and the item as `utm_campaign`. `itemPath` is the
  * website's item address with `{category}` and `{slug}` in it, such as `/{category}/{slug}`.
@@ -859,10 +873,7 @@ export function catalogTaggedItemUrl(
     sourceSlug: string
   },
 ): string | null {
-  const path = itemPath
-    .replaceAll(`{category}`, encodeURIComponent(categorySlug ?? ``))
-    .replaceAll(`{slug}`, encodeURIComponent(itemSlug))
-    .replace(/\/{2,}/g, `/`)
+  const path = catalogItemPath(itemPath, { itemSlug, categorySlug })
   let url: URL
   try {
     url = new URL(path, siteUrl)

@@ -15,12 +15,14 @@ import { dashboardModule } from "./dashboard/module.tsx"
 import { groupsModule } from "./groups/module.tsx"
 import { jobsModule } from "./jobs/module.tsx"
 import { newsletterModule } from "./newsletter/module.tsx"
+import { statsModule } from "./stats/module.tsx"
 import { systemModule } from "./system/module.tsx"
 import type { AdminModule, AdminPersonTab } from "./types.ts"
 import { usersModule } from "./users/module.tsx"
 
 export const ADMIN_MODULES: readonly AdminModule[] = [
   dashboardModule,
+  statsModule,
   usersModule,
   groupsModule,
   billingModule,

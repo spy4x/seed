@@ -14,6 +14,7 @@ each side holds them to that (`apps/admin/src/modules/registry.test.ts`,
 | Id           | Rail entry    | Pages                     | Person tabs                         | API                     |
 | ------------ | ------------- | ------------------------- | ----------------------------------- | ----------------------- |
 | `dashboard`  | Dashboard     | `/`                       |                                     | `GET /api/admin/stats`  |
+| `stats`      | Stats         | `/stats`                  |                                     | `GET /api/admin/website-stats` |
 | `users`      | Users         | `/users`, `/users/:id`    | (the page's own five)               | `/api/admin/users/*`    |
 | `groups`     | Groups        | `/groups`, `/groups/:id`  |                                     | `/api/admin/groups/*`   |
 | `billing`    | Billing       | `/billing`, `/billing/:groupId` |                               | `/api/admin/billing/*`  |
