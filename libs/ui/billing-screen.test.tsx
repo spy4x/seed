@@ -187,7 +187,7 @@ describe("GroupBillingPanel", () => {
   it("titles the tab and says Stripe handles the billing", async () => {
     await mount(panel(FREE_OWNER))
     expect(find("[data-e2e=group-section-billing] h2").textContent).toBe("Plan and billing")
-    expect(text()).toContain("What Team pays each month. Billing is handled by Stripe.")
+    expect(text()).toContain("What Team pays each month. Stripe handles the billing.")
   })
 
   it("prices Pro for a free group's members and opens the 14-day trial's checkout for its owner", async () => {
@@ -201,7 +201,7 @@ describe("GroupBillingPanel", () => {
       "Start 14-day free trial (opens Stripe)",
     )
     expect(find("[data-e2e=billing-fine-print]").textContent).toBe(
-      "Billed monthly per member. Cancel any time; you keep Pro until the period ends.",
+      "Billed monthly per member. Cancel anytime and keep Pro until the period ends.",
     )
     expect(has("[data-e2e=billing-row-invoices]")).toBe(false)
     await click("[data-e2e=billing-checkout]")
@@ -214,7 +214,7 @@ describe("GroupBillingPanel", () => {
     await mount(panel(FREE_OWNER, { ...app.props, trial }))
     expect(find("[data-e2e=billing-checkout]").textContent).toBe("Upgrade to Pro (opens Stripe)")
     expect(find("[data-e2e=billing-trial-used]").textContent).toBe(
-      "You have used your free trial on another group.",
+      "You've already used your free trial on another group.",
     )
     await click("[data-e2e=billing-checkout]")
     expect(app.checkouts).toEqual([PRO_PLAN_ID])
@@ -253,11 +253,11 @@ describe("GroupBillingPanel", () => {
     await mount(panel(TRIAL_OWNER, app.props))
     expect(find("[data-e2e=billing-status]").textContent).toBe("· Trial")
     expect(find("[data-e2e=billing-trial]").textContent).toBe(
-      "The trial ends in 10 days, on 31 October 2026. Then Team pays €54.00 a month unless you cancel.",
+      "The trial ends in 10 days, on 31 October 2026. After that, Team pays €54.00 a month unless you cancel.",
     )
     expect(has("[data-e2e=billing-checkout]")).toBe(false)
     expect(find("[data-e2e=billing-row-cancel]").textContent).toContain(
-      "Nothing is charged if you cancel before 31 October 2026.",
+      "You won't be charged if you cancel before 31 October 2026.",
     )
     await click("[data-e2e=billing-portal-cancel]")
     expect(app.portals).toBe(1)
@@ -289,7 +289,7 @@ describe("GroupBillingPanel", () => {
     await mount(panel(ENDING_OWNER, app.props))
     expect(find("[data-e2e=billing-status]").textContent).toBe("· Ends on 4 November 2026")
     expect(find("[data-e2e=billing-ending]").textContent).toBe(
-      "Pro ends on 4 November 2026. The group then moves to the free plan.",
+      "Pro ends on 4 November 2026. Then the group moves to the free plan.",
     )
     expect(has("[data-e2e=billing-row-cancel]")).toBe(false)
     await click("[data-e2e=billing-renew]")
@@ -301,7 +301,7 @@ describe("GroupBillingPanel", () => {
     await mount(panel(PAST_DUE_OWNER, app.props))
     expect(find("[data-e2e=billing-status]").textContent).toBe("· Payment failed")
     expect(find("[data-e2e=billing-notice]").textContent).toBe(
-      "A payment failed. Update the card with Change card within 7 days, by 28 October 2026, to keep Pro.",
+      "A payment failed. To keep Pro, update your card with Change card within 7 days, by 28 October 2026.",
     )
     // Cancelling is still in Stripe's page, but the tab offers no row that says Pro is kept.
     expect(has("[data-e2e=billing-row-cancel]")).toBe(false)
@@ -318,7 +318,7 @@ describe("GroupBillingPanel", () => {
       ),
     )
     expect(text()).toContain(
-      "A payment failed, so the group is on the free plan. Update the card with Change card to get Pro back.",
+      "A payment failed, so the group moved to the free plan. Update your card with Change card to get Pro back.",
     )
     // The group still has its subscription, so a second checkout is never offered.
     expect(has("[data-e2e=billing-checkout]")).toBe(false)
@@ -347,7 +347,7 @@ describe("GroupBillingPanel", () => {
   it("says Stripe is confirming the plan only while the owner is back from checkout and the group is still free", async () => {
     await mount(panel(FREE_OWNER, { confirming: true }))
     expect(find("[data-e2e=billing-confirming]").textContent).toBe(
-      "Stripe is confirming your plan. This page updates by itself.",
+      "Stripe is confirming your plan. This page will update on its own.",
     )
     await rerender(panel(PRO_OWNER, { confirming: true }))
     expect(has("[data-e2e=billing-confirming]")).toBe(false)

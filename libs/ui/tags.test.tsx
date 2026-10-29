@@ -277,7 +277,7 @@ describe("TagsScreen", () => {
     expect(remove.calls).toEqual([])
     const dialog = find("[data-e2e=tag-delete-dialog]").textContent
     expect(dialog).toContain(`Delete tag "Urgent"?`)
-    expect(dialog).toContain("It comes off every note that has it. The notes stay.")
+    expect(dialog).toContain("It's removed from every note that has it. The notes stay.")
 
     await clickText("Delete tag", "[data-e2e=tag-delete-dialog]")
     expect(remove.calls).toEqual([[urgent.id]])
@@ -289,10 +289,10 @@ describe("TagsScreen", () => {
     await click(`[data-e2e=tag-${urgent.id}] [data-e2e=tag-menu]`)
     await click(`[data-e2e=tag-${urgent.id}] [data-e2e=tag-delete]`)
     expect(find("[data-e2e=tag-delete-dialog]").textContent).toContain(
-      "It comes off 3 notes. The notes stay.",
+      "It's removed from 3 notes. The notes stay.",
     )
-    expect(tagDeleteMessage(EN, 1)).toBe("It comes off 1 note. The notes stay.")
-    expect(tagDeleteMessage(EN, 0)).toBe("No note carries it.")
+    expect(tagDeleteMessage(EN, 1)).toBe("It's removed from 1 note. The note stays.")
+    expect(tagDeleteMessage(EN, 0)).toBe("No notes have this tag.")
   })
 
   it("links each tag's note count to the notes filtered by that tag, named for a screen reader", async () => {
@@ -542,7 +542,7 @@ describe("TagEditorScreen", () => {
     expect(remove.calls).toEqual([])
     const dialog = find("[data-e2e=tag-delete-dialog]").textContent
     expect(dialog).toContain(`Delete tag "Home"?`)
-    expect(dialog).toContain("It comes off every note that has it. The notes stay.")
+    expect(dialog).toContain("It's removed from every note that has it. The notes stay.")
 
     await clickText("Cancel", "[data-e2e=tag-delete-dialog]")
     expect(remove.calls).toEqual([])
@@ -618,7 +618,7 @@ describe("TagEditorScreen", () => {
   it("shows a viewer the tag read-only, with who may change it, and no actions", async () => {
     await mount(<TagEditorScreen {...editHome} group={viewerOfTeam} dirty />)
     expect(find("[data-e2e=tag-read-only]").textContent).toBe(
-      "Only an editor can change tags in this group.",
+      "Only editors can change tags in this group.",
     )
     expect(find<HTMLInputElement>("[data-e2e=tag-name]").closest("fieldset")?.disabled).toBe(true)
     expect(count("[data-e2e=tag-save]")).toBe(0)
@@ -628,7 +628,7 @@ describe("TagEditorScreen", () => {
   it("says the changes stay on the device while it is offline", async () => {
     await mount(<TagEditorScreen {...tagEditorDefaults} offline />)
     expect(find("[data-e2e=tag-offline]").textContent).toContain(
-      "Your changes are saved on this device and sent when you are back online.",
+      "Your changes are saved on this device and sync when you're back online.",
     )
     await rerender(<TagEditorScreen {...tagEditorDefaults} />)
     expect(count("[data-e2e=tag-offline]")).toBe(0)

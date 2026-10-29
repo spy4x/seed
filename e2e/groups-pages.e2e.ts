@@ -77,7 +77,7 @@ test.describe("group list and settings pages", () => {
 
       await page.context().setOffline(true)
       await expect(page.locator("[data-e2e=group-offline]")).toContainText(
-        "You can fill this in now. Creating the group needs a connection.",
+        "You can fill this in now, but you need a connection to create the group.",
       )
       await page.locator("[data-e2e=group-name]").fill("Trip")
 
@@ -219,7 +219,7 @@ test.describe("group list and settings pages", () => {
       await openGroup(page, "Personal")
       await page.getByRole("button", { name: "More actions" }).click()
       await expect(page.locator("[data-e2e=group-delete-open]")).toBeDisabled()
-      await expect(page.locator("[data-e2e=group-delete-why]")).toHaveText("It is your only group")
+      await expect(page.locator("[data-e2e=group-delete-why]")).toHaveText("It's your only group")
 
       const groups = await page.request.get(`${apiBase}/api/groups`)
       const [only] = (await groups.json()).groups

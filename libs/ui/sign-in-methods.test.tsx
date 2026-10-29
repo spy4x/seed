@@ -138,7 +138,7 @@ describe("AuthScreen last sign-in", () => {
 
     expect(find("[data-e2e=last-sign-in] span").textContent)
       .toBe("Last time you signed in with Google (a***@example.com).")
-    expect(find("[data-e2e=last-sign-in-forget]").textContent).toBe("Not you? Forget")
+    expect(find("[data-e2e=last-sign-in-forget]").textContent).toBe("Not you? Use another account")
   })
 
   it("names a password sign-in that kept no address", async () => {
@@ -265,7 +265,7 @@ describe("ConfirmSignUpScreen", () => {
 
     expect(find("h1").textContent).toBe("Create a new account?")
     const card = find("[data-e2e=confirm-sign-up]").textContent
-    expect(card).toContain("No account here signs in with this Google account:")
+    expect(card).toContain("This Google account isn't linked to any account here:")
     expect(find("[data-e2e=confirm-sign-up-email]").textContent).toBe("ada@example.com")
     expect(card).toContain("Nothing has been created yet.")
   })
@@ -284,7 +284,7 @@ describe("ConfirmSignUpScreen", () => {
     })
 
     const warning = find("[data-e2e=confirm-sign-up-unconfirmed]")
-    expect(warning.textContent).toContain("already uses this address, but never confirmed it.")
+    expect(warning.textContent).toContain("already uses this email but never confirmed it.")
     expect(warning.textContent).toContain("its password stops working")
     expect(warning.textContent).toContain("To keep it, go back, sign in with its password")
     // Read before either answer can be given.
@@ -297,7 +297,7 @@ describe("ConfirmSignUpScreen", () => {
 
     const buttons = [...document.querySelectorAll("[data-e2e=confirm-sign-up] button")]
     expect(buttons.map((button) => button.textContent?.trim())).toEqual([
-      "I already have an account: go back to sign in",
+      "I already have an account. Back to sign in",
       "Create a new account",
     ])
     // Drawn as the library draws its main and its secondary button.
@@ -368,7 +368,7 @@ describe("ConfirmSignUpScreen", () => {
     )
 
     expect(find("[data-e2e=confirm-sign-up]").textContent)
-      .toContain("No account here signs in with this GitHub account.")
+      .toContain("This GitHub account isn't linked to any account here.")
     expect(document.querySelector("[data-e2e=confirm-sign-up-identity]")).toBe(null)
   })
 
@@ -439,14 +439,14 @@ describe("ConfirmSignUpScreen", () => {
 
     expect(find("[data-e2e=confirm-sign-up-name]").textContent).toBe("Ada Lovelace")
     expect(document.querySelector("[data-e2e=confirm-sign-up-email]")).toBe(null)
-    expect(find("[data-e2e=confirm-sign-up]").textContent).toContain("this GitHub account:")
+    expect(find("[data-e2e=confirm-sign-up]").textContent).toContain("any account here:")
   })
 
   it("offers only the way back to sign-in when nothing waits", async () => {
     await mount(<ConfirmSignUpScreen {...confirmProps([], { pending: null })} />)
 
     const gone = find("[data-e2e=confirm-sign-up-gone]")
-    expect(gone.textContent).toContain("Nothing was created")
+    expect(gone.textContent).toContain("No account was created")
     expect(gone.querySelectorAll("button").length).toBe(0)
     expect(gone.querySelector("a")?.getAttribute("href")).toBe("/sign-in")
   })
@@ -519,7 +519,7 @@ describe("SignInMethods", () => {
 
     const row = find("[data-e2e=sign-in-method-google]")
     expect(row.querySelectorAll("button").length).toBe(0)
-    expect(row.textContent).toContain("Your only way to sign in")
+    expect(row.textContent).toContain("This is your only way to sign in")
   })
 
   it("asks before unlinking, and unlinks nothing when the person cancels", async () => {
@@ -629,7 +629,7 @@ describe("SignInMethods", () => {
     await click("[data-e2e=sign-in-method-unlink-google]")
 
     const dialog = find("[data-e2e=sign-in-method-unlink-confirm]").textContent
-    expect(dialog).toContain("it will be signed out")
+    expect(dialog).toContain("this device is signed out too")
     expect(dialog).not.toContain("This device stays signed in.")
   })
 
@@ -877,7 +877,7 @@ describe("ProfileScreen for an account without a password", () => {
     expect(account).not.toContain("You sign in with your username")
     expect(account).not.toContain("cannot be changed here")
     expect(find("[data-e2e=email-current]").textContent).toBe("gia@example.com")
-    expect(find("[data-e2e=email-change-open]").textContent).toBe("Change e-mail address")
+    expect(find("[data-e2e=email-change-open]").textContent).toBe("Change email")
 
     await mount(<ProfileScreen {...profile} methods={methods} />)
     expect(find("[data-e2e=password-none]").textContent).toBe("None. You sign in with Google.")

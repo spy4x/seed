@@ -79,7 +79,7 @@ test("a new account proves its address with the mailed code before it exists, th
     await expect(page.locator("[data-e2e=email-current]")).toContainText(email)
 
     await enterCode(page, await codeFor(request, next))
-    await expect(page.locator("[data-e2e=email-verified]")).toContainText("E-mail verified")
+    await expect(page.locator("[data-e2e=email-verified]")).toContainText("Email verified")
     await expect(page.locator("[data-e2e=email-change-dialog]")).toBeHidden()
     await expect(page.locator("[data-e2e=email-current]")).toContainText(next)
 

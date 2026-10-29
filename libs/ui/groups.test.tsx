@@ -449,7 +449,7 @@ describe("GroupEditorScreen header", () => {
       expect(has("[data-e2e=group-save]")).toBe(false)
       expect(find("[data-e2e=group-general-description]").textContent).toBe("Our flat")
       expect(find("[data-e2e=group-read-only]").textContent).toBe(
-        "Only an admin or the owner can change this group's details.",
+        "Only admins and the owner can change this group's details.",
       )
       await act(() => render(null, root!))
     }
@@ -480,7 +480,7 @@ describe("GroupEditorScreen header", () => {
   it("disables Delete group with the reason when it is the person's only group or still has a subscription", async () => {
     await mount(<GroupEditorScreen {...defaults} isLastGroup />)
     expect(find<HTMLButtonElement>("[data-e2e=group-delete-open]").disabled).toBe(true)
-    expect(find("[data-e2e=group-delete-why]").textContent).toBe("It is your only group")
+    expect(find("[data-e2e=group-delete-why]").textContent).toBe("It's your only group")
     await rerender(<GroupEditorScreen {...defaults} hasSubscription />)
     expect(find<HTMLButtonElement>("[data-e2e=group-delete-open]").disabled).toBe(true)
     expect(find("[data-e2e=group-delete-why]").textContent).toBe("Cancel its subscription first")
@@ -493,7 +493,7 @@ describe("GroupEditorScreen header", () => {
     const admin = { ...defaults, group: { ...team, role: GroupRole.ADMIN } }
     await mount(<GroupEditorScreen {...admin} isLastGroup />)
     expect(find<HTMLButtonElement>("[data-e2e=group-leave-open]").disabled).toBe(true)
-    expect(find("[data-e2e=group-leave-why]").textContent).toBe("It is your only group")
+    expect(find("[data-e2e=group-leave-why]").textContent).toBe("It's your only group")
   })
 
   it("disables Transfer ownership with the reason while the group has a subscription", async () => {
@@ -663,7 +663,7 @@ describe("GroupEditorScreen header", () => {
       // plain: a `<bdi>`, not invisible marks.
       const deleteButton = find("[data-e2e=group-move-all-delete]")
       expect(deleteButton.innerHTML).toContain(`<bdi>Team</bdi>`)
-      expect(deleteButton.textContent).toBe(`Delete "Team"...`)
+      expect(deleteButton.textContent).toBe(`Delete "Team"…`)
 
       await click("[data-e2e=group-move-all-delete]")
       expect(closed.calls).toHaveLength(1)
@@ -1239,7 +1239,7 @@ describe("InviteForm", () => {
     )
     expect(focused()).toBe("invitation-error")
     expect(find("[data-e2e=invitation-error]").textContent).toContain(message)
-    expect(find("[data-e2e=invitation-verify-email]").textContent).toBe("Verify e-mail")
+    expect(find("[data-e2e=invitation-verify-email]").textContent).toBe("Verify email")
     // A phone-sized touch target, as tall as the form's own controls.
     expect(find("[data-e2e=invitation-verify-email]").classList.contains("min-h-11")).toBe(true)
     // The address field is not blamed, and the form stays to send once the address is verified.
@@ -1298,7 +1298,7 @@ describe("InvitationNewScreen", () => {
 
   it("says it is offline above the form, and a refused submit's reason above the buttons", async () => {
     await mount(<InvitationNewScreen {...page} offline />)
-    expect(find("[data-e2e=invitation-offline]").textContent).toContain("You are offline")
+    expect(find("[data-e2e=invitation-offline]").textContent).toContain("You're offline")
     expect(has("[data-e2e=invitation-error]")).toBe(false)
     await rerender(<InvitationNewScreen {...page} offline refusedOffline />)
     expect(find("[data-e2e=invitation-error]").textContent).toContain(
@@ -1743,13 +1743,13 @@ describe("GroupEditorScreen form", () => {
     await mount(<GroupEditorScreen {...settings} />)
     expect(has("[data-e2e=group-offline]")).toBe(false)
     await rerender(<GroupEditorScreen {...settings} offline />)
-    expect(find("[data-e2e=group-offline]").textContent).toContain("You are offline")
+    expect(find("[data-e2e=group-offline]").textContent).toContain("You're offline")
     expect(find("[data-e2e=group-offline]").textContent).toContain(
-      "This is the copy saved on this device. Saving changes needs a connection.",
+      "You're seeing the copy saved on this device. You need a connection to save changes.",
     )
     await rerender(<GroupEditorScreen {...creating} offline />)
     expect(find("[data-e2e=group-offline]").textContent).toContain(
-      "You can fill this in now. Creating the group needs a connection.",
+      "You can fill this in now, but you need a connection to create the group.",
     )
   })
 
@@ -1761,7 +1761,7 @@ describe("GroupEditorScreen form", () => {
       />,
     )
     expect(find("[data-e2e=group-trial]").textContent).toContain(
-      "Your 14-day free trial of a paid plan goes to the first group you choose a paid plan for.",
+      "Your 14-day free trial goes to the first group you move to a paid plan.",
     )
     await rerender(
       <GroupEditorScreen
@@ -1770,7 +1770,7 @@ describe("GroupEditorScreen form", () => {
       />,
     )
     expect(find("[data-e2e=group-trial]").textContent).toContain(
-      "You have used your free trial, so a paid plan here is charged from the first day.",
+      "You've already used your free trial, so a paid plan here is charged from day one.",
     )
     await rerender(
       <GroupEditorScreen

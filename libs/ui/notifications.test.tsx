@@ -122,7 +122,7 @@ describe("notifications screen", () => {
   })
 
   it("says the inbox is empty instead of showing a blank page", () => {
-    expect(renderToString(screen())).toContain("You are all caught up.")
+    expect(renderToString(screen())).toContain("You're all caught up.")
   })
 
   it("tells the app a notification was read as its link is followed, and only if it was unread", async () => {
