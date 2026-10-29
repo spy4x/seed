@@ -260,6 +260,7 @@ function ReadNext({ posts }: { posts: readonly PublicBlogPostSummary[] }): JSX.E
               description: post.description,
               publishedAt: post.publishedAt,
               readMinutes: post.readingMinutes,
+              lang: post.language,
             }))}
           />
         </>
