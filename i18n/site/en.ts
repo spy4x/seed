@@ -419,7 +419,7 @@ export default {
   "FeatureLanguages.lead":
     "The app, the admin area and this website speak {languages}. People choose their language in the app, and it is saved with their account. Each page of this website has its own address in every language.",
   "FeatureLanguages.fact1":
-    "One JSON catalog per language, checked by a test that names every missing or outdated message",
+    "One TypeScript catalog per language, checked by a test that names every missing or outdated message",
   "FeatureLanguages.fact2":
     "Plurals, numbers and dates through the platform's own Intl, with no i18n library",
   "FeatureLanguages.fact3":

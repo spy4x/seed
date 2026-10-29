@@ -406,7 +406,7 @@ export default {
   "FeatureLanguages.title": "بست لغات منذ البداية",
   "FeatureLanguages.lead":
     "يتحدث التطبيق ومنطقة الإدارة وهذا الموقع: {languages}. يختار كل شخص لغته في التطبيق، وتُحفظ مع حسابه. ولكل صفحة في هذا الموقع عنوانها الخاص بكل لغة.",
-  "FeatureLanguages.fact1": "كتالوج JSON لكل لغة، يفحصه اختبار يسمّي كل رسالة ناقصة أو قديمة",
+  "FeatureLanguages.fact1": "كتالوج TypeScript لكل لغة، يفحصه اختبار يسمّي كل رسالة ناقصة أو قديمة",
   "FeatureLanguages.fact2": "صيغ الجمع والأرقام والتواريخ عبر Intl المدمج في المنصة، دون مكتبة i18n",
   "FeatureLanguages.fact3": "روابط hreflang في كل صفحة من الموقع، وخريطة موقع تسرد كل لغة",
   "FeatureLanguages.fact4": "الصفحات العربية تُقرأ من اليمين إلى اليسار",
