@@ -105,7 +105,7 @@ test("an operator finds a subscriber, exports the list and removes them", async 
     await expect(rows).toHaveCount(1)
     await expect(rows.first()).toContainText(subscriber)
     await expect(rows.first()).toContainText("Confirmed")
-    await expect(ops.locator("[data-e2e=admin-newsletter-count]")).toHaveText("1 address")
+    await expect(ops.locator("[data-e2e=admin-newsletter-count]")).toHaveText("1 subscriber")
     await expect(ops).toHaveURL(`${adminBase}/newsletter`)
     expect(urls.filter((url) => decodeURIComponent(url).includes(subscriber))).toEqual([])
 

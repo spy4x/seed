@@ -115,15 +115,15 @@ test.describe("moving notes to another group", () => {
       await expect(ownerTitles).toHaveCount(2)
       await expect(targetTitles).toHaveCount(2, { timeout: 5_000 })
 
-      // Ticked notes, from the list: tick boxes appear only once the person asks to select.
+      // Ticked notes, from the list: check boxes appear only once the person asks to select.
       await expect(ownerPage.locator("[data-e2e=note-select]")).toHaveCount(0)
       await ownerPage.getByRole("button", { name: "More actions" }).click()
       await ownerPage.getByRole("menuitem", { name: "Select notes" }).click()
       // Nothing ticked yet: a hint, and no way to move nothing.
       await expect(ownerPage.getByText("Select the notes to move")).toBeVisible()
       await expect(ownerPage.locator("[data-e2e=notes-move-submit]")).toHaveCount(0)
-      await ownerPage.getByLabel("Tick Three").check()
-      await ownerPage.getByLabel("Tick Four").check()
+      await ownerPage.getByLabel("Select Three").check()
+      await ownerPage.getByLabel("Select Four").check()
       await expect(ownerPage.getByText("2 selected")).toBeVisible()
       await ownerPage.locator("[data-e2e=notes-move-to]").selectOption({ label: "Target" })
       await ownerPage.locator("[data-e2e=notes-move-submit]").click()
