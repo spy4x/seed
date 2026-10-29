@@ -21,7 +21,7 @@ test.describe(`without JavaScript`, () => {
   test(`the features page shows its heading and every in-page link lands on a section`, async ({ page }) => {
     await page.goto(`/features`)
     await expect(page.getByRole(`heading`, { level: 1 })).toHaveText(
-      `Everything Seed ships, and what it does not yet`,
+      `Everything Seed ships, and what it doesn't yet`,
     )
 
     const hrefs = await page.getByRole(`navigation`, { name: `On this page` }).getByRole(`link`)

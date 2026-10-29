@@ -177,7 +177,7 @@ describe("ApiTokenNewView", () => {
     await submit("[data-e2e=api-token-name]")
 
     expect(sent).toEqual([])
-    expect(find("[data-e2e=api-token-offline]").textContent).toContain("You are offline")
+    expect(find("[data-e2e=api-token-offline]").textContent).toContain("You're offline")
     expect(find("[data-e2e=api-token-error]").textContent).toContain(ENGLISH.t(API_TOKEN_OFFLINE))
   })
 })

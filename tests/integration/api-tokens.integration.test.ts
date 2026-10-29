@@ -653,7 +653,7 @@ Deno.test("creating a token queues one mail to its owner, which names the token 
     expect(sent.map((mail) => mail.to)).toEqual(["ada@example.com"])
     expect(sent[0].text).toContain(`An API token named "\u2068Zapier\u2069" was created`)
     expect(sent[0].text).toContain(
-      `It can read and write the group "\u2068Personal\u2069" and never expires.`,
+      `It can read and change the group "\u2068Personal\u2069" and never expires.`,
     )
     expect(JSON.stringify(sent)).not.toContain(token.secret)
     expect(JSON.stringify(sent)).not.toContain(token.secret.slice(4))

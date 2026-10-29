@@ -235,7 +235,7 @@ describe("the API tokens page", () => {
 
     const dialog = text(`[data-e2e="admin-api-tokens-dialog"]`)
     expect(dialog).toContain("Revoke this API token")
-    expect(dialog).toContain("CI deploys of Ada Lovelace stops working at once")
+    expect(dialog).toContain("CI deploys, owned by Ada Lovelace, stops working right away")
     await click(find(`[data-e2e="admin-api-tokens-confirm"]`))
     expect(events).toEqual([["confirm"]])
   })
@@ -423,7 +423,7 @@ describe("the person's tabs", () => {
         confirm={confirm}
       />,
     )
-    expect(text(`[data-e2e="admin-person-devices"]`)).toBe("No device gets push notifications.")
+    expect(text(`[data-e2e="admin-person-devices"]`)).toBe("No devices get push notifications.")
     expect(text(`[data-e2e="admin-api-tokens-dialog"]`)).toContain("Device phone123")
     await click(find(`[data-e2e="admin-api-tokens-confirm"]`))
     expect(events).toEqual([["confirm"]])

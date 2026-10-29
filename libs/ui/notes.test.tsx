@@ -353,7 +353,7 @@ describe("NotesScreen", () => {
   it("shows a viewer the notes with no way to add, move or delete one", async () => {
     const html = renderToString(<NotesScreen {...listDefaults} group={viewerOfTeam} />)
 
-    expect(html).toContain("Only an editor can change them.")
+    expect(html).toContain("only editors can change them.")
     expect(html).toContain("Groceries")
     expect(html).not.toContain(`data-e2e="note-new"`)
     expect(html).not.toContain(`data-e2e="notes-select"`)
@@ -430,7 +430,7 @@ describe("NotesScreen in the browser", () => {
     await click(`${row(groceries)} [data-e2e=note-move]`)
     expect(move.calls).toEqual([])
     const dialog = find("[data-e2e=note-move-dialog]")
-    expect(dialog.textContent).toContain(`Choose the group "Groceries" moves to.`)
+    expect(dialog.textContent).toContain(`Choose where to move "Groceries".`)
     expect([...dialog.querySelectorAll("[data-e2e=note-move-target]")].map((b) => b.textContent))
       .toEqual(["Family", "Work"])
 
@@ -463,7 +463,7 @@ describe("NotesScreen in the browser", () => {
 
     expect(count("[data-e2e=note-select]")).toBe(2)
     expect(count("[data-e2e=note-menu]")).toBe(0)
-    expect(find("[data-e2e=notes-move]").textContent).toContain("Tick the notes to move")
+    expect(find("[data-e2e=notes-move]").textContent).toContain("Select the notes to move")
     // Nothing ticked yet: nothing to move, so no group to pick and no move button.
     expect(count("[data-e2e=notes-move-submit]")).toBe(0)
   })
@@ -1030,7 +1030,7 @@ describe("NoteEditorScreen", () => {
 
     expect(html).toMatch(/data-e2e="note-read-title"[^>]*><span\b[^>]*>Groceries</)
     expect(html).toContain("milk")
-    expect(html).toContain("Only an editor can change it.")
+    expect(html).toContain("only editors can change it.")
     expect(html).not.toContain("<form")
     expect(html).not.toContain(`aria-label="More actions"`)
   })
@@ -1039,14 +1039,14 @@ describe("NoteEditorScreen", () => {
     const html = renderToString(<NoteEditorScreen {...editorDefaults} group={viewerOfTeam} />)
 
     expect(html).not.toContain("<form")
-    expect(html).toContain("Only an editor can add notes")
+    expect(html).toContain("Only editors can add notes")
   })
 
   it("says the note does not exist, with a way back to the list and no form", () => {
     const html = renderToString(<NoteEditorScreen {...editorDefaults} notFound />)
 
     expect(html).toContain("This note does not exist.")
-    expect(html).toContain("There is no such note in <bdi>Team</bdi>")
+    expect(html).toContain("We couldn't find this note in <bdi>Team</bdi>")
     expect(html).toContain(`href="${NOTE_PATHS.list}"`)
     expect(html).not.toContain("<form")
   })
@@ -1077,7 +1077,7 @@ describe("NoteEditorScreen", () => {
   it("keeps the plain not-found page when no other group holds the note", () => {
     const html = renderToString(<NoteEditorScreen {...editorDefaults} notFound elsewhere={null} />)
 
-    expect(html).toContain("There is no such note in <bdi>Team</bdi>")
+    expect(html).toContain("We couldn't find this note in <bdi>Team</bdi>")
     expect(html).not.toContain("note-switch-group")
   })
 
@@ -1087,7 +1087,7 @@ describe("NoteEditorScreen", () => {
     )
 
     expect(html).toContain("Offline")
-    expect(html).not.toContain("There is no such note")
+    expect(html).not.toContain("We couldn't find this note")
   })
 
   it("shows the owner the note cap with a link to the group's Plan and billing tab", () => {

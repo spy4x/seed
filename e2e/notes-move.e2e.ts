@@ -120,7 +120,7 @@ test.describe("moving notes to another group", () => {
       await ownerPage.getByRole("button", { name: "More actions" }).click()
       await ownerPage.getByRole("menuitem", { name: "Select notes" }).click()
       // Nothing ticked yet: a hint, and no way to move nothing.
-      await expect(ownerPage.getByText("Tick the notes to move")).toBeVisible()
+      await expect(ownerPage.getByText("Select the notes to move")).toBeVisible()
       await expect(ownerPage.locator("[data-e2e=notes-move-submit]")).toHaveCount(0)
       await ownerPage.getByLabel("Tick Three").check()
       await ownerPage.getByLabel("Tick Four").check()

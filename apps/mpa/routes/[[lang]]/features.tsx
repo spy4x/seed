@@ -65,11 +65,6 @@ function source(path: string): string {
   return `${REPOSITORY_URL}/${kind}/main/${path.replace(/\/$/, ``)}`
 }
 
-/** An open issue of the repository, by number. */
-function issue(number: number): string {
-  return `${REPOSITORY_URL}/issues/${number}`
-}
-
 /** A feature as the page lists it, without the side its picture goes on: the tier decides that. */
 type Feature = Omit<FeatureSectionProps, "flip"> & { nav: string }
 
@@ -232,10 +227,7 @@ function tiers({ t, href, rich, language }: Site): readonly Tier[] {
             t.t(`FeatureLanguages.fact2`),
             t.t(`FeatureLanguages.fact3`),
             t.t(`FeatureLanguages.fact4`),
-          ],
-          notYet: [
-            { label: t.t(`FeatureLanguages.notYet1`), issue: issue(277) },
-            { label: t.t(`FeatureLanguages.notYet3`), issue: issue(215) },
+            t.t(`FeatureLanguages.fact5`),
           ],
           code: { label: t.t(`FeatureLanguages.code`), href: source(`i18n/TRANSLATING.md`) },
         },

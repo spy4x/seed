@@ -179,8 +179,8 @@ describe("AuthScreen in the browser", () => {
       await mount(<AuthScreen {...authDefaults} screen={screen} demo />)
       const notice = find("[data-e2e=demo-notice]")
       expect(notice.textContent).toContain("public demo")
-      expect(notice.textContent).toContain("wiped every night")
-      expect(notice.textContent).toContain("sample data")
+      expect(notice.textContent).toContain("resets every night")
+      expect(notice.textContent).toContain("demo data")
       // Standing information, found while reading: no live region announces it.
       expect(notice.getAttribute("role")).toBeNull()
       // The line comes before the form, which keeps the page's one primary action.

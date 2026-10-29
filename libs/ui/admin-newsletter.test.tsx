@@ -246,7 +246,7 @@ describe("operator area: newsletter page", () => {
     await mount(<AdminNewsletterScreen {...props(calls)} />)
 
     expect(findAll("[data-e2e=admin-subscriber-resend]").map((b) => b.getAttribute("aria-label")))
-      .toEqual(["Resend the confirm mail to cat@example.com"])
+      .toEqual(["Resend the confirmation email to cat@example.com"])
     const removes = findAll("[data-e2e=admin-subscriber-remove]")
     expect(removes.map((b) => b.getAttribute("aria-label"))).toEqual([
       "Remove cat@example.com",
@@ -306,7 +306,7 @@ describe("operator area: newsletter page", () => {
       />,
     )
     expect(document.activeElement?.getAttribute("data-e2e")).toBe("admin-newsletter-count")
-    expect(find("[data-e2e=admin-newsletter-count]").textContent).toBe("1 address")
+    expect(find("[data-e2e=admin-newsletter-count]").textContent).toBe("1 subscriber")
   })
 
   it("exports from the header's one primary action, which waits while a file is on its way", async () => {
@@ -342,7 +342,7 @@ describe("operator area: newsletter page", () => {
     const calls: unknown[][] = []
     await mount(<AdminNewsletterScreen {...props(calls, { stats: null, list: null })} />)
     expect(find("[role=status][aria-label='Loading the numbers']")).toBeTruthy()
-    expect(find("[data-e2e=admin-newsletter-count]").textContent).toBe("Loading addresses")
+    expect(find("[data-e2e=admin-newsletter-count]").textContent).toBe("Loading subscribers")
 
     await mount(
       <AdminNewsletterScreen

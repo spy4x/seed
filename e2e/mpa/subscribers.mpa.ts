@@ -46,7 +46,7 @@ test("a visitor without JavaScript subscribes, confirms and unsubscribes through
 
   // The unsubscribe link names the API, which a mail client's one-click unsubscribe posts to; a
   // person who opens it is sent on to the website's page.
-  const unsubscribeLink = await mailedLink(request, email, "You are subscribed")
+  const unsubscribeLink = await mailedLink(request, email, "You're subscribed")
   expect(unsubscribeLink.origin).toBe(SPA)
   expect(unsubscribeLink.pathname).toBe("/api/subscribers/unsubscribe")
   await page.goto(unsubscribeLink.href)

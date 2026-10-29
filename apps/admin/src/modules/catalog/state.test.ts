@@ -214,7 +214,7 @@ it(`shows the link in its row when the clipboard refuses it`, async () => {
   await state.openItem(ID)
   expect(await state.copyLink(SOURCE)).toBe(false)
   expect(state.itemEditor.value.links).toEqual({ [SOURCE]: LINK })
-  expect(toasts.list.value.at(-1)?.title).toBe(`Could not copy the link`)
+  expect(toasts.list.value.at(-1)?.title).toBe(`Couldn't copy the link`)
 })
 
 it(`asks for one link at a time, and says why one was refused`, async () => {
@@ -278,7 +278,7 @@ it(`says a refusal of its own checks in the operator's language, under the field
     })
     expect(await state.saveItem()).toBeNull()
     expect(state.itemEditor.value.errors).toEqual({
-      "size:s1": `Укажите оба края роста или ни одного.`,
+      "size:s1": `Укажите рост и «от», и «до» — или оставьте оба поля пустыми.`,
     })
 
     await state.load()
@@ -287,7 +287,7 @@ it(`says a refusal of its own checks in the operator's language, under the field
     calls.length = 0
     expect(await state.saveSource()).toBe(false)
     expect(state.sourceEditor.value.errors).toEqual({
-      slug: `Используйте только строчные латинские буквы, цифры и дефисы.`,
+      slug: `Только строчные латинские буквы, цифры и дефисы.`,
     })
     expect(calls).toEqual([])
   } finally {

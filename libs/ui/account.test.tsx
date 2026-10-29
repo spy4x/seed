@@ -912,7 +912,7 @@ describe("ProfileScreen", () => {
     const name = (hook: string) => find(`[data-e2e=${hook}]`).textContent
     await mount(<ProfileScreen {...profileDefaults} section="account" emailChange={emailChange} />)
     expect(name("profile-edit")).toBe("Edit name")
-    expect(name("email-change-open")).toBe("Change e-mail address")
+    expect(name("email-change-open")).toBe("Change email")
 
     await rerender(<ProfileScreen {...profileDefaults} />)
     expect(name("password-open")).toBe("Change password")
@@ -1005,7 +1005,7 @@ describe("ProfileScreen", () => {
     const row = find("[data-e2e=profile-picture-row]")
     expect(row.compareDocumentPosition(find("[data-e2e=profile-edit]")) & 4).toBe(4)
     expect(document.body.textContent).toContain(
-      "Your picture, name, e-mail address and a copy of your data.",
+      "Your picture, name, email and a copy of your data.",
     )
   })
 
@@ -1490,7 +1490,7 @@ describe("the Your data row on the Account section", () => {
       />,
     )
     expect(find("[data-e2e=data-export-error]").textContent).toContain(
-      "Could not ask for your file.",
+      "Couldn't request your file.",
     )
   })
 })
@@ -1573,10 +1573,10 @@ describe("deleting the account from the profile", () => {
     ])
     expect(items.map((item) => item.textContent)).toEqual([
       "FamilyOther people still use it. Hand it over or remove them.",
-      "ShopIts plan is still paid. Cancel the plan first.",
-      `ClubIts plan is cancelled and runs until ${
+      "ShopIt still has a paid plan. Cancel the plan first.",
+      `ClubIts plan is cancelled but runs until ${
         createFormatters().date("2026-11-20T12:00:00.000Z", "long")
-      }. Wait until the plan ends.`,
+      }. Wait for it to end.`,
     ])
     // A tap target of 44 px on a phone.
     expect(items.map((item) => item.querySelector("a")!.classList.contains("min-h-11")))
@@ -1787,7 +1787,7 @@ describe("the e-mail address on the Account section", () => {
     expect(document.querySelectorAll("[data-e2e=email-password]").length).toBe(0)
     expect(find("[data-e2e=provider-proof-fresh]").textContent).toContain("Google")
     expect(find("[data-e2e=email-change-dialog]").textContent)
-      .toContain("You keep signing in with Google.")
+      .toContain("You'll keep signing in with Google.")
     const form = find<HTMLFormElement>("[data-e2e=email-new]").closest("form")!
     expect(Object.fromEntries(new FormData(form))).toEqual({ email: "new@example.com" })
     expect(await submit("[data-e2e=email-new]")).toBe(true)
@@ -1834,8 +1834,8 @@ describe("the e-mail address on the Account section", () => {
     expect(focused()).toBe("email-code")
     const step = find("[data-e2e=email-verify-card]").textContent
     expect(step).toContain("new@example.com")
-    expect(step).toContain("You keep signing in with ann@example.com until you enter it.")
-    expect(find("[data-e2e=email-verify]").textContent).toBe("Confirm address")
+    expect(step).toContain("Until then, you'll keep signing in with ann@example.com.")
+    expect(find("[data-e2e=email-verify]").textContent).toBe("Confirm email")
   })
 
   it("asks the app to drop what was typed when the dialog is closed, by Cancel or by the dialog itself", async () => {
@@ -1869,7 +1869,7 @@ describe("the e-mail address on the Account section", () => {
   it("names the change action after the address and gives the actions a 44 px target on a phone", async () => {
     await mount(account({ openEmailCode: true }))
 
-    expect(find("[data-e2e=email-change-open]").textContent).toBe("Change e-mail address")
+    expect(find("[data-e2e=email-change-open]").textContent).toBe("Change email")
     for (const hook of ["email-change-open", "email-code-open", "email-send"]) {
       const classes = find(`[data-e2e=${hook}]`).classList
       expect([hook, classes.contains("min-h-11")]).toEqual([hook, true])
@@ -1884,7 +1884,7 @@ describe("the e-mail address on the Account section", () => {
 
     await click("[data-e2e=email-change-open]")
     expect(find("[data-e2e=email-change-dialog]").textContent)
-      .toContain("Once you enter it, you sign in with that address.")
+      .toContain("Once you enter it, you'll sign in with that email.")
   })
 
   it("claims no mail was sent, since mail may be off", async () => {

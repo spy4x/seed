@@ -95,7 +95,7 @@ describe("invitations store", () => {
 
     expect(await store.create()).toBe(false)
 
-    expect(store.createError.value?.message).toBe("The group's plan has no room for more.")
+    expect(store.createError.value?.message).toBe("The group has reached its plan's limit.")
     expect(store.createError.value?.plan).toEqual(plan)
     expect(store.created.value).toBeNull()
   })
@@ -138,7 +138,7 @@ describe("invitations store", () => {
 
     expect(await store.create()).toBe(false)
     expect(store.createError.value).toEqual({
-      message: "Confirm that each person who joins adds a member to the group's bill.",
+      message: "Confirm that each new member adds to the group's bill.",
       code: "SEAT_PRICE_NOT_ACCEPTED",
       plan: null,
     })
@@ -168,7 +168,7 @@ describe("invitations store", () => {
     expect(store.invitations.value?.map((r) => r.id)).toEqual(["i-2"])
     expect(store.revokeError.value).toEqual({
       invitationId: "i-2",
-      message: "Your role in this group does not allow this.",
+      message: "Your role in this group doesn't allow this.",
     })
   })
 
@@ -203,7 +203,7 @@ describe("invitations store", () => {
     await store.loadPreview(token)
 
     expect(calls[0]).toEqual({ method: "POST", url: "/api/invitations/preview", body: { token } })
-    expect(store.previewError.value).toBe("This invitation has expired.")
+    expect(store.previewError.value).toBe("This invitation has expired. Ask for a new one.")
     expect(store.preview.value).toBeNull()
   })
 

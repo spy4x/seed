@@ -12,12 +12,12 @@ import { gotoApp } from "./app.ts"
  * ask for it in (#277): `EmailCodeMail.subject` of `i18n/mail/<language>.ts`.
  */
 export const CODE_SUBJECTS: Record<string, string> = {
-  en: `Your code to confirm your e-mail address`,
-  ru: `Код для подтверждения адреса электронной почты`,
+  en: `Your code to confirm your email`,
+  ru: `Код для подтверждения почты`,
   es: `Tu código para confirmar tu correo electrónico`,
-  de: `Dein Code zur Bestätigung deiner E-Mail-Adresse`,
-  "pt-BR": `Seu código para confirmar seu e-mail`,
-  ar: `رمزك لتأكيد بريدك الإلكتروني`,
+  de: `Dein Code zum Bestätigen deiner E-Mail-Adresse`,
+  "pt-BR": `Seu código para confirmar o e-mail`,
+  ar: `رمز تأكيد بريدك الإلكتروني`,
 }
 
 /** The options `APIRequestContext.post` takes, as the specs pass them to the sign-up route. */

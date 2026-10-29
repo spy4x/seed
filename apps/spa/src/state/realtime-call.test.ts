@@ -195,9 +195,9 @@ describe("refusals in the page's language", () => {
       }),
     )
 
-    expect(named.ok ? null : named.error.message).toBe("Тег с таким названием уже есть.")
+    expect(named.ok ? null : named.error.message).toBe("Метка с таким названием уже есть.")
     expect(plain.ok ? null : plain.error.message).toBe(
-      "За это время здесь что-то изменилось. Обновите страницу и попробуйте ещё раз.",
+      "Пока вы были на странице, тут что-то изменилось. Обновите её и попробуйте ещё раз.",
     )
   })
 })

@@ -148,7 +148,7 @@ it("ends the one session the dialog was opened for, and toasts it", async () => 
     `POST /api/admin/users/42/sessions/9/end`,
   ])
   expect(toasts.list.value.map((toast) => toast.body)).toEqual([
-    "One session of Grace Hopper has ended.",
+    "Ended one of Grace Hopper's sessions.",
   ])
 })
 
@@ -160,7 +160,7 @@ it("sends the role picked in the dialog as the body of a role change", async () 
   expect(calls.filter((call) => call.startsWith("POST"))).toEqual([
     `POST /api/admin/users/42/role {"role":2}`,
   ])
-  expect(toasts.list.value.map((toast) => toast.body)).toEqual(["Grace Hopper is now operator."])
+  expect(toasts.list.value.map((toast) => toast.body)).toEqual(["Grace Hopper is now an operator."])
 })
 
 it("sends nothing for a role change without a role", async () => {

@@ -88,7 +88,7 @@ test("asking for a link answers the same for an address no account uses", async 
   )
   await page.locator("[data-e2e=forgot-password-submit]").click()
   await expect(page.locator("[data-e2e=forgot-password-sent]")).toContainText(
-    "If an account uses this address",
+    "If an account uses this email",
   )
 })
 
@@ -101,7 +101,7 @@ test("the answer to a link request is in the page's language, not the server's E
   await page.locator("[data-e2e=forgot-password-submit]").click()
   // The same neutral line as for any address, so it says nothing about whether an account exists.
   await expect(page.locator("[data-e2e=forgot-password-sent] [role=status]")).toHaveText(
-    "Wenn ein Konto diese Adresse nutzt, ist ein Link zum Zurücksetzen des Passworts unterwegs.",
+    "Falls es ein Konto mit dieser E-Mail-Adresse gibt, haben wir einen Link zum Zurücksetzen des Passworts dorthin geschickt.",
   )
   await expect(page.locator("[data-e2e=forgot-password-sent] h1")).toBeFocused()
 })

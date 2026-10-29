@@ -100,7 +100,7 @@ describe("profile picture row", () => {
   it("says a refused picture could not be used, visibly and in its status region", async () => {
     await mount(<PictureRow {...row({ hasPicture: true, state: "refused" })} />)
     const status = find("[data-e2e=profile-picture-status]")
-    expect(status.textContent).toBe("We could not use that picture. Choose another.")
+    expect(status.textContent).toBe("We couldn't use that picture. Choose another one.")
     expect(status.className).not.toContain("sr-only")
   })
 

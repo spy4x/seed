@@ -228,7 +228,7 @@ describe("groups store", () => {
     await store.create()
 
     expect(store.editorErrors.value.form).toBe(
-      "Creating a group needs a connection. Try again when you are back online.",
+      "You need a connection to create a group. Try again when you're back online.",
     )
   })
 

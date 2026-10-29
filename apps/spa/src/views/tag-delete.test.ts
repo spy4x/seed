@@ -53,14 +53,14 @@ describe("deleteAndAnnounce", () => {
     expect(removed).toEqual([tagId])
     expect(shown).toEqual([{
       title: "Tag deleted",
-      body: `"\u2068Urgent\u2069" was deleted and taken off 2 notes.`,
+      body: `"\u2068Urgent\u2069" was deleted and removed from 2 notes.`,
       dataE2E: "tag-deleted",
     }])
   })
 
   it("says one note, not one notes", async () => {
     const { shown } = await run(tags().store, notes([[tagId], []]))
-    expect(shown[0].body).toBe(`"\u2068Urgent\u2069" was deleted and taken off 1 note.`)
+    expect(shown[0].body).toBe(`"\u2068Urgent\u2069" was deleted and removed from 1 note.`)
   })
 
   it("leaves the count out when the tag was on no note", async () => {

@@ -6,7 +6,7 @@ import { lastMail, nextCode, signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const password = "Passw0rd!"
-const CODE_SUBJECT = "Your code to confirm your e-mail address"
+const CODE_SUBJECT = "Your code to confirm your email"
 
 async function cleanup(request: APIRequestContext, email: string, soft = false): Promise<void> {
   const response = await request.post(`${apiBase}/api/test/cleanup-user`, {
@@ -79,7 +79,7 @@ test("a new account proves its address with the mailed code before it exists, th
     await expect(page.locator("[data-e2e=email-current]")).toContainText(email)
 
     await enterCode(page, await codeFor(request, next))
-    await expect(page.locator("[data-e2e=email-verified]")).toContainText("E-mail verified")
+    await expect(page.locator("[data-e2e=email-verified]")).toContainText("Email verified")
     await expect(page.locator("[data-e2e=email-change-dialog]")).toBeHidden()
     await expect(page.locator("[data-e2e=email-current]")).toContainText(next)
 
@@ -122,7 +122,7 @@ test("a new code's notice is in the page's language, not the server's English", 
 
     await page.locator("[data-e2e=email-send]").click()
     await expect(page.locator("[data-e2e=email-send-notice]")).toHaveText(
-      `Ein neuer Code ist unterwegs an ${next}.`,
+      `Ein neuer Code ist an ${next} unterwegs.`,
     )
   } finally {
     await cleanup(request, email, true)

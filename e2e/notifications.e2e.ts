@@ -84,7 +84,7 @@ test.describe("notifications inbox", () => {
       const list = page.locator("[data-e2e=notifications-list]")
       await expect(list.locator("li")).toHaveCount(2)
       await expect(list.locator("li").nth(0)).toContainText("You were removed from “Team”.")
-      await expect(list.locator("li").nth(1)).toContainText("Your role in “Team” is now a viewer.")
+      await expect(list.locator("li").nth(1)).toContainText("You're now a viewer in “Team”.")
       await expect(list.locator("li").nth(0)).toContainText("Unread:")
 
       // Another person cannot mark it, and cannot tell it exists.
@@ -137,7 +137,7 @@ test.describe("notifications inbox", () => {
       await signIn(page, email, password)
       await bell(page).click()
       await expect(page).toHaveURL(/\/notifications$/)
-      await expect(page.getByText("You are all caught up.")).toBeVisible()
+      await expect(page.getByText("You're all caught up.")).toBeVisible()
       await expect(bellCount(page)).toHaveCount(0)
     } finally {
       await cleanup(request, email, { soft: true })

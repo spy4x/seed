@@ -197,7 +197,7 @@ describe("SearchPalette", () => {
       "New group",
       "Open overview",
       "Open notifications",
-      "Open profile | Name, e-mail address, password, two-factor sign-in",
+      "Open profile | Name, email, password, two-factor sign-in",
       "Download my data | A ZIP of your profile, groups and notes",
       "Change profile picture | JPEG, PNG, WebP or HEIC, up to 10 MB.",
     ])
@@ -306,7 +306,7 @@ describe("SearchPalette", () => {
     await type("zz")
     expect(listed()).toEqual([])
     expect(status()).toBe(
-      "Nothing on this device matches “zz”. Search again when you are back online.",
+      "Nothing on this device matches “zz”. Search again when you're back online.",
     )
   })
 
@@ -411,7 +411,7 @@ describe("SearchPalette", () => {
 
     await type("plan")
 
-    expect(status()).toBe("Could not search. Change the text to try again.")
+    expect(status()).toBe("Couldn't search. Change your search to try again.")
   })
 
   it("asks the app to open a picked note of another group in that group, and a picked group's page", async () => {

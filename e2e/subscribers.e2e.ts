@@ -38,7 +38,7 @@ test("a visitor subscribes, confirms through the mailed link and unsubscribes fr
   // The token leaves the address bar once it is spent.
   await expect(page).toHaveURL("/subscribe/confirm")
 
-  const unsubscribeLink = await mailedLink(request, email, "You are subscribed")
+  const unsubscribeLink = await mailedLink(request, email, "You're subscribed")
   expect(unsubscribeLink).toMatch(/^\/api\/subscribers\/unsubscribe\?/)
   await gotoApp(page, unsubscribeLink, page.locator("[data-e2e=unsubscribe-submit]"))
   await expect(page).toHaveURL(/\/unsubscribe\?list=news&token=/)

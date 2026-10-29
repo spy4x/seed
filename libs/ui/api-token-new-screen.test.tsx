@@ -271,7 +271,7 @@ describe("ApiTokenNewScreen", () => {
       />,
     )
 
-    expect(find("[data-e2e=api-token-offline]").textContent).toContain("You are offline")
+    expect(find("[data-e2e=api-token-offline]").textContent).toContain("You're offline")
     expect(find("[data-e2e=api-token-offline]").textContent).toContain(ENGLISH.t(API_TOKEN_OFFLINE))
     expect(find("[data-e2e=api-token-error]").textContent).toContain(ENGLISH.t(API_TOKEN_OFFLINE))
   })
@@ -280,7 +280,7 @@ describe("ApiTokenNewScreen", () => {
     await mount(<ApiTokenNewScreen {...pageProps([], { groups: [] })} />)
 
     expect(find("[data-e2e=api-token-no-group]").textContent).toContain(
-      "You are not in a group you can make a token for.",
+      "You're not in any group you can create a token for.",
     )
     expect(find("[data-e2e=api-token-no-group] a").getAttribute("href")).toBe("/profile/api-tokens")
     expect(count("form")).toBe(0)

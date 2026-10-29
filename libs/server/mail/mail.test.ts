@@ -171,7 +171,7 @@ describe("signInLinkMail", () => {
   })
 
   it("says the link creates an account for a new address and waits for Continue", () => {
-    expect(mail.text).toContain("If no account uses this address yet, it creates one.")
+    expect(mail.text).toContain("If there's no account with this email yet, it creates one.")
     expect(mail.text).toContain("nothing happens until you press it")
   })
 })
@@ -186,7 +186,7 @@ describe("accountDeletionMail", () => {
     expect(mail.to).toBe("ann@example.com")
     expect(mail.subject).toBe("Your account will be deleted on October 11, 2026")
     expect(mail.text).toContain("deleted for good on October 11, 2026")
-    expect(mail.text).toContain("Sign in before then and your account is restored")
+    expect(mail.text).toContain("Sign in before then to keep your account.")
     expect(mail.text).toContain("https://app.example.com/sign-in")
     expect(mail.html).toContain(`href="https://app.example.com/sign-in"`)
   })
@@ -205,10 +205,10 @@ describe("apiTokenCreatedMail", () => {
 
   it("names the token, its group, what it can do and when it expires", () => {
     expect(mail.to).toBe("ann@example.com")
-    expect(mail.subject).toBe("An API token was created")
+    expect(mail.subject).toBe("A new API token was created")
     expect(mail.text).toContain(`An API token named "${iso("Zapier <script>")}" was created`)
     expect(mail.text).toContain(
-      `It can read and write the group "${iso("Family & co")}" and expires on January 2, 2027.`,
+      `It can read and change the group "${iso("Family & co")}" and expires on January 2, 2027.`,
     )
   })
 
@@ -224,8 +224,8 @@ describe("apiTokenCreatedMail", () => {
   })
 
   it("says what to do if it was someone else: revoke it and change the password", () => {
-    expect(mail.text).toContain("If this wasn't you, revoke the token on your profile page")
-    expect(mail.text).toContain("change your password, which revokes every API token")
+    expect(mail.text).toContain("If this wasn't you, revoke the token in your profile")
+    expect(mail.text).toContain("change your password. Changing it revokes every API token")
     expect(mail.text).toContain("https://app.example.com/")
   })
 
@@ -244,9 +244,13 @@ describe("accountRestoredMail", () => {
 
   it("says a sign-in restored the account and what to do if it was someone else", () => {
     expect(mail.to).toBe("ann@example.com")
-    expect(mail.subject).toBe("Your account was restored")
-    expect(mail.text).toContain("app.example.com was restored by a sign-in")
-    expect(mail.text).toContain("If this wasn't you, sign in, delete your account again and change")
+    expect(mail.subject).toBe("Your account won't be deleted")
+    expect(mail.text).toContain(
+      "Someone signed in to your account at app.example.com, so it won't be deleted",
+    )
+    expect(mail.text).toContain(
+      "If this wasn't you, sign in, change your password and delete your account again",
+    )
     expect(mail.html).toContain(`href="https://app.example.com/sign-in"`)
   })
 })
@@ -264,7 +268,7 @@ describe("dataExportReadyMail", () => {
     expect(mail.text).toContain("2026")
     expect(mail.html).toContain(`href="https://app.example.com/profile/account#your-data"`)
     expect(`${mail.text}${mail.html}`).not.toContain("data-export")
-    expect(mail.text).toContain("If you did not ask for this, change your password")
+    expect(mail.text).toContain("If you didn't ask for this, change your password")
   })
 })
 
@@ -287,7 +291,7 @@ describe("signInMethodChangedMail", () => {
         iso("Google")
       } was linked to your account at app.example.com on October 15, 2026 at 14:03.`,
     )
-    expect(mail.text).toContain(`If this wasn't you, unlink ${iso("Google")} on your profile page`)
+    expect(mail.text).toContain(`If this wasn't you, unlink ${iso("Google")} in your profile`)
     expect(mail.html).toContain(`href="https://app.example.com/"`)
   })
 
@@ -329,7 +333,7 @@ describe("signInMethodChangedMail for a passkey", () => {
       "A passkey was added to your account at app.example.com on October 15, 2026 at 14:03.",
     )
     expect(mail.text).toContain(
-      "If this wasn't you, remove the passkey on your profile page and change your password.",
+      "If this wasn't you, remove the passkey in your profile and change your password.",
     )
     expect(mail.html).toContain(`href="https://app.example.com/"`)
   })
@@ -383,12 +387,12 @@ describe("invitationMail", () => {
 
   it("carries the link, the group, the inviter, the role and how long it works", () => {
     expect(mail.to).toBe("bo@example.com")
-    expect(mail.subject).toBe(`Invitation to join "<b>Team</b> "A""`)
+    expect(mail.subject).toBe(`You're invited to join "<b>Team</b> "A""`)
     expect(mail.text).toContain(link)
     expect(mail.text).toContain(
       `${iso("Ann")} invited you to join "${iso(`<b>Team</b> "A"`)}" at app.example.com`,
     )
-    expect(mail.text).toContain("with the role Editor")
+    expect(mail.text).toContain("at app.example.com as Editor.")
     expect(mail.text).toContain("7 days")
     expect(mail.html).toContain(`href="${link}"`)
   })
@@ -411,7 +415,7 @@ describe("invitationMail", () => {
         validDays: 1,
       },
     )
-    expect(anonymous.text).toMatch(/^You are invited to join "\u2068Team\u2069"/)
+    expect(anonymous.text).toMatch(/^You're invited to join "\u2068Team\u2069"/)
   })
 })
 
@@ -436,7 +440,7 @@ describe("billingNoticeMail", () => {
 
     expect(trial.to).toBe("ann@example.com")
     expect(trial.subject).toBe("Your Pro trial ends on October 15, 2026")
-    expect(trial.text).toContain("is charged. To stop it, cancel it before then")
+    expect(trial.text).toContain("your card is charged. To stop it, cancel before then")
     expect(trial.text).toContain(link)
   })
 
@@ -444,7 +448,7 @@ describe("billingNoticeMail", () => {
     const failed = mail(BillingNoticeKind.PaymentFailed)
 
     expect(failed.subject).toBe("A payment for Pro failed")
-    expect(failed.text).toContain("Update the card from the group's page to keep it.")
+    expect(failed.text).toContain("To keep it after that, update the card on the group's page.")
   })
 
   it("tells a failed trial's owner the group is already on the free plan", () => {
@@ -461,14 +465,14 @@ describe("billingNoticeMail", () => {
     })
 
     expect(failedTrial.text).toContain("The group is now on the free plan.")
-    expect(failedTrial.text).not.toContain("is kept")
+    expect(failedTrial.text).not.toContain("You keep the plan")
   })
 
   it("names the day the grace period ends, in UTC, when the plan is kept", () => {
     const failed = mail(BillingNoticeKind.PaymentFailed)
 
     expect(failed.text).toContain(
-      "The plan is kept until October 22, 2026 while the payment is retried.",
+      "You keep the plan until October 22, 2026 while we try the payment again.",
     )
   })
 
@@ -486,16 +490,16 @@ describe("billingNoticeMail", () => {
     })
 
     expect(cardless.subject).toBe("Your Pro trial ends on October 15, 2026")
-    expect(cardless.text).toContain("Add a card from the group's page before then to keep the plan")
+    expect(cardless.text).toContain("To keep the plan, add a card on the group's page before then.")
     expect(cardless.text).toContain("Without a card, the group moves to the free plan.")
-    expect(cardless.text).not.toContain("To stop it, cancel it")
+    expect(cardless.text).not.toContain("To stop it, cancel")
   })
 
   it("says when a cancelled plan ends and that it can still be renewed", () => {
     const ending = mail(BillingNoticeKind.PlanEnding)
 
     expect(ending.subject).toBe("Your Pro plan ends on October 15, 2026")
-    expect(ending.text).toContain("Renew it from the group's page before then.")
+    expect(ending.text).toContain("Renew it on the group's page before then.")
   })
 
   it("escapes the group's name in the HTML and links to the group", () => {
@@ -599,7 +603,7 @@ describe("mail in the reader's language (#277)", () => {
       at: AT,
       reader: { language: "de", locale: "de-DE", timeZone: "Europe/Berlin", hourCycle: null },
     })
-    expect(berlin.text).toContain("am 15. Oktober 2026 um 16:03 mit deinem Konto")
+    expect(berlin.text).toContain("Am 15. Oktober 2026 um 16:03 wurde")
     expect(berlin.text).not.toContain("UTC")
 
     const newYork = signInLinkMail(brand, {
@@ -640,13 +644,13 @@ describe("mail in the reader's language (#277)", () => {
       timeZone: "Pacific/Auckland",
       hourCycle: null,
     }).slice(-1)
-    expect(notice.subject).toBe("Deine Pro-Testphase endet am 15. Oktober 2026")
+    expect(notice.subject).toBe("Deine Testphase für Pro endet am 15. Oktober 2026")
   })
 
   it("names a role and a plan as the app's screens do, in the reader's language", () => {
     const mails = everyMail({ ...EN, language: "de" })
-    expect(mails[3].text).toContain("mit der Rolle Bearbeiter")
-    expect(mails[9].text).toContain("Die Pro-Testphase")
+    expect(mails[3].text).toContain("als Bearbeiter beizutreten")
+    expect(mails[9].text).toContain("für Pro endet")
   })
 })
 
@@ -687,7 +691,7 @@ describe("mail and a hostile value (#277)", () => {
       expect(mail.text).not.toMatch(/^Bcc:/m)
     }
     expect(invitation.subject).toBe(
-      `Invitation to join "Team Bcc: victim@example.com <img src=x onerror=alert(1)>"><a href="javascript:alert(1)">x</a>"`,
+      `You're invited to join "Team Bcc: victim@example.com <img src=x onerror=alert(1)>"><a href="javascript:alert(1)">x</a>"`,
     )
   })
 
@@ -735,7 +739,7 @@ describe("mail and a full stop after a date (#277)", () => {
 
   it("writes one full stop after a Russian date that ends in «г.»", () => {
     const [deletion] = everyMail({ ...EN, language: "ru", locale: "ru-RU" }).slice(4)
-    expect(deletion.text).toContain("удалён 15 октября 2026 г.")
+    expect(deletion.text).toContain("навсегда 15 октября 2026 г.\n")
     expect(deletion.text).not.toContain("г..")
     expect(deletion.html).toContain("<strong>15 октября 2026 г.</strong></p>")
   })

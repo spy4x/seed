@@ -524,7 +524,7 @@ describe("one person in the admin app", () => {
     )
 
     const row = find("[role=tabpanel] [data-e2e=admin-user-methods] li")
-    expect(row.textContent).toContain("E-mail link")
+    expect(row.textContent).toContain("Email link")
     expect(find("[data-e2e=admin-user-email-link]").textContent).toMatch(/^Last used .+/)
     expect(row.textContent).not.toMatch(/proven/i)
   })
@@ -546,8 +546,8 @@ describe("one person in the admin app", () => {
 
     const up = find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGNED_UP}]`).textContent
     const into = find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGNED_IN}]`).textContent
-    expect(up).toContain("Signed up with an e-mail link")
-    expect(into).toContain("Signed in with an e-mail link")
+    expect(up).toContain("Signed up with an email link")
+    expect(into).toContain("Signed in with an email link")
     // The title names the method, so the stored identifier is not repeated under it.
     expect(into).not.toContain("email-link")
     expect(into).toContain("from 203.0.113.5")
@@ -578,7 +578,7 @@ describe("one person in the admin app", () => {
     // The title says what happened, so no line under it repeats the stored identifier.
     expect(rows[0]).not.toMatch(/picture$/)
     expect(rows[1]).not.toContain("picture-removed")
-    for (const row of rows) expect(row).not.toContain("Changed the profile")
+    for (const row of rows) expect(row).not.toContain("Profile changed")
   })
 
   it("colours each activity entry by what happened, the block alone as a danger", async () => {
@@ -618,7 +618,7 @@ describe("one person in the admin app", () => {
     )
 
     expect(find("[role=tabpanel] [data-e2e=admin-user-sessions]").textContent).toContain(
-      "Signed in nowhere.",
+      "Not signed in anywhere.",
     )
     expect(has(".border-dashed")).toBe(false)
   })

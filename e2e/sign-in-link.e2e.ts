@@ -111,7 +111,7 @@ test("an account signs in by a link asked for on the link page, and sign-in name
     await page.context().clearCookies()
     await gotoApp(page, "/sign-in", page.locator("[data-e2e=last-sign-in]"))
     await expect(page.locator("[data-e2e=last-sign-in]")).toContainText(
-      "Last time you signed in with an e-mail link",
+      "Last time you signed in with an email link",
     )
   } finally {
     await cleanup(request, email, true)

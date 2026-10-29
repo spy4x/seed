@@ -3,130 +3,133 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 export default {
   "Mail.sentBy": "— Gesendet von",
   "Mail.signIn": "Anmelden",
-  "Mail.openProfile": "Profil öffnen",
-  "Mail.openGroup": "Gruppe öffnen",
+  "Mail.openProfile": "Zum Profil",
+  "Mail.openGroup": "Zur Gruppe",
   "PasswordResetMail.subject": "Setze dein Passwort zurück",
   "PasswordResetMail.asked": "Jemand möchte das Passwort deines Kontos bei {host} zurücksetzen.",
   "PasswordResetMail.open": {
-    "one": "Öffne diesen Link innerhalb von {count} Minute, um ein neues Passwort zu wählen.",
-    "other": "Öffne diesen Link innerhalb von {count} Minuten, um ein neues Passwort zu wählen.",
+    "one": "Öffne diesen Link innerhalb von {count} Minute, um ein neues Passwort festzulegen.",
+    "other": "Öffne diesen Link innerhalb von {count} Minuten, um ein neues Passwort festzulegen.",
   },
-  "PasswordResetMail.button": "Neues Passwort wählen",
-  "PasswordResetMail.once": "Der Link funktioniert einmal und meldet dich danach überall ab.",
+  "PasswordResetMail.button": "Neues Passwort festlegen",
+  "PasswordResetMail.once":
+    "Der Link funktioniert nur einmal. Sobald du ihn benutzt, wirst du auf allen Geräten abgemeldet.",
   "PasswordResetMail.ignore":
-    "Wenn du das nicht warst, ignoriere diese E-Mail: Dein Passwort bleibt, wie es ist.",
+    "Warst du das nicht? Dann ignoriere diese E-Mail einfach. Dein Passwort bleibt, wie es ist.",
   "SignInLinkMail.subject": "Dein Anmeldelink für {host}",
-  "SignInLinkMail.asked": "Jemand möchte sich am {when} mit dieser Adresse bei {host} anmelden.",
+  "SignInLinkMail.asked":
+    "Jemand wollte sich am {when} mit dieser E-Mail-Adresse bei {host} anmelden.",
   "SignInLinkMail.open": {
     "one":
-      "Öffne diesen Link innerhalb von {count} Minute, um dich anzumelden. Nutzt noch kein Konto diese Adresse, wird eines erstellt.",
+      "Öffne diesen Link innerhalb von {count} Minute, um dich anzumelden. Gibt es mit dieser E-Mail-Adresse noch kein Konto, wird eins angelegt.",
     "other":
-      "Öffne diesen Link innerhalb von {count} Minuten, um dich anzumelden. Nutzt noch kein Konto diese Adresse, wird eines erstellt.",
+      "Öffne diesen Link innerhalb von {count} Minuten, um dich anzumelden. Gibt es mit dieser E-Mail-Adresse noch kein Konto, wird eins angelegt.",
   },
   "SignInLinkMail.button": "Bei {host} anmelden",
   "SignInLinkMail.once":
-    "Der Link funktioniert einmal. Er öffnet eine Seite mit dem Button „Weiter“: Erst wenn du ihn drückst, passiert etwas.",
+    "Der Link funktioniert nur einmal. Er öffnet eine Seite mit einem Weiter-Button, und erst wenn du darauf klickst, passiert etwas.",
   "SignInLinkMail.ignore":
-    "Wenn du das nicht warst, ignoriere diese E-Mail. Ohne den Link kann sich niemand anmelden.",
-  "EmailCodeMail.subject": "Dein Code zur Bestätigung deiner E-Mail-Adresse",
-  "EmailCodeMail.asked":
-    "Gib diesen Code bei {host} ein, um zu bestätigen, dass dies deine E-Mail-Adresse ist.",
+    "Warst du das nicht? Dann ignoriere diese E-Mail einfach. Ohne den Link kann sich niemand anmelden.",
+  "EmailCodeMail.subject": "Dein Code zum Bestätigen deiner E-Mail-Adresse",
+  "EmailCodeMail.asked": "Gib diesen Code bei {host} ein, um deine E-Mail-Adresse zu bestätigen.",
   "EmailCodeMail.valid": {
-    "one": "Er funktioniert einmal, {count} Minute lang.",
-    "other": "Er funktioniert einmal, {count} Minuten lang.",
+    "one": "Er funktioniert einmal und gilt {count} Minute lang.",
+    "other": "Er funktioniert einmal und gilt {count} Minuten lang.",
   },
-  "EmailCodeMail.ignore": "Wenn du das nicht warst, ignoriere diese E-Mail: Es ändert sich nichts.",
-  "InvitationMail.subject": "Einladung zu „{group}“",
+  "EmailCodeMail.ignore":
+    "Warst du das nicht? Dann ignoriere diese E-Mail einfach. Es ändert sich nichts.",
+  "InvitationMail.subject": "Du bist zu „{group}“ eingeladen",
   "InvitationMail.invited":
-    "<strong>{who}</strong> lädt dich zu „{group}“ bei {host} ein, mit der Rolle {role}.",
+    "<strong>{who}</strong> hat dich eingeladen, „{group}“ bei {host} als {role} beizutreten.",
   "InvitationMail.invitedNoName":
-    "Du bist zu „{group}“ bei {host} eingeladen, mit der Rolle {role}.",
+    "Du bist eingeladen, „{group}“ bei {host} als {role} beizutreten.",
   "InvitationMail.open": {
-    "one": "Öffne diesen Link innerhalb von {count} Tag, um anzunehmen oder abzulehnen.",
-    "other": "Öffne diesen Link innerhalb von {count} Tagen, um anzunehmen oder abzulehnen.",
+    "one": "Öffne die Einladung innerhalb von {count} Tag, um sie anzunehmen oder abzulehnen.",
+    "other": "Öffne die Einladung innerhalb von {count} Tagen, um sie anzunehmen oder abzulehnen.",
   },
   "InvitationMail.button": "Einladung öffnen",
   "InvitationMail.account":
-    "Die Einladung gilt für diese E-Mail-Adresse: Nimm sie mit dem Konto an, das diese Adresse nutzt.",
-  "InvitationMail.ignore": "Wenn du nicht beitreten möchtest, ignoriere diese E-Mail.",
+    "Die Einladung gilt für diese E-Mail-Adresse. Nimm sie also mit dem Konto an, das zu dieser Adresse gehört.",
+  "InvitationMail.ignore": "Wenn du nicht beitreten möchtest, ignoriere diese E-Mail einfach.",
   "AccountDeletionMail.subject": "Dein Konto wird am {date} gelöscht",
   "AccountDeletionMail.asked":
-    "Dein Konto bei {host} wird wie gewünscht am <strong>{date}</strong> endgültig gelöscht.",
+    "Wie gewünscht wird dein Konto bei {host} am <strong>{date}</strong> endgültig gelöscht.",
   "AccountDeletionMail.keep":
-    "Doch anders entschieden? Melde dich vorher an, dann wird dein Konto wiederhergestellt.",
+    "Doch anders überlegt? Melde dich bis dahin an, dann bleibt dein Konto bestehen.",
   "AccountDeletionMail.notYou":
-    "Wenn du das nicht warst, melde dich jetzt an, um dein Konto zu behalten, und ändere dann dein Passwort.",
-  "AccountRestoredMail.subject": "Dein Konto wurde wiederhergestellt",
+    "Warst du das nicht? Dann melde dich jetzt an, um dein Konto zu behalten, und ändere danach dein Passwort.",
+  "AccountRestoredMail.subject": "Dein Konto wird nicht gelöscht",
   "AccountRestoredMail.restored":
-    "Dein Konto bei {host} wurde durch eine Anmeldung wiederhergestellt und wird nicht mehr gelöscht.",
+    "Jemand hat sich bei deinem Konto auf {host} angemeldet, deshalb wird es nun doch nicht gelöscht.",
   "AccountRestoredMail.notYou":
-    "Wenn du das nicht warst, melde dich an, lösche dein Konto erneut und ändere dein Passwort.",
+    "Warst du das nicht? Dann melde dich an, ändere dein Passwort und lösche dein Konto noch einmal.",
   "DataExportReadyMail.subject": "Deine Daten sind bereit",
   "DataExportReadyMail.ready":
-    "Lade sie bis zum <strong>{date}</strong> in deinem Profil herunter.",
+    "Du kannst sie bis zum <strong>{date}</strong> in deinem Profil herunterladen.",
   "DataExportReadyMail.notYou":
-    "Wenn du das nicht warst, ändere dein Passwort und melde deine anderen Geräte ab.",
-  "SignInMethodMail.passkeyAddedSubject": "Deinem Konto wurde ein Passkey hinzugefügt",
+    "Warst du das nicht? Dann ändere dein Passwort und melde dich auf deinen anderen Geräten ab.",
+  "SignInMethodMail.passkeyAddedSubject": "Neuer Passkey für dein Konto",
   "SignInMethodMail.passkeyAdded":
-    "Deinem Konto bei {host} wurde am {when} ein Passkey hinzugefügt. Damit kann man sich jetzt anmelden.",
+    "Am {when} wurde deinem Konto bei {host} ein Passkey hinzugefügt. Ab jetzt kann man sich damit anmelden.",
   "SignInMethodMail.passkeyAddedNotYou":
-    "Wenn du das nicht warst, entferne den Passkey auf deiner Profilseite und ändere dein Passwort.",
-  "SignInMethodMail.passkeyRemovedSubject": "Ein Passkey wurde von deinem Konto entfernt",
+    "Warst du das nicht? Dann entferne den Passkey in deinem Profil und ändere dein Passwort.",
+  "SignInMethodMail.passkeyRemovedSubject": "Ein Passkey wurde aus deinem Konto entfernt",
   "SignInMethodMail.passkeyRemoved":
-    "Von deinem Konto bei {host} wurde am {when} ein Passkey entfernt. Damit kann man sich nicht mehr anmelden.",
+    "Am {when} wurde ein Passkey aus deinem Konto bei {host} entfernt. Mit ihm kann man sich nicht mehr anmelden.",
   "SignInMethodMail.passkeyRemovedNotYou":
-    "Wenn du das nicht warst, melde dich an, ändere dein Passwort und füge deinen Passkey wieder hinzu.",
-  "SignInMethodMail.linkedSubject": "{provider} wurde mit deinem Konto verknüpft",
+    "Warst du das nicht? Dann melde dich an, ändere dein Passwort und füge deinen Passkey wieder hinzu.",
+  "SignInMethodMail.linkedSubject": "{provider} ist jetzt mit deinem Konto verknüpft",
   "SignInMethodMail.linked":
-    "{provider} wurde am {when} mit deinem Konto bei {host} verknüpft. Damit kann man sich jetzt anmelden.",
+    "Am {when} wurde {provider} mit deinem Konto bei {host} verknüpft. Du kannst dich jetzt darüber anmelden.",
   "SignInMethodMail.linkedNotYou":
-    "Wenn du das nicht warst, trenne {provider} auf deiner Profilseite und ändere dein Passwort.",
-  "SignInMethodMail.unlinkedSubject": "{provider} wurde von deinem Konto getrennt",
+    "Warst du das nicht? Dann trenne {provider} in deinem Profil und ändere dein Passwort.",
+  "SignInMethodMail.unlinkedSubject": "{provider} ist nicht mehr mit deinem Konto verknüpft",
   "SignInMethodMail.unlinked":
-    "{provider} wurde am {when} von deinem Konto bei {host} getrennt. Damit kann man sich nicht mehr anmelden.",
+    "Am {when} wurde {provider} von deinem Konto bei {host} getrennt. Du kannst dich nicht mehr darüber anmelden.",
   "SignInMethodMail.unlinkedNotYou":
-    "Wenn du das nicht warst, melde dich an, ändere dein Passwort und verknüpfe {provider} wieder.",
-  "ApiTokenMail.subject": "Ein API-Token wurde erstellt",
+    "Warst du das nicht? Dann melde dich an, ändere dein Passwort und verknüpfe {provider} wieder.",
+  "ApiTokenMail.subject": "Neues API-Token erstellt",
   "ApiTokenMail.created": "Für dein Konto bei {host} wurde ein API-Token namens „{name}“ erstellt.",
   "ApiTokenMail.readUntil": "Es kann die Gruppe „{group}“ lesen und läuft am {date} ab.",
   "ApiTokenMail.readForever": "Es kann die Gruppe „{group}“ lesen und läuft nie ab.",
   "ApiTokenMail.writeUntil":
-    "Es kann die Gruppe „{group}“ lesen und bearbeiten und läuft am {date} ab.",
-  "ApiTokenMail.writeForever":
-    "Es kann die Gruppe „{group}“ lesen und bearbeiten und läuft nie ab.",
+    "Es kann die Gruppe „{group}“ lesen und ändern und läuft am {date} ab.",
+  "ApiTokenMail.writeForever": "Es kann die Gruppe „{group}“ lesen und ändern und läuft nie ab.",
   "ApiTokenMail.notYou":
-    "Wenn du das nicht warst, widerrufe das Token auf deiner Profilseite und ändere dein Passwort. Das widerruft alle API-Tokens.",
-  "BillingNoticeMail.paidPlan": "Bezahl",
-  "BillingNoticeMail.trialSubject": "Deine {plan}-Testphase endet am {date}",
+    "Warst du das nicht? Dann widerrufe das Token in deinem Profil und ändere dein Passwort. Damit werden alle API-Tokens widerrufen.",
+  "BillingNoticeMail.paidPlan": "den bezahlten Tarif",
+  "BillingNoticeMail.trialSubject": "Deine Testphase für {plan} endet am {date}",
   "BillingNoticeMail.trialWhat":
-    "Die {plan}-Testphase von „{group}“ endet am <strong>{date}</strong>.",
+    "Die Testphase von „{group}“ für {plan} endet am <strong>{date}</strong>.",
   "BillingNoticeMail.trialWithCard":
-    "Danach beginnt das Abo und wird berechnet. Um es zu stoppen, kündige es vorher auf der Seite der Gruppe.",
+    "Danach beginnt das Abo, und deine Karte wird belastet. Wenn du das nicht möchtest, kündige vorher auf der Seite der Gruppe.",
   "BillingNoticeMail.trialWithoutCard":
-    "Hinterlege vorher auf der Seite der Gruppe eine Karte, um den Tarif zu behalten: Das Abo beginnt dann und wird berechnet. Ohne Karte wechselt die Gruppe in den kostenlosen Tarif.",
-  "BillingNoticeMail.paymentSubject": "Eine Zahlung für {plan} ist fehlgeschlagen",
-  "BillingNoticeMail.paymentWhat":
-    "Eine Zahlung für den Tarif {plan} von „{group}“ ist fehlgeschlagen.",
+    "Wenn du den Tarif behalten möchtest, hinterlege vorher eine Karte auf der Seite der Gruppe. Dann beginnt das Abo, und deine Karte wird belastet. Ohne Karte wechselt die Gruppe in den kostenlosen Tarif.",
+  "BillingNoticeMail.paymentSubject": "Zahlung für {plan} fehlgeschlagen",
+  "BillingNoticeMail.paymentWhat": "Eine Zahlung von „{group}“ für {plan} ist fehlgeschlagen.",
   "BillingNoticeMail.paymentKept":
-    "Der Tarif bleibt bis zum <strong>{date}</strong> erhalten, während die Zahlung wiederholt wird. Aktualisiere die Karte auf der Seite der Gruppe, um ihn zu behalten.",
+    "Bis zum <strong>{date}</strong> behältst du den Tarif, während wir die Zahlung erneut versuchen. Damit er danach bleibt, aktualisiere die Karte auf der Seite der Gruppe.",
   "BillingNoticeMail.paymentFree":
-    "Die Gruppe ist jetzt im kostenlosen Tarif. Aktualisiere die Karte auf der Seite der Gruppe, um den Tarif zurückzubekommen.",
-  "BillingNoticeMail.planSubject": "Dein Tarif {plan} endet am {date}",
+    "Die Gruppe ist jetzt im kostenlosen Tarif. Um den alten Tarif zurückzubekommen, aktualisiere die Karte auf der Seite der Gruppe.",
+  "BillingNoticeMail.planSubject": "Dein Abo für {plan} endet am {date}",
   "BillingNoticeMail.planWhat":
-    "Der Tarif {plan} von „{group}“ wurde gekündigt und endet am <strong>{date}</strong>; danach wechselt die Gruppe in den kostenlosen Tarif.",
+    "Das Abo von „{group}“ für {plan} wurde gekündigt und endet am <strong>{date}</strong>. Danach wechselt die Gruppe in den kostenlosen Tarif.",
   "BillingNoticeMail.planNext":
-    "Doch anders entschieden? Verlängere ihn vorher auf der Seite der Gruppe.",
-  "SubscriberConfirmMail.subject": "Bestätige dein Abo von {host}",
-  "SubscriberConfirmMail.asked": "Jemand hat Neuigkeiten von {host} an diese Adresse angefordert.",
-  "SubscriberConfirmMail.within": "Bestätige innerhalb von drei Tagen, um sie zu bekommen.",
+    "Doch anders überlegt? Verlängere es bis dahin auf der Seite der Gruppe.",
+  "SubscriberConfirmMail.subject": "Bestätige dein Abo des Newsletters von {host}",
+  "SubscriberConfirmMail.asked":
+    "Jemand hat diese E-Mail-Adresse für Neuigkeiten von {host} angemeldet.",
+  "SubscriberConfirmMail.within":
+    "Bestätige innerhalb von drei Tagen, damit du die Neuigkeiten bekommst.",
   "SubscriberConfirmMail.button": "Bestätigen",
   "SubscriberConfirmMail.ignore":
-    "Wenn du das nicht warst, ignoriere diese Mail: Dir wird nichts geschickt.",
-  "SubscriberWelcomeMail.subject": "Du hast {host} abonniert",
-  "SubscriberWelcomeMail.subscribed": "Du bekommst jetzt Neuigkeiten von {host}.",
+    "Warst du das nicht? Dann ignoriere diese E-Mail einfach. Wir schicken dir nichts.",
+  "SubscriberWelcomeMail.subject": "Du hast den Newsletter von {host} abonniert",
+  "SubscriberWelcomeMail.subscribed": "Ab jetzt bekommst du Neuigkeiten von {host}.",
   "SubscriberWelcomeMail.reason":
-    "Du bekommst diese Mail, weil du dich bei {host} angemeldet hast.",
+    "Du bekommst diese E-Mail, weil du den Newsletter von {host} abonniert hast.",
   "SubscriberWelcomeMail.unsubscribe": "Abbestellen",
-  "SubscriberIssue.reason": "Du bekommst diese Mail, weil du dich bei {host} angemeldet hast.",
+  "SubscriberIssue.reason":
+    "Du bekommst diese E-Mail, weil du den Newsletter von {host} abonniert hast.",
   "SubscriberIssue.readPost": "Beitrag lesen",
 } satisfies Catalog

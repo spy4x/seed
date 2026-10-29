@@ -500,7 +500,7 @@ describe("the subscription pages", () => {
 
     expect(response.status).toBe(429)
     expect(response.headers.get("retry-after")).toBe("30")
-    expect(await response.text()).toContain("Could not unsubscribe")
+    expect(await response.text()).toContain("Couldn't unsubscribe")
   })
 })
 
@@ -534,7 +534,7 @@ describe("the subscription pages without an API behind them", () => {
       expect(response.headers.get("content-type")).toContain("text/html")
       const page = await response.text()
       expect(page).toContain(`data-e2e="site-brand"`)
-      expect(page).toMatch(/Could not (send the link|confirm the subscription|unsubscribe)/)
+      expect(page).toMatch(/Couldn't (send the link|confirm your subscription|unsubscribe you)/)
       expect(logged).toHaveLength(1)
       expect(logged[0]).toMatch(
         /^API call failed: (GET|POST) \/api\/subscribers[a-z/]* \(TypeError\)$/,

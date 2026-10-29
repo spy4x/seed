@@ -188,7 +188,9 @@ describe("the contact links list", () => {
   it("says the list failed in its own words and tries again", async () => {
     const calls: unknown[][] = []
     await mount(<AdminContactLinksScreen {...listProps(calls, { links: null, error: "boom" })} />)
-    expect(find("[data-e2e=contact-links-error]").textContent).toContain("could not be loaded")
+    expect(find("[data-e2e=contact-links-error]").textContent).toContain(
+      "Couldn't load contact links",
+    )
     await clickOn(button("Try again"))
     expect(calls).toEqual([["retry"]])
   })

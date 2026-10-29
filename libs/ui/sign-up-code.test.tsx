@@ -193,7 +193,7 @@ describe("SignUpCodeScreen", () => {
 
     expect(find("h1").textContent).toBe("You already have an account")
     expect(find("[data-e2e=sign-up-exists]").textContent)
-      .toContain("ada@example.com already signs in here. Nothing new was created.")
+      .toContain("ada@example.com already has an account here. Nothing new was created.")
     expect(focused()).toBe("sign-up-exists-sign-in")
     expect(find("[data-e2e=sign-up-exists-sign-in]").textContent).toBe("Sign in instead")
     await click("[data-e2e=sign-up-exists-sign-in]")
@@ -213,7 +213,9 @@ describe("SignUpCodeScreen", () => {
     )
 
     expect(find("[data-e2e=sign-up-exists]").textContent)
-      .toContain("already signs in here with Google or GitHub. Nothing new was created.")
+      .toContain(
+        "already has an account here that signs in with Google or GitHub. Nothing new was created.",
+      )
     const google = find<HTMLAnchorElement>("[data-e2e=sign-up-exists-google]")
     expect(google.textContent).toBe("Continue with Google")
     expect(google.getAttribute("href")).toBe("/api/auth/google/start?next=%2Fnotes")
@@ -227,7 +229,7 @@ describe("SignUpCodeScreen", () => {
 
     expect(find("h1").textContent).toBe("This sign-up expired")
     expect(find("[data-e2e=sign-up-expired]").textContent)
-      .toContain("It took longer than 10 minutes, or the code was tried too many times.")
+      .toContain("It took longer than 10 minutes, or the code was entered wrong too many times.")
     const start = find<HTMLAnchorElement>("[data-e2e=sign-up-expired] a")
     expect(start.getAttribute("href")).toBe("/sign-up?next=%2Fnotes")
     expect(document.activeElement === start).toBe(true)

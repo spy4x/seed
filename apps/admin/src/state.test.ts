@@ -157,7 +157,7 @@ it("answers a refusal in the operator's language, by its reason", async () => {
     expect(answer.ok ? null : [answer.status, answer.error.reason, answer.error.message]).toEqual([
       404,
       "GROUP_NOT_FOUND",
-      "Diese Gruppe gibt es nicht, oder du bist nicht mehr darin.",
+      "Diese Gruppe gibt es nicht, oder du bist nicht mehr dabei.",
     ])
   } finally {
     globalThis.fetch = real
@@ -178,7 +178,7 @@ it("words a refusal with no reason by its code in Russian, and keeps the server'
     expect(await languages.use("ru")).toBe(true)
     const russian = await adminFetch("/api/admin/groups/g-1")
     expect(russian.ok ? null : russian.error.message).toBe(
-      "Этого нет, или у вас нет к этому доступа.",
+      "Ничего не нашлось. Возможно, это удалили или у вас нет доступа.",
     )
     expect(await languages.use("en")).toBe(true)
     const english = await adminFetch("/api/admin/groups/g-1")

@@ -1,6 +1,8 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { App } from "fresh"
+import { h } from "preact"
+import { renderToString } from "preact-render-to-string"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { PLANS } from "@domain/billing"
 import AppWrapper from "./routes/_app.tsx"
@@ -25,6 +27,8 @@ import { pageMiddleware } from "./middleware.ts"
 // Seed's own site: see docs/start-a-product.md
 import { HIRE_PAGE_URL } from "./hire.ts"
 import { ogImageAlt, type OgImageKey, REPOSITORY_URL } from "./site.tsx"
+import { NotYetList } from "./components/features-section.tsx"
+import { SiteLanguage } from "./use-site.tsx"
 import { SITE_PAGES, type SitePage } from "./pages.ts"
 import { localePath, pathLanguage, SITE_LANGUAGES } from "./languages.ts"
 import type { MpaConfig } from "./config.ts"
@@ -464,13 +468,16 @@ describe("the public website", () => {
     expect(linkNamed(html, "antonshubin.com")).toBeUndefined()
   })
 
-  it("links each Not built yet item on /features that has an open issue to that issue", async () => {
-    const { html } = await page("/features")
+  it("links a Not built yet item that has an open issue to that issue, by its number", () => {
+    // No item on /features has an issue today, so the list is drawn with one of its own.
+    const tracked = { label: `Right-to-left`, issue: `${REPOSITORY_URL}/issues/215` }
+    const html = renderToString(
+      h(SiteLanguage, { language: `en`, children: h(NotYetList, { items: [tracked] }) }),
+    )
 
     const links = [...html.matchAll(/<a href="([^"]*)"[^>]*>issue #(\d+)<\/a>/g)]
       .map(([, href, number]) => ({ href, number }))
-    expect(links.length).toBeGreaterThan(0)
-    for (const { href, number } of links) expect(href).toBe(`${REPOSITORY_URL}/issues/${number}`)
+    expect(links).toEqual([{ href: tracked.issue, number: `215` }])
   })
 
   it("says on /features that Seed is translated, and names every language (#276)", async () => {
@@ -503,7 +510,7 @@ describe("the public website", () => {
   it("lists passkeys on /features as built, not under Not built yet", async () => {
     const { html } = await page("/features")
 
-    expect(html).toContain(`or sign in with a passkey, or try the app first`)
+    expect(html).toContain(`continue with Google or GitHub, sign in with a passkey`)
     expect(html).toContain(`Passkeys: only the public key is stored`)
     expect(html).toContain(`Google and GitHub sign-in, passkeys, magic links, guest accounts, 2FA`)
     expect(html).not.toContain(`issues/222`)
@@ -528,7 +535,7 @@ describe("the public website", () => {
     const pricing = (await page("/pricing")).html
 
     expect(home).toContain(`Images and PDFs attached to notes`)
-    expect(features).toContain(`notes keep images and PDFs in it`)
+    expect(features).toContain(`for images and PDFs on notes`)
     expect(rows.find((row) => row.capability === "File uploads")?.values[0]).toBe("Yes")
     expect(pricing).toContain(`100 files, 200 MB in all`)
     for (const html of [home, features]) {
@@ -955,7 +962,7 @@ describe("the public website", () => {
       .find((entry) => entry.name === "Can I try it without an account?")!
 
     expect(question.acceptedAnswer.text).toMatch(
-      /^Yes\. Try the live demo opens the app in a guest account/,
+      /^Yes\. “Try the live demo” opens the app in a guest account/,
     )
     expect(html).toContain(`Guest accounts: try the app with one click`)
   })
@@ -974,7 +981,7 @@ describe("the public website", () => {
     ) {
       const { html } = await page(path)
 
-      expect(html, path).toContain(`Last changed ${day.format(new Date(`${updated}T00:00:00Z`))}`)
+      expect(html, path).toContain(`Last updated ${day.format(new Date(`${updated}T00:00:00Z`))}`)
     }
   })
 

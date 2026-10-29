@@ -14,7 +14,7 @@ const CODE = `42_${`a`.repeat(32)}`
 const groupId = `7b6d8d6c-1af5-7f04-8ae4-b1ee5d111002`
 const ADA: TelegramAccountLabel = { firstName: `Ada`, maskedAddress: `a•••@example.com` }
 const ASK =
-  `Press "Link" only if it is your own account. If you did not ask for this, ignore this message.`
+  `Press "Link" only if it's your own account. If you didn't ask for this, ignore this message.`
 const BOT_TEXT = botText(`en`)
 /** A value as the bot isolates it inside a message: between FSI and PDI. */
 const iso = (value: string) => `\u2068${value}\u2069`
@@ -114,9 +114,7 @@ describe(`Seed's Telegram bot`, () => {
 
     await handle(`/start ${CODE}`)
     expect(sent()).toEqual([
-      `Link this Telegram to an account on ${
-        iso(`app.example.com`)
-      } with no name or address? ${ASK}`,
+      `Link this Telegram to an account on ${iso(`app.example.com`)} with no name or email? ${ASK}`,
     ])
   })
 
