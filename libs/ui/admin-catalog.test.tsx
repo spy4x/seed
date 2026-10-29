@@ -284,7 +284,7 @@ describe("the categories list", () => {
     await mount(<AdminCatalogCategoriesScreen {...props([])} />)
     await clickOn(row(0).querySelector("[data-e2e=catalog-category-menu]")!)
     const remove = row(0).querySelector<HTMLButtonElement>("[data-e2e=catalog-category-delete]")!
-    expect(remove.textContent).toBe("Move its items to delete it")
+    expect(remove.textContent).toBe("Move its items out to delete it")
     expect(remove.getAttribute("aria-disabled") ?? String(remove.disabled)).toBe("true")
   })
 
@@ -523,9 +523,9 @@ describe("the link source editor", () => {
     )
     const note = () => document.querySelector("[data-e2e=catalog-source-links-note]")
     await mount(editor(1))
-    expect(note()?.textContent).toContain("Its link keeps its address")
+    expect(note()?.textContent).toContain("Its link stays the same")
     await mount(editor(3))
-    expect(note()?.textContent).toContain("Its 3 links keep their addresses")
+    expect(note()?.textContent).toContain("Its 3 links stay the same")
     await mount(editor(0))
     expect(note() === null).toBe(true)
   })
@@ -564,7 +564,7 @@ describe("the item editor's share links", () => {
     const friends = rows()[1].querySelector<HTMLButtonElement>("[data-e2e=catalog-item-link-copy]")!
     expect(friends.disabled).toBe(true)
     expect(document.body.textContent).toContain(
-      "The links open the item once it is on the website.",
+      "The links work once the item is on the website.",
     )
   })
 

@@ -289,7 +289,7 @@ describe("stats screen", () => {
     expect(channels).toContain("Telegram")
     expect(channels).toContain("Zalo")
     expect(find("[data-e2e=admin-stats-limits]").textContent).toBe(
-      "Some visitors block trackers, so the real numbers are a little higher. A source's order clicks count only taps on the page its share link opened.",
+      "Some visitors block trackers, so the real numbers are a little higher. A source only gets credit for order clicks on the page its share link opened.",
     )
   })
 
@@ -380,7 +380,7 @@ describe("stats screen states", () => {
     }
     await mount(<AdminStatsScreen {...props(calls, { response: down })} />)
     const card = find("[data-e2e=admin-stats-unreachable]")
-    expect(card.textContent).toContain("Umami is not answering")
+    expect(card.textContent).toContain("Umami isn't responding")
     expect(has("[data-e2e=admin-stats-kpis]")).toBe(false)
     await clickOn(button("Try again", card))
     expect(calls).toEqual([["refresh", true]])
@@ -391,7 +391,7 @@ describe("stats screen states", () => {
     const stale = { ...ready(), stale: true, updatedAt: "2026-10-27T14:40:00.000Z" }
     await mount(<AdminStatsScreen {...props(calls, { response: stale as WebsiteStatsResponse })} />)
     const notice = find("[data-e2e=admin-stats-stale]")
-    expect(notice.textContent).toContain("Umami is not answering right now.")
+    expect(notice.textContent).toContain("Umami isn't responding right now.")
     expect(has("[data-e2e=admin-stats-kpis]")).toBe(true)
     await clickOn(button("Try again", notice))
     expect(calls).toEqual([["refresh", true]])
@@ -400,7 +400,7 @@ describe("stats screen states", () => {
   it("shows our API's failure with Try again, which reads the shared copy", async () => {
     const calls: unknown[][] = []
     await mount(<AdminStatsScreen {...props(calls, { response: null, error: "Down." })} />)
-    expect(find("[data-e2e=admin-stats-error]").textContent).toContain("Could not load the stats.")
+    expect(find("[data-e2e=admin-stats-error]").textContent).toContain("Couldn't load the stats.")
     await clickOn(button("Try again"))
     expect(calls).toEqual([["refresh", false]])
   })

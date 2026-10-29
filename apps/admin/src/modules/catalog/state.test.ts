@@ -214,7 +214,7 @@ it(`shows the link in its row when the clipboard refuses it`, async () => {
   await state.openItem(ID)
   expect(await state.copyLink(SOURCE)).toBe(false)
   expect(state.itemEditor.value.links).toEqual({ [SOURCE]: LINK })
-  expect(toasts.list.value.at(-1)?.title).toBe(`Could not copy the link`)
+  expect(toasts.list.value.at(-1)?.title).toBe(`Couldn't copy the link`)
 })
 
 it(`asks for one link at a time, and says why one was refused`, async () => {

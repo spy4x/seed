@@ -425,7 +425,7 @@ describe("audit log screen", () => {
   it("names each event, and shows the code of one it does not know", () => {
     expect(auditEventLabel(T, accountAuditEvent(AuthAuditEventType.SIGNED_UP))).toBe("Signed up")
     expect(auditEventLabel(T, accountAuditEvent(AuthAuditEventType.SIGNED_IN), "email-link")).toBe(
-      "Signed in with an e-mail link",
+      "Signed in with an email link",
     )
     expect(auditEventLabel(T, activityAuditEvent("note.created"))).toBe("Note added")
     expect(auditEventLabel(T, activityAuditEvent("billing.paid"))).toBe("billing.paid")

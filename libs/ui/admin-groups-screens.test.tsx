@@ -598,7 +598,7 @@ describe(`one group in the admin app`, () => {
     )
     const dialog = find(`[data-e2e=admin-group-dialog]`).textContent
     expect(dialog).toContain(`Remove “receipt.pdf”?`)
-    expect(dialog).toContain(`The members of Family will no longer see it.`)
+    expect(dialog).toContain(`Members of Family won't see it anymore.`)
     await submit(`[data-e2e=admin-group-action-submit]`)
     expect(calls).toEqual([
       [`open`, { kind: `removeFile`, fileId: FILE_ID }],
@@ -670,7 +670,7 @@ describe(`one group in the admin app`, () => {
       />,
     )
     expect(find(`[data-e2e=admin-group-files-error]`).textContent).toContain(
-      `Could not load the files. Check your connection, then try again.`,
+      `Couldn't load the files. Check your connection, then try again.`,
     )
     expect(has(`[role=search]`)).toBe(true)
     await press(`[data-e2e=admin-group-files-error]`, `Try again`)

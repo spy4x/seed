@@ -442,7 +442,9 @@ describe("the admin group page's overview widgets", () => {
     )
 
     expect(text("[data-e2e=admin-group-overview] h2")).toBe("Overview widgets")
-    expect(text("[data-e2e=admin-group-overview]")).toContain("Their layouts are not shown here.")
+    expect(text("[data-e2e=admin-group-overview]")).toContain(
+      "their own layouts aren't shown here.",
+    )
     expect(document.querySelectorAll("[data-widget-status=ready]")).toHaveLength(3)
     expect(document.querySelectorAll("[data-widget-status] button[aria-haspopup]").length).toBe(0)
   })

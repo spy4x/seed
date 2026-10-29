@@ -250,7 +250,7 @@ describe("admin jobs list", () => {
     const { node, events } = jobsPage({ list: null, error: "Something went wrong." })
     await mount(node)
 
-    expect(text(`[data-e2e="admin-jobs-error"]`)).toContain("Jobs could not be loaded.")
+    expect(text(`[data-e2e="admin-jobs-error"]`)).toContain("Couldn't load jobs.")
     await click(find(`[data-e2e="admin-jobs-error"] button`))
     expect(events).toEqual([["reload"]])
   })
@@ -405,7 +405,7 @@ describe("admin job page", () => {
 
     const dialog = text(`[data-e2e="admin-job-dialog"]`)
     expect(dialog).toContain("Cancel this job?")
-    expect(dialog).toContain("Password reset email will not run.")
+    expect(dialog).toContain("Password reset email won't run.")
     const keep = [...find(`[data-e2e="admin-job-dialog"]`).querySelectorAll("button")]
       .find((button) => button.textContent?.trim() === "Keep it")!
     await click(keep)

@@ -85,7 +85,7 @@ it("revokes the confirmed token, says so, and reads again the lists that showed 
     `GET /api/admin/users/42/api-tokens`,
   ])
   expect(state.confirm.value.target).toBeNull()
-  expect(toasts.list.value.map((toast) => toast.body)).toEqual([`CI is revoked.`])
+  expect(toasts.list.value.map((toast) => toast.body)).toEqual([`CI revoked.`])
 })
 
 it("keeps the dialog open with the API's reason when a revoke is refused", async () => {
@@ -117,7 +117,7 @@ it("removes the confirmed device and reads the person's devices again", async ()
     `POST /api/admin/users/42/devices/5/remove`,
     `GET /api/admin/users/42/devices`,
   ])
-  expect(toasts.list.value.map((toast) => toast.body)).toEqual([`Device phone123 is removed.`])
+  expect(toasts.list.value.map((toast) => toast.body)).toEqual([`Device phone123 removed.`])
 })
 
 it("sends one request however often the confirm is pressed, and cannot be closed meanwhile", async () => {

@@ -109,7 +109,7 @@ test.describe("the admin app's API tokens", () => {
       // Revoking only confirms; it asks for no password.
       await row.getByRole("button", { name: `Revoke ${tokenName}` }).click()
       await ops.locator("[data-e2e=admin-api-tokens-confirm]").click()
-      await expect(ops.locator("[data-e2e=toasts]")).toContainText(`${tokenName} is revoked.`)
+      await expect(ops.locator("[data-e2e=toasts]")).toContainText(`${tokenName} revoked.`)
       await expect(row).toHaveCount(0)
       const refused = await request.get(`${appBase}/api/v1/groups/${groupId}/notes`, {
         headers: { authorization: `Bearer ${secret}` },
@@ -133,8 +133,8 @@ test.describe("the admin app's API tokens", () => {
       await expect(devices).not.toContainText("push.example.com")
       await devices.getByRole("button", { name: `Remove device ${deviceId.slice(-8)}` }).click()
       await ops.locator("[data-e2e=admin-api-tokens-confirm]").click()
-      await expect(ops.locator("[data-e2e=toasts]")).toContainText("is removed.")
-      await expect(devices).toHaveText("No device gets push notifications.")
+      await expect(ops.locator("[data-e2e=toasts]")).toContainText(" removed.")
+      await expect(devices).toHaveText("No devices get push notifications.")
       const left = await person.get(`${appBase}/api/push/devices`, { headers })
       expect((await left.json()).data).toEqual([])
 

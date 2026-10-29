@@ -306,7 +306,7 @@ describe("one person in the admin app, with the people actions", () => {
 
     const item = find<HTMLButtonElement>("[data-e2e=admin-password-reset-open]")
     expect(item.disabled || item.getAttribute("aria-disabled") === "true").toBe(true)
-    expect(item.textContent).toContain("No password with an address")
+    expect(item.textContent).toContain("Needs a password sign-in with an email")
   })
 
   it("ends one session from its row, or all of them, from the Sessions tab", async () => {
@@ -376,7 +376,7 @@ describe("one person in the admin app, with the people actions", () => {
         "Role changed",
         "operator:7 from viewer to operator",
         "Password-reset link sent by an operator",
-        "Exported the user list",
+        "User list exported",
         "Profile picture removed by an operator",
         "operator:7 q=ada",
       ]

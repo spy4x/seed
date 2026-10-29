@@ -201,7 +201,7 @@ describe("the blog list", () => {
     const calls: unknown[][] = []
     await mount(<AdminBlogListScreen {...listProps(calls, { list: null, error: "boom" })} />)
     expect(find("[data-e2e=admin-blog-error]").textContent)
-      .toContain("Posts could not be loaded. Try again in a moment.")
+      .toContain("Couldn't load posts. Try again in a moment.")
     await clickOn(button("Try again"))
     expect(calls).toEqual([["retry"]])
   })
@@ -426,7 +426,7 @@ describe("the blog editor", () => {
     await clickOn(button("Publish"))
     expect(calls).toEqual([["publish", { at: null, list: null }]])
     await clickOn(email)
-    expect(document.body.textContent).toContain("It cannot be unsent.")
+    expect(document.body.textContent).toContain("You can't unsend it.")
     await clickOn(button("Publish and email 12"))
     expect(calls.at(-1)).toEqual(["publish", { at: null, list: "news" }])
   })
@@ -440,7 +440,7 @@ describe("the blog editor", () => {
       find("[data-e2e=admin-blog-email] input, input[data-e2e=admin-blog-email]"),
     )
     expect(find("[data-e2e=admin-blog-email-hint]").textContent).toContain(
-      "It goes only to the subscribers who signed up in the post's language.",
+      "Only subscribers who signed up in the post's language get it.",
     )
     expect(button("Publish and email 3")).toBeTruthy()
 
@@ -573,7 +573,9 @@ describe("the editor's rules", () => {
     })
     const ok = { ...emptyBlogDraft(), title: "T", slug: "t", description: "D" }
     expect(blogDraftWords(ok)).toEqual({})
-    expect(blogDraftWords(ok, true)).toEqual({ bodyMd: "The post is empty." })
+    expect(blogDraftWords(ok, true)).toEqual({
+      bodyMd: "The post is empty. Write something first.",
+    })
   })
 })
 
