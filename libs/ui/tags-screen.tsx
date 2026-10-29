@@ -150,7 +150,7 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
                       )
                   )}
                   {canWrite && props.onDelete && (
-                    <div class="relative -my-2 -mr-2 shrink-0">
+                    <div class="relative -my-2 -me-2 shrink-0">
                       <Dropdown
                         trigger={<IconEllipsisVertical class="size-5" />}
                         triggerLabel={t.t(`Tags.actions`, { name: tag.name })}

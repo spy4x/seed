@@ -531,7 +531,7 @@ export function AdminCatalogCategoriesScreen(
                       {` · ${t.t(`AdminCatalogCategories.items`, { count: category.itemCount })}`}
                     </span>
                   </div>
-                  <div class="relative -my-2 -mr-2 shrink-0">
+                  <div class="relative -my-2 -me-2 shrink-0">
                     <Dropdown
                       trigger={<IconEllipsisVertical class="size-5" />}
                       triggerLabel={t.t(`AdminCatalogCategories.actionsFor`, {

@@ -295,7 +295,7 @@ function Step(
               shown.length === 1 && more <= 0
                 ? <p data-e2e="group-import-problem">{problemText(t, shown[0])}</p>
                 : (
-                  <ul class="list-disc space-y-1 pl-4">
+                  <ul class="list-disc space-y-1 ps-4">
                     {shown.map((problem, index) => (
                       <li key={index} data-e2e="group-import-problem">
                         {problemText(t, problem)}

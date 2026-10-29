@@ -51,7 +51,7 @@ function AdminBrand({ navigate }: { navigate?: Navigate }): JSX.Element {
     <Link
       href={ADMIN_PATHS.dashboard}
       navigate={navigate}
-      class="-ml-2 flex min-h-11 shrink-0 items-center gap-2 rounded-md px-2"
+      class="-ms-2 flex min-h-11 shrink-0 items-center gap-2 rounded-md px-2"
     >
       <span class="text-base font-semibold text-foreground">{ADMIN_PRODUCT}</span>
       <span data-e2e="admin-mark">

@@ -453,7 +453,7 @@ function subscriberColumns(
           >
             {email}
           </span>
-          <Cluster gap="xs" class="-ml-2">
+          <Cluster gap="xs" class="-ms-2">
             {status === "pending" && (
               <Button
                 variant="ghost"

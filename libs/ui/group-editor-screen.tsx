@@ -724,7 +724,7 @@ function GroupForm(
   }, [showFooter, saving, group?.id])
   const t = useAppText()
   const change = (patch: Partial<GroupDraft>) => onChange?.({ ...value, ...patch })
-  const optional = <span class="ml-2 font-normal text-muted">{t.t(`GroupEditor.optional`)}</span>
+  const optional = <span class="ms-2 font-normal text-muted">{t.t(`GroupEditor.optional`)}</span>
   return (
     <>
       {offline && (
@@ -879,7 +879,7 @@ function MenuText(
   { text, hint, hintDataE2E }: { text: string; hint: string | null; hintDataE2E: string },
 ): JSX.Element {
   return (
-    <span class="flex flex-col items-start gap-1 text-left">
+    <span class="flex flex-col items-start gap-1 text-start">
       <span>{text}</span>
       {hint && <span class="text-xs text-muted" data-e2e={hintDataE2E}>{hint}</span>}
     </span>

@@ -144,7 +144,7 @@ export function AdminCatalogSourcesScreen(props: AdminCatalogSourcesScreenProps)
                       {` · ${t.t(`AdminCatalogSources.links`, { count: source.linkCount })}`}
                     </span>
                   </div>
-                  <div class="relative -my-2 -mr-2 shrink-0">
+                  <div class="relative -my-2 -me-2 shrink-0">
                     <Dropdown
                       trigger={<IconEllipsisVertical class="size-5" />}
                       triggerLabel={t.t(`AdminCatalogSources.actionsFor`, { name: source.name })}

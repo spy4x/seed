@@ -561,7 +561,7 @@ function MethodDetails(
                   disabled={pending}
                   dataE2E={`passkey-name-${method.id}`}
                   // The button's own padding would push the name off the line under it.
-                  class="-ml-2 font-medium text-foreground"
+                  class="-ms-2 font-medium text-foreground"
                 />
               </span>
             )

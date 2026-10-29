@@ -603,7 +603,7 @@ function customerColumns(
         return amount === null
           ? <span class="text-sm text-muted">{t.t(`AdminBilling.unknownPrice`)}</span>
           : (
-            <div class="flex flex-col items-end text-right" data-e2e="admin-billing-row-amount">
+            <div class="flex flex-col items-end text-end" data-e2e="admin-billing-row-amount">
               <span class="whitespace-nowrap font-medium tabular-nums">{amount.amount}</span>
               {amount.detail && (
                 <span class="whitespace-nowrap text-xs text-muted tabular-nums">

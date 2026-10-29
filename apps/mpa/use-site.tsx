@@ -57,7 +57,7 @@ export function code(text: string): JSX.Element {
  * their output read the same in every language.
  */
 export function TerminalText({ children }: { children: ComponentChildren }): JSX.Element {
-  return <span dir="ltr" class="block text-left">{children}</span>
+  return <span dir="ltr" class="block text-start">{children}</span>
 }
 
 /** A message with spans as plain text, its tags dropped: for structured data and attributes. */

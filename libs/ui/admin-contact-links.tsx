@@ -161,7 +161,7 @@ export function AdminContactLinksScreen(props: AdminContactLinksScreenProps): JS
                       {link.label !== null && <>{` · `}{literal(link.value)}</>}
                     </span>
                   </div>
-                  <div class="relative -my-2 -mr-2 shrink-0">
+                  <div class="relative -my-2 -me-2 shrink-0">
                     <Dropdown
                       trigger={<IconEllipsisVertical class="size-5" />}
                       triggerLabel={t.t(`AdminContactLinks.actionsFor`, {

@@ -65,7 +65,7 @@ export function AdminPersonDataExportsPanel(
               <span class="text-sm text-muted">{formatBytes(item.sizeBytes)}</span>
             )}
             {item.expiresAt && (
-              <span class="ml-auto text-sm text-muted">
+              <span class="ms-auto text-sm text-muted">
                 <Rich
                   parts={t.parts(
                     item.status === DataExportStatus.Expired

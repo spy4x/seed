@@ -639,7 +639,7 @@ function Methods({ detail }: { detail: AdminUserDetail }): JSX.Element {
               </span>
             )
             : (
-              <span class="ml-auto">
+              <span class="ms-auto">
                 {method.provenAt
                   ? <Badge text={t.t(`AdminUser.proven`)} color="green" type="outline" />
                   : <Badge text={t.t(`AdminUser.notProven`)} color="orange" type="outline" />}
@@ -671,7 +671,7 @@ function Sessions(
             {sessionName(t, session.deviceName)}
           </span>
           {session.ipHint && <span class="text-sm text-muted">{session.ipHint}</span>}
-          <span class="ml-auto text-xs text-muted">
+          <span class="ms-auto text-xs text-muted">
             <Rich
               parts={t.parts(`AdminUser.lastActive`)}
               tags={{ when: () => <When at={session.lastUsedAt} /> }}
@@ -735,7 +735,7 @@ function Groups(
           >
             {group.name}
           </Link>
-          <span class="ml-auto">
+          <span class="ms-auto">
             <Badge text={groupRoleLabel(t, group.role)} color="gray" type="outline" />
           </span>
         </li>

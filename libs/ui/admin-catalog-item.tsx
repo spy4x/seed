@@ -885,7 +885,7 @@ function Colours({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Ed
                       <Button
                         variant="ghost"
                         size="sm"
-                        class="ml-auto min-h-11 sm:min-h-0"
+                        class="ms-auto min-h-11 sm:min-h-0"
                         data-e2e="catalog-item-remove-colour"
                         onClick={() =>
                           edit({ colours: value.colours.filter((one) => one.id !== colour.id) })}
@@ -1121,7 +1121,7 @@ function Availability({ props, edit }: { props: AdminCatalogItemScreenProps; edi
               <tr>
                 <td />
                 {sizes.map((size) => (
-                  <th key={size?.id ?? `-`} scope="col" class="px-3 pb-2 text-left font-medium">
+                  <th key={size?.id ?? `-`} scope="col" class="px-3 pb-2 text-start font-medium">
                     <bdi translate={size ? false : undefined}>{sizeName(size)}</bdi>
                   </th>
                 ))}
@@ -1130,7 +1130,7 @@ function Availability({ props, edit }: { props: AdminCatalogItemScreenProps; edi
             <tbody>
               {colours.map((colour) => (
                 <tr key={colour?.id ?? `-`}>
-                  <th scope="row" class="py-2 pr-3 text-left font-medium">
+                  <th scope="row" class="py-2 pe-3 text-start font-medium">
                     <span class="inline-flex items-center gap-2">
                       {colour && (
                         <span

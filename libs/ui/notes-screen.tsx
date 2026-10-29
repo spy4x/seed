@@ -910,7 +910,7 @@ function NoteItem(
           <NoteTags tagIds={note.tagIds} tags={tags} max={ROW_TAGS} />
         </div>
       </div>
-      <div class="hidden shrink-0 flex-col items-end gap-1 text-right text-sm text-muted sm:flex">
+      <div class="hidden shrink-0 flex-col items-end gap-1 text-end text-sm text-muted sm:flex">
         {note.updatedAt && <Stamp kind="updated" at={note.updatedAt} />}
         {note.createdAt && <Stamp kind="created" at={note.createdAt} day />}
       </div>
@@ -942,13 +942,13 @@ function NoteItem(
           // clear of it.
           <>
             <div
-              class={`relative flex min-w-0 flex-1 py-3 pl-4 sm:pl-6 ${
-                menu ? "pr-2" : "pr-4 sm:pr-6"
+              class={`relative flex min-w-0 flex-1 py-3 ps-4 sm:ps-6 ${
+                menu ? "pe-2" : "pe-4 sm:pe-6"
               }`}
             >
               {summary}
             </div>
-            {menu && <div class="flex shrink-0 items-center px-2 sm:pr-4">{menu}</div>}
+            {menu && <div class="flex shrink-0 items-center px-2 sm:pe-4">{menu}</div>}
           </>
         )}
     </li>

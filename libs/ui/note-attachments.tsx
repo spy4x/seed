@@ -22,7 +22,7 @@ export const ATTACH_BUTTON_ID = "note-attachments-attach"
 const ACCEPT = ATTACHMENT_TYPES.join(",")
 
 /** An error under the list, in the section's column: one line per refused file. */
-const INLINE_ERROR = "mx-0 max-w-none whitespace-pre-line text-left text-sm"
+const INLINE_ERROR = "mx-0 max-w-none whitespace-pre-line text-start text-sm"
 
 /** Each plan's file rules, for the count before the group's room is read. */
 const DEFAULT_PER_NOTE = 10

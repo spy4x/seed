@@ -213,7 +213,7 @@ function SystemBody(
                 <>
                   {NUMBER.format(queue.due)}
                   {queue.oldestDueAt && (
-                    <span class="ml-1 text-muted">
+                    <span class="ms-1 text-muted">
                       <Rich
                         parts={t.parts(`AdminSystem.oldest`)}
                         tags={{ when: () => <When at={queue.oldestDueAt!} /> }}
