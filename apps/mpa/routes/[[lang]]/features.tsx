@@ -65,11 +65,6 @@ function source(path: string): string {
   return `${REPOSITORY_URL}/${kind}/main/${path.replace(/\/$/, ``)}`
 }
 
-/** An open issue of the repository, by number. */
-function issue(number: number): string {
-  return `${REPOSITORY_URL}/issues/${number}`
-}
-
 /** A feature as the page lists it, without the side its picture goes on: the tier decides that. */
 type Feature = Omit<FeatureSectionProps, "flip"> & { nav: string }
 
