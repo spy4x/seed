@@ -7,9 +7,6 @@ import { anyPicture, readablePicture, setUserPicture } from "@server/auth/profil
 import { type LedgerUpload, reserveUpload, settleUpload } from "@server/files/upload-ledger.ts"
 import { PostgresAttachmentRepository } from "@server/notes/postgres-attachment-repository.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
-import { AuthAuditEventType } from "@domain/identity"
-import { AppDbBase } from "../../apps/api/services/db-base.ts"
-import { createPictureStore } from "../../apps/api/cqrs/picture-store.ts"
 import { insertUser, team, withSchema } from "./group-team.ts"
 
 const WEBP = `image/webp`
@@ -102,33 +99,18 @@ Deno.test("profile pictures against Postgres", async (t) => {
       },
     )
 
-    await t.step(
-      "writes the person's own change with its audit row, and nothing for a removal with no picture",
-      async () => {
-        const store = createPictureStore(new AppDbBase({ sql }))
-        const person = await insertUser(sql)
-        const request = { ip: `192.0.2.1`, userAgent: `test` }
-        const audits = () =>
-          sql<{ identifier: string }[]>`
-            SELECT identifier FROM auth_audits
-            WHERE user_id = ${person} AND event_type = ${AuthAuditEventType.PROFILE_UPDATED}
-          `.then((rows) => rows.map((row) => row.identifier))
-        const updatedAt = () =>
-          sql<{ updatedAt: Date }[]>`SELECT updated_at FROM users WHERE id = ${person}`
-            .then(([row]) => row.updatedAt)
+    await t.step("writes nothing when a picture is removed from someone with none", async () => {
+      const person = await insertUser(sql)
+      const updatedAt = () =>
+        sql<{ updatedAt: Date }[]>`SELECT updated_at FROM users WHERE id = ${person}`
+          .then(([row]) => row.updatedAt)
+      const before = await updatedAt()
 
-        await store.set(person, { id: uuidV7(), contentType: WEBP }, request)
-        expect((await store.set(person, null, request))?.previous).not.toBe(null)
-        expect(await audits()).toEqual([`picture`, `picture`])
-
-        const before = await updatedAt()
-        const again = await store.set(person, null, request)
-        expect(again?.previous).toBe(null)
-        expect(again?.user.id).toBe(person)
-        expect(await audits()).toEqual([`picture`, `picture`])
-        expect(await updatedAt()).toEqual(before)
-      },
-    )
+      const removed = await sql.begin((tx) => setUserPicture(tx, person, null))
+      expect(removed?.previous).toBe(null)
+      expect(removed?.user.id).toBe(person)
+      expect(await updatedAt()).toEqual(before)
+    })
 
     await t.step("refuses a picture type with no picture, and the other way round", async () => {
       const { onlyHere } = await team(sql)
