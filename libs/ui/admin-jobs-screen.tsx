@@ -1,6 +1,6 @@
 import type { JSX, RefObject } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
-import { IconArrowPath, IconPlayCircle } from "@spy4x/preact-icons"
+import { IconArrowPath, IconArrowRight, IconPlayCircle } from "@spy4x/preact-icons"
 import { Badge, type BadgeColor, type BadgeType } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
@@ -906,7 +906,9 @@ export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
                       translate={false}
                       data-e2e="admin-job-about"
                     >
-                      {job.about.name} →
+                      {job.about.name}
+                      {` `}
+                      <IconArrowRight aria-hidden="true" class="inline size-4 align-text-bottom" />
                     </Link>
                   )
                   : <span class="text-muted">{t.t(`AdminJobs.nothingLinked`)}</span>,
