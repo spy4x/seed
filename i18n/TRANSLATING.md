@@ -66,40 +66,50 @@ like a machine made it, so:
 One word for one thing, on every screen. Translate a term the same way everywhere, unless the
 sentence needs another grammatical form of it.
 
-| English                | ru                   | es                        | de                      | pt-BR                      | ar                 |
-| ---------------------- | -------------------- | ------------------------- | ----------------------- | -------------------------- | ------------------ |
-| account                | аккаунт              | cuenta                    | Konto                   | conta                      | حساب               |
-| sign in                | войти / вход         | iniciar sesión            | anmelden / Anmeldung    | entrar                     | تسجيل الدخول       |
-| sign out               | выйти                | cerrar sesión             | abmelden                | sair                       | تسجيل الخروج       |
-| sign up                | зарегистрироваться   | registrarse               | registrieren            | criar conta                | إنشاء حساب         |
-| username               | логин                | nombre de usuario         | Benutzername            | nome de usuário            | اسم المستخدم       |
-| e-mail (address)       | e-mail, почта        | correo electrónico        | E-Mail-Adresse          | e-mail                     | البريد الإلكتروني  |
-| password               | пароль               | contraseña                | Passwort                | senha                      | كلمة المرور        |
-| passkey                | ключ доступа         | llave de acceso           | Passkey                 | chave de acesso            | مفتاح المرور       |
-| one-time code          | одноразовый код      | código de un solo uso     | Einmalcode              | código de uso único        | رمز لمرة واحدة     |
-| two-factor             | двухфакторная защита | verificación en dos pasos | Zwei-Faktor-Schutz      | verificação em duas etapas | التحقق بخطوتين     |
-| recovery codes         | резервные коды       | códigos de recuperación   | Wiederherstellungscodes | códigos de recuperação     | رموز الاسترداد     |
-| profile                | профиль              | perfil                    | Profil                  | perfil                     | الملف الشخصي       |
-| settings               | настройки            | ajustes                   | Einstellungen           | configurações              | الإعدادات          |
-| group                  | группа               | grupo                     | Gruppe                  | grupo                      | مجموعة             |
-| member                 | участник             | miembro                   | Mitglied                | membro                     | عضو                |
-| owner (of a group)     | владелец             | propietario               | Inhaber                 | dono                       | المالك             |
-| role                   | роль                 | rol                       | Rolle                   | função                     | دور                |
-| invitation             | приглашение          | invitación                | Einladung               | convite                    | دعوة               |
-| note                   | заметка              | nota                      | Notiz                   | nota                       | ملاحظة             |
-| tag                    | метка                | etiqueta                  | Tag                     | etiqueta                   | وسم                |
-| file / attachment      | файл                 | archivo                   | Datei                   | arquivo                    | ملف                |
-| device                 | устройство           | dispositivo               | Gerät                   | dispositivo                | جهاز               |
-| notification           | уведомление          | notificación              | Benachrichtigung        | notificação                | إشعار              |
-| plan                   | тариф                | plan                      | Tarif                   | plano                      | خطة                |
-| subscription / billing | подписка / оплата    | suscripción / facturación | Abo / Abrechnung        | assinatura / cobrança      | الاشتراك / الفوترة |
-| guest (account)        | гостевой аккаунт     | cuenta de invitado        | Gastkonto               | conta de visitante         | حساب ضيف           |
-| demo data, sample data | демо-данные          | datos de ejemplo          | Beispieldaten           | dados de exemplo           | بيانات تجريبية     |
-| link (a URL)           | ссылка               | enlace                    | Link                    | link                       | رابط               |
-| token (API)            | токен                | token                     | Token                   | token                      | رمز مميز           |
-| operator (admin area)  | оператор             | operador                  | Operator                | operador                   | المشغّل             |
-| newsletter             | рассылка             | boletín                   | Newsletter              | newsletter                 | النشرة البريدية    |
-| offline                | офлайн, без сети     | sin conexión              | offline                 | offline                    | دون اتصال          |
+| English                | ru                        | es                        | de                       | pt-BR                      | ar                 |
+| ---------------------- | ------------------------- | ------------------------- | ------------------------ | -------------------------- | ------------------ |
+| account                | аккаунт                   | cuenta                    | Konto                    | conta                      | حساب               |
+| sign in                | войти / вход              | iniciar sesión            | anmelden / Anmeldung     | entrar                     | تسجيل الدخول       |
+| sign out               | выйти                     | cerrar sesión             | abmelden                 | sair                       | تسجيل الخروج       |
+| sign up                | зарегистрироваться        | registrarse               | registrieren             | criar conta                | إنشاء حساب         |
+| username               | логин                     | nombre de usuario         | Benutzername             | nome de usuário            | اسم المستخدم       |
+| e-mail (address)       | e-mail, почта             | correo electrónico        | E-Mail-Adresse           | e-mail                     | البريد الإلكتروني  |
+| password               | пароль                    | contraseña                | Passwort                 | senha                      | كلمة المرور        |
+| passkey                | ключ доступа              | llave de acceso           | Passkey                  | chave de acesso            | مفتاح المرور       |
+| one-time code          | одноразовый код           | código de un solo uso     | Einmalcode               | código de uso único        | رمز لمرة واحدة     |
+| two-factor             | двухфакторная защита      | verificación en dos pasos | Zwei-Faktor-Schutz       | verificação em duas etapas | التحقق بخطوتين     |
+| recovery codes         | резервные коды            | códigos de recuperación   | Wiederherstellungscodes  | códigos de recuperação     | رموز الاسترداد     |
+| profile                | профиль                   | perfil                    | Profil                   | perfil                     | الملف الشخصي       |
+| settings               | настройки                 | ajustes                   | Einstellungen            | configurações              | الإعدادات          |
+| group                  | группа                    | grupo                     | Gruppe                   | grupo                      | مجموعة             |
+| member                 | участник                  | miembro                   | Mitglied                 | membro                     | عضو                |
+| owner (of a group)     | владелец                  | propietario               | Inhaber                  | dono                       | المالك             |
+| role                   | роль                      | rol                       | Rolle                    | função                     | دور                |
+| invitation             | приглашение               | invitación                | Einladung                | convite                    | دعوة               |
+| note                   | заметка                   | nota                      | Notiz                    | nota                       | ملاحظة             |
+| tag                    | метка                     | etiqueta                  | Tag                      | etiqueta                   | وسم                |
+| file / attachment      | файл                      | archivo                   | Datei                    | arquivo                    | ملف                |
+| device                 | устройство                | dispositivo               | Gerät                    | dispositivo                | جهاز               |
+| notification           | уведомление               | notificación              | Benachrichtigung         | notificação                | إشعار              |
+| plan                   | тариф                     | plan                      | Tarif                    | plano                      | خطة                |
+| subscription / billing | подписка / оплата         | suscripción / facturación | Abo / Abrechnung         | assinatura / cobrança      | الاشتراك / الفوترة |
+| guest (account)        | гостевой аккаунт          | cuenta de invitado        | Gastkonto                | conta de visitante         | حساب ضيف           |
+| demo data, sample data | демо-данные               | datos de ejemplo          | Beispieldaten            | dados de exemplo           | بيانات تجريبية     |
+| link (a URL)           | ссылка                    | enlace                    | Link                     | link                       | رابط               |
+| token (API)            | токен                     | token                     | Token                    | token                      | رمز مميز           |
+| operator (admin area)  | оператор                  | operador                  | Operator                 | operador                   | المشغّل             |
+| newsletter             | рассылка                  | boletín                   | Newsletter               | newsletter                 | النشرة البريدية    |
+| offline                | офлайн, без сети          | sin conexión              | offline                  | offline                    | دون اتصال          |
+| archive (verb / state) | убрать в архив / в архиве | archivar / archivado      | archivieren / archiviert | arquivar / arquivado       | أرشفة / في الأرشيف |
+| delete (record)        | удалить                   | eliminar                  | löschen                  | excluir                    | حذف                |
+| remove (from a list)   | убрать                    | quitar                    | entfernen                | remover                    | إزالة              |
+| restore                | восстановить              | restaurar                 | wiederherstellen         | restaurar                  | استعادة            |
+| upload                 | загрузить                 | subir                     | hochladen                | enviar                     | رفع                |
+| sync                   | синхронизация             | sincronización            | Synchronisierung         | sincronização              | المزامنة           |
+| conflict               | конфликт                  | conflicto                 | Konflikt                 | conflito                   | تعارض              |
+| theme                  | тема                      | tema                      | Design                   | tema                       | المظهر             |
+| retry                  | повторить                 | reintentar                | erneut versuchen         | tentar de novo             | إعادة المحاولة     |
+| dismiss                | скрыть / закрыть          | cerrar                    | schließen / ausblenden   | fechar                     | إخفاء              |
 
 ## Voice
 
