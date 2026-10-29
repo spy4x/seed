@@ -96,6 +96,11 @@ test.describe("the profile picture", () => {
       const chooser = row.locator("#profile-picture-choose")
       await expect(chooser).toHaveText("Upload profile picture")
       await expect(row.locator("[data-e2e=profile-picture-remove]")).toHaveCount(0)
+      // Until the worker has made a picture, no page asks for it: the answer would be a 404.
+      const asked: string[] = []
+      page.on("request", (request) => {
+        if (new URL(request.url()).pathname.startsWith("/api/pictures/")) asked.push(request.url())
+      })
 
       await choose(row, "red.png", "image/png", RED)
       await expect(status).toHaveText("Preparing your picture…")
@@ -103,9 +108,6 @@ test.describe("the profile picture", () => {
       const first = await pictureId(page)
       expect(first).not.toBeNull()
       expect(await stored(request, first!)).toBe(true)
-      // Until the worker has made it, the rail's account entry asks for no picture, which would
-      // answer 404.
-      await expect(page.locator(`[data-e2e=account-menu-button] img`)).toHaveCount(0)
 
       await choose(row, "black.png", "image/png", BLACK)
       await expect.poll(() => pictureId(page)).not.toBe(first)
@@ -113,6 +115,7 @@ test.describe("the profile picture", () => {
       expect(second).not.toBeNull()
       expect(await stored(request, second!)).toBe(true)
       expect(await stored(request, first!)).toBe(false)
+      expect(asked).toEqual([])
 
       await row.locator("[data-e2e=profile-picture-remove]").click()
       const dialog = page.locator("[data-e2e=profile-picture-remove-dialog]")
