@@ -33,7 +33,7 @@ export interface PictureStore {
   release(id: string, userId: number): Promise<void>
   /**
    * Sets or clears the picture and writes the person's `auth_audits` row, in one transaction.
-   * `null` when the person is gone.
+   * Clearing when there is no picture writes nothing. `null` when the person is gone.
    */
   set(
     userId: number,

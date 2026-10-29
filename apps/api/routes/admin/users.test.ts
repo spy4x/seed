@@ -1,8 +1,8 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { MiddlewareHandler } from "hono"
-import { type AdminUserFilter, type AdminUserRow, UserRole } from "@domain/identity"
-import type { UserSignedOutEvent } from "@api/cqrs/events.ts"
+import { type AdminUserFilter, type AdminUserRow, type User, UserRole } from "@domain/identity"
+import { UserProfileUpdatedEvent, UserSignedOutEvent } from "@api/cqrs/events.ts"
 import {
   type AdminActInput,
   AdminActionKind,
@@ -63,10 +63,11 @@ function buildApp(
     rows = [[person]] as AdminUserRow[][],
     exportError = undefined as Error | undefined,
     pictures = new Map<string, { contentType: string; bytes: Uint8Array }>(),
+    profile = undefined as User | undefined,
   } = {},
 ) {
   const calls: unknown[][] = []
-  const emitted: UserSignedOutEvent[] = []
+  const emitted: (UserSignedOutEvent | UserProfileUpdatedEvent)[] = []
   const admin: AdminService = {
     list: () => Promise.reject(new Error("not used")),
     detail: () => Promise.resolve(null),
@@ -76,6 +77,7 @@ function buildApp(
           outcome,
           retryAfterMs,
           user: outcome === AdminActOutcome.Done ? person : undefined,
+          profile,
         })
     ),
     export: (_c, actor, filter: AdminUserFilter) => {
@@ -188,7 +190,8 @@ describe("the people actions of the operator area", () => {
 
     expect(response.status).toBe(200)
     expect(calls).toEqual([["act", 7, 42, AdminActionKind.EndSession, { sessionId: 9 }]])
-    expect(emitted.map((event) => event.data.userId)).toEqual([42])
+    expect(emitted.map((event) => event instanceof UserSignedOutEvent && event.data.userId))
+      .toEqual([42])
   })
 
   it("answers 404 for a session id that is no number, and for one the person does not have", async () => {
@@ -240,13 +243,16 @@ describe("the people actions of the operator area", () => {
     }
   })
 
-  it("removes the person's profile picture through the service and closes no socket", async () => {
-    const { app, calls, emitted } = buildApp()
+  it("removes the person's profile picture, then tells their open tabs and closes no socket", async () => {
+    const profile = { id: 42, pictureId: null } as User
+    const { app, calls, emitted } = buildApp(administrator(), { profile })
     const response = await send(app, ROUTES[5])
 
     expect(response.status).toBe(200)
     expect(calls).toEqual([["act", 7, 42, AdminActionKind.RemovePicture, undefined]])
-    expect(emitted).toEqual([])
+    expect(emitted.map((event) => [event.constructor, event.data])).toEqual([
+      [UserProfileUpdatedEvent, { user: profile, request: expect.anything() }],
+    ])
   })
 
   it("answers 409 to a picture removal for someone with no picture", async () => {

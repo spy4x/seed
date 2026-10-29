@@ -11,7 +11,7 @@ import {
   parseAdminUserFilter,
   USER_ROLE_NAMES,
 } from "@domain/identity"
-import { UserSignedOutEvent } from "@api/cqrs/events.ts"
+import { UserProfileUpdatedEvent, UserSignedOutEvent } from "@api/cqrs/events.ts"
 import {
   type AdminActInput,
   AdminActionKind,
@@ -34,7 +34,7 @@ export interface AdminUsersRouteDependencies {
   /** The normal per-user budget the session routes spend too. */
   limit: MiddlewareHandler<APIContext>
   admin: AdminService
-  emit(event: UserSignedOutEvent): void
+  emit(event: UserSignedOutEvent | UserProfileUpdatedEvent): void
   /** The clock the export's file name reads. */
   now?: () => Date
   /** The person's data exports (#229), newest first: what and when, never the file. */
@@ -169,7 +169,7 @@ export function createAdminUsersRoutes(
   async function act(c: Context<APIContext>, action: AdminActionKind, input?: AdminActInput) {
     const targetId = serialIdOf(c.req.param("id") ?? ``)
     if (targetId === null) return errorResponse(c, `not_found`, { message: ADMIN_USER_NOT_FOUND })
-    const { outcome, user, retryAfterMs } = await admin.act(
+    const { outcome, user, profile, retryAfterMs } = await admin.act(
       c,
       c.get("auth")!,
       targetId,
@@ -195,6 +195,15 @@ export function createAdminUsersRoutes(
       emit(
         new UserSignedOutEvent({
           userId: targetId,
+          request: requestInfoFromContext(c, { trustedProxy: true }),
+        }),
+      )
+    }
+    if (profile) {
+      // Tells the person's open tabs to read their profile again, as their own change would.
+      emit(
+        new UserProfileUpdatedEvent({
+          user: profile,
           request: requestInfoFromContext(c, { trustedProxy: true }),
         }),
       )

@@ -99,6 +99,19 @@ Deno.test("profile pictures against Postgres", async (t) => {
       },
     )
 
+    await t.step("writes nothing when a picture is removed from someone with none", async () => {
+      const person = await insertUser(sql)
+      const updatedAt = () =>
+        sql<{ updatedAt: Date }[]>`SELECT updated_at FROM users WHERE id = ${person}`
+          .then(([row]) => row.updatedAt)
+      const before = await updatedAt()
+
+      const removed = await sql.begin((tx) => setUserPicture(tx, person, null))
+      expect(removed?.previous).toBe(null)
+      expect(removed?.user.id).toBe(person)
+      expect(await updatedAt()).toEqual(before)
+    })
+
     await t.step("refuses a picture type with no picture, and the other way round", async () => {
       const { onlyHere } = await team(sql)
       const refused = await sql`

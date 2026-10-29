@@ -26,6 +26,8 @@ export const pictureDependencies: PictureHandlerDependencies = {
       db.begin(async (tx) => {
         const result = await tx.pictures.set(userId, picture)
         if (!result) return null
+        // A removal with no picture to remove changed nothing, so it leaves no audit row.
+        if (!picture && result.previous === null) return result
         await tx.authAudit.insert({
           userId,
           eventType: AuthAuditEventType.PROFILE_UPDATED,
