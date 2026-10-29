@@ -9,7 +9,7 @@ import { DateTimeField } from "@spy4x/preact-ui/date-time-field"
 import { Input, Select } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
-import { BLOG_SLUG_MAX_LENGTH, BLOG_SLUG_PATTERN } from "@domain/blog"
+import { BLOG_SLUG_MAX_LENGTH, BLOG_SLUG_PATTERN, blogPostPath } from "@domain/blog"
 import type { AdminBlogEditorScreenProps } from "./admin-blog-editor.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAdminText } from "./i18n.ts"
@@ -128,7 +128,12 @@ function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
       <Stack gap="md">
         <p>
           <Rich
-            parts={t.parts(`AdminBlogDialogs.linksBreak`, { path: `/blog/${old}` })}
+            parts={t.parts(`AdminBlogDialogs.linksBreak`, {
+              path: blogPostPath({
+                language: props.post?.language ?? props.value.language,
+                slug: old,
+              }),
+            })}
             tags={{ path }}
           />
         </p>
@@ -241,7 +246,9 @@ function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): J
           : (
             <p>
               <Rich
-                parts={t.parts(`AdminBlogDialogs.goesLiveAt`, { path: `/blog/${slug}` })}
+                parts={t.parts(`AdminBlogDialogs.goesLiveAt`, {
+                  path: blogPostPath({ language: value.language, slug }),
+                })}
                 tags={{ path }}
               />
             </p>

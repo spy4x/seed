@@ -435,6 +435,7 @@ describe("the blog editor", () => {
     const value = { ...blogDraftOf(saved), language: "de" as const }
     await mount(<AdminBlogEditorScreen {...editorProps([], { dialog: "publish", value })} />)
     expect(document.body.textContent).toContain("Also email this post to 3 confirmed subscribers")
+    expect(find("dialog[open]").textContent).toContain(`It goes live at /de/blog/${value.slug}`)
     await clickOn(
       find("[data-e2e=admin-blog-email] input, input[data-e2e=admin-blog-email]"),
     )
