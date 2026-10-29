@@ -97,23 +97,23 @@ export default {
   "ApiTokenMail.writeForever": "Es kann die Gruppe „{group}“ lesen und ändern und läuft nie ab.",
   "ApiTokenMail.notYou":
     "Warst du das nicht? Dann widerrufe das Token in deinem Profil und ändere dein Passwort. Damit werden alle API-Tokens widerrufen.",
-  "BillingNoticeMail.paidPlan": "Bezahltarif",
-  "BillingNoticeMail.trialSubject": "Deine {plan}-Testphase endet am {date}",
+  "BillingNoticeMail.paidPlan": "den bezahlten Tarif",
+  "BillingNoticeMail.trialSubject": "Deine Testphase für {plan} endet am {date}",
   "BillingNoticeMail.trialWhat":
-    "Die {plan}-Testphase für „{group}“ endet am <strong>{date}</strong>.",
+    "Die Testphase von „{group}“ für {plan} endet am <strong>{date}</strong>.",
   "BillingNoticeMail.trialWithCard":
     "Danach beginnt das Abo, und deine Karte wird belastet. Wenn du das nicht möchtest, kündige vorher auf der Seite der Gruppe.",
   "BillingNoticeMail.trialWithoutCard":
     "Wenn du den Tarif behalten möchtest, hinterlege vorher eine Karte auf der Seite der Gruppe. Dann beginnt das Abo, und deine Karte wird belastet. Ohne Karte wechselt die Gruppe in den kostenlosen Tarif.",
-  "BillingNoticeMail.paymentSubject": "{plan}: Zahlung fehlgeschlagen",
-  "BillingNoticeMail.paymentWhat": "Eine {plan}-Zahlung für „{group}“ ist fehlgeschlagen.",
+  "BillingNoticeMail.paymentSubject": "Zahlung für {plan} fehlgeschlagen",
+  "BillingNoticeMail.paymentWhat": "Eine Zahlung von „{group}“ für {plan} ist fehlgeschlagen.",
   "BillingNoticeMail.paymentKept":
     "Bis zum <strong>{date}</strong> behältst du den Tarif, während wir die Zahlung erneut versuchen. Damit er danach bleibt, aktualisiere die Karte auf der Seite der Gruppe.",
   "BillingNoticeMail.paymentFree":
     "Die Gruppe ist jetzt im kostenlosen Tarif. Um den alten Tarif zurückzubekommen, aktualisiere die Karte auf der Seite der Gruppe.",
-  "BillingNoticeMail.planSubject": "Dein {plan}-Abo endet am {date}",
+  "BillingNoticeMail.planSubject": "Dein Abo für {plan} endet am {date}",
   "BillingNoticeMail.planWhat":
-    "Das {plan}-Abo von „{group}“ wurde gekündigt und endet am <strong>{date}</strong>. Danach wechselt die Gruppe in den kostenlosen Tarif.",
+    "Das Abo von „{group}“ für {plan} wurde gekündigt und endet am <strong>{date}</strong>. Danach wechselt die Gruppe in den kostenlosen Tarif.",
   "BillingNoticeMail.planNext":
     "Doch anders überlegt? Verlängere es bis dahin auf der Seite der Gruppe.",
   "SubscriberConfirmMail.subject": "Bestätige dein Abo des Newsletters von {host}",

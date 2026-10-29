@@ -62,7 +62,7 @@ export default {
   "Field.rangeOrder": "Coloque o número menor primeiro.",
   "Field.required": "Preencha este campo.",
   "Field.singleEmoji": "Escolha um emoji.",
-  "Field.slug": "Use só letras minúsculas, números e hífens.",
+  "Field.slug": "Use só letras minúsculas, números e hifens.",
   "Field.sourceSlugTaken": "Outra origem já usa este utm_source. Escolha outro.",
   "Field.timeZone": "Não conhecemos este fuso horário. Escolha outro.",
   "Field.unit": "Escolha uma das opções.",

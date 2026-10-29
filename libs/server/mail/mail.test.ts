@@ -644,13 +644,13 @@ describe("mail in the reader's language (#277)", () => {
       timeZone: "Pacific/Auckland",
       hourCycle: null,
     }).slice(-1)
-    expect(notice.subject).toBe("Deine Pro-Testphase endet am 15. Oktober 2026")
+    expect(notice.subject).toBe("Deine Testphase für Pro endet am 15. Oktober 2026")
   })
 
   it("names a role and a plan as the app's screens do, in the reader's language", () => {
     const mails = everyMail({ ...EN, language: "de" })
     expect(mails[3].text).toContain("als Bearbeiter beizutreten")
-    expect(mails[9].text).toContain("Die Pro-Testphase")
+    expect(mails[9].text).toContain("für Pro endet")
   })
 })
 

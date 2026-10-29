@@ -120,7 +120,7 @@ export default {
   "Reason.FILE_TYPE": "Aquí no se admite este tipo de archivo.",
   "Reason.GROUP_NOT_FOUND": "Este grupo no existe o ya no formas parte de él.",
   "Reason.GROUP_SUBSCRIBED": "Cancela la suscripción del grupo antes de eliminarlo.",
-  "Reason.GUEST_NEEDS_SIGN_IN_METHOD": "Primero añade una forma de iniciar sesión.",
+  "Reason.GUEST_NEEDS_SIGN_IN_METHOD": "Primero añade un método de inicio de sesión.",
   "Reason.IDEMPOTENCY_IN_PROGRESS": "Todavía estamos en ello. Espera un momento.",
   "Reason.IDEMPOTENCY_KEY_INVALID":
     "Algo falló al enviar esto. Recarga la página y vuelve a intentarlo.",
@@ -186,7 +186,7 @@ export default {
   "Reason.TAG_LIMIT_REACHED": "Este grupo no admite más etiquetas. Elimina una primero.",
   "Reason.TAG_NAME_TAKEN": "Ya existe una etiqueta con este nombre.",
   "Reason.TAG_NOT_FOUND": "Esta etiqueta ya no existe.",
-  "Reason.TOKEN_INVALID": "Este token falta, se revocó o caducó.",
+  "Reason.TOKEN_INVALID": "Falta el token, o se revocó o caducó.",
   "Reason.TOKEN_NOT_FOUND": "Este token ya no existe.",
   "Reason.TOKEN_SCOPE": "Este token no tiene permiso para hacer esto.",
   "Reason.TOO_MANY": "Ya no caben más. Elimina uno primero.",

@@ -197,8 +197,8 @@ export default {
   "AdminAuditEvent.guestStarted": "Começou como visitante",
   "AdminAuditEvent.guestKept": "Conta de visitante mantida",
   "AdminAuditEvent.guestDeleted": "Conta de visitante excluída",
-  "AdminAuditEvent.telegramLinked": "Conta do Telegram conectada",
-  "AdminAuditEvent.telegramUnlinked": "Conta do Telegram desconectada",
+  "AdminAuditEvent.telegramLinked": "Conta do Telegram vinculada",
+  "AdminAuditEvent.telegramUnlinked": "Conta do Telegram desvinculada",
   "AdminAuditEvent.pictureRemoved": "Foto de perfil removida por um operador",
   "AdminAuditEvent.pictureChanged": "Foto de perfil alterada",
   "AdminAuditEvent.pictureRemovedByPerson": "Foto de perfil removida",
@@ -230,7 +230,7 @@ export default {
   "AdminBilling.listError":
     "Não foi possível carregar os clientes. Verifique sua conexão e tente de novo.",
   "AdminBilling.offText":
-    "Todos os grupos estão no plano Free. Para ativar a cobrança, adicione as configurações do Stripe.",
+    "Todos os grupos estão no plano Gratuito. Para ativar a cobrança, adicione as configurações do Stripe.",
   "AdminBilling.paying": "Pagantes",
   "AdminBilling.trial": "Em teste",
   "AdminBilling.pastDue": "Em atraso",
@@ -244,7 +244,7 @@ export default {
   "AdminBilling.renews": "Renova em {date}",
   "AdminBilling.ends": "Termina em {date}",
   "AdminBilling.planKeptUntil": "Plano mantido até {date}",
-  "AdminBilling.onFreeSince": "No Free desde {date}",
+  "AdminBilling.onFreeSince": "No plano Gratuito desde {date}",
   "AdminBilling.wouldBe": "seria {amount}",
   "AdminBilling.seatPrice": "{seats} × {price}",
   "AdminBilling.title": "Cobrança",
@@ -303,7 +303,7 @@ export default {
   "AdminBillingCustomer.doneTimeUntil": "{group} não será cobrado até {date}.",
   "AdminBillingCustomer.doneTime": "{group} ganhou tempo grátis.",
   "AdminBillingCustomer.doneCancelNow":
-    "A assinatura de {group} foi cancelada. O grupo agora está no Free.",
+    "A assinatura de {group} foi cancelada. O grupo agora está no plano Gratuito.",
   "AdminBillingCustomer.doneCancelOn": "A assinatura de {group} termina em {date}.",
   "AdminBillingCustomer.doneCancelEnd":
     "A assinatura de {group} termina junto com o período atual.",
@@ -371,7 +371,7 @@ export default {
   "AdminBillingCustomer.renewHint":
     "O dono pode renovar em Gerenciar cobrança antes do fim do período.",
   "AdminBillingCustomer.alreadyFree":
-    "<group>{group}</group> já está no Free e não será cobrado de novo.",
+    "<group>{group}</group> já está no plano Gratuito e não será cobrado de novo.",
   "AdminBillingCustomer.keepsUntilThen":
     "<group>{group}</group> fica com o {plan} até lá e não será cobrado de novo.",
   "AdminBillingCustomer.keepsUntil":
@@ -403,7 +403,7 @@ export default {
   "AdminBillingCustomer.alreadySet": "Já está agendada para terminar nessa data.",
   "AdminBillingCustomer.now": "Agora",
   "AdminBillingCustomer.nowHelp":
-    "{group} passa para o Free na hora. O período atual não é reembolsado; se precisar, reembolse à parte. O dono não é avisado.",
+    "{group} passa para o plano Gratuito na hora. O período atual não é reembolsado; se precisar, reembolse à parte. O dono não é avisado.",
   "AdminBillingCustomer.undoTitle": "Manter a assinatura de {group}?",
   "AdminBillingCustomer.undoSubmit": "Manter assinatura",
   "AdminBillingCustomer.renewsOn": "O {plan} renova em {date} pelo valor normal de {charge}.",
@@ -1276,7 +1276,7 @@ export default {
     "Os membros de <group>{group}</group> deixam de ver o arquivo. A nota continua, e a atividade do grupo mostra que o suporte o removeu.",
   "AdminGroup.transferTitle": "Passar {group} para outro dono",
   "AdminGroup.transferText":
-    "O membro escolhido vira o dono e recebe um aviso. <name>{name}</name> continua no grupo como admin. Se a assinatura ainda renova, o dono atual precisa cancelá-la antes.",
+    "O membro escolhido vira o dono e recebe um aviso. <name>{name}</name> continua no grupo como administrador. Se a assinatura ainda renova, o dono atual precisa cancelá-la antes.",
   "AdminGroup.transferSubmit": "Passar",
   "AdminGroup.transferring": "Passando…",
   "AdminGroup.close": "Fechar",
@@ -1290,7 +1290,7 @@ export default {
   "AdminGroups.active": "Ativo",
   "AdminGroups.inTrash": "Na lixeira",
   "AdminGroups.noName": "Sem nome",
-  "AdminGroups.free": "Free",
+  "AdminGroups.free": "Gratuito",
   "AdminGroups.title": "Grupos",
   "AdminGroups.subtitle":
     "Todos os grupos, com dono e membros. Abra um grupo para gerenciar os membros e os convites.",
@@ -1320,7 +1320,7 @@ export default {
   "AdminGroups.ownerLine": "Dono: <name>{name}</name>",
   "AdminGroups.roleViewer": "Leitor",
   "AdminGroups.roleEditor": "Editor",
-  "AdminGroups.roleAdmin": "Admin",
+  "AdminGroups.roleAdmin": "Administrador",
   "AdminGroups.roleOwner": "Dono",
   "AdminGroups.roleMember": "Membro",
   "AdminJobs.doneCancelled": "{job} cancelada.",
@@ -1697,7 +1697,7 @@ export default {
   "AdminUser.doneRoleAdmin": "{name} agora tem a função de administrador.",
   "AdminUser.donePasswordReset": "Um link para redefinir a senha está a caminho de {name}.",
   "AdminUser.doneDeleteGuest": "Conta de visitante {name} excluída.",
-  "AdminUser.doneUnlinkTelegram": "A conta do Telegram de {name} foi desconectada.",
+  "AdminUser.doneUnlinkTelegram": "A conta do Telegram de {name} foi desvinculada.",
   "AdminUser.doneRemovePicture": "A foto de perfil de {name} foi removida.",
   "AdminUser.back": "Usuários",
   "AdminUser.title": "Usuário",
@@ -1707,7 +1707,7 @@ export default {
   "AdminUser.endAllSessions": "Encerrar todas as sessões",
   "AdminUser.sendReset": "Enviar link para redefinir a senha",
   "AdminUser.noResetAddress": "Precisa de login com senha e um e-mail",
-  "AdminUser.unlinkTelegram": "Desconectar o Telegram",
+  "AdminUser.unlinkTelegram": "Desvincular o Telegram",
   "AdminUser.removePicture": "Remover foto de perfil",
   "AdminUser.deleteGuest": "Excluir conta de visitante",
   "AdminUser.changeRole": "Mudar função",
@@ -1736,15 +1736,15 @@ export default {
   "AdminUser.role": "Função",
   "AdminUser.status": "Situação",
   "AdminUser.telegram": "Telegram",
-  "AdminUser.telegramLinked": "Conectado <when></when>",
-  "AdminUser.notLinked": "Não conectado",
+  "AdminUser.telegramLinked": "Vinculado <when></when>",
+  "AdminUser.notLinked": "Não vinculado",
   "AdminUser.trial": "Teste da cobrança",
   "AdminUser.trialUsed": "Usado <when></when>",
   "AdminUser.trialNotUsed": "Não usado",
   "AdminUser.noMethods": "Nenhuma forma de entrar.",
   "AdminUser.lastUsed": "Último uso <when></when>",
   "AdminUser.notUsedYet": "Ainda não usada",
-  "AdminUser.passkeyAdded": "<name>{name}</name> · Adicionada <day></day>",
+  "AdminUser.passkeyAdded": "<name>{name}</name> · Adicionada em <day></day>",
   "AdminUser.proven": "Verificado",
   "AdminUser.notProven": "Não verificado",
   "AdminUser.noSessions": "Nenhuma sessão ativa.",
@@ -1785,17 +1785,17 @@ export default {
   "AdminUser.changing": "Mudando…",
   "AdminUser.resetTitle": "Enviar a {name} um link para redefinir a senha",
   "AdminUser.resetText":
-    "A pessoa recebe o mesmo e-mail de “Esqueci minha senha”: um link para escolher uma senha nova. A senha atual continua funcionando até ela trocar.",
+    "A pessoa recebe o mesmo e-mail de “Esqueceu a senha?”: um link para escolher uma senha nova. A senha atual continua funcionando até ela trocar.",
   "AdminUser.sendLink": "Enviar link",
   "AdminUser.sending": "Enviando…",
   "AdminUser.deleteGuestTitle": "Excluir a conta de visitante {name}",
   "AdminUser.deleteGuestText":
     "A conta e tudo o que há nela são excluídos na hora, sem prazo de carência. Não dá para restaurar: sem nenhuma forma de entrar, ninguém consegue provar de quem ela era.",
   "AdminUser.deleting": "Excluindo…",
-  "AdminUser.unlinkTelegramTitle": "Desconectar a conta do Telegram de {name}",
+  "AdminUser.unlinkTelegramTitle": "Desvincular a conta do Telegram de {name}",
   "AdminUser.unlinkTelegramText":
-    "O chat do Telegram da pessoa deixa de receber as notificações dela e não pode mais agir em nome dela. Ela pode conectar de novo pelo perfil.",
-  "AdminUser.unlinking": "Desconectando…",
+    "O chat do Telegram da pessoa deixa de receber as notificações dela e não pode mais agir em nome dela. Ela pode vincular de novo pelo perfil.",
+  "AdminUser.unlinking": "Desvinculando…",
   "AdminUser.removePictureTitle": "Remover a foto de perfil desta pessoa?",
   "AdminUser.removePictureText":
     "No lugar dela aparecem as iniciais, em todo lugar. A pessoa pode enviar uma foto nova.",

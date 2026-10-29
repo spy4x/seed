@@ -17,7 +17,7 @@ export default {
   "SiteFooter.builtBy": "Öffentlich entwickelt von <author>{name}</author>. MIT-Lizenz.",
   "SiteFooter.contact": "Kontakt",
   "SiteFooter.product": "Produkt",
-  "SiteFooter.admin": "Admin-Panel",
+  "SiteFooter.admin": "Adminbereich",
   "SiteFooter.signIn": "Anmelden",
   "SiteFooter.openSource": "Open Source",
   "SiteFooter.source": "Quellcode auf GitHub",
@@ -68,7 +68,7 @@ export default {
   "SubscribeForm.intro":
     "Gib deine E-Mail-Adresse ein. Wir schicken dir einen Link zur Bestätigung, und in jeder E-Mail findest du einen Link zum Abbestellen.",
   "SubscribeForm.email": "E-Mail-Adresse",
-  "SubscribeForm.sending": "Wird gesendet…",
+  "SubscribeForm.sending": "Wird gesendet …",
   "SubscribeForm.submit": "Abonnieren",
   "SubscriptionConfirm.askAgain": "Neuen Link anfordern",
   "SubscriptionConfirm.doneTitle": "Du bist dabei",
@@ -83,7 +83,7 @@ export default {
   "SubscriptionConfirm.title": "Abo bestätigen",
   "SubscriptionConfirm.question": "Neuigkeiten an {email} schicken?",
   "SubscriptionConfirm.questionNoEmail": "Neuigkeiten an deine E-Mail-Adresse schicken?",
-  "SubscriptionConfirm.confirming": "Wird bestätigt…",
+  "SubscriptionConfirm.confirming": "Wird bestätigt …",
   "SubscriptionConfirm.submit": "Bestätigen",
   "Unsubscribe.doneTitle": "Du hast den Newsletter abbestellt",
   "Unsubscribe.doneText": "Wir schicken keine Neuigkeiten mehr an diese E-Mail-Adresse.",
@@ -93,7 +93,7 @@ export default {
   "Unsubscribe.title": "Newsletter abbestellen",
   "Unsubscribe.question": "Keine Neuigkeiten mehr an {email} schicken?",
   "Unsubscribe.questionNoEmail": "Keine Neuigkeiten mehr an deine E-Mail-Adresse schicken?",
-  "Unsubscribe.unsubscribing": "Wird abbestellt…",
+  "Unsubscribe.unsubscribing": "Wird abbestellt …",
   "Unsubscribe.submit": "Abbestellen",
   "NewsletterPage.title": "Newsletter",
   "NewsletterPage.description": "Bestätige oder beende dein Abo des {site}-Newsletters.",
@@ -155,7 +155,7 @@ export default {
   "HomeStatus.guests":
     "Gastkonten: die App mit einem Klick ausprobieren und das Konto behalten, indem man eine Anmeldemethode hinzufügt",
   "HomeStatus.groups":
-    "Gruppen mit Mitgliedern, Rollen, Einladungen und Übergabe an einen neuen Inhaber",
+    "Gruppen mit Mitgliedern, Rollen, Einladungen und Übertragung an einen neuen Inhaber",
   "HomeStatus.export": "Eine Gruppe als Datei exportieren und als neue Gruppe importieren",
   "HomeStatus.attachments": "Bilder und PDFs an Notizen, im Rahmen des jeweiligen Tarifs",
   "HomeStatus.billing": "Abrechnung pro Mitglied mit Testphasen, über Stripe",
@@ -225,11 +225,11 @@ export default {
   "HomeFeatures.groupsTitle": "Gruppen vom ersten Tag an",
   "HomeFeatures.groupsLink": "So funktionieren Gruppen",
   "HomeFeatures.groupsAlt":
-    "Die Mitglieder einer Gruppe, jedes mit seiner Rolle, ein Button zum Einladen und das geöffnete Menü eines Mitglieds mit den Optionen: zum Leser machen, zum Admin machen, aus der Gruppe entfernen.",
+    "Die Mitglieder einer Gruppe, jedes mit seiner Rolle, ein Button zum Einladen und das geöffnete Menü eines Mitglieds mit den Optionen: „Zum Betrachter machen“, „Zum Admin machen“, „Aus der Gruppe entfernen“.",
   "HomeFeatures.groupsText":
-    "Jedes Konto bekommt bei der Registrierung eine Gruppe. Lade Leute ein, gib ihnen Rollen vom Leser bis zum Inhaber, übergib die Gruppe und stelle eine gelöschte Gruppe innerhalb von 30 Tagen wieder her. Jede Gruppe hat eine Übersicht mit ihren wichtigsten Zahlen.",
+    "Jedes Konto bekommt bei der Registrierung eine Gruppe. Lade Leute ein, gib ihnen Rollen vom Betrachter bis zum Inhaber, übertrage die Gruppe und stelle eine gelöschte Gruppe innerhalb von 30 Tagen wieder her. Jede Gruppe hat eine Übersicht mit ihren wichtigsten Zahlen.",
   "HomeFeatures.adminTitle": "Ein Adminbereich",
-  "HomeFeatures.adminLink": "Rundgang durch das Admin-Panel",
+  "HomeFeatures.adminLink": "Rundgang durch den Adminbereich",
   "HomeFeatures.adminText":
     "Operatoren finden eine Person, verwalten Gruppen, erstatten Zahlungen und prüfen, ob das System gesund ist. Der Adminbereich läuft auf einem eigenen Host; riskante Aktionen fragen vorher nach, und jede Aktion wird protokolliert.",
   "HomeFeatures.websiteTitle": "Eine öffentliche Website",
@@ -372,7 +372,7 @@ export default {
   "FeatureTeams.eyebrow": "Gruppen",
   "FeatureTeams.title": "Gruppen mit Rollen, ab der ersten Minute",
   "FeatureTeams.lead":
-    "Jedes Konto bekommt bei der Registrierung eine persönliche Gruppe. Leute legen gemeinsame Gruppen an, laden andere ein, vergeben Rollen vom Leser bis zum Inhaber und übergeben eine Gruppe in einem Schritt. Eine gelöschte Gruppe lässt sich innerhalb von 30 Tagen wiederherstellen, und jede Gruppe führt ein Aktivitätsprotokoll.",
+    "Jedes Konto bekommt bei der Registrierung eine persönliche Gruppe. Leute legen gemeinsame Gruppen an, laden andere ein, vergeben Rollen vom Betrachter bis zum Inhaber und übertragen eine Gruppe in einem Schritt. Eine gelöschte Gruppe lässt sich innerhalb von 30 Tagen wiederherstellen, und jede Gruppe führt ein Aktivitätsprotokoll.",
   "FeatureTeams.fact1":
     "Die Gruppe ist die einzige Mandantengrenze: Persönliche und gemeinsame Daten durchlaufen dieselbe Prüfung",
   "FeatureTeams.fact2": "Die App, ihr Code und diese Website nennen sie alle „Gruppe“",
@@ -487,7 +487,7 @@ export default {
   "FeaturePush.eyebrow": "Benachrichtigungen",
   "FeaturePush.title": "Benachrichtigungen in der App, auf Handy und Desktop und in Telegram",
   "FeaturePush.lead":
-    "Leute werden benachrichtigt, wenn sie eingeladen werden, eine neue Rolle bekommen oder eine Gruppe übergeben bekommen: in der App, per Web-Push auf Handy oder Desktop und in Telegram, sobald sie es verknüpft haben.",
+    "Leute werden benachrichtigt, wenn sie eingeladen werden, eine neue Rolle bekommen oder eine Gruppe übertragen bekommen: in der App, per Web-Push auf Handy oder Desktop und in Telegram, sobald sie es verknüpft haben.",
   "FeaturePush.fact1":
     "Web-Push mit deinen eigenen Schlüsseln, erzeugt von einem Task: deno task vapid-key:create",
   "FeaturePush.fact2": "Ein Zähler für Ungelesenes in der App und „Alle als gelesen markieren“",
@@ -533,7 +533,7 @@ export default {
   "FeatureAdmin.watch": "In {seconds} Sekunden ansehen",
   "FeatureAdmin.fact1": "Eine eigene App auf einem eigenen Host, mit eigenem Sitzungscookie",
   "FeatureAdmin.fact2": "Neun Module, vom Dashboard bis zu den API-Tokens",
-  "FeatureAdmin.fact3": "Riskante Aktionen fragen vorher nach, und jede Aktion landet im Audit-Log",
+  "FeatureAdmin.fact3": "Riskante Aktionen fragen vorher nach, und jede Aktion landet im Protokoll",
   "FeatureAdmin.notYet1": "Sich als eine Person anmelden, um zu sehen, was sie sieht",
   "FeatureAdmin.code": "Code der Admin-App lesen",
   "FeatureDeploy.nav": "Deployment und Monitoring",
@@ -562,14 +562,14 @@ export default {
   "FeatureWebsite.fact3":
     "Ein Newsletter mit Double-Opt-in, Abbestellen mit einem Klick und E-Mails in der Sprache des Empfängers",
   "FeatureWebsite.fact4":
-    "Ein Blog, geschrieben im Admin-Panel, mit Beiträgen in jeder Sprache samt Übersetzungen, Themen, einem RSS-Feed und strukturierten Daten für Artikel",
+    "Ein Blog, geschrieben im Adminbereich, mit Beiträgen in jeder Sprache samt Übersetzungen, Themen, einem RSS-Feed und strukturierten Daten für Artikel",
   "FeatureWebsite.fact5":
-    "Kontaktlinks, im Admin-Panel festgelegt und im Footer und in den strukturierten Daten angezeigt",
+    "Kontaktlinks, im Adminbereich festgelegt und im Footer und in den strukturierten Daten angezeigt",
   "FeatureWebsite.fact6":
-    "Ein optionaler Katalog für einen Shop, bearbeitet im Admin-Panel: Artikel mit Fotos, Farben, Größen, Größentabelle und ausverkauften Größen, in jeder Sprache, in der du verkaufst, mit einem kurzen Tracking-Link pro Artikel und Ort, an dem du ihn teilst",
+    "Ein optionaler Katalog für einen Shop, bearbeitet im Adminbereich: Artikel mit Fotos, Farben, Größen, Größentabelle und ausverkauften Größen, in jeder Sprache, in der du verkaufst, mit einem kurzen Tracking-Link pro Artikel und Ort, an dem du ihn teilst",
   "FeatureWebsite.fact7": "sitemap.xml, robots.txt, Canonical-Links und Open-Graph-Bilder",
   "FeatureWebsite.fact8":
-    "Optionale Statistik ohne Cookies in deinem eigenen Umami, mit einem Event bei jedem Call-to-Action, und eine Statistikseite im Admin-Panel: Besuche und Bestellklicks pro Quelle und pro Artikel",
+    "Optionale Statistik ohne Cookies in deinem eigenen Umami, mit einem Event bei jedem Call-to-Action, und eine Statistikseite im Adminbereich: Besuche und Bestellklicks pro Quelle und pro Artikel",
   "FeatureWebsite.code": "Code der Website lesen",
   "FeatureQuality.nav": "Tests",
   "FeatureQuality.eyebrow": "Qualität",
@@ -640,25 +640,25 @@ export default {
   "Outbox.label":
     "Die Outbox: Eine Änderung und ihr Event werden in einer Datenbanktransaktion geschrieben; der Worker liest das Event und verschickt Mails, Push-Benachrichtigungen und Live-Updates an andere Tabs.",
   "Outbox.transaction": "Eine Transaktion: Beides wird gespeichert oder keins von beiden",
-  "AdminTour.title": "Admin-Panel für dein SaaS: Nutzer, Abrechnung, Audit-Log",
+  "AdminTour.title": "Adminbereich für dein SaaS: Personen, Abrechnung, Protokoll",
   "AdminTour.description":
-    "Das Admin-Panel von Seed: eine Person finden, ihre Sitzungen beenden, eine Zahlung erstatten, einen fehlgeschlagenen Job neu starten. Riskante Aktionen fragen vorher nach; alles wird protokolliert. Kostenlos, MIT.",
-  "AdminTour.heroTitle": "Ein Admin-Panel für die Leute, die dein Produkt betreiben",
+    "Der Adminbereich von Seed: eine Person finden, ihre Sitzungen beenden, eine Zahlung erstatten, einen fehlgeschlagenen Job neu starten. Riskante Aktionen fragen vorher nach; alles wird protokolliert. Kostenlos, MIT.",
+  "AdminTour.heroTitle": "Ein Adminbereich für die Leute, die dein Produkt betreiben",
   "AdminTour.heroLead":
-    "Seed bringt einen Operator-Bereich auf einem eigenen Host mit. Deine Operatoren finden eine Person, sehen ihre Anmeldemethoden, Sitzungen und Gruppen und helfen ihr: eine Sitzung beenden, einen Link zum Zurücksetzen des Passworts schicken, eine Zahlung erstatten. Riskante Aktionen fragen vorher nach, und jede Aktion landet im Audit-Log.",
+    "Seed bringt einen Adminbereich auf einem eigenen Host mit. Deine Operatoren finden eine Person, sehen ihre Anmeldemethoden, Sitzungen und Gruppen und helfen ihr: eine Sitzung beenden, einen Link zum Zurücksetzen des Passworts schicken, eine Zahlung erstatten. Riskante Aktionen fragen vorher nach, und jede Aktion landet im Protokoll.",
   "AdminTour.code": "Code der Admin-App lesen",
   "AdminTour.dashboard": "Dashboard",
   "AdminTour.dashboardText":
     "Das Produkt auf einen Blick, über die letzten 30 Tage: Personen, Registrierungen, wer aktiv ist, Gruppen und Notizen.",
   "AdminTour.stats": "Statistik",
   "AdminTour.statsText":
-    "Die Besuche der Website aus deinem Umami: woher sie kommen, welche Artikel bestellt oder nur angesehen werden und welcher Bestellbutton geklickt wird. Nur Summen, nie einzelne Besucher.",
-  "AdminTour.users": "Nutzer",
+    "Die Besuche der Website aus deinem Umami: woher sie kommen, welche Artikel bestellt oder nur angesehen werden und welcher Bestell-Button geklickt wird. Nur Summen, nie einzelne Besucher.",
+  "AdminTour.users": "Personen",
   "AdminTour.usersText":
     "Alle mit einem Konto. Öffne eine Person, um sie zu sperren, eine Sitzung zu beenden, einen Link zum Zurücksetzen des Passworts zu schicken oder die angeforderten Kopien ihrer Daten zu sehen.",
   "AdminTour.groups": "Gruppen",
   "AdminTour.groupsText":
-    "Jede Gruppe mit Inhaber, Mitgliedern und Dateien. Verwalte Mitglieder und Einladungen, finde und entferne eine Datei oder übergib eine Gruppe an ein anderes Mitglied.",
+    "Jede Gruppe mit Inhaber, Mitgliedern und Dateien. Verwalte Mitglieder und Einladungen, finde und entferne eine Datei oder übertrage eine Gruppe an ein anderes Mitglied.",
   "AdminTour.billing": "Abrechnung",
   "AdminTour.billingText":
     "Wer zahlt, was gezahlt wird und was du verdienst. Erstatte eine Zahlung, schenke Zeit oder kündige ein Abo.",
@@ -671,7 +671,7 @@ export default {
   "AdminTour.catalog": "Katalog",
   "AdminTour.catalogText":
     "Artikel für einen Shop, aus, bis du ihn einschaltest: Namen und Texte in jeder Sprache, ein Preis, Farben, Größen mit Größentabelle, was ausverkauft ist, und Fotos, die du auf einmal hochlädst und per Drag-and-drop sortierst. Ein kurzer Link pro Artikel und Ort, an dem du ihn teilst, gezählt in Umami.",
-  "AdminTour.audit": "Audit-Log",
+  "AdminTour.audit": "Protokoll",
   "AdminTour.auditText":
     "Jede Anmeldung, Kontoänderung, Gruppenänderung und Operator-Aktion, die neueste zuerst. Exportiere es als CSV.",
   "AdminTour.jobs": "Jobs",
@@ -686,27 +686,27 @@ export default {
     "Der tägliche Support: Leute finden, Sitzungen beenden, Links zum Zurücksetzen des Passworts schicken, Gruppen verwalten.",
   "AdminTour.supervisor": "Supervisor",
   "AdminTour.supervisorText":
-    "Erstattet außerdem Zahlungen, kündigt ein Abo sofort und übergibt eine Gruppe an ein anderes Mitglied.",
+    "Erstattet außerdem Zahlungen, kündigt ein Abo sofort und überträgt eine Gruppe an ein anderes Mitglied.",
   "AdminTour.administrator": "Administrator",
   "AdminTour.administratorText": "Vergibt außerdem Rollen, bis eine Stufe unter der eigenen.",
   "AdminTour.guarantee2fa":
-    "Bei der Anmeldung im Admin-Panel wird jeder Operator, der 2FA eingeschaltet hat, nach einem 2FA-Code gefragt.",
+    "Bei der Anmeldung im Adminbereich wird jeder Operator, der 2FA eingeschaltet hat, nach einem 2FA-Code gefragt.",
   "AdminTour.guaranteeHidden":
-    "Wer unter Operator steht, bekommt „Seite nicht gefunden“, als gäbe es das Admin-Panel gar nicht.",
+    "Wer unter Operator steht, bekommt „Seite nicht gefunden“, als gäbe es den Adminbereich gar nicht.",
   "AdminTour.guaranteeLogged":
-    "Riskante Aktionen fragen vorher nach, und jede Aktion landet im Audit-Log.",
+    "Riskante Aktionen fragen vorher nach, und jede Aktion landet im Protokoll.",
   "AdminTour.guaranteePrivate":
-    "Das Admin-Panel liest Zahlen und Kontodaten, nie den Inhalt der Notizen einer Person.",
+    "Der Adminbereich liest Zahlen und Kontodaten, nie den Inhalt der Notizen einer Person.",
   "AdminTour.notYetImpersonate": "Sich als eine Person anmelden, um zu sehen, was sie sieht",
-  "AdminTour.crumb": "Admin-Panel",
+  "AdminTour.crumb": "Adminbereich",
   "AdminTour.meta": "{seconds} Sekunden · {sound} · Beispieldaten",
   "AdminTour.transcriptJump": "Lies, was das Video zeigt",
   "AdminTour.modulesEyebrow": "Module",
   "AdminTour.modulesTitle": "Neun Module, eines pro Aufgabe",
   "AdminTour.modulesLead":
-    "Jedes Modul ist ein Eintrag in der Icon-Leiste des Admin-Panels. Eigene fügst du hinzu, indem du eines kopierst: Die Schritte stehen in <doc>docs/admin-modules.md</doc>.",
+    "Jedes Modul ist ein Eintrag in der Icon-Leiste des Adminbereichs. Eigene fügst du hinzu, indem du eines kopierst: Die Schritte stehen in <doc>docs/admin-modules.md</doc>.",
   "AdminTour.rolesEyebrow": "Rollen",
-  "AdminTour.rolesTitle": "Niemand handelt an einer gleichen oder höheren Rolle",
+  "AdminTour.rolesTitle": "Niemand ändert etwas an einer gleich hohen oder höheren Rolle",
   "AdminTour.rolesLead":
     "Operatoren arbeiten in Stufen. Eine höhere Rolle kann alles, was eine niedrigere kann, und niemand kann etwas an einer Person ändern, deren Rolle gleich hoch oder höher ist als die eigene.",
   "AdminTour.transcriptTitle": "Was das Video zeigt",
@@ -720,9 +720,9 @@ export default {
   "AdminVideo.soundLine": "Musik, kein Sprecher",
   "AdminVideo.soundLabel": "mit Musik und ohne Sprecher",
   "AdminVideo.soundTranscript": "Unter dem Video läuft Musik. Es wird nicht gesprochen.",
-  "AdminVideo.label": "Das Admin-Panel von Seed, ein Video von {seconds} Sekunden {sound}",
+  "AdminVideo.label": "Der Adminbereich von Seed, ein Video von {seconds} Sekunden {sound}",
   "AdminVideo.stillAlt":
-    "Video zum Admin-Panel ansehen: die Nutzerseite mit erfundenen Personen, ihrer Rolle, ihrem Status und wann sie zuletzt aktiv waren.",
+    "Video zum Adminbereich ansehen: die Seite „Personen“ mit erfundenen Personen, ihrer Rolle, ihrem Status und wann sie zuletzt aktiv waren.",
   "Compare.title": "Seed vs. ShipFast, Supastarter, Makerkit und Open SaaS",
   "Compare.description":
     "Ein ehrlicher, datierter Vergleich von SaaS-Startern und Boilerplates: Preis, Lizenz, Hosting, 2FA, Gruppen, Abrechnung pro Mitglied, Admin, offline. Mit Quellen.",

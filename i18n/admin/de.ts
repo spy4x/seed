@@ -128,7 +128,7 @@ export default {
   "AdminAuditEvent.memberRoleChanged": "Rolle eines Mitglieds geändert",
   "AdminAuditEvent.memberRemoved": "Mitglied entfernt",
   "AdminAuditEvent.memberLeft": "Mitglied ausgetreten",
-  "AdminAuditEvent.ownershipTransferred": "Gruppe übergeben",
+  "AdminAuditEvent.ownershipTransferred": "Gruppe übertragen",
   "AdminAuditEvent.invitationCreated": "Einladung verschickt",
   "AdminAuditEvent.invitationAccepted": "Einladung angenommen",
   "AdminAuditEvent.invitationRevoked": "Einladung zurückgezogen",
@@ -202,7 +202,7 @@ export default {
   "AdminAuditEvent.signedUpWithLink": "Per E-Mail-Link registriert",
   "AdminAuditEvent.paymentRefunded": "Zahlung von einem Operator erstattet",
   "AdminAuditEvent.timeGiven": "Gratiszeit von einem Operator geschenkt",
-  "AdminAuditEvent.cancelAtPeriodEnd": "Abo von einem Operator zum Laufzeitende gekündigt",
+  "AdminAuditEvent.cancelAtPeriodEnd": "Abo von einem Operator zum Ende des Zeitraums gekündigt",
   "AdminAuditEvent.cancelledNow": "Abo von einem Operator sofort gekündigt",
   "AdminAuditEvent.cancellationUndone": "Kündigung von einem Operator zurückgenommen",
   "AdminAuditEvent.catalogItemCreated": "Katalogartikel hinzugefügt",
@@ -277,7 +277,7 @@ export default {
   "AdminBilling.pastDueCount": "{count} überfällig",
   "AdminBilling.inTrial": "In der Testphase",
   "AdminBilling.trialsEnding": "{count} enden in den nächsten 7 Tagen",
-  "AdminBilling.endingHint": "Gekündigt, aber bis zum Ende der Laufzeit bezahlt",
+  "AdminBilling.endingHint": "Gekündigt, aber bis zum Ende des Zeitraums bezahlt",
   "AdminBilling.source":
     "Berechnet aus den hier gespeicherten Abos. Eine Änderung in Stripe erscheint also erst, wenn der Webhook von Stripe eintrifft.",
   "AdminBilling.lastEvent": "Letztes Ereignis von Stripe <when></when>.",
@@ -300,7 +300,7 @@ export default {
   "AdminBillingCustomer.doneCancelNow":
     "Das Abo von {group} ist gekündigt. Die Gruppe nutzt jetzt den kostenlosen Tarif.",
   "AdminBillingCustomer.doneCancelOn": "Das Abo von {group} endet am {date}.",
-  "AdminBillingCustomer.doneCancelEnd": "Das Abo von {group} endet mit der laufenden Periode.",
+  "AdminBillingCustomer.doneCancelEnd": "Das Abo von {group} endet mit dem laufenden Zeitraum.",
   "AdminBillingCustomer.doneUndoOn": "Das Abo von {group} verlängert sich am {date}.",
   "AdminBillingCustomer.doneUndo": "Das Abo von {group} verlängert sich wie gewohnt.",
   "AdminBillingCustomer.needsSupervisor": "Nur mit Supervisor-Rolle",
@@ -352,7 +352,7 @@ export default {
   "AdminBillingCustomer.paymentRefundedTitle": "Zahlung erstattet",
   "AdminBillingCustomer.noChargeUntil": "Keine Abbuchung bis zum {date}",
   "AdminBillingCustomer.timeGiven": "Gratiszeit geschenkt",
-  "AdminBillingCustomer.setToCancel": "Zum Laufzeitende gekündigt",
+  "AdminBillingCustomer.setToCancel": "Zum Ende des Zeitraums gekündigt",
   "AdminBillingCustomer.cancelledNow": "Sofort gekündigt",
   "AdminBillingCustomer.cancellationUndone": "Kündigung zurückgenommen",
   "AdminBillingCustomer.by": "Durch {operator}.",
@@ -363,7 +363,7 @@ export default {
   "AdminBillingCustomer.timedOut":
     "Stripe hat noch nicht bestätigt. Sieh beim Kunden in Stripe nach.",
   "AdminBillingCustomer.renewHint":
-    "Der Inhaber kann es vor Laufzeitende unter „Abrechnung verwalten“ wieder verlängern.",
+    "Der Inhaber kann es vor Ende des Zeitraums unter „Abrechnung verwalten“ wieder verlängern.",
   "AdminBillingCustomer.alreadyFree":
     "<group>{group}</group> nutzt schon den kostenlosen Tarif und wird nicht mehr belastet.",
   "AdminBillingCustomer.keepsUntilThen":
@@ -392,12 +392,12 @@ export default {
   "AdminBillingCustomer.cancelTitle": "Abo von {group} kündigen?",
   "AdminBillingCustomer.cancelling": "Wird gekündigt …",
   "AdminBillingCustomer.when": "Wann?",
-  "AdminBillingCustomer.atPeriodEndOn": "Zum Laufzeitende am {date}",
-  "AdminBillingCustomer.atPeriodEnd": "Zum Laufzeitende",
+  "AdminBillingCustomer.atPeriodEndOn": "Zum Ende des Zeitraums am {date}",
+  "AdminBillingCustomer.atPeriodEnd": "Zum Ende des Zeitraums",
   "AdminBillingCustomer.alreadySet": "Das Abo endet bereits zu diesem Zeitpunkt.",
   "AdminBillingCustomer.now": "Sofort",
   "AdminBillingCustomer.nowHelp":
-    "{group} wechselt sofort in den kostenlosen Tarif. Die laufende Periode wird nicht erstattet; erstatte sie bei Bedarf separat. Der Inhaber bekommt keine Benachrichtigung.",
+    "{group} wechselt sofort in den kostenlosen Tarif. Der laufende Zeitraum wird nicht erstattet; erstatte ihn bei Bedarf separat. Der Inhaber bekommt keine Benachrichtigung.",
   "AdminBillingCustomer.undoTitle": "Abo von {group} behalten?",
   "AdminBillingCustomer.undoSubmit": "Abo behalten",
   "AdminBillingCustomer.renewsOn":
@@ -1039,9 +1039,9 @@ export default {
   "AdminStats.orderRate": "Bestellquote",
   "AdminStats.orderRateHint": "Bestellklicks pro 100 Besuche",
   "AdminStats.orderClickMeans":
-    "Ein Bestellklick ist ein Tipp auf einen Bestellknopf für {channels}. Die Bestellung selbst läuft dann im Chat.",
+    "Ein Bestellklick ist ein Tipp auf einen Bestell-Button für {channels}. Die Bestellung selbst läuft dann im Chat.",
   "AdminStats.orderClickMeansAny":
-    "Ein Bestellklick ist ein Tipp auf einen Bestellknopf. Die Bestellung selbst läuft dann im Chat.",
+    "Ein Bestellklick ist ein Tipp auf einen Bestell-Button. Die Bestellung selbst läuft dann im Chat.",
   "AdminStats.sourcesTitle": "Woher die Besuche kommen",
   "AdminStats.sourcesIntro":
     "Die meisten Bestellklicks zuerst. Wähle eine Quelle, um sie im Diagramm zu sehen.",
@@ -1111,7 +1111,7 @@ export default {
   "AdminDataExports.expiredOn": "Abgelaufen am <day></day>",
   "AdminDataExports.expiresOn": "Läuft am <day></day> ab",
   "AdminFrame.tag": "Admin",
-  "AdminFrame.sections": "Bereiche der Verwaltung",
+  "AdminFrame.sections": "Module des Adminbereichs",
   "AdminFrame.shortcuts": "Tastenkürzel",
   "AdminFrame.signOut": "Abmelden",
   "AdminFrame.comingSoon": "{title} kommt bald",
@@ -1141,7 +1141,7 @@ export default {
     "Diese Datei gibt es nicht mehr. Vielleicht hat sie schon jemand entfernt.",
   "AdminGroup.title": "Gruppe",
   "AdminGroup.loading": "Gruppe wird geladen",
-  "AdminGroup.transfer": "Gruppe übergeben",
+  "AdminGroup.transfer": "Gruppe übertragen",
   "AdminGroup.members": "Mitglieder",
   "AdminGroup.invitations": "Einladungen",
   "AdminGroup.files": "Dateien",
@@ -1233,7 +1233,7 @@ export default {
   "AdminGroup.search": "Suchen",
   "AdminGroup.filePages": "Seiten mit Dateien",
   "AdminGroup.nothingRecorded": "Noch keine Einträge.",
-  "AdminGroup.byOperator": "Von einem Operator, über die Verwaltung",
+  "AdminGroup.byOperator": "Von einem Operator, über den Adminbereich",
   "AdminGroup.removeTitle": "{name} entfernen?",
   "AdminGroup.removeTitleUnknown": "Dieses Mitglied entfernen?",
   "AdminGroup.removeText":
@@ -1251,11 +1251,11 @@ export default {
   "AdminGroup.removeFileTitleUnknown": "Diese Datei entfernen?",
   "AdminGroup.removeFileText":
     "Die Mitglieder von <group>{group}</group> sehen sie dann nicht mehr. Die Notiz bleibt, und die Aktivität der Gruppe zeigt, dass der Support sie entfernt hat.",
-  "AdminGroup.transferTitle": "{group} übergeben",
+  "AdminGroup.transferTitle": "{group} übertragen",
   "AdminGroup.transferText":
     "Das gewählte Mitglied wird Inhaber und bekommt eine Benachrichtigung. <name>{name}</name> bleibt als Admin in der Gruppe. Verlängert sich das Abo noch, muss der jetzige Inhaber es zuerst kündigen.",
-  "AdminGroup.transferSubmit": "Übergeben",
-  "AdminGroup.transferring": "Wird übergeben …",
+  "AdminGroup.transferSubmit": "Übertragen",
+  "AdminGroup.transferring": "Wird übertragen …",
   "AdminGroup.close": "Schließen",
   "AdminGroup.newOwner": "Neuer Inhaber",
   "AdminGroup.candidate": "{name} ({role})",
@@ -1464,7 +1464,7 @@ export default {
   "AdminNewsletter.confirmedHint": "Bestätigt, bekommen jede Ausgabe",
   "AdminNewsletter.pendingHint": "Bestätigungs-E-Mail ist unterwegs",
   "AdminNewsletter.joined": {
-    "one": "Neu, letzter {count} Tag",
+    "one": "Neu, letzter Tag",
     "other": "Neu, letzte {count} Tage",
   },
   "AdminNewsletter.issuesSent": "Verschickte Ausgaben",
@@ -1482,7 +1482,7 @@ export default {
     "other": "−{n} in {count} Tagen",
   },
   "AdminNewsletter.chartLabel": {
-    "one": "Abonnenten am Ende jedes Tages, letzter {count} Tag",
+    "one": "Abonnenten am Ende jedes Tages, letzter Tag",
     "other": "Abonnenten am Ende jedes Tages, letzte {count} Tage",
   },
   "AdminNewsletter.nothingYet": "Noch nichts",
@@ -1558,7 +1558,7 @@ export default {
   "AdminPersonTabs.invitationReceived": "Einladung erhalten",
   "AdminPersonTabs.roleChanged": "Rolle in einer Gruppe geändert",
   "AdminPersonTabs.removedFromGroup": "Aus einer Gruppe entfernt",
-  "AdminPersonTabs.ownershipReceived": "Gruppe übergeben",
+  "AdminPersonTabs.ownershipReceived": "Gruppe übertragen",
   "AdminPersonTabs.dataExportReady": "Datenexport bereit",
   "AdminPreferences.title": "Sprache und Region",
   "AdminPreferences.theme": "Design",
@@ -1625,7 +1625,7 @@ export default {
   "AdminSystem.retrying": "Wartet auf neuen Versuch",
   "AdminSystem.scheduled": "Geplant",
   "AdminSystem.failedDays": {
-    "one": "Fehlgeschlagen, letzter {count} Tag",
+    "one": "Fehlgeschlagen, letzter Tag",
     "other": "Fehlgeschlagen, letzte {count} Tage",
   },
   "AdminSystem.backup": "Backup",

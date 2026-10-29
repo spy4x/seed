@@ -108,7 +108,7 @@ export default {
   "BillingNoticeMail.trialWithoutCard":
     "Para mantener el plan, añade una tarjeta en la página del grupo antes de esa fecha. Entonces empezará la suscripción y se hará el cargo en tu tarjeta. Sin tarjeta, el grupo pasará al plan gratuito.",
   "BillingNoticeMail.paymentSubject": "No se pudo cobrar el plan {plan}",
-  "BillingNoticeMail.paymentWhat": "No se pudo cobrar el pago del plan {plan} de «{group}».",
+  "BillingNoticeMail.paymentWhat": "No se pudo cobrar el plan {plan} de «{group}».",
   "BillingNoticeMail.paymentKept":
     "Mantienes el plan hasta el <strong>{date}</strong> mientras volvemos a intentar el cobro. Para conservarlo después, actualiza la tarjeta en la página del grupo.",
   "BillingNoticeMail.paymentFree":
@@ -129,5 +129,5 @@ export default {
   "SubscriberWelcomeMail.reason": "Recibes este correo porque te suscribiste en {host}.",
   "SubscriberWelcomeMail.unsubscribe": "Darme de baja",
   "SubscriberIssue.reason": "Recibes este correo porque te suscribiste en {host}.",
-  "SubscriberIssue.readPost": "Leer el artículo",
+  "SubscriberIssue.readPost": "Leer la entrada",
 } satisfies Catalog

@@ -78,16 +78,16 @@ export default {
     "Uma chave de acesso foi removida da sua conta em {host} em {when}. Ela não serve mais para entrar.",
   "SignInMethodMail.passkeyRemovedNotYou":
     "Se não foi você, entre, troque sua senha e adicione sua chave de acesso de novo.",
-  "SignInMethodMail.linkedSubject": "{provider} foi conectado à sua conta",
+  "SignInMethodMail.linkedSubject": "{provider} foi vinculado à sua conta",
   "SignInMethodMail.linked":
-    "{provider} foi conectado à sua conta em {host} em {when}. Agora você pode entrar com ele.",
+    "{provider} foi vinculado à sua conta em {host} em {when}. Agora você pode entrar com ele.",
   "SignInMethodMail.linkedNotYou":
-    "Se não foi você, desconecte {provider} no seu perfil e troque sua senha.",
-  "SignInMethodMail.unlinkedSubject": "{provider} foi desconectado da sua conta",
+    "Se não foi você, desvincule {provider} no seu perfil e troque sua senha.",
+  "SignInMethodMail.unlinkedSubject": "{provider} foi desvinculado da sua conta",
   "SignInMethodMail.unlinked":
-    "{provider} foi desconectado da sua conta em {host} em {when}. Você não pode mais entrar com ele.",
+    "{provider} foi desvinculado da sua conta em {host} em {when}. Você não pode mais entrar com ele.",
   "SignInMethodMail.unlinkedNotYou":
-    "Se não foi você, entre, troque sua senha e conecte {provider} de novo.",
+    "Se não foi você, entre, troque sua senha e vincule {provider} de novo.",
   "ApiTokenMail.subject": "Um novo token de API foi criado",
   "ApiTokenMail.created": "Um token de API chamado “{name}” foi criado para sua conta em {host}.",
   "ApiTokenMail.readUntil": "Ele pode ler o grupo “{group}” e expira em {date}.",
@@ -114,16 +114,16 @@ export default {
   "BillingNoticeMail.planWhat":
     "O plano {plan} do grupo “{group}” foi cancelado e termina em <strong>{date}</strong>. Depois disso, o grupo passa para o plano gratuito.",
   "BillingNoticeMail.planNext": "Mudou de ideia? Renove na página do grupo antes dessa data.",
-  "SubscriberConfirmMail.subject": "Confirme sua assinatura de {host}",
+  "SubscriberConfirmMail.subject": "Confirme sua inscrição em {host}",
   "SubscriberConfirmMail.asked": "Alguém inscreveu este e-mail para receber novidades de {host}.",
   "SubscriberConfirmMail.within": "Confirme em até três dias para começar a receber.",
   "SubscriberConfirmMail.button": "Confirmar",
   "SubscriberConfirmMail.ignore":
     "Se não foi você, ignore este e-mail. Não vamos mandar nada para você.",
-  "SubscriberWelcomeMail.subject": "Sua assinatura de {host} está confirmada",
+  "SubscriberWelcomeMail.subject": "Sua inscrição em {host} está confirmada",
   "SubscriberWelcomeMail.subscribed": "Pronto, você vai receber as novidades de {host}.",
   "SubscriberWelcomeMail.reason": "Você recebeu este e-mail porque se inscreveu em {host}.",
-  "SubscriberWelcomeMail.unsubscribe": "Cancelar assinatura",
+  "SubscriberWelcomeMail.unsubscribe": "Cancelar inscrição",
   "SubscriberIssue.reason": "Você recebeu este e-mail porque se inscreveu em {host}.",
   "SubscriberIssue.readPost": "Ler o post",
 } satisfies Catalog

@@ -621,24 +621,26 @@ export default {
   "NotificationsScreen.readFailed": "No se pudo marcar como leída.",
   "NotificationsScreen.readAllFailed": "No se pudieron marcar como leídas.",
   "NotificationsScreen.invitedViewer":
-    "Te invitaron a unirte a «<group>{group}</group>» como lector.",
+    "Te invitaron a unirte a «<group>{group}</group>» con el rol de lector.",
   "NotificationsScreen.invitedEditor":
-    "Te invitaron a unirte a «<group>{group}</group>» como editor.",
+    "Te invitaron a unirte a «<group>{group}</group>» con el rol de editor.",
   "NotificationsScreen.invitedAdmin":
-    "Te invitaron a unirte a «<group>{group}</group>» como administrador.",
+    "Te invitaron a unirte a «<group>{group}</group>» con el rol de administrador.",
   "NotificationsScreen.invitedOwner":
-    "Te invitaron a unirte a «<group>{group}</group>» como propietario.",
+    "Te invitaron a unirte a «<group>{group}</group>» con el rol de propietario.",
   "NotificationsScreen.invitedMember":
     "Te invitaron a unirte a «<group>{group}</group>» como miembro.",
-  "NotificationsScreen.roleViewer": "Ahora eres lector en «<group>{group}</group>».",
-  "NotificationsScreen.roleEditor": "Ahora eres editor en «<group>{group}</group>».",
-  "NotificationsScreen.roleAdmin": "Ahora eres administrador en «<group>{group}</group>».",
-  "NotificationsScreen.roleOwner": "Ahora eres propietario en «<group>{group}</group>».",
+  "NotificationsScreen.roleViewer": "Ahora tienes el rol de lector en «<group>{group}</group>».",
+  "NotificationsScreen.roleEditor": "Ahora tienes el rol de editor en «<group>{group}</group>».",
+  "NotificationsScreen.roleAdmin":
+    "Ahora tienes el rol de administrador en «<group>{group}</group>».",
+  "NotificationsScreen.roleOwner":
+    "Ahora tienes el rol de propietario en «<group>{group}</group>».",
   "NotificationsScreen.roleMember": "Ahora eres miembro en «<group>{group}</group>».",
   "NotificationsScreen.invited": "Te invitaron a unirte a «<group>{group}</group>».",
   "NotificationsScreen.roleChanged": "Cambió tu rol en «<group>{group}</group>».",
   "NotificationsScreen.removed": "Te quitaron de «<group>{group}</group>».",
-  "NotificationsScreen.owned": "Ahora eres propietario de «<group>{group}</group>».",
+  "NotificationsScreen.owned": "«<group>{group}</group>» ahora es tuyo.",
   "NotificationsScreen.someGroup": "un grupo",
   "NotificationsScreen.reminderFirstNote":
     "No pierdas la nota que acabas de escribir. Por ahora solo está en este navegador. Añade un método de inicio de sesión para abrirla en cualquier dispositivo.",
@@ -696,7 +698,7 @@ export default {
   "OnboardingCard.goTo": "Ir a {place}",
   "OnboardingCard.goToHighlighted": "Ir al control resaltado",
   "OnboardingCard.title": "Primeros pasos",
-  "OnboardingCard.tourOffer": "¿Eres nuevo? Haz un recorrido rápido.",
+  "OnboardingCard.tourOffer": "¿Primera vez aquí? Haz un recorrido rápido.",
   "OnboardingCard.tourStart": "Hacer el recorrido",
   "OnboardingCard.tourSkip": "Saltar el recorrido",
   "OnboardingCard.keep": "Conserva tu cuenta",
@@ -773,7 +775,7 @@ export default {
       "Su plan admite como máximo {count} archivos entre todas las notas. Quita un archivo de cualquier nota para hacer sitio.",
   },
   "PlanRefusalNotice.storageText": "Su plan no tiene espacio para más archivos.",
-  "PlanRefusalNotice.rolesTitle": "Para ascender a miembros hace falta un plan de pago",
+  "PlanRefusalNotice.rolesTitle": "Para subir el rol de un miembro hace falta un plan de pago",
   "PlanRefusalNotice.rolesText":
     "Con el plan de este grupo puedes bajar el rol de un miembro o quitarlo, pero no ascenderlo.",
   "PlanRefusalNotice.openBilling": "Abrir Plan y facturación",
@@ -821,7 +823,7 @@ export default {
   "GuestScreens.tryAgain": "Reintentar",
   "GuestScreens.signedIn": "Ya iniciaste sesión",
   "GuestScreens.signedInText":
-    "Tu cuenta está abierta en este navegador. Cierra sesión primero para probar la app como invitado.",
+    "Tu cuenta está abierta en este navegador. Cierra sesión primero para probar la app con una cuenta de invitado.",
   "GuestScreens.openApp": "Abrir la app",
   "GuestScreens.off": "Crea una cuenta para empezar",
   "GuestScreens.offText": "Aquí no se puede probar la app sin una cuenta.",
@@ -851,7 +853,7 @@ export default {
   "GuestScreens.isKeptText":
     "Tiene un método de inicio de sesión, así que puedes abrirla en cualquier dispositivo.",
   "GuestScreens.keepText":
-    "Añade una forma de iniciar sesión y podrás abrir esta cuenta en cualquier dispositivo. Tus notas y grupos siguen igual.",
+    "Añade un método de inicio de sesión y podrás abrir esta cuenta en cualquier dispositivo. Tus notas y grupos siguen igual.",
   "GuestScreens.ways": "Formas de iniciar sesión",
   "GuestScreens.openingProvider": "Abriendo {provider}…",
   "GuestScreens.addPasskey": "Añadir una llave de acceso",
@@ -867,7 +869,7 @@ export default {
   "GuestScreens.takenAddress": "Ese correo ya tiene una cuenta.",
   "GuestScreens.takenEmail": "<email>{email}</email> ya tiene una cuenta.",
   "GuestScreens.takenRest":
-    "Tu cuenta de invitado no cambió. Elige qué hacer con lo que creaste como invitado.",
+    "Tu cuenta de invitado no cambió. Elige qué hacer con lo que creaste en la cuenta de invitado.",
   "GuestScreens.moveOne":
     "Inicia sesión en esa cuenta y mueve allí <name>{name}</name>. Después se eliminará la cuenta de invitado.",
   "GuestScreens.moveMany": {
@@ -890,7 +892,7 @@ export default {
   "GuestScreens.keepGuestHint": "No cambia nada. Puedes añadir otro método de inicio de sesión.",
   "GuestScreens.linked": "Ya está vinculado a otra cuenta",
   "GuestScreens.legend": "Qué pasa con esta cuenta de invitado",
-  "GuestScreens.choose": "Elige qué hacer con lo que creaste como invitado.",
+  "GuestScreens.choose": "Elige qué hacer con lo que creaste en la cuenta de invitado.",
   "GuestScreens.passwordOf": "La contraseña de {email}.",
   "GuestScreens.passwordOfThat": "La contraseña de esa cuenta.",
   "GuestScreens.otp": "Código de la app de autenticación de esa cuenta",
@@ -1022,7 +1024,7 @@ export default {
     "No encontramos esta nota en <group>{group}</group>. Puede que la hayan eliminado o que esté en otro de tus grupos: cambia a ese grupo y ábrela desde allí.",
   "NoteEditor.loading": "Cargando la nota…",
   "NoteEditor.createdBy": "Creada por <name>{name}</name>, <date>{date}</date>",
-  "NoteEditor.created": "Creada <date>{date}</date>",
+  "NoteEditor.created": "Creada el <date>{date}</date>",
   "NoteEditor.updatedBy": "Editada por <name>{name}</name>, <date>{date}</date>",
   "NoteEditor.updated": "Editada <date>{date}</date>",
   "NoteEditor.new": "Nueva nota",
@@ -1116,8 +1118,8 @@ export default {
   "Notes.moveTo": "Mover a un grupo",
   "Notes.moving": "Moviendo…",
   "Notes.move": "Mover",
-  "Notes.updated": "Editada <date>{date}</date>",
-  "Notes.created": "Creada <date>{date}</date>",
+  "Notes.updated": "Editada: <date>{date}</date>",
+  "Notes.created": "Creada: <date>{date}</date>",
   "Notes.tick": "Seleccionar {title}",
   "Notes.actions": "Acciones para {title}",
   "Notes.open": "Abrir",
@@ -1307,7 +1309,7 @@ export default {
   "ProfileNotifications.emptyTitle": "Todavía no hay dispositivos",
   "ProfileNotifications.emptyText": "Añade este navegador para recibir notificaciones en él.",
   "ProfileNotifications.device": "Dispositivo {id}",
-  "ProfileNotifications.added": "Añadido {date}",
+  "ProfileNotifications.added": "Añadido el {date}",
   "ProfileNotifications.remove": "Quitar<hidden> el dispositivo {id}</hidden>",
   "ProfileNotifications.working": "Un momento…",
   "ProfileNotifications.add": "Añadir este dispositivo",
@@ -1433,7 +1435,7 @@ export default {
   "ProfileTelegram.description":
     "Recibe tus notificaciones en un chat con {bot} y usa sus comandos allí.",
   "ProfileTelegram.chat": "Chat",
-  "ProfileTelegram.linked": "Vinculado <day></day>",
+  "ProfileTelegram.linked": "Vinculado el <day></day>",
   "ProfileTelegram.notLinked": "Sin vincular",
   "ProfileTelegram.unlinkHidden": "Desvincular<hidden> Telegram</hidden>",
   "ProfileTelegram.link": "Vincular Telegram",
@@ -1558,7 +1560,7 @@ export default {
   "SignInLinkScreen.signedInAs":
     "Iniciaste sesión como <email>{email}</email>. Si continúas, entrarás en la cuenta del enlace.",
   "SignInLinkScreen.guest":
-    "Estás usando la app como invitado. Si pediste este enlace en este navegador, al continuar se guardará esta cuenta de invitado con el correo del enlace. Si ese correo ya tiene una cuenta, te preguntaremos antes.",
+    "Estás usando la app con una cuenta de invitado. Si pediste este enlace en este navegador, al continuar se guardará esta cuenta de invitado con el correo del enlace. Si ese correo ya tiene una cuenta, te preguntaremos antes.",
   "SignInLinkScreen.signingIn": "Iniciando sesión…",
   "SignInLinkScreen.stay": "Mantener la sesión iniciada",
   "SignInMethods.failed": "No se pudieron cambiar tus métodos de inicio de sesión",
@@ -1601,12 +1603,13 @@ export default {
   "SignInMethods.unlinkButton": "Desvincular",
   "SignInMethods.rename": "Cambiar el nombre de {name}",
   "SignInMethods.passkeyName": "Nombre de la llave de acceso",
-  "SignInMethods.addedUsed": "Añadida <added></added> · Último uso <used></used>",
-  "SignInMethods.addedUnused": "Añadida <added></added> · Sin usar todavía",
+  "SignInMethods.addedUsed": "Añadida el <added></added> · Último uso <used></used>",
+  "SignInMethods.addedUnused": "Añadida el <added></added> · Sin usar todavía",
   "SignInMethods.usedHere": "Usada en este dispositivo",
-  "SignInMethods.onlyPasskey": "Es tu única forma de iniciar sesión, así que no puedes quitarla.",
+  "SignInMethods.onlyPasskey":
+    "Es tu único método de inicio de sesión, así que no puedes quitarlo.",
   "SignInMethods.onlyLinked":
-    "Es tu única forma de iniciar sesión, así que no puedes desvincularla.",
+    "Es tu único método de inicio de sesión, así que no puedes desvincularlo.",
   "SignInMethods.passkeyNotSaved": "No se pudo guardar la llave de acceso. Vuelve a intentarlo.",
   "SignInMethods.passkeyOnDevice": "Este dispositivo ya tiene una llave de acceso para tu cuenta.",
   "SignUpCodeScreen.checkFailed": "No se pudo comprobar el código",
@@ -1910,7 +1913,7 @@ export default {
   "ApiTokens.cancel": "Cancelar",
   "ApiTokens.readWrite": "Lectura y escritura",
   "ApiTokens.readOnly": "Solo lectura",
-  "ApiTokens.expires": "Caduca <date>{date}</date>",
+  "ApiTokens.expires": "Caduca el <date>{date}</date>",
   "ApiTokens.neverExpires": "No caduca",
   "ApiTokens.lastUsed": "Último uso <when>{when}</when>",
   "ApiTokens.neverUsed": "Sin usar",
@@ -1942,7 +1945,7 @@ export default {
   },
   "AccountDelete.deleting": "Eliminando…",
   "AccountDelete.blocked":
-    "Eres propietario de grupos que otras personas todavía usan o pagan. Resuelve cada uno primero y luego vuelve.",
+    "Tienes grupos que otras personas todavía usan o pagan. Resuelve cada uno primero y luego vuelve.",
   "AuthScreen.demoNote":
     "Esta es una demo pública que se reinicia cada noche. Las cuentas nuevas traen datos de ejemplo para explorar.",
   "AuthScreen.demoGuestNote":
@@ -1980,7 +1983,7 @@ export default {
   "AuthScreen.noCodeText": "Este inicio de sesión no necesita código.",
   "AuthScreen.signedInTitle": "Ya iniciaste sesión",
   "AuthScreen.signedInText": "No hay nada que hacer aquí.",
-  "AuthScreen.newHere": "¿Eres nuevo? <link>Crea una cuenta</link>",
+  "AuthScreen.newHere": "¿Primera vez aquí? <link>Crea una cuenta</link>",
   "AuthScreen.haveAccount": "¿Ya tienes una cuenta? <link>Inicia sesión</link>",
   "AuthScreen.lostDevice": "¿Perdiste tu dispositivo? <link>Volver a iniciar sesión</link>",
   "AuthScreen.sending": "Enviando…",

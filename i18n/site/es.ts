@@ -149,7 +149,7 @@ export default {
   "HomeStatus.signIn":
     "Registro, inicio de sesión, verificación del correo electrónico, restablecimiento de contraseña, inicio de sesión con Google y GitHub, llaves de acceso, enlaces mágicos y 2FA con una app de autenticación",
   "HomeStatus.guests":
-    "Cuentas de invitado: prueba la aplicación con un clic y conserva la cuenta añadiendo una forma de iniciar sesión",
+    "Cuentas de invitado: prueba la aplicación con un clic y conserva la cuenta añadiendo un método de inicio de sesión",
   "HomeStatus.groups": "Grupos con miembros, roles, invitaciones y traspaso de la propiedad",
   "HomeStatus.export": "Exportar un grupo a un archivo e importarlo como grupo nuevo",
   "HomeStatus.attachments": "Imágenes y PDF adjuntos a las notas, dentro del espacio de cada plan",
@@ -168,7 +168,7 @@ export default {
   "HomeStatus.notBuiltDesktop": "Una app de escritorio para Windows, macOS y Linux",
   "HomeFaq.tryQuestion": "¿Puedo probarlo sin una cuenta?",
   "HomeFaq.tryAnswer":
-    "Sí. «Prueba la demo en vivo» abre la aplicación con una cuenta de invitado y datos de ejemplo, sin correo ni contraseña. Puedes añadir una forma de iniciar sesión, pero la demo se borra igualmente cada noche. Seed en sí no necesita ninguna cuenta: clónalo desde GitHub.",
+    "Sí. «Prueba la demo en vivo» abre la aplicación con una cuenta de invitado y datos de ejemplo, sin correo ni contraseña. Puedes añadir un método de inicio de sesión, pero la demo se borra igualmente cada noche. Seed en sí no necesita ninguna cuenta: clónalo desde GitHub.",
   "HomeFaq.freeQuestion": "¿Seed es gratis de verdad?",
   "HomeFaq.freeAnswer":
     "Sí. Tiene licencia MIT: úsalo en tantos productos como quieras, comerciales o no, publica tu fork, sin necesidad de cuenta. Solo pagas el servidor que alquilas y los servicios que actives, como Stripe o un proveedor de correo.",
@@ -204,7 +204,7 @@ export default {
   "HomeFeatures.signInTitle": "Inicio de sesión, resuelto",
   "HomeFeatures.signInLink": "Cómo funciona el inicio de sesión",
   "HomeFeatures.signInAlt":
-    "La página de seguridad de un perfil: las formas de iniciar sesión, la verificación en dos pasos (2FA) y las sesiones abiertas.",
+    "La página de seguridad de un perfil: los métodos de inicio de sesión, la verificación en dos pasos (2FA) y las sesiones abiertas.",
   "HomeFeatures.signInText":
     "Correo y contraseña con códigos de verificación, restablecimiento de contraseña, inicio de sesión con Google y GitHub, llaves de acceso, enlaces de inicio de sesión por correo, cuentas de invitado y 2FA con una app de autenticación. Sesiones que puedes ver y cerrar.",
   "HomeFeatures.billingTitle": "Facturación por miembro",
@@ -220,7 +220,7 @@ export default {
   "HomeFeatures.groupsTitle": "Grupos desde el primer día",
   "HomeFeatures.groupsLink": "Cómo funcionan los grupos",
   "HomeFeatures.groupsAlt":
-    "Los miembros de un grupo, cada uno con su rol, un botón para invitar a gente y el menú de un miembro abierto: «Cambiar a Lector», «Cambiar a Administrador», «Quitar del grupo».",
+    "Los miembros de un grupo, cada uno con su rol, un botón para invitar a gente y el menú de un miembro abierto: «Cambiar a lector», «Cambiar a administrador», «Quitar del grupo».",
   "HomeFeatures.groupsText":
     "Cada cuenta recibe un grupo al registrarse. Invita a personas, asígnales un rol de lector a propietario, cede la propiedad y restaura un grupo eliminado durante 30 días. Cada grupo tiene un resumen con sus cifras clave.",
   "HomeFeatures.adminTitle": "Un área de administración",
@@ -282,7 +282,7 @@ export default {
     "Es el precio de partida de un MVP típico: registro, pagos, una API, un área de administración y el despliegue. Tu presupuesto depende de tus funciones y se fija antes de empezar.",
   "PricingFaq.mvpLink": "Cómo se construye un MVP",
   "PricingHero.eyebrow": "Precios",
-  "PricingHero.title": "Seed es gratis. Esto es lo que cuesta ponerlo en marcha.",
+  "PricingHero.title": "Seed es gratis. Esto es lo que cuesta mantenerlo en marcha.",
   "PricingHero.lead":
     "Seed es un starter SaaS gratuito con licencia MIT, sin versión de pago y sin cuenta. Solo pagas el servidor que alquilas y los servicios opcionales, como Stripe.",
   "PricingFaq.title": "Sobre el precio",
@@ -317,7 +317,7 @@ export default {
   "DemoPlans.title": "Los planes de la demo: un ejemplo de la facturación que recibes",
   "DemoPlans.noticeTitle": "Estos no son los precios de Seed",
   "DemoPlans.notice":
-    "Son los planes de la app de demo, leídos de su catálogo de planes, para que pruebes el pago, los periodos de prueba y la facturación por miembro. La demo te abre una cuenta de invitado; antes de pagar te pide añadir una forma de iniciar sesión. Tu producto define sus propios planes en un archivo, <code>libs/domain/billing</code>.",
+    "Son los planes de la app de demo, leídos de su catálogo de planes, para que pruebes el pago, los periodos de prueba y la facturación por miembro. La demo te abre una cuenta de invitado; antes de pagar te pide añadir un método de inicio de sesión. Tu producto define sus propios planes en un archivo, <code>libs/domain/billing</code>.",
   "DemoPlans.choose": "Probar en la demo",
   "DemoPlans.chooseName": "Probar en la demo: {name}",
   "DemoPlans.recommended": "Recomendado",
@@ -328,7 +328,7 @@ export default {
     "other": "{count} días de prueba gratis",
   },
   "DemoPlans.start":
-    "En la demo empiezas con el plan Free y lo cambias en la página de facturación de tu grupo.",
+    "En la demo empiezas con el plan Gratis y lo cambias en la página de facturación de tu grupo.",
   "DemoPlan.freeDescription": "Para probar.",
   "DemoPlan.freeNotes": "Hasta 10 notas",
   "DemoPlan.freeMembers": "Hasta 3 miembros",
@@ -349,7 +349,7 @@ export default {
   "FeatureSignIn.eyebrow": "Cuentas",
   "FeatureSignIn.title": "Inicio de sesión, resuelto",
   "FeatureSignIn.lead":
-    "La gente se registra con correo y contraseña y confirma el correo con un código. Puede restablecer una contraseña olvidada, continuar con Google o GitHub, entrar con una llave de acceso o recibir por correo un enlace que inicia sesión y, si hace falta, crea la cuenta. También puede probar primero la aplicación con una cuenta de invitado y añadir más tarde una forma de iniciar sesión. Una app de autenticación añade la verificación en dos pasos (2FA). Cada persona ve todos los dispositivos con su sesión iniciada y puede cerrar la sesión en los demás. Cambiar una forma de iniciar sesión pide una comprobación y envía un correo.",
+    "La gente se registra con correo y contraseña y confirma el correo con un código. Puede restablecer una contraseña olvidada, continuar con Google o GitHub, entrar con una llave de acceso o recibir por correo un enlace que inicia sesión y, si hace falta, crea la cuenta. También puede probar primero la aplicación con una cuenta de invitado y añadir más tarde un método de inicio de sesión. Una app de autenticación añade la verificación en dos pasos (2FA). Cada persona ve todos los dispositivos con su sesión iniciada y puede cerrar la sesión en los demás. Cambiar un método de inicio de sesión pide una comprobación y envía un correo.",
   "FeatureSignIn.fact1":
     "Contraseñas con hash PBKDF2-SHA-256 mediante Web Crypto, 600.000 iteraciones por defecto",
   "FeatureSignIn.fact2":
@@ -360,7 +360,7 @@ export default {
   "FeatureSignIn.fact5":
     "Enlaces mágicos: un mismo enlace inicia sesión o registra, sirve una vez durante 15 minutos y solo se guarda como hash",
   "FeatureSignIn.fact6":
-    "Cuentas de invitado (inicio de sesión anónimo): el visitante empieza con un clic y sin forma de iniciar sesión, y después añade correo y contraseña, Google, GitHub o una llave de acceso a la misma cuenta",
+    "Cuentas de invitado (inicio de sesión anónimo): el visitante empieza con un clic y sin método de inicio de sesión, y después añade correo y contraseña, Google, GitHub o una llave de acceso a la misma cuenta",
   "FeatureSignIn.fact7":
     "Las contraseñas incorrectas se cuentan por nombre de inicio de sesión desde cualquier dirección de red, y luego hay un bloqueo breve",
   "FeatureSignIn.code": "Ver el código de inicio de sesión",
@@ -463,7 +463,7 @@ export default {
     "La aplicación se instala como una nativa, abre sin red y envía los cambios en cola cuando vuelve la conexión. Un cambio desfasado aparece como un conflicto que resolver, nunca como una sobrescritura silenciosa.",
   "FeatureOffline.fact1":
     "Una copia de cada lista en IndexedDB y una cola de escritura con claves de idempotencia",
-  "FeatureOffline.fact2": "«Tu versión» o «Usar la del servidor» en cada conflicto",
+  "FeatureOffline.fact2": "«Quedarme con el mío» o «Usar el otro» en cada conflicto",
   "FeatureOffline.fact3":
     "Desactívalo con un ajuste o quítalo: borra una carpeta y sigue una lista de pasos escrita",
   "FeatureOffline.code": "Leer docs/offline.md",
@@ -486,7 +486,7 @@ export default {
     "La gente recibe un aviso cuando la invitan, le cambian el rol o le ceden un grupo: en la aplicación, por web push en el teléfono o el escritorio, y en Telegram si lo vincula.",
   "FeaturePush.fact1":
     "Web push con tus propias claves, creadas con una tarea: deno task vapid-key:create",
-  "FeaturePush.fact2": "Un contador de no leídas en la aplicación y «Marcar todas como leídas»",
+  "FeaturePush.fact2": "Un contador de no leídas en la aplicación y «Marcar todo como leído»",
   "FeaturePush.fact3": "La suscripción push de cada dispositivo, listada en el perfil",
   "FeaturePush.fact4":
     "Un bot de Telegram, desactivado hasta que configures su token: se vincula con un código de un solo uso, y los comandos propios de tu producto se añaden en un archivo",
@@ -525,7 +525,7 @@ export default {
   "FeatureAdmin.eyebrow": "Soporte",
   "FeatureAdmin.title": "Un área de administración para tus operadores",
   "FeatureAdmin.lead":
-    "Tus operadores encuentran a una persona por nombre o dirección y ven sus formas de iniciar sesión, sesiones, grupos e historial. Desde el mismo lugar gestionan grupos, reembolsan un pago, cuidan de los suscriptores del boletín, ven cada tarea en segundo plano, vuelven a ejecutar una que falló y revisan el estado del sistema.",
+    "Tus operadores encuentran a una persona por nombre o dirección y ven sus métodos de inicio de sesión, sesiones, grupos e historial. Desde el mismo lugar gestionan grupos, reembolsan un pago, cuidan de los suscriptores del boletín, ven cada tarea en segundo plano, vuelven a ejecutar una que falló y revisan el estado del sistema.",
   "FeatureAdmin.watch": "Míralo en {seconds} segundos",
   "FeatureAdmin.fact1": "Una aplicación aparte en su propio host, con su propia cookie de sesión",
   "FeatureAdmin.fact2": "Nueve módulos, del panel principal a los tokens de API",
@@ -618,7 +618,7 @@ export default {
   "FeatureVisuals.realtimeB":
     "Segunda ventana, con otra sesión iniciada: justo después de «Guardar», su lista de notas muestra el título nuevo arriba, sin recargar.",
   "FeatureVisuals.offline":
-    "Un cambio hecho sin conexión choca con otro más reciente en el servidor: «1 cambio necesita que elijas» muestra las dos versiones de la nota lado a lado, con «Tu versión» y «Usar la del servidor».",
+    "Un cambio hecho sin conexión choca con otro más reciente en el servidor: «1 cambio necesita que elijas» muestra las dos versiones de la nota lado a lado, con «Quedarme con el mío» y «Usar el otro».",
   "FeatureVisuals.phone":
     "La misma aplicación instalada en un teléfono, con las notas del grupo, un buscador y filtros; cada nota con su autor, cuándo se creó y sus etiquetas.",
   "FeatureVisuals.deployCaption":
@@ -643,7 +643,7 @@ export default {
     "El panel de administración de Seed: encuentra a una persona, cierra sus sesiones, reembolsa un pago, vuelve a ejecutar una tarea fallida. Las acciones arriesgadas piden confirmación y todas quedan registradas. Gratis, MIT.",
   "AdminTour.heroTitle": "Un panel de administración para quienes gestionan tu producto",
   "AdminTour.heroLead":
-    "Seed incluye un área para operadores en su propio host. Tus operadores encuentran a una persona, ven sus formas de iniciar sesión, sus sesiones y sus grupos, y la ayudan: cierran una sesión, envían un enlace para restablecer la contraseña o reembolsan un pago. Las acciones arriesgadas piden confirmación y cada acción queda en el registro de auditoría.",
+    "Seed incluye un área para operadores en su propio host. Tus operadores encuentran a una persona, ven sus métodos de inicio de sesión, sus sesiones y sus grupos, y la ayudan: cierran una sesión, envían un enlace para restablecer la contraseña o reembolsan un pago. Las acciones arriesgadas piden confirmación y cada acción queda en el registro de auditoría.",
   "AdminTour.code": "Ver el código de la app de administración",
   "AdminTour.dashboard": "Panel",
   "AdminTour.dashboardText":
@@ -834,7 +834,7 @@ export default {
   "Compare.shipfastPrices":
     "Los precios de ShipFast son los que mostraba su <sales>página de venta</sales> el {date}.",
   "Compare.more":
-    "Para ver las funciones de Seed en detalle, consulta <features>la página de funciones</features>; para saber cuánto cuesta ponerlo en marcha, mira <pricing>los precios</pricing>.",
+    "Para ver las funciones de Seed en detalle, consulta <features>la página de funciones</features>; para saber cuánto cuesta mantenerlo en marcha, mira <pricing>los precios</pricing>.",
   "Compare.fitEyebrow": "Encaje",
   "Compare.fitTitle": "Cuándo te conviene más otro starter",
   "Compare.fitLead":

@@ -34,7 +34,7 @@ export default {
   "AttachmentMessages.remove":
     "Não foi possível remover {name}. Confira sua conexão e tente de novo.",
   "AttachmentMessages.linkExpired": "Este link expirou. Tente de novo.",
-  "Frame.overview": "Início",
+  "Frame.overview": "Visão geral",
   "Frame.notes": "Notas",
   "Frame.activity": "Atividade",
   "Frame.groups": "Grupos",
@@ -528,11 +528,11 @@ export default {
   "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
     "one":
-      "Um pagamento não foi aprovado. Para continuar no {plan}, atualize seu cartão em Trocar cartão em até {count} dia, até {date}.",
+      "Um pagamento não foi aprovado. Para continuar no {plan}, atualize o cartão em Trocar cartão até {date} (daqui a {count} dia).",
     "many":
-      "Um pagamento não foi aprovado. Para continuar no {plan}, atualize seu cartão em Trocar cartão em até {count} de dias, até {date}.",
+      "Um pagamento não foi aprovado. Para continuar no {plan}, atualize o cartão em Trocar cartão até {date} (daqui a {count} de dias).",
     "other":
-      "Um pagamento não foi aprovado. Para continuar no {plan}, atualize seu cartão em Trocar cartão em até {count} dias, até {date}.",
+      "Um pagamento não foi aprovado. Para continuar no {plan}, atualize o cartão em Trocar cartão até {date} (daqui a {count} dias).",
   },
   "GroupBillingPanel.paymentFailedFree":
     "Um pagamento não foi aprovado, e o grupo voltou para o plano gratuito. Atualize seu cartão em Trocar cartão para voltar ao {plan}.",
@@ -649,7 +649,7 @@ export default {
   "NotificationsScreen.title": "Notificações",
   "NotificationsScreen.unread": {
     "one": "{count} não lida",
-    "many": "{count} de não lidas",
+    "many": "{count} não lidas",
     "other": "{count} não lidas",
   },
   "NotificationsScreen.readAll": "Marcar todas como lidas",
@@ -736,7 +736,7 @@ export default {
     "Não conseguimos salvar seu layout. Confira sua conexão e tente de novo.",
   "OverviewView.undo": "Desfazer",
   "OverviewView.widget": "Widget",
-  "OverviewView.hidden": "{widget} ocultado.",
+  "OverviewView.hidden": "Widget “{widget}” ocultado.",
   "OverviewView.restored": "Layout padrão restaurado.",
   "OverviewView.linkCopied": "Link copiado",
   "PlanRefusalNotice.notesTitle": "{group} atingiu o limite de notas",
@@ -1018,7 +1018,7 @@ export default {
     "Não encontramos esta nota em <group>{group}</group>. Talvez ela tenha sido excluída, ou esteja em outro grupo seu: vá para esse grupo e abra a nota de lá.",
   "NoteEditor.loading": "Carregando a nota…",
   "NoteEditor.createdBy": "Criada por <name>{name}</name>, <date>{date}</date>",
-  "NoteEditor.created": "Criada <date>{date}</date>",
+  "NoteEditor.created": "Criada em <date>{date}</date>",
   "NoteEditor.updatedBy": "Atualizada por <name>{name}</name>, <date>{date}</date>",
   "NoteEditor.updated": "Atualizada <date>{date}</date>",
   "NoteEditor.new": "Nova nota",
@@ -1103,15 +1103,15 @@ export default {
   "Notes.tickToMove": "Selecione as notas que quer mover",
   "Notes.selected": {
     "one": "{count} selecionada",
-    "many": "{count} de selecionadas",
+    "many": "{count} selecionadas",
     "other": "{count} selecionadas",
   },
   "Notes.cancelSelect": "Cancelar",
   "Notes.moveTo": "Mover para outro grupo",
   "Notes.moving": "Movendo…",
   "Notes.move": "Mover",
-  "Notes.updated": "Atualizada <date>{date}</date>",
-  "Notes.created": "Criada <date>{date}</date>",
+  "Notes.updated": "Atualizada: <date>{date}</date>",
+  "Notes.created": "Criada: <date>{date}</date>",
   "Notes.tick": "Selecionar {title}",
   "Notes.actions": "Ações para {title}",
   "Notes.open": "Abrir",
@@ -1426,7 +1426,7 @@ export default {
   "ProfileTelegram.description":
     "Receba suas notificações em um chat com {bot} e use os comandos dele por lá.",
   "ProfileTelegram.chat": "Chat",
-  "ProfileTelegram.linked": "Vinculado <day></day>",
+  "ProfileTelegram.linked": "Vinculado em <day></day>",
   "ProfileTelegram.notLinked": "Não vinculado",
   "ProfileTelegram.unlinkHidden": "Desvincular<hidden> Telegram</hidden>",
   "ProfileTelegram.link": "Vincular Telegram",
@@ -1591,8 +1591,8 @@ export default {
   "SignInMethods.unlinkButton": "Desvincular",
   "SignInMethods.rename": "Renomear {name}",
   "SignInMethods.passkeyName": "Nome da chave de acesso",
-  "SignInMethods.addedUsed": "Adicionada <added></added> · Último uso <used></used>",
-  "SignInMethods.addedUnused": "Adicionada <added></added> · Ainda não usada",
+  "SignInMethods.addedUsed": "Adicionada em <added></added> · Último uso <used></used>",
+  "SignInMethods.addedUnused": "Adicionada em <added></added> · Ainda não usada",
   "SignInMethods.usedHere": "Usada neste dispositivo",
   "SignInMethods.onlyPasskey": "Esta é sua única forma de entrar, então você não pode removê-la.",
   "SignInMethods.onlyLinked":
@@ -1650,7 +1650,7 @@ export default {
     "other":
       "{count} outros dispositivos vão precisar da sua senha para entrar de novo. Este dispositivo continua conectado.",
   },
-  "SignedInDevices.signOut": "Sair",
+  "SignedInDevices.signOut": "Desconectar",
   "SignedInDevices.oneTitle": "Desconectar {device}?",
   "SignedInDevices.oneMessage": "Esse dispositivo vai precisar da sua senha para entrar de novo.",
   "SignedInDevices.thisDevice": "Este dispositivo",
@@ -1897,7 +1897,7 @@ export default {
   "ApiTokens.cancel": "Cancelar",
   "ApiTokens.readWrite": "Leitura e escrita",
   "ApiTokens.readOnly": "Só leitura",
-  "ApiTokens.expires": "Expira <date>{date}</date>",
+  "ApiTokens.expires": "Expira em <date>{date}</date>",
   "ApiTokens.neverExpires": "Não expira",
   "ApiTokens.lastUsed": "Último uso <when>{when}</when>",
   "ApiTokens.neverUsed": "Nunca usado",

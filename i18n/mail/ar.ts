@@ -106,7 +106,7 @@ export default {
   "ApiTokenMail.writeForever": "يمكنه قراءة المجموعة «{group}» وتعديلها، ولا تنتهي صلاحيته.",
   "ApiTokenMail.notYou":
     "إذا لم تكن أنت، فألغِ الرمز من ملفك الشخصي وغيّر كلمة المرور. تغيير كلمة المرور يُلغي كل رموز API المميزة.",
-  "BillingNoticeMail.paidPlan": "المدفوعة",
+  "BillingNoticeMail.paidPlan": "مدفوعة",
   "BillingNoticeMail.trialSubject": "تنتهي الفترة التجريبية لخطة {plan} في {date}",
   "BillingNoticeMail.trialWhat":
     "تنتهي الفترة التجريبية لخطة {plan} في المجموعة «{group}» في <strong>{date}</strong>.",

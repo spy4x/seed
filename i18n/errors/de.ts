@@ -180,7 +180,7 @@ export default {
   "Reason.SEAT_PRICE_NOT_ACCEPTED":
     "Bestätige, dass jedes neue Mitglied die Rechnung der Gruppe erhöht.",
   "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE":
-    "Du hast diesen Link in einem anderen Browser angefordert. Öffne ihn dort.",
+    "Dieser Link wurde in einem anderen Browser angefordert. Öffne ihn dort.",
   "Reason.SLUG_LOCKED":
     "Nach dem Veröffentlichen ist die Adresse gesperrt. Ändere sie über „URL ändern“.",
   "Reason.SLUG_TAKEN": "Diese Adresse ist schon vergeben. Nimm bitte eine andere.",
@@ -216,5 +216,5 @@ export default {
     "Vom Zahlungsanbieter kam keine Antwort. Schau auf der Abrechnungsseite nach, bevor du es noch einmal versuchst.",
   "Reason.validation": "Einige Felder stimmen noch nicht. Prüfe sie und versuche es noch einmal.",
   "Reason.TRANSLATION_INVALID":
-    "Dieser Beitrag kann keine Übersetzung von jenem sein. Wähle einen Originalbeitrag in einer anderen Sprache oder keinen.",
+    "Dieser Beitrag kann keine Übersetzung des gewählten Beitrags sein. Wähle einen Originalbeitrag in einer anderen Sprache oder keinen.",
 } satisfies Catalog

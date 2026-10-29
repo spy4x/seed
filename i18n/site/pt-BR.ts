@@ -35,7 +35,7 @@ export default {
     "Um e-mail curto quando o {site} muda. Você confirma uma vez por e-mail e sai com um clique.",
   "NewsletterForm.email": "E-mail",
   "NewsletterForm.placeholder": "voce@exemplo.com",
-  "NewsletterForm.submit": "Assinar",
+  "NewsletterForm.submit": "Inscrever-se",
   "LegalPage.englishOnly": "Esta página só está disponível em inglês.",
   "LegalPage.updated": "Atualizada em {date}",
   "LegalPage.noticeTitle": "Um ponto de partida, não uma orientação jurídica",
@@ -58,43 +58,43 @@ export default {
   "ErrorPage.retry": "Tentar de novo",
   "SubscribeFailure.subscribe": "Não conseguimos enviar o link",
   "SubscribeFailure.confirm":
-    "Não conseguimos confirmar sua assinatura. Tente de novo daqui a pouco.",
+    "Não conseguimos confirmar sua inscrição. Tente de novo daqui a pouco.",
   "SubscribeFailure.unsubscribe":
-    "Não conseguimos cancelar sua assinatura. Tente de novo daqui a pouco.",
+    "Não conseguimos cancelar sua inscrição. Tente de novo daqui a pouco.",
   "SubscribeForm.sentTitle": "Confira sua caixa de entrada",
   "SubscribeForm.sentText":
-    "Enviamos um link para você confirmar a assinatura. Ele vale por três dias.",
+    "Enviamos um link para você confirmar a inscrição. Ele vale por três dias.",
   "SubscribeForm.title": "Receba as novidades por e-mail",
   "SubscribeForm.intro":
     "Digite seu e-mail. Vamos mandar um link para confirmar, e todo e-mail traz um link para cancelar.",
   "SubscribeForm.email": "E-mail",
   "SubscribeForm.sending": "Enviando…",
-  "SubscribeForm.submit": "Assinar",
+  "SubscribeForm.submit": "Inscrever-se",
   "SubscriptionConfirm.askAgain": "Pedir um link novo",
-  "SubscriptionConfirm.doneTitle": "Assinatura confirmada",
+  "SubscriptionConfirm.doneTitle": "Inscrição confirmada",
   "SubscriptionConfirm.doneText":
     "Valeu! Um e-mail de boas-vindas já está a caminho, com um link para cancelar quando quiser.",
   "SubscriptionConfirm.expiredTitle": "Este link expirou",
   "SubscriptionConfirm.expiredText": "Os links de confirmação valem por três dias. Peça um novo.",
   "SubscriptionConfirm.invalidTitle": "Este link não funciona",
   "SubscriptionConfirm.invalidText": "Abra de novo o link do e-mail, ou peça um novo.",
-  "SubscriptionConfirm.title": "Confirme sua assinatura",
+  "SubscriptionConfirm.title": "Confirme sua inscrição",
   "SubscriptionConfirm.question": "Enviar as novidades para {email}?",
   "SubscriptionConfirm.questionNoEmail": "Enviar as novidades para o seu e-mail?",
   "SubscriptionConfirm.confirming": "Confirmando…",
   "SubscriptionConfirm.submit": "Confirmar",
-  "Unsubscribe.doneTitle": "Assinatura cancelada",
+  "Unsubscribe.doneTitle": "Inscrição cancelada",
   "Unsubscribe.doneText": "Não vamos mais mandar novidades para este e-mail.",
-  "Unsubscribe.again": "Assinar de novo",
+  "Unsubscribe.again": "Inscrever-se de novo",
   "Unsubscribe.invalidText":
     "Talvez este e-mail já tenha saído da lista. Abra o link do e-mail mais recente.",
-  "Unsubscribe.title": "Cancelar assinatura",
+  "Unsubscribe.title": "Cancelar inscrição",
   "Unsubscribe.question": "Parar de enviar as novidades para {email}?",
   "Unsubscribe.questionNoEmail": "Parar de enviar as novidades para o seu e-mail?",
   "Unsubscribe.unsubscribing": "Cancelando…",
-  "Unsubscribe.submit": "Cancelar assinatura",
+  "Unsubscribe.submit": "Cancelar inscrição",
   "NewsletterPage.title": "Newsletter",
-  "NewsletterPage.description": "Confirme ou cancele sua assinatura da newsletter do {site}.",
+  "NewsletterPage.description": "Confirme ou cancele sua inscrição na newsletter do {site}.",
   "NewsletterPage.subscribeTitle": "Newsletter do {site}: o que saiu, em poucas linhas",
   "NewsletterPage.subscribeDescription":
     "Um e-mail curto quando o {site} muda: o que saiu, o que quebrou e o que aprendi construindo. Confirmação por e-mail e saída com um clique.",
@@ -105,12 +105,12 @@ export default {
   "NewsletterPage.promiseConfirm":
     "Primeiro você confirma por um link, então ninguém consegue inscrever você no seu lugar.",
   "NewsletterPage.promiseUnsubscribe":
-    "Todo e-mail tem um link que cancela a assinatura com um clique.",
+    "Todo e-mail tem um link que cancela a inscrição com um clique.",
   "NewsletterPage.promisePrivate": "Seu e-mail serve só para esta newsletter e mais nada.",
   "NewsletterOff.title": "A newsletter do {site}",
   "NewsletterOff.noticeTitle": "A newsletter está pausada",
   "NewsletterOff.notice":
-    "No momento, este site não está aceitando assinaturas nem enviando a newsletter. Os links de confirmação e de cancelamento voltam a funcionar quando ela for reativada.",
+    "No momento, este site não está aceitando inscrições nem enviando a newsletter. Os links de confirmação e de cancelamento voltam a funcionar quando ela for reativada.",
   "NewsletterOff.lead":
     "Para saber quando o {site} mudar, acompanhe as releases no GitHub. Ou veja o que ele já faz hoje.",
   "NewsletterOff.releases": "Releases no GitHub",
@@ -221,7 +221,7 @@ export default {
   "HomeFeatures.groupsTitle": "Grupos desde o primeiro dia",
   "HomeFeatures.groupsLink": "Como funcionam os grupos",
   "HomeFeatures.groupsAlt":
-    "Os membros de um grupo, cada um com sua função, um botão para convidar pessoas e o menu de um membro aberto: Tornar leitor, Tornar admin, Remover do grupo.",
+    "Os membros de um grupo, cada um com sua função, um botão para convidar pessoas e o menu de um membro aberto: “Tornar leitor”, “Tornar administrador”, “Remover do grupo”.",
   "HomeFeatures.groupsText":
     "Toda conta ganha um grupo ao se cadastrar. Convide pessoas, dê funções de leitor a dono, passe a posse adiante e restaure um grupo excluído em até 30 dias. Cada grupo tem uma visão geral com seus principais números.",
   "HomeFeatures.adminTitle": "Um painel de administração",
@@ -330,7 +330,7 @@ export default {
     "other": "Os primeiros {count} dias grátis",
   },
   "DemoPlans.start":
-    "Na demo, você começa no plano Free e troca de plano na página de cobrança do seu grupo.",
+    "Na demo, você começa no plano Gratuito e troca de plano na página de cobrança do seu grupo.",
   "DemoPlan.freeDescription": "Para experimentar.",
   "DemoPlan.freeNotes": "Até 10 notas",
   "DemoPlan.freeMembers": "Até 3 membros",
@@ -340,7 +340,7 @@ export default {
   "DemoPlan.proNotes": "Notas ilimitadas",
   "DemoPlan.proFiles": "Arquivos ilimitados, 10 GB no total",
   "DemoPlan.proMembers": "Até 50 membros",
-  "DemoPlan.proRoles": "Promova membros a editor ou admin",
+  "DemoPlan.proRoles": "Promova membros a editor ou administrador",
   "FeatureTierSettled.eyebrow": "Já resolvido para você",
   "FeatureTierSettled.title": "Um starter kit de SaaS com grupos e cobrança já integrados",
   "FeatureTierSettled.lead":
@@ -373,7 +373,7 @@ export default {
     "Toda conta ganha um grupo pessoal ao se cadastrar. As pessoas criam grupos compartilhados, convidam outras, dão funções de leitor a dono e passam a posse adiante num passo só. Um grupo excluído pode ser restaurado em até 30 dias, e cada grupo mantém um registro de atividades.",
   "FeatureTeams.fact1":
     "O grupo é a única fronteira de isolamento: dados pessoais e compartilhados passam pela mesma verificação",
-  "FeatureTeams.fact2": "O app, o código e este site chamam tudo de grupo",
+  "FeatureTeams.fact2": "O app, o código e este site usam o mesmo nome: grupo",
   "FeatureTeams.fact3":
     "Nenhum segundo modelo de permissões para manter em sincronia com o primeiro",
   "FeatureTeams.fact4":
@@ -412,7 +412,7 @@ export default {
     "Baixar meus dados: um ZIP com arquivos JSON e CSV, preparado em segundo plano e guardado por 7 dias",
   "FeaturePrivacy.fact2": "A exclusão espera 7 dias; entrar de novo cancela",
   "FeaturePrivacy.fact3":
-    "Limpeza noturna de notificações lidas, convites mortos e eventos de auditoria antigos",
+    "Limpeza noturna de notificações lidas, convites vencidos ou já usados e eventos de auditoria antigos",
   "FeaturePrivacy.code": "Ler o código de exclusão de conta",
   "FeatureExport.nav": "Exportar e importar",
   "FeatureExport.eyebrow": "Exportação",
@@ -463,7 +463,7 @@ export default {
     "O app se instala como um nativo, abre sem internet e envia as alterações da fila quando a conexão volta. Uma alteração desatualizada aparece como um conflito para você resolver, nunca como uma sobrescrita silenciosa.",
   "FeatureOffline.fact1":
     "Uma cópia de cada lista no IndexedDB e uma fila de gravações com chaves de idempotência",
-  "FeatureOffline.fact2": "“Manter a minha” ou “Usar a do servidor” em cada conflito",
+  "FeatureOffline.fact2": "“Manter a minha versão” ou “Usar a outra versão” em cada conflito",
   "FeatureOffline.fact3":
     "Desligue com uma configuração, ou remova: apague uma pasta e siga um checklist escrito",
   "FeatureOffline.code": "Ler docs/offline.md",
@@ -476,7 +476,7 @@ export default {
   "FeatureShortcuts.fact2":
     "Uma lista por app define as teclas e preenche a janela do ?, então ela nunca mostra uma tecla que não faz nada",
   "FeatureShortcuts.fact3":
-    "Atalhos de uma tecla só podem ser desligados num dispositivo; Ctrl K e Esc continuam funcionando",
+    "Os atalhos de uma tecla podem ser desligados em cada dispositivo; Ctrl K e Esc continuam funcionando",
   "FeatureShortcuts.fact4": "No painel de administração, G seguido de uma letra abre cada módulo",
   "FeatureShortcuts.code": "Ler o código dos atalhos",
   "FeaturePush.nav": "Notificações",
@@ -525,12 +525,12 @@ export default {
   "FeatureAdmin.eyebrow": "Suporte",
   "FeatureAdmin.title": "Um painel de administração para seus operadores",
   "FeatureAdmin.lead":
-    "Seus operadores encontram uma pessoa pelo nome ou pelo e-mail e veem suas formas de entrar, sessões, grupos e histórico. No mesmo lugar, gerenciam grupos, reembolsam um pagamento, cuidam dos assinantes da newsletter, veem todas as tarefas em segundo plano, rodam de novo uma que falhou e conferem a saúde do sistema.",
+    "Seus operadores encontram uma pessoa pelo nome ou pelo e-mail e veem suas formas de entrar, sessões, grupos e histórico. No mesmo lugar, gerenciam grupos, reembolsam um pagamento, cuidam dos inscritos na newsletter, veem todas as tarefas em segundo plano, rodam de novo uma que falhou e conferem a saúde do sistema.",
   "FeatureAdmin.watch": "Assista em {seconds} segundos",
   "FeatureAdmin.fact1": "Um app separado, num host próprio, com seu próprio cookie de sessão",
-  "FeatureAdmin.fact2": "Nove módulos, do dashboard aos tokens de API",
+  "FeatureAdmin.fact2": "Nove módulos, do painel aos tokens de API",
   "FeatureAdmin.fact3":
-    "Ações arriscadas pedem confirmação, e toda ação fica registrada no log de auditoria",
+    "Ações arriscadas pedem confirmação, e toda ação fica registrada no registro de auditoria",
   "FeatureAdmin.notYet1": "Entrar como uma pessoa para ver o que ela vê",
   "FeatureAdmin.code": "Ler o código do painel",
   "FeatureDeploy.nav": "Deploy e monitoramento",
@@ -616,7 +616,7 @@ export default {
   "FeatureVisuals.realtimeB":
     "Segunda janela, com outro login: logo depois de salvar, a lista de notas mostra o título novo no topo, sem recarregar.",
   "FeatureVisuals.offline":
-    "Uma alteração feita offline encontra uma mais recente no servidor: “1 alteração precisa da sua escolha” mostra as duas versões da nota lado a lado, com “Manter a minha” e “Usar a do servidor”.",
+    "Uma alteração feita offline encontra uma mais recente no servidor: “1 alteração precisa da sua decisão” mostra as duas versões da nota lado a lado, com “Manter a minha versão” e “Usar a outra versão”.",
   "FeatureVisuals.phone":
     "O mesmo app instalado num celular, mostrando as notas do grupo com busca e filtros, cada nota com autor, data de criação e etiquetas.",
   "FeatureVisuals.deployCaption":
@@ -641,9 +641,9 @@ export default {
     "O painel de administração do Seed: encontre uma pessoa, encerre as sessões dela, reembolse um pagamento, rode de novo uma tarefa que falhou. Ações arriscadas pedem confirmação, e tudo fica registrado. Gratuito, MIT.",
   "AdminTour.heroTitle": "Um painel de administração para quem opera o seu produto",
   "AdminTour.heroLead":
-    "O Seed traz uma área de operação num host próprio. Seus operadores encontram uma pessoa, veem suas formas de entrar, sessões e grupos, e ajudam: encerram uma sessão, enviam um link para redefinir a senha, reembolsam um pagamento. Ações arriscadas pedem confirmação, e toda ação vai para o log de auditoria.",
+    "O Seed traz uma área de operação num host próprio. Seus operadores encontram uma pessoa, veem suas formas de entrar, sessões e grupos, e ajudam: encerram uma sessão, enviam um link para redefinir a senha, reembolsam um pagamento. Ações arriscadas pedem confirmação, e toda ação vai para o registro de auditoria.",
   "AdminTour.code": "Ler o código do painel",
-  "AdminTour.dashboard": "Dashboard",
+  "AdminTour.dashboard": "Painel",
   "AdminTour.dashboardText":
     "O produto num relance nos últimos 30 dias: pessoas, cadastros, quem está ativo, grupos e notas.",
   "AdminTour.stats": "Estatísticas",
@@ -667,7 +667,7 @@ export default {
   "AdminTour.catalog": "Catálogo",
   "AdminTour.catalogText":
     "Itens para uma loja, desligado até você ativar: nomes e textos em cada idioma, preço, cores, tamanhos com tabela de medidas, o que está esgotado e fotos que você envia de uma vez e arrasta para ordenar. Um link curto por item e por lugar onde você o compartilha, contado no Umami.",
-  "AdminTour.audit": "Log de auditoria",
+  "AdminTour.audit": "Registro de auditoria",
   "AdminTour.auditText":
     "Cada login, mudança de conta, mudança de grupo e ação de operador, dos mais recentes aos mais antigos. Exporte em CSV.",
   "AdminTour.jobs": "Tarefas",
@@ -691,7 +691,7 @@ export default {
   "AdminTour.guaranteeHidden":
     "Quem está abaixo de operador recebe “página não encontrada”, como se o painel não existisse.",
   "AdminTour.guaranteeLogged":
-    "Ações arriscadas pedem confirmação, e toda ação fica registrada no log de auditoria.",
+    "Ações arriscadas pedem confirmação, e toda ação fica registrada no registro de auditoria.",
   "AdminTour.guaranteePrivate":
     "O painel lê contagens e dados da conta, nunca o conteúdo das notas de alguém.",
   "AdminTour.notYetImpersonate": "Entrar como uma pessoa para ver o que ela vê",

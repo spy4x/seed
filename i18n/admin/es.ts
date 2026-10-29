@@ -231,7 +231,7 @@ export default {
   "AdminBilling.listError":
     "No se pudieron cargar los clientes. Revisa tu conexión e inténtalo de nuevo.",
   "AdminBilling.offText":
-    "Todos los grupos están en el plan Free. Para activar la facturación, añade los ajustes de Stripe.",
+    "Todos los grupos están en el plan Gratis. Para activar la facturación, añade los ajustes de Stripe.",
   "AdminBilling.paying": "De pago",
   "AdminBilling.trial": "En prueba",
   "AdminBilling.pastDue": "Pago vencido",
@@ -245,7 +245,7 @@ export default {
   "AdminBilling.renews": "Se renueva el {date}",
   "AdminBilling.ends": "Termina el {date}",
   "AdminBilling.planKeptUntil": "Mantiene el plan hasta el {date}",
-  "AdminBilling.onFreeSince": "En Free desde el {date}",
+  "AdminBilling.onFreeSince": "En el plan Gratis desde el {date}",
   "AdminBilling.wouldBe": "serían {amount}",
   "AdminBilling.seatPrice": "{seats} × {price}",
   "AdminBilling.title": "Facturación",
@@ -304,7 +304,7 @@ export default {
   "AdminBillingCustomer.doneTimeUntil": "No se cobrará a {group} hasta el {date}.",
   "AdminBillingCustomer.doneTime": "{group} recibió tiempo gratis.",
   "AdminBillingCustomer.doneCancelNow":
-    "Suscripción de {group} cancelada. El grupo pasa al plan Free.",
+    "Suscripción de {group} cancelada. El grupo pasa al plan Gratis.",
   "AdminBillingCustomer.doneCancelOn": "La suscripción de {group} termina el {date}.",
   "AdminBillingCustomer.doneCancelEnd":
     "La suscripción de {group} termina al final del periodo actual.",
@@ -327,7 +327,7 @@ export default {
   "AdminBillingCustomer.openStripe": "Abrir en Stripe",
   "AdminBillingCustomer.ownedBy": "Propietario: {owner}",
   "AdminBillingCustomer.member":
-    "Eres propietario o miembro de este grupo, así que su facturación la gestiona otro operador.",
+    "Perteneces a este grupo, así que su facturación la gestiona otro operador.",
   "AdminBillingCustomer.deleted":
     "Este grupo está en la papelera, pero su suscripción sigue cobrándose. Cancela la suscripción.",
   "AdminBillingCustomer.status": "Estado",
@@ -371,9 +371,9 @@ export default {
   "AdminBillingCustomer.timedOut":
     "Stripe todavía no lo ha confirmado. Revisa el cliente en Stripe.",
   "AdminBillingCustomer.renewHint":
-    "El propietario puede renovarla desde «Gestionar facturación» antes de que termine el periodo.",
+    "El propietario puede renovarla desde «Gestionar la facturación» antes de que termine el periodo.",
   "AdminBillingCustomer.alreadyFree":
-    "<group>{group}</group> ya está en el plan Free y no se le volverá a cobrar.",
+    "<group>{group}</group> ya está en el plan Gratis y no se le volverá a cobrar.",
   "AdminBillingCustomer.keepsUntilThen":
     "<group>{group}</group> mantiene {plan} hasta entonces y no se le volverá a cobrar.",
   "AdminBillingCustomer.keepsUntil":
@@ -405,7 +405,7 @@ export default {
   "AdminBillingCustomer.alreadySet": "Ya está programada para terminar entonces.",
   "AdminBillingCustomer.now": "Ahora",
   "AdminBillingCustomer.nowHelp":
-    "{group} pasa al plan Free al instante. El periodo actual no se reembolsa; si hace falta, reembólsalo por separado. No se avisa al propietario.",
+    "{group} pasa al plan Gratis al instante. El periodo actual no se reembolsa; si hace falta, reembólsalo por separado. No se avisa al propietario.",
   "AdminBillingCustomer.undoTitle": "¿Mantener la suscripción de {group}?",
   "AdminBillingCustomer.undoSubmit": "Mantener suscripción",
   "AdminBillingCustomer.renewsOn": "{plan} se renueva el {date} por los {charge} de siempre.",
@@ -1299,7 +1299,7 @@ export default {
   "AdminGroups.active": "Activos",
   "AdminGroups.inTrash": "En la papelera",
   "AdminGroups.noName": "Sin nombre",
-  "AdminGroups.free": "Free",
+  "AdminGroups.free": "Gratis",
   "AdminGroups.title": "Grupos",
   "AdminGroups.subtitle":
     "Todos los grupos, con su propietario y sus miembros. Abre un grupo para gestionar sus miembros e invitaciones.",
@@ -1730,7 +1730,7 @@ export default {
   "AdminUser.guest": "Invitado",
   "AdminUser.you": "Tú",
   "AdminUser.guestNote":
-    "Una cuenta de invitado: se crea con un clic y no tiene forma de iniciar sesión. El equipo de soporte no puede restaurar una cuenta de invitado.",
+    "Una cuenta de invitado: se crea con un clic y no tiene ningún método de inicio de sesión. El equipo de soporte no puede restaurar una cuenta de invitado.",
   "AdminUser.created": "Creada",
   "AdminUser.lastSeen": "Última visita",
   "AdminUser.never": "Nunca",
@@ -1750,7 +1750,7 @@ export default {
   "AdminUser.trial": "Prueba de facturación",
   "AdminUser.trialUsed": "Usada <when></when>",
   "AdminUser.trialNotUsed": "Sin usar",
-  "AdminUser.noMethods": "No tiene forma de iniciar sesión.",
+  "AdminUser.noMethods": "No tiene ningún método de inicio de sesión.",
   "AdminUser.lastUsed": "Último uso <when></when>",
   "AdminUser.notUsedYet": "Aún sin usar",
   "AdminUser.passkeyAdded": "<name>{name}</name> · Añadida el <day></day>",
