@@ -84,7 +84,7 @@ feature cards, `/features`, `/pricing` and `/compare`, and the components they r
 names it in the same PR, so the site never lists a feature the product lacks and never leaves out
 one it has. The owner asked for this on 2026-10-19: "create the rule".
 
-`deno task lighthouse` (CI step `lighthouse`) measures the website against the Lighthouse budget
+`deno task lighthouse` (CI step `browser`) measures the website against the Lighthouse budget
 of the global agent rules. The pages it measures are listed in
 `apps/mpa/lighthouse/lighthouserc.json`.
 

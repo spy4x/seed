@@ -189,7 +189,7 @@ test.describe(`the admin app's groups`, () => {
       await ops.locator(`[data-e2e=admin-group-invitation-menu]`).click()
       await ops.locator(`[data-e2e=admin-group-revoke-open]`).click()
       await ops.locator(`[data-e2e=admin-group-action-submit]`).click()
-      await expect(ops.locator(`[data-e2e=toasts]`)).toContainText(`invitation`)
+      await expect(ops.locator(`[data-e2e=toasts]`)).toContainText(`Invitation to`)
       await expect(state).toHaveText(`Revoked`)
 
       // The activity names both, as done from the admin area.

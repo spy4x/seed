@@ -119,11 +119,11 @@ because Fresh would answer those outside every middleware, without the headers.
 | What                                                                          | Where                                                    | Runs in                                  |
 | ----------------------------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------- |
 | The API's headers on an answer, a refusal, a 404 and a 500 | `apps/api/app.test.ts` | `deno task check` |
-| The running API's headers on an answer and a 404 | `e2e/spa/security-headers.spa.ts` | `e2e/spa/run.sh` (CI step `e2e-spa`) |
+| The running API's headers on an answer and a 404 | `e2e/spa/security-headers.spa.ts` | `e2e/spa/run.sh` (CI step `browser`) |
 | The MPA's headers on a page, a rendered page's nonce, a 404, a 500 and a refusal | `apps/mpa/app.test.ts`                                   | `deno task check`                        |
-| The MPA's headers on real responses; a walk with no refusal under the policy   | `e2e/mpa/security-headers.mpa.ts`                        | `e2e/mpa/run.sh` (CI step `e2e-mpa`)     |
+| The MPA's headers on real responses; a walk with no refusal under the policy   | `e2e/mpa/security-headers.mpa.ts`                        | `e2e/mpa/run.sh` (CI step `browser`)     |
 | The tracker origin the container writes, and what it refuses                   | `tests/spa-runtime-config.test.ts`                       | `deno task check`                        |
-| nginx's real responses and the policy's sources; a signed-in walk with no refusal      | `e2e/spa/security-headers.spa.ts`                        | `e2e/spa/run.sh` (CI step `e2e-spa`)     |
+| nginx's real responses and the policy's sources; a signed-in walk with no refusal      | `e2e/spa/security-headers.spa.ts`                        | `e2e/spa/run.sh` (CI step `browser`)     |
 
 `e2e/spa/run.sh` has two modes. By default it builds the image of `apps/spa/dockerfile.prod` with
 the container tool, as a deploy does, runs it beside the API and removes the image afterwards: use

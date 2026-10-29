@@ -12,29 +12,36 @@ It runs on every pull request, every push to `main` and every tag, in this order
 pull request to run the pipeline. This is the one list of CI's steps; other pages link here.
 
 ```
-check ──┬── build ────────┐
-        ├── integration   │   (Postgres and Valkey services)
-        ├── backup-restore│   (Postgres service)
-        └── e2e-mpa ──────┴── e2e-spa ──┬── e2e-smoke   (pull request and tag)
-               │                        └── e2e-full    (push to `main`)
-               └── lighthouse
+check ──┬── integration      (Postgres and Valkey services)
+        ├── backup-restore   (Postgres service)
+        ├── alert-rules
+        └── browser ─────────┬── e2e-smoke   (pull request and tag)
+            build, e2e-mpa,  └── e2e-full    (push to `main`)
+            lighthouse, e2e-spa
 ```
 
+Woodpecker runs steps in stages: a step starts only when the whole stage before it has ended, so
+the wall time is the slowest step of each stage, added up. Checks that must run one after another
+in the shared checkout are therefore commands of one step, `browser`, which runs beside
+`integration` (the reasons are in `ci.yml`).
+
 - `check` runs `deno task check`: format, lint, type check and unit tests.
-- `build` runs `deno task build` (the SPA production build).
-- `integration` runs `deno task test:integration` against a throw-away `postgres:18.6-alpine`
+- `integration` runs `deno task test:integration --parallel`, four test files at a time, against a throw-away `postgres:18.6-alpine`
   service (user `tester`, password `ci-throwaway`, database `template_test`, reachable as host
   `postgres`) and a `valkey/valkey:8.1` service (password `ci-throwaway`, host `valkey`). It waits
-  over TCP for both servers, see docs/handoff.md trap 3.
+  over TCP for both servers, see docs/handoff.md trap 3. The Postgres service runs with `fsync`,
+  `synchronous_commit` and `full_page_writes` off: its data is thrown away with the run.
 - `backup-restore` runs `infra/backup/restore.test.sh` in the `postgres:18.6` image against the same
   Postgres service: it backs a database up with restic, restores it into an empty one and compares
   them (docs/backups.md).
-- `e2e-mpa` and `e2e-spa` run the website's browser tests and the SPA behind nginx
-  (`e2e/mpa/run.sh`, `e2e/spa/run.sh`).
-- `lighthouse` runs `deno task lighthouse` (`apps/mpa/lighthouse/run.sh`): the website's pages,
+- `browser` runs four checks, one after another:
+  - build: `deno task build` (the SPA production build);
+  - e2e-mpa: the website's browser tests (`e2e/mpa/run.sh`);
+  - lighthouse: `deno task lighthouse` (`apps/mpa/lighthouse/run.sh`): the website's pages,
   built and served behind nginx with gzip, must score at least 95 for performance and 100 for
   accessibility, best practices and SEO in Lighthouse mobile. The pages are listed in
-  `apps/mpa/lighthouse/lighthouserc.json`.
+  `apps/mpa/lighthouse/lighthouserc.json`;
+  - e2e-spa: the SPA behind nginx (`e2e/spa/run.sh`).
 - `e2e-smoke` runs the product's smoke set on every pull request and tag:
   `deno task e2e:local --smoke --max-failures=3`, the script a developer runs, against the Postgres
   and Valkey services (`E2E_SERVICES=environment`). The set is `SMOKE_SPECS` in
@@ -77,8 +84,8 @@ it, because nothing reads them.
 2. Leave the repository's **Pipeline path** empty. Woodpecker then uses `.woodpecker/`. Setting it
    to another path (for example `infra/configs/`) hides the pipeline from every copy of the
    template.
-3. Check that a pull request shows the `check`, `build`, `integration`, `backup-restore`,
-   `e2e-mpa`, `e2e-spa` and `e2e-smoke` results (`gh pr checks <number>`).
+3. Check that a pull request shows the `check`, `integration`, `backup-restore`, `alert-rules`,
+   `browser` and `e2e-smoke` results (`gh pr checks <number>`).
 
 ## Releases
 
@@ -98,7 +105,7 @@ image, so there is no worker image. How to cut a release: [the deploy guide](dep
 ## Changing the Deno version
 
 Change the tag in every `image: denoland/deno:<version>` line of `ci.yml`, and the release URL and
-SHA-256 in the five Playwright steps (`e2e-mpa`, `e2e-spa`, `e2e-smoke`, `e2e-full`, `lighthouse`). Keep them
+SHA-256 in the three Playwright steps (`browser`, `e2e-smoke`, `e2e-full`). Keep them
 equal to `DENO_VERSION` in `infra/envs/.env.example` and `Dockerfile.base`.
 
 ## Running the steps locally
