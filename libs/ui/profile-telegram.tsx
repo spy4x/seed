@@ -185,8 +185,9 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
               {t.t(`ProfileTelegram.openButton`)}
             </Button>
             <p class="text-sm text-muted">{t.t(`ProfileTelegram.elsewhere`, { bot })}</p>
-            <div data-e2e="telegram-code">
-              {/* A code breaks anywhere, never at its "-", which would read as an added hyphen. */}
+            {/* A command reads left to right in every language; in Arabic, its "/" and "-" moved. */}
+            <div data-e2e="telegram-code" dir="ltr">
+              {/* The code breaks where its box ends, not early after a "-", which reads as a hyphen. */}
               <CopyBlock
                 class="break-all"
                 text={`/link ${code.code}`}
