@@ -10,6 +10,11 @@ import { signUpWithCode } from "./fixtures/sign-up.ts"
  * Account, and every replaced or removed object leaves the file store. A file that is not the
  * image it claims, or not an image the row takes, is refused. An operator removes a person's
  * picture from the admin app.
+ *
+ * The worker of this stack has no file store and no `vips` (`infra/scripts/e2e-local.sh`), so a
+ * picture stays Preparing (#464): the row says so, and no page shows it yet. Serving a picture once
+ * the worker has made its WebP is covered by tests/integration/profile-pictures.integration.test.ts
+ * and `shownPictureId` in libs/domain/identity/profile-picture.test.ts.
  */
 
 const appBase = "http://app.localhost"
@@ -80,14 +85,6 @@ async function stored(request: APIRequestContext, id: string): Promise<boolean> 
   return response.status() === 200
 }
 
-/** Whether `image` has loaded and drawn its picture. */
-function drawn(image: Locator): Promise<boolean> {
-  return image.evaluate((element) => {
-    const img = element as HTMLImageElement
-    return img.complete && img.naturalWidth > 0
-  })
-}
-
 test.describe("the profile picture", () => {
   test("is uploaded, replaced and removed, and each old object leaves the store", async ({ page, request }) => {
     const email = address("own")
@@ -101,15 +98,14 @@ test.describe("the profile picture", () => {
       await expect(row.locator("[data-e2e=profile-picture-remove]")).toHaveCount(0)
 
       await choose(row, "red.png", "image/png", RED)
-      await expect(status).toHaveText("Profile picture saved.")
+      await expect(status).toHaveText("Preparing your picture…")
       await expect(chooser).toHaveText("Change profile picture")
       const first = await pictureId(page)
       expect(first).not.toBeNull()
       expect(await stored(request, first!)).toBe(true)
-      // The rail's account entry shows it too, through the redirect to the store.
-      const rail = page.locator(`[data-e2e=account-menu-button] img`)
-      await expect(rail).toHaveAttribute("src", `/api/pictures/${first}`)
-      await expect.poll(() => drawn(rail)).toBe(true)
+      // Until the worker has made it, the rail's account entry asks for no picture, which would
+      // answer 404.
+      await expect(page.locator(`[data-e2e=account-menu-button] img`)).toHaveCount(0)
 
       await choose(row, "black.png", "image/png", BLACK)
       await expect.poll(() => pictureId(page)).not.toBe(first)
@@ -183,9 +179,9 @@ test.describe("the profile picture", () => {
       const row = await openAccount(page, email)
       await choose(row, "red.png", "image/png", RED)
       await expect(page.locator("[data-e2e=profile-picture-status]")).toHaveText(
-        "Profile picture saved.",
+        "Preparing your picture…",
       )
-      const id = await pictureId(page)
+      expect(await pictureId(page)).not.toBeNull()
 
       admin = await browser.newContext({ baseURL: adminBase })
       const ops = await admin.newPage()
@@ -197,9 +193,9 @@ test.describe("the profile picture", () => {
       await ops.goto(`${adminBase}/users?q=${encodeURIComponent(email)}`)
       await ops.locator("[data-e2e=admin-users-list] tbody tr a").first().click()
       await expect(ops.locator("[data-e2e=admin-user-title]")).toHaveText(email)
-      const shown = ops.locator("[data-e2e=admin-user-picture] img")
-      await expect(shown).toHaveAttribute("src", `/api/admin/users/pictures/${id}`)
-      await expect.poll(() => drawn(shown)).toBe(true)
+      // The page names a picture; its bytes answer 404 until the worker has made the WebP, so the
+      // avatar shows initials meanwhile.
+      await expect(ops.locator("[data-e2e=admin-user-picture]")).not.toContainText("None")
 
       await ops.locator("[data-e2e=admin-user-menu]").click()
       await ops.locator("[data-e2e=admin-remove-picture-open]").click()
