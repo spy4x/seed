@@ -59,8 +59,7 @@ export function CtaBand(props: CtaBandProps): JSX.Element {
                 data-umami-event="read-code"
                 data-umami-event-from="cta"
               >
-                {props.code.label}{" "}
-                <IconArrowRight class="size-4 rtl:-scale-x-100" aria-hidden="true" />
+                {props.code.label} <IconArrowRight class="size-4" aria-hidden="true" />
               </a>
             </div>
           )

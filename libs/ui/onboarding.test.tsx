@@ -162,6 +162,12 @@ describe("first-steps card", () => {
     expect(control("Verify e-mail").getAttribute("href")).toBe("/profile/account?verify")
   })
 
+  it("draws its action as a secondary button, so the page header keeps the one filled button", async () => {
+    await mount()
+
+    expect(control("Verify e-mail").className).not.toMatch(/\bbg-accent-900\b/)
+  })
+
   it("ticks a step when its fact arrives and moves the action to the next open step", async () => {
     const { update } = await mount({ steps: { ...NONE, emailVerified: true } })
     expect(stepLines()[0]).toContain("Done: ")

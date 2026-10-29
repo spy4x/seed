@@ -563,8 +563,7 @@ export default define.page(function Features({ state }) {
             class="inline-flex items-center gap-1 self-start py-2 text-lg font-medium text-primary hover:underline"
             data-e2e="features-compare"
           >
-            {t.t(`Features.compare`)}{" "}
-            <IconArrowRight class="size-5 rtl:-scale-x-100" aria-hidden="true" />
+            {t.t(`Features.compare`)} <IconArrowRight class="size-5" aria-hidden="true" />
           </a>
         </div>
       </div>
