@@ -126,7 +126,7 @@ it("keeps the dialog open with a message when the action failed for another reas
   expect(state.dialog.value).toEqual({
     dialog: `cancel`,
     pending: false,
-    error: `That did not work. Try again in a moment.`,
+    error: `That didn't work. Try again in a moment.`,
   })
   expect(bodies(toasts)).toEqual([])
 })
@@ -155,7 +155,7 @@ it("runs every failed job again after the confirmation and counts them in the to
   await state.confirmOpen()
 
   expect(state.confirm.value.confirm).toBeNull()
-  expect(bodies(toasts)).toEqual([`3 failed jobs started again.`])
+  expect(bodies(toasts)).toEqual([`Restarted 3 failed jobs.`])
   expect(calls.slice(-2)).toEqual([
     `POST /api/admin/jobs/retry-failed`,
     `GET /api/admin/jobs?state=failed`,

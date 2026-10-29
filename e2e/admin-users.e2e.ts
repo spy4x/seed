@@ -111,7 +111,7 @@ test.describe("the people actions of the admin app", () => {
       await sessions.first().locator("[data-e2e=admin-session-end-open]").click()
       await expect(ops.locator("[data-e2e=admin-action-session]")).toBeVisible()
       await ops.locator("[data-e2e=admin-action-submit]").click()
-      await expect(ops.locator("[data-e2e=toasts]")).toContainText("One session of")
+      await expect(ops.locator("[data-e2e=toasts]")).toContainText("Ended one of")
       await expect(sessions).toHaveCount(1)
 
       // Changes the role in the dialog's picker.
@@ -121,7 +121,7 @@ test.describe("the people actions of the admin app", () => {
       await expect(dialog.getByRole("radio")).toHaveCount(3)
       await dialog.getByRole("radio", { name: "Supervisor" }).check()
       await ops.locator("[data-e2e=admin-action-submit]").click()
-      await expect(ops.locator("[data-e2e=toasts]")).toContainText("is now supervisor")
+      await expect(ops.locator("[data-e2e=toasts]")).toContainText("is now a supervisor")
       await expect(ops.locator("[data-e2e=admin-user-card]")).toContainText("Supervisor")
 
       // Mails the "Forgot password" link.

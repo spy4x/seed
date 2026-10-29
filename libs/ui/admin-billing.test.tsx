@@ -187,7 +187,7 @@ describe(`the admin billing list`, () => {
     expect(text).toContain(`3 past due`)
     expect(text).toContain(`2 end in the next 7 days`)
     expect(find(`[data-e2e=admin-billing-source]`).textContent).toContain(
-      `once its webhook arrives`,
+      `once Stripe's webhook arrives`,
     )
   })
 
@@ -268,7 +268,7 @@ describe(`the admin billing list`, () => {
       />,
     )
     const figuresError = find(`[data-e2e=admin-billing-figures-error]`).textContent
-    expect(figuresError).toContain(`Could not count revenue.`)
+    expect(figuresError).toContain(`Couldn't load the revenue figures.`)
     expect(figuresError).not.toContain(`Server error.`)
     expect(has(`[data-e2e=admin-billing-list]`)).toBe(true)
     await press(`[data-e2e=admin-billing-figures-error]`, `Try again`)
@@ -471,7 +471,7 @@ describe(`one customer in the admin app`, () => {
       `Plan kept until ${graceEnd}`,
     )
     const dialog = find(`[data-e2e=admin-billing-dialog]`).textContent
-    expect(dialog).toContain(`Acme Studio keeps Pro until ${graceEnd} and is not charged again.`)
+    expect(dialog).toContain(`Acme Studio keeps Pro until ${graceEnd} and won't be charged again.`)
     expect(dialog).not.toContain(`keeps Pro until then`)
   })
 
@@ -488,7 +488,7 @@ describe(`one customer in the admin app`, () => {
     )
     expect(find(`[data-e2e=admin-billing-status]`).textContent).toContain(`On Free since`)
     const dialog = find(`[data-e2e=admin-billing-dialog]`).textContent
-    expect(dialog).toContain(`Acme Studio is already on Free and is not charged again.`)
+    expect(dialog).toContain(`Acme Studio is already on Free and won't be charged again.`)
     expect(dialog).not.toContain(`keeps Pro`)
   })
 
@@ -533,7 +533,7 @@ describe(`one customer in the admin app`, () => {
       <AdminBillingCustomerScreen {...customerProps([], { waiting: { timedOut: false } })} />,
     )
     expect(find(`[data-e2e=admin-billing-waiting]`).textContent).toContain(
-      `waiting for confirmation`,
+      `once Stripe confirms`,
     )
     await mount(
       <AdminBillingCustomerScreen {...customerProps([], { waiting: { timedOut: true } })} />,

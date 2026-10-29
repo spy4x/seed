@@ -296,7 +296,7 @@ test.describe(`the admin app's groups`, () => {
         `Remove “abusive-${id}.png”?`,
       )
       await ops.locator(`[data-e2e=admin-group-action-submit]`).click()
-      await expect(ops.locator(`[data-e2e=toasts]`)).toContainText(`The file is removed`)
+      await expect(ops.locator(`[data-e2e=toasts]`)).toContainText(`File removed from`)
       await expect(count).toHaveText(`No files match “ABUSIVE”`)
       await expect(ops.getByLabel(`File name`)).toBeFocused()
 

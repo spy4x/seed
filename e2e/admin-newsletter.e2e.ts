@@ -123,7 +123,7 @@ test("an operator finds a subscriber, exports the list and removes them", async 
     await expect(ops.locator("[data-e2e=admin-newsletter-dialog]")).toContainText(subscriber)
     await ops.locator("[data-e2e=admin-newsletter-confirm]").click()
     await expect(ops.locator("[data-e2e=toasts]")).toContainText("no longer gets the newsletter")
-    await expect(ops.locator("[data-e2e=admin-newsletter-count]")).toHaveText("0 addresses")
+    await expect(ops.locator("[data-e2e=admin-newsletter-count]")).toHaveText("0 subscribers")
     await expect(ops.locator("[data-e2e=admin-newsletter-count]")).toBeFocused()
 
     // The confirm link mailed before the removal no longer adds the address back.
@@ -134,7 +134,7 @@ test("an operator finds a subscriber, exports the list and removes them", async 
     await ops.reload()
     await ops.locator("[data-e2e=admin-newsletter-search]").fill(subscriber)
     await ops.locator("[data-e2e=admin-newsletter-submit]").click()
-    await expect(ops.locator("[data-e2e=admin-newsletter-count]")).toHaveText("0 addresses")
+    await expect(ops.locator("[data-e2e=admin-newsletter-count]")).toHaveText("0 subscribers")
 
     // The sent issues have their own tab, kept in the address.
     await ops.getByRole("tab", { name: "Sent issues" }).click()

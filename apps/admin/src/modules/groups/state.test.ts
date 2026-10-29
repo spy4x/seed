@@ -105,7 +105,7 @@ it(`sends each confirmed action to its path, toasts, and shows the group the API
   expect(state.dialog.value).toEqual({ dialog: null, error: null, pending: false })
   expect(toasts.list.value.map((toast) => toast.body)).toEqual([
     `\u2068Grace Hopper\u2069 is no longer in \u2068Family\u2069.`,
-    `The invitation to \u2068Family\u2069 is revoked.`,
+    `Invitation to \u2068Family\u2069 revoked.`,
     `\u2068The member\u2069 now owns \u2068Family\u2069.`,
   ])
 })
@@ -205,7 +205,7 @@ it(`removes a file, answers the same page of files as the dialog closes, then re
   expect(seen).toEqual([[before, { kind: `removeFile`, fileId: FILE_ID }], [emptied, null]])
   expect(state.group.value.detail).toBe(detail)
   expect(toasts.list.value.map((toast) => toast.body)).toEqual([
-    `The file is removed from \u2068Family\u2069.`,
+    `File removed from \u2068Family\u2069.`,
   ])
 })
 

@@ -127,7 +127,7 @@ it(`says the result of a refund that got no answer is unknown, never that nothin
   expect(dialog).toBe(`refund`)
   expect(error).toEqual({
     unknown: true,
-    message: expect.stringContaining(`cannot tell whether this happened`),
+    message: expect.stringContaining(`can't tell whether this went through`),
   })
   expect(error!.message).not.toContain(`Nothing changed`)
   expect(error!.message).toContain(`Check the customer in Stripe`)
