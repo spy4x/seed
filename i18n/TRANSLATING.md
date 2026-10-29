@@ -1,8 +1,9 @@
 # Translating
 
-Every word Seed's own screens show lives in a catalog: `i18n/<namespace>/<language>.json`, with
-`en.json` as the source. The components of preact-components bring their own catalogs; this folder
-holds only Seed's words.
+Every word Seed's own screens show lives in a catalog: `i18n/<namespace>/<language>.ts`, with
+`en.ts` as the source. Each catalog is a TypeScript module, `export default { … } satisfies
+Catalog`, with its keys and messages in double quotes. The components of preact-components bring
+their own catalogs; this folder holds only Seed's words.
 
 | Namespace | What it holds                                                   | Loaded by      |
 | --------- | --------------------------------------------------------------- | -------------- |
@@ -28,7 +29,7 @@ language.
 
 ## The loop
 
-1. Change the English in `en.json`, and name the key in the code.
+1. Change the English in `en.ts`, and name the key in the code.
 2. Run `deno task test`. `i18n/i18n.test.ts` lists every message that is missing, extra, empty, or
    out of date because its English changed, every one whose placeholders, tags or plural forms
    differ from the English, and every English key no code names.
@@ -43,13 +44,13 @@ Stamp only after the translation is done: a stamp tells the test that the transl
 
 Short, plain and friendly, as a person would say it, in the voice the components use:
 
-| Language             | File         | Voice                                                         |
-| -------------------- | ------------ | ------------------------------------------------------------- |
-| German               | `de.json`    | `du`, lower-case. "Versuche es noch einmal."                  |
-| Spanish              | `es.json`    | `tú`, neutral Spanish, gender-neutral where it costs nothing. |
-| Brazilian Portuguese | `pt-BR.json` | `você`. "Tente de novo."                                      |
-| Russian              | `ru.json`    | `вы`, lower-case. "Попробуйте ещё раз."                       |
-| Arabic               | `ar.json`    | Modern Standard Arabic, addressing the reader directly.       |
+| Language             | File       | Voice                                                         |
+| -------------------- | ---------- | ------------------------------------------------------------- |
+| German               | `de.ts`    | `du`, lower-case. "Versuche es noch einmal."                  |
+| Spanish              | `es.ts`    | `tú`, neutral Spanish, gender-neutral where it costs nothing. |
+| Brazilian Portuguese | `pt-BR.ts` | `você`. "Tente de novo."                                      |
+| Russian              | `ru.ts`    | `вы`, lower-case. "Попробуйте ещё раз."                       |
+| Arabic               | `ar.ts`    | Modern Standard Arabic, addressing the reader directly.       |
 
 A button says what it does, as a verb. An error says what happened and what to do next. Use the
 quotes of the language: „…“ in German, «…» in Spanish, Russian and Arabic, “…” in Brazilian

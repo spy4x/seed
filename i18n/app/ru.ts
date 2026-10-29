@@ -1,30 +1,39 @@
-{
+import type { Catalog } from "@spy4x/platform/universal/i18n"
+
+export default {
   "AppShell.attachFiles": "Прикрепить файлы к заметке",
   "AttachmentMessages.load": "Не удалось загрузить файлы",
-  "AttachmentMessages.type": "{name} нельзя прикрепить. Можно прикреплять только изображения JPEG, PNG, WebP и GIF и файлы PDF.",
+  "AttachmentMessages.type":
+    "{name} нельзя прикрепить. Можно прикреплять только изображения JPEG, PNG, WebP и GIF и файлы PDF.",
   "AttachmentMessages.size": "{name} весит {size}. Каждый файл может быть не больше {max}.",
   "AttachmentMessages.noteFull": {
     "one": "В заметке может быть не больше {count} файла. {name} не прикреплён.",
     "few": "В заметке может быть не больше {count} файлов. {name} не прикреплён.",
     "many": "В заметке может быть не больше {count} файлов. {name} не прикреплён.",
-    "other": "В заметке может быть не больше {count} файла. {name} не прикреплён."
+    "other": "В заметке может быть не больше {count} файла. {name} не прикреплён.",
   },
   "AttachmentMessages.pending": "{name} ждёт: сначала дождитесь загрузок, которые уже идут.",
-  "AttachmentMessages.budget": "{name} не прикреплён: вы загрузили столько, сколько можно за час. Попробуйте позже.",
+  "AttachmentMessages.budget":
+    "{name} не прикреплён: вы загрузили столько, сколько можно за час. Попробуйте позже.",
   "AttachmentMessages.uploadFailed": "Не удалось загрузить.",
   "AttachmentMessages.overflow": {
     "one": "В заметке может быть не больше {max} файлов. Не прикреплён {count}: {names}.",
     "few": "В заметке может быть не больше {max} файлов. Не прикреплены {count}: {names}.",
     "many": "В заметке может быть не больше {max} файлов. Не прикреплены {count}: {names}.",
-    "other": "В заметке может быть не больше {max} файлов. Не прикреплены {count}: {names}."
+    "other": "В заметке может быть не больше {max} файлов. Не прикреплены {count}: {names}.",
   },
   "AttachmentMessages.uploaded": "{name} загружен",
   "AttachmentMessages.notReallyPdf": "{name} на самом деле не PDF, поэтому файл не прикреплён.",
-  "AttachmentMessages.notReallyJpeg": "{name} на самом деле не изображение JPEG, поэтому файл не прикреплён.",
-  "AttachmentMessages.notReallyPng": "{name} на самом деле не изображение PNG, поэтому файл не прикреплён.",
-  "AttachmentMessages.notReallyWebp": "{name} на самом деле не изображение WebP, поэтому файл не прикреплён.",
-  "AttachmentMessages.notReallyGif": "{name} на самом деле не изображение GIF, поэтому файл не прикреплён.",
-  "AttachmentMessages.remove": "Не удалось удалить {name}. Проверьте подключение и попробуйте ещё раз.",
+  "AttachmentMessages.notReallyJpeg":
+    "{name} на самом деле не изображение JPEG, поэтому файл не прикреплён.",
+  "AttachmentMessages.notReallyPng":
+    "{name} на самом деле не изображение PNG, поэтому файл не прикреплён.",
+  "AttachmentMessages.notReallyWebp":
+    "{name} на самом деле не изображение WebP, поэтому файл не прикреплён.",
+  "AttachmentMessages.notReallyGif":
+    "{name} на самом деле не изображение GIF, поэтому файл не прикреплён.",
+  "AttachmentMessages.remove":
+    "Не удалось удалить {name}. Проверьте подключение и попробуйте ещё раз.",
   "AttachmentMessages.linkExpired": "Срок действия ссылки истёк. Попробуйте ещё раз.",
   "Frame.overview": "Обзор",
   "Frame.notes": "Заметки",
@@ -50,51 +59,65 @@
   "GroupActivity.roleUnknown": "Участник",
   "GroupActivity.created": "<who>{who}</who> создал(а) группу",
   "GroupActivity.renamed": "<who>{who}</who> переименовал(а) группу",
-  "GroupActivity.renamedFromTo": "<who>{who}</who> переименовал(а) группу «<value>{from}</value>» в «<value>{to}</value>»",
+  "GroupActivity.renamedFromTo":
+    "<who>{who}</who> переименовал(а) группу «<value>{from}</value>» в «<value>{to}</value>»",
   "GroupActivity.detailsUpdated": "<who>{who}</who> изменил(а) описание, цвет или эмодзи группы",
   "GroupActivity.deleted": "<who>{who}</who> удалил(а) группу",
   "GroupActivity.restored": "<who>{who}</who> восстановил(а) группу",
-  "GroupActivity.roleChanged": "<who>{who}</who> изменил(а) роль участника <target>{target}</target>",
+  "GroupActivity.roleChanged":
+    "<who>{who}</who> изменил(а) роль участника <target>{target}</target>",
   "GroupActivity.roleChangedSomeone": "<who>{who}</who> изменил(а) роль участника",
-  "GroupActivity.roleChangedFromTo": "<who>{who}</who> изменил(а) роль участника <target>{target}</target>: «{fromRole}» → «{toRole}»",
-  "GroupActivity.roleChangedFromToSomeone": "<who>{who}</who> изменил(а) роль участника: «{fromRole}» → «{toRole}»",
-  "GroupActivity.memberRemoved": "<who>{who}</who> удалил(а) участника <target>{target}</target> из группы",
+  "GroupActivity.roleChangedFromTo":
+    "<who>{who}</who> изменил(а) роль участника <target>{target}</target>: «{fromRole}» → «{toRole}»",
+  "GroupActivity.roleChangedFromToSomeone":
+    "<who>{who}</who> изменил(а) роль участника: «{fromRole}» → «{toRole}»",
+  "GroupActivity.memberRemoved":
+    "<who>{who}</who> удалил(а) участника <target>{target}</target> из группы",
   "GroupActivity.memberRemovedSomeone": "<who>{who}</who> удалил(а) участника из группы",
   "GroupActivity.memberLeft": "<who>{who}</who> покинул(а) группу",
-  "GroupActivity.ownershipTransferred": "<who>{who}</who> передал(а) группу во владение участнику <target>{target}</target>",
-  "GroupActivity.ownershipTransferredSomeone": "<who>{who}</who> передал(а) группу во владение другому участнику",
+  "GroupActivity.ownershipTransferred":
+    "<who>{who}</who> передал(а) группу во владение участнику <target>{target}</target>",
+  "GroupActivity.ownershipTransferredSomeone":
+    "<who>{who}</who> передал(а) группу во владение другому участнику",
   "GroupActivity.invited": "<who>{who}</who> пригласил(а) нового участника",
   "GroupActivity.invitedAs": "<who>{who}</who> пригласил(а) нового участника с ролью «{role}»",
   "GroupActivity.invitationAccepted": "<who>{who}</who> вступил(а) в группу",
   "GroupActivity.invitationRevoked": "<who>{who}</who> отозвал(а) приглашение",
   "GroupActivity.invitationDeclined": "<who>{who}</who> отклонил(а) приглашение",
   "GroupActivity.dataMovedOut": {
-    "one": "<who>{who}</who> перенёс(ла) все данные группы ({count} элемент) в <value>{group}</value>",
-    "few": "<who>{who}</who> перенёс(ла) все данные группы ({count} элемента) в <value>{group}</value>",
-    "many": "<who>{who}</who> перенёс(ла) все данные группы ({count} элементов) в <value>{group}</value>",
-    "other": "<who>{who}</who> перенёс(ла) все данные группы ({count} элемента) в <value>{group}</value>"
+    "one":
+      "<who>{who}</who> перенёс(ла) все данные группы ({count} элемент) в <value>{group}</value>",
+    "few":
+      "<who>{who}</who> перенёс(ла) все данные группы ({count} элемента) в <value>{group}</value>",
+    "many":
+      "<who>{who}</who> перенёс(ла) все данные группы ({count} элементов) в <value>{group}</value>",
+    "other":
+      "<who>{who}</who> перенёс(ла) все данные группы ({count} элемента) в <value>{group}</value>",
   },
   "GroupActivity.dataMovedOutElsewhere": {
     "one": "<who>{who}</who> перенёс(ла) все данные группы ({count} элемент) в другую группу",
     "few": "<who>{who}</who> перенёс(ла) все данные группы ({count} элемента) в другую группу",
     "many": "<who>{who}</who> перенёс(ла) все данные группы ({count} элементов) в другую группу",
-    "other": "<who>{who}</who> перенёс(ла) все данные группы ({count} элемента) в другую группу"
+    "other": "<who>{who}</who> перенёс(ла) все данные группы ({count} элемента) в другую группу",
   },
-  "GroupActivity.dataMovedOutUncounted": "<who>{who}</who> перенёс(ла) все данные группы в <value>{group}</value>",
-  "GroupActivity.dataMovedOutUncountedElsewhere": "<who>{who}</who> перенёс(ла) все данные группы в другую группу",
+  "GroupActivity.dataMovedOutUncounted":
+    "<who>{who}</who> перенёс(ла) все данные группы в <value>{group}</value>",
+  "GroupActivity.dataMovedOutUncountedElsewhere":
+    "<who>{who}</who> перенёс(ла) все данные группы в другую группу",
   "GroupActivity.dataMovedIn": {
     "one": "<who>{who}</who> перенёс(ла) сюда все данные другой группы ({count} элемент)",
     "few": "<who>{who}</who> перенёс(ла) сюда все данные другой группы ({count} элемента)",
     "many": "<who>{who}</who> перенёс(ла) сюда все данные другой группы ({count} элементов)",
-    "other": "<who>{who}</who> перенёс(ла) сюда все данные другой группы ({count} элемента)"
+    "other": "<who>{who}</who> перенёс(ла) сюда все данные другой группы ({count} элемента)",
   },
-  "GroupActivity.dataMovedInUncounted": "<who>{who}</who> перенёс(ла) сюда все данные другой группы",
+  "GroupActivity.dataMovedInUncounted":
+    "<who>{who}</who> перенёс(ла) сюда все данные другой группы",
   "GroupActivity.exported": "<who>{who}</who> экспортировал(а) группу в файл",
   "GroupActivity.imported": {
     "one": "<who>{who}</who> создал(а) группу из файла экспорта ({count} элемент)",
     "few": "<who>{who}</who> создал(а) группу из файла экспорта ({count} элемента)",
     "many": "<who>{who}</who> создал(а) группу из файла экспорта ({count} элементов)",
-    "other": "<who>{who}</who> создал(а) группу из файла экспорта ({count} элемента)"
+    "other": "<who>{who}</who> создал(а) группу из файла экспорта ({count} элемента)",
   },
   "GroupActivity.importedUncounted": "<who>{who}</who> создал(а) группу из файла экспорта",
   "GroupActivity.noteCreated": "<who>{who}</who> добавил(а) заметку «<value>{title}</value>»",
@@ -107,34 +130,42 @@
     "one": "<who>{who}</who> перенёс(ла) {count} заметку в <value>{group}</value>",
     "few": "<who>{who}</who> перенёс(ла) {count} заметки в <value>{group}</value>",
     "many": "<who>{who}</who> перенёс(ла) {count} заметок в <value>{group}</value>",
-    "other": "<who>{who}</who> перенёс(ла) {count} заметки в <value>{group}</value>"
+    "other": "<who>{who}</who> перенёс(ла) {count} заметки в <value>{group}</value>",
   },
   "GroupActivity.notesMovedOutElsewhere": {
     "one": "<who>{who}</who> перенёс(ла) {count} заметку в другую группу",
     "few": "<who>{who}</who> перенёс(ла) {count} заметки в другую группу",
     "many": "<who>{who}</who> перенёс(ла) {count} заметок в другую группу",
-    "other": "<who>{who}</who> перенёс(ла) {count} заметки в другую группу"
+    "other": "<who>{who}</who> перенёс(ла) {count} заметки в другую группу",
   },
-  "GroupActivity.notesMovedOutUncounted": "<who>{who}</who> перенёс(ла) несколько заметок в <value>{group}</value>",
-  "GroupActivity.notesMovedOutUncountedElsewhere": "<who>{who}</who> перенёс(ла) несколько заметок в другую группу",
+  "GroupActivity.notesMovedOutUncounted":
+    "<who>{who}</who> перенёс(ла) несколько заметок в <value>{group}</value>",
+  "GroupActivity.notesMovedOutUncountedElsewhere":
+    "<who>{who}</who> перенёс(ла) несколько заметок в другую группу",
   "GroupActivity.notesMovedIn": {
     "one": "<who>{who}</who> перенёс(ла) сюда {count} заметку из другой группы",
     "few": "<who>{who}</who> перенёс(ла) сюда {count} заметки из другой группы",
     "many": "<who>{who}</who> перенёс(ла) сюда {count} заметок из другой группы",
-    "other": "<who>{who}</who> перенёс(ла) сюда {count} заметки из другой группы"
+    "other": "<who>{who}</who> перенёс(ла) сюда {count} заметки из другой группы",
   },
-  "GroupActivity.notesMovedInUncounted": "<who>{who}</who> перенёс(ла) сюда несколько заметок из другой группы",
-  "GroupActivity.fileAdded": "<who>{who}</who> прикрепил(а) файл «<value>{name}</value>» к заметке «<value>{title}</value>»",
+  "GroupActivity.notesMovedInUncounted":
+    "<who>{who}</who> перенёс(ла) сюда несколько заметок из другой группы",
+  "GroupActivity.fileAdded":
+    "<who>{who}</who> прикрепил(а) файл «<value>{name}</value>» к заметке «<value>{title}</value>»",
   "GroupActivity.fileAddedNoNote": "<who>{who}</who> прикрепил(а) файл «<value>{name}</value>»",
-  "GroupActivity.fileAddedUnnamed": "<who>{who}</who> прикрепил(а) файл к заметке «<value>{title}</value>»",
+  "GroupActivity.fileAddedUnnamed":
+    "<who>{who}</who> прикрепил(а) файл к заметке «<value>{title}</value>»",
   "GroupActivity.fileAddedUnnamedNoNote": "<who>{who}</who> прикрепил(а) файл",
-  "GroupActivity.fileRemoved": "<who>{who}</who> удалил(а) файл «<value>{name}</value>» из заметки «<value>{title}</value>»",
+  "GroupActivity.fileRemoved":
+    "<who>{who}</who> удалил(а) файл «<value>{name}</value>» из заметки «<value>{title}</value>»",
   "GroupActivity.fileRemovedNoNote": "<who>{who}</who> удалил(а) файл «<value>{name}</value>»",
-  "GroupActivity.fileRemovedUnnamed": "<who>{who}</who> удалил(а) файл из заметки «<value>{title}</value>»",
+  "GroupActivity.fileRemovedUnnamed":
+    "<who>{who}</who> удалил(а) файл из заметки «<value>{title}</value>»",
   "GroupActivity.fileRemovedUnnamedNoNote": "<who>{who}</who> удалил(а) файл",
   "GroupActivity.tagCreated": "<who>{who}</who> добавил(а) тег «<value>{name}</value>»",
   "GroupActivity.tagCreatedUnnamed": "<who>{who}</who> добавил(а) тег",
-  "GroupActivity.tagRenamed": "<who>{who}</who> переименовал(а) тег «<value>{from}</value>» в «<value>{name}</value>»",
+  "GroupActivity.tagRenamed":
+    "<who>{who}</who> переименовал(а) тег «<value>{from}</value>» в «<value>{name}</value>»",
   "GroupActivity.tagChanged": "<who>{who}</who> изменил(а) тег «<value>{name}</value>»",
   "GroupActivity.tagChangedUnnamed": "<who>{who}</who> изменил(а) тег",
   "GroupActivity.tagRecoloured": "<who>{who}</who> изменил(а) цвет тега «<value>{name}</value>»",
@@ -144,13 +175,14 @@
     "one": "<who>{who}</who> удалил(а) тег «<value>{name}</value>», который был у {count} заметки",
     "few": "<who>{who}</who> удалил(а) тег «<value>{name}</value>», который был у {count} заметок",
     "many": "<who>{who}</who> удалил(а) тег «<value>{name}</value>», который был у {count} заметок",
-    "other": "<who>{who}</who> удалил(а) тег «<value>{name}</value>», который был у {count} заметок"
+    "other":
+      "<who>{who}</who> удалил(а) тег «<value>{name}</value>», который был у {count} заметок",
   },
   "GroupActivity.tagDeletedUnnamedCarried": {
     "one": "<who>{who}</who> удалил(а) тег, который был у {count} заметки",
     "few": "<who>{who}</who> удалил(а) тег, который был у {count} заметок",
     "many": "<who>{who}</who> удалил(а) тег, который был у {count} заметок",
-    "other": "<who>{who}</who> удалил(а) тег, который был у {count} заметок"
+    "other": "<who>{who}</who> удалил(а) тег, который был у {count} заметок",
   },
   "GroupActivity.unknown": "<who>{who}</who> что-то изменил(а) в группе",
   "GroupActivity.loadFailed": "Не удалось загрузить события",
@@ -175,13 +207,13 @@
     "one": "{count} участник",
     "few": "{count} участника",
     "many": "{count} участников",
-    "other": "{count} участника"
+    "other": "{count} участника",
   },
   "GroupEditor.memberCountLink": {
     "one": "{count} участник: открыть тариф и оплату",
     "few": "{count} участника: открыть тариф и оплату",
     "many": "{count} участников: открыть тариф и оплату",
-    "other": "{count} участника: открыть тариф и оплату"
+    "other": "{count} участника: открыть тариф и оплату",
   },
   "GroupEditor.tabGeneral": "Общее",
   "GroupEditor.tabMembers": "Участники",
@@ -197,24 +229,31 @@
   "GroupEditor.close": "Закрыть",
   "GroupEditor.cancel": "Отмена",
   "GroupEditor.leaveTitle": "Покинуть «{name}»?",
-  "GroupEditor.leaveConfirmation": "Вы сразу потеряете доступ на всех устройствах. Всё, что вы написали, останется в группе. Чтобы вернуться, кто-то должен снова добавить вас.",
+  "GroupEditor.leaveConfirmation":
+    "Вы сразу потеряете доступ на всех устройствах. Всё, что вы написали, останется в группе. Чтобы вернуться, кто-то должен снова добавить вас.",
   "GroupEditor.deleteTitle": "Удалить «{name}»?",
   "GroupEditor.deleteConfirmation": {
-    "one": "Группа сразу исчезнет у всех участников вместе со всем содержимым. Тех, у кого она открыта, переключит на другую их группу, а тот, у кого не останется ни одной группы, получит новую пустую группу «Personal». Восстановить её можно на странице «Группы» в течение {count} дня. После этого она и всё её содержимое будут удалены навсегда без возможности восстановления.",
-    "few": "Группа сразу исчезнет у всех участников вместе со всем содержимым. Тех, у кого она открыта, переключит на другую их группу, а тот, у кого не останется ни одной группы, получит новую пустую группу «Personal». Восстановить её можно на странице «Группы» в течение {count} дней. После этого она и всё её содержимое будут удалены навсегда без возможности восстановления.",
-    "many": "Группа сразу исчезнет у всех участников вместе со всем содержимым. Тех, у кого она открыта, переключит на другую их группу, а тот, у кого не останется ни одной группы, получит новую пустую группу «Personal». Восстановить её можно на странице «Группы» в течение {count} дней. После этого она и всё её содержимое будут удалены навсегда без возможности восстановления.",
-    "other": "Группа сразу исчезнет у всех участников вместе со всем содержимым. Тех, у кого она открыта, переключит на другую их группу, а тот, у кого не останется ни одной группы, получит новую пустую группу «Personal». Восстановить её можно на странице «Группы» в течение {count} дней. После этого она и всё её содержимое будут удалены навсегда без возможности восстановления."
+    "one":
+      "Группа сразу исчезнет у всех участников вместе со всем содержимым. Тех, у кого она открыта, переключит на другую их группу, а тот, у кого не останется ни одной группы, получит новую пустую группу «Personal». Восстановить её можно на странице «Группы» в течение {count} дня. После этого она и всё её содержимое будут удалены навсегда без возможности восстановления.",
+    "few":
+      "Группа сразу исчезнет у всех участников вместе со всем содержимым. Тех, у кого она открыта, переключит на другую их группу, а тот, у кого не останется ни одной группы, получит новую пустую группу «Personal». Восстановить её можно на странице «Группы» в течение {count} дней. После этого она и всё её содержимое будут удалены навсегда без возможности восстановления.",
+    "many":
+      "Группа сразу исчезнет у всех участников вместе со всем содержимым. Тех, у кого она открыта, переключит на другую их группу, а тот, у кого не останется ни одной группы, получит новую пустую группу «Personal». Восстановить её можно на странице «Группы» в течение {count} дней. После этого она и всё её содержимое будут удалены навсегда без возможности восстановления.",
+    "other":
+      "Группа сразу исчезнет у всех участников вместе со всем содержимым. Тех, у кого она открыта, переключит на другую их группу, а тот, у кого не останется ни одной группы, получит новую пустую группу «Personal». Восстановить её можно на странице «Группы» в течение {count} дней. После этого она и всё её содержимое будут удалены навсегда без возможности восстановления.",
   },
   "GroupEditor.optional": "Необязательно",
-  "GroupEditor.offlineCreate": "Заполнить форму можно уже сейчас. Чтобы создать группу, нужно подключение к сети.",
-  "GroupEditor.offlineSave": "Это копия, сохранённая на устройстве. Чтобы сохранить изменения, нужно подключение к сети.",
+  "GroupEditor.offlineCreate":
+    "Заполнить форму можно уже сейчас. Чтобы создать группу, нужно подключение к сети.",
+  "GroupEditor.offlineSave":
+    "Это копия, сохранённая на устройстве. Чтобы сохранить изменения, нужно подключение к сети.",
   "GroupEditor.name": "Название",
   "GroupEditor.description": "Описание",
   "GroupEditor.descriptionCount": {
     "one": "{used} из {count} символа",
     "few": "{used} из {count} символов",
     "many": "{used} из {count} символов",
-    "other": "{used} из {count} символов"
+    "other": "{used} из {count} символов",
   },
   "GroupEditor.descriptionPlaceholder": "Для чего эта группа?",
   "GroupEditor.emoji": "Эмодзи",
@@ -226,12 +265,17 @@
   "GroupEditor.saving": "Сохраняем…",
   "GroupEditor.create": "Создать группу",
   "GroupEditor.save": "Сохранить группу",
-  "GroupEditor.trialUsed": "Новые группы начинают с бесплатного тарифа. Вы уже использовали пробный период, поэтому платный тариф здесь оплачивается с первого дня.",
+  "GroupEditor.trialUsed":
+    "Новые группы начинают с бесплатного тарифа. Вы уже использовали пробный период, поэтому платный тариф здесь оплачивается с первого дня.",
   "GroupEditor.trial": {
-    "one": "Новые группы начинают с бесплатного тарифа. Ваш бесплатный пробный период платного тарифа ({count} день) достанется первой группе, для которой вы выберете платный тариф.",
-    "few": "Новые группы начинают с бесплатного тарифа. Ваш бесплатный пробный период платного тарифа ({count} дня) достанется первой группе, для которой вы выберете платный тариф.",
-    "many": "Новые группы начинают с бесплатного тарифа. Ваш бесплатный пробный период платного тарифа ({count} дней) достанется первой группе, для которой вы выберете платный тариф.",
-    "other": "Новые группы начинают с бесплатного тарифа. Ваш бесплатный пробный период платного тарифа ({count} дня) достанется первой группе, для которой вы выберете платный тариф."
+    "one":
+      "Новые группы начинают с бесплатного тарифа. Ваш бесплатный пробный период платного тарифа ({count} день) достанется первой группе, для которой вы выберете платный тариф.",
+    "few":
+      "Новые группы начинают с бесплатного тарифа. Ваш бесплатный пробный период платного тарифа ({count} дня) достанется первой группе, для которой вы выберете платный тариф.",
+    "many":
+      "Новые группы начинают с бесплатного тарифа. Ваш бесплатный пробный период платного тарифа ({count} дней) достанется первой группе, для которой вы выберете платный тариф.",
+    "other":
+      "Новые группы начинают с бесплатного тарифа. Ваш бесплатный пробный период платного тарифа ({count} дня) достанется первой группе, для которой вы выберете платный тариф.",
   },
   "GroupEditor.readOnly": "Менять данные группы могут только администратор или владелец.",
   "GroupEditor.nameRequired": "Введите название.",
@@ -240,12 +284,14 @@
     "one": "Не больше {count} символа.",
     "few": "Не больше {count} символов.",
     "many": "Не больше {count} символов.",
-    "other": "Не больше {count} символов."
+    "other": "Не больше {count} символов.",
   },
   "GroupEditor.emojiInvalid": "Укажите один эмодзи, например 🏕️, или оставьте поле пустым.",
   "GroupEditor.createFailed": "Не удалось создать группу. Попробуйте ещё раз.",
-  "GroupEditor.createOffline": "Чтобы создать группу, нужно подключение к сети. Попробуйте ещё раз, когда оно появится.",
-  "GroupEditor.saveOffline": "Чтобы сохранить группу, нужно подключение к сети. Попробуйте ещё раз, когда оно появится.",
+  "GroupEditor.createOffline":
+    "Чтобы создать группу, нужно подключение к сети. Попробуйте ещё раз, когда оно появится.",
+  "GroupEditor.saveOffline":
+    "Чтобы сохранить группу, нужно подключение к сети. Попробуйте ещё раз, когда оно появится.",
   "GroupEditor.created": "Группа создана",
   "GroupEditor.createdBody": "«{name}» теперь ваша текущая группа.",
   "GroupEditor.saved": "Группа сохранена",
@@ -261,16 +307,17 @@
     "one": "{count} заметка",
     "few": "{count} заметки",
     "many": "{count} заметок",
-    "other": "{count} заметки"
+    "other": "{count} заметки",
   },
   "GroupImport.tags": {
     "one": "{count} тег",
     "few": "{count} тега",
     "many": "{count} тегов",
-    "other": "{count} тега"
+    "other": "{count} тега",
   },
   "GroupImport.settings": "настройки",
-  "GroupImport.newerVersion": "Этот файл сделан более новой версией приложения. Обновите приложение или экспортируйте файл заново из подходящей версии.",
+  "GroupImport.newerVersion":
+    "Этот файл сделан более новой версией приложения. Обновите приложение или экспортируйте файл заново из подходящей версии.",
   "GroupImport.notExport": "Это не файл экспорта группы.",
   "GroupImport.tooLarge": "Файл больше {size} МБ.",
   "GroupImport.checking": "Проверяем файл…",
@@ -281,7 +328,8 @@
   "GroupImport.back": "Назад к группам",
   "GroupImport.intro": "Создайте новую группу из файла экспорта. Ваши группы останутся как есть.",
   "GroupImport.offlineTitle": "Нет подключения к сети",
-  "GroupImport.offline": "Чтобы проверить и импортировать файл, нужно подключение к сети. Выбранный файл никуда не денется.",
+  "GroupImport.offline":
+    "Чтобы проверить и импортировать файл, нужно подключение к сети. Выбранный файл никуда не денется.",
   "GroupImport.file": "Файл экспорта",
   "GroupImport.fileHint": "Файл .json, экспортированный из группы, до {size} МБ.",
   "GroupImport.browse": "Выбрать файл",
@@ -292,14 +340,18 @@
     "one": "и ещё {count}",
     "few": "и ещё {count}",
     "many": "и ещё {count}",
-    "other": "и ещё {count}"
+    "other": "и ещё {count}",
   },
   "GroupImport.planTitle": "В тарифе новой группы для него нет места",
   "GroupImport.plan": {
-    "one": "Новая группа начинает с бесплатного тарифа, в нём до {count} заметки. В этом файле их {notes}.",
-    "few": "Новая группа начинает с бесплатного тарифа, в нём до {count} заметок. В этом файле их {notes}.",
-    "many": "Новая группа начинает с бесплатного тарифа, в нём до {count} заметок. В этом файле их {notes}.",
-    "other": "Новая группа начинает с бесплатного тарифа, в нём до {count} заметок. В этом файле их {notes}."
+    "one":
+      "Новая группа начинает с бесплатного тарифа, в нём до {count} заметки. В этом файле их {notes}.",
+    "few":
+      "Новая группа начинает с бесплатного тарифа, в нём до {count} заметок. В этом файле их {notes}.",
+    "many":
+      "Новая группа начинает с бесплатного тарифа, в нём до {count} заметок. В этом файле их {notes}.",
+    "other":
+      "Новая группа начинает с бесплатного тарифа, в нём до {count} заметок. В этом файле их {notes}.",
   },
   "GroupImport.failed": "Импорт прервался, ничего не сохранено. Попробуйте ещё раз.",
   "GroupImport.name": "Название",
@@ -308,17 +360,22 @@
   "GroupImport.imported": "Группа импортирована",
   "GroupImport.importedBody": "Импортировано в «{name}»: {contents}.",
   "GroupImport.nameInvalid": "Название группы — от 1 до 100 символов.",
-  "GroupInvitations.viewersOnly": "На тарифе этой группы по приглашению можно добавлять только читателей. Платный тариф позволит приглашать ещё редакторов и администраторов.",
+  "GroupInvitations.viewersOnly":
+    "На тарифе этой группы по приглашению можно добавлять только читателей. Платный тариф позволит приглашать ещё редакторов и администраторов.",
   "GroupInvitations.copyNow": "Скопируйте ссылку сейчас: больше её не покажут.",
-  "GroupInvitations.copyNowMailed": "Скопируйте ссылку сейчас: больше её не покажут. Её также отправили по почте.",
-  "GroupInvitations.copyNowMailFailed": "Скопируйте ссылку сейчас: больше её не покажут. Письмо отправить не удалось, поэтому поделитесь ссылкой сами.",
+  "GroupInvitations.copyNowMailed":
+    "Скопируйте ссылку сейчас: больше её не покажут. Её также отправили по почте.",
+  "GroupInvitations.copyNowMailFailed":
+    "Скопируйте ссылку сейчас: больше её не покажут. Письмо отправить не удалось, поэтому поделитесь ссылкой сами.",
   "GroupInvitations.copyLink": "Скопировать ссылку-приглашение",
   "GroupInvitations.linkCopied": "Ссылка скопирована",
   "GroupInvitations.done": "Готово",
-  "GroupInvitations.formHint": "Любой, у кого есть ссылка, может вступить с её ролью, пока срок не истёк и места не закончились. Ожидающие приглашения не учитываются в лимите участников тарифа, а принятые — учитываются.",
+  "GroupInvitations.formHint":
+    "Любой, у кого есть ссылка, может вступить с её ролью, пока срок не истёк и места не закончились. Ожидающие приглашения не учитываются в лимите участников тарифа, а принятые — учитываются.",
   "GroupInvitations.role": "Роль",
   "GroupInvitations.email": "Адрес эл. почты (необязательно)",
-  "GroupInvitations.emailHint": "Принять приглашение сможет только аккаунт, подтвердивший этот адрес. Оно впустит одного человека.",
+  "GroupInvitations.emailHint":
+    "Принять приглашение сможет только аккаунт, подтвердивший этот адрес. Оно впустит одного человека.",
   "GroupInvitations.sendEmail": "Отправить ссылку на этот адрес",
   "GroupInvitations.days": "Действует (дней)",
   "GroupInvitations.uses": "Сколько человек",
@@ -331,19 +388,25 @@
     "one": "Использовано {uses} из {count} · действует до <value>{date}</value>",
     "few": "Использовано {uses} из {count} · действует до <value>{date}</value>",
     "many": "Использовано {uses} из {count} · действует до <value>{date}</value>",
-    "other": "Использовано {uses} из {count} · действует до <value>{date}</value>"
+    "other": "Использовано {uses} из {count} · действует до <value>{date}</value>",
   },
   "GroupInvitations.usageBy": {
-    "one": "Использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>",
-    "few": "Использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>",
-    "many": "Использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>",
-    "other": "Использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>"
+    "one":
+      "Использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>",
+    "few":
+      "Использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>",
+    "many":
+      "Использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>",
+    "other":
+      "Использовано {uses} из {count} · действует до <value>{date}</value> · создал(а) <name>{name}</name>",
   },
   "GroupInvitations.actions": "Действия с приглашением для {who}",
   "GroupInvitations.revoke": "Отозвать",
   "GroupInvitations.revokeTitle": "Отозвать приглашение?",
-  "GroupInvitations.revokeConfirmation": "Ссылка для <value>{email}</value> сразу перестанет работать. Те, кто уже вступил по ней, останутся.",
-  "GroupInvitations.revokeConfirmationLink": "Эта ссылка сразу перестанет работать. Те, кто уже вступил по ней, останутся.",
+  "GroupInvitations.revokeConfirmation":
+    "Ссылка для <value>{email}</value> сразу перестанет работать. Те, кто уже вступил по ней, останутся.",
+  "GroupInvitations.revokeConfirmationLink":
+    "Эта ссылка сразу перестанет работать. Те, кто уже вступил по ней, останутся.",
   "GroupInvitations.opening": "Открываем приглашение…",
   "GroupInvitations.unusable": "Этим приглашением нельзя воспользоваться",
   "GroupInvitations.toGroups": "К вашим группам",
@@ -360,7 +423,8 @@
   "GroupInvitations.declineNamed": "Отклонить приглашение в {name}",
   "GroupInvitations.acceptNamed": "Принять приглашение в {name}",
   "GroupInvitations.verifyEmail": "Подтвердить почту",
-  "GroupInvitations.notForYou": "Это приглашение отправлено на другой адрес. Если адрес ваш, сначала подтвердите его в <link>профиле</link> или войдите в аккаунт, который его использует.",
+  "GroupInvitations.notForYou":
+    "Это приглашение отправлено на другой адрес. Если адрес ваш, сначала подтвердите его в <link>профиле</link> или войдите в аккаунт, который его использует.",
   "GroupInvitations.somethingWrong": "Что-то пошло не так. Попробуйте ещё раз.",
   "GroupInvitations.unreachable": "Сервер недоступен. Попробуйте ещё раз.",
   "GroupMembers.unnamed": "Участник без имени",
@@ -371,7 +435,7 @@
     "one": "Показаны первые {shown} из {count} участника.",
     "few": "Показаны первые {shown} из {count} участников.",
     "many": "Показаны первые {shown} из {count} участников.",
-    "other": "Показаны первые {shown} из {count} участников."
+    "other": "Показаны первые {shown} из {count} участников.",
   },
   "GroupMembers.you": "это вы",
   "GroupMembers.lastSeen": "Был(а) в сети <value>{when}</value>",
@@ -385,12 +449,14 @@
   "GroupMembers.removeTitle": "Удалить участника {name}?",
   "GroupMembers.removeConfirm": "Удалить участника",
   "GroupMembers.cancel": "Отмена",
-  "GroupMembers.removeConfirmation": "Участник сразу потеряет доступ на всех устройствах. Всё, что он написал, останется в группе. Если это его единственная группа, он получит новую пустую группу «Personal». Ссылка-приглашение, которая у него ещё есть, позволит вернуться с другого аккаунта, поэтому отзовите и такие ссылки.",
+  "GroupMembers.removeConfirmation":
+    "Участник сразу потеряет доступ на всех устройствах. Всё, что он написал, останется в группе. Если это его единственная группа, он получит новую пустую группу «Personal». Ссылка-приглашение, которая у него ещё есть, позволит вернуться с другого аккаунта, поэтому отзовите и такие ссылки.",
   "GroupMembers.loadFailed": "Не удалось загрузить участников",
   "GroupMembers.roleFailed": "Не удалось изменить роль",
   "GroupMembers.removeFailed": "Не удалось удалить участника",
   "GroupMembers.leaveFailed": "Не удалось покинуть группу",
-  "GroupMoveAll.explanation": "Все заметки и теги из «<value>{name}</value>» перейдут в выбранную группу, и её участники перестанут их видеть. Участники другой группы увидят их сразу. Каждая заметка сохранит историю правок. Если что-то не получится, ничего не перенесётся.",
+  "GroupMoveAll.explanation":
+    "Все заметки и теги из «<value>{name}</value>» перейдут в выбранную группу, и её участники перестанут их видеть. Участники другой группы увидят их сразу. Каждая заметка сохранит историю правок. Если что-то не получится, ничего не перенесётся.",
   "GroupMoveAll.to": "Куда перенести",
   "GroupMoveAll.cancel": "Отмена",
   "GroupMoveAll.moving": "Переносим…",
@@ -399,16 +465,18 @@
     "one": "{count} заметка",
     "few": "{count} заметки",
     "many": "{count} заметок",
-    "other": "{count} заметки"
+    "other": "{count} заметки",
   },
   "GroupMoveAll.tags": {
     "one": "{count} тег",
     "few": "{count} тега",
     "many": "{count} тегов",
-    "other": "{count} тега"
+    "other": "{count} тега",
   },
-  "GroupMoveAll.done": "Перенесено: {notes} — из «<value>{from}</value>» в «<value>{to}</value>». Заметки, которые вы удалили раньше, остаются в этой группе и удалятся вместе с ней.",
-  "GroupMoveAll.doneWithTags": "Перенесено: {notes} и {tags} — из «<value>{from}</value>» в «<value>{to}</value>». Заметки, которые вы удалили раньше, остаются в этой группе и удалятся вместе с ней.",
+  "GroupMoveAll.done":
+    "Перенесено: {notes} — из «<value>{from}</value>» в «<value>{to}</value>». Заметки, которые вы удалили раньше, остаются в этой группе и удалятся вместе с ней.",
+  "GroupMoveAll.doneWithTags":
+    "Перенесено: {notes} и {tags} — из «<value>{from}</value>» в «<value>{to}</value>». Заметки, которые вы удалили раньше, остаются в этой группе и удалятся вместе с ней.",
   "GroupMoveAll.keep": "Оставить группу",
   "GroupMoveAll.delete": "Удалить «{name}»…",
   "GroupMoveAll.failed": "Не удалось перенести данные",
@@ -420,7 +488,8 @@
   "GroupPicker.all": "Все группы",
   "GroupPicker.new": "Новая группа",
   "GroupPicker.sheetHeading": "Группа",
-  "GroupTransfer.explanation": "Этот участник станет владельцем, а вы — администратором. Только владелец может удалить группу, управлять её тарифом или снова передать её. Прежде чем удалить свой аккаунт, передайте все группы, которые вы делите с другими.",
+  "GroupTransfer.explanation":
+    "Этот участник станет владельцем, а вы — администратором. Только владелец может удалить группу, управлять её тарифом или снова передать её. Прежде чем удалить свой аккаунт, передайте все группы, которые вы делите с другими.",
   "GroupTransfer.newOwner": "Новый владелец",
   "GroupTransfer.typeName": "Введите «{name}» для подтверждения",
   "GroupTransfer.password": "Ваш пароль",
@@ -429,7 +498,8 @@
   "GroupTransfer.transfer": "Передать владение",
   "GroupTransfer.failed": "Не удалось передать группу",
   "GroupTransfer.unreachable": "Сервер недоступен. Попробуйте ещё раз.",
-  "GroupTransfer.tooManyAttempts": "Слишком много попыток. Подождите несколько минут и попробуйте снова.",
+  "GroupTransfer.tooManyAttempts":
+    "Слишком много попыток. Подождите несколько минут и попробуйте снова.",
   "GroupTransfer.somethingWrong": "Что-то пошло не так. Попробуйте ещё раз.",
   "Groups.title": "Группы",
   "Groups.new": "Новая группа",
@@ -441,10 +511,14 @@
   "Groups.listLabel": "Ваши группы",
   "Groups.deleted": "Удалённые группы ({count})",
   "Groups.deletedHint": {
-    "one": "Удалённую группу со всем содержимым можно восстановить в течение {count} дня. После этого она будет удалена навсегда.",
-    "few": "Удалённую группу со всем содержимым можно восстановить в течение {count} дней. После этого она будет удалена навсегда.",
-    "many": "Удалённую группу со всем содержимым можно восстановить в течение {count} дней. После этого она будет удалена навсегда.",
-    "other": "Удалённую группу со всем содержимым можно восстановить в течение {count} дней. После этого она будет удалена навсегда."
+    "one":
+      "Удалённую группу со всем содержимым можно восстановить в течение {count} дня. После этого она будет удалена навсегда.",
+    "few":
+      "Удалённую группу со всем содержимым можно восстановить в течение {count} дней. После этого она будет удалена навсегда.",
+    "many":
+      "Удалённую группу со всем содержимым можно восстановить в течение {count} дней. После этого она будет удалена навсегда.",
+    "other":
+      "Удалённую группу со всем содержимым можно восстановить в течение {count} дней. После этого она будет удалена навсегда.",
   },
   "Groups.restorableUntil": "Можно восстановить до <value>{date}</value>",
   "Groups.restore": "Восстановить",
@@ -455,7 +529,7 @@
     "one": "{count} участник",
     "few": "{count} участника",
     "many": "{count} участников",
-    "other": "{count} участника"
+    "other": "{count} участника",
   },
   "Groups.current": "Текущая",
   "Groups.currentNamed": "{name}, текущая группа",
@@ -467,7 +541,8 @@
   "Groups.deleteFailed": "Не удалось удалить группу",
   "Groups.restoreFailed": "Не удалось восстановить группу",
   "InvitationNew.back": "Назад к участникам",
-  "InvitationNew.offline": "Чтобы создать приглашение, нужно подключение к сети. Попробуйте ещё раз, когда оно появится.",
+  "InvitationNew.offline":
+    "Чтобы создать приглашение, нужно подключение к сети. Попробуйте ещё раз, когда оно появится.",
   "InvitationNew.offlineTitle": "Нет подключения к сети",
   "InvitationNew.copyTitle": "Скопируйте ссылку-приглашение",
   "InvitationNew.title": "Новое приглашение",
@@ -488,33 +563,44 @@
   "GroupBillingPanel.planFree": "Бесплатный",
   "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
-    "one": "Платёж не прошёл. Обновите карту через «Сменить карту» в течение {count} дня, до {date}, чтобы сохранить {plan}.",
-    "few": "Платёж не прошёл. Обновите карту через «Сменить карту» в течение {count} дней, до {date}, чтобы сохранить {plan}.",
-    "many": "Платёж не прошёл. Обновите карту через «Сменить карту» в течение {count} дней, до {date}, чтобы сохранить {plan}.",
-    "other": "Платёж не прошёл. Обновите карту через «Сменить карту» в течение {count} дня, до {date}, чтобы сохранить {plan}."
+    "one":
+      "Платёж не прошёл. Обновите карту через «Сменить карту» в течение {count} дня, до {date}, чтобы сохранить {plan}.",
+    "few":
+      "Платёж не прошёл. Обновите карту через «Сменить карту» в течение {count} дней, до {date}, чтобы сохранить {plan}.",
+    "many":
+      "Платёж не прошёл. Обновите карту через «Сменить карту» в течение {count} дней, до {date}, чтобы сохранить {plan}.",
+    "other":
+      "Платёж не прошёл. Обновите карту через «Сменить карту» в течение {count} дня, до {date}, чтобы сохранить {plan}.",
   },
-  "GroupBillingPanel.paymentFailedFree": "Платёж не прошёл, поэтому группа перешла на бесплатный тариф. Обновите карту через «Сменить карту», чтобы вернуть {plan}.",
+  "GroupBillingPanel.paymentFailedFree":
+    "Платёж не прошёл, поэтому группа перешла на бесплатный тариф. Обновите карту через «Сменить карту», чтобы вернуть {plan}.",
   "GroupBillingPanel.offline": "Сервер недоступен. Попробуйте ещё раз.",
   "GroupBillingPanel.unreadable": "Не удалось прочитать тариф.",
-  "GroupBillingPanel.unsafePage": "Платёжный сервис вернул адрес, который это приложение не открывает.",
-  "GroupBillingPanel.checkoutUnreachable": "Не удалось открыть оплату в Stripe. Проверьте подключение и попробуйте ещё раз.",
-  "GroupBillingPanel.portalUnreachable": "Не удалось открыть страницу оплаты Stripe. Проверьте подключение и попробуйте ещё раз.",
+  "GroupBillingPanel.unsafePage":
+    "Платёжный сервис вернул адрес, который это приложение не открывает.",
+  "GroupBillingPanel.checkoutUnreachable":
+    "Не удалось открыть оплату в Stripe. Проверьте подключение и попробуйте ещё раз.",
+  "GroupBillingPanel.portalUnreachable":
+    "Не удалось открыть страницу оплаты Stripe. Проверьте подключение и попробуйте ещё раз.",
   "GroupBillingPanel.title": "Тариф и оплата",
-  "GroupBillingPanel.description": "Сколько <group>{group}</group> платит в месяц. Оплату обрабатывает Stripe.",
+  "GroupBillingPanel.description":
+    "Сколько <group>{group}</group> платит в месяц. Оплату обрабатывает Stripe.",
   "GroupBillingPanel.loading": "Загружаем тариф",
   "GroupBillingPanel.statusTrial": "Пробный период",
   "GroupBillingPanel.statusRenews": "Продление {date}",
   "GroupBillingPanel.statusEnds": "Закончится {date}",
   "GroupBillingPanel.statusPaymentFailed": "Платёж не прошёл",
   "GroupBillingPanel.off": "Все группы на бесплатном тарифе.",
-  "GroupBillingPanel.ownerOnly": "Только владелец группы, <name>{name}</name>, может менять тариф и смотреть счета.",
-  "GroupBillingPanel.ownerOnlyUnknown": "Только владелец группы может менять тариф и смотреть счета.",
+  "GroupBillingPanel.ownerOnly":
+    "Только владелец группы, <name>{name}</name>, может менять тариф и смотреть счета.",
+  "GroupBillingPanel.ownerOnlyUnknown":
+    "Только владелец группы может менять тариф и смотреть счета.",
   "GroupBillingPanel.price": "{plan} стоит {price} в месяц за участника.",
   "GroupBillingPanel.priceForGroup": {
     "one": "При {count} участнике <group>{group}</group> будет платить {total} в месяц.",
     "few": "При {count} участниках <group>{group}</group> будет платить {total} в месяц.",
     "many": "При {count} участниках <group>{group}</group> будет платить {total} в месяц.",
-    "other": "При {count} участника <group>{group}</group> будет платить {total} в месяц."
+    "other": "При {count} участника <group>{group}</group> будет платить {total} в месяц.",
   },
   "GroupBillingPanel.opening": "Открываем Stripe…",
   "GroupBillingPanel.opensStripe": "(откроется Stripe)",
@@ -522,26 +608,30 @@
     "one": "Попробовать бесплатно {count} день",
     "few": "Попробовать бесплатно {count} дня",
     "many": "Попробовать бесплатно {count} дней",
-    "other": "Попробовать бесплатно {count} дня"
+    "other": "Попробовать бесплатно {count} дня",
   },
   "GroupBillingPanel.upgrade": "Перейти на {plan}",
   "GroupBillingPanel.trialUsed": "Вы уже использовали бесплатный пробный период в другой группе.",
-  "GroupBillingPanel.finePrint": "Оплата ежемесячно за каждого участника. Отменить можно в любой момент: {plan} останется у вас до конца периода.",
+  "GroupBillingPanel.finePrint":
+    "Оплата ежемесячно за каждого участника. Отменить можно в любой момент: {plan} останется у вас до конца периода.",
   "GroupBillingPanel.trialEnds": {
     "one": "Пробный период закончится через {count} день, {date}.",
     "few": "Пробный период закончится через {count} дня, {date}.",
     "many": "Пробный период закончится через {count} дней, {date}.",
-    "other": "Пробный период закончится через {count} дня, {date}."
+    "other": "Пробный период закончится через {count} дня, {date}.",
   },
-  "GroupBillingPanel.trialThen": "Затем <group>{group}</group> будет платить {total} в месяц, если вы не отмените.",
+  "GroupBillingPanel.trialThen":
+    "Затем <group>{group}</group> будет платить {total} в месяц, если вы не отмените.",
   "GroupBillingPanel.seats": {
     "one": "{total} в месяц за {count} участника по {price}, включая владельца.",
     "few": "{total} в месяц за {count} участников по {price}, включая владельца.",
     "many": "{total} в месяц за {count} участников по {price}, включая владельца.",
-    "other": "{total} в месяц за {count} участника по {price}, включая владельца."
+    "other": "{total} в месяц за {count} участника по {price}, включая владельца.",
   },
-  "GroupBillingPanel.ending": "{plan} закончится {date}. Затем группа перейдёт на бесплатный тариф.",
-  "GroupBillingPanel.endingNoDate": "{plan} закончится в конце периода. Затем группа перейдёт на бесплатный тариф.",
+  "GroupBillingPanel.ending":
+    "{plan} закончится {date}. Затем группа перейдёт на бесплатный тариф.",
+  "GroupBillingPanel.endingNoDate":
+    "{plan} закончится в конце периода. Затем группа перейдёт на бесплатный тариф.",
   "GroupBillingPanel.renew": "Продлить {plan}",
   "GroupBillingPanel.planHeading": "Тариф <plan>{plan}</plan>",
   "GroupBillingPanel.confirming": "Stripe подтверждает ваш тариф. Страница обновится сама.",
@@ -559,7 +649,7 @@
     "one": "Пробный период {plan} на {count} день начался",
     "few": "Пробный период {plan} на {count} дня начался",
     "many": "Пробный период {plan} на {count} дней начался",
-    "other": "Пробный период {plan} на {count} дня начался"
+    "other": "Пробный период {plan} на {count} дня начался",
   },
   "GroupBillingView.trialUntil": "«{group}» на тарифе {plan} до {date}.",
   "GroupBillingView.paid": "Теперь у вас {plan}",
@@ -568,14 +658,20 @@
   "NotificationsScreen.loadMoreFailed": "Не удалось загрузить ещё уведомления.",
   "NotificationsScreen.readFailed": "Не удалось отметить как прочитанное.",
   "NotificationsScreen.readAllFailed": "Не удалось отметить их как прочитанные.",
-  "NotificationsScreen.invitedViewer": "Вас пригласили в группу «<group>{group}</group>» с ролью читателя.",
-  "NotificationsScreen.invitedEditor": "Вас пригласили в группу «<group>{group}</group>» с ролью редактора.",
-  "NotificationsScreen.invitedAdmin": "Вас пригласили в группу «<group>{group}</group>» с ролью администратора.",
-  "NotificationsScreen.invitedOwner": "Вас пригласили в группу «<group>{group}</group>» с ролью владельца.",
-  "NotificationsScreen.invitedMember": "Вас пригласили в группу «<group>{group}</group>» с ролью участника.",
+  "NotificationsScreen.invitedViewer":
+    "Вас пригласили в группу «<group>{group}</group>» с ролью читателя.",
+  "NotificationsScreen.invitedEditor":
+    "Вас пригласили в группу «<group>{group}</group>» с ролью редактора.",
+  "NotificationsScreen.invitedAdmin":
+    "Вас пригласили в группу «<group>{group}</group>» с ролью администратора.",
+  "NotificationsScreen.invitedOwner":
+    "Вас пригласили в группу «<group>{group}</group>» с ролью владельца.",
+  "NotificationsScreen.invitedMember":
+    "Вас пригласили в группу «<group>{group}</group>» с ролью участника.",
   "NotificationsScreen.roleViewer": "Ваша роль в группе «<group>{group}</group>» теперь: читатель.",
   "NotificationsScreen.roleEditor": "Ваша роль в группе «<group>{group}</group>» теперь: редактор.",
-  "NotificationsScreen.roleAdmin": "Ваша роль в группе «<group>{group}</group>» теперь: администратор.",
+  "NotificationsScreen.roleAdmin":
+    "Ваша роль в группе «<group>{group}</group>» теперь: администратор.",
   "NotificationsScreen.roleOwner": "Ваша роль в группе «<group>{group}</group>» теперь: владелец.",
   "NotificationsScreen.roleMember": "Ваша роль в группе «<group>{group}</group>» теперь: участник.",
   "NotificationsScreen.invited": "Вас пригласили в группу «<group>{group}</group>».",
@@ -583,10 +679,14 @@
   "NotificationsScreen.removed": "Вас удалили из группы «<group>{group}</group>».",
   "NotificationsScreen.owned": "Теперь вы владелец группы «<group>{group}</group>».",
   "NotificationsScreen.someGroup": "группа",
-  "NotificationsScreen.reminderFirstNote": "Сохраните заметку, которую только что написали. Пока она есть только в этом браузере. Добавьте способ входа, чтобы открывать её на любом устройстве.",
-  "NotificationsScreen.reminderThirdVisit": "Открывайте этот аккаунт на других устройствах. Пока его может открыть только этот браузер. Добавьте способ входа, чтобы заходить откуда угодно.",
-  "NotificationsScreen.reminderInvite": "Добавьте способ входа, чтобы приглашать людей. Приглашённые видят, кто их пригласил, а у гостевого аккаунта пока нет способа входа. Добавьте его, а затем пригласите из настроек группы.",
-  "NotificationsScreen.reminderKeep": "Сохраните аккаунт. Добавьте способ входа, чтобы он остался у вас.",
+  "NotificationsScreen.reminderFirstNote":
+    "Сохраните заметку, которую только что написали. Пока она есть только в этом браузере. Добавьте способ входа, чтобы открывать её на любом устройстве.",
+  "NotificationsScreen.reminderThirdVisit":
+    "Открывайте этот аккаунт на других устройствах. Пока его может открыть только этот браузер. Добавьте способ входа, чтобы заходить откуда угодно.",
+  "NotificationsScreen.reminderInvite":
+    "Добавьте способ входа, чтобы приглашать людей. Приглашённые видят, кто их пригласил, а у гостевого аккаунта пока нет способа входа. Добавьте его, а затем пригласите из настроек группы.",
+  "NotificationsScreen.reminderKeep":
+    "Сохраните аккаунт. Добавьте способ входа, чтобы он остался у вас.",
   "NotificationsScreen.exportReady": "Ваши данные готовы. Скачайте их в профиле.",
   "NotificationsScreen.exportReadyUntil": "Ваши данные готовы. Скачайте их в профиле до {date}.",
   "NotificationsScreen.unknown": "У вас новое уведомление.",
@@ -595,7 +695,7 @@
     "one": "{count} непрочитанное",
     "few": "{count} непрочитанных",
     "many": "{count} непрочитанных",
-    "other": "{count} непрочитанного"
+    "other": "{count} непрочитанного",
   },
   "NotificationsScreen.readAll": "Отметить все как прочитанные",
   "NotificationsScreen.loading": "Загрузка…",
@@ -605,28 +705,35 @@
   "NotificationsScreen.unreadMark": "Не прочитано:",
   "OnboardingCard.failed": "Не удалось сохранить. Попробуйте ещё раз.",
   "OnboardingCard.emailTitle": "Подтвердите адрес e-mail",
-  "OnboardingCard.emailText": "Введите код, который мы отправили, чтобы при необходимости сбросить пароль.",
+  "OnboardingCard.emailText":
+    "Введите код, который мы отправили, чтобы при необходимости сбросить пароль.",
   "OnboardingCard.emailAction": "Подтвердить e-mail",
   "OnboardingCard.noteTitle": "Напишите первую заметку",
   "OnboardingCard.noteText": "Приветственную заметку написали мы. Напишите свою.",
   "OnboardingCard.noteAction": "Написать заметку",
   "OnboardingCard.inviteTitle": "Пригласите кого-нибудь в группу",
-  "OnboardingCard.inviteText": "Они увидят те же заметки в реальном времени, с той ролью, которую вы дадите.",
+  "OnboardingCard.inviteText":
+    "Они увидят те же заметки в реальном времени, с той ролью, которую вы дадите.",
   "OnboardingCard.inviteAction": "Пригласить",
   "OnboardingCard.notificationsTitle": "Включите уведомления",
-  "OnboardingCard.notificationsText": "Добавьте это устройство, чтобы узнавать об изменениях, даже когда приложение закрыто.",
+  "OnboardingCard.notificationsText":
+    "Добавьте это устройство, чтобы узнавать об изменениях, даже когда приложение закрыто.",
   "OnboardingCard.notificationsAction": "Включить уведомления",
   "OnboardingCard.twoFactorTitle": "Настройте двухфакторный вход",
-  "OnboardingCard.twoFactorText": "Приложение-аутентификатор защитит аккаунт, даже если пароль утечёт.",
+  "OnboardingCard.twoFactorText":
+    "Приложение-аутентификатор защитит аккаунт, даже если пароль утечёт.",
   "OnboardingCard.twoFactorAction": "Настроить",
   "OnboardingCard.tourNotesTitle": "Заметки",
-  "OnboardingCard.tourNotesText": "То, что пишете вы и ваша группа. Откройте заметку, чтобы её изменить: изменения сразу видны всем.",
+  "OnboardingCard.tourNotesText":
+    "То, что пишете вы и ваша группа. Откройте заметку, чтобы её изменить: изменения сразу видны всем.",
   "OnboardingCard.tourGroupsTitle": "Группы",
-  "OnboardingCard.tourGroupsText": "Заметки живут в группе. Здесь можно создать ещё группы, пригласить людей и выбрать их роли.",
+  "OnboardingCard.tourGroupsText":
+    "Заметки живут в группе. Здесь можно создать ещё группы, пригласить людей и выбрать их роли.",
   "OnboardingCard.tourNotificationsTitle": "Уведомления",
   "OnboardingCard.tourNotificationsText": "Что произошло, пока вас не было, например приглашение.",
   "OnboardingCard.tourProfileTitle": "Профиль",
-  "OnboardingCard.tourProfileText": "Ваш аккаунт: имя, пароль, двухфакторный вход и устройства, тема и выход.",
+  "OnboardingCard.tourProfileText":
+    "Ваш аккаунт: имя, пароль, двухфакторный вход и устройства, тема и выход.",
   "OnboardingCard.goTo": "Перейти: {place}",
   "OnboardingCard.goToHighlighted": "Перейти к выделенному элементу",
   "OnboardingCard.title": "С чего начать",
@@ -634,7 +741,8 @@
   "OnboardingCard.tourStart": "Пройти тур",
   "OnboardingCard.tourSkip": "Пропустить тур",
   "OnboardingCard.keep": "Сохранить аккаунт",
-  "OnboardingCard.keepText": "Добавьте способ входа, чтобы открывать этот аккаунт на любом устройстве.",
+  "OnboardingCard.keepText":
+    "Добавьте способ входа, чтобы открывать этот аккаунт на любом устройстве.",
   "OverviewScreen.last7Days": "Последние 7 дней",
   "OverviewScreen.last30Days": "Последние 30 дней",
   "OverviewScreen.last90Days": "Последние 90 дней",
@@ -646,7 +754,7 @@
     "one": "{range}, в сравнении с предыдущим {count} днём",
     "few": "{range}, в сравнении с предыдущими {count} днями",
     "many": "{range}, в сравнении с предыдущими {count} днями",
-    "other": "{range}, в сравнении с предыдущими {count} днями"
+    "other": "{range}, в сравнении с предыдущими {count} днями",
   },
   "OverviewScreen.title": "Обзор",
   "OverviewScreen.customise": "Настроить обзор",
@@ -661,14 +769,16 @@
   "OverviewScreen.allHidden": "Все виджеты скрыты",
   "OverviewScreen.allHiddenText": "Выберите те, что хотите видеть.",
   "OverviewScreen.gridLabel": "Обзор группы {group}",
-  "OverviewScreen.customiseText": "Выберите, какие виджеты видеть и в каком порядке. Расположение только ваше и доступно на других ваших устройствах.",
+  "OverviewScreen.customiseText":
+    "Выберите, какие виджеты видеть и в каком порядке. Расположение только ваше и доступно на других ваших устройствах.",
   "OverviewScreen.widgets": "Виджеты",
   "OverviewScreen.customRange": "Свой период",
   "OverviewScreen.rangeTooLong": "Выберите период не длиннее года.",
   "OverviewScreen.asOf": "По состоянию на {time}",
   "OverviewScreen.hide": "Скрыть виджет",
   "OverviewView.opening": "Открываем обзор…",
-  "OverviewView.saveFailed": "Не удалось сохранить расположение. Проверьте подключение и попробуйте ещё раз.",
+  "OverviewView.saveFailed":
+    "Не удалось сохранить расположение. Проверьте подключение и попробуйте ещё раз.",
   "OverviewView.undo": "Отменить",
   "OverviewView.widget": "Виджет",
   "OverviewView.hidden": "Виджет «{widget}» скрыт.",
@@ -683,26 +793,35 @@
   "PlanRefusalNotice.storageTitle": "Группа {group} израсходовала всё хранилище",
   "PlanRefusalNotice.storageTitleUnnamed": "Группа израсходовала всё хранилище",
   "PlanRefusalNotice.notesText": {
-    "one": "Её тариф вмещает до {count} заметки. Все её заметки можно по-прежнему читать и редактировать.",
-    "few": "Её тариф вмещает до {count} заметок. Все её заметки можно по-прежнему читать и редактировать.",
-    "many": "Её тариф вмещает до {count} заметок. Все её заметки можно по-прежнему читать и редактировать.",
-    "other": "Её тариф вмещает до {count} заметки. Все её заметки можно по-прежнему читать и редактировать."
+    "one":
+      "Её тариф вмещает до {count} заметки. Все её заметки можно по-прежнему читать и редактировать.",
+    "few":
+      "Её тариф вмещает до {count} заметок. Все её заметки можно по-прежнему читать и редактировать.",
+    "many":
+      "Её тариф вмещает до {count} заметок. Все её заметки можно по-прежнему читать и редактировать.",
+    "other":
+      "Её тариф вмещает до {count} заметки. Все её заметки можно по-прежнему читать и редактировать.",
   },
   "PlanRefusalNotice.membersText": {
     "one": "Её тариф допускает до {count} участника.",
     "few": "Её тариф допускает до {count} участников.",
     "many": "Её тариф допускает до {count} участников.",
-    "other": "Её тариф допускает до {count} участника."
+    "other": "Её тариф допускает до {count} участника.",
   },
   "PlanRefusalNotice.filesText": {
-    "one": "Её тариф вмещает до {count} файла во всех заметках. Удалите файл из любой заметки, чтобы освободить место.",
-    "few": "Её тариф вмещает до {count} файлов во всех заметках. Удалите файл из любой заметки, чтобы освободить место.",
-    "many": "Её тариф вмещает до {count} файлов во всех заметках. Удалите файл из любой заметки, чтобы освободить место.",
-    "other": "Её тариф вмещает до {count} файла во всех заметках. Удалите файл из любой заметки, чтобы освободить место."
+    "one":
+      "Её тариф вмещает до {count} файла во всех заметках. Удалите файл из любой заметки, чтобы освободить место.",
+    "few":
+      "Её тариф вмещает до {count} файлов во всех заметках. Удалите файл из любой заметки, чтобы освободить место.",
+    "many":
+      "Её тариф вмещает до {count} файлов во всех заметках. Удалите файл из любой заметки, чтобы освободить место.",
+    "other":
+      "Её тариф вмещает до {count} файла во всех заметках. Удалите файл из любой заметки, чтобы освободить место.",
   },
   "PlanRefusalNotice.storageText": "В её тарифе нет места для новых файлов.",
   "PlanRefusalNotice.rolesTitle": "Чтобы повышать участников, нужен платный тариф",
-  "PlanRefusalNotice.rolesText": "На тарифе этой группы участнику можно понизить роль или удалить его, но не повысить.",
+  "PlanRefusalNotice.rolesText":
+    "На тарифе этой группы участнику можно понизить роль или удалить его, но не повысить.",
   "PlanRefusalNotice.openBilling": "Открыть «Тариф и оплата»",
   "PlanRefusalNotice.askOwner": "Попросите владельца группы сменить тариф.",
   "GuestProfile.accountType": "Тип аккаунта",
@@ -713,21 +832,26 @@
   "GuestProfile.danger": "Опасная зона",
   "GuestProfile.deleteSummary": "Сразу удаляет этот гостевой аккаунт со всем содержимым.",
   "GuestProfile.deleteTitle": "Удалить этот гостевой аккаунт?",
-  "GuestProfile.deleteText": "Его заметки и группы удалятся сразу, и вернуть их будет нельзя: у гостевого аккаунта нет способа входа, чтобы его восстановить. Чтобы сохранить копию, сначала экспортируйте группу.",
+  "GuestProfile.deleteText":
+    "Его заметки и группы удалятся сразу, и вернуть их будет нельзя: у гостевого аккаунта нет способа входа, чтобы его восстановить. Чтобы сохранить копию, сначала экспортируйте группу.",
   "GuestProfile.typeWord": "Введите «{word}» для подтверждения",
   "GuestProfile.deleteForGood": "Удалить навсегда",
   "GuestProfile.inviteTitle": "Чтобы приглашать, нужен способ входа",
-  "GuestProfile.inviteText": "Приглашённые видят, кто их пригласил, а гостевой аккаунт может исчезнуть вместе с данными браузера. Сначала добавьте способ входа.",
+  "GuestProfile.inviteText":
+    "Приглашённые видят, кто их пригласил, а гостевой аккаунт может исчезнуть вместе с данными браузера. Сначала добавьте способ входа.",
   "GuestProfile.pushTitle": "Для уведомлений на этом устройстве нужен способ входа",
   "GuestProfile.pushText": "Добавьте его, а потом включите уведомления здесь.",
   "GuestProfile.apiTokenTitle": "Для API-токенов нужен способ входа",
-  "GuestProfile.apiTokenText": "Токен открывает этот аккаунт вне браузера. Сначала добавьте способ входа.",
+  "GuestProfile.apiTokenText":
+    "Токен открывает этот аккаунт вне браузера. Сначала добавьте способ входа.",
   "GuestProfile.uploadTitle": "Для импорта нужен способ входа",
   "GuestProfile.uploadText": "Сначала добавьте его в аккаунт, потом импортируйте файл.",
   "GuestProfile.billingTitle": "Для платных тарифов нужен способ входа",
-  "GuestProfile.billingText": "Тариф оплачивается для аккаунта, в который можно войти снова. Сначала добавьте способ входа.",
+  "GuestProfile.billingText":
+    "Тариф оплачивается для аккаунта, в который можно войти снова. Сначала добавьте способ входа.",
   "GuestProfile.telegramTitle": "Для Telegram нужен способ входа",
-  "GuestProfile.telegramText": "Привязанный чат действует от вашего имени вне браузера. Сначала добавьте способ входа.",
+  "GuestProfile.telegramText":
+    "Привязанный чат действует от вашего имени вне браузера. Сначала добавьте способ входа.",
   "GuestProfile.otherTitle": "Для этого нужен способ входа",
   "GuestProfile.otherText": "Для этого нужен способ входа. Сначала добавьте его в аккаунт.",
   "GuestProfile.notNow": "Не сейчас",
@@ -741,28 +865,39 @@
   "GuestScreens.failedText": "Проверьте подключение и попробуйте ещё раз.",
   "GuestScreens.tryAgain": "Попробовать ещё раз",
   "GuestScreens.signedIn": "Вы уже вошли",
-  "GuestScreens.signedInText": "Ваш аккаунт открыт в этом браузере. Чтобы попробовать приложение как гость, сначала выйдите.",
+  "GuestScreens.signedInText":
+    "Ваш аккаунт открыт в этом браузере. Чтобы попробовать приложение как гость, сначала выйдите.",
   "GuestScreens.openApp": "Открыть приложение",
   "GuestScreens.off": "Чтобы начать, создайте аккаунт",
   "GuestScreens.offText": "Здесь нельзя попробовать приложение без аккаунта.",
-  "GuestScreens.terms": "Продолжая, вы соглашаетесь с <terms>условиями</terms> и <privacy>политикой конфиденциальности</privacy>.",
+  "GuestScreens.terms":
+    "Продолжая, вы соглашаетесь с <terms>условиями</terms> и <privacy>политикой конфиденциальности</privacy>.",
   "GuestScreens.tryNow": "Попробовать сейчас",
   "GuestScreens.tryLine": "Аккаунт не нужен. Чтобы сохранить работу, добавьте способ входа позже.",
   "GuestScreens.noAccount": "Ещё нет аккаунта?",
   "GuestScreens.tryWithout": "Попробовать без аккаунта",
-  "GuestScreens.tryFromSignIn": "Откроется новый пустой аккаунт в этом браузере. Это не вход в уже существующий аккаунт.",
-  "GuestScreens.tryFromSignInDemo": "Откроется новый аккаунт с примерами данных. Это не вход в уже существующий аккаунт.",
-  "GuestScreens.demoWipe": "Это гостевой аккаунт в публичном демо. Всё здесь стирается каждую ночь в {time}, со способом входа или без него. Добавьте способ входа, чтобы посмотреть, как сохраняется аккаунт.",
-  "GuestScreens.banner": "Этот аккаунт живёт только в этом браузере. Если данные браузера очистятся, аккаунт пропадёт. Чтобы сохранить его, добавьте способ входа.",
+  "GuestScreens.tryFromSignIn":
+    "Откроется новый пустой аккаунт в этом браузере. Это не вход в уже существующий аккаунт.",
+  "GuestScreens.tryFromSignInDemo":
+    "Откроется новый аккаунт с примерами данных. Это не вход в уже существующий аккаунт.",
+  "GuestScreens.demoWipe":
+    "Это гостевой аккаунт в публичном демо. Всё здесь стирается каждую ночь в {time}, со способом входа или без него. Добавьте способ входа, чтобы посмотреть, как сохраняется аккаунт.",
+  "GuestScreens.banner":
+    "Этот аккаунт живёт только в этом браузере. Если данные браузера очистятся, аккаунт пропадёт. Чтобы сохранить его, добавьте способ входа.",
   "GuestScreens.hide": "Скрыть это сообщение",
-  "GuestScreens.keptPasskey": "Теперь вы можете входить с ключом доступа на любом устройстве. В аккаунте ничего не изменилось.",
-  "GuestScreens.keptEmail": "Теперь вы можете входить по адресу электронной почты на любом устройстве. В аккаунте ничего не изменилось.",
-  "GuestScreens.keptProvider": "Теперь вы можете входить через {provider} на любом устройстве. В аккаунте ничего не изменилось.",
+  "GuestScreens.keptPasskey":
+    "Теперь вы можете входить с ключом доступа на любом устройстве. В аккаунте ничего не изменилось.",
+  "GuestScreens.keptEmail":
+    "Теперь вы можете входить по адресу электронной почты на любом устройстве. В аккаунте ничего не изменилось.",
+  "GuestScreens.keptProvider":
+    "Теперь вы можете входить через {provider} на любом устройстве. В аккаунте ничего не изменилось.",
   "GuestScreens.added": "Способ входа добавлен",
   "GuestScreens.done": "Готово",
   "GuestScreens.isKept": "Ваш аккаунт сохранён",
-  "GuestScreens.isKeptText": "У него есть способ входа, поэтому он открывается на любом устройстве.",
-  "GuestScreens.keepText": "Добавьте способ входа, и этот аккаунт можно будет открыть на любом устройстве. Заметки и группы останутся как есть.",
+  "GuestScreens.isKeptText":
+    "У него есть способ входа, поэтому он открывается на любом устройстве.",
+  "GuestScreens.keepText":
+    "Добавьте способ входа, и этот аккаунт можно будет открыть на любом устройстве. Заметки и группы останутся как есть.",
   "GuestScreens.ways": "Способы входа",
   "GuestScreens.openingProvider": "Открываем {provider}…",
   "GuestScreens.addPasskey": "Добавить ключ доступа",
@@ -772,27 +907,35 @@
     "one": "Не меньше {count} символа.",
     "few": "Не меньше {count} символов.",
     "many": "Не меньше {count} символов.",
-    "other": "Не меньше {count} символа."
+    "other": "Не меньше {count} символа.",
   },
   "GuestScreens.saving": "Сохраняем…",
   "GuestScreens.takenProvider": "{provider} уже привязан к другому аккаунту.",
   "GuestScreens.takenAddress": "Для этого адреса уже есть аккаунт.",
   "GuestScreens.takenEmail": "Для адреса <email>{email}</email> уже есть аккаунт.",
-  "GuestScreens.takenRest": "Гостевой аккаунт не изменился. Выберите, что будет с тем, что вы создали как гость.",
-  "GuestScreens.moveOne": "Войти в тот аккаунт и перенести туда <name>{name}</name>. Гостевой аккаунт после этого удалится.",
+  "GuestScreens.takenRest":
+    "Гостевой аккаунт не изменился. Выберите, что будет с тем, что вы создали как гость.",
+  "GuestScreens.moveOne":
+    "Войти в тот аккаунт и перенести туда <name>{name}</name>. Гостевой аккаунт после этого удалится.",
   "GuestScreens.moveMany": {
-    "one": "Войти в тот аккаунт и перенести туда {count} группу из гостевого аккаунта. Гостевой аккаунт после этого удалится.",
-    "few": "Войти в тот аккаунт и перенести туда {count} группы из гостевого аккаунта. Гостевой аккаунт после этого удалится.",
-    "many": "Войти в тот аккаунт и перенести туда {count} групп из гостевого аккаунта. Гостевой аккаунт после этого удалится.",
-    "other": "Войти в тот аккаунт и перенести туда {count} группы из гостевого аккаунта. Гостевой аккаунт после этого удалится."
+    "one":
+      "Войти в тот аккаунт и перенести туда {count} группу из гостевого аккаунта. Гостевой аккаунт после этого удалится.",
+    "few":
+      "Войти в тот аккаунт и перенести туда {count} группы из гостевого аккаунта. Гостевой аккаунт после этого удалится.",
+    "many":
+      "Войти в тот аккаунт и перенести туда {count} групп из гостевого аккаунта. Гостевой аккаунт после этого удалится.",
+    "other":
+      "Войти в тот аккаунт и перенести туда {count} группы из гостевого аккаунта. Гостевой аккаунт после этого удалится.",
   },
   "GuestScreens.checking": "Проверяем…",
   "GuestScreens.loading": "Загрузка…",
   "GuestScreens.nothing": "Здесь ничего не ждёт",
-  "GuestScreens.nothingText": "Время на этот выбор вышло, или он уже сделан. Гостевой аккаунт не изменился.",
+  "GuestScreens.nothingText":
+    "Время на этот выбор вышло, или он уже сделан. Гостевой аккаунт не изменился.",
   "GuestScreens.move": "Перейти и перенести группы",
   "GuestScreens.delete": "Перейти и удалить данные гостя",
-  "GuestScreens.deleteHint": "Войти в тот аккаунт и удалить этот гостевой аккаунт со всем содержимым.",
+  "GuestScreens.deleteHint":
+    "Войти в тот аккаунт и удалить этот гостевой аккаунт со всем содержимым.",
   "GuestScreens.keepGuest": "Оставить гостевой аккаунт",
   "GuestScreens.keepGuestHint": "Ничего не изменится. Можно добавить другой способ входа.",
   "GuestScreens.linked": "Привязан к другому аккаунту",
@@ -807,21 +950,25 @@
     "one": "{count} заметка",
     "few": "{count} заметки",
     "many": "{count} заметок",
-    "other": "{count} заметки"
+    "other": "{count} заметки",
   },
   "GuestScreens.groups": {
     "one": "{count} группа",
     "few": "{count} группы",
     "many": "{count} групп",
-    "other": "{count} группы"
+    "other": "{count} группы",
   },
-  "GuestScreens.confirmEmail": "Будут удалены: {notes} и {groups}, а вы войдёте в <email>{email}</email>. Это нельзя отменить.",
-  "GuestScreens.confirmAccount": "Будут удалены: {notes} и {groups}, а вы войдёте в тот аккаунт. Это нельзя отменить.",
+  "GuestScreens.confirmEmail":
+    "Будут удалены: {notes} и {groups}, а вы войдёте в <email>{email}</email>. Это нельзя отменить.",
+  "GuestScreens.confirmAccount":
+    "Будут удалены: {notes} и {groups}, а вы войдёте в тот аккаунт. Это нельзя отменить.",
   "GuestScreens.signOutTitle": "Выйти из гостевого аккаунта?",
   "GuestScreens.signOutAnyway": "Всё равно выйти",
-  "GuestScreens.signOutText": "У этого аккаунта нет способа входа, поэтому войти снова не получится. Всё, что в нём есть, будет для вас потеряно.",
+  "GuestScreens.signOutText":
+    "У этого аккаунта нет способа входа, поэтому войти снова не получится. Всё, что в нём есть, будет для вас потеряно.",
   "GuestScreens.offline": "Нет подключения к сети. Подключитесь и попробуйте ещё раз.",
-  "GuestScreens.providerFailed": "{provider} не завершил вход. Аккаунт не изменился. Попробуйте ещё раз или выберите другой способ.",
+  "GuestScreens.providerFailed":
+    "{provider} не завершил вход. Аккаунт не изменился. Попробуйте ещё раз или выберите другой способ.",
   "GuestScreens.noPasskey": "Ключ доступа не добавлен. Аккаунт по-прежнему гостевой.",
   "GuestScreens.didNotWork": "Не получилось. Попробуйте ещё раз.",
   "OAuthNotice.failed": "Этот вход не удался. Попробуйте ещё раз.",
@@ -833,12 +980,17 @@
   "OAuthNotice.guestTaken": "Этот способ входа принадлежит другому аккаунту.",
   "PasswordResetScreen.forgotFailed": "Не удалось отправить ссылку",
   "PasswordResetScreen.resetFailed": "Не удалось сменить пароль",
-  "PasswordResetScreen.sent": "Если с этим адресом есть аккаунт, ссылка для сброса пароля уже в пути.",
+  "PasswordResetScreen.sent":
+    "Если с этим адресом есть аккаунт, ссылка для сброса пароля уже в пути.",
   "PasswordResetScreen.forgotDescription": {
-    "one": "Введите адрес почты, с которым регистрировались. Мы пришлём ссылку, чтобы задать новый пароль; она сработает один раз в течение {count} минуты.",
-    "few": "Введите адрес почты, с которым регистрировались. Мы пришлём ссылку, чтобы задать новый пароль; она сработает один раз в течение {count} минут.",
-    "many": "Введите адрес почты, с которым регистрировались. Мы пришлём ссылку, чтобы задать новый пароль; она сработает один раз в течение {count} минут.",
-    "other": "Введите адрес почты, с которым регистрировались. Мы пришлём ссылку, чтобы задать новый пароль; она сработает один раз в течение {count} минуты."
+    "one":
+      "Введите адрес почты, с которым регистрировались. Мы пришлём ссылку, чтобы задать новый пароль; она сработает один раз в течение {count} минуты.",
+    "few":
+      "Введите адрес почты, с которым регистрировались. Мы пришлём ссылку, чтобы задать новый пароль; она сработает один раз в течение {count} минут.",
+    "many":
+      "Введите адрес почты, с которым регистрировались. Мы пришлём ссылку, чтобы задать новый пароль; она сработает один раз в течение {count} минут.",
+    "other":
+      "Введите адрес почты, с которым регистрировались. Мы пришлём ссылку, чтобы задать новый пароль; она сработает один раз в течение {count} минуты.",
   },
   "PasswordResetScreen.remembered": "Вспомнили? <link>Вернуться ко входу</link>",
   "PasswordResetScreen.send": "Отправить ссылку",
@@ -847,7 +999,8 @@
   "PasswordResetScreen.signIn": "Войти",
   "PasswordResetScreen.askNew": "Запросить новую ссылку",
   "PasswordResetScreen.chooseTitle": "Задайте новый пароль",
-  "PasswordResetScreen.choose": "Для <email>{email}</email>. После сохранения аккаунт выйдет на всех устройствах.",
+  "PasswordResetScreen.choose":
+    "Для <email>{email}</email>. После сохранения аккаунт выйдет на всех устройствах.",
   "PasswordResetScreen.expired": "Ссылка устарела? <link>Запросите новую</link>",
   "PasswordResetScreen.newPassword": "Новый пароль",
   "PasswordResetScreen.newPasswordHint": "От {min} до {max} символов.",
@@ -855,7 +1008,8 @@
   "PasswordResetScreen.save": "Сохранить новый пароль",
   "MoveNote.title": "Перенести в группу",
   "MoveNote.cancel": "Отмена",
-  "MoveNote.question": "Выберите группу, куда перенести «<title>{title}</title>». Её увидят все участники этой группы.",
+  "MoveNote.question":
+    "Выберите группу, куда перенести «<title>{title}</title>». Её увидят все участники этой группы.",
   "NewNote.title": "Новая заметка",
   "NewNote.close": "Закрыть",
   "NewNote.titleLabel": "Заголовок",
@@ -863,7 +1017,8 @@
   "NewNote.chooseGroup": "Выберите группу",
   "NewNote.chooseGroupError": "Выберите группу для этой заметки.",
   "NewNote.inGroup": "В группе {group}",
-  "NewNote.noGroup": "Заметки хранятся в группе, где вы можете писать. Создайте группу, чтобы начать.",
+  "NewNote.noGroup":
+    "Заметки хранятся в группе, где вы можете писать. Создайте группу, чтобы начать.",
   "NewNote.newGroup": "Новая группа",
   "NewNote.add": "Добавить заметку",
   "NewNote.adding": "Добавляем…",
@@ -885,25 +1040,25 @@
     "one": "<group>{group}</group> использует {files} из {count} файла и {bytes} из {maxBytes}.",
     "few": "<group>{group}</group> использует {files} из {count} файлов и {bytes} из {maxBytes}.",
     "many": "<group>{group}</group> использует {files} из {count} файлов и {bytes} из {maxBytes}.",
-    "other": "<group>{group}</group> использует {files} из {count} файла и {bytes} из {maxBytes}."
+    "other": "<group>{group}</group> использует {files} из {count} файла и {bytes} из {maxBytes}.",
   },
   "NoteAttachments.quotaNoByteCap": {
     "one": "<group>{group}</group> использует {files} из {count} файла и {bytes}.",
     "few": "<group>{group}</group> использует {files} из {count} файлов и {bytes}.",
     "many": "<group>{group}</group> использует {files} из {count} файлов и {bytes}.",
-    "other": "<group>{group}</group> использует {files} из {count} файла и {bytes}."
+    "other": "<group>{group}</group> использует {files} из {count} файла и {bytes}.",
   },
   "NoteAttachments.quotaNoFileCap": {
     "one": "<group>{group}</group> использует {count} файл и {bytes} из {maxBytes}.",
     "few": "<group>{group}</group> использует {count} файла и {bytes} из {maxBytes}.",
     "many": "<group>{group}</group> использует {count} файлов и {bytes} из {maxBytes}.",
-    "other": "<group>{group}</group> использует {count} файла и {bytes} из {maxBytes}."
+    "other": "<group>{group}</group> использует {count} файла и {bytes} из {maxBytes}.",
   },
   "NoteAttachments.quotaNoCaps": {
     "one": "<group>{group}</group> использует {count} файл и {bytes}.",
     "few": "<group>{group}</group> использует {count} файла и {bytes}.",
     "many": "<group>{group}</group> использует {count} файлов и {bytes}.",
-    "other": "<group>{group}</group> использует {count} файла и {bytes}."
+    "other": "<group>{group}</group> использует {count} файла и {bytes}.",
   },
   "NoteAttachments.removeTitle": "Удалить этот файл?",
   "NoteAttachments.removeMessage": "«{name}» будет удалён из заметки для всех в группе {group}.",
@@ -912,11 +1067,13 @@
   "NoteEditor.title": "Заметка",
   "NoteEditor.back": "К заметкам",
   "NoteEditor.elsewhereTitle": "Заметка в другой группе",
-  "NoteEditor.elsewhere": "Эта заметка в группе <group>{group}</group>, это другая ваша группа. Сейчас вы в группе <current>{current}</current>.",
+  "NoteEditor.elsewhere":
+    "Эта заметка в группе <group>{group}</group>, это другая ваша группа. Сейчас вы в группе <current>{current}</current>.",
   "NoteEditor.switching": "Переключаем…",
   "NoteEditor.switchTo": "Перейти в <group>{group}</group>",
   "NoteEditor.notFoundTitle": "Такой заметки нет.",
-  "NoteEditor.notFound": "В группе <group>{group}</group> нет такой заметки. Возможно, её удалили или она в другой вашей группе: перейдите в ту группу и откройте заметку из её списка.",
+  "NoteEditor.notFound":
+    "В группе <group>{group}</group> нет такой заметки. Возможно, её удалили или она в другой вашей группе: перейдите в ту группу и откройте заметку из её списка.",
   "NoteEditor.loading": "Загружаем заметку…",
   "NoteEditor.createdBy": "Автор: <name>{name}</name>, <date>{date}</date>",
   "NoteEditor.created": "Создана <date>{date}</date>",
@@ -926,7 +1083,8 @@
   "NoteEditor.readOnly": "Вы можете читать эту заметку. Изменить её может только редактор.",
   "NoteEditor.readOnlyNew": "Добавлять заметки в эту группу может только редактор.",
   "NoteEditor.titleLabel": "Заголовок",
-  "NoteEditor.conflict": "<link>Загрузите последнюю версию</link>, чтобы увидеть изменения. До этого ваш текст здесь сохранится.",
+  "NoteEditor.conflict":
+    "<link>Загрузите последнюю версию</link>, чтобы увидеть изменения. До этого ваш текст здесь сохранится.",
   "NoteEditor.cancel": "Отмена",
   "NoteEditor.saving": "Сохраняем…",
   "NoteEditor.creating": "Создаём…",
@@ -951,11 +1109,13 @@
   "NoteMessages.save": "Не удалось сохранить заметку",
   "NoteMessages.delete": "Не удалось удалить заметку",
   "NoteMessages.move": "Не удалось перенести заметки",
-  "NoteMessages.moveOffline": "Для переноса заметок нужно подключение. Попробуйте снова, когда будете в сети.",
+  "NoteMessages.moveOffline":
+    "Для переноса заметок нужно подключение. Попробуйте снова, когда будете в сети.",
   "NoteMessages.moveNone": "Отметьте заметки, которые хотите перенести.",
   "NoteMessages.moveUnsaved": "Сохраните или отмените изменения, прежде чем переносить заметку.",
   "NoteMessages.restore": "Не удалось восстановить заметку",
-  "NoteMessages.restoreOffline": "Для восстановления заметки нужно подключение. Попробуйте снова, когда будете в сети.",
+  "NoteMessages.restoreOffline":
+    "Для восстановления заметки нужно подключение. Попробуйте снова, когда будете в сети.",
   "NoteMessages.restoreGone": "Этой заметки больше нет среди удалённых.",
   "NoteMessages.moveGone": "Одной из отмеченных заметок уже нет, поэтому ничего не перенесено.",
   "NotePeople.you": "Вы",
@@ -969,7 +1129,7 @@
     "one": "{count} заметка",
     "few": "{count} заметки",
     "many": "{count} заметок",
-    "other": "{count} заметки"
+    "other": "{count} заметки",
   },
   "Notes.deleted": "Удалена <date>{date}</date>",
   "Notes.restoreNote": "Восстановить «{title}»",
@@ -990,7 +1150,7 @@
     "one": "Удалённые заметки хранятся здесь {count} день, потом удаляются насовсем.",
     "few": "Удалённые заметки хранятся здесь {count} дня, потом удаляются насовсем.",
     "many": "Удалённые заметки хранятся здесь {count} дней, потом удаляются насовсем.",
-    "other": "Удалённые заметки хранятся здесь {count} дня, потом удаляются насовсем."
+    "other": "Удалённые заметки хранятся здесь {count} дня, потом удаляются насовсем.",
   },
   "Notes.backToNotes": "К заметкам",
   "Notes.deletedLoading": "Загружаем удалённые заметки…",
@@ -1003,7 +1163,7 @@
     "one": "Выбрана {count}",
     "few": "Выбрано {count}",
     "many": "Выбрано {count}",
-    "other": "Выбрано {count}"
+    "other": "Выбрано {count}",
   },
   "Notes.cancelSelect": "Отмена",
   "Notes.moveTo": "Перенести в группу",
@@ -1038,7 +1198,8 @@
   "NotesView.linkCopiedGroup": "Открыть её могут только участники группы {group}.",
   "NotesView.linkCopiedThisGroup": "Открыть её могут только участники этой группы.",
   "NotesView.copyFailed": "Не удалось скопировать ссылку",
-  "NotesView.copyFailedHint": "Браузер этого не разрешил. Откройте заметку и скопируйте адрес из адресной строки.",
+  "NotesView.copyFailedHint":
+    "Браузер этого не разрешил. Откройте заметку и скопируйте адрес из адресной строки.",
   "NotesView.restoredTitle": "Заметка восстановлена",
   "NotesView.restored": "«{title}» снова в списке.",
   "NotesView.restoredUntitled": "Заметка снова в списке.",
@@ -1046,39 +1207,42 @@
     "one": "Заметка перенесена",
     "few": "Заметки перенесены",
     "many": "Заметки перенесены",
-    "other": "Заметки перенесены"
+    "other": "Заметки перенесены",
   },
   "NoteToasts.moved": {
     "one": "Заметка перенесена в группу {group}.",
     "few": "{count} заметки перенесены в группу {group}.",
     "many": "{count} заметок перенесено в группу {group}.",
-    "other": "{count} заметки перенесено в группу {group}."
+    "other": "{count} заметки перенесено в группу {group}.",
   },
   "NoteToasts.movedElsewhere": {
     "one": "Заметка перенесена в другую группу.",
     "few": "{count} заметки перенесены в другую группу.",
     "many": "{count} заметок перенесено в другую группу.",
-    "other": "{count} заметки перенесено в другую группу."
+    "other": "{count} заметки перенесено в другую группу.",
   },
   "NoteWidgets.previousPeriod": {
     "one": "предыдущий {count} день",
     "few": "предыдущие {count} дня",
     "many": "предыдущие {count} дней",
-    "other": "предыдущие {count} дня"
+    "other": "предыдущие {count} дня",
   },
   "NoteWidgets.totalTitle": "Заметки",
   "NoteWidgets.totalLoading": "Загружаем число заметок",
-  "NoteWidgets.totalError": "Не удалось загрузить число заметок. Проверьте подключение и попробуйте ещё раз.",
+  "NoteWidgets.totalError":
+    "Не удалось загрузить число заметок. Проверьте подключение и попробуйте ещё раз.",
   "NoteWidgets.totalNow": "Сейчас в группе",
   "NoteWidgets.totalOn": "На {date}",
   "NoteWidgets.addedTitle": "Новые заметки",
   "NoteWidgets.addedLoading": "Загружаем добавленные заметки",
-  "NoteWidgets.addedError": "Не удалось загрузить добавленные заметки. Проверьте подключение и попробуйте ещё раз.",
+  "NoteWidgets.addedError":
+    "Не удалось загрузить добавленные заметки. Проверьте подключение и попробуйте ещё раз.",
   "NoteWidgets.addedNone": "За этот период ничего не добавлено",
   "NoteWidgets.addedSome": "Добавлено за этот период",
   "NoteWidgets.seriesTitle": "Заметки во времени",
   "NoteWidgets.seriesLoading": "Загружаем график",
-  "NoteWidgets.seriesError": "Не удалось загрузить график. Проверьте подключение и попробуйте ещё раз.",
+  "NoteWidgets.seriesError":
+    "Не удалось загрузить график. Проверьте подключение и попробуйте ещё раз.",
   "NoteWidgets.seriesEmpty": "За этот период заметок нет",
   "NoteWidgets.seriesFlat": "{value} на протяжении всего периода",
   "NoteWidgets.seriesFrom": "С {first} до {last}",
@@ -1087,7 +1251,7 @@
     "one": "Предыдущий {count} день",
     "few": "Предыдущие {count} дня",
     "many": "Предыдущие {count} дней",
-    "other": "Предыдущие {count} дня"
+    "other": "Предыдущие {count} дня",
   },
   "NoteWidgets.seriesLabel": "Заметки во времени. {summary}.",
   "NoteWidgets.seriesDay": "День",
@@ -1101,7 +1265,7 @@
     "one": "{count} заметка ждёт вашего решения о теге ниже. Ничего не потеряно.",
     "few": "{count} заметки ждут вашего решения о теге ниже. Ничего не потеряно.",
     "many": "{count} заметок ждут вашего решения о теге ниже. Ничего не потеряно.",
-    "other": "{count} заметки ждут вашего решения о теге ниже. Ничего не потеряно."
+    "other": "{count} заметки ждут вашего решения о теге ниже. Ничего не потеряно.",
   },
   "OfflineStatus.mine": "Ваша версия",
   "OfflineStatus.noteGone": "Этой заметки больше нет в группе.",
@@ -1110,10 +1274,14 @@
   "OfflineStatus.tagGone": "Этого тега больше нет в группе.",
   "OfflineStatus.tagNoName": "Тег без названия",
   "OfflineStatus.tagTakenOff": {
-    "one": "Тег, созданный без сети, не удалось сохранить, поэтому его сняли с {count} заметки. Заметка сохранена без него.",
-    "few": "Тег, созданный без сети, не удалось сохранить, поэтому его сняли с {count} заметок. Заметки сохранены без него.",
-    "many": "Тег, созданный без сети, не удалось сохранить, поэтому его сняли с {count} заметок. Заметки сохранены без него.",
-    "other": "Тег, созданный без сети, не удалось сохранить, поэтому его сняли с {count} заметки. Заметки сохранены без него."
+    "one":
+      "Тег, созданный без сети, не удалось сохранить, поэтому его сняли с {count} заметки. Заметка сохранена без него.",
+    "few":
+      "Тег, созданный без сети, не удалось сохранить, поэтому его сняли с {count} заметок. Заметки сохранены без него.",
+    "many":
+      "Тег, созданный без сети, не удалось сохранить, поэтому его сняли с {count} заметок. Заметки сохранены без него.",
+    "other":
+      "Тег, созданный без сети, не удалось сохранить, поэтому его сняли с {count} заметки. Заметки сохранены без него.",
   },
   "OfflineStatus.theirs": "Версия на сервере",
   "OfflineStatus.untitledNote": "Заметка без названия",
@@ -1121,19 +1289,23 @@
   "OfflineStatus.youDeletedNote": "Вы удалили эту заметку.",
   "OfflineStatus.youDeletedTag": "Вы удалили этот тег.",
   "Preferences.example": "Даты и время выглядят так: <value>{date}</value>.",
-  "Preferences.conflict": "Эти настройки только что изменили на другом устройстве. Ниже — значения, которые оно сохранило.",
+  "Preferences.conflict":
+    "Эти настройки только что изменили на другом устройстве. Ниже — значения, которые оно сохранило.",
   "Preferences.language": "Язык",
   "Preferences.changeLanguage": "Сменить язык",
   "Preferences.formats": "Форматы",
-  "Preferences.formatsHint": "Как выглядят даты, время и числа. Язык интерфейса от этого не меняется.",
+  "Preferences.formatsHint":
+    "Как выглядят даты, время и числа. Язык интерфейса от этого не меняется.",
   "Preferences.formatsPlaceholder": "Поиск по языку или стране",
   "Preferences.formatsEmpty": "Нет форматов по запросу «{query}».",
   "Preferences.automatic": "Автоматически: {value}",
   "Preferences.automaticSearch": "автоматически устройство",
   "Preferences.timeZone": "Часовой пояс",
-  "Preferences.timeZoneHint": "Выбранный пояс действует на всех ваших устройствах. «Автоматически» — у каждого устройства свой.",
+  "Preferences.timeZoneHint":
+    "Выбранный пояс действует на всех ваших устройствах. «Автоматически» — у каждого устройства свой.",
   "Preferences.timeZonePlaceholder": "Поиск по городу",
-  "Preferences.timeZoneEmpty": "Нет часовых поясов по запросу «{query}». Попробуйте город или смещение, например GMT+2.",
+  "Preferences.timeZoneEmpty":
+    "Нет часовых поясов по запросу «{query}». Попробуйте город или смещение, например GMT+2.",
   "Preferences.clock": "Часы",
   "Preferences.clockFromFormat": "Как в формате ({clock})",
   "Preferences.clock12": "12-часовые",
@@ -1147,11 +1319,14 @@
   "Preferences.themeDark": "Тёмная",
   "Preferences.themeSystemLight": "Системная (на этом устройстве светлая)",
   "Preferences.themeSystemDark": "Системная (на этом устройстве тёмная)",
-  "Preferences.failedNetwork": "Не удалось сохранить изменение. Проверьте подключение и попробуйте ещё раз.",
-  "Preferences.failedOffline": "Вы не в сети, поэтому ничего не сохранилось. Измените ещё раз, когда подключитесь.",
+  "Preferences.failedNetwork":
+    "Не удалось сохранить изменение. Проверьте подключение и попробуйте ещё раз.",
+  "Preferences.failedOffline":
+    "Вы не в сети, поэтому ничего не сохранилось. Измените ещё раз, когда подключитесь.",
   "Preferences.failedInvalid": "Выберите каждое значение из списка.",
   "Preferences.updatedElsewhere": "Настройки изменены на другом устройстве.",
-  "SeatPriceConfirm.hint": "Каждый новый участник добавляет {price} в месяц: с ещё одним участником группа платит {next} вместо {now}. Разницу за остаток периода сервис выставит в следующем счёте.",
+  "SeatPriceConfirm.hint":
+    "Каждый новый участник добавляет {price} в месяц: с ещё одним участником группа платит {next} вместо {now}. Разницу за остаток периода сервис выставит в следующем счёте.",
   "SeatPriceConfirm.accept": "Принимаю более высокую цену за каждого нового участника",
   "ProfileAccount.name": "Имя",
   "ProfileAccount.notSet": "Не указано",
@@ -1168,7 +1343,8 @@
   "ProfileAccount.none": "Нет.",
   "ProfileAccount.noneProvider": "Нет. {provider} не передал подтверждённый адрес.",
   "ProfileExport.asking": "Запрашиваем…",
-  "ProfileExport.never": "ZIP-архив с профилем, группами и заметками в файлах JSON и CSV. Это займёт несколько минут, а когда всё будет готово, мы пришлём письмо.",
+  "ProfileExport.never":
+    "ZIP-архив с профилем, группами и заметками в файлах JSON и CSV. Это займёт несколько минут, а когда всё будет готово, мы пришлём письмо.",
   "ProfileExport.download": "Скачать мои данные",
   "ProfileExport.preparing": "Готовим файл. Когда он будет готов, мы пришлём письмо и уведомление.",
   "ProfileExport.ready": "<hidden>Ваш файл готов. </hidden>Готово: {size}, до <day></day>.",
@@ -1179,8 +1355,10 @@
   "ProfileExport.failed": "Не удалось подготовить файл.",
   "ProfileExport.label": "Ваши данные",
   "ProfileExport.network": "Не удалось запросить файл. Проверьте подключение и попробуйте ещё раз.",
-  "ProfileExport.tooSoonToday": "Файл можно запросить раз в день. Запросите снова сегодня после {time}.",
-  "ProfileExport.tooSoonTomorrow": "Файл можно запросить раз в день. Запросите снова завтра после {time}.",
+  "ProfileExport.tooSoonToday":
+    "Файл можно запросить раз в день. Запросите снова сегодня после {time}.",
+  "ProfileExport.tooSoonTomorrow":
+    "Файл можно запросить раз в день. Запросите снова завтра после {time}.",
   "ProfileNotifications.emptyTitle": "Устройств пока нет",
   "ProfileNotifications.emptyText": "Добавьте этот браузер, чтобы получать в нём уведомления.",
   "ProfileNotifications.device": "Устройство {id}",
@@ -1188,12 +1366,16 @@
   "ProfileNotifications.remove": "Удалить<hidden> устройство {id}</hidden>",
   "ProfileNotifications.working": "Подождите…",
   "ProfileNotifications.add": "Добавить это устройство",
-  "ProfilePicture.network": "Не удалось загрузить фото. Проверьте подключение и попробуйте ещё раз.",
+  "ProfilePicture.network":
+    "Не удалось загрузить фото. Проверьте подключение и попробуйте ещё раз.",
   "ProfilePicture.offline": "Нет подключения к сети. Загрузите фото, когда снова будете онлайн.",
-  "ProfilePicture.removeFailed": "Не удалось удалить фото. Проверьте подключение и попробуйте ещё раз.",
-  "ProfilePicture.type": "{name} — не изображение JPEG, PNG, WebP или HEIC. Выберите файл одного из этих форматов.",
+  "ProfilePicture.removeFailed":
+    "Не удалось удалить фото. Проверьте подключение и попробуйте ещё раз.",
+  "ProfilePicture.type":
+    "{name} — не изображение JPEG, PNG, WebP или HEIC. Выберите файл одного из этих форматов.",
   "ProfilePicture.size": "{name} весит {size}. Выберите изображение не больше {max}.",
-  "ProfilePicture.content": "{name} на самом деле не изображение, поэтому его не использовали. Выберите другой файл.",
+  "ProfilePicture.content":
+    "{name} на самом деле не изображение, поэтому его не использовали. Выберите другой файл.",
   "ProfilePicture.pending": "Сначала дождитесь уже начатых загрузок, потом попробуйте ещё раз.",
   "ProfilePicture.budget": "Вы загрузили столько, сколько разрешено за час. Попробуйте позже.",
   "ProfilePicture.saved": "Фото профиля сохранено.",
@@ -1207,15 +1389,23 @@
   "ProfilePicture.uploading": "Загружаем…",
   "ProfilePicture.removeHidden": "Удалить<hidden> фото профиля</hidden>",
   "ProfilePicture.removeTitle": "Удалить фото профиля?",
-  "ProfilePicture.removeText": "Вместо него будут показаны ваши инициалы — здесь и во всех группах.",
+  "ProfilePicture.removeText":
+    "Вместо него будут показаны ваши инициалы — здесь и во всех группах.",
   "ProfilePicture.removeButton": "Удалить фото",
-  "ProfileScreen.profileFailed": "Не удалось сохранить имя. Проверьте подключение и попробуйте ещё раз.",
-  "ProfileScreen.passwordFailed": "Не удалось сменить пароль. Проверьте подключение и попробуйте ещё раз.",
-  "ProfileScreen.passwordSetFailed": "Не удалось задать пароль. Проверьте подключение и попробуйте ещё раз.",
-  "ProfileScreen.totpFinishFailed": "Не удалось включить двухфакторный вход. Проверьте код в приложении и попробуйте ещё раз.",
-  "ProfileScreen.totpDisableFailed": "Не удалось выключить двухфакторный вход. Проверьте подключение и попробуйте ещё раз.",
-  "ProfileScreen.pushFailed": "Не удалось добавить это устройство. Разрешите уведомления для этого сайта в браузере и попробуйте ещё раз.",
-  "ProfileScreen.pushRemoveFailed": "Не удалось удалить это устройство. Проверьте подключение и попробуйте ещё раз.",
+  "ProfileScreen.profileFailed":
+    "Не удалось сохранить имя. Проверьте подключение и попробуйте ещё раз.",
+  "ProfileScreen.passwordFailed":
+    "Не удалось сменить пароль. Проверьте подключение и попробуйте ещё раз.",
+  "ProfileScreen.passwordSetFailed":
+    "Не удалось задать пароль. Проверьте подключение и попробуйте ещё раз.",
+  "ProfileScreen.totpFinishFailed":
+    "Не удалось включить двухфакторный вход. Проверьте код в приложении и попробуйте ещё раз.",
+  "ProfileScreen.totpDisableFailed":
+    "Не удалось выключить двухфакторный вход. Проверьте подключение и попробуйте ещё раз.",
+  "ProfileScreen.pushFailed":
+    "Не удалось добавить это устройство. Разрешите уведомления для этого сайта в браузере и попробуйте ещё раз.",
+  "ProfileScreen.pushRemoveFailed":
+    "Не удалось удалить это устройство. Проверьте подключение и попробуйте ещё раз.",
   "ProfileScreen.account": "Аккаунт",
   "ProfileScreen.accountText": "Фото, имя, адрес почты и копия ваших данных.",
   "ProfileScreen.security": "Вход и безопасность",
@@ -1225,13 +1415,16 @@
   "ProfileScreen.appearance": "Оформление",
   "ProfileScreen.appearanceText": "Как приложение выглядит на этом устройстве.",
   "ProfileScreen.notifications": "Уведомления",
-  "ProfileScreen.notificationsText": "Куда приходят уведомления, когда в ваших группах что-то меняется.",
+  "ProfileScreen.notificationsText":
+    "Куда приходят уведомления, когда в ваших группах что-то меняется.",
   "ProfileScreen.apiTokens": "API-токены",
-  "ProfileScreen.apiTokensText": "Дайте скрипту или другому сервису доступ к одной из ваших групп без пароля.",
+  "ProfileScreen.apiTokensText":
+    "Дайте скрипту или другому сервису доступ к одной из ваших групп без пароля.",
   "ProfileScreen.dangerZone": "Удаление аккаунта",
   "ProfileScreen.dangerZoneText": "Удалите аккаунт и всё, что видите только вы.",
   "ProfileScreen.codeTitle": "Введите одноразовый код",
-  "ProfileScreen.codeText": "Профиль откроется, когда вы введёте код из приложения-аутентификатора.",
+  "ProfileScreen.codeText":
+    "Профиль откроется, когда вы введёте код из приложения-аутентификатора.",
   "ProfileScreen.signInTitle": "Войдите, чтобы открыть профиль",
   "ProfileScreen.signInText": "Имя, пароль и устройства появятся здесь после входа.",
   "ProfileScreen.createAccount": "Создать аккаунт",
@@ -1240,19 +1433,21 @@
   "ProfileScreen.title": "Профиль",
   "ProfileScreen.noName": "Без имени",
   "ProfileScreen.push": "Push-уведомления",
-  "ProfileScreen.pushText": "Браузеры и телефоны, которые показывают уведомления, даже когда приложение закрыто.",
+  "ProfileScreen.pushText":
+    "Браузеры и телефоны, которые показывают уведомления, даже когда приложение закрыто.",
   "ProfileScreen.passkeys": {
     "one": "ключ доступа",
     "few": "ключи доступа",
     "many": "ключи доступа",
-    "other": "ключи доступа"
+    "other": "ключи доступа",
   },
   "ProfileSecurity.setPasswordHidden": "Задать<hidden> пароль</hidden>",
   "ProfileSecurity.changePasswordHidden": "Изменить<hidden> пароль</hidden>",
   "ProfileSecurity.noPassword": "Нет. Вы входите через {names}.",
   "ProfileSecurity.passwordAsked": "Запрашивается при входе на новом устройстве.",
   "ProfileSecurity.twoFactor": "Двухфакторный вход",
-  "ProfileSecurity.twoFactorText": "При входе нужен ещё и код из приложения-аутентификатора, так что одного украденного пароля не хватит.",
+  "ProfileSecurity.twoFactorText":
+    "При входе нужен ещё и код из приложения-аутентификатора, так что одного украденного пароля не хватит.",
   "ProfileSecurity.app": "Приложение-аутентификатор",
   "ProfileSecurity.on": "Включено",
   "ProfileSecurity.onText": "При входе запрашивается код, если вы не входите с ключом доступа.",
@@ -1266,36 +1461,48 @@
   "ProfileSecurity.updating": "Сохраняем…",
   "ProfileSecurity.setButton": "Задать пароль",
   "ProfileSecurity.turnOnTitle": "Включить двухфакторный вход",
-  "ProfileSecurity.turnOnText": "После включения при входе понадобится ещё и код из приложения-аутентификатора, а другие устройства выйдут из аккаунта.",
-  "ProfileSecurity.turnOnPassword": "После включения при входе понадобится ещё и код из приложения-аутентификатора, а другие устройства выйдут из аккаунта. Введите пароль, чтобы подтвердить, что это вы.",
+  "ProfileSecurity.turnOnText":
+    "После включения при входе понадобится ещё и код из приложения-аутентификатора, а другие устройства выйдут из аккаунта.",
+  "ProfileSecurity.turnOnPassword":
+    "После включения при входе понадобится ещё и код из приложения-аутентификатора, а другие устройства выйдут из аккаунта. Введите пароль, чтобы подтвердить, что это вы.",
   "ProfileSecurity.preparing": "Готовим…",
-  "ProfileSecurity.scan": "Отсканируйте код приложением-аутентификатором и введите шесть цифр, которые оно покажет.",
+  "ProfileSecurity.scan":
+    "Отсканируйте код приложением-аутентификатором и введите шесть цифр, которые оно покажет.",
   "ProfileSecurity.qr": "QR-код для приложения-аутентификатора",
   "ProfileSecurity.key": "Не получается отсканировать? Введите этот ключ: <key>{key}</key>",
   "ProfileSecurity.codeFromApp": "Код из приложения",
   "ProfileSecurity.turningOn": "Включаем…",
   "ProfileSecurity.turnOn": "Включить",
   "ProfileSecurity.turnOffTitle": "Выключить двухфакторный вход?",
-  "ProfileSecurity.turnOffCode": "При входе больше не будет запрашиваться код. Введите код из приложения-аутентификатора, чтобы подтвердить, что это вы. Двухфакторный вход можно снова включить в любой момент.",
-  "ProfileSecurity.turnOffPassword": "При входе будет запрашиваться только пароль. Введите пароль, чтобы подтвердить, что это вы. Двухфакторный вход можно снова включить в любой момент.",
+  "ProfileSecurity.turnOffCode":
+    "При входе больше не будет запрашиваться код. Введите код из приложения-аутентификатора, чтобы подтвердить, что это вы. Двухфакторный вход можно снова включить в любой момент.",
+  "ProfileSecurity.turnOffPassword":
+    "При входе будет запрашиваться только пароль. Введите пароль, чтобы подтвердить, что это вы. Двухфакторный вход можно снова включить в любой момент.",
   "ProfileSecurity.turningOff": "Выключаем…",
   "ProfileSecurity.turnOff": "Выключить",
   "ProfileTelegram.title": "Telegram",
-  "ProfileTelegram.statusFailed": "Не удалось прочитать привязку Telegram. Проверьте подключение и попробуйте ещё раз.",
-  "ProfileTelegram.codeFailed": "Не удалось создать код привязки. Проверьте подключение и попробуйте ещё раз.",
-  "ProfileTelegram.unlinkFailed": "Не удалось отвязать Telegram. Проверьте подключение и попробуйте ещё раз.",
+  "ProfileTelegram.statusFailed":
+    "Не удалось прочитать привязку Telegram. Проверьте подключение и попробуйте ещё раз.",
+  "ProfileTelegram.codeFailed":
+    "Не удалось создать код привязки. Проверьте подключение и попробуйте ещё раз.",
+  "ProfileTelegram.unlinkFailed":
+    "Не удалось отвязать Telegram. Проверьте подключение и попробуйте ещё раз.",
   "ProfileTelegram.theBot": "бот",
-  "ProfileTelegram.description": "Получайте уведомления в Telegram и пользуйтесь командами — в чате вам отвечает {bot}.",
+  "ProfileTelegram.description":
+    "Получайте уведомления в Telegram и пользуйтесь командами — в чате вам отвечает {bot}.",
   "ProfileTelegram.chat": "Чат",
   "ProfileTelegram.linked": "Привязан <day></day>",
   "ProfileTelegram.notLinked": "Не привязан",
   "ProfileTelegram.unlinkHidden": "Отвязать<hidden> Telegram</hidden>",
   "ProfileTelegram.link": "Привязать Telegram",
   "ProfileTelegram.unlinkTitle": "Отвязать Telegram?",
-  "ProfileTelegram.unlinkText": "Уведомления перестанут приходить в Telegram, и {bot} больше не сможет действовать от вашего имени. Чтобы привязать снова, понадобится новый код.",
-  "ProfileTelegram.open": "Откройте чат — <strong>{bot}</strong> — и нажмите Start, затем «{button}». Это окно закроется, как только аккаунт будет привязан.",
+  "ProfileTelegram.unlinkText":
+    "Уведомления перестанут приходить в Telegram, и {bot} больше не сможет действовать от вашего имени. Чтобы привязать снова, понадобится новый код.",
+  "ProfileTelegram.open":
+    "Откройте чат — <strong>{bot}</strong> — и нажмите Start, затем «{button}». Это окно закроется, как только аккаунт будет привязан.",
   "ProfileTelegram.openButton": "Открыть Telegram",
-  "ProfileTelegram.elsewhere": "Telegram на другом устройстве? Отправьте это сообщение в чат, где отвечает {bot}:",
+  "ProfileTelegram.elsewhere":
+    "Telegram на другом устройстве? Отправьте это сообщение в чат, где отвечает {bot}:",
   "ProfileTelegram.message": "Сообщение для отправки",
   "ProfileTelegram.copy": "Копировать сообщение",
   "ProfileTelegram.copied": "Сообщение скопировано",
@@ -1303,7 +1510,7 @@
     "one": "Ждём Telegram… Код сработает один раз в течение {count} минуты.",
     "few": "Ждём Telegram… Код сработает один раз в течение {count} минут.",
     "many": "Ждём Telegram… Код сработает один раз в течение {count} минут.",
-    "other": "Ждём Telegram… Код сработает один раз в течение {count} минуты."
+    "other": "Ждём Telegram… Код сработает один раз в течение {count} минуты.",
   },
   "ProfileView.codeMissing": "Введите код из приложения-аутентификатора",
   "ProfileView.telegramLinked": "Telegram привязан",
@@ -1313,7 +1520,7 @@
     "one": "Из гостевого аккаунта перенесена {count} группа.",
     "few": "Из гостевого аккаунта перенесены {count} группы.",
     "many": "Из гостевого аккаунта перенесено {count} групп.",
-    "other": "Из гостевого аккаунта перенесено {count} группы."
+    "other": "Из гостевого аккаунта перенесено {count} группы.",
   },
   "ProfileView.switchedDeleted": "Гостевой аккаунт удалён.",
   "ProfileView.methodLinked": "Способ входа привязан",
@@ -1321,7 +1528,8 @@
   "ProfileView.methodNotLinked": "Способ входа не привязан",
   "ProfileView.unlinked": "Отвязано: {method}",
   "ProfileView.methodUnlinked": "Способ входа отвязан",
-  "ProfileView.unlinkedBody": "Устройства, на которых вход был выполнен этим способом, вышли из аккаунта.",
+  "ProfileView.unlinkedBody":
+    "Устройства, на которых вход был выполнен этим способом, вышли из аккаунта.",
   "ProfileView.signedOut": "Выход выполнен",
   "ProfileView.deviceSignedOut": "На этом устройстве выполнен выход.",
   "ProfileView.othersSignedOut": "На всех остальных устройствах выполнен выход.",
@@ -1332,13 +1540,14 @@
     "one": "Отозван {count} API-токен.",
     "few": "Отозваны {count} API-токена.",
     "many": "Отозваны {count} API-токенов.",
-    "other": "Отозваны {count} API-токена."
+    "other": "Отозваны {count} API-токена.",
   },
   "ProfileView.usePassword": "При следующем входе используйте новый пароль.",
   "ProfileView.passwordSet": "Пароль задан",
   "ProfileView.passwordSetBody": "Теперь можно входить и по адресу почты с этим паролем.",
   "ProfileView.accountDeleted": "Аккаунт удалён",
-  "ProfileView.accountDeletedBody": "Он удалится навсегда {day}. Чтобы сохранить его, войдите до этого.",
+  "ProfileView.accountDeletedBody":
+    "Он удалится навсегда {day}. Чтобы сохранить его, войдите до этого.",
   "ProfileView.guestDeleted": "Гостевой аккаунт удалён",
   "ProfileView.guestDeletedBody": "Всё его содержимое удалено.",
   "ProfileView.emailVerified": "Почта подтверждена",
@@ -1349,55 +1558,80 @@
   "ProviderProof.link": "ссылку для входа",
   "ProviderProof.fresh": "Вы только что вошли через {methods}, поэтому пароль не нужен.",
   "ProviderProof.needed": {
-    "one": "У этого аккаунта нет пароля, чтобы это подтвердить. Снова войдите через {methods} и вернитесь сюда в течение {count} минуты.",
-    "few": "У этого аккаунта нет пароля, чтобы это подтвердить. Снова войдите через {methods} и вернитесь сюда в течение {count} минут.",
-    "many": "У этого аккаунта нет пароля, чтобы это подтвердить. Снова войдите через {methods} и вернитесь сюда в течение {count} минут.",
-    "other": "У этого аккаунта нет пароля, чтобы это подтвердить. Снова войдите через {methods} и вернитесь сюда в течение {count} минуты."
+    "one":
+      "У этого аккаунта нет пароля, чтобы это подтвердить. Снова войдите через {methods} и вернитесь сюда в течение {count} минуты.",
+    "few":
+      "У этого аккаунта нет пароля, чтобы это подтвердить. Снова войдите через {methods} и вернитесь сюда в течение {count} минут.",
+    "many":
+      "У этого аккаунта нет пароля, чтобы это подтвердить. Снова войдите через {methods} и вернитесь сюда в течение {count} минут.",
+    "other":
+      "У этого аккаунта нет пароля, чтобы это подтвердить. Снова войдите через {methods} и вернитесь сюда в течение {count} минуты.",
   },
   "ProviderProof.passkeyAgain": "Снова войти с ключом доступа",
   "ProviderProof.providerAgain": "Снова войти через {provider}",
   "SignInLinkScreen.sendFailed": "Не удалось отправить ссылку. Попробуйте ещё раз чуть позже.",
-  "SignInLinkScreen.unreachable": "Не удалось связаться с сервером. Проверьте подключение и снова нажмите «Продолжить».",
-  "SignInLinkScreen.openFailed": "Не удалось войти. Нажмите «Продолжить», чтобы попробовать ещё раз, или запросите новую ссылку.",
+  "SignInLinkScreen.unreachable":
+    "Не удалось связаться с сервером. Проверьте подключение и снова нажмите «Продолжить».",
+  "SignInLinkScreen.openFailed":
+    "Не удалось войти. Нажмите «Продолжить», чтобы попробовать ещё раз, или запросите новую ссылку.",
   "SignInLinkScreen.title": "Вход по ссылке",
-  "SignInLinkScreen.description": "Мы пришлём на почту ссылку для входа. Если с этим адресом ещё нет аккаунта, ссылка его создаст.",
+  "SignInLinkScreen.description":
+    "Мы пришлём на почту ссылку для входа. Если с этим адресом ещё нет аккаунта, ссылка его создаст.",
   "SignInLinkScreen.ratherPassword": "Удобнее с паролем? <link>Вернуться ко входу</link>",
   "SignInLinkScreen.submit": "Прислать ссылку",
   "SignInLinkScreen.sent": {
-    "one": "Мы отправили ссылку для входа на <email>{email}</email>. Она сработает один раз в течение {count} минуты.",
-    "few": "Мы отправили ссылку для входа на <email>{email}</email>. Она сработает один раз в течение {count} минут.",
-    "many": "Мы отправили ссылку для входа на <email>{email}</email>. Она сработает один раз в течение {count} минут.",
-    "other": "Мы отправили ссылку для входа на <email>{email}</email>. Она сработает один раз в течение {count} минуты."
+    "one":
+      "Мы отправили ссылку для входа на <email>{email}</email>. Она сработает один раз в течение {count} минуты.",
+    "few":
+      "Мы отправили ссылку для входа на <email>{email}</email>. Она сработает один раз в течение {count} минут.",
+    "many":
+      "Мы отправили ссылку для входа на <email>{email}</email>. Она сработает один раз в течение {count} минут.",
+    "other":
+      "Мы отправили ссылку для входа на <email>{email}</email>. Она сработает один раз в течение {count} минуты.",
   },
   "SignInLinkScreen.openHere": "Откройте её на этом устройстве, чтобы войти здесь.",
   "SignInLinkScreen.newLink": "Отправить новую ссылку",
   "SignInLinkScreen.waiting": {
-    "one": "Письма нет? Проверьте папку «Спам». Новую ссылку можно отправить через {count} секунду.",
-    "few": "Письма нет? Проверьте папку «Спам». Новую ссылку можно отправить через {count} секунды.",
-    "many": "Письма нет? Проверьте папку «Спам». Новую ссылку можно отправить через {count} секунд.",
-    "other": "Письма нет? Проверьте папку «Спам». Новую ссылку можно отправить через {count} секунды."
+    "one":
+      "Письма нет? Проверьте папку «Спам». Новую ссылку можно отправить через {count} секунду.",
+    "few":
+      "Письма нет? Проверьте папку «Спам». Новую ссылку можно отправить через {count} секунды.",
+    "many":
+      "Письма нет? Проверьте папку «Спам». Новую ссылку можно отправить через {count} секунд.",
+    "other":
+      "Письма нет? Проверьте папку «Спам». Новую ссылку можно отправить через {count} секунды.",
   },
-  "SignInLinkScreen.resent": "Новая ссылка уже в пути. Прежние ссылки работают, пока одной из них не воспользуются.",
+  "SignInLinkScreen.resent":
+    "Новая ссылка уже в пути. Прежние ссылки работают, пока одной из них не воспользуются.",
   "SignInLinkScreen.refusedTitle": "Эта ссылка больше не работает",
   "SignInLinkScreen.refused": {
-    "one": "Ссылки для входа работают один раз в течение {count} минуты. Запросите новую и откройте самое свежее письмо.",
-    "few": "Ссылки для входа работают один раз в течение {count} минут. Запросите новую и откройте самое свежее письмо.",
-    "many": "Ссылки для входа работают один раз в течение {count} минут. Запросите новую и откройте самое свежее письмо.",
-    "other": "Ссылки для входа работают один раз в течение {count} минуты. Запросите новую и откройте самое свежее письмо."
+    "one":
+      "Ссылки для входа работают один раз в течение {count} минуты. Запросите новую и откройте самое свежее письмо.",
+    "few":
+      "Ссылки для входа работают один раз в течение {count} минут. Запросите новую и откройте самое свежее письмо.",
+    "many":
+      "Ссылки для входа работают один раз в течение {count} минут. Запросите новую и откройте самое свежее письмо.",
+    "other":
+      "Ссылки для входа работают один раз в течение {count} минуты. Запросите новую и откройте самое свежее письмо.",
   },
   "SignInLinkScreen.elsewhereTitle": "Эту ссылку запросили в другом браузере",
-  "SignInLinkScreen.elsewhere": "Вход не выполнен, гостевой аккаунт остался как был. Запросите новую ссылку в этом браузере, чтобы войти здесь.",
+  "SignInLinkScreen.elsewhere":
+    "Вход не выполнен, гостевой аккаунт остался как был. Запросите новую ссылку в этом браузере, чтобы войти здесь.",
   "SignInLinkScreen.incompleteTitle": "Ссылка неполная",
   "SignInLinkScreen.incomplete": "Откройте ссылку из письма ещё раз или запросите новую.",
   "SignInLinkScreen.backToApp": "Вернуться в приложение",
   "SignInLinkScreen.finishTitle": "Завершите вход",
-  "SignInLinkScreen.finish": "Нажмите «Продолжить», чтобы войти на этом устройстве. Если адрес новый, будет создан аккаунт.",
-  "SignInLinkScreen.signedInAs": "Вы вошли как <email>{email}</email>. Если продолжить, вы войдёте в аккаунт из ссылки.",
-  "SignInLinkScreen.guest": "Вы пользуетесь приложением как гость. Если ссылку запросили в этом браузере, гостевой аккаунт сохранится под адресом из ссылки, а если с этим адресом уже есть аккаунт, мы сначала спросим.",
+  "SignInLinkScreen.finish":
+    "Нажмите «Продолжить», чтобы войти на этом устройстве. Если адрес новый, будет создан аккаунт.",
+  "SignInLinkScreen.signedInAs":
+    "Вы вошли как <email>{email}</email>. Если продолжить, вы войдёте в аккаунт из ссылки.",
+  "SignInLinkScreen.guest":
+    "Вы пользуетесь приложением как гость. Если ссылку запросили в этом браузере, гостевой аккаунт сохранится под адресом из ссылки, а если с этим адресом уже есть аккаунт, мы сначала спросим.",
   "SignInLinkScreen.signingIn": "Входим…",
   "SignInLinkScreen.stay": "Остаться в аккаунте",
   "SignInMethods.failed": "Не удалось изменить способы входа",
-  "SignInMethods.loadFailed": "Не удалось загрузить способы входа. Проверьте подключение и попробуйте ещё раз.",
+  "SignInMethods.loadFailed":
+    "Не удалось загрузить способы входа. Проверьте подключение и попробуйте ещё раз.",
   "SignInMethods.renameFailed": "Не удалось сохранить название. Попробуйте ещё раз.",
   "SignInMethods.password": "Пароль",
   "SignInMethods.passkey": "Ключ доступа",
@@ -1411,17 +1645,24 @@
   "SignInMethods.linkTitle": "Привязать",
   "SignInMethods.offline": "Чтобы добавить ключ доступа, нужно подключение к сети.",
   "SignInMethods.cancelled": "Ключ доступа не добавлен.",
-  "SignInMethods.added": "Ключ доступа добавлен как «<name>{name}</name>». Можно его переименовать.",
-  "SignInMethods.passkeyAsks": "Ключ доступа — ещё один способ входа, поэтому сначала нужен пароль.",
-  "SignInMethods.linkAsks": "Привязанный аккаунт — ещё один способ входа, поэтому сначала нужен пароль.",
+  "SignInMethods.added":
+    "Ключ доступа добавлен как «<name>{name}</name>». Можно его переименовать.",
+  "SignInMethods.passkeyAsks":
+    "Ключ доступа — ещё один способ входа, поэтому сначала нужен пароль.",
+  "SignInMethods.linkAsks":
+    "Привязанный аккаунт — ещё один способ входа, поэтому сначала нужен пароль.",
   "SignInMethods.opening": "Открываем…",
   "SignInMethods.continueTo": "Перейти в {provider}",
   "SignInMethods.removeTitle": "Удалить «{name}»?",
   "SignInMethods.unlinkTitle": "Отвязать {name}?",
-  "SignInMethods.remove": "С этим ключом доступа больше нельзя будет войти. Все устройства, которые входили с ним, выйдут из аккаунта. Удалите его и из менеджера паролей.",
-  "SignInMethods.removeCurrent": "С этим ключом доступа больше нельзя будет войти. Все устройства, которые входили с ним, выйдут из аккаунта. Удалите его и из менеджера паролей. Это устройство тоже входило с ним, поэтому тоже выйдет.",
-  "SignInMethods.unlinkCurrent": "На этом устройстве вы вошли через {name}, поэтому оно выйдет из аккаунта, как и все остальные устройства, которые так входили.",
-  "SignInMethods.unlink": "Все устройства, которые входили через {name}, выйдут из аккаунта. Это устройство останется в аккаунте.",
+  "SignInMethods.remove":
+    "С этим ключом доступа больше нельзя будет войти. Все устройства, которые входили с ним, выйдут из аккаунта. Удалите его и из менеджера паролей.",
+  "SignInMethods.removeCurrent":
+    "С этим ключом доступа больше нельзя будет войти. Все устройства, которые входили с ним, выйдут из аккаунта. Удалите его и из менеджера паролей. Это устройство тоже входило с ним, поэтому тоже выйдет.",
+  "SignInMethods.unlinkCurrent":
+    "На этом устройстве вы вошли через {name}, поэтому оно выйдет из аккаунта, как и все остальные устройства, которые так входили.",
+  "SignInMethods.unlink":
+    "Все устройства, которые входили через {name}, выйдут из аккаунта. Это устройство останется в аккаунте.",
   "SignInMethods.removing": "Удаляем…",
   "SignInMethods.unlinking": "Отвязываем…",
   "SignInMethods.removePasskey": "Удалить ключ доступа",
@@ -1443,7 +1684,7 @@
     "one": "Мы отправили код на <email>{email}</email>. Он действует {count} минуту.",
     "few": "Мы отправили код на <email>{email}</email>. Он действует {count} минуты.",
     "many": "Мы отправили код на <email>{email}</email>. Он действует {count} минут.",
-    "other": "Мы отправили код на <email>{email}</email>. Он действует {count} минуты."
+    "other": "Мы отправили код на <email>{email}</email>. Он действует {count} минуты.",
   },
   "SignUpCodeScreen.wrongAddress": "Не тот адрес? <button>Указать другой адрес</button>",
   "SignUpCodeScreen.code": "Код",
@@ -1452,32 +1693,40 @@
   "SignUpCodeScreen.resent": "Новый код уже в пути.",
   "SignUpCodeScreen.resendFailed": "Не удалось отправить новый код",
   "SignUpCodeScreen.existsTitle": "У вас уже есть аккаунт",
-  "SignUpCodeScreen.exists": "С адресом <email>{email}</email> здесь уже входят. Ничего нового не создано.",
-  "SignUpCodeScreen.existsWith": "С адресом <email>{email}</email> здесь уже входят через {providers}. Ничего нового не создано.",
+  "SignUpCodeScreen.exists":
+    "С адресом <email>{email}</email> здесь уже входят. Ничего нового не создано.",
+  "SignUpCodeScreen.existsWith":
+    "С адресом <email>{email}</email> здесь уже входят через {providers}. Ничего нового не создано.",
   "SignUpCodeScreen.signInInstead": "Войти",
   "SignUpCodeScreen.expiredTitle": "Срок этой регистрации истёк",
   "SignUpCodeScreen.expired": {
     "one": "Прошло больше {count} минуты, или код вводили слишком много раз. Ничего не создано.",
     "few": "Прошло больше {count} минут, или код вводили слишком много раз. Ничего не создано.",
     "many": "Прошло больше {count} минут, или код вводили слишком много раз. Ничего не создано.",
-    "other": "Прошло больше {count} минуты, или код вводили слишком много раз. Ничего не создано."
+    "other": "Прошло больше {count} минуты, или код вводили слишком много раз. Ничего не создано.",
   },
   "SignUpCodeScreen.startAgain": "Начать заново",
   "SignedInDevices.failed": "Не удалось завершить сеанс на этом устройстве",
   "SignedInDevices.savedTitle": "Сохранённый список устройств",
-  "SignedInDevices.savedBody": "Сервер недоступен. Этот список сохранён на этом устройстве: {time}. Устройств, которые вошли или вышли с тех пор, в нём нет.",
+  "SignedInDevices.savedBody":
+    "Сервер недоступен. Этот список сохранён на этом устройстве: {time}. Устройств, которые вошли или вышли с тех пор, в нём нет.",
   "SignedInDevices.title": "Устройства со входом",
-  "SignedInDevices.description": "Где выполнен вход в ваш аккаунт. Завершите сеанс на устройстве, которое вам незнакомо.",
+  "SignedInDevices.description":
+    "Где выполнен вход в ваш аккаунт. Завершите сеанс на устройстве, которое вам незнакомо.",
   "SignedInDevices.loading": "Загружаем устройства…",
   "SignedInDevices.signOutDevice": "Выйти<device> ({device})</device>",
   "SignedInDevices.signingOut": "Завершаем сеансы…",
   "SignedInDevices.signOutOthers": "Выйти на всех других устройствах",
   "SignedInDevices.othersTitle": "Выйти на всех других устройствах?",
   "SignedInDevices.othersMessage": {
-    "one": "На {count} другом устройстве для входа снова понадобится пароль. Это устройство останется в аккаунте.",
-    "few": "На {count} других устройствах для входа снова понадобится пароль. Это устройство останется в аккаунте.",
-    "many": "На {count} других устройствах для входа снова понадобится пароль. Это устройство останется в аккаунте.",
-    "other": "На {count} других устройства для входа снова понадобится пароль. Это устройство останется в аккаунте."
+    "one":
+      "На {count} другом устройстве для входа снова понадобится пароль. Это устройство останется в аккаунте.",
+    "few":
+      "На {count} других устройствах для входа снова понадобится пароль. Это устройство останется в аккаунте.",
+    "many":
+      "На {count} других устройствах для входа снова понадобится пароль. Это устройство останется в аккаунте.",
+    "other":
+      "На {count} других устройства для входа снова понадобится пароль. Это устройство останется в аккаунте.",
   },
   "SignedInDevices.signOut": "Выйти",
   "SignedInDevices.oneTitle": "Выйти на устройстве {device}?",
@@ -1494,10 +1743,11 @@
     "one": "Введите хотя бы {count} символ, чтобы искать заметки.",
     "few": "Введите хотя бы {count} символа, чтобы искать заметки.",
     "many": "Введите хотя бы {count} символов, чтобы искать заметки.",
-    "other": "Введите хотя бы {count} символа, чтобы искать заметки."
+    "other": "Введите хотя бы {count} символа, чтобы искать заметки.",
   },
   "Search.empty": "Нет заметок и групп по запросу «{query}».",
-  "Search.emptyOnDevice": "На этом устройстве ничего не нашлось по запросу «{query}». Поищите снова, когда будете в сети.",
+  "Search.emptyOnDevice":
+    "На этом устройстве ничего не нашлось по запросу «{query}». Поищите снова, когда будете в сети.",
   "Search.notes": "Заметки",
   "Search.notesOnDevice": "Заметки на этом устройстве",
   "Search.groups": "Группы",
@@ -1542,7 +1792,8 @@
   "TagEditor.loading": "Загружаем тег…",
   "TagEditor.new": "Новый тег",
   "TagEditor.offlineTitle": "Вы не в сети",
-  "TagEditor.offline": "Изменения сохраняются на этом устройстве и отправятся, когда вы снова будете в сети.",
+  "TagEditor.offline":
+    "Изменения сохраняются на этом устройстве и отправятся, когда вы снова будете в сети.",
   "TagEditor.readOnly": "Менять теги в этой группе может только редактор.",
   "TagEditor.name": "Название",
   "TagEditor.nameHint": "Этот тег видят все в группе <group>{group}</group>.",
@@ -1562,7 +1813,8 @@
   "TagEditorView.discardStay": "Продолжить",
   "TagMessages.nameRequired": "Введите название.",
   "TagMessages.nameTaken": "В этой группе уже есть тег с таким названием.",
-  "TagMessages.conflict": "Кто-то изменил этот тег, пока он был у вас открыт. Показываем его текущую версию.",
+  "TagMessages.conflict":
+    "Кто-то изменил этот тег, пока он был у вас открыт. Показываем его текущую версию.",
   "TagMessages.gone": "Этот тег удалён.",
   "TagMessages.load": "Не удалось загрузить теги",
   "TagMessages.create": "Не удалось создать тег. Попробуйте ещё раз.",
@@ -1575,7 +1827,7 @@
     "one": "{count} заметка",
     "few": "{count} заметки",
     "many": "{count} заметок",
-    "other": "{count} заметки"
+    "other": "{count} заметки",
   },
   "TagParts.deleteNone": "Его нет ни на одной заметке.",
   "TagParts.deleteUnknown": "Он снимется со всех заметок, где есть. Сами заметки останутся.",
@@ -1583,7 +1835,7 @@
     "one": "Он снимется с {count} заметки. Сами заметки останутся.",
     "few": "Он снимется с {count} заметок. Сами заметки останутся.",
     "many": "Он снимется с {count} заметок. Сами заметки останутся.",
-    "other": "Он снимется с {count} заметки. Сами заметки останутся."
+    "other": "Он снимется с {count} заметки. Сами заметки останутся.",
   },
   "TagSync.gone": "Пока вы были не в сети, этот тег удалили.",
   "TagSync.rejected": "Сервер не принял этот тег.",
@@ -1599,7 +1851,7 @@
     "one": "Показать {count} заметку с тегом «{name}»",
     "few": "Показать {count} заметки с тегом «{name}»",
     "many": "Показать {count} заметок с тегом «{name}»",
-    "other": "Показать {count} заметки с тегом «{name}»"
+    "other": "Показать {count} заметки с тегом «{name}»",
   },
   "Tags.actions": "Действия с «{name}»",
   "Tags.editTag": "Изменить тег",
@@ -1612,36 +1864,54 @@
     "one": "«{name}» удалён и снят с {count} заметки.",
     "few": "«{name}» удалён и снят с {count} заметок.",
     "many": "«{name}» удалён и снят с {count} заметок.",
-    "other": "«{name}» удалён и снят с {count} заметки."
+    "other": "«{name}» удалён и снят с {count} заметки.",
   },
   "TelegramNotification.open": "Открыть",
   "TelegramBot.linkButton": "Привязать",
-  "TelegramBot.confirmNameAddress": "Привязать этот Telegram к аккаунту {name} на {app} ({address})? Нажимайте «{button}», только если это ваш аккаунт. Если вы этого не запрашивали, просто проигнорируйте это сообщение.",
-  "TelegramBot.confirmName": "Привязать этот Telegram к аккаунту {name} на {app}? Нажимайте «{button}», только если это ваш аккаунт. Если вы этого не запрашивали, просто проигнорируйте это сообщение.",
-  "TelegramBot.confirmAddress": "Привязать этот Telegram к аккаунту на {app} ({address})? Нажимайте «{button}», только если это ваш аккаунт. Если вы этого не запрашивали, просто проигнорируйте это сообщение.",
-  "TelegramBot.confirmAnonymous": "Привязать этот Telegram к аккаунту на {app} без имени и адреса? Нажимайте «{button}», только если это ваш аккаунт. Если вы этого не запрашивали, просто проигнорируйте это сообщение.",
-  "TelegramBot.linked": "Готово: этот чат привязан к вашему аккаунту. Теперь уведомления приходят сюда. Отправьте /help, чтобы узнать, что я умею.",
+  "TelegramBot.confirmNameAddress":
+    "Привязать этот Telegram к аккаунту {name} на {app} ({address})? Нажимайте «{button}», только если это ваш аккаунт. Если вы этого не запрашивали, просто проигнорируйте это сообщение.",
+  "TelegramBot.confirmName":
+    "Привязать этот Telegram к аккаунту {name} на {app}? Нажимайте «{button}», только если это ваш аккаунт. Если вы этого не запрашивали, просто проигнорируйте это сообщение.",
+  "TelegramBot.confirmAddress":
+    "Привязать этот Telegram к аккаунту на {app} ({address})? Нажимайте «{button}», только если это ваш аккаунт. Если вы этого не запрашивали, просто проигнорируйте это сообщение.",
+  "TelegramBot.confirmAnonymous":
+    "Привязать этот Telegram к аккаунту на {app} без имени и адреса? Нажимайте «{button}», только если это ваш аккаунт. Если вы этого не запрашивали, просто проигнорируйте это сообщение.",
+  "TelegramBot.linked":
+    "Готово: этот чат привязан к вашему аккаунту. Теперь уведомления приходят сюда. Отправьте /help, чтобы узнать, что я умею.",
   "TelegramBot.already": "Этот аккаунт Telegram уже привязан к вашему аккаунту.",
-  "TelegramBot.taken": "Этот аккаунт Telegram привязан к другому аккаунту. Сначала отправьте /unlink, затем код ещё раз.",
+  "TelegramBot.taken":
+    "Этот аккаунт Telegram привязан к другому аккаунту. Сначала отправьте /unlink, затем код ещё раз.",
   "TelegramBot.invalid": {
-    "one": "Этот код не работает. Возможно, в нём опечатка, он уже использован или старше {count} минуты. Создайте новый в приложении.",
-    "few": "Этот код не работает. Возможно, в нём опечатка, он уже использован или старше {count} минут. Создайте новый в приложении.",
-    "many": "Этот код не работает. Возможно, в нём опечатка, он уже использован или старше {count} минут. Создайте новый в приложении.",
-    "other": "Этот код не работает. Возможно, в нём опечатка, он уже использован или старше {count} минуты. Создайте новый в приложении."
+    "one":
+      "Этот код не работает. Возможно, в нём опечатка, он уже использован или старше {count} минуты. Создайте новый в приложении.",
+    "few":
+      "Этот код не работает. Возможно, в нём опечатка, он уже использован или старше {count} минут. Создайте новый в приложении.",
+    "many":
+      "Этот код не работает. Возможно, в нём опечатка, он уже использован или старше {count} минут. Создайте новый в приложении.",
+    "other":
+      "Этот код не работает. Возможно, в нём опечатка, он уже использован или старше {count} минуты. Создайте новый в приложении.",
   },
   "TelegramBot.stale": {
-    "one": "Эта кнопка больше не работает: ею уже воспользовались, её заменила более новая или она старше {count} минуты. Чтобы привязать этот чат, создайте новый код в приложении.",
-    "few": "Эта кнопка больше не работает: ею уже воспользовались, её заменила более новая или она старше {count} минут. Чтобы привязать этот чат, создайте новый код в приложении.",
-    "many": "Эта кнопка больше не работает: ею уже воспользовались, её заменила более новая или она старше {count} минут. Чтобы привязать этот чат, создайте новый код в приложении.",
-    "other": "Эта кнопка больше не работает: ею уже воспользовались, её заменила более новая или она старше {count} минуты. Чтобы привязать этот чат, создайте новый код в приложении."
+    "one":
+      "Эта кнопка больше не работает: ею уже воспользовались, её заменила более новая или она старше {count} минуты. Чтобы привязать этот чат, создайте новый код в приложении.",
+    "few":
+      "Эта кнопка больше не работает: ею уже воспользовались, её заменила более новая или она старше {count} минут. Чтобы привязать этот чат, создайте новый код в приложении.",
+    "many":
+      "Эта кнопка больше не работает: ею уже воспользовались, её заменила более новая или она старше {count} минут. Чтобы привязать этот чат, создайте новый код в приложении.",
+    "other":
+      "Эта кнопка больше не работает: ею уже воспользовались, её заменила более новая или она старше {count} минуты. Чтобы привязать этот чат, создайте новый код в приложении.",
   },
   "TelegramBot.privateOnly": "Отправьте это мне в личном чате.",
-  "TelegramBot.codeSpent": "Этот код отправили туда, где его могут прочитать другие, поэтому он больше не работает. Создайте новый в приложении и отправьте его мне в личном чате.",
+  "TelegramBot.codeSpent":
+    "Этот код отправили туда, где его могут прочитать другие, поэтому он больше не работает. Создайте новый в приложении и отправьте его мне в личном чате.",
   "TelegramBot.unlinked": "Отвязано. Этот чат больше не получает уведомления от вашего аккаунта.",
   "TelegramBot.notLinked": "Этот аккаунт Telegram не привязан ни к одному аккаунту.",
-  "TelegramBot.howToLink": "Чтобы привязать аккаунт, откройте {url}, выберите «{action}» и отправьте мне код, который там появится.",
-  "TelegramBot.hello": "Здравствуйте! Ваш аккаунт привязан. Отправьте /help, чтобы узнать, что я умею.",
-  "TelegramBot.helloName": "Здравствуйте, {name}! Ваш аккаунт привязан. Отправьте /help, чтобы узнать, что я умею.",
+  "TelegramBot.howToLink":
+    "Чтобы привязать аккаунт, откройте {url}, выберите «{action}» и отправьте мне код, который там появится.",
+  "TelegramBot.hello":
+    "Здравствуйте! Ваш аккаунт привязан. Отправьте /help, чтобы узнать, что я умею.",
+  "TelegramBot.helloName":
+    "Здравствуйте, {name}! Ваш аккаунт привязан. Отправьте /help, чтобы узнать, что я умею.",
   "UndoToast.title": "Заметка удалена",
   "UndoToast.deleted": "«{title}» удалена.",
   "UndoToast.deletedUntitled": "Заметка удалена.",
@@ -1657,7 +1927,8 @@
   "ApiTokenNewScreen.noGroup": "Вы не состоите ни в одной группе, для которой можно создать токен.",
   "ApiTokenNewScreen.backToProfile": "Назад в профиль",
   "ApiTokenNewScreen.offlineTitle": "Вы не в сети",
-  "ApiTokenNewScreen.offline": "Чтобы создать токен, нужно подключение. Попробуйте ещё раз, когда снова будете в сети.",
+  "ApiTokenNewScreen.offline":
+    "Чтобы создать токен, нужно подключение. Попробуйте ещё раз, когда снова будете в сети.",
   "ApiTokenNewScreen.name": "Название",
   "ApiTokenNewScreen.nameHint": "Чтобы различать токены, например «Скрипт резервного копирования».",
   "ApiTokenNewScreen.nameMissing": "Введите название.",
@@ -1668,17 +1939,19 @@
     "one": "{count} день",
     "few": "{count} дня",
     "many": "{count} дней",
-    "other": "{count} дня"
+    "other": "{count} дня",
   },
   "ApiTokenNewScreen.never": "Никогда",
   "ApiTokenNewScreen.password": "Ваш пароль",
-  "ApiTokenNewScreen.passwordHint": "Токен работает без пароля, поэтому при создании мы его спрашиваем.",
+  "ApiTokenNewScreen.passwordHint":
+    "Токен работает без пароля, поэтому при создании мы его спрашиваем.",
   "ApiTokenNewScreen.passwordMissing": "Введите пароль, чтобы создать токен.",
   "ApiTokenNewScreen.createFailed": "Не удалось создать токен. Попробуйте ещё раз.",
   "ApiTokenNewScreen.cancel": "Отмена",
   "ApiTokenNewScreen.creating": "Создаём…",
   "ApiTokenNewScreen.create": "Создать токен",
-  "ApiTokenNewScreen.copyNow": "Скопируйте токен сейчас и сохраните его в надёжном месте. Больше вы его не увидите.",
+  "ApiTokenNewScreen.copyNow":
+    "Скопируйте токен сейчас и сохраните его в надёжном месте. Больше вы его не увидите.",
   "ApiTokenNewScreen.copy": "Скопировать токен",
   "ApiTokenNewScreen.copied": "Токен скопирован",
   "ApiTokenNewScreen.sendAs": "Передавайте его так: <code>{header}</code>.",
@@ -1695,16 +1968,19 @@
   "ApiTokenNewView.keepEditing": "Продолжить редактирование",
   "ApiTokens.failed": "Что-то пошло не так с вашими API-токенами.",
   "ApiTokens.savedCopyTitle": "Сохранённая копия ваших API-токенов",
-  "ApiTokens.savedCopyBody": "Сервер недоступен. Этот список сохранён на устройстве: {time}. Токенов, созданных или отозванных с тех пор, в нём нет.",
+  "ApiTokens.savedCopyBody":
+    "Сервер недоступен. Этот список сохранён на устройстве: {time}. Токенов, созданных или отозванных с тех пор, в нём нет.",
   "ApiTokens.new": "Новый токен",
   "ApiTokens.howToUse": "Как пользоваться токеном",
   "ApiTokens.loading": "Загружаем ваши токены…",
   "ApiTokens.emptyTitle": "Нет API-токенов",
-  "ApiTokens.emptyText": "Токен действует от вашего имени в одной группе: только чтение или чтение и запись.",
+  "ApiTokens.emptyText":
+    "Токен действует от вашего имени в одной группе: только чтение или чтение и запись.",
   "ApiTokens.revokeNamed": "Отозвать <name>{name}</name>",
   "ApiTokens.passwordRevokes": "Если сменить или сбросить пароль, все токены будут отозваны.",
   "ApiTokens.revokeTitle": "Отозвать «<name>{name}</name>»?",
-  "ApiTokens.revokeMessage": "Всё, что использует этот токен, сразу перестанет работать. Это нельзя отменить.",
+  "ApiTokens.revokeMessage":
+    "Всё, что использует этот токен, сразу перестанет работать. Это нельзя отменить.",
   "ApiTokens.revoke": "Отозвать",
   "ApiTokens.cancel": "Отмена",
   "ApiTokens.readWrite": "Чтение и запись",
@@ -1715,32 +1991,46 @@
   "ApiTokens.neverUsed": "Ещё не использовался",
   "AccountDelete.members": "Ею ещё пользуются другие люди. Передайте её или удалите их.",
   "AccountDelete.subscription": "Её тариф ещё оплачен. Сначала отмените тариф.",
-  "AccountDelete.planEnding": "Её тариф отменён и действует до {day}. Дождитесь, пока он закончится.",
-  "AccountDelete.planEndingPeriod": "Её тариф отменён и действует до конца оплаченного периода. Дождитесь, пока он закончится.",
+  "AccountDelete.planEnding":
+    "Её тариф отменён и действует до {day}. Дождитесь, пока он закончится.",
+  "AccountDelete.planEndingPeriod":
+    "Её тариф отменён и действует до конца оплаченного периода. Дождитесь, пока он закончится.",
   "AccountDelete.title": "Удалить мой аккаунт",
   "AccountDelete.summary": {
-    "one": "Аккаунт и группы, которыми пользуетесь только вы, удаляются навсегда через {count} день после запроса. Если войдёте раньше, они сохранятся.",
-    "few": "Аккаунт и группы, которыми пользуетесь только вы, удаляются навсегда через {count} дня после запроса. Если войдёте раньше, они сохранятся.",
-    "many": "Аккаунт и группы, которыми пользуетесь только вы, удаляются навсегда через {count} дней после запроса. Если войдёте раньше, они сохранятся.",
-    "other": "Аккаунт и группы, которыми пользуетесь только вы, удаляются навсегда через {count} дня после запроса. Если войдёте раньше, они сохранятся."
+    "one":
+      "Аккаунт и группы, которыми пользуетесь только вы, удаляются навсегда через {count} день после запроса. Если войдёте раньше, они сохранятся.",
+    "few":
+      "Аккаунт и группы, которыми пользуетесь только вы, удаляются навсегда через {count} дня после запроса. Если войдёте раньше, они сохранятся.",
+    "many":
+      "Аккаунт и группы, которыми пользуетесь только вы, удаляются навсегда через {count} дней после запроса. Если войдёте раньше, они сохранятся.",
+    "other":
+      "Аккаунт и группы, которыми пользуетесь только вы, удаляются навсегда через {count} дня после запроса. Если войдёте раньше, они сохранятся.",
   },
   "AccountDelete.copyFirst": "Хотите сначала сохранить копию? <link>Скачайте свои данные</link>.",
   "AccountDelete.deleteHidden": "Удалить<hidden> мой аккаунт</hidden>",
   "AccountDelete.checking": "Проверяем ваши группы…",
   "AccountDelete.explain": {
-    "one": "Вы сразу выйдете на всех устройствах. Аккаунт и группы, которыми пользуетесь только вы, удалятся навсегда через {count} день; войдите раньше — и аккаунт восстановится. Заметки в чужих группах останутся там с подписью «Удалённый пользователь».",
-    "few": "Вы сразу выйдете на всех устройствах. Аккаунт и группы, которыми пользуетесь только вы, удалятся навсегда через {count} дня; войдите раньше — и аккаунт восстановится. Заметки в чужих группах останутся там с подписью «Удалённый пользователь».",
-    "many": "Вы сразу выйдете на всех устройствах. Аккаунт и группы, которыми пользуетесь только вы, удалятся навсегда через {count} дней; войдите раньше — и аккаунт восстановится. Заметки в чужих группах останутся там с подписью «Удалённый пользователь».",
-    "other": "Вы сразу выйдете на всех устройствах. Аккаунт и группы, которыми пользуетесь только вы, удалятся навсегда через {count} дня; войдите раньше — и аккаунт восстановится. Заметки в чужих группах останутся там с подписью «Удалённый пользователь»."
+    "one":
+      "Вы сразу выйдете на всех устройствах. Аккаунт и группы, которыми пользуетесь только вы, удалятся навсегда через {count} день; войдите раньше — и аккаунт восстановится. Заметки в чужих группах останутся там с подписью «Удалённый пользователь».",
+    "few":
+      "Вы сразу выйдете на всех устройствах. Аккаунт и группы, которыми пользуетесь только вы, удалятся навсегда через {count} дня; войдите раньше — и аккаунт восстановится. Заметки в чужих группах останутся там с подписью «Удалённый пользователь».",
+    "many":
+      "Вы сразу выйдете на всех устройствах. Аккаунт и группы, которыми пользуетесь только вы, удалятся навсегда через {count} дней; войдите раньше — и аккаунт восстановится. Заметки в чужих группах останутся там с подписью «Удалённый пользователь».",
+    "other":
+      "Вы сразу выйдете на всех устройствах. Аккаунт и группы, которыми пользуетесь только вы, удалятся навсегда через {count} дня; войдите раньше — и аккаунт восстановится. Заметки в чужих группах останутся там с подписью «Удалённый пользователь».",
   },
   "AccountDelete.deleting": "Удаляем…",
-  "AccountDelete.blocked": "У вас есть группы, которыми ещё пользуются или за которые платят другие люди. Сначала разберитесь с каждой, потом возвращайтесь.",
-  "AuthScreen.demoNote": "Это публичное демо, его очищают каждую ночь. Новый аккаунт сразу получает примеры данных, чтобы было что посмотреть.",
-  "AuthScreen.demoGuestNote": "Это публичное демо, его очищают каждую ночь. Любой новый аккаунт, гостевой или нет, сразу получает примеры данных.",
+  "AccountDelete.blocked":
+    "У вас есть группы, которыми ещё пользуются или за которые платят другие люди. Сначала разберитесь с каждой, потом возвращайтесь.",
+  "AuthScreen.demoNote":
+    "Это публичное демо, его очищают каждую ночь. Новый аккаунт сразу получает примеры данных, чтобы было что посмотреть.",
+  "AuthScreen.demoGuestNote":
+    "Это публичное демо, его очищают каждую ночь. Любой новый аккаунт, гостевой или нет, сразу получает примеры данных.",
   "AuthScreen.tryFirst": "Сначала попробуйте приложение или зарегистрируйтесь по адресу почты.",
   "AuthScreen.invitedTitle": "Вас пригласили в группу",
   "AuthScreen.invitedSignIn": "Войдите, чтобы увидеть приглашение и вступить.",
-  "AuthScreen.invitedSignUp": "Создайте аккаунт, чтобы увидеть приглашение и вступить, или войдите, если аккаунт уже есть.",
+  "AuthScreen.invitedSignUp":
+    "Создайте аккаунт, чтобы увидеть приглашение и вступить, или войдите, если аккаунт уже есть.",
   "AuthScreen.loginOrUsername": "Почта или имя пользователя",
   "AuthScreen.email": "Почта",
   "AuthScreen.signInTitle": "С возвращением",
@@ -1750,7 +2040,8 @@
   "AuthScreen.signUpDescription": "Адрес почты и пароль. Мы пришлём код, чтобы подтвердить адрес.",
   "AuthScreen.signUpFailed": "Не удалось зарегистрироваться",
   "AuthScreen.codeTitle": "Введите код",
-  "AuthScreen.codeDescription": "Откройте приложение-аутентификатор и введите шесть цифр, которые оно показывает.",
+  "AuthScreen.codeDescription":
+    "Откройте приложение-аутентификатор и введите шесть цифр, которые оно показывает.",
   "AuthScreen.codeFailed": "Неверный код",
   "AuthScreen.forgotten": "Забыто. Этот браузер больше не помнит, как вы входили.",
   "AuthScreen.lastPassword": "В прошлый раз вы вошли по паролю<email> ({email})</email>.",
@@ -1784,9 +2075,12 @@
   "ConfirmSignUpScreen.gone": "Прошло больше десяти минут, или ответ уже дан. Ничего не создано.",
   "ConfirmSignUpScreen.backToSignIn": "Вернуться ко входу",
   "ConfirmSignUpScreen.unknown": "Ни один аккаунт здесь не входит через этот аккаунт {provider}.",
-  "ConfirmSignUpScreen.unknownColon": "Ни один аккаунт здесь не входит через этот аккаунт {provider}:",
-  "ConfirmSignUpScreen.goBack": "Если у вас уже есть аккаунт, вернитесь и войдите так же, как раньше. Потом можно привязать {provider} в профиле. Пока ничего не создано.",
-  "ConfirmSignUpScreen.unconfirmed": "<strong>Этот адрес уже указан в аккаунте здесь, но так и не был подтверждён.</strong> Новый аккаунт заблокирует тот: его пароль перестанет работать, а устройства выйдут из него. Чтобы его сохранить, вернитесь, войдите по его паролю и подтвердите адрес кодом из письма.",
+  "ConfirmSignUpScreen.unknownColon":
+    "Ни один аккаунт здесь не входит через этот аккаунт {provider}:",
+  "ConfirmSignUpScreen.goBack":
+    "Если у вас уже есть аккаунт, вернитесь и войдите так же, как раньше. Потом можно привязать {provider} в профиле. Пока ничего не создано.",
+  "ConfirmSignUpScreen.unconfirmed":
+    "<strong>Этот адрес уже указан в аккаунте здесь, но так и не был подтверждён.</strong> Новый аккаунт заблокирует тот: его пароль перестанет работать, а устройства выйдут из него. Чтобы его сохранить, вернитесь, войдите по его паролю и подтвердите адрес кодом из письма.",
   "ConfirmSignUpScreen.back": "У меня уже есть аккаунт: вернуться ко входу",
   "ConfirmSignUpScreen.creating": "Создаём аккаунт…",
   "ConfirmSignUpScreen.create": "Создать новый аккаунт",
@@ -1802,26 +2096,37 @@
   "EmailScreen.close": "Закрыть",
   "EmailScreen.cancel": "Отмена",
   "EmailScreen.codeSent": {
-    "one": "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минуты.",
-    "few": "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минут.",
-    "many": "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минут.",
-    "other": "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минуты."
+    "one":
+      "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минуты.",
+    "few":
+      "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минут.",
+    "many":
+      "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минут.",
+    "other":
+      "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минуты.",
   },
   "EmailScreen.codeResent": "Новый код отправлен на <email>{email}</email>.",
   "EmailScreen.codeSentKeep": {
-    "one": "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минуты. Пока вы его не введёте, входите с <current>{current}</current>.",
-    "few": "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минут. Пока вы его не введёте, входите с <current>{current}</current>.",
-    "many": "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минут. Пока вы его не введёте, входите с <current>{current}</current>.",
-    "other": "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минуты. Пока вы его не введёте, входите с <current>{current}</current>."
+    "one":
+      "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минуты. Пока вы его не введёте, входите с <current>{current}</current>.",
+    "few":
+      "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минут. Пока вы его не введёте, входите с <current>{current}</current>.",
+    "many":
+      "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минут. Пока вы его не введёте, входите с <current>{current}</current>.",
+    "other":
+      "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минуты. Пока вы его не введёте, входите с <current>{current}</current>.",
   },
   "EmailScreen.confirm": "Подтвердить адрес",
   "EmailScreen.noMail": "Письма нет? <button>Отправить новый код</button>",
-  "EmailScreen.changeProvider": "Мы пришлём код на новый адрес. Адрес сменится, когда вы его введёте. Входить вы будете по-прежнему через {providers}.",
-  "EmailScreen.changeKeep": "Мы пришлём код на новый адрес. Пока вы его не введёте, входите с <current>{current}</current>.",
-  "EmailScreen.changeNew": "Мы пришлём код на новый адрес. Когда вы его введёте, входить можно будет с этим адресом.",
+  "EmailScreen.changeProvider":
+    "Мы пришлём код на новый адрес. Адрес сменится, когда вы его введёте. Входить вы будете по-прежнему через {providers}.",
+  "EmailScreen.changeKeep":
+    "Мы пришлём код на новый адрес. Пока вы его не введёте, входите с <current>{current}</current>.",
+  "EmailScreen.changeNew":
+    "Мы пришлём код на новый адрес. Когда вы его введёте, входить можно будет с этим адресом.",
   "EmailScreen.newAddress": "Новый адрес почты",
   "EmailScreen.currentPassword": "Текущий пароль",
   "EmailScreen.sendCode": "Отправить код",
   "EmailScreen.verified": "Подтверждён",
-  "EmailScreen.notVerified": "Не подтверждён"
-}
+  "EmailScreen.notVerified": "Не подтверждён",
+} satisfies Catalog

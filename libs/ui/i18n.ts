@@ -12,8 +12,8 @@
 
 import { createTranslator, type Translator } from "@spy4x/platform/universal/i18n"
 import { ENGLISH, useT } from "@spy4x/preact-ui/i18n"
-import app from "@i18n/app/en.json" with { type: "json" }
-import admin from "@i18n/admin/en.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
+import admin from "@i18n/admin/en.ts"
 
 let appEnglish: Translator<string> | undefined
 let adminEnglish: Translator<string> | undefined

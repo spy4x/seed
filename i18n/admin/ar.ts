@@ -1,4 +1,6 @@
-{
+import type { Catalog } from "@spy4x/platform/universal/i18n"
+
+export default {
   "AdminApiTokens.tokenRevoked": "أُلغي «{token}».",
   "AdminApiTokens.deviceRemoved": "أُزيل الجهاز «{device}».",
   "AdminApiTokens.title": "رموز API",
@@ -14,7 +16,7 @@
     "two": "رمزان ({count})",
     "few": "{count} رموز",
     "many": "{count} رمزًا",
-    "other": "{count} رمز"
+    "other": "{count} رمز",
   },
   "AdminApiTokens.loading": "جارٍ تحميل الرموز",
   "AdminApiTokens.noneLive": "لا توجد رموز فعّالة",
@@ -37,10 +39,12 @@
   "AdminApiTokens.owner": "المالك",
   "AdminApiTokens.ownerLine": "المالك: <name>{name}</name>",
   "AdminApiTokens.revokeTitle": "إلغاء رمز API هذا",
-  "AdminApiTokens.revokeText": "يتوقف <token>{token}</token> الخاص بـ<owner>{owner}</owner> عن العمل فورًا: يُرفض كل نص برمجي يستخدمه. لا يمكن إعادة تفعيله؛ ويمكن لمالكه إنشاء رمز جديد.",
+  "AdminApiTokens.revokeText":
+    "يتوقف <token>{token}</token> الخاص بـ<owner>{owner}</owner> عن العمل فورًا: يُرفض كل نص برمجي يستخدمه. لا يمكن إعادة تفعيله؛ ويمكن لمالكه إنشاء رمز جديد.",
   "AdminApiTokens.revoking": "جارٍ الإلغاء…",
   "AdminApiTokens.removeDeviceTitle": "إزالة هذا الجهاز",
-  "AdminApiTokens.removeDeviceText": "لن يتلقى الجهاز <device>{device}</device> إشعارات فورية بعد الآن. يمكن للشخص تفعيلها مجددًا من ذلك الجهاز.",
+  "AdminApiTokens.removeDeviceText":
+    "لن يتلقى الجهاز <device>{device}</device> إشعارات فورية بعد الآن. يمكن للشخص تفعيلها مجددًا من ذلك الجهاز.",
   "AdminApiTokens.remove": "إزالة",
   "AdminApiTokens.removing": "جارٍ الإزالة…",
   "AdminApiTokens.readWrite": "قراءة وكتابة",
@@ -70,7 +74,7 @@
     "two": "إدخالان",
     "few": "{count} إدخالات",
     "many": "{count} إدخالًا",
-    "other": "{count} إدخال"
+    "other": "{count} إدخال",
   },
   "AdminAudit.countMore": {
     "zero": "{count}+ إدخال",
@@ -78,7 +82,7 @@
     "two": "{count}+ إدخال",
     "few": "{count}+ إدخالات",
     "many": "{count}+ إدخالًا",
-    "other": "{count}+ إدخال"
+    "other": "{count}+ إدخال",
   },
   "AdminAudit.countMatch": {
     "zero": "لا توجد إدخالات مطابقة",
@@ -86,7 +90,7 @@
     "two": "إدخالان مطابقان",
     "few": "{count} إدخالات مطابقة",
     "many": "{count} إدخالًا مطابقًا",
-    "other": "{count} إدخال مطابق"
+    "other": "{count} إدخال مطابق",
   },
   "AdminAudit.countMoreMatch": {
     "zero": "{count}+ إدخال مطابق",
@@ -94,13 +98,14 @@
     "two": "{count}+ إدخال مطابق",
     "few": "{count}+ إدخالات مطابقة",
     "many": "{count}+ إدخالًا مطابقًا",
-    "other": "{count}+ إدخال مطابق"
+    "other": "{count}+ إدخال مطابق",
   },
   "AdminAudit.view": "العرض",
   "AdminAudit.nothingMatches": "لا يوجد ما يطابق",
   "AdminAudit.nothingMatchesHint": "جرّب نطاق تواريخ أوسع أو شخصًا آخر، أو امسح عوامل التصفية.",
   "AdminAudit.nothingYet": "لم يُسجَّل شيء بعد",
-  "AdminAudit.nothingYetHint": "تظهر هنا عمليات تسجيل الدخول وتغييرات الحسابات والمجموعات فور حدوثها.",
+  "AdminAudit.nothingYetHint":
+    "تظهر هنا عمليات تسجيل الدخول وتغييرات الحسابات والمجموعات فور حدوثها.",
   "AdminAudit.loadingMore": "جارٍ التحميل…",
   "AdminAudit.more": "عرض الإدخالات الأقدم",
   "AdminAudit.filter": "تصفية سجل التدقيق",
@@ -257,7 +262,8 @@
   "AdminBilling.off": "الفوترة متوقفة",
   "AdminBilling.readSetup": "اقرأ إعداد الفوترة",
   "AdminBilling.noneYet": "لا توجد مجموعات مدفوعة بعد",
-  "AdminBilling.noneHint": "تظهر المجموعة هنا بمجرد أن يشترك مالكها في خطة مدفوعة، بما فيها الفترة التجريبية.",
+  "AdminBilling.noneHint":
+    "تظهر المجموعة هنا بمجرد أن يشترك مالكها في خطة مدفوعة، بما فيها الفترة التجريبية.",
   "AdminBilling.openPricing": "افتح صفحة الأسعار",
   "AdminBilling.search": "اسم المجموعة أو المالك أو معرّف المجموعة",
   "AdminBilling.searching": "جارٍ البحث…",
@@ -272,7 +278,7 @@
     "two": "مجموعتان ({count})",
     "few": "{count} مجموعات",
     "many": "{count} مجموعة",
-    "other": "{count} مجموعة"
+    "other": "{count} مجموعة",
   },
   "AdminBilling.loading": "جارٍ تحميل العملاء",
   "AdminBilling.customers": "العملاء",
@@ -289,7 +295,8 @@
   "AdminBilling.inTrial": "في الفترة التجريبية",
   "AdminBilling.trialsEnding": "تنتهي خلال الأيام السبعة القادمة: {count}",
   "AdminBilling.endingHint": "ملغاة، ومدفوعة حتى نهاية فترتها",
-  "AdminBilling.source": "محسوبة من الاشتراكات التي يخزّنها هذا التطبيق، لذا يظهر أي تغيير في Stripe هنا بمجرد وصول الـwebhook الخاص به.",
+  "AdminBilling.source":
+    "محسوبة من الاشتراكات التي يخزّنها هذا التطبيق، لذا يظهر أي تغيير في Stripe هنا بمجرد وصول الـwebhook الخاص به.",
   "AdminBilling.lastEvent": "آخر حدث من Stripe <when></when>.",
   "AdminBilling.noEvent": "لم يصل أي حدث من Stripe بعد.",
   "AdminBilling.none": "لا يوجد",
@@ -301,7 +308,8 @@
   "AdminBilling.inTrash": "في المهملات",
   "AdminBilling.newTab": "{label} (يُفتح في علامة تبويب جديدة)",
   "AdminBillingCustomer.notFound": "لا يوجد عميل بمعرّف المجموعة هذا.",
-  "AdminBillingCustomer.noAnswer": "تعذّر الوصول إلى الخادم، لذا لا نعرف إن تمّ ذلك. تحقّق من العميل في Stripe أو حاول مرة أخرى: إعادة المحاولة من هذه النافذة تُنفَّذ مرة واحدة.",
+  "AdminBillingCustomer.noAnswer":
+    "تعذّر الوصول إلى الخادم، لذا لا نعرف إن تمّ ذلك. تحقّق من العميل في Stripe أو حاول مرة أخرى: إعادة المحاولة من هذه النافذة تُنفَّذ مرة واحدة.",
   "AdminBillingCustomer.doneRefundAmount": "أُعيد {amount} إلى {group}.",
   "AdminBillingCustomer.doneRefund": "استُردّت آخر دفعة لـ {group}.",
   "AdminBillingCustomer.doneTimeUntil": "لن يُحاسَب {group} على شيء حتى {date}.",
@@ -339,14 +347,15 @@
   "AdminBillingCustomer.group": "المجموعة",
   "AdminBillingCustomer.history": "سجل الفوترة",
   "AdminBillingCustomer.nothingRecorded": "لم يُسجَّل شيء.",
-  "AdminBillingCustomer.historyNote": "إجراءات المشغّلين فقط. الفواتير والمدفوعات وتغييرات الخطة موجودة في Stripe.",
+  "AdminBillingCustomer.historyNote":
+    "إجراءات المشغّلين فقط. الفواتير والمدفوعات وتغييرات الخطة موجودة في Stripe.",
   "AdminBillingCustomer.planLine": {
     "zero": "{plan}، {count} عضو",
     "one": "{plan}، عضو واحد ({count})",
     "two": "{plan}، عضوان ({count})",
     "few": "{plan}، {count} أعضاء",
     "many": "{plan}، {count} عضوًا",
-    "other": "{plan}، {count} عضو"
+    "other": "{plan}، {count} عضو",
   },
   "AdminBillingCustomer.unknownPrice": "سعر غير معروف: يفوتر Stripe سعرًا لا يطابق أي خطة هنا",
   "AdminBillingCustomer.duringTrial": "{amount} خلال الفترة التجريبية، {detail}",
@@ -366,22 +375,28 @@
   "AdminBillingCustomer.by": "بواسطة {operator}.",
   "AdminBillingCustomer.byRemoved": "بواسطة مشغّل محذوف.",
   "AdminBillingCustomer.note": "ملاحظة: {note}",
-  "AdminBillingCustomer.waiting": "أُرسل إلى Stripe، بانتظار التأكيد. تتحدّث الصفحة بمجرد أن يؤكد Stripe، عادةً خلال دقيقة.",
+  "AdminBillingCustomer.waiting":
+    "أُرسل إلى Stripe، بانتظار التأكيد. تتحدّث الصفحة بمجرد أن يؤكد Stripe، عادةً خلال دقيقة.",
   "AdminBillingCustomer.timedOut": "لم يؤكد Stripe بعد. تحقّق من العميل في Stripe.",
   "AdminBillingCustomer.renewHint": "يمكن لمالكها تجديده من «إدارة الفوترة» قبل انتهاء الفترة.",
-  "AdminBillingCustomer.alreadyFree": "<group>{group}</group> على الخطة المجانية بالفعل ولن تُخصم منها رسوم مجددًا.",
-  "AdminBillingCustomer.keepsUntilThen": "تحتفظ <group>{group}</group> بخطة {plan} حتى ذلك الحين ولن تُخصم منها رسوم مجددًا.",
-  "AdminBillingCustomer.keepsUntil": "تحتفظ <group>{group}</group> بخطة {plan} حتى {date} ولن تُخصم منها رسوم مجددًا.",
+  "AdminBillingCustomer.alreadyFree":
+    "<group>{group}</group> على الخطة المجانية بالفعل ولن تُخصم منها رسوم مجددًا.",
+  "AdminBillingCustomer.keepsUntilThen":
+    "تحتفظ <group>{group}</group> بخطة {plan} حتى ذلك الحين ولن تُخصم منها رسوم مجددًا.",
+  "AdminBillingCustomer.keepsUntil":
+    "تحتفظ <group>{group}</group> بخطة {plan} حتى {date} ولن تُخصم منها رسوم مجددًا.",
   "AdminBillingCustomer.itsPlanPrice": "سعر خطتها",
   "AdminBillingCustomer.refundTitle": "استرداد {amount} إلى {group}؟",
   "AdminBillingCustomer.refundSubmit": "استرداد {amount}",
   "AdminBillingCustomer.refunding": "جارٍ الاسترداد…",
-  "AdminBillingCustomer.refundText": "يعيد Stripe مبلغ {amount} المدفوع في {date} إلى البطاقة التي جاء منها. يستمر الاشتراك؛ لإيقافه، ألغِه أيضًا.",
+  "AdminBillingCustomer.refundText":
+    "يعيد Stripe مبلغ {amount} المدفوع في {date} إلى البطاقة التي جاء منها. يستمر الاشتراك؛ لإيقافه، ألغِه أيضًا.",
   "AdminBillingCustomer.timeTitle": "منح {group} وقتًا دون مقابل",
   "AdminBillingCustomer.timeSubmit": "منح {length} دون مقابل",
   "AdminBillingCustomer.saving": "جارٍ الحفظ…",
   "AdminBillingCustomer.howLong": "لأي مدة",
-  "AdminBillingCustomer.timeText": "تحتفظ <group>{group}</group> بخطة {plan} ولن يُخصم شيء حتى {date}. بعد ذلك تعود الرسوم المعتادة {charge} شهريًا.",
+  "AdminBillingCustomer.timeText":
+    "تحتفظ <group>{group}</group> بخطة {plan} ولن يُخصم شيء حتى {date}. بعد ذلك تعود الرسوم المعتادة {charge} شهريًا.",
   "AdminBillingCustomer.length7d": "7 أيام",
   "AdminBillingCustomer.length14d": "14 يومًا",
   "AdminBillingCustomer.length30d": "30 يومًا",
@@ -396,7 +411,8 @@
   "AdminBillingCustomer.atPeriodEnd": "في نهاية الفترة",
   "AdminBillingCustomer.alreadySet": "مضبوط بالفعل للانتهاء حينها.",
   "AdminBillingCustomer.now": "الآن",
-  "AdminBillingCustomer.nowHelp": "تنتقل {group} إلى الخطة المجانية فورًا. لا تُسترد الفترة الحالية؛ استردّها منفصلةً إن لزم. لا يُبلَّغ المالك.",
+  "AdminBillingCustomer.nowHelp":
+    "تنتقل {group} إلى الخطة المجانية فورًا. لا تُسترد الفترة الحالية؛ استردّها منفصلةً إن لزم. لا يُبلَّغ المالك.",
   "AdminBillingCustomer.undoTitle": "الإبقاء على اشتراك {group}؟",
   "AdminBillingCustomer.undoSubmit": "الإبقاء على الاشتراك",
   "AdminBillingCustomer.renewsOn": "تتجدد {plan} في {date} وتُخصم {charge} كالمعتاد.",
@@ -433,7 +449,7 @@
     "two": "تدوينتان",
     "few": "{count} تدوينات",
     "many": "{count} تدوينة",
-    "other": "{count} تدوينة"
+    "other": "{count} تدوينة",
   },
   "AdminBlog.loading": "جارٍ تحميل التدوينات",
   "AdminBlog.posts": "التدوينات",
@@ -454,7 +470,8 @@
   "AdminBlogDialogs.unscheduleText": "تعود إلى المسودات. ويُلغى أيضًا إرسال النشرة الذي اخترته.",
   "AdminBlogDialogs.unpublishTitle": "إلغاء نشر «{title}»؟",
   "AdminBlogDialogs.unpublish": "إلغاء النشر",
-  "AdminBlogDialogs.unpublishText": "تُزال من الموقع ومن موجز RSS، ويتوقف عنوانها عن العمل. تبقى الرسالة المرسلة مرسلة.",
+  "AdminBlogDialogs.unpublishText":
+    "تُزال من الموقع ومن موجز RSS، ويتوقف عنوانها عن العمل. تبقى الرسالة المرسلة مرسلة.",
   "AdminBlogDialogs.deleteTitle": "حذف «{title}»؟",
   "AdminBlogDialogs.deletePost": "حذف التدوينة",
   "AdminBlogDialogs.deleteText": "تُحذف التدوينة ونصها نهائيًا. لا يمكن التراجع عن ذلك.",
@@ -473,7 +490,7 @@
     "two": "نشر وإرسال إلى {count}",
     "few": "نشر وإرسال إلى {count}",
     "many": "نشر وإرسال إلى {count}",
-    "other": "نشر وإرسال إلى {count}"
+    "other": "نشر وإرسال إلى {count}",
   },
   "AdminBlogDialogs.publish": "نشر",
   "AdminBlogDialogs.scheduleTitle": "جدولة «{title}»",
@@ -491,7 +508,7 @@
     "two": "إرسال هذه التدوينة أيضًا إلى مشتركَين مؤكَّدَين",
     "few": "إرسال هذه التدوينة أيضًا إلى {count} مشتركين مؤكَّدين",
     "many": "إرسال هذه التدوينة أيضًا إلى {count} مشتركًا مؤكَّدًا",
-    "other": "إرسال هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد"
+    "other": "إرسال هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد",
   },
   "AdminBlogDialogs.alsoEmailList": {
     "zero": "إرسال هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد في <list>{list}</list>",
@@ -499,7 +516,7 @@
     "two": "إرسال هذه التدوينة أيضًا إلى مشتركَين مؤكَّدَين في <list>{list}</list>",
     "few": "إرسال هذه التدوينة أيضًا إلى {count} مشتركين مؤكَّدين في <list>{list}</list>",
     "many": "إرسال هذه التدوينة أيضًا إلى {count} مشتركًا مؤكَّدًا في <list>{list}</list>",
-    "other": "إرسال هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد في <list>{list}</list>"
+    "other": "إرسال هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد في <list>{list}</list>",
   },
   "AdminBlogDialogs.sentOnce": "تُرسل مرة واحدة عند نشر التدوينة. لا يمكن التراجع عن الإرسال.",
   "AdminBlogDialogs.postLanguageOnly": "تصل فقط إلى المشتركين الذين اشتركوا بلغة التدوينة.",
@@ -522,7 +539,7 @@
     "two": "اجعله أقل من حرفين.",
     "few": "اجعله أقل من {count} أحرف.",
     "many": "اجعله أقل من {count} حرفًا.",
-    "other": "اجعله أقل من {count} حرف."
+    "other": "اجعله أقل من {count} حرف.",
   },
   "AdminBlogEditor.httpsCover": "ابدأ الرابط بـ https://.",
   "AdminBlogEditor.describeCover": "صِف صورة الغلاف.",
@@ -567,7 +584,7 @@
     "two": "كلمتان · {minutes} د للقراءة",
     "few": "{count} كلمات · {minutes} د للقراءة",
     "many": "{count} كلمة · {minutes} د للقراءة",
-    "other": "{count} كلمة · {minutes} د للقراءة"
+    "other": "{count} كلمة · {minutes} د للقراءة",
   },
   "AdminBlogEditor.previewError": "تعذّر إنشاء المعاينة. حاول مرة أخرى بعد قليل.",
   "AdminBlogEditor.rendering": "جارٍ إنشاء المعاينة",
@@ -589,10 +606,12 @@
   "AdminBlogEditor.topic": "الموضوع",
   "AdminBlogEditor.topicHint": "يجمّع التدوينات في صفحة المدونة. اختر موضوعًا أو اكتب موضوعًا جديدًا.",
   "AdminBlogEditor.coverUrl": "رابط صورة الغلاف",
-  "AdminBlogEditor.coverUrlHint": "رابط https:// كامل لصورة عريضة بمقاس 1200×630. اتركه فارغًا لعدم استخدام غلاف.",
+  "AdminBlogEditor.coverUrlHint":
+    "رابط https:// كامل لصورة عريضة بمقاس 1200×630. اتركه فارغًا لعدم استخدام غلاف.",
   "AdminBlogEditor.coverAlt": "وصف الغلاف",
   "AdminBlogEditor.coverAltHint": "ما تعرضه الصورة، لمن لا يستطيع رؤيتها.",
-  "AdminBlogEditor.coverPrivacy": "الصورة المستضافة على موقع آخر تكشف لذلك الموقع عناوين IP لقرّائك.",
+  "AdminBlogEditor.coverPrivacy":
+    "الصورة المستضافة على موقع آخر تكشف لذلك الموقع عناوين IP لقرّائك.",
   "AdminBlogEditor.publishing": "النشر",
   "AdminBlogEditor.goesLive": "تُنشر في {date}.",
   "AdminBlogEditor.publishedOn": "نُشرت في {date}.",
@@ -603,7 +622,7 @@
     "two": "أُرسلت إلى {count} في {date}",
     "few": "أُرسلت إلى {count} في {date}",
     "many": "أُرسلت إلى {count} في {date}",
-    "other": "أُرسلت إلى {count} في {date}"
+    "other": "أُرسلت إلى {count} في {date}",
   },
   "AdminBlogEditor.willEmail": "تُرسل إلى قائمة <list>{list}</list> عند نشرها.",
   "AdminBlogEditor.significant": "تحديث مهم: يُظهر الحفظ التالي تاريخ اليوم تاريخًا لتحديث التدوينة",
@@ -616,7 +635,7 @@
     "two": "أُضيفت الصورتان.",
     "few": "أُضيفت الصور.",
     "many": "أُضيفت الصور.",
-    "other": "أُضيفت الصور."
+    "other": "أُضيفت الصور.",
   },
   "AdminCatalog.doneCover": "تغيّر الغلاف.",
   "AdminCatalog.donePhotoSaved": "حُفظت الصورة.",
@@ -638,7 +657,8 @@
   "AdminCatalog.retry": "إعادة المحاولة",
   "AdminCatalog.loading": "جارٍ تحميل الكتالوج",
   "AdminCatalog.startTitle": "ابدأ بفئة",
-  "AdminCatalog.startText": "كل منتج على الموقع ضمن فئة، مثل «قمصان» أو «هوديز». أضف فئة، ثم أضف إليها منتجات.",
+  "AdminCatalog.startText":
+    "كل منتج على الموقع ضمن فئة، مثل «قمصان» أو «هوديز». أضف فئة، ثم أضف إليها منتجات.",
   "AdminCatalog.addCategory": "إضافة فئة",
   "AdminCatalog.emptyTitle": "لا منتجات بعد",
   "AdminCatalog.emptyText": "أضف منتجًا بصوره وألوانه ومقاساته. يبقى مسودة حتى تنشره.",
@@ -648,7 +668,7 @@
     "two": "منتجان",
     "few": "{count} منتجات",
     "many": "{count} منتجًا",
-    "other": "{count} منتج"
+    "other": "{count} منتج",
   },
   "AdminCatalog.search": "الاسم أو العنوان أو الفئة",
   "AdminCatalog.status": "الحالة",
@@ -668,7 +688,7 @@
     "two": "صورتان",
     "few": "{count} صور",
     "many": "{count} صورة",
-    "other": "{count} صورة"
+    "other": "{count} صورة",
   },
   "AdminCatalog.donePublished": "نُشر. سيعرضه الموقع خلال دقيقة.",
   "AdminCatalog.doneHidden": "أُخفي. سيتوقف الموقع عن عرضه خلال دقيقة.",
@@ -685,14 +705,15 @@
   "AdminCatalogCategories.subtitle": "يعرض الموقع منتجاته في هذه المجموعات بهذا الترتيب.",
   "AdminCatalogCategories.loading": "جارٍ تحميل الفئات",
   "AdminCatalogCategories.emptyTitle": "لا فئات بعد",
-  "AdminCatalogCategories.emptyText": "أضف المجموعات التي تضم منتجاتك، مثل «قمصان» أو «هوديز» أو «إكسسوارات».",
+  "AdminCatalogCategories.emptyText":
+    "أضف المجموعات التي تضم منتجاتك، مثل «قمصان» أو «هوديز» أو «إكسسوارات».",
   "AdminCatalogCategories.items": {
     "zero": "لا منتجات",
     "one": "منتج واحد",
     "two": "منتجان",
     "few": "{count} منتجات",
     "many": "{count} منتجًا",
-    "other": "{count} منتج"
+    "other": "{count} منتج",
   },
   "AdminCatalogCategories.actionsFor": "إجراءات «{name}»",
   "AdminCatalogCategories.edit": "تعديل الفئة",
@@ -757,7 +778,8 @@
   "AdminCatalogItem.deleteConfirm": "حذف المنتج",
   "AdminCatalogItem.shareLinks": "روابط المشاركة",
   "AdminCatalogItem.editSources": "تعديل المصادر",
-  "AdminCatalogItem.sourcesEmpty": "أضف الأماكن التي تشارك فيها المنتجات، مثل مجموعة على Facebook أو Zalo. يحصل كل مكان على رابط خاص به إلى هذا المنتج، فترى أيها يجلب الزوار.",
+  "AdminCatalogItem.sourcesEmpty":
+    "أضف الأماكن التي تشارك فيها المنتجات، مثل مجموعة على Facebook أو Zalo. يحصل كل مكان على رابط خاص به إلى هذا المنتج، فترى أيها يجلب الزوار.",
   "AdminCatalogItem.sourcesText": "شارك في كل مكان رابطه الخاص، فترى أيها يجلب الزوار.",
   "AdminCatalogItem.linksOpenLater": "تفتح الروابط المنتج بمجرد ظهوره على الموقع.",
   "AdminCatalogItem.addSource": "إضافة مصدر",
@@ -790,7 +812,8 @@
   "AdminCatalogItem.remove": "إزالة <name>{name}</name>",
   "AdminCatalogItem.sizes": "المقاسات",
   "AdminCatalogItem.addSize": "إضافة مقاس",
-  "AdminCatalogItem.sizesHint": "من الأصغر إلى الأكبر. حدّد لكل مقاس الأطوال والأوزان التي تناسبه، فيقترح الموقع مقاسًا وفق طول المشتري ووزنه.",
+  "AdminCatalogItem.sizesHint":
+    "من الأصغر إلى الأكبر. حدّد لكل مقاس الأطوال والأوزان التي تناسبه، فيقترح الموقع مقاسًا وفق طول المشتري ووزنه.",
   "AdminCatalogItem.sizeNumber": "المقاس {number}",
   "AdminCatalogItem.size": "المقاس",
   "AdminCatalogItem.heightFrom": "الطول من، سم",
@@ -802,7 +825,8 @@
   "AdminCatalogItem.unnamedSize": "مقاس بلا اسم",
   "AdminCatalogItem.inStockColumn": "متوفر",
   "AdminCatalogItem.inStock": "المتوفر",
-  "AdminCatalogItem.stockHint": "ألغِ تحديد ما نفد. يعرض الموقع ذلك، ويعرض المنتج الذي لم يبقَ منه شيء على أنه نفد.",
+  "AdminCatalogItem.stockHint":
+    "ألغِ تحديد ما نفد. يعرض الموقع ذلك، ويعرض المنتج الذي لم يبقَ منه شيء على أنه نفد.",
   "AdminCatalogItem.inStockLabel": "{colour}، {size}: متوفر",
   "AdminCatalogItem.preparing": "جارٍ التجهيز…",
   "AdminCatalogItem.refused": "تعذّرت قراءة هذا الملف كصورة. أزِله وارفع ملفًا آخر.",
@@ -810,7 +834,8 @@
   "AdminCatalogItem.photoNumber": "الصورة {number}",
   "AdminCatalogItem.addPhotos": "إضافة صور",
   "AdminCatalogItem.uploading": "جارٍ رفع {count}…",
-  "AdminCatalogItem.photosRule": "JPEG أو PNG أو WebP أو HEIC، حتى {size} ميغابايت لكل صورة، وبحد أقصى {count}. اسحب لتغيير الترتيب: الأولى هي الغلاف.",
+  "AdminCatalogItem.photosRule":
+    "JPEG أو PNG أو WebP أو HEIC، حتى {size} ميغابايت لكل صورة، وبحد أقصى {count}. اسحب لتغيير الترتيب: الأولى هي الغلاف.",
   "AdminCatalogItem.cover": "الغلاف",
   "AdminCatalogItem.openPhoto": "فتح بالحجم الكامل: {photo}",
   "AdminCatalogItem.noDescription": "لا وصف بعد",
@@ -836,7 +861,7 @@
     "two": "{file} لم يُضف: يقبل المنتج صورتين على الأكثر.",
     "few": "{file} لم يُضف: يقبل المنتج {count} صور على الأكثر.",
     "many": "{file} لم يُضف: يقبل المنتج {count} صورة على الأكثر.",
-    "other": "{file} لم يُضف: يقبل المنتج {count} صورة على الأكثر."
+    "other": "{file} لم يُضف: يقبل المنتج {count} صورة على الأكثر.",
   },
   "AdminCatalogSource.back": "العودة إلى المصادر",
   "AdminCatalogSource.title": "المصدر",
@@ -847,33 +872,36 @@
   "AdminCatalogSource.name": "الاسم",
   "AdminCatalogSource.nameHint": "أين تشارك، مثل «مجموعة Zalo أ». لا يراه غيرك.",
   "AdminCatalogSource.slug": "وسم المصدر",
-  "AdminCatalogSource.slugHint": "يعرض Umami الزيارات تحته باسم utm_source: أحرف لاتينية صغيرة وأرقام وشرطات. يتبع الاسم حتى تغيّره.",
+  "AdminCatalogSource.slugHint":
+    "يعرض Umami الزيارات تحته باسم utm_source: أحرف لاتينية صغيرة وأرقام وشرطات. يتبع الاسم حتى تغيّره.",
   "AdminCatalogSource.linksNote": {
     "zero": "لا روابط له.",
     "one": "يحتفظ رابطه بعنوانه؛ ويسري الوسم الجديد من الزيارة التالية.",
     "two": "يحتفظ رابطاه بعنوانيهما؛ ويسري الوسم الجديد من الزيارة التالية.",
     "few": "تحتفظ روابطه الـ{count} بعناوينها؛ ويسري الوسم الجديد من الزيارة التالية.",
     "many": "تحتفظ روابطه الـ{count} بعناوينها؛ ويسري الوسم الجديد من الزيارة التالية.",
-    "other": "تحتفظ روابطه الـ{count} بعناوينها؛ ويسري الوسم الجديد من الزيارة التالية."
+    "other": "تحتفظ روابطه الـ{count} بعناوينها؛ ويسري الوسم الجديد من الزيارة التالية.",
   },
   "AdminCatalogSource.cancel": "إلغاء",
   "AdminCatalogSource.saving": "جارٍ الحفظ…",
   "AdminCatalogSource.save": "حفظ المصدر",
-  "AdminCatalogSources.trackingOff": "تحتاج الروابط إلى عنوان الموقع. اضبط MPA_DOMAIN في ملف env على الخادم ثم انشر.",
+  "AdminCatalogSources.trackingOff":
+    "تحتاج الروابط إلى عنوان الموقع. اضبط MPA_DOMAIN في ملف env على الخادم ثم انشر.",
   "AdminCatalogSources.back": "العودة إلى الكتالوج",
   "AdminCatalogSources.title": "المصادر",
   "AdminCatalogSources.subtitle": "لكل مكان تشارك فيه المنتجات رابطه الخاص، فترى أيّها يجلب الزوار.",
   "AdminCatalogSources.add": "إضافة مصدر",
   "AdminCatalogSources.loading": "جارٍ تحميل المصادر",
   "AdminCatalogSources.emptyTitle": "لا مصادر بعد",
-  "AdminCatalogSources.emptyText": "أضف الأماكن التي تشارك فيها المنتجات، مثل مجموعة على Facebook أو مجموعة على Zalo أو Instagram.",
+  "AdminCatalogSources.emptyText":
+    "أضف الأماكن التي تشارك فيها المنتجات، مثل مجموعة على Facebook أو مجموعة على Zalo أو Instagram.",
   "AdminCatalogSources.links": {
     "zero": "لا روابط",
     "one": "رابط واحد",
     "two": "رابطان",
     "few": "{count} روابط",
     "many": "{count} رابطًا",
-    "other": "{count} رابط"
+    "other": "{count} رابط",
   },
   "AdminCatalogSources.actionsFor": "إجراءات «{name}»",
   "AdminCatalogSources.edit": "تعديل المصدر",
@@ -886,9 +914,12 @@
     "zero": "لا روابط له.",
     "one": "سيتوقف رابطه عن العمل: من يفتحه يرى «الصفحة غير موجودة». لا يمكن التراجع عن ذلك.",
     "two": "سيتوقف رابطاه عن العمل: من يفتح أحدهما يرى «الصفحة غير موجودة». لا يمكن التراجع عن ذلك.",
-    "few": "ستتوقف روابطه الـ{count} عن العمل: من يفتح أحدها يرى «الصفحة غير موجودة». لا يمكن التراجع عن ذلك.",
-    "many": "ستتوقف روابطه الـ{count} عن العمل: من يفتح أحدها يرى «الصفحة غير موجودة». لا يمكن التراجع عن ذلك.",
-    "other": "ستتوقف روابطه الـ{count} عن العمل: من يفتح أحدها يرى «الصفحة غير موجودة». لا يمكن التراجع عن ذلك."
+    "few":
+      "ستتوقف روابطه الـ{count} عن العمل: من يفتح أحدها يرى «الصفحة غير موجودة». لا يمكن التراجع عن ذلك.",
+    "many":
+      "ستتوقف روابطه الـ{count} عن العمل: من يفتح أحدها يرى «الصفحة غير موجودة». لا يمكن التراجع عن ذلك.",
+    "other":
+      "ستتوقف روابطه الـ{count} عن العمل: من يفتح أحدها يرى «الصفحة غير موجودة». لا يمكن التراجع عن ذلك.",
   },
   "AdminCatalogSources.delete": "حذف المصدر",
   "AdminCatalogSources.cancel": "إلغاء",
@@ -908,7 +939,8 @@
   "AdminContactLinks.retry": "حاول مرة أخرى",
   "AdminContactLinks.loading": "جارٍ تحميل روابط التواصل",
   "AdminContactLinks.none": "لا توجد روابط تواصل بعد",
-  "AdminContactLinks.noneHint": "أضف Telegram أو Zalo أو رقم هاتف أو بريدًا إلكترونيًا. يعرضها تذييل الموقع.",
+  "AdminContactLinks.noneHint":
+    "أضف Telegram أو Zalo أو رقم هاتف أو بريدًا إلكترونيًا. يعرضها تذييل الموقع.",
   "AdminContactLinks.actionsFor": "إجراءات لـ {name}",
   "AdminContactLinks.edit": "تعديل الرابط",
   "AdminContactLinks.moveUp": "نقل لأعلى",
@@ -937,7 +969,7 @@
     "two": "المنتج في لمحة، خلال آخر {count} يومين.",
     "few": "المنتج في لمحة، خلال آخر {count} أيام.",
     "many": "المنتج في لمحة، خلال آخر {count} يومًا.",
-    "other": "المنتج في لمحة، خلال آخر {count} يوم."
+    "other": "المنتج في لمحة، خلال آخر {count} يوم.",
   },
   "AdminDashboard.retry": "إعادة المحاولة",
   "AdminDashboard.loading": "جارٍ تحميل الأرقام",
@@ -949,7 +981,7 @@
     "two": "{count} محظوران",
     "few": "{count} محظورين",
     "many": "{count} محظورًا",
-    "other": "{count} محظور"
+    "other": "{count} محظور",
   },
   "AdminDashboard.newThisWeek": "جدد هذا الأسبوع",
   "AdminDashboard.activeToday": "نشطون اليوم",
@@ -964,7 +996,7 @@
     "two": "اليومين الـ{count} السابقين",
     "few": "الأيام الـ{count} السابقة",
     "many": "الأيام الـ{count} السابقة",
-    "other": "الأيام الـ{count} السابقة"
+    "other": "الأيام الـ{count} السابقة",
   },
   "AdminDashboard.yesterday": "الأمس",
   "AdminDashboard.signUpsTitle": "التسجيلات يوميًا",
@@ -975,7 +1007,7 @@
     "two": "{total} في {count} يومين",
     "few": "{total} في {count} أيام",
     "many": "{total} في {count} يومًا",
-    "other": "{total} في {count} يوم"
+    "other": "{total} في {count} يوم",
   },
   "AdminDashboard.activeTitle": "الأشخاص النشطون يوميًا",
   "AdminDashboard.activeSeries": "الأشخاص النشطون",
@@ -986,7 +1018,7 @@
     "two": "{title}، آخر {count} يومين",
     "few": "{title}، آخر {count} أيام",
     "many": "{title}، آخر {count} يومًا",
-    "other": "{title}، آخر {count} يوم"
+    "other": "{title}، آخر {count} يوم",
   },
   "AdminDashboard.nothingYet": "لا شيء بعد",
   "AdminDashboard.guestsTitle": {
@@ -995,7 +1027,7 @@
     "two": "حسابات الضيوف، آخر {count} يومين",
     "few": "حسابات الضيوف، آخر {count} أيام",
     "many": "حسابات الضيوف، آخر {count} يومًا",
-    "other": "حسابات الضيوف، آخر {count} يوم"
+    "other": "حسابات الضيوف، آخر {count} يوم",
   },
   "AdminDashboard.started": "بدأت",
   "AdminDashboard.kept": "احتُفظ بها",
@@ -1010,7 +1042,7 @@
     "two": "آخر {count} يومين",
     "few": "آخر {count} أيام",
     "many": "آخر {count} يومًا",
-    "other": "آخر {count} يوم"
+    "other": "آخر {count} يوم",
   },
   "AdminStats.subtitleUpdated": {
     "zero": "آخر {count} يوم · حُدِّثت {ago}",
@@ -1018,7 +1050,7 @@
     "two": "آخر {count} يومين · حُدِّثت {ago}",
     "few": "آخر {count} أيام · حُدِّثت {ago}",
     "many": "آخر {count} يومًا · حُدِّثت {ago}",
-    "other": "آخر {count} يوم · حُدِّثت {ago}"
+    "other": "آخر {count} يوم · حُدِّثت {ago}",
   },
   "AdminStats.period": "الفترة",
   "AdminStats.periodDays": {
@@ -1027,7 +1059,7 @@
     "two": "{count} يومين",
     "few": "{count} أيام",
     "many": "{count} يومًا",
-    "other": "{count} يوم"
+    "other": "{count} يوم",
   },
   "AdminStats.refresh": "تحديث الأرقام",
   "AdminStats.openUmami": "الفتح في Umami",
@@ -1035,20 +1067,30 @@
   "AdminStats.loadError": "تعذّر تحميل الإحصاءات. تحقّق من اتصالك وحاول مرة أخرى.",
   "AdminStats.tryAgain": "إعادة المحاولة",
   "AdminStats.problemTitle": "لا يمكن عرض الإحصاءات",
-  "AdminStats.tokenRefused": "لم يقبل Umami الرمز الموجود في UMAMI_API_TOKEN. أنشئ رمزًا جديدًا في Umami، وضعه في ملف env للخادم، ثم انشر.",
-  "AdminStats.unknownWebsite": "لا يوجد في Umami موقع بالمعرّف الموجود في MPA_UMAMI_WEBSITE_ID. انسخ المعرّف من إعدادات الموقع في Umami.",
-  "AdminStats.unreachable": "لا يستجيب Umami، لذا لا يمكن عرض الأرقام. حاول مرة أخرى بعد بضع دقائق. وإن تكرّر ذلك، فتحقّق من أن Umami يعمل.",
+  "AdminStats.tokenRefused":
+    "لم يقبل Umami الرمز الموجود في UMAMI_API_TOKEN. أنشئ رمزًا جديدًا في Umami، وضعه في ملف env للخادم، ثم انشر.",
+  "AdminStats.unknownWebsite":
+    "لا يوجد في Umami موقع بالمعرّف الموجود في MPA_UMAMI_WEBSITE_ID. انسخ المعرّف من إعدادات الموقع في Umami.",
+  "AdminStats.unreachable":
+    "لا يستجيب Umami، لذا لا يمكن عرض الأرقام. حاول مرة أخرى بعد بضع دقائق. وإن تكرّر ذلك، فتحقّق من أن Umami يعمل.",
   "AdminStats.stale": "تُعرض أرقام الساعة {time}. لا يستجيب Umami الآن.",
   "AdminStats.loading": "جارٍ تحميل الإحصاءات",
   "AdminStats.offTitle": "الإحصاءات متوقفة",
-  "AdminStats.offText": "تأتي الإحصاءات من Umami الخاص بك. لتشغيلها، اضبط UMAMI_API_URL وUMAMI_API_TOKEN وMPA_UMAMI_WEBSITE_ID في ملف env للخادم، ثم انشر.",
+  "AdminStats.offText":
+    "تأتي الإحصاءات من Umami الخاص بك. لتشغيلها، اضبط UMAMI_API_URL وUMAMI_API_TOKEN وMPA_UMAMI_WEBSITE_ID في ملف env للخادم، ثم انشر.",
   "AdminStats.offSome": {
-    "zero": "تحتاج الإحصاءات إلى الإعدادات الثلاثة كلها. الناقص: {missing}. أضِفها إلى ملف env للخادم، ثم انشر.",
-    "one": "تحتاج الإحصاءات إلى الإعدادات الثلاثة كلها. الناقص: {missing}. أضِفه إلى ملف env للخادم، ثم انشر.",
-    "two": "تحتاج الإحصاءات إلى الإعدادات الثلاثة كلها. الناقص: {missing}. أضِفها إلى ملف env للخادم، ثم انشر.",
-    "few": "تحتاج الإحصاءات إلى الإعدادات الثلاثة كلها. الناقص: {missing}. أضِفها إلى ملف env للخادم، ثم انشر.",
-    "many": "تحتاج الإحصاءات إلى الإعدادات الثلاثة كلها. الناقص: {missing}. أضِفها إلى ملف env للخادم، ثم انشر.",
-    "other": "تحتاج الإحصاءات إلى الإعدادات الثلاثة كلها. الناقص: {missing}. أضِفها إلى ملف env للخادم، ثم انشر."
+    "zero":
+      "تحتاج الإحصاءات إلى الإعدادات الثلاثة كلها. الناقص: {missing}. أضِفها إلى ملف env للخادم، ثم انشر.",
+    "one":
+      "تحتاج الإحصاءات إلى الإعدادات الثلاثة كلها. الناقص: {missing}. أضِفه إلى ملف env للخادم، ثم انشر.",
+    "two":
+      "تحتاج الإحصاءات إلى الإعدادات الثلاثة كلها. الناقص: {missing}. أضِفها إلى ملف env للخادم، ثم انشر.",
+    "few":
+      "تحتاج الإحصاءات إلى الإعدادات الثلاثة كلها. الناقص: {missing}. أضِفها إلى ملف env للخادم، ثم انشر.",
+    "many":
+      "تحتاج الإحصاءات إلى الإعدادات الثلاثة كلها. الناقص: {missing}. أضِفها إلى ملف env للخادم، ثم انشر.",
+    "other":
+      "تحتاج الإحصاءات إلى الإعدادات الثلاثة كلها. الناقص: {missing}. أضِفها إلى ملف env للخادم، ثم انشر.",
   },
   "AdminStats.readSetup": "قراءة طريقة تشغيل الإحصاءات",
   "AdminStats.newTab": "{label} (يُفتح في علامة تبويب جديدة)",
@@ -1058,10 +1100,11 @@
     "two": "{change} نقطة مقارنةً بـآخر {count} يومين السابقة",
     "few": "{change} نقطة مقارنةً بـآخر {count} أيام السابقة",
     "many": "{change} نقطة مقارنةً بـآخر {count} يومًا السابقة",
-    "other": "{change} نقطة مقارنةً بـآخر {count} يوم السابقة"
+    "other": "{change} نقطة مقارنةً بـآخر {count} يوم السابقة",
   },
   "AdminStats.noVisitsTitle": "لا زيارات بعد",
-  "AdminStats.noVisitsText": "تظهر الزيارات هنا حين يفتح الناس الموقع. شارك رابط منتج من صفحته لترى أي مصدر يجلبها.",
+  "AdminStats.noVisitsText":
+    "تظهر الزيارات هنا حين يفتح الناس الموقع. شارك رابط منتج من صفحته لترى أي مصدر يجلبها.",
   "AdminStats.openCatalog": "فتح الكتالوج",
   "AdminStats.fewVisits": "الزيارات قليلة حتى الآن، لذا قد تتغيّر النسب كثيرًا.",
   "AdminStats.keyNumbers": "الأرقام الرئيسية",
@@ -1069,8 +1112,10 @@
   "AdminStats.orderClicks": "نقرات الطلب",
   "AdminStats.orderRate": "نسبة الطلب",
   "AdminStats.orderRateHint": "نقرات الطلب لكل 100 زيارة",
-  "AdminStats.orderClickMeans": "نقرة الطلب هي نقرة على زر طلب عبر {channels}. أمّا الطلب نفسه فيتم في المحادثة.",
-  "AdminStats.orderClickMeansAny": "نقرة الطلب هي نقرة على زر طلب. أمّا الطلب نفسه فيتم في المحادثة.",
+  "AdminStats.orderClickMeans":
+    "نقرة الطلب هي نقرة على زر طلب عبر {channels}. أمّا الطلب نفسه فيتم في المحادثة.",
+  "AdminStats.orderClickMeansAny":
+    "نقرة الطلب هي نقرة على زر طلب. أمّا الطلب نفسه فيتم في المحادثة.",
   "AdminStats.sourcesTitle": "من أين تأتي الزيارات",
   "AdminStats.sourcesIntro": "الأكثر نقرات طلب أولًا. اختر مصدرًا لتراه في الرسم البياني.",
   "AdminStats.sourcesLabel": {
@@ -1079,19 +1124,20 @@
     "two": "الزيارات حسب المصدر، آخر {count} يومين",
     "few": "الزيارات حسب المصدر، آخر {count} أيام",
     "many": "الزيارات حسب المصدر، آخر {count} يومًا",
-    "other": "الزيارات حسب المصدر، آخر {count} يوم"
+    "other": "الزيارات حسب المصدر، آخر {count} يوم",
   },
   "AdminStats.source": "المصدر",
   "AdminStats.noSource": "بلا مصدر",
   "AdminStats.noSourceHint": "كتب العنوان بنفسه، أو جاء من رابط بلا مصدر.",
-  "AdminStats.noSources": "لا مصادر بعد. أضِف الأماكن التي تشارك فيها المنتجات، مثل مجموعة على Facebook، ثم شارك رابط كل منتج الخاص به.",
+  "AdminStats.noSources":
+    "لا مصادر بعد. أضِف الأماكن التي تشارك فيها المنتجات، مثل مجموعة على Facebook، ثم شارك رابط كل منتج الخاص به.",
   "AdminStats.sourcesQuiet": {
     "zero": "لا زيارات من مصادرك في آخر {count} يوم. شارك رابط منتج من صفحته لتبدأ.",
     "one": "لا زيارات من مصادرك في آخر {count} يوم. شارك رابط منتج من صفحته لتبدأ.",
     "two": "لا زيارات من مصادرك في آخر {count} يومين. شارك رابط منتج من صفحته لتبدأ.",
     "few": "لا زيارات من مصادرك في آخر {count} أيام. شارك رابط منتج من صفحته لتبدأ.",
     "many": "لا زيارات من مصادرك في آخر {count} يومًا. شارك رابط منتج من صفحته لتبدأ.",
-    "other": "لا زيارات من مصادرك في آخر {count} يوم. شارك رابط منتج من صفحته لتبدأ."
+    "other": "لا زيارات من مصادرك في آخر {count} يوم. شارك رابط منتج من صفحته لتبدأ.",
   },
   "AdminStats.channelsTitle": "قناة الطلب",
   "AdminStats.channelsLabel": {
@@ -1100,10 +1146,11 @@
     "two": "نقرات الطلب حسب القناة، آخر {count} يومين",
     "few": "نقرات الطلب حسب القناة، آخر {count} أيام",
     "many": "نقرات الطلب حسب القناة، آخر {count} يومًا",
-    "other": "نقرات الطلب حسب القناة، آخر {count} يوم"
+    "other": "نقرات الطلب حسب القناة، آخر {count} يوم",
   },
   "AdminStats.noOrderClicks": "لا نقرات طلب بعد.",
-  "AdminStats.limits": "يحظر بعض الزوار أدوات التتبّع، لذا فالأرقام الحقيقية أعلى قليلًا. ولا تُحسب نقرات الطلب لمصدر إلا على الصفحة التي فتحها رابط المشاركة الخاص به.",
+  "AdminStats.limits":
+    "يحظر بعض الزوار أدوات التتبّع، لذا فالأرقام الحقيقية أعلى قليلًا. ولا تُحسب نقرات الطلب لمصدر إلا على الصفحة التي فتحها رابط المشاركة الخاص به.",
   "AdminStats.chartTitle": "الزيارات يوميًا",
   "AdminStats.chartTitleWeekly": "الزيارات أسبوعيًا",
   "AdminStats.chartSummary": {
@@ -1112,7 +1159,7 @@
     "two": "{total} زيارة في {count} يومين",
     "few": "{total} زيارة في {count} أيام",
     "many": "{total} زيارة في {count} يومًا",
-    "other": "{total} زيارة في {count} يوم"
+    "other": "{total} زيارة في {count} يوم",
   },
   "AdminStats.allSources": "كل المصادر",
   "AdminStats.previousSeries": {
@@ -1121,7 +1168,7 @@
     "two": "الـ{count} يومين السابقة",
     "few": "الـ{count} أيام السابقة",
     "many": "الـ{count} يومًا السابقة",
-    "other": "الـ{count} يوم السابقة"
+    "other": "الـ{count} يوم السابقة",
   },
   "AdminStats.chartLabel": {
     "zero": "الزيارات، آخر {count} يوم",
@@ -1129,7 +1176,7 @@
     "two": "الزيارات، آخر {count} يومين",
     "few": "الزيارات، آخر {count} أيام",
     "many": "الزيارات، آخر {count} يومًا",
-    "other": "الزيارات، آخر {count} يوم"
+    "other": "الزيارات، آخر {count} يوم",
   },
   "AdminStats.mostlyFrom": "غالبًا من {source}",
   "AdminStats.itemsTitle": "المنتجات",
@@ -1145,7 +1192,7 @@
     "two": "لا مشاهدات للمنتجات في آخر {count} يومين.",
     "few": "لا مشاهدات للمنتجات في آخر {count} أيام.",
     "many": "لا مشاهدات للمنتجات في آخر {count} يومًا.",
-    "other": "لا مشاهدات للمنتجات في آخر {count} يوم."
+    "other": "لا مشاهدات للمنتجات في آخر {count} يوم.",
   },
   "AdminStats.notOrderedIntro": {
     "zero": "منتجات لها {count} مشاهدة على الأقل ولا نقرة طلب، الأكثر مشاهدة أولًا.",
@@ -1153,7 +1200,7 @@
     "two": "منتجات لها {count} مشاهدتين على الأقل ولا نقرة طلب، الأكثر مشاهدة أولًا.",
     "few": "منتجات لها {count} مشاهدات على الأقل ولا نقرة طلب، الأكثر مشاهدة أولًا.",
     "many": "منتجات لها {count} مشاهدة على الأقل ولا نقرة طلب، الأكثر مشاهدة أولًا.",
-    "other": "منتجات لها {count} مشاهدة على الأقل ولا نقرة طلب، الأكثر مشاهدة أولًا."
+    "other": "منتجات لها {count} مشاهدة على الأقل ولا نقرة طلب، الأكثر مشاهدة أولًا.",
   },
   "AdminDataExports.loading": "جارٍ تحميل عمليات تصدير البيانات",
   "AdminDataExports.empty": "لا توجد عمليات تصدير للبيانات.",
@@ -1170,7 +1217,8 @@
   "AdminFrame.signOut": "تسجيل الخروج",
   "AdminFrame.comingSoon": "قسم «{title}» قادم قريبًا",
   "AdminFrame.noAccess": "لا يوجد وصول",
-  "AdminFrame.noAccessDescription": "هذا الحساب ليس حساب مشرف. سجّل الخروج، ثم سجّل الدخول بحساب مشرف.",
+  "AdminFrame.noAccessDescription":
+    "هذا الحساب ليس حساب مشرف. سجّل الخروج، ثم سجّل الدخول بحساب مشرف.",
   "AdminFrame.noAccessHint": "يمنح المسؤول هذا الدور بالأمر <code>{command}</code>.",
   "AdminFrame.comingSoonBadge": "قريبًا",
   "AdminFrame.signInTitle": "تسجيل دخول المشغّلين",
@@ -1248,7 +1296,7 @@
     "two": "ملفان",
     "few": "{count} ملفات",
     "many": "{count} ملفًا",
-    "other": "{count} ملف"
+    "other": "{count} ملف",
   },
   "AdminGroup.usageFilesOf": {
     "zero": "{files} من {count} ملف",
@@ -1256,7 +1304,7 @@
     "two": "{files} من ملفين",
     "few": "{files} من {count} ملفات",
     "many": "{files} من {count} ملفًا",
-    "other": "{files} من {count} ملف"
+    "other": "{files} من {count} ملف",
   },
   "AdminGroup.usageBytesOf": "{used} من {max}",
   "AdminGroup.deletedAccount": "حساب محذوف",
@@ -1270,7 +1318,7 @@
     "two": "ملفان",
     "few": "{count} ملفات",
     "many": "{count} ملفًا",
-    "other": "{count} ملف"
+    "other": "{count} ملف",
   },
   "AdminGroup.filesMatch": {
     "zero": "لا توجد ملفات تطابق «{query}»",
@@ -1278,7 +1326,7 @@
     "two": "ملفان يطابقان «{query}»",
     "few": "{count} ملفات تطابق «{query}»",
     "many": "{count} ملفًا يطابق «{query}»",
-    "other": "{count} ملف يطابق «{query}»"
+    "other": "{count} ملف يطابق «{query}»",
   },
   "AdminGroup.noFilesMatchQuery": "لا توجد ملفات تطابق «{query}»",
   "AdminGroup.filesError": "تعذّر تحميل الملفات. تحقّق من اتصالك ثم حاول مرة أخرى.",
@@ -1297,19 +1345,24 @@
   "AdminGroup.byOperator": "بواسطة مشغّل، من منطقة الإدارة",
   "AdminGroup.removeTitle": "إزالة {name}؟",
   "AdminGroup.removeTitleUnknown": "إزالة هذا العضو؟",
-  "AdminGroup.removeText": "يفقد <name>{name}</name> الوصول إلى <group>{group}</group> فورًا، مع رموز API والدعوات التي أنشأها لها. يبقى ما كتبه في المجموعة. ويتلقى إشعارًا.",
-  "AdminGroup.removeTextUnknown": "يفقد هذا العضو الوصول إلى <group>{group}</group> فورًا، مع رموز API والدعوات التي أنشأها لها. يبقى ما كتبه في المجموعة. ويتلقى إشعارًا.",
+  "AdminGroup.removeText":
+    "يفقد <name>{name}</name> الوصول إلى <group>{group}</group> فورًا، مع رموز API والدعوات التي أنشأها لها. يبقى ما كتبه في المجموعة. ويتلقى إشعارًا.",
+  "AdminGroup.removeTextUnknown":
+    "يفقد هذا العضو الوصول إلى <group>{group}</group> فورًا، مع رموز API والدعوات التي أنشأها لها. يبقى ما كتبه في المجموعة. ويتلقى إشعارًا.",
   "AdminGroup.removeSubmit": "إزالة",
   "AdminGroup.removing": "جارٍ الإزالة…",
   "AdminGroup.revokeTitle": "إلغاء هذه الدعوة؟",
-  "AdminGroup.revokeText": "لن يتمكن أحد من الانضمام إلى <group>{group}</group> بها بعد الآن. يبقى من انضموا بالفعل.",
+  "AdminGroup.revokeText":
+    "لن يتمكن أحد من الانضمام إلى <group>{group}</group> بها بعد الآن. يبقى من انضموا بالفعل.",
   "AdminGroup.revokeSubmit": "إلغاء",
   "AdminGroup.revoking": "جارٍ الإلغاء…",
   "AdminGroup.removeFileTitle": "إزالة «{name}»؟",
   "AdminGroup.removeFileTitleUnknown": "إزالة هذا الملف؟",
-  "AdminGroup.removeFileText": "لن يراه أعضاء <group>{group}</group> بعد الآن. تبقى ملاحظته. ويسجّل نشاط المجموعة أن فريق الدعم أزاله.",
+  "AdminGroup.removeFileText":
+    "لن يراه أعضاء <group>{group}</group> بعد الآن. تبقى ملاحظته. ويسجّل نشاط المجموعة أن فريق الدعم أزاله.",
   "AdminGroup.transferTitle": "نقل {group}",
-  "AdminGroup.transferText": "يصبح العضو الذي تختاره المالك ويتلقى إشعارًا. يبقى <name>{name}</name> في المجموعة مسؤولًا. يجب أن يلغي المالك أولًا أي اشتراك لا يزال يتجدد.",
+  "AdminGroup.transferText":
+    "يصبح العضو الذي تختاره المالك ويتلقى إشعارًا. يبقى <name>{name}</name> في المجموعة مسؤولًا. يجب أن يلغي المالك أولًا أي اشتراك لا يزال يتجدد.",
   "AdminGroup.transferSubmit": "نقل",
   "AdminGroup.transferring": "جارٍ النقل…",
   "AdminGroup.close": "إغلاق",
@@ -1317,7 +1370,8 @@
   "AdminGroup.candidate": "{name} ({role})",
   "AdminGroup.cancel": "إلغاء",
   "AdminGroupOverview.title": "أدوات النظرة العامة",
-  "AdminGroupOverview.description": "ما يراه الأعضاء في صفحة النظرة العامة، بالتخطيط الافتراضي. يمكن لكل عضو إخفاؤها وإعادة ترتيبها. لا تظهر تخطيطاتهم هنا.",
+  "AdminGroupOverview.description":
+    "ما يراه الأعضاء في صفحة النظرة العامة، بالتخطيط الافتراضي. يمكن لكل عضو إخفاؤها وإعادة ترتيبها. لا تظهر تخطيطاتهم هنا.",
   "AdminGroupOverview.gridLabel": "أدوات النظرة العامة لـ{group}",
   "AdminGroups.active": "نشطة",
   "AdminGroups.inTrash": "في المهملات",
@@ -1336,7 +1390,7 @@
     "two": "مجموعتان ({count})",
     "few": "{count} مجموعات",
     "many": "{count} مجموعة",
-    "other": "{count} مجموعة"
+    "other": "{count} مجموعة",
   },
   "AdminGroups.loading": "جارٍ تحميل المجموعات",
   "AdminGroups.noMatch": "لا توجد مجموعة مطابقة",
@@ -1364,7 +1418,7 @@
     "two": "أُعيد تشغيل مهمتين فاشلتين.",
     "few": "أُعيد تشغيل {count} مهام فاشلة.",
     "many": "أُعيد تشغيل {count} مهمة فاشلة.",
-    "other": "أُعيد تشغيل {count} مهمة فاشلة."
+    "other": "أُعيد تشغيل {count} مهمة فاشلة.",
   },
   "AdminJobs.notFound": "لا توجد مهمة بهذا المعرّف.",
   "AdminJobs.idCopied": "نُسخ معرّف المهمة.",
@@ -1420,7 +1474,7 @@
     "two": "مهمتان",
     "few": "{count} مهام",
     "many": "{count} مهمة",
-    "other": "{count} مهمة"
+    "other": "{count} مهمة",
   },
   "AdminJobs.noneFailed": "لا توجد مهام فاشلة.",
   "AdminJobs.runsCaption": "عمليات تشغيل المهام",
@@ -1433,7 +1487,7 @@
     "two": "تظهر المهام هنا بمجرد أن يجدول الخادم واحدة. تُحفظ المهام المنتهية يومين.",
     "few": "تظهر المهام هنا بمجرد أن يجدول الخادم واحدة. تُحفظ المهام المنتهية {count} أيام.",
     "many": "تظهر المهام هنا بمجرد أن يجدول الخادم واحدة. تُحفظ المهام المنتهية {count} يومًا.",
-    "other": "تظهر المهام هنا بمجرد أن يجدول الخادم واحدة. تُحفظ المهام المنتهية {count} يوم."
+    "other": "تظهر المهام هنا بمجرد أن يجدول الخادم واحدة. تُحفظ المهام المنتهية {count} يوم.",
   },
   "AdminJobs.pages": "صفحات المهام",
   "AdminJobs.keptDays": {
@@ -1442,7 +1496,7 @@
     "two": "تُحفظ المهام المنتهية يومين.",
     "few": "تُحفظ المهام المنتهية {count} أيام.",
     "many": "تُحفظ المهام المنتهية {count} يومًا.",
-    "other": "تُحفظ المهام المنتهية {count} يوم."
+    "other": "تُحفظ المهام المنتهية {count} يوم.",
   },
   "AdminJobs.lastRunFailed": "فشل آخر تشغيل",
   "AdminJobs.schedule": "الجدول",
@@ -1462,12 +1516,13 @@
     "two": "إعادة تشغيل مهمتين فاشلتين؟",
     "few": "إعادة تشغيل {count} مهام فاشلة؟",
     "many": "إعادة تشغيل {count} مهمة فاشلة؟",
-    "other": "إعادة تشغيل {count} مهمة فاشلة؟"
+    "other": "إعادة تشغيل {count} مهمة فاشلة؟",
   },
   "AdminJobs.runNowTitle": "تشغيل هذه المهمة الآن؟",
   "AdminJobs.runAgain": "إعادة التشغيل",
   "AdminJobs.retryAllText": "تُشغَّل كل مهمة مرة أخرى بمحاولات جديدة.",
-  "AdminJobs.runsNowInstead": "تُشغَّل <job>{job}</job> الآن بدلًا من <at></at>. تحتفظ المهمة المتكررة بجدولها بعد هذا التشغيل.",
+  "AdminJobs.runsNowInstead":
+    "تُشغَّل <job>{job}</job> الآن بدلًا من <at></at>. تحتفظ المهمة المتكررة بجدولها بعد هذا التشغيل.",
   "AdminJobs.runsNow": "تُشغَّل <job>{job}</job> الآن. تحتفظ المهمة المتكررة بجدولها بعد هذا التشغيل.",
   "AdminJobs.loadingJob": "جارٍ تحميل المهمة",
   "AdminJobs.created": "أُنشئت",
@@ -1490,9 +1545,11 @@
   "AdminJobs.whatHappened": "ما الذي حدث",
   "AdminJobs.keptUntil": "تُحفظ حتى <day></day>، بعد 7 أيام من انتهائها.",
   "AdminJobs.retryTitle": "إعادة تشغيل هذه المهمة؟",
-  "AdminJobs.retryText": "ترسل <job>{job}</job> رسائل بريد. إذا سبق تشغيلها جزئيًا فقد يتلقاها أحدهم مرتين. يسجّل سجل التدقيق أنك من شغّلها.",
+  "AdminJobs.retryText":
+    "ترسل <job>{job}</job> رسائل بريد. إذا سبق تشغيلها جزئيًا فقد يتلقاها أحدهم مرتين. يسجّل سجل التدقيق أنك من شغّلها.",
   "AdminJobs.cancelTitle": "إلغاء هذه المهمة؟",
-  "AdminJobs.cancelText": "لن تُشغَّل <job>{job}</job>. تبدأ المهمة المتكررة من جديد عند تشغيل العامل في المرة القادمة. لا يمكن التراجع عن ذلك.",
+  "AdminJobs.cancelText":
+    "لن تُشغَّل <job>{job}</job>. تبدأ المهمة المتكررة من جديد عند تشغيل العامل في المرة القادمة. لا يمكن التراجع عن ذلك.",
   "AdminJobs.cancelling": "جارٍ الإلغاء…",
   "AdminJobs.keepIt": "إبقاؤها",
   "AdminNav.dashboard": "لوحة المتابعة",
@@ -1513,11 +1570,13 @@
   "AdminNewsletter.confirmed": "مؤكَّد",
   "AdminNewsletter.pending": "معلّق",
   "AdminNewsletter.removeTitle": "إزالة هذا المشترك؟",
-  "AdminNewsletter.removeText": "يتوقف <email>{email}</email> عن تلقي النشرة، كما لو ضغط رابط إلغاء الاشتراك. يُمحى العنوان، ولا يعود رابط التأكيد المرسل إليه سابقًا يعمل. ويمكنه الاشتراك مجددًا من الموقع.",
+  "AdminNewsletter.removeText":
+    "يتوقف <email>{email}</email> عن تلقي النشرة، كما لو ضغط رابط إلغاء الاشتراك. يُمحى العنوان، ولا يعود رابط التأكيد المرسل إليه سابقًا يعمل. ويمكنه الاشتراك مجددًا من الموقع.",
   "AdminNewsletter.removeSubmit": "إزالة",
   "AdminNewsletter.removing": "جارٍ الإزالة…",
   "AdminNewsletter.resendTitle": "إعادة إرسال رسالة التأكيد؟",
-  "AdminNewsletter.resendText": "يتلقى <email>{email}</email> رسالة جديدة فيها رابط لتأكيد الاشتراك. لا يتغير شيء حتى يضغطه.",
+  "AdminNewsletter.resendText":
+    "يتلقى <email>{email}</email> رسالة جديدة فيها رابط لتأكيد الاشتراك. لا يتغير شيء حتى يضغطه.",
   "AdminNewsletter.resendSubmit": "إعادة الإرسال",
   "AdminNewsletter.sending": "جارٍ الإرسال…",
   "AdminNewsletter.subscribers": "المشتركون",
@@ -1537,7 +1596,7 @@
     "two": "المنضمون، يومان",
     "few": "المنضمون، {count} أيام",
     "many": "المنضمون، {count} يومًا",
-    "other": "المنضمون، {count} يوم"
+    "other": "المنضمون، {count} يوم",
   },
   "AdminNewsletter.issuesSent": "الأعداد المرسلة",
   "AdminNewsletter.perDay": "المشتركون يوميًا",
@@ -1547,7 +1606,7 @@
     "two": "لا تغيير خلال يومين",
     "few": "لا تغيير خلال {count} أيام",
     "many": "لا تغيير خلال {count} يومًا",
-    "other": "لا تغيير خلال {count} يوم"
+    "other": "لا تغيير خلال {count} يوم",
   },
   "AdminNewsletter.growthUp": {
     "zero": "+{n} خلال {count} يوم",
@@ -1555,7 +1614,7 @@
     "two": "+{n} خلال يومين",
     "few": "+{n} خلال {count} أيام",
     "many": "+{n} خلال {count} يومًا",
-    "other": "+{n} خلال {count} يوم"
+    "other": "+{n} خلال {count} يوم",
   },
   "AdminNewsletter.growthDown": {
     "zero": "−{n} خلال {count} يوم",
@@ -1563,7 +1622,7 @@
     "two": "−{n} خلال يومين",
     "few": "−{n} خلال {count} أيام",
     "many": "−{n} خلال {count} يومًا",
-    "other": "−{n} خلال {count} يوم"
+    "other": "−{n} خلال {count} يوم",
   },
   "AdminNewsletter.chartLabel": {
     "zero": "المشتركون في نهاية كل يوم، آخر {count} يوم",
@@ -1571,11 +1630,12 @@
     "two": "المشتركون في نهاية كل يوم، آخر يومين",
     "few": "المشتركون في نهاية كل يوم، آخر {count} أيام",
     "many": "المشتركون في نهاية كل يوم، آخر {count} يومًا",
-    "other": "المشتركون في نهاية كل يوم، آخر {count} يوم"
+    "other": "المشتركون في نهاية كل يوم، آخر {count} يوم",
   },
   "AdminNewsletter.nothingYet": "لا شيء بعد",
   "AdminNewsletter.notKeptTitle": "لا تُحفظ العناوين الملغى اشتراكها",
-  "AdminNewsletter.notKeptText": "يُمحى فورًا العنوان الذي يلغي اشتراكه أو الذي تزيله. لا تحتفظ القائمة إلا بعلامة مشفّرة لا تذكر أي عنوان، فلا يمكن لرابط تأكيد سابق إعادته. ولا يزال بإمكانه الاشتراك مجددًا من الموقع.",
+  "AdminNewsletter.notKeptText":
+    "يُمحى فورًا العنوان الذي يلغي اشتراكه أو الذي تزيله. لا تحتفظ القائمة إلا بعلامة مشفّرة لا تذكر أي عنوان، فلا يمكن لرابط تأكيد سابق إعادته. ولا يزال بإمكانه الاشتراك مجددًا من الموقع.",
   "AdminNewsletter.address": "العنوان",
   "AdminNewsletter.searching": "جارٍ البحث…",
   "AdminNewsletter.search": "بحث",
@@ -1588,7 +1648,7 @@
     "two": "عنوانان",
     "few": "{count} عناوين",
     "many": "{count} عنوانًا",
-    "other": "{count} عنوان"
+    "other": "{count} عنوان",
   },
   "AdminNewsletter.loadingAddresses": "جارٍ تحميل العناوين",
   "AdminNewsletter.nobodyMatches": "لا أحد مطابق",
@@ -1629,7 +1689,7 @@
     "two": "جهازان ({count})",
     "few": "{count} أجهزة",
     "many": "{count} جهازًا",
-    "other": "{count} جهاز"
+    "other": "{count} جهاز",
   },
   "AdminPersonTabs.noDevices": "لا يتلقى أي جهاز إشعارات فورية.",
   "AdminPersonTabs.device": "الجهاز <device>{device}</device>",
@@ -1643,7 +1703,7 @@
     "two": "إشعاران ({count})، غير المقروءة: {unread}.",
     "few": "{count} إشعارات، غير المقروءة: {unread}.",
     "many": "{count} إشعارًا، غير المقروءة: {unread}.",
-    "other": "{count} إشعار، غير المقروءة: {unread}."
+    "other": "{count} إشعار، غير المقروءة: {unread}.",
   },
   "AdminPersonTabs.newestShown": {
     "zero": "أحدث {count} معروضة أدناه.",
@@ -1651,7 +1711,7 @@
     "two": "أحدث اثنين ({count}) معروضان أدناه.",
     "few": "أحدث {count} معروضة أدناه.",
     "many": "أحدث {count} معروضة أدناه.",
-    "other": "أحدث {count} معروضة أدناه."
+    "other": "أحدث {count} معروضة أدناه.",
   },
   "AdminPersonTabs.read": "مقروء",
   "AdminPersonTabs.unread": "غير مقروء",
@@ -1696,7 +1756,8 @@
   "AdminSystem.warning": "تحذير",
   "AdminSystem.error": "خطأ",
   "AdminSystem.summaryOk": "كل شيء يعمل.",
-  "AdminSystem.summaryWarning": "شيء ما يحتاج إلى نظرة قريبًا. البطاقات المعلَّمة بـ«تحذير» توضح ما هو.",
+  "AdminSystem.summaryWarning":
+    "شيء ما يحتاج إلى نظرة قريبًا. البطاقات المعلَّمة بـ«تحذير» توضح ما هو.",
   "AdminSystem.summaryError": "هناك عطل ما. البطاقات المعلَّمة بـ«خطأ» توضح ما هو.",
   "AdminSystem.services": "الخدمات",
   "AdminSystem.database": "قاعدة البيانات",
@@ -1716,7 +1777,7 @@
     "two": "ينبّه عندما تنتظر مهمة أكثر من {count} دقيقتين أو تفشل أي مهمة.",
     "few": "ينبّه عندما تنتظر مهمة أكثر من {count} دقائق أو تفشل أي مهمة.",
     "many": "ينبّه عندما تنتظر مهمة أكثر من {count} دقيقة أو تفشل أي مهمة.",
-    "other": "ينبّه عندما تنتظر مهمة أكثر من {count} دقيقة أو تفشل أي مهمة."
+    "other": "ينبّه عندما تنتظر مهمة أكثر من {count} دقيقة أو تفشل أي مهمة.",
   },
   "AdminSystem.openJobs": "افتح المهام",
   "AdminSystem.dueNow": "مستحقة الآن",
@@ -1730,7 +1791,7 @@
     "two": "فشلت، آخر {count} يومين",
     "few": "فشلت، آخر {count} أيام",
     "many": "فشلت، آخر {count} يومًا",
-    "other": "فشلت، آخر {count} يوم"
+    "other": "فشلت، آخر {count} يوم",
   },
   "AdminSystem.backup": "النسخ الاحتياطي",
   "AdminSystem.backupHint": {
@@ -1739,7 +1800,7 @@
     "two": "ينبّه بعد {count} ساعتين دون نسخة، ويصبح خطأً بعد {error}.",
     "few": "ينبّه بعد {count} ساعات دون نسخة، ويصبح خطأً بعد {error}.",
     "many": "ينبّه بعد {count} ساعة دون نسخة، ويصبح خطأً بعد {error}.",
-    "other": "ينبّه بعد {count} ساعة دون نسخة، ويصبح خطأً بعد {error}."
+    "other": "ينبّه بعد {count} ساعة دون نسخة، ويصبح خطأً بعد {error}.",
   },
   "AdminSystem.lastSuccess": "آخر نجاح",
   "AdminSystem.noneRecorded": "لم يُسجَّل شيء",
@@ -1789,7 +1850,8 @@
   "AdminUser.active": "نشط",
   "AdminUser.guest": "ضيف",
   "AdminUser.you": "أنت",
-  "AdminUser.guestNote": "حساب ضيف: أُنشئ بنقرة واحدة دون طريقة لتسجيل الدخول. لا يستعيد الدعم حساب الضيف أبدًا.",
+  "AdminUser.guestNote":
+    "حساب ضيف: أُنشئ بنقرة واحدة دون طريقة لتسجيل الدخول. لا يستعيد الدعم حساب الضيف أبدًا.",
   "AdminUser.created": "أُنشئ",
   "AdminUser.lastSeen": "آخر ظهور",
   "AdminUser.never": "أبدًا",
@@ -1831,7 +1893,8 @@
   "AdminUser.methodPasskey": "مفتاح المرور",
   "AdminUser.methodEmailLink": "رابط البريد الإلكتروني",
   "AdminUser.blockTitle": "حظر {name}",
-  "AdminUser.blockText": "تنتهي كل جلساته فورًا ويُرفض أي دخول: كلمة المرور وGoogle وGitHub ورموز API. تبقى بياناته. يمكنك إلغاء حظره لاحقًا.",
+  "AdminUser.blockText":
+    "تنتهي كل جلساته فورًا ويُرفض أي دخول: كلمة المرور وGoogle وGitHub ورموز API. تبقى بياناته. يمكنك إلغاء حظره لاحقًا.",
   "AdminUser.blocking": "جارٍ الحظر…",
   "AdminUser.unblockTitle": "إلغاء حظر {name}",
   "AdminUser.unblockText": "يمكنه تسجيل الدخول مجددًا، وتعود رموز API الخاصة به للعمل.",
@@ -1843,20 +1906,25 @@
   "AdminUser.endSessionText": "يُسجَّل خروج هذا الجهاز وحده فورًا. تبقى أجهزته الأخرى مسجّلة الدخول.",
   "AdminUser.endSession": "إنهاء الجلسة",
   "AdminUser.changeRoleTitle": "تغيير دور {name}",
-  "AdminUser.changeRoleText": "يسري الدور الجديد من طلبه التالي. يمكنك منح دور أدنى من دورك؛ ويُعيَّن المسؤول بالنص البرمجي user:role.",
+  "AdminUser.changeRoleText":
+    "يسري الدور الجديد من طلبه التالي. يمكنك منح دور أدنى من دورك؛ ويُعيَّن المسؤول بالنص البرمجي user:role.",
   "AdminUser.changing": "جارٍ التغيير…",
   "AdminUser.resetTitle": "إرسال رابط إعادة تعيين كلمة المرور إلى {name}",
-  "AdminUser.resetText": "يتلقى البريد نفسه الذي يصل من «نسيت كلمة المرور»: رابطًا لاختيار كلمة مرور جديدة. تبقى كلمة مروره الحالية صالحة حتى يفعل ذلك.",
+  "AdminUser.resetText":
+    "يتلقى البريد نفسه الذي يصل من «نسيت كلمة المرور»: رابطًا لاختيار كلمة مرور جديدة. تبقى كلمة مروره الحالية صالحة حتى يفعل ذلك.",
   "AdminUser.sendLink": "إرسال الرابط",
   "AdminUser.sending": "جارٍ الإرسال…",
   "AdminUser.deleteGuestTitle": "حذف حساب الضيف {name}",
-  "AdminUser.deleteGuestText": "يُحذف الحساب وكل ما فيه فورًا دون مهلة. لا يستعيد الدعم حساب الضيف أبدًا: فليس له طريقة تسجيل دخول تثبت لمن كان.",
+  "AdminUser.deleteGuestText":
+    "يُحذف الحساب وكل ما فيه فورًا دون مهلة. لا يستعيد الدعم حساب الضيف أبدًا: فليس له طريقة تسجيل دخول تثبت لمن كان.",
   "AdminUser.deleting": "جارٍ الحذف…",
   "AdminUser.unlinkTelegramTitle": "فصل حساب Telegram الخاص بـ{name}",
-  "AdminUser.unlinkTelegramText": "تتوقف محادثة Telegram الخاصة به عن تلقي إشعاراته ولا يمكنها التصرف نيابة عنه بعد الآن. يمكنه ربطها مجددًا من ملفه الشخصي.",
+  "AdminUser.unlinkTelegramText":
+    "تتوقف محادثة Telegram الخاصة به عن تلقي إشعاراته ولا يمكنها التصرف نيابة عنه بعد الآن. يمكنه ربطها مجددًا من ملفه الشخصي.",
   "AdminUser.unlinking": "جارٍ الفصل…",
   "AdminUser.removePictureTitle": "إزالة صورة ملفه الشخصي؟",
-  "AdminUser.removePictureText": "ستظهر الأحرف الأولى من اسمه بدلًا منها في كل مكان. يمكنه رفع صورة جديدة.",
+  "AdminUser.removePictureText":
+    "ستظهر الأحرف الأولى من اسمه بدلًا منها في كل مكان. يمكنه رفع صورة جديدة.",
   "AdminUser.removePictureSubmit": "إزالة الصورة",
   "AdminUser.removing": "جارٍ الإزالة…",
   "AdminUser.sentTo": "سيُرسل إلى <address>{address}</address>",
@@ -1864,7 +1932,8 @@
   "AdminUser.roleNow": "{role} (الحالي)",
   "AdminUser.cancel": "إلغاء",
   "AdminUsers.title": "المستخدمون",
-  "AdminUsers.subtitle": "كل من لديه حساب. افتح شخصًا لحظره أو إنهاء جلسة أو إرسال رابط لإعادة تعيين كلمة المرور.",
+  "AdminUsers.subtitle":
+    "كل من لديه حساب. افتح شخصًا لحظره أو إنهاء جلسة أو إرسال رابط لإعادة تعيين كلمة المرور.",
   "AdminUsers.export": "تصدير CSV",
   "AdminUsers.search": "الاسم أو العنوان",
   "AdminUsers.searching": "جارٍ البحث…",
@@ -1887,7 +1956,7 @@
     "two": "شخصان ({count})",
     "few": "{count} أشخاص",
     "many": "{count} شخصًا",
-    "other": "{count} شخص"
+    "other": "{count} شخص",
   },
   "AdminUsers.loading": "جارٍ تحميل الأشخاص",
   "AdminUsers.people": "الأشخاص",
@@ -1904,6 +1973,7 @@
   "AdminBlogEditor.language": "اللغة",
   "AdminBlogEditor.languageHint": "اللغة التي كُتبت بها التدوينة. يعرضها الموقع في مدونة تلك اللغة.",
   "AdminBlogEditor.translationOf": "ترجمة لـ",
-  "AdminBlogEditor.translationOfHint": "التدوينة التي تترجمها هذه. يربط الموقع بينهما كنسختين لغويتين حين تُنشر كلتاهما.",
-  "AdminBlogEditor.translationNone": "لا شيء: تدوينة مستقلة"
-}
+  "AdminBlogEditor.translationOfHint":
+    "التدوينة التي تترجمها هذه. يربط الموقع بينهما كنسختين لغويتين حين تُنشر كلتاهما.",
+  "AdminBlogEditor.translationNone": "لا شيء: تدوينة مستقلة",
+} satisfies Catalog

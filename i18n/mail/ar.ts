@@ -1,4 +1,6 @@
-{
+import type { Catalog } from "@spy4x/platform/universal/i18n"
+
+export default {
   "Mail.sentBy": "— أرسلها",
   "Mail.signIn": "سجّل الدخول",
   "Mail.openProfile": "افتح ملفك الشخصي",
@@ -11,7 +13,7 @@
     "two": "افتح هذا الرابط خلال دقيقتين لتختار كلمة مرور جديدة.",
     "few": "افتح هذا الرابط خلال {count} دقائق لتختار كلمة مرور جديدة.",
     "many": "افتح هذا الرابط خلال {count} دقيقة لتختار كلمة مرور جديدة.",
-    "other": "افتح هذا الرابط خلال {count} دقيقة لتختار كلمة مرور جديدة."
+    "other": "افتح هذا الرابط خلال {count} دقيقة لتختار كلمة مرور جديدة.",
   },
   "PasswordResetMail.button": "اختر كلمة مرور جديدة",
   "PasswordResetMail.once": "يعمل الرابط مرة واحدة، واستخدامه يُخرجك من حسابك على كل الأجهزة.",
@@ -19,16 +21,24 @@
   "SignInLinkMail.subject": "رابط تسجيل الدخول إلى {host}",
   "SignInLinkMail.asked": "طلب أحدهم تسجيل الدخول إلى {host} بهذا العنوان في {when}.",
   "SignInLinkMail.open": {
-    "zero": "افتح هذا الرابط الآن لتسجّل الدخول. إن لم يكن هذا العنوان مستخدمًا في أي حساب بعد، فسيُنشئ حسابًا.",
-    "one": "افتح هذا الرابط خلال دقيقة واحدة لتسجّل الدخول. إن لم يكن هذا العنوان مستخدمًا في أي حساب بعد، فسيُنشئ حسابًا.",
-    "two": "افتح هذا الرابط خلال دقيقتين لتسجّل الدخول. إن لم يكن هذا العنوان مستخدمًا في أي حساب بعد، فسيُنشئ حسابًا.",
-    "few": "افتح هذا الرابط خلال {count} دقائق لتسجّل الدخول. إن لم يكن هذا العنوان مستخدمًا في أي حساب بعد، فسيُنشئ حسابًا.",
-    "many": "افتح هذا الرابط خلال {count} دقيقة لتسجّل الدخول. إن لم يكن هذا العنوان مستخدمًا في أي حساب بعد، فسيُنشئ حسابًا.",
-    "other": "افتح هذا الرابط خلال {count} دقيقة لتسجّل الدخول. إن لم يكن هذا العنوان مستخدمًا في أي حساب بعد، فسيُنشئ حسابًا."
+    "zero":
+      "افتح هذا الرابط الآن لتسجّل الدخول. إن لم يكن هذا العنوان مستخدمًا في أي حساب بعد، فسيُنشئ حسابًا.",
+    "one":
+      "افتح هذا الرابط خلال دقيقة واحدة لتسجّل الدخول. إن لم يكن هذا العنوان مستخدمًا في أي حساب بعد، فسيُنشئ حسابًا.",
+    "two":
+      "افتح هذا الرابط خلال دقيقتين لتسجّل الدخول. إن لم يكن هذا العنوان مستخدمًا في أي حساب بعد، فسيُنشئ حسابًا.",
+    "few":
+      "افتح هذا الرابط خلال {count} دقائق لتسجّل الدخول. إن لم يكن هذا العنوان مستخدمًا في أي حساب بعد، فسيُنشئ حسابًا.",
+    "many":
+      "افتح هذا الرابط خلال {count} دقيقة لتسجّل الدخول. إن لم يكن هذا العنوان مستخدمًا في أي حساب بعد، فسيُنشئ حسابًا.",
+    "other":
+      "افتح هذا الرابط خلال {count} دقيقة لتسجّل الدخول. إن لم يكن هذا العنوان مستخدمًا في أي حساب بعد، فسيُنشئ حسابًا.",
   },
   "SignInLinkMail.button": "سجّل الدخول إلى {host}",
-  "SignInLinkMail.once": "يعمل الرابط مرة واحدة. يفتح صفحة فيها زر «متابعة»: لا يحدث شيء حتى تضغط عليه.",
-  "SignInLinkMail.ignore": "إن لم تطلب ذلك، فتجاهل هذه الرسالة. لا يستطيع أحد تسجيل الدخول دون الرابط.",
+  "SignInLinkMail.once":
+    "يعمل الرابط مرة واحدة. يفتح صفحة فيها زر «متابعة»: لا يحدث شيء حتى تضغط عليه.",
+  "SignInLinkMail.ignore":
+    "إن لم تطلب ذلك، فتجاهل هذه الرسالة. لا يستطيع أحد تسجيل الدخول دون الرابط.",
   "EmailCodeMail.subject": "رمزك لتأكيد بريدك الإلكتروني",
   "EmailCodeMail.asked": "أدخل هذا الرمز على {host} لتؤكد أن هذا عنوان بريدك الإلكتروني.",
   "EmailCodeMail.valid": {
@@ -37,11 +47,12 @@
     "two": "يعمل مرة واحدة، لمدة دقيقتين.",
     "few": "يعمل مرة واحدة، لمدة {count} دقائق.",
     "many": "يعمل مرة واحدة، لمدة {count} دقيقة.",
-    "other": "يعمل مرة واحدة، لمدة {count} دقيقة."
+    "other": "يعمل مرة واحدة، لمدة {count} دقيقة.",
   },
   "EmailCodeMail.ignore": "إن لم تطلب ذلك، فتجاهل هذه الرسالة: لن يتغير شيء.",
   "InvitationMail.subject": "دعوة للانضمام إلى «{group}»",
-  "InvitationMail.invited": "دعاك <strong>{who}</strong> للانضمام إلى «{group}» على {host}، بدور {role}.",
+  "InvitationMail.invited":
+    "دعاك <strong>{who}</strong> للانضمام إلى «{group}» على {host}، بدور {role}.",
   "InvitationMail.invitedNoName": "أنت مدعو للانضمام إلى «{group}» على {host}، بدور {role}.",
   "InvitationMail.open": {
     "zero": "افتح هذا الرابط الآن لتقبل الدعوة أو ترفضها.",
@@ -49,15 +60,17 @@
     "two": "افتح هذا الرابط خلال يومين لتقبل الدعوة أو ترفضها.",
     "few": "افتح هذا الرابط خلال {count} أيام لتقبل الدعوة أو ترفضها.",
     "many": "افتح هذا الرابط خلال {count} يومًا لتقبل الدعوة أو ترفضها.",
-    "other": "افتح هذا الرابط خلال {count} يوم لتقبل الدعوة أو ترفضها."
+    "other": "افتح هذا الرابط خلال {count} يوم لتقبل الدعوة أو ترفضها.",
   },
   "InvitationMail.button": "افتح الدعوة",
   "InvitationMail.account": "الدعوة موجهة إلى عنوان البريد هذا: اقبلها بالحساب الذي يستخدمه.",
   "InvitationMail.ignore": "إن لم ترغب في الانضمام، فتجاهل هذه الرسالة.",
   "AccountDeletionMail.subject": "سيُحذف حسابك في {date}",
-  "AccountDeletionMail.asked": "سيُحذف حسابك على {host} نهائيًا في <strong>{date}</strong>، كما طلبت.",
+  "AccountDeletionMail.asked":
+    "سيُحذف حسابك على {host} نهائيًا في <strong>{date}</strong>، كما طلبت.",
   "AccountDeletionMail.keep": "غيّرت رأيك؟ سجّل الدخول قبل ذلك التاريخ وسيُستعاد حسابك.",
-  "AccountDeletionMail.notYou": "إن لم تطلب ذلك، فسجّل الدخول الآن لتحتفظ بحسابك، ثم غيّر كلمة المرور.",
+  "AccountDeletionMail.notYou":
+    "إن لم تطلب ذلك، فسجّل الدخول الآن لتحتفظ بحسابك، ثم غيّر كلمة المرور.",
   "AccountRestoredMail.subject": "استُعيد حسابك",
   "AccountRestoredMail.restored": "استُعيد حسابك على {host} بعد تسجيل دخول، فلن يُحذف بعد الآن.",
   "AccountRestoredMail.notYou": "إن لم تكن أنت، فسجّل الدخول واحذف حسابك مرة أخرى وغيّر كلمة المرور.",
@@ -65,35 +78,50 @@
   "DataExportReadyMail.ready": "نزّلها من ملفك الشخصي حتى <strong>{date}</strong>.",
   "DataExportReadyMail.notYou": "إن لم تطلب ذلك، فغيّر كلمة المرور وسجّل الخروج من أجهزتك الأخرى.",
   "SignInMethodMail.passkeyAddedSubject": "أُضيف مفتاح مرور إلى حسابك",
-  "SignInMethodMail.passkeyAdded": "أُضيف مفتاح مرور إلى حسابك على {host} في {when}. يمكنه الآن تسجيل الدخول إليه.",
-  "SignInMethodMail.passkeyAddedNotYou": "إن لم تكن أنت، فأزل مفتاح المرور من صفحة ملفك الشخصي وغيّر كلمة المرور.",
+  "SignInMethodMail.passkeyAdded":
+    "أُضيف مفتاح مرور إلى حسابك على {host} في {when}. يمكنه الآن تسجيل الدخول إليه.",
+  "SignInMethodMail.passkeyAddedNotYou":
+    "إن لم تكن أنت، فأزل مفتاح المرور من صفحة ملفك الشخصي وغيّر كلمة المرور.",
   "SignInMethodMail.passkeyRemovedSubject": "أُزيل مفتاح مرور من حسابك",
-  "SignInMethodMail.passkeyRemoved": "أُزيل مفتاح مرور من حسابك على {host} في {when}. لم يعد يسجّل الدخول إليه.",
-  "SignInMethodMail.passkeyRemovedNotYou": "إن لم تكن أنت، فسجّل الدخول وغيّر كلمة المرور وأضف مفتاح المرور مرة أخرى.",
+  "SignInMethodMail.passkeyRemoved":
+    "أُزيل مفتاح مرور من حسابك على {host} في {when}. لم يعد يسجّل الدخول إليه.",
+  "SignInMethodMail.passkeyRemovedNotYou":
+    "إن لم تكن أنت، فسجّل الدخول وغيّر كلمة المرور وأضف مفتاح المرور مرة أخرى.",
   "SignInMethodMail.linkedSubject": "رُبط {provider} بحسابك",
-  "SignInMethodMail.linked": "رُبط {provider} بحسابك على {host} في {when}. يمكنه الآن تسجيل الدخول إليه.",
-  "SignInMethodMail.linkedNotYou": "إن لم تكن أنت، فألغِ ربط {provider} من صفحة ملفك الشخصي وغيّر كلمة المرور.",
+  "SignInMethodMail.linked":
+    "رُبط {provider} بحسابك على {host} في {when}. يمكنه الآن تسجيل الدخول إليه.",
+  "SignInMethodMail.linkedNotYou":
+    "إن لم تكن أنت، فألغِ ربط {provider} من صفحة ملفك الشخصي وغيّر كلمة المرور.",
   "SignInMethodMail.unlinkedSubject": "أُلغي ربط {provider} بحسابك",
-  "SignInMethodMail.unlinked": "أُلغي ربط {provider} بحسابك على {host} في {when}. لم يعد يسجّل الدخول إليه.",
-  "SignInMethodMail.unlinkedNotYou": "إن لم تكن أنت، فسجّل الدخول وغيّر كلمة المرور واربط {provider} مرة أخرى.",
+  "SignInMethodMail.unlinked":
+    "أُلغي ربط {provider} بحسابك على {host} في {when}. لم يعد يسجّل الدخول إليه.",
+  "SignInMethodMail.unlinkedNotYou":
+    "إن لم تكن أنت، فسجّل الدخول وغيّر كلمة المرور واربط {provider} مرة أخرى.",
   "ApiTokenMail.subject": "أُنشئ رمز API",
   "ApiTokenMail.created": "أُنشئ رمز API باسم «{name}» لحسابك على {host}.",
   "ApiTokenMail.readUntil": "يمكنه قراءة المجموعة «{group}» وتنتهي صلاحيته في {date}.",
   "ApiTokenMail.readForever": "يمكنه قراءة المجموعة «{group}» ولا تنتهي صلاحيته أبدًا.",
   "ApiTokenMail.writeUntil": "يمكنه قراءة المجموعة «{group}» وتعديلها وتنتهي صلاحيته في {date}.",
   "ApiTokenMail.writeForever": "يمكنه قراءة المجموعة «{group}» وتعديلها ولا تنتهي صلاحيته أبدًا.",
-  "ApiTokenMail.notYou": "إن لم تكن أنت، فألغِ الرمز من صفحة ملفك الشخصي وغيّر كلمة المرور، فهذا يُلغي كل رموز API.",
+  "ApiTokenMail.notYou":
+    "إن لم تكن أنت، فألغِ الرمز من صفحة ملفك الشخصي وغيّر كلمة المرور، فهذا يُلغي كل رموز API.",
   "BillingNoticeMail.paidPlan": "المدفوعة",
   "BillingNoticeMail.trialSubject": "تنتهي تجربتك لخطة {plan} في {date}",
-  "BillingNoticeMail.trialWhat": "تنتهي تجربة خطة {plan} للمجموعة «{group}» في <strong>{date}</strong>.",
-  "BillingNoticeMail.trialWithCard": "بعدها يبدأ الاشتراك ويُحتسب عليه المبلغ. لإيقافه، ألغِه قبل ذلك من صفحة المجموعة.",
-  "BillingNoticeMail.trialWithoutCard": "أضف بطاقة من صفحة المجموعة قبل ذلك لتحتفظ بالخطة: يبدأ الاشتراك عندها ويُحتسب عليه المبلغ. دون بطاقة، تنتقل المجموعة إلى الخطة المجانية.",
+  "BillingNoticeMail.trialWhat":
+    "تنتهي تجربة خطة {plan} للمجموعة «{group}» في <strong>{date}</strong>.",
+  "BillingNoticeMail.trialWithCard":
+    "بعدها يبدأ الاشتراك ويُحتسب عليه المبلغ. لإيقافه، ألغِه قبل ذلك من صفحة المجموعة.",
+  "BillingNoticeMail.trialWithoutCard":
+    "أضف بطاقة من صفحة المجموعة قبل ذلك لتحتفظ بالخطة: يبدأ الاشتراك عندها ويُحتسب عليه المبلغ. دون بطاقة، تنتقل المجموعة إلى الخطة المجانية.",
   "BillingNoticeMail.paymentSubject": "فشلت دفعة لخطة {plan}",
   "BillingNoticeMail.paymentWhat": "فشلت دفعة لخطة {plan} للمجموعة «{group}».",
-  "BillingNoticeMail.paymentKept": "تبقى الخطة حتى <strong>{date}</strong> بينما تُعاد محاولة الدفع. حدّث البطاقة من صفحة المجموعة لتحتفظ بها.",
-  "BillingNoticeMail.paymentFree": "المجموعة الآن على الخطة المجانية. حدّث البطاقة من صفحة المجموعة لتستعيد الخطة.",
+  "BillingNoticeMail.paymentKept":
+    "تبقى الخطة حتى <strong>{date}</strong> بينما تُعاد محاولة الدفع. حدّث البطاقة من صفحة المجموعة لتحتفظ بها.",
+  "BillingNoticeMail.paymentFree":
+    "المجموعة الآن على الخطة المجانية. حدّث البطاقة من صفحة المجموعة لتستعيد الخطة.",
   "BillingNoticeMail.planSubject": "تنتهي خطة {plan} في {date}",
-  "BillingNoticeMail.planWhat": "أُلغيت خطة {plan} للمجموعة «{group}» وتنتهي في <strong>{date}</strong>؛ ثم تنتقل المجموعة إلى الخطة المجانية.",
+  "BillingNoticeMail.planWhat":
+    "أُلغيت خطة {plan} للمجموعة «{group}» وتنتهي في <strong>{date}</strong>؛ ثم تنتقل المجموعة إلى الخطة المجانية.",
   "BillingNoticeMail.planNext": "غيّرت رأيك؟ جدّدها من صفحة المجموعة قبل ذلك التاريخ.",
   "SubscriberConfirmMail.subject": "أكّد اشتراكك في {host}",
   "SubscriberConfirmMail.asked": "طلب أحدهم إرسال أخبار {host} إلى هذا العنوان.",
@@ -105,5 +133,5 @@
   "SubscriberWelcomeMail.reason": "تصلك هذه الرسالة لأنك اشتركت في {host}.",
   "SubscriberWelcomeMail.unsubscribe": "إلغاء الاشتراك",
   "SubscriberIssue.reason": "تصلك هذه الرسالة لأنك اشتركت في {host}.",
-  "SubscriberIssue.readPost": "اقرأ المقالة"
-}
+  "SubscriberIssue.readPost": "اقرأ المقالة",
+} satisfies Catalog

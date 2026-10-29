@@ -1,0 +1,130 @@
+import type { Catalog } from "@spy4x/platform/universal/i18n"
+
+export default {
+  "Mail.sentBy": "— Enviado por",
+  "Mail.signIn": "Iniciar sesión",
+  "Mail.openProfile": "Abrir tu perfil",
+  "Mail.openGroup": "Abrir el grupo",
+  "PasswordResetMail.subject": "Restablece tu contraseña",
+  "PasswordResetMail.asked": "Alguien pidió restablecer la contraseña de tu cuenta en {host}.",
+  "PasswordResetMail.open": {
+    "one": "Abre este enlace dentro de {count} minuto para elegir una contraseña nueva.",
+    "many": "Abre este enlace dentro de {count} minutos para elegir una contraseña nueva.",
+    "other": "Abre este enlace dentro de {count} minutos para elegir una contraseña nueva.",
+  },
+  "PasswordResetMail.button": "Elegir una contraseña nueva",
+  "PasswordResetMail.once":
+    "El enlace funciona una sola vez, y al usarlo se cierra tu sesión en todas partes.",
+  "PasswordResetMail.ignore": "Si no lo pediste, ignora este correo: tu contraseña sigue igual.",
+  "SignInLinkMail.subject": "Tu enlace para iniciar sesión en {host}",
+  "SignInLinkMail.asked": "Alguien pidió iniciar sesión en {host} con esta dirección el {when}.",
+  "SignInLinkMail.open": {
+    "one":
+      "Abre este enlace dentro de {count} minuto para iniciar sesión. Si ninguna cuenta usa aún esta dirección, se crea una.",
+    "many":
+      "Abre este enlace dentro de {count} minutos para iniciar sesión. Si ninguna cuenta usa aún esta dirección, se crea una.",
+    "other":
+      "Abre este enlace dentro de {count} minutos para iniciar sesión. Si ninguna cuenta usa aún esta dirección, se crea una.",
+  },
+  "SignInLinkMail.button": "Iniciar sesión en {host}",
+  "SignInLinkMail.once":
+    "El enlace funciona una sola vez. Abre una página con un botón «Continuar»: no pasa nada hasta que lo pulses.",
+  "SignInLinkMail.ignore":
+    "Si no lo pediste, ignora este correo. Nadie puede iniciar sesión sin el enlace.",
+  "EmailCodeMail.subject": "Tu código para confirmar tu correo electrónico",
+  "EmailCodeMail.asked":
+    "Introduce este código en {host} para confirmar que esta dirección de correo es tuya.",
+  "EmailCodeMail.valid": {
+    "one": "Funciona una sola vez, durante {count} minuto.",
+    "many": "Funciona una sola vez, durante {count} minutos.",
+    "other": "Funciona una sola vez, durante {count} minutos.",
+  },
+  "EmailCodeMail.ignore": "Si no lo pediste, ignora este correo: no cambia nada.",
+  "InvitationMail.subject": "Invitación para unirte a «{group}»",
+  "InvitationMail.invited":
+    "<strong>{who}</strong> te invitó a unirte a «{group}» en {host}, con el rol {role}.",
+  "InvitationMail.invitedNoName": "Te invitaron a unirte a «{group}» en {host}, con el rol {role}.",
+  "InvitationMail.open": {
+    "one": "Abre este enlace dentro de {count} día para aceptar o rechazar.",
+    "many": "Abre este enlace dentro de {count} días para aceptar o rechazar.",
+    "other": "Abre este enlace dentro de {count} días para aceptar o rechazar.",
+  },
+  "InvitationMail.button": "Abrir la invitación",
+  "InvitationMail.account":
+    "La invitación es para esta dirección de correo: acéptala con la cuenta que la usa.",
+  "InvitationMail.ignore": "Si no quieres unirte, ignora este correo.",
+  "AccountDeletionMail.subject": "Tu cuenta se eliminará el {date}",
+  "AccountDeletionMail.asked":
+    "Tu cuenta en {host} se eliminará definitivamente el <strong>{date}</strong>, como pediste.",
+  "AccountDeletionMail.keep":
+    "¿Cambiaste de idea? Inicia sesión antes de esa fecha y tu cuenta se restaura.",
+  "AccountDeletionMail.notYou":
+    "Si no lo pediste, inicia sesión ahora para conservar tu cuenta y luego cambia tu contraseña.",
+  "AccountRestoredMail.subject": "Tu cuenta se restauró",
+  "AccountRestoredMail.restored":
+    "Tu cuenta en {host} se restauró al iniciar sesión, así que ya no se eliminará.",
+  "AccountRestoredMail.notYou":
+    "Si no fuiste tú, inicia sesión, vuelve a eliminar tu cuenta y cambia tu contraseña.",
+  "DataExportReadyMail.subject": "Tus datos están listos",
+  "DataExportReadyMail.ready": "Descárgalos desde tu perfil hasta el <strong>{date}</strong>.",
+  "DataExportReadyMail.notYou":
+    "Si no lo pediste, cambia tu contraseña y cierra la sesión en tus otros dispositivos.",
+  "SignInMethodMail.passkeyAddedSubject": "Se añadió una llave de acceso a tu cuenta",
+  "SignInMethodMail.passkeyAdded":
+    "Se añadió una llave de acceso a tu cuenta en {host} el {when}. Ahora puede iniciar sesión en ella.",
+  "SignInMethodMail.passkeyAddedNotYou":
+    "Si no fuiste tú, quita la llave de acceso en tu página de perfil y cambia tu contraseña.",
+  "SignInMethodMail.passkeyRemovedSubject": "Se quitó una llave de acceso de tu cuenta",
+  "SignInMethodMail.passkeyRemoved":
+    "Se quitó una llave de acceso de tu cuenta en {host} el {when}. Ya no puede iniciar sesión en ella.",
+  "SignInMethodMail.passkeyRemovedNotYou":
+    "Si no fuiste tú, inicia sesión, cambia tu contraseña y vuelve a añadir tu llave de acceso.",
+  "SignInMethodMail.linkedSubject": "{provider} se vinculó a tu cuenta",
+  "SignInMethodMail.linked":
+    "{provider} se vinculó a tu cuenta en {host} el {when}. Ahora puede iniciar sesión en ella.",
+  "SignInMethodMail.linkedNotYou":
+    "Si no fuiste tú, desvincula {provider} en tu página de perfil y cambia tu contraseña.",
+  "SignInMethodMail.unlinkedSubject": "{provider} se desvinculó de tu cuenta",
+  "SignInMethodMail.unlinked":
+    "{provider} se desvinculó de tu cuenta en {host} el {when}. Ya no puede iniciar sesión en ella.",
+  "SignInMethodMail.unlinkedNotYou":
+    "Si no fuiste tú, inicia sesión, cambia tu contraseña y vuelve a vincular {provider}.",
+  "ApiTokenMail.subject": "Se creó un token de API",
+  "ApiTokenMail.created": "Se creó un token de API llamado «{name}» para tu cuenta en {host}.",
+  "ApiTokenMail.readUntil": "Puede leer el grupo «{group}» y caduca el {date}.",
+  "ApiTokenMail.readForever": "Puede leer el grupo «{group}» y no caduca nunca.",
+  "ApiTokenMail.writeUntil": "Puede leer y editar el grupo «{group}» y caduca el {date}.",
+  "ApiTokenMail.writeForever": "Puede leer y editar el grupo «{group}» y no caduca nunca.",
+  "ApiTokenMail.notYou":
+    "Si no fuiste tú, revoca el token en tu página de perfil y cambia tu contraseña, lo que revoca todos los tokens de API.",
+  "BillingNoticeMail.paidPlan": "de pago",
+  "BillingNoticeMail.trialSubject": "Tu prueba de {plan} termina el {date}",
+  "BillingNoticeMail.trialWhat":
+    "La prueba de {plan} de «{group}» termina el <strong>{date}</strong>.",
+  "BillingNoticeMail.trialWithCard":
+    "Luego empieza la suscripción y se cobra. Para detenerla, cancélala antes desde la página del grupo.",
+  "BillingNoticeMail.trialWithoutCard":
+    "Añade una tarjeta desde la página del grupo antes de esa fecha para conservar el plan: entonces empieza la suscripción y se cobra. Sin tarjeta, el grupo pasa al plan gratuito.",
+  "BillingNoticeMail.paymentSubject": "Falló un pago de {plan}",
+  "BillingNoticeMail.paymentWhat": "Falló un pago del plan {plan} de «{group}».",
+  "BillingNoticeMail.paymentKept":
+    "El plan se mantiene hasta el <strong>{date}</strong> mientras se reintenta el pago. Actualiza la tarjeta desde la página del grupo para conservarlo.",
+  "BillingNoticeMail.paymentFree":
+    "El grupo está ahora en el plan gratuito. Actualiza la tarjeta desde la página del grupo para recuperar el plan.",
+  "BillingNoticeMail.planSubject": "Tu plan {plan} termina el {date}",
+  "BillingNoticeMail.planWhat":
+    "El plan {plan} de «{group}» se canceló y termina el <strong>{date}</strong>; luego el grupo pasa al plan gratuito.",
+  "BillingNoticeMail.planNext":
+    "¿Cambiaste de idea? Renuévalo desde la página del grupo antes de esa fecha.",
+  "SubscriberConfirmMail.subject": "Confirma tu suscripción a {host}",
+  "SubscriberConfirmMail.asked": "Alguien pidió recibir las novedades de {host} en esta dirección.",
+  "SubscriberConfirmMail.within": "Confírmalo en los próximos tres días para empezar a recibirlas.",
+  "SubscriberConfirmMail.button": "Confirmar",
+  "SubscriberConfirmMail.ignore": "Si no lo pediste, ignora este correo: no te enviaremos nada.",
+  "SubscriberWelcomeMail.subject": "Te has suscrito a {host}",
+  "SubscriberWelcomeMail.subscribed": "Te has suscrito a las novedades de {host}.",
+  "SubscriberWelcomeMail.reason": "Recibes este correo porque te suscribiste en {host}.",
+  "SubscriberWelcomeMail.unsubscribe": "Cancelar suscripción",
+  "SubscriberIssue.reason": "Recibes este correo porque te suscribiste en {host}.",
+  "SubscriberIssue.readPost": "Leer la entrada",
+} satisfies Catalog

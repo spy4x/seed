@@ -6,7 +6,7 @@ import { type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import { GroupTab } from "@ui/group-editor-screen.tsx"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
-import appEn from "@i18n/app/en.json" with { type: "json" }
+import appEn from "@i18n/app/en.ts"
 import { billingStore } from "../state/billing.ts"
 import { groupsStore } from "../state/groups.ts"
 import { invitationsStore } from "../state/invitations.ts"

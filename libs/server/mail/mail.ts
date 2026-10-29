@@ -25,18 +25,18 @@ import { createFormatters, type Formatters, type HourCycle } from "@spy4x/time/f
 import { BillingNoticeKind, findPlan, FREE_PLAN_ID, PRO_PLAN_ID } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import type { Language } from "@domain/identity"
-import appEn from "@i18n/app/en.json" with { type: "json" }
-import appRu from "@i18n/app/ru.json" with { type: "json" }
-import appEs from "@i18n/app/es.json" with { type: "json" }
-import appDe from "@i18n/app/de.json" with { type: "json" }
-import appPtBR from "@i18n/app/pt-BR.json" with { type: "json" }
-import appAr from "@i18n/app/ar.json" with { type: "json" }
-import mailEn from "@i18n/mail/en.json" with { type: "json" }
-import mailRu from "@i18n/mail/ru.json" with { type: "json" }
-import mailEs from "@i18n/mail/es.json" with { type: "json" }
-import mailDe from "@i18n/mail/de.json" with { type: "json" }
-import mailPtBR from "@i18n/mail/pt-BR.json" with { type: "json" }
-import mailAr from "@i18n/mail/ar.json" with { type: "json" }
+import appEn from "@i18n/app/en.ts"
+import appRu from "@i18n/app/ru.ts"
+import appEs from "@i18n/app/es.ts"
+import appDe from "@i18n/app/de.ts"
+import appPtBR from "@i18n/app/pt-BR.ts"
+import appAr from "@i18n/app/ar.ts"
+import mailEn from "@i18n/mail/en.ts"
+import mailRu from "@i18n/mail/ru.ts"
+import mailEs from "@i18n/mail/es.ts"
+import mailDe from "@i18n/mail/de.ts"
+import mailPtBR from "@i18n/mail/pt-BR.ts"
+import mailAr from "@i18n/mail/ar.ts"
 
 /** The variables SMTP needs. All five must be set for production to send mail. */
 export const SMTP_KEYS = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_FROM"] as const

@@ -4,7 +4,7 @@ import { describe, it } from "@std/testing/bdd"
 import { PictureState } from "@domain/identity"
 import { personName, personPicture } from "./note-people.ts"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
-import app from "@i18n/app/en.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
 
 /** The `app` catalog's English, as a screen without a provider reads it. */
 const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })

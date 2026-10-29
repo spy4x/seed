@@ -11,8 +11,8 @@ import { act } from "preact/test-utils"
 import type { CallPort } from "@spy4x/realtime/calls"
 import { createTranslator, type Translator } from "@spy4x/platform/universal/i18n"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
-import app from "@i18n/app/en.json" with { type: "json" }
-import appRu from "@i18n/app/ru.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
+import appRu from "@i18n/app/ru.ts"
 import { OfflineStatus } from "./OfflineStatus.tsx"
 import { startOffline, stopOffline } from "./index.ts"
 import { createMemoryStorage } from "./memory-storage.ts"

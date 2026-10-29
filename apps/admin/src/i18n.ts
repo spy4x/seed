@@ -9,11 +9,11 @@ import ui from "@spy4x/preact-ui/i18n/en"
 import system from "@spy4x/preact-system/i18n/en"
 import signals from "@spy4x/preact-signals/i18n/en"
 import charts from "@spy4x/preact-charts/i18n/en"
-import own from "@i18n/admin/en.json" with { type: "json" }
+import own from "@i18n/admin/en.ts"
 // The product's words, for the parts of its screens the operator area draws too: the group
 // overview's widgets and the keyboard shortcuts dialog.
-import app from "@i18n/app/en.json" with { type: "json" }
-import errors from "@i18n/errors/en.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
+import errors from "@i18n/errors/en.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { LANGUAGES } from "@domain/identity"
 import { type CatalogList, createLanguages, keptLanguage } from "@platform/i18n.ts"

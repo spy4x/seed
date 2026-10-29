@@ -1,4 +1,6 @@
-{
+import type { Catalog } from "@spy4x/platform/universal/i18n"
+
+export default {
   "AdminApiTokens.tokenRevoked": "Токен «{token}» отозван.",
   "AdminApiTokens.deviceRemoved": "Устройство «{device}» удалено.",
   "AdminApiTokens.title": "API-токены",
@@ -12,7 +14,7 @@
     "one": "{count} токен",
     "few": "{count} токена",
     "many": "{count} токенов",
-    "other": "{count} токена"
+    "other": "{count} токена",
   },
   "AdminApiTokens.loading": "Загружаем токены",
   "AdminApiTokens.noneLive": "Нет действующих токенов",
@@ -35,10 +37,12 @@
   "AdminApiTokens.owner": "Владелец",
   "AdminApiTokens.ownerLine": "Владелец: <name>{name}</name>",
   "AdminApiTokens.revokeTitle": "Отозвать этот API-токен",
-  "AdminApiTokens.revokeText": "Токен <token>{token}</token> пользователя <owner>{owner}</owner> сразу перестанет работать: каждому скрипту с ним будет отказано. Включить его обратно нельзя, владелец может создать новый.",
+  "AdminApiTokens.revokeText":
+    "Токен <token>{token}</token> пользователя <owner>{owner}</owner> сразу перестанет работать: каждому скрипту с ним будет отказано. Включить его обратно нельзя, владелец может создать новый.",
   "AdminApiTokens.revoking": "Отзываем…",
   "AdminApiTokens.removeDeviceTitle": "Удалить это устройство",
-  "AdminApiTokens.removeDeviceText": "Устройство <device>{device}</device> больше не будет получать push-уведомления. Человек может снова включить их на этом устройстве.",
+  "AdminApiTokens.removeDeviceText":
+    "Устройство <device>{device}</device> больше не будет получать push-уведомления. Человек может снова включить их на этом устройстве.",
   "AdminApiTokens.remove": "Удалить",
   "AdminApiTokens.removing": "Удаляем…",
   "AdminApiTokens.readWrite": "Чтение и запись",
@@ -59,38 +63,41 @@
   "AdminAudit.optionGroup": "Группа: {event}",
   "AdminAudit.optionOperator": "Оператор: {event}",
   "AdminAudit.title": "Журнал аудита",
-  "AdminAudit.subtitle": "Все входы, изменения аккаунтов и групп и действия операторов, сначала новые.",
+  "AdminAudit.subtitle":
+    "Все входы, изменения аккаунтов и групп и действия операторов, сначала новые.",
   "AdminAudit.export": "Выгрузить CSV",
   "AdminAudit.loading": "Загружаем журнал",
   "AdminAudit.count": {
     "one": "{count} запись",
     "few": "{count} записи",
     "many": "{count} записей",
-    "other": "{count} записи"
+    "other": "{count} записи",
   },
   "AdminAudit.countMore": {
     "one": "{count}+ запись",
     "few": "{count}+ записи",
     "many": "{count}+ записей",
-    "other": "{count}+ записи"
+    "other": "{count}+ записи",
   },
   "AdminAudit.countMatch": {
     "one": "Подходит {count} запись",
     "few": "Подходят {count} записи",
     "many": "Подходят {count} записей",
-    "other": "Подходят {count} записи"
+    "other": "Подходят {count} записи",
   },
   "AdminAudit.countMoreMatch": {
     "one": "Подходит {count}+ запись",
     "few": "Подходят {count}+ записи",
     "many": "Подходят {count}+ записей",
-    "other": "Подходят {count}+ записи"
+    "other": "Подходят {count}+ записи",
   },
   "AdminAudit.view": "Вид",
   "AdminAudit.nothingMatches": "Ничего не найдено",
-  "AdminAudit.nothingMatchesHint": "Попробуйте шире диапазон дат или другого человека либо сбросьте фильтры.",
+  "AdminAudit.nothingMatchesHint":
+    "Попробуйте шире диапазон дат или другого человека либо сбросьте фильтры.",
   "AdminAudit.nothingYet": "Пока ничего не записано",
-  "AdminAudit.nothingYetHint": "Входы, изменения аккаунтов и групп появятся здесь по мере того, как они происходят.",
+  "AdminAudit.nothingYetHint":
+    "Входы, изменения аккаунтов и групп появятся здесь по мере того, как они происходят.",
   "AdminAudit.loadingMore": "Загружаем…",
   "AdminAudit.more": "Показать более ранние записи",
   "AdminAudit.filter": "Фильтр журнала аудита",
@@ -224,8 +231,10 @@
   "AdminAuditEvent.catalogSourceDeleted": "Источник ссылок удалён",
   "AdminAuditEvent.catalogSourcesReordered": "Порядок источников изменён",
   "AdminAuditEvent.catalogLinkCreated": "Создана ссылка с отслеживанием",
-  "AdminBilling.listError": "Не удалось загрузить клиентов. Проверьте соединение и попробуйте ещё раз.",
-  "AdminBilling.offText": "Все группы на бесплатном тарифе. Чтобы включить оплату, добавьте настройки Stripe.",
+  "AdminBilling.listError":
+    "Не удалось загрузить клиентов. Проверьте соединение и попробуйте ещё раз.",
+  "AdminBilling.offText":
+    "Все группы на бесплатном тарифе. Чтобы включить оплату, добавьте настройки Stripe.",
   "AdminBilling.paying": "Платят",
   "AdminBilling.trial": "Пробный",
   "AdminBilling.pastDue": "Просрочено",
@@ -247,7 +256,8 @@
   "AdminBilling.off": "Оплата выключена",
   "AdminBilling.readSetup": "Как настроить оплату",
   "AdminBilling.noneYet": "Платных групп пока нет",
-  "AdminBilling.noneHint": "Группа появится здесь, когда её владелец оформит платный тариф, включая пробный период.",
+  "AdminBilling.noneHint":
+    "Группа появится здесь, когда её владелец оформит платный тариф, включая пробный период.",
   "AdminBilling.openPricing": "Открыть страницу цен",
   "AdminBilling.search": "Название группы, владелец или id группы",
   "AdminBilling.searching": "Ищем…",
@@ -260,7 +270,7 @@
     "one": "{count} группа",
     "few": "{count} группы",
     "many": "{count} групп",
-    "other": "{count} группы"
+    "other": "{count} группы",
   },
   "AdminBilling.loading": "Загружаем клиентов",
   "AdminBilling.customers": "Клиенты",
@@ -277,7 +287,8 @@
   "AdminBilling.inTrial": "На пробном",
   "AdminBilling.trialsEnding": "Закончатся в ближайшие 7 дней: {count}",
   "AdminBilling.endingHint": "Отменены, оплачены до конца периода",
-  "AdminBilling.source": "Посчитано по подпискам, которые хранит это приложение, поэтому изменение в Stripe появится здесь, когда придёт его вебхук.",
+  "AdminBilling.source":
+    "Посчитано по подпискам, которые хранит это приложение, поэтому изменение в Stripe появится здесь, когда придёт его вебхук.",
   "AdminBilling.lastEvent": "Последнее событие Stripe <when></when>.",
   "AdminBilling.noEvent": "Событий от Stripe пока не было.",
   "AdminBilling.none": "Нет",
@@ -289,12 +300,14 @@
   "AdminBilling.inTrash": "В корзине",
   "AdminBilling.newTab": "{label} (откроется в новой вкладке)",
   "AdminBillingCustomer.notFound": "Нет клиента с таким id группы.",
-  "AdminBillingCustomer.noAnswer": "Сервер не ответил, поэтому неизвестно, сработало ли действие. Проверьте клиента в Stripe или повторите: повтор из этого окна выполнит действие один раз.",
+  "AdminBillingCustomer.noAnswer":
+    "Сервер не ответил, поэтому неизвестно, сработало ли действие. Проверьте клиента в Stripe или повторите: повтор из этого окна выполнит действие один раз.",
   "AdminBillingCustomer.doneRefundAmount": "{amount} возвращено группе «{group}».",
   "AdminBillingCustomer.doneRefund": "Последний платёж группы «{group}» возвращён.",
   "AdminBillingCustomer.doneTimeUntil": "До {date} с группы «{group}» ничего не списывается.",
   "AdminBillingCustomer.doneTime": "Группа «{group}» получила бесплатное время.",
-  "AdminBillingCustomer.doneCancelNow": "Подписка группы «{group}» отменена. Группа на бесплатном тарифе.",
+  "AdminBillingCustomer.doneCancelNow":
+    "Подписка группы «{group}» отменена. Группа на бесплатном тарифе.",
   "AdminBillingCustomer.doneCancelOn": "Подписка группы «{group}» закончится {date}.",
   "AdminBillingCustomer.doneCancelEnd": "Подписка группы «{group}» закончится в конце периода.",
   "AdminBillingCustomer.doneUndoOn": "Подписка группы «{group}» продлится {date}.",
@@ -315,8 +328,10 @@
   "AdminBillingCustomer.openStripeLabel": "Открыть в Stripe (откроется в новой вкладке)",
   "AdminBillingCustomer.openStripe": "Открыть в Stripe",
   "AdminBillingCustomer.ownedBy": "Владелец: {owner}",
-  "AdminBillingCustomer.member": "Вы владелец или участник этой группы, поэтому её оплатой занимается другой оператор.",
-  "AdminBillingCustomer.deleted": "Эта группа в корзине, но её подписка всё ещё списывает деньги. Отмените её.",
+  "AdminBillingCustomer.member":
+    "Вы владелец или участник этой группы, поэтому её оплатой занимается другой оператор.",
+  "AdminBillingCustomer.deleted":
+    "Эта группа в корзине, но её подписка всё ещё списывает деньги. Отмените её.",
   "AdminBillingCustomer.status": "Статус",
   "AdminBillingCustomer.plan": "Тариф",
   "AdminBillingCustomer.perMonth": "В месяц",
@@ -327,14 +342,16 @@
   "AdminBillingCustomer.group": "Группа",
   "AdminBillingCustomer.history": "История оплаты",
   "AdminBillingCustomer.nothingRecorded": "Ничего не записано.",
-  "AdminBillingCustomer.historyNote": "Только действия операторов. Счета, платежи и смены тарифа — в Stripe.",
+  "AdminBillingCustomer.historyNote":
+    "Только действия операторов. Счета, платежи и смены тарифа — в Stripe.",
   "AdminBillingCustomer.planLine": {
     "one": "{plan}, {count} участник",
     "few": "{plan}, {count} участника",
     "many": "{plan}, {count} участников",
-    "other": "{plan}, {count} участника"
+    "other": "{plan}, {count} участника",
   },
-  "AdminBillingCustomer.unknownPrice": "Неизвестная цена: Stripe выставляет цену, которой здесь не соответствует ни один тариф",
+  "AdminBillingCustomer.unknownPrice":
+    "Неизвестная цена: Stripe выставляет цену, которой здесь не соответствует ни один тариф",
   "AdminBillingCustomer.duringTrial": "{amount} во время пробного периода, {detail}",
   "AdminBillingCustomer.seatsTotal": "{detail} = {amount}",
   "AdminBillingCustomer.loadingLastPayment": "Загружаем последний платёж",
@@ -352,22 +369,29 @@
   "AdminBillingCustomer.by": "Оператор: {operator}.",
   "AdminBillingCustomer.byRemoved": "Оператор удалён.",
   "AdminBillingCustomer.note": "Заметка: {note}",
-  "AdminBillingCustomer.waiting": "Отправлено в Stripe, ждём подтверждения. Страница обновится, когда Stripe подтвердит, обычно в течение минуты.",
+  "AdminBillingCustomer.waiting":
+    "Отправлено в Stripe, ждём подтверждения. Страница обновится, когда Stripe подтвердит, обычно в течение минуты.",
   "AdminBillingCustomer.timedOut": "Stripe ещё не подтвердил. Проверьте клиента в Stripe.",
-  "AdminBillingCustomer.renewHint": "Владелец может продлить её в разделе «Управление оплатой» до конца периода.",
-  "AdminBillingCustomer.alreadyFree": "Группа <group>{group}</group> уже на бесплатном тарифе, списаний больше не будет.",
-  "AdminBillingCustomer.keepsUntilThen": "Группа <group>{group}</group> сохранит {plan} до этого дня, списаний больше не будет.",
-  "AdminBillingCustomer.keepsUntil": "Группа <group>{group}</group> сохранит {plan} до {date}, списаний больше не будет.",
+  "AdminBillingCustomer.renewHint":
+    "Владелец может продлить её в разделе «Управление оплатой» до конца периода.",
+  "AdminBillingCustomer.alreadyFree":
+    "Группа <group>{group}</group> уже на бесплатном тарифе, списаний больше не будет.",
+  "AdminBillingCustomer.keepsUntilThen":
+    "Группа <group>{group}</group> сохранит {plan} до этого дня, списаний больше не будет.",
+  "AdminBillingCustomer.keepsUntil":
+    "Группа <group>{group}</group> сохранит {plan} до {date}, списаний больше не будет.",
   "AdminBillingCustomer.itsPlanPrice": "цена её тарифа",
   "AdminBillingCustomer.refundTitle": "Вернуть {amount} группе {group}?",
   "AdminBillingCustomer.refundSubmit": "Вернуть {amount}",
   "AdminBillingCustomer.refunding": "Возвращаем…",
-  "AdminBillingCustomer.refundText": "Stripe вернёт {amount}, оплаченные {date}, на карту, с которой они пришли. Подписка продолжит работать; чтобы её остановить, отмените и её.",
+  "AdminBillingCustomer.refundText":
+    "Stripe вернёт {amount}, оплаченные {date}, на карту, с которой они пришли. Подписка продолжит работать; чтобы её остановить, отмените и её.",
   "AdminBillingCustomer.timeTitle": "Дать группе {group} время бесплатно",
   "AdminBillingCustomer.timeSubmit": "Дать {length} бесплатно",
   "AdminBillingCustomer.saving": "Сохраняем…",
   "AdminBillingCustomer.howLong": "На какой срок",
-  "AdminBillingCustomer.timeText": "Группа <group>{group}</group> сохранит {plan}, и до {date} ничего не спишется. После этого снова начнутся обычные списания: {charge} в месяц.",
+  "AdminBillingCustomer.timeText":
+    "Группа <group>{group}</group> сохранит {plan}, и до {date} ничего не спишется. После этого снова начнутся обычные списания: {charge} в месяц.",
   "AdminBillingCustomer.length7d": "7 дней",
   "AdminBillingCustomer.length14d": "14 дней",
   "AdminBillingCustomer.length30d": "30 дней",
@@ -382,14 +406,16 @@
   "AdminBillingCustomer.atPeriodEnd": "В конце периода",
   "AdminBillingCustomer.alreadySet": "Уже назначено на этот день.",
   "AdminBillingCustomer.now": "Сейчас",
-  "AdminBillingCustomer.nowHelp": "Группа {group} сразу перейдёт на бесплатный тариф. Текущий период не возвращается; при необходимости верните его отдельно. Владелец не получит уведомления.",
+  "AdminBillingCustomer.nowHelp":
+    "Группа {group} сразу перейдёт на бесплатный тариф. Текущий период не возвращается; при необходимости верните его отдельно. Владелец не получит уведомления.",
   "AdminBillingCustomer.undoTitle": "Сохранить подписку группы {group}?",
   "AdminBillingCustomer.undoSubmit": "Сохранить подписку",
   "AdminBillingCustomer.renewsOn": "{plan} продлится {date}, и, как обычно, спишется {charge}.",
   "AdminBillingCustomer.renews": "{plan} продлится, и, как обычно, спишется {charge}.",
   "AdminBillingCustomer.close": "Закрыть",
   "AdminBillingCustomer.noteLabel": "Заметка для журнала аудита (необязательно)",
-  "AdminBillingCustomer.noteHint": "Почему вы это сделали. Другие операторы увидят это в журнале аудита.",
+  "AdminBillingCustomer.noteHint":
+    "Почему вы это сделали. Другие операторы увидят это в журнале аудита.",
   "AdminBillingCustomer.resultUnknown": "Результат неизвестен",
   "AdminBlog.listError": "Не удалось загрузить записи. Попробуйте чуть позже.",
   "AdminBlog.subtitle": "Записи на публичном сайте, от черновика до публикации.",
@@ -407,7 +433,8 @@
   "AdminBlog.newPost": "Новая запись",
   "AdminBlog.title": "Блог",
   "AdminBlog.noPosts": "Записей пока нет",
-  "AdminBlog.noPostsHint": "Напишите первую запись. Она остаётся черновиком, пока вы её не опубликуете.",
+  "AdminBlog.noPostsHint":
+    "Напишите первую запись. Она остаётся черновиком, пока вы её не опубликуете.",
   "AdminBlog.search": "Заголовок или slug",
   "AdminBlog.searching": "Ищем…",
   "AdminBlog.submit": "Найти",
@@ -417,7 +444,7 @@
     "one": "{count} запись",
     "few": "{count} записи",
     "many": "{count} записей",
-    "other": "{count} записи"
+    "other": "{count} записи",
   },
   "AdminBlog.loading": "Загружаем записи",
   "AdminBlog.posts": "Записи",
@@ -435,10 +462,12 @@
   "AdminBlogDialogs.cancel": "Отмена",
   "AdminBlogDialogs.unscheduleTitle": "Снять с расписания «{title}»?",
   "AdminBlogDialogs.unschedule": "Снять с расписания",
-  "AdminBlogDialogs.unscheduleText": "Запись вернётся в черновики. Выбранная отправка рассылки тоже отменится.",
+  "AdminBlogDialogs.unscheduleText":
+    "Запись вернётся в черновики. Выбранная отправка рассылки тоже отменится.",
   "AdminBlogDialogs.unpublishTitle": "Снять с публикации «{title}»?",
   "AdminBlogDialogs.unpublish": "Снять с публикации",
-  "AdminBlogDialogs.unpublishText": "Запись пропадёт с сайта и из RSS-ленты, а её адрес перестанет работать. Уже отправленное письмо останется отправленным.",
+  "AdminBlogDialogs.unpublishText":
+    "Запись пропадёт с сайта и из RSS-ленты, а её адрес перестанет работать. Уже отправленное письмо останется отправленным.",
   "AdminBlogDialogs.deleteTitle": "Удалить «{title}»?",
   "AdminBlogDialogs.deletePost": "Удалить запись",
   "AdminBlogDialogs.deleteText": "Запись и её текст удаляются навсегда. Это нельзя отменить.",
@@ -455,7 +484,7 @@
     "one": "Опубликовать и отправить {count}",
     "few": "Опубликовать и отправить {count}",
     "many": "Опубликовать и отправить {count}",
-    "other": "Опубликовать и отправить {count}"
+    "other": "Опубликовать и отправить {count}",
   },
   "AdminBlogDialogs.publish": "Опубликовать",
   "AdminBlogDialogs.scheduleTitle": "Запланировать «{title}»",
@@ -465,22 +494,25 @@
   "AdminBlogDialogs.atATime": "В назначенное время",
   "AdminBlogDialogs.dateTime": "Дата и время",
   "AdminBlogDialogs.liveOnItsOwn": "Запись выйдет сама в это время.",
-  "AdminBlogDialogs.goesLiveAt": "Запись появится по адресу <path>{path}</path> и попадёт в RSS-ленту и карту сайта.",
+  "AdminBlogDialogs.goesLiveAt":
+    "Запись появится по адресу <path>{path}</path> и попадёт в RSS-ленту и карту сайта.",
   "AdminBlogDialogs.mailingList": "Список рассылки",
   "AdminBlogDialogs.alsoEmail": {
     "one": "Также отправить запись {count} подтверждённому подписчику",
     "few": "Также отправить запись {count} подтверждённым подписчикам",
     "many": "Также отправить запись {count} подтверждённым подписчикам",
-    "other": "Также отправить запись {count} подтверждённым подписчикам"
+    "other": "Также отправить запись {count} подтверждённым подписчикам",
   },
   "AdminBlogDialogs.alsoEmailList": {
     "one": "Также отправить запись {count} подтверждённому подписчику списка <list>{list}</list>",
     "few": "Также отправить запись {count} подтверждённым подписчикам списка <list>{list}</list>",
     "many": "Также отправить запись {count} подтверждённым подписчикам списка <list>{list}</list>",
-    "other": "Также отправить запись {count} подтверждённым подписчикам списка <list>{list}</list>"
+    "other": "Также отправить запись {count} подтверждённым подписчикам списка <list>{list}</list>",
   },
-  "AdminBlogDialogs.sentOnce": "Отправляется один раз, когда запись выходит. Отменить отправку нельзя.",
-  "AdminBlogDialogs.postLanguageOnly": "Письмо получат только подписчики, которые подписались на языке записи.",
+  "AdminBlogDialogs.sentOnce":
+    "Отправляется один раз, когда запись выходит. Отменить отправку нельзя.",
+  "AdminBlogDialogs.postLanguageOnly":
+    "Письмо получат только подписчики, которые подписались на языке записи.",
   "AdminBlogEditor.leaveMessage": "Ваши правки в этой записи пропадут.",
   "AdminBlogEditor.doneScheduled": "Запланировано на {at}.",
   "AdminBlogEditor.donePublished": "Опубликовано.",
@@ -498,7 +530,7 @@
     "one": "Уложитесь в {count} символ.",
     "few": "Уложитесь в {count} символа.",
     "many": "Уложитесь в {count} символов.",
-    "other": "Уложитесь в {count} символа."
+    "other": "Уложитесь в {count} символа.",
   },
   "AdminBlogEditor.httpsCover": "Ссылка должна начинаться с https://.",
   "AdminBlogEditor.describeCover": "Опишите обложку.",
@@ -529,7 +561,8 @@
   "AdminBlogEditor.editPost": "Редактирование записи",
   "AdminBlogEditor.newPost": "Новая запись",
   "AdminBlogEditor.conflictTitle": "Запись изменилась",
-  "AdminBlogEditor.conflictText": "Кто-то другой изменил эту запись. Перезагрузите, чтобы увидеть его версию.",
+  "AdminBlogEditor.conflictText":
+    "Кто-то другой изменил эту запись. Перезагрузите, чтобы увидеть его версию.",
   "AdminBlogEditor.reload": "Перезагрузить",
   "AdminBlogEditor.title": "Заголовок",
   "AdminBlogEditor.titleHint": "Показывается как заголовок страницы и в результатах поиска.",
@@ -541,7 +574,7 @@
     "one": "{count} слово · {minutes} мин чтения",
     "few": "{count} слова · {minutes} мин чтения",
     "many": "{count} слов · {minutes} мин чтения",
-    "other": "{count} слова · {minutes} мин чтения"
+    "other": "{count} слова · {minutes} мин чтения",
   },
   "AdminBlogEditor.previewError": "Не удалось построить предпросмотр. Попробуйте чуть позже.",
   "AdminBlogEditor.rendering": "Строим предпросмотр",
@@ -549,24 +582,29 @@
   "AdminBlogEditor.counter": "{length} из {shown}",
   "AdminBlogEditor.settings": "Настройки записи",
   "AdminBlogEditor.slug": "Slug",
-  "AdminBlogEditor.slugLocked": "Закреплён после публикации. «Изменить адрес…» ломает старые ссылки.",
+  "AdminBlogEditor.slugLocked":
+    "Закреплён после публикации. «Изменить адрес…» ломает старые ссылки.",
   "AdminBlogEditor.slugHint": "Адрес записи: <path>{path}</path>. Строчные буквы, цифры и дефисы.",
   "AdminBlogEditor.description": "Описание",
   "AdminBlogEditor.descriptionHint": "Одно-два предложения для результатов поиска и превью ссылок.",
   "AdminBlogEditor.seoTitle": "SEO-заголовок (необязательно)",
-  "AdminBlogEditor.seoTitleHint": "Показывается в результатах поиска вместо заголовка. Около 60 символов.",
+  "AdminBlogEditor.seoTitleHint":
+    "Показывается в результатах поиска вместо заголовка. Около 60 символов.",
   "AdminBlogEditor.keyPoints": "Главное",
   "AdminBlogEditor.keyPointsHint": "До 5 коротких строк вверху записи.",
   "AdminBlogEditor.keyPoint": "Пункт {n}",
   "AdminBlogEditor.removeKeyPoint": "Удалить пункт {n}",
   "AdminBlogEditor.addPoint": "Добавить пункт",
   "AdminBlogEditor.topic": "Тема",
-  "AdminBlogEditor.topicHint": "Группирует записи на странице блога. Выберите тему или введите новую.",
+  "AdminBlogEditor.topicHint":
+    "Группирует записи на странице блога. Выберите тему или введите новую.",
   "AdminBlogEditor.coverUrl": "URL обложки",
-  "AdminBlogEditor.coverUrlHint": "Полная ссылка https:// на широкое изображение 1200×630. Оставьте пустым, чтобы обойтись без обложки.",
+  "AdminBlogEditor.coverUrlHint":
+    "Полная ссылка https:// на широкое изображение 1200×630. Оставьте пустым, чтобы обойтись без обложки.",
   "AdminBlogEditor.coverAlt": "Описание обложки",
   "AdminBlogEditor.coverAltHint": "Что изображено, для тех, кто не может это увидеть.",
-  "AdminBlogEditor.coverPrivacy": "Изображение с другого сайта раскрывает этому сайту IP-адреса ваших читателей.",
+  "AdminBlogEditor.coverPrivacy":
+    "Изображение с другого сайта раскрывает этому сайту IP-адреса ваших читателей.",
   "AdminBlogEditor.publishing": "Публикация",
   "AdminBlogEditor.goesLive": "Выйдет {date}.",
   "AdminBlogEditor.publishedOn": "Опубликована {date}.",
@@ -575,10 +613,11 @@
     "one": "Отправлено {count} получателю {date}",
     "few": "Отправлено {count} получателям {date}",
     "many": "Отправлено {count} получателям {date}",
-    "other": "Отправлено {count} получателям {date}"
+    "other": "Отправлено {count} получателям {date}",
   },
   "AdminBlogEditor.willEmail": "Будет отправлена списку <list>{list}</list>, когда выйдет.",
-  "AdminBlogEditor.significant": "Существенное обновление: при следующем сохранении сегодняшняя дата станет датой обновления",
+  "AdminBlogEditor.significant":
+    "Существенное обновление: при следующем сохранении сегодняшняя дата станет датой обновления",
   "AdminCatalog.doneItemSaved": "Товар сохранён.",
   "AdminCatalog.doneDraftSaved": "Черновик сохранён. Добавьте фото, затем опубликуйте.",
   "AdminCatalog.doneItemDeleted": "Товар удалён.",
@@ -586,7 +625,7 @@
     "one": "Фото добавлено.",
     "few": "Фото добавлены.",
     "many": "Фото добавлены.",
-    "other": "Фото добавлены."
+    "other": "Фото добавлены.",
   },
   "AdminCatalog.doneCover": "Обложка изменена.",
   "AdminCatalog.donePhotoSaved": "Фото сохранено.",
@@ -608,15 +647,17 @@
   "AdminCatalog.retry": "Повторить",
   "AdminCatalog.loading": "Загрузка каталога",
   "AdminCatalog.startTitle": "Начните с категории",
-  "AdminCatalog.startText": "Каждый товар на сайте лежит в категории, например «Футболки» или «Худи». Добавьте категорию, затем товары в неё.",
+  "AdminCatalog.startText":
+    "Каждый товар на сайте лежит в категории, например «Футболки» или «Худи». Добавьте категорию, затем товары в неё.",
   "AdminCatalog.addCategory": "Добавить категорию",
   "AdminCatalog.emptyTitle": "Товаров пока нет",
-  "AdminCatalog.emptyText": "Добавьте товар с фото, цветами и размерами. Он остаётся черновиком, пока вы его не опубликуете.",
+  "AdminCatalog.emptyText":
+    "Добавьте товар с фото, цветами и размерами. Он остаётся черновиком, пока вы его не опубликуете.",
   "AdminCatalog.count": {
     "one": "{count} товар",
     "few": "{count} товара",
     "many": "{count} товаров",
-    "other": "{count} товара"
+    "other": "{count} товара",
   },
   "AdminCatalog.search": "Название, адрес или категория",
   "AdminCatalog.status": "Статус",
@@ -634,7 +675,7 @@
     "one": "{count} фото",
     "few": "{count} фото",
     "many": "{count} фото",
-    "other": "{count} фото"
+    "other": "{count} фото",
   },
   "AdminCatalog.donePublished": "Опубликовано. Сайт покажет товар в течение минуты.",
   "AdminCatalog.doneHidden": "Скрыто. Сайт перестанет показывать товар в течение минуты.",
@@ -651,12 +692,13 @@
   "AdminCatalogCategories.subtitle": "Сайт показывает товары в этих группах и в этом порядке.",
   "AdminCatalogCategories.loading": "Загрузка категорий",
   "AdminCatalogCategories.emptyTitle": "Категорий пока нет",
-  "AdminCatalogCategories.emptyText": "Добавьте группы для товаров, например «Футболки», «Худи» или «Аксессуары».",
+  "AdminCatalogCategories.emptyText":
+    "Добавьте группы для товаров, например «Футболки», «Худи» или «Аксессуары».",
   "AdminCatalogCategories.items": {
     "one": "{count} товар",
     "few": "{count} товара",
     "many": "{count} товаров",
-    "other": "{count} товара"
+    "other": "{count} товара",
   },
   "AdminCatalogCategories.actionsFor": "Действия с «{name}»",
   "AdminCatalogCategories.edit": "Изменить категорию",
@@ -678,7 +720,8 @@
   "AdminCatalogCategory.nameInOptional": "Название ({language}, необязательно)",
   "AdminCatalogCategory.nameHint": "Показывается, когда у текста нет перевода.",
   "AdminCatalogCategory.slug": "Адрес",
-  "AdminCatalogCategory.slugHint": "Часть адреса на сайте: строчные латинские буквы, цифры и дефисы.",
+  "AdminCatalogCategory.slugHint":
+    "Часть адреса на сайте: строчные латинские буквы, цифры и дефисы.",
   "AdminCatalogCategory.cancel": "Отмена",
   "AdminCatalogCategory.saving": "Сохранение…",
   "AdminCatalogCategory.save": "Сохранить категорию",
@@ -705,24 +748,30 @@
   "AdminCatalogItem.categoryHint": "Товар попадает на сайт, только если у него есть категория.",
   "AdminCatalogItem.noCategory": "Без категории",
   "AdminCatalogItem.slug": "Адрес",
-  "AdminCatalogItem.slugHint": "Часть адреса на сайте. Повторяет название, пока вы его не измените.",
+  "AdminCatalogItem.slugHint":
+    "Часть адреса на сайте. Повторяет название, пока вы его не измените.",
   "AdminCatalogItem.photos": "Фото",
   "AdminCatalogItem.photosLater": "Сначала сохраните черновик, потом добавьте сюда фото.",
   "AdminCatalogItem.cancel": "Отмена",
   "AdminCatalogItem.publishTitle": "Опубликовать «{name}»?",
-  "AdminCatalogItem.publishText": "Сначала сохранятся ваши изменения, потом сайт покажет товар в его категории.",
-  "AdminCatalogItem.publishNoCategory": "Сначала выберите категорию: сайт показывает товары только в категориях.",
+  "AdminCatalogItem.publishText":
+    "Сначала сохранятся ваши изменения, потом сайт покажет товар в его категории.",
+  "AdminCatalogItem.publishNoCategory":
+    "Сначала выберите категорию: сайт показывает товары только в категориях.",
   "AdminCatalogItem.publishConfirm": "Опубликовать",
   "AdminCatalogItem.hideTitle": "Скрыть «{name}»?",
-  "AdminCatalogItem.hideText": "Сайт перестанет показывать товар в течение минуты. Его можно опубликовать снова.",
+  "AdminCatalogItem.hideText":
+    "Сайт перестанет показывать товар в течение минуты. Его можно опубликовать снова.",
   "AdminCatalogItem.hideConfirm": "Скрыть",
   "AdminCatalogItem.deleteTitle": "Удалить «{name}»?",
   "AdminCatalogItem.deleteText": "Его фото тоже удалятся. Это нельзя отменить.",
   "AdminCatalogItem.deleteConfirm": "Удалить товар",
   "AdminCatalogItem.shareLinks": "Ссылки для публикации",
   "AdminCatalogItem.editSources": "Изменить источники",
-  "AdminCatalogItem.sourcesEmpty": "Добавьте места, где вы делитесь товарами, например группу в Facebook или в Zalo. У каждого будет своя ссылка на этот товар, и вы увидите, откуда приходят посетители.",
-  "AdminCatalogItem.sourcesText": "Делитесь в каждом месте его собственной ссылкой, чтобы видеть, откуда приходят посетители.",
+  "AdminCatalogItem.sourcesEmpty":
+    "Добавьте места, где вы делитесь товарами, например группу в Facebook или в Zalo. У каждого будет своя ссылка на этот товар, и вы увидите, откуда приходят посетители.",
+  "AdminCatalogItem.sourcesText":
+    "Делитесь в каждом месте его собственной ссылкой, чтобы видеть, откуда приходят посетители.",
   "AdminCatalogItem.linksOpenLater": "Ссылки заработают, когда товар появится на сайте.",
   "AdminCatalogItem.addSource": "Добавить источник",
   "AdminCatalogItem.noLinkYet": "Ссылки пока нет · utm_source={source}",
@@ -754,7 +803,8 @@
   "AdminCatalogItem.remove": "Убрать <name>{name}</name>",
   "AdminCatalogItem.sizes": "Размеры",
   "AdminCatalogItem.addSize": "Добавить размер",
-  "AdminCatalogItem.sizesHint": "От меньшего к большему. Укажите для размера подходящие рост и вес, и сайт подскажет покупателю размер по его росту и весу.",
+  "AdminCatalogItem.sizesHint":
+    "От меньшего к большему. Укажите для размера подходящие рост и вес, и сайт подскажет покупателю размер по его росту и весу.",
   "AdminCatalogItem.sizeNumber": "Размер {number}",
   "AdminCatalogItem.size": "Размер",
   "AdminCatalogItem.heightFrom": "Рост от, см",
@@ -766,15 +816,18 @@
   "AdminCatalogItem.unnamedSize": "Размер без названия",
   "AdminCatalogItem.inStockColumn": "В наличии",
   "AdminCatalogItem.inStock": "В наличии",
-  "AdminCatalogItem.stockHint": "Снимите отметку с того, что распродано. Сайт покажет это, а товар, где ничего не осталось, — как распроданный.",
+  "AdminCatalogItem.stockHint":
+    "Снимите отметку с того, что распродано. Сайт покажет это, а товар, где ничего не осталось, — как распроданный.",
   "AdminCatalogItem.inStockLabel": "{colour}, {size}: в наличии",
   "AdminCatalogItem.preparing": "Подготовка…",
-  "AdminCatalogItem.refused": "Этот файл не удалось прочитать как изображение. Уберите его и загрузите другой.",
+  "AdminCatalogItem.refused":
+    "Этот файл не удалось прочитать как изображение. Уберите его и загрузите другой.",
   "AdminCatalogItem.coverLabel": "Фото {number}, обложка",
   "AdminCatalogItem.photoNumber": "Фото {number}",
   "AdminCatalogItem.addPhotos": "Добавить фото",
   "AdminCatalogItem.uploading": "Загрузка: {count}…",
-  "AdminCatalogItem.photosRule": "JPEG, PNG, WebP или HEIC, до {size} МБ каждое, не больше {count}. Перетаскивайте, чтобы изменить порядок: первое фото — обложка.",
+  "AdminCatalogItem.photosRule":
+    "JPEG, PNG, WebP или HEIC, до {size} МБ каждое, не больше {count}. Перетаскивайте, чтобы изменить порядок: первое фото — обложка.",
   "AdminCatalogItem.cover": "Обложка",
   "AdminCatalogItem.openPhoto": "Открыть в полном размере: {photo}",
   "AdminCatalogItem.noDescription": "Описания пока нет",
@@ -790,7 +843,8 @@
   "AdminCatalogItem.savePhoto": "Сохранить фото",
   "AdminCatalogItem.alt": "Что на фото",
   "AdminCatalogItem.altIn": "Что на фото, на языке: {language}",
-  "AdminCatalogItem.altHint": "Для тех, кто не видит фото, например: «Коричневое худи, вид спереди, на вешалке».",
+  "AdminCatalogItem.altHint":
+    "Для тех, кто не видит фото, например: «Коричневое худи, вид спереди, на вешалке».",
   "AdminCatalogItem.photoColour": "Цвет на фото",
   "AdminCatalogItem.photoWrongType": "{file} — не фото в формате JPEG, PNG, WebP или HEIC.",
   "AdminCatalogItem.photoTooLarge": "{file} больше {size} МБ.",
@@ -798,7 +852,7 @@
     "one": "{file} не добавлено: у товара может быть не больше {count} фото.",
     "few": "{file} не добавлено: у товара может быть не больше {count} фото.",
     "many": "{file} не добавлено: у товара может быть не больше {count} фото.",
-    "other": "{file} не добавлено: у товара может быть не больше {count} фото."
+    "other": "{file} не добавлено: у товара может быть не больше {count} фото.",
   },
   "AdminCatalogSource.back": "Назад к источникам",
   "AdminCatalogSource.title": "Источник",
@@ -809,29 +863,33 @@
   "AdminCatalogSource.name": "Название",
   "AdminCatalogSource.nameHint": "Где вы делитесь, например «Группа Zalo A». Его видите только вы.",
   "AdminCatalogSource.slug": "Метка источника",
-  "AdminCatalogSource.slugHint": "Umami показывает визиты под ней как utm_source: строчные латинские буквы, цифры и дефисы. Она повторяет название, пока вы её не измените.",
+  "AdminCatalogSource.slugHint":
+    "Umami показывает визиты под ней как utm_source: строчные латинские буквы, цифры и дефисы. Она повторяет название, пока вы её не измените.",
   "AdminCatalogSource.linksNote": {
     "one": "Его {count} ссылка сохранит адрес; новая метка действует со следующего визита.",
     "few": "Его {count} ссылки сохранят адреса; новая метка действует со следующего визита.",
     "many": "Его {count} ссылок сохранят адреса; новая метка действует со следующего визита.",
-    "other": "Его {count} ссылки сохранят адреса; новая метка действует со следующего визита."
+    "other": "Его {count} ссылки сохранят адреса; новая метка действует со следующего визита.",
   },
   "AdminCatalogSource.cancel": "Отмена",
   "AdminCatalogSource.saving": "Сохранение…",
   "AdminCatalogSource.save": "Сохранить источник",
-  "AdminCatalogSources.trackingOff": "Для ссылок нужен адрес сайта. Укажите MPA_DOMAIN в env-файле сервера и выполните деплой.",
+  "AdminCatalogSources.trackingOff":
+    "Для ссылок нужен адрес сайта. Укажите MPA_DOMAIN в env-файле сервера и выполните деплой.",
   "AdminCatalogSources.back": "Назад к каталогу",
   "AdminCatalogSources.title": "Источники",
-  "AdminCatalogSources.subtitle": "У каждого места, где вы делитесь товарами, своя ссылка — так видно, откуда приходят посетители.",
+  "AdminCatalogSources.subtitle":
+    "У каждого места, где вы делитесь товарами, своя ссылка — так видно, откуда приходят посетители.",
   "AdminCatalogSources.add": "Добавить источник",
   "AdminCatalogSources.loading": "Загрузка источников",
   "AdminCatalogSources.emptyTitle": "Источников пока нет",
-  "AdminCatalogSources.emptyText": "Добавьте места, где вы делитесь товарами, например группу в Facebook, группу в Zalo или Instagram.",
+  "AdminCatalogSources.emptyText":
+    "Добавьте места, где вы делитесь товарами, например группу в Facebook, группу в Zalo или Instagram.",
   "AdminCatalogSources.links": {
     "one": "{count} ссылка",
     "few": "{count} ссылки",
     "many": "{count} ссылок",
-    "other": "{count} ссылки"
+    "other": "{count} ссылки",
   },
   "AdminCatalogSources.actionsFor": "Действия с «{name}»",
   "AdminCatalogSources.edit": "Изменить источник",
@@ -841,10 +899,14 @@
   "AdminCatalogSources.deleteTitle": "Удалить «{name}»?",
   "AdminCatalogSources.deleteNoLinks": "Ссылок с этим источником у товаров пока нет.",
   "AdminCatalogSources.deleteLinks": {
-    "one": "Его {count} ссылка перестанет работать: любой, кто её откроет, увидит «Страница не найдена». Это нельзя отменить.",
-    "few": "Его {count} ссылки перестанут работать: любой, кто откроет одну из них, увидит «Страница не найдена». Это нельзя отменить.",
-    "many": "Его {count} ссылок перестанут работать: любой, кто откроет одну из них, увидит «Страница не найдена». Это нельзя отменить.",
-    "other": "Его {count} ссылки перестанут работать: любой, кто откроет одну из них, увидит «Страница не найдена». Это нельзя отменить."
+    "one":
+      "Его {count} ссылка перестанет работать: любой, кто её откроет, увидит «Страница не найдена». Это нельзя отменить.",
+    "few":
+      "Его {count} ссылки перестанут работать: любой, кто откроет одну из них, увидит «Страница не найдена». Это нельзя отменить.",
+    "many":
+      "Его {count} ссылок перестанут работать: любой, кто откроет одну из них, увидит «Страница не найдена». Это нельзя отменить.",
+    "other":
+      "Его {count} ссылки перестанут работать: любой, кто откроет одну из них, увидит «Страница не найдена». Это нельзя отменить.",
   },
   "AdminCatalogSources.delete": "Удалить источник",
   "AdminCatalogSources.cancel": "Отмена",
@@ -858,20 +920,23 @@
   "AdminContactLinks.email": "Адрес электронной почты",
   "AdminContactLinks.address": "Адрес",
   "AdminContactLinks.title": "Контактные ссылки",
-  "AdminContactLinks.subtitle": "Где с вами можно связаться. Подвал сайта показывает их в этом порядке.",
+  "AdminContactLinks.subtitle":
+    "Где с вами можно связаться. Подвал сайта показывает их в этом порядке.",
   "AdminContactLinks.listError": "Не удалось загрузить контактные ссылки. Попробуйте чуть позже.",
   "AdminContactLinks.addLink": "Добавить ссылку",
   "AdminContactLinks.retry": "Попробовать снова",
   "AdminContactLinks.loading": "Загружаем контактные ссылки",
   "AdminContactLinks.none": "Контактных ссылок пока нет",
-  "AdminContactLinks.noneHint": "Добавьте Telegram, Zalo, номер телефона или адрес почты. Подвал сайта покажет их.",
+  "AdminContactLinks.noneHint":
+    "Добавьте Telegram, Zalo, номер телефона или адрес почты. Подвал сайта покажет их.",
   "AdminContactLinks.actionsFor": "Действия для {name}",
   "AdminContactLinks.edit": "Изменить ссылку",
   "AdminContactLinks.moveUp": "Выше",
   "AdminContactLinks.moveDown": "Ниже",
   "AdminContactLinks.remove": "Удалить ссылку",
   "AdminContactLinks.removeTitle": "Удалить «{name}»?",
-  "AdminContactLinks.removeText": "Сайт перестанет показывать эту ссылку ({kind}) в течение минуты.",
+  "AdminContactLinks.removeText":
+    "Сайт перестанет показывать эту ссылку ({kind}) в течение минуты.",
   "AdminContactLinks.cancel": "Отмена",
   "AdminContactLinks.back": "Назад к контактным ссылкам",
   "AdminContactLinks.link": "Контактная ссылка",
@@ -891,7 +956,7 @@
     "one": "Продукт в цифрах за последний {count} день.",
     "few": "Продукт в цифрах за последние {count} дня.",
     "many": "Продукт в цифрах за последние {count} дней.",
-    "other": "Продукт в цифрах за последние {count} дня."
+    "other": "Продукт в цифрах за последние {count} дня.",
   },
   "AdminDashboard.retry": "Попробовать ещё раз",
   "AdminDashboard.loading": "Загружаем цифры",
@@ -901,7 +966,7 @@
     "one": "{count} заблокирован",
     "few": "{count} заблокированы",
     "many": "{count} заблокированы",
-    "other": "{count} заблокированы"
+    "other": "{count} заблокированы",
   },
   "AdminDashboard.newThisWeek": "Новые за неделю",
   "AdminDashboard.activeToday": "Активны сегодня",
@@ -914,7 +979,7 @@
     "one": "предыдущий {count} день",
     "few": "предыдущие {count} дня",
     "many": "предыдущие {count} дней",
-    "other": "предыдущие {count} дня"
+    "other": "предыдущие {count} дня",
   },
   "AdminDashboard.yesterday": "вчера",
   "AdminDashboard.signUpsTitle": "Регистрации по дням",
@@ -923,7 +988,7 @@
     "one": "{total} за {count} день",
     "few": "{total} за {count} дня",
     "many": "{total} за {count} дней",
-    "other": "{total} за {count} дня"
+    "other": "{total} за {count} дня",
   },
   "AdminDashboard.activeTitle": "Активные люди по дням",
   "AdminDashboard.activeSeries": "Активные люди",
@@ -932,14 +997,14 @@
     "one": "{title}, последний {count} день",
     "few": "{title}, последние {count} дня",
     "many": "{title}, последние {count} дней",
-    "other": "{title}, последние {count} дня"
+    "other": "{title}, последние {count} дня",
   },
   "AdminDashboard.nothingYet": "Пока ничего",
   "AdminDashboard.guestsTitle": {
     "one": "Гостевые аккаунты, последний {count} день",
     "few": "Гостевые аккаунты, последние {count} дня",
     "many": "Гостевые аккаунты, последние {count} дней",
-    "other": "Гостевые аккаунты, последние {count} дня"
+    "other": "Гостевые аккаунты, последние {count} дня",
   },
   "AdminDashboard.started": "Начаты",
   "AdminDashboard.kept": "Сохранены",
@@ -952,39 +1017,48 @@
     "one": "За последний {count} день",
     "few": "За последние {count} дня",
     "many": "За последние {count} дней",
-    "other": "За последние {count} дня"
+    "other": "За последние {count} дня",
   },
   "AdminStats.subtitleUpdated": {
     "one": "За последний {count} день · обновлено {ago}",
     "few": "За последние {count} дня · обновлено {ago}",
     "many": "За последние {count} дней · обновлено {ago}",
-    "other": "За последние {count} дня · обновлено {ago}"
+    "other": "За последние {count} дня · обновлено {ago}",
   },
   "AdminStats.period": "Период",
   "AdminStats.periodDays": {
     "one": "{count} день",
     "few": "{count} дня",
     "many": "{count} дней",
-    "other": "{count} дня"
+    "other": "{count} дня",
   },
   "AdminStats.refresh": "Обновить цифры",
   "AdminStats.openUmami": "Открыть в Umami",
   "AdminStats.editSources": "Изменить источники",
-  "AdminStats.loadError": "Не удалось загрузить статистику. Проверьте подключение и попробуйте ещё раз.",
+  "AdminStats.loadError":
+    "Не удалось загрузить статистику. Проверьте подключение и попробуйте ещё раз.",
   "AdminStats.tryAgain": "Попробовать ещё раз",
   "AdminStats.problemTitle": "Статистику не удаётся показать",
-  "AdminStats.tokenRefused": "Umami не принял токен из UMAMI_API_TOKEN. Создайте в Umami новый токен, впишите его в env-файл сервера и сделайте деплой.",
-  "AdminStats.unknownWebsite": "В Umami нет сайта с id из MPA_UMAMI_WEBSITE_ID. Скопируйте id из настроек сайта в Umami.",
-  "AdminStats.unreachable": "Umami не отвечает, поэтому цифры не показать. Попробуйте ещё раз через несколько минут. Если это повторяется, проверьте, что Umami запущен.",
+  "AdminStats.tokenRefused":
+    "Umami не принял токен из UMAMI_API_TOKEN. Создайте в Umami новый токен, впишите его в env-файл сервера и сделайте деплой.",
+  "AdminStats.unknownWebsite":
+    "В Umami нет сайта с id из MPA_UMAMI_WEBSITE_ID. Скопируйте id из настроек сайта в Umami.",
+  "AdminStats.unreachable":
+    "Umami не отвечает, поэтому цифры не показать. Попробуйте ещё раз через несколько минут. Если это повторяется, проверьте, что Umami запущен.",
   "AdminStats.stale": "Показаны цифры на {time}. Umami сейчас не отвечает.",
   "AdminStats.loading": "Загружаем статистику",
   "AdminStats.offTitle": "Статистика выключена",
-  "AdminStats.offText": "Статистика берётся из вашего Umami. Чтобы включить её, задайте UMAMI_API_URL, UMAMI_API_TOKEN и MPA_UMAMI_WEBSITE_ID в env-файле сервера и сделайте деплой.",
+  "AdminStats.offText":
+    "Статистика берётся из вашего Umami. Чтобы включить её, задайте UMAMI_API_URL, UMAMI_API_TOKEN и MPA_UMAMI_WEBSITE_ID в env-файле сервера и сделайте деплой.",
   "AdminStats.offSome": {
-    "one": "Статистике нужны все три настройки. Не хватает: {missing}. Добавьте её в env-файл сервера и сделайте деплой.",
-    "few": "Статистике нужны все три настройки. Не хватает: {missing}. Добавьте их в env-файл сервера и сделайте деплой.",
-    "many": "Статистике нужны все три настройки. Не хватает: {missing}. Добавьте их в env-файл сервера и сделайте деплой.",
-    "other": "Статистике нужны все три настройки. Не хватает: {missing}. Добавьте их в env-файл сервера и сделайте деплой."
+    "one":
+      "Статистике нужны все три настройки. Не хватает: {missing}. Добавьте её в env-файл сервера и сделайте деплой.",
+    "few":
+      "Статистике нужны все три настройки. Не хватает: {missing}. Добавьте их в env-файл сервера и сделайте деплой.",
+    "many":
+      "Статистике нужны все три настройки. Не хватает: {missing}. Добавьте их в env-файл сервера и сделайте деплой.",
+    "other":
+      "Статистике нужны все три настройки. Не хватает: {missing}. Добавьте их в env-файл сервера и сделайте деплой.",
   },
   "AdminStats.readSetup": "Как включить статистику",
   "AdminStats.newTab": "{label} (откроется в новой вкладке)",
@@ -992,10 +1066,11 @@
     "one": "{change} п. п. по сравнению с предыдущим {count} днём",
     "few": "{change} п. п. по сравнению с предыдущими {count} днями",
     "many": "{change} п. п. по сравнению с предыдущими {count} днями",
-    "other": "{change} п. п. по сравнению с предыдущими {count} днями"
+    "other": "{change} п. п. по сравнению с предыдущими {count} днями",
   },
   "AdminStats.noVisitsTitle": "Посещений пока нет",
-  "AdminStats.noVisitsText": "Посещения появятся здесь, когда люди откроют сайт. Поделитесь ссылкой на товар с его страницы, чтобы увидеть, какой источник их приводит.",
+  "AdminStats.noVisitsText":
+    "Посещения появятся здесь, когда люди откроют сайт. Поделитесь ссылкой на товар с его страницы, чтобы увидеть, какой источник их приводит.",
   "AdminStats.openCatalog": "Открыть каталог",
   "AdminStats.fewVisits": "Посещений пока мало, поэтому доли могут сильно меняться.",
   "AdminStats.keyNumbers": "Главные цифры",
@@ -1003,55 +1078,64 @@
   "AdminStats.orderClicks": "Нажатия «Заказать»",
   "AdminStats.orderRate": "Доля заказов",
   "AdminStats.orderRateHint": "Нажатия «Заказать» на 100 посещений",
-  "AdminStats.orderClickMeans": "Нажатие «Заказать» — это нажатие на кнопку заказа через {channels}. Сам заказ происходит в чате.",
-  "AdminStats.orderClickMeansAny": "Нажатие «Заказать» — это нажатие на кнопку заказа. Сам заказ происходит в чате.",
+  "AdminStats.orderClickMeans":
+    "Нажатие «Заказать» — это нажатие на кнопку заказа через {channels}. Сам заказ происходит в чате.",
+  "AdminStats.orderClickMeansAny":
+    "Нажатие «Заказать» — это нажатие на кнопку заказа. Сам заказ происходит в чате.",
   "AdminStats.sourcesTitle": "Откуда приходят посещения",
-  "AdminStats.sourcesIntro": "Сначала источники с наибольшим числом нажатий «Заказать». Выберите источник, чтобы увидеть его на графике.",
+  "AdminStats.sourcesIntro":
+    "Сначала источники с наибольшим числом нажатий «Заказать». Выберите источник, чтобы увидеть его на графике.",
   "AdminStats.sourcesLabel": {
     "one": "Посещения по источникам за последний {count} день",
     "few": "Посещения по источникам за последние {count} дня",
     "many": "Посещения по источникам за последние {count} дней",
-    "other": "Посещения по источникам за последние {count} дня"
+    "other": "Посещения по источникам за последние {count} дня",
   },
   "AdminStats.source": "Источник",
   "AdminStats.noSource": "Без источника",
   "AdminStats.noSourceHint": "Ввели адрес вручную или пришли по ссылке без источника.",
-  "AdminStats.noSources": "Источников пока нет. Добавьте места, где вы делитесь товарами, например группу в Facebook, а затем делитесь ссылкой каждого товара.",
+  "AdminStats.noSources":
+    "Источников пока нет. Добавьте места, где вы делитесь товарами, например группу в Facebook, а затем делитесь ссылкой каждого товара.",
   "AdminStats.sourcesQuiet": {
-    "one": "За последний {count} день из ваших источников посещений не было. Поделитесь ссылкой на товар с его страницы, чтобы начать.",
-    "few": "За последние {count} дня из ваших источников посещений не было. Поделитесь ссылкой на товар с его страницы, чтобы начать.",
-    "many": "За последние {count} дней из ваших источников посещений не было. Поделитесь ссылкой на товар с его страницы, чтобы начать.",
-    "other": "За последние {count} дня из ваших источников посещений не было. Поделитесь ссылкой на товар с его страницы, чтобы начать."
+    "one":
+      "За последний {count} день из ваших источников посещений не было. Поделитесь ссылкой на товар с его страницы, чтобы начать.",
+    "few":
+      "За последние {count} дня из ваших источников посещений не было. Поделитесь ссылкой на товар с его страницы, чтобы начать.",
+    "many":
+      "За последние {count} дней из ваших источников посещений не было. Поделитесь ссылкой на товар с его страницы, чтобы начать.",
+    "other":
+      "За последние {count} дня из ваших источников посещений не было. Поделитесь ссылкой на товар с его страницы, чтобы начать.",
   },
   "AdminStats.channelsTitle": "Канал заказа",
   "AdminStats.channelsLabel": {
     "one": "Нажатия «Заказать» по каналам за последний {count} день",
     "few": "Нажатия «Заказать» по каналам за последние {count} дня",
     "many": "Нажатия «Заказать» по каналам за последние {count} дней",
-    "other": "Нажатия «Заказать» по каналам за последние {count} дня"
+    "other": "Нажатия «Заказать» по каналам за последние {count} дня",
   },
   "AdminStats.noOrderClicks": "Нажатий «Заказать» пока нет.",
-  "AdminStats.limits": "Некоторые посетители блокируют трекеры, поэтому настоящие цифры немного выше. Нажатия «Заказать» у источника считаются только на странице, которую открыла его ссылка.",
+  "AdminStats.limits":
+    "Некоторые посетители блокируют трекеры, поэтому настоящие цифры немного выше. Нажатия «Заказать» у источника считаются только на странице, которую открыла его ссылка.",
   "AdminStats.chartTitle": "Посещения по дням",
   "AdminStats.chartTitleWeekly": "Посещения по неделям",
   "AdminStats.chartSummary": {
     "one": "{total} посещ. за {count} день",
     "few": "{total} посещ. за {count} дня",
     "many": "{total} посещ. за {count} дней",
-    "other": "{total} посещ. за {count} дня"
+    "other": "{total} посещ. за {count} дня",
   },
   "AdminStats.allSources": "Все источники",
   "AdminStats.previousSeries": {
     "one": "Предыдущий {count} день",
     "few": "Предыдущие {count} дня",
     "many": "Предыдущие {count} дней",
-    "other": "Предыдущие {count} дня"
+    "other": "Предыдущие {count} дня",
   },
   "AdminStats.chartLabel": {
     "one": "Посещения за последний {count} день",
     "few": "Посещения за последние {count} дня",
     "many": "Посещения за последние {count} дней",
-    "other": "Посещения за последние {count} дня"
+    "other": "Посещения за последние {count} дня",
   },
   "AdminStats.mostlyFrom": "в основном {source}",
   "AdminStats.itemsTitle": "Товары",
@@ -1065,13 +1149,17 @@
     "one": "За последний {count} день товары никто не смотрел.",
     "few": "За последние {count} дня товары никто не смотрел.",
     "many": "За последние {count} дней товары никто не смотрел.",
-    "other": "За последние {count} дня товары никто не смотрел."
+    "other": "За последние {count} дня товары никто не смотрел.",
   },
   "AdminStats.notOrderedIntro": {
-    "one": "Товары, у которых не меньше {count} просмотр и ни одного нажатия «Заказать», сначала самые просматриваемые.",
-    "few": "Товары, у которых не меньше {count} просмотра и ни одного нажатия «Заказать», сначала самые просматриваемые.",
-    "many": "Товары, у которых не меньше {count} просмотров и ни одного нажатия «Заказать», сначала самые просматриваемые.",
-    "other": "Товары, у которых не меньше {count} просмотра и ни одного нажатия «Заказать», сначала самые просматриваемые."
+    "one":
+      "Товары, у которых не меньше {count} просмотр и ни одного нажатия «Заказать», сначала самые просматриваемые.",
+    "few":
+      "Товары, у которых не меньше {count} просмотра и ни одного нажатия «Заказать», сначала самые просматриваемые.",
+    "many":
+      "Товары, у которых не меньше {count} просмотров и ни одного нажатия «Заказать», сначала самые просматриваемые.",
+    "other":
+      "Товары, у которых не меньше {count} просмотра и ни одного нажатия «Заказать», сначала самые просматриваемые.",
   },
   "AdminDataExports.loading": "Загружаем выгрузки данных",
   "AdminDataExports.empty": "Выгрузок данных нет.",
@@ -1088,13 +1176,15 @@
   "AdminFrame.signOut": "Выйти",
   "AdminFrame.comingSoon": "Раздел «{title}» скоро появится",
   "AdminFrame.noAccess": "Нет доступа",
-  "AdminFrame.noAccessDescription": "Эта учётная запись не принадлежит оператору. Выйдите и войдите с учётной записью оператора.",
+  "AdminFrame.noAccessDescription":
+    "Эта учётная запись не принадлежит оператору. Выйдите и войдите с учётной записью оператора.",
   "AdminFrame.noAccessHint": "Роль выдаёт администратор командой <code>{command}</code>.",
   "AdminFrame.comingSoonBadge": "Скоро",
   "AdminFrame.signInTitle": "Вход для операторов",
   "AdminFrame.signInText": "Для операторов этого продукта. Войдите с адресом почты и паролем.",
   "AdminFrame.codeTitle": "Введите код",
-  "AdminFrame.codeText": "Откройте приложение-аутентификатор и введите шесть цифр, которые оно показывает.",
+  "AdminFrame.codeText":
+    "Откройте приложение-аутентификатор и введите шесть цифр, которые оно показывает.",
   "AdminFrame.login": "Почта или имя пользователя",
   "AdminFrame.continue": "Продолжить",
   "AdminFrame.codeHint": "Шесть цифр из приложения-аутентификатора.",
@@ -1140,7 +1230,8 @@
   "AdminGroup.noSubscription": "Нет подписки",
   "AdminGroup.billing": "Оплата",
   "AdminGroup.openCustomer": "Открыть клиента",
-  "AdminGroup.deletedNotice": "В корзине с <when></when>. В ней ничего не меняется, пока владелец её не восстановит.",
+  "AdminGroup.deletedNotice":
+    "В корзине с <when></when>. В ней ничего не меняется, пока владелец её не восстановит.",
   "AdminGroup.about": "Об этой группе",
   "AdminGroup.noMembers": "Нет участников.",
   "AdminGroup.blocked": "Заблокирован",
@@ -1151,7 +1242,8 @@
   "AdminGroup.anyoneLink": "Ссылка для всех",
   "AdminGroup.noInvitations": "Нет приглашений.",
   "AdminGroup.invitedBy": "От {name}, <when></when> · использовано {uses} из {max}",
-  "AdminGroup.invitedByDeleted": "От удалённого аккаунта, <when></when> · использовано {uses} из {max}",
+  "AdminGroup.invitedByDeleted":
+    "От удалённого аккаунта, <when></when> · использовано {uses} из {max}",
   "AdminGroup.expires": "Истекает <when></when>",
   "AdminGroup.invitationActions": "Действия для приглашения {title}",
   "AdminGroup.revokeInvitation": "Отозвать приглашение",
@@ -1164,13 +1256,13 @@
     "one": "{count} файл",
     "few": "{count} файла",
     "many": "{count} файлов",
-    "other": "{count} файла"
+    "other": "{count} файла",
   },
   "AdminGroup.usageFilesOf": {
     "one": "{files} из {count} файла",
     "few": "{files} из {count} файлов",
     "many": "{files} из {count} файлов",
-    "other": "{files} из {count} файлов"
+    "other": "{files} из {count} файлов",
   },
   "AdminGroup.usageBytesOf": "{used} из {max}",
   "AdminGroup.deletedAccount": "Удалённый аккаунт",
@@ -1182,13 +1274,13 @@
     "one": "{count} файл",
     "few": "{count} файла",
     "many": "{count} файлов",
-    "other": "{count} файла"
+    "other": "{count} файла",
   },
   "AdminGroup.filesMatch": {
     "one": "{count} файл подходит под «{query}»",
     "few": "{count} файла подходят под «{query}»",
     "many": "{count} файлов подходят под «{query}»",
-    "other": "{count} файла подходят под «{query}»"
+    "other": "{count} файла подходят под «{query}»",
   },
   "AdminGroup.noFilesMatchQuery": "Нет файлов под «{query}»",
   "AdminGroup.filesError": "Не удалось загрузить файлы. Проверьте подключение и попробуйте снова.",
@@ -1207,19 +1299,24 @@
   "AdminGroup.byOperator": "Оператором, из панели администратора",
   "AdminGroup.removeTitle": "Исключить {name} из группы?",
   "AdminGroup.removeTitleUnknown": "Удалить этого участника?",
-  "AdminGroup.removeText": "<name>{name}</name> сразу теряет доступ к <group>{group}</group> вместе со своими API-токенами и приглашениями в неё. Написанное остаётся в группе. Человек получит уведомление.",
-  "AdminGroup.removeTextUnknown": "Этот участник сразу теряет доступ к <group>{group}</group> вместе со своими API-токенами и приглашениями в неё. Написанное остаётся в группе. Человек получит уведомление.",
+  "AdminGroup.removeText":
+    "<name>{name}</name> сразу теряет доступ к <group>{group}</group> вместе со своими API-токенами и приглашениями в неё. Написанное остаётся в группе. Человек получит уведомление.",
+  "AdminGroup.removeTextUnknown":
+    "Этот участник сразу теряет доступ к <group>{group}</group> вместе со своими API-токенами и приглашениями в неё. Написанное остаётся в группе. Человек получит уведомление.",
   "AdminGroup.removeSubmit": "Удалить",
   "AdminGroup.removing": "Удаляем…",
   "AdminGroup.revokeTitle": "Отозвать это приглашение?",
-  "AdminGroup.revokeText": "По нему больше никто не сможет вступить в <group>{group}</group>. Те, кто уже вступил, остаются.",
+  "AdminGroup.revokeText":
+    "По нему больше никто не сможет вступить в <group>{group}</group>. Те, кто уже вступил, остаются.",
   "AdminGroup.revokeSubmit": "Отозвать",
   "AdminGroup.revoking": "Отзываем…",
   "AdminGroup.removeFileTitle": "Удалить «{name}»?",
   "AdminGroup.removeFileTitleUnknown": "Удалить этот файл?",
-  "AdminGroup.removeFileText": "Участники <group>{group}</group> больше его не увидят. Заметка остаётся. В активности группы будет записано, что файл удалила поддержка.",
+  "AdminGroup.removeFileText":
+    "Участники <group>{group}</group> больше его не увидят. Заметка остаётся. В активности группы будет записано, что файл удалила поддержка.",
   "AdminGroup.transferTitle": "Передать {group}",
-  "AdminGroup.transferText": "Выбранный участник станет владельцем и получит уведомление. <name>{name}</name> останется в группе администратором. Подписку, которая ещё продлевается, сначала должен отменить её владелец.",
+  "AdminGroup.transferText":
+    "Выбранный участник станет владельцем и получит уведомление. <name>{name}</name> останется в группе администратором. Подписку, которая ещё продлевается, сначала должен отменить её владелец.",
   "AdminGroup.transferSubmit": "Передать",
   "AdminGroup.transferring": "Передаём…",
   "AdminGroup.close": "Закрыть",
@@ -1227,14 +1324,16 @@
   "AdminGroup.candidate": "{name} ({role})",
   "AdminGroup.cancel": "Отмена",
   "AdminGroupOverview.title": "Виджеты обзора",
-  "AdminGroupOverview.description": "Что участники видят на своей странице обзора, в раскладке по умолчанию. Каждый участник может скрыть их и поменять порядок. Их собственные раскладки здесь не показаны.",
+  "AdminGroupOverview.description":
+    "Что участники видят на своей странице обзора, в раскладке по умолчанию. Каждый участник может скрыть их и поменять порядок. Их собственные раскладки здесь не показаны.",
   "AdminGroupOverview.gridLabel": "Виджеты обзора группы {group}",
   "AdminGroups.active": "Активные",
   "AdminGroups.inTrash": "В корзине",
   "AdminGroups.noName": "Без имени",
   "AdminGroups.free": "Бесплатный",
   "AdminGroups.title": "Группы",
-  "AdminGroups.subtitle": "Все группы, их владельцы и участники. Откройте группу, чтобы управлять участниками и приглашениями.",
+  "AdminGroups.subtitle":
+    "Все группы, их владельцы и участники. Откройте группу, чтобы управлять участниками и приглашениями.",
   "AdminGroups.search": "Название группы, владелец или id группы",
   "AdminGroups.searching": "Ищем…",
   "AdminGroups.submit": "Найти",
@@ -1244,7 +1343,7 @@
     "one": "{count} группа",
     "few": "{count} группы",
     "many": "{count} групп",
-    "other": "{count} группы"
+    "other": "{count} группы",
   },
   "AdminGroups.loading": "Загружаем группы",
   "AdminGroups.noMatch": "Ни одна группа не подходит",
@@ -1270,7 +1369,7 @@
     "one": "{count} задача с ошибкой запущена снова.",
     "few": "{count} задачи с ошибкой запущены снова.",
     "many": "{count} задач с ошибкой запущены снова.",
-    "other": "{count} задачи с ошибкой запущены снова."
+    "other": "{count} задачи с ошибкой запущены снова.",
   },
   "AdminJobs.notFound": "Нет задачи с таким id.",
   "AdminJobs.idCopied": "Id задачи скопирован.",
@@ -1317,14 +1416,15 @@
   "AdminJobs.searching": "Ищем…",
   "AdminJobs.search": "Найти",
   "AdminJobs.clear": "Сбросить фильтры",
-  "AdminJobs.loadError": "Не удалось загрузить задачи. Проверьте, что сервер работает, и попробуйте снова.",
+  "AdminJobs.loadError":
+    "Не удалось загрузить задачи. Проверьте, что сервер работает, и попробуйте снова.",
   "AdminJobs.retry": "Попробовать снова",
   "AdminJobs.loading": "Загружаем задачи",
   "AdminJobs.count": {
     "one": "{count} задача",
     "few": "{count} задачи",
     "many": "{count} задач",
-    "other": "{count} задачи"
+    "other": "{count} задачи",
   },
   "AdminJobs.noneFailed": "Задач с ошибкой нет.",
   "AdminJobs.runsCaption": "Запуски задач",
@@ -1332,17 +1432,21 @@
   "AdminJobs.noMatchHint": "Попробуйте другое название или сбросьте фильтры.",
   "AdminJobs.noneYet": "Ни одна задача ещё не запускалась",
   "AdminJobs.noneYetHint": {
-    "one": "Задачи появятся здесь, когда сервер запланирует первую. Завершённые задачи хранятся {count} день.",
-    "few": "Задачи появятся здесь, когда сервер запланирует первую. Завершённые задачи хранятся {count} дня.",
-    "many": "Задачи появятся здесь, когда сервер запланирует первую. Завершённые задачи хранятся {count} дней.",
-    "other": "Задачи появятся здесь, когда сервер запланирует первую. Завершённые задачи хранятся {count} дня."
+    "one":
+      "Задачи появятся здесь, когда сервер запланирует первую. Завершённые задачи хранятся {count} день.",
+    "few":
+      "Задачи появятся здесь, когда сервер запланирует первую. Завершённые задачи хранятся {count} дня.",
+    "many":
+      "Задачи появятся здесь, когда сервер запланирует первую. Завершённые задачи хранятся {count} дней.",
+    "other":
+      "Задачи появятся здесь, когда сервер запланирует первую. Завершённые задачи хранятся {count} дня.",
   },
   "AdminJobs.pages": "Страницы задач",
   "AdminJobs.keptDays": {
     "one": "Завершённые задачи хранятся {count} день.",
     "few": "Завершённые задачи хранятся {count} дня.",
     "many": "Завершённые задачи хранятся {count} дней.",
-    "other": "Завершённые задачи хранятся {count} дня."
+    "other": "Завершённые задачи хранятся {count} дня.",
   },
   "AdminJobs.lastRunFailed": "Последний запуск с ошибкой",
   "AdminJobs.schedule": "Расписание",
@@ -1360,13 +1464,15 @@
     "one": "Перезапустить {count} задачу с ошибкой?",
     "few": "Перезапустить {count} задачи с ошибкой?",
     "many": "Перезапустить {count} задач с ошибкой?",
-    "other": "Перезапустить {count} задачи с ошибкой?"
+    "other": "Перезапустить {count} задачи с ошибкой?",
   },
   "AdminJobs.runNowTitle": "Запустить задачу сейчас?",
   "AdminJobs.runAgain": "Запустить снова",
   "AdminJobs.retryAllText": "Каждая запустится ещё раз с новым набором попыток.",
-  "AdminJobs.runsNowInstead": "<job>{job}</job> запустится сейчас, а не в <at></at>. Повторяющаяся задача после этого сохраняет своё расписание.",
-  "AdminJobs.runsNow": "<job>{job}</job> запустится сейчас. Повторяющаяся задача после этого сохраняет своё расписание.",
+  "AdminJobs.runsNowInstead":
+    "<job>{job}</job> запустится сейчас, а не в <at></at>. Повторяющаяся задача после этого сохраняет своё расписание.",
+  "AdminJobs.runsNow":
+    "<job>{job}</job> запустится сейчас. Повторяющаяся задача после этого сохраняет своё расписание.",
   "AdminJobs.loadingJob": "Загружаем задачу",
   "AdminJobs.created": "Создана",
   "AdminJobs.lastTry": "Последняя попытка",
@@ -1388,9 +1494,11 @@
   "AdminJobs.whatHappened": "Что произошло",
   "AdminJobs.keptUntil": "Хранится до <day></day>, 7 дней после завершения.",
   "AdminJobs.retryTitle": "Запустить задачу снова?",
-  "AdminJobs.retryText": "<job>{job}</job> отправляет письма. Если она уже частично выполнилась, кто-то может получить письмо дважды. Журнал аудита запишет, что её запустили вы.",
+  "AdminJobs.retryText":
+    "<job>{job}</job> отправляет письма. Если она уже частично выполнилась, кто-то может получить письмо дважды. Журнал аудита запишет, что её запустили вы.",
   "AdminJobs.cancelTitle": "Отменить задачу?",
-  "AdminJobs.cancelText": "<job>{job}</job> не запустится. Повторяющаяся задача начнётся снова при следующем старте обработчика. Это нельзя отменить.",
+  "AdminJobs.cancelText":
+    "<job>{job}</job> не запустится. Повторяющаяся задача начнётся снова при следующем старте обработчика. Это нельзя отменить.",
   "AdminJobs.cancelling": "Отменяем…",
   "AdminJobs.keepIt": "Оставить",
   "AdminNav.dashboard": "Обзор",
@@ -1411,11 +1519,13 @@
   "AdminNewsletter.confirmed": "Подтверждён",
   "AdminNewsletter.pending": "Ожидает",
   "AdminNewsletter.removeTitle": "Удалить этого подписчика?",
-  "AdminNewsletter.removeText": "<email>{email}</email> перестаёт получать рассылку, как если бы человек нажал ссылку отписки. Адрес стирается, и ссылка подтверждения, отправленная на него раньше, больше не работает. Подписаться снова можно на сайте.",
+  "AdminNewsletter.removeText":
+    "<email>{email}</email> перестаёт получать рассылку, как если бы человек нажал ссылку отписки. Адрес стирается, и ссылка подтверждения, отправленная на него раньше, больше не работает. Подписаться снова можно на сайте.",
   "AdminNewsletter.removeSubmit": "Удалить",
   "AdminNewsletter.removing": "Удаляем…",
   "AdminNewsletter.resendTitle": "Отправить письмо подтверждения снова?",
-  "AdminNewsletter.resendText": "<email>{email}</email> получит новое письмо со ссылкой для подтверждения подписки. Ничего не изменится, пока человек её не нажмёт.",
+  "AdminNewsletter.resendText":
+    "<email>{email}</email> получит новое письмо со ссылкой для подтверждения подписки. Ничего не изменится, пока человек её не нажмёт.",
   "AdminNewsletter.resendSubmit": "Отправить снова",
   "AdminNewsletter.sending": "Отправляем…",
   "AdminNewsletter.subscribers": "Подписчики",
@@ -1433,7 +1543,7 @@
     "one": "Новые за {count} день",
     "few": "Новые за {count} дня",
     "many": "Новые за {count} дней",
-    "other": "Новые за {count} дня"
+    "other": "Новые за {count} дня",
   },
   "AdminNewsletter.issuesSent": "Отправлено выпусков",
   "AdminNewsletter.perDay": "Подписчики по дням",
@@ -1441,29 +1551,30 @@
     "one": "Без изменений за {count} день",
     "few": "Без изменений за {count} дня",
     "many": "Без изменений за {count} дней",
-    "other": "Без изменений за {count} дня"
+    "other": "Без изменений за {count} дня",
   },
   "AdminNewsletter.growthUp": {
     "one": "+{n} за {count} день",
     "few": "+{n} за {count} дня",
     "many": "+{n} за {count} дней",
-    "other": "+{n} за {count} дня"
+    "other": "+{n} за {count} дня",
   },
   "AdminNewsletter.growthDown": {
     "one": "−{n} за {count} день",
     "few": "−{n} за {count} дня",
     "many": "−{n} за {count} дней",
-    "other": "−{n} за {count} дня"
+    "other": "−{n} за {count} дня",
   },
   "AdminNewsletter.chartLabel": {
     "one": "Подписчики на конец каждого дня, последний {count} день",
     "few": "Подписчики на конец каждого дня, последние {count} дня",
     "many": "Подписчики на конец каждого дня, последние {count} дней",
-    "other": "Подписчики на конец каждого дня, последние {count} дня"
+    "other": "Подписчики на конец каждого дня, последние {count} дня",
   },
   "AdminNewsletter.nothingYet": "Пока ничего",
   "AdminNewsletter.notKeptTitle": "Адреса отписавшихся не хранятся",
-  "AdminNewsletter.notKeptText": "Адрес, который отписался или который вы удалили, стирается сразу. Список хранит только ключевую метку без адреса, поэтому старая ссылка подтверждения не вернёт его. Человек по-прежнему может подписаться снова на сайте.",
+  "AdminNewsletter.notKeptText":
+    "Адрес, который отписался или который вы удалили, стирается сразу. Список хранит только ключевую метку без адреса, поэтому старая ссылка подтверждения не вернёт его. Человек по-прежнему может подписаться снова на сайте.",
   "AdminNewsletter.address": "Адрес",
   "AdminNewsletter.searching": "Ищем…",
   "AdminNewsletter.search": "Найти",
@@ -1474,7 +1585,7 @@
     "one": "{count} адрес",
     "few": "{count} адреса",
     "many": "{count} адресов",
-    "other": "{count} адреса"
+    "other": "{count} адреса",
   },
   "AdminNewsletter.loadingAddresses": "Загружаем адреса",
   "AdminNewsletter.nobodyMatches": "Никого не найдено",
@@ -1489,7 +1600,8 @@
   "AdminNewsletter.asked": "Запрошено <when></when>",
   "AdminNewsletter.loadingSends": "Загружаем отправленные выпуски",
   "AdminNewsletter.nothingSent": "Пока ничего не отправлено",
-  "AdminNewsletter.nothingSentHint": "Выпуск появится здесь, когда команда отправки начнёт его рассылать.",
+  "AdminNewsletter.nothingSentHint":
+    "Выпуск появится здесь, когда команда отправки начнёт его рассылать.",
   "AdminNewsletter.notRecorded": "Не записано",
   "AdminNewsletter.issue": "Выпуск",
   "AdminNewsletter.sent": "Отправлен",
@@ -1513,7 +1625,7 @@
     "one": "{count} устройство",
     "few": "{count} устройства",
     "many": "{count} устройств",
-    "other": "{count} устройства"
+    "other": "{count} устройства",
   },
   "AdminPersonTabs.noDevices": "Ни одно устройство не получает push-уведомления.",
   "AdminPersonTabs.device": "Устройство <device>{device}</device>",
@@ -1525,13 +1637,13 @@
     "one": "{count} уведомление, непрочитанных: {unread}.",
     "few": "{count} уведомления, непрочитанных: {unread}.",
     "many": "{count} уведомлений, непрочитанных: {unread}.",
-    "other": "{count} уведомления, непрочитанных: {unread}."
+    "other": "{count} уведомления, непрочитанных: {unread}.",
   },
   "AdminPersonTabs.newestShown": {
     "one": "Ниже последнее {count}.",
     "few": "Ниже последние {count}.",
     "many": "Ниже последние {count}.",
-    "other": "Ниже последние {count}."
+    "other": "Ниже последние {count}.",
   },
   "AdminPersonTabs.read": "Прочитано",
   "AdminPersonTabs.unread": "Не прочитано",
@@ -1548,7 +1660,8 @@
   "AdminPreferences.language": "Язык",
   "AdminPreferences.formats": "Форматы",
   "AdminPreferences.automatic": "Автоматически: как на их устройстве",
-  "AdminPreferences.formatsSignedUp": "Автоматически: как на их устройстве (при регистрации — {format})",
+  "AdminPreferences.formatsSignedUp":
+    "Автоматически: как на их устройстве (при регистрации — {format})",
   "AdminPreferences.timeZone": "Часовой пояс",
   "AdminPreferences.zoneSignedUp": "Автоматически: как на их устройстве (при регистрации — {zone})",
   "AdminPreferences.zoneNow": "{zone} · там сейчас {time}",
@@ -1576,8 +1689,10 @@
   "AdminSystem.warning": "Внимание",
   "AdminSystem.error": "Ошибка",
   "AdminSystem.summaryOk": "Всё работает.",
-  "AdminSystem.summaryWarning": "Скоро что-то потребует внимания. Что именно, видно на карточках с пометкой «Внимание».",
-  "AdminSystem.summaryError": "Что-то сломалось. Что именно, видно на карточках с пометкой «Ошибка».",
+  "AdminSystem.summaryWarning":
+    "Скоро что-то потребует внимания. Что именно, видно на карточках с пометкой «Внимание».",
+  "AdminSystem.summaryError":
+    "Что-то сломалось. Что именно, видно на карточках с пометкой «Ошибка».",
   "AdminSystem.services": "Сервисы",
   "AdminSystem.database": "База данных",
   "AdminSystem.reachable": "Доступность",
@@ -1594,7 +1709,7 @@
     "one": "Предупреждает, если задача ждёт дольше {count} минуты или какая-то задача упала.",
     "few": "Предупреждает, если задача ждёт дольше {count} минут или какая-то задача упала.",
     "many": "Предупреждает, если задача ждёт дольше {count} минут или какая-то задача упала.",
-    "other": "Предупреждает, если задача ждёт дольше {count} минуты или какая-то задача упала."
+    "other": "Предупреждает, если задача ждёт дольше {count} минуты или какая-то задача упала.",
   },
   "AdminSystem.openJobs": "Открыть задачи",
   "AdminSystem.dueNow": "Пора выполнять",
@@ -1606,14 +1721,14 @@
     "one": "Упали за последний {count} день",
     "few": "Упали за последние {count} дня",
     "many": "Упали за последние {count} дней",
-    "other": "Упали за последние {count} дня"
+    "other": "Упали за последние {count} дня",
   },
   "AdminSystem.backup": "Резервная копия",
   "AdminSystem.backupHint": {
     "one": "Предупреждает после {count} часа без копии и считает это ошибкой после {error}.",
     "few": "Предупреждает после {count} часов без копии и считает это ошибкой после {error}.",
     "many": "Предупреждает после {count} часов без копии и считает это ошибкой после {error}.",
-    "other": "Предупреждает после {count} часа без копии и считает это ошибкой после {error}."
+    "other": "Предупреждает после {count} часа без копии и считает это ошибкой после {error}.",
   },
   "AdminSystem.lastSuccess": "Последняя удачная",
   "AdminSystem.noneRecorded": "Не записано",
@@ -1663,12 +1778,14 @@
   "AdminUser.active": "Активен",
   "AdminUser.guest": "Гость",
   "AdminUser.you": "Вы",
-  "AdminUser.guestNote": "Гостевой аккаунт: создан в один клик, без способа входа. Поддержка никогда не восстанавливает гостевые аккаунты.",
+  "AdminUser.guestNote":
+    "Гостевой аккаунт: создан в один клик, без способа входа. Поддержка никогда не восстанавливает гостевые аккаунты.",
   "AdminUser.created": "Создан",
   "AdminUser.lastSeen": "Был в сети",
   "AdminUser.never": "Никогда",
   "AdminUser.blockedNotice": "Заблокирован <when></when>. Войти этот человек не может.",
-  "AdminUser.noActions": "Роль этого человека равна вашей или выше, поэтому действовать с этим аккаунтом вы не можете.",
+  "AdminUser.noActions":
+    "Роль этого человека равна вашей или выше, поэтому действовать с этим аккаунтом вы не можете.",
   "AdminUser.tabs": "Об этом человеке",
   "AdminUser.account": "Аккаунт",
   "AdminUser.picture": "Фото профиля",
@@ -1705,29 +1822,36 @@
   "AdminUser.methodPasskey": "Ключ доступа",
   "AdminUser.methodEmailLink": "Ссылка по почте",
   "AdminUser.blockTitle": "Заблокировать: {name}",
-  "AdminUser.blockText": "Все сеансы этого человека сразу завершатся, и любой вход будет запрещён: пароль, Google, GitHub и API-токены. Данные останутся. Позже можно разблокировать.",
+  "AdminUser.blockText":
+    "Все сеансы этого человека сразу завершатся, и любой вход будет запрещён: пароль, Google, GitHub и API-токены. Данные останутся. Позже можно разблокировать.",
   "AdminUser.blocking": "Блокируем…",
   "AdminUser.unblockTitle": "Разблокировать: {name}",
   "AdminUser.unblockText": "Человек снова сможет войти, и его API-токены снова заработают.",
   "AdminUser.unblocking": "Разблокируем…",
   "AdminUser.endSessionsTitle": "Завершить все сеансы: {name}",
-  "AdminUser.endSessionsText": "Все устройства этого человека сразу выйдут из аккаунта. Войти снова можно.",
+  "AdminUser.endSessionsText":
+    "Все устройства этого человека сразу выйдут из аккаунта. Войти снова можно.",
   "AdminUser.ending": "Завершаем…",
   "AdminUser.endSessionTitle": "Завершить сеанс: {name}",
-  "AdminUser.endSessionText": "Это устройство сразу выйдет из аккаунта. На остальных устройствах вход сохранится.",
+  "AdminUser.endSessionText":
+    "Это устройство сразу выйдет из аккаунта. На остальных устройствах вход сохранится.",
   "AdminUser.endSession": "Завершить сеанс",
   "AdminUser.changeRoleTitle": "Изменить роль: {name}",
-  "AdminUser.changeRoleText": "Новая роль начнёт действовать со следующего запроса. Можно выдать роль ниже вашей; администратора назначают скриптом user:role.",
+  "AdminUser.changeRoleText":
+    "Новая роль начнёт действовать со следующего запроса. Можно выдать роль ниже вашей; администратора назначают скриптом user:role.",
   "AdminUser.changing": "Меняем…",
   "AdminUser.resetTitle": "Отправить ссылку для сброса пароля: {name}",
-  "AdminUser.resetText": "Человек получит то же письмо, что и после «Забыли пароль»: ссылку, чтобы выбрать новый пароль. Текущий пароль работает, пока он этого не сделает.",
+  "AdminUser.resetText":
+    "Человек получит то же письмо, что и после «Забыли пароль»: ссылку, чтобы выбрать новый пароль. Текущий пароль работает, пока он этого не сделает.",
   "AdminUser.sendLink": "Отправить ссылку",
   "AdminUser.sending": "Отправляем…",
   "AdminUser.deleteGuestTitle": "Удалить гостевой аккаунт: {name}",
-  "AdminUser.deleteGuestText": "Аккаунт и всё, что в нём есть, удалятся сразу, без отсрочки. Поддержка никогда не восстанавливает гостевые аккаунты: в них нет способа входа, который доказал бы, чей это аккаунт.",
+  "AdminUser.deleteGuestText":
+    "Аккаунт и всё, что в нём есть, удалятся сразу, без отсрочки. Поддержка никогда не восстанавливает гостевые аккаунты: в них нет способа входа, который доказал бы, чей это аккаунт.",
   "AdminUser.deleting": "Удаляем…",
   "AdminUser.unlinkTelegramTitle": "Отвязать Telegram: {name}",
-  "AdminUser.unlinkTelegramText": "Чат в Telegram перестанет получать уведомления этого человека и больше не сможет действовать от его имени. Привязать его снова можно в профиле.",
+  "AdminUser.unlinkTelegramText":
+    "Чат в Telegram перестанет получать уведомления этого человека и больше не сможет действовать от его имени. Привязать его снова можно в профиле.",
   "AdminUser.unlinking": "Отвязываем…",
   "AdminUser.removePictureTitle": "Удалить фото профиля этого человека?",
   "AdminUser.removePictureText": "Вместо фото везде будут инициалы. Человек может загрузить новое.",
@@ -1738,7 +1862,8 @@
   "AdminUser.roleNow": "{role} (сейчас)",
   "AdminUser.cancel": "Отмена",
   "AdminUsers.title": "Люди",
-  "AdminUsers.subtitle": "Все, у кого есть аккаунт. Откройте человека, чтобы заблокировать его, завершить сеанс или отправить ссылку для сброса пароля.",
+  "AdminUsers.subtitle":
+    "Все, у кого есть аккаунт. Откройте человека, чтобы заблокировать его, завершить сеанс или отправить ссылку для сброса пароля.",
   "AdminUsers.export": "Выгрузить CSV",
   "AdminUsers.search": "Имя или адрес",
   "AdminUsers.searching": "Ищем…",
@@ -1759,7 +1884,7 @@
     "one": "{count} человек",
     "few": "{count} человека",
     "many": "{count} человек",
-    "other": "{count} человека"
+    "other": "{count} человека",
   },
   "AdminUsers.loading": "Загружаем людей",
   "AdminUsers.people": "Люди",
@@ -1774,8 +1899,10 @@
   "AdminUsers.you": "Вы",
   "AdminUsers.noName": "Без имени",
   "AdminBlogEditor.language": "Язык",
-  "AdminBlogEditor.languageHint": "Язык, на котором написан пост. Сайт покажет его в блоге на этом языке.",
+  "AdminBlogEditor.languageHint":
+    "Язык, на котором написан пост. Сайт покажет его в блоге на этом языке.",
   "AdminBlogEditor.translationOf": "Перевод поста",
-  "AdminBlogEditor.translationOfHint": "Пост, который переводит этот. Когда оба опубликованы, сайт связывает их как языковые версии.",
-  "AdminBlogEditor.translationNone": "Нет: самостоятельный пост"
-}
+  "AdminBlogEditor.translationOfHint":
+    "Пост, который переводит этот. Когда оба опубликованы, сайт связывает их как языковые версии.",
+  "AdminBlogEditor.translationNone": "Нет: самостоятельный пост",
+} satisfies Catalog

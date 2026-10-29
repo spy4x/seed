@@ -15,7 +15,7 @@ import { Router } from "wouter-preact"
 import { FREE_PLAN_ID, type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import type { User } from "@domain/identity"
-import appEn from "@i18n/app/en.json" with { type: "json" }
+import appEn from "@i18n/app/en.ts"
 import { billingStore } from "../state/billing.ts"
 import { groupsStore } from "../state/groups.ts"
 import { invitationsStore } from "../state/invitations.ts"

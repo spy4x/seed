@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test"
 import { AxeBuilder } from "@axe-core/playwright"
-import en from "../../i18n/site/en.json" with { type: "json" }
-import ru from "../../i18n/site/ru.json" with { type: "json" }
-import es from "../../i18n/site/es.json" with { type: "json" }
-import de from "../../i18n/site/de.json" with { type: "json" }
-import ptBr from "../../i18n/site/pt-BR.json" with { type: "json" }
-import ar from "../../i18n/site/ar.json" with { type: "json" }
+import en from "../../i18n/site/en.ts"
+import ru from "../../i18n/site/ru.ts"
+import es from "../../i18n/site/es.ts"
+import de from "../../i18n/site/de.ts"
+import ptBr from "../../i18n/site/pt-BR.ts"
+import ar from "../../i18n/site/ar.ts"
 
 /**
  * One page per language (#276): its address, the English page's address (`x-default`), its

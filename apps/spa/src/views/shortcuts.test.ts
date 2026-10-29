@@ -9,8 +9,8 @@ import {
 } from "@ui/progressive.tsx"
 import { SHORTCUT_GROUPS } from "@ui/shortcuts.tsx"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
-import app from "@i18n/app/en.json" with { type: "json" }
-import appRu from "@i18n/app/ru.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
+import appRu from "@i18n/app/ru.ts"
 import { pageCommands, spaShortcutRows } from "./shortcuts.ts"
 
 function rows(activityGroupId: string | null, onOverview = false) {

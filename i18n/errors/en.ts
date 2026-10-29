@@ -1,4 +1,6 @@
-{
+import type { Catalog } from "@spy4x/platform/universal/i18n"
+
+export default {
   "Code.bad_request": "This was refused. Check what you entered and try again.",
   "Code.conflict": "This changed in the meantime. Reload and try again.",
   "Code.forbidden": "You do not have access to this.",
@@ -17,7 +19,7 @@
   "Field.duplicateSize": "This size is in the list already.",
   "Field.exactLength": {
     "one": "Use exactly {count} character.",
-    "other": "Use exactly {count} characters."
+    "other": "Use exactly {count} characters.",
   },
   "Field.future": "Pick a time in the future.",
   "Field.heightBothEnds": "Enter both ends of the height, or neither.",
@@ -30,21 +32,21 @@
   "Field.maxExclusive": "Use less than {rule}.",
   "Field.maxItems": {
     "one": "Keep it to {count} item.",
-    "other": "Keep it to {count} items."
+    "other": "Keep it to {count} items.",
   },
   "Field.maxLength": {
     "one": "Use at most {count} character.",
-    "other": "Use at most {count} characters."
+    "other": "Use at most {count} characters.",
   },
   "Field.min": "Use {rule} or more.",
   "Field.minExclusive": "Use more than {rule}.",
   "Field.minLength": {
     "one": "Use at least {count} character.",
-    "other": "Use at least {count} characters."
+    "other": "Use at least {count} characters.",
   },
   "Field.noteTags": {
     "one": "A note can carry at most {count} tag.",
-    "other": "A note can carry at most {count} tags."
+    "other": "A note can carry at most {count} tags.",
   },
   "Field.overviewRange": "Pick a range of up to a year, with the start before the end.",
   "Field.pattern": "This value is not in the right format.",
@@ -67,7 +69,7 @@
   "Field.weightWholeNumbers": "Enter the weight in whole numbers.",
   "Field.withinYears": {
     "one": "Pick a time within the next year.",
-    "other": "Pick a time within the next {count} years."
+    "other": "Pick a time within the next {count} years.",
   },
   "ImportIssue.domain": "It has the wrong type.",
   "ImportIssue.duplicateId": "Another entry in the file has the same id.",
@@ -78,11 +80,11 @@
   "ImportIssue.required": "It is missing.",
   "ImportIssue.tooManyEntries": {
     "one": "It holds {count} entry, and an import takes at most {max}.",
-    "other": "It holds {count} entries, and an import takes at most {max}."
+    "other": "It holds {count} entries, and an import takes at most {max}.",
   },
   "ImportIssue.tooManyTags": {
     "one": "It holds {count} tag, and a group holds at most {max}.",
-    "other": "It holds {count} tags, and a group holds at most {max}."
+    "other": "It holds {count} tags, and a group holds at most {max}.",
   },
   "ImportIssue.unknownKey": "It holds “{key}”, which this app does not know.",
   "ImportPlace.file": "The file",
@@ -101,7 +103,8 @@
   "Reason.BILLING_DISABLED": "Billing is turned off.",
   "Reason.CATEGORY_NOT_EMPTY": "This category still has items. Move or delete them first.",
   "Reason.CATEGORY_NOT_FOUND": "This category does not exist any more. Pick another.",
-  "Reason.CATEGORY_REQUIRED": "A published item needs a category. Pick one, or hide the item first.",
+  "Reason.CATEGORY_REQUIRED":
+    "A published item needs a category. Pick one, or hide the item first.",
   "Reason.FILE_CONTENT": "The file is not the type its name says.",
   "Reason.FILE_MISSING": "Nothing was uploaded. Choose a file.",
   "Reason.FILE_TOO_LARGE": "The file is too large.",
@@ -117,12 +120,14 @@
   "Reason.INTERNAL_ERROR": "Something went wrong on our side. Try again.",
   "Reason.INVALID_CURSOR": "The list changed. Reload the page.",
   "Reason.INVALID_REQUEST": "Something in the request is not valid. Check it and try again.",
-  "Reason.INVITATION_ALREADY_USED": "You have already joined through this invitation. Ask for a new one to join again.",
+  "Reason.INVITATION_ALREADY_USED":
+    "You have already joined through this invitation. Ask for a new one to join again.",
   "Reason.INVITATION_EXPIRED": "This invitation has expired.",
   "Reason.INVITATION_NOT_FOUND": "This invitation does not exist.",
   "Reason.INVITATION_REVOKED": "This invitation was withdrawn or declined.",
   "Reason.INVITATION_USED_UP": "This invitation has been used up.",
-  "Reason.INVITATION_WRONG_ACCOUNT": "This invitation is for another e-mail address. Sign in with the account that uses it.",
+  "Reason.INVITATION_WRONG_ACCOUNT":
+    "This invitation is for another e-mail address. Sign in with the account that uses it.",
   "Reason.ITEM_NOT_FOUND": "This item does not exist any more.",
   "Reason.LAST_GROUP": "You need at least one group. Create another first.",
   "Reason.LAST_OWNER": "A group needs its owner. Transfer ownership to another member first.",
@@ -151,12 +156,15 @@
   "Reason.PLAN_LIMIT_REACHED": "The group's plan has no room for more.",
   "Reason.POST_NOT_FOUND": "This post does not exist any more.",
   "Reason.PROVIDER_ERROR": "The payment provider did not answer. Try again.",
-  "Reason.REQUEST_ORIGIN_INVALID": "This request did not come from the app. Reload the page and try again.",
+  "Reason.REQUEST_ORIGIN_INVALID":
+    "This request did not come from the app. Reload the page and try again.",
   "Reason.ROLE_INSUFFICIENT": "Your role in this group does not allow this.",
   "Reason.SAME_GROUP": "This is in that group already.",
   "Reason.SEARCH_RATE_LIMITED": "Too many searches. Wait a minute.",
-  "Reason.SEAT_PRICE_NOT_ACCEPTED": "Confirm that each person who joins adds a member to the group's bill.",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE": "This link was asked for in another browser. Open it there.",
+  "Reason.SEAT_PRICE_NOT_ACCEPTED":
+    "Confirm that each person who joins adds a member to the group's bill.",
+  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE":
+    "This link was asked for in another browser. Open it there.",
   "Reason.SLUG_LOCKED": "The address is locked since the post was published. Use Change URL.",
   "Reason.SLUG_TAKEN": "This address is taken. Pick another.",
   "Reason.SLUG_UNCHANGED": "This is the address already.",
@@ -184,7 +192,9 @@
   "Reason.limited": "Too many tries. Wait a while and try again.",
   "Reason.not-recognised": "This link is not recognised.",
   "Reason.provider_refused": "The payment provider refused this. Nothing changed.",
-  "Reason.result_unknown": "The payment provider's answer was lost. Check the billing page before you try again.",
+  "Reason.result_unknown":
+    "The payment provider's answer was lost. Check the billing page before you try again.",
   "Reason.validation": "Some fields need fixing. Check them and try again.",
-  "Reason.TRANSLATION_INVALID": "This post cannot translate that one. Pick a post of its own in another language, or none."
-}
+  "Reason.TRANSLATION_INVALID":
+    "This post cannot translate that one. Pick a post of its own in another language, or none.",
+} satisfies Catalog

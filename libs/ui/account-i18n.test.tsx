@@ -14,8 +14,8 @@ import { FormatContext } from "@spy4x/preact-ui/format"
 import { createFormatters } from "@spy4x/time/format"
 import uiEn from "@spy4x/preact-ui/i18n/en"
 import systemEn from "@spy4x/preact-system/i18n/en"
-import appEn from "@i18n/app/en.json" with { type: "json" }
-import appDe from "@i18n/app/de.json" with { type: "json" }
+import appEn from "@i18n/app/en.ts"
+import appDe from "@i18n/app/de.ts"
 import uiDe from "@spy4x/preact-ui/i18n/de"
 import systemDe from "@spy4x/preact-system/i18n/de"
 import {

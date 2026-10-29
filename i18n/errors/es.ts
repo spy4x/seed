@@ -1,4 +1,6 @@
-{
+import type { Catalog } from "@spy4x/platform/universal/i18n"
+
+export default {
   "Code.bad_request": "Se rechazó. Revisa lo que escribiste e inténtalo de nuevo.",
   "Code.conflict": "Esto cambió mientras tanto. Recarga e inténtalo de nuevo.",
   "Code.forbidden": "No tienes acceso a esto.",
@@ -18,7 +20,7 @@
   "Field.exactLength": {
     "one": "Usa exactamente {count} carácter.",
     "many": "Usa exactamente {count} caracteres.",
-    "other": "Usa exactamente {count} caracteres."
+    "other": "Usa exactamente {count} caracteres.",
   },
   "Field.future": "Elige un momento en el futuro.",
   "Field.heightBothEnds": "Indica los dos extremos de la altura, o ninguno.",
@@ -32,24 +34,24 @@
   "Field.maxItems": {
     "one": "Como máximo {count} punto.",
     "many": "Como máximo {count} puntos.",
-    "other": "Como máximo {count} puntos."
+    "other": "Como máximo {count} puntos.",
   },
   "Field.maxLength": {
     "one": "Usa como máximo {count} carácter.",
     "many": "Usa como máximo {count} caracteres.",
-    "other": "Usa como máximo {count} caracteres."
+    "other": "Usa como máximo {count} caracteres.",
   },
   "Field.min": "Usa {rule} o más.",
   "Field.minExclusive": "Usa más de {rule}.",
   "Field.minLength": {
     "one": "Usa al menos {count} carácter.",
     "many": "Usa al menos {count} caracteres.",
-    "other": "Usa al menos {count} caracteres."
+    "other": "Usa al menos {count} caracteres.",
   },
   "Field.noteTags": {
     "one": "Una nota puede llevar como máximo {count} etiqueta.",
     "many": "Una nota puede llevar como máximo {count} etiquetas.",
-    "other": "Una nota puede llevar como máximo {count} etiquetas."
+    "other": "Una nota puede llevar como máximo {count} etiquetas.",
   },
   "Field.overviewRange": "Elige un periodo de hasta un año, con el inicio antes del final.",
   "Field.pattern": "Este valor no tiene el formato correcto.",
@@ -73,7 +75,7 @@
   "Field.withinYears": {
     "one": "Elige un momento dentro del próximo año.",
     "many": "Elige un momento dentro de los próximos {count} años.",
-    "other": "Elige un momento dentro de los próximos {count} años."
+    "other": "Elige un momento dentro de los próximos {count} años.",
   },
   "ImportIssue.domain": "Tiene un tipo incorrecto.",
   "ImportIssue.duplicateId": "Otra entrada del archivo tiene el mismo id.",
@@ -85,12 +87,12 @@
   "ImportIssue.tooManyEntries": {
     "one": "Tiene {count} entrada, y una importación admite como máximo {max}.",
     "many": "Tiene {count} entradas, y una importación admite como máximo {max}.",
-    "other": "Tiene {count} entradas, y una importación admite como máximo {max}."
+    "other": "Tiene {count} entradas, y una importación admite como máximo {max}.",
   },
   "ImportIssue.tooManyTags": {
     "one": "Tiene {count} etiqueta, y un grupo admite como máximo {max}.",
     "many": "Tiene {count} etiquetas, y un grupo admite como máximo {max}.",
-    "other": "Tiene {count} etiquetas, y un grupo admite como máximo {max}."
+    "other": "Tiene {count} etiquetas, y un grupo admite como máximo {max}.",
   },
   "ImportIssue.unknownKey": "Contiene «{key}», que esta app no conoce.",
   "ImportPlace.file": "El archivo",
@@ -107,9 +109,11 @@
   "Reason.ATTACHMENT_NOT_FOUND": "Este archivo ya no existe.",
   "Reason.AUTH_REQUIRED": "Tu sesión terminó. Vuelve a iniciar sesión.",
   "Reason.BILLING_DISABLED": "La facturación está desactivada.",
-  "Reason.CATEGORY_NOT_EMPTY": "Esta categoría todavía tiene artículos. Muévelos o bórralos primero.",
+  "Reason.CATEGORY_NOT_EMPTY":
+    "Esta categoría todavía tiene artículos. Muévelos o bórralos primero.",
   "Reason.CATEGORY_NOT_FOUND": "Esta categoría ya no existe. Elige otra.",
-  "Reason.CATEGORY_REQUIRED": "Un artículo publicado necesita una categoría. Elige una u oculta el artículo primero.",
+  "Reason.CATEGORY_REQUIRED":
+    "Un artículo publicado necesita una categoría. Elige una u oculta el artículo primero.",
   "Reason.FILE_CONTENT": "El archivo no es del tipo que indica su nombre.",
   "Reason.FILE_MISSING": "No se subió nada. Elige un archivo.",
   "Reason.FILE_TOO_LARGE": "El archivo es demasiado grande.",
@@ -118,27 +122,33 @@
   "Reason.GROUP_SUBSCRIBED": "Primero cancela la suscripción del grupo.",
   "Reason.GUEST_NEEDS_SIGN_IN_METHOD": "Primero añade una forma de iniciar sesión.",
   "Reason.IDEMPOTENCY_IN_PROGRESS": "La misma solicitud sigue en curso. Espera un momento.",
-  "Reason.IDEMPOTENCY_KEY_INVALID": "No se pudo enviar la solicitud. Recarga la página e inténtalo de nuevo.",
-  "Reason.IDEMPOTENCY_KEY_REUSED": "No se pudo enviar la solicitud. Recarga la página e inténtalo de nuevo.",
+  "Reason.IDEMPOTENCY_KEY_INVALID":
+    "No se pudo enviar la solicitud. Recarga la página e inténtalo de nuevo.",
+  "Reason.IDEMPOTENCY_KEY_REUSED":
+    "No se pudo enviar la solicitud. Recarga la página e inténtalo de nuevo.",
   "Reason.ID_ALREADY_EXISTS": "Esto ya existe. Recarga la página e inténtalo de nuevo.",
   "Reason.IMPORT_REFUSED": "Este archivo no se puede importar. No se guardó nada.",
   "Reason.INTERNAL_ERROR": "Algo salió mal de nuestro lado. Inténtalo de nuevo.",
   "Reason.INVALID_CURSOR": "La lista cambió. Recarga la página.",
   "Reason.INVALID_REQUEST": "Algo de la solicitud no es válido. Revísala e inténtalo de nuevo.",
-  "Reason.INVITATION_ALREADY_USED": "Ya te uniste con esta invitación. Pide una nueva para volver a unirte.",
+  "Reason.INVITATION_ALREADY_USED":
+    "Ya te uniste con esta invitación. Pide una nueva para volver a unirte.",
   "Reason.INVITATION_EXPIRED": "Esta invitación caducó.",
   "Reason.INVITATION_NOT_FOUND": "Esta invitación no existe.",
   "Reason.INVITATION_REVOKED": "Esta invitación se retiró o se rechazó.",
   "Reason.INVITATION_USED_UP": "Esta invitación ya se agotó.",
-  "Reason.INVITATION_WRONG_ACCOUNT": "Esta invitación es para otro correo electrónico. Inicia sesión con la cuenta que lo usa.",
+  "Reason.INVITATION_WRONG_ACCOUNT":
+    "Esta invitación es para otro correo electrónico. Inicia sesión con la cuenta que lo usa.",
   "Reason.ITEM_NOT_FOUND": "Este artículo ya no existe.",
   "Reason.LAST_GROUP": "Necesitas al menos un grupo. Crea otro primero.",
-  "Reason.LAST_OWNER": "Un grupo necesita a su propietario. Transfiere la propiedad a otro miembro primero.",
+  "Reason.LAST_OWNER":
+    "Un grupo necesita a su propietario. Transfiere la propiedad a otro miembro primero.",
   "Reason.LINK_NOT_FOUND": "Este enlace ya no existe.",
   "Reason.MEMBER_NOT_FOUND": "Esta persona no es miembro del grupo.",
   "Reason.MFA_REQUIRED": "Primero introduce tu código de un solo uso.",
   "Reason.NAME_MISMATCH": "El nombre que escribiste no es el del grupo.",
-  "Reason.NEWSLETTER_OFF": "El boletín está desactivado, así que esto no se puede enviar por correo.",
+  "Reason.NEWSLETTER_OFF":
+    "El boletín está desactivado, así que esto no se puede enviar por correo.",
   "Reason.NOTE_FULL": "Esta nota ya tiene todos los archivos que admite. Quita uno primero.",
   "Reason.NOTE_NOT_FOUND": "Esta nota ya no existe.",
   "Reason.NOTHING_TO_MOVE": "No hay nada que mover.",
@@ -147,9 +157,11 @@
   "Reason.NOT_PUBLISHED": "Esto no está publicado.",
   "Reason.NOT_SCHEDULED": "Esta entrada no está programada.",
   "Reason.NO_SUBSCRIPTION": "Este grupo no tiene suscripción.",
-  "Reason.ORDER_STALE": "La lista cambió desde que se cargó la página. Recarga e inténtalo de nuevo.",
+  "Reason.ORDER_STALE":
+    "La lista cambió desde que se cargó la página. Recarga e inténtalo de nuevo.",
   "Reason.PASSWORD_INVALID": "La contraseña no es correcta.",
-  "Reason.PASSWORD_LOCKED": "Demasiadas contraseñas incorrectas. Espera un rato e inténtalo de nuevo.",
+  "Reason.PASSWORD_LOCKED":
+    "Demasiadas contraseñas incorrectas. Espera un rato e inténtalo de nuevo.",
   "Reason.PHOTO_CONTENT": "Este archivo no es la imagen que indica su tipo.",
   "Reason.PHOTO_NOT_FOUND": "Esta foto ya no existe.",
   "Reason.PHOTO_TOO_LARGE": "Esta foto es demasiado grande.",
@@ -159,11 +171,13 @@
   "Reason.PLAN_LIMIT_REACHED": "El plan del grupo no tiene espacio para más.",
   "Reason.POST_NOT_FOUND": "Esta entrada ya no existe.",
   "Reason.PROVIDER_ERROR": "El proveedor de pagos no respondió. Inténtalo de nuevo.",
-  "Reason.REQUEST_ORIGIN_INVALID": "Esta solicitud no vino de la app. Recarga la página e inténtalo de nuevo.",
+  "Reason.REQUEST_ORIGIN_INVALID":
+    "Esta solicitud no vino de la app. Recarga la página e inténtalo de nuevo.",
   "Reason.ROLE_INSUFFICIENT": "Tu rol en este grupo no permite esto.",
   "Reason.SAME_GROUP": "Esto ya está en ese grupo.",
   "Reason.SEARCH_RATE_LIMITED": "Demasiadas búsquedas. Espera un minuto.",
-  "Reason.SEAT_PRICE_NOT_ACCEPTED": "Confirma que cada persona que se une añade un miembro a la factura del grupo.",
+  "Reason.SEAT_PRICE_NOT_ACCEPTED":
+    "Confirma que cada persona que se une añade un miembro a la factura del grupo.",
   "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE": "Este enlace se pidió en otro navegador. Ábrelo allí.",
   "Reason.SLUG_LOCKED": "La dirección quedó fija al publicar la entrada. Usa «Cambiar URL».",
   "Reason.SLUG_TAKEN": "Esta dirección está ocupada. Elige otra.",
@@ -192,7 +206,9 @@
   "Reason.limited": "Demasiados intentos. Espera un rato e inténtalo de nuevo.",
   "Reason.not-recognised": "No se reconoce este enlace.",
   "Reason.provider_refused": "El proveedor de pagos lo rechazó. No cambió nada.",
-  "Reason.result_unknown": "Se perdió la respuesta del proveedor de pagos. Revisa la página de facturación antes de volver a intentarlo.",
+  "Reason.result_unknown":
+    "Se perdió la respuesta del proveedor de pagos. Revisa la página de facturación antes de volver a intentarlo.",
   "Reason.validation": "Hay campos que corregir. Revísalos e inténtalo de nuevo.",
-  "Reason.TRANSLATION_INVALID": "Esta entrada no puede traducir esa. Elige una entrada propia en otro idioma, o ninguna."
-}
+  "Reason.TRANSLATION_INVALID":
+    "Esta entrada no puede traducir esa. Elige una entrada propia en otro idioma, o ninguna.",
+} satisfies Catalog

@@ -1,4 +1,6 @@
-{
+import type { Catalog } from "@spy4x/platform/universal/i18n"
+
+export default {
   "Code.bad_request": "Das wurde abgelehnt. Prüfe deine Eingabe und versuche es noch einmal.",
   "Code.conflict": "Das wurde inzwischen geändert. Lade neu und versuche es noch einmal.",
   "Code.forbidden": "Darauf hast du keinen Zugriff.",
@@ -17,7 +19,7 @@
   "Field.duplicateSize": "Diese Größe steht schon in der Liste.",
   "Field.exactLength": {
     "one": "Verwende genau {count} Zeichen.",
-    "other": "Verwende genau {count} Zeichen."
+    "other": "Verwende genau {count} Zeichen.",
   },
   "Field.future": "Wähle einen Zeitpunkt in der Zukunft.",
   "Field.heightBothEnds": "Gib beide Enden der Größe an oder keines.",
@@ -30,23 +32,24 @@
   "Field.maxExclusive": "Gib weniger als {rule} an.",
   "Field.maxItems": {
     "one": "Höchstens {count} Punkt.",
-    "other": "Höchstens {count} Punkte."
+    "other": "Höchstens {count} Punkte.",
   },
   "Field.maxLength": {
     "one": "Verwende höchstens {count} Zeichen.",
-    "other": "Verwende höchstens {count} Zeichen."
+    "other": "Verwende höchstens {count} Zeichen.",
   },
   "Field.min": "Gib {rule} oder mehr an.",
   "Field.minExclusive": "Gib mehr als {rule} an.",
   "Field.minLength": {
     "one": "Verwende mindestens {count} Zeichen.",
-    "other": "Verwende mindestens {count} Zeichen."
+    "other": "Verwende mindestens {count} Zeichen.",
   },
   "Field.noteTags": {
     "one": "Eine Notiz kann höchstens {count} Tag haben.",
-    "other": "Eine Notiz kann höchstens {count} Tags haben."
+    "other": "Eine Notiz kann höchstens {count} Tags haben.",
   },
-  "Field.overviewRange": "Wähle einen Zeitraum von höchstens einem Jahr, mit dem Anfang vor dem Ende.",
+  "Field.overviewRange":
+    "Wähle einen Zeitraum von höchstens einem Jahr, mit dem Anfang vor dem Ende.",
   "Field.pattern": "Dieser Wert hat nicht das richtige Format.",
   "Field.predicate": "Dieser Wert ist ungültig.",
   "Field.priceTooHigh": "Gib einen niedrigeren Preis ein.",
@@ -67,7 +70,7 @@
   "Field.weightWholeNumbers": "Gib das Gewicht in ganzen Zahlen an.",
   "Field.withinYears": {
     "one": "Wähle einen Zeitpunkt innerhalb des nächsten Jahres.",
-    "other": "Wähle einen Zeitpunkt innerhalb der nächsten {count} Jahre."
+    "other": "Wähle einen Zeitpunkt innerhalb der nächsten {count} Jahre.",
   },
   "ImportIssue.domain": "Es hat den falschen Typ.",
   "ImportIssue.duplicateId": "Ein anderer Eintrag in der Datei hat dieselbe ID.",
@@ -78,11 +81,11 @@
   "ImportIssue.required": "Das fehlt.",
   "ImportIssue.tooManyEntries": {
     "one": "Hier steht {count} Eintrag, ein Import nimmt höchstens {max}.",
-    "other": "Hier stehen {count} Einträge, ein Import nimmt höchstens {max}."
+    "other": "Hier stehen {count} Einträge, ein Import nimmt höchstens {max}.",
   },
   "ImportIssue.tooManyTags": {
     "one": "Hier steht {count} Tag, eine Gruppe hat höchstens {max}.",
-    "other": "Hier stehen {count} Tags, eine Gruppe hat höchstens {max}."
+    "other": "Hier stehen {count} Tags, eine Gruppe hat höchstens {max}.",
   },
   "ImportIssue.unknownKey": "Hier steht „{key}“, das diese App nicht kennt.",
   "ImportPlace.file": "Die Datei",
@@ -99,9 +102,11 @@
   "Reason.ATTACHMENT_NOT_FOUND": "Diese Datei gibt es nicht mehr.",
   "Reason.AUTH_REQUIRED": "Deine Sitzung ist abgelaufen. Melde dich wieder an.",
   "Reason.BILLING_DISABLED": "Die Abrechnung ist ausgeschaltet.",
-  "Reason.CATEGORY_NOT_EMPTY": "In dieser Kategorie sind noch Artikel. Verschiebe oder lösche sie zuerst.",
+  "Reason.CATEGORY_NOT_EMPTY":
+    "In dieser Kategorie sind noch Artikel. Verschiebe oder lösche sie zuerst.",
   "Reason.CATEGORY_NOT_FOUND": "Diese Kategorie gibt es nicht mehr. Wähle eine andere.",
-  "Reason.CATEGORY_REQUIRED": "Ein veröffentlichter Artikel braucht eine Kategorie. Wähle eine oder blende den Artikel zuerst aus.",
+  "Reason.CATEGORY_REQUIRED":
+    "Ein veröffentlichter Artikel braucht eine Kategorie. Wähle eine oder blende den Artikel zuerst aus.",
   "Reason.FILE_CONTENT": "Die Datei hat nicht den Typ, den ihr Name angibt.",
   "Reason.FILE_MISSING": "Es wurde nichts hochgeladen. Wähle eine Datei.",
   "Reason.FILE_TOO_LARGE": "Die Datei ist zu groß.",
@@ -110,28 +115,36 @@
   "Reason.GROUP_SUBSCRIBED": "Kündige zuerst das Abo der Gruppe.",
   "Reason.GUEST_NEEDS_SIGN_IN_METHOD": "Füge zuerst eine Anmeldemethode hinzu.",
   "Reason.IDEMPOTENCY_IN_PROGRESS": "Dieselbe Anfrage läuft noch. Warte kurz.",
-  "Reason.IDEMPOTENCY_KEY_INVALID": "Die Anfrage ließ sich nicht senden. Lade die Seite neu und versuche es noch einmal.",
-  "Reason.IDEMPOTENCY_KEY_REUSED": "Die Anfrage ließ sich nicht senden. Lade die Seite neu und versuche es noch einmal.",
+  "Reason.IDEMPOTENCY_KEY_INVALID":
+    "Die Anfrage ließ sich nicht senden. Lade die Seite neu und versuche es noch einmal.",
+  "Reason.IDEMPOTENCY_KEY_REUSED":
+    "Die Anfrage ließ sich nicht senden. Lade die Seite neu und versuche es noch einmal.",
   "Reason.ID_ALREADY_EXISTS": "Das gibt es schon. Lade die Seite neu und versuche es noch einmal.",
   "Reason.IMPORT_REFUSED": "Diese Datei lässt sich nicht importieren. Es wurde nichts gespeichert.",
   "Reason.INTERNAL_ERROR": "Bei uns ist etwas schiefgelaufen. Versuche es noch einmal.",
   "Reason.INVALID_CURSOR": "Die Liste hat sich geändert. Lade die Seite neu.",
-  "Reason.INVALID_REQUEST": "Etwas an der Anfrage ist ungültig. Prüfe sie und versuche es noch einmal.",
-  "Reason.INVITATION_ALREADY_USED": "Du bist über diese Einladung schon beigetreten. Bitte um eine neue, um wieder beizutreten.",
+  "Reason.INVALID_REQUEST":
+    "Etwas an der Anfrage ist ungültig. Prüfe sie und versuche es noch einmal.",
+  "Reason.INVITATION_ALREADY_USED":
+    "Du bist über diese Einladung schon beigetreten. Bitte um eine neue, um wieder beizutreten.",
   "Reason.INVITATION_EXPIRED": "Diese Einladung ist abgelaufen.",
   "Reason.INVITATION_NOT_FOUND": "Diese Einladung gibt es nicht.",
   "Reason.INVITATION_REVOKED": "Diese Einladung wurde zurückgezogen oder abgelehnt.",
   "Reason.INVITATION_USED_UP": "Diese Einladung ist aufgebraucht.",
-  "Reason.INVITATION_WRONG_ACCOUNT": "Diese Einladung gilt für eine andere E-Mail-Adresse. Melde dich mit dem Konto an, das sie verwendet.",
+  "Reason.INVITATION_WRONG_ACCOUNT":
+    "Diese Einladung gilt für eine andere E-Mail-Adresse. Melde dich mit dem Konto an, das sie verwendet.",
   "Reason.ITEM_NOT_FOUND": "Diesen Artikel gibt es nicht mehr.",
   "Reason.LAST_GROUP": "Du brauchst mindestens eine Gruppe. Erstelle zuerst eine andere.",
-  "Reason.LAST_OWNER": "Eine Gruppe braucht ihren Eigentümer. Übertrage die Gruppe zuerst an ein anderes Mitglied.",
+  "Reason.LAST_OWNER":
+    "Eine Gruppe braucht ihren Eigentümer. Übertrage die Gruppe zuerst an ein anderes Mitglied.",
   "Reason.LINK_NOT_FOUND": "Diesen Link gibt es nicht mehr.",
   "Reason.MEMBER_NOT_FOUND": "Diese Person ist kein Mitglied der Gruppe.",
   "Reason.MFA_REQUIRED": "Gib zuerst deinen Einmalcode ein.",
   "Reason.NAME_MISMATCH": "Der eingegebene Name ist nicht der Name der Gruppe.",
-  "Reason.NEWSLETTER_OFF": "Der Newsletter ist aus, deshalb lässt sich das nicht per E-Mail senden.",
-  "Reason.NOTE_FULL": "Diese Notiz hat schon so viele Dateien, wie sie fassen kann. Entferne zuerst eine.",
+  "Reason.NEWSLETTER_OFF":
+    "Der Newsletter ist aus, deshalb lässt sich das nicht per E-Mail senden.",
+  "Reason.NOTE_FULL":
+    "Diese Notiz hat schon so viele Dateien, wie sie fassen kann. Entferne zuerst eine.",
   "Reason.NOTE_NOT_FOUND": "Diese Notiz gibt es nicht mehr.",
   "Reason.NOTHING_TO_MOVE": "Es gibt nichts zu verschieben.",
   "Reason.NOTIFICATION_NOT_FOUND": "Diese Benachrichtigung gibt es nicht mehr.",
@@ -139,9 +152,11 @@
   "Reason.NOT_PUBLISHED": "Das ist nicht veröffentlicht.",
   "Reason.NOT_SCHEDULED": "Dieser Beitrag ist nicht geplant.",
   "Reason.NO_SUBSCRIPTION": "Diese Gruppe hat kein Abo.",
-  "Reason.ORDER_STALE": "Die Liste hat sich seit dem Laden der Seite geändert. Lade neu und versuche es noch einmal.",
+  "Reason.ORDER_STALE":
+    "Die Liste hat sich seit dem Laden der Seite geändert. Lade neu und versuche es noch einmal.",
   "Reason.PASSWORD_INVALID": "Das Passwort ist falsch.",
-  "Reason.PASSWORD_LOCKED": "Zu viele falsche Passwörter. Warte eine Weile und versuche es noch einmal.",
+  "Reason.PASSWORD_LOCKED":
+    "Zu viele falsche Passwörter. Warte eine Weile und versuche es noch einmal.",
   "Reason.PHOTO_CONTENT": "Diese Datei ist nicht das Bild, das ihr Typ angibt.",
   "Reason.PHOTO_NOT_FOUND": "Dieses Foto gibt es nicht mehr.",
   "Reason.PHOTO_TOO_LARGE": "Dieses Foto ist zu groß.",
@@ -151,13 +166,17 @@
   "Reason.PLAN_LIMIT_REACHED": "Im Tarif der Gruppe ist kein Platz mehr.",
   "Reason.POST_NOT_FOUND": "Diesen Beitrag gibt es nicht mehr.",
   "Reason.PROVIDER_ERROR": "Der Zahlungsanbieter hat nicht geantwortet. Versuche es noch einmal.",
-  "Reason.REQUEST_ORIGIN_INVALID": "Diese Anfrage kam nicht aus der App. Lade die Seite neu und versuche es noch einmal.",
+  "Reason.REQUEST_ORIGIN_INVALID":
+    "Diese Anfrage kam nicht aus der App. Lade die Seite neu und versuche es noch einmal.",
   "Reason.ROLE_INSUFFICIENT": "Deine Rolle in dieser Gruppe erlaubt das nicht.",
   "Reason.SAME_GROUP": "Das ist schon in dieser Gruppe.",
   "Reason.SEARCH_RATE_LIMITED": "Zu viele Suchen. Warte eine Minute.",
-  "Reason.SEAT_PRICE_NOT_ACCEPTED": "Bestätige, dass jede Person, die beitritt, ein Mitglied zur Rechnung der Gruppe hinzufügt.",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE": "Dieser Link wurde in einem anderen Browser angefordert. Öffne ihn dort.",
-  "Reason.SLUG_LOCKED": "Die Adresse ist seit der Veröffentlichung gesperrt. Verwende „URL ändern“.",
+  "Reason.SEAT_PRICE_NOT_ACCEPTED":
+    "Bestätige, dass jede Person, die beitritt, ein Mitglied zur Rechnung der Gruppe hinzufügt.",
+  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE":
+    "Dieser Link wurde in einem anderen Browser angefordert. Öffne ihn dort.",
+  "Reason.SLUG_LOCKED":
+    "Die Adresse ist seit der Veröffentlichung gesperrt. Verwende „URL ändern“.",
   "Reason.SLUG_TAKEN": "Diese Adresse ist vergeben. Wähle eine andere.",
   "Reason.SLUG_UNCHANGED": "Das ist schon die Adresse.",
   "Reason.SOURCE_NOT_FOUND": "Diese Quelle gibt es nicht mehr.",
@@ -171,20 +190,26 @@
   "Reason.TOO_MANY": "Hier ist kein Platz mehr. Lösche zuerst etwas.",
   "Reason.TOO_MANY_LINKS": "Für weitere Links ist kein Platz. Entferne zuerst einen.",
   "Reason.TOO_MANY_TOKENS": "Für weitere Tokens ist kein Platz. Widerrufe zuerst eines.",
-  "Reason.TOO_SOON": "Das wurde vor weniger als einem Tag angefordert. Versuche es morgen noch einmal.",
+  "Reason.TOO_SOON":
+    "Das wurde vor weniger als einem Tag angefordert. Versuche es morgen noch einmal.",
   "Reason.TRACKING_OFF": "Tracking-Links brauchen die Adresse der Website.",
   "Reason.UNKNOWN_PLAN": "Diesen Tarif gibt es nicht.",
   "Reason.UPLOADS_PENDING": "Schließe zuerst die schon begonnenen Uploads ab.",
-  "Reason.UPLOAD_BUDGET": "Du hast so viel hochgeladen, wie eine Stunde erlaubt. Versuche es später noch einmal.",
+  "Reason.UPLOAD_BUDGET":
+    "Du hast so viel hochgeladen, wie eine Stunde erlaubt. Versuche es später noch einmal.",
   "Reason.UPLOAD_NOT_FOUND": "Diesen Upload gibt es nicht mehr.",
   "Reason.USER_NOT_ACTIVE": "Dieses Konto ist nicht aktiv.",
-  "Reason.VERSION_CONFLICT": "Jemand anderes hat das geändert. Lade neu, um die Änderungen zu sehen.",
+  "Reason.VERSION_CONFLICT":
+    "Jemand anderes hat das geändert. Lade neu, um die Änderungen zu sehen.",
   "Reason.expired": "Dieser Link ist abgelaufen.",
   "Reason.invalid": "Dieser Link ist ungültig.",
   "Reason.limited": "Zu viele Versuche. Warte eine Weile und versuche es noch einmal.",
   "Reason.not-recognised": "Dieser Link ist unbekannt.",
   "Reason.provider_refused": "Der Zahlungsanbieter hat abgelehnt. Es hat sich nichts geändert.",
-  "Reason.result_unknown": "Die Antwort des Zahlungsanbieters ging verloren. Prüfe die Abrechnungsseite, bevor du es noch einmal versuchst.",
-  "Reason.validation": "Einige Felder müssen korrigiert werden. Prüfe sie und versuche es noch einmal.",
-  "Reason.TRANSLATION_INVALID": "Dieser Beitrag kann jenen nicht übersetzen. Wähle einen eigenen Beitrag in einer anderen Sprache oder keinen."
-}
+  "Reason.result_unknown":
+    "Die Antwort des Zahlungsanbieters ging verloren. Prüfe die Abrechnungsseite, bevor du es noch einmal versuchst.",
+  "Reason.validation":
+    "Einige Felder müssen korrigiert werden. Prüfe sie und versuche es noch einmal.",
+  "Reason.TRANSLATION_INVALID":
+    "Dieser Beitrag kann jenen nicht übersetzen. Wähle einen eigenen Beitrag in einer anderen Sprache oder keinen.",
+} satisfies Catalog

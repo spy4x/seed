@@ -5,7 +5,7 @@
  * the first steps for a guest. What each shows, what the app receives and where focus goes.
  */
 import { createTranslator } from "@spy4x/platform/universal/i18n"
-import appEn from "@i18n/app/en.json" with { type: "json" }
+import appEn from "@i18n/app/en.ts"
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
