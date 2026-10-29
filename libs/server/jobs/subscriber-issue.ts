@@ -68,6 +68,7 @@ export function renderSubscriberIssue(
     blocks,
     footer: {
       reason: t.t(`SubscriberIssue.reason`, { host }),
+      unsubscribeLabel: t.t(`SubscriberWelcomeMail.unsubscribe`),
       unsubscribeLink: UNSUBSCRIBE_PLACEHOLDER,
     },
     ...(issue.preheader ? { preheader: issue.preheader } : {}),
