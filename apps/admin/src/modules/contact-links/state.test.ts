@@ -45,7 +45,9 @@ it(`refuses a wrong value under its field before it asks the API`, async () => {
   state.edit({ kind: `telegram`, value: `my shop`, label: `` })
 
   expect(await state.save()).toBe(false)
-  expect(state.editor.value.errors.value).toBe(`Enter it the way this kind of contact is written.`)
+  expect(state.editor.value.errors.value).toBe(
+    `This doesn't look right for this kind of contact. Check the format.`,
+  )
   expect(calls).toEqual([])
 })
 

@@ -124,7 +124,7 @@ describe(`errors`, () => {
     const refusal = { code: `not_found`, reason: `GROUP_NOT_FOUND`, message: `Group not found` }
     expect(errorText(RUSSIAN, refusal)).toBe(`Такой группы нет, или вы в ней больше не состоите.`)
     expect(errorText(ENGLISH, refusal)).toBe(
-      `This group does not exist, or you are no longer in it.`,
+      `This group doesn't exist, or you're no longer in it.`,
     )
   })
 

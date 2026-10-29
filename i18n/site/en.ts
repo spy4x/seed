@@ -3,7 +3,7 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 export default {
   "TryEntry.label": "Try the live demo",
   "TryEntry.line":
-    "No sign-up. The demo opens as a guest account with sample data, and it is wiped every night.",
+    "No sign-up. You get a guest account with demo data, and it's wiped every night.",
   "SiteNav.features": "Features",
   "SiteNav.blog": "Blog",
   "SiteNav.compare": "Compare",
@@ -32,61 +32,61 @@ export default {
   "SiteFooter.terms": "Terms",
   "FooterNewsletter.title": "Newsletter",
   "FooterNewsletter.lead":
-    "A short email when {site} changes. You confirm by email first; one click unsubscribes.",
-  "NewsletterForm.email": "Email address",
+    "A short email when {site} changes. Confirm once by email, unsubscribe in one click.",
+  "NewsletterForm.email": "Email",
   "NewsletterForm.placeholder": "you@example.com",
   "NewsletterForm.submit": "Subscribe",
   "LegalPage.englishOnly": "This page is available in English only.",
-  "LegalPage.updated": "Last changed {date}",
+  "LegalPage.updated": "Last updated {date}",
   "LegalPage.noticeTitle": "A starting point, not legal advice",
   "LegalPage.notice":
-    "This page covers the live demo of {site}. A product built on {site} must adapt it to what it really stores and does, and have it checked.",
+    "This page covers the live demo of {site}. If you build a product on {site}, adapt this page to what your product stores and does, and have a lawyer check it.",
   "OnThisPage.title": "On this page",
   "Blog.name": "{site} blog",
   "ErrorPage.notFoundTitle": "Page not found",
-  "ErrorPage.notFoundDescription": "There is no page at this address.",
+  "ErrorPage.notFoundDescription": "There's no page at this address.",
   "ErrorPage.errorTitle": "Something went wrong",
-  "ErrorPage.errorDescription": "The page could not be shown. Try again in a minute.",
+  "ErrorPage.errorDescription": "We couldn't load this page. Try again in a minute.",
   "ErrorPage.notFoundLead":
-    "The link may be old, or the page moved when this site was rebuilt. Here is where most people are headed:",
+    "The link may be old, or the page has moved. Here's where most people head:",
   "ErrorPage.home": "Back to the home page",
   "ErrorPage.features": "See the features",
   "ErrorPage.hire": "Hire me to build your MVP",
   "ErrorPage.report": "If a link on this site sent you here, <issues>tell me on GitHub</issues>.",
   "ErrorPage.retry": "Try again",
-  "SubscribeFailure.subscribe": "Could not send the link",
-  "SubscribeFailure.confirm": "Could not confirm the subscription. Try again in a minute.",
-  "SubscribeFailure.unsubscribe": "Could not unsubscribe. Try again in a minute.",
+  "SubscribeFailure.subscribe": "Couldn't send the link",
+  "SubscribeFailure.confirm": "Couldn't confirm your subscription. Try again in a minute.",
+  "SubscribeFailure.unsubscribe": "Couldn't unsubscribe you. Try again in a minute.",
   "SubscribeForm.sentTitle": "Check your inbox",
   "SubscribeForm.sentText":
-    "A link to confirm your subscription is on its way. It works for three days.",
-  "SubscribeForm.title": "Get the news by e-mail",
+    "We've sent you a link to confirm your subscription. It works for three days.",
+  "SubscribeForm.title": "Get the news by email",
   "SubscribeForm.intro":
-    "Enter your address. We send a link to confirm it first, and every mail has a link to unsubscribe.",
-  "SubscribeForm.email": "E-mail",
+    "Enter your email. We'll send a link to confirm it, and every email has an unsubscribe link.",
+  "SubscribeForm.email": "Email",
   "SubscribeForm.sending": "Sending…",
   "SubscribeForm.submit": "Subscribe",
   "SubscriptionConfirm.askAgain": "Ask for a new link",
-  "SubscriptionConfirm.doneTitle": "You are subscribed",
+  "SubscriptionConfirm.doneTitle": "You're subscribed",
   "SubscriptionConfirm.doneText":
-    "Thank you. A welcome mail is on its way, with a link to unsubscribe.",
+    "Thanks! A welcome email is on its way, with a link to unsubscribe.",
   "SubscriptionConfirm.expiredTitle": "This link has expired",
-  "SubscriptionConfirm.expiredText": "A confirm link works for three days. Ask for a new one.",
-  "SubscriptionConfirm.invalidTitle": "This link does not work",
-  "SubscriptionConfirm.invalidText": "Open the link from the mail again, or ask for a new one.",
+  "SubscriptionConfirm.expiredText": "Confirm links work for three days. Ask for a new one.",
+  "SubscriptionConfirm.invalidTitle": "This link doesn't work",
+  "SubscriptionConfirm.invalidText": "Open the link from the email again, or ask for a new one.",
   "SubscriptionConfirm.title": "Confirm your subscription",
   "SubscriptionConfirm.question": "Send the news to {email}?",
-  "SubscriptionConfirm.questionNoEmail": "Send the news to your address?",
+  "SubscriptionConfirm.questionNoEmail": "Send the news to your email?",
   "SubscriptionConfirm.confirming": "Confirming…",
   "SubscriptionConfirm.submit": "Confirm",
-  "Unsubscribe.doneTitle": "You are unsubscribed",
-  "Unsubscribe.doneText": "No more news goes to this address.",
+  "Unsubscribe.doneTitle": "You're unsubscribed",
+  "Unsubscribe.doneText": "We won't send any more news to this email.",
   "Unsubscribe.again": "Subscribe again",
   "Unsubscribe.invalidText":
-    "The address may already be unsubscribed. Open the link from the latest mail.",
+    "This email may already be unsubscribed. Open the link in the latest email.",
   "Unsubscribe.title": "Unsubscribe",
   "Unsubscribe.question": "Stop sending the news to {email}?",
-  "Unsubscribe.questionNoEmail": "Stop sending the news to your address?",
+  "Unsubscribe.questionNoEmail": "Stop sending the news to your email?",
   "Unsubscribe.unsubscribing": "Unsubscribing…",
   "Unsubscribe.submit": "Unsubscribe",
   "NewsletterPage.title": "Newsletter",
@@ -97,20 +97,20 @@ export default {
   "NewsletterPage.about": "About the newsletter",
   "NewsletterPage.heading": "Get a short email when {site} changes",
   "NewsletterPage.lead":
-    "What shipped, what broke and what I learned building it, written by me. No other mail.",
-  "NewsletterPage.promiseConfirm": "You confirm by a link first, so nobody can sign you up.",
+    "What shipped, what broke and what I learned building it, written by me. No other emails.",
+  "NewsletterPage.promiseConfirm": "You confirm with a link first, so nobody else can sign you up.",
   "NewsletterPage.promiseUnsubscribe": "Every email has a link that unsubscribes you in one click.",
-  "NewsletterPage.promisePrivate": "Your address is used for this newsletter and nothing else.",
+  "NewsletterPage.promisePrivate": "Your email is used for this newsletter and nothing else.",
   "NewsletterOff.title": "The {site} newsletter",
   "NewsletterOff.noticeTitle": "The newsletter is off",
   "NewsletterOff.notice":
-    "This site is not taking newsletter subscriptions right now, and it sends no newsletter while they are off. A confirm or unsubscribe link works again once they are back on.",
+    "This site isn't taking subscriptions right now and isn't sending the newsletter. Confirm and unsubscribe links will work again once it's back on.",
   "NewsletterOff.lead":
     "To hear when {site} changes, watch its releases on GitHub. Or see what it does today.",
   "NewsletterOff.releases": "Releases on GitHub",
   "CtaBand.title": "See it working in a minute",
   "CtaBand.lead":
-    "The demo is the app you get on day one. Open it without signing up and start in groups full of sample notes.",
+    "The demo is the app you get on day one. Open it without signing up and explore groups full of demo notes.",
   "Founders.title": "Not a developer? I'll build your product on Seed.",
   "Founders.text":
     "I'm Anton, the person who builds Seed. Founders hire me to turn an idea into a live product that people can sign up for and pay for. Because sign-up, groups and payments already exist, your budget goes to what makes your product different.",
@@ -162,7 +162,7 @@ export default {
   "HomeStatus.notBuiltRtl": "Right-to-left layouts, for Arabic, are not finished",
   "HomeFaq.tryQuestion": "Can I try it without an account?",
   "HomeFaq.tryAnswer":
-    "Yes. Try the live demo opens the app in a guest account with sample data, without an email or a password. Add a sign-in method to keep it; the demo is wiped every night either way. Seed itself needs no account at all: clone it from GitHub.",
+    "Yes. “Try the live demo” opens the app in a guest account with demo data, no email or password needed. You can add a sign-in method, but the demo is still wiped every night. Seed itself needs no account at all: clone it from GitHub.",
   "HomeFaq.freeQuestion": "Is Seed really free?",
   "HomeFaq.freeAnswer":
     "Yes. It is MIT-licensed: use it for any number of products, commercial or not, publish your fork, no account needed. You pay only for one server you rent and for services you turn on, such as Stripe or an email provider.",
@@ -178,7 +178,7 @@ export default {
   "HomeHero.badge": "Open source · MIT · Deno 2 + Postgres",
   "HomeHero.title": "The groundwork of your SaaS, already built.",
   "HomeHero.lead":
-    "Seed is a free, MIT-licensed SaaS starter with sign-in and two-factor authentication (2FA), groups with roles, per-member Stripe billing, realtime, an offline app and an admin area. You deploy it to one Linux server you rent with Docker Compose.",
+    "Seed is a free, MIT-licensed SaaS starter with sign-in and two-factor authentication (2FA), groups with roles, per-member Stripe billing, realtime, an offline app and an admin area. You deploy it with Docker Compose to a single Linux server you rent.",
   "HomeHero.github": "View on GitHub",
   "HomeHero.status":
     "Seed is a work in progress, built in public: <status>see what works today</status>.",
@@ -195,7 +195,7 @@ export default {
   "HomeFeatures.title": "Everything before your first feature",
   "HomeFeatures.lead":
     "Each part below works today and is tested in CI. Google and GitHub sign-in and Stripe billing need your own keys, so they are off in the demo.",
-  "HomeFeatures.signInTitle": "Sign-in that is done",
+  "HomeFeatures.signInTitle": "Sign-in, done",
   "HomeFeatures.signInLink": "How sign-in works",
   "HomeFeatures.signInAlt":
     "The security page of a profile: the sign-in methods, two-factor authentication (2FA) and the open sessions.",
@@ -216,11 +216,11 @@ export default {
   "HomeFeatures.groupsAlt":
     "The members of a group, each with their role, a button to invite people, and one member's menu open: Make Viewer, Make Admin, Remove from group.",
   "HomeFeatures.groupsText":
-    "Every account gets a group at sign-up. Invite people, give them roles from viewer to owner, hand ownership over, restore a deleted group for 30 days. Each group has an overview of its key numbers.",
+    "Every account gets a group at sign-up. Invite people, give them roles from viewer to owner, hand ownership over, and restore a deleted group within 30 days. Each group has an overview of its key numbers.",
   "HomeFeatures.adminTitle": "An admin area",
   "HomeFeatures.adminLink": "Tour the admin panel",
   "HomeFeatures.adminText":
-    "Operators find a person, manage groups, refund a payment and check the system's health. On its own host, with every action confirmed and logged.",
+    "Operators find a person, manage groups, refund a payment and check the system's health. It runs on its own host; risky actions ask first, and every action is logged.",
   "HomeFeatures.websiteTitle": "A public website",
   "HomeFeatures.websiteLink": "What the website includes",
   "HomeFeatures.websiteText":
@@ -240,7 +240,7 @@ export default {
   "HomeQuickStart.terminal": "Terminal",
   "HomeStatus.eyebrow": "Honest status",
   "HomeStatus.title": "Where it stands today",
-  "HomeStatus.lead": "Seed is a work in progress. Here is exactly what works and what does not.",
+  "HomeStatus.lead": "Seed is a work in progress. Here's exactly what works and what doesn't.",
   "HomeStatus.works": "Works today",
   "HomeStatus.notBuilt": "Not built yet",
   "HomeStatus.follow": "Follow progress on GitHub",
@@ -254,8 +254,8 @@ export default {
   "HomeWho.issues": "GitHub issues",
   "HomeNewsletter.title": "Get a short email when Seed changes",
   "HomeNewsletter.lead":
-    "What shipped, what broke, what I learned building it. No other mail, and one click unsubscribes.",
-  "HomeNewsletter.hint": "You confirm by email first.",
+    "What shipped, what broke, what I learned building it. No other email, and you can unsubscribe in one click.",
+  "HomeNewsletter.hint": "You'll confirm by email first.",
   "HomeFaq.eyebrow": "Questions",
   "HomeFaq.title": "Before you start",
   "Pricing.title": "Seed pricing: a free, MIT-licensed SaaS starter",
@@ -264,14 +264,14 @@ export default {
   "Pricing.crumb": "Pricing",
   "PricingFaq.paidQuestion": "Is there a paid version of Seed?",
   "PricingFaq.paidAnswer":
-    "No. There is no pro tier, no licence key and no feature held back. If you want help, you can hire me: paid help from me is the only thing I sell.",
+    "No. There's no pro tier, no licence key and no feature held back. If you want help, hire me: my time is the only thing I sell.",
   "PricingFaq.serverQuestion": "What does a server cost?",
   "PricingFaq.serverAnswer":
     "Whatever your host charges for one Linux machine with Docker. Seed has no per-user or per-request fees of its own.",
   "PricingFaq.oweQuestion": "Do I owe anything if my product makes money?",
   "PricingFaq.oweAnswer":
     "No. MIT asks only that you keep its copyright and licence notice with the code.",
-  "PricingFaq.mvpQuestion": "How is the {price} worked out?",
+  "PricingFaq.mvpQuestion": "Where does {price} come from?",
   "PricingFaq.mvpAnswer":
     "It is the starting price of a typical MVP: sign-up, payments, an API, an admin area and deployment. Your quote depends on your features and is fixed before work starts.",
   "PricingFaq.mvpLink": "How an MVP build works",
@@ -310,7 +310,7 @@ export default {
   "DemoPlans.title": "The demo's plans: an example of the billing you get",
   "DemoPlans.noticeTitle": "These are not Seed's prices",
   "DemoPlans.notice":
-    "They are the plans of the demo app, read from its plan catalog, so you can try checkout, trials and per-member billing. The demo opens as a guest account; checkout asks you to add a sign-in method first. Your product sets its own plans in one file, <code>libs/domain/billing</code>.",
+    "These are the demo app's plans, read from its plan catalog, so you can try checkout, trials and per-member billing. The demo starts you in a guest account; checkout asks you to add a sign-in method first. Your product sets its own plans in one file, <code>libs/domain/billing</code>.",
   "DemoPlans.choose": "Try in the demo",
   "DemoPlans.chooseName": "Try in the demo: {name}",
   "DemoPlans.recommended": "Recommended",
@@ -339,9 +339,9 @@ export default {
     "Tested in CI. Google and GitHub sign-in and Stripe need your own keys, so they are off in the demo.",
   "FeatureSignIn.nav": "Accounts and sign-in",
   "FeatureSignIn.eyebrow": "Accounts",
-  "FeatureSignIn.title": "Sign-in that is done",
+  "FeatureSignIn.title": "Sign-in, done",
   "FeatureSignIn.lead":
-    "People sign up with an email address and a password, prove the address with a code sent by email, reset a forgotten password, continue with Google or GitHub, get a sign-in link by email that also signs them up, or sign in with a passkey, or try the app first in a guest account and add a sign-in method later. An authenticator app adds two-factor authentication (2FA). They see every device they are signed in on and can sign the others out. Changing a sign-in method asks for proof and sends a mail.",
+    "People sign up with an email and password and confirm the email with a code. They can reset a forgotten password, continue with Google or GitHub, sign in with a passkey, or get a sign-in link by email that also signs them up. Or they try the app first in a guest account and add a sign-in method later. An authenticator app adds two-factor authentication (2FA). People see every device they're signed in on and can sign the others out. Changing a sign-in method asks for proof and sends an email.",
   "FeatureSignIn.fact1":
     "Passwords hashed with PBKDF2-SHA-256 through Web Crypto, 600,000 rounds by default",
   "FeatureSignIn.fact2": "Signed session cookies, and an audit trail of every sign-in event",
@@ -353,13 +353,13 @@ export default {
   "FeatureSignIn.fact6":
     "Guest accounts (anonymous sign-in): a visitor starts with one click and no sign-in method, then adds an email and password, Google, GitHub or a passkey to the same account",
   "FeatureSignIn.fact7":
-    "Wrong passwords counted per sign-in name, with a short lock, from any network address",
+    "Wrong passwords counted per sign-in name across every network address, then a short lock",
   "FeatureSignIn.code": "Read the sign-in code",
   "FeatureTeams.nav": "Groups and roles",
   "FeatureTeams.eyebrow": "Groups",
   "FeatureTeams.title": "Groups with roles, from the first minute",
   "FeatureTeams.lead":
-    "Every account gets a personal group at sign-up. People make shared groups, invite others, give them roles from viewer to owner and hand ownership over in one step. A deleted group can be brought back for 30 days, and each group keeps an activity log.",
+    "Every account gets a personal group at sign-up. People make shared groups, invite others, give them roles from viewer to owner and hand ownership over in one step. A deleted group can be restored within 30 days, and each group keeps an activity log.",
   "FeatureTeams.fact1":
     "The group is the one tenancy boundary: personal and shared data pass the same check",
   "FeatureTeams.fact2": "The app, its code and this site all call it a group",
@@ -370,9 +370,9 @@ export default {
   "FeatureOverview.eyebrow": "Overview",
   "FeatureOverview.title": "Overview for each group",
   "FeatureOverview.lead":
-    "Key numbers and a chart for any date range. Each person hides and reorders the widgets, and the layout follows them to their other devices.",
+    "Key numbers and a chart for any date range. Each person can hide and reorder the widgets, and their layout follows them to their other devices.",
   "FeatureOverview.fact1":
-    "Each number is compared with the period before, without a colour verdict",
+    "Each number compared with the previous period, without a red or green verdict",
   "FeatureOverview.fact2": "Counts only: no note's text and no ranking of people",
   "FeatureOverview.fact3": "Each widget loads, fails and retries on its own",
   "FeatureOverview.fact4":
@@ -406,7 +406,7 @@ export default {
   "FeatureExport.title": "Your data leaves with you",
   "FeatureExport.lead":
     "Export any group to an open JSON file, and import it later as a new group. The original group is never overwritten.",
-  "FeatureExport.fact1": "The owner exports; anyone who may create a group imports",
+  "FeatureExport.fact1": "The owner exports; anyone who can create a group can import",
   "FeatureExport.fact2":
     "The whole file is checked before anything is written, then imported in one step",
   "FeatureExport.fact3":
@@ -440,7 +440,7 @@ export default {
   "FeatureRealtime.lead":
     "A member's change appears in every open tab of the group, and a laptop that wakes from sleep catches up on what it missed.",
   "FeatureRealtime.fact1": "A standard WebSocket, with a sequence on every change",
-  "FeatureRealtime.fact2": "A tab shown again after sleep reconnects and pulls what it missed",
+  "FeatureRealtime.fact2": "A tab that wakes from sleep reconnects and pulls what it missed",
   "FeatureRealtime.fact3":
     "Realtime can be switched off: the app then polls on a timer and works the same",
   "FeatureRealtime.code": "Read the realtime design",
@@ -452,7 +452,7 @@ export default {
   "FeatureOffline.fact1": "An IndexedDB copy of each list and a write queue with idempotency keys",
   "FeatureOffline.fact2": "“Keep mine” or “Use the server's” for each conflict",
   "FeatureOffline.fact3":
-    "Turned off with one setting, or removed by deleting one folder and following a written list",
+    "Turn it off with one setting, or remove it: delete one folder and follow a written checklist",
   "FeatureOffline.code": "Read docs/offline.md",
   "FeatureShortcuts.nav": "Keyboard shortcuts",
   "FeatureShortcuts.eyebrow": "Keyboard",
@@ -470,7 +470,7 @@ export default {
   "FeaturePush.eyebrow": "Notifications",
   "FeaturePush.title": "Notifications in the app, on the phone, the desktop and Telegram",
   "FeaturePush.lead":
-    "People get a notice when they are invited, given a new role or handed a group, in the app, as a web push on their phone or desktop, and in Telegram once they link it.",
+    "People are notified when they're invited, given a new role or handed a group: in the app, by web push on their phone or desktop, and in Telegram once they link it.",
   "FeaturePush.fact1": "Web push with your own keys, made by one task: deno task vapid-key:create",
   "FeaturePush.fact2": 'An unread count in the app, and "Mark all as read"',
   "FeaturePush.fact3": "Each device's push subscription listed on the profile",
@@ -504,7 +504,7 @@ export default {
   "FeatureTierOperations.lead":
     "One server you rent, the tools to see what it does, and an area where your operators help the people who use your product.",
   "FeatureTierOperations.status":
-    "Every module below ships today. What is not built yet is listed under each.",
+    "Every module below ships today. Anything not built yet is listed under it.",
   "FeatureAdmin.nav": "Admin area",
   "FeatureAdmin.eyebrow": "Support",
   "FeatureAdmin.title": "An admin area for your operators",
@@ -524,7 +524,7 @@ export default {
   "FeatureDeploy.fact1": "Traefik in front, with automatic certificates",
   "FeatureDeploy.fact2": "Postgres and Valkey beside the apps",
   "FeatureDeploy.fact3":
-    "Garage, an S3 file store: notes keep images and PDFs in it, and people their profile pictures, uploaded on signed links and checked by their bytes. A photo, HEIC included, becomes small AVIF and WebP widths with its location and other metadata stripped",
+    "Garage, an S3 file store, for images and PDFs on notes and for profile pictures. Uploads go through signed links and are checked by their contents. Photos, HEIC included, become small AVIF and WebP versions with location and other metadata removed",
   "FeatureDeploy.fact4": "VictoriaMetrics, VictoriaLogs and Grafana, with alerts",
   "FeatureDeploy.fact5":
     "An opt-in daily encrypted restic backup of the database, and a written restore",
@@ -583,11 +583,11 @@ export default {
   "Features.title": "Seed features: auth, groups, billing, offline, admin",
   "Features.description":
     "What Seed ships: 2FA and social sign-in, groups with roles, per-member Stripe billing, realtime, an offline app, an admin area, monitoring and backups.",
-  "FeaturesHero.title": "Everything Seed ships, and what it does not yet",
+  "FeaturesHero.title": "Everything Seed ships, and what it doesn't yet",
   "FeaturesHero.lead":
     "Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, passkeys, magic links, guest accounts, 2FA, groups with roles, per-member Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code.",
   "FeaturesHero.note":
-    'Seed is a work in progress, built in public. What is not built yet is marked "Not built yet" next to the claim it limits, with its issue when one is open.',
+    'Seed is a work in progress, built in public. Anything missing is marked "Not built yet" next to the feature it affects, with a link to its issue when one is open.',
   "Features.compare": "How Seed compares",
   "FeaturesFaq.title": "Can Seed do that?",
   "FeatureSection.issue": "issue #{number}",
@@ -623,7 +623,7 @@ export default {
     "Seed's admin panel: find a person, end their sessions, refund a payment, run a failed job again. Risky actions ask first; all are logged. Free, MIT.",
   "AdminTour.heroTitle": "An admin panel for the people who run your product",
   "AdminTour.heroLead":
-    "Seed ships an operator area on its own host. Your operators find a person, see their sign-in methods, sessions and groups, and help them: ends a session, sends a password-reset link, refunds a payment. Risky actions ask first, and every action lands in the audit log.",
+    "Seed ships an operator area on its own host. Your operators find a person, see their sign-in methods, sessions and groups, and help them: end a session, send a password-reset link, refund a payment. Risky actions ask first, and every action lands in the audit log.",
   "AdminTour.code": "Read the admin app's code",
   "AdminTour.dashboard": "Dashboard",
   "AdminTour.dashboardText":
@@ -665,11 +665,11 @@ export default {
   "AdminTour.supervisorText":
     "Also refunds payments, cancels a subscription at once and hands a group to another member.",
   "AdminTour.administrator": "Administrator",
-  "AdminTour.administratorText": "Also gives roles, any role below their own.",
+  "AdminTour.administratorText": "Also assigns roles, up to one below their own.",
   "AdminTour.guarantee2fa":
     "Signing in to the admin asks for a 2FA code from every operator who has turned 2FA on.",
   "AdminTour.guaranteeHidden":
-    'Anyone below operator gets "page not found", as if the admin did not exist.',
+    'Anyone below operator gets "page not found", as if the admin didn\'t exist.',
   "AdminTour.guaranteeLogged":
     "Risky actions ask first, and every action is written to the audit log.",
   "AdminTour.guaranteePrivate":
@@ -809,7 +809,7 @@ export default {
   "Compare.fit":
     "Seed is not for you if you want to deploy to Vercel or serverless functions, if you work in Next.js and React and want to stay there, or if you need a payment provider other than Stripe this month. It is also a young project with one maintainer and no community forum yet, while the Next.js SaaS Starter and Open SaaS each have more than 16,000 GitHub stars. Seed is for you if you build a product for groups of people, want sign-in, roles, per-member billing and operations settled before your first feature, and want to control the server and own the code outright.",
   "Compare.gap":
-    "Seed's gap (payment providers other than Stripe) is not built yet; do not choose Seed for it today. The <status>status list</status> says what works.",
+    "Seed's gap, payment providers other than Stripe, isn't built yet, so don't choose Seed for that today. The <status>status list</status> says what works.",
   "Compare.shipfastPrices":
     "ShipFast's prices are the ones its <sales>sales page</sales> showed on {date}.",
   "Compare.more":
@@ -833,7 +833,7 @@ export default {
   "Blog.empty": "No posts yet",
   "Blog.emptyLead": "The first one is on its way.",
   "Blog.emptyNewsletter": "The first one is on its way. Get it by email:",
-  "Blog.notFoundTitle": "This post is not here",
+  "Blog.notFoundTitle": "This post isn't here",
   "Blog.notFoundLead": "It may have moved or been unpublished.",
   "Blog.ctaTitle": "See {site} working in a minute",
   "Blog.published": "Published <time>{date}</time>",
@@ -844,7 +844,7 @@ export default {
   },
   "Blog.newsTitle": "Get the next post by email",
   "Blog.newsLead":
-    "A short email when a post is out or something ships. You confirm by email first; one click unsubscribes.",
+    "A short email when a new post is out or something ships. Confirm once by email, unsubscribe in one click.",
   "Blog.readNext": "Read next",
   "Blog.morePosts": "More posts",
   "Blog.breadcrumb": "Breadcrumb",

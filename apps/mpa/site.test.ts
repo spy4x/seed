@@ -503,7 +503,7 @@ describe("the public website", () => {
   it("lists passkeys on /features as built, not under Not built yet", async () => {
     const { html } = await page("/features")
 
-    expect(html).toContain(`or sign in with a passkey, or try the app first`)
+    expect(html).toContain(`continue with Google or GitHub, sign in with a passkey`)
     expect(html).toContain(`Passkeys: only the public key is stored`)
     expect(html).toContain(`Google and GitHub sign-in, passkeys, magic links, guest accounts, 2FA`)
     expect(html).not.toContain(`issues/222`)
@@ -528,7 +528,7 @@ describe("the public website", () => {
     const pricing = (await page("/pricing")).html
 
     expect(home).toContain(`Images and PDFs attached to notes`)
-    expect(features).toContain(`notes keep images and PDFs in it`)
+    expect(features).toContain(`for images and PDFs on notes`)
     expect(rows.find((row) => row.capability === "File uploads")?.values[0]).toBe("Yes")
     expect(pricing).toContain(`100 files, 200 MB in all`)
     for (const html of [home, features]) {
@@ -955,7 +955,7 @@ describe("the public website", () => {
       .find((entry) => entry.name === "Can I try it without an account?")!
 
     expect(question.acceptedAnswer.text).toMatch(
-      /^Yes\. Try the live demo opens the app in a guest account/,
+      /^Yes\. “Try the live demo” opens the app in a guest account/,
     )
     expect(html).toContain(`Guest accounts: try the app with one click`)
   })
@@ -974,7 +974,7 @@ describe("the public website", () => {
     ) {
       const { html } = await page(path)
 
-      expect(html, path).toContain(`Last changed ${day.format(new Date(`${updated}T00:00:00Z`))}`)
+      expect(html, path).toContain(`Last updated ${day.format(new Date(`${updated}T00:00:00Z`))}`)
     }
   })
 

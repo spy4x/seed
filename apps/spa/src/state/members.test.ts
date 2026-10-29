@@ -277,7 +277,7 @@ describe("handing a group over by REST", () => {
     })
 
     expect([named.message, named.code]).toEqual([
-      "The name you typed is not the group's name.",
+      "That's not the group's name. Type it exactly as shown.",
       "NAME_MISMATCH",
     ])
     expect([limited.message, limited.code]).toEqual([
