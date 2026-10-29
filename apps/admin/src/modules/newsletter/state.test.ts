@@ -48,10 +48,10 @@ function fakeExport(response: Response | Error) {
 it(`reads the list with the filter in a POST body, never in the URL`, async () => {
   const { request, calls } = fakeRequest()
   const state = createNewsletterState(request, createToastStore())
-  await state.loadList({ query: `ann`, status: `pending`, page: 2 })
+  await state.loadList({ query: `ann`, status: `pending`, language: `de`, page: 2 })
 
   expect(calls).toEqual([
-    `POST /api/admin/newsletter/subscribers/search {"q":"ann","status":"pending","page":"2"}`,
+    `POST /api/admin/newsletter/subscribers/search {"q":"ann","status":"pending","language":"de","page":"2"}`,
   ])
   expect(state.list.value.pending).toBe(false)
 })
@@ -155,9 +155,12 @@ it(`says why the export failed and saves nothing`, async () => {
 
 it(`keeps the status, page and tab in the address, leaving out every default and the search`, () => {
   expect(newsletterHref(ADMIN_SUBSCRIBERS_NO_FILTER, `subscribers`)).toBe(`/newsletter`)
-  expect(newsletterHref({ query: `ann@example.com`, status: `pending`, page: 2 }, `sends`)).toBe(
-    `/newsletter?status=pending&page=2&tab=sends`,
-  )
+  expect(
+    newsletterHref(
+      { query: `ann@example.com`, status: `pending`, language: `de`, page: 2 },
+      `sends`,
+    ),
+  ).toBe(`/newsletter?status=pending&language=de&page=2&tab=sends`)
   expect(newsletterHref({ ...ADMIN_SUBSCRIBERS_NO_FILTER, query: `ann` }, `subscribers`)).toBe(
     `/newsletter`,
   )

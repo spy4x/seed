@@ -579,8 +579,11 @@ CREATE TABLE subscribers (
   email text NOT NULL,
   key text NOT NULL,
   subscribed_at timestamptz NOT NULL,
+  -- #527: the language of the page the address confirmed on, for its mails.
+  language TEXT,
   PRIMARY KEY (list_id, email),
-  CONSTRAINT subscribers_list_key_unique UNIQUE (list_id, key)
+  CONSTRAINT subscribers_list_key_unique UNIQUE (list_id, key),
+  CONSTRAINT subscribers_language_check CHECK (length(language) BETWEEN 2 AND 35)
 );
 
 CREATE INDEX idx_subscribers_list_subscribed ON subscribers (list_id, subscribed_at);
@@ -617,7 +620,10 @@ CREATE TABLE subscription_requests (
   list_id TEXT NOT NULL,
   email TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  CONSTRAINT subscription_requests_email_check CHECK (length(email) BETWEEN 3 AND 254)
+  -- #527: the language of the page that asked, for the mail.
+  language TEXT,
+  CONSTRAINT subscription_requests_email_check CHECK (length(email) BETWEEN 3 AND 254),
+  CONSTRAINT subscription_requests_language_check CHECK (length(language) BETWEEN 2 AND 35)
 );
 
 CREATE INDEX idx_subscription_requests_created ON subscription_requests (created_at);
@@ -633,7 +639,10 @@ CREATE TABLE subscriber_issue_content (
   html TEXT NOT NULL,
   text TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  CONSTRAINT subscriber_issue_content_list_issue_unique UNIQUE (list_id, issue_id)
+  -- #527: the issue's language, whose subscribers alone get it; NULL for the whole list.
+  language TEXT,
+  CONSTRAINT subscriber_issue_content_list_issue_unique UNIQUE (list_id, issue_id),
+  CONSTRAINT subscriber_issue_content_language_check CHECK (length(language) BETWEEN 2 AND 35)
 );
 
 -- A person's request to delete their account (#144). See migration 2026_10_20_0001.
@@ -942,6 +951,9 @@ CREATE TABLE blog_posts (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     version INT4 DEFAULT 1 NOT NULL,
+    -- #527: the post's language, and the post it translates. See 2026_12_10_0001_blog_language.sql.
+    language TEXT NOT NULL,
+    translation_of UUID REFERENCES blog_posts(id) ON DELETE SET NULL,
     CONSTRAINT blog_posts_slug_unique UNIQUE (slug),
     CONSTRAINT blog_posts_slug_check CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
     CONSTRAINT blog_posts_status_check CHECK (status IN ('draft', 'scheduled', 'published')),
@@ -952,13 +964,20 @@ CREATE TABLE blog_posts (
     CONSTRAINT blog_posts_scheduled_check CHECK (status <> 'scheduled' OR publish_at IS NOT NULL),
     CONSTRAINT blog_posts_published_check
         CHECK (status <> 'published' OR (publish_at IS NOT NULL AND published_at IS NOT NULL)),
-    CONSTRAINT blog_posts_version_check CHECK (version >= 1)
+    CONSTRAINT blog_posts_version_check CHECK (version >= 1),
+    CONSTRAINT blog_posts_language_check CHECK (length(language) BETWEEN 2 AND 35),
+    CONSTRAINT blog_posts_translation_check CHECK (translation_of <> id)
 );
+
+CREATE UNIQUE INDEX blog_posts_translation_language_unique
+    ON blog_posts (translation_of, language) WHERE translation_of IS NOT NULL;
 
 -- The public website's reads: newest published first, and the same per topic.
 CREATE INDEX idx_blog_posts_published ON blog_posts (published_at DESC) WHERE status = 'published';
 CREATE INDEX idx_blog_posts_topic_published
     ON blog_posts (topic, published_at DESC) WHERE status = 'published';
+CREATE INDEX idx_blog_posts_language_published
+    ON blog_posts (language, published_at DESC) WHERE status = 'published';
 -- The admin list, most recently changed first.
 CREATE INDEX idx_blog_posts_updated ON blog_posts (updated_at DESC, id DESC);
 

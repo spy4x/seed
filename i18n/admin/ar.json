@@ -207,6 +207,8 @@
   "AdminAuditEvent.telegramLinked": "رُبط حساب Telegram",
   "AdminAuditEvent.telegramUnlinked": "فُصل حساب Telegram",
   "AdminAuditEvent.pictureRemoved": "أزال مشغّل صورة الملف الشخصي",
+  "AdminAuditEvent.pictureChanged": "غيّر صورة الملف الشخصي",
+  "AdminAuditEvent.pictureRemovedByPerson": "أزال صورة الملف الشخصي",
   "AdminAuditEvent.signedInWithLink": "سجّل الدخول برابط من البريد الإلكتروني",
   "AdminAuditEvent.signedUpWithLink": "أنشأ حسابًا برابط من البريد الإلكتروني",
   "AdminAuditEvent.paymentRefunded": "استرد مشغّل الدفعة",
@@ -500,6 +502,7 @@
     "other": "إرسال هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد في <list>{list}</list>"
   },
   "AdminBlogDialogs.sentOnce": "تُرسل مرة واحدة عند نشر التدوينة. لا يمكن التراجع عن الإرسال.",
+  "AdminBlogDialogs.postLanguageOnly": "تصل فقط إلى المشتركين الذين اشتركوا بلغة التدوينة.",
   "AdminBlogEditor.leaveMessage": "ستضيع تغييراتك على هذا المنشور.",
   "AdminBlogEditor.doneScheduled": "مجدول في {at}.",
   "AdminBlogEditor.donePublished": "نُشر.",
@@ -809,6 +812,7 @@
   "AdminCatalogItem.uploading": "جارٍ رفع {count}…",
   "AdminCatalogItem.photosRule": "JPEG أو PNG أو WebP أو HEIC، حتى {size} ميغابايت لكل صورة، وبحد أقصى {count}. اسحب لتغيير الترتيب: الأولى هي الغلاف.",
   "AdminCatalogItem.cover": "الغلاف",
+  "AdminCatalogItem.openPhoto": "فتح بالحجم الكامل: {photo}",
   "AdminCatalogItem.noDescription": "لا وصف بعد",
   "AdminCatalogItem.moreActionsFor": "إجراءات أخرى لـ{photo}",
   "AdminCatalogItem.makeCover": "جعلها الغلاف<hidden>: {photo}</hidden>",
@@ -1242,6 +1246,7 @@
   "AdminJobs.startedAt": "<label>بدأت</label> <when></when>",
   "AdminJobs.notYet": "ليس بعد",
   "AdminJobs.job": "المهمة",
+  "AdminJobs.photoOf": "صورة <link>{item}</link>",
   "AdminJobs.status": "الحالة",
   "AdminJobs.attemptsHeader": "المحاولات",
   "AdminJobs.when": "متى",
@@ -1422,6 +1427,7 @@
   "AdminNewsletter.searching": "جارٍ البحث…",
   "AdminNewsletter.search": "بحث",
   "AdminNewsletter.status": "الحالة",
+  "AdminNewsletter.language": "اللغة",
   "AdminNewsletter.clear": "مسح عوامل التصفية",
   "AdminNewsletter.count": {
     "zero": "لا توجد عناوين",
@@ -1741,5 +1747,10 @@
   "AdminUsers.created": "أُنشئ",
   "AdminUsers.guest": "ضيف",
   "AdminUsers.you": "أنت",
-  "AdminUsers.noName": "بلا اسم"
+  "AdminUsers.noName": "بلا اسم",
+  "AdminBlogEditor.language": "اللغة",
+  "AdminBlogEditor.languageHint": "اللغة التي كُتبت بها التدوينة. يعرضها الموقع في مدونة تلك اللغة.",
+  "AdminBlogEditor.translationOf": "ترجمة لـ",
+  "AdminBlogEditor.translationOfHint": "التدوينة التي تترجمها هذه. يربط الموقع بينهما كنسختين لغويتين حين تُنشر كلتاهما.",
+  "AdminBlogEditor.translationNone": "لا شيء: تدوينة مستقلة"
 }

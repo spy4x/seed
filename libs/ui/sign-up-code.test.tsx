@@ -177,6 +177,16 @@ describe("SignUpCodeScreen", () => {
     expect(heard).toEqual(["different address"])
   })
 
+  it("draws Use a different address in the size of the sentence around it", async () => {
+    await mount(<SignUpCodeScreen {...props([])} />)
+
+    const button = find("[data-e2e=sign-up-different-address]")
+    // The sentence under the card is `text-sm`; the small button size would be `text-xs`.
+    expect(button.closest("p")!.classList.contains("text-sm")).toBe(true)
+    expect(button.classList.contains("text-xs")).toBe(false)
+    expect(button.classList.contains("text-sm")).toBe(true)
+  })
+
   it("hands an account with a password over to sign-in, with the reset page beside it", async () => {
     const heard: string[] = []
     await mount(<SignUpCodeScreen {...props(heard, { exists: PASSWORD_ACCOUNT })} />)

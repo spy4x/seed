@@ -1333,7 +1333,7 @@
   "ProfileScreen.pushFailed": "تعذّرت إضافة هذا الجهاز. اسمح بالإشعارات لهذا الموقع في متصفحك، ثم حاول مرة أخرى.",
   "ProfileScreen.pushRemoveFailed": "تعذّرت إزالة هذا الجهاز. تحقّق من اتصالك وحاول مرة أخرى.",
   "ProfileScreen.account": "الحساب",
-  "ProfileScreen.accountText": "اسمك وبريدك الإلكتروني ونسخة من بياناتك.",
+  "ProfileScreen.accountText": "صورتك واسمك وبريدك الإلكتروني ونسخة من بياناتك.",
   "ProfileScreen.security": "تسجيل الدخول والأمان",
   "ProfileScreen.securityText": "كيف تسجّل الدخول، وأين سُجّل الدخول إلى حسابك.",
   "ProfileScreen.region": "اللغة والمنطقة",

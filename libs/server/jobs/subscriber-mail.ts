@@ -8,6 +8,7 @@ import {
   createPostgresSubscriberStore,
 } from "@spy4x/server/subscribers/postgres"
 import { isSubscriberList, type SubscriberList } from "@domain/subscribers"
+import { DEFAULT_LANGUAGE, isLanguage, type Language, sitePath } from "@domain/identity"
 import {
   createListCrypto,
   subscriberConfirmLink,
@@ -15,7 +16,7 @@ import {
   type SubscribersSetup,
   subscriberUnsubscribeLink,
 } from "../subscribers/subscribers.ts"
-import type { MailBrand } from "../mail/mail.ts"
+import { type MailBrand, translatorFor } from "../mail/mail.ts"
 import { enqueueJob, type JobHandler } from "./jobs.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
@@ -37,19 +38,37 @@ export type SubscriberMailJob =
   | typeof SUBSCRIBER_WELCOME_MAIL_JOB
 
 /**
- * Queues one mail to `email` for `list`. A subscribe request writes the same row and job for a
- * listed address and a new one, so neither the answer nor the writes tell which. The row is written
- * before its job, as for a password reset: the worker never runs a job whose row is not there yet.
+ * Queues one mail to `email` for `list`, written in `language` (`null`: the product's main
+ * language). A subscribe request writes the same row and job for a listed address and a new one, so
+ * neither the answer nor the writes tell which. The row is written before its job, as for a
+ * password reset: the worker never runs a job whose row is not there yet.
  */
 export async function enqueueSubscriberMail(
   sql: postgres.Sql,
   job: SubscriberMailJob,
   list: string,
   email: string,
+  language: Language | null = null,
 ): Promise<void> {
   const id = uuidV7()
-  await sql`INSERT INTO subscription_requests (id, list_id, email) VALUES (${id}, ${list}, ${email})`
+  await sql`
+    INSERT INTO subscription_requests (id, list_id, email, language)
+    VALUES (${id}, ${list}, ${email}, ${isLanguage(language) ? language : null})
+  `
   await enqueueJob(sql, job, id, { inMs: 0 })
+}
+
+/**
+ * Keeps `language` as the language of `email` on `list` (#527): the page's the address confirmed
+ * on. An address no longer on the list is left alone.
+ */
+export async function rememberSubscriberLanguage(
+  sql: postgres.Sql,
+  list: string,
+  email: string,
+  language: Language,
+): Promise<void> {
+  await sql`UPDATE subscribers SET language = ${language} WHERE list_id = ${list} AND email = ${email}`
 }
 
 /** What the subscriber jobs need. */
@@ -67,27 +86,39 @@ export interface SubscriberMailDeps {
 interface RequestRow {
   listId: string
   email: string
+  language: string | null
 }
 
-/** A request row whose list the app still has. */
+/** A request row whose list the app still has, with the language its mail is written in. */
 interface ListRequest {
   listId: SubscriberList
   email: string
+  language: Language
 }
 
 /**
  * The confirm mail job: signs a confirm token here, next to the send, so the API never holds one
- * and no token is stored. A failed send throws, so the job is retried with a fresh token.
+ * and no token is stored. The mail and, on the public website, the page its link opens are in the
+ * request's language, so the address confirms in the language it signed up in. A failed send
+ * throws, so the job is retried with a fresh token.
  */
 export function subscriberConfirmMailJob(deps: SubscriberMailDeps): JobHandler {
   return requestJob(deps, async (request, setup) => {
     const crypto = await createListCrypto(setup, request.listId)
+    // The app's own confirm page has no address per language; the website's has.
+    const pagesUrl = setup.siteUrl === undefined
+      ? subscriberPagesUrl(setup, deps.brand.webAppUrl)
+      : `${setup.siteUrl}${sitePath(request.language, ``)}`
     const link = subscriberConfirmLink(
-      subscriberPagesUrl(setup, deps.brand.webAppUrl),
+      pagesUrl,
       request.listId,
       await crypto.confirmToken(request.email),
     )
-    return subscriberConfirmMail(deps.brand, { to: request.email, link })
+    return subscriberConfirmMail(deps.brand, {
+      to: request.email,
+      link,
+      language: request.language,
+    })
   })
 }
 
@@ -107,7 +138,11 @@ export function subscriberWelcomeMailJob(deps: SubscriberMailDeps): JobHandler {
       request.listId,
       await crypto.unsubscribeToken(subscriber.email, subscriber.key),
     )
-    return subscriberWelcomeMail(deps.brand, { to: subscriber.email, unsubscribeLink: link })
+    return subscriberWelcomeMail(deps.brand, {
+      to: subscriber.email,
+      unsubscribeLink: link,
+      language: request.language,
+    })
   })
 }
 
@@ -122,12 +157,13 @@ function requestJob(
   const { sql } = deps
   return async (event) => {
     const [request] = await sql<RequestRow[]>`
-      SELECT list_id, email FROM subscription_requests WHERE id = ${event.aggregateId}
+      SELECT list_id, email, language FROM subscription_requests WHERE id = ${event.aggregateId}
     `
     if (!request) return
     const { listId, email } = request
+    const language = isLanguage(request.language) ? request.language : DEFAULT_LANGUAGE
     if (deps.sender && deps.setup && isSubscriberList(listId)) {
-      const message = await build({ listId, email }, deps.setup)
+      const message = await build({ listId, email, language }, deps.setup)
       if (message) {
         const result = await sendable(deps.sender, deps.brand).send(message)
         if (!result.ok) {
@@ -146,11 +182,29 @@ interface IssueRow {
   subject: string
   html: string
   text: string
+  language: Language | null
 }
 
 /**
- * The send-issue job: mails the stored issue to everyone on its list through `sendIssue`, which
- * records each recipient in the Postgres send log. A rerun mails only the audience members the log
+ * The addresses on `list` whose language is `language`. A subscriber with no language (one from
+ * before #527, or one whose page named none) counts as the main language's.
+ */
+export async function subscribersInLanguage(
+  sql: postgres.Sql,
+  list: string,
+  language: Language,
+): Promise<Set<string>> {
+  const rows = await sql<{ email: string }[]>`
+    SELECT email FROM subscribers
+    WHERE list_id = ${list} AND COALESCE(language, ${DEFAULT_LANGUAGE}) = ${language}
+  `
+  return new Set(rows.map((row) => row.email))
+}
+
+/**
+ * The send-issue job: mails the stored issue to everyone on its list, or, for an issue with a
+ * language, to the subscribers of that language only (#527), through `sendIssue`, which records
+ * each recipient in the Postgres send log. A rerun mails only the audience members the log
  * does not list as reached. Throws when any mail failed or another run holds the send lock, so the
  * job is retried; the issue row stays for that rerun.
  */
@@ -158,7 +212,7 @@ export function subscriberSendIssueJob(deps: SubscriberMailDeps): JobHandler {
   const { sql } = deps
   return async (event) => {
     const [issue] = await sql<IssueRow[]>`
-      SELECT list_id, issue_id, subject, html, text
+      SELECT list_id, issue_id, subject, html, text, language
       FROM subscriber_issue_content WHERE id = ${event.aggregateId}
     `
     if (!issue) return
@@ -168,11 +222,17 @@ export function subscriberSendIssueJob(deps: SubscriberMailDeps): JobHandler {
     }
     const crypto = await createListCrypto(deps.setup, issue.listId)
     const store = createPostgresSubscriberStore(sql, { listId: issue.listId })
+    const everyone = await store.list()
+    const readers = issue.language === null
+      ? null
+      : await subscribersInLanguage(sql, issue.listId, issue.language)
     const result = await sendIssue({
       issue: issue.issueId,
       subject: issue.subject,
       letter: { html: issue.html, text: issue.text },
-      subscribers: await store.list(),
+      subscribers: readers === null
+        ? everyone
+        : everyone.filter((subscriber) => readers.has(subscriber.email)),
       crypto,
       unsubscribeLink: (token) =>
         subscriberUnsubscribeLink(deps.brand.webAppUrl, issue.listId, token),
@@ -219,36 +279,45 @@ export async function removeStaleSubscriptionRequests(sql: postgres.Sql): Promis
   return removed.count
 }
 
-/** The double opt-in mail. */
+/** The double opt-in mail, in `language`. */
 export function subscriberConfirmMail(
   brand: MailBrand,
-  { to, link }: { to: string; link: string },
+  { to, link, language }: { to: string; link: string; language: Language },
 ): EmailMessage {
   const host = new URL(brand.webAppUrl).host
+  const t = translatorFor(language)
   const letter = renderLetter({
     blocks: [
-      paragraph(`Someone asked to send news from ${host} to this address.`),
-      paragraph(`Confirm within three days to start getting it.`),
-      button(link, `Confirm`),
+      paragraph(t.t(`SubscriberConfirmMail.asked`, { host })),
+      paragraph(t.t(`SubscriberConfirmMail.within`)),
+      button(link, t.t(`SubscriberConfirmMail.button`)),
     ],
-    footer: { reason: `If you did not ask for this, ignore this mail: nothing is sent to you.` },
+    footer: { reason: t.t(`SubscriberConfirmMail.ignore`) },
   })
-  return { to, subject: `Confirm your subscription to ${host}`, ...letter }
+  return { to, subject: t.t(`SubscriberConfirmMail.subject`, { host }), ...letter }
 }
 
-/** The mail a new subscriber gets, with the one-click unsubscribe every list mail carries. */
+/**
+ * The mail a new subscriber gets, in `language`, with the one-click unsubscribe every list mail
+ * carries.
+ */
 export function subscriberWelcomeMail(
   brand: MailBrand,
-  { to, unsubscribeLink }: { to: string; unsubscribeLink: string },
+  { to, unsubscribeLink, language }: { to: string; unsubscribeLink: string; language: Language },
 ): EmailMessage {
   const host = new URL(brand.webAppUrl).host
+  const t = translatorFor(language)
   const letter = renderLetter({
-    blocks: [paragraph(`You are subscribed to news from ${host}.`)],
-    footer: { reason: `You get this mail because you subscribed at ${host}.`, unsubscribeLink },
+    blocks: [paragraph(t.t(`SubscriberWelcomeMail.subscribed`, { host }))],
+    footer: {
+      reason: t.t(`SubscriberWelcomeMail.reason`, { host }),
+      unsubscribeLink,
+      unsubscribeLabel: t.t(`SubscriberWelcomeMail.unsubscribe`),
+    },
   })
   return {
     to,
-    subject: `You are subscribed to ${host}`,
+    subject: t.t(`SubscriberWelcomeMail.subject`, { host }),
     ...letter,
     listUnsubscribe: { url: unsubscribeLink, oneClick: true },
   }

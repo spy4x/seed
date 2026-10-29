@@ -1101,7 +1101,7 @@
   "ProfileScreen.pushFailed": "Could not add this device. Allow notifications for this site in your browser, then try again.",
   "ProfileScreen.pushRemoveFailed": "Could not remove this device. Check your connection and try again.",
   "ProfileScreen.account": "Account",
-  "ProfileScreen.accountText": "Your name, e-mail address and a copy of your data.",
+  "ProfileScreen.accountText": "Your picture, name, e-mail address and a copy of your data.",
   "ProfileScreen.security": "Sign-in and security",
   "ProfileScreen.securityText": "How you sign in, and where your account is signed in.",
   "ProfileScreen.region": "Language and region",

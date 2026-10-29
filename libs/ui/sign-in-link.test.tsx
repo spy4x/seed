@@ -222,6 +222,36 @@ describe("LinkRequestScreen in the browser", () => {
     expect(back.calls).toHaveLength(1)
   })
 
+  it("leads back to sign-in from Check your inbox, handing the address over", async () => {
+    const back = spy<[]>()
+    await mount(
+      <LinkRequestScreen
+        {...requestDefaults}
+        email="ada@example.com"
+        sentTo="ada@example.com"
+        next="/groups"
+        onBackToSignIn={back.fn}
+      />,
+    )
+
+    const link = find("[data-e2e=sign-in-link-sent-back]")
+    expect(link.textContent).toBe("Back to sign in")
+    expect(link.getAttribute("href")).toBe("/sign-in?next=%2Fgroups")
+    await press("[data-e2e=sign-in-link-sent-back]")
+
+    expect(back.calls).toHaveLength(1)
+  })
+
+  it("draws Use a different address in the size of the sentence around it", async () => {
+    await mount(<LinkRequestScreen {...requestDefaults} sentTo="ada@example.com" />)
+
+    const button = find("[data-e2e=sign-in-link-different-address]")
+    // The sentence under the card is `text-sm`; the small button size would be `text-xs`.
+    expect(button.closest("p")!.classList.contains("text-sm")).toBe(true)
+    expect(button.classList.contains("text-xs")).toBe(false)
+    expect(button.classList.contains("text-sm")).toBe(true)
+  })
+
   it("goes back to the form, focused on the address, after Use a different address", async () => {
     const back = spy<[]>()
     const sent = { ...requestDefaults, email: "ada@example.com", onDifferentAddress: back.fn }

@@ -9,6 +9,8 @@ import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import type { AdminBlogListResponse, BlogPost } from "@domain/blog"
+import { LANGUAGES } from "@domain/identity"
+import { languageName } from "@spy4x/preact-ui/language-picker"
 import {
   ADMIN_BLOG_NO_FILTER,
   AdminBlogListScreen,
@@ -107,6 +109,14 @@ async function type(selector: string, value: string): Promise<void> {
   })
 }
 
+async function choose(selector: string, value: string): Promise<void> {
+  const field = find<HTMLSelectElement>(selector)
+  field.value = value
+  await act(() => {
+    field.dispatchEvent(new window.Event("change", { bubbles: true }) as unknown as Event)
+  })
+}
+
 async function submit(selector: string): Promise<void> {
   const form = find(selector).closest("form")!
   await act(async () => {
@@ -127,6 +137,8 @@ const listed: AdminBlogListResponse = {
       title: "Hello world",
       status: "published",
       topic: "News",
+      language: "en",
+      translationOf: null,
       publishAt: "2026-10-01T10:00:00.000Z",
       publishedAt: "2026-10-01T10:00:00.000Z",
       updatedAt: "2026-10-02T10:00:00.000Z",
@@ -210,6 +222,8 @@ const saved: BlogPost = {
   coverUrl: null,
   coverAlt: null,
   bodyMd: "## Why\n\nIt is fast.",
+  language: "en",
+  translationOf: null,
   status: "draft",
   publishAt: null,
   publishedAt: null,
@@ -247,7 +261,12 @@ function editorProps(
     significantUpdate: false,
     onSignificantUpdate: (value) => calls.push(["significant", value]),
     topics: ["Infra"],
-    newsletter: { enabled: true, lists: [{ list: "news", confirmed: 12 }], siteUrl: null },
+    originals: [],
+    newsletter: {
+      enabled: true,
+      lists: [{ list: "news", byLanguage: { en: 12, de: 3 } }],
+      siteUrl: null,
+    },
     siteUrl: "https://www.example.com",
     preview: null,
     previewPending: false,
@@ -283,6 +302,42 @@ describe("the blog editor", () => {
     expect(calls).toEqual([["change", { ...blogDraftOf(saved), title: "Jobs, explained" }]])
     await submit("[data-e2e=admin-blog-title-field]")
     expect(calls.at(-1)).toEqual(["save"])
+  })
+
+  it("sets the post's language, and the post it translates from those in other languages (#527)", async () => {
+    const calls: unknown[][] = []
+    const english = {
+      id: "01a184ae-0000-7000-8000-000000000001",
+      title: "Hello world",
+      language: "en" as const,
+    }
+    const german = {
+      id: "01a184ae-0000-7000-8000-000000000002",
+      title: "Hallo",
+      language: "de" as const,
+    }
+    const value = { ...blogDraftOf(saved), language: "de" as const }
+    await mount(
+      <AdminBlogEditorScreen {...editorProps(calls, { value, originals: [english, german] })} />,
+    )
+    const translationOf = find<HTMLSelectElement>(
+      "select[data-e2e=admin-blog-translation-of]",
+    )
+    expect([...translationOf.options].map((option) => option.value)).toEqual(["", english.id])
+
+    await choose(
+      "select[data-e2e=admin-blog-language]",
+      "es",
+    )
+    await choose(
+      "select[data-e2e=admin-blog-translation-of]",
+      english.id,
+    )
+
+    expect(calls).toEqual([
+      ["change", { ...value, language: "es" }],
+      ["change", { ...value, translationOf: english.id }],
+    ])
   })
 
   it("opens the folded settings and focuses the first field in error", async () => {
@@ -374,6 +429,27 @@ describe("the blog editor", () => {
     expect(document.body.textContent).toContain("It cannot be unsent.")
     await clickOn(button("Publish and email 12"))
     expect(calls.at(-1)).toEqual(["publish", { at: null, list: "news" }])
+  })
+
+  it("counts only the subscribers of the post's language as the issue's readers, and says so (#527)", async () => {
+    const value = { ...blogDraftOf(saved), language: "de" as const }
+    await mount(<AdminBlogEditorScreen {...editorProps([], { dialog: "publish", value })} />)
+    expect(document.body.textContent).toContain("Also email this post to 3 confirmed subscribers")
+    expect(find("dialog[open]").textContent).toContain(`It goes live at /de/blog/${value.slug}`)
+    await clickOn(
+      find("[data-e2e=admin-blog-email] input, input[data-e2e=admin-blog-email]"),
+    )
+    expect(find("[data-e2e=admin-blog-email-hint]").textContent).toContain(
+      "It goes only to the subscribers who signed up in the post's language.",
+    )
+    expect(button("Publish and email 3")).toBeTruthy()
+
+    await mount(
+      <AdminBlogEditorScreen
+        {...editorProps([], { dialog: "publish", value: { ...value, language: "es" } })}
+      />,
+    )
+    expect(document.body.textContent).toContain("Also email this post to 0 confirmed subscribers")
   })
 
   it("keeps a scheduled post's list when it is published now or moved, unless unticked", async () => {
@@ -510,6 +586,11 @@ describe("the blog screens in en-XA", () => {
         <AdminBlogEditorScreen {...editorProps([], { dialog: "delete" })} />
       </I18nContext.Provider>,
     )
-    expect(englishLeft(document.body, [`Hello world`, `News`, /\/blog\/[a-z-]+/g])).toEqual([])
+    // A language is named in its own language, as every language picker does: data, not English.
+    const languageNames = LANGUAGES.map((language) => languageName(language))
+    expect(
+      englishLeft(document.body, [`Hello world`, `News`, /\/blog\/[a-z-]+/g, ...languageNames]),
+    )
+      .toEqual([])
   })
 })

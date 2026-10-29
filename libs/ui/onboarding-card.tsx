@@ -229,6 +229,8 @@ export function OnboardingCard(
           title={t.t(`OnboardingCard.title`)}
           steps={onboardingSteps(t, steps, groupId, navigate, guest)}
           onDismiss={onDismiss}
+          // The page header's "New note" is the screen's one primary action (#454).
+          actionVariant="secondary"
           description={tourOffered
             ? (
               <span

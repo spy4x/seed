@@ -658,6 +658,13 @@ export const SIGN_IN_LINK_MINUTES = 15
 export const SIGN_IN_LINK_METHOD = "email-link"
 
 /**
+ * The `identifier` of the person's own {@link AuthAuditEventType.PROFILE_UPDATED} rows for their
+ * profile picture (#228): a new picture, and a removal (#453). Rows written before #453 say
+ * `picture` for a removal too.
+ */
+export const PICTURE_AUDIT = { changed: "picture", removed: "picture-removed" } as const
+
+/**
  * The body of `POST /api/auth/link`: the address the link goes to, and the page to open after
  * sign-in, which the API checks again.
  */

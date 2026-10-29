@@ -1159,7 +1159,7 @@
   "ProfileScreen.pushFailed": "Não foi possível adicionar este dispositivo. Permita notificações deste site no navegador e tente de novo.",
   "ProfileScreen.pushRemoveFailed": "Não foi possível remover este dispositivo. Confira sua conexão e tente de novo.",
   "ProfileScreen.account": "Conta",
-  "ProfileScreen.accountText": "Seu nome, seu e-mail e uma cópia dos seus dados.",
+  "ProfileScreen.accountText": "Sua foto, seu nome, seu e-mail e uma cópia dos seus dados.",
   "ProfileScreen.security": "Acesso e segurança",
   "ProfileScreen.securityText": "Como você entra e onde sua conta está conectada.",
   "ProfileScreen.region": "Idioma e região",

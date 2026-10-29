@@ -25,6 +25,8 @@ const post: BlogPost = {
   coverUrl: null,
   coverAlt: null,
   bodyMd: `Text.`,
+  language: `en`,
+  translationOf: null,
   status: `draft`,
   publishAt: null,
   publishedAt: null,
@@ -81,7 +83,7 @@ it(`creates the post with its client id on the first save, then saves with the v
   state.edit({ ...state.editor.value.value, title: `Hello`, description: `A post.` })
   expect(await state.save()).toEqual(post)
   expect(calls[0]).toBe(
-    `POST /api/admin/blog/posts {"id":"${ID}","title":"Hello","slug":"hello","description":"A post.","seoTitle":"","tldr":[],"topic":"","coverUrl":"","coverAlt":"","bodyMd":""}`,
+    `POST /api/admin/blog/posts {"id":"${ID}","title":"Hello","slug":"hello","description":"A post.","seoTitle":"","tldr":[],"topic":"","coverUrl":"","coverAlt":"","bodyMd":"","language":"en","translationOf":null}`,
   )
   expect(state.editor.value.saveStatus).toBe(`saved`)
   state.edit({ ...state.editor.value.value, title: `Hello again` })
@@ -276,6 +278,8 @@ it(`offers "View post" after publishing when the website's address is known`, as
       ? Promise.resolve(ok({ enabled: false, lists: [], siteUrl: `https://www.example.com` }))
       : path.endsWith(`/topics`)
       ? Promise.resolve(ok({ topics: [] }))
+      : path.endsWith(`/posts`)
+      ? Promise.resolve(ok({ posts: [], counts: { all: 0, draft: 0, scheduled: 0, published: 0 } }))
       : path.endsWith(`/publish`)
       ? Promise.resolve(ok({ post: live }))
       : undefined

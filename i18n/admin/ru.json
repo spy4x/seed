@@ -197,6 +197,8 @@
   "AdminAuditEvent.telegramLinked": "Привязан аккаунт Telegram",
   "AdminAuditEvent.telegramUnlinked": "Отвязан аккаунт Telegram",
   "AdminAuditEvent.pictureRemoved": "Оператор удалил фото профиля",
+  "AdminAuditEvent.pictureChanged": "Фото профиля изменено",
+  "AdminAuditEvent.pictureRemovedByPerson": "Фото профиля удалено",
   "AdminAuditEvent.signedInWithLink": "Вход по ссылке из письма",
   "AdminAuditEvent.signedUpWithLink": "Регистрация по ссылке из письма",
   "AdminAuditEvent.paymentRefunded": "Оператор вернул платёж",
@@ -478,6 +480,7 @@
     "other": "Также отправить запись {count} подтверждённым подписчикам списка <list>{list}</list>"
   },
   "AdminBlogDialogs.sentOnce": "Отправляется один раз, когда запись выходит. Отменить отправку нельзя.",
+  "AdminBlogDialogs.postLanguageOnly": "Письмо получат только подписчики, которые подписались на языке записи.",
   "AdminBlogEditor.leaveMessage": "Ваши правки в этой записи пропадут.",
   "AdminBlogEditor.doneScheduled": "Запланировано на {at}.",
   "AdminBlogEditor.donePublished": "Опубликовано.",
@@ -773,6 +776,7 @@
   "AdminCatalogItem.uploading": "Загрузка: {count}…",
   "AdminCatalogItem.photosRule": "JPEG, PNG, WebP или HEIC, до {size} МБ каждое, не больше {count}. Перетаскивайте, чтобы изменить порядок: первое фото — обложка.",
   "AdminCatalogItem.cover": "Обложка",
+  "AdminCatalogItem.openPhoto": "Открыть в полном размере: {photo}",
   "AdminCatalogItem.noDescription": "Описания пока нет",
   "AdminCatalogItem.moreActionsFor": "Ещё действия: {photo}",
   "AdminCatalogItem.makeCover": "Сделать обложкой<hidden>: {photo}</hidden>",
@@ -1174,6 +1178,7 @@
   "AdminJobs.startedAt": "<label>Запущена</label> <when></when>",
   "AdminJobs.notYet": "Пока нет",
   "AdminJobs.job": "Задача",
+  "AdminJobs.photoOf": "Фото товара <link>{item}</link>",
   "AdminJobs.status": "Статус",
   "AdminJobs.attemptsHeader": "Попытки",
   "AdminJobs.when": "Когда",
@@ -1336,6 +1341,7 @@
   "AdminNewsletter.searching": "Ищем…",
   "AdminNewsletter.search": "Найти",
   "AdminNewsletter.status": "Статус",
+  "AdminNewsletter.language": "Язык",
   "AdminNewsletter.clear": "Сбросить фильтры",
   "AdminNewsletter.count": {
     "one": "{count} адрес",
@@ -1639,5 +1645,10 @@
   "AdminUsers.created": "Создан",
   "AdminUsers.guest": "Гость",
   "AdminUsers.you": "Вы",
-  "AdminUsers.noName": "Без имени"
+  "AdminUsers.noName": "Без имени",
+  "AdminBlogEditor.language": "Язык",
+  "AdminBlogEditor.languageHint": "Язык, на котором написан пост. Сайт покажет его в блоге на этом языке.",
+  "AdminBlogEditor.translationOf": "Перевод поста",
+  "AdminBlogEditor.translationOfHint": "Пост, который переводит этот. Когда оба опубликованы, сайт связывает их как языковые версии.",
+  "AdminBlogEditor.translationNone": "Нет: самостоятельный пост"
 }

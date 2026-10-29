@@ -101,15 +101,17 @@ export interface SubscribeFormProps {
   pending: boolean
   onSubmit?: () => void
   localize?: LocalizePath
+  /** The page's language, posted as a hidden field: the mails are written in it. */
+  language?: string
 }
 
 /**
- * Asks for the address to send news to. Without `onSubmit` the form posts `{ email, list }` to its
- * route; with it the app takes the submit over. The answer is the same for an address already on
+ * Asks for the address to send news to. Without `onSubmit` the form posts
+ * `{ email, list, language }` to its route; with it the app takes the submit over. The answer is the same for an address already on
  * the list, so the form never says which.
  */
 export function SubscribeForm(
-  { email, onEmailChange, list, sent, error, pending, onSubmit, localize = samePath }:
+  { email, onEmailChange, list, sent, error, pending, onSubmit, localize = samePath, language }:
     SubscribeFormProps,
 ): JSX.Element {
   const { t } = useSiteText()
@@ -135,6 +137,7 @@ export function SubscribeForm(
       <ScreenForm action={localize(FORM_ACTIONS.subscribe)} pending={pending} onSubmit={onSubmit}>
         <Stack>
           <input type="hidden" name="list" value={list} />
+          <input type="hidden" name="language" value={language ?? ""} />
           <Field id="subscribe-email" label={t("SubscribeForm.email")} error={error} required>
             <Input
               ref={field}
@@ -174,11 +177,18 @@ export interface SubscriptionConfirmScreenProps {
   onSubmit?: () => void
   navigate?: Navigate
   localize?: LocalizePath
+  /**
+   * One link onward once the address is confirmed, such as back to a product's catalog. Left out,
+   * the confirmation ends the page.
+   */
+  onward?: { href: string; label: string }
+  /** The page's language, posted as a hidden field: the subscriber's mails are written in it. */
+  language?: string
 }
 
 /**
  * The page a confirm link opens. It asks for a click before anything is stored, so a mail scanner
- * that follows the link subscribes no one. The form posts `{ list, token }` to its route; with
+ * that follows the link subscribes no one. The form posts `{ list, token, language }` to its route; with
  * `onSubmit` the app takes the submit over.
  */
 export function SubscriptionConfirmScreen(
@@ -192,6 +202,8 @@ export function SubscriptionConfirmScreen(
     onSubmit,
     navigate,
     localize = samePath,
+    onward,
+    language,
   }: SubscriptionConfirmScreenProps,
 ): JSX.Element {
   const { t } = useSiteText()
@@ -205,6 +217,8 @@ export function SubscriptionConfirmScreen(
       <Outcome
         title={t("SubscriptionConfirm.doneTitle")}
         text={t("SubscriptionConfirm.doneText")}
+        link={onward}
+        navigate={navigate}
         statusRef={status}
         e2e="subscription-confirm-done"
       />
@@ -250,6 +264,7 @@ export function SubscriptionConfirmScreen(
         <Stack>
           <input type="hidden" name="list" value={list} />
           <input type="hidden" name="token" value={token} />
+          <input type="hidden" name="language" value={language ?? ""} />
           <FormError
             error={error ?? (state === "error" ? t(SUBSCRIBE_FAILURES.confirm) : null)}
             e2e="subscription-confirm-error"

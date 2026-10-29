@@ -160,7 +160,7 @@ function TextLink(
       data-umami-event={event}
       data-umami-event-from={from}
     >
-      {children} <Arrow class={down ? `size-4` : `size-4 rtl:-scale-x-100`} aria-hidden="true" />
+      {children} <Arrow class="size-4" aria-hidden="true" />
     </a>
   )
 }

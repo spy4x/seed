@@ -3,8 +3,10 @@ import {
   type BackoffConfig,
   ClientTransport,
   ConnectionLostError,
+  createJsonCodec,
   createSystemClock,
   type GapReport,
+  type MessageCodec,
   PersistentCursorStore,
   type SocketFactory,
   TransportStatus,
@@ -81,6 +83,45 @@ export function sessionGate(userId: number) {
   }
 }
 
+/** How long after one look for a newer app the next may start, so a stream of frames sends one. */
+export const UPDATE_CHECK_GAP_MS = 60_000
+
+/**
+ * The codec the socket uses, which calls `onUndecodable` for every frame it cannot read. A frame
+ * this page cannot read means the server speaks a newer protocol: it was deployed after this page
+ * loaded. The transport drops such a frame, so a call it answers would only time out (#458).
+ */
+export function versionAwareCodec(inner: MessageCodec, onUndecodable: () => void): MessageCodec {
+  return {
+    encode: (message) => inner.encode(message),
+    decode: (raw) => {
+      const result = inner.decode(raw)
+      if (!result.ok) onUndecodable()
+      return result
+    },
+  }
+}
+
+/**
+ * Asks the browser to fetch the service worker again, at most once per {@link UPDATE_CHECK_GAP_MS}.
+ * The deployed worker differs from this page's, so it installs and waits, and `SWUpdater` shows its
+ * "New version available" prompt. A page with no service worker has nothing to update.
+ */
+export function updateCheck(
+  update: () => Promise<unknown> = async () =>
+    await (await globalThis.navigator?.serviceWorker?.getRegistration())?.update(),
+  now: () => number = Date.now,
+): () => void {
+  let last = -Infinity
+  return () => {
+    if (now() - last < UPDATE_CHECK_GAP_MS) return
+    last = now()
+    update().catch(() => {})
+  }
+}
+
+const checkForNewVersion = updateCheck()
+
 interface Connection {
   userId: number
   transport: ClientTransport
@@ -142,6 +183,7 @@ export function connectRealtime(
   const transport = new ClientTransport({
     url: socketUrl(),
     socketFactory: socketFactoryFor(userId),
+    codec: versionAwareCodec(createJsonCodec(), checkForNewVersion),
     clock: createSystemClock(),
     cursors,
     pull,

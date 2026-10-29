@@ -12,12 +12,14 @@ import { createPublicBlogRoute } from "../../api/routes/blog.ts"
  */
 const DAY_MS = 86_400_000
 const now = Date.now()
-const posts: PublicBlogPost[] = SAMPLE_POSTS
-  .filter(({ status }) => status === `published`)
+const published = SAMPLE_POSTS.filter(({ status }) => status === `published`)
+const posts: PublicBlogPost[] = published
   .map((sample) => {
     const body = renderBlogBody(sample.bodyMd)
+    const original = sample.translationOf ?? sample.id
     return {
       slug: sample.slug,
+      language: sample.language,
       title: sample.title,
       description: sample.description,
       topic: sample.topic,
@@ -31,11 +33,17 @@ const posts: PublicBlogPost[] = SAMPLE_POSTS
       html: body.html,
       headings: body.headings,
       authorName: null,
+      translations: published
+        .filter((other) =>
+          other !== sample && (other.id === original || other.translationOf === original)
+        )
+        .map(({ language, slug }) => ({ language, slug })),
     }
   })
 const summary = (
-  { slug, title, description, topic, publishedAt, updatedAt, readingMinutes }: PublicBlogPost,
-) => ({ slug, title, description, topic, publishedAt, updatedAt, readingMinutes })
+  { slug, language, title, description, topic, publishedAt, updatedAt, readingMinutes }:
+    PublicBlogPost,
+) => ({ slug, language, title, description, topic, publishedAt, updatedAt, readingMinutes })
 
 const blog = createPublicBlogRoute({
   list: (topic) =>
@@ -43,7 +51,12 @@ const blog = createPublicBlogRoute({
   get: (slug) => {
     const post = posts.find((p) => p.slug === slug)
     return Promise.resolve(
-      post ? { post, readNext: posts.filter((p) => p !== post).map(summary) } : null,
+      post
+        ? {
+          post,
+          readNext: posts.filter((p) => p !== post && p.language === post.language).map(summary),
+        }
+        : null,
     )
   },
   topics: () => Promise.resolve([]),

@@ -364,7 +364,7 @@ function Features(): JSX.Element {
             data-e2e="home-all-features"
           >
             {t.t(`HomeFeatures.all`)}
-            <IconArrowRight class="size-5 text-primary rtl:-scale-x-100" />
+            <IconArrowRight class="size-5 text-primary" />
           </a>
         </div>
       </div>
@@ -491,7 +491,7 @@ function Status(): JSX.Element {
           href={`${REPOSITORY_URL}/issues`}
           class="inline-flex items-center gap-1 self-start font-medium text-primary hover:underline"
         >
-          {t.t(`HomeStatus.follow`)} <IconArrowRight class="size-4 rtl:-scale-x-100" />
+          {t.t(`HomeStatus.follow`)} <IconArrowRight class="size-4" />
         </a>
       </div>
     </Band>

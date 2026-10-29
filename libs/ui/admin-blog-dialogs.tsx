@@ -9,7 +9,7 @@ import { DateTimeField } from "@spy4x/preact-ui/date-time-field"
 import { Input, Select } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
-import { BLOG_SLUG_MAX_LENGTH, BLOG_SLUG_PATTERN } from "@domain/blog"
+import { BLOG_SLUG_MAX_LENGTH, BLOG_SLUG_PATTERN, blogPostPath } from "@domain/blog"
 import type { AdminBlogEditorScreenProps } from "./admin-blog-editor.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAdminText } from "./i18n.ts"
@@ -128,7 +128,12 @@ function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
       <Stack gap="md">
         <p>
           <Rich
-            parts={t.parts(`AdminBlogDialogs.linksBreak`, { path: `/blog/${old}` })}
+            parts={t.parts(`AdminBlogDialogs.linksBreak`, {
+              path: blogPostPath({
+                language: props.post?.language ?? props.value.language,
+                slug: old,
+              }),
+            })}
             tags={{ path }}
           />
         </p>
@@ -186,11 +191,13 @@ function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): J
   const late = at === null || new Date(at).getTime() <= now.getTime()
   const atError = scheduling && tried && late ? t.t(`AdminBlogDialogs.futureTime`) : null
   const target = list ?? chosen?.list ?? null
+  // The issue goes only to the subscribers of the post's language (#527).
+  const readers = chosen?.byLanguage[value.language] ?? 0
   const sending = canEmail && emailing && target !== null
   const confirmLabel = scheduling
     ? t.t(`AdminBlogDialogs.schedule`)
     : sending && chosen
-    ? t.t(`AdminBlogDialogs.publishAndEmail`, { count: chosen.confirmed })
+    ? t.t(`AdminBlogDialogs.publishAndEmail`, { count: readers })
     : t.t(`AdminBlogDialogs.publish`)
   const slug = post?.slug ?? value.slug.trim()
   return (
@@ -239,7 +246,9 @@ function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): J
           : (
             <p>
               <Rich
-                parts={t.parts(`AdminBlogDialogs.goesLiveAt`, { path: `/blog/${slug}` })}
+                parts={t.parts(`AdminBlogDialogs.goesLiveAt`, {
+                  path: blogPostPath({ language: value.language, slug }),
+                })}
                 tags={{ path }}
               />
             </p>
@@ -265,17 +274,17 @@ function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): J
                 ? (
                   <Rich
                     parts={t.parts(`AdminBlogDialogs.alsoEmailList`, {
-                      count: chosen.confirmed,
+                      count: readers,
                       list: chosen.list,
                     })}
                     tags={{ list: path }}
                   />
                 )
-                : t.t(`AdminBlogDialogs.alsoEmail`, { count: chosen.confirmed })}
+                : t.t(`AdminBlogDialogs.alsoEmail`, { count: readers })}
             </Checkbox>
             {emailing && (
               <p class="text-sm text-muted" data-e2e="admin-blog-email-hint">
-                {t.t(`AdminBlogDialogs.sentOnce`)}
+                {t.t(`AdminBlogDialogs.sentOnce`)} {t.t(`AdminBlogDialogs.postLanguageOnly`)}
               </p>
             )}
           </Stack>

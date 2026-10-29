@@ -325,6 +325,11 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
         contentType: file.type,
         size: file.size,
       })
+      if (abort.signal.aborted) {
+        // Cancelled while it was being signed: no PUT, and the server lets the upload go.
+        void dependencies.cancel({ groupId: group, id: signed.id }).catch(() => undefined)
+        return
+      }
       signedUploads.set(id, signed.id)
       await dependencies.put(signed, file, (progress) => {
         if (isCurrent(read)) update(id, { progress })
@@ -332,6 +337,11 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
       if (!isCurrent(read) || abort.signal.aborted) return
       update(id, { status: `checking`, progress: undefined })
       const { attachment } = await dependencies.confirm({ groupId: group, id: signed.id })
+      if (abort.signal.aborted) {
+        // Cancelled during the check, after the server took the confirm: the file it stored goes.
+        void dependencies.remove({ groupId: group, id: attachment.id }).catch(() => undefined)
+        return
+      }
       if (!isCurrent(read)) return
       files.delete(id)
       aborts.delete(id)

@@ -111,7 +111,11 @@ function buildApp(
     updatePhoto: record(`updatePhoto`, photo),
     reorderPhotos: record(`reorderPhotos`, [photo]),
     removePhoto: record(`removePhoto`, undefined),
-    thumbnail: record(`thumbnail`, { bytes: PNG, contentType: `image/webp` }),
+    photoFile: (photoId, size) =>
+      record(`photoFile`, { bytes: PNG, contentType: `image/webp`, final: size === `thumbnail` })(
+        photoId,
+        size,
+      ),
     createCategory: record(`createCategory`, category),
     updateCategory: record(`updateCategory`, category),
     deleteCategory: record(`deleteCategory`, undefined),
@@ -183,6 +187,7 @@ const ROUTES: { method: string; path: string; body?: unknown; headers?: Record<s
     { method: `POST`, path: `/items/${ID}/photos/${PHOTO}`, body: { alt: {}, colourId: null } },
     { method: `POST`, path: `/items/${ID}/photos/${PHOTO}/delete` },
     { method: `GET`, path: `/photos/${PHOTO}/thumbnail` },
+    { method: `GET`, path: `/photos/${PHOTO}/full` },
     { method: `POST`, path: `/categories`, body: { id: ID, slug: `tops`, name: { vi: `Áo` } } },
     { method: `POST`, path: `/categories/order`, body: { ids: [ID] } },
     {
@@ -432,5 +437,18 @@ describe(`operator area: catalog routes`, () => {
     expect(response.headers.get(`content-type`)).toBe(`image/webp`)
     expect(response.headers.get(`x-content-type-options`)).toBe(`nosniff`)
     expect(response.headers.get(`content-security-policy`)).toContain(`sandbox`)
+  })
+
+  it(`serves a photo's widest width for the lightbox, uncached while wider ones are made`, async () => {
+    const { app, calls } = buildApp()
+    const response = await request(app, `GET`, `/photos/${PHOTO}/full`)
+
+    expect(response.status).toBe(200)
+    expect(calls).toContainEqual([`photoFile`, PHOTO, `full`])
+    expect(response.headers.get(`content-security-policy`)).toContain(`sandbox`)
+    expect(response.headers.get(`cache-control`)).toBe(`no-store`)
+    const thumbnail = await request(app, `GET`, `/photos/${PHOTO}/thumbnail`)
+    expect(thumbnail.headers.get(`cache-control`)).toBe(`private, max-age=86400`)
+    expect((await request(app, `GET`, `/photos/${PHOTO}/original`)).status).toBe(404)
   })
 })

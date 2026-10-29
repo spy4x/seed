@@ -185,5 +185,6 @@
   "Reason.not-recognised": "This link is not recognised.",
   "Reason.provider_refused": "The payment provider refused this. Nothing changed.",
   "Reason.result_unknown": "The payment provider's answer was lost. Check the billing page before you try again.",
-  "Reason.validation": "Some fields need fixing. Check them and try again."
+  "Reason.validation": "Some fields need fixing. Check them and try again.",
+  "Reason.TRANSLATION_INVALID": "This post cannot translate that one. Pick a post of its own in another language, or none."
 }

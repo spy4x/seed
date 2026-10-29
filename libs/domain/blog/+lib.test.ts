@@ -45,6 +45,8 @@ describe(`parseBlogPostFields`, () => {
       tldr: [`One`, `Two`],
       coverUrl: null,
       coverAlt: null,
+      language: `en`,
+      translationOf: null,
     })
   })
 

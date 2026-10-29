@@ -8,7 +8,14 @@ import { PostList } from "@spy4x/preact-ui/post-list"
 import { Prose } from "@spy4x/preact-ui/prose"
 import { TldrBox } from "@spy4x/preact-ui/tldr-box"
 import { blogPostingJsonLd, breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
-import { BLOG_PATH, blogId, postPath, readPost, TOC_MIN_MINUTES } from "../../../blog.ts"
+import {
+  BLOG_PATH,
+  blogId,
+  postAddress,
+  postPath,
+  readPost,
+  TOC_MIN_MINUTES,
+} from "../../../blog.ts"
 import { Band } from "../../../components/band.tsx"
 import { CtaBand } from "../../../components/cta-band.tsx"
 import { OnThisPage } from "../../../components/on-this-page.tsx"
@@ -22,7 +29,7 @@ import {
   spaLinks,
 } from "../../../site.tsx"
 import { define, type State } from "../../../utils.ts"
-import { DEFAULT_LANGUAGE, localePath, siteTranslator } from "../../../languages.ts"
+import { localePath, siteTranslator } from "../../../languages.ts"
 import { useSite } from "../../../use-site.tsx"
 import { siteEnglishText } from "@ui/site-text.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
@@ -40,15 +47,17 @@ export const POST_NOT_FOUND = postNotFound(siteEnglishText())
  * call to action (the newsletter while it is on, else the demo) and up to three posts to read next.
  * A draft, a scheduled post and an unknown address answer 404 with {@link POST_NOT_FOUND}.
  *
- * Posts are written in one language, English, so a post is the same at every language's address:
- * the frame around it speaks the address's language, the post stays English, and its canonical
- * address is the one without a prefix, with no alternates.
+ * A post is written in one language and lives at that language's address (`/de/blog/<slug>` for
+ * German); another language's address redirects there for good, so a link from before posts had a
+ * language still works. Its page names its live translations as language versions (`hreflang`),
+ * and nothing when it has none.
  */
 export const handler = define.handlers({
   async GET(ctx) {
     const found = await readPost(ctx.state.api, ctx.params.slug ?? ``)
     if (!found) return renderNotFound(ctx)
     const { post, readNext } = found
+    if (post.language !== ctx.state.language) return ctx.redirect(postAddress(post), 301)
     const origin = ctx.state.webAppOrigin
     const cover = post.coverUrl === null ? null : { url: post.coverUrl, alt: post.coverAlt ?? `` }
     const t = siteTranslator(ctx.state.language)
@@ -62,7 +71,11 @@ export const handler = define.handlers({
           ogType: `article`,
           image: cover ?? undefined,
           jsonLd: postJsonLd(t, origin, post),
-          oneLanguage: true,
+          alternates: [post, ...post.translations].map((version) => ({
+            language: version.language,
+            path: postPath(version.slug),
+          })),
+          elsewhere: BLOG_PATH,
         }}
         footerNewsletter={!ctx.state.newsletter}
       >
@@ -86,7 +99,8 @@ export const handler = define.handlers({
 
 /** The post's structured data: the `BlogPosting` and its trail, Home › Blog › the post. */
 function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost): unknown[] {
-  const url = `${origin}${postPath(post.slug)}`
+  const url = `${origin}${postAddress(post)}`
+  const blog = `${origin}${localePath(post.language, BLOG_PATH)}`
   return [
     blogPostingJsonLd({
       url,
@@ -98,17 +112,17 @@ function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost)
       author: { name: post.authorName ?? SITE_NAME },
       publisher: { id: PERSON_JSON_LD["@id"] },
       section: post.topic ?? undefined,
-      inLanguage: `en`,
+      inLanguage: post.language,
       readingMinutes: post.readingMinutes,
       blog: {
-        id: blogId(origin),
+        id: blogId(origin, post.language),
         name: t.t(`Blog.name`, { site: SITE_NAME }),
-        url: `${origin}${BLOG_PATH}`,
+        url: blog,
       },
     }),
     breadcrumbListJsonLd(url, [
-      { name: SITE_NAME, href: `${origin}/` },
-      { name: t.t(`Blog.title`), href: `${origin}${BLOG_PATH}` },
+      { name: SITE_NAME, href: `${origin}${localePath(post.language, `/`)}` },
+      { name: t.t(`Blog.title`), href: blog },
       { name: post.title },
     ]),
   ]
@@ -119,7 +133,7 @@ function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost)
  * page" beside it from 1280 px, in the right margin; on a narrower screen the body reads alone.
  */
 function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
-  const { t, rich, href, language } = useSite()
+  const { t, rich, href } = useSite()
   const format = useFormat().utc()
   const blog = href(BLOG_PATH)
   const time = (iso: string) => (text: string) => <time dateTime={iso}>{text}</time>
@@ -159,11 +173,8 @@ function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
               )}
             </ol>
           </nav>
-          {language !== DEFAULT_LANGUAGE && (
-            <p class="text-sm text-muted" data-e2e="english-only">{t.t(`Blog.englishPost`)}</p>
-          )}
           {post.topic && <p class="font-mono text-sm font-medium text-primary">{post.topic}</p>}
-          <h1 lang="en" class="text-3xl font-semibold tracking-tight text-balance lg:text-4xl">
+          <h1 class="text-3xl font-semibold tracking-tight text-balance lg:text-4xl">
             {post.title}
           </h1>
           <p class="flex flex-wrap gap-x-1 gap-y-1 text-sm text-muted" data-e2e="blog-post-meta">
@@ -196,11 +207,9 @@ function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
             data-e2e="blog-post-cover"
           />
         )}
-        <div lang="en" dir="ltr" class="contents">
-          <TldrBox items={post.tldr} />
-          {/* The API's HTML, rendered by the safe Markdown renderer on the server (docs/blog.md). */}
-          <Prose html={post.html} />
-        </div>
+        <TldrBox items={post.tldr} />
+        {/* The API's HTML, rendered by the safe Markdown renderer on the server (docs/blog.md). */}
+        <Prose html={post.html} />
       </article>
       {toc && (
         <aside class="hidden xl:col-start-3 xl:block" data-e2e="blog-post-toc">

@@ -185,5 +185,6 @@
   "Reason.not-recognised": "Dieser Link ist unbekannt.",
   "Reason.provider_refused": "Der Zahlungsanbieter hat abgelehnt. Es hat sich nichts geändert.",
   "Reason.result_unknown": "Die Antwort des Zahlungsanbieters ging verloren. Prüfe die Abrechnungsseite, bevor du es noch einmal versuchst.",
-  "Reason.validation": "Einige Felder müssen korrigiert werden. Prüfe sie und versuche es noch einmal."
+  "Reason.validation": "Einige Felder müssen korrigiert werden. Prüfe sie und versuche es noch einmal.",
+  "Reason.TRANSLATION_INVALID": "Dieser Beitrag kann jenen nicht übersetzen. Wähle einen eigenen Beitrag in einer anderen Sprache oder keinen."
 }

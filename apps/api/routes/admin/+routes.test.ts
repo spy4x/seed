@@ -175,6 +175,7 @@ const ROUTES = [
   { method: "POST", path: "/admin/catalog/items/0199f0a0-0000-7000-8000-000000000001/status" },
   { method: "POST", path: "/admin/catalog/items/0199f0a0-0000-7000-8000-000000000001/photos" },
   { method: "GET", path: "/admin/catalog/photos/0199f0a0-0000-7000-8000-000000000001/thumbnail" },
+  { method: "GET", path: "/admin/catalog/photos/0199f0a0-0000-7000-8000-000000000001/full" },
   { method: "POST", path: "/admin/catalog/categories/order" },
   { method: "GET", path: "/admin/groups/0199f0a0-0000-7000-8000-000000000001/files" },
   {

@@ -193,5 +193,6 @@
   "Reason.not-recognised": "No se reconoce este enlace.",
   "Reason.provider_refused": "El proveedor de pagos lo rechazó. No cambió nada.",
   "Reason.result_unknown": "Se perdió la respuesta del proveedor de pagos. Revisa la página de facturación antes de volver a intentarlo.",
-  "Reason.validation": "Hay campos que corregir. Revísalos e inténtalo de nuevo."
+  "Reason.validation": "Hay campos que corregir. Revísalos e inténtalo de nuevo.",
+  "Reason.TRANSLATION_INVALID": "Esta entrada no puede traducir esa. Elige una entrada propia en otro idioma, o ninguna."
 }

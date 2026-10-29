@@ -11,7 +11,9 @@ import {
   UserRole,
 } from "@domain/identity"
 import { JOB_AGGREGATE, JOB_AGGREGATE_ID } from "@server/jobs/jobs.ts"
-import { readJob } from "@server/jobs/admin-jobs.ts"
+import { readJob, readJobPhotos } from "@server/jobs/admin-jobs.ts"
+import { PostgresCatalog } from "@server/catalog/postgres-catalog.ts"
+import { catalogPhotoObjectKey } from "@domain/catalog"
 import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
@@ -418,5 +420,48 @@ Deno.test("jobs: names the person a job is about through its request row", async
       name: "Ada Lovelace",
     })
     expect(await db.adminJobs.user("starter_data_requests", uuidV7())).toBeNull()
+  })
+})
+
+Deno.test("jobs: an image job's photo names its item in the catalog's default language", async () => {
+  await withSchema(async (sql) => {
+    const actor = { userId: await operator(sql), requestId: null }
+    const catalog = new PostgresCatalog(sql)
+    const item = await catalog.createItem(uuidV7(), {
+      slug: `zip-jacket`,
+      categoryId: null,
+      name: { vi: `Áo khoác`, en: `Zip jacket` },
+      description: {},
+      material: {},
+      fit: {},
+      care: {},
+      price: 1000,
+      colours: [],
+      sizes: [],
+      soldOut: [],
+    }, actor)
+    const [waiting, shown] = [uuidV7(), uuidV7()]
+    for (const id of [waiting, shown]) {
+      await catalog.addPhoto(item.id, id, catalogPhotoObjectKey(id), actor)
+    }
+    await sql`
+      INSERT INTO image_variants (object_key, image_id, content_type, width, height)
+      VALUES (${`${catalogPhotoObjectKey(shown)}/480.webp`}, ${shown}, 'image/webp', 480, 640)
+    `
+    // An image that is no catalog photo, such as a profile picture's.
+    const picture = uuidV7()
+    await sql`INSERT INTO images (id, object_key) VALUES (${picture}, ${`pictures/${picture}`})`
+
+    const photos = await readJobPhotos(sql, [waiting, shown, picture], [`en`, `vi`])
+
+    expect(photos.get(waiting)).toEqual({
+      id: waiting,
+      ready: false,
+      itemId: item.id,
+      itemName: `Zip jacket`,
+    })
+    expect(photos.get(shown)?.ready).toBe(true)
+    expect(photos.has(picture)).toBe(false)
+    expect((await readJobPhotos(sql, [shown], [`vi`, `en`])).get(shown)?.itemName).toBe(`Áo khoác`)
   })
 })

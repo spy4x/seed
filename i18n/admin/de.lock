@@ -174,7 +174,9 @@ AdminAuditEvent.notesMovedOut	730dde4c93bf9b70
 AdminAuditEvent.ownershipTransferred	6ab930808007e75b
 AdminAuditEvent.passkeyRenamed	9bfc231dbfa35fde
 AdminAuditEvent.paymentRefunded	64968a25ab1bd3b6
+AdminAuditEvent.pictureChanged	c81a0c1736553462
 AdminAuditEvent.pictureRemoved	12b9ee7642ee0e24
+AdminAuditEvent.pictureRemovedByPerson	07c83598863b98a5
 AdminAuditEvent.profileUpdated	8db83a92351076b6
 AdminAuditEvent.pushDeviceRemoved	43bf8619007dfe8c
 AdminAuditEvent.resetSent	22b25002d49535c9
@@ -406,6 +408,7 @@ AdminBlogDialogs.liveOnItsOwn	057aa42f4904c1cb
 AdminBlogDialogs.mailingList	13f40df7d6c966f0
 AdminBlogDialogs.newSlug	17fe8bbd217cf797
 AdminBlogDialogs.now	fe18013d93d22f4f
+AdminBlogDialogs.postLanguageOnly	61710cd9c990f13d
 AdminBlogDialogs.publish	859390eb495b2ead
 AdminBlogDialogs.publishAndEmail	6815308c5b803f7c
 AdminBlogDialogs.publishTitle	97bbbb855c13ec32
@@ -460,6 +463,8 @@ AdminBlogEditor.httpsCover	075b3b7f27038bc9
 AdminBlogEditor.keyPoint	83d7697e259de0ab
 AdminBlogEditor.keyPoints	c925a0fbcc77e84b
 AdminBlogEditor.keyPointsHint	33f17428f5a4d128
+AdminBlogEditor.language	a4fe65264ef7dbb3
+AdminBlogEditor.languageHint	e7d7c7caf09f54b5
 AdminBlogEditor.leaveMessage	04f9c31334818d2f
 AdminBlogEditor.loadError	8368b8fb253dfc44
 AdminBlogEditor.loading	07b010c6a2dcc943
@@ -496,6 +501,9 @@ AdminBlogEditor.title	7e8cd2056da73a7f
 AdminBlogEditor.titleHint	180cfb7c9dd88f93
 AdminBlogEditor.topic	7e61847d61d65d9e
 AdminBlogEditor.topicHint	1f67ad44798baf89
+AdminBlogEditor.translationNone	b4a329e2f2ae2426
+AdminBlogEditor.translationOf	2ebdebd300ac461d
+AdminBlogEditor.translationOfHint	fc154c80596d26ee
 AdminBlogEditor.unpublish	2e60b500b6301e1c
 AdminBlogEditor.unsaved	35c5fe43950d9ac1
 AdminBlogEditor.unschedule	c903480a037e7b07
@@ -647,6 +655,7 @@ AdminCatalogItem.noLinkYet	2cc657e1a5fe5f70
 AdminCatalogItem.noPhotos	484a7ea3db77aaa8
 AdminCatalogItem.notFound	1df7c3875d11b407
 AdminCatalogItem.notFoundText	992276f72e41846e
+AdminCatalogItem.openPhoto	e9b13857525db46f
 AdminCatalogItem.photoColour	7002c162972122cc
 AdminCatalogItem.photoLeftOut	b6eccbe6492412e7
 AdminCatalogItem.photoNumber	21e78e26e8afb4a8
@@ -1036,6 +1045,7 @@ AdminJobs.notFound	7e60bc5f76a619e0
 AdminJobs.notYet	a9549d7d06368d83
 AdminJobs.nothingLinked	8e2bf16efc1bb52c
 AdminJobs.pages	c1d23e816b4f74f7
+AdminJobs.photoOf	9de4f5253c74db92
 AdminJobs.repeating	544d9e42216c2ac0
 AdminJobs.repeatingCaption	8ff78c42e640ed58
 AdminJobs.repeats	92ee0233f01396ac
@@ -1105,6 +1115,7 @@ AdminNewsletter.issue	48dc76dfa23ae03f
 AdminNewsletter.issuesSent	90af23066962c9ab
 AdminNewsletter.joined	49d88728cdc627c9
 AdminNewsletter.keyNumbers	b6fead36007e76b6
+AdminNewsletter.language	a4fe65264ef7dbb3
 AdminNewsletter.loadingAddresses	cef187adfa6a167f
 AdminNewsletter.loadingNumbers	97cb5b4d552e5c22
 AdminNewsletter.loadingSends	38f9c63411b558f6

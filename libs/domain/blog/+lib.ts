@@ -2,6 +2,14 @@ import { type } from "arktype"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { type FieldError, type FieldErrors, FORM_FIELD } from "@spy4x/validation"
+// The preferences module itself: `@domain/identity` imports this library (its audit kinds).
+import {
+  DEFAULT_LANGUAGE,
+  isLanguage,
+  type Language,
+  LANGUAGES,
+  sitePath,
+} from "../identity/preferences.ts"
 
 /**
  * The blog (#395): posts an operator writes in the admin app and the public website shows once
@@ -46,6 +54,14 @@ export const BLOG_READ_NEXT_COUNT = 3
 /** How many posts the RSS feed carries, newest first. */
 export const BLOG_FEED_COUNT = 20
 
+/**
+ * A post's address on the public website, in the language it is written in: `/blog/<slug>` in the
+ * product's main language, `/de/blog/<slug>` in German.
+ */
+export function blogPostPath(post: { language: Language; slug: string }): string {
+  return sitePath(post.language, `/blog/${post.slug}`)
+}
+
 /** A slug: lowercase letters and digits in words joined by single hyphens. */
 export const BLOG_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
@@ -74,6 +90,13 @@ export interface BlogPost {
   /** Set whenever `coverUrl` is. */
   coverAlt: string | null
   bodyMd: string
+  /** The language the post is written in; the website lists it on that language's index. */
+  language: Language
+  /**
+   * The post this one translates, or `null` for a post of its own. The website links a post and
+   * its live translations to each other as language versions (`hreflang`).
+   */
+  translationOf: string | null
   status: BlogPostStatus
   /** When the post goes or went live: set while scheduled or published, `null` for a draft. */
   publishAt: string | null
@@ -100,7 +123,16 @@ export interface BlogPost {
 /** One row of the admin list. */
 export type AdminBlogPostRow = Pick<
   BlogPost,
-  `id` | `slug` | `title` | `status` | `topic` | `publishAt` | `publishedAt` | `updatedAt`
+  | `id`
+  | `slug`
+  | `title`
+  | `status`
+  | `topic`
+  | `language`
+  | `translationOf`
+  | `publishAt`
+  | `publishedAt`
+  | `updatedAt`
 >
 
 /** How many posts each status chip of the admin list counts. */
@@ -140,10 +172,13 @@ export interface RenderedBlogBody {
   readingMinutes: number
 }
 
-/** A mailing list the publish dialog offers, with how many confirmed subscribers it has. */
+/**
+ * A mailing list the publish dialog offers, with how many confirmed subscribers it has in each
+ * language: a post's issue goes only to its language's (#527). A language with none is left out.
+ */
 export interface BlogNewsletterList {
   list: string
-  confirmed: number
+  byLanguage: Partial<Record<Language, number>>
 }
 
 /** The answer of `GET /api/admin/blog/newsletter`. */
@@ -161,6 +196,8 @@ export interface BlogNewsletterResponse {
 /** One post in a public list: what the blog index, sitemap and "Read next" show. */
 export interface PublicBlogPostSummary {
   slug: string
+  /** The language the post is written in; its address on the website is in that language. */
+  language: Language
   title: string
   description: string
   topic: string | null
@@ -179,6 +216,17 @@ export interface PublicBlogPost extends PublicBlogPostSummary {
   html: string
   headings: BlogHeading[]
   authorName: string | null
+  /**
+   * The post's other language versions that are live, without the post itself: the post it
+   * translates and that post's other translations. Empty when it has none.
+   */
+  translations: BlogTranslation[]
+}
+
+/** A live language version of a post, as its page links it. */
+export interface BlogTranslation {
+  language: Language
+  slug: string
 }
 
 /** One item of the RSS feed: the summary, the cover and the full HTML. */
@@ -201,6 +249,7 @@ export type BlogErrorCode =
   | `NOT_SCHEDULED`
   | `NOT_PUBLISHED`
   | `NEWSLETTER_OFF`
+  | `TRANSLATION_INVALID`
   | `VERSION_CONFLICT`
 
 /** A refused blog request, with the field it is about when there is one. */
@@ -248,6 +297,9 @@ const postFields = {
   "coverUrl?": `string | null`,
   "coverAlt?": `string | null`,
   bodyMd: `string`,
+  /** One of the languages the apps ship; left out, the product's main language. */
+  "language?": type.enumerated(...LANGUAGES),
+  "translationOf?": type(UUID_PATTERN).or(`null`),
 } as const
 
 const versionField = { version: `number.integer >= 1` } as const
@@ -305,6 +357,8 @@ export type BlogField =
   | `coverUrl`
   | `coverAlt`
   | `bodyMd`
+  | `language`
+  | `translationOf`
 
 /** A post's fields, trimmed and checked, as the repository stores them. */
 export interface BlogPostFields {
@@ -317,6 +371,8 @@ export interface BlogPostFields {
   coverUrl: string | null
   coverAlt: string | null
   bodyMd: string
+  language: Language
+  translationOf: string | null
 }
 
 /** How many characters `text` has, an emoji counting as one, as Postgres counts. */
@@ -378,6 +434,8 @@ export function parseBlogPostFields(
     coverUrl: optional(input.coverUrl),
     coverAlt: optional(input.coverAlt),
     bodyMd: input.bodyMd,
+    language: isLanguage(input.language) ? input.language : DEFAULT_LANGUAGE,
+    translationOf: input.translationOf ?? null,
   }
   const texts: [BlogField, string | null][] = [
     [`title`, fields.title],

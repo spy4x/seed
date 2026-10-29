@@ -6,6 +6,7 @@ import { apiError } from "../_testing/api-error.ts"
 
 const post: PublicBlogPost = {
   slug: `hello-world`,
+  language: `en`,
   title: `Hello`,
   description: `A post.`,
   topic: null,
@@ -19,6 +20,7 @@ const post: PublicBlogPost = {
   html: `<p>Hi</p>`,
   headings: [],
   authorName: `Maya Chen`,
+  translations: [],
 }
 
 /** The public route over fake reads that record every call. */

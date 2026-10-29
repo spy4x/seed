@@ -47,7 +47,7 @@ import {
   auditDetail,
   auditEventTitle,
   auditTone,
-  linkAuditTitle,
+  identifiedAuditTitle,
 } from "./admin-user-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useFormat, When as Ago } from "@spy4x/preact-ui/format"
@@ -471,8 +471,8 @@ function detailOf(t: Translator<string>, entry: AdminAuditEntry): string | null 
   const eventType = event?.source === "account" ? event.eventType : null
   const parts = [
     entry.group && t.t(`AdminAudit.detailGroup`, { name: entry.group.name }),
-    // A link row's title already names the method.
-    entry.identifier && !linkAuditTitle(eventType, entry.identifier) &&
+    // A link or picture row's title already says what the identifier would.
+    entry.identifier && !identifiedAuditTitle(eventType, entry.identifier) &&
     auditDetail(t, eventType, entry.identifier),
     entry.jobKind && t.t(`AdminAudit.detailJob`, { kind: entry.jobKind }),
     entry.fileName && t.t(`AdminAudit.detailFile`, { name: entry.fileName }),
