@@ -460,7 +460,7 @@ describe("a blog post", () => {
     expect(linkNamed(readNext, `All posts`)).toContain(`href="/blog"`)
   })
 
-  it("answers 404 This post is not here for a post that is not live", async () => {
+  it("answers 404 This post isn't here for a post that is not live", async () => {
     const { get, asked } = await blogSite(listing([NEWER]))
     const { status, body } = await get("/blog/draft-pricing-notes")
 
