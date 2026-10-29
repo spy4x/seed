@@ -62,7 +62,7 @@ reason.
 `@spy4x/validation`), never its `.summary`, with arktype's own codes (`required`, `domain`,
 `maxLength`, `pattern`, `predicate`…). A feature's own check, carried by its domain error, adds
 codes of its own, such as `unsafeCharacters`, `hexColor`, `slug`, `httpsUrl` and `range`; the
-`errors` catalog (`i18n/errors/en.json`, `Field.*`) has a sentence for each. `values` holds the
+`errors` catalog (`i18n/errors/en.ts`, `Field.*`) has a sentence for each. `values` holds the
 rule (`rule`, `exclusive`, or `min` and `max` for a range), and for `unknownLanguage` the language
 tag the request sent.
 
