@@ -154,18 +154,18 @@ describe("first-steps card", () => {
     const lines = stepLines()
     expect(lines.length).toBe(5)
     expect(lines.every((line) => line.includes("To do: "))).toBe(true)
-    expect(lines[0]).toContain("Verify your e-mail address")
+    expect(lines[0]).toContain("Verify your email")
     expect(lines[1]).toContain("Write your first note")
     expect(lines[2]).toContain("Invite someone to your group")
     expect(lines[3]).toContain("Turn on notifications")
     expect(lines[4]).toContain("Set up two-factor sign-in")
-    expect(control("Verify e-mail").getAttribute("href")).toBe("/profile/account?verify")
+    expect(control("Verify email").getAttribute("href")).toBe("/profile/account?verify")
   })
 
   it("draws its action as a secondary button, so the page header keeps the one filled button", async () => {
     await mount()
 
-    expect(control("Verify e-mail").className).not.toMatch(/\bbg-accent-900\b/)
+    expect(control("Verify email").className).not.toMatch(/\bbg-accent-900\b/)
   })
 
   it("ticks a step when its fact arrives and moves the action to the next open step", async () => {
@@ -186,7 +186,7 @@ describe("first-steps card", () => {
     const { update } = await mount()
     for (
       const [fact, label] of [
-        ["emailVerified", "Verify e-mail"],
+        ["emailVerified", "Verify email"],
         ["noteCreated", "Write a note"],
         ["memberInvited", "Invite someone"],
         ["notificationsOn", "Turn on notifications"],
@@ -216,7 +216,7 @@ describe("first-steps card", () => {
   it("opens a step's page through the app's router", async () => {
     const { calls } = await mount()
 
-    await press("Verify e-mail")
+    await press("Verify email")
 
     expect(calls.routed).toEqual(["/profile/account?verify"])
   })
@@ -252,10 +252,10 @@ describe("first-steps card", () => {
     const { update } = await mount()
     expect(all("[data-e2e=onboarding-error]").length).toBe(0)
 
-    await update({ error: "Could not save that. Try again." })
+    await update({ error: "Couldn't save that. Try again." })
 
     expect(document.querySelector("[data-e2e=onboarding-error]")?.textContent).toContain(
-      "Could not save that. Try again.",
+      "Couldn't save that. Try again.",
     )
   })
 })

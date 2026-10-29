@@ -74,7 +74,7 @@ test.describe("group invitations", () => {
       // Pro is billed per member: the admin sees what one more member costs and must accept it.
       const seatPrice = section.locator("[data-e2e=seat-price]")
       await expect(seatPrice).toContainText(
-        "with one more member the group pays €27.00 instead of €18.00",
+        "so one more member takes the group from €18.00 to €27.00",
       )
       await section.locator("[data-e2e=invitation-create]").click()
       await expect(seatPrice.locator("#invitation-seat-price-error")).toBeVisible()

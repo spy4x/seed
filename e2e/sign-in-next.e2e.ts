@@ -72,7 +72,7 @@ test.describe("returning to the requested page after sign-in", () => {
   for (
     const [path, title, loaded] of [
       ["/tags", "Tags", "[data-e2e=tags-group]"],
-      ["/notifications", "Notifications", "text=You are all caught up."],
+      ["/notifications", "Notifications", "text=You're all caught up."],
     ]
   ) {
     test(`a signed-out person who opens ${path} signs in and lands there`, async ({ page, request }) => {

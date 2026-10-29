@@ -231,7 +231,7 @@ test.describe("notes in a shared group", () => {
       }
 
       await gotoApp(memberPage, "/notes/new", memberPage.locator("[data-e2e=shell-ws-status]"))
-      await expect(memberPage.getByText("Only an editor can add notes to this group."))
+      await expect(memberPage.getByText("Only editors can add notes to this group."))
         .toBeVisible()
       await expect(memberPage.locator("[data-e2e=note-save]")).toHaveCount(0)
     } finally {

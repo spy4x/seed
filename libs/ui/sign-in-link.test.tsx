@@ -289,7 +289,7 @@ describe("LinkOpenScreen in the browser", () => {
     await mount(<LinkOpenScreen {...openDefaults} signedInAs="bob@example.com" />)
 
     expect(find("[data-e2e=sign-in-link-signed-in-as]").textContent).toBe(
-      "You are signed in as bob@example.com. Continuing signs you in with the link's account instead.",
+      "You're signed in as bob@example.com. Continuing signs you in to the link's account instead.",
     )
     expect(find("[data-e2e=sign-in-link-stay]").getAttribute("href")).toBe("/")
     expect(focused()).toBe("sign-in-link-continue")
@@ -325,7 +325,7 @@ describe("LinkOpenScreen in the browser", () => {
     await mount(<LinkOpenScreen {...openDefaults} guest />)
 
     expect(find("[data-e2e=sign-in-link-guest]").textContent?.replace(/\s+/g, " ")).toBe(
-      "You are using the app as a guest. If you asked for this link in this browser, continuing keeps this guest account under the link's address, or asks you first if that address already has an account.",
+      "You're using the app as a guest. If you requested this link in this browser, continuing saves this guest account under the link's email. If that email already has an account, we'll ask you first.",
     )
     expect(focused()).toBe("sign-in-link-continue")
     // A guest has no other account to stay signed in to.
@@ -338,9 +338,9 @@ describe("LinkOpenScreen in the browser", () => {
   it("tells a guest a link from another browser left the guest account as it was, focused on a new link", async () => {
     await mount(<LinkOpenScreen {...openDefaults} state="askedElsewhere" next="/notes" />)
 
-    expect(find("h1").textContent).toBe("This link was asked for in another browser")
+    expect(find("h1").textContent).toBe("This link was requested in another browser")
     expect(text()).toContain(
-      "It did not sign you in, and your guest account is as it was. Ask for a new link in this browser to sign in here.",
+      "It didn't sign you in, and your guest account hasn't changed. Request a new link in this browser to sign in here.",
     )
     expect(focused()).toBe("sign-in-link-new")
     expect(find("[data-e2e=sign-in-link-new]").getAttribute("href"))
@@ -430,7 +430,7 @@ describe("AuthScreen's sign-in link button", () => {
       <AuthScreen {...authDefaults} lastSignIn={{ method: "link", email: "a***@example.com" }} />,
     )
     expect(find("[data-e2e=last-sign-in] span").textContent?.replace(/\s+/g, " ")).toBe(
-      "Last time you signed in with an e-mail link (a***@example.com).",
+      "Last time you signed in with an email link (a***@example.com).",
     )
   })
 })

@@ -220,7 +220,7 @@ describe("GuestTakenScreen", () => {
     expect(radios.map((radio) => radio.checked)).toEqual([false, false, false])
     expect(find("[data-e2e=taken-submit]").textContent).toBe("Continue")
     await submit("[data-e2e=taken-submit]")
-    expect(find("[role=alert]").textContent).toContain("Choose what happens")
+    expect(find("[role=alert]").textContent).toContain("Choose what to do")
     expect((document.activeElement as HTMLInputElement | null)?.value).toBe("move")
     expect(calls).toEqual([])
   })
@@ -228,7 +228,7 @@ describe("GuestTakenScreen", () => {
   it("names the other account in the line under a short title, which never truncates it", async () => {
     const { props } = takenProps()
     await mount(<GuestTakenScreen {...props} />)
-    expect(find("[data-e2e=taken-title]").textContent).toBe("Linked to another account")
+    expect(find("[data-e2e=taken-title]").textContent).toBe("Already linked to another account")
     expect(find("[data-e2e=taken-who]").textContent).toContain(
       "a***@example.com already has an account.",
     )

@@ -144,7 +144,7 @@ test.describe("the profile picture", () => {
       await choose(row, "photo.png", "image/png", Buffer.from("not an image at all"))
       // The file name is isolated from the sentence around it, so a right-to-left page keeps it whole.
       await expect(error).toContainText(
-        "\u2068photo.png\u2069 is not really an image, so it was not used. Choose another file.",
+        "\u2068photo.png\u2069 isn't really an image, so we didn't use it. Choose another file.",
       )
       await expect(error).toBeFocused()
       expect(await pictureId(page)).toBeNull()

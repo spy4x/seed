@@ -86,7 +86,7 @@ test.describe("search with no network", () => {
 
       await field.fill("snorkel")
       await expect(palette.getByRole("status")).toHaveText(
-        "Nothing on this device matches “snorkel”. Search again when you are back online.",
+        "Nothing on this device matches “snorkel”. Search again when you're back online.",
       )
     } finally {
       await context.close()

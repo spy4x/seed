@@ -93,7 +93,7 @@ test.describe("tags", () => {
       // tag's menu, not to the page's body.
       await tags.remove("Urgent")
       await expect(page.locator("[data-e2e=tag-deleted]"))
-        .toContainText(`"\u2068Urgent\u2069" was deleted and taken off 1 note.`)
+        .toContainText(`"\u2068Urgent\u2069" was deleted and removed from 1 note.`)
       await expect(tags.names).toHaveText(["Home"])
       await expect(tags.row("Home").locator("[data-e2e=tag-menu]")).toBeFocused()
       await expect.poll(async () => (await serverTags(page, groupId)).map((t) => t.name))

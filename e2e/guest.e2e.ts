@@ -73,7 +73,7 @@ test(`keeping a guest account by e-mail keeps its user id and drops the banner`,
       .fill(await nextCode(request, lastMailUrl, email, before))
     await page.locator(`[data-e2e=sign-up-code-submit]`).click()
 
-    await expect(page.locator(`[data-e2e=keep-done]`)).toContainText(`your e-mail address`)
+    await expect(page.locator(`[data-e2e=keep-done]`)).toContainText(`your email`)
     const kept = await me(page)
     expect(kept).toMatchObject({ id: guest.id, guestSince: null })
     await expect(page.locator(`[data-e2e=guest-banner]`)).toHaveCount(0)
@@ -106,7 +106,7 @@ test(`a guest who opens a sign-in link asked for in another browser stays the sa
     await go.click()
 
     await expect(
-      page.getByRole(`heading`, { level: 1, name: `This link was asked for in another browser` }),
+      page.getByRole(`heading`, { level: 1, name: `This link was requested in another browser` }),
     ).toBeVisible()
     await expect(page.locator(`[data-e2e=sign-in-link-new]`)).toBeFocused()
     expect(await me(page)).toMatchObject({ id: guest.id, guestSince: guest.guestSince })

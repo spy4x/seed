@@ -92,7 +92,7 @@ describe("InvitationNewView", () => {
   it("tells an editor that only an admin or the owner can invite, and draws no form", () => {
     const html = renderInvite(GroupRole.EDITOR)
 
-    expect(html).toContain("Only an admin or the owner can invite people.")
+    expect(html).toContain("Only admins and the owner can invite people.")
     expect(html).not.toContain("invitation-form")
   })
 

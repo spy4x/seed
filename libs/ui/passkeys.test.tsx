@@ -212,7 +212,7 @@ describe("SignInMethods with passkeys", () => {
     await click("[data-e2e=sign-in-method-add-passkey]")
     expect(isOpen("sign-in-method-link-dialog")).toBe(true)
     expect(find("[data-e2e=sign-in-method-link-dialog]").textContent)
-      .toContain("A passkey is another way to sign in, so your password is asked first.")
+      .toContain("A passkey is another way to sign in, so we ask for your password first.")
     expect(asked).toEqual([])
     await type("[data-e2e=sign-in-method-link-password]", "Passw0rd!")
     await submit("[data-e2e=sign-in-method-link-password]")
@@ -331,7 +331,7 @@ describe("SignInMethods with passkeys", () => {
     expect(dialog.textContent).toContain(`Remove "Chrome on macOS"?`)
     expect(dialog.textContent).toContain("Delete it from your password manager too.")
     expect(dialog.textContent).toContain(
-      "This device signed in with it, so it will be signed out too.",
+      "every device that signed in with it is signed out, this one included.",
     )
     expect(asked).toEqual([])
     await type("[data-e2e=sign-in-method-unlink-password]", "Passw0rd!")
@@ -346,7 +346,7 @@ describe("SignInMethods with passkeys", () => {
 
     const row = find("[data-e2e=sign-in-method-passkey]")
     expect(row.querySelector("[data-e2e^=sign-in-method-remove]")).toBe(null)
-    expect(row.textContent).toContain("Your only way to sign in, so it cannot be removed.")
+    expect(row.textContent).toContain("This is your only way to sign in, so you can't remove it.")
   })
 
   it("keeps Add a passkey off while offline, and says why", async () => {
@@ -354,7 +354,7 @@ describe("SignInMethods with passkeys", () => {
 
     expect(find<HTMLButtonElement>("[data-e2e=sign-in-method-add-passkey]").disabled).toBe(true)
     expect(find("[data-e2e=passkey-offline]").textContent)
-      .toBe("Adding a passkey needs a connection.")
+      .toBe("You need a connection to add a passkey.")
   })
 })
 

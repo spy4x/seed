@@ -97,7 +97,7 @@ test.describe("group billing", () => {
 
       await groups.click()
       await page.locator("[data-e2e=group-new]").click()
-      await expect(trial).toContainText("Your 14-day free trial of a paid plan")
+      await expect(trial).toContainText("Your 14-day free trial goes to")
       await page.locator("[data-e2e=group-name]").fill("First")
       await page.locator("[data-e2e=group-create]").click()
       await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/)
@@ -109,7 +109,7 @@ test.describe("group billing", () => {
 
       await groups.click()
       await page.locator("[data-e2e=group-new]").click()
-      await expect(trial).toContainText("You have used your free trial")
+      await expect(trial).toContainText("You've already used your free trial")
     } finally {
       await cleanup({ soft: true })
     }

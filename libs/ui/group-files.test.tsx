@@ -233,7 +233,7 @@ describe("GroupImportScreen", () => {
     )
     expect(focused()).toBe("group-import-heading")
     expect(find("[data-e2e=group-import-heading]").textContent).toBe(
-      "This file cannot be imported. Nothing was written.",
+      "This file can't be imported. Nothing was saved.",
     )
     expect(texts("[data-e2e=group-import-problem]")).toHaveLength(5)
     expect(texts("[data-e2e=group-import-problem]")[0]).toBe("Note 1: title must be a string.")
@@ -321,7 +321,7 @@ describe("group file wording", () => {
   })
 
   it("says each refusal in words", () => {
-    expect(problemText(EN, { kind: "not_export" })).toBe("This is not a group export file.")
+    expect(problemText(EN, { kind: "not_export" })).toBe("This isn't a group export file.")
     expect(problemText(EN, { kind: "too_large", maxBytes: GROUP_IMPORT_MAX_BYTES })).toBe(
       "The file is larger than 5 MB.",
     )
@@ -384,7 +384,7 @@ describe("group file menu items", () => {
   it("disables Export group… offline with the reason, and says Preparing… while it runs", async () => {
     await mount(editor({ offline: true }))
     expect(find<HTMLButtonElement>("[data-e2e=group-export]").disabled).toBe(true)
-    expect(find("[data-e2e=group-export-why]").textContent).toBe("You are offline")
+    expect(find("[data-e2e=group-export-why]").textContent).toBe("You're offline")
     await rerender(editor({ exporting: true }))
     expect(find<HTMLButtonElement>("[data-e2e=group-export]").disabled).toBe(true)
     expect(find("[data-e2e=group-export]").textContent).toContain("Preparing…")
@@ -394,7 +394,7 @@ describe("group file menu items", () => {
     const exported = spy<[]>()
     await mount(editor({ exportFailed: true, onExport: exported.fn }))
     expect(find("[data-e2e=group-export-failed]").textContent).toContain(
-      "We could not prepare the file. Nothing in your group changed.",
+      "We couldn't prepare the file. Nothing in your group changed.",
     )
     await click("[data-e2e=group-export-failed] button")
     expect(exported.calls).toHaveLength(1)

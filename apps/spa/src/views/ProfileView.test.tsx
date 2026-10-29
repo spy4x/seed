@@ -171,7 +171,7 @@ describe("ProfileView", () => {
       await settle()
 
       expect(root!.querySelector("[data-e2e=email-unavailable] [role=alert]")?.textContent)
-        .toBe("Your e-mail address could not be read.")
+        .toBe("Couldn't load your email.")
       const before = reads.filter((url) => url.endsWith("/api/auth/email")).length
       await act(() => root!.querySelector<HTMLElement>("[data-e2e=email-retry]")!.click())
       expect(reads.filter((url) => url.endsWith("/api/auth/email")).length).toBe(before + 1)

@@ -146,7 +146,7 @@ describe(`RegionSection`, () => {
     await rerender(setup({ conflict: { version: 1, value: won } }).region)
 
     expect($(`[data-e2e="preferences-conflict"]`)?.textContent).toContain(
-      `These changed on another device a moment ago.`,
+      `Another device just changed these.`,
     )
     expect(input(`[data-e2e="preferences-clock-h23"]`).checked).toBe(true)
     expect(input(`#preferences-time-zone`).value).toContain(`Tokyo`)

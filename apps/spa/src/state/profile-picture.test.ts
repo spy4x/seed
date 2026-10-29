@@ -90,7 +90,7 @@ describe(`profile picture store`, () => {
     await store.choose(file())
 
     expect(read(store.error.value)).toBe(
-      `\u2068photo.jpg\u2069 is not really an image, so it was not used. Choose another file.`,
+      `\u2068photo.jpg\u2069 isn't really an image, so we didn't use it. Choose another file.`,
     )
     expect(calls).toContain(`cancel ${PICTURE}`)
     expect(users).toEqual([])
@@ -112,7 +112,7 @@ describe(`profile picture store`, () => {
     await store.choose(file())
 
     expect(read(store.error.value)).toBe(
-      `You are offline. Upload your picture once you are back online.`,
+      `You're offline. Upload your picture when you're back online.`,
     )
     expect(calls).toEqual([])
   })

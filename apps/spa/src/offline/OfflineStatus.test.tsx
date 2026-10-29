@@ -161,7 +161,7 @@ describe("OfflineStatus", () => {
       layer.notices.value = [{ key: `OfflineStatus.tagTakenOff`, values: { count: 2 } }]
     })
     expect(root!.querySelector("[data-e2e=sync-notice]")?.textContent).toContain(
-      "A tag you created offline could not be saved, so it was taken off 2 notes.",
+      "A tag you created offline couldn't be saved, so we removed it from 2 notes.",
     )
 
     await act(() => {

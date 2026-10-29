@@ -230,7 +230,7 @@ describe(`note attachments section`, () => {
   it(`shows the drop zone with the rules when the note has no files`, async () => {
     await mount(<NoteAttachments {...base} />)
     const empty = find(`[data-e2e=note-attachments-empty]`).textContent
-    expect(empty).toContain(`Attach images or PDFs: drop them here or choose files.`)
+    expect(empty).toContain(`Drop images or PDFs here, or choose files.`)
     expect(empty).toContain(`JPEG, PNG, WebP, GIF or PDF, up to 2 MB each.`)
   })
 

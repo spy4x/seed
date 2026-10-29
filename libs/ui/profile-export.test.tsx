@@ -112,8 +112,8 @@ describe(`DataExportRow`, () => {
     const { node, requests } = row()
     await mount(node)
     expect(text(`[data-e2e=data-export-state]`)).toBe(
-      `A ZIP of your profile, groups and notes, as JSON and CSV files. It takes a few minutes, ` +
-        `and we e-mail you when it is ready.`,
+      `A ZIP of your profile, groups and notes as JSON and CSV files. It takes a few minutes, ` +
+        `and we'll email you when it's ready.`,
     )
     expect(find(`[data-e2e=data-export-request]`).id).toBe(DATA_EXPORT_ANCHOR)
     await click(`[data-e2e=data-export-request]`)
@@ -219,7 +219,7 @@ describe(`DataExportRow`, () => {
   it(`says a file failed and offers Try again`, async () => {
     const { node } = row({ exportState: view(DataExportStatus.Failed) })
     await mount(node)
-    expect(text(`[data-e2e=data-export-state]`)).toBe(`We could not prepare your file.`)
+    expect(text(`[data-e2e=data-export-state]`)).toBe(`We couldn't prepare your file. Try again.`)
     expect(text(`[data-e2e=data-export-request]`)).toBe(`Try again`)
   })
 })
@@ -234,7 +234,7 @@ describe(`DataExportErrorState`, () => {
     const retryAt = new Date(Date.now() + 25 * HOUR)
     const element = await shown({ kind: `too-soon`, retryAt })
     expect(element?.textContent).toMatch(
-      /^You can ask for one file a day\. Ask again after .+ tomorrow\.$/,
+      /^You can request one file a day\. Try again after .+ tomorrow\.$/,
     )
     expect(document.activeElement === element || element!.contains(document.activeElement)).toBe(
       true,
@@ -244,7 +244,7 @@ describe(`DataExportErrorState`, () => {
   it(`names a failed request`, async () => {
     const element = await shown({ kind: `network` })
     expect(element?.textContent).toBe(
-      `Could not ask for your file. Check your connection and try again.`,
+      `Couldn't request your file. Check your connection and try again.`,
     )
   })
 

@@ -147,7 +147,7 @@ Deno.test(`telegram: a notification reaches the linked chat, and none is sent af
     expect(await run()).toBe(1)
     const [message] = telegram.calls.filter((call) => call.method === `sendMessage`)
     expect(message.params.chat_id).toBe(String(TG))
-    expect(message.params.text).toBe(`Your role in “Team” is now a viewer.`)
+    expect(message.params.text).toBe(`You're now a viewer in “Team”.`)
     expect(message.params.reply_markup).toEqual({
       inline_keyboard: [[{ text: `Open`, url: `https://app.example.com/groups` }]],
     })

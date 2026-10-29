@@ -196,7 +196,7 @@ describe("the New note dialog", () => {
     expect(status.getAttribute("role")).toBe("status")
     expect(status.textContent).toContain("Added “Buy milk” to Acme.")
     expect(status.textContent).not.toContain(
-      "Saved on this device. It will be sent when you are back online.",
+      "Saved on this device. It'll sync when you're back online.",
     )
     expect(focused()).toBe("new-note-title")
     const link = find<HTMLAnchorElement>("[data-e2e=new-note-open]")
@@ -216,7 +216,7 @@ describe("the New note dialog", () => {
   it("says a note made offline is saved on this device", async () => {
     await draw({ added: { ...ADDED, onDevice: true } })
     expect(find("[data-e2e=new-note-added]").textContent).toContain(
-      "Saved on this device. It will be sent when you are back online.",
+      "Saved on this device. It'll sync when you're back online.",
     )
   })
 
@@ -224,7 +224,7 @@ describe("the New note dialog", () => {
     const calls = await draw({ groups: [], groupId: null })
     expect(document.querySelector("[data-e2e=new-note-title]")).toBeNull()
     expect(find("[data-e2e=new-note-no-group]").textContent).toBe(
-      "Notes live in a group you can write to. Create one to start.",
+      "You need a group you can write to. Create one to get started.",
     )
     const button = find<HTMLAnchorElement>("[data-e2e=new-note-new-group]")
     expect(button.getAttribute("href")).toBe(GROUP_PATHS.new)

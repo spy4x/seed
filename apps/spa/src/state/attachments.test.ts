@@ -191,9 +191,9 @@ describe(`note attachments store`, () => {
     await settle()
 
     expect(store.refusals.value.map(english)).toEqual([
-      `photo.heic cannot be attached. Only JPEG, PNG, WebP and GIF images and PDF files can be.`,
+      `photo.heic can't be attached. Only JPEG, PNG, WebP and GIF images and PDF files are allowed.`,
       `big.pdf is 2 MB. Each file can be up to 2 MB.`,
-      `A note holds up to 10 files. 2 were not attached: a.png, b.png.`,
+      `A note can hold up to 10 files. 2 weren't attached: a.png, b.png.`,
     ])
     expect(calls.filter((call) => call.startsWith(`sign`))).toEqual([`sign last.png`])
   })
@@ -287,7 +287,7 @@ describe(`note attachments store`, () => {
     await settle()
 
     expect(store.refusals.value.map(english)).toEqual([
-      `invoice.pdf is not really a PDF, so it was not attached.`,
+      `invoice.pdf isn't really a PDF, so it wasn't attached.`,
     ])
     expect(store.rows.value).toEqual([])
   })
