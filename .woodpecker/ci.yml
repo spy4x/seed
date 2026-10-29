@@ -7,6 +7,11 @@
 # Deno 2.9.7 is the version the repository uses (`DENO_VERSION` in infra/envs/.env.example and
 # Dockerfile.base). Playwright 1.57.0 is the version `deno task e2e` runs (deno.jsonc); the e2e
 # image tag must match it, because the browser build inside the image is tied to that version.
+#
+# Woodpecker runs the steps in stages: a step starts only when every step of the stage before has
+# ended, not only the ones it depends on. A stage lasts as long as its slowest step, so the wall
+# time is the sum of the slowest step of each stage. Steps that must run one after another in the
+# shared checkout are therefore commands of one step (`browser`), not a chain of steps.
 
 when:
   - event: pull_request
@@ -20,13 +25,6 @@ steps:
     commands:
       - deno install --frozen
       - deno task check
-
-  build:
-    image: denoland/deno:2.9.7
-    commands:
-      - deno install --frozen
-      - deno task build
-    depends_on: [check]
 
   integration:
     image: denoland/deno:2.9.7
@@ -88,13 +86,32 @@ steps:
       - /vmalert-tool-prod unittest --files=infra/configs/alerts.test.yml
     depends_on: [check]
 
-  e2e-mpa:
-    # The MPA's browser tests: with JavaScript turned off, a visitor subscribes to the newsletter,
-    # confirms and unsubscribes through the mailed links. e2e/mpa/run.sh migrates, starts the API,
-    # the worker and the MPA, on a host apart from the app's, and runs them. It creates its own database
-    # (`template_e2e`), so it shares nothing with the integration step, which uses `template_test`
-    # at the same time. `DB_NAME` below is only the database the script connects to first.
-    image: mcr.microsoft.com/playwright:v1.57.0-noble
+  browser:
+    # Four checks that share the checkout, one after another in this one step, beside
+    # `integration` (see the top of this file):
+    # - build: the SPA builds for production (apps/spa/dist).
+    # - e2e-mpa: the MPA's browser tests. With JavaScript turned off, a visitor subscribes to the
+    #   newsletter, confirms and unsubscribes through the mailed links. e2e/mpa/run.sh migrates,
+    #   starts the API, the worker and the MPA, on a host apart from the app's, in a database of
+    #   its own (`template_e2e`), so it shares nothing with `integration`, which uses
+    #   `template_test` at the same time. `DB_NAME` below is only the database the scripts connect
+    #   to first.
+    # - lighthouse: the public website's Lighthouse budget ("Design gate" in the global agent
+    #   rules). In Lighthouse mobile, every page apps/mpa/lighthouse/lighthouserc.json lists scores
+    #   at least 95 for performance and 100 for accessibility, best practices and SEO.
+    #   apps/mpa/lighthouse/run.sh serves the built MPA behind nginx with gzip, as the CDN serves it
+    #   in production.
+    # - e2e-spa: the SPA behind nginx, as production serves it: the security headers nginx.conf
+    #   adds, and a signed-in walk that fails on anything the content security policy refuses.
+    #   Vite, which the other e2e runs use, sends no such headers. Steps have no container tool, so
+    #   e2e/spa/run.sh installs the built SPA into this container's own nginx
+    #   (`SPA_SERVER=nginx`) instead of building the image, in a database of its own
+    #   (`template_e2e_spa`).
+    # Why not four steps: build and e2e-spa both build the SPA into apps/spa/dist; e2e-mpa and
+    # lighthouse both build the MPA into apps/mpa/_fresh; the run scripts keep the API's
+    # vapid.json in the repository root while they run; and each starts a worker on the one Valkey
+    # service, where a worker would take another stack's jobs.
+    image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
     environment:
       DB_HOST: postgres
       DB_PORT: "5432"
@@ -109,11 +126,12 @@ steps:
       - |
           curl -fsSL -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
           echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
-          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
+          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip nginx
           unzip -q -o /tmp/deno.zip -d /usr/local/bin
           chmod +x /usr/local/bin/deno
       - deno --version
       - deno install --frozen
+      - deno task build
       # Postgres first runs a temporary server that listens on a unix socket only, so a TCP
       # connection means the real one is up (docs/handoff.md, trap 3). Valkey has no such phase.
       - |
@@ -134,83 +152,10 @@ steps:
           }
           '
       - e2e/mpa/run.sh
-    depends_on: [check]
-
-  lighthouse:
-    # The public website's Lighthouse budget ("Design gate" in the global agent rules): in
-    # Lighthouse mobile, every page apps/mpa/lighthouse/lighthouserc.json lists scores at least 95
-    # for performance and 100 for accessibility, best practices and SEO. apps/mpa/lighthouse/run.sh
-    # serves the built MPA behind nginx with gzip, as the CDN serves it in production. After
-    # e2e-mpa: the steps share one checkout, and both build the MPA into apps/mpa/_fresh. Before
-    # e2e-spa, which waits for it: e2e-spa, e2e-smoke and e2e-full all run `deno install`, and two
-    # installs into one node_modules at once leave a package half written ("Cannot find module" in
-    # pipelines 386 and 404).
-    image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
-    commands:
-      # npm's newest `deno` package lags the binary, so take the pinned release itself.
-      - |
-          curl -fsSL -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
-          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
-          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip nginx
-          unzip -q -o /tmp/deno.zip -d /usr/local/bin
-          chmod +x /usr/local/bin/deno
-      - deno --version
-      - deno install --frozen
       - deno task mpa:build
       - deno task lighthouse
-    depends_on: [e2e-mpa]
-
-  e2e-spa:
-    # The SPA behind nginx, as production serves it: the security headers nginx.conf adds, and a
-    # signed-in walk that fails on anything the content security policy refuses. Vite, which the
-    # other e2e steps use, sends no such headers. Steps have no container tool, so e2e/spa/run.sh
-    # installs the built SPA into this container's own nginx (`SPA_SERVER=nginx`) instead of
-    # building the image. It creates its own database (`template_e2e_spa`).
-    image: mcr.microsoft.com/playwright:v1.57.0-noble
-    environment:
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_USER: tester
-      DB_PASS: ci-throwaway
-      DB_NAME: template_test
-      KV_HOSTNAME: valkey
-      KV_PORT: "6379"
-      KV_PASSWORD: ci-throwaway
-    commands:
-      # npm's newest `deno` package lags the binary, so take the pinned release itself.
-      - |
-          curl -fsSL -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
-          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
-          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
-          unzip -q -o /tmp/deno.zip -d /usr/local/bin
-          chmod +x /usr/local/bin/deno
-      - deno --version
-      - deno install --frozen
-      # Postgres first runs a temporary server that listens on a unix socket only, so a TCP
-      # connection means the real one is up (docs/handoff.md, trap 3). Valkey has no such phase.
-      - |
-          deno eval '
-          for (const [hostname, port] of [["postgres", 5432], ["valkey", 6379]]) {
-            for (let i = 0; ; i++) {
-              try {
-                (await Deno.connect({ hostname, port })).close()
-                break
-              } catch {
-                if (i >= 120) {
-                  console.error(`$${hostname} did not accept connections within 60 s`)
-                  Deno.exit(1)
-                }
-                await new Promise((resolve) => setTimeout(resolve, 500))
-              }
-            }
-          }
-          '
-      - apt-get install -y -qq --no-install-recommends nginx
       - SPA_SERVER=nginx e2e/spa/run.sh
-    # The steps share one checkout. This one builds the SPA into apps/spa/dist, as `build` does,
-    # and both run scripts keep the API's vapid.json in the repository root while they run, so it
-    # waits for those two steps instead of running beside them.
-    depends_on: [build, e2e-mpa, lighthouse]
+    depends_on: [check]
 
   e2e-smoke:
     # The product's browser tests a pull request must pass: the smoke set, `SMOKE_SPECS` in
@@ -220,7 +165,7 @@ steps:
     # own (`template_e2e_app`); it waits for both itself. It starts the API, the worker, the Vite
     # dev server and a proxy that serves them at http://app.localhost:<port>. A tag runs the set
     # too, because release.yml waits for this workflow.
-    image: mcr.microsoft.com/playwright:v1.57.0-noble
+    image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
     when:
       - event: [pull_request, tag]
     environment:
@@ -248,10 +193,10 @@ steps:
       # Playwright stops after three failed tests. When sign-in itself is broken every test fails,
       # each after 30 s, and the step would otherwise run into the script's limit of 25 minutes.
       - deno task e2e:local --smoke --max-failures=3
-    # After e2e-spa: the three run scripts keep the API's vapid.json in the shared checkout while
-    # they run, and each starts a worker on the one Valkey service, where a worker would take
-    # another stack's jobs.
-    depends_on: [e2e-spa]
+    # After `browser`: the run scripts keep the API's vapid.json in the shared checkout while they
+    # run, and each starts a worker on the one Valkey service, where a worker would take another
+    # stack's jobs.
+    depends_on: [browser]
 
   e2e-full:
     # Every browser test of the product (`e2e/*.e2e.ts`), after a merge: only a push to `main`
@@ -260,7 +205,7 @@ steps:
     # The specs that start the app with no network need the built SPA behind nginx; a step has no
     # container tool, so `E2E_BUILT=nginx` installs the build into this container's own nginx, as
     # e2e/spa/run.sh does.
-    image: mcr.microsoft.com/playwright:v1.57.0-noble
+    image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
     when:
       - event: push
         branch: main
@@ -288,7 +233,7 @@ steps:
       - echo "127.0.0.1 app.localhost" >> /etc/hosts
       # Stops after ten failed tests in a pass, for the same reason as in e2e-smoke.
       - deno task e2e:local --max-failures=10
-    depends_on: [e2e-spa]
+    depends_on: [browser]
 
 services:
   postgres:

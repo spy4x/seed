@@ -19,7 +19,7 @@ interface IdRow extends postgres.Row {
 
 const SETTLE_MS = 5_000
 
-// NOTIFY is database-wide, not schema-wide. On Woodpecker the e2e-mpa step runs a worker against
+// NOTIFY is database-wide, not schema-wide. On Woodpecker the browser step runs a worker against
 // the same database while this suite runs, so a listener also hears other processes' changes.
 // Every listener here keeps only the groups this test created.
 
