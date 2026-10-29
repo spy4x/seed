@@ -411,7 +411,8 @@ describe("one person in the admin app", () => {
     expect(panel.textContent).toContain("Language and region")
     expect(find("[data-e2e=admin-user-preferences-theme]").textContent).toContain("Dark")
     expect(find("[data-e2e=admin-user-preferences-time-zone]").textContent).toContain(
-      "Berlin, Europe · GMT+2",
+      // The zone keeps its own direction inside an Arabic sentence, its parentheses in place.
+      "\u2068Berlin, Europe · GMT+2\u2069",
     )
     expect(find("[data-e2e=admin-user-preferences-time-zone]").textContent).toMatch(
       /(14:05|2:05\spm) there now/i,

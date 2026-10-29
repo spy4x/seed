@@ -16,6 +16,7 @@ import { timeZoneOptions, zoneCity, zoneLabel, zoneOffsetLabel } from "@spy4x/ti
 import type { AdminUserPreferences, Preferences, ThemePreference } from "@domain/identity"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { Rich } from "@spy4x/preact-ui/i18n"
+import { isolate } from "@spy4x/preact-ui/bdi"
 import { LanguageDialog, languageName } from "@spy4x/preact-ui/language-picker"
 import type { AccountMenuLanguage } from "@spy4x/preact-system/account-menu"
 import { textDirection } from "@spy4x/platform/universal/i18n"
@@ -419,9 +420,9 @@ export function AdminPreferencesGroup(
       .time(now)
     : null
   const zoneText = value.timeZone !== null
-    ? zoneLabel(value.timeZone, now)
+    ? isolate(zoneLabel(value.timeZone, now))
     : firstTimeZone
-    ? t.t(`AdminPreferences.zoneSignedUp`, { zone: zoneLabel(firstTimeZone, now) })
+    ? t.t(`AdminPreferences.zoneSignedUp`, { zone: isolate(zoneLabel(firstTimeZone, now)) })
     : t.t(`AdminPreferences.automatic`)
   const formats = value.locale !== null
     ? regionName(value.locale, t.language)
