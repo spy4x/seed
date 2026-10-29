@@ -11,7 +11,7 @@ import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
- * What the group integration tests share: a schema of their own built from schema.sql, users, a
+ * What the group integration tests share: a database of their own built from schema.sql, users, a
  * team with one member per role, and a listener for access losses.
  */
 
@@ -19,24 +19,29 @@ export interface IdRow extends postgres.Row {
   id: number
 }
 
+/**
+ * Runs `body` against a database of its own, built from schema.sql and dropped afterwards. A
+ * database, not a schema: NOTIFY reaches every listener of the database, and CI runs the test
+ * files side by side, so a listener in a shared database hears the other files' changes.
+ */
 export async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const connection = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...connection, max: 1, onnotice: () => {} })
-  const schema = `lifecycle_test_${uuidV7().replaceAll("-", "")}`
+  const database = `lifecycle_test_${uuidV7().replaceAll("-", "")}`
+  await admin`CREATE DATABASE ${admin(database)}`
   const sql = postgres({
     ...connection,
+    database,
     max: 10,
     transform: postgres.camel,
-    connection: { options: `-c search_path=${schema}` },
     onnotice: () => {},
   })
   try {
-    await admin`CREATE SCHEMA ${admin(schema)}`
     await sql.unsafe(await Deno.readTextFile("libs/server/db/schema.sql"))
     await body(sql)
   } finally {
     await sql.end({ timeout: 5 })
-    await admin`DROP SCHEMA IF EXISTS ${admin(schema)} CASCADE`
+    await admin`DROP DATABASE IF EXISTS ${admin(database)} WITH (FORCE)`
     await admin.end({ timeout: 5 })
   }
 }
