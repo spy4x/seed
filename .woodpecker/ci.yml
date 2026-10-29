@@ -222,9 +222,9 @@ steps:
       E2E_BUILT: nginx
       # The deadline of one Playwright pass, in seconds. The whole suite runs on one Playwright
       # worker and took 20 to 23 minutes of the script's default 25, so a slow run, or one failed
-      # test with its retries, ran out of time. 45 minutes stays inside the repository's 60-minute
-      # pipeline limit.
-      E2E_LOCAL_TIMEOUT: "2700"
+      # test with its retries, ran out of time. 35 minutes fits the repository's 60-minute pipeline
+      # limit: this step starts about 15 minutes in, and the offline pass after it takes about 1.
+      E2E_LOCAL_TIMEOUT: "2100"
     commands:
       # npm's newest `deno` package lags the binary, so take the pinned release itself.
       - |
