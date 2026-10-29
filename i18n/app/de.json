@@ -1175,7 +1175,7 @@
   "ProfileTelegram.link": "Telegram verknüpfen",
   "ProfileTelegram.unlinkTitle": "Telegram trennen?",
   "ProfileTelegram.unlinkText": "Deine Benachrichtigungen kommen nicht mehr bei Telegram an, und mit {bot} kannst du dort nichts mehr für dein Konto tun. Um es wieder zu verknüpfen, brauchst du einen neuen Code.",
-  "ProfileTelegram.open": "Öffne den Chat mit <strong>{bot}</strong> und tippe auf Start, dann auf Link. Dieses Fenster schließt sich, sobald dein Konto verknüpft ist.",
+  "ProfileTelegram.open": "Öffne den Chat mit <strong>{bot}</strong> und tippe auf Start, dann auf „{button}“. Dieses Fenster schließt sich, sobald dein Konto verknüpft ist.",
   "ProfileTelegram.openButton": "Telegram öffnen",
   "ProfileTelegram.elsewhere": "Telegram auf einem anderen Gerät? Schick diese Nachricht im Chat mit {bot}:",
   "ProfileTelegram.message": "Zu sendende Nachricht",
@@ -1467,6 +1467,29 @@
     "other": "„{name}“ wurde gelöscht und von {count} Notizen entfernt."
   },
   "TelegramNotification.open": "Öffnen",
+  "TelegramBot.linkButton": "Verknüpfen",
+  "TelegramBot.confirmNameAddress": "Dieses Telegram mit dem Konto von {name} auf {app} ({address}) verknüpfen? Tippe nur auf „{button}“, wenn es dein eigenes Konto ist. Wenn du das nicht angefordert hast, ignoriere diese Nachricht.",
+  "TelegramBot.confirmName": "Dieses Telegram mit dem Konto von {name} auf {app} verknüpfen? Tippe nur auf „{button}“, wenn es dein eigenes Konto ist. Wenn du das nicht angefordert hast, ignoriere diese Nachricht.",
+  "TelegramBot.confirmAddress": "Dieses Telegram mit einem Konto auf {app} ({address}) verknüpfen? Tippe nur auf „{button}“, wenn es dein eigenes Konto ist. Wenn du das nicht angefordert hast, ignoriere diese Nachricht.",
+  "TelegramBot.confirmAnonymous": "Dieses Telegram mit einem Konto auf {app} ohne Namen und Adresse verknüpfen? Tippe nur auf „{button}“, wenn es dein eigenes Konto ist. Wenn du das nicht angefordert hast, ignoriere diese Nachricht.",
+  "TelegramBot.linked": "Fertig: Dieser Chat ist mit deinem Konto verknüpft. Deine Benachrichtigungen kommen jetzt hier an. Sende /help, um zu sehen, was ich kann.",
+  "TelegramBot.already": "Dieses Telegram-Konto ist bereits mit deinem Konto verknüpft.",
+  "TelegramBot.taken": "Dieses Telegram-Konto ist mit einem anderen Konto verknüpft. Sende zuerst /unlink, dann noch einmal den Code.",
+  "TelegramBot.invalid": {
+    "one": "Dieser Code funktioniert nicht. Vielleicht ist er vertippt, schon benutzt oder älter als {count} Minute. Erstelle in der App einen neuen.",
+    "other": "Dieser Code funktioniert nicht. Vielleicht ist er vertippt, schon benutzt oder älter als {count} Minuten. Erstelle in der App einen neuen."
+  },
+  "TelegramBot.stale": {
+    "one": "Dieser Button funktioniert nicht mehr. Er wurde schon benutzt, ein neuerer hat ihn ersetzt, oder er ist älter als {count} Minute. Um diesen Chat zu verknüpfen, erstelle in der App einen neuen Code.",
+    "other": "Dieser Button funktioniert nicht mehr. Er wurde schon benutzt, ein neuerer hat ihn ersetzt, oder er ist älter als {count} Minuten. Um diesen Chat zu verknüpfen, erstelle in der App einen neuen Code."
+  },
+  "TelegramBot.privateOnly": "Schick mir das in einem privaten Chat.",
+  "TelegramBot.codeSpent": "Dieser Code wurde dort gesendet, wo andere ihn lesen können, deshalb funktioniert er nicht mehr. Erstelle in der App einen neuen und schick ihn mir in einem privaten Chat.",
+  "TelegramBot.unlinked": "Verknüpfung aufgehoben. Dieser Chat bekommt keine Benachrichtigungen mehr von deinem Konto.",
+  "TelegramBot.notLinked": "Dieses Telegram-Konto ist mit keinem Konto verknüpft.",
+  "TelegramBot.howToLink": "Um dein Konto zu verknüpfen, öffne {url}, wähle „{action}“ und schick mir den Code, der dort steht.",
+  "TelegramBot.hello": "Hallo! Dein Konto ist verknüpft. Sende /help, um zu sehen, was ich kann.",
+  "TelegramBot.helloName": "Hallo {name}! Dein Konto ist verknüpft. Sende /help, um zu sehen, was ich kann.",
   "UndoToast.title": "Notiz gelöscht",
   "UndoToast.deleted": "„{title}“ wurde gelöscht.",
   "UndoToast.deletedUntitled": "Die Notiz wurde gelöscht.",
