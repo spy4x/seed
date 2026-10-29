@@ -140,13 +140,13 @@ function actionDone(
       return answer.refunded
         ? t.t(`AdminBillingCustomer.doneRefundAmount`, {
           amount: formatMoney(answer.refunded.amount, answer.refunded.currency),
-          group,
+          group: isolate(group),
         })
         : t.t(`AdminBillingCustomer.doneRefund`, { group: isolate(group) })
     case `time`:
       return answer.until
         ? t.t(`AdminBillingCustomer.doneTimeUntil`, {
-          group,
+          group: isolate(group),
           date: billingDate(answer.until, format),
         })
         : t.t(`AdminBillingCustomer.doneTime`, { group: isolate(group) })
