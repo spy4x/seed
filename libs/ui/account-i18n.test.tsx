@@ -441,7 +441,7 @@ describe(`what the server answered, said in the screen's own words`, () => {
       GERMAN,
     )
     const notice = document.querySelector(`[data-e2e=email-send-notice]`)!
-    expect(notice.textContent).toBe(`Ein neuer Code ist unterwegs an ada@example.com.`)
+    expect(notice.textContent).toBe(`Ein neuer Code ist an ada@example.com unterwegs.`)
     expect(notice.querySelector(`bdi`)!.textContent).toBe(`ada@example.com`)
   })
 })

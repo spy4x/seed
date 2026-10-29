@@ -56,7 +56,7 @@ test.describe("group ownership transfer", () => {
       await section.locator("[data-e2e=group-transfer-name]").fill("Team")
       await section.locator("[data-e2e=group-transfer-password]").fill("wrong-password")
       await section.locator("[data-e2e=group-transfer]").click()
-      await expect(section).toContainText("The password is incorrect")
+      await expect(section).toContainText("Wrong password. Try again.")
       await expect(section.locator("[data-e2e=group-transfer-password]")).toBeFocused()
       await expect(page.locator("[data-e2e=group-general-role]")).toHaveText("Owner")
 

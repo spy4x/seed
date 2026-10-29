@@ -159,7 +159,9 @@ Deno.test(`a subscriber's mails are written in the language of the page they sig
         )
         await processor.drainOnce()
 
-        expect(sender.sent.at(-1)?.subject).toBe(`Du hast app.example.com abonniert`)
+        expect(sender.sent.at(-1)?.subject).toBe(
+          `Du hast den Newsletter von app.example.com abonniert`,
+        )
         expect(await sql`SELECT language FROM subscribers WHERE email = 'eva@example.com'`)
           .toEqual([{ language: `de` }])
       },

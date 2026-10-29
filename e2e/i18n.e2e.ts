@@ -89,7 +89,7 @@ test.describe("the interface language", () => {
         "Deutsch",
       )
       await expect(ops.locator("[data-e2e=admin-user-preferences-formats]")).toContainText(
-        "registriert mit",
+        "bei der Registrierung",
       )
 
       // Choosing Arabic in the preferences switches the page at once, right to left, unreloaded.

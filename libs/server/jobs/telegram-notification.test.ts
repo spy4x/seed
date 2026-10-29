@@ -11,7 +11,7 @@ const roleChanged = {
 describe(`the Telegram notification's words`, () => {
   it(`are in the person's saved language, the group's name as it is`, () => {
     expect(telegramText({ ...roleChanged, language: `ru`, locale: null })).toEqual({
-      text: `Ваша роль в группе «Team» теперь: читатель.`,
+      text: `Теперь вы читатель в группе «Team».`,
       open: `Открыть`,
     })
   })

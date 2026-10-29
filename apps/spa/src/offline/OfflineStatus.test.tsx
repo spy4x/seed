@@ -179,11 +179,11 @@ describe("OfflineStatus", () => {
     await mountStrip(storage, RU)
 
     expect(root!.querySelector("[data-e2e=conflict-message]")?.textContent).toBe(
-      "Пока вы были не в сети, кто-то изменил этот тег.",
+      "Пока вы были не в сети, кто-то изменил эту метку.",
     )
     expect(text()).toContain("Ваша версия")
     expect(text()).toContain("Версия на сервере")
-    expect(text()).toContain("Тег \u2068Mine\u2069")
+    expect(text()).toContain("Метка \u2068Mine\u2069")
     expect(text()).not.toContain("Your version")
   })
 
@@ -208,7 +208,7 @@ describe("OfflineStatus", () => {
       layer.notices.value = [{ key: `OfflineStatus.tagTakenOff`, values: { count: 2 } }]
     })
     expect(root!.querySelector("[data-e2e=sync-notice]")?.textContent).toContain(
-      "сняли с 2 заметок",
+      "сняли её с 2 заметок",
     )
     expect(root!.querySelector("[data-e2e=sync-notice-dismiss]")?.textContent).toBe("Скрыть")
   })

@@ -603,7 +603,7 @@ describe("mail in the reader's language (#277)", () => {
       at: AT,
       reader: { language: "de", locale: "de-DE", timeZone: "Europe/Berlin", hourCycle: null },
     })
-    expect(berlin.text).toContain("am 15. Oktober 2026 um 16:03 mit deinem Konto")
+    expect(berlin.text).toContain("Am 15. Oktober 2026 um 16:03 wurde")
     expect(berlin.text).not.toContain("UTC")
 
     const newYork = signInLinkMail(brand, {
@@ -649,7 +649,7 @@ describe("mail in the reader's language (#277)", () => {
 
   it("names a role and a plan as the app's screens do, in the reader's language", () => {
     const mails = everyMail({ ...EN, language: "de" })
-    expect(mails[3].text).toContain("mit der Rolle Bearbeiter")
+    expect(mails[3].text).toContain("als Bearbeiter beizutreten")
     expect(mails[9].text).toContain("Die Pro-Testphase")
   })
 })
@@ -739,7 +739,7 @@ describe("mail and a full stop after a date (#277)", () => {
 
   it("writes one full stop after a Russian date that ends in «г.»", () => {
     const [deletion] = everyMail({ ...EN, language: "ru", locale: "ru-RU" }).slice(4)
-    expect(deletion.text).toContain("удалён 15 октября 2026 г.")
+    expect(deletion.text).toContain("навсегда 15 октября 2026 г.\n")
     expect(deletion.text).not.toContain("г..")
     expect(deletion.html).toContain("<strong>15 октября 2026 г.</strong></p>")
   })

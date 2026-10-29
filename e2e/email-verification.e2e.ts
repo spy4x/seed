@@ -122,7 +122,7 @@ test("a new code's notice is in the page's language, not the server's English", 
 
     await page.locator("[data-e2e=email-send]").click()
     await expect(page.locator("[data-e2e=email-send-notice]")).toHaveText(
-      `Ein neuer Code ist unterwegs an ${next}.`,
+      `Ein neuer Code ist an ${next} unterwegs.`,
     )
   } finally {
     await cleanup(request, email, true)

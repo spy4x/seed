@@ -137,13 +137,15 @@ describe(`errors`, () => {
 
   it(`in another language, a refusal with no known reason says its code, never the server's English`, () => {
     const reasonless = { code: `not_found`, message: `Group not found` }
-    expect(errorText(RUSSIAN, reasonless)).toBe(`Этого нет, или у вас нет к этому доступа.`)
+    expect(errorText(RUSSIAN, reasonless)).toBe(
+      `Ничего не нашлось. Возможно, это удалили или у вас нет доступа.`,
+    )
     const unknown = { code: `conflict`, reason: `SOMETHING_NEW`, message: `A new refusal` }
     expect(errorText(RUSSIAN, unknown)).toBe(
-      `За это время здесь что-то изменилось. Обновите страницу и попробуйте ещё раз.`,
+      `Пока вы были на странице, тут что-то изменилось. Обновите её и попробуйте ещё раз.`,
     )
     expect(errorText(RUSSIAN, { message: `Too Many Requests`, status: 429 })).toBe(
-      `Слишком много попыток. Подождите немного и попробуйте ещё раз.`,
+      `Слишком много попыток. Подождите немного и попробуйте снова.`,
     )
   })
 
@@ -154,10 +156,10 @@ describe(`errors`, () => {
 
   it(`a failure on the server's side says so in general words`, () => {
     expect(errorText(RUSSIAN, { code: `internal`, message: `Request failed` })).toBe(
-      `У нас что-то пошло не так. Попробуйте ещё раз.`,
+      `Что-то сломалось на нашей стороне. Попробуйте ещё раз.`,
     )
     expect(errorText(RUSSIAN, { message: `Bad Gateway`, status: 502 })).toBe(
-      `У нас что-то пошло не так. Попробуйте ещё раз.`,
+      `Что-то сломалось на нашей стороне. Попробуйте ещё раз.`,
     )
     expect(errorText(ENGLISH, { message: `Not found`, status: 404 })).toBe(`Not found`)
   })
@@ -195,7 +197,7 @@ describe(`errors`, () => {
       `Use more than 0.`,
     )
     expect(fieldText(ENGLISH, { code: `min`, values: { rule: 0 } })).toBe(`Use 0 or more.`)
-    expect(fieldText(RUSSIAN, { code: `somethingNew` })).toBe(`Это значение не подходит.`)
+    expect(fieldText(RUSSIAN, { code: `somethingNew` })).toBe(`Неверное значение.`)
   })
 
   it(`a server's sentence is never read as a catalog key`, () => {

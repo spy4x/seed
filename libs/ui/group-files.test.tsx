@@ -345,7 +345,7 @@ describe("group file wording", () => {
     }
     expect(problemText(RU, tooLong)).toBe("Заметка 3, «title»: Не больше 200 символов.")
     expect(problemText(RU, { ...tooLong, place: { part: "tags" }, issue: { code: "notList" } }))
-      .toBe("Теги: Здесь должен быть список.")
+      .toBe("Метки: Здесь должен быть список.")
     // A server without codes, or a part this app does not know, keeps the server's words.
     expect(problemText(RU, { ...tooLong, place: undefined })).toBe("Note 3: the title is too long.")
     expect(problemText(RU, { ...tooLong, place: { part: "invoices", index: 1 } })).toBe(

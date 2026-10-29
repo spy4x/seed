@@ -278,7 +278,7 @@ it(`says a refusal of its own checks in the operator's language, under the field
     })
     expect(await state.saveItem()).toBeNull()
     expect(state.itemEditor.value.errors).toEqual({
-      "size:s1": `Укажите оба края роста или ни одного.`,
+      "size:s1": `Укажите рост и «от», и «до» — или оставьте оба поля пустыми.`,
     })
 
     await state.load()
@@ -287,7 +287,7 @@ it(`says a refusal of its own checks in the operator's language, under the field
     calls.length = 0
     expect(await state.saveSource()).toBe(false)
     expect(state.sourceEditor.value.errors).toEqual({
-      slug: `Используйте только строчные латинские буквы, цифры и дефисы.`,
+      slug: `Только строчные латинские буквы, цифры и дефисы.`,
     })
     expect(calls).toEqual([])
   } finally {
