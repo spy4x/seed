@@ -105,7 +105,7 @@ export function versionAwareCodec(inner: MessageCodec, onUndecodable: () => void
 /**
  * Asks the browser to fetch the service worker again, at most once per {@link UPDATE_CHECK_GAP_MS}.
  * The deployed worker differs from this page's, so it installs and waits, and `SWUpdater` shows its
- * "New version available" prompt. A page with no service worker has nothing to update.
+ * "A new version is ready" prompt. A page with no service worker has nothing to update.
  */
 export function updateCheck(
   update: () => Promise<unknown> = async () =>

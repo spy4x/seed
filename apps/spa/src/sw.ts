@@ -9,7 +9,7 @@ import { shellOptions } from "./sw-options.ts"
 declare const __BUILD_ID__: string
 
 // Offline shell cache; the app opens with no network. Also answers `SWUpdater`'s `skipWaiting`
-// message, which a visitor sends by accepting the "New version available" prompt.
+// message, which a visitor sends by accepting the "A new version is ready" prompt.
 installOfflineShell(self as unknown as ShellScope, shellOptions(__BUILD_ID__))
 
 // Shows a pushed notification and opens the app where it points when the notification is clicked.
