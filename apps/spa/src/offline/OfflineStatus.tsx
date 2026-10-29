@@ -10,6 +10,7 @@ import { type Message, messageText } from "@ui/message.ts"
 import { activeLayer } from "./index.ts"
 import type { NoteEntry } from "./notes-cache.ts"
 import type { TagEntry } from "./tags-cache.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 const network = createOnlineStatus()
 
@@ -57,7 +58,7 @@ function tagView(t: Translator<string>, entry: TagEntry): ConflictView {
     label: entry.kind === "delete"
       ? t.t(`OfflineStatus.deletedTag`)
       : entry.payload.name
-      ? t.t(`OfflineStatus.tag`, { name: entry.payload.name })
+      ? t.t(`OfflineStatus.tag`, { name: isolate(entry.payload.name) })
       : t.t(`OfflineStatus.tagNoName`),
     reason: entry.conflict?.reason ?? "version",
     message: entry.conflict?.message ?? null,

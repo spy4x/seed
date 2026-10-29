@@ -22,6 +22,7 @@ import { ADMIN_CATALOG_PATHS, catalogFieldId, type CatalogFormErrors } from "./a
 import { useAdminText } from "./i18n.ts"
 import { ListCard, ListEmpty, MENU_TRIGGER_CLASSES } from "./notes-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { Isolated } from "@spy4x/preact-ui/bdi"
 
 /** The catalog key of what the sources page says while items get no links: no website address. */
 export const TRACKING_OFF_NOTICE = `AdminCatalogSources.trackingOff`
@@ -198,7 +199,12 @@ export function AdminCatalogSourcesScreen(props: AdminCatalogSourcesScreenProps)
       </Stack>
       {deleting && sources && (
         <ConfirmDialog
-          title={t.t(`AdminCatalogSources.deleteTitle`, { name: deleting.name })}
+          title={
+            <Isolated
+              message={(name) => t.t(`AdminCatalogSources.deleteTitle`, { name })}
+              value={deleting.name}
+            />
+          }
           message={deleting.linkCount === 0
             ? t.t(`AdminCatalogSources.deleteNoLinks`)
             : t.t(`AdminCatalogSources.deleteLinks`, { count: deleting.linkCount })}

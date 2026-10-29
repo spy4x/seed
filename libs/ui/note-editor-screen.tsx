@@ -28,6 +28,7 @@ import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { NoteAttachments, type NoteAttachmentsProps } from "./note-attachments.tsx"
 import { NoteTags, TagChips, type TagRow } from "./tag-parts.tsx"
 import { type Navigate, NOTE_PATHS, ScreenForm } from "./progressive.tsx"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /**
  * Who made a note and when, and who changed it last and when, as the page's header line names
@@ -443,7 +444,10 @@ function Editor(props: WithGroup): JSX.Element {
       {asking && note && (
         <ConfirmDialog
           title={t.t(`NoteEditor.deleteTitle`)}
-          message={t.t(`NoteEditor.deleteMessage`, { title: value.title, group: group.name })}
+          message={t.t(`NoteEditor.deleteMessage`, {
+            title: isolate(value.title),
+            group: isolate(group.name),
+          })}
           confirmLabel={t.t(`NoteEditor.deleteConfirm`)}
           cancelLabel={t.t(`NoteEditor.cancel`)}
           tone="danger"

@@ -53,26 +53,26 @@ describe("deleteAndAnnounce", () => {
     expect(removed).toEqual([tagId])
     expect(shown).toEqual([{
       title: "Tag deleted",
-      body: `"Urgent" was deleted and taken off 2 notes.`,
+      body: `"\u2068Urgent\u2069" was deleted and taken off 2 notes.`,
       dataE2E: "tag-deleted",
     }])
   })
 
   it("says one note, not one notes", async () => {
     const { shown } = await run(tags().store, notes([[tagId], []]))
-    expect(shown[0].body).toBe(`"Urgent" was deleted and taken off 1 note.`)
+    expect(shown[0].body).toBe(`"\u2068Urgent\u2069" was deleted and taken off 1 note.`)
   })
 
   it("leaves the count out when the tag was on no note", async () => {
     const { shown } = await run(tags().store, notes([[otherTag]]))
-    expect(shown[0].body).toBe(`"Urgent" was deleted.`)
+    expect(shown[0].body).toBe(`"\u2068Urgent\u2069" was deleted.`)
   })
 
   it("leaves the count out rather than guess while another group's notes, or none yet, are read", async () => {
     const other = await run(tags().store, notes([[tagId]], { forGroup: otherTag }))
-    expect(other.shown[0].body).toBe(`"Urgent" was deleted.`)
+    expect(other.shown[0].body).toBe(`"\u2068Urgent\u2069" was deleted.`)
     const loading = await run(tags().store, notes([[tagId]], { loading: true }))
-    expect(loading.shown[0].body).toBe(`"Urgent" was deleted.`)
+    expect(loading.shown[0].body).toBe(`"\u2068Urgent\u2069" was deleted.`)
   })
 
   it("shows no toast when the delete failed", async () => {

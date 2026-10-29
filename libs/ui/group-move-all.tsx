@@ -12,6 +12,7 @@ import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAppText } from "./i18n.ts"
+import { Isolated } from "@spy4x/preact-ui/bdi"
 
 /** What a finished move tells the person: how many notes and tags went, and where. */
 export interface MoveAllResult {
@@ -192,7 +193,10 @@ function Done(
               onClick={onDelete}
               data-e2e="group-move-all-delete"
             >
-              {t.t(`GroupMoveAll.delete`, { name: groupName })}
+              <Isolated
+                message={(name) => t.t(`GroupMoveAll.delete`, { name })}
+                value={groupName}
+              />
             </Button>
           )}
         </DialogActions>

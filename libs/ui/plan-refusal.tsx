@@ -2,6 +2,7 @@ import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { Notice } from "@spy4x/preact-ui/notice"
+import { isolate } from "@spy4x/preact-ui/bdi"
 import type { FeatureKey, LimitKey, PlanRefusal } from "@domain/billing"
 import { GROUP_PATHS, type Navigate } from "./progressive.tsx"
 import { useAppText } from "./i18n.ts"
@@ -41,9 +42,6 @@ const REFUSAL_KEYS: Record<
     message: `PlanRefusalNotice.rolesText`,
   },
 }
-
-/** A value inside a plain-text sentence, isolated from its direction: what `<bdi>` does in markup. */
-const isolate = (text: string) => `\u2068${text}\u2069`
 
 export interface PlanRefusalNoticeProps {
   groupId: string

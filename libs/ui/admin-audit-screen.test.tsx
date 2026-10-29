@@ -388,8 +388,8 @@ describe("audit log screen", () => {
       )
 
     expect(details()).toEqual([
-      'From "Work laptop" to "MacBook Air"',
-      'Passkey "MacBook Air"',
+      'From "\u2068Work laptop\u2069" to "\u2068MacBook Air\u2069"',
+      'Passkey "\u2068MacBook Air\u2069"',
       "ada@example.com",
     ])
 
@@ -397,7 +397,7 @@ describe("audit log screen", () => {
       render(<AdminAuditScreen {...props([], { entries, view: "timeline" })} />, mounted)
     )
     expect(find("[data-e2e=admin-audit-entry-account-6]").textContent)
-      .toContain('From "Work laptop" to "MacBook Air"')
+      .toContain('From "\u2068Work laptop\u2069" to "\u2068MacBook Air\u2069"')
   })
 
   it("tells an empty log from a filter that matches nothing, without a dashed box", async () => {

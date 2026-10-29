@@ -33,6 +33,7 @@ import {
   type NoteFilters,
   type NoteSort,
 } from "./notes-filter.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /**
  * Where focus goes once the list changes: after the row of note `id` (at `index`) leaves, the row
@@ -527,7 +528,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
               title={loading ? t.t(`Notes.loading`) : t.t(`Notes.empty`)}
               description={loading || !group.canWrite
                 ? undefined
-                : t.t(`Notes.emptyHint`, { group: group.name })}
+                : t.t(`Notes.emptyHint`, { group: isolate(group.name) })}
               action={!loading && group.canWrite && (
                 <Button
                   href={NOTE_PATHS.new}

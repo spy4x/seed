@@ -13,6 +13,7 @@ import { BLOG_SLUG_MAX_LENGTH, BLOG_SLUG_PATTERN, blogPostPath } from "@domain/b
 import type { AdminBlogEditorScreenProps } from "./admin-blog-editor.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAdminText } from "./i18n.ts"
+import { Isolated } from "@spy4x/preact-ui/bdi"
 
 /** A path inside a sentence: code, isolated, never machine-translated. */
 function path(text: string): JSX.Element {
@@ -46,7 +47,12 @@ export function Dialogs(props: AdminBlogEditorScreenProps): JSX.Element | null {
       return (
         <ConfirmDialog
           {...shared}
-          title={t.t(`AdminBlogDialogs.unscheduleTitle`, { title })}
+          title={
+            <Isolated
+              message={(title) => t.t(`AdminBlogDialogs.unscheduleTitle`, { title })}
+              value={title}
+            />
+          }
           confirmLabel={t.t(`AdminBlogDialogs.unschedule`)}
           onConfirm={props.onUnschedule}
         >
@@ -60,7 +66,12 @@ export function Dialogs(props: AdminBlogEditorScreenProps): JSX.Element | null {
         <ConfirmDialog
           {...shared}
           tone="danger"
-          title={t.t(`AdminBlogDialogs.unpublishTitle`, { title })}
+          title={
+            <Isolated
+              message={(title) => t.t(`AdminBlogDialogs.unpublishTitle`, { title })}
+              value={title}
+            />
+          }
           confirmLabel={t.t(`AdminBlogDialogs.unpublish`)}
           onConfirm={props.onUnpublish}
         >
@@ -74,7 +85,12 @@ export function Dialogs(props: AdminBlogEditorScreenProps): JSX.Element | null {
         <ConfirmDialog
           {...shared}
           tone="danger"
-          title={t.t(`AdminBlogDialogs.deleteTitle`, { title })}
+          title={
+            <Isolated
+              message={(title) => t.t(`AdminBlogDialogs.deleteTitle`, { title })}
+              value={title}
+            />
+          }
           confirmLabel={t.t(`AdminBlogDialogs.deletePost`)}
           onConfirm={props.onDelete}
         >

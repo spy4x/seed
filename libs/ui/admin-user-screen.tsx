@@ -42,6 +42,7 @@ import { AdminPreferencesGroup } from "./preferences.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /** What an operator can do to a person; each is confirmed in a dialog first. */
 export type AdminAction =
@@ -759,9 +760,11 @@ export function auditDetail(
 ): string {
   const renamed = eventType === AuthAuditEventType.SIGN_IN_METHOD_RENAMED &&
     PASSKEY_RENAMED.exec(identifier)
-  if (renamed) return t.t(`AdminUser.passkeyRenamed`, { from: renamed[2], to: renamed[1] })
+  if (renamed) {
+    return t.t(`AdminUser.passkeyRenamed`, { from: isolate(renamed[2]), to: isolate(renamed[1]) })
+  }
   const named = PASSKEY_NAMED.exec(identifier)
-  return named ? t.t(`AdminUser.passkeyNamed`, { name: named[1] }) : identifier
+  return named ? t.t(`AdminUser.passkeyNamed`, { name: isolate(named[1]) }) : identifier
 }
 
 /**

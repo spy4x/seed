@@ -1,4 +1,4 @@
-import type { JSX } from "preact"
+import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { slugify } from "@spy4x/platform/universal/text"
@@ -72,6 +72,7 @@ import {
 import { ListEmpty, MENU_TRIGGER_CLASSES } from "./notes-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useAdminText } from "./i18n.ts"
+import { Isolated } from "@spy4x/preact-ui/bdi"
 
 // #region Draft
 
@@ -546,7 +547,12 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
       </ScreenForm>
       {asking === `publish` && item && (
         <ConfirmDialog
-          title={t.t(`AdminCatalogItem.publishTitle`, { name: title })}
+          title={
+            <Isolated
+              message={(name) => t.t(`AdminCatalogItem.publishTitle`, { name })}
+              value={title}
+            />
+          }
           message={value.categoryId
             ? t.t(`AdminCatalogItem.publishText`)
             : t.t(`AdminCatalogItem.publishNoCategory`)}
@@ -562,7 +568,12 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
       )}
       {asking === `hide` && (
         <ConfirmDialog
-          title={t.t(`AdminCatalogItem.hideTitle`, { name: title })}
+          title={
+            <Isolated
+              message={(name) => t.t(`AdminCatalogItem.hideTitle`, { name })}
+              value={title}
+            />
+          }
           message={t.t(`AdminCatalogItem.hideText`)}
           confirmLabel={t.t(`AdminCatalogItem.hideConfirm`)}
           cancelLabel={t.t(`AdminCatalogItem.cancel`)}
@@ -576,7 +587,12 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
       )}
       {asking === `delete` && (
         <ConfirmDialog
-          title={t.t(`AdminCatalogItem.deleteTitle`, { name: title })}
+          title={
+            <Isolated
+              message={(name) => t.t(`AdminCatalogItem.deleteTitle`, { name })}
+              value={title}
+            />
+          }
           message={t.t(`AdminCatalogItem.deleteText`)}
           confirmLabel={t.t(`AdminCatalogItem.deleteConfirm`)}
           cancelLabel={t.t(`AdminCatalogItem.cancel`)}
@@ -1398,7 +1414,12 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
           photo={editing}
           item={item}
           languages={languages}
-          title={t.t(`AdminCatalogItem.describeTitle`, { name })}
+          title={
+            <Isolated
+              message={(name) => t.t(`AdminCatalogItem.describeTitle`, { name })}
+              value={name}
+            />
+          }
           onClose={() => setEditing(null)}
           onSave={(change) => {
             setEditing(null)
@@ -1431,7 +1452,7 @@ function PhotoDialog(
     photo: CatalogPhoto
     item: CatalogItem
     languages: readonly string[]
-    title: string
+    title: ComponentChildren
     onClose: () => void
     onSave: (change: { alt: CatalogText; colourId: string | null }) => void
   },

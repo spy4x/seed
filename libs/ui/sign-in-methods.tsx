@@ -19,6 +19,7 @@ import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { type Message, say } from "./message.ts"
 import { useAppText } from "./i18n.ts"
+import { Isolated } from "@spy4x/preact-ui/bdi"
 
 /** The message shown when linking or unlinking failed without a message of its own. */
 export const SIGN_IN_METHODS_FAILURE = `SignInMethods.failed`
@@ -445,7 +446,12 @@ export function SignInMethods(
           open
           onClose={closeUnlink}
           title={confirming.kind === "passkey"
-            ? t.t(`SignInMethods.removeTitle`, { name: shownName(t, confirming) })
+            ? (
+              <Isolated
+                message={(name) => t.t(`SignInMethods.removeTitle`, { name })}
+                value={shownName(t, confirming)}
+              />
+            )
             : t.t(`SignInMethods.unlinkTitle`, { name: signInMethodName(t, confirming.kind) })}
           cancelLabel={t.t(`EmailScreen.close`)}
           tone="danger"

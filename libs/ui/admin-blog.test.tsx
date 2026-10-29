@@ -589,7 +589,13 @@ describe("the blog screens in en-XA", () => {
     // A language is named in its own language, as every language picker does: data, not English.
     const languageNames = LANGUAGES.map((language) => languageName(language))
     expect(
-      englishLeft(document.body, [`Hello world`, `News`, /\/blog\/[a-z-]+/g, ...languageNames]),
+      englishLeft(document.body, [
+        `Hello world`,
+        `Jobs explained`,
+        `News`,
+        /\/blog\/[a-z-]+/g,
+        ...languageNames,
+      ]),
     )
       .toEqual([])
   })

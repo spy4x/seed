@@ -12,14 +12,14 @@ describe("movedToast", () => {
   it("names the group one note moved to", () => {
     expect(movedToast(EN, 1, "Home")).toEqual({
       title: "Note moved",
-      body: "The note was moved to Home.",
+      body: "The note was moved to \u2068Home\u2069.",
     })
   })
 
   it("counts the notes when several moved together", () => {
     expect(movedToast(EN, 3, "Home")).toEqual({
       title: "Notes moved",
-      body: "3 notes were moved to Home.",
+      body: "3 notes were moved to \u2068Home\u2069.",
     })
   })
 })

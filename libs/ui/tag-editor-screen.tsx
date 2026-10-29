@@ -18,6 +18,7 @@ import { TagBadge, tagDeleteMessage, type TagRow } from "./tag-parts.tsx"
 import { type Navigate, ScreenForm, TAG_PATHS } from "./progressive.tsx"
 import { useAppText } from "./i18n.ts"
 import { type Message, messageText } from "./message.ts"
+import { Isolated } from "@spy4x/preact-ui/bdi"
 
 /** What the tag's fields show: what the person typed, or the tag as saved. */
 export interface TagFormValue {
@@ -326,7 +327,9 @@ function Editor(props: WithGroup): JSX.Element {
       </ScreenForm>
       {asking && tag && (
         <ConfirmDialog
-          title={t.t(`Tags.deleteTitle`, { name: tag.name })}
+          title={
+            <Isolated message={(name) => t.t(`Tags.deleteTitle`, { name })} value={tag.name} />
+          }
           message={tagDeleteMessage(t, tag.noteCount)}
           confirmLabel={t.t(`Tags.deleteTag`)}
           cancelLabel={t.t(`Tags.cancel`)}

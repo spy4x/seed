@@ -176,7 +176,9 @@ test.describe(`the admin app's groups`, () => {
       await ops.locator(`[data-e2e=admin-group-remove-open]`).click()
       await expect(ops.locator(`[data-e2e=admin-group-dialog] input`)).toHaveCount(0)
       await ops.locator(`[data-e2e=admin-group-action-submit]`).click()
-      await expect(ops.locator(`[data-e2e=toasts]`)).toContainText(`is no longer in ${groupName}`)
+      await expect(ops.locator(`[data-e2e=toasts]`)).toContainText(
+        `is no longer in \u2068${groupName}\u2069`,
+      )
       await expect(members).toHaveCount(1)
 
       // Revokes the invitation link from its tab.

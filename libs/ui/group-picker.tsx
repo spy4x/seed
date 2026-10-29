@@ -9,6 +9,7 @@ import { NEW_GROUP_PATH, roleName } from "./groups-screen.tsx"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAppText } from "./i18n.ts"
 import { type Navigate, SCREEN_PATHS } from "./progressive.tsx"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /** One group of the switcher: its name, and the person's role in it. */
 export interface PickerGroup {
@@ -55,7 +56,7 @@ export function switcherLabel(t: Translator<string>, selected: PickerGroup | nul
 /** The switcher's tooltip: the group's name and the person's role there, `Home · Owner`. */
 export function switcherTip(t: Translator<string>, selected: PickerGroup | null): string {
   return selected
-    ? t.t(`GroupPicker.tip`, { name: selected.name, role: roleName(t, selected.role) })
+    ? t.t(`GroupPicker.tip`, { name: isolate(selected.name), role: roleName(t, selected.role) })
     : t.t(`GroupPicker.choose`)
 }
 

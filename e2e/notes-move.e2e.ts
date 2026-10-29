@@ -92,7 +92,9 @@ test.describe("moving notes to another group", () => {
       await ownerPage.locator("[data-e2e=note-move-dialog]").getByRole("button", { name: "Target" })
         .click()
       await expect(ownerPage).toHaveURL("/notes")
-      await expect(ownerPage.locator("[data-e2e=note-moved]")).toContainText("moved to Target")
+      await expect(ownerPage.locator("[data-e2e=note-moved]")).toContainText(
+        "moved to \u2068Target\u2069",
+      )
       await expect(ownerTitles).toHaveCount(3)
       await expect(ownerPage.getByRole("link", { name: "One", exact: true })).toHaveCount(0)
       await expect(sourceTitles).toHaveCount(3, { timeout: 5_000 })

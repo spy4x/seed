@@ -497,14 +497,16 @@ describe("one person in the admin app", () => {
 
     const entry = find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGN_IN_METHOD_RENAMED}]`)
     expect(entry.textContent).toContain("Passkey renamed")
-    expect(entry.textContent).toContain('From "Work laptop" to "MacBook Air" · from 203.0.113.5')
+    expect(entry.textContent).toContain(
+      'From "\u2068Work laptop\u2069" to "\u2068MacBook Air\u2069" · from 203.0.113.5',
+    )
     expect(find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGNED_IN}]`).textContent)
-      .toContain('Passkey "MacBook Air"')
+      .toContain('Passkey "\u2068MacBook Air\u2069"')
     // An identifier of another shape is shown as stored.
     expect(find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGN_IN_METHOD_LINKED}]`).textContent)
       .toContain("google ada@example.com")
     expect(find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGN_IN_METHOD_UNLINKED}]`).textContent)
-      .toContain('Passkey "Desk from=home"')
+      .toContain('Passkey "\u2068Desk from=home\u2069"')
   })
 
   it("lists the e-mail link as when it was last used, with no proof badge (#391)", async () => {

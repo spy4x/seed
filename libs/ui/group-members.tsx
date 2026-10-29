@@ -19,6 +19,7 @@ import { MoreMenu } from "@spy4x/preact-ui/page-header"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import type { Navigate } from "./progressive.tsx"
 import { When } from "@spy4x/preact-ui/format"
+import { Isolated } from "@spy4x/preact-ui/bdi"
 
 /** One member of a group as the members section shows them. */
 export interface GroupMemberRow {
@@ -287,13 +288,17 @@ function MemberItem(
         : <ErrorState focusOnAppear message={error} dataE2E="group-member-error" />)}
       {removing && (
         <ConfirmDialog
-          title={t.t(`GroupMembers.removeTitle`, { name: label })}
+          title={
+            <Isolated message={(name) => t.t(`GroupMembers.removeTitle`, { name })} value={label} />
+          }
           confirmLabel={t.t(`GroupMembers.removeConfirm`)}
           cancelLabel={t.t(`GroupMembers.cancel`)}
           tone="danger"
           dataE2E="group-member-remove-dialog"
           onConfirm={() => {
-            if (!pending) onRemove?.(member.userId)
+            if (!pending) {
+              onRemove?.(member.userId)
+            }
           }}
           onCancel={() =>
             setRemoving(false)}

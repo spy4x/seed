@@ -51,6 +51,7 @@ import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
+import { isolate, Isolated } from "@spy4x/preact-ui/bdi"
 
 /** The signed-in operator, as far as the page needs them. */
 export interface AdminBillingOperatorView {
@@ -267,7 +268,7 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
     <Stack>
       <PageHeader
         title={customer.groupName}
-        subtitle={t.t(`AdminBillingCustomer.ownedBy`, { owner })}
+        subtitle={t.t(`AdminBillingCustomer.ownedBy`, { owner: isolate(owner) })}
         back={back}
         navigate={navigate}
         action={stripe || undefined}
@@ -487,7 +488,7 @@ export function historyTitle(
 
 function historyDescription(t: Translator<string>, entry: AdminBillingHistoryEntry): string {
   const by = entry.operator
-    ? t.t(`AdminBillingCustomer.by`, { operator: entry.operator })
+    ? t.t(`AdminBillingCustomer.by`, { operator: isolate(entry.operator) })
     : t.t(`AdminBillingCustomer.byRemoved`)
   return entry.note ? `${by} ${t.t(`AdminBillingCustomer.note`, { note: entry.note })}` : by
 }
@@ -524,7 +525,7 @@ function Waiting(
 }
 
 interface DialogCopy {
-  title: string
+  title: ComponentChildren
   submit: string
   busy: string
   danger: boolean
@@ -601,7 +602,12 @@ function ActionDialog(
     case `refund`: {
       const amount = payment ? paymentAmount(payment) : ``
       copy = {
-        title: t.t(`AdminBillingCustomer.refundTitle`, { amount, group }),
+        title: (
+          <Isolated
+            message={(group) => t.t(`AdminBillingCustomer.refundTitle`, { amount, group })}
+            value={group}
+          />
+        ),
         submit: t.t(`AdminBillingCustomer.refundSubmit`, { amount }),
         busy: t.t(`AdminBillingCustomer.refunding`),
         danger: true,
@@ -619,7 +625,12 @@ function ActionDialog(
     case `time`: {
       const until = billingDate(noChargeUntil(customer, length, props.now).toISOString(), format)
       copy = {
-        title: t.t(`AdminBillingCustomer.timeTitle`, { group }),
+        title: (
+          <Isolated
+            message={(group) => t.t(`AdminBillingCustomer.timeTitle`, { group })}
+            value={group}
+          />
+        ),
         submit: t.t(`AdminBillingCustomer.timeSubmit`, { length: t.t(TIME_LABELS[length]) }),
         busy: t.t(`AdminBillingCustomer.saving`),
         danger: false,
@@ -650,7 +661,12 @@ function ActionDialog(
     }
     case `cancel`:
       copy = {
-        title: t.t(`AdminBillingCustomer.cancelTitle`, { group }),
+        title: (
+          <Isolated
+            message={(group) => t.t(`AdminBillingCustomer.cancelTitle`, { group })}
+            value={group}
+          />
+        ),
         submit: t.t(`AdminBillingCustomer.cancel`),
         busy: t.t(`AdminBillingCustomer.cancelling`),
         danger: true,
@@ -693,7 +709,7 @@ function ActionDialog(
                 <OptionLabel
                   title={t.t(`AdminBillingCustomer.now`)}
                   help={nowAllowed
-                    ? t.t(`AdminBillingCustomer.nowHelp`, { group })
+                    ? t.t(`AdminBillingCustomer.nowHelp`, { group: isolate(group) })
                     : t.t(NEEDS_SUPERVISOR)}
                 />
               ),
@@ -704,7 +720,12 @@ function ActionDialog(
       break
     case `undo`:
       copy = {
-        title: t.t(`AdminBillingCustomer.undoTitle`, { group }),
+        title: (
+          <Isolated
+            message={(group) => t.t(`AdminBillingCustomer.undoTitle`, { group })}
+            value={group}
+          />
+        ),
         submit: t.t(`AdminBillingCustomer.undoSubmit`),
         busy: t.t(`AdminBillingCustomer.saving`),
         danger: false,

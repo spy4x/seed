@@ -391,7 +391,7 @@ describe(`one customer in the admin app`, () => {
     )
     const history = find(`[data-e2e=admin-billing-history]`).textContent
     expect(history).toContain(`€36.00 refunded`)
-    expect(history).toContain(`By Grace Hopper. Note: Charged twice`)
+    expect(history).toContain(`By \u2068Grace Hopper\u2069. Note: Charged twice`)
     expect(find(`[data-e2e=admin-billing-stripe]`).getAttribute(`target`)).toBe(`_blank`)
   })
 

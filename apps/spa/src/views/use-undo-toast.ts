@@ -7,6 +7,7 @@ import type { notesStore } from "../state/notes.ts"
 import { toasts } from "../state/toasts.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAppText } from "@ui/i18n.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /** The key that takes a deleted note back while its toast shows. */
 export const UNDO_KEYS = "mod+z"
@@ -45,7 +46,7 @@ export function useUndoToast(store: typeof notesStore): void {
       id: offer.id,
       title: t.t(`UndoToast.title`),
       body: (offer.title
-        ? t.t(`UndoToast.deleted`, { title: offer.title })
+        ? t.t(`UndoToast.deleted`, { title: isolate(offer.title) })
         : t.t(`UndoToast.deletedUntitled`)) + undoKeyHint(t),
       duration: left,
       dataE2E: "note-undo-toast",

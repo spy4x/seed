@@ -81,7 +81,7 @@ test.describe("restoring deleted notes", () => {
       // Delete, then Undo from the toast.
       await deleteTrip()
       const toast = ownerPage.locator("[data-e2e=note-undo-toast]")
-      await expect(toast).toContainText(`"Trip" was deleted.`)
+      await expect(toast).toContainText(`"\u2068Trip\u2069" was deleted.`)
       await toast.getByRole("button", { name: "Undo" }).click()
       await expect(ownerTitles).toHaveText(["Trip"])
       await expect(memberTitles).toHaveText(["Trip"], { timeout: 5_000 })

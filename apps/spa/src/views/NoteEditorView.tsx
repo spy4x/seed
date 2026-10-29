@@ -22,6 +22,7 @@ import { personName } from "./note-people.ts"
 import { movedToast } from "./note-toasts.ts"
 import { useAppText } from "@ui/i18n.ts"
 import { messageText } from "@ui/message.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 /** The palette's "Attach files to this note" while a note page an editor can change is open. */
 export const noteEditorPageActions = signal<{ attach(): void } | null>(null)
@@ -188,7 +189,7 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
             void attachmentsStore.created(note.id)
             toasts.success({
               title: t.t(`NoteEditorView.createdTitle`),
-              body: t.t(`NoteEditorView.created`, { title: note.title }),
+              body: t.t(`NoteEditorView.created`, { title: isolate(note.title) }),
               dataE2E: "note-created",
             })
             navigate(NOTE_PATHS.note(note.id))
@@ -197,7 +198,7 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
             if (!await store.save()) return
             toasts.success({
               title: t.t(`NoteEditorView.savedTitle`),
-              body: t.t(`NoteEditorView.saved`, { title }),
+              body: t.t(`NoteEditorView.saved`, { title: isolate(title) }),
               dataE2E: "note-saved",
             })
             navigate(NOTE_PATHS.list)

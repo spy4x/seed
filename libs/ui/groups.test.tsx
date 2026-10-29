@@ -659,11 +659,17 @@ describe("GroupEditorScreen header", () => {
         `Moved 3 notes from "Team" to "Archive"`,
       )
       expect(focused()).toBe("group-move-all-keep")
+      // The name keeps its own direction in a right-to-left sentence, and the button's name stays
+      // plain: a `<bdi>`, not invisible marks.
+      const deleteButton = find("[data-e2e=group-move-all-delete]")
+      expect(deleteButton.innerHTML).toContain(`<bdi>Team</bdi>`)
+      expect(deleteButton.textContent).toBe(`Delete "Team"...`)
 
       await click("[data-e2e=group-move-all-delete]")
       expect(closed.calls).toHaveLength(1)
       expect(has("[data-e2e=group-move-all-dialog]")).toBe(false)
       expect(find("[data-e2e=group-delete-dialog]").textContent).toContain(`Delete "Team"?`)
+      expect(find("[data-e2e=group-delete-dialog] bdi").textContent).toBe(`Team`)
       expect(remove.calls).toHaveLength(0)
     })
 

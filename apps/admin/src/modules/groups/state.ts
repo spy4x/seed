@@ -17,6 +17,7 @@ import type { AdminGroupAction, AdminGroupDialog } from "@ui/admin-groups-detail
 import { adminGroupPersonName } from "@ui/admin-groups-list.tsx"
 import { adminFailure, type AdminFetch, post, refusalText } from "../../state.ts"
 import { adminText } from "../../i18n.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 
 export interface GroupsListState {
   /** The filter of the page the list shows, or is loading. */
@@ -97,13 +98,19 @@ function actionDone(action: AdminGroupAction, detail: AdminGroupDetail | null): 
   }
   switch (action.kind) {
     case `remove`:
-      return t.t(`AdminGroup.doneRemove`, { member: member(action.userId), group })
+      return t.t(`AdminGroup.doneRemove`, {
+        member: isolate(member(action.userId)),
+        group: isolate(group),
+      })
     case `revoke`:
-      return t.t(`AdminGroup.doneRevoke`, { group })
+      return t.t(`AdminGroup.doneRevoke`, { group: isolate(group) })
     case `transfer`:
-      return t.t(`AdminGroup.doneTransfer`, { member: member(action.userId), group })
+      return t.t(`AdminGroup.doneTransfer`, {
+        member: isolate(member(action.userId)),
+        group: isolate(group),
+      })
     case `removeFile`:
-      return t.t(`AdminGroup.doneRemoveFile`, { group })
+      return t.t(`AdminGroup.doneRemoveFile`, { group: isolate(group) })
   }
 }
 
