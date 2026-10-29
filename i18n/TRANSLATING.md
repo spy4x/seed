@@ -40,6 +40,67 @@ language.
 
 Stamp only after the translation is done: a stamp tells the test that the translation is current.
 
+## How to translate
+
+Translate the situation, not the words. A translation made key by key from the catalog alone reads
+like a machine made it, so:
+
+1. Before translating a key, find where the code uses it (search for the quoted key) and read that
+   screen or component: what the text sits next to (a button, a heading, a hint under a field, a
+   toast) and what happens when a person acts on it.
+2. Write what a native copywriter of the language would put in a modern, friendly app: natural word
+   order, the phrasing well-known apps in that language use, no calques, no impersonal or
+   bureaucratic passives, no literal noun chains.
+3. Use the glossary below: one term per thing, on every screen.
+4. Re-read the whole file as a user would, screen by screen, and fix anything that sounds
+   translated.
+5. A translation is done by an agent or person whose only task is that language, never as a side
+   task of a code change. A change that adds or edits English leaves the other languages to that
+   pass.
+6. A second reader checks every new translation: the owner for Russian, and for the other
+   languages a separate agent that translates it back to English and compares the meaning with
+   the source.
+
+## Glossary
+
+One word for one thing, on every screen. Translate a term the same way everywhere, unless the
+sentence needs another grammatical form of it.
+
+| English                | ru                   | es                        | de                      | pt-BR                      | ar                 |
+| ---------------------- | -------------------- | ------------------------- | ----------------------- | -------------------------- | ------------------ |
+| account                | аккаунт              | cuenta                    | Konto                   | conta                      | حساب               |
+| sign in                | войти / вход         | iniciar sesión            | anmelden / Anmeldung    | entrar                     | تسجيل الدخول       |
+| sign out               | выйти                | cerrar sesión             | abmelden                | sair                       | تسجيل الخروج       |
+| sign up                | зарегистрироваться   | registrarse               | registrieren            | criar conta                | إنشاء حساب         |
+| username               | логин                | nombre de usuario         | Benutzername            | nome de usuário            | اسم المستخدم       |
+| e-mail (address)       | e-mail, почта        | correo electrónico        | E-Mail-Adresse          | e-mail                     | البريد الإلكتروني  |
+| password               | пароль               | contraseña                | Passwort                | senha                      | كلمة المرور        |
+| passkey                | ключ доступа         | llave de acceso           | Passkey                 | chave de acesso            | مفتاح المرور       |
+| one-time code          | одноразовый код      | código de un solo uso     | Einmalcode              | código de uso único        | رمز لمرة واحدة     |
+| two-factor             | двухфакторная защита | verificación en dos pasos | Zwei-Faktor-Schutz      | verificação em duas etapas | التحقق بخطوتين     |
+| recovery codes         | резервные коды       | códigos de recuperación   | Wiederherstellungscodes | códigos de recuperação     | رموز الاسترداد     |
+| profile                | профиль              | perfil                    | Profil                  | perfil                     | الملف الشخصي       |
+| settings               | настройки            | ajustes                   | Einstellungen           | configurações              | الإعدادات          |
+| group                  | группа               | grupo                     | Gruppe                  | grupo                      | مجموعة             |
+| member                 | участник             | miembro                   | Mitglied                | membro                     | عضو                |
+| owner (of a group)     | владелец             | propietario               | Inhaber                 | dono                       | المالك             |
+| role                   | роль                 | rol                       | Rolle                   | função                     | دور                |
+| invitation             | приглашение          | invitación                | Einladung               | convite                    | دعوة               |
+| note                   | заметка              | nota                      | Notiz                   | nota                       | ملاحظة             |
+| tag                    | метка                | etiqueta                  | Tag                     | etiqueta                   | وسم                |
+| file / attachment      | файл                 | archivo                   | Datei                   | arquivo                    | ملف                |
+| device                 | устройство           | dispositivo               | Gerät                   | dispositivo                | جهاز               |
+| notification           | уведомление          | notificación              | Benachrichtigung        | notificação                | إشعار              |
+| plan                   | тариф                | plan                      | Tarif                   | plano                      | خطة                |
+| subscription / billing | подписка / оплата    | suscripción / facturación | Abo / Abrechnung        | assinatura / cobrança      | الاشتراك / الفوترة |
+| guest (account)        | гостевой аккаунт     | cuenta de invitado        | Gastkonto               | conta de visitante         | حساب ضيف           |
+| demo data, sample data | демо-данные          | datos de ejemplo          | Beispieldaten           | dados de exemplo           | بيانات تجريبية     |
+| link (a URL)           | ссылка               | enlace                    | Link                    | link                       | رابط               |
+| token (API)            | токен                | token                     | Token                   | token                      | رمز مميز           |
+| operator (admin area)  | оператор             | operador                  | Operator                | operador                   | المشغّل             |
+| newsletter             | рассылка             | boletín                   | Newsletter              | newsletter                 | النشرة البريدية    |
+| offline                | офлайн, без сети     | sin conexión              | offline                 | offline                    | دون اتصال          |
+
 ## Voice
 
 Short, plain and friendly, as a person would say it, in the voice the components use:
