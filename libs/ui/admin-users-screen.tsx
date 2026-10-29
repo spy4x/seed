@@ -285,7 +285,9 @@ export function AdminUsersScreen(
           <div data-e2e="admin-users-list">
             <DataTable
               mode="server"
-              class="[&>div:first-child]:min-h-0"
+              // On a phone only the person column shows, with the role and status under the name,
+              // so nothing scrolls sideways or is cut at the edge (ui-layout rule 8).
+              class="[&>div:first-child]:min-h-0 max-sm:[&_:is(th,td):not(:first-child)]:hidden"
               columns={userColumns(t, operatorId, navigate)}
               rows={rows}
               sort={filter.sort}
@@ -387,7 +389,7 @@ function FilterChips(
 
 /**
  * The person column: their avatar, their name as the link to their page, their address when the
- * name is not already it, and "You" on the operator's own row.
+ * name is not already it, "You" on the operator's own row, and on a phone their role and status.
  */
 function PersonCell(
   { user, self, navigate }: { user: AdminUserRow; self: boolean; navigate?: Navigate },
@@ -396,9 +398,9 @@ function PersonCell(
   const t = useAdminText()
   const name = adminUserName(user, t)
   return (
-    // At least 12rem wide: on a phone the table scrolls sideways instead of squeezing the name
-    // into a column a few letters wide.
-    <div class="flex min-w-48 items-center gap-3">
+    // At least 12rem wide from `sm`, where the other columns show beside it and the table may
+    // scroll sideways rather than squeeze the name into a column a few letters wide.
+    <div class="flex items-center gap-3 sm:min-w-48">
       <Avatar
         name={name}
         src={pictureUrl(user.pictureId, ADMIN_PICTURE_PATH)}
@@ -429,6 +431,27 @@ function PersonCell(
         {subtitle && (
           <span class="text-sm text-muted wrap-anywhere" translate={false}>{subtitle}</span>
         )}
+        {/* The Role and Status columns' badges, shown here only where those columns are hidden. */}
+        <span class="mt-1 flex flex-wrap gap-2 sm:hidden" data-e2e="admin-user-phone-badges">
+          <Badge text={roleLabel(t, user.role)} color={roleColor(user.role)} />
+          {user.blockedAt
+            ? <Badge text={t.t(`AdminUsers.blocked`)} color="red" />
+            : <Badge text={t.t(`AdminUsers.active`)} color="green" type="outline" />}
+        </span>
+        {/* The Last seen and Created columns' facts, shown here only where those columns are hidden. */}
+        <span
+          class="flex flex-wrap gap-x-3 text-sm text-muted sm:hidden"
+          data-e2e="admin-user-phone-dates"
+        >
+          <span class="flex gap-1">
+            <span>{t.t(`AdminUsers.lastSeen`)}</span>
+            {user.lastSeenAt ? <When at={user.lastSeenAt} /> : t.t(`AdminUsers.never`)}
+          </span>
+          <span class="flex gap-1">
+            <span>{t.t(`AdminUsers.created`)}</span>
+            <OnDay at={user.createdAt} />
+          </span>
+        </span>
       </div>
     </div>
   )

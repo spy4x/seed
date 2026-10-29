@@ -154,6 +154,28 @@ it(`reads an item with a photo being prepared again, but not forever`, async () 
   expect(calls).toHaveLength(CATALOG_PREPARING_READS)
 })
 
+it(`keeps reading past a minute while photos keep becoming ready`, async () => {
+  const photo = (id: string, ready: boolean) =>
+    ({ id, colourId: null, alt: {}, state: ready ? `ready` : `preparing` }) as const
+  const ids = Array.from({ length: 4 }, (_, i) => `0195f0b4-3c1e-7a00-8000-00000000010${i}`)
+  let read = 0
+  const { state, calls } = build({
+    // One more photo is ready every 20 reads: the batch takes longer than a minute.
+    [`GET /api/admin/catalog/items/${ID}`]: () => {
+      const ready = Math.floor(read++ / 20)
+      return ok({ item: { ...ITEM, photos: ids.map((id, i) => photo(id, i < ready)) } })
+    },
+  })
+  await state.openItem(ID)
+  calls.length = 0
+  let reads = 0
+  while (await state.readWhilePreparing()) reads++
+
+  // The last photo is ready on the 80th read again, well past the 30 a minute allows.
+  expect(state.itemEditor.value.item!.photos.every((one) => one.state === `ready`)).toBe(true)
+  expect(reads).toBe(80)
+})
+
 it(`makes a photo the cover by sending it first in the order`, async () => {
   const photos = [`a`, `b`, `c`].map((id) => ({ id, colourId: null, alt: {}, state: `ready` }))
   const { state, calls } = build({

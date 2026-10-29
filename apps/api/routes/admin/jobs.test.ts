@@ -39,8 +39,8 @@ const passThrough: MiddlewareHandler<APIContext> = async (_c, next) => await nex
 const noop = () => async () => {}
 
 /**
- * A registry of four jobs: one about a person that mails, one repeating, one about a group, and
- * one the admin may not cancel.
+ * A registry of five jobs: one about a person that mails, one repeating, one about a group, one
+ * the admin may not cancel, and one about an image.
  */
 const REGISTRY = [
   defineJob({
@@ -68,7 +68,29 @@ const REGISTRY = [
     cannotCancel: `Unschedule the post on the Blog page.`,
     handler: noop,
   }),
+  defineJob({
+    kind: `files.image-process`,
+    label: `Image processing: preview`,
+    about: { image: true },
+    handler: noop,
+  }),
 ]
+
+const PHOTO_ID = `01927f3e-6b2a-7c3d-8e4f-000000000002`
+const PICTURE_ID = `01927f3e-6b2a-7c3d-8e4f-000000000003`
+const ITEM_ID = `01927f3e-6b2a-7c3d-8e4f-000000000004`
+
+/** An image job about a catalog photo, and one about an image that is no catalog photo. */
+const imageJob = (aggregateId: string): AdminJobRecord => ({
+  ...failed,
+  id: aggregateId === PHOTO_ID
+    ? `01927f3e-6b2a-7c3d-8e4f-0000000000a1`
+    : `01927f3e-6b2a-7c3d-8e4f-0000000000a2`,
+  kind: `files.image-process`,
+  aggregateId,
+  state: AdminJobState.Done,
+  errorCode: null,
+})
 
 const failed: AdminJobRecord = {
   id: JOB_ID,
@@ -100,6 +122,8 @@ interface Options {
   outcome?: AdminJobActionOutcome
   /** The job read back after an action; `null` for one the table no longer has. */
   record?: AdminJobRecord | null
+  /** The page of runs the list reads; the failed run alone unless given. */
+  list?: AdminJobRecord[]
 }
 
 function buildApp(options: Options = {}) {
@@ -114,7 +138,7 @@ function buildApp(options: Options = {}) {
       filter,
       match,
     ) => (calls.push([`list`, filter, match]),
-      Promise.resolve({ jobs: [failed], counts: COUNTS, total: 1 })),
+      Promise.resolve({ jobs: options.list ?? [failed], counts: COUNTS, total: 1 })),
     job: (id) => (calls.push([`job`, id]), Promise.resolve(record)),
     user: (
       table,
@@ -122,6 +146,17 @@ function buildApp(options: Options = {}) {
     ) => (calls.push([`user`, table, aggregateId]),
       Promise.resolve({ id: 42, name: `Ada Lovelace` })),
     group: (groupId) => (calls.push([`group`, groupId]), Promise.resolve(null)),
+    photos: (imageIds, languages) => (calls.push([`photos`, imageIds, languages]),
+      Promise.resolve(
+        new Map(
+          imageIds.filter((id) => id === PHOTO_ID).map((id) => [id, {
+            id,
+            ready: true,
+            itemId: ITEM_ID,
+            itemName: `Zip jacket`,
+          }]),
+        ),
+      )),
     repeating: (kinds) => (calls.push([`repeating`, kinds]),
       Promise.resolve([{
         kind: `outbox.cleanup`,
@@ -149,7 +184,14 @@ function buildApp(options: Options = {}) {
     createAdminRoute({
       auth: testSessionGuards(),
       mutationGuards: testMutationGuards,
-      modules: [createAdminJobsRoutes({ limit: passThrough, jobs, registry: REGISTRY })],
+      modules: [
+        createAdminJobsRoutes({
+          limit: passThrough,
+          jobs,
+          registry: REGISTRY,
+          languages: [`vi`, `en`],
+        }),
+      ],
     }),
     options.signedOut ? null : buildAuthData({
       user: { id: 7, role: options.role ?? UserRole.OPERATOR },
@@ -210,7 +252,26 @@ describe(`jobs routes`, () => {
     expect(calls[0].slice(0, 2)).toEqual([`list`, { query: `reset`, state: `failed`, page: 2 }])
     expect(body).toMatchObject({ counts: COUNTS, total: 1, page: 2, pageSize: 50, keptDays: 7 })
     const { aggregateId: _, ...row } = failed
-    expect(body.jobs).toEqual([{ ...row, label: `Password reset email` }])
+    expect(body.jobs).toEqual([{ ...row, label: `Password reset email`, photo: null }])
+    expect(calls.map((call) => call[0])).not.toContain(`photos`)
+  })
+
+  it(`names an image job's catalog photo and its item, in the list and on its page`, async () => {
+    const { app, calls } = buildApp({
+      list: [imageJob(PHOTO_ID), imageJob(PICTURE_ID), failed],
+      record: imageJob(PHOTO_ID),
+    })
+    const photo = { id: PHOTO_ID, ready: true, itemId: ITEM_ID, itemName: `Zip jacket` }
+
+    const list = await (await send(app, `GET`, `/jobs`)).json()
+    expect(list.jobs.map((job: { photo: unknown }) => job.photo)).toEqual([photo, null, null])
+    // One read for the page, of the image jobs only, in the catalog's languages.
+    expect(calls.filter((call) => call[0] === `photos`)).toEqual([
+      [`photos`, [PHOTO_ID, PICTURE_ID], [`vi`, `en`]],
+    ])
+
+    const page = await (await send(app, `GET`, `/jobs/${imageJob(PHOTO_ID).id}`)).json()
+    expect(page).toMatchObject({ photo, about: null })
   })
 
   it(`finds a job by its name's words in any order, a prefix or its kind`, () => {

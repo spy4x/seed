@@ -23,6 +23,7 @@ import type {
   AdminSubscriberStatus,
   SubscriberList,
 } from "@domain/subscribers"
+import { DEFAULT_LANGUAGE, type Language } from "@domain/identity"
 import { fillDays, statsDays } from "../auth/admin-stats.ts"
 import { likeContains } from "@spy4x/server/db"
 import { enqueueSubscriberMail, SUBSCRIBER_CONFIRM_MAIL_JOB } from "../jobs/subscriber-mail.ts"
@@ -33,6 +34,7 @@ interface SubscriberDbRow {
   status: AdminSubscriberStatus
   requestedAt: Date | null
   confirmedAt: Date | null
+  language: Language
 }
 
 function toRow(row: SubscriberDbRow): AdminSubscriberRow {
@@ -41,6 +43,7 @@ function toRow(row: SubscriberDbRow): AdminSubscriberRow {
     status: row.status,
     requestedAt: row.requestedAt?.toISOString() ?? null,
     confirmedAt: row.confirmedAt?.toISOString() ?? null,
+    language: row.language,
   }
 }
 
@@ -48,16 +51,19 @@ function toRow(row: SubscriberDbRow): AdminSubscriberRow {
  * Every address of `list` with its status, as one SQL fragment: the confirmed rows, then each
  * pending address once, with its newest confirm request. A request for an address that is already
  * listed is no pending address (the public form queues one for a listed address too, so the
- * answer tells nothing), and neither is a welcome mail's request.
+ * answer tells nothing), and neither is a welcome mail's request. A confirmed address has its
+ * stored language, a pending one its newest request's, and one with none the main language (#527).
  */
 function addresses(sql: postgres.Sql, list: SubscriberList) {
   return sql`
     SELECT s.email, 'confirmed' AS status, NULL::timestamptz AS requested_at,
-      s.subscribed_at AS confirmed_at, s.subscribed_at AS at
+      s.subscribed_at AS confirmed_at, s.subscribed_at AS at,
+      COALESCE(s.language, ${DEFAULT_LANGUAGE}) AS language
     FROM subscribers s
     WHERE s.list_id = ${list}
     UNION ALL
-    SELECT r.email, 'pending', max(r.created_at), NULL, max(r.created_at)
+    SELECT r.email, 'pending', max(r.created_at), NULL, max(r.created_at),
+      COALESCE((array_agg(r.language ORDER BY r.created_at DESC))[1], ${DEFAULT_LANGUAGE})
     FROM subscription_requests r
     JOIN outbox_events o
       ON o.aggregate_id = r.id AND o.event_kind = ${SUBSCRIBER_CONFIRM_MAIL_JOB}
@@ -79,12 +85,13 @@ export async function listAdminSubscribers(
   const where = sql`
     WHERE (${filter.query} = '' OR a.email ILIKE ${likeContains(filter.query)})
       AND (${filter.status} = 'any' OR a.status = ${filter.status})
+      AND (${filter.language} = 'any' OR a.language = ${filter.language})
   `
   const [{ total }] = await sql<{ total: number }[]>`
     SELECT COUNT(*)::int AS total FROM (${addresses(sql, list)}) a ${where}
   `
   const rows = await sql<SubscriberDbRow[]>`
-    SELECT a.email, a.status, a.requested_at, a.confirmed_at
+    SELECT a.email, a.status, a.requested_at, a.confirmed_at, a.language
     FROM (${addresses(sql, list)}) a ${where}
     ORDER BY a.at DESC, a.email
     LIMIT ${pageSize} OFFSET ${(filter.page - 1) * pageSize}
@@ -98,7 +105,7 @@ export async function allAdminSubscribers(
   list: SubscriberList,
 ): Promise<AdminSubscriberRow[]> {
   const rows = await sql<SubscriberDbRow[]>`
-    SELECT a.email, a.status, a.requested_at, a.confirmed_at
+    SELECT a.email, a.status, a.requested_at, a.confirmed_at, a.language
     FROM (${addresses(sql, list)}) a
     ORDER BY a.at DESC, a.email
   `
@@ -112,7 +119,7 @@ export async function findAdminSubscriber(
   email: string,
 ): Promise<AdminSubscriberRow | null> {
   const [row] = await sql<SubscriberDbRow[]>`
-    SELECT a.email, a.status, a.requested_at, a.confirmed_at
+    SELECT a.email, a.status, a.requested_at, a.confirmed_at, a.language
     FROM (${addresses(sql, list)}) a
     WHERE a.email = ${email}
   `
@@ -218,6 +225,7 @@ const CSV_COLUMNS: CsvColumn<AdminSubscriberRow>[] = [
   { key: `status`, header: `Status` },
   { key: `requestedAt`, header: `Requested at` },
   { key: `confirmedAt`, header: `Confirmed at` },
+  { key: `language`, header: `Language` },
 ]
 
 /**
@@ -255,11 +263,24 @@ export async function removeAdminSubscriber(
   return removed || dropped.count > 0
 }
 
-/** Queues a new confirm mail to `email` for `list`; the worker signs and sends it. */
+/**
+ * Queues a new confirm mail to `email` for `list`, in the language of its newest request; the
+ * worker signs and sends it.
+ */
 export async function resendAdminConfirmation(
   sql: postgres.Sql,
   list: SubscriberList,
   email: string,
 ): Promise<void> {
-  await enqueueSubscriberMail(sql, SUBSCRIBER_CONFIRM_MAIL_JOB, list, email)
+  const [newest] = await sql<{ language: Language | null }[]>`
+    SELECT language FROM subscription_requests WHERE list_id = ${list} AND email = ${email}
+    ORDER BY created_at DESC LIMIT 1
+  `
+  await enqueueSubscriberMail(
+    sql,
+    SUBSCRIBER_CONFIRM_MAIL_JOB,
+    list,
+    email,
+    newest?.language ?? null,
+  )
 }

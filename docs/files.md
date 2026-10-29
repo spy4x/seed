@@ -52,15 +52,20 @@ carries where it was taken. A feature that keeps a photo for others to see has i
 (#464): `queueImage(tx, id, key)` (`libs/server/files/images.ts`), in the transaction that keeps
 the photo, writes a row to `images` and queues the `files.image-process` job.
 
-- **The job** reads the original from the store into a folder of its own under `/tmp/images`,
-  runs `processImage` of `@spy4x/server/images` on it, and stores the variants it makes: AVIF and
+- **The jobs** read the original from the store into a folder of their own under `/tmp/images`,
+  run `processImage` of `@spy4x/server/images` on it, and store the variants it makes: AVIF and
   WebP at 480, 960 and 1600 pixels wide, never wider than the photo, turned upright, with no
   EXIF, XMP, GPS or colour profile left. They go to `<key>/<width>.avif` and `<key>/<width>.webp`
-  and into `image_variants` with their sizes, `images.processed_at` is set, and only then is the
-  original deleted, so no copy that says where it was taken stays. A run stops after two minutes
-  and is retried like any job ([jobs.md](jobs.md)).
-- **Running it twice** changes nothing: a processed image only has its original deleted again, and
-  a crash before the row is marked writes the same variants under the same keys. An image whose
+  and into `image_variants` with their sizes. The first job, `files.image-process`, makes only the
+  480 width and queues `files.image-widths`, which makes the others, sets `images.processed_at`,
+  and only then deletes the original, so no copy that says where it was taken stays. The split
+  (#514) is for speed: on the worker's half a CPU a phone photo's 480 width takes about a second
+  and the rest about nine, so the admin shows every photo of a batch before any wide width is
+  made. The admin shows a photo once a variant exists; the website once it is processed. A run
+  stops after two minutes and is retried like any job ([jobs.md](jobs.md)).
+- **Running it twice** changes nothing: a processed image only has its original deleted again, a
+  first job that finds its width recorded queues nothing again, and a crash before the row is
+  marked writes the same variants under the same keys. An image whose
   row is gone (its picture was replaced meanwhile) leaves nothing behind.
 - **A refused image** (libvips cannot read it, it is not JPEG, PNG, WebP or HEIC, or it has more
   than 100 million pixels) gets `images.refused`, no variant, and loses its original too.

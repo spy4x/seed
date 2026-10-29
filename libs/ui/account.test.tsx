@@ -989,6 +989,26 @@ describe("ProfileScreen", () => {
     )
   })
 
+  it("names the picture under the Account heading, since the picture is the section's first row", async () => {
+    const picture = {
+      name: "Ada Lovelace",
+      hasPicture: false,
+      status: "idle",
+      error: null,
+      announcement: null,
+      onChoose: () => {},
+      onReject: () => {},
+      onRemove: () => {},
+    } as const
+    await mount(<ProfileScreen {...profileDefaults} section="account" picture={picture} />)
+
+    const row = find("[data-e2e=profile-picture-row]")
+    expect(row.compareDocumentPosition(find("[data-e2e=profile-edit]")) & 4).toBe(4)
+    expect(document.body.textContent).toContain(
+      "Your picture, name, e-mail address and a copy of your data.",
+    )
+  })
+
   it("edits the name in a dialog, saves it through the app's callback and closes once it is saved", async () => {
     const change = spy<[string, string]>()
     const save = spy<[]>()

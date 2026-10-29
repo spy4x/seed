@@ -262,9 +262,10 @@ Deno.test(`a photo queues its processing, keeps its order, and takes its image w
 
     await process(sql, c)
     expect((await catalog.listItems())[0]).toMatchObject({ coverId: c, photoCount: 3 })
-    expect(await catalog.photoThumbnail(c)).toEqual({
+    expect(await catalog.photoWidth(c, `narrowest`)).toEqual({
       objectKey: `${catalogPhotoObjectKey(c)}/480.webp`,
       contentType: `image/webp`,
+      final: true,
     })
 
     await catalog.removePhoto(item.id, c, actor)
@@ -285,6 +286,47 @@ Deno.test(`a photo queues its processing, keeps its order, and takes its image w
     await catalog.deleteItem(item.id, version, actor)
     const [{ count }] = await sql<{ count: number }[]>`SELECT count(*)::int AS count FROM images`
     expect(count).toBe(0)
+  })
+})
+
+Deno.test(`a photo is ready for the admin once its narrowest width is stored, before the website shows it`, async () => {
+  await withSchema(async (sql) => {
+    const catalog = new PostgresCatalog(sql)
+    const actor = await operator(sql)
+    const category = await catalog.createCategory(uuidV7(), {
+      slug: `jackets`,
+      name: { en: `Jackets` },
+    }, actor)
+    const item = await catalog.createItem(
+      uuidV7(),
+      jacket({ categoryId: category.id }).fields,
+      actor,
+    )
+    const photo = uuidV7()
+    await catalog.addPhoto(item.id, photo, catalogPhotoObjectKey(photo), actor)
+    await catalog.setStatus(item.id, item.version, `published`, actor)
+
+    // What the first image job stores: the narrowest width, with the image not processed yet.
+    const key = catalogPhotoObjectKey(photo)
+    await sql`
+      INSERT INTO image_variants (object_key, image_id, content_type, width, height) VALUES
+        (${`${key}/480.webp`}, ${photo}, 'image/webp', 480, 640)
+    `
+
+    expect((await catalog.getItem(item.id))!.photos[0].state).toBe(`ready`)
+    // The lightbox takes the widest WebP stored so far, which may still grow.
+    await sql`
+      INSERT INTO image_variants (object_key, image_id, content_type, width, height) VALUES
+        (${`${key}/960.webp`}, ${photo}, 'image/webp', 960, 1280),
+        (${`${key}/1600.avif`}, ${photo}, 'image/avif', 1600, 2133)
+    `
+    expect(await catalog.photoWidth(photo, `widest`)).toEqual({
+      objectKey: `${key}/960.webp`,
+      contentType: `image/webp`,
+      final: false,
+    })
+    expect((await catalog.listItems())[0].coverId).toBe(photo)
+    expect((await readPublicItem(sql, `zip-jacket`))!.photos).toEqual([])
   })
 })
 

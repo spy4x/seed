@@ -333,6 +333,53 @@ describe(`note attachments store`, () => {
     expect(calls.some((call) => call.startsWith(`confirm`))).toBe(false)
   })
 
+  it(`sends no PUT for a file cancelled while it is being signed, and lets its upload go`, async () => {
+    const signing = deferred<{ id: string; url: string; headers: { "content-type": string } }>()
+    const id = `0199c3a0-0000-7000-8000-000000000101`
+    const { dependencies, calls } = fakeCalls({
+      sign: ({ name }) => {
+        calls.push(`sign ${name}`)
+        return signing.promise
+      },
+    })
+    const store = createAttachmentsStore(dependencies)
+    await store.open(GROUP, NOTE)
+    store.add([file(`scan.pdf`)])
+    await settle()
+
+    store.cancel(store.rows.value[0].id)
+    signing.resolve({ id, url: `https://files.test/${id}`, headers: { "content-type": `x` } })
+    await settle()
+
+    expect(store.rows.value).toEqual([])
+    expect(calls).toEqual([`list ${NOTE}`, `sign scan.pdf`, `cancel ${id}`])
+  })
+
+  it(`removes a file cancelled during its check once the server confirms it, and counts nothing`, async () => {
+    const confirming = deferred<{ attachment: Attachment }>()
+    const id = `0199c3a0-0000-7000-8000-000000000101`
+    const { dependencies, calls } = fakeCalls({
+      confirm: ({ id }) => {
+        calls.push(`confirm ${id}`)
+        return confirming.promise
+      },
+    })
+    const store = createAttachmentsStore(dependencies)
+    await store.open(GROUP, NOTE)
+    store.add([file(`scan.pdf`)])
+    await settle()
+    expect(store.rows.value[0].status).toBe(`checking`)
+
+    store.cancel(store.rows.value[0].id)
+    confirming.resolve({ attachment: attachment(id, `scan.pdf`) })
+    await settle()
+
+    expect(store.rows.value).toEqual([])
+    expect(store.usage.value).toEqual(usage)
+    expect(store.announcement.value).toBe(``)
+    expect(calls.at(-1)).toBe(`remove ${id}`)
+  })
+
   it(`lets the server go of a signed upload before a retry and on a cancel`, async () => {
     let tries = 0
     const { dependencies, calls } = fakeCalls({

@@ -187,6 +187,8 @@
   "AdminAuditEvent.telegramLinked": "Telegram account linked",
   "AdminAuditEvent.telegramUnlinked": "Telegram account unlinked",
   "AdminAuditEvent.pictureRemoved": "Profile picture removed by an operator",
+  "AdminAuditEvent.pictureChanged": "Profile picture changed",
+  "AdminAuditEvent.pictureRemovedByPerson": "Profile picture removed",
   "AdminAuditEvent.signedInWithLink": "Signed in with an e-mail link",
   "AdminAuditEvent.signedUpWithLink": "Signed up with an e-mail link",
   "AdminAuditEvent.paymentRefunded": "Payment refunded by an operator",
@@ -456,6 +458,7 @@
     "other": "Also email this post to {count} confirmed subscribers of <list>{list}</list>"
   },
   "AdminBlogDialogs.sentOnce": "Sent once, when the post goes live. It cannot be unsent.",
+  "AdminBlogDialogs.postLanguageOnly": "It goes only to the subscribers who signed up in the post's language.",
   "AdminBlogEditor.leaveMessage": "Your changes to this post are lost.",
   "AdminBlogEditor.doneScheduled": "Scheduled for {at}.",
   "AdminBlogEditor.donePublished": "Published.",
@@ -737,6 +740,7 @@
   "AdminCatalogItem.uploading": "Uploading {count}…",
   "AdminCatalogItem.photosRule": "JPEG, PNG, WebP or HEIC, up to {size} MB each, at most {count}. Drag to reorder: the first is the cover.",
   "AdminCatalogItem.cover": "Cover",
+  "AdminCatalogItem.openPhoto": "Open full size: {photo}",
   "AdminCatalogItem.noDescription": "No description yet",
   "AdminCatalogItem.moreActionsFor": "More actions for {photo}",
   "AdminCatalogItem.makeCover": "Make cover<hidden>: {photo}</hidden>",
@@ -1206,6 +1210,7 @@
   "AdminJobs.startedAt": "<label>Started</label> <when></when>",
   "AdminJobs.notYet": "Not yet",
   "AdminJobs.job": "Job",
+  "AdminJobs.photoOf": "Photo of <link>{item}</link>",
   "AdminJobs.status": "Status",
   "AdminJobs.attemptsHeader": "Attempts",
   "AdminJobs.when": "When",
@@ -1351,6 +1356,7 @@
   "AdminNewsletter.searching": "Searching…",
   "AdminNewsletter.search": "Search",
   "AdminNewsletter.status": "Status",
+  "AdminNewsletter.language": "Language",
   "AdminNewsletter.clear": "Clear filters",
   "AdminNewsletter.count": {
     "one": "{count} address",
@@ -1638,5 +1644,10 @@
   "AdminUsers.created": "Created",
   "AdminUsers.guest": "Guest",
   "AdminUsers.you": "You",
-  "AdminUsers.noName": "No name"
+  "AdminUsers.noName": "No name",
+  "AdminBlogEditor.language": "Language",
+  "AdminBlogEditor.languageHint": "The language the post is written in. The website lists it on that language's blog.",
+  "AdminBlogEditor.translationOf": "Translation of",
+  "AdminBlogEditor.translationOfHint": "The post this one translates. The website links the two as language versions once both are live.",
+  "AdminBlogEditor.translationNone": "None: a post of its own"
 }

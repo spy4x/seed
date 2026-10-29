@@ -238,6 +238,14 @@ describe("the admin user list", () => {
     }]])
   })
 
+  it("keeps each person's last sign-in and join date under the name, for a phone", async () => {
+    await mount(<AdminUsersScreen {...listProps([])} />)
+    const dates = find("[data-e2e=admin-user-phone-dates]").textContent ?? ""
+    expect(dates).toContain("Last seen")
+    expect(dates).toContain("Created")
+    expect(dates).toContain("2026")
+  })
+
   it("offers no sorting by status, which the server cannot sort by", async () => {
     await mount(<AdminUsersScreen {...listProps([])} />)
     const status = [...document.querySelectorAll("th")]
@@ -540,6 +548,34 @@ describe("one person in the admin app", () => {
     // The title names the method, so the stored identifier is not repeated under it.
     expect(into).not.toContain("email-link")
     expect(into).toContain("from 203.0.113.5")
+  })
+
+  it("names a person's own new and removed profile picture in the activity's titles (#453)", async () => {
+    const changed = {
+      id: 4,
+      eventType: AuthAuditEventType.PROFILE_UPDATED,
+      identifier: "picture",
+      ip: null,
+      createdAt: "2026-10-14T10:00:00.000Z",
+    }
+    const removed = { ...changed, id: 5, identifier: "picture-removed" }
+    await mount(
+      <AdminUserScreen
+        {...userProps([], { tab: "activity", detail: { ...detail, audits: [changed, removed] } })}
+      />,
+    )
+
+    const rows = [
+      ...document.querySelectorAll(`[data-e2e=admin-audit-${AuthAuditEventType.PROFILE_UPDATED}]`),
+    ]
+      .map((row) => row.textContent ?? "")
+    expect(rows.length).toBe(2)
+    expect(rows[0]).toContain("Profile picture changed")
+    expect(rows[1]).toContain("Profile picture removed")
+    // The title says what happened, so no line under it repeats the stored identifier.
+    expect(rows[0]).not.toMatch(/picture$/)
+    expect(rows[1]).not.toContain("picture-removed")
+    for (const row of rows) expect(row).not.toContain("Changed the profile")
   })
 
   it("colours each activity entry by what happened, the block alone as a danger", async () => {

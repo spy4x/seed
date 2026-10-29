@@ -84,8 +84,6 @@ Blog.ctaTitle	6ad6edd1401b73ee
 Blog.empty	f2bd677095e47a53
 Blog.emptyLead	eaa8d325a9dff415
 Blog.emptyNewsletter	9b01ca3d129ed1ee
-Blog.englishPost	d0f2f189ef10f9df
-Blog.englishPosts	8416ca34e589d193
 Blog.intro	6456d3087a290631
 Blog.minutes	b4c8ecc111f1d73a
 Blog.morePosts	6a4ac3287f45c38f
@@ -393,8 +391,8 @@ FeatureWebsite.code	8c3c79106391eff7
 FeatureWebsite.eyebrow	b5a229ac8becc603
 FeatureWebsite.fact1	77305545727d416e
 FeatureWebsite.fact2	9400679b6389018a
-FeatureWebsite.fact3	120fbc71ff373fdb
-FeatureWebsite.fact4	b41088f4d8e4d7aa
+FeatureWebsite.fact3	48032056e3a8e4bb
+FeatureWebsite.fact4	fe35b38844e6641e
 FeatureWebsite.fact5	743829c03392abee
 FeatureWebsite.fact6	e948ba89ff09389e
 FeatureWebsite.fact7	38b1ff82a6bd2c9a

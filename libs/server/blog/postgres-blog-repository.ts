@@ -16,6 +16,7 @@ import {
   type BlogTopic,
   BlogVersionConflictError,
 } from "@domain/blog"
+import type { Language } from "@domain/identity"
 import { enqueueJob, JOB_AGGREGATE } from "../jobs/jobs.ts"
 
 /** The operator behind a write, for its audit row. */
@@ -37,6 +38,8 @@ export interface BlogPostRow {
   coverUrl: string | null
   coverAlt: string | null
   bodyMd: string
+  language: Language
+  translationOf: string | null
   status: BlogPostStatus
   publishAt: Date | null
   publishedAt: Date | null
@@ -69,13 +72,65 @@ export function toBlogPost(row: BlogPostRow): BlogPost {
 /** The constraint a second post with the same slug breaks. */
 const SLUG_UNIQUE = `blog_posts_slug_unique`
 
-/** `error` as {@link BlogError} `SLUG_TAKEN` when it is the slug's unique violation, else as is. */
+/** The index a second translation of one post into the same language breaks. */
+const TRANSLATION_UNIQUE = `blog_posts_translation_language_unique`
+
+/** A refusal of the post's language or the post it translates, about `translationOf`. */
+function translationInvalid(message: string): BlogError {
+  return new BlogError(`TRANSLATION_INVALID`, message, `translationOf`)
+}
+
+/**
+ * `error` as {@link BlogError} `SLUG_TAKEN` or `TRANSLATION_INVALID` when it is the slug's or the
+ * translation's unique violation, else as is.
+ */
 function slugTaken(error: unknown): unknown {
   const pg = error as { code?: string; constraint_name?: string; constraint?: string }
-  if (pg?.code === `23505` && (pg.constraint_name ?? pg.constraint) === SLUG_UNIQUE) {
+  const constraint = pg?.code === `23505` ? pg.constraint_name ?? pg.constraint : undefined
+  if (constraint === SLUG_UNIQUE) {
     return new BlogError(`SLUG_TAKEN`, `Another post has this address. Pick another.`, `slug`)
   }
+  if (constraint === TRANSLATION_UNIQUE) {
+    return translationInvalid(`That post already has a translation into this language.`)
+  }
   return error
+}
+
+/**
+ * Checks, in the write's transaction, that post `id` may be in `fields.language` and translate
+ * `fields.translationOf`. A translation points at a post of its own (not at another translation,
+ * and not at itself) in another language, and a post that others translate translates nothing
+ * itself. A post's language may not be one a translation of it already has. Throws
+ * `TRANSLATION_INVALID`; a second translation into one language is refused by the database.
+ */
+async function checkTranslation(
+  tx: postgres.TransactionSql,
+  id: string,
+  fields: Pick<BlogPostFields, `language` | `translationOf`>,
+): Promise<void> {
+  const original = fields.translationOf
+  if (original === null) {
+    const [clash] = await tx`
+      SELECT 1 FROM blog_posts WHERE translation_of = ${id} AND language = ${fields.language}
+    `
+    if (clash) throw translationInvalid(`A translation of this post is in that language already.`)
+    return
+  }
+  if (original === id) throw translationInvalid(`A post cannot translate itself.`)
+  const [target] = await tx<Pick<BlogPostRow, `language` | `translationOf`>[]>`
+    SELECT language, translation_of FROM blog_posts WHERE id = ${original}
+  `
+  if (!target) throw translationInvalid(`The post this translates does not exist any more.`)
+  if (target.translationOf !== null) {
+    throw translationInvalid(`Pick the original post, not one of its translations.`)
+  }
+  if (target.language === fields.language) {
+    throw translationInvalid(`A translation is in another language than its original.`)
+  }
+  const [translated] = await tx`SELECT 1 FROM blog_posts WHERE translation_of = ${id} LIMIT 1`
+  if (translated) {
+    throw translationInvalid(`Other posts translate this one, so it cannot be a translation.`)
+  }
 }
 
 /**
@@ -104,7 +159,8 @@ export class PostgresBlogRepository {
     }
     const status = filter.status === null ? sql`TRUE` : sql`status = ${filter.status}`
     const posts = await sql<AdminBlogPostRowRaw[]>`
-      SELECT id, slug, title, status, topic, publish_at, published_at, updated_at
+      SELECT id, slug, title, status, topic, language, translation_of, publish_at, published_at,
+        updated_at
       FROM blog_posts
       WHERE ${where} AND ${status}
       ORDER BY updated_at DESC, id DESC
@@ -151,14 +207,15 @@ export class PostgresBlogRepository {
    */
   async create(id: string, fields: BlogPostFields, actor: BlogActor): Promise<BlogPost> {
     return await this.write(async (tx) => {
+      await checkTranslation(tx, id, fields)
       const [row] = await tx<BlogPostRow[]>`
         INSERT INTO blog_posts (
           id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt, body_md,
-          author_id, author_name
+          language, translation_of, author_id, author_name
         ) VALUES (
           ${id}, ${fields.slug}, ${fields.title}, ${fields.seoTitle}, ${fields.description},
           ${tx.array(fields.tldr)}::text[], ${fields.topic}, ${fields.coverUrl}, ${fields.coverAlt},
-          ${fields.bodyMd}, ${actor.userId},
+          ${fields.bodyMd}, ${fields.language}, ${fields.translationOf}, ${actor.userId},
           (SELECT NULLIF(btrim(concat_ws(' ', first_name, last_name)), '')
             FROM users WHERE id = ${actor.userId})
         )
@@ -199,12 +256,14 @@ export class PostgresBlogRepository {
           `slug`,
         )
       }
+      await checkTranslation(tx, id, fields)
       const [row] = await tx<BlogPostRow[]>`
         UPDATE blog_posts
         SET slug = ${fields.slug}, title = ${fields.title}, seo_title = ${fields.seoTitle},
           description = ${fields.description}, tldr = ${tx.array(fields.tldr)}::text[],
           topic = ${fields.topic}, cover_url = ${fields.coverUrl}, cover_alt = ${fields.coverAlt},
-          body_md = ${fields.bodyMd},
+          body_md = ${fields.bodyMd}, language = ${fields.language},
+          translation_of = ${fields.translationOf},
           content_updated_at = CASE WHEN ${significantUpdate} AND status = 'published'
             THEN now() ELSE content_updated_at END,
           updated_at = now(), version = version + 1

@@ -26,6 +26,7 @@ import {
   subscribeSchema,
   subscriptionConfirmSchema,
 } from "@domain/subscribers"
+import type { Language } from "@domain/identity"
 import {
   createListCrypto,
   isCurrentSubscriberToken,
@@ -56,10 +57,23 @@ export interface SubscribersRouteDependencies {
   /** The app's own address, as `config.webAppUrl`. */
   webAppUrl: string
   rateLimits: SubscriberRateLimits
-  /** Queues the confirm mail; the worker signs and sends it. The same writes for any address. */
-  requestConfirmMail: (list: SubscriberList, email: string) => Promise<void>
-  /** Queues the welcome mail after a confirm; the worker sends it. */
-  requestWelcomeMail: (list: SubscriberList, email: string) => Promise<void>
+  /**
+   * Queues the confirm mail in `language`, the asking page's (`null`: the product's main one); the
+   * worker signs and sends it. The same writes for any address.
+   */
+  requestConfirmMail: (
+    list: SubscriberList,
+    email: string,
+    language: Language | null,
+  ) => Promise<void>
+  /** Queues the welcome mail after a confirm, in `language`; the worker sends it. */
+  requestWelcomeMail: (
+    list: SubscriberList,
+    email: string,
+    language: Language | null,
+  ) => Promise<void>
+  /** Keeps `language`, the page's the address confirmed on, as the subscriber's (#527). */
+  rememberLanguage: (list: SubscriberList, email: string, language: Language) => Promise<void>
   /** Where the library's flows write; they redact every address first. */
   log: SubscriberLog
 }
@@ -69,9 +83,10 @@ export interface SubscribersRouteDependencies {
  *
  * - `GET /` says whether subscriptions are on, as `{ enabled }`: the public website asks before it
  *   offers its form. It is the one route that answers when they are off.
- * - `POST /` takes `{ email, list }` and answers 202 for any valid address, listed, new or over its
+ * - `POST /` takes `{ email, list, language? }` and answers 202 for any valid address, listed, new or over its
  *   own limit, with the same writes, so the answer tells nothing about the list.
- * - `GET /confirm` previews a confirm link; `POST /confirm` adds the address.
+ * - `GET /confirm` previews a confirm link; `POST /confirm` adds the address, and keeps the
+ *   language of the page it was confirmed on (`{ list, token, language? }`) for its mails.
  * - `GET /unsubscribe` is the link in every mail: it redirects a person to the unsubscribe page,
  *   on the public website when that is deployed (`setup.siteUrl`), else in the app.
  * - `GET /unsubscribe/preview` says whom an unsubscribe link names, for that page.
@@ -93,8 +108,13 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
     requireSessionCookie: false,
     allowHeaderless: true,
   })
-  const flows = new Map<SubscriberList, Promise<FlowDeps>>()
-  const flowsFor = (setup: SubscribersSetup, list: SubscriberList): Promise<FlowDeps> => {
+  const flows = new Map<SubscriberList, Promise<Omit<FlowDeps, `sendMail`>>>()
+  /** The flows of `list`; a welcome mail they send is written in `language`. */
+  const flowsFor = async (
+    setup: SubscribersSetup,
+    list: SubscriberList,
+    language: Language | null = null,
+  ): Promise<FlowDeps> => {
     let found = flows.get(list)
     if (!found) {
       found = createListCrypto(setup, list).then((crypto) => ({
@@ -105,14 +125,16 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
             subscriberConfirmLink(subscriberPagesUrl(setup, deps.webAppUrl), list, token),
           unsubscribe: (token) => subscriberUnsubscribeLink(deps.webAppUrl, list, token),
         },
-        sendMail: async (mail) => {
-          if (mail.kind === `welcome`) await deps.requestWelcomeMail(list, mail.email)
-        },
         log: deps.log,
       }))
       flows.set(list, found)
     }
-    return found
+    return {
+      ...await found,
+      sendMail: async (mail) => {
+        if (mail.kind === `welcome`) await deps.requestWelcomeMail(list, mail.email, language)
+      },
+    }
   }
   /** The list and token of a link's query, or `null` when either is missing or not ours. */
   const linkQuery = (c: Context<APIContext>) => {
@@ -139,7 +161,7 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
       const body = await readJsonBody(c, { maxBytes: SUBSCRIBE_MAX_BYTES })
       const checked = validate(subscribeSchema, body)
       if (checked.error) return validationResponse(c, checked.error.details)
-      const { list } = checked.data
+      const { list, language = null } = checked.data
       if (!isSubscriberList(list)) {
         return errorResponse(c, `bad_request`, { message: SUBSCRIBE_UNKNOWN_LIST })
       }
@@ -150,7 +172,7 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
       // Spent for every address, listed or not. Over it, the answer is the same and nothing is
       // written, so an inbox gets at most a few confirm mails an hour, whoever asks.
       const decision = await deps.rateLimits.mailByRecipient(email)
-      if (decision.allowed) await deps.requestConfirmMail(list, email)
+      if (decision.allowed) await deps.requestConfirmMail(list, email, language)
       return c.json({}, 202)
     })
     .get(`/confirm`, deps.rateLimits.tokenByIp, async (c) => {
@@ -170,9 +192,10 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
       if (checked.error || !isSubscriberList(checked.data.list)) {
         return tokenRefusal(c, `invalid`)
       }
-      const { list, token } = checked.data
-      const outcome = await confirmSubscription(token, await flowsFor(deps.setup!, list))
+      const { list, token, language = null } = checked.data
+      const outcome = await confirmSubscription(token, await flowsFor(deps.setup!, list, language))
       if (outcome.state === `confirmed`) {
+        if (language !== null) await deps.rememberLanguage(list, outcome.email, language)
         await outcome.mails
         return c.json({ state: `done` })
       }

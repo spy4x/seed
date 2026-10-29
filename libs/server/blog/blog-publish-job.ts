@@ -1,7 +1,8 @@
 import type postgres from "postgres"
 import { isSubscriberList } from "@domain/subscribers"
-import { BLOG_PUBLISH_JOB } from "@domain/blog"
-import type { MailBrand } from "../mail/mail.ts"
+import { BLOG_PUBLISH_JOB, blogPostPath } from "@domain/blog"
+import { type MailBrand, translatorFor } from "../mail/mail.ts"
+import { subscribersInLanguage } from "../jobs/subscriber-mail.ts"
 import type { SubscribersSetup } from "../subscribers/subscribers.ts"
 import {
   queueSubscriberIssue,
@@ -28,11 +29,12 @@ const PREHEADER_MAX_LENGTH = 200
 
 /**
  * The newsletter issue of a post: its title as the subject and heading, its description, its key
- * points and a "Read the post" button to the post on the public website. The issue id is the
- * post's id, so the send log knows it as one issue whatever happens to the post.
+ * points and a "Read the post" button, in the post's language, to the post on the public website,
+ * at its language's address. The issue id is the post's id, so the send log knows it as one issue
+ * whatever happens to the post.
  */
 export function blogTeaserIssue(
-  post: Pick<BlogPostRow, `id` | `slug` | `title` | `description` | `tldr`>,
+  post: Pick<BlogPostRow, `id` | `slug` | `title` | `description` | `tldr` | `language`>,
   siteUrl: string,
 ): SubscriberIssue {
   return subscriberIssueSchema.assert({
@@ -43,7 +45,12 @@ export function blogTeaserIssue(
       { heading: post.title },
       { paragraph: post.description },
       ...(post.tldr.length > 0 ? [{ list: [...post.tldr] }] : []),
-      { button: { href: `${siteUrl}/blog/${post.slug}`, label: `Read the post` } },
+      {
+        button: {
+          href: `${siteUrl}${blogPostPath(post)}`,
+          label: translatorFor(post.language).t(`SubscriberIssue.readPost`),
+        },
+      },
     ],
   })
 }
@@ -56,7 +63,9 @@ export function blogTeaserIssue(
  *    run before the post's time with no other run waiting (the admin's Run now) queues one for
  *    that time, so the post still goes live then.
  * 2. queues the post's newsletter issue when the post is live, has a list and has never been
- *    emailed, and records when and to how many confirmed subscribers. That record is written in
+ *    emailed, and records when and to how many confirmed subscribers. The issue goes only to the
+ *    subscribers of the post's language (#527), so nobody gets a post in a language they did not
+ *    sign up in. That record is written in
  *    the same transaction as the issue's job, so a retried, repeated or concurrent run, or
  *    publishing again after unpublishing, never queues a second issue.
  *
@@ -103,15 +112,17 @@ export function blogPublishJob(deps: BlogPublishJobDeps): JobHandler {
         )
         return
       }
-      const [{ confirmed }] = await tx<{ confirmed: number }[]>`
-        SELECT COUNT(*)::int AS confirmed FROM subscribers WHERE list_id = ${list}
-      `
+      const { size: confirmed } = await subscribersInLanguage(tx, list, post.language)
       // Not a new version: the operator's open editor keeps saving; only the record changes.
       await tx`
         UPDATE blog_posts SET newsletter_sent_at = now(), newsletter_recipients = ${confirmed}
         WHERE id = ${post.id}
       `
-      const issue = renderSubscriberIssue(deps.brand, blogTeaserIssue(post, siteUrl))
+      const issue = renderSubscriberIssue(
+        deps.brand,
+        blogTeaserIssue(post, siteUrl),
+        post.language,
+      )
       await queueSubscriberIssue(tx, list, issue)
     })
   }

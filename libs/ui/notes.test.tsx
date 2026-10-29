@@ -305,6 +305,16 @@ describe("NotesScreen", () => {
     expect(html).not.toContain(`data-e2e="note-list"`)
   })
 
+  it("keeps the header's New note the page's one filled button, with the empty list's New note quieter", () => {
+    const html = renderToString(<NotesScreen {...listDefaults} notes={[]} />)
+
+    // The library's filled (primary) fill, in light and dark.
+    const filled = /\bbg-accent-900\b/
+    expect(tagOf(html, "note-new")).toMatch(filled)
+    expect(tagOf(html, "note-new-empty")).not.toMatch(filled)
+    expect(html.match(new RegExp(filled.source, "g"))).toHaveLength(1)
+  })
+
   it("shows a long title on up to two lines, with the time on the line under it", async () => {
     const long = { ...groceries, title: "Q4 roadmap: onboarding, billing and more" }
     await mount(<NotesScreen {...listDefaults} notes={[long]} />)

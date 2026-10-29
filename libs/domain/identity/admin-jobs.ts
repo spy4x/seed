@@ -107,6 +107,17 @@ export function adminJobFilterQuery(filter: AdminJobFilter): string {
   return params.toString()
 }
 
+/** The catalog photo an image job processes (#514), with the item it belongs to. */
+export interface AdminJobPhoto {
+  /** The photo's id, which is its image's: the admin's thumbnail route takes it. */
+  id: string
+  /** Whether a width is stored yet, so the thumbnail can be shown. */
+  ready: boolean
+  itemId: string
+  /** The item's name in the catalog's default language. */
+  itemName: string
+}
+
 /** One run of a job, as the list and the detail page show it. Times are ISO 8601. */
 export interface AdminJobRow {
   /** The outbox row's id, a UUID. */
@@ -128,6 +139,8 @@ export interface AdminJobRow {
   finishedAt: string | null
   /** The error's class from its last failed attempt, never its message, or `null`. */
   errorCode: string | null
+  /** The catalog photo of an image job, while it exists; `null` for every other job. */
+  photo: AdminJobPhoto | null
 }
 
 /** One page of runs, the count of each state chip, and the paging. */

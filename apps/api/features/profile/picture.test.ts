@@ -18,6 +18,7 @@ import {
   createPictureConfirmHandler,
   createPictureRemoveHandler,
   createPictureSignHandler,
+  pictureAuditIdentifier,
   type PictureHandlerDependencies,
 } from "./picture.ts"
 
@@ -242,4 +243,9 @@ Deno.test("removing the picture deletes its file and tells the person's tabs; wi
   await without.remove()
   expect(without.calls).toEqual([])
   expect(without.emitted).toEqual([])
+})
+
+Deno.test("the audit row of a new picture and of a removed one say which it was (#453)", () => {
+  expect(pictureAuditIdentifier({ id: OLD_PICTURE, contentType: `image/png` })).toBe(`picture`)
+  expect(pictureAuditIdentifier(null)).toBe(`picture-removed`)
 })

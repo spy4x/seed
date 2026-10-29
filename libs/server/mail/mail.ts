@@ -155,7 +155,7 @@ const CATALOGS: Record<Language, { app?: Catalog; mail?: Catalog }> = {
 const translators = new Map<Language, Translator<string>>()
 
 /** The mail's words in `language`, made on first use. */
-function translatorFor(language: Language): Translator<string> {
+export function translatorFor(language: Language): Translator<string> {
   let translator = translators.get(language)
   if (!translator) {
     const { app, mail } = CATALOGS[language] ?? CATALOGS.en

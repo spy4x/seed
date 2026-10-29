@@ -97,6 +97,7 @@ import { DEFAULT_PROXY_HOSTS } from "./middlewares/proxy-peer.ts"
 import { createProxyPeers } from "@spy4x/server/http/trusted-proxy"
 import {
   enqueueSubscriberMail,
+  rememberSubscriberLanguage,
   SUBSCRIBER_CONFIRM_MAIL_JOB,
   SUBSCRIBER_WELCOME_MAIL_JOB,
 } from "@server/jobs/subscriber-mail.ts"
@@ -520,10 +521,12 @@ app.route(
         ? await createRecipientLimitKey(subscribersSetup)
         : () => Promise.reject(new Error("subscriptions are off")),
     }),
-    requestConfirmMail: (list, email) =>
-      enqueueSubscriberMail(sql, SUBSCRIBER_CONFIRM_MAIL_JOB, list, email),
-    requestWelcomeMail: (list, email) =>
-      enqueueSubscriberMail(sql, SUBSCRIBER_WELCOME_MAIL_JOB, list, email),
+    requestConfirmMail: (list, email, language) =>
+      enqueueSubscriberMail(sql, SUBSCRIBER_CONFIRM_MAIL_JOB, list, email, language),
+    requestWelcomeMail: (list, email, language) =>
+      enqueueSubscriberMail(sql, SUBSCRIBER_WELCOME_MAIL_JOB, list, email, language),
+    rememberLanguage: (list, email, language) =>
+      rememberSubscriberLanguage(sql, list, email, language),
     log: console,
   }),
 )

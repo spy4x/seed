@@ -89,6 +89,7 @@ const REASONS: Record<ErrorReason, true> = {
   SEAT_PRICE_NOT_ACCEPTED: true,
   SIGN_IN_LINK_ASKED_ELSEWHERE: true,
   SLUG_LOCKED: true,
+  TRANSLATION_INVALID: true,
   SLUG_TAKEN: true,
   SLUG_UNCHANGED: true,
   SOURCE_NOT_FOUND: true,

@@ -117,6 +117,7 @@ function BlogEditorView(
         significantUpdate={editor.significantUpdate}
         onSignificantUpdate={state.setSignificantUpdate}
         topics={state.topics.value}
+        originals={state.originals.value.filter((original) => original.id !== editor.id)}
         newsletter={state.newsletter.value}
         siteUrl={state.siteUrl()}
         preview={preview.preview}

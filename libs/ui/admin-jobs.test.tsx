@@ -112,11 +112,27 @@ const failedJob: AdminJobDetail = {
   startedAt: "2026-10-20T10:30:00.000Z",
   finishedAt: "2026-10-20T11:00:00.000Z",
   errorCode: "MailSendError",
+  photo: null,
   repeats: null,
   sendsMail: true,
   cancellable: true,
   about: null,
   keptUntil: "2026-10-27T11:00:00.000Z",
+}
+
+const ITEM_ID = "01920000-0000-7000-8000-0000000000a1"
+const PHOTO_ID = "01920000-0000-7000-8000-0000000000b1"
+
+/** An image job about a catalog photo of the item "Zip jacket". */
+const imageJob: AdminJobDetail = {
+  ...failedJob,
+  id: "01920000-0000-7000-8000-000000000002",
+  kind: "files.image-process",
+  label: "Image processing: preview",
+  state: AdminJobState.Done,
+  errorCode: null,
+  sendsMail: false,
+  photo: { id: PHOTO_ID, ready: true, itemId: ITEM_ID, itemName: "Zip jacket" },
 }
 
 const list: AdminJobListResponse = {
@@ -415,19 +431,55 @@ describe("admin job page", () => {
   })
 })
 
+describe("an image job", () => {
+  it("shows its photo and links its item, in the list and on its page", async () => {
+    const waiting = {
+      ...imageJob,
+      id: "01920000-0000-7000-8000-000000000003",
+      photo: { ...imageJob.photo!, ready: false },
+    }
+    await mount(jobsPage({ list: { ...list, jobs: [imageJob, waiting, failedJob] } }).node)
+    const rows = [imageJob, waiting, failedJob].map((job) =>
+      find(`[data-e2e="admin-job-${job.id}"]`).closest("tr")!
+    )
+    const link = (row: Element) => row.querySelector("[data-e2e=admin-job-photo-item]")
+
+    expect(rows.map((row) => link(row)?.getAttribute("href") ?? null)).toEqual([
+      `/catalog/${ITEM_ID}`,
+      `/catalog/${ITEM_ID}`,
+      null,
+    ])
+    expect(link(rows[0])!.closest("span")!.textContent).toBe("Photo of Zip jacket")
+    expect(rows.map((row) => row.querySelector("img")?.getAttribute("src") ?? null)).toEqual([
+      `/api/admin/catalog/photos/${PHOTO_ID}/thumbnail`,
+      null,
+      null,
+    ])
+
+    await mount(jobPage({ job: imageJob }).node)
+    const facts = find("[data-e2e=admin-job-facts]")
+    expect(facts.querySelector("[data-e2e=admin-job-photo-item]")?.getAttribute("href"))
+      .toBe(`/catalog/${ITEM_ID}`)
+    expect(facts.querySelector("img")?.getAttribute("src"))
+      .toBe(`/api/admin/catalog/photos/${PHOTO_ID}/thumbnail`)
+  })
+})
+
 describe("the jobs screens in en-XA", () => {
   it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
     await mount(
       <I18nContext.Provider value={ADMIN_PSEUDO}>
-        {jobsPage().node}
+        {jobsPage({ list: { ...list, jobs: [failedJob, imageJob] } }).node}
         {jobsPage({ tab: "repeating" }).node}
         {jobPage({ dialog: "retry" }).node}
+        {jobPage({ job: imageJob }).node}
       </I18nContext.Provider>,
     )
     expect(englishLeft(document.body, [
       // Names, kinds, schedules and errors as the server sends them.
       ...[`Password reset email`, `auth.password-reset-mail`, `MailSendError`],
       ...[`Nightly cleanup`, `outbox.cleanup`, `Every day`],
+      ...[`Image processing: preview`, `files.image-process`, `Zip jacket`],
     ])).toEqual([])
   })
 })

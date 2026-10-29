@@ -192,6 +192,8 @@
   "AdminAuditEvent.telegramLinked": "Conta do Telegram vinculada",
   "AdminAuditEvent.telegramUnlinked": "Conta do Telegram desvinculada",
   "AdminAuditEvent.pictureRemoved": "Foto do perfil removida por um operador",
+  "AdminAuditEvent.pictureChanged": "Foto do perfil alterada",
+  "AdminAuditEvent.pictureRemovedByPerson": "Foto do perfil removida",
   "AdminAuditEvent.signedInWithLink": "Entrou com um link por e-mail",
   "AdminAuditEvent.signedUpWithLink": "Cadastrou-se com um link por e-mail",
   "AdminAuditEvent.paymentRefunded": "Pagamento reembolsado por um operador",
@@ -467,6 +469,7 @@
     "other": "Enviar também este post para {count} assinantes confirmados de <list>{list}</list>"
   },
   "AdminBlogDialogs.sentOnce": "Enviado uma vez, quando o post vai ao ar. Não dá para desfazer o envio.",
+  "AdminBlogDialogs.postLanguageOnly": "O e-mail vai só para os inscritos que se inscreveram no idioma do post.",
   "AdminBlogEditor.leaveMessage": "Suas alterações neste post serão perdidas.",
   "AdminBlogEditor.doneScheduled": "Agendado para {at}.",
   "AdminBlogEditor.donePublished": "Publicado.",
@@ -755,6 +758,7 @@
   "AdminCatalogItem.uploading": "Enviando {count}…",
   "AdminCatalogItem.photosRule": "JPEG, PNG, WebP ou HEIC, até {size} MB cada, no máximo {count}. Arraste para reordenar: a primeira é a capa.",
   "AdminCatalogItem.cover": "Capa",
+  "AdminCatalogItem.openPhoto": "Abrir em tamanho real: {photo}",
   "AdminCatalogItem.noDescription": "Ainda sem descrição",
   "AdminCatalogItem.moreActionsFor": "Mais ações para {photo}",
   "AdminCatalogItem.makeCover": "Tornar capa<hidden>: {photo}</hidden>",
@@ -1253,6 +1257,7 @@
   "AdminJobs.startedAt": "<label>Iniciada</label> <when></when>",
   "AdminJobs.notYet": "Ainda não",
   "AdminJobs.job": "Tarefa",
+  "AdminJobs.photoOf": "Foto de <link>{item}</link>",
   "AdminJobs.status": "Status",
   "AdminJobs.attemptsHeader": "Tentativas",
   "AdminJobs.when": "Quando",
@@ -1407,6 +1412,7 @@
   "AdminNewsletter.searching": "Buscando…",
   "AdminNewsletter.search": "Buscar",
   "AdminNewsletter.status": "Status",
+  "AdminNewsletter.language": "Idioma",
   "AdminNewsletter.clear": "Limpar filtros",
   "AdminNewsletter.count": {
     "one": "{count} endereço",
@@ -1702,5 +1708,10 @@
   "AdminUsers.created": "Criada",
   "AdminUsers.guest": "Convidado",
   "AdminUsers.you": "Você",
-  "AdminUsers.noName": "Sem nome"
+  "AdminUsers.noName": "Sem nome",
+  "AdminBlogEditor.language": "Idioma",
+  "AdminBlogEditor.languageHint": "O idioma em que o post está escrito. O site o mostra no blog desse idioma.",
+  "AdminBlogEditor.translationOf": "Tradução de",
+  "AdminBlogEditor.translationOfHint": "O post que este traduz. Quando os dois estiverem publicados, o site liga um ao outro como versões de idioma.",
+  "AdminBlogEditor.translationNone": "Nenhum: um post próprio"
 }

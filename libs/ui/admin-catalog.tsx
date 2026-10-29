@@ -49,6 +49,8 @@ export const ADMIN_CATALOG_PATHS = {
   /** A photo's narrowest width, served by the API on this host (`img-src 'self'`). */
   thumbnail: (photoId: string) =>
     `/api/admin/catalog/photos/${encodeURIComponent(photoId)}/thumbnail`,
+  /** A photo's widest width, for the lightbox. */
+  full: (photoId: string) => `/api/admin/catalog/photos/${encodeURIComponent(photoId)}/full`,
 } as const
 
 const STATUS_BADGES: Record<CatalogItemStatus, { text: string; color: `green` | `gray` }> = {

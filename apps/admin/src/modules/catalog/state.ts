@@ -37,7 +37,11 @@ import { adminText } from "../../i18n.ts"
 
 const API = `/api/admin/catalog`
 
-/** How many times an open item is read again while a photo is being prepared: a minute's worth. */
+/**
+ * How many times an open item is read again while a photo is being prepared and none becomes
+ * ready: a minute's worth. A photo that becomes ready starts the count again, so a large batch is
+ * followed to its last photo (#514).
+ */
 export const CATALOG_PREPARING_READS = 30
 
 /** The item editor: which item it has open (`null` for a new one) and what its fields hold. */
@@ -251,7 +255,11 @@ export function createCatalogState(
       const preparing = item?.photos.some((photo) => photo.state === `preparing`)
       if (id === null || !preparing || preparingReads >= CATALOG_PREPARING_READS) return false
       preparingReads++
+      const waiting = (photos?: readonly CatalogPhoto[]) =>
+        photos?.filter((photo) => photo.state === `preparing`).length ?? 0
+      const before = waiting(item?.photos)
       await state.readItem(id)
+      if (waiting(itemEditor.value.item?.photos) < before) preparingReads = 0
       return true
     },
 
