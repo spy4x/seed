@@ -169,9 +169,6 @@ export default {
   "HomeStatus.website": "Der Outbox-Worker, der Newsletter und diese Website",
   "HomeStatus.languages":
     "Die App, der Admin-Bereich und diese Website in sechs Sprachen: {languages}",
-  "HomeStatus.notBuiltMail":
-    "E-Mails in der Sprache des Lesers: vorerst gibt es sie nur auf Englisch",
-  "HomeStatus.notBuiltRtl": "Layouts von rechts nach links, für Arabisch, sind noch nicht fertig",
   "HomeFaq.tryQuestion": "Kann ich es ohne Konto ausprobieren?",
   "HomeFaq.tryAnswer":
     "Ja. „Live-Demo ausprobieren“ öffnet die App in einem Gastkonto mit Beispieldaten, ohne E-Mail und ohne Passwort. Füge eine Anmeldemethode hinzu, um es zu behalten; die Demo wird so oder so jede Nacht gelöscht. Seed selbst braucht überhaupt kein Konto: Klone es von GitHub.",
@@ -443,8 +440,6 @@ export default {
   "FeatureLanguages.fact3":
     "hreflang-Links auf jeder Seite der Website und eine Sitemap, die jede Sprache auflistet",
   "FeatureLanguages.fact4": "Arabische Seiten laufen von rechts nach links",
-  "FeatureLanguages.notYet1": "E-Mails in der Sprache des Lesers",
-  "FeatureLanguages.notYet3": "Layouts von rechts nach links auf jedem Bildschirm fertig",
   "FeatureLanguages.code": "Übersetzungsleitfaden lesen",
   "FeatureTierReady.eyebrow": "Bereit, wenn du es brauchst",
   "FeatureTierReady.title": "Echtzeit, offline und Hintergrundarbeit",

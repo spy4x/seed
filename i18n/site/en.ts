@@ -158,8 +158,8 @@ export default {
   "HomeStatus.admin": "The admin area",
   "HomeStatus.website": "The outbox worker, the newsletter and this website",
   "HomeStatus.languages": "The app, the admin area and this website in six languages: {languages}",
-  "HomeStatus.notBuiltMail": "E-mails in the reader's language: they are English only for now",
-  "HomeStatus.notBuiltRtl": "Right-to-left layouts, for Arabic, are not finished",
+  "HomeStatus.notBuiltAndroid": "An Android app in the Play Store",
+  "HomeStatus.notBuiltDesktop": "A desktop app for Windows, macOS and Linux",
   "HomeFaq.tryQuestion": "Can I try it without an account?",
   "HomeFaq.tryAnswer":
     "Yes. “Try the live demo” opens the app in a guest account with demo data, no email or password needed. You can add a sign-in method, but the demo is still wiped every night. Seed itself needs no account at all: clone it from GitHub.",
@@ -425,8 +425,7 @@ export default {
   "FeatureLanguages.fact3":
     "hreflang links on every page of the website, and a sitemap that lists each language",
   "FeatureLanguages.fact4": "Arabic pages read right to left",
-  "FeatureLanguages.notYet1": "E-mails in the reader's language",
-  "FeatureLanguages.notYet3": "Right-to-left layouts finished on every screen",
+  "FeatureLanguages.fact5": "Emails arrive in the reader's language",
   "FeatureLanguages.code": "Read the translation guide",
   "FeatureTierReady.eyebrow": "Ready when you need it",
   "FeatureTierReady.title": "Realtime, offline and background work",

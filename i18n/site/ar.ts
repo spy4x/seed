@@ -151,8 +151,6 @@ export default {
   "HomeStatus.admin": "منطقة الإدارة",
   "HomeStatus.website": "عامل صندوق الصادر، والنشرة البريدية، وهذا الموقع",
   "HomeStatus.languages": "التطبيق ومنطقة الإدارة وهذا الموقع بست لغات: {languages}",
-  "HomeStatus.notBuiltMail": "رسائل البريد بلغة القارئ: بالإنجليزية فقط حاليًا",
-  "HomeStatus.notBuiltRtl": "التخطيطات من اليمين إلى اليسار، للعربية، لم تكتمل بعد",
   "HomeFaq.tryQuestion": "هل يمكنني التجربة دون حساب؟",
   "HomeFaq.tryAnswer":
     "نعم. يفتح «جرّب العرض الحي» التطبيق بحساب ضيف فيه بيانات تجريبية، دون بريد أو كلمة مرور. أضف طريقة لتسجيل الدخول لتحتفظ به؛ والعرض يُمسح كل ليلة في كل الأحوال. أما Seed نفسه فلا يحتاج إلى أي حساب: استنسخه من GitHub.",
@@ -410,8 +408,6 @@ export default {
   "FeatureLanguages.fact2": "صيغ الجمع والأرقام والتواريخ عبر Intl المدمج في المنصة، دون مكتبة i18n",
   "FeatureLanguages.fact3": "روابط hreflang في كل صفحة من الموقع، وخريطة موقع تسرد كل لغة",
   "FeatureLanguages.fact4": "الصفحات العربية تُقرأ من اليمين إلى اليسار",
-  "FeatureLanguages.notYet1": "رسائل البريد بلغة القارئ",
-  "FeatureLanguages.notYet3": "تخطيطات من اليمين إلى اليسار مكتملة في كل شاشة",
   "FeatureLanguages.code": "اقرأ دليل الترجمة",
   "FeatureTierReady.eyebrow": "جاهز حين تحتاجه",
   "FeatureTierReady.title": "التحديث الفوري والعمل دون اتصال والعمل في الخلفية",

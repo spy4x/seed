@@ -160,8 +160,6 @@ export default {
   "HomeStatus.admin": "Админ-панель",
   "HomeStatus.website": "Outbox-worker, рассылка и этот сайт",
   "HomeStatus.languages": "Приложение, админ-панель и этот сайт на шести языках: {languages}",
-  "HomeStatus.notBuiltMail": "Письма на языке читателя: пока они только на английском",
-  "HomeStatus.notBuiltRtl": "Вёрстка справа налево для арабского ещё не доделана",
   "HomeFaq.tryQuestion": "Можно попробовать без аккаунта?",
   "HomeFaq.tryAnswer":
     "Да. «Открыть живое демо» запускает приложение в гостевом аккаунте с примерами данных, без почты и пароля. Чтобы сохранить аккаунт, добавьте способ входа; демо в любом случае очищается каждую ночь. Самому Seed аккаунт вообще не нужен: склонируйте его с GitHub.",
@@ -430,8 +428,6 @@ export default {
   "FeatureLanguages.fact3":
     "Ссылки hreflang на каждой странице сайта и sitemap, в котором есть каждый язык",
   "FeatureLanguages.fact4": "Арабские страницы читаются справа налево",
-  "FeatureLanguages.notYet1": "Письма на языке читателя",
-  "FeatureLanguages.notYet3": "Вёрстка справа налево, доделанная на каждом экране",
   "FeatureLanguages.code": "Читать руководство по переводу",
   "FeatureTierReady.eyebrow": "Готово, когда понадобится",
   "FeatureTierReady.title": "Реальное время, офлайн и фоновая работа",

@@ -164,9 +164,6 @@ export default {
   "HomeStatus.website": "El worker de outbox, el boletín y este sitio web",
   "HomeStatus.languages":
     "La app, el área de administración y este sitio en seis idiomas: {languages}",
-  "HomeStatus.notBuiltMail": "Los correos en el idioma del lector: por ahora están solo en inglés",
-  "HomeStatus.notBuiltRtl":
-    "Los diseños de derecha a izquierda, para el árabe, no están terminados",
   "HomeFaq.tryQuestion": "¿Puedo probarlo sin una cuenta?",
   "HomeFaq.tryAnswer":
     "Sí. «Prueba la demo en vivo» abre la app en una cuenta de invitado con datos de ejemplo, sin correo ni contraseña. Añade un método de inicio de sesión para conservarla; de todos modos, la demo se borra cada noche. Seed en sí no necesita ninguna cuenta: clónalo desde GitHub.",
@@ -437,8 +434,6 @@ export default {
   "FeatureLanguages.fact3":
     "Enlaces hreflang en cada página del sitio, y un sitemap que lista cada idioma",
   "FeatureLanguages.fact4": "Las páginas en árabe se leen de derecha a izquierda",
-  "FeatureLanguages.notYet1": "Correos en el idioma del lector",
-  "FeatureLanguages.notYet3": "Diseños de derecha a izquierda terminados en cada pantalla",
   "FeatureLanguages.code": "Lee la guía de traducción",
   "FeatureTierReady.eyebrow": "Listo cuando lo necesites",
   "FeatureTierReady.title": "Tiempo real, sin conexión y trabajo en segundo plano",

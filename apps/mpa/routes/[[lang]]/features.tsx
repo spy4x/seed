@@ -232,10 +232,7 @@ function tiers({ t, href, rich, language }: Site): readonly Tier[] {
             t.t(`FeatureLanguages.fact2`),
             t.t(`FeatureLanguages.fact3`),
             t.t(`FeatureLanguages.fact4`),
-          ],
-          notYet: [
-            { label: t.t(`FeatureLanguages.notYet1`), issue: issue(277) },
-            { label: t.t(`FeatureLanguages.notYet3`), issue: issue(215) },
+            t.t(`FeatureLanguages.fact5`),
           ],
           code: { label: t.t(`FeatureLanguages.code`), href: source(`i18n/TRANSLATING.md`) },
         },

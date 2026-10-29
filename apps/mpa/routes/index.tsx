@@ -106,7 +106,7 @@ const WORKS_TODAY = [
   `HomeStatus.languages`,
 ] as const
 
-const NOT_BUILT = [`HomeStatus.notBuiltMail`, `HomeStatus.notBuiltRtl`] as const
+const NOT_BUILT = [`HomeStatus.notBuiltAndroid`, `HomeStatus.notBuiltDesktop`] as const
 
 /** The questions by their catalog keys, each written out so the catalog test finds it. */
 const FAQ = [
