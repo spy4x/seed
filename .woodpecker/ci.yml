@@ -61,7 +61,9 @@ steps:
             }
           }
           '
-      - deno task test:integration
+      # The test files run four at a time. Each works in a schema, database or key prefix of its
+      # own, so they never meet; one after another they took 15 to 18 minutes.
+      - DENO_JOBS=4 deno task test:integration --parallel
     depends_on: [check]
 
   backup-restore:
@@ -295,6 +297,13 @@ services:
       POSTGRES_USER: tester
       POSTGRES_PASSWORD: ci-throwaway
       POSTGRES_DB: template_test
+    # Durability off: the data is thrown away with the run, and the agent host's one disk, shared
+    # with every repository's pipelines, was saturated by this service's flushes. No step relies
+    # on crash safety or the WAL: backup-restore uses pg_dump and pg_restore. The entrypoint
+    # still creates the user and database from the variables above, and drops to the postgres
+    # user itself.
+    commands:
+      - docker-entrypoint.sh postgres -c fsync=off -c synchronous_commit=off -c full_page_writes=off
   valkey:
     image: valkey/valkey:8.1
     commands:

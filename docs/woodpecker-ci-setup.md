@@ -22,10 +22,11 @@ check ──┬── build ────────┐
 
 - `check` runs `deno task check`: format, lint, type check and unit tests.
 - `build` runs `deno task build` (the SPA production build).
-- `integration` runs `deno task test:integration` against a throw-away `postgres:18.6-alpine`
+- `integration` runs `deno task test:integration --parallel`, four test files at a time, against a throw-away `postgres:18.6-alpine`
   service (user `tester`, password `ci-throwaway`, database `template_test`, reachable as host
   `postgres`) and a `valkey/valkey:8.1` service (password `ci-throwaway`, host `valkey`). It waits
-  over TCP for both servers, see docs/handoff.md trap 3.
+  over TCP for both servers, see docs/handoff.md trap 3. The Postgres service runs with `fsync`,
+  `synchronous_commit` and `full_page_writes` off: its data is thrown away with the run.
 - `backup-restore` runs `infra/backup/restore.test.sh` in the `postgres:18.6` image against the same
   Postgres service: it backs a database up with restic, restores it into an empty one and compares
   them (docs/backups.md).
