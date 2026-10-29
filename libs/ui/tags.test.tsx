@@ -18,7 +18,7 @@ import { colorName, colorStyle, tagDeleteMessage } from "./tag-parts.tsx"
 import { TagEditorScreen, type TagEditorScreenProps } from "./tag-editor-screen.tsx"
 import { TagsScreen, type TagsScreenProps } from "./tags-screen.tsx"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
-import app from "@i18n/app/en.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
 
 /** The `app` catalog's English, as a screen without a provider reads it. */
 const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })

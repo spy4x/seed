@@ -1,7 +1,10 @@
-{
+import type { Catalog } from "@spy4x/platform/universal/i18n"
+
+export default {
   "AppShell.attachFiles": "إرفاق ملفات بهذه الملاحظة",
   "AttachmentMessages.load": "تعذّر تحميل الملفات",
-  "AttachmentMessages.type": "لا يمكن إرفاق {name}. يمكن إرفاق صور JPEG وPNG وWebP وGIF وملفات PDF فقط.",
+  "AttachmentMessages.type":
+    "لا يمكن إرفاق {name}. يمكن إرفاق صور JPEG وPNG وWebP وGIF وملفات PDF فقط.",
   "AttachmentMessages.size": "حجم {name} هو {size}. يمكن أن يصل حجم كل ملف إلى {max}.",
   "AttachmentMessages.noteFull": {
     "zero": "لا تتسع الملاحظة لأي ملف. لم يُرفق {name}.",
@@ -9,10 +12,11 @@
     "two": "تتسع الملاحظة لملفين فقط. لم يُرفق {name}.",
     "few": "تتسع الملاحظة لـ{count} ملفات كحد أقصى. لم يُرفق {name}.",
     "many": "تتسع الملاحظة لـ{count} ملفًا كحد أقصى. لم يُرفق {name}.",
-    "other": "تتسع الملاحظة لـ{count} ملف كحد أقصى. لم يُرفق {name}."
+    "other": "تتسع الملاحظة لـ{count} ملف كحد أقصى. لم يُرفق {name}.",
   },
   "AttachmentMessages.pending": "{name} في الانتظار: أكمل أولًا عمليات الرفع التي بدأت.",
-  "AttachmentMessages.budget": "لم يُرفق {name}: لقد رفعت الحد الأقصى المسموح به خلال ساعة. حاول مرة أخرى لاحقًا.",
+  "AttachmentMessages.budget":
+    "لم يُرفق {name}: لقد رفعت الحد الأقصى المسموح به خلال ساعة. حاول مرة أخرى لاحقًا.",
   "AttachmentMessages.uploadFailed": "فشل الرفع.",
   "AttachmentMessages.overflow": {
     "zero": "تتسع الملاحظة لـ{max} ملفات كحد أقصى. لم يُرفق أي ملف: {names}.",
@@ -20,7 +24,7 @@
     "two": "تتسع الملاحظة لـ{max} ملفات كحد أقصى. لم يُرفق ملفان: {names}.",
     "few": "تتسع الملاحظة لـ{max} ملفات كحد أقصى. لم تُرفق {count} ملفات: {names}.",
     "many": "تتسع الملاحظة لـ{max} ملفات كحد أقصى. لم يُرفق {count} ملفًا: {names}.",
-    "other": "تتسع الملاحظة لـ{max} ملفات كحد أقصى. لم يُرفق {count} ملف: {names}."
+    "other": "تتسع الملاحظة لـ{max} ملفات كحد أقصى. لم يُرفق {count} ملف: {names}.",
   },
   "AttachmentMessages.uploaded": "تم رفع {name}",
   "AttachmentMessages.notReallyPdf": "{name} ليس ملف PDF فعلًا، لذا لم يُرفق.",
@@ -54,18 +58,22 @@
   "GroupActivity.roleUnknown": "عضو",
   "GroupActivity.created": "<who>{who}</who> أنشأ المجموعة",
   "GroupActivity.renamed": "<who>{who}</who> غيّر اسم المجموعة",
-  "GroupActivity.renamedFromTo": "<who>{who}</who> غيّر اسم المجموعة من «<value>{from}</value>» إلى «<value>{to}</value>»",
+  "GroupActivity.renamedFromTo":
+    "<who>{who}</who> غيّر اسم المجموعة من «<value>{from}</value>» إلى «<value>{to}</value>»",
   "GroupActivity.detailsUpdated": "<who>{who}</who> غيّر وصف المجموعة أو لونها أو رمزها التعبيري",
   "GroupActivity.deleted": "<who>{who}</who> حذف المجموعة",
   "GroupActivity.restored": "<who>{who}</who> استعاد المجموعة",
   "GroupActivity.roleChanged": "<who>{who}</who> غيّر دور <target>{target}</target>",
   "GroupActivity.roleChangedSomeone": "<who>{who}</who> غيّر دور أحد الأعضاء",
-  "GroupActivity.roleChangedFromTo": "<who>{who}</who> غيّر دور <target>{target}</target> من «{fromRole}» إلى «{toRole}»",
-  "GroupActivity.roleChangedFromToSomeone": "<who>{who}</who> غيّر دور أحد الأعضاء من «{fromRole}» إلى «{toRole}»",
+  "GroupActivity.roleChangedFromTo":
+    "<who>{who}</who> غيّر دور <target>{target}</target> من «{fromRole}» إلى «{toRole}»",
+  "GroupActivity.roleChangedFromToSomeone":
+    "<who>{who}</who> غيّر دور أحد الأعضاء من «{fromRole}» إلى «{toRole}»",
   "GroupActivity.memberRemoved": "<who>{who}</who> أزال <target>{target}</target> من المجموعة",
   "GroupActivity.memberRemovedSomeone": "<who>{who}</who> أزال أحد الأعضاء من المجموعة",
   "GroupActivity.memberLeft": "<who>{who}</who> غادر المجموعة",
-  "GroupActivity.ownershipTransferred": "<who>{who}</who> جعل <target>{target}</target> مالكًا للمجموعة",
+  "GroupActivity.ownershipTransferred":
+    "<who>{who}</who> جعل <target>{target}</target> مالكًا للمجموعة",
   "GroupActivity.ownershipTransferredSomeone": "<who>{who}</who> جعل أحد الأعضاء مالكًا للمجموعة",
   "GroupActivity.invited": "<who>{who}</who> دعا شخصًا للانضمام",
   "GroupActivity.invitedAs": "<who>{who}</who> دعا شخصًا للانضمام بدور «{role}»",
@@ -78,7 +86,7 @@
     "two": "<who>{who}</who> نقل كل بيانات المجموعة (عنصران) إلى <value>{group}</value>",
     "few": "<who>{who}</who> نقل كل بيانات المجموعة ({count} عناصر) إلى <value>{group}</value>",
     "many": "<who>{who}</who> نقل كل بيانات المجموعة ({count} عنصرًا) إلى <value>{group}</value>",
-    "other": "<who>{who}</who> نقل كل بيانات المجموعة ({count} عنصر) إلى <value>{group}</value>"
+    "other": "<who>{who}</who> نقل كل بيانات المجموعة ({count} عنصر) إلى <value>{group}</value>",
   },
   "GroupActivity.dataMovedOutElsewhere": {
     "zero": "<who>{who}</who> نقل كل بيانات المجموعة ({count} عنصر) إلى مجموعة أخرى",
@@ -86,17 +94,19 @@
     "two": "<who>{who}</who> نقل كل بيانات المجموعة (عنصران) إلى مجموعة أخرى",
     "few": "<who>{who}</who> نقل كل بيانات المجموعة ({count} عناصر) إلى مجموعة أخرى",
     "many": "<who>{who}</who> نقل كل بيانات المجموعة ({count} عنصرًا) إلى مجموعة أخرى",
-    "other": "<who>{who}</who> نقل كل بيانات المجموعة ({count} عنصر) إلى مجموعة أخرى"
+    "other": "<who>{who}</who> نقل كل بيانات المجموعة ({count} عنصر) إلى مجموعة أخرى",
   },
-  "GroupActivity.dataMovedOutUncounted": "<who>{who}</who> نقل كل بيانات المجموعة إلى <value>{group}</value>",
-  "GroupActivity.dataMovedOutUncountedElsewhere": "<who>{who}</who> نقل كل بيانات المجموعة إلى مجموعة أخرى",
+  "GroupActivity.dataMovedOutUncounted":
+    "<who>{who}</who> نقل كل بيانات المجموعة إلى <value>{group}</value>",
+  "GroupActivity.dataMovedOutUncountedElsewhere":
+    "<who>{who}</who> نقل كل بيانات المجموعة إلى مجموعة أخرى",
   "GroupActivity.dataMovedIn": {
     "zero": "<who>{who}</who> نقل إلى هنا كل بيانات مجموعة أخرى ({count} عنصر)",
     "one": "<who>{who}</who> نقل إلى هنا كل بيانات مجموعة أخرى (عنصر واحد)",
     "two": "<who>{who}</who> نقل إلى هنا كل بيانات مجموعة أخرى (عنصران)",
     "few": "<who>{who}</who> نقل إلى هنا كل بيانات مجموعة أخرى ({count} عناصر)",
     "many": "<who>{who}</who> نقل إلى هنا كل بيانات مجموعة أخرى ({count} عنصرًا)",
-    "other": "<who>{who}</who> نقل إلى هنا كل بيانات مجموعة أخرى ({count} عنصر)"
+    "other": "<who>{who}</who> نقل إلى هنا كل بيانات مجموعة أخرى ({count} عنصر)",
   },
   "GroupActivity.dataMovedInUncounted": "<who>{who}</who> نقل إلى هنا كل بيانات مجموعة أخرى",
   "GroupActivity.exported": "<who>{who}</who> صدّر المجموعة إلى ملف",
@@ -106,7 +116,7 @@
     "two": "<who>{who}</who> أنشأ المجموعة من ملف تصدير (عنصران)",
     "few": "<who>{who}</who> أنشأ المجموعة من ملف تصدير ({count} عناصر)",
     "many": "<who>{who}</who> أنشأ المجموعة من ملف تصدير ({count} عنصرًا)",
-    "other": "<who>{who}</who> أنشأ المجموعة من ملف تصدير ({count} عنصر)"
+    "other": "<who>{who}</who> أنشأ المجموعة من ملف تصدير ({count} عنصر)",
   },
   "GroupActivity.importedUncounted": "<who>{who}</who> أنشأ المجموعة من ملف تصدير",
   "GroupActivity.noteCreated": "<who>{who}</who> أضاف الملاحظة «<value>{title}</value>»",
@@ -121,7 +131,7 @@
     "two": "<who>{who}</who> نقل ملاحظتين إلى <value>{group}</value>",
     "few": "<who>{who}</who> نقل {count} ملاحظات إلى <value>{group}</value>",
     "many": "<who>{who}</who> نقل {count} ملاحظةً إلى <value>{group}</value>",
-    "other": "<who>{who}</who> نقل {count} ملاحظة إلى <value>{group}</value>"
+    "other": "<who>{who}</who> نقل {count} ملاحظة إلى <value>{group}</value>",
   },
   "GroupActivity.notesMovedOutElsewhere": {
     "zero": "<who>{who}</who> نقل {count} ملاحظة إلى مجموعة أخرى",
@@ -129,30 +139,35 @@
     "two": "<who>{who}</who> نقل ملاحظتين إلى مجموعة أخرى",
     "few": "<who>{who}</who> نقل {count} ملاحظات إلى مجموعة أخرى",
     "many": "<who>{who}</who> نقل {count} ملاحظةً إلى مجموعة أخرى",
-    "other": "<who>{who}</who> نقل {count} ملاحظة إلى مجموعة أخرى"
+    "other": "<who>{who}</who> نقل {count} ملاحظة إلى مجموعة أخرى",
   },
-  "GroupActivity.notesMovedOutUncounted": "<who>{who}</who> نقل بعض الملاحظات إلى <value>{group}</value>",
-  "GroupActivity.notesMovedOutUncountedElsewhere": "<who>{who}</who> نقل بعض الملاحظات إلى مجموعة أخرى",
+  "GroupActivity.notesMovedOutUncounted":
+    "<who>{who}</who> نقل بعض الملاحظات إلى <value>{group}</value>",
+  "GroupActivity.notesMovedOutUncountedElsewhere":
+    "<who>{who}</who> نقل بعض الملاحظات إلى مجموعة أخرى",
   "GroupActivity.notesMovedIn": {
     "zero": "<who>{who}</who> نقل إلى هنا {count} ملاحظة من مجموعة أخرى",
     "one": "<who>{who}</who> نقل إلى هنا ملاحظة واحدة من مجموعة أخرى",
     "two": "<who>{who}</who> نقل إلى هنا ملاحظتين من مجموعة أخرى",
     "few": "<who>{who}</who> نقل إلى هنا {count} ملاحظات من مجموعة أخرى",
     "many": "<who>{who}</who> نقل إلى هنا {count} ملاحظةً من مجموعة أخرى",
-    "other": "<who>{who}</who> نقل إلى هنا {count} ملاحظة من مجموعة أخرى"
+    "other": "<who>{who}</who> نقل إلى هنا {count} ملاحظة من مجموعة أخرى",
   },
   "GroupActivity.notesMovedInUncounted": "<who>{who}</who> نقل إلى هنا بعض الملاحظات من مجموعة أخرى",
-  "GroupActivity.fileAdded": "<who>{who}</who> أرفق الملف «<value>{name}</value>» بـ«<value>{title}</value>»",
+  "GroupActivity.fileAdded":
+    "<who>{who}</who> أرفق الملف «<value>{name}</value>» بـ«<value>{title}</value>»",
   "GroupActivity.fileAddedNoNote": "<who>{who}</who> أرفق الملف «<value>{name}</value>»",
   "GroupActivity.fileAddedUnnamed": "<who>{who}</who> أرفق ملفًا بـ«<value>{title}</value>»",
   "GroupActivity.fileAddedUnnamedNoNote": "<who>{who}</who> أرفق ملفًا",
-  "GroupActivity.fileRemoved": "<who>{who}</who> أزال الملف «<value>{name}</value>» من «<value>{title}</value>»",
+  "GroupActivity.fileRemoved":
+    "<who>{who}</who> أزال الملف «<value>{name}</value>» من «<value>{title}</value>»",
   "GroupActivity.fileRemovedNoNote": "<who>{who}</who> أزال الملف «<value>{name}</value>»",
   "GroupActivity.fileRemovedUnnamed": "<who>{who}</who> أزال ملفًا من «<value>{title}</value>»",
   "GroupActivity.fileRemovedUnnamedNoNote": "<who>{who}</who> أزال ملفًا",
   "GroupActivity.tagCreated": "<who>{who}</who> أضاف الوسم «<value>{name}</value>»",
   "GroupActivity.tagCreatedUnnamed": "<who>{who}</who> أضاف وسمًا",
-  "GroupActivity.tagRenamed": "<who>{who}</who> غيّر اسم الوسم «<value>{from}</value>» إلى «<value>{name}</value>»",
+  "GroupActivity.tagRenamed":
+    "<who>{who}</who> غيّر اسم الوسم «<value>{from}</value>» إلى «<value>{name}</value>»",
   "GroupActivity.tagChanged": "<who>{who}</who> عدّل الوسم «<value>{name}</value>»",
   "GroupActivity.tagChangedUnnamed": "<who>{who}</who> عدّل وسمًا",
   "GroupActivity.tagRecoloured": "<who>{who}</who> غيّر لون الوسم «<value>{name}</value>»",
@@ -164,7 +179,7 @@
     "two": "<who>{who}</who> حذف الوسم «<value>{name}</value>» الذي حملته ملاحظتان",
     "few": "<who>{who}</who> حذف الوسم «<value>{name}</value>» الذي حملته {count} ملاحظات",
     "many": "<who>{who}</who> حذف الوسم «<value>{name}</value>» الذي حملته {count} ملاحظةً",
-    "other": "<who>{who}</who> حذف الوسم «<value>{name}</value>» الذي حملته {count} ملاحظة"
+    "other": "<who>{who}</who> حذف الوسم «<value>{name}</value>» الذي حملته {count} ملاحظة",
   },
   "GroupActivity.tagDeletedUnnamedCarried": {
     "zero": "<who>{who}</who> حذف وسمًا حملته {count} ملاحظة",
@@ -172,7 +187,7 @@
     "two": "<who>{who}</who> حذف وسمًا حملته ملاحظتان",
     "few": "<who>{who}</who> حذف وسمًا حملته {count} ملاحظات",
     "many": "<who>{who}</who> حذف وسمًا حملته {count} ملاحظةً",
-    "other": "<who>{who}</who> حذف وسمًا حملته {count} ملاحظة"
+    "other": "<who>{who}</who> حذف وسمًا حملته {count} ملاحظة",
   },
   "GroupActivity.unknown": "<who>{who}</who> غيّر شيئًا في المجموعة",
   "GroupActivity.loadFailed": "تعذّر تحميل النشاط",
@@ -199,7 +214,7 @@
     "two": "عضوان",
     "few": "{count} أعضاء",
     "many": "{count} عضوًا",
-    "other": "{count} عضو"
+    "other": "{count} عضو",
   },
   "GroupEditor.memberCountLink": {
     "zero": "{count} عضو: عرض الخطة والفوترة",
@@ -207,7 +222,7 @@
     "two": "عضوان: عرض الخطة والفوترة",
     "few": "{count} أعضاء: عرض الخطة والفوترة",
     "many": "{count} عضوًا: عرض الخطة والفوترة",
-    "other": "{count} عضو: عرض الخطة والفوترة"
+    "other": "{count} عضو: عرض الخطة والفوترة",
   },
   "GroupEditor.tabGeneral": "عام",
   "GroupEditor.tabMembers": "الأعضاء",
@@ -223,19 +238,27 @@
   "GroupEditor.close": "إغلاق",
   "GroupEditor.cancel": "إلغاء",
   "GroupEditor.leaveTitle": "مغادرة «{name}»؟",
-  "GroupEditor.leaveConfirmation": "ستفقد الوصول فورًا على كل أجهزتك. يبقى ما كتبته في المجموعة. للعودة، يجب أن يضيفك أحد مجددًا.",
+  "GroupEditor.leaveConfirmation":
+    "ستفقد الوصول فورًا على كل أجهزتك. يبقى ما كتبته في المجموعة. للعودة، يجب أن يضيفك أحد مجددًا.",
   "GroupEditor.deleteTitle": "حذف «{name}»؟",
   "GroupEditor.deleteConfirmation": {
-    "zero": "تختفي فورًا لدى كل الأعضاء مع كل ما فيها. من كانت مفتوحة لديه يُنقل إلى مجموعة أخرى من مجموعاته، ومن لم تبقَ له أي مجموعة يحصل على مجموعة جديدة فارغة باسم «Personal». يمكنك استعادتها من صفحة المجموعات خلال {count} يوم. بعد ذلك تُحذف هي وكل ما فيها نهائيًا ولا يمكن استرجاعها.",
-    "one": "تختفي فورًا لدى كل الأعضاء مع كل ما فيها. من كانت مفتوحة لديه يُنقل إلى مجموعة أخرى من مجموعاته، ومن لم تبقَ له أي مجموعة يحصل على مجموعة جديدة فارغة باسم «Personal». يمكنك استعادتها من صفحة المجموعات خلال يوم واحد. بعد ذلك تُحذف هي وكل ما فيها نهائيًا ولا يمكن استرجاعها.",
-    "two": "تختفي فورًا لدى كل الأعضاء مع كل ما فيها. من كانت مفتوحة لديه يُنقل إلى مجموعة أخرى من مجموعاته، ومن لم تبقَ له أي مجموعة يحصل على مجموعة جديدة فارغة باسم «Personal». يمكنك استعادتها من صفحة المجموعات خلال يومين. بعد ذلك تُحذف هي وكل ما فيها نهائيًا ولا يمكن استرجاعها.",
-    "few": "تختفي فورًا لدى كل الأعضاء مع كل ما فيها. من كانت مفتوحة لديه يُنقل إلى مجموعة أخرى من مجموعاته، ومن لم تبقَ له أي مجموعة يحصل على مجموعة جديدة فارغة باسم «Personal». يمكنك استعادتها من صفحة المجموعات خلال {count} أيام. بعد ذلك تُحذف هي وكل ما فيها نهائيًا ولا يمكن استرجاعها.",
-    "many": "تختفي فورًا لدى كل الأعضاء مع كل ما فيها. من كانت مفتوحة لديه يُنقل إلى مجموعة أخرى من مجموعاته، ومن لم تبقَ له أي مجموعة يحصل على مجموعة جديدة فارغة باسم «Personal». يمكنك استعادتها من صفحة المجموعات خلال {count} يومًا. بعد ذلك تُحذف هي وكل ما فيها نهائيًا ولا يمكن استرجاعها.",
-    "other": "تختفي فورًا لدى كل الأعضاء مع كل ما فيها. من كانت مفتوحة لديه يُنقل إلى مجموعة أخرى من مجموعاته، ومن لم تبقَ له أي مجموعة يحصل على مجموعة جديدة فارغة باسم «Personal». يمكنك استعادتها من صفحة المجموعات خلال {count} يوم. بعد ذلك تُحذف هي وكل ما فيها نهائيًا ولا يمكن استرجاعها."
+    "zero":
+      "تختفي فورًا لدى كل الأعضاء مع كل ما فيها. من كانت مفتوحة لديه يُنقل إلى مجموعة أخرى من مجموعاته، ومن لم تبقَ له أي مجموعة يحصل على مجموعة جديدة فارغة باسم «Personal». يمكنك استعادتها من صفحة المجموعات خلال {count} يوم. بعد ذلك تُحذف هي وكل ما فيها نهائيًا ولا يمكن استرجاعها.",
+    "one":
+      "تختفي فورًا لدى كل الأعضاء مع كل ما فيها. من كانت مفتوحة لديه يُنقل إلى مجموعة أخرى من مجموعاته، ومن لم تبقَ له أي مجموعة يحصل على مجموعة جديدة فارغة باسم «Personal». يمكنك استعادتها من صفحة المجموعات خلال يوم واحد. بعد ذلك تُحذف هي وكل ما فيها نهائيًا ولا يمكن استرجاعها.",
+    "two":
+      "تختفي فورًا لدى كل الأعضاء مع كل ما فيها. من كانت مفتوحة لديه يُنقل إلى مجموعة أخرى من مجموعاته، ومن لم تبقَ له أي مجموعة يحصل على مجموعة جديدة فارغة باسم «Personal». يمكنك استعادتها من صفحة المجموعات خلال يومين. بعد ذلك تُحذف هي وكل ما فيها نهائيًا ولا يمكن استرجاعها.",
+    "few":
+      "تختفي فورًا لدى كل الأعضاء مع كل ما فيها. من كانت مفتوحة لديه يُنقل إلى مجموعة أخرى من مجموعاته، ومن لم تبقَ له أي مجموعة يحصل على مجموعة جديدة فارغة باسم «Personal». يمكنك استعادتها من صفحة المجموعات خلال {count} أيام. بعد ذلك تُحذف هي وكل ما فيها نهائيًا ولا يمكن استرجاعها.",
+    "many":
+      "تختفي فورًا لدى كل الأعضاء مع كل ما فيها. من كانت مفتوحة لديه يُنقل إلى مجموعة أخرى من مجموعاته، ومن لم تبقَ له أي مجموعة يحصل على مجموعة جديدة فارغة باسم «Personal». يمكنك استعادتها من صفحة المجموعات خلال {count} يومًا. بعد ذلك تُحذف هي وكل ما فيها نهائيًا ولا يمكن استرجاعها.",
+    "other":
+      "تختفي فورًا لدى كل الأعضاء مع كل ما فيها. من كانت مفتوحة لديه يُنقل إلى مجموعة أخرى من مجموعاته، ومن لم تبقَ له أي مجموعة يحصل على مجموعة جديدة فارغة باسم «Personal». يمكنك استعادتها من صفحة المجموعات خلال {count} يوم. بعد ذلك تُحذف هي وكل ما فيها نهائيًا ولا يمكن استرجاعها.",
   },
   "GroupEditor.optional": "اختياري",
   "GroupEditor.offlineCreate": "يمكنك تعبئة هذا الآن. يتطلب إنشاء المجموعة اتصالًا بالإنترنت.",
-  "GroupEditor.offlineSave": "هذه هي النسخة المحفوظة على هذا الجهاز. يتطلب حفظ التغييرات اتصالًا بالإنترنت.",
+  "GroupEditor.offlineSave":
+    "هذه هي النسخة المحفوظة على هذا الجهاز. يتطلب حفظ التغييرات اتصالًا بالإنترنت.",
   "GroupEditor.name": "الاسم",
   "GroupEditor.description": "الوصف",
   "GroupEditor.descriptionCount": {
@@ -244,7 +267,7 @@
     "two": "{used} من حرفين",
     "few": "{used} من {count} أحرف",
     "many": "{used} من {count} حرفًا",
-    "other": "{used} من {count} حرف"
+    "other": "{used} من {count} حرف",
   },
   "GroupEditor.descriptionPlaceholder": "ما الغرض من هذه المجموعة؟",
   "GroupEditor.emoji": "رمز تعبيري",
@@ -256,14 +279,21 @@
   "GroupEditor.saving": "جارٍ الحفظ…",
   "GroupEditor.create": "إنشاء المجموعة",
   "GroupEditor.save": "حفظ المجموعة",
-  "GroupEditor.trialUsed": "تبدأ المجموعات الجديدة بالخطة المجانية. لقد استخدمت فترتك التجريبية المجانية، لذا تُحتسب أي خطة مدفوعة هنا من اليوم الأول.",
+  "GroupEditor.trialUsed":
+    "تبدأ المجموعات الجديدة بالخطة المجانية. لقد استخدمت فترتك التجريبية المجانية، لذا تُحتسب أي خطة مدفوعة هنا من اليوم الأول.",
   "GroupEditor.trial": {
-    "zero": "تبدأ المجموعات الجديدة بالخطة المجانية. تذهب فترتك التجريبية المجانية لخطة مدفوعة ({count} يوم) إلى أول مجموعة تختار لها خطة مدفوعة.",
-    "one": "تبدأ المجموعات الجديدة بالخطة المجانية. تذهب فترتك التجريبية المجانية لخطة مدفوعة (يوم واحد) إلى أول مجموعة تختار لها خطة مدفوعة.",
-    "two": "تبدأ المجموعات الجديدة بالخطة المجانية. تذهب فترتك التجريبية المجانية لخطة مدفوعة (يومان) إلى أول مجموعة تختار لها خطة مدفوعة.",
-    "few": "تبدأ المجموعات الجديدة بالخطة المجانية. تذهب فترتك التجريبية المجانية لخطة مدفوعة ({count} أيام) إلى أول مجموعة تختار لها خطة مدفوعة.",
-    "many": "تبدأ المجموعات الجديدة بالخطة المجانية. تذهب فترتك التجريبية المجانية لخطة مدفوعة ({count} يومًا) إلى أول مجموعة تختار لها خطة مدفوعة.",
-    "other": "تبدأ المجموعات الجديدة بالخطة المجانية. تذهب فترتك التجريبية المجانية لخطة مدفوعة ({count} يوم) إلى أول مجموعة تختار لها خطة مدفوعة."
+    "zero":
+      "تبدأ المجموعات الجديدة بالخطة المجانية. تذهب فترتك التجريبية المجانية لخطة مدفوعة ({count} يوم) إلى أول مجموعة تختار لها خطة مدفوعة.",
+    "one":
+      "تبدأ المجموعات الجديدة بالخطة المجانية. تذهب فترتك التجريبية المجانية لخطة مدفوعة (يوم واحد) إلى أول مجموعة تختار لها خطة مدفوعة.",
+    "two":
+      "تبدأ المجموعات الجديدة بالخطة المجانية. تذهب فترتك التجريبية المجانية لخطة مدفوعة (يومان) إلى أول مجموعة تختار لها خطة مدفوعة.",
+    "few":
+      "تبدأ المجموعات الجديدة بالخطة المجانية. تذهب فترتك التجريبية المجانية لخطة مدفوعة ({count} أيام) إلى أول مجموعة تختار لها خطة مدفوعة.",
+    "many":
+      "تبدأ المجموعات الجديدة بالخطة المجانية. تذهب فترتك التجريبية المجانية لخطة مدفوعة ({count} يومًا) إلى أول مجموعة تختار لها خطة مدفوعة.",
+    "other":
+      "تبدأ المجموعات الجديدة بالخطة المجانية. تذهب فترتك التجريبية المجانية لخطة مدفوعة ({count} يوم) إلى أول مجموعة تختار لها خطة مدفوعة.",
   },
   "GroupEditor.readOnly": "لا يمكن تغيير بيانات هذه المجموعة إلا للمشرف أو المالك.",
   "GroupEditor.nameRequired": "أدخل اسمًا.",
@@ -274,7 +304,7 @@
     "two": "استخدم حرفين كحد أقصى.",
     "few": "استخدم {count} أحرف كحد أقصى.",
     "many": "استخدم {count} حرفًا كحد أقصى.",
-    "other": "استخدم {count} حرف كحد أقصى."
+    "other": "استخدم {count} حرف كحد أقصى.",
   },
   "GroupEditor.emojiInvalid": "استخدم رمزًا تعبيريًا واحدًا مثل 🏕️، أو اترك الحقل فارغًا.",
   "GroupEditor.createFailed": "تعذّر إنشاء المجموعة. حاول مرة أخرى.",
@@ -297,7 +327,7 @@
     "two": "ملاحظتان",
     "few": "{count} ملاحظات",
     "many": "{count} ملاحظةً",
-    "other": "{count} ملاحظة"
+    "other": "{count} ملاحظة",
   },
   "GroupImport.tags": {
     "zero": "{count} وسم",
@@ -305,10 +335,11 @@
     "two": "وسمان",
     "few": "{count} وسوم",
     "many": "{count} وسمًا",
-    "other": "{count} وسم"
+    "other": "{count} وسم",
   },
   "GroupImport.settings": "الإعدادات",
-  "GroupImport.newerVersion": "هذا الملف من إصدار أحدث من التطبيق. حدّث التطبيق، أو صدّر مرة أخرى من إصدار مطابق.",
+  "GroupImport.newerVersion":
+    "هذا الملف من إصدار أحدث من التطبيق. حدّث التطبيق، أو صدّر مرة أخرى من إصدار مطابق.",
   "GroupImport.notExport": "هذا ليس ملف تصدير لمجموعة.",
   "GroupImport.tooLarge": "حجم الملف أكبر من {size} ميغابايت.",
   "GroupImport.checking": "جارٍ فحص الملف…",
@@ -332,16 +363,22 @@
     "two": "واثنتان أخريان",
     "few": "و{count} أخرى",
     "many": "و{count} أخرى",
-    "other": "و{count} أخرى"
+    "other": "و{count} أخرى",
   },
   "GroupImport.planTitle": "لا تتسع خطة المجموعة الجديدة لهذا الملف",
   "GroupImport.plan": {
-    "zero": "تبدأ المجموعة الجديدة بالخطة المجانية التي تتسع لـ{count} ملاحظة كحد أقصى. يحتوي هذا الملف على {notes}.",
-    "one": "تبدأ المجموعة الجديدة بالخطة المجانية التي تتسع لـملاحظة واحدة كحد أقصى. يحتوي هذا الملف على {notes}.",
-    "two": "تبدأ المجموعة الجديدة بالخطة المجانية التي تتسع لـملاحظتين كحد أقصى. يحتوي هذا الملف على {notes}.",
-    "few": "تبدأ المجموعة الجديدة بالخطة المجانية التي تتسع لـ{count} ملاحظات كحد أقصى. يحتوي هذا الملف على {notes}.",
-    "many": "تبدأ المجموعة الجديدة بالخطة المجانية التي تتسع لـ{count} ملاحظةً كحد أقصى. يحتوي هذا الملف على {notes}.",
-    "other": "تبدأ المجموعة الجديدة بالخطة المجانية التي تتسع لـ{count} ملاحظة كحد أقصى. يحتوي هذا الملف على {notes}."
+    "zero":
+      "تبدأ المجموعة الجديدة بالخطة المجانية التي تتسع لـ{count} ملاحظة كحد أقصى. يحتوي هذا الملف على {notes}.",
+    "one":
+      "تبدأ المجموعة الجديدة بالخطة المجانية التي تتسع لـملاحظة واحدة كحد أقصى. يحتوي هذا الملف على {notes}.",
+    "two":
+      "تبدأ المجموعة الجديدة بالخطة المجانية التي تتسع لـملاحظتين كحد أقصى. يحتوي هذا الملف على {notes}.",
+    "few":
+      "تبدأ المجموعة الجديدة بالخطة المجانية التي تتسع لـ{count} ملاحظات كحد أقصى. يحتوي هذا الملف على {notes}.",
+    "many":
+      "تبدأ المجموعة الجديدة بالخطة المجانية التي تتسع لـ{count} ملاحظةً كحد أقصى. يحتوي هذا الملف على {notes}.",
+    "other":
+      "تبدأ المجموعة الجديدة بالخطة المجانية التي تتسع لـ{count} ملاحظة كحد أقصى. يحتوي هذا الملف على {notes}.",
   },
   "GroupImport.failed": "توقف الاستيراد ولم يُحفظ أي شيء. حاول مرة أخرى.",
   "GroupImport.name": "الاسم",
@@ -350,14 +387,18 @@
   "GroupImport.imported": "اُستوردت المجموعة",
   "GroupImport.importedBody": "اُستورد {contents} إلى «{name}».",
   "GroupImport.nameInvalid": "اختر للمجموعة اسمًا من 1 إلى 100 حرف.",
-  "GroupInvitations.viewersOnly": "تسمح خطة هذه المجموعة بإضافة قرّاء فقط عبر الدعوة. تتيح لك خطة مدفوعة دعوة محررين ومشرفين أيضًا.",
+  "GroupInvitations.viewersOnly":
+    "تسمح خطة هذه المجموعة بإضافة قرّاء فقط عبر الدعوة. تتيح لك خطة مدفوعة دعوة محررين ومشرفين أيضًا.",
   "GroupInvitations.copyNow": "انسخ هذا الرابط الآن: لن يظهر مرة أخرى.",
-  "GroupInvitations.copyNowMailed": "انسخ هذا الرابط الآن: لن يظهر مرة أخرى. وأُرسل أيضًا بالبريد الإلكتروني.",
-  "GroupInvitations.copyNowMailFailed": "انسخ هذا الرابط الآن: لن يظهر مرة أخرى. تعذّر إرسال البريد الإلكتروني، لذا شارك الرابط بنفسك.",
+  "GroupInvitations.copyNowMailed":
+    "انسخ هذا الرابط الآن: لن يظهر مرة أخرى. وأُرسل أيضًا بالبريد الإلكتروني.",
+  "GroupInvitations.copyNowMailFailed":
+    "انسخ هذا الرابط الآن: لن يظهر مرة أخرى. تعذّر إرسال البريد الإلكتروني، لذا شارك الرابط بنفسك.",
   "GroupInvitations.copyLink": "نسخ رابط الدعوة",
   "GroupInvitations.linkCopied": "نُسخ الرابط",
   "GroupInvitations.done": "تم",
-  "GroupInvitations.formHint": "يمكن لأي شخص لديه الرابط الانضمام بدوره حتى تنتهي صلاحيته أو تُستنفد مرات استخدامه. لا تُحتسب الدعوات المعلّقة ضمن حد الأعضاء في الخطة، لكن قبول إحداها يُحتسب.",
+  "GroupInvitations.formHint":
+    "يمكن لأي شخص لديه الرابط الانضمام بدوره حتى تنتهي صلاحيته أو تُستنفد مرات استخدامه. لا تُحتسب الدعوات المعلّقة ضمن حد الأعضاء في الخطة، لكن قبول إحداها يُحتسب.",
   "GroupInvitations.role": "الدور",
   "GroupInvitations.email": "البريد الإلكتروني (اختياري)",
   "GroupInvitations.emailHint": "لا يقبلها إلا الحساب الذي أكّد هذا العنوان. تسمح بدخول شخص واحد.",
@@ -375,7 +416,7 @@
     "two": "استُخدمت {uses} من {count} · تنتهي في <value>{date}</value>",
     "few": "استُخدمت {uses} من {count} · تنتهي في <value>{date}</value>",
     "many": "استُخدمت {uses} من {count} · تنتهي في <value>{date}</value>",
-    "other": "استُخدمت {uses} من {count} · تنتهي في <value>{date}</value>"
+    "other": "استُخدمت {uses} من {count} · تنتهي في <value>{date}</value>",
   },
   "GroupInvitations.usageBy": {
     "zero": "استُخدمت {uses} من {count} · تنتهي في <value>{date}</value> · من <name>{name}</name>",
@@ -383,12 +424,13 @@
     "two": "استُخدمت {uses} من {count} · تنتهي في <value>{date}</value> · من <name>{name}</name>",
     "few": "استُخدمت {uses} من {count} · تنتهي في <value>{date}</value> · من <name>{name}</name>",
     "many": "استُخدمت {uses} من {count} · تنتهي في <value>{date}</value> · من <name>{name}</name>",
-    "other": "استُخدمت {uses} من {count} · تنتهي في <value>{date}</value> · من <name>{name}</name>"
+    "other": "استُخدمت {uses} من {count} · تنتهي في <value>{date}</value> · من <name>{name}</name>",
   },
   "GroupInvitations.actions": "إجراءات الدعوة الموجهة إلى {who}",
   "GroupInvitations.revoke": "سحب",
   "GroupInvitations.revokeTitle": "سحب هذه الدعوة؟",
-  "GroupInvitations.revokeConfirmation": "يتوقف رابط <value>{email}</value> عن العمل فورًا. يبقى من انضموا عبره.",
+  "GroupInvitations.revokeConfirmation":
+    "يتوقف رابط <value>{email}</value> عن العمل فورًا. يبقى من انضموا عبره.",
   "GroupInvitations.revokeConfirmationLink": "يتوقف هذا الرابط عن العمل فورًا. يبقى من انضموا عبره.",
   "GroupInvitations.opening": "جارٍ فتح الدعوة…",
   "GroupInvitations.unusable": "لا يمكن استخدام هذه الدعوة",
@@ -406,7 +448,8 @@
   "GroupInvitations.declineNamed": "رفض الدعوة إلى {name}",
   "GroupInvitations.acceptNamed": "قبول الدعوة إلى {name}",
   "GroupInvitations.verifyEmail": "تأكيد البريد الإلكتروني",
-  "GroupInvitations.notForYou": "أُرسلت هذه الدعوة إلى عنوان بريد إلكتروني آخر. إذا كان العنوان لك، فأكّده أولًا في <link>ملفك الشخصي</link>، أو سجّل الدخول بالحساب الذي يستخدمه.",
+  "GroupInvitations.notForYou":
+    "أُرسلت هذه الدعوة إلى عنوان بريد إلكتروني آخر. إذا كان العنوان لك، فأكّده أولًا في <link>ملفك الشخصي</link>، أو سجّل الدخول بالحساب الذي يستخدمه.",
   "GroupInvitations.somethingWrong": "حدث خطأ ما. حاول مرة أخرى.",
   "GroupInvitations.unreachable": "تعذّر الوصول إلى الخادم. حاول مرة أخرى.",
   "GroupMembers.unnamed": "عضو بلا اسم",
@@ -419,7 +462,7 @@
     "two": "يُعرض أول {shown} من أصل عضوين.",
     "few": "يُعرض أول {shown} من أصل {count} أعضاء.",
     "many": "يُعرض أول {shown} من أصل {count} عضوًا.",
-    "other": "يُعرض أول {shown} من أصل {count} عضو."
+    "other": "يُعرض أول {shown} من أصل {count} عضو.",
   },
   "GroupMembers.you": "أنت",
   "GroupMembers.lastSeen": "آخر ظهور <value>{when}</value>",
@@ -433,12 +476,14 @@
   "GroupMembers.removeTitle": "إزالة {name}؟",
   "GroupMembers.removeConfirm": "إزالة العضو",
   "GroupMembers.cancel": "إلغاء",
-  "GroupMembers.removeConfirmation": "يفقد العضو الوصول فورًا على كل أجهزته. يبقى ما كتبه في المجموعة. إذا كانت هذه مجموعته الوحيدة، يحصل على مجموعة جديدة فارغة باسم «Personal». أي رابط دعوة ما زال يملكه يتيح له العودة من حساب آخر، لذا اسحب هذه الروابط أيضًا.",
+  "GroupMembers.removeConfirmation":
+    "يفقد العضو الوصول فورًا على كل أجهزته. يبقى ما كتبه في المجموعة. إذا كانت هذه مجموعته الوحيدة، يحصل على مجموعة جديدة فارغة باسم «Personal». أي رابط دعوة ما زال يملكه يتيح له العودة من حساب آخر، لذا اسحب هذه الروابط أيضًا.",
   "GroupMembers.loadFailed": "تعذّر تحميل الأعضاء",
   "GroupMembers.roleFailed": "تعذّر تغيير الدور",
   "GroupMembers.removeFailed": "تعذّرت إزالة العضو",
   "GroupMembers.leaveFailed": "تعذّرت مغادرة المجموعة",
-  "GroupMoveAll.explanation": "تنتقل كل الملاحظات والوسوم في «<value>{name}</value>» إلى المجموعة التي تختارها، ولا يعود أعضاؤها يرونها. يراها أعضاء المجموعة الأخرى فورًا. تحتفظ كل ملاحظة بسجل تعديلاتها. إذا فشل أي جزء، لا يُنقل شيء.",
+  "GroupMoveAll.explanation":
+    "تنتقل كل الملاحظات والوسوم في «<value>{name}</value>» إلى المجموعة التي تختارها، ولا يعود أعضاؤها يرونها. يراها أعضاء المجموعة الأخرى فورًا. تحتفظ كل ملاحظة بسجل تعديلاتها. إذا فشل أي جزء، لا يُنقل شيء.",
   "GroupMoveAll.to": "نقل كل شيء إلى",
   "GroupMoveAll.cancel": "إلغاء",
   "GroupMoveAll.moving": "جارٍ النقل…",
@@ -449,7 +494,7 @@
     "two": "ملاحظتان",
     "few": "{count} ملاحظات",
     "many": "{count} ملاحظةً",
-    "other": "{count} ملاحظة"
+    "other": "{count} ملاحظة",
   },
   "GroupMoveAll.tags": {
     "zero": "{count} وسم",
@@ -457,10 +502,12 @@
     "two": "وسمان",
     "few": "{count} وسوم",
     "many": "{count} وسمًا",
-    "other": "{count} وسم"
+    "other": "{count} وسم",
   },
-  "GroupMoveAll.done": "نُقلت {notes} من «<value>{from}</value>» إلى «<value>{to}</value>». تبقى الملاحظات التي حذفتها سابقًا في هذه المجموعة وتُحذف معها.",
-  "GroupMoveAll.doneWithTags": "نُقلت {notes} و{tags} من «<value>{from}</value>» إلى «<value>{to}</value>». تبقى الملاحظات التي حذفتها سابقًا في هذه المجموعة وتُحذف معها.",
+  "GroupMoveAll.done":
+    "نُقلت {notes} من «<value>{from}</value>» إلى «<value>{to}</value>». تبقى الملاحظات التي حذفتها سابقًا في هذه المجموعة وتُحذف معها.",
+  "GroupMoveAll.doneWithTags":
+    "نُقلت {notes} و{tags} من «<value>{from}</value>» إلى «<value>{to}</value>». تبقى الملاحظات التي حذفتها سابقًا في هذه المجموعة وتُحذف معها.",
   "GroupMoveAll.keep": "الإبقاء على المجموعة",
   "GroupMoveAll.delete": "حذف «{name}»…",
   "GroupMoveAll.failed": "تعذّر نقل البيانات",
@@ -472,7 +519,8 @@
   "GroupPicker.all": "كل المجموعات",
   "GroupPicker.new": "مجموعة جديدة",
   "GroupPicker.sheetHeading": "المجموعة",
-  "GroupTransfer.explanation": "يصبح العضو المالك وتصبح أنت مشرفًا. لا يستطيع إلا المالك حذف المجموعة أو إدارة خطتها أو نقلها مرة أخرى. قبل أن تتمكن من حذف حسابك، انقل كل مجموعة تشاركها مع الآخرين.",
+  "GroupTransfer.explanation":
+    "يصبح العضو المالك وتصبح أنت مشرفًا. لا يستطيع إلا المالك حذف المجموعة أو إدارة خطتها أو نقلها مرة أخرى. قبل أن تتمكن من حذف حسابك، انقل كل مجموعة تشاركها مع الآخرين.",
   "GroupTransfer.newOwner": "المالك الجديد",
   "GroupTransfer.typeName": "اكتب «{name}» للتأكيد",
   "GroupTransfer.password": "كلمة مرورك",
@@ -498,7 +546,7 @@
     "two": "يمكن استعادة المجموعة المحذوفة وكل ما فيها خلال يومين. بعد ذلك تُحذف نهائيًا.",
     "few": "يمكن استعادة المجموعة المحذوفة وكل ما فيها خلال {count} أيام. بعد ذلك تُحذف نهائيًا.",
     "many": "يمكن استعادة المجموعة المحذوفة وكل ما فيها خلال {count} يومًا. بعد ذلك تُحذف نهائيًا.",
-    "other": "يمكن استعادة المجموعة المحذوفة وكل ما فيها خلال {count} يوم. بعد ذلك تُحذف نهائيًا."
+    "other": "يمكن استعادة المجموعة المحذوفة وكل ما فيها خلال {count} يوم. بعد ذلك تُحذف نهائيًا.",
   },
   "Groups.restorableUntil": "يمكن استعادتها حتى <value>{date}</value>",
   "Groups.restore": "استعادة",
@@ -511,7 +559,7 @@
     "two": "عضوان",
     "few": "{count} أعضاء",
     "many": "{count} عضوًا",
-    "other": "{count} عضو"
+    "other": "{count} عضو",
   },
   "Groups.current": "الحالية",
   "Groups.currentNamed": "{name}، المجموعة الحالية",
@@ -544,19 +592,28 @@
   "GroupBillingPanel.planFree": "مجانية",
   "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
-    "zero": "تعذّر إتمام دفعة. حدّث البطاقة عبر «تغيير البطاقة» خلال {count} يوم، قبل {date}، للاحتفاظ بخطة {plan}.",
-    "one": "تعذّر إتمام دفعة. حدّث البطاقة عبر «تغيير البطاقة» خلال يوم واحد، قبل {date}، للاحتفاظ بخطة {plan}.",
-    "two": "تعذّر إتمام دفعة. حدّث البطاقة عبر «تغيير البطاقة» خلال يومين، قبل {date}، للاحتفاظ بخطة {plan}.",
-    "few": "تعذّر إتمام دفعة. حدّث البطاقة عبر «تغيير البطاقة» خلال {count} أيام، قبل {date}، للاحتفاظ بخطة {plan}.",
-    "many": "تعذّر إتمام دفعة. حدّث البطاقة عبر «تغيير البطاقة» خلال {count} يومًا، قبل {date}، للاحتفاظ بخطة {plan}.",
-    "other": "تعذّر إتمام دفعة. حدّث البطاقة عبر «تغيير البطاقة» خلال {count} يوم، قبل {date}، للاحتفاظ بخطة {plan}."
+    "zero":
+      "تعذّر إتمام دفعة. حدّث البطاقة عبر «تغيير البطاقة» خلال {count} يوم، قبل {date}، للاحتفاظ بخطة {plan}.",
+    "one":
+      "تعذّر إتمام دفعة. حدّث البطاقة عبر «تغيير البطاقة» خلال يوم واحد، قبل {date}، للاحتفاظ بخطة {plan}.",
+    "two":
+      "تعذّر إتمام دفعة. حدّث البطاقة عبر «تغيير البطاقة» خلال يومين، قبل {date}، للاحتفاظ بخطة {plan}.",
+    "few":
+      "تعذّر إتمام دفعة. حدّث البطاقة عبر «تغيير البطاقة» خلال {count} أيام، قبل {date}، للاحتفاظ بخطة {plan}.",
+    "many":
+      "تعذّر إتمام دفعة. حدّث البطاقة عبر «تغيير البطاقة» خلال {count} يومًا، قبل {date}، للاحتفاظ بخطة {plan}.",
+    "other":
+      "تعذّر إتمام دفعة. حدّث البطاقة عبر «تغيير البطاقة» خلال {count} يوم، قبل {date}، للاحتفاظ بخطة {plan}.",
   },
-  "GroupBillingPanel.paymentFailedFree": "تعذّر إتمام دفعة، لذا أصبحت المجموعة على الخطة المجانية. حدّث البطاقة عبر «تغيير البطاقة» لاستعادة خطة {plan}.",
+  "GroupBillingPanel.paymentFailedFree":
+    "تعذّر إتمام دفعة، لذا أصبحت المجموعة على الخطة المجانية. حدّث البطاقة عبر «تغيير البطاقة» لاستعادة خطة {plan}.",
   "GroupBillingPanel.offline": "تعذّر الوصول إلى الخادم. حاول مرة أخرى.",
   "GroupBillingPanel.unreadable": "تعذّرت قراءة الخطة.",
   "GroupBillingPanel.unsafePage": "ردّ مزوّد الدفع بعنوان لا يفتحه هذا التطبيق.",
-  "GroupBillingPanel.checkoutUnreachable": "تعذّر فتح صفحة الدفع في Stripe. تحقق من اتصالك وحاول مرة أخرى.",
-  "GroupBillingPanel.portalUnreachable": "تعذّر فتح صفحة الفوترة في Stripe. تحقق من اتصالك وحاول مرة أخرى.",
+  "GroupBillingPanel.checkoutUnreachable":
+    "تعذّر فتح صفحة الدفع في Stripe. تحقق من اتصالك وحاول مرة أخرى.",
+  "GroupBillingPanel.portalUnreachable":
+    "تعذّر فتح صفحة الفوترة في Stripe. تحقق من اتصالك وحاول مرة أخرى.",
   "GroupBillingPanel.title": "الخطة والفوترة",
   "GroupBillingPanel.description": "ما تدفعه <group>{group}</group> كل شهر. تتولى Stripe الفوترة.",
   "GroupBillingPanel.loading": "جارٍ تحميل الخطة",
@@ -565,8 +622,10 @@
   "GroupBillingPanel.statusEnds": "ينتهي في {date}",
   "GroupBillingPanel.statusPaymentFailed": "تعذّر الدفع",
   "GroupBillingPanel.off": "كل المجموعات على الخطة المجانية.",
-  "GroupBillingPanel.ownerOnly": "لا يستطيع تغيير خطة المجموعة أو الاطلاع على الفواتير إلا مالكها <name>{name}</name>.",
-  "GroupBillingPanel.ownerOnlyUnknown": "لا يستطيع تغيير خطة المجموعة أو الاطلاع على الفواتير إلا مالكها.",
+  "GroupBillingPanel.ownerOnly":
+    "لا يستطيع تغيير خطة المجموعة أو الاطلاع على الفواتير إلا مالكها <name>{name}</name>.",
+  "GroupBillingPanel.ownerOnlyUnknown":
+    "لا يستطيع تغيير خطة المجموعة أو الاطلاع على الفواتير إلا مالكها.",
   "GroupBillingPanel.price": "تكلفة خطة {plan} هي {price} لكل عضو شهريًا.",
   "GroupBillingPanel.priceForGroup": {
     "zero": "مع {count} عضو، ستدفع <group>{group}</group> {total} شهريًا.",
@@ -574,7 +633,7 @@
     "two": "مع عضوين، ستدفع <group>{group}</group> {total} شهريًا.",
     "few": "مع {count} أعضاء، ستدفع <group>{group}</group> {total} شهريًا.",
     "many": "مع {count} عضوًا، ستدفع <group>{group}</group> {total} شهريًا.",
-    "other": "مع {count} عضو، ستدفع <group>{group}</group> {total} شهريًا."
+    "other": "مع {count} عضو، ستدفع <group>{group}</group> {total} شهريًا.",
   },
   "GroupBillingPanel.opening": "جارٍ فتح Stripe…",
   "GroupBillingPanel.opensStripe": "(يفتح Stripe)",
@@ -584,30 +643,33 @@
     "two": "ابدأ تجربة مجانية ليومين",
     "few": "ابدأ تجربة مجانية لمدة {count} أيام",
     "many": "ابدأ تجربة مجانية لمدة {count} يومًا",
-    "other": "ابدأ تجربة مجانية لمدة {count} يوم"
+    "other": "ابدأ تجربة مجانية لمدة {count} يوم",
   },
   "GroupBillingPanel.upgrade": "الترقية إلى {plan}",
   "GroupBillingPanel.trialUsed": "استخدمت تجربتك المجانية في مجموعة أخرى.",
-  "GroupBillingPanel.finePrint": "تُحتسب شهريًا لكل عضو. يمكنك الإلغاء في أي وقت، وتبقى لديك خطة {plan} حتى نهاية الفترة.",
+  "GroupBillingPanel.finePrint":
+    "تُحتسب شهريًا لكل عضو. يمكنك الإلغاء في أي وقت، وتبقى لديك خطة {plan} حتى نهاية الفترة.",
   "GroupBillingPanel.trialEnds": {
     "zero": "تنتهي التجربة خلال {count} يوم، في {date}.",
     "one": "تنتهي التجربة خلال يوم واحد، في {date}.",
     "two": "تنتهي التجربة خلال يومين، في {date}.",
     "few": "تنتهي التجربة خلال {count} أيام، في {date}.",
     "many": "تنتهي التجربة خلال {count} يومًا، في {date}.",
-    "other": "تنتهي التجربة خلال {count} يوم، في {date}."
+    "other": "تنتهي التجربة خلال {count} يوم، في {date}.",
   },
-  "GroupBillingPanel.trialThen": "بعد ذلك تدفع <group>{group}</group> {total} شهريًا ما لم تُلغِ الاشتراك.",
+  "GroupBillingPanel.trialThen":
+    "بعد ذلك تدفع <group>{group}</group> {total} شهريًا ما لم تُلغِ الاشتراك.",
   "GroupBillingPanel.seats": {
     "zero": "{total} شهريًا مقابل {count} عضو بسعر {price} لكل عضو، بمن فيهم المالك.",
     "one": "{total} شهريًا مقابل عضو واحد بسعر {price}، هو المالك.",
     "two": "{total} شهريًا مقابل عضوين بسعر {price} لكل عضو، بمن فيهما المالك.",
     "few": "{total} شهريًا مقابل {count} أعضاء بسعر {price} لكل عضو، بمن فيهم المالك.",
     "many": "{total} شهريًا مقابل {count} عضوًا بسعر {price} لكل عضو، بمن فيهم المالك.",
-    "other": "{total} شهريًا مقابل {count} عضو بسعر {price} لكل عضو، بمن فيهم المالك."
+    "other": "{total} شهريًا مقابل {count} عضو بسعر {price} لكل عضو، بمن فيهم المالك.",
   },
   "GroupBillingPanel.ending": "تنتهي خطة {plan} في {date}. ثم تنتقل المجموعة إلى الخطة المجانية.",
-  "GroupBillingPanel.endingNoDate": "تنتهي خطة {plan} في نهاية الفترة. ثم تنتقل المجموعة إلى الخطة المجانية.",
+  "GroupBillingPanel.endingNoDate":
+    "تنتهي خطة {plan} في نهاية الفترة. ثم تنتقل المجموعة إلى الخطة المجانية.",
   "GroupBillingPanel.renew": "تجديد خطة {plan}",
   "GroupBillingPanel.planHeading": "خطة <plan>{plan}</plan>",
   "GroupBillingPanel.confirming": "يؤكد Stripe خطتك. ستتحدّث هذه الصفحة تلقائيًا.",
@@ -627,7 +689,7 @@
     "two": "بدأت تجربة {plan} ليومين",
     "few": "بدأت تجربة {plan} لمدة {count} أيام",
     "many": "بدأت تجربة {plan} لمدة {count} يومًا",
-    "other": "بدأت تجربة {plan} لمدة {count} يوم"
+    "other": "بدأت تجربة {plan} لمدة {count} يوم",
   },
   "GroupBillingView.trialUntil": "«{group}» على خطة {plan} حتى {date}.",
   "GroupBillingView.paid": "أنت الآن على خطة {plan}",
@@ -651,9 +713,12 @@
   "NotificationsScreen.removed": "أُزلت من «<group>{group}</group>».",
   "NotificationsScreen.owned": "أصبحت مالك «<group>{group}</group>».",
   "NotificationsScreen.someGroup": "مجموعة",
-  "NotificationsScreen.reminderFirstNote": "احتفظ بالملاحظة التي كتبتها للتو. فهي موجودة في هذا المتصفح فقط حتى الآن. أضف طريقة لتسجيل الدخول لتفتحها على أي جهاز.",
-  "NotificationsScreen.reminderThirdVisit": "افتح هذا الحساب على أجهزتك الأخرى. حتى الآن لا يفتحه إلا هذا المتصفح. أضف طريقة لتسجيل الدخول لتصل إليه من أي مكان.",
-  "NotificationsScreen.reminderInvite": "أضف طريقة لتسجيل الدخول لتدعو الآخرين. يرى المدعوون من دعاهم، وليس لحساب الضيف طريقة لتسجيل الدخول بعد. أضف واحدة، ثم ادعُ من إعدادات المجموعة.",
+  "NotificationsScreen.reminderFirstNote":
+    "احتفظ بالملاحظة التي كتبتها للتو. فهي موجودة في هذا المتصفح فقط حتى الآن. أضف طريقة لتسجيل الدخول لتفتحها على أي جهاز.",
+  "NotificationsScreen.reminderThirdVisit":
+    "افتح هذا الحساب على أجهزتك الأخرى. حتى الآن لا يفتحه إلا هذا المتصفح. أضف طريقة لتسجيل الدخول لتصل إليه من أي مكان.",
+  "NotificationsScreen.reminderInvite":
+    "أضف طريقة لتسجيل الدخول لتدعو الآخرين. يرى المدعوون من دعاهم، وليس لحساب الضيف طريقة لتسجيل الدخول بعد. أضف واحدة، ثم ادعُ من إعدادات المجموعة.",
   "NotificationsScreen.reminderKeep": "احتفظ بحسابك. أضف طريقة لتسجيل الدخول للاحتفاظ به.",
   "NotificationsScreen.exportReady": "بياناتك جاهزة. نزّلها من ملفك الشخصي.",
   "NotificationsScreen.exportReadyUntil": "بياناتك جاهزة. نزّلها من ملفك الشخصي حتى {date}.",
@@ -665,7 +730,7 @@
     "two": "إشعاران غير مقروءين",
     "few": "{count} إشعارات غير مقروءة",
     "many": "{count} إشعارًا غير مقروء",
-    "other": "{count} إشعار غير مقروء"
+    "other": "{count} إشعار غير مقروء",
   },
   "NotificationsScreen.readAll": "تعليم الكل كمقروء",
   "NotificationsScreen.loading": "جارٍ التحميل…",
@@ -675,7 +740,8 @@
   "NotificationsScreen.unreadMark": "غير مقروء:",
   "OnboardingCard.failed": "تعذّر الحفظ. حاول مرة أخرى.",
   "OnboardingCard.emailTitle": "أكّد بريدك الإلكتروني",
-  "OnboardingCard.emailText": "أدخل الرمز الذي أرسلناه إليك، لتتمكن من إعادة تعيين كلمة مرورك إن فقدتها.",
+  "OnboardingCard.emailText":
+    "أدخل الرمز الذي أرسلناه إليك، لتتمكن من إعادة تعيين كلمة مرورك إن فقدتها.",
   "OnboardingCard.emailAction": "تأكيد البريد",
   "OnboardingCard.noteTitle": "اكتب ملاحظتك الأولى",
   "OnboardingCard.noteText": "ملاحظة الترحيب من عندنا. اكتب ملاحظتك الخاصة.",
@@ -690,13 +756,16 @@
   "OnboardingCard.twoFactorText": "يحمي تطبيق المصادقة حسابك إذا تسرّبت كلمة المرور.",
   "OnboardingCard.twoFactorAction": "اضبط الخطوتين",
   "OnboardingCard.tourNotesTitle": "الملاحظات",
-  "OnboardingCard.tourNotesText": "ما تكتبه أنت ومجموعتك. افتح ملاحظة لتعديلها، وتصل التغييرات إلى الجميع فورًا.",
+  "OnboardingCard.tourNotesText":
+    "ما تكتبه أنت ومجموعتك. افتح ملاحظة لتعديلها، وتصل التغييرات إلى الجميع فورًا.",
   "OnboardingCard.tourGroupsTitle": "المجموعات",
-  "OnboardingCard.tourGroupsText": "تعيش الملاحظات في مجموعة. أنشئ هنا مجموعات أخرى وادعُ الآخرين واختر أدوارهم.",
+  "OnboardingCard.tourGroupsText":
+    "تعيش الملاحظات في مجموعة. أنشئ هنا مجموعات أخرى وادعُ الآخرين واختر أدوارهم.",
   "OnboardingCard.tourNotificationsTitle": "الإشعارات",
   "OnboardingCard.tourNotificationsText": "ما حدث أثناء غيابك، مثل دعوة.",
   "OnboardingCard.tourProfileTitle": "الملف الشخصي",
-  "OnboardingCard.tourProfileText": "حسابك: اسمك وكلمة المرور وتسجيل الدخول بخطوتين والأجهزة والسمة وتسجيل الخروج.",
+  "OnboardingCard.tourProfileText":
+    "حسابك: اسمك وكلمة المرور وتسجيل الدخول بخطوتين والأجهزة والسمة وتسجيل الخروج.",
   "OnboardingCard.goTo": "انتقل إلى {place}",
   "OnboardingCard.goToHighlighted": "انتقل إلى العنصر المميَّز",
   "OnboardingCard.title": "لنبدأ",
@@ -718,7 +787,7 @@
     "two": "{range}، مقارنةً باليومين السابقين",
     "few": "{range}، مقارنةً بالأيام الـ{count} السابقة",
     "many": "{range}، مقارنةً بالـ{count} يومًا السابقة",
-    "other": "{range}، مقارنةً بالـ{count} يوم السابقة"
+    "other": "{range}، مقارنةً بالـ{count} يوم السابقة",
   },
   "OverviewScreen.title": "نظرة عامة",
   "OverviewScreen.customise": "تخصيص النظرة العامة",
@@ -733,7 +802,8 @@
   "OverviewScreen.allHidden": "كل الأدوات مخفية",
   "OverviewScreen.allHiddenText": "اختر الأدوات التي تريد رؤيتها.",
   "OverviewScreen.gridLabel": "نظرة عامة على {group}",
-  "OverviewScreen.customiseText": "اختر الأدوات التي تراها وترتيبها. التخطيط خاص بك ويتبعك إلى أجهزتك الأخرى.",
+  "OverviewScreen.customiseText":
+    "اختر الأدوات التي تراها وترتيبها. التخطيط خاص بك ويتبعك إلى أجهزتك الأخرى.",
   "OverviewScreen.widgets": "الأدوات",
   "OverviewScreen.customRange": "نطاق مخصص",
   "OverviewScreen.rangeTooLong": "اختر نطاقًا لا يتجاوز سنة.",
@@ -760,7 +830,7 @@
     "two": "تتسع خطتها لملاحظتين. تبقى كل ملاحظاتها قابلة للقراءة والتعديل.",
     "few": "تتسع خطتها لـ{count} ملاحظات. تبقى كل ملاحظاتها قابلة للقراءة والتعديل.",
     "many": "تتسع خطتها لـ{count} ملاحظة. تبقى كل ملاحظاتها قابلة للقراءة والتعديل.",
-    "other": "تتسع خطتها لـ{count} ملاحظة. تبقى كل ملاحظاتها قابلة للقراءة والتعديل."
+    "other": "تتسع خطتها لـ{count} ملاحظة. تبقى كل ملاحظاتها قابلة للقراءة والتعديل.",
   },
   "PlanRefusalNotice.membersText": {
     "zero": "تسمح خطتها بـ{count} عضو كحدّ أقصى.",
@@ -768,7 +838,7 @@
     "two": "تسمح خطتها بعضوين كحدّ أقصى.",
     "few": "تسمح خطتها بـ{count} أعضاء كحدّ أقصى.",
     "many": "تسمح خطتها بـ{count} عضوًا كحدّ أقصى.",
-    "other": "تسمح خطتها بـ{count} عضو كحدّ أقصى."
+    "other": "تسمح خطتها بـ{count} عضو كحدّ أقصى.",
   },
   "PlanRefusalNotice.filesText": {
     "zero": "تتسع خطتها لـ{count} ملف في كل الملاحظات. احذف ملفًا من أي ملاحظة لتوفير مساحة.",
@@ -776,11 +846,12 @@
     "two": "تتسع خطتها لملفين في كل الملاحظات. احذف ملفًا من أي ملاحظة لتوفير مساحة.",
     "few": "تتسع خطتها لـ{count} ملفات في كل الملاحظات. احذف ملفًا من أي ملاحظة لتوفير مساحة.",
     "many": "تتسع خطتها لـ{count} ملفًا في كل الملاحظات. احذف ملفًا من أي ملاحظة لتوفير مساحة.",
-    "other": "تتسع خطتها لـ{count} ملف في كل الملاحظات. احذف ملفًا من أي ملاحظة لتوفير مساحة."
+    "other": "تتسع خطتها لـ{count} ملف في كل الملاحظات. احذف ملفًا من أي ملاحظة لتوفير مساحة.",
   },
   "PlanRefusalNotice.storageText": "لا تتسع خطتها لمزيد من الملفات.",
   "PlanRefusalNotice.rolesTitle": "ترقية الأعضاء تتطلب خطة مدفوعة",
-  "PlanRefusalNotice.rolesText": "في خطة هذه المجموعة يمكن خفض دور العضو أو إزالته، لكن لا يمكن ترقيته.",
+  "PlanRefusalNotice.rolesText":
+    "في خطة هذه المجموعة يمكن خفض دور العضو أو إزالته، لكن لا يمكن ترقيته.",
   "PlanRefusalNotice.openBilling": "افتح الخطة والفوترة",
   "PlanRefusalNotice.askOwner": "اطلب من مالك المجموعة ترقية الخطة.",
   "GuestProfile.accountType": "نوع الحساب",
@@ -791,21 +862,26 @@
   "GuestProfile.danger": "منطقة الخطر",
   "GuestProfile.deleteSummary": "يحذف حساب الضيف هذا وكل ما فيه، فورًا.",
   "GuestProfile.deleteTitle": "حذف حساب الضيف هذا؟",
-  "GuestProfile.deleteText": "تُحذف ملاحظاته ومجموعاته الآن ولا يمكن لأحد استعادتها: حساب الضيف لا يملك طريقة تسجيل دخول لاستعادته. صدّر مجموعة أولًا لتحتفظ بنسخة.",
+  "GuestProfile.deleteText":
+    "تُحذف ملاحظاته ومجموعاته الآن ولا يمكن لأحد استعادتها: حساب الضيف لا يملك طريقة تسجيل دخول لاستعادته. صدّر مجموعة أولًا لتحتفظ بنسخة.",
   "GuestProfile.typeWord": "اكتب «{word}» للتأكيد",
   "GuestProfile.deleteForGood": "حذف نهائي",
   "GuestProfile.inviteTitle": "الدعوة تحتاج إلى طريقة لتسجيل الدخول",
-  "GuestProfile.inviteText": "يرى المدعوون من دعاهم، وقد يختفي حساب الضيف مع بيانات هذا المتصفح. أضف طريقة لتسجيل الدخول أولًا.",
+  "GuestProfile.inviteText":
+    "يرى المدعوون من دعاهم، وقد يختفي حساب الضيف مع بيانات هذا المتصفح. أضف طريقة لتسجيل الدخول أولًا.",
   "GuestProfile.pushTitle": "الإشعارات على هذا الجهاز تحتاج إلى طريقة لتسجيل الدخول",
   "GuestProfile.pushText": "أضف طريقة، ثم فعّلها هنا.",
   "GuestProfile.apiTokenTitle": "رموز API تحتاج إلى طريقة لتسجيل الدخول",
-  "GuestProfile.apiTokenText": "يفتح الرمز هذا الحساب من خارج المتصفح. أضف طريقة لتسجيل الدخول أولًا.",
+  "GuestProfile.apiTokenText":
+    "يفتح الرمز هذا الحساب من خارج المتصفح. أضف طريقة لتسجيل الدخول أولًا.",
   "GuestProfile.uploadTitle": "الاستيراد يحتاج إلى طريقة لتسجيل الدخول",
   "GuestProfile.uploadText": "أضف طريقة إلى حسابك أولًا، ثم استورد الملف.",
   "GuestProfile.billingTitle": "الخطط المدفوعة تحتاج إلى طريقة لتسجيل الدخول",
-  "GuestProfile.billingText": "تُحتسب الخطة على حساب يمكنك تسجيل الدخول إليه مجددًا. أضف طريقة لتسجيل الدخول أولًا.",
+  "GuestProfile.billingText":
+    "تُحتسب الخطة على حساب يمكنك تسجيل الدخول إليه مجددًا. أضف طريقة لتسجيل الدخول أولًا.",
   "GuestProfile.telegramTitle": "Telegram يحتاج إلى طريقة لتسجيل الدخول",
-  "GuestProfile.telegramText": "تتصرف المحادثة المربوطة نيابةً عنك من خارج المتصفح. أضف طريقة لتسجيل الدخول أولًا.",
+  "GuestProfile.telegramText":
+    "تتصرف المحادثة المربوطة نيابةً عنك من خارج المتصفح. أضف طريقة لتسجيل الدخول أولًا.",
   "GuestProfile.otherTitle": "هذا يحتاج إلى طريقة لتسجيل الدخول",
   "GuestProfile.otherText": "هذا يحتاج إلى طريقة لتسجيل الدخول. أضف طريقة إلى حسابك أولًا.",
   "GuestProfile.notNow": "ليس الآن",
@@ -823,24 +899,33 @@
   "GuestScreens.openApp": "افتح التطبيق",
   "GuestScreens.off": "أنشئ حسابًا لتبدأ",
   "GuestScreens.offText": "تجربة التطبيق دون حساب متوقفة هنا.",
-  "GuestScreens.terms": "بالمتابعة فإنك توافق على <terms>الشروط</terms> و<privacy>إشعار الخصوصية</privacy>.",
+  "GuestScreens.terms":
+    "بالمتابعة فإنك توافق على <terms>الشروط</terms> و<privacy>إشعار الخصوصية</privacy>.",
   "GuestScreens.tryNow": "جرّبه الآن",
   "GuestScreens.tryLine": "لا حاجة إلى حساب. أضف طريقة لتسجيل الدخول لاحقًا لتحتفظ بعملك.",
   "GuestScreens.noAccount": "ليس لديك حساب بعد؟",
   "GuestScreens.tryWithout": "جرّبه دون حساب",
-  "GuestScreens.tryFromSignIn": "يفتح هذا حسابًا جديدًا فارغًا في هذا المتصفح. ولا يسجّل دخولك إلى حساب موجود.",
-  "GuestScreens.tryFromSignInDemo": "يفتح هذا حسابًا جديدًا ببيانات تجريبية. ولا يسجّل دخولك إلى حساب موجود.",
-  "GuestScreens.demoWipe": "هذا حساب ضيف في عرض تجريبي عام. يُمسح كل شيء هنا كل ليلة عند {time}، مع طريقة لتسجيل الدخول أو بدونها. أضف طريقة لترى كيف يعمل الاحتفاظ بالحساب.",
-  "GuestScreens.banner": "يعيش هذا الحساب في هذا المتصفح فقط. إذا مُسحت بيانات المتصفح يضيع الحساب. أضف طريقة لتسجيل الدخول للاحتفاظ به.",
+  "GuestScreens.tryFromSignIn":
+    "يفتح هذا حسابًا جديدًا فارغًا في هذا المتصفح. ولا يسجّل دخولك إلى حساب موجود.",
+  "GuestScreens.tryFromSignInDemo":
+    "يفتح هذا حسابًا جديدًا ببيانات تجريبية. ولا يسجّل دخولك إلى حساب موجود.",
+  "GuestScreens.demoWipe":
+    "هذا حساب ضيف في عرض تجريبي عام. يُمسح كل شيء هنا كل ليلة عند {time}، مع طريقة لتسجيل الدخول أو بدونها. أضف طريقة لترى كيف يعمل الاحتفاظ بالحساب.",
+  "GuestScreens.banner":
+    "يعيش هذا الحساب في هذا المتصفح فقط. إذا مُسحت بيانات المتصفح يضيع الحساب. أضف طريقة لتسجيل الدخول للاحتفاظ به.",
   "GuestScreens.hide": "إخفاء هذه الرسالة",
-  "GuestScreens.keptPasskey": "يمكنك الآن تسجيل الدخول بمفتاح مرور على أي جهاز. لم يتغير شيء في حسابك.",
-  "GuestScreens.keptEmail": "يمكنك الآن تسجيل الدخول ببريدك الإلكتروني على أي جهاز. لم يتغير شيء في حسابك.",
-  "GuestScreens.keptProvider": "يمكنك الآن تسجيل الدخول عبر {provider} على أي جهاز. لم يتغير شيء في حسابك.",
+  "GuestScreens.keptPasskey":
+    "يمكنك الآن تسجيل الدخول بمفتاح مرور على أي جهاز. لم يتغير شيء في حسابك.",
+  "GuestScreens.keptEmail":
+    "يمكنك الآن تسجيل الدخول ببريدك الإلكتروني على أي جهاز. لم يتغير شيء في حسابك.",
+  "GuestScreens.keptProvider":
+    "يمكنك الآن تسجيل الدخول عبر {provider} على أي جهاز. لم يتغير شيء في حسابك.",
   "GuestScreens.added": "تمت إضافة طريقة تسجيل الدخول",
   "GuestScreens.done": "تم",
   "GuestScreens.isKept": "حسابك محفوظ",
   "GuestScreens.isKeptText": "لديه طريقة لتسجيل الدخول، لذا يُفتح على أي جهاز.",
-  "GuestScreens.keepText": "أضف طريقة لتسجيل الدخول لتفتح هذا الحساب على أي جهاز. تبقى ملاحظاتك ومجموعاتك كما هي.",
+  "GuestScreens.keepText":
+    "أضف طريقة لتسجيل الدخول لتفتح هذا الحساب على أي جهاز. تبقى ملاحظاتك ومجموعاتك كما هي.",
   "GuestScreens.ways": "طرق تسجيل الدخول",
   "GuestScreens.openingProvider": "جارٍ فتح {provider}…",
   "GuestScreens.addPasskey": "أضف مفتاح مرور",
@@ -852,21 +937,27 @@
     "two": "حرفان على الأقل.",
     "few": "{count} أحرف على الأقل.",
     "many": "{count} حرفًا على الأقل.",
-    "other": "{count} حرف على الأقل."
+    "other": "{count} حرف على الأقل.",
   },
   "GuestScreens.saving": "جارٍ الحفظ…",
   "GuestScreens.takenProvider": "{provider} مربوط بالفعل بحساب آخر.",
   "GuestScreens.takenAddress": "لهذا العنوان حساب بالفعل.",
   "GuestScreens.takenEmail": "للعنوان <email>{email}</email> حساب بالفعل.",
   "GuestScreens.takenRest": "لم يتغير حساب الضيف. اختر ما يحدث لما أنشأته كضيف.",
-  "GuestScreens.moveOne": "سجّل الدخول إلى ذلك الحساب وانقل <name>{name}</name> إليه. ثم يُحذف حساب الضيف.",
+  "GuestScreens.moveOne":
+    "سجّل الدخول إلى ذلك الحساب وانقل <name>{name}</name> إليه. ثم يُحذف حساب الضيف.",
   "GuestScreens.moveMany": {
-    "zero": "سجّل الدخول إلى ذلك الحساب وانقل إليه {count} مجموعة من حساب الضيف هذا. ثم يُحذف حساب الضيف.",
-    "one": "سجّل الدخول إلى ذلك الحساب وانقل إليه مجموعة واحدة من حساب الضيف هذا. ثم يُحذف حساب الضيف.",
+    "zero":
+      "سجّل الدخول إلى ذلك الحساب وانقل إليه {count} مجموعة من حساب الضيف هذا. ثم يُحذف حساب الضيف.",
+    "one":
+      "سجّل الدخول إلى ذلك الحساب وانقل إليه مجموعة واحدة من حساب الضيف هذا. ثم يُحذف حساب الضيف.",
     "two": "سجّل الدخول إلى ذلك الحساب وانقل إليه مجموعتين من حساب الضيف هذا. ثم يُحذف حساب الضيف.",
-    "few": "سجّل الدخول إلى ذلك الحساب وانقل إليه {count} مجموعات من حساب الضيف هذا. ثم يُحذف حساب الضيف.",
-    "many": "سجّل الدخول إلى ذلك الحساب وانقل إليه {count} مجموعة من حساب الضيف هذا. ثم يُحذف حساب الضيف.",
-    "other": "سجّل الدخول إلى ذلك الحساب وانقل إليه {count} مجموعة من حساب الضيف هذا. ثم يُحذف حساب الضيف."
+    "few":
+      "سجّل الدخول إلى ذلك الحساب وانقل إليه {count} مجموعات من حساب الضيف هذا. ثم يُحذف حساب الضيف.",
+    "many":
+      "سجّل الدخول إلى ذلك الحساب وانقل إليه {count} مجموعة من حساب الضيف هذا. ثم يُحذف حساب الضيف.",
+    "other":
+      "سجّل الدخول إلى ذلك الحساب وانقل إليه {count} مجموعة من حساب الضيف هذا. ثم يُحذف حساب الضيف.",
   },
   "GuestScreens.checking": "جارٍ التحقق…",
   "GuestScreens.loading": "جارٍ التحميل…",
@@ -891,7 +982,7 @@
     "two": "ملاحظتان",
     "few": "{count} ملاحظات",
     "many": "{count} ملاحظة",
-    "other": "{count} ملاحظة"
+    "other": "{count} ملاحظة",
   },
   "GuestScreens.groups": {
     "zero": "{count} مجموعة",
@@ -899,15 +990,19 @@
     "two": "مجموعتان",
     "few": "{count} مجموعات",
     "many": "{count} مجموعة",
-    "other": "{count} مجموعة"
+    "other": "{count} مجموعة",
   },
-  "GuestScreens.confirmEmail": "تُحذف محتوياته ({notes} و{groups})، وتُسجَّل دخولك إلى <email>{email}</email>. لا يمكن التراجع عن ذلك.",
-  "GuestScreens.confirmAccount": "تُحذف محتوياته ({notes} و{groups})، وتُسجَّل دخولك إلى ذلك الحساب. لا يمكن التراجع عن ذلك.",
+  "GuestScreens.confirmEmail":
+    "تُحذف محتوياته ({notes} و{groups})، وتُسجَّل دخولك إلى <email>{email}</email>. لا يمكن التراجع عن ذلك.",
+  "GuestScreens.confirmAccount":
+    "تُحذف محتوياته ({notes} و{groups})، وتُسجَّل دخولك إلى ذلك الحساب. لا يمكن التراجع عن ذلك.",
   "GuestScreens.signOutTitle": "تسجيل الخروج من حساب ضيف؟",
   "GuestScreens.signOutAnyway": "سجّل الخروج على أي حال",
-  "GuestScreens.signOutText": "لا يملك هذا الحساب طريقة لتسجيل الدخول، فلن تتمكن من العودة إليه. سيضيع عليك كل ما فيه.",
+  "GuestScreens.signOutText":
+    "لا يملك هذا الحساب طريقة لتسجيل الدخول، فلن تتمكن من العودة إليه. سيضيع عليك كل ما فيه.",
   "GuestScreens.offline": "أنت غير متصل. اتصل وحاول مرة أخرى.",
-  "GuestScreens.providerFailed": "لم يكتمل {provider}. لم يتغير حسابك. حاول مرة أخرى أو اختر طريقة أخرى.",
+  "GuestScreens.providerFailed":
+    "لم يكتمل {provider}. لم يتغير حسابك. حاول مرة أخرى أو اختر طريقة أخرى.",
   "GuestScreens.noPasskey": "لم يُضف أي مفتاح مرور. ما زال حسابك حساب ضيف.",
   "GuestScreens.didNotWork": "لم ينجح ذلك. حاول مرة أخرى.",
   "OAuthNotice.failed": "لم ينجح تسجيل الدخول هذا. حاول مرة أخرى.",
@@ -919,14 +1014,21 @@
   "OAuthNotice.guestTaken": "طريقة تسجيل الدخول هذه تخص حسابًا آخر.",
   "PasswordResetScreen.forgotFailed": "تعذّر إرسال الرابط",
   "PasswordResetScreen.resetFailed": "تعذّر تغيير كلمة المرور",
-  "PasswordResetScreen.sent": "إن كان هناك حساب يستخدم هذا العنوان، فرابط إعادة تعيين كلمة مروره في طريقه إليك.",
+  "PasswordResetScreen.sent":
+    "إن كان هناك حساب يستخدم هذا العنوان، فرابط إعادة تعيين كلمة مروره في طريقه إليك.",
   "PasswordResetScreen.forgotDescription": {
-    "zero": "أدخل البريد الإلكتروني الذي سجّلت به. سنرسل إليك رابطًا لاختيار كلمة مرور جديدة؛ يعمل مرة واحدة لمدة {count} دقيقة.",
-    "one": "أدخل البريد الإلكتروني الذي سجّلت به. سنرسل إليك رابطًا لاختيار كلمة مرور جديدة؛ يعمل مرة واحدة لمدة دقيقة واحدة.",
-    "two": "أدخل البريد الإلكتروني الذي سجّلت به. سنرسل إليك رابطًا لاختيار كلمة مرور جديدة؛ يعمل مرة واحدة لمدة دقيقتين.",
-    "few": "أدخل البريد الإلكتروني الذي سجّلت به. سنرسل إليك رابطًا لاختيار كلمة مرور جديدة؛ يعمل مرة واحدة لمدة {count} دقائق.",
-    "many": "أدخل البريد الإلكتروني الذي سجّلت به. سنرسل إليك رابطًا لاختيار كلمة مرور جديدة؛ يعمل مرة واحدة لمدة {count} دقيقة.",
-    "other": "أدخل البريد الإلكتروني الذي سجّلت به. سنرسل إليك رابطًا لاختيار كلمة مرور جديدة؛ يعمل مرة واحدة لمدة {count} دقيقة."
+    "zero":
+      "أدخل البريد الإلكتروني الذي سجّلت به. سنرسل إليك رابطًا لاختيار كلمة مرور جديدة؛ يعمل مرة واحدة لمدة {count} دقيقة.",
+    "one":
+      "أدخل البريد الإلكتروني الذي سجّلت به. سنرسل إليك رابطًا لاختيار كلمة مرور جديدة؛ يعمل مرة واحدة لمدة دقيقة واحدة.",
+    "two":
+      "أدخل البريد الإلكتروني الذي سجّلت به. سنرسل إليك رابطًا لاختيار كلمة مرور جديدة؛ يعمل مرة واحدة لمدة دقيقتين.",
+    "few":
+      "أدخل البريد الإلكتروني الذي سجّلت به. سنرسل إليك رابطًا لاختيار كلمة مرور جديدة؛ يعمل مرة واحدة لمدة {count} دقائق.",
+    "many":
+      "أدخل البريد الإلكتروني الذي سجّلت به. سنرسل إليك رابطًا لاختيار كلمة مرور جديدة؛ يعمل مرة واحدة لمدة {count} دقيقة.",
+    "other":
+      "أدخل البريد الإلكتروني الذي سجّلت به. سنرسل إليك رابطًا لاختيار كلمة مرور جديدة؛ يعمل مرة واحدة لمدة {count} دقيقة.",
   },
   "PasswordResetScreen.remembered": "تذكّرتها؟ <link>العودة إلى تسجيل الدخول</link>",
   "PasswordResetScreen.send": "أرسل الرابط",
@@ -943,7 +1045,8 @@
   "PasswordResetScreen.save": "احفظ كلمة المرور الجديدة",
   "MoveNote.title": "النقل إلى مجموعة",
   "MoveNote.cancel": "إلغاء",
-  "MoveNote.question": "اختر المجموعة التي تُنقل إليها «<title>{title}</title>». سيراها كل أعضاء تلك المجموعة.",
+  "MoveNote.question":
+    "اختر المجموعة التي تُنقل إليها «<title>{title}</title>». سيراها كل أعضاء تلك المجموعة.",
   "NewNote.title": "ملاحظة جديدة",
   "NewNote.close": "إغلاق",
   "NewNote.titleLabel": "العنوان",
@@ -975,7 +1078,7 @@
     "two": "تستخدم <group>{group}</group> {files} من ملفين و{bytes} من {maxBytes}.",
     "few": "تستخدم <group>{group}</group> {files} من {count} ملفات و{bytes} من {maxBytes}.",
     "many": "تستخدم <group>{group}</group> {files} من {count} ملفًا و{bytes} من {maxBytes}.",
-    "other": "تستخدم <group>{group}</group> {files} من {count} ملف و{bytes} من {maxBytes}."
+    "other": "تستخدم <group>{group}</group> {files} من {count} ملف و{bytes} من {maxBytes}.",
   },
   "NoteAttachments.quotaNoByteCap": {
     "zero": "تستخدم <group>{group}</group> {files} من {count} ملف و{bytes}.",
@@ -983,7 +1086,7 @@
     "two": "تستخدم <group>{group}</group> {files} من ملفين و{bytes}.",
     "few": "تستخدم <group>{group}</group> {files} من {count} ملفات و{bytes}.",
     "many": "تستخدم <group>{group}</group> {files} من {count} ملفًا و{bytes}.",
-    "other": "تستخدم <group>{group}</group> {files} من {count} ملف و{bytes}."
+    "other": "تستخدم <group>{group}</group> {files} من {count} ملف و{bytes}.",
   },
   "NoteAttachments.quotaNoFileCap": {
     "zero": "لا تستخدم <group>{group}</group> أي ملف، وتستخدم {bytes} من {maxBytes}.",
@@ -991,7 +1094,7 @@
     "two": "تستخدم <group>{group}</group> ملفين و{bytes} من {maxBytes}.",
     "few": "تستخدم <group>{group}</group> {count} ملفات و{bytes} من {maxBytes}.",
     "many": "تستخدم <group>{group}</group> {count} ملفًا و{bytes} من {maxBytes}.",
-    "other": "تستخدم <group>{group}</group> {count} ملف و{bytes} من {maxBytes}."
+    "other": "تستخدم <group>{group}</group> {count} ملف و{bytes} من {maxBytes}.",
   },
   "NoteAttachments.quotaNoCaps": {
     "zero": "لا تستخدم <group>{group}</group> أي ملف، وتستخدم {bytes}.",
@@ -999,7 +1102,7 @@
     "two": "تستخدم <group>{group}</group> ملفين و{bytes}.",
     "few": "تستخدم <group>{group}</group> {count} ملفات و{bytes}.",
     "many": "تستخدم <group>{group}</group> {count} ملفًا و{bytes}.",
-    "other": "تستخدم <group>{group}</group> {count} ملف و{bytes}."
+    "other": "تستخدم <group>{group}</group> {count} ملف و{bytes}.",
   },
   "NoteAttachments.removeTitle": "إزالة هذا الملف؟",
   "NoteAttachments.removeMessage": "ستُزال «{name}» من هذه الملاحظة لكل أعضاء {group}.",
@@ -1008,11 +1111,13 @@
   "NoteEditor.title": "ملاحظة",
   "NoteEditor.back": "العودة إلى الملاحظات",
   "NoteEditor.elsewhereTitle": "ملاحظة في مجموعة أخرى",
-  "NoteEditor.elsewhere": "هذه الملاحظة في <group>{group}</group>، وهي مجموعة أخرى من مجموعاتك. أنت الآن في <current>{current}</current>.",
+  "NoteEditor.elsewhere":
+    "هذه الملاحظة في <group>{group}</group>، وهي مجموعة أخرى من مجموعاتك. أنت الآن في <current>{current}</current>.",
   "NoteEditor.switching": "جارٍ التبديل…",
   "NoteEditor.switchTo": "التبديل إلى <group>{group}</group>",
   "NoteEditor.notFoundTitle": "هذه الملاحظة غير موجودة.",
-  "NoteEditor.notFound": "لا توجد ملاحظة كهذه في <group>{group}</group>. ربما حُذفت، أو ربما تكون في مجموعة أخرى من مجموعاتك: انتقل إلى تلك المجموعة ثم افتحها من ملاحظاتها.",
+  "NoteEditor.notFound":
+    "لا توجد ملاحظة كهذه في <group>{group}</group>. ربما حُذفت، أو ربما تكون في مجموعة أخرى من مجموعاتك: انتقل إلى تلك المجموعة ثم افتحها من ملاحظاتها.",
   "NoteEditor.loading": "جارٍ تحميل الملاحظة…",
   "NoteEditor.createdBy": "أنشأها <name>{name}</name>، <date>{date}</date>",
   "NoteEditor.created": "أُنشئت <date>{date}</date>",
@@ -1067,7 +1172,7 @@
     "two": "ملاحظتان",
     "few": "{count} ملاحظات",
     "many": "{count} ملاحظة",
-    "other": "{count} ملاحظة"
+    "other": "{count} ملاحظة",
   },
   "Notes.deleted": "حُذفت <date>{date}</date>",
   "Notes.restoreNote": "استعادة «{title}»",
@@ -1090,7 +1195,7 @@
     "two": "تبقى الملاحظات المحذوفة هنا يومين، ثم تُزال نهائيًا.",
     "few": "تبقى الملاحظات المحذوفة هنا {count} أيام، ثم تُزال نهائيًا.",
     "many": "تبقى الملاحظات المحذوفة هنا {count} يومًا، ثم تُزال نهائيًا.",
-    "other": "تبقى الملاحظات المحذوفة هنا {count} يوم، ثم تُزال نهائيًا."
+    "other": "تبقى الملاحظات المحذوفة هنا {count} يوم، ثم تُزال نهائيًا.",
   },
   "Notes.backToNotes": "العودة إلى الملاحظات",
   "Notes.deletedLoading": "جارٍ تحميل الملاحظات المحذوفة…",
@@ -1105,7 +1210,7 @@
     "two": "حُدّدت ملاحظتان",
     "few": "حُدّدت {count} ملاحظات",
     "many": "حُدّدت {count} ملاحظة",
-    "other": "حُدّدت {count} ملاحظة"
+    "other": "حُدّدت {count} ملاحظة",
   },
   "Notes.cancelSelect": "إلغاء",
   "Notes.moveTo": "النقل إلى مجموعة",
@@ -1150,7 +1255,7 @@
     "two": "نُقلت الملاحظتان",
     "few": "نُقلت الملاحظات",
     "many": "نُقلت الملاحظات",
-    "other": "نُقلت الملاحظات"
+    "other": "نُقلت الملاحظات",
   },
   "NoteToasts.moved": {
     "zero": "لم تُنقل أي ملاحظة إلى {group}.",
@@ -1158,7 +1263,7 @@
     "two": "نُقلت ملاحظتان إلى {group}.",
     "few": "نُقلت {count} ملاحظات إلى {group}.",
     "many": "نُقلت {count} ملاحظة إلى {group}.",
-    "other": "نُقلت {count} ملاحظة إلى {group}."
+    "other": "نُقلت {count} ملاحظة إلى {group}.",
   },
   "NoteToasts.movedElsewhere": {
     "zero": "لم تُنقل أي ملاحظة إلى المجموعة الأخرى.",
@@ -1166,7 +1271,7 @@
     "two": "نُقلت ملاحظتان إلى المجموعة الأخرى.",
     "few": "نُقلت {count} ملاحظات إلى المجموعة الأخرى.",
     "many": "نُقلت {count} ملاحظة إلى المجموعة الأخرى.",
-    "other": "نُقلت {count} ملاحظة إلى المجموعة الأخرى."
+    "other": "نُقلت {count} ملاحظة إلى المجموعة الأخرى.",
   },
   "NoteWidgets.previousPeriod": {
     "zero": "الفترة السابقة",
@@ -1174,7 +1279,7 @@
     "two": "اليومين السابقين",
     "few": "الأيام الـ{count} السابقة",
     "many": "الـ{count} يومًا السابقة",
-    "other": "الـ{count} يوم السابقة"
+    "other": "الـ{count} يوم السابقة",
   },
   "NoteWidgets.totalTitle": "الملاحظات",
   "NoteWidgets.totalLoading": "جارٍ تحميل عدد الملاحظات",
@@ -1199,7 +1304,7 @@
     "two": "اليومان السابقان",
     "few": "الأيام الـ{count} السابقة",
     "many": "الـ{count} يومًا السابقة",
-    "other": "الـ{count} يوم السابقة"
+    "other": "الـ{count} يوم السابقة",
   },
   "NoteWidgets.seriesLabel": "الملاحظات عبر الزمن. {summary}.",
   "NoteWidgets.seriesDay": "اليوم",
@@ -1215,7 +1320,7 @@
     "two": "ملاحظتان تنتظران قرارك بشأن وسم أدناه. لم يضع شيء.",
     "few": "{count} ملاحظات تنتظر قرارك بشأن وسم أدناه. لم يضع شيء.",
     "many": "{count} ملاحظة تنتظر قرارك بشأن وسم أدناه. لم يضع شيء.",
-    "other": "{count} ملاحظة تنتظر قرارك بشأن وسم أدناه. لم يضع شيء."
+    "other": "{count} ملاحظة تنتظر قرارك بشأن وسم أدناه. لم يضع شيء.",
   },
   "OfflineStatus.mine": "نسختك",
   "OfflineStatus.noteGone": "لم تعد الملاحظة في هذه المجموعة.",
@@ -1229,7 +1334,7 @@
     "two": "تعذّر حفظ وسم أنشأته دون اتصال، فأُزيل من ملاحظتين. حُفظت الملاحظتان بدونه.",
     "few": "تعذّر حفظ وسم أنشأته دون اتصال، فأُزيل من {count} ملاحظات. حُفظت الملاحظات بدونه.",
     "many": "تعذّر حفظ وسم أنشأته دون اتصال، فأُزيل من {count} ملاحظة. حُفظت الملاحظات بدونه.",
-    "other": "تعذّر حفظ وسم أنشأته دون اتصال، فأُزيل من {count} ملاحظة. حُفظت الملاحظات بدونه."
+    "other": "تعذّر حفظ وسم أنشأته دون اتصال، فأُزيل من {count} ملاحظة. حُفظت الملاحظات بدونه.",
   },
   "OfflineStatus.theirs": "نسخة الخادم",
   "OfflineStatus.untitledNote": "ملاحظة بلا عنوان",
@@ -1267,7 +1372,8 @@
   "Preferences.failedOffline": "أنت غير متصل، لذا لم يُحفظ شيء. غيّره مرة أخرى عندما تعود متصلًا.",
   "Preferences.failedInvalid": "اختر كل قيمة من قائمتها.",
   "Preferences.updatedElsewhere": "حُدّثت التفضيلات من جهاز آخر.",
-  "SeatPriceConfirm.hint": "يضيف كل شخص ينضم {price} شهريًا: مع عضو إضافي تدفع المجموعة {next} بدلًا من {now}. يحتسب المزوّد الفرق عن بقية هذه الفترة في الفاتورة التالية.",
+  "SeatPriceConfirm.hint":
+    "يضيف كل شخص ينضم {price} شهريًا: مع عضو إضافي تدفع المجموعة {next} بدلًا من {now}. يحتسب المزوّد الفرق عن بقية هذه الفترة في الفاتورة التالية.",
   "SeatPriceConfirm.accept": "أوافق على السعر الأعلى لكل شخص ينضم",
   "ProfileAccount.name": "الاسم",
   "ProfileAccount.notSet": "غير محدد",
@@ -1284,7 +1390,8 @@
   "ProfileAccount.none": "لا يوجد.",
   "ProfileAccount.noneProvider": "لا يوجد. لم يشارك {provider} عنوانًا مؤكَّدًا.",
   "ProfileExport.asking": "جارٍ الطلب…",
-  "ProfileExport.never": "ملف ZIP بملفك الشخصي ومجموعاتك وملاحظاتك، في ملفات JSON وCSV. يستغرق بضع دقائق، وسنراسلك بالبريد عندما يجهز.",
+  "ProfileExport.never":
+    "ملف ZIP بملفك الشخصي ومجموعاتك وملاحظاتك، في ملفات JSON وCSV. يستغرق بضع دقائق، وسنراسلك بالبريد عندما يجهز.",
   "ProfileExport.download": "تنزيل بياناتي",
   "ProfileExport.preparing": "جارٍ تجهيز ملفك. سنراسلك بالبريد ونرسل إشعارًا عندما يجهز.",
   "ProfileExport.ready": "<hidden>ملفك جاهز. </hidden>جاهز: {size}، حتى <day></day>.",
@@ -1328,9 +1435,11 @@
   "ProfileScreen.profileFailed": "تعذّر حفظ اسمك. تحقّق من اتصالك وحاول مرة أخرى.",
   "ProfileScreen.passwordFailed": "تعذّر تغيير كلمة مرورك. تحقّق من اتصالك وحاول مرة أخرى.",
   "ProfileScreen.passwordSetFailed": "تعذّر تعيين كلمة مرورك. تحقّق من اتصالك وحاول مرة أخرى.",
-  "ProfileScreen.totpFinishFailed": "تعذّر تشغيل التحقق بخطوتين. تحقّق من الرمز في تطبيقك وحاول مرة أخرى.",
+  "ProfileScreen.totpFinishFailed":
+    "تعذّر تشغيل التحقق بخطوتين. تحقّق من الرمز في تطبيقك وحاول مرة أخرى.",
   "ProfileScreen.totpDisableFailed": "تعذّر إيقاف التحقق بخطوتين. تحقّق من اتصالك وحاول مرة أخرى.",
-  "ProfileScreen.pushFailed": "تعذّرت إضافة هذا الجهاز. اسمح بالإشعارات لهذا الموقع في متصفحك، ثم حاول مرة أخرى.",
+  "ProfileScreen.pushFailed":
+    "تعذّرت إضافة هذا الجهاز. اسمح بالإشعارات لهذا الموقع في متصفحك، ثم حاول مرة أخرى.",
   "ProfileScreen.pushRemoveFailed": "تعذّرت إزالة هذا الجهاز. تحقّق من اتصالك وحاول مرة أخرى.",
   "ProfileScreen.account": "الحساب",
   "ProfileScreen.accountText": "صورتك واسمك وبريدك الإلكتروني ونسخة من بياناتك.",
@@ -1343,7 +1452,8 @@
   "ProfileScreen.notifications": "الإشعارات",
   "ProfileScreen.notificationsText": "أين تصلك تنبيهات عندما يتغير شيء في مجموعاتك.",
   "ProfileScreen.apiTokens": "رموز API",
-  "ProfileScreen.apiTokensText": "اسمح لبرنامج نصي أو خدمة أخرى باستخدام إحدى مجموعاتك دون كلمة مرورك.",
+  "ProfileScreen.apiTokensText":
+    "اسمح لبرنامج نصي أو خدمة أخرى باستخدام إحدى مجموعاتك دون كلمة مرورك.",
   "ProfileScreen.dangerZone": "حذف الحساب",
   "ProfileScreen.dangerZoneText": "احذف حسابك وكل ما يمكنك أنت فقط رؤيته.",
   "ProfileScreen.codeTitle": "أدخل رمزك لمرة واحدة",
@@ -1363,14 +1473,15 @@
     "two": "مفتاحَي مرور",
     "few": "مفاتيح مرور",
     "many": "مفاتيح مرور",
-    "other": "مفاتيح مرور"
+    "other": "مفاتيح مرور",
   },
   "ProfileSecurity.setPasswordHidden": "تعيين<hidden> كلمة المرور</hidden>",
   "ProfileSecurity.changePasswordHidden": "تغيير<hidden> كلمة المرور</hidden>",
   "ProfileSecurity.noPassword": "لا توجد. تسجّل الدخول عبر {names}.",
   "ProfileSecurity.passwordAsked": "تُطلب عند تسجيل الدخول على جهاز جديد.",
   "ProfileSecurity.twoFactor": "التحقق بخطوتين",
-  "ProfileSecurity.twoFactorText": "يطلب تسجيل الدخول أيضًا رمزًا من تطبيق مصادقة، فلا تكفي كلمة مرور مسرّبة.",
+  "ProfileSecurity.twoFactorText":
+    "يطلب تسجيل الدخول أيضًا رمزًا من تطبيق مصادقة، فلا تكفي كلمة مرور مسرّبة.",
   "ProfileSecurity.app": "تطبيق المصادقة",
   "ProfileSecurity.on": "مفعّل",
   "ProfileSecurity.onText": "يطلب تسجيل الدخول رمزًا، إلا إذا استخدمت مفتاح مرور.",
@@ -1384,8 +1495,10 @@
   "ProfileSecurity.updating": "جارٍ التحديث…",
   "ProfileSecurity.setButton": "تعيين كلمة المرور",
   "ProfileSecurity.turnOnTitle": "تشغيل التحقق بخطوتين",
-  "ProfileSecurity.turnOnText": "بعد تشغيله، يطلب تسجيل الدخول أيضًا رمزًا من تطبيق المصادقة، ويُسجَّل خروج أجهزتك الأخرى.",
-  "ProfileSecurity.turnOnPassword": "بعد تشغيله، يطلب تسجيل الدخول أيضًا رمزًا من تطبيق المصادقة، ويُسجَّل خروج أجهزتك الأخرى. أدخل كلمة مرورك لتأكيد أنك أنت.",
+  "ProfileSecurity.turnOnText":
+    "بعد تشغيله، يطلب تسجيل الدخول أيضًا رمزًا من تطبيق المصادقة، ويُسجَّل خروج أجهزتك الأخرى.",
+  "ProfileSecurity.turnOnPassword":
+    "بعد تشغيله، يطلب تسجيل الدخول أيضًا رمزًا من تطبيق المصادقة، ويُسجَّل خروج أجهزتك الأخرى. أدخل كلمة مرورك لتأكيد أنك أنت.",
   "ProfileSecurity.preparing": "جارٍ التحضير…",
   "ProfileSecurity.scan": "امسح الرمز بتطبيق المصادقة، ثم أدخل الأرقام الستة التي يعرضها.",
   "ProfileSecurity.qr": "رمز QR لتطبيق المصادقة",
@@ -1394,8 +1507,10 @@
   "ProfileSecurity.turningOn": "جارٍ التشغيل…",
   "ProfileSecurity.turnOn": "تشغيل",
   "ProfileSecurity.turnOffTitle": "إيقاف التحقق بخطوتين؟",
-  "ProfileSecurity.turnOffCode": "لن يطلب تسجيل الدخول رمزًا بعد الآن. أدخل رمزًا من تطبيق المصادقة لتأكيد أنك أنت. يمكنك تشغيل التحقق بخطوتين مجددًا في أي وقت.",
-  "ProfileSecurity.turnOffPassword": "سيطلب تسجيل الدخول كلمة مرورك فقط. أدخل كلمة مرورك لتأكيد أنك أنت. يمكنك تشغيل التحقق بخطوتين مجددًا في أي وقت.",
+  "ProfileSecurity.turnOffCode":
+    "لن يطلب تسجيل الدخول رمزًا بعد الآن. أدخل رمزًا من تطبيق المصادقة لتأكيد أنك أنت. يمكنك تشغيل التحقق بخطوتين مجددًا في أي وقت.",
+  "ProfileSecurity.turnOffPassword":
+    "سيطلب تسجيل الدخول كلمة مرورك فقط. أدخل كلمة مرورك لتأكيد أنك أنت. يمكنك تشغيل التحقق بخطوتين مجددًا في أي وقت.",
   "ProfileSecurity.turningOff": "جارٍ الإيقاف…",
   "ProfileSecurity.turnOff": "إيقاف",
   "ProfileTelegram.title": "Telegram",
@@ -1410,8 +1525,10 @@
   "ProfileTelegram.unlinkHidden": "إلغاء ربط<hidden> Telegram</hidden>",
   "ProfileTelegram.link": "ربط Telegram",
   "ProfileTelegram.unlinkTitle": "إلغاء ربط Telegram؟",
-  "ProfileTelegram.unlinkText": "تتوقف إشعاراتك عن الوصول إلى Telegram، ولن يتمكن {bot} من التصرف نيابةً عنك هناك. لإعادة الربط تحتاج إلى رمز جديد.",
-  "ProfileTelegram.open": "افتح المحادثة مع <strong>{bot}</strong> واضغط Start ثم «{button}». تُغلق هذه النافذة بمجرد ربط حسابك.",
+  "ProfileTelegram.unlinkText":
+    "تتوقف إشعاراتك عن الوصول إلى Telegram، ولن يتمكن {bot} من التصرف نيابةً عنك هناك. لإعادة الربط تحتاج إلى رمز جديد.",
+  "ProfileTelegram.open":
+    "افتح المحادثة مع <strong>{bot}</strong> واضغط Start ثم «{button}». تُغلق هذه النافذة بمجرد ربط حسابك.",
   "ProfileTelegram.openButton": "افتح Telegram",
   "ProfileTelegram.elsewhere": "Telegram على جهاز آخر؟ أرسل هذه الرسالة في المحادثة مع {bot}:",
   "ProfileTelegram.message": "الرسالة المراد إرسالها",
@@ -1423,7 +1540,7 @@
     "two": "بانتظار Telegram… يعمل الرمز مرة واحدة لمدة دقيقتين.",
     "few": "بانتظار Telegram… يعمل الرمز مرة واحدة لمدة {count} دقائق.",
     "many": "بانتظار Telegram… يعمل الرمز مرة واحدة لمدة {count} دقيقة.",
-    "other": "بانتظار Telegram… يعمل الرمز مرة واحدة لمدة {count} دقيقة."
+    "other": "بانتظار Telegram… يعمل الرمز مرة واحدة لمدة {count} دقيقة.",
   },
   "ProfileView.codeMissing": "أدخل الرمز من تطبيق المصادقة",
   "ProfileView.telegramLinked": "تم ربط Telegram",
@@ -1435,7 +1552,7 @@
     "two": "نُقلت مجموعتان من حساب الضيف.",
     "few": "نُقلت {count} مجموعات من حساب الضيف.",
     "many": "نُقلت {count} مجموعة من حساب الضيف.",
-    "other": "نُقلت {count} مجموعة من حساب الضيف."
+    "other": "نُقلت {count} مجموعة من حساب الضيف.",
   },
   "ProfileView.switchedDeleted": "تم حذف حساب الضيف.",
   "ProfileView.methodLinked": "تم ربط طريقة تسجيل الدخول",
@@ -1456,7 +1573,7 @@
     "two": "تم إبطال رمزَي API الخاصين بك.",
     "few": "تم إبطال {count} رموز API.",
     "many": "تم إبطال {count} رمزًا لـ API.",
-    "other": "تم إبطال {count} رمز API."
+    "other": "تم إبطال {count} رمز API.",
   },
   "ProfileView.usePassword": "استخدم كلمة المرور الجديدة عند تسجيل الدخول المرة القادمة.",
   "ProfileView.passwordSet": "تم تعيين كلمة المرور",
@@ -1473,59 +1590,84 @@
   "ProviderProof.link": "رابط تسجيل الدخول",
   "ProviderProof.fresh": "سجّلت الدخول عبر {methods} قبل لحظات، لذلك لا تُطلب كلمة مرور.",
   "ProviderProof.needed": {
-    "zero": "لا توجد كلمة مرور لهذا الحساب لتأكيد ذلك. سجّل الدخول عبر {methods} مرة أخرى، ثم عُد إلى هنا خلال {count} دقيقة.",
-    "one": "لا توجد كلمة مرور لهذا الحساب لتأكيد ذلك. سجّل الدخول عبر {methods} مرة أخرى، ثم عُد إلى هنا خلال دقيقة واحدة.",
-    "two": "لا توجد كلمة مرور لهذا الحساب لتأكيد ذلك. سجّل الدخول عبر {methods} مرة أخرى، ثم عُد إلى هنا خلال دقيقتين.",
-    "few": "لا توجد كلمة مرور لهذا الحساب لتأكيد ذلك. سجّل الدخول عبر {methods} مرة أخرى، ثم عُد إلى هنا خلال {count} دقائق.",
-    "many": "لا توجد كلمة مرور لهذا الحساب لتأكيد ذلك. سجّل الدخول عبر {methods} مرة أخرى، ثم عُد إلى هنا خلال {count} دقيقة.",
-    "other": "لا توجد كلمة مرور لهذا الحساب لتأكيد ذلك. سجّل الدخول عبر {methods} مرة أخرى، ثم عُد إلى هنا خلال {count} دقيقة."
+    "zero":
+      "لا توجد كلمة مرور لهذا الحساب لتأكيد ذلك. سجّل الدخول عبر {methods} مرة أخرى، ثم عُد إلى هنا خلال {count} دقيقة.",
+    "one":
+      "لا توجد كلمة مرور لهذا الحساب لتأكيد ذلك. سجّل الدخول عبر {methods} مرة أخرى، ثم عُد إلى هنا خلال دقيقة واحدة.",
+    "two":
+      "لا توجد كلمة مرور لهذا الحساب لتأكيد ذلك. سجّل الدخول عبر {methods} مرة أخرى، ثم عُد إلى هنا خلال دقيقتين.",
+    "few":
+      "لا توجد كلمة مرور لهذا الحساب لتأكيد ذلك. سجّل الدخول عبر {methods} مرة أخرى، ثم عُد إلى هنا خلال {count} دقائق.",
+    "many":
+      "لا توجد كلمة مرور لهذا الحساب لتأكيد ذلك. سجّل الدخول عبر {methods} مرة أخرى، ثم عُد إلى هنا خلال {count} دقيقة.",
+    "other":
+      "لا توجد كلمة مرور لهذا الحساب لتأكيد ذلك. سجّل الدخول عبر {methods} مرة أخرى، ثم عُد إلى هنا خلال {count} دقيقة.",
   },
   "ProviderProof.passkeyAgain": "سجّل الدخول بمفتاح مرور مرة أخرى",
   "ProviderProof.providerAgain": "سجّل الدخول عبر {provider} مرة أخرى",
   "SignInLinkScreen.sendFailed": "تعذّر إرسال الرابط. حاول مرة أخرى بعد قليل.",
   "SignInLinkScreen.unreachable": "تعذّر الوصول إلى الخادم. تحقّق من اتصالك واضغط «متابعة» مرة أخرى.",
-  "SignInLinkScreen.openFailed": "تعذّر تسجيل الدخول. اضغط «متابعة» لتحاول مرة أخرى، أو اطلب رابطًا جديدًا.",
+  "SignInLinkScreen.openFailed":
+    "تعذّر تسجيل الدخول. اضغط «متابعة» لتحاول مرة أخرى، أو اطلب رابطًا جديدًا.",
   "SignInLinkScreen.title": "سجّل الدخول برابط",
-  "SignInLinkScreen.description": "نرسل إليك رابطًا بالبريد يسجّل دخولك. إن لم يكن هناك حساب يستخدم العنوان بعد، فسينشئ الرابط واحدًا.",
+  "SignInLinkScreen.description":
+    "نرسل إليك رابطًا بالبريد يسجّل دخولك. إن لم يكن هناك حساب يستخدم العنوان بعد، فسينشئ الرابط واحدًا.",
   "SignInLinkScreen.ratherPassword": "تفضّل كلمة المرور؟ <link>العودة إلى تسجيل الدخول</link>",
   "SignInLinkScreen.submit": "أرسل لي رابطًا",
   "SignInLinkScreen.sent": {
-    "zero": "أرسلنا رابط تسجيل الدخول إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة.",
+    "zero":
+      "أرسلنا رابط تسجيل الدخول إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة.",
     "one": "أرسلنا رابط تسجيل الدخول إلى <email>{email}</email>. يعمل مرة واحدة لمدة دقيقة واحدة.",
     "two": "أرسلنا رابط تسجيل الدخول إلى <email>{email}</email>. يعمل مرة واحدة لمدة دقيقتين.",
-    "few": "أرسلنا رابط تسجيل الدخول إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقائق.",
-    "many": "أرسلنا رابط تسجيل الدخول إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة.",
-    "other": "أرسلنا رابط تسجيل الدخول إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة."
+    "few":
+      "أرسلنا رابط تسجيل الدخول إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقائق.",
+    "many":
+      "أرسلنا رابط تسجيل الدخول إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة.",
+    "other":
+      "أرسلنا رابط تسجيل الدخول إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة.",
   },
   "SignInLinkScreen.openHere": "افتحه على هذا الجهاز لتسجّل الدخول هنا.",
   "SignInLinkScreen.newLink": "أرسل رابطًا جديدًا",
   "SignInLinkScreen.waiting": {
-    "zero": "لم يصل؟ تحقّق من مجلد الرسائل غير المرغوب فيها. يمكنك إرسال رابط جديد بعد {count} ثانية.",
+    "zero":
+      "لم يصل؟ تحقّق من مجلد الرسائل غير المرغوب فيها. يمكنك إرسال رابط جديد بعد {count} ثانية.",
     "one": "لم يصل؟ تحقّق من مجلد الرسائل غير المرغوب فيها. يمكنك إرسال رابط جديد بعد ثانية واحدة.",
     "two": "لم يصل؟ تحقّق من مجلد الرسائل غير المرغوب فيها. يمكنك إرسال رابط جديد بعد ثانيتين.",
     "few": "لم يصل؟ تحقّق من مجلد الرسائل غير المرغوب فيها. يمكنك إرسال رابط جديد بعد {count} ثوانٍ.",
-    "many": "لم يصل؟ تحقّق من مجلد الرسائل غير المرغوب فيها. يمكنك إرسال رابط جديد بعد {count} ثانية.",
-    "other": "لم يصل؟ تحقّق من مجلد الرسائل غير المرغوب فيها. يمكنك إرسال رابط جديد بعد {count} ثانية."
+    "many":
+      "لم يصل؟ تحقّق من مجلد الرسائل غير المرغوب فيها. يمكنك إرسال رابط جديد بعد {count} ثانية.",
+    "other":
+      "لم يصل؟ تحقّق من مجلد الرسائل غير المرغوب فيها. يمكنك إرسال رابط جديد بعد {count} ثانية.",
   },
-  "SignInLinkScreen.resent": "رابط جديد في طريقه إليك. تبقى الروابط السابقة صالحة إلى أن يُستخدم أحدها.",
+  "SignInLinkScreen.resent":
+    "رابط جديد في طريقه إليك. تبقى الروابط السابقة صالحة إلى أن يُستخدم أحدها.",
   "SignInLinkScreen.refusedTitle": "لم يعد هذا الرابط صالحًا",
   "SignInLinkScreen.refused": {
-    "zero": "تعمل روابط تسجيل الدخول مرة واحدة لمدة {count} دقيقة. اطلب رابطًا جديدًا واستخدم أحدث رسالة.",
-    "one": "تعمل روابط تسجيل الدخول مرة واحدة لمدة دقيقة واحدة. اطلب رابطًا جديدًا واستخدم أحدث رسالة.",
+    "zero":
+      "تعمل روابط تسجيل الدخول مرة واحدة لمدة {count} دقيقة. اطلب رابطًا جديدًا واستخدم أحدث رسالة.",
+    "one":
+      "تعمل روابط تسجيل الدخول مرة واحدة لمدة دقيقة واحدة. اطلب رابطًا جديدًا واستخدم أحدث رسالة.",
     "two": "تعمل روابط تسجيل الدخول مرة واحدة لمدة دقيقتين. اطلب رابطًا جديدًا واستخدم أحدث رسالة.",
-    "few": "تعمل روابط تسجيل الدخول مرة واحدة لمدة {count} دقائق. اطلب رابطًا جديدًا واستخدم أحدث رسالة.",
-    "many": "تعمل روابط تسجيل الدخول مرة واحدة لمدة {count} دقيقة. اطلب رابطًا جديدًا واستخدم أحدث رسالة.",
-    "other": "تعمل روابط تسجيل الدخول مرة واحدة لمدة {count} دقيقة. اطلب رابطًا جديدًا واستخدم أحدث رسالة."
+    "few":
+      "تعمل روابط تسجيل الدخول مرة واحدة لمدة {count} دقائق. اطلب رابطًا جديدًا واستخدم أحدث رسالة.",
+    "many":
+      "تعمل روابط تسجيل الدخول مرة واحدة لمدة {count} دقيقة. اطلب رابطًا جديدًا واستخدم أحدث رسالة.",
+    "other":
+      "تعمل روابط تسجيل الدخول مرة واحدة لمدة {count} دقيقة. اطلب رابطًا جديدًا واستخدم أحدث رسالة.",
   },
   "SignInLinkScreen.elsewhereTitle": "طُلب هذا الرابط من متصفح آخر",
-  "SignInLinkScreen.elsewhere": "لم يسجّل دخولك، وبقي حساب الضيف كما كان. اطلب رابطًا جديدًا من هذا المتصفح لتسجّل الدخول هنا.",
+  "SignInLinkScreen.elsewhere":
+    "لم يسجّل دخولك، وبقي حساب الضيف كما كان. اطلب رابطًا جديدًا من هذا المتصفح لتسجّل الدخول هنا.",
   "SignInLinkScreen.incompleteTitle": "هذا الرابط غير مكتمل",
   "SignInLinkScreen.incomplete": "افتح الرابط من الرسالة مرة أخرى، أو اطلب رابطًا جديدًا.",
   "SignInLinkScreen.backToApp": "العودة إلى التطبيق",
   "SignInLinkScreen.finishTitle": "أكمل تسجيل الدخول",
-  "SignInLinkScreen.finish": "تابع لتسجيل الدخول على هذا الجهاز. إن كان العنوان جديدًا، فسيُنشأ حسابك.",
-  "SignInLinkScreen.signedInAs": "أنت مسجّل الدخول باسم <email>{email}</email>. المتابعة تسجّل دخولك بحساب الرابط بدلًا منه.",
-  "SignInLinkScreen.guest": "أنت تستخدم التطبيق ضيفًا. إن طلبت هذا الرابط من هذا المتصفح، فالمتابعة تحتفظ بحساب الضيف تحت عنوان الرابط، أو تسألك أولًا إن كان لذلك العنوان حساب بالفعل.",
+  "SignInLinkScreen.finish":
+    "تابع لتسجيل الدخول على هذا الجهاز. إن كان العنوان جديدًا، فسيُنشأ حسابك.",
+  "SignInLinkScreen.signedInAs":
+    "أنت مسجّل الدخول باسم <email>{email}</email>. المتابعة تسجّل دخولك بحساب الرابط بدلًا منه.",
+  "SignInLinkScreen.guest":
+    "أنت تستخدم التطبيق ضيفًا. إن طلبت هذا الرابط من هذا المتصفح، فالمتابعة تحتفظ بحساب الضيف تحت عنوان الرابط، أو تسألك أولًا إن كان لذلك العنوان حساب بالفعل.",
   "SignInLinkScreen.signingIn": "جارٍ تسجيل الدخول…",
   "SignInLinkScreen.stay": "البقاء مسجّل الدخول",
   "SignInMethods.failed": "تعذّر تغيير طرق تسجيل الدخول",
@@ -1550,9 +1692,12 @@
   "SignInMethods.continueTo": "المتابعة إلى {provider}",
   "SignInMethods.removeTitle": "إزالة «{name}»؟",
   "SignInMethods.unlinkTitle": "إلغاء ربط {name}؟",
-  "SignInMethods.remove": "لن تتمكن بعد الآن من تسجيل الدخول بمفتاح المرور هذا. يُسجَّل خروج كل جهاز سجّل الدخول به. احذفه من مدير كلمات المرور أيضًا.",
-  "SignInMethods.removeCurrent": "لن تتمكن بعد الآن من تسجيل الدخول بمفتاح المرور هذا. يُسجَّل خروج كل جهاز سجّل الدخول به. احذفه من مدير كلمات المرور أيضًا. سجّل هذا الجهاز الدخول به، لذا سيُسجَّل خروجه أيضًا.",
-  "SignInMethods.unlinkCurrent": "سجّلت الدخول على هذا الجهاز عبر {name}، لذا سيُسجَّل خروجه، مثل كل جهاز آخر فعل ذلك.",
+  "SignInMethods.remove":
+    "لن تتمكن بعد الآن من تسجيل الدخول بمفتاح المرور هذا. يُسجَّل خروج كل جهاز سجّل الدخول به. احذفه من مدير كلمات المرور أيضًا.",
+  "SignInMethods.removeCurrent":
+    "لن تتمكن بعد الآن من تسجيل الدخول بمفتاح المرور هذا. يُسجَّل خروج كل جهاز سجّل الدخول به. احذفه من مدير كلمات المرور أيضًا. سجّل هذا الجهاز الدخول به، لذا سيُسجَّل خروجه أيضًا.",
+  "SignInMethods.unlinkCurrent":
+    "سجّلت الدخول على هذا الجهاز عبر {name}، لذا سيُسجَّل خروجه، مثل كل جهاز آخر فعل ذلك.",
   "SignInMethods.unlink": "سيُسجَّل خروج كل جهاز سجّل الدخول عبر {name}. يبقى هذا الجهاز مسجّل الدخول.",
   "SignInMethods.removing": "جارٍ الإزالة…",
   "SignInMethods.unlinking": "جارٍ إلغاء الربط…",
@@ -1577,7 +1722,7 @@
     "two": "أرسلنا رمزًا إلى <email>{email}</email>. يعمل لمدة دقيقتين.",
     "few": "أرسلنا رمزًا إلى <email>{email}</email>. يعمل لمدة {count} دقائق.",
     "many": "أرسلنا رمزًا إلى <email>{email}</email>. يعمل لمدة {count} دقيقة.",
-    "other": "أرسلنا رمزًا إلى <email>{email}</email>. يعمل لمدة {count} دقيقة."
+    "other": "أرسلنا رمزًا إلى <email>{email}</email>. يعمل لمدة {count} دقيقة.",
   },
   "SignUpCodeScreen.wrongAddress": "عنوان خاطئ؟ <button>استخدم عنوانًا آخر</button>",
   "SignUpCodeScreen.code": "الرمز",
@@ -1586,8 +1731,10 @@
   "SignUpCodeScreen.resent": "رمز جديد في طريقه إليك.",
   "SignUpCodeScreen.resendFailed": "تعذّر إرسال رمز جديد",
   "SignUpCodeScreen.existsTitle": "لديك حساب بالفعل",
-  "SignUpCodeScreen.exists": "يُستخدم <email>{email}</email> لتسجيل الدخول هنا بالفعل. لم يُنشأ شيء جديد.",
-  "SignUpCodeScreen.existsWith": "يُستخدم <email>{email}</email> لتسجيل الدخول هنا عبر {providers} بالفعل. لم يُنشأ شيء جديد.",
+  "SignUpCodeScreen.exists":
+    "يُستخدم <email>{email}</email> لتسجيل الدخول هنا بالفعل. لم يُنشأ شيء جديد.",
+  "SignUpCodeScreen.existsWith":
+    "يُستخدم <email>{email}</email> لتسجيل الدخول هنا عبر {providers} بالفعل. لم يُنشأ شيء جديد.",
   "SignUpCodeScreen.signInInstead": "سجّل الدخول بدلًا من ذلك",
   "SignUpCodeScreen.expiredTitle": "انتهت صلاحية عملية التسجيل هذه",
   "SignUpCodeScreen.expired": {
@@ -1596,14 +1743,16 @@
     "two": "استغرق الأمر أكثر من دقيقتين، أو جُرّب الرمز مرات كثيرة جدًا. لم يُنشأ شيء.",
     "few": "استغرق الأمر أكثر من {count} دقائق، أو جُرّب الرمز مرات كثيرة جدًا. لم يُنشأ شيء.",
     "many": "استغرق الأمر أكثر من {count} دقيقة، أو جُرّب الرمز مرات كثيرة جدًا. لم يُنشأ شيء.",
-    "other": "استغرق الأمر أكثر من {count} دقيقة، أو جُرّب الرمز مرات كثيرة جدًا. لم يُنشأ شيء."
+    "other": "استغرق الأمر أكثر من {count} دقيقة، أو جُرّب الرمز مرات كثيرة جدًا. لم يُنشأ شيء.",
   },
   "SignUpCodeScreen.startAgain": "ابدأ من جديد",
   "SignedInDevices.failed": "تعذّر تسجيل خروج ذلك الجهاز",
   "SignedInDevices.savedTitle": "نسخة محفوظة من أجهزتك",
-  "SignedInDevices.savedBody": "تعذّر الوصول إلى الخادم. حُفظت هذه القائمة على هذا الجهاز: {time}. لا تظهر فيها الأجهزة التي سجّلت الدخول أو الخروج منذ ذلك الحين.",
+  "SignedInDevices.savedBody":
+    "تعذّر الوصول إلى الخادم. حُفظت هذه القائمة على هذا الجهاز: {time}. لا تظهر فيها الأجهزة التي سجّلت الدخول أو الخروج منذ ذلك الحين.",
   "SignedInDevices.title": "الأجهزة المسجّل دخولها",
-  "SignedInDevices.description": "الأماكن التي سُجّل فيها الدخول إلى حسابك. سجّل الخروج من أي جهاز لا تعرفه.",
+  "SignedInDevices.description":
+    "الأماكن التي سُجّل فيها الدخول إلى حسابك. سجّل الخروج من أي جهاز لا تعرفه.",
   "SignedInDevices.loading": "جارٍ تحميل أجهزتك…",
   "SignedInDevices.signOutDevice": "تسجيل الخروج<device> ({device})</device>",
   "SignedInDevices.signingOut": "جارٍ تسجيل الخروج…",
@@ -1611,11 +1760,15 @@
   "SignedInDevices.othersTitle": "تسجيل الخروج من كل الأجهزة الأخرى؟",
   "SignedInDevices.othersMessage": {
     "zero": "لن يحتاج أي جهاز آخر ({count}) إلى كلمة مرورك. يبقى هذا الجهاز مسجّل الدخول.",
-    "one": "سيحتاج جهاز آخر واحد إلى كلمة مرورك لتسجيل الدخول من جديد. يبقى هذا الجهاز مسجّل الدخول.",
+    "one":
+      "سيحتاج جهاز آخر واحد إلى كلمة مرورك لتسجيل الدخول من جديد. يبقى هذا الجهاز مسجّل الدخول.",
     "two": "سيحتاج جهازان آخران إلى كلمة مرورك لتسجيل الدخول من جديد. يبقى هذا الجهاز مسجّل الدخول.",
-    "few": "ستحتاج {count} أجهزة أخرى إلى كلمة مرورك لتسجيل الدخول من جديد. يبقى هذا الجهاز مسجّل الدخول.",
-    "many": "سيحتاج {count} جهازًا آخر إلى كلمة مرورك لتسجيل الدخول من جديد. يبقى هذا الجهاز مسجّل الدخول.",
-    "other": "سيحتاج {count} جهاز آخر إلى كلمة مرورك لتسجيل الدخول من جديد. يبقى هذا الجهاز مسجّل الدخول."
+    "few":
+      "ستحتاج {count} أجهزة أخرى إلى كلمة مرورك لتسجيل الدخول من جديد. يبقى هذا الجهاز مسجّل الدخول.",
+    "many":
+      "سيحتاج {count} جهازًا آخر إلى كلمة مرورك لتسجيل الدخول من جديد. يبقى هذا الجهاز مسجّل الدخول.",
+    "other":
+      "سيحتاج {count} جهاز آخر إلى كلمة مرورك لتسجيل الدخول من جديد. يبقى هذا الجهاز مسجّل الدخول.",
   },
   "SignedInDevices.signOut": "تسجيل الخروج",
   "SignedInDevices.oneTitle": "تسجيل الخروج من {device}؟",
@@ -1634,7 +1787,7 @@
     "two": "اكتب حرفين على الأقل للبحث في الملاحظات.",
     "few": "اكتب {count} أحرف على الأقل للبحث في الملاحظات.",
     "many": "اكتب {count} حرفًا على الأقل للبحث في الملاحظات.",
-    "other": "اكتب {count} حرف على الأقل للبحث في الملاحظات."
+    "other": "اكتب {count} حرف على الأقل للبحث في الملاحظات.",
   },
   "Search.empty": "لا توجد ملاحظات أو مجموعات تطابق «{query}».",
   "Search.emptyOnDevice": "لا شيء على هذا الجهاز يطابق «{query}». ابحث مرة أخرى عندما تعود متصلًا.",
@@ -1717,7 +1870,7 @@
     "two": "ملاحظتان",
     "few": "{count} ملاحظات",
     "many": "{count} ملاحظة",
-    "other": "{count} ملاحظة"
+    "other": "{count} ملاحظة",
   },
   "TagParts.deleteNone": "لا تحمله أي ملاحظة.",
   "TagParts.deleteUnknown": "سيُزال من كل ملاحظة تحمله. تبقى الملاحظات كما هي.",
@@ -1727,7 +1880,7 @@
     "two": "سيُزال من ملاحظتين. تبقى الملاحظات كما هي.",
     "few": "سيُزال من {count} ملاحظات. تبقى الملاحظات كما هي.",
     "many": "سيُزال من {count} ملاحظة. تبقى الملاحظات كما هي.",
-    "other": "سيُزال من {count} ملاحظة. تبقى الملاحظات كما هي."
+    "other": "سيُزال من {count} ملاحظة. تبقى الملاحظات كما هي.",
   },
   "TagSync.gone": "حُذف هذا الوسم بينما كنت غير متصل.",
   "TagSync.rejected": "لم يقبل الخادم هذا الوسم.",
@@ -1745,7 +1898,7 @@
     "two": "عرض الملاحظتين ذواتي الوسم «{name}»",
     "few": "عرض {count} ملاحظات بالوسم «{name}»",
     "many": "عرض {count} ملاحظة بالوسم «{name}»",
-    "other": "عرض {count} ملاحظة بالوسم «{name}»"
+    "other": "عرض {count} ملاحظة بالوسم «{name}»",
   },
   "Tags.actions": "إجراءات «{name}»",
   "Tags.editTag": "تعديل الوسم",
@@ -1760,38 +1913,58 @@
     "two": "حُذف «{name}» وأُزيل من ملاحظتين.",
     "few": "حُذف «{name}» وأُزيل من {count} ملاحظات.",
     "many": "حُذف «{name}» وأُزيل من {count} ملاحظة.",
-    "other": "حُذف «{name}» وأُزيل من {count} ملاحظة."
+    "other": "حُذف «{name}» وأُزيل من {count} ملاحظة.",
   },
   "TelegramNotification.open": "فتح",
   "TelegramBot.linkButton": "ربط",
-  "TelegramBot.confirmNameAddress": "هل تريد ربط Telegram هذا بحساب {name} على {app} ({address})؟ اضغط «{button}» فقط إذا كان هذا حسابك. إذا لم تطلب ذلك، فتجاهل هذه الرسالة.",
-  "TelegramBot.confirmName": "هل تريد ربط Telegram هذا بحساب {name} على {app}؟ اضغط «{button}» فقط إذا كان هذا حسابك. إذا لم تطلب ذلك، فتجاهل هذه الرسالة.",
-  "TelegramBot.confirmAddress": "هل تريد ربط Telegram هذا بحساب على {app} ({address})؟ اضغط «{button}» فقط إذا كان هذا حسابك. إذا لم تطلب ذلك، فتجاهل هذه الرسالة.",
-  "TelegramBot.confirmAnonymous": "هل تريد ربط Telegram هذا بحساب على {app} بلا اسم ولا عنوان؟ اضغط «{button}» فقط إذا كان هذا حسابك. إذا لم تطلب ذلك، فتجاهل هذه الرسالة.",
-  "TelegramBot.linked": "تم: هذه المحادثة مرتبطة بحسابك. ستصلك إشعاراتك هنا من الآن. أرسل /help لترى ما يمكنني فعله.",
+  "TelegramBot.confirmNameAddress":
+    "هل تريد ربط Telegram هذا بحساب {name} على {app} ({address})؟ اضغط «{button}» فقط إذا كان هذا حسابك. إذا لم تطلب ذلك، فتجاهل هذه الرسالة.",
+  "TelegramBot.confirmName":
+    "هل تريد ربط Telegram هذا بحساب {name} على {app}؟ اضغط «{button}» فقط إذا كان هذا حسابك. إذا لم تطلب ذلك، فتجاهل هذه الرسالة.",
+  "TelegramBot.confirmAddress":
+    "هل تريد ربط Telegram هذا بحساب على {app} ({address})؟ اضغط «{button}» فقط إذا كان هذا حسابك. إذا لم تطلب ذلك، فتجاهل هذه الرسالة.",
+  "TelegramBot.confirmAnonymous":
+    "هل تريد ربط Telegram هذا بحساب على {app} بلا اسم ولا عنوان؟ اضغط «{button}» فقط إذا كان هذا حسابك. إذا لم تطلب ذلك، فتجاهل هذه الرسالة.",
+  "TelegramBot.linked":
+    "تم: هذه المحادثة مرتبطة بحسابك. ستصلك إشعاراتك هنا من الآن. أرسل /help لترى ما يمكنني فعله.",
   "TelegramBot.already": "حساب Telegram هذا مرتبط بحسابك بالفعل.",
-  "TelegramBot.taken": "حساب Telegram هذا مرتبط بحساب آخر. أرسل /unlink أولًا، ثم أرسل الرمز مرة أخرى.",
+  "TelegramBot.taken":
+    "حساب Telegram هذا مرتبط بحساب آخر. أرسل /unlink أولًا، ثم أرسل الرمز مرة أخرى.",
   "TelegramBot.invalid": {
-    "zero": "هذا الرمز لا يعمل. ربما كُتب خطأً، أو استُخدم من قبل، أو مضى عليه أكثر من {count} دقيقة. أنشئ رمزًا جديدًا في التطبيق.",
-    "one": "هذا الرمز لا يعمل. ربما كُتب خطأً، أو استُخدم من قبل، أو مضت عليه أكثر من دقيقة واحدة. أنشئ رمزًا جديدًا في التطبيق.",
-    "two": "هذا الرمز لا يعمل. ربما كُتب خطأً، أو استُخدم من قبل، أو مضى عليه أكثر من دقيقتين. أنشئ رمزًا جديدًا في التطبيق.",
-    "few": "هذا الرمز لا يعمل. ربما كُتب خطأً، أو استُخدم من قبل، أو مضى عليه أكثر من {count} دقائق. أنشئ رمزًا جديدًا في التطبيق.",
-    "many": "هذا الرمز لا يعمل. ربما كُتب خطأً، أو استُخدم من قبل، أو مضى عليه أكثر من {count} دقيقة. أنشئ رمزًا جديدًا في التطبيق.",
-    "other": "هذا الرمز لا يعمل. ربما كُتب خطأً، أو استُخدم من قبل، أو مضى عليه أكثر من {count} دقيقة. أنشئ رمزًا جديدًا في التطبيق."
+    "zero":
+      "هذا الرمز لا يعمل. ربما كُتب خطأً، أو استُخدم من قبل، أو مضى عليه أكثر من {count} دقيقة. أنشئ رمزًا جديدًا في التطبيق.",
+    "one":
+      "هذا الرمز لا يعمل. ربما كُتب خطأً، أو استُخدم من قبل، أو مضت عليه أكثر من دقيقة واحدة. أنشئ رمزًا جديدًا في التطبيق.",
+    "two":
+      "هذا الرمز لا يعمل. ربما كُتب خطأً، أو استُخدم من قبل، أو مضى عليه أكثر من دقيقتين. أنشئ رمزًا جديدًا في التطبيق.",
+    "few":
+      "هذا الرمز لا يعمل. ربما كُتب خطأً، أو استُخدم من قبل، أو مضى عليه أكثر من {count} دقائق. أنشئ رمزًا جديدًا في التطبيق.",
+    "many":
+      "هذا الرمز لا يعمل. ربما كُتب خطأً، أو استُخدم من قبل، أو مضى عليه أكثر من {count} دقيقة. أنشئ رمزًا جديدًا في التطبيق.",
+    "other":
+      "هذا الرمز لا يعمل. ربما كُتب خطأً، أو استُخدم من قبل، أو مضى عليه أكثر من {count} دقيقة. أنشئ رمزًا جديدًا في التطبيق.",
   },
   "TelegramBot.stale": {
-    "zero": "لم يعد هذا الزر يعمل. فقد استُخدم من قبل، أو حلّ محله زر أحدث، أو مضى عليه أكثر من {count} دقيقة. لربط هذه المحادثة، أنشئ رمزًا جديدًا في التطبيق.",
-    "one": "لم يعد هذا الزر يعمل. فقد استُخدم من قبل، أو حلّ محله زر أحدث، أو مضت عليه أكثر من دقيقة واحدة. لربط هذه المحادثة، أنشئ رمزًا جديدًا في التطبيق.",
-    "two": "لم يعد هذا الزر يعمل. فقد استُخدم من قبل، أو حلّ محله زر أحدث، أو مضى عليه أكثر من دقيقتين. لربط هذه المحادثة، أنشئ رمزًا جديدًا في التطبيق.",
-    "few": "لم يعد هذا الزر يعمل. فقد استُخدم من قبل، أو حلّ محله زر أحدث، أو مضى عليه أكثر من {count} دقائق. لربط هذه المحادثة، أنشئ رمزًا جديدًا في التطبيق.",
-    "many": "لم يعد هذا الزر يعمل. فقد استُخدم من قبل، أو حلّ محله زر أحدث، أو مضى عليه أكثر من {count} دقيقة. لربط هذه المحادثة، أنشئ رمزًا جديدًا في التطبيق.",
-    "other": "لم يعد هذا الزر يعمل. فقد استُخدم من قبل، أو حلّ محله زر أحدث، أو مضى عليه أكثر من {count} دقيقة. لربط هذه المحادثة، أنشئ رمزًا جديدًا في التطبيق."
+    "zero":
+      "لم يعد هذا الزر يعمل. فقد استُخدم من قبل، أو حلّ محله زر أحدث، أو مضى عليه أكثر من {count} دقيقة. لربط هذه المحادثة، أنشئ رمزًا جديدًا في التطبيق.",
+    "one":
+      "لم يعد هذا الزر يعمل. فقد استُخدم من قبل، أو حلّ محله زر أحدث، أو مضت عليه أكثر من دقيقة واحدة. لربط هذه المحادثة، أنشئ رمزًا جديدًا في التطبيق.",
+    "two":
+      "لم يعد هذا الزر يعمل. فقد استُخدم من قبل، أو حلّ محله زر أحدث، أو مضى عليه أكثر من دقيقتين. لربط هذه المحادثة، أنشئ رمزًا جديدًا في التطبيق.",
+    "few":
+      "لم يعد هذا الزر يعمل. فقد استُخدم من قبل، أو حلّ محله زر أحدث، أو مضى عليه أكثر من {count} دقائق. لربط هذه المحادثة، أنشئ رمزًا جديدًا في التطبيق.",
+    "many":
+      "لم يعد هذا الزر يعمل. فقد استُخدم من قبل، أو حلّ محله زر أحدث، أو مضى عليه أكثر من {count} دقيقة. لربط هذه المحادثة، أنشئ رمزًا جديدًا في التطبيق.",
+    "other":
+      "لم يعد هذا الزر يعمل. فقد استُخدم من قبل، أو حلّ محله زر أحدث، أو مضى عليه أكثر من {count} دقيقة. لربط هذه المحادثة، أنشئ رمزًا جديدًا في التطبيق.",
   },
   "TelegramBot.privateOnly": "أرسل لي ذلك في محادثة خاصة.",
-  "TelegramBot.codeSpent": "أُرسل هذا الرمز في مكان يستطيع الآخرون قراءته، لذا لم يعد يعمل. أنشئ رمزًا جديدًا في التطبيق وأرسله لي في محادثة خاصة.",
+  "TelegramBot.codeSpent":
+    "أُرسل هذا الرمز في مكان يستطيع الآخرون قراءته، لذا لم يعد يعمل. أنشئ رمزًا جديدًا في التطبيق وأرسله لي في محادثة خاصة.",
   "TelegramBot.unlinked": "تم إلغاء الربط. لن تتلقى هذه المحادثة إشعارات من حسابك بعد الآن.",
   "TelegramBot.notLinked": "حساب Telegram هذا غير مرتبط بأي حساب.",
-  "TelegramBot.howToLink": "لربط حسابك، افتح {url} واختر «{action}» ثم أرسل لي الرمز الذي يظهر هناك.",
+  "TelegramBot.howToLink":
+    "لربط حسابك، افتح {url} واختر «{action}» ثم أرسل لي الرمز الذي يظهر هناك.",
   "TelegramBot.hello": "مرحبًا! حسابك مرتبط. أرسل /help لترى ما يمكنني فعله.",
   "TelegramBot.helloName": "مرحبًا {name}! حسابك مرتبط. أرسل /help لترى ما يمكنني فعله.",
   "UndoToast.title": "حُذفت الملاحظة",
@@ -1822,7 +1995,7 @@
     "two": "يومان",
     "few": "{count} أيام",
     "many": "{count} يومًا",
-    "other": "{count} يوم"
+    "other": "{count} يوم",
   },
   "ApiTokenNewScreen.never": "أبدًا",
   "ApiTokenNewScreen.password": "كلمة مرورك",
@@ -1849,7 +2022,8 @@
   "ApiTokenNewView.keepEditing": "متابعة التعديل",
   "ApiTokens.failed": "حدث خطأ في رموز API الخاصة بك.",
   "ApiTokens.savedCopyTitle": "نسخة محفوظة من رموز API الخاصة بك",
-  "ApiTokens.savedCopyBody": "تعذّر الوصول إلى الخادم. حُفظت هذه القائمة على هذا الجهاز: {time}. لا تتضمن الرموز التي أُنشئت أو أُلغيت منذ ذلك الحين.",
+  "ApiTokens.savedCopyBody":
+    "تعذّر الوصول إلى الخادم. حُفظت هذه القائمة على هذا الجهاز: {time}. لا تتضمن الرموز التي أُنشئت أو أُلغيت منذ ذلك الحين.",
   "ApiTokens.new": "رمز جديد",
   "ApiTokens.howToUse": "كيفية استخدام الرمز",
   "ApiTokens.loading": "جارٍ تحميل رموزك…",
@@ -1873,28 +2047,43 @@
   "AccountDelete.planEndingPeriod": "خطتها ملغاة وتستمر حتى نهاية فترتها. انتظر حتى تنتهي الخطة.",
   "AccountDelete.title": "حذف حسابي",
   "AccountDelete.summary": {
-    "zero": "يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} يوم من طلبك. تسجيل الدخول قبل ذلك يُبقيها.",
-    "one": "يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد يوم واحد من طلبك. تسجيل الدخول قبل ذلك يُبقيها.",
-    "two": "يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد يومين من طلبك. تسجيل الدخول قبل ذلك يُبقيها.",
-    "few": "يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} أيام من طلبك. تسجيل الدخول قبل ذلك يُبقيها.",
-    "many": "يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} يومًا من طلبك. تسجيل الدخول قبل ذلك يُبقيها.",
-    "other": "يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} يوم من طلبك. تسجيل الدخول قبل ذلك يُبقيها."
+    "zero":
+      "يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} يوم من طلبك. تسجيل الدخول قبل ذلك يُبقيها.",
+    "one":
+      "يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد يوم واحد من طلبك. تسجيل الدخول قبل ذلك يُبقيها.",
+    "two":
+      "يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد يومين من طلبك. تسجيل الدخول قبل ذلك يُبقيها.",
+    "few":
+      "يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} أيام من طلبك. تسجيل الدخول قبل ذلك يُبقيها.",
+    "many":
+      "يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} يومًا من طلبك. تسجيل الدخول قبل ذلك يُبقيها.",
+    "other":
+      "يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} يوم من طلبك. تسجيل الدخول قبل ذلك يُبقيها.",
   },
   "AccountDelete.copyFirst": "تريد نسخة أولًا؟ <link>نزّل بياناتك</link>.",
   "AccountDelete.deleteHidden": "حذف<hidden> حسابي</hidden>",
   "AccountDelete.checking": "جارٍ التحقق من مجموعاتك…",
   "AccountDelete.explain": {
-    "zero": "ستُسجَّل خارج حسابك على كل الأجهزة فورًا. يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} يوم؛ سجّل الدخول قبل ذلك ليُستعاد حسابك. تبقى الملاحظات التي كتبتها في مجموعات الآخرين باسم «مستخدم محذوف».",
-    "one": "ستُسجَّل خارج حسابك على كل الأجهزة فورًا. يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد يوم واحد؛ سجّل الدخول قبل ذلك ليُستعاد حسابك. تبقى الملاحظات التي كتبتها في مجموعات الآخرين باسم «مستخدم محذوف».",
-    "two": "ستُسجَّل خارج حسابك على كل الأجهزة فورًا. يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد يومين؛ سجّل الدخول قبل ذلك ليُستعاد حسابك. تبقى الملاحظات التي كتبتها في مجموعات الآخرين باسم «مستخدم محذوف».",
-    "few": "ستُسجَّل خارج حسابك على كل الأجهزة فورًا. يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} أيام؛ سجّل الدخول قبل ذلك ليُستعاد حسابك. تبقى الملاحظات التي كتبتها في مجموعات الآخرين باسم «مستخدم محذوف».",
-    "many": "ستُسجَّل خارج حسابك على كل الأجهزة فورًا. يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} يومًا؛ سجّل الدخول قبل ذلك ليُستعاد حسابك. تبقى الملاحظات التي كتبتها في مجموعات الآخرين باسم «مستخدم محذوف».",
-    "other": "ستُسجَّل خارج حسابك على كل الأجهزة فورًا. يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} يوم؛ سجّل الدخول قبل ذلك ليُستعاد حسابك. تبقى الملاحظات التي كتبتها في مجموعات الآخرين باسم «مستخدم محذوف»."
+    "zero":
+      "ستُسجَّل خارج حسابك على كل الأجهزة فورًا. يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} يوم؛ سجّل الدخول قبل ذلك ليُستعاد حسابك. تبقى الملاحظات التي كتبتها في مجموعات الآخرين باسم «مستخدم محذوف».",
+    "one":
+      "ستُسجَّل خارج حسابك على كل الأجهزة فورًا. يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد يوم واحد؛ سجّل الدخول قبل ذلك ليُستعاد حسابك. تبقى الملاحظات التي كتبتها في مجموعات الآخرين باسم «مستخدم محذوف».",
+    "two":
+      "ستُسجَّل خارج حسابك على كل الأجهزة فورًا. يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد يومين؛ سجّل الدخول قبل ذلك ليُستعاد حسابك. تبقى الملاحظات التي كتبتها في مجموعات الآخرين باسم «مستخدم محذوف».",
+    "few":
+      "ستُسجَّل خارج حسابك على كل الأجهزة فورًا. يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} أيام؛ سجّل الدخول قبل ذلك ليُستعاد حسابك. تبقى الملاحظات التي كتبتها في مجموعات الآخرين باسم «مستخدم محذوف».",
+    "many":
+      "ستُسجَّل خارج حسابك على كل الأجهزة فورًا. يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} يومًا؛ سجّل الدخول قبل ذلك ليُستعاد حسابك. تبقى الملاحظات التي كتبتها في مجموعات الآخرين باسم «مستخدم محذوف».",
+    "other":
+      "ستُسجَّل خارج حسابك على كل الأجهزة فورًا. يُحذف حسابك والمجموعات التي تستخدمها وحدك نهائيًا بعد {count} يوم؛ سجّل الدخول قبل ذلك ليُستعاد حسابك. تبقى الملاحظات التي كتبتها في مجموعات الآخرين باسم «مستخدم محذوف».",
   },
   "AccountDelete.deleting": "جارٍ الحذف…",
-  "AccountDelete.blocked": "تملك مجموعات ما زال آخرون يستخدمونها أو يدفعون مقابلها. عالج كل واحدة أولًا ثم عُد.",
-  "AuthScreen.demoNote": "هذا عرض تجريبي عام يُمسح كل ليلة. يبدأ كل حساب جديد ببيانات نموذجية لتستكشفها.",
-  "AuthScreen.demoGuestNote": "هذا عرض تجريبي عام يُمسح كل ليلة. يبدأ كل حساب جديد، ضيفًا كان أم لا، ببيانات نموذجية لتستكشفها.",
+  "AccountDelete.blocked":
+    "تملك مجموعات ما زال آخرون يستخدمونها أو يدفعون مقابلها. عالج كل واحدة أولًا ثم عُد.",
+  "AuthScreen.demoNote":
+    "هذا عرض تجريبي عام يُمسح كل ليلة. يبدأ كل حساب جديد ببيانات نموذجية لتستكشفها.",
+  "AuthScreen.demoGuestNote":
+    "هذا عرض تجريبي عام يُمسح كل ليلة. يبدأ كل حساب جديد، ضيفًا كان أم لا، ببيانات نموذجية لتستكشفها.",
   "AuthScreen.tryFirst": "جرّب التطبيق أولًا، أو أنشئ حسابًا ببريد إلكتروني.",
   "AuthScreen.invitedTitle": "تمت دعوتك إلى مجموعة",
   "AuthScreen.invitedSignIn": "سجّل الدخول لترى الدعوة وتنضم.",
@@ -1939,12 +2128,15 @@
   "ConfirmSignUpScreen.failed": "تعذّر إنشاء حسابك",
   "ConfirmSignUpScreen.title": "إنشاء حساب جديد؟",
   "ConfirmSignUpScreen.goneTitle": "لا شيء لتأكيده",
-  "ConfirmSignUpScreen.gone": "استغرق هذا أكثر من عشر دقائق، أو تمت الإجابة عنه بالفعل. لم يُنشأ شيء.",
+  "ConfirmSignUpScreen.gone":
+    "استغرق هذا أكثر من عشر دقائق، أو تمت الإجابة عنه بالفعل. لم يُنشأ شيء.",
   "ConfirmSignUpScreen.backToSignIn": "العودة إلى تسجيل الدخول",
   "ConfirmSignUpScreen.unknown": "لا يوجد حساب هنا يسجّل الدخول بحساب {provider} هذا.",
   "ConfirmSignUpScreen.unknownColon": "لا يوجد حساب هنا يسجّل الدخول بحساب {provider} هذا:",
-  "ConfirmSignUpScreen.goBack": "إن كان لديك حساب بالفعل، فارجع وسجّل الدخول بالطريقة التي استخدمتها من قبل. يمكنك بعدها ربط {provider} من ملفك الشخصي. لم يُنشأ شيء بعد.",
-  "ConfirmSignUpScreen.unconfirmed": "<strong>يستخدم حساب هنا هذا العنوان بالفعل، لكنه لم يؤكده قط.</strong> إنشاء حساب جديد يقفل ذلك الحساب: تتوقف كلمة مروره عن العمل وتُسجَّل أجهزته خروجًا. للاحتفاظ به، ارجع وسجّل الدخول بكلمة مروره وأكّد العنوان بالرمز الذي نرسله إليك بالبريد.",
+  "ConfirmSignUpScreen.goBack":
+    "إن كان لديك حساب بالفعل، فارجع وسجّل الدخول بالطريقة التي استخدمتها من قبل. يمكنك بعدها ربط {provider} من ملفك الشخصي. لم يُنشأ شيء بعد.",
+  "ConfirmSignUpScreen.unconfirmed":
+    "<strong>يستخدم حساب هنا هذا العنوان بالفعل، لكنه لم يؤكده قط.</strong> إنشاء حساب جديد يقفل ذلك الحساب: تتوقف كلمة مروره عن العمل وتُسجَّل أجهزته خروجًا. للاحتفاظ به، ارجع وسجّل الدخول بكلمة مروره وأكّد العنوان بالرمز الذي نرسله إليك بالبريد.",
   "ConfirmSignUpScreen.back": "لديّ حساب بالفعل: العودة إلى تسجيل الدخول",
   "ConfirmSignUpScreen.creating": "جارٍ إنشاء حسابك…",
   "ConfirmSignUpScreen.create": "أنشئ حسابًا جديدًا",
@@ -1960,30 +2152,43 @@
   "EmailScreen.close": "إغلاق",
   "EmailScreen.cancel": "إلغاء",
   "EmailScreen.codeSent": {
-    "zero": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة.",
-    "one": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة دقيقة واحدة.",
+    "zero":
+      "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة.",
+    "one":
+      "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة دقيقة واحدة.",
     "two": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة دقيقتين.",
-    "few": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقائق.",
-    "many": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة.",
-    "other": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة."
+    "few":
+      "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقائق.",
+    "many":
+      "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة.",
+    "other":
+      "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة.",
   },
   "EmailScreen.codeResent": "رمز جديد في طريقه إلى <email>{email}</email>.",
   "EmailScreen.codeSentKeep": {
-    "zero": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
-    "one": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة دقيقة واحدة. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
-    "two": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة دقيقتين. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
-    "few": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقائق. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
-    "many": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
-    "other": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله."
+    "zero":
+      "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
+    "one":
+      "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة دقيقة واحدة. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
+    "two":
+      "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة دقيقتين. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
+    "few":
+      "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقائق. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
+    "many":
+      "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
+    "other":
+      "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
   },
   "EmailScreen.confirm": "تأكيد العنوان",
   "EmailScreen.noMail": "لم تصلك رسالة؟ <button>أرسل رمزًا جديدًا</button>",
-  "EmailScreen.changeProvider": "نرسل رمزًا إلى العنوان الجديد. يتغيّر عنوانك بمجرد إدخاله. ستواصل تسجيل الدخول عبر {providers}.",
-  "EmailScreen.changeKeep": "نرسل رمزًا إلى العنوان الجديد. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
+  "EmailScreen.changeProvider":
+    "نرسل رمزًا إلى العنوان الجديد. يتغيّر عنوانك بمجرد إدخاله. ستواصل تسجيل الدخول عبر {providers}.",
+  "EmailScreen.changeKeep":
+    "نرسل رمزًا إلى العنوان الجديد. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
   "EmailScreen.changeNew": "نرسل رمزًا إلى العنوان الجديد. بمجرد إدخاله، تسجّل الدخول بذلك العنوان.",
   "EmailScreen.newAddress": "البريد الإلكتروني الجديد",
   "EmailScreen.currentPassword": "كلمة المرور الحالية",
   "EmailScreen.sendCode": "أرسل الرمز",
   "EmailScreen.verified": "مؤكَّد",
-  "EmailScreen.notVerified": "غير مؤكَّد"
-}
+  "EmailScreen.notVerified": "غير مؤكَّد",
+} satisfies Catalog

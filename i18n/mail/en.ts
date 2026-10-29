@@ -1,0 +1,124 @@
+import type { Catalog } from "@spy4x/platform/universal/i18n"
+
+export default {
+  "Mail.sentBy": "— Sent by",
+  "Mail.signIn": "Sign in",
+  "Mail.openProfile": "Open your profile",
+  "Mail.openGroup": "Open the group",
+  "PasswordResetMail.subject": "Reset your password",
+  "PasswordResetMail.asked": "Someone asked to reset the password of your account at {host}.",
+  "PasswordResetMail.open": {
+    "one": "Open this link within {count} minute to choose a new password.",
+    "other": "Open this link within {count} minutes to choose a new password.",
+  },
+  "PasswordResetMail.button": "Choose a new password",
+  "PasswordResetMail.once": "The link works once, and using it signs you out everywhere.",
+  "PasswordResetMail.ignore":
+    "If you did not ask for this, ignore this mail: your password stays as it is.",
+  "SignInLinkMail.subject": "Your sign-in link for {host}",
+  "SignInLinkMail.asked": "Someone asked to sign in to {host} with this address on {when}.",
+  "SignInLinkMail.open": {
+    "one":
+      "Open this link within {count} minute to sign in. If no account uses this address yet, it creates one.",
+    "other":
+      "Open this link within {count} minutes to sign in. If no account uses this address yet, it creates one.",
+  },
+  "SignInLinkMail.button": "Sign in to {host}",
+  "SignInLinkMail.once":
+    "The link works once. Opening it shows a page with a Continue button: nothing happens until you press it.",
+  "SignInLinkMail.ignore":
+    "If you did not ask for this, ignore this mail. Nobody can sign in without the link.",
+  "EmailCodeMail.subject": "Your code to confirm your e-mail address",
+  "EmailCodeMail.asked": "Enter this code at {host} to confirm this is your e-mail address.",
+  "EmailCodeMail.valid": {
+    "one": "It works once, for {count} minute.",
+    "other": "It works once, for {count} minutes.",
+  },
+  "EmailCodeMail.ignore": "If you did not ask for this, ignore this mail: nothing changes.",
+  "InvitationMail.subject": 'Invitation to join "{group}"',
+  "InvitationMail.invited":
+    '<strong>{who}</strong> invited you to join "{group}" at {host}, with the role {role}.',
+  "InvitationMail.invitedNoName":
+    'You are invited to join "{group}" at {host}, with the role {role}.',
+  "InvitationMail.open": {
+    "one": "Open this link within {count} day to accept or decline.",
+    "other": "Open this link within {count} days to accept or decline.",
+  },
+  "InvitationMail.button": "Open the invitation",
+  "InvitationMail.account":
+    "The invitation is for this e-mail address: accept it with the account that uses it.",
+  "InvitationMail.ignore": "If you do not want to join, ignore this mail.",
+  "AccountDeletionMail.subject": "Your account will be deleted on {date}",
+  "AccountDeletionMail.asked":
+    "Your account at {host} will be deleted for good on <strong>{date}</strong>, as you asked.",
+  "AccountDeletionMail.keep":
+    "Changed your mind? Sign in before then and your account is restored.",
+  "AccountDeletionMail.notYou":
+    "If you did not ask for this, sign in now to keep your account, then change your password.",
+  "AccountRestoredMail.subject": "Your account was restored",
+  "AccountRestoredMail.restored":
+    "Your account at {host} was restored by a sign-in, so it will no longer be deleted.",
+  "AccountRestoredMail.notYou":
+    "If this wasn't you, sign in, delete your account again and change your password.",
+  "DataExportReadyMail.subject": "Your data is ready",
+  "DataExportReadyMail.ready": "Download it from your profile until <strong>{date}</strong>.",
+  "DataExportReadyMail.notYou":
+    "If you did not ask for this, change your password and sign out of your other devices.",
+  "SignInMethodMail.passkeyAddedSubject": "A passkey was added to your account",
+  "SignInMethodMail.passkeyAdded":
+    "A passkey was added to your account at {host} on {when}. It can now sign in to it.",
+  "SignInMethodMail.passkeyAddedNotYou":
+    "If this wasn't you, remove the passkey on your profile page and change your password.",
+  "SignInMethodMail.passkeyRemovedSubject": "A passkey was removed from your account",
+  "SignInMethodMail.passkeyRemoved":
+    "A passkey was removed from your account at {host} on {when}. It no longer signs in to it.",
+  "SignInMethodMail.passkeyRemovedNotYou":
+    "If this wasn't you, sign in, change your password and add your passkey again.",
+  "SignInMethodMail.linkedSubject": "{provider} was linked to your account",
+  "SignInMethodMail.linked":
+    "{provider} was linked to your account at {host} on {when}. It can now sign in to it.",
+  "SignInMethodMail.linkedNotYou":
+    "If this wasn't you, unlink {provider} on your profile page and change your password.",
+  "SignInMethodMail.unlinkedSubject": "{provider} was unlinked from your account",
+  "SignInMethodMail.unlinked":
+    "{provider} was unlinked from your account at {host} on {when}. It no longer signs in to it.",
+  "SignInMethodMail.unlinkedNotYou":
+    "If this wasn't you, sign in, change your password and link {provider} again.",
+  "ApiTokenMail.subject": "An API token was created",
+  "ApiTokenMail.created": 'An API token named "{name}" was created for your account at {host}.',
+  "ApiTokenMail.readUntil": 'It can read the group "{group}" and expires on {date}.',
+  "ApiTokenMail.readForever": 'It can read the group "{group}" and never expires.',
+  "ApiTokenMail.writeUntil": 'It can read and write the group "{group}" and expires on {date}.',
+  "ApiTokenMail.writeForever": 'It can read and write the group "{group}" and never expires.',
+  "ApiTokenMail.notYou":
+    "If this wasn't you, revoke the token on your profile page and change your password, which revokes every API token.",
+  "BillingNoticeMail.paidPlan": "paid",
+  "BillingNoticeMail.trialSubject": "Your {plan} trial ends on {date}",
+  "BillingNoticeMail.trialWhat": 'The {plan} trial of "{group}" ends on <strong>{date}</strong>.',
+  "BillingNoticeMail.trialWithCard":
+    "The subscription then starts and is charged. To stop it, cancel it before then from the group's page.",
+  "BillingNoticeMail.trialWithoutCard":
+    "Add a card from the group's page before then to keep the plan: the subscription then starts and is charged. Without a card, the group moves to the free plan.",
+  "BillingNoticeMail.paymentSubject": "A payment for {plan} failed",
+  "BillingNoticeMail.paymentWhat": 'A payment for the {plan} plan of "{group}" failed.',
+  "BillingNoticeMail.paymentKept":
+    "The plan is kept until <strong>{date}</strong> while the payment is retried. Update the card from the group's page to keep it.",
+  "BillingNoticeMail.paymentFree":
+    "The group is now on the free plan. Update the card from the group's page to get the plan back.",
+  "BillingNoticeMail.planSubject": "Your {plan} plan ends on {date}",
+  "BillingNoticeMail.planWhat":
+    'The {plan} plan of "{group}" was cancelled and ends on <strong>{date}</strong>; the group then moves to the free plan.',
+  "BillingNoticeMail.planNext": "Changed your mind? Renew it from the group's page before then.",
+  "SubscriberConfirmMail.subject": "Confirm your subscription to {host}",
+  "SubscriberConfirmMail.asked": "Someone asked to send news from {host} to this address.",
+  "SubscriberConfirmMail.within": "Confirm within three days to start getting it.",
+  "SubscriberConfirmMail.button": "Confirm",
+  "SubscriberConfirmMail.ignore":
+    "If you did not ask for this, ignore this mail: nothing is sent to you.",
+  "SubscriberWelcomeMail.subject": "You are subscribed to {host}",
+  "SubscriberWelcomeMail.subscribed": "You are subscribed to news from {host}.",
+  "SubscriberWelcomeMail.reason": "You get this mail because you subscribed at {host}.",
+  "SubscriberWelcomeMail.unsubscribe": "Unsubscribe",
+  "SubscriberIssue.reason": "You get this mail because you subscribed at {host}.",
+  "SubscriberIssue.readPost": "Read the post",
+} satisfies Catalog

@@ -20,10 +20,10 @@ import {
 import { GroupsScreen } from "./groups-screen.tsx"
 import { GROUP_PATHS } from "./progressive.tsx"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
-import appEn from "@i18n/app/en.json" with { type: "json" }
-import appRu from "@i18n/app/ru.json" with { type: "json" }
-import errorsEn from "@i18n/errors/en.json" with { type: "json" }
-import errorsRu from "@i18n/errors/ru.json" with { type: "json" }
+import appEn from "@i18n/app/en.ts"
+import appRu from "@i18n/app/ru.ts"
+import errorsEn from "@i18n/errors/en.ts"
+import errorsRu from "@i18n/errors/ru.ts"
 
 /** The screens' English, as an app without another language reads it. */
 const EN = createTranslator({ language: `en`, catalogs: [{ source: appEn }] })

@@ -24,12 +24,12 @@ import systemEs from "@spy4x/preact-system/i18n/es"
 import systemDe from "@spy4x/preact-system/i18n/de"
 import systemPtBr from "@spy4x/preact-system/i18n/pt-BR"
 import systemAr from "@spy4x/preact-system/i18n/ar"
-import siteEn from "@i18n/site/en.json" with { type: "json" }
-import siteRu from "@i18n/site/ru.json" with { type: "json" }
-import siteEs from "@i18n/site/es.json" with { type: "json" }
-import siteDe from "@i18n/site/de.json" with { type: "json" }
-import sitePtBr from "@i18n/site/pt-BR.json" with { type: "json" }
-import siteAr from "@i18n/site/ar.json" with { type: "json" }
+import siteEn from "@i18n/site/en.ts"
+import siteRu from "@i18n/site/ru.ts"
+import siteEs from "@i18n/site/es.ts"
+import siteDe from "@i18n/site/de.ts"
+import sitePtBr from "@i18n/site/pt-BR.ts"
+import siteAr from "@i18n/site/ar.ts"
 
 /** The languages the website is served in, the default first. */
 export const SITE_LANGUAGES: readonly Language[] = LANGUAGES

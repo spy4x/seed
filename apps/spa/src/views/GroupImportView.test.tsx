@@ -4,7 +4,7 @@ import { GroupRole } from "@domain/groups"
 import { GROUP_PATHS } from "@ui/progressive.tsx"
 import { openImported } from "./GroupImportView.tsx"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
-import appEn from "@i18n/app/en.json" with { type: "json" }
+import appEn from "@i18n/app/en.ts"
 
 const EN = createTranslator({ language: `en`, catalogs: [{ source: appEn }] })
 

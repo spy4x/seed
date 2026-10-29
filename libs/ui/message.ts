@@ -13,8 +13,8 @@ import {
 } from "@spy4x/platform/universal/i18n"
 import type { FieldError, FieldErrors } from "@spy4x/validation"
 import type { OAuthNotice } from "@domain/identity"
-import app from "@i18n/app/en.json" with { type: "json" }
-import errors from "@i18n/errors/en.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
+import errors from "@i18n/errors/en.ts"
 
 /** A message key of the `app` catalog with the values its sentence names. */
 export interface KeyedMessage {

@@ -19,7 +19,7 @@ import {
   type MessageValues,
   type Translator,
 } from "@spy4x/platform/universal/i18n"
-import app from "@i18n/app/en.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
 import { type OverviewPeriods, overviewPeriods } from "@domain/groups"
 import type { WidgetView } from "./note-widgets.tsx"
 import { type Navigate, NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"

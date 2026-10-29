@@ -28,12 +28,12 @@ import uiDe from "@spy4x/preact-ui/i18n/de"
 import systemDe from "@spy4x/preact-system/i18n/de"
 import uiAr from "@spy4x/preact-ui/i18n/ar"
 import systemAr from "@spy4x/preact-system/i18n/ar"
-import appEn from "@i18n/app/en.json" with { type: "json" }
-import appDe from "@i18n/app/de.json" with { type: "json" }
-import appAr from "@i18n/app/ar.json" with { type: "json" }
-import adminEn from "@i18n/admin/en.json" with { type: "json" }
-import adminDe from "@i18n/admin/de.json" with { type: "json" }
-import adminAr from "@i18n/admin/ar.json" with { type: "json" }
+import appEn from "@i18n/app/en.ts"
+import appDe from "@i18n/app/de.ts"
+import appAr from "@i18n/app/ar.ts"
+import adminEn from "@i18n/admin/en.ts"
+import adminDe from "@i18n/admin/de.ts"
+import adminAr from "@i18n/admin/ar.ts"
 import { DEFAULT_PREFERENCES } from "@domain/identity"
 import { AppFrame, PublicFrame } from "./frame.tsx"
 import { AdminFrame, AdminShell } from "./admin-frame.tsx"

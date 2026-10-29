@@ -17,8 +17,8 @@ import {
 } from "./note-attachments.tsx"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
-import app from "@i18n/app/en.json" with { type: "json" }
-import appRu from "@i18n/app/ru.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
+import appRu from "@i18n/app/ru.ts"
 
 /** The `app` catalog's English, as a screen without a provider reads it. */
 const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })

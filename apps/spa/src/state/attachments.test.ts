@@ -3,7 +3,7 @@ import { describe, it } from "@std/testing/bdd"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import type { Attachment, AttachmentListResult } from "@domain/notes"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
-import app from "@i18n/app/en.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
 import { messageText } from "@ui/message.ts"
 import { type AttachmentDependencies, createAttachmentsStore } from "./attachments.ts"
 

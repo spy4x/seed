@@ -1,28 +1,35 @@
-{
+import type { Catalog } from "@spy4x/platform/universal/i18n"
+
+export default {
   "AppShell.attachFiles": "Anexar arquivos a esta nota",
   "AttachmentMessages.load": "Não foi possível carregar os arquivos",
-  "AttachmentMessages.type": "Não é possível anexar {name}. Só dá para anexar imagens JPEG, PNG, WebP e GIF e arquivos PDF.",
+  "AttachmentMessages.type":
+    "Não é possível anexar {name}. Só dá para anexar imagens JPEG, PNG, WebP e GIF e arquivos PDF.",
   "AttachmentMessages.size": "{name} tem {size}. Cada arquivo pode ter até {max}.",
   "AttachmentMessages.noteFull": {
     "one": "Uma nota comporta até {count} arquivo. {name} não foi anexado.",
     "many": "Uma nota comporta até {count} arquivos. {name} não foi anexado.",
-    "other": "Uma nota comporta até {count} arquivos. {name} não foi anexado."
+    "other": "Uma nota comporta até {count} arquivos. {name} não foi anexado.",
   },
   "AttachmentMessages.pending": "{name} está na fila: primeiro termine os envios que já começaram.",
-  "AttachmentMessages.budget": "{name} não foi anexado: você já enviou o máximo permitido em uma hora. Tente de novo mais tarde.",
+  "AttachmentMessages.budget":
+    "{name} não foi anexado: você já enviou o máximo permitido em uma hora. Tente de novo mais tarde.",
   "AttachmentMessages.uploadFailed": "O envio falhou.",
   "AttachmentMessages.overflow": {
     "one": "Uma nota comporta até {max} arquivos. {count} não foi anexado: {names}.",
     "many": "Uma nota comporta até {max} arquivos. {count} não foram anexados: {names}.",
-    "other": "Uma nota comporta até {max} arquivos. {count} não foram anexados: {names}."
+    "other": "Uma nota comporta até {max} arquivos. {count} não foram anexados: {names}.",
   },
   "AttachmentMessages.uploaded": "{name} enviado",
   "AttachmentMessages.notReallyPdf": "{name} não é de fato um PDF, então não foi anexado.",
-  "AttachmentMessages.notReallyJpeg": "{name} não é de fato uma imagem JPEG, então não foi anexado.",
+  "AttachmentMessages.notReallyJpeg":
+    "{name} não é de fato uma imagem JPEG, então não foi anexado.",
   "AttachmentMessages.notReallyPng": "{name} não é de fato uma imagem PNG, então não foi anexado.",
-  "AttachmentMessages.notReallyWebp": "{name} não é de fato uma imagem WebP, então não foi anexado.",
+  "AttachmentMessages.notReallyWebp":
+    "{name} não é de fato uma imagem WebP, então não foi anexado.",
   "AttachmentMessages.notReallyGif": "{name} não é de fato uma imagem GIF, então não foi anexado.",
-  "AttachmentMessages.remove": "Não foi possível remover {name}. Verifique sua conexão e tente de novo.",
+  "AttachmentMessages.remove":
+    "Não foi possível remover {name}. Verifique sua conexão e tente de novo.",
   "AttachmentMessages.linkExpired": "Este link expirou. Tente de novo.",
   "Frame.overview": "Visão geral",
   "Frame.notes": "Notas",
@@ -48,49 +55,61 @@
   "GroupActivity.roleUnknown": "Membro",
   "GroupActivity.created": "<who>{who}</who> criou o grupo",
   "GroupActivity.renamed": "<who>{who}</who> renomeou o grupo",
-  "GroupActivity.renamedFromTo": "<who>{who}</who> renomeou o grupo de “<value>{from}</value>” para “<value>{to}</value>”",
+  "GroupActivity.renamedFromTo":
+    "<who>{who}</who> renomeou o grupo de “<value>{from}</value>” para “<value>{to}</value>”",
   "GroupActivity.detailsUpdated": "<who>{who}</who> mudou a descrição, a cor ou o emoji do grupo",
   "GroupActivity.deleted": "<who>{who}</who> excluiu o grupo",
   "GroupActivity.restored": "<who>{who}</who> restaurou o grupo",
   "GroupActivity.roleChanged": "<who>{who}</who> mudou o papel de <target>{target}</target>",
   "GroupActivity.roleChangedSomeone": "<who>{who}</who> mudou o papel de um membro",
-  "GroupActivity.roleChangedFromTo": "<who>{who}</who> mudou o papel de <target>{target}</target> de “{fromRole}” para “{toRole}”",
-  "GroupActivity.roleChangedFromToSomeone": "<who>{who}</who> mudou o papel de um membro de “{fromRole}” para “{toRole}”",
+  "GroupActivity.roleChangedFromTo":
+    "<who>{who}</who> mudou o papel de <target>{target}</target> de “{fromRole}” para “{toRole}”",
+  "GroupActivity.roleChangedFromToSomeone":
+    "<who>{who}</who> mudou o papel de um membro de “{fromRole}” para “{toRole}”",
   "GroupActivity.memberRemoved": "<who>{who}</who> removeu <target>{target}</target> do grupo",
   "GroupActivity.memberRemovedSomeone": "<who>{who}</who> removeu um membro do grupo",
   "GroupActivity.memberLeft": "<who>{who}</who> saiu do grupo",
-  "GroupActivity.ownershipTransferred": "<who>{who}</who> tornou <target>{target}</target> proprietário do grupo",
-  "GroupActivity.ownershipTransferredSomeone": "<who>{who}</who> tornou um membro proprietário do grupo",
+  "GroupActivity.ownershipTransferred":
+    "<who>{who}</who> tornou <target>{target}</target> proprietário do grupo",
+  "GroupActivity.ownershipTransferredSomeone":
+    "<who>{who}</who> tornou um membro proprietário do grupo",
   "GroupActivity.invited": "<who>{who}</who> convidou alguém para entrar",
   "GroupActivity.invitedAs": "<who>{who}</who> convidou alguém para entrar como “{role}”",
   "GroupActivity.invitationAccepted": "<who>{who}</who> entrou no grupo",
   "GroupActivity.invitationRevoked": "<who>{who}</who> cancelou um convite",
   "GroupActivity.invitationDeclined": "<who>{who}</who> recusou um convite",
   "GroupActivity.dataMovedOut": {
-    "one": "<who>{who}</who> moveu todos os dados do grupo ({count} item) para <value>{group}</value>",
-    "many": "<who>{who}</who> moveu todos os dados do grupo ({count} itens) para <value>{group}</value>",
-    "other": "<who>{who}</who> moveu todos os dados do grupo ({count} itens) para <value>{group}</value>"
+    "one":
+      "<who>{who}</who> moveu todos os dados do grupo ({count} item) para <value>{group}</value>",
+    "many":
+      "<who>{who}</who> moveu todos os dados do grupo ({count} itens) para <value>{group}</value>",
+    "other":
+      "<who>{who}</who> moveu todos os dados do grupo ({count} itens) para <value>{group}</value>",
   },
   "GroupActivity.dataMovedOutElsewhere": {
     "one": "<who>{who}</who> moveu todos os dados do grupo ({count} item) para outro grupo",
     "many": "<who>{who}</who> moveu todos os dados do grupo ({count} itens) para outro grupo",
-    "other": "<who>{who}</who> moveu todos os dados do grupo ({count} itens) para outro grupo"
+    "other": "<who>{who}</who> moveu todos os dados do grupo ({count} itens) para outro grupo",
   },
-  "GroupActivity.dataMovedOutUncounted": "<who>{who}</who> moveu todos os dados do grupo para <value>{group}</value>",
-  "GroupActivity.dataMovedOutUncountedElsewhere": "<who>{who}</who> moveu todos os dados do grupo para outro grupo",
+  "GroupActivity.dataMovedOutUncounted":
+    "<who>{who}</who> moveu todos os dados do grupo para <value>{group}</value>",
+  "GroupActivity.dataMovedOutUncountedElsewhere":
+    "<who>{who}</who> moveu todos os dados do grupo para outro grupo",
   "GroupActivity.dataMovedIn": {
     "one": "<who>{who}</who> moveu para cá todos os dados de outro grupo ({count} item)",
     "many": "<who>{who}</who> moveu para cá todos os dados de outro grupo ({count} itens)",
-    "other": "<who>{who}</who> moveu para cá todos os dados de outro grupo ({count} itens)"
+    "other": "<who>{who}</who> moveu para cá todos os dados de outro grupo ({count} itens)",
   },
-  "GroupActivity.dataMovedInUncounted": "<who>{who}</who> moveu para cá todos os dados de outro grupo",
+  "GroupActivity.dataMovedInUncounted":
+    "<who>{who}</who> moveu para cá todos os dados de outro grupo",
   "GroupActivity.exported": "<who>{who}</who> exportou o grupo para um arquivo",
   "GroupActivity.imported": {
     "one": "<who>{who}</who> criou o grupo a partir de um arquivo de exportação ({count} item)",
     "many": "<who>{who}</who> criou o grupo a partir de um arquivo de exportação ({count} itens)",
-    "other": "<who>{who}</who> criou o grupo a partir de um arquivo de exportação ({count} itens)"
+    "other": "<who>{who}</who> criou o grupo a partir de um arquivo de exportação ({count} itens)",
   },
-  "GroupActivity.importedUncounted": "<who>{who}</who> criou o grupo a partir de um arquivo de exportação",
+  "GroupActivity.importedUncounted":
+    "<who>{who}</who> criou o grupo a partir de um arquivo de exportação",
   "GroupActivity.noteCreated": "<who>{who}</who> adicionou a nota “<value>{title}</value>”",
   "GroupActivity.noteCreatedUntitled": "<who>{who}</who> adicionou uma nota",
   "GroupActivity.noteDeleted": "<who>{who}</who> excluiu a nota “<value>{title}</value>”",
@@ -100,32 +119,39 @@
   "GroupActivity.notesMovedOut": {
     "one": "<who>{who}</who> moveu {count} nota para <value>{group}</value>",
     "many": "<who>{who}</who> moveu {count} notas para <value>{group}</value>",
-    "other": "<who>{who}</who> moveu {count} notas para <value>{group}</value>"
+    "other": "<who>{who}</who> moveu {count} notas para <value>{group}</value>",
   },
   "GroupActivity.notesMovedOutElsewhere": {
     "one": "<who>{who}</who> moveu {count} nota para outro grupo",
     "many": "<who>{who}</who> moveu {count} notas para outro grupo",
-    "other": "<who>{who}</who> moveu {count} notas para outro grupo"
+    "other": "<who>{who}</who> moveu {count} notas para outro grupo",
   },
-  "GroupActivity.notesMovedOutUncounted": "<who>{who}</who> moveu algumas notas para <value>{group}</value>",
-  "GroupActivity.notesMovedOutUncountedElsewhere": "<who>{who}</who> moveu algumas notas para outro grupo",
+  "GroupActivity.notesMovedOutUncounted":
+    "<who>{who}</who> moveu algumas notas para <value>{group}</value>",
+  "GroupActivity.notesMovedOutUncountedElsewhere":
+    "<who>{who}</who> moveu algumas notas para outro grupo",
   "GroupActivity.notesMovedIn": {
     "one": "<who>{who}</who> moveu para cá {count} nota de outro grupo",
     "many": "<who>{who}</who> moveu para cá {count} notas de outro grupo",
-    "other": "<who>{who}</who> moveu para cá {count} notas de outro grupo"
+    "other": "<who>{who}</who> moveu para cá {count} notas de outro grupo",
   },
-  "GroupActivity.notesMovedInUncounted": "<who>{who}</who> moveu para cá algumas notas de outro grupo",
-  "GroupActivity.fileAdded": "<who>{who}</who> anexou o arquivo “<value>{name}</value>” a “<value>{title}</value>”",
+  "GroupActivity.notesMovedInUncounted":
+    "<who>{who}</who> moveu para cá algumas notas de outro grupo",
+  "GroupActivity.fileAdded":
+    "<who>{who}</who> anexou o arquivo “<value>{name}</value>” a “<value>{title}</value>”",
   "GroupActivity.fileAddedNoNote": "<who>{who}</who> anexou o arquivo “<value>{name}</value>”",
   "GroupActivity.fileAddedUnnamed": "<who>{who}</who> anexou um arquivo a “<value>{title}</value>”",
   "GroupActivity.fileAddedUnnamedNoNote": "<who>{who}</who> anexou um arquivo",
-  "GroupActivity.fileRemoved": "<who>{who}</who> removeu o arquivo “<value>{name}</value>” de “<value>{title}</value>”",
+  "GroupActivity.fileRemoved":
+    "<who>{who}</who> removeu o arquivo “<value>{name}</value>” de “<value>{title}</value>”",
   "GroupActivity.fileRemovedNoNote": "<who>{who}</who> removeu o arquivo “<value>{name}</value>”",
-  "GroupActivity.fileRemovedUnnamed": "<who>{who}</who> removeu um arquivo de “<value>{title}</value>”",
+  "GroupActivity.fileRemovedUnnamed":
+    "<who>{who}</who> removeu um arquivo de “<value>{title}</value>”",
   "GroupActivity.fileRemovedUnnamedNoNote": "<who>{who}</who> removeu um arquivo",
   "GroupActivity.tagCreated": "<who>{who}</who> adicionou a tag “<value>{name}</value>”",
   "GroupActivity.tagCreatedUnnamed": "<who>{who}</who> adicionou uma tag",
-  "GroupActivity.tagRenamed": "<who>{who}</who> renomeou a tag “<value>{from}</value>” para “<value>{name}</value>”",
+  "GroupActivity.tagRenamed":
+    "<who>{who}</who> renomeou a tag “<value>{from}</value>” para “<value>{name}</value>”",
   "GroupActivity.tagChanged": "<who>{who}</who> mudou a tag “<value>{name}</value>”",
   "GroupActivity.tagChangedUnnamed": "<who>{who}</who> mudou uma tag",
   "GroupActivity.tagRecoloured": "<who>{who}</who> mudou a cor da tag “<value>{name}</value>”",
@@ -134,12 +160,12 @@
   "GroupActivity.tagDeletedCarried": {
     "one": "<who>{who}</who> excluiu a tag “<value>{name}</value>”, que estava em {count} nota",
     "many": "<who>{who}</who> excluiu a tag “<value>{name}</value>”, que estava em {count} notas",
-    "other": "<who>{who}</who> excluiu a tag “<value>{name}</value>”, que estava em {count} notas"
+    "other": "<who>{who}</who> excluiu a tag “<value>{name}</value>”, que estava em {count} notas",
   },
   "GroupActivity.tagDeletedUnnamedCarried": {
     "one": "<who>{who}</who> excluiu uma tag que estava em {count} nota",
     "many": "<who>{who}</who> excluiu uma tag que estava em {count} notas",
-    "other": "<who>{who}</who> excluiu uma tag que estava em {count} notas"
+    "other": "<who>{who}</who> excluiu uma tag que estava em {count} notas",
   },
   "GroupActivity.unknown": "<who>{who}</who> mudou algo no grupo",
   "GroupActivity.loadFailed": "Não foi possível carregar a atividade",
@@ -163,12 +189,12 @@
   "GroupEditor.memberCount": {
     "one": "{count} membro",
     "many": "{count} membros",
-    "other": "{count} membros"
+    "other": "{count} membros",
   },
   "GroupEditor.memberCountLink": {
     "one": "{count} membro: ver o plano e o faturamento",
     "many": "{count} membros: ver o plano e o faturamento",
-    "other": "{count} membros: ver o plano e o faturamento"
+    "other": "{count} membros: ver o plano e o faturamento",
   },
   "GroupEditor.tabGeneral": "Geral",
   "GroupEditor.tabMembers": "Membros",
@@ -184,22 +210,28 @@
   "GroupEditor.close": "Fechar",
   "GroupEditor.cancel": "Cancelar",
   "GroupEditor.leaveTitle": "Sair de “{name}”?",
-  "GroupEditor.leaveConfirmation": "Você perde o acesso na hora, em todos os dispositivos. O que você escreveu fica no grupo. Para voltar, alguém precisa adicionar você de novo.",
+  "GroupEditor.leaveConfirmation":
+    "Você perde o acesso na hora, em todos os dispositivos. O que você escreveu fica no grupo. Para voltar, alguém precisa adicionar você de novo.",
   "GroupEditor.deleteTitle": "Excluir “{name}”?",
   "GroupEditor.deleteConfirmation": {
-    "one": "Ele desaparece na hora para todos os membros, com tudo o que tem dentro. Quem estiver com ele aberto passa para outro dos seus grupos, e quem ficar sem nenhum grupo ganha um novo, vazio, chamado “Personal”. Você pode restaurá-lo na página Grupos por {count} dia. Depois disso, ele e tudo o que tem dentro são excluídos para sempre e não podem ser recuperados.",
-    "many": "Ele desaparece na hora para todos os membros, com tudo o que tem dentro. Quem estiver com ele aberto passa para outro dos seus grupos, e quem ficar sem nenhum grupo ganha um novo, vazio, chamado “Personal”. Você pode restaurá-lo na página Grupos por {count} dias. Depois disso, ele e tudo o que tem dentro são excluídos para sempre e não podem ser recuperados.",
-    "other": "Ele desaparece na hora para todos os membros, com tudo o que tem dentro. Quem estiver com ele aberto passa para outro dos seus grupos, e quem ficar sem nenhum grupo ganha um novo, vazio, chamado “Personal”. Você pode restaurá-lo na página Grupos por {count} dias. Depois disso, ele e tudo o que tem dentro são excluídos para sempre e não podem ser recuperados."
+    "one":
+      "Ele desaparece na hora para todos os membros, com tudo o que tem dentro. Quem estiver com ele aberto passa para outro dos seus grupos, e quem ficar sem nenhum grupo ganha um novo, vazio, chamado “Personal”. Você pode restaurá-lo na página Grupos por {count} dia. Depois disso, ele e tudo o que tem dentro são excluídos para sempre e não podem ser recuperados.",
+    "many":
+      "Ele desaparece na hora para todos os membros, com tudo o que tem dentro. Quem estiver com ele aberto passa para outro dos seus grupos, e quem ficar sem nenhum grupo ganha um novo, vazio, chamado “Personal”. Você pode restaurá-lo na página Grupos por {count} dias. Depois disso, ele e tudo o que tem dentro são excluídos para sempre e não podem ser recuperados.",
+    "other":
+      "Ele desaparece na hora para todos os membros, com tudo o que tem dentro. Quem estiver com ele aberto passa para outro dos seus grupos, e quem ficar sem nenhum grupo ganha um novo, vazio, chamado “Personal”. Você pode restaurá-lo na página Grupos por {count} dias. Depois disso, ele e tudo o que tem dentro são excluídos para sempre e não podem ser recuperados.",
   },
   "GroupEditor.optional": "Opcional",
-  "GroupEditor.offlineCreate": "Você pode preencher agora. Para criar o grupo, é preciso ter conexão.",
-  "GroupEditor.offlineSave": "Esta é a cópia salva neste dispositivo. Para salvar alterações, é preciso ter conexão.",
+  "GroupEditor.offlineCreate":
+    "Você pode preencher agora. Para criar o grupo, é preciso ter conexão.",
+  "GroupEditor.offlineSave":
+    "Esta é a cópia salva neste dispositivo. Para salvar alterações, é preciso ter conexão.",
   "GroupEditor.name": "Nome",
   "GroupEditor.description": "Descrição",
   "GroupEditor.descriptionCount": {
     "one": "{used} de {count} caractere",
     "many": "{used} de {count} caracteres",
-    "other": "{used} de {count} caracteres"
+    "other": "{used} de {count} caracteres",
   },
   "GroupEditor.descriptionPlaceholder": "Para que serve este grupo?",
   "GroupEditor.emoji": "Emoji",
@@ -211,24 +243,32 @@
   "GroupEditor.saving": "Salvando…",
   "GroupEditor.create": "Criar grupo",
   "GroupEditor.save": "Salvar grupo",
-  "GroupEditor.trialUsed": "Grupos novos começam no plano gratuito. Você já usou seu teste grátis, então um plano pago aqui é cobrado desde o primeiro dia.",
+  "GroupEditor.trialUsed":
+    "Grupos novos começam no plano gratuito. Você já usou seu teste grátis, então um plano pago aqui é cobrado desde o primeiro dia.",
   "GroupEditor.trial": {
-    "one": "Grupos novos começam no plano gratuito. Seu teste grátis de {count} dia de um plano pago vai para o primeiro grupo em que você escolher um plano pago.",
-    "many": "Grupos novos começam no plano gratuito. Seu teste grátis de {count} dias de um plano pago vai para o primeiro grupo em que você escolher um plano pago.",
-    "other": "Grupos novos começam no plano gratuito. Seu teste grátis de {count} dias de um plano pago vai para o primeiro grupo em que você escolher um plano pago."
+    "one":
+      "Grupos novos começam no plano gratuito. Seu teste grátis de {count} dia de um plano pago vai para o primeiro grupo em que você escolher um plano pago.",
+    "many":
+      "Grupos novos começam no plano gratuito. Seu teste grátis de {count} dias de um plano pago vai para o primeiro grupo em que você escolher um plano pago.",
+    "other":
+      "Grupos novos começam no plano gratuito. Seu teste grátis de {count} dias de um plano pago vai para o primeiro grupo em que você escolher um plano pago.",
   },
-  "GroupEditor.readOnly": "Só um administrador ou o proprietário pode alterar os dados deste grupo.",
+  "GroupEditor.readOnly":
+    "Só um administrador ou o proprietário pode alterar os dados deste grupo.",
   "GroupEditor.nameRequired": "Digite um nome.",
-  "GroupEditor.nameInvalid": "Use no máximo 100 caracteres, sem quebras de linha nem caracteres ocultos.",
+  "GroupEditor.nameInvalid":
+    "Use no máximo 100 caracteres, sem quebras de linha nem caracteres ocultos.",
   "GroupEditor.descriptionTooLong": {
     "one": "Use no máximo {count} caractere.",
     "many": "Use no máximo {count} caracteres.",
-    "other": "Use no máximo {count} caracteres."
+    "other": "Use no máximo {count} caracteres.",
   },
   "GroupEditor.emojiInvalid": "Use um único emoji, como 🏕️, ou deixe em branco.",
   "GroupEditor.createFailed": "Não foi possível criar o grupo. Tente de novo.",
-  "GroupEditor.createOffline": "Para criar um grupo, é preciso ter conexão. Tente de novo quando estiver on-line.",
-  "GroupEditor.saveOffline": "Para salvar um grupo, é preciso ter conexão. Tente de novo quando estiver on-line.",
+  "GroupEditor.createOffline":
+    "Para criar um grupo, é preciso ter conexão. Tente de novo quando estiver on-line.",
+  "GroupEditor.saveOffline":
+    "Para salvar um grupo, é preciso ter conexão. Tente de novo quando estiver on-line.",
   "GroupEditor.created": "Grupo criado",
   "GroupEditor.createdBody": "“{name}” agora é o seu grupo atual.",
   "GroupEditor.saved": "Grupo salvo",
@@ -243,15 +283,16 @@
   "GroupImport.notes": {
     "one": "{count} nota",
     "many": "{count} notas",
-    "other": "{count} notas"
+    "other": "{count} notas",
   },
   "GroupImport.tags": {
     "one": "{count} tag",
     "many": "{count} tags",
-    "other": "{count} tags"
+    "other": "{count} tags",
   },
   "GroupImport.settings": "configurações",
-  "GroupImport.newerVersion": "Este arquivo vem de uma versão mais nova do app. Atualize o app ou exporte de novo a partir de uma versão compatível.",
+  "GroupImport.newerVersion":
+    "Este arquivo vem de uma versão mais nova do app. Atualize o app ou exporte de novo a partir de uma versão compatível.",
   "GroupImport.notExport": "Este não é um arquivo de exportação de grupo.",
   "GroupImport.tooLarge": "O arquivo tem mais de {size} MB.",
   "GroupImport.checking": "Verificando o arquivo…",
@@ -260,9 +301,11 @@
   "GroupImport.unchecked": "Não conseguimos verificar o arquivo.",
   "GroupImport.title": "Importar um grupo",
   "GroupImport.back": "Voltar aos grupos",
-  "GroupImport.intro": "Crie um grupo novo a partir de um arquivo de exportação. Seus grupos atuais continuam como estão.",
+  "GroupImport.intro":
+    "Crie um grupo novo a partir de um arquivo de exportação. Seus grupos atuais continuam como estão.",
   "GroupImport.offlineTitle": "Você está off-line",
-  "GroupImport.offline": "Para verificar e importar um arquivo, é preciso ter conexão. Seu arquivo continua escolhido.",
+  "GroupImport.offline":
+    "Para verificar e importar um arquivo, é preciso ter conexão. Seu arquivo continua escolhido.",
   "GroupImport.file": "Arquivo de exportação",
   "GroupImport.fileHint": "Um arquivo .json exportado de um grupo, de até {size} MB.",
   "GroupImport.browse": "Escolher um arquivo",
@@ -272,13 +315,16 @@
   "GroupImport.more": {
     "one": "e mais {count}",
     "many": "e mais {count}",
-    "other": "e mais {count}"
+    "other": "e mais {count}",
   },
   "GroupImport.planTitle": "O plano de um grupo novo não tem espaço para isso",
   "GroupImport.plan": {
-    "one": "Um grupo novo começa no plano gratuito, que comporta até {count} nota. Este arquivo tem {notes}.",
-    "many": "Um grupo novo começa no plano gratuito, que comporta até {count} notas. Este arquivo tem {notes}.",
-    "other": "Um grupo novo começa no plano gratuito, que comporta até {count} notas. Este arquivo tem {notes}."
+    "one":
+      "Um grupo novo começa no plano gratuito, que comporta até {count} nota. Este arquivo tem {notes}.",
+    "many":
+      "Um grupo novo começa no plano gratuito, que comporta até {count} notas. Este arquivo tem {notes}.",
+    "other":
+      "Um grupo novo começa no plano gratuito, que comporta até {count} notas. Este arquivo tem {notes}.",
   },
   "GroupImport.failed": "A importação parou e nada foi salvo. Tente de novo.",
   "GroupImport.name": "Nome",
@@ -287,17 +333,22 @@
   "GroupImport.imported": "Grupo importado",
   "GroupImport.importedBody": "{contents} importados para “{name}”.",
   "GroupImport.nameInvalid": "Dê ao grupo um nome de 1 a 100 caracteres.",
-  "GroupInvitations.viewersOnly": "O plano deste grupo só permite convidar leitores. Um plano pago permite convidar editores e administradores também.",
+  "GroupInvitations.viewersOnly":
+    "O plano deste grupo só permite convidar leitores. Um plano pago permite convidar editores e administradores também.",
   "GroupInvitations.copyNow": "Copie este link agora: ele não aparece de novo.",
-  "GroupInvitations.copyNowMailed": "Copie este link agora: ele não aparece de novo. Ele também foi enviado por e-mail.",
-  "GroupInvitations.copyNowMailFailed": "Copie este link agora: ele não aparece de novo. Não foi possível enviar o e-mail, então compartilhe o link você mesmo.",
+  "GroupInvitations.copyNowMailed":
+    "Copie este link agora: ele não aparece de novo. Ele também foi enviado por e-mail.",
+  "GroupInvitations.copyNowMailFailed":
+    "Copie este link agora: ele não aparece de novo. Não foi possível enviar o e-mail, então compartilhe o link você mesmo.",
   "GroupInvitations.copyLink": "Copiar link do convite",
   "GroupInvitations.linkCopied": "Link copiado",
   "GroupInvitations.done": "Concluir",
-  "GroupInvitations.formHint": "Qualquer pessoa com o link pode entrar com o papel dele até que expire ou se esgote. Convites pendentes não contam no limite de membros do plano; aceitar um conta.",
+  "GroupInvitations.formHint":
+    "Qualquer pessoa com o link pode entrar com o papel dele até que expire ou se esgote. Convites pendentes não contam no limite de membros do plano; aceitar um conta.",
   "GroupInvitations.role": "Papel",
   "GroupInvitations.email": "Endereço de e-mail (opcional)",
-  "GroupInvitations.emailHint": "Só a conta que confirmou este endereço pode aceitar. Ele permite a entrada de uma pessoa.",
+  "GroupInvitations.emailHint":
+    "Só a conta que confirmou este endereço pode aceitar. Ele permite a entrada de uma pessoa.",
   "GroupInvitations.sendEmail": "Enviar o link para este endereço",
   "GroupInvitations.days": "Expira em (dias)",
   "GroupInvitations.uses": "Pessoas que ele permite",
@@ -309,18 +360,20 @@
   "GroupInvitations.usage": {
     "one": "usado {uses} de {count} · expira em <value>{date}</value>",
     "many": "usado {uses} de {count} · expira em <value>{date}</value>",
-    "other": "usado {uses} de {count} · expira em <value>{date}</value>"
+    "other": "usado {uses} de {count} · expira em <value>{date}</value>",
   },
   "GroupInvitations.usageBy": {
     "one": "usado {uses} de {count} · expira em <value>{date}</value> · por <name>{name}</name>",
     "many": "usado {uses} de {count} · expira em <value>{date}</value> · por <name>{name}</name>",
-    "other": "usado {uses} de {count} · expira em <value>{date}</value> · por <name>{name}</name>"
+    "other": "usado {uses} de {count} · expira em <value>{date}</value> · por <name>{name}</name>",
   },
   "GroupInvitations.actions": "Ações do convite para {who}",
   "GroupInvitations.revoke": "Revogar",
   "GroupInvitations.revokeTitle": "Revogar este convite?",
-  "GroupInvitations.revokeConfirmation": "O link para <value>{email}</value> para de funcionar na hora. Quem entrou com ele continua.",
-  "GroupInvitations.revokeConfirmationLink": "Este link para de funcionar na hora. Quem entrou com ele continua.",
+  "GroupInvitations.revokeConfirmation":
+    "O link para <value>{email}</value> para de funcionar na hora. Quem entrou com ele continua.",
+  "GroupInvitations.revokeConfirmationLink":
+    "Este link para de funcionar na hora. Quem entrou com ele continua.",
   "GroupInvitations.opening": "Abrindo o convite…",
   "GroupInvitations.unusable": "Este convite não pode ser usado",
   "GroupInvitations.toGroups": "Ir para seus grupos",
@@ -337,7 +390,8 @@
   "GroupInvitations.declineNamed": "Recusar o convite para {name}",
   "GroupInvitations.acceptNamed": "Aceitar o convite para {name}",
   "GroupInvitations.verifyEmail": "Confirmar e-mail",
-  "GroupInvitations.notForYou": "Este convite foi enviado para outro endereço de e-mail. Se o endereço for seu, confirme-o primeiro no seu <link>perfil</link> ou entre com a conta que usa esse endereço.",
+  "GroupInvitations.notForYou":
+    "Este convite foi enviado para outro endereço de e-mail. Se o endereço for seu, confirme-o primeiro no seu <link>perfil</link> ou entre com a conta que usa esse endereço.",
   "GroupInvitations.somethingWrong": "Algo deu errado. Tente de novo.",
   "GroupInvitations.unreachable": "O servidor está fora de alcance. Tente de novo.",
   "GroupMembers.unnamed": "Membro sem nome",
@@ -347,7 +401,7 @@
   "GroupMembers.cutOff": {
     "one": "Mostrando os primeiros {shown} de {count} membro.",
     "many": "Mostrando os primeiros {shown} de {count} membros.",
-    "other": "Mostrando os primeiros {shown} de {count} membros."
+    "other": "Mostrando os primeiros {shown} de {count} membros.",
   },
   "GroupMembers.you": "você",
   "GroupMembers.lastSeen": "Visto por último <value>{when}</value>",
@@ -361,12 +415,14 @@
   "GroupMembers.removeTitle": "Remover {name}?",
   "GroupMembers.removeConfirm": "Remover membro",
   "GroupMembers.cancel": "Cancelar",
-  "GroupMembers.removeConfirmation": "A pessoa perde o acesso na hora, em todos os dispositivos. O que ela escreveu fica no grupo. Se este for o único grupo dela, ela ganha um novo, vazio, chamado “Personal”. Um link de convite que ela ainda tenha permite voltar por outra conta, então revogue esses links também.",
+  "GroupMembers.removeConfirmation":
+    "A pessoa perde o acesso na hora, em todos os dispositivos. O que ela escreveu fica no grupo. Se este for o único grupo dela, ela ganha um novo, vazio, chamado “Personal”. Um link de convite que ela ainda tenha permite voltar por outra conta, então revogue esses links também.",
   "GroupMembers.loadFailed": "Não foi possível carregar os membros",
   "GroupMembers.roleFailed": "Não foi possível mudar o papel",
   "GroupMembers.removeFailed": "Não foi possível remover o membro",
   "GroupMembers.leaveFailed": "Não foi possível sair do grupo",
-  "GroupMoveAll.explanation": "Todas as notas e tags de “<value>{name}</value>” vão para o grupo que você escolher, e os membros dele deixam de vê-las. Os membros do outro grupo as veem na hora. Cada nota mantém seu histórico de edições. Se algo falhar, nada é movido.",
+  "GroupMoveAll.explanation":
+    "Todas as notas e tags de “<value>{name}</value>” vão para o grupo que você escolher, e os membros dele deixam de vê-las. Os membros do outro grupo as veem na hora. Cada nota mantém seu histórico de edições. Se algo falhar, nada é movido.",
   "GroupMoveAll.to": "Mover tudo para",
   "GroupMoveAll.cancel": "Cancelar",
   "GroupMoveAll.moving": "Movendo…",
@@ -374,15 +430,17 @@
   "GroupMoveAll.notes": {
     "one": "{count} nota",
     "many": "{count} notas",
-    "other": "{count} notas"
+    "other": "{count} notas",
   },
   "GroupMoveAll.tags": {
     "one": "{count} tag",
     "many": "{count} tags",
-    "other": "{count} tags"
+    "other": "{count} tags",
   },
-  "GroupMoveAll.done": "{notes} movidas de “<value>{from}</value>” para “<value>{to}</value>”. As notas que você excluiu antes ficam neste grupo e são excluídas com ele.",
-  "GroupMoveAll.doneWithTags": "{notes} e {tags} movidas de “<value>{from}</value>” para “<value>{to}</value>”. As notas que você excluiu antes ficam neste grupo e são excluídas com ele.",
+  "GroupMoveAll.done":
+    "{notes} movidas de “<value>{from}</value>” para “<value>{to}</value>”. As notas que você excluiu antes ficam neste grupo e são excluídas com ele.",
+  "GroupMoveAll.doneWithTags":
+    "{notes} e {tags} movidas de “<value>{from}</value>” para “<value>{to}</value>”. As notas que você excluiu antes ficam neste grupo e são excluídas com ele.",
   "GroupMoveAll.keep": "Manter o grupo",
   "GroupMoveAll.delete": "Excluir “{name}”…",
   "GroupMoveAll.failed": "Não foi possível mover os dados",
@@ -394,7 +452,8 @@
   "GroupPicker.all": "Todos os grupos",
   "GroupPicker.new": "Novo grupo",
   "GroupPicker.sheetHeading": "Grupo",
-  "GroupTransfer.explanation": "A pessoa vira proprietária e você vira administrador. Só o proprietário pode excluir o grupo, gerenciar o plano ou transferi-lo de novo. Antes de excluir sua conta, transfira todos os grupos que você compartilha com outras pessoas.",
+  "GroupTransfer.explanation":
+    "A pessoa vira proprietária e você vira administrador. Só o proprietário pode excluir o grupo, gerenciar o plano ou transferi-lo de novo. Antes de excluir sua conta, transfira todos os grupos que você compartilha com outras pessoas.",
   "GroupTransfer.newOwner": "Novo proprietário",
   "GroupTransfer.typeName": "Digite “{name}” para confirmar",
   "GroupTransfer.password": "Sua senha",
@@ -411,13 +470,17 @@
   "Groups.loading": "Carregando os grupos…",
   "Groups.retry": "Tentar de novo",
   "Groups.empty": "Nenhum grupo ainda",
-  "Groups.emptyHint": "Tudo o que você coloca em um grupo é compartilhado com as pessoas que você convidar.",
+  "Groups.emptyHint":
+    "Tudo o que você coloca em um grupo é compartilhado com as pessoas que você convidar.",
   "Groups.listLabel": "Seus grupos",
   "Groups.deleted": "Grupos excluídos ({count})",
   "Groups.deletedHint": {
-    "one": "Um grupo excluído e tudo o que tem dentro podem ser restaurados por {count} dia. Depois disso, ele é excluído para sempre.",
-    "many": "Um grupo excluído e tudo o que tem dentro podem ser restaurados por {count} dias. Depois disso, ele é excluído para sempre.",
-    "other": "Um grupo excluído e tudo o que tem dentro podem ser restaurados por {count} dias. Depois disso, ele é excluído para sempre."
+    "one":
+      "Um grupo excluído e tudo o que tem dentro podem ser restaurados por {count} dia. Depois disso, ele é excluído para sempre.",
+    "many":
+      "Um grupo excluído e tudo o que tem dentro podem ser restaurados por {count} dias. Depois disso, ele é excluído para sempre.",
+    "other":
+      "Um grupo excluído e tudo o que tem dentro podem ser restaurados por {count} dias. Depois disso, ele é excluído para sempre.",
   },
   "Groups.restorableUntil": "Pode ser restaurado até <value>{date}</value>",
   "Groups.restore": "Restaurar",
@@ -427,7 +490,7 @@
   "Groups.members": {
     "one": "{count} membro",
     "many": "{count} membros",
-    "other": "{count} membros"
+    "other": "{count} membros",
   },
   "Groups.current": "Atual",
   "Groups.currentNamed": "{name}, grupo atual",
@@ -439,7 +502,8 @@
   "Groups.deleteFailed": "Não foi possível excluir o grupo",
   "Groups.restoreFailed": "Não foi possível restaurar o grupo",
   "InvitationNew.back": "Voltar aos membros",
-  "InvitationNew.offline": "Para criar um convite, é preciso ter conexão. Tente de novo quando estiver on-line.",
+  "InvitationNew.offline":
+    "Para criar um convite, é preciso ter conexão. Tente de novo quando estiver on-line.",
   "InvitationNew.offlineTitle": "Você está off-line",
   "InvitationNew.copyTitle": "Copie seu link de convite",
   "InvitationNew.title": "Novo convite",
@@ -460,58 +524,73 @@
   "GroupBillingPanel.planFree": "Gratuito",
   "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
-    "one": "Um pagamento falhou. Atualize o cartão em “Trocar cartão” dentro de {count} dia, até {date}, para manter o {plan}.",
-    "many": "Um pagamento falhou. Atualize o cartão em “Trocar cartão” dentro de {count} dias, até {date}, para manter o {plan}.",
-    "other": "Um pagamento falhou. Atualize o cartão em “Trocar cartão” dentro de {count} dias, até {date}, para manter o {plan}."
+    "one":
+      "Um pagamento falhou. Atualize o cartão em “Trocar cartão” dentro de {count} dia, até {date}, para manter o {plan}.",
+    "many":
+      "Um pagamento falhou. Atualize o cartão em “Trocar cartão” dentro de {count} dias, até {date}, para manter o {plan}.",
+    "other":
+      "Um pagamento falhou. Atualize o cartão em “Trocar cartão” dentro de {count} dias, até {date}, para manter o {plan}.",
   },
-  "GroupBillingPanel.paymentFailedFree": "Um pagamento falhou, então o grupo está no plano gratuito. Atualize o cartão em “Trocar cartão” para voltar ao {plan}.",
+  "GroupBillingPanel.paymentFailedFree":
+    "Um pagamento falhou, então o grupo está no plano gratuito. Atualize o cartão em “Trocar cartão” para voltar ao {plan}.",
   "GroupBillingPanel.offline": "O servidor está fora de alcance. Tente de novo.",
   "GroupBillingPanel.unreadable": "Não foi possível ler o plano.",
-  "GroupBillingPanel.unsafePage": "O provedor de pagamento respondeu com um endereço que este app não abre.",
-  "GroupBillingPanel.checkoutUnreachable": "Não foi possível abrir o pagamento do Stripe. Verifique sua conexão e tente de novo.",
-  "GroupBillingPanel.portalUnreachable": "Não foi possível abrir a página de cobrança do Stripe. Verifique sua conexão e tente de novo.",
+  "GroupBillingPanel.unsafePage":
+    "O provedor de pagamento respondeu com um endereço que este app não abre.",
+  "GroupBillingPanel.checkoutUnreachable":
+    "Não foi possível abrir o pagamento do Stripe. Verifique sua conexão e tente de novo.",
+  "GroupBillingPanel.portalUnreachable":
+    "Não foi possível abrir a página de cobrança do Stripe. Verifique sua conexão e tente de novo.",
   "GroupBillingPanel.title": "Plano e cobrança",
-  "GroupBillingPanel.description": "O que <group>{group}</group> paga por mês. A cobrança é feita pelo Stripe.",
+  "GroupBillingPanel.description":
+    "O que <group>{group}</group> paga por mês. A cobrança é feita pelo Stripe.",
   "GroupBillingPanel.loading": "Carregando o plano",
   "GroupBillingPanel.statusTrial": "Teste",
   "GroupBillingPanel.statusRenews": "Renova em {date}",
   "GroupBillingPanel.statusEnds": "Termina em {date}",
   "GroupBillingPanel.statusPaymentFailed": "Pagamento falhou",
   "GroupBillingPanel.off": "Todos os grupos estão no plano gratuito.",
-  "GroupBillingPanel.ownerOnly": "Somente <name>{name}</name>, dono do grupo, pode mudar o plano ou ver as faturas.",
-  "GroupBillingPanel.ownerOnlyUnknown": "Somente o dono do grupo pode mudar o plano ou ver as faturas.",
+  "GroupBillingPanel.ownerOnly":
+    "Somente <name>{name}</name>, dono do grupo, pode mudar o plano ou ver as faturas.",
+  "GroupBillingPanel.ownerOnlyUnknown":
+    "Somente o dono do grupo pode mudar o plano ou ver as faturas.",
   "GroupBillingPanel.price": "O {plan} custa {price} por membro ao mês.",
   "GroupBillingPanel.priceForGroup": {
     "one": "Com {count} membro, <group>{group}</group> pagaria {total} por mês.",
     "many": "Com {count} membros, <group>{group}</group> pagaria {total} por mês.",
-    "other": "Com {count} membros, <group>{group}</group> pagaria {total} por mês."
+    "other": "Com {count} membros, <group>{group}</group> pagaria {total} por mês.",
   },
   "GroupBillingPanel.opening": "Abrindo o Stripe…",
   "GroupBillingPanel.opensStripe": "(abre o Stripe)",
   "GroupBillingPanel.startTrial": {
     "one": "Começar teste grátis de {count} dia",
     "many": "Começar teste grátis de {count} dias",
-    "other": "Começar teste grátis de {count} dias"
+    "other": "Começar teste grátis de {count} dias",
   },
   "GroupBillingPanel.upgrade": "Mudar para o {plan}",
   "GroupBillingPanel.trialUsed": "Você já usou seu teste grátis em outro grupo.",
-  "GroupBillingPanel.finePrint": "Cobrado mensalmente por membro. Cancele quando quiser; você mantém o {plan} até o fim do período.",
+  "GroupBillingPanel.finePrint":
+    "Cobrado mensalmente por membro. Cancele quando quiser; você mantém o {plan} até o fim do período.",
   "GroupBillingPanel.trialEnds": {
     "one": "O teste termina em {count} dia, em {date}.",
     "many": "O teste termina em {count} dias, em {date}.",
-    "other": "O teste termina em {count} dias, em {date}."
+    "other": "O teste termina em {count} dias, em {date}.",
   },
-  "GroupBillingPanel.trialThen": "Depois, <group>{group}</group> paga {total} por mês, a menos que você cancele.",
+  "GroupBillingPanel.trialThen":
+    "Depois, <group>{group}</group> paga {total} por mês, a menos que você cancele.",
   "GroupBillingPanel.seats": {
     "one": "{total} por mês, por {count} membro a {price} cada, incluindo o dono.",
     "many": "{total} por mês, por {count} membros a {price} cada, incluindo o dono.",
-    "other": "{total} por mês, por {count} membros a {price} cada, incluindo o dono."
+    "other": "{total} por mês, por {count} membros a {price} cada, incluindo o dono.",
   },
-  "GroupBillingPanel.ending": "O {plan} termina em {date}. Depois, o grupo passa para o plano gratuito.",
-  "GroupBillingPanel.endingNoDate": "O {plan} termina no fim do período. Depois, o grupo passa para o plano gratuito.",
+  "GroupBillingPanel.ending":
+    "O {plan} termina em {date}. Depois, o grupo passa para o plano gratuito.",
+  "GroupBillingPanel.endingNoDate":
+    "O {plan} termina no fim do período. Depois, o grupo passa para o plano gratuito.",
   "GroupBillingPanel.renew": "Renovar o {plan}",
   "GroupBillingPanel.planHeading": "Plano <plan>{plan}</plan>",
-  "GroupBillingPanel.confirming": "O Stripe está confirmando seu plano. Esta página se atualiza sozinha.",
+  "GroupBillingPanel.confirming":
+    "O Stripe está confirmando seu plano. Esta página se atualiza sozinha.",
   "GroupBillingPanel.paymentMethod": "Forma de pagamento",
   "GroupBillingPanel.paymentMethodText": "O cartão que o Stripe cobra todo mês.",
   "GroupBillingPanel.changeCard": "Trocar cartão",
@@ -525,7 +604,7 @@
   "GroupBillingView.trialStarted": {
     "one": "Seu teste de {count} dia do {plan} começou",
     "many": "Seu teste de {count} dias do {plan} começou",
-    "other": "Seu teste de {count} dias do {plan} começou"
+    "other": "Seu teste de {count} dias do {plan} começou",
   },
   "GroupBillingView.trialUntil": "“{group}” está no {plan} até {date}.",
   "GroupBillingView.paid": "Você está no {plan}",
@@ -534,11 +613,16 @@
   "NotificationsScreen.loadMoreFailed": "Não foi possível carregar mais notificações.",
   "NotificationsScreen.readFailed": "Não foi possível marcar como lida.",
   "NotificationsScreen.readAllFailed": "Não foi possível marcá-las como lidas.",
-  "NotificationsScreen.invitedViewer": "Você recebeu um convite para entrar em “<group>{group}</group>” como leitor.",
-  "NotificationsScreen.invitedEditor": "Você recebeu um convite para entrar em “<group>{group}</group>” como editor.",
-  "NotificationsScreen.invitedAdmin": "Você recebeu um convite para entrar em “<group>{group}</group>” como admin.",
-  "NotificationsScreen.invitedOwner": "Você recebeu um convite para entrar em “<group>{group}</group>” como dono.",
-  "NotificationsScreen.invitedMember": "Você recebeu um convite para entrar em “<group>{group}</group>” como membro.",
+  "NotificationsScreen.invitedViewer":
+    "Você recebeu um convite para entrar em “<group>{group}</group>” como leitor.",
+  "NotificationsScreen.invitedEditor":
+    "Você recebeu um convite para entrar em “<group>{group}</group>” como editor.",
+  "NotificationsScreen.invitedAdmin":
+    "Você recebeu um convite para entrar em “<group>{group}</group>” como admin.",
+  "NotificationsScreen.invitedOwner":
+    "Você recebeu um convite para entrar em “<group>{group}</group>” como dono.",
+  "NotificationsScreen.invitedMember":
+    "Você recebeu um convite para entrar em “<group>{group}</group>” como membro.",
   "NotificationsScreen.roleViewer": "Sua função em “<group>{group}</group>” agora é leitor.",
   "NotificationsScreen.roleEditor": "Sua função em “<group>{group}</group>” agora é editor.",
   "NotificationsScreen.roleAdmin": "Sua função em “<group>{group}</group>” agora é admin.",
@@ -549,18 +633,23 @@
   "NotificationsScreen.removed": "Você não faz mais parte de “<group>{group}</group>”.",
   "NotificationsScreen.owned": "Agora “<group>{group}</group>” é seu.",
   "NotificationsScreen.someGroup": "um grupo",
-  "NotificationsScreen.reminderFirstNote": "Guarde a nota que você acabou de escrever. Por enquanto, ela só existe neste navegador. Adicione um método de login para abri-la em qualquer dispositivo.",
-  "NotificationsScreen.reminderThirdVisit": "Abra esta conta nos seus outros dispositivos. Por enquanto, só este navegador consegue abri-la. Adicione um método de login para acessá-la de qualquer lugar.",
-  "NotificationsScreen.reminderInvite": "Adicione um método de login para convidar pessoas. Quem você convida vê quem fez o convite, e uma conta de convidado ainda não tem login. Adicione um e depois convide nas configurações do grupo.",
-  "NotificationsScreen.reminderKeep": "Mantenha sua conta. Adicione um método de login para mantê-la.",
+  "NotificationsScreen.reminderFirstNote":
+    "Guarde a nota que você acabou de escrever. Por enquanto, ela só existe neste navegador. Adicione um método de login para abri-la em qualquer dispositivo.",
+  "NotificationsScreen.reminderThirdVisit":
+    "Abra esta conta nos seus outros dispositivos. Por enquanto, só este navegador consegue abri-la. Adicione um método de login para acessá-la de qualquer lugar.",
+  "NotificationsScreen.reminderInvite":
+    "Adicione um método de login para convidar pessoas. Quem você convida vê quem fez o convite, e uma conta de convidado ainda não tem login. Adicione um e depois convide nas configurações do grupo.",
+  "NotificationsScreen.reminderKeep":
+    "Mantenha sua conta. Adicione um método de login para mantê-la.",
   "NotificationsScreen.exportReady": "Seus dados estão prontos. Baixe-os no seu perfil.",
-  "NotificationsScreen.exportReadyUntil": "Seus dados estão prontos. Baixe-os no seu perfil até {date}.",
+  "NotificationsScreen.exportReadyUntil":
+    "Seus dados estão prontos. Baixe-os no seu perfil até {date}.",
   "NotificationsScreen.unknown": "Você tem uma nova notificação.",
   "NotificationsScreen.title": "Notificações",
   "NotificationsScreen.unread": {
     "one": "{count} não lida",
     "many": "{count} não lidas",
-    "other": "{count} não lidas"
+    "other": "{count} não lidas",
   },
   "NotificationsScreen.readAll": "Marcar todas como lidas",
   "NotificationsScreen.loading": "Carregando…",
@@ -570,7 +659,8 @@
   "NotificationsScreen.unreadMark": "Não lida:",
   "OnboardingCard.failed": "Não foi possível salvar. Tente de novo.",
   "OnboardingCard.emailTitle": "Confirme seu e-mail",
-  "OnboardingCard.emailText": "Digite o código que enviamos, para poder redefinir sua senha se a perder.",
+  "OnboardingCard.emailText":
+    "Digite o código que enviamos, para poder redefinir sua senha se a perder.",
   "OnboardingCard.emailAction": "Confirmar e-mail",
   "OnboardingCard.noteTitle": "Escreva sua primeira nota",
   "OnboardingCard.noteText": "A nota de boas-vindas é nossa. Escreva uma sua.",
@@ -579,19 +669,24 @@
   "OnboardingCard.inviteText": "A pessoa vê as mesmas notas, ao vivo, com a função que você der.",
   "OnboardingCard.inviteAction": "Convidar alguém",
   "OnboardingCard.notificationsTitle": "Ative as notificações",
-  "OnboardingCard.notificationsText": "Adicione este dispositivo para saber das mudanças com o app fechado.",
+  "OnboardingCard.notificationsText":
+    "Adicione este dispositivo para saber das mudanças com o app fechado.",
   "OnboardingCard.notificationsAction": "Ativar notificações",
   "OnboardingCard.twoFactorTitle": "Configure o login em duas etapas",
   "OnboardingCard.twoFactorText": "Um app autenticador mantém sua conta segura se a senha vazar.",
   "OnboardingCard.twoFactorAction": "Configurar duas etapas",
   "OnboardingCard.tourNotesTitle": "Notas",
-  "OnboardingCard.tourNotesText": "O que você e seu grupo escrevem. Abra uma nota para editá-la; as mudanças chegam a todos na hora.",
+  "OnboardingCard.tourNotesText":
+    "O que você e seu grupo escrevem. Abra uma nota para editá-la; as mudanças chegam a todos na hora.",
   "OnboardingCard.tourGroupsTitle": "Grupos",
-  "OnboardingCard.tourGroupsText": "As notas ficam em um grupo. Crie mais grupos aqui, convide pessoas e escolha as funções delas.",
+  "OnboardingCard.tourGroupsText":
+    "As notas ficam em um grupo. Crie mais grupos aqui, convide pessoas e escolha as funções delas.",
   "OnboardingCard.tourNotificationsTitle": "Notificações",
-  "OnboardingCard.tourNotificationsText": "O que aconteceu enquanto você estava fora, como um convite.",
+  "OnboardingCard.tourNotificationsText":
+    "O que aconteceu enquanto você estava fora, como um convite.",
   "OnboardingCard.tourProfileTitle": "Perfil",
-  "OnboardingCard.tourProfileText": "Sua conta: seu nome, senha, login em duas etapas e dispositivos, o tema e Sair.",
+  "OnboardingCard.tourProfileText":
+    "Sua conta: seu nome, senha, login em duas etapas e dispositivos, o tema e Sair.",
   "OnboardingCard.goTo": "Ir para {place}",
   "OnboardingCard.goToHighlighted": "Ir para o controle destacado",
   "OnboardingCard.title": "Primeiros passos",
@@ -599,7 +694,8 @@
   "OnboardingCard.tourStart": "Fazer o tour",
   "OnboardingCard.tourSkip": "Pular o tour",
   "OnboardingCard.keep": "Manter sua conta",
-  "OnboardingCard.keepText": "Adicione um método de login para abrir esta conta em qualquer dispositivo.",
+  "OnboardingCard.keepText":
+    "Adicione um método de login para abrir esta conta em qualquer dispositivo.",
   "OverviewScreen.last7Days": "Últimos 7 dias",
   "OverviewScreen.last30Days": "Últimos 30 dias",
   "OverviewScreen.last90Days": "Últimos 90 dias",
@@ -610,7 +706,7 @@
   "OverviewScreen.period": {
     "one": "{range}, comparado com o dia anterior",
     "many": "{range}, comparado com os {count} dias anteriores",
-    "other": "{range}, comparado com os {count} dias anteriores"
+    "other": "{range}, comparado com os {count} dias anteriores",
   },
   "OverviewScreen.title": "Visão geral",
   "OverviewScreen.customise": "Personalizar visão geral",
@@ -620,19 +716,22 @@
   "OverviewScreen.missing": "Este grupo não existe.",
   "OverviewScreen.backToGroups": "Voltar aos grupos",
   "OverviewScreen.emptyGroup": "Ainda não há notas em {group}",
-  "OverviewScreen.emptyGroupText": "A visão geral se preenche conforme as pessoas do grupo adicionam notas.",
+  "OverviewScreen.emptyGroupText":
+    "A visão geral se preenche conforme as pessoas do grupo adicionam notas.",
   "OverviewScreen.newNote": "Nova nota",
   "OverviewScreen.allHidden": "Todos os widgets estão ocultos",
   "OverviewScreen.allHiddenText": "Escolha os que você quer ver.",
   "OverviewScreen.gridLabel": "Visão geral de {group}",
-  "OverviewScreen.customiseText": "Escolha quais widgets você vê e em que ordem. O layout é seu e acompanha você nos outros dispositivos.",
+  "OverviewScreen.customiseText":
+    "Escolha quais widgets você vê e em que ordem. O layout é seu e acompanha você nos outros dispositivos.",
   "OverviewScreen.widgets": "Widgets",
   "OverviewScreen.customRange": "Período personalizado",
   "OverviewScreen.rangeTooLong": "Escolha um período de até um ano.",
   "OverviewScreen.asOf": "Às {time}",
   "OverviewScreen.hide": "Ocultar widget",
   "OverviewView.opening": "Abrindo a visão geral…",
-  "OverviewView.saveFailed": "Não foi possível salvar seu layout. Verifique sua conexão e tente de novo.",
+  "OverviewView.saveFailed":
+    "Não foi possível salvar seu layout. Verifique sua conexão e tente de novo.",
   "OverviewView.undo": "Desfazer",
   "OverviewView.widget": "Widget",
   "OverviewView.hidden": "“{widget}” oculto.",
@@ -647,23 +746,30 @@
   "PlanRefusalNotice.storageTitle": "{group} usou todo o armazenamento",
   "PlanRefusalNotice.storageTitleUnnamed": "Este grupo usou todo o armazenamento",
   "PlanRefusalNotice.notesText": {
-    "one": "O plano comporta até {count} nota. Todas as notas existentes continuam legíveis e editáveis.",
-    "many": "O plano comporta até {count} notas. Todas as notas existentes continuam legíveis e editáveis.",
-    "other": "O plano comporta até {count} notas. Todas as notas existentes continuam legíveis e editáveis."
+    "one":
+      "O plano comporta até {count} nota. Todas as notas existentes continuam legíveis e editáveis.",
+    "many":
+      "O plano comporta até {count} notas. Todas as notas existentes continuam legíveis e editáveis.",
+    "other":
+      "O plano comporta até {count} notas. Todas as notas existentes continuam legíveis e editáveis.",
   },
   "PlanRefusalNotice.membersText": {
     "one": "O plano permite até {count} membro.",
     "many": "O plano permite até {count} membros.",
-    "other": "O plano permite até {count} membros."
+    "other": "O plano permite até {count} membros.",
   },
   "PlanRefusalNotice.filesText": {
-    "one": "O plano comporta até {count} arquivo em todas as notas. Remova um arquivo de qualquer nota para liberar espaço.",
-    "many": "O plano comporta até {count} arquivos em todas as notas. Remova um arquivo de qualquer nota para liberar espaço.",
-    "other": "O plano comporta até {count} arquivos em todas as notas. Remova um arquivo de qualquer nota para liberar espaço."
+    "one":
+      "O plano comporta até {count} arquivo em todas as notas. Remova um arquivo de qualquer nota para liberar espaço.",
+    "many":
+      "O plano comporta até {count} arquivos em todas as notas. Remova um arquivo de qualquer nota para liberar espaço.",
+    "other":
+      "O plano comporta até {count} arquivos em todas as notas. Remova um arquivo de qualquer nota para liberar espaço.",
   },
   "PlanRefusalNotice.storageText": "O plano não tem espaço para mais arquivos.",
   "PlanRefusalNotice.rolesTitle": "Promover membros exige um plano pago",
-  "PlanRefusalNotice.rolesText": "No plano deste grupo, um membro pode receber uma função menor ou ser removido, mas não promovido.",
+  "PlanRefusalNotice.rolesText":
+    "No plano deste grupo, um membro pode receber uma função menor ou ser removido, mas não promovido.",
   "PlanRefusalNotice.openBilling": "Abrir Plano e cobrança",
   "PlanRefusalNotice.askOwner": "Peça ao dono do grupo para fazer o upgrade do plano.",
   "GuestProfile.accountType": "Tipo de conta",
@@ -674,23 +780,29 @@
   "GuestProfile.danger": "Zona de perigo",
   "GuestProfile.deleteSummary": "Exclui esta conta de convidado e tudo o que há nela, na hora.",
   "GuestProfile.deleteTitle": "Excluir esta conta de convidado?",
-  "GuestProfile.deleteText": "As notas e os grupos dela são excluídos agora, e ninguém consegue recuperá-los: uma conta de convidado não tem forma de entrar para restaurá-la. Exporte um grupo antes para guardar uma cópia.",
+  "GuestProfile.deleteText":
+    "As notas e os grupos dela são excluídos agora, e ninguém consegue recuperá-los: uma conta de convidado não tem forma de entrar para restaurá-la. Exporte um grupo antes para guardar uma cópia.",
   "GuestProfile.typeWord": "Digite “{word}” para confirmar",
   "GuestProfile.deleteForGood": "Excluir de vez",
   "GuestProfile.inviteTitle": "Para convidar, você precisa de uma forma de entrar",
-  "GuestProfile.inviteText": "As pessoas que você convida veem quem as convidou, e uma conta de convidado pode sumir com os dados deste navegador. Adicione uma forma de entrar primeiro.",
+  "GuestProfile.inviteText":
+    "As pessoas que você convida veem quem as convidou, e uma conta de convidado pode sumir com os dados deste navegador. Adicione uma forma de entrar primeiro.",
   "GuestProfile.pushTitle": "As notificações neste dispositivo precisam de uma forma de entrar",
   "GuestProfile.pushText": "Adicione uma e depois ative-as aqui.",
   "GuestProfile.apiTokenTitle": "Os tokens de API precisam de uma forma de entrar",
-  "GuestProfile.apiTokenText": "Um token abre esta conta fora do navegador. Adicione uma forma de entrar primeiro.",
+  "GuestProfile.apiTokenText":
+    "Um token abre esta conta fora do navegador. Adicione uma forma de entrar primeiro.",
   "GuestProfile.uploadTitle": "Para importar, você precisa de uma forma de entrar",
   "GuestProfile.uploadText": "Adicione uma à sua conta primeiro e depois importe o arquivo.",
   "GuestProfile.billingTitle": "Os planos pagos precisam de uma forma de entrar",
-  "GuestProfile.billingText": "Um plano é cobrado de uma conta em que você consiga entrar de novo. Adicione uma forma de entrar primeiro.",
+  "GuestProfile.billingText":
+    "Um plano é cobrado de uma conta em que você consiga entrar de novo. Adicione uma forma de entrar primeiro.",
   "GuestProfile.telegramTitle": "O Telegram precisa de uma forma de entrar",
-  "GuestProfile.telegramText": "Um chat vinculado age por você fora do navegador. Adicione uma forma de entrar primeiro.",
+  "GuestProfile.telegramText":
+    "Um chat vinculado age por você fora do navegador. Adicione uma forma de entrar primeiro.",
   "GuestProfile.otherTitle": "Isso precisa de uma forma de entrar",
-  "GuestProfile.otherText": "Isso precisa de uma forma de entrar. Adicione uma à sua conta primeiro.",
+  "GuestProfile.otherText":
+    "Isso precisa de uma forma de entrar. Adicione uma à sua conta primeiro.",
   "GuestProfile.notNow": "Agora não",
   "GuestScreens.keep": "Manter sua conta",
   "GuestScreens.createAccount": "Criar uma conta",
@@ -702,28 +814,39 @@
   "GuestScreens.failedText": "Confira sua conexão e tente de novo.",
   "GuestScreens.tryAgain": "Tentar de novo",
   "GuestScreens.signedIn": "Você já entrou",
-  "GuestScreens.signedInText": "Sua conta está aberta neste navegador. Saia primeiro para experimentar o app como convidado.",
+  "GuestScreens.signedInText":
+    "Sua conta está aberta neste navegador. Saia primeiro para experimentar o app como convidado.",
   "GuestScreens.openApp": "Abrir o app",
   "GuestScreens.off": "Crie uma conta para começar",
   "GuestScreens.offText": "Aqui não dá para experimentar o app sem uma conta.",
-  "GuestScreens.terms": "Ao continuar, você concorda com os <terms>termos</terms> e o <privacy>aviso de privacidade</privacy>.",
+  "GuestScreens.terms":
+    "Ao continuar, você concorda com os <terms>termos</terms> e o <privacy>aviso de privacidade</privacy>.",
   "GuestScreens.tryNow": "Experimente agora",
-  "GuestScreens.tryLine": "Não precisa de conta. Adicione uma forma de entrar depois para manter seu trabalho.",
+  "GuestScreens.tryLine":
+    "Não precisa de conta. Adicione uma forma de entrar depois para manter seu trabalho.",
   "GuestScreens.noAccount": "Ainda não tem conta?",
   "GuestScreens.tryWithout": "Experimente sem conta",
-  "GuestScreens.tryFromSignIn": "Isso abre uma conta nova e vazia neste navegador. Não entra em uma conta que já existe.",
-  "GuestScreens.tryFromSignInDemo": "Isso abre uma conta nova com dados de exemplo. Não entra em uma conta que já existe.",
-  "GuestScreens.demoWipe": "Esta é uma conta de convidado numa demonstração pública. Tudo aqui é apagado toda noite às {time}, com ou sem forma de entrar. Adicione uma para ver como funciona manter uma conta.",
-  "GuestScreens.banner": "Esta conta existe só neste navegador. Se os dados do navegador forem apagados, a conta some. Adicione uma forma de entrar para mantê-la.",
+  "GuestScreens.tryFromSignIn":
+    "Isso abre uma conta nova e vazia neste navegador. Não entra em uma conta que já existe.",
+  "GuestScreens.tryFromSignInDemo":
+    "Isso abre uma conta nova com dados de exemplo. Não entra em uma conta que já existe.",
+  "GuestScreens.demoWipe":
+    "Esta é uma conta de convidado numa demonstração pública. Tudo aqui é apagado toda noite às {time}, com ou sem forma de entrar. Adicione uma para ver como funciona manter uma conta.",
+  "GuestScreens.banner":
+    "Esta conta existe só neste navegador. Se os dados do navegador forem apagados, a conta some. Adicione uma forma de entrar para mantê-la.",
   "GuestScreens.hide": "Ocultar esta mensagem",
-  "GuestScreens.keptPasskey": "Agora você pode entrar com uma chave de acesso em qualquer dispositivo. Nada mudou na sua conta.",
-  "GuestScreens.keptEmail": "Agora você pode entrar com seu e-mail em qualquer dispositivo. Nada mudou na sua conta.",
-  "GuestScreens.keptProvider": "Agora você pode entrar com {provider} em qualquer dispositivo. Nada mudou na sua conta.",
+  "GuestScreens.keptPasskey":
+    "Agora você pode entrar com uma chave de acesso em qualquer dispositivo. Nada mudou na sua conta.",
+  "GuestScreens.keptEmail":
+    "Agora você pode entrar com seu e-mail em qualquer dispositivo. Nada mudou na sua conta.",
+  "GuestScreens.keptProvider":
+    "Agora você pode entrar com {provider} em qualquer dispositivo. Nada mudou na sua conta.",
   "GuestScreens.added": "Forma de entrar adicionada",
   "GuestScreens.done": "Concluído",
   "GuestScreens.isKept": "Sua conta está mantida",
   "GuestScreens.isKeptText": "Ela tem uma forma de entrar, então abre em qualquer dispositivo.",
-  "GuestScreens.keepText": "Adicione uma forma de entrar e você poderá abrir esta conta em qualquer dispositivo. Suas notas e grupos ficam como estão.",
+  "GuestScreens.keepText":
+    "Adicione uma forma de entrar e você poderá abrir esta conta em qualquer dispositivo. Suas notas e grupos ficam como estão.",
   "GuestScreens.ways": "Formas de entrar",
   "GuestScreens.openingProvider": "Abrindo {provider}…",
   "GuestScreens.addPasskey": "Adicionar uma chave de acesso",
@@ -732,26 +855,33 @@
   "GuestScreens.passwordHint": {
     "one": "Pelo menos {count} caractere.",
     "many": "Pelo menos {count} caracteres.",
-    "other": "Pelo menos {count} caracteres."
+    "other": "Pelo menos {count} caracteres.",
   },
   "GuestScreens.saving": "Salvando…",
   "GuestScreens.takenProvider": "{provider} já está vinculado a outra conta.",
   "GuestScreens.takenAddress": "Esse endereço já tem uma conta.",
   "GuestScreens.takenEmail": "<email>{email}</email> já tem uma conta.",
-  "GuestScreens.takenRest": "Sua conta de convidado não mudou. Escolha o que acontece com o que você fez como convidado.",
-  "GuestScreens.moveOne": "Entre nessa conta e mova <name>{name}</name> para ela. Depois a conta de convidado é excluída.",
+  "GuestScreens.takenRest":
+    "Sua conta de convidado não mudou. Escolha o que acontece com o que você fez como convidado.",
+  "GuestScreens.moveOne":
+    "Entre nessa conta e mova <name>{name}</name> para ela. Depois a conta de convidado é excluída.",
   "GuestScreens.moveMany": {
-    "one": "Entre nessa conta e mova para ela {count} grupo desta conta de convidado. Depois a conta de convidado é excluída.",
-    "many": "Entre nessa conta e mova para ela {count} grupos desta conta de convidado. Depois a conta de convidado é excluída.",
-    "other": "Entre nessa conta e mova para ela {count} grupos desta conta de convidado. Depois a conta de convidado é excluída."
+    "one":
+      "Entre nessa conta e mova para ela {count} grupo desta conta de convidado. Depois a conta de convidado é excluída.",
+    "many":
+      "Entre nessa conta e mova para ela {count} grupos desta conta de convidado. Depois a conta de convidado é excluída.",
+    "other":
+      "Entre nessa conta e mova para ela {count} grupos desta conta de convidado. Depois a conta de convidado é excluída.",
   },
   "GuestScreens.checking": "Verificando…",
   "GuestScreens.loading": "Carregando…",
   "GuestScreens.nothing": "Nada pendente aqui",
-  "GuestScreens.nothingText": "Essa escolha expirou ou já foi feita. Sua conta de convidado não mudou.",
+  "GuestScreens.nothingText":
+    "Essa escolha expirou ou já foi feita. Sua conta de convidado não mudou.",
   "GuestScreens.move": "Trocar e mover meus grupos",
   "GuestScreens.delete": "Trocar e excluir os dados de convidado",
-  "GuestScreens.deleteHint": "Entre nessa conta e exclua esta conta de convidado com tudo o que há nela.",
+  "GuestScreens.deleteHint":
+    "Entre nessa conta e exclua esta conta de convidado com tudo o que há nela.",
   "GuestScreens.keepGuest": "Manter a conta de convidado",
   "GuestScreens.keepGuestHint": "Nada muda. Você pode adicionar outra forma de entrar.",
   "GuestScreens.linked": "Vinculado a outra conta",
@@ -765,45 +895,57 @@
   "GuestScreens.notes": {
     "one": "{count} nota",
     "many": "{count} notas",
-    "other": "{count} notas"
+    "other": "{count} notas",
   },
   "GuestScreens.groups": {
     "one": "{count} grupo",
     "many": "{count} grupos",
-    "other": "{count} grupos"
+    "other": "{count} grupos",
   },
-  "GuestScreens.confirmEmail": "Serão excluídos: {notes} e {groups}, e você entra em <email>{email}</email>. Isso não pode ser desfeito.",
-  "GuestScreens.confirmAccount": "Serão excluídos: {notes} e {groups}, e você entra nessa conta. Isso não pode ser desfeito.",
+  "GuestScreens.confirmEmail":
+    "Serão excluídos: {notes} e {groups}, e você entra em <email>{email}</email>. Isso não pode ser desfeito.",
+  "GuestScreens.confirmAccount":
+    "Serão excluídos: {notes} e {groups}, e você entra nessa conta. Isso não pode ser desfeito.",
   "GuestScreens.signOutTitle": "Sair de uma conta de convidado?",
   "GuestScreens.signOutAnyway": "Sair mesmo assim",
-  "GuestScreens.signOutText": "Esta conta não tem forma de entrar, então você não consegue voltar. Tudo o que há nela se perde para você.",
+  "GuestScreens.signOutText":
+    "Esta conta não tem forma de entrar, então você não consegue voltar. Tudo o que há nela se perde para você.",
   "GuestScreens.offline": "Você está off-line. Conecte-se e tente de novo.",
-  "GuestScreens.providerFailed": "{provider} não terminou. Sua conta não mudou. Tente de novo ou escolha outra forma.",
-  "GuestScreens.noPasskey": "Nenhuma chave de acesso foi adicionada. Sua conta continua sendo de convidado.",
+  "GuestScreens.providerFailed":
+    "{provider} não terminou. Sua conta não mudou. Tente de novo ou escolha outra forma.",
+  "GuestScreens.noPasskey":
+    "Nenhuma chave de acesso foi adicionada. Sua conta continua sendo de convidado.",
   "GuestScreens.didNotWork": "Não deu certo. Tente de novo.",
   "OAuthNotice.failed": "Esse acesso não deu certo. Tente de novo.",
   "OAuthNotice.linked": "Vinculado. Agora você pode entrar com ele.",
   "OAuthNotice.linkExists": "Já estava vinculado. Você pode entrar com ele como antes.",
   "OAuthNotice.linkTaken": "Não vinculado: essa conta já está vinculada a outra conta aqui.",
   "OAuthNotice.busy": "Tentativas demais. Espere um minuto e tente de novo.",
-  "OAuthNotice.kept": "Forma de acesso adicionada. Agora você pode entrar com ela em qualquer dispositivo.",
+  "OAuthNotice.kept":
+    "Forma de acesso adicionada. Agora você pode entrar com ela em qualquer dispositivo.",
   "OAuthNotice.guestTaken": "Essa forma de acesso pertence a outra conta.",
   "PasswordResetScreen.forgotFailed": "Não foi possível enviar o link",
   "PasswordResetScreen.resetFailed": "Não foi possível trocar a senha",
-  "PasswordResetScreen.sent": "Se alguma conta usa este endereço, um link para redefinir a senha está a caminho.",
+  "PasswordResetScreen.sent":
+    "Se alguma conta usa este endereço, um link para redefinir a senha está a caminho.",
   "PasswordResetScreen.forgotDescription": {
-    "one": "Digite o e-mail com que você se cadastrou. Enviamos um link para escolher uma nova senha; ele funciona uma vez, por {count} minuto.",
-    "many": "Digite o e-mail com que você se cadastrou. Enviamos um link para escolher uma nova senha; ele funciona uma vez, por {count} minutos.",
-    "other": "Digite o e-mail com que você se cadastrou. Enviamos um link para escolher uma nova senha; ele funciona uma vez, por {count} minutos."
+    "one":
+      "Digite o e-mail com que você se cadastrou. Enviamos um link para escolher uma nova senha; ele funciona uma vez, por {count} minuto.",
+    "many":
+      "Digite o e-mail com que você se cadastrou. Enviamos um link para escolher uma nova senha; ele funciona uma vez, por {count} minutos.",
+    "other":
+      "Digite o e-mail com que você se cadastrou. Enviamos um link para escolher uma nova senha; ele funciona uma vez, por {count} minutos.",
   },
   "PasswordResetScreen.remembered": "Lembrou? <link>Voltar para entrar</link>",
   "PasswordResetScreen.send": "Enviar o link",
   "PasswordResetScreen.doneTitle": "Senha alterada",
-  "PasswordResetScreen.done": "Todas as sessões da sua conta foram encerradas. Entre com sua nova senha.",
+  "PasswordResetScreen.done":
+    "Todas as sessões da sua conta foram encerradas. Entre com sua nova senha.",
   "PasswordResetScreen.signIn": "Entrar",
   "PasswordResetScreen.askNew": "Pedir um novo link",
   "PasswordResetScreen.chooseTitle": "Escolha uma nova senha",
-  "PasswordResetScreen.choose": "Para <email>{email}</email>. Ao salvar, sua conta sai de todos os lugares.",
+  "PasswordResetScreen.choose":
+    "Para <email>{email}</email>. Ao salvar, sua conta sai de todos os lugares.",
   "PasswordResetScreen.expired": "O link expirou? <link>Peça um novo</link>",
   "PasswordResetScreen.newPassword": "Nova senha",
   "PasswordResetScreen.newPasswordHint": "De {min} a {max} caracteres.",
@@ -811,7 +953,8 @@
   "PasswordResetScreen.save": "Salvar a nova senha",
   "MoveNote.title": "Mover para um grupo",
   "MoveNote.cancel": "Cancelar",
-  "MoveNote.question": "Escolha o grupo para onde “<title>{title}</title>” vai. Todos nesse grupo vão vê-la.",
+  "MoveNote.question":
+    "Escolha o grupo para onde “<title>{title}</title>” vai. Todos nesse grupo vão vê-la.",
   "NewNote.title": "Nova nota",
   "NewNote.close": "Fechar",
   "NewNote.titleLabel": "Título",
@@ -840,22 +983,22 @@
   "NoteAttachments.quota": {
     "one": "<group>{group}</group> usa {files} de {count} arquivo e {bytes} de {maxBytes}.",
     "many": "<group>{group}</group> usa {files} de {count} arquivos e {bytes} de {maxBytes}.",
-    "other": "<group>{group}</group> usa {files} de {count} arquivos e {bytes} de {maxBytes}."
+    "other": "<group>{group}</group> usa {files} de {count} arquivos e {bytes} de {maxBytes}.",
   },
   "NoteAttachments.quotaNoByteCap": {
     "one": "<group>{group}</group> usa {files} de {count} arquivo e {bytes}.",
     "many": "<group>{group}</group> usa {files} de {count} arquivos e {bytes}.",
-    "other": "<group>{group}</group> usa {files} de {count} arquivos e {bytes}."
+    "other": "<group>{group}</group> usa {files} de {count} arquivos e {bytes}.",
   },
   "NoteAttachments.quotaNoFileCap": {
     "one": "<group>{group}</group> usa {count} arquivo e {bytes} de {maxBytes}.",
     "many": "<group>{group}</group> usa {count} arquivos e {bytes} de {maxBytes}.",
-    "other": "<group>{group}</group> usa {count} arquivos e {bytes} de {maxBytes}."
+    "other": "<group>{group}</group> usa {count} arquivos e {bytes} de {maxBytes}.",
   },
   "NoteAttachments.quotaNoCaps": {
     "one": "<group>{group}</group> usa {count} arquivo e {bytes}.",
     "many": "<group>{group}</group> usa {count} arquivos e {bytes}.",
-    "other": "<group>{group}</group> usa {count} arquivos e {bytes}."
+    "other": "<group>{group}</group> usa {count} arquivos e {bytes}.",
   },
   "NoteAttachments.removeTitle": "Remover este arquivo?",
   "NoteAttachments.removeMessage": "“{name}” será removido desta nota para todos em {group}.",
@@ -864,11 +1007,13 @@
   "NoteEditor.title": "Nota",
   "NoteEditor.back": "Voltar às notas",
   "NoteEditor.elsewhereTitle": "Nota em outro grupo",
-  "NoteEditor.elsewhere": "Esta nota está em <group>{group}</group>, outro dos seus grupos. Você está em <current>{current}</current>.",
+  "NoteEditor.elsewhere":
+    "Esta nota está em <group>{group}</group>, outro dos seus grupos. Você está em <current>{current}</current>.",
   "NoteEditor.switching": "Trocando…",
   "NoteEditor.switchTo": "Trocar para <group>{group}</group>",
   "NoteEditor.notFoundTitle": "Esta nota não existe.",
-  "NoteEditor.notFound": "Não há essa nota em <group>{group}</group>. Ela pode ter sido excluída ou estar em outro dos seus grupos: troque para esse grupo e abra-a pelas notas dele.",
+  "NoteEditor.notFound":
+    "Não há essa nota em <group>{group}</group>. Ela pode ter sido excluída ou estar em outro dos seus grupos: troque para esse grupo e abra-a pelas notas dele.",
   "NoteEditor.loading": "Carregando a nota…",
   "NoteEditor.createdBy": "Criada por <name>{name}</name>, <date>{date}</date>",
   "NoteEditor.created": "Criada <date>{date}</date>",
@@ -878,7 +1023,8 @@
   "NoteEditor.readOnly": "Você pode ler esta nota. Só um editor pode alterá-la.",
   "NoteEditor.readOnlyNew": "Só um editor pode adicionar notas a este grupo.",
   "NoteEditor.titleLabel": "Título",
-  "NoteEditor.conflict": "<link>Carregue a versão mais recente</link> para ver o que mudou. Seu texto fica aqui até lá.",
+  "NoteEditor.conflict":
+    "<link>Carregue a versão mais recente</link> para ver o que mudou. Seu texto fica aqui até lá.",
   "NoteEditor.cancel": "Cancelar",
   "NoteEditor.saving": "Salvando…",
   "NoteEditor.creating": "Criando…",
@@ -893,7 +1039,8 @@
   "NoteEditorView.created": "“{title}” foi criada.",
   "NoteEditorView.savedTitle": "Nota salva",
   "NoteEditorView.saved": "“{title}” foi salva.",
-  "NoteEditorView.unsaved": "Suas alterações nesta nota não foram salvas. Se você sair, elas serão perdidas.",
+  "NoteEditorView.unsaved":
+    "Suas alterações nesta nota não foram salvas. Se você sair, elas serão perdidas.",
   "NoteMessages.titleRequired": "Digite um título.",
   "NoteMessages.conflict": "Alguém alterou esta nota desde que você a abriu.",
   "NoteMessages.deleteConflict": "Alguém alterou essa nota, então ela não foi excluída.",
@@ -903,24 +1050,27 @@
   "NoteMessages.save": "Não foi possível salvar a nota",
   "NoteMessages.delete": "Não foi possível excluir a nota",
   "NoteMessages.move": "Não foi possível mover as notas",
-  "NoteMessages.moveOffline": "Mover notas precisa de conexão. Tente de novo quando voltar a ficar online.",
+  "NoteMessages.moveOffline":
+    "Mover notas precisa de conexão. Tente de novo quando voltar a ficar online.",
   "NoteMessages.moveNone": "Marque as notas que você quer mover.",
   "NoteMessages.moveUnsaved": "Salve ou descarte suas alterações antes de mover a nota.",
   "NoteMessages.restore": "Não foi possível restaurar a nota",
-  "NoteMessages.restoreOffline": "Restaurar uma nota precisa de conexão. Tente de novo quando voltar a ficar online.",
+  "NoteMessages.restoreOffline":
+    "Restaurar uma nota precisa de conexão. Tente de novo quando voltar a ficar online.",
   "NoteMessages.restoreGone": "Essa nota não está mais entre as excluídas.",
   "NoteMessages.moveGone": "Uma nota que você marcou não está mais aqui, então nada foi movido.",
   "NotePeople.you": "Você",
   "NotePeople.former": "Ex-membro",
   "NotePeople.unnamed": "Membro sem nome",
-  "NoteSync.gone": "Enquanto você estava offline, esta nota foi excluída ou movida para outro grupo.",
+  "NoteSync.gone":
+    "Enquanto você estava offline, esta nota foi excluída ou movida para outro grupo.",
   "NoteSync.version": "Alguém alterou esta nota enquanto você estava offline.",
   "Notes.title": "Notas",
   "Notes.new": "Nova nota",
   "Notes.count": {
     "one": "{count} nota",
     "many": "{count} notas",
-    "other": "{count} notas"
+    "other": "{count} notas",
   },
   "Notes.deleted": "Excluída <date>{date}</date>",
   "Notes.restoreNote": "Restaurar “{title}”",
@@ -940,7 +1090,7 @@
   "Notes.deletedBanner": {
     "one": "As notas excluídas ficam aqui por {count} dia e depois são apagadas de vez.",
     "many": "As notas excluídas ficam aqui por {count} dias e depois são apagadas de vez.",
-    "other": "As notas excluídas ficam aqui por {count} dias e depois são apagadas de vez."
+    "other": "As notas excluídas ficam aqui por {count} dias e depois são apagadas de vez.",
   },
   "Notes.backToNotes": "Voltar às notas",
   "Notes.deletedLoading": "Carregando notas excluídas…",
@@ -952,7 +1102,7 @@
   "Notes.selected": {
     "one": "{count} selecionada",
     "many": "{count} selecionadas",
-    "other": "{count} selecionadas"
+    "other": "{count} selecionadas",
   },
   "Notes.cancelSelect": "Cancelar",
   "Notes.moveTo": "Mover para um grupo",
@@ -994,36 +1144,39 @@
   "NoteToasts.movedTitle": {
     "one": "Nota movida",
     "many": "Notas movidas",
-    "other": "Notas movidas"
+    "other": "Notas movidas",
   },
   "NoteToasts.moved": {
     "one": "A nota foi movida para {group}.",
     "many": "{count} notas foram movidas para {group}.",
-    "other": "{count} notas foram movidas para {group}."
+    "other": "{count} notas foram movidas para {group}.",
   },
   "NoteToasts.movedElsewhere": {
     "one": "A nota foi movida para o outro grupo.",
     "many": "{count} notas foram movidas para o outro grupo.",
-    "other": "{count} notas foram movidas para o outro grupo."
+    "other": "{count} notas foram movidas para o outro grupo.",
   },
   "NoteWidgets.previousPeriod": {
     "one": "dia anterior",
     "many": "{count} dias anteriores",
-    "other": "{count} dias anteriores"
+    "other": "{count} dias anteriores",
   },
   "NoteWidgets.totalTitle": "Notas",
   "NoteWidgets.totalLoading": "Carregando o número de notas",
-  "NoteWidgets.totalError": "Não foi possível carregar o número de notas. Verifique sua conexão e tente de novo.",
+  "NoteWidgets.totalError":
+    "Não foi possível carregar o número de notas. Verifique sua conexão e tente de novo.",
   "NoteWidgets.totalNow": "No grupo agora",
   "NoteWidgets.totalOn": "Em {date}",
   "NoteWidgets.addedTitle": "Notas novas",
   "NoteWidgets.addedLoading": "Carregando as notas adicionadas",
-  "NoteWidgets.addedError": "Não foi possível carregar as notas adicionadas. Verifique sua conexão e tente de novo.",
+  "NoteWidgets.addedError":
+    "Não foi possível carregar as notas adicionadas. Verifique sua conexão e tente de novo.",
   "NoteWidgets.addedNone": "Nada adicionado neste período",
   "NoteWidgets.addedSome": "Adicionadas neste período",
   "NoteWidgets.seriesTitle": "Notas ao longo do tempo",
   "NoteWidgets.seriesLoading": "Carregando o gráfico",
-  "NoteWidgets.seriesError": "Não foi possível carregar o gráfico. Verifique sua conexão e tente de novo.",
+  "NoteWidgets.seriesError":
+    "Não foi possível carregar o gráfico. Verifique sua conexão e tente de novo.",
   "NoteWidgets.seriesEmpty": "Nenhuma nota neste período",
   "NoteWidgets.seriesFlat": "{value} durante todo o período",
   "NoteWidgets.seriesFrom": "De {first} para {last}",
@@ -1031,7 +1184,7 @@
   "NoteWidgets.seriesPrevious": {
     "one": "O dia anterior",
     "many": "Os {count} dias anteriores",
-    "other": "Os {count} dias anteriores"
+    "other": "Os {count} dias anteriores",
   },
   "NoteWidgets.seriesLabel": "Notas ao longo do tempo. {summary}.",
   "NoteWidgets.seriesDay": "Dia",
@@ -1044,7 +1197,7 @@
   "OfflineStatus.held": {
     "one": "Uma nota aguarda sua escolha sobre uma tag abaixo. Nada se perdeu.",
     "many": "{count} notas aguardam sua escolha sobre uma tag abaixo. Nada se perdeu.",
-    "other": "{count} notas aguardam sua escolha sobre uma tag abaixo. Nada se perdeu."
+    "other": "{count} notas aguardam sua escolha sobre uma tag abaixo. Nada se perdeu.",
   },
   "OfflineStatus.mine": "Sua versão",
   "OfflineStatus.noteGone": "A nota não está mais neste grupo.",
@@ -1053,9 +1206,12 @@
   "OfflineStatus.tagGone": "A tag não está mais neste grupo.",
   "OfflineStatus.tagNoName": "Tag sem nome",
   "OfflineStatus.tagTakenOff": {
-    "one": "Uma tag que você criou offline não pôde ser salva, então foi removida de {count} nota. A nota foi salva sem ela.",
-    "many": "Uma tag que você criou offline não pôde ser salva, então foi removida de {count} notas. As notas foram salvas sem ela.",
-    "other": "Uma tag que você criou offline não pôde ser salva, então foi removida de {count} notas. As notas foram salvas sem ela."
+    "one":
+      "Uma tag que você criou offline não pôde ser salva, então foi removida de {count} nota. A nota foi salva sem ela.",
+    "many":
+      "Uma tag que você criou offline não pôde ser salva, então foi removida de {count} notas. As notas foram salvas sem ela.",
+    "other":
+      "Uma tag que você criou offline não pôde ser salva, então foi removida de {count} notas. As notas foram salvas sem ela.",
   },
   "OfflineStatus.theirs": "Versão do servidor",
   "OfflineStatus.untitledNote": "Nota sem título",
@@ -1063,7 +1219,8 @@
   "OfflineStatus.youDeletedNote": "Você excluiu esta nota.",
   "OfflineStatus.youDeletedTag": "Você excluiu esta tag.",
   "Preferences.example": "Datas e horas aparecem assim: <value>{date}</value>.",
-  "Preferences.conflict": "Isto mudou em outro dispositivo agora há pouco. Os valores abaixo são os que ele salvou.",
+  "Preferences.conflict":
+    "Isto mudou em outro dispositivo agora há pouco. Os valores abaixo são os que ele salvou.",
   "Preferences.language": "Idioma",
   "Preferences.changeLanguage": "Mudar idioma",
   "Preferences.formats": "Formatos",
@@ -1073,9 +1230,11 @@
   "Preferences.automatic": "Automático: {value}",
   "Preferences.automaticSearch": "automático dispositivo",
   "Preferences.timeZone": "Fuso horário",
-  "Preferences.timeZoneHint": "O fuso que você escolher vale em todos os seus dispositivos. Automático segue cada dispositivo.",
+  "Preferences.timeZoneHint":
+    "O fuso que você escolher vale em todos os seus dispositivos. Automático segue cada dispositivo.",
   "Preferences.timeZonePlaceholder": "Busque por cidade",
-  "Preferences.timeZoneEmpty": "Nenhum fuso horário corresponde a “{query}”. Tente uma cidade ou uma diferença como GMT+2.",
+  "Preferences.timeZoneEmpty":
+    "Nenhum fuso horário corresponde a “{query}”. Tente uma cidade ou uma diferença como GMT+2.",
   "Preferences.clock": "Relógio",
   "Preferences.clockFromFormat": "Conforme o formato ({clock})",
   "Preferences.clock12": "12 horas",
@@ -1089,11 +1248,14 @@
   "Preferences.themeDark": "Escuro",
   "Preferences.themeSystemLight": "Sistema (claro neste dispositivo)",
   "Preferences.themeSystemDark": "Sistema (escuro neste dispositivo)",
-  "Preferences.failedNetwork": "Não foi possível salvar sua alteração. Verifique sua conexão e tente de novo.",
-  "Preferences.failedOffline": "Você está offline, então nada foi salvo. Altere de novo quando voltar a ficar online.",
+  "Preferences.failedNetwork":
+    "Não foi possível salvar sua alteração. Verifique sua conexão e tente de novo.",
+  "Preferences.failedOffline":
+    "Você está offline, então nada foi salvo. Altere de novo quando voltar a ficar online.",
   "Preferences.failedInvalid": "Escolha cada valor da lista.",
   "Preferences.updatedElsewhere": "Preferências atualizadas em outro dispositivo.",
-  "SeatPriceConfirm.hint": "Cada pessoa que entra soma {price} por mês: com mais um membro, o grupo paga {next} em vez de {now}. O provedor cobra a diferença do resto deste período na próxima fatura.",
+  "SeatPriceConfirm.hint":
+    "Cada pessoa que entra soma {price} por mês: com mais um membro, o grupo paga {next} em vez de {now}. O provedor cobra a diferença do resto deste período na próxima fatura.",
   "SeatPriceConfirm.accept": "Aceito o preço maior para cada pessoa que entrar",
   "ProfileAccount.name": "Nome",
   "ProfileAccount.notSet": "Não definido",
@@ -1110,19 +1272,26 @@
   "ProfileAccount.none": "Nenhum.",
   "ProfileAccount.noneProvider": "Nenhum. {provider} não compartilhou um endereço confirmado.",
   "ProfileExport.asking": "Pedindo…",
-  "ProfileExport.never": "Um ZIP com seu perfil, grupos e notas, em arquivos JSON e CSV. Leva alguns minutos, e avisamos por e-mail quando estiver pronto.",
+  "ProfileExport.never":
+    "Um ZIP com seu perfil, grupos e notas, em arquivos JSON e CSV. Leva alguns minutos, e avisamos por e-mail quando estiver pronto.",
   "ProfileExport.download": "Baixar meus dados",
-  "ProfileExport.preparing": "Preparando seu arquivo. Vamos mandar um e-mail e uma notificação quando estiver pronto.",
-  "ProfileExport.ready": "<hidden>Seu arquivo está pronto. </hidden>Pronto: {size}, até <day></day>.",
-  "ProfileExport.changed": "Seus dados mudaram desde então? <button>Prepare um novo arquivo.</button>",
+  "ProfileExport.preparing":
+    "Preparando seu arquivo. Vamos mandar um e-mail e uma notificação quando estiver pronto.",
+  "ProfileExport.ready":
+    "<hidden>Seu arquivo está pronto. </hidden>Pronto: {size}, até <day></day>.",
+  "ProfileExport.changed":
+    "Seus dados mudaram desde então? <button>Prepare um novo arquivo.</button>",
   "ProfileExport.downloadZip": "Baixar ZIP",
   "ProfileExport.expired": "Seu último arquivo expirou em <day></day>.",
   "ProfileExport.prepareNew": "Preparar um novo arquivo",
   "ProfileExport.failed": "Não conseguimos preparar seu arquivo.",
   "ProfileExport.label": "Seus dados",
-  "ProfileExport.network": "Não foi possível pedir seu arquivo. Confira sua conexão e tente de novo.",
-  "ProfileExport.tooSoonToday": "Você pode pedir um arquivo por dia. Peça de novo hoje depois das {time}.",
-  "ProfileExport.tooSoonTomorrow": "Você pode pedir um arquivo por dia. Peça de novo amanhã depois das {time}.",
+  "ProfileExport.network":
+    "Não foi possível pedir seu arquivo. Confira sua conexão e tente de novo.",
+  "ProfileExport.tooSoonToday":
+    "Você pode pedir um arquivo por dia. Peça de novo hoje depois das {time}.",
+  "ProfileExport.tooSoonTomorrow":
+    "Você pode pedir um arquivo por dia. Peça de novo amanhã depois das {time}.",
   "ProfileNotifications.emptyTitle": "Nenhum dispositivo ainda",
   "ProfileNotifications.emptyText": "Adicione este navegador para receber notificações nele.",
   "ProfileNotifications.device": "Dispositivo {id}",
@@ -1130,12 +1299,15 @@
   "ProfileNotifications.remove": "Remover<hidden> o dispositivo {id}</hidden>",
   "ProfileNotifications.working": "Um momento…",
   "ProfileNotifications.add": "Adicionar este dispositivo",
-  "ProfilePicture.network": "Não foi possível enviar sua foto. Confira sua conexão e tente de novo.",
+  "ProfilePicture.network":
+    "Não foi possível enviar sua foto. Confira sua conexão e tente de novo.",
   "ProfilePicture.offline": "Você está off-line. Envie sua foto quando estiver on-line de novo.",
-  "ProfilePicture.removeFailed": "Não foi possível remover sua foto. Confira sua conexão e tente de novo.",
+  "ProfilePicture.removeFailed":
+    "Não foi possível remover sua foto. Confira sua conexão e tente de novo.",
   "ProfilePicture.type": "{name} não é uma imagem JPEG, PNG, WebP ou HEIC. Escolha uma dessas.",
   "ProfilePicture.size": "{name} tem {size}. Escolha uma imagem de até {max}.",
-  "ProfilePicture.content": "{name} não é de fato uma imagem, então não foi usada. Escolha outro arquivo.",
+  "ProfilePicture.content":
+    "{name} não é de fato uma imagem, então não foi usada. Escolha outro arquivo.",
   "ProfilePicture.pending": "Termine primeiro os envios já iniciados e tente de novo.",
   "ProfilePicture.budget": "Você já enviou o máximo permitido em uma hora. Tente mais tarde.",
   "ProfilePicture.saved": "Foto do perfil salva.",
@@ -1151,13 +1323,20 @@
   "ProfilePicture.removeTitle": "Remover sua foto do perfil?",
   "ProfilePicture.removeText": "No lugar dela aparecem suas iniciais, aqui e em todos os grupos.",
   "ProfilePicture.removeButton": "Remover foto",
-  "ProfileScreen.profileFailed": "Não foi possível salvar seu nome. Confira sua conexão e tente de novo.",
-  "ProfileScreen.passwordFailed": "Não foi possível trocar sua senha. Confira sua conexão e tente de novo.",
-  "ProfileScreen.passwordSetFailed": "Não foi possível definir sua senha. Confira sua conexão e tente de novo.",
-  "ProfileScreen.totpFinishFailed": "Não foi possível ativar a verificação em duas etapas. Confira o código no seu app e tente de novo.",
-  "ProfileScreen.totpDisableFailed": "Não foi possível desativar a verificação em duas etapas. Confira sua conexão e tente de novo.",
-  "ProfileScreen.pushFailed": "Não foi possível adicionar este dispositivo. Permita notificações deste site no navegador e tente de novo.",
-  "ProfileScreen.pushRemoveFailed": "Não foi possível remover este dispositivo. Confira sua conexão e tente de novo.",
+  "ProfileScreen.profileFailed":
+    "Não foi possível salvar seu nome. Confira sua conexão e tente de novo.",
+  "ProfileScreen.passwordFailed":
+    "Não foi possível trocar sua senha. Confira sua conexão e tente de novo.",
+  "ProfileScreen.passwordSetFailed":
+    "Não foi possível definir sua senha. Confira sua conexão e tente de novo.",
+  "ProfileScreen.totpFinishFailed":
+    "Não foi possível ativar a verificação em duas etapas. Confira o código no seu app e tente de novo.",
+  "ProfileScreen.totpDisableFailed":
+    "Não foi possível desativar a verificação em duas etapas. Confira sua conexão e tente de novo.",
+  "ProfileScreen.pushFailed":
+    "Não foi possível adicionar este dispositivo. Permita notificações deste site no navegador e tente de novo.",
+  "ProfileScreen.pushRemoveFailed":
+    "Não foi possível remover este dispositivo. Confira sua conexão e tente de novo.",
   "ProfileScreen.account": "Conta",
   "ProfileScreen.accountText": "Sua foto, seu nome, seu e-mail e uma cópia dos seus dados.",
   "ProfileScreen.security": "Acesso e segurança",
@@ -1169,13 +1348,16 @@
   "ProfileScreen.notifications": "Notificações",
   "ProfileScreen.notificationsText": "Onde você recebe um aviso quando algo muda nos seus grupos.",
   "ProfileScreen.apiTokens": "Tokens de API",
-  "ProfileScreen.apiTokensText": "Deixe um script ou outro serviço usar um dos seus grupos sem sua senha.",
+  "ProfileScreen.apiTokensText":
+    "Deixe um script ou outro serviço usar um dos seus grupos sem sua senha.",
   "ProfileScreen.dangerZone": "Excluir conta",
   "ProfileScreen.dangerZoneText": "Exclua sua conta e tudo o que só você pode ver.",
   "ProfileScreen.codeTitle": "Digite seu código de uso único",
-  "ProfileScreen.codeText": "Seu perfil abre assim que você digitar o código do seu app autenticador.",
+  "ProfileScreen.codeText":
+    "Seu perfil abre assim que você digitar o código do seu app autenticador.",
   "ProfileScreen.signInTitle": "Entre para ver seu perfil",
-  "ProfileScreen.signInText": "Seu nome, sua senha e seus dispositivos aparecem aqui depois que você entra.",
+  "ProfileScreen.signInText":
+    "Seu nome, sua senha e seus dispositivos aparecem aqui depois que você entra.",
   "ProfileScreen.createAccount": "Criar uma conta",
   "ProfileScreen.twoFactorOn": "Duas etapas ativada",
   "ProfileScreen.twoFactorOff": "Duas etapas desativada",
@@ -1186,14 +1368,15 @@
   "ProfileScreen.passkeys": {
     "one": "uma chave de acesso",
     "many": "chaves de acesso",
-    "other": "chaves de acesso"
+    "other": "chaves de acesso",
   },
   "ProfileSecurity.setPasswordHidden": "Definir<hidden> senha</hidden>",
   "ProfileSecurity.changePasswordHidden": "Trocar<hidden> senha</hidden>",
   "ProfileSecurity.noPassword": "Nenhuma. Você entra com {names}.",
   "ProfileSecurity.passwordAsked": "É pedida quando você entra em um dispositivo novo.",
   "ProfileSecurity.twoFactor": "Verificação em duas etapas",
-  "ProfileSecurity.twoFactorText": "O acesso também pede um código de um app autenticador, então uma senha vazada não basta.",
+  "ProfileSecurity.twoFactorText":
+    "O acesso também pede um código de um app autenticador, então uma senha vazada não basta.",
   "ProfileSecurity.app": "App autenticador",
   "ProfileSecurity.on": "Ativado",
   "ProfileSecurity.onText": "O acesso pede um código, a menos que você use uma chave de acesso.",
@@ -1207,43 +1390,55 @@
   "ProfileSecurity.updating": "Atualizando…",
   "ProfileSecurity.setButton": "Definir senha",
   "ProfileSecurity.turnOnTitle": "Ativar a verificação em duas etapas",
-  "ProfileSecurity.turnOnText": "Depois de ativada, o acesso também pede um código do seu app autenticador, e seus outros dispositivos são desconectados.",
-  "ProfileSecurity.turnOnPassword": "Depois de ativada, o acesso também pede um código do seu app autenticador, e seus outros dispositivos são desconectados. Digite sua senha para confirmar que é você.",
+  "ProfileSecurity.turnOnText":
+    "Depois de ativada, o acesso também pede um código do seu app autenticador, e seus outros dispositivos são desconectados.",
+  "ProfileSecurity.turnOnPassword":
+    "Depois de ativada, o acesso também pede um código do seu app autenticador, e seus outros dispositivos são desconectados. Digite sua senha para confirmar que é você.",
   "ProfileSecurity.preparing": "Preparando…",
-  "ProfileSecurity.scan": "Escaneie o código com seu app autenticador e digite os seis dígitos que ele mostrar.",
+  "ProfileSecurity.scan":
+    "Escaneie o código com seu app autenticador e digite os seis dígitos que ele mostrar.",
   "ProfileSecurity.qr": "QR code para o seu app autenticador",
   "ProfileSecurity.key": "Não consegue escanear? Digite esta chave: <key>{key}</key>",
   "ProfileSecurity.codeFromApp": "Código do seu app",
   "ProfileSecurity.turningOn": "Ativando…",
   "ProfileSecurity.turnOn": "Ativar",
   "ProfileSecurity.turnOffTitle": "Desativar a verificação em duas etapas?",
-  "ProfileSecurity.turnOffCode": "O acesso não vai mais pedir um código. Digite um código do seu app autenticador para confirmar que é você. Você pode ativar as duas etapas de novo quando quiser.",
-  "ProfileSecurity.turnOffPassword": "O acesso vai pedir só a sua senha. Digite sua senha para confirmar que é você. Você pode ativar as duas etapas de novo quando quiser.",
+  "ProfileSecurity.turnOffCode":
+    "O acesso não vai mais pedir um código. Digite um código do seu app autenticador para confirmar que é você. Você pode ativar as duas etapas de novo quando quiser.",
+  "ProfileSecurity.turnOffPassword":
+    "O acesso vai pedir só a sua senha. Digite sua senha para confirmar que é você. Você pode ativar as duas etapas de novo quando quiser.",
   "ProfileSecurity.turningOff": "Desativando…",
   "ProfileSecurity.turnOff": "Desativar",
   "ProfileTelegram.title": "Telegram",
-  "ProfileTelegram.statusFailed": "Não foi possível ler seu vínculo com o Telegram. Confira sua conexão e tente de novo.",
-  "ProfileTelegram.codeFailed": "Não foi possível criar um código de vínculo. Confira sua conexão e tente de novo.",
-  "ProfileTelegram.unlinkFailed": "Não foi possível desvincular o Telegram. Confira sua conexão e tente de novo.",
+  "ProfileTelegram.statusFailed":
+    "Não foi possível ler seu vínculo com o Telegram. Confira sua conexão e tente de novo.",
+  "ProfileTelegram.codeFailed":
+    "Não foi possível criar um código de vínculo. Confira sua conexão e tente de novo.",
+  "ProfileTelegram.unlinkFailed":
+    "Não foi possível desvincular o Telegram. Confira sua conexão e tente de novo.",
   "ProfileTelegram.theBot": "o bot",
-  "ProfileTelegram.description": "Receba suas notificações em um chat com {bot} e use os comandos dele por lá.",
+  "ProfileTelegram.description":
+    "Receba suas notificações em um chat com {bot} e use os comandos dele por lá.",
   "ProfileTelegram.chat": "Chat",
   "ProfileTelegram.linked": "Vinculado em <day></day>",
   "ProfileTelegram.notLinked": "Não vinculado",
   "ProfileTelegram.unlinkHidden": "Desvincular<hidden> o Telegram</hidden>",
   "ProfileTelegram.link": "Vincular o Telegram",
   "ProfileTelegram.unlinkTitle": "Desvincular o Telegram?",
-  "ProfileTelegram.unlinkText": "Suas notificações deixam de chegar ao Telegram, e {bot} não pode mais agir por você lá. Para vincular de novo, você precisa de um novo código.",
-  "ProfileTelegram.open": "Abra o chat com <strong>{bot}</strong> e toque em Start e depois em “{button}”. Esta janela fecha assim que sua conta for vinculada.",
+  "ProfileTelegram.unlinkText":
+    "Suas notificações deixam de chegar ao Telegram, e {bot} não pode mais agir por você lá. Para vincular de novo, você precisa de um novo código.",
+  "ProfileTelegram.open":
+    "Abra o chat com <strong>{bot}</strong> e toque em Start e depois em “{button}”. Esta janela fecha assim que sua conta for vinculada.",
   "ProfileTelegram.openButton": "Abrir o Telegram",
-  "ProfileTelegram.elsewhere": "O Telegram está em outro dispositivo? Envie esta mensagem no chat com {bot}:",
+  "ProfileTelegram.elsewhere":
+    "O Telegram está em outro dispositivo? Envie esta mensagem no chat com {bot}:",
   "ProfileTelegram.message": "Mensagem para enviar",
   "ProfileTelegram.copy": "Copiar mensagem",
   "ProfileTelegram.copied": "Mensagem copiada",
   "ProfileTelegram.waiting": {
     "one": "Aguardando o Telegram… O código funciona uma vez, por {count} minuto.",
     "many": "Aguardando o Telegram… O código funciona uma vez, por {count} minutos.",
-    "other": "Aguardando o Telegram… O código funciona uma vez, por {count} minutos."
+    "other": "Aguardando o Telegram… O código funciona uma vez, por {count} minutos.",
   },
   "ProfileView.codeMissing": "Digite o código do seu app autenticador",
   "ProfileView.telegramLinked": "Telegram vinculado",
@@ -1252,7 +1447,7 @@
   "ProfileView.switchedMoved": {
     "one": "{count} grupo foi movido da sua conta de convidado.",
     "many": "{count} grupos foram movidos da sua conta de convidado.",
-    "other": "{count} grupos foram movidos da sua conta de convidado."
+    "other": "{count} grupos foram movidos da sua conta de convidado.",
   },
   "ProfileView.switchedDeleted": "Sua conta de convidado foi excluída.",
   "ProfileView.methodLinked": "Forma de entrar vinculada",
@@ -1270,13 +1465,14 @@
   "ProfileView.tokensRevoked": {
     "one": "Seu token de API foi revogado.",
     "many": "Seus {count} tokens de API foram revogados.",
-    "other": "Seus {count} tokens de API foram revogados."
+    "other": "Seus {count} tokens de API foram revogados.",
   },
   "ProfileView.usePassword": "Use a nova senha na próxima vez que entrar.",
   "ProfileView.passwordSet": "Senha definida",
   "ProfileView.passwordSetBody": "Agora você também pode entrar com seu e-mail e esta senha.",
   "ProfileView.accountDeleted": "Conta excluída",
-  "ProfileView.accountDeletedBody": "Ela é apagada de vez em {day}. Entre antes disso para mantê-la.",
+  "ProfileView.accountDeletedBody":
+    "Ela é apagada de vez em {day}. Entre antes disso para mantê-la.",
   "ProfileView.guestDeleted": "Conta de convidado excluída",
   "ProfileView.guestDeletedBody": "Tudo o que havia nela foi apagado.",
   "ProfileView.emailVerified": "E-mail verificado",
@@ -1287,51 +1483,71 @@
   "ProviderProof.link": "um link de acesso",
   "ProviderProof.fresh": "Você entrou com {methods} há pouco, então nenhuma senha é pedida.",
   "ProviderProof.needed": {
-    "one": "Esta conta não tem senha para confirmar isso. Entre de novo com {methods} e volte aqui em até {count} minuto.",
-    "many": "Esta conta não tem senha para confirmar isso. Entre de novo com {methods} e volte aqui em até {count} minutos.",
-    "other": "Esta conta não tem senha para confirmar isso. Entre de novo com {methods} e volte aqui em até {count} minutos."
+    "one":
+      "Esta conta não tem senha para confirmar isso. Entre de novo com {methods} e volte aqui em até {count} minuto.",
+    "many":
+      "Esta conta não tem senha para confirmar isso. Entre de novo com {methods} e volte aqui em até {count} minutos.",
+    "other":
+      "Esta conta não tem senha para confirmar isso. Entre de novo com {methods} e volte aqui em até {count} minutos.",
   },
   "ProviderProof.passkeyAgain": "Entrar de novo com uma chave de acesso",
   "ProviderProof.providerAgain": "Entrar de novo com {provider}",
   "SignInLinkScreen.sendFailed": "Não foi possível enviar o link. Tente de novo daqui a pouco.",
-  "SignInLinkScreen.unreachable": "Não foi possível falar com o servidor. Confira sua conexão e toque em “Continuar” de novo.",
-  "SignInLinkScreen.openFailed": "Não foi possível entrar. Toque em “Continuar” para tentar de novo ou peça um novo link.",
+  "SignInLinkScreen.unreachable":
+    "Não foi possível falar com o servidor. Confira sua conexão e toque em “Continuar” de novo.",
+  "SignInLinkScreen.openFailed":
+    "Não foi possível entrar. Toque em “Continuar” para tentar de novo ou peça um novo link.",
   "SignInLinkScreen.title": "Entre com um link",
-  "SignInLinkScreen.description": "Enviamos por e-mail um link que faz você entrar. Se nenhuma conta usa o endereço ainda, o link cria uma.",
+  "SignInLinkScreen.description":
+    "Enviamos por e-mail um link que faz você entrar. Se nenhuma conta usa o endereço ainda, o link cria uma.",
   "SignInLinkScreen.ratherPassword": "Prefere usar uma senha? <link>Voltar para entrar</link>",
   "SignInLinkScreen.submit": "Enviar um link",
   "SignInLinkScreen.sent": {
-    "one": "Enviamos um link de acesso para <email>{email}</email>. Ele funciona uma vez, por {count} minuto.",
-    "many": "Enviamos um link de acesso para <email>{email}</email>. Ele funciona uma vez, por {count} minutos.",
-    "other": "Enviamos um link de acesso para <email>{email}</email>. Ele funciona uma vez, por {count} minutos."
+    "one":
+      "Enviamos um link de acesso para <email>{email}</email>. Ele funciona uma vez, por {count} minuto.",
+    "many":
+      "Enviamos um link de acesso para <email>{email}</email>. Ele funciona uma vez, por {count} minutos.",
+    "other":
+      "Enviamos um link de acesso para <email>{email}</email>. Ele funciona uma vez, por {count} minutos.",
   },
   "SignInLinkScreen.openHere": "Abra o link neste dispositivo para entrar aqui.",
   "SignInLinkScreen.newLink": "Enviar um novo link",
   "SignInLinkScreen.waiting": {
     "one": "Não chegou? Confira a pasta de spam. Você pode enviar um novo link em {count} segundo.",
-    "many": "Não chegou? Confira a pasta de spam. Você pode enviar um novo link em {count} segundos.",
-    "other": "Não chegou? Confira a pasta de spam. Você pode enviar um novo link em {count} segundos."
+    "many":
+      "Não chegou? Confira a pasta de spam. Você pode enviar um novo link em {count} segundos.",
+    "other":
+      "Não chegou? Confira a pasta de spam. Você pode enviar um novo link em {count} segundos.",
   },
-  "SignInLinkScreen.resent": "Um novo link está a caminho. Os anteriores continuam valendo até que um deles seja usado.",
+  "SignInLinkScreen.resent":
+    "Um novo link está a caminho. Os anteriores continuam valendo até que um deles seja usado.",
   "SignInLinkScreen.refusedTitle": "Este link não funciona mais",
   "SignInLinkScreen.refused": {
-    "one": "Links de acesso funcionam uma vez, por {count} minuto. Peça um novo e use o e-mail mais recente.",
-    "many": "Links de acesso funcionam uma vez, por {count} minutos. Peça um novo e use o e-mail mais recente.",
-    "other": "Links de acesso funcionam uma vez, por {count} minutos. Peça um novo e use o e-mail mais recente."
+    "one":
+      "Links de acesso funcionam uma vez, por {count} minuto. Peça um novo e use o e-mail mais recente.",
+    "many":
+      "Links de acesso funcionam uma vez, por {count} minutos. Peça um novo e use o e-mail mais recente.",
+    "other":
+      "Links de acesso funcionam uma vez, por {count} minutos. Peça um novo e use o e-mail mais recente.",
   },
   "SignInLinkScreen.elsewhereTitle": "Este link foi pedido em outro navegador",
-  "SignInLinkScreen.elsewhere": "Ele não fez você entrar, e sua conta de convidado continua como estava. Peça um novo link neste navegador para entrar aqui.",
+  "SignInLinkScreen.elsewhere":
+    "Ele não fez você entrar, e sua conta de convidado continua como estava. Peça um novo link neste navegador para entrar aqui.",
   "SignInLinkScreen.incompleteTitle": "Este link está incompleto",
   "SignInLinkScreen.incomplete": "Abra o link do e-mail de novo ou peça um novo.",
   "SignInLinkScreen.backToApp": "Voltar ao app",
   "SignInLinkScreen.finishTitle": "Termine de entrar",
-  "SignInLinkScreen.finish": "Continue para entrar neste dispositivo. Se o endereço for novo, isso cria sua conta.",
-  "SignInLinkScreen.signedInAs": "Você entrou como <email>{email}</email>. Ao continuar, você entra com a conta do link.",
-  "SignInLinkScreen.guest": "Você está usando o app como convidado. Se pediu este link neste navegador, ao continuar sua conta de convidado fica com o endereço do link, ou perguntamos antes se esse endereço já tem uma conta.",
+  "SignInLinkScreen.finish":
+    "Continue para entrar neste dispositivo. Se o endereço for novo, isso cria sua conta.",
+  "SignInLinkScreen.signedInAs":
+    "Você entrou como <email>{email}</email>. Ao continuar, você entra com a conta do link.",
+  "SignInLinkScreen.guest":
+    "Você está usando o app como convidado. Se pediu este link neste navegador, ao continuar sua conta de convidado fica com o endereço do link, ou perguntamos antes se esse endereço já tem uma conta.",
   "SignInLinkScreen.signingIn": "Entrando…",
   "SignInLinkScreen.stay": "Continuar conectado",
   "SignInMethods.failed": "Não foi possível alterar suas formas de acesso",
-  "SignInMethods.loadFailed": "Não foi possível carregar suas formas de acesso. Confira sua conexão e tente de novo.",
+  "SignInMethods.loadFailed":
+    "Não foi possível carregar suas formas de acesso. Confira sua conexão e tente de novo.",
   "SignInMethods.renameFailed": "Não foi possível salvar o nome. Tente de novo.",
   "SignInMethods.password": "Senha",
   "SignInMethods.passkey": "Chave de acesso",
@@ -1345,17 +1561,24 @@
   "SignInMethods.linkTitle": "Vincular",
   "SignInMethods.offline": "Para adicionar uma chave de acesso é preciso estar conectado.",
   "SignInMethods.cancelled": "Nenhuma chave de acesso foi adicionada.",
-  "SignInMethods.added": "Chave de acesso adicionada como “<name>{name}</name>”. Renomeie se quiser.",
-  "SignInMethods.passkeyAsks": "Uma chave de acesso é outra forma de entrar, então sua senha é pedida primeiro.",
-  "SignInMethods.linkAsks": "Uma conta vinculada é outra forma de entrar, então sua senha é pedida primeiro.",
+  "SignInMethods.added":
+    "Chave de acesso adicionada como “<name>{name}</name>”. Renomeie se quiser.",
+  "SignInMethods.passkeyAsks":
+    "Uma chave de acesso é outra forma de entrar, então sua senha é pedida primeiro.",
+  "SignInMethods.linkAsks":
+    "Uma conta vinculada é outra forma de entrar, então sua senha é pedida primeiro.",
   "SignInMethods.opening": "Abrindo…",
   "SignInMethods.continueTo": "Continuar para o {provider}",
   "SignInMethods.removeTitle": "Remover “{name}”?",
   "SignInMethods.unlinkTitle": "Desvincular {name}?",
-  "SignInMethods.remove": "Você não poderá mais entrar com esta chave de acesso. Todos os dispositivos que entraram com ela são desconectados. Apague-a também do seu gerenciador de senhas.",
-  "SignInMethods.removeCurrent": "Você não poderá mais entrar com esta chave de acesso. Todos os dispositivos que entraram com ela são desconectados. Apague-a também do seu gerenciador de senhas. Este dispositivo entrou com ela, então também será desconectado.",
-  "SignInMethods.unlinkCurrent": "Você entrou neste dispositivo com {name}, então ele será desconectado, como todos os outros que fizeram o mesmo.",
-  "SignInMethods.unlink": "Todos os dispositivos que entraram com {name} serão desconectados. Este dispositivo continua conectado.",
+  "SignInMethods.remove":
+    "Você não poderá mais entrar com esta chave de acesso. Todos os dispositivos que entraram com ela são desconectados. Apague-a também do seu gerenciador de senhas.",
+  "SignInMethods.removeCurrent":
+    "Você não poderá mais entrar com esta chave de acesso. Todos os dispositivos que entraram com ela são desconectados. Apague-a também do seu gerenciador de senhas. Este dispositivo entrou com ela, então também será desconectado.",
+  "SignInMethods.unlinkCurrent":
+    "Você entrou neste dispositivo com {name}, então ele será desconectado, como todos os outros que fizeram o mesmo.",
+  "SignInMethods.unlink":
+    "Todos os dispositivos que entraram com {name} serão desconectados. Este dispositivo continua conectado.",
   "SignInMethods.removing": "Removendo…",
   "SignInMethods.unlinking": "Desvinculando…",
   "SignInMethods.removePasskey": "Remover chave de acesso",
@@ -1376,7 +1599,7 @@
   "SignUpCodeScreen.sent": {
     "one": "Enviamos um código para <email>{email}</email>. Ele vale por {count} minuto.",
     "many": "Enviamos um código para <email>{email}</email>. Ele vale por {count} minutos.",
-    "other": "Enviamos um código para <email>{email}</email>. Ele vale por {count} minutos."
+    "other": "Enviamos um código para <email>{email}</email>. Ele vale por {count} minutos.",
   },
   "SignUpCodeScreen.wrongAddress": "Endereço errado? <button>Usar outro endereço</button>",
   "SignUpCodeScreen.code": "Código",
@@ -1386,29 +1609,37 @@
   "SignUpCodeScreen.resendFailed": "Não foi possível enviar um novo código",
   "SignUpCodeScreen.existsTitle": "Você já tem uma conta",
   "SignUpCodeScreen.exists": "<email>{email}</email> já entra por aqui. Nada novo foi criado.",
-  "SignUpCodeScreen.existsWith": "<email>{email}</email> já entra por aqui com {providers}. Nada novo foi criado.",
+  "SignUpCodeScreen.existsWith":
+    "<email>{email}</email> já entra por aqui com {providers}. Nada novo foi criado.",
   "SignUpCodeScreen.signInInstead": "Entrar",
   "SignUpCodeScreen.expiredTitle": "Este cadastro expirou",
   "SignUpCodeScreen.expired": {
     "one": "Passou mais de {count} minuto, ou o código foi tentado vezes demais. Nada foi criado.",
-    "many": "Passaram mais de {count} minutos, ou o código foi tentado vezes demais. Nada foi criado.",
-    "other": "Passaram mais de {count} minutos, ou o código foi tentado vezes demais. Nada foi criado."
+    "many":
+      "Passaram mais de {count} minutos, ou o código foi tentado vezes demais. Nada foi criado.",
+    "other":
+      "Passaram mais de {count} minutos, ou o código foi tentado vezes demais. Nada foi criado.",
   },
   "SignUpCodeScreen.startAgain": "Começar de novo",
   "SignedInDevices.failed": "Não foi possível desconectar esse dispositivo",
   "SignedInDevices.savedTitle": "Cópia salva dos seus dispositivos",
-  "SignedInDevices.savedBody": "O servidor está fora de alcance. Esta lista foi salva neste dispositivo: {time}. Dispositivos que entraram ou saíram desde então não aparecem nela.",
+  "SignedInDevices.savedBody":
+    "O servidor está fora de alcance. Esta lista foi salva neste dispositivo: {time}. Dispositivos que entraram ou saíram desde então não aparecem nela.",
   "SignedInDevices.title": "Dispositivos conectados",
-  "SignedInDevices.description": "Onde sua conta está conectada. Desconecte qualquer dispositivo que você não reconheça.",
+  "SignedInDevices.description":
+    "Onde sua conta está conectada. Desconecte qualquer dispositivo que você não reconheça.",
   "SignedInDevices.loading": "Carregando seus dispositivos…",
   "SignedInDevices.signOutDevice": "Desconectar<device> ({device})</device>",
   "SignedInDevices.signingOut": "Desconectando…",
   "SignedInDevices.signOutOthers": "Desconectar todos os outros dispositivos",
   "SignedInDevices.othersTitle": "Desconectar todos os outros dispositivos?",
   "SignedInDevices.othersMessage": {
-    "one": "{count} outro dispositivo vai precisar da sua senha para entrar de novo. Este dispositivo continua conectado.",
-    "many": "{count} outros dispositivos vão precisar da sua senha para entrar de novo. Este dispositivo continua conectado.",
-    "other": "{count} outros dispositivos vão precisar da sua senha para entrar de novo. Este dispositivo continua conectado."
+    "one":
+      "{count} outro dispositivo vai precisar da sua senha para entrar de novo. Este dispositivo continua conectado.",
+    "many":
+      "{count} outros dispositivos vão precisar da sua senha para entrar de novo. Este dispositivo continua conectado.",
+    "other":
+      "{count} outros dispositivos vão precisar da sua senha para entrar de novo. Este dispositivo continua conectado.",
   },
   "SignedInDevices.signOut": "Desconectar",
   "SignedInDevices.oneTitle": "Desconectar {device}?",
@@ -1424,10 +1655,11 @@
   "Search.tooShort": {
     "one": "Digite pelo menos {count} caractere para buscar notas.",
     "many": "Digite pelo menos {count} caracteres para buscar notas.",
-    "other": "Digite pelo menos {count} caracteres para buscar notas."
+    "other": "Digite pelo menos {count} caracteres para buscar notas.",
   },
   "Search.empty": "Nenhuma nota ou grupo corresponde a “{query}”.",
-  "Search.emptyOnDevice": "Nada neste dispositivo corresponde a “{query}”. Busque de novo quando voltar a ficar online.",
+  "Search.emptyOnDevice":
+    "Nada neste dispositivo corresponde a “{query}”. Busque de novo quando voltar a ficar online.",
   "Search.notes": "Notas",
   "Search.notesOnDevice": "Notas neste dispositivo",
   "Search.groups": "Grupos",
@@ -1472,7 +1704,8 @@
   "TagEditor.loading": "Carregando a tag…",
   "TagEditor.new": "Nova tag",
   "TagEditor.offlineTitle": "Você está offline",
-  "TagEditor.offline": "Suas alterações ficam salvas neste dispositivo e são enviadas quando você voltar a ficar online.",
+  "TagEditor.offline":
+    "Suas alterações ficam salvas neste dispositivo e são enviadas quando você voltar a ficar online.",
   "TagEditor.readOnly": "Só um editor pode alterar as tags deste grupo.",
   "TagEditor.name": "Nome",
   "TagEditor.nameHint": "Todos em <group>{group}</group> veem esta tag.",
@@ -1492,7 +1725,8 @@
   "TagEditorView.discardStay": "Continuar editando",
   "TagMessages.nameRequired": "Digite um nome.",
   "TagMessages.nameTaken": "Este grupo já tem uma tag com esse nome.",
-  "TagMessages.conflict": "Alguém alterou esta tag desde que você a abriu. Ela aparece como está agora.",
+  "TagMessages.conflict":
+    "Alguém alterou esta tag desde que você a abriu. Ela aparece como está agora.",
   "TagMessages.gone": "Esta tag foi excluída.",
   "TagMessages.load": "Não foi possível carregar as tags",
   "TagMessages.create": "Não foi possível criar a tag. Tente de novo.",
@@ -1504,14 +1738,14 @@
   "TagParts.noteCount": {
     "one": "{count} nota",
     "many": "{count} notas",
-    "other": "{count} notas"
+    "other": "{count} notas",
   },
   "TagParts.deleteNone": "Nenhuma nota a usa.",
   "TagParts.deleteUnknown": "Ela sai de todas as notas que a usam. As notas continuam.",
   "TagParts.deleteCount": {
     "one": "Ela sai de {count} nota. As notas continuam.",
     "many": "Ela sai de {count} notas. As notas continuam.",
-    "other": "Ela sai de {count} notas. As notas continuam."
+    "other": "Ela sai de {count} notas. As notas continuam.",
   },
   "TagSync.gone": "Esta tag foi excluída enquanto você estava offline.",
   "TagSync.rejected": "O servidor não aceitou esta tag.",
@@ -1526,7 +1760,7 @@
   "Tags.showNotes": {
     "one": "Mostrar a nota com a tag “{name}”",
     "many": "Mostrar as {count} notas com a tag “{name}”",
-    "other": "Mostrar as {count} notas com a tag “{name}”"
+    "other": "Mostrar as {count} notas com a tag “{name}”",
   },
   "Tags.actions": "Ações de “{name}”",
   "Tags.editTag": "Editar tag",
@@ -1538,34 +1772,49 @@
   "TagToasts.deletedFromNotes": {
     "one": "“{name}” foi excluída e retirada de {count} nota.",
     "many": "“{name}” foi excluída e retirada de {count} notas.",
-    "other": "“{name}” foi excluída e retirada de {count} notas."
+    "other": "“{name}” foi excluída e retirada de {count} notas.",
   },
   "TelegramNotification.open": "Abrir",
   "TelegramBot.linkButton": "Vincular",
-  "TelegramBot.confirmNameAddress": "Vincular este Telegram à conta de {name} em {app} ({address})? Toque em “{button}” só se for a sua própria conta. Se você não pediu isso, ignore esta mensagem.",
-  "TelegramBot.confirmName": "Vincular este Telegram à conta de {name} em {app}? Toque em “{button}” só se for a sua própria conta. Se você não pediu isso, ignore esta mensagem.",
-  "TelegramBot.confirmAddress": "Vincular este Telegram a uma conta em {app} ({address})? Toque em “{button}” só se for a sua própria conta. Se você não pediu isso, ignore esta mensagem.",
-  "TelegramBot.confirmAnonymous": "Vincular este Telegram a uma conta em {app} sem nome nem endereço? Toque em “{button}” só se for a sua própria conta. Se você não pediu isso, ignore esta mensagem.",
-  "TelegramBot.linked": "Pronto: este chat está vinculado à sua conta. Agora suas notificações chegam aqui. Envie /help para ver o que eu posso fazer.",
+  "TelegramBot.confirmNameAddress":
+    "Vincular este Telegram à conta de {name} em {app} ({address})? Toque em “{button}” só se for a sua própria conta. Se você não pediu isso, ignore esta mensagem.",
+  "TelegramBot.confirmName":
+    "Vincular este Telegram à conta de {name} em {app}? Toque em “{button}” só se for a sua própria conta. Se você não pediu isso, ignore esta mensagem.",
+  "TelegramBot.confirmAddress":
+    "Vincular este Telegram a uma conta em {app} ({address})? Toque em “{button}” só se for a sua própria conta. Se você não pediu isso, ignore esta mensagem.",
+  "TelegramBot.confirmAnonymous":
+    "Vincular este Telegram a uma conta em {app} sem nome nem endereço? Toque em “{button}” só se for a sua própria conta. Se você não pediu isso, ignore esta mensagem.",
+  "TelegramBot.linked":
+    "Pronto: este chat está vinculado à sua conta. Agora suas notificações chegam aqui. Envie /help para ver o que eu posso fazer.",
   "TelegramBot.already": "Esta conta do Telegram já está vinculada à sua conta.",
-  "TelegramBot.taken": "Esta conta do Telegram está vinculada a outra conta. Envie /unlink primeiro e depois o código de novo.",
+  "TelegramBot.taken":
+    "Esta conta do Telegram está vinculada a outra conta. Envie /unlink primeiro e depois o código de novo.",
   "TelegramBot.invalid": {
-    "one": "Esse código não funciona. Ele pode estar digitado errado, já ter sido usado ou ter mais de {count} minuto. Crie um novo no app.",
-    "many": "Esse código não funciona. Ele pode estar digitado errado, já ter sido usado ou ter mais de {count} minutos. Crie um novo no app.",
-    "other": "Esse código não funciona. Ele pode estar digitado errado, já ter sido usado ou ter mais de {count} minutos. Crie um novo no app."
+    "one":
+      "Esse código não funciona. Ele pode estar digitado errado, já ter sido usado ou ter mais de {count} minuto. Crie um novo no app.",
+    "many":
+      "Esse código não funciona. Ele pode estar digitado errado, já ter sido usado ou ter mais de {count} minutos. Crie um novo no app.",
+    "other":
+      "Esse código não funciona. Ele pode estar digitado errado, já ter sido usado ou ter mais de {count} minutos. Crie um novo no app.",
   },
   "TelegramBot.stale": {
-    "one": "Este botão não funciona mais. Ele já foi usado, um mais novo o substituiu ou ele tem mais de {count} minuto. Para vincular este chat, crie um código novo no app.",
-    "many": "Este botão não funciona mais. Ele já foi usado, um mais novo o substituiu ou ele tem mais de {count} minutos. Para vincular este chat, crie um código novo no app.",
-    "other": "Este botão não funciona mais. Ele já foi usado, um mais novo o substituiu ou ele tem mais de {count} minutos. Para vincular este chat, crie um código novo no app."
+    "one":
+      "Este botão não funciona mais. Ele já foi usado, um mais novo o substituiu ou ele tem mais de {count} minuto. Para vincular este chat, crie um código novo no app.",
+    "many":
+      "Este botão não funciona mais. Ele já foi usado, um mais novo o substituiu ou ele tem mais de {count} minutos. Para vincular este chat, crie um código novo no app.",
+    "other":
+      "Este botão não funciona mais. Ele já foi usado, um mais novo o substituiu ou ele tem mais de {count} minutos. Para vincular este chat, crie um código novo no app.",
   },
   "TelegramBot.privateOnly": "Envie isso para mim em um chat privado.",
-  "TelegramBot.codeSpent": "Esse código foi enviado onde outras pessoas podem lê-lo, então ele não funciona mais. Crie um novo no app e envie para mim em um chat privado.",
+  "TelegramBot.codeSpent":
+    "Esse código foi enviado onde outras pessoas podem lê-lo, então ele não funciona mais. Crie um novo no app e envie para mim em um chat privado.",
   "TelegramBot.unlinked": "Desvinculado. Este chat não recebe mais notificações da sua conta.",
   "TelegramBot.notLinked": "Esta conta do Telegram não está vinculada a nenhuma conta.",
-  "TelegramBot.howToLink": "Para vincular sua conta, abra {url}, escolha “{action}” e me envie o código que aparecer.",
+  "TelegramBot.howToLink":
+    "Para vincular sua conta, abra {url}, escolha “{action}” e me envie o código que aparecer.",
   "TelegramBot.hello": "Oi! Sua conta está vinculada. Envie /help para ver o que eu posso fazer.",
-  "TelegramBot.helloName": "Oi, {name}! Sua conta está vinculada. Envie /help para ver o que eu posso fazer.",
+  "TelegramBot.helloName":
+    "Oi, {name}! Sua conta está vinculada. Envie /help para ver o que eu posso fazer.",
   "UndoToast.title": "Nota excluída",
   "UndoToast.deleted": "“{title}” foi excluída.",
   "UndoToast.deletedUntitled": "A nota foi excluída.",
@@ -1581,7 +1830,8 @@
   "ApiTokenNewScreen.noGroup": "Você não está em nenhum grupo para o qual possa criar um token.",
   "ApiTokenNewScreen.backToProfile": "Voltar ao perfil",
   "ApiTokenNewScreen.offlineTitle": "Você está offline",
-  "ApiTokenNewScreen.offline": "Para criar um token, você precisa de conexão. Tente de novo quando estiver online.",
+  "ApiTokenNewScreen.offline":
+    "Para criar um token, você precisa de conexão. Tente de novo quando estiver online.",
   "ApiTokenNewScreen.name": "Nome",
   "ApiTokenNewScreen.nameHint": "Para diferenciar seus tokens, como “Script de backup”.",
   "ApiTokenNewScreen.nameMissing": "Digite um nome.",
@@ -1591,17 +1841,19 @@
   "ApiTokenNewScreen.days": {
     "one": "{count} dia",
     "many": "{count} dias",
-    "other": "{count} dias"
+    "other": "{count} dias",
   },
   "ApiTokenNewScreen.never": "Nunca",
   "ApiTokenNewScreen.password": "Sua senha",
-  "ApiTokenNewScreen.passwordHint": "Um token funciona sem sua senha, por isso ela é pedida ao criá-lo.",
+  "ApiTokenNewScreen.passwordHint":
+    "Um token funciona sem sua senha, por isso ela é pedida ao criá-lo.",
   "ApiTokenNewScreen.passwordMissing": "Digite sua senha para criar um token.",
   "ApiTokenNewScreen.createFailed": "Não foi possível criar o token. Tente de novo.",
   "ApiTokenNewScreen.cancel": "Cancelar",
   "ApiTokenNewScreen.creating": "Criando…",
   "ApiTokenNewScreen.create": "Criar token",
-  "ApiTokenNewScreen.copyNow": "Copie este token agora e guarde-o em um lugar seguro. Você não poderá vê-lo de novo.",
+  "ApiTokenNewScreen.copyNow":
+    "Copie este token agora e guarde-o em um lugar seguro. Você não poderá vê-lo de novo.",
   "ApiTokenNewScreen.copy": "Copiar token",
   "ApiTokenNewScreen.copied": "Token copiado",
   "ApiTokenNewScreen.sendAs": "Envie-o como <code>{header}</code>.",
@@ -1618,16 +1870,19 @@
   "ApiTokenNewView.keepEditing": "Continuar editando",
   "ApiTokens.failed": "Algo deu errado com seus tokens de API.",
   "ApiTokens.savedCopyTitle": "Cópia salva dos seus tokens de API",
-  "ApiTokens.savedCopyBody": "O servidor está fora de alcance. Esta lista foi salva neste dispositivo: {time}. Tokens criados ou revogados desde então não aparecem nela.",
+  "ApiTokens.savedCopyBody":
+    "O servidor está fora de alcance. Esta lista foi salva neste dispositivo: {time}. Tokens criados ou revogados desde então não aparecem nela.",
   "ApiTokens.new": "Novo token",
   "ApiTokens.howToUse": "Como usar um token",
   "ApiTokens.loading": "Carregando seus tokens…",
   "ApiTokens.emptyTitle": "Nenhum token de API",
-  "ApiTokens.emptyText": "Um token age em seu nome em um grupo, somente leitura ou leitura e escrita.",
+  "ApiTokens.emptyText":
+    "Um token age em seu nome em um grupo, somente leitura ou leitura e escrita.",
   "ApiTokens.revokeNamed": "Revogar <name>{name}</name>",
   "ApiTokens.passwordRevokes": "Alterar ou redefinir sua senha revoga todos os tokens.",
   "ApiTokens.revokeTitle": "Revogar “<name>{name}</name>”?",
-  "ApiTokens.revokeMessage": "Tudo o que usa este token para de funcionar na hora. Isso não pode ser desfeito.",
+  "ApiTokens.revokeMessage":
+    "Tudo o que usa este token para de funcionar na hora. Isso não pode ser desfeito.",
   "ApiTokens.revoke": "Revogar",
   "ApiTokens.cancel": "Cancelar",
   "ApiTokens.readWrite": "Leitura e escrita",
@@ -1636,47 +1891,64 @@
   "ApiTokens.neverExpires": "Nunca expira",
   "ApiTokens.lastUsed": "Último uso: <when>{when}</when>",
   "ApiTokens.neverUsed": "Nunca usado",
-  "AccountDelete.members": "Outras pessoas ainda usam o grupo. Passe-o adiante ou remova essas pessoas.",
+  "AccountDelete.members":
+    "Outras pessoas ainda usam o grupo. Passe-o adiante ou remova essas pessoas.",
   "AccountDelete.subscription": "O plano dele ainda está pago. Cancele o plano primeiro.",
-  "AccountDelete.planEnding": "O plano dele foi cancelado e vale até {day}. Espere o plano terminar.",
-  "AccountDelete.planEndingPeriod": "O plano dele foi cancelado e vale até o fim do período. Espere o plano terminar.",
+  "AccountDelete.planEnding":
+    "O plano dele foi cancelado e vale até {day}. Espere o plano terminar.",
+  "AccountDelete.planEndingPeriod":
+    "O plano dele foi cancelado e vale até o fim do período. Espere o plano terminar.",
   "AccountDelete.title": "Excluir minha conta",
   "AccountDelete.summary": {
-    "one": "Sua conta e os grupos que só você usa são apagados de vez {count} dia depois do pedido. Se você entrar antes disso, eles ficam.",
-    "many": "Sua conta e os grupos que só você usa são apagados de vez {count} dias depois do pedido. Se você entrar antes disso, eles ficam.",
-    "other": "Sua conta e os grupos que só você usa são apagados de vez {count} dias depois do pedido. Se você entrar antes disso, eles ficam."
+    "one":
+      "Sua conta e os grupos que só você usa são apagados de vez {count} dia depois do pedido. Se você entrar antes disso, eles ficam.",
+    "many":
+      "Sua conta e os grupos que só você usa são apagados de vez {count} dias depois do pedido. Se você entrar antes disso, eles ficam.",
+    "other":
+      "Sua conta e os grupos que só você usa são apagados de vez {count} dias depois do pedido. Se você entrar antes disso, eles ficam.",
   },
   "AccountDelete.copyFirst": "Quer uma cópia antes? <link>Baixe seus dados</link>.",
   "AccountDelete.deleteHidden": "Excluir<hidden> minha conta</hidden>",
   "AccountDelete.checking": "Verificando seus grupos…",
   "AccountDelete.explain": {
-    "one": "Você sai da conta em todos os dispositivos de uma vez. Sua conta e os grupos que só você usa são apagados de vez em {count} dia; entre antes disso e sua conta é restaurada. Notas que você escreveu em grupos de outras pessoas ficam lá, assinadas por “Usuário excluído”.",
-    "many": "Você sai da conta em todos os dispositivos de uma vez. Sua conta e os grupos que só você usa são apagados de vez em {count} dias; entre antes disso e sua conta é restaurada. Notas que você escreveu em grupos de outras pessoas ficam lá, assinadas por “Usuário excluído”.",
-    "other": "Você sai da conta em todos os dispositivos de uma vez. Sua conta e os grupos que só você usa são apagados de vez em {count} dias; entre antes disso e sua conta é restaurada. Notas que você escreveu em grupos de outras pessoas ficam lá, assinadas por “Usuário excluído”."
+    "one":
+      "Você sai da conta em todos os dispositivos de uma vez. Sua conta e os grupos que só você usa são apagados de vez em {count} dia; entre antes disso e sua conta é restaurada. Notas que você escreveu em grupos de outras pessoas ficam lá, assinadas por “Usuário excluído”.",
+    "many":
+      "Você sai da conta em todos os dispositivos de uma vez. Sua conta e os grupos que só você usa são apagados de vez em {count} dias; entre antes disso e sua conta é restaurada. Notas que você escreveu em grupos de outras pessoas ficam lá, assinadas por “Usuário excluído”.",
+    "other":
+      "Você sai da conta em todos os dispositivos de uma vez. Sua conta e os grupos que só você usa são apagados de vez em {count} dias; entre antes disso e sua conta é restaurada. Notas que você escreveu em grupos de outras pessoas ficam lá, assinadas por “Usuário excluído”.",
   },
   "AccountDelete.deleting": "Excluindo…",
-  "AccountDelete.blocked": "Você tem grupos que outras pessoas ainda usam ou pagam. Resolva cada um primeiro e depois volte.",
-  "AuthScreen.demoNote": "Esta é uma demonstração pública, apagada toda noite. Uma conta nova começa com dados de exemplo para você explorar.",
-  "AuthScreen.demoGuestNote": "Esta é uma demonstração pública, apagada toda noite. Toda conta nova, de convidado ou não, começa com dados de exemplo para você explorar.",
+  "AccountDelete.blocked":
+    "Você tem grupos que outras pessoas ainda usam ou pagam. Resolva cada um primeiro e depois volte.",
+  "AuthScreen.demoNote":
+    "Esta é uma demonstração pública, apagada toda noite. Uma conta nova começa com dados de exemplo para você explorar.",
+  "AuthScreen.demoGuestNote":
+    "Esta é uma demonstração pública, apagada toda noite. Toda conta nova, de convidado ou não, começa com dados de exemplo para você explorar.",
   "AuthScreen.tryFirst": "Experimente o app primeiro ou cadastre-se com um e-mail.",
   "AuthScreen.invitedTitle": "Você foi convidado para um grupo",
   "AuthScreen.invitedSignIn": "Entre para ver o convite e participar.",
-  "AuthScreen.invitedSignUp": "Crie uma conta para ver o convite e participar, ou entre se já tiver uma.",
+  "AuthScreen.invitedSignUp":
+    "Crie uma conta para ver o convite e participar, ou entre se já tiver uma.",
   "AuthScreen.loginOrUsername": "E-mail ou nome de usuário",
   "AuthScreen.email": "E-mail",
   "AuthScreen.signInTitle": "Que bom ver você de novo",
   "AuthScreen.signInDescription": "Entre com seu e-mail ou nome de usuário.",
   "AuthScreen.signInFailed": "Não foi possível entrar",
   "AuthScreen.signUpTitle": "Crie sua conta",
-  "AuthScreen.signUpDescription": "Um e-mail e uma senha. Enviamos um código para confirmar o endereço.",
+  "AuthScreen.signUpDescription":
+    "Um e-mail e uma senha. Enviamos um código para confirmar o endereço.",
   "AuthScreen.signUpFailed": "Não foi possível criar a conta",
   "AuthScreen.codeTitle": "Digite seu código",
-  "AuthScreen.codeDescription": "Abra seu app autenticador e digite os seis dígitos que ele mostra.",
+  "AuthScreen.codeDescription":
+    "Abra seu app autenticador e digite os seis dígitos que ele mostra.",
   "AuthScreen.codeFailed": "Código inválido",
   "AuthScreen.forgotten": "Esquecido. Este navegador não lembra mais como você entrou.",
   "AuthScreen.lastPassword": "Da última vez você entrou com sua senha<email> ({email})</email>.",
-  "AuthScreen.lastPasskey": "Da última vez você entrou com uma chave de acesso<email> ({email})</email>.",
-  "AuthScreen.lastLink": "Da última vez você entrou com um link por e-mail<email> ({email})</email>.",
+  "AuthScreen.lastPasskey":
+    "Da última vez você entrou com uma chave de acesso<email> ({email})</email>.",
+  "AuthScreen.lastLink":
+    "Da última vez você entrou com um link por e-mail<email> ({email})</email>.",
   "AuthScreen.lastProvider": "Da última vez você entrou com {provider}<email> ({email})</email>.",
   "AuthScreen.forget": "Não é você? Esquecer",
   "AuthScreen.openProfile": "Abrir seu perfil",
@@ -1702,12 +1974,15 @@
   "ConfirmSignUpScreen.failed": "Não foi possível criar sua conta",
   "ConfirmSignUpScreen.title": "Criar uma conta nova?",
   "ConfirmSignUpScreen.goneTitle": "Nada para confirmar",
-  "ConfirmSignUpScreen.gone": "Passaram mais de dez minutos ou isso já foi respondido. Nada foi criado.",
+  "ConfirmSignUpScreen.gone":
+    "Passaram mais de dez minutos ou isso já foi respondido. Nada foi criado.",
   "ConfirmSignUpScreen.backToSignIn": "Voltar para entrar",
   "ConfirmSignUpScreen.unknown": "Nenhuma conta daqui entra com esta conta do {provider}.",
   "ConfirmSignUpScreen.unknownColon": "Nenhuma conta daqui entra com esta conta do {provider}:",
-  "ConfirmSignUpScreen.goBack": "Se você já tem uma conta, volte e entre do jeito que entrou antes. Depois você pode vincular o {provider} no seu perfil. Nada foi criado ainda.",
-  "ConfirmSignUpScreen.unconfirmed": "<strong>Uma conta daqui já usa este endereço, mas nunca o confirmou.</strong> Criar uma conta nova bloqueia aquela: a senha dela para de funcionar e os dispositivos dela são desconectados. Para mantê-la, volte, entre com a senha dela e confirme o endereço com o código que enviamos por e-mail.",
+  "ConfirmSignUpScreen.goBack":
+    "Se você já tem uma conta, volte e entre do jeito que entrou antes. Depois você pode vincular o {provider} no seu perfil. Nada foi criado ainda.",
+  "ConfirmSignUpScreen.unconfirmed":
+    "<strong>Uma conta daqui já usa este endereço, mas nunca o confirmou.</strong> Criar uma conta nova bloqueia aquela: a senha dela para de funcionar e os dispositivos dela são desconectados. Para mantê-la, volte, entre com a senha dela e confirme o endereço com o código que enviamos por e-mail.",
   "ConfirmSignUpScreen.back": "Já tenho uma conta: voltar para entrar",
   "ConfirmSignUpScreen.creating": "Criando sua conta…",
   "ConfirmSignUpScreen.create": "Criar uma conta nova",
@@ -1723,24 +1998,33 @@
   "EmailScreen.close": "Fechar",
   "EmailScreen.cancel": "Cancelar",
   "EmailScreen.codeSent": {
-    "one": "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minuto.",
-    "many": "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minutos.",
-    "other": "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minutos."
+    "one":
+      "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minuto.",
+    "many":
+      "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minutos.",
+    "other":
+      "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minutos.",
   },
   "EmailScreen.codeResent": "Um novo código está a caminho de <email>{email}</email>.",
   "EmailScreen.codeSentKeep": {
-    "one": "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minuto. Até digitá-lo, você continua entrando com <current>{current}</current>.",
-    "many": "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minutos. Até digitá-lo, você continua entrando com <current>{current}</current>.",
-    "other": "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minutos. Até digitá-lo, você continua entrando com <current>{current}</current>."
+    "one":
+      "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minuto. Até digitá-lo, você continua entrando com <current>{current}</current>.",
+    "many":
+      "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minutos. Até digitá-lo, você continua entrando com <current>{current}</current>.",
+    "other":
+      "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minutos. Até digitá-lo, você continua entrando com <current>{current}</current>.",
   },
   "EmailScreen.confirm": "Confirmar endereço",
   "EmailScreen.noMail": "Não chegou nada? <button>Enviar um novo código</button>",
-  "EmailScreen.changeProvider": "Enviamos um código para o novo endereço. Seu endereço muda assim que você digitá-lo. Você continua entrando com {providers}.",
-  "EmailScreen.changeKeep": "Enviamos um código para o novo endereço. Até digitá-lo, você continua entrando com <current>{current}</current>.",
-  "EmailScreen.changeNew": "Enviamos um código para o novo endereço. Depois de digitá-lo, você entra com esse endereço.",
+  "EmailScreen.changeProvider":
+    "Enviamos um código para o novo endereço. Seu endereço muda assim que você digitá-lo. Você continua entrando com {providers}.",
+  "EmailScreen.changeKeep":
+    "Enviamos um código para o novo endereço. Até digitá-lo, você continua entrando com <current>{current}</current>.",
+  "EmailScreen.changeNew":
+    "Enviamos um código para o novo endereço. Depois de digitá-lo, você entra com esse endereço.",
   "EmailScreen.newAddress": "Novo e-mail",
   "EmailScreen.currentPassword": "Senha atual",
   "EmailScreen.sendCode": "Enviar código",
   "EmailScreen.verified": "Confirmado",
-  "EmailScreen.notVerified": "Não confirmado"
-}
+  "EmailScreen.notVerified": "Não confirmado",
+} satisfies Catalog

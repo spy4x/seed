@@ -10,7 +10,7 @@
 
 import { createTranslator, type Translator } from "@spy4x/platform/universal/i18n"
 import { ENGLISH, useT } from "@spy4x/preact-ui/i18n"
-import site from "@i18n/site/en.json" with { type: "json" }
+import site from "@i18n/site/en.ts"
 
 let siteEnglish: Translator<string> | undefined
 

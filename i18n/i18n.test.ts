@@ -8,7 +8,7 @@ import { expect } from "@std/expect"
 import { walk } from "@std/fs/walk"
 import { checkCatalogs, findUnusedKeys } from "@spy4x/platform/universal/i18n"
 import { LANGUAGES } from "@domain/identity"
-import { NAMESPACES, parseCatalog, readCatalogs } from "./stamp.ts"
+import { importCatalog, NAMESPACES, readCatalogs } from "./stamp.ts"
 
 const root = new URL(`../`, import.meta.url)
 
@@ -59,10 +59,20 @@ Deno.test(`i18n: every English key is named somewhere in the code`, async () => 
   expect(unused).toEqual([])
 })
 
-Deno.test(`i18n: a catalog that is not JSON is named, with the fix`, () => {
-  expect(parseCatalog(`{ "Frame.notes": "Notizen" }`, `i18n/app/de.json`))
-    .toEqual({ "Frame.notes": `Notizen` })
-  expect(() => parseCatalog(`{ "Frame.notes": "Notizen", }`, `i18n/app/de.json`)).toThrow(
-    /^i18n\/app\/de\.json is not valid JSON \(.+\)\. Fix the file.+`deno task test` again\.$/,
+Deno.test(`i18n: a catalog that does not load, or exports no catalog, is named, with the fix`, async () => {
+  const module = (code: string) => `data:application/typescript,${encodeURIComponent(code)}`
+  expect(
+    await importCatalog(module(`export default { "Frame.notes": "Notizen" }`), `i18n/app/de.ts`),
   )
+    .toEqual({ "Frame.notes": `Notizen` })
+  await expect(
+    importCatalog(module(`export default { "Frame.notes": "Notizen" "x": "y" }`), `i18n/app/de.ts`),
+  )
+    .rejects.toThrow(
+      /^i18n\/app\/de\.ts does not load \(.+\)\. Fix the file.+`deno task test` again\.$/s,
+    )
+  await expect(importCatalog(module(`export const notes = "Notizen"`), `i18n/app/de.ts`))
+    .rejects.toThrow(
+      /^i18n\/app\/de\.ts exports no catalog\. Start it with `export default \{`.+`deno task test` again\.$/,
+    )
 })

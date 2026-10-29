@@ -50,7 +50,7 @@ import {
 } from "./group-transfer.tsx"
 import { GroupsScreen, type GroupsScreenProps, NEW_GROUP_PATH } from "./groups-screen.tsx"
 import { InvitationNewScreen } from "./invitation-new-screen.tsx"
-import appEn from "@i18n/app/en.json" with { type: "json" }
+import appEn from "@i18n/app/en.ts"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { GROUP_PATHS, SCREEN_PATHS } from "./progressive.tsx"
 import type { MessageValues } from "@spy4x/platform/universal/i18n"

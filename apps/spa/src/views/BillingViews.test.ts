@@ -3,7 +3,7 @@ import { describe, it } from "@std/testing/bdd"
 import { BillingStatus, type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import { createFormatters } from "@spy4x/time/format"
-import app from "@i18n/app/en.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
 import { checkoutDoneToast } from "./BillingViews.tsx"
 
 const t = createTranslator({ language: "en", catalogs: [{ source: app }] })

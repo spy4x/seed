@@ -1,5 +1,5 @@
 import { createTranslator } from "@spy4x/platform/universal/i18n"
-import appEn from "@i18n/app/en.json" with { type: "json" }
+import appEn from "@i18n/app/en.ts"
 import { type Message, say } from "@ui/message.ts"
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"

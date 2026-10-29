@@ -9,7 +9,7 @@ import { gotoApp } from "./app.ts"
 
 /**
  * The subject of the mail that carries a code to prove an address, in each language the page can
- * ask for it in (#277): `EmailCodeMail.subject` of `i18n/mail/<language>.json`.
+ * ask for it in (#277): `EmailCodeMail.subject` of `i18n/mail/<language>.ts`.
  */
 export const CODE_SUBJECTS: Record<string, string> = {
   en: `Your code to confirm your e-mail address`,

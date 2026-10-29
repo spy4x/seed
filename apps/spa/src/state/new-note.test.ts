@@ -2,7 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { NewNoteErrors } from "@ui/new-note-dialog.tsx"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
-import app from "@i18n/app/en.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
 import { messageText } from "@ui/message.ts"
 import { createNewNoteStore } from "./new-note.ts"
 

@@ -3,8 +3,8 @@ import { describe, it } from "@std/testing/bdd"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import type { ErrorReason } from "@domain/errors"
 import { REALTIME_ERROR_CODES } from "@spy4x/realtime"
-import errors from "@i18n/errors/en.json" with { type: "json" }
-import errorsRu from "@i18n/errors/ru.json" with { type: "json" }
+import errors from "@i18n/errors/en.ts"
+import errorsRu from "@i18n/errors/ru.ts"
 import { errorText, fieldText, fieldTexts, known } from "./message.ts"
 
 const ENGLISH = createTranslator({ language: `en`, catalogs: [{ source: errors }] })

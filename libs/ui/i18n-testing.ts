@@ -16,9 +16,9 @@ import {
 import ui from "@spy4x/preact-ui/i18n/en"
 import system from "@spy4x/preact-system/i18n/en"
 import charts from "@spy4x/preact-charts/i18n/en"
-import app from "@i18n/app/en.json" with { type: "json" }
-import admin from "@i18n/admin/en.json" with { type: "json" }
-import errors from "@i18n/errors/en.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
+import admin from "@i18n/admin/en.ts"
+import errors from "@i18n/errors/en.ts"
 
 /**
  * The catalogs each app loads, in the order it lists them (`apps/spa/src/i18n.ts`,

@@ -1,4 +1,6 @@
-{
+import type { Catalog } from "@spy4x/platform/universal/i18n"
+
+export default {
   "AdminApiTokens.tokenRevoked": "„{token}“ ist widerrufen.",
   "AdminApiTokens.deviceRemoved": "Gerät „{device}“ ist entfernt.",
   "AdminApiTokens.title": "API-Tokens",
@@ -10,7 +12,7 @@
   "AdminApiTokens.stateCount": "{state} ({count})",
   "AdminApiTokens.count": {
     "one": "{count} Token",
-    "other": "{count} Tokens"
+    "other": "{count} Tokens",
   },
   "AdminApiTokens.loading": "Tokens werden geladen",
   "AdminApiTokens.noneLive": "Keine aktiven Tokens",
@@ -18,7 +20,8 @@
   "AdminApiTokens.noneRevoked": "Keine widerrufenen Tokens",
   "AdminApiTokens.noneYet": "Noch keine API-Tokens",
   "AdminApiTokens.otherState": "Wähle einen anderen Status, um den Rest zu sehen.",
-  "AdminApiTokens.noneHint": "Eine Person erstellt eines in ihrem Profil, für ein Skript oder eine Integration.",
+  "AdminApiTokens.noneHint":
+    "Eine Person erstellt eines in ihrem Profil, für ein Skript oder eine Integration.",
   "AdminApiTokens.pages": "Seiten der Tokens",
   "AdminApiTokens.token": "Token",
   "AdminApiTokens.deletedGroup": "Gelöschte Gruppe",
@@ -33,10 +36,12 @@
   "AdminApiTokens.owner": "Eigentümer",
   "AdminApiTokens.ownerLine": "Eigentümer: <name>{name}</name>",
   "AdminApiTokens.revokeTitle": "Dieses API-Token widerrufen",
-  "AdminApiTokens.revokeText": "<token>{token}</token> von <owner>{owner}</owner> funktioniert sofort nicht mehr: Jedes Skript, das es nutzt, wird abgewiesen. Es lässt sich nicht wieder einschalten; der Eigentümer kann ein neues erstellen.",
+  "AdminApiTokens.revokeText":
+    "<token>{token}</token> von <owner>{owner}</owner> funktioniert sofort nicht mehr: Jedes Skript, das es nutzt, wird abgewiesen. Es lässt sich nicht wieder einschalten; der Eigentümer kann ein neues erstellen.",
   "AdminApiTokens.revoking": "Wird widerrufen…",
   "AdminApiTokens.removeDeviceTitle": "Dieses Gerät entfernen",
-  "AdminApiTokens.removeDeviceText": "Gerät <device>{device}</device> bekommt keine Push-Benachrichtigungen mehr. Die Person kann sie auf diesem Gerät wieder einschalten.",
+  "AdminApiTokens.removeDeviceText":
+    "Gerät <device>{device}</device> bekommt keine Push-Benachrichtigungen mehr. Die Person kann sie auf diesem Gerät wieder einschalten.",
   "AdminApiTokens.remove": "Entfernen",
   "AdminApiTokens.removing": "Wird entfernt…",
   "AdminApiTokens.readWrite": "Lesen und schreiben",
@@ -57,30 +62,33 @@
   "AdminAudit.optionGroup": "Gruppe: {event}",
   "AdminAudit.optionOperator": "Operator: {event}",
   "AdminAudit.title": "Audit-Log",
-  "AdminAudit.subtitle": "Jede Anmeldung, Konto- und Gruppenänderung und jede Operator-Aktion, die neuesten zuerst.",
+  "AdminAudit.subtitle":
+    "Jede Anmeldung, Konto- und Gruppenänderung und jede Operator-Aktion, die neuesten zuerst.",
   "AdminAudit.export": "CSV exportieren",
   "AdminAudit.loading": "Log wird geladen",
   "AdminAudit.count": {
     "one": "{count} Eintrag",
-    "other": "{count} Einträge"
+    "other": "{count} Einträge",
   },
   "AdminAudit.countMore": {
     "one": "{count}+ Eintrag",
-    "other": "{count}+ Einträge"
+    "other": "{count}+ Einträge",
   },
   "AdminAudit.countMatch": {
     "one": "{count} Eintrag passt",
-    "other": "{count} Einträge passen"
+    "other": "{count} Einträge passen",
   },
   "AdminAudit.countMoreMatch": {
     "one": "{count}+ Eintrag passt",
-    "other": "{count}+ Einträge passen"
+    "other": "{count}+ Einträge passen",
   },
   "AdminAudit.view": "Ansicht",
   "AdminAudit.nothingMatches": "Nichts passt",
-  "AdminAudit.nothingMatchesHint": "Versuche einen größeren Zeitraum oder eine andere Person, oder setze die Filter zurück.",
+  "AdminAudit.nothingMatchesHint":
+    "Versuche einen größeren Zeitraum oder eine andere Person, oder setze die Filter zurück.",
   "AdminAudit.nothingYet": "Noch nichts aufgezeichnet",
-  "AdminAudit.nothingYetHint": "Anmeldungen, Konto- und Gruppenänderungen erscheinen hier, sobald sie passieren.",
+  "AdminAudit.nothingYetHint":
+    "Anmeldungen, Konto- und Gruppenänderungen erscheinen hier, sobald sie passieren.",
   "AdminAudit.loadingMore": "Wird geladen…",
   "AdminAudit.more": "Ältere Einträge zeigen",
   "AdminAudit.filter": "Audit-Log filtern",
@@ -214,8 +222,10 @@
   "AdminAuditEvent.catalogSourceDeleted": "Linkquelle gelöscht",
   "AdminAuditEvent.catalogSourcesReordered": "Quellen neu sortiert",
   "AdminAuditEvent.catalogLinkCreated": "Tracking-Link erstellt",
-  "AdminBilling.listError": "Kunden konnten nicht geladen werden. Prüfe deine Verbindung und versuche es noch einmal.",
-  "AdminBilling.offText": "Alle Gruppen sind im kostenlosen Tarif. Um die Abrechnung einzuschalten, füge die Stripe-Einstellungen hinzu.",
+  "AdminBilling.listError":
+    "Kunden konnten nicht geladen werden. Prüfe deine Verbindung und versuche es noch einmal.",
+  "AdminBilling.offText":
+    "Alle Gruppen sind im kostenlosen Tarif. Um die Abrechnung einzuschalten, füge die Stripe-Einstellungen hinzu.",
   "AdminBilling.paying": "Zahlend",
   "AdminBilling.trial": "Test",
   "AdminBilling.pastDue": "Überfällig",
@@ -237,7 +247,8 @@
   "AdminBilling.off": "Abrechnung ist aus",
   "AdminBilling.readSetup": "Einrichtung der Abrechnung lesen",
   "AdminBilling.noneYet": "Noch keine zahlenden Gruppen",
-  "AdminBilling.noneHint": "Eine Gruppe erscheint hier, sobald ihr Eigentümer einen bezahlten Tarif abschließt, Testphase eingeschlossen.",
+  "AdminBilling.noneHint":
+    "Eine Gruppe erscheint hier, sobald ihr Eigentümer einen bezahlten Tarif abschließt, Testphase eingeschlossen.",
   "AdminBilling.openPricing": "Preisseite öffnen",
   "AdminBilling.search": "Gruppenname, Eigentümer oder Gruppen-ID",
   "AdminBilling.searching": "Wird gesucht…",
@@ -248,12 +259,13 @@
   "AdminBilling.retry": "Erneut versuchen",
   "AdminBilling.count": {
     "one": "{count} Gruppe",
-    "other": "{count} Gruppen"
+    "other": "{count} Gruppen",
   },
   "AdminBilling.loading": "Kunden werden geladen",
   "AdminBilling.customers": "Kunden",
   "AdminBilling.noMatch": "Keine Gruppe passt",
-  "AdminBilling.noMatchHint": "Versuche einen anderen Namen oder eine andere Adresse, oder setze die Filter zurück.",
+  "AdminBilling.noMatchHint":
+    "Versuche einen anderen Namen oder eine andere Adresse, oder setze die Filter zurück.",
   "AdminBilling.pages": "Seiten der Kunden",
   "AdminBilling.figuresError": "Umsatz konnte nicht berechnet werden.",
   "AdminBilling.loadingFigures": "Kennzahlen werden geladen",
@@ -265,7 +277,8 @@
   "AdminBilling.inTrial": "In der Testphase",
   "AdminBilling.trialsEnding": "{count} enden in den nächsten 7 Tagen",
   "AdminBilling.endingHint": "Gekündigt, bezahlt bis zum Ende des Zeitraums",
-  "AdminBilling.source": "Gezählt aus den Abos, die diese App speichert. Eine Änderung in Stripe erscheint hier, sobald ihr Webhook ankommt.",
+  "AdminBilling.source":
+    "Gezählt aus den Abos, die diese App speichert. Eine Änderung in Stripe erscheint hier, sobald ihr Webhook ankommt.",
   "AdminBilling.lastEvent": "Letztes Stripe-Ereignis <when></when>.",
   "AdminBilling.noEvent": "Noch kein Stripe-Ereignis angekommen.",
   "AdminBilling.none": "Keine",
@@ -277,12 +290,14 @@
   "AdminBilling.inTrash": "Im Papierkorb",
   "AdminBilling.newTab": "{label} (öffnet einen neuen Tab)",
   "AdminBillingCustomer.notFound": "Kein Kunde mit dieser Gruppen-ID.",
-  "AdminBillingCustomer.noAnswer": "Der Server war nicht erreichbar, daher wissen wir nicht, ob es geklappt hat. Prüf den Kunden in Stripe oder versuch es erneut: Ein neuer Versuch aus diesem Dialog wirkt nur einmal.",
+  "AdminBillingCustomer.noAnswer":
+    "Der Server war nicht erreichbar, daher wissen wir nicht, ob es geklappt hat. Prüf den Kunden in Stripe oder versuch es erneut: Ein neuer Versuch aus diesem Dialog wirkt nur einmal.",
   "AdminBillingCustomer.doneRefundAmount": "{amount} an {group} erstattet.",
   "AdminBillingCustomer.doneRefund": "Die letzte Zahlung von {group} ist erstattet.",
   "AdminBillingCustomer.doneTimeUntil": "{group} zahlt bis {date} nichts.",
   "AdminBillingCustomer.doneTime": "{group} hat kostenlose Zeit erhalten.",
-  "AdminBillingCustomer.doneCancelNow": "Das Abo von {group} ist gekündigt. Die Gruppe ist auf Free.",
+  "AdminBillingCustomer.doneCancelNow":
+    "Das Abo von {group} ist gekündigt. Die Gruppe ist auf Free.",
   "AdminBillingCustomer.doneCancelOn": "Das Abo von {group} endet am {date}.",
   "AdminBillingCustomer.doneCancelEnd": "Das Abo von {group} endet zum Ende des Zeitraums.",
   "AdminBillingCustomer.doneUndoOn": "Das Abo von {group} verlängert sich am {date}.",
@@ -303,8 +318,10 @@
   "AdminBillingCustomer.openStripeLabel": "In Stripe öffnen (öffnet einen neuen Tab)",
   "AdminBillingCustomer.openStripe": "In Stripe öffnen",
   "AdminBillingCustomer.ownedBy": "Gehört {owner}",
-  "AdminBillingCustomer.member": "Dir gehört diese Gruppe oder du bist Mitglied, daher kümmert sich ein anderer Operator um ihre Abrechnung.",
-  "AdminBillingCustomer.deleted": "Diese Gruppe ist im Papierkorb, aber ihr Abo rechnet weiter ab. Kündige es.",
+  "AdminBillingCustomer.member":
+    "Dir gehört diese Gruppe oder du bist Mitglied, daher kümmert sich ein anderer Operator um ihre Abrechnung.",
+  "AdminBillingCustomer.deleted":
+    "Diese Gruppe ist im Papierkorb, aber ihr Abo rechnet weiter ab. Kündige es.",
   "AdminBillingCustomer.status": "Status",
   "AdminBillingCustomer.plan": "Tarif",
   "AdminBillingCustomer.perMonth": "Pro Monat",
@@ -315,12 +332,14 @@
   "AdminBillingCustomer.group": "Gruppe",
   "AdminBillingCustomer.history": "Abrechnungsverlauf",
   "AdminBillingCustomer.nothingRecorded": "Nichts erfasst.",
-  "AdminBillingCustomer.historyNote": "Nur Aktionen von Operatoren. Rechnungen, Zahlungen und Tarifwechsel stehen in Stripe.",
+  "AdminBillingCustomer.historyNote":
+    "Nur Aktionen von Operatoren. Rechnungen, Zahlungen und Tarifwechsel stehen in Stripe.",
   "AdminBillingCustomer.planLine": {
     "one": "{plan}, {count} Mitglied",
-    "other": "{plan}, {count} Mitglieder"
+    "other": "{plan}, {count} Mitglieder",
   },
-  "AdminBillingCustomer.unknownPrice": "Unbekannter Preis: Stripe berechnet einen Preis, zu dem hier kein Tarif passt",
+  "AdminBillingCustomer.unknownPrice":
+    "Unbekannter Preis: Stripe berechnet einen Preis, zu dem hier kein Tarif passt",
   "AdminBillingCustomer.duringTrial": "{amount} während der Testphase, {detail}",
   "AdminBillingCustomer.seatsTotal": "{detail} = {amount}",
   "AdminBillingCustomer.loadingLastPayment": "Letzte Zahlung wird geladen",
@@ -338,22 +357,29 @@
   "AdminBillingCustomer.by": "Von {operator}.",
   "AdminBillingCustomer.byRemoved": "Von einem entfernten Operator.",
   "AdminBillingCustomer.note": "Notiz: {note}",
-  "AdminBillingCustomer.waiting": "An Stripe gesendet, warte auf Bestätigung. Die Seite aktualisiert sich, sobald Stripe bestätigt, meist innerhalb einer Minute.",
+  "AdminBillingCustomer.waiting":
+    "An Stripe gesendet, warte auf Bestätigung. Die Seite aktualisiert sich, sobald Stripe bestätigt, meist innerhalb einer Minute.",
   "AdminBillingCustomer.timedOut": "Stripe hat noch nicht bestätigt. Prüfe den Kunden in Stripe.",
-  "AdminBillingCustomer.renewHint": "Der Eigentümer kann es vor Ende des Zeitraums unter „Abrechnung verwalten“ verlängern.",
-  "AdminBillingCustomer.alreadyFree": "<group>{group}</group> ist schon im kostenlosen Tarif und wird nicht mehr belastet.",
-  "AdminBillingCustomer.keepsUntilThen": "<group>{group}</group> behält {plan} bis dahin und wird nicht mehr belastet.",
-  "AdminBillingCustomer.keepsUntil": "<group>{group}</group> behält {plan} bis {date} und wird nicht mehr belastet.",
+  "AdminBillingCustomer.renewHint":
+    "Der Eigentümer kann es vor Ende des Zeitraums unter „Abrechnung verwalten“ verlängern.",
+  "AdminBillingCustomer.alreadyFree":
+    "<group>{group}</group> ist schon im kostenlosen Tarif und wird nicht mehr belastet.",
+  "AdminBillingCustomer.keepsUntilThen":
+    "<group>{group}</group> behält {plan} bis dahin und wird nicht mehr belastet.",
+  "AdminBillingCustomer.keepsUntil":
+    "<group>{group}</group> behält {plan} bis {date} und wird nicht mehr belastet.",
   "AdminBillingCustomer.itsPlanPrice": "der Preis ihres Tarifs",
   "AdminBillingCustomer.refundTitle": "{amount} an {group} erstatten?",
   "AdminBillingCustomer.refundSubmit": "{amount} erstatten",
   "AdminBillingCustomer.refunding": "Wird erstattet…",
-  "AdminBillingCustomer.refundText": "Stripe erstattet die am {date} gezahlten {amount} auf die Karte, von der sie kamen. Das Abo läuft weiter; um es zu beenden, kündige es auch.",
+  "AdminBillingCustomer.refundText":
+    "Stripe erstattet die am {date} gezahlten {amount} auf die Karte, von der sie kamen. Das Abo läuft weiter; um es zu beenden, kündige es auch.",
   "AdminBillingCustomer.timeTitle": "{group} kostenlos Zeit gewähren",
   "AdminBillingCustomer.timeSubmit": "{length} kostenlos gewähren",
   "AdminBillingCustomer.saving": "Wird gespeichert…",
   "AdminBillingCustomer.howLong": "Für wie lange",
-  "AdminBillingCustomer.timeText": "<group>{group}</group> behält {plan}, und bis {date} wird nichts abgebucht. Danach startet wieder die normale Abbuchung von {charge} pro Monat.",
+  "AdminBillingCustomer.timeText":
+    "<group>{group}</group> behält {plan}, und bis {date} wird nichts abgebucht. Danach startet wieder die normale Abbuchung von {charge} pro Monat.",
   "AdminBillingCustomer.length7d": "7 Tage",
   "AdminBillingCustomer.length14d": "14 Tage",
   "AdminBillingCustomer.length30d": "30 Tage",
@@ -368,17 +394,22 @@
   "AdminBillingCustomer.atPeriodEnd": "Zum Ende des Zeitraums",
   "AdminBillingCustomer.alreadySet": "Ist bereits so eingestellt.",
   "AdminBillingCustomer.now": "Jetzt",
-  "AdminBillingCustomer.nowHelp": "{group} wechselt sofort in den kostenlosen Tarif. Der laufende Zeitraum wird nicht erstattet; erstatte ihn bei Bedarf separat. Der Eigentümer wird nicht benachrichtigt.",
+  "AdminBillingCustomer.nowHelp":
+    "{group} wechselt sofort in den kostenlosen Tarif. Der laufende Zeitraum wird nicht erstattet; erstatte ihn bei Bedarf separat. Der Eigentümer wird nicht benachrichtigt.",
   "AdminBillingCustomer.undoTitle": "Abo von {group} behalten?",
   "AdminBillingCustomer.undoSubmit": "Abo behalten",
-  "AdminBillingCustomer.renewsOn": "{plan} verlängert sich am {date} und kostet wie üblich {charge}.",
+  "AdminBillingCustomer.renewsOn":
+    "{plan} verlängert sich am {date} und kostet wie üblich {charge}.",
   "AdminBillingCustomer.renews": "{plan} verlängert sich und kostet wie üblich {charge}.",
   "AdminBillingCustomer.close": "Schließen",
   "AdminBillingCustomer.noteLabel": "Notiz für das Audit-Log (optional)",
-  "AdminBillingCustomer.noteHint": "Warum du das getan hast. Andere Operatoren sehen es im Audit-Log.",
+  "AdminBillingCustomer.noteHint":
+    "Warum du das getan hast. Andere Operatoren sehen es im Audit-Log.",
   "AdminBillingCustomer.resultUnknown": "Ergebnis unbekannt",
-  "AdminBlog.listError": "Die Beiträge konnten nicht geladen werden. Versuche es gleich noch einmal.",
-  "AdminBlog.subtitle": "Beiträge auf der öffentlichen Website, vom Entwurf bis zur Veröffentlichung.",
+  "AdminBlog.listError":
+    "Die Beiträge konnten nicht geladen werden. Versuche es gleich noch einmal.",
+  "AdminBlog.subtitle":
+    "Beiträge auf der öffentlichen Website, vom Entwurf bis zur Veröffentlichung.",
   "AdminBlog.draft": "Entwurf",
   "AdminBlog.scheduled": "Geplant",
   "AdminBlog.published": "Veröffentlicht",
@@ -393,7 +424,8 @@
   "AdminBlog.newPost": "Neuer Beitrag",
   "AdminBlog.title": "Blog",
   "AdminBlog.noPosts": "Noch keine Beiträge",
-  "AdminBlog.noPostsHint": "Schreib deinen ersten Beitrag. Er bleibt ein Entwurf, bis du ihn veröffentlichst.",
+  "AdminBlog.noPostsHint":
+    "Schreib deinen ersten Beitrag. Er bleibt ein Entwurf, bis du ihn veröffentlichst.",
   "AdminBlog.search": "Titel oder Slug",
   "AdminBlog.searching": "Wird gesucht…",
   "AdminBlog.submit": "Suchen",
@@ -401,7 +433,7 @@
   "AdminBlog.retry": "Erneut versuchen",
   "AdminBlog.count": {
     "one": "{count} Beitrag",
-    "other": "{count} Beiträge"
+    "other": "{count} Beiträge",
   },
   "AdminBlog.loading": "Beiträge werden geladen",
   "AdminBlog.posts": "Beiträge",
@@ -419,13 +451,16 @@
   "AdminBlogDialogs.cancel": "Abbrechen",
   "AdminBlogDialogs.unscheduleTitle": "Planung von „{title}“ aufheben?",
   "AdminBlogDialogs.unschedule": "Planung aufheben",
-  "AdminBlogDialogs.unscheduleText": "Er geht zurück zu den Entwürfen. Ein gewählter Newsletter-Versand wird ebenfalls abgebrochen.",
+  "AdminBlogDialogs.unscheduleText":
+    "Er geht zurück zu den Entwürfen. Ein gewählter Newsletter-Versand wird ebenfalls abgebrochen.",
   "AdminBlogDialogs.unpublishTitle": "„{title}“ zurückziehen?",
   "AdminBlogDialogs.unpublish": "Zurückziehen",
-  "AdminBlogDialogs.unpublishText": "Er verschwindet von der Website und aus dem RSS-Feed, und seine Adresse funktioniert nicht mehr. Eine bereits gesendete Mail bleibt gesendet.",
+  "AdminBlogDialogs.unpublishText":
+    "Er verschwindet von der Website und aus dem RSS-Feed, und seine Adresse funktioniert nicht mehr. Eine bereits gesendete Mail bleibt gesendet.",
   "AdminBlogDialogs.deleteTitle": "„{title}“ löschen?",
   "AdminBlogDialogs.deletePost": "Beitrag löschen",
-  "AdminBlogDialogs.deleteText": "Der Beitrag und sein Text werden endgültig gelöscht. Das lässt sich nicht rückgängig machen.",
+  "AdminBlogDialogs.deleteText":
+    "Der Beitrag und sein Text werden endgültig gelöscht. Das lässt sich nicht rückgängig machen.",
   "AdminBlogDialogs.addSlug": "Gib einen Slug ein.",
   "AdminBlogDialogs.slugRule": "Nutze nur Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogDialogs.changeUrlTitle": "URL dieses Beitrags ändern?",
@@ -437,7 +472,7 @@
   "AdminBlogDialogs.schedule": "Planen",
   "AdminBlogDialogs.publishAndEmail": {
     "one": "Veröffentlichen und an {count} senden",
-    "other": "Veröffentlichen und an {count} senden"
+    "other": "Veröffentlichen und an {count} senden",
   },
   "AdminBlogDialogs.publish": "Veröffentlichen",
   "AdminBlogDialogs.scheduleTitle": "„{title}“ planen",
@@ -447,18 +482,21 @@
   "AdminBlogDialogs.atATime": "Zu einem Zeitpunkt",
   "AdminBlogDialogs.dateTime": "Datum und Uhrzeit",
   "AdminBlogDialogs.liveOnItsOwn": "Er geht zu diesem Zeitpunkt von selbst live.",
-  "AdminBlogDialogs.goesLiveAt": "Er geht unter <path>{path}</path> live und kommt in den RSS-Feed und die Sitemap.",
+  "AdminBlogDialogs.goesLiveAt":
+    "Er geht unter <path>{path}</path> live und kommt in den RSS-Feed und die Sitemap.",
   "AdminBlogDialogs.mailingList": "Verteilerliste",
   "AdminBlogDialogs.alsoEmail": {
     "one": "Diesen Beitrag auch an {count} bestätigten Abonnenten senden",
-    "other": "Diesen Beitrag auch an {count} bestätigte Abonnenten senden"
+    "other": "Diesen Beitrag auch an {count} bestätigte Abonnenten senden",
   },
   "AdminBlogDialogs.alsoEmailList": {
     "one": "Diesen Beitrag auch an {count} bestätigten Abonnenten von <list>{list}</list> senden",
-    "other": "Diesen Beitrag auch an {count} bestätigte Abonnenten von <list>{list}</list> senden"
+    "other": "Diesen Beitrag auch an {count} bestätigte Abonnenten von <list>{list}</list> senden",
   },
-  "AdminBlogDialogs.sentOnce": "Wird einmal gesendet, wenn der Beitrag live geht. Das lässt sich nicht zurücknehmen.",
-  "AdminBlogDialogs.postLanguageOnly": "Die Mail geht nur an die Abonnenten, die sich in der Sprache des Beitrags angemeldet haben.",
+  "AdminBlogDialogs.sentOnce":
+    "Wird einmal gesendet, wenn der Beitrag live geht. Das lässt sich nicht zurücknehmen.",
+  "AdminBlogDialogs.postLanguageOnly":
+    "Die Mail geht nur an die Abonnenten, die sich in der Sprache des Beitrags angemeldet haben.",
   "AdminBlogEditor.leaveMessage": "Deine Änderungen an diesem Beitrag gehen verloren.",
   "AdminBlogEditor.doneScheduled": "Geplant für {at}.",
   "AdminBlogEditor.donePublished": "Veröffentlicht.",
@@ -474,7 +512,7 @@
   "AdminBlogEditor.addDescription": "Gib eine Beschreibung ein.",
   "AdminBlogEditor.descriptionTooLong": {
     "one": "Halte sie unter {count} Zeichen.",
-    "other": "Halte sie unter {count} Zeichen."
+    "other": "Halte sie unter {count} Zeichen.",
   },
   "AdminBlogEditor.httpsCover": "Beginne den Link mit https://.",
   "AdminBlogEditor.describeCover": "Beschreibe das Titelbild.",
@@ -485,7 +523,8 @@
   "AdminBlogEditor.notFound": "Diesen Beitrag gibt es nicht",
   "AdminBlogEditor.notFoundHint": "Er wurde vielleicht gelöscht. Der Blog listet alle Beiträge.",
   "AdminBlogEditor.allPosts": "Alle Beiträge",
-  "AdminBlogEditor.loadError": "Dieser Beitrag konnte nicht geladen werden. Versuche es gleich noch einmal.",
+  "AdminBlogEditor.loadError":
+    "Dieser Beitrag konnte nicht geladen werden. Versuche es gleich noch einmal.",
   "AdminBlogEditor.retry": "Erneut versuchen",
   "AdminBlogEditor.loading": "Beitrag wird geladen",
   "AdminBlogEditor.saved": "Gespeichert",
@@ -505,7 +544,8 @@
   "AdminBlogEditor.editPost": "Beitrag bearbeiten",
   "AdminBlogEditor.newPost": "Neuer Beitrag",
   "AdminBlogEditor.conflictTitle": "Dieser Beitrag hat sich geändert",
-  "AdminBlogEditor.conflictText": "Jemand anderes hat diesen Beitrag geändert. Lade neu, um diese Version zu sehen.",
+  "AdminBlogEditor.conflictText":
+    "Jemand anderes hat diesen Beitrag geändert. Lade neu, um diese Version zu sehen.",
   "AdminBlogEditor.reload": "Neu laden",
   "AdminBlogEditor.title": "Titel",
   "AdminBlogEditor.titleHint": "Erscheint als Seitenüberschrift und in Suchergebnissen.",
@@ -515,16 +555,19 @@
   "AdminBlogEditor.preview": "Vorschau",
   "AdminBlogEditor.wordsRead": {
     "one": "{count} Wort · {minutes} Min. Lesezeit",
-    "other": "{count} Wörter · {minutes} Min. Lesezeit"
+    "other": "{count} Wörter · {minutes} Min. Lesezeit",
   },
-  "AdminBlogEditor.previewError": "Die Vorschau konnte nicht erstellt werden. Versuche es gleich noch einmal.",
+  "AdminBlogEditor.previewError":
+    "Die Vorschau konnte nicht erstellt werden. Versuche es gleich noch einmal.",
   "AdminBlogEditor.rendering": "Vorschau wird erstellt",
   "AdminBlogEditor.untitled": "Ohne Titel",
   "AdminBlogEditor.counter": "{length} von {shown}",
   "AdminBlogEditor.settings": "Beitragseinstellungen",
   "AdminBlogEditor.slug": "Slug",
-  "AdminBlogEditor.slugLocked": "Seit der Veröffentlichung gesperrt. „URL ändern…“ macht alte Links ungültig.",
-  "AdminBlogEditor.slugHint": "Die Adresse des Beitrags: <path>{path}</path>. Kleinbuchstaben, Ziffern und Bindestriche.",
+  "AdminBlogEditor.slugLocked":
+    "Seit der Veröffentlichung gesperrt. „URL ändern…“ macht alte Links ungültig.",
+  "AdminBlogEditor.slugHint":
+    "Die Adresse des Beitrags: <path>{path}</path>. Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogEditor.description": "Beschreibung",
   "AdminBlogEditor.descriptionHint": "Ein oder zwei Sätze für Suchergebnisse und Linkvorschauen.",
   "AdminBlogEditor.seoTitle": "SEO-Titel (optional)",
@@ -535,28 +578,34 @@
   "AdminBlogEditor.removeKeyPoint": "Kernpunkt {n} entfernen",
   "AdminBlogEditor.addPoint": "Punkt hinzufügen",
   "AdminBlogEditor.topic": "Thema",
-  "AdminBlogEditor.topicHint": "Gruppiert Beiträge auf der Blogseite. Wähle eins oder gib ein neues ein.",
+  "AdminBlogEditor.topicHint":
+    "Gruppiert Beiträge auf der Blogseite. Wähle eins oder gib ein neues ein.",
   "AdminBlogEditor.coverUrl": "URL des Titelbilds",
-  "AdminBlogEditor.coverUrlHint": "Ein vollständiger https://-Link zu einem breiten Bild, 1200×630. Leer lassen für kein Titelbild.",
+  "AdminBlogEditor.coverUrlHint":
+    "Ein vollständiger https://-Link zu einem breiten Bild, 1200×630. Leer lassen für kein Titelbild.",
   "AdminBlogEditor.coverAlt": "Beschreibung des Titelbilds",
   "AdminBlogEditor.coverAltHint": "Was das Bild zeigt, für Menschen, die es nicht sehen können.",
-  "AdminBlogEditor.coverPrivacy": "Ein Bild von einer anderen Website zeigt dieser Website die IP-Adressen deiner Leser.",
+  "AdminBlogEditor.coverPrivacy":
+    "Ein Bild von einer anderen Website zeigt dieser Website die IP-Adressen deiner Leser.",
   "AdminBlogEditor.publishing": "Veröffentlichung",
   "AdminBlogEditor.goesLive": "Geht live am {date}.",
   "AdminBlogEditor.publishedOn": "Veröffentlicht am {date}.",
   "AdminBlogEditor.publishedUpdated": "Veröffentlicht am {date} · Aktualisiert am {updated}.",
   "AdminBlogEditor.emailedTo": {
     "one": "Am {date} an {count} gesendet",
-    "other": "Am {date} an {count} gesendet"
+    "other": "Am {date} an {count} gesendet",
   },
-  "AdminBlogEditor.willEmail": "Wird bei Veröffentlichung an die Liste <list>{list}</list> gesendet.",
-  "AdminBlogEditor.significant": "Wichtige Aktualisierung: Beim nächsten Speichern wird heute als Aktualisierungsdatum angezeigt",
+  "AdminBlogEditor.willEmail":
+    "Wird bei Veröffentlichung an die Liste <list>{list}</list> gesendet.",
+  "AdminBlogEditor.significant":
+    "Wichtige Aktualisierung: Beim nächsten Speichern wird heute als Aktualisierungsdatum angezeigt",
   "AdminCatalog.doneItemSaved": "Artikel gespeichert.",
-  "AdminCatalog.doneDraftSaved": "Entwurf gespeichert. Füg Fotos hinzu und veröffentliche ihn dann.",
+  "AdminCatalog.doneDraftSaved":
+    "Entwurf gespeichert. Füg Fotos hinzu und veröffentliche ihn dann.",
   "AdminCatalog.doneItemDeleted": "Artikel gelöscht.",
   "AdminCatalog.donePhotosAdded": {
     "one": "Foto hinzugefügt.",
-    "other": "Fotos hinzugefügt."
+    "other": "Fotos hinzugefügt.",
   },
   "AdminCatalog.doneCover": "Titelbild geändert.",
   "AdminCatalog.donePhotoSaved": "Foto gespeichert.",
@@ -578,13 +627,15 @@
   "AdminCatalog.retry": "Erneut versuchen",
   "AdminCatalog.loading": "Katalog wird geladen",
   "AdminCatalog.startTitle": "Fang mit einer Kategorie an",
-  "AdminCatalog.startText": "Jeder Artikel auf der Website liegt in einer Kategorie, etwa „T-Shirts“ oder „Hoodies“. Leg eine an und füg dann Artikel hinzu.",
+  "AdminCatalog.startText":
+    "Jeder Artikel auf der Website liegt in einer Kategorie, etwa „T-Shirts“ oder „Hoodies“. Leg eine an und füg dann Artikel hinzu.",
   "AdminCatalog.addCategory": "Kategorie hinzufügen",
   "AdminCatalog.emptyTitle": "Noch keine Artikel",
-  "AdminCatalog.emptyText": "Füg einen Artikel mit Fotos, Farben und Größen hinzu. Er bleibt ein Entwurf, bis du ihn veröffentlichst.",
+  "AdminCatalog.emptyText":
+    "Füg einen Artikel mit Fotos, Farben und Größen hinzu. Er bleibt ein Entwurf, bis du ihn veröffentlichst.",
   "AdminCatalog.count": {
     "one": "{count} Artikel",
-    "other": "{count} Artikel"
+    "other": "{count} Artikel",
   },
   "AdminCatalog.search": "Name, Adresse oder Kategorie",
   "AdminCatalog.status": "Status",
@@ -600,10 +651,11 @@
   "AdminCatalog.noCategory": "Keine Kategorie",
   "AdminCatalog.photos": {
     "one": "{count} Foto",
-    "other": "{count} Fotos"
+    "other": "{count} Fotos",
   },
   "AdminCatalog.donePublished": "Veröffentlicht. Die Website zeigt ihn innerhalb einer Minute.",
-  "AdminCatalog.doneHidden": "Ausgeblendet. Die Website zeigt ihn innerhalb einer Minute nicht mehr.",
+  "AdminCatalog.doneHidden":
+    "Ausgeblendet. Die Website zeigt ihn innerhalb einer Minute nicht mehr.",
   "AdminCatalog.sources": "Quellen",
   "AdminCatalog.linkNotMade": "Link nicht erstellt",
   "AdminCatalog.linkCopied": "Link kopiert",
@@ -614,13 +666,15 @@
   "AdminCatalog.doneSourceDeleted": "Quelle gelöscht.",
   "AdminCatalogCategories.back": "Zurück zum Katalog",
   "AdminCatalogCategories.title": "Kategorien",
-  "AdminCatalogCategories.subtitle": "Die Website zeigt ihre Artikel in diesen Gruppen, in dieser Reihenfolge.",
+  "AdminCatalogCategories.subtitle":
+    "Die Website zeigt ihre Artikel in diesen Gruppen, in dieser Reihenfolge.",
   "AdminCatalogCategories.loading": "Kategorien werden geladen",
   "AdminCatalogCategories.emptyTitle": "Noch keine Kategorien",
-  "AdminCatalogCategories.emptyText": "Leg die Gruppen für deine Artikel an, etwa „T-Shirts“, „Hoodies“ oder „Accessoires“.",
+  "AdminCatalogCategories.emptyText":
+    "Leg die Gruppen für deine Artikel an, etwa „T-Shirts“, „Hoodies“ oder „Accessoires“.",
   "AdminCatalogCategories.items": {
     "one": "{count} Artikel",
-    "other": "{count} Artikel"
+    "other": "{count} Artikel",
   },
   "AdminCatalogCategories.actionsFor": "Aktionen für „{name}“",
   "AdminCatalogCategories.edit": "Kategorie bearbeiten",
@@ -629,7 +683,8 @@
   "AdminCatalogCategories.moveItemsFirst": "Verschieb ihre Artikel, um sie zu löschen",
   "AdminCatalogCategories.delete": "Kategorie löschen",
   "AdminCatalogCategories.deleteTitle": "„{name}“ löschen?",
-  "AdminCatalogCategories.deleteText": "Sie enthält keine Artikel. Die Website zeigt sie nicht mehr.",
+  "AdminCatalogCategories.deleteText":
+    "Sie enthält keine Artikel. Die Website zeigt sie nicht mehr.",
   "AdminCatalogCategories.cancel": "Abbrechen",
   "AdminCatalogCategory.back": "Zurück zu den Kategorien",
   "AdminCatalogCategory.title": "Kategorie",
@@ -642,7 +697,8 @@
   "AdminCatalogCategory.nameInOptional": "Name auf {language} (optional)",
   "AdminCatalogCategory.nameHint": "Wird gezeigt, wenn ein Text keine Übersetzung hat.",
   "AdminCatalogCategory.slug": "Adresse",
-  "AdminCatalogCategory.slugHint": "Teil der Website-Adresse: Kleinbuchstaben, Ziffern und Bindestriche.",
+  "AdminCatalogCategory.slugHint":
+    "Teil der Website-Adresse: Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminCatalogCategory.cancel": "Abbrechen",
   "AdminCatalogCategory.saving": "Wird gespeichert …",
   "AdminCatalogCategory.save": "Kategorie speichern",
@@ -674,19 +730,25 @@
   "AdminCatalogItem.photosLater": "Speichere zuerst den Entwurf, dann füge hier seine Fotos hinzu.",
   "AdminCatalogItem.cancel": "Abbrechen",
   "AdminCatalogItem.publishTitle": "„{name}“ veröffentlichen?",
-  "AdminCatalogItem.publishText": "Deine Änderungen werden zuerst gespeichert, dann zeigt die Website ihn in seiner Kategorie.",
-  "AdminCatalogItem.publishNoCategory": "Wähle zuerst eine Kategorie: Die Website zeigt Artikel nur in einer Kategorie.",
+  "AdminCatalogItem.publishText":
+    "Deine Änderungen werden zuerst gespeichert, dann zeigt die Website ihn in seiner Kategorie.",
+  "AdminCatalogItem.publishNoCategory":
+    "Wähle zuerst eine Kategorie: Die Website zeigt Artikel nur in einer Kategorie.",
   "AdminCatalogItem.publishConfirm": "Veröffentlichen",
   "AdminCatalogItem.hideTitle": "„{name}“ ausblenden?",
-  "AdminCatalogItem.hideText": "Die Website zeigt ihn innerhalb einer Minute nicht mehr. Du kannst ihn wieder veröffentlichen.",
+  "AdminCatalogItem.hideText":
+    "Die Website zeigt ihn innerhalb einer Minute nicht mehr. Du kannst ihn wieder veröffentlichen.",
   "AdminCatalogItem.hideConfirm": "Ausblenden",
   "AdminCatalogItem.deleteTitle": "„{name}“ löschen?",
-  "AdminCatalogItem.deleteText": "Seine Fotos werden auch gelöscht. Das lässt sich nicht rückgängig machen.",
+  "AdminCatalogItem.deleteText":
+    "Seine Fotos werden auch gelöscht. Das lässt sich nicht rückgängig machen.",
   "AdminCatalogItem.deleteConfirm": "Artikel löschen",
   "AdminCatalogItem.shareLinks": "Links zum Teilen",
   "AdminCatalogItem.editSources": "Quellen bearbeiten",
-  "AdminCatalogItem.sourcesEmpty": "Füge die Orte hinzu, an denen du Artikel teilst, etwa eine Facebook- oder Zalo-Gruppe. Jeder bekommt einen eigenen Link zu diesem Artikel, so siehst du, welcher Besucher bringt.",
-  "AdminCatalogItem.sourcesText": "Teile an jedem Ort seinen eigenen Link, so siehst du, welcher Besucher bringt.",
+  "AdminCatalogItem.sourcesEmpty":
+    "Füge die Orte hinzu, an denen du Artikel teilst, etwa eine Facebook- oder Zalo-Gruppe. Jeder bekommt einen eigenen Link zu diesem Artikel, so siehst du, welcher Besucher bringt.",
+  "AdminCatalogItem.sourcesText":
+    "Teile an jedem Ort seinen eigenen Link, so siehst du, welcher Besucher bringt.",
   "AdminCatalogItem.linksOpenLater": "Die Links öffnen den Artikel, sobald er auf der Website ist.",
   "AdminCatalogItem.addSource": "Quelle hinzufügen",
   "AdminCatalogItem.noLinkYet": "Noch kein Link · utm_source={source}",
@@ -718,7 +780,8 @@
   "AdminCatalogItem.remove": "<name>{name}</name> entfernen",
   "AdminCatalogItem.sizes": "Größen",
   "AdminCatalogItem.addSize": "Größe hinzufügen",
-  "AdminCatalogItem.sizesHint": "Die kleinste zuerst. Gib einer Größe die Körpergrößen und Gewichte, zu denen sie passt, dann schlägt die Website anhand von Größe und Gewicht eine Größe vor.",
+  "AdminCatalogItem.sizesHint":
+    "Die kleinste zuerst. Gib einer Größe die Körpergrößen und Gewichte, zu denen sie passt, dann schlägt die Website anhand von Größe und Gewicht eine Größe vor.",
   "AdminCatalogItem.sizeNumber": "Größe {number}",
   "AdminCatalogItem.size": "Größe",
   "AdminCatalogItem.heightFrom": "Größe ab, cm",
@@ -730,15 +793,18 @@
   "AdminCatalogItem.unnamedSize": "Größe ohne Namen",
   "AdminCatalogItem.inStockColumn": "Vorrätig",
   "AdminCatalogItem.inStock": "Vorrätig",
-  "AdminCatalogItem.stockHint": "Entferne das Häkchen bei allem, was ausverkauft ist. Die Website zeigt das an, und einen Artikel ohne Rest als ausverkauft.",
+  "AdminCatalogItem.stockHint":
+    "Entferne das Häkchen bei allem, was ausverkauft ist. Die Website zeigt das an, und einen Artikel ohne Rest als ausverkauft.",
   "AdminCatalogItem.inStockLabel": "{colour}, {size}: vorrätig",
   "AdminCatalogItem.preparing": "Wird vorbereitet …",
-  "AdminCatalogItem.refused": "Diese Datei ließ sich nicht als Bild lesen. Entferne sie und lade eine andere hoch.",
+  "AdminCatalogItem.refused":
+    "Diese Datei ließ sich nicht als Bild lesen. Entferne sie und lade eine andere hoch.",
   "AdminCatalogItem.coverLabel": "Foto {number}, das Titelbild",
   "AdminCatalogItem.photoNumber": "Foto {number}",
   "AdminCatalogItem.addPhotos": "Fotos hinzufügen",
   "AdminCatalogItem.uploading": "Lädt {count} hoch …",
-  "AdminCatalogItem.photosRule": "JPEG, PNG, WebP oder HEIC, je bis {size} MB, höchstens {count}. Zum Sortieren ziehen: Das erste ist das Titelbild.",
+  "AdminCatalogItem.photosRule":
+    "JPEG, PNG, WebP oder HEIC, je bis {size} MB, höchstens {count}. Zum Sortieren ziehen: Das erste ist das Titelbild.",
   "AdminCatalogItem.cover": "Titelbild",
   "AdminCatalogItem.openPhoto": "In voller Größe öffnen: {photo}",
   "AdminCatalogItem.noDescription": "Noch keine Beschreibung",
@@ -746,21 +812,24 @@
   "AdminCatalogItem.makeCover": "Zum Titelbild machen<hidden>: {photo}</hidden>",
   "AdminCatalogItem.describe": "Beschreiben<hidden>: {photo}</hidden>",
   "AdminCatalogItem.removePhotoItem": "Entfernen<hidden>: {photo}</hidden>",
-  "AdminCatalogItem.noPhotos": "Noch keine Fotos. Bis du welche hinzufügst, zeigt die Website einen Platzhalter.",
+  "AdminCatalogItem.noPhotos":
+    "Noch keine Fotos. Bis du welche hinzufügst, zeigt die Website einen Platzhalter.",
   "AdminCatalogItem.describeTitle": "Foto von {name} beschreiben",
   "AdminCatalogItem.removePhotoTitle": "Dieses Foto entfernen?",
-  "AdminCatalogItem.removePhotoText": "Die Website zeigt es nicht mehr, und seine Datei wird gelöscht.",
+  "AdminCatalogItem.removePhotoText":
+    "Die Website zeigt es nicht mehr, und seine Datei wird gelöscht.",
   "AdminCatalogItem.removePhotoConfirm": "Foto entfernen",
   "AdminCatalogItem.savePhoto": "Foto speichern",
   "AdminCatalogItem.alt": "Was es zeigt",
   "AdminCatalogItem.altIn": "Was es zeigt, auf {language}",
-  "AdminCatalogItem.altHint": "Für Menschen, die es nicht sehen können, etwa „Braune Kapuzenjacke, von vorn, auf einem Bügel“.",
+  "AdminCatalogItem.altHint":
+    "Für Menschen, die es nicht sehen können, etwa „Braune Kapuzenjacke, von vorn, auf einem Bügel“.",
   "AdminCatalogItem.photoColour": "Gezeigte Farbe",
   "AdminCatalogItem.photoWrongType": "{file} ist kein JPEG-, PNG-, WebP- oder HEIC-Foto.",
   "AdminCatalogItem.photoTooLarge": "{file} ist größer als {size} MB.",
   "AdminCatalogItem.photoLeftOut": {
     "one": "{file} wurde weggelassen: Ein Artikel hat höchstens {count} Foto.",
-    "other": "{file} wurde weggelassen: Ein Artikel hat höchstens {count} Fotos."
+    "other": "{file} wurde weggelassen: Ein Artikel hat höchstens {count} Fotos.",
   },
   "AdminCatalogSource.back": "Zurück zu den Quellen",
   "AdminCatalogSource.title": "Quelle",
@@ -771,25 +840,30 @@
   "AdminCatalogSource.name": "Name",
   "AdminCatalogSource.nameHint": "Wo du teilst, etwa „Zalo-Gruppe A“. Nur du siehst ihn.",
   "AdminCatalogSource.slug": "Quellen-Tag",
-  "AdminCatalogSource.slugHint": "Umami führt Besuche darunter als utm_source: Kleinbuchstaben, Ziffern und Bindestriche. Er folgt dem Namen, bis du ihn änderst.",
+  "AdminCatalogSource.slugHint":
+    "Umami führt Besuche darunter als utm_source: Kleinbuchstaben, Ziffern und Bindestriche. Er folgt dem Namen, bis du ihn änderst.",
   "AdminCatalogSource.linksNote": {
     "one": "Ihr Link behält seine Adresse; ein neuer Tag gilt ab dem nächsten Besuch.",
-    "other": "Ihre {count} Links behalten ihre Adressen; ein neuer Tag gilt ab dem nächsten Besuch."
+    "other":
+      "Ihre {count} Links behalten ihre Adressen; ein neuer Tag gilt ab dem nächsten Besuch.",
   },
   "AdminCatalogSource.cancel": "Abbrechen",
   "AdminCatalogSource.saving": "Wird gespeichert …",
   "AdminCatalogSource.save": "Quelle speichern",
-  "AdminCatalogSources.trackingOff": "Links brauchen die Adresse der Website. Setz MPA_DOMAIN in der env-Datei des Servers und deploye.",
+  "AdminCatalogSources.trackingOff":
+    "Links brauchen die Adresse der Website. Setz MPA_DOMAIN in der env-Datei des Servers und deploye.",
   "AdminCatalogSources.back": "Zurück zum Katalog",
   "AdminCatalogSources.title": "Quellen",
-  "AdminCatalogSources.subtitle": "Jeder Ort, an dem du Artikel teilst, bekommt einen eigenen Link, damit du siehst, welcher Besucher bringt.",
+  "AdminCatalogSources.subtitle":
+    "Jeder Ort, an dem du Artikel teilst, bekommt einen eigenen Link, damit du siehst, welcher Besucher bringt.",
   "AdminCatalogSources.add": "Quelle hinzufügen",
   "AdminCatalogSources.loading": "Quellen werden geladen",
   "AdminCatalogSources.emptyTitle": "Noch keine Quellen",
-  "AdminCatalogSources.emptyText": "Füg die Orte hinzu, an denen du Artikel teilst, etwa eine Facebook-Gruppe, eine Zalo-Gruppe oder Instagram.",
+  "AdminCatalogSources.emptyText":
+    "Füg die Orte hinzu, an denen du Artikel teilst, etwa eine Facebook-Gruppe, eine Zalo-Gruppe oder Instagram.",
   "AdminCatalogSources.links": {
     "one": "{count} Link",
-    "other": "{count} Links"
+    "other": "{count} Links",
   },
   "AdminCatalogSources.actionsFor": "Aktionen für „{name}“",
   "AdminCatalogSources.edit": "Quelle bearbeiten",
@@ -799,8 +873,10 @@
   "AdminCatalogSources.deleteTitle": "„{name}“ löschen?",
   "AdminCatalogSources.deleteNoLinks": "Noch kein Artikel hat einen Link dafür.",
   "AdminCatalogSources.deleteLinks": {
-    "one": "Ihr Link funktioniert nicht mehr: Wer ihn öffnet, sieht „Seite nicht gefunden“. Das lässt sich nicht rückgängig machen.",
-    "other": "Ihre {count} Links funktionieren nicht mehr: Wer einen öffnet, sieht „Seite nicht gefunden“. Das lässt sich nicht rückgängig machen."
+    "one":
+      "Ihr Link funktioniert nicht mehr: Wer ihn öffnet, sieht „Seite nicht gefunden“. Das lässt sich nicht rückgängig machen.",
+    "other":
+      "Ihre {count} Links funktionieren nicht mehr: Wer einen öffnet, sieht „Seite nicht gefunden“. Das lässt sich nicht rückgängig machen.",
   },
   "AdminCatalogSources.delete": "Quelle löschen",
   "AdminCatalogSources.cancel": "Abbrechen",
@@ -814,20 +890,24 @@
   "AdminContactLinks.email": "E-Mail-Adresse",
   "AdminContactLinks.address": "Adresse",
   "AdminContactLinks.title": "Kontaktlinks",
-  "AdminContactLinks.subtitle": "Wo man dich erreicht. Die Fußzeile der Website zeigt sie in dieser Reihenfolge.",
-  "AdminContactLinks.listError": "Die Kontaktlinks konnten nicht geladen werden. Versuche es gleich noch einmal.",
+  "AdminContactLinks.subtitle":
+    "Wo man dich erreicht. Die Fußzeile der Website zeigt sie in dieser Reihenfolge.",
+  "AdminContactLinks.listError":
+    "Die Kontaktlinks konnten nicht geladen werden. Versuche es gleich noch einmal.",
   "AdminContactLinks.addLink": "Link hinzufügen",
   "AdminContactLinks.retry": "Erneut versuchen",
   "AdminContactLinks.loading": "Kontaktlinks werden geladen",
   "AdminContactLinks.none": "Noch keine Kontaktlinks",
-  "AdminContactLinks.noneHint": "Füge Telegram, Zalo, eine Telefonnummer oder eine E-Mail-Adresse hinzu. Die Fußzeile der Website zeigt sie.",
+  "AdminContactLinks.noneHint":
+    "Füge Telegram, Zalo, eine Telefonnummer oder eine E-Mail-Adresse hinzu. Die Fußzeile der Website zeigt sie.",
   "AdminContactLinks.actionsFor": "Aktionen für {name}",
   "AdminContactLinks.edit": "Link bearbeiten",
   "AdminContactLinks.moveUp": "Nach oben",
   "AdminContactLinks.moveDown": "Nach unten",
   "AdminContactLinks.remove": "Link entfernen",
   "AdminContactLinks.removeTitle": "„{name}“ entfernen?",
-  "AdminContactLinks.removeText": "Die Website zeigt diesen {kind}-Link innerhalb einer Minute nicht mehr.",
+  "AdminContactLinks.removeText":
+    "Die Website zeigt diesen {kind}-Link innerhalb einer Minute nicht mehr.",
   "AdminContactLinks.cancel": "Abbrechen",
   "AdminContactLinks.back": "Zurück zu den Kontaktlinks",
   "AdminContactLinks.link": "Kontaktlink",
@@ -845,7 +925,7 @@
   "AdminDashboard.title": "Übersicht",
   "AdminDashboard.subtitle": {
     "one": "Das Produkt auf einen Blick, über den letzten {count} Tag.",
-    "other": "Das Produkt auf einen Blick, über die letzten {count} Tage."
+    "other": "Das Produkt auf einen Blick, über die letzten {count} Tage.",
   },
   "AdminDashboard.retry": "Erneut versuchen",
   "AdminDashboard.loading": "Zahlen werden geladen",
@@ -853,7 +933,7 @@
   "AdminDashboard.people": "Personen",
   "AdminDashboard.blockedCount": {
     "one": "{count} gesperrt",
-    "other": "{count} gesperrt"
+    "other": "{count} gesperrt",
   },
   "AdminDashboard.newThisWeek": "Neu diese Woche",
   "AdminDashboard.activeToday": "Heute aktiv",
@@ -864,26 +944,26 @@
   "AdminDashboard.notes": "Notizen",
   "AdminDashboard.previousDays": {
     "one": "dem {count} Tag davor",
-    "other": "den {count} Tagen davor"
+    "other": "den {count} Tagen davor",
   },
   "AdminDashboard.yesterday": "gestern",
   "AdminDashboard.signUpsTitle": "Registrierungen pro Tag",
   "AdminDashboard.signUpsSeries": "Registrierungen",
   "AdminDashboard.signUpsSummary": {
     "one": "{total} in {count} Tag",
-    "other": "{total} in {count} Tagen"
+    "other": "{total} in {count} Tagen",
   },
   "AdminDashboard.activeTitle": "Aktive Personen pro Tag",
   "AdminDashboard.activeSeries": "Aktive Personen",
   "AdminDashboard.busiestDay": "Stärkster Tag: {count}",
   "AdminDashboard.chartLabel": {
     "one": "{title}, der letzte {count} Tag",
-    "other": "{title}, die letzten {count} Tage"
+    "other": "{title}, die letzten {count} Tage",
   },
   "AdminDashboard.nothingYet": "Noch nichts",
   "AdminDashboard.guestsTitle": {
     "one": "Gastkonten, letzter {count} Tag",
-    "other": "Gastkonten, letzte {count} Tage"
+    "other": "Gastkonten, letzte {count} Tage",
   },
   "AdminDashboard.started": "Gestartet",
   "AdminDashboard.kept": "Behalten",
@@ -894,42 +974,50 @@
   "AdminStats.title": "Statistik",
   "AdminStats.subtitle": {
     "one": "Letzter {count} Tag",
-    "other": "Letzte {count} Tage"
+    "other": "Letzte {count} Tage",
   },
   "AdminStats.subtitleUpdated": {
     "one": "Letzter {count} Tag · aktualisiert {ago}",
-    "other": "Letzte {count} Tage · aktualisiert {ago}"
+    "other": "Letzte {count} Tage · aktualisiert {ago}",
   },
   "AdminStats.period": "Zeitraum",
   "AdminStats.periodDays": {
     "one": "{count} Tag",
-    "other": "{count} Tage"
+    "other": "{count} Tage",
   },
   "AdminStats.refresh": "Zahlen neu laden",
   "AdminStats.openUmami": "In Umami öffnen",
   "AdminStats.editSources": "Quellen bearbeiten",
-  "AdminStats.loadError": "Die Statistik konnte nicht geladen werden. Prüfe deine Verbindung und versuche es noch einmal.",
+  "AdminStats.loadError":
+    "Die Statistik konnte nicht geladen werden. Prüfe deine Verbindung und versuche es noch einmal.",
   "AdminStats.tryAgain": "Erneut versuchen",
   "AdminStats.problemTitle": "Die Statistik kann nicht angezeigt werden",
-  "AdminStats.tokenRefused": "Umami hat das Token in UMAMI_API_TOKEN nicht akzeptiert. Erstelle in Umami ein neues Token, trage es in die env-Datei des Servers ein und deploye.",
-  "AdminStats.unknownWebsite": "Umami hat keine Website mit der ID in MPA_UMAMI_WEBSITE_ID. Kopiere die ID aus den Einstellungen der Website in Umami.",
-  "AdminStats.unreachable": "Umami antwortet nicht, daher können die Zahlen nicht angezeigt werden. Versuche es in ein paar Minuten noch einmal. Wenn das öfter passiert, prüfe, ob Umami läuft.",
+  "AdminStats.tokenRefused":
+    "Umami hat das Token in UMAMI_API_TOKEN nicht akzeptiert. Erstelle in Umami ein neues Token, trage es in die env-Datei des Servers ein und deploye.",
+  "AdminStats.unknownWebsite":
+    "Umami hat keine Website mit der ID in MPA_UMAMI_WEBSITE_ID. Kopiere die ID aus den Einstellungen der Website in Umami.",
+  "AdminStats.unreachable":
+    "Umami antwortet nicht, daher können die Zahlen nicht angezeigt werden. Versuche es in ein paar Minuten noch einmal. Wenn das öfter passiert, prüfe, ob Umami läuft.",
   "AdminStats.stale": "Zahlen von {time}. Umami antwortet gerade nicht.",
   "AdminStats.loading": "Statistik wird geladen",
   "AdminStats.offTitle": "Die Statistik ist aus",
-  "AdminStats.offText": "Die Statistik kommt aus deinem Umami. Um sie einzuschalten, setze UMAMI_API_URL, UMAMI_API_TOKEN und MPA_UMAMI_WEBSITE_ID in der env-Datei des Servers und deploye.",
+  "AdminStats.offText":
+    "Die Statistik kommt aus deinem Umami. Um sie einzuschalten, setze UMAMI_API_URL, UMAMI_API_TOKEN und MPA_UMAMI_WEBSITE_ID in der env-Datei des Servers und deploye.",
   "AdminStats.offSome": {
-    "one": "Die Statistik braucht alle drei Einstellungen. Es fehlt: {missing}. Trage sie in die env-Datei des Servers ein und deploye.",
-    "other": "Die Statistik braucht alle drei Einstellungen. Es fehlen: {missing}. Trage sie in die env-Datei des Servers ein und deploye."
+    "one":
+      "Die Statistik braucht alle drei Einstellungen. Es fehlt: {missing}. Trage sie in die env-Datei des Servers ein und deploye.",
+    "other":
+      "Die Statistik braucht alle drei Einstellungen. Es fehlen: {missing}. Trage sie in die env-Datei des Servers ein und deploye.",
   },
   "AdminStats.readSetup": "Einrichtung der Statistik lesen",
   "AdminStats.newTab": "{label} (öffnet in einem neuen Tab)",
   "AdminStats.rateChange": {
     "one": "{change} Punkte ggü. dem {count} Tag davor",
-    "other": "{change} Punkte ggü. den {count} Tagen davor"
+    "other": "{change} Punkte ggü. den {count} Tagen davor",
   },
   "AdminStats.noVisitsTitle": "Noch keine Besuche",
-  "AdminStats.noVisitsText": "Besuche erscheinen hier, sobald jemand die Website öffnet. Teile den Link eines Artikels von seiner Seite, um zu sehen, welche Quelle Besuche bringt.",
+  "AdminStats.noVisitsText":
+    "Besuche erscheinen hier, sobald jemand die Website öffnet. Teile den Link eines Artikels von seiner Seite, um zu sehen, welche Quelle Besuche bringt.",
   "AdminStats.openCatalog": "Katalog öffnen",
   "AdminStats.fewVisits": "Bisher wenige Besuche, daher können sich die Quoten stark ändern.",
   "AdminStats.keyNumbers": "Kennzahlen",
@@ -937,43 +1025,50 @@
   "AdminStats.orderClicks": "Bestellklicks",
   "AdminStats.orderRate": "Bestellquote",
   "AdminStats.orderRateHint": "Bestellklicks pro 100 Besuche",
-  "AdminStats.orderClickMeans": "Ein Bestellklick ist ein Tippen auf einen Bestellknopf für {channels}. Die Bestellung selbst passiert im Chat.",
-  "AdminStats.orderClickMeansAny": "Ein Bestellklick ist ein Tippen auf einen Bestellknopf. Die Bestellung selbst passiert im Chat.",
+  "AdminStats.orderClickMeans":
+    "Ein Bestellklick ist ein Tippen auf einen Bestellknopf für {channels}. Die Bestellung selbst passiert im Chat.",
+  "AdminStats.orderClickMeansAny":
+    "Ein Bestellklick ist ein Tippen auf einen Bestellknopf. Die Bestellung selbst passiert im Chat.",
   "AdminStats.sourcesTitle": "Woher die Besuche kommen",
-  "AdminStats.sourcesIntro": "Die meisten Bestellklicks zuerst. Wähle eine Quelle, um sie im Diagramm zu sehen.",
+  "AdminStats.sourcesIntro":
+    "Die meisten Bestellklicks zuerst. Wähle eine Quelle, um sie im Diagramm zu sehen.",
   "AdminStats.sourcesLabel": {
     "one": "Besuche nach Quelle, der letzte {count} Tag",
-    "other": "Besuche nach Quelle, die letzten {count} Tage"
+    "other": "Besuche nach Quelle, die letzten {count} Tage",
   },
   "AdminStats.source": "Quelle",
   "AdminStats.noSource": "Keine Quelle",
   "AdminStats.noSourceHint": "Adresse eingetippt oder über einen Link ohne Quelle gekommen.",
-  "AdminStats.noSources": "Noch keine Quellen. Füge die Orte hinzu, an denen du Artikel teilst, etwa eine Facebook-Gruppe, und teile dann den eigenen Link jedes Artikels.",
+  "AdminStats.noSources":
+    "Noch keine Quellen. Füge die Orte hinzu, an denen du Artikel teilst, etwa eine Facebook-Gruppe, und teile dann den eigenen Link jedes Artikels.",
   "AdminStats.sourcesQuiet": {
-    "one": "Keine Besuche über deine Quellen im letzten {count} Tag. Teile den Link eines Artikels von seiner Seite, um anzufangen.",
-    "other": "Keine Besuche über deine Quellen in den letzten {count} Tagen. Teile den Link eines Artikels von seiner Seite, um anzufangen."
+    "one":
+      "Keine Besuche über deine Quellen im letzten {count} Tag. Teile den Link eines Artikels von seiner Seite, um anzufangen.",
+    "other":
+      "Keine Besuche über deine Quellen in den letzten {count} Tagen. Teile den Link eines Artikels von seiner Seite, um anzufangen.",
   },
   "AdminStats.channelsTitle": "Bestellkanal",
   "AdminStats.channelsLabel": {
     "one": "Bestellklicks nach Kanal, der letzte {count} Tag",
-    "other": "Bestellklicks nach Kanal, die letzten {count} Tage"
+    "other": "Bestellklicks nach Kanal, die letzten {count} Tage",
   },
   "AdminStats.noOrderClicks": "Noch keine Bestellklicks.",
-  "AdminStats.limits": "Manche Besucher blockieren Tracker, die echten Zahlen sind also etwas höher. Die Bestellklicks einer Quelle zählen nur Tipps auf der Seite, die ihr Teilen-Link geöffnet hat.",
+  "AdminStats.limits":
+    "Manche Besucher blockieren Tracker, die echten Zahlen sind also etwas höher. Die Bestellklicks einer Quelle zählen nur Tipps auf der Seite, die ihr Teilen-Link geöffnet hat.",
   "AdminStats.chartTitle": "Besuche pro Tag",
   "AdminStats.chartTitleWeekly": "Besuche pro Woche",
   "AdminStats.chartSummary": {
     "one": "{total} Besuche in {count} Tag",
-    "other": "{total} Besuche in {count} Tagen"
+    "other": "{total} Besuche in {count} Tagen",
   },
   "AdminStats.allSources": "Alle Quellen",
   "AdminStats.previousSeries": {
     "one": "Vorheriger {count} Tag",
-    "other": "Vorherige {count} Tage"
+    "other": "Vorherige {count} Tage",
   },
   "AdminStats.chartLabel": {
     "one": "Besuche, der letzte {count} Tag",
-    "other": "Besuche, die letzten {count} Tage"
+    "other": "Besuche, die letzten {count} Tage",
   },
   "AdminStats.mostlyFrom": "meist {source}",
   "AdminStats.itemsTitle": "Artikel",
@@ -985,11 +1080,13 @@
   "AdminStats.allOrdered": "Jeder angesehene Artikel hat mindestens einen Bestellklick.",
   "AdminStats.noItemViews": {
     "one": "Keine Artikelaufrufe im letzten {count} Tag.",
-    "other": "Keine Artikelaufrufe in den letzten {count} Tagen."
+    "other": "Keine Artikelaufrufe in den letzten {count} Tagen.",
   },
   "AdminStats.notOrderedIntro": {
-    "one": "Artikel mit mindestens {count} Aufruf und ohne Bestellklick, die meistgesehenen zuerst.",
-    "other": "Artikel mit mindestens {count} Aufrufen und ohne Bestellklick, die meistgesehenen zuerst."
+    "one":
+      "Artikel mit mindestens {count} Aufruf und ohne Bestellklick, die meistgesehenen zuerst.",
+    "other":
+      "Artikel mit mindestens {count} Aufrufen und ohne Bestellklick, die meistgesehenen zuerst.",
   },
   "AdminDataExports.loading": "Datenexporte werden geladen",
   "AdminDataExports.empty": "Keine Datenexporte.",
@@ -1006,13 +1103,16 @@
   "AdminFrame.signOut": "Abmelden",
   "AdminFrame.comingSoon": "{title} kommt bald",
   "AdminFrame.noAccess": "Kein Zugriff",
-  "AdminFrame.noAccessDescription": "Dieses Konto ist kein Betreiberkonto. Melde dich ab und mit einem Betreiberkonto wieder an.",
+  "AdminFrame.noAccessDescription":
+    "Dieses Konto ist kein Betreiberkonto. Melde dich ab und mit einem Betreiberkonto wieder an.",
   "AdminFrame.noAccessHint": "Die Administration vergibt die Rolle mit <code>{command}</code>.",
   "AdminFrame.comingSoonBadge": "Demnächst",
   "AdminFrame.signInTitle": "Anmeldung für Operatoren",
-  "AdminFrame.signInText": "Für Operatoren dieses Produkts. Melde dich mit deiner E-Mail-Adresse und deinem Passwort an.",
+  "AdminFrame.signInText":
+    "Für Operatoren dieses Produkts. Melde dich mit deiner E-Mail-Adresse und deinem Passwort an.",
   "AdminFrame.codeTitle": "Gib deinen Code ein",
-  "AdminFrame.codeText": "Öffne deine Authenticator-App und gib die sechs Ziffern ein, die sie zeigt.",
+  "AdminFrame.codeText":
+    "Öffne deine Authenticator-App und gib die sechs Ziffern ein, die sie zeigt.",
   "AdminFrame.login": "E-Mail oder Benutzername",
   "AdminFrame.continue": "Weiter",
   "AdminFrame.codeHint": "Sechs Ziffern aus deiner Authenticator-App.",
@@ -1023,7 +1123,8 @@
   "AdminGroup.doneRevoke": "Die Einladung zu {group} ist zurückgezogen.",
   "AdminGroup.doneTransfer": "{member} ist jetzt Eigentümer von {group}.",
   "AdminGroup.doneRemoveFile": "Die Datei ist aus {group} entfernt.",
-  "AdminGroup.fileGone": "Diese Datei gibt es nicht mehr. Vielleicht hat sie schon jemand entfernt.",
+  "AdminGroup.fileGone":
+    "Diese Datei gibt es nicht mehr. Vielleicht hat sie schon jemand entfernt.",
   "AdminGroup.title": "Gruppe",
   "AdminGroup.loading": "Gruppe wird geladen",
   "AdminGroup.transfer": "Eigentum übertragen",
@@ -1058,7 +1159,8 @@
   "AdminGroup.noSubscription": "Kein Abo",
   "AdminGroup.billing": "Abrechnung",
   "AdminGroup.openCustomer": "Kunden öffnen",
-  "AdminGroup.deletedNotice": "Im Papierkorb seit <when></when>. Darin ändert sich nichts, bis der Eigentümer sie wiederherstellt.",
+  "AdminGroup.deletedNotice":
+    "Im Papierkorb seit <when></when>. Darin ändert sich nichts, bis der Eigentümer sie wiederherstellt.",
   "AdminGroup.about": "Über diese Gruppe",
   "AdminGroup.noMembers": "Keine Mitglieder.",
   "AdminGroup.blocked": "Gesperrt",
@@ -1069,7 +1171,8 @@
   "AdminGroup.anyoneLink": "Link, den jeder nutzen kann",
   "AdminGroup.noInvitations": "Keine Einladungen.",
   "AdminGroup.invitedBy": "Von {name}, <when></when> · {uses} von {max} genutzt",
-  "AdminGroup.invitedByDeleted": "Von einem gelöschten Konto, <when></when> · {uses} von {max} genutzt",
+  "AdminGroup.invitedByDeleted":
+    "Von einem gelöschten Konto, <when></when> · {uses} von {max} genutzt",
   "AdminGroup.expires": "Läuft ab <when></when>",
   "AdminGroup.invitationActions": "Aktionen für die Einladung {title}",
   "AdminGroup.revokeInvitation": "Einladung widerrufen",
@@ -1080,28 +1183,30 @@
   "AdminGroup.revoked": "Widerrufen",
   "AdminGroup.usageFiles": {
     "one": "{count} Datei",
-    "other": "{count} Dateien"
+    "other": "{count} Dateien",
   },
   "AdminGroup.usageFilesOf": {
     "one": "{files} von {count} Datei",
-    "other": "{files} von {count} Dateien"
+    "other": "{files} von {count} Dateien",
   },
   "AdminGroup.usageBytesOf": "{used} von {max}",
   "AdminGroup.deletedAccount": "Ein gelöschtes Konto",
   "AdminGroup.fileInNote": "{uploader} · {date} · in „{title}“",
   "AdminGroup.fileInNoteTrash": "{uploader} · {date} · in „{title}“ (im Papierkorb)",
   "AdminGroup.fileInUntitled": "{uploader} · {date} · in einer Notiz ohne Titel",
-  "AdminGroup.fileInUntitledTrash": "{uploader} · {date} · in einer Notiz ohne Titel (im Papierkorb)",
+  "AdminGroup.fileInUntitledTrash":
+    "{uploader} · {date} · in einer Notiz ohne Titel (im Papierkorb)",
   "AdminGroup.filesTotal": {
     "one": "{count} Datei",
-    "other": "{count} Dateien"
+    "other": "{count} Dateien",
   },
   "AdminGroup.filesMatch": {
     "one": "{count} Datei passt zu „{query}“",
-    "other": "{count} Dateien passen zu „{query}“"
+    "other": "{count} Dateien passen zu „{query}“",
   },
   "AdminGroup.noFilesMatchQuery": "Keine Datei passt zu „{query}“",
-  "AdminGroup.filesError": "Die Dateien konnten nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.",
+  "AdminGroup.filesError":
+    "Die Dateien konnten nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.",
   "AdminGroup.retry": "Erneut versuchen",
   "AdminGroup.loadingFiles": "Dateien werden geladen",
   "AdminGroup.noFilesYet": "Noch keine Dateien.",
@@ -1117,19 +1222,24 @@
   "AdminGroup.byOperator": "Von einem Operator, aus dem Adminbereich",
   "AdminGroup.removeTitle": "{name} entfernen?",
   "AdminGroup.removeTitleUnknown": "Dieses Mitglied entfernen?",
-  "AdminGroup.removeText": "<name>{name}</name> verliert sofort den Zugang zu <group>{group}</group>, samt API-Tokens und den Einladungen, die die Person dafür erstellt hat. Was die Person geschrieben hat, bleibt in der Gruppe. Die Person erhält eine Benachrichtigung.",
-  "AdminGroup.removeTextUnknown": "Dieses Mitglied verliert sofort den Zugang zu <group>{group}</group>, samt API-Tokens und den Einladungen, die es dafür erstellt hat. Was es geschrieben hat, bleibt in der Gruppe. Es erhält eine Benachrichtigung.",
+  "AdminGroup.removeText":
+    "<name>{name}</name> verliert sofort den Zugang zu <group>{group}</group>, samt API-Tokens und den Einladungen, die die Person dafür erstellt hat. Was die Person geschrieben hat, bleibt in der Gruppe. Die Person erhält eine Benachrichtigung.",
+  "AdminGroup.removeTextUnknown":
+    "Dieses Mitglied verliert sofort den Zugang zu <group>{group}</group>, samt API-Tokens und den Einladungen, die es dafür erstellt hat. Was es geschrieben hat, bleibt in der Gruppe. Es erhält eine Benachrichtigung.",
   "AdminGroup.removeSubmit": "Entfernen",
   "AdminGroup.removing": "Wird entfernt…",
   "AdminGroup.revokeTitle": "Diese Einladung widerrufen?",
-  "AdminGroup.revokeText": "Niemand kann <group>{group}</group> damit mehr beitreten. Wer schon beigetreten ist, bleibt.",
+  "AdminGroup.revokeText":
+    "Niemand kann <group>{group}</group> damit mehr beitreten. Wer schon beigetreten ist, bleibt.",
   "AdminGroup.revokeSubmit": "Widerrufen",
   "AdminGroup.revoking": "Wird widerrufen…",
   "AdminGroup.removeFileTitle": "„{name}“ entfernen?",
   "AdminGroup.removeFileTitleUnknown": "Diese Datei entfernen?",
-  "AdminGroup.removeFileText": "Die Mitglieder von <group>{group}</group> sehen sie nicht mehr. Ihre Notiz bleibt. Die Aktivität der Gruppe hält fest, dass der Support sie entfernt hat.",
+  "AdminGroup.removeFileText":
+    "Die Mitglieder von <group>{group}</group> sehen sie nicht mehr. Ihre Notiz bleibt. Die Aktivität der Gruppe hält fest, dass der Support sie entfernt hat.",
   "AdminGroup.transferTitle": "{group} übertragen",
-  "AdminGroup.transferText": "Das Mitglied, das du wählst, wird Eigentümer und erhält eine Benachrichtigung. <name>{name}</name> bleibt als Admin in der Gruppe. Ein Abo, das sich noch verlängert, muss zuerst sein Eigentümer kündigen.",
+  "AdminGroup.transferText":
+    "Das Mitglied, das du wählst, wird Eigentümer und erhält eine Benachrichtigung. <name>{name}</name> bleibt als Admin in der Gruppe. Ein Abo, das sich noch verlängert, muss zuerst sein Eigentümer kündigen.",
   "AdminGroup.transferSubmit": "Übertragen",
   "AdminGroup.transferring": "Wird übertragen…",
   "AdminGroup.close": "Schließen",
@@ -1137,14 +1247,16 @@
   "AdminGroup.candidate": "{name} ({role})",
   "AdminGroup.cancel": "Abbrechen",
   "AdminGroupOverview.title": "Übersichts-Widgets",
-  "AdminGroupOverview.description": "Was Mitglieder auf ihrer Übersichtsseite sehen, im Standardlayout. Jedes Mitglied kann sie ausblenden und umsortieren. Ihre eigenen Layouts werden hier nicht gezeigt.",
+  "AdminGroupOverview.description":
+    "Was Mitglieder auf ihrer Übersichtsseite sehen, im Standardlayout. Jedes Mitglied kann sie ausblenden und umsortieren. Ihre eigenen Layouts werden hier nicht gezeigt.",
   "AdminGroupOverview.gridLabel": "Übersichts-Widgets von {group}",
   "AdminGroups.active": "Aktiv",
   "AdminGroups.inTrash": "Im Papierkorb",
   "AdminGroups.noName": "Kein Name",
   "AdminGroups.free": "Kostenlos",
   "AdminGroups.title": "Gruppen",
-  "AdminGroups.subtitle": "Jede Gruppe, ihr Eigentümer und ihre Mitglieder. Öffne eine Gruppe, um Mitglieder und Einladungen zu verwalten.",
+  "AdminGroups.subtitle":
+    "Jede Gruppe, ihr Eigentümer und ihre Mitglieder. Öffne eine Gruppe, um Mitglieder und Einladungen zu verwalten.",
   "AdminGroups.search": "Gruppenname, Eigentümer oder Gruppen-ID",
   "AdminGroups.searching": "Wird gesucht…",
   "AdminGroups.submit": "Suchen",
@@ -1152,11 +1264,12 @@
   "AdminGroups.clear": "Filter zurücksetzen",
   "AdminGroups.count": {
     "one": "{count} Gruppe",
-    "other": "{count} Gruppen"
+    "other": "{count} Gruppen",
   },
   "AdminGroups.loading": "Gruppen werden geladen",
   "AdminGroups.noMatch": "Keine Gruppe passt",
-  "AdminGroups.noMatchHint": "Versuche einen anderen Namen oder eine andere Adresse, oder setze die Filter zurück.",
+  "AdminGroups.noMatchHint":
+    "Versuche einen anderen Namen oder eine andere Adresse, oder setze die Filter zurück.",
   "AdminGroups.noneYet": "Gruppen erscheinen hier, sobald sich Leute registrieren.",
   "AdminGroups.pages": "Seiten der Gruppen",
   "AdminGroups.group": "Gruppe",
@@ -1176,7 +1289,7 @@
   "AdminJobs.doneCancelled": "„{job}“ abgebrochen.",
   "AdminJobs.doneRetriedAll": {
     "one": "{count} fehlgeschlagener Job neu gestartet.",
-    "other": "{count} fehlgeschlagene Jobs neu gestartet."
+    "other": "{count} fehlgeschlagene Jobs neu gestartet.",
   },
   "AdminJobs.notFound": "Kein Job hat diese ID.",
   "AdminJobs.idCopied": "Job-ID kopiert.",
@@ -1215,7 +1328,8 @@
   "AdminJobs.attemptsHeader": "Versuche",
   "AdminJobs.when": "Wann",
   "AdminJobs.title": "Jobs",
-  "AdminJobs.subtitle": "Arbeit, die der Server im Hintergrund erledigt, und wie jeder Lauf verlief.",
+  "AdminJobs.subtitle":
+    "Arbeit, die der Server im Hintergrund erledigt, und wie jeder Lauf verlief.",
   "AdminJobs.retryAll": "Alle fehlgeschlagenen erneut ausführen ({count})",
   "AdminJobs.runs": "Läufe",
   "AdminJobs.repeating": "Wiederkehrend",
@@ -1223,12 +1337,13 @@
   "AdminJobs.searching": "Wird gesucht…",
   "AdminJobs.search": "Suchen",
   "AdminJobs.clear": "Filter zurücksetzen",
-  "AdminJobs.loadError": "Die Jobs konnten nicht geladen werden. Prüfe, ob der Server läuft, und versuche es erneut.",
+  "AdminJobs.loadError":
+    "Die Jobs konnten nicht geladen werden. Prüfe, ob der Server läuft, und versuche es erneut.",
   "AdminJobs.retry": "Erneut versuchen",
   "AdminJobs.loading": "Jobs werden geladen",
   "AdminJobs.count": {
     "one": "{count} Job",
-    "other": "{count} Jobs"
+    "other": "{count} Jobs",
   },
   "AdminJobs.noneFailed": "Keine fehlgeschlagenen Jobs.",
   "AdminJobs.runsCaption": "Job-Läufe",
@@ -1236,13 +1351,15 @@
   "AdminJobs.noMatchHint": "Versuche einen anderen Namen oder setze die Filter zurück.",
   "AdminJobs.noneYet": "Noch kein Job ist gelaufen",
   "AdminJobs.noneYetHint": {
-    "one": "Jobs erscheinen hier, sobald der Server einen plant. Erledigte Jobs werden {count} Tag aufbewahrt.",
-    "other": "Jobs erscheinen hier, sobald der Server einen plant. Erledigte Jobs werden {count} Tage aufbewahrt."
+    "one":
+      "Jobs erscheinen hier, sobald der Server einen plant. Erledigte Jobs werden {count} Tag aufbewahrt.",
+    "other":
+      "Jobs erscheinen hier, sobald der Server einen plant. Erledigte Jobs werden {count} Tage aufbewahrt.",
   },
   "AdminJobs.pages": "Seiten der Jobs",
   "AdminJobs.keptDays": {
     "one": "Erledigte Jobs werden {count} Tag aufbewahrt.",
-    "other": "Erledigte Jobs werden {count} Tage aufbewahrt."
+    "other": "Erledigte Jobs werden {count} Tage aufbewahrt.",
   },
   "AdminJobs.lastRunFailed": "Letzter Lauf fehlgeschlagen",
   "AdminJobs.schedule": "Zeitplan",
@@ -1258,13 +1375,15 @@
   "AdminJobs.noRepeatsHint": "Ein Job wiederholt sich, sobald seine Definition einen Zeitplan hat.",
   "AdminJobs.retryAllTitle": {
     "one": "{count} fehlgeschlagenen Job erneut ausführen?",
-    "other": "{count} fehlgeschlagene Jobs erneut ausführen?"
+    "other": "{count} fehlgeschlagene Jobs erneut ausführen?",
   },
   "AdminJobs.runNowTitle": "Diesen Job jetzt ausführen?",
   "AdminJobs.runAgain": "Erneut ausführen",
   "AdminJobs.retryAllText": "Jeder läuft noch einmal mit neuen Versuchen.",
-  "AdminJobs.runsNowInstead": "<job>{job}</job> läuft jetzt statt um <at></at>. Ein wiederkehrender Job behält danach seinen Zeitplan.",
-  "AdminJobs.runsNow": "<job>{job}</job> läuft jetzt. Ein wiederkehrender Job behält danach seinen Zeitplan.",
+  "AdminJobs.runsNowInstead":
+    "<job>{job}</job> läuft jetzt statt um <at></at>. Ein wiederkehrender Job behält danach seinen Zeitplan.",
+  "AdminJobs.runsNow":
+    "<job>{job}</job> läuft jetzt. Ein wiederkehrender Job behält danach seinen Zeitplan.",
   "AdminJobs.loadingJob": "Job wird geladen",
   "AdminJobs.created": "Erstellt",
   "AdminJobs.lastTry": "Letzter Versuch",
@@ -1286,9 +1405,11 @@
   "AdminJobs.whatHappened": "Was passiert ist",
   "AdminJobs.keptUntil": "Aufbewahrt bis <day></day>, 7 Tage nach dem Ende.",
   "AdminJobs.retryTitle": "Diesen Job erneut ausführen?",
-  "AdminJobs.retryText": "<job>{job}</job> verschickt E-Mails. Wenn er schon teilweise lief, bekommt jemand sie vielleicht doppelt. Das Audit-Log hält fest, dass du ihn gestartet hast.",
+  "AdminJobs.retryText":
+    "<job>{job}</job> verschickt E-Mails. Wenn er schon teilweise lief, bekommt jemand sie vielleicht doppelt. Das Audit-Log hält fest, dass du ihn gestartet hast.",
   "AdminJobs.cancelTitle": "Diesen Job abbrechen?",
-  "AdminJobs.cancelText": "<job>{job}</job> wird nicht ausgeführt. Ein wiederkehrender Job startet erneut, wenn der Worker das nächste Mal startet. Das lässt sich nicht rückgängig machen.",
+  "AdminJobs.cancelText":
+    "<job>{job}</job> wird nicht ausgeführt. Ein wiederkehrender Job startet erneut, wenn der Worker das nächste Mal startet. Das lässt sich nicht rückgängig machen.",
   "AdminJobs.cancelling": "Wird abgebrochen…",
   "AdminJobs.keepIt": "Behalten",
   "AdminNav.dashboard": "Übersicht",
@@ -1309,11 +1430,13 @@
   "AdminNewsletter.confirmed": "Bestätigt",
   "AdminNewsletter.pending": "Ausstehend",
   "AdminNewsletter.removeTitle": "Diesen Abonnenten entfernen?",
-  "AdminNewsletter.removeText": "<email>{email}</email> bekommt den Newsletter nicht mehr, als hätte die Person den Abmeldelink gedrückt. Die Adresse wird gelöscht, und ein zuvor gesendeter Bestätigungslink funktioniert nicht mehr. Über die Website kann sie sich wieder anmelden.",
+  "AdminNewsletter.removeText":
+    "<email>{email}</email> bekommt den Newsletter nicht mehr, als hätte die Person den Abmeldelink gedrückt. Die Adresse wird gelöscht, und ein zuvor gesendeter Bestätigungslink funktioniert nicht mehr. Über die Website kann sie sich wieder anmelden.",
   "AdminNewsletter.removeSubmit": "Entfernen",
   "AdminNewsletter.removing": "Wird entfernt…",
   "AdminNewsletter.resendTitle": "Bestätigungsmail erneut senden?",
-  "AdminNewsletter.resendText": "<email>{email}</email> bekommt eine neue Mail mit einem Link, um das Abo zu bestätigen. Bis die Person ihn drückt, ändert sich nichts.",
+  "AdminNewsletter.resendText":
+    "<email>{email}</email> bekommt eine neue Mail mit einem Link, um das Abo zu bestätigen. Bis die Person ihn drückt, ändert sich nichts.",
   "AdminNewsletter.resendSubmit": "Erneut senden",
   "AdminNewsletter.sending": "Wird gesendet…",
   "AdminNewsletter.subscribers": "Abonnenten",
@@ -1329,29 +1452,30 @@
   "AdminNewsletter.pendingHint": "Bestätigungsmail unterwegs",
   "AdminNewsletter.joined": {
     "one": "Neu, {count} Tag",
-    "other": "Neu, {count} Tage"
+    "other": "Neu, {count} Tage",
   },
   "AdminNewsletter.issuesSent": "Gesendete Ausgaben",
   "AdminNewsletter.perDay": "Abonnenten pro Tag",
   "AdminNewsletter.noChange": {
     "one": "Keine Änderung in {count} Tag",
-    "other": "Keine Änderung in {count} Tagen"
+    "other": "Keine Änderung in {count} Tagen",
   },
   "AdminNewsletter.growthUp": {
     "one": "+{n} in {count} Tag",
-    "other": "+{n} in {count} Tagen"
+    "other": "+{n} in {count} Tagen",
   },
   "AdminNewsletter.growthDown": {
     "one": "−{n} in {count} Tag",
-    "other": "−{n} in {count} Tagen"
+    "other": "−{n} in {count} Tagen",
   },
   "AdminNewsletter.chartLabel": {
     "one": "Abonnenten am Ende jedes Tages, der letzte {count} Tag",
-    "other": "Abonnenten am Ende jedes Tages, die letzten {count} Tage"
+    "other": "Abonnenten am Ende jedes Tages, die letzten {count} Tage",
   },
   "AdminNewsletter.nothingYet": "Noch nichts",
   "AdminNewsletter.notKeptTitle": "Abgemeldete Adressen werden nicht gespeichert",
-  "AdminNewsletter.notKeptText": "Eine Adresse, die sich abmeldet oder die du entfernst, wird sofort gelöscht. Die Liste behält nur eine verschlüsselte Markierung ohne Adresse, damit kein früherer Bestätigungslink sie wieder hinzufügt. Über die Website kann sich die Person weiterhin neu anmelden.",
+  "AdminNewsletter.notKeptText":
+    "Eine Adresse, die sich abmeldet oder die du entfernst, wird sofort gelöscht. Die Liste behält nur eine verschlüsselte Markierung ohne Adresse, damit kein früherer Bestätigungslink sie wieder hinzufügt. Über die Website kann sich die Person weiterhin neu anmelden.",
   "AdminNewsletter.address": "Adresse",
   "AdminNewsletter.searching": "Wird gesucht…",
   "AdminNewsletter.search": "Suchen",
@@ -1360,13 +1484,14 @@
   "AdminNewsletter.clear": "Filter zurücksetzen",
   "AdminNewsletter.count": {
     "one": "{count} Adresse",
-    "other": "{count} Adressen"
+    "other": "{count} Adressen",
   },
   "AdminNewsletter.loadingAddresses": "Adressen werden geladen",
   "AdminNewsletter.nobodyMatches": "Niemand passt",
   "AdminNewsletter.nobodyMatchesHint": "Versuche eine andere Adresse oder setze die Filter zurück.",
   "AdminNewsletter.noSubscribers": "Noch keine Abonnenten",
-  "AdminNewsletter.noSubscribersHint": "Adressen erscheinen hier, sobald sich jemand auf der Website anmeldet.",
+  "AdminNewsletter.noSubscribersHint":
+    "Adressen erscheinen hier, sobald sich jemand auf der Website anmeldet.",
   "AdminNewsletter.pages": "Seiten der Abonnenten",
   "AdminNewsletter.resendTo": "Bestätigungsmail erneut an {email} senden",
   "AdminNewsletter.removeEmail": "{email} entfernen",
@@ -1375,7 +1500,8 @@
   "AdminNewsletter.asked": "Angefragt <when></when>",
   "AdminNewsletter.loadingSends": "Gesendete Ausgaben werden geladen",
   "AdminNewsletter.nothingSent": "Noch nichts gesendet",
-  "AdminNewsletter.nothingSentHint": "Eine Ausgabe erscheint hier, sobald der Sendebefehl sie verschickt.",
+  "AdminNewsletter.nothingSentHint":
+    "Eine Ausgabe erscheint hier, sobald der Sendebefehl sie verschickt.",
   "AdminNewsletter.notRecorded": "Nicht erfasst",
   "AdminNewsletter.issue": "Ausgabe",
   "AdminNewsletter.sent": "Gesendet",
@@ -1397,7 +1523,7 @@
   "AdminPersonTabs.loadingDevices": "Geräte werden geladen",
   "AdminPersonTabs.deviceCount": {
     "one": "{count} Gerät",
-    "other": "{count} Geräte"
+    "other": "{count} Geräte",
   },
   "AdminPersonTabs.noDevices": "Kein Gerät bekommt Push-Benachrichtigungen.",
   "AdminPersonTabs.device": "Gerät <device>{device}</device>",
@@ -1407,11 +1533,11 @@
   "AdminPersonTabs.noNotifications": "Keine Benachrichtigungen.",
   "AdminPersonTabs.notificationCount": {
     "one": "{count} Benachrichtigung, {unread} ungelesen.",
-    "other": "{count} Benachrichtigungen, {unread} ungelesen."
+    "other": "{count} Benachrichtigungen, {unread} ungelesen.",
   },
   "AdminPersonTabs.newestShown": {
     "one": "Unten steht die neueste ({count}).",
-    "other": "Unten stehen die {count} neuesten."
+    "other": "Unten stehen die {count} neuesten.",
   },
   "AdminPersonTabs.read": "Gelesen",
   "AdminPersonTabs.unread": "Ungelesen",
@@ -1428,9 +1554,11 @@
   "AdminPreferences.language": "Sprache",
   "AdminPreferences.formats": "Formate",
   "AdminPreferences.automatic": "Automatisch: wie auf dem Gerät der Person",
-  "AdminPreferences.formatsSignedUp": "Automatisch: wie auf dem Gerät der Person (registriert mit {format})",
+  "AdminPreferences.formatsSignedUp":
+    "Automatisch: wie auf dem Gerät der Person (registriert mit {format})",
   "AdminPreferences.timeZone": "Zeitzone",
-  "AdminPreferences.zoneSignedUp": "Automatisch: wie auf dem Gerät der Person (registriert in {zone})",
+  "AdminPreferences.zoneSignedUp":
+    "Automatisch: wie auf dem Gerät der Person (registriert in {zone})",
   "AdminPreferences.zoneNow": "{zone} · dort jetzt {time}",
   "AdminPreferences.clock": "Uhr",
   "AdminPreferences.clockFromFormat": "Wie in ihrem Regionalformat",
@@ -1456,7 +1584,8 @@
   "AdminSystem.warning": "Warnung",
   "AdminSystem.error": "Fehler",
   "AdminSystem.summaryOk": "Alles funktioniert.",
-  "AdminSystem.summaryWarning": "Etwas sollte bald geprüft werden. Die Karten mit „Warnung“ sagen, was.",
+  "AdminSystem.summaryWarning":
+    "Etwas sollte bald geprüft werden. Die Karten mit „Warnung“ sagen, was.",
   "AdminSystem.summaryError": "Etwas ist kaputt. Die Karten mit „Fehler“ sagen, was.",
   "AdminSystem.services": "Dienste",
   "AdminSystem.database": "Datenbank",
@@ -1472,7 +1601,8 @@
   "AdminSystem.queue": "Job-Warteschlange",
   "AdminSystem.queueHint": {
     "one": "Warnt, wenn ein Job länger als {count} Minute wartet oder ein Job fehlgeschlagen ist.",
-    "other": "Warnt, wenn ein Job länger als {count} Minuten wartet oder ein Job fehlgeschlagen ist."
+    "other":
+      "Warnt, wenn ein Job länger als {count} Minuten wartet oder ein Job fehlgeschlagen ist.",
   },
   "AdminSystem.openJobs": "Jobs öffnen",
   "AdminSystem.dueNow": "Jetzt fällig",
@@ -1482,12 +1612,12 @@
   "AdminSystem.scheduled": "Geplant",
   "AdminSystem.failedDays": {
     "one": "Fehlgeschlagen, letzter {count} Tag",
-    "other": "Fehlgeschlagen, letzte {count} Tage"
+    "other": "Fehlgeschlagen, letzte {count} Tage",
   },
   "AdminSystem.backup": "Backup",
   "AdminSystem.backupHint": {
     "one": "Warnt nach {count} Stunde ohne Backup und meldet nach {error} einen Fehler.",
-    "other": "Warnt nach {count} Stunden ohne Backup und meldet nach {error} einen Fehler."
+    "other": "Warnt nach {count} Stunden ohne Backup und meldet nach {error} einen Fehler.",
   },
   "AdminSystem.lastSuccess": "Zuletzt erfolgreich",
   "AdminSystem.noneRecorded": "Keines erfasst",
@@ -1537,12 +1667,14 @@
   "AdminUser.active": "Aktiv",
   "AdminUser.guest": "Gast",
   "AdminUser.you": "Du",
-  "AdminUser.guestNote": "Ein Gastkonto: mit einem Klick erstellt, ohne Anmeldemethode. Der Support stellt ein Gastkonto nie wieder her.",
+  "AdminUser.guestNote":
+    "Ein Gastkonto: mit einem Klick erstellt, ohne Anmeldemethode. Der Support stellt ein Gastkonto nie wieder her.",
   "AdminUser.created": "Erstellt",
   "AdminUser.lastSeen": "Zuletzt gesehen",
   "AdminUser.never": "Nie",
   "AdminUser.blockedNotice": "Gesperrt <when></when>. Die Person kann sich nicht anmelden.",
-  "AdminUser.noActions": "Die Rolle der Person ist gleich oder höher als deine, daher kannst du bei diesem Konto nichts tun.",
+  "AdminUser.noActions":
+    "Die Rolle der Person ist gleich oder höher als deine, daher kannst du bei diesem Konto nichts tun.",
   "AdminUser.tabs": "Über diese Person",
   "AdminUser.account": "Konto",
   "AdminUser.picture": "Profilbild",
@@ -1579,32 +1711,41 @@
   "AdminUser.methodPasskey": "Passkey",
   "AdminUser.methodEmailLink": "E-Mail-Link",
   "AdminUser.blockTitle": "{name} sperren",
-  "AdminUser.blockText": "Alle Sitzungen der Person enden sofort, und jeder Zugang wird abgewiesen: Passwort, Google, GitHub und API-Tokens. Ihre Daten bleiben. Du kannst sie später entsperren.",
+  "AdminUser.blockText":
+    "Alle Sitzungen der Person enden sofort, und jeder Zugang wird abgewiesen: Passwort, Google, GitHub und API-Tokens. Ihre Daten bleiben. Du kannst sie später entsperren.",
   "AdminUser.blocking": "Wird gesperrt…",
   "AdminUser.unblockTitle": "{name} entsperren",
-  "AdminUser.unblockText": "Die Person kann sich wieder anmelden, und ihre API-Tokens funktionieren wieder.",
+  "AdminUser.unblockText":
+    "Die Person kann sich wieder anmelden, und ihre API-Tokens funktionieren wieder.",
   "AdminUser.unblocking": "Wird entsperrt…",
   "AdminUser.endSessionsTitle": "Alle Sitzungen von {name} beenden",
-  "AdminUser.endSessionsText": "Alle Geräte der Person werden sofort abgemeldet. Sie kann sich wieder anmelden.",
+  "AdminUser.endSessionsText":
+    "Alle Geräte der Person werden sofort abgemeldet. Sie kann sich wieder anmelden.",
   "AdminUser.ending": "Wird beendet…",
   "AdminUser.endSessionTitle": "Eine Sitzung von {name} beenden",
-  "AdminUser.endSessionText": "Nur dieses Gerät wird sofort abgemeldet. Die anderen Geräte der Person bleiben angemeldet.",
+  "AdminUser.endSessionText":
+    "Nur dieses Gerät wird sofort abgemeldet. Die anderen Geräte der Person bleiben angemeldet.",
   "AdminUser.endSession": "Sitzung beenden",
   "AdminUser.changeRoleTitle": "Rolle von {name} ändern",
-  "AdminUser.changeRoleText": "Die neue Rolle gilt ab der nächsten Anfrage der Person. Du kannst eine Rolle unter deiner eigenen vergeben; ein Administrator wird mit dem Skript user:role ernannt.",
+  "AdminUser.changeRoleText":
+    "Die neue Rolle gilt ab der nächsten Anfrage der Person. Du kannst eine Rolle unter deiner eigenen vergeben; ein Administrator wird mit dem Skript user:role ernannt.",
   "AdminUser.changing": "Wird geändert…",
   "AdminUser.resetTitle": "{name} einen Link zum Zurücksetzen des Passworts senden",
-  "AdminUser.resetText": "Die Person bekommt dieselbe Mail wie bei „Passwort vergessen“: einen Link, um ein neues Passwort zu wählen. Das aktuelle Passwort funktioniert, bis sie das tut.",
+  "AdminUser.resetText":
+    "Die Person bekommt dieselbe Mail wie bei „Passwort vergessen“: einen Link, um ein neues Passwort zu wählen. Das aktuelle Passwort funktioniert, bis sie das tut.",
   "AdminUser.sendLink": "Link senden",
   "AdminUser.sending": "Wird gesendet…",
   "AdminUser.deleteGuestTitle": "Gastkonto {name} löschen",
-  "AdminUser.deleteGuestText": "Das Konto und alles darin werden sofort gelöscht, ohne Frist. Der Support stellt ein Gastkonto nie wieder her: Es hat keine Anmeldemethode, die zeigt, wem es gehörte.",
+  "AdminUser.deleteGuestText":
+    "Das Konto und alles darin werden sofort gelöscht, ohne Frist. Der Support stellt ein Gastkonto nie wieder her: Es hat keine Anmeldemethode, die zeigt, wem es gehörte.",
   "AdminUser.deleting": "Wird gelöscht…",
   "AdminUser.unlinkTelegramTitle": "Telegram-Konto von {name} trennen",
-  "AdminUser.unlinkTelegramText": "Der Telegram-Chat der Person bekommt keine Benachrichtigungen mehr und kann nicht mehr für sie handeln. Sie kann ihn in ihrem Profil wieder verbinden.",
+  "AdminUser.unlinkTelegramText":
+    "Der Telegram-Chat der Person bekommt keine Benachrichtigungen mehr und kann nicht mehr für sie handeln. Sie kann ihn in ihrem Profil wieder verbinden.",
   "AdminUser.unlinking": "Wird getrennt…",
   "AdminUser.removePictureTitle": "Profilbild der Person entfernen?",
-  "AdminUser.removePictureText": "Stattdessen erscheinen überall die Initialen der Person. Sie kann ein neues hochladen.",
+  "AdminUser.removePictureText":
+    "Stattdessen erscheinen überall die Initialen der Person. Sie kann ein neues hochladen.",
   "AdminUser.removePictureSubmit": "Bild entfernen",
   "AdminUser.removing": "Wird entfernt…",
   "AdminUser.sentTo": "Geht an <address>{address}</address>",
@@ -1612,7 +1753,8 @@
   "AdminUser.roleNow": "{role} (aktuell)",
   "AdminUser.cancel": "Abbrechen",
   "AdminUsers.title": "Nutzer",
-  "AdminUsers.subtitle": "Alle mit einem Konto. Öffne eine Person, um sie zu sperren, eine Sitzung zu beenden oder einen Link zum Zurücksetzen des Passworts zu senden.",
+  "AdminUsers.subtitle":
+    "Alle mit einem Konto. Öffne eine Person, um sie zu sperren, eine Sitzung zu beenden oder einen Link zum Zurücksetzen des Passworts zu senden.",
   "AdminUsers.export": "CSV exportieren",
   "AdminUsers.search": "Name oder Adresse",
   "AdminUsers.searching": "Wird gesucht…",
@@ -1631,12 +1773,13 @@
   "AdminUsers.clear": "Filter zurücksetzen",
   "AdminUsers.count": {
     "one": "{count} Person",
-    "other": "{count} Personen"
+    "other": "{count} Personen",
   },
   "AdminUsers.loading": "Personen werden geladen",
   "AdminUsers.people": "Personen",
   "AdminUsers.noMatch": "Niemand passt",
-  "AdminUsers.noMatchHint": "Versuche einen anderen Namen oder eine andere Adresse, oder setze die Filter zurück.",
+  "AdminUsers.noMatchHint":
+    "Versuche einen anderen Namen oder eine andere Adresse, oder setze die Filter zurück.",
   "AdminUsers.pages": "Seiten der Personen",
   "AdminUsers.person": "Person",
   "AdminUsers.lastSeen": "Zuletzt gesehen",
@@ -1646,8 +1789,10 @@
   "AdminUsers.you": "Du",
   "AdminUsers.noName": "Kein Name",
   "AdminBlogEditor.language": "Sprache",
-  "AdminBlogEditor.languageHint": "Die Sprache, in der der Beitrag geschrieben ist. Die Website zeigt ihn im Blog dieser Sprache.",
+  "AdminBlogEditor.languageHint":
+    "Die Sprache, in der der Beitrag geschrieben ist. Die Website zeigt ihn im Blog dieser Sprache.",
   "AdminBlogEditor.translationOf": "Übersetzung von",
-  "AdminBlogEditor.translationOfHint": "Der Beitrag, den dieser übersetzt. Sobald beide live sind, verknüpft die Website sie als Sprachversionen.",
-  "AdminBlogEditor.translationNone": "Keiner: ein eigener Beitrag"
-}
+  "AdminBlogEditor.translationOfHint":
+    "Der Beitrag, den dieser übersetzt. Sobald beide live sind, verknüpft die Website sie als Sprachversionen.",
+  "AdminBlogEditor.translationNone": "Keiner: ein eigener Beitrag",
+} satisfies Catalog

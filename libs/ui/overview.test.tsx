@@ -14,8 +14,8 @@ import type { LayoutEntry } from "@spy4x/preact-ui/layout-customiser"
 import { ticks } from "@spy4x/preact-charts/scales"
 import { createFormatters } from "@spy4x/time/format"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
-import app from "@i18n/app/en.json" with { type: "json" }
-import appRu from "@i18n/app/ru.json" with { type: "json" }
+import app from "@i18n/app/en.ts"
+import appRu from "@i18n/app/ru.ts"
 import { NOTE_WIDGET_IDS } from "@domain/notes"
 import {
   OverviewScreen,
