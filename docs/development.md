@@ -51,6 +51,14 @@ role and proven address right and changes nothing else; when it cannot create an
 so and exits with 1. The public demo runs the same seed every night, without the administrator
 ([demo.md](demo.md)).
 
+## Env files
+
+The template's own env files are committed encrypted, one value at a time, as
+`infra/envs/*.age`. `deno task env:decrypt` writes the plaintext files next to them, using the key
+in `.age/key.txt` (the owner keeps a copy in a password manager); `deno task env:encrypt` updates
+the `.age` files after you edit a plaintext one. A product made from the template cannot read them:
+delete them and run `deno task env:keygen`, then `deno task env:encrypt`, for its own.
+
 ## Tasks
 
 Current tasks come from [`deno.jsonc`](../deno.jsonc).
