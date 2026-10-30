@@ -65,7 +65,8 @@ async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<v
     ...settings,
     max: 10,
     transform: postgres.camel,
-    connection: { options: `-c search_path=${schema}` },
+    // Names the connections so a lock count sees only this test's, not a parallel file's.
+    connection: { options: `-c search_path=${schema}`, application_name: schema },
     onnotice: () => {},
   })
   try {

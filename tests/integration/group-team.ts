@@ -148,6 +148,7 @@ export async function runBlockedOnLock<T>(
         const [{ waiting }] = await sql<{ waiting: number }[]>`
           SELECT count(*)::int AS waiting FROM pg_stat_activity
           WHERE datname = current_database() AND wait_event_type = 'Lock'
+            AND application_name = current_setting('application_name')
         `
         if (waiting > index) break
         if (Date.now() > deadline) throw new Error(`move ${index + 1} never waited on the lock`)
