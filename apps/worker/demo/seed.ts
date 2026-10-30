@@ -21,6 +21,7 @@ import {
   type FakeMember,
   fakePeople,
   fakeWorkspace,
+  withStandIns,
 } from "./fake-data.ts"
 import {
   type At,
@@ -221,7 +222,7 @@ export async function createAdmin(
 /**
  * Groups, their members, tags, notes, promotions and pending invitations, each at its time. `idOf`
  * answers `null` for someone without an account: such a member is left out, a row they wrote goes
- * to the group's first writer, and a group with such an owner is skipped. Answers each group's id,
+ * to a stand-in ({@link withStandIns}), and a group with such an owner is skipped. Answers each group's id,
  * or `null` for a skipped one.
  *
  * Every row is written by the app's own repositories, then given its time, with its audit row.
@@ -302,14 +303,11 @@ async function seedGroups(
         details: { from: GroupRole.EDITOR, to: GroupRole.ADMIN },
       })
     }
-    const fallback = [group.owner, ...group.members.map((m) => m.member)]
-      .filter((member) => member !== `you`)
-      .map(idOf)
-      .find((id) => id !== null) ?? null
-    if (fallback === null) continue
-    const writer = (member: FakeMember) => idOf(member) ?? fallback
+    const content = withStandIns(group, (member) => idOf(member) !== null)
+    if (content === null) continue
+    const writer = (member: FakeMember) => idOf(member)!
     const tagIds = new Map<string, string>()
-    for (const tag of group.tags) {
+    for (const tag of content.tags) {
       const id = uuidV7()
       const when = at(tag.createdAgo)
       await db.tag.create({ id, groupId, name: tag.name, color: tag.color }, writer(tag.author))
@@ -317,7 +315,7 @@ async function seedGroups(
       await dateAudit(sql, id, when)
       tagIds.set(tag.name, id)
     }
-    for (const note of group.notes) {
+    for (const note of content.notes) {
       const id = uuidV7()
       const when = at(note.createdAgo)
       const author = writer(note.author)
@@ -363,7 +361,7 @@ async function seedGroups(
       }
       await dateAudit(sql, id, when)
     }
-    for (const invitation of group.invitations) {
+    for (const invitation of content.invitations) {
       const made = await invitations.create(
         {
           groupId,
