@@ -96,7 +96,7 @@ export default {
   "NewsletterPage.subscribeDescription":
     "Короткое письмо, когда в {site} что-то меняется: что вышло, что сломалось и чему я научился по ходу. Подписка с подтверждением, отписка в один клик.",
   "NewsletterPage.about": "О рассылке",
-  "NewsletterPage.heading": "Короткое письмо, когда у {site} появляются новости",
+  "NewsletterPage.heading": "Получайте короткое письмо, когда у {site} появляются новости",
   "NewsletterPage.lead":
     "Что вышло, что сломалось и чему я научился по ходу. Пишу сам. Других писем не будет.",
   "NewsletterPage.promiseConfirm":
@@ -254,7 +254,7 @@ export default {
   "HomeWho.about": "Обо мне",
   "HomeWho.upwork": "Профиль на Upwork",
   "HomeWho.issues": "Issues на GitHub",
-  "HomeNewsletter.title": "Короткое письмо, когда у {site} появляются новости",
+  "HomeNewsletter.title": "Получайте короткое письмо, когда у {site} появляются новости",
   "HomeNewsletter.lead":
     "Что вышло, что сломалось и чему я научился по ходу. Других писем не будет, а отписаться можно в один клик.",
   "HomeNewsletter.hint": "Сначала нужно будет подтвердить подписку по почте.",

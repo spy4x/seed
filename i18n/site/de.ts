@@ -97,7 +97,7 @@ export default {
   "Unsubscribe.submit": "Abbestellen",
   "NewsletterPage.title": "Newsletter",
   "NewsletterPage.description": "Bestätige oder beende dein Abo des {site}-Newsletters.",
-  "NewsletterPage.subscribeTitle": "{site}-Newsletter: kurze Neuigkeiten per E-Mail",
+  "NewsletterPage.subscribeTitle": "Newsletter von {site}: kurze Neuigkeiten per E-Mail",
   "NewsletterPage.subscribeDescription":
     "Eine kurze E-Mail, wenn sich bei {site} etwas tut: was neu ist, was kaputtging und was ich beim Bauen gelernt habe. Mit Double-Opt-in, Abbestellen mit einem Klick.",
   "NewsletterPage.about": "Über den Newsletter",

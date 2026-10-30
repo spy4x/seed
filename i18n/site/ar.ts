@@ -93,7 +93,7 @@ export default {
   "NewsletterPage.subscribeDescription":
     "رسالة قصيرة كلما تغيّر {site}: ما أُطلق، وما تعطّل، وما تعلّمته أثناء بنائه. تأكيد مزدوج للاشتراك، وإلغاؤه بنقرة واحدة.",
   "NewsletterPage.about": "عن النشرة البريدية",
-  "NewsletterPage.heading": "تلقَّ رسالة قصيرة كلما كان لدى {site} جديد",
+  "NewsletterPage.heading": "تلقَّ رسالة قصيرة كلما جدّ جديد في {site}",
   "NewsletterPage.lead": "ما أُطلق، وما تعطّل، وما تعلّمته أثناء البناء، بقلمي. ولا شيء غير ذلك.",
   "NewsletterPage.promiseConfirm": "تؤكد اشتراكك أولًا عبر رابط، فلا يستطيع أحد غيرك أن يشركك.",
   "NewsletterPage.promiseUnsubscribe": "في كل رسالة رابط يلغي اشتراكك بنقرة واحدة.",
@@ -247,7 +247,7 @@ export default {
   "HomeWho.about": "عني",
   "HomeWho.upwork": "ملفي على Upwork",
   "HomeWho.issues": "المشكلات على GitHub",
-  "HomeNewsletter.title": "تلقَّ رسالة قصيرة كلما كان لدى {site} جديد",
+  "HomeNewsletter.title": "تلقَّ رسالة قصيرة كلما جدّ جديد في {site}",
   "HomeNewsletter.lead":
     "ما أُطلق، وما تعطّل، وما تعلّمته أثناء البناء. لا رسائل غير ذلك، ويمكنك إلغاء الاشتراك بنقرة واحدة.",
   "HomeNewsletter.hint": "ستؤكد اشتراكك عبر البريد أولًا.",
