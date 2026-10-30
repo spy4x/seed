@@ -275,7 +275,7 @@ describe("ProfileView", () => {
       await settle()
       await act(() => root!.querySelector<HTMLElement>("[data-e2e=password-open]")!.click())
 
-      expect(root!.querySelector("[data-e2e=password-new]")).toBe(null)
+      expect(root!.querySelectorAll("[data-e2e=password-new]").length).toBe(0)
       await act(() => root!.querySelector<HTMLElement>("[data-e2e=password-add-email]")!.click())
       await settle()
 
