@@ -180,9 +180,11 @@ describe("the contact links list", () => {
     expect(calls).toEqual([["remove", LINKS[1].id]])
   })
 
-  it("says there are no links yet and offers to add one", async () => {
+  it("says there are no links yet under an icon tile", async () => {
     await mount(<AdminContactLinksScreen {...listProps([], { links: [] })} />)
     expect(document.body.textContent).toContain("No contact links yet")
+    const tile = find("h2").parentElement?.querySelector("[aria-hidden=true] svg")
+    expect(tile).not.toBeNull()
   })
 
   it("says the list failed in its own words and tries again", async () => {
@@ -249,6 +251,52 @@ describe("the contact link editor", () => {
     const described = field.getAttribute("aria-describedby") ?? ""
     expect(described.split(" ").map((id) => document.getElementById(id)?.textContent).join(" "))
       .toContain("Enter a Telegram username.")
+  })
+
+  it("describes a field by its error alone while one shows, and by its hint again once it goes", async () => {
+    const value = { kind: "email" as const, value: "nope", label: "x" }
+    const descriptions = (selector: string) =>
+      (find(selector).getAttribute("aria-describedby") ?? "").split(" ").filter(Boolean)
+        .map((id) => document.getElementById(id)?.textContent)
+    await mount(
+      <AdminContactLinkEditorScreen
+        {...editorProps([], {
+          value,
+          errors: {
+            value: "Enter an email address, such as hello@example.com.",
+            label: "Too long.",
+          },
+        })}
+      />,
+    )
+    expect(descriptions("[data-e2e=contact-link-value]"))
+      .toEqual(["Enter an email address, such as hello@example.com."])
+    expect(descriptions("[data-e2e=contact-link-label]")).toEqual(["Too long."])
+    expect(document.body.textContent).not.toContain("Such as")
+    expect(document.body.textContent).not.toContain("Shown instead of")
+
+    await mount(<AdminContactLinkEditorScreen {...editorProps([], { value })} />)
+    expect(descriptions("[data-e2e=contact-link-value]")).toEqual(["Such as hello@example.com"])
+    expect(descriptions("[data-e2e=contact-link-label]"))
+      .toEqual(['Shown instead of the address, such as "Email us".'])
+  })
+
+  it("suggests a label that fits the channel", async () => {
+    const hints: Record<string, string> = {
+      telegram: 'Shown instead of the value, such as "Order on Telegram".',
+      phone: 'Shown instead of the number, such as "Call to order".',
+      email: 'Shown instead of the address, such as "Email us".',
+      url: 'Shown instead of the address, such as "Order online".',
+    }
+    for (const [kind, hint] of Object.entries(hints)) {
+      await mount(
+        <AdminContactLinkEditorScreen
+          {...editorProps([], { value: { kind: kind as "phone", value: "", label: "" } })}
+        />,
+      )
+      const ids = find("[data-e2e=contact-link-label]").getAttribute("aria-describedby") ?? ""
+      expect(ids.split(" ").map((id) => document.getElementById(id)?.textContent)).toEqual([hint])
+    }
   })
 })
 

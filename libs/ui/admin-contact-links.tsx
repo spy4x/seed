@@ -1,6 +1,6 @@
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
-import { IconEllipsisVertical, IconPlus } from "@spy4x/preact-icons"
+import { IconChatBubble, IconEllipsisVertical, IconPlus } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
@@ -46,6 +46,13 @@ const VALUE_FIELDS: Record<ContactKind, { label: string; example: string; inputM
   phone: { label: `AdminContactLinks.phone`, example: `+84912345678`, inputMode: `tel` },
   email: { label: `AdminContactLinks.email`, example: `hello@example.com`, inputMode: `email` },
   url: { label: `AdminContactLinks.address`, example: `https://example.com`, inputMode: `url` },
+}
+
+/** The label field's hint (a catalog key): a number or an address has a hint of its own. */
+const LABEL_HINTS: Partial<Record<ContactKind, string>> = {
+  phone: `AdminContactLinks.labelHintPhone`,
+  email: `AdminContactLinks.labelHintEmail`,
+  url: `AdminContactLinks.labelHintUrl`,
 }
 
 /** A value inside a sentence: code-like, isolated, never machine-translated. */
@@ -130,6 +137,7 @@ export function AdminContactLinksScreen(props: AdminContactLinksScreenProps): JS
           : links.length === 0
           ? (
             <ListEmpty
+              icon={<IconChatBubble class="size-8" aria-hidden="true" />}
               title={t.t(`AdminContactLinks.none`)}
               description={t.t(`AdminContactLinks.noneHint`)}
               action={
@@ -247,7 +255,7 @@ function RemoveDialog(
           value={contactLinkText(link)}
         />
       }
-      message={t.t(`AdminContactLinks.removeText`, { kind: CONTACT_KIND_NAMES[link.kind] })}
+      message={t.t(`AdminContactLinks.removeText`)}
       confirmLabel={t.t(`AdminContactLinks.remove`)}
       cancelLabel={t.t(`AdminContactLinks.cancel`)}
       tone="danger"
@@ -337,6 +345,9 @@ export function AdminContactLinkEditorScreen(
 
   const field = VALUE_FIELDS[value.kind]
   const normalized = normalizeContactValue(value.kind, value.value)
+  const labelHint = LABEL_HINTS[value.kind]
+    ? t.t(LABEL_HINTS[value.kind]!)
+    : t.t(`AdminContactLinks.labelHint`, { kind: CONTACT_KIND_NAMES[value.kind] })
   const opens = normalized !== `` && contactValueProblem(value.kind, normalized) === null
     ? contactHref(value.kind, normalized)
     : null
@@ -375,7 +386,8 @@ export function AdminContactLinkEditorScreen(
           <Field
             id="contact-link-value"
             label={t.t(field.label)}
-            hint={opens
+            // While an error shows, it alone describes the field: it already names an example.
+            hint={errors.value ? undefined : opens
               ? (
                 <Rich
                   parts={t.parts(`AdminContactLinks.opens`, { href: opens })}
@@ -405,7 +417,7 @@ export function AdminContactLinkEditorScreen(
           <Field
             id="contact-link-label"
             label={t.t(`AdminContactLinks.label`)}
-            hint={t.t(`AdminContactLinks.labelHint`, { kind: CONTACT_KIND_NAMES[value.kind] })}
+            hint={errors.label ? undefined : labelHint}
             error={errors.label}
           >
             <Input

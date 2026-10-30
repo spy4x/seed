@@ -51,6 +51,24 @@ it(`refuses a wrong value under its field before it asks the API`, async () => {
   expect(calls).toEqual([])
 })
 
+it(`drops an error once its field is edited, and keeps the other field's`, async () => {
+  const { state } = build()
+  state.open(null)
+  state.edit({ kind: `telegram`, value: `my shop`, label: `` })
+  await state.save()
+  const refused = state.editor.value.errors.value
+  state.editor.value = { ...state.editor.value, errors: { value: refused, label: `Too long.` } }
+
+  state.edit({ kind: `telegram`, value: `my shop`, label: `Order` })
+  expect(state.editor.value.errors).toEqual({ value: refused })
+  state.edit({ kind: `telegram`, value: `my_shop`, label: `Order` })
+  expect(state.editor.value.errors).toEqual({})
+
+  state.editor.value = { ...state.editor.value, errors: { value: refused } }
+  state.edit({ kind: `zalo`, value: `my_shop`, label: `Order` })
+  expect(state.editor.value.errors).toEqual({})
+})
+
 it(`adds a link under a new id, then reads the list again with nothing left unsaved`, async () => {
   const { state, calls } = build()
   state.open(null)
