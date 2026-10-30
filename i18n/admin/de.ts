@@ -481,7 +481,7 @@ export default {
   "AdminBlogDialogs.publishTitle": "„{title}“ veröffentlichen?",
   "AdminBlogDialogs.when": "Wann?",
   "AdminBlogDialogs.now": "Sofort",
-  "AdminBlogDialogs.atATime": "Zu einem Zeitpunkt",
+  "AdminBlogDialogs.whenSchedule": "Später",
   "AdminBlogDialogs.dateTime": "Datum und Uhrzeit",
   "AdminBlogDialogs.liveOnItsOwn": "Der Beitrag erscheint dann automatisch.",
   "AdminBlogDialogs.goesLiveAt":
@@ -574,6 +574,8 @@ export default {
     "Nach der Veröffentlichung gesperrt. Ändern lässt er sich über „URL ändern …“; alte Links funktionieren dann nicht mehr.",
   "AdminBlogEditor.slugHint":
     "Die URL des Beitrags: <path>{path}</path>. Kleinbuchstaben, Ziffern und Bindestriche.",
+  "AdminBlogEditor.slugHintEmpty":
+    "Wird automatisch aus dem Titel erzeugt. Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogEditor.description": "Beschreibung",
   "AdminBlogEditor.descriptionHint": "Ein, zwei Sätze für Suchergebnisse und Linkvorschauen.",
   "AdminBlogEditor.seoTitle": "SEO-Titel (optional)",
@@ -589,7 +591,7 @@ export default {
     "Ordnet Beiträge auf der Blogseite. Wähle eines aus oder tippe ein neues ein.",
   "AdminBlogEditor.coverUrl": "URL des Titelbilds",
   "AdminBlogEditor.coverUrlHint":
-    "Ein vollständiger https://-Link zu einem Bild im Querformat, 1200 × 630. Leer lassen für kein Titelbild.",
+    "Ein vollständiger https://-Link zu einem Bild im Querformat (1200 × 630) auf einem Server, der das Einbinden auf anderen Websites erlaubt. Für einen Beitrag ohne Titelbild einfach leer lassen.",
   "AdminBlogEditor.coverAlt": "Beschreibung des Titelbilds",
   "AdminBlogEditor.coverAltHint": "Was das Bild zeigt, für Menschen, die es nicht sehen können.",
   "AdminBlogEditor.coverPrivacy":
@@ -903,8 +905,7 @@ export default {
   "AdminContactLinks.email": "E-Mail-Adresse",
   "AdminContactLinks.address": "Adresse",
   "AdminContactLinks.title": "Kontaktlinks",
-  "AdminContactLinks.subtitle":
-    "Wo man dich erreicht. Der Footer der Website listet sie in dieser Reihenfolge.",
+  "AdminContactLinks.subtitle": "In dieser Reihenfolge im Footer der Website.",
   "AdminContactLinks.listError":
     "Die Kontaktlinks konnten nicht geladen werden. Versuche es gleich noch einmal.",
   "AdminContactLinks.addLink": "Link hinzufügen",
@@ -920,7 +921,7 @@ export default {
   "AdminContactLinks.remove": "Link entfernen",
   "AdminContactLinks.removeTitle": "„{name}“ entfernen?",
   "AdminContactLinks.removeText":
-    "Die Website zeigt diesen {kind}-Link in spätestens einer Minute nicht mehr.",
+    "Spätestens in einer Minute verschwindet der Link von der Website.",
   "AdminContactLinks.cancel": "Abbrechen",
   "AdminContactLinks.back": "Zurück zu den Kontaktlinks",
   "AdminContactLinks.link": "Kontaktlink",
@@ -933,6 +934,11 @@ export default {
   "AdminContactLinks.suchAs": "Zum Beispiel <example>{example}</example>",
   "AdminContactLinks.label": "Beschriftung (optional)",
   "AdminContactLinks.labelHint": "Wird statt des Werts gezeigt, etwa „Über {kind} bestellen“.",
+  "AdminContactLinks.labelHintPhone":
+    "Wird statt der Nummer angezeigt, etwa „Telefonisch bestellen“.",
+  "AdminContactLinks.labelHintEmail":
+    "Wird statt der E-Mail-Adresse angezeigt, etwa „Kontakt per E-Mail“.",
+  "AdminContactLinks.labelHintUrl": "Wird statt der Webadresse angezeigt, etwa „Online bestellen“.",
   "AdminContactLinks.saving": "Wird gespeichert …",
   "AdminContactLinks.save": "Link speichern",
   "AdminDashboard.title": "Dashboard",
@@ -1387,12 +1393,15 @@ export default {
   "AdminJobs.noRepeats": "Keine wiederkehrenden Jobs",
   "AdminJobs.noRepeatsHint": "Ein Job wiederholt sich, sobald seine Definition einen Zeitplan hat.",
   "AdminJobs.retryAllTitle": {
-    "one": "{count} fehlgeschlagenen Job neu starten?",
+    "one": "Diesen fehlgeschlagenen Job neu starten?",
     "other": "{count} fehlgeschlagene Jobs neu starten?",
   },
   "AdminJobs.runNowTitle": "Job jetzt starten?",
   "AdminJobs.runAgain": "Neu starten",
-  "AdminJobs.retryAllText": "Jeder läuft noch einmal, mit frischen Versuchen.",
+  "AdminJobs.retryAllText": {
+    "one": "Er läuft noch einmal und bekommt wieder alle Versuche.",
+    "other": "Jeder läuft noch einmal und bekommt wieder alle Versuche.",
+  },
   "AdminJobs.runsNowInstead":
     "<job>{job}</job> läuft jetzt statt am <at></at>. Ein wiederkehrender Job behält danach seinen Zeitplan.",
   "AdminJobs.runsNow":

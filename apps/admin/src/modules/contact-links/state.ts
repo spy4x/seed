@@ -77,8 +77,16 @@ export function createContactLinksState(
       }
     },
 
+    /**
+     * Takes the fields as typed. An edited field's error goes, since it may no longer hold: a new
+     * value or kind drops the value's, a new label the label's. The next save checks again.
+     */
     edit(value: ContactLinkFormValue): void {
-      editor.value = { ...editor.value, value }
+      const open = editor.value
+      const errors = { ...open.errors }
+      if (value.value !== open.value.value || value.kind !== open.value.kind) delete errors.value
+      if (value.label !== open.value.label) delete errors.label
+      editor.value = { ...open, value, errors }
     },
 
     /** Whether the fields hold something not saved, for the guard that asks before leaving. */

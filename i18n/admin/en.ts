@@ -470,7 +470,7 @@ export default {
   "AdminBlogDialogs.publishTitle": 'Publish "{title}"?',
   "AdminBlogDialogs.when": "When",
   "AdminBlogDialogs.now": "Now",
-  "AdminBlogDialogs.atATime": "At a time",
+  "AdminBlogDialogs.whenSchedule": "Schedule",
   "AdminBlogDialogs.dateTime": "Date and time",
   "AdminBlogDialogs.liveOnItsOwn": "It goes live automatically at that time.",
   "AdminBlogDialogs.goesLiveAt":
@@ -555,6 +555,8 @@ export default {
     "Locked once published. Use Change URL… to change it; old links will break.",
   "AdminBlogEditor.slugHint":
     "The post's URL: <path>{path}</path>. Lowercase letters, digits and hyphens.",
+  "AdminBlogEditor.slugHintEmpty":
+    "Filled in from the title. Lowercase letters, digits and hyphens.",
   "AdminBlogEditor.description": "Description",
   "AdminBlogEditor.descriptionHint": "One or two sentences for search results and link previews.",
   "AdminBlogEditor.seoTitle": "SEO title (optional)",
@@ -569,7 +571,7 @@ export default {
   "AdminBlogEditor.topicHint": "Groups posts on the blog page. Pick one or type a new one.",
   "AdminBlogEditor.coverUrl": "Cover image URL",
   "AdminBlogEditor.coverUrlHint":
-    "A full https:// link to a wide image, 1200×630. Leave empty for no cover.",
+    "A full https:// link to a wide image, 1200×630, on a host that lets other sites show it. Leave empty for no cover.",
   "AdminBlogEditor.coverAlt": "Cover description",
   "AdminBlogEditor.coverAltHint": "What the image shows, for people who can't see it.",
   "AdminBlogEditor.coverPrivacy":
@@ -868,8 +870,7 @@ export default {
   "AdminContactLinks.email": "Email address",
   "AdminContactLinks.address": "Address",
   "AdminContactLinks.title": "Contact links",
-  "AdminContactLinks.subtitle":
-    "Where people reach you. The website's footer lists them in this order.",
+  "AdminContactLinks.subtitle": "Shown in the website's footer, in this order.",
   "AdminContactLinks.listError": "Couldn't load contact links. Try again in a moment.",
   "AdminContactLinks.addLink": "Add link",
   "AdminContactLinks.retry": "Try again",
@@ -883,7 +884,7 @@ export default {
   "AdminContactLinks.moveDown": "Move down",
   "AdminContactLinks.remove": "Remove link",
   "AdminContactLinks.removeTitle": 'Remove "{name}"?',
-  "AdminContactLinks.removeText": "The website stops showing this {kind} link within a minute.",
+  "AdminContactLinks.removeText": "The website stops showing this link within a minute.",
   "AdminContactLinks.cancel": "Cancel",
   "AdminContactLinks.back": "Back to contact links",
   "AdminContactLinks.link": "Contact link",
@@ -896,6 +897,9 @@ export default {
   "AdminContactLinks.suchAs": "Such as <example>{example}</example>",
   "AdminContactLinks.label": "Label (optional)",
   "AdminContactLinks.labelHint": 'Shown instead of the value, such as "Order on {kind}".',
+  "AdminContactLinks.labelHintPhone": 'Shown instead of the number, such as "Call to order".',
+  "AdminContactLinks.labelHintEmail": 'Shown instead of the address, such as "Email us".',
+  "AdminContactLinks.labelHintUrl": 'Shown instead of the address, such as "Order online".',
   "AdminContactLinks.saving": "Saving…",
   "AdminContactLinks.save": "Save link",
   "AdminDashboard.title": "Dashboard",
@@ -1337,12 +1341,15 @@ export default {
   "AdminJobs.noRepeats": "No job repeats",
   "AdminJobs.noRepeatsHint": "A job repeats once its definition has a schedule.",
   "AdminJobs.retryAllTitle": {
-    "one": "Run {count} failed job again?",
+    "one": "Run this failed job again?",
     "other": "Run {count} failed jobs again?",
   },
   "AdminJobs.runNowTitle": "Run this job now?",
   "AdminJobs.runAgain": "Run again",
-  "AdminJobs.retryAllText": "Each runs once more with a fresh set of attempts.",
+  "AdminJobs.retryAllText": {
+    "one": "It runs once more with a fresh set of attempts.",
+    "other": "Each runs once more with a fresh set of attempts.",
+  },
   "AdminJobs.runsNowInstead":
     "<job>{job}</job> runs now instead of at <at></at>. A repeating job keeps its schedule after this run.",
   "AdminJobs.runsNow":

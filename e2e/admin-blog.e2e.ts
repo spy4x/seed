@@ -58,12 +58,17 @@ test("an operator writes, previews, schedules, publishes and deletes a post from
     await ops.keyboard.press("c")
     await expect(ops).toHaveURL(`${adminBase}/blog/new`)
 
+    // An empty post shows no reading time; it appears with the first word.
+    const words = ops.locator("[data-e2e=admin-blog-words]")
+    await expect(words).toHaveCount(0)
+
     // The title gives the slug; Ctrl S saves, and the page moves to the post's own address.
     await ops.locator("[data-e2e=admin-blog-title-field]").fill(title)
     await expect(ops.locator("[data-e2e=admin-blog-slug]")).toHaveValue(slug)
     await ops.locator("[data-e2e=admin-blog-body]").fill(
       "## Why\n\nIt is **fast**.\n\n<script>window.hacked = true</script>",
     )
+    await expect(words).toContainText("min read")
     await ops.locator("[data-e2e=admin-blog-description]").fill("A post written from the keys.")
     await ops.getByRole("button", { name: "Add point" }).click()
     await ops.getByLabel("Key point 1", { exact: true }).fill("Written from the keys")
@@ -109,7 +114,7 @@ test("an operator writes, previews, schedules, publishes and deletes a post from
 
     // Scheduled for a time ahead.
     await ops.locator("[data-e2e=admin-blog-publish]").click()
-    await ops.getByRole("radio", { name: "At a time" }).check()
+    await ops.getByRole("radio", { name: "Schedule" }).check()
     await ops.getByLabel("Date and time").fill("2031-03-04T10:00")
     await ops.getByRole("button", { name: "Schedule" }).click()
     await expect(ops.locator("[data-e2e=toasts]")).toContainText("Scheduled for")
