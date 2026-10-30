@@ -185,6 +185,7 @@ async function waitForLockWaiters(sql: postgres.Sql, count: number): Promise<voi
     const [{ waiting }] = await sql<{ waiting: number }[]>`
       SELECT count(*)::int AS waiting FROM pg_stat_activity
       WHERE datname = current_database() AND wait_event_type = 'Lock'
+        AND application_name = current_setting('application_name')
     `
     if (waiting >= count) return
     await new Promise((resolve) => setTimeout(resolve, 100))
