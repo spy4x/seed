@@ -10,7 +10,12 @@ import {
 } from "@ui/profile-screen.tsx"
 import type { AccountDeleteErrors, AccountDeleteValues } from "@ui/account-delete.tsx"
 import { EMAIL_FAILURES, type EmailMessages, type EmailValues } from "@ui/email-screen.tsx"
-import { isProfileSection, type ProfileSectionId, SCREEN_PATHS } from "@ui/progressive.tsx"
+import {
+  isProfileSection,
+  profilePath,
+  type ProfileSectionId,
+  SCREEN_PATHS,
+} from "@ui/progressive.tsx"
 import { TwoFactorProof } from "@ui/two-factor.ts"
 import { OAUTH_NOTICE_KEYS, say } from "@ui/message.ts"
 import { useAppText } from "@ui/i18n.ts"
@@ -43,6 +48,7 @@ import {
   authPasswordSchema,
   authPasswordSetSchema,
   emailToVerify,
+  hasPasswordAddress,
   OAUTH_NOTICE_PARAM,
   oauthNotice,
   UserMFAStatus,
@@ -163,6 +169,13 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     providerProofOf(methods.methods.value, providerProofFresh, methods.emailLink.value),
     methods,
   )
+
+  // An account with no password and no proven address: a first password would be refused, so its
+  // dialog says the address comes first (#463). Unknown status shows the form; the API decides.
+  const emailStatus = emailStore.status.value
+  const passwordNeedsEmail = providerProof && emailStatus && !hasPasswordAddress(emailStatus)
+    ? { pending: emailStatus.pending }
+    : null
 
   /** Reads the signed-in devices again; a failure shows above the list and keeps the old one. */
   const loadDevices = () => devices.load()
@@ -374,13 +387,13 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       values.newPassword,
       twoFactor ? values.passwordOtp : undefined,
     )
+    // The refusal is set in the same render that ends the wait: the dialog closes on a wait that
+    // ends without an error, so an error set after the read below came too late (#463).
+    if (!result.ok) setPasswordError(result.error || t.t(PROFILE_FAILURES.passwordSet))
     setBusyPassword(false)
     // Read again either way: a refusal may mean the provider sign-in is no longer recent.
     await methods.load()
-    if (!result.ok) {
-      setPasswordError(result.error || t.t(PROFILE_FAILURES.passwordSet))
-      return
-    }
+    if (!result.ok) return
     setValues((current) => ({ ...current, newPassword: "", passwordOtp: "" }))
     toasts.success({
       title: t.t(`ProfileView.passwordSet`),
@@ -627,7 +640,11 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
         },
       }}
       openEmailCode={new URLSearchParams(search).has("verify")}
+      openEmailAddress={new URLSearchParams(search).has("email")}
       onSetPassword={submitFirstPassword}
+      passwordNeedsEmail={passwordNeedsEmail}
+      onAddEmail={() => navigate(`${profilePath("account")}?email`)}
+      onEnterEmailCode={() => navigate(`${profilePath("account")}?verify`)}
       providerProofFresh={providerProofFresh}
       providerProof={providerProof}
       isMfaRequired={session.isMfaRequired}

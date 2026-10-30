@@ -109,6 +109,7 @@ import {
   AuthAuditEventType,
   type EmailStatus,
   emailToVerify,
+  hasPasswordAddress,
   SIGN_IN_LINK_METHOD,
   type SignedInDevice,
   type User,
@@ -1647,13 +1648,10 @@ export function createSignIn(options: SignInOptions): SignIn {
           // Two requests at once: the second reads the key the first one added.
           await tx.lockUser(user.id)
           if (await passwordKeyOf(tx.authStore, user.id)) return PasswordSetOutcome.AlreadySet
-          const { email, pending } = await readEmailStatus(
-            tx.emailChange,
-            tx.authStore,
-            user.id,
-          )
+          const status = await readEmailStatus(tx.emailChange, tx.authStore, user.id)
           // The password needs a name to sign in with, and the account's address is the only one.
-          if (email === null) return PasswordSetOutcome.NoAddress
+          if (!hasPasswordAddress(status)) return PasswordSetOutcome.NoAddress
+          const { email, pending } = status
           // Proven: the address read above is one a provider vouched for or a code proved.
           await tx.authStore.addKey(user.id, {
             method: PASSWORD_METHOD,

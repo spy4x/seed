@@ -989,6 +989,74 @@ describe("ProfileScreen for an account without a password", () => {
     expect(code.labels?.[0]?.textContent).toContain("Code from your authenticator app")
   })
 
+  for (
+    const [state, pending, label, called, text] of [
+      [
+        "no address",
+        null,
+        "Add email",
+        "add",
+        "this account has no email yet. Add one first",
+      ],
+      [
+        "an address waiting for its code",
+        "ada@example.com",
+        "Enter code",
+        "code",
+        "Confirm ada@example.com first with the code we sent there",
+      ],
+    ] as const
+  ) {
+    it(`asks for no password or code with ${state}, only for the address first (#463)`, async () => {
+      const asked: string[] = []
+      await mount(
+        <ProfileScreen
+          {...profile}
+          user={{ ...profile.user!, mfa: UserMFAStatus.CONFIGURED }}
+          methods={methodsProps([], { methods: [onlyGoogle] })}
+          providerProofFresh
+          passwordNeedsEmail={{ pending }}
+          onSetPassword={() => void asked.push("set")}
+          onAddEmail={() => void asked.push("add")}
+          onEnterEmailCode={() => void asked.push("code")}
+        />,
+      )
+
+      await click("[data-e2e=password-open]")
+
+      expect(isOpen("password-dialog")).toBe(true)
+      const dialog = find("dialog[data-e2e=password-dialog]")
+      expect(dialog.querySelectorAll("form, input").length).toBe(0)
+      expect(dialog.querySelectorAll("[data-e2e=provider-proof-fresh]").length).toBe(0)
+      const reason = find(`#${dialog.getAttribute("aria-describedby")}`)
+      expect(reason.textContent).toContain(text)
+      expect(focused()).toBe("password-add-email")
+      expect(find("[data-e2e=password-add-email]").textContent).toBe(label)
+
+      await click("[data-e2e=password-add-email]")
+
+      expect(asked).toEqual([called])
+      expect(isOpen("password-dialog")).toBe(false)
+    })
+  }
+
+  it("asks a stale provider sign-in for no new one while the address is missing (#463)", async () => {
+    await mount(
+      <ProfileScreen
+        {...profile}
+        methods={methodsProps([], { methods: [onlyGoogle] })}
+        providerProofFresh={false}
+        passwordNeedsEmail={{ pending: null }}
+        onSetPassword={() => {}}
+      />,
+    )
+
+    await click("[data-e2e=password-open]")
+
+    expect(document.querySelectorAll("[data-e2e=password-add-email]").length).toBe(1)
+    expect(document.querySelectorAll("[data-e2e=provider-proof-needed]").length).toBe(0)
+  })
+
   it("hands the account's proof to the link buttons, so an old sign-in links nothing", async () => {
     const asked: (string | number)[] = []
     await mount(

@@ -1291,6 +1291,11 @@ export default {
   "ProfileSecurity.setTitle": "Set a password",
   "ProfileSecurity.changeTitle": "Change password",
   "ProfileSecurity.setText": "Add a password to also sign in with your email.",
+  "ProfileSecurity.setNeedsEmail":
+    "You sign in with a password and your email, and this account has no email yet. Add one first, then come back here to set a password.",
+  "ProfileSecurity.setNeedsCode":
+    "You sign in with a password and your email. Confirm <email>{email}</email> first with the code we sent there, then come back here to set a password.",
+  "ProfileSecurity.addEmail": "Add email",
   "ProfileSecurity.codeFromAuthenticator": "Code from your authenticator app",
   "ProfileSecurity.updating": "Updating…",
   "ProfileSecurity.setButton": "Set password",

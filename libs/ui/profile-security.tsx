@@ -56,6 +56,16 @@ export interface SecuritySectionProps {
   providerOnly: string | null
   /** What an account with no password confirms a first password and two-factor with. */
   providerProof: ProviderProof | null
+  /**
+   * Set while an account with no password has no proven address, so a first password would be
+   * refused: the "Set a password" dialog says an address comes first instead of its form (#463).
+   * `pending` is the address that waits for its code, or `null` when there is none.
+   */
+  passwordNeedsEmail?: { pending: string | null } | null
+  /** "Add email" in that dialog: the app opens the address step of the Account section. */
+  onAddEmail?: () => void
+  /** "Enter code" in that dialog: the app opens the code step of the Account section. */
+  onEnterEmailCode?: () => void
   onChangePassword?: () => void
   onSetPassword?: () => void
   onCancelPassword?: () => void
@@ -90,6 +100,7 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
     enrolment,
     providerOnly,
     providerProof,
+    passwordNeedsEmail,
     signOutOthers,
     onSignOutOthersChange,
     methods,
@@ -112,6 +123,7 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
   const enableButton = useRef<HTMLButtonElement>(null)
   const disableButton = useRef<HTMLButtonElement>(null)
   const [changingPassword, setChangingPassword] = useState(false)
+  const addEmailButton = useRef<HTMLButtonElement>(null)
   const [confirmingEnable, setConfirmingEnable] = useState(false)
   const [confirmingDisable, setConfirmingDisable] = useState(false)
   const cancelPassword = () => {
@@ -158,6 +170,19 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
     if (step === TwoFactorStep.Disable) disableButton.current?.focus()
   }, [step])
 
+  // Only for an account with no password: one with a password changes it and needs no address.
+  const needsEmail = providerProof ? passwordNeedsEmail : null
+  // The way to the address is the dialog's one next step: it takes focus. The effect waits a
+  // microtask, as the New note dialog's does: it runs before `Modal` shows the dialog.
+  const needsEmailShown = changingPassword && needsEmail ? needsEmail.pending ?? `` : null
+  useEffect(() => {
+    if (needsEmailShown === null) return
+    let live = true
+    queueMicrotask(() => live && addEmailButton.current?.focus())
+    return () => {
+      live = false
+    }
+  }, [needsEmailShown])
   const qrSrc = enrolment?.qrcode ? svgToDataUrl(enrolment.qrcode) : null
   const passwordAction = (
     <Button
@@ -266,8 +291,47 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
         title={t.t(providerProof ? `ProfileSecurity.setTitle` : `ProfileSecurity.changeTitle`)}
         cancelLabel={close}
         dataE2E="password-dialog"
+        ariaDescribedBy={needsEmail ? `password-needs-email` : undefined}
       >
-        {providerProof && !providerProof.fresh
+        {needsEmail
+          ? (
+            // Before the provider proof: nobody is sent to sign in again for a password that
+            // would be refused.
+            <Stack>
+              <p id="password-needs-email" class="text-sm text-muted">
+                {needsEmail.pending === null ? t.t(`ProfileSecurity.setNeedsEmail`) : (
+                  <Rich
+                    parts={t.parts(`ProfileSecurity.setNeedsCode`, { email: needsEmail.pending })}
+                    tags={{
+                      email: (text) => <span class="wrap-anywhere" translate={false}>{text}</span>,
+                    }}
+                  />
+                )}
+              </p>
+              <DialogActions>
+                <Button type="button" variant="ghost" onClick={cancelPassword}>{close}</Button>
+                <Button
+                  type="button"
+                  ref={addEmailButton}
+                  data-e2e="password-add-email"
+                  autofocus
+                  onClick={() => {
+                    // Closed first: the app moves to the Account section, whose dialog takes over.
+                    setChangingPassword(false)
+                    if (needsEmail.pending === null) props.onAddEmail?.()
+                    else props.onEnterEmailCode?.()
+                  }}
+                >
+                  {t.t(
+                    needsEmail.pending === null
+                      ? `ProfileSecurity.addEmail`
+                      : `ProfileAccount.enterCode`,
+                  )}
+                </Button>
+              </DialogActions>
+            </Stack>
+          )
+          : providerProof && !providerProof.fresh
           ? (
             <Stack>
               <ProviderProofNotice proof={providerProof} next={HERE} />

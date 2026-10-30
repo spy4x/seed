@@ -1101,6 +1101,7 @@ ProfileScreen.totpDisableFailed	3b9e9c3e9746eeaa
 ProfileScreen.totpFinishFailed	e9b32de46c219c91
 ProfileScreen.twoFactorOff	9c48fd9d3ac408d3
 ProfileScreen.twoFactorOn	06e937a3e0e17076
+ProfileSecurity.addEmail	bfe6b5725f300b5b
 ProfileSecurity.app	09a12ace273fb7ba
 ProfileSecurity.changePasswordHidden	d7b769f2d8f32442
 ProfileSecurity.changeTitle	3f9c991f63a9a376
@@ -1116,6 +1117,8 @@ ProfileSecurity.preparing	5d1fa38bcf0d88ca
 ProfileSecurity.qr	def58af9fd6b3bf5
 ProfileSecurity.scan	fa463b2dc4091d38
 ProfileSecurity.setButton	4e4116871bf1515d
+ProfileSecurity.setNeedsCode	b4fd6135b20d0972
+ProfileSecurity.setNeedsEmail	03ecc4ee0821b3e3
 ProfileSecurity.setPasswordHidden	f1af8bae65b1220a
 ProfileSecurity.setText	b8cf3c493e2eeec8
 ProfileSecurity.setTitle	1b10004d07d810b0

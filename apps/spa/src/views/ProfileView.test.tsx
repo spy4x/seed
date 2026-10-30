@@ -13,7 +13,12 @@ import { render, type VNode } from "preact"
 import { Route, Router } from "wouter-preact"
 import { memoryLocation } from "wouter-preact/memory-location"
 import { act } from "preact/test-utils"
-import { type OnboardingStatus, UserMFAStatus, UserRole } from "@domain/identity"
+import {
+  type OnboardingStatus,
+  type SignInMethodsResponse,
+  UserMFAStatus,
+  UserRole,
+} from "@domain/identity"
 import { emailStore } from "../state/email.ts"
 import { onboardingStore } from "../state/onboarding.ts"
 import { sessionState } from "../state/session.ts"
@@ -31,6 +36,7 @@ const NAMES = [
   "Element",
   "fetch",
   "CSS",
+  "FormData",
 ] as const
 const own = Object.fromEntries(
   NAMES.map((name) => [name, (globalThis as Record<string, unknown>)[name]]),
@@ -122,6 +128,9 @@ const ROUTED = (
   </Route>
 )
 
+/** The API's refusal of a first password on an account with no address. */
+const PASSWORD_NEEDS_ADDRESS = `Add an e-mail address first: you sign in with it.`
+
 /** Lets the page's refused reads settle. */
 const settle = () => act(() => new Promise((done) => setTimeout(done, 0)))
 
@@ -175,6 +184,104 @@ describe("ProfileView", () => {
       const before = reads.filter((url) => url.endsWith("/api/auth/email")).length
       await act(() => root!.querySelector<HTMLElement>("[data-e2e=email-retry]")!.click())
       expect(reads.filter((url) => url.endsWith("/api/auth/email")).length).toBe(before + 1)
+    } finally {
+      globalThis.fetch = refuse
+    }
+  })
+
+  it("keeps the first-password dialog open with the server's refusal in it (#463)", async () => {
+    // An account kept with a passkey, two-factor on, no password and no address: the server
+    // refuses the password, and the dialog must say why instead of closing as if it worked.
+    const signedIn = sessionState.value
+    sessionState.value = {
+      ...signedIn,
+      user: { ...signedIn.user!, mfa: UserMFAStatus.CONFIGURED },
+    }
+    const refuse = globalThis.fetch
+    const methods: SignInMethodsResponse = {
+      methods: [{ id: 7, kind: "passkey", email: null, current: true, canUnlink: false }],
+      available: [],
+      providerProofUntil: new Date(Date.now() + 4 * 60_000).toISOString(),
+      emailLink: false,
+    }
+    // The list read after the refusal answers only when the test lets it, as a network would
+    // take its time: the page draws in between.
+    let refused = false
+    let answerList = () => {}
+    const listAfterRefusal = new Promise<void>((done) => answerList = done)
+    globalThis.fetch = async (input, init) => {
+      const url = String(input)
+      if (url.endsWith("/api/auth/methods")) {
+        if (refused) await listAfterRefusal
+        return Response.json(methods)
+      }
+      if (url.endsWith("/api/auth/password/set")) {
+        refused = true
+        const error = { code: "bad_request", message: PASSWORD_NEEDS_ADDRESS }
+        return Response.json({ error }, { status: 400 })
+      }
+      return refuse(input, init)
+    }
+    try {
+      await open("/profile/security", <ProfileView section="security" />)
+      await settle()
+      await act(() => root!.querySelector<HTMLElement>("[data-e2e=password-open]")!.click())
+      const type = (hook: string, value: string) => {
+        const input = root!.querySelector<HTMLInputElement>(`[data-e2e=${hook}]`)!
+        input.value = value
+        input.dispatchEvent(new window.Event("input", { bubbles: true }) as unknown as Event)
+      }
+      await act(() => type("password-new", "a long new password"))
+      await act(() => type("password-otp", "123456"))
+      // happy-dom sends no submit for a button's click: the event is dispatched as a browser would.
+      const form = root!.querySelector("[data-e2e=password-new]")!.closest("form")!
+      await act(() => {
+        form.dispatchEvent(
+          new window.SubmitEvent("submit", { bubbles: true, cancelable: true }) as unknown as Event,
+        )
+      })
+      await settle()
+      const dialog = () =>
+        root!.querySelector<HTMLDialogElement>("dialog[data-e2e=password-dialog]")
+      const alert = () => dialog()?.querySelector("[role=alert]")?.textContent
+      expect(dialog()?.open).toBe(true)
+      expect(alert()).toBe(PASSWORD_NEEDS_ADDRESS)
+      await act(() => answerList())
+      await settle()
+
+      expect(dialog()?.open).toBe(true)
+      expect(alert()).toBe(PASSWORD_NEEDS_ADDRESS)
+    } finally {
+      globalThis.fetch = refuse
+      sessionState.value = signedIn
+    }
+  })
+
+  it("sends an account with no address from the password dialog to add one first (#463)", async () => {
+    emailStore.status.value = { email: null, proven: false, pending: null }
+    const refuse = globalThis.fetch
+    const methods: SignInMethodsResponse = {
+      methods: [{ id: 7, kind: "passkey", email: null, current: true, canUnlink: false }],
+      available: [],
+      providerProofUntil: new Date(Date.now() + 4 * 60_000).toISOString(),
+      emailLink: false,
+    }
+    globalThis.fetch = (input, init) =>
+      String(input).endsWith("/api/auth/methods")
+        ? Promise.resolve(Response.json(methods))
+        : refuse(input, init)
+    try {
+      const { history } = await open("/profile/security", ROUTED)
+      await settle()
+      await act(() => root!.querySelector<HTMLElement>("[data-e2e=password-open]")!.click())
+
+      expect(root!.querySelectorAll("[data-e2e=password-new]").length).toBe(0)
+      await act(() => root!.querySelector<HTMLElement>("[data-e2e=password-add-email]")!.click())
+      await settle()
+
+      expect(history.at(-1)).toBe("/profile/account?email")
+      expect(root!.querySelector<HTMLDialogElement>("dialog[data-e2e=email-change-dialog]")?.open)
+        .toBe(true)
     } finally {
       globalThis.fetch = refuse
     }

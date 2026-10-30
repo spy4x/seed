@@ -1392,6 +1392,11 @@ export default {
   "ProfileSecurity.setTitle": "Definir uma senha",
   "ProfileSecurity.changeTitle": "Trocar senha",
   "ProfileSecurity.setText": "Adicione uma senha para também poder entrar com seu e-mail.",
+  "ProfileSecurity.setNeedsEmail":
+    "Para entrar com senha, você precisa de um e-mail, e esta conta ainda não tem nenhum. Adicione um e-mail primeiro e depois volte aqui para definir a senha.",
+  "ProfileSecurity.setNeedsCode":
+    "Para entrar com senha, você precisa de um e-mail confirmado. Confirme <email>{email}</email> com o código que enviamos para esse endereço e depois volte aqui para definir a senha.",
+  "ProfileSecurity.addEmail": "Adicionar e-mail",
   "ProfileSecurity.codeFromAuthenticator": "Código do seu app autenticador",
   "ProfileSecurity.updating": "Atualizando…",
   "ProfileSecurity.setButton": "Definir senha",

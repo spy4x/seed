@@ -59,6 +59,8 @@ export interface AccountSectionProps {
   emailChange?: EmailChangeProps
   /** Opens the e-mail dialog at its code on the first render, while an address waits for one. */
   openEmailCode?: boolean
+  /** Opens the e-mail dialog at its address step, whenever this turns true (`?email`). */
+  openEmailAddress?: boolean
   /**
    * Given only when the address could not be read: the row gives way to the failure and a way to
    * read it again.
@@ -91,6 +93,7 @@ export function AccountSection(
     providerOnly,
     emailChange,
     openEmailCode,
+    openEmailAddress,
     onRetryEmail,
     providerProof,
     guestRow,
@@ -110,6 +113,10 @@ export function AccountSection(
   useEffect(() => {
     if (openEmailCode && target) setEmailStep("code")
   }, [openEmailCode, Boolean(target)])
+  // The password dialog asks for an address first (`?email`): open the address step, once read.
+  useEffect(() => {
+    if (openEmailAddress && email) setEmailStep("address")
+  }, [openEmailAddress, Boolean(email)])
   const cancelName = () => {
     setEditingName(false)
     nameEdit.onCancel?.()

@@ -1456,6 +1456,11 @@ export default {
   "ProfileSecurity.setTitle": "Задать пароль",
   "ProfileSecurity.changeTitle": "Сменить пароль",
   "ProfileSecurity.setText": "Добавьте пароль, чтобы входить ещё и по почте.",
+  "ProfileSecurity.setNeedsEmail":
+    "Чтобы входить по паролю, нужна почта, а в этом аккаунте её пока нет. Добавьте почту, а потом вернитесь сюда и задайте пароль.",
+  "ProfileSecurity.setNeedsCode":
+    "Чтобы входить по паролю, нужна подтверждённая почта. Введите код, который мы отправили на <email>{email}</email>, а потом вернитесь сюда и задайте пароль.",
+  "ProfileSecurity.addEmail": "Добавить почту",
   "ProfileSecurity.codeFromAuthenticator": "Код из приложения-аутентификатора",
   "ProfileSecurity.updating": "Сохраняем…",
   "ProfileSecurity.setButton": "Задать пароль",

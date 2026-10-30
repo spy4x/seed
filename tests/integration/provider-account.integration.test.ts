@@ -23,6 +23,7 @@ import {
   createAuthRoute,
   EMAIL_ALREADY_CARRIED,
   PASSWORD_ALREADY_SET,
+  PASSWORD_NEEDS_ADDRESS,
   PASSWORD_SET_CODE_REQUIRED,
   PROVIDER_PROOF_REQUIRED,
 } from "../../apps/api/routes/auth.ts"
@@ -614,6 +615,31 @@ Deno.test("a first password waits for the authenticator code while two-factor is
     expect(set.status).toBe(200)
     expect((await methodsOf(ada)).methods.map((method) => method.kind).sort())
       .toEqual(["google", "password"])
+  })
+})
+
+Deno.test("a first password refused for want of an address leaves the authenticator code unspent", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    const { ada, userId } = await googleAccount(app)
+    const { secret } = await (await ada.post("/auth/totp/connect/start")).json()
+    const now = Date.now()
+    const finished = await ada.post("/auth/totp/connect/finish", { otp: totpCode(secret, now) })
+    expect(finished.status).toBe(200)
+    // As when Google shared no verified address, or a passkey kept a guest: no key holds one.
+    const [key] = await sql`SELECT proven_at FROM auth_keys WHERE user_id = ${userId}`
+    await sql`UPDATE auth_keys SET email = NULL, proven_at = NULL WHERE user_id = ${userId}`
+    const code = totpCode(secret, now + 30_000)
+
+    const refused = await ada.post("/auth/password/set", { newPassword: NEW_PASSWORD, otp: code })
+    expect(await refusal(refused)).toBe(PASSWORD_NEEDS_ADDRESS)
+
+    // The same code still sets the password once the account has an address again.
+    await sql`
+      UPDATE auth_keys SET email = ${ADA.email}, proven_at = ${key.provenAt} WHERE user_id = ${userId}
+    `
+    const set = await ada.post("/auth/password/set", { newPassword: NEW_PASSWORD, otp: code })
+    expect(set.status).toBe(200)
   })
 })
 
