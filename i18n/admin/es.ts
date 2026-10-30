@@ -600,7 +600,7 @@ export default {
     "Agrupa las entradas en la página del blog. Elige uno o escribe uno nuevo.",
   "AdminBlogEditor.coverUrl": "URL de la imagen de portada",
   "AdminBlogEditor.coverUrlHint":
-    "Un enlace https:// completo a una imagen apaisada de 1200×630, en un servidor que permita mostrarla en otros sitios. Déjalo vacío si no quieres portada.",
+    "Un enlace https:// completo a una imagen horizontal de 1200×630, alojada en un servidor que permita mostrarla en otros sitios. Déjalo vacío si no quieres portada.",
   "AdminBlogEditor.coverAlt": "Descripción de la portada",
   "AdminBlogEditor.coverAltHint": "Qué muestra la imagen, para quienes no pueden verla.",
   "AdminBlogEditor.coverPrivacy":
@@ -1433,9 +1433,9 @@ export default {
   "AdminJobs.runNowTitle": "¿Ejecutar esta tarea ahora?",
   "AdminJobs.runAgain": "Relanzar",
   "AdminJobs.retryAllText": {
-    "one": "Se ejecuta una vez más, con los intentos a cero.",
-    "many": "Cada una se ejecuta una vez más, con los intentos a cero.",
-    "other": "Cada una se ejecuta una vez más, con los intentos a cero.",
+    "one": "Se ejecutará de nuevo, con el contador de intentos a cero.",
+    "many": "Cada una se ejecutará de nuevo, con el contador de intentos a cero.",
+    "other": "Cada una se ejecutará de nuevo, con el contador de intentos a cero.",
   },
   "AdminJobs.runsNowInstead":
     "<job>{job}</job> se ejecuta ahora en lugar de a las <at></at>. Si es periódica, mantiene su frecuencia después de esta ejecución.",
