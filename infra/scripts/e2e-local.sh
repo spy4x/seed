@@ -314,6 +314,9 @@ export RATE_LIMITER_STRICT_LIMIT=1000
 export RATE_LIMITER_LIMIT=5000
 export RATE_LIMITER_OTP_WINDOW_MS=900000
 export RATE_LIMITER_OTP_LIMIT=1000
+# Every guest spec comes from one loopback address, so they would share one guest budget.
+export GUEST_OPERATION_COMMANDS_PER_MINUTE=6000
+export GUEST_OPERATION_QUERIES_PER_MINUTE=30000
 
 log "migrating the database"
 timeout 300 deno task db:migrate
