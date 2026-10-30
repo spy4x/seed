@@ -2309,6 +2309,32 @@ describe("a first password", () => {
     expect(calls).toEqual([])
   })
 
+  it("refuses an account with no address before it spends the authenticator code", async () => {
+    const { app, calls, failureCalls } = buildApp(
+      buildAuthData({
+        user: { mfa: UserMFAStatus.CONFIGURED },
+        session: { secondFactor: SecondFactorStatus.Completed },
+      }),
+      {
+        signIn: {
+          hasPassword: () => Promise.resolve(false),
+          confirmedByProvider: () => Promise.resolve(true),
+          emailStatus: () => Promise.resolve({ email: null, proven: false, pending: null }),
+        },
+      },
+    )
+    const response = await send(
+      app,
+      { ...setRoute, body: { newPassword: "battery-staple", otp: "123456" } },
+      sameOriginHeaders,
+    )
+
+    expect(response.status).toBe(400)
+    expect((await apiError(response)).message).toBe(PASSWORD_NEEDS_ADDRESS)
+    expect(calls).toEqual([])
+    expect(failureCalls).toEqual([])
+  })
+
   for (
     const [outcome, message] of [
       [PasswordSetOutcome.AlreadySet, PASSWORD_ALREADY_SET],

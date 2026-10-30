@@ -197,6 +197,18 @@ export enum PasswordSetOutcome {
   Refused = 5,
 }
 
+/**
+ * Whether an account with this address status can take a first password: the password signs in
+ * with the account's proven address, so an account with none, or one still waiting for its code,
+ * cannot. {@link SignIn.setPassword} refuses it with {@link PasswordSetOutcome.NoAddress}, and the
+ * route asks first, before it spends an authenticator code (#463).
+ */
+export function hasPasswordAddress(
+  status: EmailStatus,
+): status is EmailStatus & { email: string } {
+  return status.email !== null
+}
+
 /** What {@link SignIn.verifyEmail} did. */
 export enum EmailVerifyOutcome {
   Verified = 1,
@@ -1647,13 +1659,10 @@ export function createSignIn(options: SignInOptions): SignIn {
           // Two requests at once: the second reads the key the first one added.
           await tx.lockUser(user.id)
           if (await passwordKeyOf(tx.authStore, user.id)) return PasswordSetOutcome.AlreadySet
-          const { email, pending } = await readEmailStatus(
-            tx.emailChange,
-            tx.authStore,
-            user.id,
-          )
+          const status = await readEmailStatus(tx.emailChange, tx.authStore, user.id)
           // The password needs a name to sign in with, and the account's address is the only one.
-          if (email === null) return PasswordSetOutcome.NoAddress
+          if (!hasPasswordAddress(status)) return PasswordSetOutcome.NoAddress
+          const { email, pending } = status
           // Proven: the address read above is one a provider vouched for or a code proved.
           await tx.authStore.addKey(user.id, {
             method: PASSWORD_METHOD,

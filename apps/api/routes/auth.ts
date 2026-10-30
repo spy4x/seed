@@ -31,6 +31,7 @@ import {
 import {
   EmailChangeOutcome,
   EmailVerifyOutcome,
+  hasPasswordAddress,
   PasswordSetOutcome,
   type SignIn,
   SignInLinkOutcome,
@@ -756,6 +757,10 @@ export function createAuthRoute(
         // The cheap refusals first, so a code is not spent on a request that sets nothing.
         if (await signIn.hasPassword(authData.user.id)) {
           return errorResponse(c, `bad_request`, { message: PASSWORD_ALREADY_SET })
+        }
+        // No address: `setPassword` would refuse it after the code was spent (#463).
+        if (!hasPasswordAddress(await signIn.emailStatus(authData))) {
+          return errorResponse(c, `bad_request`, { message: PASSWORD_NEEDS_ADDRESS })
         }
         if (!(await signIn.confirmedByProvider(authData))) {
           return errorResponse(c, `bad_request`, { message: PROVIDER_PROOF_REQUIRED })
