@@ -65,7 +65,9 @@ export async function resetDemo(
 ): Promise<void> {
   await wipeDatabase(sql)
   const db = new AppDbBase({ sql })
-  // Right after the wipe, so a visitor has only that moment to sign up as the address first.
+  // A visitor cannot take a seeded address in between: every way in that claims one waits for a
+  // code or a link mailed to it, or for Google or GitHub to vouch for it, and `example.com` takes
+  // no mail (docs/demo.md).
   if (options.admin) await createAdmin(db, sql, options.admin.pepper, options.admin.password)
   await seedDemo(db, sql, {
     // Nobody signs in as a fake person, so the pepper that hashes their passwords is random too.

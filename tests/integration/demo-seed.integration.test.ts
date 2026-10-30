@@ -13,7 +13,11 @@ import { createOutboxProcessor } from "@server/jobs/wiring.ts"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { DEV_SUBSCRIBERS_SECRET } from "@server/subscribers/subscribers.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
-import { createSignIn } from "../../apps/api/services/sign-in.ts"
+import {
+  type AppAuthState,
+  createSignIn,
+  EmailChangeOutcome,
+} from "../../apps/api/services/sign-in.ts"
 import {
   FAKE_COUNTS,
   FAKE_PASSKEYS,
@@ -25,6 +29,7 @@ import {
 import {
   createAdmin,
   type DemoSeedOptions,
+  populationMarker,
   seedDemo,
   SeedRefusedError,
   seedWorkspace,
@@ -33,6 +38,9 @@ import { KEPT_TABLES, wipeDatabase } from "../../apps/worker/demo/wipe.ts"
 import { SAMPLE_POSTS, seedSamplePosts } from "@server/blog/sample-posts.ts"
 import { SAMPLE_CONTACT_LINKS, seedSampleContactLinks } from "@server/contact-links/sample-links.ts"
 import { isDemoSeeded, resetDemo } from "../../apps/worker/demo/run.ts"
+import { demoDataSeed } from "../../apps/worker/demo/reset.ts"
+import { enqueueSignInLinkMail } from "@server/jobs/sign-in-link-mail.ts"
+import { sendEmailCode } from "@server/auth/email-verification.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { SessionStatus } from "@spy4x/server/sign-in"
@@ -649,6 +657,47 @@ Deno.test("the private administrator is never made from an account a visitor hol
 
     await expect(createAdmin(db, sql, PEPPER, `${PASSWORD}x`)).rejects.toThrow(SeedRefusedError)
     expect((await accountOf(sql, DEV_ADMIN_EMAIL)).role).toBe(UserRole.VIEWER)
+  })
+})
+
+Deno.test("what a visitor can start with a seeded address between the wipe and the seed does not stop the reset", async () => {
+  await withSchema(async (sql) => {
+    const db = new AppDbBase({ sql })
+    // The reset's own steps (`resetDemo`), with the visitor's moment between the wipe and the seed.
+    await wipeDatabase(sql)
+    const options = { ...OPTIONS, dataSeed: demoDataSeed(DAY) }
+    const marker = populationMarker(options.dataSeed)
+    const visitors: number[] = []
+    for (const [index, email] of [marker, DEV_ADMIN_EMAIL].entries()) {
+      // Every way in that takes an address waits for a code or a link mailed there, and nobody
+      // reads mail at `example.com`: a password sign-up, a sign-in link, and a signed-in
+      // visitor's address change with its code sent.
+      expect(await inRequest(sql, (signIn, c) => signIn.requestSignUp(c, email, PASSWORD)))
+        .toBe(true)
+      await enqueueSignInLinkMail(sql, email, null)
+      const visitor = await signUpVisitor(sql, `visitor${index}@example.net`)
+      visitors.push(visitor)
+      expect(
+        await inRequest(sql, async (signIn) => {
+          const user = await db.user.findOne({ id: visitor })
+          return await signIn.requestEmailChange({ user } as AppAuthState, PASSWORD, email)
+        }),
+      ).toBe(EmailChangeOutcome.Requested)
+      await sendEmailCode(db.authStore, visitor, email, () => Promise.resolve())
+    }
+
+    await createAdmin(db, sql, PEPPER, PASSWORD)
+    expect(await seedDemo(db, sql, options)).toBe(true)
+
+    // The day's population and the private administrator are there, so the worker is done.
+    expect(await isDemoSeeded(sql, DAY, true)).toBe(true)
+    const owners = await sql<{ userId: number }[]>`
+      SELECT user_id FROM auth_keys WHERE method = 'password' AND subject IN ${
+      sql([marker, DEV_ADMIN_EMAIL])
+    }
+    `
+    expect(owners).toHaveLength(2)
+    expect(owners.some(({ userId }) => visitors.includes(userId))).toBe(false)
   })
 })
 

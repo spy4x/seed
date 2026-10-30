@@ -201,8 +201,8 @@ async function ensureAdmin(
 
 /**
  * Signs {@link DEV_ADMIN_EMAIL} up, names, proves and makes it an admin. Answers its user id. The
- * public demo's reset calls it right after the wipe: an account that holds the address already was
- * made by a visitor in between, so it is refused, never promoted.
+ * public demo's reset calls it right after the wipe. An account that holds the address already is
+ * refused, never promoted.
  *
  * @throws {SeedRefusedError} When the address has an account already.
  */
