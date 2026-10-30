@@ -522,6 +522,37 @@ function fakeGroup(
   return { name: theme.name, owner, createdAgo, members, tags, notes, invitations, promotions }
 }
 
+/**
+ * `group` as the people with an account can write it. A tag, note or edit by someone without one
+ * goes to the first owner, admin or editor who has one; an invitation to the first owner or admin,
+ * and is left out when there is none. Answers `null` when no fake member who may write has an
+ * account. The new account `you` never stands in: the "Get started" checklist counts what it made.
+ */
+export function withStandIns(
+  group: FakeGroup,
+  hasAccount: (member: FakeMember) => boolean,
+): FakeGroup | null {
+  const first = (least: GroupRole) =>
+    [{ member: group.owner, role: GroupRole.OWNER }, ...group.members]
+      .find((m) => m.member !== `you` && m.role >= least && hasAccount(m.member))?.member ?? null
+  const writer = first(GroupRole.EDITOR)
+  if (writer === null) return null
+  const inviter = first(GroupRole.ADMIN)
+  const as = (member: FakeMember, standIn: FakeMember) => hasAccount(member) ? member : standIn
+  return {
+    ...group,
+    tags: group.tags.map((tag) => ({ ...tag, author: as(tag.author, writer) })),
+    notes: group.notes.map((note) => ({
+      ...note,
+      author: as(note.author, writer),
+      edit: note.edit && { ...note.edit, by: as(note.edit.by, writer) },
+    })),
+    invitations: group.invitations
+      .filter((invitation) => hasAccount(invitation.author) || inviter !== null)
+      .map((invitation) => ({ ...invitation, author: as(invitation.author, inviter!) })),
+  }
+}
+
 /** Subscriptions for the oldest groups, in the order of {@link PLAN_ROTA}. */
 function fakeSubscriptions(tools: Tools, groups: readonly FakeGroup[]): FakeSubscription[] {
   const { int } = tools

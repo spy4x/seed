@@ -465,6 +465,25 @@ Deno.test("a visitor still gets the group they own when the population is of ano
   })
 })
 
+Deno.test("a visitor gets tags and notes in the group they own when its first member with an account today is a viewer or an editor", async () => {
+  // Day 5's population and day 6's sample groups: a viewer is the first such member, who may not
+  // write tags. Day 2's and day 3's: an editor, who may not invite.
+  for (const today of [2, 5]) {
+    await withSchema(async (sql) => {
+      await seedDemo(new AppDbBase({ sql }), sql, { ...OPTIONS, dataSeed: today })
+      const userId = await signUpVisitor(sql, "late@example.net")
+      await drainJobs(sql, today + 1)
+
+      const owned = fakeWorkspace(today + 1).find((group) => group.owner === "you")!
+      const workspace = await workspaceOf(sql, userId)
+      const group = workspace.groups.find((group) => group.name === owned.name)!
+      expect(group.role).toBe(GroupRole.OWNER)
+      expect(group.tags).toBe(owned.tags.length)
+      expect(group.notes).toBeGreaterThanOrEqual(owned.notes.length)
+    })
+  }
+})
+
 Deno.test("the demo seed fails when sign-up refuses an account that does not exist", async () => {
   await withSchema(async (sql) => {
     // Longer than the password hasher takes, so sign-up answers `null` as for a taken address.

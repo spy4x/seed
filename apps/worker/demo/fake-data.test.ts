@@ -9,9 +9,11 @@ import {
   FAKE_PASSKEYS,
   fakeDemoData,
   type FakeGroup,
+  type FakeMember,
   fakePeople,
   fakeWorkspace,
   VIDEO_PERSON_INDEX,
+  withStandIns,
 } from "./fake-data.ts"
 
 /** A Tuesday noon: the weekdays below count back from it. */
@@ -313,4 +315,42 @@ Deno.test("a new account's sample notes are written by several people over days"
     )
     expect(new Set(lines).size).toBe(lines.length)
   }
+})
+
+Deno.test("a visitor's sample groups on another day's population are written only by members with an account who may write", () => {
+  for (let today = 1; today <= 300; today++) {
+    // The population holds today's fake people; the visitor's job draws tomorrow's sample groups.
+    const accounts = new Set(fakePeople(today).map((person) => person.email))
+    const people = fakePeople(today + 1)
+    const hasAccount = (member: FakeMember) =>
+      member === `you` || accounts.has(people[member].email)
+    for (const group of fakeWorkspace(today + 1)) {
+      const content = withStandIns(group, hasAccount)
+      if (content === null) continue
+      const roleOf = (member: FakeMember) =>
+        member === group.owner
+          ? GroupRole.OWNER
+          : group.members.find((m) => m.member === member)!.role
+      const writers = [
+        ...content.tags.map((tag) => tag.author),
+        ...content.notes.flatMap((note) => [note.author, ...(note.edit ? [note.edit.by] : [])]),
+      ]
+      for (const writer of writers) {
+        expect(writer).not.toBe(`you`)
+        expect(hasAccount(writer)).toBe(true)
+        expect(roleOf(writer)).toBeGreaterThanOrEqual(GroupRole.EDITOR)
+      }
+      for (const { author } of content.invitations) {
+        expect(author).not.toBe(`you`)
+        expect(hasAccount(author)).toBe(true)
+        expect(roleOf(author)).toBeGreaterThanOrEqual(GroupRole.ADMIN)
+      }
+      expect(content.tags.length).toBe(group.tags.length)
+      expect(content.notes.length).toBe(group.notes.length)
+    }
+  }
+})
+
+Deno.test("sample groups whose members all have accounts keep every author as drawn", () => {
+  for (const group of fakeWorkspace(7)) expect(withStandIns(group, () => true)).toEqual(group)
 })
