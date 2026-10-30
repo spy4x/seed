@@ -501,7 +501,7 @@ export default {
   "AdminBlogDialogs.publishTitle": "نشر «{title}»؟",
   "AdminBlogDialogs.when": "متى",
   "AdminBlogDialogs.now": "الآن",
-  "AdminBlogDialogs.atATime": "في وقت محدد",
+  "AdminBlogDialogs.whenSchedule": "جدولة",
   "AdminBlogDialogs.dateTime": "التاريخ والوقت",
   "AdminBlogDialogs.liveOnItsOwn": "ستُنشر تلقائيًا في ذلك الوقت.",
   "AdminBlogDialogs.goesLiveAt": "ستُنشر على <path>{path}</path> وتُضاف إلى موجز RSS وخريطة الموقع.",
@@ -600,6 +600,7 @@ export default {
     "مقفل بعد النشر. لتغييره استخدم «تغيير الرابط…»، وستتوقف الروابط القديمة عن العمل.",
   "AdminBlogEditor.slugHint":
     "رابط التدوينة: <path>{path}</path>. أحرف لاتينية صغيرة وأرقام وشرطات.",
+  "AdminBlogEditor.slugHintEmpty": "يُملأ تلقائيًا من العنوان. أحرف لاتينية صغيرة وأرقام وشرطات.",
   "AdminBlogEditor.description": "الوصف",
   "AdminBlogEditor.descriptionHint": "جملة أو جملتان لنتائج البحث ومعاينات الروابط.",
   "AdminBlogEditor.seoTitle": "عنوان SEO (اختياري)",
@@ -613,7 +614,7 @@ export default {
   "AdminBlogEditor.topicHint": "يجمع التدوينات في صفحة المدونة. اختر موضوعًا أو اكتب موضوعًا جديدًا.",
   "AdminBlogEditor.coverUrl": "رابط صورة الغلاف",
   "AdminBlogEditor.coverUrlHint":
-    "رابط كامل يبدأ بـ https:// لصورة عريضة بمقاس 1200×630. اتركه فارغًا إن لم ترد غلافًا.",
+    "رابط كامل يبدأ بـ https:// لصورة عريضة بمقاس 1200×630، على خادم يسمح بعرضها في مواقع أخرى. اتركه فارغًا إن لم ترد غلافًا.",
   "AdminBlogEditor.coverAlt": "وصف الغلاف",
   "AdminBlogEditor.coverAltHint": "ما تُظهره الصورة، لمن لا يستطيع رؤيتها.",
   "AdminBlogEditor.coverPrivacy":
@@ -1521,7 +1522,7 @@ export default {
   "AdminJobs.noRepeatsHint": "تصبح المهمة متكررة حين يكون لتعريفها جدول.",
   "AdminJobs.retryAllTitle": {
     "zero": "إعادة تشغيل {count} مهمة فاشلة؟",
-    "one": "إعادة تشغيل مهمة فاشلة واحدة؟",
+    "one": "إعادة تشغيل هذه المهمة الفاشلة؟",
     "two": "إعادة تشغيل مهمتين فاشلتين؟",
     "few": "إعادة تشغيل {count} مهام فاشلة؟",
     "many": "إعادة تشغيل {count} مهمة فاشلة؟",
@@ -1529,7 +1530,14 @@ export default {
   },
   "AdminJobs.runNowTitle": "تشغيل هذه المهمة الآن؟",
   "AdminJobs.runAgain": "إعادة التشغيل",
-  "AdminJobs.retryAllText": "تُشغَّل كل منها مرة أخرى بعدد جديد من المحاولات.",
+  "AdminJobs.retryAllText": {
+    "zero": "تُشغَّل كل منها مرة أخرى بعدد جديد من المحاولات.",
+    "one": "تُشغَّل مرة أخرى بعدد جديد من المحاولات.",
+    "two": "تُشغَّل كلتاهما مرة أخرى بعدد جديد من المحاولات.",
+    "few": "تُشغَّل كل منها مرة أخرى بعدد جديد من المحاولات.",
+    "many": "تُشغَّل كل منها مرة أخرى بعدد جديد من المحاولات.",
+    "other": "تُشغَّل كل منها مرة أخرى بعدد جديد من المحاولات.",
+  },
   "AdminJobs.runsNowInstead":
     "تُشغَّل <job>{job}</job> الآن بدلًا من <at></at>. وتحتفظ المهمة المتكررة بجدولها بعد هذا التشغيل.",
   "AdminJobs.runsNow": "تُشغَّل <job>{job}</job> الآن. وتحتفظ المهمة المتكررة بجدولها بعد هذا التشغيل.",

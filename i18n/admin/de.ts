@@ -481,7 +481,7 @@ export default {
   "AdminBlogDialogs.publishTitle": "„{title}“ veröffentlichen?",
   "AdminBlogDialogs.when": "Wann?",
   "AdminBlogDialogs.now": "Sofort",
-  "AdminBlogDialogs.atATime": "Zu einem Zeitpunkt",
+  "AdminBlogDialogs.whenSchedule": "Planen",
   "AdminBlogDialogs.dateTime": "Datum und Uhrzeit",
   "AdminBlogDialogs.liveOnItsOwn": "Der Beitrag erscheint dann automatisch.",
   "AdminBlogDialogs.goesLiveAt":
@@ -574,6 +574,8 @@ export default {
     "Nach der Veröffentlichung gesperrt. Ändern lässt er sich über „URL ändern …“; alte Links funktionieren dann nicht mehr.",
   "AdminBlogEditor.slugHint":
     "Die URL des Beitrags: <path>{path}</path>. Kleinbuchstaben, Ziffern und Bindestriche.",
+  "AdminBlogEditor.slugHintEmpty":
+    "Wird aus dem Titel übernommen. Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogEditor.description": "Beschreibung",
   "AdminBlogEditor.descriptionHint": "Ein, zwei Sätze für Suchergebnisse und Linkvorschauen.",
   "AdminBlogEditor.seoTitle": "SEO-Titel (optional)",
@@ -589,7 +591,7 @@ export default {
     "Ordnet Beiträge auf der Blogseite. Wähle eines aus oder tippe ein neues ein.",
   "AdminBlogEditor.coverUrl": "URL des Titelbilds",
   "AdminBlogEditor.coverUrlHint":
-    "Ein vollständiger https://-Link zu einem Bild im Querformat, 1200 × 630. Leer lassen für kein Titelbild.",
+    "Ein vollständiger https://-Link zu einem Bild im Querformat, 1200 × 630, auf einem Server, der das Einbinden auf anderen Websites erlaubt. Leer lassen für kein Titelbild.",
   "AdminBlogEditor.coverAlt": "Beschreibung des Titelbilds",
   "AdminBlogEditor.coverAltHint": "Was das Bild zeigt, für Menschen, die es nicht sehen können.",
   "AdminBlogEditor.coverPrivacy":
@@ -1387,12 +1389,15 @@ export default {
   "AdminJobs.noRepeats": "Keine wiederkehrenden Jobs",
   "AdminJobs.noRepeatsHint": "Ein Job wiederholt sich, sobald seine Definition einen Zeitplan hat.",
   "AdminJobs.retryAllTitle": {
-    "one": "{count} fehlgeschlagenen Job neu starten?",
+    "one": "Diesen fehlgeschlagenen Job neu starten?",
     "other": "{count} fehlgeschlagene Jobs neu starten?",
   },
   "AdminJobs.runNowTitle": "Job jetzt starten?",
   "AdminJobs.runAgain": "Neu starten",
-  "AdminJobs.retryAllText": "Jeder läuft noch einmal, mit frischen Versuchen.",
+  "AdminJobs.retryAllText": {
+    "one": "Er läuft noch einmal, mit frischen Versuchen.",
+    "other": "Jeder läuft noch einmal, mit frischen Versuchen.",
+  },
   "AdminJobs.runsNowInstead":
     "<job>{job}</job> läuft jetzt statt am <at></at>. Ein wiederkehrender Job behält danach seinen Zeitplan.",
   "AdminJobs.runsNow":
