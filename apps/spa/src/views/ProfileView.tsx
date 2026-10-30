@@ -374,13 +374,13 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       values.newPassword,
       twoFactor ? values.passwordOtp : undefined,
     )
+    // The refusal is set in the same render that ends the wait: the dialog closes on a wait that
+    // ends without an error, so an error set after the read below came too late (#463).
+    if (!result.ok) setPasswordError(result.error || t.t(PROFILE_FAILURES.passwordSet))
     setBusyPassword(false)
     // Read again either way: a refusal may mean the provider sign-in is no longer recent.
     await methods.load()
-    if (!result.ok) {
-      setPasswordError(result.error || t.t(PROFILE_FAILURES.passwordSet))
-      return
-    }
+    if (!result.ok) return
     setValues((current) => ({ ...current, newPassword: "", passwordOtp: "" }))
     toasts.success({
       title: t.t(`ProfileView.passwordSet`),
