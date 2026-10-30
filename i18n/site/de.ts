@@ -97,11 +97,11 @@ export default {
   "Unsubscribe.submit": "Abbestellen",
   "NewsletterPage.title": "Newsletter",
   "NewsletterPage.description": "Bestätige oder beende dein Abo des {site}-Newsletters.",
-  "NewsletterPage.subscribeTitle": "{site}-Newsletter: was neu ist, kurz gefasst",
+  "NewsletterPage.subscribeTitle": "{site}-Newsletter: kurze Neuigkeiten per E-Mail",
   "NewsletterPage.subscribeDescription":
     "Eine kurze E-Mail, wenn sich bei {site} etwas tut: was neu ist, was kaputtging und was ich beim Bauen gelernt habe. Mit Double-Opt-in, Abbestellen mit einem Klick.",
   "NewsletterPage.about": "Über den Newsletter",
-  "NewsletterPage.heading": "Eine kurze E-Mail, wenn sich bei {site} etwas tut",
+  "NewsletterPage.heading": "Eine kurze E-Mail, wenn es bei {site} Neuigkeiten gibt",
   "NewsletterPage.lead":
     "Was neu ist, was kaputtging und was ich beim Bauen gelernt habe, von mir selbst geschrieben. Sonst nichts.",
   "NewsletterPage.promiseConfirm":
@@ -265,7 +265,7 @@ export default {
   "HomeWho.about": "Über mich",
   "HomeWho.upwork": "Upwork-Profil",
   "HomeWho.issues": "GitHub-Issues",
-  "HomeNewsletter.title": "Eine kurze E-Mail, wenn sich bei Seed etwas tut",
+  "HomeNewsletter.title": "Eine kurze E-Mail, wenn es bei {site} Neuigkeiten gibt",
   "HomeNewsletter.lead":
     "Was neu ist, was kaputtging und was ich beim Bauen gelernt habe. Keine anderen E-Mails, abbestellen mit einem Klick.",
   "HomeNewsletter.hint": "Du bestätigst zuerst per E-Mail.",
