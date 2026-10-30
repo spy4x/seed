@@ -1367,9 +1367,9 @@ export default {
   "ProfileSecurity.setText":
     "Lege ein Passwort fest, um dich auch mit deiner E-Mail-Adresse anzumelden.",
   "ProfileSecurity.setNeedsEmail":
-    "Mit einem Passwort meldest du dich zusammen mit deiner E-Mail-Adresse an, und dieses Konto hat noch keine. Füge zuerst eine hinzu und komm dann hierher zurück, um ein Passwort festzulegen.",
+    "Zur Anmeldung mit Passwort brauchst du eine E-Mail-Adresse, und dieses Konto hat noch keine. Füge zuerst eine hinzu und komm dann hierher zurück, um ein Passwort festzulegen.",
   "ProfileSecurity.setNeedsCode":
-    "Mit einem Passwort meldest du dich zusammen mit deiner E-Mail-Adresse an. Bestätige zuerst <email>{email}</email> mit dem Code, den wir dorthin geschickt haben, und komm dann hierher zurück, um ein Passwort festzulegen.",
+    "Zur Anmeldung mit Passwort brauchst du deine E-Mail-Adresse. Bestätige zuerst <email>{email}</email> mit dem Code, den wir dir dorthin geschickt haben, und komm dann hierher zurück, um ein Passwort festzulegen.",
   "ProfileSecurity.addEmail": "E-Mail-Adresse hinzufügen",
   "ProfileSecurity.codeFromAuthenticator": "Code aus deiner Authenticator-App",
   "ProfileSecurity.updating": "Wird aktualisiert …",
