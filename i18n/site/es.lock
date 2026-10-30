@@ -489,7 +489,7 @@ HomeHero.status	7b3b1728c784198f
 HomeHero.title	4405e14c0542e9bc
 HomeNewsletter.hint	8cb102e8aeca4523
 HomeNewsletter.lead	0e78f3d7aa1fc9ff
-HomeNewsletter.title	4878109637dd5159
+HomeNewsletter.title	ce8956d18546cb26
 HomeProof.licence	823dc3e6ed0bd202
 HomeProof.pulls	330890de3395848e
 HomeProof.tests	19a33d346458347e
@@ -544,13 +544,13 @@ NewsletterOff.releases	ff84d5159927d356
 NewsletterOff.title	e0b22082c5e9c5df
 NewsletterPage.about	67a6acfdf9a328c7
 NewsletterPage.description	e8f7b0622934718f
-NewsletterPage.heading	5ddc381a0d1c5062
+NewsletterPage.heading	ce8956d18546cb26
 NewsletterPage.lead	f7025ecce8468311
 NewsletterPage.promiseConfirm	5f333006999a2795
 NewsletterPage.promisePrivate	058029aee8a84f00
 NewsletterPage.promiseUnsubscribe	3f51e961634e2232
 NewsletterPage.subscribeDescription	8234b33ac649b99f
-NewsletterPage.subscribeTitle	863a429fd2f28cd9
+NewsletterPage.subscribeTitle	b25920d4875a81f2
 NewsletterPage.title	f84ca2e7716bec94
 OnThisPage.title	b5658fc8edda24f9
 Outbox.change	874ef7158877cfc2

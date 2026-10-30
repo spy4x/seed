@@ -13,7 +13,7 @@ import {
   UnsubscribeScreen,
 } from "@ui/subscribe-screen.tsx"
 import { isRecord } from "@spy4x/platform/universal/is-record"
-import { IconCheck, IconGitHub, IconSprout } from "@spy4x/preact-icons"
+import { IconCheck, IconGitHub } from "@spy4x/preact-icons"
 import { BrandMark } from "@spy4x/preact-ui/brand-mark"
 import { Button } from "@spy4x/preact-ui/button"
 import { Notice } from "@spy4x/preact-ui/notice"
@@ -22,6 +22,7 @@ import { readFormBody } from "@spy4x/server/http/bounded-body"
 import { API_BODIES, FORM_LIMITS } from "./forms.ts"
 import {
   REPOSITORY_URL,
+  SITE_ICON,
   SITE_NAME,
   SiteFrame,
   type SitePageHead,
@@ -61,6 +62,7 @@ const SENT_QUERY = "?state=sent"
 export function subscribeHead(t: Translator<string>): SitePageHead {
   return {
     title: t.t(`NewsletterPage.subscribeTitle`, { site: SITE_NAME }),
+    // Seed's own site: see docs/start-a-product.md
     description: t.t(`NewsletterPage.subscribeDescription`, { site: SITE_NAME }),
     og: `subscribe`,
   }
@@ -267,10 +269,11 @@ function renderSubscribe(
         <NewsletterBand wide>
           <div class="grid items-start gap-8 lg:grid-cols-2 lg:gap-16">
             <section class="flex flex-col gap-4" aria-label={t.t(`NewsletterPage.about`)}>
-              <BrandMark Icon={IconSprout} name={SITE_NAME} />
+              <BrandMark Icon={SITE_ICON} name={SITE_NAME} />
               <p class="text-2xl font-semibold tracking-tight text-balance">
                 {t.t(`NewsletterPage.heading`, { site: SITE_NAME })}
               </p>
+              {/* Seed's own site: see docs/start-a-product.md */}
               <p class="text-lg text-muted text-pretty">{t.t(`NewsletterPage.lead`)}</p>
               <ul class="flex flex-col gap-2">
                 {NEWSLETTER_PROMISES.map((promise) => (
@@ -330,10 +333,12 @@ function renderOff(
               {t.t(`NewsletterOff.title`, { site: SITE_NAME })}
             </h1>
             <Notice title={t.t(`NewsletterOff.noticeTitle`)}>{t.t(`NewsletterOff.notice`)}</Notice>
+            {/* Seed's own site: see docs/start-a-product.md */}
             <p class="text-muted text-pretty">
               {t.t(`NewsletterOff.lead`, { site: SITE_NAME })}
             </p>
             <div class="flex flex-col gap-4 sm:flex-row">
+              {/* Seed's own site: see docs/start-a-product.md */}
               <Button href={`${REPOSITORY_URL}/releases`} data-e2e="newsletter-off-releases">
                 <IconGitHub class="size-5" /> {t.t(`NewsletterOff.releases`)}
               </Button>

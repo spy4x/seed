@@ -61,7 +61,12 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
   says the code is under the MIT licence. Name the product's own licence, or drop the line.
 - **Replace** the privacy policy and terms, written for seedsaas.com and its demo:
   `apps/mpa/routes/[[lang]]/privacy.tsx`, `apps/mpa/routes/[[lang]]/terms.tsx`.
-- **Set** `SITE_NAME` and `REPOSITORY_URL` in `apps/mpa/brand.ts`.
+- **Set** `SITE_NAME`, `SITE_ICON` and `REPOSITORY_URL` in `apps/mpa/brand.ts`.
+- **Replace** the newsletter's voice: the keys `NewsletterPage.lead`,
+  `NewsletterPage.subscribeDescription`, `HomeNewsletter.lead` and `NewsletterOff.lead` in
+  `i18n/site/`, and the Releases on GitHub button of the page shown while the newsletter is off.
+  Their uses in `apps/mpa/subscribers.tsx` and in the `Newsletter` band of
+  `apps/mpa/routes/index.tsx` are marked "Seed's own site".
 - **Replace** the Open Graph images in `apps/mpa/static/og/`, drawn by
   `apps/mpa/screenshots/og.html`.
 - **Replace** the product screenshots and the admin video: `apps/mpa/static/shots/`,

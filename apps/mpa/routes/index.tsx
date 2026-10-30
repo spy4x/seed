@@ -552,9 +552,10 @@ function Newsletter(): JSX.Element {
   return (
     <Band tone="alt" id="newsletter" labelledBy="newsletter-title" width="3xl">
       <div class="flex flex-col gap-6">
+        {/* Seed's own site: see docs/start-a-product.md */}
         <SectionIntro
           id="newsletter-title"
-          title={t.t(`HomeNewsletter.title`)}
+          title={t.t(`HomeNewsletter.title`, { site: SITE_NAME })}
           lead={t.t(`HomeNewsletter.lead`)}
         />
         <form

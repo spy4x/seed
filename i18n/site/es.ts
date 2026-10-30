@@ -94,11 +94,11 @@ export default {
   "Unsubscribe.submit": "Darme de baja",
   "NewsletterPage.title": "Boletín",
   "NewsletterPage.description": "Confirma o cancela tu suscripción al boletín de {site}.",
-  "NewsletterPage.subscribeTitle": "Boletín de {site}: lo nuevo, en breve",
+  "NewsletterPage.subscribeTitle": "Boletín de {site}: noticias breves por correo",
   "NewsletterPage.subscribeDescription":
     "Un correo breve cuando {site} cambia: qué salió, qué se rompió y qué aprendí construyéndolo. Doble confirmación y baja con un clic.",
   "NewsletterPage.about": "Sobre el boletín",
-  "NewsletterPage.heading": "Recibe un correo breve cuando {site} cambie",
+  "NewsletterPage.heading": "Recibe un correo breve cuando {site} tenga novedades",
   "NewsletterPage.lead":
     "Qué salió, qué se rompió y qué aprendí construyéndolo, escrito por mí. Ningún otro correo.",
   "NewsletterPage.promiseConfirm":
@@ -258,7 +258,7 @@ export default {
   "HomeWho.about": "Sobre mí",
   "HomeWho.upwork": "Perfil de Upwork",
   "HomeWho.issues": "Issues en GitHub",
-  "HomeNewsletter.title": "Recibe un correo breve cuando Seed cambie",
+  "HomeNewsletter.title": "Recibe un correo breve cuando {site} tenga novedades",
   "HomeNewsletter.lead":
     "Qué salió, qué se rompió y qué aprendí construyéndolo. Ningún otro correo, y te das de baja con un clic.",
   "HomeNewsletter.hint": "Primero lo confirmarás por correo.",

@@ -95,11 +95,11 @@ export default {
   "Unsubscribe.submit": "Cancelar inscrição",
   "NewsletterPage.title": "Newsletter",
   "NewsletterPage.description": "Confirme ou cancele sua inscrição na newsletter do {site}.",
-  "NewsletterPage.subscribeTitle": "Newsletter do {site}: o que saiu, em poucas linhas",
+  "NewsletterPage.subscribeTitle": "Newsletter de {site}: novidades curtas por e-mail",
   "NewsletterPage.subscribeDescription":
     "Um e-mail curto quando o {site} muda: o que saiu, o que quebrou e o que aprendi construindo. Confirmação por e-mail e saída com um clique.",
   "NewsletterPage.about": "Sobre a newsletter",
-  "NewsletterPage.heading": "Receba um e-mail curto quando o {site} mudar",
+  "NewsletterPage.heading": "Receba um e-mail curto quando {site} tiver novidades",
   "NewsletterPage.lead":
     "O que saiu, o que quebrou e o que aprendi construindo, escrito por mim. Nenhum outro e-mail.",
   "NewsletterPage.promiseConfirm":
@@ -260,7 +260,7 @@ export default {
   "HomeWho.about": "Sobre mim",
   "HomeWho.upwork": "Perfil no Upwork",
   "HomeWho.issues": "Issues no GitHub",
-  "HomeNewsletter.title": "Receba um e-mail curto quando o Seed mudar",
+  "HomeNewsletter.title": "Receba um e-mail curto quando {site} tiver novidades",
   "HomeNewsletter.lead":
     "O que saiu, o que quebrou e o que aprendi construindo. Nenhum outro e-mail, e você sai com um clique.",
   "HomeNewsletter.hint": "Antes, você confirma por e-mail.",
