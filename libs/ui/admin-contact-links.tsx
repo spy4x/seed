@@ -386,8 +386,7 @@ export function AdminContactLinkEditorScreen(
           <Field
             id="contact-link-value"
             label={t.t(field.label)}
-            // While an error shows, it alone describes the field: it already names an example.
-            hint={errors.value ? undefined : opens
+            hint={opens
               ? (
                 <Rich
                   parts={t.parts(`AdminContactLinks.opens`, { href: opens })}
@@ -417,7 +416,7 @@ export function AdminContactLinkEditorScreen(
           <Field
             id="contact-link-label"
             label={t.t(`AdminContactLinks.label`)}
-            hint={errors.label ? undefined : labelHint}
+            hint={labelHint}
             error={errors.label}
           >
             <Input

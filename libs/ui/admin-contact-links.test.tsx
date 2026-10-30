@@ -253,7 +253,7 @@ describe("the contact link editor", () => {
       .toContain("Enter a Telegram username.")
   })
 
-  it("describes a field by its error alone while one shows, and by its hint again once it goes", async () => {
+  it("keeps the hint under an error, the error read first, and the hint alone once the error goes", async () => {
     const value = { kind: "email" as const, value: "nope", label: "x" }
     const descriptions = (selector: string) =>
       (find(selector).getAttribute("aria-describedby") ?? "").split(" ").filter(Boolean)
@@ -263,17 +263,16 @@ describe("the contact link editor", () => {
         {...editorProps([], {
           value,
           errors: {
-            value: "Enter an email address, such as hello@example.com.",
+            value: "Check the format.",
             label: "Too long.",
           },
         })}
       />,
     )
     expect(descriptions("[data-e2e=contact-link-value]"))
-      .toEqual(["Enter an email address, such as hello@example.com."])
-    expect(descriptions("[data-e2e=contact-link-label]")).toEqual(["Too long."])
-    expect(document.body.textContent).not.toContain("Such as")
-    expect(document.body.textContent).not.toContain("Shown instead of")
+      .toEqual(["Check the format.", "Such as hello@example.com"])
+    expect(descriptions("[data-e2e=contact-link-label]"))
+      .toEqual(["Too long.", 'Shown instead of the address, such as "Email us".'])
 
     await mount(<AdminContactLinkEditorScreen {...editorProps([], { value })} />)
     expect(descriptions("[data-e2e=contact-link-value]")).toEqual(["Such as hello@example.com"])
