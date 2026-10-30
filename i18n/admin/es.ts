@@ -916,8 +916,7 @@ export default {
   "AdminContactLinks.email": "Correo electrónico",
   "AdminContactLinks.address": "Dirección",
   "AdminContactLinks.title": "Enlaces de contacto",
-  "AdminContactLinks.subtitle":
-    "Dónde te pueden contactar. El pie del sitio web los muestra en este orden.",
+  "AdminContactLinks.subtitle": "Aparecen en el pie del sitio web, en este orden.",
   "AdminContactLinks.listError":
     "No se pudieron cargar los enlaces de contacto. Inténtalo de nuevo en un momento.",
   "AdminContactLinks.addLink": "Añadir enlace",
@@ -932,8 +931,7 @@ export default {
   "AdminContactLinks.moveDown": "Bajar",
   "AdminContactLinks.remove": "Quitar enlace",
   "AdminContactLinks.removeTitle": "¿Quitar «{name}»?",
-  "AdminContactLinks.removeText":
-    "El enlace de {kind} desaparecerá del sitio web en menos de un minuto.",
+  "AdminContactLinks.removeText": "El enlace desaparecerá del sitio web en menos de un minuto.",
   "AdminContactLinks.cancel": "Cancelar",
   "AdminContactLinks.back": "Volver a los enlaces de contacto",
   "AdminContactLinks.link": "Enlace de contacto",
@@ -946,6 +944,12 @@ export default {
   "AdminContactLinks.suchAs": "Por ejemplo, <example>{example}</example>",
   "AdminContactLinks.label": "Texto (opcional)",
   "AdminContactLinks.labelHint": "Se muestra en lugar del valor, por ejemplo «Pide por {kind}».",
+  "AdminContactLinks.labelHintPhone":
+    "Se muestra en lugar del número, por ejemplo «Pide por teléfono».",
+  "AdminContactLinks.labelHintEmail":
+    "Se muestra en lugar de la dirección, por ejemplo «Escríbenos».",
+  "AdminContactLinks.labelHintUrl":
+    "Se muestra en lugar de la dirección web, por ejemplo «Pide en línea».",
   "AdminContactLinks.saving": "Guardando…",
   "AdminContactLinks.save": "Guardar enlace",
   "AdminDashboard.title": "Panel",

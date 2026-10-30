@@ -756,6 +756,9 @@ AdminContactLinks.edit	94026ca2d09f5a79
 AdminContactLinks.email	f2488fd4ef4adbc6
 AdminContactLinks.label	7df60cafd57f651f
 AdminContactLinks.labelHint	8120d4c93ad96a82
+AdminContactLinks.labelHintEmail	e9811437a88acdcc
+AdminContactLinks.labelHintPhone	3aabd631da3aa10e
+AdminContactLinks.labelHintUrl	7416b53fee3239d8
 AdminContactLinks.leaveMessage	c6478a099b08c41d
 AdminContactLinks.link	4a49cbcf5a95c2e8
 AdminContactLinks.listError	1b6bbdca7a35076a
@@ -772,12 +775,12 @@ AdminContactLinks.opens	0866e421cc85bad3
 AdminContactLinks.pageUsername	080251795ce595e9
 AdminContactLinks.phone	306f1bb20677a622
 AdminContactLinks.remove	4953f897094826d3
-AdminContactLinks.removeText	2ea47db8b94d7e3f
+AdminContactLinks.removeText	6455cb0df98b4d89
 AdminContactLinks.removeTitle	0ab816a9864288a4
 AdminContactLinks.retry	d8b8392e2c542950
 AdminContactLinks.save	72145d74b37aeca1
 AdminContactLinks.saving	23e39291d6135814
-AdminContactLinks.subtitle	15c375ea76c9c74c
+AdminContactLinks.subtitle	36c9d0fa745bfba1
 AdminContactLinks.suchAs	0bc056257f575d2f
 AdminContactLinks.title	aab8164626d26778
 AdminContactLinks.username	e3b89e9d33f88e52

@@ -731,7 +731,9 @@ export function ListCard(
  * inside the list's own card, without its dashed border, so it reads as part of the page.
  */
 export function ListEmpty(
-  { title, description, action }: {
+  { icon, title, description, action }: {
+    /** A decorative icon tile above the title. */
+    icon?: ComponentChildren
     title: string
     description?: string
     action?: ComponentChildren
@@ -741,6 +743,7 @@ export function ListEmpty(
     <Card>
       <EmptyState
         headingLevel={2}
+        icon={icon}
         title={title}
         description={description}
         action={action}
