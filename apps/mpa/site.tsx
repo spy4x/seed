@@ -3,7 +3,7 @@ import { Head } from "fresh/runtime"
 import type { PublicContactLink } from "@domain/contact-links"
 import type { Language } from "@domain/identity"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
-import { IconGitHub, IconSprout } from "@spy4x/preact-icons"
+import { IconGitHub } from "@spy4x/preact-icons"
 import { BrandMark } from "@spy4x/preact-ui/brand-mark"
 import { Button } from "@spy4x/preact-ui/button"
 import { FormatContext } from "@spy4x/preact-ui/format"
@@ -20,7 +20,7 @@ import { createFormatters, type Formatters } from "@spy4x/time/format"
 import { FORM_ACTIONS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { siteEnglishText } from "@ui/site-text.ts"
 import { BLOG_PATH, RSS_PATH } from "./blog.ts"
-import { AUTHOR_URL, REPOSITORY_URL, SITE_NAME, TRY_ENTRY } from "./brand.ts"
+import { AUTHOR_URL, REPOSITORY_URL, SITE_ICON, SITE_NAME, TRY_ENTRY } from "./brand.ts"
 import { API_DOCS_PATH } from "./api-docs.ts"
 import { OnThisPage } from "./components/on-this-page.tsx"
 import { contactFooterLinks } from "./contact-links.ts"
@@ -35,7 +35,7 @@ import {
 import { useSite } from "./use-site.tsx"
 import type { State } from "./utils.ts"
 
-export { AUTHOR_URL, REPOSITORY_URL, SITE_NAME, TRY_ENTRY }
+export { AUTHOR_URL, REPOSITORY_URL, SITE_ICON, SITE_NAME, TRY_ENTRY }
 
 /** The pages that have an Open Graph image of their own, at `/og/<key>.png`. */
 export type OgImageKey =
@@ -343,7 +343,7 @@ export function SiteFrame(
         currentPath={href(path)}
         brand={
           <a href={href(`/`)} class="rounded-control" data-e2e="site-brand">
-            <BrandMark Icon={IconSprout} name={SITE_NAME} />
+            <BrandMark Icon={SITE_ICON} name={SITE_NAME} />
           </a>
         }
         links={navLinks.map((link) => ({
@@ -371,7 +371,7 @@ export function SiteFrame(
       <SiteFooter
         brand={
           <div class="flex max-w-sm flex-col gap-3">
-            <BrandMark Icon={IconSprout} name={SITE_NAME} />
+            <BrandMark Icon={SITE_ICON} name={SITE_NAME} />
             <p class="text-sm text-muted">{t.t(`SiteFooter.pitch`)}</p>
           </div>
         }

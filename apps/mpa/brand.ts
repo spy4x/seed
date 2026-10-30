@@ -1,6 +1,11 @@
 // Seed's own site: see docs/start-a-product.md
+import { IconSprout } from "@spy4x/preact-icons"
+
 /** The product this website promotes, as every page names it. */
 export const SITE_NAME = `Seed`
+
+/** The product's icon, drawn beside `SITE_NAME` in every brand mark of the website. */
+export const SITE_ICON = IconSprout
 
 /**
  * Where the source lives: the "View on GitHub" links and the footer point here.
