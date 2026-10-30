@@ -32,7 +32,7 @@ import { ProofStrip } from "../components/proof-strip.tsx"
 import { SectionIntro } from "../components/section-intro.tsx"
 import { PairShot } from "../components/features-visuals.tsx"
 import { Shot } from "../components/shot.tsx"
-import { organizationJsonLd } from "../contact-links.ts"
+import { organizationId, organizationJsonLd } from "../contact-links.ts"
 import { HIRE_PAGE_URL } from "../hire.ts"
 import {
   AUTHOR_URL,
@@ -147,7 +147,8 @@ function homeJsonLd(
       name: SITE_NAME,
       url: `${origin}/`,
       inLanguage: SITE_LANGUAGES,
-      publisher: { "@id": PERSON_JSON_LD["@id"] },
+      // Whoever runs the site: the organization with the contact links once there is one.
+      publisher: { "@id": organization ? organizationId(origin) : PERSON_JSON_LD["@id"] },
       about: { "@id": softwareId(origin) },
     },
     softwareJsonLd(origin),

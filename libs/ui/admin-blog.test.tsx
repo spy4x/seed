@@ -340,6 +340,33 @@ describe("the blog editor", () => {
     ])
   })
 
+  it("says where an empty slug comes from instead of drawing a placeholder address", async () => {
+    const empty = emptyBlogDraft()
+    await mount(<AdminBlogEditorScreen {...editorProps([], { post: null, value: empty })} />)
+    const settings = find("[data-e2e=admin-blog-settings]")
+    expect(settings.textContent).toContain(
+      "Filled in from the title. Lowercase letters, digits and hyphens.",
+    )
+    expect(settings.textContent).not.toContain("{slug}")
+    expect(settings.textContent).not.toContain("The post's URL")
+
+    const value = { ...empty, slug: "hello-world" }
+    await mount(<AdminBlogEditorScreen {...editorProps([], { post: null, value })} />)
+    expect(find("[data-e2e=admin-blog-settings]").textContent).toContain(
+      "The post's URL: /blog/hello-world. Lowercase letters, digits and hyphens.",
+    )
+  })
+
+  it("shows no reading time for an empty post, and counts from the first word", async () => {
+    const empty = emptyBlogDraft()
+    await mount(<AdminBlogEditorScreen {...editorProps([], { post: null, value: empty })} />)
+    expect(has("[data-e2e=admin-blog-words]")).toBe(false)
+
+    const one = { ...empty, bodyMd: "Hello" }
+    await mount(<AdminBlogEditorScreen {...editorProps([], { post: null, value: one })} />)
+    expect(find("[data-e2e=admin-blog-words]").textContent).toBe("1 word · 1 min read")
+  })
+
   it("opens the folded settings and focuses the first field in error", async () => {
     await mount(<AdminBlogEditorScreen {...editorProps([])} />)
     expect(find("[data-e2e=admin-blog-settings-toggle]").getAttribute("aria-expanded"))
@@ -413,6 +440,14 @@ describe("the blog editor", () => {
     expect(find("[data-e2e=admin-blog-publishing]").textContent).toMatch(
       /^Published [^·]*\S · Updated [^·]+\./,
     )
+  })
+
+  it("offers Now and Schedule as the times to publish", async () => {
+    await mount(<AdminBlogEditorScreen {...editorProps([], { dialog: "publish" })} />)
+    const when = find("[data-e2e=admin-blog-when]")
+    expect(when.querySelector("legend")?.textContent).toBe("When")
+    expect([...when.querySelectorAll("label")].map((label) => label.textContent?.trim()))
+      .toEqual(["Now", "Schedule"])
   })
 
   it("publishes a draft now without email until the box is ticked", async () => {

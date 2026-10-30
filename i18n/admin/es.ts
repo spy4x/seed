@@ -486,7 +486,7 @@ export default {
   "AdminBlogDialogs.publishTitle": "¿Publicar «{title}»?",
   "AdminBlogDialogs.when": "Cuándo",
   "AdminBlogDialogs.now": "Ahora",
-  "AdminBlogDialogs.atATime": "En otro momento",
+  "AdminBlogDialogs.whenSchedule": "Programar",
   "AdminBlogDialogs.dateTime": "Fecha y hora",
   "AdminBlogDialogs.liveOnItsOwn": "Se publicará automáticamente a esa hora.",
   "AdminBlogDialogs.goesLiveAt":
@@ -583,6 +583,7 @@ export default {
     "Queda fijo al publicar. Para cambiarlo, usa «Cambiar URL…»; los enlaces antiguos dejarán de funcionar.",
   "AdminBlogEditor.slugHint":
     "La URL de la entrada: <path>{path}</path>. Minúsculas, números y guiones.",
+  "AdminBlogEditor.slugHintEmpty": "Se rellena a partir del título. Minúsculas, números y guiones.",
   "AdminBlogEditor.description": "Descripción",
   "AdminBlogEditor.descriptionHint":
     "Una o dos frases para los resultados de búsqueda y las vistas previas de enlaces.",
@@ -599,7 +600,7 @@ export default {
     "Agrupa las entradas en la página del blog. Elige uno o escribe uno nuevo.",
   "AdminBlogEditor.coverUrl": "URL de la imagen de portada",
   "AdminBlogEditor.coverUrlHint":
-    "Un enlace https:// completo a una imagen apaisada de 1200×630. Déjalo vacío si no quieres portada.",
+    "Un enlace https:// completo a una imagen horizontal de 1200×630, alojada en un servidor que permita mostrarla en otros sitios. Déjalo vacío si no quieres portada.",
   "AdminBlogEditor.coverAlt": "Descripción de la portada",
   "AdminBlogEditor.coverAltHint": "Qué muestra la imagen, para quienes no pueden verla.",
   "AdminBlogEditor.coverPrivacy":
@@ -915,8 +916,7 @@ export default {
   "AdminContactLinks.email": "Correo electrónico",
   "AdminContactLinks.address": "Dirección",
   "AdminContactLinks.title": "Enlaces de contacto",
-  "AdminContactLinks.subtitle":
-    "Dónde te pueden contactar. El pie del sitio web los muestra en este orden.",
+  "AdminContactLinks.subtitle": "Aparecen en el pie del sitio web, en este orden.",
   "AdminContactLinks.listError":
     "No se pudieron cargar los enlaces de contacto. Inténtalo de nuevo en un momento.",
   "AdminContactLinks.addLink": "Añadir enlace",
@@ -931,8 +931,7 @@ export default {
   "AdminContactLinks.moveDown": "Bajar",
   "AdminContactLinks.remove": "Quitar enlace",
   "AdminContactLinks.removeTitle": "¿Quitar «{name}»?",
-  "AdminContactLinks.removeText":
-    "El enlace de {kind} desaparecerá del sitio web en menos de un minuto.",
+  "AdminContactLinks.removeText": "El enlace desaparecerá del sitio web en menos de un minuto.",
   "AdminContactLinks.cancel": "Cancelar",
   "AdminContactLinks.back": "Volver a los enlaces de contacto",
   "AdminContactLinks.link": "Enlace de contacto",
@@ -945,6 +944,12 @@ export default {
   "AdminContactLinks.suchAs": "Por ejemplo, <example>{example}</example>",
   "AdminContactLinks.label": "Texto (opcional)",
   "AdminContactLinks.labelHint": "Se muestra en lugar del valor, por ejemplo «Pide por {kind}».",
+  "AdminContactLinks.labelHintPhone":
+    "Se muestra en lugar del número, por ejemplo «Pide por teléfono».",
+  "AdminContactLinks.labelHintEmail":
+    "Se muestra en lugar de la dirección, por ejemplo «Escríbenos».",
+  "AdminContactLinks.labelHintUrl":
+    "Se muestra en lugar de la dirección web, por ejemplo «Pide en línea».",
   "AdminContactLinks.saving": "Guardando…",
   "AdminContactLinks.save": "Guardar enlace",
   "AdminDashboard.title": "Panel",
@@ -1425,13 +1430,17 @@ export default {
   "AdminJobs.noRepeats": "No hay tareas periódicas",
   "AdminJobs.noRepeatsHint": "Una tarea se repite cuando su definición tiene una frecuencia.",
   "AdminJobs.retryAllTitle": {
-    "one": "¿Relanzar {count} tarea fallida?",
+    "one": "¿Relanzar esta tarea fallida?",
     "many": "¿Relanzar {count} tareas fallidas?",
     "other": "¿Relanzar {count} tareas fallidas?",
   },
   "AdminJobs.runNowTitle": "¿Ejecutar esta tarea ahora?",
   "AdminJobs.runAgain": "Relanzar",
-  "AdminJobs.retryAllText": "Cada una se ejecuta una vez más, con los intentos a cero.",
+  "AdminJobs.retryAllText": {
+    "one": "Se ejecutará de nuevo, con el contador de intentos a cero.",
+    "many": "Cada una se ejecutará de nuevo, con el contador de intentos a cero.",
+    "other": "Cada una se ejecutará de nuevo, con el contador de intentos a cero.",
+  },
   "AdminJobs.runsNowInstead":
     "<job>{job}</job> se ejecuta ahora en lugar de a las <at></at>. Si es periódica, mantiene su frecuencia después de esta ejecución.",
   "AdminJobs.runsNow":

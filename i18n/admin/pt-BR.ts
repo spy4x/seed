@@ -484,7 +484,7 @@ export default {
   "AdminBlogDialogs.publishTitle": "Publicar “{title}”?",
   "AdminBlogDialogs.when": "Quando",
   "AdminBlogDialogs.now": "Agora",
-  "AdminBlogDialogs.atATime": "Em um horário",
+  "AdminBlogDialogs.whenSchedule": "Agendar para depois",
   "AdminBlogDialogs.dateTime": "Data e hora",
   "AdminBlogDialogs.liveOnItsOwn": "Ele é publicado sozinho nesse horário.",
   "AdminBlogDialogs.goesLiveAt":
@@ -579,6 +579,8 @@ export default {
     "Fica travado depois de publicado. Para mudar, use Mudar URL…; links antigos vão quebrar.",
   "AdminBlogEditor.slugHint":
     "A URL do post: <path>{path}</path>. Letras minúsculas, números e hifens.",
+  "AdminBlogEditor.slugHintEmpty":
+    "Preenchido com base no título. Use só letras minúsculas, números e hifens.",
   "AdminBlogEditor.description": "Descrição",
   "AdminBlogEditor.descriptionHint":
     "Uma ou duas frases para resultados de busca e prévias de link.",
@@ -594,7 +596,7 @@ export default {
   "AdminBlogEditor.topicHint": "Agrupa os posts na página do blog. Escolha um ou digite um novo.",
   "AdminBlogEditor.coverUrl": "URL da imagem de capa",
   "AdminBlogEditor.coverUrlHint":
-    "Um link completo com https:// para uma imagem larga, de 1200×630. Deixe vazio para não ter capa.",
+    "Link completo (https://) de uma imagem horizontal de 1200×630, hospedada em um serviço que permita exibi-la em outros sites. Deixe em branco se não quiser capa.",
   "AdminBlogEditor.coverAlt": "Descrição da capa",
   "AdminBlogEditor.coverAltHint": "O que a imagem mostra, para quem não consegue vê-la.",
   "AdminBlogEditor.coverPrivacy":
@@ -907,8 +909,7 @@ export default {
   "AdminContactLinks.email": "E-mail",
   "AdminContactLinks.address": "Endereço",
   "AdminContactLinks.title": "Links de contato",
-  "AdminContactLinks.subtitle":
-    "Onde as pessoas falam com você. O rodapé do site lista os links nesta ordem.",
+  "AdminContactLinks.subtitle": "Aparecem no rodapé do site, nesta ordem.",
   "AdminContactLinks.listError":
     "Não foi possível carregar os links de contato. Tente de novo daqui a pouco.",
   "AdminContactLinks.addLink": "Adicionar link",
@@ -923,7 +924,7 @@ export default {
   "AdminContactLinks.moveDown": "Mover para baixo",
   "AdminContactLinks.remove": "Remover link",
   "AdminContactLinks.removeTitle": "Remover “{name}”?",
-  "AdminContactLinks.removeText": "O site deixa de mostrar este link de {kind} em até um minuto.",
+  "AdminContactLinks.removeText": "O site deixa de mostrar este link em até um minuto.",
   "AdminContactLinks.cancel": "Cancelar",
   "AdminContactLinks.back": "Voltar aos links de contato",
   "AdminContactLinks.link": "Link de contato",
@@ -936,6 +937,10 @@ export default {
   "AdminContactLinks.suchAs": "Por exemplo, <example>{example}</example>",
   "AdminContactLinks.label": "Rótulo (opcional)",
   "AdminContactLinks.labelHint": "Aparece no lugar do valor, por exemplo “Peça pelo {kind}”.",
+  "AdminContactLinks.labelHintPhone":
+    "Aparece no lugar do número, por exemplo “Peça por telefone”.",
+  "AdminContactLinks.labelHintEmail": "Aparece no lugar do e-mail, por exemplo “Mande um e-mail”.",
+  "AdminContactLinks.labelHintUrl": "Aparece no lugar do endereço, por exemplo “Peça pelo site”.",
   "AdminContactLinks.saving": "Salvando…",
   "AdminContactLinks.save": "Salvar link",
   "AdminDashboard.title": "Painel",
@@ -1416,13 +1421,17 @@ export default {
   "AdminJobs.noRepeatsHint":
     "Uma tarefa passa a se repetir quando a definição dela tem uma agenda.",
   "AdminJobs.retryAllTitle": {
-    "one": "Executar de novo {count} tarefa com falha?",
-    "many": "Executar de novo {count} tarefas com falha?",
-    "other": "Executar de novo {count} tarefas com falha?",
+    "one": "Executar de novo a tarefa que falhou?",
+    "many": "Executar de novo as {count} tarefas que falharam?",
+    "other": "Executar de novo as {count} tarefas que falharam?",
   },
   "AdminJobs.runNowTitle": "Executar esta tarefa agora?",
   "AdminJobs.runAgain": "Executar de novo",
-  "AdminJobs.retryAllText": "Cada uma roda mais uma vez, com as tentativas zeradas.",
+  "AdminJobs.retryAllText": {
+    "one": "Ela vai ser executada mais uma vez, com as tentativas zeradas.",
+    "many": "Cada uma vai ser executada mais uma vez, com as tentativas zeradas.",
+    "other": "Cada uma vai ser executada mais uma vez, com as tentativas zeradas.",
+  },
   "AdminJobs.runsNowInstead":
     "<job>{job}</job> é executada agora, em vez de <at></at>. Uma tarefa recorrente mantém a agenda depois desta execução.",
   "AdminJobs.runsNow":

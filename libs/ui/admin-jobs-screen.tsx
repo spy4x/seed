@@ -690,7 +690,7 @@ function ListConfirm(
     >
       <Stack>
         <p class="text-sm text-muted">
-          {many ? t.t(`AdminJobs.retryAllText`) : (
+          {many ? t.t(`AdminJobs.retryAllText`, { count: confirm.count }) : (
             <Rich
               parts={t.parts(
                 confirm.job.nextRunAt ? `AdminJobs.runsNowInstead` : `AdminJobs.runsNow`,
