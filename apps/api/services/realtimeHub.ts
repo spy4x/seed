@@ -1,6 +1,8 @@
 import { type Actor, GuestReminderKind } from "@domain/identity"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import { guestRefusal } from "../middlewares/guest-limits.ts"
+import { createOperationRateLimits } from "../middlewares/operation-rate-limits.ts"
+import { createRedisRateLimitStore } from "@spy4x/server/kv"
 import type { Operations } from "@spy4x/realtime/operations"
 import { createGroupOperations } from "../features/groups/operations.ts"
 import { createOnboardingOperations } from "../features/onboarding/operations.ts"
@@ -13,7 +15,9 @@ import { createPictureOperations } from "../features/profile/picture.ts"
 import { createNoteOperations } from "../features/notes/operations.ts"
 import { createNoteWidgetOperations } from "../features/notes/widgets.ts"
 import { signIn } from "./auth.ts"
+import { kv } from "./cache.ts"
 import { commandBus } from "./commandBus.ts"
+import { config } from "./config.ts"
 import { db } from "./db.ts"
 import { groupListCursor } from "./group-list-cursor.ts"
 import { log } from "./log.ts"
@@ -21,12 +25,19 @@ import { noteListCursor } from "./note-list-cursor.ts"
 import { queryBus } from "./queryBus.ts"
 import { Realtime } from "./realtime.ts"
 
+/** The per-person budget both adapters spend from (#429); they `identify` each call's caller. */
+export const operationRateLimits = createOperationRateLimits({
+  budget: config.operationBudget,
+  store: (keyPrefix) => createRedisRateLimitStore(kv, { keyPrefix }),
+  onStoreError: (error) => log("error: operation rate limit store failed and was let pass", error),
+})
+
 /**
  * Everything the API can be asked to do by name (`note.create`). Each aggregate lists its own
  * operations once, and two adapters serve this one table: the socket ({@link realtime}) and
- * `POST /api/call/<name>` (`routes/call.ts`).
+ * `POST /api/call/<name>` (`routes/call.ts`). Every call spends the caller's operation budget.
  */
-export const operations: Operations<Actor> = {
+export const operations: Operations<Actor> = operationRateLimits.limit({
   ...createGroupOperations({
     create: (command) => commandBus.execute(command),
     list: (query) => queryBus.execute(query),
@@ -113,12 +124,13 @@ export const operations: Operations<Actor> = {
     list: (query) => queryBus.execute(query),
     get: (query) => queryBus.execute(query),
   }),
-}
+})
 
 /** The API's one realtime socket service; see {@link Realtime}. */
 export const realtime = new Realtime({
   entitledSession: (sessionId) => signIn.entitledSession(sessionId),
   memberUserIds: (groupId) => db.group.listMemberUserIds(groupId),
   operations,
+  identify: operationRateLimits.identify,
   log,
 })

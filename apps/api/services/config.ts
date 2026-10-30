@@ -1,4 +1,5 @@
 import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/notes"
+import { OPERATION_BUDGET, type OperationBudget } from "../middlewares/operation-rate-limits.ts"
 import { isSpaOn, readApiEnv } from "./config-env.ts"
 
 const env = readApiEnv()
@@ -46,6 +47,29 @@ export class Config {
       "ATTACHMENT_UPLOAD_BYTES_PER_HOUR",
       env.ATTACHMENT_UPLOAD_BYTES_PER_HOUR,
       ATTACHMENT_UPLOAD_BUDGET.bytes,
+    ),
+  }
+  /** Operations one person, or one address for guests, may call per minute (#429). */
+  operationBudget: OperationBudget = {
+    commands: wholeNumber(
+      "OPERATION_COMMANDS_PER_MINUTE",
+      env.OPERATION_COMMANDS_PER_MINUTE,
+      OPERATION_BUDGET.commands,
+    ),
+    queries: wholeNumber(
+      "OPERATION_QUERIES_PER_MINUTE",
+      env.OPERATION_QUERIES_PER_MINUTE,
+      OPERATION_BUDGET.queries,
+    ),
+    guestCommands: wholeNumber(
+      "GUEST_OPERATION_COMMANDS_PER_MINUTE",
+      env.GUEST_OPERATION_COMMANDS_PER_MINUTE,
+      OPERATION_BUDGET.guestCommands,
+    ),
+    guestQueries: wholeNumber(
+      "GUEST_OPERATION_QUERIES_PER_MINUTE",
+      env.GUEST_OPERATION_QUERIES_PER_MINUTE,
+      OPERATION_BUDGET.guestQueries,
     ),
   }
   rateLimiter = {
