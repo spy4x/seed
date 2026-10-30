@@ -1494,6 +1494,11 @@ export default {
   "ProfileSecurity.setTitle": "تعيين كلمة مرور",
   "ProfileSecurity.changeTitle": "تغيير كلمة المرور",
   "ProfileSecurity.setText": "أضف كلمة مرور لتتمكن أيضًا من تسجيل الدخول ببريدك الإلكتروني.",
+  "ProfileSecurity.setNeedsEmail":
+    "تسجّل الدخول بكلمة المرور مع بريدك الإلكتروني، وهذا الحساب ليس له بريد إلكتروني بعد. أضف بريدًا أولًا، ثم عُد إلى هنا لتعيين كلمة مرور.",
+  "ProfileSecurity.setNeedsCode":
+    "تسجّل الدخول بكلمة المرور مع بريدك الإلكتروني. أكّد <email>{email}</email> أولًا بالرمز الذي أرسلناه إليه، ثم عُد إلى هنا لتعيين كلمة مرور.",
+  "ProfileSecurity.addEmail": "إضافة بريد إلكتروني",
   "ProfileSecurity.codeFromAuthenticator": "الرمز من تطبيق المصادقة",
   "ProfileSecurity.updating": "جارٍ التحديث…",
   "ProfileSecurity.setButton": "تعيين كلمة المرور",

@@ -10,7 +10,12 @@ import {
 } from "@ui/profile-screen.tsx"
 import type { AccountDeleteErrors, AccountDeleteValues } from "@ui/account-delete.tsx"
 import { EMAIL_FAILURES, type EmailMessages, type EmailValues } from "@ui/email-screen.tsx"
-import { isProfileSection, type ProfileSectionId, SCREEN_PATHS } from "@ui/progressive.tsx"
+import {
+  isProfileSection,
+  profilePath,
+  type ProfileSectionId,
+  SCREEN_PATHS,
+} from "@ui/progressive.tsx"
 import { TwoFactorProof } from "@ui/two-factor.ts"
 import { OAUTH_NOTICE_KEYS, say } from "@ui/message.ts"
 import { useAppText } from "@ui/i18n.ts"
@@ -43,6 +48,7 @@ import {
   authPasswordSchema,
   authPasswordSetSchema,
   emailToVerify,
+  hasPasswordAddress,
   OAUTH_NOTICE_PARAM,
   oauthNotice,
   UserMFAStatus,
@@ -163,6 +169,13 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     providerProofOf(methods.methods.value, providerProofFresh, methods.emailLink.value),
     methods,
   )
+
+  // An account with no password and no proven address: a first password would be refused, so its
+  // dialog says the address comes first (#463). Unknown status shows the form; the API decides.
+  const emailStatus = emailStore.status.value
+  const passwordNeedsEmail = providerProof && emailStatus && !hasPasswordAddress(emailStatus)
+    ? { pending: emailStatus.pending }
+    : null
 
   /** Reads the signed-in devices again; a failure shows above the list and keeps the old one. */
   const loadDevices = () => devices.load()
@@ -627,7 +640,11 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
         },
       }}
       openEmailCode={new URLSearchParams(search).has("verify")}
+      openEmailAddress={new URLSearchParams(search).has("email")}
       onSetPassword={submitFirstPassword}
+      passwordNeedsEmail={passwordNeedsEmail}
+      onAddEmail={() => navigate(`${profilePath("account")}?email`)}
+      onEnterEmailCode={() => navigate(`${profilePath("account")}?verify`)}
       providerProofFresh={providerProofFresh}
       providerProof={providerProof}
       isMfaRequired={session.isMfaRequired}

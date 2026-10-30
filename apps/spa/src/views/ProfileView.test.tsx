@@ -257,6 +257,36 @@ describe("ProfileView", () => {
     }
   })
 
+  it("sends an account with no address from the password dialog to add one first (#463)", async () => {
+    emailStore.status.value = { email: null, proven: false, pending: null }
+    const refuse = globalThis.fetch
+    const methods: SignInMethodsResponse = {
+      methods: [{ id: 7, kind: "passkey", email: null, current: true, canUnlink: false }],
+      available: [],
+      providerProofUntil: new Date(Date.now() + 4 * 60_000).toISOString(),
+      emailLink: false,
+    }
+    globalThis.fetch = (input, init) =>
+      String(input).endsWith("/api/auth/methods")
+        ? Promise.resolve(Response.json(methods))
+        : refuse(input, init)
+    try {
+      const { history } = await open("/profile/security", ROUTED)
+      await settle()
+      await act(() => root!.querySelector<HTMLElement>("[data-e2e=password-open]")!.click())
+
+      expect(root!.querySelector("[data-e2e=password-new]")).toBe(null)
+      await act(() => root!.querySelector<HTMLElement>("[data-e2e=password-add-email]")!.click())
+      await settle()
+
+      expect(history.at(-1)).toBe("/profile/account?email")
+      expect(root!.querySelector<HTMLDialogElement>("dialog[data-e2e=email-change-dialog]")?.open)
+        .toBe(true)
+    } finally {
+      globalThis.fetch = refuse
+    }
+  })
+
   it("sends an address with no such section back to /profile", async () => {
     const { history } = await open("/profile/billing", <ProfileView section="billing" />)
 

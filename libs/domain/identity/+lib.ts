@@ -186,6 +186,18 @@ export interface EmailStatus {
 }
 
 /**
+ * Whether an account with this address status can take a first password: a password signs in with
+ * the account's proven address, so an account with none, or with one still waiting for its code,
+ * cannot. The API refuses such a password before it spends an authenticator code, and the profile
+ * says an address comes first instead of asking for one (#463).
+ */
+export function hasPasswordAddress(
+  status: EmailStatus,
+): status is EmailStatus & { email: string } {
+  return status.email !== null
+}
+
+/**
  * The address a code proves now: the pending new one, else the current one while it is unproven.
  * `null` when there is nothing to prove.
  */

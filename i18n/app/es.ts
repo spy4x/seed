@@ -1401,6 +1401,11 @@ export default {
   "ProfileSecurity.changeTitle": "Cambiar contraseña",
   "ProfileSecurity.setText":
     "Añade una contraseña para iniciar sesión también con tu correo electrónico.",
+  "ProfileSecurity.setNeedsEmail":
+    "Para iniciar sesión con contraseña necesitas tu correo electrónico, y esta cuenta aún no tiene uno. Añádelo primero y luego vuelve aquí para establecer la contraseña.",
+  "ProfileSecurity.setNeedsCode":
+    "Para iniciar sesión con contraseña necesitas tu correo electrónico. Primero confirma <email>{email}</email> con el código que te enviamos allí y luego vuelve aquí para establecer la contraseña.",
+  "ProfileSecurity.addEmail": "Añadir correo electrónico",
   "ProfileSecurity.codeFromAuthenticator": "Código de tu app de autenticación",
   "ProfileSecurity.updating": "Actualizando…",
   "ProfileSecurity.setButton": "Establecer contraseña",

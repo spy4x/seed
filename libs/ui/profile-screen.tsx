@@ -146,6 +146,8 @@ export interface ProfileScreenProps {
   emailChange?: EmailChangeProps
   /** Opens the e-mail dialog at its code, whenever this turns true while an address waits for one. */
   openEmailCode?: boolean
+  /** Opens the e-mail dialog at its address step, whenever this turns true (`?email`). */
+  openEmailAddress?: boolean
   /** Given only when the address could not be read: Account shows the failure and a retry. */
   onRetryEmail?: () => void
   onChangePassword?: () => void
@@ -167,6 +169,15 @@ export interface ProfileScreenProps {
   providerProof?: ProviderProof | null
   /** Drops what was typed in the password dialog and its errors, when the person closes it. */
   onCancelPassword?: () => void
+  /**
+   * Set while an account with no password has no proven address: the password dialog says an
+   * address comes first (`SecuritySection`'s `passwordNeedsEmail`).
+   */
+  passwordNeedsEmail?: { pending: string | null } | null
+  /** "Add email" in that dialog. */
+  onAddEmail?: () => void
+  /** "Enter code" in that dialog. */
+  onEnterEmailCode?: () => void
   /** Whether the password change also signs out every other device. */
   signOutOthers?: boolean
   /**
@@ -379,6 +390,7 @@ function ProfileSection(
           ) ?? ""}
           emailChange={props.emailChange}
           openEmailCode={props.openEmailCode}
+          openEmailAddress={props.openEmailAddress}
           onRetryEmail={props.onRetryEmail}
           providerProof={providerProof}
           guestRow={props.guest && <GuestAccountRow navigate={props.navigate} />}
@@ -407,6 +419,9 @@ function ProfileSection(
           enrolment={props.enrolment}
           providerOnly={providerOnly}
           providerProof={providerProof}
+          passwordNeedsEmail={props.passwordNeedsEmail}
+          onAddEmail={props.onAddEmail}
+          onEnterEmailCode={props.onEnterEmailCode}
           onChangePassword={props.onChangePassword}
           onSetPassword={props.onSetPassword}
           onCancelPassword={props.onCancelPassword}

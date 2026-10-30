@@ -19,6 +19,7 @@ import {
   authSignUpSchema,
   authTotpDisconnectSchema,
   emailToVerify,
+  hasPasswordAddress,
   SIGN_IN_LINK_ASKED_ELSEWHERE_CODE,
   type SignInLinkRedeemed,
   signInMethodProofSchema,
@@ -31,7 +32,6 @@ import {
 import {
   EmailChangeOutcome,
   EmailVerifyOutcome,
-  hasPasswordAddress,
   PasswordSetOutcome,
   type SignIn,
   SignInLinkOutcome,

@@ -109,6 +109,7 @@ import {
   AuthAuditEventType,
   type EmailStatus,
   emailToVerify,
+  hasPasswordAddress,
   SIGN_IN_LINK_METHOD,
   type SignedInDevice,
   type User,
@@ -195,18 +196,6 @@ export enum PasswordSetOutcome {
   NoAddress = 4,
   /** The password cannot be stored, or another account signs in with this address. */
   Refused = 5,
-}
-
-/**
- * Whether an account with this address status can take a first password: the password signs in
- * with the account's proven address, so an account with none, or one still waiting for its code,
- * cannot. {@link SignIn.setPassword} refuses it with {@link PasswordSetOutcome.NoAddress}, and the
- * route asks first, before it spends an authenticator code (#463).
- */
-export function hasPasswordAddress(
-  status: EmailStatus,
-): status is EmailStatus & { email: string } {
-  return status.email !== null
 }
 
 /** What {@link SignIn.verifyEmail} did. */
