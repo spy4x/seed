@@ -153,6 +153,8 @@ for (const [action, paths] of Object.entries(GUEST_LIMITED_PATHS)) {
     : undefined
   app.on("POST", [...paths], refuseGuests(action as GuestLimitedAction, remind))
 }
+// Before every route too: a REST write spends the same budget as an operation (#429).
+app.use("*", operationRateLimits.restWrites)
 
 app.route(
   "/health",

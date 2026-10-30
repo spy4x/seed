@@ -1,3 +1,4 @@
+import type { MiddlewareHandler } from "hono"
 import type { Actor } from "@domain/identity"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import type { Operation, Operations } from "@spy4x/realtime/operations"
@@ -8,6 +9,9 @@ import {
   type RateLimiter,
   type RateLimitStore,
 } from "@spy4x/platform/rate-limit"
+import type { APIContext } from "../_types.ts"
+import { errorResponse } from "../services/error-response.ts"
+import { signUpClient } from "./auth-rate-limits.ts"
 
 /** The window of every operation budget: one minute. */
 export const OPERATION_WINDOW_MS = 60_000
@@ -43,6 +47,21 @@ export interface OperationCaller {
   client: string
 }
 
+/**
+ * The paths whose writes {@link OperationRateLimits.restWrites} lets pass unbudgeted: sign-in has
+ * limits of its own, the operator area is for operators, and `/call` spends the budget through the
+ * operations table already.
+ */
+export const OPERATION_BUDGET_SKIPPED_PATHS: readonly string[] = [
+  `/api/auth`,
+  `/api/admin`,
+  `/api/call`,
+]
+
+const WRITE_METHODS = new Set([`POST`, `PUT`, `PATCH`, `DELETE`])
+
+const REFUSAL_MESSAGE = `Too many requests. Wait a minute`
+
 /** What the operation limits are built from. */
 export interface OperationRateLimitSettings {
   budget: OperationBudget
@@ -69,6 +88,13 @@ export interface OperationRateLimits {
    * signed-in budget.
    */
   identify(actor: Actor, caller: OperationCaller): Actor
+  /**
+   * The app-wide middleware for the REST routes: every signed-in `POST`, `PUT`, `PATCH` or `DELETE`
+   * outside {@link OPERATION_BUDGET_SKIPPED_PATHS} spends one command from the same budget, with
+   * the same keys, as an operation does. Past it the answer is 429 `rate_limited` with
+   * `Retry-After`, and the route does not run. Reads and requests with no session pass.
+   */
+  restWrites: MiddlewareHandler<APIContext>
 }
 
 /**
@@ -100,15 +126,11 @@ export function createOperationRateLimits(
   }
   const callers = new WeakMap<Actor, OperationCaller>()
 
-  const spend = async (kind: Operation<Actor>["kind"], actor: Actor) => {
-    const caller = callers.get(actor)
-    const decision = caller?.guest
-      ? await limiters[kind].guest.check(`operation-guest:${caller.client}`)
-      : await limiters[kind].user.check(`operation-user:${actor.userId}`)
-    if (!decision.allowed) {
-      throw new RealtimeRequestError(`rate_limited`, `Too many requests. Wait a minute`)
-    }
-  }
+  /** Spends one unit of `kind` for `userId`; a guest's comes from its address's budget. */
+  const spend = (kind: Operation<Actor>["kind"], userId: number, caller?: OperationCaller) =>
+    caller?.guest
+      ? limiters[kind].guest.check(`operation-guest:${caller.client}`)
+      : limiters[kind].user.check(`operation-user:${userId}`)
 
   return {
     limit: (operations) =>
@@ -116,7 +138,8 @@ export function createOperationRateLimits(
         Object.entries(operations).map(([name, operation]) => [name, {
           kind: operation.kind,
           handle: async (call) => {
-            await spend(operation.kind, call.actor)
+            const decision = await spend(operation.kind, call.actor.userId, callers.get(call.actor))
+            if (!decision.allowed) throw new RealtimeRequestError(`rate_limited`, REFUSAL_MESSAGE)
             return await operation.handle(call)
           },
         }]),
@@ -124,6 +147,21 @@ export function createOperationRateLimits(
     identify: (actor, caller) => {
       callers.set(actor, caller)
       return actor
+    },
+    restWrites: async (c, next) => {
+      const user = c.get(`auth`)?.user
+      const path = c.req.path
+      if (
+        !user || !WRITE_METHODS.has(c.req.method) ||
+        OPERATION_BUDGET_SKIPPED_PATHS.some((skip) => path === skip || path.startsWith(`${skip}/`))
+      ) return await next()
+      const decision = await spend(`command`, user.id, {
+        guest: Boolean(user.guestSince),
+        client: signUpClient(c),
+      })
+      if (decision.allowed) return await next()
+      c.header(`Retry-After`, String(Math.ceil(decision.retryAfterMs / 1000)))
+      return errorResponse(c, `rate_limited`, { message: REFUSAL_MESSAGE })
     },
   }
 }

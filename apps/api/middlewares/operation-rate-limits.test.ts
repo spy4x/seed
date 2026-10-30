@@ -11,7 +11,12 @@ import {
   sameOriginHeaders,
   WEB_APP_URL,
 } from "../_testing/mutation-requests.ts"
+import { Hono } from "hono"
+import type { NoteCreateCommand } from "@domain/notes"
+import type { APIContext } from "../_types.ts"
 import { createCallRoute } from "../routes/call.ts"
+import { createNotesRoute, type NotesRouteDependencies } from "../routes/notes.ts"
+import { createGroupsRoute, type GroupsRouteDependencies } from "../routes/groups.ts"
 import { Realtime, toRequestError } from "../services/realtime.ts"
 import {
   createOperationRateLimits,
@@ -208,3 +213,118 @@ for (const [via, open] of TRANSPORTS) {
     })
   })
 }
+
+const GROUP_ID = `01900000-0000-7000-8000-000000000001`
+
+/**
+ * The API as `index.ts` wires it, cut to what the budget touches: the app-wide `restWrites`
+ * middleware before the notes, groups and call routes, and a stand-in sign-in route. Every request
+ * comes from `who`, at its address.
+ */
+function restApp(s: Stack, who: Who | null) {
+  const ran = { notes: 0, groups: 0 }
+  const app = new Hono<APIContext>().basePath(`/api`)
+  app.use(`*`, async (c, next) => {
+    c.set(`requestId`, `req-test-1`)
+    c.set(`auth`, who ? authOf(who) : null)
+    await next()
+  })
+  app.use(`*`, s.limits.restWrites)
+  app.post(`/auth/sign-out`, (c) => c.json({ signedOut: true }))
+  app.route(
+    `/call`,
+    createCallRoute({
+      operations: s.operations,
+      identify: s.limits.identify,
+      mapError: toRequestError,
+      log: () => {},
+      expectedOrigin: WEB_APP_URL,
+    }),
+  )
+  app.route(
+    `/groups/:groupId/notes`,
+    createNotesRoute({
+      create: (command: NoteCreateCommand) => {
+        ran.notes++
+        return Promise.resolve({ note: { id: command.data.id }, created: true })
+      },
+      expectedOrigin: WEB_APP_URL,
+    } as unknown as NotesRouteDependencies),
+  )
+  app.route(
+    `/groups`,
+    createGroupsRoute({
+      create: () => {
+        ran.groups++
+        return Promise.resolve({ group: { id: GROUP_ID }, created: true })
+      },
+      expectedOrigin: WEB_APP_URL,
+    } as unknown as GroupsRouteDependencies),
+  )
+  const send = (path: string, body: unknown) =>
+    app.request(`${API_URL}${path}`, {
+      method: `POST`,
+      headers: {
+        ...sameOriginHeaders,
+        "x-realtime-user": String(who?.userId ?? 0),
+        "x-real-ip": who?.client ?? `192.0.2.1`,
+        "idempotency-key": `key-${++keys}`,
+      },
+      body: JSON.stringify(body),
+    })
+  let ids = 0
+  const id = () => `01900000-0000-7000-8000-${String(++ids).padStart(12, `0`)}`
+  return {
+    ran,
+    note: () => send(`/groups/${GROUP_ID}/notes`, { id: id(), title: `Plan`, body: `` }),
+    group: () => send(`/groups`, { id: id(), name: `Team` }),
+    call: () => send(`/call/note.create`, {}),
+    signOut: () => send(`/auth/sign-out`, {}),
+  }
+}
+
+/** `ok`, or the error code a refused request answers with and its status. */
+async function outcome(response: Response): Promise<string> {
+  if (response.ok) return `ok`
+  const body = await response.json()
+  return `${response.status} ${body.error.code}`
+}
+
+describe(`operation budget over the REST routes`, () => {
+  it(`spends one budget for REST writes and /api/call commands`, async () => {
+    const s = stack()
+    const api = restApp(s, { userId: 1 })
+
+    expect([
+      await outcome(await api.note()),
+      await outcome(await api.group()),
+      await outcome(await api.call()),
+      await outcome(await api.call()),
+      await outcome(await api.note()),
+    ]).toEqual([`ok`, `ok`, `ok`, `429 rate_limited`, `429 rate_limited`])
+    expect(api.ran.notes + api.ran.groups + s.ran.command).toBe(BUDGET.commands)
+  })
+
+  it(`refuses a guest past its address's budget on note and group creates, with Retry-After`, async () => {
+    const s = stack()
+    const first = restApp(s, { userId: 1, guest: true, client: `192.0.2.7` })
+    expect([await outcome(await first.note()), await outcome(await first.note())])
+      .toEqual([`ok`, `ok`])
+
+    const refused = await first.note()
+    expect(await outcome(refused)).toBe(`429 rate_limited`)
+    expect(Number(refused.headers.get(`retry-after`))).toBeGreaterThan(0)
+    const another = restApp(s, { userId: 2, guest: true, client: `192.0.2.7` })
+    expect(await outcome(await another.group())).toBe(`429 rate_limited`)
+    expect(first.ran.notes + another.ran.groups).toBe(BUDGET.guestCommands)
+  })
+
+  it(`leaves sign-in writes and requests with no session out of the budget`, async () => {
+    const s = stack()
+    const api = restApp(s, { userId: 1 })
+    for (let i = 0; i < BUDGET.commands; i++) await api.note()
+
+    expect(await outcome(await api.signOut())).toBe(`ok`)
+    expect(await outcome(await restApp(s, null).note())).toBe(`401 unauthorized`)
+  })
+})
