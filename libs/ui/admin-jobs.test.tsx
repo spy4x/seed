@@ -256,13 +256,24 @@ describe("admin jobs list", () => {
   })
 
   it("asks before running every failed job again, naming how many", async () => {
-    const confirm = { kind: "retryAll", count: 1 } as const
+    const confirm = { kind: "retryAll", count: 3 } as const
     const { node, events } = jobsPage({ confirm })
     await mount(node)
 
-    expect(text(`[data-e2e="admin-jobs-confirm"]`)).toContain("Run 1 failed job again?")
+    const dialog = text(`[data-e2e="admin-jobs-confirm"]`)
+    expect(dialog).toContain("Run 3 failed jobs again?")
+    expect(dialog).toContain("Each runs once more with a fresh set of attempts.")
     await click(find(`[data-e2e="admin-jobs-confirm-ok"]`))
     expect(events).toEqual([["confirm", "retryAll"]])
+  })
+
+  it("asks about one failed job in the singular", async () => {
+    await mount(jobsPage({ confirm: { kind: "retryAll", count: 1 } }).node)
+
+    const dialog = text(`[data-e2e="admin-jobs-confirm"]`)
+    expect(dialog).toContain("Run this failed job again?")
+    expect(dialog).toContain("It runs once more with a fresh set of attempts.")
+    expect(dialog).not.toContain("Each")
   })
 
   it("moves focus to the run count once the failed jobs started again", async () => {
