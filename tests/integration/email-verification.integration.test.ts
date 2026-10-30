@@ -40,7 +40,8 @@ async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<v
     ...settings,
     max: 10,
     transform: postgres.camel,
-    connection: { options: `-c search_path=${schema}` },
+    // Names the connections so a lock count sees only this test's, not a parallel file's.
+    connection: { options: `-c search_path=${schema}`, application_name: schema },
     onnotice: () => {},
   })
   try {
@@ -491,11 +492,12 @@ Deno.test("a password reset and an address move of one account", async (t) => {
       return { account, code, link }
     }
 
-    /** How many statements of this database wait for a lock. */
+    /** How many statements of this test wait for a lock. */
     const waiting = async () =>
       (await sql<{ n: number }[]>`
         SELECT count(*)::int AS n FROM pg_stat_activity
         WHERE wait_event_type = 'Lock' AND datname = current_database()
+          AND application_name = current_setting('application_name')
       `)[0].n
     const untilWaiting = async (n: number) => {
       for (let poll = 0; poll < 100 && (await waiting()) < n; poll++) {
