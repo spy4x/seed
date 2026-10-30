@@ -768,6 +768,11 @@ services:
       # The hourly upload budget of note attachments (docs/files.md): empty for the defaults.
       - ATTACHMENT_UPLOAD_FILES_PER_HOUR=${ATTACHMENT_UPLOAD_FILES_PER_HOUR:-}
       - ATTACHMENT_UPLOAD_BYTES_PER_HOUR=${ATTACHMENT_UPLOAD_BYTES_PER_HOUR:-}
+      # The operation budget per minute (docs/architecture.md): empty for the defaults.
+      - OPERATION_COMMANDS_PER_MINUTE=${OPERATION_COMMANDS_PER_MINUTE:-}
+      - OPERATION_QUERIES_PER_MINUTE=${OPERATION_QUERIES_PER_MINUTE:-}
+      - GUEST_OPERATION_COMMANDS_PER_MINUTE=${GUEST_OPERATION_COMMANDS_PER_MINUTE:-}
+      - GUEST_OPERATION_QUERIES_PER_MINUTE=${GUEST_OPERATION_QUERIES_PER_MINUTE:-}
       # The Telegram bot (docs/telegram.md): off while the token is unset. Only the API takes the
       # webhook, so only it receives the webhook secret.
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}

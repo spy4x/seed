@@ -17,6 +17,7 @@ import { TagError, TagVersionConflictError } from "@domain/tags"
 import { PlanError, toPlanRefusal } from "@domain/billing"
 import { IdempotencyError } from "@spy4x/server/idempotency"
 import { actorFromAuth } from "../cqrs/actor.ts"
+import type { OperationCaller } from "../middlewares/operation-rate-limits.ts"
 import type { AppAuthState } from "./sign-in.ts"
 
 /** WebSocket close code "policy violation": the session may no longer use the connection. */
@@ -38,6 +39,8 @@ export interface RealtimeOptions {
   memberUserIds(groupId: string): Promise<readonly number[]>
   /** The table the socket serves; the call route is given the same object. */
   operations: Operations<Actor>
+  /** Tells the operation budget who sent each call (`OperationRateLimits.identify`). */
+  identify?(actor: Actor, caller: OperationCaller): Actor
   /** Called with every failure the socket hides from the client. */
   log(...data: unknown[]): void
   clock?: Clock
@@ -47,6 +50,8 @@ export interface RealtimeOptions {
 interface LiveSocket {
   sessionId: number
   userId: number
+  /** The client address the upgrade came from, as `signUpClient` reads it. */
+  client?: string
   socket: ManagedSocket
 }
 
@@ -272,12 +277,13 @@ export class Realtime {
 
   /**
    * Adopts a socket that passed the upgrade checks. Returns `false` when the user already holds
-   * the most sockets the registry allows; the socket is then closed.
+   * the most sockets the registry allows; the socket is then closed. `client` is the address the
+   * upgrade came from; a guest's calls spend that address's operation budget.
    */
-  attach(socket: ManagedSocket, auth: AppAuthState): boolean {
+  attach(socket: ManagedSocket, auth: AppAuthState, client?: string): boolean {
     const handle = this.registry.attach(String(auth.user.id), socket)
     if (!handle) return false
-    this.#live.set(handle.id, { sessionId: auth.session.id, userId: auth.user.id, socket })
+    this.#live.set(handle.id, { sessionId: auth.session.id, userId: auth.user.id, client, socket })
     return true
   }
 
@@ -403,6 +409,9 @@ export class Realtime {
       this.#clock.setTimeout(() => live.socket.close(POLICY_CLOSE_CODE, REVOKED_REASON), 0)
       return null
     }
-    return actorFromAuth(auth)
+    const actor = actorFromAuth(auth)
+    if (live.client === undefined) return actor
+    const caller = { guest: Boolean(auth.user.guestSince), client: live.client }
+    return this.#options.identify?.(actor, caller) ?? actor
   }
 }

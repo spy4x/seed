@@ -9,12 +9,16 @@ import { createSameOriginMutationGuard } from "@spy4x/server/http/same-origin"
 import { actorFromAuth } from "../cqrs/actor.ts"
 import type { APIContext } from "../_types.ts"
 import { errorResponse } from "../services/error-response.ts"
+import { signUpClient } from "../middlewares/auth-rate-limits.ts"
+import type { OperationCaller } from "../middlewares/operation-rate-limits.ts"
 
 export interface CallRouteDependencies {
   /** The table the socket serves too (`services/realtimeHub.ts`). */
   operations: Operations<Actor>
   /** Turns a handler's error into the typed one the client reads; the socket's own mapper. */
   mapError: OperationErrorMapper
+  /** Tells the operation budget who sent each call (`OperationRateLimits.identify`). */
+  identify?(actor: Actor, caller: OperationCaller): Actor
   /** Called with every failure the route hides from the client. */
   log(...data: unknown[]): void
   /** The origin the browser sends; see `GroupsRouteDependencies.expectedOrigin`. */
@@ -55,7 +59,13 @@ export function createCallRoute(dependencies: CallRouteDependencies): Hono<APICo
   })
   return new Hono<APIContext>().all("*", requireSameOrigin, (c) => {
     const auth = c.get("auth")
-    actors.set(c.req.raw, auth ? actorFromAuth(auth) : null)
+    if (!auth) {
+      actors.set(c.req.raw, null)
+    } else {
+      const actor = actorFromAuth(auth)
+      const caller = { guest: Boolean(auth.user.guestSince), client: signUpClient(c) }
+      actors.set(c.req.raw, dependencies.identify?.(actor, caller) ?? actor)
+    }
     return handle(c.req.raw)
   })
 }

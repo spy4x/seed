@@ -87,6 +87,39 @@ job, and only the worker signs links and sends.
   plain HTTP, so the `List-Unsubscribe` header is left off there.
 - **Cleanup.** The nightly cleanup removes requests older than a day.
 
+## Operation budget
+
+Every operation, whether it arrives as `POST /api/call/<name>` or over the socket, spends one unit
+of its caller's budget before it runs (`apps/api/middlewares/operation-rate-limits.ts`, #429). So
+does every signed-in REST write (`POST`, `PUT`, `PATCH`, `DELETE`), such as
+`POST /api/groups/:groupId/notes` or `POST /api/groups`: it spends one command, with the same keys.
+The REST writes left out are those under `/api/auth` (sign-in has limits of its own), `/api/admin`
+(operators only) and `/api/call` (already counted as an operation); REST reads are not budgeted.
+Every transport shares the budget, which lives in Valkey, so it holds across API processes. Without
+it, anyone, a guest included, could create notes, tags and groups in a loop until the disk is full,
+since plan caps are lifted when billing is off.
+
+| Who                      | Counted by                          | Commands a minute | Queries a minute |
+| ------------------------ | ----------------------------------- | ----------------- | ---------------- |
+| A signed-in person       | user id, every device together      | 120               | 600              |
+| Every guest on an address | client address (IPv6: its /48)     | 60                | 300              |
+
+- **Guests by address.** A guest account costs a click, so a guest's budget follows the address
+  the request came from, read as the guest-start limit reads it (`signUpClient`: `X-Real-IP` from a
+  trusted proxy, else the connection). Opening more guest accounts gives no more writes. Behind
+  Cloudflare's proxy, Traefik sets `X-Real-IP` to a Cloudflare address, so every guest that comes
+  through one Cloudflare edge shares one budget.
+- **The refusal.** A call past the budget gets `rate_limited` (429 over HTTP) with the message "Too
+  many requests. Wait a minute", and its handler does not run. A refused REST write also carries
+  `Retry-After`. The SPA's calls treat
+  `rate_limited` as retryable: the offline queue keeps the write and sends it again after its
+  backoff.
+- **Store outage.** When Valkey cannot be reached, calls pass and the failure is logged, as the
+  normal auth limit does.
+- **Settings.** `OPERATION_COMMANDS_PER_MINUTE`, `OPERATION_QUERIES_PER_MINUTE`,
+  `GUEST_OPERATION_COMMANDS_PER_MINUTE` and `GUEST_OPERATION_QUERIES_PER_MINUTE`, whole numbers;
+  empty for the defaults above (`infra/envs/.env.example`).
+
 ## Documentation
 
 - [Architecture decision](decisions/001-deno-platform-template.md)

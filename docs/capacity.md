@@ -35,6 +35,8 @@ container directly. It takes no address, so it cannot reach the live demo or any
    ```sh
    RATE_LIMITER_STRICT_LIMIT=1000000
    RATE_LIMITER_LIMIT=1000000
+   OPERATION_COMMANDS_PER_MINUTE=1000000
+   OPERATION_QUERIES_PER_MINUTE=1000000
    DENO_LOG=info # debug logs every request, which costs the API more than the load does
    ```
 

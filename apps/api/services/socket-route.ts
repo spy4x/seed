@@ -9,6 +9,7 @@ import type { APIContext } from "../_types.ts"
 import type { Realtime } from "./realtime.ts"
 import type { AppAuthState, SignIn } from "./sign-in.ts"
 import { errorResponse } from "./error-response.ts"
+import { signUpClient } from "../middlewares/auth-rate-limits.ts"
 
 /** The `user.<id>` subprotocol the handshake offered, or `null` when it offered none. */
 export function offeredUserProtocol(request: Request): string | null {
@@ -81,10 +82,12 @@ function upgradeWebSocket(
   auth: AppAuthState,
   realtime: Pick<Realtime, "attach">,
 ): Response {
+  // Read before the upgrade: once the request is upgraded, Deno no longer knows its address.
+  const client = signUpClient(c)
   // A browser closes a socket whose server accepted none of the subprotocols it offered.
   const { socket, response } = Deno.upgradeWebSocket(c.req.raw, {
     protocol: offeredUserProtocol(c.req.raw) ?? undefined,
   })
-  realtime.attach(adaptWebSocket(socket), auth)
+  realtime.attach(adaptWebSocket(socket), auth, client)
   return response
 }

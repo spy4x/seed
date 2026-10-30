@@ -36,3 +36,7 @@ Signing out of a guest account asks first, since the account cannot be opened ag
 - Keeping by a provider or an e-mail address that another account owns never signs the guest into
   it without that account's password (and code); a provider sign-in proves the provider account.
 - The limits are enforced by the API, not by the screens.
+- Every guest on one client address shares one operation budget, 60 writes and 300 reads a minute
+  by default, over the socket, `/api/call` and the REST routes together, so opening more guest
+  accounts gives a script no more writes. Behind Cloudflare's proxy every guest that comes through
+  one Cloudflare edge shares that budget (docs/architecture.md, "Operation budget").

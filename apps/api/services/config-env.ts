@@ -52,6 +52,14 @@ export const envSchema = type({
    */
   "ATTACHMENT_UPLOAD_FILES_PER_HOUR?": "string",
   "ATTACHMENT_UPLOAD_BYTES_PER_HOUR?": "string",
+  /**
+   * The operation budget (docs/architecture.md, "Operation budget"): calls per minute, whole
+   * numbers, unset or empty for the defaults of `OPERATION_BUDGET`.
+   */
+  "OPERATION_COMMANDS_PER_MINUTE?": "string",
+  "OPERATION_QUERIES_PER_MINUTE?": "string",
+  "GUEST_OPERATION_COMMANDS_PER_MINUTE?": "string",
+  "GUEST_OPERATION_QUERIES_PER_MINUTE?": "string",
   /** Sign-in with Google is on only when both are set (docs/sign-in-providers.md). */
   "GOOGLE_CLIENT_ID?": "string",
   "GOOGLE_CLIENT_SECRET?": "string",
