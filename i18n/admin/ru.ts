@@ -926,7 +926,7 @@ export default {
   "AdminContactLinks.email": "E-mail",
   "AdminContactLinks.address": "Адрес",
   "AdminContactLinks.title": "Контакты",
-  "AdminContactLinks.subtitle": "Показываются в подвале сайта в этом порядке.",
+  "AdminContactLinks.subtitle": "Видны в подвале сайта в этом порядке.",
   "AdminContactLinks.listError": "Не удалось загрузить контакты. Попробуйте чуть позже.",
   "AdminContactLinks.addLink": "Добавить контакт",
   "AdminContactLinks.retry": "Повторить",
@@ -953,8 +953,7 @@ export default {
   "AdminContactLinks.suchAs": "Например, <example>{example}</example>",
   "AdminContactLinks.label": "Подпись (необязательно)",
   "AdminContactLinks.labelHint": "Показывается вместо значения, например «Заказать в {kind}».",
-  "AdminContactLinks.labelHintPhone":
-    "Показывается вместо номера, например «Позвонить и заказать».",
+  "AdminContactLinks.labelHintPhone": "Показывается вместо номера, например «Заказ по телефону».",
   "AdminContactLinks.labelHintEmail": "Показывается вместо адреса, например «Напишите нам».",
   "AdminContactLinks.labelHintUrl": "Показывается вместо адреса, например «Заказать онлайн».",
   "AdminContactLinks.saving": "Сохраняем…",

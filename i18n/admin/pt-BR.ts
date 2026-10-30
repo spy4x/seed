@@ -937,10 +937,10 @@ export default {
   "AdminContactLinks.suchAs": "Por exemplo, <example>{example}</example>",
   "AdminContactLinks.label": "Rótulo (opcional)",
   "AdminContactLinks.labelHint": "Aparece no lugar do valor, por exemplo “Peça pelo {kind}”.",
-  "AdminContactLinks.labelHintPhone": "Aparece no lugar do número, por exemplo “Ligue para pedir”.",
-  "AdminContactLinks.labelHintEmail":
-    "Aparece no lugar do endereço, por exemplo “Fale com a gente”.",
-  "AdminContactLinks.labelHintUrl": "Aparece no lugar do endereço, por exemplo “Peça on-line”.",
+  "AdminContactLinks.labelHintPhone":
+    "Aparece no lugar do número, por exemplo “Peça por telefone”.",
+  "AdminContactLinks.labelHintEmail": "Aparece no lugar do e-mail, por exemplo “Mande um e-mail”.",
+  "AdminContactLinks.labelHintUrl": "Aparece no lugar do endereço, por exemplo “Peça pelo site”.",
   "AdminContactLinks.saving": "Salvando…",
   "AdminContactLinks.save": "Salvar link",
   "AdminDashboard.title": "Painel",

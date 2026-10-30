@@ -969,7 +969,7 @@ export default {
   "AdminContactLinks.suchAs": "مثل <example>{example}</example>",
   "AdminContactLinks.label": "التسمية (اختيارية)",
   "AdminContactLinks.labelHint": "تظهر بدلًا من القيمة، مثل: «اطلب عبر {kind}».",
-  "AdminContactLinks.labelHintPhone": "تظهر بدلًا من الرقم، مثل: «اتصل للطلب».",
+  "AdminContactLinks.labelHintPhone": "تظهر بدلًا من الرقم، مثل: «اتصل بنا للطلب».",
   "AdminContactLinks.labelHintEmail": "تظهر بدلًا من العنوان، مثل: «راسلنا».",
   "AdminContactLinks.labelHintUrl": "تظهر بدلًا من العنوان، مثل: «اطلب عبر الإنترنت».",
   "AdminContactLinks.saving": "جارٍ الحفظ…",

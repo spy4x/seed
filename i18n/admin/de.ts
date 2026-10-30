@@ -905,7 +905,7 @@ export default {
   "AdminContactLinks.email": "E-Mail-Adresse",
   "AdminContactLinks.address": "Adresse",
   "AdminContactLinks.title": "Kontaktlinks",
-  "AdminContactLinks.subtitle": "Erscheinen im Footer der Website, in dieser Reihenfolge.",
+  "AdminContactLinks.subtitle": "In dieser Reihenfolge im Footer der Website.",
   "AdminContactLinks.listError":
     "Die Kontaktlinks konnten nicht geladen werden. Versuche es gleich noch einmal.",
   "AdminContactLinks.addLink": "Link hinzufügen",
@@ -921,7 +921,7 @@ export default {
   "AdminContactLinks.remove": "Link entfernen",
   "AdminContactLinks.removeTitle": "„{name}“ entfernen?",
   "AdminContactLinks.removeText":
-    "Die Website zeigt diesen Link in spätestens einer Minute nicht mehr.",
+    "Spätestens in einer Minute verschwindet der Link von der Website.",
   "AdminContactLinks.cancel": "Abbrechen",
   "AdminContactLinks.back": "Zurück zu den Kontaktlinks",
   "AdminContactLinks.link": "Kontaktlink",
@@ -935,9 +935,10 @@ export default {
   "AdminContactLinks.label": "Beschriftung (optional)",
   "AdminContactLinks.labelHint": "Wird statt des Werts gezeigt, etwa „Über {kind} bestellen“.",
   "AdminContactLinks.labelHintPhone":
-    "Wird statt der Nummer gezeigt, etwa „Zum Bestellen anrufen“.",
-  "AdminContactLinks.labelHintEmail": "Wird statt der Adresse gezeigt, etwa „Schreib uns“.",
-  "AdminContactLinks.labelHintUrl": "Wird statt der Adresse gezeigt, etwa „Online bestellen“.",
+    "Wird statt der Nummer angezeigt, etwa „Telefonisch bestellen“.",
+  "AdminContactLinks.labelHintEmail":
+    "Wird statt der E-Mail-Adresse angezeigt, etwa „Kontakt per E-Mail“.",
+  "AdminContactLinks.labelHintUrl": "Wird statt der Webadresse angezeigt, etwa „Online bestellen“.",
   "AdminContactLinks.saving": "Wird gespeichert …",
   "AdminContactLinks.save": "Link speichern",
   "AdminDashboard.title": "Dashboard",

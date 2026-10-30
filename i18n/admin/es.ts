@@ -945,11 +945,11 @@ export default {
   "AdminContactLinks.label": "Texto (opcional)",
   "AdminContactLinks.labelHint": "Se muestra en lugar del valor, por ejemplo «Pide por {kind}».",
   "AdminContactLinks.labelHintPhone":
-    "Se muestra en lugar del número, por ejemplo «Llama para pedir».",
+    "Se muestra en lugar del número, por ejemplo «Pide por teléfono».",
   "AdminContactLinks.labelHintEmail":
     "Se muestra en lugar de la dirección, por ejemplo «Escríbenos».",
   "AdminContactLinks.labelHintUrl":
-    "Se muestra en lugar de la dirección, por ejemplo «Pide en línea».",
+    "Se muestra en lugar de la dirección web, por ejemplo «Pide en línea».",
   "AdminContactLinks.saving": "Guardando…",
   "AdminContactLinks.save": "Guardar enlace",
   "AdminDashboard.title": "Panel",
