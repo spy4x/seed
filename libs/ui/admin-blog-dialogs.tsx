@@ -239,7 +239,7 @@ function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): J
             data-e2e="admin-blog-when"
             options={[
               { value: `now`, label: t.t(`AdminBlogDialogs.now`) },
-              { value: `schedule`, label: t.t(`AdminBlogDialogs.atATime`) },
+              { value: `schedule`, label: t.t(`AdminBlogDialogs.whenSchedule`) },
             ]}
             value={when}
             onChange={(next) => setWhen(next === `schedule` ? `schedule` : `now`)}
