@@ -492,7 +492,7 @@ export default {
   "AdminBlogDialogs.publishTitle": "Опубликовать «{title}»?",
   "AdminBlogDialogs.when": "Когда",
   "AdminBlogDialogs.now": "Сейчас",
-  "AdminBlogDialogs.atATime": "В выбранное время",
+  "AdminBlogDialogs.whenSchedule": "Позже",
   "AdminBlogDialogs.dateTime": "Дата и время",
   "AdminBlogDialogs.liveOnItsOwn": "Пост выйдет сам в это время.",
   "AdminBlogDialogs.goesLiveAt":
@@ -587,6 +587,8 @@ export default {
     "После публикации адрес не меняется. Изменить его можно через «Изменить адрес…», но старые ссылки перестанут работать.",
   "AdminBlogEditor.slugHint":
     "Адрес поста: <path>{path}</path>. Строчные латинские буквы, цифры и дефисы.",
+  "AdminBlogEditor.slugHintEmpty":
+    "Заполняется по заголовку. Строчные латинские буквы, цифры и дефисы.",
   "AdminBlogEditor.description": "Описание",
   "AdminBlogEditor.descriptionHint": "Одно-два предложения для поисковой выдачи и превью ссылки.",
   "AdminBlogEditor.seoTitle": "Заголовок для поиска (необязательно)",
@@ -602,7 +604,7 @@ export default {
     "По темам посты группируются на странице блога. Выберите тему или впишите новую.",
   "AdminBlogEditor.coverUrl": "Ссылка на обложку",
   "AdminBlogEditor.coverUrlHint":
-    "Полная ссылка https:// на широкую картинку 1200×630. Оставьте пустым, если обложка не нужна.",
+    "Полная ссылка https:// на широкую картинку 1200×630 с хостинга, который разрешает встраивать её на другие сайты. Если обложка не нужна, оставьте поле пустым.",
   "AdminBlogEditor.coverAlt": "Описание обложки",
   "AdminBlogEditor.coverAltHint": "Что на картинке — для тех, кто её не видит.",
   "AdminBlogEditor.coverPrivacy":
@@ -1471,7 +1473,12 @@ export default {
   },
   "AdminJobs.runNowTitle": "Запустить задачу сейчас?",
   "AdminJobs.runAgain": "Перезапустить",
-  "AdminJobs.retryAllText": "Каждая запустится ещё раз с новым запасом попыток.",
+  "AdminJobs.retryAllText": {
+    "one": "Запуск повторится, а счётчик попыток обнулится.",
+    "few": "Каждая запустится ещё раз, а счётчик попыток обнулится.",
+    "many": "Каждая запустится ещё раз, а счётчик попыток обнулится.",
+    "other": "Каждая запустится ещё раз, а счётчик попыток обнулится.",
+  },
   "AdminJobs.runsNowInstead":
     "Задача <job>{job}</job> запустится сейчас, а не в <at></at>. Если она по расписанию, после этого запуска расписание не изменится.",
   "AdminJobs.runsNow":

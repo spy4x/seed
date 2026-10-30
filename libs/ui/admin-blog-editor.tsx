@@ -643,12 +643,14 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
                     },
                   ]}
                 />
-                <p class="text-sm text-muted" data-e2e="admin-blog-words">
-                  {t.t(`AdminBlogEditor.wordsRead`, {
-                    count: words,
-                    minutes: readingMinutes(value.bodyMd),
-                  })}
-                </p>
+                {words > 0 && (
+                  <p class="text-sm text-muted" data-e2e="admin-blog-words">
+                    {t.t(`AdminBlogEditor.wordsRead`, {
+                      count: words,
+                      minutes: readingMinutes(value.bodyMd),
+                    })}
+                  </p>
+                )}
               </Stack>
             </Stack>
             <Settings
@@ -762,14 +764,16 @@ function Settings(
         <Field
           id={blogFieldId(`slug`)}
           label={t.t(`AdminBlogEditor.slug`)}
-          hint={locked ? t.t(`AdminBlogEditor.slugLocked`) : (
-            <Rich
-              parts={t.parts(`AdminBlogEditor.slugHint`, {
-                path: blogPostPath({ language: value.language, slug: value.slug || `{slug}` }),
-              })}
-              tags={{ path: (text: string) => <bdi translate={false}>{text}</bdi> }}
-            />
-          )}
+          hint={locked ? t.t(`AdminBlogEditor.slugLocked`) : value.slug
+            ? (
+              <Rich
+                parts={t.parts(`AdminBlogEditor.slugHint`, {
+                  path: blogPostPath({ language: value.language, slug: value.slug }),
+                })}
+                tags={{ path: (text: string) => <bdi translate={false}>{text}</bdi> }}
+              />
+            )
+            : t.t(`AdminBlogEditor.slugHintEmpty`)}
           error={message(`slug`)}
         >
           <Input
