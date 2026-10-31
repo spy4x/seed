@@ -164,6 +164,14 @@ describe("BenchmarkScreen", () => {
     expect(find("[data-e2e=benchmark-summary]").textContent).toContain("6 of 6")
   })
 
+  it("makes Copy results the one primary button of a finished run", async () => {
+    await mount(screen({ state: "done", steps: done, json }))
+    const primary = [...document.querySelectorAll("button")]
+      .filter((button) => button.classList.contains("bg-accent-900"))
+      .map((button) => button.getAttribute("data-e2e"))
+    expect(primary).toEqual(["benchmark-copy"])
+  })
+
   it("selects the results line when the browser refuses to copy it", async () => {
     await mount(screen({ state: "done", steps: done, json, copy: () => false }))
     await click("[data-e2e=benchmark-copy]")

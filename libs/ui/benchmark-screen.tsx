@@ -371,6 +371,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
     <CopyButton
       textToCopy={json}
       title={t.t(`Benchmark.copy`)}
+      variant="primary"
       copyLabel={t.t(`Benchmark.copy`)}
       copiedLabel={t.t(`Benchmark.resultsCopied`)}
       failedLabel={t.t(`Benchmark.copyFailed`)}
