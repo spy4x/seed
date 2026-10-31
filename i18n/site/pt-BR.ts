@@ -116,7 +116,7 @@ export default {
   "NewsletterOff.releases": "Releases no GitHub",
   "CtaBand.title": "Veja funcionando em um minuto",
   "CtaBand.lead":
-    "A demo é o app que você recebe no primeiro dia. Abra sem criar conta e explore grupos cheios de notas de exemplo.",
+    "A demo é o app que você recebe no primeiro dia. Abra sem criar conta: sua conta de visitante já começa com dados de exemplo.",
   "Founders.title": "Não é dev? Eu crio seu produto com o Seed.",
   "Founders.text":
     "Sou o Anton, quem desenvolve o Seed. Fundadores me contratam para transformar uma ideia num produto no ar, em que as pessoas criam conta e pagam. Como cadastro, grupos e pagamentos já estão prontos, seu orçamento vai para o que torna o seu produto diferente.",
@@ -144,8 +144,7 @@ export default {
   "Home.title": "Seed: starter kit de SaaS gratuito e de código aberto",
   "Home.description":
     "Starter kit de SaaS gratuito, com licença MIT: login com 2FA, grupos com funções, cobrança por membro no Stripe, tempo real e offline. Deno, Postgres, Docker Compose.",
-  "HomeProof.tests": "suítes de testes no navegador e arquivos de teste rodando no CI",
-  "HomeProof.pulls": "pull requests mesclados desde janeiro de 2026, todos revisados",
+  "HomeProof.tests": "arquivos de teste nos apps e nas bibliotecas, todos rodando no CI",
   "HomeProof.licence": "licença: sem conta, sem paywall",
   "HomeStatus.signIn":
     "Cadastro, login, confirmação de e-mail, redefinição de senha, entrar com Google e GitHub, chaves de acesso, links mágicos e verificação em duas etapas com app autenticador",
@@ -181,14 +180,14 @@ export default {
     "Pode. A licença MIT permite, e é assim que eu uso. Seu cliente não precisa de licença própria.",
   "HomeFaq.productionQuestion": "Está pronto para produção?",
   "HomeFaq.productionAnswer":
-    "As partes listadas em “Já funciona” têm testes no CI: todo pull request roda os testes de login, perfil, notas e grupos, e a suíte completa roda depois de cada merge. O Seed como um todo ainda está em construção; leia a lista de status antes de confiar numa parte.",
+    "As partes listadas em “Já funciona” têm testes no CI: todo pull request roda os testes de login, perfil, notas e grupos, e a suíte completa roda depois de cada merge. O Seed já pode ser usado e continua crescendo; leia a lista de status antes de confiar numa parte.",
   "HomeHero.badge": "Código aberto · MIT · Deno 2 + Postgres",
   "HomeHero.title": "A base do seu SaaS, já pronta.",
   "HomeHero.lead":
     "O Seed é um starter kit de SaaS gratuito, com licença MIT, que já traz login com verificação em duas etapas (2FA), grupos com funções, cobrança por membro no Stripe, tempo real, um app offline e um painel de administração. Você faz o deploy com Docker Compose num único servidor Linux alugado.",
   "HomeHero.github": "Ver no GitHub",
   "HomeHero.status":
-    "O Seed está em construção, à vista de todos: <status>veja o que já funciona</status>.",
+    "O Seed já pode ser usado e é construído à vista de todos: <status>veja o que já funciona</status>.",
   "HomeHero.quickStart": "Primeiros passos",
   "HomeHero.initNote":
     "O <code>init</code> cria o <code>infra/envs/.env</code> com todos os segredos preenchidos. Ou peça ao seu agente de IA: <prompt></prompt>.",
@@ -205,7 +204,7 @@ export default {
   "HomeFeatures.signInTitle": "Login resolvido",
   "HomeFeatures.signInLink": "Como funciona o login",
   "HomeFeatures.signInAlt":
-    "A página de segurança de um perfil: as formas de entrar, a verificação em duas etapas (2FA) e as sessões abertas.",
+    "A página de segurança de um perfil: a senha, um botão Adicionar chave de acesso, a verificação em duas etapas ativada e o começo da lista de dispositivos conectados.",
   "HomeFeatures.signInText":
     "E-mail e senha com código de confirmação, redefinição de senha, entrar com Google e GitHub, chaves de acesso, links de acesso por e-mail, contas de visitante e verificação em duas etapas com app autenticador. Sessões que você vê e encerra.",
   "HomeFeatures.billingTitle": "Cobrança por membro",
@@ -248,7 +247,7 @@ export default {
   "HomeStatus.eyebrow": "Status sem rodeios",
   "HomeStatus.title": "Como está hoje",
   "HomeStatus.lead":
-    "O Seed está em construção. Aqui está exatamente o que já funciona e o que ainda não.",
+    "O Seed já pode ser usado e é construído à vista de todos. Aqui está exatamente o que já funciona e o que ainda não.",
   "HomeStatus.works": "Já funciona",
   "HomeStatus.notBuilt": "Ainda não existe",
   "HomeStatus.follow": "Acompanhe no GitHub",
@@ -528,7 +527,11 @@ export default {
     "Seus operadores encontram uma pessoa pelo nome ou pelo e-mail e veem suas formas de entrar, sessões, grupos e histórico. No mesmo lugar, gerenciam grupos, reembolsam um pagamento, cuidam dos inscritos na newsletter, veem todas as tarefas em segundo plano, rodam de novo uma que falhou e conferem a saúde do sistema.",
   "FeatureAdmin.watch": "Assista em {seconds} segundos",
   "FeatureAdmin.fact1": "Um app separado, num host próprio, com seu próprio cookie de sessão",
-  "FeatureAdmin.fact2": "Nove módulos, do painel aos tokens de API",
+  "FeatureAdmin.fact2": {
+    "one": "{count} módulo, do painel aos tokens de API",
+    "many": "{count} módulos, do painel aos tokens de API",
+    "other": "{count} módulos, do painel aos tokens de API",
+  },
   "FeatureAdmin.fact3":
     "Ações arriscadas pedem confirmação, e toda ação fica registrada no registro de auditoria",
   "FeatureAdmin.notYet1": "Entrar como uma pessoa para ver o que ela vê",
@@ -571,7 +574,7 @@ export default {
   "FeatureQuality.eyebrow": "Qualidade",
   "FeatureQuality.title": "Testado onde importa",
   "FeatureQuality.lead":
-    "Contagem de 16 de outubro de 2026: 34 suítes de testes no navegador para o app, além de testes unitários e de tela, todos rodando no CI. Toda alteração passa por um pull request e uma revisão antes do merge.",
+    "Contagem de {date}: 34 suítes de testes no navegador para o app, além de testes unitários e de tela, todos rodando no CI. Toda alteração passa por um pull request e uma revisão antes do merge.",
   "FeatureQuality.fact1": "Testes no navegador com Playwright, contra a API e o banco de verdade",
   "FeatureQuality.fact2": "Testes unitários e de tela ao lado do código que testam",
   "FeatureQuality.fact3": "Testes de integração contra o Postgres",
@@ -605,7 +608,7 @@ export default {
   "FeaturesHero.lead":
     "O Seed é um starter kit de SaaS gratuito, com licença MIT, que traz login por e-mail, Google e GitHub, chaves de acesso, links mágicos, contas de visitante, 2FA, grupos com funções, cobrança por membro no Stripe, atualizações em tempo real, um app offline, um painel de administração, monitoramento e backups diários criptografados opcionais. Cada seção abaixo leva ao código correspondente.",
   "FeaturesHero.note":
-    "O Seed está em construção, à vista de todos. O que falta aparece marcado como “Ainda não existe” ao lado do recurso afetado, com um link para a issue quando houver uma aberta.",
+    "O Seed já pode ser usado e é construído à vista de todos. O que falta aparece marcado como “Ainda não existe” ao lado do recurso afetado, com um link para a issue quando houver uma aberta.",
   "Features.compare": "Como o Seed se compara",
   "FeaturesFaq.title": "O Seed faz isso?",
   "FeatureSection.issue": "issue #{number}",
@@ -644,35 +647,28 @@ export default {
     "O Seed traz uma área de operação num host próprio. Seus operadores encontram uma pessoa, veem suas formas de entrar, sessões e grupos, e ajudam: encerram uma sessão, enviam um link para redefinir a senha, reembolsam um pagamento. Ações arriscadas pedem confirmação, e toda ação vai para o registro de auditoria.",
   "AdminTour.code": "Ler o código do painel",
   "AdminTour.dashboard": "Painel",
-  "AdminTour.dashboardText":
-    "O produto num relance nos últimos 30 dias: pessoas, cadastros, quem está ativo, grupos e notas.",
+  "AdminTour.dashboardText": "Pessoas, cadastros, quem está ativo, grupos e notas em 30 dias.",
   "AdminTour.stats": "Estatísticas",
-  "AdminTour.statsText":
-    "As visitas do site vindas do seu Umami: de onde chegam, quais itens as pessoas pedem ou só olham e em qual botão de pedido clicam. Só totais, nunca um visitante.",
+  "AdminTour.statsText": "Visitas ao site e cliques em pedidos do seu Umami. Só totais.",
   "AdminTour.users": "Usuários",
   "AdminTour.usersText":
-    "Todo mundo que tem conta. Abra uma pessoa para bloqueá-la, encerrar uma sessão, enviar um link para redefinir a senha ou ver as cópias de dados que ela pediu.",
+    "Encontre uma pessoa, bloqueie, encerre uma sessão ou envie um link de senha.",
   "AdminTour.groups": "Grupos",
-  "AdminTour.groupsText":
-    "Todos os grupos, com dono, membros e arquivos. Gerencie membros e convites, encontre e remova um arquivo ou passe um grupo para outro membro.",
+  "AdminTour.groupsText": "Membros, convites e arquivos. Remova um arquivo ou troque o dono.",
   "AdminTour.billing": "Cobrança",
-  "AdminTour.billingText":
-    "Quem paga, quanto paga e quanto você ganha. Reembolse um pagamento, dê tempo grátis ou cancele uma assinatura.",
+  "AdminTour.billingText": "Quem paga e quanto você ganha. Reembolse, dê tempo grátis ou cancele.",
   "AdminTour.newsletter": "Newsletter",
-  "AdminTour.newsletterText":
-    "Quem recebe a newsletter e o que ela enviou. Exporte a lista em CSV.",
+  "AdminTour.newsletterText": "Quem assinou e o que foi enviado. Exporte a lista em CSV.",
+  "AdminTour.blog": "Blog",
+  "AdminTour.blogText": "Posts do site em cada idioma, do rascunho à publicação.",
   "AdminTour.contactLinks": "Links de contato",
-  "AdminTour.contactLinksText":
-    "Onde as pessoas falam com você: Telegram, Zalo, WhatsApp, telefone, e-mail. O rodapé do site mostra as mudanças em até um minuto, sem deploy.",
+  "AdminTour.contactLinksText": "Onde as pessoas falam com você, no rodapé do site, sem deploy.",
   "AdminTour.catalog": "Catálogo",
-  "AdminTour.catalogText":
-    "Itens para uma loja, desligado até você ativar: nomes e textos em cada idioma, preço, cores, tamanhos com tabela de medidas, o que está esgotado e fotos que você envia de uma vez e arrasta para ordenar. Um link curto por item e por lugar onde você o compartilha, contado no Umami.",
+  "AdminTour.catalogText": "Uma loja opcional: itens, preços, tamanhos, fotos e links curtos.",
   "AdminTour.audit": "Registro de auditoria",
-  "AdminTour.auditText":
-    "Cada login, mudança de conta, mudança de grupo e ação de operador, dos mais recentes aos mais antigos. Exporte em CSV.",
+  "AdminTour.auditText": "Cada acesso, alteração e ação de operador. Exporte em CSV.",
   "AdminTour.jobs": "Tarefas",
-  "AdminTour.jobsText":
-    "Todas as tarefas em segundo plano e como foi cada execução. Rode de novo uma que falhou, rode uma agora ou cancele.",
+  "AdminTour.jobsText": "Cada tarefa em segundo plano. Rode de novo uma que falhou ou cancele.",
   "AdminTour.system": "Sistema",
   "AdminTour.systemText": "A saúde do banco de dados, do cache, da fila de tarefas e do backup.",
   "AdminTour.tokens": "Tokens de API",
@@ -699,7 +695,11 @@ export default {
   "AdminTour.meta": "{seconds} segundos · {sound} · Dados de exemplo",
   "AdminTour.transcriptJump": "Ler o que o vídeo mostra",
   "AdminTour.modulesEyebrow": "Módulos",
-  "AdminTour.modulesTitle": "Nove módulos, um para cada tarefa",
+  "AdminTour.modulesTitle": {
+    "one": "{count} módulo, um para cada tarefa",
+    "many": "{count} módulos, um para cada tarefa",
+    "other": "{count} módulos, um para cada tarefa",
+  },
   "AdminTour.modulesLead":
     "Cada módulo é um item na barra de ícones do painel. Crie o seu copiando um deles: o passo a passo está em <doc>docs/admin-modules.md</doc>.",
   "AdminTour.rolesEyebrow": "Funções",

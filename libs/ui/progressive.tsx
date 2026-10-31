@@ -171,7 +171,7 @@ export const GROUP_PATHS = {
   settings: (groupId: string) => `/groups/${encodeURIComponent(groupId)}`,
   /** The group's Members tab: the members and the pending invitations. */
   members: (groupId: string) => `/groups/${encodeURIComponent(groupId)}/members`,
-  /** The group's Plan and billing tab: what it pays, and the owner's way to change it. */
+  /** The group's Billing tab: what it pays, and the owner's way to change it. */
   billing: (groupId: string) => `/groups/${encodeURIComponent(groupId)}/billing`,
   /** The group's Activity tab, its log, for its admins and owner. */
   activity: (groupId: string) => `/groups/${encodeURIComponent(groupId)}/activity`,

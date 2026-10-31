@@ -49,6 +49,7 @@ export const ADMIN_BILLING_PATHS = {
   customer: (groupId: string) => `/billing/${encodeURIComponent(groupId)}`,
 } as const
 
+// Seed's own site: see docs/start-a-product.md
 /** Where the billing setup is described, for the action of the "Billing is off" state. */
 export const ADMIN_BILLING_SETUP_URL = `https://github.com/spy4x/seed/blob/main/docs/billing.md`
 

@@ -565,8 +565,18 @@ function footerGroups(
       // Seed's own site: see docs/start-a-product.md
       title: t.t(`SiteFooter.company`),
       links: [
-        { label: t.t(`SiteFooter.hire`), href: HIRE_PAGE_URL, external: true },
-        { label: t.t(`SiteFooter.about`), href: AUTHOR_URL, external: true },
+        {
+          label: t.t(`SiteFooter.hire`),
+          href: HIRE_PAGE_URL,
+          external: true,
+          externalHint: t.t(`SiteNav.hireHint`),
+        },
+        {
+          label: t.t(`SiteFooter.about`),
+          href: AUTHOR_URL,
+          external: true,
+          externalHint: t.t(`SiteNav.hireHint`),
+        },
         { label: t.t(`SiteFooter.privacy`), href: href(`/privacy`) },
         { label: t.t(`SiteFooter.terms`), href: href(`/terms`) },
       ],

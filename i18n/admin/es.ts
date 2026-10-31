@@ -1473,6 +1473,10 @@ export default {
     "<job>{job}</job> no se ejecutará. Si es periódica, volverá la próxima vez que arranque el worker. No se puede deshacer.",
   "AdminJobs.cancelling": "Cancelando…",
   "AdminJobs.keepIt": "Mantenerla",
+  "AdminNotFound.title": "Página no encontrada",
+  "AdminNotFound.description":
+    "Esta dirección no lleva a ninguna página de administración. Revisa si tiene una errata o empieza desde el panel.",
+  "AdminNotFound.toDashboard": "Ir al panel",
   "AdminNav.dashboard": "Panel",
   "AdminNav.stats": "Estadísticas",
   "AdminNav.system": "Sistema",
@@ -1509,7 +1513,7 @@ export default {
   "AdminNewsletter.retry": "Reintentar",
   "AdminNewsletter.loadingNumbers": "Cargando las cifras",
   "AdminNewsletter.keyNumbers": "Cifras clave",
-  "AdminNewsletter.confirmedHint": "Confirmados, reciben todos los números",
+  "AdminNewsletter.confirmedHint": "Confirmados, reciben los números en su idioma",
   "AdminNewsletter.pendingHint": "El correo de confirmación va de camino",
   "AdminNewsletter.joined": {
     "one": "Nuevos, último {count} día",

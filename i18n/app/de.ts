@@ -205,7 +205,7 @@ export default {
   },
   "GroupEditor.tabGeneral": "Allgemein",
   "GroupEditor.tabMembers": "Mitglieder",
-  "GroupEditor.tabBilling": "Tarif und Abrechnung",
+  "GroupEditor.tabBilling": "Abrechnung",
   "GroupEditor.tabActivity": "Aktivität",
   "GroupEditor.tabsLabel": "Über {name}",
   "GroupEditor.currentGroup": "deine aktuelle Gruppe",
@@ -532,7 +532,7 @@ export default {
     "Die Bezahlseite von Stripe konnte nicht geöffnet werden. Prüfe deine Verbindung und versuche es noch einmal.",
   "GroupBillingPanel.portalUnreachable":
     "Die Abrechnungsseite von Stripe konnte nicht geöffnet werden. Prüfe deine Verbindung und versuche es noch einmal.",
-  "GroupBillingPanel.title": "Tarif und Abrechnung",
+  "GroupBillingPanel.title": "Abrechnung",
   "GroupBillingPanel.description":
     "Was <group>{group}</group> jeden Monat zahlt. Die Abrechnung läuft über Stripe.",
   "GroupBillingPanel.loading": "Tarif wird geladen",
@@ -752,7 +752,7 @@ export default {
   "PlanRefusalNotice.rolesTitle": "Mitglieder hochstufen geht nur mit einem bezahlten Tarif",
   "PlanRefusalNotice.rolesText":
     "Im Tarif dieser Gruppe kannst du die Rolle eines Mitglieds herabstufen oder es entfernen, aber nicht hochstufen.",
-  "PlanRefusalNotice.openBilling": "Tarif und Abrechnung öffnen",
+  "PlanRefusalNotice.openBilling": "Abrechnung öffnen",
   "PlanRefusalNotice.askOwner": "Bitte den Inhaber der Gruppe, den Tarif zu upgraden.",
   "GuestProfile.accountType": "Kontotyp",
   "GuestProfile.guestAccount": "Gastkonto. Nur dieser Browser kann es öffnen.",
@@ -1005,13 +1005,13 @@ export default {
   "NoteEditor.saving": "Wird gespeichert …",
   "NoteEditor.creating": "Wird erstellt …",
   "NoteEditor.save": "Notiz speichern",
-  "NoteEditor.create": "Notiz erstellen",
+  "NoteEditor.create": "Notiz hinzufügen",
   "NoteEditor.deleteTitle": "Diese Notiz löschen?",
   "NoteEditor.deleteMessage": "„{title}“ wird für alle in {group} gelöscht.",
   "NoteEditor.deleteConfirm": "Notiz löschen",
   "NoteEditor.text": "Text",
   "NoteEditor.tags": "Tags",
-  "NoteEditorView.createdTitle": "Notiz erstellt",
+  "NoteEditorView.createdTitle": "Notiz hinzugefügt",
   "NoteEditorView.created": "„{title}“ wurde erstellt.",
   "NoteEditorView.savedTitle": "Notiz gespeichert",
   "NoteEditorView.saved": "„{title}“ wurde gespeichert.",
@@ -1043,6 +1043,13 @@ export default {
   "NoteSync.gone":
     "Diese Notiz wurde gelöscht oder in eine andere Gruppe verschoben, während du offline warst.",
   "NoteSync.version": "Jemand hat diese Notiz geändert, während du offline warst.",
+  "NotFound.title": "Seite nicht gefunden",
+  "NotFound.description":
+    "Unter dieser Adresse gibt es keine Seite. Vielleicht ist sie falsch geschrieben, oder die Seite ist umgezogen.",
+  "NotFound.signedOut":
+    "Unter dieser Adresse gibt es keine Seite. Melde dich an, um zu deinen Notizen zu kommen.",
+  "NotFound.toNotes": "Zu deinen Notizen",
+  "NotFound.signIn": "Anmelden",
   "Notes.title": "Notizen",
   "Notes.new": "Neue Notiz",
   "Notes.count": {

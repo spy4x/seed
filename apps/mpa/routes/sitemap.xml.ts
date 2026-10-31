@@ -7,7 +7,7 @@ import { localePath, SITE_LANGUAGES } from "../languages.ts"
 
 /**
  * Lists the website's public pages, each at its address on this website's own origin, with the
- * day it last changed where the page states one. A page is listed once per language (`/pricing`,
+ * day it last changed. A page is listed once per language (`/pricing`,
  * `/de/pricing`, …), except one that is English at every address: the legal pages and the API
  * reference are listed at their English address only. The newsletter page is left out while
  * subscriptions are off. The blog's index in each language with a live post follows, then each
@@ -25,7 +25,7 @@ export const handler = define.handlers({
         .flatMap(({ path, updated, oneLanguage }) =>
           everyLanguage(path, oneLanguage).map((address) => ({
             url: `${origin}${address}`,
-            lastmod: updated === undefined ? undefined : new Date(`${updated}T00:00:00Z`),
+            lastmod: new Date(`${updated}T00:00:00Z`),
           }))
         ),
       ...(await blogPages(ctx.state.api)).map(({ path, lastmod }) => ({

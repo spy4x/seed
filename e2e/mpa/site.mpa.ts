@@ -41,7 +41,7 @@ test("robots.txt points crawlers at a sitemap that lists the pricing page", asyn
   expect(await sitemap.text()).toContain(`<loc>${new URL(baseURL!).origin}/pricing</loc>`)
 })
 
-test("the home page fits a 375 px phone: the quick start scrolls inside its own box", async ({ page }) => {
+test("the home page fits a 375 px phone: a long quick-start command wraps inside its box", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await page.goto("/")
 
@@ -52,7 +52,12 @@ test("the home page fits a 375 px phone: the quick start scrolls inside its own 
     client: terminal.clientWidth,
     scroll: terminal.scrollWidth,
   }))
-  expect(box.scroll).toBeGreaterThan(box.client)
+  expect(box.scroll).toBeLessThanOrEqual(box.client)
+  const command = quickStart.getByText("gh repo create", { exact: false })
+  const lines = await command.evaluate((line) =>
+    Math.round(line.getBoundingClientRect().height / parseFloat(getComputedStyle(line).lineHeight))
+  )
+  expect(lines).toBeGreaterThan(1)
 })
 
 test("a keyboard user skips the header: the first Tab shows the skip link and Enter lands on the content", async ({ page }) => {

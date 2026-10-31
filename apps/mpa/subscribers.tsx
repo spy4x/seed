@@ -71,6 +71,9 @@ export function subscribeHead(t: Translator<string>): SitePageHead {
 /** The subscribe page's head in English, for the page list (`pages.ts`). */
 export const SUBSCRIBE_HEAD: SitePageHead = subscribeHead(siteEnglishText())
 
+/** The day the subscribe page's content last changed: the sitemap's `lastmod`. Change it with it. */
+export const SUBSCRIBE_UPDATED = `2026-10-30`
+
 /** The translator and the addresses of the request's language. */
 function speech(ctx: FreshContext<State>) {
   const t = siteTranslator(ctx.state.language)

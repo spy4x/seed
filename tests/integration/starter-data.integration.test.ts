@@ -238,3 +238,20 @@ Deno.test("the welcome note respects the group's plan cap", async (t) => {
     })
   })
 })
+
+Deno.test("the welcome note is written after the sample data, so the page hears of it once the demo selected the sample group", async () => {
+  // The public demo's sample data selects the busy sample group (docs/demo.md). The page reads the
+  // selection again on the next group change it hears of, which is the welcome note.
+  await withSchema(async (sql) => {
+    const { userId, groupId } = await signedUpPerson(sql)
+    const requestId = await requestFor(sql, userId)
+    const notesWhenSampled: number[] = []
+    await starterDataJob(sql, {
+      sampleData: async () => {
+        notesWhenSampled.push((await notesOf(sql, groupId)).length)
+      },
+    })(eventOf(requestId))
+    expect(notesWhenSampled).toEqual([0])
+    expect((await notesOf(sql, groupId)).map((note) => note.title)).toEqual([WELCOME_NOTE_TITLE])
+  })
+})

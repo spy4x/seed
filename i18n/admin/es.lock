@@ -1105,7 +1105,7 @@ AdminNewsletter.chartLabel	9612f2a8e913610a
 AdminNewsletter.clear	7179ea0035fca783
 AdminNewsletter.close	7d9eb7acb13e2462
 AdminNewsletter.confirmed	fe00b67b6dd1143f
-AdminNewsletter.confirmedHint	c824c5c5d2cb600d
+AdminNewsletter.confirmedHint	9a966dc2e737a18d
 AdminNewsletter.count	6e43cce36d2e144e
 AdminNewsletter.delivered	906115657390f367
 AdminNewsletter.doneRemove	746ff16bfe39cbe9
@@ -1164,6 +1164,9 @@ AdminNewsletter.subscribers	a344c89d660e2f32
 AdminNewsletter.subtitle	d8f6d0a144ef14e5
 AdminNewsletter.title	f84ca2e7716bec94
 AdminNewsletter.unknown	b764cdc0eab71374
+AdminNotFound.description	ea2a4431e58fa165
+AdminNotFound.title	a469ab4ca4e55bf5
+AdminNotFound.toDashboard	7a9470bc1c1b8e8e
 AdminPersonTab.apiTokens	fa884c0e7a4a72f3
 AdminPersonTab.dataExports	b137932aa55f31e2
 AdminPersonTab.devices	4ba5121d4d1be174

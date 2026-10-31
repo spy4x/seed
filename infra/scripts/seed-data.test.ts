@@ -29,7 +29,7 @@ Deno.test("readSeedOptions refuses to seed unless ENV is dev or the public demo 
     for (const DEMO_MODE of [undefined, "", "1", "TRUE", "yes"]) {
       expect(() => readSeedOptions({ ...DEV, ENV, DEMO_MODE })).toThrow(
         new SeedConfigError(
-          "ENV must be dev, or DEMO_MODE true: the demo accounts are for development and the public demo only",
+          "ENV must be dev, or DEMO_MODE true: seeding is for a development database or the public demo only",
         ),
       )
     }

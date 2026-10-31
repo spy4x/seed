@@ -1,5 +1,6 @@
 import type { JSX } from "preact"
 import { REPOSITORY_URL, SITE_NAME } from "../brand.ts"
+import { DARK_MEDIA } from "../components/shot.tsx"
 import { DEFAULT_LANGUAGE, siteTranslator } from "../languages.ts"
 import type { State } from "../utils.ts"
 import { define } from "../utils.ts"
@@ -7,8 +8,8 @@ import { define } from "../utils.ts"
 /**
  * The document around every page. `data-theme="ink"` picks the near-black dark palette, which
  * applies only once `/theme.js` adds `dark` for a device that asks for it; without JavaScript the
- * page stays light. The script is a file, not inline, because the content security policy allows
- * scripts from this origin only.
+ * page stays light, and so do its pictures and the browser's frame (`DARK_MEDIA`). The script is a
+ * file, not inline, because the content security policy allows scripts from this origin only.
  *
  * The page's language (`State.language`, from its address) sets `lang` and `dir`. The words come
  * from `SiteLanguage` (`use-site.tsx`), which `routes/_layout.tsx` puts around every
@@ -22,9 +23,9 @@ export default define.page(function App({ Component, state, url }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{SITE_NAME}</title>
-        {/* The browser's own frame takes the canvas of the palette the device asks for. */}
-        <meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#080b10" media="(prefers-color-scheme: dark)" />
+        {/* The browser's own frame takes the canvas of the page's palette (`DARK_MEDIA`). */}
+        <meta name="theme-color" content="#f3f4f6" media={`not all and ${DARK_MEDIA}`} />
+        <meta name="theme-color" content="#080b10" media={DARK_MEDIA} />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <script src="/theme.js"></script>
         <link

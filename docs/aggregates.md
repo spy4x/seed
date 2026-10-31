@@ -132,8 +132,8 @@ sequence as its version, so it is announced exactly like a group change.
 An aggregate has two pages, a **list page** and an **editor page**, and each is one screen. Copy
 both. The list page only reads and links; everything that writes happens on the editor page, which
 has its own address, a back link to the list and room for a long text. The editor is one component
-for both modes: `/<entity>/new` shows it with empty fields and "Create", `/<entity>/:id` with the
-saved fields, and its Save and Discard only while a field differs from what is saved. Groups are
+for both modes: `/<entity>/new` shows it with empty fields and "Create" (notes say "Add note",
+the verb every other note screen uses), `/<entity>/:id` with the saved fields, and its Save and Discard only while a field differs from what is saved. Groups are
 the second example: `groups-screen.tsx` lists them, each row one link to its editor, and
 `group-editor-screen.tsx` serves `/groups/new` and `/groups/:id`, with the members, the plan and
 the activity log on tabs of their own (`/groups/:id/members`, `/billing`, `/activity`). An entity that is created and never edited, such as an API token or an invitation,

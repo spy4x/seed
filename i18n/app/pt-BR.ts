@@ -203,7 +203,7 @@ export default {
   },
   "GroupEditor.tabGeneral": "Geral",
   "GroupEditor.tabMembers": "Membros",
-  "GroupEditor.tabBilling": "Plano e cobrança",
+  "GroupEditor.tabBilling": "Cobrança",
   "GroupEditor.tabActivity": "Atividade",
   "GroupEditor.tabsLabel": "Sobre {name}",
   "GroupEditor.currentGroup": "seu grupo atual",
@@ -544,7 +544,7 @@ export default {
     "Não foi possível abrir o pagamento no Stripe. Confira sua conexão e tente de novo.",
   "GroupBillingPanel.portalUnreachable":
     "Não foi possível abrir a página de cobrança do Stripe. Confira sua conexão e tente de novo.",
-  "GroupBillingPanel.title": "Plano e cobrança",
+  "GroupBillingPanel.title": "Cobrança",
   "GroupBillingPanel.description":
     "Quanto <group>{group}</group> paga por mês. A cobrança é feita pelo Stripe.",
   "GroupBillingPanel.loading": "Carregando o plano",
@@ -772,7 +772,7 @@ export default {
   "PlanRefusalNotice.rolesTitle": "Promover membros exige um plano pago",
   "PlanRefusalNotice.rolesText":
     "No plano deste grupo, você pode rebaixar a função de um membro ou removê-lo, mas não promovê-lo.",
-  "PlanRefusalNotice.openBilling": "Abrir Plano e cobrança",
+  "PlanRefusalNotice.openBilling": "Abrir Cobrança",
   "PlanRefusalNotice.askOwner": "Peça ao dono do grupo para mudar de plano.",
   "GuestProfile.accountType": "Tipo de conta",
   "GuestProfile.guestAccount": "Conta de visitante. Só este navegador consegue abri-la.",
@@ -1067,6 +1067,12 @@ export default {
   "NoteSync.gone":
     "Esta nota foi excluída ou movida para outro grupo enquanto você estava offline.",
   "NoteSync.version": "Alguém alterou esta nota enquanto você estava offline.",
+  "NotFound.title": "Página não encontrada",
+  "NotFound.description":
+    "Este endereço não leva a nenhuma página. Talvez tenha um erro de digitação, ou a página mudou de lugar.",
+  "NotFound.signedOut": "Este endereço não leva a nenhuma página. Entre para acessar suas notas.",
+  "NotFound.toNotes": "Ir para suas notas",
+  "NotFound.signIn": "Entrar",
   "Notes.title": "Notas",
   "Notes.new": "Nova nota",
   "Notes.count": {

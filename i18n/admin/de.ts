@@ -1434,6 +1434,10 @@ export default {
     "<job>{job}</job> wird nicht ausgeführt. Ein wiederkehrender Job kommt beim nächsten Start des Workers zurück. Das lässt sich nicht rückgängig machen.",
   "AdminJobs.cancelling": "Wird abgebrochen …",
   "AdminJobs.keepIt": "Behalten",
+  "AdminNotFound.title": "Seite nicht gefunden",
+  "AdminNotFound.description":
+    "Unter dieser Adresse gibt es keine Admin-Seite. Prüfe sie auf Tippfehler oder starte im Dashboard.",
+  "AdminNotFound.toDashboard": "Zum Dashboard",
   "AdminNav.dashboard": "Dashboard",
   "AdminNav.stats": "Statistik",
   "AdminNav.system": "System",
@@ -1470,7 +1474,7 @@ export default {
   "AdminNewsletter.retry": "Erneut versuchen",
   "AdminNewsletter.loadingNumbers": "Zahlen werden geladen",
   "AdminNewsletter.keyNumbers": "Kennzahlen",
-  "AdminNewsletter.confirmedHint": "Bestätigt, bekommen jede Ausgabe",
+  "AdminNewsletter.confirmedHint": "Bestätigt, bekommen die Ausgaben in ihrer Sprache",
   "AdminNewsletter.pendingHint": "Bestätigungs-E-Mail ist unterwegs",
   "AdminNewsletter.joined": {
     "one": "Neu, letzter Tag",

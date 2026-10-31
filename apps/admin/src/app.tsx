@@ -6,7 +6,7 @@ import { Toastr } from "@spy4x/preact-ui/toastr"
 import { createLeaveGuard } from "@spy4x/preact-ui/unsaved-guard"
 import type { createThemeStore } from "@spy4x/preact-signals/theme"
 import type { ToastStore } from "@spy4x/preact-signals/toast"
-import { Redirect, Route, Switch, useLocation } from "wouter-preact"
+import { matchRoute, Redirect, Route, Switch, useLocation, useRouter } from "wouter-preact"
 import { useRouteAnnouncer } from "@spy4x/preact-system/route-announcer"
 import {
   ADMIN_PATHS,
@@ -17,6 +17,7 @@ import {
   AdminShell,
   AdminSignInScreen,
 } from "@ui/admin-frame.tsx"
+import { NotFoundScreen } from "@ui/not-found-screen.tsx"
 import { type AdminStore, hasAdminAccess, operatorName, readOperatorEmail } from "./state.ts"
 import { ADMIN_MODULES, adminPersonTabs, shownModules } from "./modules/registry.ts"
 import type { AdminContext, AdminModule } from "./modules/types.ts"
@@ -110,9 +111,17 @@ function Operator(
   // The modules name their rail entries by catalog key; the rail, the tab title and the shortcuts
   // show them in the page's language.
   const navItems = modules.map((module) => ({ ...module.nav, name: t.t(module.nav.name) }))
-  const title = user && hasAdminAccess(user)
+  // Until the list is read, every module's pages answer, so a link to one never bounces.
+  const routed = moduleIds === null ? allModules : modules
+  const { parser } = useRouter()
+  const found = routed.some((module) =>
+    module.routes.some((route) => matchRoute(parser, route.path, path)[0])
+  )
+  const title = !user || !hasAdminAccess(user)
+    ? `${tag} · ${ADMIN_PRODUCT}`
+    : found
     ? adminPageTitle(navItems, path, tag)
-    : `${tag} · ${ADMIN_PRODUCT}`
+    : [t.t(`AdminNotFound.title`), tag, ADMIN_PRODUCT].join(" · ")
   useRouteAnnouncer({ path, title })
   // A new page starts at its top; the router keeps the old page's scroll, so a person opened from
   // far down the list would show with their header under the top bar. A tab change (`?tab=`) keeps
@@ -249,8 +258,7 @@ function Operator(
         }}
       >
         <Switch>
-          {/* Until the list is read, every module's pages answer, so a link to one never bounces. */}
-          {(moduleIds === null ? allModules : modules).flatMap((module) =>
+          {routed.flatMap((module) =>
             module.routes.map(({ path: pattern, View }) => (
               <Route key={`${module.id}:${pattern}`} path={pattern}>
                 {(params) => <View context={context} params={params as Record<string, string>} />}
@@ -258,7 +266,7 @@ function Operator(
             ))
           )}
           <Route>
-            <Redirect to={ADMIN_PATHS.dashboard} replace />
+            <NotFoundScreen audience="operator" navigate={leave} />
           </Route>
         </Switch>
         {toastr}

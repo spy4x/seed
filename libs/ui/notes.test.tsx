@@ -977,8 +977,8 @@ describe("NoteEditorScreen", () => {
     expect(tagOf(html, "page-back")).toContain(`href="${NOTE_PATHS.list}"`)
     expect(tagOf(html, "page-back")).toContain(`aria-label="Back to notes"`)
     expect(html).not.toContain(`aria-label="More actions"`)
-    expect(html).toContain("Create note")
-    expect(html).not.toContain("Add note")
+    expect(html).toContain("Add note")
+    expect(html).not.toContain("Create note")
   })
 
   it("shows the title being typed once, in the heading, with the saved title as its tooltip", () => {
@@ -1090,7 +1090,7 @@ describe("NoteEditorScreen", () => {
     expect(html).not.toContain("We couldn't find this note")
   })
 
-  it("shows the owner the note cap with a link to the group's Plan and billing tab", () => {
+  it("shows the owner the note cap with a link to the group's Billing tab", () => {
     const capped: PlanRefusal = {
       code: "PLAN_LIMIT_REACHED",
       entitlement: "maxNotes",
