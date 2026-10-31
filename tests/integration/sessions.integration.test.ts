@@ -10,6 +10,7 @@ import type { APIContext } from "../../apps/api/_types.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { createPushTokenStore } from "../../apps/api/services/push-token-store.ts"
 
 /**
  * Signed-in devices (#151) against a real Postgres: what a session remembers about its device, the
@@ -268,6 +269,74 @@ Deno.test("signing out of all other devices keeps only this one", async () => {
     expect(await app.signIn.entitledSession(onLaptop.id)).not.toBeNull()
     // Someone else's session is untouched.
     expect(await app.signIn.entitledSession(bob.id)).not.toBeNull()
+  })
+})
+
+/** Switches notifications on in the browser of session `id`, as `POST /push` stores them. */
+async function subscribe(sql: postgres.Sql, userId: number, id: number): Promise<string> {
+  const deviceId = uuidV7()
+  const stored = await createPushTokenStore(sql).upsertForSession({
+    sessionId: id,
+    userId,
+    deviceId,
+    endpoint: `https://push.example/${deviceId}`,
+    auth: "auth",
+    p256dh: "p256dh",
+  })
+  if (!stored) throw new Error("the session had ended")
+  return deviceId
+}
+
+/** The devices of `userId` that still get the account's notifications. */
+async function notified(sql: postgres.Sql, userId: number): Promise<string[]> {
+  return (await createPushTokenStore(sql).listByUser(userId)).map((row) => row.deviceId).sort()
+}
+
+async function userIdOf(sql: postgres.Sql, sessionId: number): Promise<number> {
+  const [row] = await sql<{ userId: number }[]>`
+    SELECT user_id FROM auth_sessions WHERE id = ${sessionId}`
+  return row.userId
+}
+
+Deno.test("a device signed out from another one stops getting the account's notifications", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const onLaptop = await signUp(app, "ada@example.com", laptop)
+    const onPhone = await signIn(app, "ada@example.com", phone)
+    const bob = await signUp(app, "bob@example.com", phone)
+    const ada = await userIdOf(sql, onLaptop.id)
+    const laptopPush = await subscribe(sql, ada, onLaptop.id)
+    await subscribe(sql, ada, onPhone.id)
+    const bobPush = await subscribe(sql, await userIdOf(sql, bob.id), bob.id)
+
+    await app.request("/end-others", laptop, { cookie: onLaptop.cookie })
+
+    expect(await notified(sql, ada)).toEqual([laptopPush])
+    // Someone else's notifications are untouched.
+    expect(await notified(sql, await userIdOf(sql, bob.id))).toEqual([bobPush])
+  })
+})
+
+Deno.test("a password change that signs the others out keeps this device's notifications", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const onLaptop = await signUp(app, "ada@example.com", laptop)
+    const onPhone = await signIn(app, "ada@example.com", phone)
+    const ada = await userIdOf(sql, onLaptop.id)
+    const laptopPush = await subscribe(sql, ada, onLaptop.id)
+    await subscribe(sql, ada, onPhone.id)
+
+    const changed = await app.request("/password", laptop, {
+      cookie: onLaptop.cookie,
+      body: { password: PASSWORD, newPassword: NEW_PASSWORD },
+    })
+    expect(await changed.json()).toEqual({ ok: true })
+    expect(await notified(sql, ada)).toEqual([laptopPush])
+
+    // The laptop's notifications now belong to its new session, so signing out the other
+    // devices from it keeps them.
+    await app.request("/end-others", laptop, { cookie: cookieOf(changed) })
+    expect(await notified(sql, ada)).toEqual([laptopPush])
   })
 })
 

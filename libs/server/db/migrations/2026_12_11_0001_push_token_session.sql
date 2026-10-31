@@ -1,0 +1,11 @@
+-- #181: a device signed out from elsewhere ("Sign out other devices", a password change, turning on
+-- two-factor) kept getting the account's notifications, because a subscription did not record the
+-- session that stored it. `session_id` is that session. A row stored before this column has none,
+-- and the next ending of the other sessions removes it.
+--
+-- No foreign key, on purpose: some steps delete the session row before they remove its
+-- subscriptions, and the link must still find them then. Session ids are never reused. Every query
+-- on the column also names `user_id`, which is indexed, so it needs no index of its own.
+--
+-- Safe on a table with rows: a nullable column with no default changes the catalogue only.
+ALTER TABLE user_push_tokens ADD COLUMN session_id INT4;
