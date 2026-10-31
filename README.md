@@ -4,7 +4,7 @@
 
 **The groundwork of your SaaS, already built. A free, MIT-licensed starter: sign-in with a second
 factor, groups with roles, per-member Stripe billing, realtime, an offline app and an admin area.
-Deno, Postgres, Docker Compose. Work in progress.**
+Deno, Postgres, Docker Compose. Usable today, built in public.**
 
 [![CI](https://ci.antonshubin.com/api/badges/15/status.svg)](https://ci.antonshubin.com/repos/15)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -29,27 +29,45 @@ It exists because every SaaS MVP needs the same groundwork before its first feat
 parts live here and in the published [`@spy4x/*`](https://jsr.io/@spy4x) packages; product rules
 stay out.
 
-**Status:** work in progress. Sign-up, sign-in with TOTP, groups with members, roles, invitations
-and ownership transfer, billing per member, notes (the reference aggregate), the outbox worker, the
-admin app and the public website work today, and the SPA works offline. What is not built yet is
-on the [open issues](https://github.com/spy4x/seed/issues).
+**Status:** usable today, and still growing in public. On `main` now: passkeys, Google and
+GitHub sign-in, sign-in links, guest accounts, a second factor, groups with roles and invitations,
+Stripe billing per member, notes (the reference feature), the file store, notifications in the app,
+by web push and in Telegram, six languages, an offline SPA, the admin panel, and a public website
+with a blog and a newsletter. All of it is tested in CI, and most of it runs in the
+[live demo](https://app.seedsaas.com) with made-up people. Not built yet: the [Android](https://github.com/spy4x/seed/issues/202) and
+[desktop](https://github.com/spy4x/seed/issues/203) apps, and the rest of the
+[open issues](https://github.com/spy4x/seed/issues).
 
 ## Why Seed
 
 - **Tenancy from day one.** Every user gets a group at sign-up; every group uses the same IDs,
   membership checks and roles, from viewer to owner. A group can be renamed, deleted and, for 30
   days, restored, and a person always keeps at least one.
-- **Auth that is done.** Sign-up, sign-in (also by a link sent by e-mail), sessions and an
-  authenticator-app second factor, with PBKDF2-SHA-256 password hashes. Web push subscriptions are built in too.
+- **Sign-in that is done.** E-mail and password with a confirmation code, passkeys, Google and
+  GitHub, and sign-in links by e-mail. A visitor can start in a guest account with one click and
+  add a sign-in method later, keeping their data. An authenticator app adds a second factor,
+  people see and end their sessions, and personal API tokens are stored only as hashes.
+- **Billing per member, through Stripe.** A free plan with limits, a 14-day trial, quantities that
+  follow the member count and a grace period after a failed payment:
+  [docs/billing.md](docs/billing.md).
+- **Six languages.** The SPA, the admin panel, the website and the mails speak English, German,
+  Spanish, Brazilian Portuguese, Russian and Arabic, which reads right to left.
+- **A file store.** Garage, a bundled S3 store, keeps images and PDFs on notes and profile
+  pictures. Uploads go through signed links, and photos become small AVIF and WebP copies with
+  their metadata removed: [docs/files.md](docs/files.md).
+- **Notifications.** In the app, by web push on a phone or desktop, and in Telegram once a person
+  links the bot: [docs/telegram.md](docs/telegram.md).
 - **Offline-first SPA.** The SPA keeps the last notes and groups in IndexedDB (the shared data
   cache), opens with no network, and queues note writes with their idempotency keys. It sends them
   on reconnect and shows a stale write as a conflict to settle, never as a silent overwrite. The
   layer sits in one folder, so a product that does not want it deletes the folder, follows the
   removal steps in [docs/offline.md](docs/offline.md#removing-the-layer) and keeps an online SPA.
-- **Mailing lists.** Visitors subscribe at `/subscribe` with double opt-in, and every list mail
-  carries a one-click unsubscribe. The worker signs the links with `SUBSCRIBERS_SECRET` and sends
-  the confirm, welcome and issue mail:
-  [docs/architecture.md](docs/architecture.md#mail-subscriptions).
+- **An admin panel on its own host.** Operators find a person and see their sign-in methods,
+  sessions and groups, refund a payment, write the blog, look after the newsletter's subscribers
+  and rerun a failed job. Every action goes to the audit log.
+- **A public website.** Fresh, server-rendered and usable with JavaScript off: pricing, legal
+  pages, a blog with an RSS feed, and a newsletter with double opt-in and one-click unsubscribe:
+  [docs/apps.md](docs/apps.md).
 - **CQRS with an outbox.** Commands, queries and events go through one bus. Every group change
   writes its event to `outbox_events`, and the worker drains that table.
 - **Safe API defaults.** Every mutation must come from the web app's own origin, and group lists
