@@ -208,6 +208,33 @@ describe("the public website", () => {
     for (const line of QUICK_START) expect(hero).toContain(`$ ${line}`)
   })
 
+  it("wraps a long quick-start command under its own start, past the $, instead of cutting it off", async () => {
+    const { html } = await page("/")
+
+    for (const line of QUICK_START) {
+      expect(html, line).toContain(
+        `class="block whitespace-pre-wrap ps-4 -indent-4">$ ${line}</span>`,
+      )
+    }
+  })
+
+  it("names each realtime window under its frame on /features, where a phone has room for the name", async () => {
+    const { html } = await page("/features")
+
+    for (const name of ["Window 1", "Window 2"]) {
+      expect(html, name).toMatch(new RegExp(`<figcaption[^>]*>${name}</figcaption>`))
+    }
+  })
+
+  it("titles the Teams picture's frame with the address of the group activity page it shows", async () => {
+    const { html } = await page("/features")
+    const teams = html.slice(html.indexOf(`id="teams"`))
+
+    expect(teams.slice(0, teams.indexOf(`/shots/activity-`))).toContain(
+      `app.seedsaas.com/groups/…/activity`,
+    )
+  })
+
   it("keeps every quick-start line a bare command, since interactive zsh passes a comment's words on", () => {
     for (const line of QUICK_START) expect(line, line).not.toContain("#")
   })
@@ -270,18 +297,39 @@ describe("the public website", () => {
     }
   })
 
-  it("gives every page the Seed mark as its tab icon and the canvas of each palette as its theme colour", async () => {
+  it("gives every page the Seed mark as its tab icon and the canvas of the page's palette as its theme colour", async () => {
     for (const path of ["/", "/pricing", "/subscribe"]) {
       const { html } = await page(path)
 
       expect(html, path).toContain(`<link rel="icon" type="image/svg+xml" href="/favicon.svg"`)
+      // Dark only with JavaScript on, since only /theme.js darkens the page.
       expect(html, path).toContain(
-        `<meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)"`,
+        `<meta name="theme-color" content="#f3f4f6" media="not all and (prefers-color-scheme: dark) and (scripting: enabled)"`,
       )
       expect(html, path).toContain(
-        `<meta name="theme-color" content="#080b10" media="(prefers-color-scheme: dark)"`,
+        `<meta name="theme-color" content="#080b10" media="(prefers-color-scheme: dark) and (scripting: enabled)"`,
       )
     }
+  })
+
+  it("shows a picture's dark theme only with JavaScript on, as the page itself turns dark only then", async () => {
+    for (const path of ["/", "/features"]) {
+      const { html } = await page(path)
+      const sources = [...html.matchAll(/<source\b[^>]*>/g)].map((match) => match[0])
+
+      expect(sources.length, path).toBeGreaterThan(0)
+      for (const tag of sources) {
+        expect(tag, path).toContain(`media="(prefers-color-scheme: dark) and (scripting: enabled)"`)
+      }
+    }
+  })
+
+  it("opens the deploy guide itself from Read the deploy guide on /pricing", async () => {
+    const { html } = await page("/pricing")
+
+    expect(hrefOf(linkNamed(html, "Read the deploy guide"))).toBe(
+      `${REPOSITORY_URL}/blob/main/docs/deploy.md`,
+    )
   })
 
   it("starts every page with a link that skips to the main content, then one header, main and footer", async () => {
@@ -920,7 +968,7 @@ describe("the public website", () => {
     )
   })
 
-  it("dates a sitemap entry only where its page states a date", async () => {
+  it("dates every sitemap entry with the day its page last changed", async () => {
     const xml = await (await handler(new Request(`${site}/sitemap.xml`), info)).text()
     const lastmods = Object.fromEntries(
       [...xml.matchAll(/<loc>([^<]+)<\/loc>\n(?:\s*<lastmod>([^<]+)<\/lastmod>)?/g)]
@@ -929,18 +977,19 @@ describe("the public website", () => {
 
     // Every language of a page carries the English page's date: the translation says the same.
     expect(lastmods["/de/pricing"]).toBe("2026-10-21T00:00:00.000Z")
-    expect(lastmods["/ar"]).toBeUndefined()
+    expect(lastmods["/ar"]).toBe("2026-10-31T00:00:00.000Z")
+    expect(Object.values(lastmods)).not.toContain(undefined)
     const english = Object.fromEntries(
       Object.entries(lastmods).filter(([path]) => pathLanguage(path).language === "en"),
     )
     expect(english).toEqual({
-      "/": undefined,
-      "/features": "2026-10-28T00:00:00.000Z",
+      "/": "2026-10-31T00:00:00.000Z",
+      "/features": "2026-10-31T00:00:00.000Z",
       "/admin": "2026-10-28T00:00:00.000Z",
       "/docs/api": "2026-10-23T00:00:00.000Z",
       "/compare": "2026-10-16T00:00:00.000Z",
       "/pricing": "2026-10-21T00:00:00.000Z",
-      "/subscribe": undefined,
+      "/subscribe": "2026-10-30T00:00:00.000Z",
       "/privacy": "2026-10-23T00:00:00.000Z",
       "/terms": "2026-10-21T00:00:00.000Z",
     })

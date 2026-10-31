@@ -51,7 +51,7 @@ import { siteEnglishText } from "@ui/site-text.ts"
  * The day this page's feature list or wording last changed: the hero's "Updated" line and the
  * sitemap's `lastmod`. Change it with them.
  */
-export const FEATURES_UPDATED = `2026-10-28`
+export const FEATURES_UPDATED = `2026-10-31`
 
 /** The day the Quality section's tests were counted. */
 const TESTS_COUNTED_ON = `2026-10-16`
@@ -140,7 +140,7 @@ function tiers({ t, href, rich, language }: Site): readonly Tier[] {
           ],
           code: { label: t.t(`FeatureTeams.code`), href: source(`libs/domain/groups/`) },
           visual: (
-            <WindowFrame variant="browser" title={appAddress(`/groups`)}>
+            <WindowFrame variant="browser" title={appAddress(`/groups/…/activity`)}>
               <Shot
                 name="activity"
                 alt={t.t(`FeatureTeams.alt`)}

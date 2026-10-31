@@ -147,8 +147,7 @@ export default {
   "Home.title": "Seed: kostenloser Open-Source-SaaS-Starter und Boilerplate",
   "Home.description":
     "Kostenloser SaaS-Starter unter MIT-Lizenz: Anmeldung mit 2FA, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit, offline. Deno, Postgres, Docker Compose.",
-  "HomeProof.tests": "Browser-Testsuites und Testdateien laufen in der CI",
-  "HomeProof.pulls": "Pull Requests seit Januar 2026 gemergt, jeder mit Review",
+  "HomeProof.tests": "Testdateien in den Apps und Bibliotheken, alle laufen in der CI",
   "HomeProof.licence": "Lizenz: kein Konto, keine Paywall",
   "HomeStatus.signIn":
     "Registrierung, Anmeldung, Bestätigung der E-Mail-Adresse, Passwort zurücksetzen, Anmeldung mit Google und GitHub, Passkeys, Magic Links, 2FA mit einer Authenticator-App",
@@ -209,7 +208,7 @@ export default {
   "HomeFeatures.signInTitle": "Anmeldung, erledigt",
   "HomeFeatures.signInLink": "So funktioniert die Anmeldung",
   "HomeFeatures.signInAlt":
-    "Die Sicherheitsseite eines Profils: die Anmeldemethoden, der Zwei-Faktor-Schutz (2FA) und die offenen Sitzungen.",
+    "Die Sicherheitsseite eines Profils: das Passwort, ein Button „Passkey hinzufügen“, der eingeschaltete Zwei-Faktor-Schutz und der Anfang der Liste der angemeldeten Geräte.",
   "HomeFeatures.signInText":
     "E-Mail und Passwort mit Bestätigungscodes, Passwort zurücksetzen, Anmeldung mit Google und GitHub, Passkeys, Anmeldelinks per E-Mail, Gastkonten und 2FA mit einer Authenticator-App. Sitzungen, die du sehen und beenden kannst.",
   "HomeFeatures.billingTitle": "Abrechnung pro Mitglied",
