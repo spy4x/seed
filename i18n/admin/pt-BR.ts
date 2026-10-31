@@ -1464,6 +1464,10 @@ export default {
     "<job>{job}</job> não vai rodar. Uma tarefa recorrente volta na próxima vez que o worker iniciar. Não dá para desfazer.",
   "AdminJobs.cancelling": "Cancelando…",
   "AdminJobs.keepIt": "Manter",
+  "AdminNotFound.title": "Página não encontrada",
+  "AdminNotFound.description":
+    "Este endereço não leva a nenhuma página do admin. Confira se há algum erro de digitação ou comece pelo painel.",
+  "AdminNotFound.toDashboard": "Ir para o painel",
   "AdminNav.dashboard": "Painel",
   "AdminNav.stats": "Estatísticas",
   "AdminNav.system": "Sistema",

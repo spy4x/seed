@@ -1165,6 +1165,12 @@ export default {
   "NotePeople.unnamed": "عضو بلا اسم",
   "NoteSync.gone": "حُذفت هذه الملاحظة أو نُقلت إلى مجموعة أخرى بينما كنت دون اتصال.",
   "NoteSync.version": "عدّل أحدهم هذه الملاحظة بينما كنت دون اتصال.",
+  "NotFound.title": "الصفحة غير موجودة",
+  "NotFound.description":
+    "لا يؤدي هذا العنوان إلى أي صفحة. ربما فيه خطأ في الكتابة، أو نُقلت الصفحة.",
+  "NotFound.signedOut": "لا يؤدي هذا العنوان إلى أي صفحة. سجّل الدخول للوصول إلى ملاحظاتك.",
+  "NotFound.toNotes": "انتقل إلى ملاحظاتك",
+  "NotFound.signIn": "تسجيل الدخول",
   "Notes.title": "الملاحظات",
   "Notes.new": "ملاحظة جديدة",
   "Notes.count": {
