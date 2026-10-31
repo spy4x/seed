@@ -9,12 +9,12 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
 `deploy@192.0.2.10` for the server and `example.com` for the product's hosts.
 
 1. **A server and SSH access.** Create the server with your SSH key. Log in as root once, make a
-   user for the deploys, give it your key, and turn off password and root logins. Deploy as that
-   user, the first one made (uid 1000): the containers that write to the app's directory run as
-   uid 1000 ([backups](backups.md#on-a-new-server)).
+   user for the deploys with uid 1000, give it your key, and turn off password and root logins.
+   The app's containers run as uid 1000, and the `api` and `backup` ones write to the app's
+   directory, so the deploy user must have that uid ([backups](backups.md#on-a-new-server)).
 
    ```sh
-   adduser --disabled-password --gecos '' deploy
+   adduser --uid 1000 --disabled-password --gecos '' deploy
    mkdir -p ~deploy/.ssh && cp ~/.ssh/authorized_keys ~deploy/.ssh/
    chown -R deploy:deploy ~deploy/.ssh && chmod 700 ~deploy/.ssh
    printf 'PasswordAuthentication no\nPermitRootLogin no\n' > /etc/ssh/sshd_config.d/01-deploy.conf
@@ -22,7 +22,9 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
    sshd -T | grep -E '^(passwordauthentication|permitrootlogin) '
    ```
 
-   The file's name sorts first because SSH keeps the first value it reads, and a provider's file
+   If `adduser` says uid 1000 is in use, the image already has a user with it (`getent passwd 1000`
+   names it, often `ubuntu`): deploy as that user instead, and use its name for `deploy` from here
+   on. The file's name sorts first because SSH keeps the first value it reads, and a provider's file
    (`50-cloud-init.conf`) may turn passwords back on. The last command must print `no` twice. Check
    that `ssh deploy@192.0.2.10` works before you close the root session.
 
@@ -51,7 +53,7 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
    it. On the server:
 
    ```sh
-   ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443/tcp && ufw enable
+   ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443/tcp && ufw --force enable
    ```
 
    After the first deploy, `ss -tlnp` as root must list no address but `127.0.0.1` and `[::1]` for
@@ -95,8 +97,11 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
    cd <PATH_ON_SERVER> && deno task proxy:start
    ```
 
-   The proxy asks Let's Encrypt for each host's certificate on its first request
-   ([certificates](#production-certificates)). Later deploys are `deno task deploy` alone.
+   The proxy asks Let's Encrypt for each host's certificate as soon as it starts and finds the
+   app's routers, not on a first visit ([certificates](#production-certificates)). Until a
+   certificate arrives, the host answers with Traefik's own self-signed one. A host whose DNS did
+   not resolve yet gets none: `docker logs traefik` names it; fix the record, then restart the proxy
+   with `deno task proxy:stop && deno task proxy:start`. Later deploys are `deno task deploy` alone.
 
 7. **Migrations.** Nothing to run: on every deploy Compose's one-shot `migrate` service applies the
    pending migrations before the API and the worker start, and a failed migration fails the deploy.
@@ -114,8 +119,9 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
    curl -fsS https://app.example.com/api/health
    ```
 
-   `/api/health` answers 200 with the database, the cache and the file store; 503 means the API
-   cannot reach the database.
+   The second prints the health report, which must say `"status":"ok"`. A 503 (`"down"`) means the
+   API cannot reach the database. The answer is 200 also when it says `"degraded"`: the cache or the
+   file store is down, and its `checks` entry is `false`.
 
 10. **Backups, with a tested restore.** Set the backup up as [Backups](backups.md#set-it-up) says,
     deploy again, and check that a snapshot is there. Then rehearse a restore once into a spare
