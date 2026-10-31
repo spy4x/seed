@@ -629,6 +629,18 @@ export function createSignIn(options: SignInOptions): SignIn {
     await sessionsOver(tx.sessionStore).signOutUser(userId, { except: keep })
     await tx.pushTokens.removeAllBut(userId, keep)
   }
+  /**
+   * Ends `previous`, the session this browser held before it signed in as `next`, inside the
+   * caller's transaction (#572). The browser's notifications follow it when the same person signed
+   * in again, and stop when someone else did: a second person on a shared browser must not keep
+   * receiving the first person's.
+   */
+  const endReplaced = async (tx: AppDbBase, previous: AppAuthState, next: AuthSessionRecord) => {
+    const { user, session } = previous
+    if (user.id === next.userId) await tx.pushTokens.moveToSession(user.id, session.id, next.id)
+    else await tx.pushTokens.removeOfSession(user.id, session.id)
+    await sessionsOver(tx.sessionStore).deleteForUser(user.id, session.id)
+  }
   const cookie = new SessionCookie({ secret: options.cookieSecret, secure: options.secureCookie })
   const hasher = options.hasher ?? createPasswordHasher({ pepper: options.pepper })
 
@@ -824,6 +836,7 @@ export function createSignIn(options: SignInOptions): SignIn {
     guests,
     db,
     sessionsOver,
+    endReplaced,
     cookie,
     cookieSecret: options.cookieSecret,
     secureCookie: options.secureCookie,
@@ -851,6 +864,7 @@ export function createSignIn(options: SignInOptions): SignIn {
     guests,
     db,
     sessionsOver,
+    endReplaced,
     cookie,
     auditRow,
     deviceOf,
@@ -1021,7 +1035,7 @@ export function createSignIn(options: SignInOptions): SignIn {
     started: { session: AuthSessionRecord; cookieValue: string },
   ): Promise<void> {
     await cookie.set(c, started.session, started.cookieValue)
-    if (previous) await sessions.deleteForUser(previous.user.id, previous.session.id)
+    if (previous) await db.begin((tx) => endReplaced(tx, previous, started.session))
   }
 
   /**
@@ -1378,7 +1392,9 @@ export function createSignIn(options: SignInOptions): SignIn {
         await tx.authAudit.insert(auditRow(c, user.id, AuthAuditEventType.SIGNED_IN))
         return { user, ...started }
       })
-      await cookie.set(c, created.session, created.cookieValue)
+      // The session this browser held before ends, as after a link, provider or passkey sign-in:
+      // a second person on a shared browser must not keep the first person's notifications (#572).
+      await replaceSession(c, c.get("auth") as AppAuthState | null | undefined, created)
       return { user: created.user, session: created.session }
     },
 

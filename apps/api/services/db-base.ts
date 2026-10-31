@@ -120,6 +120,7 @@ import { type TelegramLinks, telegramLinks } from "@server/auth/telegram.ts"
 import {
   movePushTokensToSession,
   removeAllPushTokensOf,
+  removePushTokensOfKey,
   removePushTokensOfOtherSessions,
   removePushTokensOfSession,
 } from "./push-token-store.ts"
@@ -262,6 +263,9 @@ export class AppDbBase extends DbServiceBase {
         removePushTokensOfSession(sql, userId, sessionId),
       moveToSession: (userId: number, from: number, to: number): Promise<void> =>
         movePushTokensToSession(sql, userId, from, to),
+      /** The ones stored by the sessions key `keyId` signed in, before the key is deleted (#572). */
+      removeOfKey: (userId: number, keyId: number): Promise<void> =>
+        removePushTokensOfKey(sql, userId, keyId),
     }
   }
 

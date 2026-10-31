@@ -164,3 +164,22 @@ export async function movePushTokensToSession(
     SET session_id = ${to}, updated_at = NOW()
     WHERE deleted_at IS NULL AND user_id = ${userId} AND session_id = ${from}`
 }
+
+/**
+ * Marks deleted the subscriptions stored by the sessions of `userId` that key `keyId` signed in.
+ * Unlinking a method deletes its key, and its sessions go with it by cascade (#572), so this runs
+ * first, while those sessions still name the key. Other users' rows are never touched.
+ */
+export async function removePushTokensOfKey(
+  sql: Sql,
+  userId: number,
+  keyId: number,
+): Promise<void> {
+  await sql`
+    UPDATE user_push_tokens
+    SET deleted_at = NOW(), updated_at = NOW()
+    WHERE deleted_at IS NULL AND user_id = ${userId}
+      AND session_id IN (
+        SELECT id FROM auth_sessions WHERE user_id = ${userId} AND key_id = ${keyId}
+      )`
+}

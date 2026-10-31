@@ -33,6 +33,7 @@ import { SIGN_IN_LINK_PATH } from "../../libs/server/auth/sign-in-links.ts"
 import { enqueueSignInLinkMail } from "../../libs/server/jobs/sign-in-link-mail.ts"
 import { readAdminUserParts } from "../../libs/server/auth/admin-users.ts"
 import { applyMigrations } from "./migrations.ts"
+import { notified, sessionsOfRows, subscribeNewest } from "./push-rows.ts"
 
 /**
  * Sign-in and sign-up by e-mail link (#391) through the real auth and guest routes, the real
@@ -329,6 +330,31 @@ Deno.test("a link signs in to the owner of its address, once, through the link k
     const { methods } = await readAdminUserParts(fixture.sql, owner)
     expect(methods.find((method) => method.method === SIGN_IN_LINK_METHOD)?.lastUsedAt)
       .toEqual(expect.any(String))
+  })
+})
+
+Deno.test("a link opened on a browser signed in as someone else stops that person's notifications there", async () => {
+  await withFixture(async (fixture) => {
+    const ada = await fixture.account("ada@example.com")
+    const bob = await fixture.account("bob@example.com")
+    const shared = fixture.browser()
+    const own = await fixture.linkFor(shared, "ada@example.com")
+    expect((await shared.call("POST", "/auth/link/redeem", { token: own })).status).toBe(200)
+    const before = await subscribeNewest(fixture.sql, ada)
+
+    // Ada opens a second link of hers: the browser's notifications follow her new session.
+    const second = await fixture.linkFor(shared, "ada@example.com")
+    expect((await shared.call("POST", "/auth/link/redeem", { token: second })).status).toBe(200)
+    const [session] = await fixture.sql<{ id: number }[]>`
+      SELECT id FROM auth_sessions WHERE user_id = ${ada}`
+    expect(session.id).not.toBe(before.sessionId)
+    expect(await sessionsOfRows(fixture.sql, ada)).toEqual({ [before.deviceId]: session.id })
+
+    // Bob opens his link on the same browser: Ada's notifications stop there.
+    const bobs = await fixture.linkFor(shared, "bob@example.com")
+    expect((await shared.call("POST", "/auth/link/redeem", { token: bobs })).status).toBe(200)
+    expect(await shared.call("GET", "/auth/me")).toMatchObject({ body: { id: bob } })
+    expect(await notified(fixture.sql, ada)).toEqual([])
   })
 })
 

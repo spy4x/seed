@@ -554,10 +554,12 @@ A subscription records the session that stored it (`user_push_tokens.session_id`
 steps remove the subscriptions of the sessions they end, in the same transaction, so a device signed
 out from elsewhere gets no more notifications: "sign out other devices", ending one device, a
 password change or first password that signs the others out, turning on two-factor, an address
-change, an administrator's block or sign-out, and a reset (every subscription). Unlinking a sign-in
-method, account deletion, a plain sign-out and a sign-in that replaces this browser's earlier
-session remove none. A step that gives this device a new session (a password change, an address
-move) moves its subscription to it.
+change, an administrator's block or sign-out, a reset (every subscription), unlinking a sign-in
+method (the subscriptions of the sessions that method signed in, found before its key is deleted,
+#572), and a sign-in by password, link, provider or passkey that replaces this browser's earlier
+session of another person. Account deletion and a plain sign-out remove none. A step that gives this
+device a new session of the same person (a password change, an address move, signing in again over
+its own session) moves its subscription to it.
 
 ## How a group call travels
 
