@@ -83,6 +83,11 @@ test(`keeping a guest account by e-mail keeps its user id, drops the banner and 
     await expect(page.locator(`[data-e2e=guest-banner]`)).toHaveCount(0)
     // The guest's session ended with the keep (#374): a new cookie, and the socket opens on it.
     expect(await sessionCookie()).not.toBe(guestCookie)
+    // A screen that asks the server through the socket opens, rather than signing the page out.
+    await page.getByRole(`navigation`, { name: `Main navigation` })
+      .getByRole(`link`, { name: `Overview` }).click()
+    await expect(page.locator(`[data-e2e="overview-widget-notes.added"]`)).toBeVisible()
+    await expect(page).toHaveURL(/\/overview\/[0-9a-f-]{36}$/)
     await expect(page.locator(`[data-e2e=shell-ws-status]`)).toHaveText(`Online`)
   } finally {
     await cleanup(request, email)
