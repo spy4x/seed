@@ -8,6 +8,7 @@ import { purgeDeletedNotes } from "../notes/purge-deleted-notes.ts"
 import { purgeDeletedGroups } from "../groups/purge-deleted-groups.ts"
 import { purgeNotifications } from "../notifications/purge-notifications.ts"
 import { purgeOldAuditEvents } from "../groups/purge-audit-events.ts"
+import { purgeChangeTombstones } from "../groups/group-changes.ts"
 import { purgeExpiredApiTokens } from "../api-tokens/purge-expired-api-tokens.ts"
 import { hardDeleteDueAccounts } from "../auth/account-deletion.ts"
 import { cleanUpGuests } from "../auth/guests.ts"
@@ -105,6 +106,12 @@ export function cleanupSteps(
     ["purge old audit events", async () => {
       const audit = await purgeOldAuditEvents(sql)
       if (audit > 0) console.log(`Removed ${audit} audit event(s) past their retention`)
+    }],
+    ["forget old change tombstones", async () => {
+      const tombstones = await purgeChangeTombstones(sql, new Date())
+      if (tombstones > 0) {
+        console.log(`Forgot ${tombstones} change tombstone(s) past their retention`)
+      }
     }],
     ["purge old notifications", async () => {
       const inbox = await purgeNotifications(sql)

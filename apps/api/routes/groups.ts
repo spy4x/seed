@@ -2,10 +2,12 @@ import { Hono } from "hono"
 import type { Context, MiddlewareHandler } from "hono"
 import {
   type DeletedGroupSummary,
+  GroupChangesQuery,
   GroupCreateCommand,
   GroupCreateResult,
   GroupDeleteCommand,
   GroupDeletedListQuery,
+  GroupError,
   GroupGetQuery,
   GroupGetResult,
   GroupLeaveCommand,
@@ -37,6 +39,8 @@ import {
   parseTransferBody,
   type SelectedGroup,
 } from "@domain/groups"
+import { type } from "arktype"
+import { changesAfterSchema, type ChangesAnswer } from "@spy4x/realtime/changes"
 import { createSameOriginMutationGuard } from "@spy4x/server/http/same-origin"
 import { actorFromAuth } from "../cqrs/actor.ts"
 import { APIContext } from "../_types.ts"
@@ -57,6 +61,7 @@ export interface GroupsRouteDependencies {
   restore(command: GroupRestoreCommand): Promise<{ group: GroupSummary }>
   deleted(query: GroupDeletedListQuery): Promise<{ groups: DeletedGroupSummary[] }>
   members(query: GroupMembersQuery): Promise<GroupMembersResult>
+  changes(query: GroupChangesQuery): Promise<ChangesAnswer>
   setRole(command: GroupMemberRoleCommand): Promise<{ member: GroupMemberSummary }>
   removeMember(command: GroupMemberRemoveCommand): Promise<{ removed: true }>
   leave(command: GroupLeaveCommand): Promise<{ left: true }>
@@ -192,6 +197,18 @@ export function createGroupsRoute(dependencies: GroupsRouteDependencies): Hono<A
       return c.json(
         await dependencies.members(
           new GroupMembersQuery({ actor: actorFromAuth(c.get("auth")!), groupId }),
+        ),
+      )
+    })
+    .get("/:groupId/changes", async (c) => {
+      const groupId = parseGroupId(c.req.param("groupId"))
+      const after = changesAfterSchema(c.req.query("after") ?? "")
+      if (after instanceof type.errors) {
+        throw new GroupError("INVALID_REQUEST", "after must be a non-negative integer")
+      }
+      return c.json(
+        await dependencies.changes(
+          new GroupChangesQuery({ actor: actorFromAuth(c.get("auth")!), groupId, after }),
         ),
       )
     })

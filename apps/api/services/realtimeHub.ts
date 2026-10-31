@@ -50,6 +50,7 @@ export const operations: Operations<Actor> = operationRateLimits.limit({
     restore: (command) => commandBus.execute(command),
     deleted: (query) => queryBus.execute(query),
     members: (query) => queryBus.execute(query),
+    changes: (query) => queryBus.execute(query),
     setRole: (command) => commandBus.execute(command),
     removeMember: (command) => commandBus.execute(command),
     leave: (command) => commandBus.execute(command),

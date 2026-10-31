@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "check": "deno check postgres-group-repository.ts purge-deleted-groups.ts group-change-log.ts group-list-cursor.ts group-change-notify.ts postgres-invitation-repository.ts invitation-revocation.ts purge-dead-invitations.ts activity-cursor.ts audit.ts postgres-activity-repository.ts purge-audit-events.ts movable.ts postgres-group-data-mover.ts group-notifications.ts portable.ts postgres-group-porter.ts",
+    "check": "deno check postgres-group-repository.ts purge-deleted-groups.ts group-change-log.ts group-list-cursor.ts group-change-notify.ts postgres-invitation-repository.ts invitation-revocation.ts purge-dead-invitations.ts activity-cursor.ts audit.ts postgres-activity-repository.ts purge-audit-events.ts movable.ts postgres-group-data-mover.ts group-notifications.ts portable.ts postgres-group-porter.ts group-changes.ts",
     "test": "deno test group-list-cursor.test.ts activity-cursor.test.ts group-change-notify.test.ts portable.test.ts"
   }
 }

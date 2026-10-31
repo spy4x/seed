@@ -52,6 +52,7 @@ import {
 } from "@api/cqrs/queries.ts"
 import {
   GroupActivityQuery,
+  GroupChangesQuery,
   GroupCreateCommand,
   GroupDeleteCommand,
   GroupDeletedListQuery,
@@ -111,6 +112,7 @@ import { groupDeleteHandler } from "@api/cqrs/command-handlers/group-delete.ts"
 import { groupRestoreHandler } from "@api/cqrs/command-handlers/group-restore.ts"
 import { groupDeletedListHandler } from "@api/cqrs/query-handlers/group-deleted-list.ts"
 import { groupSelectedHandler } from "@api/cqrs/query-handlers/group-selected.ts"
+import { groupChangesHandler } from "@api/cqrs/query-handlers/group-changes.ts"
 import { groupMembersHandler } from "@api/cqrs/query-handlers/group-members.ts"
 import {
   NotificationListQuery,
@@ -298,6 +300,7 @@ queryBus.register(GroupImportCheckQuery, groupImportCheckHandler)
 queryBus.register(GroupSelectedQuery, groupSelectedHandler)
 queryBus.register(GroupDeletedListQuery, groupDeletedListHandler)
 queryBus.register(GroupMembersQuery, groupMembersHandler)
+queryBus.register(GroupChangesQuery, groupChangesHandler)
 queryBus.register(GroupActivityQuery, groupActivityHandler)
 queryBus.register(GroupInvitationsQuery, createInvitationListHandler(invitationDependencies))
 queryBus.register(InvitationPreviewQuery, createInvitationPreviewHandler(invitationDependencies))

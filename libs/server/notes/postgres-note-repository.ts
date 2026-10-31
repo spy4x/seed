@@ -25,6 +25,7 @@ import {
   lockActorRole,
   recordGroupChange,
 } from "@server/groups/group-change-log.ts"
+import { recordTombstones } from "@server/groups/group-changes.ts"
 import { writeAuditEvent } from "@server/groups/audit.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { searchNotesForMember } from "./note-search.ts"
@@ -283,6 +284,23 @@ export class PostgresNoteRepository implements NoteRepository {
     }
   }
 
+  /**
+   * The live notes of the group written in `(after, through]` of its change sequence, oldest
+   * change first: a page of the changes pull (`note-changes.ts`).
+   */
+  async listChanged(groupId: string, after: number, through: number): Promise<Note[]> {
+    const rows = await this.sql<NoteRow[]>`
+      SELECT ${this.columns()}
+      FROM notes
+      WHERE group_id = ${groupId}
+        AND deleted_at IS NULL
+        AND change_sequence > ${after}
+        AND change_sequence <= ${through}
+      ORDER BY change_sequence, id
+    `
+    return rows.map(toNote)
+  }
+
   /** How many notes the group holds, deleted ones not counted: what `maxNotes` caps. */
   async count(groupId: string): Promise<number> {
     const [{ count }] = await this.sql<{ count: number }[]>`
@@ -452,6 +470,7 @@ export class PostgresNoteRepository implements NoteRepository {
         NOTE_EVENTS.deleted,
       )
       await transaction`UPDATE notes SET change_sequence = ${sequence}::bigint WHERE id = ${input.id}`
+      await recordTombstones(transaction, input.groupId, "notes", [input.id], sequence)
       return {
         id: deleted.id,
         groupId: deleted.groupId,
@@ -523,7 +542,12 @@ export class PostgresNoteRepository implements NoteRepository {
       for (const groupId of [input.fromGroupId, input.toGroupId].sort()) {
         roles.set(groupId, await assertWriterNow(transaction, groupId, actorId))
       }
-      await recordNoteChange(transaction, input.fromGroupId, actorId, NOTE_EVENTS.movedOut)
+      const left = await recordNoteChange(
+        transaction,
+        input.fromGroupId,
+        actorId,
+        NOTE_EVENTS.movedOut,
+      )
       const sequence = await recordNoteChange(
         transaction,
         input.toGroupId,
@@ -540,6 +564,7 @@ export class PostgresNoteRepository implements NoteRepository {
         targetRole: roles.get(input.toGroupId)!,
         requestId: input.requestId,
       })
+      await recordTombstones(transaction, input.fromGroupId, "notes", input.noteIds, left)
       // The log of the group the notes left names where they went; the other says only how many.
       const target = (
         await transaction<{ name: string }[]>`SELECT name FROM groups WHERE id = ${input.toGroupId}`

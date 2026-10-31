@@ -9,6 +9,7 @@ import { isUuid } from "@spy4x/platform/universal/uuid"
 import { isHexColor } from "@spy4x/platform/universal/color"
 import type { Actor } from "@domain/identity"
 import type { FieldErrors } from "@spy4x/validation"
+import type { ChangesAnswer } from "@spy4x/realtime/changes"
 
 export * from "./activity.ts"
 export * from "./invitations.ts"
@@ -334,6 +335,28 @@ export interface GroupMembersPayload {
 export class GroupMembersQuery implements Query<GroupMembersPayload, GroupMembersResult> {
   __resultType?: GroupMembersResult
   constructor(public data: GroupMembersPayload) {}
+}
+
+export interface GroupChangesPayload {
+  actor: Actor
+  groupId: string
+  /** The sequence the device's copy is complete through; `0` for a device with no copy. */
+  after: number
+}
+
+/**
+ * One page of what changed in a group after `after`: its notes and tags written since, and the
+ * ones gone (`docs/offline.md`, "Reads: the device first"). Any member may read it; a non-member
+ * is told `GROUP_NOT_FOUND`.
+ */
+export class GroupChangesQuery implements Query<GroupChangesPayload, ChangesAnswer> {
+  __resultType?: ChangesAnswer
+  constructor(public data: GroupChangesPayload) {}
+}
+
+/** Reads a page of a group's changes; `null` when the group is missing or deleted. */
+export interface GroupChangesReader {
+  read(groupId: string, after: number): Promise<ChangesAnswer | null>
 }
 
 /**
@@ -791,6 +814,23 @@ export function parseGroupIdRequest(value: unknown): { groupId: string } {
     throw new GroupError("INVALID_REQUEST", "Expected exactly groupId")
   }
   return { groupId: parseGroupId(value.groupId) }
+}
+
+const GROUP_CHANGES_KEYS = ["after", "groupId"]
+
+/**
+ * The payload of `group.changes`: exactly `{ groupId, after }`, where `after` is a non-negative
+ * safe integer.
+ */
+export function parseGroupChangesRequest(value: unknown): { groupId: string; after: number } {
+  if (!hasExactKeys(value, GROUP_CHANGES_KEYS)) {
+    throw new GroupError("INVALID_REQUEST", "Expected exactly groupId and after")
+  }
+  const after = value.after
+  if (typeof after !== "number" || !Number.isSafeInteger(after) || after < 0) {
+    throw new GroupError("INVALID_REQUEST", "after must be a non-negative integer")
+  }
+  return { groupId: parseGroupId(value.groupId), after }
 }
 
 /** A member's user id from a request: a positive 32-bit integer, or `INVALID_REQUEST`. */

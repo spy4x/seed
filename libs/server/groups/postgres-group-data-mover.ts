@@ -11,6 +11,7 @@ import {
 } from "@domain/groups"
 import { writeAuditEvent } from "./audit.ts"
 import { GroupNotActiveError, lockActorRole, recordGroupChange } from "./group-change-log.ts"
+import { forgetChangesBefore } from "./group-changes.ts"
 import type { MovableAggregate } from "./movable.ts"
 
 /**
@@ -36,7 +37,15 @@ export class PostgresGroupDataMover implements GroupDataMover {
       for (const groupId of [input.fromGroupId, input.toGroupId].sort()) {
         roles.set(groupId, await writerNow(transaction, groupId, actorId))
       }
-      await recordGroupChange(transaction, input.fromGroupId, actorId, GROUP_DATA_EVENTS.movedOut)
+      const left = await recordGroupChange(
+        transaction,
+        input.fromGroupId,
+        actorId,
+        GROUP_DATA_EVENTS.movedOut,
+      )
+      // Every row leaves at once: a device's copy of the source is read again in full, instead of
+      // one tombstone per row.
+      await forgetChangesBefore(transaction, input.fromGroupId, left)
       const sequence = await recordGroupChange(
         transaction,
         input.toGroupId,

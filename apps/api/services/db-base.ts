@@ -1,5 +1,6 @@
 import type postgres from "postgres"
 import type { AttachmentUploadBudget } from "@domain/notes"
+import type { GroupChangesReader } from "@domain/groups"
 import {
   anyPicture,
   readablePicture,
@@ -29,6 +30,9 @@ import { PostgresGroupRepository } from "@server/groups/postgres-group-repositor
 import { PostgresNotificationRepository } from "@server/notifications/postgres-notification-repository.ts"
 import { PostgresGroupActivityRepository } from "@server/groups/postgres-activity-repository.ts"
 import { PostgresGroupDataMover } from "@server/groups/postgres-group-data-mover.ts"
+import { type ChangesAggregate, readGroupChanges } from "@server/groups/group-changes.ts"
+import { noteChanges } from "@server/notes/note-changes.ts"
+import { tagChanges } from "@server/tags/tag-changes.ts"
 import { revokeAllInvitationsOf } from "@server/groups/invitation-revocation.ts"
 import type { MovableAggregate } from "@server/groups/movable.ts"
 import type { PortableAggregate } from "@server/groups/portable.ts"
@@ -179,6 +183,12 @@ export const MOVABLE_AGGREGATES: readonly MovableAggregate[] = [tagMovable, note
  */
 export const PORTABLE_AGGREGATES: readonly PortableAggregate[] = [tagPortable, notePortable]
 
+/**
+ * The aggregates a device pulls the changes of, by group (`docs/aggregates.md`, "Taking part in
+ * the changes pull"). Their `kind`s are the keys of the answer's `upserts`.
+ */
+export const CHANGES_AGGREGATES: readonly ChangesAggregate[] = [tagChanges, noteChanges]
+
 /** A cache that stores nothing: every read goes to the database. */
 const noCache: RowCache<User> = {
   wrap: (_key, compute) => compute(),
@@ -256,6 +266,14 @@ export class AppDbBase extends DbServiceBase {
   /** Moves all of a group's data to another group. Built per access, like `group`. */
   get groupData(): PostgresGroupDataMover {
     return new PostgresGroupDataMover(this.sql, MOVABLE_AGGREGATES)
+  }
+
+  /** Pages of a group's changes for the changes pull. Built per access, like `group`. */
+  get groupChanges(): GroupChangesReader {
+    const sql = this.sql
+    return {
+      read: (groupId, after) => readGroupChanges(sql, CHANGES_AGGREGATES, groupId, after),
+    }
   }
 
   /** A group's export file and the import of one. Built per access, like `group`. */
