@@ -11,6 +11,7 @@ import { act } from "preact/test-utils"
 import type { OnboardingStatus } from "@domain/identity"
 import { createOnboardingStore } from "../state/onboarding.ts"
 import { selectionStore } from "../state/selection.ts"
+import { demoMode } from "../state/demo.ts"
 import { OnboardingView } from "./OnboardingView.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -131,6 +132,25 @@ describe("OnboardingView", () => {
 
     await mount(storeOver({ ...fresh, dismissed: true }).store)
     expect(cardShown()).toBe(false)
+  })
+
+  it("ticks the invitation step in the public demo, where every account's group has members", async () => {
+    const invite = () =>
+      [...root!.querySelectorAll("li")].find((item) =>
+        item.textContent?.includes("Invite someone to your group")
+      )?.textContent ?? ""
+    await mount(storeOver(fresh).store)
+    expect(invite()).toContain("To do")
+    await act(() => render(null, root!))
+    root?.remove()
+
+    demoMode.value = true
+    try {
+      await mount(storeOver(fresh).store)
+      expect(invite()).toContain("Done")
+    } finally {
+      demoMode.value = false
+    }
   })
 
   it("removes the card on Dismiss, saves it and moves focus to the page's heading", async () => {

@@ -5,12 +5,16 @@ import { ONBOARDING_FAILURE, OnboardingCard } from "@ui/onboarding-card.tsx"
 import { onboardingStore } from "../state/onboarding.ts"
 import { selectionStore } from "../state/selection.ts"
 import { isGuestSession } from "../state/guest.ts"
+import { demoMode } from "../state/demo.ts"
 
 /**
  * The first-steps card above the notes list, where a new account lands. It reads the steps each
  * time the list opens, so a step the person did on another page is ticked when they come back,
  * and follows hints only while it is on the page. After Dismiss the card leaves
  * and focus moves to the page's `<h1>`, the element a route change moves focus to.
+ *
+ * In the public demo (docs/demo.md) the invitation step starts done: every account owns a sample
+ * group whose members are already in it, so "Invite someone" would read as a task left undone.
  */
 export function OnboardingView({ store = onboardingStore }: { store?: typeof onboardingStore }) {
   const [, navigate] = useLocation()
@@ -25,7 +29,7 @@ export function OnboardingView({ store = onboardingStore }: { store?: typeof onb
   const error = store.error.value
   return (
     <OnboardingCard
-      steps={status.steps}
+      steps={demoMode.value ? { ...status.steps, memberInvited: true } : status.steps}
       groupId={selectionStore.groupId.value}
       navigate={navigate}
       guest={isGuestSession()}
