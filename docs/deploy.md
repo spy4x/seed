@@ -1,6 +1,135 @@
 # Deploy and operate
 
-Certificates, the deploy itself, the consoles, several projects on one server, and releases.
+Preparing a server, certificates, the deploy itself, the consoles, several projects on one server,
+and releases.
+
+## Prepare a server
+
+From a fresh Ubuntu server to a healthy deployment with a tested backup, in order. The examples use
+`deploy@192.0.2.10` for the server and `example.com` for the product's hosts.
+
+1. **A server and SSH access.** Create the server with your SSH key. Log in as root once, make a
+   user for the deploys, give it your key, and turn off password and root logins. Deploy as that
+   user, the first one made (uid 1000): the containers that write to the app's directory run as
+   uid 1000 ([backups](backups.md#on-a-new-server)).
+
+   ```sh
+   adduser --disabled-password --gecos '' deploy
+   mkdir -p ~deploy/.ssh && cp ~/.ssh/authorized_keys ~deploy/.ssh/
+   chown -R deploy:deploy ~deploy/.ssh && chmod 700 ~deploy/.ssh
+   printf 'PasswordAuthentication no\nPermitRootLogin no\n' > /etc/ssh/sshd_config.d/01-deploy.conf
+   systemctl reload ssh
+   sshd -T | grep -E '^(passwordauthentication|permitrootlogin) '
+   ```
+
+   The file's name sorts first because SSH keeps the first value it reads, and a provider's file
+   (`50-cloud-init.conf`) may turn passwords back on. The last command must print `no` twice. Check
+   that `ssh deploy@192.0.2.10` works before you close the root session.
+
+2. **Docker, Compose, Deno and rsync.** As root, install Docker with its Compose plugin, the tools
+   the deploy runs, and let the deploy user run Docker. Membership of the `docker` group is as good
+   as root, so keep that user's key as safe as root's.
+
+   ```sh
+   curl -fsSL https://get.docker.com | sh
+   apt-get install -y rsync unzip
+   usermod -aG docker deploy
+   ```
+
+   Then, as `deploy`, install Deno. The installer puts it in `~/.deno/bin`, where the deploy looks
+   first; let it add that directory to `PATH` for your own shell too.
+
+   ```sh
+   curl -fsSL https://deno.land/install.sh | sh
+   ```
+
+3. **The firewall.** Only SSH, 80 and 443 may answer from outside. Docker opens the ports it
+   publishes past `ufw`, so `ufw` alone keeps nothing private: Postgres, Valkey and Grafana stay off
+   the internet because they are published on `127.0.0.1` only (`DB_HOST_PORT`, `KV_HOST_PORT`,
+   `GRAFANA_HOST_PORT`). Never change those to `0.0.0.0`. The provider's firewall, outside the
+   server (a Hetzner Cloud Firewall), is the safer place for this rule, since Docker cannot open
+   it. On the server:
+
+   ```sh
+   ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443/tcp && ufw enable
+   ```
+
+   After the first deploy, `ss -tlnp` as root must list no address but `127.0.0.1` and `[::1]` for
+   every port other than 22, 80 and 443.
+
+4. **DNS.** An `A` record (and `AAAA` for IPv6) pointing at the server for every host the product
+   serves: `DOMAIN` (the SPA, the API and the bundled file store), `MPA_DOMAIN` with the `mpa`
+   profile, `ADMIN_DOMAIN` with the `admin` profile, and every host in `MPA_REDIRECT_RULE`. Let's
+   Encrypt checks each host over port 80, so the records must resolve before the proxy starts:
+   `dig +short app.example.com` answers `192.0.2.10`.
+
+5. **The production env file.** On your machine, copy the example and edit the copy:
+
+   ```sh
+   cp infra/envs/.env.example infra/envs/.env.prod
+   ```
+
+   Set `ENV=prod`, `PROJECT`, `DOMAIN`, `MPA_DOMAIN`, `ADMIN_DOMAIN`, `TRAEFIK_ACME_EMAIL` (a real
+   address), `SSH_TO_SERVER=deploy@192.0.2.10` and `PATH_ON_SERVER`, and add `mpa` and `admin` to
+   `COMPOSE_PROFILES` when the product has them. Leave `backup` out until step 10. Give every
+   secret a value of its own: `openssl rand -hex 32` for `DB_PASS`, `AUTH_COOKIE_SECRET`,
+   `AUTH_PEPPER`, `S3_SECRET_ACCESS_KEY` and `GARAGE_RPC_SECRET`, `openssl rand -hex 24` for
+   `KV_PASSWORD` and `GRAFANA_PASS`, and `GK` followed by `openssl rand -hex 12` for
+   `S3_ACCESS_KEY_ID`. Mail (`SMTP_*`), billing and the rest are optional; the example file says
+   what each needs. The deploy refuses a file that does not set `ENV=prod`, or that keeps a secret
+   from the example or leaves one empty, and names each.
+
+   The file stays on your machine: every deploy copies it to `infra/envs/.env` on the server,
+   readable by the deploy user only, and replaces what is there, so edit it here, never on the
+   server. It is the only copy of the secrets and the file store's key, and the backup does not
+   hold it: keep it encrypted in the repository with `deno task env:encrypt`
+   ([env files](development.md#env-files)), and its key in a password manager.
+
+6. **First deploy.** Create the app's directory, deploy, then start the shared proxy once per
+   server, in the app's directory:
+
+   ```sh
+   ssh deploy@192.0.2.10 mkdir -p <PATH_ON_SERVER>
+   deno task deploy
+   ssh deploy@192.0.2.10
+   cd <PATH_ON_SERVER> && deno task proxy:start
+   ```
+
+   The proxy asks Let's Encrypt for each host's certificate on its first request
+   ([certificates](#production-certificates)). Later deploys are `deno task deploy` alone.
+
+7. **Migrations.** Nothing to run: on every deploy Compose's one-shot `migrate` service applies the
+   pending migrations before the API and the worker start, and a failed migration fails the deploy.
+   `deno task compose logs migrate` on the server shows what it did.
+
+8. **The first operator.** On the server, `deno task compose exec worker deno task operator:create
+   <address>` ([The first operator](#the-first-operator)), then sign in at `ADMIN_DOMAIN`.
+
+9. **Health check.** On the server, `deno task compose ps` lists every container as running, and
+   healthy where it has a health check. From your machine, both of these must succeed, the second
+   without `-k`, which proves the certificate:
+
+   ```sh
+   curl -sI http://app.example.com      # a permanent redirect to https://
+   curl -fsS https://app.example.com/api/health
+   ```
+
+   `/api/health` answers 200 with the database, the cache and the file store; 503 means the API
+   cannot reach the database.
+
+10. **Backups, with a tested restore.** Set the backup up as [Backups](backups.md#set-it-up) says,
+    deploy again, and check that a snapshot is there. Then rehearse a restore once into a spare
+    database, so you know the backup can be read before you need it (`<db>` is `DB_NAME`):
+
+    ```sh
+    deno task compose exec db psql -d postgres -c 'CREATE DATABASE "<db>_restore_test"'
+    deno task compose run --rm backup restore
+    deno task compose run --rm -e PGDATABASE=<db>_restore_test backup restore <snapshot id>
+    deno task compose exec db psql -d <db>_restore_test -c '\dt'
+    deno task compose exec db psql -d postgres -c 'DROP DATABASE "<db>_restore_test"'
+    ```
+
+    The table list of the spare database must match the live one's.
 
 ## Production certificates
 
