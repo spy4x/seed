@@ -110,7 +110,7 @@ export default {
   "NewsletterOff.releases": "Releases on GitHub",
   "CtaBand.title": "See it working in a minute",
   "CtaBand.lead":
-    "The demo is the app you get on day one. Open it without signing up and explore groups full of demo notes.",
+    "The demo is the app you get on day one. Open it without signing up: your guest account starts with sample data.",
   "Founders.title": "Not a developer? I'll build your product on Seed.",
   "Founders.text":
     "I'm Anton, the person who builds Seed. Founders hire me to turn an idea into a live product that people can sign up for and pay for. Because sign-up, groups and payments already exist, your budget goes to what makes your product different.",
@@ -511,7 +511,10 @@ export default {
     "Your operators find a person by name or address and see their sign-in methods, sessions, groups and history. From the same place they manage groups, refund a payment, look after the newsletter's subscribers, see every background job, run a failed one again and check the system's health.",
   "FeatureAdmin.watch": "Watch it in {seconds} seconds",
   "FeatureAdmin.fact1": "A separate app on its own host, with its own session cookie",
-  "FeatureAdmin.fact2": "Nine modules, from the dashboard to API tokens",
+  "FeatureAdmin.fact2": {
+    "one": "{count} module, from the dashboard to API tokens",
+    "other": "{count} modules, from the dashboard to API tokens",
+  },
   "FeatureAdmin.fact3": "Risky actions ask first, and every action is written to the audit log",
   "FeatureAdmin.notYet1": "Signing in as a person to see what they see",
   "FeatureAdmin.code": "Read the admin app",
@@ -546,13 +549,13 @@ export default {
     "An optional catalog for a shop, edited in the admin panel: items with photos, colours, sizes, a size chart and sold-out sizes, in every language you sell in, with a short tracking link per item and place you share it",
   "FeatureWebsite.fact7": "sitemap.xml, robots.txt, canonical links and Open Graph images",
   "FeatureWebsite.fact8":
-    "Optional cookieless analytics in your own Umami, with an event on every call to action, and a Stats page in the admin panel: visits and order clicks per source and per item",
+    "Optional cookieless analytics in your own Umami, with an event on every call to action and a Stats page in the admin panel: visits and order clicks per source and per item",
   "FeatureWebsite.code": "Read the website's code",
   "FeatureQuality.nav": "Tests",
   "FeatureQuality.eyebrow": "Quality",
   "FeatureQuality.title": "Tested where it matters",
   "FeatureQuality.lead":
-    "Counted on 16 October 2026: 34 browser test suites for the app, plus unit and screen tests, all run in CI. Every change goes through a pull request and a review before it merges.",
+    "Counted on {date}: 34 browser test suites for the app, plus unit and screen tests, all run in CI. Every change goes through a pull request and a review before it merges.",
   "FeatureQuality.fact1": "Browser tests with Playwright, against the real API and database",
   "FeatureQuality.fact2": "Unit and screen tests next to the code they test",
   "FeatureQuality.fact3": "Integration tests against Postgres",
@@ -625,34 +628,27 @@ export default {
     "Seed ships an operator area on its own host. Your operators find a person, see their sign-in methods, sessions and groups, and help them: end a session, send a password-reset link, refund a payment. Risky actions ask first, and every action lands in the audit log.",
   "AdminTour.code": "Read the admin app's code",
   "AdminTour.dashboard": "Dashboard",
-  "AdminTour.dashboardText":
-    "The product at a glance over the last 30 days: people, sign-ups, who is active, groups and notes.",
+  "AdminTour.dashboardText": "People, sign-ups, who is active, groups and notes over 30 days.",
   "AdminTour.stats": "Stats",
-  "AdminTour.statsText":
-    "The website's visits from your Umami: where they come from, which items people order or only look at, and which order button they press. Totals only, never a visitor.",
+  "AdminTour.statsText": "Website visits and order clicks from your Umami. Totals only.",
   "AdminTour.users": "Users",
-  "AdminTour.usersText":
-    "Everyone with an account. Open a person to block them, end a session, send a password-reset link or see the copies of their data they asked for.",
+  "AdminTour.usersText": "Find a person, block them, end a session or send a reset link.",
   "AdminTour.groups": "Groups",
-  "AdminTour.groupsText":
-    "Every group, its owner, its members and its files. Manage members and invitations, find and remove a file, or hand a group to another member.",
+  "AdminTour.groupsText": "Members, invitations and files. Remove a file or change the owner.",
   "AdminTour.billing": "Billing",
-  "AdminTour.billingText":
-    "Who pays, what they pay and what you earn. Refund a payment, give time at no charge or cancel a subscription.",
+  "AdminTour.billingText": "Who pays and what you earn. Refund, give free time or cancel.",
   "AdminTour.newsletter": "Newsletter",
-  "AdminTour.newsletterText": "Who gets the newsletter and what it sent. Export the list as CSV.",
+  "AdminTour.newsletterText": "Who subscribed and what was sent. Export the list as CSV.",
+  "AdminTour.blog": "Blog",
+  "AdminTour.blogText": "Posts for the site in each language, from draft to published.",
   "AdminTour.contactLinks": "Contact links",
-  "AdminTour.contactLinksText":
-    "Where people reach you: Telegram, Zalo, WhatsApp, a phone, an email. The website's footer shows them within a minute, with no deploy.",
+  "AdminTour.contactLinksText": "Where people reach you, in the site's footer, with no deploy.",
   "AdminTour.catalog": "Catalog",
-  "AdminTour.catalogText":
-    "Items for a shop, off until you turn it on: names and texts in each language, a price, colours, sizes with a size chart, what is sold out, and photos you upload at once and drag into order. One short link per item and place you share it, counted in Umami.",
+  "AdminTour.catalogText": "An optional shop: items, prices, sizes, photos and share links.",
   "AdminTour.audit": "Audit log",
-  "AdminTour.auditText":
-    "Every sign-in, account change, group change and operator action, newest first. Export it as CSV.",
+  "AdminTour.auditText": "Every sign-in, change and operator action. Export it as CSV.",
   "AdminTour.jobs": "Jobs",
-  "AdminTour.jobsText":
-    "Every background job and how each run went. Run a failed job again, run one now or cancel it.",
+  "AdminTour.jobsText": "Every background job. Run a failed one again or cancel it.",
   "AdminTour.system": "System",
   "AdminTour.systemText": "The health of the database, the cache, the job queue and the backup.",
   "AdminTour.tokens": "API tokens",
@@ -678,7 +674,10 @@ export default {
   "AdminTour.meta": "{seconds} seconds · {sound} · Sample data",
   "AdminTour.transcriptJump": "Read what the video shows",
   "AdminTour.modulesEyebrow": "Modules",
-  "AdminTour.modulesTitle": "Nine modules, one per job",
+  "AdminTour.modulesTitle": {
+    "one": "{count} module, one per job",
+    "other": "{count} modules, one per job",
+  },
   "AdminTour.modulesLead":
     "Each module is one entry in the admin's icon rail. Add your own by copying one: the steps are in <doc>docs/admin-modules.md</doc>.",
   "AdminTour.rolesEyebrow": "Roles",

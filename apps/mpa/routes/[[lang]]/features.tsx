@@ -21,12 +21,14 @@ import {
   RealtimePair,
 } from "../../components/features-visuals.tsx"
 import { AdminVideoStill } from "../../components/admin-video.tsx"
+import { ADMIN_TOUR_MODULES } from "../../admin-modules.ts"
 import { ADMIN_VIDEO } from "../../admin-video.ts"
 import { OnThisPage } from "../../components/on-this-page.tsx"
 import { SectionIntro } from "../../components/section-intro.tsx"
 import { Shot } from "../../components/shot.tsx"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
+import { useFormat } from "@spy4x/preact-ui/format"
 import {
   PERSON_JSON_LD,
   REPOSITORY_URL,
@@ -50,6 +52,18 @@ import { siteEnglishText } from "@ui/site-text.ts"
  * sitemap's `lastmod`. Change it with them.
  */
 export const FEATURES_UPDATED = `2026-10-28`
+
+/** The day the Quality section's tests were counted. */
+const TESTS_COUNTED_ON = `2026-10-16`
+
+/**
+ * The Quality section's lead, with {@link TESTS_COUNTED_ON} in the site's short form, as the hero's
+ * "Updated" line writes its date. A component, so it reads the site's formatter inside the frame.
+ */
+function QualityLead(): JSX.Element {
+  const { t } = useSite()
+  return <>{t.t(`FeatureQuality.lead`, { date: useFormat().utc().date(TESTS_COUNTED_ON) })}</>
+}
 
 /** The page's title and description in the language of `t`. */
 export function featuresHead(t: Translator<string>): { title: string; description: string } {
@@ -370,7 +384,7 @@ function tiers({ t, href, rich, language }: Site): readonly Tier[] {
           ),
           facts: [
             t.t(`FeatureAdmin.fact1`),
-            t.t(`FeatureAdmin.fact2`),
+            t.t(`FeatureAdmin.fact2`, { count: ADMIN_TOUR_MODULES.length }),
             t.t(`FeatureAdmin.fact3`),
           ],
           notYet: [
@@ -420,7 +434,7 @@ function tiers({ t, href, rich, language }: Site): readonly Tier[] {
           nav: t.t(`FeatureQuality.nav`),
           eyebrow: t.t(`FeatureQuality.eyebrow`),
           title: t.t(`FeatureQuality.title`),
-          lead: t.t(`FeatureQuality.lead`),
+          lead: <QualityLead />,
           facts: [
             t.t(`FeatureQuality.fact1`),
             t.t(`FeatureQuality.fact2`),

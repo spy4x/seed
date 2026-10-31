@@ -115,7 +115,7 @@ export default {
   "NewsletterOff.releases": "Versiones en GitHub",
   "CtaBand.title": "Míralo funcionar en un minuto",
   "CtaBand.lead":
-    "La demo es la aplicación que tienes desde el primer día. Ábrela sin registrarte y explora grupos llenos de notas de ejemplo.",
+    "La demo es la aplicación que tienes desde el primer día. Ábrela sin registrarte: tu cuenta de invitado empieza con datos de ejemplo.",
   "Founders.title": "¿No programas? Yo creo tu producto con Seed.",
   "Founders.text":
     "Soy Anton, quien construye Seed. Los fundadores me contratan para convertir una idea en un producto en marcha en el que la gente puede registrarse y pagar. Como el registro, los grupos y los pagos ya existen, tu presupuesto va a lo que hace distinto a tu producto.",
@@ -528,7 +528,11 @@ export default {
     "Tus operadores encuentran a una persona por nombre o dirección y ven sus métodos de inicio de sesión, sesiones, grupos e historial. Desde el mismo lugar gestionan grupos, reembolsan un pago, cuidan de los suscriptores del boletín, ven cada tarea en segundo plano, vuelven a ejecutar una que falló y revisan el estado del sistema.",
   "FeatureAdmin.watch": "Míralo en {seconds} segundos",
   "FeatureAdmin.fact1": "Una aplicación aparte en su propio host, con su propia cookie de sesión",
-  "FeatureAdmin.fact2": "Nueve módulos, del panel principal a los tokens de API",
+  "FeatureAdmin.fact2": {
+    "one": "{count} módulo, del panel principal a los tokens de API",
+    "many": "{count} módulos, del panel principal a los tokens de API",
+    "other": "{count} módulos, del panel principal a los tokens de API",
+  },
   "FeatureAdmin.fact3":
     "Las acciones arriesgadas piden confirmación y cada acción queda en el registro de auditoría",
   "FeatureAdmin.notYet1": "Entrar como una persona para ver lo que ella ve",
@@ -571,7 +575,7 @@ export default {
   "FeatureQuality.eyebrow": "Calidad",
   "FeatureQuality.title": "Pruebas donde importan",
   "FeatureQuality.lead":
-    "Recuento del 16 de octubre de 2026: 34 suites de pruebas de navegador para la aplicación, además de pruebas unitarias y de pantallas, todas ejecutadas en CI. Cada cambio pasa por una pull request y una revisión antes de fusionarse.",
+    "Recuento del {date}: 34 suites de pruebas de navegador para la aplicación, además de pruebas unitarias y de pantallas, todas ejecutadas en CI. Cada cambio pasa por una pull request y una revisión antes de fusionarse.",
   "FeatureQuality.fact1":
     "Pruebas de navegador con Playwright, contra la API y la base de datos reales",
   "FeatureQuality.fact2": "Pruebas unitarias y de pantallas junto al código que prueban",
@@ -646,34 +650,30 @@ export default {
     "Seed incluye un área para operadores en su propio host. Tus operadores encuentran a una persona, ven sus métodos de inicio de sesión, sus sesiones y sus grupos, y la ayudan: cierran una sesión, envían un enlace para restablecer la contraseña o reembolsan un pago. Las acciones arriesgadas piden confirmación y cada acción queda en el registro de auditoría.",
   "AdminTour.code": "Ver el código de la app de administración",
   "AdminTour.dashboard": "Panel",
-  "AdminTour.dashboardText":
-    "El producto de un vistazo en los últimos 30 días: personas, registros, quién está activo, grupos y notas.",
+  "AdminTour.dashboardText": "Personas, registros, quién está activo, grupos y notas en 30 días.",
   "AdminTour.stats": "Estadísticas",
-  "AdminTour.statsText":
-    "Las visitas del sitio web desde tu Umami: de dónde vienen, qué artículos piden o solo miran y qué botón de pedido pulsan. Solo totales, nunca un visitante concreto.",
+  "AdminTour.statsText": "Visitas al sitio y clics de pedido desde tu Umami. Solo totales.",
   "AdminTour.users": "Usuarios",
   "AdminTour.usersText":
-    "Todas las personas con cuenta. Abre una para bloquearla, cerrar una sesión, enviarle un enlace para restablecer la contraseña o ver las copias de sus datos que pidió.",
+    "Busca a una persona, bloquéala, cierra una sesión o envía un enlace de restablecimiento.",
   "AdminTour.groups": "Grupos",
   "AdminTour.groupsText":
-    "Cada grupo, su propietario, sus miembros y sus archivos. Gestiona miembros e invitaciones, busca y quita un archivo o cede un grupo a otro miembro.",
+    "Miembros, invitaciones y archivos. Elimina un archivo o cambia el propietario.",
   "AdminTour.billing": "Facturación",
-  "AdminTour.billingText":
-    "Quién paga, cuánto paga y cuánto ganas. Reembolsa un pago, regala tiempo sin cargo o cancela una suscripción.",
+  "AdminTour.billingText": "Quién paga y cuánto ganas. Reembolsa, regala tiempo o cancela.",
   "AdminTour.newsletter": "Boletín",
-  "AdminTour.newsletterText": "Quién recibe el boletín y qué se envió. Exporta la lista en CSV.",
+  "AdminTour.newsletterText": "Quién está suscrito y qué se envió. Exporta la lista en CSV.",
+  "AdminTour.blog": "Blog",
+  "AdminTour.blogText": "Entradas del sitio en cada idioma, del borrador a la publicación.",
   "AdminTour.contactLinks": "Enlaces de contacto",
-  "AdminTour.contactLinksText":
-    "Por dónde te contacta la gente: Telegram, Zalo, WhatsApp, un teléfono, un correo. El pie de página del sitio los muestra en menos de un minuto, sin desplegar.",
+  "AdminTour.contactLinksText": "Dónde te contactan, en el pie del sitio, sin desplegar.",
   "AdminTour.catalog": "Catálogo",
   "AdminTour.catalogText":
-    "Artículos para una tienda, desactivado hasta que lo actives: nombres y textos en cada idioma, un precio, colores, tallas con su guía de tallas, lo que está agotado y fotos que subes de una vez y ordenas arrastrándolas. Un enlace corto por artículo y por sitio donde lo compartas, contado en Umami.",
+    "Una tienda opcional: artículos, precios, tallas, fotos y enlaces para compartir.",
   "AdminTour.audit": "Registro de auditoría",
-  "AdminTour.auditText":
-    "Cada inicio de sesión, cambio de cuenta, cambio de grupo y acción de un operador, de lo más reciente a lo más antiguo. Expórtalo en CSV.",
+  "AdminTour.auditText": "Cada inicio de sesión, cambio y acción de operador. Exportable a CSV.",
   "AdminTour.jobs": "Tareas",
-  "AdminTour.jobsText":
-    "Cada tarea en segundo plano y cómo fue cada ejecución. Vuelve a ejecutar una tarea fallida, ejecuta una ahora o cancélala.",
+  "AdminTour.jobsText": "Cada tarea en segundo plano. Vuelve a ejecutar una fallida o cancélala.",
   "AdminTour.system": "Sistema",
   "AdminTour.systemText":
     "El estado de la base de datos, la caché, la cola de tareas y la copia de seguridad.",
@@ -700,7 +700,11 @@ export default {
   "AdminTour.meta": "{seconds} segundos · {sound} · Datos de ejemplo",
   "AdminTour.transcriptJump": "Leer lo que muestra el video",
   "AdminTour.modulesEyebrow": "Módulos",
-  "AdminTour.modulesTitle": "Nueve módulos, uno por tarea",
+  "AdminTour.modulesTitle": {
+    "one": "{count} módulo, uno por tarea",
+    "many": "{count} módulos, uno por tarea",
+    "other": "{count} módulos, uno por tarea",
+  },
   "AdminTour.modulesLead":
     "Cada módulo es una entrada en la barra de iconos del área de administración. Añade los tuyos copiando uno: los pasos están en <doc>docs/admin-modules.md</doc>.",
   "AdminTour.rolesEyebrow": "Roles",
