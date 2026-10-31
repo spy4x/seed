@@ -45,12 +45,21 @@ try {
     const result = await buildGroup(sql, planTier(command.tier), command.members, log)
     console.log(`Group ${result.groupId} "${result.name}"`)
   } else if (command.action === `remove`) {
+    let groups = 0
     for (const tier of command.tiers) {
       const removed = await removeGroup(sql, planTier(tier))
+      groups += removed.groups
       console.log(
         `${tier}: removed ${removed.groups} group, ${removed.people} generated people, ` +
           `${removed.notifications} notifications`,
       )
+    }
+    // Up to a million deleted rows stay in the indexes until autovacuum gets to them, and every
+    // search of every group pays for them meanwhile (docs/capacity.md): clean them now.
+    if (groups > 0) {
+      await sql`VACUUM (ANALYZE) notes, note_tags, tags, group_change_tombstones, group_members,
+        audit_events, notifications, users, auth_users`
+      console.log(`Vacuumed the tables the groups used`)
     }
   } else {
     console.log(await explainGroup(sql, planTier(command.tier)))
