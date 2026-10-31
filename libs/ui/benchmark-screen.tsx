@@ -1,5 +1,5 @@
 import type { ComponentChildren, JSX } from "preact"
-import { useEffect, useId, useRef } from "preact/hooks"
+import { useEffect, useId, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
 import { CopyButton } from "@spy4x/preact-ui/copy-button"
@@ -291,6 +291,7 @@ const TOUCH = "min-h-11 w-full sm:min-h-9 sm:w-auto"
  * The list of measures keeps every row from start to end, so nothing shifts while a run goes on.
  * Running, Stop is the only button and takes focus; done, focus moves to the summary. One polite
  * live region says which step runs, and the summary at the end; progress ticks are not announced.
+ * A Run the app refuses moves focus to what it says: the group field, or the offline warning.
  */
 export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
   const { state, steps, groups, selectedId, json = null, stoppedRun = null } = props
@@ -302,6 +303,13 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
   const summary = useRef<HTMLParagraphElement>(null)
   const stoppedNotice = useRef<HTMLDivElement>(null)
   const results = useRef<HTMLTextAreaElement>(null)
+  const groupSelect = useRef<HTMLSelectElement>(null)
+  const offlineWarning = useRef<HTMLDivElement>(null)
+  const runButton = useRef<HTMLButtonElement>(null)
+  const runAgainButton = useRef<HTMLButtonElement>(null)
+  const hadStoppedRun = useRef(false)
+  // Counts presses of Run, so a second refused press moves focus again with the same error.
+  const [presses, setPresses] = useState(0)
   const running = state === "running"
   const ended = state === "done" || state === "stopped" || state === "failed"
 
@@ -310,8 +318,20 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
     else if (ended) summary.current?.focus()
   }, [state])
   useEffect(() => {
+    // Dismissed, the warning takes its focused button with it: Run is the next thing to do.
     if (stoppedRun) stoppedNotice.current?.focus()
+    else if (hadStoppedRun.current) (runButton.current ?? runAgainButton.current)?.focus()
+    hadStoppedRun.current = stoppedRun !== null
   }, [stoppedRun !== null])
+  useEffect(() => {
+    if (props.formError === "offline") offlineWarning.current?.focus()
+    else if (props.formError === "noGroup") groupSelect.current?.focus()
+  }, [props.formError, presses])
+
+  const run = () => {
+    setPresses((count) => count + 1)
+    props.onRun?.()
+  }
 
   const current = steps.findIndex((step) => step.state === "running")
   const currentLabel = current >= 0 ? stepLabel(t, steps[current].id) : null
@@ -343,7 +363,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
   // Shown under the form before a run and above "Run again" after one: Run checks the
   // connection first, so either button can be the one that finds it gone.
   const offlineNotice = props.formError === "offline" && (
-    <div data-e2e="benchmark-offline">
+    <div ref={offlineWarning} tabIndex={-1} class="outline-none" data-e2e="benchmark-offline">
       <Notice tone="warning" live={false}>{t.t(`Benchmark.offline`)}</Notice>
     </div>
   )
@@ -504,9 +524,10 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
                 </Button>
               )}
               <Button
+                ref={runAgainButton}
                 variant="secondary"
                 class={TOUCH}
-                onClick={props.onRun}
+                onClick={run}
                 data-e2e="benchmark-run-again"
               >
                 {t.t(`Benchmark.runAgain`)}
@@ -528,7 +549,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
           </Stack>
         )
         : (
-          <ScreenForm onSubmit={() => props.onRun?.()}>
+          <ScreenForm onSubmit={run}>
             <Stack>
               <Field
                 id="benchmark-group"
@@ -537,6 +558,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
                 error={props.formError === "noGroup" ? t.t(`Benchmark.chooseGroup`) : null}
               >
                 <Select
+                  ref={groupSelect}
                   name="group"
                   options={options}
                   placeholder={t.t(`Benchmark.groupPlaceholder`)}
@@ -547,7 +569,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
               </Field>
               {offlineNotice}
               <div>
-                <Button type="submit" class={TOUCH} data-e2e="benchmark-run">
+                <Button ref={runButton} type="submit" class={TOUCH} data-e2e="benchmark-run">
                   {t.t(`Benchmark.run`)}
                 </Button>
               </div>

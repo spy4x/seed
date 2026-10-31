@@ -179,6 +179,53 @@ describe("BenchmarkScreen", () => {
     expect(find("[data-e2e=benchmark-offline]").textContent).toContain("You need a connection")
   })
 
+  it("moves focus to the offline warning on every Run the app refuses for it", async () => {
+    let formError: BenchmarkScreenProps["formError"] = null
+    const idle = () =>
+      screen({ selectedId: "large", formError, onRun: () => formError = "offline" })
+    await mount(idle())
+    await submit("[data-e2e=benchmark-run]")
+    await rerender(idle())
+    expect(focused()).toBe("benchmark-offline")
+    await submit("[data-e2e=benchmark-run]")
+    await rerender(idle())
+    expect(focused()).toBe("benchmark-offline")
+  })
+
+  it("moves focus to the offline warning when Run again finds no connection", async () => {
+    let formError: BenchmarkScreenProps["formError"] = null
+    const ended = () =>
+      screen({ state: "done", steps: done, json, formError, onRun: () => formError = "offline" })
+    await mount(ended())
+    await click("[data-e2e=benchmark-run-again]")
+    await rerender(ended())
+    expect(focused()).toBe("benchmark-offline")
+  })
+
+  it("moves focus to the group field when Run is pressed with no group chosen", async () => {
+    let formError: BenchmarkScreenProps["formError"] = null
+    const idle = () => screen({ formError, onRun: () => formError = "noGroup" })
+    await mount(idle())
+    await submit("[data-e2e=benchmark-run]")
+    await rerender(idle())
+    expect(focused()).toBe("benchmark-group")
+    expect(find("[data-e2e=benchmark-group]").getAttribute("aria-invalid")).toBe("true")
+  })
+
+  it("moves focus to Run once the warning about a closed tab's run is dismissed", async () => {
+    const stoppedRun = {
+      step: "save" as const,
+      group: "Load test S",
+      startedAt: "2026-10-31T10:00:00Z",
+      json,
+    }
+    await mount(screen({ stoppedRun }))
+    find<HTMLButtonElement>("[data-e2e=benchmark-dismiss-stopped]").focus()
+    await click("[data-e2e=benchmark-dismiss-stopped]")
+    await rerender(screen())
+    expect(focused()).toBe("benchmark-run")
+  })
+
   it("puts focus on the warning about a run a closed tab left behind", async () => {
     await mount(screen({
       stoppedRun: { step: "save", group: "Load test S", startedAt: "2026-10-31T10:00:00Z", json },
