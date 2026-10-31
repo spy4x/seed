@@ -168,7 +168,7 @@ export function withBrowserLock(userId: number): OutboxLock {
  * One changes pull at a time per user across all tabs, which share the copy; one tab's chain where
  * locks are missing.
  */
-function changesLock(userId: number): OutboxLock {
+export function changesLock(userId: number): OutboxLock {
   return typeof navigator !== "undefined" && navigator.locks
     ? createWebLock(navigator.locks, `offline-changes:${userId}`)
     : createPromiseLock()
