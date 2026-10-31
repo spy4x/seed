@@ -23,7 +23,8 @@ const SEARCHES = JSON.parse(__ENV.SEARCHES ?? `{}`)
 if (!GROUP_ID || Object.keys(SEARCHES).length === 0) {
   throw new Error(`GROUP_ID and SEARCHES are required; run deno task load group <tier>`)
 }
-const ITERATIONS = 5
+/** Full reads to time; one at XL, whose read alone takes minutes. */
+const ITERATIONS = __ENV.TIER === `XL` ? 1 : 5
 
 const fullReadMs = new Trend(`group_full_read_ms`, true)
 const fullReadBytes = new Trend(`group_full_read_bytes`)
@@ -41,7 +42,7 @@ export const options = {
   teardownTimeout: `2m`,
   summaryTrendStats: [`avg`, `min`, `med`, `max`, `p(95)`, `count`],
   scenarios: {
-    group: { executor: `per-vu-iterations`, vus: 1, iterations: ITERATIONS, maxDuration: `30m` },
+    group: { executor: `per-vu-iterations`, vus: 1, iterations: ITERATIONS, maxDuration: `60m` },
   },
   thresholds: {
     "http_req_duration{scenario:group}": [`p(95)<100000`],

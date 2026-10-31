@@ -85,6 +85,8 @@ async function main(args: string[]): Promise<number> {
     `-e`,
     `GROUP_ID=${planTier(tiers[0]).groupId}`,
     `-e`,
+    `TIER=${tiers[0]}`,
+    `-e`,
     `SEARCHES=${JSON.stringify(SEARCHES)}`,
   ]
   const env = await readEnvFile(`./infra/envs/.env`)
