@@ -6,7 +6,10 @@ export interface ProofFact {
   label: string
 }
 
-/** A row of facts a visitor can check, each a big value over a quiet label, in equal columns. A `<dl>`. */
+/**
+ * A row of facts a visitor can check, each a big value over a quiet label, in equal columns. A
+ * `<dl>`.
+ */
 export function ProofStrip({ facts }: { facts: readonly ProofFact[] }): JSX.Element {
   return (
     <div class="border-y border-subtle bg-surface dark:bg-white/[0.04]">

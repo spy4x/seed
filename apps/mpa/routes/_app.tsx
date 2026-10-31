@@ -8,8 +8,8 @@ import { define } from "../utils.ts"
 /**
  * The document around every page. `data-theme="ink"` picks the near-black dark palette, which
  * applies only once `/theme.js` adds `dark` for a device that asks for it; without JavaScript the
- * page stays light, and so do its pictures and the browser's frame (`DARK_MEDIA`). The script is a file, not inline, because the content security policy allows
- * scripts from this origin only.
+ * page stays light, and so do its pictures and the browser's frame (`DARK_MEDIA`). The script is a
+ * file, not inline, because the content security policy allows scripts from this origin only.
  *
  * The page's language (`State.language`, from its address) sets `lang` and `dir`. The words come
  * from `SiteLanguage` (`use-site.tsx`), which `routes/_layout.tsx` puts around every

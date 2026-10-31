@@ -984,7 +984,7 @@ describe("the public website", () => {
     )
     expect(english).toEqual({
       "/": "2026-10-31T00:00:00.000Z",
-      "/features": "2026-10-28T00:00:00.000Z",
+      "/features": "2026-10-31T00:00:00.000Z",
       "/admin": "2026-10-28T00:00:00.000Z",
       "/docs/api": "2026-10-23T00:00:00.000Z",
       "/compare": "2026-10-16T00:00:00.000Z",

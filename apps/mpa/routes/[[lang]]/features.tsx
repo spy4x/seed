@@ -51,7 +51,7 @@ import { siteEnglishText } from "@ui/site-text.ts"
  * The day this page's feature list or wording last changed: the hero's "Updated" line and the
  * sitemap's `lastmod`. Change it with them.
  */
-export const FEATURES_UPDATED = `2026-10-28`
+export const FEATURES_UPDATED = `2026-10-31`
 
 /** The day the Quality section's tests were counted. */
 const TESTS_COUNTED_ON = `2026-10-16`
