@@ -18,7 +18,8 @@
  *
  * Before anything is sent, the deploy stops when the working tree has uncommitted changes,
  * untracked files included, because the copy sends the files as they are on disk and what runs on
- * the server would then match no commit. `--allow-dirty` sends them anyway. It also stops when a
+ * the server would then match no commit. `--allow-dirty` sends them anyway. It stops when the env
+ * file does not set `ENV=prod`. It also stops when a
  * password or secret in the env file equals one that `infra/envs/.env.example` prints, or when one
  * that the example file sets is empty or left out. The message names each such variable and never
  * prints a value.
@@ -141,7 +142,23 @@ export function refuseExampleSecrets(
 }
 
 /**
- * Reads the env file at `envFilePath`, refuses it when a secret is unsafe, and plans the deploy.
+ * Stops a deploy whose env file does not set `ENV=prod`. The example file sets `ENV=dev`, and a
+ * copy of it that keeps that line would run the development stack on the server: the containers as
+ * root, mail written to a log instead of sent, and billing webhooks signed with a public secret.
+ *
+ * @throws {Error} Naming the env file and the value it sets.
+ */
+export function refuseNonProductionEnv(values: Record<string, string>, envFilePath: string): void {
+  if (values.ENV === `prod`) return
+  throw new Error(
+    `${envFilePath} sets ENV=${values.ENV ?? ``}, and a server runs ENV=prod only. ` +
+      `Set ENV=prod before deploying.`,
+  )
+}
+
+/**
+ * Reads the env file at `envFilePath`, refuses it when it is not for production or a secret is
+ * unsafe, and plans the deploy.
  * Every deploy goes through here, so no step is planned for a refused file.
  *
  * @param read Reads one env file; replaced in tests.
@@ -162,6 +179,7 @@ export async function planFromEnvFile(
         `restore it before deploying.`,
     )
   }
+  refuseNonProductionEnv(values, envFilePath)
   refuseExampleSecrets(values, example, envFilePath)
   return planDeploy(values, envFilePath)
 }

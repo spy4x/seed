@@ -5,7 +5,7 @@
  *
  * A guest is a `users` row whose `guest_since` is set. A session must name a key, so a guest also
  * has one `auth_keys` row of method {@link GUEST_METHOD} with a random subject; no route signs in
- * with it, and keeping the account moves the guest's sessions to the new key and deletes it.
+ * with it, and keeping the account deletes it with every session made on it.
  *
  * Reads no environment and imports no singleton: the API and the worker both use it.
  *
@@ -66,27 +66,23 @@ export async function isGuestUser(sql: postgres.Sql, userId: number): Promise<bo
 }
 
 /**
- * Turns guest `userId` into a kept account, in the transaction that added the sign-in method
- * `keyId`: the guest's sessions move to that key (so this browser stays signed in), the guest key
- * goes, a waiting switch and the unread reminders go, and the dashboard counts one kept guest.
- * The sessions also stop at `sessionEnd` at the latest: a kept account's sessions last as long as
- * any other account's, not a guest's year. `false`, and nothing written, when the user is no guest
- * (any more): keeping twice keeps once.
+ * Turns guest `userId` into a kept account, in the transaction that added the account's first
+ * sign-in method: every session of the guest ends, the guest key goes, a waiting switch and the
+ * unread reminders go, and the dashboard counts one kept guest. The caller signs the browser that
+ * kept the account in with a new session on the new method's key (#374): a guest's token was never
+ * protected by a password, so it must not become the key to the kept account. `false`, and nothing
+ * written, when the user is no guest (any more): keeping twice keeps once.
  */
-export async function keepGuest(
-  tx: postgres.Sql,
-  userId: number,
-  keyId: number,
-  sessionEnd: Date,
-): Promise<boolean> {
+export async function keepGuest(tx: postgres.Sql, userId: number): Promise<boolean> {
   const kept = await tx`
     UPDATE users SET guest_since = NULL, updated_at = now()
     WHERE id = ${userId} AND guest_since IS NOT NULL
     RETURNING id
   `
   if (kept.length === 0) return false
+  // Deleting the guest key below would cascade to them too; said here, so nobody repoints them.
   await tx`
-    UPDATE auth_sessions SET key_id = ${keyId}, expires_at = LEAST(expires_at, ${sessionEnd})
+    DELETE FROM auth_sessions
     WHERE user_id = ${userId}
       AND key_id IN (SELECT id FROM auth_keys WHERE user_id = ${userId} AND method = ${GUEST_METHOD})
   `

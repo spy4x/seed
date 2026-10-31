@@ -31,7 +31,10 @@ export interface PushTokenInput {
 export interface PushTokenStore extends Pick<PushSubscriptionStore, "deleteByEndpoint"> {
   /** Live subscriptions of one user, newest first. */
   listByUser(userId: number): Promise<PushTokenRecord[]>
-  /** Creates the user's subscription for this device, or replaces the one already there. */
+  /**
+   * Creates the user's subscription for this device, or replaces the one already there. The row
+   * records no session, so ending the user's other sessions removes it (#181).
+   */
   upsert(input: PushTokenInput): Promise<PushTokenRecord>
   /**
    * {@link upsert}, but only while session `sessionId` of the user is live; `null`, and nothing
@@ -47,13 +50,14 @@ export interface PushTokenStore extends Pick<PushSubscriptionStore, "deleteByEnd
 async function upsertWith(
   sql: Sql,
   { userId, deviceId, endpoint, auth, p256dh }: PushTokenInput,
+  sessionId: number | null = null,
 ): Promise<PushTokenRecord> {
   const rows = await sql<PushTokenRecord[]>`
-    INSERT INTO user_push_tokens (user_id, device_id, endpoint, auth, p256dh)
-    VALUES (${userId}, ${deviceId}, ${endpoint}, ${auth}, ${p256dh})
+    INSERT INTO user_push_tokens (user_id, device_id, endpoint, auth, p256dh, session_id)
+    VALUES (${userId}, ${deviceId}, ${endpoint}, ${auth}, ${p256dh}, ${sessionId})
     ON CONFLICT (user_id, device_id) WHERE deleted_at IS NULL
     DO UPDATE SET endpoint = EXCLUDED.endpoint, auth = EXCLUDED.auth,
-      p256dh = EXCLUDED.p256dh, updated_at = NOW()
+      p256dh = EXCLUDED.p256dh, session_id = EXCLUDED.session_id, updated_at = NOW()
     RETURNING id, user_id, device_id, endpoint, auth, p256dh, created_at, updated_at`
   return rows[0]
 }
@@ -83,7 +87,7 @@ export function createPushTokenStore(sql: Sql): PushTokenStore {
         const session = await createPostgresSessionStore(tx as unknown as Sql).findById(sessionId)
         const live = session !== null && session.userId === input.userId &&
           session.status === SessionStatus.Active && session.expiresAt.getTime() > Date.now()
-        return live ? await upsertWith(tx as unknown as Sql, input) : null
+        return live ? await upsertWith(tx as unknown as Sql, input, sessionId) : null
       })
     },
     async remove({ userId, deviceId }) {
@@ -112,4 +116,51 @@ export async function removeAllPushTokensOf(sql: Sql, userId: number): Promise<v
     UPDATE user_push_tokens
     SET deleted_at = NOW(), updated_at = NOW()
     WHERE deleted_at IS NULL AND user_id = ${userId}`
+}
+
+/**
+ * Marks deleted every subscription of `userId` that session `keepSessionId` did not store, so the
+ * devices whose sessions were just ended stop getting the account's notifications (#181). A row
+ * stored before subscriptions recorded their session has none, and goes too. Other users' rows
+ * are never touched.
+ */
+export async function removePushTokensOfOtherSessions(
+  sql: Sql,
+  userId: number,
+  keepSessionId: number,
+): Promise<void> {
+  await sql`
+    UPDATE user_push_tokens
+    SET deleted_at = NOW(), updated_at = NOW()
+    WHERE deleted_at IS NULL AND user_id = ${userId}
+      AND session_id IS DISTINCT FROM ${keepSessionId}`
+}
+
+/** Marks deleted the subscription session `sessionId` of `userId` stored, if any (#181). */
+export async function removePushTokensOfSession(
+  sql: Sql,
+  userId: number,
+  sessionId: number,
+): Promise<void> {
+  await sql`
+    UPDATE user_push_tokens
+    SET deleted_at = NOW(), updated_at = NOW()
+    WHERE deleted_at IS NULL AND user_id = ${userId} AND session_id = ${sessionId}`
+}
+
+/**
+ * Hands the subscriptions session `from` of `userId` stored to session `to`, for a step that
+ * replaces this device's session with a new one (a password change, an address move): the device
+ * keeps its notifications, and a later "sign out other devices" from it keeps them too.
+ */
+export async function movePushTokensToSession(
+  sql: Sql,
+  userId: number,
+  from: number,
+  to: number,
+): Promise<void> {
+  await sql`
+    UPDATE user_push_tokens
+    SET session_id = ${to}, updated_at = NOW()
+    WHERE deleted_at IS NULL AND user_id = ${userId} AND session_id = ${from}`
 }

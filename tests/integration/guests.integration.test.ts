@@ -4,7 +4,7 @@ import { Hono, type MiddlewareHandler } from "hono"
 import postgres from "postgres"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
-import { createPasswordHasher } from "@spy4x/server/sign-in"
+import { createPasswordHasher, SESSION_COOKIE_NAME } from "@spy4x/server/sign-in"
 import type { EmailSender } from "@spy4x/email/sender"
 import type { EmailMessage } from "@spy4x/email/message"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
@@ -338,7 +338,7 @@ Deno.test("guest mode off refuses to make a guest", async () => {
   }, { guests: false })
 })
 
-Deno.test("keeping a guest by e-mail keeps the user id, the data and this browser's session", async () => {
+Deno.test("keeping a guest by e-mail keeps the user id, the data and this browser signed in", async () => {
   await withFixture(async (fixture) => {
     const { browser, userId } = await startGuest(fixture)
     const kept = await keepByEmail(fixture, browser, "grace@example.com")
@@ -373,6 +373,32 @@ Deno.test("keeping a guest by e-mail keeps the user id, the data and this browse
       password: PASSWORD,
     })
     expect(signedIn).toMatchObject({ status: 200, body: { id: userId } })
+  })
+})
+
+Deno.test("keeping a guest refuses the guest's old token and signs this browser in with a new one", async () => {
+  await withFixture(async (fixture) => {
+    const { browser, userId } = await startGuest(fixture)
+    const name = SESSION_COOKIE_NAME
+    const guestToken = browser.cookies.get(name)!
+    expect(guestToken).toBeDefined()
+    // A copy of the guest's cookie, as a shared computer would leave behind.
+    const copy = fixture.browser()
+    copy.cookies.set(name, guestToken)
+    expect((await copy.call("GET", "/auth/me")).body.id).toBe(userId)
+
+    const kept = await keepByEmail(fixture, browser, "grace@example.com")
+    expect(kept.status).toBe(200)
+
+    expect(browser.cookies.get(name)).toBeDefined()
+    expect(browser.cookies.get(name)).not.toBe(guestToken)
+    expect(await browser.call("GET", "/auth/me")).toMatchObject({
+      status: 200,
+      body: { id: userId, guestSince: null },
+    })
+    expect((await copy.call("GET", "/auth/me")).status).toBe(401)
+    const sessions = await fixture.sql`SELECT 1 FROM auth_sessions WHERE user_id = ${userId}`
+    expect(sessions.length).toBe(1)
   })
 })
 

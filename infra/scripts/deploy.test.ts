@@ -168,7 +168,12 @@ const EXAMPLE_SECRETS = [
 async function safeValues(): Promise<Record<string, string>> {
   const values = { ...await readEnvFile(EXAMPLE_ENV_FILE) }
   for (const name of EXAMPLE_SECRETS) values[name] = `real-${name}`
-  return { ...values, SSH_TO_SERVER: "deploy@home.example.net", PATH_ON_SERVER: "/srv/app" }
+  return {
+    ...values,
+    ENV: "prod",
+    SSH_TO_SERVER: "deploy@home.example.net",
+    PATH_ON_SERVER: "/srv/app",
+  }
 }
 
 /** What `refuseExampleSecrets` says about `values`, or "" when it lets them through. */
@@ -270,6 +275,26 @@ Deno.test("no deploy step is planned for an env file that holds an example passw
   await expect(planFromEnvFile(ENV_FILE, reader(files))).rejects.toThrow("KV_PASSWORD")
 })
 
+Deno.test("a deploy whose env file keeps the example's ENV=dev, or sets none, is refused", async () => {
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  expect(example.ENV).toBe("dev")
+  const safe = await safeValues()
+  const files: Record<string, Record<string, string>> = {
+    [EXAMPLE_ENV_FILE]: example,
+    [ENV_FILE]: { ...safe, ENV: "dev" },
+  }
+  await expect(planFromEnvFile(ENV_FILE, reader(files))).rejects.toThrow(
+    `${ENV_FILE} sets ENV=dev, and a server runs ENV=prod only`,
+  )
+
+  const { ENV: _, ...withoutEnv } = safe
+  files[ENV_FILE] = withoutEnv
+  await expect(planFromEnvFile(ENV_FILE, reader(files))).rejects.toThrow("Set ENV=prod")
+
+  files[ENV_FILE] = safe
+  expect((await planFromEnvFile(ENV_FILE, reader(files))).length).toBe(4)
+})
+
 Deno.test("a deploy without the example file stops and says the file is missing", async () => {
   const files = { [ENV_FILE]: await safeValues() }
 
@@ -329,7 +354,7 @@ async function filledExample(): Promise<Record<string, string>> {
     Object.entries(example).map(([name, value]) => [name, value === "" ? `filled-${name}` : value]),
   )
   for (const name of EXAMPLE_SECRETS) filled[name] = `real-${name}`
-  return filled
+  return { ...filled, ENV: "prod" }
 }
 
 Deno.test("a copy of the example file with its values filled in deploys: no name is missing", async () => {

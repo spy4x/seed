@@ -117,7 +117,12 @@ import {
 } from "@server/auth/admin-users.ts"
 import { readAdminStats } from "@server/auth/admin-stats.ts"
 import { type TelegramLinks, telegramLinks } from "@server/auth/telegram.ts"
-import { removeAllPushTokensOf } from "./push-token-store.ts"
+import {
+  movePushTokensToSession,
+  removeAllPushTokensOf,
+  removePushTokensOfOtherSessions,
+  removePushTokensOfSession,
+} from "./push-token-store.ts"
 import { adminGroupRows } from "@server/groups/admin-groups.ts"
 import {
   listAdminApiTokens,
@@ -250,6 +255,13 @@ export class AppDbBase extends DbServiceBase {
     const sql = this.sql
     return {
       removeAllOf: (userId: number): Promise<void> => removeAllPushTokensOf(sql, userId),
+      /** Every subscription but the ones session `keep` stored (#181). */
+      removeAllBut: (userId: number, keep: number): Promise<void> =>
+        removePushTokensOfOtherSessions(sql, userId, keep),
+      removeOfSession: (userId: number, sessionId: number): Promise<void> =>
+        removePushTokensOfSession(sql, userId, sessionId),
+      moveToSession: (userId: number, from: number, to: number): Promise<void> =>
+        movePushTokensToSession(sql, userId, from, to),
     }
   }
 
@@ -491,8 +503,8 @@ export class AppDbBase extends DbServiceBase {
       createIdentity: () => createGuestIdentity(sql),
       isGuest: (userId: number) => isGuestUser(sql, userId),
       event: (kind: GuestEventKind) => recordGuestEvent(sql, kind),
-      keep: async (userId: number, keyId: number, sessionEnd: Date): Promise<boolean> => {
-        const kept = await keepGuest(sql, userId, keyId, sessionEnd)
+      keep: async (userId: number): Promise<boolean> => {
+        const kept = await keepGuest(sql, userId)
         if (kept) await cache.delete(userId)
         return kept
       },

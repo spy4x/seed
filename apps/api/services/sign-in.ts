@@ -620,6 +620,15 @@ export function createSignIn(options: SignInOptions): SignIn {
       durationMinutes: minutes,
     })
   const sessions = sessionsOver(db.sessionStore)
+  /**
+   * Signs out every session of `userId` but `keep`, and removes the push subscriptions those
+   * sessions stored, so a device signed out from elsewhere stops getting the account's
+   * notifications at once (#181). Runs inside the caller's transaction.
+   */
+  const signOutOthers = async (tx: AppDbBase, userId: number, keep: number) => {
+    await sessionsOver(tx.sessionStore).signOutUser(userId, { except: keep })
+    await tx.pushTokens.removeAllBut(userId, keep)
+  }
   const cookie = new SessionCookie({ secret: options.cookieSecret, secure: options.secureCookie })
   const hasher = options.hasher ?? createPasswordHasher({ pepper: options.pepper })
 
@@ -804,7 +813,6 @@ export function createSignIn(options: SignInOptions): SignIn {
     db,
     enabled: options.guests ?? true,
     sessionsOver,
-    sessionMinutes: options.sessionMinutes,
     cookie,
     auditRow,
     deviceOf,
@@ -927,15 +935,19 @@ export function createSignIn(options: SignInOptions): SignIn {
           secret: request.secret,
           provenAt: now,
         })
-        if (!(await guests.keep(c, tx, guestId, key.id, PASSWORD_METHOD))) return null
+        const started = await guests.keep(c, tx, guestId, key.id, PASSWORD_METHOD)
+        if (!started) return null
         await tx.signUpRequest.remove(request.id)
-        return await tx.user.findOne({ id: guestId })
+        const user = await tx.user.findOne({ id: guestId })
+        if (!user) throw new Error("User not found")
+        return { user, ...started }
       })
       deleteCookie(c, PASSWORD_SIGN_UP_COOKIE, signUpCookieOptions)
       if (!kept) return { outcome: SignUpOutcome.Expired }
+      await cookie.set(c, kept.session, kept.cookieValue)
       return {
         outcome: SignUpOutcome.GuestKept,
-        signedIn: { user: kept, session: state.session },
+        signedIn: { user: kept.user, session: kept.session },
       }
     } catch (error) {
       // Another account took the address between the check and the write.
@@ -1061,13 +1073,17 @@ export function createSignIn(options: SignInOptions): SignIn {
           const kept = await db.begin(async (tx) => {
             await tx.lockUser(guest.user.id)
             const key = await tx.authStore.addKey(guest.user.id, linkKey)
-            if (!(await guests.keep(c, tx, guest.user.id, key.id, SIGN_IN_LINK_METHOD))) return null
-            return await tx.user.findOne({ id: guest.user.id })
+            const started = await guests.keep(c, tx, guest.user.id, key.id, SIGN_IN_LINK_METHOD)
+            if (!started) return null
+            const user = await tx.user.findOne({ id: guest.user.id })
+            if (!user) throw new Error("User not found")
+            return { user, ...started }
           })
           if (!kept) return { outcome: SignInLinkOutcome.Refused }
+          await cookie.set(c, kept.session, kept.cookieValue)
           return {
             outcome: SignInLinkOutcome.GuestKept,
-            signedIn: { user: kept, session: guest.session },
+            signedIn: { user: kept.user, session: kept.session },
             email,
             next,
           }
@@ -1438,9 +1454,8 @@ export function createSignIn(options: SignInOptions): SignIn {
         return await db.begin(async (tx) => {
           if (!(await tx.userTotp.confirm(user.id, step))) return false
           await tx.user.updateOne({ id: user.id, data: { mfa: UserMFAStatus.CONFIGURED } })
-          const txSessions = sessionsOver(tx.sessionStore)
-          await txSessions.completeSecondFactor(session.id)
-          await txSessions.signOutUser(user.id, { except: session.id })
+          await sessionsOver(tx.sessionStore).completeSecondFactor(session.id)
+          await signOutOthers(tx, user.id, session.id)
           return true
         })
       } catch (error) {
@@ -1481,7 +1496,7 @@ export function createSignIn(options: SignInOptions): SignIn {
       }
     },
 
-    async changePassword(c, { user }, password, newPassword, signOutOthers = true) {
+    async changePassword(c, { user, session: current }, password, newPassword, endOthers = true) {
       const change = { userId: user.id, currentPassword: password, newPassword }
       const request = requestInfoFromContext(c, { trustedProxy: true })
       // One transaction (#293): the password and the tokens change together or not at all, so a
@@ -1499,8 +1514,12 @@ export function createSignIn(options: SignInOptions): SignIn {
           // The person may choose to stay signed in elsewhere: the password is replaced after the
           // same checks, and no session is touched or created, so this device keeps its cookie.
           let session = null
-          if (signOutOthers) {
+          if (endOthers) {
             session = (await passwords.changePassword({ ...change, device: deviceOf(c) })).session
+            // Every session ended and this device got a new one: its notifications move to it,
+            // and every other device's go (#181).
+            await tx.pushTokens.moveToSession(user.id, current.id, session.session.id)
+            await tx.pushTokens.removeAllBut(user.id, session.session.id)
           } else {
             await passwords.changePassword({ ...change, keepSessions: true })
           }
@@ -1666,7 +1685,7 @@ export function createSignIn(options: SignInOptions): SignIn {
           await dropCodeKeys(tx.authStore, user.id, pending)
           // A new way in, as a password change is: whoever else holds a session of the account
           // is signed out, and this device stays signed in (#406).
-          await sessionsOver(tx.sessionStore).signOutUser(user.id, { except: session.id })
+          await signOutOthers(tx, user.id, session.id)
           await tx.authAudit.insert(
             auditRow(c, user.id, AuthAuditEventType.SIGN_IN_METHOD_LINKED, PASSWORD_METHOD),
           )
@@ -1791,7 +1810,7 @@ export function createSignIn(options: SignInOptions): SignIn {
           await dropCodeKeys(tx.authStore, user.id, target)
           if (status.email !== null) await releaseAddress(tx.authStore, user.id, status.email)
           await tx.emailChange.remove(user.id)
-          await txSessions.signOutUser(user.id, { except: session.id })
+          await signOutOthers(tx, user.id, session.id)
           return { outcome: EmailVerifyOutcome.Verified }
         }
 
@@ -1818,9 +1837,11 @@ export function createSignIn(options: SignInOptions): SignIn {
             ? SecondFactorStatus.Completed
             : SecondFactorStatus.NotRequired,
         }, deviceOf(c))
+        // This device's notifications move to its new session before the old one ends.
+        await tx.pushTokens.moveToSession(user.id, session.id, created.session.id)
         await tx.authStore.deleteKey(user.id, key.id)
         if (status.email !== null) await releaseAddress(tx.authStore, user.id, status.email)
-        await txSessions.signOutUser(user.id, { except: created.session.id })
+        await signOutOthers(tx, user.id, created.session.id)
         await tx.emailChange.remove(user.id)
         return { outcome: EmailVerifyOutcome.Verified, created }
       })
@@ -1862,6 +1883,7 @@ export function createSignIn(options: SignInOptions): SignIn {
       if (sessionId === session.id) return false
       return await db.begin(async (tx) => {
         if (!(await sessionsOver(tx.sessionStore).deleteForUser(user.id, sessionId))) return false
+        await tx.pushTokens.removeOfSession(user.id, sessionId)
         await tx.authAudit.insert(
           auditRow(c, user.id, AuthAuditEventType.SESSIONS_ENDED, String(sessionId)),
         )
@@ -1874,6 +1896,7 @@ export function createSignIn(options: SignInOptions): SignIn {
         // Ends nothing unless `session.id` is this user's live session, so a wrong id cannot sign
         // the person out everywhere.
         const ended = await sessionsOver(tx.sessionStore).deleteOthers(user.id, session.id)
+        await tx.pushTokens.removeAllBut(user.id, session.id)
         if (ended > 0) {
           await tx.authAudit.insert(
             auditRow(c, user.id, AuthAuditEventType.SESSIONS_ENDED, "all other sessions"),

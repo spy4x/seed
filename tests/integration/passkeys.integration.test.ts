@@ -6,6 +6,7 @@ import { AuthAuditEventType, type SignInMethodsResponse, UserMFAStatus } from "@
 import type { OAuthFlowKv } from "@spy4x/server/auth/oauth"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { SESSION_COOKIE_NAME } from "@spy4x/server/sign-in"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
@@ -126,6 +127,10 @@ function buildApp(sql: postgres.Sql) {
       logError: (message) => void logged.push(message),
     }),
   )
+  app.post("/guest", async (c) => {
+    const started = await signIn.guests.start(c, c.get("auth") ?? null)
+    return c.json({ id: "signedIn" in started ? started.signedIn.user.id : null })
+  })
   app.post("/password/sign-up", async (c) => {
     const { email } = await c.req.json()
     const result = await signIn.signUp(c, email, PASSWORD)
@@ -168,6 +173,7 @@ function browser({ app }: App) {
     return response
   }
   return {
+    cookies,
     get: (path: string) => send("GET", path),
     post: (path: string, body: unknown = {}) => send("POST", path, body),
     patch: (path: string, body: unknown) => send("PATCH", path, body),
@@ -247,6 +253,33 @@ Deno.test("a person adds a passkey, named after the browser, and signs in with i
       [AuthAuditEventType.SIGN_IN_METHOD_LINKED, "passkey name=Firefox on Linux"],
       [AuthAuditEventType.SIGNED_IN, "passkey name=Firefox on Linux"],
     ]))
+  })
+})
+
+Deno.test("a guest's first passkey refuses the guest's old token and signs this browser in anew", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const guest = browser(app)
+    const userId = (await (await guest.post("/guest")).json()).id as number
+    const name = SESSION_COOKIE_NAME
+    const guestToken = guest.cookies.get(name)!
+    expect(guestToken).toBeDefined()
+    // A copy of the guest's cookie, as a shared computer would leave behind.
+    const copy = browser(app)
+    copy.cookies.set(name, guestToken)
+    expect((await copy.get("/auth/methods")).status).toBe(200)
+
+    const options = await guest.post("/auth/passkeys/add/options")
+    expect(options.status).toBe(200)
+    const passkey = new SoftPasskey(ORIGIN)
+    const added = await guest.post("/auth/passkeys", await passkey.create(await options.json()))
+    expect(added.status).toBe(201)
+
+    expect(guest.cookies.get(name)).not.toBe(guestToken)
+    expect((await guest.get("/auth/methods")).status).toBe(200)
+    expect((await copy.get("/auth/methods")).status).toBe(401)
+    expect(await sql`SELECT guest_since FROM users WHERE id = ${userId}`)
+      .toEqual([{ guestSince: null }])
   })
 })
 

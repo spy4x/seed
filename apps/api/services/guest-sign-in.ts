@@ -81,17 +81,32 @@ export type GuestDeleteAnswer =
   | { deleted: false; reason: "not-guest" | "wrong-word" }
   | { deleted: false; reason: "blocked"; blockers: AccountDeletionBlocker[] }
 
+/** The new session of a kept account, whose cookie the caller sets once its transaction commits. */
+export interface KeptGuest {
+  session: AuthSessionRecord
+  cookieValue: string
+}
+
 /**
  * What the other sign-in paths call when a guest adds a sign-in method or finds it taken: the
- * password sign-up's code, a provider link and a new passkey.
+ * password sign-up's code, a sign-in link, a provider link and a new passkey.
  */
 export interface GuestKeeper {
   /**
    * Keeps guest `userId` in the transaction `tx` that just added key `keyId` of `method`: the
-   * account stops being a guest, this browser stays signed in, and the audit row says so. `false`
-   * for a user who is no guest: nothing is written then.
+   * account stops being a guest, every guest session ends, a new session of a full account's
+   * length starts on `keyId`, and the audit row says so (#374). The caller sets the new session's
+   * cookie after `tx` commits, as a sign-in does: set earlier, a rollback would leave the browser
+   * with a cookie of no session and the guest locked out. `null` for a user who is no guest:
+   * nothing is written then.
    */
-  keep(c: Context, tx: AppDbBase, userId: number, keyId: number, method: string): Promise<boolean>
+  keep(
+    c: Context,
+    tx: AppDbBase,
+    userId: number,
+    keyId: number,
+    method: string,
+  ): Promise<KeptGuest | null>
   /**
    * Remembers, for ten minutes, that guest `guestId` tried to add `key`'s sign-in method, which
    * belongs to another account, so the page "That sign-in belongs to another account" can offer
@@ -114,8 +129,6 @@ export interface GuestInternals {
     store: SessionStore<AuthSessionRecord>,
     minutes?: number,
   ): SessionManager<AuthSessionRecord>
-  /** The length of a full account's session, in minutes: a kept guest's sessions shrink to it. */
-  sessionMinutes: number
   cookie: SessionCookie
   auditRow(
     c: Context,
@@ -166,13 +179,17 @@ export interface GuestOperations extends GuestKeeper {
 /** Builds the guest operations over the sign-in's own parts. */
 export function createGuestOperations(own: GuestInternals): GuestOperations {
   const { db } = own
-  const sessionEnd = () => new Date(Date.now() + own.sessionMinutes * 60_000)
 
   const keeper: GuestKeeper = {
     async keep(c, tx, userId, keyId, method) {
-      if (!(await tx.guests.keep(userId, keyId, sessionEnd()))) return false
+      if (!(await tx.guests.keep(userId))) return null
       await tx.authAudit.insert(own.auditRow(c, userId, AuthAuditEventType.GUEST_KEPT, method))
-      return true
+      // A guest has no second factor to owe; the new key is the account's only way in.
+      return await own.sessionsOver(tx.sessionStore).create({
+        userId,
+        keyId,
+        secondFactor: SecondFactorStatus.NotRequired,
+      }, own.deviceOf(c))
     },
     async taken(guestId, key, needsPassword) {
       await db.guests.saveSwitch(guestId, {

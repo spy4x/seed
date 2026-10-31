@@ -202,6 +202,8 @@ export function createAdmin(
             if (target.blocked) return AdminActOutcome.Unchanged
             await tx.admin.setBlocked(targetId, now())
             await tx.sessionStore.signOutUser(targetId, null)
+            // Its devices stop getting the account's notifications too (#181).
+            await tx.pushTokens.removeAllOf(targetId)
             await tx.authAudit.insert(
               auditRow(c, targetId, AuthAuditEventType.USER_BLOCKED, identifier),
             )
@@ -215,6 +217,8 @@ export function createAdmin(
             break
           case AdminActionKind.EndSessions:
             await tx.sessionStore.signOutUser(targetId, null)
+            // Its devices stop getting the account's notifications too (#181).
+            await tx.pushTokens.removeAllOf(targetId)
             await tx.authAudit.insert(
               auditRow(c, targetId, AuthAuditEventType.SESSIONS_ENDED, identifier),
             )
@@ -225,6 +229,7 @@ export function createAdmin(
             if (!(await tx.sessionStore.deleteForUser(targetId, sessionId))) {
               return AdminActOutcome.SessionNotFound
             }
+            await tx.pushTokens.removeOfSession(targetId, sessionId)
             await tx.authAudit.insert(
               auditRow(
                 c,
