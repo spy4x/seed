@@ -45,8 +45,14 @@ export function NotFoundScreen({ audience, navigate }: NotFoundScreenProps): JSX
       label: app.t(`NotFound.toNotes`),
       href: NOTE_PATHS.list,
     }
+  // 44 px tall on a phone, a touch target; the button's own 36 px from `sm`.
   const link = (width: string) => (
-    <Button href={href} navigate={navigate} class={width} data-e2e="not-found-link">
+    <Button
+      href={href}
+      navigate={navigate}
+      class={`min-h-11 sm:min-h-9 ${width}`}
+      data-e2e="not-found-link"
+    >
       {label}
     </Button>
   )
@@ -57,10 +63,13 @@ export function NotFoundScreen({ audience, navigate }: NotFoundScreenProps): JSX
       </AuthCard>
     )
   }
+  // The 48 rem column of a form page, also in the admin app's wider one, with the box filling it
+  // under the heading instead of floating in its middle.
   return (
-    <div class="flex flex-col gap-8" data-e2e="not-found">
+    <div class="flex w-full max-w-3xl flex-col gap-8" data-e2e="not-found">
       <PageHeader title={title} />
       <EmptyState
+        class="w-full max-w-none"
         icon={<IconSearch class="size-5" />}
         description={description}
         action={link(`w-full sm:w-auto`)}
