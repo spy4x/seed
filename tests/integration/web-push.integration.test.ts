@@ -21,6 +21,7 @@ interface CountRow extends postgres.Row {
 const MIGRATIONS = "libs/server/db/migrations"
 const PUSH_MIGRATION = "2026_09_30_0001_push_token_one_per_device.sql"
 const ENDPOINT_MIGRATION = "2026_11_02_0001_push_endpoint_2048.sql"
+const SESSION_MIGRATION = "2026_12_11_0001_push_token_session.sql"
 const SNAPSHOT = "libs/server/db/schema.sql"
 
 type LimitedField = keyof typeof PUSH_SUBSCRIPTION_LIMITS
@@ -132,6 +133,7 @@ Deno.test({
       await applyMigration(sql, PUSH_MIGRATION)
       // Applied to a table that holds rows, as it is on a deployed database.
       await applyMigration(sql, ENDPOINT_MIGRATION)
+      await applyMigration(sql, SESSION_MIGRATION)
 
       await t.step(
         "the migration keeps the most recently refreshed live row of a duplicated device",

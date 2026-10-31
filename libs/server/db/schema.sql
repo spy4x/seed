@@ -242,6 +242,9 @@ CREATE TABLE user_push_tokens (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMPTZ,
+    -- #181: the session that stored the row, so ending that session removes it. No foreign key:
+    -- some steps delete the session before they remove its rows.
+    session_id INT4,
     -- The limits of `PUSH_SUBSCRIPTION_LIMITS` (`@spy4x/platform/model`). `endpoint` has no index,
     -- and must never get a btree one: 2048 characters can be 8192 bytes, past what an index row
     -- holds.
