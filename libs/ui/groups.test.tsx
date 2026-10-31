@@ -902,16 +902,16 @@ describe("GroupEditorScreen tabs", () => {
   const tabs = () => [...root!.querySelectorAll("[role=tab]")].map((tab) => tab.textContent)
   const selected = () => root!.querySelector("[role=tab][aria-selected=true]")?.textContent
 
-  it("draws General, Members, Plan and billing and Activity, with the open tab's content only", async () => {
+  it("draws General, Members, Billing and Activity, with the open tab's content only", async () => {
     await mount(<GroupEditorScreen {...defaults} />)
-    expect(tabs()).toEqual(["General", "Members", "Plan and billing", "Activity"])
+    expect(tabs()).toEqual(["General", "Members", "Billing", "Activity"])
     expect(selected()).toBe("General")
     expect(has("[data-e2e=group-name]")).toBe(true)
     expect(has("[data-e2e=group-section-members]")).toBe(false)
     for (
       const [tab, label, part] of [
         [GroupTab.MEMBERS, "Members", "group-section-members"],
-        [GroupTab.BILLING, "Plan and billing", "billing-body"],
+        [GroupTab.BILLING, "Billing", "billing-body"],
         [GroupTab.ACTIVITY, "Activity", "activity-body"],
       ] as const
     ) {
@@ -939,7 +939,7 @@ describe("GroupEditorScreen tabs", () => {
   it("leaves the Activity tab out for an editor or a viewer, unless its address is open", async () => {
     for (const role of [GroupRole.EDITOR, GroupRole.VIEWER]) {
       await mount(<GroupEditorScreen {...defaults} group={{ ...team, role }} />)
-      expect(tabs()).toEqual(["General", "Members", "Plan and billing"])
+      expect(tabs()).toEqual(["General", "Members", "Billing"])
       await rerender(
         <GroupEditorScreen {...defaults} group={{ ...team, role }} tab={GroupTab.ACTIVITY} />,
       )
@@ -948,7 +948,7 @@ describe("GroupEditorScreen tabs", () => {
     }
   })
 
-  it("links the member count to the Plan and billing tab, except on that tab", async () => {
+  it("links the member count to the Billing tab, except on that tab", async () => {
     await mount(<GroupEditorScreen {...defaults} />)
     const count = find<HTMLAnchorElement>("a[data-e2e=group-member-count]")
     expect(count.textContent).toBe("2 members")
@@ -1127,10 +1127,10 @@ describe("PlanRefusalNotice", () => {
     canUpgrade: true,
   }
 
-  it("gives the owner a link to the group's Plan and billing tab", async () => {
+  it("gives the owner a link to the group's Billing tab", async () => {
     await mount(<PlanRefusalNotice groupId={groupId} refusal={refusal} />)
     const link = find<HTMLAnchorElement>("[data-e2e=plan-refusal] a")
-    expect(link.textContent).toBe("Open Plan and billing")
+    expect(link.textContent).toBe("Open Billing")
     expect(link.getAttribute("href")).toBe(GROUP_PATHS.billing(groupId))
     expect(focused()).toBe("plan-refusal")
   })

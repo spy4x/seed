@@ -391,7 +391,7 @@ describe("billing over REST", () => {
     expect(ended.billing).toMatchObject({ planId: "free", subscribed: false, hasCustomer: true })
   })
 
-  it("opens the owner's portal for the group's customer, back to its Plan and billing tab", async () => {
+  it("opens the owner's portal for the group's customer, back to its Billing tab", async () => {
     const { recorder, call } = stack({ subscription: PRO, customer: "cus_1" })
 
     const response = await call(OWNER, "POST", "/portal")

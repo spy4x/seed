@@ -1509,7 +1509,7 @@ export default {
   "AdminNewsletter.retry": "Reintentar",
   "AdminNewsletter.loadingNumbers": "Cargando las cifras",
   "AdminNewsletter.keyNumbers": "Cifras clave",
-  "AdminNewsletter.confirmedHint": "Confirmados, reciben todos los números",
+  "AdminNewsletter.confirmedHint": "Confirmados, reciben los números en su idioma",
   "AdminNewsletter.pendingHint": "El correo de confirmación va de camino",
   "AdminNewsletter.joined": {
     "one": "Nuevos, último {count} día",

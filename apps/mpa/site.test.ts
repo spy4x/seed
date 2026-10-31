@@ -479,13 +479,15 @@ describe("the public website", () => {
     }
   })
 
-  it("tells the footer's two links to antonshubin.com apart by what each opens", async () => {
+  it("tells the footer's two links to antonshubin.com apart, and says where each goes", async () => {
     const footer = element((await page("/")).html, "footer")!
 
-    expect(hrefOf(linkNamed(footer, "Hire me for an MVP"))).toBe(
+    expect(hrefOf(linkNamed(footer, "Hire me for an MVP (opens antonshubin.com)"))).toBe(
       HIRE_PAGE_URL.replaceAll("&", "&amp;"),
     )
-    expect(hrefOf(linkNamed(footer, "About Anton"))).toBe("https://antonshubin.com")
+    expect(hrefOf(linkNamed(footer, "About Anton (opens antonshubin.com)"))).toBe(
+      "https://antonshubin.com",
+    )
     expect(linkNamed(footer, "Hire me")).toBeUndefined()
   })
 

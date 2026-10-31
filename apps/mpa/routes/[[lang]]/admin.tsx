@@ -1,25 +1,9 @@
 // Seed's own site: see docs/start-a-product.md
-import type { ComponentType, JSX } from "preact"
-import {
-  IconArrowDown,
-  IconArrowRight,
-  IconChatBubble,
-  IconCheck,
-  IconClock,
-  IconCreditCard,
-  IconFolder,
-  IconHome,
-  IconKey,
-  IconMail,
-  IconPackage,
-  IconServer,
-  IconShieldCheck,
-  IconTrendingUp,
-  IconUsers,
-} from "@spy4x/preact-icons"
-import type { IconProps } from "@spy4x/preact-icons"
+import type { JSX } from "preact"
+import { IconArrowDown, IconArrowRight, IconCheck } from "@spy4x/preact-icons"
 import { FeatureCard } from "@spy4x/preact-ui/feature-card"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
+import { ADMIN_TOUR_MODULES } from "../../admin-modules.ts"
 import { ADMIN_VIDEO, ADMIN_VIDEO_DURATION } from "../../admin-video.ts"
 import { AdminVideoPlayer } from "../../components/admin-video.tsx"
 import { Band } from "../../components/band.tsx"
@@ -64,40 +48,6 @@ const ADMIN_CODE = {
   label: `AdminTour.code`,
   href: `${REPOSITORY_URL}/tree/main/apps/admin`,
 }
-
-/**
- * The admin app's modules in its rail's order, each with the rail's own icon
- * (`apps/admin/src/modules/registry.ts`) and its page subtitle, reworded for a visitor.
- */
-const MODULES: readonly {
-  id: string
-  name: string
-  Icon: ComponentType<IconProps>
-  text: string
-}[] = [
-  { id: `dashboard`, name: `AdminTour.dashboard`, Icon: IconHome, text: `AdminTour.dashboardText` },
-  { id: `stats`, name: `AdminTour.stats`, Icon: IconTrendingUp, text: `AdminTour.statsText` },
-  { id: `users`, name: `AdminTour.users`, Icon: IconUsers, text: `AdminTour.usersText` },
-  { id: `groups`, name: `AdminTour.groups`, Icon: IconFolder, text: `AdminTour.groupsText` },
-  { id: `billing`, name: `AdminTour.billing`, Icon: IconCreditCard, text: `AdminTour.billingText` },
-  {
-    id: `newsletter`,
-    name: `AdminTour.newsletter`,
-    Icon: IconMail,
-    text: `AdminTour.newsletterText`,
-  },
-  {
-    id: `contact-links`,
-    name: `AdminTour.contactLinks`,
-    Icon: IconChatBubble,
-    text: `AdminTour.contactLinksText`,
-  },
-  { id: `catalog`, name: `AdminTour.catalog`, Icon: IconPackage, text: `AdminTour.catalogText` },
-  { id: `audit-log`, name: `AdminTour.audit`, Icon: IconShieldCheck, text: `AdminTour.auditText` },
-  { id: `jobs`, name: `AdminTour.jobs`, Icon: IconClock, text: `AdminTour.jobsText` },
-  { id: `system`, name: `AdminTour.system`, Icon: IconServer, text: `AdminTour.systemText` },
-  { id: `api-tokens`, name: `AdminTour.tokens`, Icon: IconKey, text: `AdminTour.tokensText` },
-]
 
 /** The operator roles, lowest first, and what each adds. */
 const ROLES: readonly { name: string; text: string }[] = [
@@ -208,7 +158,7 @@ function Modules(): JSX.Element {
         <SectionIntro
           id="modules-title"
           eyebrow={t.t(`AdminTour.modulesEyebrow`)}
-          title={t.t(`AdminTour.modulesTitle`)}
+          title={t.t(`AdminTour.modulesTitle`, { count: ADMIN_TOUR_MODULES.length })}
           lead={rich(`AdminTour.modulesLead`, {
             doc: (text) => (
               <a
@@ -222,8 +172,8 @@ function Modules(): JSX.Element {
             ),
           })}
         />
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4" data-e2e="admin-modules">
-          {MODULES.map(({ id, name, Icon, text }) => (
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-e2e="admin-modules">
+          {ADMIN_TOUR_MODULES.map(({ id, name, Icon, text }) => (
             <FeatureCard key={id} id={`module-${id}`} title={t.t(name)} Icon={Icon}>
               {t.t(text)}
             </FeatureCard>

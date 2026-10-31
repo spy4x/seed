@@ -1500,7 +1500,7 @@ export default {
   "AdminNewsletter.retry": "Tentar de novo",
   "AdminNewsletter.loadingNumbers": "Carregando os números",
   "AdminNewsletter.keyNumbers": "Números principais",
-  "AdminNewsletter.confirmedHint": "Confirmados, recebem todas as edições",
+  "AdminNewsletter.confirmedHint": "Confirmados, recebem as edições no seu idioma",
   "AdminNewsletter.pendingHint": "E-mail de confirmação a caminho",
   "AdminNewsletter.joined": {
     "one": "Novos, último {count} dia",
