@@ -187,6 +187,14 @@ Deno.test(`removing a tier deletes what the generator made and nothing else`, as
       VALUES (${real}, 'group.role_changed', '{}', '/groups')
     `
     await buildGroup(sql, PLAN, [`real@example.com`], quiet)
+    // A guest who joined the group on the demo has no sign-in key, and is still a real person.
+    const [{ id: guest }] = await sql<{ id: number }[]>`
+      INSERT INTO auth_users DEFAULT VALUES RETURNING id
+    `
+    await sql`INSERT INTO users (id, guest_since) VALUES (${guest}, now())`
+    await sql`
+      INSERT INTO group_members (group_id, user_id, role) VALUES (${PLAN.groupId}, ${guest}, 1)
+    `
 
     const removed = await removeGroup(sql, PLAN)
     expect(removed).toEqual({
@@ -196,7 +204,7 @@ Deno.test(`removing a tier deletes what the generator made and nothing else`, as
     })
     expect(await count(sql)).toMatchObject({
       groups: 1,
-      people: 2,
+      people: 3,
       notes: 1,
       tags: 0,
       members: 1,
