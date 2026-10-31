@@ -317,6 +317,42 @@ Deno.test("a device signed out from another one stops getting the account's noti
   })
 })
 
+Deno.test("a second person signing in with a password on a shared browser stops the first person's notifications there", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const onLaptop = await signUp(app, "ada@example.com", laptop)
+    const onPhone = await signIn(app, "ada@example.com", phone)
+    const bob = await signUp(app, "bob@example.com", phone)
+    const ada = await userIdOf(sql, onLaptop.id)
+    await subscribe(sql, ada, onLaptop.id)
+    const phonePush = await subscribe(sql, ada, onPhone.id)
+
+    // Ada signs in again on the laptop: its notifications follow her new session.
+    const again = await app.request("/sign-in", laptop, {
+      cookie: onLaptop.cookie,
+      body: { login: "ada@example.com", password: PASSWORD },
+    })
+    expect(again.status).toBe(200)
+    const renewed = (await again.json()).id
+    const [{ count }] = await sql<{ count: number }[]>`
+      SELECT count(*)::int AS count FROM user_push_tokens
+      WHERE deleted_at IS NULL AND session_id = ${renewed}`
+    expect(count).toBe(1)
+
+    // Bob signs in on the same laptop without Ada signing out first.
+    const over = await app.request("/sign-in", laptop, {
+      cookie: cookieOf(again),
+      body: { login: "bob@example.com", password: PASSWORD },
+    })
+    expect(over.status).toBe(200)
+
+    expect(await notified(sql, ada)).toEqual([phonePush])
+    // Ada's laptop session is gone, and Bob's own sessions are untouched.
+    expect(await sql`SELECT 1 FROM auth_sessions WHERE id = ${renewed}`).toHaveLength(0)
+    expect(await sql`SELECT 1 FROM auth_sessions WHERE id = ${bob.id}`).toHaveLength(1)
+  })
+})
+
 Deno.test("a password change that signs the others out keeps this device's notifications", async () => {
   await withSchema(async (sql) => {
     const app = buildApp(sql)
