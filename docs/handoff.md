@@ -550,6 +550,13 @@ which sends a `change.hint` (group id `user:<id>`, aggregate `user`, sequence = 
 milliseconds) to every socket of that user. The SPA's pull answers that hint with
 `profileStore.refresh()`, so a second tab follows without a reload.
 
+A subscription records the session that stored it (`user_push_tokens.session_id`, #181). Every step
+that ends sessions removes their subscriptions in the same transaction, so a device signed out from
+elsewhere gets no more notifications: "sign out other devices", ending one device, a password
+change or first password that signs the others out, turning on two-factor, an address change, an
+administrator's block or sign-out, and a reset (every subscription). A step that gives this device
+a new session (a password change, an address move) moves its subscription to it.
+
 ## How a group call travels
 
 1. `apps/spa/src/realtime/index.ts` opens `/api/ws`. The upgrade runs the same session gate as
