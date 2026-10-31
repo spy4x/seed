@@ -10,8 +10,9 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
 
 1. **A server and SSH access.** Create the server with your SSH key. Log in as root once, make a
    user for the deploys with uid 1000, give it your key, and turn off password and root logins.
-   The app's containers run as uid 1000, and the `api` and `backup` ones write to the app's
-   directory, so the deploy user must have that uid ([backups](backups.md#on-a-new-server)).
+   The app's containers run as uid 1000, and the `api` and `backup` ones read
+   `infra/configs/vapid.json`, which the deploy makes readable by its owner only, so the deploy
+   user must have that uid ([backups](backups.md#on-a-new-server)).
 
    ```sh
    adduser --uid 1000 --disabled-password --gecos '' deploy
