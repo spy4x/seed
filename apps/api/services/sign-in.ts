@@ -1392,7 +1392,9 @@ export function createSignIn(options: SignInOptions): SignIn {
         await tx.authAudit.insert(auditRow(c, user.id, AuthAuditEventType.SIGNED_IN))
         return { user, ...started }
       })
-      await cookie.set(c, created.session, created.cookieValue)
+      // The session this browser held before ends, as after a link, provider or passkey sign-in:
+      // a second person on a shared browser must not keep the first person's notifications (#572).
+      await replaceSession(c, c.get("auth") as AppAuthState | null | undefined, created)
       return { user: created.user, session: created.session }
     },
 
