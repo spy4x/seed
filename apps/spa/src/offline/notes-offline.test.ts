@@ -159,6 +159,15 @@ describe("offline notes reads", () => {
     expect((await deps.fetchPage(groupId, null)).notes.map((n) => n.id)).toEqual(["b"])
   })
 
+  it("drops a note put before the group's first pull once the server no longer has it", async () => {
+    const { net } = network([[]])
+    const layer = layerWith({ socket: true }, net)
+    // A write's answer, kept while the group has no copy yet (its first pull failed).
+    await layer.cache.putNote(note("x"))
+    await layer.copy.pull(groupId)
+    expect(await layer.cache.readNotes(groupId)).toEqual([])
+  })
+
   it("shows a note created offline in the list read", async () => {
     const { state, online, net } = network([[note("a")]])
     const layer = layerWith({ socket: false }, net)
