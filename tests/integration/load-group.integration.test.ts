@@ -26,6 +26,8 @@ const PLAN: TierPlan = {
   activity: 50,
   notifications: 30,
   batch: 50,
+  // A day, so a note's edit could pass the next note and every note is recent enough to delete.
+  spanDays: 1,
 }
 const quiet = () => {}
 
@@ -116,6 +118,7 @@ Deno.test(`building a tier twice leaves one group with the plan's rows and chang
       maxSequence: PLAN.tags + PLAN.notes,
       nextSequence: PLAN.tags + PLAN.notes + 1,
     })
+    expect(counts.deleted).toBeGreaterThan(0)
     expect(counts.tombstones).toBe(counts.deleted)
     const [ids] = await sql<{ notes: number; v7: number }[]>`
       SELECT count(*)::int AS notes, count(*) FILTER (WHERE uuid_extract_version(id) = 7)::int AS v7
