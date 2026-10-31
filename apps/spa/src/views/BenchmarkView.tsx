@@ -4,7 +4,6 @@ import { copyToClipboard } from "@spy4x/platform/browser/clipboard"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { rangeForPreset } from "@spy4x/preact-ui/date-range"
 import { useFormat } from "@spy4x/preact-ui/format"
-import { type ChangesCopy, createChangesPull } from "@spy4x/realtime/changes"
 import {
   type BenchmarkDevice,
   type BenchmarkGroup,
@@ -16,14 +15,7 @@ import {
 import { filterNotes, NO_NOTE_FILTERS } from "@ui/notes-filter.ts"
 import { NotesScreen } from "@ui/notes-screen.tsx"
 import type { TagRow } from "@ui/tag-parts.tsx"
-import { callQuery } from "../modules.ts"
-import { changesLock } from "../offline/index.ts"
-import {
-  CHANGES_KINDS,
-  type ChangesRows,
-  deviceCopy,
-  openChangesCopy,
-} from "../offline/device-copy.ts"
+import { benchmarkLocalData, callQuery } from "../modules.ts"
 import {
   browserRecord,
   type Measures,
@@ -42,9 +34,9 @@ import type { TagItem } from "../state/tags.ts"
 
 /**
  * `/benchmark` (#440): runs the measures of `BenchmarkScreen` on this device with the SPA's own
- * code: the changes pull and IndexedDB copy of `offline/device-copy.ts`, the real notes list and
- * the list's own search and filter. Only in a development build or on the public demo
- * (`benchmarkOpen`).
+ * code: the changes pull and IndexedDB copy of the local-data module (`benchmarkLocalData`), the
+ * real notes list and the list's own search and filter. Only in a development build or on the
+ * public demo (`benchmarkOpen`).
  */
 
 /** The generator that makes a large group (docs/capacity.md); `M` is 10,000 notes. */
@@ -97,27 +89,6 @@ async function noteCounts(
     }
   }))
   return new Map(counts.filter((entry) => entry !== null))
-}
-
-/** A changes copy whose `replace` is timed, and whose failure the save step reports. */
-function timedCopy(copy: ChangesCopy<ChangesRows>, saved: { ms: number; error: unknown }) {
-  return {
-    cursor: (groupId: string) => copy.cursor(groupId),
-    read: <K extends keyof ChangesRows & string>(kind: K, groupId: string) =>
-      copy.read(kind, groupId),
-    apply: (...args: Parameters<typeof copy.apply>) => copy.apply(...args),
-    async replace(...args: Parameters<typeof copy.replace>) {
-      const start = performance.now()
-      try {
-        await copy.replace(...args)
-      } catch (error) {
-        saved.error = error
-      }
-      saved.ms = performance.now() - start
-    },
-    drop: (groupId: string) => copy.drop(groupId),
-    clear: () => copy.clear(),
-  } satisfies ChangesCopy<ChangesRows>
 }
 
 /** Fails a frame measure the tab could not paint, because it left the screen. */
@@ -178,23 +149,22 @@ export function BenchmarkView() {
 
   /** The measures of one run of `groupId`, sharing what earlier steps read. */
   function measuresOf(groupId: string, userId: number, total: number | null): Measures {
+    // `benchmarkOpen` keeps the page closed without the local-data module.
+    const local = benchmarkLocalData
+    if (!local) throw new Error(`The benchmark needs the local-data module`)
     const saved = { ms: 0, error: undefined as unknown }
     let downloaded: number | null = null
     let notes: NoteItem[] = []
     let tags: TagItem[] = []
     return {
       async download({ signal, progress }) {
-        const copy = openChangesCopy(userId)
-        // From nothing, as a device that never opened the group: a full read, then one write.
-        await copy.drop(groupId)
         let rows = 0
         let lastPage = performance.now()
         const start = performance.now()
-        const pull = createChangesPull({
-          kinds: CHANGES_KINDS,
-          copy: timedCopy(copy, saved),
-          lock: changesLock(userId),
-          async fetch(group, after) {
+        await local.pullFresh({
+          userId,
+          groupId,
+          async readPage(group, after) {
             signal.throwIfAborted()
             const page = await callQuery<{ upserts?: { notes?: unknown[] } }>(`group.changes`, {
               groupId: group,
@@ -205,8 +175,11 @@ export function BenchmarkView() {
             progress(rows, total ?? 0)
             return page
           },
+          onSave(ms, error) {
+            saved.ms = ms
+            saved.error = error
+          },
         })
-        await pull(groupId)
         downloaded = lastPage - start
         return { value: downloaded }
       },
@@ -215,14 +188,8 @@ export function BenchmarkView() {
         return { value: saved.ms }
       },
       async startOffline() {
-        // A fresh connection to the saved copy, and no network: what a cold start offline reads.
-        const copy = deviceCopy({
-          copy: openChangesCopy(userId),
-          fetch: () => Promise.reject(new Error(`The benchmark reads the device only`)),
-        })
         const start = performance.now()
-        notes = await copy.notes.readNotes(groupId)
-        tags = await copy.tags.readTags(groupId)
+        ;({ notes, tags } = await local.readSaved(userId, groupId))
         return { value: performance.now() - start }
       },
       async firstNotes() {
@@ -285,7 +252,7 @@ export function BenchmarkView() {
         notes = []
         // The group the app has open keeps its copy: the app reads it.
         if (groupId === selectionStore.groupId.value) return { kept: true }
-        await openChangesCopy(userId).drop(groupId)
+        await local.dropCopy(userId, groupId)
         return { kept: false }
       },
     }

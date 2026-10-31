@@ -1,4 +1,5 @@
 import { signal } from "@preact/signals"
+import { benchmarkLocalData } from "../modules.ts"
 
 /**
  * Whether the public demo is on (docs/demo.md), from `/config.json`. `main.tsx` sets it before the
@@ -10,12 +11,12 @@ export const demoMode = signal(false)
 export const devBuild = signal(false)
 
 /**
- * Whether the benchmark page (#440) exists: in a development build and on the public demo only.
- * Elsewhere `/benchmark` sends the visitor to the notes, the palette leaves it out, and its code is
- * never loaded.
+ * Whether the benchmark page (#440) exists: in a development build and on the public demo only,
+ * and never without the local-data module it measures. Elsewhere `/benchmark` sends the visitor to
+ * the notes, the palette leaves it out, and its code is never loaded.
  */
 export function benchmarkOpen(): boolean {
-  return devBuild.value || demoMode.value
+  return (devBuild.value || demoMode.value) && benchmarkLocalData !== null
 }
 
 /** The benchmark page's `r` and `c` while it is open, for the frame's shortcuts; else `null`. */
