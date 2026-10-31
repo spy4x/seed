@@ -151,7 +151,9 @@ const PAGES: {
 
 /**
  * One `<Route>` per row of the route table, in its order, then the page for an address none of
- * them answers (#368): `visitor` when nobody is signed in.
+ * them answers (#368): `visitor` when nobody is signed in. Wouter's `Switch` draws the first child
+ * whose `path` matches, and a child with no `path` matches every address, so the not-found screen
+ * is a plain last child: no route, since it is no page of the table.
  */
 function Routes({ visitor = false }: { visitor?: boolean }) {
   const [, navigate] = useLocation()
@@ -162,9 +164,7 @@ function Routes({ visitor = false }: { visitor?: boolean }) {
           {PAGES[path] as (params: Record<string, string>) => ComponentChildren}
         </Route>
       ))}
-      <Route>
-        <NotFoundScreen audience={visitor ? "visitor" : "member"} navigate={navigate} />
-      </Route>
+      <NotFoundScreen audience={visitor ? "visitor" : "member"} navigate={navigate} />
     </Switch>
   )
 }
