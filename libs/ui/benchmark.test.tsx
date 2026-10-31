@@ -172,6 +172,13 @@ describe("BenchmarkScreen", () => {
     expect([line.selectionStart, line.selectionEnd]).toEqual([0, json.length])
   })
 
+  it("says the device is offline when Run again finds no connection", async () => {
+    await mount(screen({ state: "done", steps: done, json }))
+    expect(count("[data-e2e=benchmark-offline]")).toBe(0)
+    await rerender(screen({ state: "done", steps: done, json, formError: "offline" }))
+    expect(find("[data-e2e=benchmark-offline]").textContent).toContain("You need a connection")
+  })
+
   it("puts focus on the warning about a run a closed tab left behind", async () => {
     await mount(screen({
       stoppedRun: { step: "save", group: "Load test S", startedAt: "2026-10-31T10:00:00Z", json },

@@ -181,11 +181,13 @@ export function stepLabel(t: Translator<string>, step: BenchmarkStepId): string 
   return t.t(STEP_LABELS[step])
 }
 
-/** `1.2 s` from a second up, `85 ms` under it. */
+/** `1.2 s` from a second up, `85 ms` under it, and `0.4 ms` under ten. */
 function duration(t: Translator<string>, format: Formatters, ms: number): string {
   return ms >= 1_000
     ? t.t(`Benchmark.seconds`, { value: format.number(ms / 1_000, { maximumFractionDigits: 1 }) })
-    : t.t(`Benchmark.milliseconds`, { value: format.number(ms, { maximumFractionDigits: 0 }) })
+    : t.t(`Benchmark.milliseconds`, {
+      value: format.number(ms, { maximumFractionDigits: ms < 10 ? 1 : 0 }),
+    })
 }
 
 /** `48 MB`, in the region's own unit words. */
@@ -337,6 +339,13 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
     return copied
   }
 
+  // Shown under the form before a run and above "Run again" after one: Run checks the
+  // connection first, so either button can be the one that finds it gone.
+  const offlineNotice = props.formError === "offline" && (
+    <div data-e2e="benchmark-offline">
+      <Notice tone="warning" live={false}>{t.t(`Benchmark.offline`)}</Notice>
+    </div>
+  )
   const copyAction = json !== null && (
     <CopyButton
       textToCopy={json}
@@ -382,33 +391,34 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
             tone="warning"
             live={false}
             title={t.t(`Benchmark.lastStoppedTitle`, { measure: stepLabel(t, stoppedRun.step) })}
-            action={
-              <div class="flex flex-col gap-2 sm:flex-row">
-                <CopyButton
-                  textToCopy={stoppedRun.json}
-                  title={t.t(`Benchmark.copyThatRun`)}
-                  copyLabel={t.t(`Benchmark.copyThatRun`)}
-                  copiedLabel={t.t(`Benchmark.resultsCopied`)}
-                  failedLabel={t.t(`Benchmark.copyFailed`)}
-                  copy={props.copy}
-                  class={TOUCH}
-                  data-e2e="benchmark-copy-stopped"
-                />
-                <Button
-                  variant="ghost"
-                  class={TOUCH}
-                  onClick={props.onDismissStopped}
-                  data-e2e="benchmark-dismiss-stopped"
-                >
-                  {t.t(`Benchmark.dismiss`)}
-                </Button>
-              </div>
-            }
           >
-            {t.t(`Benchmark.lastStoppedBody`, {
-              group: stoppedRun.group,
-              time: format.dateTime(stoppedRun.startedAt),
-            })}
+            <p>
+              {t.t(`Benchmark.lastStoppedBody`, {
+                group: stoppedRun.group,
+                time: format.dateTime(stoppedRun.startedAt),
+              })}
+            </p>
+            {/* Under the text, not in Notice's action slot: that never wraps on a phone. */}
+            <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+              <CopyButton
+                textToCopy={stoppedRun.json}
+                title={t.t(`Benchmark.copyThatRun`)}
+                copyLabel={t.t(`Benchmark.copyThatRun`)}
+                copiedLabel={t.t(`Benchmark.resultsCopied`)}
+                failedLabel={t.t(`Benchmark.copyFailed`)}
+                copy={props.copy}
+                class={TOUCH}
+                data-e2e="benchmark-copy-stopped"
+              />
+              <Button
+                variant="ghost"
+                class={TOUCH}
+                onClick={props.onDismissStopped}
+                data-e2e="benchmark-dismiss-stopped"
+              >
+                {t.t(`Benchmark.dismiss`)}
+              </Button>
+            </div>
           </Notice>
         </div>
       )}
@@ -479,6 +489,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
                 </Notice>
               </div>
             )}
+            {offlineNotice}
             <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               {copyAction}
               {props.onShare && (
@@ -533,11 +544,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
                   data-e2e="benchmark-group"
                 />
               </Field>
-              {props.formError === "offline" && (
-                <div data-e2e="benchmark-offline">
-                  <Notice tone="warning" live={false}>{t.t(`Benchmark.offline`)}</Notice>
-                </div>
-              )}
+              {offlineNotice}
               <div>
                 <Button type="submit" class={TOUCH} data-e2e="benchmark-run">
                   {t.t(`Benchmark.run`)}
