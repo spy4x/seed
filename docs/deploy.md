@@ -14,18 +14,22 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
    `infra/configs/vapid.json`, which the deploy makes readable by its owner only, so the deploy
    user must have that uid ([backups](backups.md#on-a-new-server)).
 
+   First run `getent passwd 1000`. If it names a user (often `ubuntu`), the image already has one
+   with that uid: deploy as that user instead, leave out the `adduser` line, and use its name for
+   `deploy` below and from here on. The commands are chained, so the block stops at the first one
+   that fails and changes nothing after it.
+
    ```sh
-   adduser --uid 1000 --disabled-password --gecos '' deploy
-   mkdir -p ~deploy/.ssh && cp ~/.ssh/authorized_keys ~deploy/.ssh/
-   chown -R deploy:deploy ~deploy/.ssh && chmod 700 ~deploy/.ssh
-   printf 'PasswordAuthentication no\nPermitRootLogin no\n' > /etc/ssh/sshd_config.d/01-deploy.conf
-   systemctl reload ssh
+   adduser --uid 1000 --disabled-password --gecos '' deploy &&
+   mkdir -p ~deploy/.ssh && cp ~/.ssh/authorized_keys ~deploy/.ssh/ &&
+   chown -R deploy:deploy ~deploy/.ssh && chmod 700 ~deploy/.ssh &&
+   printf 'PasswordAuthentication no\nPermitRootLogin no\n' \
+     > /etc/ssh/sshd_config.d/01-deploy.conf &&
+   systemctl reload ssh &&
    sshd -T | grep -E '^(passwordauthentication|permitrootlogin) '
    ```
 
-   If `adduser` says uid 1000 is in use, the image already has a user with it (`getent passwd 1000`
-   names it, often `ubuntu`): deploy as that user instead, and use its name for `deploy` from here
-   on. The file's name sorts first because SSH keeps the first value it reads, and a provider's file
+   The file's name sorts first because SSH keeps the first value it reads, and a provider's file
    (`50-cloud-init.conf`) may turn passwords back on. The last command must print `no` twice. Check
    that `ssh deploy@192.0.2.10` works before you close the root session.
 
@@ -101,8 +105,11 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
    The proxy asks Let's Encrypt for each host's certificate as soon as it starts and finds the
    app's routers, not on a first visit ([certificates](#production-certificates)). Until a
    certificate arrives, the host answers with Traefik's own self-signed one. A host whose DNS did
-   not resolve yet gets none: `docker logs traefik` names it; fix the record, then restart the proxy
-   with `deno task proxy:stop && deno task proxy:start`. Later deploys are `deno task deploy` alone.
+   not resolve yet gets none: `docker logs traefik` names it. Fix the record and wait until it
+   resolves, then restart the proxy with `deno task proxy:stop && deno task proxy:start`; the next
+   deploy retries too. Do not restart again and again while DNS is still wrong: Let's Encrypt allows
+   5 failed validations per host per hour, then refuses that host for the rest of the hour. Later
+   deploys are `deno task deploy` alone.
 
 7. **Migrations.** Nothing to run: on every deploy Compose's one-shot `migrate` service applies the
    pending migrations before the API and the worker start, and a failed migration fails the deploy.
@@ -112,17 +119,17 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
    <address>` ([The first operator](#the-first-operator)), then sign in at `ADMIN_DOMAIN`.
 
 9. **Health check.** On the server, `deno task compose ps` lists every container as running, and
-   healthy where it has a health check. From your machine, both of these must succeed, the second
+   healthy where it has a health check. From your machine, run both of these. The second works
    without `-k`, which proves the certificate:
 
    ```sh
    curl -sI http://app.example.com      # a permanent redirect to https://
-   curl -fsS https://app.example.com/api/health
+   curl -sS -w '\n%{http_code}\n' https://app.example.com/api/health
    ```
 
-   The second prints the health report, which must say `"status":"ok"`. A 503 (`"down"`) means the
-   API cannot reach the database. The answer is 200 also when it says `"degraded"`: the cache or the
-   file store is down, and its `checks` entry is `false`.
+   The second prints the health report and its status code: it must say `"status":"ok"` and 200.
+   `"down"` with 503 means the API cannot reach the database. The answer is 200 also when it says
+   `"degraded"`: the cache or the file store is down, and its `checks` entry is `false`.
 
 10. **Backups, with a tested restore.** Set the backup up as [Backups](backups.md#set-it-up) says,
     deploy again, and check that a snapshot is there. Then rehearse a restore once into a spare
@@ -238,7 +245,8 @@ first line of standard input and add `-T`, so Compose gives the command no termi
 password out of the command line, where the shell history and the process list would keep it:
 
 ```sh
-ssh <SSH_TO_SERVER> 'cd <PATH_ON_SERVER> && deno task compose exec -T worker deno task operator:create seller@example.com' < password.txt
+ssh <SSH_TO_SERVER> 'cd <PATH_ON_SERVER> &&
+  deno task compose exec -T worker deno task operator:create seller@example.com' < password.txt
 ```
 
 The password is 8 to 50 characters, as at sign-up. The person signs in to the admin app at
