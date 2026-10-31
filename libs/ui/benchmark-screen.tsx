@@ -323,6 +323,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
     measure: currentLabel,
   })
   const largest = Math.max(0, ...groups.map((group) => group.notes ?? 0))
+  const counted = groups.length > 0 && groups.every((group) => group.notes !== null)
   const options = [...groups]
     .sort((a, b) => (b.notes ?? -1) - (a.notes ?? -1))
     .map((group) => ({
@@ -423,7 +424,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
         </div>
       )}
 
-      {!running && groups.length > 0 && largest <= LARGE_GROUP && (
+      {!running && counted && largest <= LARGE_GROUP && (
         <div data-e2e="benchmark-no-large-group">
           <Notice title={t.t(`Benchmark.noLargeTitle`)} live={false}>
             <Stack gap="sm">

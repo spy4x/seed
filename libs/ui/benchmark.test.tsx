@@ -195,4 +195,9 @@ describe("BenchmarkScreen", () => {
     await rerender(screen())
     expect(count("[data-e2e=benchmark-no-large-group]")).toBe(0)
   })
+
+  it("waits for every group's count before saying no group is large", async () => {
+    await mount(screen({ groups: [groups[0], { ...groups[1], notes: null }] }))
+    expect(count("[data-e2e=benchmark-no-large-group]")).toBe(0)
+  })
 })
