@@ -357,7 +357,8 @@ Finding the matches takes 25 ms; ranking the 30,938 of them takes the rest.
 The benchmark page (`/benchmark` in the SPA, in development builds and on the demo) measures the
 same group on the device it runs on: the download, saving the copy, starting offline from it, the
 first notes on screen, scrolling, a local search and filter, memory and storage. Sign in, make your
-account a member of a tier with `deno task load:group <tier> --member <email>`, open the page,
+account a member of a tier with `deno task load:group <tier> --member <email>` (on the demo, add
+the tunnel and flags from "Running it" above), open the page,
 press Run benchmark and keep the tab in front. Copy results gives one line of JSON; add a row here
 from it.
 
