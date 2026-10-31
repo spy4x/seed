@@ -2,8 +2,10 @@
 import { fresh } from "@fresh/plugin-vite"
 import tailwindcss from "@tailwindcss/vite"
 import { defineConfig } from "vite"
-import { fromFileUrl } from "@std/path"
+import { fromFileUrl, relative, SEPARATOR } from "@std/path"
+import { walk } from "@std/fs/walk"
 import { preactThemeCss, requireComponentCss } from "@spy4x/preact-theme/vite"
+import { COUNTED_FOLDERS, countTestFiles } from "./repo-facts.ts"
 
 /**
  * Selectors, escaped as in the built CSS, that the client build must contain: two only
@@ -17,7 +19,25 @@ const REQUIRED_SELECTORS = [
   ".sm\\:flex-wrap",
 ]
 
+/** Every file under the counted folders, relative to the repository root (`repo-facts.ts`). */
+async function repositoryFiles(): Promise<string[]> {
+  const root = fromFileUrl(new URL("../../", import.meta.url))
+  const paths: string[] = []
+  for (const folder of COUNTED_FOLDERS) {
+    const entries = walk(`${root}${folder}`, {
+      includeDirs: false,
+      skip: [/node_modules/, /_fresh/],
+    })
+    for await (const entry of entries) {
+      paths.push(relative(root, entry.path).split(SEPARATOR).join("/"))
+    }
+  }
+  return paths
+}
+
 export default defineConfig({
+  // The home page's proof numbers, counted from the files the build sees (`repo-facts.ts`).
+  define: { __SEED_TEST_FILES__: JSON.stringify(countTestFiles(await repositoryFiles())) },
   plugins: [
     {
       name: "markdown-text",

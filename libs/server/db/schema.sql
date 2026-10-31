@@ -570,7 +570,7 @@ CREATE INDEX idx_group_invitations_email ON group_invitations (email) WHERE emai
 CREATE INDEX idx_group_invitations_created_by ON group_invitations (created_by_user_id);
 
 -- Who accepted each invitation. A person accepts one invitation once: a member removed from the
--- group cannot come back through the team link they joined with.
+-- group cannot come back through the invitation link they joined with.
 CREATE TABLE group_invitation_acceptances (
     invitation_id UUID NOT NULL REFERENCES group_invitations(id) ON DELETE CASCADE,
     user_id INT4 NOT NULL REFERENCES users(id) ON DELETE CASCADE,

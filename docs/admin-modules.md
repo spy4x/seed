@@ -73,9 +73,9 @@ views, and give its API file real routes. Neither registry changes.
 ## What the operator gate guarantees
 
 `createAdminRoute` (`apps/api/routes/admin/+routes.ts`) checks, before any module's route runs:
-a signed-in session with its second factor, then the operator role or above (anyone below gets
-404, as if the area did not exist), then the mutation guards. A module cannot opt out: its routes
-are mounted after those checks. A path no module answers is 404 too.
+a signed-in session with its second factor, when it has one, then the operator role or above
+(anyone below gets 404, as if the area did not exist), then the mutation guards. A module cannot
+opt out: its routes are mounted after those checks. A path no module answers is 404 too.
 
 A module never answers the content of a person's notes or any other aggregate's text: the operator
 area reads counts and account facts only. One exception: a group's Files tab shows each file's name

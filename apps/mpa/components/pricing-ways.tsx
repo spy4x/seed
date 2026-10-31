@@ -87,7 +87,7 @@ export function PricingWays(): JSX.Element {
             unit={t.t(`PricingWays.runUnit`)}
             action={
               <Button
-                href={`${REPOSITORY_URL}#production-certificates`}
+                href={`${REPOSITORY_URL}/blob/main/docs/deploy.md`}
                 variant="outline"
                 class="w-full"
                 data-umami-event="read-code"

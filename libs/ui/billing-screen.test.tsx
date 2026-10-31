@@ -1,5 +1,5 @@
 /**
- * A group's Plan and billing tab: what each billing state says and offers, and what a press of each
+ * A group's Billing tab: what each billing state says and offers, and what a press of each
  * button hands the app, in a happy-dom page. Kept beside the screen rather than in
  * `screens.test.tsx`, so billing stays in its own files.
  */
@@ -186,7 +186,7 @@ describe("GroupBillingPanel", () => {
 
   it("titles the tab and says Stripe handles the billing", async () => {
     await mount(panel(FREE_OWNER))
-    expect(find("[data-e2e=group-section-billing] h2").textContent).toBe("Plan and billing")
+    expect(find("[data-e2e=group-section-billing] h2").textContent).toBe("Billing")
     expect(text()).toContain("What Team pays each month. Stripe handles the billing.")
   })
 

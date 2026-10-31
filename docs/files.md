@@ -163,8 +163,9 @@ every avatar shows its narrowest WebP, cropped to a circle with CSS. The handler
   waits on a 404. The profile row says "Preparing your picture…" meanwhile, and "We could not use
   that picture. Choose another." after a refusal, both in its status region. A new picture has a new id, so nothing stale shows. The admin app's host
   may not load the store's (its `img-src` is `'self'`), so its avatars use
-  `/api/admin/users/pictures/<id>`, which answers the bytes themselves with the store's sandbox
-  policy and `nosniff`. With another S3 store on an origin of its own, the SPA's `img-src` must
+  `/api/admin/users/pictures/<id>`, which answers the bytes themselves with `nosniff`. The route
+  also sets the store's sandbox policy, but the browser gets the admin host's policy instead until
+  Seed takes the ts-libs release that fixes spy4x/ts-libs#772. With another S3 store on an origin of its own, the SPA's `img-src` must
   allow that origin too, or every avatar shows initials.
 
 ## Where it runs

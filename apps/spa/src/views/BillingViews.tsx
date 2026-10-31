@@ -70,7 +70,7 @@ function useGroupBilling(groupId: string) {
 }
 
 /**
- * The group page's Plan and billing tab, wired to the billing store. Back from the provider's
+ * The group page's Billing tab, wired to the billing store. Back from the provider's
  * checkout (`?checkout=done`), the address loses its query at once, so a reload does not say it
  * again, and a toast says "You're on Pro" as soon as the provider's webhook has changed the plan.
  */

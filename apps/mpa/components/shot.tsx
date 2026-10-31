@@ -3,6 +3,13 @@ import type { JSX } from "preact"
 /** Whether a screenshot was taken on the desktop viewport (1280×800) or the phone one (390×844). */
 export type ShotKind = "desktop" | "mobile"
 
+/**
+ * When a picture shows its dark theme: on a device that asks for dark, and only with JavaScript on,
+ * since without it `/theme.js` never darkens the page (`routes/_app.tsx`) and a dark picture would
+ * sit on a light page.
+ */
+export const DARK_MEDIA = `(prefers-color-scheme: dark) and (scripting: enabled)`
+
 /** The two widths each screenshot is saved at, widest first, and the height at the widest. */
 const SIZES: Record<ShotKind, { widths: readonly [number, number]; height: number }> = {
   desktop: { widths: [1280, 640], height: 800 },
@@ -31,7 +38,7 @@ export interface ShotProps {
 }
 
 /**
- * A screenshot of the product, light or dark as the device asks, at the width the layout needs.
+ * A screenshot of the product, light or dark as the page is (`DARK_MEDIA`), at the width the layout needs.
  * Sized by `width` and `height`, so nothing moves when it loads.
  */
 export function Shot(
@@ -49,7 +56,7 @@ export function Shot(
   return (
     <picture>
       <source
-        media="(prefers-color-scheme: dark)"
+        media={DARK_MEDIA}
         srcset={shotSrcset(name, "dark", kind)}
         sizes={sizes}
       />

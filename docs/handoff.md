@@ -185,7 +185,8 @@ is stored, one per address, 30 minutes, with no practical cap on wrong guesses: 
 let anyone lock an address's reset, and the per-IP limit stops floods) and mails the link in the
 same step, so the raw code exists only in the mail. `POST /api/auth/password/reset` with `{ email,
 code, newPassword }` spends the code, marks the address proven, sets the password and signs out
-every session of the user; it signs nobody in. It also revokes every API token, removes every push
+every session of the user; it signs nobody in. An account waiting to be deleted comes back first
+(spy4x/template#357, `restoreInTx`), as a password sign-in would bring it back. It also revokes every API token, removes every push
 subscription (spy4x/template#409), ends the Telegram link with every link code and "Link" press
 made before it (#269), and drops a waiting address change. A subscribe stores its row
 under the lock the reset takes on the user, after checking that its session is still live, so one
@@ -367,7 +368,8 @@ address, but it stays unproven and cannot carry a second factor. A reset
 link proves the mailbox, so it gives the owner the account back: new
 password, address proven, every session signed out, every API token
 revoked, every push subscription removed (spy4x/template#409), so no browser keeps getting
-the account's notifications, any authenticator app removed, and every other
+the account's notifications, the Telegram link ended (#269), so no chat keeps acting as the
+account, any authenticator app removed, and every other
 sign-in method deleted (spy4x/template#404): each linked Google or GitHub account, and a code key
 for another address if the account holds one. Whoever linked them did so before anyone proved the
 address, so they would be a way back in. This happens only on the reset that proves the address; a
@@ -694,7 +696,7 @@ per address per hour, and previews and answers per IP (`invitation-rate-limits.t
 removed or leaves loses every pending invitation they made, and one who is demoted loses those above
 what they may now invite with, in the same transaction (`revokeInvitationsOf`).
 `group_invitation_acceptances` records who accepted each invitation, so a removed member cannot
-rejoin through the team link they used. On a plan without `memberRoles` an invitation adds a viewer
+rejoin through the invitation link they used. On a plan without `memberRoles` an invitation adds a viewer
 only, on create and on accept; the role picker says so. Invitations are the only way into a group
 through the product. The nightly cleanup deletes invitations that have been dead (expired, revoked,
 declined or used up) for over 30 days.

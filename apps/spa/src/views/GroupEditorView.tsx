@@ -121,7 +121,7 @@ export function GroupTransfer(
 
 /**
  * `/groups/:groupId/:tab?`: the group's page on the tab its address names. The old plans page
- * (`/pricing`) opens the Plan and billing tab, and an address with any other last part opens the
+ * (`/pricing`) opens the Billing tab, and an address with any other last part opens the
  * General tab, both in place of the address they came with.
  */
 export function GroupPage({ groupId, tab }: { groupId: string; tab?: string }) {

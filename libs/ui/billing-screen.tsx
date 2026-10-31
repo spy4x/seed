@@ -139,7 +139,7 @@ export const BILLING_MESSAGES = {
 const MESSAGE_KEYS: readonly string[] = Object.values(BILLING_MESSAGES)
 
 /**
- * A group's Plan and billing tab: what the group pays, when, and for the owner the one way to
+ * A group's Billing tab: what the group pays, when, and for the owner the one way to
  * change it. A free group's owner starts the trial or upgrades (the provider's checkout); a paying
  * group's owner changes the card, reads the invoices and cancels or renews (the provider's portal).
  * Anyone else reads the plan and who can change it, with no button at all. Every figure is the

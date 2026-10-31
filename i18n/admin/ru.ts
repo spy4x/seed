@@ -1513,6 +1513,10 @@ export default {
     "Задача <job>{job}</job> не запустится. Задача по расписанию вернётся при следующем старте воркера. Отменить это нельзя.",
   "AdminJobs.cancelling": "Отменяем…",
   "AdminJobs.keepIt": "Оставить",
+  "AdminNotFound.title": "Страница не найдена",
+  "AdminNotFound.description":
+    "По этому адресу нет страницы админки. Проверьте, нет ли в нём опечатки, или начните со сводки.",
+  "AdminNotFound.toDashboard": "Перейти к сводке",
   "AdminNav.dashboard": "Сводка",
   "AdminNav.stats": "Статистика",
   "AdminNav.system": "Система",
@@ -1549,7 +1553,7 @@ export default {
   "AdminNewsletter.retry": "Повторить",
   "AdminNewsletter.loadingNumbers": "Загружаем цифры",
   "AdminNewsletter.keyNumbers": "Ключевые показатели",
-  "AdminNewsletter.confirmedHint": "Подтвердили и получают каждый выпуск",
+  "AdminNewsletter.confirmedHint": "Подтвердили и получают выпуски на своём языке",
   "AdminNewsletter.pendingHint": "Письмо для подтверждения отправлено",
   "AdminNewsletter.joined": {
     "one": "Подписались за последний {count} день",

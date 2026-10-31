@@ -332,7 +332,7 @@ Deno.test("invitations: a member who leaves stops the links they made", async ()
   })
 })
 
-Deno.test("invitations: a removed member cannot rejoin through the team link they joined with", async () => {
+Deno.test("invitations: a removed member cannot rejoin through the invitation link they joined with", async () => {
   await withSchema(async (sql) => {
     const { repository, groupId, owner, stranger } = await team(sql)
     const invitations = new PostgresInvitationRepository(sql)

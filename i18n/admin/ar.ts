@@ -1572,6 +1572,10 @@ export default {
     "لن تُشغَّل <job>{job}</job>. أما المهمة المتكررة فتعود عند بدء العامل في المرة التالية. لا يمكن التراجع عن ذلك.",
   "AdminJobs.cancelling": "جارٍ الإلغاء…",
   "AdminJobs.keepIt": "الإبقاء عليها",
+  "AdminNotFound.title": "الصفحة غير موجودة",
+  "AdminNotFound.description":
+    "لا يؤدي هذا العنوان إلى أي صفحة في الإدارة. تحقّق من وجود خطأ في الكتابة، أو ابدأ من الرئيسية.",
+  "AdminNotFound.toDashboard": "انتقل إلى الرئيسية",
   "AdminNav.dashboard": "الرئيسية",
   "AdminNav.stats": "الإحصاءات",
   "AdminNav.system": "النظام",
@@ -1608,7 +1612,7 @@ export default {
   "AdminNewsletter.retry": "إعادة المحاولة",
   "AdminNewsletter.loadingNumbers": "جارٍ تحميل الأرقام",
   "AdminNewsletter.keyNumbers": "أهم الأرقام",
-  "AdminNewsletter.confirmedHint": "مؤكَّدون، تصلهم كل الأعداد",
+  "AdminNewsletter.confirmedHint": "مؤكَّدون، تصلهم الأعداد بلغتهم",
   "AdminNewsletter.pendingHint": "رسالة التأكيد في طريقها",
   "AdminNewsletter.joined": {
     "zero": "انضموا خلال آخر {count} يوم",

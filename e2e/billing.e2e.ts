@@ -32,12 +32,12 @@ test.describe("group billing", () => {
         .getByRole("link", { name: "Groups" }).click()
       await createGroup(page, "Club")
       const groupId = new URL(page.url()).pathname.replace("/groups/", "")
-      await openGroupTab(page, "Plan and billing")
+      await openGroupTab(page, "Billing")
       const plan = page.locator("[data-e2e=billing-plan]")
       await expect(plan).toHaveAttribute("data-plan", "free")
 
       // The development provider's checkout is no page of its own: it sends the browser straight
-      // back to the checkout's success URL, the Plan and billing tab, as Stripe does once paid.
+      // back to the checkout's success URL, the Billing tab, as Stripe does once paid.
       await page.getByRole("button", { name: "Start 14-day free trial (opens Stripe)" }).click()
       // The tab drops the success URL's query, so a reload does not say it again.
       await expect(page).toHaveURL(`/groups/${groupId}/billing`)
@@ -103,7 +103,7 @@ test.describe("group billing", () => {
       await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/)
       const groupId = new URL(page.url()).pathname.replace("/groups/", "")
 
-      await openGroupTab(page, "Plan and billing")
+      await openGroupTab(page, "Billing")
       await page.getByRole("button", { name: "Start 14-day free trial (opens Stripe)" }).click()
       await expect(page).toHaveURL(`/groups/${groupId}/billing`)
 
