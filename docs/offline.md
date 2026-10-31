@@ -74,7 +74,10 @@ for that group's changes after the sequence (`group.changes` over the calls port
 - **Rows the device writes itself.** The server's answer to a write (a create, an edit, a move, a
   restore) is put in the copy at the cursor the group already has, never past it, so a change
   another member made meanwhile still arrives with the next pull. A group with no copy yet keeps
-  the row at cursor `0`. A row older than the one held (a slow answer a pull overtook) is ignored.
+  the row at cursor `0`, and the next pull of a copy at `0` reads the group in full and replaces
+  it: a page from `0` carries no tombstones, so a row the server deleted or moved away meanwhile
+  is dropped only that way. A row older than the one held (a slow answer a pull overtook) is
+  ignored.
 - **Order and links.** The copy keeps rows in no order; the notes list sorts by the last change,
   newest first, as the server does. A deleted tag takes its links but moves no note, so a note
   names only the tags the copy still holds, and each tag's note count is counted from the copy.

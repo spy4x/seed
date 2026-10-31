@@ -87,9 +87,9 @@ const NO_ROWS = { notes: [], tags: [] }
  * The copy behind the notes and tags views. A row a write answered with (`putNote`, `putTag`) is
  * put at the cursor the group already has, never past it: a change another member made meanwhile
  * still arrives with the next pull. A group with no copy yet (its first pull failed) keeps the row
- * at cursor `0`, so the write the person just made still shows, and the next pull reads every
- * change from the start. A row older than the one held (a slow answer that a pull overtook) is
- * ignored.
+ * at cursor `0`, so the write the person just made still shows. The pull reads a copy at cursor `0`
+ * in full and replaces it, which drops a row the server deleted or moved away meanwhile. A row
+ * older than the one held (a slow answer that a pull overtook) is ignored.
  *
  * A put that runs beside a pull may store the cursor the pull just moved past. The next pull then
  * reads those changes again, which puts the same rows and deletes the same ids: nothing is lost.
