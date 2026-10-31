@@ -129,6 +129,17 @@ At-least-once delivery on a socket and an offline outbox that replays on
 reconnect both make duplicate submission normal rather than exceptional, so
 idempotency is required on every command, not only on those that look risky.
 
+### The cursor pull as built (#439)
+
+The notes and tags of a group are read by this pull. `group.changes` (a socket call, and
+`GET /api/groups/:groupId/changes?after=<sequence>` over REST) answers the rows changed after the
+cursor and a tombstone for each row that left the group, in pages that never split a sequence, or
+"too old" when it can no longer say what changed. The device keeps the rows and its cursor in one
+IndexedDB transaction and bootstraps by the same call from `0`, page by page, so the bootstrap
+endpoint above is this one. The wire and the device side are `@spy4x/realtime/changes`; Seed keeps
+the SQL. [offline.md](../offline.md), "Reads: the device first", has the details: tombstones, their
+90-day window, and what a refusal does. Other lists still read in full.
+
 ## Consequences
 
 - Authorization must move out of route middleware into the CQRS handlers before

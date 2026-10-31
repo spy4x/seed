@@ -52,7 +52,6 @@ Three things worth knowing before planning any of this work.
 | ---- | ------------ | ------------ |
 | WebSocket connection registry | `apps/api/services/websockets.ts` (1232 lines) | Keep: per-user socket map, heartbeat/ping-pong, open/close bookkeeping. Drop: command dispatch, per-model validation, the `LIST` data-push protocol. Target is a few hundred lines of hint-only transport. |
 | Reconnect/backoff client | `apps/web/src/state/ws.ts` (319 lines) | Keep the reconnect state machine and heartbeat. Replace `SYNC_START`-over-WS with a REST pull keyed by a persisted cursor. |
-| Sync checkpoint | `lastSyncAt` timestamp | Replace with the per-group monotonic `next_change_sequence` cursor already in this schema. Timestamps break on clock skew and cannot order ties. |
 | Client-side CQRS | `apps/web/src/cqrs/events.ts`, `apps/web/src/services/eventBus.ts` | The template already has `libs/platform/cqrs`; reconcile rather than copy. |
 | Secrets management | `.age/` | Age64 per-value encryption for env files. |
 | CI pipeline | `.woodpecker.yml` | The template has `infra/configs/woodpecker-ci.yml` but no active pipeline. |
