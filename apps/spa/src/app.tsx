@@ -1,5 +1,5 @@
 import "./app.css"
-import type { ComponentChildren } from "preact"
+import type { ComponentChildren, ComponentType } from "preact"
 import { useEffect, useState } from "preact/hooks"
 import { SWUpdater } from "@spy4x/preact-system/sw-updater"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
@@ -21,6 +21,8 @@ import { groupsStore } from "./state/groups.ts"
 import { notesStore } from "./state/notes.ts"
 import { tagsStore } from "./state/tags.ts"
 import { selectionStore } from "./state/selection.ts"
+import { benchmarkOpen } from "./state/demo.ts"
+import { useAppText } from "@ui/i18n.ts"
 import { profileStore } from "./state/profile.ts"
 import { membersStore } from "./state/members.ts"
 import { createChangeCheck, createPull } from "./state/pull.ts"
@@ -102,6 +104,25 @@ function OpenIfSelected({ groupId, noteId }: { groupId: string; noteId?: string 
 }
 
 /**
+ * `/benchmark`: the page's own module, loaded only where the page exists (`benchmarkOpen`); in any
+ * other build the address opens the notes and the module is never fetched.
+ */
+function BenchmarkPage() {
+  const t = useAppText()
+  const open = benchmarkOpen()
+  const [View, setView] = useState<ComponentType | null>(null)
+  useEffect(() => {
+    if (open) {
+      void import("./views/BenchmarkView.tsx").then((module) => setView(() => module.BenchmarkView))
+    }
+  }, [open])
+  if (!open) return <Redirect to={NOTE_PATHS.list} replace />
+  return View
+    ? <View />
+    : <LoadingSpinner size="lg" label={t.t(`Benchmark.opening`)} class="min-h-[50vh]" />
+}
+
+/**
  * What each route of the table draws. The type asks for every route of `SPA_ROUTES` and no other,
  * so a page cannot be routed without saying who may open it.
  */
@@ -145,6 +166,7 @@ const PAGES: {
   "/notes/new": () => <NoteEditorView key="new" />,
   "/notes/:noteId": (params) => <NoteEditorView key={params.noteId} noteId={params.noteId} />,
   "/tokens/new": () => <ApiTokenNewView />,
+  "/benchmark": () => <BenchmarkPage />,
   "/profile/:section?": (params) => <ProfileView section={params.section} />,
   "/": () => <Redirect to={NOTE_PATHS.list} replace />,
 }

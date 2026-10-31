@@ -490,7 +490,9 @@ imports the layer is missing from this list.
    file, the `startOfflineLayer` call in `startModules`, the `stopOfflineLayer` call in
    `forgetModules`, and the `offline` switch. Keep the `LocalReads` and `createLocalReads`
    re-export and `noLocalReads`, and make the last line of that part
-   `export const localReads = noLocalReads`.
+   `export const localReads = noLocalReads`, and make `benchmarkLocalData` `null`
+   (`export const benchmarkLocalData: BenchmarkLocalData | null = null`), which closes the
+   benchmark page: it measures this layer.
    The stores of the level 2 lists then read from the server and keep nothing, with no change to
    them or to their tests. `watchUnsentChanges` and the `UnsentWait` and `UnsentView` types go
    with that part; delete `sendLeftQueue`, its call in `startModules`, and the `databases` option.

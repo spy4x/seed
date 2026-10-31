@@ -26,6 +26,7 @@ import {
 import { offlineNotes as notesOverLayer } from "./offline/notes-collection.ts"
 import { offlineTags as tagsOverLayer } from "./offline/tags-collection.ts"
 import { OfflineStatus as OfflineStatusLine } from "./offline/OfflineStatus.tsx"
+import { benchmarkLocalData as benchmarkOverLayer } from "./offline/benchmark.ts"
 import {
   browserDatabases,
   type QueueDatabases,
@@ -40,6 +41,8 @@ import {
 import type { RuntimeConfig } from "./runtime-config.ts"
 import { canCallAs, createAppCallPort } from "./state/realtime-call.ts"
 import type { SessionState, SessionUser } from "./state/session.ts"
+import type { NoteItem } from "./state/notes.ts"
+import type { TagItem } from "./state/tags.ts"
 import { toasts } from "./state/toasts.ts"
 
 /**
@@ -399,6 +402,28 @@ export function connectionDisplay(
   return network.online.value ? "open" : "closed"
 }
 
+/**
+ * What the benchmark page (#440) measures of the local-data module, with the module's own code. A
+ * product without the module has `benchmarkLocalData` `null`, which closes the page.
+ */
+export interface BenchmarkLocalData {
+  /**
+   * Deletes the user's copy of the group, then pulls it whole, asking `readPage` for each page of
+   * `group.changes`, as a device that never opened it would. `onSave` gets how long the copy's
+   * write took, and what it threw.
+   */
+  pullFresh(options: {
+    userId: number
+    groupId: string
+    readPage: (groupId: string, after: number) => Promise<unknown>
+    onSave: (ms: number, error?: unknown) => void
+  }): Promise<void>
+  /** The group's notes and tags from the saved copy, with no network. */
+  readSaved(userId: number, groupId: string): Promise<{ notes: NoteItem[]; tags: TagItem[] }>
+  /** Deletes the user's copy of the group. */
+  dropCopy(userId: number, groupId: string): Promise<void>
+}
+
 // --- Local data --------------------------------------------------------------------------------
 
 /** The running layer, or `null` when the module is off or nobody is signed in. */
@@ -453,6 +478,9 @@ export const offlineTags = tagsOverLayer
 
 /** The offline status line and the conflict screen. */
 export const OfflineStatus = OfflineStatusLine
+
+/** The local data the benchmark page measures (`BenchmarkLocalData`). */
+export const benchmarkLocalData: BenchmarkLocalData | null = benchmarkOverLayer
 
 /**
  * Who was signed in on this device, kept in `localStorage` under the key it has always had, so the

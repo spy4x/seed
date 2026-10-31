@@ -78,6 +78,8 @@ export const SCREEN_PATHS = {
   groups: "/groups",
   /** The in-app inbox. */
   notifications: "/notifications",
+  /** The benchmark page (#440): development builds and the public demo only. */
+  benchmark: "/benchmark",
   /**
    * The e-mail address, on the profile's Account section, with the dialog open at its code while an
    * address waits for one.

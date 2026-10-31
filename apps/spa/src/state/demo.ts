@@ -1,10 +1,26 @@
 import { signal } from "@preact/signals"
+import { benchmarkLocalData } from "../modules.ts"
 
 /**
  * Whether the public demo is on (docs/demo.md), from `/config.json`. `main.tsx` sets it before the
  * first render; the sign-in and sign-up pages then say so.
  */
 export const demoMode = signal(false)
+
+/** Whether this is a development build (Vite's `import.meta.env.DEV`); `main.tsx` sets it. */
+export const devBuild = signal(false)
+
+/**
+ * Whether the benchmark page (#440) exists: in a development build and on the public demo only,
+ * and never without the local-data module it measures. Elsewhere `/benchmark` sends the visitor to
+ * the notes, the palette leaves it out, and its code is never loaded.
+ */
+export function benchmarkOpen(): boolean {
+  return (devBuild.value || demoMode.value) && benchmarkLocalData !== null
+}
+
+/** The benchmark page's `r` and `c` while it is open, for the frame's shortcuts; else `null`. */
+export const benchmarkPageActions = signal<{ run(): void; copy(): void } | null>(null)
 
 /**
  * Whether "Try it now" is offered (#224, docs/guests.md), from `/config.json`: on unless the

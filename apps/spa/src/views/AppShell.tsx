@@ -37,7 +37,7 @@ import {
   isGuestSession,
   nextPacificMidnight,
 } from "../state/guest.ts"
-import { demoMode } from "../state/demo.ts"
+import { benchmarkOpen, benchmarkPageActions, demoMode } from "../state/demo.ts"
 import { guestRefusal } from "../state/guest-refusal.ts"
 import { GuestRefusalDialog } from "@ui/guest-profile.tsx"
 import { overviewPageActions } from "./OverviewView.tsx"
@@ -215,6 +215,7 @@ export function AppShell(
     openNewNote: newNoteStore.show,
     activityGroupId: current && canViewActivity(current.role) ? current.id : null,
     overviewPage: overviewPageActions.value,
+    benchmarkPage: benchmarkPageActions.value,
   })
   useShortcuts(rows, singleKeys.on.value)
   const open = async (choice: SearchChoice) => {
@@ -245,6 +246,7 @@ export function AppShell(
           onSelect={(choice) => void open(choice)}
           slashKey={singleKeys.on.value}
           guest={guest}
+          benchmark={benchmarkOpen()}
         />
       }
       shortcuts={{

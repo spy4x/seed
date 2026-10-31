@@ -11,7 +11,7 @@ import { loadRuntimeConfig } from "./runtime-config.ts"
 import { install } from "./install.ts"
 import { configureModules } from "./modules.ts"
 import { themeStore } from "./state/theme.ts"
-import { demoMode, guestMode, siteOrigin, siteOriginOf } from "./state/demo.ts"
+import { demoMode, devBuild, guestMode, siteOrigin, siteOriginOf } from "./state/demo.ts"
 import { kept, languages } from "./i18n.ts"
 import { pickLanguage } from "@platform/i18n.ts"
 import { LANGUAGES } from "@domain/identity"
@@ -30,6 +30,7 @@ const config = await loadRuntimeConfig()
 // Which optional modules run: the socket and the device copy, both on unless the file says no.
 configureModules(config)
 demoMode.value = config.demo === true
+devBuild.value = import.meta.env.DEV === true
 guestMode.value = config.guest !== false
 siteOrigin.value = siteOriginOf(config.site, config.env)
 
