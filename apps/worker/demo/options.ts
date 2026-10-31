@@ -26,7 +26,7 @@ export class SeedConfigError extends Error {
 export function readSeedOptions(env: Record<string, string | undefined>): SeedOptions {
   if (env.ENV !== `dev` && !isDemoMode(env)) {
     throw new SeedConfigError(
-      `ENV must be dev, or DEMO_MODE true: the demo accounts are for development and the public demo only`,
+      `ENV must be dev, or DEMO_MODE true: seeding is for a development database or the public demo only`,
     )
   }
   const pepper = env.AUTH_PEPPER ?? ``
