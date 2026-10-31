@@ -103,8 +103,6 @@ interface Edit extends Draft {
 const NO_ERRORS: FormErrors = { title: null, form: null }
 const EMPTY_DRAFT: Draft = { title: "", body: "", tagIds: [] }
 const PAGE_LIMIT = 100
-/** More pages than a group has notes in this template: a stop for a cursor loop. */
-const MAX_PAGES = 20
 
 /**
  * What the store says went wrong, as keys of the `app` catalog: the screen shows each in the
@@ -206,13 +204,14 @@ export function createNotesStore(dependencies: NotesDependencies) {
   async function readPages(forGroup: string, deleted: boolean): Promise<NoteItem[]> {
     const all: NoteItem[] = []
     let cursor: string | null = null
-    for (let page = 0; page < MAX_PAGES; page++) {
+    // Every page, however many notes the group has. A cursor the server sends twice would loop for
+    // ever, so it ends the read.
+    for (;;) {
       const result: NotePage = await dependencies.fetchPage(forGroup, cursor, deleted)
       all.push(...result.notes)
+      if (result.nextCursor === null || result.nextCursor === cursor) return all
       cursor = result.nextCursor
-      if (cursor === null) break
     }
-    return all
   }
 
   async function readAll(forGroup: string): Promise<void> {

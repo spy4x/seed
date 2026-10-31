@@ -5,10 +5,10 @@ import {
   defineCollection,
 } from "@spy4x/realtime/collections"
 import type { OutboxStore } from "@spy4x/realtime/outbox"
-import { isProxyAnswer, isRefusal, isUnreachable } from "@spy4x/realtime/read-cache"
 import { DEFAULT_TAG_COLOR } from "@domain/tags"
 import type { TagItem, TagsDependencies } from "../state/tags.ts"
 import { type TagEntry, type TagPayload, type TagsCache, tagsQueueDatabase } from "./tags-cache.ts"
+import { type DeviceCopy, pullOrKeep } from "./device-copy.ts"
 
 /**
  * The tags adapter: what is the tags' own about being offline-writable (ADR 003, level 3), as
@@ -93,6 +93,8 @@ export function tagsCollection(
 
 /** What the tags dependencies need of the running layer. */
 export interface TagsLayer {
+  /** The pull that brings a group's copy up to date, and the drop for a group refused. */
+  copy: Pick<DeviceCopy, "pull" | "drop">
   /** The device's copy of the tags. */
   tagsCache: TagsCache
   /** The queue of tag writes and its overlay. */
@@ -105,10 +107,10 @@ function byName(a: TagItem, b: TagItem): number {
 
 /**
  * Puts the device's copy and the queue behind the tags store's dependencies, as `offlineNotes`
- * does for notes: a read asks the server and keeps the answer (or answers from the copy when the
- * server is unreachable or a proxy answers for it) with the queued writes applied, and a group the
- * server refuses loses its copy; a write is queued and sent at once when
- * the server is reachable. Without a running layer every call goes to `online` untouched.
+ * does for notes: a read pulls the group's changes and answers from the copy with the queued
+ * writes applied (from the copy as it is when the server is unreachable or a proxy answers for
+ * it), and a group the server refuses loses its copy; a write is queued and sent at once when the
+ * server is reachable. Without a running layer every call goes to `online` untouched.
  */
 export function offlineTags(
   online: TagsDependencies,
@@ -136,22 +138,8 @@ export function offlineTags(
     async fetchList(groupId) {
       const layer = current()
       if (!layer) return await online.fetchList(groupId)
-      let base: TagItem[]
-      try {
-        base = await online.fetchList(groupId)
-        await layer.tagsCache.replaceTags(groupId, base)
-      } catch (error) {
-        // The person left the group, or it is gone: its tags must not come back offline later.
-        if (isRefusal(error)) {
-          await layer.tagsCache.replaceTags(groupId, []).catch((failure) =>
-            console.warn(`The saved tags of group ${groupId} could not be deleted.`, failure)
-          )
-        }
-        // A proxy's answer, such as a 502 during a deploy, is an unreachable server too.
-        if (!isUnreachable(error) && !isProxyAnswer(error)) throw error
-        base = await layer.tagsCache.readTags(groupId)
-      }
-      return (await layer.tags.overlay(base, groupId)).sort(byName)
+      await pullOrKeep(layer, groupId)
+      return await visible(layer, groupId)
     },
     async create(input) {
       const layer = current()

@@ -6,8 +6,9 @@ import { createMemoryOutboxStore } from "@spy4x/realtime/outbox"
 import { type NoteItem, onlineNotes } from "../state/notes.ts"
 import { sessionState } from "../state/session.ts"
 import { onlineTags, type TagItem } from "../state/tags.ts"
-import { createMemoryNotesCache } from "./memory-notes-cache.ts"
-import { createMemoryTagsCache } from "./memory-tags-cache.ts"
+import { createAppCallPort } from "../state/realtime-call.ts"
+import { deviceCopy } from "./device-copy.ts"
+import { createMemoryChangesCopy } from "./memory-changes.ts"
 import type { NotePayload } from "./notes-cache.ts"
 import { notesCollection, offlineNotes } from "./notes-collection.ts"
 import type { TagPayload } from "./tags-cache.ts"
@@ -15,9 +16,9 @@ import { offlineTags, tagsCollection } from "./tags-collection.ts"
 
 /**
  * What the notes and tags lists do with their saved copy when the server answers with an error:
- * the same rules as every other list (`apps/spa/src/state/read-refusals.test.ts`). The readers are
- * the production ones (`onlineNotes`, `onlineTags`) behind the offline layer; only the network is
- * replaced, by a `fetch` that answers with a real `Response`.
+ * the same rules as every other list (`apps/spa/src/state/read-refusals.test.ts`). The lists are
+ * read by the changes pull over the production calls port (`createAppCallPort`, here over HTTP);
+ * only the network is replaced, by a `fetch` that answers with a real `Response`.
  */
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
@@ -35,8 +36,18 @@ const tag: TagItem = { id: "t-1", groupId, name: "Urgent", color: "#4b5563", ...
 
 /** A device in memory holding the notes and tags of user 1, with nothing queued. */
 function device() {
-  const cache = createMemoryNotesCache()
-  const tagsCache = createMemoryTagsCache()
+  const changes = createMemoryChangesCopy()
+  const port = createAppCallPort({
+    userId: 1,
+    fetch: (input, init) => globalThis.fetch(input, init),
+    onUnauthorized: () => {},
+  })
+  const copy = deviceCopy({
+    copy: changes,
+    fetch: (group, after) => port.query("group.changes", { groupId: group, after }),
+  })
+  const cache = copy.notes
+  const tagsCache = copy.tags
   const calls: CallPort = {
     command: () => Promise.reject(new Error("the test writes nothing")),
     query: () => Promise.reject(new Error("the test reads no single note or tag")),
@@ -57,6 +68,8 @@ function device() {
     canSend: () => false,
   })
   return {
+    changes,
+    copy,
     cache,
     tagsCache,
     notes: collections.get(notesDefinition),
@@ -66,8 +79,6 @@ function device() {
 
 interface Case {
   name: string
-  /** What the server answers to a read that works. */
-  body: unknown
   /** Reads the list through the offline layer; rejects when the screen would show an error. */
   read(layer: ReturnType<typeof device>): Promise<string[]>
 }
@@ -75,7 +86,6 @@ interface Case {
 const CASES: Case[] = [
   {
     name: "the notes of a group",
-    body: { notes: [note], nextCursor: null },
     read: async (layer) =>
       (await offlineNotes(onlineNotes, () => layer).fetchPage(groupId, null)).notes.map((n) =>
         n.id
@@ -83,11 +93,27 @@ const CASES: Case[] = [
   },
   {
     name: "the tags of a group",
-    body: { tags: [tag] },
     read: async (layer) =>
       (await offlineTags(onlineTags, () => layer).fetchList(groupId)).map((t) => t.id),
   },
 ]
+
+/**
+ * The server's answer to `group.changes` of the call in `init`: the group's one note and one tag
+ * for a full read, nothing new for a read after sequence 1.
+ */
+function changesAfter(init?: RequestInit) {
+  const { after } = JSON.parse(String(init?.body)) as { after: number }
+  return {
+    status: "changes",
+    after,
+    through: 1,
+    current: 1,
+    more: false,
+    upserts: after === 0 ? { notes: [note], tags: [tag] } : { notes: [], tags: [] },
+    tombstones: [],
+  }
+}
 
 /** A status with the API's error body, a page with that status and no error code, or no network. */
 type Answer = number | { proxy: number } | "offline"
@@ -95,16 +121,15 @@ type Answer = number | { proxy: number } | "offline"
 describe("the saved notes and tags and the answer of the server", () => {
   const realFetch = globalThis.fetch
   let answer: Answer = 200
-  let body: unknown = null
 
   beforeEach(() => {
-    globalThis.fetch = (() => {
+    globalThis.fetch = ((_input: RequestInfo | URL, init?: RequestInit) => {
       if (answer === "offline") return Promise.reject(new TypeError("Failed to fetch"))
       if (typeof answer === "object") {
         return Promise.resolve(new Response("<h1>Bad Gateway</h1>", { status: answer.proxy }))
       }
       return Promise.resolve(
-        answer === 200 ? Response.json(body) : Response.json(
+        answer === 200 ? Response.json({ result: changesAfter(init) }) : Response.json(
           // The API's own refusal names its reason; `code` is the one its status stands for.
           {
             error: { code: answer === 500 ? "internal" : "forbidden", message: "No", reason: "NO" },
@@ -123,7 +148,6 @@ describe("the saved notes and tags and the answer of the server", () => {
     describe(list.name, () => {
       /** One read that worked, then one that got `status`, then the network goes. */
       async function afterAnswer(status: Exclude<Answer, "offline">) {
-        body = list.body
         const layer = device()
         answer = 200
         const shownOnline = await list.read(layer)
@@ -168,13 +192,10 @@ describe("the saved notes and tags and the answer of the server", () => {
       }
 
       it("show the server's refusal and warn when the device cannot delete the copy", async () => {
-        body = list.body
         const layer = device()
         answer = 200
         await list.read(layer)
-        const broken = () => Promise.reject(new Error("the device is full"))
-        layer.cache.replaceNotes = broken
-        layer.tagsCache.replaceTags = broken
+        layer.copy.drop = () => Promise.reject(new Error("the device is full"))
         const warnings: unknown[][] = []
         const realWarn = console.warn
         console.warn = (...args: unknown[]) => void warnings.push(args)
@@ -192,11 +213,12 @@ describe("the saved notes and tags and the answer of the server", () => {
       })
 
       it("keep another group's copy when one group is refused", async () => {
-        body = list.body
         const layer = device()
         const other = "0d7d3a3e-4f65-4d0e-9d0c-6a1a3f2b9c11"
-        await layer.cache.replaceNotes(other, [{ ...note, id: "n-2", groupId: other }])
-        await layer.tagsCache.replaceTags(other, [{ ...tag, id: "t-2", groupId: other }])
+        await layer.changes.replace(other, {
+          notes: [{ ...note, id: "n-2", groupId: other }],
+          tags: [{ ...tag, id: "t-2", groupId: other }],
+        }, 1)
         answer = 200
         await list.read(layer)
         answer = 403

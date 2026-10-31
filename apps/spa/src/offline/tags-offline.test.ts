@@ -4,7 +4,12 @@ import type { CallPort } from "@spy4x/realtime/calls"
 import { createCollections } from "@spy4x/realtime/collections"
 import { createMemoryOutboxStore } from "@spy4x/realtime/outbox"
 import type { TagItem, TagsDependencies } from "../state/tags.ts"
-import { createMemoryTagsCache } from "./memory-tags-cache.ts"
+import { deviceCopy } from "./device-copy.ts"
+import {
+  type ChangesServer,
+  createChangesServer,
+  createMemoryChangesCopy,
+} from "./memory-changes.ts"
 import type { TagPayload } from "./tags-cache.ts"
 import { offlineTags, tagsCollection } from "./tags-collection.ts"
 
@@ -25,9 +30,19 @@ function tag(id: string, name = id, version = 1): TagItem {
   }
 }
 
-/** The tags of user 1 on a device in memory, with a socket the test switches off and on. */
-function layerWith(state: { socket: boolean }) {
-  const tagsCache = createMemoryTagsCache()
+/**
+ * The tags of user 1 on a device in memory, with a socket the test switches off and on. Its pull
+ * reads `net`; without one, no read reaches the server.
+ */
+function layerWith(state: { socket: boolean }, net?: ReturnType<typeof network>) {
+  const copy = deviceCopy({
+    copy: createMemoryChangesCopy(),
+    fetch: (group, after) =>
+      net?.state.up
+        ? Promise.resolve(net.server.answer(group, after))
+        : Promise.reject(new TypeError("Failed to fetch")),
+  })
+  const tagsCache = copy.tags
   const calls: CallPort = {
     command: (_name, payload) =>
       Promise.resolve({ tag: tag(String((payload as { id: string }).id), "sent") }),
@@ -44,11 +59,15 @@ function layerWith(state: { socket: boolean }) {
     canSend: () => state.socket,
     now: () => "2026-10-03T00:00:00.000Z",
   })
-  return { tagsCache, tags: collections.get(definition) }
+  return { copy, tagsCache, tags: collections.get(definition) }
 }
 
 /** Server-side dependencies whose network the test switches off and on. */
-function network(list: TagItem[]) {
+function network(list: TagItem[]): {
+  state: { up: boolean }
+  server: ChangesServer
+  online: TagsDependencies
+} {
   const state = { up: true }
   const online: TagsDependencies = {
     fetchList() {
@@ -59,13 +78,14 @@ function network(list: TagItem[]) {
     delete: () => Promise.reject(new Error("the store must not call the network to write")),
     newId: () => "new-id",
   }
-  return { state, online }
+  return { state, server: createChangesServer({ tags: list }), online }
 }
 
 describe("tags with the offline layer", () => {
   it("answers the list from the device when the server is unreachable", async () => {
-    const { state, online } = network([tag("b", "Beta"), tag("a", "Alpha")])
-    const layer = layerWith({ socket: false })
+    const net = network([tag("b", "Beta"), tag("a", "Alpha")])
+    const { state, online } = net
+    const layer = layerWith({ socket: false }, net)
     const deps = offlineTags(online, () => layer)
     await deps.fetchList(groupId)
     state.up = false
@@ -76,8 +96,9 @@ describe("tags with the offline layer", () => {
   })
 
   it("lists a tag created offline at once, sorted by name among the others", async () => {
-    const { online } = network([tag("a", "Alpha"), tag("z", "Zulu")])
-    const layer = layerWith({ socket: false })
+    const net = network([tag("a", "Alpha"), tag("z", "Zulu")])
+    const { online } = net
+    const layer = layerWith({ socket: false }, net)
     const deps = offlineTags(online, () => layer)
     await deps.fetchList(groupId)
 

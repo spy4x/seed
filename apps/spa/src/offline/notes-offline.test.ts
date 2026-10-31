@@ -6,7 +6,12 @@ import { createCollections } from "@spy4x/realtime/collections"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import { createMemoryOutboxStore } from "@spy4x/realtime/outbox"
 import { signal } from "@preact/signals"
-import { createMemoryNotesCache } from "./memory-notes-cache.ts"
+import { deviceCopy } from "./device-copy.ts"
+import {
+  type ChangesServer,
+  createChangesServer,
+  createMemoryChangesCopy,
+} from "./memory-changes.ts"
 import type { NoteEntry, NotePayload } from "./notes-cache.ts"
 import { notesCollection, offlineNotes } from "./notes-collection.ts"
 import { createMemoryTagsCache } from "./memory-tags-cache.ts"
@@ -31,9 +36,29 @@ function note(id: string, version = 1, title = id): NoteItem {
   }
 }
 
-/** The notes of user 1 on a device in memory, with a server that takes every write. */
-function layerWith(online: { socket: boolean }) {
-  const cache = createMemoryNotesCache()
+/** What the server holds, and whether a read reaches it. */
+interface Network {
+  state: { up: boolean; reads: number; error?: Error }
+  server: ChangesServer
+}
+
+/**
+ * The notes of user 1 on a device in memory, with a server that takes every write. Its pull reads
+ * `net`; without one, no read reaches the server.
+ */
+function layerWith(online: { socket: boolean }, net?: Network) {
+  const changes = createMemoryChangesCopy()
+  const copy = deviceCopy({
+    copy: changes,
+    fetch(group, after) {
+      if (!net) return Promise.reject(new TypeError("Failed to fetch"))
+      net.state.reads++
+      if (net.state.error) return Promise.reject(net.state.error)
+      if (!net.state.up) return Promise.reject(new TypeError("Failed to fetch"))
+      return Promise.resolve(net.server.answer(group, after))
+    },
+  })
+  const cache = copy.notes
   const calls: CallPort = {
     command: (_name, payload) =>
       Promise.resolve({ note: note(String((payload as { id: string }).id), 1, "sent") }),
@@ -58,12 +83,19 @@ function layerWith(online: { socket: boolean }) {
   const notes = collections.get(definition)
   const entries = signal<readonly NoteEntry[]>([])
   notes.outbox.subscribe((all) => entries.value = all)
-  return { cache, notes, entries }
+  /** Puts `held` on the device as the copy of `group`, as a pull would have. */
+  const seed = (held: NoteItem[], group = groupId) =>
+    changes.replace(group, { notes: held, tags: [] }, 1)
+  return { copy, cache, notes, entries, seed }
 }
 
-/** Server-side dependencies whose network the test switches off and on. */
+/**
+ * Server-side dependencies whose network the test switches off and on. `pages` are the pages of the
+ * notes list, which only a read with no layer pages through; the layer pulls them all at once.
+ */
 function network(pages: NoteItem[][]) {
-  const state = { up: true, reads: 0 }
+  const state: Network["state"] = { up: true, reads: 0 }
+  const server = createChangesServer({ notes: pages.flat() })
   const online: NotesDependencies = {
     fetchPage(_group, cursor): Promise<NotePage> {
       state.reads++
@@ -82,13 +114,13 @@ function network(pages: NoteItem[][]) {
     move: () => Promise.reject(new Error("the test moves nothing")),
     newId: () => "id",
   }
-  return { state, online }
+  return { state, online, server, net: { state, server } }
 }
 
 describe("offline notes reads", () => {
   it("answers from the device when the network is down", async () => {
-    const layer = layerWith({ socket: false })
-    const { state, online } = network([[note("a"), note("b")]])
+    const { state, online, net } = network([[note("a"), note("b")]])
+    const layer = layerWith({ socket: false }, net)
     const deps = offlineNotes(online, () => layer)
     await deps.fetchPage(groupId, null)
     state.up = false
@@ -96,18 +128,40 @@ describe("offline notes reads", () => {
     expect(page.notes.map((n) => n.id)).toEqual(["a", "b"])
   })
 
-  it("keeps every page of a group, not only the first", async () => {
-    const layer = layerWith({ socket: false })
-    const { state, online } = network([[note("a")], [note("b")]])
+  it("keeps every note of a group, however many, for offline reads", async () => {
+    const many = Array.from({ length: 2_500 }, (_, i) => note(`n-${String(i).padStart(4, "0")}`))
+    const { state, online, net } = network([many])
+    const layer = layerWith({ socket: false }, net)
     const deps = offlineNotes(online, () => layer)
     await deps.fetchPage(groupId, null)
     state.up = false
-    expect((await deps.fetchPage(groupId, null)).notes.map((n) => n.id)).toEqual(["a", "b"])
+    expect((await deps.fetchPage(groupId, null)).notes.length).toBe(2_500)
+  })
+
+  it("lists the device's notes newest change first", async () => {
+    const at = (id: string, updatedAt: string) => ({ ...note(id), updatedAt })
+    const { online, net } = network([[
+      at("old", "2026-10-01T00:00:00.000Z"),
+      at("new", "2026-10-03T00:00:00.000Z"),
+      at("mid", "2026-10-02T00:00:00.000Z"),
+    ]])
+    const layer = layerWith({ socket: false }, net)
+    const page = await offlineNotes(online, () => layer).fetchPage(groupId, null)
+    expect(page.notes.map((n) => n.id)).toEqual(["new", "mid", "old"])
+  })
+
+  it("drops a note from the device once the server sends it as gone", async () => {
+    const { online, server, net } = network([[note("a"), note("b")]])
+    const layer = layerWith({ socket: false }, net)
+    const deps = offlineNotes(online, () => layer)
+    await deps.fetchPage(groupId, null)
+    server.notes = [note("b")]
+    expect((await deps.fetchPage(groupId, null)).notes.map((n) => n.id)).toEqual(["b"])
   })
 
   it("shows a note created offline in the list read", async () => {
-    const layer = layerWith({ socket: false })
-    const { state, online } = network([[note("a")]])
+    const { state, online, net } = network([[note("a")]])
+    const layer = layerWith({ socket: false }, net)
     const deps = offlineNotes(online, () => layer)
     await deps.fetchPage(groupId, null)
     state.up = false
@@ -117,8 +171,8 @@ describe("offline notes reads", () => {
   })
 
   it("shows a note created offline in its own group only", async () => {
-    const layer = layerWith({ socket: false })
-    const { online } = network([[note("a")]])
+    const { online, net } = network([[note("a")]])
+    const layer = layerWith({ socket: false }, net)
     const deps = offlineNotes(online, () => layer)
     await deps.create({
       groupId: "g-2",
@@ -143,7 +197,7 @@ describe("offline notes reads", () => {
   it("does not open a saved note the server says is gone", async () => {
     const layer = layerWith({ socket: true })
     const { online } = network([[note("a")]])
-    await layer.cache.replaceNotes(groupId, [note("a")])
+    await layer.seed([note("a")])
     const notFound = new RealtimeRequestError("not_found", "Note not found")
     const deps = offlineNotes({ ...online, get: () => Promise.reject(notFound) }, () => layer)
 
@@ -153,7 +207,7 @@ describe("offline notes reads", () => {
   it("opens a saved note from the device when the server cannot be reached", async () => {
     const layer = layerWith({ socket: false })
     const { online } = network([[note("a")]])
-    await layer.cache.replaceNotes(groupId, [note("a", 3, "Saved")])
+    await layer.seed([note("a", 3, "Saved")])
     const unreachable = new TypeError("Failed to fetch")
     const deps = offlineNotes({ ...online, get: () => Promise.reject(unreachable) }, () => layer)
 
@@ -161,9 +215,9 @@ describe("offline notes reads", () => {
   })
 
   it("does not hide a server error behind the cached list", async () => {
-    const layer = layerWith({ socket: true })
-    const { online } = network([[note("a")]])
-    online.fetchPage = () => Promise.reject(new Error("Request failed"))
+    const { online, state, net } = network([[note("a")]])
+    const layer = layerWith({ socket: true }, net)
+    state.error = new Error("Request failed")
     await expect(offlineNotes(online, () => layer).fetchPage(groupId, null)).rejects.toThrow(
       "Request failed",
     )
@@ -176,9 +230,9 @@ describe("offline notes reads", () => {
   })
 
   it("lists what the device holds without asking the network", async () => {
-    const layer = layerWith({ socket: false })
-    await layer.cache.replaceNotes(groupId, [note("cached")])
-    const { state, online } = network([[]])
+    const { state, online, net } = network([[]])
+    const layer = layerWith({ socket: false }, net)
+    await layer.seed([note("cached")])
     const local = await offlineNotes(online, () => layer).readLocal!(groupId)
     expect(local.map((n) => n.id)).toEqual(["cached"])
     expect(state.reads).toBe(0)
@@ -217,6 +271,8 @@ describe("offline notes writes", () => {
 describe("offline notes moves", () => {
   it("files the moved notes under their new group on the device", async () => {
     const layer = layerWith({ socket: true })
+    await layer.seed([], "g-2")
+    await layer.seed([])
     const { online } = network([[note("a")]])
     online.move = (input) =>
       Promise.resolve({
@@ -224,6 +280,7 @@ describe("offline notes moves", () => {
       })
     const deps = offlineNotes(online, () => layer)
     await layer.cache.putNote(note("a"))
+    expect((await layer.cache.readNotes(groupId)).map((n) => n.id)).toEqual(["a"])
 
     await deps.move({ groupId, toGroupId: "g-2", noteIds: ["a"] })
 
@@ -235,7 +292,7 @@ describe("offline notes moves", () => {
     const layer = layerWith({ socket: true })
     const { online } = network([[note("a")]])
     online.move = () => Promise.reject(new Error("refused"))
-    await layer.cache.putNote(note("a"))
+    await layer.seed([note("a")])
 
     await offlineNotes(online, () => layer).move({ groupId, toGroupId: "g-2", noteIds: ["a"] })
       .catch(() => {})
@@ -248,6 +305,7 @@ describe("offline notes moves", () => {
     const { online } = network([[]])
     online.restore = (input) => Promise.resolve({ note: note(input.id, 3) })
     const deps = offlineNotes(online, () => layer)
+    await layer.seed([])
 
     const { note: restored } = await deps.restore({ groupId, id: "a" })
 
@@ -257,8 +315,8 @@ describe("offline notes moves", () => {
   })
 
   it("undoes a delete that is still waiting on the device without asking the server", async () => {
-    const layer = layerWith({ socket: false })
-    const { online } = network([[note("a")]])
+    const { online, net } = network([[note("a")]])
+    const layer = layerWith({ socket: false }, net)
     online.restore = () => Promise.reject(new Error("the server must not be asked"))
     const deps = offlineNotes(online, () => layer)
     await deps.fetchPage(groupId, null)

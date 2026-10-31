@@ -139,6 +139,18 @@ describe("notes store", () => {
     expect(reads).toEqual([{ groupId, cursor: null }, { groupId, cursor: "c1" }])
   })
 
+  it("reads a group of more than 2,000 notes to its last page", async () => {
+    const pages = Array.from({ length: 25 }, (_, page) => ({
+      notes: Array.from({ length: 100 }, (_, i) => item(`n-${page}-${i}`)),
+      nextCursor: page < 24 ? `c${page + 1}` : null,
+    }))
+    const { store } = harness({ pages })
+
+    await store.open(groupId, null)
+
+    expect(store.notes.value.length).toBe(2_500)
+  })
+
   it("creates with the form's id and trimmed title, then starts a new draft with a new id", async () => {
     const { store, calls } = harness()
     await store.open(groupId, null)

@@ -7,10 +7,6 @@ export function createMemoryTagsCache(): TagsCache {
   return {
     readTags: (groupId) =>
       Promise.resolve(tags.filter((tag) => tag.groupId === groupId).map((t) => ({ ...t }))),
-    replaceTags(groupId, next) {
-      tags = [...tags.filter((tag) => tag.groupId !== groupId), ...next.map((t) => ({ ...t }))]
-      return Promise.resolve()
-    },
     putTag(tag) {
       const at = tags.findIndex((existing) => existing.id === tag.id)
       if (at === -1) tags = [{ ...tag }, ...tags]

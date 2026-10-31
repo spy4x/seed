@@ -4,8 +4,9 @@ import type { NoteItem } from "../state/notes.ts"
 import type { TagItem } from "../state/tags.ts"
 import type { OfflineStorage } from "./index.ts"
 import type { QueueDatabases } from "./send-once.ts"
-import { createMemoryNotesCache } from "./memory-notes-cache.ts"
-import { createMemoryTagsCache } from "./memory-tags-cache.ts"
+import type { ChangesCopy } from "@spy4x/realtime/changes"
+import { type ChangesRows, deviceCopy } from "./device-copy.ts"
+import { createMemoryChangesCopy } from "./memory-changes.ts"
 import type { NotePayload, NotesCache } from "./notes-cache.ts"
 import type { TagPayload, TagsCache } from "./tags-cache.ts"
 
@@ -13,8 +14,12 @@ import type { TagPayload, TagsCache } from "./tags-cache.ts"
 export interface MemoryDevice {
   /** The read copies, by key. */
   reads: Map<string, { value: unknown; savedAt: number }>
+  /** The changes copy: every group's notes and tags and their cursors. */
+  copy: ChangesCopy<ChangesRows>
+  /** The copy's notes, as the layer reads them. */
   notes: NotesCache
   queue: OutboxStore<NotePayload, NoteItem>
+  /** The copy's tags, as the layer reads them. */
   tags: TagsCache
   tagsQueue: OutboxStore<TagPayload, TagItem>
 }
@@ -33,11 +38,17 @@ export function createMemoryStorage(): OfflineStorage & {
   function of(userId: number): MemoryDevice {
     let device = devices.get(userId)
     if (!device) {
+      const copy = createMemoryChangesCopy()
+      const views = deviceCopy({
+        copy,
+        fetch: () => Promise.reject(new Error("a test reads the copy without the server")),
+      })
       device = {
         reads: new Map(),
-        notes: createMemoryNotesCache(),
+        copy,
+        notes: views.notes,
         queue: createMemoryOutboxStore<NotePayload, NoteItem>(),
-        tags: createMemoryTagsCache(),
+        tags: views.tags,
         tagsQueue: createMemoryOutboxStore<TagPayload, TagItem>(),
       }
       devices.set(userId, device)
@@ -51,9 +62,8 @@ export function createMemoryStorage(): OfflineStorage & {
     }
     return [
       [`reads:${userId}`, () => Promise.resolve(device.reads.clear())],
-      [`offline:user:${userId}:notes`, () => device.notes.clear()],
+      [`offline:user:${userId}:changes`, () => device.copy.clear()],
       [`offline:user:${userId}:outbox`, () => emptyQueue(device.queue)],
-      [`offline:user:${userId}:tags`, () => device.tags.clear()],
       [`offline:user:${userId}:tags-outbox`, () => emptyQueue(device.tagsQueue)],
     ]
   }
@@ -65,9 +75,8 @@ export function createMemoryStorage(): OfflineStorage & {
     },
     of,
     openReads: (userId) => createMemoryReadCache(() => 0, of(userId).reads),
-    openNotes: (userId) => of(userId).notes,
+    openCopy: (userId) => of(userId).copy,
     openQueue: (userId) => of(userId).queue,
-    openTags: (userId) => of(userId).tags,
     openTagsQueue: (userId) => of(userId).tagsQueue,
   }
 }

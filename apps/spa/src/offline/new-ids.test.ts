@@ -63,14 +63,18 @@ function device(state: { socket: boolean }) {
     canSend: () => state.socket,
     now: () => "2026-10-03T00:00:00.000Z",
   })
+  // No network: the pull of a group's changes cannot reach the server.
+  const copy = { pull: unreachable, drop: () => Promise.resolve() }
   return {
     sent,
-    notesLayer: { cache, notes: collections.get(notesDefinition) },
-    tagsLayer: { tagsCache, tags: collections.get(tagsDefinition) },
+    notesLayer: { copy, cache, notes: collections.get(notesDefinition) },
+    tagsLayer: { copy, tagsCache, tags: collections.get(tagsDefinition) },
   }
 }
 
-const unreachable = () => Promise.reject(new TypeError("Failed to fetch"))
+function unreachable(): Promise<never> {
+  return Promise.reject(new TypeError("Failed to fetch"))
+}
 
 describe("ids the SPA makes", () => {
   it("gives a group created online a version 7 id", async () => {

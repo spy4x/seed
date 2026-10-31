@@ -12,15 +12,11 @@ import {
 import { createReadCache, type ReadCache } from "@spy4x/realtime/read-cache"
 import { createSyncRunner, type SyncRunner } from "@spy4x/realtime/sync-runner"
 import type { NoteItem } from "../state/notes.ts"
-import {
-  databasePrefix,
-  type NoteEntry,
-  type NotePayload,
-  type NotesCache,
-  openNotesCache,
-} from "./notes-cache.ts"
+import type { ChangesCopy } from "@spy4x/realtime/changes"
+import { type ChangesRows, type DeviceCopy, deviceCopy, openChangesCopy } from "./device-copy.ts"
+import { databasePrefix, type NoteEntry, type NotePayload, type NotesCache } from "./notes-cache.ts"
 import { type NotesCollection, notesCollection } from "./notes-collection.ts"
-import { openTagsCache, type TagEntry, type TagPayload, type TagsCache } from "./tags-cache.ts"
+import type { TagEntry, TagPayload, TagsCache } from "./tags-cache.ts"
 import { type TagsCollection, tagsCollection } from "./tags-collection.ts"
 import type { TagItem } from "../state/tags.ts"
 import type { Message } from "@ui/message.ts"
@@ -32,11 +28,12 @@ import type { Message } from "@ui/message.ts"
  *
  * One signed-in user has these things on the device, each its own IndexedDB database:
  * - the read copies (`reads:<id>`): the last answer of every offline-readable list;
- * - the notes (`offline:user:<id>:notes`): the copy the queue keeps in step;
- * - the queue of note writes (`offline:user:<id>:outbox`);
- * - the tags (`offline:user:<id>:tags`) and their queue (`offline:user:<id>:tags-outbox`).
+ * - the notes and tags of every group read, with the change sequence each group's copy is complete
+ *   through (`offline:user:<id>:changes`), which the changes pull keeps in step (`device-copy.ts`);
+ * - the queue of note writes (`offline:user:<id>:outbox`) and of tag writes
+ *   (`offline:user:<id>:tags-outbox`).
  *
- * Stopping the layer for a sign-out deletes the read copies, the notes and the tags. The sign-out
+ * Stopping the layer for a sign-out deletes the read copies and the notes and tags. The sign-out
  * then deletes every database of the app, the queues included (`wipeDevice` in `modules.ts`).
  */
 
@@ -52,10 +49,8 @@ export interface OfflineTransport {
 export interface OfflineStorage {
   /** The read copies of one user. */
   openReads(userId: number): ReadCache
-  /** The device's copy of one user's notes. */
-  openNotes(userId: number): NotesCache
-  /** The device's copy of one user's tags. */
-  openTags(userId: number): TagsCache
+  /** The device's copy of one user's notes and tags, which the changes pull keeps. */
+  openCopy(userId: number): ChangesCopy<ChangesRows>
   /** The tags queue of one user, when it is not the IndexedDB one the collection opens itself. */
   openTagsQueue?(userId: number): OutboxStore<TagPayload, TagItem>
   /** The notes queue of one user, when it is not the IndexedDB one the collection opens itself. */
@@ -67,6 +62,8 @@ export interface OfflineLayer {
   userId: number
   /** The read copies: what an offline-readable list answers from when the server is unreachable. */
   reads: ReadCache
+  /** The device's copy of the notes and tags, and the pull that keeps it in step. */
+  copy: DeviceCopy
   /** The device's copy of the notes. */
   cache: NotesCache
   /** The device's copy of the tags. */
@@ -131,14 +128,31 @@ function after(ready: Promise<void>, cache: ReadCache): ReadCache {
   }
 }
 
+/**
+ * Deletes the notes and tags databases an earlier version kept (`offline:user:<id>:notes`,
+ * `offline:user:<id>:tags`): the changes copy replaced them, and its first pull of each group reads
+ * it in full. Nothing in them is moved, since they hold no cursor to pull from.
+ */
+function retireCopyDatabases(userId: number): void {
+  try {
+    for (const part of ["notes", "tags"]) {
+      indexedDB.deleteDatabase(`${databasePrefix(userId)}:${part}`)
+    }
+  } catch (_error) {
+    // Blocked storage holds nothing to delete.
+  }
+}
+
 /** The browser's storage: IndexedDB databases named for the user. */
 export const browserStorage: OfflineStorage = {
   openReads(userId) {
     const reads = createReadCache({ name: readsDatabase(userId) })
     return after(retireGroupsDatabase(userId, reads), reads)
   },
-  openNotes: openNotesCache,
-  openTags: openTagsCache,
+  openCopy(userId) {
+    retireCopyDatabases(userId)
+    return openChangesCopy(userId)
+  },
 }
 
 let layer: OfflineLayer | null = null
@@ -147,6 +161,16 @@ let layer: OfflineLayer | null = null
 export function withBrowserLock(userId: number): OutboxLock {
   return typeof navigator !== "undefined" && navigator.locks
     ? createWebLock(navigator.locks, `offline-outbox:${userId}`)
+    : createPromiseLock()
+}
+
+/**
+ * One changes pull at a time per user across all tabs, which share the copy; one tab's chain where
+ * locks are missing.
+ */
+function changesLock(userId: number): OutboxLock {
+  return typeof navigator !== "undefined" && navigator.locks
+    ? createWebLock(navigator.locks, `offline-changes:${userId}`)
     : createPromiseLock()
 }
 
@@ -172,8 +196,13 @@ export function startOffline(
 ): OfflineLayer {
   if (layer?.userId === userId) return layer
   if (layer) void stopOffline({ forget: true }).catch(() => {})
-  const cache = storage.openNotes(userId)
-  const tagsCache = storage.openTags(userId)
+  const copy = deviceCopy({
+    copy: storage.openCopy(userId),
+    fetch: (groupId, after) => transport.calls.query("group.changes", { groupId, after }),
+    lock: changesLock(userId),
+  })
+  const cache = copy.notes
+  const tagsCache = copy.tags
   const notices = signal<readonly Message[]>([])
   const tagsDefinition = tagsCollection({
     userId,
@@ -202,6 +231,7 @@ export function startOffline(
   const started: OfflineLayer = {
     userId,
     reads: storage.openReads(userId),
+    copy,
     cache,
     tagsCache,
     collections,
@@ -240,16 +270,15 @@ export async function stopOffline({ forget = false } = {}): Promise<void> {
   closing.entries.value = []
   closing.tagEntries.value = []
   closing.notices.value = []
-  if (forget) await forgetCopies(closing.reads, closing.cache, closing.tagsCache)
+  if (forget) await forgetCopies(closing.reads, closing.copy)
 }
 
 /** Deletes every copy. Each is tried even when another fails; the first failure rejects. */
 async function forgetCopies(
   reads: ReadCache,
-  cache: NotesCache,
-  tagsCache: TagsCache,
+  copy: { clear(): Promise<void> },
 ): Promise<void> {
-  const results = await Promise.allSettled([reads.clear(), cache.clear(), tagsCache.clear()])
+  const results = await Promise.allSettled([reads.clear(), copy.clear()])
   for (const result of results) if (result.status === "rejected") throw result.reason
 }
 
@@ -263,11 +292,7 @@ export async function forgetDeviceCopy(
   storage: OfflineStorage = browserStorage,
 ): Promise<void> {
   if (layer?.userId === userId) return await stopOffline({ forget: true })
-  await forgetCopies(
-    storage.openReads(userId),
-    storage.openNotes(userId),
-    storage.openTags(userId),
-  )
+  await forgetCopies(storage.openReads(userId), storage.openCopy(userId))
 }
 
 /** Sends the queued writes. Never rejects: what could not be sent stays queued. */
