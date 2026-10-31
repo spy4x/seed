@@ -2,6 +2,8 @@
 /**
  * Runs the k6 load scenarios of this folder against the local development stack, and samples
  * Postgres while each one runs: `deno task load` runs all three, `deno task load browse` one.
+ * The large-group scenarios run only when named, with a tier: `deno task load group M` or
+ * `deno task load group-reads M`, after `deno task load:group M` built that group.
  * docs/capacity.md says what they do and holds the numbers of a run.
  *
  * - The stack is the one `deno task dev` (or `deno task compose up -d kv api worker`) started from
@@ -20,6 +22,7 @@
 import { runCommand } from "@spy4x/platform/server"
 import { readEnvFile } from "../../infra/scripts/env-file.ts"
 import { containerProvider } from "../../infra/scripts/proxy-network.ts"
+import { planTier, SEARCHES, type Tier, TIERS } from "./group-plan.ts"
 
 /** The official k6 image, pinned by version and by the digest of its multi-platform index. */
 const K6_IMAGE =
@@ -27,11 +30,16 @@ const K6_IMAGE =
 
 /** The scenarios, in the order `deno task load` runs them; each is `<name>.js` here. */
 const SCENARIOS = [`browse`, `write`, `sockets`] as const
+/**
+ * The scenarios of one large group, run only when named, with the tier whose group
+ * `deno task load:group <tier>` built: `deno task load group M`.
+ */
+const GROUP_SCENARIOS = [`group`, `group-reads`] as const
 
 /** The head of the table {@link formatRow} fills. */
 const HEADER = [
-  `| Scenario | Requests | p95 | Errors | Postgres CPU (mean / max) | API CPU (mean / max) | Connections (max) | Samples |`,
-  `| -------- | -------- | --- | ------ | ------------------------- | -------------------- | ----------------- | ------- |`,
+  `| Scenario | Requests | p95 | Errors | Postgres CPU (mean / max) | API CPU (mean / max) | API memory (max) | Connections (max) | Samples |`,
+  `| -------- | -------- | --- | ------ | ------------------------- | -------------------- | ---------------- | ----------------- | ------- |`,
 ].join(`\n`)
 
 /** How often Postgres is sampled while a scenario runs. */
@@ -42,15 +50,45 @@ interface Sample {
   dbCpu: number
   /** The API container's CPU, the same way. */
   apiCpu: number
+  /** The API container's memory in MiB. */
+  apiMemory: number
   connections: number
+  /** Seconds since the measured phase began. */
+  at: number
+}
+
+/** One `LOAD_SUMMARY` line; a step of `group-reads` also says which seconds of the run it was. */
+interface Summary {
+  scenario: string
+  requests: number
+  p95Ms: number | null
+  errorRate: number | null
+  startS?: number
+  endS?: number
 }
 
 async function main(args: string[]): Promise<number> {
-  const unknown = args.filter((arg) => !(SCENARIOS as readonly string[]).includes(arg))
+  const known: readonly string[] = [...SCENARIOS, ...GROUP_SCENARIOS]
+  const tiers = args.filter((arg) => (TIERS as readonly string[]).includes(arg)) as Tier[]
+  const scenarios = args.filter((arg) => !tiers.includes(arg as Tier))
+  const unknown = scenarios.filter((arg) => !known.includes(arg))
   if (unknown.length > 0) {
-    console.error(`Unknown scenario ${unknown.join(`, `)}; choose from ${SCENARIOS.join(`, `)}`)
+    console.error(`Unknown scenario ${unknown.join(`, `)}; choose from ${known.join(`, `)}`)
     return 2
   }
+  const forGroup = scenarios.some((arg) => (GROUP_SCENARIOS as readonly string[]).includes(arg))
+  if (tiers.length > 1 || (tiers.length === 1) !== forGroup) {
+    console.error(`Name one tier (${TIERS.join(`, `)}) with group or group-reads, and only then`)
+    return 2
+  }
+  const groupEnv = tiers.length === 0 ? [] : [
+    `-e`,
+    `GROUP_ID=${planTier(tiers[0]).groupId}`,
+    `-e`,
+    `TIER=${tiers[0]}`,
+    `-e`,
+    `SEARCHES=${JSON.stringify(SEARCHES)}`,
+  ]
   const env = await readEnvFile(`./infra/envs/.env`)
   if (env.ENV !== `dev`) {
     console.error(
@@ -74,8 +112,8 @@ async function main(args: string[]): Promise<number> {
   const scripts = new URL(`.`, import.meta.url).pathname
   const rows: string[] = []
   let failed = false
-  for (const scenario of args.length > 0 ? args : SCENARIOS) {
-    console.log(`Running ${scenario}: about four minutes, sign-ups included`)
+  for (const scenario of scenarios.length > 0 ? scenarios : SCENARIOS) {
+    console.log(`Running ${scenario}: a few minutes, sign-ups included`)
     const name = `${project}-load-${scenario}-${Date.now()}`
     const run = runCommand([
       engine,
@@ -93,6 +131,7 @@ async function main(args: string[]): Promise<number> {
       `BASE_URL=http://api:8000`,
       `-e`,
       `ORIGIN=http://${env.DOMAIN}`,
+      ...groupEnv,
       K6_IMAGE,
       `run`,
       `--quiet`,
@@ -100,8 +139,8 @@ async function main(args: string[]): Promise<number> {
     ])
     const samples = await sampleWhile(run, engine, name, env)
     const result = await run
-    const line = result.stdout.split(`\n`).find((text) => text.startsWith(`LOAD_SUMMARY `))
-    if (!line) {
+    const lines = result.stdout.split(`\n`).filter((text) => text.startsWith(`LOAD_SUMMARY `))
+    if (lines.length === 0) {
       console.error(
         `${scenario} printed no summary (exit ${result.code}):\n${result.stderr.slice(-3000)}`,
       )
@@ -115,9 +154,14 @@ async function main(args: string[]): Promise<number> {
       console.error(result.stderr.slice(-2000))
       failed = true
     }
-    const summary = JSON.parse(line.slice(`LOAD_SUMMARY `.length))
-    rows.push(formatRow(summary, samples))
-    console.log(line)
+    for (const line of lines) {
+      const summary: Summary = JSON.parse(line.slice(`LOAD_SUMMARY `.length))
+      const own = summary.startS === undefined
+        ? samples
+        : samples.filter((sample) => sample.at >= summary.startS! && sample.at < summary.endS!)
+      rows.push(formatRow(summary, own))
+      console.log(line)
+    }
   }
   console.log(`\n${HEADER}`)
   for (const row of rows) console.log(row)
@@ -138,6 +182,7 @@ async function sampleWhile(
   let done = false
   run.finally(() => done = true)
   const samples: Sample[] = []
+  let measuredFrom: number | null = null
   const db = `${env.PROJECT}-db`
   const api = `${env.PROJECT}-api`
   const query = `SELECT count(*) FROM pg_stat_activity WHERE backend_type = 'client backend'`
@@ -146,31 +191,49 @@ async function sampleWhile(
     const logs = await runCommand([engine, `logs`, container])
     const text = logs.stdout + logs.stderr
     if (!text.includes(`LOAD_PHASE measure`) || text.includes(`LOAD_PHASE teardown`)) continue
+    measuredFrom ??= Date.now()
+    const at = (Date.now() - measuredFrom) / 1000
+    const format = `{{.Name}} {{.CPUPerc}} {{.MemUsage}}`
     const [stats, connections] = await Promise.all([
-      runCommand([engine, `stats`, `--no-stream`, `--format`, `{{.Name}} {{.CPUPerc}}`, db, api]),
+      runCommand([engine, `stats`, `--no-stream`, `--format`, format, db, api]),
       runCommand([engine, `exec`, db, `psql`, `-U`, env.DB_USER, `-d`, env.DB_NAME, `-tAc`, query]),
     ])
-    const cpu = new Map(
+    const usage = new Map(
       stats.stdout.trim().split(`\n`).map((row) => {
-        const [name, percent] = row.trim().split(` `)
-        return [name, Number.parseFloat(percent)]
+        const [name, percent, memory] = row.trim().split(` `)
+        return [name, { cpu: Number.parseFloat(percent), memory: mebibytes(memory ?? ``) }]
       }),
     )
     const sample = {
-      dbCpu: cpu.get(db) ?? NaN,
-      apiCpu: cpu.get(api) ?? NaN,
+      dbCpu: usage.get(db)?.cpu ?? NaN,
+      apiCpu: usage.get(api)?.cpu ?? NaN,
+      apiMemory: usage.get(api)?.memory ?? NaN,
       connections: Number.parseInt(connections.stdout),
+      at,
     }
     if (Object.values(sample).every(Number.isFinite)) samples.push(sample)
   }
   return samples
 }
 
+/** A memory figure of `docker stats` (`123.4MiB`, `1.2GiB`, `900kB`) in MiB; `NaN` when unknown. */
+function mebibytes(text: string): number {
+  const match = /^([\d.]+)\s*([kKMG]i?B|B)$/.exec(text.trim())
+  if (!match) return NaN
+  const scale: Record<string, number> = {
+    B: 1 / 1024 / 1024,
+    kB: 1000 / 1024 / 1024,
+    KiB: 1 / 1024,
+    MB: 1000 * 1000 / 1024 / 1024,
+    MiB: 1,
+    GB: 1000 ** 3 / 1024 / 1024,
+    GiB: 1024,
+  }
+  return Number.parseFloat(match[1]) * (scale[match[2]] ?? NaN)
+}
+
 /** One row of the {@link HEADER} table: a scenario's k6 numbers and its container samples. */
-function formatRow(
-  summary: { scenario: string; requests: number; p95Ms: number | null; errorRate: number | null },
-  samples: Sample[],
-): string {
+function formatRow(summary: Summary, samples: Sample[]): string {
   const meanMax = (values: number[]) =>
     values.length === 0
       ? `n/a`
@@ -190,6 +253,9 @@ function formatRow(
     errors,
     meanMax(samples.map((sample) => sample.dbCpu)),
     meanMax(samples.map((sample) => sample.apiCpu)),
+    samples.length === 0
+      ? `n/a`
+      : `${Math.max(...samples.map((sample) => sample.apiMemory)).toFixed(0)} MiB`,
     connections,
     samples.length,
     ``,
