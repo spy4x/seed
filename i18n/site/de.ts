@@ -119,7 +119,7 @@ export default {
   "NewsletterOff.releases": "Releases auf GitHub",
   "CtaBand.title": "In einer Minute in Aktion sehen",
   "CtaBand.lead":
-    "Die Demo ist genau die App, die du am ersten Tag bekommst. Öffne sie ohne Registrierung und schau dich in Gruppen voller Beispielnotizen um.",
+    "Die Demo ist genau die App, die du am ersten Tag bekommst. Öffne sie ohne Registrierung: Dein Gastkonto startet mit Beispieldaten.",
   "Founders.title": "Kein Entwickler? Ich baue dein Produkt auf Seed.",
   "Founders.text":
     "Ich bin Anton und entwickle Seed. Gründer beauftragen mich, aus einer Idee ein fertiges Produkt zu machen, für das sich Leute registrieren und bezahlen können. Weil Registrierung, Gruppen und Zahlungen schon fertig sind, fließt dein Budget in das, was dein Produkt besonders macht.",
@@ -185,14 +185,14 @@ export default {
     "Ja. Die MIT-Lizenz erlaubt das, und genau so nutze ich es selbst. Deine Kunden brauchen keine eigene Lizenz.",
   "HomeFaq.productionQuestion": "Ist es bereit für den Produktivbetrieb?",
   "HomeFaq.productionAnswer":
-    "Die Teile unter „Funktioniert heute“ haben Tests in der CI: Jeder Pull Request führt die Tests für Anmeldung, Profil, Notizen und Gruppen aus, und nach jedem Merge läuft die ganze Suite. Seed als Ganzes ist aber noch in Arbeit. Lies die Statusliste, bevor du dich auf einen Teil verlässt.",
+    "Die Teile unter „Funktioniert heute“ haben Tests in der CI: Jeder Pull Request führt die Tests für Anmeldung, Profil, Notizen und Gruppen aus, und nach jedem Merge läuft die ganze Suite. Seed ist heute schon nutzbar und wächst weiter. Lies die Statusliste, bevor du dich auf einen Teil verlässt.",
   "HomeHero.badge": "Open Source · MIT · Deno 2 + Postgres",
   "HomeHero.title": "Das Fundament für dein SaaS, schon fertig gebaut.",
   "HomeHero.lead":
     "Seed ist ein kostenloser SaaS-Starter unter MIT-Lizenz: mit Anmeldung und Zwei-Faktor-Schutz (2FA), Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit, einer Offline-App und einem Adminbereich. Du bringst es mit Docker Compose auf einen einzigen gemieteten Linux-Server.",
   "HomeHero.github": "Auf GitHub ansehen",
   "HomeHero.status":
-    "Seed ist noch in Arbeit und wird öffentlich entwickelt: <status>Sieh dir an, was heute schon funktioniert</status>.",
+    "Seed ist heute schon nutzbar und wird öffentlich entwickelt: <status>Sieh dir an, was heute schon funktioniert</status>.",
   "HomeHero.quickStart": "Schnellstart",
   "HomeHero.initNote":
     "<code>init</code> schreibt <code>infra/envs/.env</code> mit allen Secrets. Oder frag deinen KI-Agenten: <prompt></prompt>.",
@@ -253,7 +253,7 @@ export default {
   "HomeStatus.eyebrow": "Ehrlicher Stand",
   "HomeStatus.title": "Wo es heute steht",
   "HomeStatus.lead":
-    "Seed ist noch in Arbeit. Hier steht genau, was funktioniert und was noch nicht.",
+    "Seed ist heute schon nutzbar und wird öffentlich entwickelt. Hier steht genau, was funktioniert und was noch nicht.",
   "HomeStatus.works": "Funktioniert heute",
   "HomeStatus.notBuilt": "Noch nicht gebaut",
   "HomeStatus.follow": "Fortschritt auf GitHub verfolgen",
@@ -532,7 +532,10 @@ export default {
     "Deine Operatoren finden eine Person über Name oder Adresse und sehen ihre Anmeldemethoden, Sitzungen, Gruppen und ihren Verlauf. Am selben Ort verwalten sie Gruppen, erstatten Zahlungen, kümmern sich um die Abonnenten des Newsletters, sehen jeden Hintergrundjob, starten einen fehlgeschlagenen neu und prüfen, ob das System gesund ist.",
   "FeatureAdmin.watch": "In {seconds} Sekunden ansehen",
   "FeatureAdmin.fact1": "Eine eigene App auf einem eigenen Host, mit eigenem Sitzungscookie",
-  "FeatureAdmin.fact2": "Neun Module, vom Dashboard bis zu den API-Tokens",
+  "FeatureAdmin.fact2": {
+    "one": "{count} Modul, vom Dashboard bis zu den API-Tokens",
+    "other": "{count} Module, vom Dashboard bis zu den API-Tokens",
+  },
   "FeatureAdmin.fact3": "Riskante Aktionen fragen vorher nach, und jede Aktion landet im Protokoll",
   "FeatureAdmin.notYet1": "Sich als eine Person anmelden, um zu sehen, was sie sieht",
   "FeatureAdmin.code": "Code der Admin-App lesen",
@@ -575,7 +578,7 @@ export default {
   "FeatureQuality.eyebrow": "Qualität",
   "FeatureQuality.title": "Getestet, wo es darauf ankommt",
   "FeatureQuality.lead":
-    "Stand 16. Oktober 2026: 34 Browser-Testsuites für die App, dazu Unit- und Ansichtstests, alle in der CI. Jede Änderung geht durch einen Pull Request und ein Review, bevor sie gemergt wird.",
+    "Stand {date}: 34 Browser-Testsuites für die App, dazu Unit- und Ansichtstests, alle in der CI. Jede Änderung geht durch einen Pull Request und ein Review, bevor sie gemergt wird.",
   "FeatureQuality.fact1": "Browser-Tests mit Playwright, gegen die echte API und Datenbank",
   "FeatureQuality.fact2": "Unit- und Ansichtstests direkt neben dem Code, den sie testen",
   "FeatureQuality.fact3": "Integrationstests gegen Postgres",
@@ -609,7 +612,7 @@ export default {
   "FeaturesHero.lead":
     "Seed ist ein kostenloser SaaS-Starter unter MIT-Lizenz mit Anmeldung per E-Mail, Google und GitHub, Passkeys, Magic Links, Gastkonten, 2FA, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit-Updates, einer Offline-App, einem Adminbereich, Monitoring und optionalen täglichen, verschlüsselten Backups. Jeder Abschnitt unten verlinkt auf seinen Code.",
   "FeaturesHero.note":
-    "Seed ist noch in Arbeit und wird öffentlich entwickelt. Was fehlt, ist neben der betroffenen Funktion mit „Noch nicht gebaut“ markiert, mit einem Link zum Issue, wenn es eines gibt.",
+    "Seed ist heute schon nutzbar und wird öffentlich entwickelt. Was fehlt, ist neben der betroffenen Funktion mit „Noch nicht gebaut“ markiert, mit einem Link zum Issue, wenn es eines gibt.",
   "Features.compare": "Seed im Vergleich",
   "FeaturesFaq.title": "Kann Seed das?",
   "FeatureSection.issue": "Issue #{number}",
@@ -648,35 +651,30 @@ export default {
     "Seed bringt einen Adminbereich auf einem eigenen Host mit. Deine Operatoren finden eine Person, sehen ihre Anmeldemethoden, Sitzungen und Gruppen und helfen ihr: eine Sitzung beenden, einen Link zum Zurücksetzen des Passworts schicken, eine Zahlung erstatten. Riskante Aktionen fragen vorher nach, und jede Aktion landet im Protokoll.",
   "AdminTour.code": "Code der Admin-App lesen",
   "AdminTour.dashboard": "Dashboard",
-  "AdminTour.dashboardText":
-    "Das Produkt auf einen Blick, über die letzten 30 Tage: Personen, Registrierungen, wer aktiv ist, Gruppen und Notizen.",
+  "AdminTour.dashboardText": "Personen, Registrierungen, Aktive, Gruppen und Notizen über 30 Tage.",
   "AdminTour.stats": "Statistik",
-  "AdminTour.statsText":
-    "Die Besuche der Website aus deinem Umami: woher sie kommen, welche Artikel bestellt oder nur angesehen werden und welcher Bestell-Button geklickt wird. Nur Summen, nie einzelne Besucher.",
+  "AdminTour.statsText": "Website-Besuche und Bestellklicks aus deinem Umami. Nur Summen.",
   "AdminTour.users": "Personen",
-  "AdminTour.usersText":
-    "Alle mit einem Konto. Öffne eine Person, um sie zu sperren, eine Sitzung zu beenden, einen Link zum Zurücksetzen des Passworts zu schicken oder die angeforderten Kopien ihrer Daten zu sehen.",
+  "AdminTour.usersText": "Person finden, sperren, Sitzung beenden oder Reset-Link schicken.",
   "AdminTour.groups": "Gruppen",
-  "AdminTour.groupsText":
-    "Jede Gruppe mit Inhaber, Mitgliedern und Dateien. Verwalte Mitglieder und Einladungen, finde und entferne eine Datei oder übertrage eine Gruppe an ein anderes Mitglied.",
+  "AdminTour.groupsText": "Mitglieder, Einladungen, Dateien. Datei löschen oder Inhaber wechseln.",
   "AdminTour.billing": "Abrechnung",
-  "AdminTour.billingText":
-    "Wer zahlt, was gezahlt wird und was du verdienst. Erstatte eine Zahlung, schenke Zeit oder kündige ein Abo.",
+  "AdminTour.billingText": "Wer zahlt, was du verdienst. Erstatten, Gratiszeit geben, kündigen.",
   "AdminTour.newsletter": "Newsletter",
   "AdminTour.newsletterText":
-    "Wer den Newsletter bekommt und was verschickt wurde. Exportiere die Liste als CSV.",
+    "Wer abonniert hat und was verschickt wurde. Liste als CSV exportieren.",
+  "AdminTour.blog": "Blog",
+  "AdminTour.blogText": "Beiträge für die Website in jeder Sprache, vom Entwurf bis online.",
   "AdminTour.contactLinks": "Kontaktlinks",
-  "AdminTour.contactLinksText":
-    "Wo man dich erreicht: Telegram, Zalo, WhatsApp, Telefon, E-Mail. Der Footer der Website zeigt sie innerhalb einer Minute, ganz ohne Deployment.",
+  "AdminTour.contactLinksText": "Wo man dich erreicht, im Footer der Website, ohne Deploy.",
   "AdminTour.catalog": "Katalog",
   "AdminTour.catalogText":
-    "Artikel für einen Shop, aus, bis du ihn einschaltest: Namen und Texte in jeder Sprache, ein Preis, Farben, Größen mit Größentabelle, was ausverkauft ist, und Fotos, die du auf einmal hochlädst und per Drag-and-drop sortierst. Ein kurzer Link pro Artikel und Ort, an dem du ihn teilst, gezählt in Umami.",
+    "Ein optionaler Shop: Artikel, Preise, Größen, Fotos und Links zum Teilen.",
   "AdminTour.audit": "Protokoll",
-  "AdminTour.auditText":
-    "Jede Anmeldung, Kontoänderung, Gruppenänderung und Operator-Aktion, die neueste zuerst. Exportiere es als CSV.",
+  "AdminTour.auditText": "Jede Anmeldung, Änderung und Operator-Aktion. Export als CSV.",
   "AdminTour.jobs": "Jobs",
   "AdminTour.jobsText":
-    "Jeder Hintergrundjob und wie jeder Lauf ausging. Starte einen fehlgeschlagenen Job neu, führe einen sofort aus oder brich ihn ab.",
+    "Jeder Hintergrund-Job. Starte einen fehlgeschlagenen neu oder brich ihn ab.",
   "AdminTour.system": "System",
   "AdminTour.systemText": "Der Zustand von Datenbank, Cache, Job-Warteschlange und Backup.",
   "AdminTour.tokens": "API-Tokens",
@@ -702,7 +700,10 @@ export default {
   "AdminTour.meta": "{seconds} Sekunden · {sound} · Beispieldaten",
   "AdminTour.transcriptJump": "Lies, was das Video zeigt",
   "AdminTour.modulesEyebrow": "Module",
-  "AdminTour.modulesTitle": "Neun Module, eines pro Aufgabe",
+  "AdminTour.modulesTitle": {
+    "one": "{count} Modul, eines pro Aufgabe",
+    "other": "{count} Module, eines pro Aufgabe",
+  },
   "AdminTour.modulesLead":
     "Jedes Modul ist ein Eintrag in der Icon-Leiste des Adminbereichs. Eigene fügst du hinzu, indem du eines kopierst: Die Schritte stehen in <doc>docs/admin-modules.md</doc>.",
   "AdminTour.rolesEyebrow": "Rollen",

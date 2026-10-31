@@ -1418,7 +1418,7 @@ export default {
   "AdminNewsletter.retry": "Try again",
   "AdminNewsletter.loadingNumbers": "Loading the numbers",
   "AdminNewsletter.keyNumbers": "Key numbers",
-  "AdminNewsletter.confirmedHint": "Confirmed, getting every issue",
+  "AdminNewsletter.confirmedHint": "Confirmed, getting the issues in their language",
   "AdminNewsletter.pendingHint": "Confirmation email on its way",
   "AdminNewsletter.joined": {
     "one": "Joined, last {count} day",

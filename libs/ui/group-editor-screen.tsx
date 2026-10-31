@@ -167,7 +167,7 @@ export interface GroupEditorScreenProps {
    * Left out, or with billing off, it says nothing about plans.
    */
   trial?: PersonTrial | null
-  /** The Plan and billing tab's content (`GroupBillingPanel`). */
+  /** The Billing tab's content (`GroupBillingPanel`). */
   billing?: ComponentChildren
   /** The Activity tab's content (`GroupActivityPanel`), for the admins and the owner. */
   activity?: ComponentChildren
@@ -226,7 +226,7 @@ function back(t: Translator<string>) {
  * form with "Cancel" and "Create group". An existing group shows its mark, name and the person's
  * role, then four tabs, each at its own address: General (the form, or read-only text for someone
  * who may not change it, with the footer only while a field differs from what is saved), Members
- * (with "Invite" in the header for the owner and admins), Plan and billing, and Activity (for the
+ * (with "Invite" in the header for the owner and admins), Billing, and Activity (for the
  * admins and the owner). Its "More actions" menu switches to the group, downloads the owner's
  * export file, and holds transfer, move, leave and delete, each behind a dialog.
  */

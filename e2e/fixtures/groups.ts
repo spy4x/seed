@@ -35,7 +35,7 @@ export async function openGroup(page: Page, name: string): Promise<void> {
 const TAB_PATHS = {
   "General": "",
   "Members": "/members",
-  "Plan and billing": "/billing",
+  "Billing": "/billing",
   "Activity": "/activity",
 }
 

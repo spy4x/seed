@@ -470,7 +470,7 @@ interface Screen {
   clip?: Clip
 }
 
-/** The group's Plan and billing tab, scrolled so the tab's title sits at the top. */
+/** The group's Billing tab, scrolled so the tab's title sits at the top. */
 async function openBilling(page: Page, seeded: Seeded): Promise<void> {
   await gotoApp(
     page,
@@ -520,7 +520,7 @@ const SCREENS: Screen[] = [
   },
   {
     // The home page's billing card: the plan alone, on a phone, from the canvas above its
-    // "Plan and billing" title to the canvas below the "Pro plan" card.
+    // "Billing" title to the canvas below the "Pro plan" card.
     name: "billing-plan",
     forms: ["mobile"],
     open: openBilling,

@@ -51,7 +51,7 @@ async function open(tab: string): Promise<string[]> {
 }
 
 describe("GroupPage", () => {
-  it("opens the old plans page's address on the Plan and billing tab, in its place", async () => {
+  it("opens the old plans page's address on the Billing tab, in its place", async () => {
     expect(await open("pricing")).toEqual([`/groups/${groupId}/billing`])
   })
 

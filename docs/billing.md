@@ -5,7 +5,7 @@ subscription is on the Free plan. Stripe owns the money and the subscription; th
 what Stripe's webhooks report, and never decides a plan on its own.
 
 The provider code comes from `jsr:@spy4x/billing` (`createStripeBilling`). In the SPA, billing lives
-on the group page's **Plan and billing** tab (`/groups/:groupId/billing`, `GroupBillingPanel` in
+on the group page's **Billing** tab (`/groups/:groupId/billing`, `GroupBillingPanel` in
 `libs/ui/billing-screen.tsx`): every member reads the plan there, and only the owner gets the
 checkout and portal buttons. The old plans page, `/groups/:groupId/pricing`, opens that tab.
 
@@ -59,7 +59,7 @@ invitation reserves no seat; accepting it does.
 more member adds to the bill and a box to accept it (`SeatPriceConfirm`). A create without
 `acceptSeatPrice: true` is refused with `SEAT_PRICE_NOT_ACCEPTED`, so the confirmation holds without
 JavaScript too. Only the owner and admins, who may create invitations, are asked; anyone else learns
-nothing about the bill from the answer. The Plan and billing tab shows the price times the members.
+nothing about the bill from the answer. The Billing tab shows the price times the members.
 
 ## Failed payments
 
@@ -120,7 +120,7 @@ handover trial after a transfer of ownership ("Transfer of ownership" below) car
 paid time and does not use the new owner's trial. The checkout decides on the server; the client
 cannot ask for a trial. `GET /api/billing/trial` answers the signed-in person's own `{ enabled,
 used, groupId, days }`: the page that creates a group says from it whether a trial comes with the
-new group, and the Plan and billing tab still offers the trial to the group that holds it, whose
+new group, and the Billing tab still offers the trial to the group that holds it, whose
 checkout claims it again. The admin panel shows when a person's trial was used, on the person's Overview tab.
 
 `BILLING_TRIAL_REQUIRES_CARD` decides whether the trial's checkout asks for a card. It is `true`
@@ -202,7 +202,7 @@ old owner's customer, and never lets the old owner's card be charged again witho
    transaction, under the group lock (`handOverBilling` in `libs/server/billing/handover.ts`).
 2. **The transfer records the old customer as handed over, for good**
    (`billing_handed_over_customers`, with the owner who paid with it). From then on the app opens no
-   portal for it: the new owner gets no portal buttons on the Plan and billing tab and
+   portal for it: the new owner gets no portal buttons on the Billing tab and
    the portal answers 409 `NO_SUBSCRIPTION`, and the old owner, now an admin, may not open it
    either. Nobody sees the old owner's billing details through the app. No subscription of that
    customer ever takes the group back, even one that pays later (a past-due invoice paid on retry,
@@ -213,7 +213,7 @@ old owner's customer, and never lets the old owner's card be charged again witho
    (the seat sync and the nightly drift check skip a subscription whose own customer is handed
    over). Its mails, such as "plan ending" or "payment failed", go to the old owner who pays for it,
    never to the new owner.
-4. **The new owner checks out with a customer of their own.** The Plan and billing tab shows them
+4. **The new owner checks out with a customer of their own.** The Billing tab shows them
    the free plan's checkout button, with no notice about the old subscription. Their checkout carries no
    customer, so Stripe makes a new one, and starts with a trial that lasts until the old plan ends
    (`handoverTrialDays`, whole days rounded up), with a card always asked. The new owner is first
@@ -341,7 +341,7 @@ that neither misses one.
 
 ## Flow
 
-1. The owner opens the group's **Plan and billing** tab and presses **Start 14-day free trial** (or
+1. The owner opens the group's **Billing** tab and presses **Start 14-day free trial** (or
    **Upgrade to Pro** once their trial is used). The API asks Stripe for a checkout session with the
    group's id as its reference and sends the browser there.
 2. Stripe takes the card (a trial charges nothing yet) and returns the browser to the tab, at
@@ -410,7 +410,7 @@ With `ENV=dev` and no `BILLING_PROVIDER`, the API runs the development provider
 
 - A checkout sends the browser straight back to the success URL, as if paid. Nothing changes until
   a webhook arrives.
-- The portal sends the browser back to the group's Plan and billing tab.
+- The portal sends the browser back to the group's Billing tab.
 - Webhooks are verified exactly as Stripe's are, with the public secret
   `whsec_template_development_only` and the price `price_fake_pro` for Pro. Anyone can sign a
   webhook with it, so a server running with `ENV=dev` and no `BILLING_PROVIDER` accepts webhooks
@@ -439,7 +439,7 @@ provider, so its public secret cannot sign a real event.
   since no webhook arrives at that instant. Every check reads the plan with the current time, so
   the cut-off holds; an open page shows the old plan until it reads the billing again (a reload, or
   the next change of the group).
-- The failed-payment notice is on the Plan and billing tab only, not on every page of the group.
+- The failed-payment notice is on the Billing tab only, not on every page of the group.
 - The trial is claimed when the owner opens Stripe's checkout, not when the trial starts. An owner
   who opens the checkout of one group, closes it, and then checks out another group gets no trial
   there; the first group keeps it, also when it is deleted later.

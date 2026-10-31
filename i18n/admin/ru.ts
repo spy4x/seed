@@ -1549,7 +1549,7 @@ export default {
   "AdminNewsletter.retry": "Повторить",
   "AdminNewsletter.loadingNumbers": "Загружаем цифры",
   "AdminNewsletter.keyNumbers": "Ключевые показатели",
-  "AdminNewsletter.confirmedHint": "Подтвердили и получают каждый выпуск",
+  "AdminNewsletter.confirmedHint": "Подтвердили и получают выпуски на своём языке",
   "AdminNewsletter.pendingHint": "Письмо для подтверждения отправлено",
   "AdminNewsletter.joined": {
     "one": "Подписались за последний {count} день",

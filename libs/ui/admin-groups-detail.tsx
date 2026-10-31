@@ -362,7 +362,7 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
               : t.t(`AdminGroup.noSubscription`)}
           </Fact>
           {detail.billing && (
-            // The same subscription the owner sees on the group's Plan and billing tab.
+            // The same subscription the owner sees on the group's Billing tab.
             <Fact label={t.t(`AdminGroup.billing`)}>
               <Link
                 href={ADMIN_BILLING_PATHS.customer(group.id)}
