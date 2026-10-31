@@ -351,3 +351,37 @@ Execution Time: 100.341 ms
 Finding the matches takes 25 ms; ranking the 30,938 of them takes the rest.
 
 </details>
+
+### On devices
+
+The benchmark page (`/benchmark` in the SPA, in development builds and on the demo) measures the
+same group on the device it runs on: the download, saving the copy, starting offline from it, the
+first notes on screen, scrolling, a local search and filter, memory and storage. Sign in, make your
+account a member of a tier with `deno task load:group <tier> --member <email>`, open the page,
+press Run benchmark and keep the tab in front. Copy results gives one line of JSON; add a row here
+from it.
+
+Measure a production build (the demo, or `E2E_SPA=built`). The Vite dev server's hot-reload hook
+makes a long list far slower than it is, so a dev-server run says nothing about a device.
+
+Tier M (9,984 notes), 2026-10-31, production build. The PC is a 16-core developer machine in
+headless Chromium 143. The low-end phone is the same Chromium at 390 × 844 with touch and the CPU
+slowed 6 times; its JSON line keeps the desktop user agent.
+
+| Measure (budget)              | PC         | Emulated low-end phone |
+| ----------------------------- | ---------- | ---------------------- |
+| Download (10 s on 4G)         | 0.64 s     | 1.48 s                 |
+| Save to this device           | 3.1 s      | 2.9 s                  |
+| Start offline (1 s)           | 0.35 s     | 0.69 s                 |
+| First notes (1 s)             | **5.3 s**  | **41.5 s**             |
+| Scroll (5% of frames dropped) | **95.1%**  | **99.8%**              |
+| Search (100 ms)               | **138 ms** | **680 ms**             |
+| Filter (100 ms)               | 1.3 ms     | 6.1 ms                 |
+| Memory used by the page       | 679 MB     | 822 MB                 |
+| Storage used on this device   | 17.9 MB    | 26.3 MB                |
+
+Bold is over budget. Downloading and storing a 10,000-note group is cheap; drawing it is not. The
+notes list draws every note of the group at once, so the first notes, scrolling and search grow
+with the group and break first on every device, long before the server does
+([#596](https://github.com/spy4x/seed/issues/596)). Real phones, tablets and laptops are not
+measured yet.
