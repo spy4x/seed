@@ -28,6 +28,7 @@ import { createMutationGuards } from "../../apps/api/middlewares/mutation-guards
 import type { APIContext } from "../../apps/api/_types.ts"
 import { SoftPasskey } from "./soft-authenticator.ts"
 import { apiError } from "../../apps/api/_testing/api-error.ts"
+import { notified, sessionsOfRows, subscribeNewest } from "./push-rows.ts"
 
 /**
  * Passkeys (#222) through the real routes and sign-in against a real Postgres: adding one, signing
@@ -400,6 +401,46 @@ Deno.test("a removed passkey signs its devices out and no longer signs in", asyn
       message: PASSKEY_UNKNOWN,
       details: { unknown: true },
     })
+  })
+})
+
+Deno.test("a removed passkey stops the notifications of the devices that signed in with it", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const { id, visitor } = await passwordAccount(app, "ada@example.com")
+    const kept = await subscribeNewest(sql, id)
+    const passkey = new SoftPasskey(ORIGIN)
+    const { keyId } = await (await addPasskey(visitor, passkey)).json()
+    expect((await passkeySignIn(browser(app), passkey)).status).toBe(200)
+    await subscribeNewest(sql, id)
+
+    const removed = await visitor.delete(`/auth/methods/${keyId}`, { password: PASSWORD })
+
+    expect(removed.status).toBe(200)
+    expect(await notified(sql, id)).toEqual([kept.deviceId])
+  })
+})
+
+Deno.test("confirming with a passkey keeps this browser's notifications on its new session", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const { id, visitor } = await passwordAccount(app, "ada@example.com")
+    const passkey = new SoftPasskey(ORIGIN)
+    expect((await addPasskey(visitor, passkey)).status).toBe(201)
+    const before = await subscribeNewest(sql, id)
+
+    const options = await visitor.post("/auth/passkeys/confirm/options")
+    const confirmed = await visitor.post(
+      "/auth/passkeys/confirm",
+      await passkey.get(await options.json()),
+    )
+
+    expect(confirmed.status).toBe(200)
+    const [session] = await sql<
+      { id: number }[]
+    >`SELECT id FROM auth_sessions WHERE user_id = ${id}`
+    expect(session.id).not.toBe(before.sessionId)
+    expect(await sessionsOfRows(sql, id)).toEqual({ [before.deviceId]: session.id })
   })
 })
 

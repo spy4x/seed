@@ -38,6 +38,7 @@ import { issuePasswordReset } from "../../libs/server/auth/password-reset.ts"
 import { createSignedPayloadCodec } from "@spy4x/platform/signed-payload"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { checkedError } from "../../apps/api/_testing/api-error.ts"
+import { notified, sessionsOfRows, subscribeNewest } from "./push-rows.ts"
 
 /**
  * Sign-in with Google and GitHub (#141) and the question before a provider signs anyone up (#142),
@@ -786,6 +787,49 @@ Deno.test("signing in with a provider ends the session the browser had before", 
   })
 })
 
+Deno.test("a second person signing in with a provider stops the first person's notifications on that browser", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, {
+      bob: { sub: "3003", email: "bob@example.com", verified: true },
+    })
+    const shared = browser(app)
+    const adaId = await provenPasswordAccount(app, shared, "ada@example.com")
+    await subscribeNewest(sql, adaId)
+    const phone = browser(app)
+    expect((await phone.post("/password/sign-in", { email: "ada@example.com" })).status).toBe(200)
+    const onPhone = await subscribeNewest(sql, adaId)
+
+    // Bob creates his account on Ada's browser without signing her out first.
+    await shared.through("google", "bob")
+    expect((await shared.post("/auth/sign-up/confirm")).status).toBe(201)
+    expect(await notified(sql, adaId)).toEqual([onPhone.deviceId])
+
+    // And the same when Bob, now known, signs in over a session of hers.
+    const again = browser(app)
+    expect((await again.post("/password/sign-in", { email: "ada@example.com" })).status).toBe(200)
+    await subscribeNewest(sql, adaId)
+    expect(target(await again.through("google", "bob"))).toBe("/")
+    expect(await notified(sql, adaId)).toEqual([onPhone.deviceId])
+  })
+})
+
+Deno.test("the same person signing in with a provider again keeps this browser's notifications", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    const visitor = browser(app)
+    const adaId = await provenPasswordAccount(app, visitor, "ada@example.com")
+    const before = await subscribeNewest(sql, adaId)
+
+    expect(target(await visitor.through("google", "ada"))).toBe("/")
+
+    // The row now belongs to the browser's new session, so ending the others keeps it.
+    const [session] = await sql<{ id: number }[]>`
+      SELECT id FROM auth_sessions WHERE user_id = ${adaId}`
+    expect(session.id).not.toBe(before.sessionId)
+    expect(await sessionsOfRows(sql, adaId)).toEqual({ [before.deviceId]: session.id })
+  })
+})
+
 Deno.test("a spent rate limit or a failure sends the person to the sign-in page with a reason", async () => {
   await withSchema(async (sql) => {
     // The refusal as a response of its own: nothing is left on the request for the redirect.
@@ -1401,6 +1445,28 @@ Deno.test("unlinking the method this device signed in with signs it out", async 
     expect([...withGoogle.cookies.keys()].filter((name) => !name.startsWith("oauth_")))
       .toEqual([])
     expect((await withGoogle.get("/auth/methods")).status).toBe(401)
+  })
+})
+
+Deno.test("unlinking a provider stops the notifications of the devices that signed in with it", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    const withPassword = browser(app)
+    const ownerId = await provenPasswordAccount(app, withPassword, "ada@example.com")
+    const kept = await subscribeNewest(sql, ownerId)
+    const withGoogle = browser(app)
+    await withGoogle.through("google", "ada")
+    await subscribeNewest(sql, ownerId)
+    const bobId = await provenPasswordAccount(app, browser(app), "bob@example.com")
+    const bobs = await subscribeNewest(sql, bobId)
+    const google = (await methodsOf(withGoogle)).methods.find((method) => method.kind === "google")!
+
+    const answer = await withPassword.delete(`/auth/methods/${google.id}`, { password: PASSWORD })
+
+    expect(answer.status).toBe(200)
+    expect(await notified(sql, ownerId)).toEqual([kept.deviceId])
+    // Someone else's notifications are untouched.
+    expect(await notified(sql, bobId)).toEqual([bobs.deviceId])
   })
 })
 
