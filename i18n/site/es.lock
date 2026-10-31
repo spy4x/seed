@@ -470,7 +470,7 @@ HomeFeatures.realtimeAlt	6dc2a801fa0c11f7
 HomeFeatures.realtimeLink	ed86554e74be0b75
 HomeFeatures.realtimeText	46cf28591165ce49
 HomeFeatures.realtimeTitle	556d828f508f78a1
-HomeFeatures.signInAlt	bfd5a9716c9c4828
+HomeFeatures.signInAlt	d318f55d068d6d1f
 HomeFeatures.signInLink	a18b5a371b48646b
 HomeFeatures.signInText	65d9c0bc89036728
 HomeFeatures.signInTitle	e9d3d56a1e0a0283
@@ -491,8 +491,7 @@ HomeNewsletter.hint	8cb102e8aeca4523
 HomeNewsletter.lead	0e78f3d7aa1fc9ff
 HomeNewsletter.title	ce8956d18546cb26
 HomeProof.licence	823dc3e6ed0bd202
-HomeProof.pulls	330890de3395848e
-HomeProof.tests	19a33d346458347e
+HomeProof.tests	bf9ed71c7eba8e03
 HomeQuickStart.agent	49c9be36e91fb9d6
 HomeQuickStart.needs	20fdfb9c4323773c
 HomeQuickStart.terminal	e0926fdac700b094

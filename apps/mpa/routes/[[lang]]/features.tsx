@@ -126,7 +126,7 @@ function tiers({ t, href, rich, language }: Site): readonly Tier[] {
           ],
           code: { label: t.t(`FeatureTeams.code`), href: source(`libs/domain/groups/`) },
           visual: (
-            <WindowFrame variant="browser" title={appAddress(`/groups`)}>
+            <WindowFrame variant="browser" title={appAddress(`/groups/…/activity`)}>
               <Shot
                 name="activity"
                 alt={t.t(`FeatureTeams.alt`)}

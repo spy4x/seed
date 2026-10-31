@@ -138,8 +138,7 @@ export default {
   "Home.title": "Seed: free open-source SaaS starter and boilerplate",
   "Home.description":
     "Free, MIT-licensed SaaS starter: sign-in with 2FA, groups with roles, per-member Stripe billing, realtime, offline. Deno, Postgres, Docker Compose.",
-  "HomeProof.tests": "browser test suites and test files run in CI",
-  "HomeProof.pulls": "pull requests merged since January 2026, each through review",
+  "HomeProof.tests": "test files in the apps and libraries, all run in CI",
   "HomeProof.licence": "licence: no account, no paywall",
   "HomeStatus.signIn":
     "Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, passkeys, magic links, 2FA with an authenticator app",
@@ -198,7 +197,7 @@ export default {
   "HomeFeatures.signInTitle": "Sign-in, done",
   "HomeFeatures.signInLink": "How sign-in works",
   "HomeFeatures.signInAlt":
-    "The security page of a profile: the sign-in methods, two-factor authentication (2FA) and the open sessions.",
+    "The security page of a profile: the password, an Add a passkey button, two-factor sign-in turned on, and the top of the list of signed-in devices.",
   "HomeFeatures.signInText":
     "Email and password with verification codes, password reset, Google and GitHub sign-in, passkeys, sign-in links by email, guest accounts, and 2FA with an authenticator app. Sessions you can see and end.",
   "HomeFeatures.billingTitle": "Per-member billing",

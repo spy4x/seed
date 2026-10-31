@@ -29,6 +29,7 @@ import { Band } from "../components/band.tsx"
 import { CtaBand } from "../components/cta-band.tsx"
 import { FoundersHandoff } from "../components/founders-handoff.tsx"
 import { ProofStrip } from "../components/proof-strip.tsx"
+import { TEST_FILE_COUNT } from "../repo-facts.ts"
 import { SectionIntro } from "../components/section-intro.tsx"
 import { PairShot } from "../components/features-visuals.tsx"
 import { Shot } from "../components/shot.tsx"
@@ -59,16 +60,20 @@ export function homeHead(t: Translator<string>): { title: string; description: s
   return { title: t.t(`Home.title`), description: t.t(`Home.description`) }
 }
 
+/** The day the home page's content last changed: the sitemap's `lastmod`. Change it with it. */
+export const HOME_UPDATED = `2026-10-31`
+
 /** The home page's head in English, for the page list and `llms.txt`. */
 export const HOME_HEAD = homeHead(siteEnglishText())
 
 /**
- * Facts a visitor can check in the repository. Counted on 2026-10-16: `ls e2e/*.e2e.ts`,
- * `git ls-files '*.test.ts*'` and the merged pull requests on GitHub.
+ * Facts a visitor can check in the repository. A number is counted when the site is built
+ * (`repo-facts.ts`), never typed here, and is left out when nothing counted it.
  */
 const PROOF = [
-  { value: `34 · 232`, label: `HomeProof.tests` },
-  { value: `208`, label: `HomeProof.pulls` },
+  ...(TEST_FILE_COUNT === undefined
+    ? []
+    : [{ value: `${TEST_FILE_COUNT}`, label: `HomeProof.tests` }]),
   { value: `MIT`, label: `HomeProof.licence` },
 ] as const
 
@@ -82,6 +87,22 @@ export const QUICK_START = [
   `deno task init`,
   `deno task dev`,
 ] as const
+
+/**
+ * The quick start in a terminal, one command per line. A command too long for a phone wraps under
+ * its own start, past the `$`, instead of running off the window's edge.
+ */
+function QuickStartLines(): JSX.Element {
+  return (
+    <TerminalText>
+      {QUICK_START.map((line) => (
+        <span key={line} class="block whitespace-pre-wrap ps-[2ch] -indent-[2ch]">
+          {`$ ${line}`}
+        </span>
+      ))}
+    </TerminalText>
+  )
+}
 
 /**
  * What a reader can paste into an AI agent instead of typing the quick start: English in every
@@ -211,7 +232,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
                 <span>{rich(`HomeHero.initNote`, { code, prompt: () => <AiPrompt /> })}</span>
               }
             >
-              <TerminalText>{QUICK_START.map((line) => `$ ${line}`).join(`\n`)}</TerminalText>
+              <QuickStartLines />
             </WindowFrame>
             <WindowFrame
               variant="browser"
@@ -429,7 +450,7 @@ function QuickStart(): JSX.Element {
           title={t.t(`HomeQuickStart.terminal`)}
           class="min-w-0 lg:col-span-7"
         >
-          <TerminalText>{QUICK_START.map((line) => `$ ${line}`).join(`\n`)}</TerminalText>
+          <QuickStartLines />
         </WindowFrame>
       </div>
     </Band>

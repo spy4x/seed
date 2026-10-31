@@ -3,7 +3,7 @@ import { appAddress } from "../brand.ts"
 import type { JSX } from "preact"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { TerminalText, useSite } from "../use-site.tsx"
-import { Shot } from "./shot.tsx"
+import { DARK_MEDIA, Shot } from "./shot.tsx"
 
 /** The realtime pair is captured half a desktop wide, at 640 and 320 px, 4:5. */
 const PAIR_WIDTHS = [640, 320] as const
@@ -13,7 +13,7 @@ function pairSrcset(name: string, theme: "light" | "dark"): string {
   return PAIR_WIDTHS.map((width) => `/shots/${name}-${theme}-${width}.webp ${width}w`).join(`, `)
 }
 
-/** One half of the realtime pair, light or dark as the device asks, `sizes` wide. */
+/** One half of the realtime pair, light or dark as the page is (`DARK_MEDIA`), `sizes` wide. */
 export function PairShot(
   { name, alt, sizes = `(min-width: 1280px) 220px, (min-width: 768px) 336px, 50vw` }: {
     name: string
@@ -24,7 +24,7 @@ export function PairShot(
   return (
     <picture>
       <source
-        media="(prefers-color-scheme: dark)"
+        media={DARK_MEDIA}
         srcset={pairSrcset(name, `dark`)}
         sizes={sizes}
       />
@@ -43,18 +43,21 @@ export function PairShot(
   )
 }
 
-/** Two windows side by side: a note saved in one is already in the list of the other. */
+/**
+ * Two windows side by side: a note saved in one is already in the list of the other. Each is named
+ * under its frame, where the name can wrap: a phone leaves the address bar too narrow for it.
+ */
 export function RealtimePair(): JSX.Element {
   const { t } = useSite()
   return (
     <div class="grid grid-cols-2 gap-4">
-      <WindowFrame variant="browser" title={t.t(`FeatureVisuals.window1`)}>
+      <WindowFrame variant="browser" caption={t.t(`FeatureVisuals.window1`)}>
         <PairShot
           name="realtime-a"
           alt={t.t(`FeatureVisuals.realtimeA`)}
         />
       </WindowFrame>
-      <WindowFrame variant="browser" title={t.t(`FeatureVisuals.window2`)}>
+      <WindowFrame variant="browser" caption={t.t(`FeatureVisuals.window2`)}>
         <PairShot
           name="realtime-b"
           alt={t.t(`FeatureVisuals.realtimeB`)}
@@ -230,7 +233,10 @@ const SERVICES = [
   `restic backups`,
 ] as const
 
-/** The deploy's output in a terminal, and the services it starts as a row of labels. */
+/**
+ * The deploy's output in a terminal, and the services it starts as labels. Each label grows to fill
+ * its row, so the rows end flush at any width instead of leaving one label alone on the last.
+ */
 export function DeployVisual(): JSX.Element {
   const { t } = useSite()
   return (
@@ -246,7 +252,7 @@ export function DeployVisual(): JSX.Element {
         {SERVICES.map((service) => (
           <li
             key={service}
-            class="rounded-control border border-subtle bg-surface px-2 py-1 font-mono text-sm"
+            class="grow rounded-control border border-subtle bg-surface px-2 py-1 text-center font-mono text-sm"
           >
             {service}
           </li>
