@@ -215,6 +215,11 @@ export interface OAuthOptions {
 export interface OAuthInternals {
   db: AppDbBase
   sessionsOver(store: SessionStore<AuthSessionRecord>): SessionManager<AuthSessionRecord>
+  /**
+   * Ends `previous`, the session this browser held before signing in as `next`, in transaction
+   * `tx`, and moves or removes its push subscriptions with it (#572).
+   */
+  endReplaced(tx: AppDbBase, previous: AppAuthState, next: AuthSessionRecord): Promise<void>
   cookie: SessionCookie
   /**
    * The secret that signs the session cookie, at least 32 characters. The sign-up cookie is signed
@@ -713,7 +718,7 @@ export function createOAuthOperations(
 
       const signedIn = await finishSignIn(c, result)
       // The cookie now names the new session; the one this browser had would only linger.
-      if (current) await sessions.deleteForUser(current.user.id, current.session.id)
+      if (current) await db.begin((tx) => own.endReplaced(tx, current, signedIn.session))
       return { kind: "signed-in", signedIn, next: pageOrNull(kept?.next) }
     },
 
@@ -786,7 +791,7 @@ export function createOAuthOperations(
         throw error
       }
       await cookie.set(c, created.session, created.cookieValue)
-      if (current) await sessions.deleteForUser(current.user.id, current.session.id)
+      if (current) await db.begin((tx) => own.endReplaced(tx, current, created.session))
       return { user: created.user, session: created.session }
     },
 

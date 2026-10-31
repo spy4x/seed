@@ -64,6 +64,11 @@ export interface PasskeyOptions {
 export interface PasskeyInternals {
   db: AppDbBase
   sessionsOver(store: SessionStore<AuthSessionRecord>): SessionManager<AuthSessionRecord>
+  /**
+   * Ends `previous`, the session this browser held before signing in as `next`, in transaction
+   * `tx`, and moves or removes its push subscriptions with it (#572).
+   */
+  endReplaced(tx: AppDbBase, previous: AppAuthState, next: AuthSessionRecord): Promise<void>
   cookie: SessionCookie
   auditRow(
     c: Context,
@@ -367,7 +372,7 @@ export function createPasskeyOperations(
           own.auditRow(c, user.id, AuthAuditEventType.SIGNED_IN, passkeyIdentifier(stored.name)),
         )
         // The cookie now names the new session; the one this browser had would only linger.
-        if (current) await sessions.deleteForUser(current.user.id, current.session.id)
+        if (current) await own.endReplaced(tx, current, started.session)
         return { user, ...started }
       })
       await own.cookie.set(c, created.session, created.cookieValue)
