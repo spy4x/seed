@@ -14,6 +14,7 @@ import {
 } from "wouter-preact"
 import { useRouteAnnouncer } from "@spy4x/preact-system/route-announcer"
 import { canSignOut, sessionState } from "./state/session.ts"
+import { isGuest } from "@domain/identity"
 import { bootstrapSession, settleOwedSignOut } from "./state/auth.ts"
 import { rememberSignIn } from "./state/last-sign-in.ts"
 import { groupsStore } from "./state/groups.ts"
@@ -287,6 +288,9 @@ export function App() {
   }, [
     sessionState.value.user?.id,
     sessionState.value.isMfaRequired,
+    // Keeping a guest account ends the guest's session and starts a new one (#374): the socket,
+    // still open on the old one, is opened again on the new cookie.
+    isGuest(sessionState.value.user),
   ])
 
   // Every date and time on every screen is written in the person's own settings, and every word in

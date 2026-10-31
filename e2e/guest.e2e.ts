@@ -56,11 +56,15 @@ test(`"Try it now" opens the app as a guest in one click`, async ({ page }) => {
   }
 })
 
-test(`keeping a guest account by e-mail keeps its user id and drops the banner`, async ({ page, request }) => {
+test(`keeping a guest account by e-mail keeps its user id, drops the banner and signs in anew without a reload`, async ({ page, request }) => {
   const email = `e2e-guest-keep-${uuidV7().slice(-8)}@example.com`
+  const sessionCookie = async () =>
+    (await page.context().cookies()).find((c) => c.name === `sessionIdToken`)?.value
   try {
     await tryItNow(page)
     const guest = await me(page)
+    const guestCookie = await sessionCookie()
+    expect(guestCookie).toBeTruthy()
 
     await page.locator(`[data-e2e=guest-banner-keep]`).click()
     await expect(page).toHaveURL(`/keep`)
@@ -77,6 +81,9 @@ test(`keeping a guest account by e-mail keeps its user id and drops the banner`,
     const kept = await me(page)
     expect(kept).toMatchObject({ id: guest.id, guestSince: null })
     await expect(page.locator(`[data-e2e=guest-banner]`)).toHaveCount(0)
+    // The guest's session ended with the keep (#374): a new cookie, and the socket opens on it.
+    expect(await sessionCookie()).not.toBe(guestCookie)
+    await expect(page.locator(`[data-e2e=shell-ws-status]`)).toHaveText(`Online`)
   } finally {
     await cleanup(request, email)
   }
