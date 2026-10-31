@@ -117,8 +117,9 @@ and notifications.
 | XL   | 1,000,000 | 100  | 1,000   | 100,000       | 100,000       | 4 years     | about 2 min |
 
 A note has 10 to 99 words and 0 to 3 tags; one in five was edited, one in fifty of last month's
-notes is deleted, and one in a thousand has the rare word `zeppelin` in its title. Tags stop at 100, the cap every group has. The
-members are generated people without a sign-in key, so nobody can sign in as one.
+notes is deleted, and one in a thousand has the rare word `zeppelin` in its title. Tags stop at
+100, the cap every group has. The members are generated people without a sign-in key, so nobody
+can sign in as one.
 
 The task is safe to run twice. Each tier has a fixed group id: a finished group is left as it is,
 and a group a stopped run left half built is removed and built again. It prints the group's id and
@@ -182,7 +183,10 @@ median, with its pages of 500 changes and its size; every other column is the p9
 | XL   | 854 s (14 min), 2,001 pages, 780 MB | 13.5 ms  | 2,446 / 1,518 / 52.8 ms      | 88.6 ms | 11.9 ms              | 22.4 ms | 198 MiB          |
 
 S's page p95 is one slow sample of five; its median is 19.8 ms. L's slowest full read took
-10.07 s.
+10.07 s. XL's API searches come from an earlier run, on a database where earlier tiers had been
+built and removed. There Postgres walked all the group's notes for every word. On a fresh
+database it needs 0.6 and 0.8 s for the common word and the pair (the table below), so expect the
+API near those. Which state caused the slower plan was not proven.
 
 **Parallel full reads** (`deno task load group-reads <tier>`): each reader reads the whole group
 again as soon as its last read ends. The first number is the p95 of the requests, the second the
@@ -206,16 +210,20 @@ Only L's step of 32 readers had errors (0.23 %).
 
 | Query                                     | S    | M    | L     | XL    |
 | ----------------------------------------- | ---- | ---- | ----- | ----- |
-| Changes pull: page boundary, first page   | 1.7  | 6.4  | 143   | 741   |
-| Changes pull: page boundary, middle page  | 0.9  | 2.1  | 20    | 778   |
-| Changes pull: the notes of one page       | 2.4  | 1.4  | 1.2   | 2.8   |
-| Notes list, first page of 100             | 1.5  | 0.3  | 0.3   | 0.4   |
-| Search "budget" (31 % of notes match)     | 2.3  | 7.6  | 100   | 2,186 |
-| Search "budget invoice"                   | 2.0  | 6.2  | 40    | 1,443 |
-| Search "zeppelin" (0.1 % match)           | 1.1  | 4.5  | 1.6   | 1,469 |
-| Write: next change sequence, insert       | 1.0  | 0.7  | 0.7   | 5.3   |
-| Activity, first page of 100               | 1.0  | 6.4  | 67    | 0.8   |
-| Notifications, first page and unread count | 0.4 | 2.6  | 7.9   | 31    |
+| Changes pull: page boundary, first page   | 1.7  | 6.4  | 143   | 656   |
+| Changes pull: page boundary, middle page  | 0.9  | 2.1  | 20    | 1,048 |
+| Changes pull: the notes of one page       | 2.4  | 1.4  | 1.2   | 1.9   |
+| Notes list, first page of 100             | 1.5  | 0.3  | 0.3   | 0.5   |
+| Search "budget" (31 % of notes match)     | 2.3  | 7.6  | 100   | 580   |
+| Search "budget invoice"                   | 2.0  | 6.2  | 40    | 814   |
+| Search "zeppelin" (0.1 % match)           | 1.1  | 4.5  | 1.6   | 18    |
+| Write: next change sequence, insert       | 1.0  | 0.7  | 0.7   | 1.9   |
+| Activity, first page of 100               | 1.0  | 6.4  | 67    | 0.4   |
+| Notifications, first page and unread count | 0.4 | 2.6  | 7.9   | 14    |
+
+XL's column is one run on a fresh database right after the build, with nothing to vacuum. A second
+run straight after gave 536 and 292 ms for the two boundaries and 582, 753 and 11 ms for the three
+searches: the times move with the cache, the plans do not.
 
 At XL the `notes` table holds 1.23 GB of rows and 361 MB of indexes; the largest are the search
 index (135 MB), the list's `(group_id, updated_at, id)` index (111 MB), the primary key (57 MB)
@@ -229,7 +237,7 @@ and vacuuming frees that space for new rows but does not give it back to the dis
 | -------------------------- | -------- | --------------------------------------------------------------------- |
 | Full read, one reader      | 10 s     | L: median 9.65 s, the slowest 10.07 s. XL takes 14 minutes.           |
 | Page of the list           | 200 ms   | None: 13.5 ms at XL.                                                  |
-| Search                     | 100 ms   | L: 164 ms for a common word. XL: 1.5 to 2.4 s for any word.           |
+| Search                     | 100 ms   | L: 164 ms for a common word. XL: 0.6 s for a common word, 0.8 s for a pair; the rare word stays under it (18 ms in Postgres, 52.8 ms through the API). |
 | Write                      | 200 ms   | None: 88.6 ms at XL.                                                  |
 | Requests' p95, parallel full reads | 1 s | L at 16 readers; XL at 2. S and M stay under it at 32.        |
 
@@ -247,11 +255,13 @@ A whole full read passes 1 s sooner: at M with 8 readers, and at S with 32.
    inside each branch, which the `(group_id, change_sequence)` indexes serve in order), so a page
    costs the same at any size. This was not tried here; it is the next change to measure.
 2. **Search ranks every match.** At L "budget" matches 31,000 notes, and ranking all of them takes
-   100 ms. At XL the planner gives the search index up and walks all million notes of the group,
-   so even the rare word takes 1.5 s. The search index (`idx_notes_search_vector_active`) also
-   holds every group's notes, so its cost grows with the whole database, not with the group. A
-   search index that starts with the group (`btree_gin`'s `(group_id, search_vector)`), and
-   ranking only the newest few thousand matches of a common word, would keep it within budget.
+   100 ms. At XL it matches 309,000: Postgres reads the whole table instead of the index and ranks
+   them all in 580 ms, and the pair's 109,000 matches are sorted on disk in 814 ms. A rare word
+   stays fast at every tier (18 ms at XL), because few notes match it. The search index
+   (`idx_notes_search_vector_active`) also holds every group's notes, so its cost grows with the
+   whole database, not with the group. A search index that starts with the group (`btree_gin`'s
+   `(group_id, search_vector)`), and ranking only the newest few thousand matches of a common
+   word, would keep it within budget.
 3. **A million-note first read is 780 MB.** Even with item 1 fixed, a phone joining an XL group
    downloads every note body. A group past L needs its first read to bring the recent notes
    first and the rest later, which is a product decision as much as a query.
@@ -264,20 +274,20 @@ A whole full read passes 1 s sooner: at M with 8 readers, and at S with 32.
    L and XL back to the S and M pattern; only then does adding cores buy capacity.
 
 <details>
-<summary>The changes pull's page boundary at XL, middle page (778 ms)</summary>
+<summary>The changes pull's page boundary at XL, middle page (1,048 ms)</summary>
 
 ```
-Limit  (actual time=745.981..777.224 rows=1.00 loops=1)
-  ->  Gather Merge
+Limit  (actual time=1021.577..1047.815 rows=1.00 loops=1)
+  ->  Gather Merge  (actual time=1018.371..1044.653 rows=501.00 loops=1)
         Workers Launched: 2
-        ->  Sort  (actual time=727.230..727.246 rows=501.00 loops=3)
-              Sort Key: tags.change_sequence
+        ->  Sort  (actual time=1003.946..1003.960 rows=501.00 loops=3)
+              Sort Key: group_change_tombstones.change_sequence
               Sort Method: top-N heapsort  Memory: 25kB
-              ->  Parallel Append
-                    ->  Index Only Scan using idx_tags_group_change_sequence on tags  (rows=0.00)
+              ->  Parallel Append  (actual time=3.279..998.000 rows=166683.33 loops=3)
                     ->  Index Only Scan using idx_group_change_tombstones_group_sequence on group_change_tombstones  (rows=411.00)
-                    ->  Parallel Index Scan using idx_notes_group_change_sequence on notes  (actual time=1.419..711.098 rows=166546.33 loops=3)
-Execution Time: 777.841 ms
+                    ->  Index Only Scan using idx_tags_group_change_sequence on tags  (rows=0.00)
+                    ->  Parallel Index Scan using idx_notes_group_change_sequence on notes  (actual time=1.749..987.642 rows=166546.33 loops=3)
+Execution Time: 1048.199 ms
 ```
 
 Three workers read 500,000 notes to find the 501st.
@@ -307,22 +317,25 @@ The planner uses the search index only because it covers exactly the live notes,
 </details>
 
 <details>
-<summary>Search "budget" at XL (2,186 ms)</summary>
+<summary>Search "budget" at XL (580 ms)</summary>
 
 ```
-Limit  (actual time=2183.807..2183.813 rows=20.00 loops=1)
-  ->  Sort  (actual time=2183.806..2183.809 rows=20.00 loops=1)
-        Sort Key: (ts_rank(notes_1.search_vector, '''budget'':*'::tsquery)) DESC, notes_1.updated_at DESC, notes_1.id
-        ->  Merge Join  (actual time=0.332..2138.491 rows=309182.00 loops=1)
-              ->  Materialize  (actual time=0.034..2051.082 rows=309182.00 loops=1)
-                    Storage: Disk  Maximum Storage: 405936kB
-                    ->  Index Scan using idx_notes_group_change_sequence on notes notes_1  (actual time=0.016..1602.882 rows=309182.00 loops=1)
+Limit  (actual time=562.389..578.572 rows=20.00 loops=1)
+  ->  Gather Merge  (actual time=557.008..573.190 rows=20.00 loops=1)
+        Workers Launched: 2
+        ->  Sort  (actual time=544.361..544.365 rows=16.67 loops=3)
+              Sort Key: (ts_rank(notes_1.search_vector, '''budget'':*'::tsquery)) DESC, notes_1.updated_at DESC, notes_1.id
+              Sort Method: top-N heapsort  Memory: 94kB
+              ->  Hash Join  (actual time=4.810..501.478 rows=103060.67 loops=3)
+                    ->  Parallel Seq Scan on notes notes_1  (actual time=4.680..466.544 rows=103060.67 loops=3)
                           Filter: ((deleted_at IS NULL) AND (search_vector @@ '''budget'':*'::tsquery))
-                          Rows Removed by Filter: 690818
-Execution Time: 2185.575 ms
+                          Rows Removed by Filter: 230273
+Execution Time: 580.164 ms
 ```
 
-"zeppelin" takes the same path: 999,000 rows removed by the filter to find 1,000, in 1,469 ms.
+"budget invoice" uses the search index (109,117 entries), then sorts its 109,000 matches on disk
+(`external merge  Disk: 61960kB`), in 814 ms. "zeppelin" uses the index too and finds its 1,000
+notes in 18 ms.
 
 </details>
 
