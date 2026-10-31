@@ -50,6 +50,7 @@ export const ADMIN_BILLING_PATHS = {
 } as const
 
 /** Where the billing setup is described, for the action of the "Billing is off" state. */
+// Seed's own site: see docs/start-a-product.md
 export const ADMIN_BILLING_SETUP_URL = `https://github.com/spy4x/seed/blob/main/docs/billing.md`
 
 /**

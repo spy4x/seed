@@ -103,6 +103,9 @@ These tests check the name and change with it: `libs/ui/admin-frame.test.tsx`,
 - **Create** the first operator on the server with `deno task operator:create <address>`, which
   needs no mail ([The first operator](deploy.md#the-first-operator)).
 - **Set** where release images go, `IMAGE_PREFIX` in `.woodpecker/release.yml`.
+- **Set** `ADMIN_BILLING_SETUP_URL` in `libs/ui/admin-billing-list.tsx`: the admin app's
+  "Billing is off" page links there, and it points at Seed's own `docs/billing.md` on GitHub.
+  Point it at the product's copy of that doc.
 
 ## The repository's own files
 
