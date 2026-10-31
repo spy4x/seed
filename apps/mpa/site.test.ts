@@ -213,7 +213,7 @@ describe("the public website", () => {
 
     for (const line of QUICK_START) {
       expect(html, line).toContain(
-        `class="block whitespace-pre-wrap ps-[2ch] -indent-[2ch]">$ ${line}</span>`,
+        `class="block whitespace-pre-wrap ps-4 -indent-4">$ ${line}</span>`,
       )
     }
   })

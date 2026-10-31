@@ -90,13 +90,13 @@ export const QUICK_START = [
 
 /**
  * The quick start in a terminal, one command per line. A command too long for a phone wraps under
- * its own start, past the `$`, instead of running off the window's edge.
+ * its own start, past the `$` (16 px, about two characters), instead of running off the edge.
  */
 function QuickStartLines(): JSX.Element {
   return (
     <TerminalText>
       {QUICK_START.map((line) => (
-        <span key={line} class="block whitespace-pre-wrap ps-[2ch] -indent-[2ch]">
+        <span key={line} class="block whitespace-pre-wrap ps-4 -indent-4">
           {`$ ${line}`}
         </span>
       ))}
