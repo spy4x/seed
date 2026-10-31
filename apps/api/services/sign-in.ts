@@ -804,7 +804,6 @@ export function createSignIn(options: SignInOptions): SignIn {
     db,
     enabled: options.guests ?? true,
     sessionsOver,
-    sessionMinutes: options.sessionMinutes,
     cookie,
     auditRow,
     deviceOf,
@@ -927,15 +926,19 @@ export function createSignIn(options: SignInOptions): SignIn {
           secret: request.secret,
           provenAt: now,
         })
-        if (!(await guests.keep(c, tx, guestId, key.id, PASSWORD_METHOD))) return null
+        const started = await guests.keep(c, tx, guestId, key.id, PASSWORD_METHOD)
+        if (!started) return null
         await tx.signUpRequest.remove(request.id)
-        return await tx.user.findOne({ id: guestId })
+        const user = await tx.user.findOne({ id: guestId })
+        if (!user) throw new Error("User not found")
+        return { user, ...started }
       })
       deleteCookie(c, PASSWORD_SIGN_UP_COOKIE, signUpCookieOptions)
       if (!kept) return { outcome: SignUpOutcome.Expired }
+      await cookie.set(c, kept.session, kept.cookieValue)
       return {
         outcome: SignUpOutcome.GuestKept,
-        signedIn: { user: kept, session: state.session },
+        signedIn: { user: kept.user, session: kept.session },
       }
     } catch (error) {
       // Another account took the address between the check and the write.
@@ -1061,13 +1064,17 @@ export function createSignIn(options: SignInOptions): SignIn {
           const kept = await db.begin(async (tx) => {
             await tx.lockUser(guest.user.id)
             const key = await tx.authStore.addKey(guest.user.id, linkKey)
-            if (!(await guests.keep(c, tx, guest.user.id, key.id, SIGN_IN_LINK_METHOD))) return null
-            return await tx.user.findOne({ id: guest.user.id })
+            const started = await guests.keep(c, tx, guest.user.id, key.id, SIGN_IN_LINK_METHOD)
+            if (!started) return null
+            const user = await tx.user.findOne({ id: guest.user.id })
+            if (!user) throw new Error("User not found")
+            return { user, ...started }
           })
           if (!kept) return { outcome: SignInLinkOutcome.Refused }
+          await cookie.set(c, kept.session, kept.cookieValue)
           return {
             outcome: SignInLinkOutcome.GuestKept,
-            signedIn: { user: kept, session: guest.session },
+            signedIn: { user: kept.user, session: kept.session },
             email,
             next,
           }

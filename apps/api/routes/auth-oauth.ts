@@ -187,6 +187,15 @@ export function createOAuthRoute(
         if (result.kind === "confirm") return c.redirect(page(OAUTH_PAGES.confirmSignUp), 302)
         if (result.kind === "notice") {
           if (result.notice === "guest-taken") return c.redirect(page(OAUTH_PAGES.keepTaken), 302)
+          if (result.notice === "kept") {
+            // Every guest session ended with the keep (#374): their sockets close.
+            emit(
+              new UserSignedOutEvent({
+                userId: c.get("auth")!.user.id,
+                request: requestInfoFromContext(c, { trustedProxy: true }),
+              }),
+            )
+          }
           const reportTo = result.notice === "kept"
             ? OAUTH_PAGES.keep
             : result.linking
