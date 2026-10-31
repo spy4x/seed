@@ -186,7 +186,7 @@ let anyone lock an address's reset, and the per-IP limit stops floods) and mails
 same step, so the raw code exists only in the mail. `POST /api/auth/password/reset` with `{ email,
 code, newPassword }` spends the code, marks the address proven, sets the password and signs out
 every session of the user; it signs nobody in. An account waiting to be deleted comes back first
-(#357, `restoreInTx`), as a password sign-in would bring it back. It also revokes every API token, removes every push
+(spy4x/template#357, `restoreInTx`), as a password sign-in would bring it back. It also revokes every API token, removes every push
 subscription (spy4x/template#409), ends the Telegram link with every link code and "Link" press
 made before it (#269), and drops a waiting address change. A subscribe stores its row
 under the lock the reset takes on the user, after checking that its session is still live, so one
