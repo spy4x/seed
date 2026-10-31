@@ -70,7 +70,7 @@ export interface DeviceCopy {
 export interface DeviceCopyOptions {
   copy: ChangesCopy<ChangesRows>
   /** Asks the server for `group.changes` after `after`; a refusal rejects. */
-  fetch(groupId: string, after: number): Promise<unknown>
+  fetch: (groupId: string, after: number) => Promise<unknown>
   /** One pull at a time across the tabs that share the copy. */
   lock?: OutboxLock
 }
