@@ -824,6 +824,10 @@ export function createOAuthOperations(
         const method = methods.find((candidate) => candidate.id === keyId)
         if (!method || method.kind === "password") return UnlinkOutcome.NotFound
         if (!method.canUnlink) return UnlinkOutcome.LastMethod
+        // The devices that signed in with this method stop getting the account's notifications
+        // (#572). Their sessions go with the key, so their subscriptions are found first; a
+        // refusal below rolls this back with the rest.
+        await tx.pushTokens.removeOfKey(user.id, keyId)
         if (method.kind === "passkey") {
           // The key's sessions go with it (`auth_sessions` cascades), and so does its passkey row.
           if (!(await tx.authStore.deleteKey(user.id, keyId))) return UnlinkOutcome.NotFound
