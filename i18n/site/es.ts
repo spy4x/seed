@@ -656,10 +656,9 @@ export default {
   "AdminTour.statsText": "Visitas al sitio y clics de pedido desde tu Umami. Solo totales.",
   "AdminTour.users": "Usuarios",
   "AdminTour.usersText":
-    "Busca a una persona, bloquéala, cierra una sesión o envía un enlace de restablecimiento.",
+    "Busca a alguien: bloquéalo, cierra una sesión o envíale un enlace para su clave.",
   "AdminTour.groups": "Grupos",
-  "AdminTour.groupsText":
-    "Miembros, invitaciones y archivos. Elimina un archivo o cambia el propietario.",
+  "AdminTour.groupsText": "Miembros, invitaciones y archivos. Borra un archivo o cambia el dueño.",
   "AdminTour.billing": "Facturación",
   "AdminTour.billingText": "Quién paga y cuánto ganas. Reembolsa, regala tiempo o cancela.",
   "AdminTour.newsletter": "Boletín",
@@ -676,8 +675,7 @@ export default {
   "AdminTour.jobs": "Tareas",
   "AdminTour.jobsText": "Cada tarea en segundo plano. Vuelve a ejecutar una fallida o cancélala.",
   "AdminTour.system": "Sistema",
-  "AdminTour.systemText":
-    "El estado de la base de datos, la caché, la cola de tareas y la copia de seguridad.",
+  "AdminTour.systemText": "El estado de la base de datos, la caché, la cola de tareas y la copia.",
   "AdminTour.tokens": "Tokens de API",
   "AdminTour.tokensText": "Cada token de API, de quién es y cuándo se usó por última vez.",
   "AdminTour.operator": "Operador",

@@ -653,7 +653,7 @@ export default {
   "AdminTour.statsText": "Visitas ao site e cliques em pedidos do seu Umami. Só totais.",
   "AdminTour.users": "Usuários",
   "AdminTour.usersText":
-    "Encontre uma pessoa, bloqueie, encerre uma sessão ou envie um link de nova senha.",
+    "Encontre uma pessoa, bloqueie, encerre uma sessão ou envie um link de senha.",
   "AdminTour.groups": "Grupos",
   "AdminTour.groupsText": "Membros, convites e arquivos. Remova um arquivo ou troque o dono.",
   "AdminTour.billing": "Cobrança",
@@ -665,8 +665,7 @@ export default {
   "AdminTour.contactLinks": "Links de contato",
   "AdminTour.contactLinksText": "Onde as pessoas falam com você, no rodapé do site, sem deploy.",
   "AdminTour.catalog": "Catálogo",
-  "AdminTour.catalogText":
-    "Uma loja opcional: itens, preços, tamanhos, fotos e links para compartilhar.",
+  "AdminTour.catalogText": "Uma loja opcional: itens, preços, tamanhos, fotos e links curtos.",
   "AdminTour.audit": "Registro de auditoria",
   "AdminTour.auditText": "Cada acesso, alteração e ação de operador. Exporte em CSV.",
   "AdminTour.jobs": "Tarefas",

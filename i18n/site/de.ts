@@ -655,20 +655,16 @@ export default {
   "AdminTour.stats": "Statistik",
   "AdminTour.statsText": "Website-Besuche und Bestellklicks aus deinem Umami. Nur Summen.",
   "AdminTour.users": "Personen",
-  "AdminTour.usersText":
-    "Finde eine Person, sperre sie, beende eine Sitzung oder schick einen Reset-Link.",
+  "AdminTour.usersText": "Person finden, sperren, Sitzung beenden oder Reset-Link schicken.",
   "AdminTour.groups": "Gruppen",
-  "AdminTour.groupsText":
-    "Mitglieder, Einladungen und Dateien. Entferne eine Datei oder wechsle den Inhaber.",
+  "AdminTour.groupsText": "Mitglieder, Einladungen, Dateien. Datei löschen oder Inhaber wechseln.",
   "AdminTour.billing": "Abrechnung",
-  "AdminTour.billingText":
-    "Wer zahlt und was du verdienst. Erstatten, Gratiszeit geben oder kündigen.",
+  "AdminTour.billingText": "Wer zahlt, was du verdienst. Erstatten, Gratiszeit geben, kündigen.",
   "AdminTour.newsletter": "Newsletter",
   "AdminTour.newsletterText":
     "Wer abonniert hat und was verschickt wurde. Liste als CSV exportieren.",
   "AdminTour.blog": "Blog",
-  "AdminTour.blogText":
-    "Beiträge für die Website in jeder Sprache, vom Entwurf bis zur Veröffentlichung.",
+  "AdminTour.blogText": "Beiträge für die Website in jeder Sprache, vom Entwurf bis online.",
   "AdminTour.contactLinks": "Kontaktlinks",
   "AdminTour.contactLinksText": "Wo man dich erreicht, im Footer der Website, ohne Deploy.",
   "AdminTour.catalog": "Katalog",

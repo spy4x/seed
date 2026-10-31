@@ -172,7 +172,7 @@ function Modules(): JSX.Element {
             ),
           })}
         />
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4" data-e2e="admin-modules">
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-e2e="admin-modules">
           {ADMIN_TOUR_MODULES.map(({ id, name, Icon, text }) => (
             <FeatureCard key={id} id={`module-${id}`} title={t.t(name)} Icon={Icon}>
               {t.t(text)}
