@@ -65,7 +65,7 @@ describe("NotFoundScreen", () => {
     expect(heard).toEqual([`/notes`])
   })
 
-  it("offers a signed-out visitor sign-in, in the card of the sign-in pages", async () => {
+  it("offers a signed-out visitor a link to sign in", async () => {
     const heard = await mount(`visitor`)
     expect(find(`[data-e2e=not-found] h1`).textContent).toBe(`Page not found`)
     expect(find(`[data-e2e=not-found]`).textContent).toContain(`Sign in to get to your notes`)
