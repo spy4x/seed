@@ -1608,7 +1608,7 @@ export default {
   "AdminNewsletter.retry": "إعادة المحاولة",
   "AdminNewsletter.loadingNumbers": "جارٍ تحميل الأرقام",
   "AdminNewsletter.keyNumbers": "أهم الأرقام",
-  "AdminNewsletter.confirmedHint": "مؤكَّدون، تصلهم كل الأعداد",
+  "AdminNewsletter.confirmedHint": "مؤكَّدون، تصلهم الأعداد بلغتهم",
   "AdminNewsletter.pendingHint": "رسالة التأكيد في طريقها",
   "AdminNewsletter.joined": {
     "zero": "انضموا خلال آخر {count} يوم",

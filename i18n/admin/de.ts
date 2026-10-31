@@ -1470,7 +1470,7 @@ export default {
   "AdminNewsletter.retry": "Erneut versuchen",
   "AdminNewsletter.loadingNumbers": "Zahlen werden geladen",
   "AdminNewsletter.keyNumbers": "Kennzahlen",
-  "AdminNewsletter.confirmedHint": "Bestätigt, bekommen jede Ausgabe",
+  "AdminNewsletter.confirmedHint": "Bestätigt, bekommen die Ausgaben in ihrer Sprache",
   "AdminNewsletter.pendingHint": "Bestätigungs-E-Mail ist unterwegs",
   "AdminNewsletter.joined": {
     "one": "Neu, letzter Tag",
