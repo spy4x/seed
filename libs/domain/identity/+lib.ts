@@ -455,8 +455,9 @@ export enum AuthAuditEventType {
   TELEGRAM_UNLINKED = 35,
   /**
    * An operator removed the person's profile picture (#228). `identifier` names the operator
-   * (`operator:<id>`). The person's own changes of it are {@link PROFILE_UPDATED} rows with the
-   * `identifier` `picture`.
+   * (`operator:<id>`). The person's own changes of it are {@link PROFILE_UPDATED} rows: a new
+   * picture with the `identifier` `picture`, a removal with `picture-removed`
+   * ({@link PICTURE_AUDIT}).
    */
   PICTURE_REMOVED_BY_OPERATOR = 36,
 }

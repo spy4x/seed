@@ -10,7 +10,7 @@ export const INVITATION_DEFAULT_DAYS = 7
 /** The longest an invitation may work. */
 export const INVITATION_MAX_DAYS = 30
 
-/** The most people one invitation may let in: a team link. */
+/** The most people one invitation may let in: an invitation link. */
 export const INVITATION_MAX_USES = 100
 
 /** Random bytes in an invitation's token: 256 bits, 43 base64url characters. */
