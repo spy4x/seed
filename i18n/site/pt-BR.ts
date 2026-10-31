@@ -181,14 +181,14 @@ export default {
     "Pode. A licença MIT permite, e é assim que eu uso. Seu cliente não precisa de licença própria.",
   "HomeFaq.productionQuestion": "Está pronto para produção?",
   "HomeFaq.productionAnswer":
-    "As partes listadas em “Já funciona” têm testes no CI: todo pull request roda os testes de login, perfil, notas e grupos, e a suíte completa roda depois de cada merge. O Seed como um todo ainda está em construção; leia a lista de status antes de confiar numa parte.",
+    "As partes listadas em “Já funciona” têm testes no CI: todo pull request roda os testes de login, perfil, notas e grupos, e a suíte completa roda depois de cada merge. O Seed já pode ser usado e continua crescendo; leia a lista de status antes de confiar numa parte.",
   "HomeHero.badge": "Código aberto · MIT · Deno 2 + Postgres",
   "HomeHero.title": "A base do seu SaaS, já pronta.",
   "HomeHero.lead":
     "O Seed é um starter kit de SaaS gratuito, com licença MIT, que já traz login com verificação em duas etapas (2FA), grupos com funções, cobrança por membro no Stripe, tempo real, um app offline e um painel de administração. Você faz o deploy com Docker Compose num único servidor Linux alugado.",
   "HomeHero.github": "Ver no GitHub",
   "HomeHero.status":
-    "O Seed está em construção, à vista de todos: <status>veja o que já funciona</status>.",
+    "O Seed já pode ser usado e é construído à vista de todos: <status>veja o que já funciona</status>.",
   "HomeHero.quickStart": "Primeiros passos",
   "HomeHero.initNote":
     "O <code>init</code> cria o <code>infra/envs/.env</code> com todos os segredos preenchidos. Ou peça ao seu agente de IA: <prompt></prompt>.",
@@ -248,7 +248,7 @@ export default {
   "HomeStatus.eyebrow": "Status sem rodeios",
   "HomeStatus.title": "Como está hoje",
   "HomeStatus.lead":
-    "O Seed está em construção. Aqui está exatamente o que já funciona e o que ainda não.",
+    "O Seed já pode ser usado e é construído à vista de todos. Aqui está exatamente o que já funciona e o que ainda não.",
   "HomeStatus.works": "Já funciona",
   "HomeStatus.notBuilt": "Ainda não existe",
   "HomeStatus.follow": "Acompanhe no GitHub",
@@ -609,7 +609,7 @@ export default {
   "FeaturesHero.lead":
     "O Seed é um starter kit de SaaS gratuito, com licença MIT, que traz login por e-mail, Google e GitHub, chaves de acesso, links mágicos, contas de visitante, 2FA, grupos com funções, cobrança por membro no Stripe, atualizações em tempo real, um app offline, um painel de administração, monitoramento e backups diários criptografados opcionais. Cada seção abaixo leva ao código correspondente.",
   "FeaturesHero.note":
-    "O Seed está em construção, à vista de todos. O que falta aparece marcado como “Ainda não existe” ao lado do recurso afetado, com um link para a issue quando houver uma aberta.",
+    "O Seed já pode ser usado e é construído à vista de todos. O que falta aparece marcado como “Ainda não existe” ao lado do recurso afetado, com um link para a issue quando houver uma aberta.",
   "Features.compare": "Como o Seed se compara",
   "FeaturesFaq.title": "O Seed faz isso?",
   "FeatureSection.issue": "issue #{number}",

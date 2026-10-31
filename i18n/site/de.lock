@@ -432,7 +432,7 @@ FeaturesFaq.serverlessAnswer	847892f75bc306b6
 FeaturesFaq.serverlessQuestion	6484c6bb80eb4275
 FeaturesFaq.title	2dfb8ce949d077d3
 FeaturesHero.lead	9e8b3c1b09852428
-FeaturesHero.note	a8ea9bd28ec78687
+FeaturesHero.note	0004cac222a009f3
 FeaturesHero.title	c149a19c750a1c5f
 FooterNewsletter.lead	6a7d30d6b0103052
 FooterNewsletter.title	f84ca2e7716bec94
@@ -447,7 +447,7 @@ HomeFaq.clientQuestion	20c7396c23da96d3
 HomeFaq.eyebrow	9a72221a27476f3e
 HomeFaq.freeAnswer	c11ed1d5d5d811e0
 HomeFaq.freeQuestion	3ea839b1d506555b
-HomeFaq.productionAnswer	1ec418ff2b817d2e
+HomeFaq.productionAnswer	7b7231aabe59fe2b
 HomeFaq.productionQuestion	67ed4f2aa097c9fb
 HomeFaq.stackAnswer	f27216af0a026e2e
 HomeFaq.stackQuestion	cf47b2df8992a57b
@@ -487,7 +487,7 @@ HomeHero.initNote	c3949c8aa4b15e88
 HomeHero.lead	d96b5ed2f4a70e46
 HomeHero.notesAlt	8349987a97495a50
 HomeHero.quickStart	0eb95fb6244c03f1
-HomeHero.status	7b3b1728c784198f
+HomeHero.status	62cec974a66231f0
 HomeHero.title	4405e14c0542e9bc
 HomeNewsletter.hint	8cb102e8aeca4523
 HomeNewsletter.lead	0e78f3d7aa1fc9ff
@@ -514,7 +514,7 @@ HomeStatus.follow	88c9a2dcf8348d03
 HomeStatus.groups	6b5980f8a663cfa0
 HomeStatus.guests	f47cf850d0d8d77f
 HomeStatus.languages	4163d9c2a6f47158
-HomeStatus.lead	650045872368e6d7
+HomeStatus.lead	067eb625dcf6feae
 HomeStatus.notBuilt	45ecacee6d987c49
 HomeStatus.notBuiltAndroid	5186cad6b0e963fe
 HomeStatus.notBuiltDesktop	fa22c18ba1e83c9b

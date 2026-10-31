@@ -174,14 +174,14 @@ export default {
     "Yes. MIT allows it, and that is how I use it. Your client needs no licence of their own.",
   "HomeFaq.productionQuestion": "Is it production-ready?",
   "HomeFaq.productionAnswer":
-    'The parts listed under "Works today" have tests in CI: every pull request runs the sign-in, profile, notes and groups tests, and the full suite runs after each merge. Seed as a whole is still a work in progress; read the status list before you rely on a part.',
+    'The parts listed under "Works today" have tests in CI: every pull request runs the sign-in, profile, notes and groups tests, and the full suite runs after each merge. Seed is usable today and still growing; read the status list before you rely on a part.',
   "HomeHero.badge": "Open source · MIT · Deno 2 + Postgres",
   "HomeHero.title": "The groundwork of your SaaS, already built.",
   "HomeHero.lead":
     "Seed is a free, MIT-licensed SaaS starter with sign-in and two-factor authentication (2FA), groups with roles, per-member Stripe billing, realtime, an offline app and an admin area. You deploy it with Docker Compose to a single Linux server you rent.",
   "HomeHero.github": "View on GitHub",
   "HomeHero.status":
-    "Seed is a work in progress, built in public: <status>see what works today</status>.",
+    "Seed is usable today, built in public: <status>see what works today</status>.",
   "HomeHero.quickStart": "Quick start",
   "HomeHero.initNote":
     "<code>init</code> writes <code>infra/envs/.env</code> with every secret filled in. Or ask your AI agent: <prompt></prompt>.",
@@ -240,7 +240,8 @@ export default {
   "HomeQuickStart.terminal": "Terminal",
   "HomeStatus.eyebrow": "Honest status",
   "HomeStatus.title": "Where it stands today",
-  "HomeStatus.lead": "Seed is a work in progress. Here's exactly what works and what doesn't.",
+  "HomeStatus.lead":
+    "Seed is usable today, built in public. Here's exactly what works and what doesn't yet.",
   "HomeStatus.works": "Works today",
   "HomeStatus.notBuilt": "Not built yet",
   "HomeStatus.follow": "Follow progress on GitHub",
@@ -589,7 +590,7 @@ export default {
   "FeaturesHero.lead":
     "Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, passkeys, magic links, guest accounts, 2FA, groups with roles, per-member Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code.",
   "FeaturesHero.note":
-    'Seed is a work in progress, built in public. Anything missing is marked "Not built yet" next to the feature it affects, with a link to its issue when one is open.',
+    'Seed is usable today, built in public. Anything missing is marked "Not built yet" next to the feature it affects, with a link to its issue when one is open.',
   "Features.compare": "How Seed compares",
   "FeaturesFaq.title": "Can Seed do that?",
   "FeatureSection.issue": "issue #{number}",
