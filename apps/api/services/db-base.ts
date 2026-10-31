@@ -473,8 +473,8 @@ export class AppDbBase extends DbServiceBase {
       createIdentity: () => createGuestIdentity(sql),
       isGuest: (userId: number) => isGuestUser(sql, userId),
       event: (kind: GuestEventKind) => recordGuestEvent(sql, kind),
-      keep: async (userId: number, keyId: number, sessionEnd: Date): Promise<boolean> => {
-        const kept = await keepGuest(sql, userId, keyId, sessionEnd)
+      keep: async (userId: number): Promise<boolean> => {
+        const kept = await keepGuest(sql, userId)
         if (kept) await cache.delete(userId)
         return kept
       },

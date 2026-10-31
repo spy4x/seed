@@ -508,12 +508,15 @@ Deno.test("a link refuses a blocked account like a used link", async () => {
   })
 })
 
-Deno.test("a guest's link to a new address keeps the guest with the same user id", async () => {
+Deno.test("a guest's link to a new address keeps the guest with the same user id on a new session", async () => {
   await withFixture(async (fixture) => {
     const guest = fixture.browser()
     expect((await guest.call("POST", "/auth/guest")).status).toBe(201)
     const guestId = (await guest.call("GET", "/auth/me")).body.id as number
     const token = await fixture.linkFor(guest, "grace@example.com")
+    const sessionIds = () =>
+      fixture.sql<{ id: number }[]>`SELECT id FROM auth_sessions WHERE user_id = ${guestId}`
+    const [guestSession] = await sessionIds()
 
     const redeemed = await guest.call("POST", "/auth/link/redeem", { token })
 
@@ -522,6 +525,10 @@ Deno.test("a guest's link to a new address keeps the guest with the same user id
       status: 200,
       body: { id: guestId, guestSince: null },
     })
+    // The guest's session ended (#374); the browser goes on with a new one, on the new cookie.
+    const after = await sessionIds()
+    expect(after).toHaveLength(1)
+    expect(after[0].id).not.toBe(guestSession.id)
     const [owner] = await fixture.sql<{ userId: number }[]>`
       SELECT user_id AS "userId" FROM auth_email_owners WHERE email = 'grace@example.com'
     `

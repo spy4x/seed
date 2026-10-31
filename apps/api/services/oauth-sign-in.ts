@@ -114,7 +114,7 @@ import type { SignInMethodChange } from "@server/jobs/sign-in-method-mail.ts"
 import { PASSKEY_METHOD, passkeyIdentifier, type PasskeySummary } from "@server/auth/passkeys.ts"
 import type { AppDbBase } from "./db-base.ts"
 import type { AppAuthState, SignedIn } from "./sign-in.ts"
-import type { GuestKeeper } from "./guest-sign-in.ts"
+import type { GuestKeeper, KeptGuest } from "./guest-sign-in.ts"
 
 /** How long a started flow and its cookie live: the package's default, in seconds. */
 const FLOW_SECONDS = 600
@@ -624,7 +624,7 @@ export function createOAuthOperations(
         if (!current || current.session.secondFactor === SecondFactorStatus.Pending) {
           return failed()
         }
-        let added: boolean | "kept"
+        let added: boolean | KeptGuest
         // The keys the link looked up, to find the other account when the identity is taken.
         const found: AuthKey[] = []
         try {
@@ -648,8 +648,7 @@ export function createOAuthOperations(
               key.method,
             )
             await writeTakenClaims(c, tx, taken, key.method)
-            const kept = await own.guests?.keep(c, tx, key.userId, key.id, key.method)
-            return kept ? "kept" : true
+            return await own.guests?.keep(c, tx, key.userId, key.id, key.method) ?? true
           })
         } catch (error) {
           if (error instanceof OAuthSignInError) {
@@ -667,7 +666,11 @@ export function createOAuthOperations(
           }
           throw error
         }
-        if (added === "kept") return { kind: "notice", notice: "kept", linking }
+        if (typeof added === "object") {
+          // The guest's sessions ended with the keep: this browser goes on with the new one.
+          await own.cookie.set(c, added.session, added.cookieValue)
+          return { kind: "notice", notice: "kept", linking }
+        }
         return { kind: "notice", notice: added ? "linked" : "link-exists", linking }
       }
 

@@ -387,8 +387,11 @@ export function createAuthRoute(
         }
         const result = await signIn.completeSignUp(c, validationResult.data.code)
         switch (result.outcome) {
-          case SignUpOutcome.Created:
           case SignUpOutcome.GuestKept:
+            // Every guest session ended with the keep (#374): their sockets close.
+            emitSignOut(c, result.signedIn.user.id)
+            return signInAnswer(c, result.signedIn)
+          case SignUpOutcome.Created:
             return signInAnswer(c, result.signedIn)
           case SignUpOutcome.GuestTaken: {
             const answer: SignUpGuestTakenResponse = { guestTaken: true }
@@ -490,6 +493,10 @@ export function createAuthRoute(
         case SignInLinkOutcome.SignedIn:
         case SignInLinkOutcome.Created:
         case SignInLinkOutcome.GuestKept: {
+          // Every guest session ended with the keep (#374): their sockets close.
+          if (result.outcome === SignInLinkOutcome.GuestKept) {
+            emitSignOut(c, result.signedIn.user.id)
+          }
           const answer: SignInLinkRedeemed = {
             email: result.email,
             next: pageOrNull(result.next),

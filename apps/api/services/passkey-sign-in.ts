@@ -31,7 +31,7 @@ import {
 import { PASSKEY_METHOD, passkeyIdentifier, uniqueName } from "@server/auth/passkeys.ts"
 import type { AppDbBase } from "./db-base.ts"
 import type { AppAuthState, SignedIn } from "./sign-in.ts"
-import type { GuestKeeper } from "./guest-sign-in.ts"
+import type { GuestKeeper, KeptGuest } from "./guest-sign-in.ts"
 
 /**
  * Longest credential id kept, in base64url characters: `auth_keys.subject` holds 255. The
@@ -225,7 +225,8 @@ export function createPasskeyOperations(
         return { outcome: PasskeyAddOutcome.NotSaved }
       }
       try {
-        return await db.begin(async (tx) => {
+        let kept = null as KeptGuest | null
+        const added = await db.begin(async (tx) => {
           // Two adds at once would both pick the same default name; the lock orders them.
           await tx.lockUser(user.id)
           const existing = await tx.authStore.findKey(PASSKEY_METHOD, credential.id)
@@ -259,7 +260,7 @@ export function createPasskeyOperations(
             name,
           })
           // A guest's first passkey is the account's first way in: it is a guest no more.
-          await own.guests?.keep(c, tx, user.id, key.id, PASSKEY_METHOD)
+          kept = await own.guests?.keep(c, tx, user.id, key.id, PASSKEY_METHOD) ?? null
           await tx.authAudit.insert(
             own.auditRow(
               c,
@@ -275,6 +276,9 @@ export function createPasskeyOperations(
           )
           return { outcome: PasskeyAddOutcome.Added, keyId: key.id, name }
         })
+        // The guest's sessions ended with the keep: this browser goes on with the new one.
+        if (kept) await own.cookie.set(c, kept.session, kept.cookieValue)
+        return added
       } catch (error) {
         // Another account added the same credential at the same moment.
         if (error instanceof AuthConflictError) return { outcome: PasskeyAddOutcome.NotSaved }
