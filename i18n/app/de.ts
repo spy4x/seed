@@ -1043,6 +1043,13 @@ export default {
   "NoteSync.gone":
     "Diese Notiz wurde gelöscht oder in eine andere Gruppe verschoben, während du offline warst.",
   "NoteSync.version": "Jemand hat diese Notiz geändert, während du offline warst.",
+  "NotFound.title": "Seite nicht gefunden",
+  "NotFound.description":
+    "Unter dieser Adresse gibt es keine Seite. Vielleicht ist sie falsch geschrieben, oder die Seite ist umgezogen.",
+  "NotFound.signedOut":
+    "Unter dieser Adresse gibt es keine Seite. Melde dich an, um zu deinen Notizen zu kommen.",
+  "NotFound.toNotes": "Zu deinen Notizen",
+  "NotFound.signIn": "Anmelden",
   "Notes.title": "Notizen",
   "Notes.new": "Neue Notiz",
   "Notes.count": {

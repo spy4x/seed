@@ -1072,6 +1072,13 @@ export default {
   "NotePeople.unnamed": "Miembro sin nombre",
   "NoteSync.gone": "Esta nota se eliminó o se movió a otro grupo mientras estabas sin conexión.",
   "NoteSync.version": "Alguien cambió esta nota mientras estabas sin conexión.",
+  "NotFound.title": "Página no encontrada",
+  "NotFound.description":
+    "Esta dirección no lleva a ninguna página. Puede que esté mal escrita o que la página se haya movido.",
+  "NotFound.signedOut":
+    "Esta dirección no lleva a ninguna página. Inicia sesión para ver tus notas.",
+  "NotFound.toNotes": "Ir a tus notas",
+  "NotFound.signIn": "Iniciar sesión",
   "Notes.title": "Notas",
   "Notes.new": "Nueva nota",
   "Notes.count": {

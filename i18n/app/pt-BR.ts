@@ -1067,6 +1067,12 @@ export default {
   "NoteSync.gone":
     "Esta nota foi excluída ou movida para outro grupo enquanto você estava offline.",
   "NoteSync.version": "Alguém alterou esta nota enquanto você estava offline.",
+  "NotFound.title": "Página não encontrada",
+  "NotFound.description":
+    "Este endereço não leva a nenhuma página. Talvez tenha um erro de digitação, ou a página mudou de lugar.",
+  "NotFound.signedOut": "Este endereço não leva a nenhuma página. Entre para acessar suas notas.",
+  "NotFound.toNotes": "Ir para suas notas",
+  "NotFound.signIn": "Entrar",
   "Notes.title": "Notas",
   "Notes.new": "Nova nota",
   "Notes.count": {

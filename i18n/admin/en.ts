@@ -1382,6 +1382,10 @@ export default {
     "<job>{job}</job> won't run. A repeating job comes back the next time the worker starts. You can't undo this.",
   "AdminJobs.cancelling": "Cancelling…",
   "AdminJobs.keepIt": "Keep it",
+  "AdminNotFound.title": "Page not found",
+  "AdminNotFound.description":
+    "This address doesn't lead to an admin page. Check it for a typo, or start from the dashboard.",
+  "AdminNotFound.toDashboard": "Go to the dashboard",
   "AdminNav.dashboard": "Dashboard",
   "AdminNav.stats": "Stats",
   "AdminNav.system": "System",

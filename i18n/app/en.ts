@@ -989,6 +989,12 @@ export default {
   "NotePeople.unnamed": "Unnamed member",
   "NoteSync.gone": "This note was deleted, or moved to another group, while you were offline.",
   "NoteSync.version": "Someone changed this note while you were offline.",
+  "NotFound.title": "Page not found",
+  "NotFound.description":
+    "This address doesn't lead to a page. It may be mistyped, or the page has moved.",
+  "NotFound.signedOut": "This address doesn't lead to a page. Sign in to get to your notes.",
+  "NotFound.toNotes": "Go to your notes",
+  "NotFound.signIn": "Sign in",
   "Notes.title": "Notes",
   "Notes.new": "New note",
   "Notes.count": {

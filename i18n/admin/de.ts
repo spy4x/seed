@@ -1434,6 +1434,10 @@ export default {
     "<job>{job}</job> wird nicht ausgeführt. Ein wiederkehrender Job kommt beim nächsten Start des Workers zurück. Das lässt sich nicht rückgängig machen.",
   "AdminJobs.cancelling": "Wird abgebrochen …",
   "AdminJobs.keepIt": "Behalten",
+  "AdminNotFound.title": "Seite nicht gefunden",
+  "AdminNotFound.description":
+    "Unter dieser Adresse gibt es keine Admin-Seite. Prüfe sie auf Tippfehler oder starte im Dashboard.",
+  "AdminNotFound.toDashboard": "Zum Dashboard",
   "AdminNav.dashboard": "Dashboard",
   "AdminNav.stats": "Statistik",
   "AdminNav.system": "System",
