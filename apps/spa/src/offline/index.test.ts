@@ -808,7 +808,7 @@ describe("what the device keeps", () => {
     const watched: typeof storage = {
       ...storage,
       openReads: (userId) => (opened.push(userId), storage.openReads(userId)),
-      openNotes: (userId) => (opened.push(userId), storage.openNotes(userId)),
+      openCopy: (userId) => (opened.push(userId), storage.openCopy(userId)),
     }
     visiblePage()
     configureModules({ realtime: false, offline: false })
@@ -896,11 +896,11 @@ describe("two people on one device", () => {
           ? { ...reads, clear: () => Promise.reject(new Error("blocked")) }
           : reads
       },
-      openNotes(id) {
-        const notes = storage.openNotes(id)
+      openCopy(id) {
+        const copy = storage.openCopy(id)
         return id === who && part === "notes"
-          ? { ...notes, clear: () => Promise.reject(new Error("blocked")) }
-          : notes
+          ? { ...copy, clear: () => Promise.reject(new Error("blocked")) }
+          : copy
       },
     }
   }

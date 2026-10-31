@@ -185,11 +185,13 @@ CREATE TABLE groups (
     color VARCHAR(16),
     emoji VARCHAR(32),
     imported_at TIMESTAMPTZ,
+    changes_oldest_sequence BIGINT DEFAULT 0 NOT NULL,
     CONSTRAINT groups_name_check CHECK (length(btrim(name)) BETWEEN 1 AND 100),
     CONSTRAINT groups_description_check CHECK (char_length(description) <= 500),
     CONSTRAINT groups_color_check CHECK (color ~ '^#[0-9a-f]{6}$'),
     CONSTRAINT groups_authorization_revision_check CHECK (authorization_revision >= 1),
-    CONSTRAINT groups_next_change_sequence_check CHECK (next_change_sequence >= 1)
+    CONSTRAINT groups_next_change_sequence_check CHECK (next_change_sequence >= 1),
+    CONSTRAINT groups_changes_oldest_sequence_check CHECK (changes_oldest_sequence >= 0)
 );
 
 CREATE INDEX idx_groups_updated_id_active
@@ -1311,3 +1313,20 @@ CREATE TABLE catalog_tracking_links (
 );
 
 CREATE INDEX idx_catalog_tracking_links_source ON catalog_tracking_links (source_id);
+
+-- The rows gone from a group (deleted, or moved to another group), so a device pulling the group's
+-- changes after its cursor learns to remove them. Kind and id only, never the content.
+CREATE TABLE group_change_tombstones (
+    group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    entity_id UUID NOT NULL,
+    change_sequence BIGINT NOT NULL,
+    created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (group_id, kind, entity_id),
+    CONSTRAINT group_change_tombstones_kind_check CHECK (length(kind) BETWEEN 1 AND 40),
+    CONSTRAINT group_change_tombstones_change_sequence_check CHECK (change_sequence >= 1)
+);
+
+CREATE INDEX idx_group_change_tombstones_group_sequence
+    ON group_change_tombstones (group_id, change_sequence);
+CREATE INDEX idx_group_change_tombstones_created_at ON group_change_tombstones (created_at);

@@ -20,6 +20,7 @@ import {
   lockActorRole,
   recordGroupChange,
 } from "@server/groups/group-change-log.ts"
+import { recordTombstones } from "@server/groups/group-changes.ts"
 import { writeAuditEvent } from "@server/groups/audit.ts"
 
 interface TagRow extends postgres.Row, Tag {}
@@ -98,6 +99,19 @@ export class PostgresTagRepository implements TagRepository {
       FROM tags WHERE group_id = ${groupId} ORDER BY lower(name), id
     `
     return rows.map((row) => ({ ...toTag(row), noteCount: row.noteCount }))
+  }
+
+  /**
+   * The tags of the group written in `(after, through]` of its change sequence, oldest change
+   * first, without the note counts a device works out from its own notes (`tag-changes.ts`).
+   */
+  async listChanged(groupId: string, after: number, through: number): Promise<Tag[]> {
+    const rows = await this.sql<TagRow[]>`
+      SELECT ${this.columns()} FROM tags
+      WHERE group_id = ${groupId} AND change_sequence > ${after} AND change_sequence <= ${through}
+      ORDER BY change_sequence, id
+    `
+    return rows.map(toTag)
   }
 
   async get(groupId: string, id: string): Promise<Tag | null> {
@@ -261,6 +275,7 @@ export class PostgresTagRepository implements TagRepository {
         actorId,
         TAG_EVENTS.deleted,
       )
+      await recordTombstones(transaction, input.groupId, "tags", [input.id], sequence)
       return {
         id: deleted.id,
         groupId: deleted.groupId,

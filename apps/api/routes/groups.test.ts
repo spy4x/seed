@@ -100,6 +100,7 @@ function dependencies(): GroupsRouteDependencies & {
     restore: () => Promise.reject(new Error("not used")),
     deleted: () => Promise.reject(new Error("not used")),
     members: () => Promise.reject(new Error("not used")),
+    changes: () => Promise.reject(new Error("not used")),
     setRole: () => Promise.reject(new Error("not used")),
     removeMember: () => Promise.reject(new Error("not used")),
     leave: () => Promise.reject(new Error("not used")),

@@ -12,12 +12,12 @@ the SPA works without them ([how to remove the layer](#removing-the-layer)).
 | Piece                                       | What it does                                                                                                              |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `offline/notes-collection.ts`               | The notes as one adapter for `@spy4x/realtime/collections`: their commands, error codes, wording and device copy. The queue, its rules and the overlay of queued writes on a list are the library's. |
-| `offline/notes-cache.ts`                    | The device copy of the notes, per group, for one signed-in user (`createDataCache`). |
+| `offline/device-copy.ts`                    | The device copy of every group's notes and tags for one signed-in user, kept by the changes pull of `@spy4x/realtime/changes`, with a notes view and a tags view over it. |
 | `state/read-keys.ts`                        | The key of every offline-readable list in the read cache (`@spy4x/realtime/read-cache`). |
 | `offline/OfflineStatus.tsx`                 | Binds the queue to `SyncStatus` (offline, waiting, syncing, failed with Retry) and `ConflictChooser` (each conflict, with "Keep mine" and "Use the server's"), both from `@spy4x/preact-system`. |
 | `install.ts`                                | `createInstallPrompt` from `@spy4x/preact-signals`; `app.tsx` renders `InstallPrompt` from `@spy4x/preact-system` for it.     |
 | `modules.ts` (`signedInHint`)               | Remembers who was signed in, so an offline start does not show the sign-in page: `createSignedInHint` from `@spy4x/platform/browser/signed-in-hint`, under the `localStorage` key `offline:session`. It is a hint for what to show, never a credential. |
-| `offline/index.ts`                          | Starts and stops the layer for a user: the read cache, the notes copy and the queue. It is given the calls port and sends the queue through it. |
+| `offline/index.ts`                          | Starts and stops the layer for a user: the read cache, the notes and tags copy and the queues. It is given the calls port and sends the queue through it. |
 | `sw.ts`, `sw-options.ts`                    | The service worker: the app's page, scripts and styles cached by `installOfflineShell`, and the push handlers.            |
 
 ### The three levels
@@ -54,6 +54,44 @@ the authority"). The local-data module sits behind that read. A level 2 store re
 Because the copy is replaced by every full read, it cannot drift from the server: the read that
 runs after a reconnect is the same read that heals the store.
 
+**Notes and tags are pulled, not read in full** (#439), because a group can hold tens of thousands
+of notes. The device keeps one IndexedDB database per user (`offline:user:<id>:changes`,
+`offline/device-copy.ts`) with each group's notes, its tags and the change sequence the copy is
+complete through, written in one transaction. A read of the notes or the tags list asks the server
+for that group's changes after the sequence (`group.changes` over the calls port, also
+`GET /api/groups/:groupId/changes?after=<sequence>`), applies them, and answers from the copy:
+
+- **The answer.** One page holds every changed row in `(after, through]` and a tombstone
+  (`{ kind, id }`, never the content) for each row deleted or moved away; the device asks again
+  until `more` is false. A page is at most 500 changes and never splits one sequence. The server
+  reads it in one `REPEATABLE READ` snapshot, so a page cannot mix two moments.
+- **Tombstones** live in `group_change_tombstones`, written in the transaction of the delete, the
+  move or the tag delete, stamped with the group's change sequence. The nightly cleanup forgets
+  those older than 90 days and raises the group's `changes_oldest_sequence`; "move all data"
+  raises it to its own sequence instead of writing one tombstone per row. A cursor below that
+  line, or above the group's current sequence (a restored database), is answered "too old", and
+  the device reads the group in full from `0`, which the server always answers.
+- **Rows the device writes itself.** The server's answer to a write (a create, an edit, a move, a
+  restore) is put in the copy at the cursor the group already has, never past it, so a change
+  another member made meanwhile still arrives with the next pull. A group with no copy yet keeps
+  the row at cursor `0`, and the next pull of a copy at `0` reads the group in full and replaces
+  it: a page from `0` carries no tombstones, so a row the server deleted or moved away meanwhile
+  is dropped only that way. A row older than the one held (a slow answer a pull overtook) is
+  ignored.
+- **Order and links.** The copy keeps rows in no order; the notes list sorts by the last change,
+  newest first, as the server does. A deleted tag takes its links but moves no note, so a note
+  names only the tags the copy still holds, and each tag's note count is counted from the copy.
+- **Refusals.** A pull the server refuses (the person left the group, or it is gone) deletes that
+  group's copy and shows the error. An unreachable server, or a proxy answering for it, leaves the
+  copy as it is, and the list answers from it.
+- **Tabs.** One pull at a time across the tabs of a browser (`navigator.locks`). Members, the
+  groups list and every other list stay full reads; the members list is small enough.
+
+The notes store without the layer still pages the REST list (`/api/groups/:groupId/notes`) to its
+last page; there is no page cap. A device that ran the version before keeps its old
+`offline:user:<id>:notes` and `offline:user:<id>:tags` databases until the first start of this
+one, which deletes them; the first pull reads every group in full.
+
 API tokens and signed-in devices can mislead when they are old (a token revoked or a device signed
 out elsewhere is still listed), so when their list comes from the device the section says so, with
 the time the copy was saved. A name the person just changed is never replaced by the profile's
@@ -68,8 +106,8 @@ still match before an entry is cleared, one writer at a time, conflicts left to 
 `offline/notes-collection.ts` supplies what is about notes, and `offline/notes-collection.test.ts`
 checks those rules through it. The queue is kept by `createIndexedDbOutboxStore` from
 `@spy4x/realtime/outbox-indexeddb`, in its own IndexedDB database per user
-(`offline:user:<id>:outbox`); the notes the server last sent are kept by `createDataCache` from
-`@spy4x/platform/browser/data-cache` (`offline:user:<id>:notes`). The name of the queue's database
+(`offline:user:<id>:outbox`); the notes the server last sent are kept by the changes copy
+(`offline:user:<id>:changes`, see above). The name of the queue's database
 and the shape of its entries are unchanged from the version before the collections layer, so a write
 queued by that version is sent by this one (`offline/index.test.ts` and `e2e/local-data.e2e.ts` open
 such a queue). That version kept the groups in `offline:user:<id>:groups`; the layer moves them into
@@ -110,8 +148,8 @@ and the read runs after every reconnect and after every pushed hint.
 
 ### Tags: the second offline-writable aggregate, and what a parent means
 
-Tags (`offline/tags-collection.ts`) are offline-writable like notes: they have their own device
-copy (`offline:user:<id>:tags`) and their own queue (`offline:user:<id>:tags-outbox`), and signing
+Tags (`offline/tags-collection.ts`) are offline-writable like notes: they share the notes'
+copy (`offline:user:<id>:changes`) and have their own queue (`offline:user:<id>:tags-outbox`), and signing
 out treats them exactly as it treats notes. A note can name tags, so a tag is the **parent** of the
 notes that name it and the tags collection is declared before the notes one. Four rules from
 [ADR 003](decisions/003-swappable-transport-and-local-data.md), section 5, keep that safe:
@@ -282,8 +320,8 @@ start that finds no session (the server answers 401, because the session ended e
 expired) does the same for the person the device remembered, before the sign-in page shows.
 
 An answer still on its way at sign-out is not saved in this tab. Each copy is finished by its
-deletion: the read cache (`ReadCache.clear`), and the notes copy and the tags copy, whose `clear`
-(`offline/notes-cache.ts`, `offline/tags-cache.ts`) calls the library's `DataCache.finish`. A
+deletion: the read cache (`ReadCache.clear`), and the notes and tags copy, whose `clear`
+(`createChangesCopy` of `@spy4x/realtime/changes`) finishes the database. A
 finished copy stores nothing afterwards, whether the late write is a list read, a note being
 opened, or the server's answer to a queued write that was being sent. The next sign-in opens new
 copies. `offline/device-copies.test.ts` checks this on IndexedDB.
@@ -479,3 +517,5 @@ imports the layer is missing from this list.
    unit tests of the layer lived in the folder and went with it.
 
 The app then behaves as it did before the layer existed: reads and writes over the network only.
+The server's changes read (`group.changes`) stays and is simply not called; the notes store pages
+the REST list instead.

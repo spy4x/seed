@@ -1,4 +1,5 @@
 import {
+  GroupChangesQuery,
   GroupCreateCommand,
   GroupDeleteCommand,
   GroupDeletedListQuery,
@@ -15,6 +16,7 @@ import {
   GroupSelectedQuery,
   GroupUpdateDetailsCommand,
   parseCreateGroupRequest,
+  parseGroupChangesRequest,
   parseGroupDetailsRequest,
   parseGroupId,
   parseGroupIdRequest,
@@ -34,6 +36,7 @@ import type {
   SelectedGroup,
 } from "@domain/groups"
 import type { Actor } from "@domain/identity"
+import type { ChangesAnswer } from "@spy4x/realtime/changes"
 import type { Operations } from "@spy4x/realtime/operations"
 import { type GroupListDependencies, listGroupsPage, parseListPayload } from "./list.ts"
 
@@ -49,6 +52,7 @@ export interface GroupOperationDependencies extends GroupListDependencies {
   restore(command: GroupRestoreCommand): Promise<{ group: GroupSummary }>
   deleted(query: GroupDeletedListQuery): Promise<{ groups: DeletedGroupSummary[] }>
   members(query: GroupMembersQuery): Promise<GroupMembersResult>
+  changes(query: GroupChangesQuery): Promise<ChangesAnswer>
   setRole(command: GroupMemberRoleCommand): Promise<{ member: GroupMemberSummary }>
   removeMember(command: GroupMemberRemoveCommand): Promise<{ removed: true }>
   leave(command: GroupLeaveCommand): Promise<{ left: true }>
@@ -138,6 +142,13 @@ export function createGroupOperations(dependencies: GroupOperationDependencies):
       handle: async ({ actor, payload }) => {
         const { groupId } = parseGroupIdRequest(payload)
         return await dependencies.members(new GroupMembersQuery({ actor, groupId }))
+      },
+    },
+    "group.changes": {
+      kind: "query",
+      handle: async ({ actor, payload }) => {
+        const { groupId, after } = parseGroupChangesRequest(payload)
+        return await dependencies.changes(new GroupChangesQuery({ actor, groupId, after }))
       },
     },
     "group.setRole": {

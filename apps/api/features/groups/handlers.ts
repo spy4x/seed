@@ -1,5 +1,5 @@
 import type { CommandHandler, QueryHandler } from "@spy4x/platform/cqrs"
-import type { GroupDataMover, GroupRepository } from "@domain/groups"
+import type { GroupChangesReader, GroupDataMover, GroupRepository } from "@domain/groups"
 import { GroupOwnershipTransferredEvent, GroupSelectedEvent } from "../../cqrs/events.ts"
 import {
   assertCanChangeRole,
@@ -11,6 +11,7 @@ import {
   assertCanRename,
   assertCanTransfer,
   assertTransferNameMatches,
+  GroupChangesQuery,
   GroupCreateCommand,
   GroupDeleteCommand,
   GroupDeletedListQuery,
@@ -162,6 +163,22 @@ export function createGroupDeletedListHandler(
   repository: GroupRepository,
 ): QueryHandler<GroupDeletedListQuery> {
   return async ({ data }) => ({ groups: await repository.listRestorable(data.actor.userId) })
+}
+
+/**
+ * A page of a group's changes, for any member, checked as the group's notes and tags lists are: a
+ * person who is not a member is told the group does not exist.
+ */
+export function createGroupChangesHandler(
+  repository: GroupRepository,
+  changes: GroupChangesReader,
+): QueryHandler<GroupChangesQuery> {
+  return async ({ data }) => {
+    const member = await repository.getForMember(data.groupId, data.actor.userId)
+    const page = member ? await changes.read(data.groupId, data.after) : null
+    if (!page) throw new GroupError("GROUP_NOT_FOUND", "Group not found")
+    return page
+  }
 }
 
 /** The members of a group, for any member; a person who is not one is told it does not exist. */

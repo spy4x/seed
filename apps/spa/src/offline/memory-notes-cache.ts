@@ -15,10 +15,6 @@ export function createMemoryNotesCache(): NotesCache {
           tagIds: n.tagIds ?? [],
         })),
       ),
-    replaceNotes(groupId, next) {
-      notes = [...notes.filter((note) => note.groupId !== groupId), ...next.map((n) => ({ ...n }))]
-      return Promise.resolve()
-    },
     putNote(note) {
       const at = notes.findIndex((existing) => existing.id === note.id)
       if (at === -1) notes = [{ ...note }, ...notes]

@@ -454,7 +454,7 @@ test.describe("what a device keeps", () => {
       const { page, groupId, noteId, userId } = await deviceWithNote(context, request, user)
       await gotoApp(page, "/groups", page.locator("[data-e2e=group-list]"))
       await expect.poll(() => recordsIn(page, `reads:${userId}`)).toBeGreaterThan(0)
-      await expect.poll(() => recordsIn(page, `offline:user:${userId}:notes`)).toBeGreaterThan(0)
+      await expect.poll(() => recordsIn(page, `offline:user:${userId}:changes`)).toBeGreaterThan(0)
       await context.route("**/api/call/note.update", (route) => route.abort("internetdisconnected"))
       await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
       await gotoApp(page, "/profile/security", page.locator("[data-e2e=session-current]"))
@@ -615,7 +615,7 @@ test.describe("what a device keeps", () => {
       const { page, userId } = await deviceWithNote(context, request, user)
       await expect(page.locator("[data-e2e=note-list]")).toContainText("Before the update")
       await expect.poll(() => recordsIn(page, `reads:${userId}`)).toBeGreaterThan(0)
-      await expect.poll(() => recordsIn(page, `offline:user:${userId}:notes`)).toBeGreaterThan(0)
+      await expect.poll(() => recordsIn(page, `offline:user:${userId}:changes`)).toBeGreaterThan(0)
 
       // A deploy: the API's container is being replaced, and the proxy answers in its place.
       await context.route(
@@ -628,7 +628,7 @@ test.describe("what a device keeps", () => {
       await expect(page.locator("[data-e2e=note-list]")).toContainText("Before the update")
       await expect(page.locator("[data-e2e=auth-form-login]")).toHaveCount(0)
       expect(await recordsIn(page, `reads:${userId}`)).toBeGreaterThan(0)
-      expect(await recordsIn(page, `offline:user:${userId}:notes`)).toBeGreaterThan(0)
+      expect(await recordsIn(page, `offline:user:${userId}:changes`)).toBeGreaterThan(0)
     } finally {
       await context.close()
       await cleanup(request, user)
@@ -646,12 +646,15 @@ test.describe("what a device keeps", () => {
       const { page, groupId, noteId, userId } = await deviceWithNote(context, request, first)
       await gotoApp(page, "/groups", page.locator("[data-e2e=group-list]"))
       await expect.poll(() => recordsIn(page, `reads:${userId}`)).toBeGreaterThan(0)
-      await expect.poll(() => recordsIn(page, `offline:user:${userId}:notes`)).toBeGreaterThan(0)
-      // A tag, so the tags copy holds something to delete.
+      await expect.poll(() => recordsIn(page, `offline:user:${userId}:changes`)).toBeGreaterThan(0)
+      // A tag, so the copy holds tags to delete too.
+      const held = await recordsIn(page, `offline:user:${userId}:changes`)
       const tags = new TagsPage(page)
       await tags.open()
       await tags.create("Urgent")
-      await expect.poll(() => recordsIn(page, `offline:user:${userId}:tags`)).toBeGreaterThan(0)
+      await expect.poll(() => recordsIn(page, `offline:user:${userId}:changes`)).toBeGreaterThan(
+        held,
+      )
       await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
       await signUp(request, second)
       const other = await elsewhere.newPage()
@@ -671,8 +674,7 @@ test.describe("what a device keeps", () => {
       ).toBe(secondId)
 
       await expect.poll(() => recordsIn(page, `reads:${userId}`)).toBe(0)
-      expect(await recordsIn(page, `offline:user:${userId}:notes`)).toBe(0)
-      expect(await recordsIn(page, `offline:user:${userId}:tags`)).toBe(0)
+      expect(await recordsIn(page, `offline:user:${userId}:changes`)).toBe(0)
       expect(await recordsIn(page, `offline:user:${userId}:outbox`)).toBe(0)
     } finally {
       await elsewhere.close()
@@ -696,7 +698,7 @@ test.describe("what a device keeps", () => {
       await gotoApp(page, "/notes", page.locator("[data-e2e=auth-form-login]"))
 
       expect(await recordsIn(page, `reads:${userId}`)).toBe(0)
-      expect(await recordsIn(page, `offline:user:${userId}:notes`)).toBe(0)
+      expect(await recordsIn(page, `offline:user:${userId}:changes`)).toBe(0)
     } finally {
       await context.close()
       await cleanup(request, user)

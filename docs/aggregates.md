@@ -215,10 +215,30 @@ network; it costs a conflict screen. Copy `offline/notes-collection.ts`: one `de
 with the aggregate's commands, its error codes (`classifyByCode`), the wording of its failures and
 its device copy, added to the `collections` list in `offline/index.ts`. The queue, the keys, the
 lock and the conflict rules come from `@spy4x/realtime/collections` and are not written again.
-The device copy follows `offline/notes-cache.ts`: its
-`clear` calls the store's `finish`, not `clearAll`, so a write still on its way when the person
-signs out saves nothing and cannot put the data back. Then wrap the store's dependencies as
-`offlineNotes` does, and copy `offline/notes-collection.test.ts`.
+Its device copy is a view over the changes copy (`offline/device-copy.ts`, below), whose `clear`
+finishes the database, so a write still on its way when the person signs out saves nothing and
+cannot put the data back. Then wrap the store's dependencies as `offlineNotes` does, and copy
+`offline/notes-collection.test.ts`.
+
+#### Taking part in the changes pull
+
+A level 3 aggregate of a group is read by the changes pull ([offline.md](offline.md), "Reads: the
+device first"), so a device asks only for what changed. Notes and tags take part; copy them:
+
+1. **Server.** A `ChangesAggregate` beside the repository (`libs/server/notes/note-changes.ts`):
+   its `kind`, a `sequences` query of the live rows' `change_sequence` after the cursor, and a
+   `rows` query (`listChanged` in the repository) of the rows in `(after, through]`, in the list's
+   shape. Add it to `CHANGES_AGGREGATES` in `apps/api/services/db-base.ts`.
+2. **Tombstones.** Every write that makes a row leave the group (a delete, a move away) calls
+   `recordTombstones` from `libs/server/groups/group-changes.ts` in its own transaction, with the
+   sequence it took. A write that moves every row at once raises the group's oldest cursor with
+   `forgetChangesBefore` instead. A soft-deleted row is a tombstone, never a row, so its content
+   never reaches a device.
+3. **SPA.** Add the kind to `ChangesRows` and `CHANGES_KINDS` in `offline/device-copy.ts`, with an
+   arktype schema of its row, and a view over the copy as `notes` and `tags` are there. The
+   collection's list read calls `pullOrKeep` and then reads the view.
+4. **Tests.** A case in `tests/integration/group-changes.integration.test.ts` for its upserts and
+   tombstones, and one in `offline/device-copies.test.ts` for the view.
 
 ### 8. Tests
 

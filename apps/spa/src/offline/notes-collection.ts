@@ -6,10 +6,10 @@ import {
   defineCollection,
 } from "@spy4x/realtime/collections"
 import type { OutboxStore } from "@spy4x/realtime/outbox"
-import { isProxyAnswer, isRefusal, isUnreachable } from "@spy4x/realtime/read-cache"
 import type { NoteItem, NotePage, NotesDependencies } from "../state/notes.ts"
 import { TAGS_COLLECTION } from "./tags-collection.ts"
 import { databasePrefix, type NoteEntry, type NotePayload, type NotesCache } from "./notes-cache.ts"
+import { type DeviceCopy, pullOrKeep } from "./device-copy.ts"
 
 /**
  * The notes adapter: everything that is the notes' own about being offline-writable (ADR 003,
@@ -17,9 +17,6 @@ import { databasePrefix, type NoteEntry, type NotePayload, type NotesCache } fro
  * (`@spy4x/realtime/collections`); this file names the commands, the error codes, the wording and
  * the row a queued note shows as, and puts the queue in front of the notes store's dependencies.
  */
-
-/** The notes store's own cap on pages, so a runaway cursor stops the same way in both. */
-const MAX_PAGES = 20
 
 /** The notes as a collection: a note is the entity and the row, its text the payload. */
 export type NotesCollection = Collection<NotePayload, NoteItem, NoteItem>
@@ -121,6 +118,8 @@ export function notesCollection(
 
 /** What the notes dependencies need of the running layer. */
 export interface NotesLayer {
+  /** The pull that brings a group's copy up to date, and the drop for a group refused. */
+  copy: Pick<DeviceCopy, "pull" | "drop">
   /** The device's copy of the notes. */
   cache: NotesCache
   /** The queue of note writes and its overlay. */
@@ -129,9 +128,10 @@ export interface NotesLayer {
 
 /**
  * Puts the device's copy and the queue behind the notes store's dependencies:
- * - a read asks the server for the whole list, keeps it and answers with the queued writes
- *   applied; with the server unreachable (no connection, or a proxy's answer) it answers from
- *   what was kept, and a group the server refuses loses what was kept of it;
+ * - a read pulls what changed in the group since the device's copy (`device-copy.ts`) and answers
+ *   from the copy with the queued writes applied; with the server unreachable (no connection, or a
+ *   proxy's answer) it answers from the copy as it is, and a group the server refuses loses its
+ *   copy;
  * - a write is queued and sent at once when the server is reachable, and stays queued when it is
  *   not.
  *
@@ -153,28 +153,8 @@ export function offlineNotes(
       const layer = current()
       // The deleted notes are read from the server only: the device keeps no copy of them.
       if (!layer || deleted) return await online.fetchPage(groupId, _cursor, deleted)
-      let base: NoteItem[]
-      try {
-        base = []
-        let cursor: string | null = null
-        for (let page = 0; page < MAX_PAGES; page++) {
-          const result = await online.fetchPage(groupId, cursor)
-          base.push(...result.notes)
-          cursor = result.nextCursor
-          if (cursor === null) break
-        }
-        await layer.cache.replaceNotes(groupId, base)
-      } catch (error) {
-        // The person left the group, or it is gone: its notes must not come back offline later.
-        if (isRefusal(error)) {
-          await layer.cache.replaceNotes(groupId, []).catch((failure) =>
-            console.warn(`The saved notes of group ${groupId} could not be deleted.`, failure)
-          )
-        }
-        // A proxy's answer, such as a 502 during a deploy, is an unreachable server too.
-        if (!isUnreachable(error) && !isProxyAnswer(error)) throw error
-        base = await layer.cache.readNotes(groupId)
-      }
+      await pullOrKeep(layer, groupId)
+      const base = await layer.cache.readNotes(groupId)
       return { notes: await layer.notes.overlay(base, groupId), nextCursor: null }
     },
     async get(groupId, id) {
