@@ -19,13 +19,15 @@ export interface SpaShortcutPorts {
   activityGroupId: string | null
   /** The overview's own keys while it is open; `null` or left out on every other page. */
   overviewPage?: { openRange(): void; openCustomise(): void } | null
+  /** The benchmark page's keys while it is open; `null` or left out on every other page. */
+  benchmarkPage?: { run(): void; copy(): void } | null
 }
 
 /**
  * The SPA's keyboard shortcuts, the one list the "Keyboard shortcuts" dialog shows and the frame
  * binds, each described by a key of the `app` catalog. Search's keys, the New note dialog's and Undo's (`useUndoToast`) are bound where they act
  * and listed here; Activity is listed and bound only while the rail shows it, and the overview's
- * `d` and `c` only while it is open.
+ * `d` and `c` only while it is open, and the benchmark's `r` and `c` only while it is.
  */
 export function spaShortcutRows(ports: SpaShortcutPorts): ShortcutRow[] {
   const { general, goTo, newNote, page } = SHORTCUT_GROUPS
@@ -65,6 +67,22 @@ export function spaShortcutRows(ports: SpaShortcutPorts): ShortcutRow[] {
           description: `Shortcuts.customise`,
           group: page,
           run: ports.overviewPage.openCustomise,
+        },
+      ]
+      : []),
+    ...(ports.benchmarkPage
+      ? [
+        {
+          keys: "r",
+          description: `Shortcuts.runBenchmark`,
+          group: page,
+          run: ports.benchmarkPage.run,
+        },
+        {
+          keys: "c",
+          description: `Shortcuts.copyResults`,
+          group: page,
+          run: ports.benchmarkPage.copy,
         },
       ]
       : []),

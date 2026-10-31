@@ -53,6 +53,8 @@ export const SPA_ROUTES = {
   // The create-only API token page. Not `/api-tokens/new`: the proxy sends every address that
   // starts with `/api` to the API, so a reload there would never reach the SPA.
   "/tokens/new": { open: false },
+  // The benchmark (#440): only in a development build and on the public demo (`benchmarkOpen`).
+  "/benchmark": { open: false },
   // The profile: the list of its sections, and one section (`/profile/security`).
   "/profile/:section?": { open: false },
   // The home page opens the notes; signed out, the notes send the visitor to sign-in.

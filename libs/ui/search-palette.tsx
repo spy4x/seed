@@ -96,6 +96,8 @@ export interface SearchPaletteProps {
    * person would try ("sign up", "register", "save").
    */
   guest?: boolean
+  /** Whether "Open benchmark" is listed: development builds and the public demo only (#440). */
+  benchmark?: boolean
 }
 
 /**
@@ -188,7 +190,8 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
   words.current = t
 
   const search = async (query: string, signal: AbortSignal): Promise<SearchOption[]> => {
-    const { groups, currentGroup, online, guest = false, pageCommands = [] } = latest.current
+    const { groups, currentGroup, online, guest = false, pageCommands = [], benchmark = false } =
+      latest.current
     const t = words.current
     const text = query.trim()
     const asksNotes = text === "" || Array.from(text).length >= NOTE_QUERY_MIN
@@ -221,7 +224,10 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     }))
     // Actions match their aliases too (their English label among them, so English words find
     // them in every language), in any word order, with a typo or in the other layout.
-    const actions = matchOptions(actionOptions(t, currentGroup, online, pageCommands, guest), text)
+    const actions = matchOptions(
+      actionOptions(t, currentGroup, online, pageCommands, guest, benchmark),
+      text,
+    )
     // A stale answer is dropped by the palette; its words must not replace the current ones.
     if (!signal.aborted) {
       setEmpty(asksNotes ? emptyLabel(t, text, answer.onDevice) : shortQueryLabel(t))
@@ -270,6 +276,7 @@ function actionOptions(
   online: boolean,
   pageCommands: readonly PageCommand[],
   guest = false,
+  benchmark = false,
 ): SearchOption[] {
   // An action is found by its label and its detail in English too, so a person who types the
   // English word ("password", "ZIP") finds it in every language. A detail given as text (another
@@ -346,5 +353,25 @@ function actionOptions(
       PICTURE_RULE,
       [`avatar`, `photo`, `upload picture`, `фото`, `аватар`],
     ),
+    ...(benchmark
+      ? [page(
+        "benchmark",
+        `Search.openBenchmark`,
+        SCREEN_PATHS.benchmark,
+        { key: `Search.benchmarkDetail` },
+        [
+          `benchmark`,
+          `performance`,
+          `speed`,
+          `load test`,
+          `measure`,
+          `device test`,
+          `perf`,
+          `бенчмарк`,
+          `производительность`,
+          `тест скорости`,
+        ],
+      )]
+      : []),
   ]
 }
