@@ -72,6 +72,7 @@ import {
   type SpaRoutePath,
 } from "./views/spa-paths.ts"
 import { NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { NotFoundScreen } from "@ui/not-found-screen.tsx"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import { languages } from "./i18n.ts"
@@ -148,8 +149,12 @@ const PAGES: {
   "/": () => <Redirect to={NOTE_PATHS.list} replace />,
 }
 
-/** One `<Route>` per row of the route table, in its order. */
-function Routes() {
+/**
+ * One `<Route>` per row of the route table, in its order, then the page for an address none of
+ * them answers (#368): `visitor` when nobody is signed in.
+ */
+function Routes({ visitor = false }: { visitor?: boolean }) {
+  const [, navigate] = useLocation()
   return (
     <Switch>
       {SPA_ROUTE_PATHS.map((path) => (
@@ -157,6 +162,9 @@ function Routes() {
           {PAGES[path] as (params: Record<string, string>) => ComponentChildren}
         </Route>
       ))}
+      <Route>
+        <NotFoundScreen audience={visitor ? "visitor" : "member"} navigate={navigate} />
+      </Route>
     </Switch>
   )
 }
@@ -199,7 +207,7 @@ function Frame() {
   return (
     <PublicFrame canSignOut={canSignOut(session)}>
       <SignInGate />
-      <Routes />
+      <Routes visitor />
     </PublicFrame>
   )
 }
