@@ -91,6 +91,7 @@ function stack(plans: Record<string, string> = { [FROM]: PRO_PLAN_ID, [TO]: PRO_
     restore: unused,
     deleted: unused,
     members: unused,
+    changes: unused,
     setRole: unused,
     removeMember: unused,
     leave: unused,

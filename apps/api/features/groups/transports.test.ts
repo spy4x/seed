@@ -128,6 +128,7 @@ function stack(plan = PRO_PLAN_ID) {
     restore: (command: GroupRestoreCommand) => commands.execute(command),
     deleted: (query: GroupDeletedListQuery) => queries.execute(query),
     members: (query: GroupMembersQuery) => queries.execute(query),
+    changes: () => Promise.reject(new Error("not used")),
     setRole: (command: GroupMemberRoleCommand) => commands.execute(command),
     removeMember: (command: GroupMemberRemoveCommand) => commands.execute(command),
     leave: (command: GroupLeaveCommand) => commands.execute(command),
