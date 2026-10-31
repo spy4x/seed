@@ -23,7 +23,7 @@ export function AdminVideoPlayer(): JSX.Element {
         poster={ADMIN_VIDEO.poster}
         width={ADMIN_VIDEO.width}
         height={ADMIN_VIDEO.height}
-        class="block h-auto w-full bg-canvas focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+        class="block h-auto w-full bg-canvas focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-400"
         aria-label={t.t(`AdminVideo.label`, {
           seconds: ADMIN_VIDEO.seconds,
           sound: t.t(`AdminVideo.soundLabel`),
