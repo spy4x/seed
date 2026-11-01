@@ -90,7 +90,7 @@ describe("GroupsView in a browser", () => {
     groupsStore.reset()
   })
 
-  it("reads the groups again when Try again is pressed after a failed first read", async () => {
+  it("reads the groups again when Try again is pressed, and a retry that fails again rejects nothing", async () => {
     const reads: string[] = []
     groupsStore.refresh = (via) => {
       reads.push(via ?? "rest")
