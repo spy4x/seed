@@ -8,8 +8,29 @@
 !i18n/**
 !infra/**
 !deno.jsonc
-# The MPA renders the API reference from this file.
+# The MPA renders the API reference and the published guides from these files
+# (apps/mpa/api-docs.ts, PUBLISHED_DOCS in apps/mpa/docs-site.ts); the other docs stay out.
 !docs/token-api.md
+!docs/apps.md
+!docs/products.md
+!docs/start-a-product.md
+!docs/deploy.md
+!docs/guests.md
+!docs/sign-in-providers.md
+!docs/backups.md
+!docs/files.md
+!docs/data-export.md
+!docs/capacity.md
+!docs/billing.md
+!docs/catalog.md
+!docs/telegram.md
+!docs/offline.md
+!docs/security-headers.md
+!docs/development.md
+!docs/aggregates.md
+!docs/ids.md
+!docs/api-errors.md
+!docs/admin-modules.md
 !deno.lock
 
 # 3. Bonus step: ignore any unnecessary files that may be inside those allowed directories in Step #2

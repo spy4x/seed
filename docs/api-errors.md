@@ -1,5 +1,7 @@
 # API errors
 
+> Also on the website: [seedsaas.com/docs/api-errors](https://seedsaas.com/docs/api-errors).
+
 Every answer of the API that is not a success has one body, on every transport: REST, the calls
 route (`/api/call/<name>`) and the socket. The apps word it in the person's language from the
 `errors` catalog (`errorText` in `libs/ui/message.ts`): the first failed field, else the reason,

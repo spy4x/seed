@@ -1,5 +1,7 @@
 # A person's data export
 
+> Also on the website: [seedsaas.com/docs/data-export](https://seedsaas.com/docs/data-export).
+
 A signed-in person downloads a copy of everything the product holds about them from Profile →
 Account → Your data, or by searching "Download my data". The file is built in the background and
 kept for a few days ([#229](https://github.com/spy4x/seed/issues/229)).

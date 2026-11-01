@@ -1,5 +1,7 @@
 # The three apps
 
+> Also on the website: [seedsaas.com/docs/apps](https://seedsaas.com/docs/apps).
+
 The SPA, the admin app and the website: what each does and how to deploy it.
 
 ## The SPA and the MPA

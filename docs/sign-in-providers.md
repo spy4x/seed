@@ -1,5 +1,7 @@
 # Sign in with Google and GitHub
 
+> Also on the website: [seedsaas.com/docs/sign-in-providers](https://seedsaas.com/docs/sign-in-providers).
+
 Both are off until you set their credentials: the sign-in and sign-up pages then show a "Continue
 with …" link for each provider that is on, and the profile's "Sign-in and security" section
 (`/profile/security`) lists it under "Ways to sign in". A provider is on only when both of its
