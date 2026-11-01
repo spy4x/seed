@@ -571,7 +571,7 @@ export default {
     "Ein optionaler Katalog für einen Shop, bearbeitet im Adminbereich: Artikel mit Fotos, Farben, Größen, Größentabelle und ausverkauften Größen, in jeder Sprache, in der du verkaufst, mit einem kurzen Tracking-Link pro Artikel und Ort, an dem du ihn teilst",
   "FeatureWebsite.fact7": "sitemap.xml, robots.txt, Canonical-Links und Open-Graph-Bilder",
   "FeatureWebsite.fact8":
-    "Optionale Statistik ohne Cookies in deinem eigenen Umami, mit einem Event bei jedem Call-to-Action und eine Statistikseite im Adminbereich: Besuche und Bestellklicks pro Quelle und pro Artikel",
+    "Optionale Statistik ohne Cookies in deinem eigenen Umami, mit einem Event bei jedem Call-to-Action, dazu eine Statistikseite im Adminbereich: Besuche und Bestellklicks pro Quelle und pro Artikel",
   "FeatureWebsite.code": "Code der Website lesen",
   "FeatureQuality.nav": "Tests",
   "FeatureQuality.eyebrow": "Qualität",
