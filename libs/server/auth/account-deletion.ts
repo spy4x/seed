@@ -18,6 +18,10 @@
  *   at the person either goes with the auth user (keys, sessions, profile, settings, push devices,
  *   audit rows) or is emptied (authors of notes, who added a member, who acted in a group's audit
  *   log), so content in shared groups stays, by "Deleted user".
+ * - **Lock order.** Every path that meets the delete for good takes its row locks in one order:
+ *   the password key, then the deletion request, then the `users` row. The delete for good and a
+ *   password reset take all three; a sign-in's restore takes the request, then the row. A new path
+ *   that takes the key after the request or the row deadlocks against the delete.
  *
  * Reads no environment and imports no singleton: the API and the worker both use it.
  *
