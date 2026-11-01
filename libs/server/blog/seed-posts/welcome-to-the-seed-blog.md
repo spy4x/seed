@@ -20,3 +20,8 @@ free, MIT-licensed and built in public.
 This blog is where Seed explains itself: how to start a product on it, the details that are easy
 to miss, and a monthly "What's new in Seed" post on what changed. Subscribe below to get each new
 post by email.
+
+Some posts hold a figure you can change, so you can check a claim against your own case. Here is
+the first: what the demo's Pro plan, billed per member, costs a team of your size.
+
+<CostCalculator members={4} />

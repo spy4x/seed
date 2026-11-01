@@ -394,7 +394,7 @@ FeatureWebsite.eyebrow	b5a229ac8becc603
 FeatureWebsite.fact1	77305545727d416e
 FeatureWebsite.fact2	9400679b6389018a
 FeatureWebsite.fact3	48032056e3a8e4bb
-FeatureWebsite.fact4	fe35b38844e6641e
+FeatureWebsite.fact4	28d342bd790b588a
 FeatureWebsite.fact5	743829c03392abee
 FeatureWebsite.fact6	e948ba89ff09389e
 FeatureWebsite.fact7	38b1ff82a6bd2c9a
@@ -568,6 +568,15 @@ Outbox.push	731ce7ed808913b2
 Outbox.pushNote	eadceaaec2ad4082
 Outbox.transaction	5807d49b1fbe5f0d
 Outbox.workerNote	e193bbda1b44989c
+PostFigure.CostCalculator.caption	2c46e7801af4f693
+PostFigure.CostCalculator.fallback	94a2d87f949f309e
+PostFigure.CostCalculator.lead	e9b255ac41f37f59
+PostFigure.CostCalculator.members	74156382383b39d1
+PostFigure.CostCalculator.perMember	9fb592330503c2de
+PostFigure.CostCalculator.title	c0fa68a5f7d5d6c2
+PostFigure.CostCalculator.total	8c1534b547305f31
+PostFigure.noScript	751908b16f740771
+PostFigure.rssLink	bb666393ffca6a4f
 Pricing.crumb	dfe95783edfef791
 Pricing.description	5452816591ed6eb1
 Pricing.title	9604388672a9d74b

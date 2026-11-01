@@ -566,7 +566,7 @@ export default {
   "FeatureWebsite.fact3":
     "Ein Newsletter mit Double-Opt-in, Abbestellen mit einem Klick und E-Mails in der Sprache des Empfängers",
   "FeatureWebsite.fact4":
-    "Ein Blog, geschrieben im Adminbereich, mit Beiträgen in jeder Sprache samt Übersetzungen, Themen, einem RSS-Feed und strukturierten Daten für Artikel",
+    "Ein Blog, geschrieben im Adminbereich, mit Beiträgen in jeder Sprache samt Übersetzungen, Themen, interaktiven Grafiken zum Ausprobieren, einem RSS-Feed und strukturierten Daten für Artikel",
   "FeatureWebsite.fact5":
     "Kontaktlinks, im Adminbereich festgelegt und im Footer und in den strukturierten Daten angezeigt",
   "FeatureWebsite.fact6":
@@ -877,4 +877,16 @@ export default {
   "Blog.readNext": "Weiterlesen",
   "Blog.morePosts": "Weitere Beiträge",
   "Blog.breadcrumb": "Brotkrümelnavigation",
+  "PostFigure.noScript":
+    "Gezeigt mit den Zahlen des Beitrags. Schalte JavaScript ein, um deine eigenen auszuprobieren.",
+  "PostFigure.rssLink": "Auf der Website ausprobieren: {link}",
+  "PostFigure.CostCalculator.title": "Was der Pro-Tarif der Demo dein Team kostet",
+  "PostFigure.CostCalculator.lead":
+    "Pro wird pro Mitglied abgerechnet. Stell die Größe deines Teams ein.",
+  "PostFigure.CostCalculator.members": "Teammitglieder",
+  "PostFigure.CostCalculator.total": "Dein Team, pro Monat",
+  "PostFigure.CostCalculator.perMember": "Pro Mitglied, pro Monat",
+  "PostFigure.CostCalculator.caption": "Preise der Demo-Tarife, ohne Steuern.",
+  "PostFigure.CostCalculator.fallback":
+    "Teammitglieder: {members}. Im Pro-Tarif der Demo zahlen sie {total} im Monat, {price} pro Mitglied.",
 } satisfies Catalog

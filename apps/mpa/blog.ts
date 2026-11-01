@@ -64,14 +64,24 @@ const summary = type({
 
 const postsAnswer = type({ posts: summary.array() })
 
+const headings = type({ id: `string`, text: `string`, depth: `number` }).array()
+
+/** A body segment: a chunk of the API's safe HTML, or a component tag, unchecked (#620). */
+const segments = type({ kind: `'html'`, html: `string` }).or({
+  kind: `'component'`,
+  tag: `string`,
+  props: `Record<string, unknown>`,
+  line: `number`,
+}).array()
+
 const postAnswer = type({
   post: summary.and({
     seoTitle: `string | null`,
     tldr: `string[]`,
     coverUrl: `string | null`,
     coverAlt: `string | null`,
-    html: `string`,
-    headings: type({ id: `string`, text: `string`, depth: `number` }).array(),
+    segments,
+    headings,
     authorName: `string | null`,
     translations: type({ language, slug: `string` }).array(),
   }),
@@ -80,7 +90,8 @@ const postAnswer = type({
 
 const feedAnswer = type({
   posts: summary.and({
-    html: `string`,
+    segments,
+    headings,
     coverUrl: `string | null`,
     authorName: `string | null`,
   }).array(),
