@@ -186,7 +186,7 @@
     // #endregion Aliases
 
     // #region Dependencies
-    // spy4x/ts-libs 1.105.0 (cron schedules, passkeys, idempotency, keyset cursor, lockout, offline
+    // spy4x/ts-libs 1.106.0 (cron schedules, passkeys, idempotency, keyset cursor, lockout, offline
     // outbox, e-mail proof, the redirect-path check of sign-in's `next`, the password check without
     // a session, billing, the provider's name and picture, the healthcheck's HTTP mode, a key
     // giving up its address, safe Markdown and reading time, copying an object inside the S3
@@ -251,7 +251,7 @@
     "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@13.3.0",
     // The npm name of `@spy4x/platform` above, for the same reason: every e2e spec takes `uuidV7`
     // from it. It moves with the `@spy4x/*` packages.
-    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.105.0",
+    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.106.0",
 
     // shared/types — 2.2.3 matches spy4x/ts-libs and spy4x/preact-components
     // (spy4x/preact-components#121)

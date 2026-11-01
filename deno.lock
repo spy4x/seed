@@ -116,7 +116,7 @@
     "npm:@babel/preset-react@^7.27.1": "7.29.7_@babel+core@7.29.7",
     "npm:@deno/vite-plugin@2.0.4": "2.0.4_vite@7.3.6",
     "npm:@hexagon/base64@^1.1.27": "1.1.28",
-    "npm:@jsr/spy4x__platform@1.105.0": "1.105.0",
+    "npm:@jsr/spy4x__platform@1.106.0": "1.106.0",
     "npm:@jsr/spy4x__preact-system@13.3.0": "13.3.0",
     "npm:@levischuck/tiny-cbor@~0.2.2": "0.2.11",
     "npm:@noble/ciphers@^2.1.1": "2.4.0",
@@ -1290,26 +1290,26 @@
       "integrity": "sha512-juxDlmpoejeDYSNwuNU+N6/J8aIppFAhds+DD5zoTk3VYUof2ZRly11O2jolZLs9AUezX3JLrOMweuHbRowtRg==",
       "tarball": "https://npm.jsr.io/~/11/@jsr/hono__hono/4.13.8.tgz"
     },
-    "@jsr/spy4x__email@1.105.0": {
-      "integrity": "sha512-STEm6BbEQhQlYGFJcNko8yxwU/1Oq/i7XNF01A9gTFIBQTPFXzJgIx1J5Cm7Yn21BoBy5Bi0M3CDVpdXyaFU4g==",
+    "@jsr/spy4x__email@1.106.0": {
+      "integrity": "sha512-tZC2C0qynkS2DLAlrvj3PLoIg8H6HHGO8DRJaNB/x3OzS/ViPXx6KnPKxkdKTr1DGF4C/yCZ/ZXa7znRFCnuEQ==",
       "dependencies": [
-        "@jsr/spy4x__time@1.105.0",
+        "@jsr/spy4x__time@1.106.0",
         "@jsr/std__encoding",
         "nodemailer"
       ],
-      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__email/1.105.0.tgz"
+      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__email/1.106.0.tgz"
     },
-    "@jsr/spy4x__net@1.105.0": {
-      "integrity": "sha512-5+8QEoC4YwYSt3kVJwW17rMIUvw6/WsblNo8pMlUTQAu2qS+4bl2Rq9gHDQuhB/n0xZ4ky+nW3EZ9KbIZRRkcg==",
-      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__net/1.105.0.tgz"
+    "@jsr/spy4x__net@1.106.0": {
+      "integrity": "sha512-cwoSLbXbGK/NpTENgCDEoNn3W9G3CkVUmsyLocHnjc8OH+l8uvYnbU85zvQONamkgNRdUgq4iu+KWg1ZMmgkyg==",
+      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__net/1.106.0.tgz"
     },
-    "@jsr/spy4x__platform@1.105.0": {
-      "integrity": "sha512-iTM/mUyfrkMKMNtUDCy3IXPrs0dem+HBZ04Ub8CTZD0zvIFjDDSMHGvRQUF/BYNtHXH3d/DCp0gq1I7D5TW97g==",
+    "@jsr/spy4x__platform@1.106.0": {
+      "integrity": "sha512-8C9q/ATFN6ghKavrJQTRksTjwACYEmE3ZP6zwTwsKWbr0B/cQR6PDnZGtgjfacyMC5kW/zdAdSsfyVkuoWsdeg==",
       "dependencies": [
         "@jsr/hono__hono",
         "@jsr/spy4x__email",
         "@jsr/spy4x__net",
-        "@jsr/spy4x__time@1.105.0",
+        "@jsr/spy4x__time@1.106.0",
         "@jsr/spy4x__validation",
         "@jsr/std__crypto",
         "@jsr/std__encoding",
@@ -1319,7 +1319,7 @@
         "arktype",
         "marked"
       ],
-      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__platform/1.105.0.tgz"
+      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__platform/1.106.0.tgz"
     },
     "@jsr/spy4x__platform@1.95.0": {
       "integrity": "sha512-Umin0VS1UodlbkjYcImj0Izavz8UP/REL74StBW0QfbzCixLZgehnMMDbGks3zgCBr5vx3ddoTASBpJyiRPe/Q==",
@@ -1327,7 +1327,7 @@
         "@jsr/hono__hono",
         "@jsr/spy4x__email",
         "@jsr/spy4x__net",
-        "@jsr/spy4x__time@1.105.0",
+        "@jsr/spy4x__time@1.106.0",
         "@jsr/spy4x__validation",
         "@jsr/std__crypto",
         "@jsr/std__encoding",
@@ -1389,20 +1389,20 @@
       ],
       "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__preact-ui/13.3.0.tgz"
     },
-    "@jsr/spy4x__time@1.105.0": {
-      "integrity": "sha512-RtdUWPhMpMxlQlGMQxREjQDzWxTkvA1Dk3mObnAAb5RKJzWtLrfxBw/d9F8Ub2vlqs3wy+vio0om0SFJCFsaAQ==",
-      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__time/1.105.0.tgz"
+    "@jsr/spy4x__time@1.106.0": {
+      "integrity": "sha512-kKdrA/vEsriDyIC9vqf09qV7Bhn6BP+fdJzxlsMBMWTqW/wDfQurzhxcb2NviieqSSZXHhoyo5WcbkOFM0yt4A==",
+      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__time/1.106.0.tgz"
     },
     "@jsr/spy4x__time@1.95.0": {
       "integrity": "sha512-3QMcNin6/yK4kwn+J3co5we4F5t2NI9+AaRvtiu1uCLtqM/PuuuBk56xAR6vCOKj8eR9LbT4f7jpb31Mlo2EqA==",
       "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__time/1.95.0.tgz"
     },
-    "@jsr/spy4x__validation@1.105.0": {
-      "integrity": "sha512-GY2ENQqduT0CVcDoms9RbVuSQB9I8+kGtiF7F+9I6oFR0Yov7rewP7+Cmqw8wfUyaR0akvnc9exnkG2aI5JoOg==",
+    "@jsr/spy4x__validation@1.106.0": {
+      "integrity": "sha512-s/tmuYhP7hyHxExDqvXt4Z4xKq64LcEPiUHXfIxbTfXZWR4RV4SGnKv7sEYHmdVmtM6RKfK268e1EuOiWAKDgw==",
       "dependencies": [
         "arktype"
       ],
-      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__validation/1.105.0.tgz"
+      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__validation/1.106.0.tgz"
     },
     "@jsr/std__bytes@1.0.6": {
       "integrity": "sha512-St6yKggjFGhxS52IFLJWvkchRFbAKg2Xh8UxA4S1EGz7GJ2Ui+ssDDldj/w2c8vCxvl6qgR0HaYbKeFJNqujmA==",
@@ -2936,7 +2936,7 @@
       "jsr:@std/testing@1.0.16",
       "jsr:@std/yaml@1.3.0",
       "npm:@axe-core/playwright@4.13.0",
-      "npm:@jsr/spy4x__platform@1.105.0",
+      "npm:@jsr/spy4x__platform@1.106.0",
       "npm:@jsr/spy4x__preact-system@13.3.0",
       "npm:@playwright/test@1.57.0",
       "npm:@preact/signals-core@1.12.1",
