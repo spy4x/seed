@@ -79,9 +79,27 @@ Deno.test("the comparison sees a column or an index that schema.sql lacks, on an
   })
 })
 
+Deno.test("the comparison sees a generated column whose formula schema.sql lacks", async () => {
+  await withSchemas(async (migrated, snapshot) => {
+    await applyMigrations(migrated)
+    // The search vector without its body part: a note would no longer be found by its body.
+    await migrated`
+      ALTER TABLE notes ALTER COLUMN search_vector
+        SET EXPRESSION AS (setweight(to_tsvector('simple'::regconfig, title), 'A'))
+    `
+    await snapshot.unsafe(await Deno.readTextFile(SNAPSHOT))
+
+    const migratedRows = await schemaMetadata(migrated)
+    const snapshotRows = new Set(await schemaMetadata(snapshot))
+    expect(migratedRows.filter((row) => !snapshotRows.has(row))).toEqual([
+      expect.stringMatching(/^column\|notes\|\d+\|search_vector\|.*setweight/),
+    ])
+  })
+})
+
 /**
  * Every table's columns, constraints, indexes and triggers, and every function, of the schema
- * `sql` searches, as sorted lines. A column is numbered by its position among the table's live
+ * `sql` searches, as sorted lines. A generated column carries its formula. A column is numbered by its position among the table's live
  * columns, not by `ordinal_position`: a dropped column leaves a gap there, which a fresh
  * `schema.sql` does not have.
  */
@@ -96,7 +114,7 @@ async function schemaMetadata(sql: postgres.Sql): Promise<string[]> {
         column_name || '|' ||
         data_type || '|' || COALESCE(character_maximum_length::text, '') || '|' ||
         COALESCE(datetime_precision::text, '') || '|' || is_nullable || '|' ||
-        COALESCE(column_default, '') AS value
+        COALESCE(column_default, '') || '|' || COALESCE(generation_expression, '') AS value
       FROM information_schema.columns
       WHERE table_schema = ${schema}
         AND table_name NOT IN ${sql(NOT_COMPARED)}
