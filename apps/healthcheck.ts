@@ -11,6 +11,23 @@
  * It replaces `wget`, so the check needs nothing from the image beyond Deno itself and may reach
  * nothing but `127.0.0.1` (`--allow-net=127.0.0.1`).
  */
-import { resolveHealthcheckPort, runHealthcheck } from "@spy4x/server/healthcheck"
+import {
+  type HealthcheckOptions,
+  resolveHealthcheckPort,
+  runHealthcheck,
+} from "@spy4x/server/healthcheck"
 
-await runHealthcheck({ port: resolveHealthcheckPort(Deno.env), path: Deno.args[0] })
+/**
+ * Runs the check with the command line's arguments and the environment it was given, then exits.
+ * `probe` replaces the socket, the request and the exit; a test passes them, the script never does.
+ */
+export async function healthcheck(
+  args: readonly string[],
+  env: { get: (name: string) => string | undefined },
+  probe: Pick<HealthcheckOptions, "connector" | "fetcher"> & { exit?: (code: number) => never } =
+    {},
+): Promise<void> {
+  await runHealthcheck({ port: resolveHealthcheckPort(env), path: args[0], ...probe })
+}
+
+if (import.meta.main) await healthcheck(Deno.args, Deno.env)
