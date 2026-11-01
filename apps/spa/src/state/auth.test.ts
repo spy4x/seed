@@ -688,7 +688,7 @@ describe("which end of a session is the person's own choice", () => {
     expect(signOutChosen.value).toBe(true)
   })
 
-  it("is not a session the server ended, as a start answered with 401 says", async () => {
+  it("is not a session the server ended, such as a start answered with 401", async () => {
     meAnswers(401)
 
     await bootstrapSession(() => ({ id: 5 } as User))

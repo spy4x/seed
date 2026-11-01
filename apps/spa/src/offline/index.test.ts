@@ -956,7 +956,7 @@ describe("the queue of a person whose session the server ended", () => {
     expect(currentLayer()?.userId).toBe(7)
   })
 
-  it("is deleted, never shown or sent, before another person's layer opens on that device", async () => {
+  it("is deleted before another person's layer opens on that device", async () => {
     const { storage, device } = await expired()
     const calls = server()
 
