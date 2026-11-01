@@ -82,7 +82,8 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
    ```
 
    Set `ENV=prod`, `PROJECT`, `DOMAIN`, `MPA_DOMAIN`, `ADMIN_DOMAIN`, `TRAEFIK_ACME_EMAIL` (a real
-   address), `SSH_TO_SERVER=deploy@192.0.2.10` and `PATH_ON_SERVER`, and add `mpa` and `admin` to
+   address), `SSH_TO_SERVER=deploy@192.0.2.10`, `PATH_ON_SERVER`, `PROXY_HTTPS_HOST_PORT=443` and
+   `PROXY_HTTP_HOST_PORT=80` (step 3), and add `mpa` and `admin` to
    `COMPOSE_PROFILES` when the product has them. Leave `backup` out until step 10. Give every
    secret a value of its own: `openssl rand -hex 32` for `DB_PASS`, `AUTH_COOKIE_SECRET`,
    `AUTH_PEPPER`, `S3_SECRET_ACCESS_KEY` and `GARAGE_RPC_SECRET`, `openssl rand -hex 24` for
