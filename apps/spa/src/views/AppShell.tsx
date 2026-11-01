@@ -1,5 +1,5 @@
 import type { ComponentChildren } from "preact"
-import { useEffect } from "preact/hooks"
+import { useEffect, useRef } from "preact/hooks"
 import { useSignal } from "@preact/signals"
 import { useLocation, useSearch } from "wouter-preact"
 import { canMutateNotes, canViewActivity } from "@domain/groups"
@@ -24,6 +24,7 @@ import {
   callQuery,
   canCall,
   currentLayer,
+  reviewConflicts,
   type UnsentWait,
   watchUnsentChanges,
 } from "../modules.ts"
@@ -91,20 +92,33 @@ function useSignOut(guest: boolean): { onSignOut: () => void; dialog: ComponentC
   const wait = useSignal<UnsentWait | null>(null)
   // A guest is asked first (#224): signing out of an account with no sign-in method loses it.
   const askingGuest = useSignal(false)
+  /** Whether the queue is being read for a sign-out, so a second press starts no second read. */
+  const checking = useRef(false)
+  const mounted = useRef(true)
   const close = () => {
     wait.value?.dispose()
     wait.value = null
   }
-  useEffect(() => close, [])
-  const signOutChecked = () => {
-    const watched = watchUnsentChanges()
-    if (watched) wait.value = watched
-    else signOutNow()
+  useEffect(() => () => {
+    mounted.current = false
+    close()
+  }, [])
+  const signOutChecked = async () => {
+    if (checking.current) return
+    checking.current = true
+    try {
+      const watched = await watchUnsentChanges()
+      if (!mounted.current) watched?.dispose()
+      else if (watched) wait.value = watched
+      else signOutNow()
+    } finally {
+      checking.current = false
+    }
   }
   return {
     onSignOut: () => {
       if (guest) askingGuest.value = true
-      else signOutChecked()
+      else void signOutChecked()
     },
     dialog: askingGuest.value
       ? (
@@ -116,7 +130,7 @@ function useSignOut(guest: boolean): { onSignOut: () => void; dialog: ComponentC
           }}
           onSignOut={() => {
             askingGuest.value = false
-            signOutChecked()
+            void signOutChecked()
           }}
         />
       )
@@ -131,8 +145,12 @@ function useSignOut(guest: boolean): { onSignOut: () => void; dialog: ComponentC
           onCancel={close}
           onReview={(groupId) => {
             close()
-            // The notes page of that group shows the conflicts with their choices.
-            if (groupId) void selectionStore.select(groupId)
+            // The notes page of that group shows the conflicts with their choices; focus lands on
+            // them.
+            if (groupId) {
+              reviewConflicts(groupId)
+              void selectionStore.select(groupId)
+            }
             navigate(NOTE_PATHS.list)
           }}
         />

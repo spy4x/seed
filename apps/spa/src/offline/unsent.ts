@@ -1,5 +1,5 @@
 import { computed, type ReadonlySignal, signal } from "@preact/signals"
-import type { SyncRunnerState } from "@spy4x/realtime/sync-runner"
+import type { SyncRunner, SyncRunnerState } from "@spy4x/realtime/sync-runner"
 import type { OfflineLayer } from "./index.ts"
 import { TAGS_COLLECTION } from "./tags-collection.ts"
 
@@ -69,18 +69,33 @@ export interface WatchUnsentOptions {
   canSend(): boolean
 }
 
+/** Watches the layer's queue for a sign-out, as {@link watchQueue} does. */
+export function watchUnsent({ layer, ...rest }: WatchUnsentOptions): UnsentWait {
+  return watchQueue({ counts: () => countUnsent(layer), runner: layer.runner, ...rest })
+}
+
+/** Options of {@link watchQueue}. */
+export interface WatchQueueOptions extends Omit<WatchUnsentOptions, "layer"> {
+  /** The queue's counts as they are now; it reads signals, so the view follows them. */
+  counts(): UnsentCounts
+  /** What sends the queue. */
+  runner: Pick<SyncRunner, "getState" | "subscribe" | "kick">
+}
+
 /**
- * Watches the queue for a sign-out. Before {@link UnsentWait.send} the state is `ask`; after it,
+ * Watches a queue for a sign-out. Before {@link UnsentWait.send} the state is `ask`; after it,
  * `offline` while nothing can be sent, `retrying` while the runner waits after a failed run, and
  * `sending` otherwise. The runner already sends on reconnect and retries with backoff, so nothing
  * here sends twice: `send` only asks it to run now.
  */
-export function watchUnsent({ layer, online, canSend }: WatchUnsentOptions): UnsentWait {
-  const runner = signal<SyncRunnerState>(layer.runner.getState())
-  const stop = layer.runner.subscribe((state) => runner.value = state)
+export function watchQueue(
+  { counts: read, runner: sender, online, canSend }: WatchQueueOptions,
+): UnsentWait {
+  const runner = signal<SyncRunnerState>(sender.getState())
+  const stop = sender.subscribe((state) => runner.value = state)
   const sendingFrom = signal<number | null>(null)
   const view = computed((): UnsentView => {
-    const counts = countUnsent(layer)
+    const counts = read()
     const sendable = counts.unsent - counts.conflicts
     const from = sendingFrom.value
     if (from === null) return { ...counts, sent: 0, state: "ask" }
@@ -98,9 +113,9 @@ export function watchUnsent({ layer, online, canSend }: WatchUnsentOptions): Uns
     view,
     send() {
       if (sendingFrom.value !== null) return
-      const counts = countUnsent(layer)
+      const counts = read()
       sendingFrom.value = counts.unsent - counts.conflicts
-      void layer.runner.kick()
+      void sender.kick()
     },
     dispose: stop,
   }

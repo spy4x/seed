@@ -1,4 +1,5 @@
-import { useEffect, useState } from "preact/hooks"
+import { useEffect, useRef, useState } from "preact/hooks"
+import { signal } from "@preact/signals"
 import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { ConflictChooser, type ConflictItem } from "@spy4x/preact-system/conflict-chooser"
 import { SyncStatus } from "@spy4x/preact-system/sync-status"
@@ -13,6 +14,12 @@ import type { TagEntry } from "./tags-cache.ts"
 import { isolate } from "@spy4x/preact-ui/bdi"
 
 const network = createOnlineStatus()
+
+/**
+ * The group whose conflict chooser takes focus the next time this strip shows it: "Review changes"
+ * in the sign-out dialog sets it (`reviewConflicts` in `modules.ts`), and the strip clears it.
+ */
+export const conflictsToReview = signal<string | null>(null)
 
 /** One conflict, in the words of the aggregate it is about. */
 interface ConflictView {
@@ -152,6 +159,20 @@ export function OfflineStatus(
       unsubscribe?.()
     }
   }, [layer])
+  const strip = useRef<HTMLElement>(null)
+  const reviewing = layer !== null && conflictsToReview.value === groupId
+  useEffect(() => {
+    if (!reviewing) return
+    // Asked once: a chooser that shows later, after the person moved on, takes no focus.
+    conflictsToReview.value = null
+    // A task later: the route change to this page moves focus to its `<h1>` in an effect of the
+    // app's frame, which runs after this one.
+    setTimeout(() => {
+      const chooser = strip.current?.querySelector("[aria-labelledby]")
+      const id = chooser?.getAttribute("aria-labelledby")
+      if (id) chooser?.ownerDocument.getElementById(id)?.focus()
+    })
+  }, [reviewing])
   if (!layer) return null
   const entries = layer.entries.value.filter((entry) => entry.payload.groupId === groupId)
   const tagEntries = layer.tagEntries.value.filter((entry) => entry.payload.groupId === groupId)
@@ -189,6 +210,7 @@ export function OfflineStatus(
     // Above the page's header, as the shell's banner does, a section gap (`Page`'s gap-8) keeps a
     // conflict card off the header. Under it, the page's own gap does.
     <section
+      ref={strip}
       class={underHeader ? "w-full" : "mb-8 w-full"}
       aria-label={t.t(`OfflineStatus.sync`)}
       data-e2e="offline-status"

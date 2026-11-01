@@ -132,7 +132,7 @@ describe("the queue of writes", () => {
     try {
       startModules(7, { pull: () => {}, check: () => Promise.resolve() }, { storage })
       await until(() => currentLayer()?.entries.value.length === 1)
-      const wait = watchUnsentChanges()!
+      const wait = (await watchUnsentChanges())!
       wait.send()
       const asOther = wait.view.value.state
       sessionState.value = { ...signedOut, user: user(7) }
@@ -143,5 +143,102 @@ describe("the queue of writes", () => {
     } finally {
       await stopOffline()
     }
+  })
+})
+
+describe("the sign-out question", () => {
+  const reads = { pull: () => {}, check: () => Promise.resolve() }
+
+  /**
+   * A device holding one queued edit of `userId`'s note `n-1`. Each test has its own user: a send
+   * that never ends holds that user's queue lock for the rest of the file.
+   */
+  async function deviceWithQueue(userId: number) {
+    const storage = createMemoryStorage()
+    await storage.of(userId).queue.putEntry({
+      key: "key-n-1",
+      entityId: "n-1",
+      kind: "update",
+      payload: { groupId: "g-1", title: "Plan", body: "" },
+      baseVersion: 1,
+      attempted: false,
+      status: "pending",
+      queuedAt: "2026-10-01T08:00:00.000Z",
+    })
+    return storage
+  }
+
+  it("asks right after start, before the layer has read the queue", async () => {
+    visiblePage()
+    configureModules({ realtime: false, offline: true })
+    const storage = await deviceWithQueue(9)
+    globalThis.fetch = (() => new Promise(() => {})) as unknown as typeof fetch
+    sessionState.value = { ...signedOut, user: user(9) }
+    try {
+      startModules(9, reads, { storage, databases: storage.databases })
+      const readYet = currentLayer()?.entries.value.length
+      const wait = await watchUnsentChanges()
+      const unsent = wait?.view.value.unsent
+      wait?.dispose()
+
+      expect([readYet, unsent]).toEqual([0, 1])
+    } finally {
+      await stopOffline()
+    }
+  })
+
+  it("asks when the device refused to delete the person's owed copies, so no layer opened", async () => {
+    visiblePage()
+    configureModules({ realtime: false, offline: true })
+    const storage = await deviceWithQueue(10)
+    const refused = () => Promise.reject(new Error("storage is blocked"))
+    const refusing: typeof storage = {
+      ...storage,
+      openReads: (userId) => ({ ...storage.openReads(userId), clear: refused }),
+      databases: { list: storage.databases.list, delete: refused },
+    }
+    globalThis.fetch = (() => new Promise(() => {})) as unknown as typeof fetch
+    localStorage.setItem("offline:owed-deletion", "[10]")
+    sessionState.value = { ...signedOut, user: user(10) }
+    const realWarn = console.warn
+    console.warn = () => {}
+    try {
+      startModules(10, reads, { storage: refusing, databases: refusing.databases })
+      await pause(0)
+      const layer = currentLayer()
+      const wait = await watchUnsentChanges()
+      const view = wait?.view.value
+      wait?.dispose()
+
+      expect(layer).toBeNull()
+      expect(view).toMatchObject({ unsent: 1, conflicts: 0, state: "ask" })
+    } finally {
+      console.warn = realWarn
+    }
+  })
+
+  it("with the local data off, asks about the queue left on the device and sends it on Send", async () => {
+    visiblePage()
+    configureModules({ realtime: false, offline: false })
+    const storage = await deviceWithQueue(11)
+    const urls: string[] = []
+    globalThis.fetch = ((url: string) => {
+      urls.push(url)
+      const note = { id: "n-1", groupId: "g-1", title: "Plan", body: "", tagIds: [], version: 2 }
+      return Promise.resolve(Response.json({ result: { note } }))
+    }) as unknown as typeof fetch
+    // Another person's cookie: the queue cannot go out at start, so it is still there when asked.
+    sessionState.value = { ...signedOut, user: user(8) }
+    startModules(11, reads, { storage, databases: storage.databases })
+    await pause(0)
+    const wait = (await watchUnsentChanges())!
+    const asked = wait.view.value.unsent
+    sessionState.value = { ...signedOut, user: user(11) }
+    wait.send()
+    await until(() => wait.view.value.unsent === 0)
+    wait.dispose()
+
+    expect(asked).toBe(1)
+    expect(urls).toEqual(["/api/call/note.update"])
   })
 })

@@ -1,3 +1,4 @@
+import { signal } from "@preact/signals"
 import { ConnectionLostError, type GapReport } from "@spy4x/realtime"
 import { type CallPort, type RetryOptions, sendCommand, sendQuery } from "@spy4x/realtime/calls"
 import { createOnlineStatus } from "@spy4x/preact-signals/online"
@@ -25,10 +26,11 @@ import {
 } from "./offline/index.ts"
 import { offlineNotes as notesOverLayer } from "./offline/notes-collection.ts"
 import { offlineTags as tagsOverLayer } from "./offline/tags-collection.ts"
-import { OfflineStatus as OfflineStatusLine } from "./offline/OfflineStatus.tsx"
+import { conflictsToReview, OfflineStatus as OfflineStatusLine } from "./offline/OfflineStatus.tsx"
 import { benchmarkLocalData as benchmarkOverLayer } from "./offline/benchmark.ts"
 import {
   browserDatabases,
+  countQueueOnce,
   type QueueDatabases,
   refusedMessage,
   sendQueueOnce,
@@ -36,6 +38,7 @@ import {
 import {
   type UnsentView,
   type UnsentWait,
+  watchQueue,
   watchUnsent as watchLayerUnsent,
 } from "./offline/unsent.ts"
 import type { RuntimeConfig } from "./runtime-config.ts"
@@ -99,6 +102,8 @@ interface Session {
   /** Whether the next run of the runner is the full pull, not the cheap check. */
   full: boolean
   stopEvents: () => void
+  /** What the session was started with: where a queue outside the layer is read from. */
+  options: StartOptions
 }
 
 let session: Session | null = null
@@ -209,6 +214,7 @@ export function startModules(userId: number, reads: ChangeReads, options: StartO
     polling: false,
     full: true,
     stopEvents: () => {},
+    options,
   }
   session = opened
   let stopQueue = () => {}
@@ -432,12 +438,19 @@ export function currentLayer(): OfflineLayer | null {
 }
 
 /**
- * The queue watched for a sign-out, or `null` when nothing waits: no write is queued, nobody is
- * signed in, or the module is off. The caller disposes it when the dialog closes.
+ * The queue watched for a sign-out, or `null` when nothing waits: no write is queued, or nobody is
+ * signed in. Right after start it waits for the layer to read the queue an earlier visit left, and
+ * with no layer open for the person (the module is off, or the layer waits for a deletion the
+ * device owes, or the device refused it) it reads the queue from the device: either way a sign-out
+ * never deletes unsent writes without asking. The caller disposes it when the dialog closes.
  */
-export function watchUnsentChanges(): UnsentWait | null {
+export async function watchUnsentChanges(): Promise<UnsentWait | null> {
+  const opened = session
+  if (!opened) return null
   const running = offlineLayer()
-  if (!running || !session) return null
+  if (running?.userId !== opened.userId) return await watchLeftQueue(opened)
+  await running.loaded
+  if (session !== opened || offlineLayer() !== running) return null
   if (running.entries.value.length + running.tagEntries.value.length === 0) return null
   const { userId } = running
   return watchLayerUnsent({
@@ -445,6 +458,60 @@ export function watchUnsentChanges(): UnsentWait | null {
     online: network.online,
     canSend: () => canCallAs(userId),
   })
+}
+
+/**
+ * The queue of `opened`'s user that lies on the device with no layer open, watched for a sign-out,
+ * or `null` when it holds nothing. "Send" sends it as a start with the module off does, retrying
+ * with backoff. With no layer there is no chooser: a write the server refuses is dropped, as
+ * {@link sendQueueOnce} does, so it counts as sendable here.
+ */
+async function watchLeftQueue(opened: Session): Promise<UnsentWait | null> {
+  const { userId, options: { storage, databases } } = opened
+  let count = 0
+  try {
+    count = await countQueueOnce({ userId, storage, databases })
+  } catch (error) {
+    // A queue the device cannot read cannot be sent either; the sign-out goes on.
+    console.warn("The offline queue could not be read.", error)
+  }
+  if (count === 0 || session !== opened) return null
+  const unsent = signal(count)
+  const transport = offlineTransportFor(userId, opened.port)
+  const runner = createSyncRunner({
+    async flush() {
+      const result = await sendQueueOnce({ userId, transport, storage, databases })
+      if (!result.done) return "unreachable"
+      unsent.value = 0
+    },
+  })
+  const wait = watchQueue({
+    counts: () => ({ unsent: unsent.value, conflicts: 0, reviewGroupId: null }),
+    runner,
+    online: network.online,
+    canSend: () => canCallAs(userId),
+  })
+  return {
+    view: wait.view,
+    send() {
+      wait.send()
+      // Starting runs it once at once, then on reconnect and with backoff.
+      runner.start()
+    },
+    dispose() {
+      wait.dispose()
+      runner.stop()
+    },
+  }
+}
+
+/**
+ * "Review changes" in the sign-out dialog: the conflict chooser of `groupId` takes focus the next
+ * time its notes page shows it, so a keyboard or screen-reader user lands on what they came to
+ * resolve.
+ */
+export function reviewConflicts(groupId: string): void {
+  conflictsToReview.value = groupId
 }
 
 export type { UnsentView, UnsentWait }

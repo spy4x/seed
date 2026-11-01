@@ -374,13 +374,17 @@ offline. We'll send your changes when you're back online, then sign you out." (t
 "Waiting…"), or "Couldn't reach the server. Trying again…" while the sync runner backs off. Once the
 queue is empty, the sign-out goes on by itself. A write the server refused never sends by itself, so
 it is counted apart; once only such writes are left, the button becomes "Review changes", which
-closes the dialog and opens the notes page of their group, where the chooser is. "Sign out anyway"
-signs out at once and deletes the queue with everything else; "Cancel", Escape and the backdrop keep
-the person signed in. With an empty queue, or the module off, sign-out is immediate, as before. The
-check is `watchUnsentChanges` in `modules.ts` (the counts and the wait are `offline/unsent.ts`);
-`views/AppShell.tsx` asks it and `views/UnsentSignOut.tsx` draws the dialog. The two-factor step's
-sign-out, a sign-out by the server (401) and "sign out other devices" never ask: no queue is open
-there, or it is not this device that signs out.
+closes the dialog and opens the notes page of their group, with focus on the chooser's heading.
+"Sign out anyway" signs out at once and deletes the queue with everything else; "Cancel", Escape and
+the backdrop keep the person signed in. With an empty queue, sign-out is immediate, as before. A
+sign-out right after start waits for the layer to read the queue first. With no layer open for the
+person (the module is off, or the layer waits for a deletion the device owes, or the device refused
+it), the queue is counted from IndexedDB and the same question is asked; "Send, then sign out" then
+sends it as a start with the module off does, and a write the server refuses is dropped, since
+there is no chooser. The check is `watchUnsentChanges` in `modules.ts` (the counts and the wait are
+`offline/unsent.ts`); `views/AppShell.tsx` asks it and `views/UnsentSignOut.tsx` draws the dialog.
+The two-factor step's sign-out, a sign-out by the server (401) and "sign out other devices" never
+ask: no queue is open there, or it is not this device that signs out.
 
 ## What is not offline
 
@@ -494,8 +498,9 @@ imports the layer is missing from this list.
    (`export const benchmarkLocalData: BenchmarkLocalData | null = null`), which closes the
    benchmark page: it measures this layer.
    The stores of the level 2 lists then read from the server and keep nothing, with no change to
-   them or to their tests. `watchUnsentChanges` and the `UnsentWait` and `UnsentView` types go
-   with that part; delete `sendLeftQueue`, its call in `startModules`, and the `databases` option.
+   them or to their tests. `watchUnsentChanges`, `reviewConflicts` and the `UnsentWait` and
+   `UnsentView` types go with that part; delete `sendLeftQueue`, its call in `startModules`, and the
+   `databases` option.
 4. In `apps/spa/src/app.tsx`, delete what came from that part: `bootstrapSession(recallUser)`
    becomes `bootstrapSession()` and loses its `wipeDevice` step; in the effect that remembers the
    user, drop `rememberUser` and call `clearBrowserStorage()` where it called `wipeDevice()`; drop
@@ -509,8 +514,8 @@ imports the layer is missing from this list.
    `deviceNotes` answer `[]`: with no copy, a search the server cannot answer finds nothing.
 7. In `apps/spa/src/views/NotesView.tsx`, `apps/spa/src/views/NoteEditorView.tsx` and
    `apps/spa/src/views/TagsView.tsx`, delete the `OfflineStatus` import and element.
-8. In `apps/spa/src/views/AppShell.tsx`, delete `useSignOut` and the `watchUnsentChanges` and
-   `UnsentSignOut` imports, and pass `useSignOutNow()` as `onSignOut`. Delete
+8. In `apps/spa/src/views/AppShell.tsx`, delete `useSignOut` and the `watchUnsentChanges`,
+   `reviewConflicts` and `UnsentSignOut` imports, and pass `useSignOutNow()` as `onSignOut`. Delete
    `apps/spa/src/views/UnsentSignOut.tsx` and `apps/spa/src/views/UnsentSignOut.test.tsx`.
 9. Delete the specs `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts` and `e2e/search-offline.e2e.ts`
    (with their names in `OFFLINE_SPECS` of `infra/scripts/e2e-local-plan.ts`), the offline test in
