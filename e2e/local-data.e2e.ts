@@ -731,4 +731,54 @@ test.describe("what a device keeps", () => {
       await cleanup(request, user)
     }
   })
+  test("a start after the session ended keeps a write that was never sent, and the same person's next sign-in sends it", async ({ browser, request }) => {
+    const user = "e2e_local_data_expired_queue@example.com"
+    await cleanup(request, user)
+    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    try {
+      const { page, groupId, noteId, userId } = await deviceWithNote(context, request, user)
+      await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
+
+      // The session expires while the person is away: the server answers 401 at the next start.
+      await context.clearCookies()
+      await gotoApp(page, "/notes", page.locator("[data-e2e=auth-form-login]"))
+      expect(await recordsIn(page, `reads:${userId}`)).toBe(0)
+      expect(await recordsIn(page, `offline:user:${userId}:outbox`)).toBe(1)
+
+      await signIn(page, user, password)
+      await expect.poll(async () => {
+        const response = await page.request.get(`${apiBase}/api/groups/${groupId}/notes`)
+        return (await response.json()).notes.map((note: { title: string }) => note.title)
+      }).toEqual(["Edited before the update"])
+      await expect.poll(() => recordsIn(page, `offline:user:${userId}:outbox`)).toBe(0)
+    } finally {
+      await context.close()
+      await cleanup(request, user)
+    }
+  })
+
+  test("a write kept after the session ended is deleted when another person signs in on that browser", async ({ browser, request }) => {
+    const first = "e2e_local_data_expired_first@example.com"
+    const second = "e2e_local_data_expired_second@example.com"
+    await cleanup(request, first)
+    await cleanup(request, second)
+    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    try {
+      const { page, groupId, noteId, userId } = await deviceWithNote(context, request, first)
+      await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
+      await context.clearCookies()
+      await gotoApp(page, "/notes", page.locator("[data-e2e=auth-form-login]"))
+      expect(await recordsIn(page, `offline:user:${userId}:outbox`)).toBe(1)
+
+      await signUp(request, second)
+      await signIn(page, second, password)
+
+      await expect.poll(() => databases(page)).not.toContain(`offline:user:${userId}:outbox`)
+      expect(await page.evaluate(() => localStorage.getItem("offline:kept-queue"))).toBeNull()
+    } finally {
+      await context.close()
+      await cleanup(request, first)
+      await cleanup(request, second)
+    }
+  })
 })
