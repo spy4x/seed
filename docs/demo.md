@@ -91,7 +91,7 @@ updates the demo in the same PR:
   confirm, and the sends of its fake issues, then writes the day's 90 again, so a second wipe and
   seed leaves 90, not 180. It writes no unsubscribes, which hold only keyed marks a later seed
   could not tell from a real person's. The newsletter's send skips every address on those domains
-  (`isExampleAddress` in `libs/domain/subscribers`), so a blog post's mail never goes to a fake
+  (`isExampleAddress` from `@spy4x/email/address`), so a blog post's mail never goes to a fake
   subscriber. The pending confirm requests (`subscription_requests`) are wiped with the job table
   that would mail them.
 - **The catalog is demo data**: the wipe empties its tables (its photos' files are queued with
