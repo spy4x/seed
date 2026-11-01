@@ -31,6 +31,7 @@
     "jsr:@spy4x/platform@1.95.0": "1.95.0",
     "jsr:@spy4x/platform@1.99.0": "1.99.0",
     "jsr:@spy4x/platform@^1.101.1": "1.101.1",
+    "jsr:@spy4x/platform@^1.91.0": "1.101.1",
     "jsr:@spy4x/platform@^1.99.0": "1.101.1",
     "jsr:@spy4x/preact-charts@13.3.0": "13.3.0",
     "jsr:@spy4x/preact-cn@^13.3.0": "13.3.0",
@@ -43,6 +44,7 @@
     "jsr:@spy4x/preact-ui@13.3.0": "13.3.0",
     "jsr:@spy4x/preact-ui@^13.3.0": "13.3.0",
     "jsr:@spy4x/realtime@1.101.1": "1.101.1",
+    "jsr:@spy4x/realtime@1.91.0": "1.91.0",
     "jsr:@spy4x/server@1.101.1": "1.101.1",
     "jsr:@spy4x/server@1.99.0": "1.99.0",
     "jsr:@spy4x/time@1.101.1": "1.101.1",
@@ -438,6 +440,13 @@
         "jsr:@spy4x/time@1.95.0",
         "npm:@preact/signals@^2.5.1",
         "npm:preact@^10.29.8"
+      ]
+    },
+    "@spy4x/realtime@1.91.0": {
+      "integrity": "e66453ecac43c011c8d7fae9611a263f2c59306dcda7eb952e6ffbe63bb5d5c4",
+      "dependencies": [
+        "jsr:@spy4x/platform@^1.91.0",
+        "npm:arktype"
       ]
     },
     "@spy4x/realtime@1.101.1": {
