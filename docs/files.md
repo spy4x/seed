@@ -1,5 +1,7 @@
 # The file store
 
+> Also on the website: [seedsaas.com/docs/files](https://seedsaas.com/docs/files).
+
 Seed keeps files in an S3 store. With `files` in `COMPOSE_PROFILES` (the default) Compose runs
 [Garage](https://garagehq.deuxfleurs.fr), a small S3 server, beside the apps, so a self-hosted
 product needs no outside service. Moving to another S3 store, such as Hetzner Object Storage, is a

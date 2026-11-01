@@ -47,18 +47,19 @@ wait_for() { # <name> <pid> <url>
 # The blog's pages read the API: blog-api.ts answers its public routes with Seed's own published
 # posts, read from their files, so /blog and a post are measured with content. Every other API address
 # answers 404, and the pages render without it.
-timeout 900 deno run --allow-net=127.0.0.1 --allow-read=libs/server/blog/seed-posts "$HERE/blog-api.ts" 48412 >"$SCRATCH/api.log" 2>&1 &
+# The servers outlive every Lighthouse run: 54 runs took over 20 minutes on a loaded CI host.
+timeout 2400 deno run --allow-net=127.0.0.1 --allow-read=libs/server/blog/seed-posts "$HERE/blog-api.ts" 48412 >"$SCRATCH/api.log" 2>&1 &
 PIDS+=($!)
 wait_for api "${PIDS[-1]}" http://127.0.0.1:48412/api/blog/posts
 
 # Production mode, with example hosts.
 ENV=prod DOMAIN=app.example.com MPA_DOMAIN=www.example.com API_URL=http://127.0.0.1:48412 \
-  timeout 900 deno serve --allow-all --port 48410 --host 127.0.0.1 apps/mpa/_fresh/server.js \
+  timeout 2400 deno serve --allow-all --port 48410 --host 127.0.0.1 apps/mpa/_fresh/server.js \
   >"$SCRATCH/mpa.log" 2>&1 &
 PIDS+=($!)
 wait_for mpa "${PIDS[-1]}" http://127.0.0.1:48410/health
 
-timeout 900 nginx -p "$SCRATCH" -e stderr -c "$PWD/$HERE/nginx.conf" -g 'daemon off;' \
+timeout 2400 nginx -p "$SCRATCH" -e stderr -c "$PWD/$HERE/nginx.conf" -g 'daemon off;' \
   >"$SCRATCH/nginx.log" 2>&1 &
 PIDS+=($!)
 wait_for nginx "${PIDS[-1]}" http://127.0.0.1:48411/health

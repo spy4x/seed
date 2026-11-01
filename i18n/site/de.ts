@@ -24,6 +24,8 @@ export default {
   "SiteFooter.issue": "Problem melden",
   "SiteFooter.quickStart": "Schnellstart",
   "SiteFooter.apiDocs": "API-Doku",
+  "SiteFooter.docs": "Doku",
+  "SiteFooter.changelog": "Änderungen",
   "SiteFooter.status": "Was heute funktioniert",
   "SiteFooter.company": "Unternehmen",
   "SiteFooter.hire": "Buch mich für dein MVP",

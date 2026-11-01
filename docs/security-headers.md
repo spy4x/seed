@@ -1,5 +1,7 @@
 # Security headers
 
+> Also on the website: [seedsaas.com/docs/security-headers](https://seedsaas.com/docs/security-headers).
+
 The API, the SPA and the MPA send the header set of `securityHeaders` in
 [`@spy4x/server/http/security-headers`](https://jsr.io/@spy4x/server/doc), with every response,
 error answers included.

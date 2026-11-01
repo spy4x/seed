@@ -16,7 +16,10 @@ import Privacy, { PRIVACY_HEAD } from "./routes/[[lang]]/privacy.tsx"
 import Terms, { TERMS_HEAD } from "./routes/[[lang]]/terms.tsx"
 import { handler as mvp } from "./routes/mvp.ts"
 import ApiDocs from "./routes/[[lang]]/docs/api.tsx"
-import { handler as docs } from "./routes/[[lang]]/docs/index.ts"
+import DocsIndex from "./routes/[[lang]]/docs/index.tsx"
+import { handler as doc } from "./routes/[[lang]]/docs/[slug].tsx"
+import { handler as changelog } from "./routes/[[lang]]/changelog.tsx"
+import { handler as changelogFeed } from "./routes/changelog.xml.ts"
 import { handler as robots } from "./routes/robots.txt.ts"
 import { handler as subscribe } from "./routes/[[lang]]/subscribe/index.ts"
 import { handler as theme } from "./routes/theme.js.ts"
@@ -31,6 +34,7 @@ import { ogImageAlt, type OgImageKey, REPOSITORY_URL } from "./site.tsx"
 import { NotYetList } from "./components/features-section.tsx"
 import { SiteLanguage } from "./use-site.tsx"
 import { SITE_PAGES, type SitePage } from "./pages.ts"
+import { DOC_SLUGS } from "./docs-site.ts"
 import { localePath, pathLanguage, SITE_LANGUAGES } from "./languages.ts"
 import type { MpaConfig } from "./config.ts"
 import type { State } from "./utils.ts"
@@ -73,7 +77,11 @@ function siteWith(newsletter: () => boolean, siteConfig: MpaConfig = config) {
     .get("/mvp", mvp.GET!)
     .route("/privacy", { component: view(Privacy) })
     .route("/docs/api", { component: view(ApiDocs) })
-    .get("/docs", docs.GET!)
+    .route("/docs", { component: view(DocsIndex) })
+    .get("/docs/:slug", doc.GET!)
+    .get("/:lang/docs/:slug", doc.GET!)
+    .get("/changelog", changelog.GET!)
+    .get("/changelog.xml", changelogFeed.GET!)
     .route("/terms", { component: view(Terms) })
     .get("/subscribe", subscribe.GET!)
     .get("/robots.txt", robots.GET!)
@@ -120,7 +128,10 @@ function headingOne(html: string): string | undefined {
 
 /** The `content` of the `<meta>` whose `property` or `name` is `key`. */
 function metaContent(html: string, key: string): string | undefined {
+  // The text a reader sees, so a quote in a description counts as one character, not as `&quot;`.
   return html.match(new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`))?.[1]
+    .replaceAll("&quot;", `"`).replaceAll("&#39;", "'").replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">").replaceAll("&amp;", "&")
 }
 
 /** The entities of the page's JSON-LD `@graph`, or none when the page has no structured data. */
@@ -452,7 +463,9 @@ describe("the public website", () => {
   })
 
   it("calls 2FA, groups and per-member billing by one name, the app's, on every page", async () => {
-    for (const { path } of SITE_PAGES) {
+    // The guides are the repository's docs, written for developers and shown as they are: Stripe's
+    // "seats" and the "second factor" of the code are their words.
+    for (const { path } of SITE_PAGES.filter(({ path }) => !path.startsWith("/docs/"))) {
       const { html } = await page(path)
       // What a reader hears or a crawler reads: the text, and the alt, title, label and meta words.
       const words = [...html.matchAll(/\b(?:alt|title|aria-label|content)="([^"]*)"/g)]
@@ -788,11 +801,78 @@ describe("the public website", () => {
     )
   })
 
-  it("answers /docs with a permanent redirect to the API reference", async () => {
-    const response = await handler(new Request(`${site}/docs`), info)
+  it("lists every published guide and the API reference on /docs, under Use and Build", async () => {
+    const { status, html } = await page("/docs")
 
-    expect(response.status).toBe(301)
-    expect(response.headers.get("location")).toBe("/docs/api")
+    expect(status).toBe(200)
+    expect(headingOne(html)).toBe("Seed docs")
+    const groups = [...html.matchAll(/<h2 id="docs-[^"]*"[^>]*>([^<]*)<\/h2>/g)].map((m) => m[1])
+    expect(groups).toEqual(["Use", "Build"])
+    for (const slug of DOC_SLUGS) expect(html, slug).toContain(`href="/docs/${slug}"`)
+    expect(html).toMatch(/<a href="\/docs\/api"[^>]*><span[^>]*>API reference<\/span>/)
+  })
+
+  it("draws a guide with its trail, its TechArticle and its links pointed at the website", async () => {
+    const { status, html } = await page("/docs/deploy")
+
+    expect(status).toBe(200)
+    expect(headingOne(html)).toBe("Deploy and operate")
+    expect(html).toContain(`<link rel="canonical" href="${site}/docs/deploy"`)
+    const article = jsonLdGraph(html).find((entity) => isType(entity, "TechArticle"))
+    expect(article?.headline).toBe("Deploy and operate")
+    expect(html).toContain(`href="/docs/apps"`)
+    expect(html).not.toContain(`href="apps.md`)
+    expect(html).not.toContain("Also on the website")
+  })
+
+  it("draws a guide in English at a translated address, with its canonical in English", async () => {
+    const { status, html } = await page("/de/docs/deploy")
+
+    expect(status).toBe(200)
+    expect(html).toContain(`data-e2e="english-only"`)
+    expect(html).toMatch(/<div lang="en" dir="ltr"/)
+    expect(html).toContain(`<link rel="canonical" href="${site}/docs/deploy"`)
+    expect(html).toContain(`href="/de/docs/apps"`)
+  })
+
+  it("answers 404 for an internal doc, as for an unknown one, with the way to the docs", async () => {
+    for (const path of ["/docs/handoff", "/docs/no-such-doc"]) {
+      const { status, html } = await page(path)
+
+      expect(status, path).toBe(404)
+      expect(headingOne(html), path).toBe("This doc isn't here")
+      expect(html, path).toContain(`href="/docs"`)
+      expect(html, path).toContain(`name="robots" content="noindex`)
+    }
+  })
+
+  it("shows the changelog's empty state when the build read no history", async () => {
+    const { status, html } = await page("/changelog")
+
+    expect(status).toBe(200)
+    expect(html).toContain(`data-e2e="changelog-empty"`)
+    expect(html).toMatch(
+      /<link rel="alternate" type="application\/rss\+xml"[^>]*href="https:\/\/www\.example\.com\/changelog\.xml"/,
+    )
+  })
+
+  it("serves the changelog feed as RSS, and names it in robots.txt", async () => {
+    const response = await handler(new Request(`${site}/changelog.xml`), info)
+    const xml = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toBe("application/rss+xml; charset=utf-8")
+    expect(xml).toMatch(/^<\?xml[^>]*\?>\s*<rss version="2.0"/)
+    expect(xml).toContain(`<link>${site}/changelog</link>`)
+    const robots = await (await handler(new Request(`${site}/robots.txt`), info)).text()
+    expect(robots).toContain(`# Changelog feed: ${site}/changelog.xml`)
+  })
+
+  it("links the docs and the changelog from every page's footer", async () => {
+    const footer = element((await page("/")).html, "footer")!
+
+    expect(hrefOf(linkNamed(footer, "Docs"))).toBe("/docs")
+    expect(hrefOf(linkNamed(footer, "Changelog"))).toBe("/changelog")
   })
 
   it("sends every hire link on the site to the hire page, and none to /mvp", async () => {
@@ -962,6 +1042,9 @@ describe("the public website", () => {
         "/pt-BR/pricing",
         "/ar/pricing",
         "/docs/api",
+        "/docs",
+        ...DOC_SLUGS.map((slug) => `/docs/${slug}`),
+        "/changelog",
         "/subscribe",
         "/ru/subscribe",
         "/es/subscribe",
@@ -999,6 +1082,11 @@ describe("the public website", () => {
       "/features/deploy": "2026-11-01T00:00:00.000Z",
       "/admin": "2026-10-28T00:00:00.000Z",
       "/docs/api": "2026-10-23T00:00:00.000Z",
+      // With no history to read, as under `deno test`, the guides and the changelog carry the day
+      // they were first published.
+      "/docs": "2026-11-01T00:00:00.000Z",
+      ...Object.fromEntries(DOC_SLUGS.map((slug) => [`/docs/${slug}`, "2026-11-01T00:00:00.000Z"])),
+      "/changelog": "2026-11-01T00:00:00.000Z",
       "/compare": "2026-10-16T00:00:00.000Z",
       "/pricing": "2026-10-21T00:00:00.000Z",
       "/subscribe": "2026-10-30T00:00:00.000Z",

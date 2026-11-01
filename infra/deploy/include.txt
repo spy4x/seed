@@ -3,9 +3,30 @@ libs/***
 # The language catalogs both apps build from (i18n/TRANSLATING.md).
 i18n/***
 infra/***
-# The MPA renders the API reference from this file (apps/mpa/api-docs.ts).
+# The MPA renders the API reference and the published guides from these files
+# (apps/mpa/api-docs.ts, PUBLISHED_DOCS in apps/mpa/docs-site.ts).
 docs/
 docs/token-api.md
+docs/apps.md
+docs/products.md
+docs/start-a-product.md
+docs/deploy.md
+docs/guests.md
+docs/sign-in-providers.md
+docs/backups.md
+docs/files.md
+docs/data-export.md
+docs/capacity.md
+docs/billing.md
+docs/catalog.md
+docs/telegram.md
+docs/offline.md
+docs/security-headers.md
+docs/development.md
+docs/aggregates.md
+docs/ids.md
+docs/api-errors.md
+docs/admin-modules.md
 .dockerignore
 Dockerfile.base
 README.md

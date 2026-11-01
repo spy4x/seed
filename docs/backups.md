@@ -1,5 +1,7 @@
 # Backups
 
+> Also on the website: [seedsaas.com/docs/backups](https://seedsaas.com/docs/backups).
+
 With `backup` in `COMPOSE_PROFILES`, a `backup` container saves the database,
 `infra/configs/vapid.json` (the web push keys, which exist on the server only) and the bundled file
 store ([files.md](files.md)) into a

@@ -1,5 +1,7 @@
 # Billing
 
+> Also on the website: [seedsaas.com/docs/billing](https://seedsaas.com/docs/billing).
+
 Each group has one subscription, paid by its owner through Stripe. A group without a paid
 subscription is on the Free plan. Stripe owns the money and the subscription; this app keeps only
 what Stripe's webhooks report, and never decides a plan on its own.

@@ -63,6 +63,7 @@
     "mpa:build": "deno task --cwd apps/mpa build",
     "mpa:start": "deno task --cwd apps/mpa start",
     "mpa:check": "deno task --cwd apps/mpa check",
+    "changelog": "deno run -R=. -W=apps/mpa/changelog.json -E=CI --allow-run=git apps/mpa/changelog-write.ts", // reads git history into apps/mpa/changelog.json for /changelog and the docs' dates; runs before every MPA image build
     "lighthouse": "apps/mpa/lighthouse/run.sh", // the public website's Lighthouse budget, on a built MPA; see the script
     // #endregion apps/mpa
 
@@ -87,7 +88,7 @@
     "proxy:network": "deno run -R=./infra --allow-run=docker,podman ./infra/scripts/proxy-network.ts", // creates the shared "proxy" network when it is missing
     "proxy:start": "deno task proxy:network && docker compose -f ./infra/compose/compose.proxy.yml --env-file ./infra/envs/.env up -d", // keep in step with PROXY_UP in infra/scripts/proxy-network.ts
     "proxy:stop": "docker compose -f ./infra/compose/compose.proxy.yml --env-file ./infra/envs/.env down",
-    "deploy": "deno run -R=./infra --allow-run=git,rsync,ssh ./infra/scripts/deploy.ts",
+    "deploy": "deno task changelog && deno run -R=./infra --allow-run=git,rsync,ssh ./infra/scripts/deploy.ts", // the server builds the MPA image from the files sent, so the changelog is written first
     "env:encrypt": "deno run --no-prompt -R -W=. @spy4x/server/env-age64/cli encrypt",
     "env:decrypt": "deno run --no-prompt -R -W=. @spy4x/server/env-age64/cli decrypt",
     "env:status": "deno run --no-prompt -R -W=. @spy4x/server/env-age64/cli status",
@@ -117,7 +118,7 @@
     // i18n/i18n.test.ts reads the catalogs, and the apps' and libraries' sources for the keys they name.
     // infra/scripts is excluded from the other tools; the "test" block below lets its tests run.
     // libs/ui's interaction tests load happy-dom, whose WebSocket package reads the two WS_* variables.
-    "test": "deno test --no-prompt --allow-env=WS_NO_BUFFER_UTIL,WS_NO_UTF_8_VALIDATE --allow-read=libs/server/blog/seed-posts apps/api apps/spa/src apps/admin/src apps/worker apps/healthcheck.test.ts libs e2e/fixtures && deno test --no-prompt --allow-env=DENO_DEPLOYMENT_ID,GITHUB_SHA,CI_COMMIT_SHA apps/mpa && deno test --no-prompt --allow-read=apps,libs tests/spacing.test.ts && deno test --no-prompt --allow-read=apps,libs/ui tests/ui-boundary.test.ts && deno test --no-prompt --allow-read=apps,libs/ui tests/no-direct-date-format.test.ts && deno test --no-prompt --allow-read=apps/api tests/api-error-shape.test.ts tests/api-spa-switch.test.ts && deno test --no-prompt --allow-read=deno.jsonc,Dockerfile.base tests/dockerfile-base.test.ts && deno test --no-prompt --allow-read=.dockerignore,.gitignore,infra/deploy/include.txt tests/dockerignore.test.ts tests/gitignore.test.ts && deno test --no-prompt --allow-read=infra/compose,apps/worker/+main.ts tests/compose-migrate.test.ts tests/compose-mpa.test.ts tests/compose-api-env.test.ts tests/compose-exposure.test.ts tests/compose-admin.test.ts && deno test --no-prompt --allow-read=infra/compose,infra/postgres,infra/envs/.env.example,infra/scripts/e2e-local.sh,.woodpecker/ci.yml,docs/handoff.md,docs/woodpecker-ci-setup.md tests/compose-postgres.test.ts && deno test --no-prompt --allow-read=infra/compose,infra/configs,infra/backup --allow-run=sh tests/compose-monitoring.test.ts tests/monitoring-alerts.test.ts && deno test --no-prompt --allow-read=libs/server/db/migrations tests/migration-names.test.ts && deno test --no-prompt --allow-read=infra/envs,infra/compose/compose.shared.yml,deno.jsonc,tests --allow-write=tests --allow-run=git infra/scripts && deno test --no-prompt --allow-read --allow-write --allow-env --allow-run=deno tests/db-reset-main.test.ts && deno test --no-prompt --allow-read=apps/spa,docs/offline.md tests/offline-removal.test.ts && deno test --no-prompt --allow-read=apps/spa tests/realtime-removal.test.ts tests/spa-reads.test.ts && deno test --no-prompt --allow-read=apps/spa,tests --allow-write=tests --allow-run=sh tests/spa-runtime-config.test.ts && deno test --no-prompt --allow-read=.woodpecker/ci.yml,e2e,docs/development.md,docs/woodpecker-ci-setup.md tests/ci-browser-tests.test.ts && deno test --no-prompt --allow-read=. tests/no-uuid-v4.test.ts && deno test --no-prompt --allow-read=. --allow-env --allow-sys tests/playwright-retries.test.ts && deno test --no-prompt --allow-read=. tests/dockerfiles.test.ts && deno test --no-prompt tests/load/group-plan.test.ts && deno test --no-prompt --allow-read=i18n,apps,libs i18n",
+    "test": "deno test --no-prompt --allow-env=WS_NO_BUFFER_UTIL,WS_NO_UTF_8_VALIDATE --allow-read=libs/server/blog/seed-posts apps/api apps/spa/src apps/admin/src apps/worker apps/healthcheck.test.ts libs e2e/fixtures && deno test --no-prompt --allow-env=DENO_DEPLOYMENT_ID,GITHUB_SHA,CI_COMMIT_SHA --allow-read=. apps/mpa && deno test --no-prompt --allow-read=apps,libs tests/spacing.test.ts && deno test --no-prompt --allow-read=apps,libs/ui tests/ui-boundary.test.ts && deno test --no-prompt --allow-read=apps,libs/ui tests/no-direct-date-format.test.ts && deno test --no-prompt --allow-read=apps/api tests/api-error-shape.test.ts tests/api-spa-switch.test.ts && deno test --no-prompt --allow-read=deno.jsonc,Dockerfile.base tests/dockerfile-base.test.ts && deno test --no-prompt --allow-read=.dockerignore,.gitignore,infra/deploy/include.txt tests/dockerignore.test.ts tests/gitignore.test.ts && deno test --no-prompt --allow-read=infra/compose,apps/worker/+main.ts tests/compose-migrate.test.ts tests/compose-mpa.test.ts tests/compose-api-env.test.ts tests/compose-exposure.test.ts tests/compose-admin.test.ts && deno test --no-prompt --allow-read=infra/compose,infra/postgres,infra/envs/.env.example,infra/scripts/e2e-local.sh,.woodpecker/ci.yml,docs/handoff.md,docs/woodpecker-ci-setup.md tests/compose-postgres.test.ts && deno test --no-prompt --allow-read=infra/compose,infra/configs,infra/backup --allow-run=sh tests/compose-monitoring.test.ts tests/monitoring-alerts.test.ts && deno test --no-prompt --allow-read=libs/server/db/migrations tests/migration-names.test.ts && deno test --no-prompt --allow-read=infra/envs,infra/compose/compose.shared.yml,deno.jsonc,tests --allow-write=tests --allow-run=git infra/scripts && deno test --no-prompt --allow-read --allow-write --allow-env --allow-run=deno tests/db-reset-main.test.ts && deno test --no-prompt --allow-read=apps/spa,docs/offline.md tests/offline-removal.test.ts && deno test --no-prompt --allow-read=apps/spa tests/realtime-removal.test.ts tests/spa-reads.test.ts && deno test --no-prompt --allow-read=apps/spa,tests --allow-write=tests --allow-run=sh tests/spa-runtime-config.test.ts && deno test --no-prompt --allow-read=.woodpecker/ci.yml,e2e,docs/development.md,docs/woodpecker-ci-setup.md tests/ci-browser-tests.test.ts && deno test --no-prompt --allow-read=. tests/no-uuid-v4.test.ts && deno test --no-prompt --allow-read=. --allow-env --allow-sys tests/playwright-retries.test.ts && deno test --no-prompt --allow-read=. tests/dockerfiles.test.ts && deno test --no-prompt tests/load/group-plan.test.ts && deno test --no-prompt --allow-read=i18n,apps,libs i18n",
     "test:integration": "ENV=test deno test --no-prompt -E -N -R=./libs/server/db/migrations,./libs/server/db/schema.sql,./libs/server/blog/seed-posts tests/integration",
     "e2e": "PLAYWRIGHT_HTML_OUTPUT_DIR=./e2e/report deno run -A --node-modules-dir npm:playwright@1.57.0 test",
     "test:backup": "bash infra/backup/test-local.sh", // backs a database up and restores it, in containers of its own; see the script
@@ -185,7 +186,7 @@
     // #endregion Aliases
 
     // #region Dependencies
-    // spy4x/ts-libs 1.101.1 (cron schedules, passkeys, idempotency, keyset cursor, lockout, offline
+    // spy4x/ts-libs 1.106.0 (cron schedules, passkeys, idempotency, keyset cursor, lockout, offline
     // outbox, e-mail proof, the redirect-path check of sign-in's `next`, the password check without
     // a session, billing, the provider's name and picture, the healthcheck's HTTP mode, a key
     // giving up its address, safe Markdown and reading time, copying an object inside the S3
@@ -193,15 +194,15 @@
     // processing, translator-aware formats, the changes pull of a group).
     // hono, postgres and arktype below must stay on the exact versions these packages were
     // published with, or two copies load and their types stop matching.
-    "@spy4x/validation": "jsr:@spy4x/validation@1.101.1",
-    "@spy4x/platform": "jsr:@spy4x/platform@1.101.1",
-    "@spy4x/server": "jsr:@spy4x/server@1.101.1",
-    "@spy4x/realtime": "jsr:@spy4x/realtime@1.101.1",
-    "@spy4x/integrations": "jsr:@spy4x/integrations@1.101.1",
+    "@spy4x/validation": "jsr:@spy4x/validation@1.106.0",
+    "@spy4x/platform": "jsr:@spy4x/platform@1.106.0",
+    "@spy4x/server": "jsr:@spy4x/server@1.106.0",
+    "@spy4x/realtime": "jsr:@spy4x/realtime@1.106.0",
+    "@spy4x/integrations": "jsr:@spy4x/integrations@1.106.0",
     "@spy4x/email": "jsr:@spy4x/email@1.106.0",
-    "@spy4x/net": "jsr:@spy4x/net@1.101.1",
-    "@spy4x/billing": "jsr:@spy4x/billing@1.101.1",
-    "@spy4x/time": "jsr:@spy4x/time@1.101.1",
+    "@spy4x/net": "jsr:@spy4x/net@1.106.0",
+    "@spy4x/billing": "jsr:@spy4x/billing@1.106.0",
+    "@spy4x/time": "jsr:@spy4x/time@1.106.0",
 
     // apps/api
     "hono": "jsr:@hono/hono@4.13.8",
@@ -211,17 +212,17 @@
     // apps/tgbot
 
     // client
-    // spy4x/preact-components 13.5.1. Every package is published at one version together, so all
+    // spy4x/preact-components 13.5.2. Every package is published at one version together, so all
     // six move in one change, and so does the npm copy of `@spy4x/preact-system` further down
     // (the Playwright config imports it under that name). They take preact and the signals
     // packages as caret ranges, so the versions below are the one copy that loads. wouter-preact
     // must stay on the version they pin, or two copies load.
-    "@spy4x/preact-charts": "jsr:@spy4x/preact-charts@13.5.1",
-    "@spy4x/preact-icons": "jsr:@spy4x/preact-icons@13.5.1",
-    "@spy4x/preact-signals": "jsr:@spy4x/preact-signals@13.5.1",
-    "@spy4x/preact-system": "jsr:@spy4x/preact-system@13.5.1",
-    "@spy4x/preact-theme": "jsr:@spy4x/preact-theme@13.5.1",
-    "@spy4x/preact-ui": "jsr:@spy4x/preact-ui@13.5.1",
+    "@spy4x/preact-charts": "jsr:@spy4x/preact-charts@13.5.2",
+    "@spy4x/preact-icons": "jsr:@spy4x/preact-icons@13.5.2",
+    "@spy4x/preact-signals": "jsr:@spy4x/preact-signals@13.5.2",
+    "@spy4x/preact-system": "jsr:@spy4x/preact-system@13.5.2",
+    "@spy4x/preact-theme": "jsr:@spy4x/preact-theme@13.5.2",
+    "@spy4x/preact-ui": "jsr:@spy4x/preact-ui@13.5.2",
     "preact": "npm:preact@10.29.8",
     "wouter-preact": "npm:wouter-preact@3.9.0",
     "@preact/signals": "npm:@preact/signals@2.5.1",
@@ -247,10 +248,10 @@
     // The website's browser tests check each page with axe-core (e2e/mpa).
     "@axe-core/playwright": "npm:@axe-core/playwright@4.13.0",
     // The npm name of `@spy4x/preact-system` above, for Playwright's loader; it moves with the six.
-    "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@13.5.1",
+    "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@13.5.2",
     // The npm name of `@spy4x/platform` above, for the same reason: every e2e spec takes `uuidV7`
     // from it. It moves with the `@spy4x/*` packages.
-    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.101.1",
+    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.106.0",
 
     // shared/types — 2.2.3 matches spy4x/ts-libs and spy4x/preact-components
     // (spy4x/preact-components#121)
