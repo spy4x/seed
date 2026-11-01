@@ -774,15 +774,16 @@ Deno.test("deleting one's own account", async (t) => {
         await requestDeletion(app, sql, ada)
         const id = await makeDue(sql, ada.id)
 
-        // A reset's order (`resetPassword`): the password key, the user's row, then the restore.
+        // A reset's order (`resetPassword`): the password key, then the restore, which removes the
+        // request and updates the user's row, then the lock on the user's row.
         const result = await restoreBesideDelete(
           sql,
           id,
           (tx) => tx.lockPasswordKey({ userId: ada.id }),
           async (tx) => {
-            await tx.lockUser(ada.id)
             expect(await tx.accountDeletion.cancel(ada.id)).toBe(true)
             await tx.user.undeleteOne({ id: ada.id })
+            await tx.lockUser(ada.id)
           },
         )
 
