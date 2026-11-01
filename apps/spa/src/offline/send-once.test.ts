@@ -209,7 +209,9 @@ describe("sendQueueOnce", () => {
     const { databases, deleted } = databasesHolding(NOTES_QUEUE, TAGS_QUEUE)
     const { calls, sent } = serverAnswering((id) =>
       id === "t-1"
-        ? Promise.reject(new RealtimeRequestError("conflict", "refused", { code: "TAG_NAME_TAKEN" }))
+        ? Promise.reject(
+          new RealtimeRequestError("conflict", "refused", { code: "TAG_NAME_TAKEN" }),
+        )
         : accepts(id)
     )
 
