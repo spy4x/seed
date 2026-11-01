@@ -73,6 +73,7 @@ export async function revokeAllInvitationsOf(tx: postgres.Sql, creatorId: number
       AND expires_at > CURRENT_TIMESTAMP
     RETURNING id, group_id
   `
+  // The reset passes no request id, so these audit rows carry none (#178).
   for (const { id, groupId } of revoked) {
     await writeAuditEvent(tx, {
       eventKind: INVITATION_EVENTS.revoked,
