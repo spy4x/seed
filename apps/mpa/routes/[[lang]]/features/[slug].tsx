@@ -221,15 +221,20 @@ function FeaturePageBody({ page, demo }: { page: FeaturePage; demo: string }): J
                   </a>
                 )}
                 <a
-                  href={feature.code.href}
-                  class={LINK}
+                  href={page.code ?? feature.code.href}
+                  class="py-3 font-medium text-primary underline-offset-4 wrap-anywhere hover:underline"
                   data-e2e="feature-page-code"
                   data-umami-event="read-code"
                   data-umami-event-from={`page-${page.slug}`}
                 >
                   Read the code:{" "}
-                  <code dir="ltr" class="font-mono text-sm">{codePath(feature.code.href)}</code>
-                  <IconArrowUpRight class="size-4" aria-hidden="true" />
+                  <code dir="ltr" class="font-mono text-sm">
+                    {codePath(page.code ?? feature.code.href)}
+                  </code>
+                  <IconArrowUpRight
+                    class="ms-1 inline size-4 align-[-0.125em]"
+                    aria-hidden="true"
+                  />
                 </a>
               </div>
             </Section>
@@ -265,7 +270,7 @@ function OtherFeatures({ current }: { current: string }): JSX.Element {
     <Band id="other-features" labelledBy="other-features-title">
       <div class="flex flex-col gap-8">
         <h2 id="other-features-title" class={HEADING}>Other features</h2>
-        <div class="grid items-start gap-6 lg:grid-cols-3">
+        <div class="grid gap-6 lg:grid-cols-3">
           {others.map((other) => (
             <FeatureCard
               key={other.slug}

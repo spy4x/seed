@@ -446,6 +446,8 @@ export interface FeaturePage {
   how: readonly string[]
   /** The written guide on GitHub, until the site has the docs (#268). */
   guide?: string
+  /** The code "Read the code" opens, when the feature's own code link is a guide. */
+  code?: string
   /** 3 to 5 questions people type. Empty, the section is not drawn. */
   questions: readonly FeatureQuestion[]
   /** The app's screen the demo opens on, as `/try`'s `next`. Left out, the demo's start page. */
@@ -591,6 +593,7 @@ export const FEATURE_PAGES: readonly FeaturePage[] = [
       `the group goes back to Free.`,
     ],
     guide: source(`docs/billing.md`),
+    code: source(`apps/api/features/billing/`),
     questions: [
       {
         id: `faq-without-stripe`,
@@ -640,6 +643,7 @@ export const FEATURE_PAGES: readonly FeaturePage[] = [
       `Sign-in, deleted items and two-factor set-up need the network.`,
     ],
     guide: source(`docs/offline.md`),
+    code: source(`apps/spa/src/offline/`),
     questions: [
       {
         id: `faq-offline`,
