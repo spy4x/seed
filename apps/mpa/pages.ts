@@ -7,6 +7,11 @@ import { PRICING_HEAD, PRICING_UPDATED } from "./routes/[[lang]]/pricing.tsx"
 import { PRIVACY_HEAD } from "./routes/[[lang]]/privacy.tsx"
 import { TERMS_HEAD } from "./routes/[[lang]]/terms.tsx"
 import { SUBSCRIBE_HEAD, SUBSCRIBE_UPDATED } from "./subscribers.tsx"
+import { CHANGELOG, CHANGELOG_PATH } from "./changelog.ts"
+import { DOC_SLUGS, DOCS_PATH, readDoc } from "./docs-site.ts"
+import { CHANGELOG_HEAD } from "./routes/[[lang]]/changelog.tsx"
+import { DOCS_HEAD } from "./routes/[[lang]]/docs/index.tsx"
+import { docTitle } from "./routes/[[lang]]/docs/[slug].tsx"
 
 /** One public page, as `sitemap.xml` and `llms.txt` describe it. */
 export interface SitePage {
@@ -39,6 +44,28 @@ function sitePage(
 }
 
 /**
+ * The day the changelog and the docs were first published: their date when the build had no
+ * history to read (`deno task changelog` did not run), so the sitemap still dates them.
+ */
+export const DOCS_PUBLISHED = `2026-11-01`
+
+/** The day `iso` falls on, `YYYY-MM-DD`, or {@link DOCS_PUBLISHED} without one. */
+function day(iso: string | undefined): string {
+  return iso?.slice(0, 10) ?? DOCS_PUBLISHED
+}
+
+/** Every published guide, each English at every language's address. */
+const DOC_PAGES: readonly SitePage[] = DOC_SLUGS.map((slug) => {
+  const doc = readDoc(slug, (path) => path)!
+  return sitePage(
+    `${DOCS_PATH}/${slug}`,
+    { title: docTitle(doc.title), description: doc.description },
+    day(doc.updated),
+    true,
+  )
+})
+
+/**
  * The website's public pages, in the order a visitor meets them. It lives apart from `site.tsx`
  * because it reads every page's head, and every page imports `site.tsx`.
  */
@@ -50,6 +77,9 @@ export const SITE_PAGES: readonly SitePage[] = [
   sitePage(`/compare`, COMPARE_HEAD, CHECKED_ON),
   sitePage(`/pricing`, PRICING_HEAD, PRICING_UPDATED),
   sitePage(API_DOCS_PATH, API_DOCS_HEAD, API_DOCS_HEAD.updated, true),
+  sitePage(DOCS_PATH, DOCS_HEAD, day(DOC_PAGES.map(({ updated }) => updated).sort().at(-1)), true),
+  ...DOC_PAGES,
+  sitePage(CHANGELOG_PATH, CHANGELOG_HEAD, day(CHANGELOG.entries[0]?.date), true),
   sitePage(`/subscribe`, SUBSCRIBE_HEAD, SUBSCRIBE_UPDATED),
   sitePage(`/privacy`, PRIVACY_HEAD, PRIVACY_HEAD.updated, true),
   sitePage(`/terms`, TERMS_HEAD, TERMS_HEAD.updated, true),

@@ -23,6 +23,8 @@ export default {
   "SiteFooter.issue": "أبلغ عن مشكلة",
   "SiteFooter.quickStart": "البدء السريع",
   "SiteFooter.apiDocs": "توثيق API",
+  "SiteFooter.docs": "التوثيق",
+  "SiteFooter.changelog": "سجل التغييرات",
   "SiteFooter.status": "ما يعمل اليوم",
   "SiteFooter.company": "الشركة",
   "SiteFooter.hire": "تعاقد معي لبناء MVP",
