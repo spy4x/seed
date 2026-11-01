@@ -11,6 +11,7 @@ import {
   planFromEnvFile,
   refuseDirtyTree,
   refuseExampleSecrets,
+  refuseUncommittedChanges,
   unsafeSecretsIn,
   VAPID_PATH,
 } from "./deploy.ts"
@@ -439,4 +440,52 @@ Deno.test("the deploy command line takes the flag and an env file in either orde
 Deno.test("the deploy command line refuses a mistyped flag and a second env file", () => {
   expect(() => parseDeployArgs(["--allow-dirt"])).toThrow("Unknown option --allow-dirt")
   expect(() => parseDeployArgs([ENV_FILE, "infra/envs/.env.prod"])).toThrow("at most one env file")
+})
+
+/**
+ * Runs `body` in a git repository of its own, holding one committed file, `tracked.txt`. It lives
+ * under `tests/`, the one directory this test block may write, and is deleted afterwards. The
+ * setup runs git with an empty environment, so a `GIT_DIR` or `GIT_INDEX_FILE` that a git hook
+ * exports never points it at this checkout, and the HOME it gets holds no settings of the person.
+ */
+async function inGitRepository(body: (dir: string) => Promise<void>): Promise<void> {
+  const dir = await Deno.makeTempDir({ dir: "tests", prefix: ".deploy-git-" })
+  const git = async (...args: string[]) => {
+    const output = await new Deno.Command("git", {
+      args: ["-c", "user.name=Deploy test", "-c", "user.email=deploy@example.com", ...args],
+      cwd: dir,
+      clearEnv: true,
+      env: { HOME: dir, GIT_CONFIG_NOSYSTEM: "1" },
+      stdout: "null",
+      stderr: "piped",
+    }).output()
+    if (!output.success) throw new Error(new TextDecoder().decode(output.stderr))
+  }
+  try {
+    await git("init", "--quiet")
+    await Deno.writeTextFile(`${dir}/tracked.txt`, "first\n")
+    await git("add", "tracked.txt")
+    await git("commit", "--quiet", "--no-gpg-sign", "-m", "first")
+    await body(dir)
+  } finally {
+    await Deno.remove(dir, { recursive: true })
+  }
+}
+
+Deno.test("a deploy from a checkout with a modified file stops and names it", async () => {
+  await inGitRepository(async (dir) => {
+    await refuseUncommittedChanges(false, dir)
+    await Deno.writeTextFile(`${dir}/tracked.txt`, "changed\n")
+
+    await expect(refuseUncommittedChanges(false, dir)).rejects.toThrow("tracked.txt")
+    await refuseUncommittedChanges(true, dir)
+  })
+})
+
+Deno.test("a deploy from a checkout with an untracked file stops and names it", async () => {
+  await inGitRepository(async (dir) => {
+    await Deno.writeTextFile(`${dir}/new-module.ts`, "")
+
+    await expect(refuseUncommittedChanges(false, dir)).rejects.toThrow("new-module.ts")
+  })
 })
