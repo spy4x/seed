@@ -198,6 +198,8 @@ export const QUEUE_READ_DEADLINE_MS = 3_000
  */
 export function startModules(userId: number, reads: ChangeReads, options: StartOptions = {}): void {
   if (session?.userId === userId) return
+  // A sign-in ends what a chosen sign-out decided: a later session end keeps the queue again.
+  chosenSignOut.forget()
   stopChanges()
   const port = createAppCallPort(
     switches.realtime ? { userId, socket: socketCalls, socketFirstOpen } : { userId },
@@ -365,6 +367,7 @@ const KEPT_KEYS: ReadonlySet<string> = new Set([
   "auth:sign-out-owed", // `state/auth.ts`
   "offline:owed-deletion", // below
   "offline:kept-queue", // below: an id, whose queue only that person's next sign-in opens
+  "offline:signed-out", // below: a chosen sign-out, which a session end in another tab respects
   "theme", // `state/theme.ts`, the library's default key
   "install-prompt-dismissed", // `install.ts`
   "last-sign-in", // `state/last-sign-in.ts`
@@ -665,6 +668,13 @@ const keptQueue = createSignedInHint<number>("offline:kept-queue", {
 })
 
 /**
+ * Set by a chosen sign-out ({@link wipeDevice}) until the next sign-in ({@link startModules}). Every
+ * tab of the browser shares it, so a session end that another tab of the same person sees a moment
+ * later ({@link wipeDeviceKeepingQueue}) does not keep the queue the person chose to delete (#613).
+ */
+const chosenSignOut = createSignedInHint("offline:signed-out")
+
+/**
  * The users whose copies on this device are owed a deletion, kept in `localStorage` beside the
  * remembered user (the library's holder is a safe JSON value under one key, which is all this
  * needs). An id is written before its deletion starts and removed only after the device has
@@ -793,6 +803,8 @@ function deleteDatabases(
  * {@link wipeDeviceKeepingQueue} instead. Resolves once every deletion was tried; it never rejects.
  */
 export function wipeDevice(storage?: OfflineStorage, databases?: QueueDatabases): Promise<void> {
+  // Before the kept queue goes, so another tab that keeps it after this sees the choice.
+  chosenSignOut.remember(true)
   keptQueue.forget()
   void forgetUser(storage)
   clearBrowserStorage()
@@ -806,7 +818,8 @@ export function wipeDevice(storage?: OfflineStorage, databases?: QueueDatabases)
  * writes of the person whose session it was (the one the device remembers, or already kept a queue
  * for): that is their work, not yet on the server. The device keeps their id, so only their own next
  * sign-in opens the queue and sends it; anyone else's sign-in deletes it first
- * ({@link rememberUser}). With nobody to keep it for, or the module off, it is {@link wipeDevice}.
+ * ({@link rememberUser}). With nobody to keep it for, the module off, or a sign-out the person
+ * chose since the last sign-in (in another tab, say), it is {@link wipeDevice}.
  */
 export function wipeDeviceKeepingQueue(
   storage?: OfflineStorage,
@@ -816,6 +829,8 @@ export function wipeDeviceKeepingQueue(
   if (owner === undefined) return wipeDevice(storage, databases)
   // Kept before the hint is forgotten, so a page closed in between still knows whose queue it is.
   keptQueue.remember(owner)
+  // Read after the write: a chosen sign-out in another tab, before or meanwhile, wins (#613).
+  if (chosenSignOut.recall()) return wipeDevice(storage, databases)
   void forgetUser(storage)
   clearBrowserStorage()
   deleteDatabases(databases, undefined, owner)

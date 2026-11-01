@@ -352,7 +352,7 @@ so first. What the server owns (the notes, the preferences, the selected group) 
 next sign-in. The keys a sign-out keeps (`KEPT_KEYS`) hold no person's data: `auth:sign-out-owed`
 and `offline:owed-deletion`, the debts that finish the sign-out; `offline:kept-queue`, the id of the
 person whose queue a session the server ended kept (below), which `wipeDevice` removes itself;
-`theme` and
+`offline:signed-out`, the mark that the person chose to sign out (below); `theme` and
 `install-prompt-dismissed`, the device's own answers; and `last-sign-in`, the masked hint the
 sign-in page shows (spy4x/template#142), which "Not you? Forget" drops. The databases go after the
 deletions already queued, so a copy those finished is not opened again. A browser that refuses to
@@ -376,6 +376,13 @@ before the new person's layer opens. A start that still owes the same person a d
 copies (a page closed mid-wipe) spares their kept queue. With the local-data module off, nothing is
 kept: the device is wiped as on sign-out. The read copies, the notes and tags go at once, as
 before; the queue is the only thing of the person left, and only until a sign-in.
+
+A chosen sign-out wins over a session end seen in another tab of the same browser (#613). Two tabs
+share `localStorage`: one tab can sign out while the other gets `unauthorized` for the same ended
+session and writes `offline:kept-queue` again. So `wipeDevice` first sets `offline:signed-out`, and
+`wipeDeviceKeepingQueue` checks it after writing the kept queue: when it is set, it wipes as a
+chosen sign-out does, kept queue included. `startModules` removes the mark at the next sign-in, so
+a later session end keeps that person's queue again.
 
 A change of user on one device does the same for the person before. When a provider sign-in's
 redirect brings another person's cookie to a page that never signed the last one out, the

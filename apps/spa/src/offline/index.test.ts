@@ -414,6 +414,8 @@ describe("what the device keeps", () => {
       "auth:sign-out-owed",
       "install-prompt-dismissed",
       "last-sign-in",
+      // The choice, until the next sign-in: another tab's session end must not keep the queue.
+      "offline:signed-out",
       "theme",
     ])
     // The link this tab asked for stays, so "Check your inbox" survives a signed-out reload.
@@ -982,6 +984,48 @@ describe("the queue of a person whose session the server ended", () => {
     expect(await device.queue.readOutbox()).toEqual([])
     expect(await device.tagsQueue.readOutbox()).toEqual([])
     expect(kept.getItem(KEPT_QUEUE)).toBeNull()
+  })
+
+  it("is not kept when the person chose to sign out in another tab while this tab saw the session end", async () => {
+    const storage = createMemoryStorage()
+    const device = await written(storage, 7)
+    configureModules({ realtime: false, offline: true })
+    rememberUser(user(7))
+    // The other tab's sign-out runs right after this tab has read whose session ended.
+    const getItem = kept.getItem.bind(kept)
+    let signedOutThere = false
+    let otherTab = Promise.resolve()
+    kept.getItem = (key: string) => {
+      const value = getItem(key)
+      if (key === "offline:session" && !signedOutThere) {
+        signedOutThere = true
+        otherTab = wipeDevice(storage, storage.databases)
+      }
+      return value
+    }
+
+    await wipeDeviceKeepingQueue(storage, storage.databases)
+    await otherTab
+
+    expect(signedOutThere).toBe(true)
+    expect(kept.getItem(KEPT_QUEUE)).toBeNull()
+    expect(await device.queue.readOutbox()).toEqual([])
+    expect(await device.tagsQueue.readOutbox()).toEqual([])
+  })
+
+  it("is kept again by a session end after the person signed in once more", async () => {
+    const storage = createMemoryStorage()
+    await written(storage, 7)
+    configureModules({ realtime: false, offline: true })
+    await wipeDevice(storage, storage.databases)
+    rememberUser(user(7), storage, storage.databases)
+    startPage(7, storage)
+    stopChanges()
+    await stopOffline()
+
+    await wipeDeviceKeepingQueue(storage, storage.databases)
+
+    expect(kept.getItem(KEPT_QUEUE)).toBe("7")
   })
 
   it("is not kept while the local-data module is off", async () => {
