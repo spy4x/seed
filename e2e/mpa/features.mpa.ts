@@ -83,6 +83,15 @@ test.describe(`without JavaScript`, () => {
   })
 })
 
+// Through the built server's own routing: `routes/[[lang]]/admin.tsx` also fits this address, and
+// a unit test that calls the feature page's handler cannot see which route Fresh picks.
+test(`/features/admin answers a permanent redirect to the admin panel's page`, async ({ request }) => {
+  const response = await request.get(`/features/admin`, { maxRedirects: 0 })
+
+  expect(response.status()).toBe(301)
+  expect(response.headers()[`location`]).toBe(`/admin`)
+})
+
 test(`the admin still loads only when its section nears the screen`, async ({ page }) => {
   const asked: string[] = []
   page.on(`request`, (request) => asked.push(new URL(request.url()).pathname))
