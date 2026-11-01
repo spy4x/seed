@@ -35,9 +35,26 @@ async function repositoryFiles(): Promise<string[]> {
   return paths
 }
 
+/**
+ * What `deno task changelog` wrote (`changelog-write.ts`), as JSON text, or `null` when it has not
+ * run: the changelog then shows its empty state and the docs no date.
+ */
+async function changelogData(): Promise<string> {
+  try {
+    return await Deno.readTextFile(new URL(`./changelog.json`, import.meta.url))
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) return `null`
+    throw error
+  }
+}
+
 export default defineConfig({
-  // The home page's proof numbers, counted from the files the build sees (`repo-facts.ts`).
-  define: { __SEED_TEST_FILES__: JSON.stringify(countTestFiles(await repositoryFiles())) },
+  define: {
+    // The home page's proof numbers, counted from the files the build sees (`repo-facts.ts`).
+    __SEED_TEST_FILES__: JSON.stringify(countTestFiles(await repositoryFiles())),
+    // The changelog and the docs' dates (`changelog.ts`).
+    __SEED_CHANGELOG__: await changelogData(),
+  },
   plugins: [
     {
       name: "markdown-text",
