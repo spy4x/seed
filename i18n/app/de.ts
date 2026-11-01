@@ -1192,6 +1192,7 @@ export default {
       "Ein Tag, den du offline erstellt hast, konnte nicht gespeichert werden. Wir haben ihn deshalb von {count} Notizen entfernt. Die Notizen sind ohne ihn gespeichert.",
   },
   "OfflineStatus.theirs": "Version auf dem Server",
+  "OfflineStatus.theirsUnknown": "Die Version auf dem Server ist nicht verfügbar.",
   "OfflineStatus.untitledNote": "Notiz ohne Titel",
   "OfflineStatus.useServers": "Server-Version nehmen",
   "OfflineStatus.youDeletedNote": "Du hast diese Notiz gelöscht.",

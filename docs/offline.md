@@ -180,6 +180,11 @@ the notes screen shows both sides:
 | The note was moved to another group | The same as deleted: the old group has no such note, so the entry is a "gone" conflict whose message says "deleted, or moved". |
 | The server refused the write (role) | **Discard mine**.                                            |
 
+The server's side shows the server's copy of a changed note or tag, which the queue reads when the
+server answers with a version conflict. A deleted one reads "The note is no longer in this group."
+(or the tag). Any other conflict without a copy, such as a refused write, reads "The server's
+version isn't available.", so it never claims the item is gone (#613).
+
 **Moving notes is never queued.** A move names two groups and needs edit rights in both, which the
 device cannot know, so it is sent only while the server can be reached; offline, the person sees
 "Moving notes needs a connection". A write queued for a note that someone moves meanwhile does
@@ -347,7 +352,7 @@ so first. What the server owns (the notes, the preferences, the selected group) 
 next sign-in. The keys a sign-out keeps (`KEPT_KEYS`) hold no person's data: `auth:sign-out-owed`
 and `offline:owed-deletion`, the debts that finish the sign-out; `offline:kept-queue`, the id of the
 person whose queue a session the server ended kept (below), which `wipeDevice` removes itself;
-`theme` and
+`offline:signed-out`, the mark that the person chose to sign out (below); `theme` and
 `install-prompt-dismissed`, the device's own answers; and `last-sign-in`, the masked hint the
 sign-in page shows (spy4x/template#142), which "Not you? Forget" drops. The databases go after the
 deletions already queued, so a copy those finished is not opened again. A browser that refuses to
@@ -371,6 +376,13 @@ before the new person's layer opens. A start that still owes the same person a d
 copies (a page closed mid-wipe) spares their kept queue. With the local-data module off, nothing is
 kept: the device is wiped as on sign-out. The read copies, the notes and tags go at once, as
 before; the queue is the only thing of the person left, and only until a sign-in.
+
+A chosen sign-out wins over a session end seen in another tab of the same browser (#613). Two tabs
+share `localStorage`: one tab can sign out while the other gets `unauthorized` for the same ended
+session and writes `offline:kept-queue` again. So `wipeDevice` first sets `offline:signed-out`, and
+`wipeDeviceKeepingQueue` checks it after writing the kept queue: when it is set, it wipes as a
+chosen sign-out does, kept queue included. `startModules` removes the mark at the next sign-in, so
+a later session end keeps that person's queue again.
 
 A change of user on one device does the same for the person before. When a provider sign-in's
 redirect brings another person's cookie to a page that never signed the last one out, the
@@ -401,14 +413,25 @@ it is counted apart; once only such writes are left, the button becomes "Review 
 closes the dialog and opens the notes page of their group, with focus on the chooser's heading.
 "Sign out anyway" signs out at once and deletes the queue with everything else; "Cancel", Escape and
 the backdrop keep the person signed in. With an empty queue, sign-out is immediate, as before. A
-sign-out right after start waits for the layer to read the queue first. With no layer open for the
+sign-out right after start waits for the layer to read the queue first, for at most three seconds
+(`QUEUE_READ_DEADLINE_MS`); after that the question uses the count read from IndexedDB, and follows
+the layer's own counts once it has read the queue. That count is read without the queue's lock,
+which a stalled read holds, and with the same deadline: a device that cannot read its queue in time
+signs out, since that queue could not be sent either. A press while the queue is being read starts
+no second read (`views/sign-out-check.ts`). The Sign out item shows no busy state: the account
+menu closes on the press, and its items have no busy or disabled state. With no layer open for the
 person (the module is off, or the layer waits for a deletion the device owes, or the device refused
-it), the queue is counted from IndexedDB and the same question is asked; "Send, then sign out" then
+it), the check first waits, with the same deadline, for that deletion to end: a deletion the
+device owes from an earlier sign-out deletes the person's queue, which was that sign-out's choice,
+so nothing is asked about it. What is left is counted from IndexedDB and the same question is
+asked; "Send, then sign out" then
 sends it as a start with the module off does, and a write the server refuses is dropped, since
 there is no chooser. The check is `watchUnsentChanges` in `modules.ts` (the counts and the wait are
 `offline/unsent.ts`); `views/AppShell.tsx` asks it and `views/UnsentSignOut.tsx` draws the dialog.
-The two-factor step's sign-out and "sign out other devices" never ask: no queue is open there, or
-it is not this device that signs out. A sign-out by the server (401) does not ask either: nobody
+The two-factor step's sign-out and "sign out other devices" never ask. No layer is open at the
+two-factor step, but a queue a session the server ended kept can lie on the device; that sign-out
+deletes it without the question on purpose, since the person at the step may not be the one whose
+queue it is. "Sign out other devices" does not sign this device out. A sign-out by the server (401) does not ask either: nobody
 chose it, and the queue stays on the device for the person's next sign-in (see above).
 
 ## What is not offline

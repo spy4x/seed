@@ -38,6 +38,20 @@ interface ConflictView {
   canKeepMine: boolean
 }
 
+/**
+ * The server's side of a conflict that carries no server copy: `gone` when the server deleted it,
+ * and otherwise that its version is unknown. A refusal (`rejected`) never reads the server's copy,
+ * and the queue fetches one for every version conflict, so an entry without it, such as one saved
+ * by an older version, must not claim the item is gone (#613).
+ */
+function theirsUnknown(
+  t: Translator<string>,
+  reason: ConflictView["reason"] | undefined,
+  gone: `OfflineStatus.noteGone` | `OfflineStatus.tagGone`,
+): string {
+  return reason === "gone" ? t.t(gone) : t.t(`OfflineStatus.theirsUnknown`)
+}
+
 function noteView(t: Translator<string>, entry: NoteEntry): ConflictView {
   const server = entry.conflict?.server
   return {
@@ -51,7 +65,9 @@ function noteView(t: Translator<string>, entry: NoteEntry): ConflictView {
     mine: entry.kind === "delete"
       ? t.t(`OfflineStatus.youDeletedNote`)
       : `${entry.payload.title}\n${entry.payload.body}`.trim(),
-    theirs: server ? `${server.title}\n${server.body}`.trim() : t.t(`OfflineStatus.noteGone`),
+    theirs: server
+      ? `${server.title}\n${server.body}`.trim()
+      : theirsUnknown(t, entry.conflict?.reason, `OfflineStatus.noteGone`),
     // A server that no longer has the note has nothing to keep mine against.
     canKeepMine: Boolean(server),
   }
@@ -72,7 +88,9 @@ function tagView(t: Translator<string>, entry: TagEntry): ConflictView {
     mine: entry.kind === "delete"
       ? t.t(`OfflineStatus.youDeletedTag`)
       : `${entry.payload.name} (${colorName(entry.payload.color)})`,
-    theirs: server ? `${server.name} (${colorName(server.color)})` : t.t(`OfflineStatus.tagGone`),
+    theirs: server
+      ? `${server.name} (${colorName(server.color)})`
+      : theirsUnknown(t, entry.conflict?.reason, `OfflineStatus.tagGone`),
     canKeepMine: Boolean(server),
   }
 }

@@ -1291,6 +1291,7 @@ export default {
       "Метку, созданную без сети, не удалось сохранить, поэтому мы сняли её с {count} заметки. Заметки сохранены без неё.",
   },
   "OfflineStatus.theirs": "Версия на сервере",
+  "OfflineStatus.theirsUnknown": "Версия на сервере недоступна.",
   "OfflineStatus.untitledNote": "Заметка без заголовка",
   "OfflineStatus.useServers": "Взять с сервера",
   "OfflineStatus.youDeletedNote": "Вы удалили эту заметку.",
