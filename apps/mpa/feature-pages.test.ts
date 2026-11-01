@@ -118,6 +118,19 @@ describe("the feature pages", () => {
     }
   })
 
+  it("shows the day each page last changed, as its Last updated line", async () => {
+    for (const page of FEATURE_PAGES) {
+      const { html } = await get(`/features/${page.slug}`)
+      const line = html.match(
+        /data-e2e="feature-page-updated"[^>]*>\s*Last updated <time datetime="([^"]+)">([^<]+)<\/time>/,
+      )
+
+      expect(line?.[1], page.slug).toBe(page.updated)
+      const shown = new Date(`${line?.[2]} UTC`)
+      expect(shown.toISOString().slice(0, 10), `${page.slug}: ${line?.[2]}`).toBe(page.updated)
+    }
+  })
+
   it("keeps the code link's arrow on the line of the path's last part", async () => {
     for (const page of FEATURE_PAGES) {
       const { html } = await get(`/features/${page.slug}`)
