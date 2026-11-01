@@ -2,8 +2,10 @@ import type { JSX } from "preact"
 import type { FreshContext } from "fresh"
 import { Head } from "fresh/runtime"
 import type { PublicBlogPost, PublicBlogPostSummary } from "@domain/blog"
+import { Breadcrumbs } from "@spy4x/preact-ui/breadcrumbs"
 import { Button } from "@spy4x/preact-ui/button"
 import { useFormat } from "@spy4x/preact-ui/format"
+import { OnThisPage } from "@spy4x/preact-ui/on-this-page"
 import { PostList } from "@spy4x/preact-ui/post-list"
 import { Prose } from "@spy4x/preact-ui/prose"
 import { TldrBox } from "@spy4x/preact-ui/tldr-box"
@@ -18,12 +20,12 @@ import {
 } from "../../../blog.ts"
 import { Band } from "../../../components/band.tsx"
 import { CtaBand } from "../../../components/cta-band.tsx"
-import { OnThisPage } from "../../../components/on-this-page.tsx"
 import { SectionIntro } from "../../../components/section-intro.tsx"
 import {
   NewsletterForm,
   OG_IMAGE_SIZE,
   PERSON_JSON_LD,
+  sectionLinks,
   SITE_NAME,
   SiteFrame,
   spaLinks,
@@ -151,28 +153,18 @@ function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
     >
       <article class="flex min-w-0 flex-col gap-6 xl:col-start-2" data-e2e="blog-post">
         <header class="flex flex-col gap-4">
-          <nav aria-label={t.t(`Blog.breadcrumb`)} class="text-sm">
-            <ol class="flex flex-wrap items-center gap-2 text-muted">
-              <li>
-                <a href={blog} class="font-medium text-primary hover:underline">
-                  {t.t(`Blog.title`)}
-                </a>
-              </li>
-              {post.topic && (
-                <>
-                  <li aria-hidden="true">›</li>
-                  <li>
-                    <a
-                      href={`${blog}?${new URLSearchParams({ topic: post.topic })}`}
-                      class="font-medium text-primary hover:underline"
-                    >
-                      {post.topic}
-                    </a>
-                  </li>
-                </>
-              )}
-            </ol>
-          </nav>
+          <Breadcrumbs
+            label={t.t(`Blog.breadcrumb`)}
+            items={[
+              { label: t.t(`Blog.title`), href: blog },
+              ...(post.topic
+                ? [{
+                  label: post.topic,
+                  href: `${blog}?${new URLSearchParams({ topic: post.topic })}`,
+                }]
+                : []),
+            ]}
+          />
           {post.topic && <p class="font-mono text-sm font-medium text-primary">{post.topic}</p>}
           <h1 class="text-3xl font-semibold tracking-tight text-balance lg:text-4xl">
             {post.title}
@@ -213,7 +205,10 @@ function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
       </article>
       {toc && (
         <aside class="hidden xl:col-start-3 xl:block" data-e2e="blog-post-toc">
-          <OnThisPage links={sections.map(({ id, text }) => ({ label: text, href: `#${id}` }))} />
+          <OnThisPage
+            links={sectionLinks(sections.map(({ id, text }) => ({ label: text, href: `#${id}` })))}
+            openFrom="xl"
+          />
         </aside>
       )}
     </div>

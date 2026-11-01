@@ -9,6 +9,7 @@ import AppWrapper from "./routes/_app.tsx"
 import Admin, { ADMIN_HEAD } from "./routes/[[lang]]/admin.tsx"
 import Compare from "./routes/[[lang]]/compare.tsx"
 import Features from "./routes/[[lang]]/features.tsx"
+import { handler as featurePage } from "./routes/[[lang]]/features/[slug].tsx"
 import Home, { AI_PROMPT, HOME_HEAD, QUICK_START } from "./routes/index.tsx"
 import Pricing, { handler as pricing, PRICING_HEAD } from "./routes/[[lang]]/pricing.tsx"
 import Privacy, { PRIVACY_HEAD } from "./routes/[[lang]]/privacy.tsx"
@@ -69,6 +70,7 @@ function siteWith(newsletter: () => boolean, siteConfig: MpaConfig = config) {
     .appWrapper(view(AppWrapper))
     .route("/", { component: view(Home) })
     .route("/features", { component: view(Features) })
+    .get("{/:lang}?/features/:slug", featurePage.GET!)
     .route("/admin", { component: view(Admin) })
     .route("/compare", { component: view(Compare) })
     .route("/pricing", { component: view(Pricing), handler: pricing })
@@ -1016,6 +1018,11 @@ describe("the public website", () => {
         "/de/features",
         "/pt-BR/features",
         "/ar/features",
+        "/features/sign-in",
+        "/features/groups",
+        "/features/billing",
+        "/features/offline",
+        "/features/deploy",
         "/admin",
         "/ru/admin",
         "/es/admin",
@@ -1067,7 +1074,12 @@ describe("the public website", () => {
     )
     expect(english).toEqual({
       "/": "2026-10-31T00:00:00.000Z",
-      "/features": "2026-10-31T00:00:00.000Z",
+      "/features": "2026-11-01T00:00:00.000Z",
+      "/features/sign-in": "2026-11-01T00:00:00.000Z",
+      "/features/groups": "2026-11-01T00:00:00.000Z",
+      "/features/billing": "2026-11-01T00:00:00.000Z",
+      "/features/offline": "2026-11-01T00:00:00.000Z",
+      "/features/deploy": "2026-11-01T00:00:00.000Z",
       "/admin": "2026-10-28T00:00:00.000Z",
       "/docs/api": "2026-10-23T00:00:00.000Z",
       // With no history to read, as under `deno test`, the guides and the changelog carry the day

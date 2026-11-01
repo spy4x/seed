@@ -4,6 +4,7 @@
       "url": [
         "http://127.0.0.1:48411/",
         "http://127.0.0.1:48411/features",
+        "http://127.0.0.1:48411/features/sign-in",
         "http://127.0.0.1:48411/pricing",
         "http://127.0.0.1:48411/compare",
         "http://127.0.0.1:48411/admin",
