@@ -18,7 +18,7 @@ import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { checkedError } from "../../apps/api/_testing/api-error.ts"
-import { createGroupTransferHandler } from "../../apps/api/features/groups/handlers.ts"
+import { wireGroupTransferHandler } from "../../apps/api/cqrs/command-handlers/group-transfer-wiring.ts"
 import { PasswordLockedError } from "../../apps/api/services/password-locked.ts"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
 import { GroupError, GroupRole, GroupTransferCommand } from "@domain/groups"
@@ -377,10 +377,11 @@ Deno.test("a group transfer counts its wrong passwords on the account's one lock
       INSERT INTO group_members (group_id, user_id, role, added_by_user_id)
       VALUES (${group.id}, ${member}, ${GroupRole.EDITOR}, ${owner})
     `
-    // Wired as the API wires it (apps/api/cqrs/command-handlers/group-transfer.ts).
-    const handle = createGroupTransferHandler(new AppDbBase({ sql }).group, {
-      checkPassword: (userId, password) => signIn.checkPassword(userId, password),
-      emit: () => {},
+    // The API's own wiring of the handler, over this test's database and sign-in.
+    const handle = wireGroupTransferHandler({
+      db: new AppDbBase({ sql }),
+      signIn,
+      eventBus: { emit: () => {} },
     })
     const transfer = (password: string) =>
       handle(

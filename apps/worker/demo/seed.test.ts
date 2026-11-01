@@ -2,7 +2,6 @@
 import { expect } from "@std/expect"
 import { MemoryAuthStore } from "@spy4x/server/auth/memory-store"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
-import type { AppDbBase } from "../../api/services/db-base.ts"
 import { prove } from "./seed.ts"
 
 /** A store with one proven and one unproven address, recording every key it is asked to prove. */
@@ -23,7 +22,7 @@ async function storeWithAddresses() {
   })
   const proven = await store.createUserWithKey(key("bea@example.com", new Date("2026-10-01")))
   const unproven = await store.createUserWithKey(key("ann@example.com", null))
-  const db = { authStore: store } as unknown as AppDbBase
+  const db = { authStore: store }
   return { db, store, proved, provenKey: proven.key.id, unprovenKey: unproven.key.id }
 }
 

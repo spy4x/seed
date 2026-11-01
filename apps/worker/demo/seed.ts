@@ -443,7 +443,7 @@ export async function signUp(
 }
 
 /** Marks `email` proven, as a finished sign-up leaves it. Does nothing when it is proven. */
-export async function prove(db: AppDbBase, email: string): Promise<void> {
+export async function prove(db: Pick<AppDbBase, "authStore">, email: string): Promise<void> {
   const key = await db.authStore.findKey(PASSWORD_METHOD, email)
   if (key && key.provenAt === null) await db.authStore.proveKey(key.id, new Date())
 }
