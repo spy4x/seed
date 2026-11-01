@@ -241,49 +241,54 @@ Deno.test(`mail subscriptions go through the worker's queue and Postgres`, async
       expect(await count(`subscription_requests`)).toBe(0)
     })
 
-    await t.step(`a rerun of an issue mails only whom the first run missed`, async () => {
-      for (const email of [`a@example.com`, `b@example.com`, `c@example.com`]) {
-        await store.add({
-          email,
-          key: await crypto.subscriberKey(email),
-          mark: await crypto.unsubscribeMark(email),
-          issuedAt: Date.now(),
-          at: new Date(),
+    await t.step(
+      `a rerun of an issue mails only whom the first run missed, and an example address never`,
+      async () => {
+        // `.test` takes mail in tests; a domain reserved for examples is the demo's fake subscribers.
+        for (const email of [`a@seed.test`, `b@seed.test`, `c@seed.test`, `fake@example.com`]) {
+          await store.add({
+            email,
+            key: await crypto.subscriberKey(email),
+            mark: await crypto.unsubscribeMark(email),
+            issuedAt: Date.now(),
+            at: new Date(),
+          })
+        }
+        const issue = renderSubscriberIssue(BRAND, {
+          id: `2026-10-first`,
+          subject: `First issue`,
+          blocks: [{ heading: `Hello` }, { paragraph: `The first issue.` }],
         })
-      }
-      const issue = renderSubscriberIssue(BRAND, {
-        id: `2026-10-first`,
-        subject: `First issue`,
-        blocks: [{ heading: `Hello` }, { paragraph: `The first issue.` }],
-      })
-      sender.sent.length = 0
-      sender.refuse.add(`b@example.com`)
+        sender.sent.length = 0
+        sender.refuse.add(`b@seed.test`)
 
-      const lines = await captureLines(async () => {
-        await queueSubscriberIssue(sql, `news`, issue)
-        expectVersion7Ids(await sql<{ id: string }[]>`SELECT id FROM subscriber_issue_content`)
-        expect((await processor.drainOnce()).failed).toBe(1)
-        expect(sender.sent.map((mail) => mail.to)).toEqual([`a@example.com`, `c@example.com`])
+        const lines = await captureLines(async () => {
+          await queueSubscriberIssue(sql, `news`, issue)
+          expectVersion7Ids(await sql<{ id: string }[]>`SELECT id FROM subscriber_issue_content`)
+          expect((await processor.drainOnce()).failed).toBe(1)
+          expect(sender.sent.map((mail) => mail.to)).toEqual([`a@seed.test`, `c@seed.test`])
 
-        sender.refuse.clear()
-        await queueSubscriberIssue(sql, `news`, issue)
-        await processor.drainOnce()
-      })
+          sender.refuse.clear()
+          await queueSubscriberIssue(sql, `news`, issue)
+          await processor.drainOnce()
+        })
 
-      expect(sender.sent.map((mail) => mail.to)).toEqual([
-        `a@example.com`,
-        `c@example.com`,
-        `b@example.com`,
-      ])
-      for (const mail of sender.sent) {
-        const link = linkIn(mail, `${BRAND.webAppUrl}/api/subscribers/unsubscribe`)
-        expect(mail.listUnsubscribe).toEqual({ url: link.href, oneClick: true })
-      }
-      const entry = await createPostgresSendLog(sql, { listId: `news` }).find(`2026-10-first`)
-      expect(entry?.recipients?.length).toBe(3)
-      expect(lines.length).toBeGreaterThan(0)
-      expect([...lines, ...logged].join(`\n`)).not.toMatch(/[a-c]@example\.com/)
-    })
+        expect(sender.sent.map((mail) => mail.to)).toEqual([
+          `a@seed.test`,
+          `c@seed.test`,
+          `b@seed.test`,
+        ])
+        for (const mail of sender.sent) {
+          const link = linkIn(mail, `${BRAND.webAppUrl}/api/subscribers/unsubscribe`)
+          expect(mail.listUnsubscribe).toEqual({ url: link.href, oneClick: true })
+        }
+        const entry = await createPostgresSendLog(sql, { listId: `news` }).find(`2026-10-first`)
+        expect(entry?.recipients?.length).toBe(3)
+        expect(entry?.audience?.length).toBe(3)
+        expect(lines.length).toBeGreaterThan(0)
+        expect([...lines, ...logged].join(`\n`)).not.toMatch(/[a-c]@seed\.test/)
+      },
+    )
 
     await t.step(`a request older than a day is removed by the cleanup`, async () => {
       await sql`

@@ -11,7 +11,8 @@ import { postgresFakePayments } from "@server/billing/fake-payments.ts"
 import { readOnboarding } from "@server/auth/onboarding.ts"
 import { createOutboxProcessor } from "@server/jobs/wiring.ts"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
-import { DEV_SUBSCRIBERS_SECRET } from "@server/subscribers/subscribers.ts"
+import { createListCrypto, DEV_SUBSCRIBERS_SECRET } from "@server/subscribers/subscribers.ts"
+import { createPostgresSubscriberStore } from "@spy4x/server/subscribers/postgres"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import {
   type AppAuthState,
@@ -49,6 +50,8 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { BILLING_AUDIT_EVENTS, BillingStatus } from "@domain/billing"
 import { AuthAuditEventType } from "@domain/identity"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
+import { isExampleAddress } from "@spy4x/email/address"
+import { SENT_ISSUES } from "../../apps/worker/demo/fake-content.ts"
 import { readAdminStats } from "@server/auth/admin-stats.ts"
 import {
   listAdminBillingCustomers,
@@ -513,6 +516,8 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog and th
     const seedPosts = await readSeedPosts(denoFileSystem)
     await upsertSeedPosts(sql, seedPosts)
     await seedSampleContactLinks(sql)
+    // A website reader who left: the seed writes no unsubscribes, so this is the kept row.
+    await websiteReader(sql, `left@seed.test`, { leaves: true })
     // A visitor's sample groups, whose files' objects the wipe queues for deletion.
     await signUpVisitor(sql, "wiped@example.net")
     await drainJobs(sql)
@@ -568,6 +573,57 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog and th
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     const [{ after }] = await sql<{ after: number }[]>`SELECT min(id) AS after FROM users`
     expect(after).toBeGreaterThan(before)
+  })
+})
+
+/** Subscribes `email` to the newsletter as the website's confirm link does, and unsubscribes it. */
+async function websiteReader(sql: postgres.Sql, email: string, { leaves = false } = {}) {
+  const list = DEFAULT_SUBSCRIBER_LIST
+  const crypto = await createListCrypto(SUBSCRIBERS, list)
+  const store = createPostgresSubscriberStore(sql, { listId: list })
+  const mark = await crypto.unsubscribeMark(email)
+  const at = new Date()
+  await store.add({
+    email,
+    key: await crypto.subscriberKey(email),
+    mark,
+    issuedAt: at.getTime(),
+    at,
+  })
+  if (leaves) await store.remove({ email, mark, at, pruneBefore: new Date(0) })
+  return mark
+}
+
+Deno.test("a real newsletter subscriber survives two nightly resets, which leave the same 90 fake subscribers", async () => {
+  await withSchema(async (sql) => {
+    const list = DEFAULT_SUBSCRIBER_LIST
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null }, DAY)
+    await websiteReader(sql, `reader@seed.test`)
+    const left = await websiteReader(sql, `left@seed.test`, { leaves: true })
+    await sql`
+      INSERT INTO subscriber_sends (list_id, issue, subject, started_at)
+      VALUES (${list}, 'welcome-post', 'Welcome', now())
+    `
+
+    // Two nights: the second day's fake people are others, so yesterday's must go.
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null }, DAY)
+    await resetDemo(
+      sql,
+      { subscribers: SUBSCRIBERS, admin: null },
+      new Date("2026-10-21T12:00:00Z"),
+    )
+
+    const emails = (await sql<{ email: string }[]>`
+      SELECT email FROM subscribers WHERE list_id = ${list}
+    `).map((row) => row.email)
+    expect(emails.filter((email) => !isExampleAddress(email))).toEqual([`reader@seed.test`])
+    expect(emails.filter(isExampleAddress).length).toBe(FAKE_COUNTS.subscribers)
+    const marks = await sql<{ mark: string }[]>`SELECT mark FROM subscriber_unsubscribes`
+    expect(marks.map((row) => row.mark)).toEqual([left])
+    const sends = await sql<{ issue: string }[]>`SELECT issue FROM subscriber_sends ORDER BY issue`
+    expect(sends.map((row) => row.issue)).toEqual(
+      [`welcome-post`, ...SENT_ISSUES.map((sent) => sent.issue)].sort(),
+    )
   })
 })
 
