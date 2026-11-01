@@ -271,7 +271,7 @@ function FeaturePageBody({ page, demo }: { page: FeaturePage; demo: string }): J
       </article>
       <CtaBand demoHref={demo} />
       <OtherFeatures current={page.slug} />
-      {drawn.has(`how`) && feature.visual && <ShotViewer />}
+      {drawn.has(`how`) && feature.shots && <ShotViewer />}
     </>
   )
 }

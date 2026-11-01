@@ -120,12 +120,20 @@ test.describe(`a screenshot's lightbox`, () => {
     await expect(shot).toBeFocused()
   })
 
-  test(`a page without screenshots loads none of its JavaScript`, async ({ page }) => {
-    const asked: string[] = []
-    page.on(`request`, (request) => asked.push(request.url()))
-    await page.goto(`/pricing`, { waitUntil: `networkidle` })
-    expect(asked.filter((url) => url.includes(`shot_lightbox`))).toEqual([])
-  })
+  // A feature page loads the lightbox only when its picture is a screenshot: deploy draws a diagram.
+  for (
+    const [path, loads] of [[`/pricing`, false], [`/features/deploy`, false], [
+      `/features/sign-in`,
+      true,
+    ]] as const
+  ) {
+    test(`${path} ${loads ? `loads` : `does not load`} the lightbox's JavaScript`, async ({ page }) => {
+      const asked: string[] = []
+      page.on(`request`, (request) => asked.push(request.url()))
+      await page.goto(path, { waitUntil: `networkidle` })
+      expect(asked.some((url) => url.includes(`shot_lightbox`))).toBe(loads)
+    })
+  }
 })
 
 // axe-core runs as a script in the page, so these checks keep JavaScript on: /theme.js then picks
