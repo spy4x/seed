@@ -36,4 +36,7 @@ The body, in Markdown.
 `newsletter: true` emails the post when it goes live, once ever, through the `blog.publish` job. A
 post with `newsletter: false` is marked as already mailed, so turning it on later sends nothing.
 
+A body can hold an interactive figure, a tag such as `<CostCalculator members={4} />` on a line
+of its own ([docs/blog.md](../../../../docs/blog.md#interactive-figures)).
+
 `deno task test` checks every file here (`seed-posts.test.ts`): a broken file fails the check.
