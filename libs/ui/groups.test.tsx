@@ -1130,7 +1130,7 @@ describe("PlanRefusalNotice", () => {
   it("gives the owner a link to the group's Billing tab", async () => {
     await mount(<PlanRefusalNotice groupId={groupId} refusal={refusal} />)
     const link = find<HTMLAnchorElement>("[data-e2e=plan-refusal] a")
-    expect(link.textContent).toBe("Open Billing")
+    expect(link.textContent).toBe("Open the Billing tab")
     expect(link.getAttribute("href")).toBe(GROUP_PATHS.billing(groupId))
     expect(focused()).toBe("plan-refusal")
   })

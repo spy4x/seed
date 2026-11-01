@@ -200,8 +200,8 @@ export default {
     "other": "{count} Mitglieder",
   },
   "GroupEditor.memberCountLink": {
-    "one": "{count} Mitglied – Tarif und Abrechnung ansehen",
-    "other": "{count} Mitglieder – Tarif und Abrechnung ansehen",
+    "one": "{count} Mitglied – Reiter „Abrechnung“ öffnen",
+    "other": "{count} Mitglieder – Reiter „Abrechnung“ öffnen",
   },
   "GroupEditor.tabGeneral": "Allgemein",
   "GroupEditor.tabMembers": "Mitglieder",
@@ -752,7 +752,7 @@ export default {
   "PlanRefusalNotice.rolesTitle": "Mitglieder hochstufen geht nur mit einem bezahlten Tarif",
   "PlanRefusalNotice.rolesText":
     "Im Tarif dieser Gruppe kannst du die Rolle eines Mitglieds herabstufen oder es entfernen, aber nicht hochstufen.",
-  "PlanRefusalNotice.openBilling": "Abrechnung öffnen",
+  "PlanRefusalNotice.openBilling": "Reiter „Abrechnung“ öffnen",
   "PlanRefusalNotice.askOwner": "Bitte den Inhaber der Gruppe, den Tarif zu upgraden.",
   "GuestProfile.accountType": "Kontotyp",
   "GuestProfile.guestAccount": "Gastkonto. Nur dieser Browser kann es öffnen.",

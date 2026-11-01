@@ -193,7 +193,7 @@ export default {
     "Seed ist ein kostenloser SaaS-Starter unter MIT-Lizenz: mit Anmeldung und Zwei-Faktor-Schutz (2FA), Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit, einer Offline-App und einem Adminbereich. Du bringst es mit Docker Compose auf einen einzigen gemieteten Linux-Server.",
   "HomeHero.github": "Auf GitHub ansehen",
   "HomeHero.status":
-    "Seed ist heute schon nutzbar und wird öffentlich entwickelt: <status>Sieh dir an, was heute schon funktioniert</status>.",
+    "Seed ist heute schon nutzbar und wird öffentlich entwickelt: <status>Sieh dir an, was funktioniert</status>.",
   "HomeHero.quickStart": "Schnellstart",
   "HomeHero.initNote":
     "<code>init</code> schreibt <code>infra/envs/.env</code> mit allen Secrets. Oder frag deinen KI-Agenten: <prompt></prompt>.",
@@ -573,13 +573,19 @@ export default {
     "Ein optionaler Katalog für einen Shop, bearbeitet im Adminbereich: Artikel mit Fotos, Farben, Größen, Größentabelle und ausverkauften Größen, in jeder Sprache, in der du verkaufst, mit einem kurzen Tracking-Link pro Artikel und Ort, an dem du ihn teilst",
   "FeatureWebsite.fact7": "sitemap.xml, robots.txt, Canonical-Links und Open-Graph-Bilder",
   "FeatureWebsite.fact8":
-    "Optionale Statistik ohne Cookies in deinem eigenen Umami, mit einem Event bei jedem Call-to-Action, und eine Statistikseite im Adminbereich: Besuche und Bestellklicks pro Quelle und pro Artikel",
+    "Optionale Statistik ohne Cookies in deinem eigenen Umami, mit einem Event bei jedem Call-to-Action, dazu eine Statistikseite im Adminbereich: Besuche und Bestellklicks pro Quelle und pro Artikel",
   "FeatureWebsite.code": "Code der Website lesen",
   "FeatureQuality.nav": "Tests",
   "FeatureQuality.eyebrow": "Qualität",
   "FeatureQuality.title": "Getestet, wo es darauf ankommt",
-  "FeatureQuality.lead":
-    "Stand {date}: 34 Browser-Testsuites für die App, dazu Unit- und Ansichtstests, alle in der CI. Jede Änderung geht durch einen Pull Request und ein Review, bevor sie gemergt wird.",
+  "FeatureQuality.lead": {
+    "one":
+      "{count} Browser-Testsuite für die App, dazu Unit- und Ansichtstests, alle in der CI. Jede Änderung geht durch einen Pull Request und ein Review, bevor sie gemergt wird.",
+    "other":
+      "{count} Browser-Testsuites für die App, dazu Unit- und Ansichtstests, alle in der CI. Jede Änderung geht durch einen Pull Request und ein Review, bevor sie gemergt wird.",
+  },
+  "FeatureQuality.leadUncounted":
+    "Browser-Testsuites für die App, dazu Unit- und Ansichtstests, alle in der CI. Jede Änderung geht durch einen Pull Request und ein Review, bevor sie gemergt wird.",
   "FeatureQuality.fact1": "Browser-Tests mit Playwright, gegen die echte API und Datenbank",
   "FeatureQuality.fact2": "Unit- und Ansichtstests direkt neben dem Code, den sie testen",
   "FeatureQuality.fact3": "Integrationstests gegen Postgres",
@@ -601,7 +607,7 @@ export default {
   "FeatureTeams.alt":
     "Das Aktivitätsprotokoll einer Gruppe: wer welche Notiz oder welchen Tag wann hinzugefügt hat, mit einem Link, der die jeweilige Notiz öffnet.",
   "FeatureBilling.alt":
-    "Der Reiter „Tarif und Abrechnung“ einer Beispielgruppe, zu den Beispielpreisen der Demo: Tarif Pro mit Verlängerungsdatum, 36,00 € im Monat für 4 Mitglieder zu je 9,00 €, der Inhaber eingeschlossen, mit Buttons, um die Karte zu ändern, Rechnungen anzusehen und den Tarif zu kündigen.",
+    "Der Reiter „Abrechnung“ einer Beispielgruppe, zu den Beispielpreisen der Demo: Tarif Pro mit Verlängerungsdatum, 36,00 € im Monat für 4 Mitglieder zu je 9,00 €, der Inhaber eingeschlossen, mit Buttons, um die Karte zu ändern, Rechnungen anzusehen und den Tarif zu kündigen.",
   "FeaturePush.alt":
     "Die Seite mit den Benachrichtigungen: drei ungelesene Hinweise zu einem neuen Gruppeninhaber, einem Rollenwechsel und einer Einladung; jede Zeile öffnet, worum es geht.",
   "FeatureBilling.catalog":

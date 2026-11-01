@@ -31,6 +31,8 @@
 !docs/ids.md
 !docs/api-errors.md
 !docs/admin-modules.md
+# The website counts the browser test suites (apps/mpa/repo-facts.ts).
+!e2e/*.e2e.ts
 !deno.lock
 
 # 3. Bonus step: ignore any unnecessary files that may be inside those allowed directories in Step #2

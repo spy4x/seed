@@ -255,7 +255,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
 }
 
 /**
- * The plan alone, captured on a phone from the empty canvas above its "Plan and billing" heading to
+ * The plan alone, captured on a phone from the empty canvas above its "Billing" heading to
  * the canvas below the "Pro plan" card: at most 390 px wide, so the card shows it whole at about its
  * real size. It sits in the middle of the card's picture area on the same canvas colour.
  */
