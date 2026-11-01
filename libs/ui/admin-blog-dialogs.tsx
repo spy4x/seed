@@ -254,9 +254,10 @@ function PublishDialog(props: DialogsProps & { title: string }): JSX.Element {
             data-e2e="admin-blog-publish-problems"
           >
             <p>{t.t(`AdminBlogDialogs.figuresHiddenBody`)}</p>
-            <ul class="mt-2 flex flex-col gap-1">
+            {/* One column of line labels, so every message starts at the same place. */}
+            <ul class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
               {props.problems.map((problem) => (
-                <li key={blogProblemKey(problem)} class="flex gap-3">
+                <li key={blogProblemKey(problem)} class="col-span-2 grid grid-cols-subgrid">
                   <span class="shrink-0 font-medium tabular-nums">
                     {t.t(`AdminBlogEditor.problemLine`, { line: problem.line })}
                   </span>
