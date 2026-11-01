@@ -44,10 +44,10 @@ wait_for() { # <name> <pid> <url>
   return 1
 }
 
-# The blog's pages read the API: blog-api.ts answers its public routes with the dev seed's
-# published post, so /blog and that post are measured with content. Every other API address
+# The blog's pages read the API: blog-api.ts answers its public routes with Seed's own published
+# posts, read from their files, so /blog and a post are measured with content. Every other API address
 # answers 404, and the pages render without it.
-timeout 900 deno run --allow-net=127.0.0.1 "$HERE/blog-api.ts" 48412 >"$SCRATCH/api.log" 2>&1 &
+timeout 900 deno run --allow-net=127.0.0.1 --allow-read=libs/server/blog/seed-posts "$HERE/blog-api.ts" 48412 >"$SCRATCH/api.log" 2>&1 &
 PIDS+=($!)
 wait_for api "${PIDS[-1]}" http://127.0.0.1:48412/api/blog/posts
 

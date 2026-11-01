@@ -53,6 +53,11 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
   `e2e/mpa/compare.mpa.ts`. Remove the links to it too, or they lead nowhere: "Compare" in the
   header (`NAV_LINKS`) and footer (`footerGroups`) in `apps/mpa/site.tsx`, "How Seed compares"
   in `apps/mpa/routes/[[lang]]/features.tsx` and "the comparison" in `apps/mpa/routes/index.tsx`.
+- **Delete** Seed's blog posts: every `.md` file in `libs/server/blog/seed-posts/` except its
+  `README.md`, which shows the format. They load only in demo mode, which a product never turns
+  on, but they describe Seed. The product writes its posts in the admin app. Point the post page
+  in `apps/mpa/lighthouse/lighthouserc.json` (`/blog/welcome-to-the-seed-blog`) at a post of
+  the product's own, or remove it.
 - **Replace** the page copy and FAQs of the home, features, admin and pricing pages:
   `apps/mpa/routes/index.tsx`, `routes/features.tsx`, `routes/admin.tsx`, `routes/pricing.tsx`.
 - **Replace** the `llms.txt` summary. It is the home page's description, `HOME_HEAD` in

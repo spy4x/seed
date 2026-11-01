@@ -35,7 +35,8 @@ import {
   seedWorkspace,
 } from "../../apps/worker/demo/seed.ts"
 import { KEPT_TABLES, wipeDatabase } from "../../apps/worker/demo/wipe.ts"
-import { SAMPLE_POSTS, seedSamplePosts } from "@server/blog/sample-posts.ts"
+import { readSeedPosts, upsertSeedPosts } from "@server/blog/seed-posts.ts"
+import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
 import { SAMPLE_CONTACT_LINKS, seedSampleContactLinks } from "@server/contact-links/sample-links.ts"
 import { isDemoSeeded, resetDemo } from "../../apps/worker/demo/run.ts"
 import { demoDataSeed } from "../../apps/worker/demo/reset.ts"
@@ -508,8 +509,9 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog and th
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     await sql`INSERT INTO backup_status (target, succeeded_at) VALUES ('database', now())`
     const [{ before }] = await sql<{ before: number }[]>`SELECT max(id) AS before FROM users`
-    // The website's real posts, by an account the wipe removes.
-    await seedSamplePosts(sql, before)
+    // The website's real posts, loaded from their files.
+    const seedPosts = await readSeedPosts(denoFileSystem)
+    await upsertSeedPosts(sql, seedPosts)
     await seedSampleContactLinks(sql)
     // A visitor's sample groups, whose files' objects the wipe queues for deletion.
     await signUpVisitor(sql, "wiped@example.net")
@@ -557,7 +559,7 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog and th
     const [{ posts }] = await sql<
       { posts: number }[]
     >`SELECT COUNT(*)::int AS posts FROM blog_posts`
-    expect(posts).toBe(SAMPLE_POSTS.length)
+    expect(posts).toBe(seedPosts.length)
     const [{ links }] = await sql<
       { links: number }[]
     >`SELECT COUNT(*)::int AS links FROM contact_links`

@@ -12,7 +12,7 @@ Operators write posts in the admin app; the public website shows the published o
 | `libs/server/blog/public-blog.ts`          | The website's reads: live posts only.                                                 |
 | `libs/server/blog/blog-publish-job.ts`     | The `blog.publish` job (registered in `JOBS`), and `queueDueBlogJobs` for lost jobs. |
 | `libs/server/blog/render.ts`               | Markdown to safe HTML and the reading time. The only place a body is rendered.        |
-| `libs/server/blog/sample-posts.ts`         | Sample posts for `deno task db:seed` in development: three in English, and the published one translated into every other language. |
+| `libs/server/blog/seed-posts.ts`, `seed-posts/` | Seed's own posts as Markdown files, loaded only in demo mode and by `deno task db:seed` ([demo.md](demo.md#seeds-own-blog-posts)). |
 | `apps/api/routes/admin/blog.ts`            | `/api/admin/blog/*`, behind the operator gate.                                        |
 | `apps/admin/src/modules/blog/`             | The admin pages: the list (`/blog`) and the editor (`/blog/new`, `/blog/:id`).        |
 | `libs/ui/admin-blog-*.tsx`                 | Their screens: the list, the editor and its dialogs.                                  |
@@ -93,9 +93,9 @@ language names the indexes of the other languages that have a live post. The Blo
 language's pages only while that language has one, and the sitemap lists each language's index
 and each post once, at its own address.
 
-The Lighthouse run (`deno task lighthouse`) measures `/blog` and the sample post `hello-world`.
-It needs no database: `apps/mpa/lighthouse/blog-api.ts` answers the public routes with the dev
-seed's published post.
+The Lighthouse run (`deno task lighthouse`) measures `/blog` and Seed's post
+`welcome-to-the-seed-blog`. It needs no database: `apps/mpa/lighthouse/blog-api.ts` answers the
+public routes with the published posts of `libs/server/blog/seed-posts/`.
 
 ## What the website never sees
 
