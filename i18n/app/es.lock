@@ -410,7 +410,7 @@ GroupEditor.leaveConfirmation	a69d9c78b56e41a8
 GroupEditor.leaveTitle	f917387151392810
 GroupEditor.loading	923a5c5101fe3b09
 GroupEditor.memberCount	19ec8d24139ce594
-GroupEditor.memberCountLink	413d5e58d0ead364
+GroupEditor.memberCountLink	4aa9fafcdb78e867
 GroupEditor.missing	d5b5c3a9272b6912
 GroupEditor.missingHint	037b9aa6bf3a6d43
 GroupEditor.moveAll	1a175025eeb8ebb4
@@ -1051,7 +1051,7 @@ PlanRefusalNotice.membersTitleUnnamed	ae7aca927e85a960
 PlanRefusalNotice.notesText	45f0b91e173fe889
 PlanRefusalNotice.notesTitle	34d71c217bf6bd7f
 PlanRefusalNotice.notesTitleUnnamed	c87e66ebab1baea1
-PlanRefusalNotice.openBilling	be57df4312851c1d
+PlanRefusalNotice.openBilling	821e929a7291e4a4
 PlanRefusalNotice.rolesText	de939c6d1779516c
 PlanRefusalNotice.rolesTitle	1bf105c29eef4b3b
 PlanRefusalNotice.storageText	4e96693ef78ba54f

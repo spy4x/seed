@@ -5,7 +5,12 @@ import { defineConfig } from "vite"
 import { fromFileUrl, relative, SEPARATOR } from "@std/path"
 import { walk } from "@std/fs/walk"
 import { preactThemeCss, requireComponentCss } from "@spy4x/preact-theme/vite"
-import { COUNTED_FOLDERS, countTestFiles } from "./repo-facts.ts"
+import {
+  BROWSER_SUITE_FOLDER,
+  countBrowserSuites,
+  COUNTED_FOLDERS,
+  countTestFiles,
+} from "./repo-facts.ts"
 
 /**
  * Selectors, escaped as in the built CSS, that the client build must contain: two only
@@ -19,11 +24,11 @@ const REQUIRED_SELECTORS = [
   ".sm\\:flex-wrap",
 ]
 
-/** Every file under the counted folders, relative to the repository root (`repo-facts.ts`). */
+/** Every file under the counted folders and the browser suites' folder, relative to the repository root (`repo-facts.ts`). */
 async function repositoryFiles(): Promise<string[]> {
   const root = fromFileUrl(new URL("../../", import.meta.url))
   const paths: string[] = []
-  for (const folder of COUNTED_FOLDERS) {
+  for (const folder of [...COUNTED_FOLDERS, BROWSER_SUITE_FOLDER]) {
     const entries = walk(`${root}${folder}`, {
       includeDirs: false,
       skip: [/node_modules/, /_fresh/],
@@ -36,8 +41,11 @@ async function repositoryFiles(): Promise<string[]> {
 }
 
 export default defineConfig({
-  // The home page's proof numbers, counted from the files the build sees (`repo-facts.ts`).
-  define: { __SEED_TEST_FILES__: JSON.stringify(countTestFiles(await repositoryFiles())) },
+  // The site's proof numbers, counted from the files the build sees (`repo-facts.ts`).
+  define: await repositoryFiles().then((files) => ({
+    __SEED_TEST_FILES__: JSON.stringify(countTestFiles(files)),
+    __SEED_BROWSER_SUITES__: JSON.stringify(countBrowserSuites(files)),
+  })),
   plugins: [
     {
       name: "markdown-text",

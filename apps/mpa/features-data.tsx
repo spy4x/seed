@@ -8,8 +8,6 @@
  *
  * @module
  */
-import type { JSX } from "preact"
-import { useFormat } from "@spy4x/preact-ui/format"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { appAddress } from "./brand.ts"
 import type { FeatureSectionProps, FeatureTierProps } from "./components/features-section.tsx"
@@ -25,19 +23,18 @@ import { ADMIN_TOUR_MODULES } from "./admin-modules.ts"
 import { ADMIN_VIDEO } from "./admin-video.ts"
 import { Shot } from "./components/shot.tsx"
 import { languageList } from "./languages.ts"
+import { BROWSER_SUITE_COUNT } from "./repo-facts.ts"
 import { REPOSITORY_URL } from "./site.tsx"
-import { type Site, useSite } from "./use-site.tsx"
-
-/** The day the Quality section's tests were counted. */
-const TESTS_COUNTED_ON = `2026-10-16`
+import type { Site } from "./use-site.tsx"
 
 /**
- * The Quality section's lead, with {@link TESTS_COUNTED_ON} in the site's short form, as the hero's
- * "Updated" line writes its date. A component, so it reads the site's formatter inside the frame.
+ * The Quality section's lead, with the browser test suites counted when the site was built
+ * (`repo-facts.ts`). Without a build nothing was counted, and the lead names no number.
  */
-function QualityLead(): JSX.Element {
-  const { t } = useSite()
-  return <>{t.t(`FeatureQuality.lead`, { date: useFormat().utc().date(TESTS_COUNTED_ON) })}</>
+function qualityLead(t: Site["t"]): string {
+  return BROWSER_SUITE_COUNT === undefined
+    ? t.t(`FeatureQuality.leadUncounted`)
+    : t.t(`FeatureQuality.lead`, { count: BROWSER_SUITE_COUNT })
 }
 
 /** A file or folder of the repository on GitHub, for the "where in the code" links. */
@@ -411,7 +408,7 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
           nav: t.t(`FeatureQuality.nav`),
           eyebrow: t.t(`FeatureQuality.eyebrow`),
           title: t.t(`FeatureQuality.title`),
-          lead: <QualityLead />,
+          lead: qualityLead(t),
           facts: [
             t.t(`FeatureQuality.fact1`),
             t.t(`FeatureQuality.fact2`),

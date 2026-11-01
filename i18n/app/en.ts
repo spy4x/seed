@@ -179,8 +179,8 @@ export default {
     "other": "{count} members",
   },
   "GroupEditor.memberCountLink": {
-    "one": "{count} member: see the plan and billing",
-    "other": "{count} members: see the plan and billing",
+    "one": "{count} member: open the Billing tab",
+    "other": "{count} members: open the Billing tab",
   },
   "GroupEditor.tabGeneral": "General",
   "GroupEditor.tabMembers": "Members",
@@ -713,7 +713,7 @@ export default {
   "PlanRefusalNotice.rolesTitle": "Promoting members needs a paid plan",
   "PlanRefusalNotice.rolesText":
     "On this group's plan, you can lower a member's role or remove them, but not promote them.",
-  "PlanRefusalNotice.openBilling": "Open Billing",
+  "PlanRefusalNotice.openBilling": "Open the Billing tab",
   "PlanRefusalNotice.askOwner": "Ask the group's owner to upgrade the plan.",
   "GuestProfile.accountType": "Account type",
   "GuestProfile.guestAccount": "Guest account. Only this browser can open it.",

@@ -210,10 +210,10 @@ export default {
     "other": "{count} участника",
   },
   "GroupEditor.memberCountLink": {
-    "one": "{count} участник — тариф и оплата",
-    "few": "{count} участника — тариф и оплата",
-    "many": "{count} участников — тариф и оплата",
-    "other": "{count} участника — тариф и оплата",
+    "one": "{count} участник — вкладка «Оплата»",
+    "few": "{count} участника — вкладка «Оплата»",
+    "many": "{count} участников — вкладка «Оплата»",
+    "other": "{count} участника — вкладка «Оплата»",
   },
   "GroupEditor.tabGeneral": "Основное",
   "GroupEditor.tabMembers": "Участники",
@@ -820,7 +820,7 @@ export default {
   "PlanRefusalNotice.rolesTitle": "Повышать роли можно только на платном тарифе",
   "PlanRefusalNotice.rolesText":
     "На тарифе этой группы можно понизить роль участника или исключить его, но не повысить.",
-  "PlanRefusalNotice.openBilling": "Открыть «Оплата»",
+  "PlanRefusalNotice.openBilling": "Открыть вкладку «Оплата»",
   "PlanRefusalNotice.askOwner": "Попросите владельца группы перейти на платный тариф.",
   "GuestProfile.accountType": "Тип аккаунта",
   "GuestProfile.guestAccount": "Гостевой аккаунт. Открывается только в этом браузере.",

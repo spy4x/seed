@@ -186,7 +186,7 @@ export default {
     "Seed es un starter SaaS gratuito con licencia MIT: inicio de sesión con verificación en dos pasos (2FA), grupos con roles, facturación por miembro con Stripe, tiempo real, una aplicación que funciona sin conexión y un área de administración. Lo despliegas con Docker Compose en un único servidor Linux que alquilas.",
   "HomeHero.github": "Ver en GitHub",
   "HomeHero.status":
-    "Seed ya se puede usar y se construye en público: <status>mira qué funciona hoy</status>.",
+    "Seed ya se puede usar y se construye en público: <status>mira qué funciona</status>.",
   "HomeHero.quickStart": "Inicio rápido",
   "HomeHero.initNote":
     "<code>init</code> crea <code>infra/envs/.env</code> con todos los secretos ya generados. O pídeselo a tu agente de IA: <prompt></prompt>.",
@@ -574,8 +574,16 @@ export default {
   "FeatureQuality.nav": "Pruebas",
   "FeatureQuality.eyebrow": "Calidad",
   "FeatureQuality.title": "Pruebas donde importan",
-  "FeatureQuality.lead":
-    "Recuento del {date}: 34 suites de pruebas de navegador para la aplicación, además de pruebas unitarias y de pantallas, todas ejecutadas en CI. Cada cambio pasa por una pull request y una revisión antes de fusionarse.",
+  "FeatureQuality.lead": {
+    "one":
+      "{count} suite de pruebas de navegador para la aplicación, además de pruebas unitarias y de pantallas, todas ejecutadas en CI. Cada cambio pasa por una pull request y una revisión antes de fusionarse.",
+    "many":
+      "{count} suites de pruebas de navegador para la aplicación, además de pruebas unitarias y de pantallas, todas ejecutadas en CI. Cada cambio pasa por una pull request y una revisión antes de fusionarse.",
+    "other":
+      "{count} suites de pruebas de navegador para la aplicación, además de pruebas unitarias y de pantallas, todas ejecutadas en CI. Cada cambio pasa por una pull request y una revisión antes de fusionarse.",
+  },
+  "FeatureQuality.leadUncounted":
+    "Suites de pruebas de navegador para la aplicación, además de pruebas unitarias y de pantallas, todas ejecutadas en CI. Cada cambio pasa por una pull request y una revisión antes de fusionarse.",
   "FeatureQuality.fact1":
     "Pruebas de navegador con Playwright, contra la API y la base de datos reales",
   "FeatureQuality.fact2": "Pruebas unitarias y de pantallas junto al código que prueban",
@@ -598,7 +606,7 @@ export default {
   "FeatureTeams.alt":
     "El registro de actividad de un grupo: quién añadió qué nota o etiqueta y cuándo, con un enlace para abrir cada nota.",
   "FeatureBilling.alt":
-    "La pestaña de plan y facturación de un grupo de ejemplo, con los precios de ejemplo de la demo: plan Pro con su fecha de renovación, 36,00 € al mes, para 4 miembros a 9,00 € cada uno, propietario incluido, con botones para cambiar la tarjeta, ver las facturas y cancelar el plan.",
+    "La pestaña Facturación de un grupo de ejemplo, con los precios de ejemplo de la demo: plan Pro con su fecha de renovación, 36,00 € al mes, para 4 miembros a 9,00 € cada uno, propietario incluido, con botones para cambiar la tarjeta, ver las facturas y cancelar el plan.",
   "FeaturePush.alt":
     "La página de notificaciones: tres avisos sin leer sobre un nuevo propietario del grupo, un cambio de rol y una invitación; cada fila abre aquello de lo que trata.",
   "FeatureBilling.catalog":
