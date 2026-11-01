@@ -6,14 +6,15 @@
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
-import { render } from "preact"
+import { type ComponentChildren, render } from "preact"
+import { useEffect } from "preact/hooks"
 import { act } from "preact/test-utils"
 import type { CallPort } from "@spy4x/realtime/calls"
 import { createTranslator, type Translator } from "@spy4x/platform/universal/i18n"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import app from "@i18n/app/en.ts"
 import appRu from "@i18n/app/ru.ts"
-import { OfflineStatus } from "./OfflineStatus.tsx"
+import { conflictsToReview, OfflineStatus } from "./OfflineStatus.tsx"
 import { startOffline, stopOffline } from "./index.ts"
 import { createMemoryStorage } from "./memory-storage.ts"
 
@@ -34,6 +35,7 @@ let root: HTMLElement | null = null
 afterEach(async () => {
   if (root) await act(() => render(null, root!))
   root = null
+  conflictsToReview.value = null
   await stopOffline()
 })
 
@@ -52,6 +54,7 @@ const RU = createTranslator({ language: `ru`, catalogs: [{ source: app, translat
 async function mountStrip(
   storage: ReturnType<typeof createMemoryStorage>,
   translator?: Translator<string>,
+  Frame: (props: { children: ComponentChildren }) => ComponentChildren = ({ children }) => children,
 ) {
   const layer = startOffline(
     7,
@@ -61,7 +64,11 @@ async function mountStrip(
   await settle()
   root = window.document.createElement("div") as unknown as HTMLElement
   window.document.body.append(root as never)
-  const strip = <OfflineStatus groupId="g-1" onResolved={() => {}} />
+  const strip = (
+    <Frame>
+      <OfflineStatus groupId="g-1" onResolved={() => {}} />
+    </Frame>
+  )
   await act(() =>
     render(
       translator ? <I18nContext.Provider value={translator}>{strip}</I18nContext.Provider> : strip,
@@ -72,6 +79,22 @@ async function mountStrip(
 }
 
 const text = () => root!.textContent ?? ""
+
+/**
+ * A frame that, like the app's route announcer, moves focus to its page heading in an effect that
+ * runs after the strip's own.
+ */
+function PageThatTakesFocus({ children }: { children: ComponentChildren }) {
+  useEffect(() => {
+    ;(window.document.getElementById("page-heading") as unknown as HTMLElement | null)?.focus()
+  }, [])
+  return (
+    <main>
+      <h1 id="page-heading" tabIndex={-1}>Notes</h1>
+      {children}
+    </main>
+  )
+}
 
 /** The server's side of a tag the person changed offline. */
 const SERVER_TAG = {
@@ -135,6 +158,43 @@ describe("OfflineStatus", () => {
     expect(root!.querySelector("[data-e2e=conflict-mine]")?.textContent).toBe("Mine (Red)")
     expect(root!.querySelector("[data-e2e=conflict-theirs]")?.textContent).toBe("Theirs (Blue)")
     expect(text()).toContain("Tag \u2068Mine\u2069")
+  })
+
+  it("puts focus on the conflict chooser's heading when Review changes sent the person here", async () => {
+    const storage = createMemoryStorage()
+    await storage.of(7).tagsQueue.putEntry(TAG_CONFLICT)
+    conflictsToReview.value = "g-1"
+
+    await mountStrip(storage, undefined, PageThatTakesFocus)
+    await settle()
+
+    const focused = window.document.activeElement
+    expect(focused?.tagName).toBe("H2")
+    expect(focused?.textContent).toBe(root!.querySelector("[aria-labelledby] h2")?.textContent)
+    expect(root!.contains(focused as never)).toBe(true)
+    // Asked once: a later chooser takes no focus on its own.
+    expect(conflictsToReview.value).toBeNull()
+  })
+
+  it("leaves focus where it was when Review changes named another group", async () => {
+    const storage = createMemoryStorage()
+    await storage.of(7).tagsQueue.putEntry(TAG_CONFLICT)
+    conflictsToReview.value = "g-2"
+    const before = window.document.createElement("button")
+    before.id = "outside"
+    window.document.body.append(before)
+    before.focus()
+
+    try {
+      await mountStrip(storage)
+      await settle()
+
+      // By id: a failing diff of two happy-dom elements never finishes printing.
+      expect(window.document.activeElement?.id).toBe("outside")
+      expect(conflictsToReview.value).toBe("g-2")
+    } finally {
+      before.remove()
+    }
   })
 
   it("keeps a section gap between itself and the page header under it", async () => {

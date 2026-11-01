@@ -26,7 +26,7 @@ import {
 } from "./offline/index.ts"
 import { offlineNotes as notesOverLayer } from "./offline/notes-collection.ts"
 import { offlineTags as tagsOverLayer } from "./offline/tags-collection.ts"
-import { OfflineStatus as OfflineStatusLine } from "./offline/OfflineStatus.tsx"
+import { conflictsToReview, OfflineStatus as OfflineStatusLine } from "./offline/OfflineStatus.tsx"
 import { benchmarkLocalData as benchmarkOverLayer } from "./offline/benchmark.ts"
 import {
   browserDatabases,
@@ -503,6 +503,15 @@ async function watchLeftQueue(opened: Session): Promise<UnsentWait | null> {
       runner.stop()
     },
   }
+}
+
+/**
+ * "Review changes" in the sign-out dialog: the conflict chooser of `groupId` takes focus the next
+ * time its notes page shows it, so a keyboard or screen-reader user lands on what they came to
+ * resolve.
+ */
+export function reviewConflicts(groupId: string): void {
+  conflictsToReview.value = groupId
 }
 
 export type { UnsentView, UnsentWait }

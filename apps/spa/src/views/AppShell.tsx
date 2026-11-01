@@ -24,6 +24,7 @@ import {
   callQuery,
   canCall,
   currentLayer,
+  reviewConflicts,
   type UnsentWait,
   watchUnsentChanges,
 } from "../modules.ts"
@@ -144,8 +145,12 @@ function useSignOut(guest: boolean): { onSignOut: () => void; dialog: ComponentC
           onCancel={close}
           onReview={(groupId) => {
             close()
-            // The notes page of that group shows the conflicts with their choices.
-            if (groupId) void selectionStore.select(groupId)
+            // The notes page of that group shows the conflicts with their choices; focus lands on
+            // them.
+            if (groupId) {
+              reviewConflicts(groupId)
+              void selectionStore.select(groupId)
+            }
             navigate(NOTE_PATHS.list)
           }}
         />

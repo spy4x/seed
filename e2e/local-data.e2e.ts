@@ -544,6 +544,33 @@ test.describe("what a device keeps", () => {
     }
   })
 
+  test("Review changes in the unsent-changes question opens the notes page with focus on the conflict chooser", async ({ browser, request }) => {
+    const user = "e2e_local_data_sign_out_review@example.com"
+    await cleanup(request, user)
+    const { context, page: unused } = await configured(browser, { realtime: false })
+    await unused.close()
+    try {
+      const { page, groupId, noteId, userId } = await deviceWithNote(context, request, user)
+      // A write the server refused: it never sends by itself, so the question offers the review.
+      await queueAsEarlierVersion(page, userId, {
+        ...editQueuedLastWeek(groupId, noteId),
+        attempted: true,
+        status: "conflict",
+        conflict: { reason: "version" },
+      })
+      await gotoApp(page, "/profile/security", page.locator("[data-e2e=session-current]"))
+
+      await askToSignOut(page)
+      await page.locator("[data-e2e=unsent-review]").press("Enter")
+
+      await expect(page).toHaveURL(/\/notes$/)
+      await expect(page.locator("[data-e2e=offline-status] [aria-labelledby] h2")).toBeFocused()
+    } finally {
+      await context.close()
+      await cleanup(request, user)
+    }
+  })
+
   test("a queue left on the device is sent once after the module is switched off, and the device then holds none", async ({ browser, request }) => {
     const user = "e2e_local_data_off_queue@example.com"
     await cleanup(request, user)
