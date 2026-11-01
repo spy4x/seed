@@ -167,7 +167,7 @@ function RuntimePlan(): JSX.Element {
           <a href={DENO_ANNOUNCEMENT_URL} class="text-primary underline">{text}</a>
         ),
       })}
-      status={<bdi>Deno 2</bdi>}
+      status={<bdi translate="no">Deno 2</bdi>}
       statusMore={
         <>
           <StatusMark status="wip" label={t.t(`FeatureTierRuntime.wip`)} class="font-medium" />
