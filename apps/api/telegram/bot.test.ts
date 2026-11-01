@@ -156,7 +156,7 @@ describe(`Seed's Telegram bot`, () => {
   it(`answers in English when Telegram reports a language the app does not offer`, async () => {
     const { handle, sent } = bot()
 
-    await handle(`/link`, undefined, `ja`)
+    await handle(`/link`, undefined, `it`)
 
     expect(sent()).toEqual([BOT_TEXT.howToLink(`https://app.example.com/profile/notifications`)])
   })

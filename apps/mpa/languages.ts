@@ -18,18 +18,27 @@ import uiEs from "@spy4x/preact-ui/i18n/es"
 import uiDe from "@spy4x/preact-ui/i18n/de"
 import uiPtBr from "@spy4x/preact-ui/i18n/pt-BR"
 import uiAr from "@spy4x/preact-ui/i18n/ar"
+import uiFr from "@spy4x/preact-ui/i18n/fr"
+import uiJa from "@spy4x/preact-ui/i18n/ja"
+import uiZhCn from "@spy4x/preact-ui/i18n/zh-CN"
 import systemEn from "@spy4x/preact-system/i18n/en"
 import systemRu from "@spy4x/preact-system/i18n/ru"
 import systemEs from "@spy4x/preact-system/i18n/es"
 import systemDe from "@spy4x/preact-system/i18n/de"
 import systemPtBr from "@spy4x/preact-system/i18n/pt-BR"
 import systemAr from "@spy4x/preact-system/i18n/ar"
+import systemFr from "@spy4x/preact-system/i18n/fr"
+import systemJa from "@spy4x/preact-system/i18n/ja"
+import systemZhCn from "@spy4x/preact-system/i18n/zh-CN"
 import siteEn from "@i18n/site/en.ts"
 import siteRu from "@i18n/site/ru.ts"
 import siteEs from "@i18n/site/es.ts"
 import siteDe from "@i18n/site/de.ts"
 import sitePtBr from "@i18n/site/pt-BR.ts"
 import siteAr from "@i18n/site/ar.ts"
+import siteFr from "@i18n/site/fr.ts"
+import siteJa from "@i18n/site/ja.ts"
+import siteZhCn from "@i18n/site/zh-CN.ts"
 import { figureMessages } from "./post-figures.tsx"
 
 /** The languages the website is served in, the default first. */
@@ -49,6 +58,9 @@ const CATALOGS: Record<Language, readonly [Catalog, Catalog, Catalog]> = {
   de: [uiDe, systemDe, siteDe],
   "pt-BR": [uiPtBr, systemPtBr, sitePtBr],
   ar: [uiAr, systemAr, siteAr],
+  fr: [uiFr, systemFr, siteFr],
+  ja: [uiJa, systemJa, siteJa],
+  "zh-CN": [uiZhCn, systemZhCn, siteZhCn],
 }
 
 /** The Open Graph locale of each language, as `og:locale` names it. */
@@ -59,6 +71,9 @@ const OG_LOCALES: Record<Language, string> = {
   de: `de_DE`,
   "pt-BR": `pt_BR`,
   ar: `ar_AR`,
+  fr: `fr_FR`,
+  ja: `ja_JP`,
+  "zh-CN": `zh_CN`,
 }
 
 /** True for a language the website serves, compared exactly: `PT-br` is not `pt-BR`. */
@@ -148,10 +163,11 @@ export function figureCatalog(language: Language): Catalog {
 
 /**
  * Every served language by its name in `language`, as one list: "English, Russian, Spanish, German,
- * Brazilian Portuguese and Arabic" in English.
+ * Brazilian Portuguese, Arabic, French, Japanese and Simplified Chinese" in English. `zh-CN` is named
+ * by its script, as readers know it, not as "Chinese (China)".
  */
 export function languageList(language: Language): string {
   const names = new Intl.DisplayNames([language], { type: `language` })
   return new Intl.ListFormat(language, { type: `conjunction` })
-    .format(SITE_LANGUAGES.map((tag) => names.of(tag) ?? tag))
+    .format(SITE_LANGUAGES.map((tag) => names.of(tag === `zh-CN` ? `zh-Hans` : tag) ?? tag))
 }

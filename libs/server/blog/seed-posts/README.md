@@ -15,7 +15,7 @@ overwritten at the next start. A post whose file is deleted stays in the databas
 ```markdown
 ---
 slug: welcome-to-the-seed-blog # the address, /blog/<slug>; the file is named <slug>.md
-language: en # en, ru, es, de, pt-BR or ar
+language: en # en, ru, es, de, pt-BR, ar, fr, ja or zh-CN
 translationOf: null # optional: the slug of the post this one translates, in another language
 title: Welcome to the Seed blog # up to 200 characters
 seoTitle: null # optional: the title search results show, up to 70 characters

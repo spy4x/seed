@@ -84,7 +84,7 @@ Deno.test(`preferences: accepts every listed language, and automatic (null)`, ()
 })
 
 Deno.test(`preferences: refuses a language off the list, so it can never pick a catalog file`, () => {
-  for (const language of [`fr`, `pt`, `DE`, `de-DE`, `../en`, `__proto__`, ``, 7]) {
+  for (const language of [`it`, `pt`, `DE`, `de-DE`, `../en`, `__proto__`, ``, 7]) {
     const result = preferencesDefinition.parse({ ...valid, language })
     expect(result.ok).toBe(false)
     if (result.ok || result.reason !== `invalid`) throw new Error(`expected an invalid result`)

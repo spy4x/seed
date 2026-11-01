@@ -548,9 +548,9 @@ describe("the public website", () => {
   it("says on /features that Seed is translated, and names every language (#276)", async () => {
     const { html } = await page("/features")
 
-    expect(html).toContain(`In six languages from the start`)
+    expect(html).toContain(`In nine languages from the start`)
     expect(html).toContain(
-      `speak English, Russian, Spanish, German, Brazilian Portuguese, and Arabic.`,
+      `speak English, Russian, Spanish, German, Brazilian Portuguese, Arabic, French, Japanese, and Simplified Chinese.`,
     )
   })
 
@@ -1012,12 +1012,18 @@ describe("the public website", () => {
         "/de",
         "/pt-BR",
         "/ar",
+        "/fr",
+        "/ja",
+        "/zh-CN",
         "/features",
         "/ru/features",
         "/es/features",
         "/de/features",
         "/pt-BR/features",
         "/ar/features",
+        "/fr/features",
+        "/ja/features",
+        "/zh-CN/features",
         "/features/sign-in",
         "/features/groups",
         "/features/billing",
@@ -1029,18 +1035,27 @@ describe("the public website", () => {
         "/de/admin",
         "/pt-BR/admin",
         "/ar/admin",
+        "/fr/admin",
+        "/ja/admin",
+        "/zh-CN/admin",
         "/compare",
         "/ru/compare",
         "/es/compare",
         "/de/compare",
         "/pt-BR/compare",
         "/ar/compare",
+        "/fr/compare",
+        "/ja/compare",
+        "/zh-CN/compare",
         "/pricing",
         "/ru/pricing",
         "/es/pricing",
         "/de/pricing",
         "/pt-BR/pricing",
         "/ar/pricing",
+        "/fr/pricing",
+        "/ja/pricing",
+        "/zh-CN/pricing",
         "/docs/api",
         "/docs",
         ...DOC_SLUGS.map((slug) => `/docs/${slug}`),
@@ -1051,6 +1066,9 @@ describe("the public website", () => {
         "/de/subscribe",
         "/pt-BR/subscribe",
         "/ar/subscribe",
+        "/fr/subscribe",
+        "/ja/subscribe",
+        "/zh-CN/subscribe",
         "/privacy",
         "/terms",
       ]

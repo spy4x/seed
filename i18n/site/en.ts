@@ -158,7 +158,7 @@ export default {
     "A Telegram bot: notifications in a chat, and your own commands in one file",
   "HomeStatus.admin": "The admin area",
   "HomeStatus.website": "The outbox worker, the newsletter and this website",
-  "HomeStatus.languages": "The app, the admin area and this website in six languages: {languages}",
+  "HomeStatus.languages": "The app, the admin area and this website in nine languages: {languages}",
   "HomeStatus.notBuiltAndroid": "An Android app in the Play Store",
   "HomeStatus.notBuiltDesktop": "A desktop app for Windows, macOS and Linux",
   "HomeFaq.tryQuestion": "Can I try it without an account?",
@@ -225,7 +225,7 @@ export default {
   "HomeFeatures.websiteTitle": "A public website",
   "HomeFeatures.websiteLink": "What the website includes",
   "HomeFeatures.websiteText":
-    "This site: server-rendered, works with JavaScript turned off, in six languages, with pricing from your plan catalog, legal pages and a double opt-in newsletter.",
+    "This site: server-rendered, works with JavaScript turned off, in nine languages, with pricing from your plan catalog, legal pages and a double opt-in newsletter.",
   "HomeFeatures.all": "All features, with screenshots and status",
   "HomeServer.eyebrow": "Runs on one server you rent",
   "HomeServer.title": "One server, one <code>docker compose</code>, no surprise bills.",
@@ -417,7 +417,7 @@ export default {
   "FeatureExport.code": "Read the export code",
   "FeatureLanguages.nav": "Languages",
   "FeatureLanguages.eyebrow": "Languages",
-  "FeatureLanguages.title": "In six languages from the start",
+  "FeatureLanguages.title": "In nine languages from the start",
   "FeatureLanguages.lead":
     "The app, the admin area and this website speak {languages}. People choose their language in the app, and it is saved with their account. Each page of this website has its own address in every language.",
   "FeatureLanguages.fact1":
@@ -575,7 +575,7 @@ export default {
   "FeaturesFaq.nativeAnswer":
     "Not as a store app yet. Today the web app installs from the browser on phones and desktops and opens with no network; Android and desktop apps are planned.",
   "FeatureWebsite.fact9":
-    "Every page in six languages, each at its own address with hreflang links; the legal pages stay in English",
+    "Every page in nine languages, each at its own address with hreflang links; the legal pages stay in English",
   "FeatureTeams.alt":
     "A group's activity log: who added which note or tag, and when, with a link to open each note.",
   "FeatureBilling.alt":

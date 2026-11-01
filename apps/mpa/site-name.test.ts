@@ -15,6 +15,9 @@ import siteEs from "@i18n/site/es.ts"
 import siteDe from "@i18n/site/de.ts"
 import sitePtBr from "@i18n/site/pt-BR.ts"
 import siteAr from "@i18n/site/ar.ts"
+import siteFr from "@i18n/site/fr.ts"
+import siteJa from "@i18n/site/ja.ts"
+import siteZhCn from "@i18n/site/zh-CN.ts"
 
 /**
  * A product built on Seed sets `SITE_NAME` and `SITE_ICON` in `brand.ts` to rename its newsletter
@@ -30,6 +33,9 @@ const CATALOGS: Record<string, Catalog> = {
   de: siteDe,
   "pt-BR": sitePtBr,
   ar: siteAr,
+  fr: siteFr,
+  ja: siteJa,
+  "zh-CN": siteZhCn,
 }
 
 /** The components whose words the newsletter's pages, the home band and the footer form show. */

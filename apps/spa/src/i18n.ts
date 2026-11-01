@@ -29,6 +29,9 @@ export const languages = createLanguages({
     de: () => import("./i18n/de.ts"),
     "pt-BR": () => import("./i18n/pt-BR.ts"),
     ar: () => import("./i18n/ar.ts"),
+    fr: () => import("./i18n/fr.ts"),
+    ja: () => import("./i18n/ja.ts"),
+    "zh-CN": () => import("./i18n/zh-CN.ts"),
   },
   root: () => globalThis.document?.documentElement,
 })
