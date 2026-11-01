@@ -1,5 +1,6 @@
 import type { JSX } from "preact"
 import { appAddress } from "../brand.ts"
+import { ShotViewer } from "../components/shot-viewer.tsx"
 import type { PublicContactLink } from "@domain/contact-links"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import {
@@ -672,6 +673,7 @@ export default define.page(function Home({ state }) {
       {state.newsletter && <Newsletter />}
       <Questions />
       <CtaBand demoHref={spa.try} />
+      <ShotViewer />
     </SiteFrame>
   )
 })

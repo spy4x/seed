@@ -47,7 +47,11 @@ export function source(path: string): string {
 }
 
 /** A feature as the page lists it, without the side its picture goes on: the tier decides that. */
-export type Feature = Omit<FeatureSectionProps, "flip"> & { nav: string }
+export type Feature = Omit<FeatureSectionProps, "flip"> & {
+  nav: string
+  /** Its visual holds a product screenshot (`picture img`), which the lightbox opens. */
+  shots?: true
+}
 
 /** One group of features with its heading, status line and features, in page order. */
 export interface Tier extends Omit<FeatureTierProps, "children"> {
@@ -83,6 +87,7 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
             t.t(`FeatureSignIn.fact7`),
           ],
           code: { label: t.t(`FeatureSignIn.code`), href: source(`apps/api/services/sign-in.ts`) },
+          shots: true,
           visual: (
             <WindowFrame variant="browser" title={appAddress(`/profile/security`)}>
               <Shot
@@ -106,6 +111,7 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
             t.t(`FeatureTeams.fact4`),
           ],
           code: { label: t.t(`FeatureTeams.code`), href: source(`libs/domain/groups/`) },
+          shots: true,
           visual: (
             <WindowFrame variant="browser" title={appAddress(`/groups/…/activity`)}>
               <Shot
@@ -154,6 +160,7 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
           ],
           notYet: [{ label: t.t(`FeatureBilling.notYet1`) }],
           code: { label: t.t(`FeatureBilling.code`), href: source(`docs/billing.md`) },
+          shots: true,
           visual: (
             <WindowFrame variant="browser" title={appAddress(`/groups`)}>
               <Shot
@@ -236,6 +243,7 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
             label: t.t(`FeatureRealtime.code`),
             href: source(`docs/decisions/002-realtime-transport-and-sync.md`),
           },
+          shots: true,
           visual: <RealtimePair />,
         },
         {
@@ -250,6 +258,7 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
             t.t(`FeatureOffline.fact3`),
           ],
           code: { label: t.t(`FeatureOffline.code`), href: source(`docs/offline.md`) },
+          shots: true,
           visual: <OfflinePair />,
         },
         {
@@ -282,6 +291,7 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
             label: t.t(`FeaturePush.code`),
             href: source(`apps/api/services/web-push-service.ts`),
           },
+          shots: true,
           visual: (
             <WindowFrame variant="browser" title={appAddress(`/notifications`)}>
               <Shot

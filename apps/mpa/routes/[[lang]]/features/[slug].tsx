@@ -15,6 +15,7 @@ import { breadcrumbListJsonLd, faqPageJsonLd } from "@spy4x/platform/universal/s
 import { Band } from "../../../components/band.tsx"
 import { CtaBand } from "../../../components/cta-band.tsx"
 import { FactList, NotYetList } from "../../../components/features-section.tsx"
+import { ShotViewer } from "../../../components/shot-viewer.tsx"
 import {
   type Feature,
   FEATURE_PAGES,
@@ -270,6 +271,7 @@ function FeaturePageBody({ page, demo }: { page: FeaturePage; demo: string }): J
       </article>
       <CtaBand demoHref={demo} />
       <OtherFeatures current={page.slug} />
+      {drawn.has(`how`) && feature.shots && <ShotViewer />}
     </>
   )
 }

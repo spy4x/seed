@@ -16,6 +16,7 @@ import {
   FeatureTier,
 } from "../../components/features-section.tsx"
 import { SectionIntro } from "../../components/section-intro.tsx"
+import { ShotViewer } from "../../components/shot-viewer.tsx"
 import { featurePath, pageOfFeature, tiers } from "../../features-data.tsx"
 import {
   PERSON_JSON_LD,
@@ -173,7 +174,7 @@ export default define.page(function Features({ state }) {
         <div class="flex min-w-0 flex-col gap-16 lg:col-span-9 xl:col-span-10">
           {sections.map(({ features, ...tier }) => (
             <FeatureTier key={tier.id} {...tier}>
-              {features.map(({ nav, ...feature }, index) => (
+              {features.map(({ nav, shots: _shots, ...feature }, index) => (
                 <FeatureSection
                   key={feature.id}
                   {...feature}
@@ -210,6 +211,7 @@ export default define.page(function Features({ state }) {
         </div>
       </Band>
       <CtaBand demoHref={spa.try} />
+      <ShotViewer />
     </SiteFrame>
   )
 })
