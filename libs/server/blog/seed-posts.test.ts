@@ -81,7 +81,9 @@ describe(`Seed's post files`, () => {
   })
 
   it(`fails on a slug that is no slug`, () => {
-    expect(() => parseSeedPost(`Hello World.md`, file(`Hello World`)[1])).toThrow(`slug`)
+    expect(() => parseSeedPost(`Hello World.md`, file(`Hello World`)[1])).toThrow(
+      `Hello World.md: slug: Use lowercase`,
+    )
   })
 
   it(`fails on a file named other than its slug`, () => {
