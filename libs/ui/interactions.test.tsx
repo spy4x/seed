@@ -35,14 +35,16 @@ const own = {
   document: globalThis.document,
   FormData: globalThis.FormData,
   getComputedStyle: globalThis.getComputedStyle,
+  HTMLElement: globalThis.HTMLElement,
 }
 
 beforeAll(() => {
   // Preact draws into `document`; EnhancedForm reads a form with `new FormData(form)`, which only
-  // the DOM's own FormData can do.
+  // the DOM's own FormData can do. AuthForm checks a field with `instanceof HTMLElement`.
   Object.assign(globalThis, {
     document: window.document,
     FormData: window.FormData,
+    HTMLElement: window.HTMLElement,
     getComputedStyle: window.getComputedStyle.bind(window),
   })
 })
@@ -137,6 +139,21 @@ describe("AuthScreen in the browser", () => {
 
     expect(await submit("input[name=login]")).toBe(true)
     expect(signIn.calls).toEqual([[{ login: "ada@example.com", password: "long-enough" }]])
+  })
+
+  it("moves focus to the error when a sign-in comes back refused", async () => {
+    await mount(<AuthScreen {...authDefaults} onSignIn={() => {}} />)
+    await type("input[name=login]", "ada@example.com")
+    await type("input[name=password]", "long-enough")
+    await submit("input[name=login]")
+
+    // The app marks the form busy, which disables the submit button and drops its focus.
+    await rerender(<AuthScreen {...authDefaults} busy onSignIn={() => {}} />)
+    await rerender(
+      <AuthScreen {...authDefaults} error="Wrong email or password." onSignIn={() => {}} />,
+    )
+
+    expect(focused()).toBe("auth-form-error")
   })
 
   it("sends the one-time code through the app's callback", async () => {
