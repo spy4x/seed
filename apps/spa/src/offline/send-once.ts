@@ -1,6 +1,6 @@
-import type { CallPort } from "@spy4x/realtime/calls"
 import { createCollections } from "@spy4x/realtime/collections"
 import { createMemoryOutboxStore, type OutboxStore } from "@spy4x/realtime/outbox"
+import { createIndexedDbOutboxStore } from "@spy4x/realtime/outbox-indexeddb"
 import type { NoteItem } from "../state/notes.ts"
 import type { TagItem } from "../state/tags.ts"
 import { type OfflineStorage, type OfflineTransport, withBrowserLock } from "./index.ts"
@@ -132,11 +132,19 @@ export async function countQueueOnce(
 ): Promise<number> {
   const found = await findQueue(userId, databases)
   if (!found || (!found.hasNotes && !found.hasTags)) return 0
-  // Counting sends nothing.
-  const transport: OfflineTransport = { calls: {} as CallPort, canSend: () => false }
-  const { collections, tags, notes } = openQueue(userId, transport, storage, found)
-  await collections.reload()
-  return tags.outbox.entries().length + notes.outbox.entries().length
+  // Read without the queue's lock: counting changes nothing, and a layer whose own read of the
+  // queue stalls holds the lock (#613).
+  const notes = found.hasNotes
+    ? storage.openQueue?.(userId) ?? createIndexedDbOutboxStore({ name: found.notesName })
+    : undefined
+  const tags = found.hasTags
+    ? storage.openTagsQueue?.(userId) ?? createIndexedDbOutboxStore({ name: found.tagsName })
+    : undefined
+  const [noteEntries, tagEntries] = await Promise.all([
+    notes?.readOutbox() ?? [],
+    tags?.readOutbox() ?? [],
+  ])
+  return noteEntries.length + tagEntries.length
 }
 
 /**

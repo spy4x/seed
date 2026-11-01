@@ -406,14 +406,25 @@ it is counted apart; once only such writes are left, the button becomes "Review 
 closes the dialog and opens the notes page of their group, with focus on the chooser's heading.
 "Sign out anyway" signs out at once and deletes the queue with everything else; "Cancel", Escape and
 the backdrop keep the person signed in. With an empty queue, sign-out is immediate, as before. A
-sign-out right after start waits for the layer to read the queue first. With no layer open for the
+sign-out right after start waits for the layer to read the queue first, for at most three seconds
+(`QUEUE_READ_DEADLINE_MS`); after that the question uses the count read from IndexedDB, and follows
+the layer's own counts once it has read the queue. That count is read without the queue's lock,
+which a stalled read holds, and with the same deadline: a device that cannot read its queue in time
+signs out, since that queue could not be sent either. A press while the queue is being read starts
+no second read (`views/sign-out-check.ts`). The Sign out item shows no busy state: the account
+menu closes on the press, and its items have no busy or disabled state. With no layer open for the
 person (the module is off, or the layer waits for a deletion the device owes, or the device refused
-it), the queue is counted from IndexedDB and the same question is asked; "Send, then sign out" then
+it), the check first waits, with the same deadline, for that deletion to end: a deletion the
+device owes from an earlier sign-out deletes the person's queue, which was that sign-out's choice,
+so nothing is asked about it. What is left is counted from IndexedDB and the same question is
+asked; "Send, then sign out" then
 sends it as a start with the module off does, and a write the server refuses is dropped, since
 there is no chooser. The check is `watchUnsentChanges` in `modules.ts` (the counts and the wait are
 `offline/unsent.ts`); `views/AppShell.tsx` asks it and `views/UnsentSignOut.tsx` draws the dialog.
-The two-factor step's sign-out and "sign out other devices" never ask: no queue is open there, or
-it is not this device that signs out. A sign-out by the server (401) does not ask either: nobody
+The two-factor step's sign-out and "sign out other devices" never ask. No layer is open at the
+two-factor step, but a queue a session the server ended kept can lie on the device; that sign-out
+deletes it without the question on purpose, since the person at the step may not be the one whose
+queue it is. "Sign out other devices" does not sign this device out. A sign-out by the server (401) does not ask either: nobody
 chose it, and the queue stays on the device for the person's next sign-in (see above).
 
 ## What is not offline

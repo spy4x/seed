@@ -1,5 +1,5 @@
 import type { ComponentChildren } from "preact"
-import { useEffect, useRef } from "preact/hooks"
+import { useEffect, useMemo, useRef } from "preact/hooks"
 import { useSignal } from "@preact/signals"
 import { useLocation, useSearch } from "wouter-preact"
 import { canMutateNotes, canViewActivity } from "@domain/groups"
@@ -31,6 +31,7 @@ import {
 import { signOutRedirect } from "./sign-in-gate.ts"
 import { languageChoice } from "./language-choice.ts"
 import { UnsentSignOut } from "./UnsentSignOut.tsx"
+import { createSignOutCheck } from "./sign-out-check.ts"
 import { GUEST_PATHS, GuestBanner, GuestSignOutDialog } from "@ui/guest-screens.tsx"
 import {
   hideGuestBanner,
@@ -92,9 +93,10 @@ function useSignOut(guest: boolean): { onSignOut: () => void; dialog: ComponentC
   const wait = useSignal<UnsentWait | null>(null)
   // A guest is asked first (#224): signing out of an account with no sign-in method loses it.
   const askingGuest = useSignal(false)
-  /** Whether the queue is being read for a sign-out, so a second press starts no second read. */
-  const checking = useRef(false)
   const mounted = useRef(true)
+  // The latest render's: the read can end after the page moved on.
+  const signOutLatest = useRef(signOutNow)
+  signOutLatest.current = signOutNow
   const close = () => {
     wait.value?.dispose()
     wait.value = null
@@ -103,18 +105,13 @@ function useSignOut(guest: boolean): { onSignOut: () => void; dialog: ComponentC
     mounted.current = false
     close()
   }, [])
-  const signOutChecked = async () => {
-    if (checking.current) return
-    checking.current = true
-    try {
-      const watched = await watchUnsentChanges()
-      if (!mounted.current) watched?.dispose()
-      else if (watched) wait.value = watched
-      else signOutNow()
-    } finally {
-      checking.current = false
-    }
-  }
+  const signOutChecked = useMemo(() =>
+    createSignOutCheck({
+      watch: watchUnsentChanges,
+      ask: (watched) => wait.value = watched,
+      signOutNow: () => signOutLatest.current(),
+      mounted: () => mounted.current,
+    }), [])
   return {
     onSignOut: () => {
       if (guest) askingGuest.value = true

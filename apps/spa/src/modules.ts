@@ -36,6 +36,7 @@ import {
   sendQueueOnce,
 } from "./offline/send-once.ts"
 import {
+  countUnsent,
   type UnsentView,
   type UnsentWait,
   watchQueue,
@@ -177,7 +178,15 @@ export interface StartOptions {
    * of a person still owed a deletion. A test passes one.
    */
   databases?: QueueDatabases
+  /**
+   * How long a sign-out waits for the device to read the queue before it asks with what it knows.
+   * Defaults to {@link QUEUE_READ_DEADLINE_MS}; a test passes a short one.
+   */
+  queueReadDeadlineMs?: number
 }
+
+/** How long a sign-out waits for the device to read the queue (#613). */
+export const QUEUE_READ_DEADLINE_MS = 3_000
 
 /**
  * Starts everything that talks to the server for a signed-in user: the calls port, the local-data
@@ -446,19 +455,77 @@ export function currentLayer(): OfflineLayer | null {
  * signed in. Right after start it waits for the layer to read the queue an earlier visit left, and
  * with no layer open for the person (the module is off, or the layer waits for a deletion the
  * device owes, or the device refused it) it reads the queue from the device: either way a sign-out
- * never deletes unsent writes without asking. The caller disposes it when the dialog closes.
+ * never deletes unsent writes without asking. A deletion the device owes runs first: one an earlier,
+ * chosen sign-out left deletes this person's queue, and asking about it, or sending it, while it
+ * goes would race it. Each wait ends after `queueReadDeadlineMs` (#613): a read that stalls makes
+ * it ask with the count the device gives, and with none in time either, the sign-out goes on. The
+ * caller disposes it when the dialog closes.
  */
 export async function watchUnsentChanges(): Promise<UnsentWait | null> {
   const opened = session
   if (!opened) return null
+  const ms = opened.options.queueReadDeadlineMs ?? QUEUE_READ_DEADLINE_MS
+  if (offlineLayer()?.userId !== opened.userId) {
+    await within(forgetting, ms, undefined)
+    if (session !== opened) return null
+  }
+  // The deletion's end may have opened the layer.
   const running = offlineLayer()
-  if (running?.userId !== opened.userId) return await watchLeftQueue(opened)
-  await running.loaded
+  if (running?.userId !== opened.userId) return await watchLeftQueue(opened, ms)
+  const read = await within(running.loaded.then(() => true), ms, false)
   if (session !== opened || offlineLayer() !== running) return null
+  if (!read) return await watchUnreadLayer(opened, running, ms)
   if (running.entries.value.length + running.tagEntries.value.length === 0) return null
   const { userId } = running
   return watchLayerUnsent({
     layer: running,
+    online: network.online,
+    canSend: () => canCallAs(userId),
+  })
+}
+
+/** What `work` resolves to, or `late` when `ms` pass first. Rejects as `work` does. */
+function within<T, L>(work: Promise<T>, ms: number, late: L): Promise<T | L> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<L>((resolve) => timer = setTimeout(() => resolve(late), ms))
+  return Promise.race([work, timeout]).finally(() => clearTimeout(timer))
+}
+
+/**
+ * How many writes the queue of `opened`'s user holds on the device, read without a layer: `0` when
+ * the device cannot read it within `ms`. A queue the device cannot read cannot be sent either.
+ */
+async function countDeviceQueue(opened: Session, ms: number): Promise<number> {
+  const { userId, options: { storage, databases } } = opened
+  try {
+    const count = await within(countQueueOnce({ userId, storage, databases }), ms, null)
+    if (count !== null) return count
+    console.warn("The offline queue could not be read in time.")
+  } catch (error) {
+    console.warn("The offline queue could not be read.", error)
+  }
+  return 0
+}
+
+/**
+ * The layer's queue, watched for a sign-out, when the layer has not read it within `ms`: the count
+ * comes from the device until the layer has read it, and the layer's own counts from then on, so
+ * the dialog follows its sends and closes once the queue is empty. "Send" asks the layer's runner.
+ */
+async function watchUnreadLayer(
+  opened: Session,
+  layer: OfflineLayer,
+  ms: number,
+): Promise<UnsentWait | null> {
+  const known = await countDeviceQueue(opened, ms)
+  if (known === 0 || session !== opened || offlineLayer() !== layer) return null
+  const read = signal(false)
+  void layer.loaded.then(() => read.value = true)
+  const { userId } = layer
+  return watchQueue({
+    counts: () =>
+      read.value ? countUnsent(layer) : { unsent: known, conflicts: 0, reviewGroupId: null },
+    runner: layer.runner,
     online: network.online,
     canSend: () => canCallAs(userId),
   })
@@ -470,15 +537,9 @@ export async function watchUnsentChanges(): Promise<UnsentWait | null> {
  * with backoff. With no layer there is no chooser: a write the server refuses is dropped, as
  * {@link sendQueueOnce} does, so it counts as sendable here.
  */
-async function watchLeftQueue(opened: Session): Promise<UnsentWait | null> {
+async function watchLeftQueue(opened: Session, ms: number): Promise<UnsentWait | null> {
   const { userId, options: { storage, databases } } = opened
-  let count = 0
-  try {
-    count = await countQueueOnce({ userId, storage, databases })
-  } catch (error) {
-    // A queue the device cannot read cannot be sent either; the sign-out goes on.
-    console.warn("The offline queue could not be read.", error)
-  }
+  const count = await countDeviceQueue(opened, ms)
   if (count === 0 || session !== opened) return null
   const unsent = signal(count)
   const transport = offlineTransportFor(userId, opened.port)

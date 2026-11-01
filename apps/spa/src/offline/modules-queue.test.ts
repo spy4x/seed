@@ -10,7 +10,7 @@ import {
 } from "../modules.ts"
 import { sessionState, type SessionUser } from "../state/session.ts"
 import { stopOffline } from "./index.ts"
-import { createMemoryStorage } from "./memory-storage.ts"
+import { createMemoryStorage, type MemoryDevice } from "./memory-storage.ts"
 import type { NoteEntry } from "./notes-cache.ts"
 
 /**
@@ -214,6 +214,155 @@ describe("the sign-out question", () => {
       expect(view).toMatchObject({ unsent: 1, conflicts: 0, state: "ask" })
     } finally {
       console.warn = realWarn
+    }
+  })
+
+  type QueueEntries = Awaited<ReturnType<MemoryDevice["queue"]["readOutbox"]>>
+
+  /**
+   * `storage` whose first queue store, the one the layer opens, never answers its first read until
+   * `release` gives it the entries to return. Every later store reads the device at once.
+   */
+  function stallingFirstRead(storage: Awaited<ReturnType<typeof deviceWithQueue>>) {
+    let release: (entries?: unknown[]) => void = () => {}
+    const gate = new Promise<unknown[] | undefined>((resolve) => release = resolve)
+    let opened = 0
+    const openQueue = (userId: number) => {
+      const store = storage.of(userId).queue
+      if (opened++ > 0) return store
+      let first = true
+      return {
+        ...store,
+        readOutbox() {
+          if (!first) return store.readOutbox()
+          first = false
+          return gate.then((entries) => (entries as QueueEntries | undefined) ?? store.readOutbox())
+        },
+      }
+    }
+    return { storage: { ...storage, openQueue }, release }
+  }
+
+  it("answers within the deadline with the device's count when the layer's queue read stalls", async () => {
+    visiblePage()
+    configureModules({ realtime: false, offline: true })
+    const device = await deviceWithQueue(12)
+    const { storage, release } = stallingFirstRead(device)
+    let answer: () => void = () => {}
+    const answered = new Promise<void>((resolve) => answer = resolve)
+    globalThis.fetch = (async () => {
+      await answered
+      const note = { id: "n-1", groupId: "g-1", title: "Plan", body: "", tagIds: [], version: 2 }
+      return Response.json({ result: { note } })
+    }) as unknown as typeof fetch
+    sessionState.value = { ...signedOut, user: user(12) }
+    try {
+      startModules(12, reads, { storage, databases: device.databases, queueReadDeadlineMs: 20 })
+      let layerRead = false
+      void currentLayer()!.loaded.then(() => layerRead = true)
+      const wait = (await watchUnsentChanges())!
+      const asked = { layerRead, unsent: wait.view.value.unsent }
+      // Once the layer has read the queue, the dialog follows the layer: its send empties it.
+      release()
+      answer()
+      await until(() => wait.view.value.unsent === 0)
+      wait.dispose()
+
+      expect(asked).toEqual({ layerRead: false, unsent: 1 })
+    } finally {
+      release()
+      answer()
+      await stopOffline()
+    }
+  })
+
+  it("shows nothing when the session ends while the layer reads the queue", async () => {
+    visiblePage()
+    configureModules({ realtime: false, offline: true })
+    const device = await deviceWithQueue(15)
+    const { storage, release } = stallingFirstRead(device)
+    globalThis.fetch = (() => new Promise(() => {})) as unknown as typeof fetch
+    sessionState.value = { ...signedOut, user: user(15) }
+    try {
+      startModules(15, reads, { storage, databases: device.databases, queueReadDeadlineMs: 5_000 })
+      const asking = watchUnsentChanges()
+      await pause(0)
+      stopChanges()
+      release()
+      const wait = await asking
+      wait?.dispose()
+
+      expect(wait).toBeNull()
+    } finally {
+      release()
+      await stopOffline()
+    }
+  })
+
+  it("does not ask about the person's own queue an earlier sign-out still owed a deletion of", async () => {
+    visiblePage()
+    configureModules({ realtime: false, offline: true })
+    const storage = await deviceWithQueue(13)
+    globalThis.fetch = (() => new Promise(() => {})) as unknown as typeof fetch
+    localStorage.setItem("offline:owed-deletion", "[13]")
+    sessionState.value = { ...signedOut, user: user(13) }
+    try {
+      startModules(13, reads, { storage, databases: storage.databases })
+      const wait = await watchUnsentChanges()
+      wait?.dispose()
+      const left = await storage.of(13).queue.readOutbox()
+
+      expect({ asked: wait !== null, left: left.length }).toEqual({ asked: false, left: 0 })
+    } finally {
+      await stopOffline()
+    }
+  })
+
+  it("sends a queued write once when the layer opens after Send started without it", async () => {
+    visiblePage()
+    configureModules({ realtime: false, offline: true })
+    const storage = await deviceWithQueue(14)
+    let deletable: () => void = () => {}
+    const deletions = new Promise<void>((resolve) => deletable = resolve)
+    const databases = {
+      list: storage.databases.list,
+      delete: (name: string) => deletions.then(() => storage.databases.delete(name)),
+    }
+    let answer: () => void = () => {}
+    const answered = new Promise<void>((resolve) => answer = resolve)
+    const urls: string[] = []
+    globalThis.fetch = (async (url: string) => {
+      urls.push(url)
+      await answered
+      const note = { id: "n-1", groupId: "g-1", title: "Plan", body: "", tagIds: [], version: 2 }
+      return Response.json({ result: { note } })
+    }) as unknown as typeof fetch
+    // The session ended on the server and kept the queue; a sign-out cut short still owes the rest.
+    localStorage.setItem("offline:kept-queue", "14")
+    localStorage.setItem("offline:owed-deletion", "[14]")
+    sessionState.value = { ...signedOut, user: user(14) }
+    try {
+      startModules(14, reads, { storage, databases, queueReadDeadlineMs: 20 })
+      const wait = (await watchUnsentChanges())!
+      const layerAtSend = currentLayer()
+      wait.send()
+      await until(() => urls.length === 1)
+      deletable()
+      await until(() => currentLayer() !== null)
+      // The layer reads the queue under the same lock the send holds until the server answers.
+      answer()
+      await currentLayer()!.loaded
+      await until(() => wait.view.value.unsent === 0)
+      await until(() => currentLayer()!.entries.value.length === 0)
+      await pause(20)
+      wait.dispose()
+
+      expect(layerAtSend).toBeNull()
+      expect(urls).toEqual(["/api/call/note.update"])
+    } finally {
+      deletable()
+      answer()
+      await stopOffline()
     }
   })
 
