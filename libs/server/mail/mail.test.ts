@@ -733,7 +733,17 @@ describe("mail and a hostile value (#277)", () => {
 
 describe("mail and a full stop after a date (#277)", () => {
   /** Each language with a region format of its own, whose long date may end in a full stop. */
-  const LOCALES = { en: "en-US", ru: "ru-RU", es: "es-ES", de: "de-DE", "pt-BR": "pt-BR", ar: "ar", fr: "fr-FR", ja: "ja-JP", "zh-CN": "zh-CN" }
+  const LOCALES = {
+    en: "en-US",
+    ru: "ru-RU",
+    es: "es-ES",
+    de: "de-DE",
+    "pt-BR": "pt-BR",
+    ar: "ar",
+    fr: "fr-FR",
+    ja: "ja-JP",
+    "zh-CN": "zh-CN",
+  }
   /** A letter's full stop, then the sentence's, with only closing tags or a PDI between them. */
   const DOUBLED = /\p{L}\.(?:<\/\w+>|\u2069)*\.(?!\.)/u
 
