@@ -7,7 +7,7 @@ import {
   createPostgresSendLog,
   createPostgresSubscriberStore,
 } from "@spy4x/server/subscribers/postgres"
-import { isSubscriberList, type SubscriberList } from "@domain/subscribers"
+import { isExampleAddress, isSubscriberList, type SubscriberList } from "@domain/subscribers"
 import { DEFAULT_LANGUAGE, isLanguage, type Language, sitePath } from "@domain/identity"
 import {
   createListCrypto,
@@ -203,7 +203,8 @@ export async function subscribersInLanguage(
 
 /**
  * The send-issue job: mails the stored issue to everyone on its list, or, for an issue with a
- * language, to the subscribers of that language only (#527), through `sendIssue`, which records
+ * language, to the subscribers of that language only (#527), except addresses on domains reserved
+ * for examples (`isExampleAddress`), through `sendIssue`, which records
  * each recipient in the Postgres send log. A rerun mails only the audience members the log
  * does not list as reached. Throws when any mail failed or another run holds the send lock, so the
  * job is retried; the issue row stays for that rerun.
@@ -222,7 +223,10 @@ export function subscriberSendIssueJob(deps: SubscriberMailDeps): JobHandler {
     }
     const crypto = await createListCrypto(deps.setup, issue.listId)
     const store = createPostgresSubscriberStore(sql, { listId: issue.listId })
-    const everyone = await store.list()
+    // An address on a domain reserved for examples takes no mail: the demo's fake subscribers.
+    const everyone = (await store.list()).filter((subscriber) =>
+      !isExampleAddress(subscriber.email)
+    )
     const readers = issue.language === null
       ? null
       : await subscribersInLanguage(sql, issue.listId, issue.language)

@@ -4,6 +4,7 @@ import {
   ADMIN_SUBSCRIBERS_NO_FILTER,
   adminSubscriberFilterQuery,
   DEFAULT_SUBSCRIBER_LIST,
+  isExampleAddress,
   isSubscriberList,
   parseAdminSubscriberFilter,
   SUBSCRIBER_LISTS,
@@ -15,6 +16,37 @@ describe("subscriber lists", () => {
     expect(isSubscriberList(`news`)).toBe(true)
     expect(isSubscriberList(`admin`)).toBe(false)
     expect(isSubscriberList(undefined)).toBe(false)
+  })
+})
+
+describe("example addresses", () => {
+  it("recognises every domain reserved for examples, in any case and with subdomains", () => {
+    for (
+      const email of [
+        `ann@example.com`,
+        `ann@EXAMPLE.ORG`,
+        `ann@example.net`,
+        `ann@mail.example.com`,
+        `ann@shop.example`,
+        `ann@example.com.`,
+      ]
+    ) {
+      expect({ email, example: isExampleAddress(email) }).toEqual({ email, example: true })
+    }
+  })
+
+  it("leaves real domains and the testing domain mailable", () => {
+    for (
+      const email of [
+        `ann@gmail.com`,
+        `ann@example.co`,
+        `ann@myexample.com`,
+        `ann@example.com.au`,
+        `ann@seed.test`,
+      ]
+    ) {
+      expect({ email, example: isExampleAddress(email) }).toEqual({ email, example: false })
+    }
   })
 })
 

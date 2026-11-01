@@ -24,6 +24,21 @@ export function isSubscriberList(value: unknown): value is SubscriberList {
   return SUBSCRIBER_LISTS.includes(value as SubscriberList)
 }
 
+/** The second-level domains RFC 2606 reserves for examples; none of them takes mail. */
+const EXAMPLE_DOMAINS = [`example.com`, `example.net`, `example.org`]
+
+/**
+ * Whether `email` is on a domain reserved for examples (RFC 2606): `example.com`, `example.net`,
+ * `example.org`, a subdomain of one, or the `.example` top-level domain. The demo's fake
+ * subscribers live there, so a newsletter skips them instead of bouncing. `.test` is not one:
+ * tests and development may mail it.
+ */
+export function isExampleAddress(email: string): boolean {
+  const host = email.slice(email.lastIndexOf(`@`) + 1).toLowerCase().replace(/\.$/, ``)
+  return host === `example` || host.endsWith(`.example`) ||
+    EXAMPLE_DOMAINS.some((domain) => host === domain || host.endsWith(`.${domain}`))
+}
+
 /** Longest token a link or form may carry. A real one is a few hundred characters. */
 export const SUBSCRIBER_TOKEN_MAX_LENGTH = 2048
 
