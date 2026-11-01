@@ -245,19 +245,23 @@ async function rowsPointingAt(sql: postgres.Sql, userId: number): Promise<Record
 }
 
 /**
- * Waits until some other connection is stuck behind a lock that backend `pid` holds, and answers
- * that connection's backend.
+ * Waits until a connection other than `holders` is stuck behind a lock that one of `holders`
+ * holds, and answers that connection's backend. A connection queued behind two holders may name
+ * either one as its blocker, so the caller passes every backend ahead of it. The deadline is wide
+ * because a request hashes a password before it reaches the lock, which is slow on a busy CI host.
  */
-async function waitUntilBlockedBy(sql: postgres.Sql, pid: number): Promise<number> {
-  const deadline = Date.now() + 10_000
+async function waitUntilBlockedBy(sql: postgres.Sql, ...holders: number[]): Promise<number> {
+  const deadline = Date.now() + 30_000
   while (Date.now() < deadline) {
     const [row] = await sql<{ pid: number }[]>`
-      SELECT pid FROM pg_stat_activity WHERE ${pid} = ANY(pg_blocking_pids(pid)) LIMIT 1
+      SELECT pid FROM pg_stat_activity
+      WHERE pid <> ALL(${holders}::int[]) AND pg_blocking_pids(pid) && ${holders}::int[]
+      LIMIT 1
     `
     if (row) return row.pid
     await new Promise((resolve) => setTimeout(resolve, 50))
   }
-  throw new Error(`nothing waited for backend ${pid} within 10 s`)
+  throw new Error(`nothing waited for backends ${holders.join(`, `)} within 30 s`)
 }
 
 /** The app's database, which can also name the server process of its connection. */
@@ -789,7 +793,7 @@ Deno.test("deleting one's own account", async (t) => {
           }))
           const resetPid = await waitUntilBlockedBy(sql, pid)
           deleting = hardDeleteAccount(sql, id).catch((error: Error) => error)
-          await waitUntilBlockedBy(sql, resetPid)
+          await waitUntilBlockedBy(sql, pid, resetPid)
         })
 
         // A deadlock would fail the reset with a 500 or the delete with an error.
@@ -819,7 +823,7 @@ Deno.test("deleting one's own account", async (t) => {
           resetting = Promise.resolve(app.request("/reset", {
             body: { email: issued.email, code: issued.code, password: PASSWORD },
           }))
-          await waitUntilBlockedBy(sql, deletePid)
+          await waitUntilBlockedBy(sql, pid, deletePid)
         })
 
         expect(await deleting!).toBe(HardDeleteOutcome.Deleted)
