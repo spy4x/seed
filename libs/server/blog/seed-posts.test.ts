@@ -69,7 +69,7 @@ describe(`Seed's post files`, () => {
   })
 
   it(`fails on a language the apps do not ship`, () => {
-    expect(() => parseSeedPost(...file(`hello`, [`language: fr`], [`language`]))).toThrow(
+    expect(() => parseSeedPost(...file(`hello`, [`language: it`], [`language`]))).toThrow(
       SeedPostError,
     )
   })

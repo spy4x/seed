@@ -154,7 +154,7 @@ export default {
   "HomeStatus.telegram": "بوت Telegram: إشعارات في محادثة، وأوامرك الخاصة في ملف واحد",
   "HomeStatus.admin": "لوحة الإدارة",
   "HomeStatus.website": "عامل صندوق الصادر، والنشرة البريدية، وهذا الموقع",
-  "HomeStatus.languages": "التطبيق ولوحة الإدارة وهذا الموقع بست لغات: {languages}",
+  "HomeStatus.languages": "التطبيق ولوحة الإدارة وهذا الموقع بتسع لغات: {languages}",
   "HomeStatus.notBuiltAndroid": "تطبيق Android على متجر Play",
   "HomeStatus.notBuiltDesktop": "تطبيق لسطح المكتب على Windows وmacOS وLinux",
   "HomeFaq.tryQuestion": "هل يمكنني تجربته من دون حساب؟",
@@ -221,7 +221,7 @@ export default {
   "HomeFeatures.websiteTitle": "موقع عام",
   "HomeFeatures.websiteLink": "ما يتضمنه الموقع",
   "HomeFeatures.websiteText":
-    "هذا الموقع نفسه: يُعرض من الخادم، ويعمل حتى مع تعطيل JavaScript، بست لغات، مع أسعار مأخوذة من كتالوج خططك، وصفحات قانونية، ونشرة بريدية بتأكيد مزدوج.",
+    "هذا الموقع نفسه: يُعرض من الخادم، ويعمل حتى مع تعطيل JavaScript، بتسع لغات، مع أسعار مأخوذة من كتالوج خططك، وصفحات قانونية، ونشرة بريدية بتأكيد مزدوج.",
   "HomeFeatures.all": "كل الميزات، مع لقطات الشاشة وحالة كل منها",
   "HomeServer.eyebrow": "يعمل على خادم واحد تستأجره",
   "HomeServer.title": "خادم واحد، وأمر <code>docker compose</code> واحد، ولا فواتير مفاجئة.",
@@ -411,7 +411,7 @@ export default {
   "FeatureExport.code": "اقرأ شيفرة التصدير",
   "FeatureLanguages.nav": "اللغات",
   "FeatureLanguages.eyebrow": "اللغات",
-  "FeatureLanguages.title": "بست لغات منذ البداية",
+  "FeatureLanguages.title": "بتسع لغات منذ البداية",
   "FeatureLanguages.lead":
     "التطبيق ولوحة الإدارة وهذا الموقع متاحة بهذه اللغات: {languages}. يختار كل شخص لغته في التطبيق، وتُحفظ مع حسابه. ولكل صفحة في هذا الموقع عنوان خاص بكل لغة.",
   "FeatureLanguages.fact1":
@@ -568,7 +568,7 @@ export default {
   "FeaturesFaq.nativeAnswer":
     "ليس كتطبيق في المتاجر بعد. اليوم يُثبَّت تطبيق الويب من المتصفح على الهواتف وأجهزة سطح المكتب ويفتح دون شبكة، وتطبيقات Android وسطح المكتب مخطط لها.",
   "FeatureWebsite.fact9":
-    "كل صفحة بست لغات، ولكل منها عنوان خاص مع روابط hreflang، أما الصفحات القانونية فتبقى بالإنجليزية",
+    "كل صفحة بتسع لغات، ولكل منها عنوان خاص مع روابط hreflang، أما الصفحات القانونية فتبقى بالإنجليزية",
   "FeatureTeams.alt": "سجل نشاط مجموعة: من أضاف أي ملاحظة أو وسم ومتى، مع رابط لفتح كل ملاحظة.",
   "FeatureBilling.alt":
     "تبويب الخطة والفوترة لمجموعة تجريبية، بأسعار العرض التوضيحية: خطة Pro مع تاريخ تجديدها، 36.00 € شهريًا، لأربعة أعضاء بسعر 9.00 € لكل عضو، بمن فيهم المالك، مع أزرار لتغيير البطاقة وعرض الفواتير وإلغاء الخطة.",

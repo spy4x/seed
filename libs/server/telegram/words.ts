@@ -13,8 +13,21 @@ import es from "@i18n/app/es.ts"
 import de from "@i18n/app/de.ts"
 import ptBR from "@i18n/app/pt-BR.ts"
 import ar from "@i18n/app/ar.ts"
+import fr from "@i18n/app/fr.ts"
+import ja from "@i18n/app/ja.ts"
+import zhCN from "@i18n/app/zh-CN.ts"
 
-const CATALOGS: Record<Language, Catalog> = { en, ru, es, de, "pt-BR": ptBR, ar }
+const CATALOGS: Record<Language, Catalog> = {
+  en,
+  ru,
+  es,
+  de,
+  "pt-BR": ptBR,
+  ar,
+  fr,
+  ja,
+  "zh-CN": zhCN,
+}
 const translators = new Map<Language, Translator<string>>()
 
 /** The `app` catalog in `language`, made on first use. */

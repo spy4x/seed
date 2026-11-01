@@ -6,6 +6,9 @@ import es from "../../i18n/site/es.ts"
 import de from "../../i18n/site/de.ts"
 import ptBr from "../../i18n/site/pt-BR.ts"
 import ar from "../../i18n/site/ar.ts"
+import fr from "../../i18n/site/fr.ts"
+import ja from "../../i18n/site/ja.ts"
+import zhCn from "../../i18n/site/zh-CN.ts"
 
 /**
  * One page per language (#276): its address, the English page's address (`x-default`), its
@@ -48,6 +51,21 @@ const PAGES = [
     dir: `rtl`,
     heading: ar[`AdminTour.heroTitle`],
   },
+  { language: `fr`, path: `/fr`, english: `/`, dir: `ltr`, heading: fr[`HomeHero.title`] },
+  {
+    language: `ja`,
+    path: `/ja/pricing`,
+    english: `/pricing`,
+    dir: `ltr`,
+    heading: ja[`PricingHero.title`],
+  },
+  {
+    language: `zh-CN`,
+    path: `/zh-CN/features`,
+    english: `/features`,
+    dir: `ltr`,
+    heading: zhCn[`FeaturesHero.title`],
+  },
 ] as const
 
 test.describe(`the website in every language, without JavaScript`, () => {
@@ -63,7 +81,7 @@ test.describe(`the website in every language, without JavaScript`, () => {
       await expect(page.getByRole(`heading`, { level: 1 })).toHaveText(heading)
       const canonical = await page.locator(`link[rel=canonical]`).getAttribute(`href`)
       expect(new URL(canonical!).pathname).toBe(path)
-      await expect(page.locator(`link[rel=alternate][hreflang]`)).toHaveCount(7)
+      await expect(page.locator(`link[rel=alternate][hreflang]`)).toHaveCount(10)
       const fallback = await page.locator(`link[rel=alternate][hreflang=x-default]`)
         .getAttribute(`href`)
       expect(new URL(fallback!).pathname).toBe(english)
@@ -76,6 +94,16 @@ test.describe(`the website in every language, without JavaScript`, () => {
 
     await expect(page).toHaveURL(/\/de\/pricing$/)
     await expect(page.getByRole(`heading`, { level: 1 })).toHaveText(de[`PricingHero.title`])
+  })
+
+  test(`the header's language menu opens the same page in another language`, async ({ page }) => {
+    await page.goto(`/pricing`)
+    const menu = page.locator(`[data-e2e=site-header-languages]`)
+    await menu.locator(`summary`).click()
+    await menu.locator(`a[hreflang=zh-CN]`).click()
+
+    await expect(page).toHaveURL(/\/zh-CN\/pricing$/)
+    await expect(page.getByRole(`heading`, { level: 1 })).toHaveText(zhCn[`PricingHero.title`])
   })
 
   test(`a legal page stays English at a translated address and says so`, async ({ page }) => {

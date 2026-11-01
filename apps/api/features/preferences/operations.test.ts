@@ -150,7 +150,7 @@ describe(`preferences operations`, () => {
   it(`stores a listed language, and refuses one off the list as invalid, writing nothing`, async () => {
     const { call, rows } = harness()
 
-    for (const language of [`../../etc/passwd`, `fr`, `__proto__`]) {
+    for (const language of [`../../etc/passwd`, `it`, `__proto__`]) {
       const refused = await call(`preferences.save`, {
         version: 0,
         value: { ...berlin, language },

@@ -18,6 +18,9 @@ export const CODE_SUBJECTS: Record<string, string> = {
   de: `Dein Code zum Bestätigen deiner E-Mail-Adresse`,
   "pt-BR": `Seu código para confirmar o e-mail`,
   ar: `رمز تأكيد بريدك الإلكتروني`,
+  fr: `Votre code pour confirmer votre adresse e-mail`,
+  ja: `メールアドレス確認用のコード`,
+  "zh-CN": `你的邮箱验证码`,
 }
 
 /** The options `APIRequestContext.post` takes, as the specs pass them to the sign-up route. */
