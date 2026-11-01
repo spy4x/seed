@@ -146,9 +146,9 @@ export default {
   "Architecture.captionBottom": "mit Valkey und Grafana",
   "Architecture.label":
     "So hängt Seed zusammen: Die Web-App und die Website rufen die API auf, die API schreibt jede Änderung samt ihren Events in Postgres, und der Worker verschickt daraus Mails und Push-Nachrichten. Alles läuft auf einem Server.",
-  "Home.title": "Seed: kostenloser Open-Source-SaaS-Starter und Boilerplate",
+  "Home.title": "Seed: der kostenlose SaaS-Starter auf Webstandards",
   "Home.description":
-    "Kostenloser SaaS-Starter unter MIT-Lizenz: Anmeldung mit 2FA, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit, offline. Deno, Postgres, Docker Compose.",
+    "Kostenloser SaaS-Starter unter MIT-Lizenz, gebaut auf Webstandards: 2FA-Anmeldung, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied. Läuft auf Deno.",
   "HomeProof.tests": "Testdateien in den Apps und Bibliotheken, alle laufen in der CI",
   "HomeProof.licence": "Lizenz: kein Konto, keine Paywall",
   "HomeStatus.signIn":
@@ -187,10 +187,10 @@ export default {
   "HomeFaq.productionQuestion": "Ist es bereit für den Produktivbetrieb?",
   "HomeFaq.productionAnswer":
     "Die Teile unter „Funktioniert heute“ haben Tests in der CI: Jeder Pull Request führt die Tests für Anmeldung, Profil, Notizen und Gruppen aus, und nach jedem Merge läuft die ganze Suite. Seed ist heute schon nutzbar und wächst weiter. Lies die Statusliste, bevor du dich auf einen Teil verlässt.",
-  "HomeHero.badge": "Open Source · MIT · Deno 2 + Postgres",
+  "HomeHero.badge": "Läuft auf Deno 2",
   "HomeHero.title": "Das Fundament für dein SaaS, schon fertig gebaut.",
   "HomeHero.lead":
-    "Seed ist ein kostenloser SaaS-Starter unter MIT-Lizenz: mit Anmeldung und Zwei-Faktor-Schutz (2FA), Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit, einer Offline-App und einem Adminbereich. Du bringst es mit Docker Compose auf einen einzigen gemieteten Linux-Server.",
+    "Seed ist der kostenlose SaaS-Starter auf Webstandards: Anmeldung mit 2FA, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit, Offline-App und Adminbereich. MIT-lizenziert, läuft heute auf Deno und kommt per Docker Compose auf einen gemieteten Linux-Server.",
   "HomeHero.github": "Auf GitHub ansehen",
   "HomeHero.status":
     "Seed ist heute schon nutzbar und wird öffentlich entwickelt: <status>Sieh dir an, was funktioniert</status>.",
@@ -520,6 +520,14 @@ export default {
   "FeatureYourFeature.fact2": "Jede Schicht hat ihre eigenen Tests, die du gleich mitkopierst",
   "FeatureYourFeature.fact3": "Jede ID ist eine zeitlich sortierte UUID (Version 7)",
   "FeatureYourFeature.code": "docs/aggregates.md lesen",
+  "FeatureTierRuntime.eyebrow": "Laufzeit",
+  "FeatureTierRuntime.nav": "Laufzeit-Plan",
+  "FeatureTierRuntime.title": "Läuft heute auf Deno",
+  "FeatureTierRuntime.lead":
+    "Seed läuft heute auf Deno und soll künftig unverändert auf Deno, Node und Bun laufen; ein Datum gibt es noch nicht. Der Code baut auf Webstandards auf (fetch, Request, Web Crypto, WebSocket, ES-Module), deshalb hängt das meiste davon nicht von der Laufzeit ab. Im Oktober 2026 hat das Deno-Team noch ein Jahr Support mit monatlichen Bugfix- und Sicherheits-Releases <announced>angekündigt</announced>; danach beendet es die eigene Entwicklung. Deno bleibt Open Source.",
+  "FeatureTierRuntime.wip": "In Arbeit",
+  "FeatureTierRuntime.wipRuntimes": "<name>Node</name> und <name>Bun</name>",
+  "FeatureTierRuntime.follow": "Den Plan auf GitHub verfolgen (Issue #623)",
   "FeatureTierOperations.eyebrow": "Betrieb",
   "FeatureTierOperations.title": "Betreiben, überwachen, die Leute darauf unterstützen",
   "FeatureTierOperations.lead":
@@ -595,7 +603,7 @@ export default {
     "Nein. Seed läuft als dauerhaft laufende Container mit Docker Compose auf einem gemieteten Linux-Server, weil die API WebSocket-Verbindungen offen hält und ein Worker eine Warteschlange abarbeitet.",
   "FeaturesFaq.runtimeQuestion": "Läuft Seed mit Node.js oder Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Heute noch nicht. Die Server von Seed laufen auf Deno 2 in Docker, und Tasks und Tests nutzen Deno. Der Code baut aber auf Webstandards wie fetch, Request und Web Crypto auf.",
+    "Noch nicht. Seed läuft heute auf Deno, und der Umstieg auf Deno, Node und Bun ist in Arbeit (#623). Mehr dazu im Laufzeit-Plan oben.",
   "FeaturesFaq.databaseQuestion": "Kann Seed eine andere Datenbank als Postgres nutzen?",
   "FeaturesFaq.databaseAnswer":
     "Nein. Seed ist auf Postgres gebaut: Migrationen, Abfragen und Integrationstests setzen es voraus.",

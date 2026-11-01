@@ -140,9 +140,9 @@ export default {
   "Architecture.captionBottom": "с Valkey и Grafana",
   "Architecture.label":
     "Как устроен Seed: веб-приложение и сайт обращаются к API, API записывает каждое изменение вместе с его событиями в Postgres, а воркер по этим событиям отправляет письма и пуш-уведомления. Всё работает на одном сервере.",
-  "Home.title": "Seed: бесплатный стартер и шаблон SaaS с открытым кодом",
+  "Home.title": "Seed: бесплатный стартер SaaS на веб-стандартах",
   "Home.description":
-    "Бесплатный стартер SaaS под MIT: вход с 2FA, группы с ролями, оплата за участника через Stripe, обновления в реальном времени, офлайн. Deno, Postgres, Docker Compose.",
+    "Бесплатный стартер SaaS под MIT на веб-стандартах: вход с 2FA, группы с ролями, оплата за участника через Stripe, реальное время, офлайн. Работает на Deno.",
   "HomeProof.tests": "тестовые файлы в приложениях и библиотеках, все запускаются в CI",
   "HomeProof.licence": "лицензия: без аккаунта и платного доступа",
   "HomeStatus.signIn":
@@ -178,10 +178,10 @@ export default {
   "HomeFaq.productionQuestion": "Он готов к продакшену?",
   "HomeFaq.productionAnswer":
     "Всё, что перечислено в разделе «Уже работает», покрыто тестами в CI: каждый пул-реквест прогоняет тесты входа, профиля, заметок и групп, а после каждого слияния запускается полный набор. Seed уже можно использовать, и он продолжает расти: прежде чем полагаться на какую-то часть, загляните в список статусов.",
-  "HomeHero.badge": "Открытый код · MIT · Deno 2 + Postgres",
+  "HomeHero.badge": "Работает на Deno 2",
   "HomeHero.title": "Фундамент вашего SaaS уже готов.",
   "HomeHero.lead":
-    "Seed — бесплатный стартер SaaS под лицензией MIT: вход с двухфакторной защитой (2FA), группы с ролями, оплата за участника через Stripe, обновления в реальном времени, офлайн-приложение и админ-панель. Разворачивается через Docker Compose на одном арендованном Linux-сервере.",
+    "Seed — бесплатный стартер SaaS на веб-стандартах: вход с двухфакторной защитой (2FA), группы с ролями, оплата за участника через Stripe, обновления в реальном времени, офлайн-приложение и админ-панель. Лицензия MIT, сегодня работает на Deno, разворачивается через Docker Compose на одном арендованном Linux-сервере.",
   "HomeHero.github": "Открыть на GitHub",
   "HomeHero.status":
     "Seed уже можно использовать, и я делаю его в открытую: <status>посмотрите, что работает</status>.",
@@ -510,6 +510,14 @@ export default {
   "FeatureYourFeature.fact2": "У каждого слоя свои тесты, которые копируются вместе с ним",
   "FeatureYourFeature.fact3": "Каждый id — упорядоченный по времени UUID (версия 7)",
   "FeatureYourFeature.code": "Читать docs/aggregates.md",
+  "FeatureTierRuntime.eyebrow": "Рантайм",
+  "FeatureTierRuntime.nav": "План по рантайму",
+  "FeatureTierRuntime.title": "Сегодня работает на Deno",
+  "FeatureTierRuntime.lead":
+    "Сегодня Seed работает на Deno, а дальше будет без изменений работать на Deno, Node и Bun; срока пока нет. Код построен на веб-стандартах (fetch, Request, Web Crypto, WebSocket, ES-модули), поэтому бо́льшая его часть от рантайма не зависит. В октябре 2026 года команда Deno <announced>объявила</announced>, что ещё год будет поддерживать рантайм и каждый месяц выпускать исправления ошибок и уязвимостей, а затем прекратит собственную разработку; код Deno остаётся открытым.",
+  "FeatureTierRuntime.wip": "В работе",
+  "FeatureTierRuntime.wipRuntimes": "<name>Node</name> и <name>Bun</name>",
+  "FeatureTierRuntime.follow": "Следить за планом на GitHub (issue #623)",
   "FeatureTierOperations.eyebrow": "Эксплуатация",
   "FeatureTierOperations.title": "Запускайте, наблюдайте, помогайте людям",
   "FeatureTierOperations.lead":
@@ -590,7 +598,7 @@ export default {
     "Нет. Seed работает как долгоживущие контейнеры в Docker Compose на одном арендованном Linux-сервере: API держит открытые WebSocket-соединения, а воркер разбирает очередь.",
   "FeaturesFaq.runtimeQuestion": "Можно ли запустить Seed на Node.js или Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Пока нет. Серверы Seed работают на Deno 2 в Docker, а задачи и тесты используют Deno. При этом код построен на веб-стандартах вроде fetch, Request и Web Crypto.",
+    "Пока нет. Сегодня Seed работает на Deno, а переход на Deno, Node и Bun уже идёт (#623). Подробности — в плане по рантайму выше.",
   "FeaturesFaq.databaseQuestion":
     "Можно ли использовать с Seed другую базу данных вместо Postgres?",
   "FeaturesFaq.databaseAnswer":

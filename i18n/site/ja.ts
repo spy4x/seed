@@ -146,9 +146,9 @@ export default {
   "Architecture.captionBottom": "ValkeyとGrafanaとともに稼働",
   "Architecture.label":
     "Seedの構成：WebアプリとWebサイトがAPIを呼び出し、APIはすべての変更とそのイベントをPostgresに書き込み、ワーカーがそのイベントからメールとプッシュ通知を送ります。すべてが1台のサーバーで動きます。",
-  "Home.title": "Seed：無料・オープンソースのSaaSスターター／ボイラープレート",
+  "Home.title": "Seed：Web標準で作られた無料のSaaSスターター",
   "Home.description":
-    "無料でMITライセンスのSaaSスターター。2段階認証付きログイン、ロール付きグループ、メンバー単位のStripe課金、リアルタイム、オフライン対応。Deno、Postgres、Docker Compose。",
+    "Web標準で作られた、無料でMITライセンスのSaaSスターター。2段階認証付きログイン、ロール付きグループ、メンバー単位のStripe課金、リアルタイム、オフライン対応。Denoで動作します。",
   "HomeProof.tests": "アプリとライブラリのテストファイル数。すべてCIで実行",
   "HomeProof.licence": "ライセンス：アカウント不要、ペイウォールなし",
   "HomeStatus.signIn":
@@ -184,10 +184,10 @@ export default {
   "HomeFaq.productionQuestion": "本番環境で使えますか？",
   "HomeFaq.productionAnswer":
     "「現在の対応状況」に載っている部分はCIでテストされています。すべてのプルリクエストでログイン、プロフィール、メモ、グループのテストが走り、マージのたびに全テストが実行されます。Seedは今すぐ使えて、今も成長中です。各部分を本番で頼る前に、対応状況の一覧を確認してください。",
-  "HomeHero.badge": "オープンソース · MIT · Deno 2 + Postgres",
+  "HomeHero.badge": "Deno 2で動作",
   "HomeHero.title": "SaaSの土台は、もうできています。",
   "HomeHero.lead":
-    "Seedは、無料でMITライセンスのSaaSスターターです。ログインと2段階認証（2FA）、ロール付きグループ、メンバー単位のStripe課金、リアルタイム更新、オフラインアプリ、管理画面がそろっています。Docker Composeで、借りたLinuxサーバー1台にデプロイできます。",
+    "Seedは、Web標準で作られた無料のSaaSスターターです。ログインと2段階認証（2FA）、ロール付きグループ、メンバー単位のStripe課金、リアルタイム更新、オフラインアプリ、管理画面がそろっています。MITライセンスで、現在はDenoで動き、Docker Composeで借りたLinuxサーバー1台にデプロイできます。",
   "HomeHero.github": "GitHubで見る",
   "HomeHero.status":
     "Seedは今すぐ使えて、公開しながら開発中です。<status>現在の対応状況を見る</status>。",
@@ -498,6 +498,14 @@ export default {
   "FeatureYourFeature.fact2": "各層には、一緒にコピーできる専用のテストがあります",
   "FeatureYourFeature.fact3": "IDはすべて時系列順のUUID（バージョン7）",
   "FeatureYourFeature.code": "docs/aggregates.mdを読む",
+  "FeatureTierRuntime.eyebrow": "ランタイム",
+  "FeatureTierRuntime.nav": "ランタイム計画",
+  "FeatureTierRuntime.title": "現在はDenoで動作",
+  "FeatureTierRuntime.lead":
+    "Seedは現在Denoで動いており、今後はDeno・Node・Bunのどれでもそのまま動くようにする予定です。時期はまだ決まっていません。コードはWeb標準（fetch、Request、Web Crypto、WebSocket、ESモジュール）の上に作られているため、大部分はランタイムに依存しません。2026年10月、Denoチームはあと1年間サポートを続け、毎月バグ修正とセキュリティのリリースを出したうえで、自らの開発を終えると<announced>発表</announced>しました。Denoはオープンソースのまま残ります。",
+  "FeatureTierRuntime.wip": "対応中",
+  "FeatureTierRuntime.wipRuntimes": "<name>Node</name>と<name>Bun</name>",
+  "FeatureTierRuntime.follow": "GitHubで計画を見る（issue #623）",
   "FeatureTierOperations.eyebrow": "運用",
   "FeatureTierOperations.title": "動かして、見守って、ユーザーをサポートする",
   "FeatureTierOperations.lead":
@@ -563,7 +571,7 @@ export default {
     "いいえ。Seedは、借りたLinuxサーバー1台の上でDocker Composeによる常駐コンテナとして動きます。APIがWebSocket接続を開いたままにし、ワーカーがキューを処理するためです。",
   "FeaturesFaq.runtimeQuestion": "SeedはNode.jsやBunで動きますか？",
   "FeaturesFaq.runtimeAnswer":
-    "現時点では動きません。SeedのサーバーはDocker内のDeno 2で動き、タスクとテストにもDenoを使っています。コードはfetch、Request、Web CryptoなどのWeb標準の上に作られています。",
+    "まだ動きません。Seedは現在Denoで動いており、Deno・Node・Bunのどれでも動くようにする作業を進めています（#623）。詳しくは上のランタイム計画をご覧ください。",
   "FeaturesFaq.databaseQuestion": "Postgres以外のデータベースを使えますか？",
   "FeaturesFaq.databaseAnswer":
     "いいえ。SeedはPostgresを前提に作られていて、マイグレーション、クエリ、結合テストもPostgresを想定しています。",
