@@ -37,7 +37,7 @@ import { define } from "../../utils.ts"
  * The day this page's feature list or wording last changed: the hero's "Updated" line and the
  * sitemap's `lastmod`. Change it with them.
  */
-export const FEATURES_UPDATED = `2026-10-31`
+export const FEATURES_UPDATED = `2026-11-01`
 
 /** The page's title and description in the language of `t`. */
 export function featuresHead(t: Translator<string>): { title: string; description: string } {

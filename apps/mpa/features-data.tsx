@@ -682,7 +682,7 @@ export const FEATURE_PAGES: readonly FeaturePage[] = [
       `Docker Compose on one Linux server you rent: Traefik, Postgres, Valkey, S3 files, ` +
       `monitoring and backups, deployed in one command. Free and MIT-licensed.`,
     h1: `Self-host your SaaS on one server, without a cloud platform bill`,
-    answer: `Seed runs on any Linux server you rent, with Docker Compose in development and ` +
+    answer: `Seed runs on a Linux server you rent, with Docker Compose in development and ` +
       `production alike, and one command ships it. You prepare the server once with the written ` +
       `steps, then every later deploy is that command alone.`,
     summary: `One Linux server, Docker Compose and one command to deploy.`,
