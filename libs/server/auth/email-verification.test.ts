@@ -7,6 +7,7 @@ import {
   proveEmailCode,
   provenAddressOwner,
   readEmailStatus,
+  releaseAddress,
   sendEmailCode,
 } from "./email-verification.ts"
 
@@ -168,5 +169,40 @@ describe("sendEmailCode and proveEmailCode", () => {
     await expect(
       sendEmailCode(store, ann, "ann@example.com", () => Promise.reject(new Error("smtp down"))),
     ).rejects.toThrow("smtp down")
+  })
+})
+
+describe("releaseAddress", () => {
+  it("takes the old address off every provider key that carries it, and keeps the keys (#403)", async () => {
+    const store = new MemoryAuthStore()
+    const proven = new Date("2026-10-01T00:00:00Z")
+    const provider = (method: string, subject: string, email: string) => ({
+      method,
+      subject,
+      email,
+      secret: null,
+      provenAt: proven,
+    })
+    const { user, key: google } = await store.createUserWithKey(
+      provider("oauth:google", "google-1", "ada@old.example"),
+    )
+    const github = await store.addKey(
+      user.id,
+      provider("oauth:github", "github-1", "ada@old.example"),
+    )
+    const other = await store.addKey(
+      user.id,
+      provider("oauth:gitlab", "gitlab-1", "ada@other.example"),
+    )
+
+    await releaseAddress(store, user.id, "ada@old.example")
+
+    const keys = await store.listKeys(user.id)
+    expect(keys.map((key) => [key.id, key.email])).toEqual([
+      [google.id, null],
+      [github.id, null],
+      [other.id, "ada@other.example"],
+    ])
+    expect(await provenAddressOwner(store, "ada@old.example")).toBe(null)
   })
 })
