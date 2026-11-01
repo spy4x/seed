@@ -24,6 +24,8 @@ export default {
   "SiteFooter.issue": "問題を報告",
   "SiteFooter.quickStart": "クイックスタート",
   "SiteFooter.apiDocs": "APIドキュメント",
+  "SiteFooter.docs": "ドキュメント",
+  "SiteFooter.changelog": "変更履歴",
   "SiteFooter.status": "現在の対応状況",
   "SiteFooter.company": "運営",
   "SiteFooter.hire": "MVP開発を依頼する",

@@ -23,6 +23,8 @@ export default {
   "SiteFooter.issue": "报告问题",
   "SiteFooter.quickStart": "快速开始",
   "SiteFooter.apiDocs": "API 文档",
+  "SiteFooter.docs": "文档",
+  "SiteFooter.changelog": "更新日志",
   "SiteFooter.status": "目前已完成的功能",
   "SiteFooter.company": "关于",
   "SiteFooter.hire": "找我开发 MVP",
