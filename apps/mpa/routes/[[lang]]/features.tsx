@@ -26,6 +26,7 @@ import { ADMIN_VIDEO } from "../../admin-video.ts"
 import { OnThisPage } from "../../components/on-this-page.tsx"
 import { SectionIntro } from "../../components/section-intro.tsx"
 import { Shot } from "../../components/shot.tsx"
+import { ShotViewer } from "../../components/shot-viewer.tsx"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
 import { useFormat } from "@spy4x/preact-ui/format"
@@ -590,6 +591,7 @@ export default define.page(function Features({ state }) {
         </div>
       </Band>
       <CtaBand demoHref={spa.try} />
+      <ShotViewer />
     </SiteFrame>
   )
 })
