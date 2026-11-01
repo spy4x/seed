@@ -88,12 +88,28 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
     if (!answer.cancelled) setError(answer.error || failed())
     return false
   }
+  // Bitwarden, and any extension that stands in for `navigator.credentials` like it, brings the
+  // tab and its window to the front whenever a request ends, an abort included (#609). So the
+  // request starts and renews only while the page has focus: one that falls due in the
+  // background waits for the person to come back.
+  const renewal = useRef(() => {})
+  const stopAutofill = () => {
+    renewal.current()
+    waiting.current?.abort()
+  }
   const waitForAutofill = () => {
+    renewal.current()
+    if (!document.hasFocus()) {
+      const resume = () => waitForAutofill()
+      globalThis.addEventListener("focus", resume, { once: true })
+      renewal.current = () => globalThis.removeEventListener("focus", resume)
+      return
+    }
     waiting.current?.abort()
     const controller = new AbortController()
     waiting.current = controller
     const renew = setTimeout(waitForAutofill, PASSKEY_AUTOFILL_RENEW_MS)
-    controller.signal.addEventListener("abort", () => clearTimeout(renew))
+    renewal.current = () => clearTimeout(renew)
     void signInWithPasskey({ autofill: true, signal: controller.signal })
       .then((answer) => {
         if (controller.signal.aborted) return
@@ -116,13 +132,13 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
     })
     return () => {
       shown = false
-      waiting.current?.abort()
+      stopAutofill()
     }
   }, [passkeys])
   /** "Sign in with a passkey": the autofill request steps aside for the device's own dialog. */
   const passkeySignIn = async () => {
     const resume = waiting.current !== null && !waiting.current.signal.aborted
-    waiting.current?.abort()
+    stopAutofill()
     setError(null)
     setPasskeyBusy(true)
     const answer = await signInWithPasskey()
