@@ -103,6 +103,39 @@ test(`the admin still loads only when its section nears the screen`, async ({ pa
   await expect.poll(() => asked).toContain(`/video/admin-panel-poster-1280.webp`)
 })
 
+test.describe(`a screenshot's lightbox`, () => {
+  test.use({ colorScheme: `dark` })
+
+  test(`opens the widest file of the page's theme from the keyboard and gives focus back`, async ({ page }) => {
+    await page.goto(`/features`)
+    const shot = page.getByRole(`button`, { name: /^Zoom: / }).first()
+    await shot.focus()
+    await page.keyboard.press(`Enter`)
+
+    const viewer = page.getByRole(`dialog`)
+    await expect(viewer).toBeVisible()
+    await expect(viewer.locator(`img`)).toHaveAttribute(`src`, /-dark-1280\.webp(\?|$)/)
+    await page.keyboard.press(`Escape`)
+    await expect(viewer).toBeHidden()
+    await expect(shot).toBeFocused()
+  })
+
+  // A feature page loads the lightbox only when its picture is a screenshot: deploy draws a diagram.
+  for (
+    const [path, loads] of [[`/pricing`, false], [`/features/deploy`, false], [
+      `/features/sign-in`,
+      true,
+    ]] as const
+  ) {
+    test(`${path} ${loads ? `loads` : `does not load`} the lightbox's JavaScript`, async ({ page }) => {
+      const asked: string[] = []
+      page.on(`request`, (request) => asked.push(request.url()))
+      await page.goto(path, { waitUntil: `networkidle` })
+      expect(asked.some((url) => url.includes(`shot_lightbox`))).toBe(loads)
+    })
+  }
+})
+
 // axe-core runs as a script in the page, so these checks keep JavaScript on: /theme.js then picks
 // the theme the device asks for, as it does for most visitors.
 for (const scheme of [`light`, `dark`] as const) {
