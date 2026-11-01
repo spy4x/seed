@@ -462,10 +462,7 @@ describe("the public website", () => {
         .replaceAll("Product team", " ").replace(/\s+/g, " ")
 
       expect(text, path).not.toMatch(/second factor/i)
-      // The groups page is titled with "teams", the word people search for, and says at once
-      // that Seed calls a team a group (#563); every other page says "group" only.
-      if (path !== "/features/teams") expect(text, path).not.toMatch(/\b(?:teams?|seats?)\b/i)
-      expect(text, path).not.toMatch(/\bseats?\b/i)
+      expect(text, path).not.toMatch(/\b(?:teams?|seats?)\b/i)
       expect(text, path).not.toMatch(/server you own/i)
     }
   })
@@ -942,7 +939,7 @@ describe("the public website", () => {
         "/pt-BR/features",
         "/ar/features",
         "/features/sign-in",
-        "/features/teams",
+        "/features/groups",
         "/features/billing",
         "/features/offline",
         "/features/deploy",
@@ -996,7 +993,7 @@ describe("the public website", () => {
       "/": "2026-10-31T00:00:00.000Z",
       "/features": "2026-10-31T00:00:00.000Z",
       "/features/sign-in": "2026-11-01T00:00:00.000Z",
-      "/features/teams": "2026-11-01T00:00:00.000Z",
+      "/features/groups": "2026-11-01T00:00:00.000Z",
       "/features/billing": "2026-11-01T00:00:00.000Z",
       "/features/offline": "2026-11-01T00:00:00.000Z",
       "/features/deploy": "2026-11-01T00:00:00.000Z",

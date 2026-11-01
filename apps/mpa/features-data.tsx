@@ -428,8 +428,10 @@ export interface FeatureQuestion {
  * disagree.
  */
 export interface FeaturePage {
-  /** The feature's id in {@link tiers}, and the page's address: `/features/<slug>`. Never renamed. */
+  /** The page's address: `/features/<slug>`. Never renamed. */
   slug: string
+  /** The feature's id in {@link tiers}, when it is not the slug. */
+  feature?: string
   /** The page's last crumb and its card's title under "Other features". */
   name: string
   /** The `<title>`, under 60 characters: "{Feature} for your SaaS, without {the usual cost}". */
@@ -523,14 +525,14 @@ export const FEATURE_PAGES: readonly FeaturePage[] = [
     updated: `2026-11-01`,
   },
   {
-    slug: `teams`,
-    // The product's word; the title and heading say "teams", the word people search for.
+    slug: `groups`,
+    feature: `teams`,
     name: `Groups and roles`,
-    title: `Teams and roles for your SaaS, without the plumbing`,
+    title: `Groups and roles for your SaaS, without the plumbing`,
     description: `Groups with roles from viewer to owner, invitations, ownership transfer and an ` +
       `activity log, with one tenancy check for all data. Free and MIT-licensed.`,
-    h1: `Teams and roles for your SaaS, without building multi-tenancy`,
-    answer: `In Seed a team is called a group: every account gets a personal one at sign-up, and ` +
+    h1: `Groups and roles for your SaaS, without building multi-tenancy`,
+    answer: `Seed gives every account a personal group at sign-up, and ` +
       `people make shared groups, invite others and give them roles from viewer to owner. The ` +
       `group is the one tenancy boundary, so a feature you add passes the same check as soon as ` +
       `it copies the notes aggregate.`,
@@ -545,9 +547,9 @@ export const FEATURE_PAGES: readonly FeaturePage[] = [
     guide: source(`docs/aggregates.md`),
     questions: [
       {
-        id: `faq-team-group`,
-        question: `Is a team the same as a group in Seed?`,
-        answer: `Yes. The app, its code and this site call it a group; a personal group and a ` +
+        id: `faq-personal-group`,
+        question: `Does every account get a group?`,
+        answer: `Yes. Each account gets a personal group at sign-up; a personal group and a ` +
           `shared one pass the same check.`,
       },
       {
@@ -720,6 +722,11 @@ export const FEATURE_PAGES: readonly FeaturePage[] = [
 /** The English address of the feature page `slug`: `/features/<slug>`, at every language's address. */
 export function featurePath(slug: string): string {
   return `/features/${slug}`
+}
+
+/** The page about the feature with this id in {@link tiers}, or `undefined` when it has none. */
+export function pageOfFeature(id: string): FeaturePage | undefined {
+  return FEATURE_PAGES.find((page) => (page.feature ?? page.slug) === id)
 }
 
 /** The feature page at `/features/<slug>`, or `undefined` for an address that has none. */

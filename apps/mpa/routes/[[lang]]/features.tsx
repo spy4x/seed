@@ -16,7 +16,7 @@ import {
   FeatureTier,
 } from "../../components/features-section.tsx"
 import { SectionIntro } from "../../components/section-intro.tsx"
-import { featurePage, featurePath, tiers } from "../../features-data.tsx"
+import { featurePath, pageOfFeature, tiers } from "../../features-data.tsx"
 import {
   PERSON_JSON_LD,
   REPOSITORY_URL,
@@ -102,7 +102,8 @@ function readMore(
 ): FeatureSectionProps["more"] {
   const label = t.t(`FeatureSection.readMore`, { feature: name })
   if (id === `admin`) return { label, href: href(`/admin`) }
-  return featurePage(id) && { label, href: featurePath(id), language: `en` }
+  const page = pageOfFeature(id)
+  return page && { label, href: featurePath(page.slug), language: `en` }
 }
 
 function Hero({ demoHref }: { demoHref: string }): JSX.Element {

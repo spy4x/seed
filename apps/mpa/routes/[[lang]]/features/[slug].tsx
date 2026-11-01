@@ -167,7 +167,7 @@ function Section(
  * features. From 1280 px "On this page" stands beside the body, in the blog post's grid.
  */
 function FeaturePageBody({ page, demo }: { page: FeaturePage; demo: string }): JSX.Element {
-  const feature = useFeature(page.slug)
+  const feature = useFeature(page.feature ?? page.slug)
   const format = useFormat().utc()
   const sections = featurePageSections(page, feature)
   const drawn = new Set(sections.map(({ id }) => id))
