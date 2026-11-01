@@ -286,6 +286,17 @@ ssh -L 3000:127.0.0.1:3000 <SSH_TO_SERVER>
 When the port is taken, set `GRAFANA_HOST_PORT` in the env file to another `127.0.0.1:<port>`.
 Never publish it on `0.0.0.0`.
 
+Grafana reads `GRAFANA_PASS` only on its first start, when it creates its database under
+`.volumes/grafana`. Changing the value in the env file later changes nothing. To change the
+password of a running Grafana, give the new one to Grafana's own command, which reads it from
+its input so it stays out of the shell history (type it and press Ctrl+D):
+
+```sh
+deno task compose exec -T grafana grafana cli admin reset-admin-password --password-from-stdin
+```
+
+Then put the same value in `GRAFANA_PASS`, so the env file says what Grafana uses.
+
 ## Several projects on one server
 
 Products made from this template can share a server and its Traefik. Each lives in its own

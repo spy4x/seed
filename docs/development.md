@@ -41,6 +41,8 @@ seeds it, after you confirm; `--yes` skips the question. It refuses unless `ENV=
 missing or unreadable `.env.prod` also refuses; on a machine without one, add `--no-prod-check`.
 A missing `DB_PORT`, `DB_USER` or `DB_PASS`, or a missing or invalid `AUTH_PEPPER` or
 `SEED_PASSWORD`, refuses too, before anything is dropped.
+Run it from the host, not inside the API container: there `DB_HOST` is `<PROJECT>-pgbouncer`,
+because the API reaches the database through PgBouncer, and the reset refuses that host.
 
 To fill a database with the demo data, run `ENV=dev deno task db:seed` with the same values plus
 `AUTH_PEPPER` (the API's) and `SEED_PASSWORD` (8 to 50 characters). It adds `admin@example.com`,
