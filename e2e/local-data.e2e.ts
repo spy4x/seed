@@ -468,7 +468,13 @@ test.describe("what a device keeps", () => {
       const left = await page.evaluate(() => Object.keys(localStorage))
       expect(
         left.filter((key) =>
-          !["auth:sign-out-owed", "theme", "install-prompt-dismissed", "last-sign-in"].includes(key)
+          ![
+            "auth:sign-out-owed",
+            "offline:signed-out",
+            "theme",
+            "install-prompt-dismissed",
+            "last-sign-in",
+          ].includes(key)
         ),
       ).toEqual([])
     } finally {
