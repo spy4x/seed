@@ -1,7 +1,13 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { refusedAction } from "./guest-refusal.ts"
-import { hideGuestBanner, isGuestBannerHidden, nextPacificMidnight } from "./guest.ts"
+import {
+  deleteGuestAccount,
+  hideGuestBanner,
+  isGuestBannerHidden,
+  nextPacificMidnight,
+} from "./guest.ts"
+import { sessionState, signOutChosen } from "./session.ts"
 
 /** A `Storage` in memory, or one whose every call throws, as a blocked one does. */
 function memoryStorage(blocked = false): Storage {
@@ -48,5 +54,23 @@ describe("the guest banner's hide", () => {
     const blocked = memoryStorage(true)
     hideGuestBanner(7, blocked)
     expect(isGuestBannerHidden(7, blocked)).toBe(false)
+  })
+})
+
+describe("deleting a guest account", () => {
+  it("signs the page out as the person's own choice", async () => {
+    const realFetch = globalThis.fetch
+    const signedIn = sessionState.value
+    globalThis.fetch = () => Promise.resolve(Response.json({ success: true }))
+    sessionState.value = { ...signedIn, user: { id: 3 } as typeof signedIn.user }
+    try {
+      expect(await deleteGuestAccount("DELETE")).toEqual({ ok: true })
+      expect(sessionState.value.user).toBeNull()
+      expect(signOutChosen.value).toBe(true)
+    } finally {
+      globalThis.fetch = realFetch
+      sessionState.value = signedIn
+      signOutChosen.value = false
+    }
   })
 })

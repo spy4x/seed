@@ -10,6 +10,7 @@ import {
   startModules,
   stopChanges,
   wipeDevice,
+  wipeDeviceKeepingQueue,
 } from "../modules.ts"
 import type { NoteItem } from "../state/notes.ts"
 import type { TagItem } from "../state/tags.ts"
@@ -464,12 +465,12 @@ describe("what the device keeps", () => {
     expect(kept.getItem("offline:owed-deletion")).toBeNull()
   })
 
-  it("deletes everything of the remembered user at a start that finds no session, their queue included", async () => {
+  it("deletes everything of the remembered user on their own sign-out with no layer running, their queue included", async () => {
     const { storage, device } = await deviceInUse()
     configureModules({ realtime: false, offline: true })
     rememberUser(user(7))
 
-    // No layer runs: the page found no session and shows the sign-in page.
+    // No layer runs: a sign-out the person chose, finished at a start (`auth:sign-out-owed`).
     await wipeDevice(storage, storage.databases)
 
     expect(recallUser()).toBeNull()
@@ -870,6 +871,130 @@ describe("a queue left on the device while the module is off", () => {
     expect(toasts.list.value.map((toast) => [toast.type, toast.body, toast.duration])).toEqual([
       ["warning", `1 change you made offline couldn't be saved: "Written offline".`, 0],
     ])
+  })
+})
+
+describe("the queue of a person whose session the server ended", () => {
+  const KEPT_QUEUE = "offline:kept-queue"
+
+  /** A device that holds a read copy, a note and a queued note and tag write of `id`. */
+  async function written(storage: ReturnType<typeof createMemoryStorage>, id: number) {
+    const device = storage.of(id)
+    device.reads.set("groups", { value: [{ id: "g-1" }], savedAt: 1 })
+    await device.notes.putNote(note("n-9"))
+    await device.queue.putEntry(QUEUED_BY_AN_EARLIER_VERSION)
+    await device.tagsQueue.putEntry({
+      key: "tag-key",
+      entityId: "t-1",
+      kind: "create",
+      baseVersion: 0,
+      payload: { groupId: "g-1", name: "Urgent", color: "#b91c1c" },
+      attempted: false,
+      status: "pending",
+      queuedAt: "2026-10-01T08:00:00.000Z",
+    })
+    return device
+  }
+
+  /** Person 7 wrote offline, and the next start found their session gone (401). */
+  async function expired() {
+    const storage = createMemoryStorage()
+    const device = await written(storage, 7)
+    configureModules({ realtime: false, offline: true })
+    rememberUser(user(7))
+    await wipeDeviceKeepingQueue(storage, storage.databases)
+    return { storage, device }
+  }
+
+  it("is kept on the device while their read copies, notes and remembered user are deleted", async () => {
+    const { device } = await expired()
+
+    expect(recallUser()).toBeNull()
+    expect([...device.reads.keys()]).toEqual([])
+    expect(await device.notes.readNotes("g-1")).toEqual([])
+    expect((await device.queue.readOutbox()).map((entry) => entry.entityId)).toEqual(["n-1"])
+    expect((await device.tagsQueue.readOutbox()).map((entry) => entry.entityId)).toEqual(["t-1"])
+    expect(kept.getItem(KEPT_QUEUE)).toBe("7")
+  })
+
+  it("is kept through a second signed-out start, before anyone signs in", async () => {
+    const { storage, device } = await expired()
+
+    await wipeDeviceKeepingQueue(storage, storage.databases)
+
+    expect((await device.queue.readOutbox()).map((entry) => entry.entityId)).toEqual(["n-1"])
+    expect(kept.getItem(KEPT_QUEUE)).toBe("7")
+  })
+
+  it("is sent once the same person signs in again", async () => {
+    const { storage, device } = await expired()
+    const calls = server()
+
+    rememberUser(user(7), storage, storage.databases)
+    startPage(7, storage)
+    await settle()
+
+    expect(calls.map((call) => [call.url, call.key])).toEqual([
+      ["/api/call/tag.create", "tag-key"],
+      ["/api/call/note.update", "key-from-last-week"],
+    ])
+    expect(await device.queue.readOutbox()).toEqual([])
+    expect(kept.getItem(KEPT_QUEUE)).toBeNull()
+  })
+
+  it("is sent once the same person signs in again, also when their copies are still owed a deletion", async () => {
+    const { storage } = await expired()
+    // The page closed before the device had deleted person 7's copies.
+    kept.setItem(OWED, "[7]")
+    const calls = server()
+
+    rememberUser(user(7), storage, storage.databases)
+    startPage(7, storage)
+    await settle()
+
+    expect(calls.map((call) => call.key)).toEqual(["tag-key", "key-from-last-week"])
+    expect(currentLayer()?.userId).toBe(7)
+  })
+
+  it("is deleted, never shown or sent, before another person's layer opens on that device", async () => {
+    const { storage, device } = await expired()
+    const calls = server()
+
+    rememberUser(user(8), storage, storage.databases)
+    startPage(8, storage)
+    expect(currentLayer()).toBeNull()
+    await settle()
+
+    expect(await device.queue.readOutbox()).toEqual([])
+    expect(await device.tagsQueue.readOutbox()).toEqual([])
+    expect(calls).toEqual([])
+    expect(currentLayer()?.userId).toBe(8)
+    expect(currentLayer()?.entries.value).toEqual([])
+    expect(kept.getItem(KEPT_QUEUE)).toBeNull()
+    expect(kept.getItem(OWED)).toBeNull()
+  })
+
+  it("is deleted with everything else when the device is wiped by a sign-out the person chose", async () => {
+    const { storage, device } = await expired()
+
+    await wipeDevice(storage, storage.databases)
+
+    expect(await device.queue.readOutbox()).toEqual([])
+    expect(await device.tagsQueue.readOutbox()).toEqual([])
+    expect(kept.getItem(KEPT_QUEUE)).toBeNull()
+  })
+
+  it("is not kept while the local-data module is off", async () => {
+    const storage = createMemoryStorage()
+    const device = await written(storage, 7)
+    configureModules({ realtime: false, offline: true })
+    rememberUser(user(7))
+    configureModules({ realtime: false, offline: false })
+
+    await wipeDeviceKeepingQueue(storage, storage.databases)
+
+    expect(await device.queue.readOutbox()).toEqual([])
+    expect(kept.getItem(KEPT_QUEUE)).toBeNull()
   })
 })
 

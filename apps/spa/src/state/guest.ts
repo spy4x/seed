@@ -9,7 +9,7 @@ import {
 import type { Message } from "@ui/message.ts"
 import { apiFetch } from "./api.ts"
 import { bootstrapSession } from "./auth.ts"
-import { sessionState } from "./session.ts"
+import { sessionState, signOutChosen } from "./session.ts"
 import { addDays, isoDateInTz, resolveWallClock } from "@spy4x/time/tz"
 
 /**
@@ -118,6 +118,7 @@ export async function deleteGuestAccount(
     return { ok: false, error: { key: `GuestScreens.offline` } }
   }
   if (!result.ok) return { ok: false, error: result.error.message }
+  signOutChosen.value = true
   sessionState.value = { ...sessionState.value, user: null, isMfaRequired: false }
   return { ok: true }
 }

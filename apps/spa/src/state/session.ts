@@ -26,6 +26,14 @@ export const sessionState = signal<SessionState>({
 })
 
 /**
+ * Whether the person ended the last session themselves: a sign-out (also one still owed to the
+ * server) or an account deletion. The app then deletes everything it kept on the device, the queue
+ * of unsent writes included; a session the server ended (it expired, or was ended elsewhere) keeps
+ * that person's queue for their next sign-in (#612). Cleared when someone signs in.
+ */
+export const signOutChosen = signal(false)
+
+/**
  * Whether the public frame offers "Sign out": a session that owes its one-time code has no user
  * yet, but it still holds a cookie the person must be able to end.
  */
