@@ -52,7 +52,8 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
   `apps/mpa/site.tsx`, the `compare-source` event in `docs/analytics.md`, and its browser test
   `e2e/mpa/compare.mpa.ts`. Remove the links to it too, or they lead nowhere: "Compare" in the
   header (`NAV_LINKS`) and footer (`footerGroups`) in `apps/mpa/site.tsx`, "How Seed compares"
-  in `apps/mpa/routes/[[lang]]/features.tsx` and "the comparison" in `apps/mpa/routes/index.tsx`.
+  in `apps/mpa/routes/[[lang]]/features.tsx` and `features/[slug].tsx`, and "the comparison" in
+  `apps/mpa/routes/index.tsx`.
 - **Delete** Seed's blog posts: every `.md` file in `libs/server/blog/seed-posts/` except its
   `README.md`, which shows the format. They load only in demo mode, which a product never turns
   on, but they describe Seed. The product writes its posts in the admin app. Point the post page
@@ -60,6 +61,9 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
   the product's own, or remove it.
 - **Replace** the page copy and FAQs of the home, features, admin and pricing pages:
   `apps/mpa/routes/index.tsx`, `routes/features.tsx`, `routes/admin.tsx`, `routes/pricing.tsx`.
+- **Rewrite** `apps/mpa/features-data.tsx`: the features page and every feature page
+  (`/features/<slug>`) are drawn from it, so the product's own features and their pages come from
+  that one file.
 - **Replace** the `llms.txt` summary. It is the home page's description, `HOME_HEAD` in
   `apps/mpa/routes/index.tsx`; the page list follows `apps/mpa/pages.ts` by itself.
 - **Set** the licence line in `llms.txt`: the "Source code" entry in `apps/mpa/routes/llms.txt.ts`
@@ -78,7 +82,7 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
   `apps/mpa/static/video/` and `apps/mpa/media/video/`, taken by `apps/mpa/screenshots/capture.ts`
   and `apps/mpa/admin-video.ts`.
 - **Replace** the browser frames titled `app.seedsaas.com/…` in `apps/mpa/routes/index.tsx`,
-  `apps/mpa/routes/[[lang]]/features.tsx` and `apps/mpa/components/features-visuals.tsx`.
+  `apps/mpa/features-data.tsx` and `apps/mpa/components/features-visuals.tsx`.
 
 ## The product's name in the apps
 

@@ -2,6 +2,7 @@ import { API_DOCS_HEAD, API_DOCS_PATH } from "./api-docs.ts"
 import { ADMIN_HEAD, ADMIN_UPDATED } from "./routes/[[lang]]/admin.tsx"
 import { CHECKED_ON, COMPARE_HEAD } from "./routes/[[lang]]/compare.tsx"
 import { FEATURES_HEAD, FEATURES_UPDATED } from "./routes/[[lang]]/features.tsx"
+import { FEATURE_PAGES, featurePath } from "./features-data.tsx"
 import { HOME_HEAD, HOME_UPDATED } from "./routes/index.tsx"
 import { PRICING_HEAD, PRICING_UPDATED } from "./routes/[[lang]]/pricing.tsx"
 import { PRIVACY_HEAD } from "./routes/[[lang]]/privacy.tsx"
@@ -45,6 +46,8 @@ function sitePage(
 export const SITE_PAGES: readonly SitePage[] = [
   sitePage(`/`, HOME_HEAD, HOME_UPDATED),
   sitePage(`/features`, FEATURES_HEAD, FEATURES_UPDATED),
+  // English only (#563): only the English address is listed.
+  ...FEATURE_PAGES.map((page) => sitePage(featurePath(page.slug), page, page.updated, true)),
   sitePage(`/admin`, ADMIN_HEAD, ADMIN_UPDATED),
   // Seed's own site: see docs/start-a-product.md
   sitePage(`/compare`, COMPARE_HEAD, CHECKED_ON),

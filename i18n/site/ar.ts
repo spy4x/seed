@@ -584,6 +584,7 @@ export default {
   "Features.compare": "كيف يُقارن Seed بغيره",
   "FeaturesFaq.title": "هل يستطيع Seed ذلك؟",
   "FeatureSection.issue": "المشكلة #{number}",
+  "FeatureSection.readMore": "المزيد عن {feature}",
   "FeatureVisuals.window1": "النافذة 1",
   "FeatureVisuals.window2": "النافذة 2",
   "FeatureVisuals.realtimeA":

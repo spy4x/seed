@@ -607,6 +607,7 @@ export default {
   "Features.compare": "Сравнение Seed с другими",
   "FeaturesFaq.title": "А Seed так умеет?",
   "FeatureSection.issue": "issue #{number}",
+  "FeatureSection.readMore": "Подробнее: {feature}",
   "FeatureVisuals.window1": "Окно 1",
   "FeatureVisuals.window2": "Окно 2",
   "FeatureVisuals.realtimeA":
