@@ -58,6 +58,17 @@ Deno.test("the note search against Postgres", async (t) => {
       expect(await titles(owner, "archive")).toEqual([])
     })
 
+    await t.step("a person whose account is deleted finds nothing", async () => {
+      const { groupId, owner, viewer } = await team(sql)
+      await write(groupId, owner, "Office keys")
+      expect(await titles(viewer, "keys")).toEqual(["Office keys"])
+
+      // The row stays while the deletion waits; only `deleted_at` says the account is gone.
+      await sql`UPDATE users SET deleted_at = now() WHERE id = ${viewer}`
+
+      expect(await titles(viewer, "keys")).toEqual([])
+    })
+
     await t.step("a deleted note is not found, and found again once restored", async () => {
       const { groupId, owner } = await team(sql)
       const note = await write(groupId, owner, "Vendor contract")

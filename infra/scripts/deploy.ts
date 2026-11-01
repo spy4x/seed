@@ -231,16 +231,29 @@ export function refuseDirtyTree(status: string, allowDirty: boolean): void {
 }
 
 /**
+ * Stops a deploy from a working tree with uncommitted changes, untracked files included, unless
+ * `allowDirty` is set; the tree is not read then.
+ *
+ * @param cwd The checkout to read; the current directory by default. A test passes its own.
+ * @throws {Error} From {@link refuseDirtyTree} and {@link readWorkingTreeStatus}.
+ */
+export async function refuseUncommittedChanges(allowDirty: boolean, cwd?: string): Promise<void> {
+  refuseDirtyTree(allowDirty ? "" : await readWorkingTreeStatus(cwd), allowDirty)
+}
+
+/**
  * Lists this checkout's uncommitted changes, untracked files included, with `git status`.
  *
+ * @param cwd The checkout to read; the current directory by default.
  * @throws {Error} When git cannot answer, naming {@link ALLOW_DIRTY_FLAG}: a tree that cannot be
  *   checked is not taken for a clean one.
  */
-async function readWorkingTreeStatus(): Promise<string> {
+export async function readWorkingTreeStatus(cwd?: string): Promise<string> {
   let output: Deno.CommandOutput
   try {
     output = await new Deno.Command("git", {
       args: ["status", "--porcelain", "--untracked-files=normal"],
+      cwd,
       stdout: "piped",
       stderr: "piped",
     }).output()
@@ -350,7 +363,7 @@ async function main(): Promise<void> {
   let args: DeployArgs
   try {
     args = parseDeployArgs(Deno.args)
-    refuseDirtyTree(args.allowDirty ? "" : await readWorkingTreeStatus(), args.allowDirty)
+    await refuseUncommittedChanges(args.allowDirty)
   } catch (err) {
     error(err instanceof Error ? err.message : String(err))
     Deno.exit(1)

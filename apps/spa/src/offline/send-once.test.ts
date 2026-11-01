@@ -189,6 +189,44 @@ describe("sendQueueOnce", () => {
     expect(deleted).toEqual([TAGS_QUEUE, NOTES_QUEUE])
   })
 
+  it("drops a note held back by a tag the server refused, and deletes both queues", async () => {
+    const storage = createMemoryStorage()
+    await storage.of(7).tagsQueue.putEntry({
+      key: "key-t-1",
+      entityId: "t-1",
+      kind: "create",
+      payload: { groupId: "g-1", name: "Urgent", color: "#b91c1c" },
+      baseVersion: 0,
+      attempted: false,
+      status: "pending",
+      queuedAt: "2026-10-01T08:00:00.000Z",
+    })
+    // The note names the refused tag, so it waits on the person and never sends by itself.
+    await storage.of(7).queue.putEntry({
+      ...edit("n-1", "Plan"),
+      payload: { groupId: "g-1", title: "Plan", body: "", tagIds: ["t-1"] },
+    })
+    const { databases, deleted } = databasesHolding(NOTES_QUEUE, TAGS_QUEUE)
+    const { calls, sent } = serverAnswering((id) =>
+      id === "t-1"
+        ? Promise.reject(
+          new RealtimeRequestError("conflict", "refused", { code: "TAG_NAME_TAKEN" }),
+        )
+        : accepts(id)
+    )
+
+    const result = await sendQueueOnce({
+      userId: 7,
+      transport: { calls, canSend: () => true },
+      storage,
+      databases,
+    })
+
+    expect(sent).toEqual(["tag.create t-1"])
+    expect(result).toEqual({ done: true, refused: ["Urgent", "Plan"] })
+    expect(deleted).toEqual([TAGS_QUEUE, NOTES_QUEUE])
+  })
+
   it("keeps the queue on a browser that cannot list its databases", async () => {
     const { calls, sent } = serverAnswering(accepts)
 
