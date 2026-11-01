@@ -170,12 +170,15 @@ function RuntimePlan(): JSX.Element {
       status={<bdi translate="no">Deno 2</bdi>}
       statusMore={
         <>
-          <StatusMark status="wip" label={t.t(`FeatureTierRuntime.wip`)} class="font-medium" />
-          <span class="text-muted">
-            {rich(`FeatureTierRuntime.wipRuntimes`, { name: (text) => <bdi>{text}</bdi> })}
+          {/* The mark and what it marks wrap as one, so "In progress" never ends a line alone. */}
+          <span class="inline-flex flex-wrap items-center gap-x-2">
+            <StatusMark status="wip" label={t.t(`FeatureTierRuntime.wip`)} class="font-medium" />
+            <span class="text-muted">
+              {rich(`FeatureTierRuntime.wipRuntimes`, { name: (text) => <bdi>{text}</bdi> })}
+            </span>
           </span>
           <a href={RUNTIME_ISSUE_URL} class="text-primary underline" data-e2e="runtime-issue">
-            {t.t(`FeatureTierRuntime.follow`)}
+            {rich(`FeatureTierRuntime.follow`, { issue: (text) => <bdi>{text}</bdi> })}
           </a>
         </>
       }

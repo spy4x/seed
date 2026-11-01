@@ -505,7 +505,7 @@ export default {
     "Seedは現在Denoで動いており、今後はDeno・Node・Bunのどれでもそのまま動くようにする予定です。時期はまだ決まっていません。コードはWeb標準（fetch、Request、Web Crypto、WebSocket、ESモジュール）の上に作られているため、大部分はランタイムに依存しません。2026年10月、Denoチームはあと1年間サポートを続け、毎月バグ修正とセキュリティのリリースを出したうえで、自らの開発を終えると<announced>発表</announced>しました。Denoはオープンソースのまま残ります。",
   "FeatureTierRuntime.wip": "対応中",
   "FeatureTierRuntime.wipRuntimes": "<name>Node</name>と<name>Bun</name>",
-  "FeatureTierRuntime.follow": "GitHubで計画を見る（issue #623）",
+  "FeatureTierRuntime.follow": "GitHubで計画を見る（issue <issue>#623</issue>）",
   "FeatureTierOperations.eyebrow": "運用",
   "FeatureTierOperations.title": "動かして、見守って、ユーザーをサポートする",
   "FeatureTierOperations.lead":

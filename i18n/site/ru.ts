@@ -517,7 +517,7 @@ export default {
     "Сегодня Seed работает на Deno, а дальше будет без изменений работать на Deno, Node и Bun; срока пока нет. Код построен на веб-стандартах (fetch, Request, Web Crypto, WebSocket, ES-модули), поэтому бо́льшая его часть от рантайма не зависит. В октябре 2026 года команда Deno <announced>объявила</announced>, что ещё год будет поддерживать рантайм и каждый месяц выпускать исправления ошибок и уязвимостей, а затем прекратит собственную разработку; код Deno остаётся открытым.",
   "FeatureTierRuntime.wip": "В работе",
   "FeatureTierRuntime.wipRuntimes": "<name>Node</name> и <name>Bun</name>",
-  "FeatureTierRuntime.follow": "Следить за планом на GitHub (issue #623)",
+  "FeatureTierRuntime.follow": "Следить за планом на GitHub (issue <issue>#623</issue>)",
   "FeatureTierOperations.eyebrow": "Эксплуатация",
   "FeatureTierOperations.title": "Запускайте, наблюдайте, помогайте людям",
   "FeatureTierOperations.lead":

@@ -506,7 +506,7 @@ export default {
     "Seed runs on Deno today, and it is moving to run unchanged on Deno, Node and Bun; there is no date yet. Its code is built on web standards (fetch, Request, Web Crypto, WebSocket, ES modules), so most of it does not depend on the runtime. In October 2026 the makers of Deno <announced>announced</announced> one more year of support with monthly bug-fix and security releases, after which it ends its own development; Deno stays open source.",
   "FeatureTierRuntime.wip": "In progress",
   "FeatureTierRuntime.wipRuntimes": "<name>Node</name> and <name>Bun</name>",
-  "FeatureTierRuntime.follow": "Follow the plan on GitHub (issue #623)",
+  "FeatureTierRuntime.follow": "Follow the plan on GitHub (issue <issue>#623</issue>)",
   "FeatureTierOperations.eyebrow": "Operations",
   "FeatureTierOperations.title": "Run it, watch it, support the people on it",
   "FeatureTierOperations.lead":

@@ -496,7 +496,7 @@ export default {
     "يعمل Seed اليوم على Deno، والعمل جارٍ ليعمل دون تعديل على Deno وNode وBun، ولا يوجد موعد بعد. شيفرته مبنية على معايير الويب (fetch وRequest وWeb Crypto وWebSocket ووحدات ES)، لذا لا يعتمد معظمها على بيئة التشغيل. في أكتوبر 2026 <announced>أعلن</announced> فريق Deno عن عام آخر من الدعم مع إصدارات شهرية لإصلاح الأخطاء والثغرات الأمنية، ينهي بعده تطويره الخاص؛ ويبقى Deno مفتوح المصدر.",
   "FeatureTierRuntime.wip": "قيد العمل",
   "FeatureTierRuntime.wipRuntimes": "<name>Node</name> و<name>Bun</name>",
-  "FeatureTierRuntime.follow": "تابع الخطة على GitHub (المشكلة #623)",
+  "FeatureTierRuntime.follow": "تابع الخطة على GitHub (المشكلة <issue>#623</issue>)",
   "FeatureTierOperations.eyebrow": "التشغيل",
   "FeatureTierOperations.title": "شغّله، وراقبه، وادعم مستخدميه",
   "FeatureTierOperations.lead":

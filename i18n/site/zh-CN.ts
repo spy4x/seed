@@ -469,7 +469,7 @@ export default {
     "Seed 目前运行在 Deno 上，接下来会做到无需改动就能在 Deno、Node 和 Bun 上运行，目前还没有确定日期。它的代码基于 Web 标准（fetch、Request、Web Crypto、WebSocket、ES 模块），所以大部分代码并不依赖运行时。2026 年 10 月，Deno 团队<announced>宣布</announced>将再提供一年支持，每月发布错误修复和安全更新，之后结束自己的开发工作；Deno 仍然是开源的。",
   "FeatureTierRuntime.wip": "进行中",
   "FeatureTierRuntime.wipRuntimes": "<name>Node</name> 和 <name>Bun</name>",
-  "FeatureTierRuntime.follow": "在 GitHub 上关注计划（issue #623）",
+  "FeatureTierRuntime.follow": "在 GitHub 上关注计划（issue <issue>#623</issue>）",
   "FeatureTierOperations.eyebrow": "运维",
   "FeatureTierOperations.title": "运行它、监控它、支持它的用户",
   "FeatureTierOperations.lead":
