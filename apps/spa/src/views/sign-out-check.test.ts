@@ -19,11 +19,10 @@ function waitFor(): UnsentWait & { disposed: boolean } {
 
 describe("the sign-out press", () => {
   it("reads the queue once and asks once when pressed twice while reading", async () => {
-    let reads = 0
-    let found: (wait: UnsentWait | null) => void = () => {}
+    const reads: ((wait: UnsentWait | null) => void)[] = []
     const asked: UnsentWait[] = []
     const press = createSignOutCheck({
-      watch: () => (reads++, new Promise((resolve) => found = resolve)),
+      watch: () => new Promise((resolve) => reads.push(resolve)),
       ask: (wait) => asked.push(wait),
       signOutNow: () => {},
       mounted: () => true,
@@ -31,10 +30,10 @@ describe("the sign-out press", () => {
 
     const first = press()
     const second = press()
-    found(waitFor())
+    for (const found of reads) found(waitFor())
     await Promise.all([first, second])
 
-    expect({ reads, asked: asked.length }).toEqual({ reads: 1, asked: 1 })
+    expect({ reads: reads.length, asked: asked.length }).toEqual({ reads: 1, asked: 1 })
   })
 
   it("signs out at once when nothing waits", async () => {

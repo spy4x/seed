@@ -41,6 +41,19 @@ async function until(done: () => boolean): Promise<void> {
   }
 }
 
+/** What `work` resolves to; fails when it takes longer than `ms`, so a hang fails the test. */
+async function answersWithin<T>(work: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const late = new Promise<never>((_, reject) =>
+    timer = setTimeout(() => reject(new Error(`no answer within ${ms} ms`)), ms)
+  )
+  try {
+    return await Promise.race([work, late])
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 /** Lets `ms` pass, timers included. */
 function pause(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -260,7 +273,7 @@ describe("the sign-out question", () => {
       startModules(12, reads, { storage, databases: device.databases, queueReadDeadlineMs: 20 })
       let layerRead = false
       void currentLayer()!.loaded.then(() => layerRead = true)
-      const wait = (await watchUnsentChanges())!
+      const wait = (await answersWithin(watchUnsentChanges(), 1_000))!
       const asked = { layerRead, unsent: wait.view.value.unsent }
       // Once the layer has read the queue, the dialog follows the layer: its send empties it.
       release()
