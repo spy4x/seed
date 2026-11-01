@@ -1,11 +1,13 @@
 /**
  * The three pages of sign-in with a provider, drawn by the real views over a fake API in a
  * browser DOM (happy-dom): what each asks the API for, and what it shows for the answer. The
- * screens' own tests cannot show that a view makes its request at all.
+ * screens' own tests cannot show that a view makes its request at all. Also the sign-in page's
+ * passkey autofill request, and when it starts again.
  */
 
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
+import { FakeTime } from "@std/testing/time"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
@@ -458,5 +460,118 @@ describe("the profile page", () => {
     ])
     // Said once: the notice leaves the address, so a reload does not say it again.
     expect(history.at(-1)).toBe("/profile/security")
+  })
+})
+
+describe("the sign-in page's passkey autofill", () => {
+  const renewal = 4.5 * 60_000
+
+  /** The sign-in page in a browser with passkey autofill, and what that browser saw. */
+  interface PasskeyPage {
+    /** Whether the page has focus; `focus()` gives it back. */
+    focused: boolean
+    /** Autofill requests the page started. */
+    started: number
+    /** Autofill requests the page aborted. */
+    aborted: number
+    focus(): Promise<void>
+    wait(ms: number): Promise<void>
+  }
+
+  /**
+   * Opens the sign-in page, with focus or without, in a browser that offers passkey autofill and
+   * whose autofill requests wait until aborted, and hands it to `run`.
+   */
+  async function withPasskeyPage(focused: boolean, run: (page: PasskeyPage) => Promise<void>) {
+    const time = new FakeTime()
+    const page: PasskeyPage = {
+      focused,
+      started: 0,
+      aborted: 0,
+      async focus() {
+        page.focused = true
+        globalThis.dispatchEvent(new Event("focus"))
+        await time.tickAsync(0)
+      },
+      async wait(ms) {
+        await time.tickAsync(ms)
+        // The renewed request asks the API for a challenge before it reaches the browser.
+        await time.tickAsync(0)
+      },
+    }
+    const scope = globalThis as { PublicKeyCredential?: unknown }
+    const credentials = Object.getOwnPropertyDescriptor(navigator, "credentials")
+    scope.PublicKeyCredential = {
+      parseCreationOptionsFromJSON: (options: unknown) => options,
+      parseRequestOptionsFromJSON: (options: unknown) => options,
+      isConditionalMediationAvailable: () => Promise.resolve(true),
+    }
+    Object.defineProperty(navigator, "credentials", {
+      configurable: true,
+      value: {
+        create: () => Promise.resolve(null),
+        get: ({ signal }: CredentialRequestOptions) => {
+          page.started++
+          return new Promise((_, reject) =>
+            signal?.addEventListener("abort", () => {
+              page.aborted++
+              reject(new DOMException("aborted", "AbortError"))
+            })
+          )
+        },
+      },
+    })
+    document.hasFocus = () => page.focused
+    api({ "POST /api/auth/passkeys/sign-in/options": [200, { challenge: "c" }] })
+    try {
+      const { hook } = memoryLocation({ path: "/sign-in" })
+      root = document.createElement("div")
+      document.body.append(root)
+      await act(() =>
+        render(
+          <Router hook={hook}>
+            <AuthView screen="sign-in" />
+          </Router>,
+          root!,
+        )
+      )
+      await time.tickAsync(0)
+      await run(page)
+      await act(() => render(null, root!))
+      root = null
+    } finally {
+      time.restore()
+      delete scope.PublicKeyCredential
+      if (credentials) Object.defineProperty(navigator, "credentials", credentials)
+      else delete (navigator as { credentials?: unknown }).credentials
+    }
+  }
+
+  it("renews the waiting request on time while the page has focus", async () => {
+    await withPasskeyPage(true, async (page) => {
+      expect([page.started, page.aborted]).toEqual([1, 0])
+      await page.wait(renewal)
+      expect([page.started, page.aborted]).toEqual([2, 1])
+    })
+  })
+
+  it("leaves the request alone in the background and renews it on focus", async () => {
+    await withPasskeyPage(true, async (page) => {
+      page.focused = false
+      await page.wait(renewal * 3)
+      // An abort here is what makes a password manager pull the tab to the front (#609).
+      expect([page.started, page.aborted]).toEqual([1, 0])
+      await page.focus()
+      expect([page.started, page.aborted]).toEqual([2, 1])
+    })
+  })
+
+  it("starts the request in a background tab only once the tab gets focus", async () => {
+    await withPasskeyPage(false, async (page) => {
+      await page.wait(renewal)
+      expect(page.started).toBe(0)
+      await page.focus()
+      expect([page.started, page.aborted]).toEqual([1, 0])
+    })
   })
 })
