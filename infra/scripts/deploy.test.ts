@@ -395,6 +395,15 @@ Deno.test("the example file names the host port of every service the stack publi
   }
 })
 
+Deno.test("the example file keeps the proxy on this machine, since a developer's env is a copy of it", async () => {
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  // The names infra/compose/compose.proxy.yml reads (tests/compose-exposure.test.ts).
+  expect({
+    https: example.PROXY_HTTPS_HOST_PORT,
+    http: example.PROXY_HTTP_HOST_PORT,
+  }).toEqual({ https: "127.0.0.1:443", http: "127.0.0.1:80" })
+})
+
 Deno.test("the example file does not turn on the proxy's per-request debug log", async () => {
   const example = await readEnvFile(EXAMPLE_ENV_FILE)
   // The same level infra/compose/compose.proxy.yml falls back to (tests/compose-exposure.test.ts).

@@ -1,7 +1,8 @@
 /// <reference lib="deno.ns" />
 /**
  * Holds the Compose files to what may be reached from outside the machine
- * (spy4x/template#353): the proxy serves no dashboard or API of its own, Grafana has no router
+ * (spy4x/template#353): the proxy serves no dashboard or API of its own and is published on this
+ * machine only by default (spy4x/seed#386), Grafana has no router
  * and is published on this machine only, as Postgres and Valkey are, Valkey
  * needs its password, the API's router drops a forged `CF-Connecting-IP` header, and in production
  * plain HTTP redirects to HTTPS.
@@ -81,7 +82,16 @@ Deno.test("the proxy does not turn on Traefik's unauthenticated API", async () =
   const { traefik } = await services("proxy")
   if (!traefik.command?.length) throw new Error("the proxy has no command to check")
   expect(traefik.command.filter((flag) => flag.startsWith("--api"))).toEqual([])
-  expect(traefik.ports, "only the two web ports are published").toEqual(["443:443", "80:80"])
+})
+
+// In development the proxy routes to the API's /api/test/* routes (set-role, last-mail), so on all
+// interfaces anyone on the same Wi-Fi could make themselves an administrator (spy4x/seed#386).
+Deno.test("the proxy publishes only its two web ports, on this machine unless the env file moves them", async () => {
+  const { traefik } = await services("proxy")
+  expect(traefik.ports).toEqual([
+    "${PROXY_HTTPS_HOST_PORT:-127.0.0.1:443}:443",
+    "${PROXY_HTTP_HOST_PORT:-127.0.0.1:80}:80",
+  ])
 })
 
 for (const file of ["shared", "dev", "prod"]) {
