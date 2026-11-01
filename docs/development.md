@@ -1,5 +1,7 @@
 # Development
 
+> Also on the website: [seedsaas.com/docs/development](https://seedsaas.com/docs/development).
+
 The local stack beyond the README's quick start, every task, and the browser tests.
 
 ## The local stack

@@ -1,5 +1,7 @@
 # Offline in the SPA
 
+> Also on the website: [seedsaas.com/docs/offline](https://seedsaas.com/docs/offline).
+
 The SPA opens with no network, shows every list it last saw, lets a person add, edit and delete
 notes, and sends those changes when the connection is back. A change the server cannot take is
 shown as a conflict for the person to settle; nothing is overwritten on its own.

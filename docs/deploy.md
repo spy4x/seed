@@ -1,5 +1,7 @@
 # Deploy and operate
 
+> Also on the website: [seedsaas.com/docs/deploy](https://seedsaas.com/docs/deploy).
+
 Preparing a server, certificates, the deploy itself, the consoles, several projects on one server,
 and releases.
 

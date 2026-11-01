@@ -1,5 +1,7 @@
 # Start a product: what belongs to Seed's own website
 
+> Also on the website: [seedsaas.com/docs/start-a-product](https://seedsaas.com/docs/start-a-product).
+
 Seed's repository is both the template and the home of seedsaas.com, Seed's own website. Some of
 it describes Seed, names its competitors or sells its author's paid work. A product started from
 Seed must not go live with any of that: it would carry someone else's offer and prices, and
@@ -59,6 +61,10 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
   on, but they describe Seed. The product writes its posts in the admin app. Point the post page
   in `apps/mpa/lighthouse/lighthouserc.json` (`/blog/welcome-to-the-seed-blog`) at a post of
   the product's own, or remove it.
+- **Keep** `/changelog` and `/docs`: they read the product's own history and guides. Empty
+  `CHANGELOG_OVERRIDES` in `apps/mpa/changelog-overrides.ts`, set `PUBLISHED_DOCS` and
+  `DOCS_SITE_ORIGIN` in `apps/mpa/docs-site.ts` (with the pointer line atop each guide), and
+  replace the "built by one developer" line in `apps/mpa/routes/[[lang]]/changelog.tsx`.
 - **Replace** the page copy and FAQs of the home, features, admin and pricing pages:
   `apps/mpa/routes/index.tsx`, `routes/features.tsx`, `routes/admin.tsx`, `routes/pricing.tsx`.
 - **Rewrite** `apps/mpa/features-data.tsx`: the features page and every feature page

@@ -44,3 +44,6 @@ apps/mpa/screenshots/.out/
 
 # The raw take of the demo video (media/demo/recipe/record.ts): frames, kept for a re-encode.
 media/demo/.take/
+
+# What `deno task changelog` writes for the website (apps/mpa/changelog-write.ts).
+apps/mpa/changelog.json
