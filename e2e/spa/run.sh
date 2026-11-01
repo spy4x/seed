@@ -164,10 +164,15 @@ grep -q "Worker started" "$SCRATCH/worker.log" || { echo "worker did not start w
 TRACKER_DSN="https://public-key@${ERROR_TRACKER_ORIGIN#https://}/1"
 if [ "$SPA_SERVER" = container ]; then
   # The image exactly as a deploy builds it: the base image first, then the SPA's own.
-  "$CONTAINER" build --quiet --build-arg "DENO_VERSION=$DENO_VERSION" \
+  # Podman keeps every step of a build, the SPA's build stage included, as an untagged image that
+  # the cleanup above cannot name. Switched off, nothing untagged stays behind. Docker with
+  # BuildKit keeps no such images and does not know the option.
+  LAYERS=()
+  if "$CONTAINER" build --help 2>/dev/null | grep -q -- --layers; then LAYERS=(--layers=false); fi
+  "$CONTAINER" build --quiet "${LAYERS[@]}" --build-arg "DENO_VERSION=$DENO_VERSION" \
     --tag "$BASE_IMAGE" --file Dockerfile.base . >"$SCRATCH/base-image.log" 2>&1 ||
     { echo "the base image did not build"; tail -n 40 "$SCRATCH/base-image.log"; exit 1; }
-  "$CONTAINER" build --quiet --build-arg "BASE_IMAGE=$BASE_IMAGE" \
+  "$CONTAINER" build --quiet "${LAYERS[@]}" --build-arg "BASE_IMAGE=$BASE_IMAGE" \
     --tag "$SPA_IMAGE" --file apps/spa/dockerfile.prod . >"$SCRATCH/spa-image.log" 2>&1 ||
     { echo "the SPA image did not build"; tail -n 40 "$SCRATCH/spa-image.log"; exit 1; }
   "$CONTAINER" run --detach --name "$SPA_CONTAINER" --publish "127.0.0.1:$SITE_PORT:8080" \

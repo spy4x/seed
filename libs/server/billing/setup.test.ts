@@ -1,7 +1,8 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { createEnvReader, type EnvReader } from "@spy4x/server/config"
-import { DEFAULT_GRACE_DAYS } from "@domain/billing"
+import { DEFAULT_GRACE_DAYS, PRO_PLAN_ID } from "@domain/billing"
+import { isUuid } from "@spy4x/platform/universal/uuid"
 import { DEV_PRO_PRICE_ID, DEV_WEBHOOK_SECRET } from "../../../e2e/fixtures/billing.ts"
 import {
   BillingConfigError,
@@ -161,6 +162,34 @@ describe("billing configuration", () => {
       "https://dashboard.stripe.com/test",
     )
     expect(readBillingSetup(createEnvReader({}), "dev", API).dashboardUrl).toBeNull()
+  })
+
+  it("gives each development checkout, portal session and refund a version 7 id", async () => {
+    const billing = createFakeBilling("price_dev")
+    const url = "http://app.localhost/groups/g/billing"
+    const checkout = await billing.createCheckout({
+      planId: PRO_PLAN_ID,
+      successUrl: url,
+      cancelUrl: url,
+      reference: "g",
+    })
+    const portal = await billing.createPortalSession({ customerId: "cus_fake", returnUrl: url })
+    const payment = await billing.readLastPayment({ subscriptionId: "sub_dev" })
+    if (!checkout.ok || !portal.ok || !payment.ok || payment.value === null) {
+      throw new Error("expected a checkout, a portal session and a payment")
+    }
+    const refund = await billing.refundPayment({ paymentId: payment.value.id, idempotencyKey: "k" })
+    if (!refund.ok) throw new Error("expected a refund")
+
+    const ids = [
+      ["cs_fake_", checkout.value.id],
+      ["bps_fake_", portal.value.id],
+      ["re_fake_", refund.value.id],
+    ]
+    for (const [prefix, id] of ids) {
+      expect(id.startsWith(prefix)).toBe(true)
+      expect(isUuid(id.slice(prefix.length), 7)).toBe(true)
+    }
   })
 
   it("refunds the development payment once, and answers a retry with the same refund", async () => {

@@ -25,6 +25,7 @@
  */
 
 import type postgres from "postgres"
+import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import { BillingStatus } from "@domain/billing"
 import {
   ACCOUNT_DELETION_GRACE_DAYS,
@@ -194,12 +195,27 @@ export async function isAccountDeletionWaiting(
  * Deletes for good the account of request `deletionId` once its wait is over, in one transaction.
  * Nothing happens when the request is gone (the person signed in) or not due yet. When something
  * stops it again, the request is kept for the nightly run and the account stays soft-deleted.
+ *
+ * Locks the password key first, then the request, then the `users` row. A password change and a
+ * password reset take the key before the user's row, and a reset or a sign-in removes the request
+ * before the row, so each of them waits for this delete, or it for them, and Postgres never has
+ * to abort one of the two as a deadlock.
  */
 export async function hardDeleteAccount(
   sql: postgres.Sql,
   deletionId: string,
 ): Promise<HardDeleteOutcome> {
   return await sql.begin(async (tx) => {
+    // Read without a lock to learn whose key to lock; checked again under the lock below.
+    const [owner] = await tx<{ userId: number }[]>`
+      SELECT user_id AS "userId" FROM account_deletions WHERE id = ${deletionId}
+    `
+    if (!owner) return HardDeleteOutcome.NothingDue
+    await tx`
+      SELECT 1 FROM auth_keys
+      WHERE method = ${PASSWORD_METHOD} AND user_id = ${owner.userId}
+      FOR UPDATE
+    `
     const [request] = await tx<{ userId: number }[]>`
       SELECT user_id AS "userId" FROM account_deletions
       WHERE id = ${deletionId} AND delete_after <= now()

@@ -29,6 +29,9 @@ const settingsReady = (page: Page) => page.locator("[data-e2e=group-general-name
 
 test.describe("group invitations", () => {
   test("an admin creates a link that a signed-out person follows, signs in and accepts with its role", async ({ page, browser, request }) => {
+    // Three sign-ups, two browsers and a dozen page loads: close to the default 30 s on a busy
+    // machine, so the test has room; every step still waits for the state it needs.
+    test.setTimeout(60_000)
     const id = uuidV7().slice(-8)
     const owner = `e2e-invite-owner-${id}@example.com`
     const admin = `e2e-invite-admin-${id}@example.com`

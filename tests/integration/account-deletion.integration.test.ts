@@ -244,6 +244,56 @@ async function rowsPointingAt(sql: postgres.Sql, userId: number): Promise<Record
   return counts
 }
 
+/** Waits until some other connection is stuck behind a lock that backend `pid` holds. */
+async function waitUntilBlockedBy(sql: postgres.Sql, pid: number): Promise<void> {
+  const deadline = Date.now() + 10_000
+  while (Date.now() < deadline) {
+    const [row] = await sql<{ waiting: number }[]>`
+      SELECT count(*)::int AS waiting FROM pg_stat_activity WHERE ${pid} = ANY(pg_blocking_pids(pid))
+    `
+    if (row.waiting > 0) return
+    await new Promise((resolve) => setTimeout(resolve, 50))
+  }
+  throw new Error(`nothing waited for backend ${pid} within 10 s`)
+}
+
+/** The app's database, which can also name the server process of its connection. */
+class PidDb extends AppDbBase {
+  async backendPid(): Promise<number> {
+    const [{ pid }] = await this.sql<{ pid: number }[]>`SELECT pg_backend_pid() AS pid`
+    return pid
+  }
+}
+
+/**
+ * Restores an account in one transaction while the delete for good of `deletionId` runs beside it:
+ * the restore takes its first lock with `first`, the delete starts and gets stuck behind it, then
+ * the restore takes the rest of its locks with `rest` and commits. Answers both results; a deadlock
+ * shows as an error in one of them.
+ */
+async function restoreBesideDelete(
+  sql: postgres.Sql,
+  deletionId: string,
+  first: (tx: AppDbBase) => Promise<unknown>,
+  rest: (tx: AppDbBase) => Promise<unknown>,
+): Promise<{ restore: unknown; delete: unknown }> {
+  let deleting: Promise<HardDeleteOutcome> | null = null
+  const restore = await new PidDb({ sql }).begin(async (tx) => {
+    await first(tx)
+    const pid = await tx.backendPid()
+    deleting = hardDeleteAccount(sql, deletionId)
+    // Awaited below; this only keeps an early rejection from going unhandled meanwhile.
+    deleting.catch(() => {})
+    await waitUntilBlockedBy(sql, pid)
+    await rest(tx)
+    return "restored"
+  }).catch((error: Error) => error)
+  const deleted = deleting === null
+    ? null
+    : await (deleting as Promise<HardDeleteOutcome>).catch((error: Error) => error)
+  return { restore, delete: deleted }
+}
+
 Deno.test("deleting one's own account", async (t) => {
   await withSchema(async (sql) => {
     const app = buildApp(sql)
@@ -714,6 +764,53 @@ Deno.test("deleting one's own account", async (t) => {
         expect(await sql`SELECT 1 FROM auth_users WHERE id = ${zoe.id}`).toHaveLength(1)
         expect(await sql`SELECT 1 FROM groups WHERE owner_user_id = ${zoe.id}`).toHaveLength(1)
         expect(await sql`SELECT 1 FROM account_deletions WHERE id = ${id}`).toEqual([])
+      },
+    )
+
+    await t.step(
+      "a password reset and the delete for good of one account at once both finish, the reset first",
+      async () => {
+        const ada = await signUp(app, "ada")
+        await requestDeletion(app, sql, ada)
+        const id = await makeDue(sql, ada.id)
+
+        // A reset's order (`resetPassword`): the password key, then the restore, which removes the
+        // request and updates the user's row, then the lock on the user's row.
+        const result = await restoreBesideDelete(
+          sql,
+          id,
+          (tx) => tx.lockPasswordKey({ userId: ada.id }),
+          async (tx) => {
+            expect(await tx.accountDeletion.cancel(ada.id)).toBe(true)
+            await tx.user.undeleteOne({ id: ada.id })
+            await tx.lockUser(ada.id)
+          },
+        )
+
+        expect(result).toEqual({ restore: "restored", delete: HardDeleteOutcome.NothingDue })
+        expect(await sql`SELECT 1 FROM users WHERE id = ${ada.id} AND deleted_at IS NULL`)
+          .toHaveLength(1)
+      },
+    )
+
+    await t.step(
+      "a sign-in's restore and the delete for good of one account at once both finish, the restore first",
+      async () => {
+        const bea = await signUp(app, "bea")
+        await requestDeletion(app, sql, bea)
+        const id = await makeDue(sql, bea.id)
+
+        // A sign-in's order (`restoreInTx`): the request goes first, then the user's row.
+        const result = await restoreBesideDelete(
+          sql,
+          id,
+          (tx) => tx.accountDeletion.cancel(bea.id),
+          (tx) => tx.user.undeleteOne({ id: bea.id }),
+        )
+
+        expect(result).toEqual({ restore: "restored", delete: HardDeleteOutcome.NothingDue })
+        expect(await sql`SELECT 1 FROM users WHERE id = ${bea.id} AND deleted_at IS NULL`)
+          .toHaveLength(1)
       },
     )
 
