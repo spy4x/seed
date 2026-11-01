@@ -23,15 +23,16 @@ import {
 import { AdminVideoStill } from "../../components/admin-video.tsx"
 import { ADMIN_TOUR_MODULES } from "../../admin-modules.ts"
 import { ADMIN_VIDEO } from "../../admin-video.ts"
-import { OnThisPage } from "../../components/on-this-page.tsx"
 import { SectionIntro } from "../../components/section-intro.tsx"
 import { Shot } from "../../components/shot.tsx"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
 import { useFormat } from "@spy4x/preact-ui/format"
+import { OnThisPage } from "@spy4x/preact-ui/on-this-page"
 import {
   PERSON_JSON_LD,
   REPOSITORY_URL,
+  sectionLinks,
   SITE_AUTHOR,
   siteBreadcrumbsJsonLd,
   SiteFrame,
@@ -553,7 +554,7 @@ export default define.page(function Features({ state }) {
       <Hero demoHref={spa.try} />
       <div class="mx-auto grid w-full max-w-6xl gap-12 px-4 py-12 sm:px-6 lg:grid-cols-12 lg:px-8 lg:py-16">
         <div class="lg:col-span-3 xl:col-span-2">
-          <OnThisPage links={nav} />
+          <OnThisPage links={sectionLinks(nav)} />
         </div>
         <div class="flex min-w-0 flex-col gap-16 lg:col-span-9 xl:col-span-10">
           {sections.map(({ features, ...tier }) => (
