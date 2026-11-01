@@ -189,6 +189,41 @@ describe("ProfileView", () => {
     }
   })
 
+  it("shows a failed read of the sign-in methods with a retry that is busy while it reads them again", async () => {
+    const reads: string[] = []
+    const refuse = globalThis.fetch
+    // The read the retry starts answers only when the test lets it, so the busy retry is drawn.
+    let answerRetry = () => {}
+    const retried = new Promise<void>((done) => answerRetry = done)
+    globalThis.fetch = async (input, init) => {
+      const url = String(input)
+      reads.push(url)
+      const methodReads = reads.filter((read) => read.endsWith("/api/auth/methods")).length
+      if (url.endsWith("/api/auth/methods") && methodReads > 1) await retried
+      return refuse(input, init)
+    }
+    try {
+      await open("/profile/security", <ProfileView section="security" />)
+      await settle()
+      const methodReads = () => reads.filter((url) => url.endsWith("/api/auth/methods")).length
+      const retry = () => root!.querySelector<HTMLElement>("[data-e2e=sign-in-methods-retry]")
+      expect(methodReads()).toBe(1)
+      expect(retry()?.parentElement?.querySelector("[role=alert]")).not.toBe(null)
+      expect(retry()?.textContent).not.toContain("Loading sign-in methods")
+
+      await act(() => retry()!.click())
+      await settle()
+
+      expect(methodReads()).toBe(2)
+      expect(retry()?.textContent).toContain("Loading sign-in methods")
+      await act(() => answerRetry())
+      await settle()
+      expect(retry()?.textContent).not.toContain("Loading sign-in methods")
+    } finally {
+      globalThis.fetch = refuse
+    }
+  })
+
   it("keeps the first-password dialog open with the server's refusal in it (#463)", async () => {
     // An account kept with a passkey, two-factor on, no password and no address: the server
     // refuses the password, and the dialog must say why instead of closing as if it worked.

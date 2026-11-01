@@ -656,6 +656,8 @@ export function createSignIn(options: SignInOptions): SignIn {
     const passwordChecks = db.passwordCheckFailures
     const waitMs = await passwordChecks.begin(userId)
     if (waitMs > 0) throw new PasswordLockedError(waitMs)
+    // A `verify` that throws keeps the count `begin` took: a token create that fails after a right
+    // password leaves one (#178). Rare, and left as it is.
     const right = await verify()
     if (right === false) await passwordChecks.fail(userId)
     else await passwordChecks.refund(userId)
@@ -1555,6 +1557,8 @@ export function createSignIn(options: SignInOptions): SignIn {
           outcome.changed = await run()
           return true
         } catch (error) {
+          // A key deleted between the check and this write reads as "invalid-credentials" too, so
+          // a right password then counts as wrong once (#178). Rare, and left as it is.
           if (error instanceof PasswordSignInError) return error.reason !== "invalid-credentials"
           throw error
         }
