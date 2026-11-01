@@ -75,9 +75,12 @@ describe(`Seed's post files`, () => {
   })
 
   it(`fails on a field past the blog's own limit`, () => {
-    const tldr = [`tldr:`, ...Array.from({ length: BLOG_TLDR_MAX + 1 }, (_, i) => `  - ${i}`)]
+    const tldr = [
+      `tldr:`,
+      ...Array.from({ length: BLOG_TLDR_MAX + 1 }, (_, i) => `  - Point ${i}.`),
+    ]
 
-    expect(() => parseSeedPost(...file(`hello`, tldr))).toThrow(`hello.md: tldr`)
+    expect(() => parseSeedPost(...file(`hello`, tldr))).toThrow(`hello.md: tldr: Keep it to`)
   })
 
   it(`fails on a slug that is no slug`, () => {
