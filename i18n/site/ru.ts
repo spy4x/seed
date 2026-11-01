@@ -24,6 +24,8 @@ export default {
   "SiteFooter.issue": "Сообщить о проблеме",
   "SiteFooter.quickStart": "Быстрый старт",
   "SiteFooter.apiDocs": "Документация API",
+  "SiteFooter.docs": "Документация",
+  "SiteFooter.changelog": "Список изменений",
   "SiteFooter.status": "Что уже работает",
   "SiteFooter.company": "Автор",
   "SiteFooter.hire": "Заказать у меня MVP",

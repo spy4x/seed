@@ -1,5 +1,7 @@
 # Capacity
 
+> Also on the website: [seedsaas.com/docs/capacity](https://seedsaas.com/docs/capacity).
+
 How much load one Seed server carries, measured with the k6 scenarios in `tests/load/`. The
 numbers below come from a developer machine, not from the production server: a run on a Hetzner
 box of production size is still to do, and its numbers will replace these as the ones to plan

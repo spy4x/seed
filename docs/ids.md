@@ -1,5 +1,7 @@
 # Ids
 
+> Also on the website: [seedsaas.com/docs/ids](https://seedsaas.com/docs/ids).
+
 Nothing in this repository creates a UUID version 4, except the two secrets listed below that wait
 on a decision.
 

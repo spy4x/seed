@@ -141,6 +141,9 @@ app, and [`docs/screenshots/admin-video.ts`](docs/screenshots/admin-video.ts)
 
 ## Documentation
 
+> Also on the website: [seedsaas.com/docs](https://seedsaas.com/docs), every guide below that is
+> not internal, with the changelog at [seedsaas.com/changelog](https://seedsaas.com/changelog).
+
 - [The three apps](docs/apps.md): the SPA, the admin app and the public website.
 - [Deploy and operate](docs/deploy.md): certificates, the deploy, consoles, several projects on one
   server, releases.

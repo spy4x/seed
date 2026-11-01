@@ -23,6 +23,8 @@ import { siteEnglishText } from "@ui/site-text.ts"
 import { BLOG_PATH, RSS_PATH } from "./blog.ts"
 import { AUTHOR_URL, REPOSITORY_URL, SITE_ICON, SITE_NAME, TRY_ENTRY } from "./brand.ts"
 import { API_DOCS_PATH } from "./api-docs.ts"
+import { CHANGELOG_PATH } from "./changelog.ts"
+import { DOCS_PATH } from "./docs-site.ts"
 import { contactFooterLinks } from "./contact-links.ts"
 import { HIRE_PAGE_URL } from "./hire.ts"
 import {
@@ -325,10 +327,9 @@ export function SiteFrame(
           locale={ogLocale(language)}
           noindex={head.noindex}
           jsonLd={head.jsonLd}
+          alternates={languageAlternates(origin, path, head)
+            .map(({ hreflang, href }) => ({ lang: hreflang, url: href }))}
         />
-        {languageAlternates(origin, path, head).map((alternate) => (
-          <link rel="alternate" hreflang={alternate.hreflang} href={alternate.href} />
-        ))}
         {blog && (
           <link
             rel="alternate"
@@ -582,7 +583,9 @@ function footerGroups(
         { label: t.t(`SiteFooter.source`), href: REPOSITORY_URL, external: true },
         { label: t.t(`SiteFooter.issue`), href: `${REPOSITORY_URL}/issues`, external: true },
         { label: t.t(`SiteFooter.quickStart`), href: href(`/#quick-start`) },
+        { label: t.t(`SiteFooter.docs`), href: href(DOCS_PATH) },
         { label: t.t(`SiteFooter.apiDocs`), href: href(API_DOCS_PATH) },
+        { label: t.t(`SiteFooter.changelog`), href: href(CHANGELOG_PATH) },
         { label: t.t(`SiteFooter.status`), href: href(`/#status`) },
       ],
     },

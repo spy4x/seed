@@ -1,5 +1,7 @@
 # Adding an aggregate
 
+> Also on the website: [seedsaas.com/docs/aggregates](https://seedsaas.com/docs/aggregates).
+
 An aggregate is one kind of thing a product keeps, such as a note, an invoice or a task. This page
 lists every file a new aggregate needs, in the order to write them, using **notes** as the worked
 example. Copy the notes files, rename them, and change the fields and rules; do not invent a second
