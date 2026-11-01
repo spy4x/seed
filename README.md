@@ -2,9 +2,10 @@
 
 # Seed
 
-**The groundwork of your SaaS, already built. A free, MIT-licensed starter: sign-in with a second
-factor, groups with roles, per-member Stripe billing, realtime, an offline app and an admin area.
-Deno, Postgres, Docker Compose. Usable today, built in public.**
+**Seed: the free SaaS starter built on web standards. Runs on Deno.** The groundwork of your SaaS,
+already built: sign-in with a second factor, groups with roles, per-member Stripe billing, realtime,
+an offline app and an admin area, on Postgres and Docker Compose. MIT-licensed, usable today, built
+in public.
 
 [![CI](https://ci.antonshubin.com/api/badges/15/status.svg)](https://ci.antonshubin.com/repos/15)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -83,6 +84,19 @@ with a blog and a newsletter. All of it is tested in CI, and most of it runs in 
 **Use it if** you are starting a multi-user web product and want auth, tenancy and operations
 settled before the first feature. **Skip it if** you deploy to serverless functions rather than a
 server you run.
+
+## Runtime plan
+
+Seed runs on Deno today: the servers run on Deno 2 in Docker, and the tasks and tests use Deno.
+Seed is moving to run unchanged on Deno, Node and Bun
+([#623](https://github.com/spy4x/seed/issues/623)). There is no date yet.
+
+Most of the code is already independent of the runtime, because it is built on web standards: Fetch
+`Request` and `Response`, Web Crypto, WebSocket and ES modules. On 9 October 2026 the Deno team
+[announced](https://deno.com/blog/cloudflare) one more year of support for the runtime, with monthly
+bug-fix and security releases, after which it ends its own development; Deno stays open source.
+Running on all three runtimes keeps that choice with you. Seed never used Deno Deploy, so Deploy's
+shutdown does not affect a Seed product.
 
 ## Quick start
 

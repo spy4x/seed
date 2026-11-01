@@ -141,7 +141,10 @@ export interface FeatureTierProps {
   lead: ComponentChildren
   /** The tier's one-line status: what works today and what limits it. */
   status: ComponentChildren
-  children: ComponentChildren
+  /** More of the status line after "Works today", such as a part still in progress. */
+  statusMore?: ComponentChildren
+  /** The tier's feature sections. Left out, the tier is its heading block alone. */
+  children?: ComponentChildren
 }
 
 /**
@@ -149,13 +152,17 @@ export interface FeatureTierProps {
  * the parts every product needs first.
  */
 export function FeatureTier(
-  { id, eyebrow, title, lead, status, children }: FeatureTierProps,
+  { id, eyebrow, title, lead, status, statusMore, children }: FeatureTierProps,
 ): JSX.Element {
   const { t } = useSite()
   const headingId = `${id}-title`
   return (
     <section id={id} aria-labelledby={headingId} class="flex scroll-mt-16 flex-col gap-12">
-      <div class="flex flex-col gap-4 border-b border-subtle pb-8">
+      <div
+        class={children === undefined
+          ? `flex flex-col gap-4`
+          : `flex flex-col gap-4 border-b border-subtle pb-8`}
+      >
         <p class="font-mono text-sm font-medium text-primary">{eyebrow}</p>
         <h2
           id={headingId}
@@ -167,9 +174,10 @@ export function FeatureTier(
         <p class="flex max-w-2xl flex-wrap items-center gap-x-2 gap-y-1 text-sm">
           <StatusMark status="ready" label={t.t(`HomeStatus.works`)} class="font-medium" />
           <span class="text-muted text-pretty">{status}</span>
+          {statusMore}
         </p>
       </div>
-      <div class="flex flex-col gap-12 lg:gap-16">{children}</div>
+      {children !== undefined && <div class="flex flex-col gap-12 lg:gap-16">{children}</div>}
     </section>
   )
 }

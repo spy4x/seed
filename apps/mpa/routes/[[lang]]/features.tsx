@@ -5,6 +5,7 @@ import { Button } from "@spy4x/preact-ui/button"
 import { FaqList } from "@spy4x/preact-ui/faq-list"
 import { OnThisPage } from "@spy4x/preact-ui/on-this-page"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
+import { StatusMark } from "@spy4x/preact-ui/status-mark"
 import { faqPageJsonLd } from "@spy4x/platform/universal/seo"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { siteEnglishText } from "@ui/site-text.ts"
@@ -38,7 +39,7 @@ import { define } from "../../utils.ts"
  * The day this page's feature list or wording last changed: the hero's "Updated" line and the
  * sitemap's `lastmod`. Change it with them.
  */
-export const FEATURES_UPDATED = `2026-11-01`
+export const FEATURES_UPDATED = `2026-11-02`
 
 /** The page's title and description in the language of `t`. */
 export function featuresHead(t: Translator<string>): { title: string; description: string } {
@@ -144,6 +145,44 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
   )
 }
 
+/** Deno's own announcement of its last year of development, which the runtime plan cites. */
+const DENO_ANNOUNCEMENT_URL = `https://deno.com/blog/cloudflare`
+
+/** The issue that moves Seed to run unchanged on Deno, Node and Bun. */
+const RUNTIME_ISSUE_URL = `${REPOSITORY_URL}/issues/623`
+
+/**
+ * Where Seed runs today and where it is going: Deno now, Node and Bun in progress (#623). When
+ * #623 lands, the badge on the home page and this section's heading and status change with it.
+ */
+function RuntimePlan(): JSX.Element {
+  const { t, rich } = useSite()
+  return (
+    <FeatureTier
+      id="runtime"
+      eyebrow={t.t(`FeatureTierRuntime.eyebrow`)}
+      title={t.t(`FeatureTierRuntime.title`)}
+      lead={rich(`FeatureTierRuntime.lead`, {
+        announced: (text) => (
+          <a href={DENO_ANNOUNCEMENT_URL} class="text-primary underline">{text}</a>
+        ),
+      })}
+      status={<bdi>Deno 2</bdi>}
+      statusMore={
+        <>
+          <StatusMark status="wip" label={t.t(`FeatureTierRuntime.wip`)} class="font-medium" />
+          <span class="text-muted">
+            {rich(`FeatureTierRuntime.wipRuntimes`, { name: (text) => <bdi>{text}</bdi> })}
+          </span>
+          <a href={RUNTIME_ISSUE_URL} class="text-primary underline" data-e2e="runtime-issue">
+            {t.t(`FeatureTierRuntime.follow`)}
+          </a>
+        </>
+      }
+    />
+  )
+}
+
 /**
  * `/features`: every capability, grouped by what it is for, each with what people notice, what a
  * developer gets, what is not built yet and a link to the code. One ask: try the demo.
@@ -162,6 +201,7 @@ export default define.page(function Features({ state }) {
     ...sections.flatMap((tier) =>
       tier.features.map((feature) => ({ label: feature.nav, href: `#${feature.id}` }))
     ),
+    { label: t.t(`FeatureTierRuntime.nav`), href: `#runtime` },
     { label: t.t(`HomeFaq.eyebrow`), href: `#faq` },
   ]
   return (
@@ -184,6 +224,7 @@ export default define.page(function Features({ state }) {
               ))}
             </FeatureTier>
           ))}
+          <RuntimePlan />
           {/* Seed's own site: see docs/start-a-product.md */}
           <a
             href={href(`/compare`)}

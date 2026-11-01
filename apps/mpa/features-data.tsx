@@ -468,7 +468,8 @@ export interface FeaturePage {
 /** The runtime question, the same on every page that asks it. */
 const RUNTIME_QUESTION: Omit<FeatureQuestion, "id"> = {
   question: `Does Seed run on Node or Bun?`,
-  answer: `Not yet. Runs on Deno today; Node and Bun support is planned (#623).`,
+  answer: `Not yet. Seed runs on Deno today, and the move to run on Deno, Node and Bun is in ` +
+    `progress (#623). See the runtime plan on the features page.`,
 }
 
 /**
@@ -529,7 +530,7 @@ export const FEATURE_PAGES: readonly FeaturePage[] = [
       { id: `faq-runtime`, ...RUNTIME_QUESTION },
     ],
     demo: `/profile/security`,
-    updated: `2026-11-01`,
+    updated: `2026-11-02`,
   },
   {
     slug: `groups`,
@@ -722,7 +723,7 @@ export const FEATURE_PAGES: readonly FeaturePage[] = [
       },
       { id: `faq-runtime`, ...RUNTIME_QUESTION },
     ],
-    updated: `2026-11-01`,
+    updated: `2026-11-02`,
   },
 ]
 
