@@ -16,12 +16,20 @@ async function accessibilityViolations(page: Page): Promise<string[]> {
 const PAGES = ["/changelog", "/docs", "/docs/capacity", "/ar/docs/capacity"]
 
 for (const path of PAGES) {
-  test(`${path} fits a 390 px phone without sideways scrolling`, async ({ page }) => {
+  test(`${path} fits a 390 px phone without sideways scrolling or cut-off parts`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto(path)
 
     const pageWidth = await page.evaluate(() => document.documentElement.scrollWidth)
     expect(pageWidth).toBeLessThanOrEqual(390)
+    // A right-to-left page clips what overflows to the right instead of scrolling to it, so the
+    // English column's parts are measured too: each must lie inside the screen.
+    const outside = await page.locator(`main [lang="en"] > *`).evaluateAll((parts) =>
+      parts.map((part) => part.getBoundingClientRect())
+        .filter(({ left, right }) => left < 0 || right > 390)
+        .map(({ left, right }) => `${left}..${right}`)
+    )
+    expect(outside).toEqual([])
   })
 }
 

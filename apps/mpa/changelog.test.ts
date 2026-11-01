@@ -117,7 +117,7 @@ describe(`changelogPulse`, () => {
 
   it(`names the newest change and counts the last 30 days`, () => {
     expect(changelogPulse([
-      entry(`new`, `Old.`, `2026-09-01T00:00:00.000Z`),
+      entry(`new`, `Just too old.`, `2026-10-02T11:59:59.000Z`),
       entry(`new`, `Newest.`, `2026-10-30T00:00:00.000Z`),
       entry(`fixed`, `Recent.`, `2026-10-05T00:00:00.000Z`),
     ], now)).toEqual({ last: `2026-10-30T00:00:00.000Z`, recent: 2 })
