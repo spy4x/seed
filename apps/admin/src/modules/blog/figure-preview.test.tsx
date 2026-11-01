@@ -34,7 +34,15 @@ const body: BlogPreviewBody = {
 it(`draws each figure that passes live with its checked props and the public page's ids, and lists every problem by line`, () => {
   const { preview, problems } = checkPreview(body, figures)
   expect(preview.parts.map((part) => part.kind === `figure` ? `figure ${part.id}` : part.kind))
-    .toEqual([`html`, `figure gauge-2`, `problem`, `problem`, `problem`, `figure gauge-3`, `problem`])
+    .toEqual([
+      `html`,
+      `figure gauge-2`,
+      `problem`,
+      `problem`,
+      `problem`,
+      `figure gauge-3`,
+      `problem`,
+    ])
   const first = preview.parts[1]
   if (first.kind !== `figure`) throw new Error(`the first figure is missing`)
   const node = first.node as { type: unknown; props: Record<string, unknown> }
