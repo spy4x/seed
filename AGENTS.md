@@ -116,6 +116,19 @@ so the demo keeps working and shows the new feature. The owner asked for this on
 reference to a separate doc) about how it works and that we should update wipe/seed script when we
 add/edit/remove tables or schema or db structure overall."
 
+## Blog
+
+Seed's own posts (seedsaas.com) are Markdown files in `libs/server/blog/seed-posts/`, whose
+`README.md` shows the format; they load only in demo mode ([docs/demo.md](docs/demo.md#seeds-own-blog-posts)).
+A product writes its posts in the admin app. How to write a post: the shared `blog-post` skill.
+
+- **Changelog.** A monthly "What's new in Seed" post, and a post of its own for a major change: a
+  new module, or something products must act on when they sync. The owner, 2026-11-01: "I agree,
+  let's keep it as an local instruction/rule."
+- **Ideas go to the owner first.** Propose a post in chat (title, reader, the search question it
+  answers, outline, interactive part) and file its issue only after the owner says yes. The
+  owner, 2026-11-01: "I prefer it asks me this in the chat, before creating a github issue."
+
 ## Handoff
 
 [docs/handoff.md](docs/handoff.md) holds the map of the repository, the decisions already made and
