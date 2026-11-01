@@ -74,4 +74,13 @@ describe("admin keyboard shortcuts", () => {
     expect(listed("/blog")).toBe(false)
     expect(listed("/users/7")).toBe(false)
   })
+
+  it("lists F8 and Shift F8 in the blog's editor and nowhere else", () => {
+    const listed = (path: string) =>
+      rows(path).list.filter((row) => row.keys === "f8" || row.keys === "shift+f8").length
+    expect(listed("/blog/new")).toBe(2)
+    expect(listed("/blog/0195f0b4-3c1e-7a00-8000-000000000001")).toBe(2)
+    expect(listed("/blog")).toBe(0)
+    expect(listed("/catalog/0195f0b4-3c1e-7a00-8000-000000000001")).toBe(0)
+  })
 })

@@ -14,6 +14,12 @@ import type { AdminBlogEditorScreenProps } from "./admin-blog-editor.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAdminText } from "./i18n.ts"
 import { Isolated } from "@spy4x/preact-ui/bdi"
+import { Button } from "@spy4x/preact-ui/button"
+import { Notice } from "@spy4x/preact-ui/notice"
+import { blogProblemKey, BlogProblemText } from "./admin-blog-problems.tsx"
+
+/** What the dialogs take besides the screen's props: the Problems panel's "Go to problems". */
+type DialogsProps = AdminBlogEditorScreenProps & { onGoToProblems: () => void }
 
 /** A path inside a sentence: code, isolated, never machine-translated. */
 function path(text: string): JSX.Element {
@@ -28,7 +34,7 @@ function path(text: string): JSX.Element {
  */
 
 /** The open dialog, if any. */
-export function Dialogs(props: AdminBlogEditorScreenProps): JSX.Element | null {
+export function Dialogs(props: DialogsProps): JSX.Element | null {
   const { dialog, post, value } = props
   const t = useAdminText()
   if (dialog === null) return null
@@ -187,8 +193,12 @@ function inAnHour(now: Date): string {
  * Publish a draft now or at a time, publish a scheduled post now, or move its time. Emailing the
  * post is an unchecked box that names how many people get it, offered only while the newsletter is
  * on and the post was never emailed; the button then says so too.
+ *
+ * With tags in the body that readers will not see (#620), a warning lists them and its "Go to
+ * problems" takes first focus; the confirm button then says "anyway". It never blocks: a broken
+ * tag hides one figure, and blocking would trap a post whose component a later deploy removed.
  */
-function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): JSX.Element {
+function PublishDialog(props: DialogsProps & { title: string }): JSX.Element {
   const { dialog, post, value, newsletter, now } = props
   const format = useFormat()
   const t = useAdminText()
@@ -210,11 +220,15 @@ function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): J
   // The issue goes only to the subscribers of the post's language (#527).
   const readers = chosen?.byLanguage[value.language] ?? 0
   const sending = canEmail && emailing && target !== null
+  const warned = props.problems.length > 0
   const confirmLabel = scheduling
-    ? t.t(`AdminBlogDialogs.schedule`)
+    ? t.t(warned ? `AdminBlogDialogs.scheduleAnyway` : `AdminBlogDialogs.schedule`)
     : sending && chosen
-    ? t.t(`AdminBlogDialogs.publishAndEmail`, { count: readers })
-    : t.t(`AdminBlogDialogs.publish`)
+    ? t.t(
+      warned ? `AdminBlogDialogs.publishAndEmailAnyway` : `AdminBlogDialogs.publishAndEmail`,
+      { count: readers },
+    )
+    : t.t(warned ? `AdminBlogDialogs.publishAnyway` : `AdminBlogDialogs.publish`)
   const slug = post?.slug ?? value.slug.trim()
   return (
     <ConfirmDialog
@@ -232,6 +246,40 @@ function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): J
       }}
     >
       <Stack gap="md">
+        {warned && (
+          <Notice
+            tone="warning"
+            live={false}
+            title={t.t(`AdminBlogDialogs.figuresHidden`, { count: props.problems.length })}
+            data-e2e="admin-blog-publish-problems"
+          >
+            <p>{t.t(`AdminBlogDialogs.figuresHiddenBody`)}</p>
+            <ul class="mt-2 flex flex-col gap-1">
+              {props.problems.map((problem) => (
+                <li key={blogProblemKey(problem)} class="flex gap-3">
+                  <span class="shrink-0 font-medium tabular-nums">
+                    {t.t(`AdminBlogEditor.problemLine`, { line: problem.line })}
+                  </span>
+                  <span class="min-w-0">
+                    <BlogProblemText problem={problem} />
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              class="mt-3 max-sm:min-h-11"
+              // The first thing to look at: what will not show. `showModal()` focuses it.
+              autofocus
+              data-e2e="admin-blog-go-to-problems"
+              onClick={props.onGoToProblems}
+            >
+              {t.t(`AdminBlogDialogs.goToProblems`)}
+            </Button>
+          </Notice>
+        )}
         {dialog === `publish` && (
           <RadioGroup
             legend={t.t(`AdminBlogDialogs.when`)}

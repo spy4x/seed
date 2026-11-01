@@ -8,7 +8,7 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
-import type { AdminBlogListResponse, BlogPost } from "@domain/blog"
+import type { AdminBlogListResponse, BlogPost, BlogProblem } from "@domain/blog"
 import { LANGUAGES } from "@domain/identity"
 import { languageName } from "@spy4x/preact-ui/language-picker"
 import {
@@ -272,6 +272,8 @@ function editorProps(
     previewPending: false,
     previewError: null,
     onPreview: () => calls.push(["preview"]),
+    problems: [],
+    figureExample: null,
     dialog: null,
     dialogPending: false,
     dialogError: null,
@@ -391,7 +393,11 @@ describe("the blog editor", () => {
     await mount(
       <AdminBlogEditorScreen
         {...editorProps(calls, {
-          preview: { html: "<h2>Why</h2><p>It is fast.</p>", words: 4, readingMinutes: 1 },
+          preview: {
+            parts: [{ kind: "html", html: "<h2>Why</h2><p>It is fast.</p>" }],
+            words: 4,
+            readingMinutes: 1,
+          },
         })}
       />,
     )
@@ -566,6 +572,172 @@ describe("the blog editor", () => {
 })
 
 // #endregion
+
+/** What the fake live figure in the preview says. */
+const LIVE_FIGURE = "Live"
+
+/** Two broken tags on lines 3 and 5 of a five-line body (#620). */
+const FIGURE_BODY = "Intro.\n\n<CostCalc members={4} />\n\n<CostCalculator members={0} />"
+const FIGURE_PROBLEMS: BlogProblem[] = [
+  {
+    line: 3,
+    code: "unknown",
+    tag: "CostCalc",
+    detail: "",
+    suggestion: "CostCalculator",
+    names: ["CostCalculator"],
+  },
+  { line: 5, code: "props", tag: "CostCalculator", detail: "members must be at least 1" },
+]
+
+function figureProps(calls: unknown[][], overrides: Partial<AdminBlogEditorScreenProps> = {}) {
+  return editorProps(calls, {
+    value: { ...blogDraftOf(saved), bodyMd: FIGURE_BODY },
+    problems: FIGURE_PROBLEMS,
+    ...overrides,
+  })
+}
+
+/** The body's selected text: the line a jump selected. */
+function selectedLine(): string {
+  const body = find<HTMLTextAreaElement>("[data-e2e=admin-blog-body]")
+  return body.value.slice(body.selectionStart, body.selectionEnd)
+}
+
+async function press(element: Element, key: string, shiftKey = false): Promise<void> {
+  await act(() => {
+    element.dispatchEvent(
+      new window.KeyboardEvent("keydown", {
+        key,
+        shiftKey,
+        bubbles: true,
+        cancelable: true,
+      }) as unknown as Event,
+    )
+  })
+}
+
+describe("figure problems in the editor (#620)", () => {
+  it("lists each problem in the panel, and a row selects its line in the body", async () => {
+    await mount(<AdminBlogEditorScreen {...figureProps([])} />)
+    const panel = find("[data-e2e=admin-blog-problems]")
+    expect(panel.textContent).toContain("2 problems in this post")
+    expect(panel.textContent).toContain(
+      "There's no component called CostCalc. Did you mean CostCalculator?",
+    )
+    expect(panel.textContent).toContain(
+      "CostCalculator can't use these props: members must be at least 1",
+    )
+    const rows = [...panel.querySelectorAll("button")]
+    expect(rows.map((row) => row.textContent)).toEqual(["Line 3", "Line 5"])
+    await clickOn(rows[1])
+    await settle()
+    expect(document.activeElement?.getAttribute("data-e2e")).toBe("admin-blog-body")
+    expect(selectedLine()).toBe("<CostCalculator members={0} />")
+  })
+
+  it("draws no panel without problems", async () => {
+    await mount(<AdminBlogEditorScreen {...editorProps([])} />)
+    expect(has("[data-e2e=admin-blog-problems]")).toBe(false)
+  })
+
+  it("moves to the next problem on F8 and the previous on Shift F8, round the end", async () => {
+    await mount(<AdminBlogEditorScreen {...figureProps([])} />)
+    const body = find<HTMLTextAreaElement>("[data-e2e=admin-blog-body]")
+    body.focus()
+    body.setSelectionRange(0, 0)
+    await press(body, "F8")
+    expect(selectedLine()).toBe("<CostCalc members={4} />")
+    await press(body, "F8")
+    expect(selectedLine()).toBe("<CostCalculator members={0} />")
+    await press(body, "F8")
+    expect(selectedLine()).toBe("<CostCalc members={4} />")
+    await press(body, "F8", true)
+    expect(selectedLine()).toBe("<CostCalculator members={0} />")
+  })
+
+  it("draws a live figure in the preview, and a warning with its line where a tag won't show", async () => {
+    const calls: unknown[][] = []
+    await mount(
+      <AdminBlogEditorScreen
+        {...figureProps(calls, {
+          preview: {
+            parts: [
+              { kind: "html", html: "<p>Intro.</p>" },
+              { kind: "problem", line: 3 },
+              {
+                kind: "figure",
+                id: "cost-calculator",
+                node: <figure data-live="true">{LIVE_FIGURE}</figure>,
+              },
+            ],
+            words: 1,
+            readingMinutes: 1,
+          },
+        })}
+      />,
+    )
+    await clickOn(find("#preview-tab"))
+    const preview = find("[data-e2e=admin-blog-preview]")
+    expect(preview.querySelector("figure[data-live]")?.textContent).toBe("Live")
+    const marker = find("[data-e2e=admin-blog-preview-problem]")
+    // Part of the page, not news: no live region.
+    expect(marker.getAttribute("role")).toBe(null)
+    expect(marker.textContent).toContain("This figure won't show")
+    expect(marker.textContent).toContain("There's no component called CostCalc.")
+    await clickOn(button("Go to line 3"))
+    await settle()
+    expect(document.activeElement?.getAttribute("data-e2e")).toBe("admin-blog-body")
+    expect(selectedLine()).toBe("<CostCalc members={4} />")
+  })
+
+  it("names a real tag in the body's hint", async () => {
+    await mount(
+      <AdminBlogEditorScreen {...figureProps([], { figureExample: "<CostCalculator />" })} />,
+    )
+    expect(find("[data-e2e=admin-blog-body]").closest("div")?.parentElement?.textContent)
+      .toContain("put its tag on a line of its own: <CostCalculator />")
+  })
+
+  it("warns in the publish dialog, focuses Go to problems first, and publishes anyway", async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminBlogEditorScreen {...figureProps(calls, { dialog: "publish" })} />)
+    const warning = find("[data-e2e=admin-blog-publish-problems]")
+    expect(warning.textContent).toContain("2 figures won't show")
+    expect(warning.textContent).toContain("Readers will see the post without them.")
+    expect(warning.textContent).toContain("Line 5")
+    const goTo = find("[data-e2e=admin-blog-go-to-problems]")
+    // The dialog's first focus: `showModal()` focuses the control marked `autofocus`.
+    expect(goTo.hasAttribute("autofocus")).toBe(true)
+    expect(
+      [...find("dialog").querySelectorAll("[autofocus]")].map((element) => element.textContent),
+    ).toEqual(["Go to problems"])
+    await clickOn(button("Publish anyway"))
+    expect(calls.at(-1)).toEqual(["publish", { at: null, list: null }])
+  })
+
+  it("closes the dialog on Go to problems and focuses the panel's first row", async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminBlogEditorScreen {...figureProps(calls, { dialog: "publish" })} />)
+    await clickOn(find("[data-e2e=admin-blog-go-to-problems]"))
+    expect(calls.at(-1)).toEqual(["close"])
+    await mount(<AdminBlogEditorScreen {...figureProps(calls)} />)
+    await settle()
+    expect(document.activeElement?.textContent).toBe("Line 3")
+  })
+
+  it("says Schedule anyway when a post with problems is scheduled", async () => {
+    await mount(<AdminBlogEditorScreen {...figureProps([], { dialog: "reschedule" })} />)
+    expect(button("Schedule anyway")).toBeTruthy()
+  })
+
+  it("leaves the publish dialog as it was without problems", async () => {
+    await mount(<AdminBlogEditorScreen {...editorProps([], { dialog: "publish" })} />)
+    expect(has("[data-e2e=admin-blog-publish-problems]")).toBe(false)
+    expect(button("Publish")).toBeTruthy()
+    expect(() => button("Publish anyway")).toThrow()
+  })
+})
 
 describe("the editor's rules", () => {
   it("suggests a slug of the address's letters only", () => {

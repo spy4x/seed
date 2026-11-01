@@ -400,7 +400,10 @@ AdminBlogDialogs.dateTime	a079c3bbe23a4253
 AdminBlogDialogs.deletePost	cac927004c6140fc
 AdminBlogDialogs.deleteText	5becd342ac674fcd
 AdminBlogDialogs.deleteTitle	e0943ce0540253ff
+AdminBlogDialogs.figuresHidden	c56591b0d09c40a0
+AdminBlogDialogs.figuresHiddenBody	6a958a0821940ee1
 AdminBlogDialogs.futureTime	ebfef07e2d2b1c17
+AdminBlogDialogs.goToProblems	8601a5eb067fa144
 AdminBlogDialogs.goesLiveAt	6e550d0a42349b25
 AdminBlogDialogs.linksBreak	52ad2e21a976b402
 AdminBlogDialogs.liveOnItsOwn	9870ccfb4d9734fc
@@ -410,8 +413,11 @@ AdminBlogDialogs.now	fe18013d93d22f4f
 AdminBlogDialogs.postLanguageOnly	ab898a904b1b1e75
 AdminBlogDialogs.publish	859390eb495b2ead
 AdminBlogDialogs.publishAndEmail	6815308c5b803f7c
+AdminBlogDialogs.publishAndEmailAnyway	e3a7e2468223d28c
+AdminBlogDialogs.publishAnyway	6ac87b812c39e234
 AdminBlogDialogs.publishTitle	97bbbb855c13ec32
 AdminBlogDialogs.schedule	f4830a1dae298044
+AdminBlogDialogs.scheduleAnyway	d18eebaf3a9014cb
 AdminBlogDialogs.scheduleTitle	f24119ed04059954
 AdminBlogDialogs.sentOnce	04d6e4f2365c9145
 AdminBlogDialogs.slugHint	931f415884e59aac
@@ -432,6 +438,7 @@ AdminBlogEditor.addTitle	399c6d6930d36e0f
 AdminBlogEditor.allPosts	3a2e5c2c34923fd5
 AdminBlogEditor.back	69f7dcf78f3c3cd6
 AdminBlogEditor.bodyHint	faf9a03ce812c730
+AdminBlogEditor.bodyHintFigures	3c7e543ffca20a1e
 AdminBlogEditor.bodyLabel	857611eef9af095f
 AdminBlogEditor.changeTime	3a3dca4075506505
 AdminBlogEditor.changeUrl	2f6427832492490b
@@ -458,6 +465,8 @@ AdminBlogEditor.doneUrl	16faa13086d03c45
 AdminBlogEditor.editPost	a1933147e7c8088f
 AdminBlogEditor.emailedTo	e10591d2a6321121
 AdminBlogEditor.emptyPost	52c2633063e51a41
+AdminBlogEditor.figureHidden	b9f4f461fbe30979
+AdminBlogEditor.goToLine	f818f5b7e993e924
 AdminBlogEditor.goesLive	f2d9454d995e4ed3
 AdminBlogEditor.httpsCover	075b3b7f27038bc9
 AdminBlogEditor.keyPoint	83d7697e259de0ab
@@ -474,6 +483,16 @@ AdminBlogEditor.notFoundHint	721af99b7213f449
 AdminBlogEditor.post	a5554622c655c7a7
 AdminBlogEditor.preview	324b134f57c70c72
 AdminBlogEditor.previewError	0fe7b9a21972eea0
+AdminBlogEditor.problemLine	d801ea2e56ca807b
+AdminBlogEditor.problemNested	8cec9754fc7b3c58
+AdminBlogEditor.problemProps	b192f8cdc2b47353
+AdminBlogEditor.problemSyntax	160b8ef057b2fafd
+AdminBlogEditor.problemUnknown	64da30d0e0465c0c
+AdminBlogEditor.problemUnknownNone	6d7751eff45dfc09
+AdminBlogEditor.problemsCount	51be2f73a9a0913a
+AdminBlogEditor.problemsLine	d33c8010cab84708
+AdminBlogEditor.problemsNone	3efc828d29e08411
+AdminBlogEditor.problemsTitle	a06f5b80ebf5b31e
 AdminBlogEditor.publish	86142237ce87594d
 AdminBlogEditor.publishNow	bf74ddc5486eb7ba
 AdminBlogEditor.publishedOn	4bc41e7088f38b68
@@ -1212,6 +1231,8 @@ AdminShortcuts.addCategory	aafdf428fd0256ea
 AdminShortcuts.addItem	d1a0b329a72b8f16
 AdminShortcuts.addLink	dfe9ca4d0f96ed0a
 AdminShortcuts.newPost	7e50e2667b865ad7
+AdminShortcuts.nextProblem	727c5c8a39768b8e
+AdminShortcuts.previousProblem	95c70190e39cd16e
 AdminShortcuts.saveItem	a6c513947760eab3
 AdminShortcuts.savePost	813fc4eac454086c
 AdminShortcuts.searchList	079dd748ac12b0f8

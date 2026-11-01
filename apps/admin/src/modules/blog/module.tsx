@@ -14,6 +14,9 @@ import { useAdminText } from "@ui/i18n.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { type BlogState, createBlogState } from "./state.ts"
 
+/** How long after the last keystroke the Problems panel checks the body again, in ms. */
+const PROBLEMS_CHECK_DELAY = 1_000
+
 /** One blog state per signed-in session: a new session starts with nothing loaded. */
 const states = new WeakMap<AdminContext, BlogState>()
 
@@ -87,8 +90,16 @@ function BlogEditorView(
   }, [id, context])
   useEffect(() => {
     void state.loadExtras()
+    state.loadFigures()
   }, [context])
   const editor = state.editor.value
+  // The Problems panel rechecks the body about a second after typing stops (#620).
+  const body = editor.loading ? null : editor.value.bodyMd
+  useEffect(() => {
+    if (body === null) return
+    const timer = setTimeout(() => void state.renderPreview(), PROBLEMS_CHECK_DELAY)
+    return () => clearTimeout(timer)
+  }, [body])
   const dialog = state.dialog.value
   const preview = state.preview.value
   /** After the create page's first save, the page moves to the post's own address. */
@@ -124,6 +135,8 @@ function BlogEditorView(
         previewPending={preview.pending}
         previewError={preview.error}
         onPreview={() => void state.renderPreview()}
+        problems={preview.problems}
+        figureExample={state.figures.value?.example ?? null}
         dialog={dialog.dialog}
         dialogPending={dialog.pending}
         dialogError={dialog.error}

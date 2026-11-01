@@ -56,6 +56,9 @@ export const ADMIN_PAGE_ACTIONS: Readonly<
  */
 const SAVE_PAGES = /^\/(blog|catalog)\/(?!categories(\/|$))[^/]+$/
 
+/** A post's editor, new or saved, whose body takes F8 to its figure problems (#620). */
+const BLOG_POST_PAGE = /^\/blog\/[^/]+$/
+
 /** What the admin app's shortcuts act on. */
 export interface AdminShortcutPorts {
   /** The modules shown, in the rail's order. */
@@ -112,7 +115,21 @@ export function adminShortcutRows(ports: AdminShortcutPorts): ShortcutRow[] {
       group: SHORTCUT_GROUPS.page,
     }]
     : []
-  return [...generalRows(ports.openShortcuts), ...goTo, ...filter, ...actions, ...save]
+  // Listed only: the post's textarea takes F8 itself, to its next or previous figure problem.
+  const problems: ShortcutRow[] = BLOG_POST_PAGE.test(ports.path)
+    ? [
+      { keys: `f8`, description: ports.t.t(`AdminShortcuts.nextProblem`) },
+      { keys: `shift+f8`, description: ports.t.t(`AdminShortcuts.previousProblem`) },
+    ].map((row) => ({ ...row, group: SHORTCUT_GROUPS.page }))
+    : []
+  return [
+    ...generalRows(ports.openShortcuts),
+    ...goTo,
+    ...filter,
+    ...actions,
+    ...save,
+    ...problems,
+  ]
 }
 
 /** Focuses the first search field of the page, the list's own. */

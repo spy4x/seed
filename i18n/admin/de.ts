@@ -477,6 +477,18 @@ export default {
     "other": "Veröffentlichen und an {count} senden",
   },
   "AdminBlogDialogs.publish": "Veröffentlichen",
+  "AdminBlogDialogs.figuresHidden": {
+    "one": "1 Grafik wird nicht angezeigt",
+    "other": "{count} Grafiken werden nicht angezeigt",
+  },
+  "AdminBlogDialogs.figuresHiddenBody": "Leser sehen den Beitrag ohne sie.",
+  "AdminBlogDialogs.goToProblems": "Zu den Problemen",
+  "AdminBlogDialogs.publishAnyway": "Trotzdem veröffentlichen",
+  "AdminBlogDialogs.scheduleAnyway": "Trotzdem planen",
+  "AdminBlogDialogs.publishAndEmailAnyway": {
+    "one": "Trotzdem veröffentlichen und an {count} senden",
+    "other": "Trotzdem veröffentlichen und an {count} senden",
+  },
   "AdminBlogDialogs.scheduleTitle": "„{title}“ einplanen",
   "AdminBlogDialogs.publishTitle": "„{title}“ veröffentlichen?",
   "AdminBlogDialogs.when": "Wann?",
@@ -558,6 +570,32 @@ export default {
   "AdminBlogEditor.write": "Schreiben",
   "AdminBlogEditor.bodyLabel": "Beitrag in Markdown",
   "AdminBlogEditor.bodyHint": "In Markdown geschrieben.",
+  "AdminBlogEditor.bodyHintFigures":
+    "In Markdown geschrieben. Für eine interaktive Grafik setzt du ihren Tag in eine eigene Zeile: <code>{example}</code>",
+  "AdminBlogEditor.problemsTitle": {
+    "one": "1 Problem in diesem Beitrag",
+    "other": "{count} Probleme in diesem Beitrag",
+  },
+  "AdminBlogEditor.problemsLine":
+    "Leser sehen diese Zeilen nicht. Der Rest des Beitrags erscheint wie geschrieben.",
+  "AdminBlogEditor.problemsCount": {
+    "one": "1 Problem",
+    "other": "{count} Probleme",
+  },
+  "AdminBlogEditor.problemsNone": "Keine Probleme mehr",
+  "AdminBlogEditor.problemLine": "Zeile {line}",
+  "AdminBlogEditor.problemUnknown":
+    "Es gibt keine Komponente namens {tag}. Meintest du {suggestion}?",
+  "AdminBlogEditor.problemUnknownNone":
+    "Es gibt keine Komponente namens {tag}. Verfügbar: {names}.",
+  "AdminBlogEditor.problemProps":
+    "{tag} kann diese Props nicht verwenden: <detail>{detail}</detail>",
+  "AdminBlogEditor.problemNested":
+    "{tag} steht in einer Liste oder einem Zitat. Setz es in eine eigene Zeile außerhalb davon.",
+  "AdminBlogEditor.problemSyntax":
+    "Der Tag von {tag} lässt sich nicht lesen: <detail>{detail}</detail>",
+  "AdminBlogEditor.figureHidden": "Diese Grafik wird nicht angezeigt",
+  "AdminBlogEditor.goToLine": "Zu Zeile {line}",
   "AdminBlogEditor.preview": "Vorschau",
   "AdminBlogEditor.wordsRead": {
     "one": "{count} Wort · {minutes} Min. Lesezeit",
@@ -1597,6 +1635,8 @@ export default {
   "AdminShortcuts.addLink": "Link hinzufügen",
   "AdminShortcuts.searchList": "Diese Liste durchsuchen",
   "AdminShortcuts.savePost": "Beitrag speichern",
+  "AdminShortcuts.nextProblem": "Nächstes Problem im Beitrag",
+  "AdminShortcuts.previousProblem": "Vorheriges Problem im Beitrag",
   "AdminShortcuts.addItem": "Artikel hinzufügen",
   "AdminShortcuts.addCategory": "Kategorie hinzufügen",
   "AdminShortcuts.saveItem": "Artikel speichern",

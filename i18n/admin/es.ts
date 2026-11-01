@@ -482,6 +482,20 @@ export default {
     "other": "Publicar y enviar a {count}",
   },
   "AdminBlogDialogs.publish": "Publicar",
+  "AdminBlogDialogs.figuresHidden": {
+    "one": "1 figura no se mostrará",
+    "many": "{count} figuras no se mostrarán",
+    "other": "{count} figuras no se mostrarán",
+  },
+  "AdminBlogDialogs.figuresHiddenBody": "Los lectores verán la entrada sin ellas.",
+  "AdminBlogDialogs.goToProblems": "Ir a los problemas",
+  "AdminBlogDialogs.publishAnyway": "Publicar de todos modos",
+  "AdminBlogDialogs.scheduleAnyway": "Programar de todos modos",
+  "AdminBlogDialogs.publishAndEmailAnyway": {
+    "one": "Publicar y enviar a {count} de todos modos",
+    "many": "Publicar y enviar a {count} de todos modos",
+    "other": "Publicar y enviar a {count} de todos modos",
+  },
   "AdminBlogDialogs.scheduleTitle": "Programar «{title}»",
   "AdminBlogDialogs.publishTitle": "¿Publicar «{title}»?",
   "AdminBlogDialogs.when": "Cuándo",
@@ -566,6 +580,33 @@ export default {
   "AdminBlogEditor.write": "Escribir",
   "AdminBlogEditor.bodyLabel": "Entrada, en Markdown",
   "AdminBlogEditor.bodyHint": "Se escribe en Markdown.",
+  "AdminBlogEditor.bodyHintFigures":
+    "Se escribe en Markdown. Para añadir una figura interactiva, pon su etiqueta en una línea aparte: <code>{example}</code>",
+  "AdminBlogEditor.problemsTitle": {
+    "one": "1 problema en esta entrada",
+    "many": "{count} problemas en esta entrada",
+    "other": "{count} problemas en esta entrada",
+  },
+  "AdminBlogEditor.problemsLine":
+    "Los lectores no verán estas líneas. El resto de la entrada se muestra tal como está escrito.",
+  "AdminBlogEditor.problemsCount": {
+    "one": "1 problema",
+    "many": "{count} problemas",
+    "other": "{count} problemas",
+  },
+  "AdminBlogEditor.problemsNone": "No quedan problemas",
+  "AdminBlogEditor.problemLine": "Línea {line}",
+  "AdminBlogEditor.problemUnknown":
+    "No hay ningún componente llamado {tag}. ¿Quisiste decir {suggestion}?",
+  "AdminBlogEditor.problemUnknownNone":
+    "No hay ningún componente llamado {tag}. Disponibles: {names}.",
+  "AdminBlogEditor.problemProps": "{tag} no admite estas propiedades: <detail>{detail}</detail>",
+  "AdminBlogEditor.problemNested":
+    "{tag} está dentro de una lista o una cita. Muévelo a una línea aparte, fuera de ella.",
+  "AdminBlogEditor.problemSyntax":
+    "No se puede leer la etiqueta de {tag}: <detail>{detail}</detail>",
+  "AdminBlogEditor.figureHidden": "Esta figura no se mostrará",
+  "AdminBlogEditor.goToLine": "Ir a la línea {line}",
   "AdminBlogEditor.preview": "Vista previa",
   "AdminBlogEditor.wordsRead": {
     "one": "{count} palabra · {minutes} min de lectura",
@@ -1643,6 +1684,8 @@ export default {
   "AdminShortcuts.addLink": "Añadir enlace",
   "AdminShortcuts.searchList": "Buscar en esta lista",
   "AdminShortcuts.savePost": "Guardar la entrada",
+  "AdminShortcuts.nextProblem": "Siguiente problema de la entrada",
+  "AdminShortcuts.previousProblem": "Problema anterior de la entrada",
   "AdminShortcuts.addItem": "Añadir artículo",
   "AdminShortcuts.addCategory": "Añadir categoría",
   "AdminShortcuts.saveItem": "Guardar el artículo",
