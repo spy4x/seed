@@ -72,15 +72,13 @@ updates the demo in the same PR:
   survive the night goes into `KEPT_TABLES`, with the reason, and references no table the wipe
   empties: `TRUNCATE ... CASCADE` would empty it too.
 - **The blog survives the wipe.** `blog_posts` is in `KEPT_TABLES`, because the posts on the
-  product's website (seedsaas.com for the template) are real, not demo data, and the demo seeds no
-  posts. A post keeps its author's name in `author_name`, with no foreign key to `users`, so the
-  wipe never takes it along. The wipe empties the job table and the audit log, so the worker
-  queues a scheduled post's `blog.publish` job again after it (`queueDueBlogJobs`), and the
-  operators' audit rows about posts last a day. `deno task db:seed` in development adds the
-  sample posts: three in English and a translation of the published one into every other
-  language ([blog.md](blog.md)). A post's `language` and `translation_of` stay with it; a
-  subscriber's `language` is emptied with the rest, and the seeded subscribers have none, so their
-  mails use the main language.
+  product's website (seedsaas.com for the template) are real, not demo data. A post keeps its
+  author's name in `author_name`, with no foreign key to `users`, so the wipe never takes it
+  along. The wipe empties the job table and the audit log, so the worker queues a scheduled
+  post's `blog.publish` job again after it (`queueDueBlogJobs`), and the operators' audit rows
+  about posts last a day. A post's `language` and `translation_of` stay with it; a subscriber's
+  `language` is emptied with the rest, and the seeded subscribers have none, so their mails use
+  the main language. Seed's own posts come from files ([below](#seeds-own-blog-posts)).
 - **The contact links survive the wipe** for the same reason: `contact_links` holds the
   website's real contact channels, and the demo seeds none. `deno task db:seed` in development
   adds three sample links (`libs/server/contact-links/sample-links.ts`).
@@ -109,3 +107,28 @@ updates the demo in the same PR:
   every table but the kept ones empty, that the seed's counts match the fake data, what a new
   account's sample groups hold, and what the admin's dashboard, billing and newsletter read from
   the seed. Run it.
+
+## Seed's own blog posts
+
+seedsaas.com's posts are Markdown files in `libs/server/blog/seed-posts/`, one per post and
+language, named `<slug>.md`, with YAML front matter; the folder's `README.md` shows every field.
+They are reviewed in pull requests like code, and a product built on Seed deletes them
+([start-a-product.md](start-a-product.md)).
+
+- **Loaded only in demo mode.** The worker loads them at every start when `DEMO_MODE=true`
+  (`loadDemoBlogPosts` in `libs/server/blog/seed-posts.ts`), so a deploy brings their latest
+  version; with demo mode off it reads no file. `deno task db:seed` loads them too, in
+  development and in the demo. A broken file is logged and loads nothing; `deno task check`
+  refuses one first (`seed-posts.test.ts`).
+- **Matched by slug.** A missing post is created, one that differs from its file is changed to
+  match it as a new version, and one that matches is left alone, so loading twice writes nothing.
+  A post no file names stays. The file wins: an operator's edit to one of these posts in the
+  admin app is undone at the next start, and after "Change URL" on one the next start creates
+  the file's post again under its own slug.
+- **Dated by `publishAt`.** A date in the past publishes the post with that date; one in the
+  future schedules it, and the `blog.publish` job publishes it then.
+- **Mailed only when asked.** `newsletter: true` stores the `news` list, and the `blog.publish`
+  job emails the post once when it is live. `newsletter: false`, the default, stores no list and
+  sets `newsletter_sent_at`, so the post is never mailed, also when a list is added later.
+- **Translations** name their original's slug in `translationOf`, and are linked through
+  `translation_of`.

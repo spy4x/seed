@@ -1,43 +1,45 @@
 import { Hono } from "hono"
 import type { PublicBlogPost } from "@domain/blog"
 import { renderBlogBody } from "@server/blog/render.ts"
-import { SAMPLE_POSTS } from "@server/blog/sample-posts.ts"
+import { readSeedPosts } from "@server/blog/seed-posts.ts"
+import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
 import { createPublicBlogRoute } from "../../api/routes/blog.ts"
 
 /**
  * The public blog API for the Lighthouse run (run.sh), on the port given as the first argument:
- * the dev seed's published sample posts, through the API's own public routes, so `/blog` and a
- * post page are measured as `deno task db:seed` leaves them, without a database. Every other API
- * address answers 404, which the website reads as "no answer".
+ * Seed's own published posts, read from their files (libs/server/blog/seed-posts/), through the
+ * API's own public routes, so `/blog` and a post page are measured as the demo shows them, without
+ * a database. Every other API address answers 404, which the website reads as "no answer".
  */
-const DAY_MS = 86_400_000
-const now = Date.now()
-const published = SAMPLE_POSTS.filter(({ status }) => status === `published`)
+const now = new Date()
+const published = (await readSeedPosts(denoFileSystem)).filter((post) => post.publishAt <= now)
 const posts: PublicBlogPost[] = published
-  .map((sample) => {
-    const body = renderBlogBody(sample.bodyMd)
-    const original = sample.translationOf ?? sample.id
+  .map((seed) => {
+    const { fields } = seed
+    const body = renderBlogBody(fields.bodyMd)
+    const original = seed.translationOf ?? fields.slug
     return {
-      slug: sample.slug,
-      language: sample.language,
-      title: sample.title,
-      description: sample.description,
-      topic: sample.topic,
-      publishedAt: new Date(now + (sample.liveInDays ?? 0) * DAY_MS).toISOString(),
+      slug: fields.slug,
+      language: fields.language,
+      title: fields.title,
+      description: fields.description,
+      topic: fields.topic,
+      publishedAt: seed.publishAt.toISOString(),
       updatedAt: null,
       readingMinutes: body.readingMinutes,
-      seoTitle: null,
-      tldr: sample.tldr,
-      coverUrl: null,
-      coverAlt: null,
+      seoTitle: fields.seoTitle,
+      tldr: fields.tldr,
+      coverUrl: fields.coverUrl,
+      coverAlt: fields.coverAlt,
       html: body.html,
       headings: body.headings,
-      authorName: null,
+      authorName: seed.author,
       translations: published
         .filter((other) =>
-          other !== sample && (other.id === original || other.translationOf === original)
+          other !== seed &&
+          (other.fields.slug === original || other.translationOf === original)
         )
-        .map(({ language, slug }) => ({ language, slug })),
+        .map(({ fields: { language, slug } }) => ({ language, slug })),
     }
   })
 const summary = (
