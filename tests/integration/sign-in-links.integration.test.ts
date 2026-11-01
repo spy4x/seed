@@ -32,6 +32,7 @@ import { createOutboxProcessor } from "../../libs/server/jobs/wiring.ts"
 import { SIGN_IN_LINK_PATH } from "../../libs/server/auth/sign-in-links.ts"
 import { enqueueSignInLinkMail } from "../../libs/server/jobs/sign-in-link-mail.ts"
 import { readAdminUserParts } from "../../libs/server/auth/admin-users.ts"
+import { expectVersion7Ids } from "./ids.ts"
 import { applyMigrations } from "./migrations.ts"
 import { notified, sessionsOfRows, subscribeNewest } from "./push-rows.ts"
 
@@ -390,6 +391,8 @@ Deno.test("a link to a new address makes the account with the address proven, an
     `
     expect(owner.userId).toBe(userId)
     expect(await fixture.count("groups")).toBe(1)
+    // The request named no group, so the server made the id of the first one.
+    expectVersion7Ids(await fixture.sql<{ id: string }[]>`SELECT id FROM groups`)
     expect(await auditsOf(fixture.sql, userId)).toEqual([
       { eventType: AuthAuditEventType.SIGNED_UP, identifier: SIGN_IN_LINK_METHOD },
     ])

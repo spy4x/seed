@@ -17,6 +17,7 @@ import { SIGN_UP_MAX_GUESSES } from "../../libs/server/auth/sign-up-requests.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { expectVersion7Ids } from "./ids.ts"
 
 /**
  * Sign-up that proves the address first (#142), through the exact `createSignIn`, `AppDbBase` and
@@ -294,6 +295,8 @@ Deno.test("the right code for a free address creates the account, proven, and si
     `
     expect(owner.userId).toBe(answer.userId)
     expect(await fixture.count("groups")).toBe(1)
+    // The client named no group, so the server made the id of the first one.
+    expectVersion7Ids(await fixture.sql<{ id: string }[]>`SELECT id FROM groups`)
     const audits = await fixture.sql<{ eventType: number }[]>`
       SELECT event_type AS "eventType" FROM auth_audits WHERE user_id = ${answer.userId}
     `
@@ -305,6 +308,22 @@ Deno.test("the right code for a free address creates the account, proven, and si
         password: PASSWORD,
       })).text,
     )).toEqual({ ok: true })
+  })
+})
+
+Deno.test("an account with no group gets a Personal group with a version 7 id at its next sign-in", async () => {
+  await withFixture(async (fixture) => {
+    const userId = await existingAccount(fixture, "bob@example.com", true)
+    const person = browser(fixture.signIn)
+
+    await person.call("POST", "/sign-in", { login: "bob@example.com", password: OLD_PASSWORD })
+    expect((await person.call("GET", "/me")).status).toBe(200)
+
+    const groups = await fixture.sql<{ id: string; name: string }[]>`
+      SELECT id, name FROM groups WHERE owner_user_id = ${userId}
+    `
+    expect(groups.map((group) => group.name)).toEqual(["Personal"])
+    expectVersion7Ids(groups)
   })
 })
 
