@@ -3,10 +3,10 @@
  * Seeds a database with the demo's population (docs/demo.md): fake people with months of history,
  * groups, tags, notes, invitations, subscriptions and the newsletter. In development (`ENV=dev`) it
  * also adds `admin@example.com`, an administrator who signs in to the admin app with
- * `SEED_PASSWORD` and no second factor, with what an operator did and a finished backup, and three
- * blog posts by them: a draft, a scheduled one and a published one (`SAMPLE_POSTS`). The public
- * demo's worker runs the same seed after its nightly wipe, without the administrator and the
- * posts.
+ * `SEED_PASSWORD` and no second factor, with what an operator did and a finished backup. Both in
+ * development and with `DEMO_MODE=true` it loads Seed's own blog posts from their files
+ * (`libs/server/blog/seed-posts/`). The public demo's worker runs the same seed after its nightly
+ * wipe, without the administrator, and loads the posts at every start.
  *
  * Usage, after `deno task db:migrate`, with the same `DB_*` values:
  * `ENV=dev DB_HOST=127.0.0.1 DB_PORT=5432 DB_USER=… DB_PASS=… DB_NAME=… AUTH_PEPPER=…
@@ -28,7 +28,8 @@ import postgres from "postgres"
 import { createSqlFromEnv } from "@spy4x/server/db"
 import { readSubscribersSetup } from "@server/subscribers/subscribers.ts"
 import { DEV_ADMIN_EMAIL } from "@server/auth/demo-accounts.ts"
-import { seedSamplePosts } from "@server/blog/sample-posts.ts"
+import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
+import { readSeedPosts, upsertSeedPosts } from "@server/blog/seed-posts.ts"
 import { seedSampleContactLinks } from "@server/contact-links/sample-links.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { readSeedOptions, type SeedOptions } from "../../apps/worker/demo/options.ts"
@@ -64,13 +65,9 @@ async function main(): Promise<void> {
       dataSeed: DEV_DATA_SEED,
       subscribers,
     })
-    if (dev) {
-      const [key] = await sql<{ userId: number }[]>`
-        SELECT user_id FROM auth_keys WHERE method = 'password' AND subject = ${DEV_ADMIN_EMAIL}
-      `
-      if (key) await seedSamplePosts(sql, key.userId)
-      await seedSampleContactLinks(sql)
-    }
+    // Seed's own posts: the seed runs only in development or the demo (`readSeedOptions`).
+    await upsertSeedPosts(sql, await readSeedPosts(denoFileSystem))
+    if (dev) await seedSampleContactLinks(sql)
     const admin = dev ? `"${DEV_ADMIN_EMAIL}" is ready. ` : ``
     console.log(`✅ ${admin}${created ? `Seeded the fake data.` : `The fake data exists already.`}`)
   } catch (error) {

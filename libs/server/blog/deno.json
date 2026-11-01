@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "check": "deno check postgres-blog-repository.ts public-blog.ts blog-publish-job.ts render.ts sample-posts.ts",
-    "test": "deno test render.test.ts"
+    "check": "deno check postgres-blog-repository.ts public-blog.ts blog-publish-job.ts render.ts seed-posts.ts",
+    "test": "deno test --allow-read=seed-posts render.test.ts seed-posts.test.ts"
   }
 }
