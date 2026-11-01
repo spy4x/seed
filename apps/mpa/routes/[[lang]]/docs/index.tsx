@@ -70,7 +70,7 @@ export default define.page(function DocsIndex({ state }) {
         ],
       }}
     >
-      <div class="mx-auto flex w-full max-w-5xl flex-col gap-12 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+      <div class="mx-auto flex w-full max-w-7xl flex-col gap-12 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         {language !== DEFAULT_LANGUAGE && (
           <p class="text-sm text-muted" data-e2e="english-only">{t.t(`LegalPage.englishOnly`)}</p>
         )}
