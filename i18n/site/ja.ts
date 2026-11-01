@@ -589,6 +589,7 @@ export default {
   "Features.compare": "Seedとほかのスターターの比較",
   "FeaturesFaq.title": "Seedでこんなことはできる？",
   "FeatureSection.issue": "issue #{number}",
+  "FeatureSection.readMore": "{feature}の詳細",
   "FeatureVisuals.window1": "ウィンドウ1",
   "FeatureVisuals.window2": "ウィンドウ2",
   "FeatureVisuals.realtimeA":

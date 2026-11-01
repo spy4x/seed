@@ -630,6 +630,7 @@ export default {
   "Features.compare": "Seed face aux autres",
   "FeaturesFaq.title": "Seed sait-il faire ça ?",
   "FeatureSection.issue": "issue n° {number}",
+  "FeatureSection.readMore": "En savoir plus sur {feature}",
   "FeatureVisuals.window1": "Fenêtre 1",
   "FeatureVisuals.window2": "Fenêtre 2",
   "FeatureVisuals.realtimeA":

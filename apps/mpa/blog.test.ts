@@ -186,7 +186,9 @@ function textOf(html: string): string {
   return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")
 }
 
-const header = (html: string) => html.match(/<header[\s\S]*?<\/header>/)?.[0] ?? ``
+/** The site header without its language menu, whose links open this page in other languages. */
+const header = (html: string) =>
+  (html.match(/<header[\s\S]*?<\/header>/)?.[0] ?? ``).replace(/<a [^>]*hreflang=[^>]*>/g, ``)
 const footer = (html: string) => html.match(/<footer[\s\S]*?<\/footer>/)?.[0] ?? ``
 
 describe("the blog index", () => {

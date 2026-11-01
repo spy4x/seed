@@ -549,6 +549,7 @@ export default {
   "Features.compare": "Seed 与其他方案的对比",
   "FeaturesFaq.title": "Seed 能做到吗？",
   "FeatureSection.issue": "issue #{number}",
+  "FeatureSection.readMore": "了解更多：{feature}",
   "FeatureVisuals.window1": "窗口 1",
   "FeatureVisuals.window2": "窗口 2",
   "FeatureVisuals.realtimeA":
