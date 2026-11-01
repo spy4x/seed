@@ -118,6 +118,15 @@ describe("the feature pages", () => {
     }
   })
 
+  it("keeps the code link's arrow on the line of the path's last part", async () => {
+    for (const page of FEATURE_PAGES) {
+      const { html } = await get(`/features/${page.slug}`)
+      const link = html.match(/data-e2e="feature-page-code"[\s\S]*?<\/a>/)?.[0] ?? ``
+
+      expect(link, page.slug).toMatch(/<span class="whitespace-nowrap">[^/<\s]+\/?<svg[^>]*>/)
+    }
+  })
+
   it("sends another language's address to the English page, the only one there is", async () => {
     expect(await get(`/de/features/sign-in`)).toMatchObject({
       status: 301,

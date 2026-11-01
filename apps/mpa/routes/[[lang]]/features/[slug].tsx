@@ -128,6 +128,23 @@ function codePath(href: string): string {
   return href.replace(`${REPOSITORY_URL}/`, ``).replace(/^(blob|tree)\/main\//, ``)
 }
 
+/**
+ * A repository path with the outward arrow after it. The path's last part and the arrow share a
+ * span that never breaks, so on a narrow screen the arrow never sits on a line of its own.
+ */
+function CodePath({ path }: { path: string }) {
+  const cut = path.replace(/\/$/, ``).lastIndexOf(`/`) + 1
+  return (
+    <code dir="ltr" class="font-mono text-sm">
+      {path.slice(0, cut)}
+      <span class="whitespace-nowrap">
+        {path.slice(cut)}
+        <IconArrowUpRight class="ms-1 inline size-4 align-[-0.125em]" aria-hidden="true" />
+      </span>
+    </code>
+  )
+}
+
 const HEADING =
   `scroll-mt-16 text-2xl font-semibold tracking-tight text-balance break-words hyphens-auto`
 
@@ -228,14 +245,7 @@ function FeaturePageBody({ page, demo }: { page: FeaturePage; demo: string }): J
                   data-umami-event="read-code"
                   data-umami-event-from={`page-${page.slug}`}
                 >
-                  Read the code:{" "}
-                  <code dir="ltr" class="font-mono text-sm">
-                    {codePath(page.code ?? feature.code.href)}
-                  </code>
-                  <IconArrowUpRight
-                    class="ms-1 inline size-4 align-[-0.125em]"
-                    aria-hidden="true"
-                  />
+                  Read the code: <CodePath path={codePath(page.code ?? feature.code.href)} />
                 </a>
               </div>
             </Section>
