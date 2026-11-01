@@ -524,7 +524,7 @@ export default {
   "FeatureTierRuntime.nav": "Laufzeit-Plan",
   "FeatureTierRuntime.title": "Läuft heute auf Deno",
   "FeatureTierRuntime.lead":
-    "Seed läuft heute auf Deno und soll künftig unverändert auf Deno, Node und Bun laufen; ein Datum gibt es noch nicht. Der Code baut auf Webstandards auf (fetch, Request, Web Crypto, WebSocket, ES-Module), deshalb hängt das meiste davon nicht von der Laufzeit ab. Im Oktober 2026 hat das Deno-Team noch ein Jahr Support mit monatlichen Bugfix- und Sicherheits-Releases <announced>angekündigt</announced>; danach beendet es die eigene Entwicklung. Deno bleibt Open Source.",
+    "Seed läuft heute auf Deno und soll künftig unverändert auf Deno, Node und Bun laufen; ein Datum gibt es noch nicht. Der Code baut auf Webstandards auf (fetch, Request, Web Crypto, WebSocket, ES-Module), deshalb hängt das meiste davon nicht von der Laufzeit ab. Im Oktober 2026 haben die Macher von Deno noch ein Jahr Support mit monatlichen Bugfix- und Sicherheits-Releases <announced>angekündigt</announced>; danach beendet es die eigene Entwicklung. Deno bleibt Open Source.",
   "FeatureTierRuntime.wip": "In Arbeit",
   "FeatureTierRuntime.wipRuntimes": "<name>Node</name> und <name>Bun</name>",
   "FeatureTierRuntime.follow": "Den Plan auf GitHub verfolgen (Issue #623)",
