@@ -4,8 +4,11 @@ import type postgres from "postgres"
  * The tables the nightly wipe keeps: the migration history, so the schema is not migrated again,
  * the backup service's last good backup (`infra/backup/backup.sh`), which is about the server,
  * not the demo, the blog's posts and the contact links, which are the product's website's own,
- * not demo data, and the queue of stored files to delete, which the wipe fills with every attachment's
- * object and profile picture so the nightly clean-up empties the file store too. Every other table in the schema is emptied, a new one included, so a table added later
+ * not demo data, the newsletter's subscribers, the replay guard of those who left and the send
+ * log, because the website's sign-up is real too (the seed replaces only its own fake rows on
+ * domains reserved for examples), and the queue of stored files to delete, which the wipe fills
+ * with every attachment's object and profile picture so the nightly clean-up empties the file
+ * store too. Every other table in the schema is emptied, a new one included, so a table added later
  * needs no change here unless it must survive the wipe (docs/demo.md). A kept table must not
  * reference an emptied one: `TRUNCATE ... CASCADE` would empty it too.
  */
@@ -14,6 +17,9 @@ export const KEPT_TABLES: readonly string[] = [
   `backup_status`,
   `blog_posts`,
   `contact_links`,
+  `subscribers`,
+  `subscriber_unsubscribes`,
+  `subscriber_sends`,
   `file_deletions`,
 ]
 
