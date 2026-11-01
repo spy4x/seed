@@ -86,6 +86,11 @@ export interface OfflineLayer {
   notices: Signal<readonly Message[]>
   /** Sends the queue on start, reconnect, visibility and focus, retrying with backoff. */
   runner: SyncRunner
+  /**
+   * Resolves once the queue an earlier visit left has been read, so `entries` and `tagEntries` hold
+   * it. Until then they are empty. It never rejects: a queue that could not be read stays empty.
+   */
+  loaded: Promise<void>
 }
 
 /** The name of a user's read-copy database. */
@@ -228,6 +233,12 @@ export function startOffline(
   notes.outbox.subscribe((all) => entries.value = all)
   tags.outbox.subscribe((all) => tagEntries.value = all)
   const runner = createSyncRunner({ flush: collections.syncFlush })
+  // The queue is read first, so the runner's first flush sends what an earlier visit left. A
+  // layer that was stopped meanwhile (the person signed out) does not start its runner: nothing
+  // would stop it again.
+  const loaded = collections.reload().then(() => {
+    if (layer === started) runner.start()
+  }, () => {})
   const started: OfflineLayer = {
     userId,
     reads: storage.openReads(userId),
@@ -241,15 +252,10 @@ export function startOffline(
     tagEntries,
     notices,
     runner,
+    loaded,
   }
   layer = started
   activeLayer.value = started
-  // The queue is read first, so the runner's first flush sends what an earlier visit left. A
-  // layer that was stopped meanwhile (the person signed out) does not start its runner: nothing
-  // would stop it again.
-  void collections.reload().then(() => {
-    if (layer === started) runner.start()
-  }, () => {})
   // Ask the browser not to evict the device copy and the queue; Safari clears idle sites.
   void requestPersistentStorage().catch(() => {})
   return started

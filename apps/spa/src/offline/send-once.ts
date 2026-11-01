@@ -1,3 +1,4 @@
+import type { CallPort } from "@spy4x/realtime/calls"
 import { createCollections } from "@spy4x/realtime/collections"
 import { createMemoryOutboxStore, type OutboxStore } from "@spy4x/realtime/outbox"
 import type { NoteItem } from "../state/notes.ts"
@@ -55,29 +56,39 @@ export interface SendOnceOptions {
   databases?: QueueDatabases
 }
 
-/**
- * With the local-data module switched off (`SPA_OFFLINE=false`), sends the queue an earlier visit
- * left on the device, once, then deletes it: nothing is kept on a device the module is off for.
- *
- * Nothing is opened on a device without a queue. A write that cannot reach the server keeps the
- * whole queue for the next try (the next start, or the browser coming back online). A write the
- * server refuses cannot be resolved without the conflict screen, which is off with the module, so
- * it is dropped and named in the result for the app to say so.
- */
-export async function sendQueueOnce(
-  { userId, transport, storage = {}, databases = browserDatabases }: SendOnceOptions,
-): Promise<SendOnceResult> {
+/** Where a user's queue lies on the device, and which of its two databases exist. */
+interface FoundQueue {
+  notesName: string
+  tagsName: string
+  hasNotes: boolean
+  hasTags: boolean
+}
+
+/** Lists the device's databases; `undefined` where the browser cannot list them. */
+async function findQueue(
+  userId: number,
+  databases: QueueDatabases,
+): Promise<FoundQueue | undefined> {
   const notesName = `${databasePrefix(userId)}:outbox`
   const tagsName = tagsQueueDatabase(userId)
   const names = await databases.list()
-  // A browser that cannot list its databases cannot tell without creating one; it keeps the queue.
-  if (!names) return { done: false, refused: [] }
-  const hasNotes = names.includes(notesName)
-  const hasTags = names.includes(tagsName)
-  if (!hasNotes && !hasTags) return { done: true, refused: [] }
-  if (!transport.canSend()) return { done: false, refused: [] }
+  if (!names) return undefined
+  return {
+    notesName,
+    tagsName,
+    hasNotes: names.includes(notesName),
+    hasTags: names.includes(tagsName),
+  }
+}
 
-  // The queue that is absent stays in memory, so no database is created for it.
+/** The queue of `userId` outside a layer, over memory caches. */
+function openQueue(
+  userId: number,
+  transport: OfflineTransport,
+  storage: Pick<OfflineStorage, "openQueue" | "openTagsQueue">,
+  { hasNotes, hasTags }: FoundQueue,
+) {
+  // The absent queue stays in memory, so no database is created for it.
   const tagsStore: OutboxStore<TagPayload, TagItem> | undefined = hasTags
     ? storage.openTagsQueue?.(userId)
     : createMemoryOutboxStore()
@@ -100,8 +111,54 @@ export async function sendQueueOnce(
     canSend: () => transport.canSend(),
     lock: withBrowserLock(userId),
   })
-  const tags = collections.get(tagsDefinition)
-  const notes = collections.get(notesDefinition)
+  return {
+    collections,
+    tags: collections.get(tagsDefinition),
+    notes: collections.get(notesDefinition),
+  }
+}
+
+/** Options of {@link countQueueOnce}. */
+export type CountOnceOptions = Omit<SendOnceOptions, "transport">
+
+/**
+ * How many writes the queue of `userId` on the device holds, read without a layer: for a sign-out
+ * while none is open (the module is off, or the layer waits for a deletion the device owes).
+ * Nothing is opened on a device without a queue, and a browser that cannot list its databases
+ * counts none.
+ */
+export async function countQueueOnce(
+  { userId, storage = {}, databases = browserDatabases }: CountOnceOptions,
+): Promise<number> {
+  const found = await findQueue(userId, databases)
+  if (!found || (!found.hasNotes && !found.hasTags)) return 0
+  // Counting sends nothing.
+  const transport: OfflineTransport = { calls: {} as CallPort, canSend: () => false }
+  const { collections, tags, notes } = openQueue(userId, transport, storage, found)
+  await collections.reload()
+  return tags.outbox.entries().length + notes.outbox.entries().length
+}
+
+/**
+ * With the local-data module switched off (`SPA_OFFLINE=false`), sends the queue an earlier visit
+ * left on the device, once, then deletes it: nothing is kept on a device the module is off for.
+ *
+ * Nothing is opened on a device without a queue. A write that cannot reach the server keeps the
+ * whole queue for the next try (the next start, or the browser coming back online). A write the
+ * server refuses cannot be resolved without the conflict screen, which is off with the module, so
+ * it is dropped and named in the result for the app to say so.
+ */
+export async function sendQueueOnce(
+  { userId, transport, storage = {}, databases = browserDatabases }: SendOnceOptions,
+): Promise<SendOnceResult> {
+  const found = await findQueue(userId, databases)
+  // A browser that cannot list its databases cannot tell without creating one; it keeps the queue.
+  if (!found) return { done: false, refused: [] }
+  const { notesName, tagsName, hasNotes, hasTags } = found
+  if (!hasNotes && !hasTags) return { done: true, refused: [] }
+  if (!transport.canSend()) return { done: false, refused: [] }
+
+  const { collections, tags, notes } = openQueue(userId, transport, storage, found)
   await collections.reload()
   try {
     await collections.flush()

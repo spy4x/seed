@@ -374,13 +374,17 @@ offline. We'll send your changes when you're back online, then sign you out." (t
 "Waiting…"), or "Couldn't reach the server. Trying again…" while the sync runner backs off. Once the
 queue is empty, the sign-out goes on by itself. A write the server refused never sends by itself, so
 it is counted apart; once only such writes are left, the button becomes "Review changes", which
-closes the dialog and opens the notes page of their group, where the chooser is. "Sign out anyway"
-signs out at once and deletes the queue with everything else; "Cancel", Escape and the backdrop keep
-the person signed in. With an empty queue, or the module off, sign-out is immediate, as before. The
-check is `watchUnsentChanges` in `modules.ts` (the counts and the wait are `offline/unsent.ts`);
-`views/AppShell.tsx` asks it and `views/UnsentSignOut.tsx` draws the dialog. The two-factor step's
-sign-out, a sign-out by the server (401) and "sign out other devices" never ask: no queue is open
-there, or it is not this device that signs out.
+closes the dialog and opens the notes page of their group, where the chooser is.
+"Sign out anyway" signs out at once and deletes the queue with everything else; "Cancel", Escape and
+the backdrop keep the person signed in. With an empty queue, sign-out is immediate, as before. A
+sign-out right after start waits for the layer to read the queue first. With no layer open for the
+person (the module is off, or the layer waits for a deletion the device owes, or the device refused
+it), the queue is counted from IndexedDB and the same question is asked; "Send, then sign out" then
+sends it as a start with the module off does, and a write the server refuses is dropped, since
+there is no chooser. The check is `watchUnsentChanges` in `modules.ts` (the counts and the wait are
+`offline/unsent.ts`); `views/AppShell.tsx` asks it and `views/UnsentSignOut.tsx` draws the dialog.
+The two-factor step's sign-out, a sign-out by the server (401) and "sign out other devices" never
+ask: no queue is open there, or it is not this device that signs out.
 
 ## What is not offline
 
