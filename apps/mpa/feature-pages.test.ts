@@ -112,6 +112,12 @@ describe("the feature pages", () => {
     expect(await get(`/de/features/admin`)).toMatchObject({ status: 301, location: `/de/admin` })
   })
 
+  it("answers a slug that names a property every object has with a 404, not a crash", async () => {
+    for (const slug of [`constructor`, `toString`, `__proto__`, `hasOwnProperty`]) {
+      expect((await get(`/features/${slug}`)).status, slug).toBe(404)
+    }
+  })
+
   it("sends another language's address to the English page, the only one there is", async () => {
     expect(await get(`/de/features/sign-in`)).toMatchObject({
       status: 301,

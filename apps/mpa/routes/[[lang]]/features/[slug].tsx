@@ -46,17 +46,18 @@ export const FEATURE_NOT_FOUND = {
 } as const
 
 /** The section of `/features` that has a page elsewhere: the admin panel's is `/admin`. */
-const MOVED: Readonly<Record<string, string>> = { admin: `/admin` }
+const MOVED: ReadonlyMap<string, string> = new Map([[`admin`, `/admin`]])
 
 /**
  * One feature's page, built from {@link FEATURE_PAGES} and the feature of the same id that
- * `/features` draws. `/features/admin` answers 301 to `/admin`; another language's address answers
- * 301 to the English page, the only one there is; an unknown slug answers 404.
+ * `/features` draws. `/de/features/admin` answers 301 to `/de/admin` (`/features/admin` never gets
+ * here: `routes/features/admin.ts` answers it); another language's address answers 301 to the
+ * English page, the only one there is; an unknown slug, `constructor` too, answers 404.
  */
 export const handler = define.handlers({
   GET(ctx) {
     const slug = ctx.params.slug ?? ``
-    const moved = MOVED[slug]
+    const moved = MOVED.get(slug)
     if (moved) return ctx.redirect(localePath(ctx.state.language, moved), 301)
     const page = featurePage(slug)
     if (!page) return renderNotFound(ctx)
