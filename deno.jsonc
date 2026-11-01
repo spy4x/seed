@@ -198,7 +198,7 @@
     "@spy4x/server": "jsr:@spy4x/server@1.101.1",
     "@spy4x/realtime": "jsr:@spy4x/realtime@1.101.1",
     "@spy4x/integrations": "jsr:@spy4x/integrations@1.101.1",
-    "@spy4x/email": "jsr:@spy4x/email@1.101.1",
+    "@spy4x/email": "jsr:@spy4x/email@1.106.0",
     "@spy4x/net": "jsr:@spy4x/net@1.101.1",
     "@spy4x/billing": "jsr:@spy4x/billing@1.101.1",
     "@spy4x/time": "jsr:@spy4x/time@1.101.1",

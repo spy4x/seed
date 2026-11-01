@@ -7,7 +7,8 @@ import {
   createPostgresSendLog,
   createPostgresSubscriberStore,
 } from "@spy4x/server/subscribers/postgres"
-import { isExampleAddress, isSubscriberList, type SubscriberList } from "@domain/subscribers"
+import { isSubscriberList, type SubscriberList } from "@domain/subscribers"
+import { isExampleAddress } from "@spy4x/email/address"
 import { DEFAULT_LANGUAGE, isLanguage, type Language, sitePath } from "@domain/identity"
 import {
   createListCrypto,
