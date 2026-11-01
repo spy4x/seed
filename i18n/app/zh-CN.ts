@@ -153,7 +153,7 @@ export default {
     "other": "{count} 位成员",
   },
   "GroupEditor.memberCountLink": {
-    "other": "{count} 位成员：查看套餐和账单",
+    "other": "{count} 位成员：打开「账单」标签页",
   },
   "GroupEditor.tabGeneral": "常规",
   "GroupEditor.tabMembers": "成员",
@@ -618,7 +618,7 @@ export default {
   "PlanRefusalNotice.rolesTitle": "提升成员角色需要付费套餐",
   "PlanRefusalNotice.rolesText":
     "在这个群组的套餐下，你可以降低成员的角色或移除成员，但不能提升角色。",
-  "PlanRefusalNotice.openBilling": "打开账单",
+  "PlanRefusalNotice.openBilling": "打开「账单」标签页",
   "PlanRefusalNotice.askOwner": "请让群组所有者升级套餐。",
   "GuestProfile.accountType": "账号类型",
   "GuestProfile.guestAccount": "访客账号，只有这个浏览器能打开。",

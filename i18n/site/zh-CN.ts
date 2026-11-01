@@ -171,7 +171,7 @@ export default {
   "HomeHero.lead":
     "Seed 是一个免费、MIT 许可的 SaaS 启动模板，内置登录和双重验证（2FA）、带角色的群组、按成员计费的 Stripe 订阅、实时同步、离线应用和管理后台。用 Docker Compose 部署到你租用的一台 Linux 服务器上即可。",
   "HomeHero.github": "在 GitHub 上查看",
-  "HomeHero.status": "Seed 现在就能用，并且在公开开发中：<status>看看目前有哪些功能可用</status>。",
+  "HomeHero.status": "Seed 现在就能用，并且在公开开发中：<status>看看有哪些功能可用</status>。",
   "HomeHero.quickStart": "快速开始",
   "HomeHero.initNote":
     "<code>init</code> 会生成 <code>infra/envs/.env</code>，并填好所有密钥。也可以直接让你的 AI 编程助手来做：<prompt></prompt>。",
@@ -513,8 +513,12 @@ export default {
   "FeatureQuality.nav": "测试",
   "FeatureQuality.eyebrow": "质量",
   "FeatureQuality.title": "该测的地方都测了",
-  "FeatureQuality.lead":
-    "统计于{date}：应用有 34 个浏览器测试套件，另有单元测试和界面测试，全部在 CI 中运行。每项更改在合并之前都要经过 pull request 和代码审查。",
+  "FeatureQuality.lead": {
+    "other":
+      "应用有 {count} 个浏览器测试套件，另有单元测试和界面测试，全部在 CI 中运行。每项更改在合并之前都要经过 pull request 和代码审查。",
+  },
+  "FeatureQuality.leadUncounted":
+    "应用有浏览器测试套件，另有单元测试和界面测试，全部在 CI 中运行。每项更改在合并之前都要经过 pull request 和代码审查。",
   "FeatureQuality.fact1": "使用 Playwright 的浏览器测试，直接针对真实的 API 和数据库",
   "FeatureQuality.fact2": "单元测试和界面测试就放在被测代码旁边",
   "FeatureQuality.fact3": "针对 Postgres 的集成测试",
@@ -536,7 +540,7 @@ export default {
   "FeatureTeams.alt":
     "一个群组的活动日志：谁在什么时候添加了哪条笔记或哪个标签，每条笔记都有打开链接。",
   "FeatureBilling.alt":
-    "一个示例群组的套餐与账单标签页，按演示用的示例价格显示：Pro 套餐及其续订日期，每月 €36.00，共 4 位成员，每人 €9.00，含所有者，还有更换银行卡、查看发票和取消套餐的按钮。",
+    "一个示例群组的「账单」标签页，按演示用的示例价格显示：Pro 套餐及其续订日期，每月 €36.00，共 4 位成员，每人 €9.00，含所有者，还有更换银行卡、查看发票和取消套餐的按钮。",
   "FeaturePush.alt":
     "通知页面：三条未读通知，分别关于新的群组所有者、角色变更和一份邀请，点击每一行都会打开相关内容。",
   "FeatureBilling.catalog": "套餐保存在一个目录文件中，<pricing>价格页</pricing>直接读取它",
