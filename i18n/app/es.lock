@@ -953,6 +953,7 @@ OfflineStatus.tagGone	ec1577590a664c38
 OfflineStatus.tagNoName	57b19efaf42d56b7
 OfflineStatus.tagTakenOff	3c14230034c3569b
 OfflineStatus.theirs	83c3a8628e432740
+OfflineStatus.theirsUnknown	066cac0eb961d3c6
 OfflineStatus.untitledNote	e93736573a33ef40
 OfflineStatus.useServers	7cf081c8a3499410
 OfflineStatus.youDeletedNote	4de5dd4f6d9d7595

@@ -180,6 +180,11 @@ the notes screen shows both sides:
 | The note was moved to another group | The same as deleted: the old group has no such note, so the entry is a "gone" conflict whose message says "deleted, or moved". |
 | The server refused the write (role) | **Discard mine**.                                            |
 
+The server's side shows the server's copy of a changed note or tag, which the queue reads when the
+server answers with a version conflict. A deleted one reads "The note is no longer in this group."
+(or the tag). Any other conflict without a copy, such as a refused write, reads "The server's
+version isn't available.", so it never claims the item is gone (#613).
+
 **Moving notes is never queued.** A move names two groups and needs edit rights in both, which the
 device cannot know, so it is sent only while the server can be reached; offline, the person sees
 "Moving notes needs a connection". A write queued for a note that someone moves meanwhile does

@@ -261,6 +261,47 @@ describe("OfflineStatus", () => {
     )
   })
 
+  /** A queued edit of the note Plan that the server did not take, for `conflict`. */
+  function noteConflict(conflict: { reason: "version" | "gone" | "rejected"; message: string }) {
+    return {
+      key: "note-key",
+      entityId: "n-1",
+      kind: "update" as const,
+      baseVersion: 1,
+      payload: { groupId: "g-1", title: "Plan", body: "" },
+      attempted: true,
+      status: "conflict" as const,
+      queuedAt: "2026-10-01T08:00:00.000Z",
+      conflict: { ...conflict, server: null },
+    }
+  }
+
+  it("says the server's version is unknown, not that the note is gone, for a refused edit", async () => {
+    const storage = createMemoryStorage()
+    await storage.of(7).queue.putEntry(
+      noteConflict({ reason: "rejected", message: "Your role no longer allows edits." }),
+    )
+
+    await mountStrip(storage)
+
+    expect(root!.querySelector("[data-e2e=conflict-theirs]")?.textContent).toBe(
+      "The server's version isn't available.",
+    )
+  })
+
+  it("says the note is no longer in this group when the server deleted it", async () => {
+    const storage = createMemoryStorage()
+    await storage.of(7).queue.putEntry(
+      noteConflict({ reason: "gone", message: "NoteSync.gone" }),
+    )
+
+    await mountStrip(storage)
+
+    expect(root!.querySelector("[data-e2e=conflict-theirs]")?.textContent).toBe(
+      "The note is no longer in this group.",
+    )
+  })
+
   it("says in the person's language that a tag was taken off notes, and dismisses it", async () => {
     const layer = await mountStrip(createMemoryStorage(), RU)
 

@@ -1226,6 +1226,7 @@ export default {
       "Não foi possível salvar uma etiqueta que você criou offline, então nós a tiramos de {count} notas. As notas foram salvas sem ela.",
   },
   "OfflineStatus.theirs": "Versão do servidor",
+  "OfflineStatus.theirsUnknown": "A versão do servidor não está disponível.",
   "OfflineStatus.untitledNote": "Nota sem título",
   "OfflineStatus.useServers": "Usar a do servidor",
   "OfflineStatus.youDeletedNote": "Você excluiu esta nota.",
