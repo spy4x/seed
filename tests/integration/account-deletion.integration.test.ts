@@ -244,14 +244,17 @@ async function rowsPointingAt(sql: postgres.Sql, userId: number): Promise<Record
   return counts
 }
 
-/** Waits until some other connection is stuck behind a lock that backend `pid` holds. */
-async function waitUntilBlockedBy(sql: postgres.Sql, pid: number): Promise<void> {
+/**
+ * Waits until some other connection is stuck behind a lock that backend `pid` holds, and answers
+ * that connection's backend.
+ */
+async function waitUntilBlockedBy(sql: postgres.Sql, pid: number): Promise<number> {
   const deadline = Date.now() + 10_000
   while (Date.now() < deadline) {
-    const [row] = await sql<{ waiting: number }[]>`
-      SELECT count(*)::int AS waiting FROM pg_stat_activity WHERE ${pid} = ANY(pg_blocking_pids(pid))
+    const [row] = await sql<{ pid: number }[]>`
+      SELECT pid FROM pg_stat_activity WHERE ${pid} = ANY(pg_blocking_pids(pid)) LIMIT 1
     `
-    if (row.waiting > 0) return
+    if (row) return row.pid
     await new Promise((resolve) => setTimeout(resolve, 50))
   }
   throw new Error(`nothing waited for backend ${pid} within 10 s`)
@@ -773,23 +776,55 @@ Deno.test("deleting one's own account", async (t) => {
         const ada = await signUp(app, "ada")
         await requestDeletion(app, sql, ada)
         const id = await makeDue(sql, ada.id)
+        const issued = (await issuePasswordReset(app.db.authStore, "ada@example.com"))!
+        let resetting: Promise<Response> | null = null
+        let deleting: Promise<HardDeleteOutcome | Error> | null = null
 
-        // A reset's order (`resetPassword`): the password key, then the restore, which removes the
-        // request and updates the user's row, then the lock on the user's row.
-        const result = await restoreBesideDelete(
-          sql,
-          id,
-          (tx) => tx.lockPasswordKey({ userId: ada.id }),
-          async (tx) => {
-            expect(await tx.accountDeletion.cancel(ada.id)).toBe(true)
-            await tx.user.undeleteOne({ id: ada.id })
-            await tx.lockUser(ada.id)
-          },
-        )
+        await sql.begin(async (tx) => {
+          // Holding the reset code stops the real reset right after its first lock, the key.
+          await tx`SELECT 1 FROM auth_challenges WHERE subject = ${issued.email} FOR UPDATE`
+          const [{ pid }] = await tx<{ pid: number }[]>`SELECT pg_backend_pid() AS pid`
+          resetting = Promise.resolve(app.request("/reset", {
+            body: { email: issued.email, code: issued.code, password: PASSWORD },
+          }))
+          const resetPid = await waitUntilBlockedBy(sql, pid)
+          deleting = hardDeleteAccount(sql, id).catch((error: Error) => error)
+          await waitUntilBlockedBy(sql, resetPid)
+        })
 
-        expect(result).toEqual({ restore: "restored", delete: HardDeleteOutcome.NothingDue })
+        // A deadlock would fail the reset with a 500 or the delete with an error.
+        expect((await resetting!).status).toBe(200)
+        expect(await deleting!).toBe(HardDeleteOutcome.NothingDue)
         expect(await sql`SELECT 1 FROM users WHERE id = ${ada.id} AND deleted_at IS NULL`)
           .toHaveLength(1)
+      },
+    )
+
+    await t.step(
+      "a password reset while the delete for good holds its locks waits, then finds no account",
+      async () => {
+        const joy = await signUp(app, "joy")
+        await requestDeletion(app, sql, joy)
+        const id = await makeDue(sql, joy.id)
+        const issued = (await issuePasswordReset(app.db.authStore, "joy@example.com"))!
+        let resetting: Promise<Response> | null = null
+        let deleting: Promise<HardDeleteOutcome | Error> | null = null
+
+        await sql.begin(async (tx) => {
+          // Holding the user's row stops the delete after the key and the request, its first two.
+          await tx`SELECT 1 FROM users WHERE id = ${joy.id} FOR UPDATE`
+          const [{ pid }] = await tx<{ pid: number }[]>`SELECT pg_backend_pid() AS pid`
+          deleting = hardDeleteAccount(sql, id).catch((error: Error) => error)
+          const deletePid = await waitUntilBlockedBy(sql, pid)
+          resetting = Promise.resolve(app.request("/reset", {
+            body: { email: issued.email, code: issued.code, password: PASSWORD },
+          }))
+          await waitUntilBlockedBy(sql, deletePid)
+        })
+
+        expect(await deleting!).toBe(HardDeleteOutcome.Deleted)
+        expect((await resetting!).status).toBe(401)
+        expect(await sql`SELECT 1 FROM auth_users WHERE id = ${joy.id}`).toEqual([])
       },
     )
 
