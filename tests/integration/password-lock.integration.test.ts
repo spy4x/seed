@@ -18,6 +18,13 @@ import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { checkedError } from "../../apps/api/_testing/api-error.ts"
+import { createGroupTransferHandler } from "../../apps/api/features/groups/handlers.ts"
+import { PasswordLockedError } from "../../apps/api/services/password-locked.ts"
+import { SecondFactorStatus } from "@spy4x/server/sign-in"
+import { GroupError, GroupRole, GroupTransferCommand } from "@domain/groups"
+import { UserMFAStatus } from "@domain/identity"
+import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
+import { insertUser } from "./group-team.ts"
 
 /**
  * The short lock per sign-in name after repeated wrong passwords (#387), against a real Postgres:
@@ -173,7 +180,7 @@ async function buildApp(sql: postgres.Sql) {
       }
     }
   }
-  return { clock, attempt, session }
+  return { clock, attempt, session, signIn }
 }
 
 /**
@@ -355,5 +362,61 @@ Deno.test("wrong passwords at every signed-in step share one lock per account (#
       // The sign-in page keeps its own count, which the session's guesses did not touch.
       expect((await attempt("ada@example.com", PASSWORD)).status).toBe(200)
     })
+  })
+})
+
+Deno.test("a group transfer counts its wrong passwords on the account's one lock (#406)", async (t) => {
+  await withSchema(async (sql) => {
+    const { session, signIn } = await buildApp(sql)
+    const post = await session()
+    const [{ id: owner }] = await sql<{ id: number }[]>`SELECT id FROM users`
+    const repository = new PostgresGroupRepository(sql)
+    const { group } = await repository.create({ id: uuidV7(), name: "Team" }, owner)
+    const member = await insertUser(sql)
+    await sql`
+      INSERT INTO group_members (group_id, user_id, role, added_by_user_id)
+      VALUES (${group.id}, ${member}, ${GroupRole.EDITOR}, ${owner})
+    `
+    // Wired as the API wires it (apps/api/cqrs/command-handlers/group-transfer.ts).
+    const handle = createGroupTransferHandler(new AppDbBase({ sql }).group, {
+      checkPassword: (userId, password) => signIn.checkPassword(userId, password),
+      emit: () => {},
+    })
+    const transfer = (password: string) =>
+      handle(
+        new GroupTransferCommand({
+          actor: {
+            userId: owner,
+            userMfa: UserMFAStatus.NOT_CONFIGURED,
+            sessionSecondFactor: SecondFactorStatus.NotRequired,
+          },
+          groupId: group.id,
+          userId: member,
+          name: "Team",
+          password,
+        }),
+      ).then(() => "transferred", (error) => {
+        if (error instanceof GroupError) return error.code
+        if (error instanceof PasswordLockedError) return "locked"
+        throw error
+      })
+
+    await t.step("six wrong passwords at the transfer are each refused", async () => {
+      const answers = []
+      for (let guess = 0; guess < 6; guess++) answers.push(await transfer("wrong-guess"))
+      expect(answers).toEqual(Array(6).fill("PASSWORD_INVALID"))
+    })
+
+    await t.step(
+      "the right password is then refused, at the transfer and at another step",
+      async () => {
+        expect(await transfer(PASSWORD)).toBe("locked")
+        expect((await post("/auth/totp/disconnect", { password: PASSWORD })).status).toBe(429)
+        const [{ ownerUserId }] = await sql<{ ownerUserId: number }[]>`
+        SELECT owner_user_id FROM groups WHERE id = ${group.id}
+      `
+        expect(ownerUserId).toBe(owner)
+      },
+    )
   })
 })
