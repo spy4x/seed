@@ -24,6 +24,8 @@ export interface FeatureSectionProps {
   notYet?: readonly NotYet[]
   /** Where to read the code behind the claims, on GitHub. */
   code: { label: string; href: string }
+  /** The feature's own page, linked beside the code. `language` marks a page in another language. */
+  more?: { label: string; href: string; language?: string }
   /** The picture or code window beside the text. Without one, the facts spread over two columns. */
   visual?: ComponentChildren
   /** Puts the picture on the left from `xl`, so neighbouring sections alternate. */
@@ -35,7 +37,8 @@ export interface FeatureSectionProps {
  * honest status, a link to the code, and a picture beside the text from `xl` (below it on a phone).
  */
 export function FeatureSection(
-  { id, eyebrow, title, lead, facts, notYet = [], code, visual, flip = false }: FeatureSectionProps,
+  { id, eyebrow, title, lead, facts, notYet = [], code, more, visual, flip = false }:
+    FeatureSectionProps,
 ): JSX.Element {
   const headingId = `${id}-title`
   const side = Boolean(visual)
@@ -52,24 +55,29 @@ export function FeatureSection(
           {title}
         </h3>
         <p class="text-muted text-pretty">{lead}</p>
-        <ul class={`grid gap-3 ${visual ? "" : "md:grid-cols-2 md:gap-x-8"}`}>
-          {facts.map((fact, index) => (
-            <li key={index} class="flex items-start gap-2">
-              <IconCheck class="mt-1 size-4 shrink-0 text-primary" aria-hidden="true" />
-              <span class="text-pretty">{fact}</span>
-            </li>
-          ))}
-        </ul>
+        <FactList facts={facts} columns={!visual} />
         {notYet.length > 0 && <NotYetList items={notYet} />}
-        <a
-          href={code.href}
-          class="inline-flex items-center gap-1 self-start py-2 text-sm font-medium text-primary hover:underline"
-          data-e2e="feature-code-link"
-          data-umami-event="read-code"
-          data-umami-event-from={id}
-        >
-          {code.label} <IconArrowRight class="size-4" aria-hidden="true" />
-        </a>
+        <div class="flex flex-wrap gap-x-6">
+          {more && (
+            <a
+              href={more.href}
+              hreflang={more.language}
+              class="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline"
+              data-e2e="feature-more-link"
+            >
+              {more.label} <IconArrowRight class="size-4" aria-hidden="true" />
+            </a>
+          )}
+          <a
+            href={code.href}
+            class="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline"
+            data-e2e="feature-code-link"
+            data-umami-event="read-code"
+            data-umami-event-from={id}
+          >
+            {code.label} <IconArrowRight class="size-4" aria-hidden="true" />
+          </a>
+        </div>
       </div>
       {visual && (
         <div class={`min-w-0 max-w-2xl ${flip ? "xl:order-1" : ""}`}>
@@ -77,6 +85,22 @@ export function FeatureSection(
         </div>
       )}
     </section>
+  )
+}
+
+/** What a developer gets, one check-marked fact a line; in two columns from `md` with `columns`. */
+export function FactList(
+  { facts, columns = false }: { facts: readonly ComponentChildren[]; columns?: boolean },
+): JSX.Element {
+  return (
+    <ul class={`grid gap-3 ${columns ? "md:grid-cols-2 md:gap-x-8" : ""}`}>
+      {facts.map((fact, index) => (
+        <li key={index} class="flex items-start gap-2">
+          <IconCheck class="mt-1 size-4 shrink-0 text-primary" aria-hidden="true" />
+          <span class="text-pretty">{fact}</span>
+        </li>
+      ))}
+    </ul>
   )
 }
 

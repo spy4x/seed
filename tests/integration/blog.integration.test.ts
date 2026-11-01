@@ -20,7 +20,13 @@ import {
   listPublicTopics,
   readPublicPost,
 } from "@server/blog/public-blog.ts"
-import { SAMPLE_POSTS, seedSamplePosts } from "@server/blog/sample-posts.ts"
+import {
+  loadDemoBlogPosts,
+  readSeedPosts,
+  type SeedPost,
+  upsertSeedPosts,
+} from "@server/blog/seed-posts.ts"
+import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
 import { SUBSCRIBER_SEND_ISSUE_JOB } from "@server/jobs/subscriber-mail.ts"
 import { createOutboxProcessor } from "@server/jobs/wiring.ts"
 import { cancelJob, runJobNow } from "@server/jobs/admin-jobs.ts"
@@ -163,6 +169,43 @@ async function rejection(promise: Promise<unknown>): Promise<BlogError> {
 }
 
 const LATER = () => new Date(Date.now() + 3_600_000)
+const DAY_MS = 86_400_000
+
+/** A post file as `readSeedPosts` answers it: published a day ago, not mailed. */
+function seedPost(slug: string, extra: Partial<SeedPost> = {}): SeedPost {
+  return {
+    file: `${slug}.md`,
+    fields: fields(slug),
+    translationOf: null,
+    author: `Anton Shubin`,
+    publishAt: new Date(Date.now() - DAY_MS),
+    newsletter: false,
+    ...extra,
+  }
+}
+
+/** The stored post with `slug`. */
+async function bySlug(sql: postgres.Sql, slug: string) {
+  const [row] = await sql<
+    {
+      id: string
+      title: string
+      status: string
+      publishedAt: Date | null
+      translationOf: string | null
+      authorName: string | null
+      newsletterList: string | null
+      newsletterSentAt: Date | null
+      version: number
+      updatedAt: Date
+    }[]
+  >`
+    SELECT id, title, status, published_at, translation_of, author_name, newsletter_list,
+      newsletter_sent_at, version, updated_at
+    FROM blog_posts WHERE slug = ${slug}
+  `
+  return row
+}
 
 Deno.test(`blog: writes, audit rows and the checks every write makes`, async (t) => {
   await withSchema(async (sql) => {
@@ -473,8 +516,8 @@ Deno.test(`blog: a post's issue goes only to the subscribers of its language, wr
     const crypto = await createListCrypto(SETUP, `news`)
     // Ada signed up before #527 and has no language: she reads the main language, English.
     for (
-      const [email, language] of [[`ada@example.com`, null], [`bob@example.com`, `de`], [
-        `cat@example.com`,
+      const [email, language] of [[`ada@seed.test`, null], [`bob@seed.test`, `de`], [
+        `cat@seed.test`,
         `es`,
       ]]
     ) {
@@ -505,16 +548,16 @@ Deno.test(`blog: a post's issue goes only to the subscribers of its language, wr
     expect((await blog.get(german))!.newsletterRecipients).toBe(1)
     expect((await blog.get(english))!.newsletterRecipients).toBe(1)
     const byIssue = (subject: string) => sent.filter((mail) => mail.subject === subject)
-    expect(byIssue(`Hallo`).map((mail) => mail.to)).toEqual([`bob@example.com`])
+    expect(byIssue(`Hallo`).map((mail) => mail.to)).toEqual([`bob@seed.test`])
     expect(byIssue(`Hallo`)[0].text).toContain(`Beitrag lesen`)
     expect(byIssue(`Hallo`)[0].text).toContain(`Du bekommst diese E-Mail`)
     expect(byIssue(`Hallo`)[0].text).toContain(`Abbestellen`)
     expect(byIssue(`Hallo`)[0].text).not.toContain(`Unsubscribe`)
     expect(byIssue(`Hallo`)[0].text).not.toContain(`Read the post`)
     expect(byIssue(`Hallo`)[0].text).toContain(`https://www.example.com/de/blog/hallo`)
-    expect(byIssue(`Hello`).map((mail) => mail.to)).toEqual([`ada@example.com`])
+    expect(byIssue(`Hello`).map((mail) => mail.to)).toEqual([`ada@seed.test`])
     expect(byIssue(`Hello`)[0].text).toContain(`Read the post`)
-    expect(sent.map((mail) => mail.to)).not.toContain(`cat@example.com`)
+    expect(sent.map((mail) => mail.to)).not.toContain(`cat@seed.test`)
   })
 })
 
@@ -562,27 +605,136 @@ Deno.test(`blog: with the newsletter off the post goes live and no issue is queu
   })
 })
 
-Deno.test(`blog: lost jobs come back once, and the sample posts seed once`, async () => {
+Deno.test(`blog: lost jobs come back once`, async () => {
   await withSchema(async (sql) => {
-    const maya = await operator(sql)
-    const now = new Date()
-    expect(await seedSamplePosts(sql, maya.userId, now)).toBe(SAMPLE_POSTS.length)
-    expect(await seedSamplePosts(sql, maya.userId, now)).toBe(0)
-    const published = await listPublicPosts(sql, null)
-    // The published one in English, and its translation into each other language.
-    expect(published.map((post) => `${post.language} ${post.slug}`).sort()).toEqual([
-      `ar marhaban-bialalam`,
-      `de hallo-welt`,
-      `en hello-world`,
-      `es hola-mundo`,
-      `pt-BR ola-mundo`,
-      `ru privet-mir`,
-    ])
+    await upsertSeedPosts(sql, [seedPost(`live`), seedPost(`later`, { publishAt: LATER() })])
 
     // The demo's wipe empties the job table but keeps the posts.
     await sql`DELETE FROM outbox_events`
     expect(await queueDueBlogJobs(sql)).toBe(1)
     expect(await queueDueBlogJobs(sql)).toBe(0)
+  })
+})
+
+Deno.test(`blog: Seed's post files load only in demo mode, and loading twice writes nothing (#621)`, async (t) => {
+  await withSchema(async (sql) => {
+    await t.step(`demo off reads no file and loads nothing`, async () => {
+      const untouchable = {
+        readDir: () => Promise.reject(new Error(`read a file with demo mode off`)),
+        readText: () => Promise.reject(new Error(`read a file with demo mode off`)),
+      }
+      expect(await loadDemoBlogPosts(sql, { demo: false, fs: untouchable })).toBe(0)
+      const [{ posts }] = await sql<
+        { posts: number }[]
+      >`SELECT COUNT(*)::int AS posts FROM blog_posts`
+      expect(posts).toBe(0)
+    })
+
+    const files = await readSeedPosts(denoFileSystem)
+    await t.step(`demo on loads every file, with its author and no account`, async () => {
+      expect(await loadDemoBlogPosts(sql, { demo: true, fs: denoFileSystem })).toBe(files.length)
+      const welcome = await bySlug(sql, `welcome-to-the-seed-blog`)
+      expect(welcome).toMatchObject({ status: `published`, authorName: `Anton Shubin` })
+      expect((await listPublicPosts(sql, null)).map((post) => post.slug)).toContain(
+        `welcome-to-the-seed-blog`,
+      )
+    })
+
+    await t.step(`a second load writes nothing`, async () => {
+      const before = await sql`SELECT * FROM blog_posts ORDER BY id`
+      expect(await loadDemoBlogPosts(sql, { demo: true, fs: denoFileSystem })).toBe(0)
+      expect(await sql`SELECT * FROM blog_posts ORDER BY id`).toEqual(before)
+    })
+  })
+})
+
+Deno.test(`blog: a changed post file updates its post, and a post no file names is left alone (#621)`, async () => {
+  await withSchema(async (sql) => {
+    await upsertSeedPosts(sql, [seedPost(`kept`), seedPost(`changed`)])
+    const kept = await bySlug(sql, `kept`)
+    const changed = await bySlug(sql, `changed`)
+
+    const edited = seedPost(`changed`, { fields: fields(`changed`, { title: `A new title` }) })
+    expect(await upsertSeedPosts(sql, [edited])).toBe(1)
+
+    expect(await bySlug(sql, `changed`)).toMatchObject({
+      id: changed.id,
+      title: `A new title`,
+      version: 2,
+    })
+    expect(await bySlug(sql, `kept`)).toEqual(kept)
+  })
+})
+
+Deno.test(`blog: a post file dated in the past is published with its date, one in the future waits for its job (#621)`, async () => {
+  await withSchema(async (sql) => {
+    const past = new Date(Date.now() - 3 * DAY_MS)
+    const future = LATER()
+    await upsertSeedPosts(sql, [
+      seedPost(`old-news`, { publishAt: past }),
+      seedPost(`coming-soon`, { publishAt: future }),
+    ])
+
+    expect(await bySlug(sql, `old-news`)).toMatchObject({ status: `published`, publishedAt: past })
+    const soon = await bySlug(sql, `coming-soon`)
+    expect(soon).toMatchObject({ status: `scheduled`, publishedAt: null })
+    expect((await waitingJobs(sql, soon.id)).map((job) => job.availableAt)).toEqual([future])
+    expect((await listPublicPosts(sql, null)).map((post) => post.slug)).toEqual([`old-news`])
+
+    await makeDue(sql, soon.id)
+    await drain(sql)
+    expect((await bySlug(sql, `coming-soon`)).status).toBe(`published`)
+  })
+})
+
+Deno.test(`blog: a translation's file links it to its original by slug (#621)`, async () => {
+  await withSchema(async (sql) => {
+    // The translation comes first, as no file order is promised.
+    await upsertSeedPosts(sql, [
+      seedPost(`hallo`, { fields: fields(`hallo`, { language: `de` }), translationOf: `hello` }),
+      seedPost(`hello`),
+    ])
+
+    const original = await bySlug(sql, `hello`)
+    expect((await bySlug(sql, `hallo`)).translationOf).toBe(original.id)
+  })
+})
+
+Deno.test(`blog: a post file is emailed once, and only when it asks for the newsletter (#621)`, async (t) => {
+  await withSchema(async (sql) => {
+    await sql`INSERT INTO subscribers (list_id, email, key, subscribed_at)
+      VALUES ('news', 'ada@example.com', 'k1', now())`
+    const posts = [seedPost(`mailed`, { newsletter: true }), seedPost(`quiet`)]
+    await upsertSeedPosts(sql, posts)
+    const mailed = await bySlug(sql, `mailed`)
+    const quiet = await bySlug(sql, `quiet`)
+
+    await t.step(`the post that asks is emailed through its job`, async () => {
+      await drain(sql)
+      expect((await issues(sql, mailed.id)).rows).toBe(1)
+      expect((await bySlug(sql, `mailed`)).newsletterSentAt).not.toBeNull()
+    })
+
+    await t.step(`the other is recorded as mailed, with no list, and never emailed`, async () => {
+      expect(quiet).toMatchObject({ newsletterList: null })
+      expect(quiet.newsletterSentAt).not.toBeNull()
+      expect((await issues(sql, quiet.id)).rows).toBe(0)
+    })
+
+    await t.step(`a list added later, or the file asking later, emails nothing`, async () => {
+      await sql`UPDATE blog_posts SET newsletter_list = 'news' WHERE id = ${quiet.id}`
+      expect(await queueDueBlogJobs(sql)).toBe(0)
+      await upsertSeedPosts(sql, [posts[0], seedPost(`quiet`, { newsletter: true })])
+      await blogPublishJob({ sql, brand: BRAND, setup: SETUP, log: () => {} })(jobEvent(quiet.id))
+      await drain(sql)
+      expect((await issues(sql, quiet.id)).rows).toBe(0)
+    })
+
+    await t.step(`loading again emails nothing more`, async () => {
+      await upsertSeedPosts(sql, posts)
+      await drain(sql)
+      expect((await issues(sql, mailed.id)).rows).toBe(1)
+    })
   })
 })
 

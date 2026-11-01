@@ -41,6 +41,8 @@ export const BLOG_TOPIC_MAX_LENGTH = 50
 export const BLOG_COVER_URL_MAX_LENGTH = 2000
 /** The longest cover description. */
 export const BLOG_COVER_ALT_MAX_LENGTH = 300
+/** The longest author name shown on a post (`author_name`). */
+export const BLOG_AUTHOR_NAME_MAX_LENGTH = 101
 /** The longest body, in Markdown. */
 export const BLOG_BODY_MAX_LENGTH = 200_000
 /** The longest search text of the admin list. */

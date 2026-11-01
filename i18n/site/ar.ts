@@ -23,6 +23,8 @@ export default {
   "SiteFooter.issue": "أبلغ عن مشكلة",
   "SiteFooter.quickStart": "البدء السريع",
   "SiteFooter.apiDocs": "توثيق API",
+  "SiteFooter.docs": "التوثيق",
+  "SiteFooter.changelog": "سجل التغييرات",
   "SiteFooter.status": "ما يعمل اليوم",
   "SiteFooter.company": "الشركة",
   "SiteFooter.hire": "تعاقد معي لبناء MVP",
@@ -584,6 +586,7 @@ export default {
   "Features.compare": "كيف يُقارن Seed بغيره",
   "FeaturesFaq.title": "هل يستطيع Seed ذلك؟",
   "FeatureSection.issue": "المشكلة #{number}",
+  "FeatureSection.readMore": "المزيد عن {feature}",
   "FeatureVisuals.window1": "النافذة 1",
   "FeatureVisuals.window2": "النافذة 2",
   "FeatureVisuals.realtimeA":

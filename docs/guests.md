@@ -1,5 +1,7 @@
 # Guest accounts
 
+> Also on the website: [seedsaas.com/docs/guests](https://seedsaas.com/docs/guests).
+
 A visitor presses "Try it now" and is in the app at once, in an account with no e-mail address and
 no password: a guest account. Everything works as in any account, except the few actions that need
 a person who can sign in again. Adding a sign-in method keeps the account: the user id, the groups

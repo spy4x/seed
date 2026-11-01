@@ -1,5 +1,7 @@
 # The catalog
 
+> Also on the website: [seedsaas.com/docs/catalog](https://seedsaas.com/docs/catalog).
+
 A shop's items, edited in the admin panel and read by the public website (#466). An item has a
 name and texts in each language the catalog keeps, a price, a category, colours, sizes with an
 optional size chart, what is sold out, and photos. The catalog is **off** unless the product turns

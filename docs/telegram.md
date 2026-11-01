@@ -1,5 +1,7 @@
 # Telegram bot
 
+> Also on the website: [seedsaas.com/docs/telegram](https://seedsaas.com/docs/telegram).
+
 Seed ships a Telegram bot that every product extends. A person links their Telegram account from
 the app with a one-time code. From then on, every notification they get in the app also reaches
 the chat, and the product's own commands answer there, acting as that person. The bot is off

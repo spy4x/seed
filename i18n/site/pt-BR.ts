@@ -24,6 +24,8 @@ export default {
   "SiteFooter.issue": "Relatar um problema",
   "SiteFooter.quickStart": "Primeiros passos",
   "SiteFooter.apiDocs": "Documentação da API",
+  "SiteFooter.docs": "Documentação",
+  "SiteFooter.changelog": "Registro de mudanças",
   "SiteFooter.status": "O que já funciona",
   "SiteFooter.company": "Sobre",
   "SiteFooter.hire": "Me contrate para um MVP",
@@ -612,6 +614,7 @@ export default {
   "Features.compare": "Como o Seed se compara",
   "FeaturesFaq.title": "O Seed faz isso?",
   "FeatureSection.issue": "issue #{number}",
+  "FeatureSection.readMore": "Mais sobre {feature}",
   "FeatureVisuals.window1": "Janela 1",
   "FeatureVisuals.window2": "Janela 2",
   "FeatureVisuals.realtimeA":

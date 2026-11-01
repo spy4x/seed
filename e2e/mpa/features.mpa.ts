@@ -83,6 +83,15 @@ test.describe(`without JavaScript`, () => {
   })
 })
 
+// Through the built server's own routing: `routes/[[lang]]/admin.tsx` also fits this address, and
+// a unit test that calls the feature page's handler cannot see which route Fresh picks.
+test(`/features/admin answers a permanent redirect to the admin panel's page`, async ({ request }) => {
+  const response = await request.get(`/features/admin`, { maxRedirects: 0 })
+
+  expect(response.status()).toBe(301)
+  expect(response.headers()[`location`]).toBe(`/admin`)
+})
+
 test(`the admin still loads only when its section nears the screen`, async ({ page }) => {
   const asked: string[] = []
   page.on(`request`, (request) => asked.push(new URL(request.url()).pathname))
@@ -92,6 +101,39 @@ test(`the admin still loads only when its section nears the screen`, async ({ pa
 
   await page.locator(`section#admin`).scrollIntoViewIfNeeded()
   await expect.poll(() => asked).toContain(`/video/admin-panel-poster-1280.webp`)
+})
+
+test.describe(`a screenshot's lightbox`, () => {
+  test.use({ colorScheme: `dark` })
+
+  test(`opens the widest file of the page's theme from the keyboard and gives focus back`, async ({ page }) => {
+    await page.goto(`/features`)
+    const shot = page.getByRole(`button`, { name: /^Zoom: / }).first()
+    await shot.focus()
+    await page.keyboard.press(`Enter`)
+
+    const viewer = page.getByRole(`dialog`)
+    await expect(viewer).toBeVisible()
+    await expect(viewer.locator(`img`)).toHaveAttribute(`src`, /-dark-1280\.webp(\?|$)/)
+    await page.keyboard.press(`Escape`)
+    await expect(viewer).toBeHidden()
+    await expect(shot).toBeFocused()
+  })
+
+  // A feature page loads the lightbox only when its picture is a screenshot: deploy draws a diagram.
+  for (
+    const [path, loads] of [[`/pricing`, false], [`/features/deploy`, false], [
+      `/features/sign-in`,
+      true,
+    ]] as const
+  ) {
+    test(`${path} ${loads ? `loads` : `does not load`} the lightbox's JavaScript`, async ({ page }) => {
+      const asked: string[] = []
+      page.on(`request`, (request) => asked.push(request.url()))
+      await page.goto(path, { waitUntil: `networkidle` })
+      expect(asked.some((url) => url.includes(`shot_lightbox`))).toBe(loads)
+    })
+  }
 })
 
 // axe-core runs as a script in the page, so these checks keep JavaScript on: /theme.js then picks

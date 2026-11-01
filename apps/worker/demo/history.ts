@@ -15,6 +15,7 @@ import {
 import { AuthAuditEventType, SIGN_IN_LINK_METHOD } from "@domain/identity"
 import { PASSKEY_METHOD, passkeyIdentifier } from "@server/auth/passkeys.ts"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
+import { isExampleAddress } from "@spy4x/email/address"
 import { BACKUP_TARGET_DATABASE } from "@server/jobs/admin-system.ts"
 import { WELCOME_NOTE_BODY, WELCOME_NOTE_TITLE } from "@server/jobs/starter-data.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
@@ -459,8 +460,13 @@ export async function writeBilling(
 }
 
 /**
- * The newsletter list, keyed as the subscribe flow keys it, the addresses that left it, and the
- * send log of each issue: who it went to then, by the keyed marks the log keeps.
+ * The newsletter list, keyed as the subscribe flow keys it, and the send log of each issue: who it
+ * went to then, by the keyed marks the log keeps, those who left later included. The subscriber
+ * tables survive the demo's wipe, because the website's sign-up is real, so this first deletes
+ * the fake rows an earlier seed wrote: every subscriber on a domain reserved for examples, which
+ * no real person can confirm, and the sends of the fake issues. Running it again leaves the same
+ * rows. It writes no unsubscribe: those rows hold only keyed marks, so a later seed could not tell
+ * its own from a real person's, and they would pile up.
  */
 export async function writeNewsletter(
   sql: postgres.Sql,
@@ -470,6 +476,17 @@ export async function writeNewsletter(
 ): Promise<void> {
   const list = DEFAULT_SUBSCRIBER_LIST
   const crypto = await createListCrypto(setup, list)
+  const listed = await sql<
+    { email: string }[]
+  >`SELECT email FROM subscribers WHERE list_id = ${list}`
+  const fake = listed.map((row) => row.email).filter(isExampleAddress)
+  if (fake.length > 0) {
+    await sql`DELETE FROM subscribers WHERE list_id = ${list} AND email IN ${sql(fake)}`
+  }
+  const issues = data.issues.map((issue) => issue.issue)
+  if (issues.length > 0) {
+    await sql`DELETE FROM subscriber_sends WHERE list_id = ${list} AND issue IN ${sql(issues)}`
+  }
   for (const { email, ago } of data.subscribers) {
     await sql`
       INSERT INTO subscribers (list_id, email, key, subscribed_at)
@@ -480,13 +497,6 @@ export async function writeNewsletter(
   const marks = new Map<string, string>()
   for (const { email } of [...data.subscribers, ...data.unsubscribed]) {
     marks.set(email, await crypto.unsubscribeMark(email))
-  }
-  for (const { email, ago } of data.unsubscribed) {
-    await sql`
-      INSERT INTO subscriber_unsubscribes (list_id, mark, unsubscribed_at)
-      VALUES (${list}, ${marks.get(email)!}, ${at(ago)})
-      ON CONFLICT DO NOTHING
-    `
   }
   for (const issue of data.issues) {
     // Everyone on the list that day, those who left later included.

@@ -14,6 +14,7 @@ import { Notice } from "@spy4x/preact-ui/notice"
 import { SEOHead } from "@spy4x/preact-system/seo-head"
 import { SiteFooter, type SiteFooterGroup } from "@spy4x/preact-system/site-footer"
 import { SiteHeader } from "@spy4x/preact-system/site-header"
+import { OnThisPage, type OnThisPageLink } from "@spy4x/preact-ui/on-this-page"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
 import { createFormatters, type Formatters } from "@spy4x/time/format"
@@ -22,7 +23,8 @@ import { siteEnglishText } from "@ui/site-text.ts"
 import { BLOG_PATH, RSS_PATH } from "./blog.ts"
 import { AUTHOR_URL, REPOSITORY_URL, SITE_ICON, SITE_NAME, TRY_ENTRY } from "./brand.ts"
 import { API_DOCS_PATH } from "./api-docs.ts"
-import { OnThisPage } from "./components/on-this-page.tsx"
+import { CHANGELOG_PATH } from "./changelog.ts"
+import { DOCS_PATH } from "./docs-site.ts"
 import { contactFooterLinks } from "./contact-links.ts"
 import { HIRE_PAGE_URL } from "./hire.ts"
 import {
@@ -318,10 +320,9 @@ export function SiteFrame(
           locale={ogLocale(language)}
           noindex={head.noindex}
           jsonLd={head.jsonLd}
+          alternates={languageAlternates(origin, path, head)
+            .map(({ hreflang, href }) => ({ lang: hreflang, url: href }))}
         />
-        {languageAlternates(origin, path, head).map((alternate) => (
-          <link rel="alternate" hreflang={alternate.hreflang} href={alternate.href} />
-        ))}
         {blog && (
           <link
             rel="alternate"
@@ -510,7 +511,7 @@ export function LegalPage(
           </header>
           <div class="grid gap-8 lg:grid-cols-4">
             <div class="lg:order-2">
-              <OnThisPage links={sections} label={en.t(`OnThisPage.title`)} />
+              <OnThisPage links={sectionLinks(sections)} label={en.t(`OnThisPage.title`)} />
             </div>
             <article class="flex min-w-0 max-w-3xl flex-col gap-4 lg:order-1 lg:col-span-3 [&_a]:text-primary [&_a]:underline [&_h2]:mt-6 [&_h2]:scroll-mt-16 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:tracking-tight [&_li]:text-pretty [&_p]:text-pretty [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:ps-6">
               {children}
@@ -520,6 +521,21 @@ export function LegalPage(
       </div>
     </SiteFrame>
   )
+}
+
+/**
+ * A page's sections as `OnThisPage` links, each counted in Umami as an `on-this-page` click with its
+ * section's id, so every list on the site reports the same event.
+ */
+export function sectionLinks(
+  sections: readonly { label: string; href: string }[],
+): OnThisPageLink[] {
+  return sections.map(({ label, href }) => ({
+    label,
+    href,
+    "data-umami-event": `on-this-page`,
+    "data-umami-event-section": href.slice(1),
+  }))
 }
 
 /**
@@ -557,7 +573,9 @@ function footerGroups(
         { label: t.t(`SiteFooter.source`), href: REPOSITORY_URL, external: true },
         { label: t.t(`SiteFooter.issue`), href: `${REPOSITORY_URL}/issues`, external: true },
         { label: t.t(`SiteFooter.quickStart`), href: href(`/#quick-start`) },
+        { label: t.t(`SiteFooter.docs`), href: href(DOCS_PATH) },
         { label: t.t(`SiteFooter.apiDocs`), href: href(API_DOCS_PATH) },
+        { label: t.t(`SiteFooter.changelog`), href: href(CHANGELOG_PATH) },
         { label: t.t(`SiteFooter.status`), href: href(`/#status`) },
       ],
     },

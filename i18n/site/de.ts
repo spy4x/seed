@@ -24,6 +24,8 @@ export default {
   "SiteFooter.issue": "Problem melden",
   "SiteFooter.quickStart": "Schnellstart",
   "SiteFooter.apiDocs": "API-Doku",
+  "SiteFooter.docs": "Doku",
+  "SiteFooter.changelog": "Änderungen",
   "SiteFooter.status": "Was heute funktioniert",
   "SiteFooter.company": "Unternehmen",
   "SiteFooter.hire": "Buch mich für dein MVP",
@@ -615,6 +617,7 @@ export default {
   "Features.compare": "Seed im Vergleich",
   "FeaturesFaq.title": "Kann Seed das?",
   "FeatureSection.issue": "Issue #{number}",
+  "FeatureSection.readMore": "Mehr zu {feature}",
   "FeatureVisuals.window1": "Fenster 1",
   "FeatureVisuals.window2": "Fenster 2",
   "FeatureVisuals.realtimeA":

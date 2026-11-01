@@ -1,5 +1,7 @@
 # Building a product on Seed
 
+> Also on the website: [seedsaas.com/docs/products](https://seedsaas.com/docs/products).
+
 A product starts as a copy of Seed and keeps taking Seed's later changes: fixes, security updates
 and new features. A GitHub template copy shares no git history with Seed, so those changes arrive
 as a patch, from the Seed commit the product last took to Seed's current `main`.

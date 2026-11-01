@@ -1,5 +1,7 @@
 # Admin modules
 
+> Also on the website: [seedsaas.com/docs/admin-modules](https://seedsaas.com/docs/admin-modules).
+
 The operator area (`apps/admin`, on `ADMIN_DOMAIN`) is a list of modules. A module is one section of
 the icon rail: its entry, its pages, optionally tabs on a person's page, and the API routes those
 pages call. Every feature of the product has its counterpart here (see "The admin panel stays in
