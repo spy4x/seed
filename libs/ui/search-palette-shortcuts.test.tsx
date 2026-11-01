@@ -72,9 +72,12 @@ function dialog(): HTMLDialogElement {
   return document.querySelector<HTMLDialogElement>("dialog[data-e2e=search]")!
 }
 
-async function press(init: { key: string; code: string; ctrlKey?: boolean }): Promise<void> {
+async function press(
+  init: { key: string; code: string; ctrlKey?: boolean },
+  target: HTMLElement = document.body,
+): Promise<void> {
   await act(() => {
-    document.body.dispatchEvent(
+    target.dispatchEvent(
       new window.KeyboardEvent("keydown", { ...init, bubbles: true }) as unknown as Event,
     )
   })
@@ -88,6 +91,21 @@ describe("SearchPalette and the keyboard shortcuts", () => {
     expect(dialog().open).toBe(false)
     await press({ key: "k", code: "KeyK", ctrlKey: true })
     expect(dialog().open).toBe(true)
+  })
+
+  it("does not open on Ctrl K pressed in another open dialog, such as the Account sheet", async () => {
+    await mount()
+    const account = document.createElement("dialog")
+    account.setAttribute("aria-label", "Account")
+    const inside = document.createElement("button")
+    account.append(inside)
+    document.body.append(account)
+    account.showModal()
+    // A modal dialog takes the focus, so the press lands inside it. happy-dom cannot match
+    // `:modal`, so a press outside it is not what this test can show.
+    await press({ key: "k", code: "KeyK", ctrlKey: true }, inside)
+
+    expect([account.open, dialog().open]).toEqual([true, false])
   })
 
   it("asks the app for the New note dialog when New note is picked", async () => {
