@@ -157,3 +157,77 @@ Deno.test("an account whose address is not proven cannot invite, its older links
     expect(await groupState(sql, groupId)).toEqual({ members: 1, invitations: 2 })
   })
 })
+
+/** Whether the invitation is still pending: neither revoked nor expired. */
+async function pending(sql: postgres.Sql, invitationId: string): Promise<boolean> {
+  const [row] = await sql<{ pending: boolean }[]>`
+    SELECT revoked_at IS NULL AND expires_at > now() AS pending
+    FROM group_invitations WHERE id = ${invitationId}
+  `
+  return row.pending
+}
+
+Deno.test("a reset revokes invitations only when it proves a squatted address, and only that account's", async () => {
+  await withSchema(async (sql) => {
+    const db = new AppDbBase({ sql })
+    const signIn = createSignIn({
+      db,
+      pepper: PEPPER,
+      cookieSecret: COOKIE_SECRET,
+      secureCookie: false,
+      sessionMinutes: 60,
+      totpIssuer: "example.test",
+    })
+    /** Signs `email` up with a first group, inside a request since sign-up sets a cookie. */
+    const signUp = async (email: string) => {
+      const groupId = uuidV7()
+      let userId: number | null = null
+      await new Hono<APIContext>().post("/", async (c) => {
+        userId = (await signIn.signUp(c, email, "Password-0123", groupId))?.user.id ?? null
+        return c.body(null, 204)
+      }).request("/", { method: "POST" })
+      if (userId === null) throw new Error(`The sign-up of ${email} was refused`)
+      return { userId: userId as number, groupId }
+    }
+    const reset = async (email: string) => {
+      const issued = await issuePasswordReset(db.authStore, email)
+      if (!issued) throw new Error(`No reset was issued for ${email}`)
+      expect(await signIn.resetPassword(issued.email, issued.code, "Reset-0123456")).toBe(true)
+    }
+    const invitations = new PostgresInvitationRepository(sql)
+    /** A link written to the store directly, as one made before invitations needed a proof. */
+    const link = async (groupId: string, creatorId: number) => {
+      const created = await invitations.create(
+        {
+          groupId,
+          role: GroupRole.ADMIN,
+          expiresInDays: 7,
+          maxUses: 10,
+          email: null,
+          tokenHash: await sha256Hex(newInvitationToken()),
+        },
+        creatorId,
+        { maxMembers: null, memberRoles: true },
+      )
+      if (!created) throw new Error("The invitation was not created")
+      return created.invitation.id
+    }
+
+    // Bea proves her address with a first reset, then invites into her group.
+    const bea = await signUp("bea@example.com")
+    await reset("bea@example.com")
+    const beaLink = await link(bea.groupId, bea.userId)
+    // Someone signs up first with Ada's address and makes a link.
+    const squatter = await signUp(EMAIL)
+    const squatterLink = await link(squatter.groupId, squatter.userId)
+
+    // Ada's reset proves her address and revokes the squatter's link, not Bea's.
+    await reset(EMAIL)
+    expect(await pending(sql, squatterLink)).toBe(false)
+    expect(await pending(sql, beaLink)).toBe(true)
+
+    // A reset of an address proven already takes no invitation with it.
+    await reset("bea@example.com")
+    expect(await pending(sql, beaLink)).toBe(true)
+  })
+})
