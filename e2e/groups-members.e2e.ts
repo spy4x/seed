@@ -55,20 +55,27 @@ async function teamWith(
 }
 
 /**
- * Makes every WebSocket the page opens from now on start `ms` late, so the page has read the
- * group over REST well before the server adopts its socket. A page on a slow machine is in this
- * state for a moment after every load.
+ * Holds every WebSocket the page opens from now on until the test calls {@link openSockets}, so the
+ * page reads the group over REST while the server does not know its socket yet. A page on a slow
+ * machine is in this state for a moment after every load; here it lasts exactly as long as the
+ * test needs, however slow the machine.
  */
-async function delaySockets(page: Page, ms: number) {
-  await page.addInitScript((delay) => {
+async function holdSockets(page: Page) {
+  await page.addInitScript(() => {
     const Native = globalThis.WebSocket
-    class Delayed extends EventTarget {
+    let open: () => void = () => {}
+    const opened = new Promise<void>((resolve) => (open = resolve))
+    Object.assign(globalThis, { e2eOpenSockets: () => open() })
+    class Held extends EventTarget {
       readyState = 0
       binaryType = "blob"
       real: WebSocket | null = null
+      closed = false
       constructor(url: string, protocols?: string | string[]) {
         super()
-        setTimeout(() => {
+        opened.then(() => {
+          // The app gave up on this one while it was held: it never opens.
+          if (this.closed) return
           const real = new Native(url, protocols)
           this.real = real
           for (const type of ["open", "message", "close", "error"]) {
@@ -85,18 +92,26 @@ async function delaySockets(page: Page, ms: number) {
               )
             })
           }
-        }, delay)
+        })
       }
       send(data: string) {
         this.real?.send(data)
       }
       close(code?: number, reason?: string) {
+        this.closed = true
         this.real?.close(code, reason)
       }
     }
-    Object.assign(Delayed, { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 })
-    Object.assign(globalThis, { WebSocket: Delayed })
-  }, ms)
+    Object.assign(Held, { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 })
+    Object.assign(globalThis, { WebSocket: Held })
+  })
+}
+
+/** Lets the sockets that {@link holdSockets} holds on the page's current load open. */
+async function openSockets(page: Page) {
+  await page.evaluate(() =>
+    (globalThis as unknown as { e2eOpenSockets: () => void }).e2eOpenSockets()
+  )
 }
 
 const settingsReady = (page: Page) => page.locator("[data-e2e=group-general-name]")
@@ -165,7 +180,7 @@ test.describe("group members", () => {
       const groupId = await teamWith(page, request, member, 2)
 
       memberPage = await personPage(browser, member)
-      await delaySockets(memberPage, 2_500)
+      await holdSockets(memberPage)
       await gotoApp(memberPage, `/groups/${groupId}/members`, settingsReady(memberPage))
       await expect(memberPage.locator("[data-e2e=group-general-role]")).toHaveText("Editor")
       await expect(memberPage.locator("[data-e2e=shell-ws-status]")).not.toHaveText("Online")
@@ -178,6 +193,12 @@ test.describe("group members", () => {
       await expect(row.locator("[data-e2e=group-member-role]")).toHaveText("Viewer")
       await expect(memberPage.locator("[data-e2e=shell-ws-status]")).not.toHaveText("Online")
 
+      // Only now does the member's socket reach the server, after the change it must learn of.
+      await openSockets(memberPage)
+      // A busy machine takes a while to connect and catch up: the wait ends on the state.
+      await expect(memberPage.locator("[data-e2e=shell-ws-status]")).toHaveText("Online", {
+        timeout: 15_000,
+      })
       await expect(memberPage.locator("[data-e2e=group-general-role]")).toHaveText("Viewer", {
         timeout: 15_000,
       })
