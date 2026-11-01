@@ -106,8 +106,9 @@ describe("the feature pages", () => {
     ).toEqual([`what`, `how`, `limits`, `questions`])
   })
 
-  it("sends /features/admin to the admin panel's page for good, in the page's language", async () => {
-    expect(await get(`/features/admin`)).toMatchObject({ status: 301, location: `/admin` })
+  // `/features/admin` itself never reaches this handler on the built server: Fresh routes it to
+  // `routes/features/admin.ts` (e2e/mpa/features.mpa.ts checks it there).
+  it("sends another language's /features/admin to the admin panel's page in that language", async () => {
     expect(await get(`/de/features/admin`)).toMatchObject({ status: 301, location: `/de/admin` })
   })
 
