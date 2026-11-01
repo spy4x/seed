@@ -18,15 +18,15 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
 
    First run `getent passwd 1000`. If it names a user (often `ubuntu`), the image already has one
    with that uid: deploy as that user instead, and use its name for `deploy` in the block below and
-   from here on. The block makes the user only when it is missing, and adds root's keys to the
-   user's `authorized_keys` without removing the keys already there or adding one twice. The
-   commands are chained, so the block stops at the first one that fails and changes nothing after
-   it. Pasting it again, after a fix or a later step failed, gives the same result as pasting it
-   once.
+   from here on. The block makes the user only when it is missing, stops when a user of that name
+   has another uid, and adds root's keys to the user's `authorized_keys` without removing the keys
+   already there or adding one twice. The commands are chained, so the block stops at the first
+   one that fails and changes nothing after it. Pasting it again, after a fix or a later step
+   failed, gives the same result as pasting it once.
 
    ```sh
    { id deploy >/dev/null 2>&1 || adduser --uid 1000 --disabled-password --gecos '' deploy; } &&
-   mkdir -p ~deploy/.ssh && touch ~deploy/.ssh/authorized_keys &&
+   [ "$(id -u deploy)" = 1000 ] && mkdir -p ~deploy/.ssh && touch ~deploy/.ssh/authorized_keys &&
    { grep -vxFf ~deploy/.ssh/authorized_keys ~/.ssh/authorized_keys \
        >> ~deploy/.ssh/authorized_keys || [ $? -eq 1 ]; } &&
    chown -R deploy:deploy ~deploy/.ssh && chmod 700 ~deploy/.ssh &&
