@@ -148,6 +148,9 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
 /** Deno's own announcement of its last year of development, which the runtime plan cites. */
 const DENO_ANNOUNCEMENT_URL = `https://deno.com/blog/cloudflare`
 
+/** The runtime Seed works on today, a name no language translates. */
+const RUNTIME_TODAY = `Deno 2`
+
 /** The issue that moves Seed to run unchanged on Deno, Node and Bun. */
 const RUNTIME_ISSUE_URL = `${REPOSITORY_URL}/issues/623`
 
@@ -167,7 +170,7 @@ function RuntimePlan(): JSX.Element {
           <a href={DENO_ANNOUNCEMENT_URL} class="text-primary underline">{text}</a>
         ),
       })}
-      status={<bdi translate="no">Deno 2</bdi>}
+      status={<bdi>{RUNTIME_TODAY}</bdi>}
       statusMore={
         <>
           {/* The mark and what it marks wrap as one, so "In progress" never ends a line alone. */}
