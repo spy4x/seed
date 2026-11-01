@@ -61,6 +61,11 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
    ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443/tcp && ufw --force enable
    ```
 
+   The proxy listens on `127.0.0.1` too unless the env file says otherwise, because in development
+   it serves routes that make anyone an administrator. In the production env file (step 5), set
+   `PROXY_HTTPS_HOST_PORT=443` and `PROXY_HTTP_HOST_PORT=80`, which publish both on every IPv4 and
+   IPv6 address; `0.0.0.0:443` would leave IPv6 visitors out.
+
    After the first deploy, `ss -tlnp` as root must list no address but `127.0.0.1` and `[::1]` for
    every port other than 22, 80 and 443.
 

@@ -17,9 +17,12 @@ services:
       - '--certificatesresolvers.${TRAEFIK_CERT_RESOLVER:-myresolver}.acme.email=${TRAEFIK_ACME_EMAIL:-}'
       - '--certificatesresolvers.${TRAEFIK_CERT_RESOLVER:-myresolver}.acme.storage=/letsencrypt/acme.json'
       - '--certificatesresolvers.${TRAEFIK_CERT_RESOLVER:-myresolver}.acme.httpchallenge.entrypoint=web'
+    # On this machine only by default, since development serves the API's /api/test/* routes. A
+    # production server sets both to the bare port, which Docker publishes on every IPv4 and IPv6
+    # address (docs/deploy.md, "The firewall").
     ports:
-      - '443:443'
-      - '80:80'
+      - '${PROXY_HTTPS_HOST_PORT:-127.0.0.1:443}:443'
+      - '${PROXY_HTTP_HOST_PORT:-127.0.0.1:80}:80'
     volumes:
       - '../../.volumes/traefik/letsencrypt:/letsencrypt'
       - '/var/run/docker.sock:/var/run/docker.sock:ro,Z'
