@@ -516,8 +516,8 @@ Deno.test(`blog: a post's issue goes only to the subscribers of its language, wr
     const crypto = await createListCrypto(SETUP, `news`)
     // Ada signed up before #527 and has no language: she reads the main language, English.
     for (
-      const [email, language] of [[`ada@example.com`, null], [`bob@example.com`, `de`], [
-        `cat@example.com`,
+      const [email, language] of [[`ada@seed.test`, null], [`bob@seed.test`, `de`], [
+        `cat@seed.test`,
         `es`,
       ]]
     ) {
@@ -548,16 +548,16 @@ Deno.test(`blog: a post's issue goes only to the subscribers of its language, wr
     expect((await blog.get(german))!.newsletterRecipients).toBe(1)
     expect((await blog.get(english))!.newsletterRecipients).toBe(1)
     const byIssue = (subject: string) => sent.filter((mail) => mail.subject === subject)
-    expect(byIssue(`Hallo`).map((mail) => mail.to)).toEqual([`bob@example.com`])
+    expect(byIssue(`Hallo`).map((mail) => mail.to)).toEqual([`bob@seed.test`])
     expect(byIssue(`Hallo`)[0].text).toContain(`Beitrag lesen`)
     expect(byIssue(`Hallo`)[0].text).toContain(`Du bekommst diese E-Mail`)
     expect(byIssue(`Hallo`)[0].text).toContain(`Abbestellen`)
     expect(byIssue(`Hallo`)[0].text).not.toContain(`Unsubscribe`)
     expect(byIssue(`Hallo`)[0].text).not.toContain(`Read the post`)
     expect(byIssue(`Hallo`)[0].text).toContain(`https://www.example.com/de/blog/hallo`)
-    expect(byIssue(`Hello`).map((mail) => mail.to)).toEqual([`ada@example.com`])
+    expect(byIssue(`Hello`).map((mail) => mail.to)).toEqual([`ada@seed.test`])
     expect(byIssue(`Hello`)[0].text).toContain(`Read the post`)
-    expect(sent.map((mail) => mail.to)).not.toContain(`cat@example.com`)
+    expect(sent.map((mail) => mail.to)).not.toContain(`cat@seed.test`)
   })
 })
 
