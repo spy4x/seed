@@ -16,6 +16,7 @@ import {
   type BlogPostFields,
   type BlogPostStatus,
   blogPostUpdateSchema,
+  type BlogPreviewBody,
   blogPreviewSchema,
   blogPublishSchema,
   blogSlugProblem,
@@ -25,12 +26,11 @@ import {
   parseBlogPostFields,
   parseBlogStatusFilter,
   parsePublishTime,
-  type RenderedBlogBody,
 } from "@domain/blog"
 import { isSubscriberList, SUBSCRIBER_LISTS } from "@domain/subscribers"
 import { DEFAULT_LANGUAGE, type Language } from "@domain/identity"
 import { type BlogActor, PostgresBlogRepository } from "@server/blog/postgres-blog-repository.ts"
-import { renderBlogBody } from "@server/blog/render.ts"
+import { renderBlogPreview } from "@server/blog/render.ts"
 import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
@@ -250,7 +250,7 @@ export function createAdminBlogRoutes(
     .get(`/blog/topics`, limit, async (c) => c.json({ topics: await blog.topics() }))
     .post(`/blog/preview`, limit, async (c) => {
       const { bodyMd } = await readBody(c, blogPreviewSchema)
-      const rendered: RenderedBlogBody = renderBlogBody(bodyMd)
+      const rendered: BlogPreviewBody = renderBlogPreview(bodyMd)
       return c.json(rendered)
     })
     .get(`/blog/newsletter`, limit, async (c) => {

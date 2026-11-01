@@ -352,7 +352,7 @@ Deno.test(`blog: the public reads show live posts only`, async () => {
     })
     expect(Object.keys(found!.post)).not.toContain(`authorId`)
     expect(Object.keys(found!.post)).not.toContain(`id`)
-    expect(found!.post.html).not.toContain(`<b>`)
+    expect(JSON.stringify(found!.post.segments)).not.toContain(`<b>`)
     expect(found!.readNext).toEqual([])
   })
 })

@@ -17,7 +17,7 @@ const post: PublicBlogPost = {
   tldr: [],
   coverUrl: null,
   coverAlt: null,
-  html: `<p>Hi</p>`,
+  segments: [{ kind: `html`, html: `<p>Hi</p>` }],
   headings: [],
   authorName: `Maya Chen`,
   translations: [],

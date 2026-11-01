@@ -10,6 +10,9 @@ import {
   LANGUAGES,
   sitePath,
 } from "../identity/preferences.ts"
+import type { BlogPreviewSegment, BlogProblem, BlogSegment } from "./figures.ts"
+
+export * from "./figures.ts"
 
 /**
  * The blog (#395): posts an operator writes in the admin app and the public website shows once
@@ -166,10 +169,15 @@ export interface BlogHeading {
   depth: number
 }
 
-/** A body rendered to safe HTML. */
+/**
+ * A body rendered to safe HTML, split around its component tags. `problems` lists the tag lines
+ * the parser could not use (inside a list or a quote, or unreadable); a tag that reads still has
+ * to pass {@link checkBlogFigure}.
+ */
 export interface RenderedBlogBody {
-  html: string
+  segments: BlogSegment[]
   headings: BlogHeading[]
+  problems: BlogProblem[]
   words: number
   readingMinutes: number
 }
@@ -215,7 +223,8 @@ export interface PublicBlogPost extends PublicBlogPostSummary {
   tldr: string[]
   coverUrl: string | null
   coverAlt: string | null
-  html: string
+  /** The body: HTML chunks with the component tags between them, unchecked. */
+  segments: BlogSegment[]
   headings: BlogHeading[]
   authorName: string | null
   /**
@@ -231,10 +240,15 @@ export interface BlogTranslation {
   slug: string
 }
 
-/** One item of the RSS feed: the summary, the cover and the full HTML. */
+/** One item of the RSS feed: the summary, the cover and the full body. */
 export type PublicBlogFeedItem =
   & PublicBlogPostSummary
-  & Pick<PublicBlogPost, `html` | `authorName` | `coverUrl`>
+  & Pick<PublicBlogPost, `segments` | `headings` | `authorName` | `coverUrl`>
+
+/** The answer of `POST /api/admin/blog/preview`: the body with a marker at each parse problem. */
+export interface BlogPreviewBody extends Omit<RenderedBlogBody, `segments`> {
+  segments: BlogPreviewSegment[]
+}
 
 // #endregion
 
