@@ -126,13 +126,17 @@ describe(`the published guides`, () => {
     expect(broken).toEqual([])
   })
 
-  it(`walks the guides in reading order, across the groups`, () => {
-    expect(docNeighbours(DOC_SLUGS[0])).toEqual({ previous: undefined, next: DOC_SLUGS[1] })
-    expect(docNeighbours(`security-headers`)).toEqual({ previous: `offline`, next: `development` })
-    expect(docNeighbours(DOC_SLUGS.at(-1)!)).toEqual({
-      previous: DOC_SLUGS.at(-2),
-      next: undefined,
-    })
+  it(`walks every guide in reading order, forwards and back, across the groups`, () => {
+    const walk = (from: string, step: `next` | `previous`) => {
+      const walked = [from]
+      for (let slug = docNeighbours(from)[step]; slug; slug = docNeighbours(slug)[step]) {
+        walked.push(slug)
+      }
+      return walked
+    }
+
+    expect(walk(DOC_SLUGS[0], `next`)).toEqual([...DOC_SLUGS])
+    expect(walk(DOC_SLUGS.at(-1)!, `previous`)).toEqual([...DOC_SLUGS].reverse())
   })
 })
 
