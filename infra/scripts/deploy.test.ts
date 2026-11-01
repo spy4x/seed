@@ -444,12 +444,13 @@ Deno.test("the deploy command line refuses a mistyped flag and a second env file
 
 /**
  * Runs `body` in a git repository of its own, holding one committed file, `tracked.txt`. It lives
- * under `tests/`, the one directory this test block may write, and is deleted afterwards. The
+ * under `tests/`, the one directory this test block may write, with a `.scratch-` name that
+ * `.gitignore` covers, so a run killed before the cleanup leaves no change in the checkout. The
  * setup runs git with an empty environment, so a `GIT_DIR` or `GIT_INDEX_FILE` that a git hook
  * exports never points it at this checkout, and the HOME it gets holds no settings of the person.
  */
 async function inGitRepository(body: (dir: string) => Promise<void>): Promise<void> {
-  const dir = await Deno.makeTempDir({ dir: "tests", prefix: ".deploy-git-" })
+  const dir = await Deno.makeTempDir({ dir: "tests", prefix: ".scratch-deploy-git-" })
   const git = async (...args: string[]) => {
     const output = await new Deno.Command("git", {
       args: ["-c", "user.name=Deploy test", "-c", "user.email=deploy@example.com", ...args],
