@@ -509,7 +509,7 @@ A change that a person should hear about, and did not make themselves, writes a 
    The group writers call a helper from `group-notifications.ts` after their `audit()` line.
 2. **A kind, a payload, a link.** Add the kind to `NotificationKind` in
    `libs/domain/notifications`. Its sentence goes in `notificationMessage` there, with its key in
-   all six `i18n/app/*.ts`; a kind missing there shows a generic line. The inbox and the
+   every `i18n/app/*.ts`; a kind missing there shows a generic line. The inbox and the
    Telegram message both say that sentence, in the person's language. The payload holds only the facts the sentence needs, never a note body or an
    address. The link is an in-app path; the database and
    `createNotification` both refuse anything else.
@@ -562,7 +562,7 @@ Dismiss and the end of the tour are kept on the person's `users` row (`onboardin
 `onboarding_tour_seen_at`) through the `onboarding.dismiss` and `onboarding.tour-seen` commands, so
 both follow the person to every device. Add a screen to the tour in `tourSteps`
 (`libs/ui/onboarding-card.tsx`), with the CSS selector of the control that opens it and its title
-and text keys in all six `i18n/app/*.ts`.
+and text keys in every `i18n/app/*.ts`.
 
 ## Showing it in the public demo
 

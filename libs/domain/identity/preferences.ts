@@ -28,7 +28,7 @@ const localeSchema = type.enumerated(...REGION_FORMAT_LOCALES)
  * The interface languages the apps ship (#216), English first. `language` in the preferences is
  * one of these or `null`; a catalog import is picked only by a member of this list.
  */
-export const LANGUAGES = [`en`, `ru`, `es`, `de`, `pt-BR`, `ar`] as const
+export const LANGUAGES = [`en`, `ru`, `es`, `de`, `pt-BR`, `ar`, `fr`, `ja`, `zh-CN`] as const
 
 /** An interface language the apps ship. */
 export type Language = typeof LANGUAGES[number]

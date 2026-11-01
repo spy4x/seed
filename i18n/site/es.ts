@@ -162,7 +162,7 @@ export default {
   "HomeStatus.admin": "El área de administración",
   "HomeStatus.website": "El worker de la bandeja de salida, el boletín y este sitio web",
   "HomeStatus.languages":
-    "La aplicación, el área de administración y este sitio web en seis idiomas: {languages}",
+    "La aplicación, el área de administración y este sitio web en nueve idiomas: {languages}",
   "HomeStatus.notBuiltAndroid": "Una app de Android en Play Store",
   "HomeStatus.notBuiltDesktop": "Una app de escritorio para Windows, macOS y Linux",
   "HomeFaq.tryQuestion": "¿Puedo probarlo sin una cuenta?",
@@ -229,7 +229,7 @@ export default {
   "HomeFeatures.websiteTitle": "Un sitio web público",
   "HomeFeatures.websiteLink": "Qué incluye el sitio web",
   "HomeFeatures.websiteText":
-    "Este sitio: renderizado en el servidor, funciona con JavaScript desactivado, en seis idiomas, con precios tomados de tu catálogo de planes, páginas legales y un boletín con doble confirmación.",
+    "Este sitio: renderizado en el servidor, funciona con JavaScript desactivado, en nueve idiomas, con precios tomados de tu catálogo de planes, páginas legales y un boletín con doble confirmación.",
   "HomeFeatures.all": "Todas las funciones, con capturas y estado",
   "HomeServer.eyebrow": "Funciona en un servidor que alquilas",
   "HomeServer.title": "Un servidor, un <code>docker compose</code>, sin facturas sorpresa.",
@@ -427,7 +427,7 @@ export default {
   "FeatureExport.code": "Ver el código de exportación",
   "FeatureLanguages.nav": "Idiomas",
   "FeatureLanguages.eyebrow": "Idiomas",
-  "FeatureLanguages.title": "En seis idiomas desde el principio",
+  "FeatureLanguages.title": "En nueve idiomas desde el principio",
   "FeatureLanguages.lead":
     "La aplicación, el área de administración y este sitio web hablan {languages}. Cada persona elige su idioma en la aplicación y se guarda con su cuenta. Cada página de este sitio tiene su propia dirección en cada idioma.",
   "FeatureLanguages.fact1":
@@ -594,7 +594,7 @@ export default {
   "FeaturesFaq.nativeAnswer":
     "Todavía no como app de tienda. Hoy la aplicación web se instala desde el navegador en teléfonos y equipos de escritorio y abre sin red; las apps de Android y de escritorio están previstas.",
   "FeatureWebsite.fact9":
-    "Cada página en seis idiomas, cada una en su propia dirección con enlaces hreflang; las páginas legales siguen en inglés",
+    "Cada página en nueve idiomas, cada una en su propia dirección con enlaces hreflang; las páginas legales siguen en inglés",
   "FeatureTeams.alt":
     "El registro de actividad de un grupo: quién añadió qué nota o etiqueta y cuándo, con un enlace para abrir cada nota.",
   "FeatureBilling.alt":

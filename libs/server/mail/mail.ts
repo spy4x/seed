@@ -31,12 +31,18 @@ import appEs from "@i18n/app/es.ts"
 import appDe from "@i18n/app/de.ts"
 import appPtBR from "@i18n/app/pt-BR.ts"
 import appAr from "@i18n/app/ar.ts"
+import appFr from "@i18n/app/fr.ts"
+import appJa from "@i18n/app/ja.ts"
+import appZhCN from "@i18n/app/zh-CN.ts"
 import mailEn from "@i18n/mail/en.ts"
 import mailRu from "@i18n/mail/ru.ts"
 import mailEs from "@i18n/mail/es.ts"
 import mailDe from "@i18n/mail/de.ts"
 import mailPtBR from "@i18n/mail/pt-BR.ts"
 import mailAr from "@i18n/mail/ar.ts"
+import mailFr from "@i18n/mail/fr.ts"
+import mailJa from "@i18n/mail/ja.ts"
+import mailZhCN from "@i18n/mail/zh-CN.ts"
 
 /** The variables SMTP needs. All five must be set for production to send mail. */
 export const SMTP_KEYS = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_FROM"] as const
@@ -151,6 +157,9 @@ const CATALOGS: Record<Language, { app?: Catalog; mail?: Catalog }> = {
   de: { app: appDe, mail: mailDe },
   "pt-BR": { app: appPtBR, mail: mailPtBR },
   ar: { app: appAr, mail: mailAr },
+  fr: { app: appFr, mail: mailFr },
+  ja: { app: appJa, mail: mailJa },
+  "zh-CN": { app: appZhCN, mail: mailZhCN },
 }
 const translators = new Map<Language, Translator<string>>()
 

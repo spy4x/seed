@@ -32,7 +32,7 @@ stay out.
 **Status:** usable today, and still growing in public. On `main` now: passkeys, Google and
 GitHub sign-in, sign-in links, guest accounts, a second factor, groups with roles and invitations,
 Stripe billing per member, notes (the reference feature), the file store, notifications in the app,
-by web push and in Telegram, six languages, an offline SPA, the admin panel, and a public website
+by web push and in Telegram, nine languages, an offline SPA, the admin panel, and a public website
 with a blog and a newsletter. All of it is tested in CI, and most of it runs in the
 [live demo](https://app.seedsaas.com) with made-up people. Not built yet: the [Android](https://github.com/spy4x/seed/issues/202) and
 [desktop](https://github.com/spy4x/seed/issues/203) apps, and the rest of the
@@ -50,8 +50,9 @@ with a blog and a newsletter. All of it is tested in CI, and most of it runs in 
 - **Billing per member, through Stripe.** A free plan with limits, a 14-day trial, quantities that
   follow the member count and a grace period after a failed payment:
   [docs/billing.md](docs/billing.md).
-- **Six languages.** The SPA, the admin panel, the website and the mails speak English, German,
-  Spanish, Brazilian Portuguese, Russian and Arabic, which reads right to left.
+- **Nine languages.** The SPA, the admin panel, the website and the mails speak English, German,
+  Spanish, French, Brazilian Portuguese, Russian, Japanese, Simplified Chinese and Arabic, which
+  reads right to left.
 - **A file store.** Garage, a bundled S3 store, keeps images and PDFs on notes and profile
   pictures. Uploads go through signed links, and photos become small AVIF and WebP copies with
   their metadata removed: [docs/files.md](docs/files.md).

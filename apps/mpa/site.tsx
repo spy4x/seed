@@ -288,8 +288,9 @@ export const NAV_LINKS = [
 
 /**
  * The frame of every page of the public website: its head tags, a link that skips to the content,
- * the header with the way into the demo, the content as full-width bands, and the footer with the
- * legal pages, the language picker and, while the API takes subscriptions, the newsletter form.
+ * the header with the language menu and the way into the demo, the content as full-width bands,
+ * and the footer with the legal pages, the language links and, while the API takes subscriptions,
+ * the newsletter form.
  * Every link and form works with JavaScript turned off, and every link to another page of the site
  * keeps the page's language.
  */
@@ -302,6 +303,12 @@ export function SiteFrame(
   const blog = state.blog === true
   const origin = state.webAppOrigin
   const navLinks = blog ? NAV_LINKS : NAV_LINKS.filter((link) => link.href !== BLOG_PATH)
+  // This page in another language: its translated version, or where the page says to go instead.
+  const languageHref = (tag: string) => {
+    const target = isSiteLanguage(tag) ? tag : DEFAULT_LANGUAGE
+    const version = head.alternates?.find(({ language }) => language === target)
+    return localePath(target, version?.path ?? (head.alternates && head.elsewhere) ?? path)
+  }
   return (
     <>
       <Head>
@@ -353,16 +360,26 @@ export function SiteFrame(
           ...(`externalHint` in link ? { externalHint: t.t(link.externalHint) } : {}),
         }))}
         actions={
-          <Button
-            href={spa.try}
-            rel={TRY_REL}
-            size="sm"
-            data-e2e="site-try-demo"
-            data-umami-event="try-demo"
-            data-umami-event-from="header"
-          >
-            {t.t(`SiteFrame.tryDemo`)}
-          </Button>
+          <>
+            <div data-e2e="site-header-languages">
+              <LanguagePicker
+                mode="menu"
+                languages={SITE_LANGUAGES}
+                current={language}
+                href={languageHref}
+              />
+            </div>
+            <Button
+              href={spa.try}
+              rel={TRY_REL}
+              size="sm"
+              data-e2e="site-try-demo"
+              data-umami-event="try-demo"
+              data-umami-event-from="header"
+            >
+              {t.t(`SiteFrame.tryDemo`)}
+            </Button>
+          </>
         }
       />
       <main id="main" tabIndex={-1} class="outline-none">
@@ -395,14 +412,7 @@ export function SiteFrame(
                 mode="links"
                 languages={SITE_LANGUAGES}
                 current={language}
-                href={(tag) => {
-                  const target = isSiteLanguage(tag) ? tag : DEFAULT_LANGUAGE
-                  const version = head.alternates?.find(({ language }) => language === target)
-                  return localePath(
-                    target,
-                    version?.path ?? (head.alternates && head.elsewhere) ?? path,
-                  )
-                }}
+                href={languageHref}
               />
             </div>
           </div>

@@ -163,7 +163,7 @@ export default {
   "HomeStatus.admin": "O painel de administração",
   "HomeStatus.website": "O worker da outbox, a newsletter e este site",
   "HomeStatus.languages":
-    "O app, o painel de administração e este site em seis idiomas: {languages}",
+    "O app, o painel de administração e este site em nove idiomas: {languages}",
   "HomeStatus.notBuiltAndroid": "Um app Android na Play Store",
   "HomeStatus.notBuiltDesktop": "Um app para desktop no Windows, macOS e Linux",
   "HomeFaq.tryQuestion": "Dá para testar sem criar conta?",
@@ -230,7 +230,7 @@ export default {
   "HomeFeatures.websiteTitle": "Um site público",
   "HomeFeatures.websiteLink": "O que vem no site",
   "HomeFeatures.websiteText":
-    "Este site: renderizado no servidor, funciona com o JavaScript desligado, em seis idiomas, com preços vindos do seu catálogo de planos, páginas legais e uma newsletter com confirmação por e-mail.",
+    "Este site: renderizado no servidor, funciona com o JavaScript desligado, em nove idiomas, com preços vindos do seu catálogo de planos, páginas legais e uma newsletter com confirmação por e-mail.",
   "HomeFeatures.all": "Todos os recursos, com capturas de tela e status",
   "HomeServer.eyebrow": "Roda num servidor que você aluga",
   "HomeServer.title": "Um servidor, um <code>docker compose</code>, nenhuma conta surpresa.",
@@ -427,7 +427,7 @@ export default {
   "FeatureExport.code": "Ler o código de exportação",
   "FeatureLanguages.nav": "Idiomas",
   "FeatureLanguages.eyebrow": "Idiomas",
-  "FeatureLanguages.title": "Seis idiomas desde o início",
+  "FeatureLanguages.title": "Nove idiomas desde o início",
   "FeatureLanguages.lead":
     "O app, o painel de administração e este site falam {languages}. Cada pessoa escolhe o idioma no app, e ele fica salvo na conta. Cada página deste site tem um endereço próprio em cada idioma.",
   "FeatureLanguages.fact1":
@@ -592,7 +592,7 @@ export default {
   "FeaturesFaq.nativeAnswer":
     "Ainda não como app de loja. Hoje, o app web se instala pelo navegador em celulares e computadores e abre sem internet; apps para Android e desktop estão nos planos.",
   "FeatureWebsite.fact9":
-    "Todas as páginas em seis idiomas, cada uma com endereço próprio e links hreflang; as páginas legais ficam em inglês",
+    "Todas as páginas em nove idiomas, cada uma com endereço próprio e links hreflang; as páginas legais ficam em inglês",
   "FeatureTeams.alt":
     "O registro de atividades de um grupo: quem adicionou cada nota ou etiqueta e quando, com um link para abrir cada nota.",
   "FeatureBilling.alt":

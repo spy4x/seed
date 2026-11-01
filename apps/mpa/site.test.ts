@@ -535,9 +535,9 @@ describe("the public website", () => {
   it("says on /features that Seed is translated, and names every language (#276)", async () => {
     const { html } = await page("/features")
 
-    expect(html).toContain(`In six languages from the start`)
+    expect(html).toContain(`In nine languages from the start`)
     expect(html).toContain(
-      `speak English, Russian, Spanish, German, Brazilian Portuguese, and Arabic.`,
+      `speak English, Russian, Spanish, German, Brazilian Portuguese, Arabic, French, Japanese, and Simplified Chinese.`,
     )
   })
 

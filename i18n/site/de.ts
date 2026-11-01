@@ -167,7 +167,7 @@ export default {
   "HomeStatus.admin": "Der Adminbereich",
   "HomeStatus.website": "Der Outbox-Worker, der Newsletter und diese Website",
   "HomeStatus.languages":
-    "Die App, der Adminbereich und diese Website in sechs Sprachen: {languages}",
+    "Die App, der Adminbereich und diese Website in neun Sprachen: {languages}",
   "HomeStatus.notBuiltAndroid": "Eine Android-App im Play Store",
   "HomeStatus.notBuiltDesktop": "Eine Desktop-App für Windows, macOS und Linux",
   "HomeFaq.tryQuestion": "Kann ich es ohne Konto ausprobieren?",
@@ -234,7 +234,7 @@ export default {
   "HomeFeatures.websiteTitle": "Eine öffentliche Website",
   "HomeFeatures.websiteLink": "Was zur Website gehört",
   "HomeFeatures.websiteText":
-    "Diese Website: auf dem Server gerendert, funktioniert auch ohne JavaScript, in sechs Sprachen, mit Preisen direkt aus deinem Tarifkatalog, Rechtsseiten und einem Newsletter mit Double-Opt-in.",
+    "Diese Website: auf dem Server gerendert, funktioniert auch ohne JavaScript, in neun Sprachen, mit Preisen direkt aus deinem Tarifkatalog, Rechtsseiten und einem Newsletter mit Double-Opt-in.",
   "HomeFeatures.all": "Alle Funktionen, mit Screenshots und Status",
   "HomeServer.eyebrow": "Läuft auf einem gemieteten Server",
   "HomeServer.title":
@@ -428,7 +428,7 @@ export default {
   "FeatureExport.code": "Code des Exports lesen",
   "FeatureLanguages.nav": "Sprachen",
   "FeatureLanguages.eyebrow": "Sprachen",
-  "FeatureLanguages.title": "Von Anfang an in sechs Sprachen",
+  "FeatureLanguages.title": "Von Anfang an in neun Sprachen",
   "FeatureLanguages.lead":
     "Die App, der Adminbereich und diese Website sprechen {languages}. Jeder wählt seine Sprache in der App, und sie wird mit dem Konto gespeichert. Jede Seite dieser Website hat in jeder Sprache ihre eigene Adresse.",
   "FeatureLanguages.fact1":
@@ -595,7 +595,7 @@ export default {
   "FeaturesFaq.nativeAnswer":
     "Noch nicht als App aus dem Store. Heute lässt sich die Web-App auf Handy und Desktop aus dem Browser installieren und startet ohne Netz; Apps für Android und den Desktop sind geplant.",
   "FeatureWebsite.fact9":
-    "Jede Seite in sechs Sprachen, jede unter ihrer eigenen Adresse mit hreflang-Links; die Rechtsseiten bleiben auf Englisch",
+    "Jede Seite in neun Sprachen, jede unter ihrer eigenen Adresse mit hreflang-Links; die Rechtsseiten bleiben auf Englisch",
   "FeatureTeams.alt":
     "Das Aktivitätsprotokoll einer Gruppe: wer welche Notiz oder welchen Tag wann hinzugefügt hat, mit einem Link, der die jeweilige Notiz öffnet.",
   "FeatureBilling.alt":
