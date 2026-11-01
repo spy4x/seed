@@ -246,18 +246,31 @@ async function rowsPointingAt(sql: postgres.Sql, userId: number): Promise<Record
 
 /**
  * Waits until some other connection is stuck behind a lock that backend `pid` holds, and answers
- * that connection's backend.
+ * that connection's backend. When `request` is the call expected to queue and it finishes first,
+ * this fails with its result rather than a bare timeout. The 30 s deadline is a margin for a
+ * stalled CI host: locally the wait takes under 200 ms even with every CPU busy.
  */
-async function waitUntilBlockedBy(sql: postgres.Sql, pid: number): Promise<number> {
-  const deadline = Date.now() + 10_000
+async function waitUntilBlockedBy(
+  sql: postgres.Sql,
+  pid: number,
+  request?: Promise<unknown>,
+): Promise<number> {
+  let settled: { value: unknown } | null = null
+  request?.then((value) => settled = { value }, (value) => settled = { value })
+  const deadline = Date.now() + 30_000
   while (Date.now() < deadline) {
+    if (settled) {
+      const { value } = settled as { value: unknown }
+      const result = value instanceof Response ? `status ${value.status}` : String(value)
+      throw new Error(`the request finished before it waited for backend ${pid}: ${result}`)
+    }
     const [row] = await sql<{ pid: number }[]>`
       SELECT pid FROM pg_stat_activity WHERE ${pid} = ANY(pg_blocking_pids(pid)) LIMIT 1
     `
     if (row) return row.pid
     await new Promise((resolve) => setTimeout(resolve, 50))
   }
-  throw new Error(`nothing waited for backend ${pid} within 10 s`)
+  throw new Error(`nothing waited for backend ${pid} within 30 s`)
 }
 
 /** The app's database, which can also name the server process of its connection. */
@@ -787,9 +800,9 @@ Deno.test("deleting one's own account", async (t) => {
           resetting = Promise.resolve(app.request("/reset", {
             body: { email: issued.email, code: issued.code, password: PASSWORD },
           }))
-          const resetPid = await waitUntilBlockedBy(sql, pid)
+          const resetPid = await waitUntilBlockedBy(sql, pid, resetting)
           deleting = hardDeleteAccount(sql, id).catch((error: Error) => error)
-          await waitUntilBlockedBy(sql, resetPid)
+          await waitUntilBlockedBy(sql, resetPid, deleting)
         })
 
         // A deadlock would fail the reset with a 500 or the delete with an error.
@@ -815,11 +828,11 @@ Deno.test("deleting one's own account", async (t) => {
           await tx`SELECT 1 FROM users WHERE id = ${joy.id} FOR UPDATE`
           const [{ pid }] = await tx<{ pid: number }[]>`SELECT pg_backend_pid() AS pid`
           deleting = hardDeleteAccount(sql, id).catch((error: Error) => error)
-          const deletePid = await waitUntilBlockedBy(sql, pid)
+          const deletePid = await waitUntilBlockedBy(sql, pid, deleting)
           resetting = Promise.resolve(app.request("/reset", {
             body: { email: issued.email, code: issued.code, password: PASSWORD },
           }))
-          await waitUntilBlockedBy(sql, deletePid)
+          await waitUntilBlockedBy(sql, deletePid, resetting)
         })
 
         expect(await deleting!).toBe(HardDeleteOutcome.Deleted)
