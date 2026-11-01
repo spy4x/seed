@@ -220,6 +220,8 @@ export function startModules(userId: number, reads: ChangeReads, options: StartO
   let stopQueue = () => {}
   if (switches.offline) {
     const start = () => {
+      // A queue kept when this person's session ended is theirs again: the layer opens and sends it.
+      if (keptQueue.recall() === userId) keptQueue.forget()
       startOfflineLayer(userId, offlineTransportFor(userId, port), options.storage)
     }
     // Copies an earlier page still owes a deletion are deleted before the layer opens, so none of
@@ -229,8 +231,9 @@ export function startModules(userId: number, reads: ChangeReads, options: StartO
     if (owed.length === 0) start()
     else {
       void settleOwed(options.storage)
-      // A sign-out cut short (the page closed) leaves its databases too, the queue among them.
-      deleteDatabases(options.databases, owed)
+      // A sign-out cut short (the page closed) leaves its databases too, the queue among them. The
+      // queue kept for this person when their session ended stays: it is their unsent work.
+      deleteDatabases(options.databases, owed, keptQueue.recall() === userId ? userId : undefined)
       void forgetting.then(() => {
         if (session === opened && !owedIds().includes(userId)) start()
       })
@@ -352,6 +355,7 @@ export function forgetModules(): void {
 const KEPT_KEYS: ReadonlySet<string> = new Set([
   "auth:sign-out-owed", // `state/auth.ts`
   "offline:owed-deletion", // below
+  "offline:kept-queue", // below: an id, whose queue only that person's next sign-in opens
   "theme", // `state/theme.ts`, the library's default key
   "install-prompt-dismissed", // `install.ts`
   "last-sign-in", // `state/last-sign-in.ts`
@@ -565,7 +569,9 @@ const signedInHint = createSignedInHint<SessionUser>("offline:session", {
  * the device remembers someone else (a provider sign-in's redirect brings a new person's cookie to
  * a page that never signed the last one out), everything the app kept in the browser is deleted at
  * once, as on sign-out ({@link wipeDevice}), their queue of unsent writes included: the next person
- * must not find them. The new person's layer opens only once the device holds none of it.
+ * must not find them. The same goes for the person whose queue the device kept when their session
+ * ended ({@link wipeDeviceKeepingQueue}). The new person's layer opens only once the device holds
+ * none of it.
  */
 export function rememberUser(
   user: SessionUser,
@@ -573,19 +579,29 @@ export function rememberUser(
   databases?: QueueDatabases,
 ): void {
   if (!switches.offline) return
-  const remembered = signedInHint.recall()
-  const other = remembered && remembered.id !== user.id ? remembered.id : undefined
-  if (other === undefined) {
+  const others = [...new Set([signedInHint.recall()?.id, keptQueue.recall() ?? undefined])]
+    .filter((id): id is number => id !== undefined && id !== user.id)
+  if (others.length === 0) {
     signedInHint.remember(user)
     return
   }
   // Owed before the hint names the new person, so a page closed in between still deletes them.
-  owe(other)
+  for (const id of others) owe(id)
+  keptQueue.forget()
   clearBrowserStorage()
   signedInHint.remember(user)
-  void settleOwed(storage, other)
-  deleteDatabases(databases, [other])
+  for (const id of others) void settleOwed(storage, id)
+  deleteDatabases(databases, others)
 }
+
+/**
+ * The person whose queue of unsent writes the device kept when their session ended on the server
+ * (#612). Only their own next sign-in opens it ({@link startModules}); anyone else's sign-in, or a
+ * chosen sign-out, deletes it.
+ */
+const keptQueue = createSignedInHint<number>("offline:kept-queue", {
+  validate: (value): value is number => typeof value === "number",
+})
 
 /**
  * The users whose copies on this device are owed a deletion, kept in `localStorage` beside the
@@ -675,19 +691,27 @@ function belongsTo(name: string, userIds: readonly number[]): boolean {
   )
 }
 
+/** Whether the IndexedDB database `name` is one of the queues of unsent writes of `userId`. */
+function isQueueOf(name: string, userId: number): boolean {
+  return name === `offline:user:${userId}:outbox` || name === `offline:user:${userId}:tags-outbox`
+}
+
 /**
  * Queues the deletion of the app's IndexedDB databases after the deletions already queued, so a
- * copy those finish is not opened again afterwards: every database, or only those of `userIds`.
- * The next person's layer waits for it: a start that owes a deletion opens the layer only once
- * {@link forgetting} has settled.
+ * copy those finish is not opened again afterwards: every database, or only those of `userIds`,
+ * but the queues of `keepQueueOf`. The next person's layer waits for it: a start that owes a
+ * deletion opens the layer only once {@link forgetting} has settled.
  */
 function deleteDatabases(
   databases: QueueDatabases = browserDatabases,
   userIds?: readonly number[],
+  keepQueueOf?: number,
 ): void {
   forgetting = forgetting.then(async () => {
     try {
-      const listed = await databases.list() ?? []
+      const listed = (await databases.list() ?? []).filter((name) =>
+        keepQueueOf === undefined || !isQueueOf(name, keepQueueOf)
+      )
       const names = userIds ? listed.filter((name) => belongsTo(name, userIds)) : listed
       const results = await Promise.allSettled(names.map((name) => databases.delete(name)))
       const failed = results.find((result) => result.status === "rejected")
@@ -703,14 +727,37 @@ function deleteDatabases(
  * person on a shared device finds nothing of the last one. Every IndexedDB database goes, the
  * queue of unsent writes included, and so does every `localStorage` key but the few
  * {@link KEPT_KEYS}, and `sessionStorage` but {@link KEPT_SESSION_KEYS}. What the server owns comes back at the next sign-in.
- * The app calls it whenever the page settles with nobody signed in: after the account menu's
- * sign-out, a start whose session ended (401), and a sign-out by the server. Resolves once every
- * deletion was tried; it never rejects.
+ * The app calls it when the person chose to end the session: the account menu's sign-out, the
+ * two-factor step's sign-out, an account deletion. A session the server ended goes through
+ * {@link wipeDeviceKeepingQueue} instead. Resolves once every deletion was tried; it never rejects.
  */
 export function wipeDevice(storage?: OfflineStorage, databases?: QueueDatabases): Promise<void> {
+  keptQueue.forget()
   void forgetUser(storage)
   clearBrowserStorage()
   deleteDatabases(databases)
+  return forgetting
+}
+
+/**
+ * The page settled with nobody signed in although nobody chose to sign out: the session expired or
+ * was ended on the server (#612). Deletes everything {@link wipeDevice} does but the queue of unsent
+ * writes of the person whose session it was (the one the device remembers, or already kept a queue
+ * for): that is their work, not yet on the server. The device keeps their id, so only their own next
+ * sign-in opens the queue and sends it; anyone else's sign-in deletes it first
+ * ({@link rememberUser}). With nobody to keep it for, or the module off, it is {@link wipeDevice}.
+ */
+export function wipeDeviceKeepingQueue(
+  storage?: OfflineStorage,
+  databases?: QueueDatabases,
+): Promise<void> {
+  const owner = switches.offline ? keptQueue.recall() ?? signedInHint.recall()?.id : undefined
+  if (owner === undefined) return wipeDevice(storage, databases)
+  // Kept before the hint is forgotten, so a page closed in between still knows whose queue it is.
+  keptQueue.remember(owner)
+  void forgetUser(storage)
+  clearBrowserStorage()
+  deleteDatabases(databases, undefined, owner)
   return forgetting
 }
 

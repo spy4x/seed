@@ -13,7 +13,7 @@ import {
   totpDisconnect,
   useFlagStorage,
 } from "./auth.ts"
-import { sessionState } from "./session.ts"
+import { sessionState, signOutChosen } from "./session.ts"
 
 const realFetch = globalThis.fetch
 const user = { id: 1, firstName: "Test", lastName: "User" }
@@ -644,5 +644,56 @@ describe("requestSignInLink", () => {
       error: "Too many",
       field: false,
     })
+  })
+})
+
+describe("which end of a session is the person's own choice", () => {
+  beforeEach(() => {
+    useFlagStorage(memoryFlags())
+    signOutChosen.value = false
+    sessionState.value = { ...sessionState.value, user: user as unknown as User }
+  })
+  afterEach(() => {
+    useFlagStorage(undefined)
+    globalThis.fetch = realFetch
+    signOutChosen.value = false
+    sessionState.value = { ...sessionState.value, user: null, isReady: false }
+  })
+
+  it("is a sign-out, also one the server could not be told of yet", async () => {
+    globalThis.fetch = () => Promise.reject(new TypeError("Failed to fetch"))
+
+    await signOut()
+
+    expect(signOutChosen.value).toBe(true)
+  })
+
+  it("is a sign-out owed to the server, finished at the next start", async () => {
+    const flags = memoryFlags()
+    flags.setItem("auth:sign-out-owed", "1")
+    useFlagStorage(flags)
+    globalThis.fetch = () => Promise.resolve(Response.json({ success: true }))
+
+    await bootstrapSession(() => ({ id: 5 } as User))
+
+    expect(signOutChosen.value).toBe(true)
+  })
+
+  it("is an account deletion", async () => {
+    globalThis.fetch = () =>
+      Promise.resolve(Response.json({ success: true, deleteAfter: "2026-10-11T08:00:00.000Z" }))
+
+    await deleteAccount("secret-pass")
+
+    expect(signOutChosen.value).toBe(true)
+  })
+
+  it("is not a session the server ended, such as a start answered with 401", async () => {
+    meAnswers(401)
+
+    await bootstrapSession(() => ({ id: 5 } as User))
+
+    expect(sessionState.value.user).toBeNull()
+    expect(signOutChosen.value).toBe(false)
   })
 })

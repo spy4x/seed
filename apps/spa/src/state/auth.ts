@@ -24,7 +24,7 @@ import {
 import type { KeyValueStore } from "@spy4x/platform/universal/key-value-store"
 import { languages } from "../i18n.ts"
 import { apiFetch } from "./api.ts"
-import { PendingSecondFactor, sessionState, SessionUser } from "./session.ts"
+import { PendingSecondFactor, sessionState, SessionUser, signOutChosen } from "./session.ts"
 
 const SIGN_OUT_OWED = "auth:sign-out-owed"
 
@@ -84,6 +84,7 @@ export async function bootstrapSession(
   // server is still out of reach (`recall` is not used then).
   if (isSignOutOwed()) {
     await settleOwedSignOut()
+    signOutChosen.value = true
     sessionState.value = {
       ...sessionState.value,
       isReady: true,
@@ -460,6 +461,7 @@ export async function signOut(): Promise<void> {
     // stays valid, so nobody else may be shown as this person.
     setSignOutOwed(true)
   }
+  signOutChosen.value = true
   sessionState.value = {
     ...sessionState.value,
     user: null,
@@ -643,6 +645,7 @@ export async function deleteAccount(
     return { ok: false, blocked: result.status === 409, error: result.error.message }
   }
   leave?.()
+  signOutChosen.value = true
   sessionState.value = { ...sessionState.value, user: null, isMfaRequired: false }
   return { ok: true, deleteAfter: new Date(result.data.deleteAfter) }
 }

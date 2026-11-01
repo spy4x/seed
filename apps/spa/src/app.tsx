@@ -13,7 +13,7 @@ import {
   useSearch,
 } from "wouter-preact"
 import { useRouteAnnouncer } from "@spy4x/preact-system/route-announcer"
-import { canSignOut, sessionState } from "./state/session.ts"
+import { canSignOut, sessionState, signOutChosen } from "./state/session.ts"
 import { isGuest } from "@domain/identity"
 import { bootstrapSession, settleOwedSignOut } from "./state/auth.ts"
 import { rememberSignIn } from "./state/last-sign-in.ts"
@@ -36,6 +36,7 @@ import {
   startModules,
   stopChanges,
   wipeDevice,
+  wipeDeviceKeepingQueue,
 } from "./modules.ts"
 import { toasts } from "./state/toasts.ts"
 import { AuthView } from "./views/AuthView.tsx"
@@ -234,13 +235,22 @@ function Frame() {
   )
 }
 
+/**
+ * Clears the device once nobody is signed in. After the person's own sign-out or account deletion
+ * nothing of theirs stays (#206); when the server ended the session (it expired, or was ended
+ * elsewhere), their queue of unsent writes stays for their next sign-in (#612).
+ */
+function wipeSignedOut(): Promise<void> {
+  return signOutChosen.value ? wipeDevice() : wipeDeviceKeepingQueue()
+}
+
 export function App() {
   const [ready, setReady] = useState(false)
   useEffect(() => {
     bootstrapSession(recallUser)
-      // A start that found no session deletes everything the app kept on the device before the
-      // sign-in page shows: the next person on this device must not find it.
-      .then(() => sessionState.value.user ? undefined : wipeDevice())
+      // A start that found no session deletes what the app kept on the device before the sign-in
+      // page shows: the next person on this device must not find it.
+      .then(() => sessionState.value.user ? undefined : wipeSignedOut())
       .finally(() => setReady(true))
   }, [])
 
@@ -253,10 +263,12 @@ export function App() {
 
   useEffect(() => {
     // The user is remembered for the next start with no network. Signed out, the device keeps
-    // nothing of anyone (#206).
+    // nothing of anyone (#206) but the unsent queue of a session the server ended (#612).
     const { user, isReady, isMfaRequired } = sessionState.value
-    if (user && !isMfaRequired) rememberUser(user)
-    else if (isReady && !user) void wipeDevice()
+    if (user && !isMfaRequired) {
+      signOutChosen.value = false
+      rememberUser(user)
+    } else if (isReady && !user) void wipeSignedOut()
   }, [sessionState.value.user, sessionState.value.isReady, sessionState.value.isMfaRequired])
 
   // The sign-in page of this browser later says which method the person used (#142).
