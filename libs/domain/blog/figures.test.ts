@@ -4,14 +4,15 @@ import { type } from "arktype"
 import { blogFigureIds, checkBlogFigure, closestName } from "./figures.ts"
 
 const FIGURES = new Map([
-  [`CostCalculator`, { props: type({ "members?": `number.integer`, "+": `reject` }) }],
+  // A default, so the schema's output differs from what the post wrote.
+  [`CostCalculator`, { props: type({ members: `number.integer = 4`, "+": `reject` }) }],
   [`Chart`, { props: type({ year: `number` }) }],
 ])
 
 describe(`checkBlogFigure`, () => {
   it(`gives a known tag the props its schema returns`, () => {
     const check = checkBlogFigure(
-      { tag: `CostCalculator`, props: { members: 4 }, line: 3 },
+      { tag: `CostCalculator`, props: {}, line: 3 },
       FIGURES,
     )
 
@@ -50,7 +51,7 @@ describe(`checkBlogFigure`, () => {
   })
 
   it(`never resolves a name that only an object's prototype has`, () => {
-    const check = checkBlogFigure({ tag: `Constructor`, props: {}, line: 1 }, FIGURES)
+    const check = checkBlogFigure({ tag: `constructor`, props: {}, line: 1 }, FIGURES)
 
     expect(check.ok).toBe(false)
   })
