@@ -127,7 +127,14 @@ export function Changelog(
   const sections = [
     ...months.map((month) => ({ label: month.title, href: `#${month.id}` })),
     ...(months.length > 0
-      ? [{ label: `Earlier changes on GitHub`, href: CHANGELOG_HISTORY_URL }]
+      ? [{
+        label: (
+          <>
+            Earlier changes on GitHub<span aria-hidden="true">{` ↗`}</span>
+          </>
+        ),
+        href: CHANGELOG_HISTORY_URL,
+      }]
       : []),
   ]
   return (

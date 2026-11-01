@@ -5,6 +5,7 @@ import { renderToString } from "preact-render-to-string"
 import {
   applyOverrides,
   CHANGELOG,
+  CHANGELOG_HISTORY_URL,
   type ChangelogEntry,
   changelogPulse,
   changeMonth,
@@ -150,7 +151,7 @@ describe(`the changelog page`, () => {
     expect(html).not.toContain(`data-e2e="changelog-pulse"`)
   })
 
-  it(`lists six months in full, names each pull request, and links a month's post once it exists`, () => {
+  it(`lists six months in full, names each pull request, and links a month's post once it exists, with every link to the history marked`, () => {
     const entries = Array.from(
       { length: 8 },
       (_, index) =>
@@ -168,7 +169,12 @@ describe(`the changelog page`, () => {
     expect(html).toContain(`aria-label="Pull request 600 on GitHub"`)
     expect(html).toContain(`href="/blog/october"`)
     expect(html.match(/Read (?:&quot;|")What(?:&#39;|')s new in Seed/g)).toHaveLength(1)
-    expect(html).toContain(`Earlier changes on GitHub`)
+    // Every link to the history, the section list's included, is marked as leaving the site.
+    const history = [...html.matchAll(/<a [^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g)]
+      .filter(([, href]) => href === CHANGELOG_HISTORY_URL)
+      .map(([, , text]) => text)
+    expect(history.length).toBeGreaterThanOrEqual(2)
+    expect(history.filter((text) => !text.includes(`↗`))).toEqual([])
     expect(html).toContain(`data-e2e="changelog-pulse"`)
   })
 })
