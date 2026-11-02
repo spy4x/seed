@@ -88,6 +88,23 @@ Deno.test("keeps the demo video and its raw take out of every build context", as
   }
 })
 
+Deno.test("keeps the browser tests' folders out of every build context", async () => {
+  const rules = await Deno.readTextFile(`${ROOT}.dockerignore`)
+  for (const path of ["e2e/fixtures/users.ts", "e2e/results/trace.zip", "e2e/spa/page.ts"]) {
+    expect({ path, ignored: isIgnored(rules, path) }).toEqual({ path, ignored: true })
+  }
+})
+
+Deno.test("writes every exception as a path or a path/**, so BuildKit reads only those folders", async () => {
+  // Any other wildcard in a `!` line makes BuildKit open every folder of the context to match
+  // it, and the server's `.volumes/` holds folders the deploy user may not read.
+  const rules = await Deno.readTextFile(`${ROOT}.dockerignore`)
+  const exceptions = rules.split("\n").map((line) => line.trim()).filter((line) =>
+    line.startsWith("!")
+  )
+  expect(exceptions.filter((line) => !/^![^*?[\\]+(\/\*\*)?$/.test(line))).toEqual([])
+})
+
 Deno.test("still sends what the images need", async () => {
   const rules = await Deno.readTextFile(`${ROOT}.dockerignore`)
   for (
@@ -133,8 +150,12 @@ Deno.test("deploys every folder the image builds from", async () => {
   const folders = [...rules.matchAll(/^!([\w-]+)\/\*\*$/gm)].map((match) => match[1])
   expect(folders.length).toBeGreaterThan(0)
   for (const folder of folders) {
-    expect({ folder, deployed: include.includes(`${folder}/***`) })
-      .toEqual({ folder, deployed: true })
+    // `<folder>/*/**` after it lets in only the folder's own files, which rsync copies by name.
+    const topOnly = rules.split("\n").includes(`${folder}/*/**`)
+    const deployed = topOnly
+      ? include.includes(`${folder}/`) && include.some((line) => line.startsWith(`${folder}/*`))
+      : include.includes(`${folder}/***`)
+    expect({ folder, deployed }).toEqual({ folder, deployed: true })
   }
 })
 

@@ -31,8 +31,12 @@
 !docs/ids.md
 !docs/api-errors.md
 !docs/admin-modules.md
-# The website counts the browser test suites (apps/mpa/repo-facts.ts).
-!e2e/*.e2e.ts
+# The website counts the browser test suites (apps/mpa/repo-facts.ts): the files at the top of
+# e2e/, which holds only suites there, and none of its folders. Never write this as
+# `!e2e/*.e2e.ts`: an exception with any wildcard but a trailing `/**` makes BuildKit read every
+# folder of the context, and the server's `.volumes/` holds folders it may not open.
+!e2e/**
+e2e/*/**
 !deno.lock
 
 # 3. Bonus step: ignore any unnecessary files that may be inside those allowed directories in Step #2
