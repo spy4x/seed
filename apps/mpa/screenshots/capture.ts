@@ -15,7 +15,7 @@ import { stripeSignature, subscriptionEvent } from "../../../e2e/fixtures/billin
 import { currentStep, totpCode } from "../../../e2e/fixtures/totp.ts"
 import { signUpWithCode } from "../../../e2e/fixtures/sign-up.ts"
 
-const APP = Deno.env.get("SHOTS_APP_URL") ?? "http://app.localhost"
+export const APP = Deno.env.get("SHOTS_APP_URL") ?? "http://app.localhost"
 const MPA = new URL("..", import.meta.url).pathname
 const MASTERS = `${MPA}screenshots/.out/masters`
 const CACHE = `${MPA}screenshots/.out/cache`
@@ -65,7 +65,7 @@ const TAGS = [
 type TagName = typeof TAGS[number]["name"]
 
 /** The six notes of "Acme Studio", oldest first, with who writes each. */
-const NOTES: { title: string; body: string; tags: TagName[]; author: Person }[] = [
+export const NOTES: { title: string; body: string; tags: TagName[]; author: Person }[] = [
   {
     title: "Postgres 18 upgrade checklist",
     body: "Snapshot the volume, run the upgrade task on staging first, then production at 06:00.",
@@ -167,9 +167,8 @@ const OG_CARDS: OgCard[] = [
 type Theme = "light" | "dark"
 type Form = "desktop" | "mobile"
 
-/** The widths each form is delivered at. The realtime pair is half a desktop wide. */
+/** The widths each form is delivered at. */
 const WIDTHS: Record<Form, number[]> = { desktop: [1280, 640], mobile: [780, 390] }
-const HALF_WIDTHS = [640, 320]
 
 /** Hidden caret, no transitions: added by the test browser, never by the site. */
 const STEADY_CSS = `*, *::before, *::after { caret-color: transparent !important;
@@ -178,7 +177,7 @@ const STEADY_CSS = `*, *::before, *::after { caret-color: transparent !important
 type StorageState = Awaited<ReturnType<BrowserContext["storageState"]>>
 
 /** What the screens need from the seeding. */
-interface Seeded {
+export interface Seeded {
   groupId: string
   noteIds: string[]
   /** The moment every page's clock is fixed at, a few minutes after the data was made. */
@@ -207,7 +206,7 @@ async function expectOk(
   }
 }
 
-async function cleanupPeople(page: Page): Promise<void> {
+export async function cleanupPeople(page: Page): Promise<void> {
   for (const person of PEOPLE) {
     const response = await page.request.post(`${APP}/api/test/cleanup-user`, {
       data: { login: person.email },
@@ -282,7 +281,11 @@ async function upgradeToPro(page: Page, groupId: string): Promise<void> {
 }
 
 /** Builds everything the screens show. Each person has a browser context of their own. */
-async function seed(browser: Browser, contexts: BrowserContext[], ada: Page): Promise<Seeded> {
+export async function seed(
+  browser: Browser,
+  contexts: BrowserContext[],
+  ada: Page,
+): Promise<Seeded> {
   const pageFor = async () => {
     const context = await browser.newContext({ baseURL: APP })
     contexts.push(context)
@@ -395,10 +398,6 @@ interface ContextOptions {
   theme: Theme
   form: Form
   state?: StorageState
-  /** CSS width of a desktop capture; the realtime pair is half the usual width. */
-  width?: number
-  /** The page saves a note while it is open, so its clock is the real time. */
-  live?: boolean
 }
 
 async function openPage(
@@ -413,7 +412,7 @@ async function openPage(
     storageState: options.state,
     colorScheme: options.theme,
     reducedMotion: "reduce",
-    viewport: desktop ? { width: options.width ?? 1280, height: 800 } : { width: 390, height: 844 },
+    viewport: desktop ? { width: 1280, height: 800 } : { width: 390, height: 844 },
     deviceScaleFactor: desktop ? 2 : 3,
     isMobile: !desktop,
     hasTouch: !desktop,
@@ -422,8 +421,7 @@ async function openPage(
   })
   contexts.push(context)
   const page = await context.newPage()
-  // A note saved during the capture is "just now"; the seeded ones are a few minutes old.
-  await page.clock.setFixedTime(options.live ? new Date() : seeded.now)
+  await page.clock.setFixedTime(seeded.now)
   return page
 }
 
@@ -587,54 +585,6 @@ async function captureScreens(browser: Browser, contexts: BrowserContext[], seed
       }
     }
   }
-  // These change a note, so they run after every screen that lists notes, and both realtime
-  // pictures come before the conflict moves its note to the top of the list.
-  for (const theme of ["light", "dark"] as const) {
-    await attempt(`realtime-${theme}`, () => captureRealtime(browser, contexts, seeded, theme))
-  }
-  for (const theme of ["light", "dark"] as const) {
-    await attempt(
-      `offline-conflict-${theme}`,
-      () => captureConflict(browser, contexts, seeded, theme),
-    )
-  }
-}
-
-/**
- * The same note on two devices: one edits its title, and the other's list shows the saved title
- * without a reload.
- */
-async function captureRealtime(
-  browser: Browser,
-  contexts: BrowserContext[],
-  seeded: Seeded,
-  theme: Theme,
-): Promise<void> {
-  const noteId = seeded.noteIds[5]
-  const options = {
-    theme,
-    form: "desktop",
-    state: seeded.appState,
-    width: 640,
-    live: true,
-  } as const
-  const a = await openPage(browser, contexts, seeded, options)
-  const b = await openPage(browser, contexts, seeded, options)
-  try {
-    await gotoApp(a, `/notes/${noteId}`, a.locator("[data-e2e=note-title]"))
-    await gotoApp(b, "/notes", b.locator("[data-e2e=note-item-title]").nth(5))
-    const title = "Q4 roadmap: onboarding, billing and invoices"
-    await a.locator("[data-e2e=note-title]").fill(title)
-    await snap(a, `realtime-a-${theme}-desktop`)
-    await a.locator("[data-e2e=note-save]").click()
-    await b.locator("[data-e2e=note-item-title]", { hasText: title }).waitFor()
-    await snap(b, `realtime-b-${theme}-desktop`)
-  } finally {
-    await a.context().close()
-    await b.context().close()
-    // The title goes back, so the next theme starts from the same note.
-    await saveTitle(seeded.ada, seeded, noteId, NOTES[5].title)
-  }
 }
 
 interface Note {
@@ -643,7 +593,12 @@ interface Note {
 }
 
 /** Saves a note's title through `as`'s API context, at the version the server holds. */
-async function saveTitle(as: Page, seeded: Seeded, noteId: string, title: string): Promise<void> {
+export async function saveTitle(
+  as: Page,
+  seeded: Seeded,
+  noteId: string,
+  title: string,
+): Promise<void> {
   const url = `${APP}/api/groups/${seeded.groupId}/notes/${noteId}`
   const current = await as.request.get(url)
   await expectOk("note read", current)
@@ -654,40 +609,6 @@ async function saveTitle(as: Page, seeded: Seeded, noteId: string, title: string
     data: { title, body: note.body, version: note.version },
   })
   await expectOk("note save", saved)
-}
-
-/** An edit made offline meets Grace's newer one on the server: the chooser lists both. */
-async function captureConflict(
-  browser: Browser,
-  contexts: BrowserContext[],
-  seeded: Seeded,
-  theme: Theme,
-): Promise<void> {
-  const noteId = seeded.noteIds[2]
-  const page = await openPage(browser, contexts, seeded, {
-    theme,
-    form: "desktop",
-    state: seeded.appState,
-    live: true,
-  })
-  try {
-    await gotoApp(page, `/notes/${noteId}`, page.locator("[data-e2e=note-title]"))
-    await page.locator("[data-e2e=shell-ws-status]", { hasText: "Online" }).waitFor()
-    await page.context().setOffline(true)
-    await page.locator("[data-e2e=note-title]").fill("Checkout fails for EU VAT numbers (fixed)")
-    await page.locator("[data-e2e=note-save]").click()
-    await saveTitle(seeded.grace, seeded, noteId, "Checkout fails for EU VAT numbers with spaces")
-    await page.context().setOffline(false)
-    await page.locator("[data-e2e=offline-status] li").first().waitFor({ timeout: 30_000 })
-    // The editor's "Note saved" toast would cover the list; the picture is about the conflict.
-    const saved = page.locator("[data-e2e=note-saved]")
-    if (await saved.isVisible()) await saved.getByRole("button").click()
-    await saved.waitFor({ state: "detached" })
-    await snap(page, `offline-conflict-${theme}-desktop`)
-  } finally {
-    await page.context().close()
-    await saveTitle(seeded.ada, seeded, noteId, NOTES[2].title)
-  }
 }
 
 /** Runs a command and throws with its error output when it fails. */
@@ -707,8 +628,7 @@ async function encodeShots(): Promise<void> {
     const match = entry.name.match(/^(.+)-(light|dark)-(desktop|mobile)\.png$/)
     if (!match) continue
     const [, name, theme, form] = match
-    const widths = name.startsWith("realtime-") ? HALF_WIDTHS : WIDTHS[form as Form]
-    for (const width of widths) {
+    for (const width of WIDTHS[form as Form]) {
       const target = `${SHOTS}/${name}-${theme}-${width}.webp`
       const budget = (name === "notes" && width === 1280 ? 90 : 70) * 1024
       let quality = 80

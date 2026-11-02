@@ -1,5 +1,4 @@
 import type { JSX } from "preact"
-import { appAddress } from "../brand.ts"
 import { ShotViewer } from "../components/shot-viewer.tsx"
 import type { PublicContactLink } from "@domain/contact-links"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
@@ -32,7 +31,8 @@ import { FoundersHandoff } from "../components/founders-handoff.tsx"
 import { ProofStrip } from "../components/proof-strip.tsx"
 import { TEST_FILE_COUNT } from "../repo-facts.ts"
 import { SectionIntro } from "../components/section-intro.tsx"
-import { PairShot } from "../components/features-visuals.tsx"
+import { FeatureLoop } from "../components/feature-loop.tsx"
+import HeroDemo from "../islands/hero-demo.tsx"
 import { Shot } from "../components/shot.tsx"
 import { organizationId, organizationJsonLd } from "../contact-links.ts"
 import { HIRE_PAGE_URL } from "../hire.ts"
@@ -183,7 +183,7 @@ function homeJsonLd(
 function Hero({ demoHref }: { demoHref: string }): JSX.Element {
   const { t, rich, href } = useSite()
   return (
-    <section aria-labelledby="hero-title" class="relative overflow-hidden">
+    <section id="hero" aria-labelledby="hero-title" class="relative overflow-hidden">
       <div aria-hidden="true" class="site-grid pointer-events-none absolute inset-0" />
       <div class="site-glow relative">
         <div class="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 pb-12 pt-12 sm:px-6 lg:px-8 lg:pb-16 lg:pt-16">
@@ -230,28 +230,14 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
               })}
             </p>
           </div>
-          {/* Reading order is text, then code, then picture; from `lg` the code overlaps the picture. */}
-          <div class="relative flex flex-col gap-6 lg:block lg:pb-12">
-            <WindowFrame
-              variant="terminal"
-              title={t.t(`HomeHero.quickStart`)}
-              class="lg:absolute lg:bottom-0 lg:start-0 lg:z-10 lg:w-2xl"
-              caption={
-                <span>{rich(`HomeHero.initNote`, { code, prompt: () => <AiPrompt /> })}</span>
-              }
-            >
-              <QuickStartLines />
-            </WindowFrame>
-            <WindowFrame
-              variant="browser"
-              title={appAddress(`/notes`)}
-              class="lg:ms-auto lg:w-5/6"
-            >
-              <Shot
-                name="notes"
-                alt={t.t(`HomeHero.notesAlt`)}
-                sizes="(min-width: 1024px) 960px, 100vw"
-                priority
+          {/* The README's demo: `data-no-zoom` keeps its poster out of the screenshot lightbox. */}
+          <div data-no-zoom class="mx-auto w-full max-w-240">
+            <WindowFrame variant="plain" caption={t.t(`HomeHero.demoCaption`)}>
+              <HeroDemo
+                title={t.t(`HomeHero.demoTitle`)}
+                playLabel={t.t(`DemoVideo.playLabel`)}
+                errorLabel={t.t(`DemoVideo.errorLabel`)}
+                openFileLabel={t.t(`DemoVideo.openFileLabel`)}
               />
             </WindowFrame>
           </div>
@@ -329,16 +315,11 @@ function Features(): JSX.Element {
             href={href(`/features#realtime`)}
             linkLabel={t.t(`HomeFeatures.realtimeLink`)}
             media={
-              <div class="h-94 overflow-hidden">
-                {/* As wide as the card up to 416 px, so the Save button is never cut. */}
-                <div class="w-full max-w-104">
-                  <PairShot
-                    name="realtime-a"
-                    alt={t.t(`HomeFeatures.realtimeAlt`)}
-                    sizes="416px"
-                  />
-                </div>
-              </div>
+              <FeatureLoop
+                loop="realtime"
+                caption={false}
+                sizes="(min-width: 1024px) 343px, (min-width: 640px) calc(100vw - 52px), calc(100vw - 36px)"
+              />
             }
           >
             {t.t(`HomeFeatures.realtimeText`)}

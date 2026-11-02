@@ -7,6 +7,8 @@
     "e2e": "deno run -A --node-modules-dir npm:playwright@1.57.0 test --config=../../e2e/mpa/playwright.config.ts",
     // Needs the dev stack, cwebp, magick and tar: screenshots/README.md.
     "screenshots": "deno run -A screenshots/capture.ts",
+    // Needs the dev stack, ffmpeg (with libsvtav1 and libx264) and cwebp: screenshots/README.md.
+    "loops": "deno run -A screenshots/loops.ts",
     "start": "deno serve -A _fresh/server.js"
   },
   "imports": {
@@ -51,7 +53,7 @@
   // the `site` catalog (`i18n/site`, #276). A page that is English at every address, such as a
   // legal page, opts out with `// deno-lint-ignore-file ui-text/no-literal` and the reason.
   "lint": {
-    "plugins": ["jsr:@spy4x/preact-theme@13.6.1/lint"],
+    "plugins": ["jsr:@spy4x/preact-theme@13.7.0/lint"],
     "rules": {
       "tags": ["fresh", "recommended"]
     }

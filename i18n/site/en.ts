@@ -183,10 +183,9 @@ export default {
   "HomeHero.github": "View on GitHub",
   "HomeHero.status": "Seed is usable today, built in public: <status>see what works</status>.",
   "HomeHero.quickStart": "Quick start",
-  "HomeHero.initNote":
-    "<code>init</code> writes <code>infra/envs/.env</code> with every secret filled in. Or ask your AI agent: <prompt></prompt>.",
-  "HomeHero.notesAlt":
-    "The notes screen of the Seed web app: a search box, filters by tag and author, a Created by me filter and a sort menu above a list of a group's notes, each with its author, its tags, when it was updated and when it was created, and a New note button.",
+  "HomeHero.demoTitle": "Seed in one minute, from git clone to the admin panel",
+  "HomeHero.demoCaption":
+    "1-minute demo with captions and music: clone, run, write a note, open the admin panel.",
   "HomeHero.aiPrompt":
     'Create my new product "Acme" from https://github.com/spy4x/seed and run it locally',
   "HomeFeatures.billingAlt":
@@ -207,8 +206,6 @@ export default {
     "Stripe subscriptions per group: a free plan with limits, a paid plan per member, trials, a grace period when a card fails. The owner confirms the price before each invite.",
   "HomeFeatures.realtimeTitle": "Realtime and offline",
   "HomeFeatures.realtimeLink": "How realtime and offline work",
-  "HomeFeatures.realtimeAlt":
-    "The note editor of the Seed app, with the title being changed; every other open window shows the new title after Save.",
   "HomeFeatures.realtimeText":
     "Changes reach every open tab over a WebSocket. The app installs, opens without a network, queues writes and shows a conflict instead of overwriting someone's work.",
   "HomeFeatures.groupsTitle": "Groups from day one",
@@ -609,19 +606,24 @@ export default {
   "FeaturesFaq.title": "Can Seed do that?",
   "FeatureSection.issue": "issue #{number}",
   "FeatureSection.readMore": "Read more about {feature}",
-  "FeatureVisuals.window1": "Window 1",
-  "FeatureVisuals.window2": "Window 2",
-  "FeatureVisuals.realtimeA":
-    "First window: the note editor, with the title changed to “Q4 roadmap: onboarding, billing and invoices”.",
-  "FeatureVisuals.realtimeB":
-    "Second window, a separate sign-in: right after Save, its notes list shows the new title at the top, without a reload.",
-  "FeatureVisuals.offline":
-    "A change made offline meets a newer one on the server: “1 change needs your choice” shows both versions of the note side by side, with “Keep mine” and “Use the server's”.",
-  "FeatureVisuals.phone":
-    "The same app installed on a phone, showing the group's notes with a search box and filters, each note with its author, when it was created and its tags.",
   "FeatureVisuals.deployCaption":
     "Shortened: the rsync and Compose output between the steps is left out.",
   "FeatureVisuals.services": "Services on the server",
+  "Loops.realtimeName": "Realtime sync",
+  "Loops.realtimeTitle":
+    "A note saved in the left window appears in the right window within a second, with no reload.",
+  "Loops.realtimeCaption":
+    "Two windows, one account. Save in one, and the other updates by itself.",
+  "Loops.offlineName": "Offline editing",
+  "Loops.offlineTitle":
+    "The app goes offline, a note is edited, and on reconnect the conflict chooser asks which version to keep.",
+  "Loops.offlineCaption":
+    "Offline edits wait in an outbox. If someone changed the same note, you choose which version to keep.",
+  "Loops.shortcutsName": "Keyboard shortcuts",
+  "Loops.shortcutsTitle":
+    "Ctrl+K opens the command palette. A misspelled, a Cyrillic and a wrong-layout search each find the same action, which then runs.",
+  "Loops.shortcutsCaption":
+    "Press Ctrl+K (⌘K on a Mac). Search forgives typos, Cyrillic and the wrong keyboard layout.",
   "Outbox.change": "The change",
   "Outbox.changeNote": "a note, a member",
   "Outbox.event": "Its event",

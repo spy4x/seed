@@ -11,13 +11,8 @@
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { appAddress } from "./brand.ts"
 import type { FeatureSectionProps, FeatureTierProps } from "./components/features-section.tsx"
-import {
-  AggregateFiles,
-  DeployVisual,
-  OfflinePair,
-  OutboxDiagram,
-  RealtimePair,
-} from "./components/features-visuals.tsx"
+import { AggregateFiles, DeployVisual, OutboxDiagram } from "./components/features-visuals.tsx"
+import { FeatureLoop } from "./components/feature-loop.tsx"
 import { AdminVideoStill } from "./components/admin-video.tsx"
 import { ADMIN_TOUR_MODULES } from "./admin-modules.ts"
 import { ADMIN_VIDEO } from "./admin-video.ts"
@@ -240,8 +235,7 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
             label: t.t(`FeatureRealtime.code`),
             href: source(`docs/decisions/002-realtime-transport-and-sync.md`),
           },
-          shots: true,
-          visual: <RealtimePair />,
+          visual: <FeatureLoop loop="realtime" />,
         },
         {
           id: `offline`,
@@ -255,8 +249,7 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
             t.t(`FeatureOffline.fact3`),
           ],
           code: { label: t.t(`FeatureOffline.code`), href: source(`docs/offline.md`) },
-          shots: true,
-          visual: <OfflinePair />,
+          visual: <FeatureLoop loop="offline" />,
         },
         {
           id: `shortcuts`,
@@ -271,6 +264,7 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
             t.t(`FeatureShortcuts.fact4`),
           ],
           code: { label: t.t(`FeatureShortcuts.code`), href: source(`libs/ui/shortcuts.tsx`) },
+          visual: <FeatureLoop loop="shortcuts" />,
         },
         {
           id: `push`,
@@ -474,7 +468,7 @@ const RUNTIME_QUESTION: Omit<FeatureQuestion, "id"> = {
 
 /**
  * The feature pages, in the order "Other features" lists them. Every claim was checked against the
- * code and docs on `main` on 2026-11-01.
+ * code and docs on `main` on 2026-11-01, the realtime and shortcuts pages on 2026-11-02.
  */
 export const FEATURE_PAGES: readonly FeaturePage[] = [
   {
@@ -633,6 +627,55 @@ export const FEATURE_PAGES: readonly FeaturePage[] = [
     updated: `2026-11-01`,
   },
   {
+    slug: `realtime`,
+    name: `Realtime sync`,
+    title: `Realtime sync for your SaaS, without a hosted service`,
+    description: `A change saved in one tab shows in every other open tab of the group within a ` +
+      `second, over a WebSocket from your own API. Free and MIT-licensed.`,
+    h1: `Realtime updates for your SaaS, without a hosted realtime service`,
+    answer: `Seed sends each saved change to every open tab of the group over a WebSocket from ` +
+      `its own API, so a note saved in one window shows in the others within a second, with no ` +
+      `reload. It runs on your server with no realtime service to pay for; a feature you add ` +
+      `gets it by copying the notes example.`,
+    summary: `A change saved in one tab shows in every other open tab, with no reload.`,
+    how: [
+      `Each write is committed with the group's next sequence number, and the API pushes it to ` +
+      `every member's open socket. A tab applies a change only when its number follows the last ` +
+      `one it has; on a gap it asks the server for everything after its cursor, so a dropped ` +
+      `message costs one extra request and never a wrong list.`,
+      `A laptop that wakes from sleep reconnects and pulls what it missed. With the socket ` +
+      `switched off, the app reads and writes over HTTP and checks for changes every 30 seconds.`,
+    ],
+    guide: source(`docs/decisions/002-realtime-transport-and-sync.md`),
+    code: source(`apps/spa/src/realtime/`),
+    questions: [
+      {
+        id: `faq-realtime`,
+        question: `Does Seed update in realtime?`,
+        answer: `Yes. A saved change shows in every open tab of the group within a second, with ` +
+          `no reload.`,
+      },
+      {
+        id: `faq-realtime-service`,
+        question: `Do I need Pusher, Ably or another realtime service?`,
+        answer: `No. The WebSocket is served by Seed's own API on your server.`,
+      },
+      {
+        id: `faq-realtime-sleep`,
+        question: `Does a tab catch up after the laptop sleeps?`,
+        answer: `Yes. It reconnects and pulls every change after the last one it had.`,
+      },
+      {
+        id: `faq-realtime-off`,
+        question: `Can I turn realtime off?`,
+        answer: `Yes. Set SPA_REALTIME=false: the app then checks for changes every 30 seconds ` +
+          `and works the same.`,
+      },
+    ],
+    demo: `/notes`,
+    updated: `2026-11-02`,
+  },
+  {
     slug: `offline`,
     name: `Offline app`,
     title: `Offline app for your SaaS, without building sync`,
@@ -681,6 +724,48 @@ export const FEATURE_PAGES: readonly FeaturePage[] = [
     ],
     demo: `/notes`,
     updated: `2026-11-01`,
+  },
+  {
+    slug: `shortcuts`,
+    name: `Keyboard shortcuts`,
+    title: `Keyboard shortcuts for your SaaS, without a library`,
+    description:
+      `Ctrl+K search that forgives typos, Cyrillic and the wrong keyboard layout, and a ` +
+      `key for each section of the app. Free and MIT-licensed.`,
+    h1: `A command palette and keyboard shortcuts for your SaaS, built in`,
+    answer: `Seed's app and admin area open a search with Ctrl+K (⌘K on a Mac) that finds pages ` +
+      `and actions even with a typo, in Cyrillic or in the wrong keyboard layout. Press ? for ` +
+      `every shortcut; a feature you add lists its own keys in the same list and gets them in ` +
+      `that dialog.`,
+    summary: `Ctrl+K search that forgives typos and the wrong layout, and a key for each section.`,
+    how: [
+      `One list per app binds the keys and fills the ? dialog, so the dialog never shows a key ` +
+      `that does nothing. G then a letter opens a section, N adds a note from any page, and the ` +
+      `single-key shortcuts stay quiet while you type in a field.`,
+      `The search matches every word in any order, by prefix, with one typo in a longer word, and ` +
+      `reads a query typed in the other keyboard layout or the other alphabet, so "зкщашду" finds ` +
+      `"Open profile".`,
+    ],
+    questions: [
+      {
+        id: `faq-shortcuts`,
+        question: `Does Seed have keyboard shortcuts?`,
+        answer: `Yes. Press ? in the app or the admin area to see them all.`,
+      },
+      {
+        id: `faq-palette`,
+        question: `Is there a command palette?`,
+        answer: `Yes. Ctrl+K (⌘K on a Mac) or / opens search over pages and actions.`,
+      },
+      {
+        id: `faq-shortcuts-typing`,
+        question: `Do shortcuts fire while I type?`,
+        answer: `No. Single-key shortcuts stay quiet in a field, and each device can turn them ` +
+          `off; Ctrl+K and Escape keep working.`,
+      },
+    ],
+    demo: `/notes`,
+    updated: `2026-11-02`,
   },
   {
     slug: `deploy`,

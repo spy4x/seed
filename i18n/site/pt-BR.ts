@@ -191,10 +191,9 @@ export default {
   "HomeHero.status":
     "O Seed já pode ser usado e é construído à vista de todos: <status>veja o que funciona</status>.",
   "HomeHero.quickStart": "Primeiros passos",
-  "HomeHero.initNote":
-    "O <code>init</code> cria o <code>infra/envs/.env</code> com todos os segredos preenchidos. Ou peça ao seu agente de IA: <prompt></prompt>.",
-  "HomeHero.notesAlt":
-    "A tela de notas do app web do Seed: uma busca, filtros por etiqueta e por autor, um filtro “Criadas por mim” e um menu de ordenação acima da lista de notas de um grupo, cada uma com autor, etiquetas, data de atualização e de criação, e um botão “Nova nota”.",
+  "HomeHero.demoTitle": "Seed em um minuto, do git clone ao painel de administração",
+  "HomeHero.demoCaption":
+    "Demo de 1 minuto com legendas e música: clonar, rodar, escrever uma nota, abrir o painel de administração.",
   "HomeHero.aiPrompt":
     "Crie meu novo produto “Acme” a partir de https://github.com/spy4x/seed e rode localmente",
   "HomeFeatures.billingAlt":
@@ -215,8 +214,6 @@ export default {
     "Assinaturas do Stripe por grupo: um plano gratuito com limites, um plano pago por membro, período de teste e um prazo de tolerância quando o cartão falha. O dono confirma o preço antes de cada convite.",
   "HomeFeatures.realtimeTitle": "Tempo real e offline",
   "HomeFeatures.realtimeLink": "Como funcionam o tempo real e o offline",
-  "HomeFeatures.realtimeAlt":
-    "O editor de notas do app Seed, com o título sendo alterado; todas as outras janelas abertas mostram o título novo depois de salvar.",
   "HomeFeatures.realtimeText":
     "As alterações chegam a todas as abas abertas por WebSocket. O app pode ser instalado, abre sem internet, guarda as alterações numa fila e mostra um conflito em vez de sobrescrever o trabalho de alguém.",
   "HomeFeatures.groupsTitle": "Grupos desde o primeiro dia",
@@ -631,19 +628,23 @@ export default {
   "FeaturesFaq.title": "O Seed faz isso?",
   "FeatureSection.issue": "issue #{number}",
   "FeatureSection.readMore": "Mais sobre {feature}",
-  "FeatureVisuals.window1": "Janela 1",
-  "FeatureVisuals.window2": "Janela 2",
-  "FeatureVisuals.realtimeA":
-    "Primeira janela: o editor de notas, com o título alterado para “Roadmap do 4º trimestre: onboarding, cobrança e faturas”.",
-  "FeatureVisuals.realtimeB":
-    "Segunda janela, com outro login: logo depois de salvar, a lista de notas mostra o título novo no topo, sem recarregar.",
-  "FeatureVisuals.offline":
-    "Uma alteração feita offline encontra uma mais recente no servidor: “1 alteração precisa da sua decisão” mostra as duas versões da nota lado a lado, com “Manter a minha versão” e “Usar a outra versão”.",
-  "FeatureVisuals.phone":
-    "O mesmo app instalado num celular, mostrando as notas do grupo com busca e filtros, cada nota com autor, data de criação e etiquetas.",
   "FeatureVisuals.deployCaption":
     "Resumido: a saída do rsync e do Compose entre os passos foi omitida.",
   "FeatureVisuals.services": "Serviços no servidor",
+  "Loops.realtimeName": "Sincronização em tempo real",
+  "Loops.realtimeTitle":
+    "Uma nota salva na janela da esquerda aparece na da direita em menos de um segundo, sem recarregar.",
+  "Loops.realtimeCaption": "Duas janelas, uma conta. Salve em uma, e a outra se atualiza sozinha.",
+  "Loops.offlineName": "Edição offline",
+  "Loops.offlineTitle":
+    "O app fica offline, uma nota é editada e, ao reconectar, o seletor de conflitos pergunta qual versão manter.",
+  "Loops.offlineCaption":
+    "As edições offline esperam numa caixa de saída. Se alguém mudou a mesma nota, você escolhe qual versão manter.",
+  "Loops.shortcutsName": "Atalhos de teclado",
+  "Loops.shortcutsTitle":
+    "Ctrl+K abre a paleta de comandos. Uma busca com erro de digitação, uma em cirílico e uma no layout de teclado errado encontram a mesma ação, que então é executada.",
+  "Loops.shortcutsCaption":
+    "Pressione Ctrl+K (⌘K no Mac). A busca perdoa erros de digitação, cirílico e o layout de teclado errado.",
   "Outbox.change": "A alteração",
   "Outbox.changeNote": "uma nota, um membro",
   "Outbox.event": "Seu evento",

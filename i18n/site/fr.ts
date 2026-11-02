@@ -196,10 +196,9 @@ export default {
   "HomeHero.status":
     "Seed est utilisable dès aujourd’hui, développé en public : <status>voir ce qui fonctionne</status>.",
   "HomeHero.quickStart": "Démarrage rapide",
-  "HomeHero.initNote":
-    "<code>init</code> écrit <code>infra/envs/.env</code> avec tous les secrets déjà remplis. Ou demandez à votre agent IA : <prompt></prompt>.",
-  "HomeHero.notesAlt":
-    "L’écran des notes de l’application web Seed : un champ de recherche, des filtres par étiquette et par auteur, un filtre Créées par moi et un menu de tri au-dessus de la liste des notes d’un groupe, chacune avec son auteur, ses étiquettes, sa date de mise à jour et de création, et un bouton Nouvelle note.",
+  "HomeHero.demoTitle": "Seed en une minute, de git clone au panneau d’administration",
+  "HomeHero.demoCaption":
+    "Démo d’une minute avec sous-titres et musique : cloner, lancer, écrire une note, ouvrir le panneau d’administration.",
   "HomeHero.aiPrompt":
     "Crée mon nouveau produit « Acme » à partir de https://github.com/spy4x/seed et lance-le en local",
   "HomeFeatures.billingAlt":
@@ -220,8 +219,6 @@ export default {
     "Abonnements Stripe par groupe : un forfait Gratuit avec des limites, un forfait payant par membre, des périodes d’essai, un délai de grâce quand une carte est refusée. Le propriétaire confirme le prix avant chaque invitation.",
   "HomeFeatures.realtimeTitle": "Temps réel et hors ligne",
   "HomeFeatures.realtimeLink": "Comment fonctionnent le temps réel et le hors-ligne",
-  "HomeFeatures.realtimeAlt":
-    "L’éditeur de notes de l’application Seed, pendant la modification du titre ; toutes les autres fenêtres ouvertes affichent le nouveau titre après l’enregistrement.",
   "HomeFeatures.realtimeText":
     "Les modifications arrivent dans chaque onglet ouvert via WebSocket. L’application s’installe, s’ouvre sans réseau, met les écritures en file d’attente et signale un conflit au lieu d’écraser le travail de quelqu’un.",
   "HomeFeatures.groupsTitle": "Des groupes dès le premier jour",
@@ -649,19 +646,24 @@ export default {
   "FeaturesFaq.title": "Seed sait-il faire ça ?",
   "FeatureSection.issue": "issue n° {number}",
   "FeatureSection.readMore": "En savoir plus sur {feature}",
-  "FeatureVisuals.window1": "Fenêtre 1",
-  "FeatureVisuals.window2": "Fenêtre 2",
-  "FeatureVisuals.realtimeA":
-    "Première fenêtre : l’éditeur de notes, avec le titre changé en « Feuille de route T4 : onboarding, facturation et factures ».",
-  "FeatureVisuals.realtimeB":
-    "Seconde fenêtre, avec une connexion distincte : juste après l’enregistrement, sa liste de notes affiche le nouveau titre en haut, sans rechargement.",
-  "FeatureVisuals.offline":
-    "Une modification faite hors ligne rencontre une version plus récente sur le serveur : « 1 modification attend votre choix » affiche les deux versions de la note côte à côte, avec « Garder ma version » et « Prendre l’autre version ».",
-  "FeatureVisuals.phone":
-    "La même application installée sur un téléphone, affichant les notes du groupe avec un champ de recherche et des filtres, chaque note avec son auteur, sa date de création et ses étiquettes.",
   "FeatureVisuals.deployCaption":
     "Version abrégée : la sortie de rsync et de Compose entre les étapes est omise.",
   "FeatureVisuals.services": "Services sur le serveur",
+  "Loops.realtimeName": "Synchronisation en temps réel",
+  "Loops.realtimeTitle":
+    "Une note enregistrée dans la fenêtre de gauche apparaît dans celle de droite en moins d’une seconde, sans rechargement.",
+  "Loops.realtimeCaption":
+    "Deux fenêtres, un compte. Enregistrez dans l’une, l’autre se met à jour d’elle-même.",
+  "Loops.offlineName": "Modification hors ligne",
+  "Loops.offlineTitle":
+    "L’application passe hors ligne, une note est modifiée, et à la reconnexion le choix de conflit demande quelle version garder.",
+  "Loops.offlineCaption":
+    "Les modifications hors ligne attendent dans une file d’envoi. Si quelqu’un a changé la même note, vous choisissez la version à garder.",
+  "Loops.shortcutsName": "Raccourcis clavier",
+  "Loops.shortcutsTitle":
+    "Ctrl+K ouvre la palette de commandes. Une recherche avec une faute de frappe, une en cyrillique et une dans la mauvaise disposition de clavier trouvent chacune la même action, qui s’exécute ensuite.",
+  "Loops.shortcutsCaption":
+    "Appuyez sur Ctrl+K (⌘K sur Mac). La recherche pardonne les fautes de frappe, le cyrillique et la mauvaise disposition de clavier.",
   "Outbox.change": "La modification",
   "Outbox.changeNote": "une note, un membre",
   "Outbox.event": "Son événement",
