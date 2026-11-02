@@ -15,13 +15,16 @@ import {
 /**
  * Selectors, escaped as in the built CSS, that the client build must contain: two only
  * preact-components renders, then two no file of this app uses, so only a scan of libs/ui emits
- * them (libs/ui/sources.css says how a container build once lost them).
+ * them (libs/ui/sources.css says how a container build once lost them), and the one that flips
+ * the sideways arrows in Arabic.
  */
 const REQUIRED_SELECTORS = [
   ".lg\\:w-64",
   ".focus\\:not-sr-only",
   ".sm\\:justify-end",
   ".sm\\:flex-wrap",
+  // Flips preact-icons' sideways arrows under dir="rtl"; rtl.test.ts checks the icons carry it.
+  ".\\[\\&\\:dir\\(rtl\\)\\]\\:\\[transform\\:scaleX\\(-1\\)\\]",
 ]
 
 /** Every file under the counted folders and the browser suites' folder, relative to the repository root (`repo-facts.ts`). */

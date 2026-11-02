@@ -219,6 +219,18 @@ describe("the feature pages", () => {
     }
   })
 
+  it("answers each /features question in words that stand alone, with no pointer up or down the page", async () => {
+    const faq = jsonLdGraph((await get(`/features`)).html)
+      .find((entity) => entity["@type"] === `FAQPage`) as {
+        mainEntity: { name: string; acceptedAnswer: { text: string } }[]
+      }
+
+    expect(faq.mainEntity.length).toBeGreaterThan(0)
+    for (const { name, acceptedAnswer } of faq.mainEntity) {
+      expect(acceptedAnswer.text, name).not.toMatch(/\b(above|below)\b/i)
+    }
+  })
+
   it("links each feature on /features that has a page of its own, in the page's language", async () => {
     for (const [path, prefix] of [[`/features`, ``], [`/de/features`, `/de`]]) {
       const { html } = await get(path)
