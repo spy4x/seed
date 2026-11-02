@@ -156,8 +156,11 @@ Nothing else lists the figures. The file exports:
 
 - `default`: the island. It takes its props and `figure` (`FigureFrame`), and draws `PostFigure`
   (`apps/mpa/components/post-figure.tsx`) around its content, so its root is `figure[data-live]`.
-- `props`: the arktype schema of its props, with `"+": "reject"`. A tag's props reach the island
-  only after this schema accepted them.
+- `props`: the arktype definition of its props, with `"+": "reject"`: a plain object such as
+  `{ "members?": "1 <= number.integer <= 50", "+": "reject" }`, never a `type()` call. The
+  server compiles it, and a tag's props reach the island only after it accepted them. Fresh
+  ships every export of an island to the browser, so importing arktype there would add about
+  190 KB and break the website's Content Security Policy.
 - `fallback` (optional): `(props, t) => string`, the sentence the RSS feed shows instead.
 
 Its words go in `i18n/site/` under `PostFigure.<Tag>.*`, in every language. `CostCalculator.tsx`

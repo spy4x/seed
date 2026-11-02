@@ -1,4 +1,5 @@
 import type { ComponentType } from "preact"
+import { type } from "arktype"
 import { escapeHtml } from "@spy4x/email/html"
 import type { Catalog, Translator } from "@spy4x/platform/universal/i18n"
 import {
@@ -18,7 +19,9 @@ import type { FigureFrame } from "./components/post-figure.tsx"
  *
  * A tag is looked up in this map by its exact name and never turned into a path, so a post cannot
  * reach any other module; its props reach the component only after the file's `props` schema
- * accepted them.
+ * accepted them. A file exports that schema as an arktype definition, a plain object, which the
+ * registry compiles: Fresh ships every export of an island to the browser, and arktype there would
+ * add about 190 KB and a `new Function` probe that the website's Content Security Policy blocks.
  *
  * @module
  */
@@ -28,7 +31,7 @@ export interface PostFigureModule {
   /** The island: the figure, drawn inside `PostFigure` so its root is `figure[data-live]`. */
   // deno-lint-ignore no-explicit-any
   default: ComponentType<any>
-  /** The arktype schema of its props; the island gets what it returns. */
+  /** The arktype schema of its props, compiled from the file's definition; the island gets its output. */
   props: BlogFigureSchema[`props`]
   /** What the RSS feed shows instead, from the checked props; a link to the figure when absent. */
   // deno-lint-ignore no-explicit-any
@@ -49,15 +52,14 @@ export function figureRegistry(
   for (const [path, module] of Object.entries(modules)) {
     const tag = FIGURE_FILE.exec(path.split(`/`).pop() ?? ``)?.[1]
     if (!tag) continue
-    const { default: island, props, fallback } = module as Partial<PostFigureModule>
-    // An arktype type is callable, though it is no `Function` instance.
+    const { default: island, props, fallback } = module as Record<string, unknown>
     if (
-      typeof island !== `function` || typeof props !== `function` ||
+      typeof island !== `function` || typeof props !== `object` || props === null ||
       (fallback !== undefined && typeof fallback !== `function`)
     ) {
-      throw new Error(`${path} must export the island as default and its arktype props schema`)
+      throw new Error(`${path} must export the island as default and its arktype props definition`)
     }
-    figures.set(tag, module as PostFigureModule)
+    figures.set(tag, { ...(module as PostFigureModule), props: type.raw(props) })
   }
   return figures
 }

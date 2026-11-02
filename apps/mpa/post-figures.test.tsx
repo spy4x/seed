@@ -27,7 +27,27 @@ describe(`the figure folder`, () => {
 
   it(`refuses a figure file without its props schema`, () => {
     expect(() => figureRegistry({ "./islands/post/Broken.tsx": { default: () => null } }))
-      .toThrow(`Broken.tsx must export the island as default and its arktype props schema`)
+      .toThrow(`Broken.tsx must export the island as default and its arktype props definition`)
+  })
+
+  it(`keeps arktype out of every island, which the browser loads with all its exports`, async () => {
+    for await (const entry of Deno.readDir(new URL(`./islands/post/`, import.meta.url))) {
+      if (!entry.name.endsWith(`.tsx`)) continue
+      const source = await Deno.readTextFile(
+        new URL(`./islands/post/${entry.name}`, import.meta.url),
+      )
+      expect(source).not.toMatch(/^import (?!type )[^\n]*from "arktype"/m)
+    }
+  })
+
+  it(`compiles a file's props definition, so its tags are checked`, () => {
+    const figures = figureRegistry({
+      "Gauge.tsx": { default: () => null, props: { value: `0 <= number <= 100`, "+": `reject` } },
+    })
+    const check = figures.get(`Gauge`)!.props
+
+    expect(check({ value: 40 })).toEqual({ value: 40 })
+    expect(check({ value: 400 })).toBeInstanceOf(type.errors)
   })
 
   it(`holds every file of islands/post`, async () => {
@@ -38,10 +58,10 @@ describe(`the figure folder`, () => {
 describe(`feedHtml`, () => {
   const t = siteTranslator(`en`)
   const figures = figureRegistry({
-    "Plain.tsx": { default: () => null, props: type({}) },
+    "Plain.tsx": { default: () => null, props: {} },
     "Told.tsx": {
       default: () => null,
-      props: type({ text: `string` }),
+      props: { text: `string` },
       fallback: ({ text }: { text: string }) => `Said: ${text} <b>`,
     },
   })

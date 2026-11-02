@@ -1,6 +1,5 @@
 import type { JSX } from "preact"
 import { useMemo, useState } from "preact/hooks"
-import { type } from "arktype"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { MoneyDisplay } from "@spy4x/preact-ui/money-display"
@@ -12,13 +11,18 @@ export const PRO_PRICE = { amount: 900, currency: `EUR` } as const
 /** The most members a Pro group can have. */
 export const PRO_MAX_MEMBERS = 50
 
-/** `<CostCalculator members={4} />`: the team size the figure starts at, 1 to 50 (default 4). */
-export const props = type({
+/**
+ * `<CostCalculator members={4} />`: the team size the figure starts at, 1 to 50 (default 4). An
+ * arktype definition, not a type: the server compiles it, so arktype stays out of the island.
+ */
+export const props = {
   "members?": `1 <= number.integer <= ${PRO_MAX_MEMBERS}`,
   "+": `reject`,
-})
+}
 
-type Props = typeof props.infer
+interface Props {
+  members?: number
+}
 
 /** What a team of `members` pays a month on Pro, in cents. */
 export function monthlyCost(members: number): number {
