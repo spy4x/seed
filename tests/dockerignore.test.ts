@@ -81,10 +81,27 @@ Deno.test("keeps the server's env files and key files out of every build context
   }
 })
 
-Deno.test("keeps the demo video and its raw take out of every build context", async () => {
+Deno.test("lets in the demo video the home page plays, and keeps its raw take and recipe out", async () => {
   const rules = await Deno.readTextFile(`${ROOT}.dockerignore`)
-  for (const path of ["media/demo/demo.mp4", "media/demo/.take/take.mkv"]) {
-    expect({ path, ignored: isIgnored(rules, path) }).toEqual({ path, ignored: true })
+  for (
+    const [path, ignored] of [
+      ["media/demo/demo.webm", false],
+      ["media/demo/demo.mp4", false],
+      ["media/demo/.take/take.mkv", true],
+      ["media/demo/music.opus", true],
+      ["media/demo/poster.webp", true],
+      ["media/demo/recipe/record.ts", true],
+    ] as const
+  ) {
+    expect({ path, ignored: isIgnored(rules, path) }).toEqual({ path, ignored })
+  }
+})
+
+Deno.test("deploys the demo video files the build context lets in", async () => {
+  // The server builds the MPA image from what rsync copied; a file missing there is a 500 on `/`.
+  const include = (await Deno.readTextFile(`${ROOT}infra/deploy/include.txt`)).split("\n")
+  for (const path of ["media/", "media/demo/", "media/demo/demo.webm", "media/demo/demo.mp4"]) {
+    expect({ path, deployed: include.includes(path) }).toEqual({ path, deployed: true })
   }
 })
 

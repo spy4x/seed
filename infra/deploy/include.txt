@@ -30,6 +30,11 @@ docs/admin-modules.md
 # The website counts the browser test suites (apps/mpa/repo-facts.ts).
 e2e/
 e2e/*.e2e.ts
+# The home page plays the README's demo video (apps/mpa/routes/video/[file].ts).
+media/
+media/demo/
+media/demo/demo.webm
+media/demo/demo.mp4
 .dockerignore
 Dockerfile.base
 README.md

@@ -26,9 +26,21 @@
     }
   })
 
+  // A press that plays something in place, such as the hero's demo video (`data-analytics-press`):
+  // a click, or Space on the focused control. Enter on a link arrives as a click.
+  const pressed = (element) => {
+    const control = element instanceof Element ? element.closest("[data-analytics-press]") : null
+    if (control) track(control.dataset.analyticsPress, { from: from(control) })
+    return control
+  }
+  document.addEventListener("keydown", (event) => {
+    if (event.key === " " && !event.repeat) pressed(event.target)
+  }, true)
+
   // A link that names no event of its own, such as the header's and the footer's, which the shared
   // components draw. Links inside `data-umami-event` are Umami's to count.
   document.addEventListener("click", (event) => {
+    if (pressed(event.target)) return
     const link = event.target instanceof Element ? event.target.closest("a[href]") : null
     if (!link || link.closest("[data-umami-event]")) return
     const url = new URL(link.href, location.href)
