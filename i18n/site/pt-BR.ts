@@ -582,7 +582,7 @@ export default {
     "Não. O Seed roda como contêineres de longa duração com Docker Compose num servidor Linux que você aluga, porque a API mantém conexões WebSocket abertas e um worker esvazia uma fila.",
   "FeaturesFaq.runtimeQuestion": "O Seed roda no Node.js ou no Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Ainda não. O Seed roda no Deno hoje, e o trabalho para rodar no Deno, no Node e no Bun está em andamento (#623). Veja o plano de runtime acima.",
+    "Ainda não. O Seed roda no Deno hoje, e o trabalho para rodar no Deno, no Node e no Bun está em andamento. Dá para acompanhar o progresso na issue #623 do GitHub do Seed.",
   "FeaturesFaq.databaseQuestion": "O Seed funciona com outro banco além do Postgres?",
   "FeaturesFaq.databaseAnswer":
     "Não. O Seed foi feito sobre o Postgres: as migrações, as consultas e os testes de integração contam com ele.",

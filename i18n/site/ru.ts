@@ -578,7 +578,7 @@ export default {
     "Нет. Seed работает как долгоживущие контейнеры в Docker Compose на одном арендованном Linux-сервере: API держит открытые WebSocket-соединения, а воркер разбирает очередь.",
   "FeaturesFaq.runtimeQuestion": "Можно ли запустить Seed на Node.js или Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Пока нет. Сегодня Seed работает на Deno, а переход на Deno, Node и Bun уже идёт (#623). Подробности — в плане по рантайму выше.",
+    "Пока нет. Сегодня Seed работает на Deno, а переход на Deno, Node и Bun уже идёт. Следить за ним можно в issue #623 на GitHub проекта Seed.",
   "FeaturesFaq.databaseQuestion":
     "Можно ли использовать с Seed другую базу данных вместо Postgres?",
   "FeaturesFaq.databaseAnswer":

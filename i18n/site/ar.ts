@@ -561,7 +561,7 @@ export default {
     "لا. يعمل Seed كحاويات دائمة التشغيل عبر Docker Compose على خادم Linux واحد تستأجره، لأن الـAPI يُبقي اتصالات WebSocket مفتوحة، والعامل يفرّغ قائمة انتظار.",
   "FeaturesFaq.runtimeQuestion": "هل يعمل Seed على Node.js أو Bun؟",
   "FeaturesFaq.runtimeAnswer":
-    "ليس بعد. يعمل Seed اليوم على Deno، والعمل جارٍ ليعمل على Deno وNode وBun (#623). اطّلع على خطة بيئة التشغيل أعلاه.",
+    "ليس بعد. يعمل Seed اليوم على Deno، والعمل جارٍ ليعمل على Deno وNode وBun. يمكنك متابعة التقدّم في المشكلة #623 على GitHub الخاص بـ Seed.",
   "FeaturesFaq.databaseQuestion": "هل يمكن أن يستخدم Seed قاعدة بيانات غير Postgres؟",
   "FeaturesFaq.databaseAnswer":
     "لا. Seed مبني على Postgres: ترحيلاته واستعلاماته واختبارات التكامل فيه تفترض وجوده.",
