@@ -1,5 +1,4 @@
 import type { JSX } from "preact"
-import { appAddress } from "../brand.ts"
 import { ShotViewer } from "../components/shot-viewer.tsx"
 import type { PublicContactLink } from "@domain/contact-links"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
@@ -32,8 +31,10 @@ import { FoundersHandoff } from "../components/founders-handoff.tsx"
 import { ProofStrip } from "../components/proof-strip.tsx"
 import { TEST_FILE_COUNT } from "../repo-facts.ts"
 import { SectionIntro } from "../components/section-intro.tsx"
-import { PairShot } from "../components/features-visuals.tsx"
-import { Shot } from "../components/shot.tsx"
+import { FeatureLoop } from "../components/feature-loop.tsx"
+import { HeroDemo } from "../islands/videos.tsx"
+import { DARK_MEDIA, Shot, shotSrcset } from "../components/shot.tsx"
+import { Head } from "fresh/runtime"
 import { organizationId, organizationJsonLd } from "../contact-links.ts"
 import { HIRE_PAGE_URL } from "../hire.ts"
 import {
@@ -180,10 +181,42 @@ function homeJsonLd(
   ]
 }
 
+/** Preact's types lack `imagesizes`, which the HTML standard defines on a preload. */
+const PRELOAD_SIZES = { imagesizes: `960px` }
+
+/**
+ * Fetches the demo's poster early where it is on the first screen (1024 px and up), in the
+ * page's theme. The poster itself loads lazily: on a phone an early fetch of it delays the text
+ * that is the page's largest paint.
+ */
+function HeroPosterPreload(): JSX.Element {
+  const desktop = `(min-width: 1024px)`
+  return (
+    <Head>
+      {([[`light`, `${desktop} and (not (${DARK_MEDIA}))`], [
+        `dark`,
+        `${desktop} and ${DARK_MEDIA}`,
+      ]] as const)
+        .map(([theme, media]) => (
+          <link
+            key={theme}
+            rel="preload"
+            as="image"
+            imageSrcSet={shotSrcset(`notes`, theme, `desktop`)}
+            {...PRELOAD_SIZES}
+            fetchpriority="high"
+            media={media}
+          />
+        ))}
+    </Head>
+  )
+}
+
 function Hero({ demoHref }: { demoHref: string }): JSX.Element {
   const { t, rich, href } = useSite()
   return (
-    <section aria-labelledby="hero-title" class="relative overflow-hidden">
+    <section id="hero" aria-labelledby="hero-title" class="relative overflow-hidden">
+      <HeroPosterPreload />
       <div aria-hidden="true" class="site-grid pointer-events-none absolute inset-0" />
       <div class="site-glow relative">
         <div class="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 pb-12 pt-12 sm:px-6 lg:px-8 lg:pb-16 lg:pt-16">
@@ -230,28 +263,28 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
               })}
             </p>
           </div>
-          {/* Reading order is text, then code, then picture; from `lg` the code overlaps the picture. */}
-          <div class="relative flex flex-col gap-6 lg:block lg:pb-12">
-            <WindowFrame
-              variant="terminal"
-              title={t.t(`HomeHero.quickStart`)}
-              class="lg:absolute lg:bottom-0 lg:start-0 lg:z-10 lg:w-2xl"
-              caption={
-                <span>{rich(`HomeHero.initNote`, { code, prompt: () => <AiPrompt /> })}</span>
-              }
-            >
-              <QuickStartLines />
-            </WindowFrame>
-            <WindowFrame
-              variant="browser"
-              title={appAddress(`/notes`)}
-              class="lg:ms-auto lg:w-5/6"
-            >
-              <Shot
-                name="notes"
-                alt={t.t(`HomeHero.notesAlt`)}
-                sizes="(min-width: 1024px) 960px, 100vw"
-                priority
+          {/* The README's demo: `data-no-zoom` keeps its poster out of the screenshot lightbox. */}
+          <div data-no-zoom class="mx-auto w-full max-w-240">
+            <WindowFrame variant="plain" caption={t.t(`HomeHero.demoCaption`)}>
+              <HeroDemo
+                poster={{
+                  src: `/shots/notes-light-1280.webp`,
+                  srcset: shotSrcset(`notes`, `light`, `desktop`),
+                  sizes: `(min-width: 1024px) 960px, 100vw`,
+                  width: 1280,
+                  height: 800,
+                  dark: { srcset: shotSrcset(`notes`, `dark`, `desktop`), media: DARK_MEDIA },
+                }}
+                sources={[
+                  { src: `/video/demo.webm`, type: `video/webm; codecs="vp9, opus"` },
+                  { src: `/video/demo.mp4`, type: `video/mp4` },
+                ]}
+                title={t.t(`HomeHero.demoTitle`)}
+                playLabel={t.t(`DemoVideo.playLabel`)}
+                errorLabel={t.t(`DemoVideo.errorLabel`)}
+                openFileLabel={t.t(`DemoVideo.openFileLabel`)}
+                data-e2e="hero-demo"
+                data-analytics-press="demo-video-play"
               />
             </WindowFrame>
           </div>
@@ -329,16 +362,11 @@ function Features(): JSX.Element {
             href={href(`/features#realtime`)}
             linkLabel={t.t(`HomeFeatures.realtimeLink`)}
             media={
-              <div class="h-94 overflow-hidden">
-                {/* As wide as the card up to 416 px, so the Save button is never cut. */}
-                <div class="w-full max-w-104">
-                  <PairShot
-                    name="realtime-a"
-                    alt={t.t(`HomeFeatures.realtimeAlt`)}
-                    sizes="416px"
-                  />
-                </div>
-              </div>
+              <FeatureLoop
+                loop="realtime"
+                caption={false}
+                sizes="(min-width: 1024px) 343px, (min-width: 640px) calc(100vw - 52px), calc(100vw - 36px)"
+              />
             }
           >
             {t.t(`HomeFeatures.realtimeText`)}

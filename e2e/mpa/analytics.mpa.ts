@@ -107,6 +107,21 @@ test("counts the admin video's first play, each quarter once, and its end", asyn
   ])
 })
 
+// The island swaps the link for the player once pressed, so each way of pressing gets a fresh page.
+for (const how of ["a click", "Space"] as const) {
+  test(`counts a play of the hero's demo video pressed with ${how}, and not as a link`, async ({ page }) => {
+    await page.goto("/")
+    await stayOnPage(page, "click")
+    const play = page.locator("[data-e2e=hero-demo]")
+    if (how === "a click") await play.click()
+    else {
+      await play.focus()
+      await page.keyboard.press("Space")
+    }
+    expect(await events(page)).toEqual([{ name: "demo-video-play", data: { from: "hero" } }])
+  })
+}
+
 test("loads no tracker on a page whose address carries a newsletter token", async ({ page }) => {
   await page.goto("/unsubscribe?list=news&token=not-a-real-token")
 

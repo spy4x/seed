@@ -37,6 +37,10 @@
 # folder of the context, and the server's `.volumes/` holds folders it may not open.
 !e2e/**
 e2e/*/**
+# The home page plays the README's demo video from its one copy (apps/mpa/routes/video/[file].ts);
+# the raw take, the music and the recipe stay out. Exact paths, no wildcard (see above).
+!media/demo/demo.webm
+!media/demo/demo.mp4
 !deno.lock
 
 # 3. Bonus step: ignore any unnecessary files that may be inside those allowed directories in Step #2

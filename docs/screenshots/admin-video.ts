@@ -56,6 +56,7 @@ import { renderToString } from "preact-render-to-string"
 import { BrandMark } from "@spy4x/preact-ui/brand-mark"
 import { IconSprout } from "@spy4x/preact-icons"
 import { clickLike, moveLike, typeLike } from "./human-mouse.ts"
+import { concatList, Recorder } from "./screencast.ts"
 
 const ADMIN_URL = Deno.env.get("ADMIN_URL") ?? "http://admin.localhost"
 const APP_URL = Deno.env.get("APP_URL") ?? "http://app.localhost"
@@ -91,73 +92,6 @@ const FPS = 30
 const ADMIN_EMAIL = "admin@example.com"
 /** The seeded person the support case follows, and what the operator types to find her. */
 const PERSON = { name: "Claire Hartley", email: "claire.hartley@example.com", search: "hartley" }
-
-/** One screencast frame on disk and when it was painted, in seconds. */
-interface Frame {
-  file: string
-  at: number
-}
-
-/** One shot: its frames, and when it ended. */
-interface Segment {
-  frames: Frame[]
-  end: number
-}
-
-/**
- * Collects the screencast's frames. Frames arrive only when the page paints, so the newest one is
- * always kept: it is the first frame of the next shot, whatever happened since.
- */
-class Recorder {
-  private latest: { data: string; at: number } | null = null
-  private current: Frame[] | null = null
-  private count = 0
-  readonly segments: Segment[] = []
-
-  constructor(private readonly cdp: CDPSession, private readonly dir: string) {}
-
-  async start(): Promise<void> {
-    this.cdp.on("Page.screencastFrame", async ({ data, sessionId }) => {
-      const at = performance.now() / 1000
-      this.latest = { data, at }
-      if (this.current) this.current.push(await this.write(data, at))
-      await this.cdp.send("Page.screencastFrameAck", { sessionId }).catch(() => {})
-    })
-    await this.cdp.send("Page.startScreencast", {
-      format: "jpeg",
-      quality: 95,
-      maxWidth: VIEWPORT.width * 2,
-      maxHeight: VIEWPORT.height * 2,
-      everyNthFrame: 1,
-    })
-  }
-
-  async stop(): Promise<void> {
-    await this.cdp.send("Page.stopScreencast")
-  }
-
-  private async write(data: string, at: number): Promise<Frame> {
-    const file = `${this.dir}/${String(this.count++).padStart(6, "0")}.jpg`
-    await Deno.writeFile(file, Uint8Array.from(atob(data), (c) => c.charCodeAt(0)))
-    return { file, at }
-  }
-
-  /** Starts a shot with what the screen shows now. */
-  async begin(): Promise<void> {
-    if (!this.latest) throw new Error("the screencast sent no frame yet")
-    const now = performance.now() / 1000
-    this.current = [await this.write(this.latest.data, now)]
-  }
-
-  /** Ends the shot. What happens until the next `begin` is cut. */
-  end(): Segment {
-    if (!this.current) throw new Error("no shot is running")
-    const segment = { frames: this.current, end: performance.now() / 1000 }
-    this.segments.push(segment)
-    this.current = null
-    return segment
-  }
-}
 
 /**
  * The layer drawn over the page while recording: the pointer and its click marks, the caption
@@ -843,25 +777,6 @@ async function ffmpeg(args: string[]): Promise<void> {
 }
 
 /**
- * The concat list that plays the shots back to back in real time: each frame lasts until the
- * next one was painted, and a shot's last frame until the shot ended.
- */
-function concatList(segments: Segment[]): string {
-  const lines: string[] = []
-  for (const { frames, end } of segments) {
-    frames.forEach((frame, index) => {
-      const next = frames[index + 1]?.at ?? end
-      lines.push(`file '${frame.file}'`, `duration ${Math.max(0, next - frame.at).toFixed(4)}`)
-    })
-  }
-  // The demuxer ignores the last entry's duration unless the file is listed once more; that
-  // repeat lasts one frame, and the encoder's `-t` drops it.
-  const last = segments.at(-1)!.frames.at(-1)!
-  lines.push(`file '${last.file}'`, `duration ${(1 / FPS).toFixed(4)}`)
-  return lines.join("\n") + "\n"
-}
-
-/**
  * Encodes `list` with the music under it, with the quality settings tried in order, until the file
  * fits its budget.
  */
@@ -986,7 +901,7 @@ try {
     await context.addInitScript(overlayScript(font))
     const page = await context.newPage()
     await signInAndWarmUp(page)
-    const rec = new Recorder(await context.newCDPSession(page), frames)
+    const rec = new Recorder(await context.newCDPSession(page), frames, VIEWPORT)
     await rec.start()
     const posterFrames = await play(page, rec, frames)
     await rec.stop()
@@ -994,7 +909,7 @@ try {
     await Deno.mkdir(VIDEO_DIR, { recursive: true })
     await Deno.mkdir(POSTER_DIR, { recursive: true })
     const list = `${frames}/list.txt`
-    await Deno.writeTextFile(list, concatList(rec.segments))
+    await Deno.writeTextFile(list, concatList(rec.segments, FPS))
     const seconds = rec.segments.reduce((sum, s) => sum + s.end - s.frames[0].at, 0)
     if (await duration(MUSIC) < seconds) {
       throw new Error(`the music lasts less than the video's ${seconds.toFixed(1)} s`)
