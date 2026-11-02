@@ -584,7 +584,7 @@ export default {
     "No. Seed funciona como contenedores de larga duración con Docker Compose en un servidor Linux que alquilas, porque la API mantiene abiertas las conexiones WebSocket y un worker vacía una cola.",
   "FeaturesFaq.runtimeQuestion": "¿Seed puede funcionar con Node.js o Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Todavía no. Seed funciona hoy con Deno, y ya estamos trabajando para que funcione con Deno, Node y Bun (#623). Consulta el plan de runtime más arriba.",
+    "Todavía no. Seed funciona hoy con Deno, y ya estamos trabajando para que funcione con Deno, Node y Bun. Puedes seguir el avance en el issue #623 del GitHub de Seed.",
   "FeaturesFaq.databaseQuestion": "¿Seed puede usar otra base de datos que no sea Postgres?",
   "FeaturesFaq.databaseAnswer":
     "No. Seed está construido sobre Postgres: sus migraciones, consultas y pruebas de integración cuentan con él.",

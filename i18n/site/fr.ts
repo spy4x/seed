@@ -599,7 +599,7 @@ export default {
     "Non. Seed tourne sous forme de conteneurs persistants avec Docker Compose sur un serveur Linux que vous louez, car l’API garde des connexions WebSocket ouvertes et un worker vide une file d’attente.",
   "FeaturesFaq.runtimeQuestion": "Seed peut-il tourner sur Node.js ou Bun ?",
   "FeaturesFaq.runtimeAnswer":
-    "Pas encore. Seed tourne aujourd’hui sur Deno, et le passage à Deno, Node et Bun est en cours (#623). Voir le plan d’exécution plus haut.",
+    "Pas encore. Seed tourne aujourd’hui sur Deno, et le passage à Deno, Node et Bun est en cours. Vous pouvez suivre son avancement dans l’issue n° 623 du dépôt GitHub de Seed.",
   "FeaturesFaq.databaseQuestion": "Seed peut-il utiliser une autre base de données que Postgres ?",
   "FeaturesFaq.databaseAnswer":
     "Non. Seed est construit sur Postgres : ses migrations, ses requêtes et ses tests d’intégration le supposent.",
