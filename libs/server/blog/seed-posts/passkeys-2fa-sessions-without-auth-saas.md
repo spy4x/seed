@@ -74,8 +74,9 @@ The cost of owning it is that you must get it right. So here is what "right" mea
    your fingerprint or PIN. The one exception: an account waiting to be deleted, with an
    authenticator app on, still asks for the code before it can be restored.
 
-The WebAuthn checks come from `@simplewebauthn/server`, wrapped in Seed's own small module. I
-would not write signature parsing by hand, and neither should you.
+The WebAuthn checks come from `@simplewebauthn/server`, wrapped in a small module of my shared
+library, `@spy4x/server/webauthn`. I would not write signature parsing by hand, and neither
+should you.
 
 ## What is a session, exactly?
 

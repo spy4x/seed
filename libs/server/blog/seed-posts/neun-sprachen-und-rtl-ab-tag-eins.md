@@ -4,7 +4,7 @@ language: de
 translationOf: nine-languages-and-right-to-left-from-day-one
 title: "SaaS mehrsprachig ab Tag eins: neun Sprachen und Arabisch von rechts nach links"
 seoTitle: "SaaS mehrsprachig: neun Sprachen und RTL ab Tag eins"
-description: "Wie Seed vom ersten Tag an in neun Sprachen läuft, Arabisch von rechts nach links eingeschlossen, und welche Tests verhindern, dass ein fehlender Text oder ein falscher Abstand live geht."
+description: "Wie ein Produkt auf Seed vom ersten Tag an in neun Sprachen läuft, Arabisch von rechts nach links eingeschlossen, und welche Tests verhindern, dass ein fehlender Text oder ein falscher Abstand live geht."
 tldr:
   - Die App, das Admin-Panel, die Website und die E-Mails von Seed gibt es in neun Sprachen, Arabisch eingeschlossen, mit rund 3.900 Texten pro Sprache.
   - Ein Test bricht den Build ab, wenn ein Text fehlt, veraltet ist oder einen Platzhalter verloren hat. Ein zweiter lehnt Abstände „links“ oder „rechts“ ab, die sich für Arabisch nicht umdrehen.

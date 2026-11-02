@@ -7,7 +7,7 @@ description: "Seed's admin panel lives on its own host and has a module for ever
 tldr:
   - Seed's admin panel is a separate app on its own host, with 13 modules, from users and billing to jobs and the audit log.
   - A feature and its admin counterpart ship in the same change. That rule sits in the repo's agent instructions, and two tests keep the panel's two halves listing the same modules.
-  - Only a signed-in operator with a finished second factor gets in. Everyone else gets a plain 404, and every operator action is audited.
+  - Only a signed-in operator gets in, with their second factor when they have one. A signed-in person below operator gets a plain 404, and every operator action is audited.
   - Operators see account facts and counts, not people's notes.
 topic: Deep dive
 author: Anton Shubin
@@ -36,21 +36,21 @@ The panel that grows "later" never catches up. So in Seed it is not a later thin
 
 Thirteen modules, each one entry in the icon rail:
 
-| Module        | What an operator does there                                        |
-| ------------- | ------------------------------------------------------------------ |
-| Dashboard     | Sees the main counts and their 30-day trends                       |
-| Stats         | Reads the public website's visits                                  |
-| Users         | Finds a person; blocks, unblocks, ends sessions, resets a password |
-| Groups        | Sees a group, its members and its plan                             |
-| Billing       | Follows a group's subscription and payments                        |
-| Newsletter    | Sees subscribers and the issues sent                               |
-| Blog          | Writes and schedules posts like this one                           |
-| Contact links | Edits the contact channels the website lists                       |
-| Catalog       | Edits the product catalog, only when the product turns it on       |
-| Audit log     | Reads who did what, and when                                       |
-| Jobs          | Sees background jobs, their failures, and retries them             |
-| System        | Checks the queue, the backups and the running version              |
-| API tokens    | Sees a person's tokens, devices and notification subscriptions     |
+| Module        | What an operator does there                                          |
+| ------------- | -------------------------------------------------------------------- |
+| Dashboard     | Sees the main counts and their 30-day trends                         |
+| Stats         | Reads the public website's visits                                    |
+| Users         | Finds a person; blocks, unblocks, ends sessions, sends a reset email |
+| Groups        | Sees a group, its members and its plan                               |
+| Billing       | Follows a group's subscription and payments                          |
+| Newsletter    | Sees subscribers and the issues sent                                 |
+| Blog          | Writes and schedules posts like this one                             |
+| Contact links | Edits the contact channels the website lists                         |
+| Catalog       | Edits the product catalog, only when the product turns it on         |
+| Audit log     | Reads who did what, and when                                         |
+| Jobs          | Sees background jobs, their failures, and retries them               |
+| System        | Checks the queue, the backups and the running version                |
+| API tokens    | Sees a person's tokens, devices and notification subscriptions       |
 
 A person's page has five tabs of its own: overview, sign-in methods, sessions, groups and
 activity. Other modules can add tabs there, as the API tokens module does.
@@ -88,9 +88,10 @@ quarter-long "admin panel project" that nobody wants to start.
 ## Who can get in?
 
 1. **Its own host.** The panel is served on `ADMIN_DOMAIN`, separate from the product's address.
-2. **A complete sign-in.** The session must have passed its second factor.
-3. **The operator role.** A person without it, or with an unfinished sign-in, gets a 404 from
-   every admin route, so the panel does not even admit it exists.
+2. **A complete sign-in.** The session must be signed in and, if the operator has a second
+   factor, must have passed it. Otherwise the API answers 401, as every signed-in route does.
+3. **The operator role.** A signed-in person without it gets a 404 from every admin route, so
+   the panel does not even admit it exists.
 4. **Every action is audited.** Blocking a person, ending their sessions, changing a role: each
    one is written to the audit log with who did it.
 

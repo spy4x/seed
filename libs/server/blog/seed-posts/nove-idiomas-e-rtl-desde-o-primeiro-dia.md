@@ -4,7 +4,7 @@ language: pt-BR
 translationOf: nine-languages-and-right-to-left-from-day-one
 title: "Internacionalização de SaaS desde o primeiro dia: nove idiomas e árabe da direita para a esquerda"
 seoTitle: "Internacionalização de SaaS: nove idiomas e RTL desde o início"
-description: "Como o Seed já nasce em nove idiomas, com árabe da direita para a esquerda, e quais testes impedem que um texto sem tradução ou uma margem que não inverte chegue à produção."
+description: "Como um produto feito com o Seed já nasce em nove idiomas, com árabe da direita para a esquerda, e quais testes impedem que um texto sem tradução ou uma margem que não inverte chegue à produção."
 tldr:
   - O app, o painel de administração, o site e os e-mails do Seed estão em nove idiomas, árabe incluído, com cerca de 3.900 mensagens em cada um.
   - Um teste quebra o build se falta uma mensagem, se ela ficou desatualizada ou perdeu um marcador. Outro recusa uma margem “esquerda” ou “direita” que não inverteria em árabe.
