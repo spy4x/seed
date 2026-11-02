@@ -116,7 +116,7 @@ Em três casos o Pegasus é a melhor escolha, sem discussão:
 - **Você quer IA pronta.** O Pegasus traz chat com LLM, agentes e chamadas de ferramentas; o Seed,
   nada disso.
 - **Você quer suporte pago.** O Pegasus tem comunidade e suporte prioritário no Unlimited; o Seed
-  tem issues no GitHub e eu.
+  tem issues no GitHub e a mim.
 
 Também faltam no Seed cobrança por uso, entrar como um usuário para ver o que ele vê e um CMS de
 páginas como o Wagtail. Os apps de Android e desktop [ainda não existem](https://github.com/spy4x/seed/issues/202).
