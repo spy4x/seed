@@ -66,7 +66,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `sign-in`,
           nav: t.t(`FeatureSignIn.nav`),
-          eyebrow: t.t(`FeatureSignIn.eyebrow`),
           title: t.t(`FeatureSignIn.title`),
           lead: t.t(`FeatureSignIn.lead`),
           facts: [
@@ -93,7 +92,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `teams`,
           nav: t.t(`FeatureTeams.nav`),
-          eyebrow: t.t(`FeatureTeams.eyebrow`),
           title: t.t(`FeatureTeams.title`),
           lead: t.t(`FeatureTeams.lead`),
           facts: [
@@ -117,7 +115,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `overview`,
           nav: t.t(`FeatureOverview.nav`),
-          eyebrow: t.t(`FeatureOverview.eyebrow`),
           title: t.t(`FeatureOverview.title`),
           lead: t.t(`FeatureOverview.lead`),
           facts: [
@@ -134,7 +131,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `billing`,
           nav: t.t(`FeatureBilling.nav`),
-          eyebrow: t.t(`FeatureBilling.eyebrow`),
           title: t.t(`FeatureBilling.title`),
           lead: t.t(`FeatureBilling.lead`),
           facts: [
@@ -166,7 +162,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `privacy`,
           nav: t.t(`FeaturePrivacy.nav`),
-          eyebrow: t.t(`FeaturePrivacy.eyebrow`),
           title: t.t(`FeaturePrivacy.title`),
           lead: t.t(`FeaturePrivacy.lead`),
           facts: [
@@ -182,7 +177,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `export`,
           nav: t.t(`FeatureExport.nav`),
-          eyebrow: t.t(`FeatureExport.eyebrow`),
           title: t.t(`FeatureExport.title`),
           lead: t.t(`FeatureExport.lead`),
           facts: [
@@ -199,7 +193,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `languages`,
           nav: t.t(`FeatureLanguages.nav`),
-          eyebrow: t.t(`FeatureLanguages.eyebrow`),
           title: t.t(`FeatureLanguages.title`),
           lead: t.t(`FeatureLanguages.lead`, { languages: languageList(language) }),
           facts: [
@@ -223,7 +216,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `realtime`,
           nav: t.t(`FeatureRealtime.nav`),
-          eyebrow: t.t(`FeatureRealtime.eyebrow`),
           title: t.t(`FeatureRealtime.title`),
           lead: t.t(`FeatureRealtime.lead`),
           facts: [
@@ -240,7 +232,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `offline`,
           nav: t.t(`FeatureOffline.nav`),
-          eyebrow: t.t(`FeatureOffline.eyebrow`),
           title: t.t(`FeatureOffline.title`),
           lead: t.t(`FeatureOffline.lead`),
           facts: [
@@ -254,7 +245,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `shortcuts`,
           nav: t.t(`FeatureShortcuts.nav`),
-          eyebrow: t.t(`FeatureShortcuts.eyebrow`),
           title: t.t(`FeatureShortcuts.title`),
           lead: t.t(`FeatureShortcuts.lead`),
           facts: [
@@ -269,7 +259,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `push`,
           nav: t.t(`FeaturePush.nav`),
-          eyebrow: t.t(`FeaturePush.eyebrow`),
           title: t.t(`FeaturePush.title`),
           lead: t.t(`FeaturePush.lead`),
           facts: [
@@ -296,7 +285,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `worker`,
           nav: t.t(`FeatureWorker.nav`),
-          eyebrow: t.t(`FeatureWorker.eyebrow`),
           title: t.t(`FeatureWorker.title`),
           lead: t.t(`FeatureWorker.lead`),
           facts: [
@@ -311,7 +299,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `your-feature`,
           nav: t.t(`FeatureYourFeature.nav`),
-          eyebrow: t.t(`FeatureYourFeature.eyebrow`),
           title: t.t(`FeatureYourFeature.title`),
           lead: t.t(`FeatureYourFeature.lead`),
           facts: [
@@ -334,7 +321,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `admin`,
           nav: t.t(`FeatureAdmin.nav`),
-          eyebrow: t.t(`FeatureAdmin.eyebrow`),
           title: t.t(`FeatureAdmin.title`),
           lead: (
             <>
@@ -364,7 +350,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `deploy`,
           nav: t.t(`FeatureDeploy.nav`),
-          eyebrow: t.t(`FeatureDeploy.eyebrow`),
           title: t.t(`FeatureDeploy.title`),
           lead: t.t(`FeatureDeploy.lead`),
           facts: [
@@ -381,7 +366,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `website`,
           nav: t.t(`FeatureWebsite.nav`),
-          eyebrow: t.t(`FeatureWebsite.eyebrow`),
           title: t.t(`FeatureWebsite.title`),
           lead: t.t(`FeatureWebsite.lead`),
           facts: [
@@ -400,7 +384,6 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
         {
           id: `quality`,
           nav: t.t(`FeatureQuality.nav`),
-          eyebrow: t.t(`FeatureQuality.eyebrow`),
           title: t.t(`FeatureQuality.title`),
           lead: qualityLead(t),
           facts: [

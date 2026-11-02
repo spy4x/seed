@@ -94,18 +94,13 @@ function featuresJsonLd(site: Site, origin: string): unknown[] {
 }
 
 /**
- * The "Read more about {feature}" link of a section that has a page of its own: a feature page
- * (English at every address) or, for the admin panel, `/admin`.
+ * The page a section's text links to, when the feature has one: a feature page (English at every
+ * address) or, for the admin panel, `/admin`.
  */
-function readMore(
-  { t, href }: Site,
-  id: string,
-  name: string,
-): FeatureSectionProps["more"] {
-  const label = t.t(`FeatureSection.readMore`, { feature: name })
-  if (id === `admin`) return { label, href: href(`/admin`) }
+function pageLink({ href }: Site, id: string): FeatureSectionProps["more"] {
+  if (id === `admin`) return { href: href(`/admin`) }
   const page = pageOfFeature(id)
-  return page && { label, href: featurePath(page.slug), language: `en` }
+  return page && { href: featurePath(page.slug), language: `en` }
 }
 
 function Hero({ demoHref }: { demoHref: string }): JSX.Element {
@@ -220,11 +215,11 @@ export default define.page(function Features({ state }) {
         <div class="flex min-w-0 flex-col gap-16 lg:col-span-9 xl:col-span-10">
           {sections.map(({ features, ...tier }) => (
             <FeatureTier key={tier.id} {...tier}>
-              {features.map(({ nav, shots: _shots, ...feature }, index) => (
+              {features.map(({ nav: _nav, shots: _shots, ...feature }, index) => (
                 <FeatureSection
                   key={feature.id}
                   {...feature}
-                  more={readMore(site, feature.id, nav)}
+                  more={pageLink(site, feature.id)}
                   flip={index % 2 === 1}
                 />
               ))}

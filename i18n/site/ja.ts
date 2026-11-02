@@ -342,7 +342,6 @@ export default {
   "FeatureTierSettled.status":
     "CIでテスト済み。GoogleとGitHubでのログイン、Stripeには自分のキーが必要なため、デモではオフになっています。",
   "FeatureSignIn.nav": "アカウントとログイン",
-  "FeatureSignIn.eyebrow": "アカウント",
   "FeatureSignIn.title": "ログインは完成済み",
   "FeatureSignIn.lead":
     "ユーザーはメールアドレスとパスワードで登録し、コードでメールアドレスを確認します。忘れたパスワードの再設定、GoogleやGitHubでのログイン、パスキーでのログイン、そして登録も兼ねるメールのログインリンクにも対応。まずゲストアカウントでアプリを試して、あとからログイン方法を追加することもできます。認証アプリを使えば2段階認証（2FA）も有効にできます。ログイン中のデバイスはすべて一覧で確認でき、ほかのデバイスをログアウトさせることもできます。ログイン方法を変更するときは本人確認を求め、メールで通知します。",
@@ -358,7 +357,6 @@ export default {
     "パスワードの誤入力は、ネットワークアドレスをまたいでログイン名ごとに数え、上限を超えると短時間ロック",
   "FeatureSignIn.code": "ログインのコードを読む",
   "FeatureTeams.nav": "グループとロール",
-  "FeatureTeams.eyebrow": "グループ",
   "FeatureTeams.title": "最初の1分から、ロール付きのグループ",
   "FeatureTeams.lead":
     "すべてのアカウントに、登録時に個人用のグループが作られます。共有グループを作ってほかの人を招待し、閲覧者からオーナーまでのロールを割り当て、オーナー権限もワンステップで譲渡できます。削除したグループは30日以内なら復元でき、各グループにはアクティビティログが残ります。",
@@ -369,7 +367,6 @@ export default {
   "FeatureTeams.fact4": "招待、ロール変更、オーナー権限の譲渡には、それぞれ専用のテスト",
   "FeatureTeams.code": "グループのドメインを読む",
   "FeatureOverview.nav": "グループの概要",
-  "FeatureOverview.eyebrow": "概要",
   "FeatureOverview.title": "グループごとの概要画面",
   "FeatureOverview.lead":
     "任意の期間の主要な数値とグラフ。ウィジェットの表示・非表示や並び順は人ごとに変えられ、そのレイアウトはほかのデバイスにも引き継がれます。",
@@ -379,7 +376,6 @@ export default {
   "FeatureOverview.fact4": "新しい集約は独自のウィジェットを追加でき、管理画面にも表示されます",
   "FeatureOverview.code": "概要ウィジェットのコードを読む",
   "FeatureBilling.nav": "メンバー単位の課金",
-  "FeatureBilling.eyebrow": "お金",
   "FeatureBilling.title": "Stripeによるメンバー単位の課金",
   "FeatureBilling.lead":
     "ユーザーには料金表、制限付きの無料プラン、有料プランの14日間無料トライアルが表示されます。オーナーは招待の前にメンバーを1人増やすといくらかかるかを確認でき、カード決済が失敗したときは期日入りのわかりやすい通知が届きます。",
@@ -390,7 +386,6 @@ export default {
   "FeatureBilling.notYet1": "Stripe以外の決済サービス",
   "FeatureBilling.code": "docs/billing.mdを読む",
   "FeaturePrivacy.nav": "プライバシー",
-  "FeaturePrivacy.eyebrow": "プライバシー",
   "FeaturePrivacy.title": "いつでも離れられるアカウント",
   "FeaturePrivacy.lead":
     "ユーザーはプロフィールから自分のデータのコピーをダウンロードし、アカウントを削除できます。削除には7日間の猶予があります。既読の通知は90日後に削除されます。",
@@ -400,7 +395,6 @@ export default {
   "FeaturePrivacy.fact3": "既読の通知、無効になった招待、古い監査イベントを毎晩クリーンアップ",
   "FeaturePrivacy.code": "アカウント削除のコードを読む",
   "FeatureExport.nav": "エクスポートとインポート",
-  "FeatureExport.eyebrow": "エクスポート",
   "FeatureExport.title": "データは自分のもの",
   "FeatureExport.lead":
     "どのグループもオープンなJSONファイルにエクスポートでき、あとから新しいグループとしてインポートできます。元のグループが上書きされることはありません。",
@@ -412,7 +406,6 @@ export default {
   "FeatureExport.fact4": "各集約がファイル内の自分の担当部分を登録します",
   "FeatureExport.code": "エクスポートのコードを読む",
   "FeatureLanguages.nav": "言語",
-  "FeatureLanguages.eyebrow": "言語",
   "FeatureLanguages.title": "最初から9言語に対応",
   "FeatureLanguages.lead":
     "アプリ、管理画面、このWebサイトは{languages}に対応しています。言語はアプリ内で選べて、アカウントに保存されます。このWebサイトの各ページは、言語ごとに専用のアドレスを持っています。",
@@ -431,7 +424,6 @@ export default {
   "FeatureTierReady.status":
     "オフラインでの書き込みはメモとタグに対応。そのほかのリストは、オフラインでも最後に表示した内容で開きます。",
   "FeatureRealtime.nav": "リアルタイム",
-  "FeatureRealtime.eyebrow": "リアルタイム",
   "FeatureRealtime.title": "再読み込みなしで変更が反映",
   "FeatureRealtime.lead":
     "メンバーの変更は、そのグループを開いているすべてのタブに表示されます。スリープから復帰したノートPCも、見逃した変更に追いつきます。",
@@ -441,7 +433,6 @@ export default {
     "リアルタイムはオフにもできます。その場合アプリは一定間隔でポーリングし、同じように動きます",
   "FeatureRealtime.code": "リアルタイムの設計を読む",
   "FeatureOffline.nav": "オフラインアプリ",
-  "FeatureOffline.eyebrow": "オフライン",
   "FeatureOffline.title": "ネットワークなしで開けるアプリ",
   "FeatureOffline.lead":
     "アプリはネイティブアプリのようにインストールでき、ネットワークなしでも開けて、接続が戻るとためておいた変更を送信します。古くなった変更は解決すべき競合として表示し、黙って上書きすることはありません。",
@@ -452,7 +443,6 @@ export default {
     "設定1つでオフにでき、取り除くこともできます。フォルダを1つ削除し、用意されたチェックリストに従うだけです",
   "FeatureOffline.code": "docs/offline.mdを読む",
   "FeatureShortcuts.nav": "キーボードショートカット",
-  "FeatureShortcuts.eyebrow": "キーボード",
   "FeatureShortcuts.title": "アプリと管理画面のキーボードショートカット",
   "FeatureShortcuts.lead":
     "?キーを押すと、すべてのショートカットが表示されます。Nキーでどのページからでもその場でメモを追加でき、Gキーに続けて文字キーを押すと各セクションが開きます。入力欄に入力している間は、ショートカットは邪魔をしません。",
@@ -464,7 +454,6 @@ export default {
   "FeatureShortcuts.fact4": "管理画面では、Gキーに続けて文字キーを押すと各モジュールが開きます",
   "FeatureShortcuts.code": "ショートカットのコードを読む",
   "FeaturePush.nav": "通知",
-  "FeaturePush.eyebrow": "通知",
   "FeaturePush.title": "アプリ、スマホ、デスクトップ、Telegramへの通知",
   "FeaturePush.lead":
     "招待されたとき、新しいロールを割り当てられたとき、グループを譲渡されたときに通知が届きます。アプリ内、スマホやデスクトップへのWebプッシュ、そして連携していればTelegramにも。",
@@ -475,7 +464,6 @@ export default {
     "Telegramボットはトークンを設定するまでオフ。ワンタイムコードで連携し、プロダクト独自のコマンドは1ファイルで追加できます",
   "FeaturePush.code": "Webプッシュのサービスを読む",
   "FeatureWorker.nav": "バックグラウンド処理",
-  "FeatureWorker.eyebrow": "バックグラウンド処理",
   "FeatureWorker.title": "クラッシュしても失われない処理",
   "FeatureWorker.lead":
     "処理は実行前に保存されるので、サーバーが途中で再起動してもメールや通知はきちんと送られます。独自のジョブも、即時、あとで、またはスケジュールに沿って実行できます。",
@@ -487,7 +475,6 @@ export default {
     "失敗した試行は間隔を広げながら再試行。オペレーターは管理画面ですべての実行を確認できます",
   "FeatureWorker.code": "docs/jobs.mdを読む",
   "FeatureYourFeature.nav": "独自の機能",
-  "FeatureYourFeature.eyebrow": "あなたのプロダクト",
   "FeatureYourFeature.title": "既存の機能をコピーして、新しい機能を追加",
   "FeatureYourFeature.lead":
     "メモ機能は、データベース、API、画面、オフライン、テストまで、すべての層がそろった完全な機能です。新しい機能は、各ファイルを順番に挙げたリストに沿って、それをファイルごとにコピーして作ります。",
@@ -510,7 +497,6 @@ export default {
   "FeatureTierOperations.status":
     "以下のモジュールはすべて現在提供中です。まだないものは各モジュールの下に記載しています。",
   "FeatureAdmin.nav": "管理画面",
-  "FeatureAdmin.eyebrow": "サポート",
   "FeatureAdmin.title": "オペレーターのための管理画面",
   "FeatureAdmin.lead":
     "オペレーターは名前やメールアドレスでユーザーを検索し、そのログイン方法、セッション、グループ、履歴を確認できます。同じ場所から、グループの管理、返金、ニュースレター購読者の管理、すべてのバックグラウンドジョブの確認、失敗したジョブの再実行、システムの状態確認ができます。",
@@ -523,7 +509,6 @@ export default {
   "FeatureAdmin.notYet1": "ユーザーとしてログインし、その人と同じ画面を見る機能",
   "FeatureAdmin.code": "管理画面アプリを読む",
   "FeatureDeploy.nav": "デプロイと監視",
-  "FeatureDeploy.eyebrow": "デプロイ",
   "FeatureDeploy.title": "サーバー1台、コマンド1つ",
   "FeatureDeploy.lead":
     "Seedは借りたLinuxサーバーならどこでも動き、開発でも本番でもDocker Composeを使います。複数のプロダクトで1台のサーバーを共有できます。",
@@ -537,7 +522,6 @@ export default {
   "FeatureDeploy.fact6": "バージョンタグをプッシュすると、CIからリリースイメージを公開",
   "FeatureDeploy.code": "Composeファイルを読む",
   "FeatureWebsite.nav": "公開用Webサイト",
-  "FeatureWebsite.eyebrow": "Webサイト",
   "FeatureWebsite.title": "自分用に手を加えられる公開Webサイト",
   "FeatureWebsite.lead":
     "このサイトのことです。高速で、サーバーでレンダリングされ、JavaScriptがオフでも使えます。料金ページ、法務ページ、ブログ、ニュースレター付き。",
@@ -555,7 +539,6 @@ export default {
     "自分のUmamiを使ったCookie不要のアクセス解析（任意）。すべてのCTAにイベントを付け、管理画面の統計ページで、ソース別・アイテム別の訪問数と注文クリック数を確認できます",
   "FeatureWebsite.code": "Webサイトのコードを読む",
   "FeatureQuality.nav": "テスト",
-  "FeatureQuality.eyebrow": "品質",
   "FeatureQuality.title": "大事なところをテスト",
   "FeatureQuality.lead": {
     "other":
@@ -600,7 +583,7 @@ export default {
   "Features.compare": "Seedとほかのスターターの比較",
   "FeaturesFaq.title": "Seedでこんなことはできる？",
   "FeatureSection.issue": "issue #{number}",
-  "FeatureSection.readMore": "{feature}の詳細",
+  "FeatureSection.forDevelopers": "開発者向け",
   "FeatureVisuals.deployCaption":
     "一部省略：各ステップの間のrsyncとComposeの出力は割愛しています。",
   "FeatureVisuals.services": "サーバー上のサービス",

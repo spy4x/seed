@@ -318,7 +318,6 @@ export default {
   "FeatureTierSettled.status":
     "已在 CI 中测试。Google 和 GitHub 登录以及 Stripe 需要你自己的密钥，所以在演示中是关闭的。",
   "FeatureSignIn.nav": "账号与登录",
-  "FeatureSignIn.eyebrow": "账号",
   "FeatureSignIn.title": "登录，已搞定",
   "FeatureSignIn.lead":
     "用户用邮箱和密码注册，并通过验证码验证邮箱。忘记密码可以重置，也可以用 Google 或 GitHub 继续、用通行密钥登录，或者通过邮件获取登录链接（没有账号时会顺便完成注册）。也可以先用访客账号试用应用，之后再添加登录方式。身份验证器应用可以开启双重验证（2FA）。用户能看到自己登录过的每台设备，并可以让其他设备退出登录。更改登录方式时需要验证身份，并会发送邮件通知。",
@@ -333,7 +332,6 @@ export default {
   "FeatureSignIn.fact7": "按登录名统计所有网络地址上的密码错误次数，超过后短暂锁定",
   "FeatureSignIn.code": "阅读登录代码",
   "FeatureTeams.nav": "群组与角色",
-  "FeatureTeams.eyebrow": "群组",
   "FeatureTeams.title": "带角色的群组，从第一分钟就有",
   "FeatureTeams.lead":
     "每个账号注册时都会获得一个个人群组。用户可以创建共享群组、邀请他人、分配从查看者到所有者的角色，并一步完成所有权转让。已删除的群组可在 30 天内恢复，每个群组都有活动日志。",
@@ -343,7 +341,6 @@ export default {
   "FeatureTeams.fact4": "邀请、角色变更和所有权转让，各有独立的测试",
   "FeatureTeams.code": "阅读群组领域代码",
   "FeatureOverview.nav": "群组概览",
-  "FeatureOverview.eyebrow": "概览",
   "FeatureOverview.title": "每个群组的概览",
   "FeatureOverview.lead":
     "任意日期范围的关键数据和图表。每个人都可以隐藏和重新排列小组件，布局会同步到他们的其他设备。",
@@ -353,7 +350,6 @@ export default {
   "FeatureOverview.fact4": "新增的聚合会带上自己的小组件，管理后台也会显示",
   "FeatureOverview.code": "阅读概览小组件代码",
   "FeatureBilling.nav": "按成员计费",
-  "FeatureBilling.eyebrow": "收款",
   "FeatureBilling.title": "通过 Stripe 按成员计费",
   "FeatureBilling.lead":
     "用户可以看到价格表、有使用限制的免费版，以及付费套餐的 14 天试用。所有者在邀请新成员之前就能看到多一位成员要多付多少钱；银行卡扣款失败时，会收到一条带日期的清晰提醒。",
@@ -364,7 +360,6 @@ export default {
   "FeatureBilling.notYet1": "Stripe 以外的支付服务商",
   "FeatureBilling.code": "阅读 docs/billing.md",
   "FeaturePrivacy.nav": "隐私",
-  "FeaturePrivacy.eyebrow": "隐私",
   "FeaturePrivacy.title": "用户可以随时离开的账号",
   "FeaturePrivacy.lead":
     "用户可以在个人资料中下载自己的数据副本，或删除账号，并有 7 天时间改变主意。已读通知会在 90 天后删除。",
@@ -373,7 +368,6 @@ export default {
   "FeaturePrivacy.fact3": "每晚清理已读通知、失效邀请和旧的审计事件",
   "FeaturePrivacy.code": "阅读账号删除代码",
   "FeatureExport.nav": "导出与导入",
-  "FeatureExport.eyebrow": "导出",
   "FeatureExport.title": "你的数据，随你带走",
   "FeatureExport.lead":
     "可以把任意群组导出为开放的 JSON 文件，之后再作为新群组导入。原来的群组永远不会被覆盖。",
@@ -383,7 +377,6 @@ export default {
   "FeatureExport.fact4": "每个聚合各自注册它在文件中的部分",
   "FeatureExport.code": "阅读导出代码",
   "FeatureLanguages.nav": "多语言",
-  "FeatureLanguages.eyebrow": "多语言",
   "FeatureLanguages.title": "从一开始就支持九种语言",
   "FeatureLanguages.lead":
     "应用、管理后台和本网站支持{languages}。用户在应用中选择语言，选择会保存到账号中。本网站的每个页面在每种语言下都有独立的地址。",
@@ -400,7 +393,6 @@ export default {
     "大多数启动模板因为太难而略过的部分：实时更新、没有网络也能用的应用，以及绝不能丢失的任务。",
   "FeatureTierReady.status": "离线写入支持笔记和标签；其他列表在离线时会显示上次加载的内容。",
   "FeatureRealtime.nav": "实时同步",
-  "FeatureRealtime.eyebrow": "实时同步",
   "FeatureRealtime.title": "无需刷新，更改即时可见",
   "FeatureRealtime.lead":
     "一位成员的更改会出现在该群组每个打开的标签页中；笔记本从休眠中唤醒后，也会补上错过的内容。",
@@ -409,7 +401,6 @@ export default {
   "FeatureRealtime.fact3": "实时同步可以关闭：应用会改为定时轮询，使用体验不变",
   "FeatureRealtime.code": "阅读实时同步设计",
   "FeatureOffline.nav": "离线应用",
-  "FeatureOffline.eyebrow": "离线",
   "FeatureOffline.title": "没有网络也能打开的应用",
   "FeatureOffline.lead":
     "应用可以像原生应用一样安装，没有网络也能打开，网络恢复后会自动发送排队中的更改。过时的更改会显示为需要你处理的冲突，绝不会悄悄覆盖。",
@@ -418,7 +409,6 @@ export default {
   "FeatureOffline.fact3": "改一项设置即可关闭，或者彻底移除：删除一个文件夹，再按书面清单操作",
   "FeatureOffline.code": "阅读 docs/offline.md",
   "FeatureShortcuts.nav": "键盘快捷键",
-  "FeatureShortcuts.eyebrow": "键盘",
   "FeatureShortcuts.title": "应用和管理后台都支持键盘快捷键",
   "FeatureShortcuts.lead":
     "按 ? 查看所有快捷键。在任意页面按 N 即可添加笔记，无需离开当前页面；先按 G 再按一个字母即可打开对应栏目。在输入框中打字时，快捷键不会干扰你。",
@@ -429,7 +419,6 @@ export default {
   "FeatureShortcuts.fact4": "在管理后台中，先按 G 再按一个字母即可打开各个模块",
   "FeatureShortcuts.code": "阅读快捷键代码",
   "FeaturePush.nav": "通知",
-  "FeaturePush.eyebrow": "通知",
   "FeaturePush.title": "应用内、手机、桌面和 Telegram 通知",
   "FeaturePush.lead":
     "用户在受到邀请、获得新角色或被转让群组时会收到通知：在应用内、通过手机或桌面上的 Web 推送，以及关联 Telegram 后在 Telegram 中。",
@@ -440,7 +429,6 @@ export default {
     "Telegram 机器人，设置令牌之前处于关闭状态：通过一次性验证码关联，你的产品自己的命令只需在一个文件中添加",
   "FeaturePush.code": "阅读 Web 推送服务代码",
   "FeatureWorker.nav": "后台任务",
-  "FeatureWorker.eyebrow": "后台任务",
   "FeatureWorker.title": "崩溃也不会丢失的任务",
   "FeatureWorker.lead":
     "即使服务器中途重启，邮件和通知也照样会发出，因为任务在执行之前就已保存。你自己的任务可以立即运行、稍后运行或定时运行。",
@@ -450,7 +438,6 @@ export default {
   "FeatureWorker.fact4": "失败的尝试会以逐渐延长的间隔重试；运营人员可以在管理后台看到每一次运行",
   "FeatureWorker.code": "阅读 docs/jobs.md",
   "FeatureYourFeature.nav": "你自己的功能",
-  "FeatureYourFeature.eyebrow": "你的产品",
   "FeatureYourFeature.title": "复制一个功能，就能添加一个新功能",
   "FeatureYourFeature.lead":
     "笔记是一个贯穿所有层的完整功能：数据库、API、界面、离线和测试。新功能照着它逐个文件复制即可，有一份清单按顺序列出了每个文件。",
@@ -472,7 +459,6 @@ export default {
     "一台你租用的服务器，看清它在做什么的工具，以及一个让运营人员帮助产品用户的后台。",
   "FeatureTierOperations.status": "下面每个模块现在都已上线。尚未完成的部分都列在对应模块下方。",
   "FeatureAdmin.nav": "管理后台",
-  "FeatureAdmin.eyebrow": "支持",
   "FeatureAdmin.title": "给运营人员用的管理后台",
   "FeatureAdmin.lead":
     "运营人员可以按姓名或邮箱查找用户，查看其登录方式、会话、群组和历史记录。在同一个地方，他们还能管理群组、退款、维护邮件简报的订阅者、查看所有后台任务、重新运行失败的任务，以及检查系统健康状况。",
@@ -485,7 +471,6 @@ export default {
   "FeatureAdmin.notYet1": "以用户身份登录，看到对方所看到的内容",
   "FeatureAdmin.code": "阅读管理后台代码",
   "FeatureDeploy.nav": "部署与监控",
-  "FeatureDeploy.eyebrow": "部署",
   "FeatureDeploy.title": "一台服务器，一条命令",
   "FeatureDeploy.lead":
     "Seed 可以运行在你租用的任何 Linux 服务器上，开发和生产环境都使用 Docker Compose。多个产品可以共用一台服务器。",
@@ -498,7 +483,6 @@ export default {
   "FeatureDeploy.fact6": "推送版本标签时，由 CI 发布正式版镜像",
   "FeatureDeploy.code": "阅读 Compose 文件",
   "FeatureWebsite.nav": "公开网站",
-  "FeatureWebsite.eyebrow": "网站",
   "FeatureWebsite.title": "可直接改造的公开网站",
   "FeatureWebsite.lead":
     "就是本站：快速、服务端渲染，关闭 JavaScript 也能使用，包含价格页、法律页面、博客和邮件简报。",
@@ -515,7 +499,6 @@ export default {
     "可选的无 Cookie 统计，使用你自己的 Umami，每个行动号召都有事件记录，管理后台有统计页面：按来源和商品查看访问量和下单点击",
   "FeatureWebsite.code": "阅读网站代码",
   "FeatureQuality.nav": "测试",
-  "FeatureQuality.eyebrow": "质量",
   "FeatureQuality.title": "该测的地方都测了",
   "FeatureQuality.lead": {
     "other":
@@ -559,7 +542,7 @@ export default {
   "Features.compare": "Seed 与其他方案的对比",
   "FeaturesFaq.title": "Seed 能做到吗？",
   "FeatureSection.issue": "issue #{number}",
-  "FeatureSection.readMore": "了解更多：{feature}",
+  "FeatureSection.forDevelopers": "面向开发者",
   "FeatureVisuals.deployCaption": "已精简：省略了各步骤之间 rsync 和 Compose 的输出。",
   "FeatureVisuals.services": "服务器上的服务",
   "Loops.realtimeName": "实时同步",

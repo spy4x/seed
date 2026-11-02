@@ -336,7 +336,6 @@ export default {
   "FeatureTierSettled.status":
     "Tested in CI. Google and GitHub sign-in and Stripe need your own keys, so they are off in the demo.",
   "FeatureSignIn.nav": "Accounts and sign-in",
-  "FeatureSignIn.eyebrow": "Accounts",
   "FeatureSignIn.title": "Sign-in, done",
   "FeatureSignIn.lead":
     "People sign up with an email and password and confirm the email with a code. They can reset a forgotten password, continue with Google or GitHub, sign in with a passkey, or get a sign-in link by email that also signs them up. Or they try the app first in a guest account and add a sign-in method later. An authenticator app adds two-factor authentication (2FA). People see every device they're signed in on and can sign the others out. Changing a sign-in method asks for proof and sends an email.",
@@ -354,7 +353,6 @@ export default {
     "Wrong passwords counted per sign-in name across every network address, then a short lock",
   "FeatureSignIn.code": "Read the sign-in code",
   "FeatureTeams.nav": "Groups and roles",
-  "FeatureTeams.eyebrow": "Groups",
   "FeatureTeams.title": "Groups with roles, from the first minute",
   "FeatureTeams.lead":
     "Every account gets a personal group at sign-up. People make shared groups, invite others, give them roles from viewer to owner and hand ownership over in one step. A deleted group can be restored within 30 days, and each group keeps an activity log.",
@@ -365,7 +363,6 @@ export default {
   "FeatureTeams.fact4": "Invitations, role changes and ownership transfer, each with its own tests",
   "FeatureTeams.code": "Read the groups domain",
   "FeatureOverview.nav": "Group overview",
-  "FeatureOverview.eyebrow": "Overview",
   "FeatureOverview.title": "Overview for each group",
   "FeatureOverview.lead":
     "Key numbers and a chart for any date range. Each person can hide and reorder the widgets, and their layout follows them to their other devices.",
@@ -377,7 +374,6 @@ export default {
     "A new aggregate adds its own widgets, and the admin area shows them too",
   "FeatureOverview.code": "Read the overview widgets",
   "FeatureBilling.nav": "Per-member billing",
-  "FeatureBilling.eyebrow": "Money",
   "FeatureBilling.title": "Per-member billing, through Stripe",
   "FeatureBilling.lead":
     "People see a pricing table, a free plan with limits and a 14-day trial of the paid plan. The owner sees what one more member costs before inviting them, and a clear notice with a date when a card fails.",
@@ -389,7 +385,6 @@ export default {
   "FeatureBilling.notYet1": "Payment providers other than Stripe",
   "FeatureBilling.code": "Read docs/billing.md",
   "FeaturePrivacy.nav": "Privacy",
-  "FeaturePrivacy.eyebrow": "Privacy",
   "FeaturePrivacy.title": "Accounts people can leave",
   "FeaturePrivacy.lead":
     "People download a copy of their data and delete their account from the profile, with 7 days to change their mind. Read notifications are deleted after 90 days.",
@@ -400,7 +395,6 @@ export default {
     "Nightly clean-up of read notifications, dead invitations and old audit events",
   "FeaturePrivacy.code": "Read the account deletion code",
   "FeatureExport.nav": "Export and import",
-  "FeatureExport.eyebrow": "Export",
   "FeatureExport.title": "Your data leaves with you",
   "FeatureExport.lead":
     "Export any group to an open JSON file, and import it later as a new group. The original group is never overwritten.",
@@ -412,7 +406,6 @@ export default {
   "FeatureExport.fact4": "Each aggregate registers its own part of the file",
   "FeatureExport.code": "Read the export code",
   "FeatureLanguages.nav": "Languages",
-  "FeatureLanguages.eyebrow": "Languages",
   "FeatureLanguages.title": "In nine languages from the start",
   "FeatureLanguages.lead":
     "The app, the admin area and this website speak {languages}. People choose their language in the app, and it is saved with their account. Each page of this website has its own address in every language.",
@@ -432,7 +425,6 @@ export default {
   "FeatureTierReady.status":
     "Offline writing covers notes and tags; every other list opens offline with what it last showed.",
   "FeatureRealtime.nav": "Realtime",
-  "FeatureRealtime.eyebrow": "Realtime",
   "FeatureRealtime.title": "Changes show up without a reload",
   "FeatureRealtime.lead":
     "A member's change appears in every open tab of the group, and a laptop that wakes from sleep catches up on what it missed.",
@@ -442,7 +434,6 @@ export default {
     "Realtime can be switched off: the app then polls on a timer and works the same",
   "FeatureRealtime.code": "Read the realtime design",
   "FeatureOffline.nav": "Offline app",
-  "FeatureOffline.eyebrow": "Offline",
   "FeatureOffline.title": "An app that opens with no network",
   "FeatureOffline.lead":
     "The app installs like a native one, opens with no network and sends queued changes when the network returns. A stale change shows as a conflict to settle, never as a silent overwrite.",
@@ -452,7 +443,6 @@ export default {
     "Turn it off with one setting, or remove it: delete one folder and follow a written checklist",
   "FeatureOffline.code": "Read docs/offline.md",
   "FeatureShortcuts.nav": "Keyboard shortcuts",
-  "FeatureShortcuts.eyebrow": "Keyboard",
   "FeatureShortcuts.title": "Keyboard shortcuts in the app and the admin area",
   "FeatureShortcuts.lead":
     "Press ? to see every shortcut. N adds a note from any page without leaving it, and G then a letter opens a section. Shortcuts stay out of the way while you type in a field.",
@@ -464,7 +454,6 @@ export default {
   "FeatureShortcuts.fact4": "In the admin area, G then a letter opens each module",
   "FeatureShortcuts.code": "Read the shortcuts code",
   "FeaturePush.nav": "Notifications",
-  "FeaturePush.eyebrow": "Notifications",
   "FeaturePush.title": "Notifications in the app, on the phone, the desktop and Telegram",
   "FeaturePush.lead":
     "People are notified when they're invited, given a new role or handed a group: in the app, by web push on their phone or desktop, and in Telegram once they link it.",
@@ -475,7 +464,6 @@ export default {
     "A Telegram bot, off until you set its token: linked with a one-time code, and your product's own commands added in one file",
   "FeaturePush.code": "Read the web push service",
   "FeatureWorker.nav": "Background work",
-  "FeatureWorker.eyebrow": "Background work",
   "FeatureWorker.title": "Work that survives a crash",
   "FeatureWorker.lead":
     "Mail and notifications go out even when the server restarts halfway, because the work is saved before it is done. Your own jobs run now, later or on a schedule.",
@@ -488,7 +476,6 @@ export default {
     "A failed attempt is retried with growing waits; operators see every run in the admin",
   "FeatureWorker.code": "Read docs/jobs.md",
   "FeatureYourFeature.nav": "Your own features",
-  "FeatureYourFeature.eyebrow": "Your product",
   "FeatureYourFeature.title": "Add a feature by copying one",
   "FeatureYourFeature.lead":
     "Notes is a complete feature in every layer: database, API, screen, offline and tests. A new feature copies it, file by file, from a list that names each file in order.",
@@ -511,7 +498,6 @@ export default {
   "FeatureTierOperations.status":
     "Every module below ships today. Anything not built yet is listed under it.",
   "FeatureAdmin.nav": "Admin area",
-  "FeatureAdmin.eyebrow": "Support",
   "FeatureAdmin.title": "An admin area for your operators",
   "FeatureAdmin.lead":
     "Your operators find a person by name or address and see their sign-in methods, sessions, groups and history. From the same place they manage groups, refund a payment, look after the newsletter's subscribers, see every background job, run a failed one again and check the system's health.",
@@ -525,7 +511,6 @@ export default {
   "FeatureAdmin.notYet1": "Signing in as a person to see what they see",
   "FeatureAdmin.code": "Read the admin app",
   "FeatureDeploy.nav": "Deploy and monitoring",
-  "FeatureDeploy.eyebrow": "Deploy",
   "FeatureDeploy.title": "One server, one command",
   "FeatureDeploy.lead":
     "Seed runs on any Linux server you rent, with Docker Compose for development and production alike. Several products can share one server.",
@@ -539,7 +524,6 @@ export default {
   "FeatureDeploy.fact6": "Release images published from CI when you push a version tag",
   "FeatureDeploy.code": "Read the Compose files",
   "FeatureWebsite.nav": "Public website",
-  "FeatureWebsite.eyebrow": "Website",
   "FeatureWebsite.title": "A public website to adapt",
   "FeatureWebsite.lead":
     "This site: fast, server-rendered and usable with JavaScript turned off, with pricing, legal pages, a blog and a newsletter.",
@@ -558,7 +542,6 @@ export default {
     "Optional cookieless analytics in your own Umami, with an event on every call to action and a Stats page in the admin panel: visits and order clicks per source and per item",
   "FeatureWebsite.code": "Read the website's code",
   "FeatureQuality.nav": "Tests",
-  "FeatureQuality.eyebrow": "Quality",
   "FeatureQuality.title": "Tested where it matters",
   "FeatureQuality.lead": {
     "one":
@@ -605,7 +588,7 @@ export default {
   "Features.compare": "How Seed compares",
   "FeaturesFaq.title": "Can Seed do that?",
   "FeatureSection.issue": "issue #{number}",
-  "FeatureSection.readMore": "Read more about {feature}",
+  "FeatureSection.forDevelopers": "For developers",
   "FeatureVisuals.deployCaption":
     "Shortened: the rsync and Compose output between the steps is left out.",
   "FeatureVisuals.services": "Services on the server",

@@ -345,7 +345,6 @@ export default {
   "FeatureTierSettled.status":
     "Con pruebas en CI. El inicio de sesión con Google y GitHub y Stripe necesitan tus propias claves, por eso están desactivados en la demo.",
   "FeatureSignIn.nav": "Cuentas e inicio de sesión",
-  "FeatureSignIn.eyebrow": "Cuentas",
   "FeatureSignIn.title": "Inicio de sesión, resuelto",
   "FeatureSignIn.lead":
     "La gente se registra con correo y contraseña y confirma el correo con un código. Puede restablecer una contraseña olvidada, continuar con Google o GitHub, entrar con una llave de acceso o recibir por correo un enlace que inicia sesión y, si hace falta, crea la cuenta. También puede probar primero la aplicación con una cuenta de invitado y añadir más tarde un método de inicio de sesión. Una app de autenticación añade la verificación en dos pasos (2FA). Cada persona ve todos los dispositivos con su sesión iniciada y puede cerrar la sesión en los demás. Cambiar un método de inicio de sesión pide una comprobación y envía un correo.",
@@ -364,7 +363,6 @@ export default {
     "Las contraseñas incorrectas se cuentan por nombre de inicio de sesión desde cualquier dirección de red, y luego hay un bloqueo breve",
   "FeatureSignIn.code": "Ver el código de inicio de sesión",
   "FeatureTeams.nav": "Grupos y roles",
-  "FeatureTeams.eyebrow": "Grupos",
   "FeatureTeams.title": "Grupos con roles desde el primer minuto",
   "FeatureTeams.lead":
     "Cada cuenta recibe un grupo personal al registrarse. La gente crea grupos compartidos, invita a otros, les da un rol de lector a propietario y cede la propiedad en un solo paso. Un grupo eliminado se puede restaurar durante 30 días, y cada grupo guarda un registro de actividad.",
@@ -377,7 +375,6 @@ export default {
     "Invitaciones, cambios de rol y traspaso de la propiedad, cada uno con sus propias pruebas",
   "FeatureTeams.code": "Ver el dominio de grupos",
   "FeatureOverview.nav": "Resumen del grupo",
-  "FeatureOverview.eyebrow": "Resumen",
   "FeatureOverview.title": "Un resumen para cada grupo",
   "FeatureOverview.lead":
     "Cifras clave y un gráfico para cualquier rango de fechas. Cada persona puede ocultar y reordenar los widgets, y su diseño la acompaña en sus otros dispositivos.",
@@ -389,7 +386,6 @@ export default {
     "Un agregado nuevo añade sus propios widgets, y el área de administración también los muestra",
   "FeatureOverview.code": "Ver los widgets del resumen",
   "FeatureBilling.nav": "Facturación por miembro",
-  "FeatureBilling.eyebrow": "Dinero",
   "FeatureBilling.title": "Facturación por miembro con Stripe",
   "FeatureBilling.lead":
     "La gente ve una tabla de precios, un plan gratuito con límites y una prueba de 14 días del plan de pago. El propietario ve cuánto cuesta un miembro más antes de invitarlo, y un aviso claro con fecha cuando falla una tarjeta.",
@@ -401,7 +397,6 @@ export default {
   "FeatureBilling.notYet1": "Proveedores de pago distintos de Stripe",
   "FeatureBilling.code": "Leer docs/billing.md",
   "FeaturePrivacy.nav": "Privacidad",
-  "FeaturePrivacy.eyebrow": "Privacidad",
   "FeaturePrivacy.title": "Cuentas que se pueden dejar",
   "FeaturePrivacy.lead":
     "Cada persona descarga una copia de sus datos y elimina su cuenta desde el perfil, con 7 días para cambiar de opinión. Las notificaciones leídas se eliminan a los 90 días.",
@@ -412,7 +407,6 @@ export default {
     "Limpieza nocturna de notificaciones leídas, invitaciones caducadas y eventos de auditoría antiguos",
   "FeaturePrivacy.code": "Ver el código de eliminación de cuentas",
   "FeatureExport.nav": "Exportar e importar",
-  "FeatureExport.eyebrow": "Exportación",
   "FeatureExport.title": "Tus datos se van contigo",
   "FeatureExport.lead":
     "Exporta cualquier grupo a un archivo JSON abierto e impórtalo después como grupo nuevo. El grupo original nunca se sobrescribe.",
@@ -425,7 +419,6 @@ export default {
   "FeatureExport.fact4": "Cada agregado registra su propia parte del archivo",
   "FeatureExport.code": "Ver el código de exportación",
   "FeatureLanguages.nav": "Idiomas",
-  "FeatureLanguages.eyebrow": "Idiomas",
   "FeatureLanguages.title": "En nueve idiomas desde el principio",
   "FeatureLanguages.lead":
     "La aplicación, el área de administración y este sitio web hablan {languages}. Cada persona elige su idioma en la aplicación y se guarda con su cuenta. Cada página de este sitio tiene su propia dirección en cada idioma.",
@@ -445,7 +438,6 @@ export default {
   "FeatureTierReady.status":
     "Sin conexión puedes editar notas y etiquetas; las demás listas se abren sin conexión con lo último que mostraron.",
   "FeatureRealtime.nav": "Tiempo real",
-  "FeatureRealtime.eyebrow": "Tiempo real",
   "FeatureRealtime.title": "Los cambios aparecen sin recargar",
   "FeatureRealtime.lead":
     "El cambio de un miembro aparece en cada pestaña abierta del grupo, y un equipo que sale de la suspensión se pone al día con lo que se perdió.",
@@ -456,7 +448,6 @@ export default {
     "El tiempo real se puede desactivar: la aplicación consulta entonces cada cierto tiempo y funciona igual",
   "FeatureRealtime.code": "Ver el diseño del tiempo real",
   "FeatureOffline.nav": "App sin conexión",
-  "FeatureOffline.eyebrow": "Sin conexión",
   "FeatureOffline.title": "Una aplicación que abre sin red",
   "FeatureOffline.lead":
     "La aplicación se instala como una nativa, abre sin red y envía los cambios en cola cuando vuelve la conexión. Un cambio desfasado aparece como un conflicto que resolver, nunca como una sobrescritura silenciosa.",
@@ -467,7 +458,6 @@ export default {
     "Desactívalo con un ajuste o quítalo: borra una carpeta y sigue una lista de pasos escrita",
   "FeatureOffline.code": "Leer docs/offline.md",
   "FeatureShortcuts.nav": "Atajos de teclado",
-  "FeatureShortcuts.eyebrow": "Teclado",
   "FeatureShortcuts.title": "Atajos de teclado en la aplicación y el área de administración",
   "FeatureShortcuts.lead":
     "Pulsa ? para ver todos los atajos. N añade una nota desde cualquier página sin salir de ella, y G seguida de una letra abre una sección. Los atajos no estorban mientras escribes en un campo.",
@@ -479,7 +469,6 @@ export default {
   "FeatureShortcuts.fact4": "En el área de administración, G seguida de una letra abre cada módulo",
   "FeatureShortcuts.code": "Ver el código de los atajos",
   "FeaturePush.nav": "Notificaciones",
-  "FeaturePush.eyebrow": "Notificaciones",
   "FeaturePush.title": "Notificaciones en la aplicación, el teléfono, el escritorio y Telegram",
   "FeaturePush.lead":
     "La gente recibe un aviso cuando la invitan, le cambian el rol o le ceden un grupo: en la aplicación, por web push en el teléfono o el escritorio, y en Telegram si lo vincula.",
@@ -491,7 +480,6 @@ export default {
     "Un bot de Telegram, desactivado hasta que configures su token: se vincula con un código de un solo uso, y los comandos propios de tu producto se añaden en un archivo",
   "FeaturePush.code": "Ver el servicio de web push",
   "FeatureWorker.nav": "Trabajo en segundo plano",
-  "FeatureWorker.eyebrow": "Segundo plano",
   "FeatureWorker.title": "Trabajo que sobrevive a una caída",
   "FeatureWorker.lead":
     "Los correos y las notificaciones salen aunque el servidor se reinicie a mitad, porque el trabajo se guarda antes de hacerse. Tus propias tareas se ejecutan ahora, más tarde o según un calendario.",
@@ -505,7 +493,6 @@ export default {
     "Un intento fallido se reintenta con esperas cada vez más largas; los operadores ven cada ejecución en el área de administración",
   "FeatureWorker.code": "Leer docs/jobs.md",
   "FeatureYourFeature.nav": "Tus propias funciones",
-  "FeatureYourFeature.eyebrow": "Tu producto",
   "FeatureYourFeature.title": "Añade una función copiando otra",
   "FeatureYourFeature.lead":
     "Notas es una función completa en todas las capas: base de datos, API, pantalla, modo sin conexión y pruebas. Una función nueva la copia archivo por archivo, siguiendo una lista que nombra cada archivo en orden.",
@@ -529,7 +516,6 @@ export default {
   "FeatureTierOperations.status":
     "Cada módulo de abajo ya está disponible. Lo que aún no está hecho aparece debajo de cada uno.",
   "FeatureAdmin.nav": "Área de administración",
-  "FeatureAdmin.eyebrow": "Soporte",
   "FeatureAdmin.title": "Un área de administración para tus operadores",
   "FeatureAdmin.lead":
     "Tus operadores encuentran a una persona por nombre o dirección y ven sus métodos de inicio de sesión, sesiones, grupos e historial. Desde el mismo lugar gestionan grupos, reembolsan un pago, cuidan de los suscriptores del boletín, ven cada tarea en segundo plano, vuelven a ejecutar una que falló y revisan el estado del sistema.",
@@ -545,7 +531,6 @@ export default {
   "FeatureAdmin.notYet1": "Entrar como una persona para ver lo que ella ve",
   "FeatureAdmin.code": "Ver la app de administración",
   "FeatureDeploy.nav": "Despliegue y monitorización",
-  "FeatureDeploy.eyebrow": "Despliegue",
   "FeatureDeploy.title": "Un servidor, un comando",
   "FeatureDeploy.lead":
     "Seed funciona en cualquier servidor Linux que alquiles, con Docker Compose tanto en desarrollo como en producción. Varios productos pueden compartir un servidor.",
@@ -560,7 +545,6 @@ export default {
     "Imágenes de cada versión publicadas desde CI cuando subes una etiqueta de versión",
   "FeatureDeploy.code": "Ver los archivos de Compose",
   "FeatureWebsite.nav": "Sitio web público",
-  "FeatureWebsite.eyebrow": "Sitio web",
   "FeatureWebsite.title": "Un sitio web público para adaptar",
   "FeatureWebsite.lead":
     "Este sitio: rápido, renderizado en el servidor y usable con JavaScript desactivado, con precios, páginas legales, un blog y un boletín.",
@@ -579,7 +563,6 @@ export default {
     "Analítica opcional sin cookies en tu propio Umami, con un evento en cada llamada a la acción, y una página de estadísticas en el panel de administración: visitas y clics de pedido por fuente y por artículo",
   "FeatureWebsite.code": "Ver el código del sitio web",
   "FeatureQuality.nav": "Pruebas",
-  "FeatureQuality.eyebrow": "Calidad",
   "FeatureQuality.title": "Pruebas donde importan",
   "FeatureQuality.lead": {
     "one":
@@ -630,7 +613,7 @@ export default {
   "Features.compare": "Cómo se compara Seed",
   "FeaturesFaq.title": "¿Seed puede hacer eso?",
   "FeatureSection.issue": "issue #{number}",
-  "FeatureSection.readMore": "Más sobre {feature}",
+  "FeatureSection.forDevelopers": "Para desarrolladores",
   "FeatureVisuals.deployCaption":
     "Resumido: se omite la salida de rsync y Compose entre los pasos.",
   "FeatureVisuals.services": "Servicios en el servidor",
