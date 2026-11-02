@@ -2,8 +2,7 @@
 /**
  * The website's feature loops: short silent clips of the real app, light and dark, recorded by
  * `deno task loops` (`screenshots/loops.ts`). The clips are in `media/video/` (served by
- * `routes/video/[file].ts`), the posters in `static/video/`. This module imports nothing heavy, since
- * an island reads it.
+ * `routes/video/[file].ts`), the posters in `static/video/`.
  */
 
 /** The loops, by the feature each one proves. */
