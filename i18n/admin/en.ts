@@ -498,7 +498,7 @@ export default {
   },
   "AdminBlogDialogs.sentOnce": "Sent once, when the post goes live. You can't unsend it.",
   "AdminBlogDialogs.newsletterOff":
-    "The newsletter is off, so this post won't be emailed to <list>{list}</list>.",
+    "The newsletter is off, so this post won't be emailed to the <list>{list}</list> list.",
   "AdminBlogDialogs.postLanguageOnly":
     "Only subscribers who signed up in the post's language get it.",
   "AdminBlogEditor.leaveMessage": "Your changes to this post will be lost.",

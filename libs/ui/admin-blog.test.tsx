@@ -527,7 +527,7 @@ describe("the blog editor", () => {
         />,
       )
       expect(find("[data-e2e=admin-blog-email-off]").textContent).toBe(
-        "The newsletter is off, so this post won't be emailed to news.",
+        "The newsletter is off, so this post won't be emailed to the news list.",
       )
       await clickOn(button(dialog === "reschedule" ? "Schedule" : "Publish"))
       expect(calls.at(-1)).toEqual([
