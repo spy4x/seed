@@ -568,6 +568,17 @@ PostFigure.CostCalculator.members	74156382383b39d1
 PostFigure.CostCalculator.perMember	9fb592330503c2de
 PostFigure.CostCalculator.title	c0fa68a5f7d5d6c2
 PostFigure.CostCalculator.total	8c1534b547305f31
+PostFigure.HostingCost.caption	c287b772a70f01b3
+PostFigure.HostingCost.developers	6a7102e11f4aa18e
+PostFigure.HostingCost.fallback	010a69a51e4e0a48
+PostFigure.HostingCost.inEuro	e448a4a843d932c2
+PostFigure.HostingCost.lead	6ab080f78ed51327
+PostFigure.HostingCost.managed	b5650ca2ea60c635
+PostFigure.HostingCost.seed	de4d07c0320c343a
+PostFigure.HostingCost.server	9e34e761429e9d6d
+PostFigure.HostingCost.serverOption	a68f50b1c93776ae
+PostFigure.HostingCost.title	c7955c015afdc509
+PostFigure.HostingCost.yearly	c86cfe7e6c87f183
 PostFigure.noScript	751908b16f740771
 PostFigure.rssLink	bb666393ffca6a4f
 Pricing.crumb	dfe95783edfef791
