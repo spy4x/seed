@@ -16,7 +16,7 @@ publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---
 
-Les deux alternatives gratuites à SaaS Pegasus sont Cookiecutter Django, si vous voulez rester en
+Deux alternatives gratuites à SaaS Pegasus : Cookiecutter Django, si vous voulez rester en
 Python, et Seed, si TypeScript vous convient. Cookiecutter Django fournit l'inscription, Celery et
 Docker, mais ni équipes ni facturation. Seed, sous licence MIT, fournit déjà des équipes avec
 rôles, une facturation par membre via Stripe et un back-office séparé. Pegasus coûte 449 $ pour un
@@ -51,7 +51,7 @@ Elle n'autorise pas, sans accord préalable de l'éditeur, à publier ou distrib
 le redit : rendre une application Pegasus open source demande leur accord préalable.
 
 Ce n'est pas un détail si vous comptez publier votre produit sous licence libre, livrer le code à
-un client qui veut en être propriétaire, ou répondre à un marché public qui exige les sources. Avec
+un client (la licence le permet, mais elle passe au client, qui doit en avoir une à son nom), ou répondre à un marché public qui exige les sources. Avec
 Cookiecutter Django (BSD-3-Clause) ou Seed (MIT), le code généré est à vous : vous le publiez, le
 vendez ou le fermez, comme vous voulez, en gardant la mention de licence.
 

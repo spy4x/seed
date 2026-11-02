@@ -15,7 +15,7 @@ publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---
 
-The two main SaaS Pegasus alternatives are Cookiecutter Django, a free Django base with sign-up
+Two free SaaS Pegasus alternatives stand out: Cookiecutter Django, a free Django base with sign-up
 but no teams or billing, and Seed, a free MIT-licensed TypeScript starter that already has teams
 with roles, per-member Stripe billing and an admin panel. Pegasus itself costs $449 for one
 project or $649 for unlimited projects, paid once. Which one fits depends on one question first:
