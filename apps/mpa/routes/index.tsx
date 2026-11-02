@@ -33,7 +33,7 @@ import { TEST_FILE_COUNT } from "../repo-facts.ts"
 import { SectionIntro } from "../components/section-intro.tsx"
 import { FeatureLoop } from "../components/feature-loop.tsx"
 import { HeroDemo } from "../islands/videos.tsx"
-import { DARK_MEDIA, Shot, shotSrcset } from "../components/shot.tsx"
+import { Shot, shotSrcset } from "../components/shot.tsx"
 import { Head } from "fresh/runtime"
 import { organizationId, organizationJsonLd } from "../contact-links.ts"
 import { HIRE_PAGE_URL } from "../hire.ts"
@@ -185,29 +185,21 @@ function homeJsonLd(
 const PRELOAD_SIZES = { imagesizes: `960px` }
 
 /**
- * Fetches the demo's poster early where it is on the first screen (1024 px and up), in the
- * page's theme. The poster itself loads lazily: on a phone an early fetch of it delays the text
- * that is the page's largest paint.
+ * Fetches the demo's poster early where it is on the first screen (1024 px and up). The poster
+ * itself loads lazily: on a phone an early fetch of it delays the text that is the page's largest
+ * paint.
  */
 function HeroPosterPreload(): JSX.Element {
-  const desktop = `(min-width: 1024px)`
   return (
     <Head>
-      {([[`light`, `${desktop} and (not (${DARK_MEDIA}))`], [
-        `dark`,
-        `${desktop} and ${DARK_MEDIA}`,
-      ]] as const)
-        .map(([theme, media]) => (
-          <link
-            key={theme}
-            rel="preload"
-            as="image"
-            imageSrcSet={shotSrcset(`notes`, theme, `desktop`)}
-            {...PRELOAD_SIZES}
-            fetchpriority="high"
-            media={media}
-          />
-        ))}
+      <link
+        rel="preload"
+        as="image"
+        imageSrcSet={shotSrcset(`notes`, `dark`, `desktop`)}
+        {...PRELOAD_SIZES}
+        fetchpriority="high"
+        media="(min-width: 1024px)"
+      />
     </Head>
   )
 }
@@ -263,17 +255,19 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
               })}
             </p>
           </div>
-          {/* The README's demo: `data-no-zoom` keeps its poster out of the screenshot lightbox. */}
+          {
+            /* The README's demo, recorded dark, with its dark poster in both page themes. `data-no-zoom`
+              keeps the poster out of the screenshot lightbox. */
+          }
           <div data-no-zoom class="mx-auto w-full max-w-240">
             <WindowFrame variant="plain" caption={t.t(`HomeHero.demoCaption`)}>
               <HeroDemo
                 poster={{
-                  src: `/shots/notes-light-1280.webp`,
-                  srcset: shotSrcset(`notes`, `light`, `desktop`),
+                  src: `/shots/notes-dark-1280.webp`,
+                  srcset: shotSrcset(`notes`, `dark`, `desktop`),
                   sizes: `(min-width: 1024px) 960px, 100vw`,
                   width: 1280,
                   height: 800,
-                  dark: { srcset: shotSrcset(`notes`, `dark`, `desktop`), media: DARK_MEDIA },
                 }}
                 sources={[
                   { src: `/video/demo.webm`, type: `video/webm; codecs="vp9, opus"` },
