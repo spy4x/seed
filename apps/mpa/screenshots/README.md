@@ -32,25 +32,36 @@ A screen that fails is listed at the end and the run exits 1; the others are sti
 - Gives Ada three notifications from three other groups and two-factor sign-in.
 - Photographs each screen in light and dark with reduced motion, a hidden caret, no transitions,
   and a clock fixed a few minutes after the data was made, so every time reads "3 minutes ago".
-  The realtime and offline-conflict pictures save a note while they are open, so their clock is
-  the real one.
 
-| Screen             | Form                | Delivered widths     |
-| ------------------ | ------------------- | -------------------- |
-| `notes`            | desktop and mobile  | 1280, 640 / 780, 390 |
-| `profile-security` | desktop             | 1280, 640            |
-| `group-members`    | desktop             | 1280, 640            |
-| `billing`          | desktop             | 1280, 640            |
-| `billing-plan`     | mobile, plan only   | 780, 390             |
-| `notifications`    | desktop             | 1280, 640            |
-| `activity`         | desktop             | 1280, 640            |
-| `sign-in`          | mobile              | 780, 390             |
-| `realtime-a`, `-b` | desktop, half width | 640, 320             |
-| `offline-conflict` | desktop             | 1280, 640            |
+| Screen             | Form               | Delivered widths     |
+| ------------------ | ------------------ | -------------------- |
+| `notes`            | desktop and mobile | 1280, 640 / 780, 390 |
+| `profile-security` | desktop            | 1280, 640            |
+| `group-members`    | desktop            | 1280, 640            |
+| `billing`          | desktop            | 1280, 640            |
+| `billing-plan`     | mobile, plan only  | 780, 390             |
+| `notifications`    | desktop            | 1280, 640            |
+| `activity`         | desktop            | 1280, 640            |
+| `sign-in`          | mobile             | 780, 390             |
 
 Desktop is a 1280×800 viewport at device scale 2, mobile a 390×844 viewport at device scale 3.
 `billing-plan` keeps only the 390×208 part of the phone's billing tab that shows the plan, which is
 all the home page's billing card draws.
+
+## Feature loops
+
+`loops.ts` (`deno task loops`, or `deno task loops offline` for one) records the three silent
+loops the feature pages and the home page play: realtime sync, offline editing and the keyboard
+shortcuts, in light and dark. It needs the same running stack, plus `ffmpeg` built with `libsvtav1`
+and `libx264`, and `cwebp`.
+
+- It seeds the same four people and notes as `capture.ts`, and deletes them again at the end.
+- Each clip plays in the real SPA at 720×450 CSS px (realtime: two windows of 360 px side by side)
+  at device scale 2, with a drawn pointer moved at a person's pace and key caps for shortcuts.
+- Chromium's screencast is played back at 15 frames a second. The clip ends with a half-second
+  fade into its own first frame, so it loops without a jump.
+- It writes `media/video/<name>-loop-<theme>.webm` (AV1) and `.mp4` (H.264), each under 600 KB,
+  and the first frame as `static/video/<name>-loop-<theme>-<720|1440>.webp`, the poster.
 
 ## Size budgets
 

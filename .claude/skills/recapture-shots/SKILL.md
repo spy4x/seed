@@ -1,6 +1,6 @@
 ---
 name: recapture-shots
-description: Re-capture the product screenshots, both the public website's (apps/mpa/static/shots and og cards, by apps/mpa/screenshots/capture.ts) and the README's (docs/screenshots, by docs/screenshots/record.ts). Use after a change that alters how a photographed screen looks in a significant way, and ask the owner when unsure. Also re-records the admin panel video of the website's /admin page (docs/screenshots/admin-video.ts) when a screen it shows changed significantly.
+description: Re-capture the product screenshots, both the public website's (apps/mpa/static/shots and og cards, by apps/mpa/screenshots/capture.ts) and the README's (docs/screenshots, by docs/screenshots/record.ts). Use after a change that alters how a photographed screen looks in a significant way, and ask the owner when unsure. Also re-records the admin panel video of the website's /admin page (docs/screenshots/admin-video.ts) and the website's three feature loops (apps/mpa/screenshots/loops.ts) when a screen they show changed significantly.
 ---
 
 # Re-capture the product screenshots
@@ -16,6 +16,12 @@ The admin panel video on the website's `/admin` page is a third piece, made by
 `docs/screenshots/admin-video.ts` (`deno task video:admin`) and committed under
 `apps/mpa/media/video/` and `apps/mpa/static/video/`. Re-record it in the same PR when the change
 altered a screen the video shows significantly; its header names the shots.
+
+The website's three feature loops (realtime sync, offline editing, keyboard shortcuts) are a
+fourth, made by `apps/mpa/screenshots/loops.ts` (`deno task loops` in `apps/mpa`) and committed
+under `apps/mpa/media/video/` and `apps/mpa/static/video/`. Re-record them in the same PR when the
+change altered the notes list, the note editor, the conflict chooser, the search palette or the
+shell significantly.
 
 `AGENTS.md`, "Product screenshots", says when to run this. This skill says how.
 
@@ -79,7 +85,16 @@ shows; the header says how):
 APP_URL=http://app.localhost ADMIN_URL=http://admin.localhost SEED_PASSWORD=… APP_VERSION=… systemd-run --user --scope --quiet -p TasksMax=4000 -p MemoryMax=8G timeout 900 deno task video:admin
 ```
 
-It prints the length, the file sizes and the music's loudness. Update `apps/mpa/admin-video.ts`
+When the loops need it, record them from `apps/mpa` (`deno task loops realtime` remakes one):
+
+```bash
+systemd-run --user --scope --quiet -p TasksMax=4000 -p MemoryMax=8G timeout 900 deno task loops
+```
+
+It prints each clip's length and sizes; every file stays under 600 KB and each clip lasts 5 to 8
+seconds.
+
+The admin video's run prints the length, the file sizes and the music's loudness. Update `apps/mpa/admin-video.ts`
 with them (the seconds from `ffprobe` of the MP4, rounded; the MP4's size; the upload date with
 its timezone) and with one transcript line per shot of the new cut, then the e2e tests in
 `e2e/mpa/admin.mpa.ts` that pin the length, the number of shots and the size.
@@ -95,12 +110,16 @@ its timezone) and with one transcript line per shot of the new cut, then the e2e
 2. Update the README's alt text so it describes the new pictures. For the video, extract stills
    of key moments (`ffmpeg -i admin-panel.mp4 -vf fps=2 still-%03d.png` in your scratch folder),
    look at each, and check that the transcript matches what the video shows.
-3. Check the budgets the website's README names: 90 KB for the notes hero at 1280, 70 KB for the
+3. For the loops, extract a contact sheet of each clip
+   (`ffmpeg -i realtime-loop-light.webm -vf "fps=2,scale=720:-1,tile=3x4" -frames:v 1 sheet.png`
+   in your scratch folder) and check that the pointer moves to each target and the story reads
+   from start to end.
+4. Check the budgets the website's README names: 90 KB for the notes hero at 1280, 70 KB for the
    rest, under 2.5 MB for the folder (`du -sb apps/mpa/static/shots`).
-4. Stop what you started: `deno task compose down` and `deno task proxy:stop`, unless the stack was
+5. Stop what you started: `deno task compose down` and `deno task proxy:stop`, unless the stack was
    already running before you began. Then run the orphan sweep.
-5. Open a PR with the before and after of the main pictures. A design reviewer checks it, as for
+6. Open a PR with the before and after of the main pictures. A design reviewer checks it, as for
    any visible change; merge and deploy as `AGENTS.md` says.
-6. `docs/screenshots/social-preview.png` reaches GitHub only when the owner uploads it in the
+7. `docs/screenshots/social-preview.png` reaches GitHub only when the owner uploads it in the
    repository's settings (General, "Social preview"); no agent can. When it changed, the PR body
    and the final report name this under "Needs you".
