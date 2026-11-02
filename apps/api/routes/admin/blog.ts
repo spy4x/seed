@@ -59,7 +59,8 @@ export interface AdminBlogService {
     id: string,
     version: number,
     at: Date | null,
-    newsletterList: string | null,
+    /** `undefined` keeps the list the post has. */
+    newsletterList: string | null | undefined,
     actor: BlogActor,
   ): Promise<BlogPost>
   unschedule(id: string, version: number, actor: BlogActor): Promise<BlogPost>
@@ -143,7 +144,8 @@ function actorOf(c: Context<APIContext>): BlogActor {
  * - `POST /blog/posts/:id` saves every field: the same body without `id`, plus `version` and
  *   `significantUpdate?`.
  * - `POST /blog/posts/:id/publish` takes `{ version, at?, newsletterList? }`: now, or scheduled for
- *   `at`; with a list, the post is emailed to it once, when it goes live.
+ *   `at`; with a list, the post is emailed to it once, when it goes live, and with
+ *   `newsletterList` left out the post keeps the list it has.
  * - `POST /blog/posts/:id/unschedule`, `/unpublish`, `/delete` take `{ version }`.
  * - `POST /blog/posts/:id/change-url` takes `{ version, slug }`.
  * - `GET /blog/topics` lists every topic in use, for the editor's topic field.
@@ -217,8 +219,8 @@ export function createAdminBlogRoutes(
       const id = idOf(c)
       const body = await readBody(c, blogPublishSchema)
       const at = parsePublishTime(body.at, now())
-      const list = body.newsletterList ?? null
-      if (list !== null && (!newsletterEnabled || !isSubscriberList(list))) {
+      const list = body.newsletterList
+      if (list != null && (!newsletterEnabled || !isSubscriberList(list))) {
         throw new BlogError(`NEWSLETTER_OFF`, `This post cannot be emailed: the newsletter is off.`)
       }
       return c.json({ post: await blog.publish(id, body.version, at, list, actorOf(c)) })

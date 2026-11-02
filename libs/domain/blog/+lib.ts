@@ -339,7 +339,8 @@ export type BlogPostUpdateRequest = typeof blogPostUpdateSchema.infer
 
 /**
  * `POST /api/admin/blog/posts/:id/publish`: now without `at`, else scheduled for `at`.
- * `newsletterList` emails the post to that list when it goes live; left out, nothing is emailed.
+ * `newsletterList` emails the post to that list when it goes live, and `null` emails nothing; left
+ * out, the post keeps the list it has, so a scheduled post published now is still emailed.
  */
 export const blogPublishSchema = type({
   ...versionField,
