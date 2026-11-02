@@ -30,7 +30,10 @@ export interface SocketRouteDependencies {
   expectedOrigin: string
   /** Where an accepted socket goes. */
   realtime: Pick<Realtime, "attach">
-  /** Opens the socket and hands it to {@link realtime}. Defaults to `Deno.upgradeWebSocket`. */
+  /**
+   * Opens the socket and hands it to {@link realtime}. Defaults to `Deno.upgradeWebSocket`, the
+   * one call left on Deno here: Node and Bun upgrade at the server, not per request (#623).
+   */
   upgrade?: (c: Context<APIContext>, auth: AppAuthState) => Response
 }
 
