@@ -938,4 +938,201 @@ export default {
     "Prix catalogue hors taxes, relevés le 3 novembre 2026. Seed : le serveur, son adresse IPv4 et Object Storage pour les sauvegardes. Managé : les offres de base, hors usage. Dollars convertis en euros au taux de la BCE du 2 novembre 2026.",
   "PostFigure.HostingCost.fallback":
     "Sur un serveur Hetzner {server}, Seed coûte {seed} par mois avec son adresse IPv4 et le stockage des sauvegardes. Vercel Pro et Supabase Pro coûtent {managed} par mois, environ {managedEuro}. Développeurs avec un siège Vercel : {developers}.",
+  "FeaturePage.what": "Ce que vous obtenez",
+  "FeaturePage.how": "Comment ça marche",
+  "FeaturePage.limits": "Limites",
+  "FeaturePage.questions": "Questions",
+  "FeaturePage.updated": "Dernière mise à jour : <time>{date}</time>",
+  "FeaturePage.sectionLink": "Lien vers cette section",
+  "FeaturePage.guide": "Lire le guide",
+  "FeaturePage.code": "Lire le code : <path>{path}</path>",
+  "FeaturePage.otherFeatures": "Autres fonctionnalités",
+  "FeaturePage.readMore": "En savoir plus : {name}",
+  "FeaturePage.all": "Toutes les fonctionnalités",
+  "FeaturePage.runtimeQuestion": "Seed tourne-t-il sur Node ou Bun ?",
+  "FeaturePage.runtimeAnswer":
+    "Pas encore. Seed tourne aujourd’hui sur Deno, et le passage à Deno, Node et Bun est en cours (#623). Voir le plan d’exécution sur la page des fonctionnalités.",
+  "FeaturePageMissing.title": "Cette page de fonctionnalité est introuvable",
+  "FeaturePageMissing.description":
+    "Elle a peut-être été déplacée. Toutes les fonctionnalités de Seed sont sur la page des fonctionnalités.",
+  "FeaturePageMissing.action": "Voir toutes les fonctionnalités",
+  "FeaturePageSignIn.name": "Connexion",
+  "FeaturePageSignIn.title": "Authentification pour votre SaaS, sans service externe",
+  "FeaturePageSignIn.description":
+    "Clés d’accès, liens magiques par e-mail, Google, GitHub et 2FA, vérifiés par votre API, sans service tiers ni frais par utilisateur. Gratuit, licence MIT.",
+  "FeaturePageSignIn.h1":
+    "Clés d’accès et connexion pour votre SaaS, sans service d’authentification",
+  "FeaturePageSignIn.answer":
+    "Seed connecte les utilisateurs par clé d’accès, par lien de connexion envoyé par e-mail, avec Google et avec GitHub, et sa propre API vérifie chaque connexion sur votre serveur, sans service d’authentification tiers. Mots de passe, clés d’accès et liens de connexion fonctionnent dès le déploiement, sans frais par utilisateur ; Google et GitHub demandent chacun deux clés dans le fichier env.",
+  "FeaturePageSignIn.summary":
+    "Clés d’accès, liens de connexion par e-mail, Google, GitHub et double authentification, sans service d’authentification.",
+  "FeaturePageSignIn.how1":
+    "L’API vérifie elle-même chaque connexion et répond avec un cookie de session signé. Une clé d’accès utilise le WebAuthn du navigateur : le serveur ne garde que sa clé publique, et chaque défi de connexion ne sert qu’une fois. Un lien de connexion connecte ou crée le compte, ne sert qu’une fois, reste valable 15 minutes et n’est stocké que sous forme de hachage.",
+  "FeaturePageSignIn.how2":
+    "Une application d’authentification ajoute la double authentification. Le profil liste chaque méthode de connexion au compte et chaque appareil connecté, et changer une méthode de connexion demande une preuve et envoie un e-mail. Un visiteur peut aussi commencer dans un compte invité et ajouter une méthode de connexion plus tard.",
+  "FeaturePageSignIn.authServiceQuestion": "Ai-je besoin d’un service d’authentification ?",
+  "FeaturePageSignIn.authServiceAnswer":
+    "Non. La propre API de Seed vérifie les mots de passe, les clés d’accès, les liens de connexion et les réponses de Google et de GitHub, sur votre serveur : rien n’est facturé par utilisateur.",
+  "FeaturePageSignIn.passkeysQuestion": "Seed prend-il en charge les clés d’accès (passkeys) ?",
+  "FeaturePageSignIn.passkeysAnswer":
+    "Oui. Les utilisateurs ajoutent une clé d’accès dans leur profil et s’en servent pour se connecter ; le serveur ne stocke que sa clé publique, et chaque défi de connexion ne sert qu’une fois.",
+  "FeaturePageSignIn.twoFactorQuestion": "Seed propose-t-il la double authentification (2FA) ?",
+  "FeaturePageSignIn.twoFactorAnswer":
+    "Oui. Une application d’authentification ajoute un code à usage unique à la connexion, y compris après une connexion avec Google ou GitHub.",
+  "FeaturePageSignIn.providersOffQuestion":
+    "Puis-je me passer de la connexion avec Google ou GitHub ?",
+  "FeaturePageSignIn.providersOffAnswer":
+    "Oui. Chacune reste désactivée tant que ses deux variables ne sont pas définies dans le fichier env : il suffit de les omettre pour la désactiver.",
+  "FeaturePageGroups.name": "Groupes et rôles",
+  "FeaturePageGroups.title": "Groupes et rôles pour votre SaaS, déjà branchés",
+  "FeaturePageGroups.description":
+    "Groupes et rôles de lecteur à propriétaire, invitations, transfert de propriété, journal d’activité, un seul contrôle multi-tenant. Gratuit, licence MIT.",
+  "FeaturePageGroups.h1": "Groupes et rôles pour votre SaaS, sans développer le multi-tenant",
+  "FeaturePageGroups.answer":
+    "Seed donne à chaque compte un groupe personnel à l’inscription, et les utilisateurs créent des groupes partagés, invitent d’autres personnes et leur attribuent un rôle, de lecteur à propriétaire. Le groupe est l’unique frontière entre locataires : une fonctionnalité que vous ajoutez passe la même vérification dès qu’elle copie l’agrégat des notes.",
+  "FeaturePageGroups.summary":
+    "Groupes avec rôles de lecteur à propriétaire, invitations et journal d’activité.",
+  "FeaturePageGroups.how1":
+    "Chaque ligne de données partagées appartient à un groupe, et l’API vérifie le rôle de la personne dans ce groupe avant toute lecture ou écriture. Un lecteur lit, un éditeur modifie aussi les données du groupe, et un administrateur et le propriétaire gèrent en plus les membres et lisent le journal d’activité.",
+  "FeaturePageGroups.how2":
+    "Le propriétaire transfère la propriété en une étape, et un groupe supprimé peut être restauré pendant 30 jours. Seul un compte dont l’adresse e-mail est confirmée peut inviter.",
+  "FeaturePageGroups.personalGroupQuestion": "Chaque compte a-t-il un groupe ?",
+  "FeaturePageGroups.personalGroupAnswer":
+    "Oui. Chaque compte reçoit un groupe personnel à l’inscription ; un groupe personnel et un groupe partagé passent la même vérification.",
+  "FeaturePageGroups.viewerQuestion": "Un lecteur peut-il modifier les données d’un groupe ?",
+  "FeaturePageGroups.viewerAnswer":
+    "Non. Un lecteur lit les données du groupe ; un éditeur, un administrateur ou le propriétaire peut les modifier.",
+  "FeaturePageGroups.restoreQuestion": "Un groupe supprimé peut-il être restauré ?",
+  "FeaturePageGroups.restoreAnswer":
+    "Oui. Son propriétaire peut le restaurer pendant 30 jours ; ensuite, le worker le supprime définitivement.",
+  "FeaturePageGroups.secondModelQuestion":
+    "Me faut-il un second système de permissions pour mes propres fonctionnalités ?",
+  "FeaturePageGroups.secondModelAnswer":
+    "Non. Un nouvel agrégat copie l’agrégat des notes et sa vérification de groupe : il n’y a qu’un seul modèle de permissions à maintenir.",
+  "FeaturePageBilling.name": "Facturation",
+  "FeaturePageBilling.title": "Facturation Stripe pour votre SaaS, sans coder les webhooks",
+  "FeaturePageBilling.description":
+    "Facturation Stripe par membre : forfait gratuit, essai de 14 jours, délai de grâce, limites côté serveur, synchro par webhooks. Gratuit, licence MIT.",
+  "FeaturePageBilling.h1": "Facturation Stripe par membre pour votre SaaS, sans l’écrire vous-même",
+  "FeaturePageBilling.answer":
+    "Seed facture chaque groupe par membre via Stripe Checkout et le portail client, avec un forfait gratuit, un essai de 14 jours et un délai de grâce après un paiement échoué. Vous ajoutez trois clés Stripe au fichier env et choisissez Stripe comme fournisseur de facturation.",
+  "FeaturePageBilling.summary":
+    "Facturation Stripe par membre, avec forfait gratuit, essai et délai de grâce.",
+  "FeaturePageBilling.how1":
+    "Stripe gère l’argent et l’abonnement. L’application ne garde que ce que rapportent les webhooks de Stripe et ne décide jamais d’un forfait d’elle-même ; la quantité suit le nombre de membres, et les limites des forfaits sont vérifiées sur le serveur.",
+  "FeaturePageBilling.how2":
+    "Chaque membre voit le forfait dans l’onglet Facturation du groupe, et seul le propriétaire a les boutons de paiement et du portail. Après un paiement échoué, le groupe garde son forfait 7 jours par défaut, puis repasse au forfait Gratuit.",
+  "FeaturePageBilling.withoutStripeQuestion": "La facturation fonctionne-t-elle sans Stripe ?",
+  "FeaturePageBilling.withoutStripeAnswer":
+    "Non. Stripe est le seul fournisseur aujourd’hui ; sans lui, la facturation reste désactivée et chaque groupe est au forfait Gratuit, sans limites.",
+  "FeaturePageBilling.trialQuestion": "Y a-t-il un essai gratuit ?",
+  "FeaturePageBilling.trialAnswer": "Oui. Le forfait payant commence par un essai de 14 jours.",
+  "FeaturePageBilling.failedPaymentQuestion":
+    "Un groupe garde-t-il son forfait quand une carte est refusée ?",
+  "FeaturePageBilling.failedPaymentAnswer":
+    "Oui. Il garde le forfait pendant un délai de grâce, 7 jours par défaut, et le propriétaire voit un avis avec la date ; ensuite, le groupe repasse au forfait Gratuit.",
+  "FeaturePageBilling.cutQuestion": "Seed prend-il une commission sur les paiements ?",
+  "FeaturePageBilling.cutAnswer":
+    "Non. Seed est sous licence MIT ; vous ne payez que les frais de Stripe.",
+  "FeaturePageRealtime.name": "Synchronisation en temps réel",
+  "FeaturePageRealtime.title": "Temps réel pour votre SaaS, sans service hébergé",
+  "FeaturePageRealtime.description":
+    "Une modification enregistrée dans un onglet apparaît en moins d’une seconde dans les autres, via un WebSocket de votre API. Gratuit, licence MIT.",
+  "FeaturePageRealtime.h1":
+    "Mises à jour en temps réel pour votre SaaS, sans service temps réel hébergé",
+  "FeaturePageRealtime.answer":
+    "Seed envoie chaque modification enregistrée à tous les onglets ouverts du groupe via un WebSocket de sa propre API : une note enregistrée dans une fenêtre apparaît dans les autres en moins d’une seconde, sans rechargement. Tout tourne sur votre serveur, sans service temps réel à payer ; une fonctionnalité que vous ajoutez en profite en copiant l’exemple des notes.",
+  "FeaturePageRealtime.summary":
+    "Une modification enregistrée dans un onglet apparaît dans tous les autres, sans rechargement.",
+  "FeaturePageRealtime.how1":
+    "Chaque écriture est validée avec le numéro de séquence suivant du groupe, et l’API la pousse sur le socket ouvert de chaque membre. Un onglet n’applique une modification que si son numéro suit le dernier qu’il a reçu ; s’il en manque un, il demande au serveur tout ce qui suit son curseur : un message perdu coûte une requête de plus, jamais une liste fausse.",
+  "FeaturePageRealtime.how2":
+    "Un ordinateur portable qui sort de veille se reconnecte et récupère ce qu’il a manqué. Avec le socket désactivé, l’application lit et écrit en HTTP et vérifie les modifications toutes les 30 secondes.",
+  "FeaturePageRealtime.realtimeQuestion": "Seed se met-il à jour en temps réel ?",
+  "FeaturePageRealtime.realtimeAnswer":
+    "Oui. Une modification enregistrée apparaît en moins d’une seconde dans chaque onglet ouvert du groupe, sans rechargement.",
+  "FeaturePageRealtime.realtimeServiceQuestion":
+    "Ai-je besoin de Pusher, d’Ably ou d’un autre service temps réel ?",
+  "FeaturePageRealtime.realtimeServiceAnswer":
+    "Non. Le WebSocket est servi par la propre API de Seed, sur votre serveur.",
+  "FeaturePageRealtime.realtimeSleepQuestion":
+    "Un onglet rattrape-t-il son retard quand l’ordinateur sort de veille ?",
+  "FeaturePageRealtime.realtimeSleepAnswer":
+    "Oui. Il se reconnecte et récupère chaque modification qui suit la dernière qu’il avait.",
+  "FeaturePageRealtime.realtimeOffQuestion": "Puis-je désactiver le temps réel ?",
+  "FeaturePageRealtime.realtimeOffAnswer":
+    "Oui. Définissez SPA_REALTIME=false : l’application vérifie alors les modifications toutes les 30 secondes et fonctionne de la même façon.",
+  "FeaturePageOffline.name": "Application hors ligne",
+  "FeaturePageOffline.title": "Mode hors ligne pour votre SaaS, sans coder la synchro",
+  "FeaturePageOffline.description":
+    "Application installable qui s’ouvre sans réseau, garde chaque liste sur l’appareil et envoie les modifications au retour du réseau. Gratuit, licence MIT.",
+  "FeaturePageOffline.h1":
+    "Une application offline-first pour votre SaaS, sans moteur de synchronisation à écrire",
+  "FeaturePageOffline.answer":
+    "L’application de Seed s’installe comme une application native, s’ouvre sans réseau, affiche chaque liste telle qu’elle l’a vue en dernier et permet d’ajouter, de modifier et de supprimer des notes et des étiquettes hors ligne. Votre propre fonctionnalité choisit l’un des trois niveaux, en ligne uniquement, lisible hors ligne ou modifiable hors ligne, et suit la recette écrite correspondante.",
+  "FeaturePageOffline.summary":
+    "Une application installable qui s’ouvre sans réseau et se synchronise à son retour.",
+  "FeaturePageOffline.how1":
+    "L’appareil garde une copie IndexedDB de chaque liste, et les écritures attendent dans une file avec des clés d’idempotence : une modification envoyée deux fois n’est appliquée qu’une fois. Une modification que le serveur ne peut pas accepter apparaît comme un conflit, avec « Garder ma version » ou « Utiliser celle du serveur » ; rien n’est écrasé automatiquement.",
+  "FeaturePageOffline.how2":
+    "Un service worker garde la page, les scripts et les styles de l’application : elle s’ouvre donc sans réseau. La connexion, les éléments supprimés et la configuration de la double authentification demandent le réseau.",
+  "FeaturePageOffline.offlineQuestion": "Seed fonctionne-t-il hors ligne ?",
+  "FeaturePageOffline.offlineAnswer":
+    "Oui. L’application s’ouvre sans réseau et affiche chaque liste telle qu’elle l’a vue en dernier.",
+  "FeaturePageOffline.offlineEditsQuestion": "Peut-on modifier des données hors ligne ?",
+  "FeaturePageOffline.offlineEditsAnswer":
+    "Oui. Les notes et les étiquettes fonctionnent hors ligne ; les autres modifications demandent le réseau, et l’écran l’indique.",
+  "FeaturePageOffline.conflictQuestion":
+    "Seed détecte-t-il quand deux personnes modifient la même note ?",
+  "FeaturePageOffline.conflictAnswer":
+    "Oui. La modification la plus tardive apparaît comme un conflit, et son auteur choisit « Garder ma version » ou « Utiliser celle du serveur ».",
+  "FeaturePageOffline.removeOfflineQuestion": "Puis-je retirer le mode hors ligne ?",
+  "FeaturePageOffline.removeOfflineAnswer":
+    "Oui. Désactivez-le avec un seul paramètre, ou supprimez un dossier et suivez la checklist écrite ; un test échoue si une étape est oubliée.",
+  "FeaturePageShortcuts.name": "Raccourcis clavier",
+  "FeaturePageShortcuts.title": "Raccourcis clavier pour votre SaaS, sans bibliothèque",
+  "FeaturePageShortcuts.description":
+    "Recherche Ctrl+K qui pardonne les fautes de frappe, le cyrillique et la mauvaise disposition de clavier, et une touche par section. Gratuit, licence MIT.",
+  "FeaturePageShortcuts.h1":
+    "Une palette de commandes et des raccourcis clavier intégrés à votre SaaS",
+  "FeaturePageShortcuts.answer":
+    "L’application et l’espace d’administration de Seed ouvrent avec Ctrl+K (⌘K sur Mac) une recherche qui trouve pages et actions malgré une faute de frappe, en cyrillique ou dans la mauvaise disposition de clavier. Appuyez sur ? pour voir tous les raccourcis ; une fonctionnalité que vous ajoutez déclare ses touches dans la même liste et les retrouve dans cette fenêtre.",
+  "FeaturePageShortcuts.summary":
+    "Une recherche Ctrl+K qui pardonne fautes de frappe et mauvaise disposition, et une touche par section.",
+  "FeaturePageShortcuts.how1":
+    "Une seule liste par application associe les touches et remplit la fenêtre d’aide ouverte par ?, qui n’affiche donc jamais une touche sans effet. G suivi d’une lettre ouvre une section, N ajoute une note depuis n’importe quelle page, et les raccourcis à une touche se font oublier pendant que vous tapez dans un champ.",
+  "FeaturePageShortcuts.how2":
+    "La recherche trouve chaque mot dans n’importe quel ordre, par préfixe, avec une faute de frappe dans un mot plus long, et comprend une requête tapée dans l’autre disposition de clavier ou l’autre alphabet : « зкщашд » trouve « Ouvrir le profil ».",
+  "FeaturePageShortcuts.shortcutsQuestion": "Seed a-t-il des raccourcis clavier ?",
+  "FeaturePageShortcuts.shortcutsAnswer":
+    "Oui. Appuyez sur ? dans l’application ou l’espace d’administration pour les voir tous.",
+  "FeaturePageShortcuts.paletteQuestion": "Y a-t-il une palette de commandes ?",
+  "FeaturePageShortcuts.paletteAnswer":
+    "Oui. Ctrl+K (⌘K sur Mac) ou / ouvre une recherche dans les pages et les actions.",
+  "FeaturePageShortcuts.shortcutsTypingQuestion":
+    "Les raccourcis se déclenchent-ils pendant que je tape ?",
+  "FeaturePageShortcuts.shortcutsTypingAnswer":
+    "Non. Les raccourcis à une touche restent inactifs dans un champ, et chaque appareil peut les désactiver ; Ctrl+K et Esc continuent de fonctionner.",
+  "FeaturePageDeploy.name": "Déploiement",
+  "FeaturePageDeploy.title": "Déployez votre SaaS sans facture de plateforme cloud",
+  "FeaturePageDeploy.description":
+    "Docker Compose sur un serveur Linux loué : Traefik, Postgres, Valkey, fichiers S3, supervision et sauvegardes, en une commande. Gratuit, licence MIT.",
+  "FeaturePageDeploy.h1":
+    "Auto-hébergez votre SaaS sur un seul serveur, sans facture de plateforme cloud",
+  "FeaturePageDeploy.answer":
+    "Seed tourne sur un serveur Linux que vous louez, avec Docker Compose en développement comme en production, et une seule commande le déploie. Vous préparez le serveur une fois en suivant les étapes écrites ; ensuite, chaque déploiement se résume à cette commande.",
+  "FeaturePageDeploy.summary": "Un serveur Linux, Docker Compose et une commande pour déployer.",
+  "FeaturePageDeploy.how1":
+    "Le déploiement copie le projet sur le serveur via SSH et le démarre avec Compose ; à chaque déploiement, un service ponctuel applique les migrations de la base de données. Traefik est en frontal et demande à Let's Encrypt le certificat de chaque hôte.",
+  "FeaturePageDeploy.how2":
+    "Postgres, Valkey, un stockage de fichiers S3, des métriques, des logs et des tableaux de bord avec alertes tournent à côté des applications, et plusieurs produits peuvent partager un même serveur derrière le même proxy.",
+  "FeaturePageDeploy.kubernetesQuestion": "Ai-je besoin de Kubernetes ?",
+  "FeaturePageDeploy.kubernetesAnswer":
+    "Non. Docker Compose sur un seul serveur fait tourner tout le produit, en développement comme en production.",
+  "FeaturePageDeploy.severalQuestion": "Plusieurs produits peuvent-ils partager un serveur ?",
+  "FeaturePageDeploy.severalAnswer":
+    "Oui. Ils partagent un même proxy, et chacun garde son propre dossier, sa base de données et ses données ; ne partagez un serveur qu’entre des produits auxquels vous faites autant confiance.",
+  "FeaturePageDeploy.backupQuestion": "Y a-t-il une sauvegarde ?",
+  "FeaturePageDeploy.backupAnswer":
+    "Oui. Une sauvegarde restic quotidienne et chiffrée de la base de données, à activer, avec une procédure de restauration écrite.",
 } satisfies Catalog
