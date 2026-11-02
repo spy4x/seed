@@ -4,7 +4,7 @@ language: en
 title: "What's new in Seed: October 2026"
 description: "What changed in Seed, the free SaaS starter, in October 2026: passkeys and guest accounts, Stripe billing per member, offline sync, nine languages, the admin panel and the public website."
 tldr:
-  - October was Seed's biggest month so far, with 354 commits on main, 145 of them features.
+  - October was Seed's biggest month so far, with 356 commits on main, 146 of them features.
   - Sign-in gained passkeys, Google and GitHub, e-mail links and one-click guest accounts.
   - Groups got invitations, roles, billing per member through Stripe, and export and import.
   - Nine languages, an offline app, an admin panel on its own host and a public website arrived.
@@ -17,7 +17,7 @@ newsletter: false
 What's new in Seed in October 2026: sign-in with passkeys, Google, GitHub, e-mail links and guest
 accounts; groups with invitations, roles and billing per member through Stripe; an offline app that
 syncs only what changed; nine languages, Arabic right to left included; an admin panel on its own
-host; and a public website with a blog. In numbers, 354 commits landed on `main` in October, 145 of
+host; and a public website with a blog. In numbers, 356 commits landed on `main` in October, 146 of
 them new features and 103 fixes, against 101 commits in all the months before.
 
 This is the first monthly "What's new in Seed". From now on, one comes out at the start of every
