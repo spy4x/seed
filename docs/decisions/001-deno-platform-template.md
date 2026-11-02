@@ -1,7 +1,8 @@
 # ADR 001: Establish reusable Deno platform template
 
 - Status: accepted; transport and sync rules superseded by
-  [ADR 002](002-realtime-transport-and-sync.md)
+  [ADR 002](002-realtime-transport-and-sync.md); the runtime paragraph superseded on 2026-11-03 by
+  the [runtime policy](../runtime-policy.md)
 - Date: 2026-08-18
 - Maintainer: docs owner
 - Location: `docs/decisions/001-deno-platform-template.md`
@@ -24,6 +25,10 @@ under [`apps`](https://github.com/spy4x/seed/tree/main/apps) and
 
 Repository provides reusable API, client, worker, persistence, auth, CQRS, and offline sync
 foundations. Product-specific rules stay outside platform primitives.
+
+> **Superseded on 2026-11-03** by the [runtime policy](../runtime-policy.md): the product runs
+> unchanged on Deno, Node and Bun, and Deno stays the toolchain for now. The paragraph below is
+> kept as it was decided.
 
 Deno is sole runtime and task runner. Development, checks, builds, and operations use `deno` and
 `deno task`; Node.js, npm, pnpm, Yarn, and Bun commands are not allowed. Selected packages exposed

@@ -19,9 +19,9 @@ across real projects, a CLI last.
 
 ## Ground rules
 
-- **Deno only.** No `node`, `npm`, `pnpm`, `yarn` or `bun` commands. Selected
-  `npm:` specifiers are fine where Vite or Preact need them - they still
-  run through Deno.
+- **Runs on Deno, Node and Bun.** Application code uses web standards, with
+  runtime-specific calls behind `@spy4x/platform` adapters; Deno stays the
+  toolchain (`deno task`). See the [runtime policy](runtime-policy.md).
 - Enums start at 1, never 0.
 - Money is integers.
 - `BIGINT` crosses JSON as a decimal string (`::text` in SQL), because
