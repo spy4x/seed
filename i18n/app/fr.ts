@@ -213,9 +213,9 @@ export default {
     "other": "{count} membres",
   },
   "GroupEditor.memberCountLink": {
-    "one": "{count} membre : voir le forfait et la facturation",
-    "many": "{count} membres : voir le forfait et la facturation",
-    "other": "{count} membres : voir le forfait et la facturation",
+    "one": "{count} membre : ouvrir l’onglet Facturation",
+    "many": "{count} de membres : ouvrir l’onglet Facturation",
+    "other": "{count} membres : ouvrir l’onglet Facturation",
   },
   "GroupEditor.tabGeneral": "Général",
   "GroupEditor.tabMembers": "Membres",
@@ -804,7 +804,7 @@ export default {
   "PlanRefusalNotice.rolesTitle": "Promouvoir des membres nécessite un forfait payant",
   "PlanRefusalNotice.rolesText":
     "Avec le forfait de ce groupe, vous pouvez abaisser le rôle d’un membre ou le retirer, mais pas le promouvoir.",
-  "PlanRefusalNotice.openBilling": "Ouvrir la facturation",
+  "PlanRefusalNotice.openBilling": "Ouvrir l’onglet Facturation",
   "PlanRefusalNotice.askOwner": "Demandez au propriétaire du groupe de changer de forfait.",
   "GuestProfile.accountType": "Type de compte",
   "GuestProfile.guestAccount": "Compte invité. Seul ce navigateur peut l’ouvrir.",
