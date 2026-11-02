@@ -163,7 +163,9 @@ test.describe(`a screenshot's lightbox`, () => {
     for (const [loop] of LOOPS) {
       const figure = page.locator(`[data-e2e=loop-${loop}]`)
       await expect(figure.locator(`img`).first()).toBeAttached()
-      await expect(figure.getByRole(`button`, { name: /^Zoom: / })).toHaveCount(0)
+      // Once the clip is live the poster is hidden from the accessibility tree, so the zoom marks
+      // are read off the element: a zoomable image is a Tab stop with a button's role.
+      await expect(figure.locator(`img[role=button], img[tabindex]`)).toHaveCount(0)
     }
   })
 
