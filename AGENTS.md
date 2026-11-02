@@ -105,6 +105,11 @@ video with `deno task video:admin` in the same follow-up PR as the screenshots, 
 `apps/mpa/admin-video.ts` (its length, size, upload date and transcript) to match. The skill says
 how. On 2026-10-20 the owner, asked whether the video should join this rule, answered: "Add."
 
+The website's three feature loops (realtime, offline, shortcuts; `apps/mpa/media/video/*-loop-*`)
+film the SPA's screens. When a change alters a screen a loop shows significantly, re-record that
+loop with `deno task loops <name>` in `apps/mpa`, in the same follow-up PR. On 2026-11-03 the
+owner, asked whether the loops should join this rule, answered: "I agree."
+
 ## The public demo
 
 The template's server runs a public demo of the product (not the admin panel) with fake data,
