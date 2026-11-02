@@ -45,7 +45,7 @@ Pick the guide that fits. The [README](../README.md) has the pitch and the quick
 - [Architecture](architecture.md) and [the diagram](architecture.svg)
 - [Stack](stack.md)
 - [Principles](principles.md)
-- [Deno policy](deno-policy.md)
+- [Runtime policy](runtime-policy.md)
 - [Decisions](decisions/): [ADR 001](decisions/001-deno-platform-template.md),
   [ADR 002](decisions/002-realtime-transport-and-sync.md),
   [ADR 003](decisions/003-swappable-transport-and-local-data.md)

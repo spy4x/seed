@@ -68,7 +68,7 @@ describe(`the published guides`, () => {
         `financy-extraction-inventory`,
         `postgres-18-upgrade`,
         `woodpecker-ci-setup`,
-        `deno-policy`,
+        `runtime-policy`,
         `README`,
         `token-api`,
         `../README`,
