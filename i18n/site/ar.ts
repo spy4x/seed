@@ -543,7 +543,7 @@ export default {
   "FeatureWebsite.fact2": "الأسعار مقروءة من كتالوج خطط التطبيق",
   "FeatureWebsite.fact3": "نشرة بريدية بتأكيد مزدوج، وإلغاء اشتراك بنقرة واحدة، ورسائل بلغة القارئ",
   "FeatureWebsite.fact4":
-    "مدونة تُكتب من لوحة الإدارة، بمقالات بكل لغة وترجماتها، ومواضيع، وموجز RSS، وبيانات منظَّمة للمقالات",
+    "مدونة تُكتب من لوحة الإدارة، بمقالات بكل لغة وترجماتها، ومواضيع، ورسوم تفاعلية يجرّبها القارئ، وموجز RSS، وبيانات منظَّمة للمقالات",
   "FeatureWebsite.fact5":
     "روابط التواصل تُضبط من لوحة الإدارة، وتظهر في التذييل وفي البيانات المنظَّمة",
   "FeatureWebsite.fact6":
@@ -865,4 +865,14 @@ export default {
   "Blog.readNext": "اقرأ أيضًا",
   "Blog.morePosts": "مقالات أخرى",
   "Blog.breadcrumb": "مسار التنقل",
+  "PostFigure.noScript": "معروض بأرقام المقال. فعّل JavaScript لتجرّب أرقامك.",
+  "PostFigure.rssLink": "جرّبه على الموقع: {link}",
+  "PostFigure.CostCalculator.title": "كم تكلّف خطة Pro في العرض التجريبي فريقك",
+  "PostFigure.CostCalculator.lead": "تُحتسب خطة Pro لكل عضو. حدّد حجم فريقك.",
+  "PostFigure.CostCalculator.members": "أعضاء الفريق",
+  "PostFigure.CostCalculator.total": "فريقك، شهريًا",
+  "PostFigure.CostCalculator.perMember": "لكل عضو، شهريًا",
+  "PostFigure.CostCalculator.caption": "أسعار خطط العرض التجريبي، قبل الضريبة.",
+  "PostFigure.CostCalculator.fallback":
+    "أعضاء الفريق: {members}. في خطة Pro من العرض التجريبي يدفعون {total} شهريًا، أي {price} لكل عضو.",
 } satisfies Catalog

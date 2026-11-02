@@ -480,6 +480,20 @@ export default {
     "other": "Publicar e enviar a {count}",
   },
   "AdminBlogDialogs.publish": "Publicar",
+  "AdminBlogDialogs.figuresHidden": {
+    "one": "1 figura não vai aparecer",
+    "many": "{count} figuras não vão aparecer",
+    "other": "{count} figuras não vão aparecer",
+  },
+  "AdminBlogDialogs.figuresHiddenBody": "Os leitores verão o post sem elas.",
+  "AdminBlogDialogs.goToProblems": "Ir para os problemas",
+  "AdminBlogDialogs.publishAnyway": "Publicar mesmo assim",
+  "AdminBlogDialogs.scheduleAnyway": "Agendar mesmo assim",
+  "AdminBlogDialogs.publishAndEmailAnyway": {
+    "one": "Publicar e enviar para {count} mesmo assim",
+    "many": "Publicar e enviar para {count} mesmo assim",
+    "other": "Publicar e enviar para {count} mesmo assim",
+  },
   "AdminBlogDialogs.scheduleTitle": "Agendar “{title}”",
   "AdminBlogDialogs.publishTitle": "Publicar “{title}”?",
   "AdminBlogDialogs.when": "Quando",
@@ -562,6 +576,32 @@ export default {
   "AdminBlogEditor.write": "Escrever",
   "AdminBlogEditor.bodyLabel": "Post, em Markdown",
   "AdminBlogEditor.bodyHint": "Escrito em Markdown.",
+  "AdminBlogEditor.bodyHintFigures":
+    "Escrito em Markdown. Para adicionar uma figura interativa, coloque a tag dela em uma linha só: <code>{example}</code>",
+  "AdminBlogEditor.problemsTitle": {
+    "one": "1 problema neste post",
+    "many": "{count} problemas neste post",
+    "other": "{count} problemas neste post",
+  },
+  "AdminBlogEditor.problemsLine":
+    "Os leitores não verão estas linhas. O resto do post aparece como foi escrito.",
+  "AdminBlogEditor.problemsCount": {
+    "one": "1 problema",
+    "many": "{count} problemas",
+    "other": "{count} problemas",
+  },
+  "AdminBlogEditor.problemsNone": "Nenhum problema restante",
+  "AdminBlogEditor.problemLine": "Linha {line}",
+  "AdminBlogEditor.problemUnknown":
+    "Não existe componente chamado {tag}. Você quis dizer {suggestion}?",
+  "AdminBlogEditor.problemUnknownNone":
+    "Não existe componente chamado {tag}. Disponíveis: {names}.",
+  "AdminBlogEditor.problemProps": "{tag} não aceita estas props: <detail>{detail}</detail>",
+  "AdminBlogEditor.problemNested":
+    "{tag} está dentro de uma lista ou citação. Mova para uma linha só, fora dela.",
+  "AdminBlogEditor.problemSyntax": "A tag de {tag} não pode ser lida: <detail>{detail}</detail>",
+  "AdminBlogEditor.figureHidden": "Esta figura não vai aparecer",
+  "AdminBlogEditor.goToLine": "Ir para a linha {line}",
   "AdminBlogEditor.preview": "Pré-visualizar",
   "AdminBlogEditor.wordsRead": {
     "one": "{count} palavra · {minutes} min de leitura",
@@ -1634,6 +1674,8 @@ export default {
   "AdminShortcuts.addLink": "Adicionar link",
   "AdminShortcuts.searchList": "Buscar nesta lista",
   "AdminShortcuts.savePost": "Salvar o post",
+  "AdminShortcuts.nextProblem": "Próximo problema do post",
+  "AdminShortcuts.previousProblem": "Problema anterior do post",
   "AdminShortcuts.addItem": "Adicionar item",
   "AdminShortcuts.addCategory": "Adicionar categoria",
   "AdminShortcuts.saveItem": "Salvar o item",

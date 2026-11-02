@@ -2,6 +2,7 @@ import type postgres from "postgres"
 import {
   BLOG_FEED_COUNT,
   BLOG_READ_NEXT_COUNT,
+  type BlogProblem,
   type BlogTopic,
   type BlogTranslation,
   type PublicBlogFeedItem,
@@ -107,6 +108,7 @@ export async function readPublicPost(
     LIMIT ${BLOG_READ_NEXT_COUNT}
   `
   const body = renderBlogBody(row.bodyMd)
+  warnUnusableTags(slug, body.problems)
   return {
     post: {
       ...toSummary(row),
@@ -115,7 +117,7 @@ export async function readPublicPost(
       tldr: [...row.tldr],
       coverUrl: row.coverUrl,
       coverAlt: row.coverAlt,
-      html: body.html,
+      segments: body.segments,
       headings: body.headings,
       authorName: row.authorName,
       translations: translations.map(({ language, slug }) => ({ language, slug })),
@@ -134,7 +136,17 @@ export async function listPublicTopics(sql: postgres.Sql): Promise<BlogTopic[]> 
   `
 }
 
-/** The {@link BLOG_FEED_COUNT} newest live posts with their full HTML, for the RSS feed. */
+/**
+ * Logs one warning naming a live post's tag lines that show nothing (#620): a tag in a list or a
+ * quote, or one that does not read. The public website logs the tags no component accepts.
+ */
+function warnUnusableTags(slug: string, problems: BlogProblem[]): void {
+  if (problems.length === 0) return
+  const lines = problems.map(({ line, tag, detail }) => `line ${line} <${tag}>: ${detail}`)
+  console.warn(`Blog post "${slug}": these tags show nothing: ${lines.join(`; `)}`)
+}
+
+/** The {@link BLOG_FEED_COUNT} newest live posts with their full body, for the RSS feed. */
 export async function listPublicFeed(sql: postgres.Sql): Promise<PublicBlogFeedItem[]> {
   const rows = await sql<(SummaryRow & { coverUrl: string | null; authorName: string | null })[]>`
     SELECT ${summaryColumns(sql)}, cover_url, author_name
@@ -148,7 +160,8 @@ export async function listPublicFeed(sql: postgres.Sql): Promise<PublicBlogFeedI
     return {
       ...toSummary(row),
       readingMinutes: body.readingMinutes,
-      html: body.html,
+      segments: body.segments,
+      headings: body.headings,
       coverUrl: row.coverUrl,
       authorName: row.authorName,
     }

@@ -587,7 +587,7 @@ export default {
   "FeatureWebsite.fact3":
     "Une newsletter à double confirmation, désabonnement en un clic et e-mails dans la langue du lecteur",
   "FeatureWebsite.fact4":
-    "Un blog rédigé dans le panneau d’administration, avec des articles dans chaque langue et leurs traductions, des thèmes, un flux RSS et des données structurées d’article",
+    "Un blog rédigé dans le panneau d’administration, avec des articles dans chaque langue et leurs traductions, des thèmes, des figures interactives à essayer, un flux RSS et des données structurées d’article",
   "FeatureWebsite.fact5":
     "Des liens de contact définis dans le panneau d’administration, affichés dans le pied de page et les données structurées",
   "FeatureWebsite.fact6":
@@ -921,4 +921,16 @@ export default {
   "Blog.readNext": "À lire ensuite",
   "Blog.morePosts": "Plus d’articles",
   "Blog.breadcrumb": "Fil d’Ariane",
+  "PostFigure.noScript":
+    "Affiché avec les chiffres de l’article. Activez JavaScript pour essayer les vôtres.",
+  "PostFigure.rssLink": "Essayez-le sur le site : {link}",
+  "PostFigure.CostCalculator.title": "Ce que coûte à votre équipe l’offre Pro de la démo",
+  "PostFigure.CostCalculator.lead":
+    "Pro est facturé par membre. Indiquez la taille de votre équipe.",
+  "PostFigure.CostCalculator.members": "Membres de l’équipe",
+  "PostFigure.CostCalculator.total": "Votre équipe, par mois",
+  "PostFigure.CostCalculator.perMember": "Par membre, par mois",
+  "PostFigure.CostCalculator.caption": "Prix des offres de la démo, hors taxes.",
+  "PostFigure.CostCalculator.fallback":
+    "Membres de l’équipe : {members}. Avec l’offre Pro de la démo, ils paient {total} par mois, soit {price} par membre.",
 } satisfies Catalog

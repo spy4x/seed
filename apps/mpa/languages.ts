@@ -39,6 +39,7 @@ import siteAr from "@i18n/site/ar.ts"
 import siteFr from "@i18n/site/fr.ts"
 import siteJa from "@i18n/site/ja.ts"
 import siteZhCn from "@i18n/site/zh-CN.ts"
+import { figureMessages } from "./post-figures.tsx"
 
 /** The languages the website is served in, the default first. */
 export const SITE_LANGUAGES: readonly Language[] = LANGUAGES
@@ -148,6 +149,16 @@ export function siteTranslator(language: Language): Translator<string> {
     translators.set(language, translator)
   }
   return translator
+}
+
+/**
+ * The words a post's figures need in `language` (#620), English where a translation is missing:
+ * what the page sends each figure island, so it does not ship the whole catalog.
+ */
+export function figureCatalog(language: Language): Catalog {
+  const [ui, , site] = CATALOGS[language]
+  const [uiEn, , siteEn] = CATALOGS.en
+  return figureMessages([uiEn, siteEn, ui, site])
 }
 
 /**

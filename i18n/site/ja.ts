@@ -549,7 +549,7 @@ export default {
   "FeatureWebsite.fact3":
     "ダブルオプトイン、ワンクリック購読解除、受信者の言語で届くメールに対応したニュースレター",
   "FeatureWebsite.fact4":
-    "管理画面で書けるブログ。言語ごとの記事とその翻訳、トピック、RSSフィード、記事の構造化データに対応",
+    "管理画面で書けるブログ。言語ごとの記事とその翻訳、トピック、読者が試せるインタラクティブな図、RSSフィード、記事の構造化データに対応",
   "FeatureWebsite.fact5": "連絡先リンクは管理画面で設定し、フッターと構造化データに表示",
   "FeatureWebsite.fact6":
     "ショップ用のオプションのカタログを管理画面で編集：写真、カラー、サイズ、サイズ表、売り切れのサイズを持つアイテムを、販売するすべての言語で。アイテムと共有先ごとに短いトラッキングリンクも作れます",
@@ -856,4 +856,15 @@ export default {
   "Blog.readNext": "次に読む",
   "Blog.morePosts": "ほかの記事",
   "Blog.breadcrumb": "パンくずリスト",
+  "PostFigure.noScript":
+    "記事の数値で表示しています。自分の数値で試すにはJavaScriptを有効にしてください。",
+  "PostFigure.rssLink": "サイトで試す：{link}",
+  "PostFigure.CostCalculator.title": "デモのProプランでチームにかかる費用",
+  "PostFigure.CostCalculator.lead": "Proはメンバーごとの課金です。チームの人数を設定してください。",
+  "PostFigure.CostCalculator.members": "チームのメンバー",
+  "PostFigure.CostCalculator.total": "チーム全体、月額",
+  "PostFigure.CostCalculator.perMember": "メンバー1人あたり、月額",
+  "PostFigure.CostCalculator.caption": "デモのプランの税抜価格です。",
+  "PostFigure.CostCalculator.fallback":
+    "チームのメンバー：{members}人。デモのProプランでは月額{total}、1人あたり{price}です。",
 } satisfies Catalog

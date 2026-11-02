@@ -48,6 +48,8 @@ const OLDER: PublicBlogPostSummary = {
   readingMinutes: 6,
 }
 
+const FULL_HTML = `<p>The worker <strong>wakes</strong> every second.</p>`
+
 /** The newer post as the API answers it in full, with a cover and an update. */
 const FULL: PublicBlogPost = {
   ...NEWER,
@@ -55,7 +57,7 @@ const FULL: PublicBlogPost = {
   tldr: [`One table holds every job.`, `A failed job is tried again.`],
   coverUrl: `https://images.example.com/cron.png`,
   coverAlt: `A clock over a server rack`,
-  html: `<p>The worker <strong>wakes</strong> every second.</p>`,
+  segments: [{ kind: `html`, html: FULL_HTML }],
   headings: [{ id: `why`, text: `Why`, depth: 2 }],
   authorName: `Ada Lovelace`,
   translations: [],
@@ -80,7 +82,7 @@ const GERMAN_FULL: PublicBlogPost = {
   tldr: [],
   coverUrl: null,
   coverAlt: null,
-  html: `<p>Hallo.</p>`,
+  segments: [{ kind: `html`, html: `<p>Hallo.</p>` }],
   headings: [],
   authorName: null,
   translations: [],
@@ -493,6 +495,87 @@ describe("a blog post", () => {
   })
 })
 
+describe("a figure in a post (#620)", () => {
+  const html = (text: string) => ({ kind: `html` as const, html: `<p>${text}</p>\n` })
+  const tag = (name: string, props: Record<string, unknown>, line: number) => ({
+    kind: `component` as const,
+    tag: name,
+    props,
+    line,
+  })
+  const withFigures: PublicBlogPost = {
+    ...FULL,
+    segments: [
+      html(`Before.`),
+      tag(`CostCalculator`, { members: 6 }, 3),
+      html(`Between.`),
+      tag(`CostCalculator`, {}, 7),
+      tag(`CostCalc`, {}, 9),
+      tag(`CostCalculator`, { members: 500 }, 11),
+      html(`After.`),
+    ],
+  }
+  const answers: Answers = {
+    ...listing([NEWER]),
+    [`/api/blog/posts/cron-jobs`]: () => Response.json({ post: withFigures, readNext: [] }),
+  }
+
+  /** Runs `run` and returns what it warned, with `console.warn` silenced. */
+  async function warnings(run: () => Promise<unknown>): Promise<string[]> {
+    const original = console.warn
+    const said: string[] = []
+    console.warn = (...args: unknown[]) => said.push(args.join(` `))
+    try {
+      await run()
+    } finally {
+      console.warn = original
+    }
+    return said
+  }
+
+  it("draws each figure inside Explorable with an id numbered on repeat, in page order", async () => {
+    const { get } = await blogSite(answers)
+    let body = ``
+    await warnings(async () => ({ body } = await get("/blog/cron-jobs")))
+    const figures = [...body.matchAll(/<figure id="([^"]+)"[^>]*data-live="false"/g)].map(
+      ([, id]) => id,
+    )
+
+    expect(figures).toEqual([`cost-calculator`, `cost-calculator-2`])
+    const order = [`Before.`, `cost-calculator"`, `Between.`, `cost-calculator-2"`, `After.`]
+      .map((text) => body.indexOf(text))
+    expect(order.every((at, i) => at > 0 && (i === 0 || at > order[i - 1]))).toBe(true)
+    expect(body).toContain(`Turn on JavaScript to try your own.`)
+  })
+
+  it("leaves out an unknown tag and refused props, and warns once with the post, lines and tags", async () => {
+    const { get } = await blogSite(answers)
+    let body = ``
+    const said = await warnings(async () => ({ body } = await get("/blog/cron-jobs")))
+
+    expect(body.match(/<figure /g)?.length).toBe(2)
+    expect(body).not.toContain(`CostCalc`)
+    expect(said).toEqual([
+      `Blog post "cron-jobs": these figures show nothing: line 9 <CostCalc> (unknown); ` +
+      `line 11 <CostCalculator> (props)`,
+    ])
+  })
+
+  it("shows the figure's own text in the RSS feed in its place", async () => {
+    const { get } = await blogSite({
+      ...listing([]),
+      "/api/blog/feed": () => Response.json({ posts: [withFigures] }),
+    })
+    const { body } = await get("/rss.xml")
+
+    expect(body).toContain(
+      `<p>Before.</p>\n<p>Team members: 6. On the demo&#39;s Pro plan they pay €54.00 a month, ` +
+        `€9.00 per member.</p>\n<p>Between.</p>`,
+    )
+    expect(body).not.toContain(`CostCalc`)
+  })
+})
+
 describe("the RSS feed", () => {
   const feed = (posts: unknown[]): Answers => ({
     ...listing([]),
@@ -510,7 +593,7 @@ describe("the RSS feed", () => {
     expect(body).toContain(`<title>Cron jobs without a cron</title>`)
     expect(body).toContain(`<guid isPermaLink="true">${site}/blog/cron-jobs</guid>`)
     expect(body).toContain(`<pubDate>Tue, 20 Oct 2026 09:00:00 GMT</pubDate>`)
-    expect(body).toContain(`<content:encoded><![CDATA[${FULL.html}]]></content:encoded>`)
+    expect(body).toContain(`<content:encoded><![CDATA[${FULL_HTML}]]></content:encoded>`)
   })
 
   it("is a valid feed with no items while no post is live", async () => {

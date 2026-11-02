@@ -12,6 +12,9 @@ Operators write posts in the admin app; the public website shows the published o
 | `libs/server/blog/public-blog.ts`          | The website's reads: live posts only.                                                 |
 | `libs/server/blog/blog-publish-job.ts`     | The `blog.publish` job (registered in `JOBS`), and `queueDueBlogJobs` for lost jobs. |
 | `libs/server/blog/render.ts`               | Markdown to safe HTML and the reading time. The only place a body is rendered.        |
+| `libs/domain/blog/figures.ts`              | The check of a figure tag against the figures that exist, and the figures' ids.       |
+| `apps/mpa/islands/post/`                   | The interactive figures a post can hold, one file per tag ([below](#interactive-figures)). |
+| `apps/mpa/post-figures.tsx`                | The folder's registry, and a body's figures resolved for the page, the feed and the admin. |
 | `libs/server/blog/seed-posts.ts`, `seed-posts/` | Seed's own posts as Markdown files, loaded only in demo mode and by `deno task db:seed` ([demo.md](demo.md#seeds-own-blog-posts)). |
 | `apps/api/routes/admin/blog.ts`            | `/api/admin/blog/*`, behind the operator gate.                                        |
 | `apps/admin/src/modules/blog/`             | The admin pages: the list (`/blog`) and the editor (`/blog/new`, `/blog/:id`).        |
@@ -113,12 +116,55 @@ app never renders Markdown itself. A scheduled post keeps its newsletter list wh
 published now or moved to another time: the editor names the list in every publish call, since
 the API reads a missing list as "no email".
 
+A tag that will not show is listed in a Problems panel under the Write and Preview tabs, rechecked
+about a second after typing stops. Each row's "Line N" button selects that line in the body, and
+F8 and Shift+F8 in the body jump to the next and the previous problem. The Preview tab draws each
+figure live, from the website's own islands, and a warning where a tag will not show. Publishing
+and scheduling warn about the problems and offer "Go to problems", but never refuse: a broken tag
+hides one figure and leaves the rest of the post as written.
+
 ## Markdown
 
 Bodies are rendered on the server by `renderBlogBody` (`libs/server/blog/render.ts`), which calls
 `renderMarkdown` from `@spy4x/platform/universal/markdown`: GitHub-flavoured Markdown with raw
 HTML escaped, links limited to `https:`, `http:`, `mailto:` and relative paths, and ids on
 headings. The reading time is `readingMinutes` from `@spy4x/platform/universal/text`.
+
+## Interactive figures
+
+A post can hold an interactive figure: a tag on a line of its own, outside any list or quote.
+
+```md
+What does a team pay? Move the slider.
+
+<CostCalculator members={4} />
+```
+
+The parser (`renderMarkdownSegments`) splits the body around each tag, and the API returns the
+pieces as `segments`. The website looks each tag up in `apps/mpa/islands/post/` by its exact
+name, checks its props against the file's schema and draws it inside `Explorable`, as
+`figure[data-live]` with an id from its name (`cost-calculator`, `cost-calculator-2` on repeat).
+With JavaScript off the figure shows its starting numbers and a note. A tag that fails (an unknown
+name, refused props, a tag inside a list) shows nothing, and the server logs one warning per
+render naming the post, the line and the tag. The RSS feed, where no script runs, shows the
+figure's `fallback` text, or a link to it on the post's page.
+
+### Adding a figure
+
+Add one file to `apps/mpa/islands/post/`, named after its tag: `MyChart.tsx` is `<MyChart />`.
+Nothing else lists the figures. The file exports:
+
+- `default`: the island. It takes its props and `figure` (`FigureFrame`), and draws `PostFigure`
+  (`apps/mpa/components/post-figure.tsx`) around its content, so its root is `figure[data-live]`.
+- `props`: the arktype definition of its props, with `"+": "reject"`: a plain object such as
+  `{ "members?": "1 <= number.integer <= 50", "+": "reject" }`, never a `type()` call. The
+  server compiles it, and a tag's props reach the island only after it accepted them. Fresh
+  ships every export of an island to the browser, so importing arktype there would add about
+  190 KB and break the website's Content Security Policy.
+- `fallback` (optional): `(props, t) => string`, the sentence the RSS feed shows instead.
+
+Its words go in `i18n/site/` under `PostFigure.<Tag>.*`, in every language. `CostCalculator.tsx`
+is the example to copy, and `apps/mpa/post-figures.test.tsx` checks every file in the folder.
 
 ## Demo and development
 

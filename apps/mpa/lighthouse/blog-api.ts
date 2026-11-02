@@ -31,7 +31,7 @@ const posts: PublicBlogPost[] = published
       tldr: fields.tldr,
       coverUrl: fields.coverUrl,
       coverAlt: fields.coverAlt,
-      html: body.html,
+      segments: body.segments,
       headings: body.headings,
       authorName: seed.author,
       translations: published

@@ -486,6 +486,20 @@ export default {
     "other": "Publier et envoyer à {count}",
   },
   "AdminBlogDialogs.publish": "Publier",
+  "AdminBlogDialogs.figuresHidden": {
+    "one": "{count} figure ne s’affichera pas",
+    "many": "{count} figures ne s’afficheront pas",
+    "other": "{count} figures ne s’afficheront pas",
+  },
+  "AdminBlogDialogs.figuresHiddenBody": "Les lecteurs verront l’article sans elles.",
+  "AdminBlogDialogs.goToProblems": "Voir les problèmes",
+  "AdminBlogDialogs.publishAnyway": "Publier quand même",
+  "AdminBlogDialogs.scheduleAnyway": "Programmer quand même",
+  "AdminBlogDialogs.publishAndEmailAnyway": {
+    "one": "Publier et envoyer à {count} quand même",
+    "many": "Publier et envoyer à {count} quand même",
+    "other": "Publier et envoyer à {count} quand même",
+  },
   "AdminBlogDialogs.scheduleTitle": "Programmer « {title} »",
   "AdminBlogDialogs.publishTitle": "Publier « {title} » ?",
   "AdminBlogDialogs.when": "Quand",
@@ -570,6 +584,32 @@ export default {
   "AdminBlogEditor.write": "Rédiger",
   "AdminBlogEditor.bodyLabel": "Article, en Markdown",
   "AdminBlogEditor.bodyHint": "Rédigé en Markdown.",
+  "AdminBlogEditor.bodyHintFigures":
+    "Rédigé en Markdown. Pour ajouter une figure interactive, placez sa balise seule sur une ligne : <code>{example}</code>",
+  "AdminBlogEditor.problemsTitle": {
+    "one": "{count} problème dans cet article",
+    "many": "{count} problèmes dans cet article",
+    "other": "{count} problèmes dans cet article",
+  },
+  "AdminBlogEditor.problemsLine":
+    "Les lecteurs ne verront pas ces lignes. Le reste de l’article s’affiche tel qu’il est écrit.",
+  "AdminBlogEditor.problemsCount": {
+    "one": "{count} problème",
+    "many": "{count} problèmes",
+    "other": "{count} problèmes",
+  },
+  "AdminBlogEditor.problemsNone": "Plus aucun problème",
+  "AdminBlogEditor.problemLine": "Ligne {line}",
+  "AdminBlogEditor.problemUnknown":
+    "Aucun composant ne s’appelle {tag}. Vouliez-vous dire {suggestion} ?",
+  "AdminBlogEditor.problemUnknownNone":
+    "Aucun composant ne s’appelle {tag}. Disponibles : {names}.",
+  "AdminBlogEditor.problemProps": "{tag} n’accepte pas ces propriétés : <detail>{detail}</detail>",
+  "AdminBlogEditor.problemNested":
+    "{tag} se trouve dans une liste ou une citation. Placez-le seul sur une ligne, en dehors.",
+  "AdminBlogEditor.problemSyntax": "La balise de {tag} est illisible : <detail>{detail}</detail>",
+  "AdminBlogEditor.figureHidden": "Cette figure ne s’affichera pas",
+  "AdminBlogEditor.goToLine": "Aller à la ligne {line}",
   "AdminBlogEditor.preview": "Aperçu",
   "AdminBlogEditor.wordsRead": {
     "one": "{count} mot · {minutes} min de lecture",
@@ -1656,6 +1696,8 @@ export default {
   "AdminShortcuts.addLink": "Ajouter un lien",
   "AdminShortcuts.searchList": "Rechercher dans cette liste",
   "AdminShortcuts.savePost": "Enregistrer l’article",
+  "AdminShortcuts.nextProblem": "Problème suivant de l’article",
+  "AdminShortcuts.previousProblem": "Problème précédent de l’article",
   "AdminShortcuts.addItem": "Ajouter un produit",
   "AdminShortcuts.addCategory": "Ajouter une catégorie",
   "AdminShortcuts.saveItem": "Enregistrer le produit",

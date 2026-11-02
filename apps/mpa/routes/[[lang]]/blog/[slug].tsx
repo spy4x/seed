@@ -7,7 +7,6 @@ import { Button } from "@spy4x/preact-ui/button"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { OnThisPage } from "@spy4x/preact-ui/on-this-page"
 import { PostList } from "@spy4x/preact-ui/post-list"
-import { Prose } from "@spy4x/preact-ui/prose"
 import { TldrBox } from "@spy4x/preact-ui/tldr-box"
 import { blogPostingJsonLd, breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
 import {
@@ -31,7 +30,14 @@ import {
   spaLinks,
 } from "../../../site.tsx"
 import { define, type State } from "../../../utils.ts"
-import { localePath, siteTranslator } from "../../../languages.ts"
+import { figureCatalog, localePath, siteTranslator } from "../../../languages.ts"
+import {
+  postFigures,
+  resolveBody,
+  type ResolvedBody,
+  warnHiddenFigures,
+} from "../../../post-figures.tsx"
+import { PostSegments } from "../../../components/post-segments.tsx"
 import { useSite } from "../../../use-site.tsx"
 import { siteEnglishText } from "@ui/site-text.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
@@ -63,6 +69,8 @@ export const handler = define.handlers({
     const origin = ctx.state.webAppOrigin
     const cover = post.coverUrl === null ? null : { url: post.coverUrl, alt: post.coverAlt ?? `` }
     const t = siteTranslator(ctx.state.language)
+    const body = resolveBody(post.segments, post.headings, await postFigures())
+    warnHiddenFigures(post.slug, body.problems)
     return ctx.render(
       <SiteFrame
         state={ctx.state}
@@ -86,7 +94,7 @@ export const handler = define.handlers({
           {post.updatedAt && <meta property="article:modified_time" content={post.updatedAt} />}
           {post.topic && <meta property="article:section" content={post.topic} />}
         </Head>
-        <PostBody post={post} />
+        <PostBody post={post} parts={body.parts} />
         {ctx.state.newsletter ? <NewsletterBand /> : (
           <CtaBand
             title={t.t(`Blog.ctaTitle`, { site: SITE_NAME })}
@@ -134,7 +142,9 @@ function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost)
  * The article itself. A post of {@link TOC_MIN_MINUTES} minutes or more with sections gets "On this
  * page" beside it from 1280 px, in the right margin; on a narrower screen the body reads alone.
  */
-function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
+function PostBody(
+  { post, parts }: { post: PublicBlogPost; parts: ResolvedBody[`parts`] },
+): JSX.Element {
   const { t, rich, href } = useSite()
   const format = useFormat().utc()
   const blog = href(BLOG_PATH)
@@ -200,8 +210,11 @@ function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
           />
         )}
         <TldrBox items={post.tldr} />
-        {/* The API's HTML, rendered by the safe Markdown renderer on the server (docs/blog.md). */}
-        <Prose html={post.html} />
+        <PostSegments
+          parts={parts}
+          language={post.language}
+          messages={figureCatalog(post.language)}
+        />
       </article>
       {toc && (
         <aside class="hidden xl:col-start-3 xl:block" data-e2e="blog-post-toc">

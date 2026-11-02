@@ -6,6 +6,8 @@ import {
   type BlogNewsletterResponse,
   type BlogPost,
   blogPostPath,
+  type BlogPreviewBody,
+  type BlogProblem,
   type BlogTopic,
 } from "@domain/blog"
 import type { AdminBlogFilter } from "@ui/admin-blog-list.tsx"
@@ -26,6 +28,7 @@ import {
 import type { Formatters } from "@spy4x/time/format"
 import { type AdminApiResult, type AdminFetch, post as postBody } from "../../state.ts"
 import { adminText } from "../../i18n.ts"
+import type { FigurePreview } from "./figure-preview.tsx"
 
 const API = `/api/admin/blog`
 
@@ -65,6 +68,8 @@ export interface BlogPreviewState {
   /** The Markdown the preview shows, or is rendering. */
   source: string | null
   preview: BlogPreview | null
+  /** The tags of the last body that rendered which readers will not see, by line (#620). */
+  problems: readonly BlogProblem[]
   pending: boolean
   error: string | null
 }
@@ -75,17 +80,27 @@ export interface BlogStatePorts {
   now: () => Date
   /** Opens the public post in a new tab. */
   open: (url: string) => void
+  /** Loads the website's figures, which the preview draws and checks tags against (#620). */
+  figures: () => Promise<FigurePreview>
 }
 
 const browserPorts: BlogStatePorts = {
   newId: uuidV7,
   now: () => new Date(),
   open: (url) => void globalThis.open?.(url, `_blank`, `noopener`),
+  // On demand, so the islands and their words stay out of the app's first download.
+  figures: () => import(`./figure-preview.tsx`).then((module) => module.loadFigurePreview()),
 }
 
 const NO_DIALOG: BlogDialogState = { dialog: null, pending: false, error: null }
 
-const NO_PREVIEW: BlogPreviewState = { source: null, preview: null, pending: false, error: null }
+const NO_PREVIEW: BlogPreviewState = {
+  source: null,
+  preview: null,
+  problems: [],
+  pending: false,
+  error: null,
+}
 
 /** A new post's editor: nothing typed, nothing saved. */
 function freshEditor(id: string): BlogEditorState {
@@ -158,6 +173,18 @@ export function createBlogState(
   /** Every post of its own, which a post may translate; the editor leaves out the open one. */
   const originals = signal<readonly BlogOriginal[]>([])
   const newsletter = signal<BlogNewsletterResponse | null>(null)
+  /** The website's figures, once loaded: what the body's hint names, and the preview's check. */
+  const figures = signal<FigurePreview | null>(null)
+  let loadingFigures: Promise<FigurePreview> | undefined
+  const loadFigures = () => {
+    loadingFigures ??= ports.figures().then((loaded) => figures.value = loaded)
+      // A load that failed is tried again by the next render.
+      .catch((error) => {
+        loadingFigures = undefined
+        throw error
+      })
+    return loadingFigures
+  }
 
   /** Whether `id` is still the post the editor has open, after an await. */
   const current = (id: string) => editor.value.id === id
@@ -204,6 +231,7 @@ export function createBlogState(
     topics,
     originals,
     newsletter,
+    figures,
 
     /** Reads the posts of `filter`, with each status's count. */
     async loadList(filter: AdminBlogFilter): Promise<void> {
@@ -332,16 +360,34 @@ export function createBlogState(
       return result.data.post
     },
 
-    /** Renders the body for the Preview tab, unless it shows that very text already. */
+    /**
+     * Renders the body for the Preview tab and checks its figures, unless that very text is shown
+     * already. The editor also calls it about a second after typing stops, for the Problems
+     * panel; a render that fails keeps the last list.
+     */
     async renderPreview(): Promise<void> {
       const source = editor.value.value.bodyMd
       if (preview.value.source === source && preview.value.preview && !preview.value.error) return
       preview.value = { ...preview.value, source, pending: true, error: null }
-      const result = await request<BlogPreview>(`${API}/preview`, postBody({ bodyMd: source }))
+      const [result, check] = await Promise.all([
+        request<BlogPreviewBody>(`${API}/preview`, postBody({ bodyMd: source })),
+        loadFigures().then((loaded) => loaded.check, () => null),
+      ])
       if (preview.value.source !== source) return
-      preview.value = result.ok
-        ? { source, preview: result.data, pending: false, error: null }
-        : { ...preview.value, pending: false, error: result.error.message }
+      if (!result.ok || check === null) {
+        const error = result.ok
+          ? adminText().t(`AdminBlogEditor.previewError`)
+          : result.error.message
+        preview.value = { ...preview.value, pending: false, error }
+        return
+      }
+      const checked = check(result.data)
+      preview.value = { source, ...checked, pending: false, error: null }
+    },
+
+    /** Loads the website's figures for the body's hint; the preview loads them too. */
+    loadFigures(): void {
+      loadFigures().catch(() => {})
     },
 
     /**

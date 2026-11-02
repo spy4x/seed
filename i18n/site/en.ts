@@ -551,7 +551,7 @@ export default {
   "FeatureWebsite.fact3":
     "A newsletter with double opt-in, one-click unsubscribe and mails in the reader's language",
   "FeatureWebsite.fact4":
-    "A blog written in the admin panel, with posts in each language and their translations, topics, an RSS feed and article structured data",
+    "A blog written in the admin panel, with posts in each language and their translations, topics, interactive figures readers can try, an RSS feed and article structured data",
   "FeatureWebsite.fact5":
     "Contact links set in the admin panel, shown in the footer and the structured data",
   "FeatureWebsite.fact6":
@@ -862,4 +862,14 @@ export default {
   "Blog.readNext": "Read next",
   "Blog.morePosts": "More posts",
   "Blog.breadcrumb": "Breadcrumb",
+  "PostFigure.noScript": "Shown with the post's numbers. Turn on JavaScript to try your own.",
+  "PostFigure.rssLink": "Try it on the website: {link}",
+  "PostFigure.CostCalculator.title": "What the demo's Pro plan costs your team",
+  "PostFigure.CostCalculator.lead": "Pro is billed per member. Set your team's size.",
+  "PostFigure.CostCalculator.members": "Team members",
+  "PostFigure.CostCalculator.total": "Your team, each month",
+  "PostFigure.CostCalculator.perMember": "Per member, each month",
+  "PostFigure.CostCalculator.caption": "Prices of the demo's plans, before tax.",
+  "PostFigure.CostCalculator.fallback":
+    "Team members: {members}. On the demo's Pro plan they pay {total} a month, {price} per member.",
 } satisfies Catalog

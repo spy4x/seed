@@ -572,7 +572,7 @@ export default {
   "FeatureWebsite.fact3":
     "Un boletín con doble confirmación, baja con un clic y correos en el idioma de quien los lee",
   "FeatureWebsite.fact4":
-    "Un blog que se escribe en el panel de administración, con entradas en cada idioma y sus traducciones, temas, un feed RSS y datos estructurados de artículo",
+    "Un blog que se escribe en el panel de administración, con entradas en cada idioma y sus traducciones, temas, figuras interactivas que el lector puede probar, un feed RSS y datos estructurados de artículo",
   "FeatureWebsite.fact5":
     "Enlaces de contacto configurados en el panel de administración, mostrados en el pie de página y en los datos estructurados",
   "FeatureWebsite.fact6":
@@ -892,4 +892,15 @@ export default {
   "Blog.readNext": "Sigue leyendo",
   "Blog.morePosts": "Más entradas",
   "Blog.breadcrumb": "Ruta de navegación",
+  "PostFigure.noScript":
+    "Se muestra con las cifras de la entrada. Activa JavaScript para probar las tuyas.",
+  "PostFigure.rssLink": "Pruébalo en la web: {link}",
+  "PostFigure.CostCalculator.title": "Lo que cuesta a tu equipo el plan Pro de la demo",
+  "PostFigure.CostCalculator.lead": "Pro se cobra por miembro. Indica el tamaño de tu equipo.",
+  "PostFigure.CostCalculator.members": "Miembros del equipo",
+  "PostFigure.CostCalculator.total": "Tu equipo, al mes",
+  "PostFigure.CostCalculator.perMember": "Por miembro, al mes",
+  "PostFigure.CostCalculator.caption": "Precios de los planes de la demo, sin impuestos.",
+  "PostFigure.CostCalculator.fallback":
+    "Miembros del equipo: {members}. Con el plan Pro de la demo pagan {total} al mes, {price} por miembro.",
 } satisfies Catalog

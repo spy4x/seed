@@ -1,7 +1,8 @@
 import { expect } from "@std/expect"
 import { it } from "@std/testing/bdd"
 import { createToastStore } from "@spy4x/preact-signals/toast"
-import type { BlogPost } from "@domain/blog"
+import type { BlogPost, BlogProblem } from "@domain/blog"
+import type { FigurePreview } from "./figure-preview.tsx"
 import type { AdminApiResult, AdminFetch } from "../../state.ts"
 import { blogListHref } from "./module.tsx"
 import { createBlogState } from "./state.ts"
@@ -54,6 +55,23 @@ function fakeRequest(answer: Answer = () => undefined) {
   return { request, calls }
 }
 
+/** The website's figures, faked: a body's figure problems are those its fake answer carries. */
+const fakeFigures: FigurePreview = {
+  check: (body) => ({
+    preview: {
+      parts: body.segments.filter((segment) => segment.kind === `html`),
+      words: body.words,
+      readingMinutes: body.readingMinutes,
+    },
+    problems: body.problems,
+  }),
+  example: `<CostCalculator />`,
+}
+
+/** The API's preview answer for `html`, with `problems`. */
+const rendered = (html: string, problems: BlogProblem[] = []) =>
+  ok({ segments: [{ kind: `html`, html }], headings: [], problems, words: 1, readingMinutes: 1 })
+
 function build(answer?: Answer) {
   const { request, calls } = fakeRequest(answer)
   const toasts = createToastStore()
@@ -62,6 +80,7 @@ function build(answer?: Answer) {
     newId: () => ID,
     now: () => new Date(`2026-10-23T10:00:00.000Z`),
     open: (url) => void opened.push(url),
+    figures: () => Promise.resolve(fakeFigures),
   })
   return { state, calls, toasts, opened }
 }
@@ -235,9 +254,7 @@ it(`answers a missing post as not found`, async () => {
 
 it(`renders the preview once per text`, async () => {
   const { state, calls } = build((path) =>
-    path.endsWith(`/preview`)
-      ? Promise.resolve(ok({ html: `<p>Text.</p>`, words: 1, readingMinutes: 1 }))
-      : undefined
+    path.endsWith(`/preview`) ? Promise.resolve(rendered(`<p>Text.</p>`)) : undefined
   )
   await state.openPost(ID)
   await state.renderPreview()
@@ -245,7 +262,28 @@ it(`renders the preview once per text`, async () => {
   expect(calls.filter((call) => call.includes(`/preview`))).toEqual([
     `POST /api/admin/blog/preview {"bodyMd":"Text."}`,
   ])
-  expect(state.preview.value.preview?.html).toBe(`<p>Text.</p>`)
+  expect(state.preview.value.preview?.parts).toEqual([{ kind: `html`, html: `<p>Text.</p>` }])
+  expect(state.figures.value?.example).toBe(`<CostCalculator />`)
+})
+
+it(`keeps the last figure problems when a later check fails (#620)`, async () => {
+  const problem: BlogProblem = { line: 3, code: `unknown`, tag: `Chart`, detail: `` }
+  let failing = false
+  const { state } = build((path) =>
+    path.endsWith(`/preview`)
+      ? Promise.resolve(
+        failing ? fail(503, `Down for a moment.`) : rendered(`<p>Text.</p>`, [problem]),
+      )
+      : undefined
+  )
+  await state.openPost(ID)
+  await state.renderPreview()
+  expect(state.preview.value.problems).toEqual([problem])
+  failing = true
+  state.edit({ ...state.editor.value.value, bodyMd: `Text, changed.` })
+  await state.renderPreview()
+  expect(state.preview.value.error).toBe(`Down for a moment.`)
+  expect(state.preview.value.problems).toEqual([problem])
 })
 
 it(`reads the list with its status and search, and drops an answer the page has left`, async () => {

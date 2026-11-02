@@ -565,7 +565,7 @@ export default {
   "FeatureWebsite.fact3":
     "Рассылка с подтверждением подписки, отпиской в один клик и письмами на языке читателя",
   "FeatureWebsite.fact4":
-    "Блог, который ведётся в админ-панели: посты на каждом языке и их переводы, темы, RSS-лента и структурированные данные статей",
+    "Блог, который ведётся в админ-панели: посты на каждом языке и их переводы, темы, интерактивные иллюстрации, которые читатель может попробовать, RSS-лента и структурированные данные статей",
   "FeatureWebsite.fact5":
     "Контакты задаются в админ-панели и показываются в подвале и в структурированных данных",
   "FeatureWebsite.fact6":
@@ -886,4 +886,15 @@ export default {
   "Blog.readNext": "Читать дальше",
   "Blog.morePosts": "Ещё посты",
   "Blog.breadcrumb": "Навигационная цепочка",
+  "PostFigure.noScript": "Показано с цифрами из поста. Включите JavaScript, чтобы подставить свои.",
+  "PostFigure.rssLink": "Попробуйте на сайте: {link}",
+  "PostFigure.CostCalculator.title": "Сколько стоит тариф Pro из демо для вашей команды",
+  "PostFigure.CostCalculator.lead":
+    "Pro оплачивается за каждого участника. Укажите размер команды.",
+  "PostFigure.CostCalculator.members": "Участники команды",
+  "PostFigure.CostCalculator.total": "Вся команда, в месяц",
+  "PostFigure.CostCalculator.perMember": "За участника, в месяц",
+  "PostFigure.CostCalculator.caption": "Цены тарифов демо, без налогов.",
+  "PostFigure.CostCalculator.fallback":
+    "Участников в команде: {members}. На тарифе Pro из демо они платят {total} в месяц, по {price} за участника.",
 } satisfies Catalog

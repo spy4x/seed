@@ -461,6 +461,16 @@ export default {
     "other": "公開して{count}人にメール送信",
   },
   "AdminBlogDialogs.publish": "公開する",
+  "AdminBlogDialogs.figuresHidden": {
+    "other": "{count}件の図が表示されません",
+  },
+  "AdminBlogDialogs.figuresHiddenBody": "読者にはそれらを除いた記事が表示されます。",
+  "AdminBlogDialogs.goToProblems": "問題を見る",
+  "AdminBlogDialogs.publishAnyway": "このまま公開する",
+  "AdminBlogDialogs.scheduleAnyway": "このまま予約する",
+  "AdminBlogDialogs.publishAndEmailAnyway": {
+    "other": "このまま公開して{count}人にメール送信",
+  },
   "AdminBlogDialogs.scheduleTitle": "「{title}」の公開を予約",
   "AdminBlogDialogs.publishTitle": "「{title}」を公開しますか？",
   "AdminBlogDialogs.when": "タイミング",
@@ -534,6 +544,28 @@ export default {
   "AdminBlogEditor.write": "編集",
   "AdminBlogEditor.bodyLabel": "本文（Markdown）",
   "AdminBlogEditor.bodyHint": "Markdownで書きます。",
+  "AdminBlogEditor.bodyHintFigures":
+    "Markdownで書きます。インタラクティブな図を入れるには、そのタグを1行に単独で書きます：<code>{example}</code>",
+  "AdminBlogEditor.problemsTitle": {
+    "other": "この記事の問題：{count}件",
+  },
+  "AdminBlogEditor.problemsLine":
+    "読者にはこれらの行が表示されません。記事のほかの部分は書いたとおりに表示されます。",
+  "AdminBlogEditor.problemsCount": {
+    "other": "問題{count}件",
+  },
+  "AdminBlogEditor.problemsNone": "問題はなくなりました",
+  "AdminBlogEditor.problemLine": "{line}行目",
+  "AdminBlogEditor.problemUnknown":
+    "{tag}というコンポーネントはありません。{suggestion}のことですか？",
+  "AdminBlogEditor.problemUnknownNone":
+    "{tag}というコンポーネントはありません。使えるもの：{names}。",
+  "AdminBlogEditor.problemProps": "{tag}はこのプロパティを使えません：<detail>{detail}</detail>",
+  "AdminBlogEditor.problemNested":
+    "{tag}がリストか引用の中にあります。その外の、単独の行に移してください。",
+  "AdminBlogEditor.problemSyntax": "{tag}のタグを読み取れません：<detail>{detail}</detail>",
+  "AdminBlogEditor.figureHidden": "この図は表示されません",
+  "AdminBlogEditor.goToLine": "{line}行目へ移動",
   "AdminBlogEditor.preview": "プレビュー",
   "AdminBlogEditor.wordsRead": {
     "other": "{count}語 · {minutes}分で読めます",
@@ -1489,6 +1521,8 @@ export default {
   "AdminShortcuts.addLink": "リンクを追加",
   "AdminShortcuts.searchList": "この一覧を検索",
   "AdminShortcuts.savePost": "記事を保存",
+  "AdminShortcuts.nextProblem": "記事の次の問題",
+  "AdminShortcuts.previousProblem": "記事の前の問題",
   "AdminShortcuts.addItem": "アイテムを追加",
   "AdminShortcuts.addCategory": "カテゴリーを追加",
   "AdminShortcuts.saveItem": "アイテムを保存",

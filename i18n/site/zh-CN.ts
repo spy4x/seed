@@ -510,7 +510,7 @@ export default {
   "FeatureWebsite.fact2": "价格读取自应用的套餐目录",
   "FeatureWebsite.fact3": "双重确认订阅的邮件简报，一键退订，邮件以收件人的语言发送",
   "FeatureWebsite.fact4":
-    "在管理后台撰写的博客，支持每种语言的文章及其译文、主题、RSS 订阅源和文章结构化数据",
+    "在管理后台撰写的博客，支持每种语言的文章及其译文、主题、读者可动手试用的交互图表、RSS 订阅源和文章结构化数据",
   "FeatureWebsite.fact5": "在管理后台设置的联系方式，显示在页脚和结构化数据中",
   "FeatureWebsite.fact6":
     "可选的商品目录，适合网店，在管理后台编辑：商品照片、颜色、尺码、尺码表和售罄尺码，覆盖你销售的每种语言，并为每个商品和每个分享渠道生成一个短追踪链接",
@@ -803,4 +803,14 @@ export default {
   "Blog.readNext": "接着读",
   "Blog.morePosts": "更多文章",
   "Blog.breadcrumb": "面包屑导航",
+  "PostFigure.noScript": "显示的是文章中的数字。开启 JavaScript 即可试试你自己的数字。",
+  "PostFigure.rssLink": "在网站上试一试：{link}",
+  "PostFigure.CostCalculator.title": "演示版 Pro 套餐的团队费用",
+  "PostFigure.CostCalculator.lead": "Pro 按成员计费。设置你的团队人数。",
+  "PostFigure.CostCalculator.members": "团队成员",
+  "PostFigure.CostCalculator.total": "整个团队，每月",
+  "PostFigure.CostCalculator.perMember": "每位成员，每月",
+  "PostFigure.CostCalculator.caption": "演示版套餐的税前价格。",
+  "PostFigure.CostCalculator.fallback":
+    "团队成员：{members} 人。使用演示版 Pro 套餐，每月共需 {total}，每位成员 {price}。",
 } satisfies Catalog

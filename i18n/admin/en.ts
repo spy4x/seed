@@ -466,6 +466,18 @@ export default {
     "other": "Publish and email {count}",
   },
   "AdminBlogDialogs.publish": "Publish",
+  "AdminBlogDialogs.figuresHidden": {
+    "one": "1 figure won't show",
+    "other": "{count} figures won't show",
+  },
+  "AdminBlogDialogs.figuresHiddenBody": "Readers will see the post without them.",
+  "AdminBlogDialogs.goToProblems": "Go to problems",
+  "AdminBlogDialogs.publishAnyway": "Publish anyway",
+  "AdminBlogDialogs.scheduleAnyway": "Schedule anyway",
+  "AdminBlogDialogs.publishAndEmailAnyway": {
+    "one": "Publish and email {count} anyway",
+    "other": "Publish and email {count} anyway",
+  },
   "AdminBlogDialogs.scheduleTitle": 'Schedule "{title}"',
   "AdminBlogDialogs.publishTitle": 'Publish "{title}"?',
   "AdminBlogDialogs.when": "When",
@@ -540,6 +552,28 @@ export default {
   "AdminBlogEditor.write": "Write",
   "AdminBlogEditor.bodyLabel": "Post, in Markdown",
   "AdminBlogEditor.bodyHint": "Written in Markdown.",
+  "AdminBlogEditor.bodyHintFigures":
+    "Written in Markdown. To add an interactive figure, put its tag on a line of its own: <code>{example}</code>",
+  "AdminBlogEditor.problemsTitle": {
+    "one": "1 problem in this post",
+    "other": "{count} problems in this post",
+  },
+  "AdminBlogEditor.problemsLine":
+    "Readers won't see these lines. The rest of the post shows as written.",
+  "AdminBlogEditor.problemsCount": {
+    "one": "1 problem",
+    "other": "{count} problems",
+  },
+  "AdminBlogEditor.problemsNone": "No problems left",
+  "AdminBlogEditor.problemLine": "Line {line}",
+  "AdminBlogEditor.problemUnknown": "There's no component called {tag}. Did you mean {suggestion}?",
+  "AdminBlogEditor.problemUnknownNone": "There's no component called {tag}. Available: {names}.",
+  "AdminBlogEditor.problemProps": "{tag} can't use these props: <detail>{detail}</detail>",
+  "AdminBlogEditor.problemNested":
+    "{tag} is inside a list or a quote. Move it to a line of its own, outside it.",
+  "AdminBlogEditor.problemSyntax": "{tag}'s tag can't be read: <detail>{detail}</detail>",
+  "AdminBlogEditor.figureHidden": "This figure won't show",
+  "AdminBlogEditor.goToLine": "Go to line {line}",
   "AdminBlogEditor.preview": "Preview",
   "AdminBlogEditor.wordsRead": {
     "one": "{count} word · {minutes} min read",
@@ -1541,6 +1575,8 @@ export default {
   "AdminShortcuts.addLink": "Add link",
   "AdminShortcuts.searchList": "Search this list",
   "AdminShortcuts.savePost": "Save the post",
+  "AdminShortcuts.nextProblem": "Next problem in the post",
+  "AdminShortcuts.previousProblem": "Previous problem in the post",
   "AdminShortcuts.addItem": "Add item",
   "AdminShortcuts.addCategory": "Add category",
   "AdminShortcuts.saveItem": "Save the item",

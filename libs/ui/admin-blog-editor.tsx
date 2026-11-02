@@ -1,4 +1,4 @@
-import type { JSX } from "preact"
+import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { slugify } from "@spy4x/platform/universal/text"
 import { readingMinutes } from "@spy4x/platform/universal/text"
@@ -18,6 +18,7 @@ import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { Prose } from "@spy4x/preact-ui/prose"
+import { selectTextareaLine } from "@spy4x/preact-ui/textarea-line"
 import { Tabs } from "@spy4x/preact-ui/tabs"
 import { TldrBox } from "@spy4x/preact-ui/tldr-box"
 import {
@@ -37,11 +38,19 @@ import {
   type BlogPost,
   blogPostPath,
   type BlogPostStatus,
+  type BlogProblem,
   isHttpsUrl,
 } from "@domain/blog"
 import { DEFAULT_LANGUAGE, type Language, LANGUAGES } from "@domain/identity"
 import { ADMIN_BLOG_PATHS, BlogStatusBadge } from "./admin-blog-list.tsx"
 import { Dialogs } from "./admin-blog-dialogs.tsx"
+import {
+  BLOG_PROBLEMS_ID,
+  BlogProblemMarker,
+  BlogProblemsPanel,
+  caretLine,
+  nextProblemLine,
+} from "./admin-blog-problems.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
@@ -245,9 +254,18 @@ export interface BlogPublishChoice {
 /** Where saving stands, for the line under the header. */
 export type BlogSaveStatus = `saved` | `saving` | `failed` | `unsaved`
 
+/**
+ * A piece of the Preview tab: a chunk of the API's HTML, a figure the app drew (the live island
+ * the public page shows), or the place of a tag that will not show, with its line.
+ */
+export type BlogPreviewPart =
+  | { kind: `html`; html: string }
+  | { kind: `figure`; id: string; node: ComponentChildren }
+  | { kind: `problem`; line: number }
+
 /** A body rendered by the API's renderer, the one the public page uses. */
 export interface BlogPreview {
-  html: string
+  parts: BlogPreviewPart[]
   words: number
   readingMinutes: number
 }
@@ -292,6 +310,13 @@ export interface AdminBlogEditorScreenProps {
   previewError: string | null
   /** Renders the body for the Preview tab. Called when the tab opens. */
   onPreview: () => void
+  /**
+   * The tags in the body that readers will not see, by line (#620), from the last check that
+   * worked. The Problems panel lists them and the publish dialog warns about them.
+   */
+  problems: readonly BlogProblem[]
+  /** A figure tag that exists, for the body's hint, or `null` when the site has none. */
+  figureExample: string | null
   dialog: BlogDialog | null
   dialogPending: boolean
   /** Why the API refused the dialog's action, or `null`. */
@@ -449,6 +474,37 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
     title.tabIndex = -1
     title.focus()
   }, [status, props.dialog])
+
+  // "Line N" and "Go to line N" open Write; once it is drawn, the textarea selects that line.
+  const [goingTo, setGoingTo] = useState<{ line: number } | null>(null)
+  const goTo = (line: number) => {
+    setTab(`write`)
+    setGoingTo({ line })
+  }
+  const body = () =>
+    root.current?.querySelector<HTMLTextAreaElement>(`#${blogFieldId(`bodyMd`)}`) ?? null
+  useEffect(() => {
+    if (goingTo === null) return
+    const textarea = body()
+    if (textarea) selectTextareaLine(textarea, goingTo.line)
+    setGoingTo(null)
+  }, [goingTo, tab])
+  // F8 and Shift+F8 in the textarea jump to the next and the previous problem.
+  const jump = (event: JSX.TargetedKeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== `F8` || event.altKey || event.ctrlKey || event.metaKey) return
+    const line = nextProblemLine(props.problems, caretLine(event.currentTarget), event.shiftKey)
+    if (line === null) return
+    event.preventDefault()
+    selectTextareaLine(event.currentTarget, line)
+  }
+  // The publish dialog's "Go to problems": the dialog closes and gives focus back to its opener,
+  // then focus moves on to the panel's first row.
+  const goToProblems = () => {
+    props.onCloseDialog()
+    setTimeout(() =>
+      root.current?.querySelector<HTMLElement>(`#${BLOG_PROBLEMS_ID} button`)?.focus()
+    )
+  }
 
   const edit = (patch: Partial<BlogDraft>) => onChange({ ...value, ...patch })
   const openPreview = (next: string) => {
@@ -622,7 +678,20 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
                         <Field
                           id={blogFieldId(`bodyMd`)}
                           label={<span class="sr-only">{t.t(`AdminBlogEditor.bodyLabel`)}</span>}
-                          hint={t.t(`AdminBlogEditor.bodyHint`)}
+                          hint={props.figureExample
+                            ? (
+                              <Rich
+                                parts={t.parts(`AdminBlogEditor.bodyHintFigures`, {
+                                  example: props.figureExample,
+                                })}
+                                tags={{
+                                  code: (text) => (
+                                    <code class="font-mono" translate={false}>{text}</code>
+                                  ),
+                                }}
+                              />
+                            )
+                            : t.t(`AdminBlogEditor.bodyHint`)}
                           error={message(`bodyMd`)}
                         >
                           <Textarea
@@ -632,6 +701,7 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
                             maxLength={BLOG_BODY_MAX_LENGTH}
                             value={value.bodyMd}
                             onInput={(e) => edit({ bodyMd: e.currentTarget.value })}
+                            onKeyDown={jump}
                           />
                         </Field>
                       ),
@@ -639,10 +709,11 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
                     {
                       id: `preview`,
                       label: t.t(`AdminBlogEditor.preview`),
-                      content: <PreviewPanel {...props} />,
+                      content: <PreviewPanel {...props} onGoTo={goTo} />,
                     },
                   ]}
                 />
+                <BlogProblemsPanel problems={props.problems} onSelect={goTo} />
                 {words > 0 && (
                   <p class="text-sm text-muted" data-e2e="admin-blog-words">
                     {t.t(`AdminBlogEditor.wordsRead`, {
@@ -664,13 +735,18 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
           <div class="sm:hidden">{saveButton(`min-h-11 w-full`)}</div>
         </Stack>
       </ScreenForm>
-      <Dialogs {...props} />
+      <Dialogs {...props} onGoToProblems={goToProblems} />
     </>
   )
 }
 
-/** The Preview tab: the body as the public page renders it, in the same `Prose` styles. */
-function PreviewPanel(props: AdminBlogEditorScreenProps): JSX.Element {
+/**
+ * The Preview tab: the body as the public page renders it, in the same `Prose` styles, with its
+ * figures live, and a warning where a tag will not show.
+ */
+function PreviewPanel(
+  props: AdminBlogEditorScreenProps & { onGoTo: (line: number) => void },
+): JSX.Element {
   const { preview, value } = props
   const t = useAdminText()
   if (props.previewError) {
@@ -705,8 +781,31 @@ function PreviewPanel(props: AdminBlogEditorScreenProps): JSX.Element {
         {value.title.trim() || t.t(`AdminBlogEditor.untitled`)}
       </h2>
       <TldrBox items={points} headingLevel={3} />
-      {preview.html.trim()
-        ? <Prose html={preview.html} />
+      {preview.parts.some((part) => part.kind !== `html` || part.html.trim())
+        ? (
+          <div class="flex min-w-0 flex-col gap-4">
+            {preview.parts.map((part, index) =>
+              part.kind === `html`
+                ? (
+                  <Prose
+                    key={index}
+                    class="[&>h2:first-child]:mt-8 [&>h3:first-child]:mt-4"
+                    html={part.html}
+                  />
+                )
+                : part.kind === `figure`
+                ? <div key={part.id}>{part.node}</div>
+                : (
+                  <BlogProblemMarker
+                    key={`problem-${part.line}`}
+                    line={part.line}
+                    problems={props.problems}
+                    onGoTo={props.onGoTo}
+                  />
+                )
+            )}
+          </div>
+        )
         : <p class="text-muted">{t.t(`AdminBlogEditor.emptyPost`)}</p>}
     </article>
   )
