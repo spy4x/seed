@@ -70,7 +70,8 @@ async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<v
     ...settings,
     max: 10,
     transform: postgres.camel,
-    connection: { options: `-c search_path=${schema}` },
+    // Named after the schema, so `waitUntilBlockedBy` sees this file's connections only.
+    connection: { options: `-c search_path=${schema}`, application_name: schema },
     onnotice: () => {},
   })
   try {
@@ -245,8 +246,10 @@ async function rowsPointingAt(sql: postgres.Sql, userId: number): Promise<Record
 }
 
 /**
- * Waits until some other connection is stuck behind a lock that backend `pid` holds, and answers
- * that connection's backend. When `request` is the call expected to queue and it finishes first,
+ * Waits until another connection of this file's pool is stuck behind a lock that backend `pid`
+ * holds, and answers that connection's backend. Only this pool's connections count: on CI the test
+ * files run in parallel against one database, and another file's `CREATE INDEX CONCURRENTLY` waits
+ * for every open transaction, `pid`'s included, so it would pass for the request (#655). When `request` is the call expected to queue and it finishes first,
  * this fails with its result rather than a bare timeout. The 30 s deadline is a margin for a
  * stalled CI host: locally the wait takes under 200 ms even with every CPU busy.
  */
@@ -265,7 +268,10 @@ async function waitUntilBlockedBy(
       throw new Error(`the request finished before it waited for backend ${pid}: ${result}`)
     }
     const [row] = await sql<{ pid: number }[]>`
-      SELECT pid FROM pg_stat_activity WHERE ${pid} = ANY(pg_blocking_pids(pid)) LIMIT 1
+      SELECT pid FROM pg_stat_activity
+      WHERE application_name = current_setting('application_name')
+        AND ${pid} = ANY(pg_blocking_pids(pid))
+      LIMIT 1
     `
     if (row) return row.pid
     await new Promise((resolve) => setTimeout(resolve, 50))
