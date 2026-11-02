@@ -812,4 +812,180 @@ export default {
   "PostFigure.CostCalculator.caption": "演示版套餐的税前价格。",
   "PostFigure.CostCalculator.fallback":
     "团队成员：{members} 人。使用演示版 Pro 套餐，每月共需 {total}，每位成员 {price}。",
+  "FeaturePage.what": "你会得到什么",
+  "FeaturePage.how": "工作原理",
+  "FeaturePage.limits": "限制",
+  "FeaturePage.questions": "常见问题",
+  "FeaturePage.updated": "最后更新于 <time>{date}</time>",
+  "FeaturePage.sectionLink": "链接到本节",
+  "FeaturePage.guide": "阅读指南",
+  "FeaturePage.code": "阅读代码：<path>{path}</path>",
+  "FeaturePage.otherFeatures": "其他功能",
+  "FeaturePage.readMore": "进一步了解{name}",
+  "FeaturePage.all": "所有功能",
+  "FeaturePage.runtimeQuestion": "Seed 能在 Node 或 Bun 上运行吗？",
+  "FeaturePage.runtimeAnswer":
+    "暂不支持。Seed 目前运行在 Deno 上，让它能在 Deno、Node 和 Bun 上运行的迁移工作正在进行中（#623）。运行时计划详见功能页面。",
+  "FeaturePageMissing.title": "这个功能页面不存在",
+  "FeaturePageMissing.description": "它可能已经移动了位置。Seed 提供的每项功能都列在功能页面上。",
+  "FeaturePageMissing.action": "查看所有功能",
+  "FeaturePageSignIn.name": "登录",
+  "FeaturePageSignIn.title": "SaaS 登录认证方案：无需第三方认证服务",
+  "FeaturePageSignIn.description":
+    "通行密钥、邮箱登录链接、Google、GitHub 登录和双重验证，全部由你自己的 API 校验，无需认证服务，也不按用户收费。免费，MIT 许可。",
+  "FeaturePageSignIn.h1": "SaaS 通行密钥与登录认证，无需第三方认证服务",
+  "FeaturePageSignIn.answer":
+    "Seed 支持通行密钥、邮箱登录链接、Google 和 GitHub 登录，全部由它自己的 API 在你的服务器上校验，不依赖第三方认证服务。密码、通行密钥和登录链接部署后即可使用，不按用户收费；Google 和 GitHub 登录各需在 env 文件中填写两个密钥。",
+  "FeaturePageSignIn.summary": "通行密钥、邮箱登录链接、Google、GitHub 和双重验证，无需认证服务。",
+  "FeaturePageSignIn.how1":
+    "每次登录都由 API 自己校验，并返回一个签名的会话 Cookie。通行密钥使用浏览器自带的 WebAuthn：服务器只保存其公钥，每个登录挑战只能使用一次。登录链接可用于登录或注册，只能使用一次，有效期 15 分钟，并且只以哈希形式存储。",
+  "FeaturePageSignIn.how2":
+    "身份验证器应用可以开启双重验证。个人资料页列出了进入账号的每种方式和每台已登录的设备；更改登录方式时需要验证身份，并会发送邮件通知。访客也可以先用访客账号开始，之后再添加登录方式。",
+  "FeaturePageSignIn.authServiceQuestion": "我需要第三方认证服务吗？",
+  "FeaturePageSignIn.authServiceAnswer":
+    "不需要。Seed 自己的 API 在你的服务器上校验密码、通行密钥、登录链接以及 Google 和 GitHub 返回的结果，所以不会按用户计费。",
+  "FeaturePageSignIn.passkeysQuestion": "Seed 支持通行密钥吗？",
+  "FeaturePageSignIn.passkeysAnswer":
+    "是的。用户可以在个人资料页添加通行密钥并用它登录；服务器只保存其公钥，每个登录挑战只能使用一次。",
+  "FeaturePageSignIn.twoFactorQuestion": "Seed 支持双重验证（2FA）吗？",
+  "FeaturePageSignIn.twoFactorAnswer":
+    "是的。身份验证器应用会在登录时要求输入一次性验证码，使用 Google 或 GitHub 登录后也一样。",
+  "FeaturePageSignIn.providersOffQuestion": "可以不启用 Google 或 GitHub 登录吗？",
+  "FeaturePageSignIn.providersOffAnswer":
+    "可以。每种方式在 env 文件中设置好它的两个变量之前都处于关闭状态，不设置就等于关闭。",
+  "FeaturePageGroups.name": "群组和角色",
+  "FeaturePageGroups.title": "SaaS 群组和角色权限：开箱即用，无需自己搭建",
+  "FeaturePageGroups.description":
+    "带角色的群组（从查看者到所有者）、邀请、所有权转让和活动日志，所有数据共用一套租户隔离检查。免费，MIT 许可。",
+  "FeaturePageGroups.h1": "SaaS 群组与角色权限，无需自己实现多租户",
+  "FeaturePageGroups.answer":
+    "Seed 在注册时为每个账号创建一个个人群组，用户还可以创建共享群组、邀请他人，并分配从查看者到所有者的角色。群组是唯一的租户边界，所以你新增的功能只要复制笔记聚合，就会通过同一套检查。",
+  "FeaturePageGroups.summary": "带角色的群组（从查看者到所有者）、邀请和活动日志。",
+  "FeaturePageGroups.how1":
+    "每一行共享数据都属于一个群组，API 在读取或写入之前会检查此人在该群组中的角色。查看者只能读取；编辑者还能修改群组的数据；管理员和所有者还能管理成员和查看活动日志。",
+  "FeaturePageGroups.how2":
+    "所有者一步即可转让所有权，已删除的群组可在 30 天内恢复。只有邮箱已验证的账号才能发出邀请。",
+  "FeaturePageGroups.personalGroupQuestion": "每个账号都有群组吗？",
+  "FeaturePageGroups.personalGroupAnswer":
+    "是的。每个账号注册时都会获得一个个人群组；个人群组和共享群组通过的是同一套检查。",
+  "FeaturePageGroups.viewerQuestion": "查看者能修改群组的数据吗？",
+  "FeaturePageGroups.viewerAnswer":
+    "不能。查看者只能读取群组的数据；编辑者、管理员或所有者才能修改。",
+  "FeaturePageGroups.restoreQuestion": "已删除的群组还能恢复吗？",
+  "FeaturePageGroups.restoreAnswer":
+    "可以。所有者可在 30 天内恢复它；超过 30 天后，Worker 会将其永久删除。",
+  "FeaturePageGroups.secondModelQuestion": "我自己的功能需要另做一套权限系统吗？",
+  "FeaturePageGroups.secondModelAnswer":
+    "不需要。新的聚合会复制笔记聚合及其群组检查，所以只需维护一套权限模型。",
+  "FeaturePageBilling.name": "计费",
+  "FeaturePageBilling.title": "SaaS 接入 Stripe 订阅计费，无需自己处理 webhook",
+  "FeaturePageBilling.description":
+    "按成员计费的 Stripe 订阅，含免费版、14 天试用、宽限期和服务端套餐限制，通过 webhook 保持同步。免费，MIT 许可。",
+  "FeaturePageBilling.h1": "SaaS 按成员计费的 Stripe 订阅，无需自己开发",
+  "FeaturePageBilling.answer":
+    "Seed 通过 Stripe Checkout 和客户门户按成员向每个群组收费，提供免费版、14 天试用，以及付款失败后的宽限期。你只需在 env 文件中填写三个 Stripe 密钥，并把计费服务商设为 Stripe。",
+  "FeaturePageBilling.summary": "按成员计费的 Stripe 订阅，含免费版、试用期和宽限期。",
+  "FeaturePageBilling.how1":
+    "资金和订阅都由 Stripe 管理。应用只保存 Stripe 的 webhook 报告的内容，从不自行决定套餐；订阅数量随成员人数变化，套餐限制在服务端检查。",
+  "FeaturePageBilling.how2":
+    "每位成员都能在群组的“账单”标签页查看套餐，只有所有者能看到结账和客户门户按钮。付款失败后，套餐默认保留 7 天，之后群组回到免费版。",
+  "FeaturePageBilling.withoutStripeQuestion": "不用 Stripe 能计费吗？",
+  "FeaturePageBilling.withoutStripeAnswer":
+    "不能。目前 Stripe 是唯一的服务商；没有它，计费功能保持关闭，所有群组都使用没有限制的免费版。",
+  "FeaturePageBilling.trialQuestion": "有免费试用吗？",
+  "FeaturePageBilling.trialAnswer": "有。付费套餐从 14 天试用开始。",
+  "FeaturePageBilling.failedPaymentQuestion": "银行卡扣款失败时，群组还能保留套餐吗？",
+  "FeaturePageBilling.failedPaymentAnswer":
+    "可以。套餐会在宽限期内保留，默认 7 天，所有者会看到一条带日期的提醒；之后群组回到免费版。",
+  "FeaturePageBilling.cutQuestion": "Seed 会从付款中抽成吗？",
+  "FeaturePageBilling.cutAnswer": "不会。Seed 采用 MIT 许可；你只需支付 Stripe 自己的手续费。",
+  "FeaturePageRealtime.name": "实时同步",
+  "FeaturePageRealtime.title": "SaaS 实时同步：无需第三方托管服务",
+  "FeaturePageRealtime.description":
+    "在一个标签页保存的更改，一秒内就会通过你自己 API 的 WebSocket 显示在群组的其他所有已打开标签页中。免费，MIT 许可。",
+  "FeaturePageRealtime.h1": "SaaS 实时更新，无需托管的实时推送服务",
+  "FeaturePageRealtime.answer":
+    "Seed 通过它自己 API 的 WebSocket，把每次保存的更改发送到群组的每个已打开标签页，所以在一个窗口保存的笔记，一秒内就会显示在其他窗口中，无需刷新。它运行在你的服务器上，不需要为实时服务付费；你新增的功能只要复制笔记示例就能获得这项能力。",
+  "FeaturePageRealtime.summary":
+    "在一个标签页保存的更改，会显示在其他所有已打开的标签页中，无需刷新。",
+  "FeaturePageRealtime.how1":
+    "每次写入都会带着群组的下一个序号提交，API 会把它推送到每位成员已打开的连接。标签页只有在更改的序号紧接着自己已有的最后一个序号时才会应用它；如果出现缺口，就向服务器请求游标之后的所有内容，所以丢失一条消息只会多一次请求，列表绝不会出错。",
+  "FeaturePageRealtime.how2":
+    "笔记本电脑从睡眠中唤醒后会重新连接，并拉取错过的内容。关闭 WebSocket 后，应用通过 HTTP 读写，每 30 秒检查一次更改。",
+  "FeaturePageRealtime.realtimeQuestion": "Seed 支持实时更新吗？",
+  "FeaturePageRealtime.realtimeAnswer":
+    "是的。保存的更改一秒内就会显示在群组的每个已打开标签页中，无需刷新。",
+  "FeaturePageRealtime.realtimeServiceQuestion": "我需要 Pusher、Ably 或其他实时服务吗？",
+  "FeaturePageRealtime.realtimeServiceAnswer":
+    "不需要。WebSocket 由 Seed 自己的 API 在你的服务器上提供。",
+  "FeaturePageRealtime.realtimeSleepQuestion": "笔记本电脑睡眠后，标签页能追上错过的更改吗？",
+  "FeaturePageRealtime.realtimeSleepAnswer":
+    "可以。它会重新连接，并拉取它最后一次收到的更改之后的所有更改。",
+  "FeaturePageRealtime.realtimeOffQuestion": "可以关闭实时同步吗？",
+  "FeaturePageRealtime.realtimeOffAnswer":
+    "可以。设置 SPA_REALTIME=false：应用会改为每 30 秒检查一次更改，用起来完全一样。",
+  "FeaturePageOffline.name": "离线应用",
+  "FeaturePageOffline.title": "SaaS 离线应用：无需自己开发同步",
+  "FeaturePageOffline.description":
+    "可安装的应用，没有网络也能打开，所有列表都保存在设备上，编辑内容会排队等待，直到网络恢复。免费，MIT 许可。",
+  "FeaturePageOffline.h1": "SaaS 离线优先应用，无需自己开发同步引擎",
+  "FeaturePageOffline.answer":
+    "Seed 的应用可以像原生应用一样安装，没有网络也能打开，显示上次看到的每个列表，并允许用户离线添加、编辑和删除笔记和标签。你自己的功能可以从三个级别中选一个：仅在线、离线可读或离线可写，并按照对应的书面步骤实现。",
+  "FeaturePageOffline.summary": "可安装的应用，没有网络也能打开，网络恢复后自动同步。",
+  "FeaturePageOffline.how1":
+    "设备在 IndexedDB 中保存每个列表的副本，写入操作带着幂等键在队列中等待，所以同一更改发送两次也只会生效一次。服务器无法接受的更改会显示为冲突，可以选择“保留我的版本”或“使用服务器版本”；任何内容都不会被自动覆盖。",
+  "FeaturePageOffline.how2":
+    "Service Worker 会缓存应用的页面、脚本和样式，所以没有网络也能打开。登录、已删除的项目和双重验证设置需要联网。",
+  "FeaturePageOffline.offlineQuestion": "Seed 能离线使用吗？",
+  "FeaturePageOffline.offlineAnswer": "是的。应用没有网络也能打开，并显示上次看到的每个列表。",
+  "FeaturePageOffline.offlineEditsQuestion": "离线时可以编辑吗？",
+  "FeaturePageOffline.offlineEditsAnswer":
+    "可以。笔记和标签可以离线使用；其他更改需要联网，界面上会注明。",
+  "FeaturePageOffline.conflictQuestion": "两个人同时修改同一条笔记，Seed 能发现吗？",
+  "FeaturePageOffline.conflictAnswer":
+    "是的。后提交的更改会显示为冲突，由它的作者选择“保留我的版本”或“使用服务器版本”。",
+  "FeaturePageOffline.removeOfflineQuestion": "可以去掉离线支持吗？",
+  "FeaturePageOffline.removeOfflineAnswer":
+    "可以。用一个开关关闭它，或者删除一个文件夹并按照书面清单操作；漏掉某一步时，会有测试失败。",
+  "FeaturePageShortcuts.name": "键盘快捷键",
+  "FeaturePageShortcuts.title": "SaaS 键盘快捷键和命令面板：无需第三方库",
+  "FeaturePageShortcuts.description":
+    "Ctrl+K 搜索能容忍拼写错误、西里尔字母和用错的键盘布局，应用的每个栏目都有一个快捷键。免费，MIT 许可。",
+  "FeaturePageShortcuts.h1": "SaaS 内置命令面板和键盘快捷键",
+  "FeaturePageShortcuts.answer":
+    "Seed 的应用和管理后台按 Ctrl+K（Mac 上为 ⌘K）即可打开搜索，即使有拼写错误、用西里尔字母输入或用错了键盘布局，也能找到页面和操作。按 ? 查看所有快捷键；你新增的功能会在同一个列表中登记自己的快捷键，并自动出现在该对话框里。",
+  "FeaturePageShortcuts.summary":
+    "Ctrl+K 搜索能容忍拼写错误和用错的键盘布局，每个栏目都有一个快捷键。",
+  "FeaturePageShortcuts.how1":
+    "每个应用用一个列表绑定快捷键并填充 ? 对话框，所以对话框里绝不会出现不起作用的快捷键。先按 G 再按一个字母即可打开对应栏目，在任意页面按 N 即可添加笔记；在输入框中打字时，单键快捷键不会触发。",
+  "FeaturePageShortcuts.how2":
+    "搜索会匹配每个词，不分顺序，支持前缀匹配，较长的词允许一处拼写错误，还能识别用另一种键盘布局或另一种字母输入的查询，所以输入“зкщашду”也能找到“Open profile”（打开个人资料）。",
+  "FeaturePageShortcuts.shortcutsQuestion": "Seed 有键盘快捷键吗？",
+  "FeaturePageShortcuts.shortcutsAnswer": "是的。在应用或管理后台中按 ? 即可查看所有快捷键。",
+  "FeaturePageShortcuts.paletteQuestion": "有命令面板吗？",
+  "FeaturePageShortcuts.paletteAnswer": "是的。按 Ctrl+K（Mac 上为 ⌘K）或 / 打开页面和操作搜索。",
+  "FeaturePageShortcuts.shortcutsTypingQuestion": "打字时会误触快捷键吗？",
+  "FeaturePageShortcuts.shortcutsTypingAnswer":
+    "不会。在输入框中，单键快捷键不会触发，每台设备也都可以关闭它们；Ctrl+K 和 Esc 仍然有效。",
+  "FeaturePageDeploy.name": "部署",
+  "FeaturePageDeploy.title": "SaaS 自托管部署：不用付云平台账单",
+  "FeaturePageDeploy.description":
+    "在你租用的一台 Linux 服务器上用 Docker Compose 运行：Traefik、Postgres、Valkey、S3 文件存储、监控和备份，一条命令完成部署。免费，MIT 许可。",
+  "FeaturePageDeploy.h1": "在一台服务器上自托管你的 SaaS，不用付云平台账单",
+  "FeaturePageDeploy.answer":
+    "Seed 运行在你租用的一台 Linux 服务器上，开发和生产环境都使用 Docker Compose，一条命令即可上线。你只需按书面步骤准备一次服务器，之后每次部署都只需这一条命令。",
+  "FeaturePageDeploy.summary": "一台 Linux 服务器、Docker Compose，一条命令完成部署。",
+  "FeaturePageDeploy.how1":
+    "部署时通过 SSH 把项目复制到服务器，再用 Compose 启动；每次部署都会由一个一次性服务执行数据库迁移。Traefik 位于最前端，为每个域名向 Let's Encrypt 申请证书。",
+  "FeaturePageDeploy.how2":
+    "Postgres、Valkey、S3 文件存储、指标、日志以及带告警的仪表盘都与应用并行运行，多个产品还可以在同一个代理后面共用一台服务器。",
+  "FeaturePageDeploy.kubernetesQuestion": "我需要 Kubernetes 吗？",
+  "FeaturePageDeploy.kubernetesAnswer":
+    "不需要。在一台服务器上用 Docker Compose 就能运行整个产品，开发和生产环境都一样。",
+  "FeaturePageDeploy.severalQuestion": "多个产品可以共用一台服务器吗？",
+  "FeaturePageDeploy.severalAnswer":
+    "可以。它们共用一个代理，各自保留自己的目录、数据库和数据；只让你同样信任的产品共用一台服务器。",
+  "FeaturePageDeploy.backupQuestion": "有备份吗？",
+  "FeaturePageDeploy.backupAnswer":
+    "有。可选开启的每日加密 restic 数据库备份，并附有书面恢复步骤。",
 } satisfies Catalog

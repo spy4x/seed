@@ -877,4 +877,185 @@ export default {
   "PostFigure.CostCalculator.caption": "أسعار خطط العرض التجريبي، قبل الضريبة.",
   "PostFigure.CostCalculator.fallback":
     "أعضاء الفريق: {members}. في خطة Pro من العرض التجريبي يدفعون {total} شهريًا، أي {price} لكل عضو.",
+  "FeaturePage.what": "ما تحصل عليه",
+  "FeaturePage.how": "كيف يعمل",
+  "FeaturePage.limits": "الحدود",
+  "FeaturePage.questions": "أسئلة",
+  "FeaturePage.updated": "آخر تحديث: <time>{date}</time>",
+  "FeaturePage.sectionLink": "رابط إلى هذا القسم",
+  "FeaturePage.guide": "اقرأ الدليل",
+  "FeaturePage.code": "اقرأ الشيفرة: <path>{path}</path>",
+  "FeaturePage.otherFeatures": "ميزات أخرى",
+  "FeaturePage.readMore": "اقرأ المزيد عن {name}",
+  "FeaturePage.all": "كل الميزات",
+  "FeaturePage.runtimeQuestion": "هل يعمل Seed على Node أو Bun؟",
+  "FeaturePage.runtimeAnswer":
+    "ليس بعد. يعمل Seed اليوم على Deno، والعمل جارٍ ليعمل على Deno وNode وBun (#623). اطّلع على خطة بيئة التشغيل في صفحة الميزات.",
+  "FeaturePageMissing.title": "صفحة هذه الميزة غير موجودة",
+  "FeaturePageMissing.description": "ربما نُقلت. كل ميزة يقدمها Seed موجودة في صفحة الميزات.",
+  "FeaturePageMissing.action": "عرض كل الميزات",
+  "FeaturePageSignIn.name": "تسجيل الدخول",
+  "FeaturePageSignIn.title": "تسجيل الدخول لمنتج SaaS دون خدمة مصادقة خارجية",
+  "FeaturePageSignIn.description":
+    "مفاتيح المرور، وروابط الدخول عبر البريد، وGoogle وGitHub، والتحقق بخطوتين، يفحصها الـAPI الخاص بك دون خدمة مصادقة أو رسوم لكل مستخدم. مجاني بترخيص MIT.",
+  "FeaturePageSignIn.h1": "مفاتيح المرور وتسجيل الدخول لمنتج SaaS، دون خدمة مصادقة",
+  "FeaturePageSignIn.answer":
+    "يسجّل Seed دخول الناس بمفاتيح المرور، وروابط الدخول عبر البريد، وGoogle وGitHub، ويفحص الـAPI الخاص به كل ذلك على خادمك، دون أي خدمة مصادقة خارجية. تعمل كلمات المرور ومفاتيح المرور وروابط الدخول فور النشر، دون رسوم لكل مستخدم؛ ويحتاج كل من Google وGitHub إلى مفتاحين في ملف env.",
+  "FeaturePageSignIn.summary":
+    "مفاتيح المرور، وروابط الدخول عبر البريد، وGoogle وGitHub، والتحقق بخطوتين، دون خدمة مصادقة.",
+  "FeaturePageSignIn.how1":
+    "يفحص الـAPI بنفسه كل تسجيل دخول، ويردّ بملف تعريف ارتباط موقّع للجلسة. ويستخدم مفتاح المرور تقنية WebAuthn المدمجة في المتصفح: لا يحتفظ الخادم إلا بمفتاحه العام، وكل تحدٍّ لتسجيل الدخول يعمل مرة واحدة. ورابط الدخول يسجّل الدخول أو ينشئ حسابًا، ويعمل مرة واحدة لمدة 15 دقيقة، ولا يُخزَّن إلا كقيمة مُجزّأة.",
+  "FeaturePageSignIn.how2":
+    "يضيف تطبيق المصادقة التحقق بخطوتين. ويعرض الملف الشخصي كل طرق الدخول إلى الحساب وكل جهاز مسجّل دخوله، وتغيير أي طريقة دخول يتطلب إثبات الهوية ويرسل رسالة بريد. ويمكن للزائر أيضًا أن يبدأ بحساب ضيف ويضيف طريقة لتسجيل الدخول لاحقًا.",
+  "FeaturePageSignIn.authServiceQuestion": "هل أحتاج إلى خدمة مصادقة؟",
+  "FeaturePageSignIn.authServiceAnswer":
+    "لا. يفحص الـAPI الخاص بـSeed كلمات المرور ومفاتيح المرور وروابط الدخول وردود Google وGitHub على خادمك، فلا تدفع شيئًا لكل مستخدم.",
+  "FeaturePageSignIn.passkeysQuestion": "هل يدعم Seed مفاتيح المرور (passkeys)؟",
+  "FeaturePageSignIn.passkeysAnswer":
+    "نعم. يضيف الناس مفتاح مرور من ملفهم الشخصي ويسجّلون الدخول به؛ لا يخزّن الخادم إلا مفتاحه العام، وكل تحدٍّ لتسجيل الدخول يعمل مرة واحدة.",
+  "FeaturePageSignIn.twoFactorQuestion": "هل يدعم Seed المصادقة الثنائية (التحقق بخطوتين)؟",
+  "FeaturePageSignIn.twoFactorAnswer":
+    "نعم. يضيف تطبيق المصادقة رمزًا لمرة واحدة عند تسجيل الدخول، حتى بعد تسجيل الدخول عبر Google أو GitHub.",
+  "FeaturePageSignIn.providersOffQuestion":
+    "هل يمكنني الاستغناء عن تسجيل الدخول عبر Google أو GitHub؟",
+  "FeaturePageSignIn.providersOffAnswer":
+    "نعم. كل منهما متوقف حتى يُضبط متغيّراه كلاهما في ملف env، فإن تركتهما بقي متوقفًا.",
+  "FeaturePageGroups.name": "المجموعات والأدوار",
+  "FeaturePageGroups.title": "مجموعات وأدوار لمنتج SaaS، دون بناء الأساس بنفسك",
+  "FeaturePageGroups.description":
+    "مجموعات بأدوار من قارئ إلى مالك، ودعوات، ونقل للملكية، وسجل نشاط، مع فحص واحد بين المستأجرين يشمل كل البيانات. مجاني بترخيص MIT.",
+  "FeaturePageGroups.h1": "مجموعات وأدوار لمنتج SaaS، دون بناء تعدد المستأجرين بنفسك",
+  "FeaturePageGroups.answer":
+    "يمنح Seed كل حساب مجموعة شخصية عند إنشائه، وينشئ الناس مجموعات مشتركة، ويدعون غيرهم، ويمنحونهم أدوارًا من قارئ إلى مالك. المجموعة هي الحد الوحيد بين المستأجرين، فأي ميزة تضيفها تمر بالفحص نفسه بمجرد أن تنسخ ميزة الملاحظات.",
+  "FeaturePageGroups.summary": "مجموعات بأدوار من قارئ إلى مالك، ودعوات، وسجل نشاط.",
+  "FeaturePageGroups.how1":
+    "كل صف من البيانات المشتركة ينتمي إلى مجموعة، ويفحص الـAPI دور الشخص في تلك المجموعة قبل أن يقرأ أو يكتب. القارئ يقرأ، والمحرر يغيّر بيانات المجموعة أيضًا، والمسؤول والمالك يديران الأعضاء أيضًا ويقرآن سجل النشاط.",
+  "FeaturePageGroups.how2":
+    "ينقل المالك الملكية بخطوة واحدة، ويمكن استعادة المجموعة المحذوفة خلال 30 يومًا. ولا يستطيع الدعوة إلا حساب أكّد بريده الإلكتروني.",
+  "FeaturePageGroups.personalGroupQuestion": "هل يحصل كل حساب على مجموعة؟",
+  "FeaturePageGroups.personalGroupAnswer":
+    "نعم. يحصل كل حساب على مجموعة شخصية عند إنشائه؛ والمجموعة الشخصية والمشتركة تمران بالفحص نفسه.",
+  "FeaturePageGroups.viewerQuestion": "هل يستطيع القارئ تغيير بيانات المجموعة؟",
+  "FeaturePageGroups.viewerAnswer":
+    "لا. يقرأ القارئ بيانات المجموعة؛ أما المحرر أو المسؤول أو المالك فيستطيع تغييرها.",
+  "FeaturePageGroups.restoreQuestion": "هل يمكن استعادة مجموعة محذوفة؟",
+  "FeaturePageGroups.restoreAnswer":
+    "نعم. يستطيع مالكها استعادتها خلال 30 يومًا؛ وبعد ذلك يحذفها العامل نهائيًا.",
+  "FeaturePageGroups.secondModelQuestion": "هل أحتاج إلى نظام صلاحيات ثانٍ لميزاتي الخاصة؟",
+  "FeaturePageGroups.secondModelAnswer":
+    "لا. الميزة الجديدة تنسخ ميزة الملاحظات وفحص المجموعة فيها، فيبقى لديك نموذج صلاحيات واحد تعتني به.",
+  "FeaturePageBilling.name": "الفوترة",
+  "FeaturePageBilling.title": "فوترة Stripe لمنتج SaaS، دون عناء الـwebhooks",
+  "FeaturePageBilling.description":
+    "فوترة Stripe لكل عضو مع خطة مجانية، وفترة تجريبية 14 يومًا، ومهلة سماح، وحدود تُفحص على الخادم، تُبقيها الـwebhooks متزامنة. مجاني بترخيص MIT.",
+  "FeaturePageBilling.h1": "فوترة Stripe لكل عضو في منتج SaaS، دون أن تكتبها بنفسك",
+  "FeaturePageBilling.answer":
+    "يحاسب Seed كل مجموعة حسب عدد أعضائها عبر Stripe Checkout وبوابة العملاء، مع خطة مجانية، وفترة تجريبية 14 يومًا، ومهلة سماح بعد فشل الدفع. تضيف ثلاثة مفاتيح Stripe إلى ملف env، وتختار Stripe مزوّدًا للفوترة.",
+  "FeaturePageBilling.summary": "فوترة Stripe لكل عضو مع خطة مجانية، وفترة تجريبية، ومهلة سماح.",
+  "FeaturePageBilling.how1":
+    "يتولى Stripe المال والاشتراك. ولا يحتفظ التطبيق إلا بما تبلّغ عنه webhooks من Stripe، ولا يقرر الخطة بنفسه أبدًا؛ وتتبع الكمية عدد الأعضاء، وتُفحص حدود الخطة على الخادم.",
+  "FeaturePageBilling.how2":
+    "يرى كل عضو الخطة في تبويب «الفوترة» للمجموعة، ولا تظهر أزرار الدفع وبوابة العملاء إلا للمالك. وعند فشل الدفع تبقى الخطة 7 أيام افتراضيًا، ثم تعود المجموعة إلى الخطة المجانية.",
+  "FeaturePageBilling.withoutStripeQuestion": "هل تعمل الفوترة دون Stripe؟",
+  "FeaturePageBilling.withoutStripeAnswer":
+    "لا. Stripe هو المزوّد الوحيد اليوم؛ ودونه تبقى الفوترة متوقفة، وتكون كل مجموعة على الخطة المجانية بلا حدود.",
+  "FeaturePageBilling.trialQuestion": "هل توجد فترة تجريبية مجانية؟",
+  "FeaturePageBilling.trialAnswer": "نعم. تبدأ الخطة المدفوعة بفترة تجريبية مدتها 14 يومًا.",
+  "FeaturePageBilling.failedPaymentQuestion": "هل تحتفظ المجموعة بخطتها إذا رُفضت البطاقة؟",
+  "FeaturePageBilling.failedPaymentAnswer":
+    "نعم. تحتفظ بالخطة خلال مهلة سماح، مدتها 7 أيام افتراضيًا، ويرى المالك تنبيهًا بالتاريخ؛ ثم تعود المجموعة إلى الخطة المجانية.",
+  "FeaturePageBilling.cutQuestion": "هل يأخذ Seed نسبة من المدفوعات؟",
+  "FeaturePageBilling.cutAnswer": "لا. Seed بترخيص MIT؛ ولا تدفع إلا رسوم Stripe نفسها.",
+  "FeaturePageRealtime.name": "المزامنة الفورية",
+  "FeaturePageRealtime.title": "مزامنة فورية لمنتج SaaS، دون خدمة مستضافة",
+  "FeaturePageRealtime.description":
+    "التغيير المحفوظ في علامة تبويب يظهر خلال ثانية في كل علامة تبويب أخرى مفتوحة للمجموعة، عبر WebSocket من الـAPI الخاص بك. مجاني بترخيص MIT.",
+  "FeaturePageRealtime.h1": "تحديثات فورية لمنتج SaaS، دون خدمة تحديث فوري مستضافة",
+  "FeaturePageRealtime.answer":
+    "يرسل Seed كل تغيير محفوظ إلى كل علامة تبويب مفتوحة للمجموعة عبر WebSocket من الـAPI الخاص به، فالملاحظة المحفوظة في نافذة تظهر في النوافذ الأخرى خلال ثانية، دون إعادة تحميل. يعمل ذلك على خادمك دون خدمة تحديث فوري تدفع لها؛ وأي ميزة تضيفها تحصل عليه بنسخ مثال الملاحظات.",
+  "FeaturePageRealtime.summary":
+    "التغيير المحفوظ في علامة تبويب يظهر في كل علامة تبويب مفتوحة أخرى، دون إعادة تحميل.",
+  "FeaturePageRealtime.how1":
+    "تُحفظ كل عملية كتابة مع الرقم التسلسلي التالي للمجموعة، ويدفعها الـAPI إلى كل اتصال مفتوح لأعضائها. ولا تطبّق علامة التبويب التغيير إلا إذا تلا رقمُه آخرَ رقم لديها؛ وعند وجود فجوة تطلب من الخادم كل ما بعد مؤشرها، فالرسالة الضائعة تكلّف طلبًا إضافيًا واحدًا ولا تنتج قائمة خاطئة أبدًا.",
+  "FeaturePageRealtime.how2":
+    "الحاسوب المحمول الذي يستيقظ من السكون يعيد الاتصال ويجلب ما فاته. وإذا أُوقف الـWebSocket، يقرأ التطبيق ويكتب عبر HTTP ويتحقق من التغييرات كل 30 ثانية.",
+  "FeaturePageRealtime.realtimeQuestion": "هل يدعم Seed التحديث الفوري؟",
+  "FeaturePageRealtime.realtimeAnswer":
+    "نعم. يظهر التغيير المحفوظ في كل علامة تبويب مفتوحة للمجموعة خلال ثانية، دون إعادة تحميل.",
+  "FeaturePageRealtime.realtimeServiceQuestion":
+    "هل أحتاج إلى Pusher أو Ably أو خدمة تحديث فوري أخرى؟",
+  "FeaturePageRealtime.realtimeServiceAnswer":
+    "لا. يقدّم الـAPI الخاص بـSeed اتصال WebSocket من خادمك.",
+  "FeaturePageRealtime.realtimeSleepQuestion":
+    "هل تلحق علامة التبويب بما فاتها بعد سكون الحاسوب المحمول؟",
+  "FeaturePageRealtime.realtimeSleepAnswer": "نعم. تعيد الاتصال وتجلب كل تغيير بعد آخر تغيير لديها.",
+  "FeaturePageRealtime.realtimeOffQuestion": "هل يمكنني إيقاف التحديث الفوري؟",
+  "FeaturePageRealtime.realtimeOffAnswer":
+    "نعم. اضبط SPA_REALTIME=false: عندها يتحقق التطبيق من التغييرات كل 30 ثانية ويعمل بالطريقة نفسها.",
+  "FeaturePageOffline.name": "التطبيق دون اتصال",
+  "FeaturePageOffline.title": "منتج SaaS يعمل دون اتصال، دون بناء المزامنة بنفسك",
+  "FeaturePageOffline.description":
+    "تطبيق قابل للتثبيت يفتح دون شبكة، ويحفظ كل قائمة على الجهاز، ويضع التعديلات في قائمة انتظار حتى يعود الاتصال. مجاني بترخيص MIT.",
+  "FeaturePageOffline.h1": "تطبيق يعمل دون اتصال أولًا لمنتج SaaS، دون بناء محرك مزامنة",
+  "FeaturePageOffline.answer":
+    "يُثبَّت تطبيق Seed كأي تطبيق أصلي، ويفتح دون شبكة، ويعرض كل قائمة رآها آخر مرة، ويتيح للناس إضافة الملاحظات والوسوم وتعديلها وحذفها دون اتصال. وميزتك الخاصة تختار أحد ثلاثة مستويات: عبر الإنترنت فقط، أو قابلة للقراءة دون اتصال، أو قابلة للكتابة دون اتصال، وتتبع الوصفة المكتوبة لذلك المستوى.",
+  "FeaturePageOffline.summary": "تطبيق قابل للتثبيت يفتح دون شبكة، ويزامن حين تعود.",
+  "FeaturePageOffline.how1":
+    "يحتفظ الجهاز بنسخة IndexedDB من كل قائمة، وتنتظر عمليات الكتابة في قائمة انتظار بمفاتيح منع التكرار، فالتغيير المرسَل مرتين يُطبَّق مرة واحدة. والتغيير الذي لا يقبله الخادم يظهر كتعارض مع «الاحتفاظ بنسختي» أو «استخدام نسخة الخادم»؛ ولا يُكتب شيء فوق غيره من تلقاء نفسه.",
+  "FeaturePageOffline.how2":
+    "يحتفظ عامل الخدمة (service worker) بصفحة التطبيق وسكربتاته وأنماطه، فيفتح دون شبكة. أما تسجيل الدخول والعناصر المحذوفة وإعداد التحقق بخطوتين فتحتاج إلى الشبكة.",
+  "FeaturePageOffline.offlineQuestion": "هل يعمل Seed دون اتصال بالإنترنت؟",
+  "FeaturePageOffline.offlineAnswer": "نعم. يفتح التطبيق دون شبكة ويعرض كل قائمة رآها آخر مرة.",
+  "FeaturePageOffline.offlineEditsQuestion": "هل يمكن للناس التعديل دون اتصال؟",
+  "FeaturePageOffline.offlineEditsAnswer":
+    "نعم. تعمل الملاحظات والوسوم دون اتصال؛ أما التغييرات الأخرى فتحتاج إلى الشبكة، والشاشة تخبرك بذلك.",
+  "FeaturePageOffline.conflictQuestion": "هل يكتشف Seed تعديل شخصين للملاحظة نفسها؟",
+  "FeaturePageOffline.conflictAnswer":
+    "نعم. يظهر التغيير اللاحق كتعارض، ويختار صاحبه «الاحتفاظ بنسختي» أو «استخدام نسخة الخادم».",
+  "FeaturePageOffline.removeOfflineQuestion": "هل يمكنني إزالة دعم العمل دون اتصال؟",
+  "FeaturePageOffline.removeOfflineAnswer":
+    "نعم. أوقفه بإعداد واحد، أو احذف مجلدًا واحدًا واتبع قائمة الخطوات المكتوبة؛ ويفشل اختبار إذا فاتتك خطوة.",
+  "FeaturePageShortcuts.name": "اختصارات لوحة المفاتيح",
+  "FeaturePageShortcuts.title": "اختصارات لوحة المفاتيح لمنتج SaaS، دون مكتبة",
+  "FeaturePageShortcuts.description":
+    "بحث بـCtrl+K يتسامح مع الأخطاء الإملائية والسيريلية وتخطيط لوحة المفاتيح الخاطئ، ومفتاح لكل قسم في التطبيق. مجاني بترخيص MIT.",
+  "FeaturePageShortcuts.h1": "لوحة أوامر واختصارات لوحة مفاتيح مدمجة في منتج SaaS",
+  "FeaturePageShortcuts.answer":
+    "في تطبيق Seed ولوحة الإدارة يفتح Ctrl+K (‏⌘K على Mac) بحثًا يجد الصفحات والإجراءات حتى مع خطأ إملائي، أو بالسيريلية، أو بتخطيط لوحة مفاتيح خاطئ. اضغط ? لترى كل الاختصارات؛ والميزة التي تضيفها تسجّل مفاتيحها في القائمة نفسها فتظهر في تلك النافذة.",
+  "FeaturePageShortcuts.summary":
+    "بحث بـCtrl+K يتسامح مع الأخطاء الإملائية والتخطيط الخاطئ، ومفتاح لكل قسم.",
+  "FeaturePageShortcuts.how1":
+    "قائمة واحدة لكل تطبيق تربط المفاتيح وتملأ نافذة ?، فلا تعرض النافذة أبدًا مفتاحًا لا يفعل شيئًا. يفتح G ثم حرف قسمًا، ويضيف N ملاحظة من أي صفحة، ولا تتدخل الاختصارات أحادية المفتاح أثناء الكتابة في حقل.",
+  "FeaturePageShortcuts.how2":
+    "يطابق البحث كل كلمة بأي ترتيب، وبالبادئة، ومع خطأ إملائي واحد في الكلمة الأطول، ويفهم الاستعلام المكتوب بتخطيط لوحة المفاتيح الآخر أو بالأبجدية الأخرى، فكتابة «зкщашду» تجد «Open profile».",
+  "FeaturePageShortcuts.shortcutsQuestion": "هل في Seed اختصارات لوحة مفاتيح؟",
+  "FeaturePageShortcuts.shortcutsAnswer":
+    "نعم. اضغط ? في التطبيق أو لوحة الإدارة لترى كل الاختصارات.",
+  "FeaturePageShortcuts.paletteQuestion": "هل توجد لوحة أوامر؟",
+  "FeaturePageShortcuts.paletteAnswer":
+    "نعم. يفتح Ctrl+K (‏⌘K على Mac) أو / بحثًا في الصفحات والإجراءات.",
+  "FeaturePageShortcuts.shortcutsTypingQuestion": "هل تعمل الاختصارات أثناء الكتابة؟",
+  "FeaturePageShortcuts.shortcutsTypingAnswer":
+    "لا. لا تتدخل الاختصارات أحادية المفتاح أثناء الكتابة في حقل، ويمكن إيقافها على كل جهاز؛ ويبقى Ctrl+K وEsc يعملان.",
+  "FeaturePageDeploy.name": "النشر",
+  "FeaturePageDeploy.title": "انشر منتج SaaS دون فاتورة منصة سحابية",
+  "FeaturePageDeploy.description":
+    "Docker Compose على خادم Linux واحد تستأجره: Traefik وPostgres وValkey وملفات S3 ومراقبة ونسخ احتياطي، تُنشر بأمر واحد. مجاني بترخيص MIT.",
+  "FeaturePageDeploy.h1": "استضف منتج SaaS بنفسك على خادم واحد، دون فاتورة منصة سحابية",
+  "FeaturePageDeploy.answer":
+    "يعمل Seed على خادم Linux تستأجره، باستخدام Docker Compose في التطوير والإنتاج على حد سواء، وأمر واحد ينشره. تجهّز الخادم مرة واحدة بالخطوات المكتوبة، ثم يصبح كل نشر لاحق ذلك الأمر وحده.",
+  "FeaturePageDeploy.summary": "خادم Linux واحد، وDocker Compose، وأمر واحد للنشر.",
+  "FeaturePageDeploy.how1":
+    "ينسخ النشر المشروع إلى الخادم عبر SSH ويشغّله بـCompose؛ وفي كل نشر تطبّق خدمة تعمل مرة واحدة ترحيلات قاعدة البيانات. ويقف Traefik في الواجهة ويطلب من Let's Encrypt شهادة لكل نطاق.",
+  "FeaturePageDeploy.how2":
+    "تعمل Postgres وValkey ومخزن ملفات S3 والمقاييس والسجلات ولوحات المتابعة مع التنبيهات بجانب التطبيقات، ويمكن لعدة منتجات أن تتشارك خادمًا واحدًا خلف الخادم الوكيل نفسه.",
+  "FeaturePageDeploy.kubernetesQuestion": "هل أحتاج إلى Kubernetes؟",
+  "FeaturePageDeploy.kubernetesAnswer":
+    "لا. Docker Compose على خادم واحد يشغّل المنتج كله، في التطوير وفي الإنتاج.",
+  "FeaturePageDeploy.severalQuestion": "هل يمكن لعدة منتجات أن تتشارك خادمًا واحدًا؟",
+  "FeaturePageDeploy.severalAnswer":
+    "نعم. تتشارك خادمًا وكيلًا واحدًا، ولكل منها مجلده وقاعدة بياناته وبياناته؛ ولا تُشارك خادمًا إلا بين منتجات تثق بها بالقدر نفسه.",
+  "FeaturePageDeploy.backupQuestion": "هل يوجد نسخ احتياطي؟",
+  "FeaturePageDeploy.backupAnswer":
+    "نعم. نسخة احتياطية يومية مشفّرة لقاعدة البيانات عبر restic عند تفعيلها، مع خطوات استعادة مكتوبة.",
 } satisfies Catalog

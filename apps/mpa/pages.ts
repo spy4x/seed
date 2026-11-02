@@ -2,7 +2,7 @@ import { API_DOCS_HEAD, API_DOCS_PATH } from "./api-docs.ts"
 import { ADMIN_HEAD, ADMIN_UPDATED } from "./routes/[[lang]]/admin.tsx"
 import { CHECKED_ON, COMPARE_HEAD } from "./routes/[[lang]]/compare.tsx"
 import { FEATURES_HEAD, FEATURES_UPDATED } from "./routes/[[lang]]/features.tsx"
-import { FEATURE_PAGES, featurePath } from "./features-data.tsx"
+import { FEATURE_PAGES, featurePageIn, featurePath } from "./features-data.tsx"
 import { HOME_HEAD, HOME_UPDATED } from "./routes/index.tsx"
 import { PRICING_HEAD, PRICING_UPDATED } from "./routes/[[lang]]/pricing.tsx"
 import { PRIVACY_HEAD } from "./routes/[[lang]]/privacy.tsx"
@@ -13,6 +13,7 @@ import { DOC_SLUGS, DOCS_PATH, readDoc } from "./docs-site.ts"
 import { CHANGELOG_HEAD } from "./routes/[[lang]]/changelog.tsx"
 import { DOCS_HEAD } from "./routes/[[lang]]/docs/index.tsx"
 import { docTitle } from "./routes/[[lang]]/docs/[slug].tsx"
+import { siteEnglishText } from "@ui/site-text.ts"
 
 /** One public page, as `sitemap.xml` and `llms.txt` describe it. */
 export interface SitePage {
@@ -73,8 +74,9 @@ const DOC_PAGES: readonly SitePage[] = DOC_SLUGS.map((slug) => {
 export const SITE_PAGES: readonly SitePage[] = [
   sitePage(`/`, HOME_HEAD, HOME_UPDATED),
   sitePage(`/features`, FEATURES_HEAD, FEATURES_UPDATED),
-  // English only (#563): only the English address is listed.
-  ...FEATURE_PAGES.map((page) => sitePage(featurePath(page.slug), page, page.updated, true)),
+  ...FEATURE_PAGES.map((page) =>
+    sitePage(featurePath(page.slug), featurePageIn(siteEnglishText(), page), page.updated)
+  ),
   sitePage(`/admin`, ADMIN_HEAD, ADMIN_UPDATED),
   // Seed's own site: see docs/start-a-product.md
   sitePage(`/compare`, COMPARE_HEAD, CHECKED_ON),
