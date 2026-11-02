@@ -70,7 +70,7 @@ export function FeatureSection(
               >
                 {title}
                 <IconArrowRight
-                  class="ms-2 inline size-5 align-[-0.125em] text-primary transition-transform group-hover:translate-x-1 rtl:-scale-x-100 rtl:group-hover:-translate-x-1"
+                  class="ms-2 inline size-5 align-[-0.125em] text-primary motion-safe:transition-transform motion-safe:group-hover:translate-x-1 rtl:motion-safe:group-hover:-translate-x-1"
                   aria-hidden="true"
                 />
               </a>
