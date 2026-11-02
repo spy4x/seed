@@ -314,7 +314,13 @@ function Features(): JSX.Element {
             Icon={IconZap}
             href={href(`/features#realtime`)}
             linkLabel={t.t(`HomeFeatures.realtimeLink`)}
-            media={<FeatureLoop loop="realtime" caption={false} sizes="416px" />}
+            media={
+              <FeatureLoop
+                loop="realtime"
+                caption={false}
+                sizes="(min-width: 1024px) 343px, (min-width: 640px) calc(100vw - 52px), calc(100vw - 36px)"
+              />
+            }
           >
             {t.t(`HomeFeatures.realtimeText`)}
           </FeatureCard>
