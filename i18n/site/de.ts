@@ -888,4 +888,196 @@ export default {
   "PostFigure.CostCalculator.caption": "Preise der Demo-Tarife, ohne Steuern.",
   "PostFigure.CostCalculator.fallback":
     "Teammitglieder: {members}. Im Pro-Tarif der Demo zahlen sie {total} im Monat, {price} pro Mitglied.",
+  "FeaturePage.what": "Was du bekommst",
+  "FeaturePage.how": "So funktioniert es",
+  "FeaturePage.limits": "Grenzen",
+  "FeaturePage.questions": "Fragen",
+  "FeaturePage.updated": "Zuletzt aktualisiert am <time>{date}</time>",
+  "FeaturePage.sectionLink": "Link zu diesem Abschnitt",
+  "FeaturePage.guide": "Anleitung lesen",
+  "FeaturePage.code": "Code lesen: <path>{path}</path>",
+  "FeaturePage.otherFeatures": "Weitere Funktionen",
+  "FeaturePage.readMore": "Mehr über {name} lesen",
+  "FeaturePage.all": "Alle Funktionen",
+  "FeaturePage.runtimeQuestion": "Läuft Seed auf Node oder Bun?",
+  "FeaturePage.runtimeAnswer":
+    "Noch nicht. Seed läuft heute auf Deno, und die Umstellung auf Deno, Node und Bun ist im Gange (#623). Den Plan dazu findest du auf der Funktionsseite.",
+  "FeaturePageMissing.title": "Diese Funktionsseite gibt es hier nicht",
+  "FeaturePageMissing.description":
+    "Vielleicht ist sie umgezogen. Jede Funktion von Seed steht auf der Funktionsseite.",
+  "FeaturePageMissing.action": "Alle Funktionen ansehen",
+  "FeaturePageSignIn.name": "Anmeldung",
+  "FeaturePageSignIn.title": "Login für dein SaaS, ohne externen Auth-Dienst",
+  "FeaturePageSignIn.description":
+    "Passkeys, Anmeldelinks per E-Mail, Google, GitHub und 2FA, geprüft von deiner eigenen API, ohne Auth-Dienst und Gebühr pro Nutzer. Kostenlos, MIT-Lizenz.",
+  "FeaturePageSignIn.h1": "Passkeys und Login für dein SaaS, ohne externen Auth-Dienst",
+  "FeaturePageSignIn.answer":
+    "Seed meldet Leute mit Passkeys, Anmeldelinks per E-Mail, Google und GitHub an, geprüft von der eigenen API auf deinem Server, ohne fremden Auth-Dienst. Passwörter, Passkeys und Anmeldelinks funktionieren direkt nach dem Deployment, ohne Gebühr pro Nutzer; Google und GitHub brauchen je zwei Schlüssel in der Env-Datei.",
+  "FeaturePageSignIn.summary":
+    "Passkeys, Anmeldelinks per E-Mail, Google, GitHub und 2FA, ohne Auth-Dienst.",
+  "FeaturePageSignIn.how1":
+    "Die API prüft jede Anmeldung selbst und antwortet mit einem signierten Sitzungs-Cookie. Ein Passkey nutzt das eingebaute WebAuthn des Browsers: Der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal. Ein Anmeldelink meldet an oder registriert, gilt einmal und 15 Minuten lang und wird nur als Hash gespeichert.",
+  "FeaturePageSignIn.how2":
+    "Eine Authenticator-App ergänzt die Anmeldung um einen zweiten Faktor. Das Profil listet jeden Zugang zum Konto und jedes angemeldete Gerät auf; wer einen Zugang ändert, muss sich ausweisen, und es geht eine E-Mail raus. Besucher können auch mit einem Gastkonto starten und später eine Anmeldemethode hinzufügen.",
+  "FeaturePageSignIn.authServiceQuestion": "Brauche ich einen Auth-Dienst?",
+  "FeaturePageSignIn.authServiceAnswer":
+    "Nein. Die eigene API von Seed prüft Passwörter, Passkeys, Anmeldelinks und die Antworten von Google und GitHub auf deinem Server, also wird nichts pro Nutzer berechnet.",
+  "FeaturePageSignIn.passkeysQuestion": "Unterstützt Seed Passkeys?",
+  "FeaturePageSignIn.passkeysAnswer":
+    "Ja. Leute fügen in ihrem Profil einen Passkey hinzu und melden sich damit an; der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal.",
+  "FeaturePageSignIn.twoFactorQuestion": "Hat Seed Zwei-Faktor-Authentifizierung?",
+  "FeaturePageSignIn.twoFactorAnswer":
+    "Ja. Eine Authenticator-App verlangt bei der Anmeldung einen Einmalcode, auch nach einer Anmeldung mit Google oder GitHub.",
+  "FeaturePageSignIn.providersOffQuestion":
+    "Kann ich die Anmeldung mit Google oder GitHub weglassen?",
+  "FeaturePageSignIn.providersOffAnswer":
+    "Ja. Jede bleibt aus, bis ihre beiden Variablen in der Env-Datei gesetzt sind; lässt du sie weg, ist sie also aus.",
+  "FeaturePageGroups.name": "Gruppen und Rollen",
+  "FeaturePageGroups.title": "Gruppen, Rollen und Rechte für dein SaaS, fertig eingebaut",
+  "FeaturePageGroups.description":
+    "Gruppen mit Rollen vom Betrachter bis zum Inhaber, Einladungen, Übertragung, Aktivitätsprotokoll und einer Mandantenprüfung für alles. MIT, kostenlos.",
+  "FeaturePageGroups.h1": "Gruppen und Rollen für dein SaaS, ohne Multi-Tenancy selbst zu bauen",
+  "FeaturePageGroups.answer":
+    "Seed gibt jedem Konto bei der Registrierung eine persönliche Gruppe, und Leute legen gemeinsame Gruppen an, laden andere ein und geben ihnen Rollen vom Betrachter bis zum Inhaber. Die Gruppe ist die einzige Mandantengrenze, also durchläuft eine neue Funktion dieselbe Prüfung, sobald sie das Notizen-Aggregat kopiert.",
+  "FeaturePageGroups.summary":
+    "Gruppen mit Rollen vom Betrachter bis zum Inhaber, Einladungen und Aktivitätsprotokoll.",
+  "FeaturePageGroups.how1":
+    "Jede Zeile gemeinsamer Daten gehört zu einer Gruppe, und die API prüft die Rolle der Person in dieser Gruppe, bevor sie liest oder schreibt. Ein Betrachter liest, ein Bearbeiter ändert auch die Daten der Gruppe, und ein Admin und der Inhaber verwalten zusätzlich Mitglieder und lesen das Aktivitätsprotokoll.",
+  "FeaturePageGroups.how2":
+    "Der Inhaber überträgt die Gruppe in einem Schritt, und eine gelöschte Gruppe lässt sich innerhalb von 30 Tagen wiederherstellen. Einladen kann nur ein Konto mit bestätigter E-Mail-Adresse.",
+  "FeaturePageGroups.personalGroupQuestion": "Bekommt jedes Konto eine Gruppe?",
+  "FeaturePageGroups.personalGroupAnswer":
+    "Ja. Jedes Konto bekommt bei der Registrierung eine persönliche Gruppe; persönliche und gemeinsame Gruppen durchlaufen dieselbe Prüfung.",
+  "FeaturePageGroups.viewerQuestion": "Kann ein Betrachter die Daten einer Gruppe ändern?",
+  "FeaturePageGroups.viewerAnswer":
+    "Nein. Ein Betrachter liest die Daten der Gruppe; ändern können sie ein Bearbeiter, ein Admin oder der Inhaber.",
+  "FeaturePageGroups.restoreQuestion": "Lässt sich eine gelöschte Gruppe wiederherstellen?",
+  "FeaturePageGroups.restoreAnswer":
+    "Ja. Ihr Inhaber kann sie innerhalb von 30 Tagen wiederherstellen; danach entfernt der Worker sie endgültig.",
+  "FeaturePageGroups.secondModelQuestion":
+    "Brauche ich für meine eigenen Funktionen ein zweites Rechtesystem?",
+  "FeaturePageGroups.secondModelAnswer":
+    "Nein. Ein neues Aggregat kopiert das Notizen-Aggregat samt seiner Gruppenprüfung, also pflegst du nur ein Rechtemodell.",
+  "FeaturePageBilling.name": "Abrechnung",
+  "FeaturePageBilling.title": "Stripe-Abrechnung für dein SaaS, ohne Webhook-Arbeit",
+  "FeaturePageBilling.description":
+    "Stripe-Abrechnung pro Mitglied mit Gratis-Tarif, 14 Tagen Testphase, Schonfrist und Limits auf dem Server, per Webhooks synchron. Kostenlos, MIT-Lizenz.",
+  "FeaturePageBilling.h1":
+    "Stripe-Abrechnung pro Mitglied für dein SaaS, ohne sie selbst zu schreiben",
+  "FeaturePageBilling.answer":
+    "Seed rechnet jede Gruppe pro Mitglied über Stripe Checkout und das Kundenportal ab, mit einem kostenlosen Tarif, 14 Tagen Testphase und einer Schonfrist nach einer fehlgeschlagenen Zahlung. Du trägst drei Stripe-Schlüssel in die Env-Datei ein und stellst den Abrechnungsanbieter auf Stripe.",
+  "FeaturePageBilling.summary":
+    "Stripe-Abrechnung pro Mitglied mit kostenlosem Tarif, Testphase und Schonfrist.",
+  "FeaturePageBilling.how1":
+    "Stripe verwaltet das Geld und das Abo. Die App speichert nur, was die Webhooks von Stripe melden, und legt nie selbst einen Tarif fest; die Menge folgt der Mitgliederzahl, und die Limits der Tarife werden auf dem Server geprüft.",
+  "FeaturePageBilling.how2":
+    "Jedes Mitglied sieht den Tarif im Reiter „Abrechnung“ der Gruppe, und nur der Inhaber bekommt die Buttons für Checkout und Portal. Nach einer fehlgeschlagenen Zahlung bleibt der Tarif standardmäßig 7 Tage erhalten, dann fällt die Gruppe auf Free zurück.",
+  "FeaturePageBilling.withoutStripeQuestion": "Funktioniert die Abrechnung ohne Stripe?",
+  "FeaturePageBilling.withoutStripeAnswer":
+    "Nein. Stripe ist heute der einzige Anbieter; ohne ihn bleibt die Abrechnung aus, und jede Gruppe ist ohne Limits im Tarif Free.",
+  "FeaturePageBilling.trialQuestion": "Gibt es eine kostenlose Testphase?",
+  "FeaturePageBilling.trialAnswer": "Ja. Der Bezahltarif beginnt mit 14 Tagen Testphase.",
+  "FeaturePageBilling.failedPaymentQuestion":
+    "Behält eine Gruppe ihren Tarif, wenn die Karte abgelehnt wird?",
+  "FeaturePageBilling.failedPaymentAnswer":
+    "Ja. Sie behält den Tarif während einer Schonfrist, standardmäßig 7 Tage, und der Inhaber sieht einen Hinweis mit dem Datum; danach fällt die Gruppe auf Free zurück.",
+  "FeaturePageBilling.cutQuestion": "Behält Seed einen Anteil an den Zahlungen ein?",
+  "FeaturePageBilling.cutAnswer":
+    "Nein. Seed steht unter MIT-Lizenz; du zahlst nur die Gebühren von Stripe selbst.",
+  "FeaturePageRealtime.name": "Echtzeit-Sync",
+  "FeaturePageRealtime.title": "Echtzeit-Sync für dein SaaS, ohne gehosteten Dienst",
+  "FeaturePageRealtime.description":
+    "Eine in einem Tab gespeicherte Änderung erscheint binnen einer Sekunde in jedem offenen Tab der Gruppe, per WebSocket deiner API. Kostenlos, MIT-Lizenz.",
+  "FeaturePageRealtime.h1": "Echtzeit-Updates für dein SaaS, ohne gehosteten Echtzeit-Dienst",
+  "FeaturePageRealtime.answer":
+    "Seed schickt jede gespeicherte Änderung per WebSocket von der eigenen API an jeden offenen Tab der Gruppe, sodass eine in einem Fenster gespeicherte Notiz binnen einer Sekunde in den anderen erscheint, ohne Neuladen. Das läuft auf deinem Server, ohne Echtzeit-Dienst, für den du zahlst; eine neue Funktion bekommt es, indem sie das Notizen-Beispiel kopiert.",
+  "FeaturePageRealtime.summary":
+    "Eine in einem Tab gespeicherte Änderung erscheint in jedem anderen offenen Tab, ohne Neuladen.",
+  "FeaturePageRealtime.how1":
+    "Jeder Schreibvorgang wird mit der nächsten Sequenznummer der Gruppe gespeichert, und die API schickt ihn an den offenen Socket jedes Mitglieds. Ein Tab übernimmt eine Änderung nur, wenn ihre Nummer direkt auf seine letzte folgt; bei einer Lücke fragt er den Server nach allem nach seinem Cursor. Eine verlorene Nachricht kostet also eine zusätzliche Anfrage, aber nie eine falsche Liste.",
+  "FeaturePageRealtime.how2":
+    "Ein Laptop, der aus dem Ruhezustand aufwacht, verbindet sich neu und holt nach, was er verpasst hat. Ist der Socket abgeschaltet, liest und schreibt die App über HTTP und fragt alle 30 Sekunden nach Änderungen.",
+  "FeaturePageRealtime.realtimeQuestion": "Aktualisiert sich Seed in Echtzeit?",
+  "FeaturePageRealtime.realtimeAnswer":
+    "Ja. Eine gespeicherte Änderung erscheint binnen einer Sekunde in jedem offenen Tab der Gruppe, ohne Neuladen.",
+  "FeaturePageRealtime.realtimeServiceQuestion":
+    "Brauche ich Pusher, Ably oder einen anderen Echtzeit-Dienst?",
+  "FeaturePageRealtime.realtimeServiceAnswer":
+    "Nein. Den WebSocket stellt die eigene API von Seed auf deinem Server bereit.",
+  "FeaturePageRealtime.realtimeSleepQuestion":
+    "Holt ein Tab alles nach, wenn der Laptop aus dem Ruhezustand kommt?",
+  "FeaturePageRealtime.realtimeSleepAnswer":
+    "Ja. Er verbindet sich neu und holt jede Änderung nach der letzten, die er hatte.",
+  "FeaturePageRealtime.realtimeOffQuestion": "Kann ich Echtzeit abschalten?",
+  "FeaturePageRealtime.realtimeOffAnswer":
+    "Ja. Setz SPA_REALTIME=false: Die App fragt dann alle 30 Sekunden nach Änderungen und funktioniert genauso.",
+  "FeaturePageOffline.name": "Offline-App",
+  "FeaturePageOffline.title": "Offline-App für dein SaaS, ohne Sync selbst zu bauen",
+  "FeaturePageOffline.description":
+    "Installierbare App, die ohne Netz startet, jede Liste auf dem Gerät behält und Änderungen aufhebt, bis die Verbindung zurück ist. Kostenlos, MIT-Lizenz.",
+  "FeaturePageOffline.h1": "Eine Offline-first-App für dein SaaS, ohne eigene Sync-Engine",
+  "FeaturePageOffline.answer":
+    "Die App von Seed lässt sich wie eine native installieren, startet ohne Netz, zeigt jede Liste so, wie sie sie zuletzt gesehen hat, und lässt Leute Notizen und Tags offline anlegen, bearbeiten und löschen. Deine eigene Funktion wählt eine von drei Stufen, nur online, offline lesbar oder offline beschreibbar, und folgt dem schriftlichen Rezept dafür.",
+  "FeaturePageOffline.summary":
+    "Eine installierbare App, die ohne Netz startet und synchronisiert, sobald es zurück ist.",
+  "FeaturePageOffline.how1":
+    "Das Gerät hält eine IndexedDB-Kopie jeder Liste, und Schreibvorgänge warten mit Idempotenzschlüsseln in einer Warteschlange, sodass eine doppelt gesendete Änderung nur einmal angewendet wird. Eine Änderung, die der Server nicht annehmen kann, erscheint als Konflikt mit „Meine behalten“ oder „Server-Version nehmen“; nichts wird von selbst überschrieben.",
+  "FeaturePageOffline.how2":
+    "Ein Service Worker speichert die Seite, die Skripte und die Styles der App, sodass sie ohne Netz startet. Anmeldung, gelöschte Elemente und die Einrichtung von 2FA brauchen das Netz.",
+  "FeaturePageOffline.offlineQuestion": "Funktioniert Seed offline?",
+  "FeaturePageOffline.offlineAnswer":
+    "Ja. Die App startet ohne Netz und zeigt jede Liste so, wie sie sie zuletzt gesehen hat.",
+  "FeaturePageOffline.offlineEditsQuestion": "Kann man offline bearbeiten?",
+  "FeaturePageOffline.offlineEditsAnswer":
+    "Ja. Notizen und Tags funktionieren offline; andere Änderungen brauchen das Netz, und der Bildschirm sagt das.",
+  "FeaturePageOffline.conflictQuestion": "Erkennt Seed, wenn zwei Leute dieselbe Notiz ändern?",
+  "FeaturePageOffline.conflictAnswer":
+    "Ja. Die spätere Änderung erscheint als Konflikt, und ihr Autor wählt „Meine behalten“ oder „Server-Version nehmen“.",
+  "FeaturePageOffline.removeOfflineQuestion": "Kann ich die Offline-Unterstützung entfernen?",
+  "FeaturePageOffline.removeOfflineAnswer":
+    "Ja. Schalte sie mit einem Schalter ab, oder lösche einen Ordner und folge der schriftlichen Checkliste; ein Test schlägt fehl, wenn ein Schritt fehlt.",
+  "FeaturePageShortcuts.name": "Tastenkürzel",
+  "FeaturePageShortcuts.title": "Tastenkürzel für dein SaaS, ohne Bibliothek",
+  "FeaturePageShortcuts.description":
+    "Strg+K-Suche, die Tippfehler, Kyrillisch und das falsche Tastaturlayout verzeiht, und eine Taste für jeden Bereich der App. Kostenlos, MIT-Lizenz.",
+  "FeaturePageShortcuts.h1": "Befehlspalette und Tastenkürzel für dein SaaS, fertig eingebaut",
+  "FeaturePageShortcuts.answer":
+    "Die App und der Adminbereich von Seed öffnen mit Strg+K (⌘K auf dem Mac) eine Suche, die Seiten und Aktionen auch mit Tippfehler, auf Kyrillisch oder im falschen Tastaturlayout findet. Drück ?, um alle Kürzel zu sehen; eine neue Funktion trägt ihre eigenen Tasten in dieselbe Liste ein und erscheint damit in diesem Dialog.",
+  "FeaturePageShortcuts.summary":
+    "Strg+K-Suche, die Tippfehler und das falsche Layout verzeiht, und eine Taste für jeden Bereich.",
+  "FeaturePageShortcuts.how1":
+    "Eine Liste pro App bindet die Tasten und füllt den ?-Dialog, sodass der Dialog nie eine Taste zeigt, die nichts tut. G gefolgt von einem Buchstaben öffnet einen Bereich, N legt von jeder Seite aus eine Notiz an, und die Ein-Tasten-Kürzel halten sich zurück, während du in ein Feld tippst.",
+  "FeaturePageShortcuts.how2":
+    "Die Suche findet jedes Wort in beliebiger Reihenfolge, per Präfix und mit einem Tippfehler in einem längeren Wort, und versteht eine Eingabe im anderen Tastaturlayout oder im anderen Alphabet, sodass „зкщашду“ „Open profile“ findet.",
+  "FeaturePageShortcuts.shortcutsQuestion": "Hat Seed Tastenkürzel?",
+  "FeaturePageShortcuts.shortcutsAnswer":
+    "Ja. Drück ? in der App oder im Adminbereich, um alle zu sehen.",
+  "FeaturePageShortcuts.paletteQuestion": "Gibt es eine Befehlspalette?",
+  "FeaturePageShortcuts.paletteAnswer":
+    "Ja. Strg+K (⌘K auf dem Mac) oder / öffnet die Suche über Seiten und Aktionen.",
+  "FeaturePageShortcuts.shortcutsTypingQuestion": "Lösen Tastenkürzel aus, während ich tippe?",
+  "FeaturePageShortcuts.shortcutsTypingAnswer":
+    "Nein. Ein-Tasten-Kürzel halten sich in einem Feld zurück, und jedes Gerät kann sie abschalten; Strg+K und Esc funktionieren weiter.",
+  "FeaturePageDeploy.name": "Deployment",
+  "FeaturePageDeploy.title": "Dein SaaS deployen, ohne Rechnung einer Cloud-Plattform",
+  "FeaturePageDeploy.description":
+    "Docker Compose auf einem gemieteten Linux-Server: Traefik, Postgres, Valkey, S3, Monitoring und Backups, mit einem Befehl deployt. Kostenlos, MIT-Lizenz.",
+  "FeaturePageDeploy.h1":
+    "Dein SaaS auf einem Server selbst hosten, ohne Rechnung einer Cloud-Plattform",
+  "FeaturePageDeploy.answer":
+    "Seed läuft auf einem gemieteten Linux-Server, mit Docker Compose in Entwicklung und Produktion gleichermaßen, und ein Befehl liefert es aus. Du richtest den Server einmal nach der schriftlichen Anleitung ein; danach ist jedes Deployment nur noch dieser eine Befehl.",
+  "FeaturePageDeploy.summary": "Ein Linux-Server, Docker Compose und ein Befehl zum Deployen.",
+  "FeaturePageDeploy.how1":
+    "Das Deployment kopiert das Projekt per SSH auf den Server und startet es mit Compose; bei jedem Deployment wendet ein einmaliger Dienst die Datenbankmigrationen an. Traefik sitzt davor und holt bei Let's Encrypt das Zertifikat für jeden Host.",
+  "FeaturePageDeploy.how2":
+    "Postgres, Valkey, ein S3-Dateispeicher, Metriken, Logs und Dashboards mit Alarmen laufen neben den Apps, und mehrere Produkte können sich hinter demselben Proxy einen Server teilen.",
+  "FeaturePageDeploy.kubernetesQuestion": "Brauche ich Kubernetes?",
+  "FeaturePageDeploy.kubernetesAnswer":
+    "Nein. Docker Compose auf einem Server betreibt das ganze Produkt, in Entwicklung und in Produktion.",
+  "FeaturePageDeploy.severalQuestion": "Können sich mehrere Produkte einen Server teilen?",
+  "FeaturePageDeploy.severalAnswer":
+    "Ja. Sie teilen sich einen Proxy, und jedes behält sein eigenes Verzeichnis, seine Datenbank und seine Daten; teile einen Server nur zwischen Produkten, denen du gleichermaßen vertraust.",
+  "FeaturePageDeploy.backupQuestion": "Gibt es ein Backup?",
+  "FeaturePageDeploy.backupAnswer":
+    "Ja. Ein optionales tägliches, verschlüsseltes restic-Backup der Datenbank, mit einer schriftlichen Anleitung zur Wiederherstellung.",
 } satisfies Catalog
