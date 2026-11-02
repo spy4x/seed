@@ -16,6 +16,12 @@ import {
 } from "./post-figures.tsx"
 import { figureCatalog, siteTranslator } from "./languages.ts"
 import { PRO_MAX_MEMBERS, PRO_PRICE } from "./islands/post/CostCalculator.tsx"
+import HostingCost, {
+  fallback as hostingFallback,
+  managedMonthly,
+  seedMonthly,
+  toEuro,
+} from "./islands/post/HostingCost.tsx"
 
 describe(`the figure folder`, () => {
   it(`finds a new file by its name, with no list to edit, and skips files that are no tag`, async () => {
@@ -122,5 +128,40 @@ describe(`CostCalculator`, () => {
 
     expect(PRO_PRICE).toEqual({ amount: pro.amount, currency: pro.currency })
     expect(PRO_MAX_MEMBERS).toBe(pro.entitlements.limits.maxMembers)
+  })
+})
+
+describe(`HostingCost`, () => {
+  it(`adds the server, its IPv4 address and the backup store to Seed's month`, () => {
+    expect(seedMonthly(`cx23`)).toBe(549 + 50 + 649)
+    expect(seedMonthly(`cpx32`)).toBe(3549 + 50 + 649)
+  })
+
+  it(`charges the managed stack a seat per developer on top of the database`, () => {
+    expect(managedMonthly(1)).toBe(4500)
+    expect(managedMonthly(3)).toBe(8500)
+  })
+
+  it(`turns dollars into euros at the dated ECB rate`, () => {
+    expect(toEuro(4500)).toBe(4012)
+  })
+
+  it(`draws the post's server and team without JavaScript, and its feed sentence names both totals`, () => {
+    const t = siteTranslator(`en`)
+    const html = renderToString(
+      <HostingCost
+        server={`cpx32`}
+        developers={3}
+        figure={{ id: `hosting-cost`, language: `en`, messages: figureCatalog(`en`) }}
+      />,
+    )
+
+    expect(html).toMatch(/value="cpx32"[^>]*checked/)
+    expect(html).toContain(`€42.48`)
+    expect(html).toContain(`$85.00`)
+    expect(hostingFallback({ server: `cpx32`, developers: 3 }, t)).toBe(
+      `On a Hetzner CPX32, Seed costs €42.48 a month with its IPv4 address and backup storage. ` +
+        `Vercel Pro and Supabase Pro cost $85.00 a month, about €75.78. Developers with a Vercel seat: 3.`,
+    )
   })
 })

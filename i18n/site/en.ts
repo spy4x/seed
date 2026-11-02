@@ -857,4 +857,18 @@ export default {
   "PostFigure.CostCalculator.caption": "Prices of the demo's plans, before tax.",
   "PostFigure.CostCalculator.fallback":
     "Team members: {members}. On the demo's Pro plan they pay {total} a month, {price} per member.",
+  "PostFigure.HostingCost.title": "Seed on one server against a managed stack",
+  "PostFigure.HostingCost.lead":
+    "Pick a Hetzner server and how many developers need a Vercel seat.",
+  "PostFigure.HostingCost.server": "Hetzner server",
+  "PostFigure.HostingCost.serverOption": "{name}: {cores} vCPU, {memory} GB",
+  "PostFigure.HostingCost.developers": "Developers with a Vercel seat",
+  "PostFigure.HostingCost.seed": "Seed on Hetzner, a month",
+  "PostFigure.HostingCost.managed": "Vercel Pro and Supabase Pro, a month",
+  "PostFigure.HostingCost.inEuro": "about {amount}",
+  "PostFigure.HostingCost.yearly": "Managed minus Seed, a year",
+  "PostFigure.HostingCost.caption":
+    "List prices before tax, checked on 3 November 2026. Seed: the server, its IPv4 address and Object Storage for backups. Managed: the base plans, before usage. Dollars in euros at the ECB rate of 2 November 2026.",
+  "PostFigure.HostingCost.fallback":
+    "On a Hetzner {server}, Seed costs {seed} a month with its IPv4 address and backup storage. Vercel Pro and Supabase Pro cost {managed} a month, about {managedEuro}. Developers with a Vercel seat: {developers}.",
 } satisfies Catalog

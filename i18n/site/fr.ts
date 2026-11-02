@@ -918,4 +918,18 @@ export default {
   "PostFigure.CostCalculator.caption": "Prix des offres de la démo, hors taxes.",
   "PostFigure.CostCalculator.fallback":
     "Membres de l’équipe : {members}. Avec l’offre Pro de la démo, ils paient {total} par mois, soit {price} par membre.",
+  "PostFigure.HostingCost.title": "Seed sur un serveur face à une stack managée",
+  "PostFigure.HostingCost.lead":
+    "Choisissez un serveur Hetzner et le nombre de développeurs qui ont besoin d’un siège Vercel.",
+  "PostFigure.HostingCost.server": "Serveur Hetzner",
+  "PostFigure.HostingCost.serverOption": "{name} : {cores} vCPU, {memory} Go",
+  "PostFigure.HostingCost.developers": "Développeurs avec un siège Vercel",
+  "PostFigure.HostingCost.seed": "Seed chez Hetzner, par mois",
+  "PostFigure.HostingCost.managed": "Vercel Pro et Supabase Pro, par mois",
+  "PostFigure.HostingCost.inEuro": "environ {amount}",
+  "PostFigure.HostingCost.yearly": "Managé moins Seed, par an",
+  "PostFigure.HostingCost.caption":
+    "Prix catalogue hors taxes, relevés le 3 novembre 2026. Seed : le serveur, son adresse IPv4 et Object Storage pour les sauvegardes. Managé : les offres de base, hors usage. Dollars convertis en euros au taux de la BCE du 2 novembre 2026.",
+  "PostFigure.HostingCost.fallback":
+    "Sur un serveur Hetzner {server}, Seed coûte {seed} par mois avec son adresse IPv4 et le stockage des sauvegardes. Vercel Pro et Supabase Pro coûtent {managed} par mois, environ {managedEuro}. Développeurs avec un siège Vercel : {developers}.",
 } satisfies Catalog
