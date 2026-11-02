@@ -16,8 +16,11 @@ export const LIGHTBOX_KEYS = [
   `ZoomableImages.zoomLabel`,
 ] as const
 
-/** The screenshots the lightbox opens: every `<picture>`'s image on the page. */
-const SHOTS = `picture img`
+/**
+ * The screenshots the lightbox opens: every `<picture>`'s image on the page, except a video's
+ * poster, which sits inside `data-no-zoom` (`components/feature-loop.tsx`, the home page's demo).
+ */
+export const SHOTS = `picture img:not([data-no-zoom] *)`
 
 /**
  * The widest file of the theme the page shows now: the first entry of the `srcset` the browser

@@ -103,6 +103,43 @@ test(`the admin still loads only when its section nears the screen`, async ({ pa
   await expect.poll(() => asked).toContain(`/video/admin-panel-poster-1280.webp`)
 })
 
+/** The three feature loops, the page each plays on, and the name its play button carries. */
+const LOOPS = [
+  [`realtime`, `/features/realtime`, `Realtime sync`],
+  [`offline`, `/features/offline`, `Offline editing`],
+  [`shortcuts`, `/features/shortcuts`, `Keyboard shortcuts`],
+] as const
+
+for (const [loop, path, name] of LOOPS) {
+  test(`${path} plays the ${loop} loop, captioned, with a button that names it`, async ({ page }) => {
+    await page.goto(path)
+    const figure = page.locator(`[data-e2e=loop-${loop}]`)
+    await expect(figure.locator(`figcaption`)).not.toBeEmpty()
+    await expect(figure.locator(`img`)).toHaveAttribute(
+      `src`,
+      new RegExp(`/video/${loop}-loop-light-`),
+    )
+    await expect(figure.getByRole(`button`, { name: new RegExp(`: ${name}$`) })).toBeVisible()
+  })
+}
+
+test(`the video route answers a byte range of every loop and of the hero's demo`, async ({ request }) => {
+  const files = [
+    ...LOOPS.flatMap(([loop]) =>
+      [`light`, `dark`].flatMap((theme) =>
+        [`webm`, `mp4`].map((ext) => `${loop}-loop-${theme}.${ext}`)
+      )
+    ),
+    `demo.webm`,
+    `demo.mp4`,
+  ]
+  for (const name of files) {
+    const response = await request.get(`/video/${name}`, { headers: { Range: `bytes=0-99` } })
+    expect(response.status(), name).toBe(206)
+    expect((await response.body()).byteLength, name).toBe(100)
+  }
+})
+
 test.describe(`a screenshot's lightbox`, () => {
   test.use({ colorScheme: `dark` })
 
@@ -118,6 +155,16 @@ test.describe(`a screenshot's lightbox`, () => {
     await page.keyboard.press(`Escape`)
     await expect(viewer).toBeHidden()
     await expect(shot).toBeFocused()
+  })
+
+  test(`zooms the page's screenshots but never a feature loop's poster`, async ({ page }) => {
+    await page.goto(`/features`)
+    await expect(page.getByRole(`button`, { name: /^Zoom: / }).first()).toBeVisible()
+    for (const [loop] of LOOPS) {
+      const figure = page.locator(`[data-e2e=loop-${loop}]`)
+      await expect(figure.locator(`img`).first()).toBeAttached()
+      await expect(figure.getByRole(`button`, { name: /^Zoom: / })).toHaveCount(0)
+    }
   })
 
   // A feature page loads the lightbox only when its picture is a screenshot: deploy draws a diagram.

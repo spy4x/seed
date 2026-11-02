@@ -195,10 +195,9 @@ export default {
   "HomeHero.status":
     "Seed ist heute schon nutzbar und wird öffentlich entwickelt: <status>Sieh dir an, was funktioniert</status>.",
   "HomeHero.quickStart": "Schnellstart",
-  "HomeHero.initNote":
-    "<code>init</code> schreibt <code>infra/envs/.env</code> mit allen Secrets. Oder frag deinen KI-Agenten: <prompt></prompt>.",
-  "HomeHero.notesAlt":
-    "Die Notizenansicht der Seed-Web-App: ein Suchfeld, Filter nach Tag und Autor, ein Filter „Von mir erstellt“ und ein Sortiermenü über der Notizliste einer Gruppe. Jede Notiz zeigt Autor, Tags, Zeitpunkt der letzten Änderung und Erstellung, dazu ein Button für eine neue Notiz.",
+  "HomeHero.demoTitle": "Seed in einer Minute, von git clone bis zum Adminbereich",
+  "HomeHero.demoCaption":
+    "1-Minuten-Demo mit Untertiteln und Musik: klonen, starten, eine Notiz schreiben, den Adminbereich öffnen.",
   "HomeHero.aiPrompt":
     "Erstelle mein neues Produkt „Acme“ aus https://github.com/spy4x/seed und starte es lokal",
   "HomeFeatures.billingAlt":
@@ -219,8 +218,6 @@ export default {
     "Stripe-Abos pro Gruppe: ein kostenloser Tarif mit Limits, ein Bezahltarif pro Mitglied, Testphasen und eine Schonfrist, wenn eine Karte nicht durchgeht. Vor jeder Einladung bestätigt der Inhaber den Preis.",
   "HomeFeatures.realtimeTitle": "Echtzeit und offline",
   "HomeFeatures.realtimeLink": "So funktionieren Echtzeit und Offline-Modus",
-  "HomeFeatures.realtimeAlt":
-    "Der Notizeditor der Seed-App, in dem gerade der Titel geändert wird; nach dem Speichern zeigt jedes andere offene Fenster den neuen Titel.",
   "HomeFeatures.realtimeText":
     "Änderungen erreichen über einen WebSocket jeden offenen Tab. Die App lässt sich installieren, startet ohne Netz, merkt sich Änderungen für später und zeigt einen Konflikt an, statt die Arbeit anderer zu überschreiben.",
   "HomeFeatures.groupsTitle": "Gruppen vom ersten Tag an",
@@ -632,19 +629,24 @@ export default {
   "FeaturesFaq.title": "Kann Seed das?",
   "FeatureSection.issue": "Issue #{number}",
   "FeatureSection.readMore": "Mehr zu {feature}",
-  "FeatureVisuals.window1": "Fenster 1",
-  "FeatureVisuals.window2": "Fenster 2",
-  "FeatureVisuals.realtimeA":
-    "Erstes Fenster: der Notizeditor, der Titel ist geändert zu „Q4 roadmap: onboarding, billing and invoices“.",
-  "FeatureVisuals.realtimeB":
-    "Zweites Fenster, separat angemeldet: Direkt nach dem Speichern zeigt seine Notizliste den neuen Titel ganz oben, ohne Neuladen.",
-  "FeatureVisuals.offline":
-    "Eine offline gemachte Änderung trifft auf eine neuere auf dem Server: Der Hinweis, dass eine Änderung deine Entscheidung braucht, zeigt beide Versionen der Notiz nebeneinander, mit der Wahl, deine Version zu behalten oder die vom Server zu nehmen.",
-  "FeatureVisuals.phone":
-    "Dieselbe App, auf einem Handy installiert: die Notizen der Gruppe mit Suchfeld und Filtern, jede Notiz mit Autor, Erstellungsdatum und Tags.",
   "FeatureVisuals.deployCaption":
     "Gekürzt: Die Ausgaben von rsync und Compose zwischen den Schritten sind weggelassen.",
   "FeatureVisuals.services": "Dienste auf dem Server",
+  "Loops.realtimeName": "Echtzeit-Sync",
+  "Loops.realtimeTitle":
+    "Eine im linken Fenster gespeicherte Notiz erscheint binnen einer Sekunde im rechten Fenster, ohne Neuladen.",
+  "Loops.realtimeCaption":
+    "Zwei Fenster, ein Konto. Speichere in einem, und das andere aktualisiert sich von selbst.",
+  "Loops.offlineName": "Offline bearbeiten",
+  "Loops.offlineTitle":
+    "Die App geht offline, eine Notiz wird bearbeitet, und nach der Wiederverbindung fragt die Konfliktauswahl, welche Version bleibt.",
+  "Loops.offlineCaption":
+    "Offline-Änderungen warten in einer Outbox. Hat jemand dieselbe Notiz geändert, wählst du, welche Version bleibt.",
+  "Loops.shortcutsName": "Tastenkürzel",
+  "Loops.shortcutsTitle":
+    "Strg+K öffnet die Befehlspalette. Eine Suche mit Tippfehler, eine auf Kyrillisch und eine im falschen Tastaturlayout finden jeweils dieselbe Aktion, die dann ausgeführt wird.",
+  "Loops.shortcutsCaption":
+    "Drück Strg+K (⌘K auf dem Mac). Die Suche verzeiht Tippfehler, Kyrillisch und das falsche Tastaturlayout.",
   "Outbox.change": "Die Änderung",
   "Outbox.changeNote": "eine Notiz, ein Mitglied",
   "Outbox.event": "Ihr Event",

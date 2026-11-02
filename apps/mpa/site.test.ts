@@ -6,11 +6,12 @@ import { renderToString } from "preact-render-to-string"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { PLANS } from "@domain/billing"
 import AppWrapper from "./routes/_app.tsx"
+import Layout from "./routes/_layout.tsx"
 import Admin, { ADMIN_HEAD } from "./routes/[[lang]]/admin.tsx"
 import Compare from "./routes/[[lang]]/compare.tsx"
 import Features from "./routes/[[lang]]/features.tsx"
 import { handler as featurePage } from "./routes/[[lang]]/features/[slug].tsx"
-import Home, { AI_PROMPT, HOME_HEAD, QUICK_START } from "./routes/index.tsx"
+import Home, { HOME_HEAD, QUICK_START } from "./routes/index.tsx"
 import Pricing, { handler as pricing, PRICING_HEAD } from "./routes/[[lang]]/pricing.tsx"
 import Privacy, { PRIVACY_HEAD } from "./routes/[[lang]]/privacy.tsx"
 import Terms, { TERMS_HEAD } from "./routes/[[lang]]/terms.tsx"
@@ -68,6 +69,7 @@ function siteWith(newsletter: () => boolean, siteConfig: MpaConfig = config) {
   return new App<State>()
     .use(pageMiddleware(siteConfig, neverCalled, newsletter))
     .appWrapper(view(AppWrapper))
+    .layout("*", view(Layout))
     .route("/", { component: view(Home) })
     .route("/features", { component: view(Features) })
     .get("{/:lang}?/features/:slug", featurePage.GET!)
@@ -214,11 +216,21 @@ describe("the public website", () => {
     expect(html.match(/<title>/g)).toHaveLength(1)
   })
 
-  it("shows every quick-start command in the hero, from creating the repository to starting it", async () => {
+  it("plays the README's demo in the hero and keeps the quick-start commands in their section", async () => {
     const { html } = await page("/")
 
     const hero = html.slice(html.indexOf(`id="hero-title"`), html.indexOf(`id="features"`))
-    for (const line of QUICK_START) expect(hero).toContain(`$ ${line}`)
+    const quickStart = html.slice(html.indexOf(`id="quick-start"`))
+    const play = hero.match(/<a [^>]*data-e2e="hero-demo"[^>]*>/)?.[0]
+    expect(play).toContain(`href="/video/demo.webm"`)
+    expect(hero).toContain(
+      `aria-label="Play video: Seed in one minute, from git clone to the admin panel"`,
+    )
+    expect(hero).not.toContain(`<video`)
+    for (const line of QUICK_START) {
+      expect(hero, line).not.toContain(`$ ${line}`)
+      expect(quickStart, line).toContain(`$ ${line}`)
+    }
   })
 
   it("wraps a long quick-start command under its own start, past the $, instead of cutting it off", async () => {
@@ -231,11 +243,27 @@ describe("the public website", () => {
     }
   })
 
-  it("names each realtime window under its frame on /features, where a phone has room for the name", async () => {
+  it("draws the realtime, offline and shortcuts loops on /features, each with its poster in both themes and its caption", async () => {
     const { html } = await page("/features")
 
-    for (const name of ["Window 1", "Window 2"]) {
-      expect(html, name).toMatch(new RegExp(`<figcaption[^>]*>${name}</figcaption>`))
+    for (
+      const [loop, caption] of [
+        [`realtime`, `Two windows, one account. Save in one, and the other updates by itself.`],
+        [`offline`, `Offline edits wait in an outbox.`],
+        [`shortcuts`, `Press Ctrl+K (⌘K on a Mac).`],
+      ]
+    ) {
+      const start = html.indexOf(`data-e2e="loop-${loop}"`)
+      expect(start, loop).toBeGreaterThan(-1)
+      const box = html.slice(start, html.indexOf(`</figure>`, start))
+      for (const theme of [`light`, `dark`]) {
+        expect(box, `${loop} ${theme}`).toMatch(
+          new RegExp(`/video/${loop}-loop-${theme}-1440\\.webp(\\?[^ ]*)? 1440w`),
+        )
+      }
+      expect(box, loop).toMatch(
+        new RegExp(`<figcaption[^>]*>${caption.replace(/[.+()]/g, `\\$&`)}`),
+      )
     }
   })
 
@@ -252,27 +280,27 @@ describe("the public website", () => {
     for (const line of QUICK_START) expect(line, line).not.toContain("#")
   })
 
-  it("says under the hero's commands that init fills in the secrets, and gives the AI prompt", async () => {
+  it("says under the hero's demo how long it is and what it shows", async () => {
     const { html } = await page("/")
 
     const caption = html.match(/<figcaption\b[^>]*>([\s\S]*?)<\/figcaption>/)?.[1]
-      .replace(/<[^>]+>/g, "")
     expect(caption).toBe(
-      `init writes infra/envs/.env with every secret filled in. Or ask your AI agent: ${
-        AI_PROMPT.replaceAll(`"`, `&quot;`)
-      }.`,
+      `1-minute demo with captions and music: clone, run, write a note, open the admin panel.`,
     )
   })
 
-  it("gives the billing and realtime cards a picture of the app", async () => {
+  it("gives the billing card a picture of the app and the realtime card the realtime loop", async () => {
     const { html } = await page("/")
 
     for (
-      const [id, shot] of [["feature-billing", "billing-plan"], ["feature-realtime", "realtime-a"]]
+      const [id, file] of [
+        ["feature-billing", "/shots/billing-plan-light-"],
+        ["feature-realtime", "/video/realtime-loop-light-"],
+      ]
     ) {
       const start = html.indexOf(`aria-labelledby="${id}"`)
       const card = html.slice(start, html.indexOf(`role="article"`, start + 1))
-      expect(card, id).toContain(`/shots/${shot}-light-`)
+      expect(card, id).toContain(file)
     }
   })
 
@@ -1025,7 +1053,9 @@ describe("the public website", () => {
         "/features/sign-in",
         "/features/groups",
         "/features/billing",
+        "/features/realtime",
         "/features/offline",
+        "/features/shortcuts",
         "/features/deploy",
         "/admin",
         "/ru/admin",
@@ -1094,7 +1124,9 @@ describe("the public website", () => {
       "/features/sign-in": "2026-11-02T00:00:00.000Z",
       "/features/groups": "2026-11-01T00:00:00.000Z",
       "/features/billing": "2026-11-01T00:00:00.000Z",
+      "/features/realtime": "2026-11-02T00:00:00.000Z",
       "/features/offline": "2026-11-01T00:00:00.000Z",
+      "/features/shortcuts": "2026-11-02T00:00:00.000Z",
       "/features/deploy": "2026-11-02T00:00:00.000Z",
       "/admin": "2026-10-28T00:00:00.000Z",
       "/docs/api": "2026-10-23T00:00:00.000Z",

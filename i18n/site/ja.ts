@@ -192,10 +192,9 @@ export default {
   "HomeHero.status":
     "Seedは今すぐ使えて、公開しながら開発中です。<status>対応状況を見る</status>。",
   "HomeHero.quickStart": "クイックスタート",
-  "HomeHero.initNote":
-    "<code>init</code>が、すべてのシークレットを埋めた<code>infra/envs/.env</code>を書き出します。AIエージェントに頼むこともできます：<prompt></prompt>。",
-  "HomeHero.notesAlt":
-    "SeedのWebアプリのメモ画面。グループのメモ一覧の上に、検索ボックス、タグと作成者のフィルター、「自分が作成」フィルター、並べ替えメニューがあります。各メモには作成者、タグ、更新日時、作成日時が表示され、「新しいメモ」ボタンがあります。",
+  "HomeHero.demoTitle": "1分でわかるSeed：git cloneから管理画面まで",
+  "HomeHero.demoCaption":
+    "字幕と音楽付きの1分デモ：クローンして起動し、メモを書き、管理画面を開きます。",
   "HomeHero.aiPrompt":
     "https://github.com/spy4x/seedから新しいプロダクト「Acme」を作成して、ローカルで動かして",
   "HomeFeatures.billingAlt":
@@ -216,8 +215,6 @@ export default {
     "グループごとのStripeサブスクリプション。制限付きの無料プラン、メンバー単位の有料プラン、無料トライアル、カード決済が失敗したときの猶予期間。オーナーは招待のたびに料金を確認します。",
   "HomeFeatures.realtimeTitle": "リアルタイムとオフライン",
   "HomeFeatures.realtimeLink": "リアルタイムとオフラインのしくみ",
-  "HomeFeatures.realtimeAlt":
-    "Seedアプリのメモエディターでタイトルを変更しているところ。保存すると、開いているほかのウィンドウすべてに新しいタイトルが表示されます。",
   "HomeFeatures.realtimeText":
     "変更はWebSocketで、開いているすべてのタブに届きます。アプリはインストールでき、ネットワークなしでも開け、書き込みをキューにためます。誰かの作業を上書きする代わりに、競合として表示します。",
   "HomeFeatures.groupsTitle": "最初からグループ対応",
@@ -604,19 +601,24 @@ export default {
   "FeaturesFaq.title": "Seedでこんなことはできる？",
   "FeatureSection.issue": "issue #{number}",
   "FeatureSection.readMore": "{feature}の詳細",
-  "FeatureVisuals.window1": "ウィンドウ1",
-  "FeatureVisuals.window2": "ウィンドウ2",
-  "FeatureVisuals.realtimeA":
-    "1つ目のウィンドウ：メモエディターで、タイトルを「Q4ロードマップ：オンボーディング、課金、請求書」に変更したところ。",
-  "FeatureVisuals.realtimeB":
-    "2つ目のウィンドウ（別のログイン）：保存した直後に、メモ一覧の先頭に新しいタイトルが再読み込みなしで表示されます。",
-  "FeatureVisuals.offline":
-    "オフラインで行った変更が、サーバー上のより新しい変更とぶつかったところ。「1件の変更について選択が必要です」に、メモの2つのバージョンが並んで表示され、「自分のバージョンを残す」と「サーバーのバージョンを使う」のボタンがあります。",
-  "FeatureVisuals.phone":
-    "同じアプリをスマホにインストールしたところ。検索ボックスとフィルター付きでグループのメモが表示され、各メモには作成者、作成日時、タグが付いています。",
   "FeatureVisuals.deployCaption":
     "一部省略：各ステップの間のrsyncとComposeの出力は割愛しています。",
   "FeatureVisuals.services": "サーバー上のサービス",
+  "Loops.realtimeName": "リアルタイム同期",
+  "Loops.realtimeTitle":
+    "左のウィンドウで保存したメモが、再読み込みなしで1秒以内に右のウィンドウに表示されます。",
+  "Loops.realtimeCaption":
+    "2つのウィンドウ、1つのアカウント。片方で保存すると、もう片方が自動で更新されます。",
+  "Loops.offlineName": "オフライン編集",
+  "Loops.offlineTitle":
+    "アプリがオフラインになり、メモを編集し、再接続すると競合の選択画面がどちらのバージョンを残すかを尋ねます。",
+  "Loops.offlineCaption":
+    "オフラインの編集は送信待ちの箱で待機します。誰かが同じメモを変更していたら、残すバージョンを選べます。",
+  "Loops.shortcutsName": "キーボードショートカット",
+  "Loops.shortcutsTitle":
+    "Ctrl+Kでコマンドパレットが開きます。打ち間違えた検索、キリル文字の検索、間違ったキーボード配列での検索が、どれも同じアクションを見つけて実行します。",
+  "Loops.shortcutsCaption":
+    "Ctrl+K（Macでは⌘K）を押します。検索は打ち間違い、キリル文字、間違ったキーボード配列も受け付けます。",
   "Outbox.change": "変更",
   "Outbox.changeNote": "メモ、メンバーなど",
   "Outbox.event": "そのイベント",

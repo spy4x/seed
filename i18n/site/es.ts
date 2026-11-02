@@ -190,10 +190,9 @@ export default {
   "HomeHero.status":
     "Seed ya se puede usar y se construye en público: <status>mira qué funciona</status>.",
   "HomeHero.quickStart": "Inicio rápido",
-  "HomeHero.initNote":
-    "<code>init</code> crea <code>infra/envs/.env</code> con todos los secretos ya generados. O pídeselo a tu agente de IA: <prompt></prompt>.",
-  "HomeHero.notesAlt":
-    "La pantalla de notas de la aplicación web de Seed: un buscador, filtros por etiqueta y autor, un filtro «Creadas por mí» y un menú de orden sobre la lista de notas de un grupo, cada una con su autor, sus etiquetas, cuándo se actualizó y cuándo se creó, y un botón «Nueva nota».",
+  "HomeHero.demoTitle": "Seed en un minuto, de git clone al panel de administración",
+  "HomeHero.demoCaption":
+    "Demo de 1 minuto con subtítulos y música: clonar, arrancar, escribir una nota, abrir el panel de administración.",
   "HomeHero.aiPrompt":
     "Crea mi nuevo producto «Acme» a partir de https://github.com/spy4x/seed y ejecútalo en local",
   "HomeFeatures.billingAlt":
@@ -214,8 +213,6 @@ export default {
     "Suscripciones de Stripe por grupo: un plan gratuito con límites, un plan de pago por miembro, periodos de prueba y un periodo de gracia cuando falla una tarjeta. El propietario confirma el precio antes de cada invitación.",
   "HomeFeatures.realtimeTitle": "Tiempo real y sin conexión",
   "HomeFeatures.realtimeLink": "Cómo funcionan el tiempo real y el modo sin conexión",
-  "HomeFeatures.realtimeAlt":
-    "El editor de notas de la app de Seed mientras se cambia el título; todas las demás ventanas abiertas muestran el título nuevo tras pulsar «Guardar».",
   "HomeFeatures.realtimeText":
     "Los cambios llegan a cada pestaña abierta por WebSocket. La aplicación se instala, abre sin red, pone en cola lo que escribes y muestra un conflicto en lugar de sobrescribir el trabajo de otra persona.",
   "HomeFeatures.groupsTitle": "Grupos desde el primer día",
@@ -634,19 +631,23 @@ export default {
   "FeaturesFaq.title": "¿Seed puede hacer eso?",
   "FeatureSection.issue": "issue #{number}",
   "FeatureSection.readMore": "Más sobre {feature}",
-  "FeatureVisuals.window1": "Ventana 1",
-  "FeatureVisuals.window2": "Ventana 2",
-  "FeatureVisuals.realtimeA":
-    "Primera ventana: el editor de notas, con el título cambiado a «Hoja de ruta T4: incorporación, facturación y facturas».",
-  "FeatureVisuals.realtimeB":
-    "Segunda ventana, con otra sesión iniciada: justo después de «Guardar», su lista de notas muestra el título nuevo arriba, sin recargar.",
-  "FeatureVisuals.offline":
-    "Un cambio hecho sin conexión choca con otro más reciente en el servidor: «1 cambio necesita que elijas» muestra las dos versiones de la nota lado a lado, con «Quedarme con el mío» y «Usar el otro».",
-  "FeatureVisuals.phone":
-    "La misma aplicación instalada en un teléfono, con las notas del grupo, un buscador y filtros; cada nota con su autor, cuándo se creó y sus etiquetas.",
   "FeatureVisuals.deployCaption":
     "Resumido: se omite la salida de rsync y Compose entre los pasos.",
   "FeatureVisuals.services": "Servicios en el servidor",
+  "Loops.realtimeName": "Sincronización en tiempo real",
+  "Loops.realtimeTitle":
+    "Una nota guardada en la ventana izquierda aparece en la derecha en menos de un segundo, sin recargar.",
+  "Loops.realtimeCaption": "Dos ventanas, una cuenta. Guarda en una y la otra se actualiza sola.",
+  "Loops.offlineName": "Edición sin conexión",
+  "Loops.offlineTitle":
+    "La app se queda sin conexión, se edita una nota y, al reconectar, el selector de conflictos pregunta qué versión conservar.",
+  "Loops.offlineCaption":
+    "Los cambios sin conexión esperan en una bandeja de salida. Si alguien cambió la misma nota, eliges qué versión conservar.",
+  "Loops.shortcutsName": "Atajos de teclado",
+  "Loops.shortcutsTitle":
+    "Ctrl+K abre la paleta de comandos. Una búsqueda con una errata, otra en cirílico y otra con la distribución de teclado equivocada encuentran la misma acción, que después se ejecuta.",
+  "Loops.shortcutsCaption":
+    "Pulsa Ctrl+K (⌘K en un Mac). La búsqueda perdona erratas, el cirílico y la distribución de teclado equivocada.",
   "Outbox.change": "El cambio",
   "Outbox.changeNote": "una nota, un miembro",
   "Outbox.event": "Su evento",

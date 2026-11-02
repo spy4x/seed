@@ -173,10 +173,8 @@ export default {
   "HomeHero.github": "在 GitHub 上查看",
   "HomeHero.status": "Seed 现在就能用，并且在公开开发中：<status>看看有哪些功能可用</status>。",
   "HomeHero.quickStart": "快速开始",
-  "HomeHero.initNote":
-    "<code>init</code> 会生成 <code>infra/envs/.env</code>，并填好所有密钥。也可以直接让你的 AI 编程助手来做：<prompt></prompt>。",
-  "HomeHero.notesAlt":
-    "Seed Web 应用的笔记页面：搜索框、按标签和作者筛选、“我创建的”筛选和排序菜单，下方是一个群组的笔记列表，每条显示作者、标签、更新时间和创建时间，还有一个“新建笔记”按钮。",
+  "HomeHero.demoTitle": "一分钟了解 Seed：从 git clone 到管理后台",
+  "HomeHero.demoCaption": "1 分钟演示，带字幕和音乐：克隆、运行、写一条笔记、打开管理后台。",
   "HomeHero.aiPrompt": "用 https://github.com/spy4x/seed 创建我的新产品“Acme”，并在本地运行",
   "HomeFeatures.billingAlt":
     "演示应用中一个示例群组的套餐，按演示用的示例价格显示：Pro 套餐及其续订日期，每月 €36.00，共 4 位成员，每人 €9.00，含所有者。",
@@ -196,8 +194,6 @@ export default {
     "按群组的 Stripe 订阅：有使用限制的免费版、按成员计费的付费套餐、试用期，以及银行卡扣款失败时的宽限期。所有者在每次邀请前都会先确认价格。",
   "HomeFeatures.realtimeTitle": "实时同步与离线",
   "HomeFeatures.realtimeLink": "实时同步和离线的工作原理",
-  "HomeFeatures.realtimeAlt":
-    "Seed 应用的笔记编辑器，正在修改标题；点击“保存”后，其他所有打开的窗口都会显示新标题。",
   "HomeFeatures.realtimeText":
     "更改通过 WebSocket 同步到每个打开的标签页。应用可以安装，没有网络也能打开，写入操作会排队等待，遇到冲突时会提示你，而不是直接覆盖别人的内容。",
   "HomeFeatures.groupsTitle": "从第一天起就支持群组",
@@ -564,18 +560,20 @@ export default {
   "FeaturesFaq.title": "Seed 能做到吗？",
   "FeatureSection.issue": "issue #{number}",
   "FeatureSection.readMore": "了解更多：{feature}",
-  "FeatureVisuals.window1": "窗口 1",
-  "FeatureVisuals.window2": "窗口 2",
-  "FeatureVisuals.realtimeA":
-    "第一个窗口：笔记编辑器，标题已改为“Q4 路线图：新用户引导、计费和发票”。",
-  "FeatureVisuals.realtimeB":
-    "第二个窗口，单独登录：点击“保存”后，它的笔记列表顶部立刻显示新标题，无需刷新。",
-  "FeatureVisuals.offline":
-    "离线时做的更改遇到了服务器上更新的版本：“有 1 项更改需要你来选择”并排显示笔记的两个版本，并提供“保留我的版本”和“使用服务器版本”。",
-  "FeatureVisuals.phone":
-    "同一个应用安装在手机上，显示群组的笔记，带搜索框和筛选，每条笔记显示作者、创建时间和标签。",
   "FeatureVisuals.deployCaption": "已精简：省略了各步骤之间 rsync 和 Compose 的输出。",
   "FeatureVisuals.services": "服务器上的服务",
+  "Loops.realtimeName": "实时同步",
+  "Loops.realtimeTitle": "在左边窗口保存的笔记，一秒内就出现在右边窗口，无需刷新。",
+  "Loops.realtimeCaption": "两个窗口，同一个账户。在一个窗口保存，另一个会自动更新。",
+  "Loops.offlineName": "离线编辑",
+  "Loops.offlineTitle": "应用断网后编辑一条笔记，重新连接时，冲突选择器会询问保留哪个版本。",
+  "Loops.offlineCaption":
+    "离线编辑会在发件箱里排队。如果有人改了同一条笔记，由你选择保留哪个版本。",
+  "Loops.shortcutsName": "键盘快捷键",
+  "Loops.shortcutsTitle":
+    "Ctrl+K 打开命令面板。拼错的搜索、西里尔字母的搜索和用错键盘布局的搜索，都能找到同一个操作，然后执行它。",
+  "Loops.shortcutsCaption":
+    "按 Ctrl+K（Mac 上为 ⌘K）。搜索能容忍拼写错误、西里尔字母和用错的键盘布局。",
   "Outbox.change": "更改",
   "Outbox.changeNote": "一条笔记、一位成员",
   "Outbox.event": "它的事件",
