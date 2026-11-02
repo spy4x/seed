@@ -95,10 +95,15 @@ export function fallback(
     managed: formatMoney(managed, MANAGED.currency, t.language),
     managedEuro: euro(toEuro(managed)),
   })
-  const verdict = t.t(`PostFigure.HostingCost.${cheaper}Verdict`, {
-    month: euro(monthly),
-    year: euro(12 * monthly),
-  })
+  const verdict = t.t(
+    cheaper === `seed`
+      ? `PostFigure.HostingCost.seedVerdict`
+      : `PostFigure.HostingCost.managedVerdict`,
+    {
+      month: euro(monthly),
+      year: euro(12 * monthly),
+    },
+  )
   return `${facts} ${verdict}`
 }
 
@@ -170,7 +175,13 @@ export default function HostingCost(
           </dd>
         </div>
         <div class="flex flex-col gap-1">
-          <dt class="text-sm text-muted">{t.t(`PostFigure.HostingCost.${cheaper}Saves`)}</dt>
+          <dt class="text-sm text-muted">
+            {t.t(
+              cheaper === `seed`
+                ? `PostFigure.HostingCost.seedSaves`
+                : `PostFigure.HostingCost.managedSaves`,
+            )}
+          </dt>
           <dd class={value}>
             {t.t(`PostFigure.HostingCost.perMonth`, {
               amount: formatMoney(monthly, HETZNER.currency, figure.language),
