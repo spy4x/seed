@@ -879,6 +879,25 @@ export default {
   "PostFigure.noScript":
     "Gezeigt mit den Zahlen des Beitrags. Schalte JavaScript ein, um deine eigenen auszuprobieren.",
   "PostFigure.rssLink": "Auf der Website ausprobieren: {link}",
+  "PostFigure.OfflineSyncDemo.title": "Eine Notiz ohne Netz schreiben",
+  "PostFigure.OfflineSyncDemo.lead":
+    "Schreib offline eine Notiz und schalte das Netz dann wieder ein.",
+  "PostFigure.OfflineSyncDemo.network": "Netz",
+  "PostFigure.OfflineSyncDemo.online": "Online",
+  "PostFigure.OfflineSyncDemo.offline": "Offline",
+  "PostFigure.OfflineSyncDemo.write": "Notiz schreiben",
+  "PostFigure.OfflineSyncDemo.device": "Dieses Gerät",
+  "PostFigure.OfflineSyncDemo.server": "Server",
+  "PostFigure.OfflineSyncDemo.saved": "Gespeichert",
+  "PostFigure.OfflineSyncDemo.waiting": "Wartet auf Sync",
+  "PostFigure.OfflineSyncDemo.note": "Notiz {number}",
+  "PostFigure.OfflineSyncDemo.queue": "Änderungen, die auf Sync warten: {count}",
+  "PostFigure.OfflineSyncDemo.synced": "Alles ist auf dem Server.",
+  "PostFigure.OfflineSyncDemo.full": "Für die Demo reichen die Notizen.",
+  "PostFigure.OfflineSyncDemo.caption":
+    "Ein Modell der Warteschlange von Seed. Die echte liegt in IndexedDB und schickt jede Änderung mit ihrem Idempotenzschlüssel.",
+  "PostFigure.OfflineSyncDemo.fallback":
+    "Offline wird eine neue Notiz auf dem Gerät gespeichert und als „Wartet auf Sync“ markiert. Sobald das Netz zurück ist, geht die Warteschlange in der Reihenfolge an den Server, in der sie geschrieben wurde.",
   "PostFigure.CostCalculator.title": "Was der Pro-Tarif der Demo dein Team kostet",
   "PostFigure.CostCalculator.lead":
     "Pro wird pro Mitglied abgerechnet. Stell die Größe deines Teams ein.",

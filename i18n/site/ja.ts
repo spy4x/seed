@@ -844,6 +844,25 @@ export default {
   "PostFigure.noScript":
     "記事の数値で表示しています。自分の数値で試すにはJavaScriptを有効にしてください。",
   "PostFigure.rssLink": "サイトで試す：{link}",
+  "PostFigure.OfflineSyncDemo.title": "ネットワークなしでメモを書く",
+  "PostFigure.OfflineSyncDemo.lead":
+    "オフラインでメモを書いてから、ネットワークを元に戻してください。",
+  "PostFigure.OfflineSyncDemo.network": "ネットワーク",
+  "PostFigure.OfflineSyncDemo.online": "オンライン",
+  "PostFigure.OfflineSyncDemo.offline": "オフライン",
+  "PostFigure.OfflineSyncDemo.write": "メモを書く",
+  "PostFigure.OfflineSyncDemo.device": "この端末",
+  "PostFigure.OfflineSyncDemo.server": "サーバー",
+  "PostFigure.OfflineSyncDemo.saved": "保存済み",
+  "PostFigure.OfflineSyncDemo.waiting": "同期待ち",
+  "PostFigure.OfflineSyncDemo.note": "メモ{number}",
+  "PostFigure.OfflineSyncDemo.queue": "同期待ちの変更：{count}",
+  "PostFigure.OfflineSyncDemo.synced": "すべてサーバーに保存されています。",
+  "PostFigure.OfflineSyncDemo.full": "デモのメモはここまでです。",
+  "PostFigure.OfflineSyncDemo.caption":
+    "Seedの送信キューを再現したモデルです。実際のキューはIndexedDBにあり、書き込みごとに冪等キーを付けて送信します。",
+  "PostFigure.OfflineSyncDemo.fallback":
+    "オフラインでは、新しいメモは端末に保存され「同期待ち」と表示されます。ネットワークが戻ると、キューは書いた順にサーバーへ送られます。",
   "PostFigure.CostCalculator.title": "デモのProプランでチームにかかる費用",
   "PostFigure.CostCalculator.lead": "Proはメンバーごとの課金です。チームの人数を設定してください。",
   "PostFigure.CostCalculator.members": "チームのメンバー",
