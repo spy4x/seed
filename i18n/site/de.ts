@@ -888,190 +888,196 @@ export default {
   "PostFigure.CostCalculator.caption": "Preise der Demo-Tarife, ohne Steuern.",
   "PostFigure.CostCalculator.fallback":
     "Teammitglieder: {members}. Im Pro-Tarif der Demo zahlen sie {total} im Monat, {price} pro Mitglied.",
-  "FeaturePage.what": "What you get",
-  "FeaturePage.how": "How it works",
-  "FeaturePage.limits": "Limits",
-  "FeaturePage.questions": "Questions",
-  "FeaturePage.updated": "Last updated <time>{date}</time>",
-  "FeaturePage.sectionLink": "Link to this section",
-  "FeaturePage.guide": "Read the guide",
-  "FeaturePage.code": "Read the code: <path>{path}</path>",
-  "FeaturePage.otherFeatures": "Other features",
-  "FeaturePage.readMore": "Read more about {name}",
-  "FeaturePage.all": "All features",
-  "FeaturePage.runtimeQuestion": "Does Seed run on Node or Bun?",
+  "FeaturePage.what": "Was du bekommst",
+  "FeaturePage.how": "So funktioniert es",
+  "FeaturePage.limits": "Grenzen",
+  "FeaturePage.questions": "Fragen",
+  "FeaturePage.updated": "Zuletzt aktualisiert am <time>{date}</time>",
+  "FeaturePage.sectionLink": "Link zu diesem Abschnitt",
+  "FeaturePage.guide": "Anleitung lesen",
+  "FeaturePage.code": "Code lesen: <path>{path}</path>",
+  "FeaturePage.otherFeatures": "Weitere Funktionen",
+  "FeaturePage.readMore": "Mehr über {name} lesen",
+  "FeaturePage.all": "Alle Funktionen",
+  "FeaturePage.runtimeQuestion": "Läuft Seed auf Node oder Bun?",
   "FeaturePage.runtimeAnswer":
-    "Not yet. Seed runs on Deno today, and the move to run on Deno, Node and Bun is in progress (#623). See the runtime plan on the features page.",
-  "FeaturePageMissing.title": "This feature page isn't here",
+    "Noch nicht. Seed läuft heute auf Deno, und die Umstellung auf Deno, Node und Bun ist im Gange (#623). Den Plan dazu findest du auf der Funktionsseite.",
+  "FeaturePageMissing.title": "Diese Funktionsseite gibt es hier nicht",
   "FeaturePageMissing.description":
-    "It may have moved. Every feature Seed ships is on the features page.",
-  "FeaturePageMissing.action": "See all features",
-  "FeaturePageSignIn.name": "Sign-in",
-  "FeaturePageSignIn.title": "Sign-in for your SaaS, without an auth service",
+    "Vielleicht ist sie umgezogen. Jede Funktion von Seed steht auf der Funktionsseite.",
+  "FeaturePageMissing.action": "Alle Funktionen ansehen",
+  "FeaturePageSignIn.name": "Anmeldung",
+  "FeaturePageSignIn.title": "Login für dein SaaS, ohne externen Auth-Dienst",
   "FeaturePageSignIn.description":
-    "Passkeys, sign-in links by email, Google, GitHub and two-factor, checked by your own API with no auth service or fee per user. Free and MIT-licensed.",
-  "FeaturePageSignIn.h1": "Passkeys and sign-in for your SaaS, without an auth service",
+    "Passkeys, Anmeldelinks per E-Mail, Google, GitHub und 2FA, geprüft von deiner eigenen API, ohne Auth-Dienst und Gebühr pro Nutzer. Kostenlos, MIT-Lizenz.",
+  "FeaturePageSignIn.h1": "Passkeys und Login für dein SaaS, ohne externen Auth-Dienst",
   "FeaturePageSignIn.answer":
-    "Seed signs people in with passkeys, sign-in links by email, Google and GitHub, checked by its own API on your server, with no third-party auth service. Passwords, passkeys and sign-in links work as soon as you deploy, with no fee per user; Google and GitHub each need two keys in the env file.",
+    "Seed meldet Leute mit Passkeys, Anmeldelinks per E-Mail, Google und GitHub an, geprüft von der eigenen API auf deinem Server, ohne fremden Auth-Dienst. Passwörter, Passkeys und Anmeldelinks funktionieren direkt nach dem Deployment, ohne Gebühr pro Nutzer; Google und GitHub brauchen je zwei Schlüssel in der Env-Datei.",
   "FeaturePageSignIn.summary":
-    "Passkeys, sign-in links by email, Google, GitHub and two-factor, with no auth service.",
+    "Passkeys, Anmeldelinks per E-Mail, Google, GitHub und 2FA, ohne Auth-Dienst.",
   "FeaturePageSignIn.how1":
-    "The API checks every sign-in itself and answers with a signed session cookie. A passkey uses the browser's own WebAuthn: the server keeps only its public key, and each sign-in challenge works once. A sign-in link signs in or signs up, works once, for 15 minutes, and is stored only as a hash.",
+    "Die API prüft jede Anmeldung selbst und antwortet mit einem signierten Sitzungs-Cookie. Ein Passkey nutzt das eingebaute WebAuthn des Browsers: Der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal. Ein Anmeldelink meldet an oder registriert, gilt einmal und 15 Minuten lang und wird nur als Hash gespeichert.",
   "FeaturePageSignIn.how2":
-    "An authenticator app adds two-factor sign-in. The profile lists every way into the account and every signed-in device, and changing a way in asks for proof and sends an email. A visitor can also start in a guest account and add a way to sign in later.",
-  "FeaturePageSignIn.authServiceQuestion": "Do I need an auth service?",
+    "Eine Authenticator-App ergänzt die Anmeldung um einen zweiten Faktor. Das Profil listet jeden Zugang zum Konto und jedes angemeldete Gerät auf; wer einen Zugang ändert, muss sich ausweisen, und es geht eine E-Mail raus. Besucher können auch mit einem Gastkonto starten und später eine Anmeldemethode hinzufügen.",
+  "FeaturePageSignIn.authServiceQuestion": "Brauche ich einen Auth-Dienst?",
   "FeaturePageSignIn.authServiceAnswer":
-    "No. Seed's own API checks passwords, passkeys, sign-in links and the answers from Google and GitHub, on your server, so nothing is billed per user.",
-  "FeaturePageSignIn.passkeysQuestion": "Does Seed support passkeys?",
+    "Nein. Die eigene API von Seed prüft Passwörter, Passkeys, Anmeldelinks und die Antworten von Google und GitHub auf deinem Server, also wird nichts pro Nutzer berechnet.",
+  "FeaturePageSignIn.passkeysQuestion": "Unterstützt Seed Passkeys?",
   "FeaturePageSignIn.passkeysAnswer":
-    "Yes. People add a passkey on their profile and sign in with it; the server stores only its public key, and each sign-in challenge works once.",
-  "FeaturePageSignIn.twoFactorQuestion": "Does Seed have two-factor authentication?",
+    "Ja. Leute fügen in ihrem Profil einen Passkey hinzu und melden sich damit an; der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal.",
+  "FeaturePageSignIn.twoFactorQuestion": "Hat Seed Zwei-Faktor-Authentifizierung?",
   "FeaturePageSignIn.twoFactorAnswer":
-    "Yes. An authenticator app adds a one-time code at sign-in, also after a sign-in with Google or GitHub.",
-  "FeaturePageSignIn.providersOffQuestion": "Can I leave Google or GitHub sign-in out?",
+    "Ja. Eine Authenticator-App verlangt bei der Anmeldung einen Einmalcode, auch nach einer Anmeldung mit Google oder GitHub.",
+  "FeaturePageSignIn.providersOffQuestion":
+    "Kann ich die Anmeldung mit Google oder GitHub weglassen?",
   "FeaturePageSignIn.providersOffAnswer":
-    "Yes. Each one is off until both of its variables are set in the env file, so leaving them out turns it off.",
-  "FeaturePageGroups.name": "Groups and roles",
-  "FeaturePageGroups.title": "Groups and roles for your SaaS, without the plumbing",
+    "Ja. Jede bleibt aus, bis ihre beiden Variablen in der Env-Datei gesetzt sind; lässt du sie weg, ist sie also aus.",
+  "FeaturePageGroups.name": "Gruppen und Rollen",
+  "FeaturePageGroups.title": "Gruppen, Rollen und Rechte für dein SaaS, fertig eingebaut",
   "FeaturePageGroups.description":
-    "Groups with roles from viewer to owner, invitations, ownership transfer and an activity log, with one tenancy check for all data. Free and MIT-licensed.",
-  "FeaturePageGroups.h1": "Groups and roles for your SaaS, without building multi-tenancy",
+    "Gruppen mit Rollen vom Betrachter bis zum Inhaber, Einladungen, Übertragung, Aktivitätsprotokoll und einer Mandantenprüfung für alles. MIT, kostenlos.",
+  "FeaturePageGroups.h1": "Gruppen und Rollen für dein SaaS, ohne Multi-Tenancy selbst zu bauen",
   "FeaturePageGroups.answer":
-    "Seed gives every account a personal group at sign-up, and people make shared groups, invite others and give them roles from viewer to owner. The group is the one tenancy boundary, so a feature you add passes the same check as soon as it copies the notes aggregate.",
+    "Seed gibt jedem Konto bei der Registrierung eine persönliche Gruppe, und Leute legen gemeinsame Gruppen an, laden andere ein und geben ihnen Rollen vom Betrachter bis zum Inhaber. Die Gruppe ist die einzige Mandantengrenze, also durchläuft eine neue Funktion dieselbe Prüfung, sobald sie das Notizen-Aggregat kopiert.",
   "FeaturePageGroups.summary":
-    "Groups with roles from viewer to owner, invitations and an activity log.",
+    "Gruppen mit Rollen vom Betrachter bis zum Inhaber, Einladungen und Aktivitätsprotokoll.",
   "FeaturePageGroups.how1":
-    "Every row of shared data belongs to a group, and the API checks the person's role in that group before it reads or writes. A viewer reads, an editor also changes the group's data, and an admin and the owner also manage members and read the activity log.",
+    "Jede Zeile gemeinsamer Daten gehört zu einer Gruppe, und die API prüft die Rolle der Person in dieser Gruppe, bevor sie liest oder schreibt. Ein Betrachter liest, ein Bearbeiter ändert auch die Daten der Gruppe, und ein Admin und der Inhaber verwalten zusätzlich Mitglieder und lesen das Aktivitätsprotokoll.",
   "FeaturePageGroups.how2":
-    "The owner hands ownership over in one step, and a deleted group can be restored within 30 days. Only an account whose email address is confirmed can invite.",
-  "FeaturePageGroups.personalGroupQuestion": "Does every account get a group?",
+    "Der Inhaber überträgt die Gruppe in einem Schritt, und eine gelöschte Gruppe lässt sich innerhalb von 30 Tagen wiederherstellen. Einladen kann nur ein Konto mit bestätigter E-Mail-Adresse.",
+  "FeaturePageGroups.personalGroupQuestion": "Bekommt jedes Konto eine Gruppe?",
   "FeaturePageGroups.personalGroupAnswer":
-    "Yes. Each account gets a personal group at sign-up; a personal group and a shared one pass the same check.",
-  "FeaturePageGroups.viewerQuestion": "Can a viewer change a group's data?",
+    "Ja. Jedes Konto bekommt bei der Registrierung eine persönliche Gruppe; persönliche und gemeinsame Gruppen durchlaufen dieselbe Prüfung.",
+  "FeaturePageGroups.viewerQuestion": "Kann ein Betrachter die Daten einer Gruppe ändern?",
   "FeaturePageGroups.viewerAnswer":
-    "No. A viewer reads the group's data; an editor, an admin or the owner can change it.",
-  "FeaturePageGroups.restoreQuestion": "Can a deleted group come back?",
+    "Nein. Ein Betrachter liest die Daten der Gruppe; ändern können sie ein Bearbeiter, ein Admin oder der Inhaber.",
+  "FeaturePageGroups.restoreQuestion": "Lässt sich eine gelöschte Gruppe wiederherstellen?",
   "FeaturePageGroups.restoreAnswer":
-    "Yes. Its owner can restore it within 30 days; after that the worker removes it for good.",
+    "Ja. Ihr Inhaber kann sie innerhalb von 30 Tagen wiederherstellen; danach entfernt der Worker sie endgültig.",
   "FeaturePageGroups.secondModelQuestion":
-    "Do I need a second permission system for my own features?",
+    "Brauche ich für meine eigenen Funktionen ein zweites Rechtesystem?",
   "FeaturePageGroups.secondModelAnswer":
-    "No. A new aggregate copies the notes aggregate and its group check, so there is one permission model to keep.",
-  "FeaturePageBilling.name": "Billing",
-  "FeaturePageBilling.title": "Stripe billing for your SaaS, without webhook work",
+    "Nein. Ein neues Aggregat kopiert das Notizen-Aggregat samt seiner Gruppenprüfung, also pflegst du nur ein Rechtemodell.",
+  "FeaturePageBilling.name": "Abrechnung",
+  "FeaturePageBilling.title": "Stripe-Abrechnung für dein SaaS, ohne Webhook-Arbeit",
   "FeaturePageBilling.description":
-    "Per-member Stripe billing with a free plan, a 14-day trial, a grace period and server-side limits, kept in sync by webhooks. Free and MIT-licensed.",
-  "FeaturePageBilling.h1": "Per-member Stripe billing for your SaaS, without writing it yourself",
+    "Stripe-Abrechnung pro Mitglied mit Gratis-Tarif, 14 Tagen Testphase, Schonfrist und Limits auf dem Server, per Webhooks synchron. Kostenlos, MIT-Lizenz.",
+  "FeaturePageBilling.h1":
+    "Stripe-Abrechnung pro Mitglied für dein SaaS, ohne sie selbst zu schreiben",
   "FeaturePageBilling.answer":
-    "Seed bills each group per member through Stripe Checkout and the customer portal, with a free plan, a 14-day trial and a grace period after a failed payment. You add three Stripe keys to the env file and set the billing provider to Stripe.",
+    "Seed rechnet jede Gruppe pro Mitglied über Stripe Checkout und das Kundenportal ab, mit einem kostenlosen Tarif, 14 Tagen Testphase und einer Schonfrist nach einer fehlgeschlagenen Zahlung. Du trägst drei Stripe-Schlüssel in die Env-Datei ein und stellst den Abrechnungsanbieter auf Stripe.",
   "FeaturePageBilling.summary":
-    "Per-member Stripe billing with a free plan, a trial and a grace period.",
+    "Stripe-Abrechnung pro Mitglied mit kostenlosem Tarif, Testphase und Schonfrist.",
   "FeaturePageBilling.how1":
-    "Stripe owns the money and the subscription. The app keeps only what Stripe's webhooks report and never decides a plan on its own; the quantity follows the member count, and plan limits are checked on the server.",
+    "Stripe verwaltet das Geld und das Abo. Die App speichert nur, was die Webhooks von Stripe melden, und legt nie selbst einen Tarif fest; die Menge folgt der Mitgliederzahl, und die Limits der Tarife werden auf dem Server geprüft.",
   "FeaturePageBilling.how2":
-    "Every member reads the plan on the group's Billing tab, and only the owner gets the checkout and portal buttons. A failed payment keeps the plan for 7 days by default, then the group goes back to Free.",
-  "FeaturePageBilling.withoutStripeQuestion": "Does billing work without Stripe?",
+    "Jedes Mitglied sieht den Tarif im Reiter „Abrechnung“ der Gruppe, und nur der Inhaber bekommt die Buttons für Checkout und Portal. Nach einer fehlgeschlagenen Zahlung bleibt der Tarif standardmäßig 7 Tage erhalten, dann fällt die Gruppe auf Free zurück.",
+  "FeaturePageBilling.withoutStripeQuestion": "Funktioniert die Abrechnung ohne Stripe?",
   "FeaturePageBilling.withoutStripeAnswer":
-    "No. Stripe is the only provider today; without it billing stays off, and every group is on Free with no limits.",
-  "FeaturePageBilling.trialQuestion": "Is there a free trial?",
-  "FeaturePageBilling.trialAnswer": "Yes. The paid plan starts with a 14-day trial.",
-  "FeaturePageBilling.failedPaymentQuestion": "Does a group keep its plan when a card fails?",
+    "Nein. Stripe ist heute der einzige Anbieter; ohne ihn bleibt die Abrechnung aus, und jede Gruppe ist ohne Limits im Tarif Free.",
+  "FeaturePageBilling.trialQuestion": "Gibt es eine kostenlose Testphase?",
+  "FeaturePageBilling.trialAnswer": "Ja. Der Bezahltarif beginnt mit 14 Tagen Testphase.",
+  "FeaturePageBilling.failedPaymentQuestion":
+    "Behält eine Gruppe ihren Tarif, wenn die Karte abgelehnt wird?",
   "FeaturePageBilling.failedPaymentAnswer":
-    "Yes. It keeps the plan for a grace period, 7 days by default, and the owner sees a notice with the date; then the group goes back to Free.",
-  "FeaturePageBilling.cutQuestion": "Does Seed take a cut of payments?",
-  "FeaturePageBilling.cutAnswer": "No. Seed is MIT-licensed; you pay only Stripe's own fees.",
-  "FeaturePageRealtime.name": "Realtime sync",
-  "FeaturePageRealtime.title": "Realtime sync for your SaaS, without a hosted service",
+    "Ja. Sie behält den Tarif während einer Schonfrist, standardmäßig 7 Tage, und der Inhaber sieht einen Hinweis mit dem Datum; danach fällt die Gruppe auf Free zurück.",
+  "FeaturePageBilling.cutQuestion": "Behält Seed einen Anteil an den Zahlungen ein?",
+  "FeaturePageBilling.cutAnswer":
+    "Nein. Seed steht unter MIT-Lizenz; du zahlst nur die Gebühren von Stripe selbst.",
+  "FeaturePageRealtime.name": "Echtzeit-Sync",
+  "FeaturePageRealtime.title": "Echtzeit-Sync für dein SaaS, ohne gehosteten Dienst",
   "FeaturePageRealtime.description":
-    "A change saved in one tab shows in every other open tab of the group within a second, over a WebSocket from your own API. Free and MIT-licensed.",
-  "FeaturePageRealtime.h1": "Realtime updates for your SaaS, without a hosted realtime service",
+    "Eine in einem Tab gespeicherte Änderung erscheint binnen einer Sekunde in jedem offenen Tab der Gruppe, per WebSocket deiner API. Kostenlos, MIT-Lizenz.",
+  "FeaturePageRealtime.h1": "Echtzeit-Updates für dein SaaS, ohne gehosteten Echtzeit-Dienst",
   "FeaturePageRealtime.answer":
-    "Seed sends each saved change to every open tab of the group over a WebSocket from its own API, so a note saved in one window shows in the others within a second, with no reload. It runs on your server with no realtime service to pay for; a feature you add gets it by copying the notes example.",
+    "Seed schickt jede gespeicherte Änderung per WebSocket von der eigenen API an jeden offenen Tab der Gruppe, sodass eine in einem Fenster gespeicherte Notiz binnen einer Sekunde in den anderen erscheint, ohne Neuladen. Das läuft auf deinem Server, ohne Echtzeit-Dienst, für den du zahlst; eine neue Funktion bekommt es, indem sie das Notizen-Beispiel kopiert.",
   "FeaturePageRealtime.summary":
-    "A change saved in one tab shows in every other open tab, with no reload.",
+    "Eine in einem Tab gespeicherte Änderung erscheint in jedem anderen offenen Tab, ohne Neuladen.",
   "FeaturePageRealtime.how1":
-    "Each write is committed with the group's next sequence number, and the API pushes it to every member's open socket. A tab applies a change only when its number follows the last one it has; on a gap it asks the server for everything after its cursor, so a dropped message costs one extra request and never a wrong list.",
+    "Jeder Schreibvorgang wird mit der nächsten Sequenznummer der Gruppe gespeichert, und die API schickt ihn an den offenen Socket jedes Mitglieds. Ein Tab übernimmt eine Änderung nur, wenn ihre Nummer direkt auf seine letzte folgt; bei einer Lücke fragt er den Server nach allem nach seinem Cursor. Eine verlorene Nachricht kostet also eine zusätzliche Anfrage, aber nie eine falsche Liste.",
   "FeaturePageRealtime.how2":
-    "A laptop that wakes from sleep reconnects and pulls what it missed. With the socket switched off, the app reads and writes over HTTP and checks for changes every 30 seconds.",
-  "FeaturePageRealtime.realtimeQuestion": "Does Seed update in realtime?",
+    "Ein Laptop, der aus dem Ruhezustand aufwacht, verbindet sich neu und holt nach, was er verpasst hat. Ist der Socket abgeschaltet, liest und schreibt die App über HTTP und fragt alle 30 Sekunden nach Änderungen.",
+  "FeaturePageRealtime.realtimeQuestion": "Aktualisiert sich Seed in Echtzeit?",
   "FeaturePageRealtime.realtimeAnswer":
-    "Yes. A saved change shows in every open tab of the group within a second, with no reload.",
+    "Ja. Eine gespeicherte Änderung erscheint binnen einer Sekunde in jedem offenen Tab der Gruppe, ohne Neuladen.",
   "FeaturePageRealtime.realtimeServiceQuestion":
-    "Do I need Pusher, Ably or another realtime service?",
+    "Brauche ich Pusher, Ably oder einen anderen Echtzeit-Dienst?",
   "FeaturePageRealtime.realtimeServiceAnswer":
-    "No. The WebSocket is served by Seed's own API on your server.",
-  "FeaturePageRealtime.realtimeSleepQuestion": "Does a tab catch up after the laptop sleeps?",
+    "Nein. Den WebSocket stellt die eigene API von Seed auf deinem Server bereit.",
+  "FeaturePageRealtime.realtimeSleepQuestion":
+    "Holt ein Tab alles nach, wenn der Laptop aus dem Ruhezustand kommt?",
   "FeaturePageRealtime.realtimeSleepAnswer":
-    "Yes. It reconnects and pulls every change after the last one it had.",
-  "FeaturePageRealtime.realtimeOffQuestion": "Can I turn realtime off?",
+    "Ja. Er verbindet sich neu und holt jede Änderung nach der letzten, die er hatte.",
+  "FeaturePageRealtime.realtimeOffQuestion": "Kann ich Echtzeit abschalten?",
   "FeaturePageRealtime.realtimeOffAnswer":
-    "Yes. Set SPA_REALTIME=false: the app then checks for changes every 30 seconds and works the same.",
-  "FeaturePageOffline.name": "Offline app",
-  "FeaturePageOffline.title": "Offline app for your SaaS, without building sync",
+    "Ja. Setz SPA_REALTIME=false: Die App fragt dann alle 30 Sekunden nach Änderungen und funktioniert genauso.",
+  "FeaturePageOffline.name": "Offline-App",
+  "FeaturePageOffline.title": "Offline-App für dein SaaS, ohne Sync selbst zu bauen",
   "FeaturePageOffline.description":
-    "An installable app that opens with no network, keeps every list on the device and queues edits until the connection returns. Free and MIT-licensed.",
-  "FeaturePageOffline.h1": "An offline-first app for your SaaS, without a sync engine to build",
+    "Installierbare App, die ohne Netz startet, jede Liste auf dem Gerät behält und Änderungen aufhebt, bis die Verbindung zurück ist. Kostenlos, MIT-Lizenz.",
+  "FeaturePageOffline.h1": "Eine Offline-first-App für dein SaaS, ohne eigene Sync-Engine",
   "FeaturePageOffline.answer":
-    "Seed's app installs like a native one, opens with no network, shows every list it last saw and lets people add, edit and delete notes and tags offline. Your own feature picks one of three levels, online only, readable offline or writable offline, and follows the written recipe for it.",
+    "Die App von Seed lässt sich wie eine native installieren, startet ohne Netz, zeigt jede Liste so, wie sie sie zuletzt gesehen hat, und lässt Leute Notizen und Tags offline anlegen, bearbeiten und löschen. Deine eigene Funktion wählt eine von drei Stufen, nur online, offline lesbar oder offline beschreibbar, und folgt dem schriftlichen Rezept dafür.",
   "FeaturePageOffline.summary":
-    "An installable app that opens with no network and syncs when it returns.",
+    "Eine installierbare App, die ohne Netz startet und synchronisiert, sobald es zurück ist.",
   "FeaturePageOffline.how1":
-    'The device keeps an IndexedDB copy of each list, and writes wait in a queue with idempotency keys, so a change sent twice is applied once. A change the server cannot take shows as a conflict with "Keep mine" or "Use the server\'s"; nothing is overwritten on its own.',
+    "Das Gerät hält eine IndexedDB-Kopie jeder Liste, und Schreibvorgänge warten mit Idempotenzschlüsseln in einer Warteschlange, sodass eine doppelt gesendete Änderung nur einmal angewendet wird. Eine Änderung, die der Server nicht annehmen kann, erscheint als Konflikt mit „Meine behalten“ oder „Server-Version nehmen“; nichts wird von selbst überschrieben.",
   "FeaturePageOffline.how2":
-    "A service worker keeps the app's page, scripts and styles, so it opens with no network. Sign-in, deleted items and two-factor set-up need the network.",
-  "FeaturePageOffline.offlineQuestion": "Does Seed work offline?",
+    "Ein Service Worker speichert die Seite, die Skripte und die Styles der App, sodass sie ohne Netz startet. Anmeldung, gelöschte Elemente und die Einrichtung von 2FA brauchen das Netz.",
+  "FeaturePageOffline.offlineQuestion": "Funktioniert Seed offline?",
   "FeaturePageOffline.offlineAnswer":
-    "Yes. The app opens with no network and shows every list it last saw.",
-  "FeaturePageOffline.offlineEditsQuestion": "Can people edit while offline?",
+    "Ja. Die App startet ohne Netz und zeigt jede Liste so, wie sie sie zuletzt gesehen hat.",
+  "FeaturePageOffline.offlineEditsQuestion": "Kann man offline bearbeiten?",
   "FeaturePageOffline.offlineEditsAnswer":
-    "Yes. Notes and tags work offline; other changes need the network, and the screen says so.",
-  "FeaturePageOffline.conflictQuestion": "Does Seed catch two people changing the same note?",
+    "Ja. Notizen und Tags funktionieren offline; andere Änderungen brauchen das Netz, und der Bildschirm sagt das.",
+  "FeaturePageOffline.conflictQuestion": "Erkennt Seed, wenn zwei Leute dieselbe Notiz ändern?",
   "FeaturePageOffline.conflictAnswer":
-    'Yes. The later change shows as a conflict, and its author picks "Keep mine" or "Use the server\'s".',
-  "FeaturePageOffline.removeOfflineQuestion": "Can I remove offline support?",
+    "Ja. Die spätere Änderung erscheint als Konflikt, und ihr Autor wählt „Meine behalten“ oder „Server-Version nehmen“.",
+  "FeaturePageOffline.removeOfflineQuestion": "Kann ich die Offline-Unterstützung entfernen?",
   "FeaturePageOffline.removeOfflineAnswer":
-    "Yes. Turn it off with one switch, or delete one folder and follow the written checklist; a test fails when a step is missed.",
-  "FeaturePageShortcuts.name": "Keyboard shortcuts",
-  "FeaturePageShortcuts.title": "Keyboard shortcuts for your SaaS, without a library",
+    "Ja. Schalte sie mit einem Schalter ab, oder lösche einen Ordner und folge der schriftlichen Checkliste; ein Test schlägt fehl, wenn ein Schritt fehlt.",
+  "FeaturePageShortcuts.name": "Tastenkürzel",
+  "FeaturePageShortcuts.title": "Tastenkürzel für dein SaaS, ohne Bibliothek",
   "FeaturePageShortcuts.description":
-    "Ctrl+K search that forgives typos, Cyrillic and the wrong keyboard layout, and a key for each section of the app. Free and MIT-licensed.",
-  "FeaturePageShortcuts.h1": "A command palette and keyboard shortcuts for your SaaS, built in",
+    "Strg+K-Suche, die Tippfehler, Kyrillisch und das falsche Tastaturlayout verzeiht, und eine Taste für jeden Bereich der App. Kostenlos, MIT-Lizenz.",
+  "FeaturePageShortcuts.h1": "Befehlspalette und Tastenkürzel für dein SaaS, fertig eingebaut",
   "FeaturePageShortcuts.answer":
-    "Seed's app and admin area open a search with Ctrl+K (⌘K on a Mac) that finds pages and actions even with a typo, in Cyrillic or in the wrong keyboard layout. Press ? for every shortcut; a feature you add lists its own keys in the same list and gets them in that dialog.",
+    "Die App und der Adminbereich von Seed öffnen mit Strg+K (⌘K auf dem Mac) eine Suche, die Seiten und Aktionen auch mit Tippfehler, auf Kyrillisch oder im falschen Tastaturlayout findet. Drück ?, um alle Kürzel zu sehen; eine neue Funktion trägt ihre eigenen Tasten in dieselbe Liste ein und erscheint damit in diesem Dialog.",
   "FeaturePageShortcuts.summary":
-    "Ctrl+K search that forgives typos and the wrong layout, and a key for each section.",
+    "Strg+K-Suche, die Tippfehler und das falsche Layout verzeiht, und eine Taste für jeden Bereich.",
   "FeaturePageShortcuts.how1":
-    "One list per app binds the keys and fills the ? dialog, so the dialog never shows a key that does nothing. G then a letter opens a section, N adds a note from any page, and the single-key shortcuts stay quiet while you type in a field.",
+    "Eine Liste pro App bindet die Tasten und füllt den ?-Dialog, sodass der Dialog nie eine Taste zeigt, die nichts tut. G gefolgt von einem Buchstaben öffnet einen Bereich, N legt von jeder Seite aus eine Notiz an, und die Ein-Tasten-Kürzel halten sich zurück, während du in ein Feld tippst.",
   "FeaturePageShortcuts.how2":
-    'The search matches every word in any order, by prefix, with one typo in a longer word, and reads a query typed in the other keyboard layout or the other alphabet, so "зкщашду" finds "Open profile".',
-  "FeaturePageShortcuts.shortcutsQuestion": "Does Seed have keyboard shortcuts?",
+    "Die Suche findet jedes Wort in beliebiger Reihenfolge, per Präfix und mit einem Tippfehler in einem längeren Wort, und versteht eine Eingabe im anderen Tastaturlayout oder im anderen Alphabet, sodass „зкщашду“ „Open profile“ findet.",
+  "FeaturePageShortcuts.shortcutsQuestion": "Hat Seed Tastenkürzel?",
   "FeaturePageShortcuts.shortcutsAnswer":
-    "Yes. Press ? in the app or the admin area to see them all.",
-  "FeaturePageShortcuts.paletteQuestion": "Is there a command palette?",
+    "Ja. Drück ? in der App oder im Adminbereich, um alle zu sehen.",
+  "FeaturePageShortcuts.paletteQuestion": "Gibt es eine Befehlspalette?",
   "FeaturePageShortcuts.paletteAnswer":
-    "Yes. Ctrl+K (⌘K on a Mac) or / opens search over pages and actions.",
-  "FeaturePageShortcuts.shortcutsTypingQuestion": "Do shortcuts fire while I type?",
+    "Ja. Strg+K (⌘K auf dem Mac) oder / öffnet die Suche über Seiten und Aktionen.",
+  "FeaturePageShortcuts.shortcutsTypingQuestion": "Lösen Tastenkürzel aus, während ich tippe?",
   "FeaturePageShortcuts.shortcutsTypingAnswer":
-    "No. Single-key shortcuts stay quiet in a field, and each device can turn them off; Ctrl+K and Escape keep working.",
-  "FeaturePageDeploy.name": "Deploy",
-  "FeaturePageDeploy.title": "Deploy your SaaS, without a cloud platform bill",
+    "Nein. Ein-Tasten-Kürzel halten sich in einem Feld zurück, und jedes Gerät kann sie abschalten; Strg+K und Esc funktionieren weiter.",
+  "FeaturePageDeploy.name": "Deployment",
+  "FeaturePageDeploy.title": "Dein SaaS deployen, ohne Rechnung einer Cloud-Plattform",
   "FeaturePageDeploy.description":
-    "Docker Compose on one Linux server you rent: Traefik, Postgres, Valkey, S3 files, monitoring and backups, deployed in one command. Free and MIT-licensed.",
-  "FeaturePageDeploy.h1": "Self-host your SaaS on one server, without a cloud platform bill",
+    "Docker Compose auf einem gemieteten Linux-Server: Traefik, Postgres, Valkey, S3, Monitoring und Backups, mit einem Befehl deployt. Kostenlos, MIT-Lizenz.",
+  "FeaturePageDeploy.h1":
+    "Dein SaaS auf einem Server selbst hosten, ohne Rechnung einer Cloud-Plattform",
   "FeaturePageDeploy.answer":
-    "Seed runs on a Linux server you rent, with Docker Compose in development and production alike, and one command ships it. You prepare the server once with the written steps, then every later deploy is that command alone.",
-  "FeaturePageDeploy.summary": "One Linux server, Docker Compose and one command to deploy.",
+    "Seed läuft auf einem gemieteten Linux-Server, mit Docker Compose in Entwicklung und Produktion gleichermaßen, und ein Befehl liefert es aus. Du richtest den Server einmal nach der schriftlichen Anleitung ein; danach ist jedes Deployment nur noch dieser eine Befehl.",
+  "FeaturePageDeploy.summary": "Ein Linux-Server, Docker Compose und ein Befehl zum Deployen.",
   "FeaturePageDeploy.how1":
-    "The deploy copies the project to the server over SSH and starts it with Compose; on every deploy a one-shot service applies the database migrations. Traefik sits in front and asks Let's Encrypt for each host's certificate.",
+    "Das Deployment kopiert das Projekt per SSH auf den Server und startet es mit Compose; bei jedem Deployment wendet ein einmaliger Dienst die Datenbankmigrationen an. Traefik sitzt davor und holt bei Let's Encrypt das Zertifikat für jeden Host.",
   "FeaturePageDeploy.how2":
-    "Postgres, Valkey, an S3 file store, metrics, logs and dashboards with alerts run beside the apps, and several products can share one server behind the same proxy.",
-  "FeaturePageDeploy.kubernetesQuestion": "Do I need Kubernetes?",
+    "Postgres, Valkey, ein S3-Dateispeicher, Metriken, Logs und Dashboards mit Alarmen laufen neben den Apps, und mehrere Produkte können sich hinter demselben Proxy einen Server teilen.",
+  "FeaturePageDeploy.kubernetesQuestion": "Brauche ich Kubernetes?",
   "FeaturePageDeploy.kubernetesAnswer":
-    "No. Docker Compose on one server runs the whole product, in development and in production.",
-  "FeaturePageDeploy.severalQuestion": "Can several products share one server?",
+    "Nein. Docker Compose auf einem Server betreibt das ganze Produkt, in Entwicklung und in Produktion.",
+  "FeaturePageDeploy.severalQuestion": "Können sich mehrere Produkte einen Server teilen?",
   "FeaturePageDeploy.severalAnswer":
-    "Yes. They share one proxy, and each keeps its own directory, database and data; share a server only between products you trust alike.",
-  "FeaturePageDeploy.backupQuestion": "Is there a backup?",
+    "Ja. Sie teilen sich einen Proxy, und jedes behält sein eigenes Verzeichnis, seine Datenbank und seine Daten; teile einen Server nur zwischen Produkten, denen du gleichermaßen vertraust.",
+  "FeaturePageDeploy.backupQuestion": "Gibt es ein Backup?",
   "FeaturePageDeploy.backupAnswer":
-    "Yes. An opt-in daily encrypted restic backup of the database, with a written restore.",
+    "Ja. Ein optionales tägliches, verschlüsseltes restic-Backup der Datenbank, mit einer schriftlichen Anleitung zur Wiederherstellung.",
 } satisfies Catalog

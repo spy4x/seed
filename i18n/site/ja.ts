@@ -852,190 +852,192 @@ export default {
   "PostFigure.CostCalculator.caption": "デモのプランの税抜価格です。",
   "PostFigure.CostCalculator.fallback":
     "チームのメンバー：{members}人。デモのProプランでは月額{total}、1人あたり{price}です。",
-  "FeaturePage.what": "What you get",
-  "FeaturePage.how": "How it works",
-  "FeaturePage.limits": "Limits",
-  "FeaturePage.questions": "Questions",
-  "FeaturePage.updated": "Last updated <time>{date}</time>",
-  "FeaturePage.sectionLink": "Link to this section",
-  "FeaturePage.guide": "Read the guide",
-  "FeaturePage.code": "Read the code: <path>{path}</path>",
-  "FeaturePage.otherFeatures": "Other features",
-  "FeaturePage.readMore": "Read more about {name}",
-  "FeaturePage.all": "All features",
-  "FeaturePage.runtimeQuestion": "Does Seed run on Node or Bun?",
+  "FeaturePage.what": "できること",
+  "FeaturePage.how": "仕組み",
+  "FeaturePage.limits": "制限事項",
+  "FeaturePage.questions": "よくある質問",
+  "FeaturePage.updated": "最終更新：<time>{date}</time>",
+  "FeaturePage.sectionLink": "このセクションへのリンク",
+  "FeaturePage.guide": "ガイドを読む",
+  "FeaturePage.code": "コードを読む：<path>{path}</path>",
+  "FeaturePage.otherFeatures": "ほかの機能",
+  "FeaturePage.readMore": "{name}について詳しく読む",
+  "FeaturePage.all": "すべての機能",
+  "FeaturePage.runtimeQuestion": "SeedはNodeやBunで動きますか？",
   "FeaturePage.runtimeAnswer":
-    "Not yet. Seed runs on Deno today, and the move to run on Deno, Node and Bun is in progress (#623). See the runtime plan on the features page.",
-  "FeaturePageMissing.title": "This feature page isn't here",
+    "まだです。Seedは現在Denoで動いており、Deno・Node・Bunのどれでも動くようにする作業を進めています（#623）。機能ページのランタイム計画をご覧ください。",
+  "FeaturePageMissing.title": "この機能ページは見つかりません",
   "FeaturePageMissing.description":
-    "It may have moved. Every feature Seed ships is on the features page.",
-  "FeaturePageMissing.action": "See all features",
-  "FeaturePageSignIn.name": "Sign-in",
-  "FeaturePageSignIn.title": "Sign-in for your SaaS, without an auth service",
+    "移動した可能性があります。Seedのすべての機能は機能ページに載っています。",
+  "FeaturePageMissing.action": "すべての機能を見る",
+  "FeaturePageSignIn.name": "ログイン",
+  "FeaturePageSignIn.title": "SaaSのログイン機能を、認証サービスなしで",
   "FeaturePageSignIn.description":
-    "Passkeys, sign-in links by email, Google, GitHub and two-factor, checked by your own API with no auth service or fee per user. Free and MIT-licensed.",
-  "FeaturePageSignIn.h1": "Passkeys and sign-in for your SaaS, without an auth service",
+    "パスキー、メールのログインリンク、Google、GitHub、2段階認証。自分のAPIで検証するので、認証サービスもユーザー単位の料金も不要です。無料・MITライセンス。",
+  "FeaturePageSignIn.h1": "SaaSにパスキーとログイン機能を、認証サービスなしで",
   "FeaturePageSignIn.answer":
-    "Seed signs people in with passkeys, sign-in links by email, Google and GitHub, checked by its own API on your server, with no third-party auth service. Passwords, passkeys and sign-in links work as soon as you deploy, with no fee per user; Google and GitHub each need two keys in the env file.",
+    "Seedは、パスキー、メールのログインリンク、Google、GitHubでのログインに対応し、その検証はサーバー上の自前のAPIが行います。外部の認証サービスは使いません。パスワード、パスキー、ログインリンクはデプロイした時点で使え、ユーザー単位の料金はかかりません。GoogleとGitHubは、それぞれenvファイルに2つのキーが必要です。",
   "FeaturePageSignIn.summary":
-    "Passkeys, sign-in links by email, Google, GitHub and two-factor, with no auth service.",
+    "パスキー、メールのログインリンク、Google、GitHub、2段階認証。認証サービスは不要です。",
   "FeaturePageSignIn.how1":
-    "The API checks every sign-in itself and answers with a signed session cookie. A passkey uses the browser's own WebAuthn: the server keeps only its public key, and each sign-in challenge works once. A sign-in link signs in or signs up, works once, for 15 minutes, and is stored only as a hash.",
+    "APIがすべてのログインを自ら検証し、署名付きのセッションCookieを返します。パスキーはブラウザ標準のWebAuthnを使い、サーバーが保存するのは公開鍵だけで、ログインのチャレンジは1回限り有効です。ログインリンクはログインにも登録にも使え、1回限り・15分間有効で、ハッシュとしてのみ保存されます。",
   "FeaturePageSignIn.how2":
-    "An authenticator app adds two-factor sign-in. The profile lists every way into the account and every signed-in device, and changing a way in asks for proof and sends an email. A visitor can also start in a guest account and add a way to sign in later.",
-  "FeaturePageSignIn.authServiceQuestion": "Do I need an auth service?",
+    "認証アプリを使えば2段階認証を追加できます。プロフィールには、アカウントに入るすべての方法とログイン中のすべてのデバイスが一覧表示され、ログイン方法を変更するときは本人確認を求めてメールで通知します。訪問者はゲストアカウントで始めて、あとからログイン方法を追加することもできます。",
+  "FeaturePageSignIn.authServiceQuestion": "認証サービスは必要ですか？",
   "FeaturePageSignIn.authServiceAnswer":
-    "No. Seed's own API checks passwords, passkeys, sign-in links and the answers from Google and GitHub, on your server, so nothing is billed per user.",
-  "FeaturePageSignIn.passkeysQuestion": "Does Seed support passkeys?",
+    "いいえ。パスワード、パスキー、ログインリンク、そしてGoogleとGitHubからの応答は、Seed自身のAPIがサーバー上で検証するので、ユーザー単位の料金は一切かかりません。",
+  "FeaturePageSignIn.passkeysQuestion": "Seedはパスキーに対応していますか？",
   "FeaturePageSignIn.passkeysAnswer":
-    "Yes. People add a passkey on their profile and sign in with it; the server stores only its public key, and each sign-in challenge works once.",
-  "FeaturePageSignIn.twoFactorQuestion": "Does Seed have two-factor authentication?",
+    "はい。ユーザーはプロフィールでパスキーを追加し、それでログインできます。サーバーが保存するのは公開鍵だけで、ログインのチャレンジは1回限り有効です。",
+  "FeaturePageSignIn.twoFactorQuestion": "Seedに2段階認証はありますか？",
   "FeaturePageSignIn.twoFactorAnswer":
-    "Yes. An authenticator app adds a one-time code at sign-in, also after a sign-in with Google or GitHub.",
-  "FeaturePageSignIn.providersOffQuestion": "Can I leave Google or GitHub sign-in out?",
+    "はい。認証アプリのワンタイムコードをログイン時に求めます。GoogleやGitHubでログインした場合も同様です。",
+  "FeaturePageSignIn.providersOffQuestion":
+    "GoogleやGitHubでのログインを使わないこともできますか？",
   "FeaturePageSignIn.providersOffAnswer":
-    "Yes. Each one is off until both of its variables are set in the env file, so leaving them out turns it off.",
-  "FeaturePageGroups.name": "Groups and roles",
-  "FeaturePageGroups.title": "Groups and roles for your SaaS, without the plumbing",
+    "はい。どちらも、envファイルに2つの変数を両方設定するまではオフなので、設定しなければオフのままです。",
+  "FeaturePageGroups.name": "グループとロール",
+  "FeaturePageGroups.title": "SaaSのグループとロール（権限管理）を、作り込みなしで",
   "FeaturePageGroups.description":
-    "Groups with roles from viewer to owner, invitations, ownership transfer and an activity log, with one tenancy check for all data. Free and MIT-licensed.",
-  "FeaturePageGroups.h1": "Groups and roles for your SaaS, without building multi-tenancy",
+    "閲覧者からオーナーまでのロール付きグループ、招待、オーナー権限の譲渡、アクティビティログ。すべてのデータを1つのテナントチェックで守ります。無料・MITライセンス。",
+  "FeaturePageGroups.h1": "SaaSのグループとロールを、マルチテナントを自作せずに",
   "FeaturePageGroups.answer":
-    "Seed gives every account a personal group at sign-up, and people make shared groups, invite others and give them roles from viewer to owner. The group is the one tenancy boundary, so a feature you add passes the same check as soon as it copies the notes aggregate.",
+    "Seedは登録時にすべてのアカウントに個人用グループを作ります。ユーザーは共有グループを作り、ほかの人を招待して、閲覧者からオーナーまでのロールを割り当てられます。テナントの境界はグループの1つだけなので、追加した機能も、メモの集約をコピーした時点で同じチェックを通ります。",
   "FeaturePageGroups.summary":
-    "Groups with roles from viewer to owner, invitations and an activity log.",
+    "閲覧者からオーナーまでのロール付きグループ、招待、アクティビティログ。",
   "FeaturePageGroups.how1":
-    "Every row of shared data belongs to a group, and the API checks the person's role in that group before it reads or writes. A viewer reads, an editor also changes the group's data, and an admin and the owner also manage members and read the activity log.",
+    "共有データのすべての行はいずれかのグループに属し、APIは読み書きの前に、そのグループでのその人のロールを確認します。閲覧者は読むだけ、編集者はグループのデータも変更でき、管理者とオーナーはさらにメンバーを管理し、アクティビティログを読めます。",
   "FeaturePageGroups.how2":
-    "The owner hands ownership over in one step, and a deleted group can be restored within 30 days. Only an account whose email address is confirmed can invite.",
-  "FeaturePageGroups.personalGroupQuestion": "Does every account get a group?",
+    "オーナーはワンステップでオーナー権限を譲渡でき、削除したグループは30日以内なら復元できます。招待できるのは、メールアドレスを確認済みのアカウントだけです。",
+  "FeaturePageGroups.personalGroupQuestion": "すべてのアカウントにグループがありますか？",
   "FeaturePageGroups.personalGroupAnswer":
-    "Yes. Each account gets a personal group at sign-up; a personal group and a shared one pass the same check.",
-  "FeaturePageGroups.viewerQuestion": "Can a viewer change a group's data?",
+    "はい。各アカウントには登録時に個人用グループが作られます。個人用グループも共有グループも、同じチェックを通ります。",
+  "FeaturePageGroups.viewerQuestion": "閲覧者はグループのデータを変更できますか？",
   "FeaturePageGroups.viewerAnswer":
-    "No. A viewer reads the group's data; an editor, an admin or the owner can change it.",
-  "FeaturePageGroups.restoreQuestion": "Can a deleted group come back?",
+    "いいえ。閲覧者はグループのデータを読むだけです。変更できるのは編集者、管理者、オーナーです。",
+  "FeaturePageGroups.restoreQuestion": "削除したグループは元に戻せますか？",
   "FeaturePageGroups.restoreAnswer":
-    "Yes. Its owner can restore it within 30 days; after that the worker removes it for good.",
-  "FeaturePageGroups.secondModelQuestion":
-    "Do I need a second permission system for my own features?",
+    "はい。オーナーが30日以内に復元できます。それを過ぎると、ワーカーが完全に削除します。",
+  "FeaturePageGroups.secondModelQuestion": "自分の機能のために、2つ目の権限システムが必要ですか？",
   "FeaturePageGroups.secondModelAnswer":
-    "No. A new aggregate copies the notes aggregate and its group check, so there is one permission model to keep.",
-  "FeaturePageBilling.name": "Billing",
-  "FeaturePageBilling.title": "Stripe billing for your SaaS, without webhook work",
+    "いいえ。新しい集約はメモの集約とそのグループチェックをコピーするので、管理する権限モデルは1つだけです。",
+  "FeaturePageBilling.name": "課金",
+  "FeaturePageBilling.title": "SaaSのStripe課金を、Webhookの実装なしで",
   "FeaturePageBilling.description":
-    "Per-member Stripe billing with a free plan, a 14-day trial, a grace period and server-side limits, kept in sync by webhooks. Free and MIT-licensed.",
-  "FeaturePageBilling.h1": "Per-member Stripe billing for your SaaS, without writing it yourself",
+    "無料プラン、14日間のトライアル、猶予期間、サーバー側の上限チェックを備えた、メンバー単位のStripe課金。Webhookで同期します。無料・MITライセンス。",
+  "FeaturePageBilling.h1": "SaaSにメンバー単位のStripe課金を、自分で書かずに",
   "FeaturePageBilling.answer":
-    "Seed bills each group per member through Stripe Checkout and the customer portal, with a free plan, a 14-day trial and a grace period after a failed payment. You add three Stripe keys to the env file and set the billing provider to Stripe.",
+    "Seedは、Stripe Checkoutとカスタマーポータルを通じて、各グループにメンバー単位で課金します。無料プラン、14日間のトライアル、支払い失敗後の猶予期間も備えています。envファイルにStripeのキーを3つ追加し、課金プロバイダーをStripeに設定します。",
   "FeaturePageBilling.summary":
-    "Per-member Stripe billing with a free plan, a trial and a grace period.",
+    "無料プラン、トライアル、猶予期間付きの、メンバー単位のStripe課金。",
   "FeaturePageBilling.how1":
-    "Stripe owns the money and the subscription. The app keeps only what Stripe's webhooks report and never decides a plan on its own; the quantity follows the member count, and plan limits are checked on the server.",
+    "お金とサブスクリプションを管理するのはStripeです。アプリはStripeのWebhookが知らせた内容だけを保存し、自分でプランを決めることはありません。数量はメンバー数に連動し、プランの上限はサーバーでチェックします。",
   "FeaturePageBilling.how2":
-    "Every member reads the plan on the group's Billing tab, and only the owner gets the checkout and portal buttons. A failed payment keeps the plan for 7 days by default, then the group goes back to Free.",
-  "FeaturePageBilling.withoutStripeQuestion": "Does billing work without Stripe?",
+    "どのメンバーもグループの「請求」タブでプランを確認でき、チェックアウトとポータルのボタンが表示されるのはオーナーだけです。支払いに失敗しても、デフォルトでは7日間プランが維持され、その後グループは無料プランに戻ります。",
+  "FeaturePageBilling.withoutStripeQuestion": "Stripeなしでも課金は使えますか？",
   "FeaturePageBilling.withoutStripeAnswer":
-    "No. Stripe is the only provider today; without it billing stays off, and every group is on Free with no limits.",
-  "FeaturePageBilling.trialQuestion": "Is there a free trial?",
-  "FeaturePageBilling.trialAnswer": "Yes. The paid plan starts with a 14-day trial.",
-  "FeaturePageBilling.failedPaymentQuestion": "Does a group keep its plan when a card fails?",
+    "いいえ。現在対応している決済サービスはStripeだけです。Stripeがなければ課金はオフのままで、すべてのグループが上限なしの無料プランになります。",
+  "FeaturePageBilling.trialQuestion": "無料トライアルはありますか？",
+  "FeaturePageBilling.trialAnswer": "はい。有料プランは14日間のトライアルから始まります。",
+  "FeaturePageBilling.failedPaymentQuestion":
+    "カードの支払いに失敗しても、グループはプランを維持できますか？",
   "FeaturePageBilling.failedPaymentAnswer":
-    "Yes. It keeps the plan for a grace period, 7 days by default, and the owner sees a notice with the date; then the group goes back to Free.",
-  "FeaturePageBilling.cutQuestion": "Does Seed take a cut of payments?",
-  "FeaturePageBilling.cutAnswer": "No. Seed is MIT-licensed; you pay only Stripe's own fees.",
-  "FeaturePageRealtime.name": "Realtime sync",
-  "FeaturePageRealtime.title": "Realtime sync for your SaaS, without a hosted service",
+    "はい。猶予期間（デフォルトで7日間）はプランが維持され、オーナーには日付入りのお知らせが表示されます。その後、グループは無料プランに戻ります。",
+  "FeaturePageBilling.cutQuestion": "Seedは支払いから手数料を取りますか？",
+  "FeaturePageBilling.cutAnswer":
+    "いいえ。SeedはMITライセンスです。支払うのはStripe自体の手数料だけです。",
+  "FeaturePageRealtime.name": "リアルタイム同期",
+  "FeaturePageRealtime.title": "SaaSのリアルタイム同期を、外部サービスなしで",
   "FeaturePageRealtime.description":
-    "A change saved in one tab shows in every other open tab of the group within a second, over a WebSocket from your own API. Free and MIT-licensed.",
-  "FeaturePageRealtime.h1": "Realtime updates for your SaaS, without a hosted realtime service",
+    "あるタブで保存した変更が、グループのほかの開いているタブに1秒以内に表示されます。自前のAPIからWebSocketで送ります。無料・MITライセンス。",
+  "FeaturePageRealtime.h1": "SaaSにリアルタイム更新を、ホスト型のリアルタイムサービスなしで",
   "FeaturePageRealtime.answer":
-    "Seed sends each saved change to every open tab of the group over a WebSocket from its own API, so a note saved in one window shows in the others within a second, with no reload. It runs on your server with no realtime service to pay for; a feature you add gets it by copying the notes example.",
+    "Seedは、保存された変更を自前のAPIからWebSocketで、グループの開いているすべてのタブに送ります。あるウィンドウで保存したメモは、再読み込みなしで1秒以内にほかのウィンドウにも表示されます。自分のサーバーで動くので、料金のかかるリアルタイムサービスは不要です。追加した機能も、メモの例をコピーすればこの仕組みを使えます。",
   "FeaturePageRealtime.summary":
-    "A change saved in one tab shows in every other open tab, with no reload.",
+    "あるタブで保存した変更が、再読み込みなしでほかの開いているタブすべてに表示されます。",
   "FeaturePageRealtime.how1":
-    "Each write is committed with the group's next sequence number, and the API pushes it to every member's open socket. A tab applies a change only when its number follows the last one it has; on a gap it asks the server for everything after its cursor, so a dropped message costs one extra request and never a wrong list.",
+    "各書き込みはグループの次の連番とともにコミットされ、APIはそれを各メンバーの開いているソケットに送ります。タブが変更を適用するのは、その番号が手元の最後の番号の次であるときだけです。番号が飛んでいれば、カーソル以降のすべてをサーバーに問い合わせるので、メッセージが1つ失われてもリクエストが1回増えるだけで、リストが間違うことはありません。",
   "FeaturePageRealtime.how2":
-    "A laptop that wakes from sleep reconnects and pulls what it missed. With the socket switched off, the app reads and writes over HTTP and checks for changes every 30 seconds.",
-  "FeaturePageRealtime.realtimeQuestion": "Does Seed update in realtime?",
+    "スリープから復帰したノートPCは再接続し、見逃した分を取得します。ソケットをオフにすると、アプリはHTTPで読み書きし、30秒ごとに変更を確認します。",
+  "FeaturePageRealtime.realtimeQuestion": "Seedはリアルタイムで更新されますか？",
   "FeaturePageRealtime.realtimeAnswer":
-    "Yes. A saved change shows in every open tab of the group within a second, with no reload.",
+    "はい。保存した変更は、再読み込みなしで1秒以内に、グループの開いているすべてのタブに表示されます。",
   "FeaturePageRealtime.realtimeServiceQuestion":
-    "Do I need Pusher, Ably or another realtime service?",
+    "PusherやAblyなどのリアルタイムサービスは必要ですか？",
   "FeaturePageRealtime.realtimeServiceAnswer":
-    "No. The WebSocket is served by Seed's own API on your server.",
-  "FeaturePageRealtime.realtimeSleepQuestion": "Does a tab catch up after the laptop sleeps?",
+    "いいえ。WebSocketは、自分のサーバー上でSeed自身のAPIが提供します。",
+  "FeaturePageRealtime.realtimeSleepQuestion": "ノートPCがスリープしたあと、タブは追いつきますか？",
   "FeaturePageRealtime.realtimeSleepAnswer":
-    "Yes. It reconnects and pulls every change after the last one it had.",
-  "FeaturePageRealtime.realtimeOffQuestion": "Can I turn realtime off?",
+    "はい。再接続して、手元にある最後の変更以降のすべての変更を取得します。",
+  "FeaturePageRealtime.realtimeOffQuestion": "リアルタイムをオフにできますか？",
   "FeaturePageRealtime.realtimeOffAnswer":
-    "Yes. Set SPA_REALTIME=false: the app then checks for changes every 30 seconds and works the same.",
-  "FeaturePageOffline.name": "Offline app",
-  "FeaturePageOffline.title": "Offline app for your SaaS, without building sync",
+    "はい。SPA_REALTIME=falseを設定してください。アプリは30秒ごとに変更を確認するようになり、同じように動きます。",
+  "FeaturePageOffline.name": "オフラインアプリ",
+  "FeaturePageOffline.title": "SaaSのオフライン対応アプリを、同期を自作せずに",
   "FeaturePageOffline.description":
-    "An installable app that opens with no network, keeps every list on the device and queues edits until the connection returns. Free and MIT-licensed.",
-  "FeaturePageOffline.h1": "An offline-first app for your SaaS, without a sync engine to build",
+    "ネットワークなしで開けるインストール可能なアプリ。すべてのリストを端末に保存し、接続が戻るまで編集をキューにためます。無料・MITライセンス。",
+  "FeaturePageOffline.h1": "SaaSにオフラインファーストのアプリを、同期エンジンを作らずに",
   "FeaturePageOffline.answer":
-    "Seed's app installs like a native one, opens with no network, shows every list it last saw and lets people add, edit and delete notes and tags offline. Your own feature picks one of three levels, online only, readable offline or writable offline, and follows the written recipe for it.",
+    "Seedのアプリはネイティブアプリのようにインストールでき、ネットワークなしでも開けて、最後に表示したすべてのリストを表示します。オフラインでもメモとタグを追加・編集・削除できます。自分の機能は、オンラインのみ、オフラインで閲覧可、オフラインで書き込み可の3段階から1つを選び、それぞれ用意された手順に従います。",
   "FeaturePageOffline.summary":
-    "An installable app that opens with no network and syncs when it returns.",
+    "ネットワークなしで開けて、接続が戻ると同期するインストール可能なアプリ。",
   "FeaturePageOffline.how1":
-    'The device keeps an IndexedDB copy of each list, and writes wait in a queue with idempotency keys, so a change sent twice is applied once. A change the server cannot take shows as a conflict with "Keep mine" or "Use the server\'s"; nothing is overwritten on its own.',
+    "端末は各リストのIndexedDBコピーを持ち、書き込みは冪等キー付きのキューで待機するので、2回送られた変更も適用されるのは1回だけです。サーバーが受け付けられない変更は競合として表示され、「自分のバージョンを残す」か「サーバーの内容を使う」かを選べます。勝手に上書きされることはありません。",
   "FeaturePageOffline.how2":
-    "A service worker keeps the app's page, scripts and styles, so it opens with no network. Sign-in, deleted items and two-factor set-up need the network.",
-  "FeaturePageOffline.offlineQuestion": "Does Seed work offline?",
+    "サービスワーカーがアプリのページ、スクリプト、スタイルを保存しておくので、ネットワークなしでも開けます。ログイン、削除済みのアイテム、2段階認証の設定にはネットワークが必要です。",
+  "FeaturePageOffline.offlineQuestion": "Seedはオフラインで使えますか？",
   "FeaturePageOffline.offlineAnswer":
-    "Yes. The app opens with no network and shows every list it last saw.",
-  "FeaturePageOffline.offlineEditsQuestion": "Can people edit while offline?",
+    "はい。アプリはネットワークなしでも開けて、最後に表示したすべてのリストを表示します。",
+  "FeaturePageOffline.offlineEditsQuestion": "オフライン中に編集できますか？",
   "FeaturePageOffline.offlineEditsAnswer":
-    "Yes. Notes and tags work offline; other changes need the network, and the screen says so.",
-  "FeaturePageOffline.conflictQuestion": "Does Seed catch two people changing the same note?",
+    "はい。メモとタグはオフラインでも使えます。それ以外の変更にはネットワークが必要で、画面にそう表示されます。",
+  "FeaturePageOffline.conflictQuestion": "2人が同じメモを変更したら、Seedは検知しますか？",
   "FeaturePageOffline.conflictAnswer":
-    'Yes. The later change shows as a conflict, and its author picks "Keep mine" or "Use the server\'s".',
-  "FeaturePageOffline.removeOfflineQuestion": "Can I remove offline support?",
+    "はい。あとの変更が競合として表示され、その変更をした人が「自分のバージョンを残す」か「サーバーの内容を使う」かを選びます。",
+  "FeaturePageOffline.removeOfflineQuestion": "オフライン対応を取り除けますか？",
   "FeaturePageOffline.removeOfflineAnswer":
-    "Yes. Turn it off with one switch, or delete one folder and follow the written checklist; a test fails when a step is missed.",
-  "FeaturePageShortcuts.name": "Keyboard shortcuts",
-  "FeaturePageShortcuts.title": "Keyboard shortcuts for your SaaS, without a library",
+    "はい。スイッチ1つでオフにするか、フォルダを1つ削除して用意されたチェックリストに従います。手順が抜けているとテストが失敗します。",
+  "FeaturePageShortcuts.name": "キーボードショートカット",
+  "FeaturePageShortcuts.title": "SaaSのキーボードショートカットを、ライブラリなしで",
   "FeaturePageShortcuts.description":
-    "Ctrl+K search that forgives typos, Cyrillic and the wrong keyboard layout, and a key for each section of the app. Free and MIT-licensed.",
-  "FeaturePageShortcuts.h1": "A command palette and keyboard shortcuts for your SaaS, built in",
+    "打ち間違い、キリル文字、間違ったキーボード配列も受け付けるCtrl+K検索と、アプリの各セクションを開くキー。無料・MITライセンス。",
+  "FeaturePageShortcuts.h1": "SaaSにコマンドパレットとキーボードショートカットを標準装備",
   "FeaturePageShortcuts.answer":
-    "Seed's app and admin area open a search with Ctrl+K (⌘K on a Mac) that finds pages and actions even with a typo, in Cyrillic or in the wrong keyboard layout. Press ? for every shortcut; a feature you add lists its own keys in the same list and gets them in that dialog.",
+    "Seedのアプリと管理画面では、Ctrl+K（Macでは⌘K）で検索が開き、打ち間違いやキリル文字、間違ったキーボード配列で入力しても、ページやアクションが見つかります。?キーですべてのショートカットを表示できます。追加した機能も同じリストに自分のキーを登録すれば、そのキーが使えるようになり、ダイアログにも表示されます。",
   "FeaturePageShortcuts.summary":
-    "Ctrl+K search that forgives typos and the wrong layout, and a key for each section.",
+    "打ち間違いや配列違いも受け付けるCtrl+K検索と、各セクションを開くキー。",
   "FeaturePageShortcuts.how1":
-    "One list per app binds the keys and fills the ? dialog, so the dialog never shows a key that does nothing. G then a letter opens a section, N adds a note from any page, and the single-key shortcuts stay quiet while you type in a field.",
+    "アプリごとに1つのリストがキーを割り当て、?のダイアログにも表示するので、効かないキーがダイアログに出ることはありません。Gキーに続けて文字キーを押すとセクションが開き、Nキーでどのページからでもメモを追加できます。1キーのショートカットは、入力欄に入力している間は反応しません。",
   "FeaturePageShortcuts.how2":
-    'The search matches every word in any order, by prefix, with one typo in a longer word, and reads a query typed in the other keyboard layout or the other alphabet, so "зкщашду" finds "Open profile".',
-  "FeaturePageShortcuts.shortcutsQuestion": "Does Seed have keyboard shortcuts?",
+    "検索はすべての単語を順不同・前方一致で照合し、長めの単語なら1文字の打ち間違いも許容します。もう一方のキーボード配列や文字体系で入力された検索語も読み取るので、「зкщашду」で「Open profile」が見つかります。",
+  "FeaturePageShortcuts.shortcutsQuestion": "Seedにキーボードショートカットはありますか？",
   "FeaturePageShortcuts.shortcutsAnswer":
-    "Yes. Press ? in the app or the admin area to see them all.",
-  "FeaturePageShortcuts.paletteQuestion": "Is there a command palette?",
+    "はい。アプリや管理画面で?キーを押すと、すべて表示されます。",
+  "FeaturePageShortcuts.paletteQuestion": "コマンドパレットはありますか？",
   "FeaturePageShortcuts.paletteAnswer":
-    "Yes. Ctrl+K (⌘K on a Mac) or / opens search over pages and actions.",
-  "FeaturePageShortcuts.shortcutsTypingQuestion": "Do shortcuts fire while I type?",
+    "はい。Ctrl+K（Macでは⌘K）または/で、ページとアクションの検索が開きます。",
+  "FeaturePageShortcuts.shortcutsTypingQuestion": "入力中にショートカットが反応しますか？",
   "FeaturePageShortcuts.shortcutsTypingAnswer":
-    "No. Single-key shortcuts stay quiet in a field, and each device can turn them off; Ctrl+K and Escape keep working.",
-  "FeaturePageDeploy.name": "Deploy",
-  "FeaturePageDeploy.title": "Deploy your SaaS, without a cloud platform bill",
+    "いいえ。1キーのショートカットは入力欄では反応せず、デバイスごとにオフにもできます。Ctrl+KとEscは引き続き使えます。",
+  "FeaturePageDeploy.name": "デプロイ",
+  "FeaturePageDeploy.title": "SaaSのデプロイを、クラウドプラットフォームの請求なしで",
   "FeaturePageDeploy.description":
-    "Docker Compose on one Linux server you rent: Traefik, Postgres, Valkey, S3 files, monitoring and backups, deployed in one command. Free and MIT-licensed.",
-  "FeaturePageDeploy.h1": "Self-host your SaaS on one server, without a cloud platform bill",
+    "借りたLinuxサーバー1台でDocker Compose。Traefik、Postgres、Valkey、S3ファイル、監視、バックアップをコマンド1つでデプロイします。無料・MITライセンス。",
+  "FeaturePageDeploy.h1": "SaaSをサーバー1台でセルフホスト、クラウドプラットフォームの請求なしで",
   "FeaturePageDeploy.answer":
-    "Seed runs on a Linux server you rent, with Docker Compose in development and production alike, and one command ships it. You prepare the server once with the written steps, then every later deploy is that command alone.",
-  "FeaturePageDeploy.summary": "One Linux server, Docker Compose and one command to deploy.",
+    "Seedは借りたLinuxサーバーで動き、開発でも本番でもDocker Composeを使って、コマンド1つでデプロイできます。サーバーの準備は文書化された手順で一度だけ行い、それ以降のデプロイはそのコマンドだけです。",
+  "FeaturePageDeploy.summary": "Linuxサーバー1台、Docker Compose、デプロイはコマンド1つ。",
   "FeaturePageDeploy.how1":
-    "The deploy copies the project to the server over SSH and starts it with Compose; on every deploy a one-shot service applies the database migrations. Traefik sits in front and asks Let's Encrypt for each host's certificate.",
+    "デプロイはSSHでプロジェクトをサーバーにコピーし、Composeで起動します。デプロイのたびに、1回だけ動くサービスがデータベースのマイグレーションを適用します。前段にはTraefikがあり、ホストごとの証明書をLet's Encryptに要求します。",
   "FeaturePageDeploy.how2":
-    "Postgres, Valkey, an S3 file store, metrics, logs and dashboards with alerts run beside the apps, and several products can share one server behind the same proxy.",
-  "FeaturePageDeploy.kubernetesQuestion": "Do I need Kubernetes?",
+    "Postgres、Valkey、S3ファイルストア、メトリクス、ログ、アラート付きのダッシュボードがアプリと並んで動き、複数のプロダクトが同じプロキシの背後で1台のサーバーを共有できます。",
+  "FeaturePageDeploy.kubernetesQuestion": "Kubernetesは必要ですか？",
   "FeaturePageDeploy.kubernetesAnswer":
-    "No. Docker Compose on one server runs the whole product, in development and in production.",
-  "FeaturePageDeploy.severalQuestion": "Can several products share one server?",
+    "いいえ。開発でも本番でも、サーバー1台のDocker Composeでプロダクト全体が動きます。",
+  "FeaturePageDeploy.severalQuestion": "複数のプロダクトで1台のサーバーを共有できますか？",
   "FeaturePageDeploy.severalAnswer":
-    "Yes. They share one proxy, and each keeps its own directory, database and data; share a server only between products you trust alike.",
-  "FeaturePageDeploy.backupQuestion": "Is there a backup?",
+    "はい。プロキシは共有し、ディレクトリ、データベース、データはそれぞれ別に持ちます。サーバーを共有するのは、同じくらい信頼できるプロダクト同士だけにしてください。",
+  "FeaturePageDeploy.backupQuestion": "バックアップはありますか？",
   "FeaturePageDeploy.backupAnswer":
-    "Yes. An opt-in daily encrypted restic backup of the database, with a written restore.",
+    "はい。オプトインで、データベースの暗号化resticバックアップを毎日取れます。復元手順も文書化されています。",
 } satisfies Catalog
