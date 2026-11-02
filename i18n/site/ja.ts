@@ -190,7 +190,7 @@ export default {
     "Seedは、無料でMITライセンスのSaaSスターターです。ログインと2段階認証（2FA）、ロール付きグループ、メンバー単位のStripe課金、リアルタイム更新、オフラインアプリ、管理画面がそろっています。Docker Composeで、借りたLinuxサーバー1台にデプロイできます。",
   "HomeHero.github": "GitHubで見る",
   "HomeHero.status":
-    "Seedは今すぐ使えて、公開しながら開発中です。<status>現在の対応状況を見る</status>。",
+    "Seedは今すぐ使えて、公開しながら開発中です。<status>対応状況を見る</status>。",
   "HomeHero.quickStart": "クイックスタート",
   "HomeHero.initNote":
     "<code>init</code>が、すべてのシークレットを埋めた<code>infra/envs/.env</code>を書き出します。AIエージェントに頼むこともできます：<prompt></prompt>。",
@@ -552,8 +552,12 @@ export default {
   "FeatureQuality.nav": "テスト",
   "FeatureQuality.eyebrow": "品質",
   "FeatureQuality.title": "大事なところをテスト",
-  "FeatureQuality.lead":
-    "{date}時点で、アプリのブラウザテストスイートが34個、加えてユニットテストと画面テストがあり、すべてCIで実行されます。すべての変更は、プルリクエストとレビューを経てからマージされます。",
+  "FeatureQuality.lead": {
+    "other":
+      "アプリのブラウザテストスイートが{count}個、加えてユニットテストと画面テストがあり、すべてCIで実行されます。すべての変更は、プルリクエストとレビューを経てからマージされます。",
+  },
+  "FeatureQuality.leadUncounted":
+    "アプリのブラウザテストスイートに加えてユニットテストと画面テストがあり、すべてCIで実行されます。すべての変更は、プルリクエストとレビューを経てからマージされます。",
   "FeatureQuality.fact1": "Playwrightによるブラウザテストを、本物のAPIとデータベースに対して実行",
   "FeatureQuality.fact2": "ユニットテストと画面テストは、テスト対象のコードのすぐ隣に",
   "FeatureQuality.fact3": "Postgresに対する結合テスト",
@@ -575,7 +579,7 @@ export default {
   "FeatureTeams.alt":
     "グループのアクティビティログ。誰がどのメモやタグをいつ追加したかが並び、各メモを開くリンクがあります。",
   "FeatureBilling.alt":
-    "サンプルグループの「プランと請求」タブ（デモ用の価格例）。更新日の入ったProプランで、月額€36.00、オーナーを含む4人のメンバー×各€9.00。カードの変更、請求書の表示、プランの解約のボタンがあります。",
+    "サンプルグループの「請求」タブ（デモ用の価格例）。更新日の入ったProプランで、月額€36.00、オーナーを含む4人のメンバー×各€9.00。カードの変更、請求書の表示、プランの解約のボタンがあります。",
   "FeaturePush.alt":
     "通知ページ。新しいグループオーナー、ロールの変更、招待についての未読のお知らせが3件あり、各行から該当する内容を開けます。",
   "FeatureBilling.catalog":

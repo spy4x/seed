@@ -181,8 +181,7 @@ export default {
   "HomeHero.lead":
     "Seed is a free, MIT-licensed SaaS starter with sign-in and two-factor authentication (2FA), groups with roles, per-member Stripe billing, realtime, an offline app and an admin area. You deploy it with Docker Compose to a single Linux server you rent.",
   "HomeHero.github": "View on GitHub",
-  "HomeHero.status":
-    "Seed is usable today, built in public: <status>see what works today</status>.",
+  "HomeHero.status": "Seed is usable today, built in public: <status>see what works</status>.",
   "HomeHero.quickStart": "Quick start",
   "HomeHero.initNote":
     "<code>init</code> writes <code>infra/envs/.env</code> with every secret filled in. Or ask your AI agent: <prompt></prompt>.",
@@ -556,8 +555,14 @@ export default {
   "FeatureQuality.nav": "Tests",
   "FeatureQuality.eyebrow": "Quality",
   "FeatureQuality.title": "Tested where it matters",
-  "FeatureQuality.lead":
-    "Counted on {date}: 34 browser test suites for the app, plus unit and screen tests, all run in CI. Every change goes through a pull request and a review before it merges.",
+  "FeatureQuality.lead": {
+    "one":
+      "{count} browser test suite for the app, plus unit and screen tests, all run in CI. Every change goes through a pull request and a review before it merges.",
+    "other":
+      "{count} browser test suites for the app, plus unit and screen tests, all run in CI. Every change goes through a pull request and a review before it merges.",
+  },
+  "FeatureQuality.leadUncounted":
+    "Browser test suites for the app, plus unit and screen tests, all run in CI. Every change goes through a pull request and a review before it merges.",
   "FeatureQuality.fact1": "Browser tests with Playwright, against the real API and database",
   "FeatureQuality.fact2": "Unit and screen tests next to the code they test",
   "FeatureQuality.fact3": "Integration tests against Postgres",
@@ -579,7 +584,7 @@ export default {
   "FeatureTeams.alt":
     "A group's activity log: who added which note or tag, and when, with a link to open each note.",
   "FeatureBilling.alt":
-    "A sample group's plan and billing tab, at the demo's example prices: Pro plan with its renewal date, €36.00 a month, for 4 members at €9.00 each, the owner included, with buttons to change the card, view invoices and cancel the plan.",
+    "A sample group's Billing tab, at the demo's example prices: Pro plan with its renewal date, €36.00 a month, for 4 members at €9.00 each, the owner included, with buttons to change the card, view invoices and cancel the plan.",
   "FeaturePush.alt":
     "The notifications page: three unread notices about a new group owner, a role change and an invitation, each row opening what it is about.",
   "FeatureBilling.catalog":

@@ -189,7 +189,7 @@ export default {
     "O Seed é um starter kit de SaaS gratuito, com licença MIT, que já traz login com verificação em duas etapas (2FA), grupos com funções, cobrança por membro no Stripe, tempo real, um app offline e um painel de administração. Você faz o deploy com Docker Compose num único servidor Linux alugado.",
   "HomeHero.github": "Ver no GitHub",
   "HomeHero.status":
-    "O Seed já pode ser usado e é construído à vista de todos: <status>veja o que já funciona</status>.",
+    "O Seed já pode ser usado e é construído à vista de todos: <status>veja o que funciona</status>.",
   "HomeHero.quickStart": "Primeiros passos",
   "HomeHero.initNote":
     "O <code>init</code> cria o <code>infra/envs/.env</code> com todos os segredos preenchidos. Ou peça ao seu agente de IA: <prompt></prompt>.",
@@ -575,8 +575,16 @@ export default {
   "FeatureQuality.nav": "Testes",
   "FeatureQuality.eyebrow": "Qualidade",
   "FeatureQuality.title": "Testado onde importa",
-  "FeatureQuality.lead":
-    "Contagem de {date}: 34 suítes de testes no navegador para o app, além de testes unitários e de tela, todos rodando no CI. Toda alteração passa por um pull request e uma revisão antes do merge.",
+  "FeatureQuality.lead": {
+    "one":
+      "{count} suíte de testes no navegador para o app, além de testes unitários e de tela, todos rodando no CI. Toda alteração passa por um pull request e uma revisão antes do merge.",
+    "many":
+      "{count} de suítes de testes no navegador para o app, além de testes unitários e de tela, todos rodando no CI. Toda alteração passa por um pull request e uma revisão antes do merge.",
+    "other":
+      "{count} suítes de testes no navegador para o app, além de testes unitários e de tela, todos rodando no CI. Toda alteração passa por um pull request e uma revisão antes do merge.",
+  },
+  "FeatureQuality.leadUncounted":
+    "Suítes de testes no navegador para o app, além de testes unitários e de tela, todos rodando no CI. Toda alteração passa por um pull request e uma revisão antes do merge.",
   "FeatureQuality.fact1": "Testes no navegador com Playwright, contra a API e o banco de verdade",
   "FeatureQuality.fact2": "Testes unitários e de tela ao lado do código que testam",
   "FeatureQuality.fact3": "Testes de integração contra o Postgres",
@@ -598,7 +606,7 @@ export default {
   "FeatureTeams.alt":
     "O registro de atividades de um grupo: quem adicionou cada nota ou etiqueta e quando, com um link para abrir cada nota.",
   "FeatureBilling.alt":
-    "A aba de plano e cobrança de um grupo de exemplo, com os preços de exemplo da demo: plano Pro com data de renovação, € 36,00 por mês, para 4 membros a € 9,00 cada, incluindo o dono, com botões para trocar o cartão, ver as faturas e cancelar o plano.",
+    "A aba Cobrança de um grupo de exemplo, com os preços de exemplo da demo: plano Pro com data de renovação, € 36,00 por mês, para 4 membros a € 9,00 cada, incluindo o dono, com botões para trocar o cartão, ver as faturas e cancelar o plano.",
   "FeaturePush.alt":
     "A página de notificações: três avisos não lidos sobre um novo dono de grupo, uma mudança de função e um convite, cada linha abrindo o assunto dela.",
   "FeatureBilling.catalog":

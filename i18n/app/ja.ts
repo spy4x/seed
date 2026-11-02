@@ -174,7 +174,7 @@ export default {
     "other": "メンバー{count}人",
   },
   "GroupEditor.memberCountLink": {
-    "other": "メンバー{count}人：プランと請求を見る",
+    "other": "メンバー{count}人：「請求」タブを開く",
   },
   "GroupEditor.tabGeneral": "一般",
   "GroupEditor.tabMembers": "メンバー",
@@ -676,7 +676,7 @@ export default {
   "PlanRefusalNotice.rolesTitle": "メンバーのロールを上げるには有料プランが必要です",
   "PlanRefusalNotice.rolesText":
     "このグループのプランでは、メンバーのロールを下げたり外したりはできますが、上げることはできません。",
-  "PlanRefusalNotice.openBilling": "請求を開く",
+  "PlanRefusalNotice.openBilling": "「請求」タブを開く",
   "PlanRefusalNotice.askOwner": "グループのオーナーにプランのアップグレードを依頼してください。",
   "GuestProfile.accountType": "アカウントの種類",
   "GuestProfile.guestAccount": "ゲストアカウント。このブラウザからしか開けません。",

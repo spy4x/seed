@@ -194,7 +194,7 @@ export default {
     "Seed est un starter SaaS gratuit sous licence MIT, avec connexion et double authentification (2FA), groupes avec rôles, facturation Stripe par membre, temps réel, une application hors ligne et un espace d’administration. Vous le déployez avec Docker Compose sur un seul serveur Linux que vous louez.",
   "HomeHero.github": "Voir sur GitHub",
   "HomeHero.status":
-    "Seed est utilisable dès aujourd’hui, développé en public : <status>voir ce qui fonctionne aujourd’hui</status>.",
+    "Seed est utilisable dès aujourd’hui, développé en public : <status>voir ce qui fonctionne</status>.",
   "HomeHero.quickStart": "Démarrage rapide",
   "HomeHero.initNote":
     "<code>init</code> écrit <code>infra/envs/.env</code> avec tous les secrets déjà remplis. Ou demandez à votre agent IA : <prompt></prompt>.",
@@ -591,8 +591,16 @@ export default {
   "FeatureQuality.nav": "Tests",
   "FeatureQuality.eyebrow": "Qualité",
   "FeatureQuality.title": "Testé là où ça compte",
-  "FeatureQuality.lead":
-    "Décompte du {date} : 34 suites de tests navigateur pour l’application, plus des tests unitaires et d’écran, tous exécutés en CI. Chaque modification passe par une pull request et une revue avant d’être fusionnée.",
+  "FeatureQuality.lead": {
+    "one":
+      "{count} suite de tests navigateur pour l’application, plus des tests unitaires et d’écran, tous exécutés en CI. Chaque modification passe par une pull request et une revue avant d’être fusionnée.",
+    "many":
+      "{count} de suites de tests navigateur pour l’application, plus des tests unitaires et d’écran, tous exécutés en CI. Chaque modification passe par une pull request et une revue avant d’être fusionnée.",
+    "other":
+      "{count} suites de tests navigateur pour l’application, plus des tests unitaires et d’écran, tous exécutés en CI. Chaque modification passe par une pull request et une revue avant d’être fusionnée.",
+  },
+  "FeatureQuality.leadUncounted":
+    "Des suites de tests navigateur pour l’application, plus des tests unitaires et d’écran, tous exécutés en CI. Chaque modification passe par une pull request et une revue avant d’être fusionnée.",
   "FeatureQuality.fact1":
     "Des tests navigateur avec Playwright, sur la vraie API et la vraie base de données",
   "FeatureQuality.fact2": "Des tests unitaires et d’écran à côté du code qu’ils testent",
@@ -615,7 +623,7 @@ export default {
   "FeatureTeams.alt":
     "Le journal d’activité d’un groupe : qui a ajouté quelle note ou quelle étiquette, et quand, avec un lien pour ouvrir chaque note.",
   "FeatureBilling.alt":
-    "L’onglet forfait et facturation d’un groupe d’exemple, aux prix d’exemple de la démo : forfait Pro avec sa date de renouvellement, 36,00 € par mois, pour 4 membres à 9,00 € chacun, propriétaire compris, avec des boutons pour changer de carte, voir les factures et résilier le forfait.",
+    "L’onglet Facturation d’un groupe d’exemple, aux prix d’exemple de la démo : forfait Pro avec sa date de renouvellement, 36,00 € par mois, pour 4 membres à 9,00 € chacun, propriétaire compris, avec des boutons pour changer de carte, voir les factures et résilier le forfait.",
   "FeaturePush.alt":
     "La page des notifications : trois avis non lus sur un nouveau propriétaire de groupe, un changement de rôle et une invitation, chaque ligne ouvrant l’élément concerné.",
   "FeatureBilling.catalog":

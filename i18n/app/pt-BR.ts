@@ -197,9 +197,9 @@ export default {
     "other": "{count} membros",
   },
   "GroupEditor.memberCountLink": {
-    "one": "{count} membro: ver plano e cobrança",
-    "many": "{count} de membros: ver plano e cobrança",
-    "other": "{count} membros: ver plano e cobrança",
+    "one": "{count} membro: abrir a aba Cobrança",
+    "many": "{count} de membros: abrir a aba Cobrança",
+    "other": "{count} membros: abrir a aba Cobrança",
   },
   "GroupEditor.tabGeneral": "Geral",
   "GroupEditor.tabMembers": "Membros",
@@ -772,7 +772,7 @@ export default {
   "PlanRefusalNotice.rolesTitle": "Promover membros exige um plano pago",
   "PlanRefusalNotice.rolesText":
     "No plano deste grupo, você pode rebaixar a função de um membro ou removê-lo, mas não promovê-lo.",
-  "PlanRefusalNotice.openBilling": "Abrir Cobrança",
+  "PlanRefusalNotice.openBilling": "Abrir a aba Cobrança",
   "PlanRefusalNotice.askOwner": "Peça ao dono do grupo para mudar de plano.",
   "GuestProfile.accountType": "Tipo de conta",
   "GuestProfile.guestAccount": "Conta de visitante. Só este navegador consegue abri-la.",

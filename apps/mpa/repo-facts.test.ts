@@ -1,6 +1,11 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { countTestFiles, TEST_FILE_COUNT } from "./repo-facts.ts"
+import {
+  BROWSER_SUITE_COUNT,
+  countBrowserSuites,
+  countTestFiles,
+  TEST_FILE_COUNT,
+} from "./repo-facts.ts"
 
 describe("the repository's test count", () => {
   it("counts the .test.ts and .test.tsx files of the apps and libraries", () => {
@@ -31,5 +36,22 @@ describe("the repository's test count", () => {
 
   it("is unknown outside a Vite build, so the page leaves the number out", () => {
     expect(TEST_FILE_COUNT).toBeUndefined()
+  })
+})
+
+describe("the repository's browser test suites", () => {
+  it("counts the .e2e.ts files directly in e2e/", () => {
+    expect(countBrowserSuites([
+      `e2e/account-delete.e2e.ts`,
+      `e2e/plan-limits.e2e.ts`,
+      `e2e/fixtures/seed.ts`,
+      `e2e/mpa/newsletter.e2e.ts`,
+      `apps/api/routes/notes.e2e.ts`,
+      `e2e/playwright.config.ts`,
+    ])).toBe(2)
+  })
+
+  it("is unknown outside a Vite build, so /features names no number", () => {
+    expect(BROWSER_SUITE_COUNT).toBeUndefined()
   })
 })

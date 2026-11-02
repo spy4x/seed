@@ -96,6 +96,7 @@ Deno.test("still sends what the images need", async () => {
       "libs/ui/frame.tsx",
       "infra/scripts/db-migrate.ts",
       "deno.lock",
+      "e2e/plan-limits.e2e.ts",
     ]
   ) {
     expect({ path, ignored: isIgnored(rules, path) }).toEqual({ path, ignored: false })

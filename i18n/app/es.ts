@@ -199,9 +199,9 @@ export default {
     "other": "{count} miembros",
   },
   "GroupEditor.memberCountLink": {
-    "one": "{count} miembro: ver plan y facturación",
-    "many": "{count} miembros: ver plan y facturación",
-    "other": "{count} miembros: ver plan y facturación",
+    "one": "{count} miembro: abrir la pestaña Facturación",
+    "many": "{count} miembros: abrir la pestaña Facturación",
+    "other": "{count} miembros: abrir la pestaña Facturación",
   },
   "GroupEditor.tabGeneral": "General",
   "GroupEditor.tabMembers": "Miembros",
@@ -778,7 +778,7 @@ export default {
   "PlanRefusalNotice.rolesTitle": "Para subir el rol de un miembro hace falta un plan de pago",
   "PlanRefusalNotice.rolesText":
     "Con el plan de este grupo puedes bajar el rol de un miembro o quitarlo, pero no ascenderlo.",
-  "PlanRefusalNotice.openBilling": "Abrir Facturación",
+  "PlanRefusalNotice.openBilling": "Abrir la pestaña Facturación",
   "PlanRefusalNotice.askOwner": "Pídele al propietario del grupo que mejore el plan.",
   "GuestProfile.accountType": "Tipo de cuenta",
   "GuestProfile.guestAccount": "Cuenta de invitado. Solo este navegador puede abrirla.",

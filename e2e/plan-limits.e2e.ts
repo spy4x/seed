@@ -74,7 +74,7 @@ test.describe("plan limits", () => {
       expect((await listed.json()).notes).toHaveLength(FREE_NOTES)
 
       // Following it would leave the typed draft, so the unsaved-text guard would ask first.
-      await expect(refusal.getByRole("link", { name: "Open Billing" }))
+      await expect(refusal.getByRole("link", { name: "Open the Billing tab" }))
         .toHaveAttribute("href", `/groups/${groupId}/billing`)
 
       await upgrade(request, groupId)
@@ -116,7 +116,7 @@ test.describe("plan limits", () => {
 
       const refusal = row.locator("[data-e2e=plan-refusal]")
       await expect(refusal).toBeFocused()
-      await expect(refusal.getByRole("link", { name: "Open Billing" }))
+      await expect(refusal.getByRole("link", { name: "Open the Billing tab" }))
         .toHaveAttribute("href", `/groups/${groupId}/billing`)
       await expect(row.locator("[data-e2e=group-member-role]")).toHaveText("Editor")
 
