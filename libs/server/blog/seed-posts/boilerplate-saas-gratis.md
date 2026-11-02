@@ -27,15 +27,15 @@ leí el 3 de noviembre de 2026, y cuando otra plantilla te conviene más, lo dig
 
 ## ¿Qué boilerplates SaaS gratis hay?
 
-| Plantilla                          | Licencia   | Stack                        | Equipos y roles                      | Pagos                         | Dónde corre                                       |
-| ---------------------------------- | ---------- | ---------------------------- | ------------------------------------ | ----------------------------- | ------------------------------------------------- |
-| [Seed][seed]                       | MIT        | Deno, Hono, Preact, Postgres | Grupos: lector, editor, admin, dueño | Stripe, por miembro           | Docker Compose en cualquier servidor Linux tuyo   |
-| [Open SaaS][opensaas]              | MIT        | Wasp: React, Node.js, Prisma | No mencionados                       | Stripe, Polar o Lemon Squeezy | Fly.io o Railway con un comando, o cualquier host |
-| [Next.js SaaS Starter][next]       | MIT        | Next.js, Postgres, Drizzle   | Owner y Member                       | Stripe                        | Vercel, según su guía                             |
-| [ixartz SaaS Boilerplate][ix]      | MIT        | Next.js, Drizzle, Clerk      | Organizaciones con roles, vía Clerk  | No en la edición gratis       | No indicado                                       |
-| [Apptension SaaS Boilerplate][app] | MIT        | React, Django, Postgres      | Tenants: Owner, Admin, Member        | Stripe                        | AWS, con AWS CDK                                  |
-| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js, Prisma, Postgres    | Equipos con roles                    | «Próximamente»                | Botones de Vercel, Heroku y DigitalOcean          |
-| [Makerkit Lite][mk]                | MIT        | Next.js, Supabase            | No en Lite                           | No en Lite                    | No indicado                                       |
+| Plantilla                          | Licencia   | Stack                        | Equipos y roles                      | Pagos                           | Dónde corre                                       |
+| ---------------------------------- | ---------- | ---------------------------- | ------------------------------------ | ------------------------------- | ------------------------------------------------- |
+| [Seed][seed]                       | MIT        | Deno, Hono, Preact, Postgres | Grupos: lector, editor, admin, dueño | Stripe, por miembro             | Docker Compose en cualquier servidor Linux tuyo   |
+| [Open SaaS][opensaas]              | MIT        | Wasp: React, Node.js, Prisma | No mencionados                       | Stripe, Polar o Lemon Squeezy   | Fly.io o Railway con un comando, o cualquier host |
+| [Next.js SaaS Starter][next]       | MIT        | Next.js, Postgres, Drizzle   | Owner y Member                       | Stripe                          | Vercel, según su guía                             |
+| [ixartz SaaS Boilerplate][ix]      | MIT        | Next.js, Drizzle, Clerk      | Organizaciones con roles, vía Clerk  | No en la edición gratis         | No indicado                                       |
+| [Apptension SaaS Boilerplate][app] | MIT        | React, Django, Postgres      | Tenants: Owner, Admin, Member        | Stripe                          | AWS, con AWS CDK                                  |
+| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js, Prisma, Postgres    | Equipos con roles                    | Suscripciones Stripe por equipo | Botones de Vercel, Heroku y DigitalOcean          |
+| [Makerkit Lite][mk]                | MIT        | Next.js, Supabase            | No en Lite                           | No en Lite                      | Cualquier host con Next.js                        |
 
 «No mencionados» quiere decir que la página del proyecto no lo nombra. No prueba que falte, pero
 tampoco cuentes con ello.
@@ -66,6 +66,7 @@ y prefiero decírtelo ahora que después de que montes tu MVP.
 - **Apptension**, si tu equipo trabaja con Python y Django: login con segundo factor, passkeys,
   SSO, tres roles, Stripe y panel de administración.
 - **BoxyHQ**, si vendes a empresas grandes que piden SAML SSO y SCIM desde el primer día.
+  También trae suscripciones Stripe por equipo.
 
 ## ¿Qué trae Seed?
 

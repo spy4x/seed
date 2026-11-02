@@ -34,8 +34,8 @@ Seed делаю я, так что я заинтересованная сторо
 | [Next.js SaaS Starter][next]       | MIT        | Next.js, Postgres, Drizzle   | Owner и Member                             | Stripe                          | Vercel, по его инструкции                            |
 | [ixartz SaaS Boilerplate][ix]      | MIT        | Next.js, Drizzle, Clerk      | Организации с ролями, через Clerk          | Нет в бесплатной версии         | Не указано                                           |
 | [Apptension SaaS Boilerplate][app] | MIT        | React, Django, Postgres      | Тенанты: Owner, Admin, Member              | Stripe                          | AWS, через AWS CDK                                   |
-| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js, Prisma, Postgres    | Команды с ролями                           | «Скоро будет»                   | Кнопки Vercel, Heroku, DigitalOcean                  |
-| [Makerkit Lite][mk]                | MIT        | Next.js, Supabase            | Нет в Lite                                 | Нет в Lite                      | Не указано                                           |
+| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js, Prisma, Postgres    | Команды с ролями                           | Stripe, подписка на команду     | Кнопки Vercel, Heroku, DigitalOcean                  |
+| [Makerkit Lite][mk]                | MIT        | Next.js, Supabase            | Нет в Lite                                 | Нет в Lite                      | Любой хостинг с Next.js                              |
 
 «Не указаны» значит, что на странице проекта об этом не сказано. Не доказательство, что функции нет,
 но и рассчитывать на неё не стоит.
@@ -70,6 +70,7 @@ BoxyHQ через Docker. С Clerk у ixartz аккаунты пользоват
 - **Apptension**, если команда пишет на Python и Django: там вход с вторым фактором, passkeys,
   SSO, тенанты с тремя ролями и админка.
 - **BoxyHQ**, если продаёте корпорациям, которым с первого дня нужны SAML SSO и SCIM.
+  Подписки Stripe на команду там тоже есть.
 - **Ничего из этого**, если модель входа, мультитенантности или оплаты у вас совсем необычная.
 
 ## Что даёт Seed?

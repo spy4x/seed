@@ -34,11 +34,11 @@ der ich sie am 3. November 2026 gelesen habe, und wo ein anderes Kit besser pass
 | [Next.js SaaS Starter][next]       | MIT        | Next.js, Postgres, Drizzle   | Owner und Member                                | Stripe                           | Vercel, laut Anleitung                          |
 | [ixartz SaaS Boilerplate][ix]      | MIT        | Next.js, Drizzle, Clerk      | Organisationen mit Rollen, über Clerk           | Nicht in der Gratis-Edition      | Nicht angegeben                                 |
 | [Apptension SaaS Boilerplate][app] | MIT        | React, Django, Postgres      | Tenants: Owner, Admin, Member                   | Stripe                           | AWS, per AWS CDK                                |
-| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js, Prisma, Postgres    | Teams mit Rollen                                | „Coming soon“                    | Buttons für Vercel, Heroku, DigitalOcean        |
-| [Makerkit Lite][mk]                | MIT        | Next.js, Supabase            | Nicht in Lite                                   | Nicht in Lite                    | Nicht angegeben                                 |
+| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js, Prisma, Postgres    | Teams mit Rollen                                | Stripe-Abos pro Team             | Buttons für Vercel, Heroku, DigitalOcean        |
+| [Makerkit Lite][mk]                | MIT        | Next.js, Supabase            | Nicht in Lite                                   | Nicht in Lite                    | Jeder Host mit Next.js                          |
 
 „Nicht genannt“ heißt: Die Projektseite erwähnt es nicht. Das beweist nicht, dass es fehlt, aber
-eingeplant ist es nicht.
+verlassen sollten Sie sich nicht darauf.
 
 ## Wo liegen die Daten Ihrer Nutzer?
 
@@ -70,6 +70,7 @@ Landkarte, mit der Sie zum Gespräch gehen.
 - **Apptension**, wenn Ihr Team Python schreibt: Zwei-Faktor-Login, Passkeys, SSO, drei Rollen,
   Stripe und Admin, alles auf Django.
 - **BoxyHQ**, wenn Ihre Kunden Konzerne sind, die ab Tag eins SAML-SSO und SCIM verlangen.
+  Stripe-Abos pro Team sind ebenfalls dabei.
 
 ## Was bringt Seed mit?
 

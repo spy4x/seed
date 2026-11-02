@@ -34,8 +34,8 @@ je l'ai lu le 3 novembre 2026, et quand un autre kit vous convient mieux, je le 
 | [Next.js SaaS Starter][next]       | MIT        | Next.js, Postgres, Drizzle    | Owner et Member                                 | Stripe                         | Vercel, d'après son guide                              |
 | [ixartz SaaS Boilerplate][ix]      | MIT        | Next.js, Drizzle, Clerk       | Organisations avec rôles, via Clerk             | Pas dans l'édition gratuite    | Non précisé                                            |
 | [Apptension SaaS Boilerplate][app] | MIT        | React, Django, Postgres       | Tenants : Owner, Admin, Member                  | Stripe                         | AWS, via AWS CDK                                       |
-| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js, Prisma, Postgres     | Équipes avec rôles                              | « Bientôt »                    | Boutons Vercel, Heroku et DigitalOcean                 |
-| [Makerkit Lite][mk]                | MIT        | Next.js, Supabase             | Pas dans Lite                                   | Pas dans Lite                  | Non précisé                                            |
+| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js, Prisma, Postgres     | Équipes avec rôles                              | Abonnements Stripe par équipe  | Boutons Vercel, Heroku et DigitalOcean                 |
+| [Makerkit Lite][mk]                | MIT        | Next.js, Supabase             | Pas dans Lite                                   | Pas dans Lite                  | Tout hébergeur qui fait tourner Next.js                |
 
 « Non mentionnés » signifie que la page du projet n'en parle pas. Ce n'est pas la preuve que ça
 manque, mais n'y comptez pas.
@@ -71,6 +71,7 @@ Maghreb, ce n'est pas le cas : ni le Maroc, ni la Tunisie, ni l'Algérie ne sont
 - **Apptension**, si votre équipe code en Python et Django : double authentification, passkeys,
   SSO, trois rôles, Stripe et administration.
 - **BoxyHQ**, si vous vendez à de grands comptes qui exigent SAML SSO et SCIM dès le premier jour.
+  Il inclut aussi des abonnements Stripe par équipe.
 
 ## Que contient Seed ?
 

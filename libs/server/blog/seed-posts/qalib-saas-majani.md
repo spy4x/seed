@@ -33,8 +33,8 @@ Apache-2.0. الفرق الحقيقي فيما تتركه كل نسخة مجان
 | [Next.js SaaS Starter][next]       | MIT        | Next.js وPostgres وDrizzle   | Owner وMember                    | Stripe                           | Vercel حسب دليله                           |
 | [ixartz SaaS Boilerplate][ix]      | MIT        | Next.js وDrizzle وClerk      | مؤسسات بأدوار، عبر Clerk         | ليس في النسخة المجانية           | غير محدد                                   |
 | [Apptension SaaS Boilerplate][app] | MIT        | React وDjango وPostgres      | مستأجرون: Owner وAdmin وMember   | Stripe                           | AWS عبر AWS CDK                            |
-| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js وPrisma وPostgres    | فرق بأدوار                       | «قريبًا»                          | أزرار Vercel وHeroku وDigitalOcean         |
-| [Makerkit Lite][mk]                | MIT        | Next.js وSupabase            | ليست في Lite                     | ليس في Lite                      | غير محدد                                   |
+| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js وPrisma وPostgres    | فرق بأدوار                       | اشتراكات Stripe لكل فريق         | أزرار Vercel وHeroku وDigitalOcean         |
+| [Makerkit Lite][mk]                | MIT        | Next.js وSupabase            | ليست في Lite                     | ليس في Lite                      | أي استضافة تشغّل Next.js                    |
 
 «غير مذكورة» تعني أن صفحة المشروع لا تذكرها. هذا لا يثبت غيابها، لكن لا تعتمد عليها.
 
@@ -68,7 +68,7 @@ Apache-2.0. الفرق الحقيقي فيما تتركه كل نسخة مجان
 - **Next.js SaaS Starter**: إن أردت أساسًا صغيرًا على Next.js تقرؤه في عصر يوم واحد.
 - **Apptension**: إن كان فريقك يكتب Python وDjango ويحتاج العربية: تحقق بخطوتين، ومفاتيح المرور، وSSO، وثلاثة
   أدوار، وStripe، ولوحة إدارة.
-- **BoxyHQ**: إن كان عملاؤك شركات كبيرة تطلب SAML SSO وSCIM من اليوم الأول.
+- **BoxyHQ**: إن كان عملاؤك شركات كبيرة تطلب SAML SSO وSCIM من اليوم الأول. وفيه أيضًا اشتراكات Stripe لكل فريق.
 
 ## ماذا يقدّم Seed؟
 

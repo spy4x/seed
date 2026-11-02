@@ -33,8 +33,8 @@ better, I say so.
 | [Next.js SaaS Starter][next]       | MIT        | Next.js, Postgres, Drizzle   | Owner and Member                     | Stripe                         | Vercel, in its guide                          |
 | [ixartz SaaS Boilerplate][ix]      | MIT        | Next.js, Drizzle, Clerk      | Organisations with roles, via Clerk  | Not in the free edition        | Not stated                                    |
 | [Apptension SaaS Boilerplate][app] | MIT        | React, Django, Postgres      | Tenants: Owner, Admin, Member        | Stripe                         | AWS, set up with AWS CDK                      |
-| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js, Prisma, Postgres    | Teams with roles                     | Listed as "coming soon"        | Vercel, Heroku or DigitalOcean buttons        |
-| [Makerkit Lite][mk]                | MIT        | Next.js, Supabase            | Not in Lite                          | Not in Lite                    | Not stated                                    |
+| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js, Prisma, Postgres    | Teams with roles                     | Stripe subscriptions per team  | Vercel, Heroku or DigitalOcean buttons        |
+| [Makerkit Lite][mk]                | MIT        | Next.js, Supabase            | Not in Lite                          | Not in Lite                    | Any host that runs Next.js                    |
 
 "Not listed" means the project's own page does not mention it. That is not proof it is missing,
 only that you will not find it advertised.
@@ -68,7 +68,9 @@ kit. Just know which deal you are taking before you build a month on it.
 - **Apptension**, when your team writes Python. It is the strongest free kit here for Django: two
   factor sign-in, passkeys, single sign-on, tenants with three roles, Stripe, and an admin.
 - **BoxyHQ**, when you sell to companies that ask for SAML single sign-on and directory sync
-  (SCIM) on day one. It also has webhooks and audit logs. Billing is not there yet.
+  (SCIM) on day one. It also has webhooks, audit logs and Stripe subscriptions per team. Its
+  README still lists billing as "coming soon", but its code has checkout, a customer portal and a
+  billing page.
 - **None of them**, when your sign-in, tenancy or billing model is unusual enough that you would
   fight any starter. Building it yourself is fine; it just costs weeks.
 

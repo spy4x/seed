@@ -8,7 +8,7 @@ description: Sim. Seed, Open SaaS, Next.js SaaS Starter, ixartz, Apptension, Box
 tldr:
   - Sim, há vários boilerplates SaaS gratuitos e open source, com login, pagamentos e painel prontos.
   - As edições grátis de kits pagos costumam deixar de fora justamente pagamentos ou equipes.
-  - Stripe funciona no Brasil, mas o Pix Automático não está disponível para empresas sediadas aqui. Assinatura recorrente, na prática, vai no cartão.
+  - Stripe funciona no Brasil, mas o Pix Automático não está disponível para empresas sediadas aqui. Assinatura recorrente vai no cartão ou no boleto.
   - Seed traz grupos com papéis, cobrança por membro via Stripe, painel admin e nove idiomas no seu próprio servidor.
 topic: Perguntas
 author: Anton Shubin
@@ -33,8 +33,8 @@ página onde li, em 3 de novembro de 2026, e quando outro template serve melhor 
 | [Next.js SaaS Starter][next]       | MIT        | Next.js, Postgres, Drizzle   | Owner e Member                      | Stripe                         | Vercel, no guia                                    |
 | [ixartz SaaS Boilerplate][ix]      | MIT        | Next.js, Drizzle, Clerk      | Organizações com papéis, via Clerk  | Não na edição grátis           | Não informado                                      |
 | [Apptension SaaS Boilerplate][app] | MIT        | React, Django, Postgres      | Tenants: Owner, Admin, Member       | Stripe                         | AWS, via AWS CDK                                   |
-| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js, Prisma, Postgres    | Equipes com papéis                  | "Em breve"                     | Botões de Vercel, Heroku e DigitalOcean            |
-| [Makerkit Lite][mk]                | MIT        | Next.js, Supabase            | Não no Lite                         | Não no Lite                    | Não informado                                      |
+| [BoxyHQ SaaS Starter Kit][boxy]    | Apache-2.0 | Next.js, Prisma, Postgres    | Equipes com papéis                  | Assinaturas Stripe por equipe  | Botões de Vercel, Heroku e DigitalOcean            |
+| [Makerkit Lite][mk]                | MIT        | Next.js, Supabase            | Não no Lite                         | Não no Lite                    | Qualquer host com Next.js                          |
 
 "Não citados" significa que a página do projeto não menciona. Não prova que falta, mas também não
 conte com isso.
@@ -47,8 +47,10 @@ e quase todos os kits da tabela cobram via Stripe. Mas, segundo a
 só em pagamentos avulsos: o Pix Automático, que é o Pix recorrente, não está disponível para
 empresas sediadas no Brasil. Então:
 
-- **Assinatura mensal** de empresa brasileira via Stripe, hoje, é no cartão. Isso vale para o Seed e
-  para qualquer outro kit que use Stripe Billing.
+- **Assinatura mensal** de empresa brasileira via Stripe, hoje, é no cartão ou no boleto: a
+  [documentação do boleto no Stripe][boleto] (lida em 3 de novembro de 2026) diz que ele funciona
+  com assinaturas, para contas no Brasil. Isso vale para o Seed e para qualquer outro kit que use
+  Stripe Billing.
 - **Empresa fora do Brasil** vendendo para brasileiros pode usar o Pix Automático pelo Stripe, mas o
   cliente paga IOF de 3,5% em compra internacional, diz a mesma página.
 - **Gateway nacional** (Asaas, Pagar.me, Mercado Pago) significa trocar o Stripe por outro
@@ -67,6 +69,7 @@ serviço hospedado; vale colocar isso no seu mapeamento de dados.
 - **Apptension**, se o time é de Python e Django: login com segundo fator, passkeys, SSO, três
   papéis, Stripe e admin.
 - **BoxyHQ**, se você vende para empresas grandes que exigem SAML SSO e SCIM no primeiro dia.
+  Também traz assinaturas Stripe por equipe.
 
 ## O que o Seed traz?
 
@@ -81,8 +84,8 @@ sem data), nada de serverless, e um mantenedor só, que sou eu.
 
 ## Por onde começar?
 
-Responda duas perguntas: quem paga, uma pessoa ou uma equipe, e como você vai receber, cartão via
-Stripe ou outro gateway. A tabela cai para uma ou duas opções. Se for "equipes e Stripe", abra a
+Responda duas perguntas: quem paga, uma pessoa ou uma equipe, e como você vai receber, cartão ou
+boleto via Stripe, ou outro gateway. A tabela cai para uma ou duas opções. Se for "equipes e Stripe", abra a
 [demo](https://app.seedsaas.com) em português, veja a
 [comparação com kits pagos](/pt-BR/compare) e comece pelo [repositório][seed].
 
@@ -97,3 +100,4 @@ Stripe ou outro gateway. A tabela cai para uma ou duas opções. Se for "equipes
 [mk]: https://github.com/makerkit/nextjs-saas-starter-kit-lite
 [stripe-global]: https://stripe.com/global
 [pix]: https://docs.stripe.com/payments/pix
+[boleto]: https://docs.stripe.com/payments/boleto
