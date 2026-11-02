@@ -66,4 +66,14 @@ Seedは、チームがお金を払うプロダクトを、自分で管理する�
 
 「お金を払うのは個人かチームか」「どの技術スタックを使いたいか」の2つを決めれば、表は1〜2行に絞れます。答えが「チーム、自分のサーバー」なら、日本語に切り替えられる[デモ](https://app.seedsaas.com)を触ってみて、[有料キットとの比較](/ja/compare)を読み、[リポジトリ][seed]から始めてください。
 
-[seed]: https://github.com/spy4x/seed [runtime]: https://github.com/spy4x/seed/issues/623 [opensaas]: https://github.com/wasp-lang/open-saas [next]: https://github.com/nextjs/saas-starter [ix]: https://github.com/ixartz/SaaS-Boilerplate [app]: https://github.com/apptension/saas-boilerplate [boxy]: https://github.com/boxyhq/saas-starter-kit [mk]: https://github.com/makerkit/nextjs-saas-starter-kit-lite [stripe-global]: https://stripe.com/global [app-locales]: https://github.com/apptension/saas-boilerplate/tree/master/packages/webapp-libs/webapp-core/src/translations [ix-locales]: https://github.com/ixartz/SaaS-Boilerplate/tree/main/src/locales
+[seed]: https://github.com/spy4x/seed
+[runtime]: https://github.com/spy4x/seed/issues/623
+[opensaas]: https://github.com/wasp-lang/open-saas
+[next]: https://github.com/nextjs/saas-starter
+[ix]: https://github.com/ixartz/SaaS-Boilerplate
+[app]: https://github.com/apptension/saas-boilerplate
+[boxy]: https://github.com/boxyhq/saas-starter-kit
+[mk]: https://github.com/makerkit/nextjs-saas-starter-kit-lite
+[stripe-global]: https://stripe.com/global
+[app-locales]: https://github.com/apptension/saas-boilerplate/tree/master/packages/webapp-libs/webapp-core/src/translations
+[ix-locales]: https://github.com/ixartz/SaaS-Boilerplate/tree/main/src/locales

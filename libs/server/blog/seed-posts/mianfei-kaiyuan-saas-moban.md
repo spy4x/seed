@@ -60,4 +60,16 @@ Seed 面向“按团队付费”的产品，部署在你自己掌控的服务器
 
 先回答两个问题：谁付钱，个人还是团队？你能用哪种方式收款？表格立刻就能缩到一两行。如果答案是“团队，用自己的服务器”，可以先试试能切换到中文的[在线演示](https://app.seedsaas.com)，看看[与付费模板的对比](/zh-CN/compare)，然后从[代码仓库][seed]开始。
 
-[seed]: https://github.com/spy4x/seed [billing]: https://github.com/spy4x/seed/blob/main/docs/billing.md [runtime]: https://github.com/spy4x/seed/issues/623 [opensaas]: https://github.com/wasp-lang/open-saas [next]: https://github.com/nextjs/saas-starter [ix]: https://github.com/ixartz/SaaS-Boilerplate [app]: https://github.com/apptension/saas-boilerplate [boxy]: https://github.com/boxyhq/saas-starter-kit [mk]: https://github.com/makerkit/nextjs-saas-starter-kit-lite [stripe-global]: https://stripe.com/global [alipay]: https://docs.stripe.com/payments/alipay [wechat]: https://docs.stripe.com/payments/wechat-pay [app-locales]: https://github.com/apptension/saas-boilerplate/tree/master/packages/webapp-libs/webapp-core/src/translations
+[seed]: https://github.com/spy4x/seed
+[billing]: https://github.com/spy4x/seed/blob/main/docs/billing.md
+[runtime]: https://github.com/spy4x/seed/issues/623
+[opensaas]: https://github.com/wasp-lang/open-saas
+[next]: https://github.com/nextjs/saas-starter
+[ix]: https://github.com/ixartz/SaaS-Boilerplate
+[app]: https://github.com/apptension/saas-boilerplate
+[boxy]: https://github.com/boxyhq/saas-starter-kit
+[mk]: https://github.com/makerkit/nextjs-saas-starter-kit-lite
+[stripe-global]: https://stripe.com/global
+[alipay]: https://docs.stripe.com/payments/alipay
+[wechat]: https://docs.stripe.com/payments/wechat-pay
+[app-locales]: https://github.com/apptension/saas-boilerplate/tree/master/packages/webapp-libs/webapp-core/src/translations
