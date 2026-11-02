@@ -134,9 +134,9 @@ export default {
   "Architecture.captionBottom": "مع Valkey وGrafana",
   "Architecture.label":
     "كيف تترابط أجزاء Seed: تطبيق الويب والموقع يتصلان بالـAPI، والـAPI يكتب كل تغيير وأحداثه في Postgres، والعامل يرسل البريد والإشعارات انطلاقًا من تلك الأحداث. وكل ذلك يعمل على خادم واحد.",
-  "Home.title": "Seed: قالب SaaS جاهز، مجاني ومفتوح المصدر",
+  "Home.title": "Seed: قالب SaaS المجاني المبني على معايير الويب",
   "Home.description":
-    "قالب SaaS جاهز ومجاني بترخيص MIT: تسجيل دخول مع التحقق بخطوتين، ومجموعات بأدوار، وفوترة Stripe لكل عضو، وتحديث فوري، وعمل دون اتصال. Deno وPostgres وDocker Compose.",
+    "قالب SaaS المجاني بترخيص MIT، مبني على معايير الويب: تسجيل دخول مع التحقق بخطوتين، ومجموعات بأدوار، وفوترة Stripe لكل عضو، وتحديث فوري. يعمل على Deno.",
   "HomeProof.tests": "ملفات اختبار في التطبيقات والمكتبات، وتعمل كلها في CI",
   "HomeProof.licence": "الترخيص: بلا حساب وبلا دفع",
   "HomeStatus.signIn":
@@ -172,10 +172,10 @@ export default {
   "HomeFaq.productionQuestion": "هل هو جاهز للإنتاج؟",
   "HomeFaq.productionAnswer":
     "الأجزاء المدرجة تحت «يعمل اليوم» لها اختبارات في CI: كل طلب دمج يشغّل اختبارات تسجيل الدخول والملف الشخصي والملاحظات والمجموعات، وتعمل المجموعة الكاملة بعد كل دمج. Seed صالح للاستخدام اليوم وما زال ينمو، فاقرأ قائمة الحالة قبل أن تعتمد على أي جزء.",
-  "HomeHero.badge": "مفتوح المصدر · MIT · Deno 2 + Postgres",
+  "HomeHero.badge": "يعمل على Deno 2",
   "HomeHero.title": "أساس منتج SaaS الخاص بك، مبنيّ وجاهز.",
   "HomeHero.lead":
-    "Seed قالب SaaS جاهز ومجاني بترخيص MIT، فيه تسجيل الدخول مع التحقق بخطوتين، ومجموعات بأدوار، وفوترة Stripe لكل عضو، وتحديث فوري، وتطبيق يعمل دون اتصال، ولوحة إدارة. تنشره باستخدام Docker Compose على خادم Linux واحد تستأجره.",
+    "Seed هو قالب SaaS المجاني المبني على معايير الويب، فيه تسجيل الدخول مع التحقق بخطوتين، ومجموعات بأدوار، وفوترة Stripe لكل عضو، وتحديث فوري، وتطبيق يعمل دون اتصال، ولوحة إدارة. ترخيصه MIT، ويعمل اليوم على Deno، وتنشره باستخدام Docker Compose على خادم Linux واحد تستأجره.",
   "HomeHero.github": "عرض على GitHub",
   "HomeHero.status": "Seed صالح للاستخدام اليوم، ويُبنى علنًا: <status>اطّلع على ما يعمل</status>.",
   "HomeHero.quickStart": "البدء السريع",
@@ -489,6 +489,14 @@ export default {
   "FeatureYourFeature.fact2": "لكل طبقة اختباراتها، تنسخها معها",
   "FeatureYourFeature.fact3": "كل معرّف UUID مرتّب زمنيًا (الإصدار 7)",
   "FeatureYourFeature.code": "اقرأ docs/aggregates.md",
+  "FeatureTierRuntime.eyebrow": "بيئة التشغيل",
+  "FeatureTierRuntime.nav": "خطة بيئة التشغيل",
+  "FeatureTierRuntime.title": "يعمل على Deno اليوم",
+  "FeatureTierRuntime.lead":
+    "يعمل Seed اليوم على Deno، والعمل جارٍ ليعمل دون تعديل على Deno وNode وBun، ولا يوجد موعد بعد. شيفرته مبنية على معايير الويب (fetch وRequest وWeb Crypto وWebSocket ووحدات ES)، لذا لا يعتمد معظمها على بيئة التشغيل. في أكتوبر 2026 <announced>أعلن</announced> فريق Deno عن عام آخر من الدعم مع إصدارات شهرية لإصلاح الأخطاء والثغرات الأمنية، ينهي بعده تطويره الخاص؛ ويبقى Deno مفتوح المصدر.",
+  "FeatureTierRuntime.wip": "قيد العمل",
+  "FeatureTierRuntime.wipRuntimes": "<name>Node</name> و<name>Bun</name>",
+  "FeatureTierRuntime.follow": "تابع الخطة على GitHub (المشكلة <issue>#623</issue>)",
   "FeatureTierOperations.eyebrow": "التشغيل",
   "FeatureTierOperations.title": "شغّله، وراقبه، وادعم مستخدميه",
   "FeatureTierOperations.lead":
@@ -573,7 +581,7 @@ export default {
     "لا. يعمل Seed كحاويات دائمة التشغيل عبر Docker Compose على خادم Linux واحد تستأجره، لأن الـAPI يُبقي اتصالات WebSocket مفتوحة، والعامل يفرّغ قائمة انتظار.",
   "FeaturesFaq.runtimeQuestion": "هل يعمل Seed على Node.js أو Bun؟",
   "FeaturesFaq.runtimeAnswer":
-    "ليس حاليًا. خوادم Seed تعمل على Deno 2 داخل Docker، ومهامه واختباراته تستخدم Deno. لكن الشيفرة مبنية على معايير الويب مثل fetch وRequest وWeb Crypto.",
+    "ليس بعد. يعمل Seed اليوم على Deno، والعمل جارٍ ليعمل على Deno وNode وBun (#623). اطّلع على خطة بيئة التشغيل أعلاه.",
   "FeaturesFaq.databaseQuestion": "هل يمكن أن يستخدم Seed قاعدة بيانات غير Postgres؟",
   "FeaturesFaq.databaseAnswer":
     "لا. Seed مبني على Postgres: ترحيلاته واستعلاماته واختبارات التكامل فيه تفترض وجوده.",

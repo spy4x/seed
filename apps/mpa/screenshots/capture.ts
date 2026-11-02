@@ -122,9 +122,9 @@ interface OgCard {
 const OG_CARDS: OgCard[] = [
   {
     file: "home",
-    eyebrow: "Open-source SaaS foundation",
+    eyebrow: "The free SaaS starter",
     title: "The groundwork of your SaaS, already built.",
-    sub: "Seed · open source · MIT · one server you rent",
+    sub: "Seed · MIT · built on web standards · one server you rent",
     shot: "shots/notes-dark-1280.webp",
   },
   {

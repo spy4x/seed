@@ -207,7 +207,7 @@ describe("the public website", () => {
     expect(headingOne(html)).toBe("The groundwork of your SaaS, already built.")
     expect(hrefOf(linkNamed(html, "Try the live demo"))).toBe(`${spa}/try`)
     expect(hrefOf(linkNamed(html, "View on GitHub"))).toBe(REPOSITORY_URL)
-    expect(html).toContain(`<title>Seed: free open-source SaaS starter and boilerplate</title>`)
+    expect(html).toContain(`<title>Seed: the free SaaS starter built on web standards</title>`)
     expect(html).toContain(`<link rel="canonical" href="${site}/"`)
     expect(metaContent(html, "og:url")).toBe(`${site}/`)
     expect(metaContent(html, "description")).toBe(HOME_HEAD.description)
@@ -418,11 +418,9 @@ describe("the public website", () => {
     })
   }
 
-  it("names Seed a boilerplate in the home page's title and the comparison's description", async () => {
-    const home = (await page("/")).html
+  it("names Seed among boilerplates in the comparison's description", async () => {
     const compare = (await page("/compare")).html
 
-    expect(home.match(/<title>([^<]*)<\/title>/)![1]).toContain("boilerplate")
     expect(metaContent(compare, "description")).toContain("boilerplates")
   })
 
@@ -458,7 +456,7 @@ describe("the public website", () => {
       const lead = html.slice(html.indexOf("</h1>")).match(/<p\b[^>]*>([\s\S]*?)<\/p>/)![1]
         .replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim()
 
-      expect(lead, path).toMatch(/^Seed is a free, MIT-licensed SaaS starter[^.]*\./)
+      expect(lead, path).toMatch(/^Seed is (?:a free, MIT-licensed|the free) SaaS starter[^.]*\./)
     }
   })
 
@@ -1085,19 +1083,19 @@ describe("the public website", () => {
 
     // Every language of a page carries the English page's date: the translation says the same.
     expect(lastmods["/de/pricing"]).toBe("2026-10-21T00:00:00.000Z")
-    expect(lastmods["/ar"]).toBe("2026-10-31T00:00:00.000Z")
+    expect(lastmods["/ar"]).toBe("2026-11-02T00:00:00.000Z")
     expect(Object.values(lastmods)).not.toContain(undefined)
     const english = Object.fromEntries(
       Object.entries(lastmods).filter(([path]) => pathLanguage(path).language === "en"),
     )
     expect(english).toEqual({
-      "/": "2026-10-31T00:00:00.000Z",
-      "/features": "2026-11-01T00:00:00.000Z",
-      "/features/sign-in": "2026-11-01T00:00:00.000Z",
+      "/": "2026-11-02T00:00:00.000Z",
+      "/features": "2026-11-02T00:00:00.000Z",
+      "/features/sign-in": "2026-11-02T00:00:00.000Z",
       "/features/groups": "2026-11-01T00:00:00.000Z",
       "/features/billing": "2026-11-01T00:00:00.000Z",
       "/features/offline": "2026-11-01T00:00:00.000Z",
-      "/features/deploy": "2026-11-01T00:00:00.000Z",
+      "/features/deploy": "2026-11-02T00:00:00.000Z",
       "/admin": "2026-10-28T00:00:00.000Z",
       "/docs/api": "2026-10-23T00:00:00.000Z",
       // With no history to read, as under `deno test`, the guides and the changelog carry the day
@@ -1208,7 +1206,7 @@ describe("the public website", () => {
     const text = await response.text()
 
     expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8")
-    expect(text).toMatch(/^# Seed\n\n> Free, MIT-licensed SaaS starter/)
+    expect(text).toMatch(/^# Seed\n\n> The free, MIT-licensed SaaS starter built on web standards/)
     for (const { path, title, description } of SITE_PAGES) {
       expect(text, path).toContain(`- [${title}](${site}${path}): ${description}\n`)
     }

@@ -62,7 +62,7 @@ export function homeHead(t: Translator<string>): { title: string; description: s
 }
 
 /** The day the home page's content last changed: the sitemap's `lastmod`. Change it with it. */
-export const HOME_UPDATED = `2026-10-31`
+export const HOME_UPDATED = `2026-11-02`
 
 /** The home page's head in English, for the page list and `llms.txt`. */
 export const HOME_HEAD = homeHead(siteEnglishText())
@@ -181,14 +181,21 @@ function homeJsonLd(
 }
 
 function Hero({ demoHref }: { demoHref: string }): JSX.Element {
-  const { t, rich } = useSite()
+  const { t, rich, href } = useSite()
   return (
     <section aria-labelledby="hero-title" class="relative overflow-hidden">
       <div aria-hidden="true" class="site-grid pointer-events-none absolute inset-0" />
       <div class="site-glow relative">
         <div class="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 pb-12 pt-12 sm:px-6 lg:px-8 lg:pb-16 lg:pt-16">
           <div class="mx-auto flex max-w-3xl flex-col items-start gap-6 sm:items-center sm:text-center">
-            <Badge href={REPOSITORY_URL} text={t.t(`HomeHero.badge`)} type="outline" />
+            {/* The badge draws its own link; Umami counts a click on anything inside this wrapper. */}
+            <span class="contents" data-umami-event="runtime-plan" data-umami-event-from="hero">
+              <Badge
+                href={href(`/features#runtime`)}
+                text={t.t(`HomeHero.badge`)}
+                type="outline"
+              />
+            </span>
             <h1
               id="hero-title"
               class="text-4xl font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl"

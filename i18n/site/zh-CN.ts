@@ -130,9 +130,9 @@ export default {
   "Architecture.captionBottom": "搭配 Valkey 和 Grafana",
   "Architecture.label":
     "Seed 的整体结构：Web 应用和网站调用 API，API 把每一次更改及其事件写入 Postgres，Worker 根据这些事件发送邮件和推送。所有服务都运行在一台服务器上。",
-  "Home.title": "Seed：免费开源的 SaaS 启动模板",
+  "Home.title": "Seed：基于 Web 标准的免费 SaaS 启动模板",
   "Home.description":
-    "免费、MIT 许可的 SaaS 启动模板：支持双重验证的登录、带角色的群组、按成员计费的 Stripe 订阅、实时同步、离线使用。基于 Deno、Postgres 和 Docker Compose。",
+    "基于 Web 标准、免费且 MIT 许可的 SaaS 启动模板：支持双重验证的登录、带角色的群组、按成员计费的 Stripe 订阅、实时同步、离线使用。运行在 Deno 上。",
   "HomeProof.tests": "测试文件，覆盖各个应用和库，全部在 CI 中运行",
   "HomeProof.licence": "许可证：无需账号，没有付费墙",
   "HomeStatus.signIn":
@@ -166,10 +166,10 @@ export default {
   "HomeFaq.productionQuestion": "可以用于生产环境吗？",
   "HomeFaq.productionAnswer":
     "“目前可用”中列出的部分都有 CI 测试：每个 pull request 都会运行登录、个人资料、笔记和群组的测试，每次合并后会运行完整的测试套件。Seed 现在就能用，并且还在持续完善；在依赖某个部分之前，请先查看状态列表。",
-  "HomeHero.badge": "开源 · MIT · Deno 2 + Postgres",
+  "HomeHero.badge": "运行在 Deno 2 上",
   "HomeHero.title": "你的 SaaS 地基，已经搭好了。",
   "HomeHero.lead":
-    "Seed 是一个免费、MIT 许可的 SaaS 启动模板，内置登录和双重验证（2FA）、带角色的群组、按成员计费的 Stripe 订阅、实时同步、离线应用和管理后台。用 Docker Compose 部署到你租用的一台 Linux 服务器上即可。",
+    "Seed 是基于 Web 标准的免费 SaaS 启动模板，内置登录和双重验证（2FA）、带角色的群组、按成员计费的 Stripe 订阅、实时同步、离线应用和管理后台。它采用 MIT 许可，目前运行在 Deno 上，用 Docker Compose 部署到你租用的一台 Linux 服务器上即可。",
   "HomeHero.github": "在 GitHub 上查看",
   "HomeHero.status": "Seed 现在就能用，并且在公开开发中：<status>看看有哪些功能可用</status>。",
   "HomeHero.quickStart": "快速开始",
@@ -462,6 +462,14 @@ export default {
   "FeatureYourFeature.fact2": "每一层都有自己的测试，可以一并复制",
   "FeatureYourFeature.fact3": "每个 ID 都是按时间排序的 UUID（第 7 版）",
   "FeatureYourFeature.code": "阅读 docs/aggregates.md",
+  "FeatureTierRuntime.eyebrow": "运行时",
+  "FeatureTierRuntime.nav": "运行时计划",
+  "FeatureTierRuntime.title": "目前运行在 Deno 上",
+  "FeatureTierRuntime.lead":
+    "Seed 目前运行在 Deno 上，接下来会做到无需改动就能在 Deno、Node 和 Bun 上运行，目前还没有确定日期。它的代码基于 Web 标准（fetch、Request、Web Crypto、WebSocket、ES 模块），所以大部分代码并不依赖运行时。2026 年 10 月，Deno 团队<announced>宣布</announced>将再提供一年支持，每月发布错误修复和安全更新，之后结束自己的开发工作；Deno 仍然是开源的。",
+  "FeatureTierRuntime.wip": "进行中",
+  "FeatureTierRuntime.wipRuntimes": "<name>Node</name> 和 <name>Bun</name>",
+  "FeatureTierRuntime.follow": "在 GitHub 上关注计划（issue <issue>#623</issue>）",
   "FeatureTierOperations.eyebrow": "运维",
   "FeatureTierOperations.title": "运行它、监控它、支持它的用户",
   "FeatureTierOperations.lead":
@@ -528,7 +536,7 @@ export default {
     "不能。Seed 以常驻容器的形式，用 Docker Compose 运行在你租用的一台 Linux 服务器上，因为 API 需要保持 WebSocket 连接，Worker 需要持续消费队列。",
   "FeaturesFaq.runtimeQuestion": "Seed 能在 Node.js 或 Bun 上运行吗？",
   "FeaturesFaq.runtimeAnswer":
-    "目前还不能。Seed 的服务器在 Docker 中的 Deno 2 上运行，任务和测试也使用 Deno。代码基于 fetch、Request 和 Web Crypto 等 Web 标准编写。",
+    "还不能。Seed 目前运行在 Deno 上，让它同时支持 Deno、Node 和 Bun 的工作正在进行中（#623）。详见上方的运行时计划。",
   "FeaturesFaq.databaseQuestion": "Seed 能使用 Postgres 以外的数据库吗？",
   "FeaturesFaq.databaseAnswer":
     "不能。Seed 基于 Postgres 构建：它的迁移、查询和集成测试都以 Postgres 为前提。",

@@ -55,7 +55,7 @@ export type OgImageKey =
 export const OG_IMAGES: Record<OgImageKey, { headline: string; line: string }> = {
   home: {
     headline: `The groundwork of your SaaS, already built.`,
-    line: `Seed · open source · MIT · one server you rent`,
+    line: `Seed · MIT · built on web standards · one server you rent`,
   },
   features: {
     headline: `Auth, groups, billing, offline, admin.`,
@@ -133,7 +133,7 @@ export const PERSON_JSON_LD = {
 export const SITE_AUTHOR = { name: PERSON_JSON_LD.name, href: AUTHOR_URL } as const
 
 /** What Seed is, in the words of the home page's lead, for the product's structured data. */
-const SOFTWARE_DESCRIPTION = `Seed is a free, MIT-licensed SaaS starter with sign-in and ` +
+const SOFTWARE_DESCRIPTION = `Seed is the free SaaS starter built on web standards: sign-in and ` +
   `two-factor authentication (2FA), groups with roles, per-member Stripe billing, realtime, an ` +
   `offline app and an admin area.`
 

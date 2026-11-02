@@ -137,9 +137,9 @@ export default {
   "Architecture.captionBottom": "with Valkey and Grafana",
   "Architecture.label":
     "How Seed fits together: the web app and the website call the API, the API writes every change and its events to Postgres, and the worker sends mail and push from those events. Everything runs on one server.",
-  "Home.title": "Seed: free open-source SaaS starter and boilerplate",
+  "Home.title": "Seed: the free SaaS starter built on web standards",
   "Home.description":
-    "Free, MIT-licensed SaaS starter: sign-in with 2FA, groups with roles, per-member Stripe billing, realtime, offline. Deno, Postgres, Docker Compose.",
+    "The free, MIT-licensed SaaS starter built on web standards: 2FA sign-in, groups with roles, per-member Stripe billing, realtime, offline. Runs on Deno.",
   "HomeProof.tests": "test files in the apps and libraries, all run in CI",
   "HomeProof.licence": "licence: no account, no paywall",
   "HomeStatus.signIn":
@@ -176,10 +176,10 @@ export default {
   "HomeFaq.productionQuestion": "Is it production-ready?",
   "HomeFaq.productionAnswer":
     'The parts listed under "Works today" have tests in CI: every pull request runs the sign-in, profile, notes and groups tests, and the full suite runs after each merge. Seed is usable today and still growing; read the status list before you rely on a part.',
-  "HomeHero.badge": "Open source · MIT · Deno 2 + Postgres",
+  "HomeHero.badge": "Runs on Deno 2",
   "HomeHero.title": "The groundwork of your SaaS, already built.",
   "HomeHero.lead":
-    "Seed is a free, MIT-licensed SaaS starter with sign-in and two-factor authentication (2FA), groups with roles, per-member Stripe billing, realtime, an offline app and an admin area. You deploy it with Docker Compose to a single Linux server you rent.",
+    "Seed is the free SaaS starter built on web standards: sign-in and two-factor authentication (2FA), groups with roles, per-member Stripe billing, realtime, an offline app and an admin area. It is MIT-licensed, runs on Deno today, and deploys with Docker Compose to one Linux server you rent.",
   "HomeHero.github": "View on GitHub",
   "HomeHero.status": "Seed is usable today, built in public: <status>see what works</status>.",
   "HomeHero.quickStart": "Quick start",
@@ -499,6 +499,14 @@ export default {
   "FeatureYourFeature.fact2": "Each layer has its own tests to copy with it",
   "FeatureYourFeature.fact3": "Every id is a time-ordered UUID (version 7)",
   "FeatureYourFeature.code": "Read docs/aggregates.md",
+  "FeatureTierRuntime.eyebrow": "Runtime",
+  "FeatureTierRuntime.nav": "Runtime plan",
+  "FeatureTierRuntime.title": "Runs on Deno today",
+  "FeatureTierRuntime.lead":
+    "Seed runs on Deno today, and it is moving to run unchanged on Deno, Node and Bun; there is no date yet. Its code is built on web standards (fetch, Request, Web Crypto, WebSocket, ES modules), so most of it does not depend on the runtime. In October 2026 the makers of Deno <announced>announced</announced> one more year of support with monthly bug-fix and security releases, after which they end its development; Deno stays open source.",
+  "FeatureTierRuntime.wip": "In progress",
+  "FeatureTierRuntime.wipRuntimes": "<name>Node</name> and <name>Bun</name>",
+  "FeatureTierRuntime.follow": "Follow the plan on GitHub (issue <issue>#623</issue>)",
   "FeatureTierOperations.eyebrow": "Operations",
   "FeatureTierOperations.title": "Run it, watch it, support the people on it",
   "FeatureTierOperations.lead":
@@ -572,7 +580,7 @@ export default {
     "No. Seed runs as long-lived containers with Docker Compose on one Linux server you rent, because the API keeps WebSocket connections open and a worker drains a queue.",
   "FeaturesFaq.runtimeQuestion": "Can Seed run on Node.js or Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Not today. Seed's servers run on Deno 2 in Docker, and its tasks and tests use Deno. The code is built on web standards such as fetch, Request and Web Crypto.",
+    "Not yet. Seed runs on Deno today, and the move to run on Deno, Node and Bun is in progress (#623). See the runtime plan above.",
   "FeaturesFaq.databaseQuestion": "Can Seed use a database other than Postgres?",
   "FeaturesFaq.databaseAnswer":
     "No. Seed is built on Postgres: its migrations, queries and integration tests assume it.",
