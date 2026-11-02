@@ -1,5 +1,5 @@
 import type { ComponentChildren, JSX } from "preact"
-import { IconArrowRight, IconCheck, IconMinus } from "@spy4x/preact-icons"
+import { IconArrowRight, IconCheck, IconCode, IconMinus } from "@spy4x/preact-icons"
 import { StatusMark } from "@spy4x/preact-ui/status-mark"
 import { useSite } from "../use-site.tsx"
 
@@ -13,8 +13,6 @@ export interface NotYet {
 export interface FeatureSectionProps {
   /** The section's anchor, such as `sign-in` for `/features#sign-in`. */
   id: string
-  /** The area, in small letters above the heading: "Accounts", "Money". */
-  eyebrow: string
   title: string
   /** What a person using the product notices. */
   lead: ComponentChildren
@@ -24,8 +22,11 @@ export interface FeatureSectionProps {
   notYet?: readonly NotYet[]
   /** Where to read the code behind the claims, on GitHub. */
   code: { label: string; href: string }
-  /** The feature's own page, linked beside the code. `language` marks a page in another language. */
-  more?: { label: string; href: string; language?: string }
+  /**
+   * The feature's own page. With one, the whole text block is a link to it, its name the heading.
+   * `language` marks a page in another language.
+   */
+  more?: { href: string; language?: string }
   /** The picture or code window beside the text. Without one, the facts spread over two columns. */
   visual?: ComponentChildren
   /** Puts the picture on the left from `xl`, so neighbouring sections alternate. */
@@ -33,13 +34,15 @@ export interface FeatureSectionProps {
 }
 
 /**
- * One feature of `/features`: the area, the heading, what people notice, what a developer gets, the
- * honest status, a link to the code, and a picture beside the text from `xl` (below it on a phone).
+ * One feature of `/features`: the heading, what people notice, what a developer gets, the honest
+ * status, a quiet link to the code, and a picture beside the text from `xl` (below it on a phone).
+ * With a page of its own, the whole text block is one link to it: the heading's link stretches over
+ * the block, and every other link in it sits above that layer so it stays clickable.
  */
 export function FeatureSection(
-  { id, eyebrow, title, lead, facts, notYet = [], code, more, visual, flip = false }:
-    FeatureSectionProps,
+  { id, title, lead, facts, notYet = [], code, more, visual, flip = false }: FeatureSectionProps,
 ): JSX.Element {
+  const { t } = useSite()
   const headingId = `${id}-title`
   const side = Boolean(visual)
   return (
@@ -49,35 +52,46 @@ export function FeatureSection(
       class={`grid scroll-mt-16 gap-8 ${side ? "xl:grid-cols-2 xl:items-center" : ""}`}
       data-e2e={`feature-${id}`}
     >
-      <div class={`flex min-w-0 flex-col gap-4 ${side && flip ? "xl:order-2" : ""}`}>
-        <p class="font-mono text-sm font-medium text-primary">{eyebrow}</p>
+      <div
+        class={`flex min-w-0 flex-col gap-4 ${side && flip ? "xl:order-2" : ""} ${
+          more
+            ? "group relative -m-3 rounded-card p-3 transition-colors hover:bg-hover [&_a:not(h3_a)]:relative"
+            : ""
+        }`}
+      >
         <h3 id={headingId} class="text-xl font-semibold tracking-tight text-balance lg:text-2xl">
-          {title}
+          {more
+            ? (
+              <a
+                href={more.href}
+                hreflang={more.language}
+                class="after:absolute after:inset-0 after:rounded-card group-hover:text-primary focus-visible:outline-hidden focus-visible:after:ring-2 focus-visible:after:ring-focus"
+                data-e2e="feature-more-link"
+              >
+                {title}
+                <IconArrowRight
+                  class="ms-2 inline size-5 align-[-0.125em] text-primary motion-safe:transition-transform motion-safe:group-hover:translate-x-1 rtl:motion-safe:group-hover:-translate-x-1"
+                  aria-hidden="true"
+                />
+              </a>
+            )
+            : title}
         </h3>
         <p class="text-muted text-pretty">{lead}</p>
+        <p class="font-mono text-sm font-medium text-muted">
+          {t.t(`FeatureSection.forDevelopers`)}
+        </p>
         <FactList facts={facts} columns={!visual} />
         {notYet.length > 0 && <NotYetList items={notYet} />}
-        <div class="flex flex-wrap gap-x-6">
-          {more && (
-            <a
-              href={more.href}
-              hreflang={more.language}
-              class="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline"
-              data-e2e="feature-more-link"
-            >
-              {more.label} <IconArrowRight class="size-4" aria-hidden="true" />
-            </a>
-          )}
-          <a
-            href={code.href}
-            class="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline"
-            data-e2e="feature-code-link"
-            data-umami-event="read-code"
-            data-umami-event-from={id}
-          >
-            {code.label} <IconArrowRight class="size-4" aria-hidden="true" />
-          </a>
-        </div>
+        <a
+          href={code.href}
+          class="inline-flex min-h-11 items-center gap-2 self-start text-sm text-muted hover:text-foreground hover:underline"
+          data-e2e="feature-code-link"
+          data-umami-event="read-code"
+          data-umami-event-from={id}
+        >
+          <IconCode class="size-4" aria-hidden="true" /> {code.label}
+        </a>
       </div>
       {visual && (
         <div class={`min-w-0 max-w-2xl ${flip ? "xl:order-1" : ""}`}>

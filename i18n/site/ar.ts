@@ -337,7 +337,6 @@ export default {
   "FeatureTierSettled.status":
     "مُختبَرة في CI. تسجيل الدخول عبر Google وGitHub وStripe تحتاج إلى مفاتيحك الخاصة، لذا فهي معطّلة في العرض.",
   "FeatureSignIn.nav": "الحسابات وتسجيل الدخول",
-  "FeatureSignIn.eyebrow": "الحسابات",
   "FeatureSignIn.title": "تسجيل الدخول، جاهز",
   "FeatureSignIn.lead":
     "ينشئ الناس حساباتهم ببريد إلكتروني وكلمة مرور، ويؤكدون البريد برمز. ويمكنهم إعادة تعيين كلمة مرور منسية، أو المتابعة عبر Google أو GitHub، أو تسجيل الدخول بمفتاح مرور، أو تلقّي رابط دخول عبر البريد ينشئ لهم حسابًا أيضًا. أو يجرّبون التطبيق أولًا بحساب ضيف ويضيفون طريقة لتسجيل الدخول لاحقًا. ويضيف تطبيق المصادقة التحقق بخطوتين. يرى كل شخص جميع الأجهزة المسجّل دخوله عليها، ويمكنه تسجيل الخروج من الأجهزة الأخرى. وتغيير طريقة تسجيل الدخول يتطلب إثبات الهوية ويرسل رسالة بريد.",
@@ -355,7 +354,6 @@ export default {
     "تُحصى كلمات المرور الخاطئة لكل اسم دخول عبر كل عناوين الشبكة، ثم يُقفل الحساب لفترة قصيرة",
   "FeatureSignIn.code": "اقرأ شيفرة تسجيل الدخول",
   "FeatureTeams.nav": "المجموعات والأدوار",
-  "FeatureTeams.eyebrow": "المجموعات",
   "FeatureTeams.title": "مجموعات بأدوار، من الدقيقة الأولى",
   "FeatureTeams.lead":
     "يحصل كل حساب على مجموعة شخصية عند إنشائه. ينشئ الناس مجموعات مشتركة، ويدعون غيرهم، ويمنحونهم أدوارًا من قارئ إلى مالك، وينقلون الملكية بخطوة واحدة. ويمكن استعادة المجموعة المحذوفة خلال 30 يومًا، ولكل مجموعة سجل نشاط.",
@@ -366,7 +364,6 @@ export default {
   "FeatureTeams.fact4": "الدعوات وتغيير الأدوار ونقل الملكية، ولكل منها اختباراته",
   "FeatureTeams.code": "اقرأ شيفرة المجموعات",
   "FeatureOverview.nav": "نظرة عامة على المجموعة",
-  "FeatureOverview.eyebrow": "نظرة عامة",
   "FeatureOverview.title": "نظرة عامة لكل مجموعة",
   "FeatureOverview.lead":
     "أرقام رئيسية ورسم بياني لأي فترة زمنية. يستطيع كل شخص إخفاء الأدوات وإعادة ترتيبها، ويتبعه ترتيبه إلى أجهزته الأخرى.",
@@ -376,7 +373,6 @@ export default {
   "FeatureOverview.fact4": "كل كيان جديد يضيف أدواته الخاصة، وتعرضها لوحة الإدارة أيضًا",
   "FeatureOverview.code": "اقرأ شيفرة أدوات النظرة العامة",
   "FeatureBilling.nav": "فوترة لكل عضو",
-  "FeatureBilling.eyebrow": "المال",
   "FeatureBilling.title": "فوترة لكل عضو، عبر Stripe",
   "FeatureBilling.lead":
     "يرى الناس جدول أسعار، وخطة مجانية بحدود، وفترة تجريبية مدتها 14 يومًا للخطة المدفوعة. ويرى المالك تكلفة العضو الإضافي قبل دعوته، وتنبيهًا واضحًا مع تاريخ محدد عند رفض البطاقة.",
@@ -387,7 +383,6 @@ export default {
   "FeatureBilling.notYet1": "مزوّدو دفع غير Stripe",
   "FeatureBilling.code": "اقرأ docs/billing.md",
   "FeaturePrivacy.nav": "الخصوصية",
-  "FeaturePrivacy.eyebrow": "الخصوصية",
   "FeaturePrivacy.title": "حسابات يمكن مغادرتها",
   "FeaturePrivacy.lead":
     "ينزّل الناس نسخة من بياناتهم ويحذفون حساباتهم من الملف الشخصي، مع 7 أيام لتغيير رأيهم. وتُحذف الإشعارات المقروءة بعد 90 يومًا.",
@@ -396,7 +391,6 @@ export default {
   "FeaturePrivacy.fact3": "تنظيف ليلي للإشعارات المقروءة والدعوات المنتهية وأحداث التدقيق القديمة",
   "FeaturePrivacy.code": "اقرأ شيفرة حذف الحساب",
   "FeatureExport.nav": "التصدير والاستيراد",
-  "FeatureExport.eyebrow": "التصدير",
   "FeatureExport.title": "بياناتك ترحل معك",
   "FeatureExport.lead":
     "صدّر أي مجموعة إلى ملف JSON مفتوح، واستوردها لاحقًا كمجموعة جديدة. لا تُستبدل المجموعة الأصلية أبدًا.",
@@ -406,7 +400,6 @@ export default {
   "FeatureExport.fact4": "كل كيان يسجّل الجزء الخاص به من الملف",
   "FeatureExport.code": "اقرأ شيفرة التصدير",
   "FeatureLanguages.nav": "اللغات",
-  "FeatureLanguages.eyebrow": "اللغات",
   "FeatureLanguages.title": "بتسع لغات منذ البداية",
   "FeatureLanguages.lead":
     "التطبيق ولوحة الإدارة وهذا الموقع متاحة بهذه اللغات: {languages}. يختار كل شخص لغته في التطبيق، وتُحفظ مع حسابه. ولكل صفحة في هذا الموقع عنوان خاص بكل لغة.",
@@ -425,7 +418,6 @@ export default {
   "FeatureTierReady.status":
     "الكتابة دون اتصال تشمل الملاحظات والوسوم، وكل قائمة أخرى تفتح دون اتصال بآخر ما عرضته.",
   "FeatureRealtime.nav": "التحديث الفوري",
-  "FeatureRealtime.eyebrow": "التحديث الفوري",
   "FeatureRealtime.title": "التغييرات تظهر دون إعادة تحميل",
   "FeatureRealtime.lead":
     "يظهر تغيير أي عضو في كل علامة تبويب مفتوحة للمجموعة، والحاسوب الذي يستيقظ من السكون يلحق بما فاته.",
@@ -435,7 +427,6 @@ export default {
     "يمكن إيقاف التحديث الفوري: عندها يستعلم التطبيق دوريًا ويعمل بالطريقة نفسها",
   "FeatureRealtime.code": "اقرأ تصميم التحديث الفوري",
   "FeatureOffline.nav": "التطبيق دون اتصال",
-  "FeatureOffline.eyebrow": "دون اتصال",
   "FeatureOffline.title": "تطبيق يفتح دون شبكة",
   "FeatureOffline.lead":
     "يُثبَّت التطبيق كأي تطبيق أصلي، ويفتح دون شبكة، ويرسل التغييرات المنتظرة حين تعود الشبكة. والتغيير القديم يظهر كتعارض عليك حسمه، ولا يُكتب فوق غيره بصمت أبدًا.",
@@ -444,7 +435,6 @@ export default {
   "FeatureOffline.fact3": "أوقفه بإعداد واحد، أو أزله: احذف مجلدًا واحدًا واتبع قائمة خطوات مكتوبة",
   "FeatureOffline.code": "اقرأ docs/offline.md",
   "FeatureShortcuts.nav": "اختصارات لوحة المفاتيح",
-  "FeatureShortcuts.eyebrow": "لوحة المفاتيح",
   "FeatureShortcuts.title": "اختصارات لوحة المفاتيح في التطبيق ولوحة الإدارة",
   "FeatureShortcuts.lead":
     "اضغط ? لترى كل الاختصارات. يضيف N ملاحظة من أي صفحة دون مغادرتها، وG ثم حرف يفتح قسمًا. ولا تتدخل الاختصارات أثناء الكتابة في حقل.",
@@ -456,7 +446,6 @@ export default {
   "FeatureShortcuts.fact4": "في لوحة الإدارة، G ثم حرف يفتح كل وحدة",
   "FeatureShortcuts.code": "اقرأ شيفرة الاختصارات",
   "FeaturePush.nav": "الإشعارات",
-  "FeaturePush.eyebrow": "الإشعارات",
   "FeaturePush.title": "إشعارات في التطبيق، وعلى الهاتف وسطح المكتب وTelegram",
   "FeaturePush.lead":
     "يتلقى الناس إشعارًا حين يُدعون، أو يُمنحون دورًا جديدًا، أو تُنقل إليهم ملكية مجموعة: في التطبيق، وبإشعارات الويب على الهاتف أو سطح المكتب، وفي Telegram بعد ربطه.",
@@ -467,7 +456,6 @@ export default {
     "بوت Telegram، معطّل حتى تضبط رمزه: يُربط برمز لمرة واحدة، وتُضاف أوامر منتجك في ملف واحد",
   "FeaturePush.code": "اقرأ شيفرة خدمة إشعارات الويب",
   "FeatureWorker.nav": "المهام في الخلفية",
-  "FeatureWorker.eyebrow": "المهام في الخلفية",
   "FeatureWorker.title": "مهام تصمد أمام الأعطال",
   "FeatureWorker.lead":
     "يُرسَل البريد والإشعارات حتى لو أُعيد تشغيل الخادم في منتصف العمل، لأن المهمة تُحفظ قبل تنفيذها. وتعمل مهامك الخاصة الآن، أو لاحقًا، أو وفق جدول.",
@@ -478,7 +466,6 @@ export default {
     "المحاولة الفاشلة تُعاد بفترات انتظار متزايدة، ويرى المشغّلون كل تشغيل في لوحة الإدارة",
   "FeatureWorker.code": "اقرأ docs/jobs.md",
   "FeatureYourFeature.nav": "ميزاتك الخاصة",
-  "FeatureYourFeature.eyebrow": "منتجك",
   "FeatureYourFeature.title": "أضف ميزة بنسخ ميزة موجودة",
   "FeatureYourFeature.lead":
     "الملاحظات ميزة كاملة في كل طبقة: قاعدة البيانات، والـAPI، والشاشة، والعمل دون اتصال، والاختبارات. والميزة الجديدة تنسخها ملفًا ملفًا، وفق قائمة تسمّي كل ملف بالترتيب.",
@@ -500,7 +487,6 @@ export default {
     "خادم واحد تستأجره، وأدوات ترى بها ما يفعله، ولوحة يساعد منها المشغّلون مستخدمي منتجك.",
   "FeatureTierOperations.status": "كل وحدة أدناه متاحة اليوم، وما لم يُبنَ بعد مذكور تحتها.",
   "FeatureAdmin.nav": "لوحة الإدارة",
-  "FeatureAdmin.eyebrow": "الدعم",
   "FeatureAdmin.title": "لوحة إدارة للمشغّلين",
   "FeatureAdmin.lead":
     "يبحث المشغّلون عن أي شخص بالاسم أو البريد، ويرون طرق تسجيل دخوله وجلساته ومجموعاته وسجله. ومن المكان نفسه يديرون المجموعات، ويستردّون المدفوعات، ويعتنون بمشتركي النشرة البريدية، ويرون كل مهمة في الخلفية، ويعيدون تشغيل المهمة الفاشلة، ويتابعون سلامة النظام.",
@@ -518,7 +504,6 @@ export default {
   "FeatureAdmin.notYet1": "الدخول بحساب شخص ما لرؤية ما يراه",
   "FeatureAdmin.code": "اقرأ شيفرة لوحة الإدارة",
   "FeatureDeploy.nav": "النشر والمراقبة",
-  "FeatureDeploy.eyebrow": "النشر",
   "FeatureDeploy.title": "خادم واحد، وأمر واحد",
   "FeatureDeploy.lead":
     "يعمل Seed على أي خادم Linux تستأجره، باستخدام Docker Compose في التطوير والإنتاج على حد سواء. ويمكن لعدة منتجات أن تتشارك خادمًا واحدًا.",
@@ -532,7 +517,6 @@ export default {
   "FeatureDeploy.fact6": "صور الإصدار تُنشر من CI حين تدفع وسم إصدار",
   "FeatureDeploy.code": "اقرأ ملفات Compose",
   "FeatureWebsite.nav": "الموقع العام",
-  "FeatureWebsite.eyebrow": "الموقع",
   "FeatureWebsite.title": "موقع عام جاهز للتعديل",
   "FeatureWebsite.lead":
     "هذا الموقع نفسه: سريع، يُعرض من الخادم، ويمكن استخدامه مع تعطيل JavaScript، وفيه الأسعار والصفحات القانونية والمدونة والنشرة البريدية.",
@@ -550,7 +534,6 @@ export default {
     "إحصاءات اختيارية دون ملفات تعريف ارتباط على خادم Umami الخاص بك، مع حدث لكل دعوة إلى إجراء، وصفحة «الإحصاءات» في لوحة الإدارة: الزيارات ونقرات الطلب حسب المصدر وحسب المنتج",
   "FeatureWebsite.code": "اقرأ شيفرة الموقع",
   "FeatureQuality.nav": "الاختبارات",
-  "FeatureQuality.eyebrow": "الجودة",
   "FeatureQuality.title": "مُختبَر حيث يهم",
   "FeatureQuality.lead": {
     "zero":
@@ -604,7 +587,7 @@ export default {
   "Features.compare": "كيف يُقارن Seed بغيره",
   "FeaturesFaq.title": "هل يستطيع Seed ذلك؟",
   "FeatureSection.issue": "المشكلة #{number}",
-  "FeatureSection.readMore": "المزيد عن {feature}",
+  "FeatureSection.forDevelopers": "للمطورين",
   "FeatureVisuals.deployCaption": "مختصر: حُذفت مخرجات rsync وCompose بين الخطوات.",
   "FeatureVisuals.services": "الخدمات على الخادم",
   "Loops.realtimeName": "المزامنة الفورية",

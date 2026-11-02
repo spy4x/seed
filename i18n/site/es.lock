@@ -234,7 +234,6 @@ ErrorPage.notFoundTitle	a469ab4ca4e55bf5
 ErrorPage.report	1a3893810c9bf510
 ErrorPage.retry	d8b8392e2c542950
 FeatureAdmin.code	912e13dca4cf1fd1
-FeatureAdmin.eyebrow	be91940b79f46910
 FeatureAdmin.fact1	9a7fa68646434d6e
 FeatureAdmin.fact2	4e1aec7c9b76bf3b
 FeatureAdmin.fact3	b8aff211319d87d1
@@ -246,7 +245,6 @@ FeatureAdmin.watch	a083998316c74918
 FeatureBilling.alt	38e8bd57065809f6
 FeatureBilling.catalog	8a888d78cab82de1
 FeatureBilling.code	23127fe9c071a382
-FeatureBilling.eyebrow	5ccc2e8715d7a17c
 FeatureBilling.fact1	6f9b0251fc7a6475
 FeatureBilling.fact2	70b482698765a5d1
 FeatureBilling.fact3	c631f891d6c3fc91
@@ -256,7 +254,6 @@ FeatureBilling.nav	137c8b19e4d984a5
 FeatureBilling.notYet1	7824ea86a2386456
 FeatureBilling.title	0a5d76d41e69dfbb
 FeatureDeploy.code	d4f494dfcd050dd5
-FeatureDeploy.eyebrow	4c236daafb445f86
 FeatureDeploy.fact1	1a3ee353341b52f9
 FeatureDeploy.fact2	b0900c3f64658340
 FeatureDeploy.fact3	f965199bba713023
@@ -267,7 +264,6 @@ FeatureDeploy.lead	7c26f35aa35f672a
 FeatureDeploy.nav	e5cef70e7ecce01a
 FeatureDeploy.title	9f68353540ce064f
 FeatureExport.code	af6b3bd89e7e65e5
-FeatureExport.eyebrow	3664895579f0a7e6
 FeatureExport.fact1	a8fa38b7a564fd1e
 FeatureExport.fact2	2bc07b51a371a18b
 FeatureExport.fact3	71736d6ec821f485
@@ -276,7 +272,6 @@ FeatureExport.lead	036e491b4b3f4e3a
 FeatureExport.nav	d9eb6fc6e185ea1c
 FeatureExport.title	2803704286b5afc2
 FeatureLanguages.code	cf2efaf06efc7511
-FeatureLanguages.eyebrow	318655cea4bd2096
 FeatureLanguages.fact1	9388d0e68da98020
 FeatureLanguages.fact2	78f2cf95a1b4a610
 FeatureLanguages.fact3	4481436043ef2143
@@ -286,7 +281,6 @@ FeatureLanguages.lead	e17661d67bc6c160
 FeatureLanguages.nav	318655cea4bd2096
 FeatureLanguages.title	e733a4488a13be75
 FeatureOffline.code	c788735f6c08c6a1
-FeatureOffline.eyebrow	a1794783aab72d20
 FeatureOffline.fact1	56e1ad7ab9e51e23
 FeatureOffline.fact2	365a5f6a13eda453
 FeatureOffline.fact3	fed9662c4cba2a51
@@ -294,7 +288,6 @@ FeatureOffline.lead	ae0a3e4051ac7ab7
 FeatureOffline.nav	bf0904504d78a068
 FeatureOffline.title	7d2228be0de4e8cb
 FeatureOverview.code	93ddd70ad5e14000
-FeatureOverview.eyebrow	d4b1ea5708dd5329
 FeatureOverview.fact1	ce08d74854190f35
 FeatureOverview.fact2	27086b3799b33933
 FeatureOverview.fact3	1327f43aa6ce1d45
@@ -303,7 +296,6 @@ FeatureOverview.lead	54500ab22d505b39
 FeatureOverview.nav	8b2013104f003ec3
 FeatureOverview.title	bd72a74506813a07
 FeaturePrivacy.code	d001ed62c3b49b1b
-FeaturePrivacy.eyebrow	54a57c3147c49f33
 FeaturePrivacy.fact1	330e59aee3c30b2a
 FeaturePrivacy.fact2	f6f2cb85095441d8
 FeaturePrivacy.fact3	530f1826d46b4ac0
@@ -312,7 +304,6 @@ FeaturePrivacy.nav	54a57c3147c49f33
 FeaturePrivacy.title	789d1891785ff661
 FeaturePush.alt	287e7cbc19f64616
 FeaturePush.code	9a8613d894624c6e
-FeaturePush.eyebrow	788011833a5a0f22
 FeaturePush.fact1	138d2b573e0b5da1
 FeaturePush.fact2	9b4b05ed3066311c
 FeaturePush.fact3	ecb196a9cd04a04c
@@ -321,7 +312,6 @@ FeaturePush.lead	44d16c7a08f2aed2
 FeaturePush.nav	788011833a5a0f22
 FeaturePush.title	3b8582655b4e4322
 FeatureQuality.code	97f2ae3d962e85e2
-FeatureQuality.eyebrow	1b2c08a8733d7ff1
 FeatureQuality.fact1	a6fb41c93905f87d
 FeatureQuality.fact2	754429d43a777faf
 FeatureQuality.fact3	6ef96d4efd48cb39
@@ -330,17 +320,15 @@ FeatureQuality.leadUncounted	0f15933d40124cd1
 FeatureQuality.nav	e5c9d7030bada2fe
 FeatureQuality.title	d6cf3ad6d17f1210
 FeatureRealtime.code	4e32222780549793
-FeatureRealtime.eyebrow	c8cdbd2d94cf9a22
 FeatureRealtime.fact1	8ac0317b3ff5bc0d
 FeatureRealtime.fact2	3d9a59c02bc023c5
 FeatureRealtime.fact3	4819f0293f643d5e
 FeatureRealtime.lead	dfeb840f36d26431
 FeatureRealtime.nav	c8cdbd2d94cf9a22
 FeatureRealtime.title	8f4ad0837aa9b9de
+FeatureSection.forDevelopers	6f79cf5c144a1612
 FeatureSection.issue	bdec5bf93a591401
-FeatureSection.readMore	077f34b0971d27aa
 FeatureShortcuts.code	925f301d2bde4e6b
-FeatureShortcuts.eyebrow	2316810a5de343dd
 FeatureShortcuts.fact1	b7575aec5a250ee6
 FeatureShortcuts.fact2	c51eaf3689533062
 FeatureShortcuts.fact3	3eabc73d22868463
@@ -349,7 +337,6 @@ FeatureShortcuts.lead	d907c852dc35d396
 FeatureShortcuts.nav	e9bef0b0f3c25e6e
 FeatureShortcuts.title	bc45b9b8565e8b87
 FeatureSignIn.code	a7876cf40a160add
-FeatureSignIn.eyebrow	8a7c8b67fe8bde8b
 FeatureSignIn.fact1	aec8b2b239ceac9e
 FeatureSignIn.fact2	97e80d9e26f20fb7
 FeatureSignIn.fact3	2d60ac796ef3b0ef
@@ -362,7 +349,6 @@ FeatureSignIn.nav	1149809719f05a60
 FeatureSignIn.title	e9d3d56a1e0a0283
 FeatureTeams.alt	83cd8513adc53a7a
 FeatureTeams.code	55c84b920bd8b4d5
-FeatureTeams.eyebrow	39bbb719fa2b9d22
 FeatureTeams.fact1	3155b2433357af3b
 FeatureTeams.fact2	341649bc3da19cfb
 FeatureTeams.fact3	275df4825f689e6c
@@ -392,7 +378,6 @@ FeatureTierSettled.title	64e6e6d504328741
 FeatureVisuals.deployCaption	c01bf8eb34fcf120
 FeatureVisuals.services	7c7ce2c64f30f927
 FeatureWebsite.code	8c3c79106391eff7
-FeatureWebsite.eyebrow	b5a229ac8becc603
 FeatureWebsite.fact1	77305545727d416e
 FeatureWebsite.fact2	9400679b6389018a
 FeatureWebsite.fact3	48032056e3a8e4bb
@@ -406,7 +391,6 @@ FeatureWebsite.lead	1922c3aaba55d98e
 FeatureWebsite.nav	528afaa2ffbfd914
 FeatureWebsite.title	2a6896497454dc66
 FeatureWorker.code	7c4aa1ce3631a850
-FeatureWorker.eyebrow	db08291c7ba01c37
 FeatureWorker.fact1	8ec0b13f5698ceb4
 FeatureWorker.fact2	14c351989a7d226a
 FeatureWorker.fact3	3e75bb0ac4bc06f5
@@ -415,7 +399,6 @@ FeatureWorker.lead	5c0e0333fe165ad0
 FeatureWorker.nav	db08291c7ba01c37
 FeatureWorker.title	c77b6403950f8ea2
 FeatureYourFeature.code	2265681cada83301
-FeatureYourFeature.eyebrow	2c079a837a6add31
 FeatureYourFeature.fact1	3a1f365c476b0af1
 FeatureYourFeature.fact2	bc6df6d05735e788
 FeatureYourFeature.fact3	ad2542f729474ad7

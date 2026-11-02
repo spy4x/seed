@@ -352,7 +352,6 @@ export default {
   "FeatureTierSettled.status":
     "Testé en CI. La connexion avec Google et GitHub et Stripe demandent vos propres clés : ils sont donc désactivés dans la démo.",
   "FeatureSignIn.nav": "Comptes et connexion",
-  "FeatureSignIn.eyebrow": "Comptes",
   "FeatureSignIn.title": "La connexion, c’est réglé",
   "FeatureSignIn.lead":
     "Les utilisateurs créent un compte avec une adresse e-mail et un mot de passe, puis confirment l’adresse avec un code. Ils peuvent réinitialiser un mot de passe oublié, continuer avec Google ou GitHub, se connecter avec une clé d’accès, ou recevoir par e-mail un lien de connexion qui crée aussi le compte. Ils peuvent aussi essayer d’abord l’application dans un compte invité et ajouter une méthode de connexion plus tard. Une application d’authentification ajoute la double authentification (2FA). Chacun voit tous les appareils sur lesquels il est connecté et peut déconnecter les autres. Changer de méthode de connexion demande une preuve et envoie un e-mail.",
@@ -371,7 +370,6 @@ export default {
     "Mots de passe erronés comptés par identifiant, toutes adresses réseau confondues, puis un court verrouillage",
   "FeatureSignIn.code": "Lire le code source de la connexion",
   "FeatureTeams.nav": "Groupes et rôles",
-  "FeatureTeams.eyebrow": "Groupes",
   "FeatureTeams.title": "Des groupes avec rôles, dès la première minute",
   "FeatureTeams.lead":
     "Chaque compte reçoit un groupe personnel à l’inscription. Les utilisateurs créent des groupes partagés, invitent d’autres personnes, leur attribuent un rôle de lecteur à propriétaire et transfèrent la propriété en une étape. Un groupe supprimé peut être restauré pendant 30 jours, et chaque groupe tient un journal d’activité.",
@@ -383,7 +381,6 @@ export default {
     "Invitations, changements de rôle et transfert de propriété, chacun avec ses propres tests",
   "FeatureTeams.code": "Lire le domaine des groupes",
   "FeatureOverview.nav": "Vue d’ensemble du groupe",
-  "FeatureOverview.eyebrow": "Vue d’ensemble",
   "FeatureOverview.title": "Une vue d’ensemble pour chaque groupe",
   "FeatureOverview.lead":
     "Des chiffres clés et un graphique pour n’importe quelle période. Chacun peut masquer et réordonner les widgets, et sa disposition le suit sur ses autres appareils.",
@@ -396,7 +393,6 @@ export default {
     "Un nouvel agrégat ajoute ses propres widgets, et l’espace d’administration les affiche aussi",
   "FeatureOverview.code": "Lire le code des widgets",
   "FeatureBilling.nav": "Facturation par membre",
-  "FeatureBilling.eyebrow": "Argent",
   "FeatureBilling.title": "Facturation par membre, via Stripe",
   "FeatureBilling.lead":
     "Les utilisateurs voient une grille tarifaire, un forfait Gratuit avec des limites et un essai de 14 jours du forfait payant. Le propriétaire voit ce que coûte un membre de plus avant de l’inviter, et un avis clair, avec une date, quand une carte est refusée.",
@@ -409,7 +405,6 @@ export default {
   "FeatureBilling.notYet1": "D’autres prestataires de paiement que Stripe",
   "FeatureBilling.code": "Lire docs/billing.md",
   "FeaturePrivacy.nav": "Confidentialité",
-  "FeaturePrivacy.eyebrow": "Confidentialité",
   "FeaturePrivacy.title": "Des comptes que l’on peut quitter",
   "FeaturePrivacy.lead":
     "Les utilisateurs téléchargent une copie de leurs données et suppriment leur compte depuis leur profil, avec 7 jours pour changer d’avis. Les notifications lues sont supprimées au bout de 90 jours.",
@@ -420,7 +415,6 @@ export default {
     "Nettoyage nocturne des notifications lues, des invitations expirées et des anciens événements d’audit",
   "FeaturePrivacy.code": "Lire le code de suppression de compte",
   "FeatureExport.nav": "Export et import",
-  "FeatureExport.eyebrow": "Export",
   "FeatureExport.title": "Vos données partent avec vous",
   "FeatureExport.lead":
     "Exportez n’importe quel groupe dans un fichier JSON ouvert, et importez-le plus tard comme nouveau groupe. Le groupe d’origine n’est jamais écrasé.",
@@ -433,7 +427,6 @@ export default {
   "FeatureExport.fact4": "Chaque agrégat déclare sa propre partie du fichier",
   "FeatureExport.code": "Lire le code de l’export",
   "FeatureLanguages.nav": "Langues",
-  "FeatureLanguages.eyebrow": "Langues",
   "FeatureLanguages.title": "En neuf langues dès le départ",
   "FeatureLanguages.lead":
     "L’application, l’espace d’administration et ce site web parlent {languages}. Chacun choisit sa langue dans l’application, et elle est enregistrée avec son compte. Chaque page de ce site a sa propre adresse dans chaque langue.",
@@ -453,7 +446,6 @@ export default {
   "FeatureTierReady.status":
     "L’écriture hors ligne couvre les notes et les étiquettes ; toutes les autres listes s’ouvrent hors ligne avec ce qu’elles affichaient en dernier.",
   "FeatureRealtime.nav": "Temps réel",
-  "FeatureRealtime.eyebrow": "Temps réel",
   "FeatureRealtime.title": "Les modifications apparaissent sans recharger",
   "FeatureRealtime.lead":
     "La modification d’un membre apparaît dans chaque onglet ouvert du groupe, et un ordinateur portable qui sort de veille rattrape ce qu’il a manqué.",
@@ -465,7 +457,6 @@ export default {
     "Le temps réel peut être désactivé : l’application interroge alors le serveur à intervalles réguliers et fonctionne de la même façon",
   "FeatureRealtime.code": "Lire la conception du temps réel",
   "FeatureOffline.nav": "Application hors ligne",
-  "FeatureOffline.eyebrow": "Hors ligne",
   "FeatureOffline.title": "Une application qui s’ouvre sans réseau",
   "FeatureOffline.lead":
     "L’application s’installe comme une application native, s’ouvre sans réseau et envoie les modifications en attente au retour du réseau. Une modification dépassée apparaît comme un conflit à régler, jamais comme un écrasement silencieux.",
@@ -477,7 +468,6 @@ export default {
     "Désactivez-la avec un seul paramètre, ou retirez-la : supprimez un dossier et suivez une checklist écrite",
   "FeatureOffline.code": "Lire docs/offline.md",
   "FeatureShortcuts.nav": "Raccourcis clavier",
-  "FeatureShortcuts.eyebrow": "Clavier",
   "FeatureShortcuts.title":
     "Des raccourcis clavier dans l’application et l’espace d’administration",
   "FeatureShortcuts.lead":
@@ -491,7 +481,6 @@ export default {
     "Dans l’espace d’administration, G suivi d’une lettre ouvre chaque module",
   "FeatureShortcuts.code": "Lire le code des raccourcis",
   "FeaturePush.nav": "Notifications",
-  "FeaturePush.eyebrow": "Notifications",
   "FeaturePush.title":
     "Des notifications dans l’application, sur le téléphone, l’ordinateur et Telegram",
   "FeaturePush.lead":
@@ -504,7 +493,6 @@ export default {
     "Un bot Telegram, désactivé tant que vous n’avez pas défini son jeton : associé avec un code à usage unique, et les commandes de votre produit ajoutées dans un seul fichier",
   "FeaturePush.code": "Lire le service de notifications push web",
   "FeatureWorker.nav": "Tâches en arrière-plan",
-  "FeatureWorker.eyebrow": "Tâches en arrière-plan",
   "FeatureWorker.title": "Des tâches qui survivent à un plantage",
   "FeatureWorker.lead":
     "Les e-mails et les notifications partent même si le serveur redémarre en plein milieu, car le travail est enregistré avant d’être fait. Vos propres tâches s’exécutent maintenant, plus tard ou selon un calendrier.",
@@ -518,7 +506,6 @@ export default {
     "Une tentative échouée est relancée avec des délais croissants ; les opérateurs voient chaque exécution dans l’espace d’administration",
   "FeatureWorker.code": "Lire docs/jobs.md",
   "FeatureYourFeature.nav": "Vos propres fonctionnalités",
-  "FeatureYourFeature.eyebrow": "Votre produit",
   "FeatureYourFeature.title": "Ajoutez une fonctionnalité en en copiant une",
   "FeatureYourFeature.lead":
     "Les notes sont une fonctionnalité complète à chaque niveau : base de données, API, écran, hors ligne et tests. Une nouvelle fonctionnalité la copie, fichier par fichier, à partir d’une liste qui nomme chaque fichier dans l’ordre.",
@@ -542,7 +529,6 @@ export default {
   "FeatureTierOperations.status":
     "Chaque module ci-dessous est disponible aujourd’hui. Ce qui n’est pas encore développé est indiqué en dessous.",
   "FeatureAdmin.nav": "Espace d’administration",
-  "FeatureAdmin.eyebrow": "Support",
   "FeatureAdmin.title": "Un espace d’administration pour vos opérateurs",
   "FeatureAdmin.lead":
     "Vos opérateurs retrouvent une personne par son nom ou son adresse et voient ses méthodes de connexion, ses sessions, ses groupes et son historique. Au même endroit, ils gèrent les groupes, remboursent un paiement, s’occupent des abonnés de la newsletter, voient chaque tâche en arrière-plan, relancent celle qui a échoué et vérifient l’état du système.",
@@ -559,7 +545,6 @@ export default {
   "FeatureAdmin.notYet1": "Se connecter à la place d’une personne pour voir ce qu’elle voit",
   "FeatureAdmin.code": "Lire le code de l’application d’administration",
   "FeatureDeploy.nav": "Déploiement et supervision",
-  "FeatureDeploy.eyebrow": "Déploiement",
   "FeatureDeploy.title": "Un serveur, une commande",
   "FeatureDeploy.lead":
     "Seed tourne sur n’importe quel serveur Linux que vous louez, avec Docker Compose en développement comme en production. Plusieurs produits peuvent partager un même serveur.",
@@ -574,7 +559,6 @@ export default {
     "Des images de version publiées depuis la CI quand vous poussez un tag de version",
   "FeatureDeploy.code": "Lire les fichiers Compose",
   "FeatureWebsite.nav": "Site web public",
-  "FeatureWebsite.eyebrow": "Site web",
   "FeatureWebsite.title": "Un site web public à adapter",
   "FeatureWebsite.lead":
     "Ce site : rapide, rendu côté serveur et utilisable sans JavaScript, avec tarifs, pages légales, blog et newsletter.",
@@ -594,7 +578,6 @@ export default {
     "Des statistiques facultatives sans cookies dans votre propre Umami, avec un événement à chaque appel à l’action et une page Statistiques dans le panneau d’administration : visites et clics de commande par source et par article",
   "FeatureWebsite.code": "Lire le code du site web",
   "FeatureQuality.nav": "Tests",
-  "FeatureQuality.eyebrow": "Qualité",
   "FeatureQuality.title": "Testé là où ça compte",
   "FeatureQuality.lead": {
     "one":
@@ -645,7 +628,7 @@ export default {
   "Features.compare": "Seed face aux autres",
   "FeaturesFaq.title": "Seed sait-il faire ça ?",
   "FeatureSection.issue": "issue n° {number}",
-  "FeatureSection.readMore": "En savoir plus sur {feature}",
+  "FeatureSection.forDevelopers": "Pour les développeurs",
   "FeatureVisuals.deployCaption":
     "Version abrégée : la sortie de rsync et de Compose entre les étapes est omise.",
   "FeatureVisuals.services": "Services sur le serveur",

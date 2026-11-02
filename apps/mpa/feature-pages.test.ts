@@ -92,7 +92,6 @@ describe("the feature pages", () => {
     const feature: Feature = {
       id: page.slug,
       nav: page.name,
-      eyebrow: ``,
       title: ``,
       lead: ``,
       facts: [`One fact`],
