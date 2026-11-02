@@ -94,13 +94,13 @@ function featuresJsonLd(site: Site, origin: string): unknown[] {
 }
 
 /**
- * The page a section's text links to, when the feature has one: a feature page (English at every
- * address) or, for the admin panel, `/admin`.
+ * The page a section's text links to, in the page's language, when the feature has one: a feature
+ * page or, for the admin panel, `/admin`.
  */
-function pageLink({ href }: Site, id: string): FeatureSectionProps["more"] {
+function pageLink({ href, language }: Site, id: string): FeatureSectionProps["more"] {
   if (id === `admin`) return { href: href(`/admin`) }
   const page = pageOfFeature(id)
-  return page && { href: featurePath(page.slug), language: `en` }
+  return page && { href: featurePath(page.slug, language) }
 }
 
 function Hero({ demoHref }: { demoHref: string }): JSX.Element {
