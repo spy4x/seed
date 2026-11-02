@@ -70,8 +70,8 @@ resource included.
 
 ### Product developer
 
-As a product developer, I want to start from a template built on web standards with clear app boundaries so I
-can replace notes with product behavior without rebuilding auth, CQRS, PWA, and sync foundations.
+As a product developer, I want to start from a template built on web standards with clear app
+boundaries so I can replace notes with product behavior without rebuilding auth, CQRS, PWA, and sync foundations.
 
 **Journey:** Create product from Git template, run documented Deno verification, exercise notes
 acceptance journeys, remove notes, and confirm generic platform capabilities remain valid.

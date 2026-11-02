@@ -18,5 +18,4 @@ Seed runs on Deno today and is moving to run unchanged on Deno, Node and Bun
 - **Node and Bun may be used to test code that already runs on them**, and for the per-runtime
   smoke tests #623 will add to CI. The API, the worker and the website start on Node and Bun only
   once #623 says they do.
-- **npm packages** come in through `npm:` specifiers, once the platform and `@std/*` cannot do the
-  job.
+- **npm packages** come in through `npm:` specifiers, only where the dependency rules allow them.
