@@ -583,7 +583,7 @@ export default {
     "Nein. Seed läuft als dauerhaft laufende Container mit Docker Compose auf einem gemieteten Linux-Server, weil die API WebSocket-Verbindungen offen hält und ein Worker eine Warteschlange abarbeitet.",
   "FeaturesFaq.runtimeQuestion": "Läuft Seed mit Node.js oder Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Noch nicht. Seed läuft heute auf Deno, und der Umstieg auf Deno, Node und Bun ist in Arbeit (#623). Mehr dazu im Laufzeit-Plan oben.",
+    "Noch nicht. Seed läuft heute auf Deno, und der Umstieg auf Deno, Node und Bun ist in Arbeit. Den Fortschritt kannst du in Issue #623 auf Seeds GitHub verfolgen.",
   "FeaturesFaq.databaseQuestion": "Kann Seed eine andere Datenbank als Postgres nutzen?",
   "FeaturesFaq.databaseAnswer":
     "Nein. Seed ist auf Postgres gebaut: Migrationen, Abfragen und Integrationstests setzen es voraus.",
