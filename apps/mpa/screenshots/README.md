@@ -52,7 +52,7 @@ all the home page's billing card draws.
 
 `loops.ts` (`deno task loops`, or `deno task loops offline` for one) records the three silent
 loops the feature pages and the home page play: realtime sync, offline editing and the keyboard
-shortcuts, in light and dark. It needs the same running stack, plus `ffmpeg` built with `libsvtav1`
+shortcuts, once, in the dark theme, which the site shows in both of its themes. It needs the same running stack, plus `ffmpeg` built with `libsvtav1`
 and `libx264`, and `cwebp`.
 
 - It seeds the same four people and notes as `capture.ts`, and deletes them again at the end.
@@ -60,8 +60,8 @@ and `libx264`, and `cwebp`.
   at device scale 2, with a drawn pointer moved at a person's pace and key caps for shortcuts.
 - Chromium's screencast is played back at 15 frames a second. The clip ends with a half-second
   fade into its own first frame, so it loops without a jump.
-- It writes `media/video/<name>-loop-<theme>.webm` (AV1) and `.mp4` (H.264), each under 600 KB,
-  and the first frame as `static/video/<name>-loop-<theme>-<720|1440>.webp`, the poster.
+- It writes `media/video/<name>-loop-dark.webm` (AV1) and `.mp4` (H.264), each under 600 KB, and
+  the first frame as `static/video/<name>-loop-dark-<720|1440>.webp`, the poster.
 
 ## Size budgets
 

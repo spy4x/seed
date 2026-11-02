@@ -1,8 +1,8 @@
 // Seed's own site: see docs/start-a-product.md
 /**
  * Records the website's three silent feature loops from the real SPA: realtime sync, offline
- * editing and the keyboard shortcuts, each in light and dark (`loops.ts` beside the routes names
- * them).
+ * editing and the keyboard shortcuts, in the dark theme only, the one most of the site's developer
+ * readers use; a dark clip sits fine on a light page (`loops.ts` beside the routes names them).
  *
  * `deno task loops` in `apps/mpa`; README.md beside this file says what it needs. It seeds the same
  * four people and notes as `capture.ts`, plays each loop at 720×450 CSS px and device scale 2 with
@@ -17,8 +17,6 @@ import { clickLike, type Point } from "../../../media/demo/recipe/human-mouse.ts
 import { concatList, Recorder } from "../../../docs/screenshots/screencast.ts"
 import { APP, cleanupPeople, NOTES, saveTitle, seed, type Seeded } from "./capture.ts"
 import { LOOP_NAMES, LOOP_SIZE, type LoopName } from "../loops.ts"
-
-type Theme = "light" | "dark"
 
 const MPA = new URL("..", import.meta.url).pathname
 const VIDEO_DIR = `${MPA}media/video`
@@ -53,7 +51,6 @@ async function openWindow(
   browser: Browser,
   contexts: BrowserContext[],
   seeded: Seeded,
-  theme: Theme,
   width: number,
   frames: string,
   start: Point,
@@ -62,7 +59,7 @@ async function openWindow(
   const context = await browser.newContext({
     baseURL: APP,
     storageState: seeded.appState,
-    colorScheme: theme,
+    colorScheme: "dark",
     viewport,
     deviceScaleFactor: 2,
     locale: "en-GB",
@@ -108,13 +105,12 @@ async function realtime(
   browser: Browser,
   contexts: BrowserContext[],
   seeded: Seeded,
-  theme: Theme,
   frames: string,
 ): Promise<Take> {
   const noteId = seeded.noteIds[5]
   const half = LOOP_SIZE.width / 2
-  const left = await openWindow(browser, contexts, seeded, theme, half, frames, { x: 250, y: 330 })
-  const right = await openWindow(browser, contexts, seeded, theme, half, frames, { x: 0, y: 0 })
+  const left = await openWindow(browser, contexts, seeded, half, frames, { x: 250, y: 330 })
+  const right = await openWindow(browser, contexts, seeded, half, frames, { x: 0, y: 0 })
   try {
     await gotoApp(left.page, `/notes/${noteId}`, left.page.locator("[data-e2e=note-title]"))
     await gotoApp(right.page, "/notes", right.page.locator("[data-e2e=note-item-title]").first())
@@ -150,11 +146,10 @@ async function offline(
   browser: Browser,
   contexts: BrowserContext[],
   seeded: Seeded,
-  theme: Theme,
   frames: string,
 ): Promise<Take> {
   const noteId = seeded.noteIds[2]
-  const window = await openWindow(browser, contexts, seeded, theme, LOOP_SIZE.width, frames, {
+  const window = await openWindow(browser, contexts, seeded, LOOP_SIZE.width, frames, {
     x: 560,
     y: 330,
   })
@@ -199,10 +194,9 @@ async function shortcuts(
   browser: Browser,
   contexts: BrowserContext[],
   seeded: Seeded,
-  theme: Theme,
   frames: string,
 ): Promise<Take> {
-  const window = await openWindow(browser, contexts, seeded, theme, LOOP_SIZE.width, frames, {
+  const window = await openWindow(browser, contexts, seeded, LOOP_SIZE.width, frames, {
     x: 400,
     y: 70,
   })
@@ -229,7 +223,7 @@ async function shortcuts(
 
 const CHOREOGRAPHY: Record<
   LoopName,
-  (b: Browser, c: BrowserContext[], s: Seeded, t: Theme, f: string) => Promise<Take>
+  (b: Browser, c: BrowserContext[], s: Seeded, f: string) => Promise<Take>
 > = { realtime, offline, shortcuts }
 
 /** Runs ffmpeg and throws with its error output when it fails. */
@@ -324,19 +318,18 @@ async function posters(take: Take, firsts: string[], name: string): Promise<void
   }
 }
 
-/** Records one loop in one theme and writes its two videos and two posters. */
+/** Records one loop and writes its two videos and two posters. */
 async function record(
   browser: Browser,
   seeded: Seeded,
   loop: LoopName,
-  theme: Theme,
 ): Promise<void> {
-  const frames = await Deno.makeTempDir({ prefix: `loop-${loop}-${theme}-` })
+  const frames = await Deno.makeTempDir({ prefix: `loop-${loop}-` })
   const contexts: BrowserContext[] = []
   try {
-    const take = await CHOREOGRAPHY[loop](browser, contexts, seeded, theme, frames)
+    const take = await CHOREOGRAPHY[loop](browser, contexts, seeded, frames)
     const firsts = take.lists.map((list) => Deno.readTextFileSync(list).match(/^file '(.+)'$/m)![1])
-    const name = `${loop}-loop-${theme}`
+    const name = `${loop}-loop-dark`
     const webm = await encode(take, firsts, `${VIDEO_DIR}/${name}.webm`, (crf) => [
       ...["-c:v", "libsvtav1", "-preset", "5", "-crf", String(crf), "-g", "150"],
       ...["-svtav1-params", "tune=0", "-pix_fmt", "yuv420p"],
@@ -367,9 +360,7 @@ async function main(): Promise<void> {
     await cleanupPeople(ada)
     try {
       const seeded = await seed(browser, contexts, ada)
-      for (const loop of loops) {
-        for (const theme of ["light", "dark"] as const) await record(browser, seeded, loop, theme)
-      }
+      for (const loop of loops) await record(browser, seeded, loop)
     } finally {
       await cleanupPeople(ada)
     }
