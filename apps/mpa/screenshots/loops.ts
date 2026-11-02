@@ -27,7 +27,7 @@ const POINTER = new URL("../../../media/demo/recipe/pointer.js", import.meta.url
 const KEYS = new URL("../../../media/demo/recipe/keys.js", import.meta.url).pathname
 const FPS = 15
 /** Each file's ceiling in bytes; the encoder steps its quality down until a file fits. */
-const BUDGET = { video: 600_000, poster: { 720: 40_000, 1440: 90_000 } }
+const BUDGET = { video: 600_000, poster: { 720: 18_000, 1440: 90_000 } }
 /** How long the closing fade into the first frame lasts, and how long that frame then holds. */
 const FADE = 0.5
 const HOLD = 0.2
