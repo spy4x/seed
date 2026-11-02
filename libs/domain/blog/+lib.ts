@@ -528,7 +528,13 @@ export function parseBlogPostFields(
     )
   }
   if (fields.coverUrl !== null) {
-    if (characters(fields.coverUrl) > BLOG_COVER_URL_MAX_LENGTH || !isHttpsUrl(fields.coverUrl)) {
+    if (!isHttpsUrl(fields.coverUrl)) {
+      fail(`coverUrl`, `Enter a full https:// link to the image.`, { code: `httpsUrl` })
+    }
+    // Stored as the parser writes it, `https://` in lower case, which the database checks for:
+    // `HTTPS://host` and `https:host` are the same address.
+    fields.coverUrl = new URL(fields.coverUrl).href
+    if (characters(fields.coverUrl) > BLOG_COVER_URL_MAX_LENGTH) {
       fail(`coverUrl`, `Enter a full https:// link to the image.`, { code: `httpsUrl` })
     }
     if (fields.coverAlt === null) {
