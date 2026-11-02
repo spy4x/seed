@@ -243,7 +243,7 @@ FeatureAdmin.nav	3990505ec8028cda
 FeatureAdmin.notYet1	aa99b3481929000e
 FeatureAdmin.title	22c5a1a27664944c
 FeatureAdmin.watch	a083998316c74918
-FeatureBilling.alt	020d83438ee6b681
+FeatureBilling.alt	38e8bd57065809f6
 FeatureBilling.catalog	8a888d78cab82de1
 FeatureBilling.code	23127fe9c071a382
 FeatureBilling.eyebrow	5ccc2e8715d7a17c
@@ -325,7 +325,8 @@ FeatureQuality.eyebrow	1b2c08a8733d7ff1
 FeatureQuality.fact1	a6fb41c93905f87d
 FeatureQuality.fact2	754429d43a777faf
 FeatureQuality.fact3	6ef96d4efd48cb39
-FeatureQuality.lead	eb4d5e02acb23f86
+FeatureQuality.lead	c195ffa96feb25eb
+FeatureQuality.leadUncounted	0f15933d40124cd1
 FeatureQuality.nav	e5c9d7030bada2fe
 FeatureQuality.title	d6cf3ad6d17f1210
 FeatureRealtime.code	4e32222780549793
@@ -495,7 +496,7 @@ HomeHero.initNote	c3949c8aa4b15e88
 HomeHero.lead	cd0f9755ab7d5299
 HomeHero.notesAlt	8349987a97495a50
 HomeHero.quickStart	0eb95fb6244c03f1
-HomeHero.status	62cec974a66231f0
+HomeHero.status	a1c2e3caca6fedb0
 HomeHero.title	4405e14c0542e9bc
 HomeNewsletter.hint	8cb102e8aeca4523
 HomeNewsletter.lead	0e78f3d7aa1fc9ff
