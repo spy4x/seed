@@ -60,10 +60,13 @@ sides still need an SMTP service for e-mail, so I left it out of both.
 
 ## Which server size do you need?
 
-Start small. On my laptop the whole development stack, idle and empty, used 1.6 GB of memory,
-and 700 MB of that was the Vite dev server that production does not run. So a 4 GB server holds
-Seed with room to spare at the start. Hetzner can resize the server later; resize only CPU and
-memory, not the disk, if you want to be able to go back down.
+Start small. On my laptop the whole development stack, idle and empty, used 1.6 GB of memory, and
+700 MB of that was the Vite dev server that production does not run. That is why I start on the 4 GB
+CX23. It rests on that development figure, not on a production measurement: I have not measured
+Seed's memory on a production server, nor the peak while the deploy builds the images on the server,
+which it does on every deploy. After your first deploy, check the server's memory with `free -h`.
+Hetzner can resize the server later; resize only CPU and memory, not the disk, if you want to be
+able to go back down.
 
 How many users one server carries is a question with a measured answer, not a guess: the
 [capacity guide](/docs/capacity) has the load tests and their numbers, from a laptop so far.
@@ -82,9 +85,14 @@ How many users one server carries is a question with a measured answer, not a gu
    and admin hosts if you run them. Let's Encrypt checks each host over port 80, so do this before
    the proxy starts.
 5. **Write the production env file on your machine**: `cp infra/envs/.env.example
-   infra/envs/.env.prod`, then set `ENV=prod`, your domains, `SSH_TO_SERVER` and a fresh secret for
-   each secret. The deploy refuses a file that keeps an example secret or leaves one empty, and
-   names each. The file never lives on the server: every deploy copies it there.
+   infra/envs/.env.prod`, then set `ENV=prod`, your domains, `SSH_TO_SERVER`, `PATH_ON_SERVER` (the
+   app's folder on the server), `TRAEFIK_ACME_EMAIL` (where Let's Encrypt writes about expiring
+   certificates) and a fresh secret for each secret. Set `PROXY_HTTPS_HOST_PORT=443` and
+   `PROXY_HTTP_HOST_PORT=80`: the example keeps the proxy on `127.0.0.1`, and with those defaults
+   nobody outside reaches the site and Let's Encrypt fails. Add `admin` to `COMPOSE_PROFILES` for
+   the admin panel and `mpa` for the website, if you run them. The deploy refuses a file that keeps
+   an example secret or leaves one empty, and names each. The file never lives on the server: every
+   deploy copies it there.
 6. **Deploy**, then start the shared proxy once:
 
    ```sh
@@ -115,6 +123,4 @@ run more than one thing on one bill.
 
 ## Your turn
 
-Pick the server in the calculator that matches your plan, then follow the [deploy guide](/docs/deploy)
-with a coffee. If a step in it is
-unclear, [open an issue](https://github.com/spy4x/seed/issues) and I will fix the guide.
+Pick the server in the calculator that matches your plan, then follow the [deploy guide](/docs/deploy) with a coffee. If a step in it is unclear, [open an issue](https://github.com/spy4x/seed/issues) and I will fix the guide.
