@@ -71,7 +71,7 @@ vier oder fünf Anbieter.
 
 Seed läuft komplett auf einem Server, den Sie selbst mieten, zum Beispiel bei einem Hoster in
 Deutschland: Postgres, der Dateispeicher (Garage, S3-kompatibel), das Monitoring und die
-Hintergrundjobs inklusive. Dazu kommen nur, was Sie einschalten, etwa Stripe und ein
+Hintergrundjobs inklusive. Dazu kommt nur, was Sie einschalten, etwa Stripe und ein
 Mail-Anbieter. Das macht Ihr Produkt nicht automatisch DSGVO-konform, und dies ist keine
 Rechtsberatung, aber die Liste der Auftragsverarbeiter bleibt kurz.
 
