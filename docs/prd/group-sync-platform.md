@@ -36,7 +36,7 @@ resource included.
 
 ### Scope
 
-- Deno-only application lifecycle and distribution baseline.
+- Application lifecycle and distribution baseline on Deno, moving to Deno, Node and Bun.
 - REST access with shared CQRS semantics.
 - Personal and shared group authorization.
 - Server-authoritative synchronization and replay validation.
@@ -70,7 +70,7 @@ resource included.
 
 ### Product developer
 
-As a product developer, I want to start from a Deno-only template with clear app boundaries so I
+As a product developer, I want to start from a template built on web standards with clear app boundaries so I
 can replace notes with product behavior without rebuilding auth, CQRS, PWA, and sync foundations.
 
 **Journey:** Create product from Git template, run documented Deno verification, exercise notes
@@ -195,7 +195,7 @@ capabilities that meet the next distribution stage gate.
 
 ### Non-functional and security requirements
 
-32. The product must run unchanged on Deno, Node and Bun, with Deno as the toolchain for
+32. The product must move to run unchanged on Deno, Node and Bun, with Deno as the toolchain for
     development, verification, build, and operational workflows
     ([runtime policy](../runtime-policy.md), replacing the earlier "Deno only" requirement on
     2026-11-03).

@@ -26,8 +26,8 @@ under [`apps`](https://github.com/spy4x/seed/tree/main/apps) and
 Repository provides reusable API, client, worker, persistence, auth, CQRS, and offline sync
 foundations. Product-specific rules stay outside platform primitives.
 
-> **Superseded on 2026-11-03** by the [runtime policy](../runtime-policy.md): the product runs
-> unchanged on Deno, Node and Bun, and Deno stays the toolchain for now. The paragraph below is
+> **Superseded on 2026-11-03** by the [runtime policy](../runtime-policy.md): Seed is moving
+> to run unchanged on Deno, Node and Bun, and Deno stays the toolchain for now. The paragraph below is
 > kept as it was decided.
 
 Deno is sole runtime and task runner. Development, checks, builds, and operations use `deno` and
@@ -95,6 +95,8 @@ Distribution is staged:
 - Postgres/Dexie reconciliation requires cursor, idempotency, and version metadata in every sync
   path.
 - Some dependencies resolve from npm registry, but contributors still use Deno commands only.
+  (Superseded on 2026-11-03 by the [runtime policy](../runtime-policy.md), which keeps Deno as the
+  toolchain.)
 - Library extraction and CLI work wait for repeated, proven use instead of speculative APIs.
 
 ## Maintenance
