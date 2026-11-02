@@ -19,6 +19,7 @@ import { PRO_MAX_MEMBERS, PRO_PRICE } from "./islands/post/CostCalculator.tsx"
 import HostingCost, {
   fallback as hostingFallback,
   managedMonthly,
+  savings,
   seedMonthly,
   toEuro,
 } from "./islands/post/HostingCost.tsx"
@@ -161,7 +162,35 @@ describe(`HostingCost`, () => {
     expect(html).toContain(`$85.00`)
     expect(hostingFallback({ server: `cpx32`, developers: 3 }, t)).toBe(
       `On a Hetzner CPX32, Seed costs €42.48 a month with its IPv4 address and backup storage. ` +
-        `Vercel Pro and Supabase Pro cost $85.00 a month, about €75.78. Developers with a Vercel seat: 3.`,
+        `Vercel Pro and Supabase Pro cost $85.00 a month, about €75.78. Developers with a Vercel seat: 3. ` +
+        `Seed saves €33.30 a month, €399.60 a year.`,
+    )
+  })
+
+  it(`names the cheaper side and its saving, never a negative amount`, () => {
+    expect(savings(`cx23`, 1)).toEqual({ cheaper: `seed`, monthly: 2764 })
+    expect(savings(`cpx42`, 1)).toEqual({ cheaper: `managed`, monthly: 3636 })
+
+    const draw = (server: `cx23` | `cpx42`) =>
+      renderToString(
+        <HostingCost
+          server={server}
+          developers={1}
+          figure={{ id: `hosting-cost`, language: `en`, messages: figureCatalog(`en`) }}
+        />,
+      )
+    const seedWins = draw(`cx23`)
+    expect(seedWins).toContain(`Seed saves you`)
+    expect(seedWins).toContain(`€27.64 a month`)
+    expect(seedWins).toContain(`€331.68 a year`)
+
+    const managedWins = draw(`cpx42`)
+    expect(managedWins).toContain(`The managed stack saves you`)
+    expect(managedWins).toContain(`€36.36 a month`)
+    expect(managedWins).toContain(`€436.32 a year`)
+    expect(managedWins).not.toContain(`-€`)
+    expect(hostingFallback({ server: `cpx42`, developers: 1 }, siteTranslator(`en`))).toContain(
+      `The managed stack saves €36.36 a month, €436.32 a year.`,
     )
   })
 })

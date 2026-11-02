@@ -574,11 +574,16 @@ PostFigure.HostingCost.fallback	010a69a51e4e0a48
 PostFigure.HostingCost.inEuro	e448a4a843d932c2
 PostFigure.HostingCost.lead	6ab080f78ed51327
 PostFigure.HostingCost.managed	b5650ca2ea60c635
+PostFigure.HostingCost.managedSaves	7665aa06c1d02213
+PostFigure.HostingCost.managedVerdict	4c3d2f8bee4f3324
+PostFigure.HostingCost.perMonth	2c210cb87372299e
+PostFigure.HostingCost.perYear	dcb5d8a285b1ff8b
 PostFigure.HostingCost.seed	de4d07c0320c343a
+PostFigure.HostingCost.seedSaves	7acffbf72c4fa47b
+PostFigure.HostingCost.seedVerdict	bf653dfe0e1d8882
 PostFigure.HostingCost.server	9e34e761429e9d6d
 PostFigure.HostingCost.serverOption	a68f50b1c93776ae
 PostFigure.HostingCost.title	c7955c015afdc509
-PostFigure.HostingCost.yearly	c86cfe7e6c87f183
 PostFigure.noScript	751908b16f740771
 PostFigure.rssLink	bb666393ffca6a4f
 Pricing.crumb	dfe95783edfef791

@@ -894,7 +894,13 @@ export default {
   "PostFigure.HostingCost.seed": "Seed na Hetzner, por mês",
   "PostFigure.HostingCost.managed": "Vercel Pro e Supabase Pro, por mês",
   "PostFigure.HostingCost.inEuro": "cerca de {amount}",
-  "PostFigure.HostingCost.yearly": "Gerenciada menos Seed, por ano",
+  "PostFigure.HostingCost.seedSaves": "O Seed economiza",
+  "PostFigure.HostingCost.managedSaves": "A stack gerenciada economiza",
+  "PostFigure.HostingCost.perMonth": "{amount} por mês",
+  "PostFigure.HostingCost.perYear": "{amount} por ano",
+  "PostFigure.HostingCost.seedVerdict": "O Seed economiza {month} por mês, {year} por ano.",
+  "PostFigure.HostingCost.managedVerdict":
+    "A stack gerenciada economiza {month} por mês, {year} por ano.",
   "PostFigure.HostingCost.caption":
     "Preços de tabela sem impostos, conferidos em 3 de novembro de 2026. Seed: o servidor, o endereço IPv4 e o Object Storage para os backups. Gerenciada: os planos base, sem o uso. Dólares em euros pela taxa do BCE de 2 de novembro de 2026.",
   "PostFigure.HostingCost.fallback":

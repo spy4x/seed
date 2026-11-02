@@ -68,6 +68,18 @@ export function toEuro(usdCents: number): number {
   return Math.round(usdCents / USD_PER_EUR)
 }
 
+/**
+ * Which side is cheaper a month, and by how many euro cents (never negative): the managed stack
+ * converted at the ECB rate, against Seed. A tie counts as Seed, saving nothing.
+ */
+export function savings(
+  server: ServerId,
+  developers: number,
+): { cheaper: `seed` | `managed`; monthly: number } {
+  const difference = toEuro(managedMonthly(developers)) - seedMonthly(server)
+  return { cheaper: difference >= 0 ? `seed` : `managed`, monthly: Math.abs(difference) }
+}
+
 /** The RSS feed's sentence: both monthly totals for the post's server and team. */
 export function fallback(
   { server = `cx23`, developers = 1 }: Props,
@@ -75,13 +87,19 @@ export function fallback(
 ): string {
   const euro = (amount: number) => formatMoney(amount, HETZNER.currency, t.language)
   const managed = managedMonthly(developers)
-  return t.t(`PostFigure.HostingCost.fallback`, {
+  const { cheaper, monthly } = savings(server, developers)
+  const facts = t.t(`PostFigure.HostingCost.fallback`, {
     server: HETZNER.servers.find((entry) => entry.id === server)!.name,
     seed: euro(seedMonthly(server)),
     developers,
     managed: formatMoney(managed, MANAGED.currency, t.language),
     managedEuro: euro(toEuro(managed)),
   })
+  const verdict = t.t(`PostFigure.HostingCost.${cheaper}Verdict`, {
+    month: euro(monthly),
+    year: euro(12 * monthly),
+  })
+  return `${facts} ${verdict}`
 }
 
 /**
@@ -97,6 +115,7 @@ export default function HostingCost(
   const [team, setTeam] = useState(developers)
   const seed = seedMonthly(size)
   const managed = managedMonthly(team)
+  const { cheaper, monthly } = savings(size, team)
   const money = (amount: number, currency: string) => (
     <MoneyDisplay amount={amount} currency={currency} locale={figure.language} />
   )
@@ -151,8 +170,17 @@ export default function HostingCost(
           </dd>
         </div>
         <div class="flex flex-col gap-1">
-          <dt class="text-sm text-muted">{t.t(`PostFigure.HostingCost.yearly`)}</dt>
-          <dd class={value}>{money(12 * (toEuro(managed) - seed), HETZNER.currency)}</dd>
+          <dt class="text-sm text-muted">{t.t(`PostFigure.HostingCost.${cheaper}Saves`)}</dt>
+          <dd class={value}>
+            {t.t(`PostFigure.HostingCost.perMonth`, {
+              amount: formatMoney(monthly, HETZNER.currency, figure.language),
+            })}
+          </dd>
+          <dd class="text-sm text-muted tabular-nums">
+            {t.t(`PostFigure.HostingCost.perYear`, {
+              amount: formatMoney(12 * monthly, HETZNER.currency, figure.language),
+            })}
+          </dd>
         </div>
       </dl>
     </PostFigure>

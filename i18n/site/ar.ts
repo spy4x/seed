@@ -868,7 +868,13 @@ export default {
   "PostFigure.HostingCost.seed": "Seed على Hetzner، شهريًا",
   "PostFigure.HostingCost.managed": "Vercel Pro وSupabase Pro، شهريًا",
   "PostFigure.HostingCost.inEuro": "نحو {amount}",
-  "PostFigure.HostingCost.yearly": "المُدارة ناقص Seed، سنويًا",
+  "PostFigure.HostingCost.seedSaves": "توفّر لك Seed",
+  "PostFigure.HostingCost.managedSaves": "توفّر لك الحزمة المُدارة",
+  "PostFigure.HostingCost.perMonth": "{amount} شهريًا",
+  "PostFigure.HostingCost.perYear": "{amount} سنويًا",
+  "PostFigure.HostingCost.seedVerdict": "توفّر Seed مبلغ {month} شهريًا، أي {year} سنويًا.",
+  "PostFigure.HostingCost.managedVerdict":
+    "توفّر الحزمة المُدارة مبلغ {month} شهريًا، أي {year} سنويًا.",
   "PostFigure.HostingCost.caption":
     "أسعار القوائم قبل الضريبة، تحقّقنا منها في 3 نوفمبر 2026. Seed: الخادم وعنوان IPv4 الخاص به وObject Storage للنسخ الاحتياطية. المُدارة: الخطط الأساسية قبل رسوم الاستخدام. الدولار باليورو بسعر البنك المركزي الأوروبي في 2 نوفمبر 2026.",
   "PostFigure.HostingCost.fallback":

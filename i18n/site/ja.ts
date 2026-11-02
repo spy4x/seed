@@ -861,7 +861,13 @@ export default {
   "PostFigure.HostingCost.seed": "Hetzner 上の Seed（月額）",
   "PostFigure.HostingCost.managed": "Vercel Pro と Supabase Pro（月額）",
   "PostFigure.HostingCost.inEuro": "約 {amount}",
-  "PostFigure.HostingCost.yearly": "マネージドと Seed の差額（年額）",
+  "PostFigure.HostingCost.seedSaves": "Seed のほうが安い",
+  "PostFigure.HostingCost.managedSaves": "マネージドのほうが安い",
+  "PostFigure.HostingCost.perMonth": "月額 {amount}",
+  "PostFigure.HostingCost.perYear": "年額 {amount}",
+  "PostFigure.HostingCost.seedVerdict": "Seed のほうが月額 {month}、年額 {year} 安くなります。",
+  "PostFigure.HostingCost.managedVerdict":
+    "マネージドのほうが月額 {month}、年額 {year} 安くなります。",
   "PostFigure.HostingCost.caption":
     "税抜きの定価で、2026年11月3日に確認しました。Seed はサーバー、その IPv4 アドレス、バックアップ用の Object Storage。マネージドは従量課金を除く基本プランです。ドルは2026年11月2日の ECB レートでユーロに換算しています。",
   "PostFigure.HostingCost.fallback":

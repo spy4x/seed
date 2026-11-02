@@ -802,7 +802,12 @@ export default {
   "PostFigure.HostingCost.seed": "Seed 运行在 Hetzner 上，每月",
   "PostFigure.HostingCost.managed": "Vercel Pro 加 Supabase Pro，每月",
   "PostFigure.HostingCost.inEuro": "约 {amount}",
-  "PostFigure.HostingCost.yearly": "托管方案减去 Seed，每年",
+  "PostFigure.HostingCost.seedSaves": "Seed 为你节省",
+  "PostFigure.HostingCost.managedSaves": "托管方案为你节省",
+  "PostFigure.HostingCost.perMonth": "每月 {amount}",
+  "PostFigure.HostingCost.perYear": "每年 {amount}",
+  "PostFigure.HostingCost.seedVerdict": "Seed 每月节省 {month}，每年节省 {year}。",
+  "PostFigure.HostingCost.managedVerdict": "托管方案每月节省 {month}，每年节省 {year}。",
   "PostFigure.HostingCost.caption":
     "不含税的标价，核对于 2026 年 11 月 3 日。Seed：服务器、它的 IPv4 地址和用于备份的 Object Storage。托管方案：基础套餐，不含按量计费。美元按欧洲央行 2026 年 11 月 2 日的汇率换算为欧元。",
   "PostFigure.HostingCost.fallback":
