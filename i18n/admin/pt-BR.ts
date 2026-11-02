@@ -519,6 +519,8 @@ export default {
   },
   "AdminBlogDialogs.sentOnce":
     "Enviado uma vez só, quando o post for ao ar. Não dá para cancelar o envio.",
+  "AdminBlogDialogs.newsletterOff":
+    "A newsletter está desligada, então este post não será enviado à lista <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly": "Só recebe quem se inscreveu no idioma do post.",
   "AdminBlogEditor.leaveMessage": "Suas alterações neste post serão perdidas.",
   "AdminBlogEditor.doneScheduled": "Agendado para {at}.",

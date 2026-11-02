@@ -516,6 +516,39 @@ describe("the blog editor", () => {
     expect(calls.at(-1)).toEqual(["publish", { at: scheduled.publishAt, list: "news" }])
   })
 
+  it("drops a scheduled post's list while the newsletter is off, and says so (#414)", async () => {
+    const calls: unknown[][] = []
+    const off = { enabled: false, lists: [], siteUrl: null }
+    for (const dialog of ["publish-now", "reschedule"] as const) {
+      await mount(<AdminBlogEditorScreen {...editorProps([], { post: null })} />)
+      await mount(
+        <AdminBlogEditorScreen
+          {...editorProps(calls, { post: scheduled, dialog, newsletter: off })}
+        />,
+      )
+      expect(find("[data-e2e=admin-blog-email-off]").textContent).toBe(
+        "The newsletter is off, so this post won't be emailed to news.",
+      )
+      await clickOn(button(dialog === "reschedule" ? "Schedule" : "Publish"))
+      expect(calls.at(-1)).toEqual([
+        "publish",
+        { at: dialog === "reschedule" ? scheduled.publishAt : null, list: null },
+      ])
+    }
+  })
+
+  it("says nothing was emailed for a post settled with no list (#414)", async () => {
+    const settled: BlogPost = {
+      ...saved,
+      status: "published",
+      publishedAt: "2026-10-01T09:00:00.000Z",
+      newsletterSentAt: "2026-10-01T09:00:05.000Z",
+    }
+    await mount(<AdminBlogEditorScreen {...editorProps([], { post: settled })} />)
+    expect(has("[data-e2e=admin-blog-publishing]")).toBe(true)
+    expect(has("[data-e2e=admin-blog-emailed]")).toBe(false)
+  })
+
   it("refuses a time in the past before it asks the API", async () => {
     const calls: unknown[][] = []
     await mount(

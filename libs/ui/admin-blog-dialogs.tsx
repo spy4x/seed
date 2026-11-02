@@ -192,7 +192,8 @@ function inAnHour(now: Date): string {
 /**
  * Publish a draft now or at a time, publish a scheduled post now, or move its time. Emailing the
  * post is an unchecked box that names how many people get it, offered only while the newsletter is
- * on and the post was never emailed; the button then says so too.
+ * on and the post was never emailed; the button then says so too. A scheduled post's list is
+ * dropped while the newsletter is off, and a line says so, since the API refuses a list then.
  *
  * With tags in the body that readers will not see (#620), a warning lists them and its "Go to
  * problems" takes first focus; the confirm button then says "anyway". It never blocks: a broken
@@ -206,13 +207,16 @@ function PublishDialog(props: DialogsProps & { title: string }): JSX.Element {
   const [at, setAt] = useState<string | null>(post?.publishAt ?? inAnHour(now))
   const lists = newsletter?.enabled ? newsletter.lists : []
   const sent = post?.newsletterSentAt != null
-  // The list the post already carries stays chosen: the API reads a missing list as "no email",
-  // so publishing now or moving the time sends it again, also before the lists have loaded.
+  // Known to be off, not still loading: the post's list is dropped, since the API refuses it.
+  const off = newsletter?.enabled === false
+  const dropped = off && !sent ? post?.newsletterList ?? null : null
+  // The list the post already carries stays chosen, so publishing now or moving the time sends
+  // it again, also before the lists have loaded.
   const [emailing, setEmailing] = useState(post?.newsletterList != null)
   const [list, setList] = useState(post?.newsletterList ?? lists[0]?.list ?? null)
   const [tried, setTried] = useState(false)
   const chosen = lists.find((entry) => entry.list === (list ?? lists[0]?.list))
-  const canEmail = !sent && (chosen !== undefined || post?.newsletterList != null)
+  const canEmail = !sent && !off && (chosen !== undefined || post?.newsletterList != null)
   const scheduling = when === `schedule`
   const late = at === null || new Date(at).getTime() <= now.getTime()
   const atError = scheduling && tried && late ? t.t(`AdminBlogDialogs.futureTime`) : null
@@ -353,6 +357,14 @@ function PublishDialog(props: DialogsProps & { title: string }): JSX.Element {
               </p>
             )}
           </Stack>
+        )}
+        {dropped !== null && (
+          <p class="text-sm" data-e2e="admin-blog-email-off">
+            <Rich
+              parts={t.parts(`AdminBlogDialogs.newsletterOff`, { list: dropped })}
+              tags={{ list: path }}
+            />
+          </p>
         )}
         {props.dialogError && <ErrorState message={props.dialogError} />}
       </Stack>
