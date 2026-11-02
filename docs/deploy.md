@@ -17,14 +17,20 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
    user must have that uid ([backups](backups.md#on-a-new-server)).
 
    First run `getent passwd 1000`. If it names a user (often `ubuntu`), the image already has one
-   with that uid: deploy as that user instead, leave out the `adduser` line, and use its name for
-   `deploy` below and from here on. The commands are chained, so the block stops at the first one
-   that fails and changes nothing after it.
+   with that uid: deploy as that user instead, and use its name for `deploy` in the block below and
+   from here on. The block makes the user only when it is missing, stops when a user of that name
+   has another uid, and adds root's keys to the user's `authorized_keys` without removing the keys
+   already there or adding one twice. The commands are chained, so the block stops at the first
+   one that fails and changes nothing after it. Pasting it again, after a fix or a later step
+   failed, gives the same result as pasting it once.
 
    ```sh
-   adduser --uid 1000 --disabled-password --gecos '' deploy &&
-   mkdir -p ~deploy/.ssh && cp ~/.ssh/authorized_keys ~deploy/.ssh/ &&
+   { id deploy >/dev/null 2>&1 || adduser --uid 1000 --disabled-password --gecos '' deploy; } &&
+   [ "$(id -u deploy)" = 1000 ] && mkdir -p ~deploy/.ssh && touch ~deploy/.ssh/authorized_keys &&
+   { grep -vxFf ~deploy/.ssh/authorized_keys ~/.ssh/authorized_keys \
+       >> ~deploy/.ssh/authorized_keys || [ $? -eq 1 ]; } &&
    chown -R deploy:deploy ~deploy/.ssh && chmod 700 ~deploy/.ssh &&
+   chmod 600 ~deploy/.ssh/authorized_keys &&
    printf 'PasswordAuthentication no\nPermitRootLogin no\n' \
      > /etc/ssh/sshd_config.d/01-deploy.conf &&
    systemctl reload ssh &&
@@ -114,10 +120,14 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
    app's routers, not on a first visit ([certificates](#production-certificates)). Until a
    certificate arrives, the host answers with Traefik's own self-signed one. A host whose DNS did
    not resolve yet gets none: `docker logs traefik` names it. Fix the record and wait until it
-   resolves, then restart the proxy with `deno task proxy:stop && deno task proxy:start`; the next
-   deploy retries too. Do not restart again and again while DNS is still wrong: Let's Encrypt allows
-   5 failed validations per host per hour, then refuses that host for the rest of the hour. Later
-   deploys are `deno task deploy` alone.
+   resolves, then retry at once by restarting the proxy, in the app's directory on the server:
+   `deno task proxy:stop && deno task proxy:start`. A deploy does not restart the proxy, but
+   Traefik asks again for every host still without a certificate whenever the app's routes change,
+   so a deploy that recreates the app's containers retries too, and one that changes nothing does
+   not. Do not retry again and again while DNS is still wrong: Let's Encrypt allows 5 failed
+   validations per host per hour, then refuses that host until it gives one back, which it does
+   every 12 minutes ([rate limits](https://letsencrypt.org/docs/rate-limits/#authorization-failures-per-identifier-per-account)).
+   Later deploys are `deno task deploy` alone.
 
 7. **Migrations.** Nothing to run: on every deploy Compose's one-shot `migrate` service applies the
    pending migrations before the API and the worker start, and a failed migration fails the deploy.
