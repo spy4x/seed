@@ -76,7 +76,9 @@ after you change it.
 | `GITHUB_CLIENT_ID`     | GitHub's client ID. GitHub is on when both set. | empty   |
 | `GITHUB_CLIENT_SECRET` | GitHub's client secret.                         | empty   |
 
-While a provider is off, its button is hidden and its routes answer 404.
+While a provider is off, its button is hidden. Its sign-in link sends the person back to the
+sign-in page with "That sign-in did not work. Try again.", and linking it on the profile answers
+404.
 
 ## Signing in and signing up
 
