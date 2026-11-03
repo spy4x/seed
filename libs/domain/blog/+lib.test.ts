@@ -76,6 +76,13 @@ describe(`parseBlogPostFields`, () => {
     }
   })
 
+  it(`stores a cover written HTTPS: or without slashes with the https:// the database checks for`, () => {
+    for (const coverUrl of [`HTTPS://images.example.com/a.png`, `https:images.example.com/a.png`]) {
+      expect(parseBlogPostFields({ ...FIELDS, coverUrl, coverAlt: `A chart` }).coverUrl)
+        .toBe(`https://images.example.com/a.png`)
+    }
+  })
+
   it(`counts a title's length in characters, an emoji as one`, () => {
     expect(refusedField({ ...FIELDS, title: `🙂`.repeat(200) })).toBeNull()
     expect(refusedField({ ...FIELDS, title: `🙂`.repeat(201) })).toBe(`title`)

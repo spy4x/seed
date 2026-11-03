@@ -276,7 +276,22 @@ describe(`operator area: blog routes`, () => {
     })
 
     expect(past.status).toBe(400)
-    expect(calls).toEqual([[`publish`, ID, 1, new Date(at), null, ACTOR]])
+    expect(calls).toEqual([[`publish`, ID, 1, new Date(at), undefined, ACTOR]])
+  })
+
+  it(`passes a list left out on as "keep the post's list", also while the newsletter is off`, async () => {
+    const { app, calls } = buildApp(operator(), { newsletterEnabled: false })
+    const kept = await request(app, `POST`, `/posts/${ID}/publish`, { version: 2 })
+    const dropped = await request(app, `POST`, `/posts/${ID}/publish`, {
+      version: 2,
+      newsletterList: null,
+    })
+
+    expect([kept.status, dropped.status]).toEqual([200, 200])
+    expect(calls).toEqual([
+      [`publish`, ID, 2, null, undefined, ACTOR],
+      [`publish`, ID, 2, null, null, ACTOR],
+    ])
   })
 
   it(`refuses to email a post while the newsletter is off, and publishes nothing`, async () => {
