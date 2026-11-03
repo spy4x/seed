@@ -196,7 +196,7 @@ export async function seedCommit(run: Run): Promise<{ commit?: string; note?: st
   }
   const remote = await run([`git`, `ls-remote`, SEED_REPOSITORY, `refs/heads/main`])
   const commit = /^[0-9a-f]{40}\b/.exec(remote.stdout)?.[0]
-  if (remote.code !== 0 || commit === undefined) {
+  if (commit === undefined) {
     return {
       note: `Could not reach ${SEED_REPOSITORY}, so ${SEED_COMMIT_PATH} is not written. ` +
         `Run deno task init again when online.`,
