@@ -11,6 +11,7 @@ import {
   BlogError,
   type BlogPostFields,
   BlogVersionConflictError,
+  parseBlogPostEdit,
   parseBlogPostFields,
 } from "@domain/blog"
 import { type BlogActor, PostgresBlogRepository } from "@server/blog/postgres-blog-repository.ts"
@@ -32,7 +33,7 @@ import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
 import { SUBSCRIBER_SEND_ISSUE_JOB } from "@server/jobs/subscriber-mail.ts"
 import { createOutboxProcessor } from "@server/jobs/wiring.ts"
 import { cancelJob, runJobNow } from "@server/jobs/admin-jobs.ts"
-import { AdminJobActionOutcome } from "@domain/identity"
+import { AdminJobActionOutcome, type Language } from "@domain/identity"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { createListCrypto, type SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { EmailMessage } from "@spy4x/email/message"
@@ -514,6 +515,125 @@ Deno.test(`blog: refuses a translation that does not name a post in another lang
       )
       expect([error.code, error.field]).toEqual(refusal)
     })
+  })
+})
+
+Deno.test(`blog: a save that names no language or link keeps the post's (#530)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const [english, german] = [uuidV7(), uuidV7()]
+    await blog.create(english, fields(`hello`), maya)
+    await blog.create(german, fields(`hallo`, { language: `de`, translationOf: english }), maya)
+
+    const edit = parseBlogPostEdit({
+      title: `Hallo, neu`,
+      slug: `hallo`,
+      description: `Neu.`,
+      bodyMd: `Hallo.`,
+    })
+    const saved = await blog.update(german, 1, edit, false, maya)
+
+    expect([saved.title, saved.language, saved.translationOf]).toEqual([
+      `Hallo, neu`,
+      `de`,
+      english,
+    ])
+  })
+})
+
+Deno.test(`blog: a save that makes an original a translation while another save makes it one waits, and is refused (#530)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const [english, german, spanish] = [uuidV7(), uuidV7(), uuidV7()]
+    await blog.create(english, fields(`hello`), maya)
+    await blog.create(german, fields(`hallo`, { language: `de` }), maya)
+    await blog.create(spanish, fields(`hola`, { language: `es` }), maya)
+
+    // Another operator's save, half done: the German post now translates the Spanish one.
+    let release!: () => void
+    const held = new Promise<void>((resolve) => release = resolve)
+    let changed!: () => void
+    const isChanged = new Promise<void>((resolve) => changed = resolve)
+    const other = sql.begin(async (tx) => {
+      await tx`SELECT 1 FROM blog_posts WHERE id = ${german} FOR UPDATE`
+      await tx`UPDATE blog_posts SET translation_of = ${spanish}, version = version + 1
+        WHERE id = ${german}`
+      changed()
+      await held
+    })
+    await isChanged
+    // The English post to translate the German one: it must wait for the other save to end.
+    const save = rejection(
+      blog.update(english, 1, fields(`hello`, { translationOf: german }), false, maya),
+    )
+    // Awaited below; this only keeps a save that did not wait from failing the whole file.
+    save.catch(() => {})
+    try {
+      const deadline = Date.now() + 10_000
+      while (true) {
+        const [{ waiting }] = await sql<{ waiting: number }[]>`
+          SELECT COUNT(*)::int AS waiting FROM pg_stat_activity
+          WHERE wait_event_type = 'Lock' AND query LIKE '%FOR SHARE%'
+        `
+        if (waiting > 0) break
+        if (Date.now() > deadline) throw new Error(`the save did not wait for the other one`)
+        await new Promise((resolve) => setTimeout(resolve, 20))
+      }
+    } finally {
+      // Ends the other save even when the check failed, so the schema can be dropped.
+      release()
+      await other
+    }
+
+    const error = await save
+    expect([error.code, error.field]).toEqual([`TRANSLATION_INVALID`, `translationOf`])
+    expect((await blog.get(english))!.translationOf).toBeNull()
+  })
+})
+
+Deno.test(`blog: deleting an original keeps its translations linked, the main language's first (#530)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const [german, spanish, english, french] = [uuidV7(), uuidV7(), uuidV7(), uuidV7()]
+    await blog.create(german, fields(`hallo`, { language: `de` }), maya)
+    // The Spanish one is older, but English is the main language.
+    await blog.create(spanish, fields(`hola`, { language: `es`, translationOf: german }), maya)
+    await blog.create(english, fields(`hello`, { language: `en`, translationOf: german }), maya)
+    await blog.create(french, fields(`salut`, { language: `fr`, translationOf: german }), maya)
+    for (const id of [german, spanish, english, french]) await blog.publish(id, 1, null, null, maya)
+
+    await blog.delete(german, 2, maya)
+
+    expect((await blog.get(english))!.translationOf).toBeNull()
+    expect((await blog.get(spanish))!.translationOf).toBe(english)
+    expect((await blog.get(french))!.translationOf).toBe(english)
+    expect((await readPublicPost(sql, `hola`))!.post.translations).toEqual([
+      { language: `en`, slug: `hello` },
+      { language: `fr`, slug: `salut` },
+    ])
+  })
+})
+
+Deno.test(`blog: the public reads leave out a post in a language the apps no longer ship (#530)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const [english, dropped] = [uuidV7(), uuidV7()]
+    await blog.create(english, fields(`hello`), maya)
+    await blog.create(
+      dropped,
+      fields(`moin`, { language: `nds` as Language, translationOf: english }),
+      maya,
+    )
+    for (const id of [english, dropped]) await blog.publish(id, 1, null, null, maya)
+
+    expect((await listPublicPosts(sql, null)).map((post) => post.slug)).toEqual([`hello`])
+    expect(await readPublicPost(sql, `moin`)).toBeNull()
+    expect((await readPublicPost(sql, `hello`))!.post.translations).toEqual([])
+    expect((await listPublicFeed(sql)).map((post) => post.slug)).toEqual([`hello`])
   })
 })
 

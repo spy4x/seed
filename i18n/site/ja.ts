@@ -832,6 +832,7 @@ export default {
   "Blog.ctaTitle": "{site}が動くところを1分で",
   "Blog.published": "公開日：<time>{date}</time>",
   "Blog.updated": "· 更新日：<time>{date}</time>",
+  "Blog.alsoIn": "他の言語：<links></links>",
   "Blog.minutes": {
     "other": "· {count}分で読めます",
   },

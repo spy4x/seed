@@ -11,12 +11,13 @@ import {
   type BlogAuditKind,
   BlogError,
   type BlogPost,
+  type BlogPostEdit,
   type BlogPostFields,
   type BlogPostStatus,
   type BlogTopic,
   BlogVersionConflictError,
 } from "@domain/blog"
-import type { Language } from "@domain/identity"
+import { DEFAULT_LANGUAGE, type Language } from "@domain/identity"
 import { enqueueJob, JOB_AGGREGATE } from "../jobs/jobs.ts"
 
 /** The operator behind a write, for its audit row. */
@@ -117,8 +118,10 @@ async function checkTranslation(
     return
   }
   if (original === id) throw translationInvalid(`A post cannot translate itself.`)
+  // Held until the write ends, so a save that makes the original a translation itself waits for
+  // this one, and this one waits for it, and the two never build a chain (#530).
   const [target] = await tx<Pick<BlogPostRow, `language` | `translationOf`>[]>`
-    SELECT language, translation_of FROM blog_posts WHERE id = ${original}
+    SELECT language, translation_of FROM blog_posts WHERE id = ${original} FOR SHARE
   `
   if (!target) throw translationInvalid(`The post this translates does not exist any more.`)
   if (target.translationOf !== null) {
@@ -236,19 +239,26 @@ export class PostgresBlogRepository {
   }
 
   /**
-   * Saves every field of the post at `version`. Its slug stays once the post has been published
-   * (`SLUG_LOCKED`; {@link changeUrl} changes it). `significantUpdate` on a published post moves
-   * its "Updated" date to now.
+   * Saves every field of the post at `version`; a language or link `edit` leaves out stays as it
+   * is. Its slug stays once the post has been published (`SLUG_LOCKED`; {@link changeUrl} changes
+   * it). `significantUpdate` on a published post moves its "Updated" date to now.
    */
   async update(
     id: string,
     version: number,
-    fields: BlogPostFields,
+    edit: BlogPostEdit,
     significantUpdate: boolean,
     actor: BlogActor,
   ): Promise<BlogPost> {
     return await this.write(async (tx) => {
       const current = await lock(tx, id, version)
+      const fields: BlogPostFields = {
+        ...edit,
+        language: edit.language ?? current.language,
+        translationOf: edit.translationOf === undefined
+          ? current.translationOf
+          : edit.translationOf,
+      }
       if (fields.slug !== current.slug && current.publishedAt !== null) {
         throw new BlogError(
           `SLUG_LOCKED`,
@@ -389,10 +399,25 @@ export class PostgresBlogRepository {
     })
   }
 
-  /** Deletes the post for good, whatever its status. A job waiting for it finds nothing. */
+  /**
+   * Deletes the post for good, whatever its status. A job waiting for it finds nothing. An
+   * original's translations stay linked (#530): the one in the main language, else the oldest,
+   * becomes the original, and the others translate it.
+   */
   async delete(id: string, version: number, actor: BlogActor): Promise<void> {
     await this.write(async (tx) => {
       const current = await lock(tx, id, version)
+      await tx`
+        WITH heir AS (
+          SELECT id FROM blog_posts WHERE translation_of = ${id}
+          ORDER BY language = ${DEFAULT_LANGUAGE} DESC, id
+          LIMIT 1
+        )
+        UPDATE blog_posts
+        SET translation_of = NULLIF((SELECT id FROM heir), blog_posts.id),
+          updated_at = now(), version = version + 1
+        WHERE translation_of = ${id}
+      `
       await tx`DELETE FROM blog_posts WHERE id = ${id}`
       await audit(tx, actor, BLOG_AUDIT_KINDS.deleted, current, { title: current.title })
     })
