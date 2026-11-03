@@ -54,7 +54,8 @@ The API refuses to start on a bad value, and names what is wrong:
 - `BILLING_GRACE_DAYS` must be a whole number from 0 to 90, and `BILLING_TRIAL_REQUIRES_CARD` must
   be `true` or `false`. Unset or empty means the default.
 
-`tests/compose-api-env.test.ts` checks that Compose passes every billing variable to both services.
+`tests/compose-api-env.test.ts` checks that Compose passes every billing variable to both services,
+the webhook secret to the API only.
 
 ## Set up Stripe in test mode
 
