@@ -23,10 +23,12 @@ SCRATCH=$(mktemp -d)
 PIDS=()
 cleanup() {
   set +e
+  # Each PID is a `timeout`, which passes TERM on to its server and, with `-k 5`, sends KILL five
+  # seconds later: `deno serve` does not exit on TERM while it has open connections. Killing
+  # `timeout` itself would leave the server running, so that is only the last resort.
   for pid in "${PIDS[@]}"; do
-    # `deno serve` does not exit on SIGTERM when it has open connections: stop it for good.
     kill -TERM "$pid" 2>/dev/null
-    for _ in 1 2 3 4 5 6 7 8 9 10; do kill -0 "$pid" 2>/dev/null || break; sleep 0.2; done
+    for _ in $(seq 1 50); do kill -0 "$pid" 2>/dev/null || break; sleep 0.2; done
     kill -KILL "$pid" 2>/dev/null
   done
   find "$SCRATCH" -delete
@@ -48,18 +50,18 @@ wait_for() { # <name> <pid> <url>
 # posts, read from their files, so /blog and a post are measured with content. Every other API address
 # answers 404, and the pages render without it.
 # The servers outlive every Lighthouse run: 54 runs took over 20 minutes on a loaded CI host.
-timeout 2400 deno run --allow-net=127.0.0.1 --allow-read=libs/server/blog/seed-posts "$HERE/blog-api.ts" 48412 >"$SCRATCH/api.log" 2>&1 &
+timeout -k 5 2400 deno run --allow-net=127.0.0.1 --allow-read=libs/server/blog/seed-posts "$HERE/blog-api.ts" 48412 >"$SCRATCH/api.log" 2>&1 &
 PIDS+=($!)
 wait_for api "${PIDS[-1]}" http://127.0.0.1:48412/api/blog/posts
 
 # Production mode, with example hosts.
 ENV=prod DOMAIN=app.example.com MPA_DOMAIN=www.example.com API_URL=http://127.0.0.1:48412 \
-  timeout 2400 deno serve --allow-all --port 48410 --host 127.0.0.1 apps/mpa/_fresh/server.js \
+  timeout -k 5 2400 deno serve --allow-all --port 48410 --host 127.0.0.1 apps/mpa/_fresh/server.js \
   >"$SCRATCH/mpa.log" 2>&1 &
 PIDS+=($!)
 wait_for mpa "${PIDS[-1]}" http://127.0.0.1:48410/health
 
-timeout 2400 nginx -p "$SCRATCH" -e stderr -c "$PWD/$HERE/nginx.conf" -g 'daemon off;' \
+timeout -k 5 2400 nginx -p "$SCRATCH" -e stderr -c "$PWD/$HERE/nginx.conf" -g 'daemon off;' \
   >"$SCRATCH/nginx.log" 2>&1 &
 PIDS+=($!)
 wait_for nginx "${PIDS[-1]}" http://127.0.0.1:48411/health
