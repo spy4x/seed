@@ -519,6 +519,7 @@ export default {
   "AdminBlogEditor.viewOnSite": "在网站上查看",
   "AdminBlogEditor.changeUrl": "更改网址…",
   "AdminBlogEditor.unpublish": "下线…",
+  "AdminBlogEditor.history": "历史记录…",
   "AdminBlogEditor.deletePost": "删除文章…",
   "AdminBlogEditor.editPost": "编辑文章",
   "AdminBlogEditor.newPost": "新建文章",
@@ -1686,4 +1687,13 @@ export default {
   "AdminBlogEditor.translationOfHint":
     "这篇文章翻译自哪篇文章。两篇都发布后，网站会把它们关联为不同语言版本。",
   "AdminBlogEditor.translationNone": "无：这是原创文章",
+  "AdminBlogHistory.title": "历史记录",
+  "AdminBlogHistory.versions": "早期版本",
+  "AdminBlogHistory.shown": "所选版本",
+  "AdminBlogHistory.body": "正文",
+  "AdminBlogHistory.savedBy": "由 {name} 于 {date} 保存",
+  "AdminBlogHistory.someone": "未知",
+  "AdminBlogHistory.restore": "恢复此版本",
+  "AdminBlogHistory.empty": "还没有早期版本。每次保存都会保留一个。",
+  "AdminBlogHistory.restored": "已恢复早期版本。保存后才会生效。",
 } satisfies Catalog
