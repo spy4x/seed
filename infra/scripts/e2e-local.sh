@@ -31,8 +31,8 @@
 #     and the two images they make carry a label that names this run and are removed by it at
 #     the end. Every run therefore builds from the start, which takes a minute or two.
 # Left unset, the specs that start the app with no network (`OFFLINE_SPECS` of
-# `e2e-local-plan.ts`) get the built SPA and every other spec the dev server (docs/offline.md,
-# "The app shell", says why). One Playwright pass has one server, so a run makes two passes when
+# `e2e-local-plan.ts`) get the built SPA and every other spec the dev server
+# (docs/offline-app-shell.md says why). One Playwright pass has one server, so a run makes two passes when
 # it needs both: the dev server first, then the built SPA in its place.
 #   deno task e2e:local                                            two passes: every spec
 #   deno task e2e:local e2e/notes.e2e.ts                           one pass, dev server

@@ -175,7 +175,7 @@ an id is taken.
 | `views/NoteEditorView.tsx` | Passes the store and the group's role to `NoteEditorScreen` for `/notes/new` and `/notes/:id`, with the offline conflict state above it.                                                                                                    |
 | `views/spa-paths.ts` | The route table: every route's pattern, and `open: true` on a page a signed-out person may see. Add the aggregate's routes here; each row must say `open`, and a page that is not open is for signed-in people. The sign-in gate (`views/sign-in-gate.ts`) reads the table to send a signed-out visit to sign-in and back, and preact-components' `UnsavedGuard` in `NoteEditorView.tsx` reads it to know a link stays in the app, so it asks before the person leaves the editor with text that is not saved. |
 | `app.tsx` | What each route of the table draws (`PAGES`; the type check fails for a route in the table with no page, and for a page with no route), and the pull: a hint for the open group reads its notes again. |
-| `modules.ts` | The composition root: the only file that imports the WebSocket module and the offline layer. Stores import their ports from it ([offline.md](offline.md), "The modules and their switches"). |
+| `modules.ts` | The composition root: the only file that imports the WebSocket module and the offline layer. Stores import their ports from it ([offline-data.md](offline-data.md#the-modules-and-their-switches)). |
 | `offline/notes-collection.ts` | Notes are offline-writable (level 3): their adapter for the shared collections layer. A level 1 or 2 aggregate has no file here. |
 
 The store does not move the group's cursor on its own writes: another member's change may have
@@ -186,7 +186,7 @@ one extra read instead.
 
 Decide the level before writing the store
 ([ADR 003](decisions/003-swappable-transport-and-local-data.md), section 4;
-[offline.md](offline.md#the-three-levels) lists where every list stands today).
+[offline-data.md](offline-data.md#the-three-levels) lists where every list stands today).
 
 **Level 1, online only.** Write the store as above and nothing else. With no network its read
 fails and the screen shows the store's error.
@@ -224,8 +224,9 @@ cannot put the data back. Then wrap the store's dependencies as `offlineNotes` d
 
 #### Taking part in the changes pull
 
-A level 3 aggregate of a group is read by the changes pull ([offline.md](offline.md), "Reads: the
-device first"), so a device asks only for what changed. Notes and tags take part; copy them:
+A level 3 aggregate of a group is read by the changes pull
+([offline-data.md](offline-data.md#notes-and-tags-the-changes-pull)), so a device asks only for what
+changed. Notes and tags take part; copy them:
 
 1. **Server.** A `ChangesAggregate` beside the repository (`libs/server/notes/note-changes.ts`):
    its `kind`, a `sequences` query of the live rows' `change_sequence` after the cursor, and a
@@ -284,7 +285,7 @@ Copy these choices:
   (`TAG_LIMIT_REACHED`): moving the notes without their tags would lose them silently.
 - **Offline, the parent's collection is declared first** in `offline/index.ts` and named in the
   child's `dependencies` (`parents`, `on`, `without`). The four rules are in
-  [offline.md](offline.md#tags-the-second-offline-writable-aggregate-and-what-a-parent-means).
+  [offline-writes.md](offline-writes.md#tags-and-what-a-parent-means).
 - **The child's screens read the parent's store** (`state/tags.ts`) for their picker, labels and
   filter; the filter lives in the address (`useUrlFilters`) and runs over the local list.
 
@@ -357,7 +358,7 @@ same steps; copy the notes files that mention `move`:
    item page gets a form posting `{ toGroupId }`. Targets are the person's groups where they may
    write (`moveTargetsOf`).
 6. **SPA and offline.** The store sends the command over the socket and never queues it. A queued
-   write for a moved item becomes a conflict (`docs/offline.md`).
+   write for a moved item becomes a conflict (`docs/offline-writes.md`).
 7. **Tests.** Both transports (viewer, stranger, same group, all-or-nothing, cap), Postgres (one
    sequence step and one audit row per group, rights in both groups, opposite moves), the hint for
    members of both groups (`tests/integration/note-move-push.integration.test.ts`), the screens and

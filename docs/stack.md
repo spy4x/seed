@@ -353,7 +353,7 @@ baked into the build; the container writes them to `/config.json` when it starts
   checks it with an arktype schema. A missing or invalid file gives the defaults (no error tracker)
   and a console warning, never a blank page.
 - **Offline:** the service worker stores `/config.json` with the app shell and answers from that
-  copy when the network fails (`docs/offline.md`, "The app shell").
+  copy when the network fails (`docs/offline-app-shell.md`).
 - **The content security policy:** the same start-up runs `apps/spa/csp-connect.sh`, which lets the
   page post to the origin of `SPA_ERROR_REPORT_DSN` and to no other site
   ([security-headers.md](security-headers.md)).
