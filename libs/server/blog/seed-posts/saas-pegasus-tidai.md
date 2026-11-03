@@ -12,6 +12,7 @@ tldr:
   - 两者都只支持 Stripe，而 Stripe 不向中国大陆注册的公司开放，香港公司可以使用。
 topic: 问答
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---

@@ -9,7 +9,7 @@ import {
   type PublicBlogPost,
   type PublicBlogPostSummary,
 } from "@domain/blog"
-import type { Language } from "@domain/identity"
+import { type Language, LANGUAGES } from "@domain/identity"
 import { renderBlogBody } from "./render.ts"
 
 /**
@@ -39,6 +39,7 @@ interface PostRow extends SummaryRow {
   coverUrl: string | null
   coverAlt: string | null
   authorName: string | null
+  authorUrl: string | null
 }
 
 /** The columns of a summary: never the body, which a list does not need (#416). */
@@ -47,9 +48,13 @@ function summaryColumns(sql: postgres.Sql) {
     reading_minutes`
 }
 
-/** The condition every public read starts from. */
+/**
+ * The condition every public read starts from. A post in a language the apps no longer ship is
+ * left out, so the website, which reads only those, never fails on it (#530).
+ */
 function live(sql: postgres.Sql) {
-  return sql`status = 'published' AND publish_at <= now() AND published_at IS NOT NULL`
+  return sql`status = 'published' AND publish_at <= now() AND published_at IS NOT NULL
+    AND language IN ${sql([...LANGUAGES])}`
 }
 
 function toSummary(row: SummaryRow): PublicBlogPostSummary {
@@ -91,7 +96,8 @@ export async function readPublicPost(
 ): Promise<{ post: PublicBlogPost; readNext: PublicBlogPostSummary[] } | null> {
   const [row] = await sql<PostRow[]>`
     SELECT id, translation_of, slug, language, title, seo_title, description, tldr, topic,
-      cover_url, cover_alt, body_md, published_at, content_updated_at, author_name, reading_minutes
+      cover_url, cover_alt, body_md, published_at, content_updated_at, author_name, author_url,
+      reading_minutes
     FROM blog_posts
     WHERE slug = ${slug} AND ${live(sql)}
   `
@@ -122,10 +128,29 @@ export async function readPublicPost(
       segments: body.segments,
       headings: body.headings,
       authorName: row.authorName,
+      authorUrl: row.authorUrl,
       translations: translations.map(({ language, slug }) => ({ language, slug })),
     },
     readNext: next.map(toSummary),
   }
+}
+
+/**
+ * Where the post that once lived at `slug` lives now (#418): its language and current slug, read
+ * from `blog_slug_redirects` (2026_12_13_0002_blog_slug_redirects.sql). `null` when no post moved
+ * from `slug`, and when the post that did is not live, so an old address never tells that a draft,
+ * a scheduled or an unpublished post exists. The website asks only after {@link readPublicPost}
+ * found no live post at `slug`, so a post's own address costs no extra read.
+ */
+export async function readMovedPost(
+  sql: postgres.Sql,
+  slug: string,
+): Promise<BlogTranslation | null> {
+  const [row] = await sql<BlogTranslation[]>`
+    SELECT language, slug FROM blog_posts
+    WHERE id = (SELECT post_id FROM blog_slug_redirects WHERE slug = ${slug}) AND ${live(sql)}
+  `
+  return row ? { language: row.language, slug: row.slug } : null
 }
 
 /** Every topic of a live post, with how many live posts it has, A to Z. */

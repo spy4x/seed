@@ -555,7 +555,7 @@ export default {
   "FeatureWebsite.fact3":
     "Ein Newsletter mit Double-Opt-in, Abbestellen mit einem Klick und E-Mails in der Sprache des Empfängers",
   "FeatureWebsite.fact4":
-    "Ein Blog, geschrieben im Adminbereich, mit Beiträgen in jeder Sprache samt Übersetzungen, Themen, interaktiven Grafiken zum Ausprobieren, einem RSS-Feed und strukturierten Daten für Artikel",
+    "Ein Blog, geschrieben im Adminbereich, mit Beiträgen in jeder Sprache samt Übersetzungen, Themen, interaktiven Grafiken zum Ausprobieren, einem RSS-Feed, strukturierten Daten für Artikel, alten Links, die nach einer URL-Änderung auf die neue Adresse umleiten, und einem IndexNow-Ping, der Suchmaschinen sofort von neuen oder geänderten Beiträgen erfahren lässt",
   "FeatureWebsite.fact5":
     "Kontaktlinks, im Adminbereich festgelegt und im Footer und in den strukturierten Daten angezeigt",
   "FeatureWebsite.fact6":
@@ -866,6 +866,7 @@ export default {
   "Blog.ctaTitle": "In einer Minute sehen, wie {site} funktioniert",
   "Blog.published": "Veröffentlicht am <time>{date}</time>",
   "Blog.updated": "· Aktualisiert am <time>{date}</time>",
+  "Blog.alsoIn": "Auch verfügbar auf: <links></links>",
   "Blog.minutes": {
     "one": "· {count} Min. Lesezeit",
     "other": "· {count} Min. Lesezeit",

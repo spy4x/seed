@@ -1,6 +1,7 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
-import { readDemoAdmin, SeedConfigError } from "./options.ts"
+import { readEnvRecord } from "@spy4x/platform/server/process"
+import { DEMO_ADMIN_ENV_NAMES, readDemoAdmin, SeedConfigError } from "./options.ts"
 
 const PEPPER = "p".repeat(32)
 const DEMO = { DEMO_MODE: "true", AUTH_PEPPER: PEPPER, DEMO_ADMIN_PASSWORD: "12345678" }
@@ -33,4 +34,12 @@ Deno.test("readDemoAdmin refuses a password sign-up would refuse, without its va
 Deno.test("readDemoAdmin refuses a missing or short AUTH_PEPPER", () => {
   expect(() => readDemoAdmin({ ...DEMO, AUTH_PEPPER: undefined })).toThrow(/AUTH_PEPPER/)
   expect(() => readDemoAdmin({ ...DEMO, AUTH_PEPPER: "p".repeat(31) })).toThrow(/AUTH_PEPPER/)
+})
+
+Deno.test("the worker's demo variable list reaches readDemoAdmin, AUTH_PEPPER included", () => {
+  const env = { get: (name: string) => (DEMO as Record<string, string>)[name] }
+  expect(readDemoAdmin(readEnvRecord(DEMO_ADMIN_ENV_NAMES, env))).toEqual({
+    pepper: PEPPER,
+    password: "12345678",
+  })
 })

@@ -945,6 +945,8 @@ services:
       - SUBSCRIBERS_PREVIOUS_SECRETS=${SUBSCRIBERS_PREVIOUS_SECRETS:-}
       # The website's host, when it is deployed: the mailed confirm and unsubscribe links open there.
       - MPA_DOMAIN=${MPA_DOMAIN:-}
+      # IndexNow (docs/blog.md): with MPA_DOMAIN, a blog post's change is announced. Unset → off.
+      - INDEXNOW_KEY=${INDEXNOW_KEY:-}
       # The public demo (docs/demo.md): `true` wipes and seeds the database every night and gives
       # every new account sample groups. Unset → off.
       - DEMO_MODE=${DEMO_MODE:-}
@@ -1066,6 +1068,8 @@ services:
       # Optional, together: the website's Umami (docs/analytics.md). Empty loads no tracker.
       - MPA_UMAMI_ORIGIN=${MPA_UMAMI_ORIGIN:-}
       - MPA_UMAMI_WEBSITE_ID=${MPA_UMAMI_WEBSITE_ID:-}
+      # IndexNow (docs/blog.md): served at /<key>.txt, the same key the worker pings with.
+      - INDEXNOW_KEY=${INDEXNOW_KEY:-}
       # Not `http://api`: on the shared `proxy` network that name is any project's API.
       - API_URL=http://${PROJECT}-api:${API_PORT}
       - DENO_LOG=${DENO_LOG}

@@ -17,13 +17,13 @@
  * @module
  */
 import postgres from "postgres"
-import { createSqlFromEnv, PostgresEnvName } from "@spy4x/server/db"
+import { createSqlFromEnv } from "@spy4x/server/db"
+import { postgresEnv } from "../api/services/db-direct.ts"
 import {
   exitProcess,
   processArgs,
   processEnv,
   processStdin,
-  readEnvRecord,
   writeStderr,
 } from "@spy4x/platform/server/process"
 import { normalizeEmail } from "@spy4x/server/auth"
@@ -214,7 +214,7 @@ if (import.meta.main) {
     console.error(`❌ AUTH_PEPPER must be set to the API's value (32 characters or more)`)
     exitProcess(1)
   }
-  const sql = createSqlFromEnv(readEnvRecord(Object.values(PostgresEnvName)), {
+  const sql = createSqlFromEnv(postgresEnv(), {
     transform: postgres.camel,
     applicationName: `operator-create`,
     max: 1,

@@ -6,7 +6,8 @@ import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * The blog's admin pages (#396): an operator writes a post from the keyboard, previews it as the
- * public page renders it, schedules it, publishes it now, finds it on the list and deletes it.
+ * public page renders it, schedules it, publishes it now, finds it on the list, changes its URL and
+ * deletes it.
  */
 
 const appBase = "http://app.localhost"
@@ -41,7 +42,7 @@ async function operatorPage(
   return { admin, ops }
 }
 
-test("an operator writes, previews, schedules, publishes and deletes a post from the keyboard", async ({ browser, request }) => {
+test("an operator writes, previews, schedules, publishes, moves and deletes a post from the keyboard", async ({ browser, request }) => {
   let admin: BrowserContext | null = null
   try {
     const signedIn = await operatorPage(browser, request)
@@ -139,15 +140,30 @@ test("an operator writes, previews, schedules, publishes and deletes a post from
     await expect(rows).toHaveCount(1)
     await expect(rows.first()).toContainText("Published")
 
-    // Deleted after a confirmation that names it; the website no longer has it.
+    // Change URL moves it; the old address now leads to the new one (#418).
+    const moved = `${slug}-moved`
     await ops.locator("[data-e2e=admin-blog-row]").click()
+    await ops.locator("[data-e2e=admin-blog-menu]").click()
+    await ops.locator("[data-e2e=admin-blog-change-url]").click()
+    await expect(ops.getByRole("alertdialog")).toContainText(
+      `Links to /blog/${slug} keep working: they redirect to the new URL.`,
+    )
+    await ops.locator("[data-e2e=admin-blog-new-slug]").fill(moved)
+    await ops.getByRole("button", { name: "Change URL", exact: true }).click()
+    await expect(ops.locator("[data-e2e=admin-blog-slug]")).toHaveValue(moved)
+    const old = await request.get(`${appBase}/api/blog/posts/${slug}`)
+    expect(await old.json()).toEqual({ moved: { language: "en", slug: moved } })
+
+    // Deleted after a confirmation that names it; the website no longer has it.
     await ops.locator("[data-e2e=admin-blog-menu]").click()
     await ops.locator("[data-e2e=admin-blog-delete]").click()
     await expect(ops.getByRole("alertdialog")).toContainText(`Delete "${title}"?`)
     await ops.getByRole("button", { name: "Delete post" }).click()
     await expect(ops).toHaveURL(`${adminBase}/blog`)
     await expect(ops.locator("[data-e2e=toasts]")).toContainText("Post deleted.")
-    expect((await request.get(`${appBase}/api/blog/posts/${slug}`)).status()).toBe(404)
+    for (const gone of [slug, moved]) {
+      expect((await request.get(`${appBase}/api/blog/posts/${gone}`)).status()).toBe(404)
+    }
   } finally {
     await admin?.close()
   }

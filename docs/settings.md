@@ -26,6 +26,7 @@ default, never a value to keep for a secret.
 | `MPA_REDIRECT_RULE`    | Production only: a Traefik rule for hosts redirected to `MPA_DOMAIN`. Empty matches nothing.                 | empty              | [Certificates](certificates.md)                |
 | `MPA_UMAMI_ORIGIN`     | The website's self-hosted Umami. Set both Umami values or neither.                                           | empty              | [Analytics](analytics.md)                      |
 | `MPA_UMAMI_WEBSITE_ID` | The website's id in that Umami. It is public.                                                                | empty              | [Analytics](analytics.md)                      |
+| `INDEXNOW_KEY`         | The website's IndexNow key, 8 to 128 letters, digits and dashes. Public. Empty turns IndexNow off.           | empty              | [Blog](blog.md#indexnow)                       |
 | `ADMIN_DOMAIN`         | The admin app's host, with the `admin` profile. Empty turns the operator area off.                           | `admin.localhost`  | [The three apps](apps.md#deploy-the-admin-app) |
 
 | Profile           | What it starts                                                                   | Guide                                   |

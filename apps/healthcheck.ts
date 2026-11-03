@@ -1,6 +1,6 @@
 /**
- * The container healthcheck of every service that runs on Deno: the API, the MPA and the SPA's and
- * admin app's dev servers (`infra/compose`). It exits 0 when the service is healthy, 1 when not.
+ * The container healthcheck of every server service: the API, the MPA and the SPA's and admin
+ * app's dev servers (`infra/compose`). It runs unchanged on Deno, Node and Bun. It exits 0 when the service is healthy, 1 when not.
  * The port comes from `HEALTHCHECK_PORT`, which each service sets in its environment.
  *
  * Given a path as its argument (`apps/healthcheck.ts /api/health`), it sends `GET` to that path on
@@ -8,8 +8,8 @@
  * container unhealthy when the database is gone. Without one, it only opens a connection to the
  * port, which is all a dev server can tell.
  *
- * It replaces `wget`, so the check needs nothing from the image beyond Deno itself and may reach
- * nothing but `127.0.0.1` (`--allow-net=127.0.0.1`).
+ * It replaces `wget`, so the check needs nothing from the image beyond the runtime itself. On
+ * Deno it may reach nothing but `127.0.0.1` (`--allow-net=127.0.0.1`).
  */
 import {
   type HealthcheckOptions,

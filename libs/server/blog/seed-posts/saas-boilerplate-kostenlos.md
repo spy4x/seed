@@ -12,6 +12,7 @@ tldr:
   - Seed bringt Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, ein Admin-Panel und neun Sprachen auf Ihrem eigenen Server mit.
 topic: Fragen
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---

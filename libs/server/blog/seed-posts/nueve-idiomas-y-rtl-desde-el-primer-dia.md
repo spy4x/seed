@@ -12,6 +12,7 @@ tldr:
   - Añadir un décimo idioma es una entrada en una lista, un archivo por catálogo y unas pocas líneas de carga.
 topic: A fondo
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z
 newsletter: false
 ---

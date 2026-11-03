@@ -48,10 +48,12 @@ The website refuses to start without any of them. Set `MPA_DOMAIN` only together
 profile: the API and the worker build links to it, and without the website those links lead
 nowhere.
 
-Two optional settings go with the website. `MPA_REDIRECT_RULE` sends other hosts, such as the
+Optional settings go with the website. `MPA_REDIRECT_RULE` sends other hosts, such as the
 `www` one, to `MPA_DOMAIN`
 ([Redirect other hosts](certificates.md#redirect-other-hosts-to-the-website)).
 `MPA_UMAMI_ORIGIN` and `MPA_UMAMI_WEBSITE_ID` turn on visitor statistics ([Analytics](analytics.md)).
+`INDEXNOW_KEY`, which the worker reads too, tells search engines when a blog post changes
+([IndexNow](blog.md#indexnow)).
 [Settings](settings.md) lists them all.
 
 The API accepts a form only from `DOMAIN`'s origin. The website first refuses any post that does

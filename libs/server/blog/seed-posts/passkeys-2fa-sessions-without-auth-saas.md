@@ -11,6 +11,7 @@ tldr:
   - You can list your sessions with their device and end any of them yourself.
 topic: Deep dive
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T16:00:00Z
 newsletter: false
 ---

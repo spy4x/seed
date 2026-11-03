@@ -568,7 +568,7 @@ export default {
   "FeatureWebsite.fact3":
     "Une newsletter à double confirmation, désabonnement en un clic et e-mails dans la langue du lecteur",
   "FeatureWebsite.fact4":
-    "Un blog rédigé dans le panneau d’administration, avec des articles dans chaque langue et leurs traductions, des thèmes, des figures interactives à essayer, un flux RSS et des données structurées d’article",
+    "Un blog rédigé dans le panneau d’administration, avec des articles dans chaque langue et leurs traductions, des thèmes, des figures interactives à essayer, un flux RSS, des données structurées d’article, des anciens liens qui redirigent quand l’URL d’un article change et un signal IndexNow qui prévient aussitôt les moteurs de recherche d’un article nouveau ou modifié",
   "FeatureWebsite.fact5":
     "Des liens de contact définis dans le panneau d’administration, affichés dans le pied de page et les données structurées",
   "FeatureWebsite.fact6":
@@ -895,6 +895,7 @@ export default {
   "Blog.ctaTitle": "Voyez {site} fonctionner en une minute",
   "Blog.published": "Publié le <time>{date}</time>",
   "Blog.updated": "· Mis à jour le <time>{date}</time>",
+  "Blog.alsoIn": "Aussi disponible en : <links></links>",
   "Blog.minutes": {
     "one": "· {count} min de lecture",
     "many": "· {count} min de lecture",

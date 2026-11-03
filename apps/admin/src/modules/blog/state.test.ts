@@ -34,6 +34,7 @@ const post: BlogPost = {
   contentUpdatedAt: null,
   authorId: 7,
   authorName: `Ann`,
+  authorUrl: null,
   newsletterList: null,
   newsletterSentAt: null,
   newsletterRecipients: null,
@@ -102,7 +103,7 @@ it(`creates the post with its client id on the first save, then saves with the v
   state.edit({ ...state.editor.value.value, title: `Hello`, description: `A post.` })
   expect(await state.save()).toEqual(post)
   expect(calls[0]).toBe(
-    `POST /api/admin/blog/posts {"id":"${ID}","title":"Hello","slug":"hello","description":"A post.","seoTitle":"","tldr":[],"topic":"","coverUrl":"","coverAlt":"","bodyMd":"","language":"en","translationOf":null}`,
+    `POST /api/admin/blog/posts {"id":"${ID}","title":"Hello","slug":"hello","description":"A post.","seoTitle":"","tldr":[],"topic":"","coverUrl":"","coverAlt":"","authorUrl":"","bodyMd":"","language":"en","translationOf":null}`,
   )
   expect(state.editor.value.saveStatus).toBe(`saved`)
   state.edit({ ...state.editor.value.value, title: `Hello again` })
@@ -130,6 +131,27 @@ it(`checks the fields before it sends anything`, async () => {
   expect(await state.save()).toBe(null)
   expect(calls).toEqual([])
   expect(state.editor.value.errors.title).toBe(`AdminBlogEditor.addTitle`)
+})
+
+it(`sends the author link as typed, and an emptied one to clear it (#730)`, async () => {
+  const { state, calls } = build()
+  await state.openPost(ID)
+  state.edit({ ...state.editor.value.value, authorUrl: ` https://example.com/about ` })
+  await state.save()
+  expect(calls.at(-1)).toContain(`"authorUrl":" https://example.com/about "`)
+  state.edit({ ...state.editor.value.value, authorUrl: `` })
+  await state.save()
+  expect(calls.at(-1)).toContain(`"authorUrl":""`)
+})
+
+it(`refuses an author link that is not https before it sends anything (#730)`, async () => {
+  const { state, calls } = build()
+  await state.openPost(ID)
+  const sent = calls.length
+  state.edit({ ...state.editor.value.value, authorUrl: `http://example.com/about` })
+  expect(await state.save()).toBe(null)
+  expect(calls.length).toBe(sent)
+  expect(state.editor.value.errors).toEqual({ authorUrl: `AdminBlogEditor.httpsCover` })
 })
 
 it(`marks a conflict on 409 and saves nothing more until reloaded`, async () => {

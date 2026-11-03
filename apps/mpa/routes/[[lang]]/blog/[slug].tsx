@@ -1,14 +1,19 @@
 import type { JSX } from "preact"
 import type { FreshContext } from "fresh"
 import { Head } from "fresh/runtime"
-import type { PublicBlogPost, PublicBlogPostSummary } from "@domain/blog"
+import type { BlogTranslation, PublicBlogPost, PublicBlogPostSummary } from "@domain/blog"
 import { Breadcrumbs } from "@spy4x/preact-ui/breadcrumbs"
 import { Button } from "@spy4x/preact-ui/button"
+import { languageName } from "@spy4x/preact-ui/language-picker"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { OnThisPage } from "@spy4x/preact-ui/on-this-page"
 import { PostList } from "@spy4x/preact-ui/post-list"
 import { TldrBox } from "@spy4x/preact-ui/tldr-box"
-import { blogPostingJsonLd, breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
+import {
+  blogPostingJsonLd,
+  breadcrumbListJsonLd,
+  type JsonLdPerson,
+} from "@spy4x/platform/universal/seo"
 import {
   BLOG_PATH,
   blogId,
@@ -19,6 +24,7 @@ import {
 } from "../../../blog.ts"
 import { CtaBand } from "../../../components/cta-band.tsx"
 import {
+  AUTHOR_URL,
   NewsletterForm,
   OG_IMAGE_SIZE,
   PERSON_JSON_LD,
@@ -55,13 +61,16 @@ export const POST_NOT_FOUND = postNotFound(siteEnglishText())
  *
  * A post is written in one language and lives at that language's address (`/de/blog/<slug>` for
  * German); another language's address redirects there for good, so a link from before posts had a
- * language still works. Its page names its live translations as language versions (`hreflang`),
- * and nothing when it has none.
+ * language still works. A slug the post had before "Change URL" redirects to its current address
+ * for good too, in every language, while the post is live (#418). Its page names its live
+ * translations as language versions (`hreflang`) and links them by name under the byline, and
+ * names nothing when it has none.
  */
 export const handler = define.handlers({
   async GET(ctx) {
     const found = await readPost(ctx.state.api, ctx.params.slug ?? ``)
     if (!found) return renderNotFound(ctx)
+    if (`moved` in found) return ctx.redirect(postAddress(found.moved), 301)
     const { post, readNext } = found
     if (post.language !== ctx.state.language) return ctx.redirect(postAddress(post), 301)
     const origin = ctx.state.webAppOrigin
@@ -117,7 +126,7 @@ function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost)
       image: post.coverUrl ?? { url: `${origin}/og/home.png`, ...OG_IMAGE_SIZE },
       datePublished: new Date(post.publishedAt),
       dateModified: post.updatedAt === null ? undefined : new Date(post.updatedAt),
-      author: { name: post.authorName ?? SITE_NAME },
+      author: postAuthor(post),
       publisher: { id: PERSON_JSON_LD["@id"] },
       section: post.topic ?? undefined,
       inLanguage: post.language,
@@ -134,6 +143,22 @@ function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost)
       { name: post.title },
     ]),
   ]
+}
+
+/**
+ * The post's author for its structured data: the name and the page it links to. A link on the
+ * site author's own domain ({@link AUTHOR_URL}) is that person, so the author also carries their
+ * `@id`, the one {@link PERSON_JSON_LD} and the site author's own site give them.
+ */
+export function postAuthor(
+  post: Pick<PublicBlogPost, `authorName` | `authorUrl`>,
+): JsonLdPerson {
+  const name = post.authorName ?? SITE_NAME
+  if (post.authorUrl === null) return { name }
+  const own = new URL(post.authorUrl).origin === new URL(AUTHOR_URL).origin
+  return own
+    ? { id: PERSON_JSON_LD[`@id`], name, url: post.authorUrl }
+    : { name, url: post.authorUrl }
 }
 
 /**
@@ -201,8 +226,31 @@ function PostBody(
                 </span>
               )}
               <span>{t.t(`Blog.minutes`, { count: post.readingMinutes })}</span>
-              {post.authorName && <span>· {post.authorName}</span>}
+              {post.authorName && (
+                <span>
+                  ·{` `}
+                  {post.authorUrl
+                    ? (
+                      <a
+                        href={post.authorUrl}
+                        rel="author"
+                        class="rounded-sm underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                        data-e2e="blog-post-author"
+                      >
+                        {post.authorName}
+                      </a>
+                    )
+                    : post.authorName}
+                </span>
+              )}
             </p>
+            {post.translations.length > 0 && (
+              <p class="text-sm text-muted" data-e2e="blog-post-translations">
+                {rich(`Blog.alsoIn`, {
+                  links: () => <TranslationLinks translations={post.translations} />,
+                })}
+              </p>
+            )}
           </header>
           {post.coverUrl && (
             <img
@@ -236,6 +284,38 @@ function PostBody(
         )}
       </div>
     </div>
+  )
+}
+
+/**
+ * The post's live translations, each named in its own language and linked at its own address, as
+ * a list in the page's language: "Deutsch, Español and Français" (#530).
+ */
+function TranslationLinks(
+  { translations }: { translations: readonly BlogTranslation[] },
+): JSX.Element {
+  const { language } = useSite()
+  const parts = new Intl.ListFormat(language, { type: `conjunction` })
+    .formatToParts(translations.map(({ language }) => languageName(language)))
+  let next = 0
+  return (
+    <>
+      {parts.map((part) => {
+        if (part.type === `literal`) return part.value
+        const version = translations[next++]
+        return (
+          <a
+            key={version.language}
+            href={postAddress(version)}
+            hreflang={version.language}
+            lang={version.language}
+            class="font-medium text-primary underline"
+          >
+            {part.value}
+          </a>
+        )
+      })}
+    </>
   )
 }
 
