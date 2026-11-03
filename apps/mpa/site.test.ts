@@ -431,6 +431,7 @@ describe("the public website", () => {
       .map((match) => [linkText(match[1]), hrefOf(match[0])])
     expect(nav).toEqual(expect.arrayContaining([
       ["Features", "/features"],
+      ["Docs", "/docs"],
       ["Compare", "/compare"],
       ["Pricing", "/pricing"],
       ["Hire me (opens antonshubin.com)", HIRE_PAGE_URL.replaceAll("&", "&amp;")],
@@ -440,6 +441,16 @@ describe("the public website", () => {
     expect(linkNamed(header, "Sign in")).toBeUndefined()
     expect(hrefOf(linkNamed(footer, "Sign in"))).toBe(`${spa}/sign-in`)
     expect(header).not.toContain(`href="${site}/sign-`)
+  })
+
+  it("marks the header's Docs as the current page on the docs index and on every guide, in every language", async () => {
+    const pages = [["/docs", "Docs"], ["/docs/get-started", "Docs"], ["/de/docs/deploy", "Doku"]]
+    for (const [path, docs] of pages) {
+      const header = element((await page(path)).html, "header")!
+      expect(linkNamed(header, docs), path).toContain(`aria-current="page"`)
+    }
+    const header = element((await page("/features")).html, "header")!
+    expect(linkNamed(header, "Docs")).not.toContain(`aria-current="page"`)
   })
 
   it("marks the header's Hire me as leaving the site: an icon after its label, and words for a screen reader", async () => {
@@ -860,13 +871,19 @@ describe("the public website", () => {
     )
   })
 
-  it("lists every published guide and the API reference on /docs, under Use and Build", async () => {
+  it("leads /docs with Get started, then lists every published guide and the API reference in the four sections", async () => {
     const { status, html } = await page("/docs")
 
     expect(status).toBe(200)
     expect(headingOne(html)).toBe("Seed docs")
-    const groups = [...html.matchAll(/<h2 id="docs-[^"]*"[^>]*>([^<]*)<\/h2>/g)].map((m) => m[1])
-    expect(groups).toEqual(["Use", "Build"])
+    const groups = [...html.matchAll(/<h2 id="docs-[^"]*"[^>]*>([\s\S]*?)<\/h2>/g)]
+      .map((m) => linkText(m[1]))
+    expect(groups).toEqual(["New to Seed?", "Get started", "Guides", "Concepts", "Reference"])
+    const first = /<section[^>]*data-e2e="docs-first"[\s\S]*?<\/section>/.exec(html)![0]
+    expect(hrefOf(linkNamed(first, "Get started"))).toBe("/docs/get-started")
+    expect(html.indexOf(`href="/docs/get-started"`)).toBeLessThan(
+      html.indexOf(`href="/docs/products"`),
+    )
     for (const slug of DOC_SLUGS) expect(html, slug).toContain(`href="/docs/${slug}"`)
     expect(html).toMatch(/<a href="\/docs\/api"[^>]*><span[^>]*>API reference<\/span>/)
   })

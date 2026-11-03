@@ -276,6 +276,8 @@ export interface SiteFrameProps {
 /** The header's links, in display order, by catalog key. The Blog link joins them once a post is live. */
 export const NAV_LINKS = [
   { label: `SiteNav.features`, href: `/features` },
+  // The footer's word for the docs, which every language has already.
+  { label: `SiteFooter.docs`, href: DOCS_PATH },
   { label: `SiteNav.blog`, href: BLOG_PATH },
   { label: `SiteNav.compare`, href: `/compare` }, // Seed's own site: see docs/start-a-product.md
   { label: `SiteNav.pricing`, href: `/pricing` },
@@ -287,6 +289,14 @@ export const NAV_LINKS = [
   },
   { label: `SiteNav.github`, href: REPOSITORY_URL, Icon: IconGitHub },
 ] as const
+
+/**
+ * The header link that `path` falls under, for its current-page mark: the docs' link on every
+ * guide under `/docs`, else `path` itself.
+ */
+export function navPath(path: string): string {
+  return path.startsWith(`${DOCS_PATH}/`) ? DOCS_PATH : path
+}
 
 /**
  * The frame of every page of the public website: its head tags, a link that skips to the content,
@@ -348,7 +358,7 @@ export function SiteFrame(
       </a>
       <SiteHeader
         class="lg:sticky lg:top-0 lg:z-20"
-        currentPath={href(path)}
+        currentPath={href(navPath(path))}
         brand={
           <a href={href(`/`)} class="rounded-control" data-e2e="site-brand">
             <BrandMark Icon={SITE_ICON} name={SITE_NAME} />

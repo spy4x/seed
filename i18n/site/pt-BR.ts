@@ -243,6 +243,7 @@ export default {
     "O <init>init</init> copia o arquivo de ambiente e gera todos os segredos e as chaves de push da web; o <dev>dev</dev> sobe o Traefik e todo o resto. Depois, abra <url>http://app.localhost</url>. O <readme>README</readme> lista todas as configurações e explica o deploy.",
   "HomeQuickStart.agent": "Ou peça ao seu agente de IA: <prompt></prompt>.",
   "HomeQuickStart.terminal": "Terminal",
+  "HomeQuickStart.guide": "Leia o guia passo a passo",
   "HomeStatus.eyebrow": "Status sem rodeios",
   "HomeStatus.title": "Como está hoje",
   "HomeStatus.lead":

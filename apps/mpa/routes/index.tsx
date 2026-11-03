@@ -37,6 +37,7 @@ import { Shot, shotSrcset } from "../components/shot.tsx"
 import { Head } from "fresh/runtime"
 import { organizationId, organizationJsonLd } from "../contact-links.ts"
 import { HIRE_PAGE_URL } from "../hire.ts"
+import { DOCS_PATH } from "../docs-site.ts"
 import {
   AUTHOR_URL,
   PERSON_JSON_LD,
@@ -450,7 +451,7 @@ function command(text: string): JSX.Element {
 }
 
 function QuickStart(): JSX.Element {
-  const { t, rich } = useSite()
+  const { t, rich, href } = useSite()
   return (
     <Band id="quick-start" labelledBy="quick-start-title">
       <div class="grid gap-8 lg:grid-cols-12 lg:items-start">
@@ -473,6 +474,15 @@ function QuickStart(): JSX.Element {
           </p>
           <p class="text-muted text-pretty">
             {rich(`HomeQuickStart.agent`, { prompt: () => <AiPrompt /> })}
+          </p>
+          <p>
+            <a
+              href={href(`${DOCS_PATH}/get-started`)}
+              class="font-medium text-primary underline"
+              data-e2e="home-get-started"
+            >
+              {t.t(`HomeQuickStart.guide`)}
+            </a>
           </p>
         </div>
         <WindowFrame

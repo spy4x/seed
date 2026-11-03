@@ -248,6 +248,7 @@ export default {
     "<init>init</init> kopiert die Env-Datei und erzeugt alle Secrets und die Web-Push-Schlüssel; <dev>dev</dev> startet Traefik und alles andere. Dann öffne <url>http://app.localhost</url>. Im <readme>README</readme> stehen alle Einstellungen und wie du deployst.",
   "HomeQuickStart.agent": "Oder frag deinen KI-Agenten: <prompt></prompt>.",
   "HomeQuickStart.terminal": "Terminal",
+  "HomeQuickStart.guide": "Lies die Schritt-für-Schritt-Anleitung",
   "HomeStatus.eyebrow": "Ehrlicher Stand",
   "HomeStatus.title": "Wo es heute steht",
   "HomeStatus.lead":

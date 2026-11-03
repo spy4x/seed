@@ -223,6 +223,7 @@ export default {
     "<init>init</init> 会复制 env 文件，并生成所有密钥和 Web 推送密钥；<dev>dev</dev> 会启动 Traefik 和其他所有服务。然后打开 <url>http://app.localhost</url>。<readme>README</readme> 列出了每项配置和部署方法。",
   "HomeQuickStart.agent": "也可以直接让你的 AI 编程助手来做：<prompt></prompt>。",
   "HomeQuickStart.terminal": "终端",
+  "HomeQuickStart.guide": "阅读分步指南",
   "HomeStatus.eyebrow": "如实说明",
   "HomeStatus.title": "目前进展",
   "HomeStatus.lead": "Seed 现在就能用，并且在公开开发中。下面列出了哪些功能已经可用，哪些还没有。",
