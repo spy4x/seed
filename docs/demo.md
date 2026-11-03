@@ -78,9 +78,8 @@ updates the demo in the same PR:
   and needs no seed rows: "Change URL" on a live post writes them. A post keeps its author's name
   in `author_name`, and the page it links to in `author_url`, with no foreign key to `users`, so
   the wipe never takes them along. The wipe empties the job table and the audit log, so the worker
-  queues a scheduled
-  post's `blog.publish` job again after it (`queueDueBlogJobs`), and the operators' audit rows
-  about posts last a day. A post's `language` and `translation_of` stay with it; a subscriber
+  queues a scheduled post's `blog.publish` job again after it (`queueDueBlogJobs`), and the
+  operators' audit rows about posts last a day. A post's `language` and `translation_of` stay with it; a subscriber
   keeps their `language` too, and the seeded subscribers have none, so they count as the main
   language's. A post's `reading_minutes` is a column Postgres computes from its body, so the
   wipe, the seed and Seed's post files never write it and every post has it. Seed's own posts come
