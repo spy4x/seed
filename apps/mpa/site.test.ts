@@ -875,10 +875,10 @@ describe("the public website", () => {
     const { status, html } = await page("/docs/deploy")
 
     expect(status).toBe(200)
-    expect(headingOne(html)).toBe("Deploy and operate")
+    expect(headingOne(html)).toBe("Deploy to a server")
     expect(html).toContain(`<link rel="canonical" href="${site}/docs/deploy"`)
     const article = jsonLdGraph(html).find((entity) => isType(entity, "TechArticle"))
-    expect(article?.headline).toBe("Deploy and operate")
+    expect(article?.headline).toBe("Deploy to a server")
     expect(html).toContain(`href="/docs/apps"`)
     expect(html).not.toContain(`href="apps.md`)
     expect(html).not.toContain("Also on the website")
