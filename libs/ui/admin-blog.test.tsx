@@ -481,6 +481,12 @@ describe("the blog editor", () => {
       "Also email this post to 3 confirmed subscribers in Deutsch",
     )
     expect(find("dialog[open] span[lang=de]").textContent).toBe("Deutsch")
+    // The checkbox's label is a flex row: the sentence must be one item, or its words spread out.
+    const label = find("dialog[open] span[lang=de]").closest("label")!
+    expect([...label.childNodes].map((node) => node.nodeName)).toEqual(["INPUT", "SPAN"])
+    expect(label.children[1].textContent).toBe(
+      "Also email this post to 3 confirmed subscribers in Deutsch",
+    )
     expect(find("dialog[open]").textContent).toContain(`It goes live at /de/blog/${value.slug}`)
     await clickOn(
       find("[data-e2e=admin-blog-email] input, input[data-e2e=admin-blog-email]"),

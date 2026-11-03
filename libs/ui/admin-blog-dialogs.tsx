@@ -354,19 +354,22 @@ function PublishDialog(props: DialogsProps & { title: string }): JSX.Element {
                   data-e2e="admin-blog-email"
                   onChange={(e) => setEmailing(e.currentTarget.checked)}
                 >
-                  <Rich
-                    parts={lists.length > 1
-                      ? t.parts(`AdminBlogDialogs.alsoEmailList`, {
-                        count: readers,
-                        list: chosen.list,
-                        language: languageName(value.language),
-                      })
-                      : t.parts(`AdminBlogDialogs.alsoEmail`, {
-                        count: readers,
-                        language: languageName(value.language),
-                      })}
-                    tags={{ list: path, language }}
-                  />
+                  {/* One span: Checkbox lays its children out as a row, which split the sentence. */}
+                  <span>
+                    <Rich
+                      parts={lists.length > 1
+                        ? t.parts(`AdminBlogDialogs.alsoEmailList`, {
+                          count: readers,
+                          list: chosen.list,
+                          language: languageName(value.language),
+                        })
+                        : t.parts(`AdminBlogDialogs.alsoEmail`, {
+                          count: readers,
+                          language: languageName(value.language),
+                        })}
+                      tags={{ list: path, language }}
+                    />
+                  </span>
                 </Checkbox>
               )}
             {sending && (
