@@ -13,6 +13,7 @@
         "http://127.0.0.1:48411/privacy",
         "http://127.0.0.1:48411/docs/api",
         "http://127.0.0.1:48411/docs",
+        "http://127.0.0.1:48411/docs/get-started",
         "http://127.0.0.1:48411/docs/capacity",
         "http://127.0.0.1:48411/changelog",
         "http://127.0.0.1:48411/subscribe",
