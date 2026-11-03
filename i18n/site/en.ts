@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "No sign-up. You get a guest account with demo data, and it's wiped every night.",
   "SiteNav.features": "Features",
+  "SiteNav.docs": "Docs",
   "SiteNav.blog": "Blog",
   "SiteNav.compare": "Compare",
   "SiteNav.pricing": "Pricing",

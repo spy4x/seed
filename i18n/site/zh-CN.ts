@@ -4,6 +4,7 @@ export default {
   "TryEntry.label": "体验在线演示",
   "TryEntry.line": "无需注册。你会得到一个带示例数据的访客账号，数据每晚清空。",
   "SiteNav.features": "功能",
+  "SiteNav.docs": "文档",
   "SiteNav.blog": "博客",
   "SiteNav.compare": "对比",
   "SiteNav.pricing": "价格",

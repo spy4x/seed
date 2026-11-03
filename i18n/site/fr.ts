@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "Sans inscription. Vous obtenez un compte invité avec des données d’exemple, effacé chaque nuit.",
   "SiteNav.features": "Fonctionnalités",
+  "SiteNav.docs": "Docs",
   "SiteNav.blog": "Blog",
   "SiteNav.compare": "Comparer",
   "SiteNav.pricing": "Tarifs",

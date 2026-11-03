@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "Без регистрации. Вы получите гостевой аккаунт с демо-данными, а каждую ночь всё начинается с чистого листа.",
   "SiteNav.features": "Возможности",
+  "SiteNav.docs": "Документация",
   "SiteNav.blog": "Блог",
   "SiteNav.compare": "Сравнение",
   "SiteNav.pricing": "Цены",

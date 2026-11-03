@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "Ohne Registrierung. Du bekommst ein Gastkonto mit Beispieldaten, das jede Nacht zurückgesetzt wird.",
   "SiteNav.features": "Funktionen",
+  "SiteNav.docs": "Doku",
   "SiteNav.blog": "Blog",
   "SiteNav.compare": "Vergleich",
   "SiteNav.pricing": "Preise",

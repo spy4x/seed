@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "登録は不要です。サンプルデータ入りのゲストアカウントで使えて、データは毎晩リセットされます。",
   "SiteNav.features": "機能",
+  "SiteNav.docs": "ドキュメント",
   "SiteNav.blog": "ブログ",
   "SiteNav.compare": "比較",
   "SiteNav.pricing": "料金",

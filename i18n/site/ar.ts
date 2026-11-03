@@ -4,6 +4,7 @@ export default {
   "TryEntry.label": "جرّب العرض الحي",
   "TryEntry.line": "لا حاجة إلى إنشاء حساب. تحصل على حساب ضيف فيه بيانات تجريبية، ويُمسح كل ليلة.",
   "SiteNav.features": "الميزات",
+  "SiteNav.docs": "التوثيق",
   "SiteNav.blog": "المدونة",
   "SiteNav.compare": "المقارنة",
   "SiteNav.pricing": "الأسعار",

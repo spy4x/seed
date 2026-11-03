@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "Sem cadastro. Você entra numa conta de visitante com dados de exemplo, e tudo é apagado toda noite.",
   "SiteNav.features": "Recursos",
+  "SiteNav.docs": "Docs",
   "SiteNav.blog": "Blog",
   "SiteNav.compare": "Comparar",
   "SiteNav.pricing": "Preços",
