@@ -13,7 +13,8 @@ const CHUNK = `[&>h2:first-child]:mt-8 [&>h3:first-child]:mt-4`
 /**
  * A post's body: each HTML chunk in `Prose`, each figure that passed its check as its island,
  * between them. The chunks are the API's HTML from the safe Markdown renderer (docs/blog.md). Each
- * code block gets a copy button, which `CodeCopy` wires once for the whole body.
+ * code block gets a copy button, which `CodeCopy` wires once for the whole body; a post without one
+ * loads no script for it.
  */
 export function PostSegments(
   { parts, language, messages }: {
@@ -31,7 +32,7 @@ export function PostSegments(
         const Island = part.figure.default
         return <Island key={part.id} {...islandProps(part, language, messages)} />
       })}
-      <CodeCopy />
+      {parts.some((part) => part.kind === `html` && part.html.includes(`<pre`)) && <CodeCopy />}
     </div>
   )
 }

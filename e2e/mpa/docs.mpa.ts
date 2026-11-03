@@ -95,4 +95,13 @@ test.describe("with JavaScript off", () => {
     expect(await buttons.count()).toBeGreaterThan(0)
     await expect(buttons.filter({ visible: true })).toHaveCount(0)
   })
+
+  test("the API reference names its copy buttons in English at every language's address", async ({ page }) => {
+    await page.goto("/de/docs/api")
+
+    await expect(page.locator("main button[data-prose-copy]").first()).toHaveAttribute(
+      "aria-label",
+      "Copy",
+    )
+  })
 })

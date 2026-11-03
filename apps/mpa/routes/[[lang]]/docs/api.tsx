@@ -1,7 +1,7 @@
 // deno-lint-ignore-file ui-text/no-literal
 // This page is English at every language's address: a translated reference could say something the
 // English does not, so it is not translated (#276). The frame around it is.
-import { Prose } from "@spy4x/preact-ui/prose"
+import { Prose, PROSE_LABELS } from "@spy4x/preact-ui/prose"
 import CodeCopy from "../../../islands/code-copy.tsx"
 import { API_DOCS_HEAD, API_DOCS_PATH, API_DOCS_SOURCE, renderApiDocs } from "../../../api-docs.ts"
 import { LegalPage, REPOSITORY_URL } from "../../../site.tsx"
@@ -38,7 +38,7 @@ export default define.page(function ApiDocs({ state }) {
         </p>
       }
     >
-      <Prose html={html} copyCode />
+      <Prose html={html} copyCode labels={PROSE_LABELS} />
       <CodeCopy />
     </LegalPage>
   )
