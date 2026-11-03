@@ -75,6 +75,18 @@ again, not when two runs race (the post is locked). The send itself is the newsl
 Emailing needs mail subscriptions on and `MPA_DOMAIN` set; otherwise the admin API refuses a list
 with `NEWSLETTER_OFF`, and `GET /api/admin/blog/newsletter` says `enabled: false`.
 
+**A post that goes live while the newsletter is off is never emailed** (#414). That happens to a
+post scheduled with a list before the newsletter was turned off, or to a list the app no longer
+has. The job publishes it and settles it as never emailed: it clears `newsletter_list` and sets
+`newsletter_sent_at`, as for a post file that does not ask for the newsletter. Turning the
+newsletter on later emails only the posts that go live after that, never one that went live while
+it was off. The editor shows no "Emailed" line for such a post.
+
+The publish call's `newsletterList` names the list to email, or `null` for none. Left out, the post
+keeps the list it has, so an API client that publishes a scheduled post now without naming the
+list still sends its email. While the newsletter is off, the publish dialog sends `null` for a
+scheduled post's list and says that the post will not be emailed.
+
 ## On the public website
 
 The website (`apps/mpa`) renders every blog page on its server, with no JavaScript needed:
@@ -113,8 +125,7 @@ opens a new post. The editor saves with Ctrl S (Command S on a Mac). The slug fo
 until it is typed by hand or the post is first published. The Preview tab asks the API to render
 the body (`POST /api/admin/blog/preview`), so it shows exactly what the website will; the admin
 app never renders Markdown itself. A scheduled post keeps its newsletter list when it is
-published now or moved to another time: the editor names the list in every publish call, since
-the API reads a missing list as "no email".
+published now or moved to another time, unless the operator unticks it or the newsletter is off.
 
 A tag that will not show is listed in a Problems panel under the Write and Preview tabs, rechecked
 about a second after typing stops. Each row's "Line N" button selects that line in the body, and

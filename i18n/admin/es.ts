@@ -521,6 +521,8 @@ export default {
   },
   "AdminBlogDialogs.sentOnce":
     "Se envía una sola vez, cuando se publica la entrada. Después no se puede anular el envío.",
+  "AdminBlogDialogs.newsletterOff":
+    "El boletín está desactivado, así que esta entrada no se enviará a la lista <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly":
     "Solo la reciben los suscriptores que se apuntaron en el idioma de la entrada.",
   "AdminBlogEditor.leaveMessage": "Perderás los cambios de esta entrada.",
