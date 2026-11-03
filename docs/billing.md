@@ -243,7 +243,7 @@ answers.
 | `storageBytes` | limit   | 200 MiB | 10 GiB  | The same two: the bytes of those files                        |
 
 Each plan also has `attachments` (`maxFileBytes` 2 MiB, `maxPerNote` 10 on both plans), the rules
-for one file and one note ([files.md](files.md), "Note attachments"). They are not caps a plan
+for one file and one note ([attachments-and-pictures.md](attachments-and-pictures.md#limits)). They are not caps a plan
 sells, so they hold with billing off too.
 
 A limit of `null` means no cap.
