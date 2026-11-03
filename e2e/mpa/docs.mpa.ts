@@ -13,7 +13,7 @@ async function accessibilityViolations(page: Page): Promise<string[]> {
 }
 
 // capacity has the widest table of the guides; /ar/ is the right-to-left frame around English.
-const PAGES = ["/changelog", "/docs", "/docs/capacity", "/ar/docs/capacity"]
+const PAGES = ["/changelog", "/docs", "/docs/get-started", "/docs/capacity", "/ar/docs/capacity"]
 
 for (const path of PAGES) {
   test(`${path} fits a 390 px phone without sideways scrolling or cut-off parts`, async ({ page }) => {
@@ -34,7 +34,7 @@ for (const path of PAGES) {
 }
 
 // The dark theme needs the theme script, so these run with JavaScript, in both colour schemes.
-for (const path of ["/changelog", "/docs/capacity"]) {
+for (const path of ["/changelog", "/docs", "/docs/get-started", "/docs/capacity"]) {
   for (const colorScheme of ["light", "dark"] as const) {
     for (const width of [390, 1440]) {
       test(`${path} has no accessibility violations in the ${colorScheme} theme at ${width} px`, async ({ page }) => {
@@ -48,6 +48,26 @@ for (const path of ["/changelog", "/docs/capacity"]) {
       })
     }
   }
+}
+
+for (const width of [390, 1440]) {
+  test(`a visitor at ${width} px opens Docs from the header and starts with Get started`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto("/features")
+    if (width < 1024) await page.locator("header summary").last().click()
+    const nav = page.getByRole("navigation", { name: "Main navigation" }).filter({ visible: true })
+    await nav.getByRole("link", { name: "Docs", exact: true }).click()
+
+    await expect(page).toHaveURL(/\/docs$/)
+    await page.locator("[data-e2e=docs-first]").getByRole("link", { name: "Get started" }).click()
+    await expect(page).toHaveURL(/\/docs\/get-started$/)
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Get started")
+    if (width < 1024) await page.locator("header summary").last().click()
+    await expect(nav.getByRole("link", { name: "Docs", exact: true })).toHaveAttribute(
+      "aria-current",
+      "true",
+    )
+  })
 }
 
 test("a reader moves from the docs index to a guide, through its sections, to the next guide", async ({ page }) => {
