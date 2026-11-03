@@ -168,7 +168,7 @@ type Theme = "light" | "dark"
 type Form = "desktop" | "mobile"
 
 /** The widths each form is delivered at. */
-const WIDTHS: Record<Form, number[]> = { desktop: [1280, 640], mobile: [780, 390] }
+const WIDTHS: Record<Form, number[]> = { desktop: [1280, 800, 640], mobile: [780, 390] }
 
 /** Hidden caret, no transitions: added by the test browser, never by the site. */
 const STEADY_CSS = `*, *::before, *::after { caret-color: transparent !important;

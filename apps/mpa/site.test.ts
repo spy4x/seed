@@ -109,6 +109,33 @@ async function page(path: string, app = handler): Promise<{ status: number; html
   return { status: response.status, html: await response.text() }
 }
 
+/**
+ * The width in CSS pixels a `sizes` attribute gives an image at `viewport`, for the forms the
+ * website writes: `(min-width: Npx)` conditions, and `Npx`, `100vw` or `calc(100vw - Npx)`.
+ */
+function slotWidth(sizes: string, viewport: number): number {
+  for (const entry of sizes.split(/,(?![^(]*\))/).map((part) => part.trim())) {
+    const media = entry.match(/^\(min-width: (\d+)px\)\s+(.+)$/)
+    if (media && viewport < Number(media[1])) continue
+    const length = media ? media[2] : entry
+    if (/^\d+px$/.test(length)) return parseInt(length)
+    if (length === `100vw`) return viewport
+    const calc = length.match(/^calc\(100vw - (\d+)px\)$/)
+    if (calc) return viewport - Number(calc[1])
+    throw new Error(`unknown length in sizes: ${length}`)
+  }
+  throw new Error(`no entry of "${sizes}" fits ${viewport}px`)
+}
+
+/** The file of `srcset` a browser fetches for `pixels` device pixels: the narrowest that covers them. */
+function chosenFile(srcset: string, pixels: number): string {
+  const files = srcset.split(`,`).map((entry) => {
+    const [url, width] = entry.trim().split(/\s+/)
+    return { url, width: parseInt(width) }
+  }).sort((a, b) => a.width - b.width)
+  return (files.find((file) => file.width >= pixels) ?? files.at(-1)!).url
+}
+
 /** The `<a>` whose text is `text`, or `undefined`: its whole opening tag, to read `href` from. */
 function linkNamed(html: string, text: string): string | undefined {
   return [...html.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)]
@@ -311,6 +338,23 @@ describe("the public website", () => {
     expect(preloads).toHaveLength(1)
     expect(preloads[0]).toContain(`/shots/notes-dark-1280.webp`)
     expect(preloads[0]).toContain(`media="(min-width: 1024px)"`)
+  })
+
+  it("fetches no 1280 px picture on the home page on a phone", async () => {
+    const { html } = await page("/")
+    const pictures = [...html.matchAll(/<(?:img|source)\b[^>]*\bsrcset="[^"]*"[^>]*>/g)]
+      .map(([tag]) => ({
+        srcset: tag.match(/\bsrcset="([^"]*)"/)![1],
+        sizes: tag.match(/\bsizes="([^"]*)"/)?.[1] ?? `100vw`,
+      }))
+    expect(pictures.length).toBeGreaterThan(5)
+    // A 390 px phone at device scale 2, and a 412 px one at 1.75 (Lighthouse) and 2.
+    for (const [viewport, scale] of [[390, 2], [412, 1.75], [412, 2]]) {
+      for (const { srcset, sizes } of pictures) {
+        const file = chosenFile(srcset, slotWidth(sizes, viewport) * scale)
+        expect(file, `${viewport} px at ${scale}: ${sizes}`).not.toMatch(/-1280\.webp(\?|$)/)
+      }
+    }
   })
 
   it("says under the hero's demo how long it is and what it shows", async () => {
