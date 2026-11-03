@@ -33,16 +33,16 @@ A screen that fails is listed at the end and the run exits 1; the others are sti
 - Photographs each screen in light and dark with reduced motion, a hidden caret, no transitions,
   and a clock fixed a few minutes after the data was made, so every time reads "3 minutes ago".
 
-| Screen             | Form               | Delivered widths     |
-| ------------------ | ------------------ | -------------------- |
-| `notes`            | desktop and mobile | 1280, 640 / 780, 390 |
-| `profile-security` | desktop            | 1280, 640            |
-| `group-members`    | desktop            | 1280, 640            |
-| `billing`          | desktop            | 1280, 640            |
-| `billing-plan`     | mobile, plan only  | 780, 390             |
-| `notifications`    | desktop            | 1280, 640            |
-| `activity`         | desktop            | 1280, 640            |
-| `sign-in`          | mobile             | 780, 390             |
+| Screen             | Form               | Delivered widths          |
+| ------------------ | ------------------ | ------------------------- |
+| `notes`            | desktop and mobile | 1280, 800, 640 / 780, 390 |
+| `profile-security` | desktop            | 1280, 800, 640            |
+| `group-members`    | desktop            | 1280, 800, 640            |
+| `billing`          | desktop            | 1280, 800, 640            |
+| `billing-plan`     | mobile, plan only  | 780, 390                  |
+| `notifications`    | desktop            | 1280, 800, 640            |
+| `activity`         | desktop            | 1280, 800, 640            |
+| `sign-in`          | mobile             | 780, 390                  |
 
 Desktop is a 1280×800 viewport at device scale 2, mobile a 390×844 viewport at device scale 3.
 `billing-plan` keeps only the 390×208 part of the phone's billing tab that shows the plan, which is
