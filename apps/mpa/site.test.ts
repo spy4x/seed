@@ -348,7 +348,7 @@ describe("the public website", () => {
         sizes: tag.match(/\bsizes="([^"]*)"/)?.[1] ?? `100vw`,
       }))
     expect(pictures.length).toBeGreaterThan(5)
-    // A 390 px phone at device scale 2 and 3, and Lighthouse's 412 px one at 1.75.
+    // A 390 px phone at device scale 2, and a 412 px one at 1.75 (Lighthouse) and 2.
     for (const [viewport, scale] of [[390, 2], [412, 1.75], [412, 2]]) {
       for (const { srcset, sizes } of pictures) {
         const file = chosenFile(srcset, slotWidth(sizes, viewport) * scale)
