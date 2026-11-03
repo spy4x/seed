@@ -1,9 +1,10 @@
 import type { JSX } from "preact"
 import type { FreshContext } from "fresh"
 import { Head } from "fresh/runtime"
-import type { PublicBlogPost, PublicBlogPostSummary } from "@domain/blog"
+import type { BlogTranslation, PublicBlogPost, PublicBlogPostSummary } from "@domain/blog"
 import { Breadcrumbs } from "@spy4x/preact-ui/breadcrumbs"
 import { Button } from "@spy4x/preact-ui/button"
+import { languageName } from "@spy4x/preact-ui/language-picker"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { OnThisPage } from "@spy4x/preact-ui/on-this-page"
 import { PostList } from "@spy4x/preact-ui/post-list"
@@ -55,8 +56,8 @@ export const POST_NOT_FOUND = postNotFound(siteEnglishText())
  *
  * A post is written in one language and lives at that language's address (`/de/blog/<slug>` for
  * German); another language's address redirects there for good, so a link from before posts had a
- * language still works. Its page names its live translations as language versions (`hreflang`),
- * and nothing when it has none.
+ * language still works. Its page names its live translations as language versions (`hreflang`)
+ * and links them by name under the byline, and names nothing when it has none.
  */
 export const handler = define.handlers({
   async GET(ctx) {
@@ -203,6 +204,13 @@ function PostBody(
               <span>{t.t(`Blog.minutes`, { count: post.readingMinutes })}</span>
               {post.authorName && <span>· {post.authorName}</span>}
             </p>
+            {post.translations.length > 0 && (
+              <p class="text-sm text-muted" data-e2e="blog-post-translations">
+                {rich(`Blog.alsoIn`, {
+                  links: () => <TranslationLinks translations={post.translations} />,
+                })}
+              </p>
+            )}
           </header>
           {post.coverUrl && (
             <img
@@ -236,6 +244,38 @@ function PostBody(
         )}
       </div>
     </div>
+  )
+}
+
+/**
+ * The post's live translations, each named in its own language and linked at its own address, as
+ * a list in the page's language: "Deutsch, Español and Français" (#530).
+ */
+function TranslationLinks(
+  { translations }: { translations: readonly BlogTranslation[] },
+): JSX.Element {
+  const { language } = useSite()
+  const parts = new Intl.ListFormat(language, { type: `conjunction` })
+    .formatToParts(translations.map(({ language }) => languageName(language)))
+  let next = 0
+  return (
+    <>
+      {parts.map((part) => {
+        if (part.type === `literal`) return part.value
+        const version = translations[next++]
+        return (
+          <a
+            key={version.language}
+            href={postAddress(version)}
+            hreflang={version.language}
+            lang={version.language}
+            class="font-medium text-primary underline"
+          >
+            {part.value}
+          </a>
+        )
+      })}
+    </>
   )
 }
 
