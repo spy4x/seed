@@ -10,11 +10,14 @@ Compose joins every service that Traefik routes to a Docker network named `proxy
 `dev` create it when it is missing (`deno task proxy:network` does only that) and leave an existing
 one alone, so a fresh machine needs no extra command.
 
-`deno task init` prepares a fresh clone and is safe to run again: it creates `infra/envs/.env`
-from the example, replaces each placeholder secret (`KV_PASSWORD`, `GRAFANA_PASS`,
-`AUTH_COOKIE_SECRET`, `AUTH_PEPPER`, `SEED_PASSWORD`) with a random one while it still holds the
-placeholder, and creates `infra/configs/vapid.json` when it is missing. `--name <name>` sets
-`PROJECT` and `--yes` takes the folder's name; both apply only when the env file is created.
+`deno task init` prepares a fresh clone and is safe to run again. It first checks that Docker, or
+Podman under `CONTAINER_PROVIDER=podman`, is installed and running, and stops with what to install
+or start when not. Then it creates `infra/envs/.env` from the example, and replaces each placeholder
+secret (`KV_PASSWORD`, `GRAFANA_PASS`, `AUTH_COOKIE_SECRET`, `AUTH_PEPPER`, `SEED_PASSWORD`) with a
+random one while it still holds the placeholder. It creates `infra/configs/vapid.json` when that is
+missing, and records the Seed commit in `.seed/commit` when that is missing
+([products.md](products.md#start-a-product)). `--name <name>` sets `PROJECT` and `--yes` takes the
+folder's name; both apply only when the env file is created.
 `deno task dev` then starts Traefik unless a container named `traefik` already runs, which is left
 alone; under Podman it prints the `proxy:start` hint instead.
 
