@@ -8,7 +8,11 @@ import { useFormat } from "@spy4x/preact-ui/format"
 import { OnThisPage } from "@spy4x/preact-ui/on-this-page"
 import { PostList } from "@spy4x/preact-ui/post-list"
 import { TldrBox } from "@spy4x/preact-ui/tldr-box"
-import { blogPostingJsonLd, breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
+import {
+  blogPostingJsonLd,
+  breadcrumbListJsonLd,
+  type JsonLdPerson,
+} from "@spy4x/platform/universal/seo"
 import {
   BLOG_PATH,
   blogId,
@@ -19,6 +23,7 @@ import {
 } from "../../../blog.ts"
 import { CtaBand } from "../../../components/cta-band.tsx"
 import {
+  AUTHOR_URL,
   NewsletterForm,
   OG_IMAGE_SIZE,
   PERSON_JSON_LD,
@@ -117,7 +122,7 @@ function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost)
       image: post.coverUrl ?? { url: `${origin}/og/home.png`, ...OG_IMAGE_SIZE },
       datePublished: new Date(post.publishedAt),
       dateModified: post.updatedAt === null ? undefined : new Date(post.updatedAt),
-      author: { name: post.authorName ?? SITE_NAME },
+      author: postAuthor(post),
       publisher: { id: PERSON_JSON_LD["@id"] },
       section: post.topic ?? undefined,
       inLanguage: post.language,
@@ -134,6 +139,22 @@ function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost)
       { name: post.title },
     ]),
   ]
+}
+
+/**
+ * The post's author for its structured data: the name and the page it links to. A link on the
+ * site author's own domain ({@link AUTHOR_URL}) is that person, so the author also carries their
+ * `@id`, the one {@link PERSON_JSON_LD} and the site author's own site give them.
+ */
+export function postAuthor(
+  post: Pick<PublicBlogPost, `authorName` | `authorUrl`>,
+): JsonLdPerson {
+  const name = post.authorName ?? SITE_NAME
+  if (post.authorUrl === null) return { name }
+  const own = new URL(post.authorUrl).origin === new URL(AUTHOR_URL).origin
+  return own
+    ? { id: PERSON_JSON_LD[`@id`], name, url: post.authorUrl }
+    : { name, url: post.authorUrl }
 }
 
 /**
@@ -201,7 +222,23 @@ function PostBody(
                 </span>
               )}
               <span>{t.t(`Blog.minutes`, { count: post.readingMinutes })}</span>
-              {post.authorName && <span>· {post.authorName}</span>}
+              {post.authorName && (
+                <span>
+                  ·{` `}
+                  {post.authorUrl
+                    ? (
+                      <a
+                        href={post.authorUrl}
+                        rel="author"
+                        class="rounded-sm underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                        data-e2e="blog-post-author"
+                      >
+                        {post.authorName}
+                      </a>
+                    )
+                    : post.authorName}
+                </span>
+              )}
             </p>
           </header>
           {post.coverUrl && (

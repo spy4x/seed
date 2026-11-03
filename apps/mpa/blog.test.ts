@@ -60,6 +60,7 @@ const FULL: PublicBlogPost = {
   segments: [{ kind: `html`, html: FULL_HTML }],
   headings: [{ id: `why`, text: `Why`, depth: 2 }],
   authorName: `Ada Lovelace`,
+  authorUrl: null,
   translations: [],
 }
 
@@ -85,6 +86,7 @@ const GERMAN_FULL: PublicBlogPost = {
   segments: [{ kind: `html`, html: `<p>Hallo.</p>` }],
   headings: [],
   authorName: null,
+  authorUrl: null,
   translations: [],
 }
 
@@ -407,6 +409,43 @@ describe("a blog post", () => {
         { position: 3, name: FULL.title },
       ],
     })
+  })
+
+  it("links the author's name to their page with rel=author, and shows it plain without one (#730)", async () => {
+    const linked = { ...FULL, authorUrl: `https://ada.example.org/about` }
+    const { body } = await (await blogSite(answers(linked))).get("/blog/cron-jobs")
+    expect(linkNamed(body, `Ada Lovelace`)).toMatch(
+      /^<a href="https:\/\/ada\.example\.org\/about" rel="author" class="[^"]*focus-visible:ring-2/,
+    )
+    expect(textOf(body)).toContain(`4 min read · Ada Lovelace`)
+
+    const plain = await (await blogSite(answers(FULL))).get("/blog/cron-jobs")
+    expect(linkNamed(plain.body, `Ada Lovelace`)).toBeUndefined()
+    expect(plain.body).not.toContain(`rel="author"`)
+    expect(textOf(plain.body)).toContain(`4 min read · Ada Lovelace`)
+  })
+
+  it("gives the structured data's author the link, and the site author's @id on their own domain (#730)", async () => {
+    const author = async (authorUrl: string | null) => {
+      const { body } = await (await blogSite(answers({ ...FULL, authorUrl }))).get(
+        "/blog/cron-jobs",
+      )
+      return jsonLdGraph(body)[0].author
+    }
+    expect(await author(`https://antonshubin.com/about`)).toEqual({
+      "@type": `Person`,
+      "@id": `https://antonshubin.com/#person`,
+      name: `Ada Lovelace`,
+      url: `https://antonshubin.com/about`,
+    })
+    expect(await author(`https://ada.example.org/about`)).toEqual({
+      "@type": `Person`,
+      name: `Ada Lovelace`,
+      url: `https://ada.example.org/about`,
+    })
+    // A look-alike host is another site, not the site author's.
+    expect(await author(`https://antonshubin.com.example.org/about`)).not.toHaveProperty(`@id`)
+    expect(await author(null)).toEqual({ "@type": `Person`, name: `Ada Lovelace` })
   })
 
   it("shares the site's own image when the post has no cover", async () => {

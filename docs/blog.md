@@ -102,11 +102,14 @@ answers 404 "This post is not here". With no live post, `/blog` says so and keep
 results, and the Blog link, the RSS link, the sitemap entries and the `llms.txt` section stay
 hidden; the website asks the API at most once a minute whether a post is live
 (`blogLinkMiddleware`). Each post page carries `BlogPosting` and `BreadcrumbList` JSON-LD and
-`og:type` `article`. Its `inLanguage` is the post's language, and the page names its live
-translations as `hreflang` alternates; a post with none names no alternate. The blog index of a
-language names the indexes of the other languages that have a live post. The Blog link shows on a
-language's pages only while that language has one, and the sitemap lists each language's index
-and each post once, at its own address.
+`og:type` `article`. A post with an author link (`author_url`, the editor's "Author link") shows
+the author's name as a link to it with `rel="author"`, and its `BlogPosting` author carries the
+link as `url`; a link on the site author's own domain (`AUTHOR_URL`) adds the `@id` of
+`PERSON_JSON_LD`, so the post and the author's own site name one person. Its `inLanguage` is the
+post's language, and the page names its live translations as `hreflang` alternates; a post with
+none names no alternate. The blog index of a language names the indexes of the other languages
+that have a live post. The Blog link shows on a language's pages only while that language has one,
+and the sitemap lists each language's index and each post once, at its own address.
 
 The Lighthouse run (`deno task lighthouse`) measures `/blog` and Seed's post
 `welcome-to-the-seed-blog`. It needs no database: `apps/mpa/lighthouse/blog-api.ts` answers the
