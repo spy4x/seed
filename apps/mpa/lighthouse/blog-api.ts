@@ -61,6 +61,7 @@ const blog = createPublicBlogRoute({
         : null,
     )
   },
+  moved: () => Promise.resolve(null),
   topics: () => Promise.resolve([]),
   feed: () => Promise.resolve(posts),
 })
