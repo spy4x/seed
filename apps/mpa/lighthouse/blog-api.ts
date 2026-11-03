@@ -29,8 +29,10 @@ const posts: PublicBlogPost[] = published
       readingMinutes: body.readingMinutes,
       seoTitle: fields.seoTitle,
       tldr: fields.tldr,
-      coverUrl: fields.coverUrl,
+      coverUrl: null,
+      coverFile: seed.coverFile,
       coverAlt: fields.coverAlt,
+      relatedFeature: fields.relatedFeature,
       segments: body.segments,
       headings: body.headings,
       authorName: seed.author,
@@ -44,9 +46,30 @@ const posts: PublicBlogPost[] = published
     }
   })
 const summary = (
-  { slug, language, title, description, topic, publishedAt, updatedAt, readingMinutes }:
-    PublicBlogPost,
-) => ({ slug, language, title, description, topic, publishedAt, updatedAt, readingMinutes })
+  {
+    slug,
+    language,
+    title,
+    description,
+    topic,
+    publishedAt,
+    updatedAt,
+    readingMinutes,
+    coverUrl,
+    coverFile,
+  }: PublicBlogPost,
+) => ({
+  slug,
+  language,
+  title,
+  description,
+  topic,
+  publishedAt,
+  updatedAt,
+  readingMinutes,
+  coverUrl,
+  coverFile,
+})
 
 const blog = createPublicBlogRoute({
   list: (topic) =>

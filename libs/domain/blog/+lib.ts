@@ -40,6 +40,10 @@ export const BLOG_TLDR_MAX = 5
 export const BLOG_TLDR_ITEM_MAX_LENGTH = 200
 /** The longest topic name. */
 export const BLOG_TOPIC_MAX_LENGTH = 50
+/** The longest intro, the sentences that open a post's newsletter issue and cross-post. */
+export const BLOG_INTRO_MAX_LENGTH = 600
+/** The longest related feature: the slug of a feature page, `/features/<slug>`. */
+export const BLOG_RELATED_FEATURE_MAX_LENGTH = 100
 /** The longest cover image address. */
 export const BLOG_COVER_URL_MAX_LENGTH = 2000
 /** The longest cover description. */
@@ -94,8 +98,17 @@ export interface BlogPost {
   topic: string | null
   /** An `https:` address, or `null` for no cover. */
   coverUrl: string | null
-  /** Set whenever `coverUrl` is. */
+  /** Set whenever `coverUrl` or `coverFile` is. */
   coverAlt: string | null
+  /**
+   * A cover kept as a file beside Seed's own posts (`seed-posts/covers/<name>.webp`), which the
+   * website serves. Only the post files set it; the admin app reads it and never writes it.
+   */
+  coverFile: string | null
+  /** Two or three sentences that open the newsletter issue and the cross-post; not on the page. */
+  intro: string | null
+  /** The slug of the website's feature page the post is about, linked under the byline. */
+  relatedFeature: string | null
   bodyMd: string
   /** The language the post is written in; the website lists it on that language's index. */
   language: Language
@@ -123,6 +136,10 @@ export interface BlogPost {
   newsletterSentAt: string | null
   /** How many confirmed subscribers the list had when the issue was queued. */
   newsletterRecipients: number | null
+  /** When the Dev.to cross-post was settled, once ever: made, or skipped. */
+  crosspostedAt: string | null
+  /** The Dev.to article's address, when the cross-post was made. */
+  devtoUrl: string | null
   createdAt: string
   updatedAt: string
   /** Starts at 1 and grows by one with every change; every write must name it. */
@@ -219,14 +236,19 @@ export interface PublicBlogPostSummary {
   /** The last significant update, or `null`. */
   updatedAt: string | null
   readingMinutes: number
+  /** An `https:` cover, or `null`. */
+  coverUrl: string | null
+  /** A cover file the website serves itself (`BlogPost.coverFile`), or `null`. */
+  coverFile: string | null
 }
 
 /** One published post, as the public website renders it. No id, author account or address. */
 export interface PublicBlogPost extends PublicBlogPostSummary {
   seoTitle: string | null
   tldr: string[]
-  coverUrl: string | null
   coverAlt: string | null
+  /** The slug of the feature page the post is about, or `null`. */
+  relatedFeature: string | null
   /** The body: HTML chunks with the component tags between them, unchecked. */
   segments: BlogSegment[]
   headings: BlogHeading[]
@@ -249,7 +271,7 @@ export interface BlogTranslation {
 /** One item of the RSS feed: the summary, the cover and the full body. */
 export type PublicBlogFeedItem =
   & PublicBlogPostSummary
-  & Pick<PublicBlogPost, `segments` | `headings` | `authorName` | `coverUrl`>
+  & Pick<PublicBlogPost, `segments` | `headings` | `authorName`>
 
 /** The answer of `POST /api/admin/blog/preview`: the body with a marker at each parse problem. */
 export interface BlogPreviewBody extends Omit<RenderedBlogBody, `segments`> {
@@ -319,6 +341,8 @@ const postFields = {
   "coverUrl?": `string | null`,
   "coverAlt?": `string | null`,
   "authorUrl?": `string | null`,
+  "intro?": `string | null`,
+  "relatedFeature?": `string | null`,
   bodyMd: `string`,
   /** One of the languages the apps ship; left out, the product's main language. */
   "language?": type.enumerated(...LANGUAGES),
@@ -381,6 +405,8 @@ export type BlogField =
   | `coverUrl`
   | `coverAlt`
   | `authorUrl`
+  | `intro`
+  | `relatedFeature`
   | `bodyMd`
   | `language`
   | `translationOf`
@@ -396,6 +422,8 @@ export interface BlogPostFields {
   coverUrl: string | null
   coverAlt: string | null
   authorUrl: string | null
+  intro: string | null
+  relatedFeature: string | null
   bodyMd: string
   language: Language
   translationOf: string | null
@@ -440,8 +468,8 @@ export function isHttpsUrl(url: string): boolean {
 /**
  * Trims and checks a post's fields. Throws {@link BlogError} with the field it is about: a
  * missing title or description, a slug that is no slug, more than {@link BLOG_TLDR_MAX} key
- * points, a cover or author link that is not `https:`, a cover with no description, a text past
- * its column, or a NUL or broken character anywhere.
+ * points, a cover or author link that is not `https:`, a cover with no description, a related
+ * feature that is no slug, a text past its column, or a NUL or broken character anywhere.
  */
 export function parseBlogPostFields(
   input: Pick<BlogPostCreateRequest, Exclude<keyof BlogPostCreateRequest, `id`>>,
@@ -460,6 +488,8 @@ export function parseBlogPostFields(
     coverUrl: optional(input.coverUrl),
     coverAlt: optional(input.coverAlt),
     authorUrl: optional(input.authorUrl),
+    intro: optional(input.intro),
+    relatedFeature: optional(input.relatedFeature),
     bodyMd: input.bodyMd,
     language: isLanguage(input.language) ? input.language : DEFAULT_LANGUAGE,
     translationOf: input.translationOf ?? null,
@@ -473,6 +503,8 @@ export function parseBlogPostFields(
     [`coverUrl`, fields.coverUrl],
     [`coverAlt`, fields.coverAlt],
     [`authorUrl`, fields.authorUrl],
+    [`intro`, fields.intro],
+    [`relatedFeature`, fields.relatedFeature],
     [`bodyMd`, fields.bodyMd],
     ...fields.tldr.map((point): [BlogField, string] => [`tldr`, point]),
   ]
@@ -574,6 +606,24 @@ export function parseBlogPostFields(
       )
     }
   }
+  if (fields.intro !== null && characters(fields.intro) > BLOG_INTRO_MAX_LENGTH) {
+    fail(
+      `intro`,
+      `Keep the intro to ${BLOG_INTRO_MAX_LENGTH} characters.`,
+      tooLong(BLOG_INTRO_MAX_LENGTH),
+    )
+  }
+  if (
+    fields.relatedFeature !== null &&
+    (characters(fields.relatedFeature) > BLOG_RELATED_FEATURE_MAX_LENGTH ||
+      !BLOG_SLUG_PATTERN.test(fields.relatedFeature))
+  ) {
+    fail(
+      `relatedFeature`,
+      `Enter a feature page's address, such as "realtime" for /features/realtime.`,
+      { code: `slug` },
+    )
+  }
   if (characters(fields.bodyMd) > BLOG_BODY_MAX_LENGTH) {
     fail(
       `bodyMd`,
@@ -655,6 +705,9 @@ export type BlogAuditKind = typeof BLOG_AUDIT_KINDS[keyof typeof BLOG_AUDIT_KIND
 
 /** The job that publishes a scheduled post at its time and queues its newsletter issue. */
 export const BLOG_PUBLISH_JOB = `blog.publish`
+
+/** The job that cross-posts a live post to Dev.to once ever, after its live check. */
+export const BLOG_CROSSPOST_JOB = `blog.crosspost`
 
 /** The job that tells IndexNow a post's addresses changed: it went live, changed, moved or left. */
 export const BLOG_INDEXNOW_JOB = `blog.indexnow`

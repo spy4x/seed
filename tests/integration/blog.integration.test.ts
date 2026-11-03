@@ -106,6 +106,8 @@ function fields(slug: string, extra: Partial<BlogPostFields> = {}): BlogPostFiel
     coverUrl: null,
     coverAlt: null,
     authorUrl: null,
+    intro: null,
+    relatedFeature: null,
     bodyMd: `Hello <b>there</b>.`,
     language: `en`,
     translationOf: null,
@@ -188,6 +190,8 @@ function seedPost(slug: string, extra: Partial<SeedPost> = {}): SeedPost {
     author: `Anton Shubin`,
     publishAt: new Date(Date.now() - DAY_MS),
     newsletter: false,
+    devto: false,
+    coverFile: null,
     ...extra,
   }
 }

@@ -7,6 +7,7 @@ import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import {
   BLOG_AUTHOR_NAME_MAX_LENGTH,
+  BLOG_COVER_ALT_MAX_LENGTH,
   BlogError,
   type BlogPostFields,
   type BlogPostStatus,
@@ -32,6 +33,16 @@ export const SEED_POSTS_DIR = fromFileUrl(new URL(`./seed-posts/`, import.meta.u
 /** A file in {@link SEED_POSTS_DIR} that is not a post. */
 const NOT_A_POST = `README.md`
 
+/** The folder of the posts' covers, inside {@link SEED_POSTS_DIR}: `<name>.webp` and `<name>-640.webp`. */
+export const SEED_COVERS_DIR = join(SEED_POSTS_DIR, `covers`)
+
+/** A post file's `cover`: a WebP file in `covers/`, named as a slug. */
+const COVER_PATTERN = /^covers\/([a-z0-9]+(?:-[a-z0-9]+)*\.webp)$/
+
+/** How many "In short" points a Seed post has: two to four (#733). */
+export const SEED_TLDR_MIN = 2
+export const SEED_TLDR_MAX = 4
+
 /** One post file, checked. */
 export interface SeedPost {
   /** The file's name, for error messages. */
@@ -45,6 +56,13 @@ export interface SeedPost {
   publishAt: Date
   /** Whether the post is emailed to subscribers when it goes live. */
   newsletter: boolean
+  /** Whether the post is cross-posted to Dev.to when it goes live; never for a translation. */
+  devto: boolean
+  /**
+   * The cover's file name in {@link SEED_COVERS_DIR}: the post's own `cover`, or for a translation
+   * its original's, once {@link readSeedPosts} has read them all.
+   */
+  coverFile: string | null
 }
 
 /** A post file that cannot be loaded. Names the file and what is wrong. */
@@ -65,19 +83,26 @@ const frontMatterSchema = type({
   description: `string`,
   "tldr?": `string[] | null`,
   "topic?": `string | null`,
-  "coverUrl?": `string | null`,
-  "coverAlt?": `string | null`,
+  "cover?": `string`,
+  coverAlt: `string`,
+  intro: `string`,
+  "relatedFeature?": `string | null`,
   author: `string`,
   "authorUrl?": `string | null`,
   // YAML reads an unquoted timestamp as a date, a quoted one as text.
   publishAt: type(`Date`).or(`string.date.iso.parse`),
   "newsletter?": `boolean`,
+  "devto?": `boolean`,
   "+": `reject`,
 })
 
 /**
  * Parses one post file named `file`. Throws {@link SeedPostError} for missing or unknown front
- * matter, a field the blog's own checks refuse, a name other than `<slug>.md`, or an empty body.
+ * matter, a field the blog's own checks refuse, a name other than `<slug>.md`, an empty body, a
+ * `cover` that is no WebP file in `covers/`, or fewer than {@link SEED_TLDR_MIN} or more than
+ * {@link SEED_TLDR_MAX} "In short" points. A cover, its description and an intro are required
+ * of Seed's own posts, unlike the admin app's (#733); a translation names no cover, it shares its
+ * original's.
  */
 export function parseSeedPost(file: string, text: string): SeedPost {
   let attrs: unknown
@@ -89,6 +114,27 @@ export function parseSeedPost(file: string, text: string): SeedPost {
   }
   const front = frontMatterSchema(attrs)
   if (front instanceof type.errors) throw new SeedPostError(file, front.summary)
+  const translationOf = front.translationOf?.trim() || null
+  let coverFile: string | null = null
+  if (front.cover !== undefined) {
+    const match = COVER_PATTERN.exec(front.cover)
+    if (!match) {
+      throw new SeedPostError(file, `cover: a WebP file in covers/, such as covers/<slug>.webp`)
+    }
+    coverFile = match[1]
+  }
+  if (translationOf === null && coverFile === null) {
+    throw new SeedPostError(file, `cover: every post has one, such as covers/<slug>.webp`)
+  }
+  if (translationOf !== null && coverFile !== null) {
+    throw new SeedPostError(file, `cover: a translation shares its original's; remove it`)
+  }
+  const tldr = front.tldr ?? []
+  if (tldr.length < SEED_TLDR_MIN || tldr.length > SEED_TLDR_MAX) {
+    throw new SeedPostError(file, `tldr: ${SEED_TLDR_MIN} to ${SEED_TLDR_MAX} points`)
+  }
+  if (front.intro.trim() === ``) throw new SeedPostError(file, `intro: two or three sentences`)
+  if (front.coverAlt.trim() === ``) throw new SeedPostError(file, `coverAlt: what the cover shows`)
   let fields: BlogPostFields
   try {
     fields = parseBlogPostFields({
@@ -97,11 +143,15 @@ export function parseSeedPost(file: string, text: string): SeedPost {
       title: front.title,
       seoTitle: front.seoTitle,
       description: front.description,
-      tldr: front.tldr ?? [],
+      tldr,
       topic: front.topic,
-      coverUrl: front.coverUrl,
-      coverAlt: front.coverAlt,
+      coverUrl: null,
+      // `parseBlogPostFields` keeps a description only with a cover address; the file's own
+      // cover is checked above.
+      coverAlt: null,
       authorUrl: front.authorUrl,
+      intro: front.intro,
+      relatedFeature: front.relatedFeature,
       bodyMd: body.trim() + `\n`,
       translationOf: null,
     })
@@ -120,13 +170,21 @@ export function parseSeedPost(file: string, text: string): SeedPost {
   ) {
     throw new SeedPostError(file, `author: 1 to ${BLOG_AUTHOR_NAME_MAX_LENGTH} characters`)
   }
+  const coverAlt = front.coverAlt.trim()
+  if (
+    Array.from(coverAlt).length > BLOG_COVER_ALT_MAX_LENGTH || hasUnstorableTextCharacters(coverAlt)
+  ) {
+    throw new SeedPostError(file, `coverAlt: up to ${BLOG_COVER_ALT_MAX_LENGTH} characters`)
+  }
   return {
     file,
-    fields,
-    translationOf: front.translationOf?.trim() || null,
+    fields: { ...fields, coverAlt },
+    translationOf,
     author,
     publishAt: front.publishAt,
     newsletter: front.newsletter ?? false,
+    devto: (front.devto ?? false) && translationOf === null,
+    coverFile,
   }
 }
 
@@ -179,7 +237,10 @@ export async function readSeedPosts(
     posts.push(parseSeedPost(name, text))
   }
   checkSeedPosts(posts)
-  return posts
+  const covers = new Map(posts.map((post) => [post.fields.slug, post.coverFile]))
+  return posts.map((post) =>
+    post.translationOf === null ? post : { ...post, coverFile: covers.get(post.translationOf)! }
+  )
 }
 
 /** The columns a load writes, as it compares them. */
@@ -192,6 +253,9 @@ interface StoredPost {
   topic: string | null
   coverUrl: string | null
   coverAlt: string | null
+  coverFile: string | null
+  intro: string | null
+  relatedFeature: string | null
   authorUrl: string | null
   bodyMd: string
   language: string
@@ -202,6 +266,7 @@ interface StoredPost {
   authorName: string
   newsletterList: string | null
   newsletterSentAt: Date | null
+  crosspostedAt: Date | null
 }
 
 /** Whether `row` holds every value of `wanted`, dates compared by their time. */
@@ -243,8 +308,9 @@ export async function upsertSeedPosts(
     for (const post of ordered) {
       const [existing] = await tx<(StoredPost & { id: string })[]>`
         SELECT id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt,
-          author_url, body_md, language, translation_of, status, publish_at, published_at,
-          author_name, newsletter_list, newsletter_sent_at
+          cover_file, intro, related_feature, author_url, body_md, language, translation_of,
+          status, publish_at, published_at, author_name, newsletter_list, newsletter_sent_at,
+          crossposted_at
         FROM blog_posts WHERE slug = ${post.fields.slug}
         FOR UPDATE
       `
@@ -266,6 +332,9 @@ export async function upsertSeedPosts(
         topic: post.fields.topic,
         coverUrl: post.fields.coverUrl,
         coverAlt: post.fields.coverAlt,
+        coverFile: post.coverFile,
+        intro: post.fields.intro,
+        relatedFeature: post.fields.relatedFeature,
         authorUrl: post.fields.authorUrl,
         bodyMd: post.fields.bodyMd,
         language: post.fields.language,
@@ -280,6 +349,8 @@ export async function upsertSeedPosts(
           ? DEFAULT_SUBSCRIBER_LIST
           : null,
         newsletterSentAt: mailed ?? (post.newsletter ? null : now),
+        // As the newsletter: settled at once unless the file asks for the cross-post.
+        crosspostedAt: existing?.crosspostedAt ?? (post.devto ? null : now),
       }
       if (existing && same(existing, wanted)) continue
       const w = wanted
@@ -289,12 +360,13 @@ export async function upsertSeedPosts(
           UPDATE blog_posts SET
             title = ${w.title}, seo_title = ${w.seoTitle}, description = ${w.description},
             tldr = ${tx.array(w.tldr)}::text[], topic = ${w.topic}, cover_url = ${w.coverUrl},
-            cover_alt = ${w.coverAlt}, author_url = ${w.authorUrl}, body_md = ${w.bodyMd},
-            language = ${w.language},
+            cover_alt = ${w.coverAlt}, cover_file = ${w.coverFile}, intro = ${w.intro},
+            related_feature = ${w.relatedFeature}, author_url = ${w.authorUrl},
+            body_md = ${w.bodyMd}, language = ${w.language},
             translation_of = ${w.translationOf}, status = ${w.status}, publish_at = ${w.publishAt},
             published_at = ${w.publishedAt}, author_name = ${w.authorName},
             newsletter_list = ${w.newsletterList}, newsletter_sent_at = ${w.newsletterSentAt},
-            updated_at = ${now}, version = version + 1
+            crossposted_at = ${w.crosspostedAt}, updated_at = ${now}, version = version + 1
           WHERE id = ${id}
         `
       } else {
@@ -302,14 +374,16 @@ export async function upsertSeedPosts(
         const writtenAt = live ? post.publishAt : now
         await tx`
           INSERT INTO blog_posts (
-            id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt, author_url,
-            body_md, language, translation_of, status, publish_at, published_at, author_id,
-            author_name, newsletter_list, newsletter_sent_at, created_at, updated_at
+            id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt, cover_file,
+            intro, related_feature, author_url, body_md, language, translation_of, status,
+            publish_at, published_at, author_id, author_name, newsletter_list, newsletter_sent_at,
+            crossposted_at, created_at, updated_at
           ) VALUES (
             ${id}, ${w.slug}, ${w.title}, ${w.seoTitle}, ${w.description},
-            ${tx.array(w.tldr)}::text[], ${w.topic}, ${w.coverUrl}, ${w.coverAlt}, ${w.authorUrl},
-            ${w.bodyMd}, ${w.language}, ${w.translationOf}, ${w.status}, ${w.publishAt},
-            ${w.publishedAt}, NULL, ${w.authorName}, ${w.newsletterList}, ${w.newsletterSentAt},
+            ${tx.array(w.tldr)}::text[], ${w.topic}, ${w.coverUrl}, ${w.coverAlt}, ${w.coverFile},
+            ${w.intro}, ${w.relatedFeature}, ${w.authorUrl}, ${w.bodyMd}, ${w.language},
+            ${w.translationOf}, ${w.status}, ${w.publishAt}, ${w.publishedAt}, NULL,
+            ${w.authorName}, ${w.newsletterList}, ${w.newsletterSentAt}, ${w.crosspostedAt},
             ${writtenAt}, ${writtenAt}
           )
         `

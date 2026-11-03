@@ -36,6 +36,8 @@ const NEWER: PublicBlogPostSummary = {
   publishedAt: `2026-10-20T09:00:00.000Z`,
   updatedAt: `2026-10-22T09:00:00.000Z`,
   readingMinutes: 4,
+  coverUrl: null,
+  coverFile: null,
 }
 const OLDER: PublicBlogPostSummary = {
   slug: `hello-world`,
@@ -46,6 +48,8 @@ const OLDER: PublicBlogPostSummary = {
   publishedAt: `2026-10-02T09:00:00.000Z`,
   updatedAt: null,
   readingMinutes: 6,
+  coverUrl: null,
+  coverFile: null,
 }
 
 const FULL_HTML = `<p>The worker <strong>wakes</strong> every second.</p>`
@@ -57,6 +61,7 @@ const FULL: PublicBlogPost = {
   tldr: [`One table holds every job.`, `A failed job is tried again.`],
   coverUrl: `https://images.example.com/cron.png`,
   coverAlt: `A clock over a server rack`,
+  relatedFeature: null,
   segments: [{ kind: `html`, html: FULL_HTML }],
   headings: [{ id: `why`, text: `Why`, depth: 2 }],
   authorName: `Ada Lovelace`,
@@ -74,6 +79,8 @@ const GERMAN: PublicBlogPostSummary = {
   publishedAt: `2026-10-03T09:00:00.000Z`,
   updatedAt: null,
   readingMinutes: 2,
+  coverUrl: null,
+  coverFile: null,
 }
 
 /** {@link GERMAN} as the API answers it in full. */
@@ -83,6 +90,7 @@ const GERMAN_FULL: PublicBlogPost = {
   tldr: [],
   coverUrl: null,
   coverAlt: null,
+  relatedFeature: null,
   segments: [{ kind: `html`, html: `<p>Hallo.</p>` }],
   headings: [],
   authorName: null,
@@ -96,6 +104,7 @@ const LONG: PublicBlogPost = {
   updatedAt: null,
   coverUrl: null,
   coverAlt: null,
+  relatedFeature: null,
   authorName: null,
   readingMinutes: 9,
   headings: [

@@ -39,6 +39,9 @@ export interface BlogPostRow {
   topic: string | null
   coverUrl: string | null
   coverAlt: string | null
+  coverFile: string | null
+  intro: string | null
+  relatedFeature: string | null
   bodyMd: string
   language: Language
   translationOf: string | null
@@ -52,6 +55,8 @@ export interface BlogPostRow {
   newsletterList: string | null
   newsletterSentAt: Date | null
   newsletterRecipients: number | null
+  crosspostedAt: Date | null
+  devtoUrl: string | null
   createdAt: Date
   updatedAt: Date
   version: number
@@ -67,6 +72,7 @@ export function toBlogPost(row: BlogPostRow): BlogPost {
     publishedAt: iso(row.publishedAt),
     contentUpdatedAt: iso(row.contentUpdatedAt),
     newsletterSentAt: iso(row.newsletterSentAt),
+    crosspostedAt: iso(row.crosspostedAt),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
@@ -216,14 +222,14 @@ export class PostgresBlogRepository {
       const [row] = await tx<BlogPostRow[]>`
         INSERT INTO blog_posts (
           id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt, body_md,
-          language, translation_of, author_id, author_name, author_url
+          language, translation_of, author_id, author_name, author_url, intro, related_feature
         ) VALUES (
           ${id}, ${fields.slug}, ${fields.title}, ${fields.seoTitle}, ${fields.description},
           ${tx.array(fields.tldr)}::text[], ${fields.topic}, ${fields.coverUrl}, ${fields.coverAlt},
           ${fields.bodyMd}, ${fields.language}, ${fields.translationOf}, ${actor.userId},
           (SELECT NULLIF(btrim(concat_ws(' ', first_name, last_name)), '')
             FROM users WHERE id = ${actor.userId}),
-          ${fields.authorUrl}
+          ${fields.authorUrl}, ${fields.intro}, ${fields.relatedFeature}
         )
         ON CONFLICT (id) DO NOTHING
         RETURNING *
@@ -275,7 +281,8 @@ export class PostgresBlogRepository {
         SET slug = ${fields.slug}, title = ${fields.title}, seo_title = ${fields.seoTitle},
           description = ${fields.description}, tldr = ${tx.array(fields.tldr)}::text[],
           topic = ${fields.topic}, cover_url = ${fields.coverUrl}, cover_alt = ${fields.coverAlt},
-          author_url = ${fields.authorUrl}, body_md = ${fields.bodyMd}, language = ${fields.language},
+          author_url = ${fields.authorUrl}, intro = ${fields.intro},
+          related_feature = ${fields.relatedFeature}, body_md = ${fields.bodyMd}, language = ${fields.language},
           translation_of = ${fields.translationOf},
           content_updated_at = CASE WHEN ${significantUpdate} AND status = 'published'
             THEN now() ELSE content_updated_at END,

@@ -221,6 +221,9 @@ const saved: BlogPost = {
   topic: "Infra",
   coverUrl: null,
   coverAlt: null,
+  coverFile: null,
+  intro: null,
+  relatedFeature: null,
   bodyMd: "## Why\n\nIt is fast.",
   language: "en",
   translationOf: null,
@@ -234,6 +237,8 @@ const saved: BlogPost = {
   newsletterList: null,
   newsletterSentAt: null,
   newsletterRecipients: null,
+  crosspostedAt: null,
+  devtoUrl: null,
   createdAt: "2026-10-20T10:00:00.000Z",
   updatedAt: "2026-10-20T10:00:00.000Z",
   version: 3,
@@ -632,6 +637,8 @@ describe("the blog editor", () => {
       newsletterList: "news",
       newsletterSentAt: "2026-10-01T09:00:05.000Z",
       newsletterRecipients: 312,
+      crosspostedAt: null,
+      devtoUrl: null,
     }
     await mount(<AdminBlogEditorScreen {...editorProps([], { post: sent })} />)
     expect(find("[data-e2e=admin-blog-emailed]").textContent).toContain("Emailed to 312 on")
@@ -918,6 +925,9 @@ describe("the editor's rules", () => {
       slug: "Use lowercase letters, digits and hyphens only.",
       coverUrl: "Start the link with https://.",
       coverAlt: "Describe the cover image.",
+      coverFile: null,
+      intro: null,
+      relatedFeature: null,
       authorUrl: "Start the link with https://.",
     })
     const ok = { ...emptyBlogDraft(), title: "T", slug: "t", description: "D" }

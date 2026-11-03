@@ -31,6 +31,9 @@ const post: BlogPost = {
   topic: null,
   coverUrl: null,
   coverAlt: null,
+  coverFile: null,
+  intro: null,
+  relatedFeature: null,
   bodyMd: `Hi`,
   language: `en`,
   translationOf: null,
@@ -44,6 +47,8 @@ const post: BlogPost = {
   newsletterList: null,
   newsletterSentAt: null,
   newsletterRecipients: null,
+  crosspostedAt: null,
+  devtoUrl: null,
   createdAt: NOW.toISOString(),
   updatedAt: NOW.toISOString(),
   version: 1,
@@ -198,6 +203,9 @@ describe(`operator area: blog routes`, () => {
       topic: null,
       coverUrl: null,
       coverAlt: null,
+      coverFile: null,
+      intro: null,
+      relatedFeature: null,
       authorUrl: null,
       language: `en`,
       translationOf: null,
@@ -238,6 +246,9 @@ describe(`operator area: blog routes`, () => {
       version: 1,
       coverUrl: `http://images.example.com/a.png`,
       coverAlt: `A chart`,
+      coverFile: null,
+      intro: null,
+      relatedFeature: null,
     })
 
     expect(response.status).toBe(400)
