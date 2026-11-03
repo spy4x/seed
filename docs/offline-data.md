@@ -107,9 +107,14 @@ The copy answers when there is no answer at all: no network, a failed connection
 It also answers for a 5xx, 404 or 429 without a `reason` in its body. The proxy in front of the API
 answers those for a few seconds during a deploy.
 
-Every API error carries a `reason` ([api-errors.md](api-errors.md)). So a 404 with a reason means
-the thing is gone, and deletes the copy. A 404 without one is the proxy, and the copy stays. A 5xx
-with a reason shows the error and keeps the copy. A 401 or 403 is a refusal either way.
+The API's feature routes put a `reason` in every error ([api-errors.md](api-errors.md)):
+
+| Answer               | What the screen does                    |
+| -------------------- | --------------------------------------- |
+| 404 with a reason    | The thing is gone: the copy is deleted. |
+| 404 without a reason | The proxy: the copy answers and stays.  |
+| 5xx with a reason    | The error shows, and the copy stays.    |
+| 401 or 403           | A refusal: the copy is deleted.         |
 
 The rule is `isForeignAnswer` in `@spy4x/realtime`. The rate limiter's 429 and the auth routes'
 errors carry no reason, so with a saved copy, those show the copy too.

@@ -46,8 +46,10 @@ hold:
 
 The checkout claims the trial in one conditional update of the owner's row (`users.trial_group_id`).
 Two checkouts of two groups opened at once never both get it. A second checkout of the same group
-still gets it. The server decides; the client cannot ask for a trial. Only the owner checks out, so
-joining someone else's group never uses a person's trial.
+still gets it.
+
+The server decides; the client cannot ask for a trial. Only the owner checks out, so joining
+someone else's group never uses a person's trial.
 
 `GET /api/billing/trial` answers the signed-in person's `{ enabled, used, groupId, days }`. The page
 that creates a group uses it to say whether a trial comes with the new group. The admin panel shows

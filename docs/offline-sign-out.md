@@ -10,10 +10,12 @@ when the server ends the session, and when it asks before signing out.
 The app asks `/api/auth/me` before it renders. Only a 401 means nobody is signed in: the app shows
 the sign-in page and deletes the remembered person's copies, all but their queue of unsent writes.
 
-Every other answer says nothing about the session: a proxy's 502 or bare 404 during a deploy, a
-403, a 500, a 429, a 2xx without a profile, or no answer at all. The app then opens as the
-remembered person, on their saved copy. The first call the server answers with 401 or
-`unauthorized` signs the page out. With nobody remembered, the sign-in page shows.
+Every other answer says nothing about the session. That includes a proxy's 502 or bare 404 during a
+deploy, a 403, a 500, a 429, a 2xx without a profile, and no answer at all. The app then opens as
+the remembered person, on their saved copy. The first call the server answers with 401 or
+`unauthorized` signs the page out.
+
+With nobody remembered, the sign-in page shows.
 
 ## Signing out deletes everything
 

@@ -119,10 +119,12 @@ owner.
    to start without one.
 5. For a limit, count again inside the write's transaction, as the note repository does.
 
-Step 5 closes a race. The gate counts before the handler runs, so two requests can both pass it for
+Step 5 closes a race: the gate counts before the handler runs, so two requests can both pass it for
 the last free slot. The gate passes the cap to the handler (`allowance` on the command). The
 repository counts again after its insert, under the group's row lock, and refuses the second write.
-`tests/integration/plan-limits.integration.test.ts` races two creates to prove it.
+
+`tests/integration/plan-limits.integration.test.ts` races two creates to prove it. A handler that
+gets no `allowance` throws, so a bus without the gate fails closed.
 
 The gate runs on the command bus, after the idempotency middleware, so a retry still gets its stored
 answer. It judges a command only when the handler would allow it on some plan. A stranger still
