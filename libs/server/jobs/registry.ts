@@ -21,11 +21,12 @@ import { describeCron, parseCron } from "@spy4x/time/cron"
 import type { BillingProvider } from "@spy4x/billing"
 import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import { BillingNoticeKind } from "@domain/billing"
-import { BLOG_INDEXNOW_JOB, BLOG_PUBLISH_JOB } from "@domain/blog"
+import { BLOG_CROSSPOST_JOB, BLOG_INDEXNOW_JOB, BLOG_PUBLISH_JOB } from "@domain/blog"
 import { BILLING_NOTICE_JOBS } from "../billing/billing-notices.ts"
 import { SEAT_SYNC_JOB, seatSyncJob } from "../billing/seat-sync.ts"
 import { blogPublishJob } from "../blog/blog-publish-job.ts"
 import { blogIndexNowJob, type IndexNowSetup } from "../blog/blog-indexnow-job.ts"
+import { blogCrosspostJob, type BlogCrosspostSetup } from "../blog/blog-crosspost-job.ts"
 import type { SubscribersSetup } from "../subscribers/subscribers.ts"
 import {
   ACCOUNT_DELETION_MAIL_JOB,
@@ -92,6 +93,8 @@ export interface JobDeps {
   imageScratch: ImageScratch | null
   /** IndexNow's key and the website's origin, or `null` while IndexNow is off (#418). */
   indexNow: IndexNowSetup | null
+  /** The website's origin and a Dev.to client, or `null` while the cross-post is off (#733). */
+  crosspost: BlogCrosspostSetup | null
 }
 
 /**
@@ -353,7 +356,15 @@ export const JOBS: readonly JobDefinition[] = [
     label: `Publish a blog post`,
     cannotCancel: `To stop a scheduled post, unschedule it on the Blog page. ` +
       `Cancelling its job would leave the post scheduled with nothing to publish it.`,
-    handler: (deps) => blogPublishJob({ ...mailDeps(deps), setup: deps.subscribers }),
+    handler: (deps) =>
+      blogPublishJob({ ...mailDeps(deps), setup: deps.subscribers, crosspost: deps.crosspost }),
+  }),
+  // Posts once ever: a run that is retried or repeated finds the article it made and posts nothing.
+  defineJob({
+    kind: BLOG_CROSSPOST_JOB,
+    label: `Cross-post a blog post to Dev.to`,
+    handler: ({ sql, mail, crosspost }) =>
+      blogCrosspostJob({ sql, setup: crosspost, log: mail.log }),
   }),
   // Monitoring-grade: a failed ping is logged and never retried, so running it again sends once more.
   defineJob({
