@@ -543,6 +543,8 @@ export default {
     "other": "أرسل هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد في <list>{list}</list>",
   },
   "AdminBlogDialogs.sentOnce": "تُرسل مرة واحدة عند نشر التدوينة، ولا يمكن استرجاعها.",
+  "AdminBlogDialogs.newsletterOff":
+    "النشرة البريدية متوقفة، لذا لن تُرسل هذه التدوينة إلى قائمة <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly": "تصل فقط إلى المشتركين الذين اشتركوا بلغة التدوينة.",
   "AdminBlogEditor.leaveMessage": "ستفقد تغييراتك على هذه التدوينة.",
   "AdminBlogEditor.doneScheduled": "جُدولت للنشر في {at}.",

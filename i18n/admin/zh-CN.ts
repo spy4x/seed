@@ -471,6 +471,8 @@ export default {
     "other": "同时将这篇文章发送给<list>{list}</list>的 {count} 位已确认订阅者",
   },
   "AdminBlogDialogs.sentOnce": "只在文章发布时发送一次，发出后无法撤回。",
+  "AdminBlogDialogs.newsletterOff":
+    "邮件简报已关闭，这篇文章不会发送给<list>{list}</list>邮件列表。",
   "AdminBlogDialogs.postLanguageOnly": "只有以文章语言订阅的订阅者才会收到。",
   "AdminBlogEditor.leaveMessage": "你对这篇文章的修改将会丢失。",
   "AdminBlogEditor.doneScheduled": "已定时在{at}发布。",
