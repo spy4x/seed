@@ -1055,7 +1055,9 @@ function PublishingFacts(props: AdminBlogEditorScreenProps): JSX.Element | null 
   const { post } = props
   const format = useFormat()
   const t = useAdminText()
-  if (!post || post.status === `draft` && post.newsletterSentAt === null) return null
+  // A post settled as never emailed has a send time and no list: nothing went (#414).
+  const emailedAt = post?.newsletterList != null ? post.newsletterSentAt : null
+  if (!post || post.status === `draft` && emailedAt === null) return null
   return (
     <section
       aria-label={t.t(`AdminBlogEditor.publishing`)}
@@ -1075,12 +1077,12 @@ function PublishingFacts(props: AdminBlogEditorScreenProps): JSX.Element | null 
             : t.t(`AdminBlogEditor.publishedOn`, { date: format.date(post.publishedAt) })}
         </p>
       )}
-      {post.newsletterSentAt !== null
+      {emailedAt !== null
         ? (
           <p data-e2e="admin-blog-emailed">
             {t.t(`AdminBlogEditor.emailedTo`, {
               count: post.newsletterRecipients ?? 0,
-              date: format.date(post.newsletterSentAt),
+              date: format.date(emailedAt),
             })}
           </p>
         )

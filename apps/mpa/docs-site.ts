@@ -40,7 +40,7 @@ export interface PublishedDoc {
 /**
  * The guides the website publishes at `/docs/<slug>`, in the groups and order of `docs/README.md`.
  * Every other file under `docs/` stays in the repository only: the handoff, the design and product
- * documents, the decisions, the once-per-server upgrade, the CI setup and the Deno policy. A file
+ * documents, the decisions, the once-per-server upgrade, the CI setup and the runtime policy. A file
  * listed here needs its import below, its line in `.dockerignore` and `infra/deploy/include.txt`,
  * and the pointer line at its top (`docs-site.test.ts` checks all four).
  */

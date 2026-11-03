@@ -511,6 +511,8 @@ export default {
   },
   "AdminBlogDialogs.sentOnce":
     "Wird einmal verschickt, sobald der Beitrag erscheint. Das lässt sich nicht zurückholen.",
+  "AdminBlogDialogs.newsletterOff":
+    "Der Newsletter ist aus, deshalb geht dieser Beitrag nicht an den Verteiler <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly":
     "Nur wer sich in der Sprache des Beitrags angemeldet hat, bekommt ihn.",
   "AdminBlogEditor.leaveMessage": "Deine Änderungen an diesem Beitrag gehen verloren.",

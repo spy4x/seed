@@ -11,6 +11,7 @@ import {
   BlogError,
   type BlogPostFields,
   BlogVersionConflictError,
+  parseBlogPostFields,
 } from "@domain/blog"
 import { type BlogActor, PostgresBlogRepository } from "@server/blog/postgres-blog-repository.ts"
 import { blogPublishJob, queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
@@ -599,9 +600,71 @@ Deno.test(`blog: with the newsletter off the post goes live and no issue is queu
       jobEvent(id),
     )
 
-    expect(await blog.get(id)).toMatchObject({ status: `published`, newsletterSentAt: null })
+    expect(await blog.get(id)).toMatchObject({ status: `published`, newsletterList: null })
     expect(await issues(sql, id)).toEqual({ rows: 0, jobs: 0 })
     expect(lines).toHaveLength(1)
+  })
+})
+
+Deno.test(`blog: a post that went live while the newsletter was off is not emailed once it is on (#414)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const id = uuidV7()
+    await sql`INSERT INTO subscribers (list_id, email, key, subscribed_at)
+      VALUES ('news', 'ada@example.com', 'k1', now())`
+    await blog.create(id, fields(`old-news`), maya)
+    await blog.publish(id, 1, LATER(), `news`, maya)
+    await makeDue(sql, id)
+    await blogPublishJob({ sql, brand: BRAND, setup: null, log: () => {} })(jobEvent(id))
+
+    // The worker starts again months later, with the newsletter on.
+    await queueDueBlogJobs(sql)
+    await blogPublishJob({ sql, brand: BRAND, setup: SETUP, log: () => {} })(jobEvent(id))
+    await drain(sql)
+
+    expect(await issues(sql, id)).toEqual({ rows: 0, jobs: 0 })
+    expect((await blog.get(id))!.newsletterSentAt).not.toBeNull()
+  })
+})
+
+Deno.test(`blog: publishing a scheduled post now without naming a list keeps its email (#414)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    await sql`INSERT INTO subscribers (list_id, email, key, subscribed_at)
+      VALUES ('news', 'ada@example.com', 'k1', now())`
+    const [kept, dropped] = [uuidV7(), uuidV7()]
+    for (const id of [kept, dropped]) {
+      await blog.create(id, fields(id === kept ? `kept` : `dropped`), maya)
+      await blog.publish(id, 1, LATER(), `news`, maya)
+    }
+
+    await t.step(`a list left out keeps the post's list, and the post is emailed`, async () => {
+      expect((await blog.publish(kept, 2, null, undefined, maya)).newsletterList).toBe(`news`)
+      await drain(sql)
+      expect((await issues(sql, kept)).rows).toBe(1)
+    })
+
+    await t.step(`a list given as null drops the email`, async () => {
+      expect((await blog.publish(dropped, 2, null, null, maya)).newsletterList).toBeNull()
+      await drain(sql)
+      expect((await issues(sql, dropped)).rows).toBe(0)
+    })
+  })
+})
+
+Deno.test(`blog: a cover written HTTPS:// is stored, not refused by the database (#414)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const { coverUrl, coverAlt } = parseBlogPostFields({
+      ...fields(`cover`),
+      coverUrl: `HTTPS://images.example.com/a.png`,
+      coverAlt: `A chart`,
+    })
+    const post = await blog.create(uuidV7(), fields(`cover`, { coverUrl, coverAlt }), maya)
+    expect(post.coverUrl).toBe(`https://images.example.com/a.png`)
   })
 })
 

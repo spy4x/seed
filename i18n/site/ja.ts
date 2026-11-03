@@ -555,7 +555,7 @@ export default {
     "いいえ。Seedは、借りたLinuxサーバー1台の上でDocker Composeによる常駐コンテナとして動きます。APIがWebSocket接続を開いたままにし、ワーカーがキューを処理するためです。",
   "FeaturesFaq.runtimeQuestion": "SeedはNode.jsやBunで動きますか？",
   "FeaturesFaq.runtimeAnswer":
-    "まだ動きません。Seedは現在Denoで動いており、Deno・Node・Bunのどれでも動くようにする作業を進めています（#623）。詳しくは上のランタイム計画をご覧ください。",
+    "まだ動きません。Seedは現在Denoで動いており、Deno・Node・Bunのどれでも動くようにする作業を進めています。進み具合はSeedのGitHubにあるissue #623で確認できます。",
   "FeaturesFaq.databaseQuestion": "Postgres以外のデータベースを使えますか？",
   "FeaturesFaq.databaseAnswer":
     "いいえ。SeedはPostgresを前提に作られていて、マイグレーション、クエリ、結合テストもPostgresを想定しています。",
@@ -852,4 +852,192 @@ export default {
   "PostFigure.CostCalculator.caption": "デモのプランの税抜価格です。",
   "PostFigure.CostCalculator.fallback":
     "チームのメンバー：{members}人。デモのProプランでは月額{total}、1人あたり{price}です。",
+  "FeaturePage.what": "できること",
+  "FeaturePage.how": "仕組み",
+  "FeaturePage.limits": "制限事項",
+  "FeaturePage.questions": "よくある質問",
+  "FeaturePage.updated": "最終更新：<time>{date}</time>",
+  "FeaturePage.sectionLink": "このセクションへのリンク",
+  "FeaturePage.guide": "ガイドを読む",
+  "FeaturePage.code": "コードを読む：<path>{path}</path>",
+  "FeaturePage.otherFeatures": "ほかの機能",
+  "FeaturePage.readMore": "{name}について詳しく読む",
+  "FeaturePage.all": "すべての機能",
+  "FeaturePage.runtimeQuestion": "SeedはNodeやBunで動きますか？",
+  "FeaturePage.runtimeAnswer":
+    "まだです。Seedは現在Denoで動いており、Deno・Node・Bunのどれでも動くようにする作業を進めています（#623）。機能ページのランタイム計画をご覧ください。",
+  "FeaturePageMissing.title": "この機能ページは見つかりません",
+  "FeaturePageMissing.description":
+    "移動した可能性があります。Seedのすべての機能は機能ページに載っています。",
+  "FeaturePageMissing.action": "すべての機能を見る",
+  "FeaturePageSignIn.name": "ログイン",
+  "FeaturePageSignIn.title": "SaaSのログイン機能を、認証サービスなしで",
+  "FeaturePageSignIn.description":
+    "パスキー、メールのログインリンク、Google、GitHub、2段階認証。自分のAPIで検証するので、認証サービスもユーザー単位の料金も不要です。無料・MITライセンス。",
+  "FeaturePageSignIn.h1": "SaaSにパスキーとログイン機能を、認証サービスなしで",
+  "FeaturePageSignIn.answer":
+    "Seedは、パスキー、メールのログインリンク、Google、GitHubでのログインに対応し、その検証はサーバー上の自前のAPIが行います。外部の認証サービスは使いません。パスワード、パスキー、ログインリンクはデプロイした時点で使え、ユーザー単位の料金はかかりません。GoogleとGitHubは、それぞれenvファイルに2つのキーが必要です。",
+  "FeaturePageSignIn.summary":
+    "パスキー、メールのログインリンク、Google、GitHub、2段階認証。認証サービスは不要です。",
+  "FeaturePageSignIn.how1":
+    "APIがすべてのログインを自ら検証し、署名付きのセッションCookieを返します。パスキーはブラウザ標準のWebAuthnを使い、サーバーが保存するのは公開鍵だけで、ログインのチャレンジは1回限り有効です。ログインリンクはログインにも登録にも使え、1回限り・15分間有効で、ハッシュとしてのみ保存されます。",
+  "FeaturePageSignIn.how2":
+    "認証アプリを使えば2段階認証を追加できます。プロフィールには、アカウントに入るすべての方法とログイン中のすべてのデバイスが一覧表示され、ログイン方法を変更するときは本人確認を求めてメールで通知します。訪問者はゲストアカウントで始めて、あとからログイン方法を追加することもできます。",
+  "FeaturePageSignIn.authServiceQuestion": "認証サービスは必要ですか？",
+  "FeaturePageSignIn.authServiceAnswer":
+    "いいえ。パスワード、パスキー、ログインリンク、そしてGoogleとGitHubからの応答は、Seed自身のAPIがサーバー上で検証するので、ユーザー単位の料金は一切かかりません。",
+  "FeaturePageSignIn.passkeysQuestion": "Seedはパスキーに対応していますか？",
+  "FeaturePageSignIn.passkeysAnswer":
+    "はい。ユーザーはプロフィールでパスキーを追加し、それでログインできます。サーバーが保存するのは公開鍵だけで、ログインのチャレンジは1回限り有効です。",
+  "FeaturePageSignIn.twoFactorQuestion": "Seedに2段階認証はありますか？",
+  "FeaturePageSignIn.twoFactorAnswer":
+    "はい。認証アプリのワンタイムコードをログイン時に求めます。GoogleやGitHubでログインした場合も同様です。",
+  "FeaturePageSignIn.providersOffQuestion":
+    "GoogleやGitHubでのログインを使わないこともできますか？",
+  "FeaturePageSignIn.providersOffAnswer":
+    "はい。どちらも、envファイルに2つの変数を両方設定するまではオフなので、設定しなければオフのままです。",
+  "FeaturePageGroups.name": "グループとロール",
+  "FeaturePageGroups.title": "SaaSのグループとロール（権限管理）を、作り込みなしで",
+  "FeaturePageGroups.description":
+    "閲覧者からオーナーまでのロール付きグループ、招待、オーナー権限の譲渡、アクティビティログ。すべてのデータを1つのテナントチェックで守ります。無料・MITライセンス。",
+  "FeaturePageGroups.h1": "SaaSのグループとロールを、マルチテナントを自作せずに",
+  "FeaturePageGroups.answer":
+    "Seedは登録時にすべてのアカウントに個人用グループを作ります。ユーザーは共有グループを作り、ほかの人を招待して、閲覧者からオーナーまでのロールを割り当てられます。テナントの境界はグループの1つだけなので、追加した機能も、メモの集約をコピーした時点で同じチェックを通ります。",
+  "FeaturePageGroups.summary":
+    "閲覧者からオーナーまでのロール付きグループ、招待、アクティビティログ。",
+  "FeaturePageGroups.how1":
+    "共有データのすべての行はいずれかのグループに属し、APIは読み書きの前に、そのグループでのその人のロールを確認します。閲覧者は読むだけ、編集者はグループのデータも変更でき、管理者とオーナーはさらにメンバーを管理し、アクティビティログを読めます。",
+  "FeaturePageGroups.how2":
+    "オーナーはワンステップでオーナー権限を譲渡でき、削除したグループは30日以内なら復元できます。招待できるのは、メールアドレスを確認済みのアカウントだけです。",
+  "FeaturePageGroups.personalGroupQuestion": "すべてのアカウントにグループがありますか？",
+  "FeaturePageGroups.personalGroupAnswer":
+    "はい。各アカウントには登録時に個人用グループが作られます。個人用グループも共有グループも、同じチェックを通ります。",
+  "FeaturePageGroups.viewerQuestion": "閲覧者はグループのデータを変更できますか？",
+  "FeaturePageGroups.viewerAnswer":
+    "いいえ。閲覧者はグループのデータを読むだけです。変更できるのは編集者、管理者、オーナーです。",
+  "FeaturePageGroups.restoreQuestion": "削除したグループは元に戻せますか？",
+  "FeaturePageGroups.restoreAnswer":
+    "はい。オーナーが30日以内に復元できます。それを過ぎると、ワーカーが完全に削除します。",
+  "FeaturePageGroups.secondModelQuestion": "自分の機能のために、2つ目の権限システムが必要ですか？",
+  "FeaturePageGroups.secondModelAnswer":
+    "いいえ。新しい集約はメモの集約とそのグループチェックをコピーするので、管理する権限モデルは1つだけです。",
+  "FeaturePageBilling.name": "課金",
+  "FeaturePageBilling.title": "SaaSのStripe課金を、Webhookの実装なしで",
+  "FeaturePageBilling.description":
+    "無料プラン、14日間のトライアル、猶予期間、サーバー側の上限チェックを備えた、メンバー単位のStripe課金。Webhookで同期します。無料・MITライセンス。",
+  "FeaturePageBilling.h1": "SaaSにメンバー単位のStripe課金を、自分で書かずに",
+  "FeaturePageBilling.answer":
+    "Seedは、Stripe Checkoutとカスタマーポータルを通じて、各グループにメンバー単位で課金します。無料プラン、14日間のトライアル、支払い失敗後の猶予期間も備えています。envファイルにStripeのキーを3つ追加し、課金プロバイダーをStripeに設定します。",
+  "FeaturePageBilling.summary":
+    "無料プラン、トライアル、猶予期間付きの、メンバー単位のStripe課金。",
+  "FeaturePageBilling.how1":
+    "お金とサブスクリプションを管理するのはStripeです。アプリはStripeのWebhookが知らせた内容だけを保存し、自分でプランを決めることはありません。数量はメンバー数に連動し、プランの上限はサーバーでチェックします。",
+  "FeaturePageBilling.how2":
+    "どのメンバーもグループの「請求」タブでプランを確認でき、チェックアウトとポータルのボタンが表示されるのはオーナーだけです。支払いに失敗しても、デフォルトでは7日間プランが維持され、その後グループは無料プランに戻ります。",
+  "FeaturePageBilling.withoutStripeQuestion": "Stripeなしでも課金は使えますか？",
+  "FeaturePageBilling.withoutStripeAnswer":
+    "いいえ。現在対応している決済サービスはStripeだけです。Stripeがなければ課金はオフのままで、すべてのグループが上限なしの無料プランになります。",
+  "FeaturePageBilling.trialQuestion": "無料トライアルはありますか？",
+  "FeaturePageBilling.trialAnswer": "はい。有料プランは14日間のトライアルから始まります。",
+  "FeaturePageBilling.failedPaymentQuestion":
+    "カードの支払いに失敗しても、グループはプランを維持できますか？",
+  "FeaturePageBilling.failedPaymentAnswer":
+    "はい。猶予期間（デフォルトで7日間）はプランが維持され、オーナーには日付入りのお知らせが表示されます。その後、グループは無料プランに戻ります。",
+  "FeaturePageBilling.cutQuestion": "Seedは支払いから手数料を取りますか？",
+  "FeaturePageBilling.cutAnswer":
+    "いいえ。SeedはMITライセンスです。支払うのはStripe自体の手数料だけです。",
+  "FeaturePageRealtime.name": "リアルタイム同期",
+  "FeaturePageRealtime.title": "SaaSのリアルタイム同期を、外部サービスなしで",
+  "FeaturePageRealtime.description":
+    "あるタブで保存した変更が、グループのほかの開いているタブに1秒以内に表示されます。自前のAPIからWebSocketで送ります。無料・MITライセンス。",
+  "FeaturePageRealtime.h1": "SaaSにリアルタイム更新を、ホスト型のリアルタイムサービスなしで",
+  "FeaturePageRealtime.answer":
+    "Seedは、保存された変更を自前のAPIからWebSocketで、グループの開いているすべてのタブに送ります。あるウィンドウで保存したメモは、再読み込みなしで1秒以内にほかのウィンドウにも表示されます。自分のサーバーで動くので、料金のかかるリアルタイムサービスは不要です。追加した機能も、メモの例をコピーすればこの仕組みを使えます。",
+  "FeaturePageRealtime.summary":
+    "あるタブで保存した変更が、再読み込みなしでほかの開いているタブすべてに表示されます。",
+  "FeaturePageRealtime.how1":
+    "各書き込みはグループの次の連番とともにコミットされ、APIはそれを各メンバーの開いているソケットに送ります。タブが変更を適用するのは、その番号が手元の最後の番号の次であるときだけです。番号が飛んでいれば、カーソル以降のすべてをサーバーに問い合わせるので、メッセージが1つ失われてもリクエストが1回増えるだけで、リストが間違うことはありません。",
+  "FeaturePageRealtime.how2":
+    "スリープから復帰したノートPCは再接続し、見逃した分を取得します。ソケットをオフにすると、アプリはHTTPで読み書きし、30秒ごとに変更を確認します。",
+  "FeaturePageRealtime.realtimeQuestion": "Seedはリアルタイムで更新されますか？",
+  "FeaturePageRealtime.realtimeAnswer":
+    "はい。保存した変更は、再読み込みなしで1秒以内に、グループの開いているすべてのタブに表示されます。",
+  "FeaturePageRealtime.realtimeServiceQuestion":
+    "PusherやAblyなどのリアルタイムサービスは必要ですか？",
+  "FeaturePageRealtime.realtimeServiceAnswer":
+    "いいえ。WebSocketは、自分のサーバー上でSeed自身のAPIが提供します。",
+  "FeaturePageRealtime.realtimeSleepQuestion": "ノートPCがスリープしたあと、タブは追いつきますか？",
+  "FeaturePageRealtime.realtimeSleepAnswer":
+    "はい。再接続して、手元にある最後の変更以降のすべての変更を取得します。",
+  "FeaturePageRealtime.realtimeOffQuestion": "リアルタイムをオフにできますか？",
+  "FeaturePageRealtime.realtimeOffAnswer":
+    "はい。SPA_REALTIME=falseを設定してください。アプリは30秒ごとに変更を確認するようになり、同じように動きます。",
+  "FeaturePageOffline.name": "オフラインアプリ",
+  "FeaturePageOffline.title": "SaaSのオフライン対応アプリを、同期を自作せずに",
+  "FeaturePageOffline.description":
+    "ネットワークなしで開けるインストール可能なアプリ。すべてのリストを端末に保存し、接続が戻るまで編集をキューにためます。無料・MITライセンス。",
+  "FeaturePageOffline.h1": "SaaSにオフラインファーストのアプリを、同期エンジンを作らずに",
+  "FeaturePageOffline.answer":
+    "Seedのアプリはネイティブアプリのようにインストールでき、ネットワークなしでも開けて、最後に表示したすべてのリストを表示します。オフラインでもメモとタグを追加・編集・削除できます。自分の機能は、オンラインのみ、オフラインで閲覧可、オフラインで書き込み可の3段階から1つを選び、それぞれ用意された手順に従います。",
+  "FeaturePageOffline.summary":
+    "ネットワークなしで開けて、接続が戻ると同期するインストール可能なアプリ。",
+  "FeaturePageOffline.how1":
+    "端末は各リストのIndexedDBコピーを持ち、書き込みは冪等キー付きのキューで待機するので、2回送られた変更も適用されるのは1回だけです。サーバーが受け付けられない変更は競合として表示され、「自分のバージョンを残す」か「サーバーの内容を使う」かを選べます。勝手に上書きされることはありません。",
+  "FeaturePageOffline.how2":
+    "サービスワーカーがアプリのページ、スクリプト、スタイルを保存しておくので、ネットワークなしでも開けます。ログイン、削除済みのアイテム、2段階認証の設定にはネットワークが必要です。",
+  "FeaturePageOffline.offlineQuestion": "Seedはオフラインで使えますか？",
+  "FeaturePageOffline.offlineAnswer":
+    "はい。アプリはネットワークなしでも開けて、最後に表示したすべてのリストを表示します。",
+  "FeaturePageOffline.offlineEditsQuestion": "オフライン中に編集できますか？",
+  "FeaturePageOffline.offlineEditsAnswer":
+    "はい。メモとタグはオフラインでも使えます。それ以外の変更にはネットワークが必要で、画面にそう表示されます。",
+  "FeaturePageOffline.conflictQuestion": "2人が同じメモを変更したら、Seedは検知しますか？",
+  "FeaturePageOffline.conflictAnswer":
+    "はい。あとの変更が競合として表示され、その変更をした人が「自分のバージョンを残す」か「サーバーの内容を使う」かを選びます。",
+  "FeaturePageOffline.removeOfflineQuestion": "オフライン対応を取り除けますか？",
+  "FeaturePageOffline.removeOfflineAnswer":
+    "はい。スイッチ1つでオフにするか、フォルダを1つ削除して用意されたチェックリストに従います。手順が抜けているとテストが失敗します。",
+  "FeaturePageShortcuts.name": "キーボードショートカット",
+  "FeaturePageShortcuts.title": "SaaSのキーボードショートカットを、ライブラリなしで",
+  "FeaturePageShortcuts.description":
+    "打ち間違い、キリル文字、間違ったキーボード配列も受け付けるCtrl+K検索と、アプリの各セクションを開くキー。無料・MITライセンス。",
+  "FeaturePageShortcuts.h1": "SaaSにコマンドパレットとキーボードショートカットを標準装備",
+  "FeaturePageShortcuts.answer":
+    "Seedのアプリと管理画面では、Ctrl+K（Macでは⌘K）で検索が開き、打ち間違いやキリル文字、間違ったキーボード配列で入力しても、ページやアクションが見つかります。?キーですべてのショートカットを表示できます。追加した機能も同じリストに自分のキーを登録すれば、そのキーが使えるようになり、ダイアログにも表示されます。",
+  "FeaturePageShortcuts.summary":
+    "打ち間違いや配列違いも受け付けるCtrl+K検索と、各セクションを開くキー。",
+  "FeaturePageShortcuts.how1":
+    "アプリごとに1つのリストがキーを割り当て、?のダイアログにも表示するので、効かないキーがダイアログに出ることはありません。Gキーに続けて文字キーを押すとセクションが開き、Nキーでどのページからでもメモを追加できます。1キーのショートカットは、入力欄に入力している間は反応しません。",
+  "FeaturePageShortcuts.how2":
+    "検索はすべての単語を順不同・前方一致で照合し、長めの単語なら1文字の打ち間違いも許容します。もう一方のキーボード配列や文字体系で入力された検索語も読み取るので、「зкщашду」で「Open profile」が見つかります。",
+  "FeaturePageShortcuts.shortcutsQuestion": "Seedにキーボードショートカットはありますか？",
+  "FeaturePageShortcuts.shortcutsAnswer":
+    "はい。アプリや管理画面で?キーを押すと、すべて表示されます。",
+  "FeaturePageShortcuts.paletteQuestion": "コマンドパレットはありますか？",
+  "FeaturePageShortcuts.paletteAnswer":
+    "はい。Ctrl+K（Macでは⌘K）または/で、ページとアクションの検索が開きます。",
+  "FeaturePageShortcuts.shortcutsTypingQuestion": "入力中にショートカットが反応しますか？",
+  "FeaturePageShortcuts.shortcutsTypingAnswer":
+    "いいえ。1キーのショートカットは入力欄では反応せず、デバイスごとにオフにもできます。Ctrl+KとEscは引き続き使えます。",
+  "FeaturePageDeploy.name": "デプロイ",
+  "FeaturePageDeploy.title": "SaaSのデプロイを、クラウドプラットフォームの請求なしで",
+  "FeaturePageDeploy.description":
+    "借りたLinuxサーバー1台でDocker Compose。Traefik、Postgres、Valkey、S3ファイル、監視、バックアップをコマンド1つでデプロイします。無料・MITライセンス。",
+  "FeaturePageDeploy.h1": "SaaSをサーバー1台でセルフホスト、クラウドプラットフォームの請求なしで",
+  "FeaturePageDeploy.answer":
+    "Seedは借りたLinuxサーバーで動き、開発でも本番でもDocker Composeを使って、コマンド1つでデプロイできます。サーバーの準備は文書化された手順で一度だけ行い、それ以降のデプロイはそのコマンドだけです。",
+  "FeaturePageDeploy.summary": "Linuxサーバー1台、Docker Compose、デプロイはコマンド1つ。",
+  "FeaturePageDeploy.how1":
+    "デプロイはSSHでプロジェクトをサーバーにコピーし、Composeで起動します。デプロイのたびに、1回だけ動くサービスがデータベースのマイグレーションを適用します。前段にはTraefikがあり、ホストごとの証明書をLet's Encryptに要求します。",
+  "FeaturePageDeploy.how2":
+    "Postgres、Valkey、S3ファイルストア、メトリクス、ログ、アラート付きのダッシュボードがアプリと並んで動き、複数のプロダクトが同じプロキシの背後で1台のサーバーを共有できます。",
+  "FeaturePageDeploy.kubernetesQuestion": "Kubernetesは必要ですか？",
+  "FeaturePageDeploy.kubernetesAnswer":
+    "いいえ。開発でも本番でも、サーバー1台のDocker Composeでプロダクト全体が動きます。",
+  "FeaturePageDeploy.severalQuestion": "複数のプロダクトで1台のサーバーを共有できますか？",
+  "FeaturePageDeploy.severalAnswer":
+    "はい。プロキシは共有し、ディレクトリ、データベース、データはそれぞれ別に持ちます。サーバーを共有するのは、同じくらい信頼できるプロダクト同士だけにしてください。",
+  "FeaturePageDeploy.backupQuestion": "バックアップはありますか？",
+  "FeaturePageDeploy.backupAnswer":
+    "はい。オプトインで、データベースの暗号化resticバックアップを毎日取れます。復元手順も文書化されています。",
 } satisfies Catalog
