@@ -42,8 +42,9 @@ Two things are shared:
 A container on the `proxy` network can call any project's API directly, past the proxy. The API
 refuses such a request when it names a client address (`X-Real-IP` and the like). Only Traefik and
 the project's own website may name one. So a neighbour cannot pose as many visitors to dodge the
-sign-in limits, but it can still call the API as one. Share a server only between projects you
-trust alike.
+sign-in limits, but it can still call the API as one.
+
+Share a server only between projects you trust alike.
 
 On that network, address your own services by container name (`<PROJECT>-api`, `<PROJECT>-db`).
 A plain service name such as `api` is answered by any project.
