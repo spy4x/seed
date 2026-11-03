@@ -5,6 +5,7 @@ import {
   BlogError,
   blogSlugProblem,
   isHttpsUrl,
+  parseBlogPostEdit,
   parseBlogPostFields,
   parseBlogStatusFilter,
   parsePublishTime,
@@ -131,5 +132,18 @@ describe(`parseBlogStatusFilter`, () => {
     expect(parseBlogStatusFilter(`published`)).toBe(`published`)
     expect(parseBlogStatusFilter(`all`)).toBeNull()
     expect(parseBlogStatusFilter(null)).toBeNull()
+  })
+})
+
+describe(`parseBlogPostEdit`, () => {
+  it(`leaves out the language and the link a save did not name, so the post keeps its own (#530)`, () => {
+    const edit = parseBlogPostEdit(FIELDS)
+    expect(`language` in edit).toBe(false)
+    expect(`translationOf` in edit).toBe(false)
+  })
+
+  it(`keeps the language and the link a save named, an unlink as null`, () => {
+    expect(parseBlogPostEdit({ ...FIELDS, language: `de`, translationOf: null }))
+      .toMatchObject({ language: `de`, translationOf: null })
   })
 })

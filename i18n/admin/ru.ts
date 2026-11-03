@@ -515,22 +515,32 @@ export default {
     "Пост появится по адресу <path>{path}</path>, в RSS и в карте сайта.",
   "AdminBlogDialogs.mailingList": "Список рассылки",
   "AdminBlogDialogs.alsoEmail": {
-    "one": "Разослать пост {count} подтверждённому подписчику",
-    "few": "Разослать пост {count} подтверждённым подписчикам",
-    "many": "Разослать пост {count} подтверждённым подписчикам",
-    "other": "Разослать пост {count} подтверждённого подписчика",
+    "one":
+      "Разослать пост {count} подтверждённому подписчику (язык: <language>{language}</language>)",
+    "few":
+      "Разослать пост {count} подтверждённым подписчикам (язык: <language>{language}</language>)",
+    "many":
+      "Разослать пост {count} подтверждённым подписчикам (язык: <language>{language}</language>)",
+    "other":
+      "Разослать пост {count} подтверждённого подписчика (язык: <language>{language}</language>)",
   },
   "AdminBlogDialogs.alsoEmailList": {
-    "one": "Разослать пост {count} подтверждённому подписчику списка <list>{list}</list>",
-    "few": "Разослать пост {count} подтверждённым подписчикам списка <list>{list}</list>",
-    "many": "Разослать пост {count} подтверждённым подписчикам списка <list>{list}</list>",
-    "other": "Разослать пост {count} подтверждённого подписчика списка <list>{list}</list>",
+    "one":
+      "Разослать пост {count} подтверждённому подписчику списка <list>{list}</list> (язык: <language>{language}</language>)",
+    "few":
+      "Разослать пост {count} подтверждённым подписчикам списка <list>{list}</list> (язык: <language>{language}</language>)",
+    "many":
+      "Разослать пост {count} подтверждённым подписчикам списка <list>{list}</list> (язык: <language>{language}</language>)",
+    "other":
+      "Разослать пост {count} подтверждённого подписчика списка <list>{list}</list> (язык: <language>{language}</language>)",
   },
   "AdminBlogDialogs.sentOnce":
     "Письмо уйдёт один раз, когда пост выйдет. Отозвать его будет нельзя.",
   "AdminBlogDialogs.newsletterOff":
     "Рассылка выключена, поэтому пост не уйдёт подписчикам списка <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly": "Письмо получат только те, кто подписался на языке поста.",
+  "AdminBlogDialogs.noReaders":
+    "Пока нет подтверждённых подписчиков с языком <language>{language}</language>, поэтому пост некому разослать.",
   "AdminBlogEditor.leaveMessage": "Изменения в посте не сохранятся.",
   "AdminBlogEditor.doneScheduled": "Публикация запланирована на {at}.",
   "AdminBlogEditor.donePublished": "Опубликовано.",
@@ -1971,6 +1981,8 @@ export default {
   "AdminBlogEditor.language": "Язык",
   "AdminBlogEditor.languageHint":
     "Язык, на котором написан пост. На сайте он появится в блоге на этом языке.",
+  "AdminBlogEditor.languageMoves":
+    "После сохранения пост переедет на <path>{path}</path>. Старый адрес будет перенаправлять туда.",
   "AdminBlogEditor.translationOf": "Перевод поста",
   "AdminBlogEditor.translationOfHint":
     "Пост, который переводит этот. Когда оба выйдут, сайт свяжет их как языковые версии.",

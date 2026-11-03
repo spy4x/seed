@@ -835,6 +835,10 @@ function Settings(
   const description = Array.from(value.description).length
   const seo = Array.from(value.seoTitle).length
   const cover = value.coverUrl.trim()
+  // A published post's address carries its language: where a new language moves it (#530).
+  const movedTo = locked && post && value.language !== post.language
+    ? blogPostPath({ language: value.language, slug: post.slug })
+    : null
   return (
     <aside
       aria-label={t.t(`AdminBlogEditor.settings`)}
@@ -960,7 +964,16 @@ function Settings(
         <Field
           id={blogFieldId(`language`)}
           label={t.t(`AdminBlogEditor.language`)}
-          hint={t.t(`AdminBlogEditor.languageHint`)}
+          hint={movedTo !== null
+            ? (
+              <span data-e2e="admin-blog-language-moves">
+                <Rich
+                  parts={t.parts(`AdminBlogEditor.languageMoves`, { path: movedTo })}
+                  tags={{ path: (text: string) => <bdi translate={false}>{text}</bdi> }}
+                />
+              </span>
+            )
+            : t.t(`AdminBlogEditor.languageHint`)}
           error={message(`language`)}
         >
           <Select

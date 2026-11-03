@@ -860,6 +860,7 @@ export default {
   "Blog.ctaTitle": "Посмотрите {site} в деле за минуту",
   "Blog.published": "Опубликовано <time>{date}</time>",
   "Blog.updated": "· Обновлено <time>{date}</time>",
+  "Blog.alsoIn": "Другие языки: <links></links>",
   "Blog.minutes": {
     "one": "· {count} мин чтения",
     "few": "· {count} мин чтения",
