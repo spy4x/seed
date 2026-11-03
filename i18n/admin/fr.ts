@@ -192,7 +192,7 @@ export default {
   "AdminAuditEvent.confirmationResent": "Confirmation de la newsletter renvoyée",
   "AdminAuditEvent.subscribersExported": "Abonnés à la newsletter exportés",
   "AdminAuditEvent.roleChanged": "Rôle modifié",
-  "AdminAuditEvent.resetSent": "Lien de réinitialisation du mot de passe envoyé par un opérateur",
+  "AdminAuditEvent.resetSent": "E-mail de réinitialisation du mot de passe envoyé par un opérateur",
   "AdminAuditEvent.usersExported": "Liste des utilisateurs exportée",
   "AdminAuditEvent.passkeyRenamed": "Clé d’accès renommée",
   "AdminAuditEvent.guestStarted": "Démarrage en invité",
@@ -1786,7 +1786,7 @@ export default {
   "AdminUser.doneRoleSupervisor": "{name} est maintenant superviseur.",
   "AdminUser.doneRoleAdmin": "{name} est maintenant administrateur.",
   "AdminUser.donePasswordReset":
-    "Un lien de réinitialisation du mot de passe est en route vers {name}.",
+    "Un e-mail de réinitialisation du mot de passe est en route vers {name}.",
   "AdminUser.doneDeleteGuest": "Compte invité {name} supprimé.",
   "AdminUser.doneUnlinkTelegram": "Le compte Telegram de {name} a été dissocié.",
   "AdminUser.doneRemovePicture": "La photo de profil de {name} a été retirée.",
@@ -1796,7 +1796,7 @@ export default {
   "AdminUser.unblock": "Débloquer",
   "AdminUser.block": "Bloquer",
   "AdminUser.endAllSessions": "Fermer toutes les sessions",
-  "AdminUser.sendReset": "Envoyer un lien de réinitialisation",
+  "AdminUser.sendReset": "Envoyer un e-mail de réinitialisation",
   "AdminUser.noResetAddress": "Nécessite une connexion par mot de passe avec une adresse e-mail",
   "AdminUser.unlinkTelegram": "Dissocier Telegram",
   "AdminUser.removePicture": "Retirer la photo de profil",
@@ -1853,7 +1853,7 @@ export default {
   "AdminUser.methodPassword": "Mot de passe",
   "AdminUser.methodEmailCode": "Code par e-mail",
   "AdminUser.methodPasskey": "Clé d’accès",
-  "AdminUser.methodEmailLink": "Lien par e-mail",
+  "AdminUser.methodEmailLink": "Code par e-mail",
   "AdminUser.blockTitle": "Bloquer {name}",
   "AdminUser.blockText":
     "Cette personne est immédiatement déconnectée partout, et tous ses accès sont refusés : mot de passe, Google, GitHub et jetons d’API. Ses données restent. Vous pourrez la débloquer plus tard.",
@@ -1874,10 +1874,10 @@ export default {
   "AdminUser.changeRoleText":
     "Le nouveau rôle s’applique dès sa prochaine requête. Vous pouvez attribuer tout rôle inférieur au vôtre ; pour nommer quelqu’un administrateur, utilisez le script user:role.",
   "AdminUser.changing": "Modification…",
-  "AdminUser.resetTitle": "Envoyer à {name} un lien de réinitialisation du mot de passe",
+  "AdminUser.resetTitle": "Envoyer à {name} un e-mail de réinitialisation du mot de passe",
   "AdminUser.resetText":
-    "Cette personne reçoit le même e-mail qu’avec « Mot de passe oublié » : un lien pour choisir un nouveau mot de passe. Son mot de passe actuel fonctionne jusque-là.",
-  "AdminUser.sendLink": "Envoyer le lien",
+    "Cette personne reçoit un e-mail qui lui explique comment réinitialiser son mot de passe avec « Mot de passe oublié », qui lui envoie un code. Son mot de passe actuel fonctionne jusque-là.",
+  "AdminUser.sendLink": "Envoyer l’e-mail",
   "AdminUser.sending": "Envoi…",
   "AdminUser.deleteGuestTitle": "Supprimer le compte invité {name}",
   "AdminUser.deleteGuestText":
@@ -1898,7 +1898,7 @@ export default {
   "AdminUser.cancel": "Annuler",
   "AdminUsers.title": "Utilisateurs",
   "AdminUsers.subtitle":
-    "Toutes les personnes qui ont un compte. Ouvrez une fiche pour bloquer la personne, fermer une session ou envoyer un lien de réinitialisation du mot de passe.",
+    "Toutes les personnes qui ont un compte. Ouvrez une fiche pour bloquer la personne, fermer une session ou envoyer un e-mail de réinitialisation du mot de passe.",
   "AdminUsers.export": "Exporter en CSV",
   "AdminUsers.search": "Nom ou adresse e-mail",
   "AdminUsers.searching": "Recherche…",

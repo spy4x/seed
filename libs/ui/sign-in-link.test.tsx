@@ -184,7 +184,7 @@ describe("LinkRequestScreen in the browser", () => {
 
     expect(focused()).toBe("H1")
     expect(find("h1").textContent).toBe("Check your inbox")
-    expect(text()).toContain("We sent a sign-in link to ada@example.com. It works once, for 15")
+    expect(text()).toContain("We sent a sign-in link to ada@example.com. It works once, for 10")
     // The ticking number is never announced.
     expect(find("[aria-live=off]").textContent).toBe(
       "Not there? Check your spam folder. You can send a new link in 45 seconds.",

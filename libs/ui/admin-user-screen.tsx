@@ -217,7 +217,7 @@ const ACTIONS: Record<AdminAction, { title: string; text: string; submit: string
 const CALM_ACTIONS: readonly AdminAction[] = ["unblock", "change-role", "password-reset"]
 
 /**
- * The address a password-reset link would go to, or `null` when the person has no password with
+ * The address a password-reset email would go to, or `null` when the person has no password with
  * an address. The API answers the same on its own; this only says so before the operator asks.
  */
 export function resetAddress(detail: Pick<AdminUserDetail, "methods">): string | null {
@@ -282,7 +282,7 @@ export interface AdminUserScreenProps {
  * One person in the admin app (#424): a header card with their avatar, name, badges and the one
  * "More actions" menu, then tabs for their account, how they sign in, their sessions, their groups
  * and their activity, plus any tab a module adds. The menu blocks, unblocks, ends every session,
- * sends a password-reset link and, for an administrator, changes the role (#425); the Sessions tab
+ * sends a password-reset email and, for an administrator, changes the role (#425); the Sessions tab
  * ends one session or all. Each is confirmed in a dialog. No password is asked: the audit trail
  * records who acted.
  */
@@ -620,7 +620,7 @@ function Methods({ detail }: { detail: AdminUserDetail }): JSX.Element {
           )}
           {method.method === SIGN_IN_LINK_METHOD
             ? (
-              // A sign-in link is no stored method: when one was last used, read-only (#391).
+              // A sign-in code is no stored method: when one was last used, read-only (#391).
               <span class="text-sm text-muted" data-e2e="admin-user-email-link">
                 {lastUsed(method.lastUsedAt)}
               </span>
@@ -790,7 +790,7 @@ export function identifiedAuditTitle(
 
 /**
  * What an audit row says happened, in the operator's language: one whole message per event code
- * (an account event, a billing event, or a sign-in link's own title), or `null` for a code this
+ * (an account event, a billing event, or a sign-in code's own title), or `null` for a code this
  * page does not know.
  */
 export function auditEventTitle(
@@ -876,7 +876,7 @@ function ActionDialog(
   { action, detail, address, operator, sessionId, actionError, pending, onAction, onCloseDialog }: {
     action: AdminAction
     detail: AdminUserDetail
-    /** Where a password-reset link goes, or `null` when it cannot. */
+    /** Where a password-reset email goes, or `null` when it cannot. */
     address: string | null
     operator: AdminOperator
     /** The session an "end-session" dialog ends. */

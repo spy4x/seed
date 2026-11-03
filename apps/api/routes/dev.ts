@@ -65,8 +65,8 @@ export interface DevRouteDeps {
  * a role with `deno task user:role` instead. It answers 404 when the user does not exist.
  *
  * `POST /last-mail` with `{ email }` answers the newest mail the worker sent to that address in
- * development (`dev_mail`): `{ subject, text }`, or 404 when there is none. The e2e specs read a
- * password reset link this way.
+ * development (`dev_mail`): `{ subject, text }`, or 404 when there is none. The e2e specs read
+ * sign-in, sign-up and password-reset codes this way.
  */
 export function createDevRoute(deps: DevRouteDeps) {
   return new Hono<APIContext>()
@@ -213,7 +213,7 @@ async function readLogin(
   }
   const key = await findPasswordKey(deps, validation.data.login)
   const email = normalizeEmail(validation.data.login)
-  // An account a sign-in link made has no password key: its proven address finds it (#391).
+  // An account a sign-in code made has no password key: its proven address finds it (#391).
   const userId = key?.userId ??
     (email === null ? null : await deps.db.authStore.findUserIdByProvenEmail(email))
   return { userId, email }

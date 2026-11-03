@@ -7,7 +7,7 @@ import { signUpWithCode } from "./fixtures/sign-up.ts"
 /**
  * The people actions of the admin app (#425): an administrator finds their own row marked "You",
  * exports the filtered list as CSV, ends one of a person's two sessions, changes their role and
- * mails them the "Forgot password" link, and each shows on the person's Activity tab.
+ * mails them the way to "Forgot password", and each shows on the person's Activity tab.
  */
 
 const appBase = "http://app.localhost"
@@ -59,7 +59,7 @@ async function search(ops: Page, query: string): Promise<void> {
 }
 
 test.describe("the people actions of the admin app", () => {
-  test("an administrator exports, ends one session, changes a role and sends a reset link", async ({ browser, page, request }) => {
+  test("an administrator exports, ends one session, changes a role and sends a reset email", async ({ browser, page, request }) => {
     const adminEmail = address("admin")
     const targetEmail = address("ada")
     let admin: BrowserContext | null = null
@@ -124,18 +124,18 @@ test.describe("the people actions of the admin app", () => {
       await expect(ops.locator("[data-e2e=toasts]")).toContainText("is now a supervisor")
       await expect(ops.locator("[data-e2e=admin-user-card]")).toContainText("Supervisor")
 
-      // Mails the "Forgot password" link.
+      // Mails the way to "Forgot password".
       await ops.locator("[data-e2e=admin-user-menu]").click()
       await ops.locator("[data-e2e=admin-password-reset-open]").click()
       await expect(dialog).toContainText(targetEmail)
       await ops.locator("[data-e2e=admin-action-submit]").click()
-      await expect(ops.locator("[data-e2e=toasts]")).toContainText("password-reset link")
+      await expect(ops.locator("[data-e2e=toasts]")).toContainText("password-reset email")
       await expect.poll(async () => {
         const response = await request.post(`${appBase}/api/test/last-mail`, {
           data: { email: targetEmail },
         })
         return response.ok() ? ((await response.json()) as { subject: string }).subject : null
-      }, { timeout: 20_000, message: "the worker mails the reset link" }).toBe(
+      }, { timeout: 20_000, message: "the worker mails the reset email" }).toBe(
         "Reset your password",
       )
 
@@ -144,7 +144,7 @@ test.describe("the people actions of the admin app", () => {
       const trail = ops.locator("[data-e2e=admin-user-audits]")
       await expect(trail).toContainText("Role changed")
       await expect(trail).toContainText("from viewer to supervisor")
-      await expect(trail).toContainText("Password-reset link sent by an operator")
+      await expect(trail).toContainText("Password-reset email sent by an operator")
       await expect(trail).toContainText("Sessions ended")
     } finally {
       await laptop?.close()

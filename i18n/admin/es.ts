@@ -192,7 +192,7 @@ export default {
   "AdminAuditEvent.confirmationResent": "Confirmación del boletín reenviada",
   "AdminAuditEvent.subscribersExported": "Suscriptores del boletín exportados",
   "AdminAuditEvent.roleChanged": "Rol cambiado",
-  "AdminAuditEvent.resetSent": "Enlace para restablecer la contraseña enviado por un operador",
+  "AdminAuditEvent.resetSent": "Correo para restablecer la contraseña enviado por un operador",
   "AdminAuditEvent.usersExported": "Lista de usuarios exportada",
   "AdminAuditEvent.passkeyRenamed": "Llave de acceso renombrada",
   "AdminAuditEvent.guestStarted": "Empezó como invitado",
@@ -1771,7 +1771,7 @@ export default {
   "AdminUser.doneRoleOperator": "{name} ahora tiene el rol de operador.",
   "AdminUser.doneRoleSupervisor": "{name} ahora tiene el rol de supervisor.",
   "AdminUser.doneRoleAdmin": "{name} ahora tiene el rol de administrador.",
-  "AdminUser.donePasswordReset": "Un enlace para restablecer la contraseña va de camino a {name}.",
+  "AdminUser.donePasswordReset": "Un correo para restablecer la contraseña va de camino a {name}.",
   "AdminUser.doneDeleteGuest": "Cuenta de invitado {name} eliminada.",
   "AdminUser.doneUnlinkTelegram": "Se desvinculó la cuenta de Telegram de {name}.",
   "AdminUser.doneRemovePicture": "Se quitó la foto de perfil de {name}.",
@@ -1781,7 +1781,7 @@ export default {
   "AdminUser.unblock": "Desbloquear",
   "AdminUser.block": "Bloquear",
   "AdminUser.endAllSessions": "Cerrar todas las sesiones",
-  "AdminUser.sendReset": "Enviar enlace para restablecer la contraseña",
+  "AdminUser.sendReset": "Enviar correo para restablecer la contraseña",
   "AdminUser.noResetAddress": "Requiere inicio de sesión con contraseña y un correo electrónico",
   "AdminUser.unlinkTelegram": "Desvincular Telegram",
   "AdminUser.removePicture": "Quitar la foto de perfil",
@@ -1838,7 +1838,7 @@ export default {
   "AdminUser.methodPassword": "Contraseña",
   "AdminUser.methodEmailCode": "Código por correo",
   "AdminUser.methodPasskey": "Llave de acceso",
-  "AdminUser.methodEmailLink": "Enlace por correo",
+  "AdminUser.methodEmailLink": "Código por correo",
   "AdminUser.blockTitle": "Bloquear a {name}",
   "AdminUser.blockText":
     "Se cierran al instante todas sus sesiones y se le niega cualquier forma de entrar: contraseña, Google, GitHub y tokens de API. Sus datos se conservan. Puedes desbloquear la cuenta más adelante.",
@@ -1859,10 +1859,10 @@ export default {
   "AdminUser.changeRoleText":
     "El nuevo rol se aplica en su siguiente petición. Puedes dar cualquier rol inferior al tuyo; para nombrar a alguien administrador, usa el script user:role.",
   "AdminUser.changing": "Cambiando…",
-  "AdminUser.resetTitle": "Enviar a {name} un enlace para restablecer la contraseña",
+  "AdminUser.resetTitle": "Enviar a {name} un correo para restablecer la contraseña",
   "AdminUser.resetText":
-    "Recibirá el mismo correo que con «¿Olvidaste tu contraseña?»: un enlace para elegir una contraseña nueva. Su contraseña actual sigue funcionando hasta que la cambie.",
-  "AdminUser.sendLink": "Enviar enlace",
+    "Recibirá un correo que le explica cómo restablecer la contraseña con «¿Olvidaste tu contraseña?», que le envía un código. Su contraseña actual sigue funcionando hasta que la cambie.",
+  "AdminUser.sendLink": "Enviar correo",
   "AdminUser.sending": "Enviando…",
   "AdminUser.deleteGuestTitle": "Eliminar la cuenta de invitado {name}",
   "AdminUser.deleteGuestText":
@@ -1883,7 +1883,7 @@ export default {
   "AdminUser.cancel": "Cancelar",
   "AdminUsers.title": "Usuarios",
   "AdminUsers.subtitle":
-    "Todas las personas con cuenta. Abre una para bloquearla, cerrar una sesión o enviarle un enlace para restablecer la contraseña.",
+    "Todas las personas con cuenta. Abre una para bloquearla, cerrar una sesión o enviarle un correo para restablecer la contraseña.",
   "AdminUsers.export": "Exportar CSV",
   "AdminUsers.search": "Nombre o correo electrónico",
   "AdminUsers.searching": "Buscando…",

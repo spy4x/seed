@@ -41,7 +41,6 @@ import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
 import { SAMPLE_CONTACT_LINKS, seedSampleContactLinks } from "@server/contact-links/sample-links.ts"
 import { isDemoSeeded, resetDemo } from "../../apps/worker/demo/run.ts"
 import { demoDataSeed } from "../../apps/worker/demo/reset.ts"
-import { enqueueSignInLinkMail } from "@server/jobs/sign-in-link-mail.ts"
 import { sendEmailCode } from "@server/auth/email-verification.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
@@ -736,12 +735,12 @@ Deno.test("what a visitor can start with a seeded address between the wipe and t
     const marker = populationMarker(options.dataSeed)
     const visitors: number[] = []
     for (const [index, email] of [marker, DEV_ADMIN_EMAIL].entries()) {
-      // Every way in that takes an address waits for a code or a link mailed there, and nobody
-      // reads mail at `example.com`: a password sign-up, a sign-in link, and a signed-in
+      // Every way in that takes an address waits for a code mailed there, and nobody reads mail
+      // at `example.com`: a password sign-up, a sign-in code, and a signed-in
       // visitor's address change with its code sent.
       expect(await inRequest(sql, (signIn, c) => signIn.requestSignUp(c, email, PASSWORD)))
         .toBe(true)
-      await enqueueSignInLinkMail(sql, email, null)
+      await inRequest(sql, (signIn, c) => signIn.requestSignInCode(c, email, null))
       const visitor = await signUpVisitor(sql, `visitor${index}@example.net`)
       visitors.push(visitor)
       expect(
