@@ -507,17 +507,20 @@ export default {
     "Se publica en <path>{path}</path> y se añade al feed RSS y al mapa del sitio.",
   "AdminBlogDialogs.mailingList": "Lista de correo",
   "AdminBlogDialogs.alsoEmail": {
-    "one": "Enviar también esta entrada por correo a {count} suscriptor confirmado",
-    "many": "Enviar también esta entrada por correo a {count} suscriptores confirmados",
-    "other": "Enviar también esta entrada por correo a {count} suscriptores confirmados",
+    "one":
+      "Enviar también esta entrada por correo a {count} suscriptor confirmado (idioma: <language>{language}</language>)",
+    "many":
+      "Enviar también esta entrada por correo a {count} suscriptores confirmados (idioma: <language>{language}</language>)",
+    "other":
+      "Enviar también esta entrada por correo a {count} suscriptores confirmados (idioma: <language>{language}</language>)",
   },
   "AdminBlogDialogs.alsoEmailList": {
     "one":
-      "Enviar también esta entrada por correo a {count} suscriptor confirmado de <list>{list}</list>",
+      "Enviar también esta entrada por correo a {count} suscriptor confirmado de <list>{list}</list> (idioma: <language>{language}</language>)",
     "many":
-      "Enviar también esta entrada por correo a {count} suscriptores confirmados de <list>{list}</list>",
+      "Enviar también esta entrada por correo a {count} suscriptores confirmados de <list>{list}</list> (idioma: <language>{language}</language>)",
     "other":
-      "Enviar también esta entrada por correo a {count} suscriptores confirmados de <list>{list}</list>",
+      "Enviar también esta entrada por correo a {count} suscriptores confirmados de <list>{list}</list> (idioma: <language>{language}</language>)",
   },
   "AdminBlogDialogs.sentOnce":
     "Se envía una sola vez, cuando se publica la entrada. Después no se puede anular el envío.",
@@ -525,6 +528,8 @@ export default {
     "El boletín está desactivado, así que esta entrada no se enviará a la lista <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly":
     "Solo la reciben los suscriptores que se apuntaron en el idioma de la entrada.",
+  "AdminBlogDialogs.noReaders":
+    "Aún no hay suscriptores confirmados en <language>{language}</language>, así que esta entrada no se puede enviar por correo.",
   "AdminBlogEditor.leaveMessage": "Perderás los cambios de esta entrada.",
   "AdminBlogEditor.doneScheduled": "Programada para el {at}.",
   "AdminBlogEditor.donePublished": "Publicada.",
@@ -641,6 +646,9 @@ export default {
   "AdminBlogEditor.topic": "Tema",
   "AdminBlogEditor.topicHint":
     "Agrupa las entradas en la página del blog. Elige uno o escribe uno nuevo.",
+  "AdminBlogEditor.authorUrl": "Enlace del autor",
+  "AdminBlogEditor.authorUrlHint":
+    "El nombre del autor en la entrada enlazará aquí, por ejemplo a su página «Sobre mí», para que lectores y buscadores sepan quién la escribió. Déjalo vacío si no quieres enlace.",
   "AdminBlogEditor.coverUrl": "URL de la imagen de portada",
   "AdminBlogEditor.coverUrlHint":
     "Un enlace https:// completo a una imagen horizontal de 1200×630, alojada en un servidor que permita mostrarla en otros sitios. Déjalo vacío si no quieres portada.",
@@ -1911,6 +1919,8 @@ export default {
   "AdminBlogEditor.language": "Idioma",
   "AdminBlogEditor.languageHint":
     "El idioma en que está escrita la entrada. El sitio web la muestra en el blog de ese idioma.",
+  "AdminBlogEditor.languageMoves":
+    "Al guardar, la entrada pasa a <path>{path}</path>. La dirección anterior redirige allí.",
   "AdminBlogEditor.translationOf": "Traducción de",
   "AdminBlogEditor.translationOfHint":
     "La entrada que esta traduce. Cuando ambas estén publicadas, el sitio web las enlaza como versiones en distintos idiomas.",

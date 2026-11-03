@@ -12,6 +12,7 @@ tldr:
   - Seed 自带带角色的群组、按成员计费的 Stripe 订阅、管理后台和包括简体中文在内的九种语言，部署在你自己的服务器上。
 topic: 问答
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---

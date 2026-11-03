@@ -230,6 +230,7 @@ const saved: BlogPost = {
   contentUpdatedAt: null,
   authorId: 7,
   authorName: "Ann",
+  authorUrl: null,
   newsletterList: null,
   newsletterSentAt: null,
   newsletterRecipients: null,
@@ -369,6 +370,43 @@ describe("the blog editor", () => {
     expect(find("[data-e2e=admin-blog-words]").textContent).toBe("1 word · 1 min read")
   })
 
+  it("passes a typed author link up, and shows its error under the field and focuses it (#730)", async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminBlogEditorScreen {...editorProps(calls)} />)
+    const field = find<HTMLInputElement>("[data-e2e=admin-blog-author-url]")
+    expect(field.type).toBe("url")
+    expect(document.querySelector(`label[for="${field.id}"]`)?.textContent).toBe("Author link")
+    await type("[data-e2e=admin-blog-author-url]", "https://example.com/about")
+    expect(calls).toEqual([
+      ["change", { ...blogDraftOf(saved), authorUrl: "https://example.com/about" }],
+    ])
+    await submit("[data-e2e=admin-blog-author-url]")
+    expect(calls.at(-1)).toEqual(["save"])
+
+    await mount(
+      <AdminBlogEditorScreen
+        {...editorProps([], { errors: { authorUrl: "AdminBlogEditor.httpsCover" } })}
+      />,
+    )
+    await settle()
+    const refused = find<HTMLInputElement>("[data-e2e=admin-blog-author-url]")
+    expect(document.activeElement).toBe(refused)
+    const described = refused.getAttribute("aria-describedby") ?? ""
+    const error = described.split(" ").map((id) => document.getElementById(id)?.textContent)
+    expect(error).toContain("Start the link with https://.")
+  })
+
+  it("shows a saved author link in its field, and an empty field for none (#730)", async () => {
+    await mount(
+      <AdminBlogEditorScreen
+        {...editorProps([], { post: { ...saved, authorUrl: "https://example.com/about" } })}
+      />,
+    )
+    expect(find<HTMLInputElement>("[data-e2e=admin-blog-author-url]").value)
+      .toBe("https://example.com/about")
+    expect(blogDraftOf(saved).authorUrl).toBe("")
+  })
+
   it("opens the folded settings and focuses the first field in error", async () => {
     await mount(<AdminBlogEditorScreen {...editorProps([])} />)
     expect(find("[data-e2e=admin-blog-settings-toggle]").getAttribute("aria-expanded"))
@@ -463,7 +501,9 @@ describe("the blog editor", () => {
       "[data-e2e=admin-blog-email] input, input[data-e2e=admin-blog-email]",
     )
     expect(email.checked).toBe(false)
-    expect(document.body.textContent).toContain("Also email this post to 12 confirmed subscribers")
+    expect(document.body.textContent).toContain(
+      "Also email this post to 12 confirmed subscribers in English",
+    )
     await clickOn(button("Publish"))
     expect(calls).toEqual([["publish", { at: null, list: null }]])
     await clickOn(email)
@@ -472,10 +512,19 @@ describe("the blog editor", () => {
     expect(calls.at(-1)).toEqual(["publish", { at: null, list: "news" }])
   })
 
-  it("counts only the subscribers of the post's language as the issue's readers, and says so (#527)", async () => {
+  it("counts only the subscribers of the post's language as the issue's readers, and names it (#527, #530)", async () => {
     const value = { ...blogDraftOf(saved), language: "de" as const }
     await mount(<AdminBlogEditorScreen {...editorProps([], { dialog: "publish", value })} />)
-    expect(document.body.textContent).toContain("Also email this post to 3 confirmed subscribers")
+    expect(document.body.textContent).toContain(
+      "Also email this post to 3 confirmed subscribers in Deutsch",
+    )
+    expect(find("dialog[open] span[lang=de]").textContent).toBe("Deutsch")
+    // The checkbox's label is a flex row: the sentence must be one item, or its words spread out.
+    const label = find("dialog[open] span[lang=de]").closest("label")!
+    expect([...label.childNodes].map((node) => node.nodeName)).toEqual(["INPUT", "SPAN"])
+    expect(label.children[1].textContent).toBe(
+      "Also email this post to 3 confirmed subscribers in Deutsch",
+    )
     expect(find("dialog[open]").textContent).toContain(`It goes live at /de/blog/${value.slug}`)
     await clickOn(
       find("[data-e2e=admin-blog-email] input, input[data-e2e=admin-blog-email]"),
@@ -484,13 +533,23 @@ describe("the blog editor", () => {
       "Only subscribers who signed up in the post's language get it.",
     )
     expect(button("Publish and email 3")).toBeTruthy()
+  })
 
+  it("offers no email to a language with no confirmed subscribers, and publishes without one (#530)", async () => {
+    const calls: unknown[][] = []
+    const value = { ...blogDraftOf(saved), language: "es" as const }
     await mount(
       <AdminBlogEditorScreen
-        {...editorProps([], { dialog: "publish", value: { ...value, language: "es" } })}
+        {...editorProps(calls, { post: scheduled, dialog: "publish-now", value })}
       />,
     )
-    expect(document.body.textContent).toContain("Also email this post to 0 confirmed subscribers")
+    expect(has("[data-e2e=admin-blog-email]")).toBe(false)
+    expect(document.body.textContent).not.toContain("Also email")
+    expect(find("[data-e2e=admin-blog-email-none]").textContent).toBe(
+      "No confirmed subscribers in Español yet, so this post can't be emailed.",
+    )
+    await clickOn(button("Publish"))
+    expect(calls).toEqual([["publish", { at: null, list: null }]])
   })
 
   it("keeps a scheduled post's list when it is published now or moved, unless unticked", async () => {
@@ -583,6 +642,43 @@ describe("the blog editor", () => {
       />,
     )
     expect(has("[data-e2e=admin-blog-email]")).toBe(false)
+  })
+
+  it("names the address that stops working in the post's own language when its URL changes (#530)", async () => {
+    const live: BlogPost = {
+      ...saved,
+      language: "de",
+      status: "published",
+      publishAt: "2026-10-01T09:00:00.000Z",
+      publishedAt: "2026-10-01T09:00:00.000Z",
+    }
+    // The draft's language is not saved yet: the address that breaks is the saved one's.
+    const value = { ...blogDraftOf(live), language: "es" as const }
+    await mount(
+      <AdminBlogEditorScreen {...editorProps([], { post: live, value, dialog: "change-url" })} />,
+    )
+    expect(find("dialog[open]").textContent).toContain(
+      "Links to /de/blog/jobs-explained stop working.",
+    )
+  })
+
+  it("says where a published post moves when its language changes, and nothing for a draft (#530)", async () => {
+    const live: BlogPost = {
+      ...saved,
+      status: "published",
+      publishAt: "2026-10-01T09:00:00.000Z",
+      publishedAt: "2026-10-01T09:00:00.000Z",
+    }
+    const value = { ...blogDraftOf(live), language: "de" as const }
+    await mount(<AdminBlogEditorScreen {...editorProps([], { post: live, value })} />)
+    expect(find("[data-e2e=admin-blog-language-moves]").textContent).toBe(
+      "Saving moves the post to /de/blog/jobs-explained. Its old address redirects there.",
+    )
+
+    await mount(<AdminBlogEditorScreen {...editorProps([], { post: live })} />)
+    expect(has("[data-e2e=admin-blog-language-moves]")).toBe(false)
+    await mount(<AdminBlogEditorScreen {...editorProps([], { value })} />)
+    expect(has("[data-e2e=admin-blog-language-moves]")).toBe(false)
   })
 
   it("confirms a delete in a dialog that names the post", async () => {
@@ -805,11 +901,13 @@ describe("the editor's rules", () => {
       slug: "Bad Slug",
       description: "D",
       coverUrl: "http://example.com/a.png",
+      authorUrl: "javascript:alert(1)",
     }
     expect(blogDraftWords(draft)).toEqual({
       slug: "Use lowercase letters, digits and hyphens only.",
       coverUrl: "Start the link with https://.",
       coverAlt: "Describe the cover image.",
+      authorUrl: "Start the link with https://.",
     })
     const ok = { ...emptyBlogDraft(), title: "T", slug: "t", description: "D" }
     expect(blogDraftWords(ok)).toEqual({})

@@ -12,6 +12,7 @@ tldr:
   - Seed apporte des groupes avec rôles, la facturation Stripe par membre, un panneau d'administration et neuf langues sur votre propre serveur.
 topic: Questions
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---

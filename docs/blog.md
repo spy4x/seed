@@ -46,7 +46,12 @@ Every post has a `language`, one of the languages the apps ship (`LANGUAGES`), a
 post it translates in `translation_of` (#527). A translation names the original, never another
 translation, and in another language; a post has at most one translation per language. The
 editor's Language and "Translation of" fields set both; anything else is refused with
-`TRANSLATION_INVALID`. Deleting the original keeps its translations as posts of their own.
+`TRANSLATION_INVALID`. A save that leaves out `language` or `translationOf` keeps the post's own
+(#530). The check reads the original under a share lock, so two saves at once cannot build a chain
+of translations. Deleting the original keeps its translations linked: the one in the main
+language, else the oldest, becomes the original, and the others translate it (#530). Changing a
+published post's language moves its address; the editor says where, and the old address
+redirects there.
 
 A post lives at its own language's address: `/blog/<slug>` in the main language, `/<language>/blog/<slug>`
 in any other (`blogPostPath`). Its address in another language answers 301 to that one. Slugs are
@@ -63,7 +68,8 @@ the one of the page they signed up on (`subscribers.language`); one with none, s
 from before languages existed, counts as the main language's. The issue stores its language
 (`subscriber_issue_content.language`), the send job mails only those subscribers, and the button
 label and the footer come from the mail catalog in that language, so nobody gets a post in a
-language they did not sign up in. The publish dialog counts only those subscribers. An issue
+language they did not sign up in. The publish dialog counts only those subscribers and names the
+language; with none, it offers no email (#530). An issue
 queued with `deno task subscribers:send` has no language and goes to the whole list.
 
 A post is emailed **once ever**. The job sets `newsletter_sent_at` and `newsletter_recipients` (the
@@ -102,11 +108,18 @@ answers 404 "This post is not here". With no live post, `/blog` says so and keep
 results, and the Blog link, the RSS link, the sitemap entries and the `llms.txt` section stay
 hidden; the website asks the API at most once a minute whether a post is live
 (`blogLinkMiddleware`). Each post page carries `BlogPosting` and `BreadcrumbList` JSON-LD and
-`og:type` `article`. Its `inLanguage` is the post's language, and the page names its live
-translations as `hreflang` alternates; a post with none names no alternate. The blog index of a
-language names the indexes of the other languages that have a live post. The Blog link shows on a
-language's pages only while that language has one, and the sitemap lists each language's index
-and each post once, at its own address.
+`og:type` `article`. A post with an author link (`author_url`, the editor's "Author link") shows
+the author's name as a link to it with `rel="author"`, and its `BlogPosting` author carries the
+link as `url`; a link on the site author's own domain (`AUTHOR_URL`) adds the `@id` of
+`PERSON_JSON_LD`, so the post and the author's own site name one person. Its `inLanguage` is the
+post's language, and the page names its live translations as `hreflang` alternates and links them
+by name under the byline ("Also in"); a post with none names neither. The blog index of a language
+names the indexes of the other languages that have a live post, and the language links send a
+language without one to its home page, never to its empty blog (#530). A post in a language the
+apps no longer ship is left out of every public read, so dropping a language from `LANGUAGES` hides
+its posts instead of failing the blog. The Blog link shows on a language's pages only while that
+language has one, and the sitemap lists each language's index and each post once, at its own
+address.
 
 The Lighthouse run (`deno task lighthouse`) measures `/blog` and Seed's post
 `welcome-to-the-seed-blog`. It needs no database: `apps/mpa/lighthouse/blog-api.ts` answers the

@@ -391,8 +391,8 @@ AdminBlog.submit	49c266baaaa70981
 AdminBlog.subtitle	0924087be40fb003
 AdminBlog.title	8c6bc099534a0251
 AdminBlogDialogs.addSlug	02839bf12c2dca7f
-AdminBlogDialogs.alsoEmail	ec3e6482a34ba5e9
-AdminBlogDialogs.alsoEmailList	2d79825ab8a57dcb
+AdminBlogDialogs.alsoEmail	438e397a38aaf08b
+AdminBlogDialogs.alsoEmailList	57f7d01da608a3d6
 AdminBlogDialogs.cancel	19766ed6ccb2f4a3
 AdminBlogDialogs.changeUrl	fc1a80e1869c826c
 AdminBlogDialogs.changeUrlTitle	414abf972fef276f
@@ -410,6 +410,7 @@ AdminBlogDialogs.liveOnItsOwn	9870ccfb4d9734fc
 AdminBlogDialogs.mailingList	13f40df7d6c966f0
 AdminBlogDialogs.newSlug	17fe8bbd217cf797
 AdminBlogDialogs.newsletterOff	f7982fe12dec8dcf
+AdminBlogDialogs.noReaders	028eda9c66f789db
 AdminBlogDialogs.now	fe18013d93d22f4f
 AdminBlogDialogs.postLanguageOnly	ab898a904b1b1e75
 AdminBlogDialogs.publish	859390eb495b2ead
@@ -437,6 +438,8 @@ AdminBlogEditor.addPoint	71c21386f37fcf2c
 AdminBlogEditor.addSlug	02839bf12c2dca7f
 AdminBlogEditor.addTitle	399c6d6930d36e0f
 AdminBlogEditor.allPosts	3a2e5c2c34923fd5
+AdminBlogEditor.authorUrl	98e8d7a3950491eb
+AdminBlogEditor.authorUrlHint	6e93b538c88f21eb
 AdminBlogEditor.back	69f7dcf78f3c3cd6
 AdminBlogEditor.bodyHint	faf9a03ce812c730
 AdminBlogEditor.bodyHintFigures	3c7e543ffca20a1e
@@ -475,6 +478,7 @@ AdminBlogEditor.keyPoints	c925a0fbcc77e84b
 AdminBlogEditor.keyPointsHint	33f17428f5a4d128
 AdminBlogEditor.language	a4fe65264ef7dbb3
 AdminBlogEditor.languageHint	e7d7c7caf09f54b5
+AdminBlogEditor.languageMoves	2d9f36eb3dd76a30
 AdminBlogEditor.leaveMessage	06f6c809c88deab3
 AdminBlogEditor.loadError	e717d7a7a5450cdf
 AdminBlogEditor.loading	07b010c6a2dcc943

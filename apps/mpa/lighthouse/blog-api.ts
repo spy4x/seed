@@ -34,6 +34,7 @@ const posts: PublicBlogPost[] = published
       segments: body.segments,
       headings: body.headings,
       authorName: seed.author,
+      authorUrl: fields.authorUrl,
       translations: published
         .filter((other) =>
           other !== seed &&

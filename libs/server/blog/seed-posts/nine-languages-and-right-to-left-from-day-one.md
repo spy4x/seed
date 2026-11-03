@@ -11,6 +11,7 @@ tldr:
   - Adding a tenth language is one list entry, one file per catalog and a few loader lines.
 topic: Deep dive
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z
 newsletter: false
 ---

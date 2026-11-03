@@ -12,6 +12,7 @@ tldr:
   - Stripe не работает с компаниями из России, и это касается почти всех шаблонов из списка.
 topic: Вопросы
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
 newsletter: false
 ---

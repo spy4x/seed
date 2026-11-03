@@ -482,15 +482,19 @@ export default {
     "<path>{path}</path>で公開され、RSSフィードとサイトマップに追加されます。",
   "AdminBlogDialogs.mailingList": "メーリングリスト",
   "AdminBlogDialogs.alsoEmail": {
-    "other": "確認済みの購読者{count}人にもこの記事をメールで送る",
+    "other":
+      "確認済みの購読者{count}人（言語：<language>{language}</language>）にもこの記事をメールで送る",
   },
   "AdminBlogDialogs.alsoEmailList": {
-    "other": "<list>{list}</list>の確認済みの購読者{count}人にもこの記事をメールで送る",
+    "other":
+      "<list>{list}</list>の確認済みの購読者{count}人（言語：<language>{language}</language>）にもこの記事をメールで送る",
   },
   "AdminBlogDialogs.sentOnce": "記事の公開時に一度だけ送信されます。送信は取り消せません。",
   "AdminBlogDialogs.newsletterOff":
     "ニュースレターがオフのため、この記事は<list>{list}</list>リストへ送信されません。",
   "AdminBlogDialogs.postLanguageOnly": "記事と同じ言語で登録した購読者にのみ届きます。",
+  "AdminBlogDialogs.noReaders":
+    "<language>{language}</language>の確認済みの購読者はまだいないため、この記事はメールで送れません。",
   "AdminBlogEditor.leaveMessage": "この記事への変更は失われます。",
   "AdminBlogEditor.doneScheduled": "{at}に公開を予約しました。",
   "AdminBlogEditor.donePublished": "公開しました。",
@@ -596,6 +600,9 @@ export default {
   "AdminBlogEditor.topic": "トピック",
   "AdminBlogEditor.topicHint":
     "ブログページで記事をまとめる単位です。一覧から選ぶか、新しく入力してください。",
+  "AdminBlogEditor.authorUrl": "著者のリンク",
+  "AdminBlogEditor.authorUrlHint":
+    "記事に表示される著者名のリンク先です。「自己紹介」ページなどを指定すると、読者や検索エンジンに誰が書いたかが伝わります。リンクが不要なら空欄のままにします。",
   "AdminBlogEditor.coverUrl": "カバー画像のURL",
   "AdminBlogEditor.coverUrlHint":
     "横長の画像（1200×630）へのhttps://から始まる完全なリンク。ほかのサイトでの表示を許可しているホストのものを指定してください。カバーなしにする場合は空欄のままにします。",
@@ -1741,6 +1748,8 @@ export default {
   "AdminBlogEditor.language": "言語",
   "AdminBlogEditor.languageHint":
     "記事を書いた言語です。サイトではその言語のブログに掲載されます。",
+  "AdminBlogEditor.languageMoves":
+    "保存すると、記事は<path>{path}</path>に移動します。古いアドレスからはそこへリダイレクトされます。",
   "AdminBlogEditor.translationOf": "翻訳元",
   "AdminBlogEditor.translationOfHint":
     "この記事の翻訳元となる記事です。両方が公開されると、サイトで言語版として相互にリンクされます。",

@@ -865,6 +865,7 @@ export default {
   "Blog.ctaTitle": "Mira {site} funcionando en un minuto",
   "Blog.published": "Publicado el <time>{date}</time>",
   "Blog.updated": "· Actualizado el <time>{date}</time>",
+  "Blog.alsoIn": "También disponible en: <links></links>",
   "Blog.minutes": {
     "one": "· {count} min de lectura",
     "many": "· {count} min de lectura",

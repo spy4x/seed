@@ -12,6 +12,7 @@ tldr:
   - Ambos cobran solo con Stripe, que opera en España y México pero no en Argentina.
 topic: Preguntas
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---
