@@ -959,6 +959,12 @@ CREATE TABLE blog_posts (
     -- #527: the post's language, and the post it translates. See 2026_12_10_0001_blog_language.sql.
     language TEXT NOT NULL,
     translation_of UUID REFERENCES blog_posts(id) ON DELETE SET NULL,
+    -- #416: the reading minutes of `body_md`. See 2026_12_12_0001_blog_reading_minutes.sql.
+    reading_minutes INT4 GENERATED ALWAYS AS (
+        GREATEST(1, round(regexp_count(
+            body_md, '[^\t\n\v\f\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+'
+        ) / 230.0))::int4
+    ) STORED,
     CONSTRAINT blog_posts_slug_unique UNIQUE (slug),
     CONSTRAINT blog_posts_slug_check CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
     CONSTRAINT blog_posts_status_check CHECK (status IN ('draft', 'scheduled', 'published')),
