@@ -453,6 +453,12 @@ describe("the public website", () => {
     expect(linkNamed(header, "Docs")).not.toContain(`aria-current="page"`)
   })
 
+  it("links the home page's quick start to the Get started guide", async () => {
+    const { html } = await page("/")
+    const link = /<a [^>]*data-e2e="home-get-started"[^>]*>/.exec(html)?.[0]
+    expect(hrefOf(link)).toBe("/docs/get-started")
+  })
+
   it("marks the header's Hire me as leaving the site: an icon after its label, and words for a screen reader", async () => {
     const header = element((await page("/")).html, "header")!
     const inner = (href: string) =>
