@@ -12,6 +12,7 @@ tldr:
   - Pegasus の翻訳は仕組みがあるものの、公式ドキュメントによると UI の文言はまだ全部が翻訳対象になっていません。
 topic: 質問
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---

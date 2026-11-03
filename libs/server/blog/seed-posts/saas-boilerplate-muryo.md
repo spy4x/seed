@@ -12,6 +12,7 @@ tldr:
   - Seedはロール付きグループ、メンバー単位のStripe課金、管理画面、9言語を自分のサーバーで動かせます。
 topic: 質問
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---

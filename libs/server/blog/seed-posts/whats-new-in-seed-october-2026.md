@@ -10,6 +10,7 @@ tldr:
   - Nine languages, an offline app, an admin panel on its own host and a public website arrived.
 topic: Changelog
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T21:00:00Z
 newsletter: false
 ---
