@@ -130,8 +130,9 @@ deno task operator:create <address>
 - **Replace** the demo and website links, the CI badge, the author section and the admin video
   link in `README.md`.
 - **Set** the licence holder in `LICENSE`.
-- **Keep** `AGENTS.md` and add the product's own rules to it. The sections that hold for Seed's
-  template only live in `AGENTS.seed.md`.
+- **Replace** `AGENTS.md` with the product's own, as
+  [step 3](products.md#start-a-product) says: it applies Seed's `AGENTS.md` except the sections
+  "The live demo is not production" and "Financy", which hold for the template only.
 
 ## Next
 
