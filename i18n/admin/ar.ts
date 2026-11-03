@@ -662,6 +662,9 @@ export default {
   "AdminBlogEditor.addPoint": "إضافة نقطة",
   "AdminBlogEditor.topic": "الموضوع",
   "AdminBlogEditor.topicHint": "يجمع التدوينات في صفحة المدونة. اختر موضوعًا أو اكتب موضوعًا جديدًا.",
+  "AdminBlogEditor.authorUrl": "رابط الكاتب",
+  "AdminBlogEditor.authorUrlHint":
+    "سيصبح اسم الكاتب في التدوينة رابطًا إلى هذه الصفحة، مثل صفحة «من أنا»، ليعرف القرّاء ومحركات البحث من كتبها. اتركه فارغًا إن لم ترد رابطًا.",
   "AdminBlogEditor.coverUrl": "رابط صورة الغلاف",
   "AdminBlogEditor.coverUrlHint":
     "رابط كامل يبدأ بـ https:// لصورة عريضة بمقاس 1200×630، على خادم يسمح بعرضها في مواقع أخرى. اتركه فارغًا إن لم ترد غلافًا.",

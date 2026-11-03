@@ -230,6 +230,7 @@ const saved: BlogPost = {
   contentUpdatedAt: null,
   authorId: 7,
   authorName: "Ann",
+  authorUrl: null,
   newsletterList: null,
   newsletterSentAt: null,
   newsletterRecipients: null,
@@ -367,6 +368,43 @@ describe("the blog editor", () => {
     const one = { ...empty, bodyMd: "Hello" }
     await mount(<AdminBlogEditorScreen {...editorProps([], { post: null, value: one })} />)
     expect(find("[data-e2e=admin-blog-words]").textContent).toBe("1 word · 1 min read")
+  })
+
+  it("passes a typed author link up, and shows its error under the field and focuses it (#730)", async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminBlogEditorScreen {...editorProps(calls)} />)
+    const field = find<HTMLInputElement>("[data-e2e=admin-blog-author-url]")
+    expect(field.type).toBe("url")
+    expect(document.querySelector(`label[for="${field.id}"]`)?.textContent).toBe("Author link")
+    await type("[data-e2e=admin-blog-author-url]", "https://example.com/about")
+    expect(calls).toEqual([
+      ["change", { ...blogDraftOf(saved), authorUrl: "https://example.com/about" }],
+    ])
+    await submit("[data-e2e=admin-blog-author-url]")
+    expect(calls.at(-1)).toEqual(["save"])
+
+    await mount(
+      <AdminBlogEditorScreen
+        {...editorProps([], { errors: { authorUrl: "AdminBlogEditor.httpsCover" } })}
+      />,
+    )
+    await settle()
+    const refused = find<HTMLInputElement>("[data-e2e=admin-blog-author-url]")
+    expect(document.activeElement).toBe(refused)
+    const described = refused.getAttribute("aria-describedby") ?? ""
+    const error = described.split(" ").map((id) => document.getElementById(id)?.textContent)
+    expect(error).toContain("Start the link with https://.")
+  })
+
+  it("shows a saved author link in its field, and an empty field for none (#730)", async () => {
+    await mount(
+      <AdminBlogEditorScreen
+        {...editorProps([], { post: { ...saved, authorUrl: "https://example.com/about" } })}
+      />,
+    )
+    expect(find<HTMLInputElement>("[data-e2e=admin-blog-author-url]").value)
+      .toBe("https://example.com/about")
+    expect(blogDraftOf(saved).authorUrl).toBe("")
   })
 
   it("opens the folded settings and focuses the first field in error", async () => {
@@ -805,11 +843,13 @@ describe("the editor's rules", () => {
       slug: "Bad Slug",
       description: "D",
       coverUrl: "http://example.com/a.png",
+      authorUrl: "javascript:alert(1)",
     }
     expect(blogDraftWords(draft)).toEqual({
       slug: "Use lowercase letters, digits and hyphens only.",
       coverUrl: "Start the link with https://.",
       coverAlt: "Describe the cover image.",
+      authorUrl: "Start the link with https://.",
     })
     const ok = { ...emptyBlogDraft(), title: "T", slug: "t", description: "D" }
     expect(blogDraftWords(ok)).toEqual({})
