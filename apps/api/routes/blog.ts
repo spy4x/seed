@@ -1,4 +1,4 @@
-import { Hono } from "hono"
+import { Hono, type MiddlewareHandler } from "hono"
 import type postgres from "postgres"
 import {
   BLOG_TOPIC_MAX_LENGTH,
@@ -9,7 +9,7 @@ import {
   type PublicBlogPostSummary,
 } from "@domain/blog"
 import {
-  listPublicFeed,
+  createPublicFeed,
   listPublicPosts,
   listPublicTopics,
   readPublicPost,
@@ -37,9 +37,14 @@ export interface PublicBlogReads {
  * - `GET /posts/:slug` answers one post, rendered, and up to three to read next.
  * - `GET /topics` lists the topics of live posts with their counts.
  * - `GET /feed` answers the newest posts with their full HTML, for the RSS feed.
+ *
+ * `limit` stands in front of every route: production mounts the public read limit
+ * (`createPublicReadRateLimit`), per client IP (#416).
  */
-export function createPublicBlogRoute(reads: PublicBlogReads): Hono {
-  return new Hono()
+export function createPublicBlogRoute(reads: PublicBlogReads, limit?: MiddlewareHandler): Hono {
+  const app = new Hono()
+  if (limit) app.use(`*`, limit)
+  return app
     .get(`/posts`, async (c) => {
       const topic = c.req.query(`topic`)?.trim() || null
       if (topic !== null && Array.from(topic).length > BLOG_TOPIC_MAX_LENGTH) {
@@ -57,12 +62,13 @@ export function createPublicBlogRoute(reads: PublicBlogReads): Hono {
     .get(`/feed`, async (c) => c.json({ posts: await reads.feed() }))
 }
 
-/** The reads over the app's database. */
+/** The reads over the app's database; the feed keeps its last render while no post in it changed. */
 export function createPublicBlogReads(sql: postgres.Sql): PublicBlogReads {
+  const feed = createPublicFeed(sql)
   return {
     list: (topic) => listPublicPosts(sql, topic),
     get: (slug) => readPublicPost(sql, slug),
     topics: () => listPublicTopics(sql),
-    feed: () => listPublicFeed(sql),
+    feed,
   }
 }

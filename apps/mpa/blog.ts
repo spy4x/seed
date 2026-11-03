@@ -108,8 +108,16 @@ async function read<T>(
     const body = schema(answer.body)
     if (!(body instanceof type.errors)) return body
   }
-  // The error page logs it; a 502 says the page could not get what it needed.
-  throw new HttpError(502, `The blog API answered ${answer.status} for ${path}`)
+  throw apiFailure(answer.status, path)
+}
+
+/**
+ * The error a page throws when the blog API did not answer what it needed: 429 when the API's
+ * public read limit refused the visitor (#416), so the error page says so without logging a fault,
+ * else 502, which the error page logs.
+ */
+function apiFailure(status: number, path: string): HttpError {
+  return new HttpError(status === 429 ? 429 : 502, `The blog API answered ${status} for ${path}`)
 }
 
 /** Every live post in every language, newest first. */
@@ -130,7 +138,7 @@ export async function readPost(
     const body = postAnswer(answer.body)
     if (!(body instanceof type.errors)) return body
   }
-  throw new HttpError(502, `The blog API answered ${answer.status} for ${path}`)
+  throw apiFailure(answer.status, path)
 }
 
 /** The blog's index or one post, as `sitemap.xml` and `llms.txt` list it. */

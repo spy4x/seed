@@ -611,6 +611,22 @@ describe("the RSS feed", () => {
 
     expect(status).toBe(502)
   })
+
+  it("answers 429 when the API's read limit refused the reader, for the feed and a post (#416)", async () => {
+    const refused = () =>
+      Response.json({ error: { code: `rate_limited` } }, {
+        status: 429,
+        headers: { "retry-after": `30` },
+      })
+    const { get } = await blogSite({
+      ...listing([NEWER]),
+      "/api/blog/feed": refused,
+      "/api/blog/posts/cron-jobs": refused,
+    })
+
+    expect((await get("/rss.xml")).status).toBe(429)
+    expect((await get("/blog/cron-jobs")).status).toBe(429)
+  })
 })
 
 describe("the blog in the sitemap and llms.txt", () => {
