@@ -1,4 +1,3 @@
-/// <reference lib="deno.ns" />
 /**
  * Gives a person a role: `deno task user:role <address> <viewer|operator|supervisor|administrator>`,
  * run where the database is reachable, such as the worker container
@@ -12,7 +11,8 @@
  * transaction.
  */
 import postgres from "postgres"
-import { createSqlFromEnv } from "@spy4x/server/db"
+import { createSqlFromEnv, PostgresEnvName } from "@spy4x/server/db"
+import { exitProcess, processArgs, readEnvRecord } from "@spy4x/platform/server/process"
 import { USER_ROLE_NAMES, type UserRole, userRoleNamed } from "@domain/identity"
 import { setUserRoleByAddress } from "@server/auth/admin-users.ts"
 
@@ -35,19 +35,19 @@ export function parseUserRoleArgs(
 }
 
 if (import.meta.main) {
-  const parsed = parseUserRoleArgs(Deno.args)
+  const parsed = parseUserRoleArgs(processArgs())
   if (!parsed) {
     console.error(USER_ROLE_USAGE)
-    Deno.exit(2)
+    exitProcess(2)
   }
-  const sql = createSqlFromEnv(Deno.env.toObject(), {
+  const sql = createSqlFromEnv(readEnvRecord(Object.values(PostgresEnvName)), {
     transform: postgres.camel,
     applicationName: "user-role",
     max: 1,
   })
   if (!sql) {
     console.error("❌ Missing environment variable: DB_HOST")
-    Deno.exit(1)
+    exitProcess(1)
   }
   let changed: Awaited<ReturnType<typeof setUserRoleByAddress>>
   try {
@@ -57,7 +57,7 @@ if (import.meta.main) {
   }
   if (changed === null) {
     console.error(`❌ Nobody signs in with ${parsed.address}`)
-    Deno.exit(1)
+    exitProcess(1)
   }
   console.log(
     changed.previous === parsed.role

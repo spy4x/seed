@@ -1,5 +1,6 @@
 import { entitlementsOf, UNLIMITED } from "@domain/billing"
 import { hasProvenAddress, provenAddressOwner } from "@server/auth/email-verification.ts"
+import { processEnv } from "@spy4x/platform/server/process"
 import { createMailSender, readMailSetup } from "@server/mail/mail.ts"
 import { readMailReader } from "@server/mail/reader.ts"
 import { PostgresInvitationRepository } from "@server/groups/postgres-invitation-repository.ts"
@@ -43,7 +44,7 @@ export const invitationDependencies: InvitationHandlerDependencies = {
     billingSetup.provider !== null,
   ),
   mail: {
-    sender: createMailSender(readMailSetup(Deno.env), sql),
+    sender: createMailSender(readMailSetup(processEnv), sql),
     brand: { webAppUrl: config.webAppUrl },
     byAddress: invitationRateLimits.mailByAddress,
     readerOf: (userId) => readMailReader(sql, userId),
