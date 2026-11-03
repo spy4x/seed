@@ -505,23 +505,28 @@ export default {
     "Ele vai ao ar em <path>{path}</path> e entra no feed RSS e no sitemap.",
   "AdminBlogDialogs.mailingList": "Lista de e-mails",
   "AdminBlogDialogs.alsoEmail": {
-    "one": "Enviar este post também por e-mail a {count} inscrito confirmado",
-    "many": "Enviar este post também por e-mail a {count} inscritos confirmados",
-    "other": "Enviar este post também por e-mail a {count} inscritos confirmados",
+    "one":
+      "Enviar este post também por e-mail a {count} inscrito confirmado (idioma: <language>{language}</language>)",
+    "many":
+      "Enviar este post também por e-mail a {count} inscritos confirmados (idioma: <language>{language}</language>)",
+    "other":
+      "Enviar este post também por e-mail a {count} inscritos confirmados (idioma: <language>{language}</language>)",
   },
   "AdminBlogDialogs.alsoEmailList": {
     "one":
-      "Enviar este post também por e-mail a {count} inscrito confirmado de <list>{list}</list>",
+      "Enviar este post também por e-mail a {count} inscrito confirmado de <list>{list}</list> (idioma: <language>{language}</language>)",
     "many":
-      "Enviar este post também por e-mail a {count} inscritos confirmados de <list>{list}</list>",
+      "Enviar este post também por e-mail a {count} inscritos confirmados de <list>{list}</list> (idioma: <language>{language}</language>)",
     "other":
-      "Enviar este post também por e-mail a {count} inscritos confirmados de <list>{list}</list>",
+      "Enviar este post também por e-mail a {count} inscritos confirmados de <list>{list}</list> (idioma: <language>{language}</language>)",
   },
   "AdminBlogDialogs.sentOnce":
     "Enviado uma vez só, quando o post for ao ar. Não dá para cancelar o envio.",
   "AdminBlogDialogs.newsletterOff":
     "A newsletter está desligada, então este post não será enviado à lista <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly": "Só recebe quem se inscreveu no idioma do post.",
+  "AdminBlogDialogs.noReaders":
+    "Ainda não há inscritos confirmados em <language>{language}</language>, então este post não pode ser enviado por e-mail.",
   "AdminBlogEditor.leaveMessage": "Suas alterações neste post serão perdidas.",
   "AdminBlogEditor.doneScheduled": "Agendado para {at}.",
   "AdminBlogEditor.donePublished": "Publicado.",
@@ -1901,6 +1906,8 @@ export default {
   "AdminBlogEditor.language": "Idioma",
   "AdminBlogEditor.languageHint":
     "O idioma em que o post está escrito. O site o lista no blog desse idioma.",
+  "AdminBlogEditor.languageMoves":
+    "Ao salvar, o post passa para <path>{path}</path>. O endereço antigo redireciona para lá.",
   "AdminBlogEditor.translationOf": "Tradução de",
   "AdminBlogEditor.translationOfHint":
     "O post que este traduz. Quando os dois estiverem no ar, o site liga um ao outro como versões em idiomas diferentes.",
