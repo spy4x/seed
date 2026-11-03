@@ -11,6 +11,7 @@ tldr:
   - Пришли девять языков, офлайн-приложение, админка на отдельном хосте и публичный сайт.
 topic: Что нового
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T21:00:00Z
 newsletter: false
 ---

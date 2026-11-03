@@ -102,6 +102,7 @@ function fields(slug: string, extra: Partial<BlogPostFields> = {}): BlogPostFiel
     topic: `Product`,
     coverUrl: null,
     coverAlt: null,
+    authorUrl: null,
     bodyMd: `Hello <b>there</b>.`,
     language: `en`,
     translationOf: null,
@@ -198,14 +199,15 @@ async function bySlug(sql: postgres.Sql, slug: string) {
       publishedAt: Date | null
       translationOf: string | null
       authorName: string | null
+      authorUrl: string | null
       newsletterList: string | null
       newsletterSentAt: Date | null
       version: number
       updatedAt: Date
     }[]
   >`
-    SELECT id, title, status, published_at, translation_of, author_name, newsletter_list,
-      newsletter_sent_at, version, updated_at
+    SELECT id, title, status, published_at, translation_of, author_name, author_url,
+      newsletter_list, newsletter_sent_at, version, updated_at
     FROM blog_posts WHERE slug = ${slug}
   `
   return row
@@ -863,6 +865,34 @@ Deno.test(`blog: a cover written HTTPS:// is stored, not refused by the database
   })
 })
 
+Deno.test(`blog: an author link is stored, changed and cleared, and the public post answers it (#730)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const id = uuidV7()
+    const about = `https://maya.example.org/about`
+    const created = await blog.create(id, fields(`linked`, { authorUrl: about }), maya)
+    expect(created.authorUrl).toBe(about)
+    expect((await blog.get(id))?.authorUrl).toBe(about)
+    await blog.publish(id, 1, null, null, maya)
+    expect((await readPublicPost(sql, `linked`))?.post.authorUrl).toBe(about)
+
+    const other = `https://maya.example.net/`
+    expect(
+      (await blog.update(id, 2, fields(`linked`, { authorUrl: other }), false, maya)).authorUrl,
+    )
+      .toBe(other)
+    expect((await blog.update(id, 3, fields(`linked`), false, maya)).authorUrl).toBeNull()
+    expect((await readPublicPost(sql, `linked`))?.post.authorUrl).toBeNull()
+
+    // The database refuses what the API would: a link that is not https.
+    await expect(
+      sql`UPDATE blog_posts SET author_url = 'http://maya.example.org/' WHERE id = ${id}`,
+    )
+      .rejects.toThrow(`blog_posts_author_url_check`)
+  })
+})
+
 Deno.test(`blog: lost jobs come back once`, async () => {
   await withSchema(async (sql) => {
     await upsertSeedPosts(sql, [seedPost(`live`), seedPost(`later`, { publishAt: LATER() })])
@@ -892,7 +922,11 @@ Deno.test(`blog: Seed's post files load only in demo mode, and loading twice wri
     await t.step(`demo on loads every file, with its author and no account`, async () => {
       expect(await loadDemoBlogPosts(sql, { demo: true, fs: denoFileSystem })).toBe(files.length)
       const welcome = await bySlug(sql, `welcome-to-the-seed-blog`)
-      expect(welcome).toMatchObject({ status: `published`, authorName: `Anton Shubin` })
+      expect(welcome).toMatchObject({
+        status: `published`,
+        authorName: `Anton Shubin`,
+        authorUrl: `https://antonshubin.com/about`,
+      })
       expect((await listPublicPosts(sql, null)).map((post) => post.slug)).toContain(
         `welcome-to-the-seed-blog`,
       )
@@ -921,6 +955,21 @@ Deno.test(`blog: a changed post file updates its post, and a post no file names 
       version: 2,
     })
     expect(await bySlug(sql, `kept`)).toEqual(kept)
+  })
+})
+
+Deno.test(`blog: a post file's author link is written, changed and cleared with the file (#730)`, async () => {
+  await withSchema(async (sql) => {
+    const publishAt = new Date(Date.now() - DAY_MS)
+    const linked = (authorUrl: string | null) =>
+      seedPost(`linked`, { fields: fields(`linked`, { authorUrl }), publishAt })
+    await upsertSeedPosts(sql, [linked(`https://antonshubin.com/about`)])
+    expect((await bySlug(sql, `linked`)).authorUrl).toBe(`https://antonshubin.com/about`)
+    expect(await upsertSeedPosts(sql, [linked(`https://antonshubin.com/about`)])).toBe(0)
+    expect(await upsertSeedPosts(sql, [linked(`https://example.com/about`)])).toBe(1)
+    expect((await bySlug(sql, `linked`)).authorUrl).toBe(`https://example.com/about`)
+    expect(await upsertSeedPosts(sql, [linked(null)])).toBe(1)
+    expect((await bySlug(sql, `linked`)).authorUrl).toBeNull()
   })
 })
 

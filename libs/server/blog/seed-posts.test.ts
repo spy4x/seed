@@ -48,6 +48,25 @@ describe(`Seed's post files`, () => {
     expect(post.fields.bodyMd).toBe(`The body.\n`)
   })
 
+  it(`reads an author link, and none when the file has no authorUrl`, () => {
+    const linked = parseSeedPost(...file(`hello`, [`authorUrl: https://example.com/about`]))
+    expect(linked.fields.authorUrl).toBe(`https://example.com/about`)
+    expect(parseSeedPost(...file()).fields.authorUrl).toBeNull()
+  })
+
+  it(`fails on an author link that is not https, naming the file`, () => {
+    expect(() => parseSeedPost(...file(`hello`, [`authorUrl: http://example.com/about`])))
+      .toThrow(`hello.md: authorUrl: Enter a full https:// link`)
+  })
+
+  it(`links every post by Anton Shubin to his About page`, async () => {
+    const posts = (await readSeedPosts(denoFileSystem))
+      .filter((post) => post.author === `Anton Shubin`)
+    expect(posts.length).toBeGreaterThan(0)
+    expect(posts.filter((post) => post.fields.authorUrl !== `https://antonshubin.com/about`))
+      .toEqual([])
+  })
+
   it(`reads a quoted date as well as an unquoted one`, () => {
     const post = parseSeedPost(
       ...file(`hello`, [`publishAt: "2026-12-01T09:00:00Z"`], [`publishAt`]),

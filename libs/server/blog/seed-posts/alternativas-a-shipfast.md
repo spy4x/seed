@@ -12,6 +12,7 @@ tldr:
   - Si tu producto debe hablar español, ShipFast no anuncia traducciones; Seed y ShipFree sí las traen.
 topic: Preguntas
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
 newsletter: false
 ---

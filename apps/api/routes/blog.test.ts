@@ -25,6 +25,7 @@ const post: PublicBlogPost = {
   segments: [{ kind: `html`, html: `<p>Hi</p>` }],
   headings: [],
   authorName: `Maya Chen`,
+  authorUrl: null,
   translations: [],
 }
 

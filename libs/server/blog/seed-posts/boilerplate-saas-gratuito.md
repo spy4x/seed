@@ -12,6 +12,7 @@ tldr:
   - Seed traz grupos com papéis, cobrança por membro via Stripe, painel admin e nove idiomas no seu próprio servidor.
 topic: Perguntas
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---
