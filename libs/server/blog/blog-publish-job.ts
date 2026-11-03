@@ -12,6 +12,7 @@ import {
 } from "../jobs/subscriber-issue.ts"
 import { enqueueJob, JOB_AGGREGATE, type JobHandler } from "../jobs/jobs.ts"
 import type { BlogPostRow } from "./postgres-blog-repository.ts"
+import { queueIndexNow } from "./blog-indexnow-job.ts"
 
 /** What the `blog.publish` job needs. */
 export interface BlogPublishJobDeps {
@@ -61,7 +62,8 @@ export function blogTeaserIssue(
  * 1. publishes a scheduled post whose time has come. A post unscheduled, deleted or moved to a
  *    later time since the job was queued is left alone: the job of its new time publishes it. A
  *    run before the post's time with no other run waiting (the admin's Run now) queues one for
- *    that time, so the post still goes live then.
+ *    that time, so the post still goes live then. A post it publishes gets its `blog.indexnow`
+ *    job, which tells the search engines.
  * 2. queues the post's newsletter issue when the post is live, has a list and has never been
  *    emailed, and records when and to how many confirmed subscribers. The issue goes only to the
  *    subscribers of the post's language (#527), so nobody gets a post in a language they did not
@@ -103,6 +105,7 @@ export function blogPublishJob(deps: BlogPublishJobDeps): JobHandler {
           WHERE id = ${post.id}
         `
         live = true
+        await queueIndexNow(tx, post.id)
       }
       const list = post.newsletterList
       if (!live || list === null || post.newsletterSentAt !== null) return

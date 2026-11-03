@@ -436,7 +436,7 @@ export default {
   "AdminBlogDialogs.slugRule": "只能使用小写字母、数字和连字符。",
   "AdminBlogDialogs.changeUrlTitle": "更改这篇文章的网址？",
   "AdminBlogDialogs.changeUrl": "更改网址",
-  "AdminBlogDialogs.linksBreak": "指向 <path>{path}</path> 的链接将会失效。",
+  "AdminBlogDialogs.linksRedirect": "指向 <path>{path}</path> 的链接仍然有效，会自动跳转到新网址。",
   "AdminBlogDialogs.newSlug": "新的网址别名",
   "AdminBlogDialogs.slugHint": "小写字母、数字和连字符。",
   "AdminBlogDialogs.futureTime": "请选择一个将来的时间。",
@@ -465,15 +465,19 @@ export default {
   "AdminBlogDialogs.goesLiveAt": "文章将发布在 <path>{path}</path>，并加入 RSS 订阅源和站点地图。",
   "AdminBlogDialogs.mailingList": "邮件列表",
   "AdminBlogDialogs.alsoEmail": {
-    "other": "同时将这篇文章发送给 {count} 位已确认的订阅者",
+    "other":
+      "同时将这篇文章发送给 {count} 位已确认的订阅者（语言：<language>{language}</language>）",
   },
   "AdminBlogDialogs.alsoEmailList": {
-    "other": "同时将这篇文章发送给<list>{list}</list>的 {count} 位已确认订阅者",
+    "other":
+      "同时将这篇文章发送给<list>{list}</list>的 {count} 位已确认订阅者（语言：<language>{language}</language>）",
   },
   "AdminBlogDialogs.sentOnce": "只在文章发布时发送一次，发出后无法撤回。",
   "AdminBlogDialogs.newsletterOff":
     "邮件简报已关闭，这篇文章不会发送给<list>{list}</list>邮件列表。",
   "AdminBlogDialogs.postLanguageOnly": "只有以文章语言订阅的订阅者才会收到。",
+  "AdminBlogDialogs.noReaders":
+    "还没有语言为<language>{language}</language>的已确认订阅者，因此无法通过邮件发送这篇文章。",
   "AdminBlogEditor.leaveMessage": "你对这篇文章的修改将会丢失。",
   "AdminBlogEditor.doneScheduled": "已定时在{at}发布。",
   "AdminBlogEditor.donePublished": "已发布。",
@@ -554,7 +558,8 @@ export default {
   "AdminBlogEditor.counter": "{length}/{shown}",
   "AdminBlogEditor.settings": "文章设置",
   "AdminBlogEditor.slug": "网址别名",
-  "AdminBlogEditor.slugLocked": "发布后锁定。如需修改，请使用“更改网址…”；旧链接将会失效。",
+  "AdminBlogEditor.slugLocked":
+    "发布后锁定。如需修改，请使用“更改网址…”；旧链接会自动跳转到新网址。",
   "AdminBlogEditor.slugHint": "文章网址：<path>{path}</path>。小写字母、数字和连字符。",
   "AdminBlogEditor.slugHintEmpty": "根据标题自动填写。小写字母、数字和连字符。",
   "AdminBlogEditor.description": "描述",
@@ -568,6 +573,9 @@ export default {
   "AdminBlogEditor.addPoint": "添加要点",
   "AdminBlogEditor.topic": "主题",
   "AdminBlogEditor.topicHint": "用于在博客页面上为文章分组。选择一个，或输入新的主题。",
+  "AdminBlogEditor.authorUrl": "作者链接",
+  "AdminBlogEditor.authorUrlHint":
+    "文章中的作者名会链接到这里，比如作者的“关于我”页面，让读者和搜索引擎知道是谁写的。留空则不加链接。",
   "AdminBlogEditor.coverUrl": "封面图片网址",
   "AdminBlogEditor.coverUrlHint":
     "完整的 https:// 链接，指向一张 1200×630 的横幅图片，且所在网站允许其他网站引用。留空则不显示封面。",
@@ -1673,6 +1681,7 @@ export default {
   "AdminUsers.noName": "未命名",
   "AdminBlogEditor.language": "语言",
   "AdminBlogEditor.languageHint": "文章的撰写语言。网站会把它列在对应语言的博客中。",
+  "AdminBlogEditor.languageMoves": "保存后，文章将移到<path>{path}</path>。旧地址会重定向到那里。",
   "AdminBlogEditor.translationOf": "译自",
   "AdminBlogEditor.translationOfHint":
     "这篇文章翻译自哪篇文章。两篇都发布后，网站会把它们关联为不同语言版本。",

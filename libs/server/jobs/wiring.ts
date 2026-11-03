@@ -48,7 +48,8 @@ import type { ServerFiles } from "../files/files.ts"
  * keep the person's file; without it they fail and are retried (docs/data-export.md). With
  * `telegram`, a notification also goes to the person's linked Telegram chat (#269); without it,
  * those jobs send nothing. `imageScratch` is where image processing writes its files (#464);
- * without it, those jobs fail and are retried.
+ * without it, those jobs fail and are retried. With `indexNow`, the `blog.indexnow` job tells
+ * IndexNow that a post's addresses changed (#418); without it, that job sends nothing.
  *
  * @throws Error when two jobs share a kind: one handler would silently replace the other.
  */
@@ -64,6 +65,7 @@ export function createOutboxProcessor(
   files: ServerFiles | null = null,
   telegram: JobDeps["telegram"] = null,
   imageScratch: JobDeps["imageScratch"] = null,
+  indexNow: JobDeps["indexNow"] = null,
 ): OutboxProcessor {
   const notifier = new GroupChangeNotifier(sql)
   const deps: JobDeps = {
@@ -77,6 +79,7 @@ export function createOutboxProcessor(
     files,
     telegram,
     imageScratch,
+    indexNow,
   }
   const kinds = jobs.map((job) => job.kind)
   const twice = kinds.filter((kind, index) => kinds.indexOf(kind) !== index)

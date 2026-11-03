@@ -12,6 +12,7 @@ tldr:
   - Vercel Pro и Supabase Pro для одного разработчика стоят от 45 $ в месяц, не считая расхода.
 topic: Руководства
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T12:00:00Z
 newsletter: false
 ---

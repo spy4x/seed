@@ -3,6 +3,7 @@
 // are written in English only. The frame around them is translated.
 import type { JSX } from "preact"
 import { Breadcrumbs } from "@spy4x/preact-ui/breadcrumbs"
+import { Button } from "@spy4x/preact-ui/button"
 import { API_DOCS_PATH } from "../../../api-docs.ts"
 import { DOCS_PATH, PUBLISHED_DOCS, readDoc } from "../../../docs-site.ts"
 import { DEFAULT_LANGUAGE } from "../../../languages.ts"
@@ -24,9 +25,12 @@ interface DocCard {
   summary: string
 }
 
+/** The guide the index puts first, above the groups, as the way in for a new reader. */
+export const FIRST_DOC = `get-started`
+
 /**
- * `/docs`: every published guide as a card under its group, "Use" then "Build", with the API
- * reference as the last guide to build with.
+ * `/docs`: the Get started guide first, as a band with one link, then every other published guide
+ * as a card under its group, with the API reference last under Reference.
  */
 export default define.page(function DocsIndex({ state }) {
   const { t, language, href } = useSite()
@@ -35,7 +39,7 @@ export default define.page(function DocsIndex({ state }) {
   const groups = PUBLISHED_DOCS.map((group, index) => ({
     title: group.title,
     cards: [
-      ...group.docs.map(({ slug, summary }): DocCard => ({
+      ...group.docs.filter(({ slug }) => slug !== FIRST_DOC).map(({ slug, summary }): DocCard => ({
         href: href(`${DOCS_PATH}/${slug}`),
         title: readDoc(slug, href)!.title,
         summary,
@@ -49,6 +53,7 @@ export default define.page(function DocsIndex({ state }) {
         : []),
     ],
   }))
+  const first = readDoc(FIRST_DOC, href)!
   return (
     <SiteFrame
       state={state}
@@ -88,6 +93,17 @@ export default define.page(function DocsIndex({ state }) {
               <code dir="ltr">docs</code> folder, kept in step with <code dir="ltr">main</code>.
             </p>
           </header>
+          <section
+            aria-labelledby="docs-first"
+            class="flex flex-col items-start gap-4 rounded-card border border-subtle bg-surface p-6 sm:p-8"
+            data-e2e="docs-first"
+          >
+            <h2 id="docs-first" class="text-2xl font-semibold tracking-tight">
+              New to {SITE_NAME}?
+            </h2>
+            <p class="max-w-2xl text-muted text-pretty">{first.description}</p>
+            <Button href={href(`${DOCS_PATH}/${FIRST_DOC}`)} size="lg">{first.title}</Button>
+          </section>
           {groups.map((group) => <CardGroup key={group.title} {...group} />)}
         </div>
       </div>
@@ -97,7 +113,7 @@ export default define.page(function DocsIndex({ state }) {
 
 /** One group of the index: its heading and its guides as cards. */
 function CardGroup({ title, cards }: { title: string; cards: readonly DocCard[] }): JSX.Element {
-  const id = `docs-${title.toLowerCase()}`
+  const id = `docs-${title.toLowerCase().replaceAll(` `, `-`)}`
   return (
     <section aria-labelledby={id} class="flex flex-col gap-4" data-e2e="docs-group">
       <h2 id={id} class="text-2xl font-semibold tracking-tight">{title}</h2>

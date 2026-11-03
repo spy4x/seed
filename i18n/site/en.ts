@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "No sign-up. You get a guest account with demo data, and it's wiped every night.",
   "SiteNav.features": "Features",
+  "SiteNav.docs": "Docs",
   "SiteNav.blog": "Blog",
   "SiteNav.compare": "Compare",
   "SiteNav.pricing": "Pricing",
@@ -235,6 +236,7 @@ export default {
     "<init>init</init> copies the env file and generates every secret and the web push keys; <dev>dev</dev> starts Traefik and everything else. Then open <url>http://app.localhost</url>. The <readme>README</readme> lists every setting and how to deploy.",
   "HomeQuickStart.agent": "Or ask your AI agent: <prompt></prompt>.",
   "HomeQuickStart.terminal": "Terminal",
+  "HomeQuickStart.guide": "Read the step-by-step guide",
   "HomeStatus.eyebrow": "Honest status",
   "HomeStatus.title": "Where it stands today",
   "HomeStatus.lead":
@@ -532,7 +534,7 @@ export default {
   "FeatureWebsite.fact3":
     "A newsletter with double opt-in, one-click unsubscribe and mails in the reader's language",
   "FeatureWebsite.fact4":
-    "A blog written in the admin panel, with posts in each language and their translations, topics, interactive figures readers can try, an RSS feed and article structured data",
+    "A blog written in the admin panel, with posts in each language and their translations, topics, interactive figures readers can try, an RSS feed, article structured data, old links that redirect when a post's URL changes, and an IndexNow ping so search engines hear of a new or changed post at once",
   "FeatureWebsite.fact5":
     "Contact links set in the admin panel, shown in the footer and the structured data",
   "FeatureWebsite.fact6":
@@ -837,6 +839,7 @@ export default {
   "Blog.ctaTitle": "See {site} working in a minute",
   "Blog.published": "Published <time>{date}</time>",
   "Blog.updated": "· Updated <time>{date}</time>",
+  "Blog.alsoIn": "Also in: <links></links>",
   "Blog.minutes": {
     "one": "· {count} min read",
     "other": "· {count} min read",

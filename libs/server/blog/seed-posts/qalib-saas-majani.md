@@ -12,6 +12,7 @@ tldr:
   - Stripe متاح في الإمارات، وغير متاح في السعودية ومصر والمغرب. تحقّق من بلد شركتك قبل الاختيار.
 topic: أسئلة
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---

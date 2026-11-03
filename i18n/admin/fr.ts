@@ -475,7 +475,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Utilisez uniquement des minuscules, des chiffres et des tirets.",
   "AdminBlogDialogs.changeUrlTitle": "Changer l’URL de cet article ?",
   "AdminBlogDialogs.changeUrl": "Changer l’URL",
-  "AdminBlogDialogs.linksBreak": "Les liens vers <path>{path}</path> ne fonctionneront plus.",
+  "AdminBlogDialogs.linksRedirect":
+    "Les liens vers <path>{path}</path> continuent de fonctionner : ils redirigent vers la nouvelle URL.",
   "AdminBlogDialogs.newSlug": "Nouveau slug",
   "AdminBlogDialogs.slugHint": "Minuscules, chiffres et tirets.",
   "AdminBlogDialogs.futureTime": "Choisissez une date dans le futur.",
@@ -511,16 +512,20 @@ export default {
     "Il sera en ligne à l’adresse <path>{path}</path> et rejoindra le flux RSS et le sitemap.",
   "AdminBlogDialogs.mailingList": "Liste de diffusion",
   "AdminBlogDialogs.alsoEmail": {
-    "one": "Envoyer aussi cet article par e-mail à {count} abonné confirmé",
-    "many": "Envoyer aussi cet article par e-mail à {count} abonnés confirmés",
-    "other": "Envoyer aussi cet article par e-mail à {count} abonnés confirmés",
+    "one":
+      "Envoyer aussi cet article par e-mail à {count} abonné confirmé (langue : <language>{language}</language>)",
+    "many":
+      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés (langue : <language>{language}</language>)",
+    "other":
+      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés (langue : <language>{language}</language>)",
   },
   "AdminBlogDialogs.alsoEmailList": {
-    "one": "Envoyer aussi cet article par e-mail à {count} abonné confirmé de <list>{list}</list>",
+    "one":
+      "Envoyer aussi cet article par e-mail à {count} abonné confirmé de <list>{list}</list> (langue : <language>{language}</language>)",
     "many":
-      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés de <list>{list}</list>",
+      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés de <list>{list}</list> (langue : <language>{language}</language>)",
     "other":
-      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés de <list>{list}</list>",
+      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés de <list>{list}</list> (langue : <language>{language}</language>)",
   },
   "AdminBlogDialogs.sentOnce":
     "Envoyé une seule fois, à la mise en ligne de l’article. Impossible d’annuler l’envoi.",
@@ -528,6 +533,8 @@ export default {
     "La newsletter est désactivée : cet article ne sera pas envoyé à la liste <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly":
     "Seuls les abonnés inscrits dans la langue de l’article le reçoivent.",
+  "AdminBlogDialogs.noReaders":
+    "Aucun abonné confirmé en <language>{language}</language> pour l’instant : cet article ne peut pas être envoyé par e-mail.",
   "AdminBlogEditor.leaveMessage": "Vos modifications de cet article seront perdues.",
   "AdminBlogEditor.doneScheduled": "Programmé pour le {at}.",
   "AdminBlogEditor.donePublished": "Publié.",
@@ -625,7 +632,7 @@ export default {
   "AdminBlogEditor.settings": "Paramètres de l’article",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Verrouillé après publication. Utilisez « Changer l’URL… » pour le modifier ; les anciens liens ne fonctionneront plus.",
+    "Verrouillé après publication. Utilisez « Changer l’URL… » pour le modifier ; les anciens liens redirigent vers la nouvelle.",
   "AdminBlogEditor.slugHint":
     "L’URL de l’article : <path>{path}</path>. Minuscules, chiffres et tirets.",
   "AdminBlogEditor.slugHintEmpty": "Rempli à partir du titre. Minuscules, chiffres et tirets.",
@@ -643,6 +650,9 @@ export default {
   "AdminBlogEditor.topic": "Thème",
   "AdminBlogEditor.topicHint":
     "Regroupe les articles sur la page du blog. Choisissez-en un ou saisissez-en un nouveau.",
+  "AdminBlogEditor.authorUrl": "Lien vers l’auteur",
+  "AdminBlogEditor.authorUrlHint":
+    "Le nom de l’auteur dans l’article renverra ici, par exemple vers sa page « À propos », pour que lecteurs et moteurs de recherche sachent qui l’a écrit. Laissez vide pour ne pas mettre de lien.",
   "AdminBlogEditor.coverUrl": "URL de l’image de couverture",
   "AdminBlogEditor.coverUrlHint":
     "Un lien https:// complet vers une image large, 1200×630, sur un hébergeur qui autorise son affichage sur d’autres sites. Laissez vide pour ne pas avoir de couverture.",
@@ -1926,6 +1936,8 @@ export default {
   "AdminBlogEditor.language": "Langue",
   "AdminBlogEditor.languageHint":
     "La langue dans laquelle l’article est rédigé. Le site l’affiche sur le blog de cette langue.",
+  "AdminBlogEditor.languageMoves":
+    "À l’enregistrement, l’article passe à <path>{path}</path>. L’ancienne adresse y redirige.",
   "AdminBlogEditor.translationOf": "Traduction de",
   "AdminBlogEditor.translationOfHint":
     "L’article dont celui-ci est la traduction. Le site relie les deux comme versions linguistiques dès qu’ils sont tous deux en ligne.",

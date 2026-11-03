@@ -12,6 +12,7 @@ tldr:
   - Seed läuft per Docker Compose auf Ihrem eigenen Server, Backups und Monitoring inklusive.
 topic: Fragen
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---

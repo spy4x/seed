@@ -68,6 +68,14 @@ for (const service of ["api", "worker"]) {
   })
 }
 
+// Without it the worker would never ping IndexNow, or the website would serve no key file for the
+// engines to check the pings against (docs/blog.md).
+for (const service of ["worker", "mpa"]) {
+  Deno.test(`the ${service} container receives the IndexNow key`, async () => {
+    expect(await environmentOf(service)).toContain("INDEXNOW_KEY")
+  })
+}
+
 Deno.test("the api container receives the error tracker's DSN", async () => {
   expect(await environmentOf("api")).toContain("ERROR_REPORT_DSN")
 })

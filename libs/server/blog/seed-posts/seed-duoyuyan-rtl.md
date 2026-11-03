@@ -12,6 +12,7 @@ tldr:
   - 加第十种语言，只需要在列表里加一行、每个目录加一个文件，再加几行加载代码。
 topic: 深入解析
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z
 newsletter: false
 ---

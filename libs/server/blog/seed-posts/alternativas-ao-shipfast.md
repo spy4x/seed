@@ -12,6 +12,7 @@ tldr:
   - O Seed já vem em português do Brasil, e o servidor custa um valor fixo por mês.
 topic: Perguntas
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
 newsletter: false
 ---

@@ -467,7 +467,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Nur Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogDialogs.changeUrlTitle": "URL des Beitrags ändern?",
   "AdminBlogDialogs.changeUrl": "URL ändern",
-  "AdminBlogDialogs.linksBreak": "Links auf <path>{path}</path> funktionieren dann nicht mehr.",
+  "AdminBlogDialogs.linksRedirect":
+    "Links auf <path>{path}</path> funktionieren weiter: sie leiten auf die neue URL um.",
   "AdminBlogDialogs.newSlug": "Neuer Slug",
   "AdminBlogDialogs.slugHint": "Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogDialogs.futureTime": "Wähle einen Zeitpunkt in der Zukunft.",
@@ -500,14 +501,16 @@ export default {
     "Der Beitrag erscheint unter <path>{path}</path> und landet im RSS-Feed und in der Sitemap.",
   "AdminBlogDialogs.mailingList": "Verteiler",
   "AdminBlogDialogs.alsoEmail": {
-    "one": "Beitrag auch per E-Mail an {count} bestätigten Abonnenten senden",
-    "other": "Beitrag auch per E-Mail an {count} bestätigte Abonnenten senden",
+    "one":
+      "Beitrag auch per E-Mail an {count} bestätigten Abonnenten (Sprache: <language>{language}</language>) senden",
+    "other":
+      "Beitrag auch per E-Mail an {count} bestätigte Abonnenten (Sprache: <language>{language}</language>) senden",
   },
   "AdminBlogDialogs.alsoEmailList": {
     "one":
-      "Beitrag auch per E-Mail an {count} bestätigten Abonnenten von <list>{list}</list> senden",
+      "Beitrag auch per E-Mail an {count} bestätigten Abonnenten von <list>{list}</list> (Sprache: <language>{language}</language>) senden",
     "other":
-      "Beitrag auch per E-Mail an {count} bestätigte Abonnenten von <list>{list}</list> senden",
+      "Beitrag auch per E-Mail an {count} bestätigte Abonnenten von <list>{list}</list> (Sprache: <language>{language}</language>) senden",
   },
   "AdminBlogDialogs.sentOnce":
     "Wird einmal verschickt, sobald der Beitrag erscheint. Das lässt sich nicht zurückholen.",
@@ -515,6 +518,8 @@ export default {
     "Der Newsletter ist aus, deshalb geht dieser Beitrag nicht an den Verteiler <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly":
     "Nur wer sich in der Sprache des Beitrags angemeldet hat, bekommt ihn.",
+  "AdminBlogDialogs.noReaders":
+    "Noch keine bestätigten Abonnenten mit der Sprache <language>{language}</language>, daher kann dieser Beitrag nicht per E-Mail verschickt werden.",
   "AdminBlogEditor.leaveMessage": "Deine Änderungen an diesem Beitrag gehen verloren.",
   "AdminBlogEditor.doneScheduled": "Eingeplant für {at}.",
   "AdminBlogEditor.donePublished": "Veröffentlicht.",
@@ -611,7 +616,7 @@ export default {
   "AdminBlogEditor.settings": "Einstellungen des Beitrags",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Nach der Veröffentlichung gesperrt. Ändern lässt er sich über „URL ändern …“; alte Links funktionieren dann nicht mehr.",
+    "Nach der Veröffentlichung gesperrt. Ändern lässt er sich über „URL ändern …“; alte Links leiten dann auf die neue URL um.",
   "AdminBlogEditor.slugHint":
     "Die URL des Beitrags: <path>{path}</path>. Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogEditor.slugHintEmpty":
@@ -629,6 +634,9 @@ export default {
   "AdminBlogEditor.topic": "Thema",
   "AdminBlogEditor.topicHint":
     "Ordnet Beiträge auf der Blogseite. Wähle eines aus oder tippe ein neues ein.",
+  "AdminBlogEditor.authorUrl": "Link zum Autor",
+  "AdminBlogEditor.authorUrlHint":
+    "Der Name des Autors im Beitrag verlinkt hierher, etwa auf seine „Über mich“-Seite. So sehen Leser und Suchmaschinen, wer ihn geschrieben hat. Für keinen Link einfach leer lassen.",
   "AdminBlogEditor.coverUrl": "URL des Titelbilds",
   "AdminBlogEditor.coverUrlHint":
     "Ein vollständiger https://-Link zu einem Bild im Querformat (1200 × 630) auf einem Server, der das Einbinden auf anderen Websites erlaubt. Für einen Beitrag ohne Titelbild einfach leer lassen.",
@@ -1860,6 +1868,8 @@ export default {
   "AdminBlogEditor.language": "Sprache",
   "AdminBlogEditor.languageHint":
     "Die Sprache, in der der Beitrag geschrieben ist. Die Website zeigt ihn im Blog dieser Sprache.",
+  "AdminBlogEditor.languageMoves":
+    "Beim Speichern zieht der Beitrag nach <path>{path}</path> um. Die alte Adresse leitet dorthin weiter.",
   "AdminBlogEditor.translationOf": "Übersetzung von",
   "AdminBlogEditor.translationOfHint":
     "Der Beitrag, den dieser übersetzt. Sobald beide online sind, verknüpft die Website sie als Sprachversionen.",

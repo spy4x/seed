@@ -7,6 +7,7 @@ infra/***
 # (apps/mpa/api-docs.ts, PUBLISHED_DOCS in apps/mpa/docs-site.ts).
 docs/
 docs/token-api.md
+docs/get-started.md
 docs/apps.md
 docs/products.md
 docs/start-a-product.md

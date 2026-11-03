@@ -12,6 +12,7 @@ tldr:
   - Wer Daten in der EU halten will, fährt mit einem eigenen Server einfacher als mit fünf externen Diensten.
 topic: Fragen
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
 newsletter: false
 ---

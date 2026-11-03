@@ -11,6 +11,7 @@ tldr:
   - The whole layer sits in one folder, behind one switch. A product that doesn't want it deletes the folder.
 topic: Deep dive
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T14:00:00Z
 newsletter: false
 ---
