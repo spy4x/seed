@@ -192,7 +192,7 @@ describe("signInCodeMail", () => {
   it("draws the code in a monospace box that selects whole", () => {
     const box = mail.html!.match(/<span dir="ltr" style="([^"]*)">Ab3-x_9Z<\/span>/)
     expect(box?.[1]).toContain("monospace")
-    expect(box?.[1]).toContain("user-select:all")
+    expect(box?.[1]).toMatch(/(^|;)user-select:all/)
   })
 
   it("says the code creates an account for a new address, and warns against sharing it", () => {
