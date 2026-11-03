@@ -12,6 +12,7 @@ tldr:
   - Eine zehnte Sprache ist ein Listeneintrag, eine Datei pro Katalog und ein paar Ladezeilen.
 topic: Im Detail
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z
 newsletter: false
 ---

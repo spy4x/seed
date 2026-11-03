@@ -1,6 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import {
+  BLOG_AUTHOR_URL_MAX_LENGTH,
   BLOG_TLDR_MAX,
   BlogError,
   blogSlugProblem,
@@ -39,6 +40,7 @@ describe(`parseBlogPostFields`, () => {
       tldr: [` One `, `   `, `Two`],
       coverUrl: null,
       coverAlt: `left over`,
+      authorUrl: `   `,
     })).toEqual({
       ...FIELDS,
       seoTitle: null,
@@ -46,6 +48,7 @@ describe(`parseBlogPostFields`, () => {
       tldr: [`One`, `Two`],
       coverUrl: null,
       coverAlt: null,
+      authorUrl: null,
       language: `en`,
       translationOf: null,
     })
@@ -81,6 +84,29 @@ describe(`parseBlogPostFields`, () => {
     for (const coverUrl of [`HTTPS://images.example.com/a.png`, `https:images.example.com/a.png`]) {
       expect(parseBlogPostFields({ ...FIELDS, coverUrl, coverAlt: `A chart` }).coverUrl)
         .toBe(`https://images.example.com/a.png`)
+    }
+  })
+
+  it(`stores an https author link trimmed, as the parser writes it`, () => {
+    for (const authorUrl of [`  https://example.com/about `, `HTTPS://example.com/about`]) {
+      expect(parseBlogPostFields({ ...FIELDS, authorUrl }).authorUrl)
+        .toBe(`https://example.com/about`)
+    }
+  })
+
+  it(`refuses an author link that is not https, is junk, carries credentials or is too long`, () => {
+    for (
+      const authorUrl of [
+        `http://example.com/about`,
+        `javascript:alert(1)`,
+        `example.com/about`,
+        `/about`,
+        `not a link`,
+        `https://user:secret@example.com/`,
+        `https://example.com/${`a`.repeat(BLOG_AUTHOR_URL_MAX_LENGTH)}`,
+      ]
+    ) {
+      expect(refusedField({ ...FIELDS, authorUrl })).toBe(`authorUrl`)
     }
   })
 

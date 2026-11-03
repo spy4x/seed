@@ -10,6 +10,7 @@ tldr:
   - Skip it if you want serverless functions or a hosted backend.
 topic: Seed
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T06:00:00Z
 newsletter: false
 ---

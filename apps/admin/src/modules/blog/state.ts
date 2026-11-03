@@ -134,6 +134,7 @@ function fieldsOf(draft: BlogDraft) {
     topic: draft.topic,
     coverUrl: draft.coverUrl,
     coverAlt: draft.coverAlt,
+    authorUrl: draft.authorUrl,
     bodyMd: draft.bodyMd,
     language: draft.language,
     translationOf: draft.translationOf === `` ? null : draft.translationOf,

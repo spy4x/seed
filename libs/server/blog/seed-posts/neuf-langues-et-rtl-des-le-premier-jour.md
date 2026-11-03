@@ -12,6 +12,7 @@ tldr:
   - Ajouter une dixième langue, c’est une entrée dans une liste, un fichier par catalogue et quelques lignes de chargement.
 topic: En détail
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z
 newsletter: false
 ---

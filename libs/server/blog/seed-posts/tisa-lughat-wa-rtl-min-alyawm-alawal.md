@@ -12,6 +12,7 @@ tldr:
   - إضافة لغة عاشرة تعني سطرًا في قائمة، وملفًا لكل فهرس، وبضعة أسطر للتحميل.
 topic: بالتفصيل
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z
 newsletter: false
 ---

@@ -12,6 +12,7 @@ tldr:
   - Десятый язык — это одна строка в списке, по файлу на каталог и пара строк загрузки.
 topic: Подробно
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z
 newsletter: false
 ---

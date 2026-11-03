@@ -10,6 +10,7 @@ tldr:
   - On my laptop the stack came up in 36 seconds and used 1.6 GB of memory at rest.
 topic: Guides
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
 newsletter: false
 ---

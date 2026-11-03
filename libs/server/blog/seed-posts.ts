@@ -67,6 +67,7 @@ const frontMatterSchema = type({
   "coverUrl?": `string | null`,
   "coverAlt?": `string | null`,
   author: `string`,
+  "authorUrl?": `string | null`,
   // YAML reads an unquoted timestamp as a date, a quoted one as text.
   publishAt: type(`Date`).or(`string.date.iso.parse`),
   "newsletter?": `boolean`,
@@ -99,6 +100,7 @@ export function parseSeedPost(file: string, text: string): SeedPost {
       topic: front.topic,
       coverUrl: front.coverUrl,
       coverAlt: front.coverAlt,
+      authorUrl: front.authorUrl,
       bodyMd: body.trim() + `\n`,
       translationOf: null,
     })
@@ -189,6 +191,7 @@ interface StoredPost {
   topic: string | null
   coverUrl: string | null
   coverAlt: string | null
+  authorUrl: string | null
   bodyMd: string
   language: string
   translationOf: string | null
@@ -238,9 +241,9 @@ export async function upsertSeedPosts(
     let count = 0
     for (const post of ordered) {
       const [existing] = await tx<(StoredPost & { id: string })[]>`
-        SELECT id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt, body_md,
-          language, translation_of, status, publish_at, published_at, author_name,
-          newsletter_list, newsletter_sent_at
+        SELECT id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt,
+          author_url, body_md, language, translation_of, status, publish_at, published_at,
+          author_name, newsletter_list, newsletter_sent_at
         FROM blog_posts WHERE slug = ${post.fields.slug}
         FOR UPDATE
       `
@@ -262,6 +265,7 @@ export async function upsertSeedPosts(
         topic: post.fields.topic,
         coverUrl: post.fields.coverUrl,
         coverAlt: post.fields.coverAlt,
+        authorUrl: post.fields.authorUrl,
         bodyMd: post.fields.bodyMd,
         language: post.fields.language,
         translationOf,
@@ -283,7 +287,8 @@ export async function upsertSeedPosts(
           UPDATE blog_posts SET
             title = ${w.title}, seo_title = ${w.seoTitle}, description = ${w.description},
             tldr = ${tx.array(w.tldr)}::text[], topic = ${w.topic}, cover_url = ${w.coverUrl},
-            cover_alt = ${w.coverAlt}, body_md = ${w.bodyMd}, language = ${w.language},
+            cover_alt = ${w.coverAlt}, author_url = ${w.authorUrl}, body_md = ${w.bodyMd},
+            language = ${w.language},
             translation_of = ${w.translationOf}, status = ${w.status}, publish_at = ${w.publishAt},
             published_at = ${w.publishedAt}, author_name = ${w.authorName},
             newsletter_list = ${w.newsletterList}, newsletter_sent_at = ${w.newsletterSentAt},
@@ -295,15 +300,15 @@ export async function upsertSeedPosts(
         const writtenAt = live ? post.publishAt : now
         await tx`
           INSERT INTO blog_posts (
-            id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt, body_md,
-            language, translation_of, status, publish_at, published_at, author_id, author_name,
-            newsletter_list, newsletter_sent_at, created_at, updated_at
+            id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt, author_url,
+            body_md, language, translation_of, status, publish_at, published_at, author_id,
+            author_name, newsletter_list, newsletter_sent_at, created_at, updated_at
           ) VALUES (
             ${uuidV7()}, ${w.slug}, ${w.title}, ${w.seoTitle}, ${w.description},
-            ${tx.array(w.tldr)}::text[], ${w.topic}, ${w.coverUrl}, ${w.coverAlt}, ${w.bodyMd},
-            ${w.language}, ${w.translationOf}, ${w.status}, ${w.publishAt}, ${w.publishedAt},
-            NULL, ${w.authorName}, ${w.newsletterList}, ${w.newsletterSentAt}, ${writtenAt},
-            ${writtenAt}
+            ${tx.array(w.tldr)}::text[], ${w.topic}, ${w.coverUrl}, ${w.coverAlt}, ${w.authorUrl},
+            ${w.bodyMd}, ${w.language}, ${w.translationOf}, ${w.status}, ${w.publishAt},
+            ${w.publishedAt}, NULL, ${w.authorName}, ${w.newsletterList}, ${w.newsletterSentAt},
+            ${writtenAt}, ${writtenAt}
           )
         `
       }

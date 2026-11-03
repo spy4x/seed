@@ -12,6 +12,7 @@ tldr:
   - Pegasus и Seed принимают оплату только через Stripe, а Stripe не работает с компаниями из России.
 topic: Вопросы
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---

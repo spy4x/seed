@@ -39,6 +39,7 @@ interface PostRow extends SummaryRow {
   coverUrl: string | null
   coverAlt: string | null
   authorName: string | null
+  authorUrl: string | null
 }
 
 /** The columns of a summary: never the body, which a list does not need (#416). */
@@ -95,7 +96,8 @@ export async function readPublicPost(
 ): Promise<{ post: PublicBlogPost; readNext: PublicBlogPostSummary[] } | null> {
   const [row] = await sql<PostRow[]>`
     SELECT id, translation_of, slug, language, title, seo_title, description, tldr, topic,
-      cover_url, cover_alt, body_md, published_at, content_updated_at, author_name, reading_minutes
+      cover_url, cover_alt, body_md, published_at, content_updated_at, author_name, author_url,
+      reading_minutes
     FROM blog_posts
     WHERE slug = ${slug} AND ${live(sql)}
   `
@@ -126,6 +128,7 @@ export async function readPublicPost(
       segments: body.segments,
       headings: body.headings,
       authorName: row.authorName,
+      authorUrl: row.authorUrl,
       translations: translations.map(({ language, slug }) => ({ language, slug })),
     },
     readNext: next.map(toSummary),
