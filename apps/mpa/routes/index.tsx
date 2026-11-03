@@ -182,6 +182,12 @@ function homeJsonLd(
   ]
 }
 
+/**
+ * How wide a picture in the page's column is drawn below 1024 px: the viewport less the column's
+ * gutters and the frame's borders. A phone then fetches a 640 or 800 px file, not the 1280 px one.
+ */
+const COLUMN_SIZES = `(min-width: 640px) calc(100vw - 52px), calc(100vw - 36px)`
+
 /** Preact's types lack `imagesizes`, which the HTML standard defines on a preload. */
 const PRELOAD_SIZES = { imagesizes: `960px` }
 
@@ -266,7 +272,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
                 poster={{
                   src: `/shots/notes-dark-1280.webp`,
                   srcset: shotSrcset(`notes`, `dark`, `desktop`),
-                  sizes: `(min-width: 1024px) 960px, 100vw`,
+                  sizes: `(min-width: 1024px) 960px, ${COLUMN_SIZES}`,
                   width: 1280,
                   height: 800,
                 }}
@@ -334,7 +340,7 @@ function Features(): JSX.Element {
               <Shot
                 name="profile-security"
                 alt={t.t(`HomeFeatures.signInAlt`)}
-                sizes="(min-width: 1024px) 640px, 100vw"
+                sizes={`(min-width: 1024px) 640px, ${COLUMN_SIZES}`}
               />
             }
           >
@@ -360,7 +366,7 @@ function Features(): JSX.Element {
               <FeatureLoop
                 loop="realtime"
                 caption={false}
-                sizes="(min-width: 1024px) 343px, (min-width: 640px) calc(100vw - 52px), calc(100vw - 36px)"
+                sizes={`(min-width: 1024px) 343px, ${COLUMN_SIZES}`}
               />
             }
           >
@@ -381,7 +387,7 @@ function Features(): JSX.Element {
                     <Shot
                       name="group-members"
                       alt={t.t(`HomeFeatures.groupsAlt`)}
-                      sizes="(min-width: 1024px) 1024px, 100vw"
+                      sizes={`(min-width: 1024px) 1024px, ${COLUMN_SIZES}`}
                     />
                   </div>
                 </div>
