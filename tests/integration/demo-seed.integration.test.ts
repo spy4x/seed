@@ -570,6 +570,10 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog, its o
       { posts: number }[]
     >`SELECT COUNT(*)::int AS posts FROM blog_posts`
     expect(posts).toBe(seedPosts.length)
+    const [{ redirects }] = await sql<
+      { redirects: number }[]
+    >`SELECT COUNT(*)::int AS redirects FROM blog_slug_redirects`
+    expect(redirects).toBe(1)
     const [{ links }] = await sql<
       { links: number }[]
     >`SELECT COUNT(*)::int AS links FROM contact_links`
