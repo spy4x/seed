@@ -992,6 +992,36 @@ CREATE INDEX idx_blog_posts_language_published
 -- The admin list, most recently changed first.
 CREATE INDEX idx_blog_posts_updated ON blog_posts (updated_at DESC, id DESC);
 
+-- #418: the old addresses of posts that moved. See migration 2026_12_13_0001_blog_slug_redirects.sql.
+CREATE TABLE blog_slug_redirects (
+    slug VARCHAR(100) PRIMARY KEY,
+    post_id UUID NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_blog_slug_redirects_post ON blog_slug_redirects (post_id);
+
+CREATE FUNCTION keep_blog_slug_redirect() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    DELETE FROM blog_slug_redirects WHERE slug = NEW.slug;
+    IF TG_OP = 'UPDATE' AND OLD.published_at IS NOT NULL THEN
+        INSERT INTO blog_slug_redirects (slug, post_id) VALUES (OLD.slug, NEW.id)
+        ON CONFLICT (slug) DO UPDATE SET post_id = EXCLUDED.post_id, created_at = now();
+    END IF;
+    RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER blog_posts_slug_insert
+    AFTER INSERT ON blog_posts
+    FOR EACH ROW EXECUTE FUNCTION keep_blog_slug_redirect();
+
+CREATE TRIGGER blog_posts_slug_update
+    AFTER UPDATE OF slug ON blog_posts
+    FOR EACH ROW WHEN (OLD.slug IS DISTINCT FROM NEW.slug)
+    EXECUTE FUNCTION keep_blog_slug_redirect();
+
 -- #229: a person's data exports. See migration 2026_12_01_0001_data_exports.sql.
 CREATE TABLE data_exports (
     id UUID PRIMARY KEY,
