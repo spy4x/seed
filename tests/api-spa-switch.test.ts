@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 /**
- * `SPA=false` reaches the API's gate (docs/deploy.md, "Without the SPA"): `config.ts` reads it with
+ * `SPA=false` reaches the API's gate (docs/apps.md, "Without the SPA"): `config.ts` reads it with
  * `isSpaOn`, whose parsing `apps/api/services/config-env.test.ts` checks, and `index.ts` hands it
  * to `createApiApp`, whose gate `apps/api/app.test.ts` checks. Both files run against the real
  * environment and database at import, so this reads their source instead of importing them.

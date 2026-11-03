@@ -2076,7 +2076,7 @@ export default {
   "Benchmark.noLargeBody": "Erstelle eine mit dem Generator und lade diese Seite neu:",
   "Benchmark.copyCommand": "Befehl kopieren",
   "Benchmark.noLargeFoot":
-    "Die Größen und wie du die Gruppe wieder entfernst, stehen in docs/capacity.md.",
+    "Die Größen und wie du die Gruppe wieder entfernst, stehen in docs/load-tests.md.",
   "Benchmark.lastStoppedTitle": "Der letzte Lauf stoppte bei „{measure}“",
   "Benchmark.lastStoppedBody":
     "Der Tab wurde geschlossen, bevor der Lauf endete. Meist war der Speicher oder Speicherplatz voll. Gruppe: {group}, gestartet {time}.",

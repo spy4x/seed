@@ -1,7 +1,7 @@
 /**
  * Makes a product's administrator from the server, for a product with no mail or no sign-up
  * (`SPA=false`): `deno task operator:create <address>`, run where the database is reachable, such as
- * the worker container (docs/deploy.md, "The first operator"). It asks for the password at a
+ * the worker container (docs/operator-access.md, "The first operator"). It asks for the password at a
  * prompt that shows nothing typed, twice, or reads one line from a pipe. It never takes the password
  * as an argument, where the shell history and the process list would keep it, and never prints it.
  *

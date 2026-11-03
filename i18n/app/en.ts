@@ -1961,7 +1961,7 @@ export default {
   "Benchmark.noLargeTitle": "No large group yet",
   "Benchmark.noLargeBody": "Make one with the generator, then reload this page:",
   "Benchmark.copyCommand": "Copy command",
-  "Benchmark.noLargeFoot": "The sizes and how to remove the group again are in docs/capacity.md.",
+  "Benchmark.noLargeFoot": "The sizes and how to remove the group again are in docs/load-tests.md.",
   "Benchmark.lastStoppedTitle": "The last run stopped at {measure}",
   "Benchmark.lastStoppedBody":
     "The tab closed before the run finished, which usually means it ran out of memory or storage. Group: {group}, started {time}.",

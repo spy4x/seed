@@ -2262,7 +2262,7 @@ export default {
   "Benchmark.noLargeTitle": "لا توجد مجموعة كبيرة بعد",
   "Benchmark.noLargeBody": "أنشئ واحدة بالمولّد، ثم أعد تحميل هذه الصفحة:",
   "Benchmark.copyCommand": "نسخ الأمر",
-  "Benchmark.noLargeFoot": "الأحجام وطريقة إزالة المجموعة لاحقًا موجودة في docs/capacity.md.",
+  "Benchmark.noLargeFoot": "الأحجام وطريقة إزالة المجموعة لاحقًا موجودة في docs/load-tests.md.",
   "Benchmark.lastStoppedTitle": "توقف التشغيل الأخير عند «{measure}»",
   "Benchmark.lastStoppedBody":
     "أُغلقت العلامة قبل انتهاء التشغيل، وهذا يعني عادةً نفاد الذاكرة أو المساحة. المجموعة: {group}، بدأ {time}.",

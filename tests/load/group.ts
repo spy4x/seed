@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 /**
  * `deno task load:group`: builds, removes or explains the large load-test group of one tier
- * (spy4x/seed#440). docs/capacity.md, "One large group", says what a tier holds and how to run it
+ * (spy4x/seed#440). docs/load-tests.md, "One large group", says what a tier holds and how to run it
  * against the local stack or the public demo.
  *
  * - It reads the database's name, user and password from one env file, `infra/envs/.env` unless
@@ -55,7 +55,7 @@ try {
       )
     }
     // Up to a million deleted rows stay in the indexes until autovacuum gets to them, and every
-    // search of every group pays for them meanwhile (docs/capacity.md): clean them now.
+    // search of every group pays for them meanwhile (docs/large-group.md): clean them now.
     if (groups > 0) {
       await sql`VACUUM (ANALYZE) notes, note_tags, tags, group_change_tombstones, group_members,
         audit_events, notifications, users, auth_users`

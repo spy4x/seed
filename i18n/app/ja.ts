@@ -1910,7 +1910,7 @@ export default {
   "Benchmark.noLargeBody":
     "ジェネレーターでグループを作成してから、このページを再読み込みしてください：",
   "Benchmark.copyCommand": "コマンドをコピー",
-  "Benchmark.noLargeFoot": "サイズとグループの削除方法はdocs/capacity.mdにあります。",
+  "Benchmark.noLargeFoot": "サイズとグループの削除方法はdocs/load-tests.mdにあります。",
   "Benchmark.lastStoppedTitle": "前回の実行は「{measure}」で停止しました",
   "Benchmark.lastStoppedBody":
     "実行が終わる前にタブが閉じました。多くの場合、メモリかストレージの不足が原因です。グループ：{group}、開始：{time}。",
