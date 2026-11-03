@@ -38,7 +38,6 @@ export default define.page(function App({ Component, state, url }) {
         <link
           rel="preload"
           href="/fonts/geist-mono-latin-cyrillic.var.woff2"
-          media="(min-width: 1024px)"
           as="font"
           type="font/woff2"
           crossorigin="anonymous"

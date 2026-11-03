@@ -6,10 +6,9 @@
    files `Geist-Variable.woff2` and `GeistMono-Variable.woff2`), under the SIL Open Font License
    beside them in OFL.txt. Every app serves the files itself at `/fonts/` (apps/spa/public,
    apps/admin/public, apps/mpa/static), so no page asks a font CDN, and preloads the sans
-   `-latin-cyrillic` file; the website preloads the mono one too from 1024 px, where its home page
-   shows it on the first screen. `swap` shows the text at once in "Geist Fallback", Arial scaled
-   to Geist's metrics (the values next/font computes for Geist), so the swap barely moves the
-   layout.
+   `-latin-cyrillic` file; the website preloads the mono one too, which its home page shows above
+   the fold. `swap` shows the text at once in "Geist Fallback", Arial scaled to Geist's metrics
+   (the values next/font computes for Geist), so the swap barely moves the layout.
 
    Each family is split in two by `unicode-range`, so a page downloads only what its text needs.
    The `-latin-cyrillic` file, 35 KB (sans) and 28 KB (mono) against 70, holds every letter the

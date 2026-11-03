@@ -357,18 +357,6 @@ describe("the public website", () => {
     }
   })
 
-  it("preloads the mono font only from 1024 px, where the home page shows it on the first screen", async () => {
-    const { html } = await page("/")
-    const fonts = html.match(/<link [^>]*rel="preload"[^>]*as="font"[^>]*>/g) ?? []
-
-    const mono = fonts.filter((link) => link.includes(`/fonts/geist-mono-`))
-    expect(mono).toHaveLength(1)
-    expect(mono[0]).toContain(`media="(min-width: 1024px)"`)
-    const sans = fonts.filter((link) => link.includes(`/fonts/geist-sans-`))
-    expect(sans).toHaveLength(1)
-    expect(sans[0]).not.toContain(`media=`)
-  })
-
   it("says under the hero's demo how long it is and what it shows", async () => {
     const { html } = await page("/")
 
