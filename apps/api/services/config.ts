@@ -1,8 +1,9 @@
 import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/notes"
 import { OPERATION_BUDGET, type OperationBudget } from "../middlewares/operation-rate-limits.ts"
+import { processEnv } from "@spy4x/platform/server/process"
 import { isSpaOn, readApiEnv } from "./config-env.ts"
 
-const env = readApiEnv()
+const env = readApiEnv(processEnv)
 // loadConfig names a failing variable but not the rule it broke, so this one says it outright.
 if (env.AUTH_COOKIE_SECRET.length < 32) {
   throw new Error("AUTH_COOKIE_SECRET must be at least 32 characters (openssl rand -hex 32)")
