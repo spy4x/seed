@@ -1,6 +1,12 @@
 /** How long an answer is used before the API is asked again. */
 export const API_FLAG_TTL_MS = 60_000
 
+/**
+ * How long a value that never had an answer waits before the API is asked again, such as when the
+ * website starts before the API: the Blog link appears seconds after the API is up, not a minute.
+ */
+export const API_FLAG_RETRY_MS = 5_000
+
 /** How long the API may take to answer. */
 export const API_FLAG_TIMEOUT_MS = 2_000
 
@@ -36,6 +42,8 @@ export interface ApiValueOptions<T> {
   fetch?: typeof globalThis.fetch
   now?: () => number
   ttlMs?: number
+  /** {@link API_FLAG_RETRY_MS}: the wait instead of `ttlMs` while no answer has come in yet. */
+  retryMs?: number
   timeoutMs?: number
 }
 
@@ -45,7 +53,7 @@ export type ApiFlagOptions = ApiValueOptions<boolean>
 /**
  * A fact the website asks the API at most once per `ttlMs`. When the API cannot be reached, or
  * answers something `read` does not understand, the last answer stands; before any answer the
- * value is `initial`.
+ * value is `initial`, and the API is asked again after `retryMs` instead of `ttlMs`.
  */
 export function createApiValue<T>(
   {
@@ -56,10 +64,12 @@ export function createApiValue<T>(
     fetch = globalThis.fetch,
     now = Date.now,
     ttlMs = API_FLAG_TTL_MS,
+    retryMs = API_FLAG_RETRY_MS,
     timeoutMs = API_FLAG_TIMEOUT_MS,
   }: ApiValueOptions<T>,
 ): ApiValue<T> {
   let value = initial
+  let answered = false
   let askedAt = -Infinity
   let pending: Promise<void> | null = null
 
@@ -68,8 +78,15 @@ export function createApiValue<T>(
     const timer = setTimeout(() => abort.abort(), timeoutMs)
     try {
       const response = await fetch(new URL(path, apiUrl), { signal: abort.signal })
-      const answer = response.ok ? read(await response.json()) : undefined
-      if (answer !== undefined) value = answer
+      if (!response.ok) {
+        // An unread body keeps its connection open until garbage collection.
+        await response.body?.cancel()
+        return
+      }
+      const answer = read(await response.json())
+      if (answer === undefined) return
+      value = answer
+      answered = true
     } catch {
       // The last answer stands.
     } finally {
@@ -86,7 +103,7 @@ export function createApiValue<T>(
 
   return {
     current() {
-      if (now() - askedAt >= ttlMs) void refresh()
+      if (now() - askedAt >= (answered ? ttlMs : retryMs)) void refresh()
       return value
     },
     refresh,

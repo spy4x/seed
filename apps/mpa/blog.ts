@@ -182,7 +182,8 @@ export async function readFeed(api: Api): Promise<PublicBlogFeedItem[]> {
  * header, the footer and the RSS link name the blog only where there is something to read. The
  * API is asked once before the first page, then at most once a minute in the background
  * (`createApiValue`). Until it has answered, and while it cannot be reached before its first
- * answer, the blog counts as empty.
+ * answer, the blog counts as empty, and the API is asked again every few seconds, so a website
+ * that started before the API shows the Blog link soon after the API is up.
  */
 export async function blogLinkMiddleware(
   config: Pick<MpaConfig, "apiUrl">,
