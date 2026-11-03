@@ -649,6 +649,9 @@ export default {
   "AdminBlogEditor.topic": "Thème",
   "AdminBlogEditor.topicHint":
     "Regroupe les articles sur la page du blog. Choisissez-en un ou saisissez-en un nouveau.",
+  "AdminBlogEditor.authorUrl": "Lien vers l’auteur",
+  "AdminBlogEditor.authorUrlHint":
+    "Le nom de l’auteur dans l’article renverra ici, par exemple vers sa page « À propos », pour que lecteurs et moteurs de recherche sachent qui l’a écrit. Laissez vide pour ne pas mettre de lien.",
   "AdminBlogEditor.coverUrl": "URL de l’image de couverture",
   "AdminBlogEditor.coverUrlHint":
     "Un lien https:// complet vers une image large, 1200×630, sur un hébergeur qui autorise son affichage sur d’autres sites. Laissez vide pour ne pas avoir de couverture.",

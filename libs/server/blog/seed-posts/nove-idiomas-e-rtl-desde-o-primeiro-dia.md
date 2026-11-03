@@ -12,6 +12,7 @@ tldr:
   - Um décimo idioma é uma entrada numa lista, um arquivo por catálogo e algumas linhas de carregamento.
 topic: Em detalhe
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z
 newsletter: false
 ---

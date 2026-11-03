@@ -11,6 +11,7 @@ tldr:
   - На моём ноутбуке стек поднялся за 36 секунд и в покое занял 1,6 ГБ памяти.
 topic: Руководства
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
 newsletter: false
 ---

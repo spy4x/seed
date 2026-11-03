@@ -11,6 +11,7 @@ tldr:
   - Keep Pegasus if your team writes Python or you want its AI chat and agent features.
 topic: Questions
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---

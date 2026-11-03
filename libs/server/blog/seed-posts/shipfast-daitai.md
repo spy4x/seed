@@ -12,6 +12,7 @@ tldr:
   - ShipFast は翻訳機能を掲げていません。Seed は日本語を含む 9 言語に対応しています。
 topic: 質問
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
 newsletter: false
 ---
