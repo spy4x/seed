@@ -148,7 +148,7 @@ export default {
   "HomeProof.tests": "archivos de pruebas en las apps y las bibliotecas, todos se ejecutan en CI",
   "HomeProof.licence": "licencia: sin cuenta y sin muro de pago",
   "HomeStatus.signIn":
-    "Registro, inicio de sesión, verificación del correo electrónico, restablecimiento de contraseña, inicio de sesión con Google y GitHub, llaves de acceso, enlaces mágicos y 2FA con una app de autenticación",
+    "Registro, inicio de sesión, verificación del correo electrónico, restablecimiento de contraseña, inicio de sesión con Google y GitHub, llaves de acceso, códigos de inicio de sesión por correo y 2FA con una app de autenticación",
   "HomeStatus.guests":
     "Cuentas de invitado: prueba la aplicación con un clic y conserva la cuenta añadiendo un método de inicio de sesión",
   "HomeStatus.groups": "Grupos con miembros, roles, invitaciones y traspaso de la propiedad",
@@ -206,7 +206,7 @@ export default {
   "HomeFeatures.signInAlt":
     "La página de seguridad de un perfil: la contraseña, un botón Añadir una llave de acceso, la verificación en dos pasos activada y el principio de la lista de dispositivos con sesión iniciada.",
   "HomeFeatures.signInText":
-    "Correo y contraseña con códigos de verificación, restablecimiento de contraseña, inicio de sesión con Google y GitHub, llaves de acceso, enlaces de inicio de sesión por correo, cuentas de invitado y 2FA con una app de autenticación. Sesiones que puedes ver y cerrar.",
+    "Correo y contraseña con códigos de verificación, restablecimiento de contraseña, inicio de sesión con Google y GitHub, llaves de acceso, códigos de inicio de sesión por correo, cuentas de invitado y 2FA con una app de autenticación. Sesiones que puedes ver y cerrar.",
   "HomeFeatures.billingTitle": "Facturación por miembro",
   "HomeFeatures.billingLink": "Cómo funciona la facturación",
   "HomeFeatures.billingText":
@@ -347,7 +347,7 @@ export default {
   "FeatureSignIn.nav": "Cuentas e inicio de sesión",
   "FeatureSignIn.title": "Inicio de sesión, resuelto",
   "FeatureSignIn.lead":
-    "La gente se registra con correo y contraseña y confirma el correo con un código. Puede restablecer una contraseña olvidada, continuar con Google o GitHub, entrar con una llave de acceso o recibir por correo un enlace que inicia sesión y, si hace falta, crea la cuenta. También puede probar primero la aplicación con una cuenta de invitado y añadir más tarde un método de inicio de sesión. Una app de autenticación añade la verificación en dos pasos (2FA). Cada persona ve todos los dispositivos con su sesión iniciada y puede cerrar la sesión en los demás. Cambiar un método de inicio de sesión pide una comprobación y envía un correo.",
+    "La gente se registra con correo y contraseña y confirma el correo con un código. Puede restablecer una contraseña olvidada, continuar con Google o GitHub, entrar con una llave de acceso o recibir por correo un código que inicia sesión y, si hace falta, crea la cuenta. También puede probar primero la aplicación con una cuenta de invitado y añadir más tarde un método de inicio de sesión. Una app de autenticación añade la verificación en dos pasos (2FA). Cada persona ve todos los dispositivos con su sesión iniciada y puede cerrar la sesión en los demás. Cambiar un método de inicio de sesión pide una comprobación y envía un correo.",
   "FeatureSignIn.fact1":
     "Contraseñas con hash PBKDF2-SHA-256 mediante Web Crypto, 600.000 iteraciones por defecto",
   "FeatureSignIn.fact2":
@@ -356,7 +356,7 @@ export default {
   "FeatureSignIn.fact4":
     "Llaves de acceso: solo se guarda la clave pública y cada desafío de inicio de sesión sirve una vez",
   "FeatureSignIn.fact5":
-    "Enlaces mágicos: un mismo enlace inicia sesión o registra, sirve una vez durante 15 minutos y solo se guarda como hash",
+    "Códigos de inicio de sesión por correo: un código de 8 caracteres inicia sesión o registra, sirve una vez durante 10 minutos, solo en el navegador que lo pidió, y solo se guarda como hash",
   "FeatureSignIn.fact6":
     "Cuentas de invitado (inicio de sesión anónimo): el visitante empieza con un clic y sin método de inicio de sesión, y después añade correo y contraseña, Google, GitHub o una llave de acceso a la misma cuenta",
   "FeatureSignIn.fact7":
@@ -607,7 +607,7 @@ export default {
     "Lo que incluye Seed: 2FA e inicio de sesión social, grupos con roles, facturación por miembro con Stripe, tiempo real, una aplicación sin conexión, un área de administración, monitorización y copias de seguridad.",
   "FeaturesHero.title": "Todo lo que incluye Seed, y lo que todavía no",
   "FeaturesHero.lead":
-    "Seed es un starter SaaS gratuito con licencia MIT, con inicio de sesión por correo, Google y GitHub, llaves de acceso, enlaces mágicos, cuentas de invitado, 2FA, grupos con roles, facturación por miembro con Stripe, actualizaciones en tiempo real, una aplicación sin conexión, un área de administración, monitorización y copias de seguridad diarias cifradas opcionales. Cada sección de abajo enlaza a su código.",
+    "Seed es un starter SaaS gratuito con licencia MIT, con inicio de sesión por correo, Google y GitHub, llaves de acceso, códigos de inicio de sesión por correo, cuentas de invitado, 2FA, grupos con roles, facturación por miembro con Stripe, actualizaciones en tiempo real, una aplicación sin conexión, un área de administración, monitorización y copias de seguridad diarias cifradas opcionales. Cada sección de abajo enlaza a su código.",
   "FeaturesHero.note":
     "Seed ya se puede usar y se construye en público. Lo que falta aparece marcado como «Aún no está hecho» junto a la función afectada, con un enlace a su issue si hay uno abierto.",
   "Features.compare": "Cómo se compara Seed",
@@ -650,7 +650,7 @@ export default {
     "El panel de administración de Seed: encuentra a una persona, cierra sus sesiones, reembolsa un pago, vuelve a ejecutar una tarea fallida. Las acciones arriesgadas piden confirmación y todas quedan registradas. Gratis, MIT.",
   "AdminTour.heroTitle": "Un panel de administración para quienes gestionan tu producto",
   "AdminTour.heroLead":
-    "Seed incluye un área para operadores en su propio host. Tus operadores encuentran a una persona, ven sus métodos de inicio de sesión, sus sesiones y sus grupos, y la ayudan: cierran una sesión, envían un enlace para restablecer la contraseña o reembolsan un pago. Las acciones arriesgadas piden confirmación y cada acción queda en el registro de auditoría.",
+    "Seed incluye un área para operadores en su propio host. Tus operadores encuentran a una persona, ven sus métodos de inicio de sesión, sus sesiones y sus grupos, y la ayudan: cierran una sesión, envían un correo para restablecer la contraseña o reembolsan un pago. Las acciones arriesgadas piden confirmación y cada acción queda en el registro de auditoría.",
   "AdminTour.code": "Ver el código de la app de administración",
   "AdminTour.dashboard": "Panel",
   "AdminTour.dashboardText": "Personas, registros, quién está activo, grupos y notas en 30 días.",
@@ -658,7 +658,7 @@ export default {
   "AdminTour.statsText": "Visitas al sitio y clics de pedido desde tu Umami. Solo totales.",
   "AdminTour.users": "Usuarios",
   "AdminTour.usersText":
-    "Busca a alguien: bloquéalo, cierra una sesión o envíale un enlace para su clave.",
+    "Busca a alguien: bloquéalo, cierra una sesión o envíale un correo para su clave.",
   "AdminTour.groups": "Grupos",
   "AdminTour.groupsText": "Miembros, invitaciones y archivos. Borra un archivo o cambia el dueño.",
   "AdminTour.billing": "Facturación",
@@ -682,7 +682,7 @@ export default {
   "AdminTour.tokensText": "Cada token de API, de quién es y cuándo se usó por última vez.",
   "AdminTour.operator": "Operador",
   "AdminTour.operatorText":
-    "Soporte diario: buscar personas, cerrar sesiones, enviar enlaces para restablecer la contraseña, gestionar grupos.",
+    "Soporte diario: buscar personas, cerrar sesiones, enviar correos para restablecer la contraseña, gestionar grupos.",
   "AdminTour.supervisor": "Supervisor",
   "AdminTour.supervisorText":
     "Además, reembolsa pagos, cancela una suscripción al momento y cede un grupo a otro miembro.",
@@ -733,7 +733,7 @@ export default {
   "CompareRow.makerkitLite": "Makerkit: solo el kit Lite",
   "CompareRow.openSource": "Código abierto (MIT)",
   "CompareRow.password": "Inicio de sesión con contraseña",
-  "CompareRow.magicLinks": "Enlaces mágicos",
+  "CompareRow.magicLinks": "Inicio de sesión por correo sin contraseña",
   "CompareRow.social": "Inicio de sesión social",
   "CompareRow.socialNote": "Seed: Google, GitHub",
   "CompareRow.totp": "2FA con app",
@@ -948,20 +948,20 @@ export default {
   "FeaturePageSignIn.name": "Inicio de sesión",
   "FeaturePageSignIn.title": "Autenticación para tu SaaS, sin servicio externo",
   "FeaturePageSignIn.description":
-    "Llaves de acceso, enlaces por correo, Google, GitHub y 2FA, comprobados por tu API, sin servicio de autenticación ni pago por usuario. Gratis y MIT.",
+    "Llaves de acceso, códigos por correo, Google, GitHub y 2FA, comprobados por tu API, sin servicio de autenticación ni pago por usuario. Gratis y MIT.",
   "FeaturePageSignIn.h1":
     "Llaves de acceso e inicio de sesión para tu SaaS, sin servicio de autenticación",
   "FeaturePageSignIn.answer":
-    "Seed inicia la sesión de la gente con llaves de acceso, enlaces de inicio de sesión por correo, Google y GitHub, y lo comprueba su propia API en tu servidor, sin ningún servicio de autenticación de terceros. Las contraseñas, las llaves de acceso y los enlaces de inicio de sesión funcionan en cuanto despliegas, sin pago por usuario; Google y GitHub necesitan dos claves cada uno en el archivo env.",
+    "Seed inicia la sesión de la gente con llaves de acceso, códigos de inicio de sesión por correo, Google y GitHub, y lo comprueba su propia API en tu servidor, sin ningún servicio de autenticación de terceros. Las contraseñas, las llaves de acceso y los códigos de inicio de sesión funcionan en cuanto despliegas, sin pago por usuario; Google y GitHub necesitan dos claves cada uno en el archivo env.",
   "FeaturePageSignIn.summary":
-    "Llaves de acceso, enlaces por correo, Google, GitHub y verificación en dos pasos, sin servicio de autenticación.",
+    "Llaves de acceso, códigos por correo, Google, GitHub y verificación en dos pasos, sin servicio de autenticación.",
   "FeaturePageSignIn.how1":
-    "La API comprueba cada inicio de sesión por sí misma y responde con una cookie de sesión firmada. Una llave de acceso usa el WebAuthn del propio navegador: el servidor guarda solo su clave pública, y cada desafío de inicio de sesión sirve una sola vez. Un enlace de inicio de sesión sirve para entrar o para registrarse, funciona una sola vez durante 15 minutos y se guarda solo como hash.",
+    "La API comprueba cada inicio de sesión por sí misma y responde con una cookie de sesión firmada. Una llave de acceso usa el WebAuthn del propio navegador: el servidor guarda solo su clave pública, y cada desafío de inicio de sesión sirve una sola vez. Un código de inicio de sesión por correo sirve para entrar o para registrarse, funciona una sola vez durante 10 minutos, solo en el navegador que lo pidió, y se guarda solo como hash.",
   "FeaturePageSignIn.how2":
     "Una app de autenticación añade la verificación en dos pasos. El perfil muestra cada forma de entrar en la cuenta y cada dispositivo con la sesión iniciada, y cambiar una forma de entrar pide una prueba y envía un correo. Un visitante también puede empezar con una cuenta de invitado y añadir un método de inicio de sesión más tarde.",
   "FeaturePageSignIn.authServiceQuestion": "¿Necesito un servicio de autenticación?",
   "FeaturePageSignIn.authServiceAnswer":
-    "No. La propia API de Seed comprueba las contraseñas, las llaves de acceso, los enlaces de inicio de sesión y las respuestas de Google y GitHub en tu servidor, así que no se cobra nada por usuario.",
+    "No. La propia API de Seed comprueba las contraseñas, las llaves de acceso, los códigos de inicio de sesión y las respuestas de Google y GitHub en tu servidor, así que no se cobra nada por usuario.",
   "FeaturePageSignIn.passkeysQuestion": "¿Seed admite llaves de acceso (passkeys)?",
   "FeaturePageSignIn.passkeysAnswer":
     "Sí. La gente añade una llave de acceso en su perfil e inicia sesión con ella; el servidor guarda solo su clave pública, y cada desafío de inicio de sesión sirve una sola vez.",

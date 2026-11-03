@@ -142,8 +142,8 @@ export default define.page(function Privacy({ state }) {
         </li>
       </ul>
       <p>
-        Mail, such as sign-in codes, reset links, invitations and the newsletter, goes out through
-        an email provider. The servers keep request logs to run and fix the service. If an error
+        Mail, such as sign-in and reset codes, invitations and the newsletter, goes out through an
+        email provider. The servers keep request logs to run and fix the service. If an error
         tracker is set up, the app and the server send it a report when they crash; the app's report
         carries the page's address without anything after the <code>?</code>{" "}
         and without an invitation's token.

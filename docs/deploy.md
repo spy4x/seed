@@ -283,7 +283,7 @@ A product that is a website and its admin panel only, with no signed-in customer
   its router on `DOMAIN`, for the webhooks and the file store's links. The SPA's image is still
   built on a deploy.
 - The API answers 404 to sign-up and every other route under `/api/auth` on every host but
-  `ADMIN_DOMAIN`: the password sign-up, sign-in links, Google and GitHub, guests and passkeys.
+  `ADMIN_DOMAIN`: the password sign-up, email sign-in codes, Google and GitHub, guests and passkeys.
   Nobody can make an account or sign in there.
 - The admin app's sign-in on `ADMIN_DOMAIN` works as before. Its first operator comes from
   [`deno task operator:create`](#the-first-operator).

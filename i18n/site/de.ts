@@ -152,7 +152,7 @@ export default {
   "HomeProof.tests": "Testdateien in den Apps und Bibliotheken, alle laufen in der CI",
   "HomeProof.licence": "Lizenz: kein Konto, keine Paywall",
   "HomeStatus.signIn":
-    "Registrierung, Anmeldung, Bestätigung der E-Mail-Adresse, Passwort zurücksetzen, Anmeldung mit Google und GitHub, Passkeys, Magic Links, 2FA mit einer Authenticator-App",
+    "Registrierung, Anmeldung, Bestätigung der E-Mail-Adresse, Passwort zurücksetzen, Anmeldung mit Google und GitHub, Passkeys, Anmeldecodes per E-Mail, 2FA mit einer Authenticator-App",
   "HomeStatus.guests":
     "Gastkonten: die App mit einem Klick ausprobieren und das Konto behalten, indem man eine Anmeldemethode hinzufügt",
   "HomeStatus.groups":
@@ -211,7 +211,7 @@ export default {
   "HomeFeatures.signInAlt":
     "Die Sicherheitsseite eines Profils: das Passwort, ein Button „Passkey hinzufügen“, der eingeschaltete Zwei-Faktor-Schutz und der Anfang der Liste der angemeldeten Geräte.",
   "HomeFeatures.signInText":
-    "E-Mail und Passwort mit Bestätigungscodes, Passwort zurücksetzen, Anmeldung mit Google und GitHub, Passkeys, Anmeldelinks per E-Mail, Gastkonten und 2FA mit einer Authenticator-App. Sitzungen, die du sehen und beenden kannst.",
+    "E-Mail und Passwort mit Bestätigungscodes, Passwort zurücksetzen, Anmeldung mit Google und GitHub, Passkeys, Anmeldecodes per E-Mail, Gastkonten und 2FA mit einer Authenticator-App. Sitzungen, die du sehen und beenden kannst.",
   "HomeFeatures.billingTitle": "Abrechnung pro Mitglied",
   "HomeFeatures.billingLink": "So funktioniert die Abrechnung",
   "HomeFeatures.billingText":
@@ -351,7 +351,7 @@ export default {
   "FeatureSignIn.nav": "Konten und Anmeldung",
   "FeatureSignIn.title": "Anmeldung, erledigt",
   "FeatureSignIn.lead":
-    "Leute registrieren sich mit E-Mail-Adresse und Passwort und bestätigen die Adresse mit einem Code. Sie können ein vergessenes Passwort zurücksetzen, mit Google oder GitHub weitermachen, sich mit einem Passkey anmelden oder sich einen Anmeldelink per E-Mail schicken lassen, der sie auch gleich registriert. Oder sie probieren die App erst in einem Gastkonto aus und fügen später eine Anmeldemethode hinzu. Mit einer Authenticator-App kommt Zwei-Faktor-Schutz (2FA) dazu. Jeder sieht alle Geräte, auf denen er angemeldet ist, und kann die anderen abmelden. Wer eine Anmeldemethode ändert, muss sich ausweisen und bekommt eine E-Mail.",
+    "Leute registrieren sich mit E-Mail-Adresse und Passwort und bestätigen die Adresse mit einem Code. Sie können ein vergessenes Passwort zurücksetzen, mit Google oder GitHub weitermachen, sich mit einem Passkey anmelden oder sich einen Anmeldecode per E-Mail schicken lassen, der sie auch gleich registriert. Oder sie probieren die App erst in einem Gastkonto aus und fügen später eine Anmeldemethode hinzu. Mit einer Authenticator-App kommt Zwei-Faktor-Schutz (2FA) dazu. Jeder sieht alle Geräte, auf denen er angemeldet ist, und kann die anderen abmelden. Wer eine Anmeldemethode ändert, muss sich ausweisen und bekommt eine E-Mail.",
   "FeatureSignIn.fact1":
     "Passwörter mit PBKDF2-SHA-256 über Web Crypto gehasht, standardmäßig mit 600.000 Runden",
   "FeatureSignIn.fact2": "Signierte Sitzungscookies und ein Audit-Trail für jedes Anmeldeereignis",
@@ -359,7 +359,7 @@ export default {
   "FeatureSignIn.fact4":
     "Passkeys: Gespeichert wird nur der öffentliche Schlüssel, und jede Anmelde-Challenge gilt nur einmal",
   "FeatureSignIn.fact5":
-    "Magic Links: Ein Link meldet an oder registriert, gilt einmal und 15 Minuten lang und wird nur als Hash gespeichert",
+    "Anmeldecodes per E-Mail: Ein 8-stelliger Code meldet an oder registriert, gilt einmal und 10 Minuten lang, nur im Browser, der ihn angefordert hat, und wird nur als Hash gespeichert",
   "FeatureSignIn.fact6":
     "Gastkonten (anonyme Anmeldung): Besucher starten mit einem Klick ohne Anmeldemethode und fügen demselben Konto später E-Mail und Passwort, Google, GitHub oder einen Passkey hinzu",
   "FeatureSignIn.fact7":
@@ -605,7 +605,7 @@ export default {
     "Was Seed mitbringt: 2FA und Social Login, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit, eine Offline-App, einen Adminbereich, Monitoring und Backups.",
   "FeaturesHero.title": "Alles, was Seed mitbringt, und was noch fehlt",
   "FeaturesHero.lead":
-    "Seed ist ein kostenloser SaaS-Starter unter MIT-Lizenz mit Anmeldung per E-Mail, Google und GitHub, Passkeys, Magic Links, Gastkonten, 2FA, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit-Updates, einer Offline-App, einem Adminbereich, Monitoring und optionalen täglichen, verschlüsselten Backups. Jeder Abschnitt unten verlinkt auf seinen Code.",
+    "Seed ist ein kostenloser SaaS-Starter unter MIT-Lizenz mit Anmeldung per E-Mail, Google und GitHub, Passkeys, Anmeldecodes per E-Mail, Gastkonten, 2FA, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit-Updates, einer Offline-App, einem Adminbereich, Monitoring und optionalen täglichen, verschlüsselten Backups. Jeder Abschnitt unten verlinkt auf seinen Code.",
   "FeaturesHero.note":
     "Seed ist heute schon nutzbar und wird öffentlich entwickelt. Was fehlt, ist neben der betroffenen Funktion mit „Noch nicht gebaut“ markiert, mit einem Link zum Issue, wenn es eines gibt.",
   "Features.compare": "Seed im Vergleich",
@@ -649,14 +649,14 @@ export default {
     "Der Adminbereich von Seed: eine Person finden, ihre Sitzungen beenden, eine Zahlung erstatten, einen fehlgeschlagenen Job neu starten. Riskante Aktionen fragen vorher nach; alles wird protokolliert. Kostenlos, MIT.",
   "AdminTour.heroTitle": "Ein Adminbereich für die Leute, die dein Produkt betreiben",
   "AdminTour.heroLead":
-    "Seed bringt einen Adminbereich auf einem eigenen Host mit. Deine Operatoren finden eine Person, sehen ihre Anmeldemethoden, Sitzungen und Gruppen und helfen ihr: eine Sitzung beenden, einen Link zum Zurücksetzen des Passworts schicken, eine Zahlung erstatten. Riskante Aktionen fragen vorher nach, und jede Aktion landet im Protokoll.",
+    "Seed bringt einen Adminbereich auf einem eigenen Host mit. Deine Operatoren finden eine Person, sehen ihre Anmeldemethoden, Sitzungen und Gruppen und helfen ihr: eine Sitzung beenden, eine E-Mail zum Zurücksetzen des Passworts schicken, eine Zahlung erstatten. Riskante Aktionen fragen vorher nach, und jede Aktion landet im Protokoll.",
   "AdminTour.code": "Code der Admin-App lesen",
   "AdminTour.dashboard": "Dashboard",
   "AdminTour.dashboardText": "Personen, Registrierungen, Aktive, Gruppen und Notizen über 30 Tage.",
   "AdminTour.stats": "Statistik",
   "AdminTour.statsText": "Website-Besuche und Bestellklicks aus deinem Umami. Nur Summen.",
   "AdminTour.users": "Personen",
-  "AdminTour.usersText": "Person finden, sperren, Sitzung beenden oder Reset-Link schicken.",
+  "AdminTour.usersText": "Person finden, sperren, Sitzung beenden oder Reset-E-Mail schicken.",
   "AdminTour.groups": "Gruppen",
   "AdminTour.groupsText": "Mitglieder, Einladungen, Dateien. Datei löschen oder Inhaber wechseln.",
   "AdminTour.billing": "Abrechnung",
@@ -682,7 +682,7 @@ export default {
   "AdminTour.tokensText": "Jedes API-Token, wem es gehört und wann es zuletzt benutzt wurde.",
   "AdminTour.operator": "Operator",
   "AdminTour.operatorText":
-    "Der tägliche Support: Leute finden, Sitzungen beenden, Links zum Zurücksetzen des Passworts schicken, Gruppen verwalten.",
+    "Der tägliche Support: Leute finden, Sitzungen beenden, E-Mails zum Zurücksetzen des Passworts schicken, Gruppen verwalten.",
   "AdminTour.supervisor": "Supervisor",
   "AdminTour.supervisorText":
     "Erstattet außerdem Zahlungen, kündigt ein Abo sofort und überträgt eine Gruppe an ein anderes Mitglied.",
@@ -732,7 +732,7 @@ export default {
   "CompareRow.makerkitLite": "Makerkit: nur das Lite-Kit",
   "CompareRow.openSource": "Open Source (MIT)",
   "CompareRow.password": "Anmeldung mit Passwort",
-  "CompareRow.magicLinks": "Magic Links",
+  "CompareRow.magicLinks": "Passwortlose Anmeldung per E-Mail",
   "CompareRow.social": "Social Login",
   "CompareRow.socialNote": "Seed: Google, GitHub",
   "CompareRow.totp": "2FA per App",
@@ -949,19 +949,19 @@ export default {
   "FeaturePageSignIn.name": "Anmeldung",
   "FeaturePageSignIn.title": "Login für dein SaaS, ohne externen Auth-Dienst",
   "FeaturePageSignIn.description":
-    "Passkeys, Anmeldelinks per E-Mail, Google, GitHub und 2FA, geprüft von deiner eigenen API, ohne Auth-Dienst und Gebühr pro Nutzer. Kostenlos, MIT-Lizenz.",
+    "Passkeys, Anmeldecodes per E-Mail, Google, GitHub und 2FA, geprüft von deiner eigenen API, ohne Auth-Dienst und Gebühr pro Nutzer. Kostenlos, MIT-Lizenz.",
   "FeaturePageSignIn.h1": "Passkeys und Login für dein SaaS, ohne externen Auth-Dienst",
   "FeaturePageSignIn.answer":
-    "Seed meldet Leute mit Passkeys, Anmeldelinks per E-Mail, Google und GitHub an, geprüft von der eigenen API auf deinem Server, ohne fremden Auth-Dienst. Passwörter, Passkeys und Anmeldelinks funktionieren direkt nach dem Deployment, ohne Gebühr pro Nutzer; Google und GitHub brauchen je zwei Schlüssel in der Env-Datei.",
+    "Seed meldet Leute mit Passkeys, Anmeldecodes per E-Mail, Google und GitHub an, geprüft von der eigenen API auf deinem Server, ohne fremden Auth-Dienst. Passwörter, Passkeys und Anmeldecodes funktionieren direkt nach dem Deployment, ohne Gebühr pro Nutzer; Google und GitHub brauchen je zwei Schlüssel in der Env-Datei.",
   "FeaturePageSignIn.summary":
-    "Passkeys, Anmeldelinks per E-Mail, Google, GitHub und 2FA, ohne Auth-Dienst.",
+    "Passkeys, Anmeldecodes per E-Mail, Google, GitHub und 2FA, ohne Auth-Dienst.",
   "FeaturePageSignIn.how1":
-    "Die API prüft jede Anmeldung selbst und antwortet mit einem signierten Sitzungs-Cookie. Ein Passkey nutzt das eingebaute WebAuthn des Browsers: Der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal. Ein Anmeldelink meldet an oder registriert, gilt einmal und 15 Minuten lang und wird nur als Hash gespeichert.",
+    "Die API prüft jede Anmeldung selbst und antwortet mit einem signierten Sitzungs-Cookie. Ein Passkey nutzt das eingebaute WebAuthn des Browsers: Der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal. Ein Anmeldecode per E-Mail meldet an oder registriert, gilt einmal und 10 Minuten lang, nur im Browser, der ihn angefordert hat, und wird nur als Hash gespeichert.",
   "FeaturePageSignIn.how2":
     "Eine Authenticator-App ergänzt die Anmeldung um einen zweiten Faktor. Das Profil listet jeden Zugang zum Konto und jedes angemeldete Gerät auf; wer einen Zugang ändert, muss sich ausweisen, und es geht eine E-Mail raus. Besucher können auch mit einem Gastkonto starten und später eine Anmeldemethode hinzufügen.",
   "FeaturePageSignIn.authServiceQuestion": "Brauche ich einen Auth-Dienst?",
   "FeaturePageSignIn.authServiceAnswer":
-    "Nein. Die eigene API von Seed prüft Passwörter, Passkeys, Anmeldelinks und die Antworten von Google und GitHub auf deinem Server, also wird nichts pro Nutzer berechnet.",
+    "Nein. Die eigene API von Seed prüft Passwörter, Passkeys, Anmeldecodes und die Antworten von Google und GitHub auf deinem Server, also wird nichts pro Nutzer berechnet.",
   "FeaturePageSignIn.passkeysQuestion": "Unterstützt Seed Passkeys?",
   "FeaturePageSignIn.passkeysAnswer":
     "Ja. Leute fügen in ihrem Profil einen Passkey hinzu und melden sich damit an; der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal.",
