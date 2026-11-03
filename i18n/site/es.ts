@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "Sin registro. Entras con una cuenta de invitado y datos de ejemplo, y todo se borra cada noche.",
   "SiteNav.features": "Funciones",
+  "SiteNav.docs": "Docs",
   "SiteNav.blog": "Blog",
   "SiteNav.compare": "Comparar",
   "SiteNav.pricing": "Precios",
@@ -242,6 +243,7 @@ export default {
     "<init>init</init> copia el archivo de entorno y genera todos los secretos y las claves de web push; <dev>dev</dev> arranca Traefik y todo lo demás. Luego abre <url>http://app.localhost</url>. El <readme>README</readme> explica cada ajuste y cómo desplegar.",
   "HomeQuickStart.agent": "O pídeselo a tu agente de IA: <prompt></prompt>.",
   "HomeQuickStart.terminal": "Terminal",
+  "HomeQuickStart.guide": "Lee la guía paso a paso",
   "HomeStatus.eyebrow": "Estado sincero",
   "HomeStatus.title": "Dónde está hoy",
   "HomeStatus.lead":
@@ -553,7 +555,7 @@ export default {
   "FeatureWebsite.fact3":
     "Un boletín con doble confirmación, baja con un clic y correos en el idioma de quien los lee",
   "FeatureWebsite.fact4":
-    "Un blog que se escribe en el panel de administración, con entradas en cada idioma y sus traducciones, temas, figuras interactivas que el lector puede probar, un feed RSS y datos estructurados de artículo",
+    "Un blog que se escribe en el panel de administración, con entradas en cada idioma y sus traducciones, temas, figuras interactivas que el lector puede probar, un feed RSS, datos estructurados de artículo, enlaces antiguos que redirigen cuando cambia la URL de una entrada y un aviso a IndexNow para que los buscadores sepan al instante de una entrada nueva o cambiada",
   "FeatureWebsite.fact5":
     "Enlaces de contacto configurados en el panel de administración, mostrados en el pie de página y en los datos estructurados",
   "FeatureWebsite.fact6":
@@ -865,6 +867,7 @@ export default {
   "Blog.ctaTitle": "Mira {site} funcionando en un minuto",
   "Blog.published": "Publicado el <time>{date}</time>",
   "Blog.updated": "· Actualizado el <time>{date}</time>",
+  "Blog.alsoIn": "También disponible en: <links></links>",
   "Blog.minutes": {
     "one": "· {count} min de lectura",
     "many": "· {count} min de lectura",

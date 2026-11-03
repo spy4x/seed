@@ -2,13 +2,21 @@
 import { expect } from "@std/expect"
 import { parseEnvValues } from "./env-file.ts"
 import {
+  chooseEngine,
+  engineProblem,
   KEEPS_OLD_DATA,
   nameFlag,
+  nextSteps,
   prepareEnv,
   projectSlug,
   randomHex,
+  recordSeedCommit,
+  type Run,
   SECRET_PREFIXES,
+  SEED_REPOSITORY,
+  seedCommit,
   SECRETS,
+  withEngine,
   writeSafely,
 } from "./init.ts"
 
@@ -146,3 +154,109 @@ Deno.test("a temporary file left by a crash does not bring its mode along", () =
     expect(await modeOf(`${dir}/vapid.json`)).toBe(0o600)
     expect([...Deno.readDirSync(dir)].map((entry) => entry.name)).toEqual([`vapid.json`])
   }))
+
+/**
+ * A `Run` that answers each command from `answers` by its words, and records what it ran. A
+ * command it has no answer for could not start, as when the program is not installed.
+ */
+function fakeRun(answers: Record<string, { code: number; stdout?: string }>) {
+  const ran: string[] = []
+  const run: Run = (command) => {
+    const line = command.join(` `)
+    ran.push(line)
+    const answer = answers[line]
+    if (answer === undefined) {
+      return Promise.resolve({ success: false, code: -1, stdout: ``, stderr: ``, error: `missing` })
+    }
+    return Promise.resolve({ success: answer.code === 0, stdout: ``, stderr: ``, ...answer })
+  }
+  return { run, ran }
+}
+
+const SHA = `0123456789abcdef0123456789abcdef01234567`
+const LS_REMOTE = `git ls-remote ${SEED_REPOSITORY} refs/heads/main`
+const PRODUCT = {
+  [`git remote get-url origin`]: { code: 0, stdout: `git@github.com:acme/product.git\n` },
+  [LS_REMOTE]: { code: 0, stdout: `${SHA}\trefs/heads/main\n` },
+}
+
+Deno.test("a missing container engine is named, with where to install it", async () => {
+  const docker = await engineProblem(`docker`, fakeRun({}).run)
+  expect(docker).toContain(`docker is not installed`)
+  expect(docker).toContain(`https://docs.docker.com/`)
+  expect(await engineProblem(`podman`, fakeRun({}).run)).toContain(`https://podman.io/`)
+})
+
+Deno.test("an engine that is installed but stopped is told how to start", async () => {
+  const stopped = { [`docker info`]: { code: 1 }, [`podman info`]: { code: 125 } }
+  const docker = await engineProblem(`docker`, fakeRun(stopped).run)
+  expect(docker).toContain(`docker is installed but not running`)
+  expect(docker).toContain(`systemctl start docker`)
+  expect(await engineProblem(`podman`, fakeRun(stopped).run)).toContain(`podman machine start`)
+})
+
+Deno.test("a running engine passes the check", async () => {
+  expect(await engineProblem(`docker`, fakeRun({ [`docker info`]: { code: 0 } }).run))
+    .toBeUndefined()
+})
+
+Deno.test("a fresh clone with only Podman running takes Podman", async () => {
+  const podmanOnly = fakeRun({ [`podman info`]: { code: 0 } }).run
+  expect(await chooseEngine(undefined, podmanOnly)).toEqual({ engine: `podman` })
+  const sample = `PROJECT=x\nCONTAINER_PROVIDER=docker # or "podman"\n`
+  expect(withEngine(sample, `podman`)).toContain(`CONTAINER_PROVIDER=podman # or "podman"`)
+  expect(withEngine(sample, `docker`)).toBe(sample)
+})
+
+Deno.test("an env file that names Docker is never switched to Podman", async () => {
+  const podmanOnly = fakeRun({ [`podman info`]: { code: 0 } }).run
+  const { engine, problem } = await chooseEngine(`CONTAINER_PROVIDER=docker\n`, podmanOnly)
+  expect(engine).toBe(`docker`)
+  expect(problem).toContain(`docker is not installed`)
+})
+
+Deno.test("a product's copy records Seed's current main", async () => {
+  expect(await seedCommit(fakeRun(PRODUCT).run)).toEqual({ commit: SHA })
+})
+
+Deno.test("a clone of Seed itself records no commit and does not ask GitHub", async () => {
+  for (const url of [`https://github.com/spy4x/seed.git`, `git@github.com:spy4x/seed.git`]) {
+    const { run, ran } = fakeRun({ ...PRODUCT, [`git remote get-url origin`]: { code: 0, stdout: url } })
+    expect((await seedCommit(run)).note, url).toContain(`clone of Seed itself`)
+    expect(ran, url).not.toContain(LS_REMOTE)
+  }
+})
+
+Deno.test("offline, or without git, no commit is recorded and the note says why", async () => {
+  const offline = await seedCommit(fakeRun({ ...PRODUCT, [LS_REMOTE]: { code: 128 } }).run)
+  expect(offline).toEqual({ note: expect.stringContaining(`when online`) })
+  expect(await seedCommit(fakeRun({}).run)).toEqual({
+    note: expect.stringContaining(`git is not installed`),
+  })
+})
+
+Deno.test("the Seed commit is written once: a second run keeps the file and asks nothing", () =>
+  inScratch(async (dir) => {
+    const path = `${dir}/.seed/commit`
+    expect(await recordSeedCommit(path, fakeRun(PRODUCT).run)).toContain(SHA.slice(0, 7))
+    expect(await Deno.readTextFile(path)).toBe(`${SHA}\n`)
+
+    const later = fakeRun({ ...PRODUCT, [LS_REMOTE]: { code: 0, stdout: `${`f`.repeat(40)}\tx` } })
+    expect(await recordSeedCommit(path, later.run)).toBeUndefined()
+    expect(await Deno.readTextFile(path)).toBe(`${SHA}\n`)
+    expect(later.ran).toEqual([])
+  }))
+
+Deno.test("the last lines name the next command and only the apps the env file turns on", () => {
+  const values = parseEnvValues(example, `.env.example`)
+  const lines = nextSteps(values)
+  expect(lines).toContain(`  deno task dev\n`)
+  expect(lines).toContain(`http://app.localhost`)
+  expect(lines).toContain(`http://localhost:3000`)
+  expect(lines).not.toContain(`admin.localhost`)
+
+  const all = nextSteps({ ...values, COMPOSE_PROFILES: `admin,mpa`, MPA_DOMAIN: `site.localhost` })
+  expect(all).toContain(`http://admin.localhost`)
+  expect(all).toContain(`http://site.localhost`)
+  expect(all).not.toContain(`Grafana`)
+})

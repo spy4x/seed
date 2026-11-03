@@ -2,6 +2,7 @@ import { type } from "arktype"
 import { HttpError } from "fresh"
 import {
   blogSlugProblem,
+  type BlogTranslation,
   type PublicBlogFeedItem,
   type PublicBlogPost,
   type PublicBlogPostSummary,
@@ -83,10 +84,14 @@ const postAnswer = type({
     segments,
     headings,
     authorName: `string | null`,
+    authorUrl: `string | null`,
     translations: type({ language, slug: `string` }).array(),
   }),
   readNext: summary.array(),
 })
+
+/** The answer for a slug the post moved away from: where it lives now (#418). */
+const movedAnswer = type({ moved: { language, slug: `string` } })
 
 const feedAnswer = type({
   posts: summary.and({
@@ -125,17 +130,23 @@ export async function listPosts(api: Api): Promise<PublicBlogPostSummary[]> {
   return (await read(api, `/api/blog/posts`, postsAnswer)).posts
 }
 
-/** The live post at `slug` with up to three to read next, or `null` when there is none. */
+/**
+ * The live post at `slug` with up to three to read next; `{ moved }`, the post's current language
+ * and slug, when a live post moved away from `slug` with "Change URL" (#418); or `null` when there
+ * is neither.
+ */
 export async function readPost(
   api: Api,
   slug: string,
-): Promise<{ post: PublicBlogPost; readNext: PublicBlogPostSummary[] } | null> {
+): Promise<
+  { post: PublicBlogPost; readNext: PublicBlogPostSummary[] } | { moved: BlogTranslation } | null
+> {
   if (blogSlugProblem(slug) !== null) return null
   const path = `/api/blog/posts/${encodeURIComponent(slug)}` as const
   const answer = await api.call(`GET`, path)
   if (answer.status === 404) return null
   if (answer.status === 200) {
-    const body = postAnswer(answer.body)
+    const body = postAnswer.or(movedAnswer)(answer.body)
     if (!(body instanceof type.errors)) return body
   }
   throw apiFailure(answer.status, path)
@@ -173,7 +184,7 @@ export async function blogPages(api: Api): Promise<BlogPage[]> {
     path: localePath(language, BLOG_PATH),
     title: BLOG_NAME,
     description: BLOG_INTRO,
-    // Newest first, so the first of the language is its newest.
+    // The latest change among the language's posts: ISO dates sort as text, so the last is it.
     lastmod: pages.filter((page) => page.language === language)
       .map(({ lastmod }) => lastmod).sort().at(-1)!,
   }))
@@ -186,8 +197,9 @@ export async function readFeed(api: Api): Promise<PublicBlogFeedItem[]> {
 }
 
 /**
- * Tells every page whether the blog has a live post in the page's language (`State.blog`), so the
- * header, the footer and the RSS link name the blog only where there is something to read. The
+ * Tells every page whether the blog has a live post in the page's language (`State.blog`), and in
+ * which languages it has one (`State.blogLanguages`), so the header, the footer, the RSS link and
+ * the language links name the blog only where there is something to read. The
  * API is asked once before the first page, then at most once a minute in the background
  * (`createApiValue`). Until it has answered, and while it cannot be reached before its first
  * answer, the blog counts as empty, and the API is asked again every few seconds, so a website
@@ -211,7 +223,8 @@ export async function blogLinkMiddleware(
   })
   await languages.refresh()
   return define.middleware((ctx) => {
-    ctx.state.blog = languages.current().has(pathLanguage(ctx.url.pathname).language)
+    ctx.state.blogLanguages = languages.current()
+    ctx.state.blog = ctx.state.blogLanguages.has(pathLanguage(ctx.url.pathname).language)
     return ctx.next()
   })
 }

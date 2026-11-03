@@ -12,6 +12,7 @@ tldr:
   - 10番目の言語の追加は、リストへの1行、カタログごとのファイル、読み込み用の数行で済みます。
 topic: 詳しく
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z
 newsletter: false
 ---

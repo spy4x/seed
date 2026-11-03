@@ -16,6 +16,7 @@ import dataExport from "../../docs/data-export.md" with { type: "text" }
 import deploy from "../../docs/deploy.md" with { type: "text" }
 import development from "../../docs/development.md" with { type: "text" }
 import files from "../../docs/files.md" with { type: "text" }
+import getStarted from "../../docs/get-started.md" with { type: "text" }
 import guests from "../../docs/guests.md" with { type: "text" }
 import ids from "../../docs/ids.md" with { type: "text" }
 import offline from "../../docs/offline.md" with { type: "text" }
@@ -46,32 +47,33 @@ export interface PublishedDoc {
  */
 export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedDoc[] }[] = [
   {
-    title: `Use`,
+    title: `Get started`,
     docs: [
-      {
-        slug: `apps`,
-        summary: `The SPA, the admin app and the public website, and how to deploy each.`,
-      },
+      { slug: `get-started`, summary: `Run Seed on your machine in four commands.` },
       {
         slug: `products`,
         summary: `Start a product, take Seed's later changes, give back to Seed.`,
       },
       { slug: `start-a-product`, summary: `What a new product deletes, replaces or sets.` },
+    ],
+  },
+  {
+    title: `Guides`,
+    docs: [
       {
         slug: `deploy`,
         summary: `Certificates, the deploy, consoles, several projects on one server, releases.`,
       },
+      { slug: `backups`, summary: `Set up, restore, rehearse.` },
+      { slug: `sign-in-providers`, summary: `Registering the providers and what a person gets.` },
       {
         slug: `guests`,
         summary:
           `"Try it now" without signing up, keeping the account, the limits and the clean-up.`,
       },
-      { slug: `sign-in-providers`, summary: `Registering the providers and what a person gets.` },
-      { slug: `backups`, summary: `Set up, restore, rehearse.` },
+      { slug: `billing`, summary: `One subscription per group, paid through Stripe.` },
       { slug: `files`, summary: `Garage or another S3 store, signed uploads and downloads.` },
       { slug: `data-export`, summary: `Download my data, what the ZIP holds and how it expires.` },
-      { slug: `capacity`, summary: `Load tests and how many users one server carries.` },
-      { slug: `billing`, summary: `One subscription per group, paid through Stripe.` },
       {
         slug: `catalog`,
         summary: `A shop's items with photos, colours and sizes, edited in the admin panel.`,
@@ -81,22 +83,32 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         summary: `BotFather, the webhook, linking a chat, and adding a product's commands.`,
       },
       { slug: `offline`, summary: `The SPA's local data and write queue, and how to remove it.` },
-      {
-        slug: `security-headers`,
-        summary: `The headers every answer of the API, SPA and MPA sends.`,
-      },
-    ],
-  },
-  {
-    title: `Build`,
-    docs: [
-      { slug: `development`, summary: `The local stack, every task, the browser tests and CI.` },
       { slug: `aggregates`, summary: `Every file of the notes aggregate, in order.` },
-      { slug: `ids`, summary: `Every id is a UUID version 7.` },
-      { slug: `api-errors`, summary: `The one error body every failed API answer has.` },
       {
         slug: `admin-modules`,
         summary: `The operator area as a list of modules, and how to add one.`,
+      },
+      { slug: `capacity`, summary: `Load tests and how many users one server carries.` },
+    ],
+  },
+  {
+    title: `Concepts`,
+    docs: [
+      {
+        slug: `apps`,
+        summary: `The SPA, the admin app and the public website, and how to deploy each.`,
+      },
+      { slug: `ids`, summary: `Every id is a UUID version 7.` },
+    ],
+  },
+  {
+    title: `Reference`,
+    docs: [
+      { slug: `development`, summary: `The local stack, every task, the browser tests and CI.` },
+      { slug: `api-errors`, summary: `The one error body every failed API answer has.` },
+      {
+        slug: `security-headers`,
+        summary: `The headers every answer of the API, SPA and MPA sends.`,
       },
     ],
   },
@@ -116,6 +128,7 @@ const SOURCES: Readonly<Record<string, string>> = {
   deploy,
   development,
   files,
+  "get-started": getStarted,
   guests,
   ids,
   offline,
@@ -131,7 +144,7 @@ export interface SiteDoc {
   slug: string
   /** The file's `#` heading. */
   title: string
-  /** The group it is listed under: `Use` or `Build`. */
+  /** The group it is listed under: `Get started`, `Guides`, `Concepts` or `Reference`. */
   group: string
   /** Its line on the index. */
   summary: string

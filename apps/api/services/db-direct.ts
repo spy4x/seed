@@ -1,3 +1,25 @@
+import { PostgresEnvName } from "@spy4x/server/db"
+import { type EnvReader, processEnv, readEnvRecord } from "@spy4x/platform/server/process"
+
+/**
+ * The Postgres variables `createSqlFromEnv` reads, from `env`. The one list every API and worker
+ * connection takes, so a variable the library's parser starts reading reaches all of them.
+ */
+export function postgresEnv(env: EnvReader = processEnv): Record<string, string | undefined> {
+  return readEnvRecord(Object.values(PostgresEnvName), env)
+}
+
+/**
+ * The environment of the `LISTEN` connection: {@link postgresEnv} plus `DB_DIRECT_HOST` and
+ * `DB_DIRECT_PORT`, passed through {@link directDbEnv}.
+ */
+export function listenPostgresEnv(env: EnvReader = processEnv): Record<string, string | undefined> {
+  return directDbEnv({
+    ...postgresEnv(env),
+    ...readEnvRecord([`DB_DIRECT_HOST`, `DB_DIRECT_PORT`], env),
+  })
+}
+
 /**
  * The environment of the API's direct Postgres connection: the one `LISTEN` runs on.
  *

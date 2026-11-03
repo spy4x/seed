@@ -7,14 +7,9 @@
  */
 import postgres from "postgres"
 import { type } from "arktype"
-import { createSqlFromEnv, PostgresEnvName } from "@spy4x/server/db"
-import {
-  exitProcess,
-  processArgs,
-  processEnv,
-  processStdin,
-  readEnvRecord,
-} from "@spy4x/platform/server/process"
+import { createSqlFromEnv } from "@spy4x/server/db"
+import { postgresEnv } from "../api/services/db-direct.ts"
+import { exitProcess, processArgs, processEnv, processStdin } from "@spy4x/platform/server/process"
 import { runtimeFileSystem } from "@spy4x/platform/server/runtime-fs"
 import { isSubscriberList, SUBSCRIBER_LISTS } from "@domain/subscribers"
 import {
@@ -54,7 +49,7 @@ if (issue instanceof type.errors) {
   exitProcess(1)
 }
 
-const sql = createSqlFromEnv(readEnvRecord(Object.values(PostgresEnvName)), {
+const sql = createSqlFromEnv(postgresEnv(), {
   transform: postgres.camel,
   applicationName: "subscribers-send",
   // sendIssue runs in the worker; this only writes two rows.

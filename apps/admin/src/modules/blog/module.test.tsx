@@ -77,6 +77,7 @@ const post: BlogPost = {
   contentUpdatedAt: null,
   authorId: 7,
   authorName: `Ann`,
+  authorUrl: null,
   newsletterList: null,
   newsletterSentAt: null,
   newsletterRecipients: null,

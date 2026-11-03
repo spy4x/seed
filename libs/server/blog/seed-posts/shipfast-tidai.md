@@ -12,6 +12,7 @@ tldr:
   - Stripe 不支持中国大陆的公司，但支持香港公司；选模板前先确认收款方式。
 topic: 问答
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
 newsletter: false
 ---

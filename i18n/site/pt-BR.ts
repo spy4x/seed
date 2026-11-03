@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "Sem cadastro. Você entra numa conta de visitante com dados de exemplo, e tudo é apagado toda noite.",
   "SiteNav.features": "Recursos",
+  "SiteNav.docs": "Docs",
   "SiteNav.blog": "Blog",
   "SiteNav.compare": "Comparar",
   "SiteNav.pricing": "Preços",
@@ -243,6 +244,7 @@ export default {
     "O <init>init</init> copia o arquivo de ambiente e gera todos os segredos e as chaves de push da web; o <dev>dev</dev> sobe o Traefik e todo o resto. Depois, abra <url>http://app.localhost</url>. O <readme>README</readme> lista todas as configurações e explica o deploy.",
   "HomeQuickStart.agent": "Ou peça ao seu agente de IA: <prompt></prompt>.",
   "HomeQuickStart.terminal": "Terminal",
+  "HomeQuickStart.guide": "Leia o guia passo a passo",
   "HomeStatus.eyebrow": "Status sem rodeios",
   "HomeStatus.title": "Como está hoje",
   "HomeStatus.lead":
@@ -552,7 +554,7 @@ export default {
   "FeatureWebsite.fact3":
     "Uma newsletter com confirmação por e-mail, cancelamento com um clique e e-mails no idioma de quem lê",
   "FeatureWebsite.fact4":
-    "Um blog escrito no painel de administração, com posts em cada idioma e suas traduções, tópicos, figuras interativas que o leitor pode testar, feed RSS e dados estruturados de artigo",
+    "Um blog escrito no painel de administração, com posts em cada idioma e suas traduções, tópicos, figuras interativas que o leitor pode testar, feed RSS, dados estruturados de artigo, links antigos que redirecionam quando a URL de um post muda e um aviso ao IndexNow para que os buscadores saibam na hora de um post novo ou alterado",
   "FeatureWebsite.fact5":
     "Links de contato definidos no painel de administração, exibidos no rodapé e nos dados estruturados",
   "FeatureWebsite.fact6":
@@ -864,6 +866,7 @@ export default {
   "Blog.ctaTitle": "Veja o {site} funcionando em um minuto",
   "Blog.published": "Publicado em <time>{date}</time>",
   "Blog.updated": "· Atualizado em <time>{date}</time>",
+  "Blog.alsoIn": "Também disponível em: <links></links>",
   "Blog.minutes": {
     "one": "· {count} min de leitura",
     "many": "· {count} min de leitura",
