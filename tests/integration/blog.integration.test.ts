@@ -7,6 +7,7 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import type { OutboxEvent } from "@spy4x/server/outbox"
 import {
   BLOG_AUDIT_KINDS,
+  BLOG_INDEXNOW_JOB,
   BLOG_PUBLISH_JOB,
   BlogError,
   type BlogPostFields,
@@ -16,6 +17,7 @@ import {
 } from "@domain/blog"
 import { type BlogActor, PostgresBlogRepository } from "@server/blog/postgres-blog-repository.ts"
 import { blogPublishJob, queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
+import { blogIndexNowJob, type IndexNowSetup } from "@server/blog/blog-indexnow-job.ts"
 import {
   createPublicFeed,
   listPublicFeed,
@@ -1188,5 +1190,182 @@ Deno.test(`blog: Cancel on a post's job is refused, and the post keeps its job`,
     expect(outcome).toBe(AdminJobActionOutcome.NotCancellable)
     expect(await waitingJobs(sql, id)).toEqual([{ ...job, cancelledAt: null }])
     expect((await blog.get(id))!.status).toBe(`scheduled`)
+  })
+})
+
+const INDEXNOW: IndexNowSetup = {
+  key: `indexnow-test-key-0123`,
+  siteUrl: `https://www.example.com`,
+}
+
+/**
+ * A fake IndexNow that answers `status` (or throws when it is `null`) and records the addresses of
+ * every submission.
+ */
+function fakeIndexNow(status: number | null = 200) {
+  const sent: string[][] = []
+  const fetch = async (_input: string | URL | Request, init?: RequestInit) => {
+    sent.push(JSON.parse(String(init?.body)).urlList)
+    if (status === null) throw new TypeError(`connection refused`)
+    return new Response(null, { status })
+  }
+  return { sent, fetch: fetch as typeof globalThis.fetch }
+}
+
+/**
+ * Runs the `blog.indexnow` rows of post `id` that wait, as the worker would, and closes them.
+ * Answers how many ran.
+ */
+async function runIndexNow(
+  sql: postgres.Sql,
+  id: string,
+  deps: Omit<Parameters<typeof blogIndexNowJob>[0], `sql`>,
+): Promise<number> {
+  const rows = await sql<{ id: string }[]>`
+    SELECT id FROM outbox_events
+    WHERE event_kind = ${BLOG_INDEXNOW_JOB} AND aggregate_id = ${id} AND processed_at IS NULL
+  `
+  const job = blogIndexNowJob({ sql, ...deps })
+  for (const row of rows) {
+    await job({ id: row.id, aggregateId: id, eventKind: BLOG_INDEXNOW_JOB } as OutboxEvent)
+    await sql`UPDATE outbox_events SET processed_at = now() WHERE id = ${row.id}`
+  }
+  return rows.length
+}
+
+Deno.test(`blog: IndexNow hears every address of a post that goes live, moves, changes or leaves (#418)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const post = uuidV7()
+    const indexNow = fakeIndexNow()
+    const run = () =>
+      runIndexNow(sql, post, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch })
+    await blog.create(post, fields(`first`, { language: `de` }), maya)
+
+    await t.step(`queues nothing for a draft that was never live`, async () => {
+      await blog.update(
+        post,
+        1,
+        parseBlogPostEdit(fields(`first`, { language: `de` })),
+        false,
+        maya,
+      )
+      expect(await run()).toBe(0)
+    })
+
+    await t.step(`sends the post's address when it is published now`, async () => {
+      await blog.publish(post, 2, null, null, maya)
+      expect(await run()).toBe(1)
+      expect(indexNow.sent.at(-1)).toEqual([`https://www.example.com/de/blog/first`])
+    })
+
+    await t.step(`sends the new address and the old one after Change URL`, async () => {
+      await blog.changeUrl(post, 3, `second`, maya)
+      expect(await run()).toBe(1)
+      expect(indexNow.sent.at(-1)).toEqual([
+        `https://www.example.com/de/blog/second`,
+        `https://www.example.com/de/blog/first`,
+      ])
+    })
+
+    await t.step(
+      `sends them again when the live post is saved, once for saves before it ran`,
+      async () => {
+        const edit = parseBlogPostEdit(fields(`second`, { language: `de`, title: `Changed` }))
+        await blog.update(post, 4, edit, true, maya)
+        await blog.update(post, 5, edit, false, maya)
+        expect(await run()).toBe(1)
+        expect(indexNow.sent.at(-1)).toHaveLength(2)
+      },
+    )
+
+    await t.step(
+      `sends them when the post is unpublished, so the engines see it gone`,
+      async () => {
+        await blog.unpublish(post, 6, maya)
+        expect(await run()).toBe(1)
+        expect(indexNow.sent.at(-1)).toEqual([
+          `https://www.example.com/de/blog/second`,
+          `https://www.example.com/de/blog/first`,
+        ])
+      },
+    )
+  })
+})
+
+Deno.test(`blog: a scheduled post that goes live through its job is sent to IndexNow (#418)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const post = uuidV7()
+    const indexNow = fakeIndexNow()
+    await blog.create(post, fields(`later`), maya)
+    await blog.publish(post, 1, LATER(), null, maya)
+    expect(await runIndexNow(sql, post, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch }))
+      .toBe(0)
+
+    await makeDue(sql, post)
+    await blogPublishJob({ sql, brand: BRAND, setup: null, log: () => {} })(jobEvent(post))
+    await runIndexNow(sql, post, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch })
+
+    expect(indexNow.sent).toEqual([[`https://www.example.com/blog/later`]])
+  })
+})
+
+Deno.test(`blog: with IndexNow off a post goes live and nothing is sent (#418)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const post = uuidV7()
+    const indexNow = fakeIndexNow()
+    await blog.create(post, fields(`quiet`), maya)
+    await blog.publish(post, 1, null, null, maya)
+
+    expect(await runIndexNow(sql, post, { setup: null, log: () => {}, fetch: indexNow.fetch }))
+      .toBe(1)
+    expect(indexNow.sent).toEqual([])
+    expect((await bySlug(sql, `quiet`)).status).toBe(`published`)
+  })
+})
+
+Deno.test(`blog: a failing IndexNow is logged once without the key and fails no publish (#418)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    for (const [slug, status] of [[`refused`, 403], [`unreachable`, null]] as const) {
+      const post = uuidV7()
+      const lines: string[] = []
+      await blog.create(post, fields(slug), maya)
+      await blog.publish(post, 1, null, null, maya)
+
+      const indexNow = fakeIndexNow(status)
+      await runIndexNow(sql, post, {
+        setup: INDEXNOW,
+        log: (line) => lines.push(line),
+        fetch: indexNow.fetch,
+      })
+
+      expect(indexNow.sent).toHaveLength(1)
+      expect(lines).toHaveLength(1)
+      expect(lines[0]).toContain(`IndexNow was not told about blog post ${post}`)
+      expect(lines[0]).not.toContain(INDEXNOW.key)
+      expect((await bySlug(sql, slug)).status).toBe(`published`)
+    }
+  })
+})
+
+Deno.test(`blog: Seed's live post files are sent to IndexNow, a scheduled one only when it goes live (#418)`, async () => {
+  await withSchema(async (sql) => {
+    await upsertSeedPosts(sql, [seedPost(`live`), seedPost(`later`, { publishAt: LATER() })])
+    const queued = async (slug: string) => {
+      const [{ count }] = await sql<{ count: number }[]>`
+        SELECT COUNT(*)::int AS count FROM outbox_events o JOIN blog_posts p ON p.id = o.aggregate_id
+        WHERE o.event_kind = ${BLOG_INDEXNOW_JOB} AND p.slug = ${slug}
+      `
+      return count
+    }
+    expect(await queued(`live`)).toBe(1)
+    expect(await queued(`later`)).toBe(0)
   })
 })
