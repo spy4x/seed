@@ -488,6 +488,8 @@ export default {
     "other": "<list>{list}</list>の確認済みの購読者{count}人にもこの記事をメールで送る",
   },
   "AdminBlogDialogs.sentOnce": "記事の公開時に一度だけ送信されます。送信は取り消せません。",
+  "AdminBlogDialogs.newsletterOff":
+    "ニュースレターがオフのため、この記事は<list>{list}</list>リストへ送信されません。",
   "AdminBlogDialogs.postLanguageOnly": "記事と同じ言語で登録した購読者にのみ届きます。",
   "AdminBlogEditor.leaveMessage": "この記事への変更は失われます。",
   "AdminBlogEditor.doneScheduled": "{at}に公開を予約しました。",
