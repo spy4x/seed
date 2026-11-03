@@ -140,7 +140,6 @@ function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
       busy={props.dialogPending}
       onCancel={props.onCloseDialog}
       cancelLabel={t.t(`AdminBlogDialogs.cancel`)}
-      tone="danger"
       title={t.t(`AdminBlogDialogs.changeUrlTitle`)}
       confirmLabel={t.t(`AdminBlogDialogs.changeUrl`)}
       onConfirm={() => {

@@ -666,6 +666,8 @@ describe("the blog editor", () => {
     expect(document.body.textContent).toContain(
       "Locked once published. Use Change URL… to change it; old links redirect to the new one.",
     )
+    // Old links redirect, so nothing is lost: the dialog is not drawn as a destructive one.
+    expect(button("Change URL").className).not.toContain("danger")
     await type("[data-e2e=admin-blog-new-slug]", "jobs-in-depth")
     await clickOn(button("Change URL"))
     expect(calls.at(-1)).toEqual(["change-url", "jobs-in-depth"])

@@ -468,7 +468,7 @@ export default {
   "AdminBlogDialogs.changeUrlTitle": "URL des Beitrags ändern?",
   "AdminBlogDialogs.changeUrl": "URL ändern",
   "AdminBlogDialogs.linksRedirect":
-    "Links auf <path>{path}</path> funktionieren weiter: Sie leiten auf die neue URL um.",
+    "Links auf <path>{path}</path> funktionieren weiter: sie leiten auf die neue URL um.",
   "AdminBlogDialogs.newSlug": "Neuer Slug",
   "AdminBlogDialogs.slugHint": "Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogDialogs.futureTime": "Wähle einen Zeitpunkt in der Zukunft.",
