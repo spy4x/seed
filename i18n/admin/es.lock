@@ -405,7 +405,7 @@ AdminBlogDialogs.figuresHiddenBody	6a958a0821940ee1
 AdminBlogDialogs.futureTime	ebfef07e2d2b1c17
 AdminBlogDialogs.goToProblems	8601a5eb067fa144
 AdminBlogDialogs.goesLiveAt	6e550d0a42349b25
-AdminBlogDialogs.linksBreak	52ad2e21a976b402
+AdminBlogDialogs.linksRedirect	1e61f9d631ef6941
 AdminBlogDialogs.liveOnItsOwn	9870ccfb4d9734fc
 AdminBlogDialogs.mailingList	13f40df7d6c966f0
 AdminBlogDialogs.newSlug	17fe8bbd217cf797
@@ -519,7 +519,7 @@ AdminBlogEditor.significant	35547a4990bf2e58
 AdminBlogEditor.slug	d15387ecc6c5e22d
 AdminBlogEditor.slugHint	baaec1a362852e81
 AdminBlogEditor.slugHintEmpty	f8e506be4641e815
-AdminBlogEditor.slugLocked	20d6754b7bf5e056
+AdminBlogEditor.slugLocked	2a2ca16e622caa28
 AdminBlogEditor.slugRule	59c1bc41e3afb065
 AdminBlogEditor.slugTaken	ecdb6229d8ae9ac0
 AdminBlogEditor.title	7e8cd2056da73a7f

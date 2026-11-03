@@ -469,7 +469,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Use só letras minúsculas, números e hifens.",
   "AdminBlogDialogs.changeUrlTitle": "Mudar a URL deste post?",
   "AdminBlogDialogs.changeUrl": "Mudar URL",
-  "AdminBlogDialogs.linksBreak": "Links para <path>{path}</path> vão parar de funcionar.",
+  "AdminBlogDialogs.linksRedirect":
+    "Links para <path>{path}</path> continuam funcionando: eles redirecionam para a nova URL.",
   "AdminBlogDialogs.newSlug": "Novo slug",
   "AdminBlogDialogs.slugHint": "Letras minúsculas, números e hifens.",
   "AdminBlogDialogs.futureTime": "Escolha um horário no futuro.",
@@ -623,7 +624,7 @@ export default {
   "AdminBlogEditor.settings": "Configurações do post",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Fica travado depois de publicado. Para mudar, use Mudar URL…; links antigos vão quebrar.",
+    "Fica travado depois de publicado. Para mudar, use Mudar URL…; links antigos redirecionam para a nova.",
   "AdminBlogEditor.slugHint":
     "A URL do post: <path>{path}</path>. Letras minúsculas, números e hifens.",
   "AdminBlogEditor.slugHintEmpty":

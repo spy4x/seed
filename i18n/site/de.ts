@@ -557,7 +557,7 @@ export default {
   "FeatureWebsite.fact3":
     "Ein Newsletter mit Double-Opt-in, Abbestellen mit einem Klick und E-Mails in der Sprache des Empfängers",
   "FeatureWebsite.fact4":
-    "Ein Blog, geschrieben im Adminbereich, mit Beiträgen in jeder Sprache samt Übersetzungen, Themen, interaktiven Grafiken zum Ausprobieren, einem RSS-Feed und strukturierten Daten für Artikel",
+    "Ein Blog, geschrieben im Adminbereich, mit Beiträgen in jeder Sprache samt Übersetzungen, Themen, interaktiven Grafiken zum Ausprobieren, einem RSS-Feed, strukturierten Daten für Artikel und alten Links, die nach einer URL-Änderung auf die neue Adresse umleiten",
   "FeatureWebsite.fact5":
     "Kontaktlinks, im Adminbereich festgelegt und im Footer und in den strukturierten Daten angezeigt",
   "FeatureWebsite.fact6":

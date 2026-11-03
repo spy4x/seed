@@ -21,6 +21,7 @@ import {
   listPublicFeed,
   listPublicPosts,
   listPublicTopics,
+  readMovedPost,
   readPublicPost,
 } from "@server/blog/public-blog.ts"
 import {
@@ -360,6 +361,75 @@ Deno.test(`blog: the public reads show live posts only`, async () => {
     expect(Object.keys(found!.post)).not.toContain(`id`)
     expect(JSON.stringify(found!.post.segments)).not.toContain(`<b>`)
     expect(found!.readNext).toEqual([])
+  })
+})
+
+Deno.test(`blog: a live post's old slugs lead to its current address, and only while it is live (#418)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const post = uuidV7()
+    const rows = async () =>
+      (await sql<{ slug: string; postId: string }[]>`
+        SELECT slug, post_id FROM blog_slug_redirects ORDER BY slug
+      `).map(({ slug, postId }) => `${slug} → ${postId === post ? `post` : postId}`)
+    await blog.create(post, fields(`first`, { language: `de` }), maya)
+    await blog.publish(post, 1, null, null, maya)
+
+    await t.step(`sends every old slug of a chain straight to the current one`, async () => {
+      await blog.changeUrl(post, 2, `second`, maya)
+      await blog.changeUrl(post, 3, `third`, maya)
+      for (const slug of [`first`, `second`]) {
+        expect(await readPublicPost(sql, slug)).toBeNull()
+        expect(await readMovedPost(sql, slug)).toEqual({ language: `de`, slug: `third` })
+      }
+      expect(await readMovedPost(sql, `third`)).toBeNull()
+      expect(await readMovedPost(sql, `never-was`)).toBeNull()
+    })
+
+    await t.step(`lists only the current address in the index and the feed`, async () => {
+      expect((await listPublicPosts(sql, null)).map(({ slug }) => slug)).toEqual([`third`])
+      expect((await listPublicFeed(sql)).map(({ slug }) => slug)).toEqual([`third`])
+    })
+
+    await t.step(`keeps no row for the slug a post moves back to`, async () => {
+      await blog.changeUrl(post, 4, `first`, maya)
+      expect(await rows()).toEqual([`second → post`, `third → post`])
+      expect((await readPublicPost(sql, `first`))?.post.slug).toBe(`first`)
+      expect(await readMovedPost(sql, `third`)).toEqual({ language: `de`, slug: `first` })
+    })
+
+    await t.step(`gives an old slug to the post that takes it, from its draft on`, async () => {
+      const other = uuidV7()
+      await blog.create(other, fields(`second`), maya)
+      expect(await rows()).toEqual([`third → post`])
+      expect(await readMovedPost(sql, `second`)).toBeNull()
+      await blog.publish(other, 1, null, null, maya)
+      expect((await readPublicPost(sql, `second`))?.post.title).toBe(`Post second`)
+    })
+
+    await t.step(`answers nothing for the old slug of a post that is not live`, async () => {
+      await blog.unpublish(post, 5, maya)
+      expect(await readMovedPost(sql, `third`)).toBeNull()
+      await blog.publish(post, 6, null, null, maya)
+      expect(await readMovedPost(sql, `third`)).toEqual({ language: `de`, slug: `first` })
+    })
+
+    await t.step(`keeps no row for a slug the public never saw`, async () => {
+      const draft = uuidV7()
+      await blog.create(draft, fields(`draft-a`), maya)
+      await blog.update(draft, 1, fields(`draft-b`), false, maya)
+      const scheduled = uuidV7()
+      await blog.create(scheduled, fields(`later-a`), maya)
+      await blog.publish(scheduled, 1, LATER(), null, maya)
+      await blog.changeUrl(scheduled, 2, `later-b`, maya)
+      expect(await rows()).toEqual([`third → post`])
+    })
+
+    await t.step(`deletes a post's old slugs with it`, async () => {
+      await blog.delete(post, 7, maya)
+      expect(await rows()).toEqual([])
+    })
   })
 })
 

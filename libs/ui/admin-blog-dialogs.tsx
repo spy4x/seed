@@ -123,7 +123,7 @@ function DialogBody(
   )
 }
 
-/** The new address of a published post, with the warning that old links break. */
+/** The new address of a published post, with the note that old links redirect to it (#418). */
 function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
   const t = useAdminText()
   const old = props.post?.slug ?? ``
@@ -140,7 +140,6 @@ function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
       busy={props.dialogPending}
       onCancel={props.onCloseDialog}
       cancelLabel={t.t(`AdminBlogDialogs.cancel`)}
-      tone="danger"
       title={t.t(`AdminBlogDialogs.changeUrlTitle`)}
       confirmLabel={t.t(`AdminBlogDialogs.changeUrl`)}
       onConfirm={() => {
@@ -151,7 +150,7 @@ function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
       <Stack gap="md">
         <p>
           <Rich
-            parts={t.parts(`AdminBlogDialogs.linksBreak`, {
+            parts={t.parts(`AdminBlogDialogs.linksRedirect`, {
               path: blogPostPath({
                 language: props.post?.language ?? props.value.language,
                 slug: old,

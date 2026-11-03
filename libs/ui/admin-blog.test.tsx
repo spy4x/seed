@@ -644,7 +644,8 @@ describe("the blog editor", () => {
     expect(has("[data-e2e=admin-blog-email]")).toBe(false)
   })
 
-  it("names the address that stops working in the post's own language when its URL changes (#530)", async () => {
+  it("says the old address, in the post's own language, keeps working when the URL changes, and sends the new slug (#418, #530)", async () => {
+    const calls: unknown[][] = []
     const live: BlogPost = {
       ...saved,
       language: "de",
@@ -652,14 +653,24 @@ describe("the blog editor", () => {
       publishAt: "2026-10-01T09:00:00.000Z",
       publishedAt: "2026-10-01T09:00:00.000Z",
     }
-    // The draft's language is not saved yet: the address that breaks is the saved one's.
+    // The draft's language is not saved yet: the old address is the saved one's.
     const value = { ...blogDraftOf(live), language: "es" as const }
     await mount(
-      <AdminBlogEditorScreen {...editorProps([], { post: live, value, dialog: "change-url" })} />,
+      <AdminBlogEditorScreen
+        {...editorProps(calls, { post: live, value, dialog: "change-url" })}
+      />,
     )
     expect(find("dialog[open]").textContent).toContain(
-      "Links to /de/blog/jobs-explained stop working.",
+      "Links to /de/blog/jobs-explained keep working: they redirect to the new URL.",
     )
+    expect(document.body.textContent).toContain(
+      "Locked once published. Use Change URL… to change it; old links redirect to the new one.",
+    )
+    // Old links redirect, so nothing is lost: the dialog is not drawn as a destructive one.
+    expect(button("Change URL").className).not.toContain("danger")
+    await type("[data-e2e=admin-blog-new-slug]", "jobs-in-depth")
+    await clickOn(button("Change URL"))
+    expect(calls.at(-1)).toEqual(["change-url", "jobs-in-depth"])
   })
 
   it("says where a published post moves when its language changes, and nothing for a draft (#530)", async () => {
