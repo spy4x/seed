@@ -93,6 +93,7 @@ import {
   createPublicContactLinksRoute,
 } from "./routes/contact-links.ts"
 import { createSubscriberRateLimits } from "./middlewares/subscriber-rate-limits.ts"
+import { createPublicReadRateLimit } from "./middlewares/public-read-rate-limit.ts"
 import { DEFAULT_PROXY_HOSTS } from "./middlewares/proxy-peer.ts"
 import { createProxyPeers } from "@spy4x/server/http/trusted-proxy"
 import {
@@ -498,7 +499,17 @@ app.route(
   }),
 )
 // The public website reads the blog's live posts; drafts and scheduled posts are never answered.
-app.route("/blog", createPublicBlogRoute(createPublicBlogReads(sql)))
+app.route(
+  "/blog",
+  createPublicBlogRoute(
+    createPublicBlogReads(sql),
+    createPublicReadRateLimit({
+      store: (keyPrefix) => createRedisRateLimitStore(kv, { keyPrefix }),
+      onStoreError: (error) =>
+        log("error: public read rate limit store failed and was let pass", error),
+    }),
+  ),
+)
 // The public website names the contact links in its footer and its structured data.
 app.route("/contact-links", createPublicContactLinksRoute(createPublicContactLinksRead(sql)))
 // The public website shows the catalog's published items, while the catalog is on.

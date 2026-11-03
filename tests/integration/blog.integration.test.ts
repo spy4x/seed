@@ -16,6 +16,7 @@ import {
 import { type BlogActor, PostgresBlogRepository } from "@server/blog/postgres-blog-repository.ts"
 import { blogPublishJob, queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
 import {
+  createPublicFeed,
   listPublicFeed,
   listPublicPosts,
   listPublicTopics,
@@ -36,6 +37,7 @@ import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { createListCrypto, type SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { EmailMessage } from "@spy4x/email/message"
 import type { EmailSender } from "@spy4x/email/sender"
+import { blogBodyLength } from "@server/blog/render.ts"
 import { createAdminBlog } from "../../apps/api/routes/admin/blog.ts"
 import { applyMigrations } from "./migrations.ts"
 
@@ -355,6 +357,79 @@ Deno.test(`blog: the public reads show live posts only`, async () => {
     expect(Object.keys(found!.post)).not.toContain(`id`)
     expect(JSON.stringify(found!.post.segments)).not.toContain(`<b>`)
     expect(found!.readNext).toEqual([])
+  })
+})
+
+Deno.test(`blog: every writer stores the reading minutes the renderer counts, and the reads answer them (#416)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    // Words split by JavaScript's whitespace beyond ASCII (no-break, ideographic, em space), and
+    // a zero-width space, which splits no word: 420 words, 2 minutes. A split on plain spaces
+    // alone counts 240 words, 1 minute, so this body catches a pattern that drops those spaces.
+    const tricky = Array.from(
+      { length: 240 },
+      (_, i) => [`w\u00a0x`, `w\u3000x`, `w\u2003x`, `w\u200bx`][i % 4],
+    ).join(` `)
+    const bodies = [``, `one`, tricky, `word `.repeat(344), `word `.repeat(2_000)]
+    for (const [i, bodyMd] of bodies.entries()) {
+      const id = uuidV7()
+      await blog.create(id, fields(`post-${i}`, { bodyMd: `x` }), maya)
+      await blog.update(id, 1, fields(`post-${i}`, { bodyMd }), false, maya)
+      await blog.publish(id, 2, null, null, maya)
+    }
+    await upsertSeedPosts(sql, [
+      seedPost(`from-file`, { fields: fields(`from-file`, { bodyMd: tricky }) }),
+    ])
+
+    const stored = await sql<{ slug: string; bodyMd: string; readingMinutes: number }[]>`
+      SELECT slug, body_md, reading_minutes FROM blog_posts
+    `
+    expect(stored).toHaveLength(bodies.length + 1)
+    for (const row of stored) {
+      expect({ slug: row.slug, minutes: row.readingMinutes })
+        .toEqual({ slug: row.slug, minutes: blogBodyLength(row.bodyMd).readingMinutes })
+    }
+    const minutes = Object.fromEntries(stored.map((row) => [row.slug, row.readingMinutes]))
+    expect(minutes[`post-2`]).toBe(blogBodyLength(tricky).readingMinutes)
+    for (const post of await listPublicPosts(sql, null)) {
+      expect(post.readingMinutes).toBe(minutes[post.slug])
+    }
+    expect((await readPublicPost(sql, `post-4`))!.post.readingMinutes).toBe(minutes[`post-4`])
+    for (const post of await listPublicFeed(sql)) {
+      expect(post.readingMinutes).toBe(minutes[post.slug])
+    }
+  })
+})
+
+Deno.test(`blog: the feed is read and rendered again only when a post in it changed (#416)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const feed = createPublicFeed(sql)
+    const first = uuidV7()
+    await blog.create(first, fields(`first`), maya)
+    await blog.publish(first, 1, null, null, maya)
+
+    const kept = await feed()
+    expect(kept.map((post) => post.slug)).toEqual([`first`])
+    expect(await feed()).toBe(kept)
+
+    await blog.update(first, 2, fields(`first`, { title: `Retitled` }), false, maya)
+    const edited = await feed()
+    expect(edited).not.toBe(kept)
+    expect(edited[0].title).toBe(`Retitled`)
+    expect(await feed()).toBe(edited)
+
+    const second = uuidV7()
+    await blog.create(second, fields(`second`), maya)
+    expect(await feed()).toBe(edited)
+    await blog.publish(second, 1, null, null, maya)
+    await sql`UPDATE blog_posts SET published_at = now() + interval '1 second' WHERE id = ${second}`
+    expect((await feed()).map((post) => post.slug)).toEqual([`second`, `first`])
+
+    await blog.unpublish(second, 2, maya)
+    expect((await feed()).map((post) => post.slug)).toEqual([`first`])
   })
 })
 

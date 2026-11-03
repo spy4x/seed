@@ -105,4 +105,52 @@ describe("createNewsletterStatus", () => {
 
     expect(status.isOn()).toBe(true)
   })
+
+  it("asks again after the short retry while the API has never answered, then only once a ttl", async () => {
+    let clock = 0
+    const { api, fetch } = fakeApi(down)
+    const status = createNewsletterStatus({
+      apiUrl: "http://api:8000",
+      fetch,
+      now: () => clock,
+      ttlMs: 60_000,
+      retryMs: 5_000,
+    })
+    await status.refresh()
+
+    clock = 4_999
+    status.isOn()
+    expect(api.asked).toHaveLength(1)
+
+    api.answer = says(false)
+    clock = 5_000
+    status.isOn()
+    // The read above started the question; this only waits for it.
+    expect(api.asked).toHaveLength(2)
+    await status.refresh()
+    expect(api.asked).toHaveLength(2)
+    expect(status.isOn()).toBe(false)
+
+    // Answered once: a failure now waits the whole ttl, keeping the answer it has.
+    api.answer = down
+    clock = 10_000
+    status.isOn()
+    expect(api.asked).toHaveLength(2)
+  })
+
+  it("cancels the body of an answer that is not OK, so its connection is let go", async () => {
+    let cancelled = false
+    const body = new ReadableStream({
+      cancel() {
+        cancelled = true
+      },
+    })
+    const { fetch } = fakeApi(() => Promise.resolve(new Response(body, { status: 503 })))
+    const status = createNewsletterStatus({ apiUrl: "http://api:8000", fetch })
+
+    await status.refresh()
+
+    expect(cancelled).toBe(true)
+    expect(status.isOn()).toBe(true)
+  })
 })

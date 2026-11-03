@@ -170,8 +170,7 @@ describe("securityHeadersMiddleware", () => {
       .handler()
   }
 
-  const policy =
-    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; " +
+  const policy = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; " +
     "connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; " +
     "frame-ancestors 'none'"
 
@@ -191,6 +190,22 @@ describe("securityHeadersMiddleware", () => {
       "max-age=15552000; includeSubDomains",
     )
   }
+
+  it("allows https: images on a blog post's page in every language, and nowhere else (#416)", async () => {
+    const app = await securedApp()
+    const imgSrc = async (path: string) => {
+      const response = await app(new Request(`${config.webAppOrigin}${path}`), info)
+      await response.body?.cancel()
+      return response.headers.get("content-security-policy")?.match(/img-src [^;]*/)?.[0]
+    }
+
+    for (const path of ["/blog/a-post", "/de/blog/a-post"]) {
+      expect(await imgSrc(path)).toBe("img-src 'self' data: https:")
+    }
+    for (const path of ["/", "/page", "/blog", "/de/blog", "/pricing", "/blogs/a-post"]) {
+      expect(await imgSrc(path)).toBe("img-src 'self' data:")
+    }
+  })
 
   it("sends the policy, nosniff, no-referrer, the frame ban and HSTS with a page", async () => {
     const response = await (await securedApp())(new Request(`${config.webAppOrigin}/page`), info)

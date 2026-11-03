@@ -103,6 +103,24 @@ describe(`feedHtml`, () => {
       `<p>Said: &lt;i&gt; &lt;b&gt;</p>\n`,
     )
   })
+
+  it(`makes every relative link and image address absolute, and leaves the rest of the HTML alone (#416)`, () => {
+    const html = `<p>See <a href="/docs/x" title="T">docs</a>, <a href="#part">this</a>, ` +
+      `<a href="other-post">that</a>, <a href="https://example.org/a?b=1&amp;c=2">out</a> and ` +
+      `<a href="mailto:hi@example.com">mail</a>.</p>\n<p><img src="/shots/a.png" alt="A"></p>\n` +
+      `<p><code>href=&quot;/code&quot;</code></p>\n`
+    const { parts } = resolveBody([{ kind: `html`, html }], [], figures)
+
+    expect(feedHtml(parts, `https://www.example.com/blog/a`, t)).toBe(
+      `<p>See <a href="https://www.example.com/docs/x" title="T">docs</a>, ` +
+        `<a href="https://www.example.com/blog/a#part">this</a>, ` +
+        `<a href="https://www.example.com/blog/other-post">that</a>, ` +
+        `<a href="https://example.org/a?b=1&amp;c=2">out</a> and ` +
+        `<a href="mailto:hi@example.com">mail</a>.</p>\n` +
+        `<p><img src="https://www.example.com/shots/a.png" alt="A"></p>\n` +
+        `<p><code>href=&quot;/code&quot;</code></p>\n`,
+    )
+  })
 })
 
 describe(`Seed's own posts`, () => {
