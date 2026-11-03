@@ -129,6 +129,8 @@ These tests check the name and change with it: `libs/ui/admin-frame.test.tsx`,
 - **Replace** the README's pictures in `docs/screenshots/` and the GitHub social preview, whose
   card says `seedsaas.com`: `docs/screenshots/record.ts` records them.
 - **Set** the licence holder in `LICENSE`.
+- **Delete** `AGENTS.seed.md` and the line in `AGENTS.md` that names it: that file holds the
+  rules of Seed's own repository.
 - **Replace** `AGENTS.md` with the product's own, as
   [step 3](products.md#start-a-product) says: it applies Seed's `AGENTS.md` except the sections
   "The live demo is not production" and "Financy", which hold for the template only.

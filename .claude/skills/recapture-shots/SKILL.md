@@ -24,12 +24,13 @@ theme, and the site shows that one copy in both of its themes. Re-record them in
 the change altered the notes list, the note editor, the conflict chooser, the search palette or the
 shell significantly.
 
-`AGENTS.md`, "Product screenshots", says when to run this. This skill says how.
+`AGENTS.seed.md`, "Product screenshots", says when to run this. This skill says how.
 
 ## 1. Decide whether to run
 
-`AGENTS.md`, "Product screenshots", says when. The website's photographed screens are listed in
-`apps/mpa/screenshots/README.md`, "What it does"; the README's are named in `record.ts`'s header.
+`AGENTS.seed.md`, "Product screenshots", says when. The website's photographed screens are
+listed in `apps/mpa/screenshots/README.md`, "What it does"; the README's are named in
+`record.ts`'s header.
 
 ## 2. Prepare
 
@@ -120,7 +121,7 @@ its timezone) and with one transcript line per shot of the new cut, then the e2e
 5. Stop what you started: `deno task compose down` and `deno task proxy:stop`, unless the stack was
    already running before you began. Then run the orphan sweep.
 6. Open a PR with the before and after of the main pictures. A design reviewer checks it, as for
-   any visible change; merge and deploy as `AGENTS.md` says.
+   any visible change; merge and deploy as `AGENTS.seed.md` says.
 7. `docs/screenshots/social-preview.png` reaches GitHub only when the owner uploads it in the
    repository's settings (General, "Social preview"); no agent can. When it changed, the PR body
    and the final report name this under "Needs you".

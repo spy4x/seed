@@ -3,6 +3,8 @@
 Read `README.md` and `CONTRIBUTING.md` first. The global agent instructions own Git Flow, review
 and cleanup; this file adds what is specific to this repo.
 
+In Seed's own repository, also read `AGENTS.seed.md`. A product deletes that file and this line.
+
 ## Three layers of UI
 
 Every piece of UI has one home:
@@ -88,28 +90,6 @@ one it has. The owner asked for this on 2026-10-19: "create the rule".
 of the global agent rules. The pages it measures are listed in
 `apps/mpa/lighthouse/lighthouserc.json`.
 
-## Product screenshots
-
-The public website (`apps/mpa/static/shots/`) and the README (`docs/screenshots/`) show pictures of
-the product. When a change alters a photographed screen significantly (the shell, a screen's
-layout, its primary action, the palette), re-capture both sets in a PR of their own with the
-`recapture-shots` skill (`.claude/skills/recapture-shots/SKILL.md`), once the change is merged. A
-small change (a wording, a spacing nudge) does not need it. When unsure, ask the owner. The owner
-asked for this on 2026-10-16: "do that automatically when screens/UI/UX change significantly (not
-every small change). If unsure if screenshots to be remade - ask me." On 2026-10-17 the owner
-agreed that the skill covers the README pictures too.
-
-The admin panel video on the website's `/admin` page (`apps/mpa/media/video/`) shows the admin
-app's screens too. When a change alters a screen the video shows significantly, re-record the
-video with `deno task video:admin` in the same follow-up PR as the screenshots, and update
-`apps/mpa/admin-video.ts` (its length, size, upload date and transcript) to match. The skill says
-how. On 2026-10-20 the owner, asked whether the video should join this rule, answered: "Add."
-
-The website's three feature loops (realtime, offline, shortcuts; `apps/mpa/media/video/*-loop-*`)
-film the SPA's screens. When a change alters a screen a loop shows significantly, re-record that
-loop with `deno task loops <name>` in `apps/mpa`, in the same follow-up PR. On 2026-11-03 the
-owner, asked whether the loops should join this rule, answered: "I agree."
-
 ## The public demo
 
 The template's server runs a public demo of the product (not the admin panel) with fake data,
@@ -123,42 +103,15 @@ add/edit/remove tables or schema or db structure overall."
 
 ## Blog
 
-Seed's own posts (seedsaas.com) are Markdown files in `libs/server/blog/seed-posts/`, whose
-`README.md` shows the format; they load only in demo mode ([docs/demo.md](docs/demo.md#seeds-own-blog-posts)).
 A product writes its posts in the admin app. How to write a post: the shared `blog-post` skill.
-
-- **Changelog.** A monthly "What's new in Seed" post, and a post of its own for a major change: a
-  new module, or something products must act on when they sync. The owner, 2026-11-01: "I agree,
-  let's keep it as an local instruction/rule."
-- **Ideas go to the owner first.** Propose a post in chat (title, reader, the search question it
-  answers, outline, interactive part) and file its issue only after the owner says yes. The
-  owner, 2026-11-01: "I prefer it asks me this in the chat, before creating a github issue."
 
 ## Handoff
 
 [docs/handoff.md](docs/handoff.md) holds the map of the repository, the decisions already made and
 the traps in this codebase. Read its "Traps in this codebase" before changing the API or the tests.
 
-## The live demo is not production
-
-The template's own server, which runs the live demo the README links to, is not in production
-yet: nobody depends on it and nothing of this project on it has to be kept. The owner said so on
-2026-10-14. An agent may change that server without asking: deploy to it, edit its env file
-(`infra/envs/.env.prod`, which `deno task deploy` copies there), change or reset its database, and
-delete this project's data under `.volumes/`. Other projects run on the same server and are not
-ours to touch.
-
-This holds for the template only. A product started from the template deletes this section: its
-server holds real people's data.
-
 ## Products built on Seed
 
 A product starts as a copy of Seed and keeps taking Seed's later changes as a patch:
 [docs/products.md](docs/products.md) says how. Keep that recipe working: a change to it, or to
 what a product must record, updates that doc in the same PR.
-
-## Financy
-
-Financy is being rebuilt on Seed, as the first product built on it. Seed decides how Financy's
-code looks; Financy says which features it needs. A feature any product would need is built here
-first and Financy takes it with a sync. Do not port Financy's old structure into Seed.
