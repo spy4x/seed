@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "登録は不要です。サンプルデータ入りのゲストアカウントで使えて、データは毎晩リセットされます。",
   "SiteNav.features": "機能",
+  "SiteNav.docs": "ドキュメント",
   "SiteNav.blog": "ブログ",
   "SiteNav.compare": "比較",
   "SiteNav.pricing": "料金",
@@ -244,6 +245,7 @@ export default {
     "<init>init</init>がenvファイルをコピーし、すべてのシークレットとWebプッシュ用の鍵を生成します。<dev>dev</dev>でTraefikをはじめすべてが起動します。あとは<url>http://app.localhost</url>を開くだけです。すべての設定項目とデプロイ方法は<readme>README</readme>にまとめています。",
   "HomeQuickStart.agent": "AIエージェントに頼むこともできます：<prompt></prompt>。",
   "HomeQuickStart.terminal": "ターミナル",
+  "HomeQuickStart.guide": "手順ガイドを読む",
   "HomeStatus.eyebrow": "正直な現状",
   "HomeStatus.title": "今どこまでできているか",
   "HomeStatus.lead":
