@@ -82,4 +82,14 @@ describe("readMpaConfig", () => {
       ).toThrow("MPA_UMAMI_ORIGIN must be an address")
     }
   })
+
+  it("reads the IndexNow key, and serves none without it or refuses to start with a bad one", () => {
+    expect(readMpaConfig(env(prod)).indexNowKey).toBeUndefined()
+    expect(readMpaConfig(env({ ...prod, INDEXNOW_KEY: "0123abcd-ef45" })).indexNowKey).toBe(
+      "0123abcd-ef45",
+    )
+    expect(() => readMpaConfig(env({ ...prod, INDEXNOW_KEY: "bad/key" }))).toThrow(
+      "INDEXNOW_KEY must be",
+    )
+  })
 })

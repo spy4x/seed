@@ -10,6 +10,7 @@ import {
   parseBlogPostFields,
   parseBlogStatusFilter,
   parsePublishTime,
+  readIndexNowKey,
 } from "./+lib.ts"
 
 const FIELDS = {
@@ -171,5 +172,28 @@ describe(`parseBlogPostEdit`, () => {
   it(`keeps the language and the link a save named, an unlink as null`, () => {
     expect(parseBlogPostEdit({ ...FIELDS, language: `de`, translationOf: null }))
       .toMatchObject({ language: `de`, translationOf: null })
+  })
+})
+
+describe(`readIndexNowKey`, () => {
+  const env = (value?: string) => ({
+    get: (name: string) => name === `INDEXNOW_KEY` ? value : undefined,
+  })
+
+  it(`answers the key, and null when it is unset or empty, so IndexNow stays off`, () => {
+    expect(readIndexNowKey(env(`0123abcd-ef45`))).toBe(`0123abcd-ef45`)
+    expect(readIndexNowKey(env())).toBeNull()
+    expect(readIndexNowKey(env(` `))).toBeNull()
+  })
+
+  it(`refuses a key IndexNow would not take, without naming it`, () => {
+    for (const bad of [`short`, `has space in it`, `a/b/c/d/e/f`, `k`.repeat(129)]) {
+      expect(() => readIndexNowKey(env(bad))).toThrow(`INDEXNOW_KEY must be`)
+      try {
+        readIndexNowKey(env(bad))
+      } catch (error) {
+        expect((error as Error).message).not.toContain(bad)
+      }
+    }
   })
 })
