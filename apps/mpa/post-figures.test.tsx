@@ -16,6 +16,19 @@ import {
 } from "./post-figures.tsx"
 import { figureCatalog, siteTranslator } from "./languages.ts"
 import { PRO_MAX_MEMBERS, PRO_PRICE } from "./islands/post/CostCalculator.tsx"
+import HostingCost, {
+  fallback as hostingFallback,
+  managedMonthly,
+  savings,
+  seedMonthly,
+  toEuro,
+} from "./islands/post/HostingCost.tsx"
+import OfflineSyncDemo, {
+  MAX_NOTES,
+  reconnect,
+  START,
+  writeNote,
+} from "./islands/post/OfflineSyncDemo.tsx"
 
 describe(`the figure folder`, () => {
   it(`finds a new file by its name, with no list to edit, and skips files that are no tag`, async () => {
@@ -140,5 +153,100 @@ describe(`CostCalculator`, () => {
 
     expect(PRO_PRICE).toEqual({ amount: pro.amount, currency: pro.currency })
     expect(PRO_MAX_MEMBERS).toBe(pro.entitlements.limits.maxMembers)
+  })
+})
+
+describe(`HostingCost`, () => {
+  it(`adds the server, its IPv4 address and the backup store to Seed's month`, () => {
+    expect(seedMonthly(`cx23`)).toBe(549 + 50 + 649)
+    expect(seedMonthly(`cpx32`)).toBe(3549 + 50 + 649)
+  })
+
+  it(`charges the managed stack a seat per developer on top of the database`, () => {
+    expect(managedMonthly(1)).toBe(4500)
+    expect(managedMonthly(3)).toBe(8500)
+  })
+
+  it(`turns dollars into euros at the dated ECB rate`, () => {
+    expect(toEuro(4500)).toBe(4012)
+  })
+
+  it(`draws the post's server and team without JavaScript, and its feed sentence names both totals`, () => {
+    const t = siteTranslator(`en`)
+    const html = renderToString(
+      <HostingCost
+        server={`cpx32`}
+        developers={3}
+        figure={{ id: `hosting-cost`, language: `en`, messages: figureCatalog(`en`) }}
+      />,
+    )
+
+    expect(html).toMatch(/value="cpx32"[^>]*checked/)
+    expect(html).toContain(`€42.48`)
+    expect(html).toContain(`$85.00`)
+    expect(hostingFallback({ server: `cpx32`, developers: 3 }, t)).toBe(
+      `On a Hetzner CPX32, Seed costs €42.48 a month with its IPv4 address and backup storage. ` +
+        `Vercel Pro and Supabase Pro cost $85.00 a month, about €75.78. Developers with a Vercel seat: 3. ` +
+        `Seed saves €33.30 a month, €399.60 a year.`,
+    )
+  })
+
+  it(`names the cheaper side and its saving, never a negative amount`, () => {
+    expect(savings(`cx23`, 1)).toEqual({ cheaper: `seed`, monthly: 2764 })
+    expect(savings(`cpx42`, 1)).toEqual({ cheaper: `managed`, monthly: 3636 })
+
+    const draw = (server: `cx23` | `cpx42`) =>
+      renderToString(
+        <HostingCost
+          server={server}
+          developers={1}
+          figure={{ id: `hosting-cost`, language: `en`, messages: figureCatalog(`en`) }}
+        />,
+      )
+    const seedWins = draw(`cx23`)
+    expect(seedWins).toContain(`Seed saves you`)
+    expect(seedWins).toContain(`€27.64 a month`)
+    expect(seedWins).toContain(`€331.68 a year`)
+
+    const managedWins = draw(`cpx42`)
+    expect(managedWins).toContain(`The managed stack saves you`)
+    expect(managedWins).toContain(`€36.36 a month`)
+    expect(managedWins).toContain(`€436.32 a year`)
+    expect(managedWins).not.toContain(`-€`)
+    expect(hostingFallback({ server: `cpx42`, developers: 1 }, siteTranslator(`en`))).toContain(
+      `The managed stack saves €36.36 a month, €436.32 a year.`,
+    )
+  })
+})
+
+describe(`OfflineSyncDemo`, () => {
+  it(`keeps a note written offline on the device, waiting, until the network is back`, () => {
+    const offline = writeNote(START, false)
+
+    expect(offline.map((note) => note.synced)).toEqual([true, false, false])
+    expect(reconnect(offline).map((note) => note.synced)).toEqual([true, true, true])
+  })
+
+  it(`saves a note written online on the server at once`, () => {
+    expect(writeNote(reconnect(START), true).at(-1)).toEqual({ id: 3, synced: true })
+  })
+
+  it(`stops adding notes once it holds MAX_NOTES`, () => {
+    let notes = START
+    for (let i = 0; i < MAX_NOTES + 2; i++) notes = writeNote(notes, false)
+
+    expect(notes.length).toBe(MAX_NOTES)
+  })
+
+  it(`starts offline with one note on the server and one waiting, as the post says`, () => {
+    const html = renderToString(
+      <OfflineSyncDemo
+        figure={{ id: `offline-sync-demo`, language: `en`, messages: figureCatalog(`en`) }}
+      />,
+    )
+
+    expect(html.match(/Waiting to sync</g)?.length).toBe(1)
+    expect(html).toContain(`Changes waiting to sync: 1`)
+    expect(html).toMatch(/aria-checked="true"[^>]*>(?:<svg[\s\S]*?<\/svg>)?Offline/)
   })
 })

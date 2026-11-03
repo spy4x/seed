@@ -879,6 +879,25 @@ export default {
   "PostFigure.noScript":
     "Gezeigt mit den Zahlen des Beitrags. Schalte JavaScript ein, um deine eigenen auszuprobieren.",
   "PostFigure.rssLink": "Auf der Website ausprobieren: {link}",
+  "PostFigure.OfflineSyncDemo.title": "Eine Notiz ohne Netz schreiben",
+  "PostFigure.OfflineSyncDemo.lead":
+    "Schreib offline eine Notiz und schalte das Netz dann wieder ein.",
+  "PostFigure.OfflineSyncDemo.network": "Netz",
+  "PostFigure.OfflineSyncDemo.online": "Online",
+  "PostFigure.OfflineSyncDemo.offline": "Offline",
+  "PostFigure.OfflineSyncDemo.write": "Notiz schreiben",
+  "PostFigure.OfflineSyncDemo.device": "Dieses Gerät",
+  "PostFigure.OfflineSyncDemo.server": "Server",
+  "PostFigure.OfflineSyncDemo.saved": "Gespeichert",
+  "PostFigure.OfflineSyncDemo.waiting": "Wartet auf Sync",
+  "PostFigure.OfflineSyncDemo.note": "Notiz {number}",
+  "PostFigure.OfflineSyncDemo.queue": "Änderungen, die auf Sync warten: {count}",
+  "PostFigure.OfflineSyncDemo.synced": "Alles ist auf dem Server.",
+  "PostFigure.OfflineSyncDemo.full": "Für die Demo reichen die Notizen.",
+  "PostFigure.OfflineSyncDemo.caption":
+    "Ein Modell der Warteschlange von Seed. Die echte liegt in IndexedDB und schickt jede Änderung mit ihrem Idempotenzschlüssel.",
+  "PostFigure.OfflineSyncDemo.fallback":
+    "Offline wird eine neue Notiz auf dem Gerät gespeichert und als „Wartet auf Sync“ markiert. Sobald das Netz zurück ist, geht die Warteschlange in der Reihenfolge an den Server, in der sie geschrieben wurde.",
   "PostFigure.CostCalculator.title": "Was der Pro-Tarif der Demo dein Team kostet",
   "PostFigure.CostCalculator.lead":
     "Pro wird pro Mitglied abgerechnet. Stell die Größe deines Teams ein.",
@@ -888,6 +907,26 @@ export default {
   "PostFigure.CostCalculator.caption": "Preise der Demo-Tarife, ohne Steuern.",
   "PostFigure.CostCalculator.fallback":
     "Teammitglieder: {members}. Im Pro-Tarif der Demo zahlen sie {total} im Monat, {price} pro Mitglied.",
+  "PostFigure.HostingCost.title": "Seed auf einem Server gegen einen Managed Stack",
+  "PostFigure.HostingCost.lead":
+    "Wähle einen Hetzner-Server und wie viele Entwickler einen Vercel-Platz brauchen.",
+  "PostFigure.HostingCost.server": "Hetzner-Server",
+  "PostFigure.HostingCost.serverOption": "{name}: {cores} vCPU, {memory} GB",
+  "PostFigure.HostingCost.developers": "Entwickler mit Vercel-Platz",
+  "PostFigure.HostingCost.seed": "Seed bei Hetzner, pro Monat",
+  "PostFigure.HostingCost.managed": "Vercel Pro und Supabase Pro, pro Monat",
+  "PostFigure.HostingCost.inEuro": "etwa {amount}",
+  "PostFigure.HostingCost.seedSaves": "Seed spart dir",
+  "PostFigure.HostingCost.managedSaves": "Der Managed-Stack spart dir",
+  "PostFigure.HostingCost.perMonth": "{amount} im Monat",
+  "PostFigure.HostingCost.perYear": "{amount} im Jahr",
+  "PostFigure.HostingCost.seedVerdict": "Seed spart {month} im Monat, {year} im Jahr.",
+  "PostFigure.HostingCost.managedVerdict":
+    "Der Managed-Stack spart {month} im Monat, {year} im Jahr.",
+  "PostFigure.HostingCost.caption":
+    "Listenpreise ohne Steuern, geprüft am 3. November 2026. Seed: der Server, seine IPv4-Adresse und Object Storage für Backups. Managed: die Grundtarife, ohne Nutzung. Dollar in Euro zum EZB-Kurs vom 2. November 2026.",
+  "PostFigure.HostingCost.fallback":
+    "Auf einem Hetzner {server} kostet Seed {seed} im Monat, mit IPv4-Adresse und Backup-Speicher. Vercel Pro und Supabase Pro kosten {managed} im Monat, etwa {managedEuro}. Entwickler mit Vercel-Platz: {developers}.",
   "FeaturePage.what": "Was du bekommst",
   "FeaturePage.how": "So funktioniert es",
   "FeaturePage.limits": "Grenzen",
