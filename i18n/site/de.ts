@@ -907,6 +907,26 @@ export default {
   "PostFigure.CostCalculator.caption": "Preise der Demo-Tarife, ohne Steuern.",
   "PostFigure.CostCalculator.fallback":
     "Teammitglieder: {members}. Im Pro-Tarif der Demo zahlen sie {total} im Monat, {price} pro Mitglied.",
+  "PostFigure.HostingCost.title": "Seed auf einem Server gegen einen Managed Stack",
+  "PostFigure.HostingCost.lead":
+    "Wähle einen Hetzner-Server und wie viele Entwickler einen Vercel-Platz brauchen.",
+  "PostFigure.HostingCost.server": "Hetzner-Server",
+  "PostFigure.HostingCost.serverOption": "{name}: {cores} vCPU, {memory} GB",
+  "PostFigure.HostingCost.developers": "Entwickler mit Vercel-Platz",
+  "PostFigure.HostingCost.seed": "Seed bei Hetzner, pro Monat",
+  "PostFigure.HostingCost.managed": "Vercel Pro und Supabase Pro, pro Monat",
+  "PostFigure.HostingCost.inEuro": "etwa {amount}",
+  "PostFigure.HostingCost.seedSaves": "Seed spart dir",
+  "PostFigure.HostingCost.managedSaves": "Der Managed-Stack spart dir",
+  "PostFigure.HostingCost.perMonth": "{amount} im Monat",
+  "PostFigure.HostingCost.perYear": "{amount} im Jahr",
+  "PostFigure.HostingCost.seedVerdict": "Seed spart {month} im Monat, {year} im Jahr.",
+  "PostFigure.HostingCost.managedVerdict":
+    "Der Managed-Stack spart {month} im Monat, {year} im Jahr.",
+  "PostFigure.HostingCost.caption":
+    "Listenpreise ohne Steuern, geprüft am 3. November 2026. Seed: der Server, seine IPv4-Adresse und Object Storage für Backups. Managed: die Grundtarife, ohne Nutzung. Dollar in Euro zum EZB-Kurs vom 2. November 2026.",
+  "PostFigure.HostingCost.fallback":
+    "Auf einem Hetzner {server} kostet Seed {seed} im Monat, mit IPv4-Adresse und Backup-Speicher. Vercel Pro und Supabase Pro kosten {managed} im Monat, etwa {managedEuro}. Entwickler mit Vercel-Platz: {developers}.",
   "FeaturePage.what": "Was du bekommst",
   "FeaturePage.how": "So funktioniert es",
   "FeaturePage.limits": "Grenzen",

@@ -899,6 +899,25 @@ export default {
   "PostFigure.CostCalculator.caption": "Цены тарифов демо, без налогов.",
   "PostFigure.CostCalculator.fallback":
     "Участников в команде: {members}. На тарифе Pro из демо они платят {total} в месяц, по {price} за участника.",
+  "PostFigure.HostingCost.title": "Seed на одном сервере против управляемого стека",
+  "PostFigure.HostingCost.lead": "Выберите сервер Hetzner и число разработчиков с местом в Vercel.",
+  "PostFigure.HostingCost.server": "Сервер Hetzner",
+  "PostFigure.HostingCost.serverOption": "{name}: {cores} vCPU, {memory} ГБ",
+  "PostFigure.HostingCost.developers": "Разработчики с местом в Vercel",
+  "PostFigure.HostingCost.seed": "Seed на Hetzner, в месяц",
+  "PostFigure.HostingCost.managed": "Vercel Pro и Supabase Pro, в месяц",
+  "PostFigure.HostingCost.inEuro": "примерно {amount}",
+  "PostFigure.HostingCost.seedSaves": "Seed экономит",
+  "PostFigure.HostingCost.managedSaves": "Управляемый стек экономит",
+  "PostFigure.HostingCost.perMonth": "{amount} в месяц",
+  "PostFigure.HostingCost.perYear": "{amount} в год",
+  "PostFigure.HostingCost.seedVerdict": "Seed экономит {month} в месяц, {year} в год.",
+  "PostFigure.HostingCost.managedVerdict":
+    "Управляемый стек экономит {month} в месяц, {year} в год.",
+  "PostFigure.HostingCost.caption":
+    "Цены из прайс-листов без налогов, проверены 3 ноября 2026 года. Seed: сервер, его IPv4-адрес и Object Storage для бэкапов. Управляемый стек: базовые тарифы без оплаты за использование. Доллары в евро по курсу ЕЦБ на 2 ноября 2026 года.",
+  "PostFigure.HostingCost.fallback":
+    "На сервере Hetzner {server} Seed стоит {seed} в месяц вместе с IPv4-адресом и хранилищем для бэкапов. Vercel Pro и Supabase Pro стоят {managed} в месяц, примерно {managedEuro}. Разработчиков с местом в Vercel: {developers}.",
   "FeaturePage.what": "Что вы получаете",
   "FeaturePage.how": "Как это работает",
   "FeaturePage.limits": "Ограничения",

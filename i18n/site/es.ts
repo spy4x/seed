@@ -906,6 +906,26 @@ export default {
   "PostFigure.CostCalculator.caption": "Precios de los planes de la demo, sin impuestos.",
   "PostFigure.CostCalculator.fallback":
     "Miembros del equipo: {members}. Con el plan Pro de la demo pagan {total} al mes, {price} por miembro.",
+  "PostFigure.HostingCost.title": "Seed en un servidor frente a un stack gestionado",
+  "PostFigure.HostingCost.lead":
+    "Elige un servidor de Hetzner y cuántos desarrolladores necesitan un asiento en Vercel.",
+  "PostFigure.HostingCost.server": "Servidor de Hetzner",
+  "PostFigure.HostingCost.serverOption": "{name}: {cores} vCPU, {memory} GB",
+  "PostFigure.HostingCost.developers": "Desarrolladores con asiento en Vercel",
+  "PostFigure.HostingCost.seed": "Seed en Hetzner, al mes",
+  "PostFigure.HostingCost.managed": "Vercel Pro y Supabase Pro, al mes",
+  "PostFigure.HostingCost.inEuro": "unos {amount}",
+  "PostFigure.HostingCost.seedSaves": "Seed te ahorra",
+  "PostFigure.HostingCost.managedSaves": "El stack gestionado te ahorra",
+  "PostFigure.HostingCost.perMonth": "{amount} al mes",
+  "PostFigure.HostingCost.perYear": "{amount} al año",
+  "PostFigure.HostingCost.seedVerdict": "Seed ahorra {month} al mes, {year} al año.",
+  "PostFigure.HostingCost.managedVerdict":
+    "El stack gestionado ahorra {month} al mes, {year} al año.",
+  "PostFigure.HostingCost.caption":
+    "Precios de tarifa sin impuestos, consultados el 3 de noviembre de 2026. Seed: el servidor, su dirección IPv4 y Object Storage para las copias de seguridad. Gestionado: los planes base, sin el uso. Dólares en euros al tipo del BCE del 2 de noviembre de 2026.",
+  "PostFigure.HostingCost.fallback":
+    "En un servidor {server} de Hetzner, Seed cuesta {seed} al mes con su dirección IPv4 y el almacenamiento de copias. Vercel Pro y Supabase Pro cuestan {managed} al mes, unos {managedEuro}. Desarrolladores con asiento en Vercel: {developers}.",
   "FeaturePage.what": "Qué obtienes",
   "FeaturePage.how": "Cómo funciona",
   "FeaturePage.limits": "Límites",

@@ -871,6 +871,26 @@ export default {
   "PostFigure.CostCalculator.caption": "デモのプランの税抜価格です。",
   "PostFigure.CostCalculator.fallback":
     "チームのメンバー：{members}人。デモのProプランでは月額{total}、1人あたり{price}です。",
+  "PostFigure.HostingCost.title": "1台のサーバーで動く Seed とマネージドスタックの比較",
+  "PostFigure.HostingCost.lead":
+    "Hetzner のサーバーと、Vercel のシートが必要な開発者の人数を選んでください。",
+  "PostFigure.HostingCost.server": "Hetzner のサーバー",
+  "PostFigure.HostingCost.serverOption": "{name}: {cores} vCPU、{memory} GB",
+  "PostFigure.HostingCost.developers": "Vercel のシートを持つ開発者",
+  "PostFigure.HostingCost.seed": "Hetzner 上の Seed（月額）",
+  "PostFigure.HostingCost.managed": "Vercel Pro と Supabase Pro（月額）",
+  "PostFigure.HostingCost.inEuro": "約 {amount}",
+  "PostFigure.HostingCost.seedSaves": "Seed のほうが安い",
+  "PostFigure.HostingCost.managedSaves": "マネージドのほうが安い",
+  "PostFigure.HostingCost.perMonth": "月額 {amount}",
+  "PostFigure.HostingCost.perYear": "年額 {amount}",
+  "PostFigure.HostingCost.seedVerdict": "Seed のほうが月額 {month}、年額 {year} 安くなります。",
+  "PostFigure.HostingCost.managedVerdict":
+    "マネージドのほうが月額 {month}、年額 {year} 安くなります。",
+  "PostFigure.HostingCost.caption":
+    "税抜きの定価で、2026年11月3日に確認しました。Seed はサーバー、その IPv4 アドレス、バックアップ用の Object Storage。マネージドは従量課金を除く基本プランです。ドルは2026年11月2日の ECB レートでユーロに換算しています。",
+  "PostFigure.HostingCost.fallback":
+    "Hetzner の {server} では、Seed は IPv4 アドレスとバックアップ用ストレージ込みで月額 {seed} です。Vercel Pro と Supabase Pro は月額 {managed}（約 {managedEuro}）です。Vercel のシートを持つ開発者: {developers} 人。",
   "FeaturePage.what": "できること",
   "FeaturePage.how": "仕組み",
   "FeaturePage.limits": "制限事項",

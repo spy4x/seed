@@ -877,6 +877,26 @@ export default {
   "PostFigure.CostCalculator.caption": "أسعار خطط العرض التجريبي، قبل الضريبة.",
   "PostFigure.CostCalculator.fallback":
     "أعضاء الفريق: {members}. في خطة Pro من العرض التجريبي يدفعون {total} شهريًا، أي {price} لكل عضو.",
+  "PostFigure.HostingCost.title": "Seed على خادم واحد مقابل حزمة مُدارة",
+  "PostFigure.HostingCost.lead":
+    "اختر خادمًا من Hetzner وعدد المطوّرين الذين يحتاجون إلى مقعد في Vercel.",
+  "PostFigure.HostingCost.server": "خادم Hetzner",
+  "PostFigure.HostingCost.serverOption": "{name}: {cores} vCPU، {memory} GB",
+  "PostFigure.HostingCost.developers": "مطوّرون لهم مقعد في Vercel",
+  "PostFigure.HostingCost.seed": "Seed على Hetzner، شهريًا",
+  "PostFigure.HostingCost.managed": "Vercel Pro وSupabase Pro، شهريًا",
+  "PostFigure.HostingCost.inEuro": "نحو {amount}",
+  "PostFigure.HostingCost.seedSaves": "توفّر لك Seed",
+  "PostFigure.HostingCost.managedSaves": "توفّر لك الحزمة المُدارة",
+  "PostFigure.HostingCost.perMonth": "{amount} شهريًا",
+  "PostFigure.HostingCost.perYear": "{amount} سنويًا",
+  "PostFigure.HostingCost.seedVerdict": "توفّر Seed مبلغ {month} شهريًا، أي {year} سنويًا.",
+  "PostFigure.HostingCost.managedVerdict":
+    "توفّر الحزمة المُدارة مبلغ {month} شهريًا، أي {year} سنويًا.",
+  "PostFigure.HostingCost.caption":
+    "أسعار القوائم قبل الضريبة، تحقّقنا منها في 3 نوفمبر 2026. Seed: الخادم وعنوان IPv4 الخاص به وObject Storage للنسخ الاحتياطية. المُدارة: الخطط الأساسية قبل رسوم الاستخدام. الدولار باليورو بسعر البنك المركزي الأوروبي في 2 نوفمبر 2026.",
+  "PostFigure.HostingCost.fallback":
+    "على خادم {server} من Hetzner تكلّف Seed مبلغ {seed} شهريًا مع عنوان IPv4 وتخزين النسخ الاحتياطية. وتكلّف Vercel Pro وSupabase Pro مبلغ {managed} شهريًا، أي نحو {managedEuro}. المطوّرون الذين لهم مقعد في Vercel: {developers}.",
   "FeaturePage.what": "ما تحصل عليه",
   "FeaturePage.how": "كيف يعمل",
   "FeaturePage.limits": "الحدود",
