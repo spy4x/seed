@@ -568,6 +568,8 @@ Deno.test(`blog: a save that makes an original a translation while another save 
     const save = rejection(
       blog.update(english, 1, fields(`hello`, { translationOf: german }), false, maya),
     )
+    // Awaited below; this only keeps a save that did not wait from failing the whole file.
+    save.catch(() => {})
     try {
       const deadline = Date.now() + 10_000
       while (true) {
