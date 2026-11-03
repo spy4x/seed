@@ -402,6 +402,20 @@ describe("a blog post", () => {
     expect(location).toBe(`/blog/cron-jobs`)
   })
 
+  it("sends a slug the post moved away from to its current address for good, in every language (#418)", async () => {
+    const { get } = await blogSite({
+      ...listing([NEWER, GERMAN]),
+      [`/api/blog/posts/old-cron`]: () =>
+        Response.json({ moved: { language: `de`, slug: `hallo-welt` } }),
+    })
+
+    for (const path of [`/blog/old-cron`, `/de/blog/old-cron`, `/fr/blog/old-cron`]) {
+      const { status, location } = await get(path)
+      expect(status).toBe(301)
+      expect(location).toBe(`/de/blog/hallo-welt`)
+    }
+  })
+
   it("says Updated only for a post that was updated", async () => {
     const { get } = await blogSite(answers({ ...FULL, updatedAt: null }))
     const { body } = await get("/blog/cron-jobs")

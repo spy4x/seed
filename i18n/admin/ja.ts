@@ -452,7 +452,8 @@ export default {
   "AdminBlogDialogs.slugRule": "小文字の英字、数字、ハイフンのみ使用できます。",
   "AdminBlogDialogs.changeUrlTitle": "この記事のURLを変更しますか？",
   "AdminBlogDialogs.changeUrl": "URLを変更",
-  "AdminBlogDialogs.linksBreak": "<path>{path}</path>へのリンクは使えなくなります。",
+  "AdminBlogDialogs.linksRedirect":
+    "<path>{path}</path>へのリンクはそのまま使えます。新しいURLへ自動で転送されます。",
   "AdminBlogDialogs.newSlug": "新しいスラッグ",
   "AdminBlogDialogs.slugHint": "小文字の英字、数字、ハイフン。",
   "AdminBlogDialogs.futureTime": "未来の日時を選んでください。",
@@ -584,7 +585,7 @@ export default {
   "AdminBlogEditor.settings": "記事の設定",
   "AdminBlogEditor.slug": "スラッグ",
   "AdminBlogEditor.slugLocked":
-    "公開後は固定されます。変更するには「URLを変更…」を使ってください。古いリンクは使えなくなります。",
+    "公開後は固定されます。変更するには「URLを変更…」を使ってください。古いリンクは新しいURLへ転送されます。",
   "AdminBlogEditor.slugHint": "記事のURL：<path>{path}</path>。小文字の英字、数字、ハイフン。",
   "AdminBlogEditor.slugHintEmpty": "タイトルから自動で入力されます。小文字の英字、数字、ハイフン。",
   "AdminBlogEditor.description": "説明",

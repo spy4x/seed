@@ -471,7 +471,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Usa solo minúsculas, números y guiones.",
   "AdminBlogDialogs.changeUrlTitle": "¿Cambiar la URL de esta entrada?",
   "AdminBlogDialogs.changeUrl": "Cambiar URL",
-  "AdminBlogDialogs.linksBreak": "Los enlaces a <path>{path}</path> dejarán de funcionar.",
+  "AdminBlogDialogs.linksRedirect":
+    "Los enlaces a <path>{path}</path> seguirán funcionando: redirigirán a la nueva URL.",
   "AdminBlogDialogs.newSlug": "Nuevo slug",
   "AdminBlogDialogs.slugHint": "Minúsculas, números y guiones.",
   "AdminBlogDialogs.futureTime": "Elige una fecha y hora futuras.",
@@ -628,7 +629,7 @@ export default {
   "AdminBlogEditor.settings": "Ajustes de la entrada",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Queda fijo al publicar. Para cambiarlo, usa «Cambiar URL…»; los enlaces antiguos dejarán de funcionar.",
+    "Queda fijo al publicar. Para cambiarlo, usa «Cambiar URL…»; los enlaces antiguos redirigirán a la nueva.",
   "AdminBlogEditor.slugHint":
     "La URL de la entrada: <path>{path}</path>. Minúsculas, números y guiones.",
   "AdminBlogEditor.slugHintEmpty": "Se rellena a partir del título. Minúsculas, números y guiones.",
