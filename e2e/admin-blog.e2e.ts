@@ -168,3 +168,67 @@ test("an operator writes, previews, schedules, publishes, moves and deletes a po
     await admin?.close()
   }
 })
+
+test("an operator brings an earlier version of a post back from History, by the keyboard (#418)", async ({ browser, request }) => {
+  let admin: BrowserContext | null = null
+  try {
+    const signedIn = await operatorPage(browser, request)
+    admin = signedIn.admin
+    const ops = signedIn.ops
+    const title = `History post ${uuidV7().slice(-6)}`
+
+    // Two saves: the first text, then a worse one over it.
+    await ops.goto(`${adminBase}/blog/new`)
+    const body = ops.locator("[data-e2e=admin-blog-body]")
+    await ops.locator("[data-e2e=admin-blog-title-field]").fill(title)
+    await ops.locator("[data-e2e=admin-blog-description]").fill("A post with a past.")
+    await body.fill("The good paragraph.")
+    await ops.keyboard.press("ControlOrMeta+s")
+    await expect(ops).toHaveURL(/\/blog\/[0-9a-f-]{36}$/)
+    await expect(ops.locator("[data-e2e=admin-blog-saved]")).toHaveText("Saved")
+    await body.fill("Worse.")
+    await ops.keyboard.press("ControlOrMeta+s")
+    await expect(ops.locator("[data-e2e=admin-blog-saved]")).toHaveText("Saved")
+
+    // History lists both saves, newest first, and shows the newest.
+    const menu = ops.locator("[data-e2e=admin-blog-menu]")
+    await menu.click()
+    await ops.locator("[data-e2e=admin-blog-history-open]").click()
+    const history = ops.getByRole("dialog", { name: "History" })
+    const versions = history.getByRole("radio")
+    await expect(versions).toHaveCount(2)
+    await expect(history.locator("[data-e2e=admin-blog-history-body]")).toHaveText("Worse.")
+    const axe = await new AxeBuilder({ page: ops })
+      .include("[data-e2e=admin-blog-history]")
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"])
+      .analyze()
+    expect(axe.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`))
+      .toEqual([])
+
+    // The arrow key picks the older one; Tab reaches its text, then the footer.
+    await versions.first().focus()
+    await ops.keyboard.press("ArrowDown")
+    await expect(versions.nth(1)).toBeChecked()
+    await expect(history.locator("[data-e2e=admin-blog-history-body]"))
+      .toHaveText("The good paragraph.")
+    await ops.keyboard.press("Tab")
+    await expect(history.locator("[data-e2e=admin-blog-history-body]")).toBeFocused()
+
+    // Restore puts it in the editor unsaved, and focus on the title.
+    await history.getByRole("button", { name: "Restore this version" }).click()
+    await expect(history).toBeHidden()
+    await expect(body).toHaveValue("The good paragraph.")
+    await expect(ops.locator("[data-e2e=admin-blog-title-field]")).toBeFocused()
+    await expect(ops.locator("[data-e2e=toasts]")).toContainText("Earlier version restored.")
+
+    // Escape closes History and gives focus back to More actions.
+    await menu.click()
+    await ops.locator("[data-e2e=admin-blog-history-open]").click()
+    await expect(history).toBeVisible()
+    await ops.keyboard.press("Escape")
+    await expect(history).toBeHidden()
+    await expect(menu).toBeFocused()
+  } finally {
+    await admin?.close()
+  }
+})
