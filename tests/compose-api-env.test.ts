@@ -2,7 +2,7 @@
 /**
  * The api and worker services in `infra/compose/compose.shared.yml` pass their environment by name
  * and have no `env_file`, so a variable a process reads reaches its container only when it is
- * listed there. This holds the billing variables (`docs/billing.md`, "Configuration") to both lists:
+ * listed there. This holds the billing variables (`docs/billing.md`, "Settings") to both lists:
  * the worker reads the same billing setup to change a per-member subscription's quantity. Only the
  * API verifies webhooks, so only the API container receives the webhook signing secret. Both
  * receive the subscriber secrets: the worker signs the links the API checks.
