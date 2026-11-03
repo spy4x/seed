@@ -12,18 +12,20 @@ It runs on every pull request, every push to `main` and every tag, in this order
 pull request to run the pipeline. This is the one list of CI's steps; other pages link here.
 
 ```
-check ──┬── integration      (Postgres and Valkey services)
-        ├── backup-restore   (Postgres service)
-        ├── alert-rules
-        └── browser ─────────┬── e2e-smoke   (pull request and tag)
-            build, e2e-mpa,  └── e2e-full    (push to `main`)
-            lighthouse, e2e-spa
+check ──┬── integration      (Postgres and Valkey services) ──┐
+        ├── backup-restore   (Postgres service)               │
+        ├── alert-rules                                       ├── lighthouse
+        └── browser          (build, e2e-mpa, e2e-spa) ───────┘       │
+                                                        ┌─────────────┴─┐
+                                                   e2e-smoke         e2e-full
+                                            (pull request, tag)   (push to `main`)
 ```
 
 Woodpecker runs steps in stages: a step starts only when the whole stage before it has ended, so
 the wall time is the slowest step of each stage, added up. Checks that must run one after another
 in the shared checkout are therefore commands of one step, `browser`, which runs beside
-`integration` (the reasons are in `ci.yml`).
+`integration` (the reasons are in `ci.yml`). `lighthouse` is a stage of its own, because lab
+performance falls when another step shares the CPU.
 
 - `check` runs `deno task check`: format, lint, type check and unit tests.
 - `integration` runs `deno task test:integration --parallel`, four test files at a time, against a throw-away `postgres:18.6-alpine`
@@ -34,14 +36,15 @@ in the shared checkout are therefore commands of one step, `browser`, which runs
 - `backup-restore` runs `infra/backup/restore.test.sh` in the `postgres:18.6` image against the same
   Postgres service: it backs a database up with restic, restores it into an empty one and compares
   them (docs/backups.md).
-- `browser` runs four checks, one after another:
+- `browser` runs three checks, one after another:
   - build: `deno task build` (the SPA production build);
   - e2e-mpa: the website's browser tests (`e2e/mpa/run.sh`);
-  - lighthouse: `deno task lighthouse` (`apps/mpa/lighthouse/run.sh`): the website's pages,
-  built and served behind nginx with gzip, must score at least 95 for performance and 100 for
-  accessibility, best practices and SEO in Lighthouse mobile. The pages are listed in
-  `apps/mpa/lighthouse/lighthouserc.json`;
   - e2e-spa: the SPA behind nginx (`e2e/spa/run.sh`).
+- `lighthouse` builds the website and runs `deno task lighthouse` (`apps/mpa/lighthouse/run.sh`):
+  the website's pages, served behind nginx with gzip, must score at least 95 for performance and
+  100 for accessibility, best practices and SEO in Lighthouse mobile. The pages are listed in
+  `apps/mpa/lighthouse/lighthouserc.json`. It starts when every step before it has ended, and the
+  e2e steps wait for it, so nothing else of the pipeline runs beside it.
 - `e2e-smoke` runs the product's smoke set on every pull request and tag:
   `deno task e2e:local --smoke --max-failures=3`, the script a developer runs, against the Postgres
   and Valkey services (`E2E_SERVICES=environment`). The set is `SMOKE_SPECS` in
@@ -105,7 +108,7 @@ image, so there is no worker image. How to cut a release: [the deploy guide](dep
 ## Changing the Deno version
 
 Change the tag in every `image: denoland/deno:<version>` line of `ci.yml`, and the release URL and
-SHA-256 in the three Playwright steps (`browser`, `e2e-smoke`, `e2e-full`). Keep them
+SHA-256 in the four Playwright steps (`browser`, `lighthouse`, `e2e-smoke`, `e2e-full`). Keep them
 equal to `DENO_VERSION` in `infra/envs/.env.example` and `Dockerfile.base`.
 
 ## Running the steps locally
