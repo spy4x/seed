@@ -1,4 +1,5 @@
 import { FORM_ACTIONS } from "@ui/progressive.tsx"
+import { readIndexNowKey } from "@domain/blog"
 
 /** What the MPA needs to know about its surroundings. */
 export interface MpaConfig {
@@ -16,6 +17,11 @@ export interface MpaConfig {
   apiOrigin: string
   /** Where page views and events go, or `undefined` when the website runs without analytics. */
   analytics?: AnalyticsConfig
+  /**
+   * The site's IndexNow key from `INDEXNOW_KEY` (docs/blog.md), served at `/<key>.txt` so the search
+   * engines can check the worker's pings. `undefined` serves no key file. The key is public.
+   */
+  indexNowKey?: string
 }
 
 /**
@@ -51,9 +57,10 @@ export const ROBOTS_POLICY: RobotsPolicy = {
 
 /**
  * Reads the configuration from the environment: `ENV`, `DOMAIN` (as the API reads them), `API_URL`
- * and `MPA_DOMAIN`, and the optional pair `MPA_UMAMI_ORIGIN` and `MPA_UMAMI_WEBSITE_ID`. Throws
- * when a required one is missing, when `MPA_DOMAIN` carries a scheme (it would become the host
- * `https`), or when only one of the Umami pair is set, so a misconfigured MPA refuses to start.
+ * and `MPA_DOMAIN`, the optional pair `MPA_UMAMI_ORIGIN` and `MPA_UMAMI_WEBSITE_ID`, and the
+ * optional `INDEXNOW_KEY`. Throws when a required one is missing, when `MPA_DOMAIN` carries a scheme
+ * (it would become the host `https`), when only one of the Umami pair is set, or when the IndexNow
+ * key is malformed, so a misconfigured MPA refuses to start.
  */
 export function readMpaConfig(env: { get(name: string): string | undefined }): MpaConfig {
   const required = (name: string): string => {
@@ -71,6 +78,7 @@ export function readMpaConfig(env: { get(name: string): string | undefined }): M
     webAppOrigin: new URL(`${scheme}://${required("MPA_DOMAIN")}`).origin,
     apiOrigin,
     analytics: readAnalytics(env),
+    indexNowKey: readIndexNowKey(env) ?? undefined,
   }
 }
 

@@ -689,3 +689,26 @@ export type BlogAuditKind = typeof BLOG_AUDIT_KINDS[keyof typeof BLOG_AUDIT_KIND
 
 /** The job that publishes a scheduled post at its time and queues its newsletter issue. */
 export const BLOG_PUBLISH_JOB = `blog.publish`
+
+/** The job that tells IndexNow a post's addresses changed: it went live, changed, moved or left. */
+export const BLOG_INDEXNOW_JOB = `blog.indexnow`
+
+/** An IndexNow key: 8 to 128 letters, digits and dashes, as the protocol asks. */
+const INDEXNOW_KEY_PATTERN = /^[A-Za-z0-9-]{8,128}$/
+
+/**
+ * The site's IndexNow key from `INDEXNOW_KEY`, or `null` when it is unset or empty: then nothing
+ * is pinged and the website serves no key file. The worker pings with it, and the public website
+ * serves it at `/<key>.txt`, so both read it here.
+ *
+ * @throws Error when it is set to anything but 8 to 128 letters, digits and dashes, so a
+ *   misconfigured process stops at start. The message never holds the value.
+ */
+export function readIndexNowKey(env: { get(name: string): string | undefined }): string | null {
+  const key = env.get(`INDEXNOW_KEY`)?.trim() ?? ``
+  if (key === ``) return null
+  if (!INDEXNOW_KEY_PATTERN.test(key)) {
+    throw new Error(`INDEXNOW_KEY must be 8 to 128 letters, digits and dashes`)
+  }
+  return key
+}

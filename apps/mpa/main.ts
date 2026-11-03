@@ -3,6 +3,7 @@ import { blogLinkMiddleware } from "./blog.ts"
 import { readMpaConfig } from "./config.ts"
 import { contactLinksMiddleware } from "./contact-links.ts"
 import {
+  indexNowKeyMiddleware,
   newsletterPageMiddleware,
   securityHeadersMiddleware,
   staticFilesMiddleware,
@@ -15,6 +16,7 @@ const config = readMpaConfig(Deno.env)
 
 app.use(await securityHeadersMiddleware(config))
 app.use(staticFilesMiddleware())
+app.use(indexNowKeyMiddleware(config))
 app.use(await newsletterPageMiddleware(config))
 app.use(await blogLinkMiddleware(config))
 app.use(await contactLinksMiddleware(config))
