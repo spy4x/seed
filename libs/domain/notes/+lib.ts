@@ -656,7 +656,7 @@ export interface GroupRoleLookup {
 
 // #region Export file
 /**
- * One note in a group's export file (`docs/aggregates.md`, "Making an aggregate exportable"): its
+ * One note in a group's export file (`docs/aggregate-lifecycle.md`, "Make it exportable"): its
  * id in the file, its text, the ids of its tags in the file, and when it was written. Who wrote it
  * stays out: the file holds no person. The dates come back on import, so the list keeps its order.
  */
