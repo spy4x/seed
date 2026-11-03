@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "Без регистрации. Вы получите гостевой аккаунт с демо-данными, а каждую ночь всё начинается с чистого листа.",
   "SiteNav.features": "Возможности",
+  "SiteNav.docs": "Документация",
   "SiteNav.blog": "Блог",
   "SiteNav.compare": "Сравнение",
   "SiteNav.pricing": "Цены",
@@ -238,6 +239,7 @@ export default {
     "<init>init</init> копирует env-файл и генерирует все секреты и ключи для веб-пушей; <dev>dev</dev> запускает Traefik и всё остальное. Потом откройте <url>http://app.localhost</url>. В <readme>README</readme> описаны все настройки и деплой.",
   "HomeQuickStart.agent": "Или попросите своего ИИ-агента: <prompt></prompt>.",
   "HomeQuickStart.terminal": "Терминал",
+  "HomeQuickStart.guide": "Читать пошаговое руководство",
   "HomeStatus.eyebrow": "Честный статус",
   "HomeStatus.title": "Что есть на сегодня",
   "HomeStatus.lead":
