@@ -490,18 +490,24 @@ export default {
     "It goes live at <path>{path}</path> and joins the RSS feed and sitemap.",
   "AdminBlogDialogs.mailingList": "Mailing list",
   "AdminBlogDialogs.alsoEmail": {
-    "one": "Also email this post to {count} confirmed subscriber",
-    "other": "Also email this post to {count} confirmed subscribers",
+    "one":
+      "Also email this post to {count} confirmed subscriber in <language>{language}</language>",
+    "other":
+      "Also email this post to {count} confirmed subscribers in <language>{language}</language>",
   },
   "AdminBlogDialogs.alsoEmailList": {
-    "one": "Also email this post to {count} confirmed subscriber of <list>{list}</list>",
-    "other": "Also email this post to {count} confirmed subscribers of <list>{list}</list>",
+    "one":
+      "Also email this post to {count} confirmed subscriber of <list>{list}</list> in <language>{language}</language>",
+    "other":
+      "Also email this post to {count} confirmed subscribers of <list>{list}</list> in <language>{language}</language>",
   },
   "AdminBlogDialogs.sentOnce": "Sent once, when the post goes live. You can't unsend it.",
   "AdminBlogDialogs.newsletterOff":
     "The newsletter is off, so this post won't be emailed to the <list>{list}</list> list.",
   "AdminBlogDialogs.postLanguageOnly":
     "Only subscribers who signed up in the post's language get it.",
+  "AdminBlogDialogs.noReaders":
+    "No confirmed subscribers in <language>{language}</language> yet, so this post can't be emailed.",
   "AdminBlogEditor.leaveMessage": "Your changes to this post will be lost.",
   "AdminBlogEditor.doneScheduled": "Scheduled for {at}.",
   "AdminBlogEditor.donePublished": "Published.",
@@ -1797,6 +1803,8 @@ export default {
   "AdminBlogEditor.language": "Language",
   "AdminBlogEditor.languageHint":
     "The language the post is written in. The website lists it on that language's blog.",
+  "AdminBlogEditor.languageMoves":
+    "Saving moves the post to <path>{path}</path>. Its old address redirects there.",
   "AdminBlogEditor.translationOf": "Translation of",
   "AdminBlogEditor.translationOfHint":
     "The post this one translates. The website links the two as language versions once both are live.",

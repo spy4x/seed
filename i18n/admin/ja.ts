@@ -483,15 +483,19 @@ export default {
     "<path>{path}</path>で公開され、RSSフィードとサイトマップに追加されます。",
   "AdminBlogDialogs.mailingList": "メーリングリスト",
   "AdminBlogDialogs.alsoEmail": {
-    "other": "確認済みの購読者{count}人にもこの記事をメールで送る",
+    "other":
+      "確認済みの購読者{count}人（言語：<language>{language}</language>）にもこの記事をメールで送る",
   },
   "AdminBlogDialogs.alsoEmailList": {
-    "other": "<list>{list}</list>の確認済みの購読者{count}人にもこの記事をメールで送る",
+    "other":
+      "<list>{list}</list>の確認済みの購読者{count}人（言語：<language>{language}</language>）にもこの記事をメールで送る",
   },
   "AdminBlogDialogs.sentOnce": "記事の公開時に一度だけ送信されます。送信は取り消せません。",
   "AdminBlogDialogs.newsletterOff":
     "ニュースレターがオフのため、この記事は<list>{list}</list>リストへ送信されません。",
   "AdminBlogDialogs.postLanguageOnly": "記事と同じ言語で登録した購読者にのみ届きます。",
+  "AdminBlogDialogs.noReaders":
+    "<language>{language}</language>の確認済みの購読者はまだいないため、この記事はメールで送れません。",
   "AdminBlogEditor.leaveMessage": "この記事への変更は失われます。",
   "AdminBlogEditor.doneScheduled": "{at}に公開を予約しました。",
   "AdminBlogEditor.donePublished": "公開しました。",
@@ -1742,6 +1746,8 @@ export default {
   "AdminBlogEditor.language": "言語",
   "AdminBlogEditor.languageHint":
     "記事を書いた言語です。サイトではその言語のブログに掲載されます。",
+  "AdminBlogEditor.languageMoves":
+    "保存すると、記事は<path>{path}</path>に移動します。古いアドレスからはそこへリダイレクトされます。",
   "AdminBlogEditor.translationOf": "翻訳元",
   "AdminBlogEditor.translationOfHint":
     "この記事の翻訳元となる記事です。両方が公開されると、サイトで言語版として相互にリンクされます。",

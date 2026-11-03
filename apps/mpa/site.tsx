@@ -257,7 +257,10 @@ export interface SiteFrameProps {
    * The request's state: the website's own origin for canonical links, the SPA's for actions, and
    * whether the footer offers the newsletter.
    */
-  state: Pick<State, "webAppOrigin" | "spaOrigin" | "newsletter" | "blog" | "contactLinks">
+  state: Pick<
+    State,
+    "webAppOrigin" | "spaOrigin" | "newsletter" | "blog" | "blogLanguages" | "contactLinks"
+  >
   /**
    * The page's path on this website in the default language, such as `/pricing`. The frame puts
    * the page's language in front of it for the canonical address and the links.
@@ -305,11 +308,14 @@ export function SiteFrame(
   const blog = state.blog === true
   const origin = state.webAppOrigin
   const navLinks = blog ? NAV_LINKS : NAV_LINKS.filter((link) => link.href !== BLOG_PATH)
-  // This page in another language: its translated version, or where the page says to go instead.
+  // This page in another language: its translated version, or where the page says to go instead;
+  // the home page in place of another language's blog index while it has no posts (#530).
   const languageHref = (tag: string) => {
     const target = isSiteLanguage(tag) ? tag : DEFAULT_LANGUAGE
     const version = head.alternates?.find(({ language }) => language === target)
-    return localePath(target, version?.path ?? (head.alternates && head.elsewhere) ?? path)
+    const to = version?.path ?? (head.alternates && head.elsewhere) ?? path
+    const empty = to === BLOG_PATH && target !== language && !state.blogLanguages?.has(target)
+    return localePath(target, empty ? `/` : to)
   }
   return (
     <>

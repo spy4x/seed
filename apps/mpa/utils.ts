@@ -25,6 +25,11 @@ export interface State {
    */
   blog?: boolean
   /**
+   * The languages with a live post (`blogLinkMiddleware`): the language links never send a reader
+   * to the blog of a language outside it, which would be empty (#530). Missing counts as none.
+   */
+  blogLanguages?: ReadonlySet<Language>
+  /**
    * Where people reach the product (`contactLinksMiddleware`), in the operator's order; the footer
    * lists them and the home page's structured data names them. Missing or empty shows none.
    */

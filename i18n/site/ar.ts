@@ -835,6 +835,7 @@ export default {
   "Blog.ctaTitle": "شاهد {site} يعمل خلال دقيقة",
   "Blog.published": "نُشر في <time>{date}</time>",
   "Blog.updated": "· حُدّث في <time>{date}</time>",
+  "Blog.alsoIn": "متوفرة أيضًا باللغات: <links></links>",
   "Blog.minutes": {
     "zero": "· قراءة في أقل من دقيقة",
     "one": "· قراءة في دقيقة واحدة",

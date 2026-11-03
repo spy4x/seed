@@ -463,7 +463,9 @@ describe("the blog editor", () => {
       "[data-e2e=admin-blog-email] input, input[data-e2e=admin-blog-email]",
     )
     expect(email.checked).toBe(false)
-    expect(document.body.textContent).toContain("Also email this post to 12 confirmed subscribers")
+    expect(document.body.textContent).toContain(
+      "Also email this post to 12 confirmed subscribers in English",
+    )
     await clickOn(button("Publish"))
     expect(calls).toEqual([["publish", { at: null, list: null }]])
     await clickOn(email)
@@ -472,10 +474,19 @@ describe("the blog editor", () => {
     expect(calls.at(-1)).toEqual(["publish", { at: null, list: "news" }])
   })
 
-  it("counts only the subscribers of the post's language as the issue's readers, and says so (#527)", async () => {
+  it("counts only the subscribers of the post's language as the issue's readers, and names it (#527, #530)", async () => {
     const value = { ...blogDraftOf(saved), language: "de" as const }
     await mount(<AdminBlogEditorScreen {...editorProps([], { dialog: "publish", value })} />)
-    expect(document.body.textContent).toContain("Also email this post to 3 confirmed subscribers")
+    expect(document.body.textContent).toContain(
+      "Also email this post to 3 confirmed subscribers in Deutsch",
+    )
+    expect(find("dialog[open] span[lang=de]").textContent).toBe("Deutsch")
+    // The checkbox's label is a flex row: the sentence must be one item, or its words spread out.
+    const label = find("dialog[open] span[lang=de]").closest("label")!
+    expect([...label.childNodes].map((node) => node.nodeName)).toEqual(["INPUT", "SPAN"])
+    expect(label.children[1].textContent).toBe(
+      "Also email this post to 3 confirmed subscribers in Deutsch",
+    )
     expect(find("dialog[open]").textContent).toContain(`It goes live at /de/blog/${value.slug}`)
     await clickOn(
       find("[data-e2e=admin-blog-email] input, input[data-e2e=admin-blog-email]"),
@@ -484,13 +495,23 @@ describe("the blog editor", () => {
       "Only subscribers who signed up in the post's language get it.",
     )
     expect(button("Publish and email 3")).toBeTruthy()
+  })
 
+  it("offers no email to a language with no confirmed subscribers, and publishes without one (#530)", async () => {
+    const calls: unknown[][] = []
+    const value = { ...blogDraftOf(saved), language: "es" as const }
     await mount(
       <AdminBlogEditorScreen
-        {...editorProps([], { dialog: "publish", value: { ...value, language: "es" } })}
+        {...editorProps(calls, { post: scheduled, dialog: "publish-now", value })}
       />,
     )
-    expect(document.body.textContent).toContain("Also email this post to 0 confirmed subscribers")
+    expect(has("[data-e2e=admin-blog-email]")).toBe(false)
+    expect(document.body.textContent).not.toContain("Also email")
+    expect(find("[data-e2e=admin-blog-email-none]").textContent).toBe(
+      "No confirmed subscribers in Español yet, so this post can't be emailed.",
+    )
+    await clickOn(button("Publish"))
+    expect(calls).toEqual([["publish", { at: null, list: null }]])
   })
 
   it("keeps a scheduled post's list when it is published now or moved, unless unticked", async () => {
@@ -585,7 +606,7 @@ describe("the blog editor", () => {
     expect(has("[data-e2e=admin-blog-email]")).toBe(false)
   })
 
-  it("says the old address keeps working when the URL changes, and sends the new slug (#418)", async () => {
+  it("says the old address, in the post's own language, keeps working when the URL changes, and sends the new slug (#418, #530)", async () => {
     const calls: unknown[][] = []
     const live: BlogPost = {
       ...saved,
@@ -594,10 +615,14 @@ describe("the blog editor", () => {
       publishAt: "2026-10-01T09:00:00.000Z",
       publishedAt: "2026-10-01T09:00:00.000Z",
     }
+    // The draft's language is not saved yet: the old address is the saved one's.
+    const value = { ...blogDraftOf(live), language: "es" as const }
     await mount(
-      <AdminBlogEditorScreen {...editorProps(calls, { post: live, dialog: "change-url" })} />,
+      <AdminBlogEditorScreen
+        {...editorProps(calls, { post: live, value, dialog: "change-url" })}
+      />,
     )
-    expect(find("dialog").textContent).toContain(
+    expect(find("dialog[open]").textContent).toContain(
       "Links to /de/blog/jobs-explained keep working: they redirect to the new URL.",
     )
     expect(document.body.textContent).toContain(
@@ -606,6 +631,25 @@ describe("the blog editor", () => {
     await type("[data-e2e=admin-blog-new-slug]", "jobs-in-depth")
     await clickOn(button("Change URL"))
     expect(calls.at(-1)).toEqual(["change-url", "jobs-in-depth"])
+  })
+
+  it("says where a published post moves when its language changes, and nothing for a draft (#530)", async () => {
+    const live: BlogPost = {
+      ...saved,
+      status: "published",
+      publishAt: "2026-10-01T09:00:00.000Z",
+      publishedAt: "2026-10-01T09:00:00.000Z",
+    }
+    const value = { ...blogDraftOf(live), language: "de" as const }
+    await mount(<AdminBlogEditorScreen {...editorProps([], { post: live, value })} />)
+    expect(find("[data-e2e=admin-blog-language-moves]").textContent).toBe(
+      "Saving moves the post to /de/blog/jobs-explained. Its old address redirects there.",
+    )
+
+    await mount(<AdminBlogEditorScreen {...editorProps([], { post: live })} />)
+    expect(has("[data-e2e=admin-blog-language-moves]")).toBe(false)
+    await mount(<AdminBlogEditorScreen {...editorProps([], { value })} />)
+    expect(has("[data-e2e=admin-blog-language-moves]")).toBe(false)
   })
 
   it("confirms a delete in a dialog that names the post", async () => {
