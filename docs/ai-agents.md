@@ -10,7 +10,7 @@ from Seed, add features to it and check its own work.
 | File                | What it holds                                                                                                 |
 | ------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `AGENTS.md`         | The rules for any agent on the product: where UI code goes, how to add a feature, what must change together. |
-| `CLAUDE.md`         | One line, `@AGENTS.md`, so Claude Code loads the same rules as every other agent.                             |
+| `CLAUDE.md`         | `@AGENTS.md` for the same rules as every other agent, and `@AGENTS.seed.md`, which a product deletes.         |
 | `docs/`             | The guides this site publishes. `docs/handoff.md` maps the repository and lists its traps.                    |
 | `/llms.txt`         | The website's summary for AI assistants: what the product is and every public page.                           |
 | `AGENTS.seed.md`    | Rules for Seed's own repository only. A product deletes it, as [Start a product](start-a-product.md) says.    |
