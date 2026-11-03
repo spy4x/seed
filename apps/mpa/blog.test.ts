@@ -446,6 +446,26 @@ describe("a blog post", () => {
     expect(body).not.toContain(`data-e2e="cta-github"`)
   })
 
+  it("puts the newsletter and read next in the post's column, under a heading smaller than the title (#416)", async () => {
+    const { get } = await blogSite(answers(FULL))
+    const { body } = await get("/blog/cron-jobs")
+
+    // Each block is the same gutter around the same centred 42 rem column, so at any width the
+    // article, the newsletter and "Read next" start at one left edge.
+    const column = (hook: string) =>
+      body.match(new RegExp(`<div class="([^"]*)"[^>]*data-e2e="${hook}"`))?.[1] ??
+        body.match(new RegExp(`data-e2e="${hook}"[^>]*>\\s*<div class="([^"]*)"`))?.[1]
+    const article = body.match(/<div class="(mx-auto[^"]*)"[^>]*>\s*<article/)?.[1]
+    for (const classes of [article, column(`blog-post-newsletter`), column(`blog-read-next`)]) {
+      expect(classes?.split(` `)).toEqual(
+        expect.arrayContaining([`mx-auto`, `w-full`, `max-w-2xl`]),
+      )
+    }
+    const heading = body.match(/<h2 id="post-news" class="([^"]*)"/)?.[1] ?? ``
+    expect(heading).toContain(`text-2xl`)
+    expect(heading).not.toMatch(/text-[3-9]xl/)
+  })
+
   it("ends with the demo's call to action while the newsletter is off", async () => {
     const { get } = await blogSite(answers(FULL), { newsletter: false })
     const { body } = await get("/blog/cron-jobs")

@@ -17,9 +17,7 @@ import {
   readPost,
   TOC_MIN_MINUTES,
 } from "../../../blog.ts"
-import { Band } from "../../../components/band.tsx"
 import { CtaBand } from "../../../components/cta-band.tsx"
-import { SectionIntro } from "../../../components/section-intro.tsx"
 import {
   NewsletterForm,
   OG_IMAGE_SIZE,
@@ -139,6 +137,15 @@ function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost)
 }
 
 /**
+ * The page's side gutter, around a post's column. The article, the newsletter and "Read next" all
+ * sit in one centred column of 42 rem inside it, so the three start at one left edge (#416).
+ */
+const GUTTER = `px-4 sm:px-6 lg:px-8`
+
+/** The post's reading column, inside {@link GUTTER}. */
+const COLUMN = `mx-auto w-full max-w-2xl`
+
+/**
  * The article itself. A post of {@link TOC_MIN_MINUTES} minutes or more with sections gets "On this
  * page" beside it from 1280 px, in the right margin; on a narrower screen the body reads alone.
  */
@@ -154,94 +161,105 @@ function PostBody(
     : []
   const toc = sections.length > 0
   return (
-    <div
-      class={`mx-auto w-full px-4 py-12 sm:px-6 lg:px-8 lg:py-16 ${
-        // The reading column stays centred, in line with the bands below; the list sits beside it.
-        toc
-          ? "max-w-2xl xl:grid xl:max-w-7xl xl:grid-cols-[minmax(0,1fr)_42rem_minmax(0,1fr)] xl:gap-12"
-          : "max-w-2xl"}`}
-    >
-      <article class="flex min-w-0 flex-col gap-6 xl:col-start-2" data-e2e="blog-post">
-        <header class="flex flex-col gap-4">
-          <Breadcrumbs
-            label={t.t(`Blog.breadcrumb`)}
-            items={[
-              { label: t.t(`Blog.title`), href: blog },
-              ...(post.topic
-                ? [{
-                  label: post.topic,
-                  href: `${blog}?${new URLSearchParams({ topic: post.topic })}`,
-                }]
-                : []),
-            ]}
-          />
-          {post.topic && <p class="font-mono text-sm font-medium text-primary">{post.topic}</p>}
-          <h1 class="text-3xl font-semibold tracking-tight text-balance lg:text-4xl">
-            {post.title}
-          </h1>
-          <p class="flex flex-wrap gap-x-1 gap-y-1 text-sm text-muted" data-e2e="blog-post-meta">
-            <span>
-              {rich(`Blog.published`, { time: time(post.publishedAt) }, {
-                date: format.date(post.publishedAt),
-              })}
-            </span>
-            {post.updatedAt && (
+    <div class={`${GUTTER} py-12 lg:py-16`}>
+      <div
+        class={`${COLUMN} ${
+          // The reading column stays centred, in line with the blocks below; the list sits beside it.
+          toc
+            ? "xl:grid xl:max-w-7xl xl:grid-cols-[minmax(0,1fr)_42rem_minmax(0,1fr)] xl:gap-12"
+            : ""}`}
+      >
+        <article class="flex min-w-0 flex-col gap-6 xl:col-start-2" data-e2e="blog-post">
+          <header class="flex flex-col gap-4">
+            <Breadcrumbs
+              label={t.t(`Blog.breadcrumb`)}
+              items={[
+                { label: t.t(`Blog.title`), href: blog },
+                ...(post.topic
+                  ? [{
+                    label: post.topic,
+                    href: `${blog}?${new URLSearchParams({ topic: post.topic })}`,
+                  }]
+                  : []),
+              ]}
+            />
+            {post.topic && <p class="font-mono text-sm font-medium text-primary">{post.topic}</p>}
+            <h1 class="text-3xl font-semibold tracking-tight text-balance lg:text-4xl">
+              {post.title}
+            </h1>
+            <p class="flex flex-wrap gap-x-1 gap-y-1 text-sm text-muted" data-e2e="blog-post-meta">
               <span>
-                {rich(`Blog.updated`, { time: time(post.updatedAt) }, {
-                  date: format.date(post.updatedAt),
+                {rich(`Blog.published`, { time: time(post.publishedAt) }, {
+                  date: format.date(post.publishedAt),
                 })}
               </span>
-            )}
-            <span>{t.t(`Blog.minutes`, { count: post.readingMinutes })}</span>
-            {post.authorName && <span>· {post.authorName}</span>}
-          </p>
-        </header>
-        {post.coverUrl && (
-          <img
-            src={post.coverUrl}
-            alt={post.coverAlt ?? ``}
-            width={1200}
-            height={630}
-            loading="eager"
-            fetchpriority="high"
-            decoding="async"
-            class="aspect-video w-full rounded-card border border-subtle bg-surface object-cover"
-            data-e2e="blog-post-cover"
+              {post.updatedAt && (
+                <span>
+                  {rich(`Blog.updated`, { time: time(post.updatedAt) }, {
+                    date: format.date(post.updatedAt),
+                  })}
+                </span>
+              )}
+              <span>{t.t(`Blog.minutes`, { count: post.readingMinutes })}</span>
+              {post.authorName && <span>· {post.authorName}</span>}
+            </p>
+          </header>
+          {post.coverUrl && (
+            <img
+              src={post.coverUrl}
+              alt={post.coverAlt ?? ``}
+              width={1200}
+              height={630}
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+              class="aspect-video w-full rounded-card border border-subtle bg-surface object-cover"
+              data-e2e="blog-post-cover"
+            />
+          )}
+          <TldrBox items={post.tldr} />
+          <PostSegments
+            parts={parts}
+            language={post.language}
+            messages={figureCatalog(post.language)}
           />
+        </article>
+        {toc && (
+          <aside class="hidden xl:col-start-3 xl:block" data-e2e="blog-post-toc">
+            <OnThisPage
+              links={sectionLinks(
+                sections.map(({ id, text }) => ({ label: text, href: `#${id}` })),
+              )}
+              openFrom="xl"
+            />
+          </aside>
         )}
-        <TldrBox items={post.tldr} />
-        <PostSegments
-          parts={parts}
-          language={post.language}
-          messages={figureCatalog(post.language)}
-        />
-      </article>
-      {toc && (
-        <aside class="hidden xl:col-start-3 xl:block" data-e2e="blog-post-toc">
-          <OnThisPage
-            links={sectionLinks(sections.map(({ id, text }) => ({ label: text, href: `#${id}` })))}
-            openFrom="xl"
-          />
-        </aside>
-      )}
+      </div>
     </div>
   )
 }
 
-/** The newsletter as the post's one call to action. */
+/**
+ * The newsletter as the post's one call to action: in the post's column, under a heading the size
+ * of "Read next", so it reads as part of the post and not as a second title (#416).
+ */
 function NewsletterBand(): JSX.Element {
   const { t } = useSite()
   return (
-    <Band tone="glow" labelledBy="post-news" width="md" class="border-t border-subtle">
-      <div class="flex flex-col gap-4" data-e2e="blog-post-newsletter">
-        <SectionIntro
-          id="post-news"
-          title={t.t(`Blog.newsTitle`)}
-          lead={t.t(`Blog.newsLead`)}
-        />
-        <NewsletterForm id="post" />
+    <section
+      aria-labelledby="post-news"
+      class={`site-glow border-t border-subtle ${GUTTER} py-12 lg:py-16`}
+    >
+      <div class={`${COLUMN} flex flex-col gap-4`} data-e2e="blog-post-newsletter">
+        <h2 id="post-news" class="text-2xl font-semibold tracking-tight text-balance">
+          {t.t(`Blog.newsTitle`)}
+        </h2>
+        <p class="text-muted text-pretty">{t.t(`Blog.newsLead`)}</p>
+        <div class="max-w-md">
+          <NewsletterForm id="post" />
+        </div>
       </div>
-    </Band>
+    </section>
   )
 }
 
@@ -252,30 +270,32 @@ function ReadNext({ posts }: { posts: readonly PublicBlogPostSummary[] }): JSX.E
     <section
       aria-labelledby={posts.length > 0 ? "read-next" : undefined}
       aria-label={posts.length > 0 ? undefined : t.t(`Blog.morePosts`)}
-      class="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-12 sm:px-6 lg:py-16"
+      class={`${GUTTER} py-12 lg:py-16`}
       data-e2e="blog-read-next"
     >
-      {posts.length > 0 && (
-        <>
-          <h2 id="read-next" class="text-2xl font-semibold tracking-tight">
-            {t.t(`Blog.readNext`)}
-          </h2>
-          <PostList
-            headingLevel={3}
-            posts={posts.map((post) => ({
-              href: href(postPath(post.slug)),
-              title: post.title,
-              description: post.description,
-              publishedAt: post.publishedAt,
-              readMinutes: post.readingMinutes,
-              lang: post.language,
-            }))}
-          />
-        </>
-      )}
-      <a href={href(BLOG_PATH)} class="self-start font-medium text-primary underline">
-        {t.t(`Blog.allPosts`)}
-      </a>
+      <div class={`${COLUMN} flex flex-col gap-4`}>
+        {posts.length > 0 && (
+          <>
+            <h2 id="read-next" class="text-2xl font-semibold tracking-tight">
+              {t.t(`Blog.readNext`)}
+            </h2>
+            <PostList
+              headingLevel={3}
+              posts={posts.map((post) => ({
+                href: href(postPath(post.slug)),
+                title: post.title,
+                description: post.description,
+                publishedAt: post.publishedAt,
+                readMinutes: post.readingMinutes,
+                lang: post.language,
+              }))}
+            />
+          </>
+        )}
+        <a href={href(BLOG_PATH)} class="self-start font-medium text-primary underline">
+          {t.t(`Blog.allPosts`)}
+        </a>
+      </div>
     </section>
   )
 }
