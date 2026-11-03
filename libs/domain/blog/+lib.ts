@@ -560,6 +560,26 @@ export function parseBlogPostFields(
 }
 
 /**
+ * A save's fields: {@link BlogPostFields} with `language` and `translationOf` only when the request
+ * named them, so a save that leaves them out keeps the post's language and its link (#530).
+ */
+export type BlogPostEdit =
+  & Omit<BlogPostFields, `language` | `translationOf`>
+  & Partial<Pick<BlogPostFields, `language` | `translationOf`>>
+
+/** {@link parseBlogPostFields} for a save: a language or link the request left out stays out. */
+export function parseBlogPostEdit(
+  input: Parameters<typeof parseBlogPostFields>[0],
+): BlogPostEdit {
+  const { language, translationOf, ...fields } = parseBlogPostFields(input)
+  return {
+    ...fields,
+    ...(input.language === undefined ? {} : { language }),
+    ...(input.translationOf === undefined ? {} : { translationOf }),
+  }
+}
+
+/**
  * When a publish request goes live: `now` without `at`, else `at`, which must lie in the future
  * and at most {@link BLOG_SCHEDULE_MAX_DAYS} days ahead. Answers `null` for "now".
  */
