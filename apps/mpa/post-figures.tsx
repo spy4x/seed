@@ -179,7 +179,8 @@ export function islandProps(
 /**
  * A body as one HTML string for the RSS feed, where no island runs: each figure becomes its
  * file's `fallback` text, or a link to it on the post's page (`postUrl#id`), in a paragraph.
- * Tags that fail show nothing, as on the page.
+ * Tags that fail show nothing, as on the page. Every link and image address is made absolute
+ * against `postUrl` ({@link absoluteAddresses}).
  */
 export function feedHtml(
   parts: ResolvedBody[`parts`],
@@ -187,7 +188,7 @@ export function feedHtml(
   t: Translator<string>,
 ): string {
   return parts.map((part) => {
-    if (part.kind === `html`) return part.html
+    if (part.kind === `html`) return absoluteAddresses(part.html, postUrl)
     const text = part.figure.fallback?.(part.props, t)
     if (text !== undefined) return `<p>${escapeHtml(text)}</p>\n`
     const href = escapeHtml(`${postUrl}#${part.id}`)
@@ -195,4 +196,19 @@ export function feedHtml(
     const words = escapeHtml(t.t(`PostFigure.rssLink`, { link: `\u0000` }))
     return `<p>${words.replace(`\u0000`, `<a href="${href}">${href}</a>`)}</p>\n`
   }).join(``)
+}
+
+/**
+ * `html` with each relative `href` and `src` resolved against `base`, so a link inside a post
+ * (`/docs`, `#part`, `other-post`) works in a feed reader that does not resolve it against the
+ * item's link (#416). It relies on the API's safe HTML, the only HTML a body has: every attribute
+ * is double-quoted, and a `"` in text is written `&quot;`, so ` href="` appears only inside a tag.
+ * An address with a scheme (`https:`, `mailto:`) is left as it is.
+ */
+export function absoluteAddresses(html: string, base: string): string {
+  return html.replace(/ (href|src)="([^"]*)"/g, (whole, name: string, value: string) => {
+    if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return whole
+    const url = URL.parse(value, base)
+    return url ? ` ${name}="${url.href}"` : whole
+  })
 }
