@@ -72,3 +72,27 @@ test("an internal doc answers 404 with the way back to the docs", async ({ page 
   await page.getByRole("link", { name: "See all docs" }).click()
   await expect(page).toHaveURL(/\/docs$/)
 })
+
+test("a press on a guide's copy button copies the command and says it did", async ({ page, context, baseURL }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: baseURL })
+  await page.goto("/docs/capacity")
+  const block = page.locator("main [data-prose-code]").first()
+
+  await block.getByRole("button", { name: "Copy" }).click()
+
+  await expect(block.getByRole("status")).toHaveText("Copied")
+  const command = (await block.locator("pre").textContent())?.replace(/\n$/, "")
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(command)
+})
+
+test.describe("with JavaScript off", () => {
+  test.use({ javaScriptEnabled: false })
+
+  test("a guide shows no copy button that could not work", async ({ page }) => {
+    await page.goto("/docs/capacity")
+
+    const buttons = page.locator("main button[data-prose-copy]")
+    expect(await buttons.count()).toBeGreaterThan(0)
+    await expect(buttons.filter({ visible: true })).toHaveCount(0)
+  })
+})
