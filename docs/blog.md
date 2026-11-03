@@ -11,6 +11,7 @@ Operators write posts in the admin app; the public website shows the published o
 | `libs/server/blog/postgres-blog-repository.ts` | The admin's reads and writes, each write with its audit row in one transaction.   |
 | `libs/server/blog/public-blog.ts`          | The website's reads: live posts only.                                                 |
 | `libs/server/blog/blog-publish-job.ts`     | The `blog.publish` job (registered in `JOBS`), and `queueDueBlogJobs` for lost jobs. |
+| `libs/server/blog/blog-indexnow-job.ts`    | The `blog.indexnow` job, which tells search engines about a post ([below](#indexnow)). |
 | `libs/server/blog/render.ts`               | Markdown to safe HTML and the reading time. The only place a body is rendered.        |
 | `libs/domain/blog/figures.ts`              | The check of a figure tag against the figures that exist, and the figures' ids.       |
 | `apps/mpa/islands/post/`                   | The interactive figures a post can hold, one file per tag ([below](#interactive-figures)). |
@@ -78,6 +79,31 @@ answer 301 to the post's current address, in its own language.
 - The website asks for a moved post only when no live post has the slug (`GET /api/blog/posts/:slug`
   answers `{ moved: { language, slug } }`), so a post's own address costs no extra read. The
   sitemap, the RSS feed and `llms.txt` list current addresses only.
+
+## IndexNow
+
+With `INDEXNOW_KEY` set (8 to 128 letters, digits and dashes) and `MPA_DOMAIN` set, Seed tells
+[IndexNow](https://www.indexnow.org/) about a post whenever it goes live, changes while live, moves
+with **Change URL** or is unpublished. Bing, Yandex and the other engines that share IndexNow, and
+the AI answer engines that read Bing's index, then hear of the change at once instead of at their
+next crawl. Without the key nothing is sent.
+
+- **Its own job.** Each of those writes queues a `blog.indexnow` job in its own transaction: the
+  admin's Publish now, a save, Change URL and Unpublish, the `blog.publish` job when it publishes a
+  scheduled post, and Seed's own post files when one that is live is written. The worker sends the
+  ping, so no request to IndexNow ever holds a post's lock or slows an operator's save. One job
+  waits per post at a time: saves made before it runs share it, and it reads the post when it runs.
+- **Every address.** The job sends the post's address in its language (`blogPostPath`) and every
+  old address a Change URL left (`blog_slug_redirects`), at most `INDEXNOW_MAX_URLS` in one call. An
+  unpublished post's addresses are sent too: the engines find them gone. A post that was never live
+  sends nothing.
+- **Fail-open.** A refused or failed ping is logged once, without the key, and the job still
+  succeeds: it is not retried and never touches the post.
+- **The key file.** IndexNow checks a ping against `/<key>.txt` on the website, so the website
+  serves the key there as plain text, and only while `INDEXNOW_KEY` is set. The key is public by
+  IndexNow's design; a malformed one stops the website and the worker at start.
+- **The demo.** The public demo has no sample posts: its blog is Seed's own posts
+  ([demo.md](demo.md#seeds-own-blog-posts)), which are real, so demo mode pings like any server.
 
 ## The newsletter send
 

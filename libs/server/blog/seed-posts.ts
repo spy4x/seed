@@ -15,6 +15,7 @@ import {
 import { LANGUAGES } from "@domain/identity"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { queueDueBlogJobs } from "./blog-publish-job.ts"
+import { queueIndexNow } from "./blog-indexnow-job.ts"
 import type { BlogPostRow } from "./postgres-blog-repository.ts"
 
 /**
@@ -282,6 +283,7 @@ export async function upsertSeedPosts(
       }
       if (existing && same(existing, wanted)) continue
       const w = wanted
+      const id = existing?.id ?? uuidV7()
       if (existing) {
         await tx`
           UPDATE blog_posts SET
@@ -293,7 +295,7 @@ export async function upsertSeedPosts(
             published_at = ${w.publishedAt}, author_name = ${w.authorName},
             newsletter_list = ${w.newsletterList}, newsletter_sent_at = ${w.newsletterSentAt},
             updated_at = ${now}, version = version + 1
-          WHERE id = ${existing.id}
+          WHERE id = ${id}
         `
       } else {
         // A post that went live was written then.
@@ -304,7 +306,7 @@ export async function upsertSeedPosts(
             body_md, language, translation_of, status, publish_at, published_at, author_id,
             author_name, newsletter_list, newsletter_sent_at, created_at, updated_at
           ) VALUES (
-            ${uuidV7()}, ${w.slug}, ${w.title}, ${w.seoTitle}, ${w.description},
+            ${id}, ${w.slug}, ${w.title}, ${w.seoTitle}, ${w.description},
             ${tx.array(w.tldr)}::text[], ${w.topic}, ${w.coverUrl}, ${w.coverAlt}, ${w.authorUrl},
             ${w.bodyMd}, ${w.language}, ${w.translationOf}, ${w.status}, ${w.publishAt},
             ${w.publishedAt}, NULL, ${w.authorName}, ${w.newsletterList}, ${w.newsletterSentAt},
@@ -312,6 +314,8 @@ export async function upsertSeedPosts(
           )
         `
       }
+      // Seed's own posts are real (seedsaas.com): a live one that changed is announced.
+      if (live) await queueIndexNow(tx, id)
       count++
     }
     return count

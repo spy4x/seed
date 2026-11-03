@@ -19,6 +19,7 @@ import {
 } from "@domain/blog"
 import { DEFAULT_LANGUAGE, type Language } from "@domain/identity"
 import { enqueueJob, JOB_AGGREGATE } from "../jobs/jobs.ts"
+import { queueIndexNow } from "./blog-indexnow-job.ts"
 
 /** The operator behind a write, for its audit row. */
 export interface BlogActor {
@@ -282,6 +283,7 @@ export class PostgresBlogRepository {
         WHERE id = ${id}
         RETURNING *
       `
+      if (row.status === `published`) await queueIndexNow(tx, id)
       await audit(tx, actor, BLOG_AUDIT_KINDS.updated, row)
       return toBlogPost(row)
     })
@@ -327,6 +329,7 @@ export class PostgresBlogRepository {
         `
       if (at !== null) await queuePublishJob(tx, id, { at })
       else if (list !== null && !sent) await queuePublishJob(tx, id, { inMs: 0 })
+      if (at === null) await queueIndexNow(tx, id)
       await audit(
         tx,
         actor,
@@ -378,6 +381,7 @@ export class PostgresBlogRepository {
         WHERE id = ${id}
         RETURNING *
       `
+      await queueIndexNow(tx, id)
       await audit(tx, actor, BLOG_AUDIT_KINDS.unpublished, row)
       return toBlogPost(row)
     })
@@ -400,6 +404,7 @@ export class PostgresBlogRepository {
         WHERE id = ${id}
         RETURNING *
       `
+      if (row.status === `published`) await queueIndexNow(tx, id)
       await audit(tx, actor, BLOG_AUDIT_KINDS.urlChanged, row, { from: current.slug })
       return toBlogPost(row)
     })
