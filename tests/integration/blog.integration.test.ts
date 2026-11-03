@@ -397,7 +397,11 @@ Deno.test(`blog: every save keeps the post's fields as an earlier version, the n
 
     await t.step(`keeps no version of Seed's own posts from files`, async () => {
       await upsertSeedPosts(sql, [seedPost(`from-a-file`)])
+      // The file changed: the next start writes the post again.
+      const edited = fields(`from-a-file`, { title: `Edited in the file` })
+      expect(await upsertSeedPosts(sql, [seedPost(`from-a-file`, { fields: edited })])).toBe(1)
       const post = await bySlug(sql, `from-a-file`)
+      expect(post.title).toBe(`Edited in the file`)
       expect(await blog.revisions(post.id)).toEqual([])
     })
   })
