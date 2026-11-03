@@ -203,7 +203,6 @@ describe(`operator area: blog routes`, () => {
       topic: null,
       coverUrl: null,
       coverAlt: null,
-      coverFile: null,
       intro: null,
       relatedFeature: null,
       authorUrl: null,
@@ -246,9 +245,6 @@ describe(`operator area: blog routes`, () => {
       version: 1,
       coverUrl: `http://images.example.com/a.png`,
       coverAlt: `A chart`,
-      coverFile: null,
-      intro: null,
-      relatedFeature: null,
     })
 
     expect(response.status).toBe(400)
