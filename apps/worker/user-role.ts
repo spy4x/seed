@@ -11,8 +11,9 @@
  * transaction.
  */
 import postgres from "postgres"
-import { createSqlFromEnv, PostgresEnvName } from "@spy4x/server/db"
-import { exitProcess, processArgs, readEnvRecord } from "@spy4x/platform/server/process"
+import { createSqlFromEnv } from "@spy4x/server/db"
+import { postgresEnv } from "../api/services/db-direct.ts"
+import { exitProcess, processArgs } from "@spy4x/platform/server/process"
 import { USER_ROLE_NAMES, type UserRole, userRoleNamed } from "@domain/identity"
 import { setUserRoleByAddress } from "@server/auth/admin-users.ts"
 
@@ -40,7 +41,7 @@ if (import.meta.main) {
     console.error(USER_ROLE_USAGE)
     exitProcess(2)
   }
-  const sql = createSqlFromEnv(readEnvRecord(Object.values(PostgresEnvName)), {
+  const sql = createSqlFromEnv(postgresEnv(), {
     transform: postgres.camel,
     applicationName: "user-role",
     max: 1,

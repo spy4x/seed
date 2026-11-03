@@ -109,6 +109,33 @@ async function page(path: string, app = handler): Promise<{ status: number; html
   return { status: response.status, html: await response.text() }
 }
 
+/**
+ * The width in CSS pixels a `sizes` attribute gives an image at `viewport`, for the forms the
+ * website writes: `(min-width: Npx)` conditions, and `Npx`, `100vw` or `calc(100vw - Npx)`.
+ */
+function slotWidth(sizes: string, viewport: number): number {
+  for (const entry of sizes.split(/,(?![^(]*\))/).map((part) => part.trim())) {
+    const media = entry.match(/^\(min-width: (\d+)px\)\s+(.+)$/)
+    if (media && viewport < Number(media[1])) continue
+    const length = media ? media[2] : entry
+    if (/^\d+px$/.test(length)) return parseInt(length)
+    if (length === `100vw`) return viewport
+    const calc = length.match(/^calc\(100vw - (\d+)px\)$/)
+    if (calc) return viewport - Number(calc[1])
+    throw new Error(`unknown length in sizes: ${length}`)
+  }
+  throw new Error(`no entry of "${sizes}" fits ${viewport}px`)
+}
+
+/** The file of `srcset` a browser fetches for `pixels` device pixels: the narrowest that covers them. */
+function chosenFile(srcset: string, pixels: number): string {
+  const files = srcset.split(`,`).map((entry) => {
+    const [url, width] = entry.trim().split(/\s+/)
+    return { url, width: parseInt(width) }
+  }).sort((a, b) => a.width - b.width)
+  return (files.find((file) => file.width >= pixels) ?? files.at(-1)!).url
+}
+
 /** The `<a>` whose text is `text`, or `undefined`: its whole opening tag, to read `href` from. */
 function linkNamed(html: string, text: string): string | undefined {
   return [...html.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)]
@@ -313,6 +340,23 @@ describe("the public website", () => {
     expect(preloads[0]).toContain(`media="(min-width: 1024px)"`)
   })
 
+  it("fetches no 1280 px picture on the home page on a phone", async () => {
+    const { html } = await page("/")
+    const pictures = [...html.matchAll(/<(?:img|source)\b[^>]*\bsrcset="[^"]*"[^>]*>/g)]
+      .map(([tag]) => ({
+        srcset: tag.match(/\bsrcset="([^"]*)"/)![1],
+        sizes: tag.match(/\bsizes="([^"]*)"/)?.[1] ?? `100vw`,
+      }))
+    expect(pictures.length).toBeGreaterThan(5)
+    // A 390 px phone at device scale 2, and a 412 px one at 1.75 (Lighthouse) and 2.
+    for (const [viewport, scale] of [[390, 2], [412, 1.75], [412, 2]]) {
+      for (const { srcset, sizes } of pictures) {
+        const file = chosenFile(srcset, slotWidth(sizes, viewport) * scale)
+        expect(file, `${viewport} px at ${scale}: ${sizes}`).not.toMatch(/-1280\.webp(\?|$)/)
+      }
+    }
+  })
+
   it("says under the hero's demo how long it is and what it shows", async () => {
     const { html } = await page("/")
 
@@ -431,6 +475,7 @@ describe("the public website", () => {
       .map((match) => [linkText(match[1]), hrefOf(match[0])])
     expect(nav).toEqual(expect.arrayContaining([
       ["Features", "/features"],
+      ["Docs", "/docs"],
       ["Compare", "/compare"],
       ["Pricing", "/pricing"],
       ["Hire me (opens antonshubin.com)", HIRE_PAGE_URL.replaceAll("&", "&amp;")],
@@ -440,6 +485,26 @@ describe("the public website", () => {
     expect(linkNamed(header, "Sign in")).toBeUndefined()
     expect(hrefOf(linkNamed(footer, "Sign in"))).toBe(`${spa}/sign-in`)
     expect(header).not.toContain(`href="${site}/sign-`)
+  })
+
+  it("marks the header's Docs as the current page on the docs index, and as its section on every guide", async () => {
+    const pages = [["/docs", "Docs", "page"], ["/docs/get-started", "Docs", "true"], [
+      "/de/docs/deploy",
+      "Doku",
+      "true",
+    ]]
+    for (const [path, docs, current] of pages) {
+      const header = element((await page(path)).html, "header")!
+      expect(linkNamed(header, docs), path).toContain(`aria-current="${current}"`)
+    }
+    const header = element((await page("/features")).html, "header")!
+    expect(linkNamed(header, "Docs")).not.toContain(`aria-current`)
+  })
+
+  it("links the home page's quick start to the Get started guide", async () => {
+    const { html } = await page("/")
+    const link = /<a [^>]*data-e2e="home-get-started"[^>]*>/.exec(html)?.[0]
+    expect(hrefOf(link)).toBe("/docs/get-started")
   })
 
   it("marks the header's Hire me as leaving the site: an icon after its label, and words for a screen reader", async () => {
@@ -860,13 +925,19 @@ describe("the public website", () => {
     )
   })
 
-  it("lists every published guide and the API reference on /docs, under Use and Build", async () => {
+  it("leads /docs with Get started, then lists every published guide and the API reference in the four sections", async () => {
     const { status, html } = await page("/docs")
 
     expect(status).toBe(200)
     expect(headingOne(html)).toBe("Seed docs")
-    const groups = [...html.matchAll(/<h2 id="docs-[^"]*"[^>]*>([^<]*)<\/h2>/g)].map((m) => m[1])
-    expect(groups).toEqual(["Use", "Build"])
+    const groups = [...html.matchAll(/<h2 id="docs-[^"]*"[^>]*>([\s\S]*?)<\/h2>/g)]
+      .map((m) => linkText(m[1]))
+    expect(groups).toEqual(["New to Seed?", "Get started", "Guides", "Concepts", "Reference"])
+    const first = /<section[^>]*data-e2e="docs-first"[\s\S]*?<\/section>/.exec(html)![0]
+    expect(hrefOf(linkNamed(first, "Get started"))).toBe("/docs/get-started")
+    expect(html.indexOf(`href="/docs/get-started"`)).toBeLessThan(
+      html.indexOf(`href="/docs/products"`),
+    )
     for (const slug of DOC_SLUGS) expect(html, slug).toContain(`href="/docs/${slug}"`)
     expect(html).toMatch(/<a href="\/docs\/api"[^>]*><span[^>]*>API reference<\/span>/)
   })

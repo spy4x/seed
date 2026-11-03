@@ -31,7 +31,8 @@ that does not come from its own pages, presents its posts to the API with `DOMAI
 confirm and unsubscribe links open the website's pages, which work without JavaScript, so set it
 only together with the profile. Without it the links open the SPA. Without the profile nothing about
 the deploy changes. The pair `MPA_UMAMI_ORIGIN` and `MPA_UMAMI_WEBSITE_ID` turns on visitor
-statistics in a self-hosted Umami: [analytics.md](analytics.md). The MPA's end-to-end test runs in
+statistics in a self-hosted Umami: [analytics.md](analytics.md). `INDEXNOW_KEY`, read by the MPA and
+the worker, tells search engines about blog posts: [blog.md](blog.md#indexnow). The MPA's end-to-end test runs in
 CI on every pull request, and locally with `e2e/mpa/run.sh` against a running Postgres and Valkey
 (see the header of that script).
 

@@ -16,11 +16,12 @@ the Seed commit the product last took to Seed's current `main`.
 
 ## Start a product
 
-Create the repository from the template, as the [README](../README.md#quick-start) shows. Then,
-in the product's first pull request:
+Create the repository from the template, as [Get started](get-started.md) shows. Then, in the
+product's first pull request:
 
-1. Record the Seed commit the copy came from, in `.seed/commit`. Right after creating the
-   repository, that is Seed's current `main`:
+1. Record the Seed commit the copy came from, in `.seed/commit`. `deno task init` does it when the
+   file is missing: right after creating the repository, that is Seed's current `main`. Without
+   `init`, or for a copy made earlier, write it yourself:
 
    ```sh
    mkdir -p .seed && git ls-remote https://github.com/spy4x/seed refs/heads/main | cut -f1 > .seed/commit

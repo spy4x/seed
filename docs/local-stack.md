@@ -26,9 +26,13 @@ You need:
 
 3. Open http://app.localhost and sign up.
 
-`init` copies `infra/envs/.env.example` to `infra/envs/.env` and replaces every placeholder secret
-with a random one. It also creates the web push keys in `infra/configs/vapid.json`. It is safe to
-run again: a value you changed and a file that exists stay as they are.
+`init` first checks that Docker, or Podman, is installed and running, and stops with what to
+install or start when neither is. On a fresh clone it takes Podman when Docker does not answer and
+Podman does. Then it copies `infra/envs/.env.example` to `infra/envs/.env` and replaces every
+placeholder secret with a random one. It also creates the web push keys in
+`infra/configs/vapid.json`, and records the Seed commit in `.seed/commit`
+([Start a product](products.md#start-a-product)). It is safe to run again: a value you changed and
+a file that exists stay as they are.
 
 | Flag            | What it does                                     |
 | --------------- | ------------------------------------------------ |

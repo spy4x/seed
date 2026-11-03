@@ -13,6 +13,7 @@ import {
   type BlogNewsletterResponse,
   type BlogPost,
   blogPostCreateSchema,
+  type BlogPostEdit,
   type BlogPostFields,
   type BlogPostStatus,
   blogPostUpdateSchema,
@@ -23,6 +24,7 @@ import {
   type BlogTopic,
   BlogVersionConflictError,
   blogVersionSchema,
+  parseBlogPostEdit,
   parseBlogPostFields,
   parseBlogStatusFilter,
   parsePublishTime,
@@ -51,7 +53,7 @@ export interface AdminBlogService {
   update(
     id: string,
     version: number,
-    fields: BlogPostFields,
+    fields: BlogPostEdit,
     significantUpdate: boolean,
     actor: BlogActor,
   ): Promise<BlogPost>
@@ -210,7 +212,7 @@ export function createAdminBlogRoutes(
         c,
         blogPostUpdateSchema,
       )
-      const fields = parseBlogPostFields(input)
+      const fields = parseBlogPostEdit(input)
       return c.json({
         post: await blog.update(id, version, fields, significantUpdate, actorOf(c)),
       })

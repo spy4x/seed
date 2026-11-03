@@ -22,6 +22,7 @@ import { selectTextareaLine } from "@spy4x/preact-ui/textarea-line"
 import { Tabs } from "@spy4x/preact-ui/tabs"
 import { TldrBox } from "@spy4x/preact-ui/tldr-box"
 import {
+  BLOG_AUTHOR_URL_MAX_LENGTH,
   BLOG_BODY_MAX_LENGTH,
   BLOG_COVER_ALT_MAX_LENGTH,
   BLOG_COVER_URL_MAX_LENGTH,
@@ -72,6 +73,8 @@ export interface BlogDraft {
   language: Language
   /** The id of the post this one translates, or `` for a post of its own. */
   translationOf: string
+  /** The page the author's name links to on the post, or `` for none. */
+  authorUrl: string
 }
 
 /** The editor's messages: one per field, `at` for the publish time, `form` for the rest. */
@@ -88,6 +91,7 @@ export const BLOG_FIELD_ORDER: readonly BlogField[] = [
   `topic`,
   `language`,
   `translationOf`,
+  `authorUrl`,
   `coverUrl`,
   `coverAlt`,
 ]
@@ -101,6 +105,7 @@ const SETTINGS_FIELDS: ReadonlySet<BlogField> = new Set([
   `topic`,
   `language`,
   `translationOf`,
+  `authorUrl`,
   `coverUrl`,
   `coverAlt`,
 ])
@@ -124,6 +129,7 @@ export function emptyBlogDraft(): BlogDraft {
     bodyMd: ``,
     language: DEFAULT_LANGUAGE,
     translationOf: ``,
+    authorUrl: ``,
   }
 }
 
@@ -141,6 +147,7 @@ export function blogDraftOf(post: BlogPost): BlogDraft {
     bodyMd: post.bodyMd,
     language: post.language,
     translationOf: post.translationOf ?? ``,
+    authorUrl: post.authorUrl ?? ``,
   }
 }
 
@@ -200,6 +207,8 @@ export function blogDraftErrors(draft: BlogDraft, publishing = false): BlogFormE
   if (cover !== `` && draft.coverAlt.trim() === ``) {
     errors.coverAlt = `AdminBlogEditor.describeCover`
   }
+  const author = draft.authorUrl.trim()
+  if (author !== `` && !isHttpsUrl(author)) errors.authorUrl = `AdminBlogEditor.httpsCover`
   if (publishing && draft.bodyMd.trim() === ``) errors.bodyMd = `AdminBlogEditor.emptyPost`
   return errors
 }
@@ -823,7 +832,8 @@ function Counter({ length, shown, id }: { length: number; shown: number; id: str
 
 /**
  * The settings column: the address, what search results and previews show, the key points, the
- * topic and the cover, then where publishing stands. Below `lg` it folds under "Post settings".
+ * topic, the language, the author's link and the cover, then where publishing stands. Below `lg`
+ * it folds under "Post settings".
  */
 function Settings(
   props: AdminBlogEditorScreenProps & { locked: boolean; open: boolean; onToggle: () => void },
@@ -835,6 +845,10 @@ function Settings(
   const description = Array.from(value.description).length
   const seo = Array.from(value.seoTitle).length
   const cover = value.coverUrl.trim()
+  // A published post's address carries its language: where a new language moves it (#530).
+  const movedTo = locked && post && value.language !== post.language
+    ? blogPostPath({ language: value.language, slug: post.slug })
+    : null
   return (
     <aside
       aria-label={t.t(`AdminBlogEditor.settings`)}
@@ -960,7 +974,16 @@ function Settings(
         <Field
           id={blogFieldId(`language`)}
           label={t.t(`AdminBlogEditor.language`)}
-          hint={t.t(`AdminBlogEditor.languageHint`)}
+          hint={movedTo !== null
+            ? (
+              <span data-e2e="admin-blog-language-moves">
+                <Rich
+                  parts={t.parts(`AdminBlogEditor.languageMoves`, { path: movedTo })}
+                  tags={{ path: (text: string) => <bdi translate={false}>{text}</bdi> }}
+                />
+              </span>
+            )
+            : t.t(`AdminBlogEditor.languageHint`)}
           error={message(`language`)}
         >
           <Select
@@ -994,6 +1017,23 @@ function Settings(
                 })),
             ]}
             onChange={(e) => edit({ translationOf: e.currentTarget.value })}
+          />
+        </Field>
+        <Field
+          id={blogFieldId(`authorUrl`)}
+          label={t.t(`AdminBlogEditor.authorUrl`)}
+          hint={t.t(`AdminBlogEditor.authorUrlHint`)}
+          error={message(`authorUrl`)}
+        >
+          <Input
+            type="url"
+            inputMode="url"
+            data-e2e="admin-blog-author-url"
+            maxLength={BLOG_AUTHOR_URL_MAX_LENGTH}
+            autocomplete="off"
+            spellcheck={false}
+            value={value.authorUrl}
+            onInput={(e) => edit({ authorUrl: e.currentTarget.value })}
           />
         </Field>
         <Field

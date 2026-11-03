@@ -7,19 +7,23 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import type { OutboxEvent } from "@spy4x/server/outbox"
 import {
   BLOG_AUDIT_KINDS,
+  BLOG_INDEXNOW_JOB,
   BLOG_PUBLISH_JOB,
   BlogError,
   type BlogPostFields,
   BlogVersionConflictError,
+  parseBlogPostEdit,
   parseBlogPostFields,
 } from "@domain/blog"
 import { type BlogActor, PostgresBlogRepository } from "@server/blog/postgres-blog-repository.ts"
 import { blogPublishJob, queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
+import { blogIndexNowJob, type IndexNowSetup } from "@server/blog/blog-indexnow-job.ts"
 import {
   createPublicFeed,
   listPublicFeed,
   listPublicPosts,
   listPublicTopics,
+  readMovedPost,
   readPublicPost,
 } from "@server/blog/public-blog.ts"
 import {
@@ -32,7 +36,7 @@ import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
 import { SUBSCRIBER_SEND_ISSUE_JOB } from "@server/jobs/subscriber-mail.ts"
 import { createOutboxProcessor } from "@server/jobs/wiring.ts"
 import { cancelJob, runJobNow } from "@server/jobs/admin-jobs.ts"
-import { AdminJobActionOutcome } from "@domain/identity"
+import { AdminJobActionOutcome, type Language } from "@domain/identity"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { createListCrypto, type SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { EmailMessage } from "@spy4x/email/message"
@@ -101,6 +105,7 @@ function fields(slug: string, extra: Partial<BlogPostFields> = {}): BlogPostFiel
     topic: `Product`,
     coverUrl: null,
     coverAlt: null,
+    authorUrl: null,
     bodyMd: `Hello <b>there</b>.`,
     language: `en`,
     translationOf: null,
@@ -197,14 +202,15 @@ async function bySlug(sql: postgres.Sql, slug: string) {
       publishedAt: Date | null
       translationOf: string | null
       authorName: string | null
+      authorUrl: string | null
       newsletterList: string | null
       newsletterSentAt: Date | null
       version: number
       updatedAt: Date
     }[]
   >`
-    SELECT id, title, status, published_at, translation_of, author_name, newsletter_list,
-      newsletter_sent_at, version, updated_at
+    SELECT id, title, status, published_at, translation_of, author_name, author_url,
+      newsletter_list, newsletter_sent_at, version, updated_at
     FROM blog_posts WHERE slug = ${slug}
   `
   return row
@@ -357,6 +363,75 @@ Deno.test(`blog: the public reads show live posts only`, async () => {
     expect(Object.keys(found!.post)).not.toContain(`id`)
     expect(JSON.stringify(found!.post.segments)).not.toContain(`<b>`)
     expect(found!.readNext).toEqual([])
+  })
+})
+
+Deno.test(`blog: a live post's old slugs lead to its current address, and only while it is live (#418)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const post = uuidV7()
+    const rows = async () =>
+      (await sql<{ slug: string; postId: string }[]>`
+        SELECT slug, post_id FROM blog_slug_redirects ORDER BY slug
+      `).map(({ slug, postId }) => `${slug} → ${postId === post ? `post` : postId}`)
+    await blog.create(post, fields(`first`, { language: `de` }), maya)
+    await blog.publish(post, 1, null, null, maya)
+
+    await t.step(`sends every old slug of a chain straight to the current one`, async () => {
+      await blog.changeUrl(post, 2, `second`, maya)
+      await blog.changeUrl(post, 3, `third`, maya)
+      for (const slug of [`first`, `second`]) {
+        expect(await readPublicPost(sql, slug)).toBeNull()
+        expect(await readMovedPost(sql, slug)).toEqual({ language: `de`, slug: `third` })
+      }
+      expect(await readMovedPost(sql, `third`)).toBeNull()
+      expect(await readMovedPost(sql, `never-was`)).toBeNull()
+    })
+
+    await t.step(`lists only the current address in the index and the feed`, async () => {
+      expect((await listPublicPosts(sql, null)).map(({ slug }) => slug)).toEqual([`third`])
+      expect((await listPublicFeed(sql)).map(({ slug }) => slug)).toEqual([`third`])
+    })
+
+    await t.step(`keeps no row for the slug a post moves back to`, async () => {
+      await blog.changeUrl(post, 4, `first`, maya)
+      expect(await rows()).toEqual([`second → post`, `third → post`])
+      expect((await readPublicPost(sql, `first`))?.post.slug).toBe(`first`)
+      expect(await readMovedPost(sql, `third`)).toEqual({ language: `de`, slug: `first` })
+    })
+
+    await t.step(`gives an old slug to the post that takes it, from its draft on`, async () => {
+      const other = uuidV7()
+      await blog.create(other, fields(`second`), maya)
+      expect(await rows()).toEqual([`third → post`])
+      expect(await readMovedPost(sql, `second`)).toBeNull()
+      await blog.publish(other, 1, null, null, maya)
+      expect((await readPublicPost(sql, `second`))?.post.title).toBe(`Post second`)
+    })
+
+    await t.step(`answers nothing for the old slug of a post that is not live`, async () => {
+      await blog.unpublish(post, 5, maya)
+      expect(await readMovedPost(sql, `third`)).toBeNull()
+      await blog.publish(post, 6, null, null, maya)
+      expect(await readMovedPost(sql, `third`)).toEqual({ language: `de`, slug: `first` })
+    })
+
+    await t.step(`keeps no row for a slug the public never saw`, async () => {
+      const draft = uuidV7()
+      await blog.create(draft, fields(`draft-a`), maya)
+      await blog.update(draft, 1, fields(`draft-b`), false, maya)
+      const scheduled = uuidV7()
+      await blog.create(scheduled, fields(`later-a`), maya)
+      await blog.publish(scheduled, 1, LATER(), null, maya)
+      await blog.changeUrl(scheduled, 2, `later-b`, maya)
+      expect(await rows()).toEqual([`third → post`])
+    })
+
+    await t.step(`deletes a post's old slugs with it`, async () => {
+      await blog.delete(post, 7, maya)
+      expect(await rows()).toEqual([])
+    })
   })
 })
 
@@ -514,6 +589,125 @@ Deno.test(`blog: refuses a translation that does not name a post in another lang
       )
       expect([error.code, error.field]).toEqual(refusal)
     })
+  })
+})
+
+Deno.test(`blog: a save that names no language or link keeps the post's (#530)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const [english, german] = [uuidV7(), uuidV7()]
+    await blog.create(english, fields(`hello`), maya)
+    await blog.create(german, fields(`hallo`, { language: `de`, translationOf: english }), maya)
+
+    const edit = parseBlogPostEdit({
+      title: `Hallo, neu`,
+      slug: `hallo`,
+      description: `Neu.`,
+      bodyMd: `Hallo.`,
+    })
+    const saved = await blog.update(german, 1, edit, false, maya)
+
+    expect([saved.title, saved.language, saved.translationOf]).toEqual([
+      `Hallo, neu`,
+      `de`,
+      english,
+    ])
+  })
+})
+
+Deno.test(`blog: a save that makes an original a translation while another save makes it one waits, and is refused (#530)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const [english, german, spanish] = [uuidV7(), uuidV7(), uuidV7()]
+    await blog.create(english, fields(`hello`), maya)
+    await blog.create(german, fields(`hallo`, { language: `de` }), maya)
+    await blog.create(spanish, fields(`hola`, { language: `es` }), maya)
+
+    // Another operator's save, half done: the German post now translates the Spanish one.
+    let release!: () => void
+    const held = new Promise<void>((resolve) => release = resolve)
+    let changed!: () => void
+    const isChanged = new Promise<void>((resolve) => changed = resolve)
+    const other = sql.begin(async (tx) => {
+      await tx`SELECT 1 FROM blog_posts WHERE id = ${german} FOR UPDATE`
+      await tx`UPDATE blog_posts SET translation_of = ${spanish}, version = version + 1
+        WHERE id = ${german}`
+      changed()
+      await held
+    })
+    await isChanged
+    // The English post to translate the German one: it must wait for the other save to end.
+    const save = rejection(
+      blog.update(english, 1, fields(`hello`, { translationOf: german }), false, maya),
+    )
+    // Awaited below; this only keeps a save that did not wait from failing the whole file.
+    save.catch(() => {})
+    try {
+      const deadline = Date.now() + 10_000
+      while (true) {
+        const [{ waiting }] = await sql<{ waiting: number }[]>`
+          SELECT COUNT(*)::int AS waiting FROM pg_stat_activity
+          WHERE wait_event_type = 'Lock' AND query LIKE '%FOR SHARE%'
+        `
+        if (waiting > 0) break
+        if (Date.now() > deadline) throw new Error(`the save did not wait for the other one`)
+        await new Promise((resolve) => setTimeout(resolve, 20))
+      }
+    } finally {
+      // Ends the other save even when the check failed, so the schema can be dropped.
+      release()
+      await other
+    }
+
+    const error = await save
+    expect([error.code, error.field]).toEqual([`TRANSLATION_INVALID`, `translationOf`])
+    expect((await blog.get(english))!.translationOf).toBeNull()
+  })
+})
+
+Deno.test(`blog: deleting an original keeps its translations linked, the main language's first (#530)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const [german, spanish, english, french] = [uuidV7(), uuidV7(), uuidV7(), uuidV7()]
+    await blog.create(german, fields(`hallo`, { language: `de` }), maya)
+    // The Spanish one is older, but English is the main language.
+    await blog.create(spanish, fields(`hola`, { language: `es`, translationOf: german }), maya)
+    await blog.create(english, fields(`hello`, { language: `en`, translationOf: german }), maya)
+    await blog.create(french, fields(`salut`, { language: `fr`, translationOf: german }), maya)
+    for (const id of [german, spanish, english, french]) await blog.publish(id, 1, null, null, maya)
+
+    await blog.delete(german, 2, maya)
+
+    expect((await blog.get(english))!.translationOf).toBeNull()
+    expect((await blog.get(spanish))!.translationOf).toBe(english)
+    expect((await blog.get(french))!.translationOf).toBe(english)
+    expect((await readPublicPost(sql, `hola`))!.post.translations).toEqual([
+      { language: `en`, slug: `hello` },
+      { language: `fr`, slug: `salut` },
+    ])
+  })
+})
+
+Deno.test(`blog: the public reads leave out a post in a language the apps no longer ship (#530)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const [english, dropped] = [uuidV7(), uuidV7()]
+    await blog.create(english, fields(`hello`), maya)
+    await blog.create(
+      dropped,
+      fields(`moin`, { language: `nds` as Language, translationOf: english }),
+      maya,
+    )
+    for (const id of [english, dropped]) await blog.publish(id, 1, null, null, maya)
+
+    expect((await listPublicPosts(sql, null)).map((post) => post.slug)).toEqual([`hello`])
+    expect(await readPublicPost(sql, `moin`)).toBeNull()
+    expect((await readPublicPost(sql, `hello`))!.post.translations).toEqual([])
+    expect((await listPublicFeed(sql)).map((post) => post.slug)).toEqual([`hello`])
   })
 })
 
@@ -743,6 +937,34 @@ Deno.test(`blog: a cover written HTTPS:// is stored, not refused by the database
   })
 })
 
+Deno.test(`blog: an author link is stored, changed and cleared, and the public post answers it (#730)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const id = uuidV7()
+    const about = `https://maya.example.org/about`
+    const created = await blog.create(id, fields(`linked`, { authorUrl: about }), maya)
+    expect(created.authorUrl).toBe(about)
+    expect((await blog.get(id))?.authorUrl).toBe(about)
+    await blog.publish(id, 1, null, null, maya)
+    expect((await readPublicPost(sql, `linked`))?.post.authorUrl).toBe(about)
+
+    const other = `https://maya.example.net/`
+    expect(
+      (await blog.update(id, 2, fields(`linked`, { authorUrl: other }), false, maya)).authorUrl,
+    )
+      .toBe(other)
+    expect((await blog.update(id, 3, fields(`linked`), false, maya)).authorUrl).toBeNull()
+    expect((await readPublicPost(sql, `linked`))?.post.authorUrl).toBeNull()
+
+    // The database refuses what the API would: a link that is not https.
+    await expect(
+      sql`UPDATE blog_posts SET author_url = 'http://maya.example.org/' WHERE id = ${id}`,
+    )
+      .rejects.toThrow(`blog_posts_author_url_check`)
+  })
+})
+
 Deno.test(`blog: lost jobs come back once`, async () => {
   await withSchema(async (sql) => {
     await upsertSeedPosts(sql, [seedPost(`live`), seedPost(`later`, { publishAt: LATER() })])
@@ -772,7 +994,11 @@ Deno.test(`blog: Seed's post files load only in demo mode, and loading twice wri
     await t.step(`demo on loads every file, with its author and no account`, async () => {
       expect(await loadDemoBlogPosts(sql, { demo: true, fs: denoFileSystem })).toBe(files.length)
       const welcome = await bySlug(sql, `welcome-to-the-seed-blog`)
-      expect(welcome).toMatchObject({ status: `published`, authorName: `Anton Shubin` })
+      expect(welcome).toMatchObject({
+        status: `published`,
+        authorName: `Anton Shubin`,
+        authorUrl: `https://antonshubin.com/about`,
+      })
       expect((await listPublicPosts(sql, null)).map((post) => post.slug)).toContain(
         `welcome-to-the-seed-blog`,
       )
@@ -801,6 +1027,21 @@ Deno.test(`blog: a changed post file updates its post, and a post no file names 
       version: 2,
     })
     expect(await bySlug(sql, `kept`)).toEqual(kept)
+  })
+})
+
+Deno.test(`blog: a post file's author link is written, changed and cleared with the file (#730)`, async () => {
+  await withSchema(async (sql) => {
+    const publishAt = new Date(Date.now() - DAY_MS)
+    const linked = (authorUrl: string | null) =>
+      seedPost(`linked`, { fields: fields(`linked`, { authorUrl }), publishAt })
+    await upsertSeedPosts(sql, [linked(`https://antonshubin.com/about`)])
+    expect((await bySlug(sql, `linked`)).authorUrl).toBe(`https://antonshubin.com/about`)
+    expect(await upsertSeedPosts(sql, [linked(`https://antonshubin.com/about`)])).toBe(0)
+    expect(await upsertSeedPosts(sql, [linked(`https://example.com/about`)])).toBe(1)
+    expect((await bySlug(sql, `linked`)).authorUrl).toBe(`https://example.com/about`)
+    expect(await upsertSeedPosts(sql, [linked(null)])).toBe(1)
+    expect((await bySlug(sql, `linked`)).authorUrl).toBeNull()
   })
 })
 
@@ -949,5 +1190,182 @@ Deno.test(`blog: Cancel on a post's job is refused, and the post keeps its job`,
     expect(outcome).toBe(AdminJobActionOutcome.NotCancellable)
     expect(await waitingJobs(sql, id)).toEqual([{ ...job, cancelledAt: null }])
     expect((await blog.get(id))!.status).toBe(`scheduled`)
+  })
+})
+
+const INDEXNOW: IndexNowSetup = {
+  key: `indexnow-test-key-0123`,
+  siteUrl: `https://www.example.com`,
+}
+
+/**
+ * A fake IndexNow that answers `status` (or throws when it is `null`) and records the addresses of
+ * every submission.
+ */
+function fakeIndexNow(status: number | null = 200) {
+  const sent: string[][] = []
+  const fetch = async (_input: string | URL | Request, init?: RequestInit) => {
+    sent.push(JSON.parse(String(init?.body)).urlList)
+    if (status === null) throw new TypeError(`connection refused`)
+    return new Response(null, { status })
+  }
+  return { sent, fetch: fetch as typeof globalThis.fetch }
+}
+
+/**
+ * Runs the `blog.indexnow` rows of post `id` that wait, as the worker would, and closes them.
+ * Answers how many ran.
+ */
+async function runIndexNow(
+  sql: postgres.Sql,
+  id: string,
+  deps: Omit<Parameters<typeof blogIndexNowJob>[0], `sql`>,
+): Promise<number> {
+  const rows = await sql<{ id: string }[]>`
+    SELECT id FROM outbox_events
+    WHERE event_kind = ${BLOG_INDEXNOW_JOB} AND aggregate_id = ${id} AND processed_at IS NULL
+  `
+  const job = blogIndexNowJob({ sql, ...deps })
+  for (const row of rows) {
+    await job({ id: row.id, aggregateId: id, eventKind: BLOG_INDEXNOW_JOB } as OutboxEvent)
+    await sql`UPDATE outbox_events SET processed_at = now() WHERE id = ${row.id}`
+  }
+  return rows.length
+}
+
+Deno.test(`blog: IndexNow hears every address of a post that goes live, moves, changes or leaves (#418)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const post = uuidV7()
+    const indexNow = fakeIndexNow()
+    const run = () =>
+      runIndexNow(sql, post, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch })
+    await blog.create(post, fields(`first`, { language: `de` }), maya)
+
+    await t.step(`queues nothing for a draft that was never live`, async () => {
+      await blog.update(
+        post,
+        1,
+        parseBlogPostEdit(fields(`first`, { language: `de` })),
+        false,
+        maya,
+      )
+      expect(await run()).toBe(0)
+    })
+
+    await t.step(`sends the post's address when it is published now`, async () => {
+      await blog.publish(post, 2, null, null, maya)
+      expect(await run()).toBe(1)
+      expect(indexNow.sent.at(-1)).toEqual([`https://www.example.com/de/blog/first`])
+    })
+
+    await t.step(`sends the new address and the old one after Change URL`, async () => {
+      await blog.changeUrl(post, 3, `second`, maya)
+      expect(await run()).toBe(1)
+      expect(indexNow.sent.at(-1)).toEqual([
+        `https://www.example.com/de/blog/second`,
+        `https://www.example.com/de/blog/first`,
+      ])
+    })
+
+    await t.step(
+      `sends them again when the live post is saved, once for saves before it ran`,
+      async () => {
+        const edit = parseBlogPostEdit(fields(`second`, { language: `de`, title: `Changed` }))
+        await blog.update(post, 4, edit, true, maya)
+        await blog.update(post, 5, edit, false, maya)
+        expect(await run()).toBe(1)
+        expect(indexNow.sent.at(-1)).toHaveLength(2)
+      },
+    )
+
+    await t.step(
+      `sends them when the post is unpublished, so the engines see it gone`,
+      async () => {
+        await blog.unpublish(post, 6, maya)
+        expect(await run()).toBe(1)
+        expect(indexNow.sent.at(-1)).toEqual([
+          `https://www.example.com/de/blog/second`,
+          `https://www.example.com/de/blog/first`,
+        ])
+      },
+    )
+  })
+})
+
+Deno.test(`blog: a scheduled post that goes live through its job is sent to IndexNow (#418)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const post = uuidV7()
+    const indexNow = fakeIndexNow()
+    await blog.create(post, fields(`later`), maya)
+    await blog.publish(post, 1, LATER(), null, maya)
+    expect(await runIndexNow(sql, post, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch }))
+      .toBe(0)
+
+    await makeDue(sql, post)
+    await blogPublishJob({ sql, brand: BRAND, setup: null, log: () => {} })(jobEvent(post))
+    await runIndexNow(sql, post, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch })
+
+    expect(indexNow.sent).toEqual([[`https://www.example.com/blog/later`]])
+  })
+})
+
+Deno.test(`blog: with IndexNow off a post goes live and nothing is sent (#418)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const post = uuidV7()
+    const indexNow = fakeIndexNow()
+    await blog.create(post, fields(`quiet`), maya)
+    await blog.publish(post, 1, null, null, maya)
+
+    expect(await runIndexNow(sql, post, { setup: null, log: () => {}, fetch: indexNow.fetch }))
+      .toBe(1)
+    expect(indexNow.sent).toEqual([])
+    expect((await bySlug(sql, `quiet`)).status).toBe(`published`)
+  })
+})
+
+Deno.test(`blog: a failing IndexNow is logged once without the key and fails no publish (#418)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    for (const [slug, status] of [[`refused`, 403], [`unreachable`, null]] as const) {
+      const post = uuidV7()
+      const lines: string[] = []
+      await blog.create(post, fields(slug), maya)
+      await blog.publish(post, 1, null, null, maya)
+
+      const indexNow = fakeIndexNow(status)
+      await runIndexNow(sql, post, {
+        setup: INDEXNOW,
+        log: (line) => lines.push(line),
+        fetch: indexNow.fetch,
+      })
+
+      expect(indexNow.sent).toHaveLength(1)
+      expect(lines).toHaveLength(1)
+      expect(lines[0]).toContain(`IndexNow was not told about blog post ${post}`)
+      expect(lines[0]).not.toContain(INDEXNOW.key)
+      expect((await bySlug(sql, slug)).status).toBe(`published`)
+    }
+  })
+})
+
+Deno.test(`blog: Seed's live post files are sent to IndexNow, a scheduled one only when it goes live (#418)`, async () => {
+  await withSchema(async (sql) => {
+    await upsertSeedPosts(sql, [seedPost(`live`), seedPost(`later`, { publishAt: LATER() })])
+    const queued = async (slug: string) => {
+      const [{ count }] = await sql<{ count: number }[]>`
+        SELECT COUNT(*)::int AS count FROM outbox_events o JOIN blog_posts p ON p.id = o.aggregate_id
+        WHERE o.event_kind = ${BLOG_INDEXNOW_JOB} AND p.slug = ${slug}
+      `
+      return count
+    }
+    expect(await queued(`live`)).toBe(1)
+    expect(await queued(`later`)).toBe(0)
   })
 })

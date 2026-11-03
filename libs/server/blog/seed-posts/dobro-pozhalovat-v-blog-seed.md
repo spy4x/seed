@@ -10,6 +10,7 @@ tldr:
   - Подпишитесь, чтобы получать каждый новый пост на почту.
 topic: Seed
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-01T09:00:00Z
 newsletter: false
 ---

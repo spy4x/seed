@@ -11,6 +11,7 @@
 # The MPA renders the API reference and the published guides from these files
 # (apps/mpa/api-docs.ts, PUBLISHED_DOCS in apps/mpa/docs-site.ts); the other docs stay out.
 !docs/token-api.md
+!docs/get-started.md
 !docs/apps.md
 !docs/products.md
 !docs/start-a-product.md

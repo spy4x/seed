@@ -456,7 +456,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Use lowercase letters, digits and hyphens only.",
   "AdminBlogDialogs.changeUrlTitle": "Change this post's URL?",
   "AdminBlogDialogs.changeUrl": "Change URL",
-  "AdminBlogDialogs.linksBreak": "Links to <path>{path}</path> stop working.",
+  "AdminBlogDialogs.linksRedirect":
+    "Links to <path>{path}</path> keep working: they redirect to the new URL.",
   "AdminBlogDialogs.newSlug": "New slug",
   "AdminBlogDialogs.slugHint": "Lowercase letters, digits and hyphens.",
   "AdminBlogDialogs.futureTime": "Pick a time in the future.",
@@ -489,18 +490,24 @@ export default {
     "It goes live at <path>{path}</path> and joins the RSS feed and sitemap.",
   "AdminBlogDialogs.mailingList": "Mailing list",
   "AdminBlogDialogs.alsoEmail": {
-    "one": "Also email this post to {count} confirmed subscriber",
-    "other": "Also email this post to {count} confirmed subscribers",
+    "one":
+      "Also email this post to {count} confirmed subscriber in <language>{language}</language>",
+    "other":
+      "Also email this post to {count} confirmed subscribers in <language>{language}</language>",
   },
   "AdminBlogDialogs.alsoEmailList": {
-    "one": "Also email this post to {count} confirmed subscriber of <list>{list}</list>",
-    "other": "Also email this post to {count} confirmed subscribers of <list>{list}</list>",
+    "one":
+      "Also email this post to {count} confirmed subscriber of <list>{list}</list> in <language>{language}</language>",
+    "other":
+      "Also email this post to {count} confirmed subscribers of <list>{list}</list> in <language>{language}</language>",
   },
   "AdminBlogDialogs.sentOnce": "Sent once, when the post goes live. You can't unsend it.",
   "AdminBlogDialogs.newsletterOff":
     "The newsletter is off, so this post won't be emailed to the <list>{list}</list> list.",
   "AdminBlogDialogs.postLanguageOnly":
     "Only subscribers who signed up in the post's language get it.",
+  "AdminBlogDialogs.noReaders":
+    "No confirmed subscribers in <language>{language}</language> yet, so this post can't be emailed.",
   "AdminBlogEditor.leaveMessage": "Your changes to this post will be lost.",
   "AdminBlogEditor.doneScheduled": "Scheduled for {at}.",
   "AdminBlogEditor.donePublished": "Published.",
@@ -588,7 +595,7 @@ export default {
   "AdminBlogEditor.settings": "Post settings",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Locked once published. Use Change URL… to change it; old links will break.",
+    "Locked once published. Use Change URL… to change it; old links redirect to the new one.",
   "AdminBlogEditor.slugHint":
     "The post's URL: <path>{path}</path>. Lowercase letters, digits and hyphens.",
   "AdminBlogEditor.slugHintEmpty":
@@ -605,6 +612,9 @@ export default {
   "AdminBlogEditor.addPoint": "Add point",
   "AdminBlogEditor.topic": "Topic",
   "AdminBlogEditor.topicHint": "Groups posts on the blog page. Pick one or type a new one.",
+  "AdminBlogEditor.authorUrl": "Author link",
+  "AdminBlogEditor.authorUrlHint":
+    "The author's name on the post links here, such as their About page, so readers and search engines can tell who wrote it. Leave empty for no link.",
   "AdminBlogEditor.coverUrl": "Cover image URL",
   "AdminBlogEditor.coverUrlHint":
     "A full https:// link to a wide image, 1200×630, on a host that lets other sites show it. Leave empty for no cover.",
@@ -1796,6 +1806,8 @@ export default {
   "AdminBlogEditor.language": "Language",
   "AdminBlogEditor.languageHint":
     "The language the post is written in. The website lists it on that language's blog.",
+  "AdminBlogEditor.languageMoves":
+    "Saving moves the post to <path>{path}</path>. Its old address redirects there.",
   "AdminBlogEditor.translationOf": "Translation of",
   "AdminBlogEditor.translationOfHint":
     "The post this one translates. The website links the two as language versions once both are live.",

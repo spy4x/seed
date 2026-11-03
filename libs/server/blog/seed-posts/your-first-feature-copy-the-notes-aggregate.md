@@ -11,6 +11,7 @@ tldr:
   - Every write takes a version and an idempotency key, so nothing is overwritten or done twice.
 topic: Guides
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T18:00:00Z
 newsletter: false
 ---

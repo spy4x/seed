@@ -21,10 +21,11 @@ import { describeCron, parseCron } from "@spy4x/time/cron"
 import type { BillingProvider } from "@spy4x/billing"
 import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import { BillingNoticeKind } from "@domain/billing"
-import { BLOG_PUBLISH_JOB } from "@domain/blog"
+import { BLOG_INDEXNOW_JOB, BLOG_PUBLISH_JOB } from "@domain/blog"
 import { BILLING_NOTICE_JOBS } from "../billing/billing-notices.ts"
 import { SEAT_SYNC_JOB, seatSyncJob } from "../billing/seat-sync.ts"
 import { blogPublishJob } from "../blog/blog-publish-job.ts"
+import { blogIndexNowJob, type IndexNowSetup } from "../blog/blog-indexnow-job.ts"
 import type { SubscribersSetup } from "../subscribers/subscribers.ts"
 import {
   ACCOUNT_DELETION_MAIL_JOB,
@@ -89,6 +90,8 @@ export interface JobDeps {
   telegram: TelegramNotificationDeps["client"]
   /** Where image processing works on disk, or `null` when the worker has none (#464). */
   imageScratch: ImageScratch | null
+  /** IndexNow's key and the website's origin, or `null` while IndexNow is off (#418). */
+  indexNow: IndexNowSetup | null
 }
 
 /**
@@ -351,6 +354,12 @@ export const JOBS: readonly JobDefinition[] = [
     cannotCancel: `To stop a scheduled post, unschedule it on the Blog page. ` +
       `Cancelling its job would leave the post scheduled with nothing to publish it.`,
     handler: (deps) => blogPublishJob({ ...mailDeps(deps), setup: deps.subscribers }),
+  }),
+  // Monitoring-grade: a failed ping is logged and never retried, so running it again sends once more.
+  defineJob({
+    kind: BLOG_INDEXNOW_JOB,
+    label: `Tell search engines a blog post changed`,
+    handler: ({ sql, mail, indexNow }) => blogIndexNowJob({ sql, setup: indexNow, log: mail.log }),
   }),
 ]
 
