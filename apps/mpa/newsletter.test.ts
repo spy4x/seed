@@ -125,6 +125,8 @@ describe("createNewsletterStatus", () => {
     api.answer = says(false)
     clock = 5_000
     status.isOn()
+    // The read above started the question; this only waits for it.
+    expect(api.asked).toHaveLength(2)
     await status.refresh()
     expect(api.asked).toHaveLength(2)
     expect(status.isOn()).toBe(false)
