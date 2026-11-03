@@ -11,6 +11,7 @@ tldr:
   - Verkaufen Sie an Teams, nehmen Sie eine Vorlage mit Gruppen, Rollen und Abrechnung pro Mitglied.
   - Wer Daten in der EU halten will, fährt mit einem eigenen Server einfacher als mit fünf externen Diensten.
 topic: Fragen
+intro: "ShipFast ist ein gutes Kit, aber nicht das einzige, und es ist nicht kostenlos. Ich habe sieben Boilerplates nach Preis, Lizenz, Stack, Teams und Hosting verglichen, mit einer Quelle für jede Angabe."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z

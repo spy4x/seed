@@ -10,6 +10,8 @@ tldr:
   - A session is a random token the server stores only as a keyed hash, so a leaked database does not hand out sessions, and signing out works at once.
   - You can list your sessions with their device and end any of them yourself.
 topic: Deep dive
+intro: "You don't need an auth service to offer passkeys, two-factor codes and sessions you can revoke. I show how Seed does each one itself, with the limits and the code."
+relatedFeature: sign-in
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T16:00:00Z

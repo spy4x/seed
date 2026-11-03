@@ -10,6 +10,8 @@ tldr:
   - Without a socket, the page pulls on start, when the network returns, when the tab is shown, after its own writes and every 30 seconds while visible.
   - "The rule behind it: delete every line of WebSocket code and the app must still end up correct. Tests run the app exactly that way."
 topic: Deep dive
+intro: "Every screen in Seed updates live over a WebSocket, yet the app stays correct with the socket gone. This is the design that makes both true, and the tests that hold it to that."
+relatedFeature: realtime
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T22:00:00Z

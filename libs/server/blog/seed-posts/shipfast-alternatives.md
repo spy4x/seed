@@ -10,6 +10,7 @@ tldr:
   - If your customers are teams, pick a kit with groups, roles and per-member billing built in.
   - Stay with ShipFast if you want Next.js, its community and a launch this weekend.
 topic: Questions
+intro: "ShipFast is a good kit, but it isn't the only one, and it isn't free. I compared seven boilerplates on price, licence, stack, teams and hosting, with a source for every fact."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z

@@ -11,6 +11,7 @@ tldr:
   - Seed 免费（MIT 许可），自带团队、Stripe 收费、管理后台和简体中文界面，语言是 TypeScript。
   - 两者都只支持 Stripe，而 Stripe 不向中国大陆注册的公司开放，香港公司可以使用。
 topic: 问答
+intro: "SaaS Pegasus 是一个不错的 Django 起步模板，价格 449 美元起。如果你不想花钱，这里有 Python 和 TypeScript 的免费方案，以及每个方案缺少什么。"
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

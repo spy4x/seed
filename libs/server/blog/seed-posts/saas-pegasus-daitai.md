@@ -11,6 +11,7 @@ tldr:
   - Seed は無料（MIT）で、チーム、Stripe 課金、管理画面、日本語 UI まで揃っています。言語は TypeScript です。
   - Pegasus の翻訳は仕組みがあるものの、公式ドキュメントによると UI の文言はまだ全部が翻訳対象になっていません。
 topic: 質問
+intro: "SaaS Pegasus は良い Django スターターで、価格は 449 ドルから。お金をかけたくないなら、Python と TypeScript の無料の選択肢と、それぞれに欠けているものをまとめました。"
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

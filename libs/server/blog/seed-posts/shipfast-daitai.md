@@ -11,6 +11,7 @@ tldr:
   - 顧客がチームなら、グループ・ロール・メンバー単位の課金が最初から入ったものを選びましょう。
   - ShipFast は翻訳機能を掲げていません。Seed は日本語を含む 9 言語に対応しています。
 topic: 質問
+intro: "ShipFast は良いキットですが、唯一の選択肢ではなく、無料でもありません。七つのボイラープレートを価格、ライセンス、技術スタック、チーム機能、ホスティングで比べ、すべての事実に出典を付けました。"
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z

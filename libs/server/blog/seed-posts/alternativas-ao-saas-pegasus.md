@@ -11,6 +11,7 @@ tldr:
   - O Seed é grátis (MIT), com times, cobrança via Stripe e painel admin, em TypeScript.
   - Os dois cobram só via Stripe, e uma empresa no Brasil não tem Pix recorrente no Stripe.
 topic: Perguntas
+intro: "O SaaS Pegasus é um bom starter Django, e custa US$ 449 ou mais. Se você prefere não pagar nada, aqui estão os caminhos gratuitos em Python e em TypeScript, e o que cada um deixa de fora."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

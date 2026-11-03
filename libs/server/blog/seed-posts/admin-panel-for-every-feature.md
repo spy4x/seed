@@ -10,6 +10,7 @@ tldr:
   - Only a signed-in operator gets in, with their second factor when they have one. A signed-in person below operator gets a plain 404, and every operator action is audited.
   - Operators see account facts and counts, not people's notes.
 topic: Deep dive
+intro: "Every feature I add to Seed gets its admin screen in the same change, on a host of its own. Here is how a module is built, who may open it, and the two tests that keep the panel honest."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T18:00:00Z

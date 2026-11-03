@@ -11,6 +11,7 @@ tldr:
   - La langue est un réglage de la personne, enregistré sur le serveur, indépendant du format de date, du fuseau horaire et de l’horloge.
   - Ajouter une dixième langue, c’est une entrée dans une liste, un fichier par catalogue et quelques lignes de chargement.
 topic: En détail
+intro: "Seed parle neuf langues dès le premier commit, arabe de droite à gauche compris. Cet article montre comment les catalogues restent complets, et les tests qui bloquent une traduction manquante avant sa mise en ligne."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z
