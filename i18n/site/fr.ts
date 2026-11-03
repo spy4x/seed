@@ -896,6 +896,7 @@ export default {
   "Blog.published": "Publié le <time>{date}</time>",
   "Blog.updated": "· Mis à jour le <time>{date}</time>",
   "Blog.alsoIn": "Aussi disponible en : <links></links>",
+  "Blog.relatedFeature": "Fonctionnalité de Seed : {name} →",
   "Blog.minutes": {
     "one": "· {count} min de lecture",
     "many": "· {count} min de lecture",

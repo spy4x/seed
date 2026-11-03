@@ -836,6 +836,7 @@ export default {
   "Blog.published": "نُشر في <time>{date}</time>",
   "Blog.updated": "· حُدّث في <time>{date}</time>",
   "Blog.alsoIn": "متوفرة أيضًا باللغات: <links></links>",
+  "Blog.relatedFeature": "ميزة في Seed: {name} ←",
   "Blog.minutes": {
     "zero": "· قراءة في أقل من دقيقة",
     "one": "· قراءة في دقيقة واحدة",

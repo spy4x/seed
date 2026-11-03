@@ -838,6 +838,7 @@ export default {
   "Blog.published": "Published <time>{date}</time>",
   "Blog.updated": "· Updated <time>{date}</time>",
   "Blog.alsoIn": "Also in: <links></links>",
+  "Blog.relatedFeature": "Seed feature: {name} →",
   "Blog.minutes": {
     "one": "· {count} min read",
     "other": "· {count} min read",

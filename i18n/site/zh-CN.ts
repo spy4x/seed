@@ -776,6 +776,7 @@ export default {
   "Blog.published": "发布于<time>{date}</time>",
   "Blog.updated": "· 更新于<time>{date}</time>",
   "Blog.alsoIn": "其他语言：<links></links>",
+  "Blog.relatedFeature": "Seed 功能：{name} →",
   "Blog.minutes": {
     "other": "· 阅读约 {count} 分钟",
   },

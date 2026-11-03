@@ -509,6 +509,50 @@ describe("a blog post", () => {
     expect(await author(null)).toEqual({ "@type": `Person`, name: `Ada Lovelace` })
   })
 
+  it("draws a cover file in both widths at its real size, and shares it at its full address (#733)", async () => {
+    const post = { ...FULL, coverUrl: null, coverFile: `cron-jobs.webp` }
+    const { body } = await (await blogSite(answers(post))).get("/blog/cron-jobs")
+
+    // Fresh adds its build's cache key to a path on the site; the files are the same.
+    const img = (body.match(/<img [^>]*data-e2e="blog-post-cover"[^>]*>/)?.[0] ?? ``)
+      .replace(/\?__frsh_c=\w+/g, ``)
+    expect(img).toContain(`src="/blog/covers/cron-jobs.webp"`)
+    expect(img).toContain(
+      `srcset="/blog/covers/cron-jobs-640.webp 640w, /blog/covers/cron-jobs.webp 1600w"`,
+    )
+    expect(img).toContain(`sizes="(min-width: 720px) 672px, calc(100vw - 32px)"`)
+    expect(img).toContain(`width="1600" height="900"`)
+    expect(img).toContain(`alt="A clock over a server rack"`)
+    expect(metaContent(body, "og:image")).toBe(`${site}/blog/covers/cron-jobs.webp`)
+    expect(jsonLdGraph(body)[0].image).toMatchObject({
+      url: `${site}/blog/covers/cron-jobs.webp`,
+      width: 1600,
+      height: 900,
+    })
+  })
+
+  it("links its related feature's page under the byline by the page's name, and nothing for an unknown one (#733)", async () => {
+    const linked = { ...FULL, relatedFeature: `realtime` }
+    const { body } = await (await blogSite(answers(linked))).get("/blog/cron-jobs")
+    expect(linkNamed(body, `Seed feature: Realtime sync →`)).toMatch(
+      /^<a href="\/features\/realtime" class="[^"]*min-h-11/,
+    )
+
+    const german = { ...GERMAN_FULL, relatedFeature: `realtime` }
+    const de = await (await blogSite({
+      ...listing([GERMAN]),
+      [`/api/blog/posts/hallo-welt`]: () => Response.json({ post: german, readNext: [] }),
+    })).get("/de/blog/hallo-welt")
+    expect(de.body).toMatch(/<a href="\/de\/features\/realtime"[^>]*>Seed-Funktion: /)
+
+    for (const relatedFeature of [null, `no-such-feature`]) {
+      const { body } = await (await blogSite(answers({ ...FULL, relatedFeature }))).get(
+        "/blog/cron-jobs",
+      )
+      expect(body).not.toContain(`data-e2e="blog-post-feature"`)
+    }
+  })
+
   it("shares the site's own image when the post has no cover", async () => {
     const { get } = await blogSite(answers(LONG))
     const { body } = await get("/blog/cron-jobs")

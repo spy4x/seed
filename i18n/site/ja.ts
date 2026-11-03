@@ -833,6 +833,7 @@ export default {
   "Blog.published": "公開日：<time>{date}</time>",
   "Blog.updated": "· 更新日：<time>{date}</time>",
   "Blog.alsoIn": "他の言語：<links></links>",
+  "Blog.relatedFeature": "Seed の機能：{name} →",
   "Blog.minutes": {
     "other": "· {count}分で読めます",
   },
