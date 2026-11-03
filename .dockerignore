@@ -32,6 +32,15 @@
 !docs/ids.md
 !docs/api-errors.md
 !docs/admin-modules.md
+!docs/certificates.md
+!docs/deploy-updates.md
+!docs/large-group.md
+!docs/load-tests.md
+!docs/operator-access.md
+!docs/releases.md
+!docs/restore.md
+!docs/settings.md
+!docs/several-projects.md
 # The website counts the browser test suites (apps/mpa/repo-facts.ts): the files at the top of
 # e2e/, which holds only suites there, and none of its folders. Never write this as
 # `!e2e/*.e2e.ts`: an exception with any wildcard but a trailing `/**` makes BuildKit read every
