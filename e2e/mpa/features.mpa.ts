@@ -117,7 +117,7 @@ for (const [loop, path, name] of LOOPS) {
     await expect(figure.locator(`figcaption`)).not.toBeEmpty()
     await expect(figure.locator(`img`)).toHaveAttribute(
       `src`,
-      new RegExp(`/video/${loop}-loop-light-`),
+      new RegExp(`/video/${loop}-loop-dark-`),
     )
     await expect(figure.getByRole(`button`, { name: new RegExp(`: ${name}$`) })).toBeVisible()
   })
@@ -125,11 +125,7 @@ for (const [loop, path, name] of LOOPS) {
 
 test(`the video route answers a byte range of every loop and of the hero's demo`, async ({ request }) => {
   const files = [
-    ...LOOPS.flatMap(([loop]) =>
-      [`light`, `dark`].flatMap((theme) =>
-        [`webm`, `mp4`].map((ext) => `${loop}-loop-${theme}.${ext}`)
-      )
-    ),
+    ...LOOPS.flatMap(([loop]) => [`webm`, `mp4`].map((ext) => `${loop}-loop-dark.${ext}`)),
     `demo.webm`,
     `demo.mp4`,
   ]

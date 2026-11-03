@@ -19,8 +19,9 @@ altered a screen the video shows significantly; its header names the shots.
 
 The website's three feature loops (realtime sync, offline editing, keyboard shortcuts) are a
 fourth, made by `apps/mpa/screenshots/loops.ts` (`deno task loops` in `apps/mpa`) and committed
-under `apps/mpa/media/video/` and `apps/mpa/static/video/`. Re-record them in the same PR when the
-change altered the notes list, the note editor, the conflict chooser, the search palette or the
+under `apps/mpa/media/video/` and `apps/mpa/static/video/`. They are recorded once, in the dark
+theme, and the site shows that one copy in both of its themes. Re-record them in the same PR when
+the change altered the notes list, the note editor, the conflict chooser, the search palette or the
 shell significantly.
 
 `AGENTS.md`, "Product screenshots", says when to run this. This skill says how.
@@ -111,7 +112,7 @@ its timezone) and with one transcript line per shot of the new cut, then the e2e
    of key moments (`ffmpeg -i admin-panel.mp4 -vf fps=2 still-%03d.png` in your scratch folder),
    look at each, and check that the transcript matches what the video shows.
 3. For the loops, extract a contact sheet of each clip
-   (`ffmpeg -i realtime-loop-light.webm -vf "fps=2,scale=720:-1,tile=3x4" -frames:v 1 sheet.png`
+   (`ffmpeg -i realtime-loop-dark.webm -vf "fps=2,scale=720:-1,tile=3x4" -frames:v 1 sheet.png`
    in your scratch folder) and check that the pointer moves to each target and the story reads
    from start to end.
 4. Check the budgets the website's README names: 90 KB for the notes hero at 1280, 70 KB for the
