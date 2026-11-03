@@ -1,5 +1,6 @@
 import postgres from "postgres"
-import { createSqlFromEnv, PostgresEnvName } from "@spy4x/server/db"
+import { createSqlFromEnv } from "@spy4x/server/db"
+import { postgresEnv } from "../api/services/db-direct.ts"
 import { exitProcess, processEnv, readEnvRecord } from "@spy4x/platform/server/process"
 import { runtimeFileSystem } from "@spy4x/platform/server/runtime-fs"
 import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
@@ -19,13 +20,13 @@ import { isDemoMode } from "@server/auth/demo-accounts.ts"
 import { AppDbBase } from "../api/services/db-base.ts"
 import { demoDataSeed, startDemoReset } from "./demo/reset.ts"
 import { isDemoSeeded, resetDemo } from "./demo/run.ts"
-import { type DemoAdmin, readDemoAdmin } from "./demo/options.ts"
+import { DEMO_ADMIN_ENV_NAMES, type DemoAdmin, readDemoAdmin } from "./demo/options.ts"
 import { seedWorkspace } from "./demo/seed.ts"
 import { s3ServerFiles } from "@server/files/files.ts"
 import { readServerFilesSetup } from "@server/files/settings.ts"
 import type { ImageScratch } from "@server/files/images.ts"
 
-const sql = createSqlFromEnv(readEnvRecord(Object.values(PostgresEnvName)), {
+const sql = createSqlFromEnv(postgresEnv(), {
   transform: postgres.camel,
   applicationName: "app-backend",
   // In Compose these are connections to PgBouncer, which holds the connections to Postgres
@@ -118,7 +119,7 @@ const demo = isDemoMode(readEnvRecord([`DEMO_MODE`]))
 // stops the worker here.
 let demoAdmin: DemoAdmin | null = null
 try {
-  demoAdmin = readDemoAdmin(readEnvRecord([`DEMO_MODE`, `DEMO_ADMIN_PASSWORD`, `AUTH_PEPPER`]))
+  demoAdmin = readDemoAdmin(readEnvRecord(DEMO_ADMIN_ENV_NAMES))
 } catch (error) {
   // A SeedConfigError: it names the variable, never its value.
   console.error(`❌ ${(error as Error).message}`)
