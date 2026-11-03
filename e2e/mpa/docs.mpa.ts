@@ -81,7 +81,7 @@ test("a reader moves from the docs index to a guide, through its sections, to th
   await sections.getByRole("link").filter({ visible: true }).first().click()
   await expect(page).toHaveURL(/\/docs\/deploy#.+/)
   await page.locator("a[rel=next]").click()
-  await expect(page).not.toHaveURL(/\/docs\/deploy/)
+  await expect(page).not.toHaveURL(/\/docs\/deploy(#|$)/)
   await expect(page).toHaveURL(/\/docs\/[a-z-]+$/)
 })
 
