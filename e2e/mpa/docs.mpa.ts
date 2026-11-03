@@ -53,10 +53,10 @@ for (const path of ["/changelog", "/docs/capacity"]) {
 test("a reader moves from the docs index to a guide, through its sections, to the next guide", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto("/docs")
-  await page.getByRole("link", { name: /^Deploy and operate/ }).click()
+  await page.getByRole("link", { name: /^Deploy to a server/ }).click()
 
   await expect(page).toHaveURL(/\/docs\/deploy$/)
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Deploy and operate")
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Deploy to a server")
   const sections = page.getByRole("navigation", { name: "On this page" })
   await sections.getByRole("link").filter({ visible: true }).first().click()
   await expect(page).toHaveURL(/\/docs\/deploy#.+/)
