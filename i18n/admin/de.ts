@@ -500,14 +500,16 @@ export default {
     "Der Beitrag erscheint unter <path>{path}</path> und landet im RSS-Feed und in der Sitemap.",
   "AdminBlogDialogs.mailingList": "Verteiler",
   "AdminBlogDialogs.alsoEmail": {
-    "one": "Beitrag auch per E-Mail an {count} bestätigten Abonnenten senden",
-    "other": "Beitrag auch per E-Mail an {count} bestätigte Abonnenten senden",
+    "one":
+      "Beitrag auch per E-Mail an {count} bestätigten Abonnenten (Sprache: <language>{language}</language>) senden",
+    "other":
+      "Beitrag auch per E-Mail an {count} bestätigte Abonnenten (Sprache: <language>{language}</language>) senden",
   },
   "AdminBlogDialogs.alsoEmailList": {
     "one":
-      "Beitrag auch per E-Mail an {count} bestätigten Abonnenten von <list>{list}</list> senden",
+      "Beitrag auch per E-Mail an {count} bestätigten Abonnenten von <list>{list}</list> (Sprache: <language>{language}</language>) senden",
     "other":
-      "Beitrag auch per E-Mail an {count} bestätigte Abonnenten von <list>{list}</list> senden",
+      "Beitrag auch per E-Mail an {count} bestätigte Abonnenten von <list>{list}</list> (Sprache: <language>{language}</language>) senden",
   },
   "AdminBlogDialogs.sentOnce":
     "Wird einmal verschickt, sobald der Beitrag erscheint. Das lässt sich nicht zurückholen.",
@@ -515,6 +517,8 @@ export default {
     "Der Newsletter ist aus, deshalb geht dieser Beitrag nicht an den Verteiler <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly":
     "Nur wer sich in der Sprache des Beitrags angemeldet hat, bekommt ihn.",
+  "AdminBlogDialogs.noReaders":
+    "Noch keine bestätigten Abonnenten mit der Sprache <language>{language}</language>, daher kann dieser Beitrag nicht per E-Mail verschickt werden.",
   "AdminBlogEditor.leaveMessage": "Deine Änderungen an diesem Beitrag gehen verloren.",
   "AdminBlogEditor.doneScheduled": "Eingeplant für {at}.",
   "AdminBlogEditor.donePublished": "Veröffentlicht.",
@@ -1863,6 +1867,8 @@ export default {
   "AdminBlogEditor.language": "Sprache",
   "AdminBlogEditor.languageHint":
     "Die Sprache, in der der Beitrag geschrieben ist. Die Website zeigt ihn im Blog dieser Sprache.",
+  "AdminBlogEditor.languageMoves":
+    "Beim Speichern zieht der Beitrag nach <path>{path}</path> um. Die alte Adresse leitet dorthin weiter.",
   "AdminBlogEditor.translationOf": "Übersetzung von",
   "AdminBlogEditor.translationOfHint":
     "Der Beitrag, den dieser übersetzt. Sobald beide online sind, verknüpft die Website sie als Sprachversionen.",

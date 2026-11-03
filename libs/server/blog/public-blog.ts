@@ -9,7 +9,7 @@ import {
   type PublicBlogPost,
   type PublicBlogPostSummary,
 } from "@domain/blog"
-import type { Language } from "@domain/identity"
+import { type Language, LANGUAGES } from "@domain/identity"
 import { renderBlogBody } from "./render.ts"
 
 /**
@@ -48,9 +48,13 @@ function summaryColumns(sql: postgres.Sql) {
     reading_minutes`
 }
 
-/** The condition every public read starts from. */
+/**
+ * The condition every public read starts from. A post in a language the apps no longer ship is
+ * left out, so the website, which reads only those, never fails on it (#530).
+ */
 function live(sql: postgres.Sql) {
-  return sql`status = 'published' AND publish_at <= now() AND published_at IS NOT NULL`
+  return sql`status = 'published' AND publish_at <= now() AND published_at IS NOT NULL
+    AND language IN ${sql([...LANGUAGES])}`
 }
 
 function toSummary(row: SummaryRow): PublicBlogPostSummary {

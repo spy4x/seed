@@ -356,6 +356,44 @@ describe("a blog post", () => {
     expect(alternates((await get("/de/blog/hallo-welt")).body).sort()).toEqual(versions.sort())
   })
 
+  it("names its live translations under the byline, each in its own language at its own address (#530)", async () => {
+    const english = {
+      ...FULL,
+      translations: [
+        { language: `de` as const, slug: `hallo-welt` },
+        { language: `es` as const, slug: `hola-mundo` },
+      ],
+    }
+    const german = {
+      ...GERMAN_FULL,
+      translations: [{ language: `en` as const, slug: `cron-jobs` }],
+    }
+    const { get } = await blogSite({
+      ...listing([NEWER, GERMAN]),
+      [`/api/blog/posts/cron-jobs`]: () => Response.json({ post: english, readNext: [] }),
+      [`/api/blog/posts/hallo-welt`]: () => Response.json({ post: german, readNext: [] }),
+    })
+    const versions = (html: string) =>
+      html.match(/<p[^>]*data-e2e="blog-post-translations"[\s\S]*?<\/p>/)?.[0] ?? ``
+
+    const englishLine = versions((await get("/blog/cron-jobs")).body)
+    expect(textOf(englishLine).trim()).toBe(`Also in: Deutsch and Español`)
+    expect(englishLine).toMatch(
+      /<a href="\/de\/blog\/hallo-welt" hreflang="de" lang="de"[^>]*>Deutsch<\/a>/,
+    )
+    expect(englishLine).toMatch(
+      /<a href="\/es\/blog\/hola-mundo" hreflang="es" lang="es"[^>]*>Español<\/a>/,
+    )
+    const germanLine = versions((await get("/de/blog/hallo-welt")).body)
+    expect(textOf(germanLine).trim()).toBe(`Auch verfügbar auf: English`)
+    expect(germanLine).toContain(`href="/blog/cron-jobs"`)
+  })
+
+  it("names no other version for a post without translations (#530)", async () => {
+    const { get } = await blogSite(answers(FULL))
+    expect((await get("/blog/cron-jobs")).body).not.toContain(`blog-post-translations`)
+  })
+
   it("sends a post's address in another language to its own for good (#527)", async () => {
     const { get } = await blogSite(answers(FULL))
     const { status, location } = await get("/de/blog/cron-jobs")
@@ -740,6 +778,31 @@ describe("the blog in the sitemap and llms.txt", () => {
     expect(body).toContain(
       `[Cron jobs without a cron](${site}/blog/cron-jobs): ${NEWER.description}`,
     )
+  })
+})
+
+describe("the language links on the blog (#530)", () => {
+  /** Where the footer's link to `language` goes. */
+  const footerLink = (html: string, language: string) =>
+    footer(html).match(new RegExp(`<a href="([^"]*)" hreflang="${language}"`))?.[1]
+
+  it("send a language with no live post to its home page, never to its empty blog", async () => {
+    const { get } = await blogSite({
+      ...listing([NEWER, GERMAN]),
+      [`/api/blog/posts/cron-jobs`]: () => Response.json({ post: FULL, readNext: [] }),
+    })
+    for (const path of [`/blog`, `/blog/cron-jobs`]) {
+      const { body } = await get(path)
+      expect(footerLink(body, `de`)).toBe(`/de/blog`)
+      expect(footerLink(body, `ru`)).toBe(`/ru`)
+    }
+  })
+
+  it("keep the current language's own link on its empty blog", async () => {
+    const { get } = await blogSite(listing([NEWER]))
+    const { body } = await get(`/ru/blog`)
+    expect(footerLink(body, `ru`)).toBe(`/ru/blog`)
+    expect(footerLink(body, `en`)).toBe(`/blog`)
   })
 })
 

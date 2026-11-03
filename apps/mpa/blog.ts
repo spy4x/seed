@@ -174,7 +174,7 @@ export async function blogPages(api: Api): Promise<BlogPage[]> {
     path: localePath(language, BLOG_PATH),
     title: BLOG_NAME,
     description: BLOG_INTRO,
-    // Newest first, so the first of the language is its newest.
+    // The latest change among the language's posts: ISO dates sort as text, so the last is it.
     lastmod: pages.filter((page) => page.language === language)
       .map(({ lastmod }) => lastmod).sort().at(-1)!,
   }))
@@ -187,8 +187,9 @@ export async function readFeed(api: Api): Promise<PublicBlogFeedItem[]> {
 }
 
 /**
- * Tells every page whether the blog has a live post in the page's language (`State.blog`), so the
- * header, the footer and the RSS link name the blog only where there is something to read. The
+ * Tells every page whether the blog has a live post in the page's language (`State.blog`), and in
+ * which languages it has one (`State.blogLanguages`), so the header, the footer, the RSS link and
+ * the language links name the blog only where there is something to read. The
  * API is asked once before the first page, then at most once a minute in the background
  * (`createApiValue`). Until it has answered, and while it cannot be reached before its first
  * answer, the blog counts as empty, and the API is asked again every few seconds, so a website
@@ -212,7 +213,8 @@ export async function blogLinkMiddleware(
   })
   await languages.refresh()
   return define.middleware((ctx) => {
-    ctx.state.blog = languages.current().has(pathLanguage(ctx.url.pathname).language)
+    ctx.state.blogLanguages = languages.current()
+    ctx.state.blog = ctx.state.blogLanguages.has(pathLanguage(ctx.url.pathname).language)
     return ctx.next()
   })
 }
