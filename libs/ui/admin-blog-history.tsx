@@ -127,7 +127,7 @@ function Versions(
         legend={t.t(`AdminBlogHistory.versions`)}
         name="blog-history-version"
         data-e2e="admin-blog-history-list"
-        class="max-h-56 overflow-y-auto lg:max-h-[60vh] [&_label]:items-start [&_label]:rounded-md [&_label]:p-2 [&_label:has(:checked)]:bg-selected [&_label:hover]:bg-hover [&_input]:mt-1"
+        class="min-w-0 max-h-56 overflow-y-auto lg:max-h-[60vh] [&_label]:min-w-0 [&_label]:items-start [&_label]:rounded-md [&_label]:p-2 [&_label:hover]:bg-hover [&_label:has(:checked)]:bg-selected-soft [&_input]:mt-1"
         value={selectedId}
         onChange={props.onSelect}
         options={props.revisions.map((revision) => ({
@@ -137,7 +137,7 @@ function Versions(
               <span class="truncate font-medium">
                 <bdi>{revision.title}</bdi>
               </span>
-              <span class="text-sm text-muted">
+              <span class="truncate text-sm text-muted">
                 <When at={revision.savedAt} now={props.now.getTime()} />
                 {` · `}
                 <bdi>{revision.savedBy ?? someone}</bdi>
