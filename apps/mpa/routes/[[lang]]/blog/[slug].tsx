@@ -55,13 +55,15 @@ export const POST_NOT_FOUND = postNotFound(siteEnglishText())
  *
  * A post is written in one language and lives at that language's address (`/de/blog/<slug>` for
  * German); another language's address redirects there for good, so a link from before posts had a
- * language still works. Its page names its live translations as language versions (`hreflang`),
- * and nothing when it has none.
+ * language still works. A slug the post had before "Change URL" redirects to its current address
+ * for good too, in every language, while the post is live (#418). Its page names its live
+ * translations as language versions (`hreflang`), and nothing when it has none.
  */
 export const handler = define.handlers({
   async GET(ctx) {
     const found = await readPost(ctx.state.api, ctx.params.slug ?? ``)
     if (!found) return renderNotFound(ctx)
+    if (`moved` in found) return ctx.redirect(postAddress(found.moved), 301)
     const { post, readNext } = found
     if (post.language !== ctx.state.language) return ctx.redirect(postAddress(post), 301)
     const origin = ctx.state.webAppOrigin

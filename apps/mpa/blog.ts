@@ -2,6 +2,7 @@ import { type } from "arktype"
 import { HttpError } from "fresh"
 import {
   blogSlugProblem,
+  type BlogTranslation,
   type PublicBlogFeedItem,
   type PublicBlogPost,
   type PublicBlogPostSummary,
@@ -88,6 +89,9 @@ const postAnswer = type({
   readNext: summary.array(),
 })
 
+/** The answer for a slug the post moved away from: where it lives now (#418). */
+const movedAnswer = type({ moved: { language, slug: `string` } })
+
 const feedAnswer = type({
   posts: summary.and({
     segments,
@@ -125,17 +129,23 @@ export async function listPosts(api: Api): Promise<PublicBlogPostSummary[]> {
   return (await read(api, `/api/blog/posts`, postsAnswer)).posts
 }
 
-/** The live post at `slug` with up to three to read next, or `null` when there is none. */
+/**
+ * The live post at `slug` with up to three to read next; `{ moved }`, the post's current language
+ * and slug, when a live post moved away from `slug` with "Change URL" (#418); or `null` when there
+ * is neither.
+ */
 export async function readPost(
   api: Api,
   slug: string,
-): Promise<{ post: PublicBlogPost; readNext: PublicBlogPostSummary[] } | null> {
+): Promise<
+  { post: PublicBlogPost; readNext: PublicBlogPostSummary[] } | { moved: BlogTranslation } | null
+> {
   if (blogSlugProblem(slug) !== null) return null
   const path = `/api/blog/posts/${encodeURIComponent(slug)}` as const
   const answer = await api.call(`GET`, path)
   if (answer.status === 404) return null
   if (answer.status === 200) {
-    const body = postAnswer(answer.body)
+    const body = postAnswer.or(movedAnswer)(answer.body)
     if (!(body instanceof type.errors)) return body
   }
   throw apiFailure(answer.status, path)

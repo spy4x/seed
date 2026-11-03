@@ -32,7 +32,7 @@ Operators write posts in the admin app; the public website shows the published o
   waits. **Cancel** is refused for `blog.publish`; Unschedule on the Blog page stops a post.
 - `published_at` is set the first time a post goes live and never moves, so unpublishing and
   publishing again keeps the date readers saw. From then on the slug is locked; **Change URL**
-  changes it, and old links stop working (there are no redirects).
+  changes it, and the old address redirects to the new one ([below](#old-addresses)).
 - Saving a published post with **Significant update** sets `content_updated_at`, shown as
   "Updated" and used by the sitemap and the feed.
 - Every write names the version the operator saw. A stale one gets 409 with the current version.
@@ -51,6 +51,28 @@ editor's Language and "Translation of" fields set both; anything else is refused
 A post lives at its own language's address: `/blog/<slug>` in the main language, `/<language>/blog/<slug>`
 in any other (`blogPostPath`). Its address in another language answers 301 to that one. Slugs are
 unique across languages.
+
+## Old addresses
+
+A post that has been live keeps every slug it had before **Change URL** (#418), so links already
+shared, indexed or mailed in a newsletter keep working. `/blog/<old>` and `/<language>/blog/<old>`
+answer 301 to the post's current address, in its own language.
+
+- `blog_slug_redirects` holds one row per old slug, naming the post, not the next slug: a chain of
+  changes (a → b → c) sends `a` straight to `c`, and no chain can loop. Slugs are unique across
+  languages, so the slug alone names the address in every language.
+- Triggers on `blog_posts` write the rows in the transaction of the slug change, so every writer
+  (the admin, Seed's own post files, a later one) keeps them. A draft's or a scheduled post's slug
+  changes freely and leaves no row: nobody saw that address.
+- A slug a post takes is that post's: its row is deleted in the same write. A new post that takes
+  an old address owns it from then on, also as a draft, and the old row never comes back, so a link
+  to the new post never lands on the old one. A post moved back to an old slug has no row either.
+- Only a live post redirects. An old address of a draft, a scheduled or an unpublished post
+  answers 404, as the post's own address does, so a redirect never shows that the post exists.
+  Deleting a post deletes its rows.
+- The website asks for a moved post only when no live post has the slug (`GET /api/blog/posts/:slug`
+  answers `{ moved: { language, slug } }`), so a post's own address costs no extra read. The
+  sitemap, the RSS feed and `llms.txt` list current addresses only.
 
 ## The newsletter send
 
@@ -179,6 +201,7 @@ is the example to copy, and `apps/mpa/post-figures.test.tsx` checks every file i
 
 ## Demo and development
 
-The public demo's nightly wipe keeps `blog_posts` ([demo.md](demo.md)); the demo seeds no posts.
+The public demo's nightly wipe keeps `blog_posts` and `blog_slug_redirects` ([demo.md](demo.md)); the
+demo seeds no posts.
 In development, `deno task db:seed` adds a published, a scheduled and a draft post by
 `admin@example.com`.

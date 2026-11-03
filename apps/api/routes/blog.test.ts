@@ -55,6 +55,10 @@ function buildApp(limit?: Parameters<typeof createPublicBlogRoute>[1]) {
       slug,
     ) => (calls.push([`get`, slug]),
       Promise.resolve(slug === post.slug ? { post, readNext: [] } : null)),
+    moved: (
+      slug,
+    ) => (calls.push([`moved`, slug]),
+      Promise.resolve(slug === `old-hello` ? { language: `de`, slug: `hallo-welt` } : null)),
     topics: () => (calls.push([`topics`]), Promise.resolve([])),
     feed: () => (calls.push([`feed`]), Promise.resolve([])),
   }
@@ -76,6 +80,22 @@ describe(`public blog routes`, () => {
 
     expect(response.status).toBe(404)
     expect((await apiError(response)).message).toBe(BLOG_POST_NOT_FOUND)
+  })
+
+  it(`answers a slug a live post moved away from with the post's current address`, async () => {
+    const { app } = buildApp()
+    const response = await app.request(`/posts/old-hello`)
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ moved: { language: `de`, slug: `hallo-welt` } })
+  })
+
+  it(`looks for a moved post only when no live post has the slug`, async () => {
+    const { app, calls } = buildApp()
+    await app.request(`/posts/hello-world`)
+    await app.request(`/posts/a-draft`)
+
+    expect(calls).toEqual([[`get`, `hello-world`], [`get`, `a-draft`], [`moved`, `a-draft`]])
   })
 
   it(`answers 404 for an address that is no slug, without reading the database`, async () => {
