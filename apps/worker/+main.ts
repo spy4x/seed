@@ -7,6 +7,7 @@ import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.t
 import { TelegramClient } from "@spy4x/integrations/telegram"
 import { readTelegramSetup } from "@server/telegram/setup.ts"
 import { queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
+import { readIndexNowSetup } from "@server/blog/blog-indexnow-job.ts"
 import { loadDemoBlogPosts } from "@server/blog/seed-posts.ts"
 import { PostgresIdempotencyStore } from "@spy4x/server/idempotency"
 import { startIdempotencySweep } from "./idempotency-sweep.ts"
@@ -113,6 +114,13 @@ const telegram = telegramSetup
   ? new TelegramClient({ token: telegramSetup.token, apiBaseUrl: telegramSetup.apiBaseUrl })
   : null
 
+// IndexNow (#418, docs/blog.md): with `INDEXNOW_KEY` and `MPA_DOMAIN`, a blog post that goes live,
+// changes, moves or leaves is announced to the search engines. A malformed key stops the worker.
+const indexNow = readIndexNowSetup(processEnv, processEnv.get("ENV") === "dev" ? "dev" : "prod")
+if (!indexNow && processEnv.get("INDEXNOW_KEY")?.trim()) {
+  console.warn("IndexNow is off: INDEXNOW_KEY is set, but MPA_DOMAIN is not")
+}
+
 // The public demo (docs/demo.md) gives every new account its own sample groups.
 const demo = isDemoMode(readEnvRecord([`DEMO_MODE`]))
 // The owner's private administrator on the demo, when `DEMO_ADMIN_PASSWORD` is set. A bad value
@@ -157,6 +165,7 @@ const processor = createOutboxProcessor(
   files,
   telegram,
   imageScratch,
+  indexNow,
 )
 
 // Starts the nightly chain the first time; a restart finds the waiting row and adds nothing. A run

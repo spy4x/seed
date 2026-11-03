@@ -19,6 +19,7 @@ import {
 } from "@domain/blog"
 import { DEFAULT_LANGUAGE, type Language } from "@domain/identity"
 import { enqueueJob, JOB_AGGREGATE } from "../jobs/jobs.ts"
+import { queueIndexNow } from "./blog-indexnow-job.ts"
 
 /** The operator behind a write, for its audit row. */
 export interface BlogActor {
@@ -282,6 +283,7 @@ export class PostgresBlogRepository {
         WHERE id = ${id}
         RETURNING *
       `
+      if (row.status === `published`) await queueIndexNow(tx, id)
       await audit(tx, actor, BLOG_AUDIT_KINDS.updated, row)
       return toBlogPost(row)
     })
@@ -327,6 +329,7 @@ export class PostgresBlogRepository {
         `
       if (at !== null) await queuePublishJob(tx, id, { at })
       else if (list !== null && !sent) await queuePublishJob(tx, id, { inMs: 0 })
+      if (at === null) await queueIndexNow(tx, id)
       await audit(
         tx,
         actor,
@@ -378,12 +381,17 @@ export class PostgresBlogRepository {
         WHERE id = ${id}
         RETURNING *
       `
+      await queueIndexNow(tx, id)
       await audit(tx, actor, BLOG_AUDIT_KINDS.unpublished, row)
       return toBlogPost(row)
     })
   }
 
-  /** Gives the post a new slug, whatever its status. Links to the old one stop working. */
+  /**
+   * Gives the post a new slug, whatever its status. Once the post has been live, the old slug
+   * redirects to the new one while the post is live: the database's trigger keeps it in
+   * `blog_slug_redirects` in this transaction (2026_12_13_0002_blog_slug_redirects.sql, #418).
+   */
   async changeUrl(id: string, version: number, slug: string, actor: BlogActor): Promise<BlogPost> {
     return await this.write(async (tx) => {
       const current = await lock(tx, id, version)
@@ -396,6 +404,7 @@ export class PostgresBlogRepository {
         WHERE id = ${id}
         RETURNING *
       `
+      if (row.status === `published`) await queueIndexNow(tx, id)
       await audit(tx, actor, BLOG_AUDIT_KINDS.urlChanged, row, { from: current.slug })
       return toBlogPost(row)
     })

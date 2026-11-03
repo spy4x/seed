@@ -135,6 +135,24 @@ export async function readPublicPost(
   }
 }
 
+/**
+ * Where the post that once lived at `slug` lives now (#418): its language and current slug, read
+ * from `blog_slug_redirects` (2026_12_13_0002_blog_slug_redirects.sql). `null` when no post moved
+ * from `slug`, and when the post that did is not live, so an old address never tells that a draft,
+ * a scheduled or an unpublished post exists. The website asks only after {@link readPublicPost}
+ * found no live post at `slug`, so a post's own address costs no extra read.
+ */
+export async function readMovedPost(
+  sql: postgres.Sql,
+  slug: string,
+): Promise<BlogTranslation | null> {
+  const [row] = await sql<BlogTranslation[]>`
+    SELECT language, slug FROM blog_posts
+    WHERE id = (SELECT post_id FROM blog_slug_redirects WHERE slug = ${slug}) AND ${live(sql)}
+  `
+  return row ? { language: row.language, slug: row.slug } : null
+}
+
 /** Every topic of a live post, with how many live posts it has, A to Z. */
 export async function listPublicTopics(sql: postgres.Sql): Promise<BlogTopic[]> {
   return await sql<BlogTopic[]>`

@@ -552,7 +552,7 @@ export default {
   "FeatureWebsite.fact3":
     "Uma newsletter com confirmação por e-mail, cancelamento com um clique e e-mails no idioma de quem lê",
   "FeatureWebsite.fact4":
-    "Um blog escrito no painel de administração, com posts em cada idioma e suas traduções, tópicos, figuras interativas que o leitor pode testar, feed RSS e dados estruturados de artigo",
+    "Um blog escrito no painel de administração, com posts em cada idioma e suas traduções, tópicos, figuras interativas que o leitor pode testar, feed RSS, dados estruturados de artigo, links antigos que redirecionam quando a URL de um post muda e um aviso ao IndexNow para que os buscadores saibam na hora de um post novo ou alterado",
   "FeatureWebsite.fact5":
     "Links de contato definidos no painel de administração, exibidos no rodapé e nos dados estruturados",
   "FeatureWebsite.fact6":

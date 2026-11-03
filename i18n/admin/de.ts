@@ -467,7 +467,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Nur Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogDialogs.changeUrlTitle": "URL des Beitrags ändern?",
   "AdminBlogDialogs.changeUrl": "URL ändern",
-  "AdminBlogDialogs.linksBreak": "Links auf <path>{path}</path> funktionieren dann nicht mehr.",
+  "AdminBlogDialogs.linksRedirect":
+    "Links auf <path>{path}</path> funktionieren weiter: sie leiten auf die neue URL um.",
   "AdminBlogDialogs.newSlug": "Neuer Slug",
   "AdminBlogDialogs.slugHint": "Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogDialogs.futureTime": "Wähle einen Zeitpunkt in der Zukunft.",
@@ -615,7 +616,7 @@ export default {
   "AdminBlogEditor.settings": "Einstellungen des Beitrags",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Nach der Veröffentlichung gesperrt. Ändern lässt er sich über „URL ändern …“; alte Links funktionieren dann nicht mehr.",
+    "Nach der Veröffentlichung gesperrt. Ändern lässt er sich über „URL ändern …“; alte Links leiten dann auf die neue URL um.",
   "AdminBlogEditor.slugHint":
     "Die URL des Beitrags: <path>{path}</path>. Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogEditor.slugHintEmpty":

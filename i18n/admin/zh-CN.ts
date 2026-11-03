@@ -436,7 +436,7 @@ export default {
   "AdminBlogDialogs.slugRule": "只能使用小写字母、数字和连字符。",
   "AdminBlogDialogs.changeUrlTitle": "更改这篇文章的网址？",
   "AdminBlogDialogs.changeUrl": "更改网址",
-  "AdminBlogDialogs.linksBreak": "指向 <path>{path}</path> 的链接将会失效。",
+  "AdminBlogDialogs.linksRedirect": "指向 <path>{path}</path> 的链接仍然有效，会自动跳转到新网址。",
   "AdminBlogDialogs.newSlug": "新的网址别名",
   "AdminBlogDialogs.slugHint": "小写字母、数字和连字符。",
   "AdminBlogDialogs.futureTime": "请选择一个将来的时间。",
@@ -558,7 +558,8 @@ export default {
   "AdminBlogEditor.counter": "{length}/{shown}",
   "AdminBlogEditor.settings": "文章设置",
   "AdminBlogEditor.slug": "网址别名",
-  "AdminBlogEditor.slugLocked": "发布后锁定。如需修改，请使用“更改网址…”；旧链接将会失效。",
+  "AdminBlogEditor.slugLocked":
+    "发布后锁定。如需修改，请使用“更改网址…”；旧链接会自动跳转到新网址。",
   "AdminBlogEditor.slugHint": "文章网址：<path>{path}</path>。小写字母、数字和连字符。",
   "AdminBlogEditor.slugHintEmpty": "根据标题自动填写。小写字母、数字和连字符。",
   "AdminBlogEditor.description": "描述",
