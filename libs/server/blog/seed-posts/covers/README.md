@@ -62,5 +62,5 @@ What each cover shows, in one sentence; a post's `coverAlt` takes it.
 | `start-a-product-from-seed-and-keep-its-updates`   | A large violet plant and a young cutting of it in a separate pot, joined by a thin line carrying drops from one to the other.        |
 | `welcome-to-the-seed-blog`                         | A violet seedling in a pot beside an open envelope from which leaves drift out like letters.                                         |
 | `whats-new-in-seed-october-2026`                   | A tree whose new branches end in buds shaped like a key, a coin, a globe, a house and a gear, with leaves falling around it.         |
-| `why-seed-free-saas-starter-web-standards`         | A violet sprout growing from the top of a stack of plain, identical cubes.                                                           |
-| `your-first-feature-copy-the-notes-aggregate`      | A stack of translucent violet and grey layers beside an identical stack being built, its top layer hovering into place.              |
+| `why-seed-free-saas-starter-web-standards`         | A violet sprout growing from a violet cube on top of a stepped pile of plain grey cubes.                                             |
+| `your-first-feature-copy-the-notes-aggregate`      | A stack of translucent violet and grey layers beside a copy of it being built, one more layer hovering into place.                   |
