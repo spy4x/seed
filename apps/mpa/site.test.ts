@@ -443,14 +443,18 @@ describe("the public website", () => {
     expect(header).not.toContain(`href="${site}/sign-`)
   })
 
-  it("marks the header's Docs as the current page on the docs index and on every guide, in every language", async () => {
-    const pages = [["/docs", "Docs"], ["/docs/get-started", "Docs"], ["/de/docs/deploy", "Doku"]]
-    for (const [path, docs] of pages) {
+  it("marks the header's Docs as the current page on the docs index, and as its section on every guide", async () => {
+    const pages = [["/docs", "Docs", "page"], ["/docs/get-started", "Docs", "true"], [
+      "/de/docs/deploy",
+      "Doku",
+      "true",
+    ]]
+    for (const [path, docs, current] of pages) {
       const header = element((await page(path)).html, "header")!
-      expect(linkNamed(header, docs), path).toContain(`aria-current="page"`)
+      expect(linkNamed(header, docs), path).toContain(`aria-current="${current}"`)
     }
     const header = element((await page("/features")).html, "header")!
-    expect(linkNamed(header, "Docs")).not.toContain(`aria-current="page"`)
+    expect(linkNamed(header, "Docs")).not.toContain(`aria-current`)
   })
 
   it("links the home page's quick start to the Get started guide", async () => {

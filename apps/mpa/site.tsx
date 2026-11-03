@@ -291,14 +291,6 @@ export const NAV_LINKS = [
 ] as const
 
 /**
- * The header link that `path` falls under, for its current-page mark: the docs' link on every
- * guide under `/docs`, else `path` itself.
- */
-export function navPath(path: string): string {
-  return path.startsWith(`${DOCS_PATH}/`) ? DOCS_PATH : path
-}
-
-/**
  * The frame of every page of the public website: its head tags, a link that skips to the content,
  * the header with the language menu and the way into the demo, the content as full-width bands,
  * and the footer with the legal pages, the language links and, while the API takes subscriptions,
@@ -358,7 +350,7 @@ export function SiteFrame(
       </a>
       <SiteHeader
         class="lg:sticky lg:top-0 lg:z-20"
-        currentPath={href(navPath(path))}
+        currentPath={href(path)}
         brand={
           <a href={href(`/`)} class="rounded-control" data-e2e="site-brand">
             <BrandMark Icon={SITE_ICON} name={SITE_NAME} />

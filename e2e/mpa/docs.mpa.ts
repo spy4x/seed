@@ -65,7 +65,7 @@ for (const width of [390, 1440]) {
     if (width < 1024) await page.locator("header summary").last().click()
     await expect(nav.getByRole("link", { name: "Docs", exact: true })).toHaveAttribute(
       "aria-current",
-      "page",
+      "true",
     )
   })
 }
