@@ -365,11 +365,12 @@ Deno.test(`blog: every writer stores the reading minutes the renderer counts, an
     const blog = new PostgresBlogRepository(sql)
     const maya = await operator(sql)
     // Words split by JavaScript's whitespace beyond ASCII (no-break, ideographic, em space), and
-    // a zero-width space, which splits no word. 345 words is 1.5 minutes, which rounds up.
+    // a zero-width space, which splits no word: 420 words, 2 minutes. A split on plain spaces
+    // alone counts 240 words, 1 minute, so this body catches a pattern that drops those spaces.
     const tricky = Array.from(
-      { length: 345 },
-      (_, i) => [`word`, `w\u00a0x`, `w\u3000x`, `w\u2003x`, `w\u200bx`][i % 5],
-    ).join(`\n`)
+      { length: 240 },
+      (_, i) => [`w\u00a0x`, `w\u3000x`, `w\u2003x`, `w\u200bx`][i % 4],
+    ).join(` `)
     const bodies = [``, `one`, tricky, `word `.repeat(344), `word `.repeat(2_000)]
     for (const [i, bodyMd] of bodies.entries()) {
       const id = uuidV7()
