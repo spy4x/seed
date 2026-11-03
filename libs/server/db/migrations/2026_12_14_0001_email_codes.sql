@@ -17,6 +17,13 @@ ALTER TABLE sign_in_code_requests
 ALTER TABLE sign_in_code_requests
     RENAME CONSTRAINT sign_in_link_requests_requested_by_user_id_fkey
     TO sign_in_code_requests_requested_by_user_id_fkey;
+ALTER TABLE sign_in_code_requests
+    RENAME CONSTRAINT sign_in_link_requests_id_not_null TO sign_in_code_requests_id_not_null;
+ALTER TABLE sign_in_code_requests
+    RENAME CONSTRAINT sign_in_link_requests_email_not_null TO sign_in_code_requests_email_not_null;
+ALTER TABLE sign_in_code_requests
+    RENAME CONSTRAINT sign_in_link_requests_created_at_not_null
+    TO sign_in_code_requests_created_at_not_null;
 ALTER INDEX idx_sign_in_link_requests_email RENAME TO idx_sign_in_code_requests_email;
 ALTER TABLE sign_in_code_requests ADD COLUMN expires_at TIMESTAMPTZ NOT NULL;
 
