@@ -607,6 +607,9 @@ export default {
     "Shown in search results instead of the title. About 60 characters.",
   "AdminBlogEditor.keyPoints": "Key points",
   "AdminBlogEditor.keyPointsHint": "Up to 5 short lines, shown at the top of the post.",
+  "AdminBlogEditor.intro": "Intro",
+  "AdminBlogEditor.introHint":
+    "Two or three sentences that open the newsletter email and the cross-posts. Not shown on the post page.",
   "AdminBlogEditor.keyPoint": "Key point {n}",
   "AdminBlogEditor.removeKeyPoint": "Remove key point {n}",
   "AdminBlogEditor.addPoint": "Add point",
@@ -615,6 +618,9 @@ export default {
   "AdminBlogEditor.authorUrl": "Author link",
   "AdminBlogEditor.authorUrlHint":
     "The author's name on the post links here, such as their About page, so readers and search engines can tell who wrote it. Leave empty for no link.",
+  "AdminBlogEditor.relatedFeature": "Related feature",
+  "AdminBlogEditor.relatedFeatureHint":
+    "The website's feature page this post is about, such as realtime for /features/realtime. The post links it under the byline. Leave empty for none.",
   "AdminBlogEditor.coverUrl": "Cover image URL",
   "AdminBlogEditor.coverUrlHint":
     "A full https:// link to a wide image, 1200×630, on a host that lets other sites show it. Leave empty for no cover.",

@@ -473,6 +473,8 @@ AdminBlogEditor.figureHidden	b9f4f461fbe30979
 AdminBlogEditor.goToLine	f818f5b7e993e924
 AdminBlogEditor.goesLive	f2d9454d995e4ed3
 AdminBlogEditor.httpsCover	075b3b7f27038bc9
+AdminBlogEditor.intro	24601bcaae6e170b
+AdminBlogEditor.introHint	ef6dba2eeb744f9d
 AdminBlogEditor.keyPoint	83d7697e259de0ab
 AdminBlogEditor.keyPoints	c925a0fbcc77e84b
 AdminBlogEditor.keyPointsHint	33f17428f5a4d128
@@ -503,6 +505,8 @@ AdminBlogEditor.publishNow	bf74ddc5486eb7ba
 AdminBlogEditor.publishedOn	4bc41e7088f38b68
 AdminBlogEditor.publishedUpdated	b29b131e151a8b36
 AdminBlogEditor.publishing	26c81739396ded64
+AdminBlogEditor.relatedFeature	24ae6a265a2bf59f
+AdminBlogEditor.relatedFeatureHint	4a4b05c616207611
 AdminBlogEditor.reload	bdc090ec61e3fcfc
 AdminBlogEditor.removeKeyPoint	a6a944a0cd135ee1
 AdminBlogEditor.rendering	68b18112e87b6c56

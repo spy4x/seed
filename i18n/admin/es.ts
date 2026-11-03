@@ -641,6 +641,9 @@ export default {
     "Aparece en los resultados de búsqueda en lugar del título. Unos 60 caracteres.",
   "AdminBlogEditor.keyPoints": "Puntos clave",
   "AdminBlogEditor.keyPointsHint": "Hasta 5 líneas cortas, al principio de la entrada.",
+  "AdminBlogEditor.intro": "Entradilla",
+  "AdminBlogEditor.introHint":
+    "Dos o tres frases que abren el correo del boletín y las publicaciones cruzadas. No se muestra en la página de la entrada.",
   "AdminBlogEditor.keyPoint": "Punto clave {n}",
   "AdminBlogEditor.removeKeyPoint": "Quitar el punto clave {n}",
   "AdminBlogEditor.addPoint": "Añadir punto",
@@ -650,6 +653,9 @@ export default {
   "AdminBlogEditor.authorUrl": "Enlace del autor",
   "AdminBlogEditor.authorUrlHint":
     "El nombre del autor en la entrada enlazará aquí, por ejemplo a su página «Sobre mí», para que lectores y buscadores sepan quién la escribió. Déjalo vacío si no quieres enlace.",
+  "AdminBlogEditor.relatedFeature": "Función relacionada",
+  "AdminBlogEditor.relatedFeatureHint":
+    "La página de función del sitio de la que trata la entrada, por ejemplo realtime para /features/realtime. La entrada la enlaza bajo la línea del autor. Déjalo vacío si no hay ninguna.",
   "AdminBlogEditor.coverUrl": "URL de la imagen de portada",
   "AdminBlogEditor.coverUrlHint":
     "Un enlace https:// completo a una imagen horizontal de 1200×630, alojada en un servidor que permita mostrarla en otros sitios. Déjalo vacío si no quieres portada.",

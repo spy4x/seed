@@ -412,6 +412,29 @@ describe("the blog editor", () => {
     expect(blogDraftOf(saved).authorUrl).toBe("")
   })
 
+  it("passes a typed intro and related feature up, and shows saved ones in their fields (#733)", async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminBlogEditorScreen {...editorProps(calls)} />)
+    const intro = find<HTMLTextAreaElement>("[data-e2e=admin-blog-intro]")
+    expect(document.querySelector(`label[for="${intro.id}"]`)?.textContent).toBe("Intro")
+    await type("[data-e2e=admin-blog-intro]", "Two sentences.")
+    await type("[data-e2e=admin-blog-related-feature]", "realtime")
+    expect(calls).toEqual([
+      ["change", { ...blogDraftOf(saved), intro: "Two sentences." }],
+      ["change", { ...blogDraftOf(saved), relatedFeature: "realtime" }],
+    ])
+
+    await mount(
+      <AdminBlogEditorScreen
+        {...editorProps([], {
+          post: { ...saved, intro: "Saved intro.", relatedFeature: "offline" },
+        })}
+      />,
+    )
+    expect(find<HTMLTextAreaElement>("[data-e2e=admin-blog-intro]").value).toBe("Saved intro.")
+    expect(find<HTMLInputElement>("[data-e2e=admin-blog-related-feature]").value).toBe("offline")
+  })
+
   it("opens the folded settings and focuses the first field in error", async () => {
     await mount(<AdminBlogEditorScreen {...editorProps([])} />)
     expect(find("[data-e2e=admin-blog-settings-toggle]").getAttribute("aria-expanded"))
@@ -925,9 +948,6 @@ describe("the editor's rules", () => {
       slug: "Use lowercase letters, digits and hyphens only.",
       coverUrl: "Start the link with https://.",
       coverAlt: "Describe the cover image.",
-      coverFile: null,
-      intro: null,
-      relatedFeature: null,
       authorUrl: "Start the link with https://.",
     })
     const ok = { ...emptyBlogDraft(), title: "T", slug: "t", description: "D" }

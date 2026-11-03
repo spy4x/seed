@@ -568,6 +568,8 @@ export default {
   "AdminBlogEditor.seoTitleHint": "在搜索结果中代替标题显示。60 个字符左右。",
   "AdminBlogEditor.keyPoints": "要点",
   "AdminBlogEditor.keyPointsHint": "最多 5 行简短内容，显示在文章顶部。",
+  "AdminBlogEditor.intro": "导语",
+  "AdminBlogEditor.introHint": "放在通讯邮件和转载文章开头的两三句话。不会显示在文章页面上。",
   "AdminBlogEditor.keyPoint": "要点 {n}",
   "AdminBlogEditor.removeKeyPoint": "移除要点 {n}",
   "AdminBlogEditor.addPoint": "添加要点",
@@ -576,6 +578,9 @@ export default {
   "AdminBlogEditor.authorUrl": "作者链接",
   "AdminBlogEditor.authorUrlHint":
     "文章中的作者名会链接到这里，比如作者的“关于我”页面，让读者和搜索引擎知道是谁写的。留空则不加链接。",
+  "AdminBlogEditor.relatedFeature": "相关功能",
+  "AdminBlogEditor.relatedFeatureHint":
+    "这篇文章介绍的网站功能页，比如 /features/realtime 就填 realtime。文章会在作者行下方链接到它。没有就留空。",
   "AdminBlogEditor.coverUrl": "封面图片网址",
   "AdminBlogEditor.coverUrlHint":
     "完整的 https:// 链接，指向一张 1200×630 的横幅图片，且所在网站允许其他网站引用。留空则不显示封面。",

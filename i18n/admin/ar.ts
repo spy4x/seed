@@ -670,6 +670,9 @@ export default {
   "AdminBlogEditor.seoTitleHint": "يظهر في نتائج البحث بدلًا من العنوان. نحو 60 حرفًا.",
   "AdminBlogEditor.keyPoints": "النقاط الرئيسية",
   "AdminBlogEditor.keyPointsHint": "حتى 5 أسطر قصيرة تظهر في أعلى التدوينة.",
+  "AdminBlogEditor.intro": "المقدمة",
+  "AdminBlogEditor.introHint":
+    "جملتان أو ثلاث تبدأ بها رسالة النشرة البريدية والمنشورات المتقاطعة. لا تظهر في صفحة التدوينة.",
   "AdminBlogEditor.keyPoint": "النقطة {n}",
   "AdminBlogEditor.removeKeyPoint": "إزالة النقطة {n}",
   "AdminBlogEditor.addPoint": "إضافة نقطة",
@@ -678,6 +681,9 @@ export default {
   "AdminBlogEditor.authorUrl": "رابط الكاتب",
   "AdminBlogEditor.authorUrlHint":
     "سيصبح اسم الكاتب في التدوينة رابطًا إلى هذه الصفحة، مثل صفحة «من أنا»، ليعرف القرّاء ومحركات البحث من كتبها. اتركه فارغًا إن لم ترد رابطًا.",
+  "AdminBlogEditor.relatedFeature": "الميزة المرتبطة",
+  "AdminBlogEditor.relatedFeatureHint":
+    "صفحة الميزة في الموقع التي تتناولها التدوينة، مثل realtime لصفحة ‎/features/realtime. تضع التدوينة رابطًا إليها تحت سطر الكاتب. اتركه فارغًا إن لم توجد.",
   "AdminBlogEditor.coverUrl": "رابط صورة الغلاف",
   "AdminBlogEditor.coverUrlHint":
     "رابط كامل يبدأ بـ https:// لصورة عريضة بمقاس 1200×630، على خادم يسمح بعرضها في مواقع أخرى. اتركه فارغًا إن لم ترد غلافًا.",

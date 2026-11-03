@@ -27,6 +27,8 @@ import {
   BLOG_COVER_ALT_MAX_LENGTH,
   BLOG_COVER_URL_MAX_LENGTH,
   BLOG_DESCRIPTION_MAX_LENGTH,
+  BLOG_INTRO_MAX_LENGTH,
+  BLOG_RELATED_FEATURE_MAX_LENGTH,
   BLOG_SEO_TITLE_MAX_LENGTH,
   BLOG_SLUG_MAX_LENGTH,
   BLOG_SLUG_PATTERN,
@@ -66,6 +68,8 @@ export interface BlogDraft {
   description: string
   seoTitle: string
   tldr: string[]
+  /** The sentences that open the post's newsletter issue and cross-posts. */
+  intro: string
   topic: string
   coverUrl: string
   coverAlt: string
@@ -75,6 +79,8 @@ export interface BlogDraft {
   translationOf: string
   /** The page the author's name links to on the post, or `` for none. */
   authorUrl: string
+  /** The slug of the website's feature page the post links, or `` for none. */
+  relatedFeature: string
 }
 
 /** The editor's messages: one per field, `at` for the publish time, `form` for the rest. */
@@ -88,9 +94,11 @@ export const BLOG_FIELD_ORDER: readonly BlogField[] = [
   `description`,
   `seoTitle`,
   `tldr`,
+  `intro`,
   `topic`,
   `language`,
   `translationOf`,
+  `relatedFeature`,
   `authorUrl`,
   `coverUrl`,
   `coverAlt`,
@@ -102,9 +110,11 @@ const SETTINGS_FIELDS: ReadonlySet<BlogField> = new Set([
   `description`,
   `seoTitle`,
   `tldr`,
+  `intro`,
   `topic`,
   `language`,
   `translationOf`,
+  `relatedFeature`,
   `authorUrl`,
   `coverUrl`,
   `coverAlt`,
@@ -123,6 +133,7 @@ export function emptyBlogDraft(): BlogDraft {
     description: ``,
     seoTitle: ``,
     tldr: [],
+    intro: ``,
     topic: ``,
     coverUrl: ``,
     coverAlt: ``,
@@ -130,6 +141,7 @@ export function emptyBlogDraft(): BlogDraft {
     language: DEFAULT_LANGUAGE,
     translationOf: ``,
     authorUrl: ``,
+    relatedFeature: ``,
   }
 }
 
@@ -141,6 +153,7 @@ export function blogDraftOf(post: BlogPost): BlogDraft {
     description: post.description,
     seoTitle: post.seoTitle ?? ``,
     tldr: [...post.tldr],
+    intro: post.intro ?? ``,
     topic: post.topic ?? ``,
     coverUrl: post.coverUrl ?? ``,
     coverAlt: post.coverAlt ?? ``,
@@ -148,6 +161,7 @@ export function blogDraftOf(post: BlogPost): BlogDraft {
     language: post.language,
     translationOf: post.translationOf ?? ``,
     authorUrl: post.authorUrl ?? ``,
+    relatedFeature: post.relatedFeature ?? ``,
   }
 }
 
@@ -954,6 +968,20 @@ function Settings(
           }}
         />
         <Field
+          id={blogFieldId(`intro`)}
+          label={t.t(`AdminBlogEditor.intro`)}
+          hint={t.t(`AdminBlogEditor.introHint`)}
+          error={message(`intro`)}
+        >
+          <Textarea
+            data-e2e="admin-blog-intro"
+            rows={3}
+            maxLength={BLOG_INTRO_MAX_LENGTH}
+            value={value.intro}
+            onInput={(e) => edit({ intro: e.currentTarget.value })}
+          />
+        </Field>
+        <Field
           id={blogFieldId(`topic`)}
           label={t.t(`AdminBlogEditor.topic`)}
           hint={t.t(`AdminBlogEditor.topicHint`)}
@@ -1017,6 +1045,21 @@ function Settings(
                 })),
             ]}
             onChange={(e) => edit({ translationOf: e.currentTarget.value })}
+          />
+        </Field>
+        <Field
+          id={blogFieldId(`relatedFeature`)}
+          label={t.t(`AdminBlogEditor.relatedFeature`)}
+          hint={t.t(`AdminBlogEditor.relatedFeatureHint`)}
+          error={message(`relatedFeature`)}
+        >
+          <Input
+            data-e2e="admin-blog-related-feature"
+            maxLength={BLOG_RELATED_FEATURE_MAX_LENGTH}
+            autocomplete="off"
+            spellcheck={false}
+            value={value.relatedFeature}
+            onInput={(e) => edit({ relatedFeature: e.currentTarget.value })}
           />
         </Field>
         <Field
