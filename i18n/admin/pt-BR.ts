@@ -642,6 +642,9 @@ export default {
   "AdminBlogEditor.addPoint": "Adicionar ponto",
   "AdminBlogEditor.topic": "Tema",
   "AdminBlogEditor.topicHint": "Agrupa os posts na página do blog. Escolha um ou digite um novo.",
+  "AdminBlogEditor.authorUrl": "Link do autor",
+  "AdminBlogEditor.authorUrlHint":
+    "O nome do autor no post vai levar para cá, como a página “Sobre mim”, para que leitores e buscadores saibam quem o escreveu. Deixe em branco se não quiser link.",
   "AdminBlogEditor.coverUrl": "URL da imagem de capa",
   "AdminBlogEditor.coverUrlHint":
     "Link completo (https://) de uma imagem horizontal de 1200×630, hospedada em um serviço que permita exibi-la em outros sites. Deixe em branco se não quiser capa.",

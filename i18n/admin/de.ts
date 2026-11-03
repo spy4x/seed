@@ -634,6 +634,9 @@ export default {
   "AdminBlogEditor.topic": "Thema",
   "AdminBlogEditor.topicHint":
     "Ordnet Beiträge auf der Blogseite. Wähle eines aus oder tippe ein neues ein.",
+  "AdminBlogEditor.authorUrl": "Link zum Autor",
+  "AdminBlogEditor.authorUrlHint":
+    "Der Name des Autors im Beitrag verlinkt hierher, etwa auf seine „Über mich“-Seite. So sehen Leser und Suchmaschinen, wer ihn geschrieben hat. Für keinen Link einfach leer lassen.",
   "AdminBlogEditor.coverUrl": "URL des Titelbilds",
   "AdminBlogEditor.coverUrlHint":
     "Ein vollständiger https://-Link zu einem Bild im Querformat (1200 × 630) auf einem Server, der das Einbinden auf anderen Websites erlaubt. Für einen Beitrag ohne Titelbild einfach leer lassen.",

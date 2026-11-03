@@ -12,6 +12,7 @@ tldr:
   - Seed даёт группы с ролями, оплату за участника, админку и девять языков на вашем собственном сервере.
 topic: Вопросы
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---

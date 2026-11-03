@@ -84,6 +84,7 @@ const postAnswer = type({
     segments,
     headings,
     authorName: `string | null`,
+    authorUrl: `string | null`,
     translations: type({ language, slug: `string` }).array(),
   }),
   readNext: summary.array(),

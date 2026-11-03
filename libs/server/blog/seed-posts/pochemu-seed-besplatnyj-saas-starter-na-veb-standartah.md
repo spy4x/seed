@@ -11,6 +11,7 @@ tldr:
   - Не берите его, если вам нужны serverless-функции или чужой готовый бэкенд.
 topic: Seed
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T06:00:00Z
 newsletter: false
 ---

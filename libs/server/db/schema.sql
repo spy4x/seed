@@ -965,6 +965,8 @@ CREATE TABLE blog_posts (
             body_md, '[^\t\n\v\f\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+'
         ) / 230.0))::int4
     ) STORED,
+    -- #730: the page the author's name links to. See 2026_12_13_0001_blog_author_url.sql.
+    author_url VARCHAR(2000),
     CONSTRAINT blog_posts_slug_unique UNIQUE (slug),
     CONSTRAINT blog_posts_slug_check CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
     CONSTRAINT blog_posts_status_check CHECK (status IN ('draft', 'scheduled', 'published')),
@@ -977,7 +979,9 @@ CREATE TABLE blog_posts (
         CHECK (status <> 'published' OR (publish_at IS NOT NULL AND published_at IS NOT NULL)),
     CONSTRAINT blog_posts_version_check CHECK (version >= 1),
     CONSTRAINT blog_posts_language_check CHECK (length(language) BETWEEN 2 AND 35),
-    CONSTRAINT blog_posts_translation_check CHECK (translation_of <> id)
+    CONSTRAINT blog_posts_translation_check CHECK (translation_of <> id),
+    CONSTRAINT blog_posts_author_url_check
+        CHECK (author_url IS NULL OR author_url LIKE 'https://%')
 );
 
 CREATE UNIQUE INDEX blog_posts_translation_language_unique
@@ -992,7 +996,7 @@ CREATE INDEX idx_blog_posts_language_published
 -- The admin list, most recently changed first.
 CREATE INDEX idx_blog_posts_updated ON blog_posts (updated_at DESC, id DESC);
 
--- #418: the old addresses of posts that moved. See migration 2026_12_13_0001_blog_slug_redirects.sql.
+-- #418: the old addresses of posts that moved. See migration 2026_12_13_0002_blog_slug_redirects.sql.
 CREATE TABLE blog_slug_redirects (
     slug VARCHAR(100) PRIMARY KEY,
     post_id UUID NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,

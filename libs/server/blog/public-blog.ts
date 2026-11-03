@@ -39,6 +39,7 @@ interface PostRow extends SummaryRow {
   coverUrl: string | null
   coverAlt: string | null
   authorName: string | null
+  authorUrl: string | null
 }
 
 /** The columns of a summary: never the body, which a list does not need (#416). */
@@ -95,7 +96,8 @@ export async function readPublicPost(
 ): Promise<{ post: PublicBlogPost; readNext: PublicBlogPostSummary[] } | null> {
   const [row] = await sql<PostRow[]>`
     SELECT id, translation_of, slug, language, title, seo_title, description, tldr, topic,
-      cover_url, cover_alt, body_md, published_at, content_updated_at, author_name, reading_minutes
+      cover_url, cover_alt, body_md, published_at, content_updated_at, author_name, author_url,
+      reading_minutes
     FROM blog_posts
     WHERE slug = ${slug} AND ${live(sql)}
   `
@@ -126,6 +128,7 @@ export async function readPublicPost(
       segments: body.segments,
       headings: body.headings,
       authorName: row.authorName,
+      authorUrl: row.authorUrl,
       translations: translations.map(({ language, slug }) => ({ language, slug })),
     },
     readNext: next.map(toSummary),
@@ -134,7 +137,7 @@ export async function readPublicPost(
 
 /**
  * Where the post that once lived at `slug` lives now (#418): its language and current slug, read
- * from `blog_slug_redirects` (2026_12_13_0001_blog_slug_redirects.sql). `null` when no post moved
+ * from `blog_slug_redirects` (2026_12_13_0002_blog_slug_redirects.sql). `null` when no post moved
  * from `slug`, and when the post that did is not live, so an old address never tells that a draft,
  * a scheduled or an unpublished post exists. The website asks only after {@link readPublicPost}
  * found no live post at `slug`, so a post's own address costs no extra read.

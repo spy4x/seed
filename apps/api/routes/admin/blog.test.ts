@@ -40,6 +40,7 @@ const post: BlogPost = {
   contentUpdatedAt: null,
   authorId: 7,
   authorName: `Maya Chen`,
+  authorUrl: null,
   newsletterList: null,
   newsletterSentAt: null,
   newsletterRecipients: null,
@@ -197,9 +198,37 @@ describe(`operator area: blog routes`, () => {
       topic: null,
       coverUrl: null,
       coverAlt: null,
+      authorUrl: null,
       language: `en`,
       translationOf: null,
     }, ACTOR]])
+  })
+
+  it(`saves an author link trimmed, and an empty one as none (#730)`, async () => {
+    const { app, calls } = buildApp()
+    const save = (authorUrl: string) =>
+      request(app, `POST`, `/posts/${ID}`, { ...FIELDS, version: 1, authorUrl })
+
+    expect((await save(` https://example.com/about `)).status).toBe(200)
+    expect((await save(``)).status).toBe(200)
+    expect(calls.map((call) => (call[3] as { authorUrl: unknown }).authorUrl))
+      .toEqual([`https://example.com/about`, null])
+  })
+
+  it(`answers 400 naming the field for an author link that is not https, and saves nothing (#730)`, async () => {
+    const { app, calls } = buildApp()
+    const response = await request(app, `POST`, `/posts/${ID}`, {
+      ...FIELDS,
+      version: 1,
+      authorUrl: `http://example.com/about`,
+    })
+
+    expect(response.status).toBe(400)
+    expect(await apiError(response)).toMatchObject({
+      reason: `INVALID_REQUEST`,
+      details: { field: `authorUrl` },
+    })
+    expect(calls).toEqual([])
   })
 
   it(`answers 400 naming the field for a cover that is not https, and saves nothing`, async () => {

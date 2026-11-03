@@ -12,6 +12,7 @@ tldr:
   - Os dois cobram só via Stripe, e uma empresa no Brasil não tem Pix recorrente no Stripe.
 topic: Perguntas
 author: Anton Shubin
+authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z
 newsletter: false
 ---

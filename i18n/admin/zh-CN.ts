@@ -573,6 +573,9 @@ export default {
   "AdminBlogEditor.addPoint": "添加要点",
   "AdminBlogEditor.topic": "主题",
   "AdminBlogEditor.topicHint": "用于在博客页面上为文章分组。选择一个，或输入新的主题。",
+  "AdminBlogEditor.authorUrl": "作者链接",
+  "AdminBlogEditor.authorUrlHint":
+    "文章中的作者名会链接到这里，比如作者的“关于我”页面，让读者和搜索引擎知道是谁写的。留空则不加链接。",
   "AdminBlogEditor.coverUrl": "封面图片网址",
   "AdminBlogEditor.coverUrlHint":
     "完整的 https:// 链接，指向一张 1200×630 的横幅图片，且所在网站允许其他网站引用。留空则不显示封面。",

@@ -647,6 +647,9 @@ export default {
   "AdminBlogEditor.topic": "Tema",
   "AdminBlogEditor.topicHint":
     "Agrupa las entradas en la página del blog. Elige uno o escribe uno nuevo.",
+  "AdminBlogEditor.authorUrl": "Enlace del autor",
+  "AdminBlogEditor.authorUrlHint":
+    "El nombre del autor en la entrada enlazará aquí, por ejemplo a su página «Sobre mí», para que lectores y buscadores sepan quién la escribió. Déjalo vacío si no quieres enlace.",
   "AdminBlogEditor.coverUrl": "URL de la imagen de portada",
   "AdminBlogEditor.coverUrlHint":
     "Un enlace https:// completo a una imagen horizontal de 1200×630, alojada en un servidor que permita mostrarla en otros sitios. Déjalo vacío si no quieres portada.",

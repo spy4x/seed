@@ -47,6 +47,7 @@ export interface BlogPostRow {
   contentUpdatedAt: Date | null
   authorId: number | null
   authorName: string | null
+  authorUrl: string | null
   newsletterList: string | null
   newsletterSentAt: Date | null
   newsletterRecipients: number | null
@@ -214,13 +215,14 @@ export class PostgresBlogRepository {
       const [row] = await tx<BlogPostRow[]>`
         INSERT INTO blog_posts (
           id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt, body_md,
-          language, translation_of, author_id, author_name
+          language, translation_of, author_id, author_name, author_url
         ) VALUES (
           ${id}, ${fields.slug}, ${fields.title}, ${fields.seoTitle}, ${fields.description},
           ${tx.array(fields.tldr)}::text[], ${fields.topic}, ${fields.coverUrl}, ${fields.coverAlt},
           ${fields.bodyMd}, ${fields.language}, ${fields.translationOf}, ${actor.userId},
           (SELECT NULLIF(btrim(concat_ws(' ', first_name, last_name)), '')
-            FROM users WHERE id = ${actor.userId})
+            FROM users WHERE id = ${actor.userId}),
+          ${fields.authorUrl}
         )
         ON CONFLICT (id) DO NOTHING
         RETURNING *
@@ -272,7 +274,7 @@ export class PostgresBlogRepository {
         SET slug = ${fields.slug}, title = ${fields.title}, seo_title = ${fields.seoTitle},
           description = ${fields.description}, tldr = ${tx.array(fields.tldr)}::text[],
           topic = ${fields.topic}, cover_url = ${fields.coverUrl}, cover_alt = ${fields.coverAlt},
-          body_md = ${fields.bodyMd}, language = ${fields.language},
+          author_url = ${fields.authorUrl}, body_md = ${fields.bodyMd}, language = ${fields.language},
           translation_of = ${fields.translationOf},
           content_updated_at = CASE WHEN ${significantUpdate} AND status = 'published'
             THEN now() ELSE content_updated_at END,
@@ -384,7 +386,7 @@ export class PostgresBlogRepository {
   /**
    * Gives the post a new slug, whatever its status. Once the post has been live, the old slug
    * redirects to the new one while the post is live: the database's trigger keeps it in
-   * `blog_slug_redirects` in this transaction (2026_12_13_0001_blog_slug_redirects.sql, #418).
+   * `blog_slug_redirects` in this transaction (2026_12_13_0002_blog_slug_redirects.sql, #418).
    */
   async changeUrl(id: string, version: number, slug: string, actor: BlogActor): Promise<BlogPost> {
     return await this.write(async (tx) => {

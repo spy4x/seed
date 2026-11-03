@@ -612,6 +612,9 @@ export default {
   "AdminBlogEditor.addPoint": "Add point",
   "AdminBlogEditor.topic": "Topic",
   "AdminBlogEditor.topicHint": "Groups posts on the blog page. Pick one or type a new one.",
+  "AdminBlogEditor.authorUrl": "Author link",
+  "AdminBlogEditor.authorUrlHint":
+    "The author's name on the post links here, such as their About page, so readers and search engines can tell who wrote it. Leave empty for no link.",
   "AdminBlogEditor.coverUrl": "Cover image URL",
   "AdminBlogEditor.coverUrlHint":
     "A full https:// link to a wide image, 1200×630, on a host that lets other sites show it. Leave empty for no cover.",

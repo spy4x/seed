@@ -26,6 +26,7 @@ topic: Seed # optional, up to 50 characters
 coverUrl: null # optional: an https:// image address
 coverAlt: null # what the cover shows; required with coverUrl
 author: Anton Shubin # the name shown on the post
+authorUrl: https://antonshubin.com/about # optional: the https:// page the author's name links to
 publishAt: 2026-11-01T09:00:00Z # in the past: published with this date; in the future: scheduled
 newsletter: false # optional, default false: true emails the post to subscribers, once
 ---
