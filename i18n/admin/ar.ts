@@ -483,7 +483,8 @@ export default {
   "AdminBlogDialogs.slugRule": "استخدم أحرفًا لاتينية صغيرة وأرقامًا وشرطات فقط.",
   "AdminBlogDialogs.changeUrlTitle": "تغيير رابط هذه التدوينة؟",
   "AdminBlogDialogs.changeUrl": "تغيير الرابط",
-  "AdminBlogDialogs.linksBreak": "ستتوقف الروابط إلى <path>{path}</path> عن العمل.",
+  "AdminBlogDialogs.linksRedirect":
+    "ستبقى الروابط إلى <path>{path}</path> تعمل، وستنقل القارئ إلى الرابط الجديد.",
   "AdminBlogDialogs.newSlug": "المسار الجديد",
   "AdminBlogDialogs.slugHint": "أحرف لاتينية صغيرة وأرقام وشرطات.",
   "AdminBlogDialogs.futureTime": "اختر وقتًا في المستقبل.",
@@ -647,7 +648,7 @@ export default {
   "AdminBlogEditor.settings": "إعدادات التدوينة",
   "AdminBlogEditor.slug": "المسار",
   "AdminBlogEditor.slugLocked":
-    "مقفل بعد النشر. لتغييره استخدم «تغيير الرابط…»، وستتوقف الروابط القديمة عن العمل.",
+    "مقفل بعد النشر. لتغييره استخدم «تغيير الرابط…»، وستنقل الروابط القديمة القارئ إلى الرابط الجديد.",
   "AdminBlogEditor.slugHint":
     "رابط التدوينة: <path>{path}</path>. أحرف لاتينية صغيرة وأرقام وشرطات.",
   "AdminBlogEditor.slugHintEmpty": "يُملأ تلقائيًا من العنوان. أحرف لاتينية صغيرة وأرقام وشرطات.",

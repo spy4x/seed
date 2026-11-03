@@ -585,6 +585,29 @@ describe("the blog editor", () => {
     expect(has("[data-e2e=admin-blog-email]")).toBe(false)
   })
 
+  it("says the old address keeps working when the URL changes, and sends the new slug (#418)", async () => {
+    const calls: unknown[][] = []
+    const live: BlogPost = {
+      ...saved,
+      language: "de",
+      status: "published",
+      publishAt: "2026-10-01T09:00:00.000Z",
+      publishedAt: "2026-10-01T09:00:00.000Z",
+    }
+    await mount(
+      <AdminBlogEditorScreen {...editorProps(calls, { post: live, dialog: "change-url" })} />,
+    )
+    expect(find("dialog").textContent).toContain(
+      "Links to /de/blog/jobs-explained keep working: they redirect to the new URL.",
+    )
+    expect(document.body.textContent).toContain(
+      "Locked once published. Use Change URL… to change it; old links redirect to the new one.",
+    )
+    await type("[data-e2e=admin-blog-new-slug]", "jobs-in-depth")
+    await clickOn(button("Change URL"))
+    expect(calls.at(-1)).toEqual(["change-url", "jobs-in-depth"])
+  })
+
   it("confirms a delete in a dialog that names the post", async () => {
     const calls: unknown[][] = []
     await mount(<AdminBlogEditorScreen {...editorProps(calls, { dialog: "delete" })} />)

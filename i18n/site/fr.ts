@@ -568,7 +568,7 @@ export default {
   "FeatureWebsite.fact3":
     "Une newsletter à double confirmation, désabonnement en un clic et e-mails dans la langue du lecteur",
   "FeatureWebsite.fact4":
-    "Un blog rédigé dans le panneau d’administration, avec des articles dans chaque langue et leurs traductions, des thèmes, des figures interactives à essayer, un flux RSS et des données structurées d’article",
+    "Un blog rédigé dans le panneau d’administration, avec des articles dans chaque langue et leurs traductions, des thèmes, des figures interactives à essayer, un flux RSS, des données structurées d’article et des anciens liens qui redirigent quand l’URL d’un article change",
   "FeatureWebsite.fact5":
     "Des liens de contact définis dans le panneau d’administration, affichés dans le pied de page et les données structurées",
   "FeatureWebsite.fact6":

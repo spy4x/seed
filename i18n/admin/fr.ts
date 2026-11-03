@@ -475,7 +475,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Utilisez uniquement des minuscules, des chiffres et des tirets.",
   "AdminBlogDialogs.changeUrlTitle": "Changer l’URL de cet article ?",
   "AdminBlogDialogs.changeUrl": "Changer l’URL",
-  "AdminBlogDialogs.linksBreak": "Les liens vers <path>{path}</path> ne fonctionneront plus.",
+  "AdminBlogDialogs.linksRedirect":
+    "Les liens vers <path>{path}</path> continuent de fonctionner : ils redirigent vers la nouvelle URL.",
   "AdminBlogDialogs.newSlug": "Nouveau slug",
   "AdminBlogDialogs.slugHint": "Minuscules, chiffres et tirets.",
   "AdminBlogDialogs.futureTime": "Choisissez une date dans le futur.",
@@ -625,7 +626,7 @@ export default {
   "AdminBlogEditor.settings": "Paramètres de l’article",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Verrouillé après publication. Utilisez « Changer l’URL… » pour le modifier ; les anciens liens ne fonctionneront plus.",
+    "Verrouillé après publication. Utilisez « Changer l’URL… » pour le modifier ; les anciens liens redirigent vers la nouvelle.",
   "AdminBlogEditor.slugHint":
     "L’URL de l’article : <path>{path}</path>. Minuscules, chiffres et tirets.",
   "AdminBlogEditor.slugHintEmpty": "Rempli à partir du titre. Minuscules, chiffres et tirets.",

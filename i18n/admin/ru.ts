@@ -476,7 +476,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Только строчные латинские буквы, цифры и дефисы.",
   "AdminBlogDialogs.changeUrlTitle": "Изменить адрес поста?",
   "AdminBlogDialogs.changeUrl": "Изменить адрес",
-  "AdminBlogDialogs.linksBreak": "Ссылки на <path>{path}</path> перестанут работать.",
+  "AdminBlogDialogs.linksRedirect":
+    "Ссылки на <path>{path}</path> продолжат работать: они будут вести на новый адрес.",
   "AdminBlogDialogs.newSlug": "Новый адрес",
   "AdminBlogDialogs.slugHint": "Строчные латинские буквы, цифры и дефисы.",
   "AdminBlogDialogs.futureTime": "Выберите время в будущем.",
@@ -628,7 +629,7 @@ export default {
   "AdminBlogEditor.settings": "Настройки поста",
   "AdminBlogEditor.slug": "Адрес",
   "AdminBlogEditor.slugLocked":
-    "После публикации адрес не меняется. Изменить его можно через «Изменить адрес…», но старые ссылки перестанут работать.",
+    "После публикации адрес не меняется. Изменить его можно через «Изменить адрес…», а старые ссылки будут вести на новый.",
   "AdminBlogEditor.slugHint":
     "Адрес поста: <path>{path}</path>. Строчные латинские буквы, цифры и дефисы.",
   "AdminBlogEditor.slugHintEmpty":

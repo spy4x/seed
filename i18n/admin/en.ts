@@ -456,7 +456,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Use lowercase letters, digits and hyphens only.",
   "AdminBlogDialogs.changeUrlTitle": "Change this post's URL?",
   "AdminBlogDialogs.changeUrl": "Change URL",
-  "AdminBlogDialogs.linksBreak": "Links to <path>{path}</path> stop working.",
+  "AdminBlogDialogs.linksRedirect":
+    "Links to <path>{path}</path> keep working: they redirect to the new URL.",
   "AdminBlogDialogs.newSlug": "New slug",
   "AdminBlogDialogs.slugHint": "Lowercase letters, digits and hyphens.",
   "AdminBlogDialogs.futureTime": "Pick a time in the future.",
@@ -588,7 +589,7 @@ export default {
   "AdminBlogEditor.settings": "Post settings",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Locked once published. Use Change URL… to change it; old links will break.",
+    "Locked once published. Use Change URL… to change it; old links redirect to the new one.",
   "AdminBlogEditor.slugHint":
     "The post's URL: <path>{path}</path>. Lowercase letters, digits and hyphens.",
   "AdminBlogEditor.slugHintEmpty":
