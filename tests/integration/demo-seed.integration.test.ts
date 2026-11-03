@@ -507,7 +507,7 @@ Deno.test("the demo seed fails when sign-up refuses an account that does not exi
   })
 })
 
-Deno.test("the wipe empties every table but the kept ones, keeps the blog and the contact links, queues every stored file for deletion, and never reuses an id", async () => {
+Deno.test("the wipe empties every table but the kept ones, keeps the blog, its old addresses and the contact links, queues every stored file for deletion, and never reuses an id", async () => {
   await withSchema(async (sql) => {
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     await sql`INSERT INTO backup_status (target, succeeded_at) VALUES ('database', now())`
@@ -515,6 +515,11 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog and th
     // The website's real posts, loaded from their files.
     const seedPosts = await readSeedPosts(denoFileSystem)
     await upsertSeedPosts(sql, seedPosts)
+    // A live post moved with "Change URL": its old address is the website's too (#418).
+    await sql`
+      UPDATE blog_posts SET slug = slug || '-moved'
+      WHERE id = (SELECT id FROM blog_posts WHERE published_at IS NOT NULL ORDER BY id LIMIT 1)
+    `
     await seedSampleContactLinks(sql)
     // A website reader who left: the seed writes no unsubscribes, so this is the kept row.
     await websiteReader(sql, `left@seed.test`, { leaves: true })
@@ -565,6 +570,10 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog and th
       { posts: number }[]
     >`SELECT COUNT(*)::int AS posts FROM blog_posts`
     expect(posts).toBe(seedPosts.length)
+    const [{ redirects }] = await sql<
+      { redirects: number }[]
+    >`SELECT COUNT(*)::int AS redirects FROM blog_slug_redirects`
+    expect(redirects).toBe(1)
     const [{ links }] = await sql<
       { links: number }[]
     >`SELECT COUNT(*)::int AS links FROM contact_links`

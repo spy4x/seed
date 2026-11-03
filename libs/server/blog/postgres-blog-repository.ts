@@ -383,7 +383,11 @@ export class PostgresBlogRepository {
     })
   }
 
-  /** Gives the post a new slug, whatever its status. Links to the old one stop working. */
+  /**
+   * Gives the post a new slug, whatever its status. Once the post has been live, the old slug
+   * redirects to the new one while the post is live: the database's trigger keeps it in
+   * `blog_slug_redirects` in this transaction (2026_12_13_0002_blog_slug_redirects.sql, #418).
+   */
   async changeUrl(id: string, version: number, slug: string, actor: BlogActor): Promise<BlogPost> {
     return await this.write(async (tx) => {
       const current = await lock(tx, id, version)
