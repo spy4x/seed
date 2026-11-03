@@ -560,7 +560,7 @@ export default {
     "No. Seed runs as long-lived containers with Docker Compose on one Linux server you rent, because the API keeps WebSocket connections open and a worker drains a queue.",
   "FeaturesFaq.runtimeQuestion": "Can Seed run on Node.js or Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Not yet. Seed runs on Deno today, and the move to run on Deno, Node and Bun is in progress (#623). See the runtime plan above.",
+    "Not yet. Seed runs on Deno today, and the move to run on Deno, Node and Bun is in progress. You can follow it in issue #623 on Seed's GitHub.",
   "FeaturesFaq.databaseQuestion": "Can Seed use a database other than Postgres?",
   "FeaturesFaq.databaseAnswer":
     "No. Seed is built on Postgres: its migrations, queries and integration tests assume it.",
@@ -849,6 +849,24 @@ export default {
   "Blog.breadcrumb": "Breadcrumb",
   "PostFigure.noScript": "Shown with the post's numbers. Turn on JavaScript to try your own.",
   "PostFigure.rssLink": "Try it on the website: {link}",
+  "PostFigure.OfflineSyncDemo.title": "Write a note with the network off",
+  "PostFigure.OfflineSyncDemo.lead": "Write a note while offline, then turn the network back on.",
+  "PostFigure.OfflineSyncDemo.network": "Network",
+  "PostFigure.OfflineSyncDemo.online": "Online",
+  "PostFigure.OfflineSyncDemo.offline": "Offline",
+  "PostFigure.OfflineSyncDemo.write": "Write a note",
+  "PostFigure.OfflineSyncDemo.device": "This device",
+  "PostFigure.OfflineSyncDemo.server": "Server",
+  "PostFigure.OfflineSyncDemo.saved": "Saved",
+  "PostFigure.OfflineSyncDemo.waiting": "Waiting to sync",
+  "PostFigure.OfflineSyncDemo.note": "Note {number}",
+  "PostFigure.OfflineSyncDemo.queue": "Changes waiting to sync: {count}",
+  "PostFigure.OfflineSyncDemo.synced": "Everything is on the server.",
+  "PostFigure.OfflineSyncDemo.full": "That's enough notes for a demo.",
+  "PostFigure.OfflineSyncDemo.caption":
+    "A model of Seed's outbox. The real queue lives in IndexedDB and sends each write with its idempotency key.",
+  "PostFigure.OfflineSyncDemo.fallback":
+    "Offline, a new note is saved on the device and marked “Waiting to sync”. When the network is back, the queue goes to the server in the order it was written.",
   "PostFigure.CostCalculator.title": "What the demo's Pro plan costs your team",
   "PostFigure.CostCalculator.lead": "Pro is billed per member. Set your team's size.",
   "PostFigure.CostCalculator.members": "Team members",

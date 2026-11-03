@@ -23,6 +23,12 @@ import HostingCost, {
   seedMonthly,
   toEuro,
 } from "./islands/post/HostingCost.tsx"
+import OfflineSyncDemo, {
+  MAX_NOTES,
+  reconnect,
+  START,
+  writeNote,
+} from "./islands/post/OfflineSyncDemo.tsx"
 
 describe(`the figure folder`, () => {
   it(`finds a new file by its name, with no list to edit, and skips files that are no tag`, async () => {
@@ -192,5 +198,37 @@ describe(`HostingCost`, () => {
     expect(hostingFallback({ server: `cpx42`, developers: 1 }, siteTranslator(`en`))).toContain(
       `The managed stack saves €36.36 a month, €436.32 a year.`,
     )
+  })
+})
+
+describe(`OfflineSyncDemo`, () => {
+  it(`keeps a note written offline on the device, waiting, until the network is back`, () => {
+    const offline = writeNote(START, false)
+
+    expect(offline.map((note) => note.synced)).toEqual([true, false, false])
+    expect(reconnect(offline).map((note) => note.synced)).toEqual([true, true, true])
+  })
+
+  it(`saves a note written online on the server at once`, () => {
+    expect(writeNote(reconnect(START), true).at(-1)).toEqual({ id: 3, synced: true })
+  })
+
+  it(`stops adding notes once it holds MAX_NOTES`, () => {
+    let notes = START
+    for (let i = 0; i < MAX_NOTES + 2; i++) notes = writeNote(notes, false)
+
+    expect(notes.length).toBe(MAX_NOTES)
+  })
+
+  it(`starts offline with one note on the server and one waiting, as the post says`, () => {
+    const html = renderToString(
+      <OfflineSyncDemo
+        figure={{ id: `offline-sync-demo`, language: `en`, messages: figureCatalog(`en`) }}
+      />,
+    )
+
+    expect(html.match(/Waiting to sync</g)?.length).toBe(1)
+    expect(html).toContain(`Changes waiting to sync: 1`)
+    expect(html).toMatch(/aria-checked="true"[^>]*>(?:<svg[\s\S]*?<\/svg>)?Offline/)
   })
 })

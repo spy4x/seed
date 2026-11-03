@@ -70,8 +70,10 @@ export function blogTeaserIssue(
  *    publishing again after unpublishing, never queues a second issue.
  *
  * With mail subscriptions off, without the public website's address (`MPA_DOMAIN`) or with a list
- * the app no longer has, the post still goes live and the issue is not queued; the worker queues
- * this job again at its next start (`queueDueBlogJobs`).
+ * the app no longer has, the post still goes live and is settled as never emailed: its list is
+ * cleared and `newsletter_sent_at` set, as for a post file that does not ask for the newsletter.
+ * Turning the newsletter on later then emails only posts that go live after that, never a post
+ * that went live months before.
  */
 export function blogPublishJob(deps: BlogPublishJobDeps): JobHandler {
   return async (event) => {
@@ -106,9 +108,13 @@ export function blogPublishJob(deps: BlogPublishJobDeps): JobHandler {
       if (!live || list === null || post.newsletterSentAt !== null) return
       const siteUrl = deps.setup?.siteUrl
       if (!siteUrl || !isSubscriberList(list)) {
+        await tx`
+          UPDATE blog_posts SET newsletter_list = NULL, newsletter_sent_at = now()
+          WHERE id = ${post.id}
+        `
         deps.log(
-          `warning: blog post ${post.id} went live, but its newsletter was not queued: ` +
-            `mail subscriptions, MPA_DOMAIN or the list ${list} are off`,
+          `warning: blog post ${post.id} went live, but its newsletter was not queued and never ` +
+            `will be: mail subscriptions, MPA_DOMAIN or the list ${list} are off`,
         )
         return
       }

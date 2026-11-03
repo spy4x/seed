@@ -279,14 +279,15 @@ export class PostgresBlogRepository {
    * Publishes a draft or scheduled post now (`at` is `null`), or schedules it for `at`, which
    * the caller has checked lies ahead. A `blog.publish` job is queued for `at`, or at once when a
    * post going live now has a newsletter to send. `newsletterList` is the list to email when the
-   * post goes live, or `null` for none; once a post's issue was queued, its list stays as it was
-   * and nothing is sent again.
+   * post goes live, `null` for none, or `undefined` to keep the list the post has, so a client
+   * that leaves it out never drops a scheduled post's email. Once a post's issue was queued, its
+   * list stays as it was and nothing is sent again.
    */
   async publish(
     id: string,
     version: number,
     at: Date | null,
-    newsletterList: string | null,
+    newsletterList: string | null | undefined,
     actor: BlogActor,
   ): Promise<BlogPost> {
     return await this.write(async (tx) => {
@@ -295,7 +296,7 @@ export class PostgresBlogRepository {
         throw new BlogError(`NOT_DRAFT_OR_SCHEDULED`, `This post is published already.`)
       }
       const sent = current.newsletterSentAt !== null
-      const list = sent ? current.newsletterList : newsletterList
+      const list = sent || newsletterList === undefined ? current.newsletterList : newsletterList
       const [row] = at === null
         ? await tx<BlogPostRow[]>`
           UPDATE blog_posts

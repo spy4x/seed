@@ -582,7 +582,7 @@ export default {
     "Não. O Seed roda como contêineres de longa duração com Docker Compose num servidor Linux que você aluga, porque a API mantém conexões WebSocket abertas e um worker esvazia uma fila.",
   "FeaturesFaq.runtimeQuestion": "O Seed roda no Node.js ou no Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Ainda não. O Seed roda no Deno hoje, e o trabalho para rodar no Deno, no Node e no Bun está em andamento (#623). Veja o plano de runtime acima.",
+    "Ainda não. O Seed roda no Deno hoje, e o trabalho para rodar no Deno, no Node e no Bun está em andamento. Dá para acompanhar o progresso na issue #623 do GitHub do Seed.",
   "FeaturesFaq.databaseQuestion": "O Seed funciona com outro banco além do Postgres?",
   "FeaturesFaq.databaseAnswer":
     "Não. O Seed foi feito sobre o Postgres: as migrações, as consultas e os testes de integração contam com ele.",
@@ -877,6 +877,24 @@ export default {
   "Blog.breadcrumb": "Trilha de navegação",
   "PostFigure.noScript": "Mostrado com os números do post. Ative o JavaScript para testar os seus.",
   "PostFigure.rssLink": "Teste no site: {link}",
+  "PostFigure.OfflineSyncDemo.title": "Escreva uma nota sem internet",
+  "PostFigure.OfflineSyncDemo.lead": "Escreva uma nota offline e depois ligue a rede de novo.",
+  "PostFigure.OfflineSyncDemo.network": "Rede",
+  "PostFigure.OfflineSyncDemo.online": "Online",
+  "PostFigure.OfflineSyncDemo.offline": "Offline",
+  "PostFigure.OfflineSyncDemo.write": "Escrever nota",
+  "PostFigure.OfflineSyncDemo.device": "Este aparelho",
+  "PostFigure.OfflineSyncDemo.server": "Servidor",
+  "PostFigure.OfflineSyncDemo.saved": "Salva",
+  "PostFigure.OfflineSyncDemo.waiting": "Aguardando sincronização",
+  "PostFigure.OfflineSyncDemo.note": "Nota {number}",
+  "PostFigure.OfflineSyncDemo.queue": "Alterações aguardando sincronização: {count}",
+  "PostFigure.OfflineSyncDemo.synced": "Tudo já está no servidor.",
+  "PostFigure.OfflineSyncDemo.full": "Já tem notas suficientes para a demo.",
+  "PostFigure.OfflineSyncDemo.caption":
+    "Um modelo da fila de alterações do Seed. A fila de verdade fica no IndexedDB e envia cada gravação com sua chave de idempotência.",
+  "PostFigure.OfflineSyncDemo.fallback":
+    "Offline, uma nota nova é salva no aparelho e marcada como “Aguardando sincronização”. Quando a rede volta, a fila vai para o servidor na ordem em que foi escrita.",
   "PostFigure.CostCalculator.title": "Quanto o plano Pro da demo custa para sua equipe",
   "PostFigure.CostCalculator.lead": "O Pro é cobrado por membro. Defina o tamanho da sua equipe.",
   "PostFigure.CostCalculator.members": "Membros da equipe",

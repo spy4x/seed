@@ -578,7 +578,7 @@ export default {
     "Нет. Seed работает как долгоживущие контейнеры в Docker Compose на одном арендованном Linux-сервере: API держит открытые WebSocket-соединения, а воркер разбирает очередь.",
   "FeaturesFaq.runtimeQuestion": "Можно ли запустить Seed на Node.js или Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Пока нет. Сегодня Seed работает на Deno, а переход на Deno, Node и Bun уже идёт (#623). Подробности — в плане по рантайму выше.",
+    "Пока нет. Сегодня Seed работает на Deno, а переход на Deno, Node и Bun уже идёт. Следить за ним можно в issue #623 на GitHub проекта Seed.",
   "FeaturesFaq.databaseQuestion":
     "Можно ли использовать с Seed другую базу данных вместо Postgres?",
   "FeaturesFaq.databaseAnswer":
@@ -872,6 +872,24 @@ export default {
   "Blog.breadcrumb": "Навигационная цепочка",
   "PostFigure.noScript": "Показано с цифрами из поста. Включите JavaScript, чтобы подставить свои.",
   "PostFigure.rssLink": "Попробуйте на сайте: {link}",
+  "PostFigure.OfflineSyncDemo.title": "Пишем заметку без сети",
+  "PostFigure.OfflineSyncDemo.lead": "Напишите заметку офлайн, потом снова включите сеть.",
+  "PostFigure.OfflineSyncDemo.network": "Сеть",
+  "PostFigure.OfflineSyncDemo.online": "Онлайн",
+  "PostFigure.OfflineSyncDemo.offline": "Офлайн",
+  "PostFigure.OfflineSyncDemo.write": "Написать заметку",
+  "PostFigure.OfflineSyncDemo.device": "Это устройство",
+  "PostFigure.OfflineSyncDemo.server": "Сервер",
+  "PostFigure.OfflineSyncDemo.saved": "Сохранено",
+  "PostFigure.OfflineSyncDemo.waiting": "Ждёт синхронизации",
+  "PostFigure.OfflineSyncDemo.note": "Заметка {number}",
+  "PostFigure.OfflineSyncDemo.queue": "Ждут синхронизации: {count}",
+  "PostFigure.OfflineSyncDemo.synced": "Всё уже на сервере.",
+  "PostFigure.OfflineSyncDemo.full": "Для демо заметок хватит.",
+  "PostFigure.OfflineSyncDemo.caption":
+    "Модель очереди изменений Seed. Настоящая очередь хранится в IndexedDB и отправляет каждую запись со своим ключом идемпотентности.",
+  "PostFigure.OfflineSyncDemo.fallback":
+    "Без сети новая заметка сохраняется на устройстве с пометкой «Ждёт синхронизации». Когда сеть возвращается, очередь уходит на сервер в том порядке, в каком её писали.",
   "PostFigure.CostCalculator.title": "Сколько стоит тариф Pro из демо для вашей команды",
   "PostFigure.CostCalculator.lead":
     "Pro оплачивается за каждого участника. Укажите размер команды.",

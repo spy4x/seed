@@ -1,5 +1,6 @@
 import postgres from "postgres"
-import { createSqlFromEnv, type Sql } from "@spy4x/server/db"
+import { createSqlFromEnv, PostgresEnvName, type Sql } from "@spy4x/server/db"
+import { readEnvRecord } from "@spy4x/platform/server/process"
 import { publicAPICache } from "./cache.ts"
 import { AppDbBase } from "./db-base.ts"
 import { directDbEnv } from "./db-direct.ts"
@@ -12,7 +13,7 @@ import { directDbEnv } from "./db-direct.ts"
  * but it is honoured when set - `.env.example` and CI both define it.
  */
 export const sql: Sql = (() => {
-  const client = createSqlFromEnv(Deno.env.toObject(), {
+  const client = createSqlFromEnv(readEnvRecord(Object.values(PostgresEnvName)), {
     transform: postgres.camel,
     applicationName: "app-backend",
     // In Compose these are connections to PgBouncer, which holds the connections to Postgres
@@ -32,11 +33,16 @@ export const sql: Sql = (() => {
  * to, so this pool never opens another.
  */
 export const listenSql: Sql = (() => {
-  const client = createSqlFromEnv(directDbEnv(Deno.env.toObject()), {
-    transform: postgres.camel,
-    applicationName: "app-backend-listen",
-    max: 1,
-  })
+  const client = createSqlFromEnv(
+    directDbEnv(
+      readEnvRecord([...Object.values(PostgresEnvName), `DB_DIRECT_HOST`, `DB_DIRECT_PORT`]),
+    ),
+    {
+      transform: postgres.camel,
+      applicationName: "app-backend-listen",
+      max: 1,
+    },
+  )
   if (!client) {
     throw new Error("Missing environment variable: DB_HOST")
   }

@@ -584,7 +584,7 @@ export default {
     "No. Seed funciona como contenedores de larga duración con Docker Compose en un servidor Linux que alquilas, porque la API mantiene abiertas las conexiones WebSocket y un worker vacía una cola.",
   "FeaturesFaq.runtimeQuestion": "¿Seed puede funcionar con Node.js o Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Todavía no. Seed funciona hoy con Deno, y ya estamos trabajando para que funcione con Deno, Node y Bun (#623). Consulta el plan de runtime más arriba.",
+    "Todavía no. Seed funciona hoy con Deno, y ya estamos trabajando para que funcione con Deno, Node y Bun. Puedes seguir el avance en el issue #623 del GitHub de Seed.",
   "FeaturesFaq.databaseQuestion": "¿Seed puede usar otra base de datos que no sea Postgres?",
   "FeaturesFaq.databaseAnswer":
     "No. Seed está construido sobre Postgres: sus migraciones, consultas y pruebas de integración cuentan con él.",
@@ -879,6 +879,25 @@ export default {
   "PostFigure.noScript":
     "Se muestra con las cifras de la entrada. Activa JavaScript para probar las tuyas.",
   "PostFigure.rssLink": "Pruébalo en la web: {link}",
+  "PostFigure.OfflineSyncDemo.title": "Escribe una nota sin conexión",
+  "PostFigure.OfflineSyncDemo.lead":
+    "Escribe una nota sin conexión y luego vuelve a activar la red.",
+  "PostFigure.OfflineSyncDemo.network": "Red",
+  "PostFigure.OfflineSyncDemo.online": "Con conexión",
+  "PostFigure.OfflineSyncDemo.offline": "Sin conexión",
+  "PostFigure.OfflineSyncDemo.write": "Escribir una nota",
+  "PostFigure.OfflineSyncDemo.device": "Este dispositivo",
+  "PostFigure.OfflineSyncDemo.server": "Servidor",
+  "PostFigure.OfflineSyncDemo.saved": "Guardada",
+  "PostFigure.OfflineSyncDemo.waiting": "Pendiente de sincronizar",
+  "PostFigure.OfflineSyncDemo.note": "Nota {number}",
+  "PostFigure.OfflineSyncDemo.queue": "Cambios pendientes de sincronizar: {count}",
+  "PostFigure.OfflineSyncDemo.synced": "Todo está en el servidor.",
+  "PostFigure.OfflineSyncDemo.full": "Ya hay suficientes notas para la demo.",
+  "PostFigure.OfflineSyncDemo.caption":
+    "Un modelo de la cola de cambios de Seed. La cola real vive en IndexedDB y envía cada escritura con su clave de idempotencia.",
+  "PostFigure.OfflineSyncDemo.fallback":
+    "Sin conexión, una nota nueva se guarda en el dispositivo marcada como «Pendiente de sincronizar». Cuando vuelve la red, la cola llega al servidor en el orden en que se escribió.",
   "PostFigure.CostCalculator.title": "Lo que cuesta a tu equipo el plan Pro de la demo",
   "PostFigure.CostCalculator.lead": "Pro se cobra por miembro. Indica el tamaño de tu equipo.",
   "PostFigure.CostCalculator.members": "Miembros del equipo",

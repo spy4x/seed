@@ -561,7 +561,7 @@ export default {
     "لا. يعمل Seed كحاويات دائمة التشغيل عبر Docker Compose على خادم Linux واحد تستأجره، لأن الـAPI يُبقي اتصالات WebSocket مفتوحة، والعامل يفرّغ قائمة انتظار.",
   "FeaturesFaq.runtimeQuestion": "هل يعمل Seed على Node.js أو Bun؟",
   "FeaturesFaq.runtimeAnswer":
-    "ليس بعد. يعمل Seed اليوم على Deno، والعمل جارٍ ليعمل على Deno وNode وBun (#623). اطّلع على خطة بيئة التشغيل أعلاه.",
+    "ليس بعد. يعمل Seed اليوم على Deno، والعمل جارٍ ليعمل على Deno وNode وBun. يمكنك متابعة التقدّم في المشكلة #623 على GitHub الخاص بـ Seed.",
   "FeaturesFaq.databaseQuestion": "هل يمكن أن يستخدم Seed قاعدة بيانات غير Postgres؟",
   "FeaturesFaq.databaseAnswer":
     "لا. Seed مبني على Postgres: ترحيلاته واستعلاماته واختبارات التكامل فيه تفترض وجوده.",
@@ -851,6 +851,24 @@ export default {
   "Blog.breadcrumb": "مسار التنقل",
   "PostFigure.noScript": "معروض بأرقام المقال. فعّل JavaScript لتجرّب أرقامك.",
   "PostFigure.rssLink": "جرّبه على الموقع: {link}",
+  "PostFigure.OfflineSyncDemo.title": "اكتب ملاحظة دون اتصال بالشبكة",
+  "PostFigure.OfflineSyncDemo.lead": "اكتب ملاحظة دون اتصال، ثم أعد تشغيل الشبكة.",
+  "PostFigure.OfflineSyncDemo.network": "الشبكة",
+  "PostFigure.OfflineSyncDemo.online": "متصل",
+  "PostFigure.OfflineSyncDemo.offline": "غير متصل",
+  "PostFigure.OfflineSyncDemo.write": "اكتب ملاحظة",
+  "PostFigure.OfflineSyncDemo.device": "هذا الجهاز",
+  "PostFigure.OfflineSyncDemo.server": "الخادم",
+  "PostFigure.OfflineSyncDemo.saved": "محفوظة",
+  "PostFigure.OfflineSyncDemo.waiting": "بانتظار المزامنة",
+  "PostFigure.OfflineSyncDemo.note": "ملاحظة {number}",
+  "PostFigure.OfflineSyncDemo.queue": "تغييرات بانتظار المزامنة: {count}",
+  "PostFigure.OfflineSyncDemo.synced": "كل شيء على الخادم.",
+  "PostFigure.OfflineSyncDemo.full": "هذا يكفي من الملاحظات للعرض.",
+  "PostFigure.OfflineSyncDemo.caption":
+    "نموذج لطابور التغييرات في Seed. الطابور الحقيقي محفوظ في IndexedDB ويرسل كل كتابة مع مفتاح عدم التكرار الخاص بها.",
+  "PostFigure.OfflineSyncDemo.fallback":
+    "دون اتصال، تُحفظ الملاحظة الجديدة على الجهاز وتحمل علامة «بانتظار المزامنة». وعندما تعود الشبكة، يصل الطابور إلى الخادم بالترتيب الذي كُتب به.",
   "PostFigure.CostCalculator.title": "كم تكلّف خطة Pro في العرض التجريبي فريقك",
   "PostFigure.CostCalculator.lead": "تُحتسب خطة Pro لكل عضو. حدّد حجم فريقك.",
   "PostFigure.CostCalculator.members": "أعضاء الفريق",

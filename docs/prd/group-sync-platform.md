@@ -36,7 +36,7 @@ resource included.
 
 ### Scope
 
-- Deno-only application lifecycle and distribution baseline.
+- Application lifecycle and distribution baseline on Deno, moving to Deno, Node and Bun.
 - REST access with shared CQRS semantics.
 - Personal and shared group authorization.
 - Server-authoritative synchronization and replay validation.
@@ -70,8 +70,9 @@ resource included.
 
 ### Product developer
 
-As a product developer, I want to start from a Deno-only template with clear app boundaries so I
-can replace notes with product behavior without rebuilding auth, CQRS, PWA, and sync foundations.
+As a product developer, I want to start from a template built on web standards with clear app
+boundaries so I can replace notes with product behavior without rebuilding auth, CQRS, PWA, and
+sync foundations.
 
 **Journey:** Create product from Git template, run documented Deno verification, exercise notes
 acceptance journeys, remove notes, and confirm generic platform capabilities remain valid.
@@ -195,12 +196,12 @@ capabilities that meet the next distribution stage gate.
 
 ### Non-functional and security requirements
 
-32. The system must use Deno as the sole runtime and task runner for development, verification,
-    build, and operational workflows.
-33. The system must require zero Node, npm, pnpm, Yarn, or Bun commands in documented and automated
-    workflows.
-34. The system must allow selected npm packages only when invoked through Deno and required by the
-    mandated Preact, Vite, or Dexie stack.
+32. The product must move to run unchanged on Deno, Node and Bun, with Deno as the toolchain for
+    development, verification, build, and operational workflows
+    ([runtime policy](../runtime-policy.md), replacing the earlier "Deno only" requirement on
+    2026-11-03).
+33. Runtime-specific calls must sit behind `@spy4x/platform` adapters, never in application code.
+34. The system must allow selected npm packages only where the dependency rules allow them.
 35. The system must protect all authenticated network traffic against plaintext transport.
 36. The system must treat every client-provided identity, permission claim, state value, and replay
     outcome as untrusted until server validation succeeds.

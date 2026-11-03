@@ -515,7 +515,7 @@ export default {
     "不能。Seed 以常驻容器的形式，用 Docker Compose 运行在你租用的一台 Linux 服务器上，因为 API 需要保持 WebSocket 连接，Worker 需要持续消费队列。",
   "FeaturesFaq.runtimeQuestion": "Seed 能在 Node.js 或 Bun 上运行吗？",
   "FeaturesFaq.runtimeAnswer":
-    "还不能。Seed 目前运行在 Deno 上，让它同时支持 Deno、Node 和 Bun 的工作正在进行中（#623）。详见上方的运行时计划。",
+    "还不能。Seed 目前运行在 Deno 上，让它同时支持 Deno、Node 和 Bun 的工作正在进行中。进展可以在 Seed 的 GitHub 上的 issue #623 中查看。",
   "FeaturesFaq.databaseQuestion": "Seed 能使用 Postgres 以外的数据库吗？",
   "FeaturesFaq.databaseAnswer":
     "不能。Seed 基于 Postgres 构建：它的迁移、查询和集成测试都以 Postgres 为前提。",
@@ -786,6 +786,24 @@ export default {
   "Blog.breadcrumb": "面包屑导航",
   "PostFigure.noScript": "显示的是文章中的数字。开启 JavaScript 即可试试你自己的数字。",
   "PostFigure.rssLink": "在网站上试一试：{link}",
+  "PostFigure.OfflineSyncDemo.title": "断网时写一条笔记",
+  "PostFigure.OfflineSyncDemo.lead": "先在离线状态下写一条笔记，再把网络打开。",
+  "PostFigure.OfflineSyncDemo.network": "网络",
+  "PostFigure.OfflineSyncDemo.online": "在线",
+  "PostFigure.OfflineSyncDemo.offline": "离线",
+  "PostFigure.OfflineSyncDemo.write": "写笔记",
+  "PostFigure.OfflineSyncDemo.device": "本设备",
+  "PostFigure.OfflineSyncDemo.server": "服务器",
+  "PostFigure.OfflineSyncDemo.saved": "已保存",
+  "PostFigure.OfflineSyncDemo.waiting": "等待同步",
+  "PostFigure.OfflineSyncDemo.note": "笔记 {number}",
+  "PostFigure.OfflineSyncDemo.queue": "等待同步的更改：{count}",
+  "PostFigure.OfflineSyncDemo.synced": "所有内容都已在服务器上。",
+  "PostFigure.OfflineSyncDemo.full": "演示用的笔记已经够了。",
+  "PostFigure.OfflineSyncDemo.caption":
+    "Seed 发送队列的模型。真实的队列保存在 IndexedDB 中，每次写入都带着自己的幂等键发送。",
+  "PostFigure.OfflineSyncDemo.fallback":
+    "离线时，新笔记会保存在设备上，并标为“等待同步”。网络恢复后，队列会按写入顺序发送到服务器。",
   "PostFigure.CostCalculator.title": "演示版 Pro 套餐的团队费用",
   "PostFigure.CostCalculator.lead": "Pro 按成员计费。设置你的团队人数。",
   "PostFigure.CostCalculator.members": "团队成员",
