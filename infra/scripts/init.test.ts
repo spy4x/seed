@@ -2,6 +2,7 @@
 import { expect } from "@std/expect"
 import { parseEnvValues } from "./env-file.ts"
 import {
+  chooseEngine,
   engineProblem,
   KEEPS_OLD_DATA,
   nameFlag,
@@ -15,6 +16,7 @@ import {
   SEED_REPOSITORY,
   seedCommit,
   SECRETS,
+  withEngine,
   writeSafely,
 } from "./init.ts"
 
@@ -196,6 +198,21 @@ Deno.test("an engine that is installed but stopped is told how to start", async 
 Deno.test("a running engine passes the check", async () => {
   expect(await engineProblem(`docker`, fakeRun({ [`docker info`]: { code: 0 } }).run))
     .toBeUndefined()
+})
+
+Deno.test("a fresh clone with only Podman running takes Podman", async () => {
+  const podmanOnly = fakeRun({ [`podman info`]: { code: 0 } }).run
+  expect(await chooseEngine(undefined, podmanOnly)).toEqual({ engine: `podman` })
+  const sample = `PROJECT=x\nCONTAINER_PROVIDER=docker # or "podman"\n`
+  expect(withEngine(sample, `podman`)).toContain(`CONTAINER_PROVIDER=podman # or "podman"`)
+  expect(withEngine(sample, `docker`)).toBe(sample)
+})
+
+Deno.test("an env file that names Docker is never switched to Podman", async () => {
+  const podmanOnly = fakeRun({ [`podman info`]: { code: 0 } }).run
+  const { engine, problem } = await chooseEngine(`CONTAINER_PROVIDER=docker\n`, podmanOnly)
+  expect(engine).toBe(`docker`)
+  expect(problem).toContain(`docker is not installed`)
 })
 
 Deno.test("a product's copy records Seed's current main", async () => {

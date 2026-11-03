@@ -16,7 +16,7 @@ import { basename, dirname } from "@std/path"
 import { generateVapidKeyPair } from "@spy4x/integrations/push"
 import { type RunCommandResult, runCommand } from "@spy4x/platform/server"
 import { parseEnvValues } from "./env-file.ts"
-import { containerProvider } from "./proxy-network.ts"
+import { type ContainerProvider, containerProvider } from "./proxy-network.ts"
 
 const EXAMPLE_PATH = `infra/envs/.env.example`
 const ENV_PATH = `infra/envs/.env`
@@ -183,6 +183,27 @@ export async function engineProblem(provider: string, run: Run): Promise<string 
 }
 
 /**
+ * The engine to run the stack on, and why it cannot run when it cannot. A fresh clone has no env
+ * file to name one yet, so it takes Podman when Docker does not answer and Podman does.
+ */
+export async function chooseEngine(
+  current: string | undefined,
+  run: Run,
+): Promise<{ engine: ContainerProvider; problem?: string }> {
+  const engine = containerProvider(parseEnvValues(current ?? ``, ENV_PATH))
+  const problem = await engineProblem(engine, run)
+  if (problem === undefined || current !== undefined) return { engine, problem }
+  if (await engineProblem(`podman`, run) === undefined) return { engine: `podman` }
+  return { engine, problem }
+}
+
+/** The new env file's text, set to Podman when that is the engine found. */
+export function withEngine(text: string, engine: ContainerProvider): string {
+  if (engine === `docker`) return text
+  return text.replace(/^CONTAINER_PROVIDER=docker\b/m, `CONTAINER_PROVIDER=podman`)
+}
+
+/**
  * The Seed commit a fresh copy came from: Seed's current `main`, which is what a copy made today
  * holds. `note` says why there is none: in Seed itself, without git, or offline.
  */
@@ -255,14 +276,15 @@ if (import.meta.main) {
     Deno.exit(1)
   }
   const current = await readIfExists(ENV_PATH)
-  const engine = containerProvider(parseEnvValues(current ?? ``, ENV_PATH))
-  const problem = await engineProblem(engine, runCommand)
+  const { engine, problem } = await chooseEngine(current, runCommand)
   if (problem !== undefined) {
     console.error(problem)
     Deno.exit(1)
   }
   const project = current === undefined ? askProject(name, Deno.args.includes(`--yes`)) : undefined
-  const { text, changed } = prepareEnv(await Deno.readTextFile(EXAMPLE_PATH), current, project)
+  const prepared = prepareEnv(await Deno.readTextFile(EXAMPLE_PATH), current, project)
+  const text = current === undefined ? withEngine(prepared.text, engine) : prepared.text
+  const { changed } = prepared
 
   if (current === undefined) console.log(`Created ${ENV_PATH}`)
   if (changed.length > 0) {

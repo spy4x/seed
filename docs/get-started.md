@@ -82,8 +82,9 @@ To run the public website, add `mpa` to `COMPOSE_PROFILES`, set `MPA_DOMAIN=site
 - **Traefik does not start.** Traefik answers on port 80 for every `*.localhost` address. When
   another program holds port 80, stop it. When another project already runs a container named
   `traefik`, Seed uses that one.
-- **You use Podman.** Set `CONTAINER_PROVIDER=podman` in `infra/envs/.env`, and start Traefik once
-  with `deno task proxy:start`, which calls Docker.
+- **You use Podman.** When Docker is not running and Podman is, `deno task init` picks Podman and
+  writes `CONTAINER_PROVIDER=podman` to `infra/envs/.env`. Start Traefik once with
+  `deno task proxy:start`, which calls Docker.
 
 [Development](development.md) has the rest of the local stack: every task, the tests and the
 database.
