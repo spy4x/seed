@@ -553,7 +553,7 @@ export default {
   "FeatureWebsite.fact3":
     "Un boletín con doble confirmación, baja con un clic y correos en el idioma de quien los lee",
   "FeatureWebsite.fact4":
-    "Un blog que se escribe en el panel de administración, con entradas en cada idioma y sus traducciones, temas, figuras interactivas que el lector puede probar, un feed RSS, datos estructurados de artículo y enlaces antiguos que redirigen cuando cambia la URL de una entrada",
+    "Un blog que se escribe en el panel de administración, con entradas en cada idioma y sus traducciones, temas, figuras interactivas que el lector puede probar, un feed RSS, datos estructurados de artículo, enlaces antiguos que redirigen cuando cambia la URL de una entrada y un aviso a IndexNow para que los buscadores sepan al instante de una entrada nueva o cambiada",
   "FeatureWebsite.fact5":
     "Enlaces de contacto configurados en el panel de administración, mostrados en el pie de página y en los datos estructurados",
   "FeatureWebsite.fact6":
