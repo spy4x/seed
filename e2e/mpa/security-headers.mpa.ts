@@ -9,9 +9,10 @@ const UMAMI = Deno.env.get("MPA_UMAMI_ORIGIN")!
 
 /**
  * Checks the headers of `response`. A page Fresh rendered also allows that render's nonce in
- * `script-src`, for the inline scripts Fresh writes; any other answer has none.
+ * `script-src`, for the inline scripts Fresh writes; any other answer has none. Only a blog post's
+ * page (`postPage`) allows `https:` images (#416).
  */
-function expectSecurityHeaders(response: APIResponse, rendered: boolean) {
+function expectSecurityHeaders(response: APIResponse, rendered: boolean, postPage = false) {
   const headers = response.headers()
   const nonces = headers["content-security-policy"].match(/ 'nonce-[0-9a-f]+'/g) ?? []
   expect(nonces).toHaveLength(rendered ? 1 : 0)
@@ -19,7 +20,7 @@ function expectSecurityHeaders(response: APIResponse, rendered: boolean) {
   expect(headers["content-security-policy"]).toBe(
     `default-src 'self'; script-src 'self' ${UMAMI}${
       nonces.join("")
-    }; style-src 'self'; img-src 'self' data: https:; ` +
+    }; style-src 'self'; img-src 'self' data:${postPage ? " https:" : ""}; ` +
       `connect-src 'self' ${UMAMI}; object-src 'none'; base-uri 'self'; ` +
       `form-action 'self' ${SPA}; ` +
       "frame-ancestors 'none'",
@@ -47,6 +48,14 @@ test("the website sends the security headers with a page, its stylesheet and an 
   // The error page keeps the site's frame, so the visitor can go on from it.
   expect(await unknown.text()).toContain("Page not found")
   expect(await unknown.text()).toContain("Main navigation")
+
+  // A post's page, here one that is not live, may show the post's https: images.
+  for (const path of ["/blog/no-such-post", "/de/blog/no-such-post"]) {
+    const post = await request.get(path)
+    expect(post.status()).toBe(404)
+    expectSecurityHeaders(post, true, true)
+  }
+  expectSecurityHeaders(await request.get("/blog"), true)
 })
 
 test("a visitor walks the website and its forms without a refusal under the content security policy", async ({ context, page }) => {

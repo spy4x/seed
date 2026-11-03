@@ -92,11 +92,13 @@ of an unknown address and the 500 of an error. A WebSocket upgrade passes throug
 ## The MPA's policy
 
 The MPA's pages load one stylesheet from their own origin and no font, so the policy is the
-helper's default with one source added: `'self'` for `default-src`,
-`script-src`, `style-src` and `connect-src`; `'self'`, `data:` and `https:` for `img-src`;
-`object-src 'none'`; `base-uri 'self'`; `frame-ancestors 'none'`. `https:` is there for the blog
-([blog.md](blog.md)): a post's cover and the images in its body are `https:` addresses wherever the
-operator keeps them. Only operators write posts, and an image runs no code.
+helper's default: `'self'` for `default-src`, `script-src`, `style-src` and `connect-src`; `'self'`
+and `data:` for `img-src`; `object-src 'none'`; `base-uri 'self'`; `frame-ancestors 'none'`.
+
+A blog post's page, any address under `/blog/` in any language (`/blog/<slug>`, `/de/blog/<slug>`),
+also allows `https:` in `img-src` ([blog.md](blog.md)): a post's cover and the images in its body
+are `https:` addresses wherever the operator keeps them. Only operators write posts, and an image
+runs no code. Every other page, the blog's index included, keeps `img-src 'self' data:` (#416).
 
 A page Fresh renders also has that render's nonce in `script-src` (`'nonce-…'`): Fresh writes the
 inline script that wakes the page's islands, and every other inline script it renders, with a nonce

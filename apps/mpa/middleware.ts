@@ -3,6 +3,7 @@ import { createApi } from "./api.ts"
 import { renderErrorPage } from "./error-page.tsx"
 import { DEFAULT_LANGUAGE, pathLanguage, segmentLanguage } from "./languages.ts"
 import { createNewsletterStatus } from "./newsletter.ts"
+import { BLOG_PATH } from "./blog.ts"
 import { define, type State } from "./utils.ts"
 import { HttpError, staticFiles } from "fresh"
 import { FORM_ACTIONS } from "@ui/progressive.tsx"
@@ -24,19 +25,30 @@ import {
  * Two things widen it. The pricing page's form posts to the MPA, which redirects to the SPA's
  * sign-up, and a browser applies `form-action` to that redirect too: on a domain of its own the
  * MPA therefore allows the SPA's origin there. With analytics on, the Umami origin is allowed in
- * `script-src` (its tracker) and `connect-src` (the events it sends), and nowhere else. A blog
- * post's cover and the images in its body are `https:` addresses wherever the operator keeps them,
- * so `img-src` allows any `https:` image. Only operators write posts, and an image runs no code.
+ * `script-src` (its tracker) and `connect-src` (the events it sends), and nowhere else.
+ *
+ * With `postImages`, `img-src` also allows any `https:` image: a blog post's cover and the images
+ * in its body are `https:` addresses wherever the operator keeps them. Only operators write posts,
+ * and an image runs no code. Only the blog's post pages get it ({@link isPostPage}); every other
+ * page keeps `img-src 'self' data:` (#416).
  */
-function securityHeaderSet(config: MpaConfig): Promise<[string, string][]> {
+function securityHeaderSet(
+  config: MpaConfig,
+  { postImages }: { postImages: boolean },
+): Promise<[string, string][]> {
   const umami = config.analytics?.origin
   return securityHeaderList({
     extraSources: {
       ...(config.apiOrigin === config.webAppOrigin ? {} : { formAction: [config.apiOrigin] }),
-      imgSrc: [`https:`],
+      ...(postImages ? { imgSrc: [`https:`] } : {}),
       ...(umami ? { scriptSrc: [umami], connectSrc: [umami] } : {}),
     },
   })
+}
+
+/** Whether `pathname` is under `/blog/` in any language: a post's page, which shows its images. */
+export function isPostPage(pathname: string): boolean {
+  return pathLanguage(pathname).path.startsWith(`${BLOG_PATH}/`)
 }
 
 /** Where Fresh leaves a rendered page's nonce on its response (`NONCE_SYMBOL` in Fresh). */
@@ -56,8 +68,10 @@ function freshNonce(response: Response): unknown {
  * for that render, which `'self'` alone refuses.
  */
 export async function securityHeadersMiddleware(config: MpaConfig) {
-  const set = await securityHeaderSet(config)
+  const site = await securityHeaderSet(config, { postImages: false })
+  const posts = await securityHeaderSet(config, { postImages: true })
   return define.middleware(async (ctx) => {
+    const set = isPostPage(ctx.url.pathname) ? posts : site
     let response: Response
     try {
       response = await ctx.next()
