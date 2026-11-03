@@ -144,7 +144,7 @@ test("a signed-in walk through the app meets no refusal under the content securi
       .toBeGreaterThan(0)
     const origin = new URL(baseURL!).origin
     expect(fontRequests.filter((url) => new URL(url).origin !== origin)).toEqual([])
-    expect(fontRequests).toContain(`${origin}/fonts/geist-sans.var.woff2`)
+    expect(fontRequests).toContain(`${origin}/fonts/geist-sans-latin-cyrillic.var.woff2`)
 
     // The service worker installs from /sw.js and takes the page over.
     await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined))

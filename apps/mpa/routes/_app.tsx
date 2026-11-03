@@ -30,7 +30,14 @@ export default define.page(function App({ Component, state, url }) {
         <script src="/theme.js"></script>
         <link
           rel="preload"
-          href="/fonts/geist-sans.var.woff2"
+          href="/fonts/geist-sans-latin-cyrillic.var.woff2"
+          as="font"
+          type="font/woff2"
+          crossorigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/geist-mono-latin-cyrillic.var.woff2"
           as="font"
           type="font/woff2"
           crossorigin="anonymous"
