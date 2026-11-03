@@ -3,7 +3,6 @@ import type { JSX } from "preact"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { LoopClip } from "../islands/videos.tsx"
 import { LOOP_SIZE, type LoopName, loopPosterSrcset, loopSources } from "../loops.ts"
-import { DARK_MEDIA } from "./shot.tsx"
 import { useSite } from "../use-site.tsx"
 
 /** The catalog keys of each loop: its short name, the sentence that names the video, its caption. */
@@ -26,8 +25,8 @@ const LOOP_KEYS: Record<LoopName, { name: string; title: string; caption: string
 }
 
 /**
- * A feature loop in a plain frame, with its caption under it. `data-no-zoom` keeps its poster out
- * of the screenshot lightbox (`islands/shot-lightbox.tsx`).
+ * A feature loop in a plain frame, with its caption under it: the dark clip in both page themes.
+ * `data-no-zoom` keeps its poster out of the screenshot lightbox (`islands/shot-lightbox.tsx`).
  */
 export function FeatureLoop(
   { loop, sizes = `(min-width: 1280px) 600px, (min-width: 768px) 672px, 100vw`, caption = true }: {
@@ -44,15 +43,13 @@ export function FeatureLoop(
       <WindowFrame variant="plain" caption={caption ? t.t(keys.caption) : undefined}>
         <LoopClip
           poster={{
-            src: `/video/${loop}-loop-light-${LOOP_SIZE.width}.webp`,
-            srcset: loopPosterSrcset(loop, `light`),
+            src: `/video/${loop}-loop-dark-${LOOP_SIZE.width}.webp`,
+            srcset: loopPosterSrcset(loop),
             sizes,
             width: LOOP_SIZE.width,
             height: LOOP_SIZE.height,
-            dark: { srcset: loopPosterSrcset(loop, `dark`), media: DARK_MEDIA },
           }}
-          sources={loopSources(loop, `light`)}
-          darkSources={loopSources(loop, `dark`)}
+          sources={loopSources(loop)}
           name={t.t(keys.name)}
           title={t.t(keys.title)}
           pauseLabel={t.t(`LoopVideo.pauseLabel`)}

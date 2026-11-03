@@ -1,4 +1,3 @@
-/// <reference lib="deno.ns" />
 /**
  * Makes a product's administrator from the server, for a product with no mail or no sign-up
  * (`SPA=false`): `deno task operator:create <address>`, run where the database is reachable, such as
@@ -18,7 +17,15 @@
  * @module
  */
 import postgres from "postgres"
-import { createSqlFromEnv } from "@spy4x/server/db"
+import { createSqlFromEnv, PostgresEnvName } from "@spy4x/server/db"
+import {
+  exitProcess,
+  processArgs,
+  processEnv,
+  processStdin,
+  readEnvRecord,
+  writeStderr,
+} from "@spy4x/platform/server/process"
 import { normalizeEmail } from "@spy4x/server/auth"
 import { HiddenLine, KeyResult } from "@spy4x/server/sign-in/password-hash"
 import { authPasswordSchema, USER_ROLE_NAMES, UserRole } from "@domain/identity"
@@ -197,37 +204,30 @@ export async function askNewPassword(
 }
 
 if (import.meta.main) {
-  const address = parseOperatorCreateArgs(Deno.args)
+  const address = parseOperatorCreateArgs(processArgs())
   if (!address) {
     console.error(OPERATOR_CREATE_USAGE)
-    Deno.exit(2)
+    exitProcess(2)
   }
-  const pepper = Deno.env.get(`AUTH_PEPPER`) ?? ``
+  const pepper = processEnv.get(`AUTH_PEPPER`) ?? ``
   if (pepper.length < 32) {
     console.error(`❌ AUTH_PEPPER must be set to the API's value (32 characters or more)`)
-    Deno.exit(1)
+    exitProcess(1)
   }
-  const sql = createSqlFromEnv(Deno.env.toObject(), {
+  const sql = createSqlFromEnv(readEnvRecord(Object.values(PostgresEnvName)), {
     transform: postgres.camel,
     applicationName: `operator-create`,
     max: 1,
   })
   if (!sql) {
     console.error(`❌ Missing environment variable: DB_HOST`)
-    Deno.exit(1)
-  }
-  const encoder = new TextEncoder()
-  const write = (text: string) => void Deno.stderr.writeSync(encoder.encode(text))
-  const stdin: SecretInput = {
-    isTerminal: () => Deno.stdin.isTerminal(),
-    setRaw: (raw) => Deno.stdin.setRaw(raw),
-    read: (buffer) => Deno.stdin.read(buffer),
+    exitProcess(1)
   }
   let result: OperatorCreateResult
   try {
     result = await createOperator(
       address,
-      databasePorts(sql, pepper, () => askNewPassword(stdin, write)),
+      databasePorts(sql, pepper, () => askNewPassword(processStdin, writeStderr)),
     )
   } catch (error) {
     if (!(error instanceof SeedRefusedError)) throw error
@@ -240,7 +240,7 @@ if (import.meta.main) {
   const message = operatorCreateMessage(address, result)
   if (`error` in result) {
     console.error(message)
-    Deno.exit(1)
+    exitProcess(1)
   }
   console.log(message)
 }

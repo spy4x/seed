@@ -243,7 +243,7 @@ describe("the public website", () => {
     }
   })
 
-  it("draws the realtime, offline and shortcuts loops on /features, each with its poster in both themes and its caption", async () => {
+  it("draws the realtime, offline and shortcuts loops on /features, each with its dark poster and its caption", async () => {
     const { html } = await page("/features")
 
     for (
@@ -256,11 +256,9 @@ describe("the public website", () => {
       const start = html.indexOf(`data-e2e="loop-${loop}"`)
       expect(start, loop).toBeGreaterThan(-1)
       const box = html.slice(start, html.indexOf(`</figure>`, start))
-      for (const theme of [`light`, `dark`]) {
-        expect(box, `${loop} ${theme}`).toMatch(
-          new RegExp(`/video/${loop}-loop-${theme}-1440\\.webp(\\?[^ ]*)? 1440w`),
-        )
-      }
+      expect(box, loop).toMatch(
+        new RegExp(`/video/${loop}-loop-dark-1440\\.webp(\\?[^ ]*)? 1440w`),
+      )
       expect(box, loop).toMatch(
         new RegExp(`<figcaption[^>]*>${caption.replace(/[.+()]/g, `\\$&`)}`),
       )
@@ -280,6 +278,41 @@ describe("the public website", () => {
     for (const line of QUICK_START) expect(line, line).not.toContain("#")
   })
 
+  it("draws the hero's demo and every feature loop from one dark poster and clip in both themes", async () => {
+    for (
+      const path of [
+        `/`,
+        `/features`,
+        `/features/realtime`,
+        `/features/offline`,
+        `/features/shortcuts`,
+      ]
+    ) {
+      const { html } = await page(path)
+      const hero = path === `/`
+        ? html.slice(html.indexOf(`id="hero"`), html.indexOf(`id="features"`))
+        : ``
+      const loops = [...html.matchAll(/data-e2e="loop-[a-z]+"[\s\S]*?<img [^>]*>/g)].map(([m]) => m)
+      expect(loops.length, path).toBeGreaterThan(0)
+      for (const media of [hero, ...loops]) {
+        expect(media, path).not.toMatch(/-light-\d+\.webp|-loop-light\./)
+        // A dark `<source media>` would swap the poster by theme.
+        expect(media, path).not.toContain(`<source`)
+      }
+      if (hero) expect(hero, path).toContain(`/shots/notes-dark-1280.webp`)
+      for (const loop of loops) expect(loop, path).toMatch(/\/video\/[a-z]+-loop-dark-720\.webp/)
+    }
+  })
+
+  it("preloads only the hero demo's dark poster, and only where it is on the first screen", async () => {
+    const { html } = await page("/")
+    const preloads = html.match(/<link [^>]*rel="preload"[^>]*as="image"[^>]*>/g) ?? []
+
+    expect(preloads).toHaveLength(1)
+    expect(preloads[0]).toContain(`/shots/notes-dark-1280.webp`)
+    expect(preloads[0]).toContain(`media="(min-width: 1024px)"`)
+  })
+
   it("says under the hero's demo how long it is and what it shows", async () => {
     const { html } = await page("/")
 
@@ -295,7 +328,7 @@ describe("the public website", () => {
     for (
       const [id, file] of [
         ["feature-billing", "/shots/billing-plan-light-"],
-        ["feature-realtime", "/video/realtime-loop-light-"],
+        ["feature-realtime", "/video/realtime-loop-dark-"],
       ]
     ) {
       const start = html.indexOf(`aria-labelledby="${id}"`)

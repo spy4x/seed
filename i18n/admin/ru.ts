@@ -528,6 +528,8 @@ export default {
   },
   "AdminBlogDialogs.sentOnce":
     "Письмо уйдёт один раз, когда пост выйдет. Отозвать его будет нельзя.",
+  "AdminBlogDialogs.newsletterOff":
+    "Рассылка выключена, поэтому пост не уйдёт подписчикам списка <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly": "Письмо получат только те, кто подписался на языке поста.",
   "AdminBlogEditor.leaveMessage": "Изменения в посте не сохранятся.",
   "AdminBlogEditor.doneScheduled": "Публикация запланирована на {at}.",

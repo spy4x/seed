@@ -109,7 +109,7 @@ import {
 } from "@server/subscribers/subscribers.ts"
 import { createPostgresSubscriberStore } from "@spy4x/server/subscribers/postgres"
 import { createErrorReporter } from "@spy4x/platform"
-import { systemEnv } from "@spy4x/server/config"
+import { processEnv } from "@spy4x/platform/server/process"
 import { readTelegramSetup, telegramOffNote } from "@server/telegram/setup.ts"
 import { createTelegramRoute, createTelegramWebhookRoute } from "./routes/telegram.ts"
 import { createTelegramAccounts, createTelegramRuntime } from "./services/telegram.ts"
@@ -119,7 +119,7 @@ import "./cqrs/+init.ts"
 const REALTIME_REVALIDATE_INTERVAL_MS = 15_000
 
 // The worker sends the mail; the API only says once, at start-up, when production has no SMTP.
-const mailWarning = mailOffWarning(readMailSetup(Deno.env))
+const mailWarning = mailOffWarning(readMailSetup(processEnv))
 if (mailWarning) log(mailWarning)
 
 // Without ERROR_REPORT_DSN the reporter is off and sends nothing.
@@ -264,20 +264,20 @@ app.route(
   }),
 )
 // The mail subscriptions' keys, read once for the public routes and the operator area.
-const subscribersSetup = readSubscribersSetup(Deno.env, config.isDev ? "dev" : "prod")
+const subscribersSetup = readSubscribersSetup(processEnv, config.isDev ? "dev" : "prod")
 const subscribersWarning = subscribersOffWarning(subscribersSetup)
 if (subscribersWarning) log(subscribersWarning)
 // The catalog (#466): off unless CATALOG=true. Its photos pass through the API to the file store.
 // Its tracking links (#483) need the website's address, and count visits in Umami when it is set.
-const siteUrl = readSiteUrl(Deno.env, config.isDev ? "dev" : "prod")
-const catalogSwitch = readCatalogSetup(Deno.env)
-const trackingSetup = catalogSwitch.on ? readTrackingSetup(Deno.env, siteUrl) : null
+const siteUrl = readSiteUrl(processEnv, config.isDev ? "dev" : "prod")
+const catalogSwitch = readCatalogSetup(processEnv)
+const trackingSetup = catalogSwitch.on ? readTrackingSetup(processEnv, siteUrl) : null
 const catalogSetup = { ...catalogSwitch, tracking: trackingSetup }
 // Stats (#485): the website's numbers from Umami, off until its three settings are set.
 const websiteStats = {
-  ...readWebsiteStatsSetup(Deno.env),
+  ...readWebsiteStatsSetup(processEnv),
   itemPath: trackingSetup?.itemPath ??
-    (Deno.env.get("CATALOG_ITEM_PATH")?.trim() || DEFAULT_ITEM_PATH),
+    (processEnv.get("CATALOG_ITEM_PATH")?.trim() || DEFAULT_ITEM_PATH),
 }
 const serverFiles = s3ServerFiles(config.files)
 // The operator area (#146) and its modules (#424). The gate answers 404 to anyone below operator.
@@ -428,7 +428,7 @@ app.route(
 )
 // The Telegram bot (#269, docs/telegram.md): off without TELEGRAM_BOT_TOKEN, and then nothing here
 // calls Telegram. A setting that cannot work stops the API now, not at the first message.
-const telegramSetup = readTelegramSetup(systemEnv, config.isDev ? "dev" : "prod")
+const telegramSetup = readTelegramSetup(processEnv, config.isDev ? "dev" : "prod")
 const telegramNote = telegramOffNote(telegramSetup)
 if (telegramNote) log(telegramNote)
 const telegram = telegramSetup

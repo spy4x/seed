@@ -16,6 +16,7 @@ import {
   resolveHealthcheckPort,
   runHealthcheck,
 } from "@spy4x/server/healthcheck"
+import { exitProcess, processArgs, processEnv } from "@spy4x/platform/server/process"
 
 /**
  * Runs the check with the command line's arguments and the environment it was given, then exits.
@@ -27,7 +28,12 @@ export async function healthcheck(
   probe: Pick<HealthcheckOptions, "connector" | "fetcher"> & { exit?: (code: number) => never } =
     {},
 ): Promise<void> {
-  await runHealthcheck({ port: resolveHealthcheckPort(env), path: args[0], ...probe })
+  await runHealthcheck({
+    port: resolveHealthcheckPort(env),
+    path: args[0],
+    exit: exitProcess,
+    ...probe,
+  })
 }
 
-if (import.meta.main) await healthcheck(Deno.args, Deno.env)
+if (import.meta.main) await healthcheck(processArgs(), processEnv)

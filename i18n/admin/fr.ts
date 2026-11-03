@@ -524,6 +524,8 @@ export default {
   },
   "AdminBlogDialogs.sentOnce":
     "Envoyé une seule fois, à la mise en ligne de l’article. Impossible d’annuler l’envoi.",
+  "AdminBlogDialogs.newsletterOff":
+    "La newsletter est désactivée : cet article ne sera pas envoyé à la liste <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly":
     "Seuls les abonnés inscrits dans la langue de l’article le reçoivent.",
   "AdminBlogEditor.leaveMessage": "Vos modifications de cet article seront perdues.",
