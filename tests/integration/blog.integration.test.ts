@@ -568,18 +568,22 @@ Deno.test(`blog: a save that makes an original a translation while another save 
     const save = rejection(
       blog.update(english, 1, fields(`hello`, { translationOf: german }), false, maya),
     )
-    const deadline = Date.now() + 10_000
-    while (true) {
-      const [{ waiting }] = await sql<{ waiting: number }[]>`
-        SELECT COUNT(*)::int AS waiting FROM pg_stat_activity
-        WHERE wait_event_type = 'Lock' AND query LIKE '%FOR SHARE%'
-      `
-      if (waiting > 0) break
-      if (Date.now() > deadline) throw new Error(`the save did not wait for the other one`)
-      await new Promise((resolve) => setTimeout(resolve, 20))
+    try {
+      const deadline = Date.now() + 10_000
+      while (true) {
+        const [{ waiting }] = await sql<{ waiting: number }[]>`
+          SELECT COUNT(*)::int AS waiting FROM pg_stat_activity
+          WHERE wait_event_type = 'Lock' AND query LIKE '%FOR SHARE%'
+        `
+        if (waiting > 0) break
+        if (Date.now() > deadline) throw new Error(`the save did not wait for the other one`)
+        await new Promise((resolve) => setTimeout(resolve, 20))
+      }
+    } finally {
+      // Ends the other save even when the check failed, so the schema can be dropped.
+      release()
+      await other
     }
-    release()
-    await other
 
     const error = await save
     expect([error.code, error.field]).toEqual([`TRANSLATION_INVALID`, `translationOf`])
