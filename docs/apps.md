@@ -20,7 +20,8 @@ In the SPA, people see each other's changes live over a WebSocket
 ([the offline guide](offline.md)).
 
 The MPA renders every page on the server, and every page works with JavaScript turned off. It has
-no session and never touches the database. It calls the API only for the newsletter.
+no session and never touches the database. It asks the API over HTTP for the blog's posts, the
+contact links, a few settings flags and the newsletter's sign-ups.
 
 The website's end-to-end test runs in CI on every pull request. To run it locally, start Postgres
 and Valkey, then run `e2e/mpa/run.sh`; the script's header says what it needs.

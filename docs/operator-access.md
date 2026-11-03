@@ -49,8 +49,8 @@ and above open the admin app.
 `user:role` finds the person by the address they sign in with, and exits with 1 when nobody does.
 Each change writes an audit row on the person naming `cli:user-role`.
 
-An administrator is made only by `operator:create`, by the development seed, or on the public demo
-by `DEMO_ADMIN_PASSWORD` ([The public demo](demo.md)).
+An administrator is made only by `operator:create`, by `user:role <address> administrator`, by the
+development seed, or on the public demo by `DEMO_ADMIN_PASSWORD` ([The public demo](demo.md)).
 
 ## Admin consoles
 

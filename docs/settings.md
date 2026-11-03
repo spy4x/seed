@@ -115,7 +115,10 @@ rules.
 
 To send to another server, take `monitoring` out of `COMPOSE_PROFILES` and set the two addresses.
 
-| Containers (CPU, memory limit)                               | Default       |
+The first six pairs below are optional: the values shown are Compose's defaults. The last four have
+no default, so keep them in the env file.
+
+| Containers (CPU, memory limit)                               | Value         |
 | ------------------------------------------------------------ | ------------- |
 | `VMAGENT_CPU_LIMIT`, `VMAGENT_MEM_LIMIT`                     | `0.2`, `128M` |
 | `VECTOR_CPU_LIMIT`, `VECTOR_MEM_LIMIT`                       | `0.2`, `128M` |

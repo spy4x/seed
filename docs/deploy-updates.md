@@ -50,7 +50,7 @@ The deploy stops when one of the first two is empty.
 - It creates the web push keys (`infra/configs/vapid.json`) on the server when they are missing. It
   never sends yours and never replaces existing ones.
 - It starts the product first: the database, Valkey, the migrations, the API, the worker and the
-  SPA, and the website and admin app when their profiles are on. Everything else, such as
+  SPA (unless `SPA=false`), and the website and admin app when their profiles are on. Everything else, such as
   monitoring, starts after. A failed migration fails the deploy.
 
 When a monitoring container cannot start, the product already runs the new version. The deploy
