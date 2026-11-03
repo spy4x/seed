@@ -35,11 +35,11 @@ A write runs as one command in one transaction. It records the change and any jo
 `outbox_events`, so the worker and the other open sockets learn of it from the same row. Every
 write is versioned and idempotent ([ADR 002](decisions/002-realtime-transport-and-sync.md)).
 
-| Service  | What it holds                                                     |
-| -------- | ----------------------------------------------------------------- |
-| Postgres | Every record, the outbox and the change log                       |
-| Valkey   | Rate limits, short-lived sign-in codes and the API cache          |
-| Garage   | Uploaded files, an S3 store, with the `files` profile             |
+| Service  | What it holds                                                                        |
+| -------- | ------------------------------------------------------------------------------------ |
+| Postgres | Every record, the outbox and the change log                                          |
+| Valkey   | Rate limits, passkey and sign-in-provider flows, the operation budget, the API cache |
+| Garage   | Uploaded files, an S3 store, with the `files` profile                                |
 
 A migration only adds. One that rewrites rows is idempotent and safe to rerun during a rollout.
 

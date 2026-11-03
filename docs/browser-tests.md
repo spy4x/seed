@@ -83,8 +83,9 @@ pass. A red step may list only some failures, so run the specs on your machine f
 
 2. Add it to `SMOKE_SPECS` only when every run passed. A spec that fails once blocks every pull
    request.
-3. Name it in the table above and in [the CI guide](woodpecker-ci-setup.md).
-   `tests/ci-browser-tests.test.ts` fails until both name it.
+3. Name it in the table above, in "The smoke set" of [Every task](development.md#the-smoke-set) and
+   in [the CI guide](woodpecker-ci-setup.md). `tests/ci-browser-tests.test.ts` reads the last two
+   and fails until both name it.
 
 ## Next
 

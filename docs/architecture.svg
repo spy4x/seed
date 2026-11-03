@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 700" width="960" height="700" role="img" aria-labelledby="title desc">
   <title id="title">Seed architecture: apps, services and shared code</title>
-  <desc id="desc">Clients: apps/spa, the product, a Preact and Vite PWA with an IndexedDB offline copy that pulls what changed since its cursor; apps/admin, the operator area on its own host; apps/mpa, the public website on Fresh, rendered on the server. All three call apps/api, the SPA and the admin app over REST, the call route and the WebSocket, the MPA over REST for the blog, contact links, the catalog and the newsletter. Servers: apps/api on Hono (auth, CQRS dispatch, REST, the call route, the WebSocket) and apps/worker, which runs the outbox jobs. Data: Postgres 18 behind PgBouncer is the source of truth, Valkey holds rate limits and the cache, and Garage stores files with the files profile. Docker Compose also runs Traefik and, with the monitoring profile, VictoriaMetrics, VictoriaLogs and Grafana. Shared code: libs/domain, libs/server, libs/ui, libs/platform and the @spy4x packages on JSR.</desc>
+  <desc id="desc">Clients: apps/spa, the product, a Preact and Vite PWA with an IndexedDB offline copy that pulls what changed since its cursor; apps/admin, the operator area on its own host; apps/mpa, the public website on Fresh, rendered on the server. All three call apps/api, the SPA over REST, the call route and the WebSocket, the admin app over REST, the MPA over REST for the blog, contact links, the catalog and the newsletter. Servers: apps/api on Hono (auth, CQRS dispatch, REST, the call route, the WebSocket) and apps/worker, which runs the outbox jobs. Data: Postgres 18 behind PgBouncer is the source of truth, Valkey holds rate limits, sign-in flows and the cache, and Garage stores files with the files profile. Docker Compose also runs Traefik and, with the monitoring profile, VictoriaMetrics, VictoriaLogs and Grafana. Shared code: libs/domain, libs/server, libs/ui, libs/platform and the @spy4x packages on JSR.</desc>
   <style>
     .bg { fill: #ffffff; stroke: #d0d7de; }
     .t { fill: #1f2328; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; }
@@ -63,7 +63,7 @@
   <text class="t m" x="56" y="226">REST, call route,</text>
   <text class="t m" x="56" y="242">WebSocket</text>
   <line class="line" x1="480" y1="188" x2="400" y2="258" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
-  <text class="t m" x="452" y="232">REST, WebSocket</text>
+  <text class="t m" x="452" y="232">REST</text>
   <line class="line" x1="780" y1="188" x2="450" y2="270" marker-end="url(#arrow)"/>
   <text class="t m" x="664" y="226">REST: blog, catalog,</text>
   <text class="t m" x="664" y="242">newsletter</text>
@@ -91,7 +91,7 @@
   <text class="t tier" x="40" y="412">DATA</text>
   <rect class="box data" x="40" y="422" width="200" height="86" rx="8"/>
   <text class="t h" x="56" y="448">Valkey</text>
-  <text class="t m" x="56" y="470">rate limits, sign-in codes,</text>
+  <text class="t m" x="56" y="470">rate limits, sign-in flows,</text>
   <text class="t m" x="56" y="488">API cache</text>
 
   <rect class="box data" x="260" y="422" width="360" height="86" rx="8"/>
