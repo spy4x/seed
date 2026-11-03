@@ -23,6 +23,8 @@ notes is deleted, and one in a thousand has the rare word `zeppelin` in its titl
 the cap every group has. The members are generated people without a sign-in key, so nobody can sign
 in as one.
 
+To build or remove a tier, see [Run the load tests](load-tests.md#one-large-group).
+
 ## Where the budgets break
 
 | Measure                            | Budget | First tier over it                                                                                                                                     |
@@ -153,6 +155,19 @@ Execution Time: 142.756 ms
 
 The planner uses the search index only because it covers exactly the live notes, and reads all
 100,000 of them.
+
+</details>
+
+<details>
+<summary>Search "budget" at L (100 ms)</summary>
+
+```text
+->  Bitmap Heap Scan on notes notes_1  (actual time=8.723..24.872 rows=30938.00 loops=1)
+      ->  Bitmap Index Scan on idx_notes_search_vector_active  (actual time=7.396..7.397 rows=34231.00 loops=1)
+Execution Time: 100.341 ms
+```
+
+Finding the matches takes 25 ms; ranking the 30,938 of them takes the rest.
 
 </details>
 

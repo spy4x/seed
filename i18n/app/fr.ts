@@ -2190,7 +2190,7 @@ export default {
   "Benchmark.noLargeBody": "Créez-en un avec le générateur, puis rechargez cette page :",
   "Benchmark.copyCommand": "Copier la commande",
   "Benchmark.noLargeFoot":
-    "Les tailles et la façon de supprimer le groupe ensuite figurent dans docs/load-tests.md.",
+    "Les tailles et la façon de supprimer le groupe ensuite figurent dans docs/large-group.md.",
   "Benchmark.lastStoppedTitle": "Le dernier test s’est arrêté à l’étape « {measure} »",
   "Benchmark.lastStoppedBody":
     "L’onglet s’est fermé avant la fin du test, ce qui signifie généralement qu’il a manqué de mémoire ou d’espace de stockage. Groupe : {group}, démarré {time}.",
