@@ -308,6 +308,101 @@ Deno.test(`blog: writes, audit rows and the checks every write makes`, async (t)
   })
 })
 
+Deno.test(`blog: every save keeps the post's fields as an earlier version, the newest 50 (#418)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const lee = await operator(sql, `Lee Park`)
+    const id = uuidV7()
+    const first = fields(`hello`, { bodyMd: `The good paragraph.`, tldr: [`One`] })
+    await blog.create(id, first, maya)
+
+    await t.step(`keeps the created fields, with who saved them`, async () => {
+      const list = await blog.revisions(id)
+      expect(list?.map((row) => [row.title, row.savedBy])).toEqual([[`Post hello`, `Maya Chen`]])
+      expect(await blog.revision(id, list![0].id)).toMatchObject({
+        ...first,
+        savedBy: `Maya Chen`,
+      })
+    })
+
+    await t.step(`keeps each save, newest first, and the earlier text stays readable`, async () => {
+      await blog.update(
+        id,
+        1,
+        fields(`hello`, { title: `Worse`, bodyMd: `Saved over.` }),
+        false,
+        lee,
+      )
+      const list = await blog.revisions(id)
+      expect(list?.map((row) => [row.title, row.savedBy])).toEqual([
+        [`Worse`, `Lee Park`],
+        [`Post hello`, `Maya Chen`],
+      ])
+      expect((await blog.revision(id, list![1].id))?.bodyMd).toBe(`The good paragraph.`)
+    })
+
+    await t.step(`keeps nothing for a save that changed no field`, async () => {
+      await blog.update(
+        id,
+        2,
+        fields(`hello`, { title: `Worse`, bodyMd: `Saved over.` }),
+        false,
+        maya,
+      )
+      expect((await blog.revisions(id))?.length).toBe(2)
+    })
+
+    await t.step(`keeps the newest 50 and deletes the older ones in the same save`, async () => {
+      for (let version = 3; version <= 52; version++) {
+        await blog.update(id, version, fields(`hello`, { bodyMd: `Save ${version}.` }), false, maya)
+      }
+      const list = await blog.revisions(id)
+      expect(list?.length).toBe(50)
+      // 52 versions were kept: the create's and Lee's are gone, the oldest left is the next save's.
+      expect((await blog.revision(id, list!.at(-1)!.id))?.bodyMd).toBe(`Save 3.`)
+      expect((await blog.revision(id, list![0].id))?.bodyMd).toBe(`Save 52.`)
+    })
+
+    await t.step(
+      `answers no version of another post, and no list for a post that is gone`,
+      async () => {
+        const other = uuidV7()
+        await blog.create(other, fields(`other`), maya)
+        const [mine] = (await blog.revisions(id))!
+        expect(await blog.revision(other, mine.id)).toBeNull()
+        expect(await blog.revisions(uuidV7())).toBeNull()
+      },
+    )
+
+    await t.step(`names an operator without a name by their address`, async () => {
+      const [{ id: nameless }] = await sql<{ id: number }[]>`
+        WITH auth_user AS (INSERT INTO auth_users DEFAULT VALUES RETURNING id)
+        INSERT INTO users (id, role) SELECT id, 3 FROM auth_user RETURNING id
+      `
+      await sql`INSERT INTO auth_email_owners (email, user_id) VALUES ('ops@example.com', ${nameless})`
+      const post = uuidV7()
+      await blog.create(post, fields(`nameless`), { userId: nameless, requestId: null })
+      expect((await blog.revisions(post))?.[0].savedBy).toBe(`ops@example.com`)
+    })
+
+    await t.step(`deletes a post's versions with it`, async () => {
+      const post = await blog.get(id)
+      await blog.delete(id, post!.version, maya)
+      const [{ rows }] = await sql<{ rows: number }[]>`
+        SELECT COUNT(*)::int AS rows FROM blog_post_revisions WHERE post_id = ${id}
+      `
+      expect(rows).toBe(0)
+    })
+
+    await t.step(`keeps no version of Seed's own posts from files`, async () => {
+      await upsertSeedPosts(sql, [seedPost(`from-a-file`)])
+      const post = await bySlug(sql, `from-a-file`)
+      expect(await blog.revisions(post.id)).toEqual([])
+    })
+  })
+})
+
 Deno.test(`blog: two operators publishing at once publish once`, async () => {
   await withSchema(async (sql) => {
     const blog = new PostgresBlogRepository(sql)

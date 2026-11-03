@@ -1026,6 +1026,30 @@ CREATE TRIGGER blog_posts_slug_update
     FOR EACH ROW WHEN (OLD.slug IS DISTINCT FROM NEW.slug)
     EXECUTE FUNCTION keep_blog_slug_redirect();
 
+-- #418: a post's earlier versions. See migration 2026_12_14_0001_blog_post_revisions.sql.
+CREATE TABLE blog_post_revisions (
+    id UUID PRIMARY KEY,
+    post_id UUID NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+    slug VARCHAR(100) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    seo_title VARCHAR(70),
+    description VARCHAR(300) NOT NULL,
+    tldr TEXT[] DEFAULT '{}' NOT NULL,
+    topic VARCHAR(50),
+    cover_url VARCHAR(2000),
+    cover_alt VARCHAR(300),
+    author_url VARCHAR(2000),
+    body_md TEXT NOT NULL,
+    language TEXT NOT NULL,
+    translation_of UUID,
+    saved_by_id INT4,
+    saved_by_name VARCHAR(320),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_blog_post_revisions_post
+    ON blog_post_revisions (post_id, created_at DESC, id DESC);
+
 -- #229: a person's data exports. See migration 2026_12_01_0001_data_exports.sql.
 CREATE TABLE data_exports (
     id UUID PRIMARY KEY,
