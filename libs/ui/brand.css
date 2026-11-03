@@ -11,14 +11,18 @@
    (the values next/font computes for Geist), so the swap barely moves the layout.
 
    Each family is split in two by `unicode-range`, so a page downloads only what its text needs.
-   The `-latin-cyrillic` file, 42 KB against 70, holds every letter the website's languages use;
-   the full file serves the rest of the font (Vietnamese, Greek, symbols). The two ranges never
-   overlap and leave out Arabic and CJK, which Geist lacks, so those pages ask for neither file for
-   their own letters. To update: `npm pack geist@<version>`, copy the two files as
-   `geist-sans.var.woff2` and `geist-mono.var.woff2` and LICENSE.txt into the three folders, cut
-   each `-latin-cyrillic` file with fontTools 4.60.1 and copy it beside them:
+   The `-latin-cyrillic` file, 35 KB (sans) and 28 KB (mono) against 70, holds every letter the
+   website's languages use, with only the OpenType features a browser applies by default and
+   `tnum`, which `tabular-nums` asks for: the stylistic sets, fractions and other features no
+   page turns on are left out. The full file serves the rest of the font (Vietnamese, Greek,
+   symbols) with every feature. The two ranges never overlap and leave out Arabic and CJK, which
+   Geist lacks, so those pages ask for neither file for their own letters. To update: `npm pack
+   geist@<version>`, copy the two files as `geist-sans.var.woff2` and `geist-mono.var.woff2` and
+   LICENSE.txt into the three folders, cut each `-latin-cyrillic` file with fontTools 4.60.1 and
+   copy it beside them:
 
-     pyftsubset geist-sans.var.woff2 --flavor=woff2 --layout-features='*' \
+     pyftsubset geist-sans.var.woff2 --flavor=woff2 \
+       --layout-features=ccmp,locl,mark,mkmk,rlig,calt,clig,curs,kern,liga,rclt,rvrn,tnum \
        --output-file=geist-sans-latin-cyrillic.var.woff2 --unicodes="<its face's unicode-range>"
 
    and set the full file's range to the code points the full font covers outside it. */

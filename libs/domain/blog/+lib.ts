@@ -46,6 +46,8 @@ export const BLOG_COVER_URL_MAX_LENGTH = 2000
 export const BLOG_COVER_ALT_MAX_LENGTH = 300
 /** The longest author name shown on a post (`author_name`). */
 export const BLOG_AUTHOR_NAME_MAX_LENGTH = 101
+/** The longest author link (`author_url`, migration `2026_12_13_0001_blog_author_url.sql`). */
+export const BLOG_AUTHOR_URL_MAX_LENGTH = 2000
 /** The longest body, in Markdown. */
 export const BLOG_BODY_MAX_LENGTH = 200_000
 /** The longest search text of the admin list. */
@@ -113,6 +115,8 @@ export interface BlogPost {
   authorId: number | null
   /** The name shown on the post, kept when the account is gone. */
   authorName: string | null
+  /** An `https:` page about the author, which the name on the post links to; `null` for none. */
+  authorUrl: string | null
   /** The mailing list the post is emailed to when it goes live, or `null` for none. */
   newsletterList: string | null
   /** When its newsletter issue was queued; set once ever. */
@@ -227,6 +231,8 @@ export interface PublicBlogPost extends PublicBlogPostSummary {
   segments: BlogSegment[]
   headings: BlogHeading[]
   authorName: string | null
+  /** An `https:` page about the author, which the byline links to, or `null`. */
+  authorUrl: string | null
   /**
    * The post's other language versions that are live, without the post itself: the post it
    * translates and that post's other translations. Empty when it has none.
@@ -312,6 +318,7 @@ const postFields = {
   "topic?": `string | null`,
   "coverUrl?": `string | null`,
   "coverAlt?": `string | null`,
+  "authorUrl?": `string | null`,
   bodyMd: `string`,
   /** One of the languages the apps ship; left out, the product's main language. */
   "language?": type.enumerated(...LANGUAGES),
@@ -373,6 +380,7 @@ export type BlogField =
   | `topic`
   | `coverUrl`
   | `coverAlt`
+  | `authorUrl`
   | `bodyMd`
   | `language`
   | `translationOf`
@@ -387,6 +395,7 @@ export interface BlogPostFields {
   topic: string | null
   coverUrl: string | null
   coverAlt: string | null
+  authorUrl: string | null
   bodyMd: string
   language: Language
   translationOf: string | null
@@ -431,8 +440,8 @@ export function isHttpsUrl(url: string): boolean {
 /**
  * Trims and checks a post's fields. Throws {@link BlogError} with the field it is about: a
  * missing title or description, a slug that is no slug, more than {@link BLOG_TLDR_MAX} key
- * points, a cover that is not `https:` or has no description, a text past its column, or a NUL
- * or broken character anywhere.
+ * points, a cover or author link that is not `https:`, a cover with no description, a text past
+ * its column, or a NUL or broken character anywhere.
  */
 export function parseBlogPostFields(
   input: Pick<BlogPostCreateRequest, Exclude<keyof BlogPostCreateRequest, `id`>>,
@@ -450,6 +459,7 @@ export function parseBlogPostFields(
     topic: optional(input.topic),
     coverUrl: optional(input.coverUrl),
     coverAlt: optional(input.coverAlt),
+    authorUrl: optional(input.authorUrl),
     bodyMd: input.bodyMd,
     language: isLanguage(input.language) ? input.language : DEFAULT_LANGUAGE,
     translationOf: input.translationOf ?? null,
@@ -462,6 +472,7 @@ export function parseBlogPostFields(
     [`topic`, fields.topic],
     [`coverUrl`, fields.coverUrl],
     [`coverAlt`, fields.coverAlt],
+    [`authorUrl`, fields.authorUrl],
     [`bodyMd`, fields.bodyMd],
     ...fields.tldr.map((point): [BlogField, string] => [`tldr`, point]),
   ]
@@ -549,6 +560,20 @@ export function parseBlogPostFields(
     )
   }
   if (fields.coverUrl === null) fields.coverAlt = null
+  if (fields.authorUrl !== null) {
+    if (!isHttpsUrl(fields.authorUrl)) {
+      fail(`authorUrl`, `Enter a full https:// link to the author's page.`, { code: `httpsUrl` })
+    }
+    // Stored as the parser writes it, as the cover is, which the database checks for.
+    fields.authorUrl = new URL(fields.authorUrl).href
+    if (characters(fields.authorUrl) > BLOG_AUTHOR_URL_MAX_LENGTH) {
+      fail(
+        `authorUrl`,
+        `Keep the author link to ${BLOG_AUTHOR_URL_MAX_LENGTH} characters.`,
+        tooLong(BLOG_AUTHOR_URL_MAX_LENGTH),
+      )
+    }
+  }
   if (characters(fields.bodyMd) > BLOG_BODY_MAX_LENGTH) {
     fail(
       `bodyMd`,
@@ -557,6 +582,26 @@ export function parseBlogPostFields(
     )
   }
   return fields
+}
+
+/**
+ * A save's fields: {@link BlogPostFields} with `language` and `translationOf` only when the request
+ * named them, so a save that leaves them out keeps the post's language and its link (#530).
+ */
+export type BlogPostEdit =
+  & Omit<BlogPostFields, `language` | `translationOf`>
+  & Partial<Pick<BlogPostFields, `language` | `translationOf`>>
+
+/** {@link parseBlogPostFields} for a save: a language or link the request left out stays out. */
+export function parseBlogPostEdit(
+  input: Parameters<typeof parseBlogPostFields>[0],
+): BlogPostEdit {
+  const { language, translationOf, ...fields } = parseBlogPostFields(input)
+  return {
+    ...fields,
+    ...(input.language === undefined ? {} : { language }),
+    ...(input.translationOf === undefined ? {} : { translationOf }),
+  }
 }
 
 /**
@@ -610,3 +655,26 @@ export type BlogAuditKind = typeof BLOG_AUDIT_KINDS[keyof typeof BLOG_AUDIT_KIND
 
 /** The job that publishes a scheduled post at its time and queues its newsletter issue. */
 export const BLOG_PUBLISH_JOB = `blog.publish`
+
+/** The job that tells IndexNow a post's addresses changed: it went live, changed, moved or left. */
+export const BLOG_INDEXNOW_JOB = `blog.indexnow`
+
+/** An IndexNow key: 8 to 128 letters, digits and dashes, as the protocol asks. */
+const INDEXNOW_KEY_PATTERN = /^[A-Za-z0-9-]{8,128}$/
+
+/**
+ * The site's IndexNow key from `INDEXNOW_KEY`, or `null` when it is unset or empty: then nothing
+ * is pinged and the website serves no key file. The worker pings with it, and the public website
+ * serves it at `/<key>.txt`, so both read it here.
+ *
+ * @throws Error when it is set to anything but 8 to 128 letters, digits and dashes, so a
+ *   misconfigured process stops at start. The message never holds the value.
+ */
+export function readIndexNowKey(env: { get(name: string): string | undefined }): string | null {
+  const key = env.get(`INDEXNOW_KEY`)?.trim() ?? ``
+  if (key === ``) return null
+  if (!INDEXNOW_KEY_PATTERN.test(key)) {
+    throw new Error(`INDEXNOW_KEY must be 8 to 128 letters, digits and dashes`)
+  }
+  return key
+}

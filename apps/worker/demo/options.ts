@@ -46,6 +46,9 @@ export interface DemoAdmin {
   password: string
 }
 
+/** The variables {@link readDemoAdmin} reads; the worker passes exactly these. */
+export const DEMO_ADMIN_ENV_NAMES = [`DEMO_MODE`, `DEMO_ADMIN_PASSWORD`, `AUTH_PEPPER`] as const
+
 /**
  * Reads the public demo's private administrator (docs/demo.md): `DEMO_ADMIN_PASSWORD`, with the
  * API's `AUTH_PEPPER` to hash it so the API accepts it. `null` when the demo is off or the password

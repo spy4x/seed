@@ -10,9 +10,12 @@ export type ShotKind = "desktop" | "mobile"
  */
 export const DARK_MEDIA = `(prefers-color-scheme: dark) and (scripting: enabled)`
 
-/** The two widths each screenshot is saved at, widest first, and the height at the widest. */
-const SIZES: Record<ShotKind, { widths: readonly [number, number]; height: number }> = {
-  desktop: { widths: [1280, 640], height: 800 },
+/**
+ * The widths each screenshot is saved at, widest first, and the height at the widest. A desktop
+ * shot's 800 px file is the one a phone at device scale 2 fetches for a picture as wide as the page.
+ */
+const SIZES: Record<ShotKind, { widths: readonly number[]; height: number }> = {
+  desktop: { widths: [1280, 800, 640], height: 800 },
   mobile: { widths: [780, 390], height: 1688 },
 }
 

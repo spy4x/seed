@@ -483,7 +483,8 @@ export default {
   "AdminBlogDialogs.slugRule": "استخدم أحرفًا لاتينية صغيرة وأرقامًا وشرطات فقط.",
   "AdminBlogDialogs.changeUrlTitle": "تغيير رابط هذه التدوينة؟",
   "AdminBlogDialogs.changeUrl": "تغيير الرابط",
-  "AdminBlogDialogs.linksBreak": "ستتوقف الروابط إلى <path>{path}</path> عن العمل.",
+  "AdminBlogDialogs.linksRedirect":
+    "ستبقى الروابط إلى <path>{path}</path> تعمل، وستنقل القارئ إلى الرابط الجديد.",
   "AdminBlogDialogs.newSlug": "المسار الجديد",
   "AdminBlogDialogs.slugHint": "أحرف لاتينية صغيرة وأرقام وشرطات.",
   "AdminBlogDialogs.futureTime": "اختر وقتًا في المستقبل.",
@@ -527,25 +528,37 @@ export default {
   "AdminBlogDialogs.goesLiveAt": "ستُنشر على <path>{path}</path> وتُضاف إلى موجز RSS وخريطة الموقع.",
   "AdminBlogDialogs.mailingList": "القائمة البريدية",
   "AdminBlogDialogs.alsoEmail": {
-    "zero": "أرسل هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد",
-    "one": "أرسل هذه التدوينة أيضًا إلى مشترك واحد مؤكَّد",
-    "two": "أرسل هذه التدوينة أيضًا إلى مشتركَين مؤكَّدين",
-    "few": "أرسل هذه التدوينة أيضًا إلى {count} مشتركين مؤكَّدين",
-    "many": "أرسل هذه التدوينة أيضًا إلى {count} مشتركًا مؤكَّدًا",
-    "other": "أرسل هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد",
+    "zero":
+      "أرسل هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد (اللغة: <language>{language}</language>)",
+    "one": "أرسل هذه التدوينة أيضًا إلى مشترك واحد مؤكَّد (اللغة: <language>{language}</language>)",
+    "two": "أرسل هذه التدوينة أيضًا إلى مشتركَين مؤكَّدين (اللغة: <language>{language}</language>)",
+    "few":
+      "أرسل هذه التدوينة أيضًا إلى {count} مشتركين مؤكَّدين (اللغة: <language>{language}</language>)",
+    "many":
+      "أرسل هذه التدوينة أيضًا إلى {count} مشتركًا مؤكَّدًا (اللغة: <language>{language}</language>)",
+    "other":
+      "أرسل هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد (اللغة: <language>{language}</language>)",
   },
   "AdminBlogDialogs.alsoEmailList": {
-    "zero": "أرسل هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد في <list>{list}</list>",
-    "one": "أرسل هذه التدوينة أيضًا إلى مشترك واحد مؤكَّد في <list>{list}</list>",
-    "two": "أرسل هذه التدوينة أيضًا إلى مشتركَين مؤكَّدين في <list>{list}</list>",
-    "few": "أرسل هذه التدوينة أيضًا إلى {count} مشتركين مؤكَّدين في <list>{list}</list>",
-    "many": "أرسل هذه التدوينة أيضًا إلى {count} مشتركًا مؤكَّدًا في <list>{list}</list>",
-    "other": "أرسل هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد في <list>{list}</list>",
+    "zero":
+      "أرسل هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد في <list>{list}</list> (اللغة: <language>{language}</language>)",
+    "one":
+      "أرسل هذه التدوينة أيضًا إلى مشترك واحد مؤكَّد في <list>{list}</list> (اللغة: <language>{language}</language>)",
+    "two":
+      "أرسل هذه التدوينة أيضًا إلى مشتركَين مؤكَّدين في <list>{list}</list> (اللغة: <language>{language}</language>)",
+    "few":
+      "أرسل هذه التدوينة أيضًا إلى {count} مشتركين مؤكَّدين في <list>{list}</list> (اللغة: <language>{language}</language>)",
+    "many":
+      "أرسل هذه التدوينة أيضًا إلى {count} مشتركًا مؤكَّدًا في <list>{list}</list> (اللغة: <language>{language}</language>)",
+    "other":
+      "أرسل هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد في <list>{list}</list> (اللغة: <language>{language}</language>)",
   },
   "AdminBlogDialogs.sentOnce": "تُرسل مرة واحدة عند نشر التدوينة، ولا يمكن استرجاعها.",
   "AdminBlogDialogs.newsletterOff":
     "النشرة البريدية متوقفة، لذا لن تُرسل هذه التدوينة إلى قائمة <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly": "تصل فقط إلى المشتركين الذين اشتركوا بلغة التدوينة.",
+  "AdminBlogDialogs.noReaders":
+    "لا يوجد بعد مشتركون مؤكَّدون بلغة <language>{language}</language>، لذا لا يمكن إرسال هذه التدوينة بالبريد.",
   "AdminBlogEditor.leaveMessage": "ستفقد تغييراتك على هذه التدوينة.",
   "AdminBlogEditor.doneScheduled": "جُدولت للنشر في {at}.",
   "AdminBlogEditor.donePublished": "نُشرت.",
@@ -647,7 +660,7 @@ export default {
   "AdminBlogEditor.settings": "إعدادات التدوينة",
   "AdminBlogEditor.slug": "المسار",
   "AdminBlogEditor.slugLocked":
-    "مقفل بعد النشر. لتغييره استخدم «تغيير الرابط…»، وستتوقف الروابط القديمة عن العمل.",
+    "مقفل بعد النشر. لتغييره استخدم «تغيير الرابط…»، وستنقل الروابط القديمة القارئ إلى الرابط الجديد.",
   "AdminBlogEditor.slugHint":
     "رابط التدوينة: <path>{path}</path>. أحرف لاتينية صغيرة وأرقام وشرطات.",
   "AdminBlogEditor.slugHintEmpty": "يُملأ تلقائيًا من العنوان. أحرف لاتينية صغيرة وأرقام وشرطات.",
@@ -662,6 +675,9 @@ export default {
   "AdminBlogEditor.addPoint": "إضافة نقطة",
   "AdminBlogEditor.topic": "الموضوع",
   "AdminBlogEditor.topicHint": "يجمع التدوينات في صفحة المدونة. اختر موضوعًا أو اكتب موضوعًا جديدًا.",
+  "AdminBlogEditor.authorUrl": "رابط الكاتب",
+  "AdminBlogEditor.authorUrlHint":
+    "سيصبح اسم الكاتب في التدوينة رابطًا إلى هذه الصفحة، مثل صفحة «من أنا»، ليعرف القرّاء ومحركات البحث من كتبها. اتركه فارغًا إن لم ترد رابطًا.",
   "AdminBlogEditor.coverUrl": "رابط صورة الغلاف",
   "AdminBlogEditor.coverUrlHint":
     "رابط كامل يبدأ بـ https:// لصورة عريضة بمقاس 1200×630، على خادم يسمح بعرضها في مواقع أخرى. اتركه فارغًا إن لم ترد غلافًا.",
@@ -2049,6 +2065,8 @@ export default {
   "AdminUsers.noName": "بلا اسم",
   "AdminBlogEditor.language": "اللغة",
   "AdminBlogEditor.languageHint": "اللغة التي كُتبت بها التدوينة. يعرضها الموقع في مدونة تلك اللغة.",
+  "AdminBlogEditor.languageMoves":
+    "عند الحفظ تنتقل التدوينة إلى <path>{path}</path>، ويُحوِّل العنوان القديم إليها.",
   "AdminBlogEditor.translationOf": "ترجمة لـ",
   "AdminBlogEditor.translationOfHint":
     "التدوينة التي تترجمها هذه. يربط الموقع بينهما كنسختين لغويتين بعد نشر كلتيهما.",

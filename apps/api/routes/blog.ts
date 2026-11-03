@@ -4,6 +4,7 @@ import {
   BLOG_TOPIC_MAX_LENGTH,
   blogSlugProblem,
   type BlogTopic,
+  type BlogTranslation,
   type PublicBlogFeedItem,
   type PublicBlogPost,
   type PublicBlogPostSummary,
@@ -12,6 +13,7 @@ import {
   createPublicFeed,
   listPublicPosts,
   listPublicTopics,
+  readMovedPost,
   readPublicPost,
 } from "@server/blog/public-blog.ts"
 import { errorResponse } from "../services/error-response.ts"
@@ -23,6 +25,8 @@ export const BLOG_POST_NOT_FOUND = `This post is not here`
 export interface PublicBlogReads {
   list(topic: string | null): Promise<PublicBlogPostSummary[]>
   get(slug: string): Promise<{ post: PublicBlogPost; readNext: PublicBlogPostSummary[] } | null>
+  /** Where a live post that moved away from `slug` lives now, or `null`. */
+  moved(slug: string): Promise<BlogTranslation | null>
   topics(): Promise<BlogTopic[]>
   feed(): Promise<PublicBlogFeedItem[]>
 }
@@ -34,7 +38,9 @@ export interface PublicBlogReads {
  * an address that never existed.
  *
  * - `GET /posts?topic=` lists live posts, newest first.
- * - `GET /posts/:slug` answers one post, rendered, and up to three to read next.
+ * - `GET /posts/:slug` answers one post, rendered, and up to three to read next. A slug a live post
+ *   moved away from with "Change URL" answers `{ moved: { language, slug } }`, the post's current
+ *   address, for the website to redirect to (#418); it is read only when no live post has the slug.
  * - `GET /topics` lists the topics of live posts with their counts.
  * - `GET /feed` answers the newest posts with their full HTML, for the RSS feed.
  *
@@ -54,9 +60,14 @@ export function createPublicBlogRoute(reads: PublicBlogReads, limit?: Middleware
     })
     .get(`/posts/:slug`, async (c) => {
       const slug = c.req.param(`slug`)
-      const found = blogSlugProblem(slug) === null ? await reads.get(slug) : null
-      if (!found) return errorResponse(c, `not_found`, { message: BLOG_POST_NOT_FOUND })
-      return c.json(found)
+      if (blogSlugProblem(slug) !== null) {
+        return errorResponse(c, `not_found`, { message: BLOG_POST_NOT_FOUND })
+      }
+      const found = await reads.get(slug)
+      if (found) return c.json(found)
+      const moved = await reads.moved(slug)
+      if (moved) return c.json({ moved })
+      return errorResponse(c, `not_found`, { message: BLOG_POST_NOT_FOUND })
     })
     .get(`/topics`, async (c) => c.json({ topics: await reads.topics() }))
     .get(`/feed`, async (c) => c.json({ posts: await reads.feed() }))
@@ -68,6 +79,7 @@ export function createPublicBlogReads(sql: postgres.Sql): PublicBlogReads {
   return {
     list: (topic) => listPublicPosts(sql, topic),
     get: (slug) => readPublicPost(sql, slug),
+    moved: (slug) => readMovedPost(sql, slug),
     topics: () => listPublicTopics(sql),
     feed,
   }

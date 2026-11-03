@@ -34,6 +34,7 @@ const posts: PublicBlogPost[] = published
       segments: body.segments,
       headings: body.headings,
       authorName: seed.author,
+      authorUrl: fields.authorUrl,
       translations: published
         .filter((other) =>
           other !== seed &&
@@ -61,6 +62,7 @@ const blog = createPublicBlogRoute({
         : null,
     )
   },
+  moved: () => Promise.resolve(null),
   topics: () => Promise.resolve([]),
   feed: () => Promise.resolve(posts),
 })

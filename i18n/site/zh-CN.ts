@@ -4,6 +4,7 @@ export default {
   "TryEntry.label": "体验在线演示",
   "TryEntry.line": "无需注册。你会得到一个带示例数据的访客账号，数据每晚清空。",
   "SiteNav.features": "功能",
+  "SiteNav.docs": "文档",
   "SiteNav.blog": "博客",
   "SiteNav.compare": "对比",
   "SiteNav.pricing": "价格",
@@ -223,6 +224,7 @@ export default {
     "<init>init</init> 会复制 env 文件，并生成所有密钥和 Web 推送密钥；<dev>dev</dev> 会启动 Traefik 和其他所有服务。然后打开 <url>http://app.localhost</url>。<readme>README</readme> 列出了每项配置和部署方法。",
   "HomeQuickStart.agent": "也可以直接让你的 AI 编程助手来做：<prompt></prompt>。",
   "HomeQuickStart.terminal": "终端",
+  "HomeQuickStart.guide": "阅读分步指南",
   "HomeStatus.eyebrow": "如实说明",
   "HomeStatus.title": "目前进展",
   "HomeStatus.lead": "Seed 现在就能用，并且在公开开发中。下面列出了哪些功能已经可用，哪些还没有。",
@@ -490,7 +492,7 @@ export default {
   "FeatureWebsite.fact2": "价格读取自应用的套餐目录",
   "FeatureWebsite.fact3": "双重确认订阅的邮件简报，一键退订，邮件以收件人的语言发送",
   "FeatureWebsite.fact4":
-    "在管理后台撰写的博客，支持每种语言的文章及其译文、主题、读者可动手试用的交互图表、RSS 订阅源和文章结构化数据",
+    "在管理后台撰写的博客，支持每种语言的文章及其译文、主题、读者可动手试用的交互图表、RSS 订阅源、文章结构化数据、文章网址变更后会自动跳转的旧链接，以及在文章发布或更新时立即通知搜索引擎的 IndexNow 推送",
   "FeatureWebsite.fact5": "在管理后台设置的联系方式，显示在页脚和结构化数据中",
   "FeatureWebsite.fact6":
     "可选的商品目录，适合网店，在管理后台编辑：商品照片、颜色、尺码、尺码表和售罄尺码，覆盖你销售的每种语言，并为每个商品和每个分享渠道生成一个短追踪链接",
@@ -775,6 +777,7 @@ export default {
   "Blog.ctaTitle": "一分钟看 {site} 跑起来",
   "Blog.published": "发布于<time>{date}</time>",
   "Blog.updated": "· 更新于<time>{date}</time>",
+  "Blog.alsoIn": "其他语言：<links></links>",
   "Blog.minutes": {
     "other": "· 阅读约 {count} 分钟",
   },

@@ -7,6 +7,7 @@ import { Field } from "@spy4x/preact-ui/field"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { DateTimeField } from "@spy4x/preact-ui/date-time-field"
 import { Input, Select } from "@spy4x/preact-ui/input"
+import { languageName } from "@spy4x/preact-ui/language-picker"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
 import { BLOG_SLUG_MAX_LENGTH, BLOG_SLUG_PATTERN, blogPostPath } from "@domain/blog"
@@ -122,7 +123,7 @@ function DialogBody(
   )
 }
 
-/** The new address of a published post, with the warning that old links break. */
+/** The new address of a published post, with the note that old links redirect to it (#418). */
 function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
   const t = useAdminText()
   const old = props.post?.slug ?? ``
@@ -139,7 +140,6 @@ function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
       busy={props.dialogPending}
       onCancel={props.onCloseDialog}
       cancelLabel={t.t(`AdminBlogDialogs.cancel`)}
-      tone="danger"
       title={t.t(`AdminBlogDialogs.changeUrlTitle`)}
       confirmLabel={t.t(`AdminBlogDialogs.changeUrl`)}
       onConfirm={() => {
@@ -150,7 +150,7 @@ function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
       <Stack gap="md">
         <p>
           <Rich
-            parts={t.parts(`AdminBlogDialogs.linksBreak`, {
+            parts={t.parts(`AdminBlogDialogs.linksRedirect`, {
               path: blogPostPath({
                 language: props.post?.language ?? props.value.language,
                 slug: old,
@@ -221,9 +221,11 @@ function PublishDialog(props: DialogsProps & { title: string }): JSX.Element {
   const late = at === null || new Date(at).getTime() <= now.getTime()
   const atError = scheduling && tried && late ? t.t(`AdminBlogDialogs.futureTime`) : null
   const target = list ?? chosen?.list ?? null
-  // The issue goes only to the subscribers of the post's language (#527).
+  // The issue goes only to the subscribers of the post's language (#527), so a list with none in
+  // it offers no email at all (#530).
   const readers = chosen?.byLanguage[value.language] ?? 0
-  const sending = canEmail && emailing && target !== null
+  const sending = canEmail && emailing && target !== null && (chosen === undefined || readers > 0)
+  const language = (text: string) => <span lang={value.language}>{text}</span>
   const warned = props.problems.length > 0
   const confirmLabel = scheduling
     ? t.t(warned ? `AdminBlogDialogs.scheduleAnyway` : `AdminBlogDialogs.schedule`)
@@ -334,24 +336,42 @@ function PublishDialog(props: DialogsProps & { title: string }): JSX.Element {
                 />
               </Field>
             )}
-            <Checkbox
-              checked={emailing}
-              data-e2e="admin-blog-email"
-              onChange={(e) => setEmailing(e.currentTarget.checked)}
-            >
-              {lists.length > 1
-                ? (
+            {readers === 0
+              ? (
+                <p class="text-sm text-muted" data-e2e="admin-blog-email-none">
                   <Rich
-                    parts={t.parts(`AdminBlogDialogs.alsoEmailList`, {
-                      count: readers,
-                      list: chosen.list,
+                    parts={t.parts(`AdminBlogDialogs.noReaders`, {
+                      language: languageName(value.language),
                     })}
-                    tags={{ list: path }}
+                    tags={{ language }}
                   />
-                )
-                : t.t(`AdminBlogDialogs.alsoEmail`, { count: readers })}
-            </Checkbox>
-            {emailing && (
+                </p>
+              )
+              : (
+                <Checkbox
+                  checked={emailing}
+                  data-e2e="admin-blog-email"
+                  onChange={(e) => setEmailing(e.currentTarget.checked)}
+                >
+                  {/* One span: Checkbox lays its children out as a row, which split the sentence. */}
+                  <span>
+                    <Rich
+                      parts={lists.length > 1
+                        ? t.parts(`AdminBlogDialogs.alsoEmailList`, {
+                          count: readers,
+                          list: chosen.list,
+                          language: languageName(value.language),
+                        })
+                        : t.parts(`AdminBlogDialogs.alsoEmail`, {
+                          count: readers,
+                          language: languageName(value.language),
+                        })}
+                      tags={{ list: path, language }}
+                    />
+                  </span>
+                </Checkbox>
+              )}
+            {sending && (
               <p class="text-sm text-muted" data-e2e="admin-blog-email-hint">
                 {t.t(`AdminBlogDialogs.sentOnce`)} {t.t(`AdminBlogDialogs.postLanguageOnly`)}
               </p>
