@@ -1,18 +1,17 @@
-/// <reference lib="deno.ns" />
 import postgres from "postgres"
-import { createSqlFromEnv } from "@spy4x/server/db"
+import { createSqlFromEnv, PostgresEnvName } from "@spy4x/server/db"
+import { exitProcess, processEnv, readEnvRecord } from "@spy4x/platform/server/process"
+import { runtimeFileSystem } from "@spy4x/platform/server/runtime-fs"
 import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { TelegramClient } from "@spy4x/integrations/telegram"
 import { readTelegramSetup } from "@server/telegram/setup.ts"
 import { queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
 import { loadDemoBlogPosts } from "@server/blog/seed-posts.ts"
-import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
 import { PostgresIdempotencyStore } from "@spy4x/server/idempotency"
 import { startIdempotencySweep } from "./idempotency-sweep.ts"
 import { shutdownSignal, ShutdownSignalError } from "@spy4x/platform/server/shutdown-signal"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { createMailSender, mailOffWarning, readMailSetup } from "@server/mail/mail.ts"
-import { systemEnv } from "@spy4x/server/config"
 import { readSubscribersSetup, subscribersOffWarning } from "@server/subscribers/subscribers.ts"
 // The API's own reading of the billing variables, so both processes run one provider.
 import { readBillingSetup } from "@server/billing/setup.ts"
@@ -26,7 +25,7 @@ import { s3ServerFiles } from "@server/files/files.ts"
 import { readServerFilesSetup } from "@server/files/settings.ts"
 import type { ImageScratch } from "@server/files/images.ts"
 
-const sql = createSqlFromEnv(Deno.env.toObject(), {
+const sql = createSqlFromEnv(readEnvRecord(Object.values(PostgresEnvName)), {
   transform: postgres.camel,
   applicationName: "app-backend",
   // In Compose these are connections to PgBouncer, which holds the connections to Postgres
@@ -36,7 +35,7 @@ const sql = createSqlFromEnv(Deno.env.toObject(), {
 })
 if (!sql) {
   console.error("❌ Missing environment variable: DB_HOST")
-  Deno.exit(1)
+  exitProcess(1)
 }
 
 // Aborts once, on the first SIGINT or SIGTERM, and removes both listeners itself.
@@ -45,19 +44,19 @@ const signal = shutdownSignal()
 console.log("Worker started")
 
 // Mail goes out from here, never from the API: a reset link is made and sent in one step.
-const domain = Deno.env.get("DOMAIN")
+const domain = processEnv.get("DOMAIN")
 if (!domain) {
   console.error("❌ Missing environment variable: DOMAIN")
-  Deno.exit(1)
+  exitProcess(1)
 }
-const mailSetup = readMailSetup(Deno.env)
+const mailSetup = readMailSetup(processEnv)
 const mailWarning = mailOffWarning(mailSetup)
 if (mailWarning) console.warn(mailWarning)
 
 // The worker signs the subscriber links it mails; the API checks them with the same secrets.
 const subscribersSetup = readSubscribersSetup(
-  Deno.env,
-  Deno.env.get("ENV") === "dev" ? "dev" : "prod",
+  processEnv,
+  processEnv.get("ENV") === "dev" ? "dev" : "prod",
 )
 const subscribersWarning = subscribersOffWarning(subscribersSetup)
 if (subscribersWarning) console.warn(subscribersWarning)
@@ -65,14 +64,18 @@ if (subscribersWarning) console.warn(subscribersWarning)
 // A per-member subscription's quantity is changed from here, through the outbox, so a provider
 // that is down never holds a new member back. A setup that cannot run stops the worker, as it stops
 // the API. The worker verifies no webhook, so it neither needs nor reads the webhook secret.
-const billingSetup = readBillingSetup(systemEnv, Deno.env.get("ENV") === "dev" ? "dev" : "prod", {
-  webhooks: false,
-})
+const billingSetup = readBillingSetup(
+  processEnv,
+  processEnv.get("ENV") === "dev" ? "dev" : "prod",
+  {
+    webhooks: false,
+  },
+)
 
 // A person's data export (docs/data-export.md) is built here and kept in the file store, and the
 // nightly clean-up deletes removed attachments and abandoned uploads from it. Without its settings
 // the export jobs fail and are retried, so a fixed env file still delivers them.
-const filesSetup = readServerFilesSetup(Deno.env)
+const filesSetup = readServerFilesSetup(processEnv)
 if (!filesSetup.success) console.warn(filesSetup.error)
 const files = filesSetup.success ? s3ServerFiles(filesSetup.output) : null
 
@@ -82,36 +85,44 @@ const files = filesSetup.success ? s3ServerFiles(filesSetup.output) : null
 const IMAGE_SCRATCH_ROOT = `/tmp/images`
 const imageScratch: ImageScratch = {
   async open(bytes) {
-    await Deno.mkdir(IMAGE_SCRATCH_ROOT, { recursive: true })
-    const dir = await Deno.makeTempDir({ dir: IMAGE_SCRATCH_ROOT })
+    await runtimeFileSystem.mkdirp(IMAGE_SCRATCH_ROOT)
+    const dir = await runtimeFileSystem.makeTempDir!(IMAGE_SCRATCH_ROOT)
     const input = `${dir}/original`
-    await Deno.writeFile(input, bytes)
+    await runtimeFileSystem.writeBytes!(input, bytes)
     return { dir, input }
   },
-  read: (path) => Deno.readFile(path),
-  close: (dir) => Deno.remove(dir, { recursive: true }),
+  async read(path) {
+    const bytes = await runtimeFileSystem.readBytes!(path)
+    if (bytes === null) throw new Error(`No file at ${path}`)
+    return bytes
+  },
+  close: (dir) => runtimeFileSystem.removeTree!(dir),
 }
 
 // Notifications also go to a linked Telegram chat (#269, docs/telegram.md) while the bot is on. The
 // worker only sends, so it needs no webhook secret.
-const telegramSetup = readTelegramSetup(systemEnv, Deno.env.get("ENV") === "dev" ? "dev" : "prod", {
-  webhook: false,
-})
+const telegramSetup = readTelegramSetup(
+  processEnv,
+  processEnv.get("ENV") === "dev" ? "dev" : "prod",
+  {
+    webhook: false,
+  },
+)
 const telegram = telegramSetup
   ? new TelegramClient({ token: telegramSetup.token, apiBaseUrl: telegramSetup.apiBaseUrl })
   : null
 
 // The public demo (docs/demo.md) gives every new account its own sample groups.
-const demo = isDemoMode(Deno.env.toObject())
+const demo = isDemoMode(readEnvRecord([`DEMO_MODE`]))
 // The owner's private administrator on the demo, when `DEMO_ADMIN_PASSWORD` is set. A bad value
 // stops the worker here.
 let demoAdmin: DemoAdmin | null = null
 try {
-  demoAdmin = readDemoAdmin(Deno.env.toObject())
+  demoAdmin = readDemoAdmin(readEnvRecord([`DEMO_MODE`, `DEMO_ADMIN_PASSWORD`, `AUTH_PEPPER`]))
 } catch (error) {
   // A SeedConfigError: it names the variable, never its value.
   console.error(`❌ ${(error as Error).message}`)
-  Deno.exit(1)
+  exitProcess(1)
 }
 
 // A committed group change is announced on a Postgres channel; the API process, which holds the
@@ -123,7 +134,7 @@ const processor = createOutboxProcessor(
     store: createPostgresAuthStore(sql),
     sender: createMailSender(mailSetup, sql),
     // The API's own rule (apps/api/services/config.ts): plain HTTP only in development.
-    brand: { webAppUrl: `http${Deno.env.get("ENV") === "dev" ? "" : "s"}://${domain}` },
+    brand: { webAppUrl: `http${processEnv.get("ENV") === "dev" ? "" : "s"}://${domain}` },
     log: (line) => console.error(line),
   },
   billingSetup.provider,
@@ -154,7 +165,7 @@ await startRepeatingJobs(sql)
 // deploy brings their latest version. A broken file is logged and leaves the blog as it was:
 // `deno task check` refuses one before it ships.
 try {
-  await loadDemoBlogPosts(sql, { demo, fs: denoFileSystem })
+  await loadDemoBlogPosts(sql, { demo, fs: runtimeFileSystem })
 } catch (error) {
   console.error("Seed's blog posts were not loaded", error)
 }
