@@ -1064,7 +1064,10 @@ CREATE TABLE blog_post_revisions (
     translation_of UUID,
     saved_by_id INT4,
     saved_by_name VARCHAR(320),
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    -- 2026_12_14_0003_blog_publishing.sql.
+    intro VARCHAR(600),
+    related_feature VARCHAR(100)
 );
 
 CREATE INDEX idx_blog_post_revisions_post

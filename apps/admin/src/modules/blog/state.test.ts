@@ -384,6 +384,8 @@ const revisionOf = (id: string, changes: Partial<BlogRevision> = {}): BlogRevisi
   topic: post.topic,
   coverUrl: post.coverUrl,
   coverAlt: post.coverAlt,
+  intro: null,
+  relatedFeature: null,
   authorUrl: post.authorUrl,
   bodyMd: post.bodyMd,
   language: post.language,

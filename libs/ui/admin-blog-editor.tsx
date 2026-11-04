@@ -158,6 +158,8 @@ export type BlogDraftSource = Pick<
   | `topic`
   | `coverUrl`
   | `coverAlt`
+  | `intro`
+  | `relatedFeature`
   | `bodyMd`
   | `language`
   | `translationOf`

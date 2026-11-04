@@ -295,6 +295,8 @@ export interface BlogRevision extends BlogRevisionSummary {
   topic: string | null
   coverUrl: string | null
   coverAlt: string | null
+  intro: string | null
+  relatedFeature: string | null
   authorUrl: string | null
   bodyMd: string
   language: Language

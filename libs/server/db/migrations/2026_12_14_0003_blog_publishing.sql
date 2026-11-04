@@ -12,6 +12,8 @@
 --   and the article's address when it was made. NULL `crossposted_at`: still to do once the post is
 --   live. Every post published before this migration is settled now, so turning the cross-post on
 --   never posts the whole archive at once.
+-- - `blog_post_revisions` keeps `intro` and `related_feature` too, so an earlier version brings
+--   them back with the rest of the post's fields.
 --
 -- Nullable columns with no default change no row; the one UPDATE touches only published posts, a
 -- few hundred small rows at most, and a second run of it changes nothing it has not changed.
@@ -36,3 +38,7 @@ ALTER TABLE blog_posts
 
 UPDATE blog_posts SET crossposted_at = now()
 WHERE status = 'published' AND crossposted_at IS NULL;
+
+ALTER TABLE blog_post_revisions
+    ADD COLUMN IF NOT EXISTS intro VARCHAR(600),
+    ADD COLUMN IF NOT EXISTS related_feature VARCHAR(100);

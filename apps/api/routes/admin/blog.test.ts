@@ -69,6 +69,8 @@ const revision: BlogRevision = {
   topic: null,
   coverUrl: null,
   coverAlt: null,
+  intro: null,
+  relatedFeature: null,
   authorUrl: null,
   bodyMd: `Hi, as it was`,
   language: `en`,

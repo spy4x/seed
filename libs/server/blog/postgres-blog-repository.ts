@@ -226,7 +226,8 @@ export class PostgresBlogRepository {
   async revision(id: string, revisionId: string): Promise<BlogRevision | null> {
     const [row] = await this.sql<(Omit<BlogRevision, `savedAt`> & { savedAt: Date })[]>`
       SELECT id, created_at AS saved_at, saved_by_name AS saved_by, title, slug, description,
-        seo_title, tldr, topic, cover_url, cover_alt, author_url, body_md, language, translation_of
+        seo_title, tldr, topic, cover_url, cover_alt, intro, related_feature, author_url, body_md,
+        language, translation_of
       FROM blog_post_revisions
       WHERE id = ${revisionId} AND post_id = ${id}
     `
@@ -549,11 +550,13 @@ async function keepRevision(
 ): Promise<void> {
   await tx`
     INSERT INTO blog_post_revisions (
-      id, post_id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt,
-      author_url, body_md, language, translation_of, saved_by_id, saved_by_name, created_at
+      id, post_id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt, intro,
+      related_feature, author_url, body_md, language, translation_of, saved_by_id, saved_by_name,
+      created_at
     )
     SELECT ${uuidV7()}, post.id, post.slug, post.title, post.seo_title, post.description,
-      post.tldr, post.topic, post.cover_url, post.cover_alt, post.author_url, post.body_md,
+      post.tldr, post.topic, post.cover_url, post.cover_alt, post.intro, post.related_feature,
+      post.author_url, post.body_md,
       post.language, post.translation_of, ${actor.userId},
       COALESCE(
         (SELECT NULLIF(btrim(concat_ws(' ', first_name, last_name)), '')
@@ -568,11 +571,11 @@ async function keepRevision(
         ORDER BY created_at DESC, id DESC LIMIT 1
       ) AS newest
       WHERE (newest.slug, newest.title, newest.seo_title, newest.description, newest.tldr,
-          newest.topic, newest.cover_url, newest.cover_alt, newest.author_url, newest.body_md,
-          newest.language, newest.translation_of)
+          newest.topic, newest.cover_url, newest.cover_alt, newest.intro, newest.related_feature,
+          newest.author_url, newest.body_md, newest.language, newest.translation_of)
         IS NOT DISTINCT FROM (post.slug, post.title, post.seo_title, post.description, post.tldr,
-          post.topic, post.cover_url, post.cover_alt, post.author_url, post.body_md,
-          post.language, post.translation_of)
+          post.topic, post.cover_url, post.cover_alt, post.intro, post.related_feature,
+          post.author_url, post.body_md, post.language, post.translation_of)
     )
   `
   await tx`
