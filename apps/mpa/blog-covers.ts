@@ -46,6 +46,21 @@ export function coverImage(
   return post.coverUrl === null ? null : { src: post.coverUrl, ...COVER_SIZE }
 }
 
+/** Where the website serves the link-preview cards of Seed's own posts. */
+export const OG_CARDS_PATH = `/blog/og`
+
+/**
+ * The link-preview card of `post`, `<slug>.jpg` (made by `deno task og:blog`), or `null` for a
+ * post that has none. Every Seed post has one, which `og-cards.test.ts` checks; a product's post,
+ * written in the admin, shares its own cover or the site's image instead.
+ */
+export function ogCard(
+  post: Pick<PublicBlogPostSummary, `coverFile` | `slug`>,
+): { src: string; width: number; height: number } | null {
+  if (post.coverFile === null) return null
+  return { src: `${OG_CARDS_PATH}/${post.slug}.jpg`, width: 1200, height: 630 }
+}
+
 /** How wide a cover is drawn in a post list: beside the text from 640 px, full width below. */
 export const LIST_COVER_SIZES = `(min-width: 640px) 192px, calc(100vw - 32px)`
 

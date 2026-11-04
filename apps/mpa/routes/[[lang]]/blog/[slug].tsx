@@ -22,7 +22,7 @@ import {
   readPost,
   TOC_MIN_MINUTES,
 } from "../../../blog.ts"
-import { coverImage, listCoverImage } from "../../../blog-covers.ts"
+import { coverImage, listCoverImage, ogCard } from "../../../blog-covers.ts"
 import { CtaBand } from "../../../components/cta-band.tsx"
 import { featurePage } from "../../../features-data.tsx"
 import {
@@ -33,6 +33,7 @@ import {
   sectionLinks,
   SITE_NAME,
   SiteFrame,
+  type SitePageHead,
   spaLinks,
 } from "../../../site.tsx"
 import { define, type State } from "../../../utils.ts"
@@ -76,7 +77,6 @@ export const handler = define.handlers({
     const { post, readNext } = found
     if (post.language !== ctx.state.language) return ctx.redirect(postAddress(post), 301)
     const origin = ctx.state.webAppOrigin
-    const cover = coverImage(post)
     const t = siteTranslator(ctx.state.language)
     const body = resolveBody(post.segments, post.headings, await postFigures())
     warnHiddenFigures(post.slug, body.problems)
@@ -88,7 +88,7 @@ export const handler = define.handlers({
           title: post.seoTitle ?? post.title,
           description: post.description,
           ogType: `article`,
-          image: cover ? { url: absolute(origin, cover.src), alt: post.coverAlt ?? `` } : undefined,
+          image: shareImage(origin, post),
           jsonLd: postJsonLd(t, origin, post),
           alternates: [post, ...post.translations].map((version) => ({
             language: version.language,
@@ -115,6 +115,17 @@ export const handler = define.handlers({
     )
   },
 })
+
+/**
+ * The picture a link to the post shows: a Seed post's card (its title over its cover), else its
+ * cover, else nothing, and the site's own image is shared.
+ */
+function shareImage(origin: string, post: PublicBlogPost): SitePageHead[`image`] {
+  const card = ogCard(post)
+  if (card) return { url: absolute(origin, card.src), alt: post.title, ...card }
+  const cover = coverImage(post)
+  return cover ? { url: absolute(origin, cover.src), alt: post.coverAlt ?? `` } : undefined
+}
 
 /** The post's structured data: the `BlogPosting` and its trail, Home › Blog › the post. */
 function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost): unknown[] {

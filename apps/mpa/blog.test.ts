@@ -532,7 +532,7 @@ describe("a blog post", () => {
     expect(await author(null)).toEqual({ "@type": `Person`, name: `Ada Lovelace` })
   })
 
-  it("draws a cover file in both widths at its real size, and shares it at its full address (#733)", async () => {
+  it("draws a cover file in both widths at its real size, and shares the post's card at its full address (#733)", async () => {
     const post = { ...FULL, coverUrl: null, coverFile: `cron-jobs.webp` }
     const { body } = await (await blogSite(answers(post))).get("/blog/cron-jobs")
 
@@ -546,7 +546,10 @@ describe("a blog post", () => {
     expect(img).toContain(`sizes="(min-width: 720px) 672px, calc(100vw - 32px)"`)
     expect(img).toContain(`width="1600" height="900"`)
     expect(img).toContain(`alt="A clock over a server rack"`)
-    expect(metaContent(body, "og:image")).toBe(`${site}/blog/covers/cron-jobs.webp`)
+    expect(metaContent(body, "og:image")).toBe(`${site}/blog/og/cron-jobs.jpg`)
+    expect(metaContent(body, "og:image:width")).toBe(`1200`)
+    expect(metaContent(body, "og:image:height")).toBe(`630`)
+    expect(metaContent(body, "og:image:alt")).toBe(FULL.title)
     expect(jsonLdGraph(body)[0].image).toMatchObject({
       url: `${site}/blog/covers/cron-jobs.webp`,
       width: 1600,
