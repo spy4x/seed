@@ -10,6 +10,9 @@ import apiErrors from "../../docs/api-errors.md" with { type: "text" }
 import apps from "../../docs/apps.md" with { type: "text" }
 import backups from "../../docs/backups.md" with { type: "text" }
 import billing from "../../docs/billing.md" with { type: "text" }
+import billingLifecycle from "../../docs/billing-lifecycle.md" with { type: "text" }
+import billingOperator from "../../docs/billing-operator.md" with { type: "text" }
+import billingPlans from "../../docs/billing-plans.md" with { type: "text" }
 import capacity from "../../docs/capacity.md" with { type: "text" }
 import catalog from "../../docs/catalog.md" with { type: "text" }
 import certificates from "../../docs/certificates.md" with { type: "text" }
@@ -24,6 +27,10 @@ import ids from "../../docs/ids.md" with { type: "text" }
 import largeGroup from "../../docs/large-group.md" with { type: "text" }
 import loadTests from "../../docs/load-tests.md" with { type: "text" }
 import offline from "../../docs/offline.md" with { type: "text" }
+import offlineAppShell from "../../docs/offline-app-shell.md" with { type: "text" }
+import offlineData from "../../docs/offline-data.md" with { type: "text" }
+import offlineSignOut from "../../docs/offline-sign-out.md" with { type: "text" }
+import offlineWrites from "../../docs/offline-writes.md" with { type: "text" }
 import operatorAccess from "../../docs/operator-access.md" with { type: "text" }
 import products from "../../docs/products.md" with { type: "text" }
 import releases from "../../docs/releases.md" with { type: "text" }
@@ -86,7 +93,12 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         summary:
           `"Try it now" without signing up, keeping the account, the limits and the clean-up.`,
       },
-      { slug: `billing`, summary: `One subscription per group, paid through Stripe.` },
+      { slug: `billing`, summary: `Paid plans through Stripe, test mode first, then live.` },
+      { slug: `billing-plans`, summary: `Change a plan, add one, or add a limit a plan sells.` },
+      {
+        slug: `billing-operator`,
+        summary: `The admin panel's Billing pages, transfers, and Stripe's dashboard.`,
+      },
       { slug: `files`, summary: `Garage or another S3 store, signed uploads and downloads.` },
       { slug: `data-export`, summary: `Download my data, what the ZIP holds and how it expires.` },
       {
@@ -97,7 +109,10 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         slug: `telegram`,
         summary: `BotFather, the webhook, linking a chat, and adding a product's commands.`,
       },
-      { slug: `offline`, summary: `The SPA's local data and write queue, and how to remove it.` },
+      {
+        slug: `offline`,
+        summary: `Turn the offline layer or the WebSocket module off, or remove them.`,
+      },
       { slug: `aggregates`, summary: `Every file of the notes aggregate, in order.` },
       {
         slug: `admin-modules`,
@@ -115,6 +130,26 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
       },
       { slug: `ids`, summary: `Every id is a UUID version 7.` },
       { slug: `capacity`, summary: `How many users one server carries.` },
+      {
+        slug: `billing-lifecycle`,
+        summary: `A group's plan from checkout to cancellation, and its mails.`,
+      },
+      {
+        slug: `offline-data`,
+        summary: `What the SPA keeps on the device and how it reads offline.`,
+      },
+      {
+        slug: `offline-writes`,
+        summary: `How a change made offline reaches the server, or is refused.`,
+      },
+      {
+        slug: `offline-sign-out`,
+        summary: `What the SPA deletes, and keeps, when a person signs out.`,
+      },
+      {
+        slug: `offline-app-shell`,
+        summary: `How the service worker starts the app with no network.`,
+      },
       { slug: `large-group`, summary: `How one group behaves from a thousand notes to a million.` },
     ],
   },
@@ -140,6 +175,9 @@ const SOURCES: Readonly<Record<string, string>> = {
   apps,
   backups,
   billing,
+  "billing-lifecycle": billingLifecycle,
+  "billing-operator": billingOperator,
+  "billing-plans": billingPlans,
   capacity,
   catalog,
   certificates,
@@ -154,6 +192,10 @@ const SOURCES: Readonly<Record<string, string>> = {
   "large-group": largeGroup,
   "load-tests": loadTests,
   offline,
+  "offline-app-shell": offlineAppShell,
+  "offline-data": offlineData,
+  "offline-sign-out": offlineSignOut,
+  "offline-writes": offlineWrites,
   "operator-access": operatorAccess,
   products,
   releases,
