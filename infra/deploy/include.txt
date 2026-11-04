@@ -28,6 +28,8 @@ docs/aggregates.md
 docs/ids.md
 docs/api-errors.md
 docs/admin-modules.md
+docs/file-uploads.md
+docs/attachments-and-pictures.md
 docs/billing-plans.md
 docs/billing-operator.md
 docs/billing-lifecycle.md
