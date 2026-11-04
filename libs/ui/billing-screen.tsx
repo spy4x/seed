@@ -307,7 +307,7 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
       ? (
         <div class="flex flex-col gap-3">
           <SegmentedControl
-            class="w-full sm:w-auto"
+            class="w-full sm:w-auto [&>button]:flex-1 sm:[&>button]:flex-none"
             ariaLabel={t.t(`GroupBillingPanel.periodTitle`)}
             value={yearly ? `year` : `month`}
             onChange={(value) =>
