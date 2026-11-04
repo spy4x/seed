@@ -11,6 +11,7 @@ import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { LayoutCustomiser, type LayoutEntry } from "@spy4x/preact-ui/layout-customiser"
 import { Stack } from "@spy4x/preact-ui/layout"
+import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { DashboardGrid, WidgetCard, type WidgetSize } from "@spy4x/preact-ui/widget-card"
 import { createFormatters, type Formatters } from "@spy4x/time/format"
@@ -124,6 +125,11 @@ export interface OverviewScreenProps {
    * "New note" button.
    */
   emptyGroup?: { canCreate: boolean } | null
+  /**
+   * The group's Billing tab, when its owner must choose a plan before anything can be added (the
+   * free plan allows nothing): a calm line under the header links there. `null` or left out, none.
+   */
+  choosePlanHref?: string | null
   /** `data-e2e` of the range picker's button, so the page's `d` key can open it. */
   rangeDataE2E?: string
   navigate?: Navigate
@@ -230,6 +236,25 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
             </>
           )}
         />
+        {group && props.choosePlanHref && (
+          <Notice
+            tone="info"
+            data-e2e="overview-choose-plan"
+            action={
+              <Button
+                href={props.choosePlanHref}
+                navigate={navigate}
+                variant="outline"
+                size="sm"
+                class="min-h-11 sm:min-h-9"
+              >
+                {t.t(`OverviewScreen.choosePlan`)}
+              </Button>
+            }
+          >
+            {t.t(`OverviewScreen.choosePlanText`)}
+          </Notice>
+        )}
         {!group
           ? (
             <Card>

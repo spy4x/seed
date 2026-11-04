@@ -409,6 +409,25 @@ describe("the group overview", () => {
     expect(document.querySelectorAll("[data-e2e=overview-new-note]").length).toBe(0)
   })
 
+  it("asks the owner to choose a plan, linking the Billing tab, when the plan allows nothing yet", async () => {
+    await mount(READY, {
+      emptyGroup: { canCreate: false },
+      choosePlanHref: "/groups/g/billing",
+    })
+
+    expect(text("[data-e2e=overview-choose-plan]")).toContain("Choose a plan to start adding.")
+    const action = find("[data-e2e=overview-choose-plan] a")
+    expect(action.getAttribute("href")).toBe("/groups/g/billing")
+    expect(action.textContent).toBe("Choose a plan")
+    expect(document.querySelectorAll("[data-e2e=overview-new-note]").length).toBe(0)
+  })
+
+  it("shows no plan line to a group that can add notes", async () => {
+    await mount(READY, { emptyGroup: { canCreate: true } })
+
+    expect(document.querySelectorAll("[data-e2e=overview-choose-plan]").length).toBe(0)
+  })
+
   it("tells a person outside the group that it does not exist", async () => {
     await mount(READY, { group: null })
 
@@ -502,6 +521,7 @@ describe("the group overview in another language", () => {
             layoutError="⟦not saved⟧"
             onCopyLink={() => {}}
             emptyGroup={{ canCreate: true }}
+            choosePlanHref="/groups/g/billing"
             {...props}
           />
         </FormatContext.Provider>
@@ -519,6 +539,8 @@ describe("the group overview in another language", () => {
       const key of [
         "OverviewScreen.title",
         "OverviewScreen.emptyGroupText",
+        "OverviewScreen.choosePlanText",
+        "OverviewScreen.choosePlan",
         "OverviewScreen.customiseText",
         "OverviewScreen.last30Days",
       ]
