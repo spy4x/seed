@@ -47,15 +47,15 @@ Wasp إطار متكامل: تصف الصفحات والمسارات والدخ�
 
 ## البدائل جنبًا إلى جنب
 
-|                | Open SaaS                     | Seed                              | Makerkit                             | Supastarter                         |
-| -------------- | ----------------------------- | --------------------------------- | ------------------------------------ | ----------------------------------- |
-| السعر          | مجاني                         | مجاني                             | 299 أو 599 دولارًا مرة واحدة          | من 349 إلى 1,499 دولارًا مرة واحدة   |
-| الترخيص        | MIT                           | MIT                               | مدفوع؛ مجموعة Lite بترخيص MIT        | مدفوع                               |
-| التقنيات       | Wasp (React وNode.js وPrisma) | Hono وPreact وFresh؛ Postgres     | Next.js 16 أو TanStack Start وغيرهما | Next.js أو Nuxt أو TanStack Start   |
-| الفرق والأدوار | لا                            | نعم، من القارئ إلى المالك         | نعم، مع دعوات وصلاحيات               | نعم، مع دعوات وأدوار                |
-| المدفوعات      | Stripe وPolar وLemon Squeezy  | Stripe، لكل عضو                   | لم أتحقق                             | Stripe وLemon Squeezy وثلاثة غيرهما |
-| الإدارة        | لوحة إدارة                    | تطبيق مستقل على نطاقه، وسجل تدقيق | ليست في مجموعة Lite                  | لم أتحقق                            |
-| الاستضافة      | Fly.io أو Railway بأمر واحد   | Docker Compose على خادمك          | لم أتحقق                             | Vercel أو Serverless أو Docker      |
+|                | Open SaaS                      | Seed                              | Makerkit                             | Supastarter                         |
+| -------------- | ------------------------------ | --------------------------------- | ------------------------------------ | ----------------------------------- |
+| السعر          | مجاني                          | مجاني                             | 299 أو 599 دولارًا مرة واحدة          | من 349 إلى 1,499 دولارًا مرة واحدة   |
+| الترخيص        | MIT                            | MIT                               | مدفوع؛ مجموعة Lite بترخيص MIT        | مدفوع                               |
+| التقنيات       | Wasp مع React وNode.js وPrisma | Hono وPreact وFresh؛ Postgres     | Next.js 16 أو TanStack Start وغيرهما | Next.js أو Nuxt أو TanStack Start   |
+| الفرق والأدوار | لا                             | نعم، من القارئ إلى المالك         | نعم، مع دعوات وصلاحيات               | نعم، مع دعوات وأدوار                |
+| المدفوعات      | Stripe وPolar وLemon Squeezy   | Stripe، لكل عضو                   | لم أتحقق                             | Stripe وLemon Squeezy وثلاثة غيرهما |
+| الإدارة        | لوحة إدارة                     | تطبيق مستقل على نطاقه، وسجل تدقيق | ليست في مجموعة Lite                  | لم أتحقق                            |
+| الاستضافة      | Fly.io أو Railway بأمر واحد    | Docker Compose على خادمك          | لم أتحقق                             | Vercel أو Serverless أو Docker      |
 
 المصادر: [README الخاص بـ Open SaaS](https://github.com/wasp-lang/open-saas)، و[أسعار Makerkit](https://makerkit.dev/pricing)، و[Supastarter](https://supastarter.dev/)، و[README الخاص بـ Seed](https://github.com/spy4x/seed). أسعار Makerkit هي المخفّضة، وأسعاره الأصلية 349 و649 دولارًا. «لم أتحقق» تعني أنني لم أجده في الصفحات التي قرأتها، لا أنه غير موجود.
 

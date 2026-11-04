@@ -53,7 +53,7 @@ Next.js SaaS Starter قالب مجاني بترخيص MIT: دخول بالبري
 | -------------- | --------------------- | ----------------------------- | ---------------------------- | ------------------------------------ | ----------------------------------- |
 | السعر          | مجاني                 | مجاني                         | مجاني                        | 299 أو 599 دولارًا مرة واحدة          | من 349 إلى 1,499 دولارًا مرة واحدة   |
 | الترخيص        | MIT                   | MIT                           | MIT                          | مدفوع؛ مجموعة Lite بترخيص MIT        | مدفوع                               |
-| التقنيات       | Next.js وDrizzle      | Hono وPreact وFresh؛ Postgres | Wasp (React وNode.js)        | Next.js 16 أو TanStack Start وغيرهما | Next.js أو Nuxt أو TanStack Start   |
+| التقنيات       | Next.js وDrizzle      | Hono وPreact وFresh؛ Postgres | Wasp مع React وNode.js       | Next.js 16 أو TanStack Start وغيرهما | Next.js أو Nuxt أو TanStack Start   |
 | الفرق والأدوار | المالك والعضو         | من القارئ إلى المالك          | لا                           | نعم، مع دعوات                        | نعم، مع دعوات                       |
 | بريد الدعوة    | لا يُرسل               | نعم                           | لا فرق                       | لم أتحقق                             | لم أتحقق                            |
 | الدفع          | Stripe، واحد لكل فريق | Stripe، لكل عضو               | Stripe وPolar وLemon Squeezy | لم أتحقق                             | Stripe وLemon Squeezy وثلاثة غيرهما |
