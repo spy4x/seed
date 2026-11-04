@@ -262,6 +262,8 @@ export default {
   "Pricing.description":
     "Seed is free under MIT, with no paid tier. Running it costs one Linux server at your host's price, plus any services you turn on.",
   "Pricing.crumb": "Pricing",
+  "Pricing.saving":
+    "{plan} costs {monthly} a month or {yearly} a year: {saving} less than paying monthly.",
   "PricingFaq.paidQuestion": "Is there a paid version of Seed?",
   "PricingFaq.paidAnswer":
     "No. There's no pro tier, no licence key and no feature held back. If you want help, hire me: my time is the only thing I sell.",

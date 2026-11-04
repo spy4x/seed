@@ -12,7 +12,7 @@ import { render as draw } from "preact"
 import { act } from "preact/test-utils"
 import { renderToString } from "preact-render-to-string"
 import { Router } from "wouter-preact"
-import { FREE_PLAN_ID, type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
+import { BillingPeriod, FREE_PLAN_ID, type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import type { User } from "@domain/identity"
 import appEn from "@i18n/app/en.ts"
@@ -125,6 +125,7 @@ describe("InvitationNewView", () => {
       trialEnd: null,
       notice: null,
       seatPrice: null,
+      period: null,
     })
     const hint = appEn["GroupInvitations.viewersOnly"]
 
@@ -152,7 +153,8 @@ describe("InvitationNewView", () => {
         hasCustomer: true,
         trialEnd: null,
         notice: null,
-        seatPrice: { seats: 2, amount: 900, currency: "EUR" },
+        seatPrice: { seats: 2, amount: 900, currency: "EUR", period: BillingPeriod.Monthly },
+        period: BillingPeriod.Monthly,
       },
     }
     const box = (html: string) => html.match(/<input[^>]*name="acceptSeatPrice"[^>]*>/)?.[0] ?? ""
@@ -305,6 +307,7 @@ describe("InvitationNewView in the browser", () => {
         trialEnd: null,
         notice: null,
         seatPrice: null,
+        period: null,
       },
     }
     await mount()

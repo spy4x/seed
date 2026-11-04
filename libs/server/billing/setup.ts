@@ -1,6 +1,7 @@
 import type { EnvReader } from "@spy4x/server/config"
 import { parseBoundedInteger } from "@spy4x/platform/universal/bounded-integer"
 import {
+  BillingPeriod,
   type BillingProvider,
   createStripeBilling,
   type PlanRef,
@@ -9,7 +10,7 @@ import {
   type Subscription,
   SubscriptionStatus,
 } from "@spy4x/billing"
-import { DEFAULT_GRACE_DAYS, PRO_PLAN_ID } from "@domain/billing"
+import { DEFAULT_GRACE_DAYS, PAID_PLANS, type Plan, PRO_PLAN_ID } from "@domain/billing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import type { FakePayments } from "./fake-payments.ts"
 
@@ -23,6 +24,13 @@ export const FAKE_WEBHOOK_SECRET = "whsec_template_development_only"
 
 /** The price the development provider maps to the Pro plan when `STRIPE_PRICE_PRO` is unset. */
 export const FAKE_PRO_PRICE_ID = "price_fake_pro"
+
+/**
+ * The yearly price the development provider maps to the Pro plan when `STRIPE_PRICE_PRO_YEARLY` is
+ * unset. It is always listed, so a signed event for it is read as yearly in development, the demo and
+ * the e2e tests; checkout still sells yearly only when the catalog has a yearly amount.
+ */
+export const FAKE_PRO_YEARLY_PRICE_ID = "price_fake_pro_yearly"
 
 /** Which provider takes payments. */
 export enum BillingMode {
@@ -64,6 +72,8 @@ export interface BillingSetupOptions {
    * Without it, every subscription's last payment is one Pro seat paid now.
    */
   fakePayments?: FakePayments
+  /** The paid plans: {@link PAID_PLANS} unless a test passes a catalog Seed does not sell. */
+  plans?: readonly Plan[]
 }
 
 /** Thrown at start-up when billing is asked for but cannot run. Names variables, never values. */
@@ -87,8 +97,10 @@ export const MAX_GRACE_DAYS = 90
  *
  * - Unset, it is `fake` in development and `off` in production, so a deployment with no billing
  *   keys starts and keeps every group on the free plan.
- * - `stripe` needs `STRIPE_SECRET_KEY` and `STRIPE_PRICE_PRO`, and `STRIPE_WEBHOOK_SECRET` too when
- *   `options.webhooks` is true; a missing one stops start-up with an error naming it.
+ * - `stripe` needs `STRIPE_SECRET_KEY` and `STRIPE_PRICE_PRO`, `STRIPE_PRICE_PRO_YEARLY` too when
+ *   Pro has a yearly price, and `STRIPE_WEBHOOK_SECRET` when `options.webhooks` is true; a missing
+ *   one stops start-up with an error naming it. `STRIPE_PRICE_PRO_YEARLY` set for a Pro with no
+ *   yearly price stops it too, since that price could never be sold.
  * - `fake` is refused in production.
  */
 export function readBillingSetup(
@@ -119,15 +131,25 @@ export function readBillingSetup(
         provider: createFakeBilling(
           env.get("STRIPE_PRICE_PRO") ?? FAKE_PRO_PRICE_ID,
           options.fakePayments,
+          env.get("STRIPE_PRICE_PRO_YEARLY") ?? FAKE_PRO_YEARLY_PRICE_ID,
         ),
         dashboardUrl: null,
         graceDays,
         trialRequiresCard,
       }
     case "stripe": {
-      const required = options.webhooks
-        ? ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRICE_PRO"]
-        : STRIPE_KEYS
+      const yearly = sellsYearly(options.plans ?? PAID_PLANS)
+      if (!yearly && env.get("STRIPE_PRICE_PRO_YEARLY") !== undefined) {
+        throw new BillingConfigError(
+          "STRIPE_PRICE_PRO_YEARLY is set, but Pro has no yearly price (see docs/billing.md)",
+        )
+      }
+      const required = [
+        ...(options.webhooks
+          ? ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRICE_PRO"]
+          : STRIPE_KEYS),
+        ...(yearly ? ["STRIPE_PRICE_PRO_YEARLY"] : []),
+      ]
       const missing = required.filter((name) => env.get(name) === undefined)
       if (missing.length > 0) {
         throw new BillingConfigError(
@@ -143,7 +165,10 @@ export function readBillingSetup(
           webhookSecret: options.webhooks
             ? env.get("STRIPE_WEBHOOK_SECRET")!
             : `whsec_unused_${crypto.randomUUID()}`,
-          plans: planRefs(env.get("STRIPE_PRICE_PRO")!),
+          plans: planRefs(
+            env.get("STRIPE_PRICE_PRO")!,
+            yearly ? env.get("STRIPE_PRICE_PRO_YEARLY")! : null,
+          ),
           fetch: options.fetch,
         }),
         dashboardUrl: stripeDashboardUrl(env.get("STRIPE_SECRET_KEY")!),
@@ -186,8 +211,23 @@ function readGraceDays(value: string | undefined): number {
   return days
 }
 
-function planRefs(proPriceId: string): PlanRef[] {
-  return [{ planId: PRO_PLAN_ID, priceId: proPriceId }]
+/** Whether the catalog sells Pro yearly, so the provider needs its yearly price. */
+function sellsYearly(plans: readonly Plan[]): boolean {
+  return (plans.find((plan) => plan.id === PRO_PLAN_ID)?.yearlyAmount ?? null) !== null
+}
+
+/**
+ * Pro's provider prices, each with the period it bills. Every listing names its period, so a
+ * subscription's period is always read from the price the provider reports, and checkout passes the
+ * period it means, monthly included.
+ */
+function planRefs(proPriceId: string, proYearlyPriceId: string | null): PlanRef[] {
+  return [
+    { planId: PRO_PLAN_ID, priceId: proPriceId, period: BillingPeriod.Monthly },
+    ...(proYearlyPriceId === null
+      ? []
+      : [{ planId: PRO_PLAN_ID, priceId: proYearlyPriceId, period: BillingPeriod.Yearly }]),
+  ]
 }
 
 /**
@@ -199,19 +239,20 @@ function planRefs(proPriceId: string): PlanRef[] {
  * The operator calls answer as Stripe would, without a webhook following: a subscription's last
  * payment comes from `payments` (one Pro seat paid now without it), refundable once per provider,
  * and the subscription changes are only answered. A retried refund with the same idempotency key
- * answers the same refund.
+ * answers the same refund. It bills Pro monthly on `proPriceId` and yearly on `proYearlyPriceId`.
  */
 export function createFakeBilling(
   proPriceId: string,
   payments?: FakePayments,
+  proYearlyPriceId: string = FAKE_PRO_YEARLY_PRICE_ID,
 ): Required<BillingProvider> {
+  const plans = planRefs(proPriceId, proYearlyPriceId)
   const stripe = createStripeBilling({
     secretKey: "sk_test_fake",
     webhookSecret: FAKE_WEBHOOK_SECRET,
-    plans: planRefs(proPriceId),
+    plans,
     fetch: () => Promise.reject(new Error("The development billing provider makes no requests")),
   })
-  const known = new Set([PRO_PLAN_ID])
   const refunds = new Map<string, Refund>()
   const refunded = new Set<string>()
   const amounts = new Map<string, number>()
@@ -238,7 +279,9 @@ export function createFakeBilling(
     })
   return {
     createCheckout(request) {
-      if (!known.has(request.planId)) {
+      // The same answer as Stripe's adapter for a plan it has no price for. Pro is listed for both
+      // periods here, so every period the checkout schema accepts has a price.
+      if (!plans.some((plan) => plan.planId === request.planId)) {
         return Promise.resolve({
           ok: false,
           error: { code: "unknown_plan", message: "unknown plan", status: null },

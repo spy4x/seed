@@ -486,8 +486,7 @@ export default {
   "GroupBillingPanel.portalUnreachable":
     "Stripeの請求ページを開けませんでした。接続を確認して、もう一度お試しください。",
   "GroupBillingPanel.title": "請求",
-  "GroupBillingPanel.description":
-    "<group>{group}</group>の毎月のお支払い。請求はStripeが処理します。",
+  "GroupBillingPanel.description": "<group>{group}</group>のお支払い。請求はStripeが処理します。",
   "GroupBillingPanel.loading": "プランを読み込んでいます",
   "GroupBillingPanel.statusTrial": "トライアル中",
   "GroupBillingPanel.statusRenews": "{date}に更新",
@@ -528,7 +527,7 @@ export default {
   "GroupBillingPanel.confirming":
     "Stripeがプランを確認しています。このページは自動で更新されます。",
   "GroupBillingPanel.paymentMethod": "支払い方法",
-  "GroupBillingPanel.paymentMethodText": "Stripeが毎月請求するカードです。",
+  "GroupBillingPanel.paymentMethodText": "このプランの料金をStripeが請求するカードです。",
   "GroupBillingPanel.changeCard": "カードを変更",
   "GroupBillingPanel.invoices": "請求書",
   "GroupBillingPanel.invoicesText": "すべての請求書と領収書を閲覧・ダウンロードできます。",
@@ -537,6 +536,27 @@ export default {
   "GroupBillingPanel.cancelFree": "{date}より前に解約すれば、料金はかかりません。",
   "GroupBillingPanel.cancelKeep": "期間の終わりまで{plan}を使えます。",
   "GroupBillingPanel.cancelPlan": "プランを解約",
+  "GroupBillingPanel.periodTitle": "請求期間",
+  "GroupBillingPanel.monthly": "月払い",
+  "GroupBillingPanel.yearly": "年払い",
+  "GroupBillingPanel.priceYear": "{plan}の料金は、メンバー1人あたり年額{price}です。",
+  "GroupBillingPanel.priceForGroupYear": {
+    "other": "メンバー{count}人の場合、<group>{group}</group>のお支払いは年額{total}です。",
+  },
+  "GroupBillingPanel.saving": "月払いより{amount}お得です。",
+  "GroupBillingPanel.finePrintYear":
+    "メンバー1人ごとに毎年請求されます。いつでも解約でき、期間の終わりまで{plan}を使えます。",
+  "GroupBillingPanel.trialThenYear":
+    "その後は、解約しない限り<group>{group}</group>に年額{total}が請求されます。",
+  "GroupBillingPanel.seatsYear": {
+    "other": "年額{total}（オーナーを含むメンバー{count}人 × {price}）",
+  },
+  "GroupBillingPanel.periodMonthly":
+    "現在は月払いです。年払いなら年額{price}で、{saving}お得です。",
+  "GroupBillingPanel.periodYearly": "現在は年払いです。月払いなら月額{price}です。",
+  "GroupBillingPanel.periodHint": "確定する前に、今日のお支払い額がStripeに表示されます。",
+  "GroupBillingPanel.switchYearly": "年払いに切り替える",
+  "GroupBillingPanel.switchMonthly": "月払いに切り替える",
   "GroupBillingView.trialStarted": {
     "other": "{plan}の{count}日間トライアルが始まりました",
   },
@@ -1135,6 +1155,8 @@ export default {
   "Preferences.updatedElsewhere": "別のデバイスから設定が更新されました。",
   "SeatPriceConfirm.hint":
     "メンバーが1人増えるごとに月額{price}が加算されるため、あと1人加わるとグループの料金は{now}から{next}になります。今の期間の残りの差額は、次回の請求書で請求されます。",
+  "SeatPriceConfirm.hintYear":
+    "メンバーが1人増えるごとに年額{price}が加算されるため、あと1人加わるとグループの料金は{now}から{next}になります。今の期間の残りの差額は、次回の請求書で請求されます。",
   "SeatPriceConfirm.accept": "参加者が増えるごとに料金が上がることに同意します",
   "ProfileAccount.name": "名前",
   "ProfileAccount.notSet": "未設定",

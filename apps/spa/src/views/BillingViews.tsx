@@ -1,6 +1,12 @@
 import { useEffect, useRef } from "preact/hooks"
 import { useLocation, useSearch } from "wouter-preact"
-import { BillingStatus, findPlan, FREE_PLAN_ID, type GroupBilling } from "@domain/billing"
+import {
+  BillingPeriod,
+  BillingStatus,
+  findPlan,
+  FREE_PLAN_ID,
+  type GroupBilling,
+} from "@domain/billing"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import type { Formatters } from "@spy4x/time/format"
 import { GroupBillingPanel, planName } from "@ui/billing-screen.tsx"
@@ -14,6 +20,16 @@ import { isolate } from "@spy4x/preact-ui/bdi"
 
 /** The query the checkout's success address carries, so the tab knows the owner just paid. */
 export const CHECKOUT_DONE = "checkout=done"
+
+/** The query that keeps the yearly choice, so a reload or the checkout's cancel link keeps it. */
+export const YEARLY_QUERY = "period=year"
+
+/** The period the address chose: yearly with `?period=year`, else monthly. */
+export function periodFromSearch(search: string): BillingPeriod {
+  return new URLSearchParams(search).get("period") === "year"
+    ? BillingPeriod.Yearly
+    : BillingPeriod.Monthly
+}
 
 /**
  * What the toast says once the provider confirmed the owner's checkout: a started trial is no
@@ -91,6 +107,11 @@ export function GroupBillingView(
   useEffect(() => {
     if (search.includes(CHECKOUT_DONE)) navigate(GROUP_PATHS.billing(groupId), { replace: true })
   }, [search])
+  const period = periodFromSearch(search)
+  const choose = (next: BillingPeriod) => {
+    const path = GROUP_PATHS.billing(groupId)
+    navigate(next === BillingPeriod.Yearly ? `${path}?${YEARLY_QUERY}` : path, { replace: true })
+  }
   const paid = billing !== null && billing.planId !== FREE_PLAN_ID
   useEffect(() => {
     if (!waiting.current || !paid) return
@@ -112,7 +133,9 @@ export function GroupBillingView(
       error={error}
       errorId={errorId}
       pending={billingStore.pending.value}
-      onCheckout={(planId) => void billingStore.checkout(groupId, planId)}
+      period={period}
+      onPeriod={choose}
+      onCheckout={(planId, chosen) => void billingStore.checkout(groupId, planId, chosen)}
       onPortal={() => void billingStore.portal(groupId)}
     />
   )

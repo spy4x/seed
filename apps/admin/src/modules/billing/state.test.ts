@@ -2,7 +2,7 @@ import { expect } from "@std/expect"
 import { it } from "@std/testing/bdd"
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import { createToastStore } from "@spy4x/preact-signals/toast"
-import { type AdminBillingDetail, BillingStatus, PRO_PLAN_ID } from "@domain/billing"
+import { type AdminBillingDetail, BillingPeriod, BillingStatus, PRO_PLAN_ID } from "@domain/billing"
 import type { AdminApiResult, AdminFetch } from "../../state.ts"
 import { type BillingClock, createBillingState } from "./state.ts"
 
@@ -23,6 +23,7 @@ function detail(updatedAt: string, overrides: Partial<AdminBillingDetail[`custom
       trialEnd: null,
       pastDueSince: null,
       everActive: true,
+      period: BillingPeriod.Monthly,
       updatedAt,
       ...overrides,
     },

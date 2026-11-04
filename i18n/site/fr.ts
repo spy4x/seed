@@ -275,6 +275,8 @@ export default {
   "Pricing.description":
     "Seed est gratuit sous licence MIT, sans offre payante. Le faire tourner coûte un serveur Linux au prix de votre hébergeur, plus les services que vous activez.",
   "Pricing.crumb": "Tarifs",
+  "Pricing.saving":
+    "{plan} coûte {monthly} par mois ou {yearly} par an : {saving} de moins qu’en payant chaque mois.",
   "PricingFaq.paidQuestion": "Existe-t-il une version payante de Seed ?",
   "PricingFaq.paidAnswer":
     "Non. Pas d’offre pro, pas de clé de licence, aucune fonctionnalité réservée. Si vous voulez de l’aide, faites appel à moi : mon temps est la seule chose que je vends.",

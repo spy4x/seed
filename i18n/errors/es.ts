@@ -161,6 +161,8 @@ export default {
   "Reason.PASSWORD_INVALID": "La contraseña no es correcta. Vuelve a intentarlo.",
   "Reason.PASSWORD_LOCKED":
     "Demasiadas contraseñas incorrectas. Espera un rato y vuelve a intentarlo.",
+  "Reason.PERIOD_NOT_OFFERED":
+    "Este plan no se vende con ese periodo de facturación. Elige el otro.",
   "Reason.PHOTO_CONTENT": "El contenido de este archivo no coincide con su tipo de imagen.",
   "Reason.PHOTO_NOT_FOUND": "Esta foto ya no existe.",
   "Reason.PHOTO_TOO_LARGE": "Esta foto es demasiado grande.",

@@ -210,6 +210,7 @@ describe("GroupEditorView", () => {
       trialEnd: null,
       notice: null,
       seatPrice: null,
+      period: null,
     }
     const blocked = "group-transfer-why"
 

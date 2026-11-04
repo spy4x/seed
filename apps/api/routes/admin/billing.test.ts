@@ -7,6 +7,7 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import {
   type AdminBillingCustomer,
   BILLING_AUDIT_EVENTS,
+  BillingPeriod,
   BillingStatus,
   PRO_PLAN_ID,
 } from "@domain/billing"
@@ -61,6 +62,7 @@ const customer: AdminBillingCustomer = {
   trialEnd: null,
   pastDueSince: null,
   everActive: true,
+  period: BillingPeriod.Monthly,
   updatedAt: `2026-10-12T00:00:00.000Z`,
 }
 

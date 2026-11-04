@@ -1,5 +1,11 @@
 import type postgres from "postgres"
-import { BILLING_AUDIT_EVENTS, BillingStatus, findPlan } from "@domain/billing"
+import {
+  BILLING_AUDIT_EVENTS,
+  BillingPeriod,
+  BillingStatus,
+  findPlan,
+  priceOf,
+} from "@domain/billing"
 
 /** A subscription's last payment as the development provider answers it. */
 export interface FakePayment {
@@ -13,8 +19,11 @@ export interface FakePayment {
 /** The last payment of the subscription with this provider id, or `null` when it paid nothing. */
 export type FakePayments = (subscriptionId: string) => Promise<FakePayment | null>
 
-/** How long a billing period lasts in the development provider. */
-const PERIOD_MS = 30 * 24 * 60 * 60_000
+/** How long each billing period lasts in the development provider. */
+const PERIOD_MS: Record<BillingPeriod, number> = {
+  [BillingPeriod.Monthly]: 30 * 24 * 60 * 60_000,
+  [BillingPeriod.Yearly]: 365 * 24 * 60 * 60_000,
+}
 
 /**
  * The development provider's payments, read from this app's own subscription rows, so the admin's
@@ -30,13 +39,14 @@ export function postgresFakePayments(sql: postgres.Sql): FakePayments {
       status: BillingStatus
       planId: string | null
       quantity: number | null
+      billingPeriod: BillingPeriod | null
       everActive: boolean
       currentPeriodEnd: Date | null
       pastDueSince: Date | null
       providerEventAt: Date
       refunded: boolean
     }[]>`
-      SELECT s.status, s.plan_id, s.quantity, s.ever_active, s.current_period_end,
+      SELECT s.status, s.plan_id, s.quantity, s.billing_period, s.ever_active, s.current_period_end,
         s.past_due_since, s.provider_event_at,
         EXISTS (
           SELECT 1 FROM auth_audits a
@@ -48,10 +58,13 @@ export function postgresFakePayments(sql: postgres.Sql): FakePayments {
     `
     const plan = row?.planId ? findPlan(row.planId) : null
     if (!row || !plan || !row.everActive || row.status === BillingStatus.Trialing) return null
+    const period = row.billingPeriod ?? BillingPeriod.Monthly
+    const price = priceOf(plan, period)
+    if (price === null) return null
     const due = row.status === BillingStatus.PastDue ? row.pastDueSince : row.currentPeriodEnd
     return {
-      amount: plan.amount * (plan.perSeat ? row.quantity ?? 1 : 1),
-      paidAt: due ? new Date(due.getTime() - PERIOD_MS) : row.providerEventAt,
+      amount: price * (plan.perSeat ? row.quantity ?? 1 : 1),
+      paidAt: due ? new Date(due.getTime() - PERIOD_MS[period]) : row.providerEventAt,
       refunded: row.refunded,
     }
   }

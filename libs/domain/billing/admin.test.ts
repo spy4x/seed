@@ -10,13 +10,18 @@ import {
   AdminBillingState,
   adminBillingStatus,
   adminBillingTimeSchema,
+  billedPriceOf,
   BILLING_AUDIT_EVENT_TYPES,
   billingAuditIdentifier,
   billingAuditPrefix,
+  BillingPeriod,
   BillingStatus,
+  listPriceOf,
   monthlyRevenue,
   noChargeUntil,
   parseAdminBillingFilter,
+  type Plan,
+  PLANS,
   PRO_PLAN_ID,
   readBillingAuditIdentifier,
 } from "./+lib.ts"
@@ -38,6 +43,7 @@ function customer(overrides: Partial<AdminBillingCustomer> = {}): AdminBillingCu
     trialEnd: null,
     pastDueSince: null,
     everActive: true,
+    period: BillingPeriod.Monthly,
     updatedAt: `2026-10-12T00:00:00.000Z`,
     ...overrides,
   }
@@ -70,13 +76,49 @@ describe(`admin billing filter`, () => {
 describe(`monthly revenue`, () => {
   it(`counts seats of active and past-due subscriptions, and nothing for trials or cancelled`, () => {
     const revenue = monthlyRevenue([
-      { planId: PRO_PLAN_ID, quantity: 3, status: BillingStatus.Active },
-      { planId: PRO_PLAN_ID, quantity: null, status: BillingStatus.PastDue },
-      { planId: PRO_PLAN_ID, quantity: 5, status: BillingStatus.Trialing },
-      { planId: PRO_PLAN_ID, quantity: 2, status: BillingStatus.Canceled },
-      { planId: null, quantity: 9, status: BillingStatus.Active },
+      {
+        planId: PRO_PLAN_ID,
+        quantity: 3,
+        status: BillingStatus.Active,
+        period: BillingPeriod.Monthly,
+      },
+      {
+        planId: PRO_PLAN_ID,
+        quantity: null,
+        status: BillingStatus.PastDue,
+        period: BillingPeriod.Monthly,
+      },
+      {
+        planId: PRO_PLAN_ID,
+        quantity: 5,
+        status: BillingStatus.Trialing,
+        period: BillingPeriod.Monthly,
+      },
+      {
+        planId: PRO_PLAN_ID,
+        quantity: 2,
+        status: BillingStatus.Canceled,
+        period: BillingPeriod.Monthly,
+      },
+      { planId: null, quantity: 9, status: BillingStatus.Active, period: null },
     ])
     expect(revenue).toEqual([{ amount: 900 * 4, currency: `EUR` }])
+  })
+
+  const pro = PLANS.find((plan) => plan.id === PRO_PLAN_ID)!
+  const yearly: Plan[] = [{ ...pro, perSeat: false, yearlyAmount: 9006 }]
+  const year = { planId: PRO_PLAN_ID, quantity: 1, period: BillingPeriod.Yearly }
+
+  it(`counts a yearly subscription as its yearly price divided by twelve, rounded`, () => {
+    expect(billedPriceOf(year, yearly)).toEqual({ amount: 9006, currency: `EUR` })
+    expect(listPriceOf(year, yearly)).toEqual({ amount: 751, currency: `EUR` })
+    expect(monthlyRevenue([{ ...year, status: BillingStatus.Active }], yearly))
+      .toEqual([{ amount: 751, currency: `EUR` }])
+  })
+
+  it(`prices nothing for a yearly subscription of a plan sold monthly only`, () => {
+    expect(billedPriceOf(year)).toBeNull()
+    expect(monthlyRevenue([{ ...year, status: BillingStatus.Active }])).toEqual([])
   })
 })
 

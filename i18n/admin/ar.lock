@@ -201,6 +201,7 @@ AdminAuditEvent.userUnblocked	77f772b34446bda9
 AdminAuditEvent.usersExported	3a78277f4b5b91eb
 AdminBilling.active	92340695899bd2d8
 AdminBilling.all	a52ace420f2175d0
+AdminBilling.billedYearly	f6f60960af8077cc
 AdminBilling.cancelled	d353a99eb4556847
 AdminBilling.chipCount	ce5efaf46c9edcae
 AdminBilling.clear	7179ea0035fca783
@@ -220,7 +221,7 @@ AdminBilling.listError	a98ee8f2d81f025c
 AdminBilling.loading	e575e509f70af151
 AdminBilling.loadingFigures	98e682443f91a5b4
 AdminBilling.mrr	013b174b769057a3
-AdminBilling.mrrHint	cde193bec3c672d9
+AdminBilling.mrrHint	44963d0e5ec63f55
 AdminBilling.newTab	9794bb09dfeecd40
 AdminBilling.nextCharge	4a4c42411f49eb2a
 AdminBilling.noEvent	fc102487bfb2a28c
@@ -305,6 +306,7 @@ AdminBillingCustomer.loading	5122290177028c6e
 AdminBillingCustomer.loadingLastPayment	608b480b67fc6238
 AdminBillingCustomer.loadingPayment	20b151af95db18a0
 AdminBillingCustomer.member	00ca8bff90921c40
+AdminBillingCustomer.monthly	9b11f6b707d2a03e
 AdminBillingCustomer.needsSupervisor	c0ae8e9d5db55986
 AdminBillingCustomer.noAnswer	eee225c7ec057aa6
 AdminBillingCustomer.noChargeUntil	7ea4e71550ae66b3
@@ -327,6 +329,7 @@ AdminBillingCustomer.paymentPartlyRefunded	141fa5bf505b8c81
 AdminBillingCustomer.paymentRefunded	2c604dc43660c1c3
 AdminBillingCustomer.paymentRefundedTitle	dc142ba534998801
 AdminBillingCustomer.perMonth	f6c260d29d68d0b3
+AdminBillingCustomer.period	a4a987fb16d9bd93
 AdminBillingCustomer.plan	fa8ed0bdabdd6bcb
 AdminBillingCustomer.planLine	345f52b9bba50d87
 AdminBillingCustomer.refundLast	8de66a4fa2c591a4
@@ -346,6 +349,7 @@ AdminBillingCustomer.status	920e413c7d411b61
 AdminBillingCustomer.timeGiven	af7998736faa755d
 AdminBillingCustomer.timeSubmit	80724d593080798f
 AdminBillingCustomer.timeText	dca593ab9231c92f
+AdminBillingCustomer.timeTextYear	cd306e0eec747a73
 AdminBillingCustomer.timeTitle	4d94699104b58490
 AdminBillingCustomer.timedOut	1d9e23300c618912
 AdminBillingCustomer.title	bf3763383aaf4306
@@ -355,6 +359,7 @@ AdminBillingCustomer.undoTitle	6022d387e4aad1cc
 AdminBillingCustomer.unknownPrice	24312ff42c1bc3fb
 AdminBillingCustomer.waiting	da2ed57a49c27458
 AdminBillingCustomer.when	cf9c7aa24a26aac4
+AdminBillingCustomer.yearly	6e69b59ed34d42ef
 AdminBillingCustomer.youBelong	020623d0a4ab0bb4
 AdminBlog.all	a52ace420f2175d0
 AdminBlog.chipAll	7ad000982d871de6

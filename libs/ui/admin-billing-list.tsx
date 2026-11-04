@@ -26,13 +26,16 @@ import {
   adminBillingStatus,
   type AdminBillingStatusFilter,
   type AdminBillingStatusView,
+  billedPriceOf,
   BILLING_AUDIT_EVENTS,
   type BillingAuditEvent,
+  BillingPeriod,
   BillingStatus,
   findPlan,
   listPriceOf,
   type Money,
   monthlyRevenueOf,
+  type Plan,
   seatsOf,
 } from "@domain/billing"
 import { adminGroupPersonName } from "./admin-groups-list.tsx"
@@ -147,21 +150,29 @@ export function BillingStatusLine(
 
 /**
  * What the customer pays a month now, and how it is made up: `€36.00` over `4 × €9.00`. During a
- * trial it pays nothing, and the second line says what it would pay. `null` for an unknown price.
+ * trial it pays nothing, and the second line says what it would pay. A yearly subscription counts
+ * its twelfth, so every row keeps one scale, and `yearly` says what the year bills. `null` for an
+ * unknown price. `catalog` is the plan catalog, `PLANS` unless a test passes its own.
  */
 export function perMonth(
   t: Translator<string>,
   customer: AdminBillingCustomer,
-): { amount: string; detail: string | null } | null {
-  const now = monthlyRevenueOf(customer)
-  const price = listPriceOf(customer)
-  if (now === null || price === null) return null
+  catalog?: readonly Plan[],
+): { amount: string; detail: string | null; yearly: string | null } | null {
+  const now = monthlyRevenueOf(customer, catalog)
+  const price = listPriceOf(customer, catalog)
+  const billed = billedPriceOf(customer, catalog)
+  if (now === null || price === null || billed === null) return null
+  const yearly = customer.period === BillingPeriod.Yearly
+    ? t.t(`AdminBilling.billedYearly`, { amount: money(billed) })
+    : null
   const seats = seatsOf(customer)
   if (now.amount === 0) {
     const trial = customer.status === BillingStatus.Trialing
     return {
       amount: money(now),
       detail: trial ? t.t(`AdminBilling.wouldBe`, { amount: money(price) }) : null,
+      yearly,
     }
   }
   return {
@@ -172,6 +183,7 @@ export function perMonth(
         price: money({ amount: price.amount / seats, currency: price.currency }),
       })
       : null,
+    yearly,
   }
 }
 
@@ -201,6 +213,8 @@ export interface AdminBillingListScreenProps {
   /** Reads the figures and the list again after a failure. */
   onRetry: () => void
   navigate?: Navigate
+  /** The plan catalog the rows are priced from: `PLANS` unless a test passes its own. */
+  plans?: readonly Plan[]
 }
 
 /**
@@ -398,7 +412,14 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                   <DataTable
                     mode="server"
                     class={TABLE_CLASS}
-                    columns={customerColumns(t, props.now, list.graceDays, format, navigate)}
+                    columns={customerColumns(
+                      t,
+                      props.now,
+                      list.graceDays,
+                      format,
+                      navigate,
+                      props.plans,
+                    )}
                     rows={list.customers.map((customer) => ({ customer }))}
                     caption={t.t(`AdminBilling.customers`)}
                     captionHidden
@@ -553,6 +574,7 @@ function customerColumns(
   graceDays: number,
   format: Pick<Formatters, "date">,
   navigate?: Navigate,
+  plans?: readonly Plan[],
 ): DataTableColumn<CustomerRow, "customer">[] {
   return [
     {
@@ -600,7 +622,7 @@ function customerColumns(
       header: t.t(`AdminBilling.perMonth`),
       align: `right`,
       render: ({ customer }) => {
-        const amount = perMonth(t, customer)
+        const amount = perMonth(t, customer, plans)
         return amount === null
           ? <span class="text-sm text-muted">{t.t(`AdminBilling.unknownPrice`)}</span>
           : (
@@ -609,6 +631,14 @@ function customerColumns(
               {amount.detail && (
                 <span class="whitespace-nowrap text-xs text-muted tabular-nums">
                   {amount.detail}
+                </span>
+              )}
+              {amount.yearly && (
+                <span
+                  class="whitespace-nowrap text-xs text-muted tabular-nums"
+                  data-e2e="admin-billing-row-yearly"
+                >
+                  {amount.yearly}
                 </span>
               )}
             </div>

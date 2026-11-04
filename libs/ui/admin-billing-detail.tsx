@@ -28,10 +28,12 @@ import {
   type AdminBillingPayment,
   adminBillingStatus,
   type AdminBillingTimeLength,
+  billedPriceOf,
   BILLING_AUDIT_EVENTS,
+  BillingPeriod,
   BillingStatus,
-  listPriceOf,
   noChargeUntil,
+  type Plan,
   planEndsIfCancelledAt,
   seatsOf,
 } from "@domain/billing"
@@ -113,6 +115,8 @@ export interface AdminBillingCustomerScreenProps {
   onAction: (action: AdminBillingAction) => void
   waiting: AdminBillingWaiting | null
   navigate?: Navigate
+  /** The plan catalog the prices are read from: `PLANS` unless a test passes its own. */
+  plans?: readonly Plan[]
 }
 
 /** The menu item's second line when the operator's role is too low for it (decision 6 of #196). */
@@ -248,6 +252,7 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
 
   const { customer } = detail
   const view = adminBillingStatus(customer, props.now, detail.graceDays)
+  const yearly = perMonth(t, customer, props.plans)?.yearly ?? null
   const entries = billingMenu(detail, props.payment, props.operator)
   const owner = adminGroupPersonName(t, customer.owner)
   const stripe = detail.providerUrl && (
@@ -312,8 +317,24 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
           <BillingStatusLine view={view} dataE2E="admin-billing-status" />
         </Fact>
         <Fact label={t.t(`AdminBillingCustomer.plan`)}>{planLine(t, customer)}</Fact>
+        {customer.period !== null && (
+          <Fact label={t.t(`AdminBillingCustomer.period`)}>
+            <span data-e2e="admin-billing-period" data-period={customer.period}>
+              {t.t(
+                customer.period === BillingPeriod.Yearly
+                  ? `AdminBillingCustomer.yearly`
+                  : `AdminBillingCustomer.monthly`,
+              )}
+            </span>
+          </Fact>
+        )}
         <Fact label={t.t(`AdminBillingCustomer.perMonth`)}>
-          <span data-e2e="admin-billing-per-month">{perMonthLine(t, customer)}</span>
+          <span data-e2e="admin-billing-per-month">{perMonthLine(t, customer, props.plans)}</span>
+          {yearly && (
+            <span class="block text-sm text-muted" data-e2e="admin-billing-billed-yearly">
+              {yearly}
+            </span>
+          )}
         </Fact>
         <Fact label={t.t(`AdminBillingCustomer.lastPayment`)}>
           <LastPayment {...props.payment} onRetry={props.onRetryPayment} />
@@ -402,8 +423,12 @@ function planLine(t: Translator<string>, customer: AdminBillingCustomer): string
 }
 
 /** `4 × €9.00 = €36.00`, or what a trial would pay. */
-function perMonthLine(t: Translator<string>, customer: AdminBillingCustomer): string {
-  const amount = perMonth(t, customer)
+function perMonthLine(
+  t: Translator<string>,
+  customer: AdminBillingCustomer,
+  plans?: readonly Plan[],
+): string {
+  const amount = perMonth(t, customer, plans)
   if (amount === null) return t.t(`AdminBillingCustomer.unknownPrice`)
   if (amount.detail === null) return amount.amount
   return t.t(
@@ -583,8 +608,10 @@ function ActionDialog(
   const t = useAdminText()
   const group = customer.groupName
   const plan = billingPlanName(t, customer.planId)
-  const price = listPriceOf(customer)
+  // What the next renewal charges: a yearly subscription renews at its yearly price.
+  const price = billedPriceOf(customer, props.plans)
   const charge = price ? money(price) : t.t(`AdminBillingCustomer.itsPlanPrice`)
+  const yearly = customer.period === BillingPeriod.Yearly
   const periodEnd = customer.currentPeriodEnd
     ? billingDate(customer.currentPeriodEnd, format)
     : null
@@ -651,7 +678,10 @@ function ActionDialog(
           />
           <p class="text-sm text-muted" aria-live="polite" data-e2e="admin-billing-until">
             <Rich
-              parts={t.parts(`AdminBillingCustomer.timeText`, { group, plan, date: until, charge })}
+              parts={t.parts(
+                yearly ? `AdminBillingCustomer.timeTextYear` : `AdminBillingCustomer.timeText`,
+                { group, plan, date: until, charge },
+              )}
               tags={{ group: groupName }}
             />
           </p>
