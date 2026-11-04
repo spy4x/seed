@@ -41,7 +41,7 @@ newsletter: false
 | ボイラープレート                                               | 価格                             | ライセンス          | 技術スタック                             | チームとロール     | ホスティング                         |
 | -------------------------------------------------------------- | -------------------------------- | ------------------- | ---------------------------------------- | ------------------ | ------------------------------------ |
 | [Supastarter](https://supastarter.dev/)                        | 349、799、1,499 ドル             | 有料、再配布不可    | Next.js、Nuxt、TanStack Start；Postgres  | あり、シート課金   | Vercel、Docker、Coolify ほか         |
-| [Seed](https://github.com/spy4x/seed)                          | 無料                             | MIT                 | Hono、Fresh、Preact；Postgres            | あり、メンバー単位 | 自分のサーバー、Docker Compose       |
+| [Seed](https://github.com/spy4x/seed)                          | 無料                             | MIT                 | Hono、Preact；Postgres                   | あり、メンバー単位 | 自分のサーバー、Docker Compose       |
 | [Makerkit](https://makerkit.dev/pricing)                       | 299 か 599 ドル（定価 349、649） | 有料；Lite 版は MIT | Next.js、React Router、TanStack Start    | あり、シート課金   | Vercel 推奨；Cloudflare、Docker、VPS |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter) | 無料                             | MIT                 | Next.js、Drizzle；Postgres               | Owner と Member    | Vercel                               |
 | [Open SaaS](https://github.com/wasp-lang/open-saas)            | 無料                             | MIT                 | Wasp（React、Node.js、Prisma）；Postgres | 記載なし           | Railway か Fly.io、ほかどこでも      |

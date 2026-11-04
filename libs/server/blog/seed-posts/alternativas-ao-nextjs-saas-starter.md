@@ -71,7 +71,7 @@ primeiro continua sendo trabalho seu.
 | ----------------- | -------------------- | ------------------------------ | ---------------------------- | ------------------------------------------ | --------------------------------------- |
 | Preço             | Grátis               | Grátis                         | Grátis                       | US$ 299 ou US$ 599, pagamento único        | De US$ 349 a US$ 1.499, pagamento único |
 | Licença           | MIT                  | MIT                            | MIT                          | Paga; o kit Lite é MIT                     | Paga                                    |
-| Stack             | Next.js, Drizzle     | Hono, Preact, Fresh; Postgres  | Wasp (React, Node.js)        | Next.js 16 ou TanStack Start, entre outros | Next.js, Nuxt ou TanStack Start         |
+| Stack             | Next.js, Drizzle     | Hono, Preact; Postgres         | Wasp (React, Node.js)        | Next.js 16 ou TanStack Start, entre outros | Next.js, Nuxt ou TanStack Start         |
 | Times e papéis    | Dono e membro        | De leitor a dono               | Não                          | Sim, com convites                          | Sim, com convites                       |
 | E-mail de convite | Não é enviado        | Sim                            | Sem times                    | Não verifiquei                             | Não verifiquei                          |
 | Cobrança          | Stripe, uma por time | Stripe, por membro             | Stripe, Polar, Lemon Squeezy | Não verifiquei                             | Stripe, Lemon Squeezy e mais três       |

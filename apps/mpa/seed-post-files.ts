@@ -1,4 +1,4 @@
-import { HttpError } from "fresh"
+import { HttpError } from "@spy4x/preact-server"
 import { serveFile } from "@std/http/file-server"
 import { fromFileUrl } from "@std/path"
 

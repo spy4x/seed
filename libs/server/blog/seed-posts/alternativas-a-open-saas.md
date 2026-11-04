@@ -74,7 +74,7 @@ Railway con un comando, y el camino manual sirve para cualquier hosting
 | --------------- | ------------------------------- | --------------------------------------- | ---------------------------------------- | -------------------------------- |
 | Precio          | Gratis                          | Gratis                                  | $299 o $599, pago único                  | De $349 a $1.499, pago único     |
 | Licencia        | MIT                             | MIT                                     | De pago; el kit Lite es MIT              | De pago                          |
-| Stack           | Wasp (React, Node.js, Prisma)   | Hono, Preact, Fresh; Postgres           | Next.js 16 o TanStack Start, entre otros | Next.js, Nuxt o TanStack Start   |
+| Stack           | Wasp (React, Node.js, Prisma)   | Hono, Preact; Postgres                  | Next.js 16 o TanStack Start, entre otros | Next.js, Nuxt o TanStack Start   |
 | Equipos y roles | No                              | Sí, de lector a propietario             | Sí, con invitaciones y permisos          | Sí, con invitaciones y roles     |
 | Pagos           | Stripe, Polar, Lemon Squeezy    | Stripe, por miembro                     | No comprobado                            | Stripe, Lemon Squeezy y tres más |
 | Administración  | Panel de administración         | App propia en su dominio, con auditoría | No en el kit Lite                        | No comprobado                    |

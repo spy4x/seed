@@ -125,13 +125,13 @@ export default {
   "Architecture.worker": "Worker",
   "Architecture.mail": "Mail, push",
   "Architecture.webAppNote": "Preact, in the browser",
-  "Architecture.websiteNote": "Fresh, like this page",
+  "Architecture.websiteNote": "Preact, on the server",
   "Architecture.apiNote": "Hono on Deno",
   "Architecture.postgresNote": "every change",
   "Architecture.workerNote": "the slow work",
   "Architecture.mailNote": "and clean-up",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "events, same transaction",
   "Architecture.caption": "All on one server, behind Traefik, with Valkey and Grafana",
   "Architecture.captionTop": "All on one server, behind Traefik,",
@@ -531,7 +531,8 @@ export default {
   "FeatureWebsite.title": "A public website to adapt",
   "FeatureWebsite.lead":
     "This site: fast, server-rendered and usable with JavaScript turned off, with pricing, legal pages, a blog and a newsletter.",
-  "FeatureWebsite.fact1": "Fresh on the server; every action a real link or form",
+  "FeatureWebsite.fact1":
+    "Preact rendered on the server, built with Vite; every action a real link or form",
   "FeatureWebsite.fact2": "Pricing read from the app's plan catalog",
   "FeatureWebsite.fact3":
     "A newsletter with double opt-in, one-click unsubscribe and mails in the reader's language",

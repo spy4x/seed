@@ -52,7 +52,7 @@ Wasp はフルスタックフレームワークです。ページ、ルート、
 | -------------- | -------------------------------- | -------------------------------- | -------------------------------- | ------------------------------- |
 | 価格           | 無料                             | 無料                             | 買い切り 299 ドルまたは 599 ドル | 買い切り 349〜1,499 ドル        |
 | ライセンス     | MIT                              | MIT                              | 有料。Lite キットは MIT          | 有料                            |
-| 技術スタック   | Wasp（React、Node.js、Prisma）   | Hono、Preact、Fresh、Postgres    | Next.js 16、TanStack Start ほか  | Next.js、Nuxt、TanStack Start   |
+| 技術スタック   | Wasp（React、Node.js、Prisma）   | Hono、Preact、Postgres           | Next.js 16、TanStack Start ほか  | Next.js、Nuxt、TanStack Start   |
 | チームとロール | なし                             | あり（閲覧者からオーナーまで）   | あり（招待と権限付き）           | あり（招待とロール付き）        |
 | 決済           | Stripe、Polar、Lemon Squeezy     | Stripe、メンバー単位の課金       | 未確認                           | Stripe、Lemon Squeezy ほか 3 社 |
 | 管理画面       | 管理ダッシュボード               | 専用ホストの管理アプリ、監査ログ | Lite キットにはなし              | 未確認                          |

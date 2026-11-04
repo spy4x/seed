@@ -72,7 +72,7 @@ necesita un equipo que paga sigue siendo trabajo tuyo.
 | -------------------- | ---------------------- | ----------------------------- | ---------------------------- | ---------------------------------------- | -------------------------------- |
 | Precio               | Gratis                 | Gratis                        | Gratis                       | $299 o $599, pago único                  | De $349 a $1.499, pago único     |
 | Licencia             | MIT                    | MIT                           | MIT                          | De pago; el kit Lite es MIT              | De pago                          |
-| Stack                | Next.js, Drizzle       | Hono, Preact, Fresh; Postgres | Wasp (React, Node.js)        | Next.js 16 o TanStack Start, entre otros | Next.js, Nuxt o TanStack Start   |
+| Stack                | Next.js, Drizzle       | Hono, Preact; Postgres        | Wasp (React, Node.js)        | Next.js 16 o TanStack Start, entre otros | Next.js, Nuxt o TanStack Start   |
 | Equipos y roles      | Propietario y miembro  | De lector a propietario       | No                           | Sí, con invitaciones                     | Sí, con invitaciones             |
 | Correo de invitación | No se envía            | Sí                            | Sin equipos                  | No comprobado                            | No comprobado                    |
 | Cobros               | Stripe, uno por equipo | Stripe, por miembro           | Stripe, Polar, Lemon Squeezy | No comprobado                            | Stripe, Lemon Squeezy y tres más |

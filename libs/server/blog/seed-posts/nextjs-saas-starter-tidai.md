@@ -54,7 +54,7 @@ Next.js SaaS Starter 是一个采用 MIT 许可证的免费模板：邮箱和密
 | ---------- | -------------------- | ------------------------------- | ---------------------------- | ----------------------------- | ------------------------------- |
 | 价格       | 免费                 | 免费                            | 免费                         | 一次性 299 或 599 美元        | 一次性 349 到 1,499 美元        |
 | 许可证     | MIT                  | MIT                             | MIT                          | 付费；Lite 套件为 MIT         | 付费                            |
-| 技术栈     | Next.js、Drizzle     | Hono、Preact、Fresh；Postgres   | Wasp（React、Node.js）       | Next.js 16、TanStack Start 等 | Next.js、Nuxt 或 TanStack Start |
+| 技术栈     | Next.js、Drizzle     | Hono、Preact；Postgres          | Wasp（React、Node.js）       | Next.js 16、TanStack Start 等 | Next.js、Nuxt 或 TanStack Start |
 | 团队和角色 | 所有者和成员         | 从查看者到所有者                | 无                           | 有，带邀请                    | 有，带邀请                      |
 | 邀请邮件   | 不发送               | 有                              | 没有团队                     | 未核实                        | 未核实                          |
 | 计费       | Stripe，每团队一个   | Stripe，按成员                  | Stripe、Polar、Lemon Squeezy | 未核实                        | Stripe、Lemon Squeezy 等五家    |

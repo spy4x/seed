@@ -1,4 +1,4 @@
-import { createDefine } from "fresh"
+import { createDefine } from "@spy4x/preact-server"
 import type { PublicContactLink } from "@domain/contact-links"
 import type { Language } from "@domain/identity"
 import type { Api } from "./api.ts"

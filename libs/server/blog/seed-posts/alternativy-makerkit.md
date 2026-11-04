@@ -61,7 +61,7 @@ AI-агентов есть правила, навыки и MCP-сервер.
 | ------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------ | ---------------------------------------- | ------------------------------- | ------------------------------------------- |
 | [Makerkit](https://makerkit.dev/pricing)                                  | $299 или $599 разово (без скидки $349, $649) | Платная, без open source, на клиента | Next.js, React Router или TanStack Start | Да, за место                    | Рекомендуют Vercel; Cloudflare, Docker, VPS |
 | [Makerkit Lite](https://github.com/makerkit/nextjs-saas-starter-kit-lite) | Бесплатно                                    | MIT                                  | Next.js, Supabase                        | Нет                             | Не указано                                  |
-| [Seed](https://github.com/spy4x/seed)                                     | Бесплатно                                    | MIT                                  | Hono, Fresh, Preact; Postgres            | Да, за участника                | Свой сервер, Docker Compose                 |
+| [Seed](https://github.com/spy4x/seed)                                     | Бесплатно                                    | MIT                                  | Hono, Preact; Postgres                   | Да, за участника                | Свой сервер, Docker Compose                 |
 | [Supastarter](https://supastarter.dev/)                                   | $349, $799 или $1 499 разово                 | Платная, без распространения         | Next.js, Nuxt или TanStack Start         | Да, за место                    | Vercel, Docker, Coolify и другие            |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)            | Бесплатно                                    | MIT                                  | Next.js, Drizzle; Postgres               | Owner и Member; Stripe Checkout | Vercel                                      |
 
@@ -114,7 +114,7 @@ Seed под MIT, поэтому двух сюрпризов лицензии н�
 
 - **Вам нужен Supabase.** Основной шаблон Makerkit построен на его входе, хранилище и row-level
   security. Seed использует свой Postgres и свой вход.
-- **Вам нужны Next.js или React Router.** Seed — это Preact и Fresh для публичного сайта.
+- **Вам нужны Next.js или React Router.** Seed — это Preact везде, включая публичный сайт.
 - **Нужны вход под пользователем, оплата по использованию или второй платёжный провайдер.** У
   Makerkit есть вход под пользователем и подписки по использованию, а на главной рядом со Stripe
   назван Polar. У Seed нет ни одного из трёх, провайдер только Stripe.

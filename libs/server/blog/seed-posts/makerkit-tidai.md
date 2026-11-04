@@ -43,7 +43,7 @@ Seed 是我做的，读的时候请记住这一点。关于其他产品的每条
 | ------------------------------------------------------------------------- | --------------------------------------- | -------------------------- | --------------------------------------- | -------------------------------- | ------------------------------------ |
 | [Makerkit](https://makerkit.dev/pricing)                                  | 一次性 299 或 599 美元（标价 349、649） | 付费，不可开源，按客户授权 | Next.js、React Router 或 TanStack Start | 有，按席位                       | 推荐 Vercel；Cloudflare、Docker、VPS |
 | [Makerkit Lite](https://github.com/makerkit/nextjs-saas-starter-kit-lite) | 免费                                    | MIT                        | Next.js、Supabase                       | 无                               | 未提及                               |
-| [Seed](https://github.com/spy4x/seed)                                     | 免费                                    | MIT                        | Hono、Fresh、Preact；Postgres           | 有，按成员                       | 你自己的服务器，Docker Compose       |
+| [Seed](https://github.com/spy4x/seed)                                     | 免费                                    | MIT                        | Hono、Preact；Postgres                  | 有，按成员                       | 你自己的服务器，Docker Compose       |
 | [Supastarter](https://supastarter.dev/)                                   | 一次性 349、799 或 1499 美元            | 付费，禁止再分发           | Next.js、Nuxt 或 TanStack Start         | 有，按席位                       | Vercel、Docker、Coolify 等           |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)            | 免费                                    | MIT                        | Next.js、Drizzle；Postgres              | Owner 和 Member；Stripe Checkout | Vercel                               |
 
@@ -72,7 +72,7 @@ Makerkit 的检查清单推荐 Vercel，主力套件跑在 Supabase 上。这对
 ## 什么时候值得为 Makerkit 付钱？
 
 - **你想用 Supabase。** Makerkit 的主力套件依赖它的认证、存储和 row-level security。Seed 有自己的 Postgres 和登录。
-- **你想用 Next.js 或 React Router。** Seed 用 Preact，公开网站用 Fresh。
+- **你想用 Next.js 或 React Router。** Seed 全部用 Preact，公开网站也是。
 - **你需要以用户身份登录、按用量计费或第二家支付服务商。** Makerkit 列出了前两项，首页还在 Stripe 旁边提到 Polar。Seed 三样都没有，Stripe 是它唯一的服务商。
 - **你和编程智能体一起工作。** Makerkit 有 MCP 服务器和技能。Seed 有[给智能体的说明](/zh-CN/docs/ai-agents)，但没有 MCP 服务器（[#211](https://github.com/spy4x/seed/issues/211)）。
 - **你想要有长期记录的维护者。** Makerkit 说它从 2022 年起就全职维护。Seed 很年轻，只有一位维护者：我。

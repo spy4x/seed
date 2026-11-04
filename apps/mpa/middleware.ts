@@ -5,21 +5,17 @@ import { DEFAULT_LANGUAGE, pathLanguage, segmentLanguage } from "./languages.ts"
 import { createNewsletterStatus } from "./newsletter.ts"
 import { BLOG_PATH } from "./blog.ts"
 import { define, type State } from "./utils.ts"
-import { HttpError, staticFiles } from "fresh"
+import { HttpError, type ServeInfo, staticFiles } from "@spy4x/preact-server"
 import { FORM_ACTIONS } from "@ui/progressive.tsx"
 import { HTTPException } from "hono/http-exception"
 import { createSameOriginCheck } from "@spy4x/server/http/same-origin"
-import {
-  securityHeaderList,
-  withScriptNonce,
-  withSecurityHeaders,
-} from "@spy4x/server/http/security-headers"
+import { securityHeaderList, withSecurityHeaders } from "@spy4x/server/http/security-headers"
 
 /**
  * The header set `securityHeaders` of `@spy4x/server` sends; the helper itself is Hono middleware
- * and the MPA runs on Fresh. A page here loads one stylesheet from its own origin and no font, so
- * the policy is the library's strictest: everything from `'self'` only, no plugins and no framing,
- * images and Fresh's inline scripts aside (below and {@link securityHeadersMiddleware}). Its
+ * and the MPA's server is not Hono. A page here loads one stylesheet from its own origin and no
+ * font, so the policy is the library's strictest: everything from `'self'` only, no plugins and no
+ * framing, images aside (below). Its
  * `Referrer-Policy: no-referrer` also covers the newsletter pages, whose address carries a token.
  *
  * Two things widen it. The pricing page's form posts to the MPA, which redirects to the SPA's
@@ -37,11 +33,16 @@ function securityHeaderSet(
   { postImages }: { postImages: boolean },
 ): Promise<[string, string][]> {
   const umami = config.analytics?.origin
+  // Vite's dev server injects the styles it hot-reloads and talks to the page over a WebSocket.
+  const dev: boolean = import.meta.env?.DEV ?? false
   return securityHeaderList({
     extraSources: {
       ...(config.apiOrigin === config.webAppOrigin ? {} : { formAction: [config.apiOrigin] }),
       ...(postImages ? { imgSrc: [`https:`] } : {}),
       ...(umami ? { scriptSrc: [umami], connectSrc: [umami] } : {}),
+      ...(dev
+        ? { styleSrc: [`'unsafe-inline'`], connectSrc: [...(umami ? [umami] : []), `ws:`] }
+        : {}),
     },
   })
 }
@@ -51,21 +52,11 @@ export function isPostPage(pathname: string): boolean {
   return pathLanguage(pathname).path.startsWith(`${BLOG_PATH}/`)
 }
 
-/** Where Fresh leaves a rendered page's nonce on its response (`NONCE_SYMBOL` in Fresh). */
-const FRESH_NONCE = Symbol.for("__freshNonce")
-
-/** The nonce Fresh made for the page `response` carries, or `undefined` for any other answer. */
-function freshNonce(response: Response): unknown {
-  return (response as unknown as Record<symbol, unknown>)[FRESH_NONCE]
-}
-
 /**
  * Puts the security headers on every response: pages, static files, redirects, refusals and the
- * answer to an error a route throws. It goes first in the app, before the static files.
- *
- * A rendered page also has its render's nonce allowed in `script-src`: Fresh writes the inline
- * script that wakes a page's islands, and every other inline script it renders, with a nonce made
- * for that render, which `'self'` alone refuses.
+ * answer to an error a route throws. It goes first in the app, before the static files. The page
+ * has no inline script: its islands wake from a script file (`@spy4x/preact-server`), so `'self'`
+ * covers it.
  */
 export async function securityHeadersMiddleware(config: MpaConfig) {
   const site = await securityHeaderSet(config, { postImages: false })
@@ -78,7 +69,7 @@ export async function securityHeadersMiddleware(config: MpaConfig) {
     } catch (error) {
       response = errorResponse(error)
     }
-    return withSecurityHeaders(response, withScriptNonce(set, freshNonce(response)))
+    return withSecurityHeaders(response, set)
   })
 }
 
@@ -102,8 +93,7 @@ export async function securityHeadersMiddleware(config: MpaConfig) {
  *    (`no-store`), since the newsletter pages carry a token in their address.
  *
  * Between steps 1 and 2, a `GET` or `HEAD` of an address that ends in a slash answers 301 to the
- * same address without it, query kept (`/de/pricing/` → `/de/pricing`). Fresh's own
- * `trailingSlashes("never")` would answer 302.
+ * same address without it, query kept (`/de/pricing/` → `/de/pricing`).
  *
  * Framing is forbidden by {@link securityHeadersMiddleware}, which runs before this one.
  */
@@ -159,9 +149,9 @@ export function pageMiddleware(
 
 /**
  * The last resort, in plain text: the answer to an error {@link pageMiddleware} did not turn into
- * the error page, because it came from a static file or from rendering that page. It is what
- * Fresh's default handler answers; Fresh makes that answer outside every middleware, so it would
- * leave without the security headers.
+ * the error page, because it came from a static file or from rendering that page. It is what the
+ * website's server answers to an error that leaves every middleware (`@spy4x/preact-server`); that
+ * answer would leave without the security headers.
  */
 function errorResponse(error: unknown): Response {
   if (error instanceof HttpError && error.status < 500) {
@@ -172,7 +162,7 @@ function errorResponse(error: unknown): Response {
   return new Response("Internal server error", { status })
 }
 
-function remoteAddress(info: Deno.ServeHandlerInfo): string {
+function remoteAddress(info: ServeInfo): string {
   const address = info.remoteAddr
   return address.transport === "tcp" || address.transport === "udp" ? address.hostname : ""
 }
@@ -189,14 +179,11 @@ function withPageHeaders(response: Response, pathname: string): Response {
   } else if (headers.get("content-type")?.startsWith("text/html")) {
     headers.set("cache-control", "no-cache")
   }
-  const answer = new Response(response.body, {
+  return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
     headers,
   })
-  // Keep the render's nonce for `securityHeadersMiddleware`, which runs outside this middleware.
-  Object.assign(answer, { [FRESH_NONCE]: freshNonce(response) })
-  return answer
 }
 
 /**
@@ -206,8 +193,8 @@ function withPageHeaders(response: Response, pathname: string): Response {
  * kept), and anything else is the 404 page.
  */
 export const languageMiddleware = define.middleware((ctx) => {
-  // Fresh hands an address without the segment an empty one. An empty segment in the address
-  // itself never arrives: Fresh collapses `//pricing` to `/pricing` before it routes.
+  // The router hands an address without the segment an empty one. An empty segment in the address
+  // itself never arrives: the server collapses `//pricing` to `/pricing` before it routes.
   const asked = segmentLanguage(ctx.params.lang || undefined)
   if (asked.kind === `missing`) throw new HttpError(404)
   if (asked.kind === `redirect`) {
@@ -217,30 +204,30 @@ export const languageMiddleware = define.middleware((ctx) => {
   return ctx.next()
 })
 
-/** What Fresh sends with a static file whose address carries no build id. */
-const FRESH_NO_STORE = "no-cache, no-store, max-age=0, must-revalidate"
+/** What `staticFiles` sends with a static file whose address carries no build id. */
+const NO_STORE = "no-cache, no-store, max-age=0, must-revalidate"
 
 /** How long a browser keeps a static file whose address carries no build id: one hour. */
 export const UNVERSIONED_FILE_CACHE = "public, max-age=3600"
 
 /**
- * Fresh's `staticFiles`, with a shorter rule for files whose address carries no build id.
+ * The server's `staticFiles` (`@spy4x/preact-server`), with a shorter rule for files whose address
+ * carries no build id.
  *
- * Fresh sends a file as immutable for a year when its address carries the build id (`?__frsh_c=`,
- * which Fresh adds to every `<img>`) or a hashed name (`/assets/`). Any other file, such as a font
+ * `staticFiles` sends a file as immutable for a year when its address carries the build id
+ * (`?__v=`, which the renderer adds to every `<img>`) or a hashed name (`/assets/`). Any other
+ * file, such as a font
  * the stylesheet names or the Open Graph image a crawler fetches, it sends as never to be stored,
  * so every page view downloads it again. Such a file can change in the next deploy under the same
  * address, so it must not be immutable: a browser keeps it for {@link UNVERSIONED_FILE_CACHE} and
- * then revalidates it with its ETag. In development Fresh's own rule stays.
+ * then revalidates it with its ETag. In development Vite serves the files and this rule does not
+ * apply.
  */
 export function staticFilesMiddleware() {
   const serve = staticFiles<State>()
   return define.middleware(async (ctx) => {
     const response = await serve(ctx)
-    if (
-      ctx.config.mode !== "development" &&
-      response.headers.get("cache-control") === FRESH_NO_STORE
-    ) {
+    if (response.headers.get("cache-control") === NO_STORE) {
       response.headers.set("cache-control", UNVERSIONED_FILE_CACHE)
     }
     return response

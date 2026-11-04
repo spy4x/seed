@@ -64,7 +64,7 @@ documentación.
 | ------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------- | -------------------------------------- | ------------------------------- | ------------------------------------------ |
 | [Makerkit](https://makerkit.dev/pricing)                                  | 299 o 599 USD en un pago (precio de lista 349, 649) | De pago, sin open source, por cliente | Next.js, React Router o TanStack Start | Sí, por asiento                 | Recomienda Vercel; Cloudflare, Docker, VPS |
 | [Makerkit Lite](https://github.com/makerkit/nextjs-saas-starter-kit-lite) | Gratis                                              | MIT                                   | Next.js, Supabase                      | No                              | No figura                                  |
-| [Seed](https://github.com/spy4x/seed)                                     | Gratis                                              | MIT                                   | Hono, Fresh, Preact; Postgres          | Sí, por miembro                 | Tu propio servidor, Docker Compose         |
+| [Seed](https://github.com/spy4x/seed)                                     | Gratis                                              | MIT                                   | Hono, Preact; Postgres                 | Sí, por miembro                 | Tu propio servidor, Docker Compose         |
 | [Supastarter](https://supastarter.dev/)                                   | 349, 799 o 1499 USD en un pago                      | De pago, sin redistribución           | Next.js, Nuxt o TanStack Start         | Sí, por asiento                 | Vercel, Docker, Coolify y otros            |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)            | Gratis                                              | MIT                                   | Next.js, Drizzle; Postgres             | Owner y Member; Stripe Checkout | Vercel                                     |
 
@@ -116,7 +116,7 @@ Cómo poner Seed en un servidor: la [guía de despliegue](/es/docs/deploy).
 
 - **Quieres Supabase.** El kit principal de Makerkit se apoya en su autenticación, su
   almacenamiento y su row-level security. Seed usa su propio Postgres y su propio inicio de sesión.
-- **Quieres Next.js o React Router.** Seed es Preact, con Fresh para el sitio público.
+- **Quieres Next.js o React Router.** Seed es Preact en todas partes, también en el sitio público.
 - **Necesitas entrar como un usuario, cobro por uso o un segundo proveedor de pagos.** Makerkit
   lista los dos primeros y su página principal nombra Polar junto a Stripe. Seed no tiene ninguno
   de los tres; Stripe es su único proveedor.

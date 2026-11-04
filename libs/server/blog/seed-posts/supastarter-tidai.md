@@ -41,7 +41,7 @@ Seed 是我做的，所以我并不中立。因此，关于其他产品的每条
 | 模板                                                           | 价格                             | 许可证              | 技术栈                                    | 团队与角色      | 托管                                 |
 | -------------------------------------------------------------- | -------------------------------- | ------------------- | ----------------------------------------- | --------------- | ------------------------------------ |
 | [Supastarter](https://supastarter.dev/)                        | 349、799 或 1499 美元            | 付费，禁止再分发    | Next.js、Nuxt 或 TanStack Start；Postgres | 有，按席位计费  | Vercel、Docker、Coolify 等           |
-| [Seed](https://github.com/spy4x/seed)                          | 免费                             | MIT                 | Hono、Fresh、Preact；Postgres             | 有，按成员      | 你自己的服务器，Docker Compose       |
+| [Seed](https://github.com/spy4x/seed)                          | 免费                             | MIT                 | Hono、Preact；Postgres                    | 有，按成员      | 你自己的服务器，Docker Compose       |
 | [Makerkit](https://makerkit.dev/pricing)                       | 299 或 599 美元（标价 349、649） | 付费；Lite 版为 MIT | Next.js、React Router 或 TanStack Start   | 有，按席位      | 推荐 Vercel；Cloudflare、Docker、VPS |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter) | 免费                             | MIT                 | Next.js、Drizzle；Postgres                | Owner 和 Member | Vercel                               |
 | [Open SaaS](https://github.com/wasp-lang/open-saas)            | 免费                             | MIT                 | Wasp（React、Node.js、Prisma）；Postgres  | 未提及          | Railway 或 Fly.io，或任何主机        |

@@ -2,7 +2,7 @@
 // The docs are English at every language's address: they are the repository's own guides, which
 // are written in English only. The frame around them is translated.
 import type { JSX } from "preact"
-import type { FreshContext } from "fresh"
+import type { Context } from "@spy4x/preact-server"
 import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
 import { Breadcrumbs } from "@spy4x/preact-ui/breadcrumbs"
 import { Button } from "@spy4x/preact-ui/button"
@@ -188,7 +188,7 @@ function DocPage({ doc }: { doc: SiteDoc }): JSX.Element {
 }
 
 /** The 404 of a guide that is not published: why, and the way to the ones that are. */
-function renderNotFound(ctx: FreshContext<State>): Response | Promise<Response> {
+function renderNotFound(ctx: Context<State>): Response | Promise<Response> {
   return ctx.render(
     <SiteLanguage language={ctx.state.language}>
       <SiteFrame

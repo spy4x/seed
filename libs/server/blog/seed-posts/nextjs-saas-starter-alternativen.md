@@ -72,7 +72,7 @@ Team zuerst braucht, schreiben Sie selbst.
 | ---------------- | --------------------- | ------------------------------- | ---------------------------- | ------------------------------------- | -------------------------------------- |
 | Preis            | Kostenlos             | Kostenlos                       | Kostenlos                    | 299 $ oder 599 $, einmalig            | 349 $ bis 1.499 $, einmalig            |
 | Lizenz           | MIT                   | MIT                             | MIT                          | Kostenpflichtig; das Lite-Kit ist MIT | Kostenpflichtig                        |
-| Stack            | Next.js, Drizzle      | Hono, Preact, Fresh; Postgres   | Wasp (React, Node.js)        | Next.js 16 oder TanStack Start u. a.  | Next.js, Nuxt oder TanStack Start      |
+| Stack            | Next.js, Drizzle      | Hono, Preact; Postgres          | Wasp (React, Node.js)        | Next.js 16 oder TanStack Start u. a.  | Next.js, Nuxt oder TanStack Start      |
 | Teams und Rollen | Inhaber und Mitglied  | Vom Betrachter bis zum Inhaber  | Nein                         | Ja, mit Einladungen                   | Ja, mit Einladungen                    |
 | Einladungs-Mail  | Wird nicht verschickt | Ja                              | Keine Teams                  | Nicht geprüft                         | Nicht geprüft                          |
 | Abrechnung       | Stripe, eins pro Team | Stripe, pro Mitglied            | Stripe, Polar, Lemon Squeezy | Nicht geprüft                         | Stripe, Lemon Squeezy und drei weitere |

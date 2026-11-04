@@ -20,7 +20,7 @@ async function sourceTexts(): Promise<string[]> {
       const entry of walk(new URL(folder, root), {
         exts: [`.ts`, `.tsx`],
         includeDirs: false,
-        skip: [/\/(node_modules|dist|build|_fresh|\.vite)\//, /\.test\.tsx?$/],
+        skip: [/\/(node_modules|dist|build|\.vite)\//, /\.test\.tsx?$/],
       })
     ) texts.push(await Deno.readTextFile(entry.path))
   }

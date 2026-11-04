@@ -52,7 +52,7 @@ Wasp 是一个全栈框架：你在一个文件 `main.wasp.ts` 里描述页面�
 | ---------- | -------------------------------- | ------------------------------- | ----------------------------- | ------------------------------- |
 | 价格       | 免费                             | 免费                            | 一次性 299 或 599 美元        | 一次性 349 到 1,499 美元        |
 | 许可证     | MIT                              | MIT                             | 付费；Lite 套件为 MIT         | 付费                            |
-| 技术栈     | Wasp（React、Node.js、Prisma）   | Hono、Preact、Fresh；Postgres   | Next.js 16、TanStack Start 等 | Next.js、Nuxt 或 TanStack Start |
+| 技术栈     | Wasp（React、Node.js、Prisma）   | Hono、Preact；Postgres          | Next.js 16、TanStack Start 等 | Next.js、Nuxt 或 TanStack Start |
 | 团队和角色 | 无                               | 有，从查看者到所有者            | 有，带邀请和权限              | 有，带邀请和角色                |
 | 支付       | Stripe、Polar、Lemon Squeezy     | Stripe，按成员计费              | 未核实                        | Stripe、Lemon Squeezy 等五家    |
 | 管理后台   | 管理仪表盘                       | 独立主机上的管理应用，审计日志  | Lite 套件中没有               | 未核实                          |

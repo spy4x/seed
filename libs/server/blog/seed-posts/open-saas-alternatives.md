@@ -73,7 +73,7 @@ with one command, and the manual path goes to any host
 | --------------- | -------------------------------- | ------------------------------------ | -------------------------------------- | ------------------------------------ |
 | Price           | Free                             | Free                                 | $299 or $599 once                      | $349 to $1,499 once                  |
 | Licence         | MIT                              | MIT                                  | Paid; the Lite kit is MIT              | Paid                                 |
-| Stack           | Wasp (React, Node.js, Prisma)    | Hono, Preact, Fresh; Postgres        | Next.js 16 or TanStack Start, and more | Next.js, Nuxt or TanStack Start      |
+| Stack           | Wasp (React, Node.js, Prisma)    | Hono, Preact; Postgres               | Next.js 16 or TanStack Start, and more | Next.js, Nuxt or TanStack Start      |
 | Teams and roles | No                               | Yes, viewer to owner                 | Yes, with invitations and permissions  | Yes, with invitations and roles      |
 | Payments        | Stripe, Polar, Lemon Squeezy     | Stripe, billed per member            | Not checked                            | Stripe, Lemon Squeezy and three more |
 | Admin           | Admin dashboard                  | Admin app on its own host, audit log | Not in the Lite kit                    | Not checked                          |

@@ -20,8 +20,9 @@ import type { FigureFrame } from "./components/post-figure.tsx"
  * A tag is looked up in this map by its exact name and never turned into a path, so a post cannot
  * reach any other module; its props reach the component only after the file's `props` schema
  * accepted them. A file exports that schema as an arktype definition, a plain object, which the
- * registry compiles: Fresh ships every export of an island to the browser, and arktype there would
- * add about 190 KB and a `new Function` probe that the website's Content Security Policy blocks.
+ * registry compiles: the browser loads an island's whole file, every export, and arktype there
+ * would add about 190 KB and a `new Function` probe that the website's Content Security Policy
+ * blocks.
  *
  * @module
  */
@@ -89,8 +90,8 @@ const BUNDLED: Record<string, unknown> | undefined = (import.meta as { env?: unk
 let loaded: Promise<ReadonlyMap<string, PostFigureModule>> | undefined
 
 /**
- * The site's figures. Under Vite each island is the very module Fresh hydrates; Deno alone (the
- * tests) reads the folder from disk instead.
+ * The site's figures. Under Vite each island is the very module the browser hydrates; Deno alone
+ * (the tests) reads the folder from disk instead.
  */
 export function postFigures(): Promise<ReadonlyMap<string, PostFigureModule>> {
   loaded ??= BUNDLED

@@ -2,7 +2,7 @@
 // The changelog is English at every language's address, like the docs: its entries are commit
 // subjects, which are written in English only. The frame around it is translated.
 import type { JSX } from "preact"
-import { Head } from "fresh/runtime"
+import { Head } from "@spy4x/preact-server"
 import { Breadcrumbs } from "@spy4x/preact-ui/breadcrumbs"
 import { CHANGE_LIST_LABELS, ChangeList } from "@spy4x/preact-ui/change-list"
 import { OnThisPage } from "@spy4x/preact-ui/on-this-page"
