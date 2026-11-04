@@ -84,12 +84,13 @@ cambio, habla español en la app, el panel, el sitio y los correos.
 ## ¿Qué alternativa gratis tiene lo que le falta a Makerkit Lite?
 
 **Seed** tiene las tres piezas. Cada persona recibe un grupo al registrarse, con roles de lector,
-editor, administrador y propietario. Stripe cobra por miembro, con un plan gratis, 14 días de
-prueba y un periodo de gracia tras un pago fallido. Una app de administración en su propio dominio
+editor, administrador y propietario. Stripe cobra por miembro, con un plan gratis, 14 días de prueba
+y un periodo de gracia tras un pago fallido. Una app de administración en su propio dominio
 encuentra a una persona, devuelve un pago y anota cada acción en un registro de auditoría. Inicio de
 sesión con contraseña, passkeys, códigos por correo, Google y GitHub, y una app autenticadora como
 segundo factor. Y suma lo que ninguna página de Makerkit menciona: una app que abre sin conexión y
-deja en cola los cambios, y copias de seguridad y monitorización en el archivo Compose.
+deja en cola los cambios, y monitorización del servidor (VictoriaMetrics, Grafana) y copias de
+seguridad en el archivo Compose.
 
 Como Seed es MIT, las dos sorpresas de la licencia no existen: publica tu producto como open source
 o construye diez proyectos de clientes encima, y nadie necesita una segunda licencia. Yo mismo hago

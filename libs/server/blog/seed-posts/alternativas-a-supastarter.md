@@ -66,9 +66,10 @@ páginas que leí: pregunta antes de comprar.
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter) | Gratis                                   | MIT                         | Next.js, Drizzle; Postgres               | Owner y Member        | Vercel                                     |
 | [Open SaaS](https://github.com/wasp-lang/open-saas)            | Gratis                                   | MIT                         | Wasp (React, Node.js, Prisma); Postgres  | No figura             | Railway o Fly.io, o cualquier hosting      |
 
-"No figura" significa que las páginas del producto no lo mencionan, no que no se pueda añadir.
-Makerkit muestra los dos pares de precios sin decir cuál es el descuento: compruébalo al pagar. La
-[página de comparación](/es/compare) pone 19 funciones de seis boilerplates en una tabla.
+"No figura" significa que las páginas del producto no lo mencionan, no que no se pueda añadir. La
+página de precios de Makerkit tacha 349 y 649 USD y cobra 299 y 599; sus preguntas frecuentes aún
+citan 349 y 649. La [página de comparación](/es/compare) pone 19 funciones de seis boilerplates en
+una tabla.
 
 ## ¿Y los cobros si estás en Latinoamérica?
 
@@ -96,8 +97,8 @@ periodo de gracia tras un pago fallido. Inicio de sesión con contraseña, passk
 correo, Google y GitHub, y una app autenticadora como segundo factor. Una app de administración en
 su propio dominio encuentra a una persona, devuelve un pago y anota cada acción en un registro de
 auditoría. Además de lo que lista Supastarter, Seed tiene actualizaciones en tiempo real por
-WebSocket, una app que abre sin conexión y deja en cola los cambios, y copias de seguridad y
-monitorización en su archivo Compose.
+WebSocket, una app que abre sin conexión y deja en cola los cambios, y monitorización del servidor
+(VictoriaMetrics, Grafana) y copias de seguridad en su archivo Compose.
 
 **El Next.js SaaS Starter**, unas 16 300 estrellas en GitHub, es el pequeño y honesto: correo y
 contraseña, Stripe Checkout, equipos con Owner y Member. Lo lees en una tarde y construyes el

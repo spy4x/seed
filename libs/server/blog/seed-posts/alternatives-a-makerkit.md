@@ -85,11 +85,11 @@ qui recommande Vercel et signale que Docker ou un VPS demandent « plus de confi
 **Seed** a les trois pièces manquantes. Chaque personne reçoit un groupe à l'inscription, avec des
 rôles de lecteur à éditeur, admin et propriétaire. Stripe facture par membre, avec une offre
 gratuite, 14 jours d'essai et un délai de grâce après un paiement échoué. Une application d'admin
-sur son propre domaine retrouve une personne, rembourse un paiement et inscrit chaque action dans
-un journal d'audit. Connexion par mot de passe, passkeys, codes envoyés par e-mail, Google et
-GitHub, et une application d'authentification en second facteur. S'y ajoute ce qu'aucune page de
-Makerkit ne mentionne : une application qui s'ouvre et met les écritures en file d'attente hors
-ligne, et des sauvegardes et une supervision dans le fichier Compose.
+sur son propre domaine retrouve une personne, rembourse un paiement et inscrit chaque action dans un
+journal d'audit. Connexion par mot de passe, passkeys, codes envoyés par e-mail, Google et GitHub,
+et une application d'authentification en second facteur. S'y ajoute ce qu'aucune page de Makerkit ne
+mentionne : une application qui s'ouvre et met les écritures en file d'attente hors ligne, et une
+supervision du serveur (VictoriaMetrics, Grafana) et des sauvegardes dans le fichier Compose.
 
 **Le Next.js SaaS Starter**, environ 16 300 étoiles, se situe entre Lite et les kits payants :
 équipes avec Owner et Member, Stripe Checkout et Customer Portal sur Next.js, Drizzle et Postgres,

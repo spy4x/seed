@@ -46,7 +46,7 @@ Seed 是我做的，所以我并不中立。因此，关于其他产品的每条
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter) | 免费                             | MIT                 | Next.js、Drizzle；Postgres                | Owner 和 Member | Vercel                               |
 | [Open SaaS](https://github.com/wasp-lang/open-saas)            | 免费                             | MIT                 | Wasp（React、Node.js、Prisma）；Postgres  | 未提及          | Railway 或 Fly.io，或任何主机        |
 
-“未提及”指产品页面没有写，不代表加不上。Makerkit 同时列出两组价格，却没说哪组是折扣价，结账时请核对。[对比页](/zh-CN/compare)把六个模板的 19 项功能放在一张表里。
+“未提及”指产品页面没有写，不代表加不上。Makerkit 的价格页把 349 和 649 美元划掉，实际收 299 和 599 美元；它的常见问题里仍写着 349 和 649 美元。[对比页](/zh-CN/compare)把六个模板的 19 项功能放在一张表里。
 
 ## 在中国开发，收款怎么办？
 
@@ -58,7 +58,7 @@ Seed 已经翻译成包括简体中文在内的九种语言，应用、管理后
 
 有，而这恰恰是多数免费模板留下的空白。它们止步于登录和 Stripe Checkout；团队、角色和按成员定价，正是你本来要为 Supastarter 付钱的那部分。
 
-**Seed** 做了这部分。每个人注册时都会得到一个群组，角色有查看者、编辑、管理员和所有者；Stripe 按成员计费，带免费方案、14 天试用和付款失败后的宽限期。登录支持密码、通行密钥、邮件验证码、Google 和 GitHub，第二因素用身份验证器应用。独立域名上的管理应用可以查找用户、退款，并把每个操作记进审计日志。除了 Supastarter 列出的功能，Seed 还有基于 WebSocket 的实时更新、断网也能打开并把修改排队的应用，以及写在 Compose 文件里的备份和监控。
+**Seed** 做了这部分。每个人注册时都会得到一个群组，角色有查看者、编辑、管理员和所有者；Stripe 按成员计费，带免费方案、14 天试用和付款失败后的宽限期。登录支持密码、通行密钥、邮件验证码、Google 和 GitHub，第二因素用身份验证器应用。独立域名上的管理应用可以查找用户、退款，并把每个操作记进审计日志。除了 Supastarter 列出的功能，Seed 还有基于 WebSocket 的实时更新、断网也能打开并把修改排队的应用，以及写在 Compose 文件里的服务器监控（VictoriaMetrics、Grafana）和备份。
 
 **Next.js SaaS Starter**（GitHub 约 16,300 星）小而实在：邮箱加密码、Stripe Checkout、Owner 和 Member 两种角色的团队。一个晚上就能读完，剩下的自己搭。
 

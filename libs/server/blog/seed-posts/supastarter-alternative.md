@@ -67,9 +67,9 @@ gelesenen Seiten nicht gefunden; fragen Sie also vor dem Kauf.
 | [Open SaaS](https://github.com/wasp-lang/open-saas)            | Kostenlos                             | MIT                         | Wasp (React, Node.js, Prisma); Postgres     | Nicht genannt            | Railway oder Fly.io, oder jeder Host      |
 
 „Nicht genannt“ heißt, dass die Seiten des Produkts es nicht erwähnen, nicht dass es sich nie
-nachrüsten lässt. Makerkit zeigt beide Preispaare, ohne zu sagen, welches der Rabatt ist; prüfen
-Sie das an der Kasse. Die [Vergleichsseite](/de/compare) stellt 19 Funktionen von sechs Startern
-nebeneinander.
+nachrüsten lässt. Die Preisseite von Makerkit streicht 349 und 649 $ durch und verlangt 299 und 599
+$; die FAQ nennt noch 349 und 649 $. Die [Vergleichsseite](/de/compare) stellt 19 Funktionen von
+sechs Startern nebeneinander.
 
 ## DSGVO: Wo liegen die Daten Ihrer Kunden?
 
@@ -90,15 +90,15 @@ Ja, und genau diese Lücke lassen die meisten kostenlosen Kits offen. Sie hören
 Stripe Checkout auf; Teams, Rollen und ein Preis pro Mitglied sind der Teil, für den man Supastarter
 bezahlt hätte.
 
-**Seed** hat diesen Teil. Jede Person bekommt bei der Registrierung eine Gruppe mit Rollen vom
-Leser über Bearbeiter und Admin bis zum Inhaber, und Stripe rechnet pro Mitglied ab, mit
-kostenlosem Plan, 14 Tagen Testphase und einer Schonfrist nach einer fehlgeschlagenen Zahlung.
-Anmeldung per Passwort, Passkeys, Anmeldecodes per E-Mail, Google und GitHub, dazu eine
-Authenticator-App als zweiter Faktor. Eine Admin-App auf eigener Domain findet eine Person,
-erstattet eine Zahlung und schreibt jede Aktion ins Audit-Log. Über Supastarters Liste hinaus hat
-Seed Echtzeit-Updates per WebSocket, eine App, die offline startet und Änderungen in eine
-Warteschlange stellt, neun Sprachen einschließlich Deutsch und Arabisch von rechts nach links, und
-Backups und Monitoring in der Compose-Datei.
+**Seed** hat diesen Teil. Jede Person bekommt bei der Registrierung eine Gruppe mit Rollen vom Leser
+über Bearbeiter und Admin bis zum Inhaber, und Stripe rechnet pro Mitglied ab, mit kostenlosem Plan,
+14 Tagen Testphase und einer Schonfrist nach einer fehlgeschlagenen Zahlung. Anmeldung per Passwort,
+Passkeys, Anmeldecodes per E-Mail, Google und GitHub, dazu eine Authenticator-App als zweiter
+Faktor. Eine Admin-App auf eigener Domain findet eine Person, erstattet eine Zahlung und schreibt
+jede Aktion ins Audit-Log. Über Supastarters Liste hinaus hat Seed Echtzeit-Updates per WebSocket,
+eine App, die offline startet und Änderungen in eine Warteschlange stellt, neun Sprachen
+einschließlich Deutsch und Arabisch von rechts nach links, und Server-Monitoring (VictoriaMetrics,
+Grafana) und Backups in der Compose-Datei.
 
 **Der Next.js SaaS Starter**, etwa 16.300 Sterne auf GitHub, ist der kleine, ehrliche: E-Mail und
 Passwort, Stripe Checkout, Teams mit Owner und Member. An einem Nachmittag gelesen, den Rest bauen

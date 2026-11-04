@@ -66,8 +66,9 @@ read, so ask before you buy.
 | [Open SaaS](https://github.com/wasp-lang/open-saas)            | Free                           | MIT                     | Wasp (React, Node.js, Prisma); Postgres   | Not listed              | Railway or Fly.io, or any host              |
 
 "Not listed" means the product's own pages do not mention it, not that it can never be added.
-Makerkit's pricing page shows both price pairs without saying which one is the discount; check at
-checkout. The [comparison page](/compare) puts 19 capabilities of six starters in one table.
+Makerkit's pricing page strikes through $349 and $649 and charges $299 and $599; its FAQ still
+quotes $349 and $649. The [comparison page](/compare) puts 19 capabilities of six starters in one
+table.
 
 ## Is there a free Supastarter alternative with teams and billing?
 
@@ -75,13 +76,13 @@ Yes, and that is the gap most free kits leave open. Free starters usually stop a
 Stripe checkout; teams, roles and a price per member are the part you were going to pay
 Supastarter for.
 
-**Seed** does that part. Every person gets a group at sign-up, with roles from
-viewer through editor and admin to owner, and Stripe bills per member with a free plan, a 14-day
-trial and a grace period after a failed payment. Sign-in has password, passkeys, email sign-in
-codes, Google and GitHub, and an authenticator app as a second factor. An admin app on its own
-host finds a person, refunds a payment and writes every action to an audit log. On top of what
-Supastarter lists, Seed has realtime updates over WebSocket, an app that opens and queues writes
-offline, nine languages with Arabic right to left, and backups and monitoring in its Compose file.
+**Seed** does that part. Every person gets a group at sign-up, with roles from viewer through editor
+and admin to owner, and Stripe bills per member with a free plan, a 14-day trial and a grace period
+after a failed payment. Sign-in has password, passkeys, email sign-in codes, Google and GitHub, and
+an authenticator app as a second factor. An admin app on its own host finds a person, refunds a
+payment and writes every action to an audit log. On top of what Supastarter lists, Seed has realtime
+updates over WebSocket, an app that opens and queues writes offline, nine languages with Arabic
+right to left, and server monitoring (VictoriaMetrics, Grafana) and backups in its Compose file.
 
 **The Next.js SaaS Starter**, about 16,300 GitHub stars, is the small honest one: email and
 password, Stripe Checkout, teams with Owner and Member. You read it in an afternoon and build the

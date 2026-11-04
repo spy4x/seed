@@ -65,8 +65,8 @@ li, então pergunte antes de comprar.
 | [Open SaaS](https://github.com/wasp-lang/open-saas)            | Grátis                                    | MIT                      | Wasp (React, Node.js, Prisma); Postgres   | Não informado             | Railway ou Fly.io, ou qualquer host       |
 
 "Não informado" quer dizer que as páginas do produto não mencionam, não que seja impossível
-adicionar. O Makerkit mostra os dois pares de preços sem dizer qual é o desconto: confira no
-checkout. A [página de comparação](/pt-BR/compare) põe 19 recursos de seis boilerplates numa
+adicionar. A página de preços do Makerkit risca US$ 349 e 649 e cobra US$ 299 e 599; o FAQ ainda
+cita 349 e 649. A [página de comparação](/pt-BR/compare) põe 19 recursos de seis boilerplates numa
 tabela.
 
 ## Cobrança no Brasil: o que muda na escolha?
@@ -88,7 +88,8 @@ carência depois de um pagamento recusado. Login com senha, passkeys, códigos p
 GitHub, e um app autenticador como segundo fator. Um app de administração em domínio próprio acha
 uma pessoa, estorna um pagamento e registra cada ação num log de auditoria. Além do que o
 Supastarter lista, o Seed tem atualizações em tempo real por WebSocket, um app que abre sem internet
-e enfileira as alterações, e backups e monitoramento no arquivo Compose.
+e enfileira as alterações, e monitoramento do servidor (VictoriaMetrics, Grafana) e backups no
+arquivo Compose.
 
 O **Next.js SaaS Starter**, cerca de 16.300 estrelas no GitHub, é o pequeno e honesto: e-mail e
 senha, Stripe Checkout, equipes com Owner e Member. Dá para ler numa tarde e construir o resto.

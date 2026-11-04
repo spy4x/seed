@@ -89,11 +89,11 @@ Produkt nicht automatisch DSGVO-konform, aber die Liste der Auftragsverarbeiter 
 **Seed** hat alle drei fehlenden Teile. Jede Person bekommt bei der Registrierung eine Gruppe mit
 Rollen vom Leser über Bearbeiter und Admin bis zum Inhaber. Stripe rechnet pro Mitglied ab, mit
 kostenlosem Plan, 14 Tagen Testphase und einer Schonfrist nach einer fehlgeschlagenen Zahlung. Eine
-Admin-App auf eigener Domain findet eine Person, erstattet eine Zahlung und schreibt jede Aktion
-ins Audit-Log. Anmeldung per Passwort, Passkeys, Anmeldecodes per E-Mail, Google und GitHub, dazu
-eine Authenticator-App als zweiter Faktor. Dazu kommt, was keine Makerkit-Seite nennt: eine App,
-die offline startet und Änderungen in eine Warteschlange stellt, und Backups und Monitoring in der
-Compose-Datei.
+Admin-App auf eigener Domain findet eine Person, erstattet eine Zahlung und schreibt jede Aktion ins
+Audit-Log. Anmeldung per Passwort, Passkeys, Anmeldecodes per E-Mail, Google und GitHub, dazu eine
+Authenticator-App als zweiter Faktor. Dazu kommt, was keine Makerkit-Seite nennt: eine App, die
+offline startet und Änderungen in eine Warteschlange stellt, und Server-Monitoring (VictoriaMetrics,
+Grafana) und Backups in der Compose-Datei.
 
 Weil Seed unter MIT steht, gibt es die zwei Lizenz-Überraschungen nicht: Veröffentlichen Sie Ihr
 Produkt als Open Source oder bauen Sie zehn Kundenprojekte darauf, eine zweite Lizenz braucht

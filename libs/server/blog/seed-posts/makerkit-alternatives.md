@@ -74,12 +74,12 @@ which marks Vercel as recommended and Docker or a VPS as "more setup required". 
 ## Which free alternative has what Makerkit Lite leaves out?
 
 **Seed** has all three of Lite's missing pieces. Every person gets a group at sign-up, with roles
-from viewer through editor and admin to owner. Stripe bills per member, with a free plan, a
-14-day trial and a grace period after a failed payment. An admin app on its own host finds a
-person, refunds a payment and writes every action to an audit log. Sign-in has password, passkeys,
-email sign-in codes, Google and GitHub, and an authenticator app as a second factor. It also has
-things no Makerkit page lists: an app that opens and queues writes offline, and backups and
-monitoring in the Compose file.
+from viewer through editor and admin to owner. Stripe bills per member, with a free plan, a 14-day
+trial and a grace period after a failed payment. An admin app on its own host finds a person,
+refunds a payment and writes every action to an audit log. Sign-in has password, passkeys, email
+sign-in codes, Google and GitHub, and an authenticator app as a second factor. It also has things no
+Makerkit page lists: an app that opens and queues writes offline, and server monitoring
+(VictoriaMetrics, Grafana) and backups in the Compose file.
 
 Because Seed is MIT, the two licence surprises above do not exist: open-source your product, or
 build ten client projects on it, and nobody needs a second licence. I build my own clients' MVPs

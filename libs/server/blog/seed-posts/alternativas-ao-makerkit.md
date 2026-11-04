@@ -79,9 +79,8 @@ administrador e dono. O Stripe cobra por membro, com plano grátis, 14 dias de t
 carência depois de um pagamento recusado. Um app de administração em domínio próprio acha uma
 pessoa, estorna um pagamento e registra cada ação num log de auditoria. Login com senha, passkeys,
 códigos por e-mail, Google e GitHub, e um app autenticador como segundo fator. E soma o que nenhuma
-página do Makerkit menciona: um app que abre sem internet e enfileira as alterações, e backups e
-monitoramento no arquivo Compose. O Stripe [atende empresas do Brasil](https://stripe.com/global),
-e o Seed já vem em português do Brasil.
+página do Makerkit menciona: um app que abre sem internet e enfileira as alterações, e monitoramento
+do servidor (VictoriaMetrics, Grafana) e backups no arquivo Compose. O Stripe [atende empresas do Brasil](https://stripe.com/global), e o Seed já vem em português do Brasil.
 
 Como o Seed é MIT, as duas surpresas da licença não existem: publique seu produto como open source
 ou faça dez projetos de clientes em cima dele, e ninguém precisa de uma segunda licença. Eu mesmo

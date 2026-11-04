@@ -75,8 +75,8 @@ français, dans l'application, l'administration, le site et les e-mails, parmi n
 | [Open SaaS](https://github.com/wasp-lang/open-saas)            | Gratuit                                | MIT                            | Wasp (React, Node.js, Prisma) ; Postgres   | Non mentionné              | Railway ou Fly.io, ou tout hébergeur        |
 
 « Non mentionné » veut dire que les pages du produit n'en parlent pas, pas que c'est impossible à
-ajouter. Makerkit affiche les deux paires de prix sans dire laquelle est la remise : vérifiez au
-paiement. La [page de comparaison](/fr/compare) aligne 19 fonctions de six boilerplates.
+ajouter. La page de tarifs de Makerkit barre 349 et 649 $ et facture 299 et 599 $ ; sa FAQ cite
+encore 349 et 649 $. La [page de comparaison](/fr/compare) aligne 19 fonctions de six boilerplates.
 
 ## Existe-t-il une alternative gratuite à Supastarter avec équipes et facturation ?
 
@@ -87,12 +87,12 @@ payer à Supastarter.
 **Seed** fait cette partie. Chaque personne reçoit un groupe à l'inscription, avec des rôles de
 lecteur à éditeur, admin et propriétaire, et Stripe facture par membre, avec une offre gratuite, 14
 jours d'essai et un délai de grâce après un paiement échoué. Connexion par mot de passe, passkeys,
-codes envoyés par e-mail, Google et GitHub, et une application d'authentification en second
-facteur. Une application d'administration sur son propre domaine retrouve une personne, rembourse
-un paiement et inscrit chaque action dans un journal d'audit. En plus de ce que liste Supastarter,
-Seed a des mises à jour en temps réel par WebSocket, une application qui s'ouvre et met les
-écritures en file d'attente hors ligne, et des sauvegardes et une supervision dans son fichier
-Compose.
+codes envoyés par e-mail, Google et GitHub, et une application d'authentification en second facteur.
+Une application d'administration sur son propre domaine retrouve une personne, rembourse un paiement
+et inscrit chaque action dans un journal d'audit. En plus de ce que liste Supastarter, Seed a des
+mises à jour en temps réel par WebSocket, une application qui s'ouvre et met les écritures en file
+d'attente hors ligne, et une supervision du serveur (VictoriaMetrics, Grafana) et des sauvegardes
+dans son fichier Compose.
 
 **Le Next.js SaaS Starter**, environ 16 300 étoiles sur GitHub, est le petit honnête : e-mail et
 mot de passe, Stripe Checkout, équipes avec Owner et Member. Lu en un après-midi, le reste est à
