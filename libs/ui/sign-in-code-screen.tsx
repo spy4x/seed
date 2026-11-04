@@ -90,6 +90,7 @@ export function CodeStep(
   }: CodeStepProps,
 ): JSX.Element {
   const step = useRef<HTMLDivElement>(null)
+  const t = useAppText()
   useEffect(() => {
     // The step focuses its field as it mounts, but the app's route announcer then focuses the new
     // page's heading in the same flush: a step reached by navigation takes the focus back after it.
@@ -108,6 +109,7 @@ export function CodeStep(
         busy={checking}
         error={error}
         pattern={MAILED_CODE_PATTERN}
+        labels={{ invalid: t.t(`CodeStep.invalid`) }}
         readyAt={readyAt}
         resending={resending}
         headingLevel={1}

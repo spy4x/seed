@@ -1244,6 +1244,7 @@ export default {
   "SignInCodeScreen.confirmDescription":
     "我们会向 <email>{email}</email> 发送验证码。请在下一步输入，确认是你本人。",
   "CodeStep.sent": "我们已向 <email>{email}</email> 发送验证码。",
+  "CodeStep.invalid": "验证码共 8 位。请检查是否漏了一位。",
   "SignInCodeScreen.guest":
     "你正在以访客身份使用应用。登录后，你在这里创建的内容会保存到这个邮箱名下。如果这个邮箱已有账号，我们会先征求你的意见。",
   "CodeStep.deadTitle": "这个验证码已失效",

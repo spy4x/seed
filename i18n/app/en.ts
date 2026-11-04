@@ -1410,6 +1410,7 @@ export default {
   "SignInCodeScreen.confirmDescription":
     "We'll email a code to <email>{email}</email>. Type it on the next step to confirm it's you.",
   "CodeStep.sent": "We sent a code to <email>{email}</email>.",
+  "CodeStep.invalid": "The code has 8 characters. Check for a missing one.",
   "SignInCodeScreen.guest":
     "You're using the app as a guest. Signing in saves what you made here under this email. If it already has an account, we'll ask you first.",
   "CodeStep.deadTitle": "This code no longer works",

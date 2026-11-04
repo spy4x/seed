@@ -236,7 +236,7 @@ describe("SignInCodeScreen's code step in the browser", () => {
     await submit("[data-e2e=mailed-code-step-code]")
 
     expect(code.calls).toEqual([])
-    expect(text()).toContain("That doesn't look like the code we sent.")
+    expect(text()).toContain("The code has 8 characters. Check for a missing one.")
     expect(focused()).toBe("mailed-code-step-code")
   })
 

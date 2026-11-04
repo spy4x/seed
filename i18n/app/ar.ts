@@ -1629,6 +1629,7 @@ export default {
   "SignInCodeScreen.confirmDescription":
     "سنرسل رمزًا إلى <email>{email}</email>. اكتبه في الخطوة التالية لتأكيد هويتك.",
   "CodeStep.sent": "أرسلنا رمزًا إلى <email>{email}</email>.",
+  "CodeStep.invalid": "يتكوّن الرمز من 8 أحرف. تحقّق من أنه لا ينقصه حرف.",
   "SignInCodeScreen.guest":
     "أنت تستخدم التطبيق كضيف. عند تسجيل الدخول نحفظ ما أنشأته هنا في حساب بهذا البريد. وإن كان لهذا البريد حساب بالفعل، فسنسألك أولًا.",
   "CodeStep.deadTitle": "هذا الرمز لم يعد صالحًا",

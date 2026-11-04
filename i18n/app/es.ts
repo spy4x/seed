@@ -1532,6 +1532,7 @@ export default {
   "SignInCodeScreen.confirmDescription":
     "Te enviaremos un código a <email>{email}</email>. Escríbelo en el siguiente paso para confirmar que eres tú.",
   "CodeStep.sent": "Enviamos un código a <email>{email}</email>.",
+  "CodeStep.invalid": "El código tiene 8 caracteres. Revisa si falta alguno.",
   "SignInCodeScreen.guest":
     "Estás usando la app como invitado. Al iniciar sesión, lo que creaste aquí se guarda con este correo. Si ese correo ya tiene una cuenta, te preguntaremos primero.",
   "CodeStep.deadTitle": "Este código ya no funciona",

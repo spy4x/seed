@@ -1367,6 +1367,7 @@ export default {
   "SignInCodeScreen.confirmDescription":
     "<email>{email}</email>にコードをお送りします。次の画面でそのコードを入力して、本人確認を完了してください。",
   "CodeStep.sent": "<email>{email}</email>にコードを送信しました。",
+  "CodeStep.invalid": "コードは8文字です。抜けている文字がないか確認してください。",
   "SignInCodeScreen.guest":
     "ゲストとしてアプリを使っています。ログインすると、ここで作ったものはこのメールアドレスで保存されます。このメールアドレスのアカウントがすでにある場合は、先にお尋ねします。",
   "CodeStep.deadTitle": "このコードはもう使えません",
