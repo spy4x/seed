@@ -133,13 +133,13 @@ export default {
   "Architecture.worker": "Worker",
   "Architecture.mail": "E-mail, push",
   "Architecture.webAppNote": "Preact, dans le navigateur",
-  "Architecture.websiteNote": "Fresh, comme cette page",
+  "Architecture.websiteNote": "Preact, côté serveur",
   "Architecture.apiNote": "Hono sur Deno",
   "Architecture.postgresNote": "chaque modification",
   "Architecture.workerNote": "les tâches lentes",
   "Architecture.mailNote": "et le nettoyage",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "événements, même transaction",
   "Architecture.caption": "Le tout sur un seul serveur, derrière Traefik, avec Valkey et Grafana",
   "Architecture.captionTop": "Le tout sur un seul serveur, derrière Traefik,",
@@ -567,7 +567,7 @@ export default {
   "FeatureWebsite.lead":
     "Ce site : rapide, rendu côté serveur et utilisable sans JavaScript, avec tarifs, pages légales, blog et newsletter.",
   "FeatureWebsite.fact1":
-    "Fresh côté serveur ; chaque action est un vrai lien ou un vrai formulaire",
+    "Preact côté serveur, construit avec Vite ; chaque action est un vrai lien ou un vrai formulaire",
   "FeatureWebsite.fact2": "Des tarifs lus depuis le catalogue de forfaits de l’application",
   "FeatureWebsite.fact3":
     "Une newsletter à double confirmation, désabonnement en un clic et e-mails dans la langue du lecteur",

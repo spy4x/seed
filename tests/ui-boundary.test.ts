@@ -36,7 +36,7 @@ Deno.test("no app imports RailShell: every app's frame is the library's AppShell
     const entry of walk(appsDir, {
       exts: [".ts", ".tsx"],
       includeDirs: false,
-      skip: [/\/(node_modules|dist|build|_fresh|\.vite)\//],
+      skip: [/\/(node_modules|dist|build|\.vite)\//],
     })
   ) files.push(entry.path)
   // An empty walk would pass silently, so require the SPA's frame wiring.

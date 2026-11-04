@@ -1391,6 +1391,10 @@ export default {
   "AdminGroupOverview.description":
     "Ce que les membres voient sur leur page Vue d’ensemble, dans la disposition par défaut. Les membres peuvent masquer et réordonner ces widgets ; leurs propres dispositions ne sont pas affichées ici.",
   "AdminGroupOverview.gridLabel": "Widgets de la vue d’ensemble de {group}",
+  "AdminGroupOverview.membersOnly":
+    "Les widgets qui affichent les chiffres propres au groupe ne sont visibles que par ses membres.",
+  "AdminGroupOverview.noneShown":
+    "Tous les widgets de la page Vue d’ensemble de ce groupe affichent ses propres chiffres, donc seuls ses membres peuvent les voir.",
   "AdminGroups.active": "Actifs",
   "AdminGroups.inTrash": "Dans la corbeille",
   "AdminGroups.noName": "Sans nom",

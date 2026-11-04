@@ -1479,6 +1479,9 @@ export default {
   "AdminGroupOverview.description":
     "ما يراه الأعضاء في صفحة «نظرة عامة» بالترتيب الافتراضي. يستطيع الأعضاء إخفاء هذه الأدوات وإعادة ترتيبها، ولا تظهر ترتيباتهم الخاصة هنا.",
   "AdminGroupOverview.gridLabel": "أدوات النظرة العامة في {group}",
+  "AdminGroupOverview.membersOnly": "الأدوات التي تعرض أرقام المجموعة الخاصة لا يراها إلا أعضاؤها.",
+  "AdminGroupOverview.noneShown":
+    "كل الأدوات في صفحة «نظرة عامة» لهذه المجموعة تعرض أرقامها الخاصة، لذلك لا يراها إلا أعضاؤها.",
   "AdminGroups.active": "نشطة",
   "AdminGroups.inTrash": "في سلة المهملات",
   "AdminGroups.noName": "بلا اسم",

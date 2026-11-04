@@ -2,8 +2,9 @@ import type { JSX } from "preact"
 import { DemoVideo, type DemoVideoProps } from "@spy4x/preact-ui/demo-video"
 import { LoopVideo, type LoopVideoProps } from "@spy4x/preact-ui/loop-video"
 
-// Both videos live in one island file on purpose: Fresh ships one script per island file, and on
-// the home page, which draws both, a second script delays the first paint on a slow phone
+// Both videos live in one island file on purpose: the island loader fetches one script per island
+// file (`@spy4x/preact-server/client`), and on the home page, which draws both, a second script delays the
+// first paint on a slow phone
 // (Lighthouse budget, `lighthouse/lighthouserc.json`). The pages build every prop on the server,
 // so this file imports nothing of the site's own.
 

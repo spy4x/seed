@@ -77,7 +77,7 @@ nicht.
 | ---------------- | ------------------------------------ | -------------------------------------- | -------------------------------------- | -------------------------------------- |
 | Preis            | Kostenlos                            | Kostenlos                              | 299 $ oder 599 $, einmalig             | 349 $ bis 1.499 $, einmalig            |
 | Lizenz           | MIT                                  | MIT                                    | Kostenpflichtig; das Lite-Kit ist MIT  | Kostenpflichtig                        |
-| Stack            | Wasp (React, Node.js, Prisma)        | Hono, Preact, Fresh; Postgres          | Next.js 16 oder TanStack Start u. a.   | Next.js, Nuxt oder TanStack Start      |
+| Stack            | Wasp (React, Node.js, Prisma)        | Hono, Preact; Postgres                 | Next.js 16 oder TanStack Start u. a.   | Next.js, Nuxt oder TanStack Start      |
 | Teams und Rollen | Nein                                 | Ja, vom Betrachter bis zum Inhaber     | Ja, mit Einladungen und Berechtigungen | Ja, mit Einladungen und Rollen         |
 | Zahlungen        | Stripe, Polar, Lemon Squeezy         | Stripe, pro Mitglied                   | Nicht geprüft                          | Stripe, Lemon Squeezy und drei weitere |
 | Admin            | Admin-Dashboard                      | Eigene App auf eigenem Host, Audit-Log | Nicht im Lite-Kit                      | Nicht geprüft                          |

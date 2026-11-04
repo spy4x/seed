@@ -92,8 +92,9 @@ const TALL: Layout = {
 }
 
 /**
- * What the diagram shows, for a screen reader. It is an `aria-label`, not an SVG `<title>`: Fresh
- * treats every `<title>` it renders as the page's, so one in the body would replace the head's.
+ * What the diagram shows, for a screen reader. It is an `aria-label`, not an SVG `<title>`: the
+ * website's renderer (`@spy4x/preact-server`) treats every `<title>` as the page's, so one in the
+ * body would take the head's.
  */
 const DIAGRAM_LABEL = `Architecture.label`
 

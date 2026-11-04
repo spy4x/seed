@@ -1381,6 +1381,10 @@ export default {
   "AdminGroupOverview.description":
     "Lo que ven los miembros en su página Resumen, con la disposición predeterminada. Cada miembro puede ocultarlos y reordenarlos; sus disposiciones personales no se muestran aquí.",
   "AdminGroupOverview.gridLabel": "Widgets del resumen de {group}",
+  "AdminGroupOverview.membersOnly":
+    "Los widgets con las cifras propias del grupo solo los ven sus miembros.",
+  "AdminGroupOverview.noneShown":
+    "Todos los widgets de la página Resumen de este grupo muestran sus propias cifras, así que solo los ven sus miembros.",
   "AdminGroups.active": "Activos",
   "AdminGroups.inTrash": "En la papelera",
   "AdminGroups.noName": "Sin nombre",

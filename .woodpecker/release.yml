@@ -10,7 +10,7 @@
 #         Bun, for APP_RUNTIME=node or bun (infra/compose/compose.runtime-*.yml). Self-contained:
 #         they start from no base image.
 #   spa   apps/spa/dockerfile.prod: nginx with the built SPA.
-#   mpa   apps/mpa/dockerfile.prod: the Fresh website.
+#   mpa   apps/mpa/dockerfile.prod: the public website.
 #
 # The repository is untrusted in Woodpecker: no step mounts a volume or runs privileged. The only
 # agent runs on a home server, and a pipeline that could mount its Docker socket would be root on

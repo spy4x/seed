@@ -47,11 +47,15 @@ read the group again. `e2e/groups-details.e2e.ts` tests this with two pages.
 ## Add a widget to the overview
 
 The group overview (`/overview/:groupId`) is a page of numbers and charts about the group over a
-range of days. Each aggregate offers its own widgets. A widget shows counts only, never an item's
-content or who did it.
+range of days. Each aggregate offers its own widgets. A widget that shows the group's own content
+or figures (its spending, its revenue, an item, who did what) is `operatorView: "never"`: the admin
+group page shows only the `"counts"` widgets.
 
 1. **Definition.** Add the widget to the aggregate's list, as `NOTE_WIDGETS` in
-   `libs/domain/notes/overview.ts` does. Its fields are in the table below.
+   `libs/domain/notes/overview.ts` does. Its fields are in the table below. Choose `operatorView`:
+   `"counts"` when it only counts things, `"never"` otherwise. For a `"never"` widget the admin
+   group page draws no card and adds the line "Widgets that show this group's own figures are
+   visible to its members only.", and its admin route answers 404 without reading anything.
 2. **Query and handler.** Write one query class per widget and a handler, as
    `apps/api/features/notes/widgets.ts` does. The handler makes the list's membership check before
    it reads anything, so a stranger is told the group does not exist.
@@ -63,18 +67,20 @@ content or who did it.
    number takes `WidgetStat`; a chart takes `LineChart` with a one-sentence summary as its caption.
 6. **Registry.** Add the list and the drawings to `OVERVIEW_WIDGETS` and `OVERVIEW_VIEWS` in
    `libs/ui/overview-widgets.ts`. The SPA and the admin group page both read it.
-7. **Admin.** Add the readers next to `NOTE_WIDGET_READERS` in `apps/api/routes/admin/groups.ts`.
-   Without them the admin card shows its error.
+7. **Admin.** For a `"counts"` widget, add the list and the readers to `ADMIN_WIDGETS` in
+   `apps/api/routes/admin/groups.ts`. Without them the admin card shows its error. A `"never"`
+   widget needs nothing there.
 8. **Tests.** Copy `widgets.test.ts`, `tests/integration/note-overview.integration.test.ts` and the
    drawing's case in `libs/ui/overview.test.tsx`. Include another group's rows that must not count.
 
-| Field       | What it holds                                                                     |
-| ----------- | --------------------------------------------------------------------------------- |
-| `id`        | A stable name. A saved layout keeps it, so it never changes                       |
-| `titleKey`  | The `app` catalog key of its name                                                 |
-| `size`      | `stat` for a number, `full` for a chart                                           |
-| `canView`   | Which roles see it                                                                |
-| `operation` | The operation that answers it                                                     |
+| Field          | What it holds                                                                     |
+| -------------- | --------------------------------------------------------------------------------- |
+| `id`           | A stable name. A saved layout keeps it, so it never changes                       |
+| `titleKey`     | The `app` catalog key of its name                                                 |
+| `size`         | `stat` for a number, `full` for a chart                                           |
+| `canView`      | Which roles see it                                                                |
+| `operation`    | The operation that answers it                                                     |
+| `operatorView` | `counts`: the admin group page shows it; `never`: only the group's members see it |
 
 A number answers with `CountWidgetResult`, and a chart with `SeriesWidgetResult`, from
 `@domain/groups`. Both carry the period before the range, or `null` when the group did not exist

@@ -1,4 +1,5 @@
-# The MPA: Fresh, built into the image and served by Deno. Build context is the repository root.
+# The MPA: the public website, built into the image by Vite and served by Deno.
+# Build context is the repository root.
 ARG DENO_VERSION=2.9.7
 # The release pipeline starts from the published base image instead (BASE_IMAGE).
 ARG BASE_IMAGE=localhost/app/deno-base:${DENO_VERSION}
@@ -8,13 +9,14 @@ USER root
 COPY --chown=1000:1000 . .
 USER 1000:1000
 
-# Fresh puts its build id into asset addresses (`?__frsh_c=`) and serves those as immutable for a
-# year. It reads the id from CI_COMMIT_SHA or `git rev-parse HEAD`, and the image has no .git, so
-# the id came out empty and stayed the same across deploys. A hash of the sources stands in.
+# The build puts its id into asset addresses (`?__v=`), which the server sends as immutable
+# for a year. It takes the id from CI_COMMIT_SHA, else from a hash of the client build's files
+# (`website()` in `@spy4x/preact-server/vite`); the image has no .git, so a hash of the sources
+# stands in.
 RUN CI_COMMIT_SHA="$(find apps libs docs deno.jsonc deno.lock -name node_modules -prune -o -type f \
       -exec sha1sum {} + | sort | sha1sum | cut -d' ' -f1)" deno task mpa:build
 # The container healthcheck runs this file; cached here so it never downloads at run time.
 RUN deno cache --frozen apps/healthcheck.ts
 
 EXPOSE 8080
-CMD ["deno", "serve", "--allow-all", "--port", "8080", "apps/mpa/_fresh/server.js"]
+CMD ["deno", "serve", "--allow-all", "--port", "8080", "apps/mpa/dist/server.js"]

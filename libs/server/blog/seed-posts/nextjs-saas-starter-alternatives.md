@@ -72,7 +72,7 @@ needs first are still yours to write.
 | --------------- | -------------------- | ----------------------------- | ---------------------------- | -------------------------------------- | ------------------------------------ |
 | Price           | Free                 | Free                          | Free                         | $299 or $599 once                      | $349 to $1,499 once                  |
 | Licence         | MIT                  | MIT                           | MIT                          | Paid; the Lite kit is MIT              | Paid                                 |
-| Stack           | Next.js, Drizzle     | Hono, Preact, Fresh; Postgres | Wasp (React, Node.js)        | Next.js 16 or TanStack Start, and more | Next.js, Nuxt or TanStack Start      |
+| Stack           | Next.js, Drizzle     | Hono, Preact; Postgres        | Wasp (React, Node.js)        | Next.js 16 or TanStack Start, and more | Next.js, Nuxt or TanStack Start      |
 | Teams and roles | Owner and member     | Viewer to owner               | No                           | Yes, with invitations                  | Yes, with invitations                |
 | Invitation mail | Not sent             | Yes                           | No teams                     | Not checked                            | Not checked                          |
 | Billing         | Stripe, one per team | Stripe, per member            | Stripe, Polar, Lemon Squeezy | Not checked                            | Stripe, Lemon Squeezy and three more |

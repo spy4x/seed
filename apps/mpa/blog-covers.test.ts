@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { App } from "fresh"
+import { App } from "@spy4x/preact-server"
 import { COVERS, handler } from "./routes/blog/covers/[file].ts"
 import { coverImage } from "./blog-covers.ts"
 import type { State } from "./utils.ts"

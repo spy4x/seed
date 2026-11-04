@@ -31,8 +31,8 @@ const ARROWS = [
 ] as const
 
 /**
- * What the diagram shows, for a screen reader. An `aria-label`, not an SVG `<title>`: Fresh treats
- * every `<title>` it renders as the page's.
+ * What the diagram shows, for a screen reader. An `aria-label`, not an SVG `<title>`: the website's
+ * renderer (`@spy4x/preact-server`) treats every `<title>` as the page's.
  */
 const OUTBOX_LABEL = `Outbox.label`
 

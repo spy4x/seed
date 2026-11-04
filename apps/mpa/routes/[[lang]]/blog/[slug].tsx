@@ -1,6 +1,5 @@
 import type { JSX } from "preact"
-import type { FreshContext } from "fresh"
-import { Head } from "fresh/runtime"
+import { type Context, Head } from "@spy4x/preact-server"
 import type { BlogTranslation, PublicBlogPost, PublicBlogPostSummary } from "@domain/blog"
 import { Breadcrumbs } from "@spy4x/preact-ui/breadcrumbs"
 import { Button } from "@spy4x/preact-ui/button"
@@ -421,7 +420,7 @@ function ReadNext({ posts }: { posts: readonly PublicBlogPostSummary[] }): JSX.E
 }
 
 /** The 404 of a post that is not live: why, and the way to the posts that are. */
-function renderNotFound(ctx: FreshContext<State>): Response | Promise<Response> {
+function renderNotFound(ctx: Context<State>): Response | Promise<Response> {
   const t = siteTranslator(ctx.state.language)
   const notFound = postNotFound(t)
   return ctx.render(

@@ -16,7 +16,7 @@ what is running and how it is deployed.
 | --- | ----- | --------- |
 | `apps/api` | Deno, Hono | REST plus the `/api/ws` socket for group calls (ADR 002) |
 | `apps/spa` | Preact, Vite, PWA | Group, note, profile and push calls over the socket; REST for auth, bootstrap and the pull |
-| `apps/mpa` | Fresh | The public website; REST to the API for the newsletter only |
+| `apps/mpa` | Preact, a small Fresh-compatible layer built with Vite ([website-server.md](website-server.md)) | The public website; REST to the API for the newsletter only |
 | `apps/worker` | Deno | No inbound transport; drains `outbox_events` |
 
 ## Services in compose

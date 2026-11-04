@@ -70,7 +70,7 @@ const SKIPPED_DIRECTORIES: readonly string[] = [
   "apps/admin/.vite",
   "apps/admin/dist",
   "apps/mpa/.vite",
-  "apps/mpa/_fresh",
+  "apps/mpa/dist",
   "apps/spa/.vite",
   "apps/spa/dist",
   "e2e/report",

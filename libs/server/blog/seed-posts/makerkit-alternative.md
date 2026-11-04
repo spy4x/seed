@@ -63,7 +63,7 @@ Team-Produkts: Abrechnung, Team-Konten, Mail-Vorlagen, das Super-Admin-Panel, Bl
 | ------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------ | ----------------------------------------- | --------------------------------- | ----------------------------------------- |
 | [Makerkit](https://makerkit.dev/pricing)                                  | 299 oder 599 $ einmalig (Listenpreis 349, 649) | Bezahlt, kein Open Source, pro Kunde | Next.js, React Router oder TanStack Start | Ja, pro Platz                     | Vercel empfohlen; Cloudflare, Docker, VPS |
 | [Makerkit Lite](https://github.com/makerkit/nextjs-saas-starter-kit-lite) | Kostenlos                                      | MIT                                  | Next.js, Supabase                         | Nein                              | Nicht genannt                             |
-| [Seed](https://github.com/spy4x/seed)                                     | Kostenlos                                      | MIT                                  | Hono, Fresh, Preact; Postgres             | Ja, pro Mitglied                  | Eigener Server, Docker Compose            |
+| [Seed](https://github.com/spy4x/seed)                                     | Kostenlos                                      | MIT                                  | Hono, Preact; Postgres                    | Ja, pro Mitglied                  | Eigener Server, Docker Compose            |
 | [Supastarter](https://supastarter.dev/)                                   | 349, 799 oder 1.499 $ einmalig                 | Bezahlt, keine Weitergabe            | Next.js, Nuxt oder TanStack Start         | Ja, pro Platz                     | Vercel, Docker, Coolify und andere        |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)            | Kostenlos                                      | MIT                                  | Next.js, Drizzle; Postgres                | Owner und Member; Stripe Checkout | Vercel                                    |
 
@@ -119,7 +119,7 @@ Seed auf den Server kommt, steht in der [Deploy-Anleitung](/de/docs/deploy).
 
 - **Sie wollen Supabase.** Makerkits Haupt-Kit baut auf dessen Anmeldung, Speicher und Row Level
   Security. Seed hat sein eigenes Postgres und seine eigene Anmeldung.
-- **Sie wollen Next.js oder React Router.** Seed ist Preact, mit Fresh für die öffentliche Website.
+- **Sie wollen Next.js oder React Router.** Seed ist durchgehend Preact, auch die öffentliche Website.
 - **Sie brauchen Anmeldung als Nutzer, Abrechnung nach Verbrauch oder einen zweiten
   Zahlungsanbieter.** Makerkit nennt die ersten beiden, und seine Startseite nennt Polar neben
   Stripe. Seed hat keins davon; Stripe ist sein einziger Anbieter.

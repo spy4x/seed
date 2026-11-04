@@ -77,7 +77,7 @@ Docker.
 | ---------------- | --------------------------------- | ------------------------------------------- | ------------------------------------------ | ------------------------------------- |
 | Prix             | Gratuit                           | Gratuit                                     | 299 $ ou 599 $, une fois                   | De 349 $ à 1 499 $, une fois          |
 | Licence          | MIT                               | MIT                                         | Payante ; le kit Lite est sous MIT         | Payante                               |
-| Stack            | Wasp (React, Node.js, Prisma)     | Hono, Preact, Fresh ; Postgres              | Next.js 16 ou TanStack Start, entre autres | Next.js, Nuxt ou TanStack Start       |
+| Stack            | Wasp (React, Node.js, Prisma)     | Hono, Preact ; Postgres                     | Next.js 16 ou TanStack Start, entre autres | Next.js, Nuxt ou TanStack Start       |
 | Équipes et rôles | Non                               | Oui, de lecteur à propriétaire              | Oui, avec invitations et permissions       | Oui, avec invitations et rôles        |
 | Paiements        | Stripe, Polar, Lemon Squeezy      | Stripe, par membre                          | Non vérifié                                | Stripe, Lemon Squeezy et trois autres |
 | Administration   | Tableau d'administration          | App dédiée sur son domaine, journal d'audit | Absent du kit Lite                         | Non vérifié                           |

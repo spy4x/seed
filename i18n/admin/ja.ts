@@ -1254,6 +1254,10 @@ export default {
   "AdminGroupOverview.description":
     "メンバーの概要ページに表示されるデフォルトのレイアウトです。メンバーはこれらを非表示にしたり並べ替えたりできますが、各自のレイアウトはここには表示されません。",
   "AdminGroupOverview.gridLabel": "{group}の概要ウィジェット",
+  "AdminGroupOverview.membersOnly":
+    "グループ自身の数値を表示するウィジェットは、そのメンバーだけが見られます。",
+  "AdminGroupOverview.noneShown":
+    "このグループの概要ページのウィジェットはすべてグループ自身の数値を表示するため、メンバーだけが見られます。",
   "AdminGroups.active": "有効",
   "AdminGroups.inTrash": "ゴミ箱内",
   "AdminGroups.noName": "名前なし",

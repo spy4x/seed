@@ -1,4 +1,4 @@
-import { HttpError } from "fresh"
+import { HttpError } from "@spy4x/preact-server"
 import { serveFile } from "@std/http/file-server"
 import { fromFileUrl } from "@std/path"
 import { LOOP_FILES } from "../../loops.ts"
@@ -6,7 +6,7 @@ import { define } from "../../utils.ts"
 
 /**
  * The first of `paths` that is a folder, seen from where this module runs: the source
- * (`routes/video/`), or the build, which bundles it into `_fresh/server/assets/`.
+ * (`routes/video/`), or the build, which bundles it into `dist/server/assets/`.
  */
 function folder(paths: readonly string[], name: string): URL {
   const found = paths.map((path) => new URL(path, import.meta.url)).find((url) => {
@@ -42,8 +42,9 @@ export const VIDEO_FILES: Readonly<Record<string, URL>> = Object.fromEntries([
 const CACHE_CONTROL = `public, max-age=604800, must-revalidate`
 
 /**
- * The website's videos. Fresh's static files ignore `Range`, and Safari plays a video only from a
- * server that answers byte ranges with 206; `serveFile` does, with `ETag` and `If-None-Match`.
+ * The website's videos. The server's static files (`@spy4x/preact-server`) ignore `Range`, and
+ * Safari plays a video only from a server that answers byte ranges with 206; `serveFile` does, with
+ * `ETag` and `If-None-Match`.
  */
 export const handler = define.handlers({
   async GET(ctx) {

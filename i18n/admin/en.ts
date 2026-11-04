@@ -1295,6 +1295,10 @@ export default {
   "AdminGroupOverview.description":
     "What members see on their Overview page, in the default layout. Members can hide and reorder these; their own layouts aren't shown here.",
   "AdminGroupOverview.gridLabel": "Overview widgets of {group}",
+  "AdminGroupOverview.membersOnly":
+    "Widgets that show this group's own figures are visible to its members only.",
+  "AdminGroupOverview.noneShown":
+    "Every widget on this group's Overview page shows the group's own figures, so only its members can see them.",
   "AdminGroups.active": "Active",
   "AdminGroups.inTrash": "In trash",
   "AdminGroups.noName": "No name",

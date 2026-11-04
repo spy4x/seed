@@ -19,7 +19,7 @@ const ROOT = fromFileUrl(new URL("../", import.meta.url))
 export const FORBIDDEN = /\.toLocale(?:Date|Time)?String\s*\(|\bIntl\.DateTimeFormat\s*\(/
 
 /** Built or installed code, which no person writes. */
-const SKIPPED = [/[\\/]node_modules[\\/]/, /[\\/]dist[\\/]/, /[\\/]_fresh[\\/]/, /[\\/]\.vite[\\/]/]
+const SKIPPED = [/[\\/]node_modules[\\/]/, /[\\/]dist[\\/]/, /[\\/]\.vite[\\/]/]
 
 /** The lines of a source that format a date on their own, as `line: text`. */
 export function directCalls(source: string): string[] {

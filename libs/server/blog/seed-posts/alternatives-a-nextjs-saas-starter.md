@@ -74,7 +74,7 @@ dont une équipe qui paie a besoin en premier reste à écrire.
 | ------------------- | ---------------------- | -------------------------------- | ---------------------------- | ------------------------------------------ | ------------------------------------- |
 | Prix                | Gratuit                | Gratuit                          | Gratuit                      | 299 $ ou 599 $, une fois                   | De 349 $ à 1 499 $, une fois          |
 | Licence             | MIT                    | MIT                              | MIT                          | Payante ; le kit Lite est sous MIT         | Payante                               |
-| Stack               | Next.js, Drizzle       | Hono, Preact, Fresh ; Postgres   | Wasp (React, Node.js)        | Next.js 16 ou TanStack Start, entre autres | Next.js, Nuxt ou TanStack Start       |
+| Stack               | Next.js, Drizzle       | Hono, Preact ; Postgres          | Wasp (React, Node.js)        | Next.js 16 ou TanStack Start, entre autres | Next.js, Nuxt ou TanStack Start       |
 | Équipes et rôles    | Propriétaire et membre | De lecteur à propriétaire        | Non                          | Oui, avec invitations                      | Oui, avec invitations                 |
 | E-mail d'invitation | Non envoyé             | Oui                              | Pas d'équipes                | Non vérifié                                | Non vérifié                           |
 | Facturation         | Stripe, une par équipe | Stripe, par membre               | Stripe, Polar, Lemon Squeezy | Non vérifié                                | Stripe, Lemon Squeezy et trois autres |

@@ -74,7 +74,7 @@ comando, e o caminho manual serve para qualquer hospedagem
 | -------------- | -------------------------------- | --------------------------------------- | ------------------------------------------ | --------------------------------------- |
 | Preço          | Grátis                           | Grátis                                  | US$ 299 ou US$ 599, pagamento único        | De US$ 349 a US$ 1.499, pagamento único |
 | Licença        | MIT                              | MIT                                     | Paga; o kit Lite é MIT                     | Paga                                    |
-| Stack          | Wasp (React, Node.js, Prisma)    | Hono, Preact, Fresh; Postgres           | Next.js 16 ou TanStack Start, entre outros | Next.js, Nuxt ou TanStack Start         |
+| Stack          | Wasp (React, Node.js, Prisma)    | Hono, Preact; Postgres                  | Next.js 16 ou TanStack Start, entre outros | Next.js, Nuxt ou TanStack Start         |
 | Times e papéis | Não                              | Sim, de leitor a dono                   | Sim, com convites e permissões             | Sim, com convites e papéis              |
 | Pagamentos     | Stripe, Polar, Lemon Squeezy     | Stripe, por membro                      | Não verifiquei                             | Stripe, Lemon Squeezy e mais três       |
 | Admin          | Painel admin                     | App próprio em outro domínio, auditoria | Não no kit Lite                            | Não verifiquei                          |

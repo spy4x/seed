@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { App } from "fresh"
+import { App } from "@spy4x/preact-server"
 import { h } from "preact"
 import { renderToString } from "preact-render-to-string"
 import { formatMoney } from "@spy4x/platform/universal/money"

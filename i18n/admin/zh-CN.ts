@@ -1200,6 +1200,9 @@ export default {
   "AdminGroupOverview.description":
     "成员在“概览”页面上看到的内容（默认布局）。成员可以隐藏和调整这些小组件的顺序；他们各自的布局不会显示在这里。",
   "AdminGroupOverview.gridLabel": "{group}的概览小组件",
+  "AdminGroupOverview.membersOnly": "显示群组自身数据的小组件仅对其成员可见。",
+  "AdminGroupOverview.noneShown":
+    "该群组“概览”页面上的每个小组件都显示群组自身的数据，因此只有其成员可以查看。",
   "AdminGroups.active": "正常",
   "AdminGroups.inTrash": "在回收站中",
   "AdminGroups.noName": "未命名",

@@ -1420,6 +1420,9 @@ export default {
   "AdminGroupOverview.description":
     "Что участники видят на странице «Обзор» при стандартной раскладке. Участники могут скрывать виджеты и менять их порядок, но их собственные раскладки здесь не показаны.",
   "AdminGroupOverview.gridLabel": "Виджеты обзора группы {group}",
+  "AdminGroupOverview.membersOnly": "Виджеты с данными самой группы видны только её участникам.",
+  "AdminGroupOverview.noneShown":
+    "Все виджеты на странице «Обзор» этой группы показывают её собственные данные, поэтому их видят только участники группы.",
   "AdminGroups.active": "Активные",
   "AdminGroups.inTrash": "В корзине",
   "AdminGroups.noName": "Без названия",

@@ -43,7 +43,7 @@ Makerkit の有料キットが加えるもの、つまりチーム、課金、�
 | ------------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------ | ------------------------------------- | -------------------------------- | ------------------------------------ |
 | [Makerkit](https://makerkit.dev/pricing)                                  | 買い切り 299 か 599 ドル（定価 349、649） | 有料、オープンソース不可、クライアントごと | Next.js、React Router、TanStack Start | あり、シート単位                 | Vercel 推奨；Cloudflare、Docker、VPS |
 | [Makerkit Lite](https://github.com/makerkit/nextjs-saas-starter-kit-lite) | 無料                                      | MIT                                        | Next.js、Supabase                     | なし                             | 記載なし                             |
-| [Seed](https://github.com/spy4x/seed)                                     | 無料                                      | MIT                                        | Hono、Fresh、Preact；Postgres         | あり、メンバー単位               | 自分のサーバー、Docker Compose       |
+| [Seed](https://github.com/spy4x/seed)                                     | 無料                                      | MIT                                        | Hono、Preact；Postgres                | あり、メンバー単位               | 自分のサーバー、Docker Compose       |
 | [Supastarter](https://supastarter.dev/)                                   | 買い切り 349、799、1,499 ドル             | 有料、再配布不可                           | Next.js、Nuxt、TanStack Start         | あり、シート単位                 | Vercel、Docker、Coolify ほか         |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)            | 無料                                      | MIT                                        | Next.js、Drizzle；Postgres            | Owner と Member；Stripe Checkout | Vercel                               |
 
@@ -72,7 +72,7 @@ Makerkit のチェックリストは Vercel を推奨し、主力キットは Su
 ## Makerkit にお金を払う価値があるのは
 
 - **Supabase を使いたい。** Makerkit の主力キットは Supabase の認証、ストレージ、row-level security に乗っています。Seed は独自の Postgres とログインを持っています。
-- **Next.js か React Router を使いたい。** Seed は Preact で、公開サイトは Fresh です。
+- **Next.js か React Router を使いたい。** Seed は公開サイトも含めてすべて Preact です。
 - **ユーザーとしてのログイン、従量課金、二つ目の決済プロバイダーが必要。** Makerkit は前の二つを挙げ、トップページでは Stripe と並んで Polar の名前も出しています。Seed には三つともなく、決済は Stripe だけです。
 - **コーディングエージェントと一緒に働く。** Makerkit には MCP サーバーとスキルがあります。Seed には[エージェント向けの手引き](/ja/docs/ai-agents)がありますが、MCP サーバーはありません（[#211](https://github.com/spy4x/seed/issues/211)）。
 - **実績のあるメンテナーが欲しい。** Makerkit は 2022 年からフルタイムで保守していると述べています。Seed は新しく、メンテナーは私一人です。
