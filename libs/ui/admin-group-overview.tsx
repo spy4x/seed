@@ -9,6 +9,8 @@ export interface AdminGroupOverviewProps {
   groupName: string
   range: DateRangeChoice
   timeZone: string
+  /** The operator's own zone: when it is another, the range line names the group's city. */
+  viewerTimeZone?: string
   now: Date
   onRangeChange: (choice: DateRangeChoice) => void
   /** Every widget, in the default layout. */
@@ -39,6 +41,7 @@ export function AdminGroupOverview(props: AdminGroupOverviewProps): JSX.Element 
       <OverviewRangeRow
         range={props.range}
         timeZone={props.timeZone}
+        viewerTimeZone={props.viewerTimeZone}
         now={props.now}
         onRangeChange={props.onRangeChange}
         dataE2E="admin-group-overview-range"

@@ -61,6 +61,9 @@ export default {
   "GroupActivity.renamedFromTo":
     "<who>{who}</who> renomeou o grupo de “<value>{from}</value>” para “<value>{to}</value>”",
   "GroupActivity.detailsUpdated": "<who>{who}</who> mudou a descrição, a cor ou o emoji do grupo",
+  "GroupActivity.timeZoneChanged":
+    "<who>{who}</who> mudou o fuso horário de <value>{from}</value> para <value>{to}</value>",
+  "GroupActivity.timeZoneChangedPlain": "<who>{who}</who> mudou o fuso horário",
   "GroupActivity.deleted": "<who>{who}</who> excluiu o grupo",
   "GroupActivity.restored": "<who>{who}</who> restaurou o grupo",
   "GroupActivity.roleChanged": "<who>{who}</who> mudou a função de <target>{target}</target>",
@@ -258,6 +261,11 @@ export default {
       "Grupos novos começam no plano gratuito. Seu teste grátis de {count} dias vale para o primeiro grupo que você passar para um plano pago.",
   },
   "GroupEditor.readOnly": "Só os administradores e o dono podem alterar os dados deste grupo.",
+  "GroupEditor.timeZoneHint":
+    "Dias e meses começam à meia-noite neste fuso, para todo mundo do grupo.",
+  "GroupEditor.timeZoneInvalid": "Não conhecemos esse fuso horário. Escolha outro da lista.",
+  "GroupEditor.timeZoneChangedElsewhere":
+    "Outra pessoa mudou para {zone} enquanto você editava. Salve para usar o seu ou clique em Descartar.",
   "GroupEditor.nameRequired": "Digite um nome.",
   "GroupEditor.nameInvalid":
     "Use no máximo 100 caracteres, sem quebras de linha nem caracteres invisíveis.",
@@ -730,6 +738,7 @@ export default {
   "OverviewScreen.customRange": "Período personalizado",
   "OverviewScreen.rangeTooLong": "Escolha um período de até um ano.",
   "OverviewScreen.asOf": "Atualizado às {time}",
+  "OverviewScreen.zoneNote": "horário de {city}",
   "OverviewScreen.hide": "Ocultar widget",
   "OverviewView.opening": "Abrindo a visão geral…",
   "OverviewView.saveFailed":

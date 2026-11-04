@@ -357,7 +357,13 @@ describe("group file wording", () => {
 describe("group file menu items", () => {
   const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001"
   const team = { id: groupId, name: "Team", role: GroupRole.OWNER }
-  const draft: GroupDraft = { name: "Team", description: "", color: null, emoji: "" }
+  const draft: GroupDraft = {
+    name: "Team",
+    description: "",
+    color: null,
+    emoji: "",
+    timeZone: "UTC",
+  }
   const editor = (props: Partial<Parameters<typeof GroupEditorScreen>[0]> = {}) => (
     <GroupEditorScreen
       group={team}

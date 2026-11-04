@@ -18,6 +18,7 @@ describe("openImported", () => {
       description: "",
       color: null,
       emoji: null,
+      timeZone: "UTC",
       role: GroupRole.OWNER,
       authorizationRevision: "1",
       changeSequence: "1",

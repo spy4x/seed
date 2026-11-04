@@ -62,6 +62,9 @@ export default {
     "<who>{who}</who> cambió el nombre del grupo de «<value>{from}</value>» a «<value>{to}</value>»",
   "GroupActivity.detailsUpdated":
     "<who>{who}</who> cambió la descripción, el color o el emoji del grupo",
+  "GroupActivity.timeZoneChanged":
+    "<who>{who}</who> cambió la zona horaria de <value>{from}</value> a <value>{to}</value>",
+  "GroupActivity.timeZoneChangedPlain": "<who>{who}</who> cambió la zona horaria",
   "GroupActivity.deleted": "<who>{who}</who> eliminó el grupo",
   "GroupActivity.restored": "<who>{who}</who> restauró el grupo",
   "GroupActivity.roleChanged": "<who>{who}</who> cambió el rol de <target>{target}</target>",
@@ -262,6 +265,11 @@ export default {
   },
   "GroupEditor.readOnly":
     "Solo los administradores y el propietario pueden cambiar los datos de este grupo.",
+  "GroupEditor.timeZoneHint":
+    "Los días y los meses empiezan a medianoche en esta zona, para todo el grupo.",
+  "GroupEditor.timeZoneInvalid": "No conocemos esta zona horaria. Elige otra de la lista.",
+  "GroupEditor.timeZoneChangedElsewhere":
+    "Alguien cambió esto a {zone} mientras editabas. Guarda para usar la tuya o pulsa Descartar.",
   "GroupEditor.nameRequired": "Escribe un nombre.",
   "GroupEditor.nameInvalid":
     "Usa como máximo 100 caracteres, sin saltos de línea ni caracteres ocultos.",
@@ -736,6 +744,7 @@ export default {
   "OverviewScreen.customRange": "Rango personalizado",
   "OverviewScreen.rangeTooLong": "Elige un rango de un año como máximo.",
   "OverviewScreen.asOf": "Actualizado a las {time}",
+  "OverviewScreen.zoneNote": "hora de {city}",
   "OverviewScreen.hide": "Ocultar widget",
   "OverviewView.opening": "Abriendo el resumen…",
   "OverviewView.saveFailed":

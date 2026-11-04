@@ -56,6 +56,7 @@ import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
 import { isolate, Isolated } from "@spy4x/preact-ui/bdi"
+import { zoneLabel } from "@spy4x/time/tz"
 
 /** The signed-in operator, as far as the page needs them. */
 export interface AdminGroupOperatorView {
@@ -322,6 +323,9 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
           </Fact>
           <Fact label={t.t(`AdminGroup.created`)}>
             <When at={group.createdAt} />
+          </Fact>
+          <Fact label={t.t(`AdminGroup.timeZone`)}>
+            <bdi data-e2e="admin-group-time-zone">{zoneLabel(group.timeZone, new Date())}</bdi>
           </Fact>
           {detail.imported && (
             <Fact label={t.t(`AdminGroup.imported`)}>
