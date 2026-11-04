@@ -532,7 +532,7 @@ describe("a blog post", () => {
     expect(await author(null)).toEqual({ "@type": `Person`, name: `Ada Lovelace` })
   })
 
-  it("draws a cover file in both widths at its real size, and shares the post's card at its full address (#733)", async () => {
+  it("draws a cover file in all three widths at its real size, and shares the post's card at its full address (#733)", async () => {
     const post = { ...FULL, coverUrl: null, coverFile: `cron-jobs.webp` }
     const { body } = await (await blogSite(answers(post))).get("/blog/cron-jobs")
 
