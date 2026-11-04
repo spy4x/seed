@@ -279,12 +279,9 @@ export function createFakeBilling(
     })
   return {
     createCheckout(request) {
-      // The same answer as Stripe's adapter: a plan, and a period, it has no price for.
-      const sold = plans.some((plan) =>
-        plan.planId === request.planId &&
-        (request.period === undefined || plan.period === request.period)
-      )
-      if (!sold) {
+      // The same answer as Stripe's adapter for a plan it has no price for. Pro is listed for both
+      // periods here, so every period the checkout schema accepts has a price.
+      if (!plans.some((plan) => plan.planId === request.planId)) {
         return Promise.resolve({
           ok: false,
           error: { code: "unknown_plan", message: "unknown plan", status: null },
