@@ -40,8 +40,8 @@ or two.
 Look at the result before you commit it, beside the other covers
 (`magick montage *-640.webp -tile 3x -geometry 400x225+8+8 sheet.png`). Run it again with a
 clearer scene when the picture shows text, a colour outside the palette, or a style the set does
-not share. Then add the post's alt text to the table below and set the post's `coverUrl` and
-`coverAlt`.
+not share. Then add the post's alt text to the table below and set the post's `cover`
+(`covers/<slug>.webp`) and `coverAlt`; each translation sets `coverAlt` in its own language.
 
 ## Alt text
 

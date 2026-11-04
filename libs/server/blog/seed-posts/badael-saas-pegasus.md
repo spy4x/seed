@@ -12,6 +12,7 @@ tldr:
   - كلاهما يعتمد على Stripe وحده، وStripe متاح لشركات الإمارات لكن السعودية ومصر ليستا في قائمته.
 topic: أسئلة
 intro: "SaaS Pegasus قالب Django جيد، وسعره 449 دولارًا أو أكثر. إن كنت تفضّل ألا تدفع شيئًا، فهذه هي الطرق المجانية في Python وفي TypeScript، وما ينقص كلًّا منها."
+coverAlt: "ميزان في إحدى كفتيه صندوق كنز مقفل عليه بطاقة سعر فارغة، وفي الأخرى كيسا بذور مفتوحان."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

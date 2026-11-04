@@ -10,6 +10,8 @@ tldr:
   - On my laptop the stack came up in 36 seconds and used 1.6 GB of memory at rest.
 topic: Guides
 intro: "You can have Seed running on your laptop in four commands and well under a minute. I walk through each one, what you should see, and the snags I hit so you don't have to."
+cover: covers/install-seed-and-run-it-locally.webp
+coverAlt: "Four stepping stones leading to a small computer with a potted seedling on top, the last stone glowing."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z

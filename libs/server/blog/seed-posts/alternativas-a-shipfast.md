@@ -12,6 +12,7 @@ tldr:
   - Si tu producto debe hablar español, ShipFast no anuncia traducciones; Seed y ShipFree sí las traen.
 topic: Preguntas
 intro: "ShipFast es un buen kit, pero no es el único y no es gratis. Comparé siete boilerplates por precio, licencia, stack, equipos y alojamiento, con una fuente para cada dato."
+coverAlt: "Siete veleros de formas distintas en fila sobre el agua en calma, uno de ellos violeta."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z

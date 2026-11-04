@@ -11,6 +11,8 @@ tldr:
   - Adding a tenth language is one list entry, one file per catalog and a few loader lines.
 topic: Deep dive
 intro: "Seed speaks nine languages from the first commit, Arabic right-to-left included. This post shows how the catalogs stay complete, and the tests that stop a missing translation before it ships."
+cover: covers/nine-languages-and-right-to-left-from-day-one.webp
+coverAlt: "A violet globe circled by empty speech bubbles, with arrows turning both ways around it."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z

@@ -12,6 +12,7 @@ tldr:
   - Seed traz grupos com papéis, cobrança por membro via Stripe, painel admin e nove idiomas no seu próprio servidor.
 topic: Perguntas
 intro: "Procurei um boilerplate SaaS gratuito do jeito que você faria e encontrei sete que não custam nada. Cada um deixa algo diferente de fora, então comparei o que você realmente recebe antes de investir seu tempo em um deles."
+coverAlt: "Sete mudas em vasinhos numa prateleira de madeira, atrás de um portão de jardim aberto."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

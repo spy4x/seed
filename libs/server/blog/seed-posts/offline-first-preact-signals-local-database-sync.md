@@ -12,6 +12,8 @@ tldr:
 topic: Deep dive
 intro: "Seed's app keeps working when the network doesn't: lists load from a local database and writes wait in a queue. Here is how signals, IndexedDB and a numbered pull fit together."
 relatedFeature: offline
+cover: covers/offline-first-preact-signals-local-database-sync.webp
+coverAlt: "A plant thriving inside a glass terrarium on a table, linked to a cloud above by a dashed line with arrows both ways."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T14:00:00Z

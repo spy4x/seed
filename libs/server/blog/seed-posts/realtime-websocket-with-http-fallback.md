@@ -12,6 +12,8 @@ tldr:
 topic: Deep dive
 intro: "Every screen in Seed updates live over a WebSocket, yet the app stays correct with the socket gone. This is the design that makes both true, and the tests that hold it to that."
 relatedFeature: realtime
+cover: covers/realtime-websocket-with-http-fallback.webp
+coverAlt: "Two rocky islands joined by a bright bridge, with a small ferry waiting on the water below as a second way across."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T22:00:00Z

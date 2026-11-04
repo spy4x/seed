@@ -12,6 +12,7 @@ tldr:
   - Um décimo idioma é uma entrada numa lista, um arquivo por catálogo e algumas linhas de carregamento.
 topic: Em detalhe
 intro: "O Seed fala nove idiomas desde o primeiro commit, incluindo o árabe da direita para a esquerda. Este post mostra como os catálogos ficam completos e os testes que barram uma tradução faltando antes de ir ao ar."
+coverAlt: "Um globo violeta cercado de balões de fala vazios, com setas girando ao redor nos dois sentidos."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z

@@ -12,6 +12,8 @@ tldr:
 topic: Deep dive
 intro: "You don't need an auth service to offer passkeys, two-factor codes and sessions you can revoke. I show how Seed does each one itself, with the limits and the code."
 relatedFeature: sign-in
+cover: covers/passkeys-2fa-sessions-without-auth-saas.webp
+coverAlt: "A key with a leaf for its handle floating towards a round violet door with two locks in a garden wall."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T16:00:00Z
