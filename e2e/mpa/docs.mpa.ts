@@ -95,7 +95,7 @@ test("an internal doc answers 404 with the way back to the docs", async ({ page 
 
 test("a press on a guide's copy button copies the command and says it did", async ({ page, context, baseURL }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: baseURL })
-  await page.goto("/docs/capacity")
+  await page.goto("/docs/load-tests")
   const block = page.locator("main [data-prose-code]").first()
 
   await block.getByRole("button", { name: "Copy" }).click()
@@ -109,7 +109,7 @@ test.describe("with JavaScript off", () => {
   test.use({ javaScriptEnabled: false })
 
   test("a guide shows no copy button that could not work", async ({ page }) => {
-    await page.goto("/docs/capacity")
+    await page.goto("/docs/load-tests")
 
     const buttons = page.locator("main button[data-prose-copy]")
     expect(await buttons.count()).toBeGreaterThan(0)
