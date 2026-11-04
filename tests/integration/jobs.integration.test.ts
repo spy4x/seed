@@ -32,6 +32,7 @@ import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { isUuid, uuidV7 } from "@spy4x/platform/universal/uuid"
 import { expectVersion7Ids } from "./ids.ts"
+import { isMembersOnlyPath, SPA_ROUTE_PATHS } from "../../apps/spa/src/views/spa-paths.ts"
 
 const JOB = {
   eventKind: OUTBOX_CLEANUP_JOB,
@@ -193,7 +194,11 @@ Deno.test("password reset mails go through the worker's queue", async (t) => {
         expect((await processor.drainOnce()).published).toBe(2)
 
         expect(sender.sent.map((mail) => mail.to)).toEqual(["ann@example.com"])
-        expect(sender.sent[0].text).toContain("http://app.localhost/forgot-password")
+        // The link opens the SPA's own page for asking a reset code, open to a signed-out person.
+        const link = (sender.sent[0]?.text ?? "").match(/http:\/\/app\.localhost\/\S*/)?.[0] ?? ""
+        const path = new URL(link).pathname
+        expect(SPA_ROUTE_PATHS).toContain(path)
+        expect(isMembersOnlyPath(path)).toBe(false)
         expect(await count("auth_challenges")).toBe(0)
         expect(await count("password_reset_requests")).toBe(0)
       },
