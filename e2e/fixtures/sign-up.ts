@@ -66,6 +66,28 @@ export async function nextCode(
 }
 
 /**
+ * Waits for a mail to `email` whose subject starts with `subject` (a subject can end in the host,
+ * whose port differs between stacks), and answers the code in it (#752): the
+ * second paragraph, as with the sign-up code. Earlier mails, such as the sign-up code, are passed
+ * over until it arrives.
+ */
+export async function mailedCode(
+  api: APIRequestContext,
+  lastMailUrl: string,
+  email: string,
+  subject: string,
+): Promise<string> {
+  let code = ``
+  await expect.poll(async () => {
+    const mail = await lastMail(api, lastMailUrl, email)
+    if (!mail?.subject.startsWith(subject)) return false
+    code = mail.text.split(`\n\n`)[1].trim()
+    return true
+  }, { timeout: 20_000, message: `the worker mails "${subject}" to ${email}` }).toBe(true)
+  return code
+}
+
+/**
  * Signs up through the API the way a person does since #142: posts the address and password to
  * `signUpUrl` (`…/api/auth/password/sign-up`, absolute or relative to `api`'s base URL), reads the
  * code the worker mails from the development route, and enters it at `…/verify` with the same
