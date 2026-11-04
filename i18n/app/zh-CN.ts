@@ -1239,7 +1239,10 @@ export default {
     "我们会给你发一封邮件，里面有要在这里输入的验证码。这个邮箱还没有账号？验证码会帮你创建一个。",
   "SignInCodeScreen.ratherPassword": "想用密码？<link>返回登录</link>",
   "SignInCodeScreen.submit": "给我发送验证码",
-  "SignInCodeScreen.sent": "我们已向 <email>{email}</email> 发送验证码。",
+  "SignInCodeScreen.confirmTitle": "确认是你本人",
+  "SignInCodeScreen.confirmDescription":
+    "我们会向 <email>{email}</email> 发送验证码。请在下一步输入，确认是你本人。",
+  "CodeStep.sent": "我们已向 <email>{email}</email> 发送验证码。",
   "SignInCodeScreen.guest":
     "你正在以访客身份使用应用。登录后，你在这里创建的内容会保存到这个邮箱下。如果它已有账号，我们会先问你。",
   "CodeStep.deadTitle": "这个验证码已失效",
@@ -1294,14 +1297,9 @@ export default {
   "SignUpCodeScreen.offline": "你已离线，请联网后重试。",
   "SignUpCodeScreen.title": "查看你的收件箱",
   "SignUpCodeScreen.loading": "正在加载…",
-  "SignUpCodeScreen.sent": {
-    "other": "我们已向 <email>{email}</email> 发送验证码，{count} 分钟内有效。",
-  },
-  "SignUpCodeScreen.wrongAddress": "邮箱填错了？<button>换一个</button>",
   "SignUpCodeScreen.code": "验证码",
   "SignUpCodeScreen.checking": "正在验证…",
   "SignUpCodeScreen.resend": "重新发送验证码",
-  "SignUpCodeScreen.resent": "新的验证码正在发送中。",
   "SignUpCodeScreen.resendFailed": "无法重新发送验证码",
   "SignUpCodeScreen.existsTitle": "你已经有账号了",
   "SignUpCodeScreen.exists": "<email>{email}</email> 已经在这里注册过账号，没有创建新账号。",

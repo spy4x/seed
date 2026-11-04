@@ -1577,7 +1577,10 @@ export default {
   "SignInCodeScreen.ratherPassword":
     "Vous préférez un mot de passe ? <link>Retour à la connexion</link>",
   "SignInCodeScreen.submit": "Recevoir un code",
-  "SignInCodeScreen.sent": "Nous avons envoyé un code à <email>{email}</email>.",
+  "SignInCodeScreen.confirmTitle": "Confirmez qu’il s’agit bien de vous",
+  "SignInCodeScreen.confirmDescription":
+    "Nous allons envoyer un code à <email>{email}</email>. Saisissez-le à l’étape suivante pour confirmer qu’il s’agit bien de vous.",
+  "CodeStep.sent": "Nous avons envoyé un code à <email>{email}</email>.",
   "SignInCodeScreen.guest":
     "Vous utilisez l’app en tant qu’invité. En vous connectant, ce que vous avez créé ici est enregistré sous cette adresse. Si elle a déjà un compte, nous vous demanderons d’abord.",
   "CodeStep.deadTitle": "Ce code ne fonctionne plus",
@@ -1643,16 +1646,9 @@ export default {
   "SignUpCodeScreen.offline": "Vous êtes hors ligne. Connectez-vous à Internet et réessayez.",
   "SignUpCodeScreen.title": "Consultez votre boîte de réception",
   "SignUpCodeScreen.loading": "Chargement…",
-  "SignUpCodeScreen.sent": {
-    "one": "Nous avons envoyé un code à <email>{email}</email>. Il est valable {count} minute.",
-    "many": "Nous avons envoyé un code à <email>{email}</email>. Il est valable {count} minutes.",
-    "other": "Nous avons envoyé un code à <email>{email}</email>. Il est valable {count} minutes.",
-  },
-  "SignUpCodeScreen.wrongAddress": "Mauvaise adresse ? <button>En utiliser une autre</button>",
   "SignUpCodeScreen.code": "Code",
   "SignUpCodeScreen.checking": "Vérification…",
   "SignUpCodeScreen.resend": "Envoyer un nouveau code",
-  "SignUpCodeScreen.resent": "Un nouveau code est en route.",
   "SignUpCodeScreen.resendFailed": "Impossible d’envoyer un nouveau code",
   "SignUpCodeScreen.existsTitle": "Vous avez déjà un compte",
   "SignUpCodeScreen.exists":

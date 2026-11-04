@@ -1363,7 +1363,10 @@ export default {
     "ここに入力するコードをメールでお送りします。そのメールアドレスのアカウントがまだない場合は、コードで作成されます。",
   "SignInCodeScreen.ratherPassword": "パスワードを使いますか？<link>ログインに戻る</link>",
   "SignInCodeScreen.submit": "コードをメールで受け取る",
-  "SignInCodeScreen.sent": "<email>{email}</email> にコードを送信しました。",
+  "SignInCodeScreen.confirmTitle": "本人確認",
+  "SignInCodeScreen.confirmDescription":
+    "<email>{email}</email> にコードをお送りします。次の画面で入力して、本人確認を完了してください。",
+  "CodeStep.sent": "<email>{email}</email> にコードを送信しました。",
   "SignInCodeScreen.guest":
     "ゲストとしてアプリを使っています。ログインすると、ここで作ったものはこのメールアドレスで保存されます。すでにアカウントがある場合は、先に確認します。",
   "CodeStep.deadTitle": "このコードはもう使えません",
@@ -1423,15 +1426,9 @@ export default {
   "SignUpCodeScreen.offline": "オフラインです。接続してから、もう一度お試しください。",
   "SignUpCodeScreen.title": "受信トレイを確認してください",
   "SignUpCodeScreen.loading": "読み込んでいます…",
-  "SignUpCodeScreen.sent": {
-    "other": "<email>{email}</email>にコードを送信しました。コードは{count}分間有効です。",
-  },
-  "SignUpCodeScreen.wrongAddress":
-    "メールアドレスが違いますか？<button>別のアドレスを使う</button>",
   "SignUpCodeScreen.code": "コード",
   "SignUpCodeScreen.checking": "確認しています…",
   "SignUpCodeScreen.resend": "新しいコードを送信",
-  "SignUpCodeScreen.resent": "新しいコードを送信しました。",
   "SignUpCodeScreen.resendFailed": "新しいコードを送信できませんでした",
   "SignUpCodeScreen.existsTitle": "すでにアカウントをお持ちです",
   "SignUpCodeScreen.exists":

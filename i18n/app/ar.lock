@@ -204,6 +204,7 @@ Benchmark.within	6d99b67376c97161
 CodeStep.dead	deefe8573b168783
 CodeStep.deadTitle	1d05b7ddaf5d58d2
 CodeStep.differentEmail	b7337027ef1f69f1
+CodeStep.sent	9d31c222cbb19b17
 ConfirmSignUpScreen.back	9bc5eeae3d817946
 ConfirmSignUpScreen.backToSignIn	71fe31ccd37c3268
 ConfirmSignUpScreen.create	5ff298d5dcee68a5
@@ -1323,11 +1324,12 @@ Shortcuts.search	70a959ad631af421
 Shortcuts.show	3d0ced5dc621bc9e
 Shortcuts.switchLabel	c50ee5352512fb8d
 Shortcuts.undo	77d5dd65a0dff190
+SignInCodeScreen.confirmDescription	b751b5983b048f54
+SignInCodeScreen.confirmTitle	6176eec272e87e7f
 SignInCodeScreen.description	be61adba22b83b3d
 SignInCodeScreen.guest	91a7a6a3c7a94612
 SignInCodeScreen.ratherPassword	31412355575b1b60
 SignInCodeScreen.sendFailed	3811a24eba6293ae
-SignInCodeScreen.sent	9d31c222cbb19b17
 SignInCodeScreen.submit	88d420398edd3a06
 SignInCodeScreen.title	e22bc1b3ae604571
 SignInMethods.addPasskey	09fb67d57bc78f93
@@ -1381,12 +1383,9 @@ SignUpCodeScreen.loading	ba3bbbe10d8bef66
 SignUpCodeScreen.offline	58bbaf31197a47b0
 SignUpCodeScreen.resend	9200fc2f31ae11ab
 SignUpCodeScreen.resendFailed	1436cd871040c910
-SignUpCodeScreen.resent	8f5c29c43ffff22e
-SignUpCodeScreen.sent	17b9ee1618dd4f03
 SignUpCodeScreen.signInInstead	65da838eacef8495
 SignUpCodeScreen.startAgain	962e64b761961fe0
 SignUpCodeScreen.title	4ee2c02184f0fe62
-SignUpCodeScreen.wrongAddress	2e7771665907005f
 SignedInDevices.description	0c120c74d781e62a
 SignedInDevices.failed	690428742ca993cf
 SignedInDevices.ip	93b448f6f4c43acb

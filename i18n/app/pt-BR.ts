@@ -1516,7 +1516,10 @@ export default {
     "Vamos enviar por e-mail um código para você digitar aqui. Ainda não tem conta com esse e-mail? O código cria uma.",
   "SignInCodeScreen.ratherPassword": "Prefere usar senha? <link>Voltar para o login</link>",
   "SignInCodeScreen.submit": "Receber um código",
-  "SignInCodeScreen.sent": "Enviamos um código para <email>{email}</email>.",
+  "SignInCodeScreen.confirmTitle": "Confirme que é você",
+  "SignInCodeScreen.confirmDescription":
+    "Vamos enviar um código para <email>{email}</email>. Digite-o na próxima etapa para confirmar que é você.",
+  "CodeStep.sent": "Enviamos um código para <email>{email}</email>.",
   "SignInCodeScreen.guest":
     "Você está usando o app como convidado. Ao entrar, o que você criou aqui fica salvo com este e-mail. Se ele já tiver uma conta, perguntamos antes.",
   "CodeStep.deadTitle": "Este código não funciona mais",
@@ -1581,16 +1584,9 @@ export default {
   "SignUpCodeScreen.offline": "Você está offline. Conecte-se e tente de novo.",
   "SignUpCodeScreen.title": "Confira seu e-mail",
   "SignUpCodeScreen.loading": "Carregando…",
-  "SignUpCodeScreen.sent": {
-    "one": "Enviamos um código para <email>{email}</email>. Ele vale por {count} minuto.",
-    "many": "Enviamos um código para <email>{email}</email>. Ele vale por {count} de minutos.",
-    "other": "Enviamos um código para <email>{email}</email>. Ele vale por {count} minutos.",
-  },
-  "SignUpCodeScreen.wrongAddress": "E-mail errado? <button>Use outro</button>",
   "SignUpCodeScreen.code": "Código",
   "SignUpCodeScreen.checking": "Verificando…",
   "SignUpCodeScreen.resend": "Enviar novo código",
-  "SignUpCodeScreen.resent": "Um novo código está a caminho.",
   "SignUpCodeScreen.resendFailed": "Não foi possível enviar um novo código",
   "SignUpCodeScreen.existsTitle": "Você já tem uma conta",
   "SignUpCodeScreen.exists":

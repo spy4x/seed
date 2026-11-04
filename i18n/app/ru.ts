@@ -1585,7 +1585,10 @@ export default {
     "Мы пришлём на почту код, который нужно ввести здесь. Если аккаунта с этой почтой ещё нет, код его создаст.",
   "SignInCodeScreen.ratherPassword": "Удобнее с паролем? <link>Вернуться ко входу</link>",
   "SignInCodeScreen.submit": "Прислать код",
-  "SignInCodeScreen.sent": "Мы отправили код на <email>{email}</email>.",
+  "SignInCodeScreen.confirmTitle": "Подтвердите, что это вы",
+  "SignInCodeScreen.confirmDescription":
+    "Мы пришлём код на <email>{email}</email>. Введите его на следующем шаге, чтобы подтвердить, что это вы.",
+  "CodeStep.sent": "Мы отправили код на <email>{email}</email>.",
   "SignInCodeScreen.guest":
     "Вы пользуетесь приложением как гость. После входа всё, что вы здесь создали, сохранится под этой почтой. Если на неё уже есть аккаунт, мы сначала спросим вас.",
   "CodeStep.deadTitle": "Этот код больше не работает",
@@ -1651,17 +1654,9 @@ export default {
   "SignUpCodeScreen.offline": "Нет сети. Подключитесь к интернету и попробуйте ещё раз.",
   "SignUpCodeScreen.title": "Проверьте почту",
   "SignUpCodeScreen.loading": "Загрузка…",
-  "SignUpCodeScreen.sent": {
-    "one": "Мы отправили код на <email>{email}</email>. Он действует {count} минуту.",
-    "few": "Мы отправили код на <email>{email}</email>. Он действует {count} минуты.",
-    "many": "Мы отправили код на <email>{email}</email>. Он действует {count} минут.",
-    "other": "Мы отправили код на <email>{email}</email>. Он действует {count} минуты.",
-  },
-  "SignUpCodeScreen.wrongAddress": "Не та почта? <button>Указать другую</button>",
   "SignUpCodeScreen.code": "Код",
   "SignUpCodeScreen.checking": "Проверяем…",
   "SignUpCodeScreen.resend": "Отправить новый код",
-  "SignUpCodeScreen.resent": "Новый код уже в пути.",
   "SignUpCodeScreen.resendFailed": "Не удалось отправить новый код",
   "SignUpCodeScreen.existsTitle": "У вас уже есть аккаунт",
   "SignUpCodeScreen.exists":

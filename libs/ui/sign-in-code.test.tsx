@@ -312,6 +312,44 @@ describe("SignInCodeScreen with a dead code in the browser", () => {
   })
 })
 
+describe("SignInCodeScreen for someone already signed in", () => {
+  it("says they are signed in, with no address field, outside the proof flow", async () => {
+    await mount(<SignInCodeScreen {...codeDefaults} signedIn />)
+
+    expect(find("h1").textContent).toBe("You're signed in")
+    expect(root!.querySelector("[data-e2e=sign-in-code-signed-in]")).not.toBeNull()
+    expect(root!.querySelector("input[type=email]")).toBeNull()
+  })
+
+  it("fixes the account's address as text and asks a code for it from the confirm button", async () => {
+    const asked = spy<[]>()
+    await mount(
+      <SignInCodeScreen
+        {...codeDefaults}
+        fixedEmail="ada@example.com"
+        next="/profile/danger-zone"
+        onSubmit={asked.fn}
+      />,
+    )
+
+    expect(root!.querySelector("input[type=email]")).toBeNull()
+    expect(find("[data-e2e=sign-in-code-confirm] strong").textContent).toBe("ada@example.com")
+    expect(focused()).toBe("sign-in-code-submit")
+    expect(find<HTMLAnchorElement>("[data-e2e=sign-in-code-back]").getAttribute("href"))
+      .toBe("/profile/danger-zone")
+
+    expect(await submit("[data-e2e=sign-in-code-submit]")).toBe(true)
+    expect(asked.calls).toHaveLength(1)
+  })
+
+  it("waits for the account's address before the confirm button works", async () => {
+    await mount(<SignInCodeScreen {...codeDefaults} fixedEmail={null} />)
+
+    expect(text()).toContain("Loading")
+    expect(find<HTMLButtonElement>("[data-e2e=sign-in-code-submit]").disabled).toBe(true)
+  })
+})
+
 const authDefaults: AuthScreenProps = {
   screen: "sign-in",
   isSignedIn: false,

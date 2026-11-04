@@ -64,6 +64,8 @@ export interface CodeStepProps {
   onDifferentAddress: () => void
   /** A line of its own under the step, such as "Back to sign in". */
   after?: ComponentChildren
+  /** The `data-e2e` of the step's outer column, for a page's own tests. */
+  e2e?: string
 }
 
 /**
@@ -83,6 +85,7 @@ export function CodeStep(
     resending,
     onResend,
     after,
+    e2e,
     ...rest
   }: CodeStepProps,
 ): JSX.Element {
@@ -95,7 +98,7 @@ export function CodeStep(
     )
   }, [])
   return (
-    <div class="flex w-full flex-col gap-6" ref={step}>
+    <div class="flex w-full flex-col gap-6" ref={step} data-e2e={e2e}>
       <MailedCodeStep
         sentence={<CodeSentence messageKey={sentence} email={email} />}
         minutes={minutes}
@@ -201,6 +204,14 @@ export interface SignInCodeScreenProps {
   /** The page to return to after sign-in, already checked by the app. */
   next?: string | null
   navigate?: Navigate
+  /** Signed in, outside a proof the profile asked for: the page says so and asks for nothing. */
+  signedIn?: boolean
+  /**
+   * The profile asked for proof (#752): the code goes to the account's own address, shown as text
+   * and never as a field, and the right code returns to `next` with fresh proof. `null` while the
+   * address is being read.
+   */
+  fixedEmail?: string | null
 }
 
 /**
@@ -210,29 +221,61 @@ export interface SignInCodeScreenProps {
  */
 export function SignInCodeScreen(props: SignInCodeScreenProps): JSX.Element {
   const { email, onEmailChange, sentTo, dead, fieldError, error, pending, onSubmit } = props
-  const { guest = false, next = null, navigate, onBackToSignIn } = props
+  const { guest = false, next = null, navigate, onBackToSignIn, signedIn = false } = props
+  const fixedEmail = props.fixedEmail
+  const proving = fixedEmail !== undefined
   const field = useFocusOnError(fieldError)
   const t = useAppText()
+  const confirm = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    // Focus starts in the field, with an address handed back selected so typing replaces it.
+    // Focus starts in the field, with an address handed back selected so typing replaces it. A
+    // proof has no field: focus starts on its one button, once the address is known.
     if (sentTo !== null) return
     queueMicrotask(() => {
+      if (proving) return confirm.current?.querySelector<HTMLElement>(`button`)?.focus()
       field.current?.focus()
       field.current?.select()
     })
-  }, [sentTo])
+  }, [sentTo, proving && fixedEmail !== null])
 
-  const back = (e2e: string, text = t.t(`ConfirmSignUpScreen.backToSignIn`)) => (
-    <Link
-      href={withNext(SCREEN_PATHS.signIn, next)}
-      navigate={navigate}
-      onClick={onBackToSignIn}
-      class="pc-link font-medium"
-      data-e2e={e2e}
-    >
-      {text}
-    </Link>
-  )
+  // A proof goes back to the profile page that asked for it; anything else, to sign-in.
+  const back = (e2e: string, text?: string) =>
+    proving
+      ? (
+        <Link
+          href={next ?? SCREEN_PATHS.profile}
+          navigate={navigate}
+          class="pc-link font-medium"
+          data-e2e={e2e}
+        >
+          {text ?? t.t(`AuthScreen.openProfile`)}
+        </Link>
+      )
+      : (
+        <Link
+          href={withNext(SCREEN_PATHS.signIn, next)}
+          navigate={navigate}
+          onClick={onBackToSignIn}
+          class="pc-link font-medium"
+          data-e2e={e2e}
+        >
+          {text ?? t.t(`ConfirmSignUpScreen.backToSignIn`)}
+        </Link>
+      )
+
+  if (signedIn) {
+    return (
+      <AuthCard
+        title={t.t(`AuthScreen.signedInTitle`)}
+        description={t.t(`AuthScreen.signedInText`)}
+        e2e="sign-in-code-signed-in"
+      >
+        <Button href={SCREEN_PATHS.profile} navigate={navigate} class="w-full">
+          {t.t(`AuthScreen.openProfile`)}
+        </Button>
+      </AuthCard>
+    )
+  }
 
   if (sentTo !== null && dead) {
     return (
@@ -249,7 +292,7 @@ export function SignInCodeScreen(props: SignInCodeScreenProps): JSX.Element {
     return (
       <CodeStep
         email={sentTo}
-        sentence={`SignInCodeScreen.sent`}
+        sentence={`CodeStep.sent`}
         minutes={SIGN_IN_CODE_MINUTES}
         checking={props.checking}
         error={props.codeError}
@@ -260,6 +303,33 @@ export function SignInCodeScreen(props: SignInCodeScreenProps): JSX.Element {
         onDifferentAddress={props.onDifferentAddress}
         after={back("sign-in-code-step-back")}
       />
+    )
+  }
+  if (proving) {
+    return (
+      <AuthCard
+        title={t.t(`SignInCodeScreen.confirmTitle`)}
+        description={fixedEmail === null
+          ? t.t(`SignUpCodeScreen.loading`)
+          : <CodeSentence messageKey={`SignInCodeScreen.confirmDescription`} email={fixedEmail} />}
+        e2e="sign-in-code-confirm"
+        after={back("sign-in-code-back")}
+      >
+        <ScreenForm pending={pending} onSubmit={onSubmit}>
+          <div ref={confirm} class="flex flex-col gap-4">
+            <Button
+              type="submit"
+              data-e2e="sign-in-code-submit"
+              busy={pending}
+              busyLabel={t.t(`AuthScreen.sending`)}
+              disabled={fixedEmail === null}
+            >
+              {t.t(`SignInCodeScreen.submit`)}
+            </Button>
+            <ErrorState message={error} focusOnAppear dataE2E="sign-in-code-error" />
+          </div>
+        </ScreenForm>
+      </AuthCard>
     )
   }
   return (

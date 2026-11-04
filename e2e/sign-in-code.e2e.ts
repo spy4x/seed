@@ -56,6 +56,40 @@ test("a new address signs up by the mailed code, which works once", async ({ pag
   }
 })
 
+test("signed in, the code page says so, and from the profile it confirms the account's own address", async ({ page, request }) => {
+  const email = `e2e-code-proof-${uuidV7().slice(-8)}@example.com`
+  await cleanup(request, email)
+  try {
+    const button = page.locator("[data-e2e=link-sign-up]")
+    await gotoApp(page, "/sign-up", button)
+    await page.locator("[data-e2e=auth-form-login]").fill(email)
+    await button.click()
+    const first = await codeFor(request, email)
+    await enterCode(page, first)
+    await page.waitForURL("/notes")
+
+    await gotoApp(page, "/sign-in/code", page.locator("[data-e2e=sign-in-code-signed-in]"))
+    await expect(page.locator("[data-e2e=sign-in-code-email]")).toHaveCount(0)
+
+    const next = "/profile/danger-zone"
+    const confirm = page.locator("[data-e2e=sign-in-code-confirm]")
+    await gotoApp(page, `/sign-in/code?next=${encodeURIComponent(next)}`, confirm)
+    await expect(confirm).toContainText(email)
+    await expect(page.locator("[data-e2e=sign-in-code-email]")).toHaveCount(0)
+    await expect(page.locator("[data-e2e=sign-in-code-submit]")).toBeFocused()
+    await page.locator("[data-e2e=sign-in-code-submit]").click()
+    await expect(page.locator("[data-e2e=mailed-code-step]")).toContainText(email)
+    let second = first
+    await expect.poll(async () => (second = await codeFor(request, email)), {
+      message: "the worker mails a second code",
+    }).not.toBe(first)
+    await enterCode(page, second)
+    await page.waitForURL(next)
+  } finally {
+    await cleanup(request, email, true)
+  }
+})
+
 test("a reload keeps the code step, and Use a different one goes back with the address", async ({ page, request }) => {
   const email = `e2e-code-back-${uuidV7().slice(-8)}@example.com`
   await cleanup(request, email)

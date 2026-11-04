@@ -20,6 +20,7 @@ import {
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
 import { createGuestRoute } from "../../apps/api/routes/auth-guest.ts"
+import { createOAuthRoute } from "../../apps/api/routes/auth-oauth.ts"
 import {
   createAuthRoute,
   MAILED_CODE_DEAD,
@@ -165,6 +166,17 @@ async function withFixture(body: (fixture: Fixture) => Promise<void>): Promise<v
     })
     app.use("*", signIn.auth.parseAuth)
     app.route("/auth", createGuestRoute({ signIn, mutationGuards, rateLimits: openLimits }))
+    app.route(
+      "/auth",
+      createOAuthRoute({
+        signIn,
+        emit: () => {},
+        mutationGuards,
+        rateLimits: openLimits,
+        origin: WEB_APP_URL,
+        logError: () => {},
+      }),
+    )
     app.route(
       "/auth",
       createAuthRoute({
@@ -365,6 +377,32 @@ Deno.test("the right code in the asking browser signs in to the owner of the add
     const { methods } = await readAdminUserParts(fixture.sql, owner)
     expect(methods.find((method) => method.method === SIGN_IN_LINK_METHOD)?.lastUsedAt)
       .toEqual(expect.any(String))
+  })
+})
+
+Deno.test("a code from the danger zone signs the same person in again with fresh proof and returns to the profile", async () => {
+  await withFixture(async (fixture) => {
+    const owner = await fixture.account("ada@example.com")
+    const person = fixture.browser()
+    const signedIn = await person.call("POST", "/auth/password/check", {
+      login: "ada@example.com",
+      password: PASSWORD,
+    })
+    expect(signedIn.status).toBe(200)
+    const before = await person.call("GET", "/auth/methods")
+    expect(before).toMatchObject({ status: 200, body: { providerProofUntil: null } })
+
+    const code = await fixture.codeFor(person, "ada@example.com", "/profile/danger-zone")
+    const verified = await person.call("POST", "/auth/code/verify", { code })
+
+    expect(verified).toMatchObject({
+      status: 200,
+      body: { email: "ada@example.com", next: "/profile/danger-zone", created: false },
+    })
+    expect(await person.call("GET", "/auth/me")).toMatchObject({ status: 200, body: { id: owner } })
+    const after = await person.call("GET", "/auth/methods")
+    expect(after.status).toBe(200)
+    expect(Date.parse(after.body.providerProofUntil as string)).toBeGreaterThan(Date.now())
   })
 })
 

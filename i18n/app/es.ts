@@ -1528,7 +1528,10 @@ export default {
   "SignInCodeScreen.ratherPassword":
     "¿Prefieres una contraseña? <link>Volver a iniciar sesión</link>",
   "SignInCodeScreen.submit": "Enviarme un código",
-  "SignInCodeScreen.sent": "Enviamos un código a <email>{email}</email>.",
+  "SignInCodeScreen.confirmTitle": "Confirma que eres tú",
+  "SignInCodeScreen.confirmDescription":
+    "Te enviaremos un código a <email>{email}</email>. Escríbelo en el siguiente paso para confirmar que eres tú.",
+  "CodeStep.sent": "Enviamos un código a <email>{email}</email>.",
   "SignInCodeScreen.guest":
     "Estás usando la app como invitado. Al iniciar sesión, lo que creaste aquí se guarda con este correo. Si ya tiene una cuenta, te preguntaremos primero.",
   "CodeStep.deadTitle": "Este código ya no funciona",
@@ -1594,16 +1597,9 @@ export default {
   "SignUpCodeScreen.offline": "Estás sin conexión. Conéctate y vuelve a intentarlo.",
   "SignUpCodeScreen.title": "Revisa tu bandeja de entrada",
   "SignUpCodeScreen.loading": "Cargando…",
-  "SignUpCodeScreen.sent": {
-    "one": "Enviamos un código a <email>{email}</email>. Sirve durante {count} minuto.",
-    "many": "Enviamos un código a <email>{email}</email>. Sirve durante {count} minutos.",
-    "other": "Enviamos un código a <email>{email}</email>. Sirve durante {count} minutos.",
-  },
-  "SignUpCodeScreen.wrongAddress": "¿Correo equivocado? <button>Usa otro</button>",
   "SignUpCodeScreen.code": "Código",
   "SignUpCodeScreen.checking": "Comprobando…",
   "SignUpCodeScreen.resend": "Enviar un código nuevo",
-  "SignUpCodeScreen.resent": "Te enviamos un código nuevo.",
   "SignUpCodeScreen.resendFailed": "No se pudo enviar un código nuevo",
   "SignUpCodeScreen.existsTitle": "Ya tienes una cuenta",
   "SignUpCodeScreen.exists":

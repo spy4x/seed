@@ -1406,7 +1406,10 @@ export default {
     "We'll email you a code to type here. No account with that email yet? The code creates one.",
   "SignInCodeScreen.ratherPassword": "Prefer a password? <link>Back to sign in</link>",
   "SignInCodeScreen.submit": "Email me a code",
-  "SignInCodeScreen.sent": "We sent a code to <email>{email}</email>.",
+  "SignInCodeScreen.confirmTitle": "Confirm it's you",
+  "SignInCodeScreen.confirmDescription":
+    "We'll email a code to <email>{email}</email>. Type it on the next step to confirm it's you.",
+  "CodeStep.sent": "We sent a code to <email>{email}</email>.",
   "SignInCodeScreen.guest":
     "You're using the app as a guest. Signing in saves what you made here under this email. If it already has an account, we'll ask you first.",
   "CodeStep.deadTitle": "This code no longer works",
@@ -1467,15 +1470,9 @@ export default {
   "SignUpCodeScreen.offline": "You're offline. Connect and try again.",
   "SignUpCodeScreen.title": "Check your inbox",
   "SignUpCodeScreen.loading": "Loading…",
-  "SignUpCodeScreen.sent": {
-    "one": "We sent a code to <email>{email}</email>. It works for {count} minute.",
-    "other": "We sent a code to <email>{email}</email>. It works for {count} minutes.",
-  },
-  "SignUpCodeScreen.wrongAddress": "Wrong email? <button>Use a different one</button>",
   "SignUpCodeScreen.code": "Code",
   "SignUpCodeScreen.checking": "Checking…",
   "SignUpCodeScreen.resend": "Send a new code",
-  "SignUpCodeScreen.resent": "A new code is on its way.",
   "SignUpCodeScreen.resendFailed": "Couldn't send a new code",
   "SignUpCodeScreen.existsTitle": "You already have an account",
   "SignUpCodeScreen.exists":

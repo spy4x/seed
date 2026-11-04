@@ -2,7 +2,7 @@ import { expect } from "@std/expect"
 import { afterEach, describe, it } from "@std/testing/bdd"
 import { SIGN_UP_OFFLINE } from "@ui/sign-up-code-screen.tsx"
 import { MAILED_CODE_COOLDOWN_SECONDS, SIGN_IN_CODE_MESSAGES } from "@ui/sign-in-code-screen.tsx"
-import { codeFailure, readyAtOf } from "./SignInCodeView.tsx"
+import { codeFailure, isProofReturn, readyAtOf } from "./SignInCodeView.tsx"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import { forgetSentCode, readSentCode, rememberSentCode } from "../state/sign-in-code.ts"
 
@@ -32,5 +32,12 @@ describe("the sign-in code page (#391, #752)", () => {
 
     forgetSentCode()
     expect(readSentCode()).toBe(null)
+  })
+
+  it("treats only a return to the profile as the danger zone's proof flow", () => {
+    expect(isProofReturn("/profile")).toBe(true)
+    expect(isProofReturn("/profile/danger-zone?tab=1")).toBe(true)
+    expect(isProofReturn("/notes")).toBe(false)
+    expect(isProofReturn("/profiles")).toBe(false)
   })
 })

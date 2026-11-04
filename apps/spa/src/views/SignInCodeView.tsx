@@ -27,6 +27,7 @@ import {
 import { lastSignIn } from "../state/last-sign-in.ts"
 import { sessionState } from "../state/session.ts"
 import { isGuestSession } from "../state/guest.ts"
+import { emailStore } from "../state/email.ts"
 import { useAppText } from "@ui/i18n.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 
@@ -50,12 +51,23 @@ export function readyAtOf(sent: SentCode | null): number | undefined {
 }
 
 /**
+ * Whether `next` is a page of the profile, where the danger zone's proof button sends a signed-in
+ * person for a code to their own address (#752).
+ */
+export function isProofReturn(next: string): boolean {
+  const path = new URL(next, `http://app.invalid`).pathname
+  return path === SCREEN_PATHS.profile || path.startsWith(`${SCREEN_PATHS.profile}/`)
+}
+
+/**
  * Wires `SignInCodeScreen` (#391, #752). The server's cookie says whether a code waits for this
  * browser, so a reload stays on the code step; the tab keeps when the code went out
  * (`sessionStorage`) for the wait before a new one. An address handed over by the sign-in page
  * fills the field, and "Back to sign in" hands the typed one back (#406). The right code reloads
  * onto the next page: the authenticator's code page while a second factor is owed, `/keep` for a
- * guest who kept the account, or the page asked for when the code was.
+ * guest who kept the account, or the page asked for when the code was. Signed in, the page shows
+ * "You're signed in", unless the profile asked for proof: then the code goes to the account's own
+ * proven address, and the right code returns to the profile with a session that counts as fresh.
  */
 export function SignInCodeView() {
   const [, navigate] = useLocation()
@@ -70,7 +82,23 @@ export function SignInCodeView() {
   const [pending, setPending] = useState(false)
   const [checking, setChecking] = useState(false)
   const [resending, setResending] = useState(false)
-  const guest = isGuestSession(sessionState.value.user)
+  const session = sessionState.value
+  const guest = isGuestSession(session.user)
+  const signedIn = session.user !== null && !session.isMfaRequired && !guest
+  // The profile's proof button (#752): a code to the account's own proven address, back to `next`.
+  const proving = signedIn && next !== null && isProofReturn(next)
+  const status = emailStore.status.value
+  const fixedEmail = !proving
+    ? undefined
+    : status === null && !emailStore.loadFailed.value
+    ? null
+    : status?.proven && status.email
+    ? status.email
+    : undefined
+
+  useEffect(() => {
+    if (proving && emailStore.status.value === null) void emailStore.refresh()
+  }, [proving])
 
   useEffect(() => {
     // The tab's memory may be stale or missing: the server decides whether a code waits here.
@@ -99,10 +127,12 @@ export function SignInCodeView() {
     setFieldError(null)
     setError(null)
     setPending(true)
-    const address = email.trim()
+    const address = fixedEmail ?? email.trim()
     const answer = await requestSignInCode(address, next)
+    // The step names the address as the server keeps it, trimmed and in lower case.
+    const kept = answer.ok ? await readWaitingSignInCode() : null
     setPending(false)
-    if (answer.ok) return markSent(address)
+    if (answer.ok) return markSent(kept || address)
     if (answer.field) setFieldError(answer.error || t.t(SIGN_IN_CODE_MESSAGES.sendFailed))
     else setError(codeFailure(t, answer))
   }
@@ -172,6 +202,8 @@ export function SignInCodeView() {
       }}
       next={next}
       navigate={navigate}
+      signedIn={signedIn && fixedEmail === undefined}
+      fixedEmail={fixedEmail}
     />
   )
 }

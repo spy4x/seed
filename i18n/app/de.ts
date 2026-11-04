@@ -1488,7 +1488,10 @@ export default {
     "Wir schicken dir per E-Mail einen Code, den du hier eingibst. Noch kein Konto mit dieser E-Mail-Adresse? Dann erstellt der Code eines.",
   "SignInCodeScreen.ratherPassword": "Lieber mit Passwort? <link>Zurück zur Anmeldung</link>",
   "SignInCodeScreen.submit": "Code per E-Mail senden",
-  "SignInCodeScreen.sent": "Wir haben einen Code an <email>{email}</email> geschickt.",
+  "SignInCodeScreen.confirmTitle": "Bestätige, dass du es bist",
+  "SignInCodeScreen.confirmDescription":
+    "Wir schicken einen Code an <email>{email}</email>. Gib ihn im nächsten Schritt ein, um zu bestätigen, dass du es bist.",
+  "CodeStep.sent": "Wir haben einen Code an <email>{email}</email> geschickt.",
   "SignInCodeScreen.guest":
     "Du nutzt die App als Gast. Wenn du dich anmeldest, wird alles, was du hier erstellt hast, unter dieser E-Mail-Adresse gespeichert. Gibt es dafür schon ein Konto, fragen wir dich vorher.",
   "CodeStep.deadTitle": "Dieser Code funktioniert nicht mehr",
@@ -1555,16 +1558,9 @@ export default {
     "Du bist offline. Stell eine Verbindung her und versuche es noch einmal.",
   "SignUpCodeScreen.title": "Schau in dein Postfach",
   "SignUpCodeScreen.loading": "Wird geladen …",
-  "SignUpCodeScreen.sent": {
-    "one": "Wir haben einen Code an <email>{email}</email> geschickt. Er gilt {count} Minute lang.",
-    "other":
-      "Wir haben einen Code an <email>{email}</email> geschickt. Er gilt {count} Minuten lang.",
-  },
-  "SignUpCodeScreen.wrongAddress": "Falsche E-Mail-Adresse? <button>Andere verwenden</button>",
   "SignUpCodeScreen.code": "Code",
   "SignUpCodeScreen.checking": "Wird geprüft …",
   "SignUpCodeScreen.resend": "Neuen Code senden",
-  "SignUpCodeScreen.resent": "Ein neuer Code ist unterwegs.",
   "SignUpCodeScreen.resendFailed": "Es konnte kein neuer Code gesendet werden",
   "SignUpCodeScreen.existsTitle": "Du hast schon ein Konto",
   "SignUpCodeScreen.exists":
