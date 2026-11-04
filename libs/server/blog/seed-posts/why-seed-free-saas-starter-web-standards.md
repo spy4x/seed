@@ -9,6 +9,9 @@ tldr:
   - Its servers speak Fetch, Web Crypto and WebSocket, so the code is not tied to one runtime.
   - Skip it if you want serverless functions or a hosted backend.
 topic: Seed
+intro: "I built Seed because every SaaS I started needed the same month of plumbing first. Here is what it gives you on day one, who it is for, and when you should pick something else."
+cover: covers/why-seed-free-saas-starter-web-standards.webp
+coverAlt: "A violet sprout growing from a violet cube on top of a stepped pile of plain grey cubes."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T06:00:00Z

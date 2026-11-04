@@ -123,6 +123,7 @@ export default {
   "AdminAuditEvent.groupCreated": "Gruppe erstellt",
   "AdminAuditEvent.groupRenamed": "Gruppe umbenannt",
   "AdminAuditEvent.groupDetailsUpdated": "Gruppenangaben geändert",
+  "AdminAuditEvent.groupTimeZoneChanged": "Zeitzone der Gruppe geändert",
   "AdminAuditEvent.groupDeleted": "Gruppe gelöscht",
   "AdminAuditEvent.groupRestored": "Gruppe wiederhergestellt",
   "AdminAuditEvent.memberRoleChanged": "Rolle eines Mitglieds geändert",
@@ -636,6 +637,9 @@ export default {
     "Erscheint in Suchergebnissen anstelle des Titels. Etwa 60 Zeichen.",
   "AdminBlogEditor.keyPoints": "Kernpunkte",
   "AdminBlogEditor.keyPointsHint": "Bis zu 5 kurze Zeilen, ganz oben im Beitrag.",
+  "AdminBlogEditor.intro": "Einleitung",
+  "AdminBlogEditor.introHint":
+    "Zwei oder drei Sätze, mit denen die Newsletter-E-Mail und die Crossposts beginnen. Erscheint nicht auf der Beitragsseite.",
   "AdminBlogEditor.keyPoint": "Kernpunkt {n}",
   "AdminBlogEditor.removeKeyPoint": "Kernpunkt {n} entfernen",
   "AdminBlogEditor.addPoint": "Punkt hinzufügen",
@@ -645,11 +649,19 @@ export default {
   "AdminBlogEditor.authorUrl": "Link zum Autor",
   "AdminBlogEditor.authorUrlHint":
     "Der Name des Autors im Beitrag verlinkt hierher, etwa auf seine „Über mich“-Seite. So sehen Leser und Suchmaschinen, wer ihn geschrieben hat. Für keinen Link einfach leer lassen.",
+  "AdminBlogEditor.relatedFeature": "Zugehörige Funktion",
+  "AdminBlogEditor.relatedFeatureHint":
+    "Die Funktionsseite der Website, um die es im Beitrag geht, etwa realtime für /features/realtime. Der Beitrag verlinkt sie unter der Autorenzeile. Leer lassen, wenn es keine gibt.",
   "AdminBlogEditor.coverUrl": "URL des Titelbilds",
-  "AdminBlogEditor.coverUrlHint":
-    "Ein vollständiger https://-Link zu einem Bild im Querformat (1200 × 630) auf einem Server, der das Einbinden auf anderen Websites erlaubt. Für einen Beitrag ohne Titelbild einfach leer lassen.",
+  "AdminBlogEditor.coverUrlHint": "Ein Bild im Format 16:9, https://-Adresse.",
   "AdminBlogEditor.coverAlt": "Beschreibung des Titelbilds",
   "AdminBlogEditor.coverAltHint": "Was das Bild zeigt, für Menschen, die es nicht sehen können.",
+  "AdminBlogEditor.groupAddress": "Adresse und Sprache",
+  "AdminBlogEditor.groupSummary": "Zusammenfassung",
+  "AdminBlogEditor.groupCover": "Titelbild",
+  "AdminBlogEditor.groupLinks": "Links",
+  "AdminBlogEditor.coverOf": "Nutzt das Titelbild von: {title}",
+  "AdminBlogEditor.coverBroken": "Dieses Bild wurde nicht geladen.",
   "AdminBlogEditor.coverPrivacy":
     "Liegt das Bild auf einer anderen Website, sieht diese die IP-Adressen deiner Leser.",
   "AdminBlogEditor.publishing": "Veröffentlichung",
@@ -1226,6 +1238,7 @@ export default {
   "AdminGroup.openInvitations": "Offene Einladungen",
   "AdminGroup.owner": "Inhaber",
   "AdminGroup.created": "Erstellt",
+  "AdminGroup.timeZone": "Zeitzone",
   "AdminGroup.imported": "Importiert",
   "AdminGroup.importedBy": "<when></when> von <person>{name}</person>",
   "AdminGroup.lastActivity": "Letzte Aktivität",

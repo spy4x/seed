@@ -40,6 +40,8 @@ export interface AdminGroupRow {
   name: string
   emoji: string | null
   color: GroupColor | null
+  /** The zone the group's days are cut in, such as `Europe/Berlin`. */
+  timeZone: string
   owner: AdminGroupPerson
   memberCount: number
   /** Notes that are not deleted. A count, never their text. */

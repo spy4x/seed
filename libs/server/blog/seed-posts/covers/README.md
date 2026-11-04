@@ -1,9 +1,10 @@
 # Covers of Seed's blog posts
 
 Every post of seedsaas.com's blog has one cover: an editorial illustration made by an image model
-in one house style, so the blog list and link previews read as one set. Each post has two files:
+in one house style, so the blog list and link previews read as one set. Each post has three files:
 
 - `<slug>.webp`: 1600×900 (16:9), for the post page and link previews;
+- `<slug>-960.webp`: 960×540, for a phone's full-width cover;
 - `<slug>-640.webp`: 640×360, for the post list.
 
 Translations share their original's cover: a post with a `translationOf` slug uses the files of
@@ -34,14 +35,14 @@ deno task blog:cover <slug> "A sealed glass terrarium with a thriving plant insi
 
 The script asks `COVER_MODEL` (`gpt-image-2`) for a landscape 1536×1024 picture at high
 quality, crops it to 16:9 from the middle with ImageMagick (`magick` must be installed), and
-writes both files here at WebP quality 80 with all metadata stripped. A picture takes a minute
+writes the three files here at WebP quality 80 with all metadata stripped. A picture takes a minute
 or two.
 
 Look at the result before you commit it, beside the other covers
 (`magick montage *-640.webp -tile 3x -geometry 400x225+8+8 sheet.png`). Run it again with a
 clearer scene when the picture shows text, a colour outside the palette, or a style the set does
-not share. Then add the post's alt text to the table below and set the post's `coverUrl` and
-`coverAlt`.
+not share. Then add the post's alt text to the table below and set the post's `cover`
+(`covers/<slug>.webp`) and `coverAlt`; each translation sets `coverAlt` in its own language.
 
 ## Alt text
 

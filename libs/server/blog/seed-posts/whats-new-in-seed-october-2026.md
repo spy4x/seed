@@ -9,6 +9,9 @@ tldr:
   - Groups got invitations, roles, billing per member through Stripe, and export and import.
   - Nine languages, an offline app, an admin panel on its own host and a public website arrived.
 topic: Changelog
+intro: "October was Seed's biggest month yet, with 356 commits on main. Here is what changed, from passkeys and per-member billing to offline sync and nine languages."
+cover: covers/whats-new-in-seed-october-2026.webp
+coverAlt: "A tree whose new branches end in buds shaped like a key, a coin, a globe, a house and a gear, with leaves falling around it."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T21:00:00Z

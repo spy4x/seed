@@ -28,6 +28,8 @@ interface SummaryRow {
   contentUpdatedAt: Date | null
   /** Stored by Postgres from the body (2026_12_12_0001_blog_reading_minutes.sql). */
   readingMinutes: number
+  coverUrl: string | null
+  coverFile: string | null
 }
 
 interface PostRow extends SummaryRow {
@@ -36,8 +38,8 @@ interface PostRow extends SummaryRow {
   translationOf: string | null
   seoTitle: string | null
   tldr: string[]
-  coverUrl: string | null
   coverAlt: string | null
+  relatedFeature: string | null
   authorName: string | null
   authorUrl: string | null
 }
@@ -45,7 +47,7 @@ interface PostRow extends SummaryRow {
 /** The columns of a summary: never the body, which a list does not need (#416). */
 function summaryColumns(sql: postgres.Sql) {
   return sql`slug, language, title, description, topic, published_at, content_updated_at,
-    reading_minutes`
+    reading_minutes, cover_url, cover_file`
 }
 
 /**
@@ -67,6 +69,8 @@ function toSummary(row: SummaryRow): PublicBlogPostSummary {
     publishedAt: row.publishedAt.toISOString(),
     updatedAt: row.contentUpdatedAt?.toISOString() ?? null,
     readingMinutes: row.readingMinutes,
+    coverUrl: row.coverUrl,
+    coverFile: row.coverFile,
   }
 }
 
@@ -96,8 +100,8 @@ export async function readPublicPost(
 ): Promise<{ post: PublicBlogPost; readNext: PublicBlogPostSummary[] } | null> {
   const [row] = await sql<PostRow[]>`
     SELECT id, translation_of, slug, language, title, seo_title, description, tldr, topic,
-      cover_url, cover_alt, body_md, published_at, content_updated_at, author_name, author_url,
-      reading_minutes
+      cover_url, cover_file, cover_alt, related_feature, body_md, published_at, content_updated_at,
+      author_name, author_url, reading_minutes
     FROM blog_posts
     WHERE slug = ${slug} AND ${live(sql)}
   `
@@ -123,8 +127,8 @@ export async function readPublicPost(
       ...toSummary(row),
       seoTitle: row.seoTitle,
       tldr: [...row.tldr],
-      coverUrl: row.coverUrl,
       coverAlt: row.coverAlt,
+      relatedFeature: row.relatedFeature,
       segments: body.segments,
       headings: body.headings,
       authorName: row.authorName,
@@ -176,7 +180,6 @@ function warnUnusableTags(slug: string, problems: BlogProblem[]): void {
 /** One live post of the feed, as {@link createPublicFeed} reads it. */
 interface FeedRow extends SummaryRow {
   bodyMd: string
-  coverUrl: string | null
   authorName: string | null
 }
 
@@ -208,7 +211,7 @@ export function createPublicFeed(sql: postgres.Sql): () => Promise<PublicBlogFee
 /** The {@link BLOG_FEED_COUNT} newest live posts with their full body, rendered. */
 export async function listPublicFeed(sql: postgres.Sql): Promise<PublicBlogFeedItem[]> {
   const rows = await sql<FeedRow[]>`
-    SELECT ${summaryColumns(sql)}, body_md, cover_url, author_name
+    SELECT ${summaryColumns(sql)}, body_md, author_name
     FROM blog_posts
     WHERE ${live(sql)}
     ORDER BY published_at DESC, id DESC
@@ -220,7 +223,6 @@ export async function listPublicFeed(sql: postgres.Sql): Promise<PublicBlogFeedI
       ...toSummary(row),
       segments: body.segments,
       headings: body.headings,
-      coverUrl: row.coverUrl,
       authorName: row.authorName,
     }
   })

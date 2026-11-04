@@ -59,6 +59,9 @@ export default {
   "GroupActivity.renamedFromTo":
     "<who>{who}</who> переименовал(а) группу «<value>{from}</value>» в «<value>{to}</value>»",
   "GroupActivity.detailsUpdated": "<who>{who}</who> изменил(а) описание, цвет или эмодзи группы",
+  "GroupActivity.timeZoneChanged":
+    "<who>{who}</who> изменил(а) часовой пояс с <value>{from}</value> на <value>{to}</value>",
+  "GroupActivity.timeZoneChangedPlain": "<who>{who}</who> изменил(а) часовой пояс",
   "GroupActivity.deleted": "<who>{who}</who> удалил(а) группу",
   "GroupActivity.restored": "<who>{who}</who> восстановил(а) группу",
   "GroupActivity.roleChanged":
@@ -278,6 +281,11 @@ export default {
       "Новые группы начинают с бесплатного тарифа. Бесплатный пробный период на {count} дня достанется первой группе, которую вы переведёте на платный тариф.",
   },
   "GroupEditor.readOnly": "Менять данные группы могут только администраторы и владелец.",
+  "GroupEditor.timeZoneHint":
+    "Дни и месяцы начинаются в полночь по этому поясу — для всех в группе.",
+  "GroupEditor.timeZoneInvalid": "Такого часового пояса мы не знаем. Выберите другой из списка.",
+  "GroupEditor.timeZoneChangedElsewhere":
+    "Пока вы редактировали, кто-то другой выбрал {zone}. Сохраните, чтобы оставить свой вариант, или нажмите «Отменить».",
   "GroupEditor.nameRequired": "Введите название.",
   "GroupEditor.nameInvalid": "Не больше 100 символов, без переносов строк и скрытых символов.",
   "GroupEditor.descriptionTooLong": {
@@ -801,6 +809,7 @@ export default {
   "OverviewScreen.customRange": "Свой период",
   "OverviewScreen.rangeTooLong": "Выберите период не длиннее года.",
   "OverviewScreen.asOf": "Данные на {time}",
+  "OverviewScreen.zoneNote": "время: {city}",
   "OverviewScreen.hide": "Скрыть виджет",
   "OverviewView.opening": "Открываем обзор…",
   "OverviewView.saveFailed":

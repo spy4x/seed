@@ -11,6 +11,8 @@ tldr:
   - Die Sprache ist eine Einstellung der Person, auf dem Server gespeichert und unabhängig von Datumsformat, Zeitzone und Uhr.
   - Eine zehnte Sprache ist ein Listeneintrag, eine Datei pro Katalog und ein paar Ladezeilen.
 topic: Im Detail
+intro: "Seed spricht ab dem ersten Commit neun Sprachen, Arabisch von rechts nach links eingeschlossen. Dieser Beitrag zeigt, wie die Kataloge vollständig bleiben, und die Tests, die eine fehlende Übersetzung vor dem Release stoppen."
+coverAlt: "Ein violetter Globus, umgeben von leeren Sprechblasen, mit Pfeilen, die in beide Richtungen um ihn kreisen."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z

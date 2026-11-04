@@ -11,6 +11,8 @@ tldr:
   - Si vos clients sont des équipes, prenez un modèle avec groupes, rôles et facturation par membre.
   - Freelance ou agence ? Sous MIT, le code se remet au client sans licence à racheter.
 topic: Questions
+intro: "ShipFast est un bon kit, mais ce n'est pas le seul, et il n'est pas gratuit. J'ai comparé sept boilerplates sur le prix, la licence, la stack, les équipes et l'hébergement, avec une source pour chaque fait."
+coverAlt: "Sept voiliers de formes différentes alignés sur une eau calme, dont un violet."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z

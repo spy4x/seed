@@ -8,6 +8,9 @@ tldr:
   - This blog covers how to build on it, its details, and what changed.
   - Subscribe to get each new post by email.
 topic: Seed
+intro: "I'm starting a blog for Seed, the free SaaS starter I build in public. Here is what you will read and how to get each post by email."
+cover: covers/welcome-to-the-seed-blog.webp
+coverAlt: "A violet seedling in a pot beside an open envelope from which leaves drift out like letters."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-01T09:00:00Z

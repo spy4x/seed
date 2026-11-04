@@ -56,6 +56,9 @@ export default {
     "<who>{who}</who>がグループ名を「<value>{from}</value>」から「<value>{to}</value>」に変更しました",
   "GroupActivity.detailsUpdated":
     "<who>{who}</who>がグループの説明、色、または絵文字を変更しました",
+  "GroupActivity.timeZoneChanged":
+    "<who>{who}</who>がタイムゾーンを<value>{from}</value>から<value>{to}</value>に変更しました",
+  "GroupActivity.timeZoneChangedPlain": "<who>{who}</who>がタイムゾーンを変更しました",
   "GroupActivity.deleted": "<who>{who}</who>がグループを削除しました",
   "GroupActivity.restored": "<who>{who}</who>がグループを復元しました",
   "GroupActivity.roleChanged": "<who>{who}</who>が<target>{target}</target>のロールを変更しました",
@@ -225,6 +228,11 @@ export default {
       "新しいグループは無料プランから始まります。{count}日間の無料トライアルは、最初に有料プランに切り替えたグループに適用されます。",
   },
   "GroupEditor.readOnly": "このグループの詳細を変更できるのは管理者とオーナーだけです。",
+  "GroupEditor.timeZoneHint": "グループ全員の日と月が、このタイムゾーンの午前0時に始まります。",
+  "GroupEditor.timeZoneInvalid":
+    "このタイムゾーンは使えません。リストから別のものを選んでください。",
+  "GroupEditor.timeZoneChangedElsewhere":
+    "編集中に、ほかの人がこれを{zone}に変更しました。自分の選択を使うには保存を、やめるには「破棄」を押してください。",
   "GroupEditor.nameRequired": "名前を入力してください。",
   "GroupEditor.nameInvalid": "改行や不可視文字を含めず、100文字以内で入力してください。",
   "GroupEditor.descriptionTooLong": {
@@ -664,6 +672,7 @@ export default {
   "OverviewScreen.customRange": "期間を指定",
   "OverviewScreen.rangeTooLong": "1年以内の期間を選んでください。",
   "OverviewScreen.asOf": "{time}時点",
+  "OverviewScreen.zoneNote": "{city}時間",
   "OverviewScreen.hide": "ウィジェットを非表示",
   "OverviewView.opening": "概要を開いています…",
   "OverviewView.saveFailed":

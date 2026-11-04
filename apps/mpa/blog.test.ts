@@ -36,6 +36,8 @@ const NEWER: PublicBlogPostSummary = {
   publishedAt: `2026-10-20T09:00:00.000Z`,
   updatedAt: `2026-10-22T09:00:00.000Z`,
   readingMinutes: 4,
+  coverUrl: null,
+  coverFile: null,
 }
 const OLDER: PublicBlogPostSummary = {
   slug: `hello-world`,
@@ -46,6 +48,8 @@ const OLDER: PublicBlogPostSummary = {
   publishedAt: `2026-10-02T09:00:00.000Z`,
   updatedAt: null,
   readingMinutes: 6,
+  coverUrl: null,
+  coverFile: null,
 }
 
 const FULL_HTML = `<p>The worker <strong>wakes</strong> every second.</p>`
@@ -57,6 +61,7 @@ const FULL: PublicBlogPost = {
   tldr: [`One table holds every job.`, `A failed job is tried again.`],
   coverUrl: `https://images.example.com/cron.png`,
   coverAlt: `A clock over a server rack`,
+  relatedFeature: null,
   segments: [{ kind: `html`, html: FULL_HTML }],
   headings: [{ id: `why`, text: `Why`, depth: 2 }],
   authorName: `Ada Lovelace`,
@@ -74,6 +79,8 @@ const GERMAN: PublicBlogPostSummary = {
   publishedAt: `2026-10-03T09:00:00.000Z`,
   updatedAt: null,
   readingMinutes: 2,
+  coverUrl: null,
+  coverFile: null,
 }
 
 /** {@link GERMAN} as the API answers it in full. */
@@ -83,6 +90,7 @@ const GERMAN_FULL: PublicBlogPost = {
   tldr: [],
   coverUrl: null,
   coverAlt: null,
+  relatedFeature: null,
   segments: [{ kind: `html`, html: `<p>Hallo.</p>` }],
   headings: [],
   authorName: null,
@@ -96,6 +104,7 @@ const LONG: PublicBlogPost = {
   updatedAt: null,
   coverUrl: null,
   coverAlt: null,
+  relatedFeature: null,
   authorName: null,
   readingMinutes: 9,
   headings: [
@@ -233,6 +242,29 @@ describe("the blog index", () => {
     expect(canonical(body)).toBe(`${site}/blog`)
     expect(metaContent(body, "robots")).toBe("index, follow")
     expect(jsonLdGraph(body).map((node) => node["@type"])).toEqual([`Blog`, `BreadcrumbList`])
+  })
+
+  it("draws each listed post's cover, the first one eager, and none for a post without one (#733)", async () => {
+    const covered = { ...NEWER, coverUrl: null, coverFile: `cron-jobs.webp` }
+    const later = { ...OLDER, coverUrl: null, coverFile: `hello-world.webp` }
+    const plain = { ...OLDER, slug: `plain`, title: `Plain`, coverUrl: null, coverFile: null }
+    const { body } = await (await blogSite(listing([covered, later, plain]))).get("/blog")
+
+    const images = (body.match(/<ul [^>]*data-e2e="post-list"[\s\S]*?<\/ul>/)?.[0] ?? ``)
+      .replace(/\?__frsh_c=\w+/g, ``)
+      .match(/<img [^>]*>/g) ?? []
+    expect(images).toHaveLength(2)
+    expect(images[0]).toContain(
+      `srcset="/blog/covers/cron-jobs-640.webp 640w, /blog/covers/cron-jobs-960.webp 960w, /blog/covers/cron-jobs.webp 1600w"`,
+    )
+    expect(images[0]).toContain(`sizes="(min-width: 640px) 192px, calc(100vw - 32px)"`)
+    expect(images[0]).toContain(`width="1600" height="900"`)
+    expect(images[0]).toMatch(/ alt(="")? /)
+    expect(images[0]).toContain(`loading="eager"`)
+    expect(images[0]).toContain(`fetchpriority="high"`)
+    expect(images[1]).toContain(`src="/blog/covers/hello-world.webp"`)
+    expect(images[1]).toContain(`loading="lazy"`)
+    expect(images[1]).not.toContain(`fetchpriority`)
   })
 
   it("filters by topic through a plain link, marks it, and keeps the canonical address", async () => {
@@ -498,6 +530,53 @@ describe("a blog post", () => {
     // A look-alike host is another site, not the site author's.
     expect(await author(`https://antonshubin.com.example.org/about`)).not.toHaveProperty(`@id`)
     expect(await author(null)).toEqual({ "@type": `Person`, name: `Ada Lovelace` })
+  })
+
+  it("draws a cover file in all three widths at its real size, and shares the post's card at its full address (#733)", async () => {
+    const post = { ...FULL, coverUrl: null, coverFile: `cron-jobs.webp` }
+    const { body } = await (await blogSite(answers(post))).get("/blog/cron-jobs")
+
+    // Fresh adds its build's cache key to a path on the site; the files are the same.
+    const img = (body.match(/<img [^>]*data-e2e="blog-post-cover"[^>]*>/)?.[0] ?? ``)
+      .replace(/\?__frsh_c=\w+/g, ``)
+    expect(img).toContain(`src="/blog/covers/cron-jobs.webp"`)
+    expect(img).toContain(
+      `srcset="/blog/covers/cron-jobs-640.webp 640w, /blog/covers/cron-jobs-960.webp 960w, /blog/covers/cron-jobs.webp 1600w"`,
+    )
+    expect(img).toContain(`sizes="(min-width: 720px) 672px, calc(100vw - 32px)"`)
+    expect(img).toContain(`width="1600" height="900"`)
+    expect(img).toContain(`alt="A clock over a server rack"`)
+    expect(metaContent(body, "og:image")).toBe(`${site}/blog/og/cron-jobs.jpg`)
+    expect(metaContent(body, "og:image:width")).toBe(`1200`)
+    expect(metaContent(body, "og:image:height")).toBe(`630`)
+    expect(metaContent(body, "og:image:alt")).toBe(FULL.title)
+    expect(jsonLdGraph(body)[0].image).toMatchObject({
+      url: `${site}/blog/covers/cron-jobs.webp`,
+      width: 1600,
+      height: 900,
+    })
+  })
+
+  it("links its related feature's page under the byline by the page's name, and nothing for an unknown one (#733)", async () => {
+    const linked = { ...FULL, relatedFeature: `realtime` }
+    const { body } = await (await blogSite(answers(linked))).get("/blog/cron-jobs")
+    expect(linkNamed(body, `Seed feature: Realtime sync →`)).toMatch(
+      /^<a href="\/features\/realtime" class="[^"]*min-h-11/,
+    )
+
+    const german = { ...GERMAN_FULL, relatedFeature: `realtime` }
+    const de = await (await blogSite({
+      ...listing([GERMAN]),
+      [`/api/blog/posts/hallo-welt`]: () => Response.json({ post: german, readNext: [] }),
+    })).get("/de/blog/hallo-welt")
+    expect(de.body).toMatch(/<a href="\/de\/features\/realtime"[^>]*>Seed-Funktion: /)
+
+    for (const relatedFeature of [null, `no-such-feature`]) {
+      const { body } = await (await blogSite(answers({ ...FULL, relatedFeature }))).get(
+        "/blog/cron-jobs",
+      )
+      expect(body).not.toContain(`data-e2e="blog-post-feature"`)
+    }
   })
 
   it("shares the site's own image when the post has no cover", async () => {

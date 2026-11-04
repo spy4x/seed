@@ -61,6 +61,8 @@ const summary = type({
   publishedAt: `string`,
   updatedAt: `string | null`,
   readingMinutes: `number`,
+  coverUrl: `string | null`,
+  coverFile: `string | null`,
 })
 
 const postsAnswer = type({ posts: summary.array() })
@@ -79,8 +81,8 @@ const postAnswer = type({
   post: summary.and({
     seoTitle: `string | null`,
     tldr: `string[]`,
-    coverUrl: `string | null`,
     coverAlt: `string | null`,
+    relatedFeature: `string | null`,
     segments,
     headings,
     authorName: `string | null`,
@@ -97,7 +99,6 @@ const feedAnswer = type({
   posts: summary.and({
     segments,
     headings,
-    coverUrl: `string | null`,
     authorName: `string | null`,
   }).array(),
 })

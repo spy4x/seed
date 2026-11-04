@@ -22,7 +22,9 @@ import {
   readPost,
   TOC_MIN_MINUTES,
 } from "../../../blog.ts"
+import { coverImage, listCoverImage, ogCard } from "../../../blog-covers.ts"
 import { CtaBand } from "../../../components/cta-band.tsx"
+import { featurePage } from "../../../features-data.tsx"
 import {
   AUTHOR_URL,
   NewsletterForm,
@@ -31,6 +33,7 @@ import {
   sectionLinks,
   SITE_NAME,
   SiteFrame,
+  type SitePageHead,
   spaLinks,
 } from "../../../site.tsx"
 import { define, type State } from "../../../utils.ts"
@@ -74,7 +77,6 @@ export const handler = define.handlers({
     const { post, readNext } = found
     if (post.language !== ctx.state.language) return ctx.redirect(postAddress(post), 301)
     const origin = ctx.state.webAppOrigin
-    const cover = post.coverUrl === null ? null : { url: post.coverUrl, alt: post.coverAlt ?? `` }
     const t = siteTranslator(ctx.state.language)
     const body = resolveBody(post.segments, post.headings, await postFigures())
     warnHiddenFigures(post.slug, body.problems)
@@ -86,7 +88,7 @@ export const handler = define.handlers({
           title: post.seoTitle ?? post.title,
           description: post.description,
           ogType: `article`,
-          image: cover ?? undefined,
+          image: shareImage(origin, post),
           jsonLd: postJsonLd(t, origin, post),
           alternates: [post, ...post.translations].map((version) => ({
             language: version.language,
@@ -114,8 +116,20 @@ export const handler = define.handlers({
   },
 })
 
+/**
+ * The picture a link to the post shows: a Seed post's card (its title over its cover), else its
+ * cover, else nothing, and the site's own image is shared.
+ */
+function shareImage(origin: string, post: PublicBlogPost): SitePageHead[`image`] {
+  const card = ogCard(post)
+  if (card) return { url: absolute(origin, card.src), alt: post.title, ...card }
+  const cover = coverImage(post)
+  return cover ? { url: absolute(origin, cover.src), alt: post.coverAlt ?? `` } : undefined
+}
+
 /** The post's structured data: the `BlogPosting` and its trail, Home › Blog › the post. */
 function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost): unknown[] {
+  const cover = coverImage(post)
   const url = `${origin}${postAddress(post)}`
   const blog = `${origin}${localePath(post.language, BLOG_PATH)}`
   return [
@@ -123,7 +137,10 @@ function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost)
       url,
       headline: post.title,
       description: post.description,
-      image: post.coverUrl ?? { url: `${origin}/og/home.png`, ...OG_IMAGE_SIZE },
+      // A file's size is known; a product's https cover is named alone.
+      image: post.coverFile !== null && cover
+        ? { url: absolute(origin, cover.src), width: cover.width, height: cover.height }
+        : post.coverUrl ?? { url: `${origin}/og/home.png`, ...OG_IMAGE_SIZE },
       datePublished: new Date(post.publishedAt),
       dateModified: post.updatedAt === null ? undefined : new Date(post.updatedAt),
       author: postAuthor(post),
@@ -170,6 +187,14 @@ const GUTTER = `px-4 sm:px-6 lg:px-8`
 /** The post's reading column, inside {@link GUTTER}. */
 const COLUMN = `mx-auto w-full max-w-2xl`
 
+/** How wide the cover is drawn: the column's 672 px from 720 px, else the screen less its gutters. */
+const COVER_SIZES = `(min-width: 720px) 672px, calc(100vw - 32px)`
+
+/** `src` as a full address: a file cover is a path on this website. */
+function absolute(origin: string, src: string): string {
+  return src.startsWith(`/`) ? `${origin}${src}` : src
+}
+
 /**
  * The article itself. A post of {@link TOC_MIN_MINUTES} minutes or more with sections gets "On this
  * page" beside it from 1280 px, in the right margin; on a narrower screen the body reads alone.
@@ -185,6 +210,8 @@ function PostBody(
     ? post.headings.filter(({ depth }) => depth === 2)
     : []
   const toc = sections.length > 0
+  const cover = coverImage(post)
+  const feature = post.relatedFeature === null ? undefined : featurePage(post.relatedFeature)
   return (
     <div class={`${GUTTER} py-12 lg:py-16`}>
       <div
@@ -244,6 +271,16 @@ function PostBody(
                 </span>
               )}
             </p>
+            {feature && (
+              <p class="text-sm" data-e2e="blog-post-feature">
+                <a
+                  href={href(`/features/${feature.slug}`)}
+                  class="inline-flex min-h-11 items-center rounded-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus sm:min-h-0"
+                >
+                  {t.t(`Blog.relatedFeature`, { name: t.t(feature.name) })}
+                </a>
+              </p>
+            )}
             {post.translations.length > 0 && (
               <p class="text-sm text-muted" data-e2e="blog-post-translations">
                 {rich(`Blog.alsoIn`, {
@@ -252,12 +289,14 @@ function PostBody(
               </p>
             )}
           </header>
-          {post.coverUrl && (
+          {cover && (
             <img
-              src={post.coverUrl}
+              src={cover.src}
+              srcset={cover.srcset}
+              sizes={cover.srcset && COVER_SIZES}
               alt={post.coverAlt ?? ``}
-              width={1200}
-              height={630}
+              width={cover.width}
+              height={cover.height}
               loading="eager"
               fetchpriority="high"
               decoding="async"
@@ -368,6 +407,7 @@ function ReadNext({ posts }: { posts: readonly PublicBlogPostSummary[] }): JSX.E
                 publishedAt: post.publishedAt,
                 readMinutes: post.readingMinutes,
                 lang: post.language,
+                image: listCoverImage(post),
               }))}
             />
           </>

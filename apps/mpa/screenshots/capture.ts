@@ -17,8 +17,8 @@ import { signUpWithCode } from "../../../e2e/fixtures/sign-up.ts"
 
 export const APP = Deno.env.get("SHOTS_APP_URL") ?? "http://app.localhost"
 const MPA = new URL("..", import.meta.url).pathname
-const MASTERS = `${MPA}screenshots/.out/masters`
-const CACHE = `${MPA}screenshots/.out/cache`
+export const MASTERS = `${MPA}screenshots/.out/masters`
+export const CACHE = `${MPA}screenshots/.out/cache`
 const SHOTS = `${MPA}static/shots`
 const OG = `${MPA}static/og`
 
@@ -612,7 +612,7 @@ export async function saveTitle(
 }
 
 /** Runs a command and throws with its error output when it fails. */
-async function run(command: string, args: string[]): Promise<void> {
+export async function run(command: string, args: string[]): Promise<void> {
   const { code, stderr } = await new Deno.Command(command, { args, stdout: "null" }).output()
   if (code !== 0) {
     throw new Error(`${command} ${args.join(" ")}: ${new TextDecoder().decode(stderr)}`)
@@ -648,7 +648,7 @@ async function encodeShots(): Promise<void> {
 }
 
 /** Downloads the pinned `geist` package once, checks its integrity and unpacks the two fonts. */
-async function geistFonts(): Promise<void> {
+export async function geistFonts(): Promise<void> {
   const fontsReady = await Promise.all(
     Object.keys(GEIST.files).map((name) =>
       Deno.stat(`${CACHE}/${name}`).then(() => true, () => false)

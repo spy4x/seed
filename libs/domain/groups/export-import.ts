@@ -72,6 +72,11 @@ export interface GroupExportSettings {
   description: string
   color: GroupColor | null
   emoji: string | null
+  /**
+   * The group's zone. An export always writes it; a file written before groups had zones has none,
+   * and its import takes the importer's zone.
+   */
+  timeZone?: string
 }
 
 /** Why a file cannot be imported. The app words each one; see `libs/ui/group-import-screen.tsx`. */

@@ -11,6 +11,8 @@ tldr:
   - El idioma es un ajuste de cada persona, guardado en el servidor, y no va atado al formato de fecha, la zona horaria ni el reloj.
   - Añadir un décimo idioma es una entrada en una lista, un archivo por catálogo y unas pocas líneas de carga.
 topic: A fondo
+intro: "Seed habla nueve idiomas desde el primer commit, árabe de derecha a izquierda incluido. Este artículo muestra cómo los catálogos se mantienen completos y las pruebas que frenan una traducción que falta antes de publicarse."
+coverAlt: "Un globo terráqueo violeta rodeado de bocadillos vacíos, con flechas que giran a su alrededor en ambos sentidos."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z

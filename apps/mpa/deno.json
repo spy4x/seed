@@ -9,6 +9,8 @@
     "screenshots": "deno run -A screenshots/capture.ts",
     // Needs the dev stack, ffmpeg (with libsvtav1 and libx264) and cwebp: screenshots/README.md.
     "loops": "deno run -A screenshots/loops.ts",
+    // The link-preview card of each of Seed's own posts. Needs magick: screenshots/blog-og.ts.
+    "og:blog": "deno run -A screenshots/blog-og.ts",
     "start": "deno serve -A _fresh/server.js"
   },
   "imports": {

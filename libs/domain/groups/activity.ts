@@ -27,6 +27,7 @@ export const ACTIVITY_KINDS = [
   "group.created",
   "group.renamed",
   "group.details_updated",
+  "group.time_zone_changed",
   "group.deleted",
   "group.restored",
   "group.member_role_changed",
@@ -208,6 +209,13 @@ export function describeActivity(
     }
     case "group.details_updated":
       return `${who} changed the group's description, colour or emoji`
+    case "group.time_zone_changed": {
+      const from = typeof details.from === "string" ? details.from : null
+      const to = typeof details.to === "string" ? details.to : null
+      return from && to
+        ? `${who} changed the time zone from ${from} to ${to}`
+        : `${who} changed the time zone`
+    }
     case "group.deleted":
       return `${who} deleted the group`
     case "group.restored":

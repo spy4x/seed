@@ -84,7 +84,10 @@ updates the demo in the same PR:
   operators' audit rows about posts last a day. A post's `language` and `translation_of` stay with it; a subscriber
   keeps their `language` too, and the seeded subscribers have none, so they count as the main
   language's. A post's `reading_minutes` is a column Postgres computes from its body, so the
-  wipe, the seed and Seed's post files never write it and every post has it. Seed's own posts come
+  wipe, the seed and Seed's post files never write it and every post has it. A post's `intro`,
+  `related_feature` and `cover_file`, and its Dev.to record (`crossposted_at`, `devto_url`), stay
+  with it too (#733); a revision keeps its `intro` and `related_feature`. The seed writes none of
+  them: Seed's post files set them. Seed's own posts come
   from files ([below](#seeds-own-blog-posts)).
 - **The contact links survive the wipe** for the same reason: `contact_links` holds the
   website's real contact channels, and the demo seeds none. `deno task db:seed` in development
@@ -152,3 +155,6 @@ They are reviewed in pull requests like code, and a product built on Seed delete
   sets `newsletter_sent_at`, so the post is never mailed, also when a list is added later.
 - **Translations** name their original's slug in `translationOf`, and are linked through
   `translation_of`.
+- **Cross-posted only when asked.** `devto: true` copies an original to Dev.to once it is live,
+  when the server has `DEVTO_API_KEY` ([blog.md](blog.md#the-devto-cross-post)); without it, or with
+  `devto: false`, the post is settled as never cross-posted.

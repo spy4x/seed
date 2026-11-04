@@ -11,6 +11,8 @@ tldr:
   - Stripe funciona en España y México, pero no en Argentina, Colombia, Chile ni Perú. Mira eso antes de elegir.
   - Seed trae grupos con roles, cobro por miembro con Stripe, panel de administración y nueve idiomas en tu propio servidor.
 topic: Preguntas
+intro: "Busqué un boilerplate SaaS gratuito como lo harías tú y encontré siete que no cuestan nada. Cada uno deja fuera algo distinto, así que comparé lo que de verdad obtienes antes de que le dediques tu tiempo."
+coverAlt: "Siete plantas jóvenes en macetas de semillero sobre un estante de madera, tras una puerta de jardín abierta."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

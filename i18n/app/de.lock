@@ -325,6 +325,8 @@ GroupActivity.tagDeletedUnnamed	4f001844fdefa822
 GroupActivity.tagDeletedUnnamedCarried	bdda6654cbbcde49
 GroupActivity.tagRecoloured	f5165a9b2236f711
 GroupActivity.tagRenamed	8f34ad5d1afaf072
+GroupActivity.timeZoneChanged	9865a90afd7736f6
+GroupActivity.timeZoneChangedPlain	75178346ab187fc3
 GroupActivity.unknown	e102c7e20d89a1a2
 GroupBillingPanel.cancelFree	6c63ffe7354921cb
 GroupBillingPanel.cancelKeep	8c78770014f074ae
@@ -456,6 +458,9 @@ GroupEditor.tabBilling	3ac8bbca9a74cfbd
 GroupEditor.tabGeneral	c910d474dcd724bf
 GroupEditor.tabMembers	1044a4c056d0d685
 GroupEditor.tabsLabel	c200f2ef2a407ce5
+GroupEditor.timeZoneChangedElsewhere	e659a9a872602c4d
+GroupEditor.timeZoneHint	4c0334c50f7de346
+GroupEditor.timeZoneInvalid	19c71dafbf702ad7
 GroupEditor.title	34ca0e76608842ff
 GroupEditor.transfer	3667f939d52f5974
 GroupEditor.transferTitle	a58fa19a2e3fec28
@@ -1036,6 +1041,7 @@ OverviewScreen.reset	2e2a17849c24f8e9
 OverviewScreen.thisMonth	fd787ef3d46c9b82
 OverviewScreen.title	d4b1ea5708dd5329
 OverviewScreen.widgets	1fda79ffb6597357
+OverviewScreen.zoneNote	9b0a5613a3e6d333
 OverviewView.hidden	a4a2898b7f718549
 OverviewView.linkCopied	d12860c21e78baa5
 OverviewView.opening	f492d4ec6a71ef46

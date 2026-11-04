@@ -112,6 +112,8 @@ const ON_MAIN: readonly string[] = [
   "2026_12_13_0002_blog_slug_redirects.sql",
   "2026_12_14_0001_blog_post_revisions.sql",
   "2026_12_14_0002_email_codes.sql",
+  "2026_12_14_0003_group_time_zone.sql",
+  "2026_12_14_0004_blog_publishing.sql",
   "2026_12_15_0001_subscription_billing_period.sql",
 ]
 

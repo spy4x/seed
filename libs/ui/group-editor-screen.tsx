@@ -1,5 +1,5 @@
 import type { ComponentChildren, JSX } from "preact"
-import { useEffect, useRef, useState } from "preact/hooks"
+import { useEffect, useMemo, useRef, useState } from "preact/hooks"
 import { IconPlus } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { Link } from "@spy4x/preact-ui/link"
@@ -24,10 +24,12 @@ import {
   canMutateNotes,
   canRename,
   canViewActivity,
+  GROUP_DEFAULT_TIME_ZONE,
   GROUP_DESCRIPTION_MAX,
   GROUP_RESTORE_DAYS,
   type GroupColor,
   GroupRole,
+  groupTimeZone,
 } from "@domain/groups"
 import { GroupMark } from "./group-appearance.tsx"
 import { type GroupRow, roleName } from "./groups-screen.tsx"
@@ -43,7 +45,10 @@ import { GroupMoveAllForm, type MoveAllResult } from "./group-move-all.tsx"
 import type { MoveTarget } from "./notes-screen.tsx"
 import { GROUP_PATHS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { FORM_WIDTH, useWaited } from "./tag-editor-screen.tsx"
-import { Isolated } from "@spy4x/preact-ui/bdi"
+import { isolate, Isolated } from "@spy4x/preact-ui/bdi"
+import { FactList } from "@spy4x/preact-ui/fact-list"
+import { zoneLabel } from "@spy4x/time/tz"
+import { TimeZonePicker } from "./time-zone-picker.tsx"
 
 /** What the editor's fields hold. The emoji is the text typed, an empty string for none. */
 export interface GroupDraft {
@@ -51,16 +56,28 @@ export interface GroupDraft {
   description: string
   color: GroupColor | null
   emoji: string
+  /** The IANA zone the group's days are cut in. */
+  timeZone: string
 }
 
-/** The fields of a new group: all empty. */
-export const EMPTY_GROUP_DRAFT: GroupDraft = { name: "", description: "", color: null, emoji: "" }
+/** The id of the time zone field, which a refused zone focuses. */
+const TIME_ZONE_ID = "group-time-zone"
+
+/** The fields of a new group: all empty, in UTC until the person's own zone is known. */
+export const EMPTY_GROUP_DRAFT: GroupDraft = {
+  name: "",
+  description: "",
+  color: null,
+  emoji: "",
+  timeZone: GROUP_DEFAULT_TIME_ZONE,
+}
 
 /** Why the last create or save was refused: under the field it is about, or under the form. */
 export interface GroupEditorErrors {
   name?: string | null
   description?: string | null
   emoji?: string | null
+  timeZone?: string | null
   form?: string | null
 }
 
@@ -104,6 +121,13 @@ export interface GroupEditorScreenProps {
   /** What the fields show: what the person typed, or the group as saved. */
   value: GroupDraft
   onChange?: (value: GroupDraft) => void
+  /**
+   * The zone someone else saved while the person picked another one here, or `null`. The field
+   * keeps the person's choice and says so.
+   */
+  zoneChangedElsewhere?: string | null
+  /** The moment the zones' offsets are read at. Defaults to now. */
+  now?: Date
   /** The messages of the last refused create or save. */
   errors?: GroupEditorErrors
   /**
@@ -476,7 +500,9 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
     content: item.id !== tab
       ? null
       : item.id === GroupTab.GENERAL
-      ? (canRename(group.role) ? <GroupForm {...props} /> : <GroupDetailsText group={group} />)
+      ? (canRename(group.role)
+        ? <GroupForm {...props} />
+        : <GroupDetailsText group={group} now={props.now} />)
       : item.id === GroupTab.MEMBERS
       ? (
         <GroupMembersSection
@@ -711,19 +737,24 @@ function GroupForm(
     group,
     offline = false,
     trial = null,
+    zoneChangedElsewhere = null,
+    now,
   }: GroupEditorScreenProps,
 ): JSX.Element {
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const first = errors.name
-      ? "name"
+      ? "[name=name]"
       : errors.description
-      ? "description"
+      ? "[name=description]"
       : errors.emoji
-      ? "emoji"
+      ? "[name=emoji]"
+      : errors.timeZone
+      ? `#${TIME_ZONE_ID}`
       : null
-    if (first) box.current?.querySelector<HTMLElement>(`[name=${first}]`)?.focus()
+    if (first) box.current?.querySelector<HTMLElement>(first)?.focus()
   }, [errors])
+  const at = useMemo(() => now ?? new Date(), [now])
   // When an existing group's footer goes away (Discard, or a save that went through), the button
   // that held focus goes with it, and the browser drops focus to the page. Focus moves to the name
   // field instead, once the save has finished and the fields are enabled again. Focus the person
@@ -813,6 +844,32 @@ function GroupForm(
                 onChange={(color) => change({ color })}
               />
             </div>
+            <Field
+              id={TIME_ZONE_ID}
+              label={t.t(`Preferences.timeZone`)}
+              hint={t.t(`GroupEditor.timeZoneHint`)}
+              error={errors.timeZone}
+            >
+              {(wiring) => (
+                <div data-e2e="group-time-zone">
+                  <TimeZonePicker
+                    id={wiring.id}
+                    aria-describedby={wiring["aria-describedby"]}
+                    aria-invalid={Boolean(errors.timeZone)}
+                    value={value.timeZone}
+                    now={at}
+                    onChange={(timeZone) => timeZone && change({ timeZone })}
+                  />
+                </div>
+              )}
+            </Field>
+            {zoneChangedElsewhere && (
+              <Notice tone="info" data-e2e="group-time-zone-elsewhere">
+                {t.t(`GroupEditor.timeZoneChangedElsewhere`, {
+                  zone: isolate(zoneLabel(zoneChangedElsewhere, at)),
+                })}
+              </Notice>
+            )}
             {creating && trialText(t, trial) && (
               <p class="text-sm text-muted" data-e2e="group-trial">{trialText(t, trial)}</p>
             )}
@@ -875,8 +932,9 @@ export function trialText(t: Translator<string>, trial: PersonTrial | null): str
 }
 
 /** The details as text, for a member who may not change them, with who may. */
-function GroupDetailsText({ group }: { group: GroupRow }): JSX.Element {
+function GroupDetailsText({ group, now }: { group: GroupRow; now?: Date }): JSX.Element {
   const t = useAppText()
+  const zone = groupTimeZone(group)
   return (
     <Stack gap="sm">
       {group.description && (
@@ -888,6 +946,15 @@ function GroupDetailsText({ group }: { group: GroupRow }): JSX.Element {
           {group.description}
         </p>
       )}
+      <div data-e2e="group-general-time-zone">
+        <FactList
+          facts={[{
+            label: t.t(`Preferences.timeZone`),
+            value: <bdi>{zoneLabel(zone, now ?? new Date())}</bdi>,
+            hint: t.t(`GroupEditor.timeZoneHint`),
+          }]}
+        />
+      </div>
       <p class="text-sm text-muted" data-e2e="group-read-only">
         {t.t(`GroupEditor.readOnly`)}
       </p>

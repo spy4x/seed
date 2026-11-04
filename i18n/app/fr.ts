@@ -67,6 +67,9 @@ export default {
     "<who>{who}</who> a renommé le groupe « <value>{from}</value> » en « <value>{to}</value> »",
   "GroupActivity.detailsUpdated":
     "<who>{who}</who> a modifié la description, la couleur ou l’emoji du groupe",
+  "GroupActivity.timeZoneChanged":
+    "<who>{who}</who> a changé le fuseau horaire de <value>{from}</value> à <value>{to}</value>",
+  "GroupActivity.timeZoneChangedPlain": "<who>{who}</who> a changé le fuseau horaire",
   "GroupActivity.deleted": "<who>{who}</who> a supprimé le groupe",
   "GroupActivity.restored": "<who>{who}</who> a restauré le groupe",
   "GroupActivity.roleChanged": "<who>{who}</who> a modifié le rôle de <target>{target}</target>",
@@ -277,6 +280,12 @@ export default {
   },
   "GroupEditor.readOnly":
     "Seuls les administrateurs et le propriétaire peuvent modifier les informations de ce groupe.",
+  "GroupEditor.timeZoneHint":
+    "Les jours et les mois commencent à minuit dans ce fuseau, pour tout le groupe.",
+  "GroupEditor.timeZoneInvalid":
+    "Nous ne connaissons pas ce fuseau horaire. Choisissez-en un autre dans la liste.",
+  "GroupEditor.timeZoneChangedElsewhere":
+    "Quelqu’un d’autre l’a changé en {zone} pendant que vous modifiiez. Enregistrez pour garder le vôtre, ou Abandonnez.",
   "GroupEditor.nameRequired": "Saisissez un nom.",
   "GroupEditor.nameInvalid":
     "100 caractères maximum, sans retour à la ligne ni caractère invisible.",
@@ -788,6 +797,7 @@ export default {
   "OverviewScreen.customRange": "Période personnalisée",
   "OverviewScreen.rangeTooLong": "Choisissez une période d’un an maximum.",
   "OverviewScreen.asOf": "Mis à jour à {time}",
+  "OverviewScreen.zoneNote": "heure de {city}",
   "OverviewScreen.hide": "Masquer le widget",
   "OverviewView.opening": "Ouverture de la vue d’ensemble…",
   "OverviewView.saveFailed":

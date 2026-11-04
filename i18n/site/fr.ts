@@ -572,7 +572,7 @@ export default {
   "FeatureWebsite.fact3":
     "Une newsletter à double confirmation, désabonnement en un clic et e-mails dans la langue du lecteur",
   "FeatureWebsite.fact4":
-    "Un blog rédigé dans le panneau d’administration, avec des articles dans chaque langue et leurs traductions, des thèmes, des figures interactives à essayer, un flux RSS, des données structurées d’article, des anciens liens qui redirigent quand l’URL d’un article change et un signal IndexNow qui prévient aussitôt les moteurs de recherche d’un article nouveau ou modifié",
+    "Un blog rédigé dans le panneau d’administration, avec des articles dans chaque langue et leurs traductions, des thèmes, des figures interactives à essayer, un flux RSS, des données structurées d’article, des anciens liens qui redirigent quand l’URL d’un article change, des couvertures dans les listes, une copie facultative sur Dev.to qui désigne l’article comme original et un signal IndexNow qui prévient aussitôt les moteurs de recherche d’un article nouveau ou modifié",
   "FeatureWebsite.fact5":
     "Des liens de contact définis dans le panneau d’administration, affichés dans le pied de page et les données structurées",
   "FeatureWebsite.fact6":
@@ -900,6 +900,7 @@ export default {
   "Blog.published": "Publié le <time>{date}</time>",
   "Blog.updated": "· Mis à jour le <time>{date}</time>",
   "Blog.alsoIn": "Aussi disponible en : <links></links>",
+  "Blog.relatedFeature": "Fonctionnalité de Seed : {name} →",
   "Blog.minutes": {
     "one": "· {count} min de lecture",
     "many": "· {count} min de lecture",

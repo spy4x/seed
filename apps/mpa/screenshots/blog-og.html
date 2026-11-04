@@ -1,0 +1,158 @@
+<!doctype html>
+<!-- Seed's own site: see docs/start-a-product.md -->
+<!--
+  The link-preview card of one of Seed's own posts, 1200×630 (#733). blog-og.ts opens it with the
+  words in the query string (lang, title, footer, cover) and photographs it: the words on the left
+  600 px, the post's cover centre-cropped on the right 600 px. Self-contained: its fonts come from
+  the pinned geist package that capture.ts unpacks, and nothing loads from outside.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Seed blog card</title>
+    <style>
+    @font-face {
+      font-family: "Geist";
+      src: url("/fonts/geist-sans.woff2") format("woff2");
+      font-weight: 100 900;
+    }
+    @font-face {
+      font-family: "Geist Mono";
+      src: url("/fonts/geist-mono.woff2") format("woff2");
+      font-weight: 100 900;
+    }
+    :root {
+      --bg: #0a0a0c;
+      --text: #f4f4f6;
+      --muted: #a1a1aa;
+      --accent: #a78bfa;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+    }
+    html,
+    body {
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+    }
+    body {
+      position: relative;
+      background: var(--bg);
+      color: var(--text);
+      /* Geist has no CJK or Arabic letters: those come from the machine's Noto fonts. */
+      font-family: "Geist", "Noto Sans", "Noto Sans CJK SC", "Noto Sans Arabic", sans-serif;
+    }
+    .cover {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 600px;
+      height: 630px;
+    }
+    .cover img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    /* The canvas fades into the cover over its first 120 px, so the two halves meet softly. */
+    .cover::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 120px;
+      background: linear-gradient(90deg, var(--bg), transparent);
+    }
+    .copy {
+      position: absolute;
+      inset: 64px auto 56px 64px;
+      width: 512px;
+      display: flex;
+      flex-direction: column;
+    }
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: "Geist Mono", monospace;
+      font-size: 20px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    h1 {
+      margin-top: 40px;
+      font-size: 60px;
+      line-height: 1.1;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+    }
+    h1.long {
+      font-size: 48px;
+    }
+    h1.longer {
+      font-size: 40px;
+    }
+    footer {
+      margin-top: auto;
+      font-family: "Geist Mono", monospace;
+      font-size: 22px;
+      color: var(--muted);
+    }
+    </style>
+  </head>
+  <body>
+    <div class="cover"><img alt=""></div>
+    <div class="copy">
+      <p class="eyebrow">
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M16 29V15" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" />
+          <path d="M16 17C16 10 11 6 4 6c0 7 5 11 12 11Z" fill="#4ade80" />
+          <path d="M16 14c0-6 4.5-10 12-10 0 6.5-4.5 10-12 10Z" fill="#a78bfa" />
+        </svg>
+        Seed blog
+      </p>
+      <h1></h1>
+      <footer></footer>
+    </div>
+    <script>
+    const query = new URLSearchParams(location.search)
+    const lang = query.get("lang") ?? "en"
+    document.documentElement.lang = lang
+    const title = document.querySelector("h1")
+    title.textContent = query.get("title") ?? ""
+    title.dir = lang === "ar" ? "rtl" : "ltr"
+    const length = [...title.textContent].length
+    if (length > 80) title.classList.add("longer")
+    else if (length > 50) title.classList.add("long")
+    document.querySelector("footer").textContent = query.get("footer") ?? ""
+    const image = document.querySelector(".cover img")
+    // How many lines the title takes unclamped at its current size.
+    const lines = () => {
+      title.style.display = "block"
+      title.style.webkitLineClamp = "none"
+      const count = Math.round(title.offsetHeight / parseFloat(getComputedStyle(title).lineHeight))
+      title.style.display = ""
+      title.style.webkitLineClamp = ""
+      return count
+    }
+    const fit = () => {
+      // A title that still needs a fourth line at its size steps down, at most to 40 px.
+      for (const size of ["long", "longer"]) {
+        if (!title.classList.contains(size) && lines() > 3) title.classList.add(size)
+      }
+      document.body.setAttribute("data-ready", "")
+    }
+    image.onload = () => document.fonts.ready.then(fit)
+    image.onerror = () => document.body.setAttribute("data-error", query.get("cover") ?? "")
+    image.src = query.get("cover") ?? ""
+    </script>
+  </body>
+</html>

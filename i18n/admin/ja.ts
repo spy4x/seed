@@ -117,6 +117,7 @@ export default {
   "AdminAuditEvent.groupCreated": "グループを作成",
   "AdminAuditEvent.groupRenamed": "グループ名を変更",
   "AdminAuditEvent.groupDetailsUpdated": "グループの詳細を変更",
+  "AdminAuditEvent.groupTimeZoneChanged": "グループのタイムゾーンを変更",
   "AdminAuditEvent.groupDeleted": "グループを削除",
   "AdminAuditEvent.groupRestored": "グループを復元",
   "AdminAuditEvent.memberRoleChanged": "メンバーのロールを変更",
@@ -602,6 +603,9 @@ export default {
     "検索結果でタイトルの代わりに表示されます。全角30文字程度が目安です。",
   "AdminBlogEditor.keyPoints": "要点",
   "AdminBlogEditor.keyPointsHint": "記事の冒頭に表示する短い文を5つまで。",
+  "AdminBlogEditor.intro": "導入文",
+  "AdminBlogEditor.introHint":
+    "ニュースレターのメールとクロスポストの冒頭に入る2〜3文です。記事ページには表示されません。",
   "AdminBlogEditor.keyPoint": "要点{n}",
   "AdminBlogEditor.removeKeyPoint": "要点{n}を削除",
   "AdminBlogEditor.addPoint": "要点を追加",
@@ -611,11 +615,19 @@ export default {
   "AdminBlogEditor.authorUrl": "著者のリンク",
   "AdminBlogEditor.authorUrlHint":
     "記事に表示される著者名のリンク先です。「自己紹介」ページなどを指定すると、読者や検索エンジンに誰が書いたかが伝わります。リンクが不要なら空欄のままにします。",
+  "AdminBlogEditor.relatedFeature": "関連する機能",
+  "AdminBlogEditor.relatedFeatureHint":
+    "この記事が扱うサイトの機能ページです。たとえば /features/realtime なら realtime。記事の著者行の下にリンクされます。なければ空欄のままにします。",
   "AdminBlogEditor.coverUrl": "カバー画像のURL",
-  "AdminBlogEditor.coverUrlHint":
-    "横長の画像（1200×630）へのhttps://から始まる完全なリンク。ほかのサイトでの表示を許可しているホストのものを指定してください。カバーなしにする場合は空欄のままにします。",
+  "AdminBlogEditor.coverUrlHint": "16:9の画像、https://で始まるURL。",
   "AdminBlogEditor.coverAlt": "カバー画像の説明",
   "AdminBlogEditor.coverAltHint": "画像が見えない人のために、何が写っているかを書きます。",
+  "AdminBlogEditor.groupAddress": "URLと言語",
+  "AdminBlogEditor.groupSummary": "概要",
+  "AdminBlogEditor.groupCover": "カバー",
+  "AdminBlogEditor.groupLinks": "リンク",
+  "AdminBlogEditor.coverOf": "元記事のカバーを使用：{title}",
+  "AdminBlogEditor.coverBroken": "画像を読み込めませんでした。",
   "AdminBlogEditor.coverPrivacy":
     "ほかのサイトにある画像を使うと、そのサイトに読者のIPアドレスが伝わります。",
   "AdminBlogEditor.publishing": "公開",
@@ -1138,6 +1150,7 @@ export default {
   "AdminGroup.openInvitations": "有効な招待",
   "AdminGroup.owner": "オーナー",
   "AdminGroup.created": "作成日",
+  "AdminGroup.timeZone": "タイムゾーン",
   "AdminGroup.imported": "インポート",
   "AdminGroup.importedBy": "<when></when>、<person>{name}</person>が実行",
   "AdminGroup.lastActivity": "最終アクティビティ",

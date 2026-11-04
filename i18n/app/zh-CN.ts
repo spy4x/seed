@@ -49,6 +49,9 @@ export default {
   "GroupActivity.renamedFromTo":
     "<who>{who}</who>将群组从“<value>{from}</value>”重命名为“<value>{to}</value>”",
   "GroupActivity.detailsUpdated": "<who>{who}</who>修改了群组的简介、颜色或表情",
+  "GroupActivity.timeZoneChanged":
+    "<who>{who}</who>将时区从<value>{from}</value>改为<value>{to}</value>",
+  "GroupActivity.timeZoneChangedPlain": "<who>{who}</who>修改了时区",
   "GroupActivity.deleted": "<who>{who}</who>删除了群组",
   "GroupActivity.restored": "<who>{who}</who>恢复了群组",
   "GroupActivity.roleChanged": "<who>{who}</who>修改了<target>{target}</target>的角色",
@@ -200,6 +203,10 @@ export default {
     "other": "新群组默认使用免费版。你的 {count} 天免费试用会用在第一个升级到付费套餐的群组上。",
   },
   "GroupEditor.readOnly": "只有管理员和所有者可以修改这个群组的信息。",
+  "GroupEditor.timeZoneHint": "群组里每个人的日和月都从这个时区的午夜开始。",
+  "GroupEditor.timeZoneInvalid": "无法识别这个时区。请从列表中另选一个。",
+  "GroupEditor.timeZoneChangedElsewhere":
+    "你编辑时，其他人把它改成了{zone}。保存以使用你的选择，或点击“放弃”。",
   "GroupEditor.nameRequired": "请输入名称。",
   "GroupEditor.nameInvalid": "最多 100 个字符，不能包含换行或隐藏字符。",
   "GroupEditor.descriptionTooLong": {
@@ -607,6 +614,7 @@ export default {
   "OverviewScreen.customRange": "自定义范围",
   "OverviewScreen.rangeTooLong": "请选择一年以内的范围。",
   "OverviewScreen.asOf": "截至{time}",
+  "OverviewScreen.zoneNote": "{city}时间",
   "OverviewScreen.hide": "隐藏小组件",
   "OverviewView.opening": "正在打开概览…",
   "OverviewView.saveFailed": "没能保存你的布局。请检查网络连接后重试。",

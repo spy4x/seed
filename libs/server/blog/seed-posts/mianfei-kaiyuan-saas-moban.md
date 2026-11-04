@@ -11,6 +11,8 @@ tldr:
   - Stripe 不支持中国大陆公司注册，支持香港。七个模板都没有单独对接支付宝或微信支付，但香港公司的 Stripe 账户可以开通这两种支付方式。
   - Seed 自带带角色的群组、按成员计费的 Stripe 订阅、管理后台和包括简体中文在内的九种语言，部署在你自己的服务器上。
 topic: 问答
+intro: "我像你一样去找免费的 SaaS 模板，找到了七个完全不花钱的。每个都少了点不同的东西，所以在你投入时间之前，我先比较了你实际能得到什么。"
+coverAlt: "敞开的花园门后，木架上摆着七株种在育苗盆里的幼苗。"
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

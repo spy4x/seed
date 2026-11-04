@@ -11,6 +11,8 @@ tldr:
   - 如果付费的是团队，选一个自带群组、角色和按成员计费的模板。
   - Stripe 不支持中国大陆的公司，但支持香港公司；选模板前先确认收款方式。
 topic: 问答
+intro: "ShipFast 是个好工具包，但它不是唯一的选择，也不免费。我从价格、许可证、技术栈、团队功能和托管方式比较了七个模板，每个事实都附有来源。"
+coverAlt: "平静水面上排成一列的七艘形状各异的帆船，其中一艘是紫色的。"
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z

@@ -61,6 +61,9 @@ export default {
   "GroupActivity.renamedFromTo":
     "<who>{who}</who> غيّر اسم المجموعة من «<value>{from}</value>» إلى «<value>{to}</value>»",
   "GroupActivity.detailsUpdated": "<who>{who}</who> غيّر وصف المجموعة أو لونها أو رمزها التعبيري",
+  "GroupActivity.timeZoneChanged":
+    "<who>{who}</who> غيّر المنطقة الزمنية من <value>{from}</value> إلى <value>{to}</value>",
+  "GroupActivity.timeZoneChangedPlain": "<who>{who}</who> غيّر المنطقة الزمنية",
   "GroupActivity.deleted": "<who>{who}</who> حذف المجموعة",
   "GroupActivity.restored": "<who>{who}</who> استعاد المجموعة",
   "GroupActivity.roleChanged": "<who>{who}</who> غيّر دور <target>{target}</target>",
@@ -297,6 +300,11 @@ export default {
       "تبدأ المجموعات الجديدة على الخطة المجانية. تذهب فترتك التجريبية المجانية ({count} يوم) إلى أول مجموعة تنقلها إلى خطة مدفوعة.",
   },
   "GroupEditor.readOnly": "لا يمكن تعديل تفاصيل هذه المجموعة إلا للمسؤولين والمالك.",
+  "GroupEditor.timeZoneHint":
+    "تبدأ الأيام والأشهر عند منتصف الليل في هذه المنطقة، لكل أعضاء المجموعة.",
+  "GroupEditor.timeZoneInvalid": "لا نعرف هذه المنطقة الزمنية. اختر منطقة أخرى من القائمة.",
+  "GroupEditor.timeZoneChangedElsewhere":
+    "غيّرها شخص آخر إلى {zone} أثناء تعديلك. احفظ لتستخدم اختيارك، أو اختر «تجاهل».",
   "GroupEditor.nameRequired": "أدخل اسمًا.",
   "GroupEditor.nameInvalid": "استخدم 100 حرف كحدّ أقصى، دون أسطر جديدة أو أحرف مخفية.",
   "GroupEditor.descriptionTooLong": {
@@ -842,6 +850,7 @@ export default {
   "OverviewScreen.customRange": "فترة مخصصة",
   "OverviewScreen.rangeTooLong": "اختر فترة لا تتجاوز سنة.",
   "OverviewScreen.asOf": "حتى {time}",
+  "OverviewScreen.zoneNote": "بتوقيت {city}",
   "OverviewScreen.hide": "إخفاء الأداة",
   "OverviewView.opening": "جارٍ فتح النظرة العامة…",
   "OverviewView.saveFailed": "تعذّر حفظ التخطيط. تحقّق من اتصالك وحاول مجددًا.",

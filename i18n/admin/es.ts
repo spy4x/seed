@@ -128,6 +128,7 @@ export default {
   "AdminAuditEvent.groupCreated": "Grupo creado",
   "AdminAuditEvent.groupRenamed": "Grupo renombrado",
   "AdminAuditEvent.groupDetailsUpdated": "Datos del grupo modificados",
+  "AdminAuditEvent.groupTimeZoneChanged": "Zona horaria del grupo modificada",
   "AdminAuditEvent.groupDeleted": "Grupo eliminado",
   "AdminAuditEvent.groupRestored": "Grupo restaurado",
   "AdminAuditEvent.memberRoleChanged": "Rol de un miembro cambiado",
@@ -648,6 +649,9 @@ export default {
     "Aparece en los resultados de búsqueda en lugar del título. Unos 60 caracteres.",
   "AdminBlogEditor.keyPoints": "Puntos clave",
   "AdminBlogEditor.keyPointsHint": "Hasta 5 líneas cortas, al principio de la entrada.",
+  "AdminBlogEditor.intro": "Entradilla",
+  "AdminBlogEditor.introHint":
+    "Dos o tres frases que abren el correo del boletín y las publicaciones cruzadas. No se muestra en la página de la entrada.",
   "AdminBlogEditor.keyPoint": "Punto clave {n}",
   "AdminBlogEditor.removeKeyPoint": "Quitar el punto clave {n}",
   "AdminBlogEditor.addPoint": "Añadir punto",
@@ -657,11 +661,19 @@ export default {
   "AdminBlogEditor.authorUrl": "Enlace del autor",
   "AdminBlogEditor.authorUrlHint":
     "El nombre del autor en la entrada enlazará aquí, por ejemplo a su página «Sobre mí», para que lectores y buscadores sepan quién la escribió. Déjalo vacío si no quieres enlace.",
+  "AdminBlogEditor.relatedFeature": "Función relacionada",
+  "AdminBlogEditor.relatedFeatureHint":
+    "La página de función del sitio de la que trata la entrada, por ejemplo realtime para /features/realtime. La entrada la enlaza bajo la línea del autor. Déjalo vacío si no hay ninguna.",
   "AdminBlogEditor.coverUrl": "URL de la imagen de portada",
-  "AdminBlogEditor.coverUrlHint":
-    "Un enlace https:// completo a una imagen horizontal de 1200×630, alojada en un servidor que permita mostrarla en otros sitios. Déjalo vacío si no quieres portada.",
+  "AdminBlogEditor.coverUrlHint": "Una imagen 16:9, dirección https://.",
   "AdminBlogEditor.coverAlt": "Descripción de la portada",
   "AdminBlogEditor.coverAltHint": "Qué muestra la imagen, para quienes no pueden verla.",
+  "AdminBlogEditor.groupAddress": "Dirección e idioma",
+  "AdminBlogEditor.groupSummary": "Resumen",
+  "AdminBlogEditor.groupCover": "Portada",
+  "AdminBlogEditor.groupLinks": "Enlaces",
+  "AdminBlogEditor.coverOf": "Usa la portada de: {title}",
+  "AdminBlogEditor.coverBroken": "Esta imagen no se ha cargado.",
   "AdminBlogEditor.coverPrivacy":
     "Si la imagen está alojada en otro sitio, ese sitio podrá ver las direcciones IP de tus lectores.",
   "AdminBlogEditor.publishing": "Publicación",
@@ -1258,6 +1270,7 @@ export default {
   "AdminGroup.openInvitations": "Invitaciones abiertas",
   "AdminGroup.owner": "Propietario",
   "AdminGroup.created": "Creado",
+  "AdminGroup.timeZone": "Zona horaria",
   "AdminGroup.imported": "Importado",
   "AdminGroup.importedBy": "<when></when> por <person>{name}</person>",
   "AdminGroup.lastActivity": "Última actividad",

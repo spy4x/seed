@@ -63,6 +63,9 @@ export default {
     "<who>{who}</who> hat die Gruppe von „<value>{from}</value>“ in „<value>{to}</value>“ umbenannt",
   "GroupActivity.detailsUpdated":
     "<who>{who}</who> hat Beschreibung, Farbe oder Emoji der Gruppe geändert",
+  "GroupActivity.timeZoneChanged":
+    "<who>{who}</who> hat die Zeitzone von <value>{from}</value> auf <value>{to}</value> geändert",
+  "GroupActivity.timeZoneChangedPlain": "<who>{who}</who> hat die Zeitzone geändert",
   "GroupActivity.deleted": "<who>{who}</who> hat die Gruppe gelöscht",
   "GroupActivity.restored": "<who>{who}</who> hat die Gruppe wiederhergestellt",
   "GroupActivity.roleChanged":
@@ -257,6 +260,12 @@ export default {
       "Neue Gruppen starten im kostenlosen Tarif. Deine {count}-tägige kostenlose Testphase gilt für die erste Gruppe, die du auf einen bezahlten Tarif umstellst.",
   },
   "GroupEditor.readOnly": "Nur Admins und der Inhaber können die Angaben dieser Gruppe ändern.",
+  "GroupEditor.timeZoneHint":
+    "Tage und Monate beginnen hier um Mitternacht, für alle in der Gruppe.",
+  "GroupEditor.timeZoneInvalid":
+    "Diese Zeitzone kennen wir nicht. Wähle eine andere aus der Liste.",
+  "GroupEditor.timeZoneChangedElsewhere":
+    "Jemand anderes hat das auf {zone} geändert, während du bearbeitet hast. Speichere, um deine zu nehmen, oder verwirf.",
   "GroupEditor.nameRequired": "Gib einen Namen ein.",
   "GroupEditor.nameInvalid": "Höchstens 100 Zeichen, ohne Zeilenumbrüche und unsichtbare Zeichen.",
   "GroupEditor.descriptionTooLong": {
@@ -738,6 +747,7 @@ export default {
   "OverviewScreen.customRange": "Eigener Zeitraum",
   "OverviewScreen.rangeTooLong": "Wähle einen Zeitraum von höchstens einem Jahr.",
   "OverviewScreen.asOf": "Stand: {time}",
+  "OverviewScreen.zoneNote": "Ortszeit {city}",
   "OverviewScreen.hide": "Widget ausblenden",
   "OverviewView.opening": "Übersicht wird geöffnet …",
   "OverviewView.saveFailed":
