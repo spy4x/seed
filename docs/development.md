@@ -23,7 +23,7 @@ folder's name; both apply only when the env file is created.
 alone; under Podman it prints the `proxy:start` hint instead.
 
 Metrics and logs go to VictoriaMetrics and VictoriaLogs, with Grafana on top at
-`http://localhost:3000` ([Admin consoles](deploy.md#admin-consoles)). `COMPOSE_PROFILES=monitoring`
+`http://localhost:3000` ([Admin consoles](operator-access.md#admin-consoles)). `COMPOSE_PROFILES=monitoring`
 in the env file runs those three in this project; without it, `VM_REMOTE_WRITE_URL` and `VLOGS_URL`
 send the same metrics and logs to a monitoring server you already have.
 [The stack guide](stack.md#monitoring) describes both modes. node-exporter and cAdvisor watch the
@@ -116,7 +116,8 @@ deno task e2e:report                       # open the report of the last run
 
 The specs that start the app with no network, `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts` and
 `e2e/search-offline.e2e.ts`, run against the built SPA, the image a deploy serves, and every other
-spec against the dev server ([the offline guide](offline.md), "The app shell", says why). A run that
+spec against the dev server
+([the app shell](offline-app-shell.md#offline-tests-run-against-the-built-spa) says why). A run that
 needs both makes two Playwright passes, the dev server first and then the built SPA in its place, so
 `deno task e2e:local` alone still runs every spec. It fails when either pass fails, and its last
 lines give the counts of each pass. The report of the second pass is in `e2e/report/offline`, which

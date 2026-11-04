@@ -172,6 +172,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "Le forfait du groupe n’inclut pas cette fonctionnalité.",
   "Reason.PLAN_LIMIT_REACHED": "Le groupe a atteint la limite de son forfait.",
   "Reason.POST_NOT_FOUND": "Cet article de blog n’existe plus.",
+  "Reason.REVISION_NOT_FOUND": "Cette version précédente n’existe plus.",
   "Reason.PROVIDER_ERROR": "Le prestataire de paiement n’a pas répondu. Réessayez.",
   "Reason.REQUEST_ORIGIN_INVALID":
     "Impossible de vérifier l’origine de cette requête. Rechargez la page et réessayez.",

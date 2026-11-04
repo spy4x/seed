@@ -13,24 +13,35 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 
 ## Guides
 
-- [Deploy and operate](deploy.md): certificates, the deploy, consoles, several projects on one
-  server, releases.
-- [Backups](backups.md): set up, restore, rehearse.
+- [Deploy to a server](deploy.md): from a fresh server to a healthy deployment with HTTPS.
+- [Deploy an update](deploy-updates.md): every deploy after the first, and rolling back.
+- [HTTPS certificates](certificates.md): how each host gets its certificate, and retrying one.
+- [Give operators access](operator-access.md): the first administrator, roles, and opening
+  Grafana.
+- [Run several projects on one server](several-projects.md): products that share one server and
+  one Traefik.
+- [Publish a release](releases.md): a version tag publishes the images to Docker Hub.
+- [Backups](backups.md): turn on the daily backup, and rehearse it.
+- [Restore from a backup](restore.md): bring back the database, the files and the push keys.
 - [Sign in with Google and GitHub](sign-in-providers.md): registering the providers and what a
   person gets.
 - [Guest accounts](guests.md): "Try it now" without signing up, keeping the account, the limits
   and the clean-up.
-- [Billing](billing.md)
+- [Set up billing](billing.md): paid plans through Stripe, test mode first, then live.
+- [Plans and limits](billing-plans.md): change a plan, add one, or add a limit a plan sells.
+- [Billing for operators](billing-operator.md): the admin panel's Billing pages, transfers, and
+  Stripe's dashboard.
 - [The file store](files.md): Garage or another S3 store, signed uploads and downloads.
 - [A person's data export](data-export.md): Download my data, what the ZIP holds and how it expires.
 - [The catalog](catalog.md): a shop's items with photos, colours and sizes, edited in the admin
   panel; off unless a product turns it on.
 - [Telegram bot](telegram.md): BotFather, the webhook, linking a chat, and adding a product's
   commands.
-- [Offline](offline.md): the SPA's local data and write queue, and how to remove it.
+- [Offline in the SPA](offline.md): turn the offline layer or the WebSocket module off, or remove
+  them.
 - [Adding a feature](aggregates.md): every file of the notes aggregate, in order.
 - [Admin modules](admin-modules.md)
-- [Capacity](capacity.md): load tests and how many users one server carries.
+- [Run the load tests](load-tests.md): run the k6 scenarios and build a large test group.
 - [Postgres 18 upgrade](postgres-18-upgrade.md): once per server that ran Postgres 16.
 
 ## Concepts
@@ -38,10 +49,23 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [The three apps](apps.md): the SPA, the admin app and the public website, and how to deploy each.
 - [Architecture](architecture.md) and [the diagram](architecture.svg)
 - [Ids](ids.md): every id is a UUID version 7.
+- [Capacity](capacity.md): how many users one server carries.
+- [Trials, failed payments and cancelling](billing-lifecycle.md): a group's plan from checkout to
+  cancellation, and its mails.
+- [How offline reads work](offline-data.md): what the SPA keeps on the device and how it reads
+  offline.
+- [How offline writes sync](offline-writes.md): how a change made offline reaches the server, or is
+  refused.
+- [Sign-out and the device's data](offline-sign-out.md): what the SPA deletes, and keeps, when a
+  person signs out.
+- [The app shell](offline-app-shell.md): how the service worker starts the app with no network.
+- [One large group](large-group.md): how one group behaves from a thousand notes to a million.
 
 ## Reference
 
 - [Development](development.md): the local stack, every task, the browser tests and what CI runs.
+- [Settings](settings.md): every variable of the env file.
+- [Writing the docs](writing-docs.md): how a guide here is written and published.
 - [API errors](api-errors.md): the one error body every API answer that is not a success has.
 - [Security headers](security-headers.md)
 - [Woodpecker CI setup](woodpecker-ci-setup.md)

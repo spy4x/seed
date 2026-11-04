@@ -10,7 +10,7 @@ import { NoteCreateCommand, NoteMoveCommand, NoteRestoreCommand } from "@domain/
 import { type EntitlementNeeds, needsFeature, needsRoom } from "./entitlement-gate.ts"
 
 /**
- * Every command a plan can refuse, in one list (`docs/billing.md`, "Entitlements"). A command not
+ * Every command a plan can refuse, in one list (`docs/billing-plans.md`, "What each plan allows"). A command not
  * listed here is never refused for its plan, and no query is.
  */
 export const ENTITLEMENT_NEEDS: EntitlementNeeds = new Map([

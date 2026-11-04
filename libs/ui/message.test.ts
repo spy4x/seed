@@ -83,6 +83,7 @@ const REASONS: Record<ErrorReason, true> = {
   provider_refused: true,
   REQUEST_ORIGIN_INVALID: true,
   result_unknown: true,
+  REVISION_NOT_FOUND: true,
   ROLE_INSUFFICIENT: true,
   SAME_GROUP: true,
   SEARCH_RATE_LIMITED: true,

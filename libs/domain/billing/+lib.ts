@@ -78,7 +78,7 @@ export interface Plan {
   attachments: AttachmentRules
   /**
    * Days of free trial this plan offers; `0` for none. Each person gets one trial, whichever group
-   * they first open a checkout for (docs/billing.md, "Trials").
+   * they first open a checkout for (docs/billing-lifecycle.md, "Trials").
    */
   trialDays: number
   /**

@@ -2,7 +2,7 @@
 /**
  * Decides which Playwright passes one `deno task e2e:local` makes, and against what: the specs
  * that start the app with no network run against the built SPA, every other spec against the dev
- * server (docs/offline.md, "The app shell"). `e2e-local.sh` runs this file with the value of
+ * server (docs/offline-app-shell.md). `e2e-local.sh` runs this file with the value of
  * `E2E_SPA` (or an empty string) and its own arguments, and reads the plan from standard output.
  */
 
