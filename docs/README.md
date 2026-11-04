@@ -31,7 +31,9 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [Plans and limits](billing-plans.md): change a plan, add one, or add a limit a plan sells.
 - [Billing for operators](billing-operator.md): the admin panel's Billing pages, transfers, and
   Stripe's dashboard.
-- [The file store](files.md): Garage or another S3 store, signed uploads and downloads.
+- [The file store](files.md): Garage or another S3 store, its settings and the upload budget.
+- [Add file uploads to a feature](file-uploads.md): upload and download files from a feature, and
+  have photos made safe and small.
 - [A person's data export](data-export.md): Download my data, what the ZIP holds and how it expires.
 - [The catalog](catalog.md): a shop's items with photos, colours and sizes, edited in the admin
   panel; off unless a product turns it on.
@@ -59,6 +61,8 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [Sign-out and the device's data](offline-sign-out.md): what the SPA deletes, and keeps, when a
   person signs out.
 - [The app shell](offline-app-shell.md): how the service worker starts the app with no network.
+- [Note attachments and profile pictures](attachments-and-pictures.md): files kept on a note, and a
+  person's picture in place of their initials.
 - [One large group](large-group.md): how one group behaves from a thousand notes to a million.
 
 ## Reference

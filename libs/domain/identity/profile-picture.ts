@@ -6,10 +6,10 @@ import { type FieldErrors, fieldErrors } from "@spy4x/validation"
 import type { Actor, User } from "./+lib.ts"
 
 /**
- * Profile pictures (#228, docs/files.md): a person's own picture in place of their initials. It is
+ * Profile pictures (#228, docs/attachments-and-pictures.md): a person's own picture in place of their initials. It is
  * uploaded like a note attachment (signed, PUT straight to the store, confirmed), counts against
  * the same waiting uploads and hourly budget. The worker turns it into upright widths with no
- * metadata (#464, docs/files.md), and avatars show the narrowest WebP.
+ * metadata (#464, docs/file-uploads.md), and avatars show the narrowest WebP.
  */
 
 /** The types a picture may be: those a browser shows and whose first bytes the store checks. */
