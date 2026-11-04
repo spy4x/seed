@@ -95,6 +95,8 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [Security headers](security-headers.md)
 - [Woodpecker CI setup](woodpecker-ci-setup.md)
 - [Handoff](handoff.md): the map of the repository, decisions made, traps.
+- [How calls travel](how-calls-travel.md): a note write, a group call and a profile call, file by
+  file, from the SPA to Postgres and back to other tabs.
 - [Contributing](../CONTRIBUTING.md)
 
 ## Design
