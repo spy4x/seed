@@ -186,6 +186,7 @@ CREATE TABLE groups (
     emoji VARCHAR(32),
     imported_at TIMESTAMPTZ,
     changes_oldest_sequence BIGINT DEFAULT 0 NOT NULL,
+    time_zone VARCHAR(64) DEFAULT 'UTC' NOT NULL,
     CONSTRAINT groups_name_check CHECK (length(btrim(name)) BETWEEN 1 AND 100),
     CONSTRAINT groups_description_check CHECK (char_length(description) <= 500),
     CONSTRAINT groups_color_check CHECK (color ~ '^#[0-9a-f]{6}$'),

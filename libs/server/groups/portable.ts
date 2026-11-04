@@ -17,6 +17,7 @@ import {
   parseGroupDescription,
   parseGroupEmoji,
   parseGroupName,
+  parseGroupTimeZone,
 } from "@domain/groups"
 import { isRecord } from "@spy4x/platform/universal/is-record"
 import { FORM_FIELD } from "@spy4x/validation"
@@ -89,7 +90,7 @@ export interface ParsedGroupFile {
 }
 
 const FILE_KEYS = ["format", "version", "exportedAt", "group", "aggregates"]
-const SETTINGS_KEYS = ["name", "description", "color", "emoji"]
+const SETTINGS_KEYS = ["name", "description", "color", "emoji", "timeZone"]
 const isoDate = type("string.date.iso")
 
 /** `Note`, from `note`. */
@@ -236,7 +237,10 @@ function parseSettings(
   const description = read(() => parseGroupDescription(value.description ?? ""))
   const color = read(() => parseGroupColor(legacyExportColor(value.color ?? null)))
   const emoji = read(() => parseGroupEmoji(value.emoji ?? null))
-  return name === null ? null : { name, description: description ?? "", color, emoji }
+  const timeZone = "timeZone" in value ? read(() => parseGroupTimeZone(value.timeZone)) : null
+  return name === null
+    ? null
+    : { name, description: description ?? "", color, emoji, ...(timeZone ? { timeZone } : {}) }
 }
 
 function parseEntries(

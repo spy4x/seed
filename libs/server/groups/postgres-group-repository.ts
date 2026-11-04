@@ -12,6 +12,7 @@ import {
   DeletedGroupSummary,
   FirstGroupInput,
   Group,
+  GROUP_DEFAULT_TIME_ZONE,
   GROUP_FILE_EVENTS,
   GROUP_MEMBER_PREVIEW_LIMIT,
   GROUP_RESTORE_DAYS,
@@ -26,6 +27,7 @@ import {
   GroupRepository,
   GroupRole,
   GroupSummary,
+  parseGroupTimeZone,
   SelectedGroup,
 } from "@domain/groups"
 import { BillingStatus } from "@domain/billing"
@@ -48,6 +50,7 @@ interface GroupRow extends postgres.Row {
   description: string
   color: GroupColor | null
   emoji: string | null
+  timeZone: string
   ownerUserId: number
   createdByUserId: number | null
   authorizationRevision: string
@@ -67,6 +70,7 @@ interface GroupSummaryRow extends postgres.Row {
   description: string
   color: GroupColor | null
   emoji: string | null
+  timeZone: string
   role: GroupRole
   authorizationRevision: string
   changeSequence: string
@@ -80,6 +84,7 @@ interface RenamedRow extends postgres.Row {
   description: string
   color: GroupColor | null
   emoji: string | null
+  timeZone: string
   authorizationRevision: string
   changeSequence: string
   updatedAt: Date
@@ -126,6 +131,7 @@ interface SelectionRow extends postgres.Row {
 const GROUP_CREATED_EVENT = "group.created"
 const GROUP_RENAMED_EVENT = "group.renamed"
 const GROUP_DETAILS_UPDATED_EVENT = "group.details_updated"
+const GROUP_TIME_ZONE_CHANGED_EVENT = "group.time_zone_changed"
 const GROUP_DELETED_EVENT = "group.deleted"
 const GROUP_RESTORED_EVENT = "group.restored"
 const MEMBER_ROLE_CHANGED_EVENT = "group.member_role_changed"
@@ -159,6 +165,7 @@ export class PostgresGroupRepository implements GroupRepository {
         groups.description,
         groups.color,
         groups.emoji,
+        groups.time_zone,
         group_members.role,
         groups.authorization_revision::text AS authorization_revision,
         (groups.next_change_sequence - 1)::text AS change_sequence,
@@ -226,6 +233,7 @@ export class PostgresGroupRepository implements GroupRepository {
         groups.description,
         groups.color,
         groups.emoji,
+        groups.time_zone,
         group_members.role,
         groups.authorization_revision::text AS authorization_revision,
         (groups.next_change_sequence - 1)::text AS change_sequence,
@@ -252,6 +260,7 @@ export class PostgresGroupRepository implements GroupRepository {
           groups.description,
           groups.color,
           groups.emoji,
+          groups.time_zone,
           groups.owner_user_id,
           groups.created_by_user_id,
           groups.authorization_revision::text AS authorization_revision,
@@ -415,15 +424,19 @@ export class PostgresGroupRepository implements GroupRepository {
     ownerId: number,
     ignoreConflict: boolean,
   ): Promise<GroupRow | null> {
+    const timeZone = input.timeZone ?? await this.creatorTimeZone(ownerId)
     const inserted = (
       await this.sql<GroupRow[]>`
-        INSERT INTO groups (id, name, description, color, emoji, owner_user_id, created_by_user_id)
+        INSERT INTO groups (
+          id, name, description, color, emoji, time_zone, owner_user_id, created_by_user_id
+        )
         VALUES (
           ${input.id},
           ${input.name},
           ${input.description ?? ""},
           ${input.color ?? null},
           ${input.emoji ?? null},
+          ${timeZone},
           ${ownerId},
           ${ownerId}
         )
@@ -434,6 +447,7 @@ export class PostgresGroupRepository implements GroupRepository {
           description,
           color,
           emoji,
+          time_zone,
           owner_user_id,
           created_by_user_id,
           authorization_revision::text AS authorization_revision,
@@ -449,6 +463,27 @@ export class PostgresGroupRepository implements GroupRepository {
       VALUES (${inserted.id}, ${ownerId}, ${GroupRole.OWNER}, ${ownerId})
     `
     return inserted
+  }
+
+  /**
+   * The zone a group the person creates starts in: the one in their preferences, else the one
+   * their first device reported, else `UTC`. A stored zone the group's parser refuses is skipped.
+   */
+  private async creatorTimeZone(userId: number): Promise<string> {
+    const [row] = await this.sql<{ saved: string | null; first: string | null }[]>`
+      SELECT value ->> 'timeZone' AS saved, first_time_zone AS first
+      FROM user_preferences
+      WHERE user_id = ${userId}
+    `
+    for (const candidate of [row?.saved, row?.first]) {
+      if (candidate == null) continue
+      try {
+        return parseGroupTimeZone(candidate)
+      } catch (error) {
+        if (!(error instanceof GroupError)) throw error
+      }
+    }
+    return GROUP_DEFAULT_TIME_ZONE
   }
 
   private async createInCurrentTransaction(
@@ -515,6 +550,7 @@ export class PostgresGroupRepository implements GroupRepository {
             description,
             color,
             emoji,
+            time_zone,
             authorization_revision::text AS authorization_revision,
             next_change_sequence::text AS change_sequence,
             updated_at
@@ -543,6 +579,12 @@ export class PostgresGroupRepository implements GroupRepository {
         throw error
       })
       if (role === null || !canRename(role)) return null
+      const before = (
+        await transaction<Pick<GroupRow, "description" | "color" | "emoji" | "timeZone">[]>`
+          SELECT description, color, emoji, time_zone FROM groups WHERE id = ${groupId}
+        `
+      )[0]
+      const timeZone = details.timeZone ?? before.timeZone
       const updated = (
         await transaction<RenamedRow[]>`
           UPDATE groups
@@ -550,6 +592,7 @@ export class PostgresGroupRepository implements GroupRepository {
             description = ${details.description},
             color = ${details.color},
             emoji = ${details.emoji},
+            time_zone = ${timeZone},
             updated_at = CURRENT_TIMESTAMP
           WHERE id = ${groupId}
           RETURNING
@@ -558,13 +601,26 @@ export class PostgresGroupRepository implements GroupRepository {
             description,
             color,
             emoji,
+            time_zone,
             authorization_revision::text AS authorization_revision,
             next_change_sequence::text AS change_sequence,
             updated_at
         `
       )[0]
       if (!updated) return null
-      await repository.audit(groupId, actorId, GROUP_DETAILS_UPDATED_EVENT, requestId)
+      // A zone change moves every member's days, so it has a line of its own in the activity, with
+      // both zones. The other details keep theirs; a save that changed nothing still writes it.
+      const zoneChanged = timeZone !== before.timeZone
+      const othersChanged = details.description !== before.description ||
+        details.color !== before.color || details.emoji !== before.emoji
+      if (othersChanged || !zoneChanged) {
+        await repository.audit(groupId, actorId, GROUP_DETAILS_UPDATED_EVENT, requestId)
+      }
+      if (zoneChanged) {
+        await repository.audit(groupId, actorId, GROUP_TIME_ZONE_CHANGED_EVENT, requestId, {
+          details: { from: before.timeZone, to: timeZone },
+        })
+      }
       const sequence = await repository.recordChange(groupId, actorId, GROUP_DETAILS_UPDATED_EVENT)
       return { ...updated, role, changeSequence: sequence }
     })
@@ -661,6 +717,7 @@ export class PostgresGroupRepository implements GroupRepository {
         description: group.description,
         color: group.color,
         emoji: group.emoji,
+        timeZone: group.timeZone,
         role: GroupRole.OWNER,
         authorizationRevision: change.authorizationRevision,
         changeSequence: change.sequence,
@@ -703,6 +760,7 @@ export class PostgresGroupRepository implements GroupRepository {
         description: group.description,
         color: group.color,
         emoji: group.emoji,
+        timeZone: group.timeZone,
         role: GroupRole.OWNER,
         authorizationRevision: change.authorizationRevision,
         changeSequence: change.sequence,
@@ -719,6 +777,7 @@ export class PostgresGroupRepository implements GroupRepository {
         groups.description,
         groups.color,
         groups.emoji,
+        groups.time_zone,
         group_members.role,
         groups.authorization_revision::text AS authorization_revision,
         (groups.next_change_sequence - 1)::text AS change_sequence,
@@ -745,6 +804,7 @@ export class PostgresGroupRepository implements GroupRepository {
           groups.description,
           groups.color,
           groups.emoji,
+          groups.time_zone,
           groups.owner_user_id,
           groups.created_by_user_id,
           groups.authorization_revision::text AS authorization_revision,
@@ -1046,10 +1106,14 @@ export class PostgresGroupRepository implements GroupRepository {
     groupId: string,
     actorId: number,
     restorable: boolean,
-  ): Promise<Pick<GroupSummaryRow, "name" | "description" | "color" | "emoji"> | null> {
+  ): Promise<
+    Pick<GroupSummaryRow, "name" | "description" | "color" | "emoji" | "timeZone"> | null
+  > {
     const row = (
-      await this.sql<Pick<GroupSummaryRow, "name" | "description" | "color" | "emoji">[]>`
-        SELECT groups.name, groups.description, groups.color, groups.emoji
+      await this.sql<
+        Pick<GroupSummaryRow, "name" | "description" | "color" | "emoji" | "timeZone">[]
+      >`
+        SELECT groups.name, groups.description, groups.color, groups.emoji, groups.time_zone
         FROM groups
         INNER JOIN group_members
           ON group_members.group_id = groups.id
@@ -1122,6 +1186,7 @@ function toGroup(row: GroupRow): Group {
     description: row.description,
     color: row.color,
     emoji: row.emoji,
+    timeZone: row.timeZone,
     ownerUserId: row.ownerUserId,
     createdByUserId: row.createdByUserId,
     authorizationRevision: row.authorizationRevision,
@@ -1145,6 +1210,7 @@ function toSummary(
     | "description"
     | "color"
     | "emoji"
+    | "timeZone"
     | "authorizationRevision"
     | "nextChangeSequence"
     | "updatedAt"
@@ -1157,6 +1223,7 @@ function toSummary(
     description: group.description,
     color: group.color,
     emoji: group.emoji,
+    timeZone: group.timeZone,
     role,
     authorizationRevision: group.authorizationRevision,
     changeSequence: (BigInt(group.nextChangeSequence) - 1n).toString(),
