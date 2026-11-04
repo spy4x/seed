@@ -12,6 +12,8 @@ import {
   BillingPortalCommand,
   BillingStatus,
   BillingTrialQuery,
+  PAID_PLANS,
+  type Plan,
   type StoredSubscription,
 } from "@domain/billing"
 import { createSessionGate } from "../../cqrs/session-gate.ts"
@@ -74,7 +76,10 @@ function stack(
     members = 1,
     handedOver = false,
     trialGroup = null,
+    plans,
   }: {
+    /** The plans a checkout may name, when a test needs a catalog Seed does not sell. */
+    plans?: readonly Plan[]
     /** The group each person's one trial went to, as `users.trial_group_id` holds it. */
     trialGroup?: string | null
     subscription?: StoredSubscription | null
@@ -118,6 +123,7 @@ function stack(
     graceDays: 7,
     trialRequiresCard,
     now: () => now,
+    plans,
   }
   const commands = new CommandBus()
   commands.use(createSessionGate([]))
@@ -331,6 +337,45 @@ describe("billing over REST", () => {
     expect([free.status, await code(free)]).toEqual([400, "UNKNOWN_PLAN"])
     expect([unknown.status, await code(unknown)]).toEqual([400, "UNKNOWN_PLAN"])
     expect(recorder.checkouts).toEqual([])
+  })
+
+  it("refuses a yearly checkout for a plan sold monthly only, and opens none", async () => {
+    const { recorder, call } = stack()
+
+    const response = await call(OWNER, "POST", "/checkout", {
+      planId: "pro",
+      period: BillingPeriod.Yearly,
+    })
+
+    expect([response.status, await code(response)]).toEqual([400, "PERIOD_NOT_OFFERED"])
+    expect(recorder.checkouts).toEqual([])
+  })
+
+  it("refuses a period that is neither monthly nor yearly", async () => {
+    const { recorder, call } = stack()
+
+    const response = await call(OWNER, "POST", "/checkout", { planId: "pro", period: 12 })
+
+    expect([response.status, await code(response)]).toEqual([400, "INVALID_REQUEST"])
+    expect(recorder.checkouts).toEqual([])
+  })
+
+  it("opens a yearly checkout for a plan with a yearly price, and keeps yearly on cancel", async () => {
+    const plans = PAID_PLANS.map((plan) => ({ ...plan, yearlyAmount: plan.amount * 10 }))
+    const yearly = stack({ plans })
+    const monthly = stack({ plans })
+
+    const response = await yearly.call(OWNER, "POST", "/checkout", {
+      planId: "pro",
+      period: BillingPeriod.Yearly,
+    })
+    await monthly.call(OWNER, "POST", "/checkout", { planId: "pro" })
+
+    expect(response.status).toBe(200)
+    expect(yearly.recorder.checkouts[0].cancelUrl)
+      .toBe(`https://app.example.com/groups/${groupId}/billing?period=year`)
+    expect(monthly.recorder.checkouts[0].cancelUrl)
+      .toBe(`https://app.example.com/groups/${groupId}/billing`)
   })
 
   it("refuses a second checkout while the group pays", async () => {
