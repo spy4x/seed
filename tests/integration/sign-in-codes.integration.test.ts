@@ -119,12 +119,12 @@ function recordingSender(): EmailSender & { sent: EmailMessage[] } {
 interface Answer {
   status: number
   body: Record<string, unknown>
-  /** The answer's `Set-Cookie` lines, as sent. */
-  setCookies: string[]
 }
 
 interface Browser {
   call(method: string, path: string, body?: unknown): Promise<Answer>
+  /** The `Set-Cookie` lines of the last answer, as sent. */
+  setCookies(): string[]
 }
 
 interface Fixture {
@@ -203,8 +203,10 @@ async function withFixture(body: (fixture: Fixture) => Promise<void>): Promise<v
     let ip = 0
     const browser = (): Browser => {
       const cookies = new Map<string, string>()
+      let setCookies: string[] = []
       const own = `198.51.100.${++ip}`
       return {
+        setCookies: () => setCookies,
         async call(method, path, payload) {
           const headers = new Headers({
             "content-type": "application/json",
@@ -231,11 +233,8 @@ async function withFixture(body: (fixture: Fixture) => Promise<void>): Promise<v
             else cookies.set(name, value)
           }
           const text = await response.text()
-          return {
-            status: response.status,
-            body: text ? JSON.parse(text) : {},
-            setCookies: response.headers.getSetCookie(),
-          }
+          setCookies = response.headers.getSetCookie()
+          return { status: response.status, body: text ? JSON.parse(text) : {} }
         },
       }
     }
@@ -326,18 +325,18 @@ Deno.test("a code request writes the same rows and sends the same mail for a kno
 Deno.test("the code cookies are HttpOnly, SameSite=Lax and sent only to their own routes", async () => {
   await withFixture(async (fixture) => {
     const browser = fixture.browser()
-    const cookieOf = (answer: Answer, name: string) => {
-      const line = answer.setCookies.find((cookie) => cookie.startsWith(`${name}=`))
-      if (!line) throw new Error(`no ${name} cookie in ${JSON.stringify(answer.setCookies)}`)
+    const cookieOf = (name: string) => {
+      const line = browser.setCookies().find((cookie) => cookie.startsWith(`${name}=`))
+      if (!line) throw new Error(`no ${name} cookie in ${JSON.stringify(browser.setCookies())}`)
       return line.split(";").slice(1).map((part) => part.trim().toLowerCase()).sort()
     }
 
-    const code = await browser.call("POST", "/auth/code", { email: "ann@example.com" })
-    expect(cookieOf(code, "sign_in_code")).toEqual(
+    await browser.call("POST", "/auth/code", { email: "ann@example.com" })
+    expect(cookieOf("sign_in_code")).toEqual(
       ["httponly", "max-age=600", "path=/api/auth/code", "samesite=lax"],
     )
-    const reset = await browser.call("POST", "/auth/password/forgot", { email: "ann@example.com" })
-    expect(cookieOf(reset, "password_reset")).toEqual(
+    await browser.call("POST", "/auth/password/forgot", { email: "ann@example.com" })
+    expect(cookieOf("password_reset")).toEqual(
       ["httponly", "max-age=600", "path=/api/auth/password/reset", "samesite=lax"],
     )
   })
