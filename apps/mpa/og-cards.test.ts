@@ -38,7 +38,7 @@ describe("the link-preview cards of Seed's posts (#733)", () => {
 
   it("answers 404 for a name it does not hold, and for one that climbs out of the folder", async () => {
     for (
-      const name of [`no-such-post.jpg`, `welcome-to-the-seed-blog.png`, `..%2Fcovers%2Fx.jpg`]
+      const name of [`no-such-post.jpg`, `welcome-to-the-seed-blog.png`, `..%2FREADME.md`]
     ) {
       const response = await get(name)
       expect(response.status).toBe(404)
