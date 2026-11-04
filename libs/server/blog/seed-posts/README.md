@@ -6,7 +6,8 @@ The posts of seedsaas.com's blog. The worker loads them into the blog's database
 `DEMO_MODE=true`, at every start (`libs/server/blog/seed-posts.ts`), and `deno task db:seed` loads
 them in development. A product built on Seed deletes the posts here, but keeps this file
 ([docs/start-a-product.md](../../../../docs/start-a-product.md)), and writes its posts in the
-admin app.
+admin app. The Lighthouse run reads none of them: it measures a fixture post in the same format
+(`apps/mpa/lighthouse/posts/`).
 
 One Markdown file per post and language, named `<slug>.md`. The file is the source: a load
 updates the post to match its file, and an edit made in the admin app to one of these posts is
