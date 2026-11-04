@@ -47,13 +47,13 @@ A run that needs both makes two passes: the dev server first, then the built SPA
 A merge needs the pull-request check, so that check runs a smoke set. The whole suite runs after
 the merge. Every step of the pipeline is in [the CI guide](woodpecker-ci-setup.md).
 
-| When                    | Step        | Specs                                                    |
-| ----------------------- | ----------- | -------------------------------------------------------- |
-| Pull request, and a tag | `e2e-smoke` | The smoke set below (`deno task e2e:local --smoke`)      |
-| Push to `main`          | `e2e-full`  | Every `e2e/*.e2e.ts` (`deno task e2e:local`)             |
-| All three               | `browser`   | The website's `e2e/mpa/*.mpa.ts`                         |
-| All three               | `browser`   | `e2e/spa/*.spa.ts`, on the SPA behind nginx              |
-| All three               | `browser`   | The website's Lighthouse budget (`deno task lighthouse`) |
+| When                    | Step         | Specs                                                    |
+| ----------------------- | ------------ | -------------------------------------------------------- |
+| Pull request, and a tag | `e2e-smoke`  | The smoke set below (`deno task e2e:local --smoke`)      |
+| Push to `main`          | `e2e-full`   | Every `e2e/*.e2e.ts` (`deno task e2e:local`)             |
+| All three               | `browser`    | The website's `e2e/mpa/*.mpa.ts`                         |
+| All three               | `browser`    | `e2e/spa/*.spa.ts`, on the SPA behind nginx              |
+| All three               | `lighthouse` | The website's Lighthouse budget (`deno task lighthouse`) |
 
 The smoke set is `SMOKE_SPECS` in
 [`infra/scripts/e2e-local-plan.ts`](../infra/scripts/e2e-local-plan.ts):
