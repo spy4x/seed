@@ -6,7 +6,7 @@ import { seedPostFiles } from "../../../seed-post-files.ts"
  * and `<slug>-640.webp` in `libs/server/blog/seed-posts/covers/`. The source (`routes/blog/covers/`) and the build
  * (`dist/server/assets/`) sit at the same depth, so the path holds in both.
  */
-export const COVERS = seedPostFiles(
+export const COVERS = await seedPostFiles(
   new URL(`../../../../../libs/server/blog/seed-posts/covers/`, import.meta.url),
   `webp`,
 )

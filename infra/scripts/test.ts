@@ -79,7 +79,7 @@ export const GROUPS: TestGroup[] = [
   },
   {
     flags: [
-      `--allow-read=deno.jsonc,Dockerfile.base,apps/api/dockerfile.node,apps/api/dockerfile.bun`,
+      `--allow-read=deno.jsonc,Dockerfile.base,apps/api/dockerfile.node,apps/api/dockerfile.bun,apps/mpa/dockerfile.node,apps/mpa/dockerfile.bun`,
     ],
     paths: [`tests/dockerfile-base.test.ts`],
   },

@@ -14,7 +14,7 @@ export interface ComposePlan {
   off: string[]
 }
 
-/** The runtimes the API, the worker and the migration can run on (`APP_RUNTIME`). */
+/** The runtimes the API, the worker, the migration and the website can run on (`APP_RUNTIME`). */
 export const APP_RUNTIMES = ["deno", "node", "bun"] as const
 
 /** One of {@link APP_RUNTIMES}. */
@@ -33,8 +33,8 @@ export function appRuntime(envVars: Record<string, string>): AppRuntime {
 /**
  * Plans `deno task compose <args>`. The engine is the one `CONTAINER_PROVIDER` names and Docker
  * without it, as everywhere else ({@link containerProvider}); `ENV` picks the second Compose file,
- * and `APP_RUNTIME=node` or `bun` adds a third that runs the API, the worker and the migration on
- * that runtime ({@link appRuntime}).
+ * and `APP_RUNTIME=node` or `bun` adds a third that runs the API, the worker, the migration and the
+ * website on that runtime ({@link appRuntime}).
  *
  * `SPA=false` keeps the SPA off: every `up` scales it to no container, which also stops and removes
  * one that runs, so Traefik has no router for its host. Scaling, not a profile, so a hand-typed

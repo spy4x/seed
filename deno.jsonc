@@ -123,6 +123,14 @@
       "command": "deno task --cwd apps/mpa check",
       "description": "Checks the public website"
     },
+    "mpa:node": {
+      "command": "deno task mpa:build && node apps/mpa/dist/start.js",
+      "description": "Builds the public website and serves it on Node (apps/mpa/start.ts)"
+    },
+    "mpa:bun": {
+      "command": "deno task mpa:build && bun apps/mpa/dist/start.js",
+      "description": "Builds the public website and serves it on Bun"
+    },
     // runs before every MPA image build
     "changelog": {
       "command": "deno run -R=. -W=apps/mpa/changelog.json -E=CI --allow-run=git apps/mpa/changelog-write.ts",
@@ -303,6 +311,10 @@
       "command": "bash infra/scripts/e2e-local.sh",
       "description": "Browser tests against a stack of their own on spare ports"
     },
+    "test:runtimes": {
+      "command": "bash tests/runtimes/smoke.sh",
+      "description": "The API, the worker and the website on Deno, Node and Bun, against a running Postgres and Valkey"
+    },
     "e2e:report": {
       "command": "PLAYWRIGHT_HTML_OUTPUT_DIR=./e2e/report deno run -A --node-modules-dir npm:playwright@1.57.0 show-report",
       "description": "Opens the report of the last browser test run"
@@ -385,15 +397,15 @@
     // billing period per plan price).
     // hono, postgres and arktype below must stay on the exact versions these packages were
     // published with, or two copies load and their types stop matching.
-    "@spy4x/validation": "jsr:@spy4x/validation@1.114.0",
-    "@spy4x/platform": "jsr:@spy4x/platform@1.114.0",
-    "@spy4x/server": "jsr:@spy4x/server@1.114.0",
-    "@spy4x/realtime": "jsr:@spy4x/realtime@1.114.0",
-    "@spy4x/integrations": "jsr:@spy4x/integrations@1.114.0",
-    "@spy4x/email": "jsr:@spy4x/email@1.114.0",
-    "@spy4x/net": "jsr:@spy4x/net@1.114.0",
-    "@spy4x/billing": "jsr:@spy4x/billing@1.114.0",
-    "@spy4x/time": "jsr:@spy4x/time@1.114.0",
+    "@spy4x/validation": "jsr:@spy4x/validation@1.116.0",
+    "@spy4x/platform": "jsr:@spy4x/platform@1.116.0",
+    "@spy4x/server": "jsr:@spy4x/server@1.116.0",
+    "@spy4x/realtime": "jsr:@spy4x/realtime@1.116.0",
+    "@spy4x/integrations": "jsr:@spy4x/integrations@1.116.0",
+    "@spy4x/email": "jsr:@spy4x/email@1.116.0",
+    "@spy4x/net": "jsr:@spy4x/net@1.116.0",
+    "@spy4x/billing": "jsr:@spy4x/billing@1.116.0",
+    "@spy4x/time": "jsr:@spy4x/time@1.116.0",
 
     // apps/api
     "hono": "jsr:@hono/hono@4.13.8",
@@ -423,7 +435,6 @@
     // shared
     "@std/async": "jsr:@std/async@1.5.1",
     "@std/path": "jsr:@std/path@1.1.6",
-    "@std/http": "jsr:@std/http@1.1.4",
     "@std/fs": "jsr:@std/fs@1.0.24",
     "@std/expect": "jsr:@std/expect@1.0.17",
     "@std/testing": "jsr:@std/testing@1.0.16",
@@ -443,7 +454,7 @@
     "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@13.11.1",
     // The npm name of `@spy4x/platform` above, for the same reason: every e2e spec takes `uuidV7`
     // from it. It moves with the `@spy4x/*` packages.
-    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.114.0",
+    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.116.0",
 
     // shared/types — 2.2.3 matches spy4x/ts-libs and spy4x/preact-components
     // (spy4x/preact-components#121)

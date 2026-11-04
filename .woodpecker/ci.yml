@@ -260,12 +260,61 @@ steps:
       - deno task e2e:local --max-failures=10
     depends_on: [lighthouse]
 
+  runtimes:
+    # Starts the API, the worker and the website on Deno, Node and Bun, and checks each answers
+    # (tests/runtimes/smoke.sh, #623). The Node image gets Deno and Bun from their release zips,
+    # checked against their SHA-256. The script works in its own copy of the checkout, so it runs
+    # beside `browser` and `lighthouse` without sharing their builds or vapid.json.
+    image: docker.io/library/node:26.13.0-bookworm@sha256:fa52d1669505e29b58c042875b1d65c229e0787a3610fd52869b22b68e480853
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: tester
+      DB_PASS: ci-throwaway
+      DB_NAME: template_test
+      KV_HOSTNAME: valkey
+      KV_PORT: "6379"
+      KV_PASSWORD: ci-throwaway
+    commands:
+      - |
+          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
+          curl -fsSL -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
+          unzip -q -o /tmp/deno.zip -d /usr/local/bin
+          curl -fsSL -o /tmp/bun.zip https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-linux-x64.zip
+          echo "bf8ccbfb2b0b80159e0f9a6d15c55317add8077534dbc6130a3edb52fccb395c  /tmp/bun.zip" | sha256sum -c -
+          unzip -q -o -j /tmp/bun.zip bun-linux-x64/bun -d /usr/local/bin
+          chmod +x /usr/local/bin/deno /usr/local/bin/bun
+      - deno --version && node --version && bun --version
+      # smoke.sh copies the checkout with git, which refuses a repository another user owns.
+      - git config --global --add safe.directory "$$PWD"
+      - |
+          deno eval '
+          for (const [hostname, port] of [["postgres", 5432], ["valkey", 6379]]) {
+            for (let i = 0; ; i++) {
+              try {
+                (await Deno.connect({ hostname, port })).close()
+                break
+              } catch {
+                if (i >= 120) {
+                  console.error(`$${hostname} did not accept connections within 60 s`)
+                  Deno.exit(1)
+                }
+                await new Promise((resolve) => setTimeout(resolve, 500))
+              }
+            }
+          }
+          '
+      - tests/runtimes/smoke.sh
+    depends_on: [check]
+
   image-node:
     # Builds the Node and Bun images of the API (apps/api/dockerfile.node, apps/api/dockerfile.bun,
-    # #748), so a pull request that breaks the bundle or either Dockerfile fails here, not at the
-    # release. Kaniko builds inside an ordinary container, with no Docker daemon, no volume and no
-    # secret, and pushes nothing (`--no-push`), as in release.yml. Both are self-contained, so no
-    # base image has to be published first. One step each: kaniko builds in its own root
+    # #748) and of the website (apps/mpa/dockerfile.node, apps/mpa/dockerfile.bun, #623), so a pull
+    # request that breaks a bundle or a Dockerfile fails here, not at the release. Kaniko builds
+    # inside an ordinary container, with no Docker daemon, no volume and no secret, and pushes
+    # nothing (`--no-push`), as in release.yml. All four are self-contained, so no base image has
+    # to be published first. One step each: kaniko builds in its own root
     # filesystem, so two builds in one container would share it.
     image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
     commands:
@@ -277,6 +326,20 @@ steps:
     image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
     commands:
       - executor --context "$$PWD" --dockerfile apps/api/dockerfile.bun --no-push
+    depends_on: []
+
+  image-mpa-node:
+    # See image-node.
+    image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
+    commands:
+      - executor --context "$$PWD" --dockerfile apps/mpa/dockerfile.node --no-push
+    depends_on: []
+
+  image-mpa-bun:
+    # See image-node.
+    image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
+    commands:
+      - executor --context "$$PWD" --dockerfile apps/mpa/dockerfile.bun --no-push
     depends_on: []
 
 services:
