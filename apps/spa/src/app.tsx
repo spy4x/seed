@@ -51,6 +51,7 @@ import { GroupEditorView, GroupPage } from "./views/GroupEditorView.tsx"
 import { GroupImportView } from "./views/GroupImportView.tsx"
 import { NotificationsView } from "./views/NotificationsView.tsx"
 import { OverviewRedirect, OverviewView } from "./views/OverviewView.tsx"
+import { HomeView } from "./views/HomeView.tsx"
 import { InstallOffer } from "./views/InstallOffer.tsx"
 import { InvitationView } from "./views/InvitationView.tsx"
 import { notificationsStore } from "./state/notifications.ts"
@@ -172,7 +173,7 @@ const PAGES: {
   "/tokens/new": () => <ApiTokenNewView />,
   "/benchmark": () => <BenchmarkPage />,
   "/profile/:section?": (params) => <ProfileView section={params.section} />,
-  "/": () => <Redirect to={NOTE_PATHS.list} replace />,
+  "/": () => <HomeView />,
 }
 
 /**

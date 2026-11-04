@@ -41,6 +41,6 @@ describe("the next page of a sign-in", () => {
 
   it("goes to next after sign-in, or to the notes list without one", () => {
     expect(afterSignIn("/notes/abc")).toBe("/notes/abc")
-    expect(afterSignIn(null)).toBe(NOTE_PATHS.list)
+    expect(afterSignIn(null)).toBe(SCREEN_PATHS.home)
   })
 })
