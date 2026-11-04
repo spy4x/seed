@@ -499,6 +499,31 @@ describe("billing domain", () => {
       expect(readGroupBilling({ ...sent, period: 3 })).toBeNull()
     })
 
+    it("prices a seat for the period the group is billed, none for a period its plan does not sell", () => {
+      const billed = (period: BillingPeriod) =>
+        toGroupBilling(
+          { ...subscription(BillingStatus.Active), period },
+          GroupRole.OWNER,
+          true,
+          true,
+          NOW,
+          7,
+          3,
+        )
+      const monthly = JSON.parse(JSON.stringify(billed(BillingPeriod.Monthly)))
+
+      expect(monthly.seatPrice).toEqual({
+        seats: 3,
+        amount: pro.amount,
+        currency: pro.currency,
+        period: BillingPeriod.Monthly,
+      })
+      expect(billed(BillingPeriod.Yearly).seatPrice).toBeNull()
+      expect(readGroupBilling(monthly)?.seatPrice?.period).toBe(BillingPeriod.Monthly)
+      expect(readGroupBilling({ ...monthly, seatPrice: { ...monthly.seatPrice, period: 3 } }))
+        .toBeNull()
+    })
+
     it("shows no period once the subscription has ended", () => {
       const ended = { ...subscription(BillingStatus.Canceled), period: BillingPeriod.Yearly }
 
