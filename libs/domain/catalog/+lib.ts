@@ -1,5 +1,6 @@
 import { type } from "arktype"
 import { isHexColor } from "@spy4x/platform/universal/color"
+import { isCurrencyCode } from "@spy4x/platform/universal/money"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import type { FieldError, FieldErrors } from "@spy4x/validation"
@@ -75,18 +76,14 @@ export interface CatalogSettings {
 export const CATALOG_DEFAULT_SETTINGS: CatalogSettings = { currency: `USD`, languages: [`en`] }
 
 /**
- * Checks a currency code: three capital letters that `Intl` formats as a currency. Throws an
- * `Error` naming the setting.
+ * Checks a currency code, in any case and with spaces around it, against the ISO 4217 list of the
+ * money library. Throws an `Error` naming the setting.
  */
 export function parseCatalogCurrency(value: string): string {
   const code = value.trim().toUpperCase()
-  let known = /^[A-Z]{3}$/.test(code)
-  try {
-    if (known) new Intl.NumberFormat(`en`, { style: `currency`, currency: code })
-  } catch {
-    known = false
+  if (!isCurrencyCode(code)) {
+    throw new Error(`CATALOG_CURRENCY must be a currency code such as USD or VND`)
   }
-  if (!known) throw new Error(`CATALOG_CURRENCY must be a currency code such as USD or VND`)
   return code
 }
 

@@ -65,7 +65,13 @@ describe(`catalog settings`, () => {
 
   it(`reads a currency code in capitals and refuses anything else`, () => {
     expect(parseCatalogCurrency(` vnd `)).toBe(`VND`)
+    expect(parseCatalogCurrency(` eur `)).toBe(`EUR`)
+    expect(parseCatalogCurrency(`USD`)).toBe(`USD`)
     expect(() => parseCatalogCurrency(`dong`)).toThrow(`CATALOG_CURRENCY`)
+  })
+
+  it(`refuses three letters that name no ISO 4217 currency`, () => {
+    expect(() => parseCatalogCurrency(`XYZ`)).toThrow(`CATALOG_CURRENCY`)
   })
 })
 
