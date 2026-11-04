@@ -718,7 +718,7 @@ demotes the old owner to admin before it promotes the new one: the partial uniqu
 admin links are revoked, and their viewer and editor links stay; the new owner's links stay. The new
 owner gets a web push. A subscription that still renews refuses the transfer
 (`SUBSCRIPTION_RENEWS`); after it, the old owner's billing customer is handed over and the new owner
-checks out with their own ([the billing guide](billing.md), "Transfer of ownership").
+checks out with their own ([billing for operators](billing-operator.md#transfer-of-ownership)).
 
 Moving all of a group's data (spy4x/template#260): `POST /api/groups/:id/move-all` takes `{
 toGroupId }`, and the socket command `group.moveAll` takes `{ groupId, toGroupId }`. One transaction

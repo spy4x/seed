@@ -7,7 +7,7 @@ import { SegmentedControl } from "@spy4x/preact-ui/segmented-control"
 import { type FigureFrame, figureTranslator, PostFigure } from "../../components/post-figure.tsx"
 
 /**
- * `<OfflineSyncDemo />`: a model of the SPA's outbox (`docs/offline.md`, "Writes: the outbox") for
+ * `<OfflineSyncDemo />`: a model of the SPA's outbox (`docs/offline-writes.md`, "Writes: the outbox") for
  * a post. It takes no props. An arktype definition, not a type: the server compiles it, so
  * arktype stays out of the island.
  */
