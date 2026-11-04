@@ -2,7 +2,7 @@ import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { Kpi, KpiGrid } from "@spy4x/preact-charts/kpi"
-import { IconCreditCard, IconExternalLink } from "@spy4x/preact-icons"
+import { IconClock, IconCreditCard, IconExternalLink } from "@spy4x/preact-icons"
 import { Badge, type BadgeColor } from "@spy4x/preact-ui/badge"
 import { Button, buttonClasses } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
@@ -14,7 +14,7 @@ import { Input } from "@spy4x/preact-ui/input"
 import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
-import { PageHeader } from "@spy4x/preact-ui/page-header"
+import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import {
   ADMIN_BILLING_SEARCH_MAX_LENGTH,
@@ -49,6 +49,8 @@ import { useAdminText } from "./i18n.ts"
 /** The billing module's pages in the admin app. */
 export const ADMIN_BILLING_PATHS = {
   list: `/billing`,
+  /** The groups that have never paid (#706). */
+  neverPaid: `/billing/never-paid`,
   customer: (groupId: string) => `/billing/${encodeURIComponent(groupId)}`,
 } as const
 
@@ -253,6 +255,16 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
       title={t.t(`AdminBilling.title`)}
       subtitle={t.t(`AdminBilling.subtitle`)}
       titleDataE2E="admin-billing-title"
+      action={list?.enabled && (
+        <PageAction
+          label={t.t(`AdminNeverPaid.title`)}
+          Icon={IconClock}
+          href={ADMIN_BILLING_PATHS.neverPaid}
+          navigate={navigate}
+          variant="secondary"
+          dataE2E="admin-billing-never-paid"
+        />
+      )}
     />
   )
 

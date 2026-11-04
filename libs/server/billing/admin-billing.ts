@@ -16,6 +16,7 @@ import {
   type AdminBillingFilter,
   type AdminBillingHistoryEntry,
   type AdminBillingStatusFilter,
+  type AdminNeverPaidGroup,
   BILLING_AUDIT_EVENT_TYPES,
   type BillingAuditEvent,
   billingAuditPrefix,
@@ -250,6 +251,58 @@ export async function listAdminBillingCustomers(
     customers: rows.map(toCustomer),
     total: chipCounts[filter.status],
     counts: chipCounts,
+  }
+}
+
+/**
+ * One page of the groups that have never paid, newest first: not in the trash, and no subscription
+ * of theirs ever went active. A trial that has not paid yet counts as never paid. With how many there
+ * are in all.
+ */
+export async function listNeverPaidGroups(
+  sql: postgres.Sql,
+  page: number,
+  pageSize: number,
+): Promise<{ groups: AdminNeverPaidGroup[]; total: number }> {
+  const neverPaid = sql`
+    g.deleted_at IS NULL
+    AND NOT EXISTS (SELECT 1 FROM subscriptions s WHERE s.group_id = g.id AND s.ever_active)
+  `
+  const [{ total }] = await sql<{ total: number }[]>`
+    SELECT COUNT(*)::int AS total FROM groups g WHERE ${neverPaid}
+  `
+  const rows = await sql<{
+    groupId: string
+    groupName: string
+    ownerId: number
+    ownerName: string | null
+    ownerEmail: string | null
+    createdAt: Date
+  }[]>`
+    SELECT
+      g.id AS group_id, g.name AS group_name, g.created_at,
+      o.id AS owner_id, btrim(concat_ws(' ', o.first_name, o.last_name)) AS owner_name,
+      (
+        SELECT COALESCE(k.email, CASE WHEN k.method = ${PASSWORD_METHOD} THEN k.subject END)
+        FROM auth_keys k
+        WHERE k.user_id = o.id
+        ORDER BY (k.method = ${PASSWORD_METHOD}) DESC, k.email IS NULL, k.id
+        LIMIT 1
+      ) AS owner_email
+    FROM groups g
+    JOIN users o ON o.id = g.owner_user_id
+    WHERE ${neverPaid}
+    ORDER BY g.created_at DESC, g.id DESC
+    LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
+  `
+  return {
+    groups: rows.map((row) => ({
+      groupId: row.groupId,
+      groupName: row.groupName,
+      owner: { id: row.ownerId, name: row.ownerName ?? ``, email: row.ownerEmail },
+      createdAt: row.createdAt.toISOString(),
+    })),
+    total,
   }
 }
 

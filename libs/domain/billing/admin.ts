@@ -149,6 +149,26 @@ export interface AdminBillingCustomer {
   updatedAt: string
 }
 
+/** A group that has never paid: one row of the "Never paid" list. Dates are ISO strings. */
+export interface AdminNeverPaidGroup {
+  groupId: string
+  groupName: string
+  owner: AdminBillingOwner
+  /** When the group was made: for a person's first group, the day they signed up. */
+  createdAt: string
+}
+
+/** `GET /api/admin/billing/never-paid?page=`. */
+export type AdminNeverPaidResponse =
+  | { enabled: false }
+  | {
+    enabled: true
+    groups: AdminNeverPaidGroup[]
+    total: number
+    page: number
+    pageSize: number
+  }
+
 /** How many customers each status chip holds, with every filter but the status applied. */
 export type AdminBillingCounts = Record<AdminBillingStatusFilter, number>
 
