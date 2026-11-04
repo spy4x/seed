@@ -162,11 +162,13 @@ app, and [`docs/screenshots/admin-video.ts`](docs/screenshots/admin-video.ts)
 > not internal, with the changelog at [seedsaas.com/changelog](https://seedsaas.com/changelog).
 
 - [The three apps](docs/apps.md): the SPA, the admin app and the public website.
-- [Deploy and operate](docs/deploy.md): certificates, the deploy, consoles, several projects on one
-  server, releases.
+- [Deploy to a server](docs/deploy.md): the first deploy. Then [updates](docs/deploy-updates.md),
+  [certificates](docs/certificates.md), [operator access](docs/operator-access.md),
+  [several projects](docs/several-projects.md) and [releases](docs/releases.md).
+- [Settings](docs/settings.md): every variable of the env file.
 - [Guest accounts](docs/guests.md)
 - [Sign in with Google and GitHub](docs/sign-in-providers.md)
-- [Backups](docs/backups.md): set up, restore, rehearse.
+- [Backups](docs/backups.md): set up, and [restore and rehearse](docs/restore.md).
 - [The file store](docs/files.md): Garage or another S3 store, signed uploads and downloads.
 - [Development](docs/development.md): every task and the browser tests.
 - [Adding a feature](docs/aggregates.md): every file of the notes aggregate, in order.

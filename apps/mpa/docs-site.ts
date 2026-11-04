@@ -12,16 +12,25 @@ import backups from "../../docs/backups.md" with { type: "text" }
 import billing from "../../docs/billing.md" with { type: "text" }
 import capacity from "../../docs/capacity.md" with { type: "text" }
 import catalog from "../../docs/catalog.md" with { type: "text" }
+import certificates from "../../docs/certificates.md" with { type: "text" }
 import dataExport from "../../docs/data-export.md" with { type: "text" }
 import deploy from "../../docs/deploy.md" with { type: "text" }
+import deployUpdates from "../../docs/deploy-updates.md" with { type: "text" }
 import development from "../../docs/development.md" with { type: "text" }
 import files from "../../docs/files.md" with { type: "text" }
 import getStarted from "../../docs/get-started.md" with { type: "text" }
 import guests from "../../docs/guests.md" with { type: "text" }
 import ids from "../../docs/ids.md" with { type: "text" }
+import largeGroup from "../../docs/large-group.md" with { type: "text" }
+import loadTests from "../../docs/load-tests.md" with { type: "text" }
 import offline from "../../docs/offline.md" with { type: "text" }
+import operatorAccess from "../../docs/operator-access.md" with { type: "text" }
 import products from "../../docs/products.md" with { type: "text" }
+import releases from "../../docs/releases.md" with { type: "text" }
+import restore from "../../docs/restore.md" with { type: "text" }
 import securityHeaders from "../../docs/security-headers.md" with { type: "text" }
+import settings from "../../docs/settings.md" with { type: "text" }
+import severalProjects from "../../docs/several-projects.md" with { type: "text" }
 import signInProviders from "../../docs/sign-in-providers.md" with { type: "text" }
 import startAProduct from "../../docs/start-a-product.md" with { type: "text" }
 import telegram from "../../docs/telegram.md" with { type: "text" }
@@ -60,11 +69,17 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
   {
     title: `Guides`,
     docs: [
+      { slug: `deploy`, summary: `From a fresh server to a healthy deployment with HTTPS.` },
+      { slug: `deploy-updates`, summary: `Every deploy after the first, and rolling back.` },
+      { slug: `certificates`, summary: `How each host gets its certificate, and retrying one.` },
       {
-        slug: `deploy`,
-        summary: `Certificates, the deploy, consoles, several projects on one server, releases.`,
+        slug: `operator-access`,
+        summary: `The first administrator, roles, and opening Grafana.`,
       },
-      { slug: `backups`, summary: `Set up, restore, rehearse.` },
+      { slug: `several-projects`, summary: `Products that share one server and one Traefik.` },
+      { slug: `releases`, summary: `A version tag publishes the images to Docker Hub.` },
+      { slug: `backups`, summary: `Turn on the daily backup, and rehearse it.` },
+      { slug: `restore`, summary: `Bring back the database, the files and the push keys.` },
       { slug: `sign-in-providers`, summary: `Registering the providers and what a person gets.` },
       {
         slug: `guests`,
@@ -88,7 +103,7 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         slug: `admin-modules`,
         summary: `The operator area as a list of modules, and how to add one.`,
       },
-      { slug: `capacity`, summary: `Load tests and how many users one server carries.` },
+      { slug: `load-tests`, summary: `Run the k6 scenarios and build a large test group.` },
     ],
   },
   {
@@ -99,12 +114,15 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         summary: `The SPA, the admin app and the public website, and how to deploy each.`,
       },
       { slug: `ids`, summary: `Every id is a UUID version 7.` },
+      { slug: `capacity`, summary: `How many users one server carries.` },
+      { slug: `large-group`, summary: `How one group behaves from a thousand notes to a million.` },
     ],
   },
   {
     title: `Reference`,
     docs: [
       { slug: `development`, summary: `The local stack, every task, the browser tests and CI.` },
+      { slug: `settings`, summary: `Every variable of the env file.` },
       { slug: `api-errors`, summary: `The one error body every failed API answer has.` },
       {
         slug: `security-headers`,
@@ -124,16 +142,25 @@ const SOURCES: Readonly<Record<string, string>> = {
   billing,
   capacity,
   catalog,
+  certificates,
   "data-export": dataExport,
   deploy,
+  "deploy-updates": deployUpdates,
   development,
   files,
   "get-started": getStarted,
   guests,
   ids,
+  "large-group": largeGroup,
+  "load-tests": loadTests,
   offline,
+  "operator-access": operatorAccess,
   products,
+  releases,
+  restore,
   "security-headers": securityHeaders,
+  settings,
+  "several-projects": severalProjects,
   "sign-in-providers": signInProviders,
   "start-a-product": startAProduct,
   telegram,
