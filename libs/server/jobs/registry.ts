@@ -95,6 +95,8 @@ export interface JobDeps {
   indexNow: IndexNowSetup | null
   /** The website's origin and a Dev.to client, or `null` while the cross-post is off (#733). */
   crosspost: BlogCrosspostSetup | null
+  /** How jobs ask the public website something, such as whether a post is live (#733). */
+  fetch: typeof fetch
 }
 
 /**
@@ -357,7 +359,12 @@ export const JOBS: readonly JobDefinition[] = [
     cannotCancel: `To stop a scheduled post, unschedule it on the Blog page. ` +
       `Cancelling its job would leave the post scheduled with nothing to publish it.`,
     handler: (deps) =>
-      blogPublishJob({ ...mailDeps(deps), setup: deps.subscribers, crosspost: deps.crosspost }),
+      blogPublishJob({
+        ...mailDeps(deps),
+        setup: deps.subscribers,
+        crosspost: deps.crosspost,
+        fetch: deps.fetch,
+      }),
   }),
   // Posts once ever: a run that is retried or repeated finds the article it made and posts nothing.
   defineJob({

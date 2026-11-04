@@ -299,7 +299,7 @@ export class PostgresBlogRepository {
   /**
    * Publishes a draft or scheduled post now (`at` is `null`), or schedules it for `at`, which
    * the caller has checked lies ahead. A `blog.publish` job is queued for `at`, or at once when a
-   * post going live now has a newsletter to send. `newsletterList` is the list to email when the
+   * post going live now has a newsletter to send or its cross-post was never settled (#733). `newsletterList` is the list to email when the
    * post goes live, `null` for none, or `undefined` to keep the list the post has, so a client
    * that leaves it out never drops a scheduled post's email. Once a post's issue was queued, its
    * list stays as it was and nothing is sent again.
@@ -335,7 +335,9 @@ export class PostgresBlogRepository {
           RETURNING *
         `
       if (at !== null) await queuePublishJob(tx, id, { at })
-      else if (list !== null && !sent) await queuePublishJob(tx, id, { inMs: 0 })
+      else if ((list !== null && !sent) || current.crosspostedAt === null) {
+        await queuePublishJob(tx, id, { inMs: 0 })
+      }
       if (at === null) await queueIndexNow(tx, id)
       await audit(
         tx,
