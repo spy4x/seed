@@ -7,7 +7,7 @@ import { securityHeaders } from "@spy4x/server/http/security-headers"
 import { requireBoundUser } from "./middlewares/bound-user.ts"
 import { createAdminHostGate } from "./middlewares/admin-host.ts"
 import { type IsProxyPeer, requireProxyForForwardedHeaders } from "@spy4x/server/http/trusted-proxy"
-import { denoServeRemoteAddr } from "@spy4x/platform/rate-limit/hono"
+import { serveRemoteAddr } from "@spy4x/platform/rate-limit/hono"
 import type { APIContext } from "./_types.ts"
 import {
   errorResponse,
@@ -56,7 +56,7 @@ export async function createApiApp(
   app.notFound((c) => errorResponse(c, `not_found`, { message: `Not found` }))
   app.use(
     "*",
-    requireProxyForForwardedHeaders<APIContext>(isProxyPeer, { remoteAddr: denoServeRemoteAddr }),
+    requireProxyForForwardedHeaders<APIContext>(isProxyPeer, { remoteAddr: serveRemoteAddr }),
   )
   app.use("*", createAdminHostGate(adminHost, { spa }))
   app.use("*", requireBoundUser)

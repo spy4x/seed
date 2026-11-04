@@ -16,6 +16,8 @@ Seed runs on Deno today and is moving to run unchanged on Deno, Node and Bun
   `infra/scripts` use `deno` and `deno task`. Tests stay on `Deno.test`. The runtime review due
   2027-01-10 decides whether that changes.
 - **Node and Bun may be used to test code that already runs on them**, and for the per-runtime
-  smoke tests #623 will add to CI. The API, the worker and the website start on Node and Bun only
-  once #623 says they do.
+  smoke tests #623 will add to CI. The API and the worker start on Node and Bun
+  ([#748](https://github.com/spy4x/seed/issues/748)): `APP_RUNTIME` picks the runtime
+  ([apps.md, "Runtime"](apps.md#runtime)). The website starts on Node and Bun only once #623
+  says it does.
 - **npm packages** come in through `npm:` specifiers, only where the dependency rules allow them.

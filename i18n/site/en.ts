@@ -144,7 +144,7 @@ export default {
   "HomeProof.tests": "test files in the apps and libraries, all run in CI",
   "HomeProof.licence": "licence: no account, no paywall",
   "HomeStatus.signIn":
-    "Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, passkeys, magic links, 2FA with an authenticator app",
+    "Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, passkeys, email sign-in codes, 2FA with an authenticator app",
   "HomeStatus.guests":
     "Guest accounts: try the app with one click, keep the account by adding a sign-in method",
   "HomeStatus.groups": "Groups with members, roles, invitations and ownership transfer",
@@ -200,7 +200,7 @@ export default {
   "HomeFeatures.signInAlt":
     "The security page of a profile: the password, an Add a passkey button, two-factor sign-in turned on, and the top of the list of signed-in devices.",
   "HomeFeatures.signInText":
-    "Email and password with verification codes, password reset, Google and GitHub sign-in, passkeys, sign-in links by email, guest accounts, and 2FA with an authenticator app. Sessions you can see and end.",
+    "Email and password with verification codes, password reset, Google and GitHub sign-in, passkeys, sign-in codes by email, guest accounts, and 2FA with an authenticator app. Sessions you can see and end.",
   "HomeFeatures.billingTitle": "Per-member billing",
   "HomeFeatures.billingLink": "How billing works",
   "HomeFeatures.billingText":
@@ -340,7 +340,7 @@ export default {
   "FeatureSignIn.nav": "Accounts and sign-in",
   "FeatureSignIn.title": "Sign-in, done",
   "FeatureSignIn.lead":
-    "People sign up with an email and password and confirm the email with a code. They can reset a forgotten password, continue with Google or GitHub, sign in with a passkey, or get a sign-in link by email that also signs them up. Or they try the app first in a guest account and add a sign-in method later. An authenticator app adds two-factor authentication (2FA). People see every device they're signed in on and can sign the others out. Changing a sign-in method asks for proof and sends an email.",
+    "People sign up with an email and password and confirm the email with a code. They can reset a forgotten password, continue with Google or GitHub, sign in with a passkey, or get a sign-in code by email that also signs them up. Or they try the app first in a guest account and add a sign-in method later. An authenticator app adds two-factor authentication (2FA). People see every device they're signed in on and can sign the others out. Changing a sign-in method asks for proof and sends an email.",
   "FeatureSignIn.fact1":
     "Passwords hashed with PBKDF2-SHA-256 through Web Crypto, 600,000 rounds by default",
   "FeatureSignIn.fact2": "Signed session cookies, and an audit trail of every sign-in event",
@@ -348,7 +348,7 @@ export default {
   "FeatureSignIn.fact4":
     "Passkeys: only the public key is stored, and each sign-in challenge works once",
   "FeatureSignIn.fact5":
-    "Magic links: one link signs in or signs up, works once, for 15 minutes, and is stored only as a hash",
+    "Email sign-in codes: an 8-character code signs in or signs up, works once, for 10 minutes, only in the browser that asked, and is stored only as a hash",
   "FeatureSignIn.fact6":
     "Guest accounts (anonymous sign-in): a visitor starts with one click and no sign-in method, then adds an email and password, Google, GitHub or a passkey to the same account",
   "FeatureSignIn.fact7":
@@ -562,7 +562,7 @@ export default {
     "No. Seed runs as long-lived containers with Docker Compose on one Linux server you rent, because the API keeps WebSocket connections open and a worker drains a queue.",
   "FeaturesFaq.runtimeQuestion": "Can Seed run on Node.js or Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Not yet. Seed runs on Deno today, and the move to run on Deno, Node and Bun is in progress. You can follow it in issue #623 on Seed's GitHub.",
+    "Not yet. The API and the background worker already run on Node and Bun as well as Deno: one setting in the env file, APP_RUNTIME, picks the runtime. The website and the development tools still need Deno. You can follow the rest in issue #623 on Seed's GitHub.",
   "FeaturesFaq.databaseQuestion": "Can Seed use a database other than Postgres?",
   "FeaturesFaq.databaseAnswer":
     "No. Seed is built on Postgres: its migrations, queries and integration tests assume it.",
@@ -584,7 +584,7 @@ export default {
     "What Seed ships: 2FA and social sign-in, groups with roles, per-member Stripe billing, realtime, an offline app, an admin area, monitoring and backups.",
   "FeaturesHero.title": "Everything Seed ships, and what it doesn't yet",
   "FeaturesHero.lead":
-    "Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, passkeys, magic links, guest accounts, 2FA, groups with roles, per-member Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code.",
+    "Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, passkeys, email sign-in codes, guest accounts, 2FA, groups with roles, per-member Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code.",
   "FeaturesHero.note":
     'Seed is usable today, built in public. Anything missing is marked "Not built yet" next to the feature it affects, with a link to its issue when one is open.',
   "Features.compare": "How Seed compares",
@@ -628,14 +628,14 @@ export default {
     "Seed's admin panel: find a person, end their sessions, refund a payment, run a failed job again. Risky actions ask first; all are logged. Free, MIT.",
   "AdminTour.heroTitle": "An admin panel for the people who run your product",
   "AdminTour.heroLead":
-    "Seed ships an operator area on its own host. Your operators find a person, see their sign-in methods, sessions and groups, and help them: end a session, send a password-reset link, refund a payment. Risky actions ask first, and every action lands in the audit log.",
+    "Seed ships an operator area on its own host. Your operators find a person, see their sign-in methods, sessions and groups, and help them: end a session, send a password-reset email, refund a payment. Risky actions ask first, and every action lands in the audit log.",
   "AdminTour.code": "Read the admin app's code",
   "AdminTour.dashboard": "Dashboard",
   "AdminTour.dashboardText": "People, sign-ups, who is active, groups and notes over 30 days.",
   "AdminTour.stats": "Stats",
   "AdminTour.statsText": "Website visits and order clicks from your Umami. Totals only.",
   "AdminTour.users": "Users",
-  "AdminTour.usersText": "Find a person, block them, end a session or send a reset link.",
+  "AdminTour.usersText": "Find a person, block them, end a session or send a reset email.",
   "AdminTour.groups": "Groups",
   "AdminTour.groupsText": "Members, invitations and files. Remove a file or change the owner.",
   "AdminTour.billing": "Billing",
@@ -658,7 +658,7 @@ export default {
   "AdminTour.tokensText": "Every API token, whose it is and when it was last used.",
   "AdminTour.operator": "Operator",
   "AdminTour.operatorText":
-    "Day-to-day support: find people, end sessions, send password-reset links, manage groups.",
+    "Day-to-day support: find people, end sessions, send password-reset emails, manage groups.",
   "AdminTour.supervisor": "Supervisor",
   "AdminTour.supervisorText":
     "Also refunds payments, cancels a subscription at once and hands a group to another member.",
@@ -708,7 +708,7 @@ export default {
   "CompareRow.makerkitLite": "Makerkit: the Lite kit only",
   "CompareRow.openSource": "Open source (MIT)",
   "CompareRow.password": "Password sign-in",
-  "CompareRow.magicLinks": "Magic links",
+  "CompareRow.magicLinks": "Passwordless email sign-in",
   "CompareRow.social": "Social sign-in",
   "CompareRow.socialNote": "Seed: Google, GitHub",
   "CompareRow.totp": "App-based 2FA",
@@ -911,7 +911,7 @@ export default {
   "FeaturePage.all": "All features",
   "FeaturePage.runtimeQuestion": "Does Seed run on Node or Bun?",
   "FeaturePage.runtimeAnswer":
-    "Not yet. Seed runs on Deno today, and the move to run on Deno, Node and Bun is in progress (#623). See the runtime plan on the features page.",
+    "Not yet. The API and the background worker already run on Deno, Node or Bun, picked by one setting (APP_RUNTIME). The website and the development tools still need Deno, and that part is in progress (#623). See the runtime plan on the features page.",
   "FeaturePageMissing.title": "This feature page isn't here",
   "FeaturePageMissing.description":
     "It may have moved. Every feature Seed ships is on the features page.",
@@ -919,19 +919,19 @@ export default {
   "FeaturePageSignIn.name": "Sign-in",
   "FeaturePageSignIn.title": "Sign-in for your SaaS, without an auth service",
   "FeaturePageSignIn.description":
-    "Passkeys, sign-in links by email, Google, GitHub and two-factor, checked by your own API with no auth service or fee per user. Free and MIT-licensed.",
+    "Passkeys, sign-in codes by email, Google, GitHub and two-factor, checked by your own API with no auth service or fee per user. Free and MIT-licensed.",
   "FeaturePageSignIn.h1": "Passkeys and sign-in for your SaaS, without an auth service",
   "FeaturePageSignIn.answer":
-    "Seed signs people in with passkeys, sign-in links by email, Google and GitHub, checked by its own API on your server, with no third-party auth service. Passwords, passkeys and sign-in links work as soon as you deploy, with no fee per user; Google and GitHub each need two keys in the env file.",
+    "Seed signs people in with passkeys, sign-in codes by email, Google and GitHub, checked by its own API on your server, with no third-party auth service. Passwords, passkeys and sign-in codes work as soon as you deploy, with no fee per user; Google and GitHub each need two keys in the env file.",
   "FeaturePageSignIn.summary":
-    "Passkeys, sign-in links by email, Google, GitHub and two-factor, with no auth service.",
+    "Passkeys, sign-in codes by email, Google, GitHub and two-factor, with no auth service.",
   "FeaturePageSignIn.how1":
-    "The API checks every sign-in itself and answers with a signed session cookie. A passkey uses the browser's own WebAuthn: the server keeps only its public key, and each sign-in challenge works once. A sign-in link signs in or signs up, works once, for 15 minutes, and is stored only as a hash.",
+    "The API checks every sign-in itself and answers with a signed session cookie. A passkey uses the browser's own WebAuthn: the server keeps only its public key, and each sign-in challenge works once. A sign-in code by email signs in or signs up, works once, for 10 minutes, only in the browser that asked, and is stored only as a hash.",
   "FeaturePageSignIn.how2":
     "An authenticator app adds two-factor sign-in. The profile lists every way into the account and every signed-in device, and changing a way in asks for proof and sends an email. A visitor can also start in a guest account and add a way to sign in later.",
   "FeaturePageSignIn.authServiceQuestion": "Do I need an auth service?",
   "FeaturePageSignIn.authServiceAnswer":
-    "No. Seed's own API checks passwords, passkeys, sign-in links and the answers from Google and GitHub, on your server, so nothing is billed per user.",
+    "No. Seed's own API checks passwords, passkeys, sign-in codes and the answers from Google and GitHub, on your server, so nothing is billed per user.",
   "FeaturePageSignIn.passkeysQuestion": "Does Seed support passkeys?",
   "FeaturePageSignIn.passkeysAnswer":
     "Yes. People add a passkey on their profile and sign in with it; the server stores only its public key, and each sign-in challenge works once.",

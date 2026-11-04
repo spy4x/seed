@@ -32,6 +32,7 @@ import {
 } from "../state/guest.ts"
 import { createSignInMethodsStore, listProviders } from "../state/sign-in-methods.ts"
 import { sessionState } from "../state/session.ts"
+import { rememberSentCode } from "../state/sign-in-code.ts"
 
 /** Where a new guest lands: the notes, where the starter note waits. */
 const GUEST_HOME = "/notes"
@@ -167,6 +168,7 @@ export function KeepView() {
         const answer = await signUp(email, password)
         setBusy(null)
         if (answer.ok) {
+          rememberSentCode({ email, sentAt: Date.now() }, "sign-up")
           navigate(withNext(SCREEN_PATHS.signUpCode, withKept(back)))
           return
         }

@@ -140,6 +140,7 @@ no default, so keep them in the env file.
 | Variable                                 | What it does                                                                                      | Example          | Guide                                     |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------- | ----------------------------------------- |
 | `DENO_VERSION`                           | The Deno version every image is built on.                                                         | `2.9.7`          |                                           |
+| `APP_RUNTIME`                            | The runtime of the API, the worker and the migration: `node`, `bun`, or empty for Deno.           | empty            | [The three apps](apps.md#runtime)         |
 | `API_CPU_LIMIT`, `API_MEM_LIMIT`         | The API's CPU and memory limit.                                                                   | `1`, `512M`      | [Capacity](capacity.md)                   |
 | `API_PORT`                               | The port the API listens on inside its container.                                                 | `8000`           |                                           |
 | `WORKER_CPU_LIMIT`, `WORKER_MEM_LIMIT`   | The worker's CPU and memory limit.                                                                | `0.5`, `256M`    |                                           |
@@ -180,7 +181,7 @@ one warning naming the missing ones.
 | `SMTP_PASS` | Its password.            | empty                    |
 | `SMTP_FROM` | The sender, with a name. | `"App <hi@example.com>"` |
 
-The worker sends the mail, such as password reset links.
+The worker sends the mail, such as sign-in and password reset codes.
 
 ## Billing
 

@@ -701,20 +701,28 @@ describe("the public website", () => {
 
     expect(html).toContain(`continue with Google or GitHub, sign in with a passkey`)
     expect(html).toContain(`Passkeys: only the public key is stored`)
-    expect(html).toContain(`Google and GitHub sign-in, passkeys, magic links, guest accounts, 2FA`)
+    expect(html).toContain(
+      `Google and GitHub sign-in, passkeys, email sign-in codes, guest accounts, 2FA`,
+    )
     expect(html).not.toContain(`issues/222`)
   })
 
-  it("lists magic links as built on the home page, /features and /compare (#391)", async () => {
+  it("lists email sign-in codes as built on the home page, /features and /compare (#391, #752)", async () => {
     const home = (await page("/")).html
     const features = (await page("/features")).html
     const { rows } = comparisonTable((await page("/compare")).html)
 
-    expect(home).toContain(`passkeys, magic links, 2FA`)
-    expect(features).toContain(`Magic links: one link signs in or signs up`)
-    expect(rows.find((row) => row.capability === "Magic links")?.values[0]).toBe("Yes")
+    expect(home).toContain(`passkeys, email sign-in codes, 2FA`)
+    expect(features).toContain(
+      `Email sign-in codes: an 8-character code signs in or signs up, works once, for 10 minutes, only in the browser that asked`,
+    )
+    expect(rows.find((row) => row.capability === "Passwordless email sign-in")?.values[0])
+      .toBe("Yes")
     // No "Not built yet" list, and no "gaps" line, names them any more.
-    for (const html of [home, features]) expect(html).not.toMatch(/>\s*Magic links\s*</)
+    for (const html of [home, features]) {
+      expect(html).not.toMatch(/>\s*Email sign-in codes\s*</)
+      expect(html).not.toMatch(/magic link/i)
+    }
   })
 
   it("lists note attachments as built on the home page, /features, /compare and /pricing (#225)", async () => {

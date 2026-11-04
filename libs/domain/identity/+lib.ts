@@ -133,7 +133,7 @@ export const authPasswordSchema = type({
 export type AuthPassword = typeof authPasswordSchema.infer
 
 /**
- * The language of the page that asks for a mail (#277): a sign-up code or a sign-in link, sent
+ * The language of the page that asks for a mail (#277): a sign-up code or a sign-in code, sent
  * before the server knows whose account the address is. Any short tag is accepted, so an app
  * that offers a language the server does not yet know still signs up; the server keeps only one
  * of {@link LANGUAGES}, and English otherwise.
@@ -148,13 +148,16 @@ export type AuthSignUp = typeof authSignUpSchema.infer
 export const authSignInSchema = authLoginSchema.and(authPasswordSchema)
 export type AuthSignIn = typeof authSignInSchema.infer
 
-/** The body of "forgot password": the address the reset link goes to. */
+/** The body of "forgot password": the address the reset code goes to. */
 export const authPasswordForgotSchema = authEmailSchema
 export type AuthPasswordForgot = typeof authPasswordForgotSchema.infer
 
-/** The body of a password reset: the address and code from the link, and the new password. */
-export const authPasswordResetSchema = authEmailSchema.and({
-  code: "string <= 128",
+/**
+ * The body of a password reset (#752): the token the right code gave, and the new password. The
+ * address comes from the reset request the browser's cookie names.
+ */
+export const authPasswordResetSchema = type({
+  token: "string <= 128",
   newPassword: "8 <= string <= 50",
 })
 export type AuthPasswordReset = typeof authPasswordResetSchema.infer
@@ -419,7 +422,7 @@ export enum AuthAuditEventType {
    */
   USER_ROLE_CHANGED = 22,
   /**
-   * An operator sent the person a password-reset link, the same mail "Forgot password" sends.
+   * An operator sent the person a password-reset email, which points them to "Forgot password".
    * `identifier` names the operator (`operator:<id>`).
    */
   PASSWORD_RESET_SENT = 23,
@@ -660,13 +663,41 @@ export interface SignUpGuestTakenResponse {
   guestTaken: true
 }
 
-/** How long a sign-in link works, in minutes (#391). Each link works once. */
-export const SIGN_IN_LINK_MINUTES = 15
+/**
+ * How long a mailed sign-in code works, in minutes (#391, #752): the sign-up code's lifetime. A new
+ * code of the same request starts it again; each code works once.
+ */
+export const SIGN_IN_CODE_MINUTES = SIGN_UP_CODE_MINUTES
+
+/** How long a mailed password-reset code works, in minutes (#752): the sign-up code's lifetime. */
+export const PASSWORD_RESET_CODE_MINUTES = SIGN_UP_CODE_MINUTES
+
+/** Characters in a mailed code: 6 random bytes as base64url (`EMAIL_CODE_BYTES`). */
+export const MAILED_CODE_LENGTH = 8
 
 /**
- * The `auth_keys.method` of the key a sign-in link signs in through (#391), and the `identifier` of
- * the audit rows a link writes. It holds no secret: an account gets one such key, and a link proves
- * the mailbox each time. It is no sign-in method a person links or unlinks.
+ * What a whole mailed code looks like once whitespace is gone: {@link MAILED_CODE_LENGTH}
+ * base64url characters. The code step submits a pasted code by itself when it matches.
+ */
+export const MAILED_CODE_PATTERN = /^[A-Za-z0-9_-]{8}$/
+
+/**
+ * A mailed code as typed or pasted, cleaned: every whitespace character removed (a mail app often
+ * adds some), never `-` or `_`, which belong to the base64url alphabet. `null` when what is left
+ * is not {@link MAILED_CODE_LENGTH} base64url characters: such a value is refused before any
+ * guess is counted.
+ */
+export function mailedCodeOf(raw: string): string | null {
+  const code = raw.replace(/\s+/g, "")
+  return MAILED_CODE_PATTERN.test(code) ? code : null
+}
+
+/**
+ * The `auth_keys.method` of the key a mailed sign-in code signs in through (#391), and the
+ * `identifier` of the audit rows a code writes. It holds no secret: an account gets one such key,
+ * and a code proves the mailbox each time. It is no sign-in method a person links or unlinks. The
+ * stored value predates codes (sign-in mailed a link until #752) and stays, so older rows keep
+ * their meaning.
  */
 export const SIGN_IN_LINK_METHOD = "email-link"
 
@@ -678,37 +709,42 @@ export const SIGN_IN_LINK_METHOD = "email-link"
 export const PICTURE_AUDIT = { changed: "picture", removed: "picture-removed" } as const
 
 /**
- * The body of `POST /api/auth/link`: the address the link goes to, and the page to open after
+ * The body of `POST /api/auth/code`: the address the code goes to, and the page to open after
  * sign-in, which the API checks again.
  */
-export const authSignInLinkSchema = authEmailSchema.and({
+export const authSignInCodeSchema = authEmailSchema.and({
   "next?": "string <= 2048",
 }).and(mailLanguageSchema)
-export type AuthSignInLink = typeof authSignInLinkSchema.infer
+export type AuthSignInCode = typeof authSignInCodeSchema.infer
 
-/** The body of `POST /api/auth/link/redeem`: the token from the link, as the page read it. */
-export const authSignInLinkRedeemSchema = type({
-  token: "0 < string <= 256",
-})
-export type AuthSignInLinkRedeem = typeof authSignInLinkRedeemSchema.infer
-
-/** What `POST /api/auth/link/redeem` answers when the link signed someone in (#391). */
-export interface SignInLinkRedeemed {
-  /** The address the link proved, for the sign-in page's "last time" hint. */
+/** What `POST /api/auth/code/verify` answers when the code signed someone in (#391, #752). */
+export interface SignInCodeAnswer {
+  /** The address the code proved, for the sign-in page's "last time" hint. */
   email: string
-  /** The page to open: the one asked for when the link was requested, already checked. */
+  /** The page to open: the one asked for when the code was requested, already checked. */
   next: string | null
-  /** The link made a new account, or kept a guest's (`false` for an existing account). */
+  /** The code made a new account, or kept a guest's (`false` for an existing account). */
   created: boolean
   /** The account has an authenticator app: its code comes next. */
   secondFactorPending: boolean
 }
 
 /**
- * The `code` of the refusal `POST /api/auth/link/redeem` answers a guest whose link another browser
- * asked for (#391). The link is spent and the guest's session stays as it was.
+ * What `GET /api/auth/code` and `GET /api/auth/password/reset` answer: the address of the request
+ * this browser waits on, or `null` when none waits, so the code step survives a reload.
  */
-export const SIGN_IN_LINK_ASKED_ELSEWHERE_CODE = "SIGN_IN_LINK_ASKED_ELSEWHERE"
+export interface WaitingCodeResponse {
+  email: string | null
+}
+
+/** What `POST /api/auth/password/reset/verify` answers for the right code (#752). */
+export interface PasswordResetVerified {
+  /**
+   * The proof that sets the new password, valid for {@link PASSWORD_RESET_CODE_MINUTES} minutes.
+   * The page holds it in memory only, never in its address.
+   */
+  token: string
+}
 
 /** What `GET /auth/sign-up/pending` answers: the sign-up that waits, or `null` when none does. */
 export interface PendingSignUpResponse {
@@ -756,7 +792,7 @@ export interface SignInMethod {
   current: boolean
   /**
    * A provider method or passkey that is not the last way in. An address another key holds proven
-   * is a way in, through a sign-in link. The password is never unlinked.
+   * is a way in, through a sign-in code. The password is never unlinked.
    */
   canUnlink: boolean
   /** The passkey's name and dates, on a passkey row only. */
@@ -775,8 +811,8 @@ export interface SignInMethodsResponse {
    */
   providerProofUntil: string | null
   /**
-   * The account has a proven address, so a sign-in link reaches it (#391): an account with no
-   * password can confirm a step with a link sign-in of a moment ago.
+   * The account has a proven address, so a mailed sign-in code reaches it (#391): an account with
+   * no password can confirm a step with a code sign-in of a moment ago.
    */
   emailLink: boolean
 }
@@ -975,7 +1011,7 @@ export interface AdminSignInMethod {
   /** A passkey's name and last use (#222), on a passkey row only. */
   passkey?: { name: string; lastUsedAt: string | null }
   /**
-   * On the `email-link` row only (#391): when a sign-in link last signed the person in or up, or
+   * On the `email-link` row only (#391): when a mailed code last signed the person in or up, or
    * `null` when the audit keeps no such row. ISO 8601.
    */
   lastUsedAt?: string | null

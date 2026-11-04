@@ -156,7 +156,7 @@ export function createSignInMethodsStore(
    * cannot give a password for; `null` when it does not.
    */
   const providerProofUntil = signal<string | null>(null)
-  /** The account has a proven address, so a sign-in link reaches it (#391). */
+  /** The account has a proven address, so a sign-in code reaches it (#391, #752). */
   const emailLink = signal(false)
   /** Why the last link or unlink failed; empty when the server gave no reason. */
   const error = signal<Message | null>(null)

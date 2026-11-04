@@ -2,8 +2,8 @@ import type { MiddlewareHandler } from "hono"
 import { type Clock, createStoreLimiter, type RateLimitStore } from "@spy4x/platform/rate-limit"
 import {
   createRateLimitMiddleware,
-  denoServeRemoteAddr,
   type RateLimitContext,
+  serveRemoteAddr,
   userThenIp,
 } from "@spy4x/platform/rate-limit/hono"
 import type { APIContext } from "../../_types.ts"
@@ -63,7 +63,7 @@ export function createGroupFileRateLimits(
         clock,
       }),
       {
-        remoteAddr: denoServeRemoteAddr,
+        remoteAddr: serveRemoteAddr,
         keyResolver: userThenIp<APIContext>(userId, { trustedProxy: "x-real-ip" }),
         keyPrefix: `${name}:`,
       },

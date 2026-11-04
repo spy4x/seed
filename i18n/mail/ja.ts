@@ -5,28 +5,34 @@ export default {
   "Mail.signIn": "ログイン",
   "Mail.openProfile": "プロフィールを開く",
   "Mail.openGroup": "グループを開く",
-  "PasswordResetMail.subject": "パスワードの再設定",
-  "PasswordResetMail.asked": "{host}のアカウントで、パスワードの再設定がリクエストされました。",
-  "PasswordResetMail.open": {
-    "other": "{count}分以内にこのリンクを開いて、新しいパスワードを設定してください。",
+  "Mail.dontShare":
+    "このコードは誰にも教えないでください。{host}からコードをお尋ねすることはありません。",
+  "PasswordResetMail.subject": "パスワード再設定用のコード",
+  "PasswordResetMail.asked":
+    "{host}のアカウントで、パスワードの再設定がリクエストされました。リクエストしたブラウザのタブで、次のコードを入力してください。",
+  "PasswordResetMail.valid": {
+    "other":
+      "このコードは{count}分間、1回だけ使えます。使うと、すべてのデバイスでログアウトされます。",
   },
-  "PasswordResetMail.button": "新しいパスワードを設定",
-  "PasswordResetMail.once":
-    "このリンクは1回だけ使えます。使うと、すべてのデバイスからログアウトします。",
   "PasswordResetMail.ignore":
     "お心当たりがない場合は、このメールを無視してください。パスワードは変更されません。",
-  "SignInLinkMail.subject": "{host}のログインリンク",
-  "SignInLinkMail.asked":
-    "{when}に、このメールアドレスで{host}へのログインがリクエストされました。",
-  "SignInLinkMail.open": {
+  "PasswordResetNoticeMail.subject": "パスワードの再設定",
+  "PasswordResetNoticeMail.asked":
+    "{host}の運営チームから、アカウントの新しいパスワードを設定していただくためにお送りしています。",
+  "PasswordResetNoticeMail.how":
+    "下のページを開いて、このメールアドレスを入力してください。そこでコードをお送りしますので、新しいパスワードを設定してください。",
+  "PasswordResetNoticeMail.button": "パスワードを再設定",
+  "PasswordResetNoticeMail.ignore":
+    "新しいパスワードが不要な場合は、このメールを無視してください。パスワードは変更されません。",
+  "SignInCodeMail.subject": "{host}のログインコード",
+  "SignInCodeMail.asked":
+    "{when}に、このメールアドレスで{host}へのログインがリクエストされました。リクエストしたブラウザのタブで、次のコードを入力してください。",
+  "SignInCodeMail.valid": {
     "other":
-      "{count}分以内にこのリンクを開いてログインしてください。このメールアドレスのアカウントがまだない場合は、新しく作成されます。",
+      "このコードは{count}分間、1回だけ使えます。このメールアドレスのアカウントがまだない場合は、新しく作成されます。",
   },
-  "SignInLinkMail.button": "{host}にログイン",
-  "SignInLinkMail.once":
-    "このリンクは1回だけ使えます。開くと「続行」ボタンのあるページが表示され、ボタンを押すまでは何も起こりません。",
-  "SignInLinkMail.ignore":
-    "お心当たりがない場合は、このメールを無視してください。リンクがなければ誰もログインできません。",
+  "SignInCodeMail.ignore":
+    "お心当たりがない場合は、このメールを無視してください。コードがなければ誰もログインできません。",
   "EmailCodeMail.subject": "メールアドレス確認用のコード",
   "EmailCodeMail.asked": "メールアドレスを確認するには、{host}でこのコードを入力してください。",
   "EmailCodeMail.valid": {

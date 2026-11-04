@@ -1,7 +1,7 @@
-/// <reference lib="deno.ns" />
 import { Hono } from "hono"
 import type { Context } from "hono"
 import { adaptWebSocket } from "@spy4x/realtime"
+import { upgradeWebSocket as upgradeRequest } from "@spy4x/platform/server/serve"
 import { isBoundToUser } from "@spy4x/realtime/operations"
 import { createSameOriginUpgradeGuard } from "@spy4x/server/http/same-origin"
 import { SOCKET_USER_PROTOCOL } from "@domain/identity"
@@ -31,8 +31,9 @@ export interface SocketRouteDependencies {
   /** Where an accepted socket goes. */
   realtime: Pick<Realtime, "attach">
   /**
-   * Opens the socket and hands it to {@link realtime}. Defaults to `Deno.upgradeWebSocket`, the
-   * one call left on Deno here: Node and Bun upgrade at the server, not per request (#623).
+   * Opens the socket and hands it to {@link realtime}. Defaults to `upgradeWebSocket` of
+   * `@spy4x/platform/server/serve`, which works on Deno, Node and Bun for a request that `serve`
+   * handed in.
    */
   upgrade?: (c: Context<APIContext>, auth: AppAuthState) => Response
 }
@@ -85,10 +86,11 @@ function upgradeWebSocket(
   auth: AppAuthState,
   realtime: Pick<Realtime, "attach">,
 ): Response {
-  // Read before the upgrade: once the request is upgraded, Deno no longer knows its address.
+  // Read before the upgrade: once the request is upgraded, the runtime may no longer know its
+  // address.
   const client = signUpClient(c)
   // A browser closes a socket whose server accepted none of the subprotocols it offered.
-  const { socket, response } = Deno.upgradeWebSocket(c.req.raw, {
+  const { socket, response } = upgradeRequest(c.req.raw, {
     protocol: offeredUserProtocol(c.req.raw) ?? undefined,
   })
   realtime.attach(adaptWebSocket(socket), auth, client)

@@ -166,8 +166,6 @@ export default {
   "Reason.SAME_GROUP": "This is already in that group.",
   "Reason.SEARCH_RATE_LIMITED": "Too many searches. Wait a minute and try again.",
   "Reason.SEAT_PRICE_NOT_ACCEPTED": "Confirm that each new member adds to the group's bill.",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE":
-    "This link was requested in another browser. Open it there.",
   "Reason.SLUG_LOCKED":
     "The address is locked once a post is published. Use Change URL to change it.",
   "Reason.SLUG_TAKEN": "This address is taken. Pick a different one.",

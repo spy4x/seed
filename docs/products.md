@@ -30,9 +30,9 @@ product's first pull request:
 2. Create an empty `.seed/skip`. It lists Seed's paths, one per line, that the product never takes
    changes for. Those are the files it deleted and the files that are entirely its own, such as its
    README.
-3. Replace `AGENTS.md` with the product's own. It says that Seed's `AGENTS.md` applies, except the
-   sections "The live demo is not production" and "Financy", and adds what is specific to the
-   product. A sync never touches it.
+3. Delete `AGENTS.seed.md`, which holds the rules of Seed's own repository, and the lines in
+   `AGENTS.md` and `CLAUDE.md` that name it. List `AGENTS.seed.md` in `.seed/skip`. Then add what
+   is specific to the product to `AGENTS.md`. A sync never touches `AGENTS.md`.
 4. Remove or replace what belongs to Seed's own website and its author:
    [the checklist](start-a-product.md).
 

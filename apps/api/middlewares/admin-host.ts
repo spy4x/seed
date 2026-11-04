@@ -43,7 +43,7 @@ function isAuthApiPath(path: string): boolean {
  *   page, never reaches it.
  * - With no admin host configured, the operator area is 404 everywhere.
  * - Without the SPA (`spa: false`, `SPA=false`), every account route under `/api/auth` is 404 on
- *   every host but the admin host: sign-up, sign-in links, Google and GitHub, guests and passkeys.
+ *   every host but the admin host: sign-up, sign-in codes, Google and GitHub, guests and passkeys.
  *   Nobody can make or enter an account there, and the admin host keeps its own sign-in.
  *
  * The path is the one the router matches, with its percent-escapes decoded, so an escaped letter

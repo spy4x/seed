@@ -11,7 +11,8 @@
  *   anything else to a username provider over the same keys, so an older account signs in as before.
  *   The address is attached to the key, not to `users`: nullable (older keys), unique through the
  *   key's `(method, subject)` constraint, and compared after normalisation.
- * - **Password reset by link.** `resetPassword` spends a code from `password-reset.ts`, proves the
+ * - **Password reset by code (#752).** The browser that asks waits for a mailed code; the right
+ *   code buys a reset token, and `resetPassword` spends that token (`password-reset.ts`), proves the
  *   address (whoever holds the mailbox owns the account that signs in with it), sets the new
  *   password, signs out every session of the user, deletes every API token and removes every
  *   push subscription (#409). It signs nobody in: the person signs in again with the new
@@ -26,7 +27,7 @@
  *   keeps its three states. An account whose address is not proven cannot turn one on: whoever
  *   squats someone else's address must not lock its owner out with a second factor (#140).
  * - **Proving the address (#140).** `verifyEmail` checks a code from
- *   `@spy4x/server/auth/email-code` and proves the address it was sent to. A reset link proves the
+ *   `@spy4x/server/auth/email-code` and proves the address it was sent to. A reset code proves the
  *   address too; when it was unproven until then, the reset also removes any second factor, since
  *   whoever set it up never showed they own the mailbox. A new address waits in `email_changes`
  *   until its code proves it; only then does the password key move to it, so the account signs in
@@ -117,7 +118,13 @@ import {
   UserRole,
 } from "@domain/identity"
 import type { AppDbBase } from "./db-base.ts"
-import { consumePasswordReset } from "@server/auth/password-reset.ts"
+import {
+  consumePasswordReset,
+  issuePasswordReset,
+  PASSWORD_RESET_CODES,
+  PASSWORD_RESET_TTL_MINUTES,
+  passwordResetExpiry,
+} from "@server/auth/password-reset.ts"
 import {
   dropCodeKeys,
   passwordKeyOf,
@@ -143,7 +150,12 @@ import {
 } from "./passkey-sign-in.ts"
 import { PasswordLockedError } from "./password-locked.ts"
 import { createGuestOperations, type GuestOperations } from "./guest-sign-in.ts"
-import { consumeSignInLink, type SignInLinkRequest } from "@server/auth/sign-in-links.ts"
+import {
+  SIGN_IN_CODE_TTL_MINUTES,
+  SIGN_IN_CODES,
+  signInCodeExpiry,
+  type SignInCodeRequest,
+} from "@server/auth/sign-in-codes.ts"
 
 /** Longest username, in characters (code points), after normalisation. */
 export const USERNAME_MAX_LENGTH = 50
@@ -265,50 +277,68 @@ export type SignUpCompletion =
   | { outcome: SignUpOutcome.GuestKept; signedIn: SignedIn }
   | { outcome: SignUpOutcome.WrongCode | SignUpOutcome.Expired | SignUpOutcome.GuestTaken }
 
-/** What {@link SignIn.redeemSignInLink} did with a link (#391). */
-export enum SignInLinkOutcome {
-  /** The link's address belongs to an account: it is signed in, its second factor still owed. */
+/** What {@link SignIn.completeSignInCode} did with a code (#391, #752). */
+export enum SignInCodeOutcome {
+  /** The code's address belongs to an account: it is signed in, its second factor still owed. */
   SignedIn = 1,
   /** No account used the address: a new one is made with it proven, and signed in. */
   Created = 2,
-  /** A guest's link to a new address: the address became the guest's, now kept (#224). */
+  /** A guest's code to a new address: the address became the guest's, now kept (#224). */
   GuestKept = 3,
   /**
-   * A guest's link to an address another account owns: nothing changed, and the switch page asks
+   * A guest's code to an address another account owns: nothing changed, and the switch page asks
    * what happens to the guest's work.
    */
   GuestTaken = 4,
-  /** Unknown, expired or used; or the account is blocked or gone. One answer for all. */
+  /**
+   * No request waits in this browser, it expired or its guesses ran out, the browser's guest is
+   * not the one who asked, or the account is blocked or gone. One answer for all; the request ends.
+   */
   Refused = 5,
   /**
-   * An account signs in with the address by password but never proved it: the link proves the
+   * An account signs in with the address by password but never proved it: the code proves the
    * mailbox, not that account, so nothing happens. A password reset proves it.
    */
   Unconfirmed = 6,
-  /**
-   * A guest opened a link another browser asked for: nothing changed, the guest's session stays,
-   * and the link is spent. A guest key has no secret, so a session lost here loses the account.
-   */
-  AskedElsewhere = 7,
+  /** Not the request's code: the guess is counted and the request keeps waiting. */
+  WrongCode = 7,
 }
 
-/** The answer of {@link SignIn.redeemSignInLink}. */
-export type SignInLinkRedemption =
+/** The answer of {@link SignIn.completeSignInCode}. */
+export type SignInCodeRedemption =
   | {
-    outcome: SignInLinkOutcome.SignedIn | SignInLinkOutcome.Created | SignInLinkOutcome.GuestKept
+    outcome: SignInCodeOutcome.SignedIn | SignInCodeOutcome.Created | SignInCodeOutcome.GuestKept
     signedIn: SignedIn
-    /** The address the link proved. */
+    /** The address the code proved. */
     email: string
     /** The page to open next, as the request stored it. */
     next: string | null
   }
-  | { outcome: SignInLinkOutcome.GuestTaken; next: string | null }
+  | { outcome: SignInCodeOutcome.GuestTaken; next: string | null }
   | {
-    outcome:
-      | SignInLinkOutcome.Refused
-      | SignInLinkOutcome.Unconfirmed
-      | SignInLinkOutcome.AskedElsewhere
+    outcome: SignInCodeOutcome.Refused | SignInCodeOutcome.Unconfirmed | SignInCodeOutcome.WrongCode
   }
+
+/** What {@link SignIn.verifyPasswordReset} did with a code (#752). */
+export enum PasswordResetOutcome {
+  /** The right code: the token that sets the new password comes with it. */
+  Verified = 1,
+  /** Not the request's code: the guess is counted and the request keeps waiting. */
+  WrongCode = 2,
+  /** No request waits in this browser, it expired or its guesses ran out. The request ends. */
+  Expired = 3,
+}
+
+/** The answer of {@link SignIn.verifyPasswordReset}. */
+export type PasswordResetVerification =
+  | { outcome: PasswordResetOutcome.Verified; token: string }
+  | { outcome: PasswordResetOutcome.WrongCode | PasswordResetOutcome.Expired }
+
+/** The cookie that ties a browser to the sign-in code it waits for (#752). */
+export const SIGN_IN_CODE_COOKIE = "sign_in_code"
+
+/** The cookie that ties a browser to the password-reset code it waits for (#752). */
+export const PASSWORD_RESET_COOKIE = "password_reset"
 
 /** A sign-up waiting for its code, as the page that asks for the code reads it back. */
 export interface WaitingSignUp {
@@ -374,15 +404,61 @@ export interface SignIn {
    */
   completeSignUp(c: Context, code: string, firstGroupId?: string): Promise<SignUpCompletion>
   /**
-   * Spends a sign-in link's token (#391) and signs in to the account that owns its address, or
-   * makes one with the address proven. An account with an authenticator app still owes its code.
-   * A guest who asked for the link keeps their account with the address, or is offered the switch
-   * when another account owns it; any other guest is refused and keeps their session. A full
-   * account's session the browser held before is replaced.
+   * Asks for a sign-in code to `email`, already normalised (#391, #752): writes the request and
+   * its mail job, and names the request in this browser's cookie. The same work for every address;
+   * the code decides what happens once entered. A guest who asks is recorded, so that guest keeps
+   * their account through the code. `language` is the asking page's, for the mail (#277).
+   */
+  requestSignInCode(
+    c: Context,
+    email: string,
+    next: string | null,
+    language?: string | null,
+  ): Promise<void>
+  /** The address of the sign-in code this browser waits for, or `null`. */
+  waitingSignInCode(c: Context): Promise<{ email: string } | null>
+  /**
+   * Mails a new code for this browser's request, ending the old one, and starts its time again.
+   * The guesses already spent stay spent. `false` when no request waits.
+   */
+  resendSignInCode(c: Context): Promise<boolean>
+  /** Forgets this browser's request and its cookie. */
+  cancelSignInCode(c: Context): Promise<void>
+  /**
+   * Checks `code` against this browser's request and, when right, signs in to the account that
+   * owns its address, or makes one with the address proven. An account with an authenticator app
+   * still owes its code. A guest who asked keeps their account with the address, or is offered the
+   * switch when another account owns it; any other guest is refused and keeps their session. A full
+   * account's session the browser held before is replaced. The right code ends every request and
+   * code of the address.
    *
    * @param firstGroupId The id of a new account's first group. Defaults to a random UUID.
    */
-  redeemSignInLink(c: Context, token: string, firstGroupId?: string): Promise<SignInLinkRedemption>
+  completeSignInCode(c: Context, code: string, firstGroupId?: string): Promise<SignInCodeRedemption>
+  /**
+   * Asks for a password-reset code to `email`, already normalised (#752): writes the request and
+   * its mail job, and names the request in this browser's cookie. The same work for every address;
+   * the worker mails the code only when an account signs in with a password and that address.
+   */
+  requestPasswordReset(c: Context, email: string): Promise<void>
+  /** The address of the reset this browser waits for, or `null`. */
+  waitingPasswordReset(c: Context): Promise<{ email: string } | null>
+  /** As {@link resendSignInCode}, for the reset this browser waits for. */
+  resendPasswordReset(c: Context): Promise<boolean>
+  /** Forgets this browser's reset request and its cookie. */
+  cancelPasswordReset(c: Context): Promise<void>
+  /**
+   * Checks `code` against this browser's reset request. The right code answers a token that
+   * {@link finishPasswordReset} takes with the new password, and keeps the request waiting as long
+   * as the token works.
+   */
+  verifyPasswordReset(c: Context, code: string): Promise<PasswordResetVerification>
+  /**
+   * Sets the new password with `token`, for the address of this browser's reset request, as
+   * {@link resetPassword} does. On success every reset request and code of the address ends and
+   * the cookie goes. `false` when no request waits or the reset is refused.
+   */
+  finishPasswordReset(c: Context, token: string, newPassword: string): Promise<boolean>
   /**
    * Checks the password of the account that signs in with `login`, an address or an older
    * account's username, then starts a session, records the time and writes the audit row in one
@@ -425,12 +501,12 @@ export interface SignIn {
     signOutOthers?: boolean,
   ): Promise<{ revokedTokens: number } | null>
   /**
-   * Spends the reset code for `email` and, when it was the live one, proves the address, replaces
+   * Spends the reset token for `email` and, when it was the live one, proves the address, replaces
    * the password, signs out every session of the user and revokes every API token, with an audit
    * row each, and removes every push subscription of the user (#409). An account waiting to be
-   * deleted is restored too: the link proved the mailbox, so the person is back (#388). `c`,
+   * deleted is restored too: the code proved the mailbox, so the person is back (#388). `c`,
    * when given, names the request in the restore's audit row.
-   * `false`, and the password unchanged, when the code is wrong, expired, already used or
+   * `false`, and the password unchanged, when the token is wrong, expired, already used or
    * replaced, the new password is refused, or no live account signs in with the address.
    */
   resetPassword(email: string, code: string, newPassword: string, c?: Context): Promise<boolean>
@@ -497,7 +573,7 @@ export interface SignIn {
   /**
    * Checks the current password, then records `email` as the address to move to once a code sent
    * there proves it. The account keeps signing in with its old address until then. The password
-   * is asked so that a stolen session cannot point the account, and its reset links, elsewhere.
+   * is asked so that a stolen session cannot point the account, and its reset codes, elsewhere.
    * An account with no password is asked for a provider sign-in a moment ago instead
    * ({@link confirmedByProvider}). The password is counted as {@link checkPassword} counts it.
    */
@@ -1013,12 +1089,70 @@ export function createSignIn(options: SignInOptions): SignIn {
   }
 
   /**
-   * The key a sign-in link signs user `userId` in through (#391), added the first time. It holds
-   * no secret and no address: the link proved the mailbox, and the account's own keys hold its
-   * address. Its sessions show as e-mail-link sessions, and a link sign-up's key carries the new
-   * address itself (see {@link signInByLink}).
+   * A signed cookie that names one waiting request of a mailed code (#752), sent only to the
+   * routes under `path`, so only the browser that asked can enter the code. A cookie this API did
+   * not sign, or one changed since, names nothing.
    */
-  async function linkKeyOf(tx: AppDbBase, userId: number): Promise<AuthKey> {
+  function waitingCookie(name: string, path: string, purpose: string, ttlMinutes: number) {
+    const codec = createSignedPayloadCodec({
+      secret: options.cookieSecret,
+      purpose,
+      version: 1,
+      schema: signUpCookieSchema,
+    })
+    const cookieOptions = {
+      httpOnly: true,
+      secure: options.secureCookie,
+      sameSite: "Lax",
+      path,
+    } as const
+    return {
+      set: async (c: Context, id: string): Promise<void> => {
+        setCookie(c, name, await codec.sign({ id }), { ...cookieOptions, maxAge: ttlMinutes * 60 })
+      },
+      idOf: async (c: Context): Promise<string | null> => {
+        const raw = getCookie(c, name)
+        const read = raw ? await codec.verify(raw) : null
+        return read?.ok ? read.value.id : null
+      },
+      clear: (c: Context): void => {
+        deleteCookie(c, name, cookieOptions)
+      },
+    }
+  }
+
+  const signInCodeCookie = waitingCookie(
+    SIGN_IN_CODE_COOKIE,
+    "/api/auth/code",
+    "app.sign-in-code",
+    SIGN_IN_CODE_TTL_MINUTES,
+  )
+  const passwordResetCookie = waitingCookie(
+    PASSWORD_RESET_COOKIE,
+    "/api/auth/password/reset",
+    "app.password-reset",
+    PASSWORD_RESET_TTL_MINUTES,
+  )
+
+  /** The sign-in request this browser's cookie names, while it works, or `null`. */
+  async function waitingSignInRequest(c: Context, now: Date): Promise<SignInCodeRequest | null> {
+    const id = await signInCodeCookie.idOf(c)
+    return id ? await db.signInCode.find(id, now) : null
+  }
+
+  /** The reset request this browser's cookie names, while it works, or `null`. */
+  async function waitingResetRequest(c: Context, now: Date) {
+    const id = await passwordResetCookie.idOf(c)
+    return id ? await db.passwordReset.find(id, now) : null
+  }
+
+  /**
+   * The key a sign-in code signs user `userId` in through (#391), added the first time. It holds
+   * no secret and no address: the code proved the mailbox, and the account's own keys hold its
+   * address. Its sessions show as e-mail sessions, and a code sign-up's key carries the new
+   * address itself (see {@link signInByCode}).
+   */
+  async function codeKeyOf(tx: AppDbBase, userId: number): Promise<AuthKey> {
     const keys = await tx.authStore.listKeys(userId)
     return keys.find((key) => key.method === SIGN_IN_LINK_METHOD) ??
       await tx.authStore.addKey(userId, {
@@ -1041,43 +1175,35 @@ export function createSignIn(options: SignInOptions): SignIn {
   }
 
   /**
-   * What a spent link does (#391), for the link's normalised address `email`:
+   * What a right code does (#391, #752), for the request's normalised address `email`:
    *
-   * - **A guest who did not ask for the link** is refused, and nothing changes: replacing the
-   *   guest's session would lose the guest account for good, since a guest key has no secret.
    * - **An owner of the proven address** is signed in, as a password would sign them in: a blocked
    *   account is refused, one waiting to be deleted is restored (or owes its code first), and an
    *   authenticator app is still owed. A guest is offered the switch to that account instead.
-   * - **A password key that claims the address without having proven it** is left alone: the link
+   * - **A password key that claims the address without having proven it** is left alone: the code
    *   proves the mailbox, not that account, whose password may be someone else's.
-   * - **Nobody** has the address: a new account is made with a link key that carries it, proven;
+   * - **Nobody** has the address: a new account is made with a code key that carries it, proven;
    *   a guest keeps theirs with that key instead (#224).
    *
    * When someone proves the address between the read and the write, the write fails and this runs
    * once more, then finds that owner.
    */
-  async function signInByLink(
+  async function signInByCode(
     c: Context,
-    link: SignInLinkRequest,
+    request: SignInCodeRequest,
     now: Date,
     firstGroupId: string,
     retried = false,
-  ): Promise<SignInLinkRedemption> {
-    const { email, next } = link
+  ): Promise<SignInCodeRedemption> {
+    const { email, next } = request
     const state = c.get("auth") as AppAuthState | null | undefined
-    // A guest uses only a link the guest asked for. Attaching the address of someone else's link
-    // would let that person, signing in with it later, own the guest's data; signing the browser
-    // in instead would end the guest's only session and lose the account.
-    if (state?.user.guestSince && link.requestedBy !== state.user.id) {
-      return { outcome: SignInLinkOutcome.AskedElsewhere }
-    }
     const guest = state?.user.guestSince ? state : null
     const owner = await db.authStore.findUserIdByProvenEmail(email)
     if (owner === null) {
       if (await db.authStore.findKey(PASSWORD_METHOD, email)) {
-        return { outcome: SignInLinkOutcome.Unconfirmed }
+        return { outcome: SignInCodeOutcome.Unconfirmed }
       }
-      const linkKey = {
+      const codeKey = {
         method: SIGN_IN_LINK_METHOD,
         subject: uuidV7(),
         email,
@@ -1088,24 +1214,24 @@ export function createSignIn(options: SignInOptions): SignIn {
         if (guest) {
           const kept = await db.begin(async (tx) => {
             await tx.lockUser(guest.user.id)
-            const key = await tx.authStore.addKey(guest.user.id, linkKey)
+            const key = await tx.authStore.addKey(guest.user.id, codeKey)
             const started = await guests.keep(c, tx, guest.user.id, key.id, SIGN_IN_LINK_METHOD)
             if (!started) return null
             const user = await tx.user.findOne({ id: guest.user.id })
             if (!user) throw new Error("User not found")
             return { user, ...started }
           })
-          if (!kept) return { outcome: SignInLinkOutcome.Refused }
+          if (!kept) return { outcome: SignInCodeOutcome.Refused }
           await cookie.set(c, kept.session, kept.cookieValue)
           return {
-            outcome: SignInLinkOutcome.GuestKept,
+            outcome: SignInCodeOutcome.GuestKept,
             signedIn: { user: kept.user, session: kept.session },
             email,
             next,
           }
         }
         const created = await db.begin(async (tx) => {
-          const signedUp = await tx.authStore.createUserWithKey(linkKey)
+          const signedUp = await tx.authStore.createUserWithKey(codeKey)
           const started = await sessionsOver(tx.sessionStore).create({
             userId: signedUp.user.id,
             keyId: signedUp.key.id,
@@ -1122,43 +1248,43 @@ export function createSignIn(options: SignInOptions): SignIn {
         })
         await replaceSession(c, state, created)
         return {
-          outcome: SignInLinkOutcome.Created,
+          outcome: SignInCodeOutcome.Created,
           signedIn: { user: created.user, session: created.session },
           email,
           next,
         }
       } catch (error) {
         if (error instanceof AuthConflictError && !retried) {
-          return await signInByLink(c, link, now, firstGroupId, true)
+          return await signInByCode(c, request, now, firstGroupId, true)
         }
         throw error
       }
     }
 
     if (guest) {
-      const key = await db.begin((tx) => linkKeyOf(tx, owner))
+      const key = await db.begin((tx) => codeKeyOf(tx, owner))
       await guests.taken(guest.user.id, { id: key.id, userId: owner, method: key.method }, false)
-      return { outcome: SignInLinkOutcome.GuestTaken, next }
+      return { outcome: SignInCodeOutcome.GuestTaken, next }
     }
     const authUser = await db.authStore.findUser(owner)
-    if (!authUser || authUser.deletedAt !== null) return { outcome: SignInLinkOutcome.Refused }
-    if (await db.admin.isBlocked(owner)) return { outcome: SignInLinkOutcome.Refused }
+    if (!authUser || authUser.deletedAt !== null) return { outcome: SignInCodeOutcome.Refused }
+    if (await db.admin.isBlocked(owner)) return { outcome: SignInCodeOutcome.Refused }
     const waiting = await waitingForCode(owner)
     let secondFactor: SecondFactorStatus
     if (waiting) {
       secondFactor = SecondFactorStatus.Pending
     } else {
-      if (!(await restoreIfWaiting(c, owner))) return { outcome: SignInLinkOutcome.Refused }
+      if (!(await restoreIfWaiting(c, owner))) return { outcome: SignInCodeOutcome.Refused }
       try {
         secondFactor = await signInSecondFactor(authUser)
       } catch (error) {
-        if (error instanceof MissingProfileError) return { outcome: SignInLinkOutcome.Refused }
+        if (error instanceof MissingProfileError) return { outcome: SignInCodeOutcome.Refused }
         throw error
       }
     }
     // The session, the last sign-in time and the audit row are kept or undone together.
     const started = await db.begin(async (tx) => {
-      const key = await linkKeyOf(tx, owner)
+      const key = await codeKeyOf(tx, owner)
       const begun = await sessionsOver(tx.sessionStore).create({
         userId: owner,
         keyId: key.id,
@@ -1174,7 +1300,7 @@ export function createSignIn(options: SignInOptions): SignIn {
     })
     await replaceSession(c, state, started)
     return {
-      outcome: SignInLinkOutcome.SignedIn,
+      outcome: SignInCodeOutcome.SignedIn,
       signedIn: { user: started.user, session: started.session },
       email,
       next,
@@ -1343,12 +1469,141 @@ export function createSignIn(options: SignInOptions): SignIn {
       }
     },
 
-    async redeemSignInLink(c, token, firstGroupId = uuidV7()) {
+    async requestSignInCode(c, email, next, language) {
+      const state = c.get("auth") as AppAuthState | null | undefined
+      const id = uuidV7()
+      await db.begin(async (tx) => {
+        await tx.signInCode.create({
+          id,
+          email,
+          next,
+          requestedBy: state?.user.guestSince ? state.user.id : null,
+          language,
+          expiresAt: signInCodeExpiry(new Date()),
+        })
+        await tx.signInCode.queueCode(id)
+      })
+      await signInCodeCookie.set(c, id)
+    },
+
+    async waitingSignInCode(c) {
+      const request = await waitingSignInRequest(c, new Date())
+      return request ? { email: request.email } : null
+    },
+
+    async resendSignInCode(c) {
       const now = new Date()
-      // Spent outside any transaction, so the link is used up whatever follows.
-      const link = await consumeSignInLink(db.authStore, db.signInLink, token, now)
-      if (link === null) return { outcome: SignInLinkOutcome.Refused }
-      return await signInByLink(c, link, now, firstGroupId)
+      const request = await waitingSignInRequest(c, now)
+      if (!request) return false
+      // The new code ends the old one when the worker issues it; the guesses spent stay spent.
+      await db.begin(async (tx) => {
+        await tx.signInCode.extend(request.id, signInCodeExpiry(now), now)
+        await tx.signInCode.queueCode(request.id)
+      })
+      await signInCodeCookie.set(c, request.id)
+      return true
+    },
+
+    async cancelSignInCode(c) {
+      const id = await signInCodeCookie.idOf(c)
+      if (id) await db.signInCode.remove(id)
+      signInCodeCookie.clear(c)
+    },
+
+    async completeSignInCode(c, code, firstGroupId = uuidV7()) {
+      const now = new Date()
+      const request = await waitingSignInRequest(c, now)
+      const end = async (): Promise<SignInCodeRedemption> => {
+        if (request) await db.signInCode.remove(request.id)
+        signInCodeCookie.clear(c)
+        return { outcome: SignInCodeOutcome.Refused }
+      }
+      if (!request) return await end()
+      // A guest uses only a code the guest asked for: one who signed in as a guest after asking
+      // in this browser would otherwise attach the address to an account nobody asked about.
+      const state = c.get("auth") as AppAuthState | null | undefined
+      if (state?.user.guestSince && request.requestedBy !== state.user.id) return await end()
+      const guessed = await SIGN_IN_CODES.attempt(db.authStore, request, code, now)
+      if (guessed === ChallengeOutcome.WrongGuess) return { outcome: SignInCodeOutcome.WrongCode }
+      if (guessed !== ChallengeOutcome.Matched) return await end()
+      // Spent outside any transaction, so every code of the address is gone whatever follows.
+      await SIGN_IN_CODES.forget(db.authStore, request.email)
+      await db.signInCode.removeFor(request.email)
+      signInCodeCookie.clear(c)
+      return await signInByCode(c, request, now, firstGroupId)
+    },
+
+    async requestPasswordReset(c, email) {
+      const id = uuidV7()
+      await db.begin(async (tx) => {
+        await tx.passwordReset.create({
+          id,
+          email,
+          expiresAt: passwordResetExpiry(new Date()),
+          byOperator: false,
+        })
+        await tx.passwordReset.queueCode(id)
+      })
+      await passwordResetCookie.set(c, id)
+    },
+
+    async waitingPasswordReset(c) {
+      const request = await waitingResetRequest(c, new Date())
+      return request ? { email: request.email } : null
+    },
+
+    async resendPasswordReset(c) {
+      const now = new Date()
+      const request = await waitingResetRequest(c, now)
+      if (!request) return false
+      await db.begin(async (tx) => {
+        await tx.passwordReset.extend(request.id, passwordResetExpiry(now), now)
+        await tx.passwordReset.queueCode(request.id)
+      })
+      await passwordResetCookie.set(c, request.id)
+      return true
+    },
+
+    async cancelPasswordReset(c) {
+      const id = await passwordResetCookie.idOf(c)
+      if (id) await db.passwordReset.remove(id)
+      passwordResetCookie.clear(c)
+    },
+
+    async verifyPasswordReset(c, code) {
+      const now = new Date()
+      const request = await waitingResetRequest(c, now)
+      const end = async (): Promise<PasswordResetVerification> => {
+        if (request) await db.passwordReset.remove(request.id)
+        passwordResetCookie.clear(c)
+        return { outcome: PasswordResetOutcome.Expired }
+      }
+      if (!request) return await end()
+      const guessed = await PASSWORD_RESET_CODES.attempt(db.authStore, request, code, now)
+      if (guessed === ChallengeOutcome.WrongGuess) {
+        return { outcome: PasswordResetOutcome.WrongCode }
+      }
+      if (guessed !== ChallengeOutcome.Matched) return await end()
+      // A code is mailed only to an account that resets; one gone since is refused like a late code.
+      const issued = await issuePasswordReset(db.authStore, request.email, now)
+      if (!issued) return await end()
+      // The request waits as long as the token works, so the new password can follow.
+      await db.passwordReset.extend(request.id, issued.expiresAt, now)
+      await passwordResetCookie.set(c, request.id)
+      return { outcome: PasswordResetOutcome.Verified, token: issued.code }
+    },
+
+    async finishPasswordReset(c, token, newPassword) {
+      const request = await waitingResetRequest(c, new Date())
+      if (!request) {
+        passwordResetCookie.clear(c)
+        return false
+      }
+      if (!(await api.resetPassword(request.email, token, newPassword, c))) return false
+      await PASSWORD_RESET_CODES.forget(db.authStore, request.email)
+      await db.passwordReset.removeFor(request.email)
+      passwordResetCookie.clear(c)
+      return true
     },
 
     async signIn(c, login, password) {
@@ -1394,7 +1649,7 @@ export function createSignIn(options: SignInOptions): SignIn {
         await tx.authAudit.insert(auditRow(c, user.id, AuthAuditEventType.SIGNED_IN))
         return { user, ...started }
       })
-      // The session this browser held before ends, as after a link, provider or passkey sign-in:
+      // The session this browser held before ends, as after a code, provider or passkey sign-in:
       // a second person on a shared browser must not keep the first person's notifications (#572).
       await replaceSession(c, c.get("auth") as AppAuthState | null | undefined, created)
       return { user: created.user, session: created.session }
@@ -1447,7 +1702,7 @@ export function createSignIn(options: SignInOptions): SignIn {
       }
       const { qrCodeSvg } = totpEnrolment(secret, {
         issuer: accountPart(options.totpIssuer, "App"),
-        // A link key's subject is an id: the account's address names it instead (#391).
+        // A code key's subject is an id: the account's address names it instead (#391).
         label: accountPart(
           key.method === SIGN_IN_LINK_METHOD
             ? (await readEmailStatus(db.emailChange, db.authStore, user.id)).email ?? ""
@@ -1593,7 +1848,7 @@ export function createSignIn(options: SignInOptions): SignIn {
         if (!key || key.email === null) return false
         const user = await tx.authStore.findUser(key.userId)
         if (!user || user.deletedAt !== null) return false
-        // An account waiting to be deleted comes back (#357, decision 5): the link reached the
+        // An account waiting to be deleted comes back (#357, decision 5): the code reached the
         // mailbox, as a sign-in would prove the password. Its request row goes before the user row
         // is locked, the order a sign-in's restore and the delete for good take them in.
         const profile = await tx.user.findOne({ id: user.id, includeDeleted: true })
@@ -1605,8 +1860,8 @@ export function createSignIn(options: SignInOptions): SignIn {
         // goes, as the tokens below do. First, so the key clean-up of an unproven address does
         // not take it without its audit row.
         await unlinkTelegramOf(tx, c, user.id, "password-reset")
-        // The link reached the mailbox, so the address is proven: this user now owns it. Another
-        // user owning it already is a refusal; the code stays spent.
+        // The code reached the mailbox, so the address is proven: this user now owns it. Another
+        // user owning it already is a refusal; the token stays spent.
         if (key.provenAt === null) {
           try {
             await tx.authStore.proveKey(key.id, now)

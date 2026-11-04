@@ -31,7 +31,7 @@ parts live here and in the published [`@spy4x/*`](https://jsr.io/@spy4x) package
 stay out.
 
 **Status:** usable today, and still growing in public. On `main` now: passkeys, Google and
-GitHub sign-in, sign-in links, guest accounts, a second factor, groups with roles and invitations,
+GitHub sign-in, email sign-in codes, guest accounts, a second factor, groups with roles and invitations,
 Stripe billing per member, notes (the reference feature), the file store, notifications in the app,
 by web push and in Telegram, nine languages, an offline SPA, the admin panel, and a public website
 with a blog and a newsletter. All of it is tested in CI, and most of it runs in the
@@ -45,7 +45,7 @@ with a blog and a newsletter. All of it is tested in CI, and most of it runs in 
   membership checks and roles, from viewer to owner. A group can be renamed, deleted and, for 30
   days, restored, and a person always keeps at least one.
 - **Sign-in that is done.** E-mail and password with a confirmation code, passkeys, Google and
-  GitHub, and sign-in links by e-mail. A visitor can start in a guest account with one click and
+  GitHub, and email sign-in codes. A visitor can start in a guest account with one click and
   add a sign-in method later, keeping their data. An authenticator app adds a second factor,
   people see and end their sessions, and personal API tokens are stored only as hashes.
 - **Billing per member, through Stripe.** A free plan with limits, a 14-day trial, quantities that

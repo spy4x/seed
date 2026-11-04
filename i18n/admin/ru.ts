@@ -195,7 +195,7 @@ export default {
   "AdminAuditEvent.confirmationResent": "Письмо для подтверждения подписки отправлено повторно",
   "AdminAuditEvent.subscribersExported": "Список подписчиков скачан",
   "AdminAuditEvent.roleChanged": "Изменена роль",
-  "AdminAuditEvent.resetSent": "Оператор отправил ссылку для сброса пароля",
+  "AdminAuditEvent.resetSent": "Оператор отправил письмо для сброса пароля",
   "AdminAuditEvent.usersExported": "Список пользователей скачан",
   "AdminAuditEvent.passkeyRenamed": "Ключ доступа переименован",
   "AdminAuditEvent.guestStarted": "Вход как гость",
@@ -1837,7 +1837,7 @@ export default {
   "AdminUser.doneRoleOperator": "{name}: теперь роль «Оператор».",
   "AdminUser.doneRoleSupervisor": "{name}: теперь роль «Старший оператор».",
   "AdminUser.doneRoleAdmin": "{name}: теперь роль «Администратор».",
-  "AdminUser.donePasswordReset": "{name}: ссылка для сброса пароля отправлена.",
+  "AdminUser.donePasswordReset": "{name}: письмо для сброса пароля отправлено.",
   "AdminUser.doneDeleteGuest": "Гостевой аккаунт {name} удалён.",
   "AdminUser.doneUnlinkTelegram": "{name}: Telegram отвязан.",
   "AdminUser.doneRemovePicture": "{name}: фото профиля убрано.",
@@ -1847,7 +1847,7 @@ export default {
   "AdminUser.unblock": "Разблокировать",
   "AdminUser.block": "Заблокировать",
   "AdminUser.endAllSessions": "Завершить все сеансы",
-  "AdminUser.sendReset": "Отправить ссылку для сброса пароля",
+  "AdminUser.sendReset": "Отправить письмо для сброса пароля",
   "AdminUser.noResetAddress": "Нужен вход по паролю с e-mail",
   "AdminUser.unlinkTelegram": "Отвязать Telegram",
   "AdminUser.removePicture": "Убрать фото профиля",
@@ -1904,7 +1904,7 @@ export default {
   "AdminUser.methodPassword": "Пароль",
   "AdminUser.methodEmailCode": "Код из письма",
   "AdminUser.methodPasskey": "Ключ доступа",
-  "AdminUser.methodEmailLink": "Ссылка из письма",
+  "AdminUser.methodEmailLink": "Код из письма",
   "AdminUser.blockTitle": "Заблокировать {name}",
   "AdminUser.blockText":
     "Все сеансы сразу завершатся, и любой вход будет отклонён: по паролю, через Google, GitHub и по API-токенам. Данные останутся на месте. Блокировку можно снять позже.",
@@ -1924,10 +1924,10 @@ export default {
   "AdminUser.changeRoleText":
     "Новая роль начнёт действовать со следующего запроса. Вы можете выдать любую роль ниже своей. Чтобы назначить администратора, используйте скрипт user:role.",
   "AdminUser.changing": "Меняем…",
-  "AdminUser.resetTitle": "Отправить ссылку для сброса пароля: {name}",
+  "AdminUser.resetTitle": "Отправить письмо для сброса пароля: {name}",
   "AdminUser.resetText":
-    "Придёт то же письмо, что и после «Забыли пароль?»: со ссылкой, по которой можно задать новый пароль. Пока новый пароль не задан, старый продолжает работать.",
-  "AdminUser.sendLink": "Отправить ссылку",
+    "Придёт письмо о том, как сбросить пароль через «Забыли пароль?»: там пользователь получит код на почту. Пока новый пароль не задан, старый продолжает работать.",
+  "AdminUser.sendLink": "Отправить письмо",
   "AdminUser.sending": "Отправляем…",
   "AdminUser.deleteGuestTitle": "Удалить гостевой аккаунт {name}",
   "AdminUser.deleteGuestText":
@@ -1948,7 +1948,7 @@ export default {
   "AdminUser.cancel": "Отмена",
   "AdminUsers.title": "Пользователи",
   "AdminUsers.subtitle":
-    "Все, у кого есть аккаунт. Откройте пользователя, чтобы заблокировать его, завершить сеанс или отправить ссылку для сброса пароля.",
+    "Все, у кого есть аккаунт. Откройте пользователя, чтобы заблокировать его, завершить сеанс или отправить письмо для сброса пароля.",
   "AdminUsers.export": "Скачать CSV",
   "AdminUsers.search": "Имя или e-mail",
   "AdminUsers.searching": "Ищем…",

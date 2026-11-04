@@ -28,6 +28,7 @@ docs/aggregates.md
 docs/ids.md
 docs/api-errors.md
 docs/admin-modules.md
+docs/ai-agents.md
 docs/local-stack.md
 docs/first-feature.md
 docs/aggregate-offline.md

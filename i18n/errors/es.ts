@@ -177,7 +177,6 @@ export default {
   "Reason.SAME_GROUP": "Esto ya está en ese grupo.",
   "Reason.SEARCH_RATE_LIMITED": "Demasiadas búsquedas. Espera un minuto y vuelve a intentarlo.",
   "Reason.SEAT_PRICE_NOT_ACCEPTED": "Confirma que cada miembro nuevo aumenta la factura del grupo.",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE": "Este enlace se pidió desde otro navegador. Ábrelo allí.",
   "Reason.SLUG_LOCKED":
     "La dirección ya no se puede editar una vez publicada la entrada. Usa «Cambiar URL» para cambiarla.",
   "Reason.SLUG_TAKEN": "Esta dirección ya está en uso. Elige otra.",

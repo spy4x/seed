@@ -80,6 +80,7 @@ describe("isMembersOnlyPath", () => {
       "/sign-up/confirm",
       "/sign-up/code",
       "/sign-in",
+      "/sign-in/code",
       "/sign-in/link",
       "/sign-in/link/open",
       "/try",

@@ -89,7 +89,7 @@ export interface KeptGuest {
 
 /**
  * What the other sign-in paths call when a guest adds a sign-in method or finds it taken: the
- * password sign-up's code, a sign-in link, a provider link and a new passkey.
+ * password sign-up's code, a sign-in code, a provider link and a new passkey.
  */
 export interface GuestKeeper {
   /**
