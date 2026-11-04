@@ -68,6 +68,8 @@
     "mpa:build": "deno task --cwd apps/mpa build",
     "mpa:start": "deno task --cwd apps/mpa start",
     "mpa:check": "deno task --cwd apps/mpa check",
+    "mpa:node": "deno task mpa:build && node apps/mpa/dist/start.js", // the website on Node, from the build (apps/mpa/start.ts)
+    "mpa:bun": "deno task mpa:build && bun apps/mpa/dist/start.js", // the website on Bun, from the build
     "changelog": "deno run -R=. -W=apps/mpa/changelog.json -E=CI --allow-run=git apps/mpa/changelog-write.ts", // reads git history into apps/mpa/changelog.json for /changelog and the docs' dates; runs before every MPA image build
     "lighthouse": "apps/mpa/lighthouse/run.sh", // the public website's Lighthouse budget, on a built MPA; see the script
     // #endregion apps/mpa
@@ -131,6 +133,7 @@
     "test:backup": "bash infra/backup/test-local.sh", // backs a database up and restores it, in containers of its own; see the script
     "test:files": "bash tests/files/run.sh", // the file store against a Garage container of its own: upload, confirm, download, delete; see the script
     "e2e:local": "bash infra/scripts/e2e-local.sh", // the same specs against a stack of its own on spare ports; see the script
+    "test:runtimes": "bash tests/runtimes/smoke.sh", // the API, the worker and the website on Deno, Node and Bun, against a running Postgres and Valkey (tests/runtimes/smoke.sh)
     "e2e:report": "PLAYWRIGHT_HTML_OUTPUT_DIR=./e2e/report deno run -A --node-modules-dir npm:playwright@1.57.0 show-report",
     "fix": {
       "command": "echo 'Fixes applied!'",

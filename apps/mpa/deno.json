@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "build": "deno run -A --node-modules-dir=auto npm:vite@7.3.6 build",
+    "build": "deno run -A --node-modules-dir=auto npm:vite@7.3.6 build && deno bundle --platform deno -o dist/start.js start.ts",
     "check": "deno fmt --check . && deno lint . && deno check",
     "dev": "deno run -A --node-modules-dir=auto npm:vite@7.3.6",
     // Needs the MPA and the API at MPA_BASE_URL (default http://app.localhost), /api going to the API.
@@ -11,7 +11,10 @@
     "loops": "deno run -A screenshots/loops.ts",
     // The link-preview card of each of Seed's own posts. Needs magick: screenshots/blog-og.ts.
     "og:blog": "deno run -A screenshots/blog-og.ts",
-    "start": "deno serve -A dist/server.js"
+    "start": "deno serve -A dist/server.js",
+    // The built website on Node or Bun (start.ts).
+    "start:node": "node dist/start.js",
+    "start:bun": "bun dist/start.js"
   },
   "imports": {
     "@/": "./",

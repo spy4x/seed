@@ -1,33 +1,30 @@
 import { HttpError } from "@spy4x/preact-server"
 import { serveFile } from "@std/http/file-server"
+import { runtimeFileSystem } from "@spy4x/platform/server/runtime-fs"
 import { fromFileUrl } from "@std/path"
 import { LOOP_FILES } from "../../loops.ts"
 import { define } from "../../utils.ts"
 
 /**
- * The first of `paths` that is a folder, seen from where this module runs: the source
+ * The first of `paths` that exists, seen from where this module runs: the source
  * (`routes/video/`), or the build, which bundles it into `dist/server/assets/`.
  */
-function folder(paths: readonly string[], name: string): URL {
-  const found = paths.map((path) => new URL(path, import.meta.url)).find((url) => {
-    try {
-      return Deno.statSync(url).isDirectory
-    } catch {
-      return false
-    }
-  })
-  if (!found) throw new Error(`${name} is missing`)
-  return found
+async function folder(paths: readonly string[], name: string): Promise<URL> {
+  for (const path of paths) {
+    const url = new URL(path, import.meta.url)
+    if (await runtimeFileSystem.exists(fromFileUrl(url))) return url
+  }
+  throw new Error(`${name} is missing`)
 }
 
 /** `apps/mpa/media/video/`: the admin panel video and the feature loops. */
-const SITE = folder([`../../media/video/`, `../../../media/video/`], `apps/mpa/media/video/`)
+const SITE = await folder([`../../media/video/`, `../../../media/video/`], `apps/mpa/media/video/`)
 
 /**
  * `media/demo/` at the repository root: the README's demo video, which the home page plays too.
  * Its one copy stays there (`.dockerignore` lets in only its two files).
  */
-const DEMO = folder([`../../../../media/demo/`, `../../../../../media/demo/`], `media/demo/`)
+const DEMO = await folder([`../../../../media/demo/`, `../../../../../media/demo/`], `media/demo/`)
 
 /** The files this route serves, by name, and their folder; any other name is a 404. */
 export const VIDEO_FILES: Readonly<Record<string, URL>> = Object.fromEntries([

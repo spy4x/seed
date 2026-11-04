@@ -1,5 +1,6 @@
 import { HttpError } from "@spy4x/preact-server"
 import { serveFile } from "@std/http/file-server"
+import { runtimeFileSystem } from "@spy4x/platform/server/runtime-fs"
 import { fromFileUrl } from "@std/path"
 
 /**
@@ -32,10 +33,13 @@ export interface SeedPostFiles {
  * Any other name is a 404, so no request reaches a path the folder does not hold; a missing folder
  * stops the server, as a missing video does.
  */
-export function seedPostFiles(folder: URL, extension: string): SeedPostFiles {
+export async function seedPostFiles(folder: URL, extension: string): Promise<SeedPostFiles> {
+  const path = fromFileUrl(folder)
+  if (!await runtimeFileSystem.exists(path)) throw new Error(`${path} is missing`)
   const pattern = FILE_NAME(extension)
   const names = new Set(
-    [...Deno.readDirSync(folder)].filter((entry) => entry.isFile && pattern.test(entry.name))
+    (await runtimeFileSystem.readDir(path))
+      .filter((entry) => entry.isFile && pattern.test(entry.name))
       .map((entry) => entry.name),
   )
   return {
