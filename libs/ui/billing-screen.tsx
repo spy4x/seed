@@ -307,7 +307,7 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
       ? (
         // The start state's first question is "how much": the price is the largest thing on it.
         <div aria-live={sellsYearly ? "polite" : undefined} data-e2e="billing-price">
-          <p class="flex flex-wrap items-baseline gap-x-1.5">
+          <p class="flex flex-wrap items-baseline gap-x-2">
             <span
               class="text-2xl font-semibold tabular-nums text-foreground"
               data-e2e="billing-amount"
