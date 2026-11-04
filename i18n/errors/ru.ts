@@ -175,6 +175,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "Тариф группы этого не включает.",
   "Reason.PLAN_LIMIT_REACHED": "Группа упёрлась в лимит своего тарифа.",
   "Reason.POST_NOT_FOUND": "Этого поста больше нет.",
+  "Reason.REVISION_NOT_FOUND": "Этой прежней версии больше нет.",
   "Reason.PROVIDER_ERROR": "Платёжный сервис не ответил. Попробуйте ещё раз.",
   "Reason.REQUEST_ORIGIN_INVALID":
     "Не удалось проверить, откуда пришёл запрос. Обновите страницу и попробуйте ещё раз.",

@@ -23,7 +23,7 @@ folder's name; both apply only when the env file is created.
 alone; under Podman it prints the `proxy:start` hint instead.
 
 Metrics and logs go to VictoriaMetrics and VictoriaLogs, with Grafana on top at
-`http://localhost:3000` ([Admin consoles](deploy.md#admin-consoles)). `COMPOSE_PROFILES=monitoring`
+`http://localhost:3000` ([Admin consoles](operator-access.md#admin-consoles)). `COMPOSE_PROFILES=monitoring`
 in the env file runs those three in this project; without it, `VM_REMOTE_WRITE_URL` and `VLOGS_URL`
 send the same metrics and logs to a monitoring server you already have.
 [The stack guide](stack.md#monitoring) describes both modes. node-exporter and cAdvisor watch the

@@ -185,6 +185,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "خطة المجموعة لا تشمل هذه الميزة.",
   "Reason.PLAN_LIMIT_REACHED": "وصلت المجموعة إلى حدّ خطتها.",
   "Reason.POST_NOT_FOUND": "هذا المقال لم يعد موجودًا.",
+  "Reason.REVISION_NOT_FOUND": "هذه النسخة السابقة لم تعد موجودة.",
   "Reason.PROVIDER_ERROR": "لم يستجب مزوّد الدفع. حاول مرة أخرى.",
   "Reason.REQUEST_ORIGIN_INVALID":
     "لم نتمكن من التحقق من مصدر هذا الطلب. أعد تحميل الصفحة وحاول مرة أخرى.",

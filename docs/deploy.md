@@ -1,28 +1,22 @@
-# Deploy and operate
+# Deploy to a server
 
 > Also on the website: [seedsaas.com/docs/deploy](https://seedsaas.com/docs/deploy).
 
-Preparing a server, certificates, the deploy itself, the consoles, several projects on one server,
-and releases.
+From a fresh Ubuntu server to a healthy deployment with HTTPS and a tested backup, in order.
 
-## Prepare a server
+**You need:**
 
-From a fresh Ubuntu server to a healthy deployment with a tested backup, in order. The examples use
-`deploy@192.0.2.10` for the server and `example.com` for the product's hosts.
+- An Ubuntu server you can reach over SSH as root, and a domain whose DNS you control.
+- A checkout of your product on your machine, with Deno installed.
 
-1. **A server and SSH access.** Create the server with your SSH key. Log in as root once, make a
-   user for the deploys with uid 1000, give it your key, and turn off password and root logins.
-   The app's containers run as uid 1000, and the `api` and `backup` ones read
-   `infra/configs/vapid.json`, which the deploy makes readable by its owner only, so the deploy
-   user must have that uid ([backups](backups.md#on-a-new-server)).
+The examples use `deploy@192.0.2.10` for the server and `app.example.com` for the product's host.
 
-   First run `getent passwd 1000`. If it names a user (often `ubuntu`), the image already has one
-   with that uid: deploy as that user instead, and use its name for `deploy` in the block below and
-   from here on. The block makes the user only when it is missing, stops when a user of that name
-   has another uid, and adds root's keys to the user's `authorized_keys` without removing the keys
-   already there or adding one twice. The commands are chained, so the block stops at the first
-   one that fails and changes nothing after it. Pasting it again, after a fix or a later step
-   failed, gives the same result as pasting it once.
+## The server
+
+1. Run `getent passwd 1000` as root. If it names a user (often `ubuntu`), deploy as that user:
+   use its name for `deploy` from here on.
+2. Make the deploy user with uid 1000, give it root's SSH keys, and turn off password and root
+   logins. Pasting this block twice gives the same result as pasting it once:
 
    ```sh
    { id deploy >/dev/null 2>&1 || adduser --uid 1000 --disabled-password --gecos '' deploy; } &&
@@ -37,13 +31,10 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
    sshd -T | grep -E '^(passwordauthentication|permitrootlogin) '
    ```
 
-   The file's name sorts first because SSH keeps the first value it reads, and a provider's file
-   (`50-cloud-init.conf`) may turn passwords back on. The last command must print `no` twice. Check
-   that `ssh deploy@192.0.2.10` works before you close the root session.
-
-2. **Docker, Compose, Deno and rsync.** As root, install Docker with its Compose plugin, the tools
-   the deploy runs, and let the deploy user run Docker. Membership of the `docker` group is as good
-   as root, so keep that user's key as safe as root's.
+3. Check that the last command printed `no` twice.
+4. From your machine, check that `ssh deploy@192.0.2.10` works before you close the root session.
+5. As root, install Docker with its Compose plugin, rsync and unzip, and let the deploy user run
+   Docker:
 
    ```sh
    curl -fsSL https://get.docker.com | sh
@@ -51,314 +42,149 @@ From a fresh Ubuntu server to a healthy deployment with a tested backup, in orde
    usermod -aG docker deploy
    ```
 
-   Then, as `deploy`, install Deno. The installer puts it in `~/.deno/bin`, where the deploy looks
-   first; let it add that directory to `PATH` for your own shell too.
+6. As `deploy`, install Deno:
 
    ```sh
    curl -fsSL https://deno.land/install.sh | sh
    ```
 
-3. **The firewall.** Only SSH, 80 and 443 may answer from outside. Docker opens the ports it
-   publishes past `ufw`, so `ufw` alone keeps nothing private: Postgres, Valkey and Grafana stay off
-   the internet because they are published on `127.0.0.1` only (`DB_HOST_PORT`, `KV_HOST_PORT`,
-   `GRAFANA_HOST_PORT`). Never change those to `0.0.0.0`. The provider's firewall, outside the
-   server (a Hetzner Cloud Firewall), is the safer place for this rule, since Docker cannot open
-   it. On the server:
+The containers run as uid 1000 and read the web push keys, which only their owner may read. That is
+why the deploy user needs that uid. The SSH file's name sorts first because SSH keeps the first
+value it reads, and a provider's own file may turn passwords back on. Membership of the `docker`
+group is as good as root, so keep the deploy user's key as safe as root's.
 
-   ```sh
-   ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443/tcp && ufw --force enable
-   ```
+## The firewall
 
-   The proxy listens on `127.0.0.1` too unless the env file says otherwise, because in development
-   it serves routes that make anyone an administrator. In the production env file (step 5), set
-   `PROXY_HTTPS_HOST_PORT=443` and `PROXY_HTTP_HOST_PORT=80`, which publish both on every IPv4 and
-   IPv6 address; `0.0.0.0:443` would leave IPv6 visitors out.
+Only SSH, 80 and 443 may answer from outside. On the server, as root:
 
-   After the first deploy, `ss -tlnp` as root must list no address but `127.0.0.1` and `[::1]` for
-   every port other than 22, 80 and 443.
+```sh
+ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443/tcp && ufw --force enable
+```
 
-4. **DNS.** An `A` record (and `AAAA` for IPv6) pointing at the server for every host the product
-   serves: `DOMAIN` (the SPA, the API and the bundled file store), `MPA_DOMAIN` with the `mpa`
-   profile, `ADMIN_DOMAIN` with the `admin` profile, and every host in `MPA_REDIRECT_RULE`. Let's
-   Encrypt checks each host over port 80, so the records must resolve before the proxy starts:
-   `dig +short app.example.com` answers `192.0.2.10`.
+Docker opens the ports it publishes past `ufw`. Postgres, Valkey and Grafana stay private because
+they are published on `127.0.0.1` only: never change `DB_HOST_PORT`, `KV_HOST_PORT` or
+`GRAFANA_HOST_PORT` to `0.0.0.0`. The provider's firewall outside the server, such as a Hetzner
+Cloud Firewall, is the safer place for this rule, since Docker cannot open it.
 
-5. **The production env file.** On your machine, copy the example and edit the copy:
+After the first deploy, `ss -tlnp` as root must list no address but `127.0.0.1` and `[::1]` for
+every port other than 22, 80 and 443.
+
+## DNS
+
+Create an `A` record, and an `AAAA` record for IPv6, pointing at the server for every host:
+
+| Host                             | When                                     |
+| -------------------------------- | ---------------------------------------- |
+| `DOMAIN`                         | Always: the SPA, the API and file store. |
+| `MPA_DOMAIN`                     | With the `mpa` profile.                  |
+| `ADMIN_DOMAIN`                   | With the `admin` profile.                |
+| each host in `MPA_REDIRECT_RULE` | When the rule is set.                    |
+
+Let's Encrypt checks each host over port 80, so the records must resolve before the first deploy.
+`dig +short app.example.com` must answer `192.0.2.10`.
+
+## The env file
+
+1. On your machine, copy the example:
 
    ```sh
    cp infra/envs/.env.example infra/envs/.env.prod
    ```
 
-   Set `ENV=prod`, `PROJECT`, `DOMAIN`, `MPA_DOMAIN`, `ADMIN_DOMAIN`, `TRAEFIK_ACME_EMAIL` (a real
-   address), `SSH_TO_SERVER=deploy@192.0.2.10`, `PATH_ON_SERVER`, `PROXY_HTTPS_HOST_PORT=443` and
-   `PROXY_HTTP_HOST_PORT=80` (step 3), and add `mpa` and `admin` to
-   `COMPOSE_PROFILES` when the product has them. Leave `backup` out until step 10. Give every
-   secret a value of its own: `openssl rand -hex 32` for `DB_PASS`, `AUTH_COOKIE_SECRET`,
-   `AUTH_PEPPER`, `S3_SECRET_ACCESS_KEY` and `GARAGE_RPC_SECRET`, `openssl rand -hex 24` for
-   `KV_PASSWORD` and `GRAFANA_PASS`, and `GK` followed by `openssl rand -hex 12` for
-   `S3_ACCESS_KEY_ID`. Mail (`SMTP_*`), billing and the rest are optional; the example file says
-   what each needs. The deploy refuses a file that does not set `ENV=prod`, or that keeps a secret
-   from the example or leaves one empty, and names each.
+2. Set the values below. [Settings](settings.md) describes every variable.
 
-   The file stays on your machine: every deploy copies it to `infra/envs/.env` on the server,
-   readable by the deploy user only, and replaces what is there, so edit it here, never on the
-   server. It is the only copy of the secrets and the file store's key, and the backup does not
-   hold it: keep it encrypted in the repository with `deno task env:encrypt`
-   ([env files](development.md#env-files)), and its key in a password manager.
+   | Variable                               | Value                                                               |
+   | -------------------------------------- | ------------------------------------------------------------------- |
+   | `ENV`                                  | `prod`                                                              |
+   | `PROJECT`                              | Your product's name, lowercase.                                     |
+   | `DOMAIN`, `MPA_DOMAIN`, `ADMIN_DOMAIN` | The hosts from the DNS step.                                        |
+   | `TRAEFIK_ACME_EMAIL`                   | A real address for certificate notices.                             |
+   | `SSH_TO_SERVER`                        | `deploy@192.0.2.10`                                                 |
+   | `PATH_ON_SERVER`                       | The app's directory on the server.                                  |
+   | `PROXY_HTTPS_HOST_PORT`                | `443`                                                               |
+   | `PROXY_HTTP_HOST_PORT`                 | `80`                                                                |
+   | `COMPOSE_PROFILES`                     | Add `mpa` and `admin` when you use them: [The three apps](apps.md). |
 
-6. **First deploy.** Create the app's directory, deploy, then start the shared proxy once per
-   server, in the app's directory:
+   The proxy listens on `127.0.0.1` unless you set the two ports, because in development it serves
+   routes that make anyone an administrator. `443` and `80` publish on every IPv4 and IPv6 address;
+   `0.0.0.0:443` would leave IPv6 visitors out.
+
+3. Leave `backup` out of `COMPOSE_PROFILES` for now: you set it up after the first deploy.
+4. Give every secret a value of its own:
+
+   | Secrets                                                                                     | Command                         |
+   | ------------------------------------------------------------------------------------------- | ------------------------------- |
+   | `DB_PASS`, `AUTH_COOKIE_SECRET`, `AUTH_PEPPER`, `S3_SECRET_ACCESS_KEY`, `GARAGE_RPC_SECRET` | `openssl rand -hex 32`          |
+   | `KV_PASSWORD`, `GRAFANA_PASS`                                                               | `openssl rand -hex 24`          |
+   | `S3_ACCESS_KEY_ID`                                                                          | `GK` and `openssl rand -hex 12` |
+
+5. Encrypt the file into the repository, and keep its key in a password manager:
+
+   ```sh
+   deno task env:encrypt
+   ```
+
+Mail, billing and the rest are optional. The deploy refuses a file that does not set `ENV=prod`,
+or that keeps a secret from the example or leaves one empty, and names each.
+
+The file stays on your machine. Every deploy copies it to `infra/envs/.env` on the server and
+replaces what is there, so edit it here, never on the server. It holds the only copy of the secrets
+and the file store's key, and the backup does not hold it ([env files](development.md#env-files)).
+
+## The first deploy
+
+1. Create the app's directory on the server:
 
    ```sh
    ssh deploy@192.0.2.10 mkdir -p <PATH_ON_SERVER>
+   ```
+
+2. Deploy from your machine:
+
+   ```sh
    deno task deploy
+   ```
+
+3. Start the shared proxy, once per server, in the app's directory on the server:
+
+   ```sh
    ssh deploy@192.0.2.10
    cd <PATH_ON_SERVER> && deno task proxy:start
    ```
 
-   The proxy asks Let's Encrypt for each host's certificate as soon as it starts and finds the
-   app's routers, not on a first visit ([certificates](#production-certificates)). Until a
-   certificate arrives, the host answers with Traefik's own self-signed one. A host whose DNS did
-   not resolve yet gets none: `docker logs traefik` names it. Fix the record and wait until it
-   resolves, then retry at once by restarting the proxy, in the app's directory on the server:
-   `deno task proxy:stop && deno task proxy:start`. A deploy does not restart the proxy, but
-   Traefik asks again for every host still without a certificate whenever the app's routes change,
-   so a deploy that recreates the app's containers retries too, and one that changes nothing does
-   not. Do not retry again and again while DNS is still wrong: Let's Encrypt allows 5 failed
-   validations per host per hour, then refuses that host until it gives one back, which it does
-   every 12 minutes ([rate limits](https://letsencrypt.org/docs/rate-limits/#authorization-failures-per-identifier-per-account)).
-   Later deploys are `deno task deploy` alone.
+Every deploy applies pending migrations before the API and the worker start, and a failed migration
+fails the deploy. `deno task compose logs migrate` on the server shows what it did. The deploy also
+creates the web push keys when they are missing.
 
-7. **Migrations.** Nothing to run: on every deploy Compose's one-shot `migrate` service applies the
-   pending migrations before the API and the worker start, and a failed migration fails the deploy.
-   `deno task compose logs migrate` on the server shows what it did.
+The proxy asks Let's Encrypt for each host's certificate as soon as it starts. When a host still
+shows a self-signed certificate after a few minutes, see [HTTPS certificates](certificates.md).
 
-8. **The first operator.** On the server, `deno task compose exec worker deno task operator:create
-   <address>` ([The first operator](#the-first-operator)), then sign in at `ADMIN_DOMAIN`.
+## Check it
 
-9. **Health check.** On the server, `deno task compose ps` lists every container as running, and
-   healthy where it has a health check. From your machine, run both of these. The second works
-   without `-k`, which proves the certificate:
+1. On the server, list the containers. Each must be running, and healthy where it has a check:
 
    ```sh
-   curl -sI http://app.example.com      # a permanent redirect to https://
+   deno task compose ps
+   ```
+
+2. From your machine, check the redirect:
+
+   ```sh
+   curl -sI http://app.example.com
+   ```
+
+3. Check the API's health. It must print `"status":"ok"` and `200`, without `-k`, which proves the
+   certificate:
+
+   ```sh
    curl -sS -w '\n%{http_code}\n' https://app.example.com/api/health
    ```
 
-   The second prints the health report and its status code: it must say `"status":"ok"` and 200.
-   `"down"` with 503 means the API cannot reach the database. The answer is 200 also when it says
-   `"degraded"`: the cache or the file store is down, and its `checks` entry is `false`.
+`"down"` with 503 means the API cannot reach the database. `"degraded"` with 200 means the cache or
+the file store is down; its `checks` entry is `false`.
 
-10. **Backups, with a tested restore.** Set the backup up as [Backups](backups.md#set-it-up) says,
-    deploy again, and check that a snapshot is there. Then rehearse a restore once into a spare
-    database, so you know the backup can be read before you need it (`<db>` is `DB_NAME`):
+## Next
 
-    ```sh
-    deno task compose exec db psql -d postgres -c 'CREATE DATABASE "<db>_restore_test"'
-    deno task compose run --rm backup restore
-    deno task compose run --rm -e PGDATABASE=<db>_restore_test backup restore <snapshot id>
-    deno task compose exec db psql -d <db>_restore_test -c '\dt'
-    deno task compose exec db psql -d postgres -c 'DROP DATABASE "<db>_restore_test"'
-    ```
-
-    The table list of the spare database must match the live one's.
-
-## Production certificates
-
-The production routers ask Traefik for certificates from the resolver named by
-`TRAEFIK_CERT_RESOLVER` (default `myresolver`). `infra/compose/compose.proxy.yml` defines that
-resolver: Let's Encrypt, HTTP challenge on port 80, certificates stored in
-`.volumes/traefik/letsencrypt/acme.json`, expiry notices to `TRAEFIK_ACME_EMAIL`. Point `DOMAIN` at
-the server and run `deno task proxy:start` there.
-
-Plain `http://<DOMAIN>` (and `http://<MPA_DOMAIN>` with the `mpa` profile) answers a permanent
-redirect to HTTPS. Other hosts can answer a permanent redirect to the same path on `MPA_DOMAIN`:
-set `MPA_REDIRECT_RULE` to a Traefik rule, such as ``MPA_REDIRECT_RULE=Host(`www.example.com`)``.
-
-The proxy serves nothing of its own but `/ping`: Traefik's dashboard and API are
-off, because they list every router and backend address of every project behind the proxy.
-
-**A server deployed before these changes needs three things once**, and its next deploy does
-more than usual:
-
-1. A server that runs Podman needs `CONTAINER_PROVIDER=podman` in its env file. Without that line
-   the deploy used to run Podman and now runs Docker: it fails at "Starting the app" and the old
-   containers stay up. Any other value than `docker` or `podman` is refused.
-2. Run `deno task proxy:start` on it: `deno task deploy` restarts the app's containers but never
-   the proxy, so the proxy that is already running keeps serving its dashboard at
-   `proxy.<DOMAIN>` until then.
-3. The next deploy publishes Grafana (with the `monitoring` profile) on `127.0.0.1:3000`. When
-   something on the server that is not this project
-   already listens on a port the project publishes, the deploy stops at "Starting the app" before
-   any container is created, stopped or started: it names the port and the variable to change
-   (`GRAFANA_HOST_PORT`), and what ran before still runs. Set that
-   variable in the env file to a free `127.0.0.1:<port>` and deploy again
-   ([Admin consoles](#admin-consoles)).
-
-That deploy also recreates the project's network, which no longer has a fixed subnet. Compose
-would start the containers it does not recreate on the new network without their service names
-(`db`, `kv`), so the deploy sees the change coming (a dry run names the network), builds the
-images, removes every container of the project and that network, and creates them all again:
-expect a short outage of everything, the database included, not the usual restart of the app
-alone. Data is not touched: it lives in `.volumes`. The base image is now named
-`<PROJECT>/deno-base`; the old `app/deno-base` image stays on the server until you remove it
-(`docker image rm app/deno-base:<version>`).
-
-Every deploy starts the product first (the database, Valkey, the migration, the API, the worker,
-the SPA unless `SPA=false`, and the website with the `mpa` profile), then everything else. When a
-monitoring container cannot start, the product already runs on the new version; the deploy still
-fails, and its last lines name the services that are not up. A check that cannot be made (Compose
-answers in a form the script does not read, as `podman-compose` may) is skipped, and the deploy
-runs as one `compose up`, as it did before.
-
-`deno task deploy [env file]` reads the server from the env file (`infra/envs/.env.prod` unless you
-name another): `SSH_TO_SERVER`, `PATH_ON_SERVER` and, when Deno is not on the server's `PATH`,
-`DENO_ON_SERVER`. `infra/envs/.env.example` lists them with every other name. The copy replaces
-every server file that differs from your checkout, one edited on the server or newer there too, and
-deletes the ones your checkout no longer has; env files and the web push keys are never touched. So
-deploying an older commit is a full rollback of the code. It does not roll back the database or
-Valkey: before rolling back, read traps 10 and 11 in [the handoff](handoff.md).
-
-The deploy stops when your working tree has uncommitted changes, untracked files included, and
-lists them: the copy sends files as they are on disk, so the server would run code that matches no
-commit. Commit or stash them first, or run `deno task deploy --allow-dirty [env file]` to send
-them anyway.
-
-**A server that ran Postgres 16 moves its data once.** The Compose file runs Postgres 18, which
-keeps its data in a directory of its own, so the first deploy of this version stops at "Starting
-the app" with a message that says why, and the old containers keep serving. Run
-`deno task db:upgrade-18` on the server to move the data and finish the deploy:
-[The Postgres 18 upgrade guide](postgres-18-upgrade.md) has the steps, the outage to expect and
-the way back.
-
-`deno task deploy` needs no manual step on a new server: it creates `infra/configs/vapid.json`
-(the web push keys) there when the file is missing, readable by its owner only. It never sends the
-key from your machine and never replaces one that exists. It stops before sending anything when a
-password or secret in the env file equals one that `infra/envs/.env.example` prints (those values
-are public), or when one that the example file sets is empty or missing, and names each such
-variable. It reads the example file for that, so keep the file. Router, service and middleware names
-carry `${PROJECT}`, so projects with different `PROJECT` values can share one Traefik. Postgres and
-Valkey stay on `127.0.0.1`. Every image has a pinned version, except the nginx base of the SPA and
-admin images (`nginx-unprivileged:stable-alpine`).
-
-The template usually deploys behind a Traefik that several projects share. If that Traefik already
-defines a resolver, do not start the proxy compose file: set `TRAEFIK_CERT_RESOLVER` to the name it
-defines. If that Traefik defines none, copy the three `--certificatesresolvers.*` flags from
-`compose.proxy.yml` into its command.
-
-## The first operator
-
-`deno task operator:create <address>` makes a person an administrator of the admin app. When
-nobody signs in with the address, it creates the account, its address proven, with a password it
-asks for. It needs no mail, so it is how a product without mail or without sign-up gets its first
-operator. Run it on the server, in `PATH_ON_SERVER`, in the worker container, which has the
-database and `AUTH_PEPPER`:
-
-```sh
-deno task compose exec worker deno task operator:create seller@example.com
-```
-
-It asks for the password twice and shows nothing typed. From a script, send the password as the
-first line of standard input and add `-T`, so Compose gives the command no terminal. Keep the
-password out of the command line, where the shell history and the process list would keep it:
-
-```sh
-ssh <SSH_TO_SERVER> 'cd <PATH_ON_SERVER> &&
-  deno task compose exec -T worker deno task operator:create seller@example.com' < password.txt
-```
-
-The password is 8 to 50 characters, as at sign-up. The person signs in to the admin app at
-`ADMIN_DOMAIN` with the address and that password. When somebody signs in with the address
-already, the command makes them an administrator and asks for nothing: their password stays as it
-is. Running it again changes nothing. Every role change writes an audit row on the person naming
-`cli:operator-create`. To give a lower role, use `deno task user:role` ([apps.md](apps.md)).
-
-## Without the SPA
-
-A product that is a website and its admin panel only, with no signed-in customers, sets
-`SPA=false` in the env file:
-
-- Compose runs no SPA container: every `deno task compose up`, and so every deploy, scales it to
-  none, and stops and removes one that runs. Traefik then has no router for the SPA. The API keeps
-  its router on `DOMAIN`, for the webhooks and the file store's links. The SPA's image is still
-  built on a deploy.
-- The API answers 404 to sign-up and every other route under `/api/auth` on every host but
-  `ADMIN_DOMAIN`: the password sign-up, sign-in links, Google and GitHub, guests and passkeys.
-  Nobody can make an account or sign in there.
-- The admin app's sign-in on `ADMIN_DOMAIN` works as before. Its first operator comes from
-  [`deno task operator:create`](#the-first-operator).
-
-Any other value, or none, runs the SPA. The website's links to sign-in and sign-up lead to the SPA,
-so a product without it removes them from its pages.
-
-## Admin consoles
-
-Grafana has no public address. It is published on the machine's own address only, on
-`127.0.0.1:3000` (sign in with `admin` and `GRAFANA_PASS`). On your own machine open
-`http://localhost:3000`. On a server, open a tunnel first:
-
-```sh
-ssh -L 3000:127.0.0.1:3000 <SSH_TO_SERVER>
-```
-
-When the port is taken, set `GRAFANA_HOST_PORT` in the env file to another `127.0.0.1:<port>`.
-Never publish it on `0.0.0.0`.
-
-Grafana reads `GRAFANA_PASS` only on its first start, when it creates its database under
-`.volumes/grafana`. Changing the value in the env file later changes nothing. To change the
-password of a running Grafana, give the new one to Grafana's own command, which reads it from
-its input so it stays out of the shell history (type it and press Ctrl+D):
-
-```sh
-deno task compose exec -T grafana grafana cli admin reset-admin-password --password-from-stdin
-```
-
-Then put the same value in `GRAFANA_PASS`, so the env file says what Grafana uses.
-
-## Several projects on one server
-
-Products made from this template can share a server and its Traefik. Each lives in its own
-directory, so each has its own data under `.volumes/`. In the env file of every project after the
-first, change:
-
-- `PROJECT`: containers, the project's network, its base image and its Traefik routers are named
-  after it. Lowercase letters, digits and dashes.
-- `DOMAIN`, and `MPA_DOMAIN` with the `mpa` profile.
-- the three ports published on `127.0.0.1`: `DB_HOST_PORT`, `KV_HOST_PORT` and
-  `GRAFANA_HOST_PORT`. A port another project holds stops
-  `deno task compose up -d` before it changes anything, naming the port and its variable.
-
-The engine gives every project's network a free subnet, and each project's database, Valkey
-and monitoring are on that network only. Two things are shared. The proxy: start it once per
-server, not per project. And the `proxy` network, which the API, the SPA and the website of every
-project join so that Traefik can reach them: a container on it can open any project's API
-directly, without passing the proxy. The API refuses such a request when it names a client address
-(`X-Real-IP` and the like): only Traefik, which must keep the container name `traefik`, and the
-project's own website may, as `PROXY_HOSTS` in the API's environment lists them. So a neighbour
-cannot pose as many visitors to dodge the sign-in limits, though it can still call the API as one.
-Share a server only between projects you trust alike. On that network a project addresses its own
-services by container name (`<PROJECT>-api`, `<PROJECT>-db`), never by a plain service name such as
-`api`, which any project would answer.
-
-With the `host-monitoring` profile, turn it on in one project only: its containers watch the whole
-host.
-
-## Releases
-
-A version tag on `main` publishes the images to Docker Hub as `<IMAGE_PREFIX>-api`, `-spa` and
-`-mpa` (the worker runs the API image); `IMAGE_PREFIX` is set in
-[`.woodpecker/release.yml`](../.woodpecker/release.yml). To cut a release:
-
-```sh
-git switch main && git pull --ff-only   # the tag must point at a commit on main
-git tag v1.2.3                          # v1.2.3-rc.1 publishes that tag only, never `latest`
-git push origin v1.2.3
-```
-
-The pipeline refuses a tag whose commit is not on `main`. Setup and the steps:
-[the CI guide](woodpecker-ci-setup.md#releases).
-
-**Release images are public.** A new Docker Hub repository is public unless the account says
-otherwise, and the API image holds the whole source tree, not only the build output. A private
-product makes its repositories private on Docker Hub (`-base`, `-api`, `-spa` and `-mpa`), or sets
-the account's default visibility to private, before its first release tag.
+- [Give operators access](operator-access.md): the first operator, then sign in at `ADMIN_DOMAIN`.
+- [Backups](backups.md): set them up, then rehearse a restore.
+- [Deploy an update](deploy-updates.md)
