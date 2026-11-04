@@ -427,6 +427,8 @@ describe(`one group in the admin app`, () => {
     expect(zone.textContent).toMatch(/^Berlin, Europe · GMT\+[12]$/)
     const facts = [...root!.querySelectorAll(`dt`)].map((term) => term.textContent?.trim())
     expect(facts.indexOf(`Time zone`)).toBe(facts.indexOf(`Created`) + 1)
+    // A zone name runs past a phone's column; cut short, its offset would be lost.
+    expect(zone.closest(`dd`)!.classList.contains(`truncate`)).toBe(false)
   })
 
   it(`says when a group was made from an export file and who imported it, and nothing for one created empty`, async () => {

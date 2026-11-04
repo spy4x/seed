@@ -324,7 +324,7 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
           <Fact label={t.t(`AdminGroup.created`)}>
             <When at={group.createdAt} />
           </Fact>
-          <Fact label={t.t(`AdminGroup.timeZone`)}>
+          <Fact label={t.t(`AdminGroup.timeZone`)} wrap>
             <bdi data-e2e="admin-group-time-zone">{zoneLabel(group.timeZone, new Date())}</bdi>
           </Fact>
           {detail.imported && (
@@ -425,12 +425,14 @@ function TabLabel({ text, count }: { text: string; count: number }): JSX.Element
   )
 }
 
-/** One fact of the header card. */
-function Fact({ label, children }: { label: string; children: ComponentChildren }): JSX.Element {
+/** One fact of the header card, cut to one line unless `wrap` lets a long value break. */
+function Fact(
+  { label, wrap, children }: { label: string; wrap?: boolean; children: ComponentChildren },
+): JSX.Element {
   return (
     <div class="flex min-w-0 flex-col gap-1">
       <dt class="text-xs font-medium uppercase tracking-wide text-muted">{label}</dt>
-      <dd class="truncate text-sm font-medium">{children}</dd>
+      <dd class={`${wrap ? `break-words` : `truncate`} text-sm font-medium`}>{children}</dd>
     </div>
   )
 }
