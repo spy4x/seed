@@ -131,4 +131,4 @@ processes.
 
 - [Seed's apps](apps.md)
 - [Offline](offline.md)
-- [Group sync design](design/group-sync.md)
+- [ADR 002: realtime transport and sync](decisions/002-realtime-transport-and-sync.md)
