@@ -507,7 +507,7 @@ Deno.test("the demo seed fails when sign-up refuses an account that does not exi
   })
 })
 
-Deno.test("the wipe empties every table but the kept ones, keeps the blog, its old addresses and the contact links, queues every stored file for deletion, and never reuses an id", async () => {
+Deno.test("the wipe empties every table but the kept ones, keeps the blog, its old addresses, its earlier versions and the contact links, queues every stored file for deletion, and never reuses an id", async () => {
   await withSchema(async (sql) => {
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     await sql`INSERT INTO backup_status (target, succeeded_at) VALUES ('database', now())`
@@ -519,6 +519,14 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog, its o
     await sql`
       UPDATE blog_posts SET slug = slug || '-moved'
       WHERE id = (SELECT id FROM blog_posts WHERE published_at IS NOT NULL ORDER BY id LIMIT 1)
+    `
+    // An operator's earlier version of a post, which History brings back (#418).
+    await sql`
+      INSERT INTO blog_post_revisions (
+        id, post_id, slug, title, description, body_md, language, saved_by_id, saved_by_name
+      )
+      SELECT ${uuidV7()}, id, slug, title, description, body_md, language, ${before}, 'Maya Chen'
+      FROM blog_posts ORDER BY id LIMIT 1
     `
     await seedSampleContactLinks(sql)
     // A website reader who left: the seed writes no unsubscribes, so this is the kept row.
@@ -574,6 +582,10 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog, its o
       { redirects: number }[]
     >`SELECT COUNT(*)::int AS redirects FROM blog_slug_redirects`
     expect(redirects).toBe(1)
+    const [{ revisions }] = await sql<
+      { revisions: number }[]
+    >`SELECT COUNT(*)::int AS revisions FROM blog_post_revisions`
+    expect(revisions).toBe(1)
     const [{ links }] = await sql<
       { links: number }[]
     >`SELECT COUNT(*)::int AS links FROM contact_links`

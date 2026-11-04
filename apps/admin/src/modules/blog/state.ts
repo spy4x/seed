@@ -8,8 +8,11 @@ import {
   blogPostPath,
   type BlogPreviewBody,
   type BlogProblem,
+  type BlogRevision,
+  type BlogRevisionListResponse,
   type BlogTopic,
 } from "@domain/blog"
+import { type BlogHistoryState, NO_BLOG_HISTORY } from "@ui/admin-blog-history.tsx"
 import type { AdminBlogFilter } from "@ui/admin-blog-list.tsx"
 import {
   type BlogDialog,
@@ -170,6 +173,10 @@ export function createBlogState(
   const editor = signal<BlogEditorState>(freshEditor(ports.newId()))
   const dialog = signal<BlogDialogState>(NO_DIALOG)
   const preview = signal<BlogPreviewState>(NO_PREVIEW)
+  /** The History dialog's list and the version picked (#418). */
+  const history = signal<BlogHistoryState>(NO_BLOG_HISTORY)
+  /** The versions already read, by id: the list's arrow keys come back to them often. */
+  const revisions = new Map<string, BlogRevision>()
   const topics = signal<readonly string[]>([])
   /** Every post of its own, which a post may translate; the editor leaves out the open one. */
   const originals = signal<readonly BlogOriginal[]>([])
@@ -189,6 +196,44 @@ export function createBlogState(
 
   /** Whether `id` is still the post the editor has open, after an await. */
   const current = (id: string) => editor.value.id === id
+
+  /** Reads the open post's earlier versions, then the newest of them. */
+  const loadHistory = async () => {
+    const { id } = editor.value
+    revisions.clear()
+    history.value = NO_BLOG_HISTORY
+    const result = await request<BlogRevisionListResponse>(`${API}/posts/${id}/revisions`)
+    if (!current(id) || dialog.value.dialog !== `history`) return
+    if (!result.ok) {
+      history.value = { ...NO_BLOG_HISTORY, listError: result.error.message }
+      return
+    }
+    history.value = { ...NO_BLOG_HISTORY, revisions: result.data.revisions }
+    const newest = result.data.revisions[0]
+    if (newest) await selectRevision(newest.id)
+  }
+
+  /** Picks a version and reads it, unless it was read before. An answer for a version no longer
+   * picked is dropped: the arrow keys can move faster than the API answers. */
+  const selectRevision = async (revisionId: string) => {
+    const { id } = editor.value
+    const known = revisions.get(revisionId) ?? null
+    history.value = {
+      ...history.value,
+      selectedId: revisionId,
+      selected: known,
+      selectedError: null,
+    }
+    if (known) return
+    const result = await request<{ revision: BlogRevision }>(
+      `${API}/posts/${id}/revisions/${revisionId}`,
+    )
+    if (!current(id) || history.value.selectedId !== revisionId) return
+    if (result.ok) {
+      revisions.set(revisionId, result.data.revision)
+      history.value = { ...history.value, selected: result.data.revision }
+    } else history.value = { ...history.value, selectedError: result.error.message }
+  }
 
   /** Puts a saved or changed post in the editor, keeping nothing typed since: there was none. */
   const show = (saved: BlogPost) => {
@@ -229,6 +274,7 @@ export function createBlogState(
     editor,
     dialog,
     preview,
+    history,
     topics,
     originals,
     newsletter,
@@ -256,6 +302,7 @@ export function createBlogState(
       editor.value = freshEditor(ports.newId())
       dialog.value = NO_DIALOG
       preview.value = NO_PREVIEW
+      history.value = NO_BLOG_HISTORY
     },
 
     /** Opens the post `id` and reads it. */
@@ -263,6 +310,7 @@ export function createBlogState(
       editor.value = { ...freshEditor(id), loading: true, saveStatus: `saved` }
       dialog.value = NO_DIALOG
       preview.value = NO_PREVIEW
+      history.value = NO_BLOG_HISTORY
       await state.reload()
     },
 
@@ -404,6 +452,44 @@ export function createBlogState(
         }
       }
       dialog.value = { dialog: next, pending: false, error: null }
+      if (next === `history`) void loadHistory()
+    },
+
+    /** Picks a version in History and reads it. */
+    selectRevision(revisionId: string): Promise<void> {
+      return selectRevision(revisionId)
+    },
+
+    /** Reads what History failed to read: the list, or the version picked. */
+    retryHistory(): Promise<void> {
+      const { revisions, selectedId } = history.value
+      return revisions !== null && selectedId !== null ? selectRevision(selectedId) : loadHistory()
+    },
+
+    /**
+     * Puts an earlier version's fields in the editor as unsaved changes and closes History.
+     * Nothing is saved: the operator reads it and saves, or leaves it. A published post keeps its
+     * address, which only "Change URL" moves.
+     */
+    restoreRevision(revision: BlogRevision): void {
+      const open = editor.value
+      const restored = blogDraftOf(revision)
+      const value = open.post?.publishedAt != null
+        ? { ...restored, slug: open.value.slug }
+        : restored
+      const saved = open.post ? blogDraftOf(open.post) : emptyBlogDraft()
+      editor.value = {
+        ...open,
+        value,
+        errors: {},
+        saveStatus: sameBlogDraft(value, saved) ? `saved` : `unsaved`,
+      }
+      dialog.value = NO_DIALOG
+      history.value = NO_BLOG_HISTORY
+      toasts.success({
+        body: adminText().t(`AdminBlogHistory.restored`),
+        dataE2E: `admin-blog-toast`,
+      })
     },
 
     closeDialog(): void {
