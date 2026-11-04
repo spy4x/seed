@@ -114,7 +114,7 @@ export function AdminNeverPaidScreen(props: AdminNeverPaidScreenProps): JSX.Elem
       id: `owner`,
       header: t.t(`AdminBilling.owner`),
       render: ({ group }) => (
-        <div class="flex w-56 min-w-0 flex-col" translate={false}>
+        <div class="flex min-w-0 max-w-md flex-col" translate={false}>
           <span class="truncate text-sm font-medium" title={adminGroupPersonName(t, group.owner)}>
             {adminGroupPersonName(t, group.owner)}
           </span>
