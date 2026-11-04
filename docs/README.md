@@ -12,6 +12,8 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
   deletes, replaces or sets.
 - [Run the local stack](local-stack.md): run Seed on your machine with demo data, and reset it.
 - [Add your first feature](first-feature.md): a new kind of record, from the database to the screen.
+- [Work with an AI agent](ai-agents.md): have an AI agent create a product from Seed, add features
+  and check its work.
 
 ## Guides
 
