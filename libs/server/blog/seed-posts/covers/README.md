@@ -54,9 +54,11 @@ What each cover shows, in one sentence; a post's `coverAlt` takes it.
 | `deploy-saas-to-one-hetzner-server`                | A single server tower on a small grassy island with a young plant growing from its top, and a path leading to it from a seed packet. |
 | `free-saas-boilerplate`                            | Seven young plants in starter pots on a wooden shelf behind an open garden gate.                                                     |
 | `install-seed-and-run-it-locally`                  | Four stepping stones leading to a small computer with a potted seedling on top, the last stone glowing.                              |
+| `multi-tenant-saas-groups-roles-postgres`          | A greenhouse divided into glass rooms, each with its own plants and its own violet door, with a key hanging beside each door.        |
 | `nine-languages-and-right-to-left-from-day-one`    | A violet globe circled by empty speech bubbles, with arrows turning both ways around it.                                             |
 | `offline-first-preact-signals-local-database-sync` | A plant thriving inside a glass terrarium on a table, linked to a cloud above by a dashed line with arrows both ways.                |
 | `passkeys-2fa-sessions-without-auth-saas`          | A key with a leaf for its handle floating towards a round violet door with two locks in a garden wall.                               |
+| `per-seat-billing-stripe-webhooks-retries`         | A row of violet theatre seats, each holding a potted plant, with a new seedling lowered on a string into one more seat.              |
 | `realtime-websocket-with-http-fallback`            | Two rocky islands joined by a bright bridge, with a small ferry waiting on the water below as a second way across.                   |
 | `saas-pegasus-alternatives`                        | A balance scale holding a locked treasure chest with a blank price tag on one side and two open seed packets on the other.           |
 | `shipfast-alternatives`                            | Seven sailboats of different shapes lined up on calm water, one of them violet.                                                      |
