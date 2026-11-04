@@ -820,6 +820,11 @@ export type BillingApplyOutcome =
   | "stale"
   /** Stored, but it names no group of this app, or is not about a subscription. */
   | "ignored"
+  /**
+   * Its subscription bills a price no plan maps to: nothing changed or stored, and the webhook logs
+   * it so the operator adds the price to the settings and resends it (`docs/billing.md`).
+   */
+  | "unknown_price"
 
 /**
  * Where billing is kept. `applyEvent` stores the provider's event id and applies the event in one
