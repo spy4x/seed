@@ -10,7 +10,7 @@ You need:
 - Docker, or Podman (see [Use Podman](#use-podman)).
 - A clone of your product's repository.
 
-## Start
+## Start the stack
 
 1. Prepare the clone. It asks for the project's name:
 
