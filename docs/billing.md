@@ -120,6 +120,13 @@ read from the price Stripe reports in the webhook, so a subscription is billed a
 Stripe charges. A checkout for a period the plan does not sell is refused with 400
 `PERIOD_NOT_OFFERED`.
 
+A webhook for a price no plan maps to, such as a price added in Stripe but not to the settings,
+changes no group's subscription. The API logs `billing event bills a price no plan maps to` with the
+event and price ids, and keeps no record of the event. Add the price to the settings, then resend
+the event from Stripe's dashboard: it applies like any other. The development provider
+always knows a yearly Pro price (`price_fake_pro_yearly`, or `STRIPE_PRICE_PRO_YEARLY`), so a signed
+event for it is read as yearly there.
+
 ## Go live
 
 1. In the Stripe dashboard, in live mode, create the same product and price, and set up the
