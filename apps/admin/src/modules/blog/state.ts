@@ -341,7 +341,13 @@ export function createBlogState(
       if (postsResult.ok) {
         originals.value = postsResult.data.posts
           .filter((post) => post.translationOf === null)
-          .map(({ id, title, language }) => ({ id, title, language }))
+          .map(({ id, title, language, coverUrl, coverAlt }) => ({
+            id,
+            title,
+            language,
+            coverUrl,
+            coverAlt,
+          }))
       }
       if (newsletterResult.ok) newsletter.value = newsletterResult.data
     },

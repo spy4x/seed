@@ -175,7 +175,7 @@ export class PostgresBlogRepository {
     const status = filter.status === null ? sql`TRUE` : sql`status = ${filter.status}`
     const posts = await sql<AdminBlogPostRowRaw[]>`
       SELECT id, slug, title, status, topic, language, translation_of, publish_at, published_at,
-        updated_at
+        updated_at, cover_url, cover_alt
       FROM blog_posts
       WHERE ${where} AND ${status}
       ORDER BY updated_at DESC, id DESC

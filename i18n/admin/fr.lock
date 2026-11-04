@@ -451,9 +451,11 @@ AdminBlogEditor.conflictTitle	793d3c102c95bfec
 AdminBlogEditor.counter	8a464f95ef5bd2fc
 AdminBlogEditor.coverAlt	8ddb41a4fb9f028f
 AdminBlogEditor.coverAltHint	a7699f79170f40e6
+AdminBlogEditor.coverBroken	fb051056ab45a894
+AdminBlogEditor.coverOf	0d4229231d2571cd
 AdminBlogEditor.coverPrivacy	fd6c960f0c0fb740
 AdminBlogEditor.coverUrl	6aeec91b65e7a8be
-AdminBlogEditor.coverUrlHint	97230c3cae879034
+AdminBlogEditor.coverUrlHint	4fc1217e873112f7
 AdminBlogEditor.deletePost	f4e967b40b9dc61d
 AdminBlogEditor.describeCover	f6776a2e346f9fd3
 AdminBlogEditor.description	526e0087cc3f254d
@@ -472,6 +474,10 @@ AdminBlogEditor.emptyPost	52c2633063e51a41
 AdminBlogEditor.figureHidden	b9f4f461fbe30979
 AdminBlogEditor.goToLine	f818f5b7e993e924
 AdminBlogEditor.goesLive	f2d9454d995e4ed3
+AdminBlogEditor.groupAddress	dcec4480ee5d137e
+AdminBlogEditor.groupCover	fa8d84566676ee2e
+AdminBlogEditor.groupLinks	9024c197d84940e4
+AdminBlogEditor.groupSummary	8e76a94ac8320d51
 AdminBlogEditor.history	f7c0b6faaf056809
 AdminBlogEditor.httpsCover	075b3b7f27038bc9
 AdminBlogEditor.intro	24601bcaae6e170b

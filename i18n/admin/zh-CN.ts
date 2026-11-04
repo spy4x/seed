@@ -583,10 +583,15 @@ export default {
   "AdminBlogEditor.relatedFeatureHint":
     "这篇文章介绍的网站功能页，比如 /features/realtime 就填 realtime。文章会在作者行下方链接到它。没有就留空。",
   "AdminBlogEditor.coverUrl": "封面图片网址",
-  "AdminBlogEditor.coverUrlHint":
-    "完整的 https:// 链接，指向一张 1200×630 的横幅图片，且所在网站允许其他网站引用。留空则不显示封面。",
+  "AdminBlogEditor.coverUrlHint": "16:9 的图片，https:// 地址。",
   "AdminBlogEditor.coverAlt": "封面描述",
   "AdminBlogEditor.coverAltHint": "描述图片内容，供看不到图片的读者使用。",
+  "AdminBlogEditor.groupAddress": "网址与语言",
+  "AdminBlogEditor.groupSummary": "摘要",
+  "AdminBlogEditor.groupCover": "封面",
+  "AdminBlogEditor.groupLinks": "链接",
+  "AdminBlogEditor.coverOf": "使用此文的封面：{title}",
+  "AdminBlogEditor.coverBroken": "图片未能加载。",
   "AdminBlogEditor.coverPrivacy": "使用其他网站托管的图片，会让那个网站看到你读者的 IP 地址。",
   "AdminBlogEditor.publishing": "发布",
   "AdminBlogEditor.goesLive": "将于{date}发布。",

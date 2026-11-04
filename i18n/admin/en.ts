@@ -623,10 +623,15 @@ export default {
   "AdminBlogEditor.relatedFeatureHint":
     "The website's feature page this post is about, such as realtime for /features/realtime. The post links it under the byline. Leave empty for none.",
   "AdminBlogEditor.coverUrl": "Cover image URL",
-  "AdminBlogEditor.coverUrlHint":
-    "A full https:// link to a wide image, 1200×630, on a host that lets other sites show it. Leave empty for no cover.",
+  "AdminBlogEditor.coverUrlHint": "A 16:9 picture, https:// address.",
   "AdminBlogEditor.coverAlt": "Cover description",
   "AdminBlogEditor.coverAltHint": "What the image shows, for people who can't see it.",
+  "AdminBlogEditor.groupAddress": "Address & language",
+  "AdminBlogEditor.groupSummary": "Summary",
+  "AdminBlogEditor.groupCover": "Cover",
+  "AdminBlogEditor.groupLinks": "Links",
+  "AdminBlogEditor.coverOf": "Uses the cover of: {title}",
+  "AdminBlogEditor.coverBroken": "This picture did not load.",
   "AdminBlogEditor.coverPrivacy":
     "An image hosted on another site lets that site see your readers' IP addresses.",
   "AdminBlogEditor.publishing": "Publishing",

@@ -148,7 +148,7 @@ export interface BlogPost {
   version: number
 }
 
-/** One row of the admin list. */
+/** One row of the admin list, with the cover a translation of it takes (#733). */
 export type AdminBlogPostRow = Pick<
   BlogPost,
   | `id`
@@ -161,6 +161,8 @@ export type AdminBlogPostRow = Pick<
   | `publishAt`
   | `publishedAt`
   | `updatedAt`
+  | `coverUrl`
+  | `coverAlt`
 >
 
 /** How many posts each status chip of the admin list counts. */

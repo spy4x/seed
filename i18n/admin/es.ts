@@ -658,10 +658,15 @@ export default {
   "AdminBlogEditor.relatedFeatureHint":
     "La página de función del sitio de la que trata la entrada, por ejemplo realtime para /features/realtime. La entrada la enlaza bajo la línea del autor. Déjalo vacío si no hay ninguna.",
   "AdminBlogEditor.coverUrl": "URL de la imagen de portada",
-  "AdminBlogEditor.coverUrlHint":
-    "Un enlace https:// completo a una imagen horizontal de 1200×630, alojada en un servidor que permita mostrarla en otros sitios. Déjalo vacío si no quieres portada.",
+  "AdminBlogEditor.coverUrlHint": "Una imagen 16:9, dirección https://.",
   "AdminBlogEditor.coverAlt": "Descripción de la portada",
   "AdminBlogEditor.coverAltHint": "Qué muestra la imagen, para quienes no pueden verla.",
+  "AdminBlogEditor.groupAddress": "Dirección e idioma",
+  "AdminBlogEditor.groupSummary": "Resumen",
+  "AdminBlogEditor.groupCover": "Portada",
+  "AdminBlogEditor.groupLinks": "Enlaces",
+  "AdminBlogEditor.coverOf": "Usa la portada de: {title}",
+  "AdminBlogEditor.coverBroken": "Esta imagen no se ha cargado.",
   "AdminBlogEditor.coverPrivacy":
     "Si la imagen está alojada en otro sitio, ese sitio podrá ver las direcciones IP de tus lectores.",
   "AdminBlogEditor.publishing": "Publicación",

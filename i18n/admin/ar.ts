@@ -686,10 +686,15 @@ export default {
   "AdminBlogEditor.relatedFeatureHint":
     "صفحة الميزة في الموقع التي تتناولها التدوينة، مثل realtime لصفحة ‎/features/realtime. تضع التدوينة رابطًا إليها تحت سطر الكاتب. اتركه فارغًا إن لم توجد.",
   "AdminBlogEditor.coverUrl": "رابط صورة الغلاف",
-  "AdminBlogEditor.coverUrlHint":
-    "رابط كامل يبدأ بـ https:// لصورة عريضة بمقاس 1200×630، على خادم يسمح بعرضها في مواقع أخرى. اتركه فارغًا إن لم ترد غلافًا.",
+  "AdminBlogEditor.coverUrlHint": "صورة بنسبة 16:9، بعنوان https://.",
   "AdminBlogEditor.coverAlt": "وصف الغلاف",
   "AdminBlogEditor.coverAltHint": "ما تُظهره الصورة، لمن لا يستطيع رؤيتها.",
+  "AdminBlogEditor.groupAddress": "العنوان واللغة",
+  "AdminBlogEditor.groupSummary": "الملخص",
+  "AdminBlogEditor.groupCover": "الغلاف",
+  "AdminBlogEditor.groupLinks": "الروابط",
+  "AdminBlogEditor.coverOf": "يستخدم غلاف: {title}",
+  "AdminBlogEditor.coverBroken": "لم يتم تحميل هذه الصورة.",
   "AdminBlogEditor.coverPrivacy":
     "الصورة المستضافة على موقع آخر تتيح لذلك الموقع رؤية عناوين IP لقرّائك.",
   "AdminBlogEditor.publishing": "النشر",

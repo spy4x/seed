@@ -612,10 +612,15 @@ export default {
   "AdminBlogEditor.relatedFeatureHint":
     "この記事が扱うサイトの機能ページです。たとえば /features/realtime なら realtime。記事の著者行の下にリンクされます。なければ空欄のままにします。",
   "AdminBlogEditor.coverUrl": "カバー画像のURL",
-  "AdminBlogEditor.coverUrlHint":
-    "横長の画像（1200×630）へのhttps://から始まる完全なリンク。ほかのサイトでの表示を許可しているホストのものを指定してください。カバーなしにする場合は空欄のままにします。",
+  "AdminBlogEditor.coverUrlHint": "16:9の画像、https://で始まるURL。",
   "AdminBlogEditor.coverAlt": "カバー画像の説明",
   "AdminBlogEditor.coverAltHint": "画像が見えない人のために、何が写っているかを書きます。",
+  "AdminBlogEditor.groupAddress": "URLと言語",
+  "AdminBlogEditor.groupSummary": "概要",
+  "AdminBlogEditor.groupCover": "カバー",
+  "AdminBlogEditor.groupLinks": "リンク",
+  "AdminBlogEditor.coverOf": "元記事のカバーを使用：{title}",
+  "AdminBlogEditor.coverBroken": "画像を読み込めませんでした。",
   "AdminBlogEditor.coverPrivacy":
     "ほかのサイトにある画像を使うと、そのサイトに読者のIPアドレスが伝わります。",
   "AdminBlogEditor.publishing": "公開",

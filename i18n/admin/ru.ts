@@ -668,10 +668,15 @@ export default {
   "AdminBlogEditor.relatedFeatureHint":
     "Страница возможности на сайте, о которой этот пост, например realtime для /features/realtime. Пост ссылается на неё под строкой с автором. Оставьте пустым, если такой нет.",
   "AdminBlogEditor.coverUrl": "Ссылка на обложку",
-  "AdminBlogEditor.coverUrlHint":
-    "Полная ссылка https:// на широкую картинку 1200×630 с хостинга, который разрешает встраивать её на другие сайты. Если обложка не нужна, оставьте поле пустым.",
+  "AdminBlogEditor.coverUrlHint": "Картинка 16:9, адрес https://.",
   "AdminBlogEditor.coverAlt": "Описание обложки",
   "AdminBlogEditor.coverAltHint": "Что на картинке — для тех, кто её не видит.",
+  "AdminBlogEditor.groupAddress": "Адрес и язык",
+  "AdminBlogEditor.groupSummary": "Краткое содержание",
+  "AdminBlogEditor.groupCover": "Обложка",
+  "AdminBlogEditor.groupLinks": "Ссылки",
+  "AdminBlogEditor.coverOf": "Использует обложку поста: {title}",
+  "AdminBlogEditor.coverBroken": "Картинка не загрузилась.",
   "AdminBlogEditor.coverPrivacy":
     "Если картинка лежит на чужом сайте, этот сайт увидит IP-адреса ваших читателей.",
   "AdminBlogEditor.publishing": "Публикация",
