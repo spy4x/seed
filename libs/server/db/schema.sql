@@ -974,7 +974,7 @@ CREATE TABLE blog_posts (
     -- #730: the page the author's name links to. See 2026_12_13_0001_blog_author_url.sql.
     author_url VARCHAR(2000),
     -- #733: intro, related feature, a cover file, the Dev.to cross-post. See
-    -- 2026_12_14_0001_blog_publishing.sql.
+    -- 2026_12_14_0003_blog_publishing.sql.
     intro VARCHAR(600),
     related_feature VARCHAR(100),
     cover_file VARCHAR(120),
