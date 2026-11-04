@@ -21,6 +21,7 @@ const PRO: GroupBilling = {
   subscribed: true,
   hasCustomer: true,
   seatPrice: null,
+  period: null,
 }
 
 describe("checkoutDoneToast", () => {

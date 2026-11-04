@@ -10,6 +10,7 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import {
   BillingNoticeKind,
+  BillingPeriod,
   BillingStatus,
   FREE_PLAN_ID,
   type GroupBilling,
@@ -43,6 +44,7 @@ const FREE_OWNER: GroupBilling = {
   subscribed: false,
   hasCustomer: false,
   seatPrice: null,
+  period: null,
 }
 
 const PRO_OWNER: GroupBilling = {
@@ -52,7 +54,7 @@ const PRO_OWNER: GroupBilling = {
   currentPeriodEnd: new Date("2026-11-04T00:00:00Z"),
   subscribed: true,
   hasCustomer: true,
-  seatPrice: { seats: 6, amount: 900, currency: "EUR" },
+  seatPrice: { seats: 6, amount: 900, currency: "EUR", period: BillingPeriod.Monthly },
 }
 
 const TRIAL_OWNER: GroupBilling = {
@@ -397,7 +399,10 @@ describe("GroupBillingPanel", () => {
         {panel(asMember(PRO_OWNER), { ownerName: null })}
         {panel(off)}
         {panel(null)}
-        <SeatPriceConfirm seatPrice={{ seats: 6, amount: 900, currency: "EUR" }} checked={false} />
+        <SeatPriceConfirm
+          seatPrice={{ seats: 6, amount: 900, currency: "EUR", period: BillingPeriod.Monthly }}
+          checked={false}
+        />
         {(["maxNotes", "maxMembers", "maxAttachments", "storageBytes", "memberRoles"] as const).map(
           (entitlement) => (
             <PlanRefusalNotice

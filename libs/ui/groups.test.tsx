@@ -11,7 +11,7 @@ import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { renderToString } from "preact-render-to-string"
 import { act } from "preact/test-utils"
-import type { PlanRefusal } from "@domain/billing"
+import { BillingPeriod, type PlanRefusal } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import { SeatPriceConfirm } from "./billing-screen.tsx"
 import {
@@ -1421,7 +1421,7 @@ describe("PendingInvitations", () => {
 })
 
 describe("SeatPriceConfirm", () => {
-  const seatPrice = { seats: 2, amount: 900, currency: "EUR" }
+  const seatPrice = { seats: 2, amount: 900, currency: "EUR", period: BillingPeriod.Monthly }
 
   it("hands the price tick to the app", async () => {
     const ticks = spy<[boolean]>()

@@ -16,6 +16,7 @@ import {
   type AdminBillingFigures,
   type AdminBillingListResponse,
   BILLING_AUDIT_EVENTS,
+  BillingPeriod,
   BillingStatus,
   PRO_PLAN_ID,
 } from "@domain/billing"
@@ -131,6 +132,7 @@ function customer(overrides: Partial<AdminBillingCustomer> = {}): AdminBillingCu
     trialEnd: null,
     pastDueSince: null,
     everActive: true,
+    period: BillingPeriod.Monthly,
     updatedAt: `2026-10-12T12:00:00.000Z`,
     ...overrides,
   }

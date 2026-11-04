@@ -82,6 +82,7 @@ export class PostgresBillingRepository implements BillingRepository {
           past_due_since,
           trial_end,
           quantity,
+          billing_period AS period,
           ever_active
         FROM subscriptions
         WHERE group_id = ${groupId}
@@ -98,6 +99,7 @@ export class PostgresBillingRepository implements BillingRepository {
         pastDueSince: row.pastDueSince,
         trialEnd: row.trialEnd,
         quantity: row.quantity,
+        period: row.period,
         everActive: row.everActive,
       }
       : null

@@ -517,14 +517,20 @@ CREATE TABLE subscriptions (
     -- The customer this subscription bills (#250), so a handed-over customer's subscription is
     -- known by its own customer and not by the group's current one.
     provider_customer_id VARCHAR(255),
+    -- How often the price the provider last reported bills (#695); `NULL` when that price is in no
+    -- plan.
+    billing_period INT2,
     CONSTRAINT subscriptions_status_check CHECK (status BETWEEN 1 AND 6),
     CONSTRAINT subscriptions_provider_event_rank_check CHECK (provider_event_rank BETWEEN 1 AND 3),
     CONSTRAINT subscriptions_past_due_since_check
-        CHECK ((status = 3) = (past_due_since IS NOT NULL))
+        CHECK ((status = 3) = (past_due_since IS NOT NULL)),
+    CONSTRAINT subscriptions_billing_period_check CHECK (billing_period IN (1, 2))
 );
 
 COMMENT ON COLUMN subscriptions.status IS
     '1=trialing, 2=active, 3=past_due, 4=canceled, 5=incomplete, 6=paused';
+
+COMMENT ON COLUMN subscriptions.billing_period IS '1=month, 2=year';
 
 CREATE INDEX idx_subscriptions_provider_subscription_id
     ON subscriptions (provider_subscription_id);

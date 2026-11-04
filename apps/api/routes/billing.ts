@@ -5,6 +5,7 @@ import {
   BillingCheckoutCommand,
   billingCheckoutRequestSchema,
   BillingGetQuery,
+  BillingPeriod,
   BillingPortalCommand,
   type BillingRedirect,
   BillingTrialQuery,
@@ -31,7 +32,8 @@ export interface BillingRouteDependencies {
  * dispatches; who may act is decided by the handlers.
  *
  * - `GET /` reads the group's plan: any member.
- * - `POST /checkout` `{ planId }` answers `{ url }`, the provider's checkout page: the owner only.
+ * - `POST /checkout` `{ planId, period? }` answers `{ url }`, the provider's checkout page: the owner
+ *   only. `period` is a `BillingPeriod`, monthly when left out.
  * - `POST /portal` answers `{ url }`, the provider's portal: the owner only.
  *
  * Both posts need the web app's origin and accept an `Idempotency-Key` header.
@@ -64,6 +66,7 @@ export function createBillingRoute(dependencies: BillingRouteDependencies): Hono
             actor: actorOf(c),
             groupId: groupIdOf(c),
             planId: input.planId,
+            period: input.period ?? BillingPeriod.Monthly,
             idempotencyKey: c.req.header("idempotency-key"),
           }),
         ),

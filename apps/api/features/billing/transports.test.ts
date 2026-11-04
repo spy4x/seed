@@ -8,6 +8,7 @@ import {
   BillingCheckoutCommand,
   BillingGetQuery,
   BillingNoticeKind,
+  BillingPeriod,
   BillingPortalCommand,
   BillingStatus,
   BillingTrialQuery,
@@ -175,6 +176,7 @@ const PRO: StoredSubscription = {
   trialEnd: null,
   quantity: 1,
   everActive: true,
+  period: BillingPeriod.Monthly,
 }
 
 async function code(response: Response): Promise<string> {
@@ -492,7 +494,12 @@ describe("billing over REST", () => {
 
     const viewer = await (await call(VIEWER, "GET", "")).json()
 
-    expect(viewer.billing.seatPrice).toEqual({ seats: 4, amount: 900, currency: "EUR" })
+    expect(viewer.billing.seatPrice).toEqual({
+      seats: 4,
+      amount: 900,
+      currency: "EUR",
+      period: BillingPeriod.Monthly,
+    })
   })
 
   it("shows a past-due group its plan through the seven-day grace period, then the free plan", async () => {
@@ -523,6 +530,7 @@ describe("billing over REST", () => {
       subscribed: false,
       hasCustomer: false,
       seatPrice: null,
+      period: null,
     })
     expect([checkout.status, await code(checkout)]).toEqual([404, "BILLING_DISABLED"])
   })
