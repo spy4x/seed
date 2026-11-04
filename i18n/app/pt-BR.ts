@@ -2113,7 +2113,8 @@ export default {
   "Benchmark.noLargeTitle": "Ainda não há um grupo grande",
   "Benchmark.noLargeBody": "Crie um com o gerador e recarregue esta página:",
   "Benchmark.copyCommand": "Copiar comando",
-  "Benchmark.noLargeFoot": "Os tamanhos e como remover o grupo depois estão em docs/capacity.md.",
+  "Benchmark.noLargeFoot":
+    "Os tamanhos e como remover o grupo depois estão em docs/large-group.md.",
   "Benchmark.lastStoppedTitle": "A última execução parou em “{measure}”",
   "Benchmark.lastStoppedBody":
     "A aba fechou antes do fim da execução, o que geralmente indica falta de memória ou de armazenamento. Grupo: {group}, iniciada {time}.",

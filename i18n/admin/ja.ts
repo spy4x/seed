@@ -539,6 +539,7 @@ export default {
   "AdminBlogEditor.viewOnSite": "サイトで見る",
   "AdminBlogEditor.changeUrl": "URLを変更…",
   "AdminBlogEditor.unpublish": "非公開にする…",
+  "AdminBlogEditor.history": "履歴…",
   "AdminBlogEditor.deletePost": "記事を削除…",
   "AdminBlogEditor.editPost": "記事を編集",
   "AdminBlogEditor.newPost": "新しい記事",
@@ -1755,4 +1756,13 @@ export default {
   "AdminBlogEditor.translationOfHint":
     "この記事の翻訳元となる記事です。両方が公開されると、サイトで言語版として相互にリンクされます。",
   "AdminBlogEditor.translationNone": "なし：オリジナルの記事",
+  "AdminBlogHistory.title": "履歴",
+  "AdminBlogHistory.versions": "以前のバージョン",
+  "AdminBlogHistory.shown": "表示中のバージョン",
+  "AdminBlogHistory.body": "本文",
+  "AdminBlogHistory.savedBy": "{date}に{name}が保存",
+  "AdminBlogHistory.someone": "不明",
+  "AdminBlogHistory.restore": "このバージョンを復元",
+  "AdminBlogHistory.empty": "以前のバージョンはまだありません。保存するたびに1つ残ります。",
+  "AdminBlogHistory.restored": "以前のバージョンを復元しました。保存すると反映されます。",
 } satisfies Catalog

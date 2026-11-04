@@ -114,12 +114,12 @@ These tests check the name: `libs/ui/admin-frame.test.tsx`, `libs/ui/account.tes
 | Set    | The crawler policy                       | `ROBOTS_POLICY` in `apps/mpa/config.ts`                 |
 | Set    | Analytics ids ([Analytics](analytics.md)) | `MPA_UMAMI_ORIGIN`, `MPA_UMAMI_WEBSITE_ID` in the env file |
 | Set    | Domains and the demo ([demo](demo.md))   | `MPA_DOMAIN`, `DOMAIN`, `DEMO_MODE` in the env file     |
-| Set    | A website with no customers              | `SPA=false` ([Without the SPA](deploy.md#without-the-spa)) |
+| Set    | A website with no customers              | `SPA=false` ([Without the SPA](apps.md#without-the-spa)) |
 | Set    | Where release images go                  | `IMAGE_PREFIX` in `.woodpecker/release.yml`             |
 | Set    | The billing guide link                   | `ADMIN_BILLING_SETUP_URL` in `libs/ui/admin-billing-list.tsx` |
 
 Create the first operator on the server; it needs no mail
-([The first operator](deploy.md#the-first-operator)):
+([The first operator](operator-access.md#the-first-operator)):
 
 ```sh
 deno task operator:create <address>

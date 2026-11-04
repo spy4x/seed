@@ -70,7 +70,7 @@ example file starts `monitoring,files`.
 
 Without `monitoring`, set `VM_REMOTE_WRITE_URL` and `VLOGS_URL` to send metrics and logs to a
 monitoring server you already have. [The stack guide](stack.md#monitoring) describes both modes.
-Grafana's sign-in is in [Admin consoles](deploy.md#admin-consoles).
+Grafana's sign-in is in [Admin consoles](operator-access.md#admin-consoles).
 
 ## Migrations
 

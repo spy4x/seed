@@ -149,6 +149,10 @@ function BlogEditorView(
         onDelete={async () => {
           if (await state.remove()) go(ADMIN_BLOG_PATHS.list)
         }}
+        history={state.history.value}
+        onSelectRevision={(revisionId) => void state.selectRevision(revisionId)}
+        onRestoreRevision={state.restoreRevision}
+        onRetryHistory={() => void state.retryHistory()}
         now={state.now()}
         navigate={context.navigate}
       />
