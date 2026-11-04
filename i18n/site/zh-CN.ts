@@ -492,7 +492,7 @@ export default {
   "FeatureWebsite.fact2": "价格读取自应用的套餐目录",
   "FeatureWebsite.fact3": "双重确认订阅的邮件简报，一键退订，邮件以收件人的语言发送",
   "FeatureWebsite.fact4":
-    "在管理后台撰写的博客，支持每种语言的文章及其译文、主题、读者可动手试用的交互图表、RSS 订阅源、文章结构化数据、文章网址变更后会自动跳转的旧链接，以及在文章发布或更新时立即通知搜索引擎的 IndexNow 推送",
+    "在管理后台撰写的博客，支持每种语言的文章及其译文、主题、读者可动手试用的交互图表、RSS 订阅源、文章结构化数据、文章网址变更后会自动跳转的旧链接、文章列表中的封面图、注明原文地址的可选 Dev.to 转载，以及在文章发布或更新时立即通知搜索引擎的 IndexNow 推送",
   "FeatureWebsite.fact5": "在管理后台设置的联系方式，显示在页脚和结构化数据中",
   "FeatureWebsite.fact6":
     "可选的商品目录，适合网店，在管理后台编辑：商品照片、颜色、尺码、尺码表和售罄尺码，覆盖你销售的每种语言，并为每个商品和每个分享渠道生成一个短追踪链接",
@@ -778,6 +778,7 @@ export default {
   "Blog.published": "发布于<time>{date}</time>",
   "Blog.updated": "· 更新于<time>{date}</time>",
   "Blog.alsoIn": "其他语言：<links></links>",
+  "Blog.relatedFeature": "Seed 功能：{name} →",
   "Blog.minutes": {
     "other": "· 阅读约 {count} 分钟",
   },

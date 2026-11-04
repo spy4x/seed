@@ -49,7 +49,9 @@ import type { ServerFiles } from "../files/files.ts"
  * `telegram`, a notification also goes to the person's linked Telegram chat (#269); without it,
  * those jobs send nothing. `imageScratch` is where image processing writes its files (#464);
  * without it, those jobs fail and are retried. With `indexNow`, the `blog.indexnow` job tells
- * IndexNow that a post's addresses changed (#418); without it, that job sends nothing.
+ * IndexNow that a post's addresses changed (#418); without it, that job sends nothing. With
+ * `crosspost`, a live post is cross-posted to Dev.to once (#733); without it, it is skipped.
+ * `fetcher` is how `blog.publish` asks the website whether a post is live; tests pass a fake.
  *
  * @throws Error when two jobs share a kind: one handler would silently replace the other.
  */
@@ -66,6 +68,8 @@ export function createOutboxProcessor(
   telegram: JobDeps["telegram"] = null,
   imageScratch: JobDeps["imageScratch"] = null,
   indexNow: JobDeps["indexNow"] = null,
+  crosspost: JobDeps["crosspost"] = null,
+  fetcher: JobDeps["fetch"] = globalThis.fetch,
 ): OutboxProcessor {
   const notifier = new GroupChangeNotifier(sql)
   const deps: JobDeps = {
@@ -80,6 +84,8 @@ export function createOutboxProcessor(
     telegram,
     imageScratch,
     indexNow,
+    crosspost,
+    fetch: fetcher,
   }
   const kinds = jobs.map((job) => job.kind)
   const twice = kinds.filter((kind, index) => kinds.indexOf(kind) !== index)

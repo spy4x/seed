@@ -653,6 +653,9 @@ export default {
     "Показывается в поисковой выдаче вместо заголовка. Примерно 60 символов.",
   "AdminBlogEditor.keyPoints": "Главное",
   "AdminBlogEditor.keyPointsHint": "До 5 коротких строк в начале поста.",
+  "AdminBlogEditor.intro": "Вступление",
+  "AdminBlogEditor.introHint":
+    "Два-три предложения, с которых начинаются письмо рассылки и кросс-посты. На странице поста не показывается.",
   "AdminBlogEditor.keyPoint": "Пункт {n}",
   "AdminBlogEditor.removeKeyPoint": "Убрать пункт {n}",
   "AdminBlogEditor.addPoint": "Добавить пункт",
@@ -662,11 +665,19 @@ export default {
   "AdminBlogEditor.authorUrl": "Ссылка на автора",
   "AdminBlogEditor.authorUrlHint":
     "Имя автора в посте будет вести сюда — например, на страницу «Обо мне». Так читатели и поисковики поймут, кто написал пост. Если ссылка не нужна, оставьте поле пустым.",
+  "AdminBlogEditor.relatedFeature": "Связанная возможность",
+  "AdminBlogEditor.relatedFeatureHint":
+    "Страница возможности на сайте, о которой этот пост, например realtime для /features/realtime. Пост ссылается на неё под строкой с автором. Оставьте пустым, если такой нет.",
   "AdminBlogEditor.coverUrl": "Ссылка на обложку",
-  "AdminBlogEditor.coverUrlHint":
-    "Полная ссылка https:// на широкую картинку 1200×630 с хостинга, который разрешает встраивать её на другие сайты. Если обложка не нужна, оставьте поле пустым.",
+  "AdminBlogEditor.coverUrlHint": "Картинка 16:9, адрес https://.",
   "AdminBlogEditor.coverAlt": "Описание обложки",
   "AdminBlogEditor.coverAltHint": "Что на картинке — для тех, кто её не видит.",
+  "AdminBlogEditor.groupAddress": "Адрес и язык",
+  "AdminBlogEditor.groupSummary": "Краткое содержание",
+  "AdminBlogEditor.groupCover": "Обложка",
+  "AdminBlogEditor.groupLinks": "Ссылки",
+  "AdminBlogEditor.coverOf": "Использует обложку поста: {title}",
+  "AdminBlogEditor.coverBroken": "Картинка не загрузилась.",
   "AdminBlogEditor.coverPrivacy":
     "Если картинка лежит на чужом сайте, этот сайт увидит IP-адреса ваших читателей.",
   "AdminBlogEditor.publishing": "Публикация",

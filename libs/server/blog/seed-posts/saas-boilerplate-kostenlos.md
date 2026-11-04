@@ -11,6 +11,8 @@ tldr:
   - Wer Nutzerdaten in der EU halten will, wählt ein Kit ohne fremden Login-Dienst, das auf dem eigenen Server läuft.
   - Seed bringt Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, ein Admin-Panel und neun Sprachen auf Ihrem eigenen Server mit.
 topic: Fragen
+intro: "Ich habe nach einem kostenlosen SaaS-Boilerplate gesucht, so wie Sie es tun würden, und sieben gefunden, die nichts kosten. Jedes lässt etwas anderes weg, also habe ich verglichen, was Sie wirklich bekommen, bevor Sie Ihre Zeit investieren."
+coverAlt: "Sieben junge Pflanzen in Anzuchttöpfen auf einem Holzregal hinter einem offenen Gartentor."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

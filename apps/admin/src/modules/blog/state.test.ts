@@ -25,6 +25,9 @@ const post: BlogPost = {
   topic: null,
   coverUrl: null,
   coverAlt: null,
+  coverFile: null,
+  intro: null,
+  relatedFeature: null,
   bodyMd: `Text.`,
   language: `en`,
   translationOf: null,
@@ -38,6 +41,8 @@ const post: BlogPost = {
   newsletterList: null,
   newsletterSentAt: null,
   newsletterRecipients: null,
+  crosspostedAt: null,
+  devtoUrl: null,
   createdAt: `2026-10-20T10:00:00.000Z`,
   updatedAt: `2026-10-20T10:00:00.000Z`,
   version: 1,
@@ -103,7 +108,7 @@ it(`creates the post with its client id on the first save, then saves with the v
   state.edit({ ...state.editor.value.value, title: `Hello`, description: `A post.` })
   expect(await state.save()).toEqual(post)
   expect(calls[0]).toBe(
-    `POST /api/admin/blog/posts {"id":"${ID}","title":"Hello","slug":"hello","description":"A post.","seoTitle":"","tldr":[],"topic":"","coverUrl":"","coverAlt":"","authorUrl":"","bodyMd":"","language":"en","translationOf":null}`,
+    `POST /api/admin/blog/posts {"id":"${ID}","title":"Hello","slug":"hello","description":"A post.","seoTitle":"","tldr":[],"intro":"","topic":"","coverUrl":"","coverAlt":"","authorUrl":"","relatedFeature":"","bodyMd":"","language":"en","translationOf":null}`,
   )
   expect(state.editor.value.saveStatus).toBe(`saved`)
   state.edit({ ...state.editor.value.value, title: `Hello again` })
@@ -142,6 +147,15 @@ it(`sends the author link as typed, and an emptied one to clear it (#730)`, asyn
   state.edit({ ...state.editor.value.value, authorUrl: `` })
   await state.save()
   expect(calls.at(-1)).toContain(`"authorUrl":""`)
+})
+
+it(`sends the intro and the related feature as typed (#733)`, async () => {
+  const { state, calls } = build()
+  await state.openPost(ID)
+  state.edit({ ...state.editor.value.value, intro: `Two sentences. `, relatedFeature: `realtime` })
+  await state.save()
+  expect(calls.at(-1)).toContain(`"intro":"Two sentences. "`)
+  expect(calls.at(-1)).toContain(`"relatedFeature":"realtime"`)
 })
 
 it(`refuses an author link that is not https before it sends anything (#730)`, async () => {
@@ -370,6 +384,8 @@ const revisionOf = (id: string, changes: Partial<BlogRevision> = {}): BlogRevisi
   topic: post.topic,
   coverUrl: post.coverUrl,
   coverAlt: post.coverAlt,
+  intro: null,
+  relatedFeature: null,
   authorUrl: post.authorUrl,
   bodyMd: post.bodyMd,
   language: post.language,

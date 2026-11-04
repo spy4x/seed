@@ -639,6 +639,9 @@ export default {
     "Aparece nos resultados de busca no lugar do título. Cerca de 60 caracteres.",
   "AdminBlogEditor.keyPoints": "Pontos principais",
   "AdminBlogEditor.keyPointsHint": "Até 5 linhas curtas, mostradas no topo do post.",
+  "AdminBlogEditor.intro": "Abertura",
+  "AdminBlogEditor.introHint":
+    "Duas ou três frases que abrem o e-mail da newsletter e as publicações cruzadas. Não aparece na página do post.",
   "AdminBlogEditor.keyPoint": "Ponto principal {n}",
   "AdminBlogEditor.removeKeyPoint": "Remover o ponto principal {n}",
   "AdminBlogEditor.addPoint": "Adicionar ponto",
@@ -647,11 +650,19 @@ export default {
   "AdminBlogEditor.authorUrl": "Link do autor",
   "AdminBlogEditor.authorUrlHint":
     "O nome do autor no post vai levar para cá, como a página “Sobre mim”, para que leitores e buscadores saibam quem o escreveu. Deixe em branco se não quiser link.",
+  "AdminBlogEditor.relatedFeature": "Recurso relacionado",
+  "AdminBlogEditor.relatedFeatureHint":
+    "A página de recurso do site de que o post trata, como realtime para /features/realtime. O post leva a ela abaixo da linha do autor. Deixe em branco se não houver.",
   "AdminBlogEditor.coverUrl": "URL da imagem de capa",
-  "AdminBlogEditor.coverUrlHint":
-    "Link completo (https://) de uma imagem horizontal de 1200×630, hospedada em um serviço que permita exibi-la em outros sites. Deixe em branco se não quiser capa.",
+  "AdminBlogEditor.coverUrlHint": "Uma imagem 16:9, endereço https://.",
   "AdminBlogEditor.coverAlt": "Descrição da capa",
   "AdminBlogEditor.coverAltHint": "O que a imagem mostra, para quem não consegue vê-la.",
+  "AdminBlogEditor.groupAddress": "Endereço e idioma",
+  "AdminBlogEditor.groupSummary": "Resumo",
+  "AdminBlogEditor.groupCover": "Capa",
+  "AdminBlogEditor.groupLinks": "Links",
+  "AdminBlogEditor.coverOf": "Usa a capa de: {title}",
+  "AdminBlogEditor.coverBroken": "Esta imagem não carregou.",
   "AdminBlogEditor.coverPrivacy":
     "Uma imagem hospedada em outro site permite que esse site veja o endereço IP dos seus leitores.",
   "AdminBlogEditor.publishing": "Publicação",

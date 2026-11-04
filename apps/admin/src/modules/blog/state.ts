@@ -134,10 +134,12 @@ function fieldsOf(draft: BlogDraft) {
     description: draft.description,
     seoTitle: draft.seoTitle,
     tldr: draft.tldr,
+    intro: draft.intro,
     topic: draft.topic,
     coverUrl: draft.coverUrl,
     coverAlt: draft.coverAlt,
     authorUrl: draft.authorUrl,
+    relatedFeature: draft.relatedFeature,
     bodyMd: draft.bodyMd,
     language: draft.language,
     translationOf: draft.translationOf === `` ? null : draft.translationOf,
@@ -339,7 +341,13 @@ export function createBlogState(
       if (postsResult.ok) {
         originals.value = postsResult.data.posts
           .filter((post) => post.translationOf === null)
-          .map(({ id, title, language }) => ({ id, title, language }))
+          .map(({ id, title, language, coverUrl, coverAlt }) => ({
+            id,
+            title,
+            language,
+            coverUrl,
+            coverAlt,
+          }))
       }
       if (newsletterResult.ok) newsletter.value = newsletterResult.data
     },

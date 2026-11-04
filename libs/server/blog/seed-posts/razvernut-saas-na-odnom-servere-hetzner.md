@@ -11,6 +11,9 @@ tldr:
   - 3 ноября 2026 года самый дешёвый x86-сервер Hetzner с хранилищем для бэкапов стоил 12,48 € в месяц.
   - Vercel Pro и Supabase Pro для одного разработчика стоят от 45 $ в месяц, не считая расхода.
 topic: Руководства
+intro: "Я довёл Seed от git clone до продакшена на одном сервере Hetzner, и обходится это примерно в 12 € в месяц. Вот шаги и счёт рядом с Vercel Pro и Supabase Pro."
+relatedFeature: deploy
+coverAlt: "Одна серверная стойка на маленьком травяном острове, с её верха растёт молодое растение, а к ней ведёт тропинка от пакетика семян."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T12:00:00Z

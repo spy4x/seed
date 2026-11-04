@@ -974,6 +974,13 @@ CREATE TABLE blog_posts (
     ) STORED,
     -- #730: the page the author's name links to. See 2026_12_13_0001_blog_author_url.sql.
     author_url VARCHAR(2000),
+    -- #733: intro, related feature, a cover file, the Dev.to cross-post. See
+    -- 2026_12_14_0004_blog_publishing.sql.
+    intro VARCHAR(600),
+    related_feature VARCHAR(100),
+    cover_file VARCHAR(120),
+    crossposted_at TIMESTAMPTZ,
+    devto_url VARCHAR(2000),
     CONSTRAINT blog_posts_slug_unique UNIQUE (slug),
     CONSTRAINT blog_posts_slug_check CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
     CONSTRAINT blog_posts_status_check CHECK (status IN ('draft', 'scheduled', 'published')),
@@ -988,7 +995,14 @@ CREATE TABLE blog_posts (
     CONSTRAINT blog_posts_language_check CHECK (length(language) BETWEEN 2 AND 35),
     CONSTRAINT blog_posts_translation_check CHECK (translation_of <> id),
     CONSTRAINT blog_posts_author_url_check
-        CHECK (author_url IS NULL OR author_url LIKE 'https://%')
+        CHECK (author_url IS NULL OR author_url LIKE 'https://%'),
+    CONSTRAINT blog_posts_related_feature_check
+        CHECK (related_feature IS NULL OR related_feature ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+    CONSTRAINT blog_posts_cover_file_check
+        CHECK (cover_file IS NULL OR
+            (cover_file ~ '^[a-z0-9]+(-[a-z0-9]+)*\.webp$' AND cover_alt IS NOT NULL)),
+    CONSTRAINT blog_posts_devto_url_check
+        CHECK (devto_url IS NULL OR (devto_url LIKE 'https://%' AND crossposted_at IS NOT NULL))
 );
 
 CREATE UNIQUE INDEX blog_posts_translation_language_unique
@@ -1051,7 +1065,10 @@ CREATE TABLE blog_post_revisions (
     translation_of UUID,
     saved_by_id INT4,
     saved_by_name VARCHAR(320),
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    -- 2026_12_14_0004_blog_publishing.sql.
+    intro VARCHAR(600),
+    related_feature VARCHAR(100)
 );
 
 CREATE INDEX idx_blog_post_revisions_post

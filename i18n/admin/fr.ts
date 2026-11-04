@@ -646,6 +646,9 @@ export default {
     "Affiché dans les résultats de recherche à la place du titre. Environ 60 caractères.",
   "AdminBlogEditor.keyPoints": "Points clés",
   "AdminBlogEditor.keyPointsHint": "Jusqu’à 5 lignes courtes, affichées en haut de l’article.",
+  "AdminBlogEditor.intro": "Chapeau",
+  "AdminBlogEditor.introHint":
+    "Deux ou trois phrases qui ouvrent l’e-mail de la newsletter et les publications croisées. Non affiché sur la page de l’article.",
   "AdminBlogEditor.keyPoint": "Point clé {n}",
   "AdminBlogEditor.removeKeyPoint": "Retirer le point clé {n}",
   "AdminBlogEditor.addPoint": "Ajouter un point",
@@ -655,11 +658,19 @@ export default {
   "AdminBlogEditor.authorUrl": "Lien vers l’auteur",
   "AdminBlogEditor.authorUrlHint":
     "Le nom de l’auteur dans l’article renverra ici, par exemple vers sa page « À propos », pour que lecteurs et moteurs de recherche sachent qui l’a écrit. Laissez vide pour ne pas mettre de lien.",
+  "AdminBlogEditor.relatedFeature": "Fonctionnalité liée",
+  "AdminBlogEditor.relatedFeatureHint":
+    "La page de fonctionnalité du site dont parle l’article, par exemple realtime pour /features/realtime. L’article la lie sous la ligne de l’auteur. Laissez vide s’il n’y en a pas.",
   "AdminBlogEditor.coverUrl": "URL de l’image de couverture",
-  "AdminBlogEditor.coverUrlHint":
-    "Un lien https:// complet vers une image large, 1200×630, sur un hébergeur qui autorise son affichage sur d’autres sites. Laissez vide pour ne pas avoir de couverture.",
+  "AdminBlogEditor.coverUrlHint": "Une image 16:9, adresse https://.",
   "AdminBlogEditor.coverAlt": "Description de la couverture",
   "AdminBlogEditor.coverAltHint": "Ce que montre l’image, pour les personnes qui ne la voient pas.",
+  "AdminBlogEditor.groupAddress": "Adresse et langue",
+  "AdminBlogEditor.groupSummary": "Résumé",
+  "AdminBlogEditor.groupCover": "Couverture",
+  "AdminBlogEditor.groupLinks": "Liens",
+  "AdminBlogEditor.coverOf": "Utilise la couverture de : {title}",
+  "AdminBlogEditor.coverBroken": "Cette image ne s’est pas chargée.",
   "AdminBlogEditor.coverPrivacy":
     "Une image hébergée sur un autre site permet à ce site de voir l’adresse IP de vos lecteurs.",
   "AdminBlogEditor.publishing": "Publication",

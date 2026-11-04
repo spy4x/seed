@@ -947,6 +947,8 @@ services:
       - MPA_DOMAIN=${MPA_DOMAIN:-}
       # IndexNow (docs/blog.md): with MPA_DOMAIN, a blog post's change is announced. Unset → off.
       - INDEXNOW_KEY=${INDEXNOW_KEY:-}
+      # Dev.to (docs/blog.md): with MPA_DOMAIN, a live post is cross-posted once. Unset → off.
+      - DEVTO_API_KEY=${DEVTO_API_KEY:-}
       # The public demo (docs/demo.md): `true` wipes and seeds the database every night and gives
       # every new account sample groups. Unset → off.
       - DEMO_MODE=${DEMO_MODE:-}

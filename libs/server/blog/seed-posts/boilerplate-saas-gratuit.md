@@ -11,6 +11,8 @@ tldr:
   - Le code est gratuit ; l'hébergement ne l'est pas. Regardez où chaque kit veut tourner avant de choisir.
   - Seed apporte des groupes avec rôles, la facturation Stripe par membre, un panneau d'administration et neuf langues sur votre propre serveur.
 topic: Questions
+intro: "J'ai cherché un boilerplate SaaS gratuit comme vous le feriez, et j'en ai trouvé sept qui ne coûtent rien. Chacun laisse de côté quelque chose de différent : j'ai donc comparé ce que vous obtenez vraiment avant d'y consacrer votre temps."
+coverAlt: "Sept jeunes plantes en godets sur une étagère en bois, derrière un portail de jardin ouvert."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

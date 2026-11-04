@@ -10,6 +10,9 @@ tldr:
   - Pick by your stack and by who pays you, a single user or a team.
   - Seed combines teams, per-member Stripe billing, an admin panel and nine languages, on a server you run.
 topic: Questions
+intro: "I looked for a free SaaS boilerplate the way you would, and found seven that cost nothing. Each one leaves out something different, so I compared what you actually get before you spend your time on one."
+cover: covers/free-saas-boilerplate.webp
+coverAlt: "Seven young plants in starter pots on a wooden shelf behind an open garden gate."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

@@ -9,6 +9,9 @@ tldr:
   - I rehearsed it from a 24 October copy to 3 November's main; 945 files applied with no conflict.
   - Code every product needs goes to Seed first, then comes back with a sync.
 topic: Guides
+intro: "A product copied from Seed can keep taking Seed's fixes and features. I rehearsed the sync on a real copy, and this is the recipe, from recording where you started to applying one reviewed patch."
+cover: covers/start-a-product-from-seed-and-keep-its-updates.webp
+coverAlt: "A large violet plant and a young cutting of it in a separate pot, joined by a thin line carrying drops from one to the other."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T15:00:00Z

@@ -11,6 +11,8 @@ tldr:
   - Seed ist kostenlos (MIT), mit Teams, Stripe-Abrechnung und Admin-Bereich, aber in TypeScript.
   - Seed läuft per Docker Compose auf Ihrem eigenen Server, Backups und Monitoring inklusive.
 topic: Fragen
+intro: "SaaS Pegasus ist ein guter Django-Starter und kostet 449 $ oder mehr. Wenn Sie lieber nichts zahlen, finden Sie hier die kostenlosen Wege in Python und in TypeScript, und was jedem fehlt."
+coverAlt: "Eine Waage mit einer verschlossenen Schatztruhe und einem leeren Preisschild auf der einen Seite und zwei offenen Samentüten auf der anderen."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

@@ -53,7 +53,8 @@ Optional settings go with the website. `MPA_REDIRECT_RULE` sends other hosts, su
 ([Redirect other hosts](certificates.md#redirect-other-hosts-to-the-website)).
 `MPA_UMAMI_ORIGIN` and `MPA_UMAMI_WEBSITE_ID` turn on visitor statistics ([Analytics](analytics.md)).
 `INDEXNOW_KEY`, which the worker reads too, tells search engines when a blog post changes
-([IndexNow](blog.md#indexnow)).
+([IndexNow](blog.md#indexnow)). `DEVTO_API_KEY`, read by the worker, copies each live post to
+Dev.to once ([the Dev.to cross-post](blog.md#the-devto-cross-post)).
 [Settings](settings.md) lists them all.
 
 The API accepts a form only from `DOMAIN`'s origin. The website first refuses any post that does

@@ -11,6 +11,8 @@ tldr:
   - Se quem paga é uma equipe, escolha um template com grupos, papéis e cobrança por membro.
   - O Seed já vem em português do Brasil, e o servidor custa um valor fixo por mês.
 topic: Perguntas
+intro: "O ShipFast é um bom kit, mas não é o único, e não é gratuito. Comparei sete boilerplates por preço, licença, stack, equipes e hospedagem, com uma fonte para cada fato."
+coverAlt: "Sete veleiros de formas diferentes alinhados em águas calmas, um deles violeta."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z

@@ -152,6 +152,8 @@ const listed: AdminBlogListResponse = {
       publishAt: "2026-10-01T10:00:00.000Z",
       publishedAt: "2026-10-01T10:00:00.000Z",
       updatedAt: "2026-10-02T10:00:00.000Z",
+      coverUrl: null,
+      coverAlt: null,
     },
   ],
   counts: { all: 3, draft: 1, scheduled: 1, published: 1 },
@@ -231,6 +233,9 @@ const saved: BlogPost = {
   topic: "Infra",
   coverUrl: null,
   coverAlt: null,
+  coverFile: null,
+  intro: null,
+  relatedFeature: null,
   bodyMd: "## Why\n\nIt is fast.",
   language: "en",
   translationOf: null,
@@ -244,6 +249,8 @@ const saved: BlogPost = {
   newsletterList: null,
   newsletterSentAt: null,
   newsletterRecipients: null,
+  crosspostedAt: null,
+  devtoUrl: null,
   createdAt: "2026-10-20T10:00:00.000Z",
   updatedAt: "2026-10-20T10:00:00.000Z",
   version: 3,
@@ -321,17 +328,21 @@ describe("the blog editor", () => {
     expect(calls.at(-1)).toEqual(["save"])
   })
 
-  it("sets the post's language, and the post it translates from those in other languages (#527)", async () => {
+  it("sets the post's language, and the post it translates from those in other languages, taking its cover (#527, #733)", async () => {
     const calls: unknown[][] = []
     const english = {
       id: "01a184ae-0000-7000-8000-000000000001",
       title: "Hello world",
       language: "en" as const,
+      coverUrl: "https://images.example.com/hello.webp",
+      coverAlt: "A seedling",
     }
     const german = {
       id: "01a184ae-0000-7000-8000-000000000002",
       title: "Hallo",
       language: "de" as const,
+      coverUrl: null,
+      coverAlt: null,
     }
     const value = { ...blogDraftOf(saved), language: "de" as const }
     await mount(
@@ -353,8 +364,93 @@ describe("the blog editor", () => {
 
     expect(calls).toEqual([
       ["change", { ...value, language: "es" }],
-      ["change", { ...value, translationOf: english.id }],
+      ["change", {
+        ...value,
+        translationOf: english.id,
+        coverUrl: "https://images.example.com/hello.webp",
+        coverAlt: "A seedling",
+      }],
     ])
+  })
+
+  it("groups the settings under four headings, in the order focus follows (#733)", async () => {
+    await mount(<AdminBlogEditorScreen {...editorProps([])} />)
+    const groups = [...document.querySelectorAll("[data-e2e=admin-blog-settings] section h2")]
+    expect(groups.map((heading) => heading.textContent)).toEqual([
+      "Address & language",
+      "Summary",
+      "Cover",
+      "Links",
+    ])
+    const inGroup = (group: string) =>
+      [...find(`[data-e2e=admin-blog-group-${group}]`).querySelectorAll("[data-e2e]")]
+        .map((element) => element.getAttribute("data-e2e"))
+    expect(inGroup("address")).toEqual([
+      "admin-blog-slug",
+      "admin-blog-language",
+      "admin-blog-translation-of",
+      "admin-blog-topic",
+    ])
+    expect(inGroup("cover")).toEqual(["admin-blog-cover-url"])
+    expect(inGroup("links")).toEqual(["admin-blog-related-feature", "admin-blog-author-url"])
+    expect(find("[data-e2e=admin-blog-group-cover]").getAttribute("aria-labelledby"))
+      .toBe("admin-blog-group-cover-heading")
+
+    await mount(
+      <AdminBlogEditorScreen
+        {...editorProps([], { errors: { relatedFeature: "Bad.", coverUrl: "Bad." } })}
+      />,
+    )
+    await settle()
+    expect(document.activeElement?.getAttribute("data-e2e")).toBe("admin-blog-cover-url")
+  })
+
+  it("draws a cover address as a 16:9 thumbnail, and says so when the picture does not load (#733)", async () => {
+    const value = {
+      ...blogDraftOf(saved),
+      coverUrl: "https://images.example.com/a.webp",
+      coverAlt: "A chart",
+    }
+    await mount(<AdminBlogEditorScreen {...editorProps([], { value })} />)
+    const thumbnail = find<HTMLImageElement>("[data-e2e=admin-blog-cover-thumbnail]")
+    expect(thumbnail.getAttribute("src")).toBe("https://images.example.com/a.webp")
+    expect(thumbnail.className).toContain("aspect-video")
+    expect(find("[data-e2e=admin-blog-group-cover]").textContent).toContain(
+      "A 16:9 picture, https:// address.",
+    )
+
+    await act(() => {
+      thumbnail.dispatchEvent(new window.Event("error") as unknown as Event)
+    })
+    expect(has("[data-e2e=admin-blog-cover-thumbnail]")).toBe(false)
+    expect(find("[data-e2e=admin-blog-cover-broken]").textContent).toBe(
+      "This picture did not load.",
+    )
+  })
+
+  it("shows a translation the cover of its original, read-only, instead of the cover fields (#733)", async () => {
+    const english = {
+      id: "01a184ae-0000-7000-8000-000000000001",
+      title: "Hello world",
+      language: "en" as const,
+      coverUrl: "https://images.example.com/hello.webp",
+      coverAlt: "A seedling",
+    }
+    const value = {
+      ...blogDraftOf(saved),
+      language: "de" as const,
+      translationOf: english.id,
+      coverUrl: english.coverUrl,
+      coverAlt: english.coverAlt,
+    }
+    await mount(<AdminBlogEditorScreen {...editorProps([], { value, originals: [english] })} />)
+    expect(has("[data-e2e=admin-blog-cover-url]")).toBe(false)
+    expect(has("[data-e2e=admin-blog-cover-alt]")).toBe(false)
+    expect(find("[data-e2e=admin-blog-cover-of]").textContent).toBe(
+      "Uses the cover of: Hello world",
+    )
+    expect(find<HTMLImageElement>("[data-e2e=admin-blog-cover-thumbnail]").getAttribute("src"))
+      .toBe(english.coverUrl)
   })
 
   it("says where an empty slug comes from instead of drawing a placeholder address", async () => {
@@ -419,6 +515,29 @@ describe("the blog editor", () => {
     expect(find<HTMLInputElement>("[data-e2e=admin-blog-author-url]").value)
       .toBe("https://example.com/about")
     expect(blogDraftOf(saved).authorUrl).toBe("")
+  })
+
+  it("passes a typed intro and related feature up, and shows saved ones in their fields (#733)", async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminBlogEditorScreen {...editorProps(calls)} />)
+    const intro = find<HTMLTextAreaElement>("[data-e2e=admin-blog-intro]")
+    expect(document.querySelector(`label[for="${intro.id}"]`)?.textContent).toBe("Intro")
+    await type("[data-e2e=admin-blog-intro]", "Two sentences.")
+    await type("[data-e2e=admin-blog-related-feature]", "realtime")
+    expect(calls).toEqual([
+      ["change", { ...blogDraftOf(saved), intro: "Two sentences." }],
+      ["change", { ...blogDraftOf(saved), relatedFeature: "realtime" }],
+    ])
+
+    await mount(
+      <AdminBlogEditorScreen
+        {...editorProps([], {
+          post: { ...saved, intro: "Saved intro.", relatedFeature: "offline" },
+        })}
+      />,
+    )
+    expect(find<HTMLTextAreaElement>("[data-e2e=admin-blog-intro]").value).toBe("Saved intro.")
+    expect(find<HTMLInputElement>("[data-e2e=admin-blog-related-feature]").value).toBe("offline")
   })
 
   it("opens the folded settings and focuses the first field in error", async () => {
@@ -646,6 +765,8 @@ describe("the blog editor", () => {
       newsletterList: "news",
       newsletterSentAt: "2026-10-01T09:00:05.000Z",
       newsletterRecipients: 312,
+      crosspostedAt: null,
+      devtoUrl: null,
     }
     await mount(<AdminBlogEditorScreen {...editorProps([], { post: sent })} />)
     expect(find("[data-e2e=admin-blog-emailed]").textContent).toContain("Emailed to 312 on")

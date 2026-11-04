@@ -49,12 +49,20 @@ describe(`blog cover script`, () => {
     expect(coverPrompt(`  A seedling.  `)).toBe(`${HOUSE_STYLE}\n\nScene: A seedling.`)
   })
 
-  it(`writes a 1600x900 and a 640x360 cover without metadata, then removes the API's picture`, async () => {
+  it(`writes a 1600x900, a 960x540 and a 640x360 cover without metadata, then removes the API's picture`, async () => {
     const { deps: d, calls, removed } = deps({ key: `test-key` })
     const written = await makeCover(`hello`, `A seedling.`, d)
-    expect(written).toEqual([`/covers/hello.webp`, `/covers/hello-640.webp`])
+    expect(written).toEqual([
+      `/covers/hello.webp`,
+      `/covers/hello-960.webp`,
+      `/covers/hello-640.webp`,
+    ])
     expect(calls.run.map((command) => [command.at(-1), command[command.indexOf(`-extent`) + 1]]))
-      .toEqual([[`/covers/hello.webp`, `1600x900`], [`/covers/hello-640.webp`, `640x360`]])
+      .toEqual([
+        [`/covers/hello.webp`, `1600x900`],
+        [`/covers/hello-960.webp`, `960x540`],
+        [`/covers/hello-640.webp`, `640x360`],
+      ])
     expect(calls.run.every((command) => command.includes(`-strip`))).toBe(true)
     expect(calls.written).toEqual([`/covers/.hello.source.png`])
     expect(removed).toEqual(calls.written)
