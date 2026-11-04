@@ -1,5 +1,5 @@
 # The API, the worker and the migration on Bun (#748), for a product that sets APP_RUNTIME=bun: the
-# Bun counterpart of apps/api/dockerfile (infra/compose/compose.runtime-bun.yml, docs/deploy.md).
+# Bun counterpart of apps/api/dockerfile (infra/compose/compose.runtime-bun.yml, docs/apps.md).
 #
 # Deno bundles the four entry points at build time (`deno task server:build`, into dist/server),
 # and the final image holds Bun, the bundles, the migrations and the `vips` command line the worker
