@@ -1,6 +1,15 @@
 import type postgres from "postgres"
+import {
+  createDevtoArticle,
+  DEVTO_MAX_TAGS,
+  type DevtoArticleInput,
+  type DevtoCreateResult,
+  type DevtoFindResult,
+  findDevtoArticleByCanonical,
+} from "@spy4x/integrations/devto"
 import { blogPostPath } from "@domain/blog"
 import type { JobHandler } from "../jobs/jobs.ts"
+import { readSiteUrl } from "../subscribers/subscribers.ts"
 import type { BlogPostRow } from "./postgres-blog-repository.ts"
 
 /**
@@ -11,19 +20,8 @@ import type { BlogPostRow } from "./postgres-blog-repository.ts"
  * @module
  */
 
-/** A Dev.to answer, as `@spy4x/integrations/devto` gives it. */
-export type DevtoResult<T> = { success: true; output: T } | { success: false; error: string }
-
 /** An article as Dev.to's API takes it. */
-export interface DevtoArticle {
-  title: string
-  body_markdown: string
-  canonical_url: string
-  description?: string
-  tags?: string[]
-  main_image?: string
-  published: boolean
-}
+export type DevtoArticle = DevtoArticleInput
 
 /**
  * The two calls the job makes, which hold the API key themselves, so the job never sees it. Their
@@ -31,9 +29,9 @@ export interface DevtoArticle {
  */
 export interface DevtoClient {
   /** The account's article whose canonical address is `canonicalUrl`, or `null` for none. */
-  find(canonicalUrl: string): Promise<DevtoResult<{ url: string } | null>>
+  find(canonicalUrl: string): Promise<DevtoFindResult>
   /** Makes the article and answers its address. */
-  create(article: DevtoArticle): Promise<DevtoResult<{ url: string }>>
+  create(article: DevtoArticle): Promise<DevtoCreateResult>
 }
 
 /** What the cross-post needs: the public website's origin and a Dev.to client. */
@@ -43,8 +41,28 @@ export interface BlogCrosspostSetup {
   client: DevtoClient
 }
 
-/** The most tags Dev.to takes on an article. */
-const DEVTO_MAX_TAGS = 4
+/** The Dev.to client of the account `apiKey` names, from `@spy4x/integrations/devto`. */
+export function devtoClient(apiKey: string): DevtoClient {
+  return {
+    find: (canonicalUrl) => findDevtoArticleByCanonical({ apiKey, canonicalUrl }),
+    create: (article) => createDevtoArticle({ apiKey, article }),
+  }
+}
+
+/**
+ * The cross-post's setup from `DEVTO_API_KEY` and `MPA_DOMAIN`, or `null` when either is unset:
+ * then every post is settled as never cross-posted. Plain HTTP only in development.
+ *
+ * @throws Error when `MPA_DOMAIN` carries a scheme.
+ */
+export function readCrosspostSetup(
+  env: { get(name: string): string | undefined },
+  mode: `dev` | `prod`,
+): BlogCrosspostSetup | null {
+  const apiKey = env.get(`DEVTO_API_KEY`)?.trim() ?? ``
+  const siteUrl = readSiteUrl(env, mode)
+  return apiKey === `` || siteUrl === null ? null : { siteUrl, client: devtoClient(apiKey) }
+}
 
 /** A body line that is an interactive figure's tag alone, such as `<CostCalculator members={4} />`. */
 const FIGURE_LINE = /^\s*<[A-Z][A-Za-z0-9]*\b[^\n]*\/>\s*$/gm

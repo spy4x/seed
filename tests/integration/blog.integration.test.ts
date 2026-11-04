@@ -1595,16 +1595,18 @@ function fakeDevto(articles: DevtoArticle[] = []) {
     find: (canonical) => {
       const at = articles.findIndex((article) => article.canonical_url === canonical)
       return Promise.resolve({
-        success: true,
-        output: at === -1 ? null : { url: `https://dev.to/seed/article-${at}` },
+        success: true as const,
+        output: at === -1 ? null : { id: at + 1, url: `https://dev.to/seed/article-${at}` },
+        error: `` as const,
       })
     },
     create: (article) => {
       made.push(article)
       articles.push(article)
       return Promise.resolve({
-        success: true,
-        output: { url: `https://dev.to/seed/article-${articles.length - 1}` },
+        success: true as const,
+        output: { id: articles.length, url: `https://dev.to/seed/article-${articles.length - 1}` },
+        error: `` as const,
       })
     },
   }
@@ -1693,7 +1695,8 @@ Deno.test(`blog: a Dev.to error fails the cross-post for a retry, and records no
       ...devto.setup,
       client: {
         ...devto.setup.client,
-        create: () => Promise.resolve({ success: false as const, error: `Dev.to answered 503` }),
+        create: () =>
+          Promise.resolve({ success: false as const, output: null, error: `Dev.to answered 503` }),
       },
     }
 
