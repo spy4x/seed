@@ -75,8 +75,8 @@ string.
 
 ## The guard
 
-`tests/no-uuid-v4.test.ts` runs in `deno task check`. It reads every text file, whatever its
-extension, and fails on any of these:
+`tests/no-uuid-v4.test.ts` runs in `deno task check`. It reads every text file git tracks, whatever
+its extension, and fails on any of these:
 
 - a call that makes a version 4 id, in TypeScript or SQL;
 - a pattern or helper that accepts only version 4.

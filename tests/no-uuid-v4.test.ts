@@ -6,9 +6,8 @@
  *
  * This test reads every text file of the repository, whatever its extension (code, SQL, shell,
  * HTML, configuration and documents), and fails on a call that makes a version 4 id, on a pattern
- * that accepts only version 4, and on a document that shows either. The CI image has no git, so
- * the files are found by walking the tree and leaving out what `.gitignore` leaves out, each
- * directory by its exact path from the root.
+ * that accepts only version 4, and on a document that shows either. The files are the ones git
+ * tracks (`git ls-files`), so build output, dependencies and other ignored folders are never read.
  */
 
 import { expect } from "@std/expect"
@@ -48,58 +47,17 @@ export const PENDING: ReadonlyMap<string, string> = new Map([
   ["libs/server/billing/setup.ts", ": `whsec_unused_${crypto.randomUUID()}`,"],
 ])
 
-/**
- * Directories git does not track here (dependencies, build output, reports, local data and git's
- * own), each by its exact path from the root. A tracked folder that only shares a name with one
- * of them, such as `libs/server/report`, is read.
- */
-const SKIPPED_DIRECTORIES: readonly string[] = [
-  ".git",
-  ".age",
-  ".idea",
-  ".vs",
-  ".volumes",
-  "node_modules",
-  "apps/admin/node_modules",
-  "apps/api/node_modules",
-  "apps/mpa/node_modules",
-  "apps/spa/node_modules",
-  "apps/worker/node_modules",
-  // The server bundles of `deno task server:build` (apps/api/dockerfile.node, #748).
-  "dist",
-  "apps/admin/.vite",
-  "apps/admin/dist",
-  "apps/mpa/.vite",
-  "apps/mpa/_fresh",
-  "apps/spa/.vite",
-  "apps/spa/dist",
-  "e2e/report",
-  "e2e/results",
-  "playwright-report",
-]
-
-/** Single files git does not track here: generated ones, logs, and env files, which hold secrets. */
-const SKIPPED_FILES =
-  /^(apps\/(spa|admin)\/security-headers\.conf|infra\/configs\/vapid\.json|tests\/\.scratch-.*|(.*\/)?(\.DS_Store|[^/]*\.log|vite\.config\.[jt]s\.timestamp-[^/]*|\.env(?![^/]*\.example$)[^/]*))$/
-
-/**
- * Whether the guard leaves out `path` (a file or a directory, relative to the root, with `/`).
- * Nothing is left out for its extension: any file that is not skipped here is read.
- */
-export function isSkipped(path: string): boolean {
-  return SKIPPED_DIRECTORIES.some((directory) =>
-    path === directory || path.startsWith(`${directory}/`)
-  ) || SKIPPED_FILES.test(path)
-}
-
-/** Every file under `directory` that is not skipped, as its path from the root. */
-async function* repositoryFiles(directory = ""): AsyncGenerator<string> {
-  for await (const entry of Deno.readDir(`${ROOT}${directory}`)) {
-    const path = `${directory}${entry.name}`
-    if (isSkipped(path)) continue
-    if (entry.isDirectory) yield* repositoryFiles(`${path}/`)
-    else if (entry.isFile) yield path
-  }
+/** Every file git tracks under `root`, staged ones included, as its path from that root. */
+export async function trackedFiles(root: string): Promise<string[]> {
+  const { success, stdout, stderr } = await new Deno.Command("git", {
+    args: ["ls-files", "-z"],
+    cwd: root,
+    stdout: "piped",
+    stderr: "piped",
+  }).output()
+  const decoder = new TextDecoder()
+  if (!success) throw new Error(`git ls-files failed: ${decoder.decode(stderr)}`)
+  return decoder.decode(stdout).split("\0").filter(Boolean)
 }
 
 /** `path:line: match` for every forbidden name in `text`, leaving out the file's pending line. */
@@ -126,8 +84,13 @@ export function offendersIn(files: Iterable<readonly [path: string, text: string
 
 Deno.test("no file of the repository creates, accepts only or documents a UUID version 4", async () => {
   const files: [string, string][] = []
-  for await (const path of repositoryFiles()) {
-    const bytes = await Deno.readFile(`${ROOT}${path}`)
+  for (const path of await trackedFiles(ROOT)) {
+    // A tracked file deleted and not yet staged is gone from the tree.
+    const bytes = await Deno.readFile(`${ROOT}${path}`).catch((error) => {
+      if (error instanceof Deno.errors.NotFound) return undefined
+      throw error
+    })
+    if (!bytes) continue
     // A file with a zero byte is an image or another binary, not text.
     if (!bytes.includes(0)) files.push([path, new TextDecoder().decode(bytes)])
   }
@@ -194,51 +157,37 @@ Deno.test("the UUID version 4 guard sees a version 4 helper imported under any n
   }
 })
 
-Deno.test("the UUID version 4 guard reads a file whatever its extension", () => {
-  for (
-    const path of [
-      "apps/api/zz.mts",
-      "apps/api/zz.cjs",
-      "libs/ui/zz.jsx",
+Deno.test("the UUID version 4 guard reads every tracked file, whatever its name, and no ignored one", async () => {
+  // A repository of its own, under tests/ (the folder this test may write), with a `.scratch-`
+  // name that git ignores here.
+  const root = await Deno.makeTempDir({
+    dir: fromFileUrl(new URL(".", import.meta.url)),
+    prefix: ".scratch-uuid-",
+  })
+  try {
+    const git = (...args: string[]) =>
+      new Deno.Command("git", { args, cwd: root, stdout: "null", stderr: "null" }).output()
+    await git("init", "-q")
+    await Deno.writeTextFile(`${root}/.gitignore`, ".vite\n.lighthouseci\n")
+    for (const path of ["apps/api", "apps/web/.vite", ".lighthouseci", "e2e/report"]) {
+      await Deno.mkdir(`${root}/${path}`, { recursive: true })
+    }
+    for (const path of ["apps/api/dockerfile", "deno.lock", "e2e/report/index.html"]) {
+      await Deno.writeTextFile(`${root}/${path}`, "")
+    }
+    await Deno.writeTextFile(`${root}/apps/web/.vite/deps.js`, "crypto.randomUUID()")
+    await Deno.writeTextFile(`${root}/.lighthouseci/lhr.json`, "crypto.randomUUID()")
+    await git("add", ".")
+    // Untracked and not staged: not read until it is added.
+    await Deno.writeTextFile(`${root}/draft.ts`, "")
+    expect((await trackedFiles(`${root}/`)).sort()).toEqual([
+      ".gitignore",
       "apps/api/dockerfile",
-      "infra/scripts/make-id",
-      "apps/spa/public-env.allow",
-      ".env.example",
       "deno.lock",
-    ]
-  ) {
-    expect([path, isSkipped(path)]).toEqual([path, false])
-  }
-})
-
-Deno.test("the UUID version 4 guard skips a directory only at its exact path from the root", () => {
-  for (
-    const path of [
-      "libs/server/report/zz-g.ts",
-      "libs/server/results/zz.ts",
-      "apps/api/dist/zz.ts",
-      "libs/build/zz.ts",
-      "libs/package/zz.ts",
-      "docs/node_modules/zz.js",
-      "e2e/reporter.ts",
-      "apps/spa/distribution.ts",
-    ]
-  ) {
-    expect([path, isSkipped(path)]).toEqual([path, false])
-  }
-  for (
-    const path of [
-      "e2e/report",
       "e2e/report/index.html",
-      "node_modules/uuid/dist/v4.js",
-      "apps/spa/dist/sw.js",
-      ".git",
-      ".env",
-      "apps/spa/.env.dev",
-      "e2e/results/run.log",
-    ]
-  ) {
-    expect([path, isSkipped(path)]).toEqual([path, true])
+    ])
+  } finally {
+    await Deno.remove(root, { recursive: true })
   }
 })
 
