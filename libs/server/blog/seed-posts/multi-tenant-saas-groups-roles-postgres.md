@@ -61,14 +61,14 @@ feature (a note, a tag, a file) has its own `group_id` column.
 Four, fixed, ordered: viewer (1), editor (2), admin (3), owner (4). Ordered numbers make most rules
 one comparison: "editor or above" is `role >= 2`.
 
-| What                                           | Viewer | Editor | Admin | Owner |
-| ---------------------------------------------- | ------ | ------ | ----- | ----- |
-| Read the group's notes                         | yes    | yes    | yes   | yes   |
-| Create, edit and delete notes                  | no     | yes    | yes   | yes   |
-| Invite people as viewers or editors            | no     | no     | yes   | yes   |
-| Rename the group, see members' email addresses | no     | no     | yes   | yes   |
-| Make someone an admin                          | no     | no     | no    | yes   |
-| Pay, delete the group, transfer ownership      | no     | no     | no    | yes   |
+| What                    | Viewer | Editor | Admin | Owner |
+| ----------------------- | ------ | ------ | ----- | ----- |
+| Read notes              | yes    | yes    | yes   | yes   |
+| Write notes             | no     | yes    | yes   | yes   |
+| Invite viewers, editors | no     | no     | yes   | yes   |
+| Rename, see emails      | no     | no     | yes   | yes   |
+| Make an admin           | no     | no     | no    | yes   |
+| Pay, delete, transfer   | no     | no     | no    | yes   |
 
 An admin manages viewers and editors, never another admin, and nobody but the owner touches the
 owner. On the Free plan, an invitation adds a viewer only: giving members other roles is what the
