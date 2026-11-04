@@ -13,6 +13,13 @@ import type { GroupRole } from "./+lib.ts"
 /** A widget's width: `stat` shares a row with other numbers, `full` takes the row. */
 export type WidgetSize = "stat" | "full"
 
+/**
+ * What the operator's group page may show of a widget: `counts` (how many of something, never what
+ * it says or who did it) or `never` (the group's own figures, such as its spending, which only its
+ * members see).
+ */
+export type WidgetOperatorView = "counts" | "never"
+
 /** One widget an aggregate offers. Its data comes from {@link WidgetDefinition.operation}. */
 export interface WidgetDefinition {
   /** Stable: it is what a person's saved layout keeps, so it never changes once shipped. */
@@ -24,6 +31,18 @@ export interface WidgetDefinition {
   canView(role: GroupRole): boolean
   /** The query operation (`note.widget.total`) that answers with the widget's data. */
   operation: string
+  /**
+   * Whether the operator's group page draws and reads it. Required, so every new widget makes the
+   * choice: one that shows the group's own figures is `never`.
+   */
+  operatorView: WidgetOperatorView
+}
+
+/** The widgets the operator's group page draws and reads: the `counts` ones, in their order. */
+export function operatorWidgets<T extends { operatorView: WidgetOperatorView }>(
+  widgets: readonly T[],
+): T[] {
+  return widgets.filter((widget) => widget.operatorView === "counts")
 }
 
 /** The longest range a widget answers for, in days: a year, a leap day included. */

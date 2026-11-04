@@ -1339,6 +1339,10 @@ export default {
   "AdminGroupOverview.description":
     "Was Mitglieder auf ihrer Übersichtsseite im Standardlayout sehen. Mitglieder können diese Widgets ausblenden und umsortieren; ihre eigenen Layouts sind hier nicht zu sehen.",
   "AdminGroupOverview.gridLabel": "Widgets der Übersicht von {group}",
+  "AdminGroupOverview.membersOnly":
+    "Widgets mit den eigenen Zahlen der Gruppe sehen nur ihre Mitglieder.",
+  "AdminGroupOverview.noneShown":
+    "Alle Widgets auf der Übersichtsseite dieser Gruppe zeigen ihre eigenen Zahlen, deshalb sehen sie nur ihre Mitglieder.",
   "AdminGroups.active": "Aktiv",
   "AdminGroups.inTrash": "Im Papierkorb",
   "AdminGroups.noName": "Ohne Namen",
