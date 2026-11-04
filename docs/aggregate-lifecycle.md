@@ -63,7 +63,7 @@ A note can move to another group (`NoteMoveCommand`). Copy the notes files that 
    The editor gets a form posting `{ toGroupId }`. Targets are the groups where the person may
    write (`moveTargetsOf`).
 6. **SPA.** The store sends the command and never queues it. A queued write for a moved item
-   becomes a conflict ([offline.md](offline.md)).
+   becomes a conflict ([offline-writes.md](offline-writes.md)).
 7. **Tests.** Both transports (viewer, stranger, same group, all or nothing, cap), Postgres, the
    hint to members of both groups, the screens and an e2e spec. Notes:
    `tests/integration/note-move-push.integration.test.ts` and `e2e/notes-move.e2e.ts`.

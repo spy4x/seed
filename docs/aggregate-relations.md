@@ -25,7 +25,7 @@ You need:
   their tags would lose them silently.
 - **Offline, the parent's collection comes first** in `offline/index.ts`, and the child names it in
   its `dependencies` (`parents`, `on`, `without`). The four rules are in
-  [offline.md](offline.md#tags-the-second-offline-writable-aggregate-and-what-a-parent-means).
+  [offline-writes.md](offline-writes.md#tags-and-what-a-parent-means).
 - **The child's screens read the parent's store** (`state/tags.ts`) for their picker, labels and
   filter. The filter lives in the address (`useUrlFilters`) and runs over the local list.
 

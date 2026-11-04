@@ -34,7 +34,7 @@ reads, and the process cap to allow when you run it under one.
 
 Three specs start the app with no network: `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts` and
 `e2e/search-offline.e2e.ts`. They run against the built SPA, the image a deploy serves. Every
-other spec runs against the dev server. [The offline guide](offline.md), "The app shell", says why.
+other spec runs against the dev server. [The app shell](offline-app-shell.md#offline-tests-run-against-the-built-spa) says why.
 
 A run that needs both makes two passes: the dev server first, then the built SPA in its place.
 

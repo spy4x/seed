@@ -9,7 +9,8 @@ You need:
 
 - An aggregate with a working store ([Add your first feature](first-feature.md)).
 - The level it needs. [ADR 003](decisions/003-swappable-transport-and-local-data.md), section 4,
-  sets the levels, and [offline.md](offline.md#the-three-levels) lists where every list stands.
+  sets the levels, and [offline-data.md](offline-data.md#the-three-levels) lists where every list
+  stands.
 
 ## Level 1: online only
 
@@ -62,7 +63,8 @@ Its `clear` ends the database, so a write in flight at sign-out cannot put the d
 ## Take part in the changes pull
 
 A level 3 aggregate is read by the changes pull: a device asks only for what changed since its
-cursor ([offline.md](offline.md), "Reads: the device first"). Notes and tags take part; copy them.
+cursor ([offline-data.md](offline-data.md#notes-and-tags-the-changes-pull)). Notes and tags take
+part; copy them.
 
 1. **Server.** Write a `ChangesAggregate` beside the repository, as
    `libs/server/notes/note-changes.ts` does. It has a `kind` and two queries. `sequences` reads the

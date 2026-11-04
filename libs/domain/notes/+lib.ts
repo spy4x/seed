@@ -367,7 +367,7 @@ export interface NoteWriteResult {
   created: boolean
 }
 
-/** Counts against the plan's `maxNotes` (`docs/billing.md`, "Entitlements"). */
+/** Counts against the plan's `maxNotes` (`docs/billing-plans.md`, "What each plan allows"). */
 export class NoteCreateCommand implements Command<NoteCreatePayload, NoteWriteResult> {
   __resultType?: NoteWriteResult
   /**

@@ -108,7 +108,7 @@ For a body a schema refused, it answers with `validationResponse(c, errors)`. Bo
 socket, `details.code` repeats the reason, since the library's retry rule reads it.
 
 A REST read hands `error.reason` to `ReadRefused`. An answer with no reason is taken for a proxy's
-([offline.md](offline.md)).
+([offline-data.md](offline-data.md#which-answers-count-as-unreachable)).
 
 ## Next
 
