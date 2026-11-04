@@ -2,8 +2,8 @@ import type postgres from "postgres"
 import { type ChangesAnswer, planChangesPage, type Tombstone } from "@spy4x/realtime/changes"
 
 /**
- * One aggregate's part in the changes pull of a group (`docs/aggregates.md`, "Taking part in the
- * changes pull"). Both functions run in the read's repeatable-read transaction, so they see the
+ * One aggregate's part in the changes pull of a group (`docs/aggregate-offline.md`, "Take part in
+ * the changes pull"). Both functions run in the read's repeatable-read transaction, so they see the
  * same snapshot as the group's sequence.
  */
 export interface ChangesAggregate {

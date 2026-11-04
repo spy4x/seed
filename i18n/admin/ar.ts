@@ -605,6 +605,7 @@ export default {
   "AdminBlogEditor.viewOnSite": "عرضها على الموقع",
   "AdminBlogEditor.changeUrl": "تغيير الرابط…",
   "AdminBlogEditor.unpublish": "إلغاء النشر…",
+  "AdminBlogEditor.history": "السجل…",
   "AdminBlogEditor.deletePost": "حذف التدوينة…",
   "AdminBlogEditor.editPost": "تعديل التدوينة",
   "AdminBlogEditor.newPost": "تدوينة جديدة",
@@ -2071,4 +2072,13 @@ export default {
   "AdminBlogEditor.translationOfHint":
     "التدوينة التي تترجمها هذه. يربط الموقع بينهما كنسختين لغويتين بعد نشر كلتيهما.",
   "AdminBlogEditor.translationNone": "لا شيء: تدوينة أصلية",
+  "AdminBlogHistory.title": "السجل",
+  "AdminBlogHistory.versions": "الإصدارات السابقة",
+  "AdminBlogHistory.shown": "الإصدار المعروض",
+  "AdminBlogHistory.body": "النص",
+  "AdminBlogHistory.savedBy": "حفظه {name} في {date}",
+  "AdminBlogHistory.someone": "غير معروف",
+  "AdminBlogHistory.restore": "استعادة هذا الإصدار",
+  "AdminBlogHistory.empty": "لا إصدارات سابقة بعد. كل حفظ يحتفظ بإصدار.",
+  "AdminBlogHistory.restored": "تمت استعادة الإصدار السابق. احفظ للإبقاء عليه.",
 } satisfies Catalog
