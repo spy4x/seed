@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "Sin registro. Entras con una cuenta de invitado y datos de ejemplo, y todo se borra cada noche.",
   "SiteNav.features": "Funciones",
+  "SiteNav.docs": "Docs",
   "SiteNav.blog": "Blog",
   "SiteNav.compare": "Comparar",
   "SiteNav.pricing": "Precios",
@@ -242,6 +243,7 @@ export default {
     "<init>init</init> copia el archivo de entorno y genera todos los secretos y las claves de web push; <dev>dev</dev> arranca Traefik y todo lo demás. Luego abre <url>http://app.localhost</url>. El <readme>README</readme> explica cada ajuste y cómo desplegar.",
   "HomeQuickStart.agent": "O pídeselo a tu agente de IA: <prompt></prompt>.",
   "HomeQuickStart.terminal": "Terminal",
+  "HomeQuickStart.guide": "Lee la guía paso a paso",
   "HomeStatus.eyebrow": "Estado sincero",
   "HomeStatus.title": "Dónde está hoy",
   "HomeStatus.lead":
