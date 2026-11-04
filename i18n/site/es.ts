@@ -130,13 +130,13 @@ export default {
   "Architecture.worker": "Worker",
   "Architecture.mail": "Correo, push",
   "Architecture.webAppNote": "Preact, en el navegador",
-  "Architecture.websiteNote": "Fresh, como esta página",
+  "Architecture.websiteNote": "Preact, en el servidor",
   "Architecture.apiNote": "Hono sobre Deno",
   "Architecture.postgresNote": "cada cambio",
   "Architecture.workerNote": "el trabajo lento",
   "Architecture.mailNote": "y la limpieza",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "eventos, misma transacción",
   "Architecture.caption": "Todo en un servidor, detrás de Traefik, con Valkey y Grafana",
   "Architecture.captionTop": "Todo en un servidor, detrás de Traefik,",
@@ -269,6 +269,8 @@ export default {
   "Pricing.description":
     "Seed es gratis con licencia MIT, sin versión de pago. Ejecutarlo cuesta un servidor Linux al precio de tu proveedor, más los servicios que actives.",
   "Pricing.crumb": "Precios",
+  "Pricing.saving":
+    "{plan} cuesta {monthly} al mes o {yearly} al año: {saving} menos que pagando cada mes.",
   "PricingFaq.paidQuestion": "¿Hay una versión de pago de Seed?",
   "PricingFaq.paidAnswer":
     "No. No hay versión pro, ni clave de licencia, ni funciones reservadas. Si quieres ayuda, contrátame: mi tiempo es lo único que vendo.",
@@ -550,7 +552,8 @@ export default {
   "FeatureWebsite.title": "Un sitio web público para adaptar",
   "FeatureWebsite.lead":
     "Este sitio: rápido, renderizado en el servidor y usable con JavaScript desactivado, con precios, páginas legales, un blog y un boletín.",
-  "FeatureWebsite.fact1": "Fresh en el servidor; cada acción es un enlace o un formulario real",
+  "FeatureWebsite.fact1":
+    "Preact en el servidor, compilado con Vite; cada acción es un enlace o un formulario real",
   "FeatureWebsite.fact2": "Precios leídos del catálogo de planes de la aplicación",
   "FeatureWebsite.fact3":
     "Un boletín con doble confirmación, baja con un clic y correos en el idioma de quien los lee",

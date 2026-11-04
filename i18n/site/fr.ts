@@ -133,13 +133,13 @@ export default {
   "Architecture.worker": "Worker",
   "Architecture.mail": "E-mail, push",
   "Architecture.webAppNote": "Preact, dans le navigateur",
-  "Architecture.websiteNote": "Fresh, comme cette page",
+  "Architecture.websiteNote": "Preact, côté serveur",
   "Architecture.apiNote": "Hono sur Deno",
   "Architecture.postgresNote": "chaque modification",
   "Architecture.workerNote": "les tâches lentes",
   "Architecture.mailNote": "et le nettoyage",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "événements, même transaction",
   "Architecture.caption": "Le tout sur un seul serveur, derrière Traefik, avec Valkey et Grafana",
   "Architecture.captionTop": "Le tout sur un seul serveur, derrière Traefik,",
@@ -275,6 +275,8 @@ export default {
   "Pricing.description":
     "Seed est gratuit sous licence MIT, sans offre payante. Le faire tourner coûte un serveur Linux au prix de votre hébergeur, plus les services que vous activez.",
   "Pricing.crumb": "Tarifs",
+  "Pricing.saving":
+    "{plan} coûte {monthly} par mois ou {yearly} par an : {saving} de moins qu’en payant chaque mois.",
   "PricingFaq.paidQuestion": "Existe-t-il une version payante de Seed ?",
   "PricingFaq.paidAnswer":
     "Non. Pas d’offre pro, pas de clé de licence, aucune fonctionnalité réservée. Si vous voulez de l’aide, faites appel à moi : mon temps est la seule chose que je vends.",
@@ -565,7 +567,7 @@ export default {
   "FeatureWebsite.lead":
     "Ce site : rapide, rendu côté serveur et utilisable sans JavaScript, avec tarifs, pages légales, blog et newsletter.",
   "FeatureWebsite.fact1":
-    "Fresh côté serveur ; chaque action est un vrai lien ou un vrai formulaire",
+    "Preact côté serveur, construit avec Vite ; chaque action est un vrai lien ou un vrai formulaire",
   "FeatureWebsite.fact2": "Des tarifs lus depuis le catalogue de forfaits de l’application",
   "FeatureWebsite.fact3":
     "Une newsletter à double confirmation, désabonnement en un clic et e-mails dans la langue du lecteur",

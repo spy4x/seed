@@ -43,9 +43,9 @@ apps/api      REST, the /api/ws socket, the call route, auth, CQRS dispatch, the
 apps/spa      Preact + Vite PWA: the product. Commands go over the socket (over HTTP with the
               realtime module off), reads over REST; an IndexedDB copy and a queue of writes keep
               it working offline.
-apps/mpa      Fresh. The public website: server-rendered, works without JavaScript, no
-              session. Calls the API over HTTP (API_URL) for the newsletter only; in
-              compose under the `mpa` profile.
+apps/mpa      Preact SSR (`@spy4x/preact-server`). The public website: server-rendered,
+              works without JavaScript, no session. Calls the API over HTTP (API_URL) for
+              the newsletter only; in compose under the `mpa` profile.
 apps/admin    Preact + Vite. The operator area on its own host (ADMIN_DOMAIN), one module per
               area (apps/admin/src/modules). In compose under the `admin` profile.
 apps/worker   Drains outbox_events and announces group changes (pg_notify); sweeps
@@ -77,6 +77,12 @@ ADR 002 is recent and reverses part of ADR 001. In short:
   page, pricing (from the `PLANS` catalog), privacy, terms, `robots.txt`, `sitemap.xml`, `llms.txt`
   and the newsletter. It speaks REST only, for the newsletter, and has no session; its sign-in and
   sign-up links open the SPA at `DOMAIN`.
+- **`apps/mpa` no longer runs on Fresh** (spy4x/seed#623, 2026-11-04). It runs on
+  `@spy4x/preact-server` (spy4x/preact-components), a small layer with Fresh 2's API shape on web
+  standards, built by Vite into `apps/mpa/dist/` ([website-server.md](website-server.md)). The
+  goals: run on Node and Bun as well as Deno, own which scripts load and what is preloaded, and
+  stop reaching into Fresh's private symbols. The layer is new and may not be final: when it
+  falls short, fix and improve it in the library instead of working around it here.
 - Every transport is a thin adapter over **one set of CQRS handlers**. A transport parses,
   authenticates and dispatches; it holds no business rule.
 - **Session strength is checked on the buses, not in a transport.** Every

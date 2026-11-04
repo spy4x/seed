@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { App } from "fresh"
+import { App } from "@spy4x/preact-server"
 import { h } from "preact"
 import { renderToString } from "preact-render-to-string"
 import { formatMoney } from "@spy4x/platform/universal/money"
@@ -896,6 +896,9 @@ describe("the public website", () => {
     expect(html.match(/<form [^>]*action="\/pricing"[^>]*method="post"/g)).toHaveLength(
       PLANS.length,
     )
+    // Seed's own catalog sells no yearly price: no toggle and no saving sentence.
+    expect(html).not.toContain(`data-pricing-interval`)
+    expect(html).not.toContain(`data-e2e="pricing-saving"`)
   })
 
   it("offers only Seed itself, at no cost, in the pricing page's structured data", async () => {

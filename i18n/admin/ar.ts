@@ -260,6 +260,7 @@ export default {
   "AdminBilling.onFreeSince": "على الخطة المجانية منذ {date}",
   "AdminBilling.wouldBe": "سيصبح {amount}",
   "AdminBilling.seatPrice": "{seats} × {price}",
+  "AdminBilling.billedYearly": "‏{amount} تُدفع سنويًا",
   "AdminBilling.title": "الفوترة",
   "AdminBilling.subtitle": "من يدفع، وكم يدفع، وكم تكسب.",
   "AdminBilling.off": "الفوترة متوقفة",
@@ -292,7 +293,7 @@ export default {
   "AdminBilling.keyNumbers": "أهم الأرقام",
   "AdminBilling.mrr": "الإيرادات الشهرية المتكررة",
   "AdminBilling.mrrHint":
-    "الاشتراكات النشطة والمتأخرة السداد بسعر القائمة. الفترات التجريبية تُحسب صفرًا.",
+    "الاشتراكات النشطة والمتأخرة السداد بسعر القائمة. يُحسب الاشتراك السنوي بسعره مقسومًا على 12. الفترات التجريبية تُحسب صفرًا.",
   "AdminBilling.payingGroups": "المجموعات التي تدفع",
   "AdminBilling.pastDueCount": "{count} متأخرة السداد",
   "AdminBilling.inTrial": "في فترة تجريبية",
@@ -344,6 +345,9 @@ export default {
   "AdminBillingCustomer.status": "الحالة",
   "AdminBillingCustomer.plan": "الخطة",
   "AdminBillingCustomer.perMonth": "شهريًا",
+  "AdminBillingCustomer.period": "فترة الفوترة",
+  "AdminBillingCustomer.monthly": "شهري",
+  "AdminBillingCustomer.yearly": "سنوي",
   "AdminBillingCustomer.lastPayment": "آخر دفعة",
   "AdminBillingCustomer.customerSince": "عميل منذ",
   "AdminBillingCustomer.notRecorded": "غير مسجَّل",
@@ -401,6 +405,8 @@ export default {
   "AdminBillingCustomer.howLong": "المدة",
   "AdminBillingCustomer.timeText":
     "تحتفظ <group>{group}</group> بخطة {plan} دون رسوم حتى {date}. بعد ذلك يعود الدفع المعتاد: {charge} شهريًا.",
+  "AdminBillingCustomer.timeTextYear":
+    "تحتفظ <group>{group}</group> بخطة {plan} دون رسوم حتى {date}. بعد ذلك يعود الدفع المعتاد: {charge} سنويًا.",
   "AdminBillingCustomer.length7d": "7 أيام",
   "AdminBillingCustomer.length14d": "14 يومًا",
   "AdminBillingCustomer.length30d": "30 يومًا",
@@ -1466,6 +1472,9 @@ export default {
   "AdminGroupOverview.description":
     "ما يراه الأعضاء في صفحة «نظرة عامة» بالترتيب الافتراضي. يستطيع الأعضاء إخفاء هذه الأدوات وإعادة ترتيبها، ولا تظهر ترتيباتهم الخاصة هنا.",
   "AdminGroupOverview.gridLabel": "أدوات النظرة العامة في {group}",
+  "AdminGroupOverview.membersOnly": "الأدوات التي تعرض أرقام المجموعة الخاصة لا يراها إلا أعضاؤها.",
+  "AdminGroupOverview.noneShown":
+    "كل الأدوات في صفحة «نظرة عامة» لهذه المجموعة تعرض أرقامها الخاصة، لذلك لا يراها إلا أعضاؤها.",
   "AdminGroups.active": "نشطة",
   "AdminGroups.inTrash": "في سلة المهملات",
   "AdminGroups.noName": "بلا اسم",

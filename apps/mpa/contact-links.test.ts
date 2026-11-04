@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { App } from "fresh"
+import { App } from "@spy4x/preact-server"
 import AppWrapper from "./routes/_app.tsx"
 import Home from "./routes/index.tsx"
 import { contactLinksMiddleware, contactLinkText, readContactLinks } from "./contact-links.ts"

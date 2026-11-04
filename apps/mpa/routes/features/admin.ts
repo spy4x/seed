@@ -3,8 +3,8 @@ import { define } from "../../utils.ts"
 
 /**
  * `/features/admin` answers 301 to `/admin`, the admin panel's page. The address also fits
- * `routes/[[lang]]/admin.tsx`, which Fresh tries before `features/[slug].tsx` and which reads
- * `features` as a language and answers 404; a route with no language segment comes first. Another
+ * `routes/[[lang]]/admin.tsx`, which reads `features` as a language and answers 404; a route with
+ * no parameter is tried first (`@spy4x/preact-server`), so this one answers it. Another
  * language's address (`/de/features/admin`) reaches `features/[slug].tsx`, which redirects it.
  */
 export const handler = define.handlers({

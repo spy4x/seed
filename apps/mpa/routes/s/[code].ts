@@ -1,4 +1,4 @@
-import { HttpError } from "fresh"
+import { HttpError } from "@spy4x/preact-server"
 import { CATALOG_LINK_CODE_PATTERN } from "@domain/catalog"
 import { define } from "../../utils.ts"
 

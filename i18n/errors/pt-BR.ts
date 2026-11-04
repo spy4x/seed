@@ -156,6 +156,8 @@ export default {
   "Reason.ORDER_STALE": "A lista mudou depois que a página carregou. Recarregue e tente de novo.",
   "Reason.PASSWORD_INVALID": "Senha errada. Tente de novo.",
   "Reason.PASSWORD_LOCKED": "Muitas senhas erradas. Espere um pouco e tente de novo.",
+  "Reason.PERIOD_NOT_OFFERED":
+    "Este plano não é vendido nesse período de cobrança. Escolha o outro.",
   "Reason.PHOTO_CONTENT": "O conteúdo deste arquivo não corresponde ao tipo de imagem dele.",
   "Reason.PHOTO_NOT_FOUND": "Esta foto não existe mais.",
   "Reason.PHOTO_TOO_LARGE": "Esta foto é grande demais.",

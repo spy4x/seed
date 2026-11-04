@@ -134,13 +134,13 @@ export default {
   "Architecture.worker": "ワーカー",
   "Architecture.mail": "メール、プッシュ",
   "Architecture.webAppNote": "ブラウザで動くPreact",
-  "Architecture.websiteNote": "このページと同じFresh",
+  "Architecture.websiteNote": "サーバーで動くPreact",
   "Architecture.apiNote": "Deno上のHono",
   "Architecture.postgresNote": "すべての変更",
   "Architecture.workerNote": "時間のかかる処理",
   "Architecture.mailNote": "とクリーンアップ",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "イベントも同じトランザクションで",
   "Architecture.caption": "すべて1台のサーバー上で、Traefikの背後にValkeyとGrafanaとともに稼働",
   "Architecture.captionTop": "すべて1台のサーバー上で、Traefikの背後に",
@@ -271,6 +271,8 @@ export default {
   "Pricing.description":
     "SeedはMITライセンスで無料、有料プランはありません。運用にかかるのは、ホスティング会社の料金でLinuxサーバー1台分と、自分で有効にしたサービスの費用だけです。",
   "Pricing.crumb": "料金",
+  "Pricing.saving":
+    "{plan} は月額 {monthly}、または年額 {yearly} です。月払いより {saving} お得です。",
   "PricingFaq.paidQuestion": "Seedに有料版はありますか？",
   "PricingFaq.paidAnswer":
     "ありません。Pro版も、ライセンスキーも、出し惜しみしている機能もありません。サポートが必要なら私に依頼してください。私が売っているのは自分の時間だけです。",
@@ -527,7 +529,7 @@ export default {
   "FeatureWebsite.title": "自分用に手を加えられる公開Webサイト",
   "FeatureWebsite.lead":
     "このサイトのことです。高速で、サーバーでレンダリングされ、JavaScriptがオフでも使えます。料金ページ、法務ページ、ブログ、ニュースレター付き。",
-  "FeatureWebsite.fact1": "サーバー側はFresh。すべての操作が本物のリンクかフォーム",
+  "FeatureWebsite.fact1": "サーバー側はPreact、ビルドはVite。すべての操作が本物のリンクかフォーム",
   "FeatureWebsite.fact2": "料金はアプリのプランカタログから読み込み",
   "FeatureWebsite.fact3":
     "ダブルオプトイン、ワンクリック購読解除、受信者の言語で届くメールに対応したニュースレター",

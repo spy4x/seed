@@ -248,6 +248,7 @@ export default {
   "AdminBilling.onFreeSince": "No plano Gratuito desde {date}",
   "AdminBilling.wouldBe": "seria {amount}",
   "AdminBilling.seatPrice": "{seats} × {price}",
+  "AdminBilling.billedYearly": "{amount} cobrados por ano",
   "AdminBilling.title": "Cobrança",
   "AdminBilling.subtitle": "Quem paga, quanto paga e quanto você recebe.",
   "AdminBilling.off": "A cobrança está desativada",
@@ -278,7 +279,7 @@ export default {
   "AdminBilling.keyNumbers": "Números principais",
   "AdminBilling.mrr": "Receita recorrente mensal",
   "AdminBilling.mrrHint":
-    "Assinaturas ativas e em atraso, pelo preço de tabela. Testes contam como 0.",
+    "Assinaturas ativas e em atraso, pelo preço de tabela. Uma anual conta como o preço dividido por 12. Testes contam como 0.",
   "AdminBilling.payingGroups": "Grupos pagantes",
   "AdminBilling.pastDueCount": "{count} em atraso",
   "AdminBilling.inTrial": "Em teste",
@@ -333,6 +334,9 @@ export default {
   "AdminBillingCustomer.status": "Situação",
   "AdminBillingCustomer.plan": "Plano",
   "AdminBillingCustomer.perMonth": "Por mês",
+  "AdminBillingCustomer.period": "Período de cobrança",
+  "AdminBillingCustomer.monthly": "Mensal",
+  "AdminBillingCustomer.yearly": "Anual",
   "AdminBillingCustomer.lastPayment": "Último pagamento",
   "AdminBillingCustomer.customerSince": "Cliente desde",
   "AdminBillingCustomer.notRecorded": "Não registrado",
@@ -389,6 +393,8 @@ export default {
   "AdminBillingCustomer.howLong": "Por quanto tempo",
   "AdminBillingCustomer.timeText":
     "<group>{group}</group> fica com o {plan} sem pagar nada até {date}. Depois disso, volta a cobrança normal de {charge} por mês.",
+  "AdminBillingCustomer.timeTextYear":
+    "<group>{group}</group> fica com o {plan} sem pagar nada até {date}. Depois disso, volta a cobrança normal de {charge} por ano.",
   "AdminBillingCustomer.length7d": "7 dias",
   "AdminBillingCustomer.length14d": "14 dias",
   "AdminBillingCustomer.length30d": "30 dias",
@@ -1357,6 +1363,10 @@ export default {
   "AdminGroupOverview.description":
     "O que os membros veem na página Visão geral, no layout padrão. Eles podem ocultar e reordenar esses widgets; os layouts pessoais deles não aparecem aqui.",
   "AdminGroupOverview.gridLabel": "Widgets da visão geral de {group}",
+  "AdminGroupOverview.membersOnly":
+    "Widgets com os números do próprio grupo só aparecem para os membros dele.",
+  "AdminGroupOverview.noneShown":
+    "Todos os widgets da página Visão geral deste grupo mostram os números do próprio grupo, então só os membros dele podem vê-los.",
   "AdminGroups.active": "Ativo",
   "AdminGroups.inTrash": "Na lixeira",
   "AdminGroups.noName": "Sem nome",

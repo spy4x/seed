@@ -128,13 +128,13 @@ export default {
   "Architecture.worker": "Воркер",
   "Architecture.mail": "Почта, пуши",
   "Architecture.webAppNote": "Preact, в браузере",
-  "Architecture.websiteNote": "Fresh, как эта страница",
+  "Architecture.websiteNote": "Preact, на сервере",
   "Architecture.apiNote": "Hono на Deno",
   "Architecture.postgresNote": "каждое изменение",
   "Architecture.workerNote": "долгая работа",
   "Architecture.mailNote": "и уборка",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "события, в той же транзакции",
   "Architecture.caption": "Всё на одном сервере, за Traefik, с Valkey и Grafana",
   "Architecture.captionTop": "Всё на одном сервере, за Traefik,",
@@ -265,6 +265,8 @@ export default {
   "Pricing.description":
     "Seed бесплатный, под MIT, платной версии нет. Чтобы его запустить, нужен один Linux-сервер по цене вашего хостинга и сервисы, которые вы подключите сами.",
   "Pricing.crumb": "Цены",
+  "Pricing.saving":
+    "{plan} стоит {monthly} в месяц или {yearly} в год: на {saving} меньше, чем при оплате помесячно.",
   "PricingFaq.paidQuestion": "Есть ли платная версия Seed?",
   "PricingFaq.paidAnswer":
     "Нет. Ни Pro-версии, ни лицензионного ключа, ни придержанных функций. Если нужна помощь, наймите меня: продаю я только своё время.",
@@ -543,7 +545,8 @@ export default {
   "FeatureWebsite.title": "Публичный сайт, который можно взять за основу",
   "FeatureWebsite.lead":
     "Этот сайт: быстрый, рендерится на сервере и работает без JavaScript. В нём есть цены, юридические страницы, блог и рассылка.",
-  "FeatureWebsite.fact1": "Fresh на сервере; каждое действие — настоящая ссылка или форма",
+  "FeatureWebsite.fact1":
+    "Preact на сервере, сборка на Vite; каждое действие — настоящая ссылка или форма",
   "FeatureWebsite.fact2": "Цены берутся из каталога тарифов приложения",
   "FeatureWebsite.fact3":
     "Рассылка с подтверждением подписки, отпиской в один клик и письмами на языке читателя",

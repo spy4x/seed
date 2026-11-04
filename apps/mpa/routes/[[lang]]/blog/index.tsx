@@ -156,7 +156,8 @@ function TopicLinks(
             <li key={label}>
               <a
                 href={topicHref(href, topic)}
-                // Fresh marks every link to the current path as the page; only the chosen topic is.
+                // The renderer marks every link to the current path as the page; only the chosen
+                // topic is.
                 aria-current={here ? "page" : "false"}
                 class={badgeClasses(
                   here ? "purple" : "gray",

@@ -8,9 +8,11 @@ import {
   assertFeature,
   assertRoomFor,
   attachmentRulesOf,
+  billingCheckoutRequestSchema,
   BillingError,
   BillingNoticeKind,
   billingNoticeOf,
+  BillingPeriod,
   BillingStatus,
   DEFAULT_GRACE_DAYS,
   effectivePlanId,
@@ -20,8 +22,11 @@ import {
   handoverTrialDays,
   hasLiveSubscription,
   isSeatBilled,
+  periodsOf,
+  type Plan,
   PlanError,
   PLANS,
+  priceOf,
   PRO_PLAN_ID,
   providerPageUrl,
   readGroupBilling,
@@ -31,7 +36,9 @@ import {
   toPlanRefusal,
   TRIAL_NOTICE_DAYS,
   UNLIMITED,
+  yearlySavingOf,
 } from "./+lib.ts"
+import { type } from "arktype"
 
 /** When the first payment failed in the tests below. */
 const FAILED_AT = new Date("2026-10-01T10:00:00Z")
@@ -49,6 +56,7 @@ const subscription = (status: BillingStatus, planId: string | null = PRO_PLAN_ID
     trialEnd: null,
     quantity: 1,
     everActive: status !== BillingStatus.Trialing,
+    period: planId === null ? null : BillingPeriod.Monthly,
   }) satisfies StoredSubscription
 
 /** When the trial and the period end in the tests of trials and cancellations. */
@@ -162,6 +170,7 @@ describe("billing domain", () => {
         subscribed: false,
         hasCustomer: false,
         seatPrice: null,
+        period: null,
       })
   })
 
@@ -305,6 +314,7 @@ describe("billing domain", () => {
       seats: 4,
       amount: 900,
       currency: "EUR",
+      period: BillingPeriod.Monthly,
     })
     expect(view(subscription(BillingStatus.Canceled))).toBeNull()
     expect(view(null)).toBeNull()
@@ -433,5 +443,91 @@ describe("billing domain", () => {
     expect(attachmentRulesOf(PRO_PLAN_ID, false)).toBe(free.attachments)
     expect(attachmentRulesOf(PRO_PLAN_ID, true)).toBe(pro.attachments)
     expect(attachmentRulesOf("unknown", true)).toBe(free.attachments)
+  })
+
+  describe("yearly prices", () => {
+    const pro = PLANS.find((plan) => plan.id === PRO_PLAN_ID)!
+    const yearly: Plan = { ...pro, amount: 400, yearlyAmount: 4000 }
+
+    it("sells a plan monthly only until it has a yearly price, then both, monthly first", () => {
+      expect(periodsOf(pro)).toEqual([BillingPeriod.Monthly])
+      expect(periodsOf(yearly)).toEqual([BillingPeriod.Monthly, BillingPeriod.Yearly])
+    })
+
+    it("prices each period from its own amount, and a period the plan is not sold for as null", () => {
+      expect(priceOf(yearly, BillingPeriod.Monthly)).toBe(400)
+      expect(priceOf(yearly, BillingPeriod.Yearly)).toBe(4000)
+      expect(priceOf(pro, BillingPeriod.Yearly)).toBeNull()
+    })
+
+    it("saves twelve monthly payments minus the yearly price, never less than nothing", () => {
+      expect(yearlySavingOf(yearly)).toBe(800)
+      expect(yearlySavingOf(pro)).toBe(0)
+      expect(yearlySavingOf({ ...yearly, yearlyAmount: 5000 })).toBe(0)
+    })
+
+    it("sells Seed's own Pro monthly only, so seedsaas.com and the demo show one price", () => {
+      expect(pro.yearlyAmount).toBeNull()
+    })
+
+    it("takes a checkout with or without a period, and nothing but month or year", () => {
+      const check = (body: unknown) => !(billingCheckoutRequestSchema(body) instanceof type.errors)
+
+      expect(check({ planId: PRO_PLAN_ID })).toBe(true)
+      expect(check({ planId: PRO_PLAN_ID, period: BillingPeriod.Monthly })).toBe(true)
+      expect(check({ planId: PRO_PLAN_ID, period: BillingPeriod.Yearly })).toBe(true)
+      expect(check({ planId: PRO_PLAN_ID, period: 3 })).toBe(false)
+      expect(check({ planId: PRO_PLAN_ID, period: "year" })).toBe(false)
+      expect(check({ planId: PRO_PLAN_ID, priceId: "price_1" })).toBe(false)
+    })
+
+    it("reads a group's billing period back, and refuses a period it does not know", () => {
+      const billing = toGroupBilling(
+        { ...subscription(BillingStatus.Active), period: BillingPeriod.Yearly },
+        GroupRole.OWNER,
+        true,
+        true,
+        NOW,
+        7,
+        1,
+      )
+      const sent = JSON.parse(JSON.stringify(billing))
+
+      expect(billing.period).toBe(BillingPeriod.Yearly)
+      expect(readGroupBilling(sent)?.period).toBe(BillingPeriod.Yearly)
+      expect(readGroupBilling({ ...sent, period: null })?.period).toBeNull()
+      expect(readGroupBilling({ ...sent, period: 3 })).toBeNull()
+    })
+
+    it("prices a seat for the period the group is billed, none for a period its plan does not sell", () => {
+      const billed = (period: BillingPeriod) =>
+        toGroupBilling(
+          { ...subscription(BillingStatus.Active), period },
+          GroupRole.OWNER,
+          true,
+          true,
+          NOW,
+          7,
+          3,
+        )
+      const monthly = JSON.parse(JSON.stringify(billed(BillingPeriod.Monthly)))
+
+      expect(monthly.seatPrice).toEqual({
+        seats: 3,
+        amount: pro.amount,
+        currency: pro.currency,
+        period: BillingPeriod.Monthly,
+      })
+      expect(billed(BillingPeriod.Yearly).seatPrice).toBeNull()
+      expect(readGroupBilling(monthly)?.seatPrice?.period).toBe(BillingPeriod.Monthly)
+      expect(readGroupBilling({ ...monthly, seatPrice: { ...monthly.seatPrice, period: 3 } }))
+        .toBeNull()
+    })
+
+    it("shows no period once the subscription has ended", () => {
+      const ended = { ...subscription(BillingStatus.Canceled), period: BillingPeriod.Yearly }
+
+      expect(toGroupBilling(ended, GroupRole.OWNER, true, true, NOW, 7, 1).period).toBeNull()
+    })
   })
 })

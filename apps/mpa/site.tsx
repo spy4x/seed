@@ -1,5 +1,5 @@
 import type { ComponentChildren, JSX } from "preact"
-import { Head } from "fresh/runtime"
+import { Head } from "@spy4x/preact-server"
 import type { PublicContactLink } from "@domain/contact-links"
 import type { Language } from "@domain/identity"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"

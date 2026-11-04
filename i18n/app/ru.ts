@@ -591,7 +591,7 @@ export default {
     "Не удалось открыть платёжный кабинет Stripe. Проверьте подключение к интернету и попробуйте ещё раз.",
   "GroupBillingPanel.title": "Оплата",
   "GroupBillingPanel.description":
-    "Сколько группа <group>{group}</group> платит в месяц. Оплатой занимается Stripe.",
+    "Сколько платит группа <group>{group}</group>. Оплатой занимается Stripe.",
   "GroupBillingPanel.loading": "Загружаем тариф",
   "GroupBillingPanel.statusTrial": "Пробный период",
   "GroupBillingPanel.statusRenews": "Продлится {date}",
@@ -642,7 +642,7 @@ export default {
   "GroupBillingPanel.planHeading": "Тариф <plan>{plan}</plan>",
   "GroupBillingPanel.confirming": "Stripe подтверждает оплату. Страница обновится сама.",
   "GroupBillingPanel.paymentMethod": "Способ оплаты",
-  "GroupBillingPanel.paymentMethodText": "Карта, с которой Stripe списывает оплату каждый месяц.",
+  "GroupBillingPanel.paymentMethodText": "Карта, с которой Stripe списывает оплату за тариф.",
   "GroupBillingPanel.changeCard": "Сменить карту",
   "GroupBillingPanel.invoices": "Счета",
   "GroupBillingPanel.invoicesText": "Все счета и чеки — посмотреть или скачать.",
@@ -651,6 +651,34 @@ export default {
   "GroupBillingPanel.cancelFree": "Если отмените до {date}, деньги не спишутся.",
   "GroupBillingPanel.cancelKeep": "Тариф {plan} останется до конца оплаченного периода.",
   "GroupBillingPanel.cancelPlan": "Отменить тариф",
+  "GroupBillingPanel.periodTitle": "Период оплаты",
+  "GroupBillingPanel.monthly": "Помесячно",
+  "GroupBillingPanel.yearly": "На год",
+  "GroupBillingPanel.priceYear": "Тариф {plan} — {price} в год за участника.",
+  "GroupBillingPanel.priceForGroupYear": {
+    "one": "С {count} участником группа <group>{group}</group> будет платить {total} в год.",
+    "few": "С {count} участниками группа <group>{group}</group> будет платить {total} в год.",
+    "many": "С {count} участниками группа <group>{group}</group> будет платить {total} в год.",
+    "other": "С {count} участниками группа <group>{group}</group> будет платить {total} в год.",
+  },
+  "GroupBillingPanel.saving": "Это на {amount} меньше, чем при помесячной оплате.",
+  "GroupBillingPanel.finePrintYear":
+    "Оплата раз в год за каждого участника. Отменить можно в любой момент — {plan} останется до конца оплаченного периода.",
+  "GroupBillingPanel.trialThenYear":
+    "Затем группа <group>{group}</group> будет платить {total} в год, если вы не отмените подписку.",
+  "GroupBillingPanel.seatsYear": {
+    "one": "{total} в год: {count} участник по {price}, включая владельца.",
+    "few": "{total} в год: {count} участника по {price}, включая владельца.",
+    "many": "{total} в год: {count} участников по {price}, включая владельца.",
+    "other": "{total} в год: {count} участника по {price}, включая владельца.",
+  },
+  "GroupBillingPanel.periodMonthly":
+    "Вы платите помесячно. Оплата за год — {price}, на {saving} меньше.",
+  "GroupBillingPanel.periodYearly": "Вы платите раз в год. Помесячно — {price} в месяц.",
+  "GroupBillingPanel.periodHint":
+    "Перед подтверждением Stripe покажет, сколько нужно заплатить сегодня.",
+  "GroupBillingPanel.switchYearly": "Перейти на оплату за год",
+  "GroupBillingPanel.switchMonthly": "Перейти на помесячную оплату",
   "GroupBillingView.trialStarted": {
     "one": "Начался пробный период {plan} на {count} день",
     "few": "Начался пробный период {plan} на {count} дня",
@@ -1343,6 +1371,8 @@ export default {
   "Preferences.updatedElsewhere": "Настройки обновлены с другого устройства.",
   "SeatPriceConfirm.hint":
     "Каждый новый участник добавляет {price} в месяц: с ещё одним участником стоимость группы вырастет с {now} до {next}. Разница за остаток текущего периода войдёт в следующий счёт.",
+  "SeatPriceConfirm.hintYear":
+    "Каждый новый участник добавляет {price} в год: с ещё одним участником стоимость группы вырастет с {now} до {next}. Разница за остаток текущего периода войдёт в следующий счёт.",
   "SeatPriceConfirm.accept": "Принимаю повышение цены за каждого нового участника",
   "ProfileAccount.name": "Имя",
   "ProfileAccount.notSet": "Не указано",

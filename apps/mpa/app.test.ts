@@ -1,8 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { App } from "fresh"
-import { setBuildCache } from "fresh/internal"
-import { asset } from "fresh/runtime"
+import { App, asset, setStaticFiles } from "@spy4x/preact-server"
 import { h } from "preact"
 import { handler as subscribe } from "./routes/[[lang]]/subscribe/index.ts"
 import { handler as subscriptionConfirm } from "./routes/[[lang]]/subscribe/confirm.ts"
@@ -153,17 +151,13 @@ describe("pageMiddleware", () => {
 
 describe("securityHeadersMiddleware", () => {
   /** The app as `main.ts` builds it: the security headers first, then the page middleware. */
-  async function securedApp(appConfig = config, rendered: { nonce?: unknown } = {}) {
+  async function securedApp(appConfig = config) {
     const { fetch } = fakeApi(() => Response.json({}))
     return new App<State>()
       .use(await securityHeadersMiddleware(appConfig))
       .use(pageMiddleware(appConfig, fetch, () => true))
       .get("/page", (ctx) => ctx.html("<p>page</p>"))
-      .get("/rendered", async (ctx) => {
-        const response = await ctx.render(h("p", null, "page"))
-        rendered.nonce = (response as unknown as Record<symbol, unknown>)[FRESH_NONCE]
-        return response
-      })
+      .get("/rendered", (ctx) => ctx.render(h("p", null, "page")))
       .get("/broken", () => {
         throw new Error("a route failed")
       })
@@ -175,15 +169,8 @@ describe("securityHeadersMiddleware", () => {
     "connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; " +
     "frame-ancestors 'none'"
 
-  /** Where Fresh leaves a rendered page's nonce on its response (`NONCE_SYMBOL` in Fresh). */
-  const FRESH_NONCE = Symbol.for("__freshNonce")
-
-  /** A page Fresh rendered allows its render's nonce in `script-src`; no other answer has one. */
-  function expectSecurityHeaders(response: Response, rendered = false) {
-    const csp = response.headers.get("content-security-policy") ?? ""
-    const nonces = csp.match(/ 'nonce-[0-9a-f]+'/g) ?? []
-    expect(nonces).toHaveLength(rendered ? 1 : 0)
-    expect(csp.replace(nonces[0] ?? "", "")).toBe(policy)
+  function expectSecurityHeaders(response: Response) {
+    expect(response.headers.get("content-security-policy")).toBe(policy)
     expect(response.headers.get("x-content-type-options")).toBe("nosniff")
     expect(response.headers.get("referrer-policy")).toBe("no-referrer")
     expect(response.headers.get("x-frame-options")).toBe("DENY")
@@ -216,19 +203,14 @@ describe("securityHeadersMiddleware", () => {
     expect(response.headers.get("cache-control")).toBe("no-cache")
   })
 
-  it("allows the inline scripts of a rendered page by the nonce Fresh made for that render", async () => {
-    const rendered: { nonce?: unknown } = {}
-    const response = await (await securedApp(config, rendered))(
+  it("sends a rendered page the same policy, with no inline script to allow (#623)", async () => {
+    const response = await (await securedApp())(
       new Request(`${config.webAppOrigin}/rendered`),
       info,
     )
 
-    await response.body?.cancel()
-    const nonce = rendered.nonce
-    expect(nonce).toMatch(/^[0-9a-f]+$/)
-    expect(response.headers.get("content-security-policy")).toBe(
-      policy.replace("script-src 'self'", `script-src 'self' 'nonce-${nonce}'`),
-    )
+    expect(await response.text()).not.toMatch(/<script(?![^>]*type="application\/json")[^>]*>[^<]/)
+    expectSecurityHeaders(response)
     expect(response.headers.get("cache-control")).toBe("no-cache")
   })
 
@@ -236,7 +218,7 @@ describe("securityHeadersMiddleware", () => {
     const response = await (await securedApp())(new Request(`${config.webAppOrigin}/nope`), info)
 
     expect(response.status).toBe(404)
-    expectSecurityHeaders(response, true)
+    expectSecurityHeaders(response)
     const page = await response.text()
     expect(page).toContain("Page not found")
     expect(page).toContain(`data-e2e="site-brand"`)
@@ -252,7 +234,7 @@ describe("securityHeadersMiddleware", () => {
     })
 
     expect(response.status).toBe(500)
-    expectSecurityHeaders(response, true)
+    expectSecurityHeaders(response)
     expect(response.headers.get("cache-control")).toBe("no-cache")
     const page = await response.text()
     expect(page).toContain("Something went wrong")
@@ -684,27 +666,21 @@ describe("an MPA on its own domain", () => {
 describe("staticFilesMiddleware", () => {
   /** An app in production mode whose build holds one static file, `/shots/home.webp`. */
   function staticApp() {
-    const app = new App<State>().use(staticFilesMiddleware())
-    setBuildCache(app, {
+    setStaticFiles({
       root: ".",
-      islandRegistry: new Map(),
-      clientEntry: "",
-      features: { errorOverlay: false },
-      getFsRoutes: () => [],
-      getEntryAssets: () => [],
-      readFile: (pathname) =>
-        Promise.resolve(
-          pathname === "/shots/home.webp"
-            ? {
-              hash: "home",
-              size: 4,
-              contentType: "image/webp",
-              readable: new Uint8Array(4),
-              close: () => {},
-            }
-            : null,
-        ),
-    }, "production")
+      files: {
+        "/shots/home.webp": { filePath: "home.webp", hash: "home", contentType: "image/webp" },
+      },
+      fs: {
+        open: (path) =>
+          Promise.resolve(
+            path === "./home.webp"
+              ? { size: 4, body: new Blob([new Uint8Array(4)]).stream(), close: () => {} }
+              : null,
+          ),
+      },
+    })
+    const app = new App<State>().use(staticFilesMiddleware())
     return app.handler()
   }
 

@@ -1,5 +1,5 @@
 import type { ComponentChildren, JSX } from "preact"
-import type { FreshContext } from "fresh"
+import type { Context } from "@spy4x/preact-server"
 import {
   DEFAULT_SUBSCRIBER_LIST,
   type SubscriptionConfirmState,
@@ -75,7 +75,7 @@ export const SUBSCRIBE_HEAD: SitePageHead = subscribeHead(siteEnglishText())
 export const SUBSCRIBE_UPDATED = `2026-10-30`
 
 /** The translator and the addresses of the request's language. */
-function speech(ctx: FreshContext<State>) {
+function speech(ctx: Context<State>) {
   const t = siteTranslator(ctx.state.language)
   return { t, href: (path: string) => localePath(ctx.state.language, path) }
 }
@@ -257,7 +257,7 @@ function NewsletterBand(
 }
 
 function renderSubscribe(
-  ctx: FreshContext<State>,
+  ctx: Context<State>,
   page: PageStatus & { email: string; sent: boolean; error: string | null },
 ): Response | Promise<Response> {
   const { t, href } = speech(ctx)
@@ -321,7 +321,7 @@ const NEWSLETTER_PROMISES = [
  * does not end the visit.
  */
 function renderOff(
-  ctx: FreshContext<State>,
+  ctx: Context<State>,
   path: string,
   head: (t: Translator<string>) => SitePageHead,
 ): Response | Promise<Response> {
@@ -358,7 +358,7 @@ function renderOff(
 }
 
 function renderConfirm(
-  ctx: FreshContext<State>,
+  ctx: Context<State>,
   page: PageStatus & {
     state: SubscriptionConfirmState
     email?: string
@@ -390,7 +390,7 @@ function renderConfirm(
 }
 
 function renderUnsubscribe(
-  ctx: FreshContext<State>,
+  ctx: Context<State>,
   page: PageStatus & { state: UnsubscribeState; email?: string; list: string; token: string },
 ): Response | Promise<Response> {
   const { t, href } = speech(ctx)

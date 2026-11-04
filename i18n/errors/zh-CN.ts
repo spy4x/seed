@@ -136,6 +136,7 @@ export default {
   "Reason.ORDER_STALE": "页面加载后列表已有变化，请刷新后重试。",
   "Reason.PASSWORD_INVALID": "密码错误，请重试。",
   "Reason.PASSWORD_LOCKED": "密码错误次数过多，请稍后再试。",
+  "Reason.PERIOD_NOT_OFFERED": "该套餐不支持这个计费周期，请选择另一个。",
   "Reason.PHOTO_CONTENT": "文件内容与其图片类型不符。",
   "Reason.PHOTO_NOT_FOUND": "这张照片已不存在。",
   "Reason.PHOTO_TOO_LARGE": "照片太大了。",

@@ -19,6 +19,7 @@ import {
   BILLING_AUDIT_EVENT_TYPES,
   type BillingAuditEvent,
   billingAuditPrefix,
+  type BillingPeriod,
   BillingStatus,
   type Money,
   monthlyRevenueOf,
@@ -43,17 +44,18 @@ export async function readAdminBillingFigures(
       planId: string | null
       status: BillingStatus
       quantity: number | null
+      period: BillingPeriod | null
       cancelAtPeriodEnd: boolean
       endsSoon: boolean
       count: number
     }[]
   >`
-    SELECT plan_id, status, quantity, cancel_at_period_end,
+    SELECT plan_id, status, quantity, billing_period AS period, cancel_at_period_end,
       (status = ${BillingStatus.Trialing} AND trial_end > ${now} AND trial_end <= ${soon})
         AS ends_soon,
       COUNT(*)::int AS count
     FROM subscriptions
-    GROUP BY 1, 2, 3, 4, 5
+    GROUP BY 1, 2, 3, 4, 5, 6
   `
   const revenue = new Map<string, number>()
   const figures: AdminBillingFigures = {
@@ -143,6 +145,7 @@ interface CustomerRowRaw {
   planId: string | null
   status: BillingStatus
   quantity: number | null
+  period: BillingPeriod | null
   currentPeriodEnd: Date | null
   cancelAtPeriodEnd: boolean
   trialEnd: Date | null
@@ -166,7 +169,7 @@ function customerColumns(sql: postgres.Sql) {
       ORDER BY (k.method = ${PASSWORD_METHOD}) DESC, k.email IS NULL, k.id
       LIMIT 1
     ) AS owner_email,
-    s.plan_id, s.status, s.quantity, s.current_period_end, s.cancel_at_period_end, s.trial_end,
+    s.plan_id, s.status, s.quantity, s.billing_period AS period, s.current_period_end, s.cancel_at_period_end, s.trial_end,
     s.past_due_since, s.ever_active, s.updated_at, s.provider_subscription_id,
     COALESCE(s.provider_customer_id, c.provider_customer_id) AS provider_customer_id,
     c.created_at AS customer_since
@@ -190,6 +193,7 @@ function toCustomer(row: CustomerRowRaw): AdminBillingCustomer {
     planId: row.planId,
     status: row.status,
     quantity: row.quantity,
+    period: row.period,
     currentPeriodEnd: row.currentPeriodEnd?.toISOString() ?? null,
     cancelAtPeriodEnd: row.cancelAtPeriodEnd,
     trialEnd: row.trialEnd?.toISOString() ?? null,

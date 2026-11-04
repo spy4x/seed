@@ -6,6 +6,7 @@ import {
   BillingCheckoutCommand,
   BillingError,
   BillingGetQuery,
+  BillingPeriod,
   BillingPortalCommand,
   type BillingRepository,
   BillingTrialQuery,
@@ -14,6 +15,8 @@ import {
   hasLiveSubscription,
   LONGEST_TRIAL_DAYS,
   PAID_PLANS,
+  type Plan,
+  priceOf,
   type StoredSubscription,
   toGroupBilling,
 } from "@domain/billing"
@@ -34,6 +37,8 @@ export interface BillingHandlerDependencies {
   trialRequiresCard: boolean
   /** The current time; tests pass a fixed one. */
   now: () => Date
+  /** The plans a checkout may name: {@link PAID_PLANS} unless a test passes its own. */
+  plans?: readonly Plan[]
 }
 
 /**
@@ -75,11 +80,18 @@ export function createBillingCheckoutHandler(
 ): CommandHandler<BillingCheckoutCommand> {
   return async ({ data }) => {
     const provider = await authorize(dependencies, data.groupId, data.actor.userId)
-    const plan = PAID_PLANS.find((candidate) => candidate.id === data.planId)
+    const plan = (dependencies.plans ?? PAID_PLANS).find((candidate) =>
+      candidate.id === data.planId
+    )
     if (!plan) throw new BillingError("UNKNOWN_PLAN", "No such plan")
+    // The catalog decides which periods a plan is sold for. What the subscription then bills is
+    // read from the price the provider reports in its webhook, never from this request.
+    if (priceOf(plan, data.period) === null) {
+      throw new BillingError("PERIOD_NOT_OFFERED", "The plan is not sold for that billing period")
+    }
     // A second checkout would start a second subscription and charge twice; the portal changes the
-    // plan of the one the group has. Any subscription that is not cancelled counts, even a paused,
-    // incomplete or unknown-price one that shows as the free plan. The one exception is a
+    // plan of the one the group has. Any stored subscription that is not cancelled counts, even a
+    // paused or incomplete one that shows as the free plan. The one exception is a
     // subscription the previous owner pays after a transfer and has cancelled at its period's end:
     // the new owner checks out with a customer of their own, first charged when it ends (#250).
     const [current, customerId, handedOver] = await Promise.all([
@@ -92,8 +104,15 @@ export function createBillingCheckoutHandler(
     }
     const result = await provider.createCheckout({
       planId: data.planId,
+      period: data.period,
       successUrl: appUrl(dependencies, `/groups/${data.groupId}/billing?checkout=done`),
-      cancelUrl: appUrl(dependencies, `/groups/${data.groupId}/billing`),
+      // Coming back without paying keeps the period the owner chose selected.
+      cancelUrl: appUrl(
+        dependencies,
+        `/groups/${data.groupId}/billing${
+          data.period === BillingPeriod.Yearly ? "?period=year" : ""
+        }`,
+      ),
       reference: data.groupId,
       // A per-member plan starts with a seat for every member; the worker keeps it in step after.
       ...(plan.perSeat ? { quantity: await dependencies.billing.membersOf(data.groupId) } : {}),

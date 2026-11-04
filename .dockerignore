@@ -79,7 +79,6 @@ e2e/*/**
 **/Dockerfile
 **/dockerfile
 **/dockerfile.*
-**/_fresh
 
 # 4. Never let a secret into an image. On the server these folders hold the env file and the Web
 #    Push key, and a developer may keep a .env beside an app; Compose hands the containers what they

@@ -134,13 +134,13 @@ export default {
   "Architecture.worker": "Worker",
   "Architecture.mail": "Mail, Push",
   "Architecture.webAppNote": "Preact, im Browser",
-  "Architecture.websiteNote": "Fresh, wie diese Seite",
+  "Architecture.websiteNote": "Preact, auf dem Server",
   "Architecture.apiNote": "Hono auf Deno",
   "Architecture.postgresNote": "jede Änderung",
   "Architecture.workerNote": "die langsame Arbeit",
   "Architecture.mailNote": "und Aufräumen",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "Events, gleiche Transaktion",
   "Architecture.caption": "Alles auf einem Server, hinter Traefik, mit Valkey und Grafana",
   "Architecture.captionTop": "Alles auf einem Server, hinter Traefik,",
@@ -275,6 +275,8 @@ export default {
   "Pricing.description":
     "Seed ist kostenlos unter MIT, ohne Bezahlversion. Für den Betrieb brauchst du einen Linux-Server zum Preis deines Hosters, plus die Dienste, die du einschaltest.",
   "Pricing.crumb": "Preise",
+  "Pricing.saving":
+    "{plan} kostet {monthly} im Monat oder {yearly} im Jahr: {saving} weniger als bei monatlicher Zahlung.",
   "PricingFaq.paidQuestion": "Gibt es eine Bezahlversion von Seed?",
   "PricingFaq.paidAnswer":
     "Nein. Es gibt keine Pro-Version, keinen Lizenzschlüssel und keine zurückgehaltene Funktion. Wenn du Hilfe willst, buch mich: Meine Zeit ist das Einzige, was ich verkaufe.",
@@ -552,7 +554,7 @@ export default {
   "FeatureWebsite.lead":
     "Diese Website: schnell, auf dem Server gerendert und auch ohne JavaScript nutzbar, mit Preisen, Rechtsseiten, einem Blog und einem Newsletter.",
   "FeatureWebsite.fact1":
-    "Fresh auf dem Server; jede Aktion ist ein echter Link oder ein echtes Formular",
+    "Preact auf dem Server, gebaut mit Vite; jede Aktion ist ein echter Link oder ein echtes Formular",
   "FeatureWebsite.fact2": "Preise direkt aus dem Tarifkatalog der App",
   "FeatureWebsite.fact3":
     "Ein Newsletter mit Double-Opt-in, Abbestellen mit einem Klick und E-Mails in der Sprache des Empfängers",

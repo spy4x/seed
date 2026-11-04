@@ -10,19 +10,25 @@ This page shows how to change a plan, add one, or add a new limit that a plan se
 
 The catalog is `PLANS` in `libs/domain/billing/+lib.ts`:
 
-| Plan id | Name | Price                    | Trial   | Stripe price       |
-| ------- | ---- | ------------------------ | ------- | ------------------ |
-| `free`  | Free | 0                        | none    | none               |
-| `pro`   | Pro  | €9.00 per member a month | 14 days | `STRIPE_PRICE_PRO` |
+| Plan id | Name | Price                    | Yearly price | Trial   | Stripe price       |
+| ------- | ---- | ------------------------ | ------------ | ------- | ------------------ |
+| `free`  | Free | 0                        | none         | none    | none               |
+| `pro`   | Pro  | €9.00 per member a month | none         | 14 days | `STRIPE_PRICE_PRO` |
+
+A plan with a `yearlyAmount` is sold a year at a time too
+([yearly price](billing.md#sell-a-yearly-price)).
 
 A group is on a paid plan while its subscription is trialing or active. It also keeps the plan for
 a grace period after a failed payment ([failed payments](billing-lifecycle.md#failed-payments)).
-A canceled, incomplete or paused subscription puts the group back on Free. So does a subscription
-that bills a price not in the catalog.
+A canceled, incomplete or paused subscription puts the group back on Free. An event for a price
+not in the catalog changes nothing: the group keeps the plan it had, even when the event cancels
+the subscription ([unknown prices](billing.md#sell-a-yearly-price)). So before you replace a plan's
+Stripe price, keep the old price in the settings until no subscription bills it.
 
 ## Add a plan
 
-1. Add the plan to `PLANS`: its `amount` in cents, `trialDays`, `perSeat` and `entitlements`.
+1. Add the plan to `PLANS`: its `amount` in cents, its `yearlyAmount` (or `null` for monthly only),
+   `trialDays`, `perSeat` and `entitlements`.
 2. Map it to its Stripe price in `planRefs` and `readBillingSetup`
    (`libs/server/billing/setup.ts`), with a new price variable.
 3. Add the variable to `infra/envs/.env.example`.

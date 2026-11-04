@@ -8,9 +8,12 @@ import {
   BillingCheckoutCommand,
   BillingGetQuery,
   BillingNoticeKind,
+  BillingPeriod,
   BillingPortalCommand,
   BillingStatus,
   BillingTrialQuery,
+  PAID_PLANS,
+  type Plan,
   type StoredSubscription,
 } from "@domain/billing"
 import { createSessionGate } from "../../cqrs/session-gate.ts"
@@ -73,7 +76,10 @@ function stack(
     members = 1,
     handedOver = false,
     trialGroup = null,
+    plans,
   }: {
+    /** The plans a checkout may name, when a test needs a catalog Seed does not sell. */
+    plans?: readonly Plan[]
     /** The group each person's one trial went to, as `users.trial_group_id` holds it. */
     trialGroup?: string | null
     subscription?: StoredSubscription | null
@@ -117,6 +123,7 @@ function stack(
     graceDays: 7,
     trialRequiresCard,
     now: () => now,
+    plans,
   }
   const commands = new CommandBus()
   commands.use(createSessionGate([]))
@@ -175,6 +182,7 @@ const PRO: StoredSubscription = {
   trialEnd: null,
   quantity: 1,
   everActive: true,
+  period: BillingPeriod.Monthly,
 }
 
 async function code(response: Response): Promise<string> {
@@ -217,6 +225,7 @@ describe("billing over REST", () => {
     expect(await response.json()).toEqual({ url: "https://pay.example/cs_1" })
     expect(recorder.checkouts).toEqual([{
       planId: "pro",
+      period: BillingPeriod.Monthly,
       successUrl: `https://app.example.com/groups/${groupId}/billing?checkout=done`,
       cancelUrl: `https://app.example.com/groups/${groupId}/billing`,
       reference: groupId,
@@ -331,6 +340,49 @@ describe("billing over REST", () => {
     expect(recorder.checkouts).toEqual([])
   })
 
+  it("refuses a yearly checkout for a plan sold monthly only, and opens none", async () => {
+    const { recorder, call } = stack()
+
+    const response = await call(OWNER, "POST", "/checkout", {
+      planId: "pro",
+      period: BillingPeriod.Yearly,
+    })
+
+    expect([response.status, await code(response)]).toEqual([400, "PERIOD_NOT_OFFERED"])
+    expect(recorder.checkouts).toEqual([])
+  })
+
+  it("refuses a period that is neither monthly nor yearly", async () => {
+    const { recorder, call } = stack()
+
+    const response = await call(OWNER, "POST", "/checkout", { planId: "pro", period: 12 })
+
+    expect([response.status, await code(response)]).toEqual([400, "INVALID_REQUEST"])
+    expect(recorder.checkouts).toEqual([])
+  })
+
+  it("bills the period chosen for a plan with a yearly price, monthly when none is named, and keeps yearly on cancel", async () => {
+    const plans = PAID_PLANS.map((plan) => ({ ...plan, yearlyAmount: plan.amount * 10 }))
+    const yearly = stack({ plans })
+    const monthly = stack({ plans })
+
+    const response = await yearly.call(OWNER, "POST", "/checkout", {
+      planId: "pro",
+      period: BillingPeriod.Yearly,
+    })
+    await monthly.call(OWNER, "POST", "/checkout", { planId: "pro" })
+
+    expect(response.status).toBe(200)
+    expect(yearly.recorder.checkouts.map((checkout) => checkout.period))
+      .toEqual([BillingPeriod.Yearly])
+    expect(monthly.recorder.checkouts.map((checkout) => checkout.period))
+      .toEqual([BillingPeriod.Monthly])
+    expect(yearly.recorder.checkouts[0].cancelUrl)
+      .toBe(`https://app.example.com/groups/${groupId}/billing?period=year`)
+    expect(monthly.recorder.checkouts[0].cancelUrl)
+      .toBe(`https://app.example.com/groups/${groupId}/billing`)
+  })
+
   it("refuses a second checkout while the group pays", async () => {
     const { recorder, call } = stack({ subscription: PRO, customer: "cus_1" })
 
@@ -422,6 +474,7 @@ describe("billing over REST", () => {
       // From 2026-10-01T10:00 to 2026-11-01T00:00 is 30 days and 14 hours: 31 whole days.
       expect(recorder.checkouts).toEqual([{
         planId: "pro",
+        period: BillingPeriod.Monthly,
         successUrl: `https://app.example.com/groups/${groupId}/billing?checkout=done`,
         cancelUrl: `https://app.example.com/groups/${groupId}/billing`,
         reference: groupId,
@@ -492,7 +545,12 @@ describe("billing over REST", () => {
 
     const viewer = await (await call(VIEWER, "GET", "")).json()
 
-    expect(viewer.billing.seatPrice).toEqual({ seats: 4, amount: 900, currency: "EUR" })
+    expect(viewer.billing.seatPrice).toEqual({
+      seats: 4,
+      amount: 900,
+      currency: "EUR",
+      period: BillingPeriod.Monthly,
+    })
   })
 
   it("shows a past-due group its plan through the seven-day grace period, then the free plan", async () => {
@@ -523,6 +581,7 @@ describe("billing over REST", () => {
       subscribed: false,
       hasCustomer: false,
       seatPrice: null,
+      period: null,
     })
     expect([checkout.status, await code(checkout)]).toEqual([404, "BILLING_DISABLED"])
   })

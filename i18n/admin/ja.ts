@@ -237,6 +237,7 @@ export default {
   "AdminBilling.onFreeSince": "{date}から無料プラン",
   "AdminBilling.wouldBe": "本来は{amount}",
   "AdminBilling.seatPrice": "{seats} × {price}",
+  "AdminBilling.billedYearly": "年額 {amount} で請求",
   "AdminBilling.title": "請求",
   "AdminBilling.subtitle": "誰が、いくら支払っているか、そして収益はいくらかを確認できます。",
   "AdminBilling.off": "請求は無効です",
@@ -265,7 +266,7 @@ export default {
   "AdminBilling.keyNumbers": "主な指標",
   "AdminBilling.mrr": "月間経常収益（MRR）",
   "AdminBilling.mrrHint":
-    "有効および支払い期限超過のサブスクリプションを定価で計算します。無料トライアルは0として扱います。",
+    "有効および支払い期限超過のサブスクリプションを定価で計算します。年額プランは価格を12で割った額として数えます。無料トライアルは0として扱います。",
   "AdminBilling.payingGroups": "有料のグループ",
   "AdminBilling.pastDueCount": "{count}件が支払い期限超過",
   "AdminBilling.inTrial": "無料トライアル中",
@@ -320,6 +321,9 @@ export default {
   "AdminBillingCustomer.status": "ステータス",
   "AdminBillingCustomer.plan": "プラン",
   "AdminBillingCustomer.perMonth": "月額",
+  "AdminBillingCustomer.period": "請求期間",
+  "AdminBillingCustomer.monthly": "月払い",
+  "AdminBillingCustomer.yearly": "年払い",
   "AdminBillingCustomer.lastPayment": "直近の支払い",
   "AdminBillingCustomer.customerSince": "顧客になった日",
   "AdminBillingCustomer.notRecorded": "記録なし",
@@ -374,6 +378,8 @@ export default {
   "AdminBillingCustomer.howLong": "期間",
   "AdminBillingCustomer.timeText":
     "<group>{group}</group>は{date}まで無料で{plan}を利用できます。その後は通常どおり月額{charge}の請求が再開されます。",
+  "AdminBillingCustomer.timeTextYear":
+    "<group>{group}</group>は{date}まで無料で{plan}を利用できます。その後は通常どおり年額{charge}の請求が再開されます。",
   "AdminBillingCustomer.length7d": "7日間",
   "AdminBillingCustomer.length14d": "14日間",
   "AdminBillingCustomer.length30d": "30日間",
@@ -1240,6 +1246,10 @@ export default {
   "AdminGroupOverview.description":
     "メンバーの概要ページに表示されるデフォルトのレイアウトです。メンバーはこれらを非表示にしたり並べ替えたりできますが、各自のレイアウトはここには表示されません。",
   "AdminGroupOverview.gridLabel": "{group}の概要ウィジェット",
+  "AdminGroupOverview.membersOnly":
+    "グループ自身の数値を表示するウィジェットは、そのメンバーだけが見られます。",
+  "AdminGroupOverview.noneShown":
+    "このグループの概要ページのウィジェットはすべてグループ自身の数値を表示するため、メンバーだけが見られます。",
   "AdminGroups.active": "有効",
   "AdminGroups.inTrash": "ゴミ箱内",
   "AdminGroups.noName": "名前なし",

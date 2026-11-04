@@ -71,6 +71,7 @@ const REASONS: Record<ErrorReason, true> = {
   ORDER_STALE: true,
   PASSWORD_INVALID: true,
   PASSWORD_LOCKED: true,
+  PERIOD_NOT_OFFERED: true,
   PHOTO_CONTENT: true,
   PHOTO_NOT_FOUND: true,
   PHOTO_TOO_LARGE: true,

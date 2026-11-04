@@ -75,8 +75,8 @@ Architecture.webApp	f2dc406dd2f38bf8
 Architecture.webAppNote	8e3fbdf4cb773a9c
 Architecture.webAppNoteShort	a91010572026bddd
 Architecture.website	b5a229ac8becc603
-Architecture.websiteNote	ce07d5d2dbd75505
-Architecture.websiteNoteShort	f810b66877419ce9
+Architecture.websiteNote	35c11a097e38ad43
+Architecture.websiteNoteShort	339908b5d658c6ba
 Architecture.worker	a67b04cd5c491d4d
 Architecture.workerNote	830f8c5848a38958
 Blog.allPosts	3a2e5c2c34923fd5
@@ -504,7 +504,7 @@ FeatureTierSettled.title	64e6e6d504328741
 FeatureVisuals.deployCaption	c01bf8eb34fcf120
 FeatureVisuals.services	7c7ce2c64f30f927
 FeatureWebsite.code	8c3c79106391eff7
-FeatureWebsite.fact1	77305545727d416e
+FeatureWebsite.fact1	40ee3a3a570fbc55
 FeatureWebsite.fact2	9400679b6389018a
 FeatureWebsite.fact3	48032056e3a8e4bb
 FeatureWebsite.fact4	b4cc3e4ffd894eb8
@@ -731,6 +731,7 @@ PostFigure.noScript	751908b16f740771
 PostFigure.rssLink	bb666393ffca6a4f
 Pricing.crumb	dfe95783edfef791
 Pricing.description	5452816591ed6eb1
+Pricing.saving	268e67b52e066f25
 Pricing.title	9604388672a9d74b
 PricingFaq.mvpAnswer	80208e283a89ad1e
 PricingFaq.mvpLink	288adb9dd8ed4bb3
