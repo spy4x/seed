@@ -1,7 +1,13 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { MiddlewareHandler } from "hono"
-import { ADMIN_GROUP_NO_FILTER, type AdminGroupDetail, type AdminGroupFiles } from "@domain/groups"
+import {
+  ADMIN_GROUP_NO_FILTER,
+  type AdminGroupDetail,
+  type AdminGroupFiles,
+  canRead,
+  type WidgetDefinition,
+} from "@domain/groups"
 import { UserRole } from "@domain/identity"
 import { AdminGroupActOutcome, type AdminGroupStoredFile } from "@server/groups/admin-groups.ts"
 import type { APIContext } from "../../_types.ts"
@@ -21,8 +27,10 @@ import {
   ADMIN_GROUP_FILE_NOT_FOUND,
   ADMIN_GROUP_NOT_FOUND,
   type AdminGroupsService,
+  createAdminGroups,
   createAdminGroupsRoutes,
 } from "./groups.ts"
+import type { AppDbBase } from "@api/services/db-base.ts"
 import { apiError } from "../../_testing/api-error.ts"
 
 const GROUP_ID = `0199c3a0-0000-7000-8000-000000000001`
@@ -546,5 +554,73 @@ describe(`operator area group routes`, () => {
     const response = await send(app, ROUTES[11])
     expect(response.status).toBe(500)
     expect(response.headers.get(`content-disposition`)).toBe(null)
+  })
+})
+
+describe(`admin group widgets: what the operator may read`, () => {
+  const widget = (
+    id: string,
+    operatorView: WidgetDefinition["operatorView"],
+  ): WidgetDefinition => ({
+    id,
+    titleKey: `Test.title`,
+    size: `stat`,
+    canView: canRead,
+    operation: `test.widget`,
+    operatorView,
+  })
+
+  /** The real service over a fake database, with one reader per widget that counts its calls. */
+  function buildWidgetApp(definitions: WidgetDefinition[], readerIds: string[]) {
+    const reads: string[] = []
+    const db = {
+      noteOverview: {
+        startDay: () => (reads.push(`startDay`), Promise.resolve(`2026-01-01`)),
+      },
+    } as unknown as AppDbBase
+    const readers = Object.fromEntries(
+      readerIds.map((id) => [id, () => (reads.push(id), Promise.resolve({ current: 9 }))]),
+    )
+    const groups = createAdminGroups(
+      db,
+      25,
+      () => Promise.resolve({ maxFiles: null, maxBytes: null }),
+      () => Promise.resolve(null),
+      { definitions, readers },
+    )
+    const route = createAdminRoute({
+      auth: testSessionGuards(),
+      mutationGuards: testMutationGuards,
+      modules: [createAdminGroupsRoutes({ limit: passThrough, groups })],
+    })
+    return { app: mountRoute(`/admin`, route, operator()), reads }
+  }
+
+  const ask = (app: ReturnType<typeof buildWidgetApp>["app"], id: string) =>
+    send(app, {
+      method: `GET`,
+      path: `/admin/groups/${GROUP_ID}/widgets/${id}?from=2026-10-01&to=2026-10-21&timeZone=UTC`,
+    })
+
+  it(`answers a counts widget from its reader`, async () => {
+    const { app, reads } = buildWidgetApp([widget(`test.counts`, `counts`)], [`test.counts`])
+    const response = await ask(app, `test.counts`)
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ current: 9 })
+    expect(reads).toEqual([`startDay`, `test.counts`])
+  })
+
+  it(`answers 404 for a members-only widget without calling its reader`, async () => {
+    const { app, reads } = buildWidgetApp([widget(`test.never`, `never`)], [`test.never`])
+    const response = await ask(app, `test.never`)
+    expect(response.status).toBe(404)
+    expect((await apiError(response)).message).toBe(ADMIN_GROUP_NOT_FOUND)
+    expect(reads).toEqual([])
+  })
+
+  it(`answers 404 for a reader whose widget has no definition, reading nothing`, async () => {
+    const { app, reads } = buildWidgetApp([], [`test.orphan`])
+    expect((await ask(app, `test.orphan`)).status).toBe(404)
+    expect(reads).toEqual([])
   })
 })

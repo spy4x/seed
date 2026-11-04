@@ -16,7 +16,7 @@ You need:
 | ------------- | ---------------------------------------------------------------------------------- |
 | `apps/spa`    | The product, a Preact and Vite PWA. It keeps an offline copy in IndexedDB          |
 | `apps/admin`  | The operator area, on a host of its own ([Admin modules](admin-modules.md))        |
-| `apps/mpa`    | The public website on Fresh. It renders on the server and works without JavaScript |
+| `apps/mpa`    | The public website. It renders on the server and works without JavaScript          |
 | `apps/api`    | Hono: REST, the call route, the WebSocket, auth and CQRS dispatch                  |
 | `apps/worker` | Runs the outbox jobs: mail, Telegram notices, data exports and the nightly cleanup |
 

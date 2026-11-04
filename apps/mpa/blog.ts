@@ -1,5 +1,5 @@
 import { type } from "arktype"
-import { HttpError } from "fresh"
+import { HttpError } from "@spy4x/preact-server"
 import {
   blogSlugProblem,
   type BlogTranslation,

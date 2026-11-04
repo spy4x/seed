@@ -122,13 +122,13 @@ export default {
   "Architecture.worker": "العامل",
   "Architecture.mail": "البريد والإشعارات",
   "Architecture.webAppNote": "Preact، في المتصفح",
-  "Architecture.websiteNote": "Fresh، مثل هذه الصفحة",
+  "Architecture.websiteNote": "Preact، على الخادم",
   "Architecture.apiNote": "Hono على Deno",
   "Architecture.postgresNote": "كل تغيير",
   "Architecture.workerNote": "المهام البطيئة",
   "Architecture.mailNote": "والتنظيف",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "الأحداث، في المعاملة نفسها",
   "Architecture.caption": "كل شيء على خادم واحد، خلف Traefik، مع Valkey وGrafana",
   "Architecture.captionTop": "كل شيء على خادم واحد، خلف Traefik،",
@@ -257,6 +257,8 @@ export default {
   "Pricing.description":
     "Seed مجاني بترخيص MIT، ولا توجد منه نسخة مدفوعة. تشغيله يكلّفك خادم Linux واحدًا بسعر مزوّد الاستضافة، إضافة إلى أي خدمات تفعّلها.",
   "Pricing.crumb": "الأسعار",
+  "Pricing.saving":
+    "يكلّف {plan} ‏{monthly} شهريًا أو {yearly} سنويًا، أي أقل بمقدار {saving} من الدفع الشهري.",
   "PricingFaq.paidQuestion": "هل توجد نسخة مدفوعة من Seed؟",
   "PricingFaq.paidAnswer":
     "لا. لا توجد باقة Pro، ولا مفتاح ترخيص، ولا ميزة محجوبة. وإذا أردت مساعدة، فتعاقد معي: وقتي هو الشيء الوحيد الذي أبيعه.",
@@ -522,7 +524,7 @@ export default {
   "FeatureWebsite.title": "موقع عام جاهز للتعديل",
   "FeatureWebsite.lead":
     "هذا الموقع نفسه: سريع، يُعرض من الخادم، ويمكن استخدامه مع تعطيل JavaScript، وفيه الأسعار والصفحات القانونية والمدونة والنشرة البريدية.",
-  "FeatureWebsite.fact1": "Fresh على الخادم، وكل إجراء رابط أو نموذج حقيقي",
+  "FeatureWebsite.fact1": "Preact يُعرض على الخادم ويُبنى بـ Vite، وكل إجراء رابط أو نموذج حقيقي",
   "FeatureWebsite.fact2": "الأسعار مقروءة من كتالوج خطط التطبيق",
   "FeatureWebsite.fact3": "نشرة بريدية بتأكيد مزدوج، وإلغاء اشتراك بنقرة واحدة، ورسائل بلغة القارئ",
   "FeatureWebsite.fact4":

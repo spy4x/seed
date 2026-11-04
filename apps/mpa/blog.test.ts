@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { App } from "fresh"
+import { App } from "@spy4x/preact-server"
 import type { PublicBlogPost, PublicBlogPostSummary } from "@domain/blog"
 import Layout from "./routes/_layout.tsx"
 import AppWrapper from "./routes/_app.tsx"
@@ -251,7 +251,7 @@ describe("the blog index", () => {
     const { body } = await (await blogSite(listing([covered, later, plain]))).get("/blog")
 
     const images = (body.match(/<ul [^>]*data-e2e="post-list"[\s\S]*?<\/ul>/)?.[0] ?? ``)
-      .replace(/\?__frsh_c=\w+/g, ``)
+      .replace(/\?__v=\w+/g, ``)
       .match(/<img [^>]*>/g) ?? []
     expect(images).toHaveLength(2)
     expect(images[0]).toContain(
@@ -536,9 +536,9 @@ describe("a blog post", () => {
     const post = { ...FULL, coverUrl: null, coverFile: `cron-jobs.webp` }
     const { body } = await (await blogSite(answers(post))).get("/blog/cron-jobs")
 
-    // Fresh adds its build's cache key to a path on the site; the files are the same.
+    // The renderer adds its build's cache key to a path on the site; the files are the same.
     const img = (body.match(/<img [^>]*data-e2e="blog-post-cover"[^>]*>/)?.[0] ?? ``)
-      .replace(/\?__frsh_c=\w+/g, ``)
+      .replace(/\?__v=\w+/g, ``)
     expect(img).toContain(`src="/blog/covers/cron-jobs.webp"`)
     expect(img).toContain(
       `srcset="/blog/covers/cron-jobs-640.webp 640w, /blog/covers/cron-jobs-960.webp 960w, /blog/covers/cron-jobs.webp 1600w"`,

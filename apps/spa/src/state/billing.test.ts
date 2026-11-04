@@ -1,6 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { ApiResult } from "@spy4x/platform/api"
+import { BillingPeriod } from "@domain/billing"
 import { BILLING_MESSAGES } from "@ui/billing-screen.tsx"
 import { createBillingStore } from "./billing.ts"
 
@@ -54,7 +55,8 @@ const billingJson = {
   canManage: true,
   subscribed: true,
   hasCustomer: true,
-  seatPrice: { seats: 3, amount: 900, currency: "EUR" },
+  seatPrice: { seats: 3, amount: 900, currency: "EUR", period: 1 },
+  period: 1,
 }
 
 describe("billing store", () => {
@@ -116,10 +118,22 @@ describe("billing store", () => {
     expect(calls).toEqual([{
       url: `/api/groups/${groupId}/billing/checkout`,
       method: "POST",
-      body: { planId: "pro" },
+      body: { planId: "pro", period: BillingPeriod.Monthly },
     }])
     expect(left).toEqual(["https://checkout.stripe.com/c/pay/cs_1"])
     expect(store.pending.value).toBe(true)
+  })
+
+  it("posts the yearly period when the owner chose the year", async () => {
+    const { store, calls } = harness({
+      ok: true,
+      status: 200,
+      data: { url: "https://checkout.stripe.com/c/pay/cs_1" },
+    })
+
+    await store.checkout(groupId, "pro", BillingPeriod.Yearly)
+
+    expect(calls[0].body).toEqual({ planId: "pro", period: BillingPeriod.Yearly })
   })
 
   it("opens one checkout at a time, however often the plan is chosen", async () => {

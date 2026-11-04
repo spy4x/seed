@@ -1,16 +1,22 @@
 /// <reference lib="deno.ns" />
-import { fresh } from "@fresh/plugin-vite"
+import deno from "@deno/vite-plugin"
 import tailwindcss from "@tailwindcss/vite"
 import { defineConfig } from "vite"
 import { fromFileUrl, relative, SEPARATOR } from "@std/path"
 import { walk } from "@std/fs/walk"
-import { preactThemeCss, requireComponentCss } from "@spy4x/preact-theme/vite"
+import {
+  denoModuleIds,
+  npmSpecifiers,
+  preactThemeCss,
+  requireComponentCss,
+} from "@spy4x/preact-theme/vite"
 import {
   BROWSER_SUITE_FOLDER,
   countBrowserSuites,
   COUNTED_FOLDERS,
   countTestFiles,
 } from "./repo-facts.ts"
+import { website } from "@spy4x/preact-server/vite"
 
 /**
  * Selectors, escaped as in the built CSS, that the client build must contain: two only
@@ -34,7 +40,7 @@ async function repositoryFiles(): Promise<string[]> {
   for (const folder of [...COUNTED_FOLDERS, BROWSER_SUITE_FOLDER]) {
     const entries = walk(`${root}${folder}`, {
       includeDirs: false,
-      skip: [/node_modules/, /_fresh/],
+      skip: [/node_modules/, /dist/],
     })
     for await (const entry of entries) {
       paths.push(relative(root, entry.path).split(SEPARATOR).join("/"))
@@ -70,7 +76,17 @@ export default defineConfig({
       enforce: "pre",
       transform: (code, id) => id.endsWith(".md") ? `export default ${JSON.stringify(code)}` : null,
     },
-    fresh(),
+    // One id per Deno module, so a context loads once (spy4x/preact-components#785); before `deno()`.
+    denoModuleIds(),
+    npmSpecifiers({ readTextFile: Deno.readTextFile }),
+    deno(),
+    website({
+      readDir: Deno.readDir,
+      readFile: Deno.readFile,
+      isFile: (path) => Deno.stat(path).then((info) => info.isFile, () => false),
+      buildId: Deno.env.get("DENO_DEPLOYMENT_ID") ?? Deno.env.get("GITHUB_SHA") ??
+        Deno.env.get("CI_COMMIT_SHA"),
+    }),
     preactThemeCss({ stylesheet: "/apps/mpa/styles.css" }),
     tailwindcss(),
     // The client build carries the stylesheet; the server build has none to check.

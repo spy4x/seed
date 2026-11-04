@@ -242,6 +242,7 @@ export default {
   "AdminBilling.onFreeSince": "On Free since {date}",
   "AdminBilling.wouldBe": "would be {amount}",
   "AdminBilling.seatPrice": "{seats} × {price}",
+  "AdminBilling.billedYearly": "{amount} billed yearly",
   "AdminBilling.title": "Billing",
   "AdminBilling.subtitle": "Who pays, what they pay, and what you earn.",
   "AdminBilling.off": "Billing is off",
@@ -269,7 +270,8 @@ export default {
   "AdminBilling.loadingFigures": "Loading the figures",
   "AdminBilling.keyNumbers": "Key numbers",
   "AdminBilling.mrr": "Monthly recurring revenue",
-  "AdminBilling.mrrHint": "Active and past-due subscriptions at list price. Trials count as 0.",
+  "AdminBilling.mrrHint":
+    "Active and past-due subscriptions at list price. A yearly one counts as its price divided by 12. Trials count as 0.",
   "AdminBilling.payingGroups": "Paying groups",
   "AdminBilling.pastDueCount": "{count} past due",
   "AdminBilling.inTrial": "In trial",
@@ -323,6 +325,9 @@ export default {
   "AdminBillingCustomer.status": "Status",
   "AdminBillingCustomer.plan": "Plan",
   "AdminBillingCustomer.perMonth": "Per month",
+  "AdminBillingCustomer.period": "Billing period",
+  "AdminBillingCustomer.monthly": "Monthly",
+  "AdminBillingCustomer.yearly": "Yearly",
   "AdminBillingCustomer.lastPayment": "Last payment",
   "AdminBillingCustomer.customerSince": "Customer since",
   "AdminBillingCustomer.notRecorded": "Not recorded",
@@ -378,6 +383,8 @@ export default {
   "AdminBillingCustomer.howLong": "For how long",
   "AdminBillingCustomer.timeText":
     "<group>{group}</group> keeps {plan} with no charge until {date}. After that, the usual {charge} a month starts again.",
+  "AdminBillingCustomer.timeTextYear":
+    "<group>{group}</group> keeps {plan} with no charge until {date}. After that, the usual {charge} a year starts again.",
   "AdminBillingCustomer.length7d": "7 days",
   "AdminBillingCustomer.length14d": "14 days",
   "AdminBillingCustomer.length30d": "30 days",
@@ -1281,6 +1288,10 @@ export default {
   "AdminGroupOverview.description":
     "What members see on their Overview page, in the default layout. Members can hide and reorder these; their own layouts aren't shown here.",
   "AdminGroupOverview.gridLabel": "Overview widgets of {group}",
+  "AdminGroupOverview.membersOnly":
+    "Widgets that show this group's own figures are visible to its members only.",
+  "AdminGroupOverview.noneShown":
+    "Every widget on this group's Overview page shows the group's own figures, so only its members can see them.",
   "AdminGroups.active": "Active",
   "AdminGroups.inTrash": "In trash",
   "AdminGroups.noName": "No name",

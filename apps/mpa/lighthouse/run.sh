@@ -10,7 +10,7 @@
 set -euo pipefail
 
 HERE=apps/mpa/lighthouse
-[ -f apps/mpa/_fresh/server.js ] || { echo "no MPA build: run deno task mpa:build first"; exit 1; }
+[ -f apps/mpa/dist/server.js ] || { echo "no MPA build: run deno task mpa:build first"; exit 1; }
 
 if [ -z "${CHROME_PATH:-}" ]; then
   CHROME_PATH=$(find "${PLAYWRIGHT_BROWSERS_PATH:-$HOME/.cache/ms-playwright}" \
@@ -57,7 +57,7 @@ wait_for api "${PIDS[-1]}" http://127.0.0.1:48412/api/blog/posts
 
 # Production mode, with example hosts.
 ENV=prod DOMAIN=app.example.com MPA_DOMAIN=www.example.com API_URL=http://127.0.0.1:48412 \
-  timeout -k 5 2400 deno serve --allow-all --port 48410 --host 127.0.0.1 apps/mpa/_fresh/server.js \
+  timeout -k 5 2400 deno serve --allow-all --port 48410 --host 127.0.0.1 apps/mpa/dist/server.js \
   >"$SCRATCH/mpa.log" 2>&1 &
 PIDS+=($!)
 wait_for mpa "${PIDS[-1]}" http://127.0.0.1:48410/health

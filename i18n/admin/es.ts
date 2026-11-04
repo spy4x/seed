@@ -249,6 +249,7 @@ export default {
   "AdminBilling.onFreeSince": "En el plan Gratis desde el {date}",
   "AdminBilling.wouldBe": "serían {amount}",
   "AdminBilling.seatPrice": "{seats} × {price}",
+  "AdminBilling.billedYearly": "{amount} facturados al año",
   "AdminBilling.title": "Facturación",
   "AdminBilling.subtitle": "Quién paga, cuánto paga y cuánto ganas.",
   "AdminBilling.off": "La facturación está desactivada",
@@ -279,7 +280,7 @@ export default {
   "AdminBilling.keyNumbers": "Cifras clave",
   "AdminBilling.mrr": "Ingresos recurrentes mensuales",
   "AdminBilling.mrrHint":
-    "Suscripciones activas y con pago vencido, a precio de tarifa. Las pruebas cuentan como 0.",
+    "Suscripciones activas y con pago vencido, a precio de tarifa. Una anual cuenta como su precio dividido entre 12. Las pruebas cuentan como 0.",
   "AdminBilling.payingGroups": "Grupos de pago",
   "AdminBilling.pastDueCount": "{count} con pago vencido",
   "AdminBilling.inTrial": "En prueba",
@@ -334,6 +335,9 @@ export default {
   "AdminBillingCustomer.status": "Estado",
   "AdminBillingCustomer.plan": "Plan",
   "AdminBillingCustomer.perMonth": "Al mes",
+  "AdminBillingCustomer.period": "Periodo de facturación",
+  "AdminBillingCustomer.monthly": "Mensual",
+  "AdminBillingCustomer.yearly": "Anual",
   "AdminBillingCustomer.lastPayment": "Último pago",
   "AdminBillingCustomer.customerSince": "Cliente desde",
   "AdminBillingCustomer.notRecorded": "Sin registrar",
@@ -391,6 +395,8 @@ export default {
   "AdminBillingCustomer.howLong": "Durante cuánto tiempo",
   "AdminBillingCustomer.timeText":
     "<group>{group}</group> mantiene {plan} sin pagar nada hasta el {date}. Después vuelve el cobro habitual de {charge} al mes.",
+  "AdminBillingCustomer.timeTextYear":
+    "<group>{group}</group> mantiene {plan} sin pagar nada hasta el {date}. Después vuelve el cobro habitual de {charge} al año.",
   "AdminBillingCustomer.length7d": "7 días",
   "AdminBillingCustomer.length14d": "14 días",
   "AdminBillingCustomer.length30d": "30 días",
@@ -1367,6 +1373,10 @@ export default {
   "AdminGroupOverview.description":
     "Lo que ven los miembros en su página Resumen, con la disposición predeterminada. Cada miembro puede ocultarlos y reordenarlos; sus disposiciones personales no se muestran aquí.",
   "AdminGroupOverview.gridLabel": "Widgets del resumen de {group}",
+  "AdminGroupOverview.membersOnly":
+    "Los widgets con las cifras propias del grupo solo los ven sus miembros.",
+  "AdminGroupOverview.noneShown":
+    "Todos los widgets de la página Resumen de este grupo muestran sus propias cifras, así que solo los ven sus miembros.",
   "AdminGroups.active": "Activos",
   "AdminGroups.inTrash": "En la papelera",
   "AdminGroups.noName": "Sin nombre",

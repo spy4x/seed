@@ -146,7 +146,7 @@ wait_for proxy "${PIDS[-1]}" "$SPA_BASE_URL/api/health"
 
 deno task mpa:build
 # Flags go before the file: after it, `deno serve` passes them to the script and ignores them.
-deno serve --allow-all --port "$MPA_PORT" --host 127.0.0.1 apps/mpa/_fresh/server.js \
+deno serve --allow-all --port "$MPA_PORT" --host 127.0.0.1 apps/mpa/dist/server.js \
   >"$SCRATCH/mpa.log" 2>&1 &
 PIDS+=($!)
 wait_for mpa "${PIDS[-1]}" "$MPA_BASE_URL/health"

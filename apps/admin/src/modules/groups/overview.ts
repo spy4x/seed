@@ -1,5 +1,6 @@
 import { signal } from "@preact/signals"
 import type { DateRange } from "@spy4x/time/date"
+import { operatorWidgets, type WidgetDefinition } from "@domain/groups"
 import type { OverviewWidgetLoad } from "@ui/overview-screen.tsx"
 import { OVERVIEW_WIDGETS } from "@ui/overview-widgets.ts"
 import type { AdminFetch } from "../../state.ts"
@@ -24,10 +25,14 @@ export function adminWidgetPath(widgetId: string, request: AdminOverviewRequest)
 }
 
 /**
- * The admin group page's "Overview widgets": every widget in the default layout, each read on its
- * own. An answer for a request the page has moved on from is dropped.
+ * The admin group page's "Overview widgets": every `counts` widget of `widgets` in the default
+ * layout, each read on its own; a members-only one is never asked for. An answer for a request the
+ * page has moved on from is dropped.
  */
-export function createAdminOverviewState(request: AdminFetch) {
+export function createAdminOverviewState(
+  request: AdminFetch,
+  widgets: readonly WidgetDefinition[] = OVERVIEW_WIDGETS,
+) {
   const loads = signal<Readonly<Record<string, OverviewWidgetLoad>>>({})
   let current: AdminOverviewRequest | null = null
 
@@ -43,11 +48,11 @@ export function createAdminOverviewState(request: AdminFetch) {
     if (current === asked) loads.value = { ...loads.value, [widgetId]: next }
   }
 
-  /** Reads every widget for `next`. */
+  /** Reads every widget the operator may see for `next`. */
   function open(next: AdminOverviewRequest): void {
     current = next
     loads.value = {}
-    for (const widget of OVERVIEW_WIDGETS) void load(widget.id, next)
+    for (const widget of operatorWidgets(widgets)) void load(widget.id, next)
   }
 
   /** Reads one widget again: its "Try again". */

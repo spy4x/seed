@@ -52,8 +52,12 @@ The paths below are under `apps/mpa/` unless they say otherwise. `[[lang]]/` sta
 | ------- | -------------------------------------- | -------------------------------------------------------- |
 | Delete  | `/compare`, named competitors' prices  | `[[lang]]/compare.tsx`, `components/compare-alternatives.tsx` |
 | Delete  | Seed's blog posts, except `README.md`  | `libs/server/blog/seed-posts/`                           |
-| Replace | Home, features, admin and pricing copy | `routes/index.tsx`, `[[lang]]/features.tsx`, `admin.tsx`, `pricing.tsx` |
-| Rewrite | Every feature and feature page         | `features-data.tsx`                                      |
+| Delete  | The link cards of Seed's posts         | `libs/server/blog/seed-posts/og/`, drawn by `screenshots/blog-og.ts` and `screenshots/blog-og.html` |
+| Replace | Home, features, admin and pricing copy | `routes/index.tsx`, `[[lang]]/features.tsx`, `[[lang]]/admin.tsx`, `[[lang]]/pricing.tsx` |
+| Rewrite | Every feature and feature page         | `features-data.tsx`, `[[lang]]/features/[slug].tsx`      |
+| Replace | The admin page's list of modules       | `admin-modules.ts`, checked by `admin-modules.test.ts`   |
+| Delete  | The `/features/admin` redirect, with `/admin` | `routes/features/admin.ts`                        |
+| Replace | The blog's name and its one line       | `BLOG_NAME`, `BLOG_INTRO` in `blog.ts`: `Blog.name`, `Blog.intro` in `i18n/site/` |
 | Replace | The `llms.txt` summary                 | `HOME_HEAD` in `routes/index.tsx`                        |
 | Set     | The licence line of `llms.txt`         | "Source code" in `routes/llms.txt.ts`                    |
 | Replace | The privacy policy and terms           | `[[lang]]/privacy.tsx`, `[[lang]]/terms.tsx`             |
@@ -61,6 +65,8 @@ The paths below are under `apps/mpa/` unless they say otherwise. `[[lang]]/` sta
 | Replace | The newsletter's voice                 | Four keys in `i18n/site/` (below)                        |
 | Replace | Open Graph images                      | `static/og/`, drawn by `screenshots/og.html`             |
 | Replace | Browser frames titled `app.seedsaas.com/…` | `routes/index.tsx`, `features-data.tsx`, `components/features-visuals.tsx` |
+
+`i18n/site/` is at the repository's root, not under `apps/mpa/`: one file per language.
 
 **`/compare` has more parts.** Also delete:
 
@@ -70,7 +76,19 @@ The paths below are under `apps/mpa/` unless they say otherwise. `[[lang]]/` sta
   `[[lang]]/features/[slug].tsx`, and "the comparison" in `routes/index.tsx`.
 
 **The blog.** The posts load only in demo mode, but they describe Seed. A product writes its posts
-in the admin app. The Lighthouse run measures a fixture post of its own, so it needs no change.
+in the admin app, and deletes the `og:blog` task in `apps/mpa/deno.json` with the cards' script.
+The Lighthouse run measures a fixture post of its own (`lighthouse/posts/`), so the post it reads
+needs no change.
+
+**The Lighthouse pages.** `lighthouse/lighthouserc.json` measures Seed's own addresses besides the
+shared ones. Delete those of pages the product deleted, and point the rest at the product's own:
+
+- `/compare` and `/pt-BR/compare`, gone with `/compare`;
+- `/admin`, if the product drops the admin panel's page;
+- `/features/sign-in`, `/features/realtime` and `/features/shortcuts`: the product's own feature
+  slugs from `features-data.tsx`;
+- `/docs/api`, `/docs/get-started` and `/docs/capacity`: guides listed in the product's
+  `PUBLISHED_DOCS`.
 
 **Keep `/changelog` and `/docs`.** They read the product's own history and guides. In
 `changelog-overrides.ts`, set `CHANGELOG_START` to the full hash of the commit that copied Seed
@@ -89,15 +107,20 @@ uses in `subscribers.tsx` and `routes/index.tsx` are marked.
 | What                     | Where                                     | Recorded by                                  |
 | ------------------------ | ----------------------------------------- | -------------------------------------------- |
 | Website screenshots      | `static/shots/`                           | `screenshots/capture.ts`                     |
-| The admin video          | `media/video/admin-panel.*`, `static/video/` | `deno task video:admin`                   |
-| The three feature loops  | `media/video/*-loop-*`                    | `deno task loops` in `apps/mpa`              |
+| The admin video          | `media/video/admin-panel.*`, `static/video/admin-panel-*` | `deno task video:admin`      |
+| The three feature loops  | `media/video/*-loop-*`, `static/video/*-loop-*` | `deno task loops` in `apps/mpa` (`screenshots/loops.ts`) |
 | README pictures          | `docs/screenshots/`                       | `docs/screenshots/record.ts`                 |
 
-`deno task video:admin` runs `docs/screenshots/admin-video.ts`. Then update the video's length,
-size, date and transcript in `admin-video.ts`. The GitHub social preview says `seedsaas.com` too;
-replace it.
+`deno task video:admin`, run from the repository's root, records the video with
+`docs/screenshots/admin-video.ts`. It prints the files' length and sizes: write them, the date and
+the transcript into `admin-video.ts` (this one under `apps/mpa/`), which the website reads for the
+line under the player and the structured data.
 
-## The product's name in the apps
+The feature loops show Seed's own app. `loops.ts` names them and `components/feature-loop.tsx`
+draws them on the website: replace both with the product's own clips, or delete them with the
+`loops` task and their uses. The GitHub social preview says `seedsaas.com` too; replace it.
+
+## The product's name, icon and colour in the apps
 
 | File                         | What says "Seed"                                       |
 | ---------------------------- | ------------------------------------------------------ |
@@ -110,6 +133,19 @@ replace it.
 These tests check the name: `libs/ui/admin-frame.test.tsx`, `libs/ui/account.test.tsx`,
 `e2e/pwa.e2e.ts` and `e2e/app-shell-parity.e2e.ts`.
 
+The pictures carry no mark. Replace each with the product's own, at the same size and name:
+
+| Picture                       | Files                                                          |
+| ----------------------------- | -------------------------------------------------------------- |
+| The app's favicons            | `apps/spa/public/favicon.svg`, `favicon.ico`, `favicon-96x96.png` |
+| The home screen icons         | `apps/spa/public/apple-touch-icon.png`, `img/android/`, `img/pwa/` |
+| The admin app's favicon       | `apps/admin/public/favicon.svg`                                |
+| The website's favicon         | `apps/mpa/static/favicon.svg`                                  |
+
+**The brand colour.** Seed's purple, hue 305°, is `--color-primary` and `--color-accent` in
+`libs/ui/brand.css`, which the app, the admin app and the website all load. Set the product's own
+there.
+
 ## Settings
 
 | Do     | What                                     | Where                                                   |
@@ -120,6 +156,7 @@ These tests check the name: `libs/ui/admin-frame.test.tsx`, `libs/ui/account.tes
 | Set    | A website with no customers              | `SPA=false` ([Without the SPA](apps.md#without-the-spa)) |
 | Set    | Where release images go                  | `IMAGE_PREFIX` in `.woodpecker/release.yml`             |
 | Set    | The billing guide link                   | `ADMIN_BILLING_SETUP_URL` in `libs/ui/admin-billing-list.tsx` |
+| Set    | The Stats guide link                     | `ADMIN_STATS_SETUP_URL` in `libs/ui/admin-stats-screen.tsx` |
 
 Create the first operator on the server; it needs no mail
 ([The first operator](operator-access.md#the-first-operator)):
@@ -132,7 +169,10 @@ deno task operator:create <address>
 
 - **Replace** the demo and website links, the CI badge, the author section and the admin video
   link in `README.md`.
-- **Set** the licence holder in `LICENSE`.
+- **Set** the licence holder in `LICENSE`. A product under another licence replaces `LICENSE`
+  with its own and keeps Seed's MIT notice, which the MIT licence requires for the copied code, in
+  a file of its own, such as `LICENSES/MIT-seed.txt`. It also changes "under the MIT licence" in
+  the licence line of `routes/llms.txt.ts` (above).
 - **Delete** `AGENTS.seed.md`, which holds the rules of Seed's own repository, and the lines in
   `AGENTS.md` and `CLAUDE.md` that name it. List it in `.seed/skip`, as
   [step 3](products.md#start-a-product) says.

@@ -164,6 +164,8 @@ export default {
     "La liste a changé depuis le chargement de la page. Rechargez-la et réessayez.",
   "Reason.PASSWORD_INVALID": "Mot de passe incorrect. Réessayez.",
   "Reason.PASSWORD_LOCKED": "Trop de mots de passe incorrects. Patientez un moment et réessayez.",
+  "Reason.PERIOD_NOT_OFFERED":
+    "Ce forfait n’est pas proposé pour cette période de facturation. Choisissez l’autre.",
   "Reason.PHOTO_CONTENT": "Le contenu de ce fichier ne correspond pas à son type d’image.",
   "Reason.PHOTO_NOT_FOUND": "Cette photo n’existe plus.",
   "Reason.PHOTO_TOO_LARGE": "Cette photo est trop volumineuse.",

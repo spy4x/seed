@@ -99,7 +99,6 @@ so a refusal, a 404 and a 500 carry them too. A WebSocket upgrade passes through
 | `default-src`, `script-src`, `style-src`, `connect-src` | `'self'`              | Always.                                                  |
 | `img-src`                                               | `'self'`, `data:`     | Always.                                                  |
 | `img-src`                                               | also `https:`         | On a blog post's page, `/blog/<slug>` in any language.   |
-| `script-src`                                            | also `'nonce-…'`      | On a page Fresh renders, with that render's nonce.       |
 | `script-src`, `connect-src`                             | also the Umami origin | With `MPA_UMAMI_ORIGIN` set ([Analytics](analytics.md)). |
 | `form-action`                                           | `'self'`              | Always.                                                  |
 | `form-action`                                           | also the SPA's origin | When `MPA_DOMAIN` differs from `DOMAIN`.                 |
@@ -111,13 +110,13 @@ A post's cover and the images in its body are `https:` addresses wherever the op
 ([Blog](blog.md)). Only operators write posts, and an image runs no code. Every other page, the
 blog's index included, keeps `img-src 'self' data:`.
 
-The nonce lets Fresh's inline scripts run, such as the one that wakes the page's islands. The
-pricing page's form posts to the MPA, which redirects to the SPA's sign-up; a browser applies
-`form-action` to that redirect too.
+No page has an inline script: the script that wakes a page's islands is a file from the site's own
+origin, so `'self'` covers it. The pricing page's form posts to the MPA, which redirects to the
+SPA's sign-up; a browser applies `form-action` to that redirect too.
 
 `securityHeadersMiddleware` in `apps/mpa/middleware.ts` sets the headers. It runs before the static
-files, and also answers errors no route caught, which Fresh would otherwise answer without the
-headers.
+files, and also answers errors no route caught, which the website's server would otherwise answer
+without the headers.
 
 ## Tests
 

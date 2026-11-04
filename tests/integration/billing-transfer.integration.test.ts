@@ -16,6 +16,7 @@ import {
   BillingError,
   BillingGetQuery,
   BillingNoticeKind,
+  BillingPeriod,
   BillingPortalCommand,
   PRO_PLAN_ID,
 } from "@domain/billing"
@@ -155,7 +156,14 @@ Deno.test("transfer of a subscribed group moves its billing to the new owner", a
     const read = createBillingGetHandler(dependencies)
     const actor = (userId: number) => ({ userId }) as BillingGetQuery["data"]["actor"]
     const checkoutAs = (userId: number) =>
-      checkout(new BillingCheckoutCommand({ groupId, actor: actor(userId), planId: PRO_PLAN_ID }))
+      checkout(
+        new BillingCheckoutCommand({
+          groupId,
+          actor: actor(userId),
+          planId: PRO_PLAN_ID,
+          period: BillingPeriod.Monthly,
+        }),
+      )
     const portalAs = (userId: number) =>
       portal(new BillingPortalCommand({ groupId, actor: actor(userId) }))
     const readAs = async (userId: number) =>
@@ -324,6 +332,7 @@ function handlers(sql: postgres.Sql, groups: Awaited<ReturnType<typeof team>>["r
           groupId,
           actor: { userId } as BillingGetQuery["data"]["actor"],
           planId: PRO_PLAN_ID,
+          period: BillingPeriod.Monthly,
         }),
       ),
   }

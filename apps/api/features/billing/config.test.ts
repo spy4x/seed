@@ -2,7 +2,12 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { createEnvReader } from "@spy4x/server/config"
 import { GroupRole } from "@domain/groups"
-import { BillingGetQuery, BillingStatus, type StoredSubscription } from "@domain/billing"
+import {
+  BillingGetQuery,
+  BillingPeriod,
+  BillingStatus,
+  type StoredSubscription,
+} from "@domain/billing"
 import { readBillingSetup } from "@server/billing/setup.ts"
 import { billingSettingsOf, createPlanOf, createSeatPriced } from "./config.ts"
 import { createBillingGetHandler } from "./handlers.ts"
@@ -37,6 +42,7 @@ describe("billing configuration", () => {
           trialEnd: null,
           quantity: 1,
           everActive: true,
+          period: BillingPeriod.Monthly,
         }),
     })
     const setup = (graceDays?: string) =>
@@ -96,6 +102,7 @@ describe("billing configuration", () => {
       trialEnd: null,
       quantity: 2,
       everActive: true,
+      period: BillingPeriod.Monthly,
     })
     const seatPriced = (
       stored: StoredSubscription | null,

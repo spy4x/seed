@@ -118,13 +118,13 @@ export default {
   "Architecture.worker": "Worker",
   "Architecture.mail": "邮件、推送",
   "Architecture.webAppNote": "Preact，运行在浏览器中",
-  "Architecture.websiteNote": "Fresh，就像本页",
+  "Architecture.websiteNote": "Preact，运行在服务端",
   "Architecture.apiNote": "Hono，运行在 Deno 上",
   "Architecture.postgresNote": "每一次更改",
   "Architecture.workerNote": "耗时的工作",
   "Architecture.mailNote": "以及清理",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "事件，同一事务",
   "Architecture.caption": "全部运行在一台服务器上，由 Traefik 统一入口，搭配 Valkey 和 Grafana",
   "Architecture.captionTop": "全部运行在一台服务器上，由 Traefik 统一入口，",
@@ -248,6 +248,7 @@ export default {
   "Pricing.description":
     "Seed 基于 MIT 许可证免费提供，没有付费版。运行成本只有一台 Linux 服务器（按你的服务商价格），以及你开启的其他服务。",
   "Pricing.crumb": "价格",
+  "Pricing.saving": "{plan} 每月 {monthly}，或每年 {yearly}：比按月付款少 {saving}。",
   "PricingFaq.paidQuestion": "Seed 有付费版吗？",
   "PricingFaq.paidAnswer":
     "没有。没有专业版、没有许可证密钥，也没有保留任何功能。如果你需要帮助，可以聘请我：我只出售我的时间。",
@@ -488,7 +489,7 @@ export default {
   "FeatureWebsite.title": "可直接改造的公开网站",
   "FeatureWebsite.lead":
     "就是本站：快速、服务端渲染，关闭 JavaScript 也能使用，包含价格页、法律页面、博客和邮件简报。",
-  "FeatureWebsite.fact1": "服务端使用 Fresh；每个操作都是真实的链接或表单",
+  "FeatureWebsite.fact1": "服务端渲染 Preact，用 Vite 构建；每个操作都是真实的链接或表单",
   "FeatureWebsite.fact2": "价格读取自应用的套餐目录",
   "FeatureWebsite.fact3": "双重确认订阅的邮件简报，一键退订，邮件以收件人的语言发送",
   "FeatureWebsite.fact4":

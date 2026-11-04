@@ -148,6 +148,8 @@ export default {
   "Reason.PASSWORD_INVALID": "パスワードが違います。もう一度お試しください。",
   "Reason.PASSWORD_LOCKED":
     "パスワードを何度も間違えました。しばらく待ってから、もう一度お試しください。",
+  "Reason.PERIOD_NOT_OFFERED":
+    "このプランはその請求期間では購入できません。もう一方を選んでください。",
   "Reason.PHOTO_CONTENT": "ファイルの中身が画像の種類と一致しません。",
   "Reason.PHOTO_NOT_FOUND": "この写真はもう存在しません。",
   "Reason.PHOTO_TOO_LARGE": "写真が大きすぎます。",

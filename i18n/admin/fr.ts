@@ -249,6 +249,7 @@ export default {
   "AdminBilling.onFreeSince": "Au forfait Gratuit depuis le {date}",
   "AdminBilling.wouldBe": "serait de {amount}",
   "AdminBilling.seatPrice": "{seats} × {price}",
+  "AdminBilling.billedYearly": "{amount} facturés à l’année",
   "AdminBilling.title": "Facturation",
   "AdminBilling.subtitle": "Qui paie, combien, et ce que vous gagnez.",
   "AdminBilling.off": "La facturation est désactivée",
@@ -280,7 +281,7 @@ export default {
   "AdminBilling.keyNumbers": "Chiffres clés",
   "AdminBilling.mrr": "Revenu mensuel récurrent",
   "AdminBilling.mrrHint":
-    "Abonnements actifs et impayés, au prix catalogue. Les essais comptent pour 0.",
+    "Abonnements actifs et impayés, au prix catalogue. Un abonnement annuel compte pour son prix divisé par 12. Les essais comptent pour 0.",
   "AdminBilling.payingGroups": "Groupes payants",
   "AdminBilling.pastDueCount": "Impayés : {count}",
   "AdminBilling.inTrial": "En essai",
@@ -335,6 +336,9 @@ export default {
   "AdminBillingCustomer.status": "Statut",
   "AdminBillingCustomer.plan": "Forfait",
   "AdminBillingCustomer.perMonth": "Par mois",
+  "AdminBillingCustomer.period": "Période de facturation",
+  "AdminBillingCustomer.monthly": "Mensuelle",
+  "AdminBillingCustomer.yearly": "Annuelle",
   "AdminBillingCustomer.lastPayment": "Dernier paiement",
   "AdminBillingCustomer.customerSince": "Client depuis",
   "AdminBillingCustomer.notRecorded": "Non enregistré",
@@ -392,6 +396,8 @@ export default {
   "AdminBillingCustomer.howLong": "Durée",
   "AdminBillingCustomer.timeText":
     "<group>{group}</group> garde le forfait {plan} sans prélèvement jusqu’au {date}. Ensuite, le prélèvement habituel de {charge} par mois reprend.",
+  "AdminBillingCustomer.timeTextYear":
+    "<group>{group}</group> garde le forfait {plan} sans prélèvement jusqu’au {date}. Ensuite, le prélèvement habituel de {charge} par an reprend.",
   "AdminBillingCustomer.length7d": "7 jours",
   "AdminBillingCustomer.length14d": "14 jours",
   "AdminBillingCustomer.length30d": "30 jours",
@@ -1377,6 +1383,10 @@ export default {
   "AdminGroupOverview.description":
     "Ce que les membres voient sur leur page Vue d’ensemble, dans la disposition par défaut. Les membres peuvent masquer et réordonner ces widgets ; leurs propres dispositions ne sont pas affichées ici.",
   "AdminGroupOverview.gridLabel": "Widgets de la vue d’ensemble de {group}",
+  "AdminGroupOverview.membersOnly":
+    "Les widgets qui affichent les chiffres propres au groupe ne sont visibles que par ses membres.",
+  "AdminGroupOverview.noneShown":
+    "Tous les widgets de la page Vue d’ensemble de ce groupe affichent ses propres chiffres, donc seuls ses membres peuvent les voir.",
   "AdminGroups.active": "Actifs",
   "AdminGroups.inTrash": "Dans la corbeille",
   "AdminGroups.noName": "Sans nom",

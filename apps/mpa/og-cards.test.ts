@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { App } from "fresh"
+import { App } from "@spy4x/preact-server"
 import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
 import { readSeedPosts } from "@server/blog/seed-posts.ts"
 import { CARDS, handler } from "./routes/blog/og/[file].ts"

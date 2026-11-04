@@ -179,6 +179,7 @@ function GroupView(
             id: widget.id,
             titleKey: widget.titleKey,
             size: widget.size,
+            operatorView: widget.operatorView,
             load: loads[widget.id] ?? { status: `loading` },
           }))}
           views={OVERVIEW_VIEWS}

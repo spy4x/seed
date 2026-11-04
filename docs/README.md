@@ -80,6 +80,8 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
   refused.
 - [Sign-out and the device's data](offline-sign-out.md): what the SPA deletes, and keeps, when a
   person signs out.
+- [The website's server](website-server.md): the small server layer the public website runs on,
+  `@spy4x/preact-server`, which replaced Fresh.
 - [The app shell](offline-app-shell.md): how the service worker starts the app with no network.
 - [Note attachments and profile pictures](attachments-and-pictures.md): files kept on a note, and a
   person's picture in place of their initials.
