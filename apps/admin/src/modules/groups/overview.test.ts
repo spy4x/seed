@@ -1,5 +1,6 @@
 import { expect } from "@std/expect"
 import { it } from "@std/testing/bdd"
+import { NOTE_WIDGETS } from "@domain/notes"
 import type { AdminApiResult, AdminFetch } from "../../state.ts"
 import { createAdminOverviewState } from "./overview.ts"
 
@@ -78,4 +79,22 @@ it(`drops an answer for a range the page has moved on from`, async () => {
     data: { current: 4, previous: null },
     savedAt: null,
   })
+})
+
+it(`never asks for a members-only widget`, async () => {
+  const paths: string[] = []
+  const request = ((path: string) => {
+    paths.push(path)
+    return Promise.resolve({ ok: true, status: 200, data: { current: 1, previous: null } })
+  }) as AdminFetch
+  const [total, added] = NOTE_WIDGETS
+  const state = createAdminOverviewState(request, [total, { ...added, operatorView: `never` }])
+
+  state.open(october)
+  await settle()
+
+  expect(paths).toEqual([
+    `/api/admin/groups/${GROUP_ID}/widgets/notes.total?from=2026-10-01&to=2026-10-21&timeZone=Europe%2FBerlin`,
+  ])
+  expect(state.loads.value[`notes.added`]).toBe(undefined)
 })

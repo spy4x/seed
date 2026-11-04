@@ -1001,6 +1001,8 @@ AdminGroup.used	ae7d8dfac9ff5e0f
 AdminGroup.you	08b041935798fbf6
 AdminGroupOverview.description	921aa6fc0c0cefc7
 AdminGroupOverview.gridLabel	7bdbf8de566e883d
+AdminGroupOverview.membersOnly	e2ef658063fd2687
+AdminGroupOverview.noneShown	1ca4dbe4ae23d098
 AdminGroupOverview.title	c25369df419dbc06
 AdminGroups.active	92340695899bd2d8
 AdminGroups.clear	7179ea0035fca783

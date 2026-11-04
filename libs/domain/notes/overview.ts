@@ -38,6 +38,7 @@ export const NOTE_WIDGETS: readonly WidgetDefinition[] = [
     size: "stat",
     canView: canRead,
     operation: "note.widget.total",
+    operatorView: "counts",
   },
   {
     id: NOTE_WIDGET_IDS.added,
@@ -45,6 +46,7 @@ export const NOTE_WIDGETS: readonly WidgetDefinition[] = [
     size: "stat",
     canView: canRead,
     operation: "note.widget.added",
+    operatorView: "counts",
   },
   {
     id: NOTE_WIDGET_IDS.series,
@@ -52,6 +54,7 @@ export const NOTE_WIDGETS: readonly WidgetDefinition[] = [
     size: "full",
     canView: canRead,
     operation: "note.widget.series",
+    operatorView: "counts",
   },
 ]
 
