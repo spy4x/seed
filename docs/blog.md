@@ -226,9 +226,10 @@ its posts instead of failing the blog. The Blog link shows on a language's pages
 language has one, and the sitemap lists each language's index and each post once, at its own
 address.
 
-The Lighthouse run (`deno task lighthouse`) measures `/blog` and Seed's post
-`welcome-to-the-seed-blog`. It needs no database: `apps/mpa/lighthouse/blog-api.ts` answers the
-public routes with the published posts of `libs/server/blog/seed-posts/`.
+The Lighthouse run (`deno task lighthouse`) measures `/blog` and a post page with a fixture post of
+its own, `apps/mpa/lighthouse/posts/`, as long as a typical post and in the same format. It needs no
+database: `apps/mpa/lighthouse/blog-api.ts` answers the public routes with that folder's posts only,
+so deleting Seed's posts changes nothing there. The fixture never appears on the website.
 
 ## What the website never sees
 
