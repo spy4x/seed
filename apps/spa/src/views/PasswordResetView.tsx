@@ -69,8 +69,13 @@ export function ForgotPasswordView() {
     setError(null)
     setPending(true)
     const answer = await requestPasswordReset(email.trim())
+    // The step names the address as the server keeps it, trimmed and in lower case.
+    const kept = answer.ok ? await readWaitingReset() : null
     setPending(false)
-    if (answer.ok) return markSent()
+    if (answer.ok) {
+      if (kept) setEmail(kept)
+      return markSent()
+    }
     setError(codeFailure(t, answer, PASSWORD_RESET_FAILURES.forgot))
   }
 
