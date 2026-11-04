@@ -11,6 +11,8 @@
 #         they start from no base image.
 #   spa   apps/spa/dockerfile.prod: nginx with the built SPA.
 #   mpa   apps/mpa/dockerfile.prod: the public website.
+#   mpa-node, mpa-bun  apps/mpa/dockerfile.node and apps/mpa/dockerfile.bun: the website on Node or
+#         Bun, for APP_RUNTIME=node or bun. Self-contained, like api-node and api-bun.
 #
 # The repository is untrusted in Woodpecker: no step mounts a volume or runs privileged. The only
 # agent runs on a home server, and a pipeline that could mount its Docker socket would be root on
@@ -38,7 +40,7 @@ when:
 
 variables:
   # The one place the image names come from: `<IMAGE_PREFIX>-base`, `-api`, `-api-node`,
-  # `-api-bun`, `-spa`, `-mpa`.
+  # `-api-bun`, `-spa`, `-mpa`, `-mpa-node`, `-mpa-bun`.
   # Seed's own site: see docs/start-a-product.md
   - &image_env
     IMAGE_PREFIX: antonshubin/template
@@ -232,6 +234,52 @@ steps:
     environment:
       <<: *image_env
       NAME: mpa
+      DOCKERHUB_USERNAME:
+        from_secret: DOCKERHUB_USERNAME
+      DOCKERHUB_TOKEN:
+        from_secret: DOCKERHUB_TOKEN
+    commands: *publish_commands
+
+  build-mpa-node:
+    <<: *kaniko
+    depends_on: [guard, changelog]
+    environment:
+      <<: *image_env
+      NAME: mpa-node
+    commands:
+      - executor --context "$$PWD" --dockerfile apps/mpa/dockerfile.node
+        --destination "$$IMAGE_PREFIX-$$NAME:$${CI_COMMIT_TAG}"
+        --no-push --tar-path "$$PWD/$$NAME.tar"
+
+  publish-mpa-node:
+    <<: *crane
+    depends_on: [build-mpa-node]
+    environment:
+      <<: *image_env
+      NAME: mpa-node
+      DOCKERHUB_USERNAME:
+        from_secret: DOCKERHUB_USERNAME
+      DOCKERHUB_TOKEN:
+        from_secret: DOCKERHUB_TOKEN
+    commands: *publish_commands
+
+  build-mpa-bun:
+    <<: *kaniko
+    depends_on: [guard, changelog]
+    environment:
+      <<: *image_env
+      NAME: mpa-bun
+    commands:
+      - executor --context "$$PWD" --dockerfile apps/mpa/dockerfile.bun
+        --destination "$$IMAGE_PREFIX-$$NAME:$${CI_COMMIT_TAG}"
+        --no-push --tar-path "$$PWD/$$NAME.tar"
+
+  publish-mpa-bun:
+    <<: *crane
+    depends_on: [build-mpa-bun]
+    environment:
+      <<: *image_env
+      NAME: mpa-bun
       DOCKERHUB_USERNAME:
         from_secret: DOCKERHUB_USERNAME
       DOCKERHUB_TOKEN:

@@ -311,8 +311,8 @@ steps:
     # #748) and of the website (apps/mpa/dockerfile.node, apps/mpa/dockerfile.bun, #623), so a pull
     # request that breaks a bundle or a Dockerfile fails here, not at the release. Kaniko builds
     # inside an ordinary container, with no Docker daemon, no volume and no secret, and pushes
-    # nothing (`--no-push`), as in release.yml. All four are self-contained, so no
-    # base image has to be published first. One step each: kaniko builds in its own root
+    # nothing (`--no-push`), as in release.yml. All four are self-contained, so no base image has
+    # to be published first. One step each: kaniko builds in its own root
     # filesystem, so two builds in one container would share it.
     image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
     commands:

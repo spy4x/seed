@@ -36,10 +36,13 @@ async function checkApi(api: string, app: string): Promise<void> {
   const user = await me.json() as { id?: unknown }
   expect(me.status === 200 && user.id, `GET /api/auth/me answered ${me.status}`)
 
-  const socket = new WebSocket(`${api.replace(/^http/, `ws`)}/api/ws`, {
+  // Deno's WebSocket takes headers, as a browser sends its cookie and origin; the DOM types the
+  // repository is checked against know only the protocols.
+  const options = {
     protocols: [`${SOCKET_USER_PROTOCOL}${user.id}`],
     headers: { cookie, origin: app },
-  })
+  } as unknown as string[]
+  const socket = new WebSocket(`${api.replace(/^http/, `ws`)}/api/ws`, options)
   await new Promise<void>((resolve, reject) => {
     const timer = setTimeout(
       () => reject(new Error(`the WebSocket did not open within 10 s`)),
