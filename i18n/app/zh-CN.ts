@@ -525,7 +525,7 @@ export default {
   "GroupBillingPanel.refund": {
     "other": "改变主意了？{count} 天内申请即可全额退款。",
   },
-  "GroupBillingPanel.joinInstead": "想加入别人的群组？请向群组所有者要一个邀请链接，无需付款。",
+  "GroupBillingPanel.joinInstead": "想加入别人的群组？请向该群组的所有者索取邀请链接，无需付款。",
   "HomeView.opening": "正在打开应用…",
   "GroupBillingView.trialStarted": {
     "other": "你的 {count} 天 {plan} 试用已开始",

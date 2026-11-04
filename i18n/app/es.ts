@@ -660,9 +660,9 @@ export default {
   "GroupBillingPanel.finePrintFlatYear":
     "Se cobra cada año. Cancela cuando quieras y conserva {plan} hasta que termine el periodo.",
   "GroupBillingPanel.refund": {
-    "one": "¿Cambiaste de idea? Pide el reembolso completo en un plazo de {count} día.",
-    "many": "¿Cambiaste de idea? Pide el reembolso completo en un plazo de {count} días.",
-    "other": "¿Cambiaste de idea? Pide el reembolso completo en un plazo de {count} días.",
+    "one": "¿Cambiaste de opinión? Pide el reembolso completo dentro de {count} día.",
+    "many": "¿Cambiaste de opinión? Pide el reembolso completo dentro de {count} días.",
+    "other": "¿Cambiaste de opinión? Pide el reembolso completo dentro de {count} días.",
   },
   "GroupBillingPanel.joinInstead":
     "¿Quieres unirte al grupo de otra persona? Pídele a su propietario un enlace de invitación en lugar de pagar.",
@@ -786,7 +786,7 @@ export default {
   "OverviewScreen.emptyGroupText":
     "El resumen se irá llenando a medida que las personas del grupo añadan notas.",
   "OverviewScreen.newNote": "Nueva nota",
-  "OverviewScreen.choosePlanText": "Para añadir algo, elige un plan.",
+  "OverviewScreen.choosePlanText": "Elige un plan para empezar a añadir contenido.",
   "OverviewScreen.choosePlan": "Elegir un plan",
   "OverviewScreen.allHidden": "Todos los widgets están ocultos",
   "OverviewScreen.allHiddenText": "Elige los que quieras ver.",
@@ -844,7 +844,7 @@ export default {
   "PlanRefusalNotice.askOwner": "Pídele al propietario del grupo que mejore el plan.",
   "PlanRefusalNotice.noPlanTitle": "{group} no tiene un plan de pago",
   "PlanRefusalNotice.noPlanTitleUnnamed": "Este grupo no tiene un plan de pago",
-  "PlanRefusalNotice.noPlanText": "Para añadir algo, elige un plan.",
+  "PlanRefusalNotice.noPlanText": "Elige un plan para empezar a añadir contenido.",
   "GuestProfile.accountType": "Tipo de cuenta",
   "GuestProfile.guestAccount": "Cuenta de invitado. Solo este navegador puede abrirla.",
   "GuestProfile.methods": "Métodos de inicio de sesión",

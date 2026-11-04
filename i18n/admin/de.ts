@@ -296,7 +296,7 @@ export default {
   "AdminNeverPaid.created": "Erstellt",
   "AdminNeverPaid.empty": "Jede Gruppe hat mindestens einmal bezahlt.",
   "AdminNeverPaid.listError":
-    "Die Gruppen konnten nicht geladen werden. Prüfe deine Verbindung und versuch es noch einmal.",
+    "Die Gruppen konnten nicht geladen werden. Prüfe deine Verbindung und versuche es noch einmal.",
   "AdminNeverPaid.loading": "Gruppen werden geladen",
   "AdminNeverPaid.pages": "Seiten mit Gruppen",
   "AdminBilling.inTrash": "Im Papierkorb",

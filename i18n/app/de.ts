@@ -640,12 +640,12 @@ export default {
     "Jährliche Abrechnung. Jederzeit kündbar, {plan} bleibt bis zum Ende des Zeitraums.",
   "GroupBillingPanel.refund": {
     "one":
-      "Doch anders entschieden? Melde dich innerhalb von {count} Tag, dann erstatten wir den vollen Betrag.",
+      "Anders überlegt? Melde dich innerhalb von {count} Tag und du bekommst den vollen Betrag zurück.",
     "other":
-      "Doch anders entschieden? Melde dich innerhalb von {count} Tagen, dann erstatten wir den vollen Betrag.",
+      "Anders überlegt? Melde dich innerhalb von {count} Tagen und du bekommst den vollen Betrag zurück.",
   },
   "GroupBillingPanel.joinInstead":
-    "Du willst der Gruppe von jemand anderem beitreten? Bitte den Inhaber um einen Einladungslink, statt zu bezahlen.",
+    "Du möchtest der Gruppe einer anderen Person beitreten? Bitte ihren Inhaber um einen Einladungslink, statt selbst zu bezahlen.",
   "HomeView.opening": "App wird geöffnet …",
   "GroupBillingView.trialStarted": {
     "one": "Deine {count}-tägige Testphase für {plan} hat begonnen",

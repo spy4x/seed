@@ -282,7 +282,7 @@ export default {
   "AdminBilling.perMonth": "月額",
   "AdminBilling.unknownPrice": "不明な料金",
   "AdminBilling.nextCharge": "次回の請求",
-  "AdminNeverPaid.title": "未払い",
+  "AdminNeverPaid.title": "支払い実績なし",
   "AdminNeverPaid.subtitle": "一度も支払いのないグループ（新しい順）。",
   "AdminNeverPaid.created": "作成日",
   "AdminNeverPaid.empty": "すべてのグループが一度は支払っています。",

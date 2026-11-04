@@ -676,7 +676,7 @@ export default {
     "other": "Pour tout le groupe, jusqu’à {count} membres.",
   },
   "GroupBillingPanel.wholeGroupNoCap": "Pour tout le groupe.",
-  "GroupBillingPanel.continueToPayment": "Continuer vers le paiement",
+  "GroupBillingPanel.continueToPayment": "Passer au paiement",
   "GroupBillingPanel.priceFlat": "{plan} coûte {price} par mois pour tout le groupe.",
   "GroupBillingPanel.priceFlatYear": "{plan} coûte {price} par an pour tout le groupe.",
   "GroupBillingPanel.finePrintFlat":
@@ -814,7 +814,7 @@ export default {
   "OverviewScreen.emptyGroupText":
     "La vue d’ensemble se remplit à mesure que les membres du groupe ajoutent des notes.",
   "OverviewScreen.newNote": "Nouvelle note",
-  "OverviewScreen.choosePlanText": "Pour ajouter quoi que ce soit, choisissez un forfait.",
+  "OverviewScreen.choosePlanText": "Choisissez un forfait pour commencer à ajouter du contenu.",
   "OverviewScreen.choosePlan": "Choisir un forfait",
   "OverviewScreen.allHidden": "Tous les widgets sont masqués",
   "OverviewScreen.allHiddenText": "Choisissez ceux que vous voulez voir.",
@@ -872,7 +872,7 @@ export default {
   "PlanRefusalNotice.askOwner": "Demandez au propriétaire du groupe de changer de forfait.",
   "PlanRefusalNotice.noPlanTitle": "{group} n’a pas de forfait payant",
   "PlanRefusalNotice.noPlanTitleUnnamed": "Ce groupe n’a pas de forfait payant",
-  "PlanRefusalNotice.noPlanText": "Pour ajouter quoi que ce soit, choisissez un forfait.",
+  "PlanRefusalNotice.noPlanText": "Choisissez un forfait pour commencer à ajouter du contenu.",
   "GuestProfile.accountType": "Type de compte",
   "GuestProfile.guestAccount": "Compte invité. Seul ce navigateur peut l’ouvrir.",
   "GuestProfile.methods": "Méthodes de connexion",

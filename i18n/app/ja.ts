@@ -557,11 +557,11 @@ export default {
   "GroupBillingPanel.periodHint": "確定する前に、今日のお支払い額がStripeに表示されます。",
   "GroupBillingPanel.switchYearly": "年払いに切り替える",
   "GroupBillingPanel.switchMonthly": "月払いに切り替える",
-  "GroupBillingPanel.startHeading": "<plan>{plan}</plan>を始める",
+  "GroupBillingPanel.startHeading": "<plan>{plan}</plan>プランで始める",
   "GroupBillingPanel.unitMonth": "/月",
   "GroupBillingPanel.unitYear": "/年",
-  "GroupBillingPanel.unitMemberMonth": "/メンバー1人・月",
-  "GroupBillingPanel.unitMemberYear": "/メンバー1人・年",
+  "GroupBillingPanel.unitMemberMonth": "メンバー1人あたり/月",
+  "GroupBillingPanel.unitMemberYear": "メンバー1人あたり/年",
   "GroupBillingPanel.wholeGroup": {
     "other": "グループ全体の料金です（メンバー{count}人まで）。",
   },
@@ -577,7 +577,7 @@ export default {
     "other": "気が変わったら、{count}日以内にお申し出いただければ全額返金します。",
   },
   "GroupBillingPanel.joinInstead":
-    "ほかの人のグループに参加したい場合は、支払わずにオーナーに招待リンクを頼んでください。",
+    "ほかの人のグループに参加する場合は、支払いはせずに、そのグループのオーナーから招待リンクをもらってください。",
   "HomeView.opening": "アプリを開いています…",
   "GroupBillingView.trialStarted": {
     "other": "{plan}の{count}日間トライアルが始まりました",
