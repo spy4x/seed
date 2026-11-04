@@ -73,9 +73,13 @@ The paths below are under `apps/mpa/` unless they say otherwise. `[[lang]]/` sta
 in the admin app. Point the post page in `lighthouse/lighthouserc.json` at one of the product's
 posts, or remove it.
 
-**Keep `/changelog` and `/docs`.** They read the product's own history and guides. Empty
-`CHANGELOG_OVERRIDES` in `changelog-overrides.ts`. Set `PUBLISHED_DOCS` and `DOCS_SITE_ORIGIN` in
-`docs-site.ts`. Replace the "built by one developer" line in `[[lang]]/changelog.tsx`.
+**Keep `/changelog` and `/docs`.** They read the product's own history and guides. In
+`changelog-overrides.ts`, set `CHANGELOG_START` to the full hash of the commit that copied Seed
+in, so `/changelog` lists only the changes after it, and empty `CHANGELOG_OVERRIDES`, whose
+numbers are Seed's pull requests. The file is the product's own now:
+list `apps/mpa/changelog-overrides.ts` in `.seed/skip`, so Seed's later wording never reaches it.
+Set `PUBLISHED_DOCS` and `DOCS_SITE_ORIGIN` in `docs-site.ts`. Replace the "built by one
+developer" line in `[[lang]]/changelog.tsx`.
 
 **The newsletter keys** are `NewsletterPage.lead`, `NewsletterPage.subscribeDescription`,
 `HomeNewsletter.lead` and `NewsletterOff.lead`. Replace the Releases on GitHub button too. Their
