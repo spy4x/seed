@@ -86,7 +86,8 @@ const billing = (cancelAtPeriodEnd: boolean) => ({
       canManage: true,
       subscribed: true,
       hasCustomer: true,
-      seatPrice: { seats: 3, amount: 900, currency: "EUR" },
+      seatPrice: { seats: 3, amount: 900, currency: "EUR", period: 1 },
+      period: 1,
     },
   },
 })
