@@ -9,6 +9,7 @@ import { SecondFactorStatus, SessionStatus } from "@spy4x/server/sign-in"
 import {
   BILLING_AUDIT_EVENTS,
   billingAuditIdentifier,
+  BillingPeriod,
   BillingStatus,
   PRO_PLAN_ID,
 } from "@domain/billing"
@@ -437,14 +438,14 @@ export async function writeBilling(
       INSERT INTO subscriptions (
         group_id, provider_subscription_id, plan_id, status, current_period_end,
         cancel_at_period_end, provider_event_at, provider_event_rank, updated_at, past_due_since,
-        trial_end, quantity, ever_active, provider_customer_id
+        trial_end, quantity, ever_active, provider_customer_id, billing_period
       ) VALUES (
         ${groupId}, ${subscriptionId}, ${PRO_PLAN_ID}, ${subscription.status},
         ${ahead(subscription.periodEndIn)}, ${subscription.cancelAtPeriodEnd}, ${at(lastAgo)},
         ${rank}, ${at(lastAgo)},
         ${subscription.pastDueSinceAgo === null ? null : at(subscription.pastDueSinceAgo)},
         ${subscription.trialEndIn === null ? null : ahead(subscription.trialEndIn)},
-        ${subscription.seats}, ${subscription.everActive}, ${customerId}
+        ${subscription.seats}, ${subscription.everActive}, ${customerId}, ${BillingPeriod.Monthly}
       )
     `
     if (subscription.status === BillingStatus.Trialing) {

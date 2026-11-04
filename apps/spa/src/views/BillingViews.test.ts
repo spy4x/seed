@@ -1,10 +1,10 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { BillingStatus, type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
+import { BillingPeriod, BillingStatus, type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import { createFormatters } from "@spy4x/time/format"
 import app from "@i18n/app/en.ts"
-import { checkoutDoneToast } from "./BillingViews.tsx"
+import { checkoutDoneToast, periodFromSearch } from "./BillingViews.tsx"
 
 const t = createTranslator({ language: "en", catalogs: [{ source: app }] })
 const format = createFormatters({ locale: "en-US", timeZone: "Asia/Tokyo" })
@@ -21,6 +21,7 @@ const PRO: GroupBilling = {
   subscribed: true,
   hasCustomer: true,
   seatPrice: null,
+  period: null,
 }
 
 describe("checkoutDoneToast", () => {
@@ -41,5 +42,14 @@ describe("checkoutDoneToast", () => {
       title: "You’re on Pro",
       body: `Stripe confirmed the payment for “\u2068Team\u2069”.`,
     })
+  })
+})
+
+describe("periodFromSearch", () => {
+  it("reads the year from ?period=year and the month from anything else", () => {
+    expect(periodFromSearch("period=year")).toBe(BillingPeriod.Yearly)
+    expect(periodFromSearch("?checkout=done&period=year")).toBe(BillingPeriod.Yearly)
+    expect(periodFromSearch("")).toBe(BillingPeriod.Monthly)
+    expect(periodFromSearch("period=decade")).toBe(BillingPeriod.Monthly)
   })
 })

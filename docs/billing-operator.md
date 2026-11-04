@@ -41,8 +41,10 @@ active or past-due subscription can get it.
 - Only the owner may open a checkout or the Stripe customer portal. Another member gets 403
   `ROLE_INSUFFICIENT`, and a person outside the group gets 404.
 - A group whose subscription is not cancelled cannot open a second checkout: 409
-  `ALREADY_SUBSCRIBED`. That holds even when the subscription shows as Free (paused, incomplete, or
-  on a price not in the catalog). The owner changes or cancels it in the portal.
+  `ALREADY_SUBSCRIBED`. That holds even when the subscription shows as Free (paused or incomplete).
+  The owner changes or cancels it in the portal. A subscription on a price not in the catalog is
+  never stored, so it does not block a second checkout until the price is added and its event
+  resent.
 - A group with a live subscription cannot be deleted: 409 `GROUP_SUBSCRIBED`. The owner cancels in
   the portal first, and the settings page says so.
 

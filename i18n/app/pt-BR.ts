@@ -554,7 +554,7 @@ export default {
     "Não foi possível abrir a página de cobrança do Stripe. Confira sua conexão e tente de novo.",
   "GroupBillingPanel.title": "Cobrança",
   "GroupBillingPanel.description":
-    "Quanto <group>{group}</group> paga por mês. A cobrança é feita pelo Stripe.",
+    "Quanto <group>{group}</group> paga. A cobrança é feita pelo Stripe.",
   "GroupBillingPanel.loading": "Carregando o plano",
   "GroupBillingPanel.statusTrial": "Teste",
   "GroupBillingPanel.statusRenews": "Renova em {date}",
@@ -602,7 +602,7 @@ export default {
   "GroupBillingPanel.confirming":
     "O Stripe está confirmando seu plano. Esta página se atualiza sozinha.",
   "GroupBillingPanel.paymentMethod": "Forma de pagamento",
-  "GroupBillingPanel.paymentMethodText": "O cartão que o Stripe cobra todo mês.",
+  "GroupBillingPanel.paymentMethodText": "O cartão que o Stripe cobra por este plano.",
   "GroupBillingPanel.changeCard": "Trocar cartão",
   "GroupBillingPanel.invoices": "Faturas",
   "GroupBillingPanel.invoicesText": "Todas as faturas e recibos, para ver ou baixar.",
@@ -611,6 +611,31 @@ export default {
   "GroupBillingPanel.cancelFree": "Se você cancelar antes de {date}, não será cobrado.",
   "GroupBillingPanel.cancelKeep": "Você continua no {plan} até o fim do período.",
   "GroupBillingPanel.cancelPlan": "Cancelar plano",
+  "GroupBillingPanel.periodTitle": "Período de cobrança",
+  "GroupBillingPanel.monthly": "Mensal",
+  "GroupBillingPanel.yearly": "Anual",
+  "GroupBillingPanel.priceYear": "O {plan} custa {price} por membro ao ano.",
+  "GroupBillingPanel.priceForGroupYear": {
+    "one": "Com {count} membro, <group>{group}</group> pagaria {total} por ano.",
+    "many": "Com {count} de membros, <group>{group}</group> pagaria {total} por ano.",
+    "other": "Com {count} membros, <group>{group}</group> pagaria {total} por ano.",
+  },
+  "GroupBillingPanel.saving": "{amount} a menos do que pagando por mês.",
+  "GroupBillingPanel.finePrintYear":
+    "Cobrança anual por membro. Cancele quando quiser e continue no {plan} até o fim do período.",
+  "GroupBillingPanel.trialThenYear":
+    "Depois disso, <group>{group}</group> paga {total} por ano, a menos que você cancele.",
+  "GroupBillingPanel.seatsYear": {
+    "one": "{total} por ano, por {count} membro a {price} cada, incluindo o dono.",
+    "many": "{total} por ano, por {count} de membros a {price} cada, incluindo o dono.",
+    "other": "{total} por ano, por {count} membros a {price} cada, incluindo o dono.",
+  },
+  "GroupBillingPanel.periodMonthly":
+    "Você paga por mês. O plano anual custa {price} por ano, {saving} a menos.",
+  "GroupBillingPanel.periodYearly": "Você paga por ano. O plano mensal custa {price} por mês.",
+  "GroupBillingPanel.periodHint": "O Stripe mostra quanto você paga hoje antes de você confirmar.",
+  "GroupBillingPanel.switchYearly": "Mudar para anual",
+  "GroupBillingPanel.switchMonthly": "Mudar para mensal",
   "GroupBillingView.trialStarted": {
     "one": "Seu teste do {plan} de {count} dia começou",
     "many": "Seu teste do {plan} de {count} de dias começou",
@@ -1278,6 +1303,8 @@ export default {
   "Preferences.updatedElsewhere": "Preferências atualizadas em outro dispositivo.",
   "SeatPriceConfirm.hint":
     "Cada novo membro acrescenta {price} por mês, então mais um membro faz o grupo passar de {now} para {next}. A diferença do resto deste período vem na próxima fatura.",
+  "SeatPriceConfirm.hintYear":
+    "Cada novo membro acrescenta {price} por ano, então mais um membro faz o grupo passar de {now} para {next}. A diferença do resto deste período vem na próxima fatura.",
   "SeatPriceConfirm.accept": "Aceito o preço maior a cada pessoa que entrar",
   "ProfileAccount.name": "Nome",
   "ProfileAccount.notSet": "Não informado",

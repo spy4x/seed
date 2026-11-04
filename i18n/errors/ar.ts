@@ -177,6 +177,7 @@ export default {
   "Reason.ORDER_STALE": "تغيّرت القائمة بعد تحميل الصفحة. أعد تحميلها وحاول مرة أخرى.",
   "Reason.PASSWORD_INVALID": "كلمة المرور غير صحيحة. حاول مرة أخرى.",
   "Reason.PASSWORD_LOCKED": "أدخلت كلمة مرور خاطئة مرات كثيرة. انتظر قليلًا وحاول مرة أخرى.",
+  "Reason.PERIOD_NOT_OFFERED": "هذه الخطة لا تُباع لفترة الفوترة هذه. اختر الفترة الأخرى.",
   "Reason.PHOTO_CONTENT": "محتوى هذا الملف لا يطابق نوع الصورة.",
   "Reason.PHOTO_NOT_FOUND": "هذه الصورة لم تعد موجودة.",
   "Reason.PHOTO_TOO_LARGE": "هذه الصورة كبيرة جدًا.",

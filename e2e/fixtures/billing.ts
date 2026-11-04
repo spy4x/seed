@@ -17,6 +17,9 @@ export const DEV_WEBHOOK_SECRET = "whsec_template_development_only"
 /** The price the development provider maps to the Pro plan. */
 export const DEV_PRO_PRICE_ID = "price_fake_pro"
 
+/** The price the development provider maps to the Pro plan billed yearly. */
+export const DEV_PRO_YEARLY_PRICE_ID = "price_fake_pro_yearly"
+
 /** The webhook path of the API. */
 export const BILLING_WEBHOOK_PATH = "/api/webhooks/billing"
 
