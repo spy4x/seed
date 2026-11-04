@@ -251,6 +251,7 @@ export default {
   "AdminBilling.onFreeSince": "На бесплатном тарифе с {date}",
   "AdminBilling.wouldBe": "после пробного — {amount}",
   "AdminBilling.seatPrice": "{seats} × {price}",
+  "AdminBilling.billedYearly": "{amount} за год",
   "AdminBilling.title": "Оплата",
   "AdminBilling.subtitle": "Кто платит, сколько и сколько вы зарабатываете.",
   "AdminBilling.off": "Оплата выключена",
@@ -282,7 +283,7 @@ export default {
   "AdminBilling.keyNumbers": "Ключевые показатели",
   "AdminBilling.mrr": "Ежемесячная выручка (MRR)",
   "AdminBilling.mrrHint":
-    "Активные подписки и подписки с просроченным платежом, по прейскуранту. Пробные периоды считаются как 0.",
+    "Активные подписки и подписки с просроченным платежом, по прейскуранту. Годовая считается как её цена, делённая на 12. Пробные периоды считаются как 0.",
   "AdminBilling.payingGroups": "Платящие группы",
   "AdminBilling.pastDueCount": "Просрочено: {count}",
   "AdminBilling.inTrial": "На пробном периоде",
@@ -337,6 +338,9 @@ export default {
   "AdminBillingCustomer.status": "Статус",
   "AdminBillingCustomer.plan": "Тариф",
   "AdminBillingCustomer.perMonth": "В месяц",
+  "AdminBillingCustomer.period": "Период оплаты",
+  "AdminBillingCustomer.monthly": "Помесячно",
+  "AdminBillingCustomer.yearly": "Ежегодно",
   "AdminBillingCustomer.lastPayment": "Последний платёж",
   "AdminBillingCustomer.customerSince": "Клиент с",
   "AdminBillingCustomer.notRecorded": "Нет данных",
@@ -394,6 +398,8 @@ export default {
   "AdminBillingCustomer.howLong": "На какой срок",
   "AdminBillingCustomer.timeText":
     "У группы <group>{group}</group> останется тариф {plan} без списаний до {date}. Потом снова начнёт списываться обычная плата — {charge} в месяц.",
+  "AdminBillingCustomer.timeTextYear":
+    "У группы <group>{group}</group> останется тариф {plan} без списаний до {date}. Потом снова начнёт списываться обычная плата — {charge} в год.",
   "AdminBillingCustomer.length7d": "7 дней",
   "AdminBillingCustomer.length14d": "14 дней",
   "AdminBillingCustomer.length30d": "30 дней",

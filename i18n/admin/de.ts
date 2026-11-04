@@ -243,6 +243,7 @@ export default {
   "AdminBilling.onFreeSince": "Seit {date} kostenlos",
   "AdminBilling.wouldBe": "regulär {amount}",
   "AdminBilling.seatPrice": "{seats} × {price}",
+  "AdminBilling.billedYearly": "{amount} jährlich abgerechnet",
   "AdminBilling.title": "Abrechnung",
   "AdminBilling.subtitle": "Wer zahlt, wie viel und was du einnimmst.",
   "AdminBilling.off": "Abrechnung ist ausgeschaltet",
@@ -272,7 +273,8 @@ export default {
   "AdminBilling.loadingFigures": "Zahlen werden geladen",
   "AdminBilling.keyNumbers": "Kennzahlen",
   "AdminBilling.mrr": "Monatlich wiederkehrender Umsatz",
-  "AdminBilling.mrrHint": "Aktive und überfällige Abos zum Listenpreis. Testphasen zählen mit 0.",
+  "AdminBilling.mrrHint":
+    "Aktive und überfällige Abos zum Listenpreis. Ein Jahresabo zählt mit einem Zwölftel seines Preises. Testphasen zählen mit 0.",
   "AdminBilling.payingGroups": "Zahlende Gruppen",
   "AdminBilling.pastDueCount": "{count} überfällig",
   "AdminBilling.inTrial": "In der Testphase",
@@ -326,6 +328,9 @@ export default {
   "AdminBillingCustomer.status": "Status",
   "AdminBillingCustomer.plan": "Tarif",
   "AdminBillingCustomer.perMonth": "Pro Monat",
+  "AdminBillingCustomer.period": "Abrechnungszeitraum",
+  "AdminBillingCustomer.monthly": "Monatlich",
+  "AdminBillingCustomer.yearly": "Jährlich",
   "AdminBillingCustomer.lastPayment": "Letzte Zahlung",
   "AdminBillingCustomer.customerSince": "Kunde seit",
   "AdminBillingCustomer.notRecorded": "Nicht erfasst",
@@ -382,6 +387,8 @@ export default {
   "AdminBillingCustomer.howLong": "Wie lange?",
   "AdminBillingCustomer.timeText":
     "<group>{group}</group> behält {plan} und zahlt bis zum {date} nichts. Danach wird wieder wie gewohnt {charge} im Monat abgebucht.",
+  "AdminBillingCustomer.timeTextYear":
+    "<group>{group}</group> behält {plan} und zahlt bis zum {date} nichts. Danach wird wieder wie gewohnt {charge} im Jahr abgebucht.",
   "AdminBillingCustomer.length7d": "7 Tage",
   "AdminBillingCustomer.length14d": "14 Tage",
   "AdminBillingCustomer.length30d": "30 Tage",

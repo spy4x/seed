@@ -231,6 +231,7 @@ export default {
   "AdminBilling.onFreeSince": "自{date}起使用免费版",
   "AdminBilling.wouldBe": "原价 {amount}",
   "AdminBilling.seatPrice": "{seats} × {price}",
+  "AdminBilling.billedYearly": "按年计费 {amount}",
   "AdminBilling.title": "账单",
   "AdminBilling.subtitle": "谁在付费、付多少，以及你的收入。",
   "AdminBilling.off": "计费未开启",
@@ -257,7 +258,8 @@ export default {
   "AdminBilling.loadingFigures": "正在加载数据",
   "AdminBilling.keyNumbers": "关键指标",
   "AdminBilling.mrr": "月度经常性收入",
-  "AdminBilling.mrrHint": "按标价计算生效中和已逾期的订阅，试用期计为 0。",
+  "AdminBilling.mrrHint":
+    "按标价计算生效中和已逾期的订阅，年付订阅按价格的十二分之一计算，试用期计为 0。",
   "AdminBilling.payingGroups": "付费群组",
   "AdminBilling.pastDueCount": "{count} 个已逾期",
   "AdminBilling.inTrial": "试用中",
@@ -308,6 +310,9 @@ export default {
   "AdminBillingCustomer.status": "状态",
   "AdminBillingCustomer.plan": "套餐",
   "AdminBillingCustomer.perMonth": "每月",
+  "AdminBillingCustomer.period": "计费周期",
+  "AdminBillingCustomer.monthly": "按月",
+  "AdminBillingCustomer.yearly": "按年",
   "AdminBillingCustomer.lastPayment": "最近一笔付款",
   "AdminBillingCustomer.customerSince": "成为客户时间",
   "AdminBillingCustomer.notRecorded": "未记录",
@@ -359,6 +364,8 @@ export default {
   "AdminBillingCustomer.howLong": "时长",
   "AdminBillingCustomer.timeText":
     "<group>{group}</group>在{date}之前免费使用 {plan}。之后恢复每月 {charge} 的常规扣款。",
+  "AdminBillingCustomer.timeTextYear":
+    "<group>{group}</group>在{date}之前免费使用 {plan}。之后恢复每年 {charge} 的常规扣款。",
   "AdminBillingCustomer.length7d": "7 天",
   "AdminBillingCustomer.length14d": "14 天",
   "AdminBillingCustomer.length30d": "30 天",
