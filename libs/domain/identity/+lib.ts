@@ -792,7 +792,7 @@ export interface SignInMethod {
   current: boolean
   /**
    * A provider method or passkey that is not the last way in. An address another key holds proven
-   * is a way in, through a sign-in link. The password is never unlinked.
+   * is a way in, through a sign-in code. The password is never unlinked.
    */
   canUnlink: boolean
   /** The passkey's name and dates, on a passkey row only. */

@@ -7,7 +7,7 @@
  *   ignored there.
  * - **Production** uses SMTP when every `SMTP_*` key is set. With any of them missing, mail is
  *   off: nothing is sent and the caller logs {@link mailOffWarning} once at start-up. The console
- *   sender never runs in production, since it prints the body, a reset link included, and
+ *   sender never runs in production, since it prints the body, a reset code included, and
  *   container logs are shipped.
  *
  * `@spy4x/email` reads no environment by design, so the template maps its own variables here.
@@ -91,7 +91,7 @@ export function readMailSetup(env: { get(name: string): string | undefined }): M
 /** The start-up warning for a setup that sends nothing: it names the keys, never a value. */
 export function mailOffWarning(setup: MailSetup): string | null {
   if (setup.transport !== MailTransport.Off) return null
-  return `warning: mail is off, so password reset links and e-mail codes are not sent. Set ${
+  return `warning: mail is off, so sign-in, sign-up and password reset codes are not sent. Set ${
     setup.missing.join(", ")
   } to send them.`
 }

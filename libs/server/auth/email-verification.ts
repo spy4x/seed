@@ -171,7 +171,7 @@ export async function proveEmailCode(
 }
 
 /**
- * The user who owns `email` because a code or a reset link proved it, or `null`: an unproven claim
+ * The user who owns `email` because a code proved it, or `null`: an unproven claim
  * owns nothing. Anything that trusts an address to name a person asks this first; today that is
  * an invitation by address (#131).
  */

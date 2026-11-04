@@ -20,7 +20,7 @@ export interface ProviderProof {
   providers: readonly OAuthProviderId[]
   /** The account has a passkey (#222). */
   passkeys?: boolean
-  /** A sign-in link reaches the account: it has a proven address (#391). */
+  /** A sign-in code reaches the account: it has a proven address (#391, #752). */
   emailLink?: boolean
   /** This device signed in with one of them less than `PROVIDER_PROOF_MINUTES` minutes ago. */
   fresh: boolean
