@@ -2,46 +2,136 @@
 
 > Also on the website: [seedsaas.com/docs/guests](https://seedsaas.com/docs/guests).
 
-A visitor presses "Try it now" and is in the app at once, in an account with no e-mail address and
-no password: a guest account. Everything works as in any account, except the few actions that need
-a person who can sign in again. Adding a sign-in method keeps the account: the user id, the groups
-and the notes stay as they are. Firebase and Supabase call the same feature anonymous sign-in.
+This page shows how "Try it now" lets a visitor into the app without signing up, and what such a
+guest account can and cannot do.
 
-It is on by default. `GUEST_MODE=false` in the env file turns it off: the API refuses to start a
-guest (404) and the SPA hides every "Try it now" (`SPA_GUEST`, set from `GUEST_MODE` by
-`infra/compose/compose.shared.yml`). The line under "Try it now" links to the website's terms and privacy notice at `MPA_DOMAIN`
-(`SPA_SITE`); without a website it names them without links.
+A guest account has no e-mail address and no password. Everything works as in any other account,
+except a few actions that need a person who can sign in again. Firebase and Supabase call the same
+feature anonymous sign-in.
 
-## How it works
+## Turn it on or off
 
-| Part | Where | What |
-| --- | --- | --- |
-| Start | `POST /api/auth/guest` (`apps/api/routes/auth-guest.ts`, `apps/api/services/guest-sign-in.ts`) | Creates the user, a sign-in key of the method `guest` (a session needs a key), the first group and the starter data, in one transaction, and sets the HttpOnly session cookie for 365 days. A browser with a session gets `already-guest` or `signed-in` and nothing is made. Five starts an hour per network address (`guestStart` in `apps/api/middlewares/auth-rate-limits.ts`); the sixth gets 429 with the wait in `Retry-After` and in the body. |
-| Renewal | `parseAuth` in `apps/api/services/sign-in.ts`, `renewGuestSession` in `libs/server/auth/guests.ts` | A guest's session is pushed back to 365 days at most once a day, and each such day counts in `users.guest_visit_days` for the third-visit reminder. |
-| `/try` | `apps/spa/src/views/GuestViews.tsx`, `libs/ui/guest-screens.tsx` | Posts once as it opens and replaces itself in the history, so Back never makes a second account. It draws working, too many, failed, off and already signed in. The app's `robots.txt` disallows it, and the website's links to it carry `rel="nofollow"`. |
-| Keeping | `/keep` | Google, GitHub, a passkey, or an e-mail address and password through the sign-up code page. The password step that linking asks for is skipped for a guest, who has none. Keeping writes a `guest_events` row, ends every session of the guest, signs this browser in with a new session of the normal length on the new key, and drops the unread reminders. The SPA reopens its socket on the new cookie without a reload (`apps/spa/src/app.tsx`). |
-| Taken | `/keep/taken`, `GET`, `POST` and `DELETE /api/auth/guest/switch` | When the method belongs to another account, nothing changes until the person picks: move the guest's groups to that account, delete the guest's data, or keep the guest account. The e-mail path asks for that account's password, and its code when it has two-factor sign-in on, before anything moves. Nothing is ever merged without that choice. |
-| Limits | `apps/api/middlewares/guest-limits.ts`, the push check in `apps/api/services/realtimeHub.ts` | Inviting, push devices, API tokens (and so MCP), group imports and checkout answer 403 with the code `GUEST_NEEDS_SIGN_IN_METHOD`. The SPA keeps every button and shows the refusal with "Keep your account" (`apps/spa/src/state/api.ts`, `GuestRefusalDialog`). |
-| Reminders | `remindGuest` in `libs/server/auth/guests.ts` | One inbox notification each: after the first note, on the third day of use, and on an invite attempt. |
-| Clean-up | `cleanUpGuests`, in the worker's nightly cleanup (`libs/server/jobs/cleanup.ts`) | Deletes a guest made over 7 days ago who has nothing of their own, and any guest unused for 365 days. Each delete is checked again under a row lock, so a guest who wrote something since the list was read stays. Running it twice deletes nobody twice. |
-| Delete | `POST /api/auth/guest/delete`, the Profile | A guest types the word `delete` and the account goes at once: there is no grace period, because nobody could sign in to restore it. A group export works for guests as for anyone. |
-| Admin | `libs/ui/admin-users-screen.tsx`, `admin-user-screen.tsx`, `admin-dashboard-screen.tsx` | A "Guest" badge, an Account filter, "Delete guest account" on the person's page (`POST /api/admin/users/:id/guest/delete`, guests only, audited on the operator's row), and the counts started, kept and cleaned up over the dashboard's 30 days. Support never restores a guest account: it has no sign-in method to prove whose it was. |
+Guest accounts are on by default. To turn them off:
 
-Signing out of a guest account asks first, since the account cannot be opened again.
+1. In the env file (`infra/envs/.env`, or `infra/envs/.env.prod` on the server), set:
+
+   ```sh
+   GUEST_MODE=false
+   ```
+
+2. Restart `deno task dev` on your machine, or deploy to the server:
+
+   ```sh
+   deno task deploy
+   ```
+
+| Variable     | What it does                                                                  | Default |
+| ------------ | ----------------------------------------------------------------------------- | ------- |
+| `GUEST_MODE` | `false` turns guests off: the API answers 404 and the SPA hides "Try it now". | on      |
+
+Compose passes the same value to the SPA as `SPA_GUEST`, so you set it once. The line under "Try
+it now" links to the terms and the privacy notice on the website at `MPA_DOMAIN`. Without a
+website, it names them without links.
+
+## What a visitor gets
+
+1. "Try it now" opens `/try`, which starts the guest once and replaces itself in the browser
+   history. Back never makes a second account.
+2. The API creates the user, the first group and the starter data in one transaction.
+3. The browser gets a session cookie that lasts 365 days. Each day of use pushes it back, at most
+   once a day.
+
+A browser that already has a session gets nothing new. One network address can start five guests
+an hour; the sixth gets 429 with the wait in `Retry-After`. The app's `robots.txt` disallows `/try`,
+and the website's links to it carry `rel="nofollow"`.
+
+## What a guest cannot do
+
+These actions answer 403 with the code `GUEST_NEEDS_SIGN_IN_METHOD`:
+
+- inviting people to a group;
+- adding a push device;
+- making API tokens, and so using the MCP server;
+- importing a group;
+- checkout (paying for a plan);
+- linking Telegram.
+
+The SPA keeps every button. Pressing one shows the refusal with a "Keep your account" button. The
+API enforces the limits, not the screens.
+
+Signing out of a guest account asks first, because nobody can open that account again.
+
+## Keep the account
+
+On `/keep`, a guest adds a sign-in method: Google, GitHub, a passkey, or an e-mail address and a
+password. The user id, the groups and the notes stay as they are.
+
+Keeping the account:
+
+1. skips the password step that linking asks for, since a guest has none;
+2. ends every session of the guest, including ones in other browsers;
+3. signs this browser in with a new session of the normal length;
+4. drops the unread reminders.
+
+The SPA reopens its socket on the new cookie without a reload.
+
+### When the method belongs to another account
+
+Nothing changes until the person picks one of three choices on `/keep/taken`:
+
+- move the guest's groups to that other account;
+- delete the guest's data;
+- keep the guest account as it is.
+
+Nothing is ever merged without that choice. By e-mail address, the move asks for that account's
+password first, and for its two-factor code when it has one.
+
+## Reminders
+
+A guest gets one inbox notification for each of these moments:
+
+- after their first note;
+- on their third day of use;
+- when they try to invite someone.
+
+## Clean-up and deleting
+
+The worker's nightly clean-up deletes two kinds of guest:
+
+- a guest made over 7 days ago who has nothing of their own;
+- any guest unused for 365 days.
+
+It checks each guest again just before the delete, so one who wrote something meanwhile stays.
+
+A guest deletes their own account on the Profile by typing the word `delete`. It goes at once,
+with no grace period, because nobody could sign in to restore it. A group export works for guests
+as for anyone.
+
+## In the admin panel
+
+- A "Guest" badge on the person, and an Account filter on the users list.
+- "Delete guest account" on the person's page, for guests only. It is audited.
+- The dashboard counts guests started, kept and cleaned up over its 30 days.
+
+Support never restores a guest account: nothing proves whose it was.
 
 ## Security
 
-- A guest is a member like any other: every route and handler checks membership as before. A
-  guest can join another person's group by accepting an invitation link, and on the demo a guest
-  starts in the sample groups.
-- Starting a guest never takes over a session: a browser with any session gets nothing new.
-- Keeping never turns a guest's token into the kept account's (#374): the guest cookie lived a
-  year and was never protected by a password, so a copy of it, on a shared computer say, is
-  refused once the account is kept. Other browsers of the guest have to sign in again.
-- Keeping by a provider or an e-mail address that another account owns never signs the guest into
-  it without that account's password (and code); a provider sign-in proves the provider account.
-- The limits are enforced by the API, not by the screens.
-- Every guest on one client address shares one operation budget, 60 writes and 300 reads a minute
-  by default, over the socket, `/api/call` and the REST routes together, so opening more guest
-  accounts gives a script no more writes. Behind Cloudflare's proxy every guest that comes through
-  one Cloudflare edge shares that budget (docs/architecture.md, "Operation budget").
+- A guest is a member like any other. Every route checks group membership as usual.
+- A guest can join another person's group through an invitation link. On the demo, a guest starts
+  in the sample groups.
+- Keeping never turns the guest's cookie into the kept account's
+  ([#374](https://github.com/spy4x/seed/issues/374)). The guest cookie lived a year without a
+  password, so a copy of it, on a shared computer say, stops working once the account is kept.
+- Keeping by a method another account owns never signs the guest in to that account without its
+  password and code. A provider sign-in proves the provider account.
+- Every guest on one client address shares one operation budget: 60 writes and 300 reads a minute
+  by default. Opening more guest accounts gives a script no more writes.
+- Behind Cloudflare's proxy, every guest that comes through one Cloudflare edge shares that budget
+  ([architecture.md](architecture.md), "Operation budget").
+
+## Next
+
+- [Sign in with Google and GitHub](sign-in-providers.md): the providers a guest can keep the
+  account with.
+- [The public demo](demo.md): how guests start on the demo.

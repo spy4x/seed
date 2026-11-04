@@ -37,7 +37,7 @@ way.
 - **Colours and sizes** belong to one item, in its order. Sizes go smallest first.
 - **Sold out** is stored per colour and size combination. An item without colours or sizes uses
   `null` for the missing side. Lists show the stock as `in-stock`, `some-sold-out` or `sold-out`.
-- **Photos** go through the file store's image pipeline ([files.md](files.md)). The worker makes
+- **Photos** go through the file store's image pipeline ([Process photos](file-uploads.md#process-photos)). The worker makes
   AVIF and WebP widths, and the admin shows them about a second after the upload. The first photo
   is the cover. A photo may name the colour it shows.
 
@@ -138,4 +138,4 @@ JSON-LD, images in a sitemap entry, and an IndexNow client. They come first in `
 ## Next
 
 - [Analytics](analytics.md): the Stats page.
-- [Files](files.md): the image pipeline.
+- [Process photos](file-uploads.md#process-photos): the image pipeline.
