@@ -50,3 +50,26 @@ Deno.test("workspaceMembers reads members past comments, even bracketed ones, an
   }`
   expect(workspaceMembers(source)).toEqual(["apps/api", "libs/x"])
 })
+
+/** Whether a `COPY . .` comes before the first `deno install`, so every member's config is there. */
+export function copiesContextBeforeInstall(dockerfile: string): boolean {
+  const lines = dockerfile.split(/\r?\n/).map((line) => line.trim())
+  const install = lines.findIndex((line) => /^RUN\s.*\bdeno\s+install\b/.test(line))
+  const copy = lines.findIndex((line) => /^COPY\s+(--\S+\s+)*\.\s+\.$/.test(line))
+  return install !== -1 && copy !== -1 && copy < install
+}
+
+Deno.test("the Node and Bun images copy the whole build context before deno install", async () => {
+  // They list no member, so a new member cannot be missing from them as it can from Dockerfile.base.
+  for (const path of ["apps/api/dockerfile.node", "apps/api/dockerfile.bun"]) {
+    const dockerfile = await Deno.readTextFile(`${ROOT}${path}`)
+    expect({ path, copied: copiesContextBeforeInstall(dockerfile) }).toEqual({ path, copied: true })
+  }
+})
+
+Deno.test("copiesContextBeforeInstall wants the copy before the install, and both present", () => {
+  expect(copiesContextBeforeInstall(`COPY . .\nRUN deno install --frozen`)).toBe(true)
+  expect(copiesContextBeforeInstall(`RUN deno install --frozen\nCOPY . .`)).toBe(false)
+  expect(copiesContextBeforeInstall(`COPY deno.jsonc ./\nRUN deno install --frozen`)).toBe(false)
+  expect(copiesContextBeforeInstall(`COPY . .`)).toBe(false)
+})

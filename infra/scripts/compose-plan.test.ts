@@ -85,3 +85,40 @@ Deno.test("the SPA runs unless SPA is exactly false", () => {
       .toEqual({ value, command: [...FILES, "up", "-d"], off: [] })
   }
 })
+
+Deno.test("APP_RUNTIME=node or bun adds that runtime's Compose file after the ENV one", () => {
+  for (const runtime of ["node", "bun"]) {
+    const plan = planCompose({ ENV: "prod", APP_RUNTIME: runtime }, ["up", "-d"], ENV_FILE)
+    expect(plan.command).toEqual([
+      "compose",
+      "-f",
+      "./infra/compose/compose.shared.yml",
+      "-f",
+      "./infra/compose/compose.prod.yml",
+      "-f",
+      `./infra/compose/compose.runtime-${runtime}.yml`,
+      "--env-file",
+      ENV_FILE,
+      "up",
+      "-d",
+    ])
+    expect(plan.buildBase).toEqual([...plan.command.slice(0, 9), "build", "deno-base"])
+  }
+})
+
+Deno.test("Deno stays the runtime when APP_RUNTIME is unset, empty or deno", () => {
+  const envs: Record<string, string>[] = [
+    { ENV: "dev" },
+    { ENV: "dev", APP_RUNTIME: "" },
+    { ENV: "dev", APP_RUNTIME: "deno" },
+  ]
+  for (const env of envs) {
+    expect(planCompose(env, ["ps"], ENV_FILE).command).toEqual([...FILES, "ps"])
+  }
+})
+
+Deno.test("deno task compose refuses a runtime it does not know", () => {
+  expect(() => planCompose({ ENV: "dev", APP_RUNTIME: "Node" }, ["ps"], ENV_FILE)).toThrow(
+    `APP_RUNTIME must be one of deno, node, bun, got "Node"`,
+  )
+})
