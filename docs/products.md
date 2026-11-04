@@ -19,13 +19,34 @@ the Seed commit the product last took to Seed's current `main`.
 Create the repository from the template, as [Get started](get-started.md) shows. Then, in the
 product's first pull request:
 
-1. Record the Seed commit the copy came from, in `.seed/commit`. `deno task init` does it when the
-   file is missing: right after creating the repository, that is Seed's current `main`. Without
-   `init`, or for a copy made earlier, write it yourself:
+1. Record the Seed commit the copy came from, in `.seed/commit`. That is the Seed commit whose
+   files are exactly those of the product's first commit. Seed's newest commit is not always it: a
+   commit that lands in Seed between the copy and this step would be skipped by every later sync,
+   without an error. `deno task init` writes Seed's current `main` when the file is missing, so
+   check it, and write the right one yourself:
 
    ```sh
-   mkdir -p .seed && git ls-remote https://github.com/spy4x/seed refs/heads/main | cut -f1 > .seed/commit
+   git fetch --quiet https://github.com/spy4x/seed main
+   COPY=$(git rev-list --max-parents=0 HEAD)  # the product's first commit
+   mkdir -p .seed && git log --format='%H %T' FETCH_HEAD \
+     | awk -v t="$(git rev-parse "$COPY^{tree}")" '$2 == t { print $1; exit }' > .seed/commit
+   cat .seed/commit
    ```
+
+   `%T` is a commit's tree: two commits with the same tree hold the same files. If the product
+   brought Seed in with a commit of its own rather than the template, set `COPY` to that commit.
+
+   When nothing is printed, no Seed commit matches: the product changed files before its first
+   commit. Then take the newest Seed commit older than the copy, and take Seed's changes once
+   right away (below), so whatever Seed changed after it arrives now:
+
+   ```sh
+   git log -1 --first-parent --format=%H --before="$(git log -1 --format=%cI "$COPY")" FETCH_HEAD \
+     > .seed/commit
+   ```
+
+   Financy is that case: its first commit on Seed ([financy#83](https://github.com/spy4x/financy/pull/83)) copied Seed's files at
+   `fc379655` and changed some of them in the same commit.
 
 2. Create an empty `.seed/skip`. It lists Seed's paths, one per line, that the product never takes
    changes for. Those are the files it deleted and the files that are entirely its own, such as its
