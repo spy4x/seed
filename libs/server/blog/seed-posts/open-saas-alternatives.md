@@ -8,7 +8,7 @@ tldr:
   - Open SaaS is free and MIT, with payments, an admin dashboard and file uploads, built on Wasp.
   - It has no teams or organizations, so every subscription belongs to one person.
   - For teams, look at Seed (free, MIT) or the paid Makerkit and Supastarter.
-  - Keep Open SaaS for a product people buy alone, a one-command deploy or Polar and Paddle.
+  - Stay on Open SaaS if single people buy, you want a one-command deploy, or you need Polar or Paddle.
 topic: Questions
 intro: "Open SaaS is one of the best free SaaS starters, and I mean that. It also makes two choices for you: one person per subscription, and the Wasp framework. Here is what to use when either one does not suit you."
 relatedFeature: groups
