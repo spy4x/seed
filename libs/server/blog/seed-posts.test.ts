@@ -151,6 +151,9 @@ describe(`Seed's post files`, () => {
       `hello.md: intro: two or three sentences`,
     )
     expect(() => parseSeedPost(...file(`hello`, [], [`coverAlt`]))).toThrow(`hello.md: coverAlt`)
+    expect(() => parseSeedPost(...file(`hello`, [`coverAlt: " "`], [`coverAlt`]))).toThrow(
+      `hello.md: coverAlt: what the cover shows`,
+    )
   })
 
   it(`requires a WebP cover in covers/ of an original, and refuses one on a translation (#733)`, () => {
