@@ -156,6 +156,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "グループのプランにはこの機能が含まれていません。",
   "Reason.PLAN_LIMIT_REACHED": "グループのプランの上限に達しました。",
   "Reason.POST_NOT_FOUND": "この記事はもう存在しません。",
+  "Reason.REVISION_NOT_FOUND": "この以前の版はもう存在しません。",
   "Reason.PROVIDER_ERROR": "決済サービスから応答がありませんでした。もう一度お試しください。",
   "Reason.REQUEST_ORIGIN_INVALID":
     "このリクエストの送信元を確認できませんでした。ページを再読み込みして、もう一度お試しください。",

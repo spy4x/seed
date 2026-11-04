@@ -550,6 +550,7 @@ export default {
   "AdminBlogEditor.viewOnSite": "View on website",
   "AdminBlogEditor.changeUrl": "Change URL…",
   "AdminBlogEditor.unpublish": "Unpublish…",
+  "AdminBlogEditor.history": "History…",
   "AdminBlogEditor.deletePost": "Delete post…",
   "AdminBlogEditor.editPost": "Edit post",
   "AdminBlogEditor.newPost": "New post",
@@ -1812,4 +1813,13 @@ export default {
   "AdminBlogEditor.translationOfHint":
     "The post this one translates. The website links the two as language versions once both are live.",
   "AdminBlogEditor.translationNone": "None: an original post",
+  "AdminBlogHistory.title": "History",
+  "AdminBlogHistory.versions": "Earlier versions",
+  "AdminBlogHistory.shown": "Version shown",
+  "AdminBlogHistory.body": "Body",
+  "AdminBlogHistory.savedBy": "Saved {date} by {name}",
+  "AdminBlogHistory.someone": "Unknown",
+  "AdminBlogHistory.restore": "Restore this version",
+  "AdminBlogHistory.empty": "No earlier versions yet. Each save keeps one.",
+  "AdminBlogHistory.restored": "Earlier version restored. Save to keep it.",
 } satisfies Catalog

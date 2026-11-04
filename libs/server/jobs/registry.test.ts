@@ -2,7 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type postgres from "postgres"
 import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
-import { BLOG_PUBLISH_JOB } from "@domain/blog"
+import { BLOG_INDEXNOW_JOB, BLOG_PUBLISH_JOB } from "@domain/blog"
 import { BILLING_NOTICE_JOBS } from "../billing/billing-notices.ts"
 import { SEAT_SYNC_JOB } from "../billing/seat-sync.ts"
 import {
@@ -58,6 +58,7 @@ const QUEUED_KINDS = [
   SUBSCRIBER_WELCOME_MAIL_JOB,
   SUBSCRIBER_SEND_ISSUE_JOB,
   BLOG_PUBLISH_JOB,
+  BLOG_INDEXNOW_JOB,
 ]
 
 const noop = () => async () => {}

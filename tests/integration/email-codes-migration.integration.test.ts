@@ -18,7 +18,7 @@ import { applyMigrations, migrationNames } from "./migrations.ts"
  * (recipe in docs/handoff.md); it fails when they are missing rather than skipping.
  */
 
-const CODES_MIGRATION = "2026_12_14_0001_email_codes.sql"
+const CODES_MIGRATION = "2026_12_14_0002_email_codes.sql"
 
 Deno.test("mails queued before the code migration are dropped or end quietly, and send nothing", async () => {
   const settings = buildPostgresOptions(requireDbConnection())

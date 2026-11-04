@@ -158,6 +158,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "The group's plan doesn't include this.",
   "Reason.PLAN_LIMIT_REACHED": "The group has reached its plan's limit.",
   "Reason.POST_NOT_FOUND": "This post no longer exists.",
+  "Reason.REVISION_NOT_FOUND": "This earlier version no longer exists.",
   "Reason.PROVIDER_ERROR": "The payment provider didn't respond. Try again.",
   "Reason.REQUEST_ORIGIN_INVALID":
     "We couldn't verify where this request came from. Reload the page and try again.",

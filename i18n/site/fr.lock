@@ -506,7 +506,7 @@ FeatureWebsite.code	8c3c79106391eff7
 FeatureWebsite.fact1	77305545727d416e
 FeatureWebsite.fact2	9400679b6389018a
 FeatureWebsite.fact3	48032056e3a8e4bb
-FeatureWebsite.fact4	d6c4336e0f8aabc6
+FeatureWebsite.fact4	7b9f0f9e9646b1b0
 FeatureWebsite.fact5	743829c03392abee
 FeatureWebsite.fact6	e948ba89ff09389e
 FeatureWebsite.fact7	38b1ff82a6bd2c9a
@@ -605,6 +605,7 @@ HomeNewsletter.title	ce8956d18546cb26
 HomeProof.licence	823dc3e6ed0bd202
 HomeProof.tests	bf9ed71c7eba8e03
 HomeQuickStart.agent	49c9be36e91fb9d6
+HomeQuickStart.guide	7743ca5b97270eb8
 HomeQuickStart.needs	20fdfb9c4323773c
 HomeQuickStart.terminal	e0926fdac700b094
 HomeQuickStart.text	a59a7d00ad254bbd
@@ -783,6 +784,7 @@ SiteFrame.skip	ac576a66d4563e60
 SiteFrame.tryDemo	6e5fe4ca7c07142f
 SiteNav.blog	8c6bc099534a0251
 SiteNav.compare	e888155d8c7d2e3c
+SiteNav.docs	7af023c43013b9a5
 SiteNav.features	5697d03daef4de9c
 SiteNav.github	f911e414cf6bdfc5
 SiteNav.hire	97032844653ecda1

@@ -111,9 +111,12 @@ deno task init
 deno task dev
 ```
 
-`init` copies `infra/envs/.env.example` to `infra/envs/.env`, generates every secret and the web
-push keys, and asks for the project name. `dev` starts Traefik, unless one already runs, then
+`init` checks that Docker runs, copies `infra/envs/.env.example` to `infra/envs/.env`, generates
+every secret and the web push keys, records the Seed commit your copy came from, and asks for the
+project name. `dev` starts Traefik, unless one already runs, then
 Postgres, Valkey, the API, the worker, the SPA and the monitoring. Then open http://app.localhost.
+[Get started](docs/get-started.md) walks through it step by step: what opens where, and what to do
+when a step fails.
 
 Or ask your AI agent:
 

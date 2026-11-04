@@ -144,6 +144,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "群组的套餐不包含此功能。",
   "Reason.PLAN_LIMIT_REACHED": "群组已达到套餐的上限。",
   "Reason.POST_NOT_FOUND": "这篇文章已不存在。",
+  "Reason.REVISION_NOT_FOUND": "这个早期版本已不存在。",
   "Reason.PROVIDER_ERROR": "支付服务商没有响应，请重试。",
   "Reason.REQUEST_ORIGIN_INVALID": "我们无法验证此请求的来源，请刷新页面后重试。",
   "Reason.ROLE_INSUFFICIENT": "你在这个群组中的角色无权执行此操作。",

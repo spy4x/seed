@@ -581,6 +581,7 @@ export default {
   "AdminBlogEditor.viewOnSite": "Voir sur le site",
   "AdminBlogEditor.changeUrl": "Changer l’URL…",
   "AdminBlogEditor.unpublish": "Dépublier…",
+  "AdminBlogEditor.history": "Historique…",
   "AdminBlogEditor.deletePost": "Supprimer l’article…",
   "AdminBlogEditor.editPost": "Modifier l’article",
   "AdminBlogEditor.newPost": "Nouvel article",
@@ -1942,4 +1943,14 @@ export default {
   "AdminBlogEditor.translationOfHint":
     "L’article dont celui-ci est la traduction. Le site relie les deux comme versions linguistiques dès qu’ils sont tous deux en ligne.",
   "AdminBlogEditor.translationNone": "Aucun : article original",
+  "AdminBlogHistory.title": "Historique",
+  "AdminBlogHistory.versions": "Versions précédentes",
+  "AdminBlogHistory.shown": "Version affichée",
+  "AdminBlogHistory.body": "Corps",
+  "AdminBlogHistory.savedBy": "Enregistrée le {date} par {name}",
+  "AdminBlogHistory.someone": "Inconnu",
+  "AdminBlogHistory.restore": "Restaurer cette version",
+  "AdminBlogHistory.empty":
+    "Aucune version précédente pour l’instant. Chaque enregistrement en garde une.",
+  "AdminBlogHistory.restored": "Version précédente restaurée. Enregistrez pour la garder.",
 } satisfies Catalog

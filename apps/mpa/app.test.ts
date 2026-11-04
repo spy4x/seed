@@ -8,6 +8,7 @@ import { handler as subscribe } from "./routes/[[lang]]/subscribe/index.ts"
 import { handler as subscriptionConfirm } from "./routes/[[lang]]/subscribe/confirm.ts"
 import { handler as unsubscribe } from "./routes/[[lang]]/unsubscribe.ts"
 import {
+  indexNowKeyMiddleware,
   newsletterPageMiddleware,
   pageMiddleware,
   securityHeadersMiddleware,
@@ -726,5 +727,36 @@ describe("staticFilesMiddleware", () => {
     expect(response.status).toBe(200)
     expect(response.headers.get("cache-control")).toBe(UNVERSIONED_FILE_CACHE)
     expect(UNVERSIONED_FILE_CACHE).toBe("public, max-age=3600")
+  })
+})
+
+describe("indexNowKeyMiddleware", () => {
+  const KEY = "0123abcd-ef45"
+  function keyApp(indexNowKey?: string) {
+    return new App<State>()
+      .use(indexNowKeyMiddleware({ indexNowKey }))
+      .get("/*", () => new Response("not found", { status: 404 }))
+      .handler()
+  }
+
+  it("serves the key as plain text at /<key>.txt, as IndexNow asks", async () => {
+    const response = await keyApp(KEY)(new Request(`${config.webAppOrigin}/${KEY}.txt`), info)
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8")
+    expect(await response.text()).toBe(KEY)
+  })
+
+  it("serves no key file without a key, and nothing at any other address", async () => {
+    for (
+      const [app, path] of [[keyApp(), `/${KEY}.txt`], [keyApp(), "/undefined.txt"], [
+        keyApp(KEY),
+        "/other.txt",
+      ]] as const
+    ) {
+      const response = await app(new Request(`${config.webAppOrigin}${path}`), info)
+      expect(response.status, path).toBe(404)
+      await response.body?.cancel()
+    }
   })
 })

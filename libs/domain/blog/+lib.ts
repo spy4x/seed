@@ -60,6 +60,8 @@ export const BLOG_SCHEDULE_MAX_DAYS = 5 * 366
 export const BLOG_READ_NEXT_COUNT = 3
 /** How many posts the RSS feed carries, newest first. */
 export const BLOG_FEED_COUNT = 20
+/** How many earlier versions a post keeps; a save deletes the older ones (#418). */
+export const BLOG_REVISIONS_KEPT = 50
 
 /**
  * A post's address on the public website, in the language it is written in: `/blog/<slug>` in the
@@ -251,6 +253,37 @@ export type PublicBlogFeedItem =
   & PublicBlogPostSummary
   & Pick<PublicBlogPost, `segments` | `headings` | `authorName` | `coverUrl`>
 
+/**
+ * One earlier version of a post in the editor's History list (#418): who saved it, when, and the
+ * title it had. `savedBy` is the operator's name or address as it was, `null` when they had none.
+ */
+export interface BlogRevisionSummary {
+  id: string
+  savedAt: string
+  savedBy: string | null
+  title: string
+}
+
+/** One earlier version with every field the editor saves, as History shows and restores it. */
+export interface BlogRevision extends BlogRevisionSummary {
+  slug: string
+  description: string
+  seoTitle: string | null
+  tldr: string[]
+  topic: string | null
+  coverUrl: string | null
+  coverAlt: string | null
+  authorUrl: string | null
+  bodyMd: string
+  language: Language
+  translationOf: string | null
+}
+
+/** The answer of `GET /api/admin/blog/posts/:id/revisions`: newest first, without bodies. */
+export interface BlogRevisionListResponse {
+  revisions: BlogRevisionSummary[]
+}
+
 /** The answer of `POST /api/admin/blog/preview`: the body with a marker at each parse problem. */
 export interface BlogPreviewBody extends Omit<RenderedBlogBody, `segments`> {
   segments: BlogPreviewSegment[]
@@ -262,6 +295,7 @@ export interface BlogPreviewBody extends Omit<RenderedBlogBody, `segments`> {
 
 export type BlogErrorCode =
   | `POST_NOT_FOUND`
+  | `REVISION_NOT_FOUND`
   | `INVALID_REQUEST`
   | `ID_ALREADY_EXISTS`
   | `SLUG_TAKEN`
@@ -655,3 +689,26 @@ export type BlogAuditKind = typeof BLOG_AUDIT_KINDS[keyof typeof BLOG_AUDIT_KIND
 
 /** The job that publishes a scheduled post at its time and queues its newsletter issue. */
 export const BLOG_PUBLISH_JOB = `blog.publish`
+
+/** The job that tells IndexNow a post's addresses changed: it went live, changed, moved or left. */
+export const BLOG_INDEXNOW_JOB = `blog.indexnow`
+
+/** An IndexNow key: 8 to 128 letters, digits and dashes, as the protocol asks. */
+const INDEXNOW_KEY_PATTERN = /^[A-Za-z0-9-]{8,128}$/
+
+/**
+ * The site's IndexNow key from `INDEXNOW_KEY`, or `null` when it is unset or empty: then nothing
+ * is pinged and the website serves no key file. The worker pings with it, and the public website
+ * serves it at `/<key>.txt`, so both read it here.
+ *
+ * @throws Error when it is set to anything but 8 to 128 letters, digits and dashes, so a
+ *   misconfigured process stops at start. The message never holds the value.
+ */
+export function readIndexNowKey(env: { get(name: string): string | undefined }): string | null {
+  const key = env.get(`INDEXNOW_KEY`)?.trim() ?? ``
+  if (key === ``) return null
+  if (!INDEXNOW_KEY_PATTERN.test(key)) {
+    throw new Error(`INDEXNOW_KEY must be 8 to 128 letters, digits and dashes`)
+  }
+  return key
+}
