@@ -111,6 +111,8 @@ Deno.test("every Dockerfile of the repository is found, in any letter case", asy
   expect(await dockerfiles()).toEqual(expect.arrayContaining([
     "Dockerfile.base",
     "apps/api/dockerfile",
+    "apps/api/dockerfile.bun",
+    "apps/api/dockerfile.node",
     "apps/mpa/dockerfile.prod",
     "apps/spa/dockerfile.dev",
     "apps/spa/dockerfile.prod",
@@ -140,6 +142,59 @@ Deno.test("every deno install and deno cache in every Dockerfile runs with --fro
   expect(unfrozen).toEqual([])
   // The base image installs the dependencies: with that line gone, nothing above would be checked.
   expect(installs(await read("Dockerfile.base"))).toEqual(["RUN deno install --frozen"])
+  for (const path of NODE_BUN_DOCKERFILES) {
+    expect({ path, installs: installs(await read(path)) }).toEqual({
+      path,
+      installs: ["RUN deno install --frozen && deno task server:build"],
+    })
+  }
+})
+
+/** The images of the API on Node and Bun (#748). */
+const NODE_BUN_DOCKERFILES = ["apps/api/dockerfile.node", "apps/api/dockerfile.bun"]
+
+/** The image of every `FROM` that is not pinned by a digest; an earlier stage is no image. */
+export function imagesWithoutDigest(dockerfile: string): string[] {
+  const stages = new Set<string>()
+  const loose: string[] = []
+  for (const line of instructions(dockerfile)) {
+    const from = /^FROM\s+(?:--\S+\s+)*(\S+)(?:\s+AS\s+(\S+))?/i.exec(line)
+    if (!from) continue
+    if (!stages.has(from[1].toLowerCase()) && !/@sha256:[0-9a-f]{64}$/.test(from[1])) {
+      loose.push(from[1])
+    }
+    if (from[2]) stages.add(from[2].toLowerCase())
+  }
+  return loose
+}
+
+Deno.test("the Node and Bun images pin every image they start from by digest", async () => {
+  for (const path of NODE_BUN_DOCKERFILES) {
+    const dockerfile = await read(path)
+    expect({ path, loose: imagesWithoutDigest(dockerfile) }).toEqual({ path, loose: [] })
+    expect(instructions(dockerfile).filter((line) => /^FROM\s/i.test(line)).length).toBe(2)
+  }
+})
+
+Deno.test("the Node image runs the API on Node, and the Bun image on Bun", async () => {
+  for (const runtime of ["node", "bun"]) {
+    const final = instructions(await read(`apps/api/dockerfile.${runtime}`)).filter((line) =>
+      /^CMD\s/i.test(line)
+    )
+    expect(final).toEqual([`CMD ["${runtime}", "dist/server/api.js"]`])
+  }
+})
+
+Deno.test("an image is loose without a digest, by tag alone or with a short digest", () => {
+  expect(imagesWithoutDigest(`
+    FROM docker.io/denoland/deno:alpine-2.9.7@sha256:${"a".repeat(64)} AS build
+    FROM docker.io/library/node:26.13.0-alpine
+    FROM docker.io/oven/bun:1.4.4-alpine@sha256:abc
+    FROM build
+  `)).toEqual([
+    "docker.io/library/node:26.13.0-alpine",
+    "docker.io/oven/bun:1.4.4-alpine@sha256:abc",
+  ])
 })
 
 Deno.test("a FROM is short when its image, or its build argument's default, has no registry", () => {

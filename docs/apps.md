@@ -115,6 +115,31 @@ Then:
 
 Any other value of `SPA`, or none, runs the SPA.
 
+## Runtime
+
+The API, the worker and the migration run on Deno unless the env file says otherwise. One line
+moves all three to Node or Bun:
+
+```sh
+APP_RUNTIME=node   # or bun; deno, empty or no line keeps Deno
+```
+
+- `deno task compose`, and so every deploy, then adds
+  [`compose.runtime-node.yml`](../infra/compose/compose.runtime-node.yml) (or `-bun`), which builds
+  [`apps/api/dockerfile.node`](../apps/api/dockerfile.node) (or `.bun`) for those three services.
+  The image bundles the code with `deno task server:build` at build time and runs the bundles on
+  Node 26 or Bun 1.4. Ports, environment variables and the order of the services stay the same.
+- Any other value stops `deno task compose` before it starts anything.
+- The bundles are made when the image is built, so on Node or Bun a code change shows only after
+  `deno task compose up -d --build`, in development too. Development with watch mode stays on Deno.
+- On Deno the worker may read and write only its image folder and run only `vips`. Node and Bun
+  have no such permission limits: there the worker is confined only by its container and its
+  non-root user.
+- The website, the SPA and the admin app are not affected: they keep their own images.
+
+To start them on a machine without containers, `deno task api:node`, `api:bun`, `worker:node` and
+`worker:bun` build the bundles into `dist/server/` and run them.
+
 ## Next
 
 - [Deploy to a server](deploy.md)

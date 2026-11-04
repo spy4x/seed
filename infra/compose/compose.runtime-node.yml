@@ -1,0 +1,22 @@
+# APP_RUNTIME=node in the env file: `deno task compose` adds this file after compose.${ENV}.yml
+# (infra/scripts/compose-plan.ts), and the API, the worker and the migration run on Node, from the
+# bundles apps/api/dockerfile.node builds (docs/apps.md, "Runtime"). Everything else, the ports, the
+# environment and the dependencies, stays as compose.shared.yml sets it. The bundles are made at
+# build time, so a code change needs `deno task compose up -d --build`, even in development.
+services:
+  migrate:
+    build:
+      dockerfile: apps/api/dockerfile.node
+    command: [ 'node', 'dist/server/migrate.js' ]
+
+  api:
+    build:
+      dockerfile: apps/api/dockerfile.node
+    command: [ 'node', 'dist/server/api.js' ]
+    healthcheck:
+      test: [ 'CMD', 'node', 'dist/server/healthcheck.js', '/api/health' ]
+
+  worker:
+    build:
+      dockerfile: apps/api/dockerfile.node
+    command: [ 'node', 'dist/server/worker.js' ]

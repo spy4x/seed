@@ -557,7 +557,7 @@ export default {
     "いいえ。Seedは、借りたLinuxサーバー1台の上でDocker Composeによる常駐コンテナとして動きます。APIがWebSocket接続を開いたままにし、ワーカーがキューを処理するためです。",
   "FeaturesFaq.runtimeQuestion": "SeedはNode.jsやBunで動きますか？",
   "FeaturesFaq.runtimeAnswer":
-    "まだ動きません。Seedは現在Denoで動いており、Deno・Node・Bunのどれでも動くようにする作業を進めています。進み具合はSeedのGitHubにあるissue #623で確認できます。",
+    "まだ一部だけです。APIとバックグラウンドのワーカーは、すでにDenoに加えてNodeとBunでも動きます。envファイルの設定ひとつ（APP_RUNTIME）でランタイムを選べます。WebサイトとSeedの開発ツールは今もDenoが必要です。残りの進み具合はSeedのGitHubにあるissue #623で確認できます。",
   "FeaturesFaq.databaseQuestion": "Postgres以外のデータベースを使えますか？",
   "FeaturesFaq.databaseAnswer":
     "いいえ。SeedはPostgresを前提に作られていて、マイグレーション、クエリ、結合テストもPostgresを想定しています。",
@@ -909,7 +909,7 @@ export default {
   "FeaturePage.all": "すべての機能",
   "FeaturePage.runtimeQuestion": "SeedはNodeやBunで動きますか？",
   "FeaturePage.runtimeAnswer":
-    "まだです。Seedは現在Denoで動いており、Deno・Node・Bunのどれでも動くようにする作業を進めています（#623）。機能ページのランタイム計画をご覧ください。",
+    "まだ一部だけです。APIとバックグラウンドのワーカーは、すでに設定ひとつ（APP_RUNTIME）でDeno・Node・Bunのどれでも動きます。Webサイトと開発ツールは今もDenoが必要で、こちらは作業中です（#623）。機能ページのランタイム計画をご覧ください。",
   "FeaturePageMissing.title": "この機能ページは見つかりません",
   "FeaturePageMissing.description":
     "移動した可能性があります。Seedのすべての機能は機能ページに載っています。",
