@@ -28,6 +28,13 @@ docs/aggregates.md
 docs/ids.md
 docs/api-errors.md
 docs/admin-modules.md
+docs/local-stack.md
+docs/first-feature.md
+docs/aggregate-offline.md
+docs/aggregate-relations.md
+docs/aggregate-lifecycle.md
+docs/aggregate-extras.md
+docs/browser-tests.md
 docs/billing-plans.md
 docs/billing-operator.md
 docs/billing-lifecycle.md

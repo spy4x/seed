@@ -1,7 +1,5 @@
 # Architecture
 
-> Also on the website: [seedsaas.com/docs/architecture](https://seedsaas.com/docs/architecture).
-
 This page shows how Seed's apps, libraries and services fit together, and what each one owns.
 
 You need:
