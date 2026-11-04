@@ -200,7 +200,8 @@ Deno.test("an export carries the group's time zone, and the import keeps it", as
 
     const importer = await insertUser(sql)
     await sql`
-      INSERT INTO user_preferences (user_id, value) VALUES (${importer}, '{"timeZone":"Europe/Berlin"}')
+      INSERT INTO user_preferences (user_id, value)
+      VALUES (${importer}, ${sql.json({ timeZone: "Europe/Berlin" })})
     `
     const result = await new PostgresGroupPorter(sql, PORTABLE_AGGREGATES).importGroup(
       { file, name: null },

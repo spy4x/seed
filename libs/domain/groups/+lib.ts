@@ -582,8 +582,8 @@ export interface GroupRepository {
     requestId?: string,
   ): Promise<GroupSummary | null>
   /**
-   * Sets the group's description, colour, emoji and zone, and announces the change. `null` when the actor
-   * may not edit them or the group is missing or deleted.
+   * Sets the group's description, colour, emoji and zone, and announces the change. `null` when
+   * the actor may not edit them or the group is missing or deleted.
    */
   updateDetails(
     groupId: string,

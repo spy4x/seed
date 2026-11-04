@@ -109,9 +109,9 @@ export function createGroupRenameHandler(
 }
 
 /**
- * Sets a group's description, colour, emoji and zone. The rule is the rename rule: an admin or the owner
- * may, a viewer or editor is refused, and a person who is not a member is told the group does not
- * exist. The repository writes and announces the change like a rename.
+ * Sets a group's description, colour, emoji and zone. The rule is the rename rule: an admin or
+ * the owner may, a viewer or editor is refused, and a person who is not a member is told the
+ * group does not exist. The repository writes and announces the change like a rename.
  */
 export function createGroupUpdateDetailsHandler(
   repository: GroupRepository,
