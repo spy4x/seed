@@ -8,7 +8,7 @@ import {
   starterDataJob,
   WELCOME_NOTE_TITLE,
 } from "@server/jobs/starter-data.ts"
-import { entitlementsOf, FREE_PLAN_ID } from "@domain/billing"
+import { entitlementsOf, FREE_PLAN_ID, freePlanAllowsNothing, PLANS } from "@domain/billing"
 import { JOB_AGGREGATE } from "@server/jobs/jobs.ts"
 import type { OutboxEvent } from "@spy4x/server/outbox"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
@@ -225,6 +225,30 @@ Deno.test("the welcome note respects the group's plan cap", async (t) => {
       await starterDataJob(sql, free)(eventOf(requestId))
 
       expect(await notesOf(sql, groupId)).toHaveLength(FREE_NOTES)
+      const [row] = await sql<{ doneAt: Date | null }[]>`
+        SELECT done_at FROM starter_data_requests WHERE id = ${requestId}`
+      expect(row.doneAt).not.toBeNull()
+    })
+
+    await t.step("a new group under a free plan that allows nothing starts empty", async () => {
+      const [freePlan, ...paid] = PLANS
+      const plans = [
+        {
+          ...freePlan,
+          entitlements: {
+            ...freePlan.entitlements,
+            limits: { maxMembers: 1, maxNotes: 0, maxAttachments: 0, storageBytes: 0 },
+          },
+        },
+        ...paid,
+      ]
+      expect(freePlanAllowsNothing(plans)).toBe(true)
+      const { userId, groupId } = await signedUpPerson(sql)
+      const requestId = await requestFor(sql, userId)
+
+      await starterDataJob(sql, { ...free, plans })(eventOf(requestId))
+
+      expect(await notesOf(sql, groupId)).toEqual([])
       const [row] = await sql<{ doneAt: Date | null }[]>`
         SELECT done_at FROM starter_data_requests WHERE id = ${requestId}`
       expect(row.doneAt).not.toBeNull()
