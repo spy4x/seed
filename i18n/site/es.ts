@@ -586,7 +586,7 @@ export default {
     "No. Seed funciona como contenedores de larga duración con Docker Compose en un servidor Linux que alquilas, porque la API mantiene abiertas las conexiones WebSocket y un worker vacía una cola.",
   "FeaturesFaq.runtimeQuestion": "¿Seed puede funcionar con Node.js o Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Todavía no. Seed funciona hoy con Deno, y ya estamos trabajando para que funcione con Deno, Node y Bun. Puedes seguir el avance en el issue #623 del GitHub de Seed.",
+    "Todavía no del todo. La API y el worker en segundo plano ya funcionan con Node y Bun además de Deno: un solo ajuste en el archivo env, APP_RUNTIME, elige el entorno de ejecución. El sitio web y las herramientas de desarrollo siguen necesitando Deno. Puedes seguir el resto en el issue #623 del GitHub de Seed.",
   "FeaturesFaq.databaseQuestion": "¿Seed puede usar otra base de datos que no sea Postgres?",
   "FeaturesFaq.databaseAnswer":
     "No. Seed está construido sobre Postgres: sus migraciones, consultas y pruebas de integración cuentan con él.",
@@ -942,7 +942,7 @@ export default {
   "FeaturePage.all": "Todas las funciones",
   "FeaturePage.runtimeQuestion": "¿Seed funciona con Node o Bun?",
   "FeaturePage.runtimeAnswer":
-    "Todavía no. Hoy Seed funciona con Deno, y el trabajo para que funcione con Deno, Node y Bun está en marcha (#623). Consulta el plan de entornos de ejecución en la página de funciones.",
+    "Todavía no del todo. La API y el worker en segundo plano ya funcionan con Deno, Node o Bun, según un solo ajuste (APP_RUNTIME). El sitio web y las herramientas de desarrollo siguen necesitando Deno, y esa parte está en marcha (#623). Consulta el plan de entornos de ejecución en la página de funciones.",
   "FeaturePageMissing.title": "Esta página de función no existe",
   "FeaturePageMissing.description":
     "Puede que se haya movido. Todas las funciones que incluye Seed están en la página de funciones.",

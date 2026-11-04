@@ -243,6 +243,25 @@ steps:
       - deno task e2e:local --max-failures=10
     depends_on: [browser]
 
+  image-node:
+    # Builds the Node and Bun images of the API (apps/api/dockerfile.node, apps/api/dockerfile.bun,
+    # #748), so a pull request that breaks the bundle or either Dockerfile fails here, not at the
+    # release. Kaniko builds inside an ordinary container, with no Docker daemon, no volume and no
+    # secret, and pushes nothing (`--no-push`), as in release.yml. Both are self-contained, so no
+    # base image has to be published first. One step each: kaniko builds in its own root
+    # filesystem, so two builds in one container would share it.
+    image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
+    commands:
+      - executor --context "$$PWD" --dockerfile apps/api/dockerfile.node --no-push
+    depends_on: []
+
+  image-bun:
+    # See image-node.
+    image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
+    commands:
+      - executor --context "$$PWD" --dockerfile apps/api/dockerfile.bun --no-push
+    depends_on: []
+
 services:
   postgres:
     image: postgres:18.6-alpine

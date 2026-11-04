@@ -584,7 +584,7 @@ export default {
     "Não. O Seed roda como contêineres de longa duração com Docker Compose num servidor Linux que você aluga, porque a API mantém conexões WebSocket abertas e um worker esvazia uma fila.",
   "FeaturesFaq.runtimeQuestion": "O Seed roda no Node.js ou no Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Ainda não. O Seed roda no Deno hoje, e o trabalho para rodar no Deno, no Node e no Bun está em andamento. Dá para acompanhar o progresso na issue #623 do GitHub do Seed.",
+    "Ainda não por completo. A API e o worker em segundo plano já rodam no Node e no Bun, além do Deno: uma única configuração no arquivo env, APP_RUNTIME, escolhe o runtime. O site e as ferramentas de desenvolvimento ainda precisam do Deno. Dá para acompanhar o resto na issue #623 do GitHub do Seed.",
   "FeaturesFaq.databaseQuestion": "O Seed funciona com outro banco além do Postgres?",
   "FeaturesFaq.databaseAnswer":
     "Não. O Seed foi feito sobre o Postgres: as migrações, as consultas e os testes de integração contam com ele.",
@@ -939,7 +939,7 @@ export default {
   "FeaturePage.all": "Todos os recursos",
   "FeaturePage.runtimeQuestion": "O Seed roda no Node ou no Bun?",
   "FeaturePage.runtimeAnswer":
-    "Ainda não. Hoje o Seed roda no Deno, e a mudança para rodar no Deno, no Node e no Bun está em andamento (#623). Veja o plano de runtimes na página de recursos.",
+    "Ainda não por completo. A API e o worker em segundo plano já rodam no Deno, no Node ou no Bun, escolhidos por uma única configuração (APP_RUNTIME). O site e as ferramentas de desenvolvimento ainda precisam do Deno, e essa parte está em andamento (#623). Veja o plano de runtimes na página de recursos.",
   "FeaturePageMissing.title": "Esta página de recurso não está aqui",
   "FeaturePageMissing.description":
     "Ela pode ter mudado de lugar. Todos os recursos que o Seed oferece estão na página de recursos.",

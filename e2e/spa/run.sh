@@ -145,7 +145,7 @@ else
   deno task vapid-key:create >/dev/null && mv infra/configs/vapid.json vapid.json
 fi
 
-deno serve --allow-all --port "$API_PORT" --host 127.0.0.1 apps/api/index.ts \
+API_HOST=127.0.0.1 API_PORT="$API_PORT" deno run --allow-all apps/api/+main.ts \
   >"$SCRATCH/api.log" 2>&1 &
 PIDS+=($!)
 wait_for api "${PIDS[-1]}" "http://127.0.0.1:$API_PORT/api/health"

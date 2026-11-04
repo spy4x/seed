@@ -14,9 +14,27 @@ export interface ComposePlan {
   off: string[]
 }
 
+/** The runtimes the API, the worker and the migration can run on (`APP_RUNTIME`). */
+export const APP_RUNTIMES = ["deno", "node", "bun"] as const
+
+/** One of {@link APP_RUNTIMES}. */
+export type AppRuntime = typeof APP_RUNTIMES[number]
+
+/**
+ * The runtime `APP_RUNTIME` names, Deno when it is unset or empty. Throws on any other value, so a
+ * typo never starts the project on a runtime nobody chose.
+ */
+export function appRuntime(envVars: Record<string, string>): AppRuntime {
+  const value = envVars["APP_RUNTIME"] || "deno"
+  if ((APP_RUNTIMES as readonly string[]).includes(value)) return value as AppRuntime
+  throw new Error(`APP_RUNTIME must be one of ${APP_RUNTIMES.join(", ")}, got "${value}"`)
+}
+
 /**
  * Plans `deno task compose <args>`. The engine is the one `CONTAINER_PROVIDER` names and Docker
- * without it, as everywhere else ({@link containerProvider}); `ENV` picks the second Compose file.
+ * without it, as everywhere else ({@link containerProvider}); `ENV` picks the second Compose file,
+ * and `APP_RUNTIME=node` or `bun` adds a third that runs the API, the worker and the migration on
+ * that runtime ({@link appRuntime}).
  *
  * `SPA=false` keeps the SPA off: every `up` scales it to no container, which also stops and removes
  * one that runs, so Traefik has no router for its host. Scaling, not a profile, so a hand-typed
@@ -27,12 +45,14 @@ export function planCompose(
   args: string[],
   envFilePath: string,
 ): ComposePlan {
+  const runtime = appRuntime(envVars)
   const compose = [
     "compose",
     "-f",
     "./infra/compose/compose.shared.yml",
     "-f",
     `./infra/compose/compose.${envVars["ENV"]}.yml`,
+    ...(runtime === "deno" ? [] : ["-f", `./infra/compose/compose.runtime-${runtime}.yml`]),
     "--env-file",
     envFilePath,
   ]

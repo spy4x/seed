@@ -563,7 +563,7 @@ export default {
     "لا. يعمل Seed كحاويات دائمة التشغيل عبر Docker Compose على خادم Linux واحد تستأجره، لأن الـAPI يُبقي اتصالات WebSocket مفتوحة، والعامل يفرّغ قائمة انتظار.",
   "FeaturesFaq.runtimeQuestion": "هل يعمل Seed على Node.js أو Bun؟",
   "FeaturesFaq.runtimeAnswer":
-    "ليس بعد. يعمل Seed اليوم على Deno، والعمل جارٍ ليعمل على Deno وNode وBun. يمكنك متابعة التقدّم في المشكلة #623 على GitHub الخاص بـ Seed.",
+    "ليس بالكامل بعد. تعمل الواجهة البرمجية (API) والعامل الخلفي بالفعل على Node وBun إلى جانب Deno: إعداد واحد في ملف env، هو APP_RUNTIME، يختار بيئة التشغيل. أما الموقع وأدوات التطوير فما زالت تحتاج إلى Deno. يمكنك متابعة الباقي في المشكلة #623 على GitHub الخاص بـ Seed.",
   "FeaturesFaq.databaseQuestion": "هل يمكن أن يستخدم Seed قاعدة بيانات غير Postgres؟",
   "FeaturesFaq.databaseAnswer":
     "لا. Seed مبني على Postgres: ترحيلاته واستعلاماته واختبارات التكامل فيه تفترض وجوده.",
@@ -913,7 +913,7 @@ export default {
   "FeaturePage.all": "كل الميزات",
   "FeaturePage.runtimeQuestion": "هل يعمل Seed على Node أو Bun؟",
   "FeaturePage.runtimeAnswer":
-    "ليس بعد. يعمل Seed اليوم على Deno، والعمل جارٍ ليعمل على Deno وNode وBun (#623). اطّلع على خطة بيئة التشغيل في صفحة الميزات.",
+    "ليس بالكامل بعد. تعمل الواجهة البرمجية (API) والعامل الخلفي بالفعل على Deno أو Node أو Bun، ويختار بينها إعداد واحد (APP_RUNTIME). أما الموقع وأدوات التطوير فما زالت تحتاج إلى Deno، والعمل جارٍ على ذلك (#623). اطّلع على خطة بيئة التشغيل في صفحة الميزات.",
   "FeaturePageMissing.title": "صفحة هذه الميزة غير موجودة",
   "FeaturePageMissing.description": "ربما نُقلت. كل ميزة يقدمها Seed موجودة في صفحة الميزات.",
   "FeaturePageMissing.action": "عرض كل الميزات",

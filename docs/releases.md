@@ -13,7 +13,7 @@ Make your Docker Hub repositories private, unless the product is open source. A 
 repository is public unless the account says otherwise, and the API image holds the whole source
 tree, not only the build output.
 
-Make `<IMAGE_PREFIX>-base`, `-api`, `-spa` and `-mpa` private, or set the account's default
+Make `<IMAGE_PREFIX>-base`, `-api`, `-api-node`, `-api-bun`, `-spa` and `-mpa` private, or set the account's default
 visibility to private, before the first tag.
 
 ## Releases
@@ -36,7 +36,8 @@ visibility to private, before the first tag.
    git push origin v1.2.3
    ```
 
-The pipeline publishes `<IMAGE_PREFIX>-api`, `-spa` and `-mpa`. The worker runs the API image. It
+The pipeline publishes `<IMAGE_PREFIX>-api`, `-api-node`, `-api-bun`, `-spa` and `-mpa`. The worker
+runs the API image of its runtime. It
 refuses a tag whose commit is not on `main`.
 
 A tag such as `v1.2.3-rc.1` publishes that tag only, never `latest`.

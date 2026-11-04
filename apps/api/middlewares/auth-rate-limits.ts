@@ -11,8 +11,8 @@ import {
 import { sha256Hex } from "@spy4x/platform/tokens"
 import {
   createRateLimitMiddleware,
-  denoServeRemoteAddr,
   type RateLimitContext,
+  serveRemoteAddr,
   userThenIp,
 } from "@spy4x/platform/rate-limit/hono"
 import { GUEST_STARTS_PER_HOUR } from "@domain/identity"
@@ -91,8 +91,9 @@ export const SIGN_UP_CLIENT_IPV6_PREFIX = 48
  * (`X-Real-IP`, else the connection).
  */
 export function signUpClient(c: Context<APIContext>): string {
-  // `c.env` is what `deno serve` hands Hono, the same object the per-IP limits read.
-  const remoteAddr = denoServeRemoteAddr({ req: c.req.raw, env: c.env } as RateLimitContext)
+  // `c.env` is what `serve` (`@spy4x/platform/server/serve`) hands Hono, the same object the
+  // per-IP limits read.
+  const remoteAddr = serveRemoteAddr({ req: c.req.raw, env: c.env } as RateLimitContext)
   return clientIpBucket(clientIp(c.req.raw, remoteAddr, "x-real-ip"), {
     ipv6Prefix: SIGN_UP_CLIENT_IPV6_PREFIX,
   })
@@ -278,7 +279,7 @@ export interface AuthRateLimitSettings {
  * limits guesses over days and years.
  *
  * Client address: the client IP comes from `X-Real-IP`, which Traefik overwrites on every request.
- * The connection's own address, which `deno serve` hands Hono as `env.remoteAddr`, is the
+ * The connection's own address, which `serve` hands Hono as `env.remoteAddr`, is the
  * fallback. `CF-Connecting-IP` and `X-Forwarded-For` are not read here. Only a trusted proxy may
  * send `X-Real-IP`: `requireProxyForForwardedHeaders` (`@spy4x/server/http/trusted-proxy`), in
  * front of every route, refuses a request that carries it, or either other header, from any other
@@ -366,17 +367,17 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
   const byUser = userThenIp<APIContext>(userId, { trustedProxy: "x-real-ip" })
   return {
     strictByIp: createRateLimitMiddleware(strict, {
-      remoteAddr: denoServeRemoteAddr,
+      remoteAddr: serveRemoteAddr,
       keyResolver: byIp,
       keyPrefix: "auth-strict:",
     }),
     strictByUser: createRateLimitMiddleware(strict, {
-      remoteAddr: denoServeRemoteAddr,
+      remoteAddr: serveRemoteAddr,
       keyResolver: byUser,
       keyPrefix: "auth-strict:",
     }),
     otpByUser: createRateLimitMiddleware(otp, {
-      remoteAddr: denoServeRemoteAddr,
+      remoteAddr: serveRemoteAddr,
       keyResolver: byUser,
       keyPrefix: "auth-otp:",
       // A correct code gives its slot back: only wrong codes run the budget out.
@@ -384,7 +385,7 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
       onRefundError: (error) => settings.onStoreError(error),
     }),
     normal: createRateLimitMiddleware(normal, {
-      remoteAddr: denoServeRemoteAddr,
+      remoteAddr: serveRemoteAddr,
       keyResolver: byUser,
       keyPrefix: "auth:",
     }),

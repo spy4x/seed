@@ -7,7 +7,7 @@ import {
 } from "@spy4x/platform/rate-limit"
 import {
   createRateLimitMiddleware,
-  denoServeRemoteAddr,
+  serveRemoteAddr,
   userThenIp,
 } from "@spy4x/platform/rate-limit/hono"
 import type { APIContext } from "../_types.ts"
@@ -65,12 +65,12 @@ export function createSubscriberRateLimits(
   const byIp = userThenIp<APIContext>(() => undefined, { trustedProxy: `x-real-ip` })
   return {
     subscribeByIp: createRateLimitMiddleware(subscribe, {
-      remoteAddr: denoServeRemoteAddr,
+      remoteAddr: serveRemoteAddr,
       keyResolver: byIp,
       keyPrefix: `subscribe:`,
     }),
     tokenByIp: createRateLimitMiddleware(token, {
-      remoteAddr: denoServeRemoteAddr,
+      remoteAddr: serveRemoteAddr,
       keyResolver: byIp,
       keyPrefix: `subscriber-token:`,
     }),

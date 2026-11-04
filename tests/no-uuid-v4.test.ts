@@ -65,6 +65,8 @@ const SKIPPED_DIRECTORIES: readonly string[] = [
   "apps/mpa/node_modules",
   "apps/spa/node_modules",
   "apps/worker/node_modules",
+  // The server bundles of `deno task server:build` (apps/api/dockerfile.node, #748).
+  "dist",
   "apps/admin/.vite",
   "apps/admin/dist",
   "apps/mpa/.vite",

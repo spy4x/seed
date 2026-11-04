@@ -517,7 +517,7 @@ export default {
     "不能。Seed 以常驻容器的形式，用 Docker Compose 运行在你租用的一台 Linux 服务器上，因为 API 需要保持 WebSocket 连接，Worker 需要持续消费队列。",
   "FeaturesFaq.runtimeQuestion": "Seed 能在 Node.js 或 Bun 上运行吗？",
   "FeaturesFaq.runtimeAnswer":
-    "还不能。Seed 目前运行在 Deno 上，让它同时支持 Deno、Node 和 Bun 的工作正在进行中。进展可以在 Seed 的 GitHub 上的 issue #623 中查看。",
+    "还不能完全支持。API 和后台 worker 除了 Deno，也能在 Node 和 Bun 上运行：env 文件里的一项设置 APP_RUNTIME 决定用哪个运行时。网站和开发工具目前仍需要 Deno。其余进展可以在 Seed 的 GitHub 上的 issue #623 中查看。",
   "FeaturesFaq.databaseQuestion": "Seed 能使用 Postgres 以外的数据库吗？",
   "FeaturesFaq.databaseAnswer":
     "不能。Seed 基于 Postgres 构建：它的迁移、查询和集成测试都以 Postgres 为前提。",
@@ -846,7 +846,7 @@ export default {
   "FeaturePage.all": "所有功能",
   "FeaturePage.runtimeQuestion": "Seed 能在 Node 或 Bun 上运行吗？",
   "FeaturePage.runtimeAnswer":
-    "暂不支持。Seed 目前运行在 Deno 上，让它能在 Deno、Node 和 Bun 上运行的迁移工作正在进行中（#623）。运行时计划详见功能页面。",
+    "暂不完全支持。API 和后台 worker 已经可以在 Deno、Node 或 Bun 上运行，由一项设置（APP_RUNTIME）决定。网站和开发工具目前仍需要 Deno，这部分仍在进行中（#623）。运行时计划详见功能页面。",
   "FeaturePageMissing.title": "这个功能页面不存在",
   "FeaturePageMissing.description": "它可能已经移动了位置。Seed 提供的每项功能都列在功能页面上。",
   "FeaturePageMissing.action": "查看所有功能",
