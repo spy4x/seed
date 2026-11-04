@@ -255,7 +255,7 @@ describe("the blog index", () => {
       .match(/<img [^>]*>/g) ?? []
     expect(images).toHaveLength(2)
     expect(images[0]).toContain(
-      `srcset="/blog/covers/cron-jobs-640.webp 640w, /blog/covers/cron-jobs.webp 1600w"`,
+      `srcset="/blog/covers/cron-jobs-640.webp 640w, /blog/covers/cron-jobs-960.webp 960w, /blog/covers/cron-jobs.webp 1600w"`,
     )
     expect(images[0]).toContain(`sizes="(min-width: 640px) 192px, calc(100vw - 32px)"`)
     expect(images[0]).toContain(`width="1600" height="900"`)
@@ -541,7 +541,7 @@ describe("a blog post", () => {
       .replace(/\?__frsh_c=\w+/g, ``)
     expect(img).toContain(`src="/blog/covers/cron-jobs.webp"`)
     expect(img).toContain(
-      `srcset="/blog/covers/cron-jobs-640.webp 640w, /blog/covers/cron-jobs.webp 1600w"`,
+      `srcset="/blog/covers/cron-jobs-640.webp 640w, /blog/covers/cron-jobs-960.webp 960w, /blog/covers/cron-jobs.webp 1600w"`,
     )
     expect(img).toContain(`sizes="(min-width: 720px) 672px, calc(100vw - 32px)"`)
     expect(img).toContain(`width="1600" height="900"`)

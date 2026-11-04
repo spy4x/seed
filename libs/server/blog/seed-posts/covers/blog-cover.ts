@@ -1,7 +1,8 @@
 /**
  * Makes the cover of one of Seed's blog posts: `deno task blog:cover <slug> <scene>`. It asks the
  * OpenAI Images API for one picture in the house style below plus the scene, and writes
- * `<slug>.webp` (1600×900) and `<slug>-640.webp` (640×360, for the post list) beside this file.
+ * `<slug>.webp` (1600×900), `<slug>-960.webp` (960×540, for phones) and `<slug>-640.webp`
+ * (640×360, for the post list) beside this file.
  * The key comes from `OPENAI_API_KEY`. How to use it and the alt text of every cover: README.md.
  */
 import { fromFileUrl } from "@std/path"
@@ -78,7 +79,11 @@ export async function makeCover(slug: string, scene: string, deps: CoverDeps): P
   }
 
   const source = `${deps.dir}/.${slug}.source.png`
-  const outputs = [[`${slug}.webp`, `1600x900`], [`${slug}-640.webp`, `640x360`]]
+  const outputs = [
+    [`${slug}.webp`, `1600x900`],
+    [`${slug}-960.webp`, `960x540`],
+    [`${slug}-640.webp`, `640x360`],
+  ]
   await deps.fs.writeBytes!(source, Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)))
   try {
     for (const [name, size] of outputs) {

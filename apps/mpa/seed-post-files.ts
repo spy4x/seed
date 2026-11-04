@@ -9,7 +9,7 @@ import { fromFileUrl } from "@std/path"
  * @module
  */
 
-/** A file name this module serves: a slug, an optional `-640`, then the folder's extension. */
+/** A file name this module serves: a slug (a cover's `-640` or `-960` too), then the extension. */
 const FILE_NAME = (extension: string) => new RegExp(`^[a-z0-9]+(?:-[a-z0-9]+)*\\.${extension}$`)
 
 /**

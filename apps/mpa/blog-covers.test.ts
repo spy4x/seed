@@ -2,6 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { App } from "fresh"
 import { COVERS, handler } from "./routes/blog/covers/[file].ts"
+import { coverImage } from "./blog-covers.ts"
 import type { State } from "./utils.ts"
 
 const info = {
@@ -23,6 +24,22 @@ describe("the blog's cover files (#733)", () => {
     expect(response.headers.get(`cache-control`)).toBe(`public, max-age=2592000, must-revalidate`)
     expect(response.headers.get(`etag`)).toBeTruthy()
     await response.body?.cancel()
+  })
+
+  it("serves every width a post's srcset names, the 960 px copy among them", async () => {
+    const coverFile = `welcome-to-the-seed-blog.webp`
+    const srcset = coverImage({ coverFile, coverUrl: null })!.srcset!
+    const names = srcset.split(`, `).map((entry) => entry.split(` `)[0].split(`/`).pop()!)
+    expect(names).toEqual([
+      `welcome-to-the-seed-blog-640.webp`,
+      `welcome-to-the-seed-blog-960.webp`,
+      coverFile,
+    ])
+    for (const name of names) {
+      const response = await get(name)
+      expect(response.status).toBe(200)
+      await response.body?.cancel()
+    }
   })
 
   it("answers 404 for a name it does not hold, and for one that climbs out of the folder", async () => {

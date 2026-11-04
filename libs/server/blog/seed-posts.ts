@@ -33,7 +33,10 @@ export const SEED_POSTS_DIR = fromFileUrl(new URL(`./seed-posts/`, import.meta.u
 /** A file in {@link SEED_POSTS_DIR} that is not a post. */
 const NOT_A_POST = `README.md`
 
-/** The folder of the posts' covers, inside {@link SEED_POSTS_DIR}: `<name>.webp` and `<name>-640.webp`. */
+/**
+ * The folder of the posts' covers, inside {@link SEED_POSTS_DIR}: `<name>.webp`, `<name>-960.webp`
+ * and `<name>-640.webp`.
+ */
 export const SEED_COVERS_DIR = join(SEED_POSTS_DIR, `covers`)
 
 /** A post file's `cover`: a WebP file in `covers/`, named as a slug. */

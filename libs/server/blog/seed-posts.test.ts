@@ -190,11 +190,13 @@ describe(`Seed's post files`, () => {
     expect(parseSeedPost(...file()).devto).toBe(false)
   })
 
-  it(`has both widths of every post's cover in covers/ (#733)`, async () => {
+  it(`has all three widths of every post's cover in covers/ (#733)`, async () => {
     const posts = await readSeedPosts(denoFileSystem)
     const files = new Set((await denoFileSystem.readDir(SEED_COVERS_DIR)).map(({ name }) => name))
     const missing = posts.filter((post) => post.translationOf === null)
-      .flatMap(({ coverFile }) => [coverFile!, coverFile!.replace(/\.webp$/, `-640.webp`)])
+      .flatMap(({ coverFile }) =>
+        [``, `-960`, `-640`].map((width) => coverFile!.replace(/\.webp$/, `${width}.webp`))
+      )
       .filter((name) => !files.has(name))
     expect(posts.length).toBeGreaterThan(0)
     expect(missing).toEqual([])
