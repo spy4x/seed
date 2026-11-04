@@ -17,18 +17,22 @@ Deno.test("runs a file with the permissions of the group that tests it", () => {
   expect(groupOf(`docs/x.test.ts`)).toBeUndefined()
 })
 
-Deno.test("runs every group in parallel, with its ignored files left out", () => {
-  expect(testArgs(groupOf(`apps/mpa`)!, [`apps/mpa/a.test.ts`], [`--filter=x`]))
-    .toEqual([
-      `test`,
-      `--no-prompt`,
-      `--parallel`,
-      `--allow-env=DENO_DEPLOYMENT_ID,GITHUB_SHA,CI_COMMIT_SHA`,
-      `--allow-read=.`,
-      `--ignore=apps/mpa/changelog-start.test.ts`,
-      `--filter=x`,
-      `apps/mpa/a.test.ts`,
-    ])
+Deno.test("runs every group in parallel but the serial one, with its ignored files left out", () => {
+  expect(testArgs(groupOf(`apps/mpa`)!, [`apps/mpa/a.test.ts`], [`--filter=x`])).toEqual([
+    `test`,
+    `--no-prompt`,
+    `--parallel`,
+    `--allow-env=DENO_DEPLOYMENT_ID,GITHUB_SHA,CI_COMMIT_SHA`,
+    `--allow-read=.`,
+    `--ignore=apps/mpa/changelog-start.test.ts`,
+    `--filter=x`,
+    `apps/mpa/a.test.ts`,
+  ])
+  // A test that counts timer turns runs alone, not beside the workers of the app group.
+  const timing = groupOf(`apps/spa/src/offline/index.test.ts`)!
+  expect(timing.serial).toBe(true)
+  expect(testArgs(timing)).not.toContain(`--parallel`)
+  expect(testArgs(GROUPS[0]).join(` `)).toContain(`apps/spa/src/offline/index.test.ts`)
 })
 
 Deno.test("adds up the tests, steps and failures of every group's summary", () => {

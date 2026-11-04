@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 /**
  * `deno task test`: the unit tests, in groups that each run `deno test --parallel` with only the
- * permissions their files need. The groups run side by side.
+ * permissions their files need, two groups at a time. A serial group runs alone at the end.
  *
  * - No arguments: a passing run prints one summary line. A failing group prints its failures,
  *   with the output of the failed tests, and the command that runs it again.
@@ -16,16 +16,32 @@ export interface TestGroup {
   paths: string[]
   /** Paths under `paths` that another group tests. */
   ignore?: string[]
+  /** Runs without `--parallel`, alone, once every other group is done. */
+  serial?: boolean
 }
 
+/**
+ * Tests that count timer turns or measure wall time, and fail when other test workers take the CPU.
+ * They run in the serial group below.
+ */
+const TIMING_SENSITIVE = [
+  `apps/api/routes/group-files.test.ts`,
+  `apps/spa/src/offline/OfflineStatus.test.tsx`,
+  `apps/spa/src/offline/index.test.ts`,
+]
+
+/**
+ * libs/ui's interaction tests load happy-dom, whose WebSocket package reads the two WS_* variables;
+ * the blog's tests read Seed's own posts.
+ */
+const APP_FLAGS = [
+  `--allow-env=WS_NO_BUFFER_UTIL,WS_NO_UTF_8_VALIDATE`,
+  `--allow-read=libs/server/blog/seed-posts`,
+]
+
 export const GROUPS: TestGroup[] = [
-  // libs/ui's interaction tests load happy-dom, whose WebSocket package reads the two WS_*
-  // variables; the blog's tests read Seed's own posts.
   {
-    flags: [
-      `--allow-env=WS_NO_BUFFER_UTIL,WS_NO_UTF_8_VALIDATE`,
-      `--allow-read=libs/server/blog/seed-posts`,
-    ],
+    flags: APP_FLAGS,
     paths: [
       `apps/api`,
       `apps/spa/src`,
@@ -35,7 +51,9 @@ export const GROUPS: TestGroup[] = [
       `libs`,
       `e2e/fixtures`,
     ],
+    ignore: TIMING_SENSITIVE,
   },
+  { flags: APP_FLAGS, paths: TIMING_SENSITIVE, serial: true },
   // Fresh reads its build id from DENO_DEPLOYMENT_ID, GITHUB_SHA or CI_COMMIT_SHA when it loads.
   {
     flags: [
@@ -161,7 +179,7 @@ export function testArgs(
   return [
     `test`,
     `--no-prompt`,
-    `--parallel`,
+    ...group.serial ? [] : [`--parallel`],
     ...group.flags,
     ...ignore,
     ...extra,
@@ -306,17 +324,19 @@ async function runPaths(paths: string[], extra: string[]): Promise<number> {
 /** Runs every group, a few at a time, and prints failures and one summary line, or everything. */
 async function runAll(extra: string[], verbose: boolean): Promise<number> {
   const started = performance.now()
-  const results = await pool(
-    GROUPS.map((group) => () => capture(testArgs(group, group.paths, extra))),
-    JOBS,
-  )
+  const run = (group: TestGroup) => () => capture(testArgs(group, group.paths, extra))
+  const parallel = GROUPS.filter((group) => !group.serial)
+  const serial = GROUPS.filter((group) => group.serial)
+  const results = await pool(parallel.map(run), JOBS)
+  for (const group of serial) results.push(await run(group)())
+  const order = [...parallel, ...serial]
   let failed = 0
   results.forEach(({ success, output }, index) => {
     if (verbose) console.log(output)
     if (success) return
     if (!verbose) console.log(failuresOf(output))
     failed++
-    console.log(`\nFailed: deno ${testArgs(GROUPS[index], GROUPS[index].paths, extra).join(` `)}\n`)
+    console.log(`\nFailed: deno ${testArgs(order[index], order[index].paths, extra).join(` `)}\n`)
   })
   const totals = totalsOf(results.map(({ output }) => output).join(`\n`))
   const seconds = Math.round((performance.now() - started) / 1000)
