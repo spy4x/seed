@@ -12,6 +12,7 @@ import aggregateRelations from "../../docs/aggregate-relations.md" with { type: 
 import aggregates from "../../docs/aggregates.md" with { type: "text" }
 import apiErrors from "../../docs/api-errors.md" with { type: "text" }
 import apps from "../../docs/apps.md" with { type: "text" }
+import attachmentsAndPictures from "../../docs/attachments-and-pictures.md" with { type: "text" }
 import backups from "../../docs/backups.md" with { type: "text" }
 import billing from "../../docs/billing.md" with { type: "text" }
 import billingLifecycle from "../../docs/billing-lifecycle.md" with { type: "text" }
@@ -25,6 +26,7 @@ import dataExport from "../../docs/data-export.md" with { type: "text" }
 import deploy from "../../docs/deploy.md" with { type: "text" }
 import deployUpdates from "../../docs/deploy-updates.md" with { type: "text" }
 import development from "../../docs/development.md" with { type: "text" }
+import fileUploads from "../../docs/file-uploads.md" with { type: "text" }
 import files from "../../docs/files.md" with { type: "text" }
 import firstFeature from "../../docs/first-feature.md" with { type: "text" }
 import getStarted from "../../docs/get-started.md" with { type: "text" }
@@ -108,7 +110,11 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         slug: `billing-operator`,
         summary: `The admin panel's Billing pages, transfers, and Stripe's dashboard.`,
       },
-      { slug: `files`, summary: `Garage or another S3 store, signed uploads and downloads.` },
+      { slug: `files`, summary: `Garage or another S3 store, its settings and the upload budget.` },
+      {
+        slug: `file-uploads`,
+        summary: `Upload and download files from a feature, and have photos made safe and small.`,
+      },
       { slug: `data-export`, summary: `Download my data, what the ZIP holds and how it expires.` },
       {
         slug: `catalog`,
@@ -176,6 +182,10 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         slug: `offline-app-shell`,
         summary: `How the service worker starts the app with no network.`,
       },
+      {
+        slug: `attachments-and-pictures`,
+        summary: `Files kept on a note, and a person's picture in place of their initials.`,
+      },
       { slug: `large-group`, summary: `How one group behaves from a thousand notes to a million.` },
     ],
   },
@@ -203,6 +213,7 @@ const SOURCES: Readonly<Record<string, string>> = {
   aggregates,
   "api-errors": apiErrors,
   apps,
+  "attachments-and-pictures": attachmentsAndPictures,
   backups,
   billing,
   "billing-lifecycle": billingLifecycle,
@@ -216,6 +227,7 @@ const SOURCES: Readonly<Record<string, string>> = {
   deploy,
   "deploy-updates": deployUpdates,
   development,
+  "file-uploads": fileUploads,
   files,
   "first-feature": firstFeature,
   "get-started": getStarted,
