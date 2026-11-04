@@ -19,7 +19,7 @@ publishAt: 2026-11-01T09:00:00Z
 newsletter: false
 ---
 
-Seed 发布了。这是一款 MIT 许可的免费 SaaS 模板，今天就能用：复制一个仓库，登录、带角色的群组、通过 Stripe 按成员计费、实时更新、可离线使用的应用、管理后台和九种语言就都已经在运行了。它跑在你自己掌控的一台服务器上，用的是 Postgres 和 Docker Compose。什么都不用装，就能在[在线演示](https://app.seedsaas.com)里把每个页面点一遍。
+Seed 发布了。这是一款 MIT 许可的免费 SaaS 模板，今天就能用：复制一个仓库，登录、带角色的群组、通过 Stripe 按成员计费、实时更新、可离线使用的应用、管理后台和九种语言就都已经在运行了。它跑在你自己掌控的一台服务器上，用的是 Postgres 和 Docker Compose。什么都不用装，就能在[在线演示](https://app.seedsaas.com)里把应用点一遍。
 
 我是 Anton，平时为客户做 SaaS 的 MVP。以前每个项目开头都是同样一个月的“管道活”：登录、团队、计费，还有一个我每次都说“以后再弄好看”的管理页面。Seed 就是把这一个月的活一次做完，并且持续更新。这篇文章是一次导览；和其他模板的客观对比，请看[免费开源 SaaS 模板](/zh-CN/blog/mianfei-kaiyuan-saas-moban)。
 
@@ -39,7 +39,7 @@ Seed 发布了。这是一款 MIT 许可的免费 SaaS 模板，今天就能用�
 
 ## 计费是什么样的？
 
-每个群组一份 Stripe 订阅，按成员计费。演示的套餐里有一个免费套餐（最多 3 位成员、10 条笔记），以及每位成员每月 €9 的 Pro 套餐（含所有者），带 14 天试用。数量跟着成员人数变化，所有者在每次邀请前确认新价格；银行卡扣款失败时会有宽限期，而不是立刻锁定。这些价格只是示例：你的套餐就是一个文件里的列表（[计费文档](/docs/billing)，英文）。
+每个群组一份 Stripe 订阅，按成员计费。演示的套餐里有一个免费套餐（最多 3 位成员、10 条笔记），以及每位成员每月 €9 的 Pro 套餐（含所有者），带 14 天试用。数量跟着成员人数变化，所有者在每次邀请前确认新价格；银行卡扣款失败时会有宽限期，而不是立刻锁定。这些价格只是示例：你的套餐就是一个文件里的列表（[计费套餐文档](/docs/billing-plans)，英文）。
 
 ![演示应用中一个示例群组的套餐，按演示用的示例价格显示：Pro 套餐及其续订日期，每月 €36.00，共 4 位成员，每人 €9.00，含所有者。](/shots/billing-plan-dark-780.webp)
 
@@ -53,7 +53,7 @@ Seed 发布了。这是一款 MIT 许可的免费 SaaS 模板，今天就能用�
 
 ![一个名为 Acme Studio 的团队的笔记页面：六条笔记，带作者、彩色标签和更新时间，一个搜索框，按标签和作者筛选，以及“新建笔记”按钮。](/shots/notes-dark-800.webp)
 
-笔记是参考功能：你的第一个功能就是照着它逐个文件复制出来的。详细内容见两篇英文文章：[基于 WebSocket、以 HTTP 兜底的实时更新](/blog/realtime-websocket-with-http-fallback)和[本地数据库如何同步](/blog/offline-first-preact-signals-local-database-sync)。
+笔记是参考功能：你的第一个功能就是照着它逐个文件复制出来的（[你的第一个功能](/blog/your-first-feature-copy-the-notes-aggregate)，英文）。详细内容见两篇英文文章：[基于 WebSocket、以 HTTP 兜底的实时更新](/blog/realtime-websocket-with-http-fallback)和[本地数据库如何同步](/blog/offline-first-preact-signals-local-database-sync)。
 
 ## 运营人员能看到什么？
 
@@ -61,7 +61,7 @@ Seed 发布了。这是一款 MIT 许可的免费 SaaS 模板，今天就能用�
 
 ![管理后台的用户页面：按姓名或地址搜索，按状态、账号类型和角色筛选，以及一张列出虚构用户及其角色、状态和最后在线时间的表格。](/video/admin-panel-poster-1280.webp)
 
-应用的每个功能都会在同一次改动里配上自己的管理页面，两边永远不会脱节。
+应用的每个功能都会在同一次改动里配上自己的管理页面，两边永远不会脱节（[管理后台如何保持同步](/blog/admin-panel-for-every-feature)，英文）。
 
 ## 支持哪些语言？
 
@@ -69,7 +69,7 @@ Seed 发布了。这是一款 MIT 许可的免费 SaaS 模板，今天就能用�
 
 ## 还有什么没做？
 
-Android 应用（[#202](https://github.com/spy4x/seed/issues/202)）和桌面应用（[#203](https://github.com/spy4x/seed/issues/203)）。其余计划在[未关闭的 issue](https://github.com/spy4x/seed/issues) 里。演示里 Stripe 是关闭的：计费需要你自己的密钥，所以演示显示的是虚构的付款，而不是真实付款。
+Android 应用（[#202](https://github.com/spy4x/seed/issues/202)）和桌面应用（[#203](https://github.com/spy4x/seed/issues/203)）。其余计划在[未关闭的 issue](https://github.com/spy4x/seed/issues) 里。Google 和 GitHub 登录以及 Stripe 计费需要你自己的密钥，所以在演示中是关闭的，演示显示的是虚构的付款。管理后台也不在演示里：[有一段视频展示它](/zh-CN/admin)。
 
 Seed 也不是什么项目都适合。如果你要部署到 serverless 函数，或者想要托管好的后端，请选别的方案：Seed 默认你自己运维一台服务器。
 

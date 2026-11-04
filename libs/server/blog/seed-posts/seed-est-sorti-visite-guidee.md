@@ -23,7 +23,7 @@ Seed est sorti. C’est un starter SaaS gratuit, sous licence MIT, que vous pouv
 aujourd’hui : vous copiez un dépôt et vous démarrez avec la connexion, des groupes avec rôles, la
 facturation par membre via Stripe, les mises à jour en temps réel, une application hors ligne, un
 panneau d’administration et neuf langues, déjà en place. Il tourne sur Postgres et Docker Compose,
-sur un seul serveur que vous contrôlez, et vous pouvez en parcourir chaque écran dans la
+sur un seul serveur que vous contrôlez, et vous pouvez parcourir l’application dans la
 [démo en ligne](https://app.seedsaas.com) avant d’installer quoi que ce soit.
 
 Je m’appelle Anton et je développe des MVP SaaS pour des clients. Chacun commençait par le même mois
@@ -65,7 +65,7 @@ Des abonnements Stripe par groupe, facturés par membre. Le catalogue de la dém
 compris, avec 14 jours d’essai. La quantité suit le nombre de membres, le propriétaire confirme le
 nouveau prix avant chaque invitation, et une carte refusée ouvre un délai de grâce au lieu d’un
 blocage immédiat. Les prix sont des exemples : vos forfaits sont une liste dans un fichier
-([facturation](/docs/billing), en anglais).
+([forfaits](/docs/billing-plans), en anglais).
 
 ![Le forfait d’un groupe d’exemple dans l’application de démo, aux prix d’exemple de la démo : forfait Pro avec sa date de renouvellement, 36,00 € par mois, pour 4 membres à 9,00 € chacun, propriétaire compris.](/shots/billing-plan-dark-780.webp)
 
@@ -85,7 +85,7 @@ un écrasement silencieux du travail d’un collègue.
 ![La page Notes d’une équipe appelée Acme Studio : six notes avec leurs auteurs, des étiquettes de couleur et l’heure de modification, un champ de recherche, des filtres par étiquette et par auteur, et un bouton Nouvelle note.](/shots/notes-dark-800.webp)
 
 Les notes sont la fonctionnalité de référence : votre première fonctionnalité la copie fichier par
-fichier. Les détails, en anglais :
+fichier ([votre première fonctionnalité](/blog/your-first-feature-copy-the-notes-aggregate), en anglais). Les détails, en anglais :
 [le temps réel par WebSocket avec repli HTTP](/blog/realtime-websocket-with-http-fallback) et
 [la synchronisation de la base locale](/blog/offline-first-preact-signals-local-database-sync).
 
@@ -99,7 +99,8 @@ confirmation, et chaque action entre dans un journal d’audit.
 ![La page Utilisateurs du panneau d’administration : une recherche par nom ou adresse, des filtres par statut, type de compte et rôle, et un tableau de personnes inventées avec leur rôle, leur statut et leur dernière activité.](/video/admin-panel-poster-1280.webp)
 
 Chaque fonctionnalité de l’application reçoit son écran d’administration dans le même changement,
-pour que les deux ne divergent jamais.
+pour que les deux ne divergent jamais
+([comment le panneau reste synchronisé](/blog/admin-panel-for-every-feature), en anglais).
 
 ## Quelles langues parle-t-il ?
 
@@ -113,9 +114,10 @@ client arabophone ne trouve le bug à votre place
 
 L’application Android ([#202](https://github.com/spy4x/seed/issues/202)) et l’application de bureau
 ([#203](https://github.com/spy4x/seed/issues/203)). Le reste du plan est dans les
-[issues ouvertes](https://github.com/spy4x/seed/issues). Dans la démo, Stripe est coupé : la
-facturation a besoin de vos propres clés, donc la démo montre des paiements inventés plutôt que de
-vrais.
+[issues ouvertes](https://github.com/spy4x/seed/issues). La connexion avec Google et GitHub et la
+facturation Stripe demandent vos propres clés : elles sont donc désactivées dans la démo, qui montre
+des paiements inventés plutôt que de vrais. Le panneau d’administration ne fait pas partie de la
+démo non plus : [une vidéo le montre](/fr/admin).
 
 Et Seed ne convient pas à tous les projets. Si vous déployez sur des fonctions serverless ou voulez
 un backend hébergé, prenez autre chose : Seed suppose un serveur que vous gérez.

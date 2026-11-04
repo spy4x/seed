@@ -22,8 +22,8 @@ newsletter: false
 O Seed chegou. É um starter SaaS gratuito, com licença MIT, que você pode usar hoje: você copia um
 repositório e começa com login, grupos com funções, cobrança por membro via Stripe, atualizações em
 tempo real, um app que funciona offline, um painel de administração e nove idiomas já funcionando.
-Ele roda em Postgres e Docker Compose, em um único servidor que você controla, e dá para clicar em
-cada tela na [demo ao vivo](https://app.seedsaas.com) antes de instalar qualquer coisa.
+Ele roda em Postgres e Docker Compose, em um único servidor que você controla, e dá para navegar pelo
+app na [demo ao vivo](https://app.seedsaas.com) antes de instalar qualquer coisa.
 
 Eu sou o Anton e desenvolvo MVPs de SaaS para clientes. Todos começavam com o mesmo mês de
 encanamento: login, equipes, cobrança e uma página de admin que eu sempre prometia deixar bonita
@@ -61,7 +61,7 @@ Assinaturas do Stripe por grupo, cobradas por membro. O catálogo da demo tem um
 3 membros e 10 notas) e um plano Pro de € 9 por membro por mês, incluindo o dono, com 14 dias de
 teste. A quantidade acompanha o número de membros, o dono confirma o novo preço antes de cada
 convite, e um cartão recusado ganha um período de carência em vez de um bloqueio imediato. Os preços
-são exemplos: seus planos são uma lista em um arquivo ([cobrança](/docs/billing), em inglês).
+são exemplos: seus planos são uma lista em um arquivo ([planos](/docs/billing-plans), em inglês).
 
 ![O plano de um grupo de exemplo no app de demo, com os preços de exemplo da demo: plano Pro com data de renovação, € 36,00 por mês, para 4 membros a € 9,00 cada, incluindo o dono.](/shots/billing-plan-dark-780.webp)
 
@@ -80,7 +80,8 @@ colega.
 
 ![A página Notas de uma equipe chamada Acme Studio: seis notas com seus autores, etiquetas coloridas e horário de alteração, um campo de busca, filtros por etiqueta e autor e um botão Nova nota.](/shots/notes-dark-800.webp)
 
-Notas é a funcionalidade de referência: a sua primeira funcionalidade a copia arquivo por arquivo.
+Notas é a funcionalidade de referência: a sua primeira funcionalidade a copia arquivo por arquivo
+([sua primeira funcionalidade](/blog/your-first-feature-copy-the-notes-aggregate), em inglês).
 Os detalhes, em inglês:
 [tempo real por WebSocket com HTTP de reserva](/blog/realtime-websocket-with-http-fallback) e
 [como o banco de dados local sincroniza](/blog/offline-first-preact-signals-local-database-sync).
@@ -95,7 +96,7 @@ para um log de auditoria.
 ![A página Usuários do painel de administração: busca por nome ou endereço, filtros por status, tipo de conta e função, e uma tabela de pessoas inventadas com função, status e quando foram vistas pela última vez.](/video/admin-panel-poster-1280.webp)
 
 Cada funcionalidade do app ganha sua tela no painel na mesma mudança, para que os dois nunca fiquem
-fora de sincronia.
+fora de sincronia ([como o painel fica em dia](/blog/admin-panel-for-every-feature), em inglês).
 
 ## Quais idiomas ele fala?
 
@@ -109,8 +110,10 @@ bug por você
 
 O app para Android ([#202](https://github.com/spy4x/seed/issues/202)) e o app para desktop
 ([#203](https://github.com/spy4x/seed/issues/203)). O resto do plano está nas
-[issues abertas](https://github.com/spy4x/seed/issues). Na demo, o Stripe fica desligado: a cobrança
-precisa das suas próprias chaves, então a demo mostra pagamentos inventados em vez de reais.
+[issues abertas](https://github.com/spy4x/seed/issues). Login com Google e GitHub e cobrança pelo
+Stripe precisam das suas próprias chaves, por isso ficam desligados na demo, que mostra pagamentos
+inventados em vez de reais. O painel de administração também não faz parte da demo:
+[um vídeo o mostra](/pt-BR/admin).
 
 E o Seed não serve para todo projeto. Se você faz deploy em funções serverless ou quer um backend
 hospedado, escolha outra coisa: o Seed conta com um servidor que você administra.

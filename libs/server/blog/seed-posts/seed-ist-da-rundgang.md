@@ -23,8 +23,8 @@ Seed ist da. Es ist ein kostenloser SaaS-Starter unter MIT-Lizenz, den du heute 
 kopierst ein Repository und startest mit Anmeldung, Gruppen mit Rollen, Abrechnung pro Mitglied über
 Stripe, Echtzeit-Updates, einer Offline-App, einem Adminbereich und neun Sprachen, die bereits
 funktionieren. Er läuft mit Postgres und Docker Compose auf einem Server, den du selbst
-kontrollierst, und du kannst jeden Bildschirm in der [Live-Demo](https://app.seedsaas.com)
-durchklicken, bevor du irgendetwas installierst.
+kontrollierst, und du kannst dich in der [Live-Demo](https://app.seedsaas.com) durch die App
+klicken, bevor du irgendetwas installierst.
 
 Ich bin Anton und baue SaaS-MVPs für Kunden. Jedes davon begann früher mit demselben Monat
 Klempnerarbeit: Anmeldung, Teams, Abrechnung und eine Adminseite, die ich „später mal schön mache“.
@@ -64,7 +64,7 @@ Stripe-Abos pro Gruppe, abgerechnet pro Mitglied. Der Katalog der Demo hat einen
 eingeschlossen, mit 14 Tagen Testphase. Die Menge folgt der Mitgliederzahl, der Inhaber bestätigt
 den neuen Preis vor jeder Einladung, und eine abgelehnte Karte bekommt eine Schonfrist statt einer
 sofortigen Sperre. Die Preise sind Beispiele: deine Tarife sind eine Liste in einer Datei
-([Abrechnung](/docs/billing), auf Englisch).
+([Tarife](/docs/billing-plans), auf Englisch).
 
 ![Der Tarif einer Beispielgruppe in der Demo-App, zu den Beispielpreisen der Demo: Tarif Pro mit Verlängerungsdatum, 36,00 € im Monat für 4 Mitglieder zu je 9,00 €, der Inhaber eingeschlossen.](/shots/billing-plan-dark-780.webp)
 
@@ -83,7 +83,8 @@ jemand dieselbe Notiz inzwischen geändert, siehst du einen Konflikt zum Klären
 
 ![Die Seite Notizen eines Teams namens Acme Studio: sechs Notizen mit Autor, farbigen Tags und Änderungszeit, ein Suchfeld, Filter nach Tag und Autor und ein Button Neue Notiz.](/shots/notes-dark-800.webp)
 
-Notizen sind die Referenzfunktion: deine erste eigene Funktion kopiert sie Datei für Datei. Die
+Notizen sind die Referenzfunktion: deine erste eigene Funktion kopiert sie Datei für Datei
+([deine erste Funktion](/blog/your-first-feature-copy-the-notes-aggregate), auf Englisch). Die
 Details auf Englisch: [Echtzeit über WebSocket mit HTTP als Rückfall](/blog/realtime-websocket-with-http-fallback)
 und [wie sich die lokale Datenbank synchronisiert](/blog/offline-first-preact-signals-local-database-sync).
 
@@ -97,7 +98,7 @@ vorher nach, und jede Aktion landet im Audit-Log.
 ![Die Seite Personen im Adminbereich: Suche nach Name oder Adresse, Filter nach Status, Kontoart und Rolle und eine Tabelle erfundener Personen mit Rolle, Status und wann sie zuletzt aktiv waren.](/video/admin-panel-poster-1280.webp)
 
 Jede Funktion der App bekommt ihren Admin-Bildschirm in derselben Änderung, damit beide nie
-auseinanderlaufen.
+auseinanderlaufen ([wie der Adminbereich synchron bleibt](/blog/admin-panel-for-every-feature), auf Englisch).
 
 ## Welche Sprachen spricht er?
 
@@ -111,8 +112,10 @@ erster arabischer Kunde den Fehler für dich findet
 
 Die Android-App ([#202](https://github.com/spy4x/seed/issues/202)) und die Desktop-App
 ([#203](https://github.com/spy4x/seed/issues/203)). Der Rest des Plans steht in den
-[offenen Issues](https://github.com/spy4x/seed/issues). In der Demo ist Stripe aus: Die Abrechnung
-braucht deine eigenen Schlüssel, daher zeigt die Demo erfundene Zahlungen statt echter.
+[offenen Issues](https://github.com/spy4x/seed/issues). Die Anmeldung mit Google und GitHub und die
+Stripe-Abrechnung brauchen deine eigenen Schlüssel und sind in der Demo deshalb aus; sie zeigt
+erfundene Zahlungen statt echter. Der Adminbereich ist auch nicht Teil der Demo:
+[ein Video zeigt ihn](/de/admin).
 
 Seed passt auch nicht zu jedem Projekt. Wenn du auf Serverless-Funktionen deployst oder ein
 gehostetes Backend willst, nimm etwas anderes: Seed rechnet mit einem Server, den du

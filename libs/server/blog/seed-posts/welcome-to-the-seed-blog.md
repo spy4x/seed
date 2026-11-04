@@ -22,7 +22,7 @@ newsletter: false
 Seed is out. It is a free, MIT-licensed SaaS starter that you can use today: you copy one
 repository and start with sign-in, groups with roles, per-member Stripe billing, realtime updates,
 an offline app, an admin panel and nine languages already working. It runs on Postgres and Docker
-Compose on one server you control, and you can click through all of it in the
+Compose on one server you control, and you can click through the app in the
 [live demo](https://app.seedsaas.com) before you install anything.
 
 I'm Anton. I build SaaS MVPs for clients, and every one of them used to start with the same month
@@ -59,7 +59,7 @@ Stripe subscriptions per group, billed per member. The demo's catalog has a free
 members and 10 notes) and a Pro plan at €9 a member a month, the owner included, with a 14-day
 trial. The quantity follows the member count, the owner confirms the new price before each
 invite, and a failed card gets a grace period instead of an instant lock-out. The prices are
-examples: your plans are a list in one file ([billing](/docs/billing)).
+examples: your plans are a list in one file ([billing plans](/docs/billing-plans)).
 
 ![A sample group's plan in the demo app, at the demo's example prices: Pro plan with its renewal date, €36.00 a month, for 4 members at €9.00 each, the owner included.](/shots/billing-plan-dark-780.webp)
 
@@ -103,8 +103,9 @@ you ([nine languages and right to left](/blog/nine-languages-and-right-to-left-f
 
 The Android app ([#202](https://github.com/spy4x/seed/issues/202)) and the desktop app
 ([#203](https://github.com/spy4x/seed/issues/203)). The rest of the plan is in the
-[open issues](https://github.com/spy4x/seed/issues). In the demo, Stripe stays off: billing needs
-your own keys, so the demo shows made-up payments instead of real ones.
+[open issues](https://github.com/spy4x/seed/issues). Google and GitHub sign-in and Stripe billing
+need your own keys, so they are off in the demo, which shows made-up payments instead. The admin
+panel is not part of the demo either: [a video shows it](/admin).
 
 Seed is also not for every project. If you deploy to serverless functions or want a hosted
 backend, pick something else: Seed expects a server you run.
