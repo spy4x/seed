@@ -2,17 +2,22 @@ import { Hono } from "hono"
 import type { PublicBlogPost } from "@domain/blog"
 import { renderBlogBody } from "@server/blog/render.ts"
 import { readSeedPosts } from "@server/blog/seed-posts.ts"
+import { fromFileUrl } from "@std/path"
 import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
 import { createPublicBlogRoute } from "../../api/routes/blog.ts"
 
 /**
  * The public blog API for the Lighthouse run (run.sh), on the port given as the first argument:
- * Seed's own published posts, read from their files (libs/server/blog/seed-posts/), through the
- * API's own public routes, so `/blog` and a post page are measured as the demo shows them, without
- * a database. Every other API address answers 404, which the website reads as "no answer".
+ * the run's own fixture posts, read from their files in `posts/` next to this script, through the
+ * API's own public routes, so `/blog` and a post page are measured with real content, without a
+ * database. They are never Seed's posts, so a product that deletes those keeps this check working.
+ * Every other API address answers 404, which the website reads as "no answer".
  */
+const FIXTURE_POSTS_DIR = fromFileUrl(new URL(`./posts/`, import.meta.url))
+
 const now = new Date()
-const published = (await readSeedPosts(denoFileSystem)).filter((post) => post.publishAt <= now)
+const published = (await readSeedPosts(denoFileSystem, FIXTURE_POSTS_DIR))
+  .filter((post) => post.publishAt <= now)
 const posts: PublicBlogPost[] = published
   .map((seed) => {
     const { fields } = seed
