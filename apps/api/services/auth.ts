@@ -1,3 +1,9 @@
+/**
+ * The app's sign-in instance, built from the environment, and the guards the routes use. Not
+ * `@server/auth` (`libs/server/auth`), which stores sign-in state, nor JSR's `@spy4x/server/auth`.
+ *
+ * @module
+ */
 import { createKvOAuthFlowStore } from "@spy4x/server/auth/oauth"
 import { kv } from "./cache.ts"
 import { config } from "./config.ts"

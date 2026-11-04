@@ -1,16 +1,12 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { APIContext } from "../_types.ts"
-import {
-  EmailChangeOutcome,
-  EmailVerifyOutcome,
-  PasswordResetOutcome,
-  PasswordSetOutcome,
-  type SignedIn,
-  type SignIn,
-  SignInCodeOutcome,
-  SignUpOutcome,
-} from "../services/sign-in.ts"
+import { type SignedIn, type SignIn } from "../services/sign-in.ts"
+import { EmailChangeOutcome, EmailVerifyOutcome } from "../services/email-change.ts"
+import { PasswordResetOutcome } from "../services/password-reset.ts"
+import { PasswordSetOutcome } from "../services/password.ts"
+import { SignInCodeOutcome } from "../services/sign-in-codes.ts"
+import { SignUpOutcome } from "../services/sign-up.ts"
 import {
   AccountDeletionBlockReason,
   type EmailStatus,

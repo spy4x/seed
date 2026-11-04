@@ -29,15 +29,12 @@ import {
   type WaitingCodeResponse,
   type WaitingPasswordSignUpResponse,
 } from "@domain/identity"
-import {
-  EmailChangeOutcome,
-  EmailVerifyOutcome,
-  PasswordResetOutcome,
-  PasswordSetOutcome,
-  type SignIn,
-  SignInCodeOutcome,
-  SignUpOutcome,
-} from "@api/services/sign-in.ts"
+import { type SignIn } from "@api/services/sign-in.ts"
+import { EmailChangeOutcome, EmailVerifyOutcome } from "@api/services/email-change.ts"
+import { PasswordResetOutcome } from "@api/services/password-reset.ts"
+import { PasswordSetOutcome } from "@api/services/password.ts"
+import { SignInCodeOutcome } from "@api/services/sign-in-codes.ts"
+import { SignUpOutcome } from "@api/services/sign-up.ts"
 import { pageOrNull } from "@api/services/oauth-sign-in.ts"
 import { UserSignedOutEvent } from "@api/cqrs/events.ts"
 import { APIContext } from "../_types.ts"
