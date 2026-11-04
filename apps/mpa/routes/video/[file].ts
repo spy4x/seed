@@ -1,6 +1,6 @@
 import { HttpError } from "@spy4x/preact-server"
-import { serveFile } from "@std/http/file-server"
 import { runtimeFileSystem } from "@spy4x/platform/server/runtime-fs"
+import { serveFile } from "@spy4x/server/static"
 import { fromFileUrl } from "@std/path"
 import { LOOP_FILES } from "../../loops.ts"
 import { define } from "../../utils.ts"
@@ -48,8 +48,9 @@ export const handler = define.handlers({
     const name = ctx.params.file
     const dir = Object.hasOwn(VIDEO_FILES, name) ? VIDEO_FILES[name] : undefined
     if (!dir) throw new HttpError(404)
-    const response = await serveFile(ctx.req, fromFileUrl(new URL(name, dir)))
-    response.headers.set(`cache-control`, CACHE_CONTROL)
+    const path = fromFileUrl(new URL(name, dir))
+    const response = await serveFile(ctx.req, path, { cacheControl: CACHE_CONTROL })
+    if (!response) throw new HttpError(404)
     return response
   },
 })

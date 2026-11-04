@@ -1,6 +1,6 @@
 import { HttpError } from "@spy4x/preact-server"
-import { serveFile } from "@std/http/file-server"
 import { runtimeFileSystem } from "@spy4x/platform/server/runtime-fs"
+import { serveFile } from "@spy4x/server/static"
 import { fromFileUrl } from "@std/path"
 
 /**
@@ -46,8 +46,9 @@ export async function seedPostFiles(folder: URL, extension: string): Promise<See
     names,
     async serve(request, name) {
       if (!names.has(name)) throw new HttpError(404)
-      const response = await serveFile(request, fromFileUrl(new URL(name, folder)))
-      response.headers.set(`cache-control`, CACHE_CONTROL)
+      const path = fromFileUrl(new URL(name, folder))
+      const response = await serveFile(request, path, { cacheControl: CACHE_CONTROL })
+      if (!response) throw new HttpError(404)
       return response
     },
   }
