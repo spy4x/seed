@@ -10,6 +10,7 @@ import aggregateLifecycle from "../../docs/aggregate-lifecycle.md" with { type: 
 import aggregateOffline from "../../docs/aggregate-offline.md" with { type: "text" }
 import aggregateRelations from "../../docs/aggregate-relations.md" with { type: "text" }
 import aggregates from "../../docs/aggregates.md" with { type: "text" }
+import aiAgents from "../../docs/ai-agents.md" with { type: "text" }
 import apiErrors from "../../docs/api-errors.md" with { type: "text" }
 import apps from "../../docs/apps.md" with { type: "text" }
 import attachmentsAndPictures from "../../docs/attachments-and-pictures.md" with { type: "text" }
@@ -82,6 +83,10 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
       { slug: `start-a-product`, summary: `What a new product deletes, replaces or sets.` },
       { slug: `local-stack`, summary: `Run Seed on your machine with demo data, and reset it.` },
       { slug: `first-feature`, summary: `A new kind of record, from the database to the screen.` },
+      {
+        slug: `ai-agents`,
+        summary: `Have an AI agent create a product from Seed, add features and check its work.`,
+      },
     ],
   },
   {
@@ -211,6 +216,7 @@ const SOURCES: Readonly<Record<string, string>> = {
   "aggregate-offline": aggregateOffline,
   "aggregate-relations": aggregateRelations,
   aggregates,
+  "ai-agents": aiAgents,
   "api-errors": apiErrors,
   apps,
   "attachments-and-pictures": attachmentsAndPictures,
