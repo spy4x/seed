@@ -35,6 +35,7 @@ them to the API and the worker.
 | `STRIPE_SECRET_KEY`           | Stripe's secret key. `sk_test_…` in test mode.                 | none                         |
 | `STRIPE_WEBHOOK_SECRET`       | The signing secret of the webhook endpoint, `whsec_…`.         | none                         |
 | `STRIPE_PRICE_PRO`            | The id of the Pro plan's price in Stripe, `price_…`.           | none                         |
+| `STRIPE_PRICE_PRO_YEARLY`     | Pro's yearly price id; only when Pro has a `yearlyAmount`.     | none                         |
 | `BILLING_GRACE_DAYS`          | Days a group keeps its plan after a failed payment. 0 to 90.   | `7`                          |
 | `BILLING_TRIAL_REQUIRES_CARD` | `true` or `false`: whether a trial's checkout asks for a card. | `true`                       |
 
@@ -93,6 +94,31 @@ new checkout with 409 `ALREADY_SUBSCRIBED`. The group drops to Free after the gr
 way ([failed payments](billing-lifecycle.md#failed-payments)).
 
 To test, open a group's **Billing** tab as its owner and press **Start 14-day free trial**.
+
+## Sell a yearly price
+
+A plan sells a year too once its entry in `PLANS` has a `yearlyAmount`, in the currency's smallest
+unit: `4000` is $40.00. Seed's own Pro has none, so it is sold monthly only. With a yearly price,
+the Billing tab offers a Monthly/Yearly choice, `/pricing` shows both prices and the saving, and
+the admin panel names each subscription's period.
+
+1. Set `yearlyAmount` on the plan in `PLANS`.
+2. In Stripe, add a yearly price to the same product. Copy its id into `STRIPE_PRICE_PRO_YEARLY`.
+   With `stripe`, the API and the worker refuse to start when Pro has a yearly price and the
+   variable is empty, or when the variable is set and Pro has none.
+3. In the customer portal's settings, list both prices of the product, so an owner can switch
+   period there. Let a switch happen at once, with proration: Stripe then charges or credits the
+   difference, and the Billing tab's hint ("Stripe shows what you pay today before you confirm")
+   stays true.
+4. Turn on Stripe's reminder email about upcoming renewals, under Settings, Billing, Subscriptions
+   and emails. A year is long enough for an owner to forget the charge.
+5. Decide whether the yearly price includes tax before you sell it: a Stripe price's tax behaviour
+   cannot change once the price has been used.
+
+The period an owner picks only chooses which price the checkout opens. The plan and its period are
+read from the price Stripe reports in the webhook, so a subscription is billed and stored for what
+Stripe charges. A checkout for a period the plan does not sell is refused with 400
+`PERIOD_NOT_OFFERED`.
 
 ## Go live
 
