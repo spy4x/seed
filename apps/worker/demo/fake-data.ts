@@ -88,6 +88,8 @@ export interface FakeNote {
 
 export interface FakeGroup {
   name: string
+  /** The zone the group's days are cut in: one of {@link DEMO_TIME_ZONES}, by its name. */
+  timeZone: string
   owner: FakeMember
   createdAgo: number
   members: { member: FakeMember; role: GroupRole; joinedAgo: number }[]
@@ -519,7 +521,40 @@ function fakeGroup(
   const promotions = owner === `you` ? [] : members
     .filter((m) => m.role === GroupRole.ADMIN && chance(0.6))
     .map((m) => ({ member: m.member, ago: between(m.joinedAgo - 1, 30) }))
-  return { name: theme.name, owner, createdAgo, members, tags, notes, invitations, promotions }
+  return {
+    name: theme.name,
+    timeZone: demoTimeZone(theme.name),
+    owner,
+    createdAgo,
+    members,
+    tags,
+    notes,
+    invitations,
+    promotions,
+  }
+}
+
+/** The zones the sample groups live in, west to east, so the demo shows more than one. */
+export const DEMO_TIME_ZONES = [
+  `America/Los_Angeles`,
+  `America/New_York`,
+  `America/Sao_Paulo`,
+  `Europe/London`,
+  `Europe/Berlin`,
+  `Asia/Dubai`,
+  `Asia/Kolkata`,
+  `Asia/Singapore`,
+  `Asia/Tokyo`,
+] as const
+
+/**
+ * A sample group's zone, chosen by its name rather than the seed's random numbers, so adding the
+ * zone left every other sample row as it was.
+ */
+export function demoTimeZone(name: string): string {
+  let sum = 0
+  for (const char of name) sum += char.codePointAt(0) ?? 0
+  return DEMO_TIME_ZONES[sum % DEMO_TIME_ZONES.length]
 }
 
 /**
