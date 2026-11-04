@@ -61,7 +61,14 @@ export function copiesContextBeforeInstall(dockerfile: string): boolean {
 
 Deno.test("the Node and Bun images copy the whole build context before deno install", async () => {
   // They list no member, so a new member cannot be missing from them as it can from Dockerfile.base.
-  for (const path of ["apps/api/dockerfile.node", "apps/api/dockerfile.bun"]) {
+  for (
+    const path of [
+      "apps/api/dockerfile.node",
+      "apps/api/dockerfile.bun",
+      "apps/mpa/dockerfile.node",
+      "apps/mpa/dockerfile.bun",
+    ]
+  ) {
     const dockerfile = await Deno.readTextFile(`${ROOT}${path}`)
     expect({ path, copied: copiesContextBeforeInstall(dockerfile) }).toEqual({ path, copied: true })
   }

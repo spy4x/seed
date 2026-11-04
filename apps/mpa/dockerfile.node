@@ -1,0 +1,32 @@
+# The website on Node (#623), for a product that sets APP_RUNTIME=node: the Node counterpart of
+# apps/mpa/dockerfile.prod (infra/compose/compose.runtime-node.yml, docs/apps.md).
+#
+# Deno builds the site with Vite (`deno task mpa:build`, into apps/mpa/dist) and bundles the
+# healthcheck; the final image holds Node, the build and the files the server reads from disk: the
+# videos and the pictures of Seed's own posts. npm packages are inside the build; the image installs
+# none. Build context is the repository root. Images pinned by digest.
+
+FROM docker.io/denoland/deno:alpine-2.9.7@sha256:8ce780168429c4bf5962652e6cbea3fd45254ae902069e90585fb33f74c56968 AS build
+WORKDIR /app
+COPY . .
+# --frozen fails the build when deno.lock does not match deno.jsonc. The build id comes from a hash
+# of the sources, as in apps/mpa/dockerfile.prod.
+RUN deno install --frozen && \
+    CI_COMMIT_SHA="$(find apps libs docs deno.jsonc deno.lock -name node_modules -prune -o -type f \
+      -exec sha1sum {} + | sort | sha1sum | cut -d' ' -f1)" deno task mpa:build && \
+    deno bundle --platform deno -o apps/mpa/dist/healthcheck.js apps/healthcheck.ts
+
+FROM docker.io/library/node:26.13.0-alpine@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94
+WORKDIR /app
+COPY --from=build --chown=1000:1000 /app/apps/mpa/dist ./apps/mpa/dist
+# Read at run time (routes/video/[file].ts, seed-post-files.ts), from the same places as in the
+# repository.
+COPY --from=build --chown=1000:1000 /app/apps/mpa/media/video ./apps/mpa/media/video
+COPY --from=build --chown=1000:1000 /app/media/demo ./media/demo
+COPY --from=build --chown=1000:1000 /app/libs/server/blog/seed-posts/covers ./libs/server/blog/seed-posts/covers
+COPY --from=build --chown=1000:1000 /app/libs/server/blog/seed-posts/og ./libs/server/blog/seed-posts/og
+USER 1000:1000
+
+ENV MPA_PORT=8080
+EXPOSE 8080
+CMD ["node", "apps/mpa/dist/start.js"]

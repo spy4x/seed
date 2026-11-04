@@ -2,8 +2,9 @@
 /**
  * `APP_RUNTIME=node` or `bun` adds `infra/compose/compose.runtime-<runtime>.yml`
  * (`infra/scripts/compose-plan.ts`). Each file must move the three services that run the API's
- * image, `migrate`, `api` and `worker`, to that runtime's image and bundles, and leave every other
- * service alone, so the switch is one setting and the rest of the stack stays as on Deno.
+ * image, `migrate`, `api` and `worker`, and the website, `mpa`, to that runtime's images and
+ * bundles, and leave every other service alone, so the switch is one setting and the rest of the
+ * stack stays as on Deno.
  */
 
 import { expect } from "@std/expect"
@@ -34,9 +35,14 @@ Deno.test("APP_RUNTIME knows Node and Bun besides Deno, the default", () => {
   expect(OTHER_RUNTIMES).toEqual(["node", "bun"])
 })
 
-Deno.test("a runtime's Compose file changes migrate, api and worker, and nothing else", async () => {
+Deno.test("a runtime's Compose file changes migrate, api, worker and mpa, and nothing else", async () => {
   for (const runtime of OTHER_RUNTIMES) {
-    expect(Object.keys(await servicesOf(runtime)).sort()).toEqual(["api", "migrate", "worker"])
+    expect(Object.keys(await servicesOf(runtime)).sort()).toEqual([
+      "api",
+      "migrate",
+      "mpa",
+      "worker",
+    ])
   }
 })
 
@@ -58,6 +64,20 @@ Deno.test("a runtime's Compose file builds its own image and runs each bundle on
       runtime,
       "dist/server/healthcheck.js",
       "/api/health",
+    ])
+  }
+})
+
+Deno.test("a runtime's Compose file builds the website's own image and runs it on that runtime", async () => {
+  for (const runtime of OTHER_RUNTIMES) {
+    const mpa = (await servicesOf(runtime)).mpa
+    expect(mpa?.build?.dockerfile).toEqual(`apps/mpa/dockerfile.${runtime}`)
+    expect(mpa?.command).toEqual([runtime, "apps/mpa/dist/start.js"])
+    expect(mpa?.healthcheck?.test).toEqual([
+      "CMD",
+      runtime,
+      "apps/mpa/dist/healthcheck.js",
+      "/health",
     ])
   }
 })
