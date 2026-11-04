@@ -33,6 +33,7 @@ interface CustomerRow extends postgres.Row {
 interface HeldRow extends postgres.Row {
   planId: string | null
   status: number
+  billingPeriod: number | null
   cancelAtPeriodEnd: boolean
   trialEnd: Date | null
 }
@@ -82,6 +83,7 @@ export class PostgresBillingRepository implements BillingRepository {
           past_due_since,
           trial_end,
           quantity,
+          billing_period AS period,
           ever_active
         FROM subscriptions
         WHERE group_id = ${groupId}
@@ -98,6 +100,7 @@ export class PostgresBillingRepository implements BillingRepository {
         pastDueSince: row.pastDueSince,
         trialEnd: row.trialEnd,
         quantity: row.quantity,
+        period: row.period,
         everActive: row.everActive,
       }
       : null
@@ -183,8 +186,16 @@ export class PostgresBillingRepository implements BillingRepository {
    *
    * The group comes from the checkout's `reference` (the group id), or else from the customer an
    * earlier event stored. An event that names no group of this app is stored and ignored.
+   *
+   * The stored period is the one of the price the provider reports (`subscription.period`), never
+   * anything a checkout asked for. An event whose subscription bills a price no plan maps to changes
+   * nothing and is not stored (`unknown_price`): its period cannot be known, and a paid plan is never
+   * granted, kept or taken away on a price the app does not sell. Once the price is in the settings,
+   * the provider's resend of the same event applies.
    */
   async applyEvent(event: BillingEvent): Promise<BillingApplyOutcome> {
+    // Not stored, so the provider's resend applies once the price is in the settings.
+    if (isSubscriptionEvent(event) && event.subscription.planId === null) return "unknown_price"
     return await this.sql.begin(async (transaction: postgres.TransactionSql) => {
       const stored = await transaction`
         INSERT INTO billing_events (id, event_type) VALUES (${event.id}, ${event.type})
@@ -218,7 +229,7 @@ export class PostgresBillingRepository implements BillingRepository {
       `).length > 0
       const before = (
         await transaction<HeldRow[]>`
-          SELECT plan_id, status, cancel_at_period_end, trial_end
+          SELECT plan_id, status, billing_period, cancel_at_period_end, trial_end
           FROM subscriptions WHERE group_id = ${group.id} FOR UPDATE
         `
       )[0]
@@ -236,7 +247,8 @@ export class PostgresBillingRepository implements BillingRepository {
           trial_end,
           quantity,
           ever_active,
-          provider_customer_id
+          provider_customer_id,
+          billing_period
         ) VALUES (
           ${group.id},
           ${subscription.id},
@@ -250,7 +262,8 @@ export class PostgresBillingRepository implements BillingRepository {
           ${subscription.trialEnd},
           ${subscription.quantity},
           ${active},
-          ${subscription.customerId}
+          ${subscription.customerId},
+          ${subscription.period ?? null}
         )
         ON CONFLICT (group_id) DO UPDATE SET
           provider_subscription_id = EXCLUDED.provider_subscription_id,
@@ -273,6 +286,7 @@ export class PostgresBillingRepository implements BillingRepository {
             AND subscriptions.provider_subscription_id = EXCLUDED.provider_subscription_id
           ),
           provider_customer_id = EXCLUDED.provider_customer_id,
+          billing_period = EXCLUDED.billing_period,
           updated_at = CURRENT_TIMESTAMP
         WHERE (subscriptions.provider_event_at, subscriptions.provider_event_rank)
             <= (EXCLUDED.provider_event_at, EXCLUDED.provider_event_rank)
@@ -317,11 +331,12 @@ export class PostgresBillingRepository implements BillingRepository {
       ) {
         await queueSeatSync(transaction, group.id)
       }
-      // Only a new plan or status is news to the group's pages; a renewal that moves the period's end
-      // is not. The owner pays, so the change is theirs; a deleted group still records it, so a
+      // Only a new plan, status or billing period is news to the group's pages; a renewal that moves
+      // the period's end is not. The owner pays, so the change is theirs; a deleted group still records it, so a
       // restore shows the plan the provider reported meanwhile.
       const changed = before === undefined || before.planId !== subscription.planId ||
-        before.status !== subscription.status
+        before.status !== subscription.status ||
+        before.billingPeriod !== (subscription.period ?? null)
       if (!changed) return "applied"
       await recordGroupChange(
         transaction,

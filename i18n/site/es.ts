@@ -269,6 +269,8 @@ export default {
   "Pricing.description":
     "Seed es gratis con licencia MIT, sin versión de pago. Ejecutarlo cuesta un servidor Linux al precio de tu proveedor, más los servicios que actives.",
   "Pricing.crumb": "Precios",
+  "Pricing.saving":
+    "{plan} cuesta {monthly} al mes o {yearly} al año: {saving} menos que pagando cada mes.",
   "PricingFaq.paidQuestion": "¿Hay una versión de pago de Seed?",
   "PricingFaq.paidAnswer":
     "No. No hay versión pro, ni clave de licencia, ni funciones reservadas. Si quieres ayuda, contrátame: mi tiempo es lo único que vendo.",

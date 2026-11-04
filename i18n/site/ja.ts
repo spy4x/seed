@@ -271,6 +271,8 @@ export default {
   "Pricing.description":
     "SeedはMITライセンスで無料、有料プランはありません。運用にかかるのは、ホスティング会社の料金でLinuxサーバー1台分と、自分で有効にしたサービスの費用だけです。",
   "Pricing.crumb": "料金",
+  "Pricing.saving":
+    "{plan} は月額 {monthly}、または年額 {yearly} です。月払いより {saving} お得です。",
   "PricingFaq.paidQuestion": "Seedに有料版はありますか？",
   "PricingFaq.paidAnswer":
     "ありません。Pro版も、ライセンスキーも、出し惜しみしている機能もありません。サポートが必要なら私に依頼してください。私が売っているのは自分の時間だけです。",

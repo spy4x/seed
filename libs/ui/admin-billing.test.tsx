@@ -16,7 +16,9 @@ import {
   type AdminBillingFigures,
   type AdminBillingListResponse,
   BILLING_AUDIT_EVENTS,
+  BillingPeriod,
   BillingStatus,
+  PLANS,
   PRO_PLAN_ID,
 } from "@domain/billing"
 import { UserRole } from "@domain/identity"
@@ -131,10 +133,16 @@ function customer(overrides: Partial<AdminBillingCustomer> = {}): AdminBillingCu
     trialEnd: null,
     pastDueSince: null,
     everActive: true,
+    period: BillingPeriod.Monthly,
     updatedAt: `2026-10-12T12:00:00.000Z`,
     ...overrides,
   }
 }
+
+/** Seed's catalog with Pro sold yearly too, at €90.00 a member a year against €9.00 a month. */
+const YEARLY_PLANS = PLANS.map((plan) =>
+  plan.id === PRO_PLAN_ID ? { ...plan, yearlyAmount: 9000 } : plan
+)
 
 const figures: AdminBillingFigures = {
   monthlyRevenue: [{ amount: 122400, currency: `EUR` }, { amount: 1800, currency: `USD` }],
@@ -233,6 +241,27 @@ describe(`the admin billing list`, () => {
       `€0.00would be €18.00`,
     )
     expect(rows[1].querySelector(`[data-e2e=admin-billing-deleted]`) !== null).toBe(true)
+  })
+
+  it(`shows a yearly row at a twelfth of its price, with what the year bills under it`, async () => {
+    const yearly = customer({ period: BillingPeriod.Yearly })
+    await mount(
+      <AdminBillingListScreen
+        {...listProps([], { list: page([yearly]), plans: YEARLY_PLANS })}
+      />,
+    )
+
+    expect(find(`[data-e2e=admin-billing-row-amount]`).textContent).toBe(
+      `€30.004 × €7.50€360.00 billed yearly`,
+    )
+    expect(find(`[data-e2e=admin-billing-row-yearly]`).textContent).toBe(`€360.00 billed yearly`)
+  })
+
+  it(`says a monthly row bills monthly, with no yearly line`, async () => {
+    await mount(<AdminBillingListScreen {...listProps([], { plans: YEARLY_PLANS })} />)
+
+    expect(find(`[data-e2e=admin-billing-row-amount]`).textContent).toBe(`€36.004 × €9.00`)
+    expect(has(`[data-e2e=admin-billing-row-yearly]`)).toBe(false)
   })
 
   it(`says billing is off instead of showing an empty table`, async () => {
@@ -393,6 +422,55 @@ describe(`one customer in the admin app`, () => {
     expect(history).toContain(`€36.00 refunded`)
     expect(history).toContain(`By \u2068Grace Hopper\u2069. Note: Charged twice`)
     expect(find(`[data-e2e=admin-billing-stripe]`).getAttribute(`target`)).toBe(`_blank`)
+  })
+
+  it(`names a yearly subscription's period, its twelfth and what the year bills`, async () => {
+    const yearly = detail({ customer: customer({ period: BillingPeriod.Yearly }) })
+    await mount(
+      <AdminBillingCustomerScreen
+        {...customerProps([], { detail: yearly, plans: YEARLY_PLANS })}
+      />,
+    )
+
+    expect(find(`[data-e2e=admin-billing-period]`).textContent).toBe(`Yearly`)
+    expect(find(`[data-e2e=admin-billing-per-month]`).textContent).toBe(`4 × €7.50 = €30.00`)
+    expect(find(`[data-e2e=admin-billing-billed-yearly]`).textContent).toBe(
+      `€360.00 billed yearly`,
+    )
+  })
+
+  it(`names a monthly subscription's period, with no yearly line`, async () => {
+    await mount(<AdminBillingCustomerScreen {...customerProps([], { plans: YEARLY_PLANS })} />)
+
+    expect(find(`[data-e2e=admin-billing-period]`).textContent).toBe(`Monthly`)
+    expect(has(`[data-e2e=admin-billing-billed-yearly]`)).toBe(false)
+  })
+
+  it(`renews a yearly subscription at its yearly price, never the monthly one`, async () => {
+    const yearly = customer({ period: BillingPeriod.Yearly })
+    await mount(
+      <AdminBillingCustomerScreen
+        {...customerProps([], {
+          dialog: `time`,
+          detail: detail({ customer: yearly }),
+          plans: YEARLY_PLANS,
+        })}
+      />,
+    )
+    expect(find(`[data-e2e=admin-billing-until]`).textContent).toContain(
+      `the usual €360.00 a year starts again`,
+    )
+
+    await mount(
+      <AdminBillingCustomerScreen
+        {...customerProps([], {
+          dialog: `undo`,
+          detail: detail({ customer: { ...yearly, cancelAtPeriodEnd: true } }),
+          plans: YEARLY_PLANS,
+        })}
+      />,
+    )
+    expect(find(`[data-e2e=admin-billing-dialog]`).textContent).toContain(`at the usual €360.00.`)
   })
 
   it(`offers an operator the reversible actions and shows the supervisor's ones disabled`, async () => {
@@ -583,6 +661,19 @@ describe("the billing screens in en-XA", () => {
         <AdminBillingCustomerScreen {...customerProps([], { dialog: `time` })} />
         <AdminBillingCustomerScreen
           {...customerProps([], { operator: supervisor, dialog: `refund` })}
+        />
+        <AdminBillingListScreen
+          {...listProps([], {
+            list: page([customer({ period: BillingPeriod.Yearly })]),
+            plans: YEARLY_PLANS,
+          })}
+        />
+        <AdminBillingCustomerScreen
+          {...customerProps([], {
+            dialog: `time`,
+            detail: detail({ customer: customer({ period: BillingPeriod.Yearly }) }),
+            plans: YEARLY_PLANS,
+          })}
         />
       </I18nContext.Provider>,
     )

@@ -150,6 +150,8 @@ export default {
   "Reason.ORDER_STALE": "The list changed after this page loaded. Reload and try again.",
   "Reason.PASSWORD_INVALID": "Wrong password. Try again.",
   "Reason.PASSWORD_LOCKED": "Too many wrong passwords. Wait a while and try again.",
+  "Reason.PERIOD_NOT_OFFERED":
+    "This plan isn't sold for that billing period. Choose the other one.",
   "Reason.PHOTO_CONTENT": "This file's contents don't match its image type.",
   "Reason.PHOTO_NOT_FOUND": "This photo no longer exists.",
   "Reason.PHOTO_TOO_LARGE": "This photo is too large.",

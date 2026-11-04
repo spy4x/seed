@@ -10,9 +10,12 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import {
   BillingNoticeKind,
+  BillingPeriod,
   BillingStatus,
   FREE_PLAN_ID,
   type GroupBilling,
+  PAID_PLANS,
+  type Plan,
   PRO_PLAN_ID,
 } from "@domain/billing"
 import { FormatContext } from "@spy4x/preact-ui/format"
@@ -43,6 +46,7 @@ const FREE_OWNER: GroupBilling = {
   subscribed: false,
   hasCustomer: false,
   seatPrice: null,
+  period: null,
 }
 
 const PRO_OWNER: GroupBilling = {
@@ -52,15 +56,18 @@ const PRO_OWNER: GroupBilling = {
   currentPeriodEnd: new Date("2026-11-04T00:00:00Z"),
   subscribed: true,
   hasCustomer: true,
-  seatPrice: { seats: 6, amount: 900, currency: "EUR" },
+  seatPrice: { seats: 6, amount: 900, currency: "EUR", period: BillingPeriod.Monthly },
+  period: BillingPeriod.Monthly,
 }
 
-const TRIAL_OWNER: GroupBilling = {
-  ...PRO_OWNER,
+/** What makes a subscription a trial ending on 31 October. */
+const TRIAL_STATE = {
   status: BillingStatus.Trialing,
   trialEnd: new Date("2026-10-31T12:00:00Z"),
   currentPeriodEnd: new Date("2026-10-31T12:00:00Z"),
 }
+
+const TRIAL_OWNER: GroupBilling = { ...PRO_OWNER, ...TRIAL_STATE }
 
 const ENDING_OWNER: GroupBilling = { ...PRO_OWNER, cancelAtPeriodEnd: true }
 
@@ -120,20 +127,37 @@ async function click(selector: string): Promise<void> {
   await act(() => find(selector).click())
 }
 
-/** What the panel handed the app: each checkout's plan, and each portal open. */
+/** What the panel handed the app: each checkout's plan and period, each period picked, each portal open. */
 function calls() {
   const checkouts: string[] = []
+  const periods: BillingPeriod[] = []
+  const picked: BillingPeriod[] = []
   let portals = 0
   return {
     checkouts,
+    periods,
+    picked,
     get portals() {
       return portals
     },
     props: {
-      onCheckout: (planId: string) => checkouts.push(planId),
+      onCheckout: (planId: string, period: BillingPeriod) => {
+        checkouts.push(planId)
+        periods.push(period)
+      },
+      onPeriod: (period: BillingPeriod) => picked.push(period),
       onPortal: () => portals++,
     },
   }
+}
+
+/** Seed's Pro with a yearly price: €4.00 a member a month or €40.00 a year, €8.00 less. */
+const YEARLY_PRO: Plan = { ...PAID_PLANS[0], amount: 400, yearlyAmount: 4000 }
+
+const YEARLY_OWNER: GroupBilling = {
+  ...PRO_OWNER,
+  seatPrice: { seats: 6, amount: 4000, currency: "EUR", period: BillingPeriod.Yearly },
+  period: BillingPeriod.Yearly,
 }
 
 const GROUP_ID = "019a0000-0000-7000-8000-00000000000a"
@@ -187,7 +211,7 @@ describe("GroupBillingPanel", () => {
   it("titles the tab and says Stripe handles the billing", async () => {
     await mount(panel(FREE_OWNER))
     expect(find("[data-e2e=group-section-billing] h2").textContent).toBe("Billing")
-    expect(text()).toContain("What Team pays each month. Stripe handles the billing.")
+    expect(text()).toContain("What Team pays. Stripe handles the billing.")
   })
 
   it("prices Pro for a free group's members and opens the 14-day trial's checkout for its owner", async () => {
@@ -206,6 +230,99 @@ describe("GroupBillingPanel", () => {
     expect(has("[data-e2e=billing-row-invoices]")).toBe(false)
     await click("[data-e2e=billing-checkout]")
     expect(app.checkouts).toEqual([PRO_PLAN_ID])
+    expect(app.periods).toEqual([BillingPeriod.Monthly])
+  })
+
+  it("offers no billing period for a plan sold monthly only", async () => {
+    await mount(panel(FREE_OWNER))
+    expect(has("[role=radiogroup]")).toBe(false)
+    expect(find("[data-e2e=billing-price]").hasAttribute("aria-live")).toBe(false)
+  })
+
+  it("offers Monthly and Yearly for a plan with a yearly price, Monthly chosen first", async () => {
+    const app = calls()
+    await mount(panel(FREE_OWNER, { ...app.props, plan: YEARLY_PRO }))
+    const picker = find("[role=radiogroup]")
+    const options = [...picker.querySelectorAll("[role=radio]")]
+    expect(picker.getAttribute("aria-label")).toBe("Billing period")
+    expect(options.map((option) => option.textContent)).toEqual(["Monthly", "Yearly"])
+    expect(options.map((option) => option.getAttribute("aria-checked"))).toEqual(["true", "false"])
+    expect(find("[data-e2e=billing-price]").textContent).toBe(
+      "Pro costs €4.00 per member a month. With 6 members, Team would pay €24.00 a month.",
+    )
+    await act(() => (options[1] as HTMLElement).click())
+    expect(app.picked).toEqual([BillingPeriod.Yearly])
+    await click("[data-e2e=billing-checkout]")
+    expect(app.periods).toEqual([BillingPeriod.Monthly])
+  })
+
+  it("prices the year with its saving, says it renews yearly, and checks out yearly", async () => {
+    const app = calls()
+    await mount(panel(FREE_OWNER, { ...app.props, plan: YEARLY_PRO, period: BillingPeriod.Yearly }))
+    expect(find("[data-e2e=billing-price]").getAttribute("aria-live")).toBe("polite")
+    expect(find("[data-e2e=billing-price]").textContent).toBe(
+      "Pro costs €40.00 per member a year. With 6 members, Team would pay €240.00 a year. €8.00 less than paying monthly.",
+    )
+    expect(find("[data-e2e=billing-fine-print]").textContent).toBe(
+      "Billed yearly per member. Cancel anytime and keep Pro until the period ends.",
+    )
+    await click("[data-e2e=billing-checkout]")
+    expect(app.checkouts).toEqual([PRO_PLAN_ID])
+    expect(app.periods).toEqual([BillingPeriod.Yearly])
+  })
+
+  it("names no saving when the yearly price saves nothing", async () => {
+    const dear = { ...YEARLY_PRO, yearlyAmount: 4800 }
+    await mount(panel(FREE_OWNER, { plan: dear, period: BillingPeriod.Yearly }))
+    expect(has("[data-e2e=billing-saving]")).toBe(false)
+  })
+
+  it("checks a plan sold monthly only out monthly, whatever period the address asked for", async () => {
+    const app = calls()
+    await mount(panel(FREE_OWNER, { ...app.props, period: BillingPeriod.Yearly }))
+    expect(text()).toContain("Pro costs €9.00 per member a month.")
+    await click("[data-e2e=billing-checkout]")
+    expect(app.periods).toEqual([BillingPeriod.Monthly])
+  })
+
+  it("shows a yearly subscriber the yearly total, and monthly one portal visit away", async () => {
+    const app = calls()
+    await mount(panel(YEARLY_OWNER, { ...app.props, plan: YEARLY_PRO }))
+    expect(find("[data-e2e=billing-seats]").textContent).toBe(
+      "€240.00 a year, for 6 members at €40.00 each, the owner included.",
+    )
+    expect(find("[data-e2e=billing-row-period]").textContent).toContain(
+      "You pay yearly. Monthly costs €24.00 a month.Stripe shows what you pay today before you confirm.",
+    )
+    expect(find("[data-e2e=billing-portal-period]").textContent).toBe(
+      "Switch to monthly (opens Stripe)",
+    )
+    await click("[data-e2e=billing-portal-period]")
+    expect(app.portals).toBe(1)
+  })
+
+  it("offers a monthly subscriber of a plan sold yearly the year and its saving", async () => {
+    await mount(panel(PRO_OWNER, { plan: YEARLY_PRO }))
+    expect(find("[data-e2e=billing-period]").textContent).toBe(
+      "You pay monthly. Yearly costs €240.00 a year, €48.00 less.",
+    )
+    expect(find("[data-e2e=billing-portal-period]").textContent).toBe(
+      "Switch to yearly (opens Stripe)",
+    )
+  })
+
+  it("offers no period row for a plan sold monthly only, nor once the plan is cancelled", async () => {
+    await mount(panel(PRO_OWNER))
+    expect(has("[data-e2e=billing-row-period]")).toBe(false)
+    await rerender(panel({ ...YEARLY_OWNER, cancelAtPeriodEnd: true }, { plan: YEARLY_PRO }))
+    expect(has("[data-e2e=billing-row-period]")).toBe(false)
+  })
+
+  it("tells a yearly trial what the group pays a year once it ends", async () => {
+    await mount(panel({ ...YEARLY_OWNER, ...TRIAL_STATE }, { plan: YEARLY_PRO }))
+    expect(find("[data-e2e=billing-trial]").textContent).toContain(
+      "After that, Team pays €240.00 a year unless you cancel.",
+    )
   })
 
   it("offers Upgrade to Pro, saying the trial went to another group, once the owner used it", async () => {
@@ -391,13 +508,24 @@ describe("GroupBillingPanel", () => {
         {panel(FREE_OWNER, { confirming: true })}
         {panel(TRIAL_OWNER)}
         {panel(PRO_OWNER)}
+        {panel(FREE_OWNER, { plan: YEARLY_PRO, period: BillingPeriod.Yearly })}
+        {panel(YEARLY_OWNER, { plan: YEARLY_PRO })}
+        {panel({ ...YEARLY_OWNER, ...TRIAL_STATE }, { plan: YEARLY_PRO })}
+        {panel(PRO_OWNER, { plan: YEARLY_PRO })}
         {panel(ENDING_OWNER)}
         {panel(PAST_DUE_OWNER)}
         {panel(asMember(PRO_OWNER))}
         {panel(asMember(PRO_OWNER), { ownerName: null })}
         {panel(off)}
         {panel(null)}
-        <SeatPriceConfirm seatPrice={{ seats: 6, amount: 900, currency: "EUR" }} checked={false} />
+        <SeatPriceConfirm
+          seatPrice={{ seats: 6, amount: 900, currency: "EUR", period: BillingPeriod.Monthly }}
+          checked={false}
+        />
+        <SeatPriceConfirm
+          seatPrice={{ seats: 6, amount: 4000, currency: "EUR", period: BillingPeriod.Yearly }}
+          checked={false}
+        />
         {(["maxNotes", "maxMembers", "maxAttachments", "storageBytes", "memberRoles"] as const).map(
           (entitlement) => (
             <PlanRefusalNotice
@@ -434,6 +562,10 @@ describe("GroupBillingPanel", () => {
         "GroupBillingPanel.ownerOnlyUnknown",
         "GroupBillingPanel.off",
         "SeatPriceConfirm.accept",
+        "GroupBillingPanel.yearly",
+        "GroupBillingPanel.periodHint",
+        "GroupBillingPanel.switchMonthly",
+        "GroupBillingPanel.switchYearly",
         "PlanRefusalNotice.rolesText",
         "PlanRefusalNotice.notesTitleUnnamed",
         "PlanRefusalNotice.askOwner",

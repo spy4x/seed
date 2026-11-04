@@ -248,6 +248,7 @@ export default {
   "Pricing.description":
     "Seed 基于 MIT 许可证免费提供，没有付费版。运行成本只有一台 Linux 服务器（按你的服务商价格），以及你开启的其他服务。",
   "Pricing.crumb": "价格",
+  "Pricing.saving": "{plan} 每月 {monthly}，或每年 {yearly}：比按月付款少 {saving}。",
   "PricingFaq.paidQuestion": "Seed 有付费版吗？",
   "PricingFaq.paidAnswer":
     "没有。没有专业版、没有许可证密钥，也没有保留任何功能。如果你需要帮助，可以聘请我：我只出售我的时间。",

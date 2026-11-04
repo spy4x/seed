@@ -257,6 +257,8 @@ export default {
   "Pricing.description":
     "Seed مجاني بترخيص MIT، ولا توجد منه نسخة مدفوعة. تشغيله يكلّفك خادم Linux واحدًا بسعر مزوّد الاستضافة، إضافة إلى أي خدمات تفعّلها.",
   "Pricing.crumb": "الأسعار",
+  "Pricing.saving":
+    "يكلّف {plan} ‏{monthly} شهريًا أو {yearly} سنويًا، أي أقل بمقدار {saving} من الدفع الشهري.",
   "PricingFaq.paidQuestion": "هل توجد نسخة مدفوعة من Seed؟",
   "PricingFaq.paidAnswer":
     "لا. لا توجد باقة Pro، ولا مفتاح ترخيص، ولا ميزة محجوبة. وإذا أردت مساعدة، فتعاقد معي: وقتي هو الشيء الوحيد الذي أبيعه.",

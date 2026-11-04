@@ -1,14 +1,20 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { createEnvReader, type EnvReader } from "@spy4x/server/config"
-import { DEFAULT_GRACE_DAYS, PRO_PLAN_ID } from "@domain/billing"
+import { BillingPeriod } from "@spy4x/billing"
+import { DEFAULT_GRACE_DAYS, PAID_PLANS, type Plan, PRO_PLAN_ID } from "@domain/billing"
 import { isUuid } from "@spy4x/platform/universal/uuid"
-import { DEV_PRO_PRICE_ID, DEV_WEBHOOK_SECRET } from "../../../e2e/fixtures/billing.ts"
+import {
+  DEV_PRO_PRICE_ID,
+  DEV_PRO_YEARLY_PRICE_ID,
+  DEV_WEBHOOK_SECRET,
+} from "../../../e2e/fixtures/billing.ts"
 import {
   BillingConfigError,
   BillingMode,
   createFakeBilling,
   FAKE_PRO_PRICE_ID,
+  FAKE_PRO_YEARLY_PRICE_ID,
   FAKE_WEBHOOK_SECRET,
   readBillingSetup,
   stripeDashboardUrl,
@@ -65,6 +71,45 @@ describe("billing configuration", () => {
 
     expect(setup.mode).toBe(BillingMode.Stripe)
     expect(setup.provider).not.toBeNull()
+  })
+
+  describe("a Pro sold yearly", () => {
+    const yearly = PAID_PLANS.map((plan) => ({ ...plan, yearlyAmount: plan.amount * 10 }))
+
+    it("stops start-up while Stripe lacks the yearly price", () => {
+      const env = createEnvReader({ BILLING_PROVIDER: "stripe", ...STRIPE_KEYS })
+
+      expect(() => readBillingSetup(env, "prod", { ...API, plans: yearly })).toThrow(
+        new BillingConfigError(
+          "BILLING_PROVIDER=stripe needs STRIPE_PRICE_PRO_YEARLY (see docs/billing.md)",
+        ),
+      )
+    })
+
+    it("runs Stripe once the yearly price is set", () => {
+      const env = createEnvReader({
+        BILLING_PROVIDER: "stripe",
+        ...STRIPE_KEYS,
+        STRIPE_PRICE_PRO_YEARLY: "price_yearly_placeholder",
+      })
+
+      expect(readBillingSetup(env, "prod", { ...API, plans: yearly }).mode)
+        .toBe(BillingMode.Stripe)
+    })
+  })
+
+  it("stops start-up on a yearly price for a Pro sold monthly only, since it could never sell", () => {
+    const env = createEnvReader({
+      BILLING_PROVIDER: "stripe",
+      ...STRIPE_KEYS,
+      STRIPE_PRICE_PRO_YEARLY: "price_yearly_placeholder",
+    })
+
+    expect(() => readBillingSetup(env, "prod", API)).toThrow(
+      new BillingConfigError(
+        "STRIPE_PRICE_PRO_YEARLY is set, but Pro has no yearly price (see docs/billing.md)",
+      ),
+    )
   })
 
   it("refuses the development provider in production", () => {
@@ -136,8 +181,56 @@ describe("billing configuration", () => {
     }
   })
 
-  it("shares its webhook secret and Pro price with the e2e fixture that signs events", () => {
-    expect([FAKE_WEBHOOK_SECRET, FAKE_PRO_PRICE_ID]).toEqual([DEV_WEBHOOK_SECRET, DEV_PRO_PRICE_ID])
+  it("shares its webhook secret and Pro prices with the e2e fixture that signs events", () => {
+    expect([FAKE_WEBHOOK_SECRET, FAKE_PRO_PRICE_ID, FAKE_PRO_YEARLY_PRICE_ID])
+      .toEqual([DEV_WEBHOOK_SECRET, DEV_PRO_PRICE_ID, DEV_PRO_YEARLY_PRICE_ID])
+  })
+
+  describe("the Stripe price a checkout bills", () => {
+    const YEARLY_PLANS = PAID_PLANS.map((plan) => ({ ...plan, yearlyAmount: plan.amount * 10 }))
+
+    /** Opens a Pro checkout for `period` and answers the price Stripe was asked to bill, if any. */
+    async function billedPrice(
+      plans: readonly Plan[],
+      period: BillingPeriod,
+      extra: Record<string, string> = {},
+    ): Promise<{ ok: boolean; price: string | null }> {
+      let price: string | null = null
+      const env = createEnvReader({ BILLING_PROVIDER: "stripe", ...STRIPE_KEYS, ...extra })
+      const setup = readBillingSetup(env, "prod", {
+        ...API,
+        plans,
+        fetch: async (_input, init) => {
+          price = new URLSearchParams(String(init?.body)).get("line_items[0][price]")
+          return Response.json({ id: "cs_1", url: "https://checkout.stripe.com/c/cs_1" })
+        },
+      })
+      const result = await setup.provider!.createCheckout({
+        planId: PRO_PLAN_ID,
+        period,
+        successUrl: "https://app.example.com/done",
+        cancelUrl: "https://app.example.com/back",
+      })
+      return { ok: result.ok, price }
+    }
+
+    it("bills the monthly price for a Pro sold monthly only, and has no yearly one to bill", async () => {
+      expect(await billedPrice(PAID_PLANS, BillingPeriod.Monthly))
+        .toEqual({ ok: true, price: "price_placeholder" })
+      expect(await billedPrice(PAID_PLANS, BillingPeriod.Yearly)).toEqual({
+        ok: false,
+        price: null,
+      })
+    })
+
+    it("bills the yearly price for a yearly checkout once Pro is sold yearly", async () => {
+      const extra = { STRIPE_PRICE_PRO_YEARLY: "price_yearly_placeholder" }
+
+      expect(await billedPrice(YEARLY_PLANS, BillingPeriod.Yearly, extra))
+        .toEqual({ ok: true, price: "price_yearly_placeholder" })
+      expect(await billedPrice(YEARLY_PLANS, BillingPeriod.Monthly, extra))
+        .toEqual({ ok: true, price: "price_placeholder" })
+    })
   })
 
   it("answers a seat change in development with the asked quantity on the Pro plan", async () => {

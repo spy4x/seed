@@ -50,6 +50,7 @@ const ERROR_DEFINITIONS: Record<BillingFeatureErrorCode, ErrorDefinition> = {
   INVALID_REQUEST: { status: 400, message: "Request is invalid" },
   MFA_REQUIRED: { status: 401, message: "Complete MFA to manage billing" },
   NO_SUBSCRIPTION: { status: 409, message: "The group has no subscription to manage" },
+  PERIOD_NOT_OFFERED: { status: 400, message: "The plan is not sold for that billing period" },
   PROVIDER_ERROR: { status: 502, message: "The payment provider did not answer; try again" },
   REQUEST_ORIGIN_INVALID: { status: 403, message: "Request origin is invalid" },
   ROLE_INSUFFICIENT: { status: 403, message: "Only the owner can manage the group's billing" },
