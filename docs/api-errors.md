@@ -87,4 +87,4 @@ middleware's `{ error: "…" }` into this body, keeping its status, message and 
   `details.code` repeats the reason there, since the library's retry rule reads it.
 
 A REST read hands `error.reason` to `ReadRefused`, so an answer with no reason is taken for the
-proxy's, as before ([offline.md](offline.md)).
+proxy's, as before ([offline-data.md](offline-data.md#which-answers-count-as-unreachable)).

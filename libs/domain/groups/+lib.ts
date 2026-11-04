@@ -346,7 +346,7 @@ export interface GroupChangesPayload {
 
 /**
  * One page of what changed in a group after `after`: its notes and tags written since, and the
- * ones gone (`docs/offline.md`, "Reads: the device first"). Any member may read it; a non-member
+ * ones gone (`docs/offline-data.md`, "Notes and tags: the changes pull"). Any member may read it; a non-member
  * is told `GROUP_NOT_FOUND`.
  */
 export class GroupChangesQuery implements Query<GroupChangesPayload, ChangesAnswer> {
