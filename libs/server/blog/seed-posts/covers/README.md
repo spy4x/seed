@@ -55,8 +55,10 @@ What each cover shows, in one sentence; a post's `coverAlt` takes it.
 | `free-saas-boilerplate`                            | Seven young plants in starter pots on a wooden shelf behind an open garden gate.                                                     |
 | `install-seed-and-run-it-locally`                  | Four stepping stones leading to a small computer with a potted seedling on top, the last stone glowing.                              |
 | `makerkit-alternatives`                            | A large violet toolbox standing open with trays full of tools, beside a small closed grey toolbox with a padlock.                    |
+| `nextjs-saas-starter-alternatives`                 | A small wooden frame around a single seedling, in front of a finished glass greenhouse full of violet plants.                        |
 | `nine-languages-and-right-to-left-from-day-one`    | A violet globe circled by empty speech bubbles, with arrows turning both ways around it.                                             |
 | `offline-first-preact-signals-local-database-sync` | A plant thriving inside a glass terrarium on a table, linked to a cloud above by a dashed line with arrows both ways.                |
+| `open-saas-alternatives`                           | A glass greenhouse with a shared planter of violet plants inside and a row of five single small pots by its open door.               |
 | `passkeys-2fa-sessions-without-auth-saas`          | A key with a leaf for its handle floating towards a round violet door with two locks in a garden wall.                               |
 | `realtime-websocket-with-http-fallback`            | Two rocky islands joined by a bright bridge, with a small ferry waiting on the water below as a second way across.                   |
 | `saas-pegasus-alternatives`                        | A balance scale holding a locked treasure chest with a blank price tag on one side and two open seed packets on the other.           |
