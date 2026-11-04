@@ -1,7 +1,7 @@
 /**
- * Sign-in and sign-up by e-mail link (#391) in a browser DOM (happy-dom): the link pages, the
- * button on sign-in and sign-up, the last-sign-in hint, and the proof an account with only a link
- * confirms a step with. Typing, pressing through the app's callbacks, and where focus goes.
+ * Sign-in and sign-up by e-mail code (#391, #752) in a browser DOM (happy-dom): the code page,
+ * the button on sign-in and sign-up, the last-sign-in hint, and the proof an account with no
+ * password confirms a step with. Typing, pressing through the app's callbacks, and where focus goes.
  */
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import appEn from "@i18n/app/en.ts"
@@ -11,12 +11,7 @@ import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { AuthScreen, type AuthScreenProps } from "./auth-screen.tsx"
-import {
-  LinkOpenScreen,
-  type LinkOpenScreenProps,
-  LinkRequestScreen,
-  type LinkRequestScreenProps,
-} from "./sign-in-link-screen.tsx"
+import { SignInCodeScreen, type SignInCodeScreenProps } from "./sign-in-code-screen.tsx"
 import { ProviderProofNotice, providerProofOf } from "./provider-proof.tsx"
 import { providerOnlyNames } from "./profile-screen.tsx"
 
@@ -122,232 +117,182 @@ function text(): string {
   return (root?.textContent ?? "").replace(/\s+/g, " ")
 }
 
-const requestDefaults: LinkRequestScreenProps = {
+const codeDefaults: SignInCodeScreenProps = {
   email: "",
   onEmailChange: () => {},
   sentTo: null,
+  dead: false,
   fieldError: null,
   error: null,
   pending: false,
   onSubmit: () => {},
+  codeError: null,
+  checking: false,
+  onCode: () => {},
   resending: false,
   onResend: () => {},
   onDifferentAddress: () => {},
 }
 
-describe("LinkRequestScreen in the browser", () => {
-  it("starts in the address field and asks for a link through the app's callback", async () => {
+const sentDefaults: SignInCodeScreenProps = { ...codeDefaults, sentTo: "ada@example.com" }
+
+describe("SignInCodeScreen's address form in the browser", () => {
+  it("starts in the address field and asks for a code through the app's callback", async () => {
     const change = spy<[string]>()
     const send = spy<[]>()
     await mount(
-      <LinkRequestScreen {...requestDefaults} onEmailChange={change.fn} onSubmit={send.fn} />,
+      <SignInCodeScreen {...codeDefaults} onEmailChange={change.fn} onSubmit={send.fn} />,
     )
-    expect(focused()).toBe("sign-in-link-email")
+    expect(focused()).toBe("sign-in-code-email")
 
-    await type("[data-e2e=sign-in-link-email]", "ada@example.com")
+    await type("[data-e2e=sign-in-code-email]", "ada@example.com")
 
     expect(change.calls).toEqual([["ada@example.com"]])
-    expect(await submit("[data-e2e=sign-in-link-email]")).toBe(true)
+    expect(await submit("[data-e2e=sign-in-code-email]")).toBe(true)
     expect(send.calls).toHaveLength(1)
   })
 
   it("ties a refused address to its field and moves focus there", async () => {
-    await mount(<LinkRequestScreen {...requestDefaults} />)
-    find("[data-e2e=sign-in-link-submit]").focus()
+    await mount(<SignInCodeScreen {...codeDefaults} />)
+    find("[data-e2e=sign-in-code-submit]").focus()
 
-    await rerender(<LinkRequestScreen {...requestDefaults} fieldError="Enter an e-mail address" />)
+    await rerender(<SignInCodeScreen {...codeDefaults} fieldError="Enter an e-mail address" />)
 
-    const field = find("[data-e2e=sign-in-link-email]")
+    const field = find("[data-e2e=sign-in-code-email]")
     const describedBy = field.getAttribute("aria-describedby") ?? ""
     expect(describedBy.split(" ").map((id) => document.getElementById(id)?.textContent))
       .toContain("Enter an e-mail address")
-    expect(focused()).toBe("sign-in-link-email")
+    expect(focused()).toBe("sign-in-code-email")
   })
 
   it("moves focus to a failure that belongs to no field", async () => {
-    await mount(<LinkRequestScreen {...requestDefaults} />)
+    await mount(<SignInCodeScreen {...codeDefaults} />)
 
-    await rerender(<LinkRequestScreen {...requestDefaults} error="Too many links" />)
+    await rerender(<SignInCodeScreen {...codeDefaults} error="Too many codes" />)
 
-    expect(focused()).toBe("sign-in-link-error")
-    expect(find("[data-e2e=sign-in-link-error]").textContent).toBe("Too many links")
+    expect(focused()).toBe("sign-in-code-error")
+    expect(find("[data-e2e=sign-in-code-error]").textContent).toBe("Too many codes")
   })
 
-  it("says to check the inbox with focus on its heading, and offers no new link while the wait runs", async () => {
-    await mount(
-      <LinkRequestScreen
-        {...requestDefaults}
-        sentTo="ada@example.com"
-        readyAt={Date.now() + 44_500}
-      />,
-    )
+  it("tells a guest what signing in does to the guest account, and nobody else", async () => {
+    await mount(<SignInCodeScreen {...codeDefaults} />)
+    expect(root!.querySelector("[data-e2e=sign-in-code-guest]")).toBeNull()
 
-    expect(focused()).toBe("H1")
-    expect(find("h1").textContent).toBe("Check your inbox")
-    expect(text()).toContain("We sent a sign-in link to ada@example.com. It works once, for 10")
-    // The ticking number is never announced.
-    expect(find("[aria-live=off]").textContent).toBe(
-      "Not there? Check your spam folder. You can send a new link in 45 seconds.",
-    )
-    expect(text()).not.toContain("Send a new link")
-    // The next step is in the mail app: no primary button.
-    expect(root!.querySelectorAll("button[type=submit]")).toHaveLength(0)
-  })
-
-  it("offers a new link once the wait ends, and moves focus to the line saying it is on its way", async () => {
-    const resend = spy<[]>()
-    const sent = { ...requestDefaults, sentTo: "ada@example.com", onResend: resend.fn }
-    await mount(<LinkRequestScreen {...sent} />)
-
-    expect(find("[data-e2e=resend-button-send]").textContent).toBe("Send a new link")
-    await press("[data-e2e=resend-button-send]")
-    await rerender(<LinkRequestScreen {...sent} readyAt={Date.now() + 60_000} />)
-
-    expect(resend.calls).toHaveLength(1)
-    expect(focused()).toBe("resend-button-sent")
-    expect(find("[data-e2e=resend-button-sent]").textContent).toBe(
-      "A new link is on its way. Earlier links still work until one is used.",
-    )
-    expect(text()).not.toContain("Send a new link")
+    await rerender(<SignInCodeScreen {...codeDefaults} guest />)
+    expect(find("[data-e2e=sign-in-code-guest]").textContent).toBe(appEn["SignInCodeScreen.guest"])
   })
 
   it("tells the app when Back to sign in is pressed, so it can hand the address over", async () => {
     const back = spy<[]>()
-    await mount(
-      <LinkRequestScreen {...requestDefaults} email="ada@example.com" onBackToSignIn={back.fn} />,
-    )
+    await mount(<SignInCodeScreen {...codeDefaults} onBackToSignIn={back.fn} navigate={() => {}} />)
 
-    await press("[data-e2e=sign-in-link-back]")
+    await press("[data-e2e=sign-in-code-back]")
 
     expect(back.calls).toHaveLength(1)
-  })
-
-  it("leads back to sign-in from Check your inbox, handing the address over", async () => {
-    const back = spy<[]>()
-    await mount(
-      <LinkRequestScreen
-        {...requestDefaults}
-        email="ada@example.com"
-        sentTo="ada@example.com"
-        next="/groups"
-        onBackToSignIn={back.fn}
-      />,
-    )
-
-    const link = find("[data-e2e=sign-in-link-sent-back]")
-    expect(link.textContent).toBe("Back to sign in")
-    expect(link.getAttribute("href")).toBe("/sign-in?next=%2Fgroups")
-    await press("[data-e2e=sign-in-link-sent-back]")
-
-    expect(back.calls).toHaveLength(1)
-  })
-
-  it("draws Use a different address in the size of the sentence around it", async () => {
-    await mount(<LinkRequestScreen {...requestDefaults} sentTo="ada@example.com" />)
-
-    const button = find("[data-e2e=sign-in-link-different-address]")
-    // The sentence under the card is `text-sm`; the small button size would be `text-xs`.
-    expect(button.closest("p")!.classList.contains("text-sm")).toBe(true)
-    expect(button.classList.contains("text-xs")).toBe(false)
-    expect(button.classList.contains("text-sm")).toBe(true)
-  })
-
-  it("goes back to the form, focused on the address, after Use a different address", async () => {
-    const back = spy<[]>()
-    const sent = { ...requestDefaults, email: "ada@example.com", onDifferentAddress: back.fn }
-    await mount(<LinkRequestScreen {...sent} sentTo="ada@example.com" />)
-
-    await press("[data-e2e=sign-in-link-different-address]")
-    await rerender(<LinkRequestScreen {...sent} />)
-
-    expect(back.calls).toHaveLength(1)
-    expect(focused()).toBe("sign-in-link-email")
-    expect(find<HTMLInputElement>("[data-e2e=sign-in-link-email]").value).toBe("ada@example.com")
   })
 })
 
-const openDefaults: LinkOpenScreenProps = {
-  state: "ready",
-  signedInAs: null,
-  busy: false,
-  error: null,
-  onContinue: () => {},
-}
+describe("SignInCodeScreen's code step in the browser", () => {
+  it("names the address in bold, says how long the code works, and starts in the code field", async () => {
+    await mount(<SignInCodeScreen {...sentDefaults} />)
 
-describe("LinkOpenScreen in the browser", () => {
-  it("focuses Continue and spends the link only when it is pressed", async () => {
-    const go = spy<[]>()
-    await mount(<LinkOpenScreen {...openDefaults} onContinue={go.fn} />)
-
-    expect(focused()).toBe("sign-in-link-continue")
-    expect(go.calls).toHaveLength(0)
-    expect(await submit("[data-e2e=sign-in-link-continue]")).toBe(true)
-    expect(go.calls).toHaveLength(1)
+    expect(find("h1").textContent).toBe("Check your inbox")
+    expect(text()).toContain("We sent a code to ada@example.com. The code works for 10 minutes.")
+    expect(find("strong bdi").textContent).toBe("ada@example.com")
+    expect(focused()).toBe("mailed-code-step-code")
   })
 
-  it("tells a signed-in person whose account they leave, and offers to stay", async () => {
-    await mount(<LinkOpenScreen {...openDefaults} signedInAs="bob@example.com" />)
+  it("hands a pasted code to the app at once, without spaces", async () => {
+    const code = spy<[string]>()
+    await mount(<SignInCodeScreen {...sentDefaults} onCode={code.fn} />)
 
-    expect(find("[data-e2e=sign-in-link-signed-in-as]").textContent).toBe(
-      "You're signed in as bob@example.com. Continuing signs you in to the link's account instead.",
+    // An input event with no input type is how a paste or an autofill arrives.
+    await type("[data-e2e=mailed-code-step-code]", " Ab3_-x9Z ")
+
+    expect(code.calls).toEqual([["Ab3_-x9Z"]])
+  })
+
+  it("refuses a code of the wrong shape before the app counts a guess", async () => {
+    const code = spy<[string]>()
+    await mount(<SignInCodeScreen {...sentDefaults} onCode={code.fn} />)
+
+    await type("[data-e2e=mailed-code-step-code]", "Ab3+x9")
+    await submit("[data-e2e=mailed-code-step-code]")
+
+    expect(code.calls).toEqual([])
+    expect(text()).toContain("That doesn't look like the code we sent.")
+    expect(focused()).toBe("mailed-code-step-code")
+  })
+
+  it("shows a refused code under the field, its text selected for the next try", async () => {
+    await mount(<SignInCodeScreen {...sentDefaults} checking />)
+
+    await rerender(<SignInCodeScreen {...sentDefaults} codeError="That code is wrong." />)
+
+    const field = find("[data-e2e=mailed-code-step-code]")
+    expect(field.getAttribute("aria-invalid")).toBe("true")
+    expect(text()).toContain("That code is wrong.")
+    expect(focused()).toBe("mailed-code-step-code")
+  })
+
+  it("offers a new code only once the wait ends, through the app's callback", async () => {
+    const resend = spy<[]>()
+    await mount(
+      <SignInCodeScreen {...sentDefaults} readyAt={Date.now() + 44_500} onResend={resend.fn} />,
     )
-    expect(find("[data-e2e=sign-in-link-stay]").getAttribute("href")).toBe("/")
-    expect(focused()).toBe("sign-in-link-continue")
-  })
+    expect(root!.querySelector("[data-e2e=resend-button-send]")).toBeNull()
+    expect(find("[data-e2e=resend-button-waiting]").textContent).toContain("45")
 
-  it("moves focus to a failure under Continue", async () => {
-    await mount(<LinkOpenScreen {...openDefaults} />)
-
-    await rerender(<LinkOpenScreen {...openDefaults} error="Could not reach the server" />)
-
-    expect(focused()).toBe("sign-in-link-open-error")
-  })
-
-  it("offers a new link, focused, when the link no longer works or came incomplete", async () => {
-    for (
-      const [state, title] of [
-        ["refused", "This link no longer works"],
-        ["incomplete", "This link is incomplete"],
-      ] as const
-    ) {
-      await mount(<LinkOpenScreen {...openDefaults} state={state} next="/notes" />)
-
-      expect(find("h1").textContent).toBe(title)
-      expect(focused()).toBe("sign-in-link-new")
-      expect(find("[data-e2e=sign-in-link-new]").getAttribute("href"))
-        .toBe("/sign-in/link?next=%2Fnotes")
-      expect(root!.querySelector("[data-e2e=sign-in-link-continue]")).toBeNull()
-      await act(() => render(null, root!))
-    }
-  })
-
-  it("tells a guest what Continue does to the guest account, and nobody else", async () => {
-    await mount(<LinkOpenScreen {...openDefaults} guest />)
-
-    expect(find("[data-e2e=sign-in-link-guest]").textContent?.replace(/\s+/g, " ")).toBe(
-      "You're using the app as a guest. If you requested this link in this browser, continuing saves this guest account under the link's email. If that email already has an account, we'll ask you first.",
+    await rerender(
+      <SignInCodeScreen {...sentDefaults} readyAt={Date.now() - 1} onResend={resend.fn} />,
     )
-    expect(focused()).toBe("sign-in-link-continue")
-    // A guest has no other account to stay signed in to.
-    expect(root!.querySelector("[data-e2e=sign-in-link-stay]")).toBeNull()
+    await press("[data-e2e=resend-button-send]")
 
-    await rerender(<LinkOpenScreen {...openDefaults} />)
-    expect(text()).not.toContain("You are using the app as a guest")
+    expect(resend.calls).toHaveLength(1)
   })
 
-  it("tells a guest a link from another browser left the guest account as it was, focused on a new link", async () => {
-    await mount(<LinkOpenScreen {...openDefaults} state="askedElsewhere" next="/notes" />)
-
-    expect(find("h1").textContent).toBe("This link was requested in another browser")
-    expect(text()).toContain(
-      "It didn't sign you in, and your guest account hasn't changed. Request a new link in this browser to sign in here.",
+  it("goes back to the address through the app's callback, or to sign-in", async () => {
+    const different = spy<[]>()
+    const back = spy<[]>()
+    await mount(
+      <SignInCodeScreen
+        {...sentDefaults}
+        onDifferentAddress={different.fn}
+        onBackToSignIn={back.fn}
+        navigate={() => {}}
+      />,
     )
-    expect(focused()).toBe("sign-in-link-new")
-    expect(find("[data-e2e=sign-in-link-new]").getAttribute("href"))
-      .toBe("/sign-in/link?next=%2Fnotes")
-    const back = [...root!.querySelectorAll("a")].find((a) => a.textContent === "Back to the app")
-    expect(back?.getAttribute("href")).toBe("/")
-    expect(root!.querySelector("[data-e2e=sign-in-link-continue]")).toBeNull()
+
+    await press("[data-e2e=mailed-code-step-change-email]")
+    await press("[data-e2e=sign-in-code-step-back]")
+
+    expect(different.calls).toHaveLength(1)
+    expect(back.calls).toHaveLength(1)
+  })
+})
+
+describe("SignInCodeScreen with a dead code in the browser", () => {
+  it("says the code no longer works and focuses sending a new one", async () => {
+    const resend = spy<[]>()
+    const different = spy<[]>()
+    await mount(
+      <SignInCodeScreen
+        {...sentDefaults}
+        dead
+        onResend={resend.fn}
+        onDifferentAddress={different.fn}
+      />,
+    )
+
+    expect(find("h1").textContent).toBe("This code no longer works")
+    expect(root!.querySelector("[data-e2e=mailed-code-step-code]")).toBeNull()
+    expect(focused()).toBe("code-dead-new")
+
+    await press("[data-e2e=code-dead-new]")
+    await press("[data-e2e=code-dead-different-address]")
+
+    expect(resend.calls).toHaveLength(1)
+    expect(different.calls).toHaveLength(1)
   })
 })
 
@@ -365,7 +310,7 @@ function otherWaysIn(): (string | null)[] {
     .map((element) => element.getAttribute("data-e2e"))
 }
 
-describe("AuthScreen's sign-in link button", () => {
+describe("AuthScreen's sign-in code button", () => {
   it("sends what the login field holds through the app's callback, after the passkey", async () => {
     const link = spy<[string]>()
     await mount(
@@ -381,7 +326,7 @@ describe("AuthScreen's sign-in link button", () => {
     await press("[data-e2e=link-sign-in]")
 
     expect(link.calls).toEqual([["ada@example.com"]])
-    expect(find("[data-e2e=link-sign-in]").textContent).toBe("Email me a sign-in link")
+    expect(find("[data-e2e=link-sign-in]").textContent).toBe("Email me a sign-in code")
     expect(otherWaysIn()).toEqual(["passkey-sign-in", "link-sign-in", "provider-google"])
   })
 
@@ -411,7 +356,7 @@ describe("AuthScreen's sign-in link button", () => {
     await press("[data-e2e=link-sign-up]")
 
     expect(link.calls).toEqual([[""]])
-    expect(find("[data-e2e=link-sign-up]").textContent).toBe("Email me a sign-up link")
+    expect(find("[data-e2e=link-sign-up]").textContent).toBe("Email me a sign-up code")
     expect(otherWaysIn()).toEqual(["link-sign-up", "provider-google"])
   })
 
@@ -420,33 +365,33 @@ describe("AuthScreen's sign-in link button", () => {
     expect(otherWaysIn()).toEqual(["link-sign-up"])
   })
 
-  it("is left out when the app offers no link", async () => {
+  it("is left out when the app offers no code", async () => {
     await mount(<AuthScreen {...authDefaults} />)
     expect(root!.querySelector("[data-e2e=link-sign-in]")).toBeNull()
   })
 
-  it("names an e-mail link as the way the person last signed in", async () => {
+  it("names an e-mail code as the way the person last signed in", async () => {
     await mount(
       <AuthScreen {...authDefaults} lastSignIn={{ method: "link", email: "a***@example.com" }} />,
     )
     expect(find("[data-e2e=last-sign-in] span").textContent?.replace(/\s+/g, " ")).toBe(
-      "Last time you signed in with an email link (a***@example.com).",
+      "Last time you signed in with an email code (a***@example.com).",
     )
   })
 })
 
-describe("an account that signs in only with a link", () => {
-  it("confirms a step with a sign-in link, not with a password it does not have", async () => {
+describe("an account that signs in only with an e-mail code", () => {
+  it("confirms a step with an e-mail code, not with a password it does not have", async () => {
     const proof = providerProofOf([], false, true)
     expect(proof).toEqual({ providers: [], passkeys: false, emailLink: true, fresh: false })
     expect(providerProofOf([], false)).toBe(null)
-    expect(providerOnlyNames(EN, [], true)).toBe("a sign-in link")
+    expect(providerOnlyNames(EN, [], true)).toBe("an email code")
     expect(providerOnlyNames(EN, [], false)).toBe(null)
 
     await mount(<ProviderProofNotice proof={proof!} next="/profile/danger-zone" />)
 
-    expect(text()).toContain("Sign in with a sign-in link again")
+    expect(text()).toContain("Email me a sign-in code")
     expect(find("[data-e2e=provider-proof-link]").getAttribute("href"))
-      .toBe("/sign-in/link?next=%2Fprofile%2Fdanger-zone")
+      .toBe("/sign-in/code?next=%2Fprofile%2Fdanger-zone")
   })
 })

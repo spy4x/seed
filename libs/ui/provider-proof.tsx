@@ -103,13 +103,13 @@ export function ProviderProofNotice(
           </Button>
         ))}
         {proof.emailLink && (
-          // A plain link: the link's page reloads into the app once used.
+          // A plain link: the code page reloads into the app once the code is used.
           <Button
-            href={withNext(SCREEN_PATHS.signInLink, next)}
+            href={withNext(SCREEN_PATHS.signInCode, next)}
             variant="secondary"
             data-e2e="provider-proof-link"
           >
-            {t.t(`AuthScreen.emailSignInLink`)}
+            {t.t(`AuthScreen.emailSignInCode`)}
           </Button>
         )}
       </Cluster>

@@ -675,7 +675,11 @@ export const PASSWORD_RESET_CODE_MINUTES = SIGN_UP_CODE_MINUTES
 /** Characters in a mailed code: 6 random bytes as base64url (`EMAIL_CODE_BYTES`). */
 export const MAILED_CODE_LENGTH = 8
 
-const MAILED_CODE_PATTERN = /^[A-Za-z0-9_-]{8}$/
+/**
+ * What a whole mailed code looks like once whitespace is gone: {@link MAILED_CODE_LENGTH}
+ * base64url characters. The code step submits a pasted code by itself when it matches.
+ */
+export const MAILED_CODE_PATTERN = /^[A-Za-z0-9_-]{8}$/
 
 /**
  * A mailed code as typed or pasted, cleaned: every whitespace character removed (a mail app often
@@ -741,16 +745,6 @@ export interface PasswordResetVerified {
    */
   token: string
 }
-
-/**
- * Kept only until the SPA's code step replaces the link pages (#752): the SPA still names these.
- * The API no longer sends this code, links no longer exist, and a link page's request now fails.
- */
-export const SIGN_IN_LINK_MINUTES = SIGN_IN_CODE_MINUTES
-/** See {@link SIGN_IN_LINK_MINUTES}. */
-export type SignInLinkRedeemed = SignInCodeAnswer
-/** See {@link SIGN_IN_LINK_MINUTES}. */
-export const SIGN_IN_LINK_ASKED_ELSEWHERE_CODE = "SIGN_IN_LINK_ASKED_ELSEWHERE"
 
 /** What `GET /auth/sign-up/pending` answers: the sign-up that waits, or `null` when none does. */
 export interface PendingSignUpResponse {

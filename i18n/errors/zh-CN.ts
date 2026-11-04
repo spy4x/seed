@@ -151,7 +151,6 @@ export default {
   "Reason.SAME_GROUP": "它已经在那个群组中了。",
   "Reason.SEARCH_RATE_LIMITED": "搜索次数过多，请一分钟后再试。",
   "Reason.SEAT_PRICE_NOT_ACCEPTED": "请确认每增加一位新成员，群组的费用都会相应增加。",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE": "这个链接是在另一个浏览器中申请的，请在那个浏览器中打开。",
   "Reason.SLUG_LOCKED": "文章发布后地址就会锁定。如需修改，请使用“更改 URL”。",
   "Reason.SLUG_TAKEN": "这个地址已被占用，请换一个。",
   "Reason.SLUG_UNCHANGED": "地址已经是这个了。",

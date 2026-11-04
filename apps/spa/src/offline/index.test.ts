@@ -402,7 +402,7 @@ describe("what the device keeps", () => {
       "last-sign-in": `{"method":"password","email":"a***@example.com"}`,
     })
     const sent = `{"email":"ann@example.com","sentAt":1}`
-    const session = webStorage({ "draft": "Private text", "sign-in-link:sent": sent })
+    const session = webStorage({ "draft": "Private text", "sign-in-code:sent": sent })
     const restore = installWebStorage(local, session)
     try {
       await signOut(storage)
@@ -419,7 +419,7 @@ describe("what the device keeps", () => {
       "theme",
     ])
     // The link this tab asked for stays, so "Check your inbox" survives a signed-out reload.
-    expect([...session.entries]).toEqual([["sign-in-link:sent", sent]])
+    expect([...session.entries]).toEqual([["sign-in-code:sent", sent]])
   })
 
   it("saves no answer that arrives after the sign-out", async () => {

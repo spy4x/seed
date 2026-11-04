@@ -180,8 +180,6 @@ export default {
     "Zu viele Suchen. Warte eine Minute und versuche es dann noch einmal.",
   "Reason.SEAT_PRICE_NOT_ACCEPTED":
     "Bestätige, dass jedes neue Mitglied die Rechnung der Gruppe erhöht.",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE":
-    "Dieser Link wurde in einem anderen Browser angefordert. Öffne ihn dort.",
   "Reason.SLUG_LOCKED":
     "Nach dem Veröffentlichen ist die Adresse gesperrt. Ändere sie über „URL ändern“.",
   "Reason.SLUG_TAKEN": "Diese Adresse ist schon vergeben. Nimm bitte eine andere.",

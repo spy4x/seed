@@ -380,7 +380,7 @@ export function AuthScreen(
         onClick={() => onEmailLink(login.current.trim())}
         data-e2e={screen === "sign-in" ? "link-sign-in" : "link-sign-up"}
       >
-        {t.t(screen === "sign-in" ? `AuthScreen.emailSignInLink` : `AuthScreen.emailSignUpLink`)}
+        {t.t(screen === "sign-in" ? `AuthScreen.emailSignInCode` : `AuthScreen.emailSignUpCode`)}
       </Button>
     </li>
   )
