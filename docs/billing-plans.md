@@ -71,7 +71,7 @@ says what it needs, and the plan answers.
 
 A limit of `null` means no cap. Each plan also has `attachments` rules for one file and one note
 (`maxFileBytes` 2 MiB, `maxPerNote` 10 on both plans). They are not sold by a plan, so they hold
-with billing off too ([files.md](files.md)).
+with billing off too ([Limits](attachments-and-pictures.md#limits)).
 
 **Only a promotion is a paid feature.** Any plan may give a member a lower role or remove them. A
 group back on Free can still demote an admin it made on Pro.
