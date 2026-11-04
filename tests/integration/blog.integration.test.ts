@@ -1784,3 +1784,33 @@ Deno.test(`blog: a post file's cover, intro and related feature are written with
     expect((await read()).relatedFeature).toBeNull()
   })
 })
+
+Deno.test(`blog: an admin save of a post file with a cover keeps the cover and its description (#733)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    await upsertSeedPosts(sql, [
+      seedPost(`covered`, {
+        fields: fields(`covered`, { coverAlt: `A seedling` }),
+        coverFile: `covered.webp`,
+      }),
+    ])
+    const { id, version } = await bySlug(sql, `covered`)
+    // What the editor sends for this post, parsed as `POST /admin/blog/posts/:id` parses it.
+    const edit = parseBlogPostEdit({
+      title: `Covered, edited`,
+      slug: `covered`,
+      description: `About covered.`,
+      bodyMd: `Hello.`,
+      coverUrl: null,
+      coverAlt: `A seedling`,
+    })
+    const saved = await blog.update(id, version, edit, false, maya)
+
+    expect([saved.title, saved.coverFile, saved.coverAlt]).toEqual([
+      `Covered, edited`,
+      `covered.webp`,
+      `A seedling`,
+    ])
+  })
+})

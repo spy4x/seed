@@ -296,6 +296,9 @@ export class PostgresBlogRepository {
       const current = await lock(tx, id, version)
       const fields: BlogPostFields = {
         ...edit,
+        // A post file's cover (`cover_file`) needs its description, which the admin app never
+        // edits: the parser drops the description of a post with no cover address (#733).
+        coverAlt: edit.coverAlt ?? (current.coverFile === null ? null : current.coverAlt),
         language: edit.language ?? current.language,
         translationOf: edit.translationOf === undefined
           ? current.translationOf
