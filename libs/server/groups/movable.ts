@@ -20,10 +20,10 @@ export interface MoveAllContext {
 }
 
 /**
- * An aggregate that joins "move all of a group's data" (`docs/aggregates.md`, "Making an aggregate
- * movable"). The mover locks both groups, checks the actor's rights, records the changes and the
- * audit events, and calls each registered aggregate in the same transaction, so one that throws
- * takes the others' moves back with it.
+ * An aggregate that joins "move all of a group's data" (`docs/aggregate-lifecycle.md`, "Register it
+ * for move all data"). The mover locks both groups, checks the actor's rights, records the changes
+ * and the audit events, and calls each registered aggregate in the same transaction, so one that
+ * throws takes the others' moves back with it.
  */
 export interface MovableAggregate {
   /** Names the aggregate in the move's result and its audit details, such as `notes`. */

@@ -5,14 +5,20 @@ import { API_DOCS_PATH } from "./api-docs.ts"
 import { REPOSITORY_URL } from "./brand.ts"
 import { CHANGELOG } from "./changelog.ts"
 import adminModules from "../../docs/admin-modules.md" with { type: "text" }
+import aggregateExtras from "../../docs/aggregate-extras.md" with { type: "text" }
+import aggregateLifecycle from "../../docs/aggregate-lifecycle.md" with { type: "text" }
+import aggregateOffline from "../../docs/aggregate-offline.md" with { type: "text" }
+import aggregateRelations from "../../docs/aggregate-relations.md" with { type: "text" }
 import aggregates from "../../docs/aggregates.md" with { type: "text" }
 import apiErrors from "../../docs/api-errors.md" with { type: "text" }
 import apps from "../../docs/apps.md" with { type: "text" }
+import attachmentsAndPictures from "../../docs/attachments-and-pictures.md" with { type: "text" }
 import backups from "../../docs/backups.md" with { type: "text" }
 import billing from "../../docs/billing.md" with { type: "text" }
 import billingLifecycle from "../../docs/billing-lifecycle.md" with { type: "text" }
 import billingOperator from "../../docs/billing-operator.md" with { type: "text" }
 import billingPlans from "../../docs/billing-plans.md" with { type: "text" }
+import browserTests from "../../docs/browser-tests.md" with { type: "text" }
 import capacity from "../../docs/capacity.md" with { type: "text" }
 import catalog from "../../docs/catalog.md" with { type: "text" }
 import certificates from "../../docs/certificates.md" with { type: "text" }
@@ -20,12 +26,15 @@ import dataExport from "../../docs/data-export.md" with { type: "text" }
 import deploy from "../../docs/deploy.md" with { type: "text" }
 import deployUpdates from "../../docs/deploy-updates.md" with { type: "text" }
 import development from "../../docs/development.md" with { type: "text" }
+import fileUploads from "../../docs/file-uploads.md" with { type: "text" }
 import files from "../../docs/files.md" with { type: "text" }
+import firstFeature from "../../docs/first-feature.md" with { type: "text" }
 import getStarted from "../../docs/get-started.md" with { type: "text" }
 import guests from "../../docs/guests.md" with { type: "text" }
 import ids from "../../docs/ids.md" with { type: "text" }
 import largeGroup from "../../docs/large-group.md" with { type: "text" }
 import loadTests from "../../docs/load-tests.md" with { type: "text" }
+import localStack from "../../docs/local-stack.md" with { type: "text" }
 import offline from "../../docs/offline.md" with { type: "text" }
 import offlineAppShell from "../../docs/offline-app-shell.md" with { type: "text" }
 import offlineData from "../../docs/offline-data.md" with { type: "text" }
@@ -71,6 +80,8 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         summary: `Start a product, take Seed's later changes, give back to Seed.`,
       },
       { slug: `start-a-product`, summary: `What a new product deletes, replaces or sets.` },
+      { slug: `local-stack`, summary: `Run Seed on your machine with demo data, and reset it.` },
+      { slug: `first-feature`, summary: `A new kind of record, from the database to the screen.` },
     ],
   },
   {
@@ -99,7 +110,11 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         slug: `billing-operator`,
         summary: `The admin panel's Billing pages, transfers, and Stripe's dashboard.`,
       },
-      { slug: `files`, summary: `Garage or another S3 store, signed uploads and downloads.` },
+      { slug: `files`, summary: `Garage or another S3 store, its settings and the upload budget.` },
+      {
+        slug: `file-uploads`,
+        summary: `Upload and download files from a feature, and have photos made safe and small.`,
+      },
       { slug: `data-export`, summary: `Download my data, what the ZIP holds and how it expires.` },
       {
         slug: `catalog`,
@@ -114,11 +129,28 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         summary: `Turn the offline layer or the WebSocket module off, or remove them.`,
       },
       { slug: `aggregates`, summary: `Every file of the notes aggregate, in order.` },
+      { slug: `aggregate-offline`, summary: `Read, and write, an aggregate with no network.` },
+      {
+        slug: `aggregate-relations`,
+        summary: `One aggregate naming another, with tags and notes as the example.`,
+      },
+      {
+        slug: `aggregate-lifecycle`,
+        summary: `Restore after delete, a move to another group, and the data export.`,
+      },
+      {
+        slug: `aggregate-extras`,
+        summary: `Group settings, the overview, the inbox and the rest of the app.`,
+      },
       {
         slug: `admin-modules`,
         summary: `The operator area as a list of modules, and how to add one.`,
       },
       { slug: `load-tests`, summary: `Run the k6 scenarios and build a large test group.` },
+      {
+        slug: `browser-tests`,
+        summary: `The Playwright specs in e2e/, and which of them CI runs.`,
+      },
     ],
   },
   {
@@ -150,13 +182,17 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         slug: `offline-app-shell`,
         summary: `How the service worker starts the app with no network.`,
       },
+      {
+        slug: `attachments-and-pictures`,
+        summary: `Files kept on a note, and a person's picture in place of their initials.`,
+      },
       { slug: `large-group`, summary: `How one group behaves from a thousand notes to a million.` },
     ],
   },
   {
     title: `Reference`,
     docs: [
-      { slug: `development`, summary: `The local stack, every task, the browser tests and CI.` },
+      { slug: `development`, summary: `Every deno task, what it does and where it is explained.` },
       { slug: `settings`, summary: `Every variable of the env file.` },
       { slug: `api-errors`, summary: `The one error body every failed API answer has.` },
       {
@@ -170,14 +206,20 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
 /** Each published guide's Markdown, by slug. */
 const SOURCES: Readonly<Record<string, string>> = {
   "admin-modules": adminModules,
+  "aggregate-extras": aggregateExtras,
+  "aggregate-lifecycle": aggregateLifecycle,
+  "aggregate-offline": aggregateOffline,
+  "aggregate-relations": aggregateRelations,
   aggregates,
   "api-errors": apiErrors,
   apps,
+  "attachments-and-pictures": attachmentsAndPictures,
   backups,
   billing,
   "billing-lifecycle": billingLifecycle,
   "billing-operator": billingOperator,
   "billing-plans": billingPlans,
+  "browser-tests": browserTests,
   capacity,
   catalog,
   certificates,
@@ -185,12 +227,15 @@ const SOURCES: Readonly<Record<string, string>> = {
   deploy,
   "deploy-updates": deployUpdates,
   development,
+  "file-uploads": fileUploads,
   files,
+  "first-feature": firstFeature,
   "get-started": getStarted,
   guests,
   ids,
   "large-group": largeGroup,
   "load-tests": loadTests,
+  "local-stack": localStack,
   offline,
   "offline-app-shell": offlineAppShell,
   "offline-data": offlineData,

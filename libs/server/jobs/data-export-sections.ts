@@ -1,7 +1,7 @@
 /**
  * What a person's data export holds (#229, docs/data-export.md): one section per kind of row, each
  * a list of rows in the JSON file and a CSV file of its own. A new table that holds a person's
- * data adds its section here (docs/aggregates.md, "The person's data export").
+ * data adds its section here (docs/aggregate-lifecycle.md, "Put it in the person's data export").
  *
  * The rule every section keeps: a row is in the export only when it is about the person or was
  * made by them, and it carries no other person's data and no secret. In a shared group that means

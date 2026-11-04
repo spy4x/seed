@@ -5,7 +5,7 @@ import { canMutateNotes, GroupError, type GroupRole, parseGroupId } from "./+lib
 /**
  * The events a move of all of a group's data writes, once per group: to the source's activity log
  * and change sequence ("out") and to the target's ("in"). A product's aggregates add no event of
- * their own to this move; they only register what moves (`docs/aggregates.md`).
+ * their own to this move; they only register what moves (`docs/aggregate-lifecycle.md`).
  */
 export const GROUP_DATA_EVENTS = {
   movedOut: "group.data_moved_out",

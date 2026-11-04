@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 680" width="960" height="680" role="img" aria-labelledby="title desc">
-  <title id="title">template architecture: what exists today and what is planned</title>
-  <desc id="desc">Clients: apps/spa, a Preact and Vite PWA with sign-up, sign-in, TOTP and profile, talks to apps/api over REST and WebSocket; an IndexedDB offline store keeps the last notes and groups and queues writes made offline. apps/mpa is a Fresh server-rendered shell with /health; its REST calls to the API are planned. Servers: apps/api on Hono handles auth, groups, CQRS dispatch and web push; apps/worker drains outbox_events. Data: Postgres is authoritative, Valkey is the cache; Docker Compose also runs Traefik, VictoriaMetrics, VictoriaLogs and Grafana. Shared code: libs/domain, libs/server, libs/client and the @spy4x packages on JSR.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 700" width="960" height="700" role="img" aria-labelledby="title desc">
+  <title id="title">Seed architecture: apps, services and shared code</title>
+  <desc id="desc">Clients: apps/spa, the product, a Preact and Vite PWA with an IndexedDB offline copy that pulls what changed since its cursor; apps/admin, the operator area on its own host; apps/mpa, the public website on Fresh, rendered on the server. All three call apps/api, the SPA over REST, the call route and the WebSocket, the admin app over REST, the MPA over REST for the blog, contact links, the catalog and the newsletter. Servers: apps/api on Hono (auth, CQRS dispatch, REST, the call route, the WebSocket) and apps/worker, which runs the outbox jobs. Data: Postgres 18 behind PgBouncer is the source of truth, Valkey holds rate limits, sign-in flows and the cache, and Garage stores files with the files profile. Docker Compose also runs Traefik and, with the monitoring profile, VictoriaMetrics, VictoriaLogs and Grafana. Shared code: libs/domain, libs/server, libs/ui, libs/platform and the @spy4x packages on JSR.</desc>
   <style>
     .bg { fill: #ffffff; stroke: #d0d7de; }
     .t { fill: #1f2328; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; }
@@ -13,9 +13,7 @@
     .data { stroke: #1a7f37; }
     .lib { stroke: #8250df; }
     .ops { stroke: #d0d7de; }
-    .plan { fill: none; stroke: #818b98; stroke-width: 1.5; stroke-dasharray: 6 4; }
     .line { stroke: #59636e; stroke-width: 1.5; fill: none; }
-    .dash { stroke-dasharray: 6 4; }
     .head { fill: #59636e; }
     @media (prefers-color-scheme: dark) {
       .bg { fill: #0d1117; stroke: #30363d; }
@@ -26,7 +24,6 @@
       .data { stroke: #3fb950; }
       .lib { stroke: #ab7df8; }
       .ops { stroke: #30363d; }
-      .plan { stroke: #6e7681; }
       .line { stroke: #9198a1; }
       .head { fill: #9198a1; }
     }
@@ -37,93 +34,98 @@
     </marker>
   </defs>
 
-  <rect class="bg" x="0.5" y="0.5" width="959" height="679" rx="12"/>
+  <rect class="bg" x="0.5" y="0.5" width="959" height="699" rx="12"/>
 
-  <text class="t title" x="40" y="44">template: what runs today</text>
-  <line class="line" x1="640" y1="38" x2="690" y2="38"/>
-  <text class="t m" x="700" y="42">exists</text>
-  <line class="line dash" x1="770" y1="38" x2="820" y2="38"/>
-  <text class="t m" x="830" y="42">planned</text>
+  <text class="t title" x="40" y="44">Seed: what runs</text>
 
   <!-- Clients -->
   <text class="t tier" x="40" y="82">CLIENTS</text>
-  <rect class="box app" x="40" y="92" width="240" height="86" rx="8"/>
+  <rect class="box app" x="40" y="92" width="280" height="96" rx="8"/>
   <text class="t h" x="56" y="118">apps/spa</text>
-  <text class="t" x="56" y="140">Preact + Vite PWA</text>
-  <text class="t m" x="56" y="160">sign-up, sign-in, TOTP, profile</text>
+  <text class="t" x="56" y="140">the product: Preact + Vite PWA</text>
+  <text class="t m" x="56" y="160">IndexedDB offline copy,</text>
+  <text class="t m" x="56" y="178">pulls changes since its cursor</text>
 
-  <rect class="plan" x="300" y="92" width="200" height="86" rx="8"/>
-  <text class="t h m" x="316" y="118">Device store</text>
-  <text class="t m" x="316" y="140">offline projection</text>
-  <text class="t m" x="316" y="160">planned</text>
-  <line class="line dash" x1="280" y1="135" x2="300" y2="135"/>
+  <rect class="box app" x="340" y="92" width="280" height="96" rx="8"/>
+  <text class="t h" x="356" y="118">apps/admin</text>
+  <text class="t" x="356" y="140">the operator area</text>
+  <text class="t m" x="356" y="160">on its own host, one module</text>
+  <text class="t m" x="356" y="178">per feature</text>
 
-  <rect class="box app" x="660" y="92" width="260" height="86" rx="8"/>
-  <text class="t h" x="676" y="118">apps/mpa</text>
-  <text class="t" x="676" y="140">Fresh, server-rendered</text>
-  <text class="t m" x="676" y="160">page shell and /health</text>
+  <rect class="box app" x="640" y="92" width="280" height="96" rx="8"/>
+  <text class="t h" x="656" y="118">apps/mpa</text>
+  <text class="t" x="656" y="140">the public website: Fresh</text>
+  <text class="t m" x="656" y="160">rendered on the server,</text>
+  <text class="t m" x="656" y="178">works without JavaScript</text>
 
   <!-- Client to server edges -->
-  <line class="line" x1="200" y1="178" x2="200" y2="248" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
-  <text class="t m" x="210" y="218">REST + WebSocket</text>
-  <line class="line dash" x1="400" y1="178" x2="400" y2="248" marker-end="url(#arrow)"/>
-  <text class="t m" x="410" y="196">group sync:</text>
-  <text class="t m" x="410" y="212">cursor pull (planned)</text>
-  <line class="line dash" x1="720" y1="178" x2="444" y2="248" marker-end="url(#arrow)"/>
-  <text class="t m" x="608" y="226">REST (planned)</text>
+  <line class="line" x1="180" y1="188" x2="240" y2="258" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="t m" x="56" y="226">REST, call route,</text>
+  <text class="t m" x="56" y="242">WebSocket</text>
+  <line class="line" x1="480" y1="188" x2="400" y2="258" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text class="t m" x="452" y="232">REST</text>
+  <line class="line" x1="780" y1="188" x2="450" y2="270" marker-end="url(#arrow)"/>
+  <text class="t m" x="664" y="226">REST: blog, catalog,</text>
+  <text class="t m" x="664" y="242">newsletter</text>
 
   <!-- Servers -->
-  <text class="t tier" x="40" y="242">SERVERS</text>
-  <rect class="box app" x="140" y="252" width="300" height="86" rx="8"/>
-  <text class="t h" x="156" y="278">apps/api</text>
-  <text class="t" x="156" y="300">Hono: REST and WebSocket</text>
-  <text class="t m" x="156" y="320">auth, groups, CQRS dispatch, web push</text>
+  <text class="t tier" x="40" y="282">SERVERS</text>
+  <rect class="box app" x="140" y="262" width="320" height="86" rx="8"/>
+  <text class="t h" x="156" y="288">apps/api</text>
+  <text class="t" x="156" y="310">Hono: REST, call route, WebSocket</text>
+  <text class="t m" x="156" y="330">auth, CQRS dispatch, operation budget</text>
 
-  <rect class="box app" x="620" y="252" width="300" height="86" rx="8"/>
-  <text class="t h" x="636" y="278">apps/worker</text>
-  <text class="t" x="636" y="300">drains outbox_events</text>
-  <text class="t m" x="636" y="320">logs each event; handlers planned</text>
+  <rect class="box app" x="600" y="262" width="320" height="86" rx="8"/>
+  <text class="t h" x="616" y="288">apps/worker</text>
+  <text class="t" x="616" y="310">runs the outbox jobs</text>
+  <text class="t m" x="616" y="330">mail, Telegram, exports, nightly cleanup</text>
 
   <!-- Server to data edges -->
-  <line class="line" x1="190" y1="338" x2="150" y2="408" marker-end="url(#arrow)"/>
-  <line class="line" x1="350" y1="338" x2="350" y2="408" marker-end="url(#arrow)"/>
-  <line class="line" x1="680" y1="338" x2="580" y2="408" marker-end="url(#arrow)"/>
+  <line class="line" x1="190" y1="348" x2="130" y2="418" marker-end="url(#arrow)"/>
+  <line class="line" x1="340" y1="348" x2="380" y2="418" marker-end="url(#arrow)"/>
+  <line class="line" x1="440" y1="348" x2="690" y2="418" marker-end="url(#arrow)"/>
+  <line class="line" x1="700" y1="348" x2="480" y2="418" marker-end="url(#arrow)"/>
+  <line class="line" x1="820" y1="348" x2="780" y2="418" marker-end="url(#arrow)"/>
 
   <!-- Data -->
-  <text class="t tier" x="40" y="402">DATA</text>
-  <rect class="box data" x="40" y="412" width="190" height="76" rx="8"/>
-  <text class="t h" x="56" y="438">Valkey</text>
-  <text class="t m" x="56" y="460">API cache</text>
+  <text class="t tier" x="40" y="412">DATA</text>
+  <rect class="box data" x="40" y="422" width="200" height="86" rx="8"/>
+  <text class="t h" x="56" y="448">Valkey</text>
+  <text class="t m" x="56" y="470">rate limits, sign-in flows,</text>
+  <text class="t m" x="56" y="488">API cache</text>
 
-  <rect class="box data" x="250" y="412" width="360" height="76" rx="8"/>
-  <text class="t h" x="266" y="438">Postgres 18</text>
-  <text class="t m" x="266" y="460">authoritative: users, groups, outbox_events</text>
+  <rect class="box data" x="260" y="422" width="360" height="86" rx="8"/>
+  <text class="t h" x="276" y="448">Postgres 18, behind PgBouncer</text>
+  <text class="t m" x="276" y="470">the source of truth: records,</text>
+  <text class="t m" x="276" y="488">outbox_events, the change log</text>
 
-  <rect class="box ops" x="650" y="412" width="270" height="76" rx="8"/>
-  <text class="t" x="666" y="438">Docker Compose also runs</text>
-  <text class="t m" x="666" y="460">Traefik, VictoriaMetrics,</text>
-  <text class="t m" x="666" y="478">VictoriaLogs, Grafana</text>
+  <rect class="box data" x="640" y="422" width="280" height="86" rx="8"/>
+  <text class="t h" x="656" y="448">Garage</text>
+  <text class="t m" x="656" y="470">S3 store for uploaded files</text>
+  <text class="t m" x="656" y="488">files profile</text>
 
   <!-- Shared code -->
-  <text class="t tier" x="40" y="532">SHARED CODE</text>
-  <rect class="box lib" x="40" y="542" width="205" height="86" rx="8"/>
-  <text class="t h" x="56" y="568">libs/domain</text>
-  <text class="t m" x="56" y="590">groups, identity:</text>
-  <text class="t m" x="56" y="608">rules and contracts</text>
+  <text class="t tier" x="40" y="542">SHARED CODE</text>
+  <rect class="box lib" x="40" y="552" width="160" height="76" rx="8"/>
+  <text class="t h" x="56" y="578">libs/domain</text>
+  <text class="t m" x="56" y="600">rules, commands</text>
 
-  <rect class="box lib" x="261" y="542" width="205" height="86" rx="8"/>
-  <text class="t h" x="277" y="568">libs/server</text>
-  <text class="t m" x="277" y="590">migrations,</text>
-  <text class="t m" x="277" y="608">group repository</text>
+  <rect class="box lib" x="214" y="552" width="160" height="76" rx="8"/>
+  <text class="t h" x="230" y="578">libs/server</text>
+  <text class="t m" x="230" y="600">repositories, jobs</text>
 
-  <rect class="box lib" x="482" y="542" width="205" height="86" rx="8"/>
-  <text class="t h" x="498" y="568">libs/client</text>
-  <text class="t m" x="498" y="590">Vite env helper</text>
+  <rect class="box lib" x="388" y="552" width="160" height="76" rx="8"/>
+  <text class="t h" x="404" y="578">libs/ui</text>
+  <text class="t m" x="404" y="600">product screens</text>
 
-  <rect class="box lib" x="703" y="542" width="217" height="86" rx="8"/>
-  <text class="t h" x="719" y="568">@spy4x/* on JSR</text>
-  <text class="t m" x="719" y="590">CQRS bus, auth, outbox,</text>
-  <text class="t m" x="719" y="608">key-value store, validation</text>
+  <rect class="box lib" x="562" y="552" width="160" height="76" rx="8"/>
+  <text class="t h" x="578" y="578">libs/platform</text>
+  <text class="t m" x="578" y="600">i18n, shortcuts</text>
 
-  <text class="t m" x="40" y="656">Every app runs on Deno. Solid boxes and lines exist in the code today; dashed ones are planned in ADR 001 and ADR 002.</text>
+  <rect class="box lib" x="736" y="552" width="184" height="76" rx="8"/>
+  <text class="t h" x="752" y="578">@spy4x/* on JSR</text>
+  <text class="t m" x="752" y="600">CQRS, auth, outbox, UI</text>
+
+  <text class="t m" x="40" y="664">Docker Compose also runs Traefik and, with the monitoring profile, VictoriaMetrics, VictoriaLogs and Grafana.</text>
+  <text class="t m" x="40" y="684">Every app runs on Deno.</text>
 </svg>
