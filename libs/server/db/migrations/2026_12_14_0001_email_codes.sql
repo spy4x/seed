@@ -35,3 +35,8 @@ DELETE FROM password_reset_requests;
 ALTER TABLE password_reset_requests
     ADD COLUMN expires_at TIMESTAMPTZ NOT NULL,
     ADD COLUMN by_operator BOOLEAN DEFAULT false NOT NULL;
+
+-- A link mail still queued has no handler in the worker that ships with this migration, which would
+-- fail it twenty times and log every failure. Its request is gone above, so the job goes too. A
+-- queued reset mail keeps its kind: its request is gone, so its handler finds nothing and ends.
+DELETE FROM outbox_events WHERE aggregate_type = 'job' AND event_kind = 'auth.sign-in-link-mail';
