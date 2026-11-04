@@ -44,34 +44,38 @@ import { MemoryLockoutStore } from "@spy4x/server/lockout/memory-store"
 import { PASSWORD_LOCK_POLICY } from "../services/password-failures.ts"
 import { PasswordLockedError } from "../services/password-locked.ts"
 import { createKvStore, type RateLimitStore } from "@spy4x/platform/rate-limit"
+import { ACCOUNT_DELETE_BLOCKED, ACCOUNT_DELETE_CODE_REQUIRED } from "./auth-account-deletion.ts"
 import {
-  ACCOUNT_DELETE_BLOCKED,
-  ACCOUNT_DELETE_CODE_REQUIRED,
-  createAuthRoute,
-  EMAIL_ALREADY_CARRIED,
-  EMAIL_CHANGE_TOO_MANY,
   EMAIL_CODE_REFUSED,
-  EMAIL_NOTHING_TO_VERIFY,
-  EMAIL_TAKEN,
   MAILED_CODE_DEAD,
   MAILED_CODE_WRONG,
-  PASSWORD_ALREADY_SET,
-  PASSWORD_NEEDS_ADDRESS,
+  PROVIDER_PROOF_REQUIRED,
+} from "./auth-answers.ts"
+import {
+  EMAIL_ALREADY_CARRIED,
+  EMAIL_CHANGE_TOO_MANY,
+  EMAIL_NOTHING_TO_VERIFY,
+  EMAIL_TAKEN,
+} from "./auth-email-change.ts"
+import {
   PASSWORD_RESET_REFUSED,
   PASSWORD_RESET_REQUESTED,
   PASSWORD_RESET_TOO_MANY,
+} from "./auth-password-reset.ts"
+import {
+  PASSWORD_ALREADY_SET,
+  PASSWORD_NEEDS_ADDRESS,
   PASSWORD_SET_REFUSED,
-  PROVIDER_PROOF_REQUIRED,
-  SESSION_IS_CURRENT,
-  SESSION_NOT_FOUND,
+} from "./auth-password.ts"
+import { SESSION_IS_CURRENT, SESSION_NOT_FOUND } from "./auth-sessions.ts"
+import {
   SIGN_IN_CODE_BAD_ADDRESS,
   SIGN_IN_CODE_REQUESTED,
   SIGN_IN_CODE_UNCONFIRMED,
-  SIGN_UP_CODES_TOO_MANY,
-  SIGN_UP_EXPIRED,
-  SIGN_UP_REQUESTED,
-  TOTP_DISCONNECT_PROOF_REQUIRED,
-} from "./auth.ts"
+} from "./auth-sign-in-codes.ts"
+import { SIGN_UP_CODES_TOO_MANY, SIGN_UP_EXPIRED, SIGN_UP_REQUESTED } from "./auth-sign-up.ts"
+import { TOTP_DISCONNECT_PROOF_REQUIRED } from "./auth-totp.ts"
+import { createAuthRoute } from "./auth.ts"
 import { apiError } from "../_testing/api-error.ts"
 
 /** When the fake sign-in's waiting sign-up stops working. */
