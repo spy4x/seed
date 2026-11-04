@@ -4,8 +4,9 @@
  * check must run the smoke set (`SMOKE_SPECS` of `infra/scripts/e2e-local-plan.ts`), and the set
  * must keep the sign-in and the notes specs: without either, a pull request that breaks that
  * screen shows green again. The whole suite runs after the merge, on `main`, where a red run is
- * seen but blocks nobody. `docs/development.md` and `docs/woodpecker-ci-setup.md` name the specs
- * of the set.
+ * seen but blocks nobody. `docs/browser-tests.md` and `docs/woodpecker-ci-setup.md` name the specs
+ * of the set. Lighthouse measures in a stage of its own, with no other step of the pipeline beside
+ * it.
  */
 
 import { expect } from "@std/expect"
@@ -75,6 +76,34 @@ export function blockingSteps(
     .map(([name]) => name)
 }
 
+/**
+ * The stages Woodpecker runs for `event` on `branch`, as lists of step names. A step's stage is one
+ * past the latest stage of the steps it depends on that run, and a stage starts only when the one
+ * before it has ended (the top of `.woodpecker/ci.yml`).
+ */
+export function stages(
+  workflow: Step & { steps?: Record<string, Step> },
+  event: string,
+  branch: string,
+): string[][] {
+  const steps = Object.entries(workflow.steps ?? {}).filter(([, step]) =>
+    runsFor(step, event, branch)
+  )
+  const names = new Set(steps.map(([name]) => name))
+  const levels = new Map<string, number>()
+  const level = (name: string): number => {
+    const known = levels.get(name)
+    if (known !== undefined) return known
+    const deps = list(workflow.steps?.[name]?.depends_on).filter((dep) => names.has(dep))
+    const value = deps.length === 0 ? 0 : 1 + Math.max(...deps.map(level))
+    levels.set(name, value)
+    return value
+  }
+  const result: string[][] = []
+  for (const [name] of steps) (result[level(name)] ??= []).push(name)
+  return result.filter(Boolean)
+}
+
 const workflow = async () => parse(await read(CI)) as Step & { steps?: Record<string, Step> }
 
 Deno.test("a step runs for an event when it has no condition or one condition names the event and the branch", () => {
@@ -97,6 +126,27 @@ Deno.test("a command counts only as a whole line, and a step that ignores its fa
   expect(blockingSteps({ steps }, SMOKE, "pull_request", "main")).toEqual([])
   const off = { when: { event: "push" }, steps: { smoke: { commands: [SMOKE] } } }
   expect(blockingSteps(off, SMOKE, "pull_request", "main")).toEqual([])
+})
+
+Deno.test("a step's stage comes after the latest stage of its dependencies, and a step that does not run has none", () => {
+  const steps = {
+    a: {},
+    b: { depends_on: [`a`] },
+    c: { depends_on: [`a`] },
+    d: { depends_on: [`b`, `c`] },
+    off: { when: { event: `push` }, depends_on: [`a`] },
+  }
+  expect(stages({ steps }, `pull_request`, `main`)).toEqual([[`a`], [`b`, `c`], [`d`]])
+})
+
+Deno.test("Lighthouse measures in a stage of its own on every event", async () => {
+  // Lab performance falls when another step shares the CPU, and the budget then fails on noise.
+  const ci = await workflow()
+  for (const event of [`pull_request`, `push`, `tag`]) {
+    const [step] = blockingSteps(ci, `deno task lighthouse`, event, `main`)
+    const stage = stages(ci, event, `main`).find((names) => names.includes(step))
+    expect({ event, stage }).toEqual({ event, stage: [`lighthouse`] })
+  }
 })
 
 Deno.test("the smoke set holds the sign-in and the notes specs", () => {
@@ -128,8 +178,8 @@ Deno.test("a push to main runs the whole suite, and a pull request does not wait
   expect(blockingSteps(ci, SMOKE, "tag", "main")).toEqual(["e2e-smoke"])
 })
 
-Deno.test("the development guide and the CI guide name every spec of the smoke set", async () => {
-  for (const path of ["docs/development.md", "docs/woodpecker-ci-setup.md"]) {
+Deno.test("the browser-test guide and the CI guide name every spec of the smoke set", async () => {
+  for (const path of ["docs/browser-tests.md", "docs/woodpecker-ci-setup.md"]) {
     const text = await read(path)
     const missing = SMOKE_SPECS.filter((name) => !text.includes(name))
     expect({ path, missing }).toEqual({ path, missing: [] })
