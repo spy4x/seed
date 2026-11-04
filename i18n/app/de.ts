@@ -904,27 +904,27 @@ export default {
   "OAuthNotice.kept":
     "Anmeldemethode hinzugefügt. Du kannst dich damit jetzt auf jedem Gerät anmelden.",
   "OAuthNotice.guestTaken": "Diese Anmeldemethode gehört zu einem anderen Konto.",
-  "PasswordResetScreen.forgotFailed": "Der Link konnte nicht gesendet werden",
+  "PasswordResetScreen.forgotFailed": "Der Code konnte nicht gesendet werden",
   "PasswordResetScreen.resetFailed": "Das Passwort konnte nicht geändert werden",
   "PasswordResetScreen.sent":
-    "Falls es ein Konto mit dieser E-Mail-Adresse gibt, haben wir einen Link zum Zurücksetzen des Passworts dorthin geschickt.",
+    "Falls es ein Konto mit <email>{email}</email> gibt, haben wir einen Code dorthin geschickt.",
   "PasswordResetScreen.forgotDescription": {
     "one":
-      "Gib die E-Mail-Adresse ein, mit der du dich registriert hast. Wir schicken dir einen Link, über den du ein neues Passwort festlegst. Er funktioniert einmal und {count} Minute lang.",
+      "Gib die E-Mail-Adresse ein, mit der du dich registriert hast. Wir schicken dir einen Code, mit dem du ein neues Passwort festlegst. Er gilt {count} Minute lang.",
     "other":
-      "Gib die E-Mail-Adresse ein, mit der du dich registriert hast. Wir schicken dir einen Link, über den du ein neues Passwort festlegst. Er funktioniert einmal und {count} Minuten lang.",
+      "Gib die E-Mail-Adresse ein, mit der du dich registriert hast. Wir schicken dir einen Code, mit dem du ein neues Passwort festlegst. Er gilt {count} Minuten lang.",
   },
   "PasswordResetScreen.remembered": "Doch wieder eingefallen? <link>Zurück zur Anmeldung</link>",
-  "PasswordResetScreen.send": "Link senden",
+  "PasswordResetScreen.send": "Code senden",
   "PasswordResetScreen.doneTitle": "Passwort geändert",
   "PasswordResetScreen.done":
     "Du wurdest überall abgemeldet. Melde dich mit deinem neuen Passwort an.",
   "PasswordResetScreen.signIn": "Anmelden",
-  "PasswordResetScreen.askNew": "Neuen Link anfordern",
   "PasswordResetScreen.chooseTitle": "Neues Passwort festlegen",
   "PasswordResetScreen.choose":
     "Für <email>{email}</email>. Beim Speichern wirst du auf allen Geräten abgemeldet.",
-  "PasswordResetScreen.expired": "Link abgelaufen? <link>Neuen anfordern</link>",
+  "PasswordResetScreen.expired": "Zu lange gedauert? <link>Neuen Code anfordern</link>",
+  "PasswordResetScreen.tookTooLong": "Das hat zu lange gedauert. Fordere einen neuen Code an.",
   "PasswordResetScreen.newPassword": "Neues Passwort",
   "PasswordResetScreen.newPasswordHint": "{min} bis {max} Zeichen.",
   "PasswordResetScreen.saving": "Wird gespeichert …",
@@ -1470,7 +1470,7 @@ export default {
   "ProfileView.tokenRevoked": "Token widerrufen",
   "ProfileView.tokenRevokedBody": "Dieses Token funktioniert nicht mehr.",
   "ProviderProof.passkey": "einem Passkey",
-  "ProviderProof.link": "einem Anmeldelink",
+  "ProviderProof.link": "einem Code per E-Mail",
   "ProviderProof.fresh":
     "Du hast dich gerade erst mit {methods} angemeldet, deshalb brauchst du kein Passwort.",
   "ProviderProof.needed": {
@@ -1481,56 +1481,28 @@ export default {
   },
   "ProviderProof.passkeyAgain": "Noch einmal mit Passkey anmelden",
   "ProviderProof.providerAgain": "Noch einmal mit {provider} anmelden",
-  "SignInLinkScreen.sendFailed":
-    "Der Link konnte nicht gesendet werden. Versuche es gleich noch einmal.",
-  "SignInLinkScreen.unreachable":
-    "Der Server ist nicht erreichbar. Prüfe deine Verbindung und tippe noch einmal auf „Weiter“.",
-  "SignInLinkScreen.openFailed":
-    "Die Anmeldung hat nicht geklappt. Tippe auf „Weiter“, um es noch einmal zu versuchen, oder fordere einen neuen Link an.",
-  "SignInLinkScreen.title": "Mit Link anmelden",
-  "SignInLinkScreen.description":
-    "Wir schicken dir per E-Mail einen Link, der dich anmeldet. Noch kein Konto mit dieser E-Mail-Adresse? Dann erstellt der Link eines.",
-  "SignInLinkScreen.ratherPassword": "Lieber mit Passwort? <link>Zurück zur Anmeldung</link>",
-  "SignInLinkScreen.submit": "Link per E-Mail senden",
-  "SignInLinkScreen.sent": {
+  "SignInCodeScreen.sendFailed":
+    "Der Code konnte nicht gesendet werden. Versuche es gleich noch einmal.",
+  "SignInCodeScreen.title": "Mit einem Code per E-Mail anmelden",
+  "SignInCodeScreen.description":
+    "Wir schicken dir einen Code per E-Mail, den du hier eingibst. Noch kein Konto mit dieser E-Mail-Adresse? Dann legt der Code eins an.",
+  "SignInCodeScreen.ratherPassword": "Lieber mit Passwort? <link>Zurück zur Anmeldung</link>",
+  "SignInCodeScreen.submit": "Code per E-Mail senden",
+  "SignInCodeScreen.confirmTitle": "Bestätige, dass du es bist",
+  "SignInCodeScreen.confirmDescription":
+    "Wir schicken einen Code an <email>{email}</email>. Gib ihn im nächsten Schritt ein, um zu bestätigen, dass du es bist.",
+  "CodeStep.sent": "Wir haben einen Code an <email>{email}</email> geschickt.",
+  "CodeStep.invalid": "Der Code hat 8 Zeichen. Schau nach, ob eins fehlt.",
+  "SignInCodeScreen.guest":
+    "Du nutzt die App als Gast. Wenn du dich anmeldest, speichern wir alles, was du hier erstellt hast, unter dieser E-Mail-Adresse. Gibt es dafür schon ein Konto, fragen wir dich vorher.",
+  "CodeStep.deadTitle": "Dieser Code funktioniert nicht mehr",
+  "CodeStep.dead": {
     "one":
-      "Wir haben einen Anmeldelink an <email>{email}</email> geschickt. Er funktioniert einmal und {count} Minute lang.",
+      "Ein Code gilt nur einmal und nur {count} Minute, und du hast nur wenige Versuche. Fordere einen neuen an und nimm den aus der neuesten E-Mail.",
     "other":
-      "Wir haben einen Anmeldelink an <email>{email}</email> geschickt. Er funktioniert einmal und {count} Minuten lang.",
+      "Ein Code gilt nur einmal und nur {count} Minuten, und du hast nur wenige Versuche. Fordere einen neuen an und nimm den aus der neuesten E-Mail.",
   },
-  "SignInLinkScreen.openHere": "Öffne ihn auf diesem Gerät, um dich hier anzumelden.",
-  "SignInLinkScreen.newLink": "Neuen Link senden",
-  "SignInLinkScreen.waiting": {
-    "one":
-      "Nicht angekommen? Schau in deinen Spam-Ordner. In {count} Sekunde kannst du einen neuen Link senden.",
-    "other":
-      "Nicht angekommen? Schau in deinen Spam-Ordner. In {count} Sekunden kannst du einen neuen Link senden.",
-  },
-  "SignInLinkScreen.resent":
-    "Ein neuer Link ist unterwegs. Frühere Links funktionieren weiter, bis einer davon genutzt wird.",
-  "SignInLinkScreen.refusedTitle": "Dieser Link funktioniert nicht mehr",
-  "SignInLinkScreen.refused": {
-    "one":
-      "Anmeldelinks funktionieren einmal und {count} Minute lang. Fordere einen neuen an und nimm die neueste E-Mail.",
-    "other":
-      "Anmeldelinks funktionieren einmal und {count} Minuten lang. Fordere einen neuen an und nimm die neueste E-Mail.",
-  },
-  "SignInLinkScreen.elsewhereTitle": "Dieser Link wurde in einem anderen Browser angefordert",
-  "SignInLinkScreen.elsewhere":
-    "Du wurdest nicht angemeldet, und dein Gastkonto ist unverändert. Fordere in diesem Browser einen neuen Link an, um dich hier anzumelden.",
-  "SignInLinkScreen.incompleteTitle": "Dieser Link ist unvollständig",
-  "SignInLinkScreen.incomplete":
-    "Öffne den Link aus der E-Mail noch einmal oder fordere einen neuen an.",
-  "SignInLinkScreen.backToApp": "Zurück zur App",
-  "SignInLinkScreen.finishTitle": "Anmeldung abschließen",
-  "SignInLinkScreen.finish":
-    "Tippe auf „Weiter“, um dich auf diesem Gerät anzumelden. Ist die E-Mail-Adresse neu, wird dabei dein Konto erstellt.",
-  "SignInLinkScreen.signedInAs":
-    "Du bist als <email>{email}</email> angemeldet. Wenn du fortfährst, wirst du stattdessen beim Konto des Links angemeldet.",
-  "SignInLinkScreen.guest":
-    "Du nutzt die App als Gast. Wenn du diesen Link in diesem Browser angefordert hast, wird dein Gastkonto beim Fortfahren unter der E-Mail-Adresse des Links gespeichert. Gibt es für diese Adresse schon ein Konto, fragen wir dich vorher.",
-  "SignInLinkScreen.signingIn": "Wird angemeldet …",
-  "SignInLinkScreen.stay": "Angemeldet bleiben",
+  "CodeStep.differentEmail": "Andere E-Mail-Adresse verwenden",
   "SignInMethods.failed": "Deine Anmeldemethoden konnten nicht geändert werden",
   "SignInMethods.loadFailed":
     "Deine Anmeldemethoden konnten nicht geladen werden. Prüfe deine Verbindung und versuche es noch einmal.",
@@ -1587,16 +1559,9 @@ export default {
     "Du bist offline. Stell eine Verbindung her und versuche es noch einmal.",
   "SignUpCodeScreen.title": "Schau in dein Postfach",
   "SignUpCodeScreen.loading": "Wird geladen …",
-  "SignUpCodeScreen.sent": {
-    "one": "Wir haben einen Code an <email>{email}</email> geschickt. Er gilt {count} Minute lang.",
-    "other":
-      "Wir haben einen Code an <email>{email}</email> geschickt. Er gilt {count} Minuten lang.",
-  },
-  "SignUpCodeScreen.wrongAddress": "Falsche E-Mail-Adresse? <button>Andere verwenden</button>",
   "SignUpCodeScreen.code": "Code",
   "SignUpCodeScreen.checking": "Wird geprüft …",
   "SignUpCodeScreen.resend": "Neuen Code senden",
-  "SignUpCodeScreen.resent": "Ein neuer Code ist unterwegs.",
   "SignUpCodeScreen.resendFailed": "Es konnte kein neuer Code gesendet werden",
   "SignUpCodeScreen.existsTitle": "Du hast schon ein Konto",
   "SignUpCodeScreen.exists":
@@ -1934,7 +1899,9 @@ export default {
   "AuthScreen.lastPasskey":
     "Letztes Mal hast du dich mit einem Passkey angemeldet<email> ({email})</email>.",
   "AuthScreen.lastLink":
-    "Letztes Mal hast du dich mit einem Link per E-Mail angemeldet<email> ({email})</email>.",
+    "Letztes Mal hast du dich mit einem Code per E-Mail angemeldet<email> ({email})</email>.",
+  "AuthScreen.emailSignInCode": "Anmeldecode per E-Mail senden",
+  "AuthScreen.emailSignUpCode": "Registrierungscode per E-Mail senden",
   "AuthScreen.lastProvider":
     "Letztes Mal hast du dich mit {provider} angemeldet<email> ({email})</email>.",
   "AuthScreen.forget": "Nicht du? Anderes Konto verwenden",
@@ -1947,8 +1914,6 @@ export default {
   "AuthScreen.haveAccount": "Du hast schon ein Konto? <link>Anmelden</link>",
   "AuthScreen.lostDevice": "Gerät verloren? <link>Zurück zur Anmeldung</link>",
   "AuthScreen.sending": "Wird gesendet …",
-  "AuthScreen.emailSignInLink": "Anmeldelink per E-Mail senden",
-  "AuthScreen.emailSignUpLink": "Registrierungslink per E-Mail senden",
   "AuthScreen.orCreate": "oder ein Konto erstellen",
   "AuthScreen.createAccount": "Konto erstellen",
   "AuthScreen.continue": "Weiter",

@@ -181,8 +181,6 @@ export default {
   "Reason.SEARCH_RATE_LIMITED": "Trop de recherches. Patientez une minute et réessayez.",
   "Reason.SEAT_PRICE_NOT_ACCEPTED":
     "Confirmez que chaque nouveau membre s’ajoute à la facture du groupe.",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE":
-    "Ce lien a été demandé dans un autre navigateur. Ouvrez-le dans ce navigateur-là.",
   "Reason.SLUG_LOCKED":
     "L’adresse est verrouillée une fois l’article publié. Utilisez « Changer l’URL » pour la changer.",
   "Reason.SLUG_TAKEN": "Cette adresse est déjà prise. Choisissez-en une autre.",

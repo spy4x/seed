@@ -313,9 +313,9 @@ export async function setUserRole(
 }
 
 /**
- * The address a password-reset link for `userId` goes to: their password key's, as "Forgot
- * password" looks it up. `null` when they have no password, or only a username with no address
- * (#139), so no link can reach them.
+ * The address an operator's password-reset mail for `userId` goes to: their password key's, as
+ * "Forgot password" looks it up. `null` when they have no password, or only a username with no
+ * address (#139), so no mail can reach them.
  */
 export async function readPasswordResetAddress(
   sql: postgres.Sql,

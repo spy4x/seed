@@ -5,32 +5,40 @@ export default {
   "Mail.signIn": "Entrar",
   "Mail.openProfile": "Abrir seu perfil",
   "Mail.openGroup": "Abrir o grupo",
-  "PasswordResetMail.subject": "Redefina sua senha",
-  "PasswordResetMail.asked": "Alguém pediu para redefinir a senha da sua conta em {host}.",
-  "PasswordResetMail.open": {
-    "one": "Abra este link em até {count} minuto para escolher uma senha nova.",
-    "many": "Abra este link em até {count} minutos para escolher uma senha nova.",
-    "other": "Abra este link em até {count} minutos para escolher uma senha nova.",
-  },
-  "PasswordResetMail.button": "Escolher uma senha nova",
-  "PasswordResetMail.once":
-    "O link só funciona uma vez. Ao usá-lo, você sai da conta em todos os dispositivos.",
-  "PasswordResetMail.ignore": "Se não foi você, ignore este e-mail. Sua senha continua a mesma.",
-  "SignInLinkMail.subject": "Seu link para entrar em {host}",
-  "SignInLinkMail.asked": "Alguém pediu para entrar em {host} com este e-mail em {when}.",
-  "SignInLinkMail.open": {
+  "Mail.dontShare": "Não compartilhe este código. {host} nunca vai pedir esse código a você.",
+  "PasswordResetMail.subject": "Seu código para redefinir a senha",
+  "PasswordResetMail.asked":
+    "Alguém pediu para redefinir a senha da sua conta em {host}. Digite este código na aba em que fez o pedido:",
+  "PasswordResetMail.valid": {
     "one":
-      "Abra este link em até {count} minuto para entrar. Se ainda não houver uma conta com este e-mail, ele cria uma.",
+      "Ele só funciona uma vez, por {count} minuto. Ao usá-lo, você sai da conta em todos os dispositivos.",
     "many":
-      "Abra este link em até {count} minutos para entrar. Se ainda não houver uma conta com este e-mail, ele cria uma.",
+      "Ele só funciona uma vez, por {count} minutos. Ao usá-lo, você sai da conta em todos os dispositivos.",
     "other":
-      "Abra este link em até {count} minutos para entrar. Se ainda não houver uma conta com este e-mail, ele cria uma.",
+      "Ele só funciona uma vez, por {count} minutos. Ao usá-lo, você sai da conta em todos os dispositivos.",
   },
-  "SignInLinkMail.button": "Entrar em {host}",
-  "SignInLinkMail.once":
-    "O link só funciona uma vez. Ele abre uma página com o botão Continuar, e nada acontece até você clicar nele.",
-  "SignInLinkMail.ignore":
-    "Se não foi você, ignore este e-mail. Ninguém consegue entrar sem o link.",
+  "PasswordResetMail.ignore": "Se não foi você, ignore este e-mail. Sua senha continua a mesma.",
+  "PasswordResetNoticeMail.subject": "Redefina sua senha",
+  "PasswordResetNoticeMail.asked":
+    "A equipe de {host} enviou este e-mail para você escolher uma senha nova para a sua conta.",
+  "PasswordResetNoticeMail.how":
+    "Abra a página abaixo e digite este e-mail. Lá, você recebe um código e escolhe a senha nova.",
+  "PasswordResetNoticeMail.button": "Redefinir a senha",
+  "PasswordResetNoticeMail.ignore":
+    "Se você não quer uma senha nova, ignore este e-mail. Sua senha não vai mudar.",
+  "SignInCodeMail.subject": "Seu código para entrar em {host}",
+  "SignInCodeMail.asked":
+    "Alguém pediu para entrar em {host} com este e-mail em {when}. Digite este código na aba em que fez o pedido:",
+  "SignInCodeMail.valid": {
+    "one":
+      "Ele só funciona uma vez, por {count} minuto. Se ainda não houver uma conta com este e-mail, ele cria uma.",
+    "many":
+      "Ele só funciona uma vez, por {count} minutos. Se ainda não houver uma conta com este e-mail, ele cria uma.",
+    "other":
+      "Ele só funciona uma vez, por {count} minutos. Se ainda não houver uma conta com este e-mail, ele cria uma.",
+  },
+  "SignInCodeMail.ignore":
+    "Se não foi você, ignore este e-mail. Ninguém consegue entrar sem o código.",
   "EmailCodeMail.subject": "Seu código para confirmar o e-mail",
   "EmailCodeMail.asked": "Digite este código em {host} para confirmar seu e-mail.",
   "EmailCodeMail.valid": {

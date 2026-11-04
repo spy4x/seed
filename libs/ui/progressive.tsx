@@ -69,10 +69,8 @@ export const SCREEN_PATHS = {
   signUpCode: "/sign-up/code",
   oneTimeCode: "/totp",
   forgotPassword: "/forgot-password",
-  /** Asks for the address a sign-in link goes to, then says to check the inbox (#391). */
-  signInLink: "/sign-in/link",
-  /** The page a sign-in link opens, with its token in the fragment. */
-  signInLinkOpen: "/sign-in/link/open",
+  /** Asks for the address a sign-in code goes to, then for the code (#391, #752). */
+  signInCode: "/sign-in/code",
   /** The profile: its list of sections on a phone, its first section from `md` up. */
   profile: "/profile",
   groups: "/groups",

@@ -205,7 +205,7 @@ export default {
   "AdminAuditEvent.confirmationResent": "أُعيد إرسال تأكيد الاشتراك في النشرة البريدية",
   "AdminAuditEvent.subscribersExported": "صُدّرت قائمة مشتركي النشرة البريدية",
   "AdminAuditEvent.roleChanged": "تغيّر الدور",
-  "AdminAuditEvent.resetSent": "أرسل مشغّل رابط إعادة تعيين كلمة المرور",
+  "AdminAuditEvent.resetSent": "أرسل مشغّل رسالة إعادة تعيين كلمة المرور",
   "AdminAuditEvent.usersExported": "صُدّرت قائمة المستخدمين",
   "AdminAuditEvent.passkeyRenamed": "تغيّر اسم مفتاح المرور",
   "AdminAuditEvent.guestStarted": "بدأ كضيف",
@@ -1917,7 +1917,7 @@ export default {
   "AdminUser.doneRoleOperator": "أصبح {name} مشغّلًا.",
   "AdminUser.doneRoleSupervisor": "أصبح {name} مشرفًا.",
   "AdminUser.doneRoleAdmin": "أصبح {name} مديرًا.",
-  "AdminUser.donePasswordReset": "رابط إعادة تعيين كلمة المرور في طريقه إلى {name}.",
+  "AdminUser.donePasswordReset": "رسالة إعادة تعيين كلمة المرور في طريقها إلى {name}.",
   "AdminUser.doneDeleteGuest": "حُذف حساب الضيف {name}.",
   "AdminUser.doneUnlinkTelegram": "أُلغي ربط حساب Telegram الخاص بـ{name}.",
   "AdminUser.doneRemovePicture": "أُزيلت صورة الملف الشخصي لـ{name}.",
@@ -1927,7 +1927,7 @@ export default {
   "AdminUser.unblock": "إلغاء الحظر",
   "AdminUser.block": "حظر",
   "AdminUser.endAllSessions": "إنهاء كل الجلسات",
-  "AdminUser.sendReset": "إرسال رابط إعادة تعيين كلمة المرور",
+  "AdminUser.sendReset": "إرسال رسالة إعادة تعيين كلمة المرور",
   "AdminUser.noResetAddress": "يتطلب تسجيل دخول بكلمة مرور وبريد إلكتروني",
   "AdminUser.unlinkTelegram": "إلغاء ربط Telegram",
   "AdminUser.removePicture": "إزالة صورة الملف الشخصي",
@@ -1983,7 +1983,7 @@ export default {
   "AdminUser.methodPassword": "كلمة المرور",
   "AdminUser.methodEmailCode": "رمز عبر البريد الإلكتروني",
   "AdminUser.methodPasskey": "مفتاح المرور",
-  "AdminUser.methodEmailLink": "رابط عبر البريد الإلكتروني",
+  "AdminUser.methodEmailLink": "رمز عبر البريد الإلكتروني",
   "AdminUser.blockTitle": "حظر {name}",
   "AdminUser.blockText":
     "سيُسجَّل خروجه من كل مكان فورًا، وستُرفض كل طرق الدخول: كلمة المرور وGoogle وGitHub ورموز API المميزة. تبقى بياناته كما هي، ويمكنك إلغاء حظره لاحقًا.",
@@ -2003,10 +2003,10 @@ export default {
   "AdminUser.changeRoleText":
     "يسري الدور الجديد مع طلبه التالي. يمكنك منح أي دور أدنى من دورك؛ ولجعل أحدهم مديرًا استخدم السكربت user:role.",
   "AdminUser.changing": "جارٍ التغيير…",
-  "AdminUser.resetTitle": "إرسال رابط إعادة تعيين كلمة المرور إلى {name}",
+  "AdminUser.resetTitle": "إرسال رسالة إعادة تعيين كلمة المرور إلى {name}",
   "AdminUser.resetText":
-    "ستصله الرسالة نفسها التي تصل عند «نسيت كلمة المرور»: رابط لاختيار كلمة مرور جديدة. وتبقى كلمة مروره الحالية صالحة حتى يغيّرها.",
-  "AdminUser.sendLink": "إرسال الرابط",
+    "ستصله رسالة تشرح كيف يعيد تعيين كلمة المرور من «نسيت كلمة المرور»، حيث يصله رمز بالبريد. وتبقى كلمة مروره الحالية صالحة حتى يغيّرها.",
+  "AdminUser.sendLink": "إرسال الرسالة",
   "AdminUser.sending": "جارٍ الإرسال…",
   "AdminUser.deleteGuestTitle": "حذف حساب الضيف {name}",
   "AdminUser.deleteGuestText":
@@ -2027,7 +2027,7 @@ export default {
   "AdminUser.cancel": "إلغاء",
   "AdminUsers.title": "المستخدمون",
   "AdminUsers.subtitle":
-    "كل من لديه حساب. افتح صفحة شخص لحظره، أو إنهاء جلسة، أو إرسال رابط إعادة تعيين كلمة المرور.",
+    "كل من لديه حساب. افتح صفحة شخص لحظره، أو إنهاء جلسة، أو إرسال رسالة إعادة تعيين كلمة المرور.",
   "AdminUsers.export": "تصدير CSV",
   "AdminUsers.search": "الاسم أو البريد الإلكتروني",
   "AdminUsers.searching": "جارٍ البحث…",

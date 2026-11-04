@@ -50,8 +50,8 @@ export function SubscribeView() {
 
 /**
  * The list and token of the link that opened the page, read once. While the page is open its
- * requests send no Referer, as for a password reset link: nginx sends the same policy, but a page
- * the service worker serves from its cache comes without it.
+ * requests send no Referer: nginx sends the same policy, but a page the service worker serves from
+ * its cache comes without it.
  */
 function useTokenLink() {
   const [link] = useState(() => new URLSearchParams(location.search))

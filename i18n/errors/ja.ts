@@ -165,8 +165,6 @@ export default {
   "Reason.SEARCH_RATE_LIMITED": "検索回数が多すぎます。1分ほど待ってから、もう一度お試しください。",
   "Reason.SEAT_PRICE_NOT_ACCEPTED":
     "メンバーを追加するたびにグループの請求額が増えることを確認してください。",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE":
-    "このリンクは別のブラウザでリクエストされました。そのブラウザで開いてください。",
   "Reason.SLUG_LOCKED":
     "記事を公開するとアドレスは固定されます。変更するには「URLを変更」を使ってください。",
   "Reason.SLUG_TAKEN": "このアドレスはすでに使われています。別のものを選んでください。",

@@ -403,11 +403,14 @@ CREATE INDEX idx_user_settings_selected_group
     ON user_settings (selected_group_id)
     WHERE selected_group_id IS NOT NULL;
 
--- Password reset by e-mail. See migration 2026_10_06_0001_password_reset.sql.
+-- Password reset by e-mail. See migrations 2026_10_06_0001_password_reset.sql and
+-- 2026_12_14_0002_email_codes.sql (#752: a code, waited for in the browser that asked).
 CREATE TABLE password_reset_requests (
     id UUID PRIMARY KEY,
     email TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    by_operator BOOLEAN DEFAULT false NOT NULL,
     CONSTRAINT password_reset_requests_email_check CHECK (length(email) BETWEEN 3 AND 254)
 );
 
@@ -916,21 +919,24 @@ CREATE TABLE guest_reminders (
     CONSTRAINT guest_reminders_kind_check CHECK (kind BETWEEN 1 AND 3)
 );
 
--- #391: sign-in by e-mail link. See migration 2026_11_29_0001_sign_in_links.sql.
-CREATE TABLE sign_in_link_requests (
+-- #391: sign-in by e-mail (a link until #752, now a code). See migrations
+-- 2026_11_29_0001_sign_in_links.sql and 2026_12_14_0002_email_codes.sql.
+CREATE TABLE sign_in_code_requests (
     id UUID PRIMARY KEY,
     email TEXT NOT NULL,
     next TEXT,
     requested_by_user_id INT4 REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    -- #277: the language of the page that asked, for the link mail.
+    -- #277: the language of the page that asked, for the code mail.
     language TEXT,
-    CONSTRAINT sign_in_link_requests_email_check CHECK (length(email) BETWEEN 3 AND 254),
-    CONSTRAINT sign_in_link_requests_next_check CHECK (length(next) BETWEEN 1 AND 2048),
-    CONSTRAINT sign_in_link_requests_language_check CHECK (length(language) BETWEEN 2 AND 35)
+    -- #752: the request, and its code, work until then; a new code moves it on.
+    expires_at TIMESTAMPTZ NOT NULL,
+    CONSTRAINT sign_in_code_requests_email_check CHECK (length(email) BETWEEN 3 AND 254),
+    CONSTRAINT sign_in_code_requests_next_check CHECK (length(next) BETWEEN 1 AND 2048),
+    CONSTRAINT sign_in_code_requests_language_check CHECK (length(language) BETWEEN 2 AND 35)
 );
 
-CREATE INDEX idx_sign_in_link_requests_email ON sign_in_link_requests (email);
+CREATE INDEX idx_sign_in_code_requests_email ON sign_in_code_requests (email);
 
 -- #395: the blog's posts. See migration 2026_11_30_0001_blog_posts.sql.
 CREATE TABLE blog_posts (

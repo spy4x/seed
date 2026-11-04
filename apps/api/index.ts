@@ -57,9 +57,9 @@ import {
   createAuthRateLimits,
   EMAIL_CODE_STORE,
   emailCodeBudgetKey,
-  SIGN_IN_LINK_STORE,
+  SIGN_IN_CODE_STORE,
   SIGN_UP_CODE_STORE,
-  signInLinkBudgetKeys,
+  signInCodeBudgetKeys,
   signUpCodeBudgetKeys,
 } from "./middlewares/auth-rate-limits.ts"
 import { commandBus } from "./services/commandBus.ts"
@@ -82,8 +82,6 @@ import { createUmamiLinks, DEFAULT_ITEM_PATH, readTrackingSetup } from "@server/
 import { readWebsiteStatsSetup } from "./services/website-stats.ts"
 import { createPublicCatalogReads, createPublicCatalogRoute } from "./routes/catalog.ts"
 import { createRedisRateLimitStore } from "@spy4x/server/kv"
-import { enqueuePasswordResetMail } from "@server/jobs/password-reset-mail.ts"
-import { enqueueSignInLinkMail } from "@server/jobs/sign-in-link-mail.ts"
 import { enqueueEmailCodeMail } from "@server/jobs/email-code-mail.ts"
 import { mailOffWarning, readMailSetup } from "@server/mail/mail.ts"
 import { createSubscribersRoute } from "./routes/subscribers.ts"
@@ -198,9 +196,6 @@ app.route(
     rateLimits,
     totpFailures: createTotpFailures({ sql }),
     passwordFailures: createPasswordFailures({ sql }),
-    requestPasswordReset: (email) => enqueuePasswordResetMail(sql, email),
-    requestSignInLink: (email, next, requestedBy, language) =>
-      enqueueSignInLinkMail(sql, email, next, requestedBy, language),
     emailCodeFailures: createEmailCodeFailures({ sql }),
     requestEmailCode: (userId, email) => enqueueEmailCodeMail(sql, userId, email),
   }),
@@ -569,10 +564,10 @@ if (config.isDev) {
         const keys = await signUpCodeBudgetKeys(email, client)
         await signUp.delete(keys.address)
         await signUp.delete(keys.client)
-        const links = createRedisRateLimitStore(kv, { keyPrefix: SIGN_IN_LINK_STORE })
-        const linkKeys = await signInLinkBudgetKeys(email, client)
-        await links.delete(linkKeys.address)
-        await links.delete(linkKeys.client)
+        const signInCodes = createRedisRateLimitStore(kv, { keyPrefix: SIGN_IN_CODE_STORE })
+        const codeKeys = await signInCodeBudgetKeys(email, client)
+        await signInCodes.delete(codeKeys.address)
+        await signInCodes.delete(codeKeys.client)
       },
     }),
   )

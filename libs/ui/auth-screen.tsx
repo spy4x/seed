@@ -145,12 +145,13 @@ export interface AuthScreenProps {
    */
   passkeyAutofill?: boolean
   /**
-   * Sends a sign-in link (#391): "Email me a sign-in link" on sign-in, "Email me a sign-up link" on
-   * sign-up, in the other ways in. Called with what the login field holds, as typed: the app sends
-   * the link when it is an address and opens the link page otherwise. Left out: no such button.
+   * Sends a sign-in code (#391, #752): "Email me a sign-in code" on sign-in, "Email me a sign-up
+   * code" on sign-up, in the other ways in. Called with what the login field holds, as typed: the
+   * app sends the code when it is an address and opens the code page otherwise. Left out: no such
+   * button.
    */
   onEmailLink?: (login: string) => void
-  /** The link is being sent: its button says so. */
+  /** The code is being sent: its button says so. */
   linkBusy?: boolean
   /** The login field's starting value, such as an address another page handed back. */
   defaultLogin?: string
@@ -380,7 +381,7 @@ export function AuthScreen(
         onClick={() => onEmailLink(login.current.trim())}
         data-e2e={screen === "sign-in" ? "link-sign-in" : "link-sign-up"}
       >
-        {t.t(screen === "sign-in" ? `AuthScreen.emailSignInLink` : `AuthScreen.emailSignUpLink`)}
+        {t.t(screen === "sign-in" ? `AuthScreen.emailSignInCode` : `AuthScreen.emailSignUpCode`)}
       </Button>
     </li>
   )

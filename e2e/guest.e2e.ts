@@ -1,7 +1,7 @@
 import type { APIRequestContext, Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp } from "./fixtures/app.ts"
-import { lastMail, nextCode } from "./fixtures/sign-up.ts"
+import { lastMail, mailedCode, nextCode } from "./fixtures/sign-up.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
@@ -73,9 +73,9 @@ test(`keeping a guest account by e-mail keeps its user id, drops the banner and 
     await page.locator(`[data-e2e=keep-password]`).fill(`Passw0rd!`)
     await page.locator(`[data-e2e=keep-email-submit]`).click()
     await expect(page.getByRole(`heading`, { level: 1, name: `Check your inbox` })).toBeVisible()
-    await page.locator(`[data-e2e=sign-up-code-input]`)
-      .fill(await nextCode(request, lastMailUrl, email, before))
-    await page.locator(`[data-e2e=sign-up-code-submit]`).click()
+    const field = page.locator(`[data-e2e=mailed-code-step-code]`)
+    await field.pressSequentially(await nextCode(request, lastMailUrl, email, before))
+    await field.press(`Enter`)
 
     await expect(page.locator(`[data-e2e=keep-done]`)).toContainText(`your email`)
     const kept = await me(page)
@@ -94,36 +94,26 @@ test(`keeping a guest account by e-mail keeps its user id, drops the banner and 
   }
 })
 
-test(`a guest who opens a sign-in link asked for in another browser stays the same guest`, async ({ page, request }) => {
-  const email = `e2e-guest-link-${uuidV7().slice(-8)}@example.com`
+test(`a guest who signs in by a code to a new address keeps the guest account`, async ({ page, request }) => {
+  const email = `e2e-guest-code-${uuidV7().slice(-8)}@example.com`
   try {
     await tryItNow(page)
     const guest = await me(page)
-    // Another browser asks for the link: the `request` context shares no cookie with the page.
-    const asked = await request.post(`${apiBase}/api/auth/link`, {
-      headers: { origin: apiBase, "sec-fetch-site": `same-origin` },
-      data: { email },
-    })
-    expect(asked.ok(), await asked.text()).toBe(true)
-    let link = ``
-    await expect.poll(async () => {
-      link = (await lastMail(request, lastMailUrl, email))?.text.match(/https?:\/\/\S+/)?.[0] ?? ``
-      return link
-    }, { timeout: 20_000, message: `the worker mails the sign-in link` }).not.toBe(``)
 
-    const go = page.locator(`[data-e2e=sign-in-link-continue]`)
-    const url = new URL(link)
-    await gotoApp(page, url.pathname + url.hash, go)
-    await expect(page.locator(`[data-e2e=sign-in-link-guest]`)).toBeVisible()
-    await go.click()
+    await gotoApp(page, `/sign-in/code`, page.locator(`[data-e2e=sign-in-code-email]`))
+    await expect(page.locator(`[data-e2e=sign-in-code-guest]`)).toBeVisible()
+    await page.locator(`[data-e2e=sign-in-code-email]`).fill(email)
+    await page.locator(`[data-e2e=sign-in-code-submit]`).click()
+    const field = page.locator(`[data-e2e=mailed-code-step-code]`)
+    await expect(field).toBeFocused()
+    await field.pressSequentially(
+      await mailedCode(request, lastMailUrl, email, `Your sign-in code for `),
+    )
+    await field.press(`Enter`)
 
-    await expect(
-      page.getByRole(`heading`, { level: 1, name: `This link was requested in another browser` }),
-    ).toBeVisible()
-    await expect(page.locator(`[data-e2e=sign-in-link-new]`)).toBeFocused()
-    expect(await me(page)).toMatchObject({ id: guest.id, guestSince: guest.guestSince })
+    await page.waitForURL(`/keep`)
+    expect(await me(page)).toMatchObject({ id: guest.id, guestSince: null })
   } finally {
-    await deleteGuest(page)
     await cleanup(request, email)
   }
 })

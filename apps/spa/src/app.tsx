@@ -42,9 +42,9 @@ import { toasts } from "./state/toasts.ts"
 import { AuthView } from "./views/AuthView.tsx"
 import { ConfirmSignUpView } from "./views/ConfirmSignUpView.tsx"
 import { SignUpCodeView } from "./views/SignUpCodeView.tsx"
-import { LinkOpenView, LinkRequestView } from "./views/SignInLinkViews.tsx"
+import { SignInCodeView } from "./views/SignInCodeView.tsx"
 import { GuestTakenView, KeepView, TryView } from "./views/GuestViews.tsx"
-import { ForgotPasswordView, ResetPasswordView } from "./views/PasswordResetView.tsx"
+import { ForgotPasswordView } from "./views/PasswordResetView.tsx"
 import { GroupsView } from "./views/GroupsView.tsx"
 import { SubscribeView, SubscriptionConfirmView, UnsubscribeView } from "./views/SubscribeViews.tsx"
 import { GroupEditorView, GroupPage } from "./views/GroupEditorView.tsx"
@@ -134,14 +134,17 @@ const PAGES: {
   "/sign-up/confirm": () => <ConfirmSignUpView />,
   "/sign-up/code": () => <SignUpCodeView />,
   "/sign-in": () => <AuthView key="sign-in" screen="sign-in" />,
-  "/sign-in/link": () => <LinkRequestView />,
-  "/sign-in/link/open": () => <LinkOpenView />,
+  "/sign-in/code": () => <SignInCodeView />,
+  // Sign-in mailed a link until #752: an old bookmark or mail opens the code page, keeping `next`.
+  "/sign-in/link": () => <Redirect to={SCREEN_PATHS.signInCode + location.search} replace />,
+  "/sign-in/link/open": () => <Redirect to={SCREEN_PATHS.signInCode} replace />,
   "/try": () => <TryView />,
   "/keep": () => <KeepView />,
   "/keep/taken": () => <GuestTakenView />,
   "/totp": () => <AuthView key="one-time-code" screen="one-time-code" />,
   "/forgot-password": () => <ForgotPasswordView />,
-  "/reset-password": () => <ResetPasswordView />,
+  // The reset mailed a link to this page until #752; the code step lives on `/forgot-password`.
+  "/reset-password": () => <Redirect to={SCREEN_PATHS.forgotPassword} replace />,
   "/subscribe": () => <SubscribeView />,
   "/subscribe/confirm": () => <SubscriptionConfirmView />,
   "/unsubscribe": () => <UnsubscribeView />,

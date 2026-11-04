@@ -100,7 +100,7 @@ const openAuthLimits: AuthRateLimits = {
   resetByAddress: notCalled,
   emailCodeByAddress: notCalled,
   signUpCode: notCalled,
-  signInLink: notCalled,
+  signInCode: notCalled,
   emailChangeByUser: notCalled,
   emailChangeByAddress: notCalled,
 }
@@ -212,8 +212,6 @@ async function buildApp(sql: postgres.Sql, { countPasswords = true } = {}) {
       rateLimits: openAuthLimits,
       totpFailures: openLockout,
       passwordFailures: openLockout,
-      requestPasswordReset: () => Promise.resolve(),
-      requestSignInLink: () => Promise.resolve(),
       emailCodeFailures: openLockout,
       requestEmailCode: () => Promise.resolve(),
     }),

@@ -30,6 +30,23 @@ async function askForCode(
   return await nextCode(request, lastMailUrl, email, before)
 }
 
+test("the first sign-up code makes a new one wait, also after a reload", async ({ page, request }) => {
+  const email = `e2e-sign-up-wait-${uuidV7().slice(-8)}@example.com`
+  await cleanup(request, email)
+  try {
+    await askForCode(page, request, email, await lastMail(request, lastMailUrl, email))
+    await expect(page.locator("[data-e2e=resend-button-waiting]")).toBeVisible()
+    await expect(page.locator("[data-e2e=resend-button-send]")).toHaveCount(0)
+
+    await page.reload()
+    await expect(page.locator("[data-e2e=mailed-code-step-code]")).toBeVisible()
+    await expect(page.locator("[data-e2e=resend-button-waiting]")).toBeVisible()
+    await expect(page.locator("[data-e2e=resend-button-send]")).toHaveCount(0)
+  } finally {
+    await cleanup(request, email, true)
+  }
+})
+
 test("two sign-ups of one address: the first code signs in, the second finds the account and hands the address to sign-in", async ({ browser, request }) => {
   // A fresh address each run: each sign-up spends one of the client's three code mails an hour.
   const email = `e2e-sign-up-race-${uuidV7().slice(-8)}@example.com`
@@ -52,19 +69,19 @@ test("two sign-ups of one address: the first code signs in, the second finds the
       await lastMail(request, lastMailUrl, email),
     )
 
-    await firstPage.locator("[data-e2e=sign-up-code-input]").fill(firstCode)
+    await firstPage.locator("[data-e2e=mailed-code-step-code]").pressSequentially(firstCode)
     await gotoApp(
       firstPage,
       "/notes",
       firstPage.locator("[data-e2e=shell-ws-status]"),
       async () => {
-        await firstPage.locator("[data-e2e=sign-up-code-submit]").click()
+        await firstPage.locator("[data-e2e=mailed-code-step-code]").press("Enter")
         await firstPage.waitForURL("/notes")
       },
     )
 
-    await secondPage.locator("[data-e2e=sign-up-code-input]").fill(secondCode)
-    await secondPage.locator("[data-e2e=sign-up-code-submit]").click()
+    await secondPage.locator("[data-e2e=mailed-code-step-code]").pressSequentially(secondCode)
+    await secondPage.locator("[data-e2e=mailed-code-step-code]").press("Enter")
     await expect(secondPage.getByRole("heading", { level: 1, name: "You already have an account" }))
       .toBeVisible()
     const signIn = secondPage.locator("[data-e2e=sign-up-exists-sign-in]")

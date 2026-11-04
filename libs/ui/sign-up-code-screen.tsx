@@ -1,9 +1,6 @@
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
-import { ErrorState } from "@spy4x/preact-ui/error-state"
-import { Field } from "@spy4x/preact-ui/field"
-import { Input } from "@spy4x/preact-ui/input"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import {
   type ExistingAccountAnswer,
@@ -13,7 +10,8 @@ import {
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { AuthCard, providerStartPath } from "./auth-screen.tsx"
 import { useAppText } from "./i18n.ts"
-import { type Navigate, SCREEN_PATHS, ScreenForm, withNext } from "./progressive.tsx"
+import { type Navigate, SCREEN_PATHS, withNext } from "./progressive.tsx"
+import { CodeStep } from "./sign-in-code-screen.tsx"
 
 /** The message shown when checking the code failed without one of its own, by its key in `app`. */
 export const SIGN_UP_CODE_FAILURE = `SignUpCodeScreen.checkFailed`
@@ -39,10 +37,10 @@ export interface SignUpCodeScreenProps {
   error: string | null
   /** A new code is being asked for. */
   resending: boolean
-  /** Said once a new code is on its way. */
-  resendNotice: string | null
   /** Why a new code was refused. */
   resendError: string | null
+  /** When a new code may be asked for, in milliseconds since the epoch. */
+  readyAt?: number
   onSubmit: (code: string) => void
   onResend: () => void
   /** "Use a different address": the app forgets this sign-up and returns to the form. */
@@ -90,7 +88,10 @@ export function SignUpCodeScreen(props: SignUpCodeScreenProps): JSX.Element {
   return <CheckInbox {...props} pending={pending} />
 }
 
-/** The code form, with the way to a new code and the way back to another address. */
+/**
+ * The code step, the same `CodeStep` as sign-in and reset (#752): the code field, a new code once
+ * the wait ends, and the way back to another address.
+ */
 function CheckInbox(
   {
     pending,
@@ -98,101 +99,27 @@ function CheckInbox(
     busy,
     error,
     resending,
-    resendNotice,
     resendError,
+    readyAt,
     onSubmit,
     onResend,
     onDifferentAddress,
   }: SignUpCodeScreenProps & { pending: WaitingPasswordSignUp },
 ): JSX.Element {
-  const field = useRef<HTMLInputElement>(null)
-  const t = useAppText()
-  // On open, and after each refused code, with what was typed selected so the next try replaces it.
-  useEffect(() => {
-    field.current?.focus()
-    if (error) field.current?.select()
-  }, [error])
-
   return (
-    <AuthCard
-      title={t.t(`SignUpCodeScreen.title`)}
-      description={
-        <Rich
-          parts={t.parts(`SignUpCodeScreen.sent`, { email: pending.email, count: minutes })}
-          tags={{
-            email: (text) => (
-              <strong class="wrap-anywhere font-medium" translate={false}>
-                <bdi>{text}</bdi>
-              </strong>
-            ),
-          }}
-        />
-      }
+    <CodeStep
+      email={pending.email}
+      sentence={`CodeStep.sent`}
+      minutes={minutes}
+      checking={busy}
+      error={error ?? resendError}
+      onCode={onSubmit}
+      readyAt={readyAt}
+      resending={resending}
+      onResend={onResend}
+      onDifferentAddress={onDifferentAddress}
       e2e="sign-up-code"
-      after={
-        <Rich
-          parts={t.parts(`SignUpCodeScreen.wrongAddress`)}
-          tags={{
-            button: (text) => (
-              <Button
-                type="button"
-                variant="ghost"
-                class={TOUCH_TARGET}
-                data-e2e="sign-up-different-address"
-                onClick={onDifferentAddress}
-              >
-                {text}
-              </Button>
-            ),
-          }}
-        />
-      }
-    >
-      <ScreenForm
-        pending={busy}
-        onSubmit={(data) => onSubmit(String(data.get("code") ?? ""))}
-      >
-        <div class="flex flex-col gap-4">
-          <Field id="sign-up-code" label={t.t(`SignUpCodeScreen.code`)} error={error} required>
-            <Input
-              ref={field}
-              data-e2e="sign-up-code-input"
-              name="code"
-              autocomplete="one-time-code"
-              autocapitalize="off"
-              spellcheck={false}
-              required
-            />
-          </Field>
-          <Button
-            type="submit"
-            busy={busy}
-            busyLabel={t.t(`SignUpCodeScreen.checking`)}
-            data-e2e="sign-up-code-submit"
-          >
-            {t.t(`AuthScreen.continue`)}
-          </Button>
-        </div>
-      </ScreenForm>
-      <div class="flex flex-col items-start gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          class={TOUCH_TARGET}
-          busy={resending}
-          busyLabel={t.t(`AuthScreen.sending`)}
-          disabled={busy}
-          data-e2e="sign-up-code-resend"
-          onClick={onResend}
-        >
-          {t.t(`SignUpCodeScreen.resend`)}
-        </Button>
-        <ErrorState message={resendError} />
-        {resendNotice && (
-          <p class="text-sm" role="status" data-e2e="sign-up-code-resent">{resendNotice}</p>
-        )}
-      </div>
-    </AuthCard>
+    />
   )
 }
 

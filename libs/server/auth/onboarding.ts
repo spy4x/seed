@@ -32,8 +32,8 @@ interface OnboardingRow extends postgres.Row {
  *
  * Each step is a fact another feature already keeps, so nothing has to remember to tick it:
  *
- * - the address: the password key, or the key of a sign-up by link, carries an address that a code
- *   or the link proved;
+ * - the address: the password key, or the key of a sign-up by code, carries an address that a code
+ *   proved;
  * - a note: the person created one. The welcome note of a new account
  *   (`@server/jobs/starter-data.ts`) is created in their name and does not count: its id is the id
  *   of their `starter_data_requests` row. A note in the trash still counts, so deleting the first

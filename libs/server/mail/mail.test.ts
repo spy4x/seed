@@ -20,8 +20,9 @@ import {
   MailTransport,
   messageHtml,
   passwordResetMail,
+  passwordResetNoticeMail,
   readMailSetup,
-  signInLinkMail,
+  signInCodeMail,
   signInMethodChangedMail,
   SMTP_KEYS,
 } from "./mail.ts"
@@ -127,52 +128,76 @@ describe("createMailSender", () => {
 })
 
 describe("passwordResetMail", () => {
-  const link = "https://app.example.com/reset-password?email=ann%40example.com&code=abc"
   const mail = passwordResetMail(
     { webAppUrl: "https://app.example.com" },
-    { to: "ann@example.com", reader: EN, link, validMinutes: 30 },
+    { to: "ann@example.com", reader: EN, code: "a<b-C9_z", validMinutes: 10 },
   )
 
-  it("carries the link and how long it works in the text and the HTML", () => {
+  it("carries the code and how long it works in the text and the escaped HTML, with no link", () => {
     expect(mail.to).toBe("ann@example.com")
-    expect(mail.subject).toBe("Reset your password")
-    expect(mail.text).toContain(link)
-    expect(mail.text).toContain("30 minutes")
-    expect(mail.html).toContain(`href="${link.replace("&", "&amp;")}"`)
+    expect(mail.subject).toBe("Your code to reset your password")
+    expect(mail.text).toContain("\na<b-C9_z\n")
+    expect(mail.text).toContain("for 10 minutes. Using it signs you out on every device.")
+    expect(mail.text).toContain("Don't share this code. app.example.com will never ask you for it.")
+    expect(mail.html).toContain("a&lt;b-C9_z")
+    expect(mail.html).not.toContain('href="https://app.example.com/')
   })
 
-  it("wraps the HTML in the shared shell, branded with the app's host", () => {
-    expect(mail.html).toMatch(/^<!doctype html>/)
-    expect(mail.html).toContain(">app.example.com</a>")
+  it("never puts the code in the subject", () => {
+    expect(mail.subject).not.toContain("a<b-C9_z")
   })
 })
 
-describe("signInLinkMail", () => {
-  const link = "https://app.example.com/sign-in/link/open#token=abc.def"
-  const mail = signInLinkMail(
+describe("passwordResetNoticeMail", () => {
+  const link = "https://app.example.com/forgot-password"
+  const mail = passwordResetNoticeMail(
+    { webAppUrl: "https://app.example.com" },
+    { to: "ann@example.com", reader: EN, link },
+  )
+
+  it("links to the page that asks for a code, and carries no code", () => {
+    expect(mail.subject).toBe("Reset your password")
+    expect(mail.text).toContain(link)
+    expect(mail.html).toContain(`href="${link}"`)
+    expect(mail.text).not.toMatch(/\n[A-Za-z0-9_-]{8}\n/)
+  })
+})
+
+describe("signInCodeMail", () => {
+  const mail = signInCodeMail(
     { webAppUrl: "https://app.example.com" },
     {
       to: "ann@example.com",
       reader: EN,
-      link,
-      validMinutes: 15,
+      code: "Ab3-x_9Z",
+      validMinutes: 10,
       at: new Date("2026-10-23T14:03:00Z"),
     },
   )
 
-  it("carries the link, its fifteen minutes and when it was asked for, in the text and the HTML", () => {
+  it("carries the code, its ten minutes and when it was asked for, with no link", () => {
     expect(mail.to).toBe("ann@example.com")
-    expect(mail.subject).toBe("Your sign-in link for app.example.com")
-    expect(mail.text).toContain(`\n${link}\n`)
-    expect(mail.text).toContain("within 15 minutes")
-    expect(mail.text).toContain("on October 23, 2026 at 14:03.")
-    expect(mail.html).toContain(`href="${link}"`)
-    expect(mail.html).toContain("Sign in to app.example.com")
+    expect(mail.subject).toBe("Your sign-in code for app.example.com")
+    expect(mail.text).toContain("\nAb3-x_9Z\n")
+    expect(mail.text).toContain("for 10 minutes")
+    expect(mail.text).toContain("on October 23, 2026 at 14:03. Enter this code in the tab")
+    expect(mail.html).toContain("Ab3-x_9Z")
+    expect(mail.html).not.toContain('href="https://app.example.com/')
   })
 
-  it("says the link creates an account for a new address and waits for Continue", () => {
-    expect(mail.text).toContain("If there's no account with this email yet, it creates one.")
-    expect(mail.text).toContain("nothing happens until you press it")
+  it("never puts the code in the subject", () => {
+    expect(mail.subject).not.toContain("Ab3-x_9Z")
+  })
+
+  it("draws the code in a monospace box that selects whole", () => {
+    const box = mail.html!.match(/<span dir="ltr" style="([^"]*)">Ab3-x_9Z<\/span>/)
+    expect(box?.[1]).toContain("monospace")
+    expect(box?.[1]).toMatch(/(^|;)user-select:all/)
+  })
+
+  it("says the code creates an account for a new address, and warns against sharing it", () => {
+    expect(mail.text).toContain("If no account uses this email yet, it creates one.")
+    expect(mail.text).toContain("Don't share this code.")
   })
 })
 
@@ -364,7 +389,7 @@ describe("emailCodeMail", () => {
     expect(mail.to).toBe("ann@example.com")
     expect(mail.text).toContain("\na<b-C9_z\n")
     expect(mail.text).toContain("10 minutes")
-    expect(mail.html).toContain(`<span dir="ltr">a&lt;b-C9_z</span>`)
+    expect(mail.html).toMatch(/<span dir="ltr" style="[^"]*">a&lt;b-C9_z<\/span>/)
     expect(mail.html).not.toContain("a<b-C9_z")
     expect(mail.text).not.toMatch(/https?:\/\//)
   })
@@ -518,8 +543,15 @@ const AT = new Date("2026-10-15T14:03:00Z")
 function everyMail(reader: MailReader) {
   const link = "https://app.example.com/x"
   return [
-    passwordResetMail(brand, { to: "a@example.com", link, validMinutes: 30, reader }),
-    signInLinkMail(brand, { to: "a@example.com", link, validMinutes: 15, at: AT, reader }),
+    passwordResetMail(brand, { to: "a@example.com", code: "ABCD1234", validMinutes: 10, reader }),
+    passwordResetNoticeMail(brand, { to: "a@example.com", link, reader }),
+    signInCodeMail(brand, {
+      to: "a@example.com",
+      code: "ABCD1234",
+      validMinutes: 10,
+      at: AT,
+      reader,
+    }),
     emailCodeMail(brand, { to: "a@example.com", code: "ABCD1234", validMinutes: 10, reader }),
     invitationMail(brand, {
       to: "a@example.com",
@@ -606,10 +638,10 @@ describe("mail in the reader's language (#277)", () => {
     expect(berlin.text).toContain("Am 15. Oktober 2026 um 16:03 wurde")
     expect(berlin.text).not.toContain("UTC")
 
-    const newYork = signInLinkMail(brand, {
+    const newYork = signInCodeMail(brand, {
       to: "a@example.com",
-      link: "https://app.example.com/x",
-      validMinutes: 15,
+      code: "ABCD1234",
+      validMinutes: 10,
       at: AT,
       reader: { language: "en", locale: "en-US", timeZone: "America/New_York", hourCycle: null },
     })
@@ -617,10 +649,10 @@ describe("mail in the reader's language (#277)", () => {
   })
 
   it("says a time is in UTC when the reader's zone is unknown", () => {
-    const unknown = signInLinkMail(brand, {
+    const unknown = signInCodeMail(brand, {
       to: "a@example.com",
-      link: "https://app.example.com/x",
-      validMinutes: 15,
+      code: "ABCD1234",
+      validMinutes: 10,
       at: AT,
       reader: { language: "en", locale: "en-GB", timeZone: null, hourCycle: null },
     })
@@ -649,8 +681,8 @@ describe("mail in the reader's language (#277)", () => {
 
   it("names a role and a plan as the app's screens do, in the reader's language", () => {
     const mails = everyMail({ ...EN, language: "de" })
-    expect(mails[3].text).toContain("als Bearbeiter beizutreten")
-    expect(mails[9].text).toContain("für Pro endet")
+    expect(mails[4].text).toContain("als Bearbeiter beizutreten")
+    expect(mails[10].text).toContain("für Pro endet")
   })
 })
 
@@ -748,7 +780,7 @@ describe("mail and a full stop after a date (#277)", () => {
   const DOUBLED = /\p{L}\.(?:<\/\w+>|\u2069)*\.(?!\.)/u
 
   it("writes one full stop after a Russian date that ends in «г.»", () => {
-    const [deletion] = everyMail({ ...EN, language: "ru", locale: "ru-RU" }).slice(4)
+    const [deletion] = everyMail({ ...EN, language: "ru", locale: "ru-RU" }).slice(5)
     expect(deletion.text).toContain("навсегда 15 октября 2026 г.\n")
     expect(deletion.text).not.toContain("г..")
     expect(deletion.html).toContain("<strong>15 октября 2026 г.</strong></p>")

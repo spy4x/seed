@@ -302,13 +302,13 @@ async function recordFlow(browser: Browser, dir: string): Promise<Recording> {
     await page.waitForTimeout(500)
     const before = await lastMailText(page, DEMO.email)
     await clickLike(page, pointer, page.locator("[data-e2e=auth-form-submit]"), h)
-    const codeInput = page.locator("[data-e2e=sign-up-code-input]")
+    const codeInput = page.locator("[data-e2e=mailed-code-step-code]")
     await codeInput.waitFor()
     const code = await nextCode(page, DEMO.email, before)
     await page.waitForTimeout(600)
     await typeLike(page, pointer, codeInput, code, h)
     await page.waitForTimeout(400)
-    await clickLike(page, pointer, page.locator("[data-e2e=sign-up-code-submit]"), h)
+    await clickLike(page, pointer, page.locator("[data-e2e=mailed-code-step-submit]"), h)
     // From the click until the notes page has loaded, the page shows parts of it (the group chip
     // as a bare chevron, no checklist yet); the GIF leaves that stretch out.
     const clicked = (Date.now() - started) / 1000

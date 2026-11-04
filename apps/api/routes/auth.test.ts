@@ -4,10 +4,11 @@ import type { APIContext } from "../_types.ts"
 import {
   EmailChangeOutcome,
   EmailVerifyOutcome,
+  PasswordResetOutcome,
   PasswordSetOutcome,
   type SignedIn,
   type SignIn,
-  SignInLinkOutcome,
+  SignInCodeOutcome,
   SignUpOutcome,
 } from "../services/sign-in.ts"
 import {
@@ -37,8 +38,8 @@ import {
   EMAIL_CHANGE_MAILS_PER_ADDRESS,
   EMAIL_CODE_MAILS_PER_ADDRESS,
   RESET_MAILS_PER_ADDRESS,
-  SIGN_IN_LINK_MAILS_PER_ADDRESS,
-  SIGN_IN_LINK_MAILS_PER_CLIENT,
+  SIGN_IN_CODE_MAILS_PER_ADDRESS,
+  SIGN_IN_CODE_MAILS_PER_CLIENT,
   SIGN_UP_CODE_MAILS_PER_ADDRESS,
   SIGN_UP_CODE_MAILS_PER_CLIENT,
 } from "../middlewares/auth-rate-limits.ts"
@@ -56,18 +57,20 @@ import {
   EMAIL_CODE_REFUSED,
   EMAIL_NOTHING_TO_VERIFY,
   EMAIL_TAKEN,
+  MAILED_CODE_DEAD,
+  MAILED_CODE_WRONG,
   PASSWORD_ALREADY_SET,
   PASSWORD_NEEDS_ADDRESS,
   PASSWORD_RESET_REFUSED,
   PASSWORD_RESET_REQUESTED,
+  PASSWORD_RESET_TOO_MANY,
   PASSWORD_SET_REFUSED,
   PROVIDER_PROOF_REQUIRED,
   SESSION_IS_CURRENT,
   SESSION_NOT_FOUND,
-  SIGN_IN_LINK_BAD_ADDRESS,
-  SIGN_IN_LINK_REFUSED,
-  SIGN_IN_LINK_REQUESTED,
-  SIGN_IN_LINK_UNCONFIRMED,
+  SIGN_IN_CODE_BAD_ADDRESS,
+  SIGN_IN_CODE_REQUESTED,
+  SIGN_IN_CODE_UNCONFIRMED,
   SIGN_UP_CODES_TOO_MANY,
   SIGN_UP_EXPIRED,
   SIGN_UP_REQUESTED,
@@ -145,17 +148,35 @@ function fakeSignIn(
         ? { outcome: SignUpOutcome.Created, signedIn: await signedIn() }
         : { outcome: SignUpOutcome.WrongCode }
     },
-    redeemSignInLink: async () => {
-      calls.push("redeemSignInLink")
+    requestSignInCode: () => (calls.push("requestSignInCode"), Promise.resolve()),
+    waitingSignInCode: () => Promise.resolve({ email: "alice@example.com" }),
+    resendSignInCode: () => (calls.push("resendSignInCode"), Promise.resolve(succeed)),
+    cancelSignInCode: () => (calls.push("cancelSignInCode"), Promise.resolve()),
+    // Without success the code is wrong.
+    completeSignInCode: async () => {
+      calls.push("completeSignInCode")
       return succeed
         ? {
-          outcome: SignInLinkOutcome.SignedIn,
+          outcome: SignInCodeOutcome.SignedIn,
           signedIn: await signedIn(),
           email: "alice@example.com",
           next: "/notes",
         }
-        : { outcome: SignInLinkOutcome.Refused }
+        : { outcome: SignInCodeOutcome.WrongCode }
     },
+    requestPasswordReset: () => (calls.push("requestPasswordReset"), Promise.resolve()),
+    waitingPasswordReset: () => Promise.resolve({ email: "alice@example.com" }),
+    resendPasswordReset: () => (calls.push("resendPasswordReset"), Promise.resolve(succeed)),
+    cancelPasswordReset: () => (calls.push("cancelPasswordReset"), Promise.resolve()),
+    verifyPasswordReset: () => (
+      calls.push("verifyPasswordReset"),
+        Promise.resolve(
+          succeed
+            ? { outcome: PasswordResetOutcome.Verified, token: "a-reset-token" }
+            : { outcome: PasswordResetOutcome.WrongCode },
+        )
+    ),
+    finishPasswordReset: () => (calls.push("finishPasswordReset"), Promise.resolve(succeed)),
     signIn: (_c, login) => (
       calls.push("signIn"), logins.push(login), succeed ? signedIn() : Promise.resolve(null)
     ),
@@ -267,28 +288,31 @@ function buildApp(
   const passwordFailureCalls: string[] = []
   /** Every address a code mail was queued for. */
   const mailed: string[] = []
-  /** Every address a reset link was queued for, as the route passed it. */
+  /** Every address a reset code was asked for, as the route passed it. */
   const queued: string[] = []
-  /** Every sign-in link the route queued: the address and the page to open after. */
-  const links: { email: string; next: string | null }[] = []
+  /** Every sign-in code the route asked for: the address and the page to open after. */
+  const codes: { email: string; next: string | null }[] = []
   /** What the route handed `signUp` and `signIn` as the address or login. */
   const logins: string[] = []
   /** Every sign-out the route announced. */
   const emitted: UserSignedOutEvent[] = []
   const route = createAuthRoute({
-    signIn: { ...fakeSignIn(calls, succeed, secondFactor, logins), ...overrides },
+    signIn: {
+      ...fakeSignIn(calls, succeed, secondFactor, logins),
+      requestPasswordReset: (_c, email) => (
+        calls.push("requestPasswordReset"), queued.push(email), Promise.resolve()
+      ),
+      requestSignInCode: (_c, email, next) => (
+        calls.push("requestSignInCode"), codes.push({ email, next }), Promise.resolve()
+      ),
+      ...overrides,
+    },
     emit: (event) => void emitted.push(event),
     mutationGuards: testMutationGuards,
     rateLimits,
     totpFailures: fakeTotpFailures(failureCalls, lockedForMs),
     passwordFailures: passwordFailures ??
       fakeTotpFailures(passwordFailureCalls, passwordLockedForMs),
-    requestPasswordReset: (email) => (
-      calls.push("requestPasswordReset"), queued.push(email), Promise.resolve()
-    ),
-    requestSignInLink: (email, next) => (
-      calls.push("requestSignInLink"), links.push({ email, next }), Promise.resolve()
-    ),
     emailCodeFailures: fakeTotpFailures(codeFailureCalls, codeLockedForMs),
     requestEmailCode: (_userId, email) => (mailed.push(email), Promise.resolve()),
   })
@@ -299,7 +323,7 @@ function buildApp(
     codeFailureCalls,
     passwordFailureCalls,
     queued,
-    links,
+    codes,
     logins,
     mailed,
     emitted,
@@ -326,8 +350,7 @@ function send(
 const credentials = { login: "alice@example.com", password: "correct-horse" }
 const signUpBody = { email: "alice@example.com", password: "correct-horse" }
 const resetBody = {
-  email: "alice@example.com",
-  code: "a-code-from-the-link",
+  token: "a-reset-token",
   newPassword: "battery-staple",
 }
 
@@ -365,18 +388,53 @@ const anonymousRoutes: (MutationCase & { operation: string })[] = [
     body: { email: "alice@example.com" },
     operation: "requestPasswordReset",
   },
-  { method: "POST", path: "/auth/password/reset", body: resetBody, operation: "resetPassword" },
   {
     method: "POST",
-    path: "/auth/link",
-    body: { email: "alice@example.com" },
-    operation: "requestSignInLink",
+    path: "/auth/password/reset/verify",
+    body: { code: "abcd1234" },
+    operation: "verifyPasswordReset",
   },
   {
     method: "POST",
-    path: "/auth/link/redeem",
-    body: { token: "a-token-from-the-link" },
-    operation: "redeemSignInLink",
+    path: "/auth/password/reset/resend",
+    body: undefined,
+    operation: "resendPasswordReset",
+  },
+  {
+    method: "POST",
+    path: "/auth/password/reset/cancel",
+    body: undefined,
+    operation: "cancelPasswordReset",
+  },
+  {
+    method: "POST",
+    path: "/auth/password/reset",
+    body: resetBody,
+    operation: "finishPasswordReset",
+  },
+  {
+    method: "POST",
+    path: "/auth/code",
+    body: { email: "alice@example.com" },
+    operation: "requestSignInCode",
+  },
+  {
+    method: "POST",
+    path: "/auth/code/verify",
+    body: { code: "abcd1234" },
+    operation: "completeSignInCode",
+  },
+  {
+    method: "POST",
+    path: "/auth/code/resend",
+    body: undefined,
+    operation: "resendSignInCode",
+  },
+  {
+    method: "POST",
+    path: "/auth/code/cancel",
+    body: undefined,
+    operation: "cancelSignInCode",
   },
 ]
 
@@ -689,8 +747,6 @@ describe("auth routes rate-limit", () => {
         rateLimits: createAuthRateLimits(tightLimits),
         totpFailures: fakeTotpFailures([]),
         passwordFailures: fakeTotpFailures([]),
-        requestPasswordReset: () => Promise.resolve(),
-        requestSignInLink: () => Promise.resolve(),
         emailCodeFailures: fakeTotpFailures([]),
         requestEmailCode: () => Promise.resolve(),
       }),
@@ -1274,12 +1330,14 @@ describe("auth routes lock a sign-in name after repeated wrong passwords", () =>
   })
 })
 
-describe("auth routes reset a password by e-mail link", () => {
+describe("auth routes reset a password by e-mailed code (#752)", () => {
   const forgot = anonymousRoutes.find((route) => route.path === "/auth/password/forgot")!
+  const verify = anonymousRoutes.find((route) => route.path === "/auth/password/reset/verify")!
+  const resend = anonymousRoutes.find((route) => route.path === "/auth/password/reset/resend")!
   const reset = anonymousRoutes.find((route) => route.path === "/auth/password/reset")!
   const json = (body: unknown) => ({ ...forgot, body })
 
-  it("queues the link for the address as normalizeEmail leaves it", async () => {
+  it("asks for the code for the address as normalizeEmail leaves it", async () => {
     const { app, queued } = buildApp(null)
 
     const response = await send(
@@ -1327,6 +1385,45 @@ describe("auth routes reset a password by e-mail link", () => {
     expect(queued).toHaveLength(RESET_MAILS_PER_ADDRESS)
   })
 
+  it("spends the address's reset budget on a new code too", async () => {
+    const { app, calls } = buildApp(null)
+    for (let attempt = 0; attempt < RESET_MAILS_PER_ADDRESS; attempt++) {
+      await send(app, json({ email: "alice@example.com" }), sameOriginWithoutCookieHeaders)
+    }
+
+    const response = await send(app, resend, sameOriginWithoutCookieHeaders)
+
+    expect(response.status).toBe(429)
+    expect((await apiError(response)).message).toBe(PASSWORD_RESET_TOO_MANY)
+    expect(calls).not.toContain("resendPasswordReset")
+  })
+
+  it("answers the right code with the reset token", async () => {
+    const { app } = buildApp(null)
+
+    const response = await send(app, verify, sameOriginWithoutCookieHeaders)
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ token: "a-reset-token" })
+  })
+
+  it("answers a wrong code with 400 and a dead request with 410", async () => {
+    const wrong = buildApp(null, { succeed: false })
+    const dead = buildApp(null, {
+      signIn: {
+        verifyPasswordReset: () => Promise.resolve({ outcome: PasswordResetOutcome.Expired }),
+      },
+    })
+
+    const wrongAnswer = await send(wrong.app, verify, sameOriginWithoutCookieHeaders)
+    const deadAnswer = await send(dead.app, verify, sameOriginWithoutCookieHeaders)
+
+    expect(wrongAnswer.status).toBe(400)
+    expect((await apiError(wrongAnswer)).message).toBe(MAILED_CODE_WRONG)
+    expect(deadAnswer.status).toBe(410)
+    expect((await apiError(deadAnswer)).message).toBe(MAILED_CODE_DEAD)
+  })
+
   it("gives each address its own reset budget", async () => {
     const { app, queued } = buildApp(null)
     for (let attempt = 0; attempt < RESET_MAILS_PER_ADDRESS; attempt++) {
@@ -1357,17 +1454,17 @@ describe("auth routes reset a password by e-mail link", () => {
     expect(calls).toEqual([])
   })
 
-  it("answers a link the sign-in refuses with 400 and says to ask for a new one", async () => {
+  it("answers a token the reset refuses with 400 and says to ask for a new code", async () => {
     const { app, calls } = buildApp(null, { succeed: false })
 
     const response = await send(app, reset, sameOriginWithoutCookieHeaders)
 
     expect(response.status).toBe(400)
     expect((await apiError(response)).message).toBe(PASSWORD_RESET_REFUSED)
-    expect(calls).toEqual(["resetPassword"])
+    expect(calls).toEqual(["finishPasswordReset"])
   })
 
-  it("refuses a new password shorter than 8 characters before spending the link", async () => {
+  it("refuses a new password shorter than 8 characters before spending the token", async () => {
     const { app, calls } = buildApp(null)
 
     const response = await send(
@@ -1381,15 +1478,16 @@ describe("auth routes reset a password by e-mail link", () => {
   })
 })
 
-describe("auth routes sign in and sign up by e-mail link (#391)", () => {
-  const request = anonymousRoutes.find((route) => route.path === "/auth/link")!
-  const redeem = anonymousRoutes.find((route) => route.path === "/auth/link/redeem")!
+describe("auth routes sign in and sign up by e-mailed code (#391, #752)", () => {
+  const request = anonymousRoutes.find((route) => route.path === "/auth/code")!
+  const redeem = anonymousRoutes.find((route) => route.path === "/auth/code/verify")!
+  const resend = anonymousRoutes.find((route) => route.path === "/auth/code/resend")!
   /** The headers of an anonymous request from `ip`. */
   const from = (ip: string) => ({ ...sameOriginWithoutCookieHeaders, "x-real-ip": ip })
   const askFor = (body: unknown, ip = "192.0.2.1") => ({ route: { ...request, body }, ip })
 
-  it("answers the same for every address and queues the link with the address normalised", async () => {
-    const { app, links } = buildApp(null)
+  it("answers the same for every address and asks for the code with the address normalised", async () => {
+    const { app, codes } = buildApp(null)
     const answers = []
     for (const email of ["  Known@Example.com ", "nobody@example.com"]) {
       const { route, ip } = askFor({ email })
@@ -1398,36 +1496,36 @@ describe("auth routes sign in and sign up by e-mail link (#391)", () => {
     }
 
     expect(answers).toEqual([
-      { status: 200, body: SIGN_IN_LINK_REQUESTED },
-      { status: 200, body: SIGN_IN_LINK_REQUESTED },
+      { status: 200, body: SIGN_IN_CODE_REQUESTED },
+      { status: 200, body: SIGN_IN_CODE_REQUESTED },
     ])
-    expect(links.map((link) => link.email)).toEqual(["known@example.com", "nobody@example.com"])
+    expect(codes.map((code) => code.email)).toEqual(["known@example.com", "nobody@example.com"])
   })
 
-  it("keeps a page of the app as the link's next page and drops any other", async () => {
-    const { app, links } = buildApp(null)
+  it("keeps a page of the app as the code's next page and drops any other", async () => {
+    const { app, codes } = buildApp(null)
     for (const next of ["/notes?tag=work", "//evil.example.com", "/api/auth/me"]) {
       const { route, ip } = askFor({ email: "alice@example.com", next })
       await send(app, route, from(ip))
     }
 
-    expect(links.map((link) => link.next)).toEqual(["/notes?tag=work", null, null])
+    expect(codes.map((code) => code.next)).toEqual(["/notes?tag=work", null, null])
   })
 
   it("refuses an address it cannot normalise, and queues nothing", async () => {
-    const { app, links } = buildApp(null)
+    const { app, codes } = buildApp(null)
     const { route, ip } = askFor({ email: "not an address" })
     const response = await send(app, route, from(ip))
 
     expect(response.status).toBe(400)
-    expect((await apiError(response)).message).toBe(SIGN_IN_LINK_BAD_ADDRESS)
-    expect(links).toEqual([])
+    expect((await apiError(response)).message).toBe(SIGN_IN_CODE_BAD_ADDRESS)
+    expect(codes).toEqual([])
   })
 
-  it("leaves the address's owner a link after a stranger keeps asking for it", async () => {
-    const { app, links } = buildApp(null)
+  it("leaves the address's owner a code after a stranger keeps asking for it", async () => {
+    const { app, codes } = buildApp(null)
     const stranger = []
-    for (let attempt = 0; attempt <= SIGN_IN_LINK_MAILS_PER_ADDRESS; attempt++) {
+    for (let attempt = 0; attempt <= SIGN_IN_CODE_MAILS_PER_ADDRESS; attempt++) {
       const { route } = askFor({ email: "alice@example.com" })
       stranger.push((await send(app, route, from("192.0.2.1"))).status)
     }
@@ -1438,18 +1536,18 @@ describe("auth routes sign in and sign up by e-mail link (#391)", () => {
     )
 
     expect(stranger).toEqual([
-      ...Array(SIGN_IN_LINK_MAILS_PER_CLIENT).fill(200),
-      ...Array(SIGN_IN_LINK_MAILS_PER_ADDRESS + 1 - SIGN_IN_LINK_MAILS_PER_CLIENT).fill(429),
+      ...Array(SIGN_IN_CODE_MAILS_PER_CLIENT).fill(200),
+      ...Array(SIGN_IN_CODE_MAILS_PER_ADDRESS + 1 - SIGN_IN_CODE_MAILS_PER_CLIENT).fill(429),
     ])
     expect(owner.status).toBe(200)
-    expect(links).toHaveLength(SIGN_IN_LINK_MAILS_PER_CLIENT + 1)
+    expect(codes).toHaveLength(SIGN_IN_CODE_MAILS_PER_CLIENT + 1)
   })
 
-  it("caps one address's links from many networks together, and says how long to wait", async () => {
+  it("caps one address's codes from many networks together, and says how long to wait", async () => {
     const { app } = buildApp(null)
     const statuses = []
-    for (let network = 1; statuses.length < SIGN_IN_LINK_MAILS_PER_ADDRESS; network++) {
-      for (let mail = 0; mail < SIGN_IN_LINK_MAILS_PER_CLIENT; mail++) {
+    for (let network = 1; statuses.length < SIGN_IN_CODE_MAILS_PER_ADDRESS; network++) {
+      for (let mail = 0; mail < SIGN_IN_CODE_MAILS_PER_CLIENT; mail++) {
         const { route } = askFor({ email: "alice@example.com" })
         statuses.push((await send(app, route, from(`192.0.2.${network}`))).status)
       }
@@ -1465,24 +1563,45 @@ describe("auth routes sign in and sign up by e-mail link (#391)", () => {
       from("198.51.100.7"),
     )
 
-    expect(statuses.slice(0, SIGN_IN_LINK_MAILS_PER_ADDRESS)).not.toContain(429)
+    expect(statuses.slice(0, SIGN_IN_CODE_MAILS_PER_ADDRESS)).not.toContain(429)
     expect(refused.status).toBe(429)
     expect(refused.headers.get("retry-after")).not.toBe(null)
     expect((await apiError(refused)).message).toMatch(
-      /^Too many links were asked for this address\. Try again in \d+ minutes?\.$/,
+      /^Too many codes were asked for this address\. Try again in \d+ minutes?\.$/,
     )
     expect(otherAddress.status).toBe(200)
   })
 
-  it("answers a used, expired or unknown link with one refusal", async () => {
-    const { app } = buildApp(null, { succeed: false })
-    const response = await send(app, redeem, sameOriginWithoutCookieHeaders)
+  it("answers a wrong code with 400, and a dead request with one 410 refusal", async () => {
+    const wrong = buildApp(null, { succeed: false })
+    const dead = buildApp(null, {
+      signIn: {
+        completeSignInCode: () => Promise.resolve({ outcome: SignInCodeOutcome.Refused }),
+      },
+    })
 
-    expect(response.status).toBe(410)
-    expect((await apiError(response)).message).toBe(SIGN_IN_LINK_REFUSED)
+    const wrongAnswer = await send(wrong.app, redeem, sameOriginWithoutCookieHeaders)
+    const deadAnswer = await send(dead.app, redeem, sameOriginWithoutCookieHeaders)
+
+    expect(wrongAnswer.status).toBe(400)
+    expect((await apiError(wrongAnswer)).message).toBe(MAILED_CODE_WRONG)
+    expect(deadAnswer.status).toBe(410)
+    expect((await apiError(deadAnswer)).message).toBe(MAILED_CODE_DEAD)
   })
 
-  it("answers a signed-in link with the address, the next page and whether a code is owed", async () => {
+  it("spends the address's code budget on a new code too", async () => {
+    const { app, calls } = buildApp(null)
+    for (let mail = 0; mail < SIGN_IN_CODE_MAILS_PER_CLIENT; mail++) {
+      await send(app, askFor({ email: "alice@example.com" }).route, from("192.0.2.1"))
+    }
+
+    const response = await send(app, resend, from("192.0.2.1"))
+
+    expect(response.status).toBe(429)
+    expect(calls).not.toContain("resendSignInCode")
+  })
+
+  it("answers a signed-in code with the address, the next page and whether a second factor is owed", async () => {
     const { app } = buildApp(null, { secondFactor: SecondFactorStatus.Pending })
     const response = await send(app, redeem, sameOriginWithoutCookieHeaders)
 
@@ -1498,8 +1617,8 @@ describe("auth routes sign in and sign up by e-mail link (#391)", () => {
   it("says a new account was made, and sends a guest whose address is taken to the switch", async () => {
     const created = buildApp(null, {
       signIn: {
-        redeemSignInLink: async () => ({
-          outcome: SignInLinkOutcome.Created,
+        completeSignInCode: async () => ({
+          outcome: SignInCodeOutcome.Created,
           signedIn: buildAuthData(),
           email: "new@example.com",
           next: null,
@@ -1508,8 +1627,8 @@ describe("auth routes sign in and sign up by e-mail link (#391)", () => {
     })
     const taken = buildApp(null, {
       signIn: {
-        redeemSignInLink: () =>
-          Promise.resolve({ outcome: SignInLinkOutcome.GuestTaken, next: null }),
+        completeSignInCode: () =>
+          Promise.resolve({ outcome: SignInCodeOutcome.GuestTaken, next: null }),
       },
     })
 
@@ -1528,13 +1647,13 @@ describe("auth routes sign in and sign up by e-mail link (#391)", () => {
   it("tells the mailbox's holder that an unconfirmed account uses the address", async () => {
     const { app } = buildApp(null, {
       signIn: {
-        redeemSignInLink: () => Promise.resolve({ outcome: SignInLinkOutcome.Unconfirmed }),
+        completeSignInCode: () => Promise.resolve({ outcome: SignInCodeOutcome.Unconfirmed }),
       },
     })
     const response = await send(app, redeem, sameOriginWithoutCookieHeaders)
 
     expect(response.status).toBe(409)
-    expect((await apiError(response)).message).toBe(SIGN_IN_LINK_UNCONFIRMED)
+    expect((await apiError(response)).message).toBe(SIGN_IN_CODE_UNCONFIRMED)
   })
 })
 
@@ -1897,7 +2016,7 @@ describe("auth routes prove an e-mail address with a code", () => {
     expect(mailed).toHaveLength(EMAIL_CHANGE_MAILS_PER_ACCOUNT)
   })
 
-  it(`leaves the owner a code and a reset link after ${EMAIL_CHANGE_MAILS_PER_ACCOUNT} requests from another account to move to their address`, async () => {
+  it(`leaves the owner a code and a reset code after ${EMAIL_CHANGE_MAILS_PER_ACCOUNT} requests from another account to move to their address`, async () => {
     // One set of limits, as one API process holds; the stranger is user 2, the owner user 1.
     const rateLimits = createAuthRateLimits(generousLimits)
     const owned = "alice@example.com"
@@ -1932,7 +2051,7 @@ describe("auth routes prove an e-mail address with a code", () => {
     expect((await apiError(resend)).message).toBe(EMAIL_CHANGE_TOO_MANY)
   })
 
-  it(`answers change mail ${EMAIL_CHANGE_MAILS_PER_ADDRESS + 1} to one address from as many accounts with 429, and leaves the owner a code and a reset link`, async () => {
+  it(`answers change mail ${EMAIL_CHANGE_MAILS_PER_ADDRESS + 1} to one address from as many accounts with 429, and leaves the owner a code and a reset code`, async () => {
     const rateLimits = createAuthRateLimits(generousLimits)
     const owned = "alice@example.com"
     const toOwned = { ...change, body: { email: owned, password: "correct-horse" } }

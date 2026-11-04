@@ -1,4 +1,5 @@
 import type { JSX } from "preact"
+import { useEffect } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
@@ -6,6 +7,8 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { useFocusOnError } from "@spy4x/preact-ui/use-focus-on-error"
 import { Link } from "@spy4x/preact-ui/link"
 import { Rich } from "@spy4x/preact-ui/i18n"
+import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
+import { PASSWORD_RESET_CODE_MINUTES } from "@domain/identity"
 import { AuthCard } from "./auth-screen.tsx"
 import { useAppText } from "./i18n.ts"
 import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
@@ -43,11 +46,6 @@ export interface ForgotPasswordScreenProps {
   /** The address typed so far. */
   email: string
   onEmailChange: (email: string) => void
-  /**
-   * The API's answer was accepted: the screen says to check the inbox instead of asking again, in
-   * its own words, which never say whether an account uses the address.
-   */
-  sent: boolean
   error: string | null
   pending: boolean
   onSubmit?: () => void
@@ -55,38 +53,23 @@ export interface ForgotPasswordScreenProps {
 }
 
 /**
- * Asks for the address a reset link goes to. The app takes the submit over with `onSubmit`; the
- * form names no route of its own. The answer is the same whether or not an account
- * uses the address, so the screen never says which.
+ * Asks for the address a reset code goes to (#752). The app takes the submit over with `onSubmit`;
+ * the form names no route of its own. The answer is the same whether or not an account uses the
+ * address, so the code step that follows never says which.
  */
 export function ForgotPasswordScreen(
-  { email, onEmailChange, sent, error, pending, onSubmit, navigate }: ForgotPasswordScreenProps,
+  { email, onEmailChange, error, pending, onSubmit, navigate }: ForgotPasswordScreenProps,
 ): JSX.Element {
   const field = useFocusOnError(error)
   const t = useAppText()
-  if (sent) {
-    return (
-      <Message
-        title={t.t(`SignUpCodeScreen.title`)}
-        text={t.t(`PasswordResetScreen.sent`)}
-        href={SCREEN_PATHS.signIn}
-        link={t.t(`ConfirmSignUpScreen.backToSignIn`)}
-        navigate={navigate}
-        e2e="forgot-password-sent"
-        focusTitle
-      />
-    )
-  }
   return (
     <AuthCard
       title={t.t(`AuthScreen.forgotPassword`)}
-      description={t.t(`PasswordResetScreen.forgotDescription`, { count: 30 })}
-      after={
-        <Rich
-          parts={t.parts(`PasswordResetScreen.remembered`)}
-          tags={{ link: (text) => signInLink(text, navigate) }}
-        />
-      }
+      description={t.t(`PasswordResetScreen.forgotDescription`, {
+        count: PASSWORD_RESET_CODE_MINUTES,
+      })}
+      e2e="forgot-password"
+      after={<RememberedIt navigate={navigate} />}
     >
       <ScreenForm pending={pending} onSubmit={onSubmit}>
         <Stack>
@@ -121,11 +104,20 @@ export function ForgotPasswordScreen(
   )
 }
 
+/** "Remembered it? Back to sign in", under every step of the reset. */
+export function RememberedIt({ navigate }: { navigate?: Navigate }): JSX.Element {
+  const t = useAppText()
+  return (
+    <Rich
+      parts={t.parts(`PasswordResetScreen.remembered`)}
+      tags={{ link: (text) => signInLink(text, navigate) }}
+    />
+  )
+}
+
 export interface ResetPasswordScreenProps {
-  /** The address from the link. */
+  /** The address the reset code went to. */
   email: string
-  /** The code from the link. */
-  code: string
   /** The new password typed so far. */
   newPassword: string
   onNewPasswordChange: (newPassword: string) => void
@@ -134,19 +126,34 @@ export interface ResetPasswordScreenProps {
   error: string | null
   pending: boolean
   onSubmit?: () => void
+  /** "Took too long? Ask for a new code": the app returns to the address, keeping it. */
+  onStartOver: () => void
   navigate?: Navigate
 }
 
 /**
- * Sets a new password with the address and code a reset link carries. The form shows the new
- * password only; the app takes the submit over with `onSubmit` and sends all three. A link without its address or code offers a new link instead.
+ * Sets a new password once the reset code was right (#752). The form shows the new password only;
+ * the app sends it with the token the code gave, which never appears in the page's address.
  */
 export function ResetPasswordScreen(
-  { email, code, newPassword, onNewPasswordChange, done, error, pending, onSubmit, navigate }:
-    ResetPasswordScreenProps,
+  {
+    email,
+    newPassword,
+    onNewPasswordChange,
+    done,
+    error,
+    pending,
+    onSubmit,
+    onStartOver,
+    navigate,
+  }: ResetPasswordScreenProps,
 ): JSX.Element {
   const field = useFocusOnError(error)
   const t = useAppText()
+  useEffect(() => {
+    // The step opens after the code: typing the new password comes next.
+    if (!done) queueMicrotask(() => field.current?.focus())
+  }, [done])
   if (done) {
     return (
       <Message
@@ -156,18 +163,7 @@ export function ResetPasswordScreen(
         link={t.t(`PasswordResetScreen.signIn`)}
         navigate={navigate}
         e2e="reset-password-done"
-      />
-    )
-  }
-  if (!email || !code) {
-    return (
-      <Message
-        title={t.t(`SignInLinkScreen.incompleteTitle`)}
-        text={t.t(`SignInLinkScreen.incomplete`)}
-        href={SCREEN_PATHS.forgotPassword}
-        link={t.t(`PasswordResetScreen.askNew`)}
-        navigate={navigate}
-        e2e="reset-password-incomplete"
+        focusTitle
       />
     )
   }
@@ -186,18 +182,22 @@ export function ResetPasswordScreen(
           }}
         />
       }
+      e2e="reset-password"
       after={
         <Rich
           parts={t.parts(`PasswordResetScreen.expired`)}
           tags={{
             link: (text) => (
-              <Link
-                href={SCREEN_PATHS.forgotPassword}
-                navigate={navigate}
-                class="pc-link font-medium"
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                class={TOUCH_TARGET}
+                data-e2e="reset-password-start-over"
+                onClick={onStartOver}
               >
                 {text}
-              </Link>
+              </Button>
             ),
           }}
         />
