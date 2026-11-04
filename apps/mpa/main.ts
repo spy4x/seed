@@ -1,4 +1,5 @@
 import { App, fsRoutes } from "@spy4x/preact-server"
+import { processEnv } from "@spy4x/platform/server/process"
 import { blogLinkMiddleware } from "./blog.ts"
 import { readMpaConfig } from "./config.ts"
 import { contactLinksMiddleware } from "./contact-links.ts"
@@ -15,7 +16,7 @@ const dev: boolean = import.meta.env?.DEV ?? false
 
 export const app = new App<State>({ mode: dev ? `development` : `production` })
 
-const config = readMpaConfig(Deno.env)
+const config = readMpaConfig(processEnv)
 
 app.use(await securityHeadersMiddleware(config))
 app.use(staticFilesMiddleware())

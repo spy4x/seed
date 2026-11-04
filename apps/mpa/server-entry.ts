@@ -2,9 +2,10 @@
  * The website's server, as the build bundles it (`vite.config.ts`): `deno serve` runs its
  * `fetch`, and so does the dev server. The build hands it what it produced (`__WEBSITE_BUILD__`):
  * the stylesheets, the client script, the build id and the static files. `null` means the dev
- * server, where Vite serves the files and the scripts.
+ * server, where Vite serves the files and the scripts. The files are read through the running
+ * runtime's file system, so the same build serves on Deno, Node and Bun.
  */
-import { denoStaticFs } from "@spy4x/server/static"
+import { runtimeStaticFs } from "@spy4x/server/static"
 import { fromFileUrl } from "@std/path"
 import { registerIslands, setAssets, setStaticFiles, type WebsiteBuild } from "@spy4x/preact-server"
 import { app } from "./main.ts"
@@ -29,7 +30,7 @@ setAssets(
 )
 setStaticFiles(
   build &&
-    { files: build.files, root: fromFileUrl(new URL(`../`, import.meta.url)), fs: denoStaticFs },
+    { files: build.files, root: fromFileUrl(new URL(`../`, import.meta.url)), fs: runtimeStaticFs },
 )
 
 export default { fetch: app.handler() }

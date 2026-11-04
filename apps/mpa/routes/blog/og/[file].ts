@@ -6,7 +6,7 @@ import { seedPostFiles } from "../../../seed-post-files.ts"
  * made by `deno task og:blog` (`screenshots/blog-og.ts`). The source (`routes/blog/og/`) and the
  * build (`dist/server/assets/`) sit at the same depth, so the path holds in both.
  */
-export const CARDS = seedPostFiles(
+export const CARDS = await seedPostFiles(
   new URL(`../../../../../libs/server/blog/seed-posts/og/`, import.meta.url),
   `jpg`,
 )
