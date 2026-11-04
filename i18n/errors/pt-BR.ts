@@ -164,6 +164,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "O plano do grupo não inclui isto.",
   "Reason.PLAN_LIMIT_REACHED": "O grupo chegou ao limite do plano.",
   "Reason.POST_NOT_FOUND": "Este post não existe mais.",
+  "Reason.REVISION_NOT_FOUND": "Esta versão anterior não existe mais.",
   "Reason.PROVIDER_ERROR": "O provedor de pagamento não respondeu. Tente de novo.",
   "Reason.REQUEST_ORIGIN_INVALID":
     "Não conseguimos confirmar de onde veio esta solicitação. Recarregue a página e tente de novo.",

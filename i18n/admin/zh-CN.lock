@@ -472,6 +472,7 @@ AdminBlogEditor.emptyPost	52c2633063e51a41
 AdminBlogEditor.figureHidden	b9f4f461fbe30979
 AdminBlogEditor.goToLine	f818f5b7e993e924
 AdminBlogEditor.goesLive	f2d9454d995e4ed3
+AdminBlogEditor.history	f7c0b6faaf056809
 AdminBlogEditor.httpsCover	075b3b7f27038bc9
 AdminBlogEditor.keyPoint	83d7697e259de0ab
 AdminBlogEditor.keyPoints	c925a0fbcc77e84b
@@ -538,6 +539,15 @@ AdminBlogEditor.viewPost	fe9715bcd31d86c2
 AdminBlogEditor.willEmail	fb694f7099be66cb
 AdminBlogEditor.wordsRead	4a076103425d828f
 AdminBlogEditor.write	3f00927a719345ed
+AdminBlogHistory.body	6ccaa6415b5ee449
+AdminBlogHistory.empty	729f08042d49c450
+AdminBlogHistory.restore	0570daa12fe55db8
+AdminBlogHistory.restored	019a061dbda2267d
+AdminBlogHistory.savedBy	9b49246a51fa793f
+AdminBlogHistory.shown	2c79ad461bbca95a
+AdminBlogHistory.someone	b764cdc0eab71374
+AdminBlogHistory.title	0e76960093379060
+AdminBlogHistory.versions	401dc1a55cb963df
 AdminCatalog.addCategory	aafdf428fd0256ea
 AdminCatalog.addItem	d1a0b329a72b8f16
 AdminCatalog.categories	b8b1d894c6837252
