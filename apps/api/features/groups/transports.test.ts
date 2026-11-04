@@ -290,6 +290,110 @@ describe("renaming a group over REST", () => {
   })
 })
 
+describe("a group's time zone over REST", () => {
+  const details = { description: "", color: null, emoji: null }
+
+  it("stores a known zone the owner picks", async () => {
+    const { groups, buses } = stack()
+
+    const response = await rest(buses, OWNER)("PUT", `/${groupId}/details`, {
+      ...details,
+      timeZone: "Europe/Berlin",
+    })
+
+    expect(response.status).toBe(200)
+    expect((await response.json()).group.timeZone).toBe("Europe/Berlin")
+    expect(groups.timeZone).toBe("Europe/Berlin")
+  })
+
+  it("refuses an unknown zone and an offset as INVALID_REQUEST on the zone field", async () => {
+    const { groups, buses } = stack()
+    const send = rest(buses, OWNER)
+
+    for (const timeZone of ["Mars/Olympus", "+02:00"]) {
+      const response = await send("PUT", `/${groupId}/details`, { ...details, timeZone })
+      expect(response.status).toBe(400)
+      expect(await apiError(response)).toMatchObject({
+        reason: "INVALID_REQUEST",
+        fields: { timeZone: { code: "timeZone" } },
+      })
+    }
+    expect(groups.timeZone).toBe("UTC")
+    expect(groups.writes).toBe(0)
+  })
+
+  it("refuses a viewer with ROLE_INSUFFICIENT and keeps the zone", async () => {
+    const { groups, buses } = stack()
+
+    const response = await rest(buses, VIEWER)("PUT", `/${groupId}/details`, {
+      ...details,
+      timeZone: "Europe/Berlin",
+    })
+
+    expect(response.status).toBe(403)
+    expect((await apiError(response)).reason).toBe("ROLE_INSUFFICIENT")
+    expect(groups.timeZone).toBe("UTC")
+  })
+})
+
+for (const [via, open] of CALL_TRANSPORTS) {
+  describe(`a group's time zone over ${via}`, () => {
+    const details = { groupId, description: "", color: null, emoji: null }
+
+    it("stores a known zone the owner picks", async () => {
+      const { groups, buses } = stack()
+      const ws = open(buses, OWNER)
+
+      const frame = await ws.command("group.updateDetails", {
+        ...details,
+        timeZone: "Europe/Berlin",
+      })
+
+      expect(frame).toMatchObject({
+        kind: "server.result",
+        payload: { group: { timeZone: "Europe/Berlin" } },
+      })
+      expect(groups.timeZone).toBe("Europe/Berlin")
+      ws.shutdown()
+    })
+
+    it("refuses an unknown zone and an offset as INVALID_REQUEST on the zone field", async () => {
+      const { groups, buses } = stack()
+
+      for (const timeZone of ["Mars/Olympus", "+02:00"]) {
+        const ws = open(buses, OWNER)
+        const frame = await ws.command("group.updateDetails", { ...details, timeZone })
+        expect(frame).toMatchObject({
+          kind: "server.error",
+          reason: "INVALID_REQUEST",
+          fields: { timeZone: { code: "timeZone" } },
+        })
+        ws.shutdown()
+      }
+      expect(groups.timeZone).toBe("UTC")
+      expect(groups.writes).toBe(0)
+    })
+
+    it("refuses a viewer with ROLE_INSUFFICIENT and keeps the zone", async () => {
+      const { groups, buses } = stack()
+      const ws = open(buses, VIEWER)
+
+      const frame = await ws.command("group.updateDetails", {
+        ...details,
+        timeZone: "Europe/Berlin",
+      })
+
+      expect(frame).toMatchObject({
+        kind: "server.error",
+        code: "forbidden",
+        details: { code: "ROLE_INSUFFICIENT" },
+      })
+      expect(groups.timeZone).toBe("UTC")
+      ws.shutdown()
+    })
+  })
+}
+
 describe("deleting a group over REST", () => {
   for (const person of PEOPLE) {
     it(`${person.owner ? "lets" : "refuses"} ${person.name} delete it`, async () => {

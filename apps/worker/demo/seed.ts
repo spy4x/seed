@@ -252,7 +252,7 @@ async function seedGroups(
     const groupId = uuidV7()
     ids.push(groupId)
     const created = at(group.createdAgo)
-    await db.group.create({ id: groupId, name: group.name }, ownerId)
+    await db.group.create({ id: groupId, name: group.name, timeZone: group.timeZone }, ownerId)
     await sql`
       UPDATE audit_events SET created_at = ${created}
       WHERE group_id = ${groupId} AND event_kind = ${GROUP_CREATED}

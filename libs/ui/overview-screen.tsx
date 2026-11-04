@@ -14,6 +14,7 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { DashboardGrid, WidgetCard, type WidgetSize } from "@spy4x/preact-ui/widget-card"
 import { createFormatters, type Formatters } from "@spy4x/time/format"
+import { zoneCity } from "@spy4x/time/tz"
 import {
   createTranslator,
   type MessageValues,
@@ -91,8 +92,10 @@ export interface OverviewScreenProps {
   loading: boolean
   /** The range shown and the preset that chose it. */
   range: DateRangeChoice
-  /** The zone whose days the picker's presets count. */
+  /** The group's zone, whose days the picker's presets and the widgets count. */
   timeZone: string
+  /** The person's own zone: when it is another, the range line names the group's city. */
+  viewerTimeZone?: string
   /** The clock the presets and "now" read; tests pass a fixed one. */
   now: Date
   onRangeChange: (choice: DateRangeChoice) => void
@@ -252,6 +255,7 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
               <OverviewRangeRow
                 range={props.range}
                 timeZone={props.timeZone}
+                viewerTimeZone={props.viewerTimeZone}
                 now={props.now}
                 onRangeChange={props.onRangeChange}
                 dataE2E={props.rangeDataE2E}
@@ -334,7 +338,10 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
 /** What {@link OverviewRangeRow} takes. */
 export interface OverviewRangeRowProps {
   range: DateRangeChoice
+  /** The group's zone, whose days are counted. */
   timeZone: string
+  /** The reader's own zone: when it is another, the line ends with "· Berlin time". */
+  viewerTimeZone?: string
   now: Date
   onRangeChange: (choice: DateRangeChoice) => void
   /** `data-e2e` of the picker's button. Defaults to `"overview-range"`. */
@@ -343,7 +350,8 @@ export interface OverviewRangeRowProps {
 
 /**
  * The range picker in its own row, with the muted line that names the exact days and what they are
- * compared with, or asks for a shorter range.
+ * compared with, or asks for a shorter range. A reader in another zone than the group's is told
+ * whose midnight the days start at.
  */
 export function OverviewRangeRow(props: OverviewRangeRowProps): JSX.Element {
   const format = useFormat()
@@ -375,6 +383,12 @@ export function OverviewRangeRow(props: OverviewRangeRowProps): JSX.Element {
       />
       <p class="text-sm text-muted" data-e2e="overview-period">
         {periods ? periodLine(t, periods, format) : t.t(`OverviewScreen.rangeTooLong`)}
+        {props.viewerTimeZone && props.viewerTimeZone !== props.timeZone && (
+          <span data-e2e="overview-zone-note">
+            {` · `}
+            {t.t(`OverviewScreen.zoneNote`, { city: isolate(zoneCity(props.timeZone)) })}
+          </span>
+        )}
       </p>
     </div>
   )

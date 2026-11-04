@@ -76,6 +76,21 @@ describe("parseGroupFile", () => {
     ])
   })
 
+  it("keeps the group's time zone, and reads a file without one as having none", () => {
+    const zoned = file({}, {
+      group: { name: "Family", description: "", color: null, emoji: null, timeZone: "Asia/Tokyo" },
+    })
+    expect(parseGroupFile(zoned, AGGREGATES).settings.timeZone).toBe("Asia/Tokyo")
+    expect("timeZone" in parseGroupFile(file({}), AGGREGATES).settings).toBe(false)
+  })
+
+  it("refuses an unknown time zone as a problem of the group's settings", () => {
+    const { problems } = problemsOf(
+      file({}, { group: { name: "Family", timeZone: "Mars/Olympus" } }),
+    )
+    expect(problems).toEqual([expect.objectContaining({ place: { part: "settings" } })])
+  })
+
   it("reads a version 1 file's old colour names as the hex the migration gave them", () => {
     const parsed = parseGroupFile(
       file({ tags: [{ ...tag("Work"), color: "blue" }] }, {

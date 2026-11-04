@@ -120,6 +120,7 @@ interface GroupRowRaw {
   name: string
   emoji: string | null
   color: GroupColor | null
+  timeZone: string
   ownerId: number
   ownerName: string
   ownerEmail: string | null
@@ -151,7 +152,7 @@ function lastActivityAt(sql: postgres.Sql) {
 /** The columns of {@link AdminGroupRow} over `groups g` joined to its owner `o`. */
 function groupColumns(sql: postgres.Sql) {
   return sql`
-    g.id, g.name, g.emoji, g.color, g.created_at, g.deleted_at,
+    g.id, g.name, g.emoji, g.color, g.time_zone, g.created_at, g.deleted_at,
     ${personColumns(sql, `o`, `owner`)},
     ${memberCount(sql)} AS member_count,
     (
@@ -180,6 +181,7 @@ function toGroupRow(row: GroupRowRaw): AdminGroupRow {
     name: row.name,
     emoji: row.emoji,
     color: row.color,
+    timeZone: row.timeZone,
     owner: toPerson(row.ownerId, row.ownerName, row.ownerEmail),
     memberCount: row.memberCount,
     noteCount: row.noteCount,

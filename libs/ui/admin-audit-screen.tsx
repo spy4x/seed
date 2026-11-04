@@ -69,6 +69,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
   "group.created": `AdminAuditEvent.groupCreated`,
   "group.renamed": `AdminAuditEvent.groupRenamed`,
   "group.details_updated": `AdminAuditEvent.groupDetailsUpdated`,
+  "group.time_zone_changed": `AdminAuditEvent.groupTimeZoneChanged`,
   "group.deleted": `AdminAuditEvent.groupDeleted`,
   "group.restored": `AdminAuditEvent.groupRestored`,
   "group.member_role_changed": `AdminAuditEvent.memberRoleChanged`,

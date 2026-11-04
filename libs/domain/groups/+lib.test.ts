@@ -20,6 +20,7 @@ import {
   GROUP_EMOJI_MAX,
   GroupError,
   GroupRole,
+  groupTimeZone,
   parseCreateGroupRequest,
   parseGroupColor,
   parseGroupDescription,
@@ -27,6 +28,7 @@ import {
   parseGroupDetailsRequest,
   parseGroupEmoji,
   parseGroupIdRequest,
+  parseGroupTimeZone,
   parseMemberRequest,
   parseMemberRoleBody,
   parseMemberRoleRequest,
@@ -406,6 +408,34 @@ describe("a group's colour", () => {
   })
 })
 
+describe("a group's time zone", () => {
+  it("is an IANA name, in its canonical spelling", () => {
+    expect(parseGroupTimeZone("Europe/Berlin")).toBe("Europe/Berlin")
+    expect(parseGroupTimeZone("europe/berlin")).toBe("Europe/Berlin")
+  })
+
+  it("refuses an unknown name, an offset and anything but a string, on the zone field", () => {
+    for (const value of ["Mars/Olympus", "+02:00", "-0530", "", null, undefined, 2]) {
+      let thrown: unknown
+      try {
+        parseGroupTimeZone(value)
+      } catch (error) {
+        thrown = error
+      }
+      expect(thrown).toBeInstanceOf(GroupError)
+      expect((thrown as GroupError).code).toBe("INVALID_REQUEST")
+      expect((thrown as GroupError).fields).toEqual({ timeZone: { code: "timeZone" } })
+    }
+  })
+
+  it("reads a group's own zone, else the fallback, else UTC", () => {
+    expect(groupTimeZone({ timeZone: "Asia/Tokyo" }, "Europe/Berlin")).toBe("Asia/Tokyo")
+    expect(groupTimeZone({}, "Europe/Berlin")).toBe("Europe/Berlin")
+    expect(groupTimeZone({ timeZone: "Mars/Olympus" })).toBe("UTC")
+    expect(groupTimeZone({ timeZone: null })).toBe("UTC")
+  })
+})
+
 describe("a group's emoji", () => {
   it("accepts one emoji, however many code points it takes", () => {
     for (const emoji of ["🏕️", "🏠", "👨‍👩‍👧", "🇳🇱", "👍🏽", "⭐"]) {
@@ -447,6 +477,17 @@ describe("a group's details request", () => {
       color: "#15803d",
       emoji: "🏕️",
     })
+  })
+
+  it("takes an optional zone and refuses an unknown one", () => {
+    expect(parseGroupDetailsBody({ ...details, timeZone: "Asia/Tokyo" }).timeZone).toBe(
+      "Asia/Tokyo",
+    )
+    expect(parseCreateGroupRequest({ id: groupId, name: "Trip", timeZone: "Asia/Tokyo" }).timeZone)
+      .toBe("Asia/Tokyo")
+    expect(codeOf(() => parseGroupDetailsBody({ ...details, timeZone: "Mars/Olympus" }))).toBe(
+      "INVALID_REQUEST",
+    )
   })
 
   it("refuses a missing field, an extra one and a bad group id", () => {

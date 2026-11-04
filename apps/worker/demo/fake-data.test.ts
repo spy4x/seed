@@ -5,6 +5,7 @@ import { BillingStatus } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import {
   DAY,
+  DEMO_TIME_ZONES,
   FAKE_COUNTS,
   FAKE_PASSKEYS,
   fakeDemoData,
@@ -211,6 +212,19 @@ Deno.test("Product team, which the admin video opens from the top of Groups, is 
     expect(sizes.filter(([, size]) => size === largest).map(([name]) => name)).toEqual([
       `Product team`,
     ])
+  }
+})
+
+Deno.test("every fake group has a time zone of its own, the same for the same name, on any seed", () => {
+  const zones = (seed: number) =>
+    Object.fromEntries(fakeDemoData(seed, NOW).groups.map((group) => [group.name, group.timeZone]))
+  const first = zones(1)
+  const values = Object.values(first)
+
+  expect(values.every((zone) => (DEMO_TIME_ZONES as readonly string[]).includes(zone))).toBe(true)
+  expect(new Set(values).size).toBeGreaterThan(1)
+  for (const [name, zone] of Object.entries(zones(42))) {
+    if (name in first) expect(zone).toBe(first[name])
   }
 })
 

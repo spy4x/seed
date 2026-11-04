@@ -31,6 +31,11 @@ command, `group.updateDetails`.
 6. **Screen.** Add the field to `libs/ui/group-editor-screen.tsx` and to the create request. A role
    that may not edit sees the value as text.
 
+A setting that existing groups must have from the start, such as the time zone, has no default
+state to show: the migration fills every row (the time zone takes the owner's), then sets
+`NOT NULL`. A setting the client may leave out of the details request (the time zone again) keeps
+older clients working: absent means unchanged.
+
 A colour is a lower-case `#rrggbb`, checked with `isHexColor` from
 `@spy4x/platform/universal/color`. Draw text on it with `readableTextColor`. New fields on
 `GroupRow`, `PickerGroup` and the SPA's `GroupItem` are optional: the device may hold groups saved
@@ -51,7 +56,8 @@ content or who did it.
    `apps/api/features/notes/widgets.ts` does. The handler makes the list's membership check before
    it reads anything, so a stranger is told the group does not exist.
 3. **Numbers.** Read them from a read-only repository over one group, as
-   `libs/server/notes/note-overview.ts` does. Cut days at midnight in the person's zone.
+   `libs/server/notes/note-overview.ts` does. Cut days at midnight in the zone the request names:
+   the pages send the group's (`groupTimeZone(group)`), so every member sees the same days.
 4. **Register.** Add the handler to `apps/api/cqrs/+init.ts` and the operation to `realtimeHub.ts`.
 5. **Drawing.** Add a `WidgetView`, as `NOTE_WIDGET_VIEWS` in `libs/ui/note-widgets.tsx` does. A
    number takes `WidgetStat`; a chart takes `LineChart` with a one-sentence summary as its caption.

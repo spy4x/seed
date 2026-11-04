@@ -72,6 +72,9 @@ const FORMATTED: readonly RegExp[] = [
 /** Where a page shows data as it is: a date in `<time>`, and content marked not to translate. */
 const DATA_PLACES = `script, style, time, [translate="no"]`
 
+/** A time zone's label, `Berlin, Europe · GMT+1`: a place and an offset, data and not a message. */
+export const ZONE_LABEL = /(?:[\p{L}' _-]+, )*[\p{L}' _-]+ · GMT(?:[+−-]\d{1,2}(?::\d\d)?)?/gu
+
 /**
  * The English words a person reads under `root` outside the pseudo-language's marks: its text and
  * the names and hints in its attributes. `data` lists what the screen shows as it is (a person's

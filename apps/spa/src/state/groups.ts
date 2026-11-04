@@ -1,15 +1,18 @@
 import { signal } from "@preact/signals"
 import { describeError, RealtimeRequestError } from "@spy4x/realtime"
 import {
+  GROUP_DEFAULT_TIME_ZONE,
   GROUP_DESCRIPTION_MAX,
   type GroupColor,
   type GroupDetails,
   GroupError,
   type GroupMoveAllResult,
   type GroupRole,
+  groupTimeZone,
   parseGroupDescription,
   parseGroupEmoji,
   parseGroupName,
+  parseGroupTimeZone,
 } from "@domain/groups"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
 import { apiAsUser } from "./realtime-call.ts"
@@ -29,6 +32,7 @@ import {
   type GroupEditorErrors,
 } from "@ui/group-editor-screen.tsx"
 import { appText } from "../i18n.ts"
+import { preferencesState } from "./preferences.ts"
 
 /** A group as the API sends it: dates are ISO strings, the sequence a decimal string. */
 export interface GroupItem {
@@ -38,6 +42,8 @@ export interface GroupItem {
   description?: string
   color?: GroupColor | null
   emoji?: string | null
+  /** The zone the group's days are cut in. Absent in a list stored before groups had one. */
+  timeZone?: string
   role: GroupRole
   authorizationRevision: string
   changeSequence: string
@@ -78,6 +84,8 @@ export interface GroupsDependencies {
   /** Records that this page holds a group up to a sequence. */
   advance(groupId: string, sequence: number): void
   newId(): string
+  /** The person's own zone, which a new group starts in. */
+  viewerTimeZone?(): string
   /** What the device already holds of the list, shown before the read answers. */
   readLocal?(): Promise<readonly GroupItem[]>
 }
@@ -93,6 +101,7 @@ export const GROUP_MESSAGES = {
   nameInvalid: `GroupEditor.nameInvalid`,
   descriptionTooLong: `GroupEditor.descriptionTooLong`,
   emojiInvalid: `GroupEditor.emojiInvalid`,
+  timeZoneInvalid: `GroupEditor.timeZoneInvalid`,
   create: `GroupEditor.createFailed`,
   createOffline: `GroupEditor.createOffline`,
   saveOffline: `GroupEditor.saveOffline`,
@@ -105,13 +114,14 @@ export function draftOf(group: GroupItem): GroupDraft {
     description: group.description ?? "",
     color: group.color ?? null,
     emoji: group.emoji ?? "",
+    timeZone: groupTimeZone(group),
   }
 }
 
 /** Whether two drafts would save the same group: spaces around the text do not count. */
 function sameDraft(a: GroupDraft, b: GroupDraft): boolean {
   return a.name.trim() === b.name.trim() && a.description.trim() === b.description.trim() &&
-    a.color === b.color && a.emoji.trim() === b.emoji.trim()
+    a.color === b.color && a.emoji.trim() === b.emoji.trim() && a.timeZone === b.timeZone
 }
 
 /** Reads `parse`'s answer, or `null` when it refused the value. */
@@ -134,11 +144,17 @@ export function checkGroupDraft(
   const name = parsed(() => parseGroupName(draft.name))
   const description = parsed(() => parseGroupDescription(draft.description))
   const emoji = parsed(() => parseGroupEmoji(draft.emoji))
-  if (name && description && emoji) {
+  const timeZone = parsed(() => parseGroupTimeZone(draft.timeZone))
+  if (name && description && emoji && timeZone) {
     return {
       ok: true,
       name: name.value,
-      details: { description: description.value, color: draft.color, emoji: emoji.value },
+      details: {
+        description: description.value,
+        color: draft.color,
+        emoji: emoji.value,
+        timeZone: timeZone.value,
+      },
     }
   }
   return {
@@ -153,8 +169,14 @@ export function checkGroupDraft(
         ? null
         : appText(GROUP_MESSAGES.descriptionTooLong, { count: GROUP_DESCRIPTION_MAX }),
       emoji: emoji ? null : appText(GROUP_MESSAGES.emojiInvalid),
+      timeZone: timeZone ? null : appText(GROUP_MESSAGES.timeZoneInvalid),
     },
   }
+}
+
+/** Whether the server refused a request for its time zone: the field says so, not the form. */
+function refusedZone(cause: unknown): boolean {
+  return cause instanceof RealtimeRequestError && cause.fields?.timeZone !== undefined
 }
 
 /** How a read reaches the API. */
@@ -176,16 +198,26 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
   /**
    * What the person typed in the group editor, with the group it is for (`null`: a new group).
    * `null` while nothing was typed: the editor then shows the group as saved, also when the group
-   * is read after the page opened.
+   * is read after the page opened. `base` is the saved group (or the empty form) as it was when
+   * the person started typing: a zone still equal to it is untouched, and follows the saved one.
    */
-  const editor = signal<{ groupId: string | null; value: GroupDraft } | null>(null)
+  const editor = signal<
+    { groupId: string | null; value: GroupDraft; base: GroupDraft } | null
+  >(null)
   /** Why the editor's last create or save was refused. */
   const editorErrors = signal<GroupEditorErrors>({})
   /** The group a save, delete or restore is in flight for, and which of them. */
   const working = signal<{ groupId: string; action: GroupAction } | null>(null)
   /** Why the last save, delete or restore was refused. */
   const actionError = signal<
-    { groupId: string; action: GroupAction; message: string; plan?: PlanRefusal } | null
+    {
+      groupId: string
+      action: GroupAction
+      message: string
+      plan?: PlanRefusal
+      /** The server refused the group's time zone. */
+      zone?: boolean
+    } | null
   >(null)
   /**
    * The last move of a group's data that worked, until the person closes its dialog: how many
@@ -278,25 +310,56 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
     return groups.value.find((group) => group.id === groupId)
   }
 
-  /** What the editor of a group (`null`: a new one) shows: what was typed, else the saved group. */
+  /** The saved group's fields, or a new group's: empty, in the person's own zone. */
+  function savedDraft(groupId: string | null): GroupDraft {
+    const saved = groupId === null ? undefined : savedGroup(groupId)
+    if (saved) return draftOf(saved)
+    const zone = dependencies.viewerTimeZone?.() ?? GROUP_DEFAULT_TIME_ZONE
+    return { ...EMPTY_GROUP_DRAFT, timeZone: groupTimeZone({ timeZone: zone }) }
+  }
+
+  /**
+   * What the editor of a group (`null`: a new one) shows: what was typed, else the saved group. A
+   * zone the person did not touch follows the saved one, so someone else's change shows at once.
+   */
   function draft(groupId: string | null): GroupDraft {
     const typed = editor.value
-    if (typed && typed.groupId === groupId) return typed.value
-    const saved = groupId === null ? undefined : savedGroup(groupId)
-    return saved ? draftOf(saved) : EMPTY_GROUP_DRAFT
+    if (!typed || typed.groupId !== groupId) return savedDraft(groupId)
+    if (typed.value.timeZone !== typed.base.timeZone) return typed.value
+    return { ...typed.value, timeZone: savedDraft(groupId).timeZone }
   }
 
   /** Whether the editor of a group (`null`: a new one) holds something that is not saved. */
   function unsaved(groupId: string | null): boolean {
     const typed = editor.value
     if (!typed || typed.groupId !== groupId) return false
-    const saved = groupId === null ? undefined : savedGroup(groupId)
-    return !sameDraft(typed.value, saved ? draftOf(saved) : EMPTY_GROUP_DRAFT)
+    return !sameDraft(draft(groupId), savedDraft(groupId))
+  }
+
+  /**
+   * The zone someone else saved for a group while the person picked another one here, or `null`.
+   * The editor keeps the person's choice and says so.
+   */
+  function zoneChangedElsewhere(groupId: string): string | null {
+    const typed = editor.value
+    if (!typed || typed.groupId !== groupId) return null
+    const saved = savedDraft(groupId).timeZone
+    const { base, value } = typed
+    return value.timeZone !== base.timeZone && saved !== base.timeZone &&
+        saved !== value.timeZone
+      ? saved
+      : null
   }
 
   /** Keeps what the person typed in the editor of a group (`null`: a new one). */
   function edit(groupId: string | null, value: GroupDraft): void {
-    editor.value = { groupId, value }
+    const saved = savedDraft(groupId)
+    const before = editor.value?.groupId === groupId ? editor.value.base : saved
+    // A zone equal to the saved one is untouched from here on, whoever saved it.
+    const base = value.timeZone === saved.timeZone
+      ? { ...before, timeZone: saved.timeZone }
+      : before
+    editor.value = { groupId, value, base }
   }
 
   /**
@@ -339,11 +402,13 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
       if (editor.value?.groupId === null) editor.value = null
       return group
     } catch (cause) {
-      editorErrors.value = {
-        form: cause instanceof RealtimeRequestError
-          ? describeError(cause, appText(GROUP_MESSAGES.create))
-          : appText(GROUP_MESSAGES.createOffline),
-      }
+      editorErrors.value = refusedZone(cause)
+        ? { timeZone: appText(GROUP_MESSAGES.timeZoneInvalid) }
+        : {
+          form: cause instanceof RealtimeRequestError
+            ? describeError(cause, appText(GROUP_MESSAGES.create))
+            : appText(GROUP_MESSAGES.createOffline),
+        }
       return null
     } finally {
       creating.value = false
@@ -373,6 +438,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
         action,
         message: describeError(cause, fallback),
         ...(plan && { plan }),
+        ...(refusedZone(cause) && { zone: true }),
       }
       return false
     } finally {
@@ -404,11 +470,16 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
         )
       }
       if (name !== before.name) merge((await dependencies.rename({ groupId, name })).group)
+      // The zone goes only when the person changed it, so a save of the name or the description
+      // never puts back a zone someone else saved meanwhile.
+      const { timeZone, ...rest } = details
+      const zoneChanged = timeZone !== before.timeZone
       if (
-        details.description !== before.description || details.color !== before.color ||
-        (details.emoji ?? "") !== before.emoji
+        rest.description !== before.description || rest.color !== before.color ||
+        (rest.emoji ?? "") !== before.emoji || zoneChanged
       ) {
-        merge((await dependencies.updateDetails({ groupId, ...details })).group)
+        const update = zoneChanged ? { groupId, ...rest, timeZone } : { groupId, ...rest }
+        merge((await dependencies.updateDetails(update)).group)
       }
       // A failure that is not the server's answer means the server was not reached.
     }, appText(GROUP_MESSAGES.saveOffline))
@@ -416,7 +487,9 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
     if (done) {
       if (editor.value?.groupId === groupId) editor.value = null
     } else if (failure?.groupId === groupId && failure.action === "save") {
-      editorErrors.value = { form: failure.message }
+      editorErrors.value = failure.zone
+        ? { timeZone: appText(GROUP_MESSAGES.timeZoneInvalid) }
+        : { form: failure.message }
     }
     return done
   }
@@ -484,6 +557,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
     editorErrors,
     draft,
     unsaved,
+    zoneChangedElsewhere,
     edit,
     openEditor,
     discard,
@@ -537,6 +611,7 @@ export const onlineGroups: GroupsDependencies = {
   moveAll: (input) => callCommand("group.moveAll", input),
   advance: advanceGroupCursor,
   newId: () => uuidV7(),
+  viewerTimeZone: () => preferencesState.format.value.timeZone,
 }
 
 /**

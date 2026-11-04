@@ -12,6 +12,7 @@ import { type Navigate, NOTE_PATHS } from "./progressive.tsx"
 import { When } from "@spy4x/preact-ui/format"
 import { useAppText } from "./i18n.ts"
 import { roleName } from "./groups-screen.tsx"
+import { zoneLabel } from "@spy4x/time/tz"
 
 /** One event as the API sends it: `at` is an ISO timestamp. */
 export type ActivityRow = Omit<ActivityEvent, "at"> & { at: string }
@@ -176,6 +177,13 @@ export function activityMessage(event: Pick<ActivityEvent, "kind" | "details">):
     }
     case "group.details_updated":
       return one(`GroupActivity.detailsUpdated`)
+    case "group.time_zone_changed": {
+      const from = text(details.from)
+      const to = text(details.to)
+      return from && to
+        ? one(`GroupActivity.timeZoneChanged`, { from, to })
+        : one(`GroupActivity.timeZoneChangedPlain`)
+    }
     case "group.deleted":
       return one(`GroupActivity.deleted`)
     case "group.restored":
@@ -297,7 +305,9 @@ function roleIn(t: Translator<string>, role: string | number): string {
  * person with no name "Someone"; those are the app's own words, so they are translated.
  */
 export function ActivitySentence(
-  { event }: { event: Pick<ActivityEvent, "kind" | "actor" | "target" | "details"> },
+  { event }: {
+    event: Pick<ActivityEvent, "kind" | "actor" | "target" | "details"> & { at?: string | Date }
+  },
 ): JSX.Element {
   const t = useAppText()
   const message = activityMessage(event)
@@ -314,6 +324,14 @@ export function ActivitySentence(
   const filled: Record<string, string | number> = { ...values, who, target }
   for (const field of [`role`, `fromRole`, `toRole`]) {
     if (field in values) filled[field] = roleIn(t, values[field])
+  }
+  // A zone reads as a place with its offset on the day of the change: `Berlin, Europe · GMT+1`.
+  if (event.kind === `group.time_zone_changed` && event.at) {
+    for (const field of [`from`, `to`]) {
+      if (typeof values[field] === `string`) {
+        filled[field] = zoneLabel(values[field] as string, new Date(event.at))
+      }
+    }
   }
   const key = message.someone && !target ? message.someone : message.key
   const person = (named: boolean) => (part: string) =>
