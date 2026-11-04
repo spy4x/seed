@@ -896,6 +896,9 @@ describe("the public website", () => {
     expect(html.match(/<form [^>]*action="\/pricing"[^>]*method="post"/g)).toHaveLength(
       PLANS.length,
     )
+    // Seed's own catalog sells no yearly price: no toggle and no saving sentence.
+    expect(html).not.toContain(`data-pricing-interval`)
+    expect(html).not.toContain(`data-e2e="pricing-saving"`)
   })
 
   it("offers only Seed itself, at no cost, in the pricing page's structured data", async () => {

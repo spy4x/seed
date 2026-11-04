@@ -275,6 +275,8 @@ export default {
   "Pricing.description":
     "Seed ist kostenlos unter MIT, ohne Bezahlversion. Für den Betrieb brauchst du einen Linux-Server zum Preis deines Hosters, plus die Dienste, die du einschaltest.",
   "Pricing.crumb": "Preise",
+  "Pricing.saving":
+    "{plan} kostet {monthly} im Monat oder {yearly} im Jahr: {saving} weniger als bei monatlicher Zahlung.",
   "PricingFaq.paidQuestion": "Gibt es eine Bezahlversion von Seed?",
   "PricingFaq.paidAnswer":
     "Nein. Es gibt keine Pro-Version, keinen Lizenzschlüssel und keine zurückgehaltene Funktion. Wenn du Hilfe willst, buch mich: Meine Zeit ist das Einzige, was ich verkaufe.",
