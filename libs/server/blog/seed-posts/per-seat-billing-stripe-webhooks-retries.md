@@ -13,7 +13,7 @@ topic: Deep dive
 intro: "Per-seat billing looks like one number: members times price. The hard part is keeping that number right while people join, Stripe is down, and webhooks arrive twice or out of order. This is how Seed does it, with the real code."
 relatedFeature: billing
 cover: covers/per-seat-billing-stripe-webhooks-retries.webp
-coverAlt: "A row of violet theatre seats seen from the side, each holding a potted plant, with one empty seat folding down as a new seedling arrives."
+coverAlt: "A row of violet theatre seats, each holding a potted plant, with a new seedling lowered on a string into one more seat."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-05T09:00:00Z
@@ -133,7 +133,7 @@ return await this.sql.begin(async (transaction) => {
 ```
 
 `billing_events.id` is the primary key, so the second delivery inserts nothing and returns before
-touching the subscription. Because the id is stored *inside* the transaction, the opposite case is
+touching the subscription. Because the id is stored _inside_ the transaction, the opposite case is
 safe too: if anything after it fails, the id rolls back with the rest, the route answers `500`, and
 Stripe's retry gets a clean second attempt. Storing the id first and applying later, in two steps,
 would lose the event the first time a deploy restarts the API between them.
