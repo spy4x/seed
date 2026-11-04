@@ -20,8 +20,10 @@ A plan with a `yearlyAmount` is sold a year at a time too
 
 A group is on a paid plan while its subscription is trialing or active. It also keeps the plan for
 a grace period after a failed payment ([failed payments](billing-lifecycle.md#failed-payments)).
-A canceled, incomplete or paused subscription puts the group back on Free. So does a subscription
-that bills a price not in the catalog.
+A canceled, incomplete or paused subscription puts the group back on Free. An event for a price
+not in the catalog changes nothing: the group keeps the plan it had, even when the event cancels
+the subscription ([unknown prices](billing.md#sell-a-yearly-price)). So before you replace a plan's
+Stripe price, keep the old price in the settings until no subscription bills it.
 
 ## Add a plan
 

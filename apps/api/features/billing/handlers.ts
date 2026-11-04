@@ -90,8 +90,8 @@ export function createBillingCheckoutHandler(
       throw new BillingError("PERIOD_NOT_OFFERED", "The plan is not sold for that billing period")
     }
     // A second checkout would start a second subscription and charge twice; the portal changes the
-    // plan of the one the group has. Any subscription that is not cancelled counts, even a paused,
-    // incomplete or unknown-price one that shows as the free plan. The one exception is a
+    // plan of the one the group has. Any stored subscription that is not cancelled counts, even a
+    // paused or incomplete one that shows as the free plan. The one exception is a
     // subscription the previous owner pays after a transfer and has cancelled at its period's end:
     // the new owner checks out with a customer of their own, first charged when it ends (#250).
     const [current, customerId, handedOver] = await Promise.all([
