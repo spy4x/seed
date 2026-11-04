@@ -660,9 +660,9 @@ export default {
   "GroupBillingPanel.finePrintFlatYear":
     "Se cobra cada año. Cancela cuando quieras y conserva {plan} hasta que termine el periodo.",
   "GroupBillingPanel.refund": {
-    "one": "¿Cambiaste de opinión? Pide el reembolso completo dentro de {count} día.",
-    "many": "¿Cambiaste de opinión? Pide el reembolso completo dentro de {count} días.",
-    "other": "¿Cambiaste de opinión? Pide el reembolso completo dentro de {count} días.",
+    "one": "¿Cambiaste de opinión? Pide el reembolso completo en un plazo de {count} día.",
+    "many": "¿Cambiaste de opinión? Pide el reembolso completo en un plazo de {count} días.",
+    "other": "¿Cambiaste de opinión? Pide el reembolso completo en un plazo de {count} días.",
   },
   "GroupBillingPanel.joinInstead":
     "¿Quieres unirte al grupo de otra persona? Pídele a su propietario un enlace de invitación en lugar de pagar.",

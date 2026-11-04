@@ -518,8 +518,8 @@ export default {
   },
   "GroupBillingPanel.wholeGroupNoCap": "适用于整个群组。",
   "GroupBillingPanel.continueToPayment": "继续付款",
-  "GroupBillingPanel.priceFlat": "{plan} 整个群组每月 {price}。",
-  "GroupBillingPanel.priceFlatYear": "{plan} 整个群组每年 {price}。",
+  "GroupBillingPanel.priceFlat": "{plan} 每月 {price}，适用于整个群组。",
+  "GroupBillingPanel.priceFlatYear": "{plan} 每年 {price}，适用于整个群组。",
   "GroupBillingPanel.finePrintFlat": "按月计费。可随时取消，{plan} 会保留到当期结束。",
   "GroupBillingPanel.finePrintFlatYear": "按年计费。可随时取消，{plan} 会保留到当期结束。",
   "GroupBillingPanel.refund": {

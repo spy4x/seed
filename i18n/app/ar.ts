@@ -725,7 +725,7 @@ export default {
   "GroupBillingPanel.periodHint": "تعرض لك Stripe ما ستدفعه اليوم قبل أن تؤكد.",
   "GroupBillingPanel.switchYearly": "التحويل إلى الدفع السنوي",
   "GroupBillingPanel.switchMonthly": "التحويل إلى الدفع الشهري",
-  "GroupBillingPanel.startHeading": "ابدأ مع خطة <plan>{plan}</plan>",
+  "GroupBillingPanel.startHeading": "ابدأ بخطة <plan>{plan}</plan>",
   "GroupBillingPanel.unitMonth": "شهريًا",
   "GroupBillingPanel.unitYear": "سنويًا",
   "GroupBillingPanel.unitMemberMonth": "لكل عضو شهريًا",
