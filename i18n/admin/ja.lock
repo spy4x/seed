@@ -151,6 +151,7 @@ AdminAuditEvent.groupExported	382b8ad9605e51b6
 AdminAuditEvent.groupImported	a82ec193d2251a20
 AdminAuditEvent.groupRenamed	d4f471cec061ad34
 AdminAuditEvent.groupRestored	0ce23a38c471e523
+AdminAuditEvent.groupTimeZoneChanged	f0c09de442ee6692
 AdminAuditEvent.guestDeleted	e0b52ec0a7d83f3d
 AdminAuditEvent.guestKept	d822c85bd5280f79
 AdminAuditEvent.guestStarted	27831ec2f7393c5b
@@ -981,6 +982,7 @@ AdminGroup.subscription	9a3bea7770f7ad99
 AdminGroup.tags	1331275bc537b4c2
 AdminGroup.theGroup	3e56466042cf9bf7
 AdminGroup.theMember	b7f9c38752f607b1
+AdminGroup.timeZone	b9fe1464783e1c0d
 AdminGroup.title	34ca0e76608842ff
 AdminGroup.transfer	3667f939d52f5974
 AdminGroup.transferSubmit	dde8bef78cbb7206

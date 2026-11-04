@@ -29,7 +29,7 @@ import {
 import { AdminUserScreen, type AdminUserScreenProps } from "./admin-user-screen.tsx"
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
-import { ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
+import { ADMIN_PSEUDO, englishLeft, ZONE_LABEL } from "./i18n-testing.ts"
 
 const window = new Window({ url: `http://admin.localhost/` })
 const own = {
@@ -126,6 +126,7 @@ const family: AdminGroupRow = {
   id: GROUP_ID,
   name: `Family`,
   emoji: null,
+  timeZone: `Europe/Berlin`,
   color: null,
   owner: { id: 42, name: `Ada Lovelace`, email: `ada@example.com` },
   memberCount: 3,
@@ -417,6 +418,17 @@ describe(`one group in the admin app`, () => {
     expect(counts).toContain(`12`)
     expect(counts).toContain(`2 in trash`)
     expect(find(`[data-e2e=admin-group-status]`).textContent).toBe(`Active`)
+  })
+
+  it(`shows the group's time zone as a fact after Created`, async () => {
+    await mount(<AdminGroupScreen {...groupProps([])} />)
+
+    const zone = find(`[data-e2e=admin-group-time-zone]`)
+    expect(zone.textContent).toMatch(/^Berlin, Europe · GMT\+[12]$/)
+    const facts = [...root!.querySelectorAll(`dt`)].map((term) => term.textContent?.trim())
+    expect(facts.indexOf(`Time zone`)).toBe(facts.indexOf(`Created`) + 1)
+    // A zone name runs past a phone's column; cut short, its offset would be lost.
+    expect(zone.closest(`dd`)!.classList.contains(`truncate`)).toBe(false)
   })
 
   it(`says when a group was made from an export file and who imported it, and nothing for one created empty`, async () => {
@@ -875,6 +887,7 @@ describe("the group screens in en-XA", () => {
       /[a-z]+@example\.com/g,
       `receipt.pdf`,
       `IMG_0001.png`,
+      ZONE_LABEL,
     ])).toEqual([])
   })
 

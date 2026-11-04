@@ -82,6 +82,7 @@ const detail: AdminGroupDetail = {
     id: GROUP_ID,
     name: `Family`,
     emoji: null,
+    timeZone: "UTC",
     color: null,
     owner: { id: 42, name: `Ada Lovelace`, email: `ada@example.com` },
     memberCount: 2,

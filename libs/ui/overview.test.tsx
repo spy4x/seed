@@ -200,6 +200,15 @@ describe("the group overview", () => {
     )
   })
 
+  it("ends the range line with the group's city when the group's zone is not the viewer's", async () => {
+    await mount(READY, { timeZone: "Europe/Berlin", viewerTimeZone: "Asia/Tokyo" })
+    expect(text("[data-e2e=overview-period]")).toMatch(/ · \u2068Berlin\u2069 time$/)
+
+    await act(() => render(null, root!))
+    await mount(READY, { timeZone: "Europe/Berlin", viewerTimeZone: "Europe/Berlin" })
+    expect(text("[data-e2e=overview-period]")).not.toContain("Berlin")
+  })
+
   it("names the last day instead of now for a range that ended before today", async () => {
     await mount(READY, {
       range: { preset: "custom", range: { from: "2026-09-01", to: "2026-09-30" } },

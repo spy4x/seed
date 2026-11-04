@@ -87,7 +87,7 @@ describe("ids the SPA makes", () => {
       },
       advance: () => {},
     })
-    store.edit(null, { name: "Team", description: "", color: null, emoji: "" })
+    store.edit(null, { name: "Team", description: "", color: null, emoji: "", timeZone: "UTC" })
 
     await store.create()
 

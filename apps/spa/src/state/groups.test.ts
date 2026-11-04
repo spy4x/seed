@@ -63,6 +63,7 @@ function harness(
     moveAll?: (
       input: { groupId: string; toGroupId: string },
     ) => Promise<{ moved: number; counts: Record<string, number> }>
+    viewerTimeZone?: () => string
   },
 ) {
   const pages = [...(overrides.pages ?? [{ groups: [], nextCursor: null }])]
@@ -88,6 +89,7 @@ function harness(
     },
     advance: (groupId, sequence) => advanced.push([groupId, sequence]),
     newId: () => "new-id",
+    ...(overrides.viewerTimeZone && { viewerTimeZone: overrides.viewerTimeZone }),
   })
   return { store, reads, advanced, created }
 }
@@ -193,12 +195,25 @@ describe("groups store", () => {
       pages: [{ groups: [item("a", "1")], nextCursor: null }],
     })
     await store.refresh()
-    store.edit(null, { name: "  Trip  ", description: " Hikes ", color: "#15803d", emoji: "🏕️" })
+    store.edit(null, {
+      name: "  Trip  ",
+      description: " Hikes ",
+      color: "#15803d",
+      emoji: "🏕️",
+      timeZone: "UTC",
+    })
 
     const group = await store.create()
 
     expect(created).toEqual([
-      { id: "new-id", name: "Trip", description: "Hikes", color: "#15803d", emoji: "🏕️" },
+      {
+        id: "new-id",
+        name: "Trip",
+        description: "Hikes",
+        color: "#15803d",
+        emoji: "🏕️",
+        timeZone: "UTC",
+      },
     ])
     expect(group?.id).toBe("new-id")
     expect(store.groups.value.map((group) => group.id)).toEqual(["new-id", "a"])
@@ -234,7 +249,13 @@ describe("groups store", () => {
 
   it("tells each wrong field before sending, and sends nothing", async () => {
     const { store, created } = harness({})
-    store.edit(null, { name: "  ", description: "x".repeat(501), color: null, emoji: "ab" })
+    store.edit(null, {
+      name: "  ",
+      description: "x".repeat(501),
+      color: null,
+      emoji: "ab",
+      timeZone: "UTC",
+    })
 
     expect(await store.create()).toBeNull()
 
@@ -243,6 +264,7 @@ describe("groups store", () => {
       name: "Enter a name.",
       description: "Use at most 500 characters.",
       emoji: "Use a single emoji, such as 🏕️, or leave it empty.",
+      timeZone: null,
     })
   })
 
@@ -266,6 +288,7 @@ describe("groups store", () => {
       description: "Flat",
       color: "#1d4ed8",
       emoji: "",
+      timeZone: "UTC",
     })
     store.edit("a", { ...store.draft("a"), name: "Home  ", emoji: " " })
     expect(store.unsaved("a")).toBe(false)
@@ -329,12 +352,110 @@ describe("groups store", () => {
       },
     })
     await store.refresh()
-    store.edit("a", { name: "a", description: "Flat", color: "#15803d", emoji: "" })
+    store.edit("a", {
+      name: "a",
+      description: "Flat",
+      color: "#15803d",
+      emoji: "",
+      timeZone: "UTC",
+    })
 
     expect(await store.save("a")).toBe(true)
 
     expect(sent).toEqual([{ groupId: "a", description: "Flat", color: "#15803d", emoji: null }])
     expect(store.groups.value[0]).toMatchObject({ description: "Flat", color: "#15803d" })
+  })
+
+  it("starts a new group in the person's own zone and creates it there", async () => {
+    const { store, created } = harness({ viewerTimeZone: () => "Europe/Berlin" })
+
+    expect(store.draft(null).timeZone).toBe("Europe/Berlin")
+    store.edit(null, { ...store.draft(null), name: "Trip" })
+    expect(await store.create()).not.toBeNull()
+
+    expect(created[0]?.timeZone).toBe("Europe/Berlin")
+  })
+
+  it("sends a zone the person picked with the details, and the zone alone counts as a change", async () => {
+    const sent: unknown[] = []
+    const { store } = harness({
+      pages: [{ groups: [{ ...item("a", "1"), timeZone: "Europe/Berlin" }], nextCursor: null }],
+      updateDetails: (input) => {
+        sent.push(input)
+        return Promise.resolve({ group: { ...item("a", "2"), timeZone: "Asia/Tokyo" } })
+      },
+    })
+    await store.refresh()
+    store.edit("a", { ...store.draft("a"), timeZone: "Asia/Tokyo" })
+    expect(store.unsaved("a")).toBe(true)
+
+    expect(await store.save("a")).toBe(true)
+
+    expect(sent).toEqual([
+      { groupId: "a", description: "", color: null, emoji: null, timeZone: "Asia/Tokyo" },
+    ])
+    expect(store.draft("a").timeZone).toBe("Asia/Tokyo")
+  })
+
+  it("lets an untouched zone follow someone else's change, and keeps a picked one with a note", async () => {
+    const at = (zone: string, sequence: string) => ({
+      groups: [{ ...item("a", sequence), timeZone: zone }],
+      nextCursor: null,
+    })
+    const { store } = harness({
+      pages: [
+        at("Europe/Berlin", "1"),
+        at("Asia/Bangkok", "2"),
+        at("Asia/Tokyo", "3"),
+      ],
+    })
+    await store.refresh()
+    store.edit("a", { ...store.draft("a"), name: "Typed" })
+
+    await store.refresh()
+    expect(store.draft("a")).toMatchObject({ name: "Typed", timeZone: "Asia/Bangkok" })
+    expect(store.zoneChangedElsewhere("a")).toBeNull()
+
+    store.edit("a", { ...store.draft("a"), timeZone: "Europe/Lisbon" })
+    await store.refresh()
+    expect(store.draft("a").timeZone).toBe("Europe/Lisbon")
+    expect(store.zoneChangedElsewhere("a")).toBe("Asia/Tokyo")
+  })
+
+  it("refuses an unknown zone before sending, under the zone field", async () => {
+    const { store, created } = harness({})
+    store.edit(null, { ...EMPTY_GROUP_DRAFT, name: "Trip", timeZone: "Mars/Olympus" })
+
+    expect(await store.create()).toBeNull()
+
+    expect(created).toEqual([])
+    expect(store.editorErrors.value.timeZone).toBe(
+      "We don't know this time zone. Pick another from the list.",
+    )
+  })
+
+  it("shows the server's refusal of the zone under the zone field, not under the form", async () => {
+    const refusal = new RealtimeRequestError(
+      "bad_request",
+      "Group time zone must be an IANA name",
+      {
+        code: "INVALID_REQUEST",
+      },
+      { reason: "INVALID_REQUEST", fields: { timeZone: { code: "timeZone" } } },
+    )
+    const { store } = harness({
+      pages: [{ groups: [item("a", "1")], nextCursor: null }],
+      updateDetails: () => Promise.reject(refusal),
+    })
+    await store.refresh()
+    store.edit("a", { ...store.draft("a"), timeZone: "Asia/Tokyo" })
+
+    expect(await store.save("a")).toBe(false)
+
+    expect(store.editorErrors.value).toEqual({
+      timeZone: "We don't know this time zone. Pick another from the list.",
+    })
+    expect(store.draft("a").timeZone).toBe("Asia/Tokyo")
   })
 
   it("keeps what was typed and shows the server's reason under the form when a save is refused", async () => {

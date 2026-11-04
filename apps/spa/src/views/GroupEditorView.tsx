@@ -248,6 +248,7 @@ function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
       onSwitch={() => void selectionStore.select(groupId)}
       value={store.draft(groupId)}
       onChange={(value) => store.edit(groupId, value)}
+      zoneChangedElsewhere={store.zoneChangedElsewhere(groupId)}
       errors={store.editorErrors.value}
       dirty={store.unsaved(groupId)}
       saving={working?.groupId === groupId && working.action === "save"}

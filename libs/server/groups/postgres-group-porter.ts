@@ -44,7 +44,7 @@ export class PostgresGroupPorter implements GroupFilePorter {
     requestId?: string,
   ): Promise<GroupExportResult> {
     const [settings] = await this.sql<GroupExportSettings[]>`
-      SELECT name, description, color, emoji FROM groups
+      SELECT name, description, color, emoji, time_zone FROM groups
       WHERE id = ${groupId} AND deleted_at IS NULL
     `
     if (!settings) throw new GroupError("GROUP_NOT_FOUND", "Group not found")
@@ -55,13 +55,13 @@ export class PostgresGroupPorter implements GroupFilePorter {
       groupId,
       requestId,
     })
-    const { name, description, color, emoji } = settings
+    const { name, description, color, emoji, timeZone } = settings
     return {
       fileName: groupExportFileName(name, now),
       chunks: writeGroupFile(
         this.sql,
         groupId,
-        { name, description, color, emoji },
+        { name, description, color, emoji, timeZone },
         this.aggregates,
         now,
       ),

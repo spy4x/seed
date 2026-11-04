@@ -186,6 +186,7 @@ CREATE TABLE groups (
     emoji VARCHAR(32),
     imported_at TIMESTAMPTZ,
     changes_oldest_sequence BIGINT DEFAULT 0 NOT NULL,
+    time_zone VARCHAR(64) DEFAULT 'UTC' NOT NULL,
     CONSTRAINT groups_name_check CHECK (length(btrim(name)) BETWEEN 1 AND 100),
     CONSTRAINT groups_description_check CHECK (char_length(description) <= 500),
     CONSTRAINT groups_color_check CHECK (color ~ '^#[0-9a-f]{6}$'),
@@ -974,7 +975,7 @@ CREATE TABLE blog_posts (
     -- #730: the page the author's name links to. See 2026_12_13_0001_blog_author_url.sql.
     author_url VARCHAR(2000),
     -- #733: intro, related feature, a cover file, the Dev.to cross-post. See
-    -- 2026_12_14_0003_blog_publishing.sql.
+    -- 2026_12_14_0004_blog_publishing.sql.
     intro VARCHAR(600),
     related_feature VARCHAR(100),
     cover_file VARCHAR(120),
@@ -1065,7 +1066,7 @@ CREATE TABLE blog_post_revisions (
     saved_by_id INT4,
     saved_by_name VARCHAR(320),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    -- 2026_12_14_0003_blog_publishing.sql.
+    -- 2026_12_14_0004_blog_publishing.sql.
     intro VARCHAR(600),
     related_feature VARCHAR(100)
 );

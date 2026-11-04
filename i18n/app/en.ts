@@ -55,6 +55,9 @@ export default {
     "<who>{who}</who> renamed the group from “<value>{from}</value>” to “<value>{to}</value>”",
   "GroupActivity.detailsUpdated":
     "<who>{who}</who> changed the group's description, colour or emoji",
+  "GroupActivity.timeZoneChanged":
+    "<who>{who}</who> changed the time zone from <value>{from}</value> to <value>{to}</value>",
+  "GroupActivity.timeZoneChangedPlain": "<who>{who}</who> changed the time zone",
   "GroupActivity.deleted": "<who>{who}</who> deleted the group",
   "GroupActivity.restored": "<who>{who}</who> restored the group",
   "GroupActivity.roleChanged": "<who>{who}</who> changed the role of <target>{target}</target>",
@@ -235,6 +238,10 @@ export default {
       "New groups start on the free plan. Your {count}-day free trial goes to the first group you move to a paid plan.",
   },
   "GroupEditor.readOnly": "Only admins and the owner can change this group's details.",
+  "GroupEditor.timeZoneHint": "Days and months start at midnight here, for everyone in the group.",
+  "GroupEditor.timeZoneInvalid": "We don't know this time zone. Pick another from the list.",
+  "GroupEditor.timeZoneChangedElsewhere":
+    "Someone else changed this to {zone} while you were editing. Save to use yours, or Discard.",
   "GroupEditor.nameRequired": "Enter a name.",
   "GroupEditor.nameInvalid":
     "Use at most 100 characters, with no line breaks or hidden characters.",
@@ -679,6 +686,7 @@ export default {
   "OverviewScreen.customRange": "Custom range",
   "OverviewScreen.rangeTooLong": "Choose a range of a year or less.",
   "OverviewScreen.asOf": "As of {time}",
+  "OverviewScreen.zoneNote": "{city} time",
   "OverviewScreen.hide": "Hide widget",
   "OverviewView.opening": "Opening the overview…",
   "OverviewView.saveFailed": "We couldn't save your layout. Check your connection and try again.",

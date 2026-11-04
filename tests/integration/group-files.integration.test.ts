@@ -185,6 +185,33 @@ Deno.test("an export imported by another person gives the same notes and tags un
   })
 })
 
+Deno.test("an export carries the group's time zone, and the import keeps it", async () => {
+  await withSchema(async (sql) => {
+    const source = await seed(sql)
+    await new PostgresGroupRepository(sql).updateDetails(
+      source.groupId,
+      { description: "Our home", color: "#15803d", emoji: "🏡", timeZone: "Asia/Tokyo" },
+      source.owner,
+    )
+    const file = await exportAs(sql, source.groupId, source.owner) as {
+      group: { timeZone?: string }
+    }
+    expect(file.group.timeZone).toBe("Asia/Tokyo")
+
+    const importer = await insertUser(sql)
+    await sql`
+      INSERT INTO user_preferences (user_id, value)
+      VALUES (${importer}, ${sql.json({ timeZone: "Europe/Berlin" })})
+    `
+    const result = await new PostgresGroupPorter(sql, PORTABLE_AGGREGATES).importGroup(
+      { file, name: null },
+      importer,
+      NO_CAP,
+    )
+    expect(result.group.timeZone).toBe("Asia/Tokyo")
+  })
+})
+
 Deno.test("an import takes the name the person gave instead of the file's", async () => {
   await withSchema(async (sql) => {
     const source = await seed(sql)

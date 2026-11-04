@@ -66,6 +66,20 @@ describe("group activity panel", () => {
     expect(page).toContain(`data-e2e="activity-2"`)
   })
 
+  it("names both zones of a time zone change by city and offset, as they were that day", () => {
+    const page = html({
+      events: [
+        row(1, {
+          kind: "group.time_zone_changed",
+          at: "2026-01-15T12:00:00.000Z",
+          details: { from: "UTC", to: "Europe/Berlin" },
+        }),
+      ],
+    })
+    const text = page.replaceAll(/<\/?bdi[^>]*>/g, "")
+    expect(text).toContain("Ada changed the time zone from UTC · GMT+0 to Berlin, Europe · GMT+1")
+  })
+
   it("links a note that is still in the group and leaves a gone one as text", () => {
     const page = html({
       events: [
