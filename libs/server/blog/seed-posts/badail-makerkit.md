@@ -59,7 +59,7 @@ Auth؛ وPrisma مع Better Auth) لـ Next.js 16 وTanStack Start، ومع Supa
 | ------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------- | ----------------------------------------- | ------------------------------ | --------------------------------------- |
 | [Makerkit](https://makerkit.dev/pricing)                                  | 299 أو 599 دولارًا مرة واحدة (المعلن 349، 649) | مدفوع، بلا مصدر مفتوح، لكل عميل | Next.js أو React Router أو TanStack Start | نعم، لكل مقعد                  | يوصي بـ Vercel؛ Cloudflare وDocker وVPS |
 | [Makerkit Lite](https://github.com/makerkit/nextjs-saas-starter-kit-lite) | مجاني                                         | MIT                             | Next.js وSupabase                         | لا                             | غير مذكور                               |
-| [Seed](https://github.com/spy4x/seed)                                     | مجاني                                         | MIT                             | Hono وFresh وPreact؛ Postgres             | نعم، لكل عضو                   | خادمك الخاص، Docker Compose             |
+| [Seed](https://github.com/spy4x/seed)                                     | مجاني                                         | MIT                             | Hono وPreact؛ Postgres                    | نعم، لكل عضو                   | خادمك الخاص، Docker Compose             |
 | [Supastarter](https://supastarter.dev/)                                   | 349 أو 799 أو 1499 دولارًا مرة واحدة           | مدفوع، بلا إعادة توزيع          | Next.js أو Nuxt أو TanStack Start         | نعم، لكل مقعد                  | Vercel وDocker وCoolify وغيرها          |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)            | مجاني                                         | MIT                             | Next.js وDrizzle؛ Postgres                | Owner وMember؛ Stripe Checkout | Vercel                                  |
 
@@ -108,7 +108,7 @@ Supabase Pro. المقارنة ليست متكافئة تمامًا: الثنا�
 
 - **تريد Supabase.** تعتمد مجموعة Makerkit الرئيسية على مصادقته وتخزينه وrow-level security. أما
   Seed فله Postgres خاص وتسجيل دخول خاص.
-- **تريد Next.js أو React Router.** Seed مبني على Preact، مع Fresh للموقع العام.
+- **تريد Next.js أو React Router.** Seed مبني على Preact بالكامل، بما في ذلك الموقع العام.
 - **تحتاج الدخول باسم مستخدم، أو دفعًا حسب الاستخدام، أو مزوّد دفع ثانيًا.** يذكر Makerkit الأولين،
   وتذكر صفحته الرئيسية Polar بجانب Stripe. ليس في Seed أيٌّ من الثلاثة؛ Stripe مزوّده الوحيد.
 - **تعمل مع وكلاء البرمجة.** في Makerkit خادم MCP ومهارات. في Seed

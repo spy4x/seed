@@ -30,7 +30,7 @@ on web standards (`Request`, `Response`, `URL`, Web Crypto) and Preact, and Vite
 - **Islands** (`@spy4x/preact-server/client`): every export of a file in `islands/` is an island. Its
   server HTML is marked with comments, its props go to the browser as JSON (a prop JSON cannot
   carry is refused), and the client script wakes it in place, loading that file's chunk only
-  when the page has it. In production a page without an island loads no script.
+  when the page has it. In production a page without an island loads no island script.
 
 ## Build and dev
 

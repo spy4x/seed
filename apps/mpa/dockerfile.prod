@@ -1,4 +1,5 @@
-# The MPA: the public website, built into the image by Vite and served by Deno. Build context is the repository root.
+# The MPA: the public website, built into the image by Vite and served by Deno.
+# Build context is the repository root.
 ARG DENO_VERSION=2.9.7
 # The release pipeline starts from the published base image instead (BASE_IMAGE).
 ARG BASE_IMAGE=localhost/app/deno-base:${DENO_VERSION}

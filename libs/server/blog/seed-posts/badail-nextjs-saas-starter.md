@@ -50,15 +50,15 @@ Next.js SaaS Starter قالب مجاني بترخيص MIT: دخول بالبري
 
 ## البدائل جنبًا إلى جنب
 
-| الميزة         | Next.js SaaS Starter  | Seed                          | Open SaaS                    | Makerkit                             | Supastarter                         |
-| -------------- | --------------------- | ----------------------------- | ---------------------------- | ------------------------------------ | ----------------------------------- |
-| السعر          | مجاني                 | مجاني                         | مجاني                        | 299 أو 599 دولارًا مرة واحدة          | من 349 إلى 1,499 دولارًا مرة واحدة   |
-| الترخيص        | MIT                   | MIT                           | MIT                          | مدفوع؛ مجموعة Lite بترخيص MIT        | مدفوع                               |
-| التقنيات       | Next.js وDrizzle      | Hono وPreact وFresh؛ Postgres | Wasp مع React وNode.js       | Next.js 16 أو TanStack Start وغيرهما | Next.js أو Nuxt أو TanStack Start   |
-| الفرق والأدوار | المالك والعضو         | من القارئ إلى المالك          | لا                           | نعم، مع دعوات                        | نعم، مع دعوات                       |
-| بريد الدعوة    | لا يُرسل               | نعم                           | لا فرق                       | لم أتحقق                             | لم أتحقق                            |
-| الدفع          | Stripe، واحد لكل فريق | Stripe، لكل عضو               | Stripe وPolar وLemon Squeezy | لم أتحقق                             | Stripe وLemon Squeezy وثلاثة غيرهما |
-| الاستضافة      | Vercel                | Docker Compose على خادمك      | Fly.io أو Railway            | لم أتحقق                             | Vercel أو Serverless أو Docker      |
+| الميزة         | Next.js SaaS Starter  | Seed                     | Open SaaS                    | Makerkit                             | Supastarter                         |
+| -------------- | --------------------- | ------------------------ | ---------------------------- | ------------------------------------ | ----------------------------------- |
+| السعر          | مجاني                 | مجاني                    | مجاني                        | 299 أو 599 دولارًا مرة واحدة          | من 349 إلى 1,499 دولارًا مرة واحدة   |
+| الترخيص        | MIT                   | MIT                      | MIT                          | مدفوع؛ مجموعة Lite بترخيص MIT        | مدفوع                               |
+| التقنيات       | Next.js وDrizzle      | Hono وPreact؛ Postgres   | Wasp مع React وNode.js       | Next.js 16 أو TanStack Start وغيرهما | Next.js أو Nuxt أو TanStack Start   |
+| الفرق والأدوار | المالك والعضو         | من القارئ إلى المالك     | لا                           | نعم، مع دعوات                        | نعم، مع دعوات                       |
+| بريد الدعوة    | لا يُرسل               | نعم                      | لا فرق                       | لم أتحقق                             | لم أتحقق                            |
+| الدفع          | Stripe، واحد لكل فريق | Stripe، لكل عضو          | Stripe وPolar وLemon Squeezy | لم أتحقق                             | Stripe وLemon Squeezy وثلاثة غيرهما |
+| الاستضافة      | Vercel                | Docker Compose على خادمك | Fly.io أو Railway            | لم أتحقق                             | Vercel أو Serverless أو Docker      |
 
 المصادر: [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)، و[Open SaaS](https://github.com/wasp-lang/open-saas)، و[أسعار Makerkit](https://makerkit.dev/pricing)، و[Supastarter](https://supastarter.dev/)، و[README الخاص بـ Seed](https://github.com/spy4x/seed). أسعار Makerkit هي المخفّضة، وأسعاره الأصلية 349 و649 دولارًا. «لم أتحقق» تعني أنني لم أجده في الصفحات التي قرأتها، لا أنه غير موجود.
 

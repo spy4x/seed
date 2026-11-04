@@ -54,7 +54,7 @@ Next.js SaaS Starter は MIT ライセンスの無料テンプレートで、メ
 | -------------- | ------------------------ | ------------------------------- | ---------------------------- | -------------------------------- | ------------------------------- |
 | 価格           | 無料                     | 無料                            | 無料                         | 買い切り 299 ドルまたは 599 ドル | 買い切り 349〜1,499 ドル        |
 | ライセンス     | MIT                      | MIT                             | MIT                          | 有料。Lite キットは MIT          | 有料                            |
-| 技術スタック   | Next.js、Drizzle         | Hono、Preact、Fresh、Postgres   | Wasp（React、Node.js）       | Next.js 16、TanStack Start ほか  | Next.js、Nuxt、TanStack Start   |
+| 技術スタック   | Next.js、Drizzle         | Hono、Preact、Postgres          | Wasp（React、Node.js）       | Next.js 16、TanStack Start ほか  | Next.js、Nuxt、TanStack Start   |
 | チームとロール | オーナーとメンバー       | 閲覧者からオーナーまで          | なし                         | あり（招待付き）                 | あり（招待付き）                |
 | 招待メール     | 送信されない             | あり                            | チーム機能なし               | 未確認                           | 未確認                          |
 | 課金           | Stripe、チームごとに一つ | Stripe、メンバー単位            | Stripe、Polar、Lemon Squeezy | 未確認                           | Stripe、Lemon Squeezy ほか 3 社 |

@@ -62,7 +62,7 @@ mailers, the super admin panel, the blog and docs.
 | ------------------------------------------------------------------------- | ----------------------------------- | -------------------------------- | --------------------------------------- | --------------------------------- | ------------------------------------------- |
 | [Makerkit](https://makerkit.dev/pricing)                                  | $299 or $599 once (list $349, $649) | Paid, no open source, per client | Next.js, React Router or TanStack Start | Yes, per seat                     | Vercel recommended; Cloudflare, Docker, VPS |
 | [Makerkit Lite](https://github.com/makerkit/nextjs-saas-starter-kit-lite) | Free                                | MIT                              | Next.js, Supabase                       | No                                | Not stated                                  |
-| [Seed](https://github.com/spy4x/seed)                                     | Free                                | MIT                              | Hono, Fresh, Preact; Postgres           | Yes, per member                   | Your own server, Docker Compose             |
+| [Seed](https://github.com/spy4x/seed)                                     | Free                                | MIT                              | Hono, Preact; Postgres                  | Yes, per member                   | Your own server, Docker Compose             |
 | [Supastarter](https://supastarter.dev/)                                   | $349, $799 or $1,499 once           | Paid, no redistribution          | Next.js, Nuxt or TanStack Start         | Yes, seat-based                   | Vercel, Docker, Coolify and others          |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)            | Free                                | MIT                              | Next.js, Drizzle; Postgres              | Owner and Member; Stripe Checkout | Vercel                                      |
 
@@ -107,7 +107,7 @@ Docker and VPS guides put it on a server of your own too.
 
 - **You want Supabase.** Makerkit's main kit is built around its auth, storage and row-level
   security. Seed runs its own Postgres and its own sign-in.
-- **You want Next.js or React Router.** Seed is Preact, with Fresh for the public website.
+- **You want Next.js or React Router.** Seed is Preact throughout, the public website included.
 - **You want impersonation, metered billing or a second payment provider.** Makerkit lists
   impersonation and metered subscriptions, and its home page names Polar beside Stripe. Seed has
   none of the three; Stripe is its only provider.

@@ -36,7 +36,7 @@ ShipFast 是 Marc Lou 做的 Next.js 模板。它的[销售页](https://shipfa.s
 | 模板                                                                  | 价格                      | 许可证              | 技术栈                                   | 团队与角色      | 部署                                    |
 | --------------------------------------------------------------------- | ------------------------- | ------------------- | ---------------------------------------- | --------------- | --------------------------------------- |
 | [ShipFast](https://shipfa.st/)                                        | 199 或 249 美元，一次性   | 付费，不可再分发    | Next.js；MongoDB 或 Supabase             | 未提及          | 以 Vercel 作为免费选项                  |
-| [Seed](https://github.com/spy4x/seed)                                 | 免费                      | MIT                 | Deno、Hono、Fresh、Preact；Postgres      | 有，按成员计费  | 一台自己的 Linux 服务器，Docker Compose |
+| [Seed](https://github.com/spy4x/seed)                                 | 免费                      | MIT                 | Deno、Hono、Preact；Postgres             | 有，按成员计费  | 一台自己的 Linux 服务器，Docker Compose |
 | [Open SaaS](https://github.com/wasp-lang/open-saas)                   | 免费                      | MIT                 | Wasp（React、Node.js、Prisma）；Postgres | 未提及          | 一条命令部署到 Railway 或 Fly.io        |
 | [ShipFree](https://github.com/revokslab/shipfree)                     | 免费                      | MIT                 | Next.js、Bun、Drizzle；Postgres          | 未提及          | Vercel 或 Docker                        |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)        | 免费                      | MIT                 | Next.js、Drizzle；Postgres               | Owner 和 Member | Vercel                                  |
