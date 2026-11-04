@@ -1,7 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { createEnvReader, type EnvReader } from "@spy4x/server/config"
-import { DEFAULT_GRACE_DAYS, PRO_PLAN_ID } from "@domain/billing"
+import { DEFAULT_GRACE_DAYS, PAID_PLANS, PRO_PLAN_ID } from "@domain/billing"
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import { DEV_PRO_PRICE_ID, DEV_WEBHOOK_SECRET } from "../../../e2e/fixtures/billing.ts"
 import {
@@ -65,6 +65,45 @@ describe("billing configuration", () => {
 
     expect(setup.mode).toBe(BillingMode.Stripe)
     expect(setup.provider).not.toBeNull()
+  })
+
+  describe("a Pro sold yearly", () => {
+    const yearly = PAID_PLANS.map((plan) => ({ ...plan, yearlyAmount: plan.amount * 10 }))
+
+    it("stops start-up while Stripe lacks the yearly price", () => {
+      const env = createEnvReader({ BILLING_PROVIDER: "stripe", ...STRIPE_KEYS })
+
+      expect(() => readBillingSetup(env, "prod", { ...API, plans: yearly })).toThrow(
+        new BillingConfigError(
+          "BILLING_PROVIDER=stripe needs STRIPE_PRICE_PRO_YEARLY (see docs/billing.md)",
+        ),
+      )
+    })
+
+    it("runs Stripe once the yearly price is set", () => {
+      const env = createEnvReader({
+        BILLING_PROVIDER: "stripe",
+        ...STRIPE_KEYS,
+        STRIPE_PRICE_PRO_YEARLY: "price_yearly_placeholder",
+      })
+
+      expect(readBillingSetup(env, "prod", { ...API, plans: yearly }).mode)
+        .toBe(BillingMode.Stripe)
+    })
+  })
+
+  it("stops start-up on a yearly price for a Pro sold monthly only, since it could never sell", () => {
+    const env = createEnvReader({
+      BILLING_PROVIDER: "stripe",
+      ...STRIPE_KEYS,
+      STRIPE_PRICE_PRO_YEARLY: "price_yearly_placeholder",
+    })
+
+    expect(() => readBillingSetup(env, "prod", API)).toThrow(
+      new BillingConfigError(
+        "STRIPE_PRICE_PRO_YEARLY is set, but Pro has no yearly price (see docs/billing.md)",
+      ),
+    )
   })
 
   it("refuses the development provider in production", () => {

@@ -191,6 +191,7 @@ The worker sends the mail, such as sign-in and password reset codes.
 | `STRIPE_SECRET_KEY`           | Stripe's secret key. With `stripe`, the API refuses to start without all three Stripe values.                  | empty   | [Billing](billing.md) |
 | `STRIPE_WEBHOOK_SECRET`       | The webhook's signing secret.                                                                                  | empty   | [Billing](billing.md) |
 | `STRIPE_PRICE_PRO`            | The Pro plan's price id.                                                                                       | empty   | [Billing](billing.md) |
+| `STRIPE_PRICE_PRO_YEARLY`     | The Pro plan's yearly price id. Required when Pro has a yearly price, refused when it has none.               | empty   | [Billing](billing.md) |
 | `BILLING_GRACE_DAYS`          | Days a group whose payment failed keeps its plan, 0 to 90. Empty: 7.                                           | empty   | [Billing](billing.md) |
 | `BILLING_TRIAL_REQUIRES_CARD` | Whether a trial asks for a card. Empty: `true`. With `false`, a trial that ends without one goes back to Free. | empty   | [Billing](billing.md) |
 

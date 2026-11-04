@@ -9,7 +9,7 @@ import {
   type Subscription,
   SubscriptionStatus,
 } from "@spy4x/billing"
-import { DEFAULT_GRACE_DAYS, PRO_PLAN_ID } from "@domain/billing"
+import { DEFAULT_GRACE_DAYS, PAID_PLANS, type Plan, PRO_PLAN_ID } from "@domain/billing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import type { FakePayments } from "./fake-payments.ts"
 
@@ -64,6 +64,8 @@ export interface BillingSetupOptions {
    * Without it, every subscription's last payment is one Pro seat paid now.
    */
   fakePayments?: FakePayments
+  /** The paid plans: {@link PAID_PLANS} unless a test passes a catalog Seed does not sell. */
+  plans?: readonly Plan[]
 }
 
 /** Thrown at start-up when billing is asked for but cannot run. Names variables, never values. */
@@ -87,8 +89,10 @@ export const MAX_GRACE_DAYS = 90
  *
  * - Unset, it is `fake` in development and `off` in production, so a deployment with no billing
  *   keys starts and keeps every group on the free plan.
- * - `stripe` needs `STRIPE_SECRET_KEY` and `STRIPE_PRICE_PRO`, and `STRIPE_WEBHOOK_SECRET` too when
- *   `options.webhooks` is true; a missing one stops start-up with an error naming it.
+ * - `stripe` needs `STRIPE_SECRET_KEY` and `STRIPE_PRICE_PRO`, `STRIPE_PRICE_PRO_YEARLY` too when
+ *   Pro has a yearly price, and `STRIPE_WEBHOOK_SECRET` when `options.webhooks` is true; a missing
+ *   one stops start-up with an error naming it. `STRIPE_PRICE_PRO_YEARLY` set for a Pro with no
+ *   yearly price stops it too, since that price could never be sold.
  * - `fake` is refused in production.
  */
 export function readBillingSetup(
@@ -125,9 +129,18 @@ export function readBillingSetup(
         trialRequiresCard,
       }
     case "stripe": {
-      const required = options.webhooks
-        ? ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRICE_PRO"]
-        : STRIPE_KEYS
+      const yearly = sellsYearly(options.plans ?? PAID_PLANS)
+      if (!yearly && env.get("STRIPE_PRICE_PRO_YEARLY") !== undefined) {
+        throw new BillingConfigError(
+          "STRIPE_PRICE_PRO_YEARLY is set, but Pro has no yearly price (see docs/billing.md)",
+        )
+      }
+      const required = [
+        ...(options.webhooks
+          ? ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRICE_PRO"]
+          : STRIPE_KEYS),
+        ...(yearly ? ["STRIPE_PRICE_PRO_YEARLY"] : []),
+      ]
       const missing = required.filter((name) => env.get(name) === undefined)
       if (missing.length > 0) {
         throw new BillingConfigError(
@@ -184,6 +197,11 @@ function readGraceDays(value: string | undefined): number {
     )
   }
   return days
+}
+
+/** Whether the catalog sells Pro yearly, so the provider needs its yearly price. */
+function sellsYearly(plans: readonly Plan[]): boolean {
+  return (plans.find((plan) => plan.id === PRO_PLAN_ID)?.yearlyAmount ?? null) !== null
 }
 
 function planRefs(proPriceId: string): PlanRef[] {
