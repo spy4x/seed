@@ -86,8 +86,16 @@ export function CodeStep(
     ...rest
   }: CodeStepProps,
 ): JSX.Element {
+  const step = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    // The step focuses its field as it mounts, but the app's route announcer then focuses the new
+    // page's heading in the same flush: a step reached by navigation takes the focus back after it.
+    queueMicrotask(() =>
+      step.current?.querySelector<HTMLElement>(`[data-e2e=mailed-code-step-code]`)?.focus()
+    )
+  }, [])
   return (
-    <div class="flex w-full flex-col gap-6">
+    <div class="flex w-full flex-col gap-6" ref={step}>
       <MailedCodeStep
         sentence={<CodeSentence messageKey={sentence} email={email} />}
         minutes={minutes}

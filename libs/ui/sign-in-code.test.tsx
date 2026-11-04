@@ -10,6 +10,7 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
+import { useEffect } from "preact/hooks"
 import { AuthScreen, type AuthScreenProps } from "./auth-screen.tsx"
 import { SignInCodeScreen, type SignInCodeScreenProps } from "./sign-in-code-screen.tsx"
 import { ProviderProofNotice, providerProofOf } from "./provider-proof.tsx"
@@ -199,6 +200,21 @@ describe("SignInCodeScreen's code step in the browser", () => {
     expect(find("h1").textContent).toBe("Check your inbox")
     expect(text()).toContain("We sent a code to ada@example.com. The code works for 10 minutes.")
     expect(find("strong bdi").textContent).toBe("ada@example.com")
+    expect(focused()).toBe("mailed-code-step-code")
+  })
+
+  it("takes the focus back from the route announcer when reached by navigation", async () => {
+    /** Focuses the new page's heading after the page mounted, as the app's route announcer does. */
+    function Announced() {
+      useEffect(() => {
+        const heading = document.querySelector<HTMLElement>("h1")!
+        heading.tabIndex = -1
+        heading.focus()
+      }, [])
+      return <SignInCodeScreen {...sentDefaults} />
+    }
+    await mount(<Announced />)
+
     expect(focused()).toBe("mailed-code-step-code")
   })
 
