@@ -2,133 +2,139 @@
 
 > Also on the website: [seedsaas.com/docs/start-a-product](https://seedsaas.com/docs/start-a-product).
 
-Seed's repository is both the template and the home of seedsaas.com, Seed's own website. Some of
-it describes Seed, names its competitors or sells its author's paid work. A product started from
-Seed must not go live with any of that: it would carry someone else's offer and prices, and
-claims about competitors the product never checked.
+This page lists what a new product removes or replaces, because it describes Seed, its competitors
+or its author's paid work.
 
-Work through this list in the product's first pull requests, next to the steps in
-[Building a product on Seed](products.md#start-a-product). Every place in a file that can hold a
-comment is also marked with `Seed's own site: see docs/start-a-product.md`, so this finds what is
-left (images, `LICENSE`, `AGENTS.md` and the env file carry no mark):
+You need:
+
+- The product's repository, made as [Building a product on Seed](products.md#start-a-product) says.
+- Its own name, domains, licence and privacy policy.
+
+Seed's repository is also the home of seedsaas.com. A product that goes live with that content
+would carry someone else's offer and prices, and claims about competitors it never checked.
+
+## Find what is left
+
+Every file that can hold a comment marks such a place with `Seed's own site: see
+docs/start-a-product.md`. Images, `LICENSE`, `AGENTS.md` and the env file carry no mark.
 
 ```sh
 git grep -n "Seed's own site"
 ```
 
-Each item says what the product does: **delete** it, **replace** it with its own, or **set** a
-value. A file the product deletes or takes over completely goes into `.seed/skip`, so later syncs
-from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the browser tests in
-`e2e/mpa/` check some of these values, and change with them.
+Each row says what to do: **delete** it, **replace** it with the product's own, or **set** a value.
+A file the product deletes or takes over goes into `.seed/skip`, so later syncs leave it out.
+Tests follow the code: `apps/mpa/site.test.ts` and `e2e/mpa/` check some of these values.
+
+The paths below are under `apps/mpa/` unless they say otherwise. `[[lang]]/` stands for
+`routes/[[lang]]/`.
 
 ## The author and his paid work
 
-- **Set** `AUTHOR_URL` in `apps/mpa/brand.ts`: the author's own site.
-- **Delete** `apps/mpa/hire.ts`: the author's prices (`HIRE_PRICES`) and his MVP offer
-  (`HIRE_PAGE_URL`). Its other importers change with it: `apps/mpa/routes/[[lang]]/pricing.tsx` (the FAQ
-  on how `HIRE_PRICES.mvpFrom` is worked out, and a hire link), `apps/mpa/routes/index.tsx` (the
-  link in `WhoBuilds`), `apps/mpa/site.tsx`, `apps/mpa/error-page.tsx`,
-  `apps/mpa/components/pricing-ways.tsx` and `apps/mpa/site.test.ts`.
-- **Delete** the `/mvp` redirect to that offer, `apps/mpa/routes/mvp.ts`, and its browser test
-  `e2e/mpa/mvp.mpa.ts`.
-- **Replace** "Hire me", "About Anton" and the "Built in public by" line in the header and footer:
-  `NAV_LINKS`, `footerGroups` and `SiteFrame` in `apps/mpa/site.tsx`.
-- **Replace** `PERSON_JSON_LD` in `apps/mpa/site.tsx`: the Person (Anton Shubin) and his company
-  (NeatSoft PTE LTD) in the structured data. `apps/mpa/routes/index.tsx`, `routes/features.tsx`,
-  `routes/pricing.tsx` and `routes/compare.tsx` use it.
-- **Replace** the "Who builds Seed" band, `WhoBuilds` in `apps/mpa/routes/index.tsx`.
-- **Delete** the founders' band that sends to the MVP offer,
-  `apps/mpa/components/founders-handoff.tsx`, and its use, `<FoundersHandoff />` in
-  `apps/mpa/routes/index.tsx`.
-- **Replace** the "have it built" card with the author's prices,
-  `apps/mpa/components/pricing-ways.tsx`.
-- **Delete** the hire link on the error page, `apps/mpa/error-page.tsx`, and the `hire-me` event
-  in `docs/analytics.md`.
+| Do      | What                              | Where                                                         |
+| ------- | --------------------------------- | ------------------------------------------------------------- |
+| Set     | The author's own site             | `AUTHOR_URL` in `brand.ts`                                    |
+| Delete  | His prices and MVP offer          | `hire.ts`, and its uses (below)                               |
+| Delete  | The `/mvp` redirect               | `routes/mvp.ts`, `e2e/mpa/mvp.mpa.ts`                         |
+| Replace | "Hire me", "About Anton", "Built in public by" | `NAV_LINKS`, `footerGroups`, `SiteFrame` in `site.tsx` |
+| Replace | The author and his company in structured data | `PERSON_JSON_LD` in `site.tsx`                 |
+| Replace | The "Who builds Seed" band        | `WhoBuilds` in `routes/index.tsx`                             |
+| Delete  | The founders' band                | `components/founders-handoff.tsx`, `<FoundersHandoff />`      |
+| Replace | The "have it built" card          | `components/pricing-ways.tsx`                                 |
+| Delete  | The hire link and its event       | `error-page.tsx`, `hire-me` in `docs/analytics.md`            |
+
+`hire.ts` is also imported by `[[lang]]/pricing.tsx`, `routes/index.tsx`, `site.tsx` and
+`site.test.ts`. The pricing FAQ on how `HIRE_PRICES.mvpFrom` is worked out goes with it.
 
 ## Seed's own pages and copy
 
-- **Delete** `/compare`: named competitors, their prices and the day they were checked. That is
-  `apps/mpa/routes/[[lang]]/compare.tsx`, the card component only it uses,
-  `apps/mpa/components/compare-alternatives.tsx`, its entry in `apps/mpa/pages.ts`, its Open
-  Graph image `apps/mpa/static/og/compare.png` with the `compare` key of `OG_IMAGES` in
-  `apps/mpa/site.tsx`, the `compare-source` event in `docs/analytics.md`, and its browser test
-  `e2e/mpa/compare.mpa.ts`. Remove the links to it too, or they lead nowhere: "Compare" in the
-  header (`NAV_LINKS`) and footer (`footerGroups`) in `apps/mpa/site.tsx`, "How Seed compares"
-  in `apps/mpa/routes/[[lang]]/features.tsx` and `features/[slug].tsx`, and "the comparison" in
-  `apps/mpa/routes/index.tsx`.
-- **Delete** Seed's blog posts: every `.md` file in `libs/server/blog/seed-posts/` except its
-  `README.md`, which shows the format. They load only in demo mode, which a product never turns
-  on, but they describe Seed. The product writes its posts in the admin app. Point the post page
-  in `apps/mpa/lighthouse/lighthouserc.json` (`/blog/welcome-to-the-seed-blog`) at a post of
-  the product's own, or remove it.
-- **Keep** `/changelog` and `/docs`: they read the product's own history and guides. Empty
-  `CHANGELOG_OVERRIDES` in `apps/mpa/changelog-overrides.ts`, set `PUBLISHED_DOCS` and
-  `DOCS_SITE_ORIGIN` in `apps/mpa/docs-site.ts` (with the pointer line atop each guide), and
-  replace the "built by one developer" line in `apps/mpa/routes/[[lang]]/changelog.tsx`.
-- **Replace** the page copy and FAQs of the home, features, admin and pricing pages:
-  `apps/mpa/routes/index.tsx`, `routes/features.tsx`, `routes/admin.tsx`, `routes/pricing.tsx`.
-- **Rewrite** `apps/mpa/features-data.tsx`: the features page and every feature page
-  (`/features/<slug>`) are drawn from it, so the product's own features and their pages come from
-  that one file.
-- **Replace** the `llms.txt` summary. It is the home page's description, `HOME_HEAD` in
-  `apps/mpa/routes/index.tsx`; the page list follows `apps/mpa/pages.ts` by itself.
-- **Set** the licence line in `llms.txt`: the "Source code" entry in `apps/mpa/routes/llms.txt.ts`
-  says the code is under the MIT licence. Name the product's own licence, or drop the line.
-- **Replace** the privacy policy and terms, written for seedsaas.com and its demo:
-  `apps/mpa/routes/[[lang]]/privacy.tsx`, `apps/mpa/routes/[[lang]]/terms.tsx`.
-- **Set** `SITE_NAME`, `SITE_ICON` and `REPOSITORY_URL` in `apps/mpa/brand.ts`.
-- **Replace** the newsletter's voice: the keys `NewsletterPage.lead`,
-  `NewsletterPage.subscribeDescription`, `HomeNewsletter.lead` and `NewsletterOff.lead` in
-  `i18n/site/`, and the Releases on GitHub button of the page shown while the newsletter is off.
-  Their uses in `apps/mpa/subscribers.tsx` and in the `Newsletter` band of
-  `apps/mpa/routes/index.tsx` are marked "Seed's own site".
-- **Replace** the Open Graph images in `apps/mpa/static/og/`, drawn by
-  `apps/mpa/screenshots/og.html`.
-- **Replace** the product screenshots and the admin video: `apps/mpa/static/shots/`,
-  `apps/mpa/static/video/` and `apps/mpa/media/video/`, taken by `apps/mpa/screenshots/capture.ts`
-  and `apps/mpa/admin-video.ts`.
-- **Replace** the browser frames titled `app.seedsaas.com/…` in `apps/mpa/routes/index.tsx`,
-  `apps/mpa/features-data.tsx` and `apps/mpa/components/features-visuals.tsx`.
+| Do      | What                                   | Where                                                    |
+| ------- | -------------------------------------- | -------------------------------------------------------- |
+| Delete  | `/compare`, named competitors' prices  | `[[lang]]/compare.tsx`, `components/compare-alternatives.tsx` |
+| Delete  | Seed's blog posts, except `README.md`  | `libs/server/blog/seed-posts/`                           |
+| Replace | Home, features, admin and pricing copy | `routes/index.tsx`, `[[lang]]/features.tsx`, `admin.tsx`, `pricing.tsx` |
+| Rewrite | Every feature and feature page         | `features-data.tsx`                                      |
+| Replace | The `llms.txt` summary                 | `HOME_HEAD` in `routes/index.tsx`                        |
+| Set     | The licence line of `llms.txt`         | "Source code" in `routes/llms.txt.ts`                    |
+| Replace | The privacy policy and terms           | `[[lang]]/privacy.tsx`, `[[lang]]/terms.tsx`             |
+| Set     | Name, icon and repository              | `SITE_NAME`, `SITE_ICON`, `REPOSITORY_URL` in `brand.ts` |
+| Replace | The newsletter's voice                 | Four keys in `i18n/site/` (below)                        |
+| Replace | Open Graph images                      | `static/og/`, drawn by `screenshots/og.html`             |
+| Replace | Browser frames titled `app.seedsaas.com/…` | `routes/index.tsx`, `features-data.tsx`, `components/features-visuals.tsx` |
+
+**`/compare` has more parts.** Also delete:
+
+- its entry in `pages.ts`, and its `OG_IMAGES` key and image `static/og/compare.png`;
+- the `compare-source` event in `docs/analytics.md` and `e2e/mpa/compare.mpa.ts`;
+- the links to it: "Compare" in `site.tsx`, "How Seed compares" in `[[lang]]/features.tsx` and
+  `[[lang]]/features/[slug].tsx`, and "the comparison" in `routes/index.tsx`.
+
+**The blog.** The posts load only in demo mode, but they describe Seed. A product writes its posts
+in the admin app. Point the post page in `lighthouse/lighthouserc.json` at one of the product's
+posts, or remove it.
+
+**Keep `/changelog` and `/docs`.** They read the product's own history and guides. Empty
+`CHANGELOG_OVERRIDES` in `changelog-overrides.ts`. Set `PUBLISHED_DOCS` and `DOCS_SITE_ORIGIN` in
+`docs-site.ts`. Replace the "built by one developer" line in `[[lang]]/changelog.tsx`.
+
+**The newsletter keys** are `NewsletterPage.lead`, `NewsletterPage.subscribeDescription`,
+`HomeNewsletter.lead` and `NewsletterOff.lead`. Replace the Releases on GitHub button too. Their
+uses in `subscribers.tsx` and `routes/index.tsx` are marked.
+
+## Pictures and videos
+
+| What                     | Where                                     | Recorded by                                  |
+| ------------------------ | ----------------------------------------- | -------------------------------------------- |
+| Website screenshots      | `static/shots/`                           | `screenshots/capture.ts`                     |
+| The admin video          | `media/video/admin-panel.*`, `static/video/` | `deno task video:admin`                   |
+| The three feature loops  | `media/video/*-loop-*`                    | `deno task loops` in `apps/mpa`              |
+| README pictures          | `docs/screenshots/`                       | `docs/screenshots/record.ts`                 |
+
+`deno task video:admin` runs `docs/screenshots/admin-video.ts`. Then update the video's length,
+size, date and transcript in `admin-video.ts`. The GitHub social preview says `seedsaas.com` too;
+replace it.
 
 ## The product's name in the apps
 
-The SPA and the admin app say "Seed" in the browser tab, the installed app's name and the brand
-mark. **Replace** each with the product's name:
+| File                         | What says "Seed"                                       |
+| ---------------------------- | ------------------------------------------------------ |
+| `apps/spa/index.html`        | `<title>` and `apple-mobile-web-app-title`             |
+| `apps/spa/vite.config.ts`    | `name` and `short_name` in the web app manifest        |
+| `apps/admin/index.html`      | `<title>`                                              |
+| `libs/ui/frame.tsx`          | The `name` of the `BrandMark`                          |
+| `libs/ui/admin-frame.tsx`    | `ADMIN_PRODUCT`, the admin's tab titles and brand mark |
 
-- `apps/spa/index.html`: the `<title>` and the `apple-mobile-web-app-title` meta.
-- `apps/spa/vite.config.ts`: `name` and `short_name` in the web app manifest.
-- `apps/admin/index.html`: the `<title>` (`Admin · Seed`).
-- `libs/ui/frame.tsx`: the `name` of the `BrandMark` in the app frame.
-- `libs/ui/admin-frame.tsx`: `ADMIN_PRODUCT`, which names the admin's tab titles and brand mark.
-
-These tests check the name and change with it: `libs/ui/admin-frame.test.tsx`,
-`libs/ui/account.test.tsx` (the brand mark), `e2e/pwa.e2e.ts` (the manifest's names) and
-`e2e/app-shell-parity.e2e.ts` (the admin tab title).
+These tests check the name: `libs/ui/admin-frame.test.tsx`, `libs/ui/account.test.tsx`,
+`e2e/pwa.e2e.ts` and `e2e/app-shell-parity.e2e.ts`.
 
 ## Settings
 
-- **Set** the crawler policy, `ROBOTS_POLICY` in `apps/mpa/config.ts`.
-- **Set** the analytics ids, `MPA_UMAMI_ORIGIN` and `MPA_UMAMI_WEBSITE_ID`, in the server's env
-  file (`infra/envs/.env.example` lists them), as [Analytics](analytics.md) says.
-- **Set** the domains and whether the public demo runs: `MPA_DOMAIN`, `DOMAIN` and `DEMO_MODE` in
-  the env file ([The public demo](demo.md)).
-- **Set** whether the product has signed-in customers: a website and its admin panel only sets
-  `SPA=false` in the env file, which keeps the SPA off and closes sign-up ([Without the
-  SPA](deploy.md#without-the-spa)), and drops the website's sign-in and sign-up links.
-- **Create** the first operator on the server with `deno task operator:create <address>`, which
-  needs no mail ([The first operator](deploy.md#the-first-operator)).
-- **Set** where release images go, `IMAGE_PREFIX` in `.woodpecker/release.yml`.
-- **Set** `ADMIN_BILLING_SETUP_URL` in `libs/ui/admin-billing-list.tsx`: the admin app's
-  "Billing is off" page links there, and it points at Seed's own `docs/billing.md` on GitHub.
-  Point it at the product's copy of that doc.
+| Do     | What                                     | Where                                                   |
+| ------ | ---------------------------------------- | ------------------------------------------------------- |
+| Set    | The crawler policy                       | `ROBOTS_POLICY` in `apps/mpa/config.ts`                 |
+| Set    | Analytics ids ([Analytics](analytics.md)) | `MPA_UMAMI_ORIGIN`, `MPA_UMAMI_WEBSITE_ID` in the env file |
+| Set    | Domains and the demo ([demo](demo.md))   | `MPA_DOMAIN`, `DOMAIN`, `DEMO_MODE` in the env file     |
+| Set    | A website with no customers              | `SPA=false` ([Without the SPA](apps.md#without-the-spa)) |
+| Set    | Where release images go                  | `IMAGE_PREFIX` in `.woodpecker/release.yml`             |
+| Set    | The billing guide link                   | `ADMIN_BILLING_SETUP_URL` in `libs/ui/admin-billing-list.tsx` |
+
+Create the first operator on the server; it needs no mail
+([The first operator](operator-access.md#the-first-operator)):
+
+```sh
+deno task operator:create <address>
+```
 
 ## The repository's own files
 
-- **Replace** the README's demo and website links, CI badge, author section and admin video link
-  in `README.md`.
-- **Replace** the README's pictures in `docs/screenshots/` and the GitHub social preview, whose
-  card says `seedsaas.com`: `docs/screenshots/record.ts` records them.
+- **Replace** the demo and website links, the CI badge, the author section and the admin video
+  link in `README.md`.
 - **Set** the licence holder in `LICENSE`.
 - **Replace** `AGENTS.md` with the product's own, as
   [step 3](products.md#start-a-product) says: it applies Seed's `AGENTS.md` except the sections
   "The live demo is not production" and "Financy", which hold for the template only.
+
+## Next
+
+- [Building a product on Seed](products.md): take Seed's later changes.
+- [Deploy](deploy.md)

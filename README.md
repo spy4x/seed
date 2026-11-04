@@ -111,9 +111,12 @@ deno task init
 deno task dev
 ```
 
-`init` copies `infra/envs/.env.example` to `infra/envs/.env`, generates every secret and the web
-push keys, and asks for the project name. `dev` starts Traefik, unless one already runs, then
+`init` checks that Docker runs, copies `infra/envs/.env.example` to `infra/envs/.env`, generates
+every secret and the web push keys, records the Seed commit your copy came from, and asks for the
+project name. `dev` starts Traefik, unless one already runs, then
 Postgres, Valkey, the API, the worker, the SPA and the monitoring. Then open http://app.localhost.
+[Get started](docs/get-started.md) walks through it step by step: what opens where, and what to do
+when a step fails.
 
 Or ask your AI agent:
 
@@ -128,7 +131,7 @@ To keep taking Seed's fixes and features in your product later, see
 [docs/products.md](docs/products.md).
 
 The rest of the local stack (monitoring, migrations, demo data, resetting the database) is in
-[docs/development.md](docs/development.md).
+[docs/local-stack.md](docs/local-stack.md).
 
 ## What you get
 
@@ -149,7 +152,7 @@ app, and [`docs/screenshots/admin-video.ts`](docs/screenshots/admin-video.ts)
 <details>
 <summary>How the parts fit together</summary>
 
-<img src="docs/architecture.svg" alt="Architecture diagram. Clients: apps/spa, a Preact and Vite PWA with sign-up, sign-in, TOTP and profile, talks to apps/api over REST and WebSocket; an IndexedDB offline store keeps the last notes and groups and queues writes made offline. apps/mpa is the public website on Fresh, server-rendered, calling the API only for the newsletter. Servers: apps/api on Hono (auth, groups, CQRS dispatch, web push) and apps/worker, which drains outbox_events. Data: Postgres is authoritative and Valkey is the API cache; Docker Compose also runs Traefik, VictoriaMetrics, VictoriaLogs and Grafana. Shared code: libs/domain, libs/server, libs/ui and the @spy4x packages on JSR." width="860">
+<img src="docs/architecture.svg" alt="Architecture diagram. Clients: apps/spa, the product, a Preact and Vite PWA with an IndexedDB offline copy that pulls what changed since its cursor; apps/admin, the operator area on its own host; apps/mpa, the public website on Fresh, rendered on the server. All three call apps/api, the SPA over REST, the call route and the WebSocket, the admin app over REST, the MPA over REST for the blog, contact links, the catalog and the newsletter. Servers: apps/api on Hono (auth, CQRS dispatch, REST, the call route, the WebSocket) and apps/worker, which runs the outbox jobs. Data: Postgres 18 behind PgBouncer is the source of truth, Valkey holds rate limits, sign-in flows and the cache, and Garage stores files with the files profile. Docker Compose also runs Traefik and, with the monitoring profile, VictoriaMetrics, VictoriaLogs and Grafana. Shared code: libs/domain, libs/server, libs/ui, libs/platform and the @spy4x packages on JSR." width="860">
 
 </details>
 
@@ -159,14 +162,17 @@ app, and [`docs/screenshots/admin-video.ts`](docs/screenshots/admin-video.ts)
 > not internal, with the changelog at [seedsaas.com/changelog](https://seedsaas.com/changelog).
 
 - [The three apps](docs/apps.md): the SPA, the admin app and the public website.
-- [Deploy and operate](docs/deploy.md): certificates, the deploy, consoles, several projects on one
-  server, releases.
+- [Deploy to a server](docs/deploy.md): the first deploy. Then [updates](docs/deploy-updates.md),
+  [certificates](docs/certificates.md), [operator access](docs/operator-access.md),
+  [several projects](docs/several-projects.md) and [releases](docs/releases.md).
+- [Settings](docs/settings.md): every variable of the env file.
 - [Guest accounts](docs/guests.md)
 - [Sign in with Google and GitHub](docs/sign-in-providers.md)
-- [Backups](docs/backups.md): set up, restore, rehearse.
+- [Backups](docs/backups.md): set up, and [restore and rehearse](docs/restore.md).
 - [The file store](docs/files.md): Garage or another S3 store, signed uploads and downloads.
-- [Development](docs/development.md): every task and the browser tests.
-- [Adding a feature](docs/aggregates.md): every file of the notes aggregate, in order.
+- [Every task](docs/development.md) and [the browser tests](docs/browser-tests.md).
+- [Add your first feature](docs/first-feature.md), then
+  [the aggregate reference](docs/aggregates.md).
 - [Everything else](docs/README.md)
 
 ## Development

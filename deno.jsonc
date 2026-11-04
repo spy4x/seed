@@ -39,7 +39,7 @@
   "allowScripts": ["npm:@tailwindcss/oxide@4.1.12"],
   "minimumDependencyAge": { "age": "1440", "exclude": ["jsr:@spy4x/*", "npm:@jsr/spy4x__*"] },
   "tasks": {
-    "init": "deno run -R=. -W=infra/envs/.env,infra/envs/.env.tmp,infra/configs/vapid.json,infra/configs/vapid.json.tmp ./infra/scripts/init.ts", // once after cloning: the env file with generated secrets, and the web push keys; see the script
+    "init": "deno run -R=. -W=infra/envs/.env,infra/envs/.env.tmp,infra/configs/vapid.json,infra/configs/vapid.json.tmp,.seed --allow-run=docker,podman,git ./infra/scripts/init.ts", // once after cloning: checks Docker, then the env file with generated secrets, the web push keys and .seed/commit; see the script
     "dev": "deno run -R=./infra --allow-run=docker,podman ./infra/scripts/proxy-network.ts --start && deno run compose up -d", // starts Traefik unless one runs, then the development environment
     "build": "deno task spa:build", // builds the SPA for production (CI's `build` step)
 
@@ -73,14 +73,14 @@
     "db:seed": "deno run -N=$DB_HOST:$DB_PORT -E -R=./libs/server/blog/seed-posts ./infra/scripts/seed-data.ts", // the fake population, and the dev administrator; see the script
     "subscribers:send": "deno run -N -E -R ./apps/worker/subscribers-send.ts", // queues an issue for a mailing list; run in the worker container, see docs/development.md
     "user:role": "deno run -N -E -R ./apps/worker/user-role.ts", // gives a person a role by their address, such as operator for the admin app; see docs/apps.md
-    "operator:create": "deno run -N -E -R ./apps/worker/operator-create.ts", // creates an administrator with a password typed at a prompt, or makes an existing person one; see docs/deploy.md
+    "operator:create": "deno run -N -E -R ./apps/worker/operator-create.ts", // creates an administrator with a password typed at a prompt, or makes an existing person one; see docs/operator-access.md
     "i18n:stamp": "deno run -R=i18n -W=i18n i18n/stamp.ts", // records which English each translation was made from, once it is translated; see i18n/TRANSLATING.md
     "deps:check": "deno outdated -r",
     "deps:update": "deno outdated -r -u -i",
     "update:ubuntu": "sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean && sudo apt --fix-broken install && sudo do-release-upgrade",
     "vapid-key:create": "deno run -W=infra/configs/vapid.json ./infra/scripts/vapid-keys-create.ts",
-    "load": "deno run -R=./infra/envs --allow-run=docker,podman ./tests/load/run.ts", // k6 load scenarios against the local dev stack, and the Postgres numbers; see docs/capacity.md
-    "load:group": "deno run --no-prompt -R=./infra/envs -N=127.0.0.1 -E ./tests/load/group.ts", // builds, removes or explains the large load-test group of a tier; see docs/capacity.md
+    "load": "deno run -R=./infra/envs --allow-run=docker,podman ./tests/load/run.ts", // k6 load scenarios against the local dev stack, and the Postgres numbers; see docs/load-tests.md
+    "load:group": "deno run --no-prompt -R=./infra/envs -N=127.0.0.1 -E ./tests/load/group.ts", // builds, removes or explains the large load-test group of a tier; see docs/load-tests.md
     "video:admin": "deno run -A docs/screenshots/admin-video.ts", // records the website's admin panel video from a local stack, see the script
     "demo-video": "deno run -A media/demo/recipe/record.ts", // records the README's demo video into media/demo (--encode re-encodes the last take), see media/demo/recipe/README.md
     "compose": "deno run -R=./infra,./.volumes --allow-run=docker,podman --allow-net=127.0.0.1,0.0.0.0 ./infra/scripts/compose.ts", // reads .volumes to refuse starting Postgres 18 beside unmoved Postgres 16 data; binds the host ports the project publishes, for a moment, to refuse a start when one is taken
@@ -186,24 +186,25 @@
     // #endregion Aliases
 
     // #region Dependencies
-    // spy4x/ts-libs 1.109.0 (cron schedules, passkeys, idempotency, keyset cursor, lockout, offline
+    // spy4x/ts-libs 1.110.0 (cron schedules, passkeys, idempotency, keyset cursor, lockout, offline
     // outbox, e-mail proof, the redirect-path check of sign-in's `next`, the password check without
     // a session, billing, the provider's name and picture, the healthcheck's HTTP mode, a key
     // giving up its address, safe Markdown and reading time, copying an object inside the S3
     // store, an error's reason and per-field codes, contact channels, HEIC by its bytes, image
     // processing, translator-aware formats, the changes pull of a group, process adapters for Node
-    // and Bun, signals, the port-only healthcheck, the default environment and `runCommand` on Node and Bun).
+    // and Bun, signals, the port-only healthcheck, and the default environment, `runCommand` and
+    // file storage on Node and Bun).
     // hono, postgres and arktype below must stay on the exact versions these packages were
     // published with, or two copies load and their types stop matching.
-    "@spy4x/validation": "jsr:@spy4x/validation@1.109.0",
-    "@spy4x/platform": "jsr:@spy4x/platform@1.109.0",
-    "@spy4x/server": "jsr:@spy4x/server@1.109.0",
-    "@spy4x/realtime": "jsr:@spy4x/realtime@1.109.0",
-    "@spy4x/integrations": "jsr:@spy4x/integrations@1.109.0",
-    "@spy4x/email": "jsr:@spy4x/email@1.109.0",
-    "@spy4x/net": "jsr:@spy4x/net@1.109.0",
-    "@spy4x/billing": "jsr:@spy4x/billing@1.109.0",
-    "@spy4x/time": "jsr:@spy4x/time@1.109.0",
+    "@spy4x/validation": "jsr:@spy4x/validation@1.110.0",
+    "@spy4x/platform": "jsr:@spy4x/platform@1.110.0",
+    "@spy4x/server": "jsr:@spy4x/server@1.110.0",
+    "@spy4x/realtime": "jsr:@spy4x/realtime@1.110.0",
+    "@spy4x/integrations": "jsr:@spy4x/integrations@1.110.0",
+    "@spy4x/email": "jsr:@spy4x/email@1.110.0",
+    "@spy4x/net": "jsr:@spy4x/net@1.110.0",
+    "@spy4x/billing": "jsr:@spy4x/billing@1.110.0",
+    "@spy4x/time": "jsr:@spy4x/time@1.110.0",
 
     // apps/api
     "hono": "jsr:@hono/hono@4.13.8",
@@ -213,17 +214,17 @@
     // apps/tgbot
 
     // client
-    // spy4x/preact-components 13.5.2. Every package is published at one version together, so all
+    // spy4x/preact-components 13.8.1. Every package is published at one version together, so all
     // six move in one change, and so does the npm copy of `@spy4x/preact-system` further down
     // (the Playwright config imports it under that name). They take preact and the signals
     // packages as caret ranges, so the versions below are the one copy that loads. wouter-preact
     // must stay on the version they pin, or two copies load.
-    "@spy4x/preact-charts": "jsr:@spy4x/preact-charts@13.7.0",
-    "@spy4x/preact-icons": "jsr:@spy4x/preact-icons@13.7.0",
-    "@spy4x/preact-signals": "jsr:@spy4x/preact-signals@13.7.0",
-    "@spy4x/preact-system": "jsr:@spy4x/preact-system@13.7.0",
-    "@spy4x/preact-theme": "jsr:@spy4x/preact-theme@13.7.0",
-    "@spy4x/preact-ui": "jsr:@spy4x/preact-ui@13.7.0",
+    "@spy4x/preact-charts": "jsr:@spy4x/preact-charts@13.8.1",
+    "@spy4x/preact-icons": "jsr:@spy4x/preact-icons@13.8.1",
+    "@spy4x/preact-signals": "jsr:@spy4x/preact-signals@13.8.1",
+    "@spy4x/preact-system": "jsr:@spy4x/preact-system@13.8.1",
+    "@spy4x/preact-theme": "jsr:@spy4x/preact-theme@13.8.1",
+    "@spy4x/preact-ui": "jsr:@spy4x/preact-ui@13.8.1",
     "preact": "npm:preact@10.29.8",
     "wouter-preact": "npm:wouter-preact@3.9.0",
     "@preact/signals": "npm:@preact/signals@2.5.1",
@@ -249,10 +250,10 @@
     // The website's browser tests check each page with axe-core (e2e/mpa).
     "@axe-core/playwright": "npm:@axe-core/playwright@4.13.0",
     // The npm name of `@spy4x/preact-system` above, for Playwright's loader; it moves with the six.
-    "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@13.7.0",
+    "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@13.8.1",
     // The npm name of `@spy4x/platform` above, for the same reason: every e2e spec takes `uuidV7`
     // from it. It moves with the `@spy4x/*` packages.
-    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.109.0",
+    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.110.0",
 
     // shared/types — 2.2.3 matches spy4x/ts-libs and spy4x/preact-components
     // (spy4x/preact-components#121)

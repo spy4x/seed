@@ -10,7 +10,12 @@ import { Input, Select } from "@spy4x/preact-ui/input"
 import { languageName } from "@spy4x/preact-ui/language-picker"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
-import { BLOG_SLUG_MAX_LENGTH, BLOG_SLUG_PATTERN, blogPostPath } from "@domain/blog"
+import {
+  BLOG_SLUG_MAX_LENGTH,
+  BLOG_SLUG_PATTERN,
+  blogPostPath,
+  type BlogRevision,
+} from "@domain/blog"
 import type { AdminBlogEditorScreenProps } from "./admin-blog-editor.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAdminText } from "./i18n.ts"
@@ -18,9 +23,16 @@ import { Isolated } from "@spy4x/preact-ui/bdi"
 import { Button } from "@spy4x/preact-ui/button"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { blogProblemKey, BlogProblemText } from "./admin-blog-problems.tsx"
+import { BlogHistoryDialog } from "./admin-blog-history.tsx"
 
-/** What the dialogs take besides the screen's props: the Problems panel's "Go to problems". */
-type DialogsProps = AdminBlogEditorScreenProps & { onGoToProblems: () => void }
+/**
+ * What the dialogs take besides the screen's props: the Problems panel's "Go to problems", and
+ * History's restore, which also moves focus to the editor's first field.
+ */
+type DialogsProps = AdminBlogEditorScreenProps & {
+  onGoToProblems: () => void
+  onRestore: (revision: BlogRevision) => void
+}
 
 /** A path inside a sentence: code, isolated, never machine-translated. */
 function path(text: string): JSX.Element {
@@ -46,6 +58,17 @@ export function Dialogs(props: DialogsProps): JSX.Element | null {
     cancelLabel: t.t(`AdminBlogDialogs.cancel`),
   }
   switch (dialog) {
+    case `history`:
+      return (
+        <BlogHistoryDialog
+          history={props.history}
+          now={props.now}
+          onSelect={props.onSelectRevision}
+          onRestore={props.onRestore}
+          onRetry={props.onRetryHistory}
+          onClose={props.onCloseDialog}
+        />
+      )
     case `publish`:
     case `publish-now`:
     case `reschedule`:
@@ -123,7 +146,7 @@ function DialogBody(
   )
 }
 
-/** The new address of a published post, with the warning that old links break. */
+/** The new address of a published post, with the note that old links redirect to it (#418). */
 function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
   const t = useAdminText()
   const old = props.post?.slug ?? ``
@@ -140,7 +163,6 @@ function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
       busy={props.dialogPending}
       onCancel={props.onCloseDialog}
       cancelLabel={t.t(`AdminBlogDialogs.cancel`)}
-      tone="danger"
       title={t.t(`AdminBlogDialogs.changeUrlTitle`)}
       confirmLabel={t.t(`AdminBlogDialogs.changeUrl`)}
       onConfirm={() => {
@@ -151,7 +173,7 @@ function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
       <Stack gap="md">
         <p>
           <Rich
-            parts={t.parts(`AdminBlogDialogs.linksBreak`, {
+            parts={t.parts(`AdminBlogDialogs.linksRedirect`, {
               path: blogPostPath({
                 language: props.post?.language ?? props.value.language,
                 slug: old,

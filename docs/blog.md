@@ -11,6 +11,7 @@ Operators write posts in the admin app; the public website shows the published o
 | `libs/server/blog/postgres-blog-repository.ts` | The admin's reads and writes, each write with its audit row in one transaction.   |
 | `libs/server/blog/public-blog.ts`          | The website's reads: live posts only.                                                 |
 | `libs/server/blog/blog-publish-job.ts`     | The `blog.publish` job (registered in `JOBS`), and `queueDueBlogJobs` for lost jobs. |
+| `libs/server/blog/blog-indexnow-job.ts`    | The `blog.indexnow` job, which tells search engines about a post ([below](#indexnow)). |
 | `libs/server/blog/render.ts`               | Markdown to safe HTML and the reading time. The only place a body is rendered.        |
 | `libs/domain/blog/figures.ts`              | The check of a figure tag against the figures that exist, and the figures' ids.       |
 | `apps/mpa/islands/post/`                   | The interactive figures a post can hold, one file per tag ([below](#interactive-figures)). |
@@ -32,7 +33,7 @@ Operators write posts in the admin app; the public website shows the published o
   waits. **Cancel** is refused for `blog.publish`; Unschedule on the Blog page stops a post.
 - `published_at` is set the first time a post goes live and never moves, so unpublishing and
   publishing again keeps the date readers saw. From then on the slug is locked; **Change URL**
-  changes it, and old links stop working (there are no redirects).
+  changes it, and the old address redirects to the new one ([below](#old-addresses)).
 - Saving a published post with **Significant update** sets `content_updated_at`, shown as
   "Updated" and used by the sitemap and the feed.
 - Every write names the version the operator saw. A stale one gets 409 with the current version.
@@ -56,6 +57,53 @@ redirects there.
 A post lives at its own language's address: `/blog/<slug>` in the main language, `/<language>/blog/<slug>`
 in any other (`blogPostPath`). Its address in another language answers 301 to that one. Slugs are
 unique across languages.
+
+## Old addresses
+
+A post that has been live keeps every slug it had before **Change URL** (#418), so links already
+shared, indexed or mailed in a newsletter keep working. `/blog/<old>` and `/<language>/blog/<old>`
+answer 301 to the post's current address, in its own language.
+
+- `blog_slug_redirects` holds one row per old slug, naming the post, not the next slug: a chain of
+  changes (a → b → c) sends `a` straight to `c`, and no chain can loop. Slugs are unique across
+  languages, so the slug alone names the address in every language.
+- Triggers on `blog_posts` write the rows in the transaction of the slug change, so every writer
+  (the admin, Seed's own post files, a later one) keeps them. A draft's or a scheduled post's slug
+  changes freely and leaves no row: nobody saw that address.
+- A slug a post takes is that post's: its row is deleted in the same write. A new post that takes
+  an old address owns it from then on, also as a draft, and the old row never comes back, so a link
+  to the new post never lands on the old one. A post moved back to an old slug has no row either.
+- Only a live post redirects. An old address of a draft, a scheduled or an unpublished post
+  answers 404, as the post's own address does, so a redirect never shows that the post exists.
+  Deleting a post deletes its rows.
+- The website asks for a moved post only when no live post has the slug (`GET /api/blog/posts/:slug`
+  answers `{ moved: { language, slug } }`), so a post's own address costs no extra read. The
+  sitemap, the RSS feed and `llms.txt` list current addresses only.
+
+## IndexNow
+
+With `INDEXNOW_KEY` set (8 to 128 letters, digits and dashes) and `MPA_DOMAIN` set, Seed tells
+[IndexNow](https://www.indexnow.org/) about a post whenever it goes live, changes while live, moves
+with **Change URL** or is unpublished. Bing, Yandex and the other engines that share IndexNow, and
+the AI answer engines that read Bing's index, then hear of the change at once instead of at their
+next crawl. Without the key nothing is sent.
+
+- **Its own job.** Each of those writes queues a `blog.indexnow` job in its own transaction: the
+  admin's Publish now, a save, Change URL and Unpublish, the `blog.publish` job when it publishes a
+  scheduled post, and Seed's own post files when one that is live is written. The worker sends the
+  ping, so no request to IndexNow ever holds a post's lock or slows an operator's save. One job
+  waits per post at a time: saves made before it runs share it, and it reads the post when it runs.
+- **Every address.** The job sends the post's address in its language (`blogPostPath`) and every
+  old address a Change URL left (`blog_slug_redirects`), at most `INDEXNOW_MAX_URLS` in one call. An
+  unpublished post's addresses are sent too: the engines find them gone. A post that was never live
+  sends nothing.
+- **Fail-open.** A refused or failed ping is logged once, without the key, and the job still
+  succeeds: it is not retried and never touches the post.
+- **The key file.** IndexNow checks a ping against `/<key>.txt` on the website, so the website
+  serves the key there as plain text, and only while `INDEXNOW_KEY` is set. The key is public by
+  IndexNow's design; a malformed one stops the website and the worker at start.
+- **The demo.** The public demo has no sample posts: its blog is Seed's own posts
+  ([demo.md](demo.md#seeds-own-blog-posts)), which are real, so demo mode pings like any server.
 
 ## The newsletter send
 
@@ -192,6 +240,7 @@ is the example to copy, and `apps/mpa/post-figures.test.tsx` checks every file i
 
 ## Demo and development
 
-The public demo's nightly wipe keeps `blog_posts` ([demo.md](demo.md)); the demo seeds no posts.
+The public demo's nightly wipe keeps `blog_posts` and `blog_slug_redirects` ([demo.md](demo.md)); the
+demo seeds no posts.
 In development, `deno task db:seed` adds a published, a scheduled and a draft post by
 `admin@example.com`.

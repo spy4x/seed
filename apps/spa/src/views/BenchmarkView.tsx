@@ -39,7 +39,7 @@ import type { TagItem } from "../state/tags.ts"
  * public demo (`benchmarkOpen`).
  */
 
-/** The generator that makes a large group (docs/capacity.md); `M` is 10,000 notes. */
+/** The generator that makes a large group (docs/load-tests.md); `M` is 10,000 notes. */
 const GENERATOR = `deno task load:group M --member`
 
 /** A frame interval this much over 60 Hz counts the frames it skipped as dropped. */

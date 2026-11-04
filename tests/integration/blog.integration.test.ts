@@ -7,6 +7,7 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import type { OutboxEvent } from "@spy4x/server/outbox"
 import {
   BLOG_AUDIT_KINDS,
+  BLOG_INDEXNOW_JOB,
   BLOG_PUBLISH_JOB,
   BlogError,
   type BlogPostFields,
@@ -16,11 +17,13 @@ import {
 } from "@domain/blog"
 import { type BlogActor, PostgresBlogRepository } from "@server/blog/postgres-blog-repository.ts"
 import { blogPublishJob, queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
+import { blogIndexNowJob, type IndexNowSetup } from "@server/blog/blog-indexnow-job.ts"
 import {
   createPublicFeed,
   listPublicFeed,
   listPublicPosts,
   listPublicTopics,
+  readMovedPost,
   readPublicPost,
 } from "@server/blog/public-blog.ts"
 import {
@@ -307,6 +310,105 @@ Deno.test(`blog: writes, audit rows and the checks every write makes`, async (t)
   })
 })
 
+Deno.test(`blog: every save keeps the post's fields as an earlier version, the newest 50 (#418)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const lee = await operator(sql, `Lee Park`)
+    const id = uuidV7()
+    const first = fields(`hello`, { bodyMd: `The good paragraph.`, tldr: [`One`] })
+    await blog.create(id, first, maya)
+
+    await t.step(`keeps the created fields, with who saved them`, async () => {
+      const list = await blog.revisions(id)
+      expect(list?.map((row) => [row.title, row.savedBy])).toEqual([[`Post hello`, `Maya Chen`]])
+      expect(await blog.revision(id, list![0].id)).toMatchObject({
+        ...first,
+        savedBy: `Maya Chen`,
+      })
+    })
+
+    await t.step(`keeps each save, newest first, and the earlier text stays readable`, async () => {
+      await blog.update(
+        id,
+        1,
+        fields(`hello`, { title: `Worse`, bodyMd: `Saved over.` }),
+        false,
+        lee,
+      )
+      const list = await blog.revisions(id)
+      expect(list?.map((row) => [row.title, row.savedBy])).toEqual([
+        [`Worse`, `Lee Park`],
+        [`Post hello`, `Maya Chen`],
+      ])
+      expect((await blog.revision(id, list![1].id))?.bodyMd).toBe(`The good paragraph.`)
+    })
+
+    await t.step(`keeps nothing for a save that changed no field`, async () => {
+      await blog.update(
+        id,
+        2,
+        fields(`hello`, { title: `Worse`, bodyMd: `Saved over.` }),
+        false,
+        maya,
+      )
+      expect((await blog.revisions(id))?.length).toBe(2)
+    })
+
+    await t.step(`keeps the newest 50 and deletes the older ones in the same save`, async () => {
+      for (let version = 3; version <= 52; version++) {
+        await blog.update(id, version, fields(`hello`, { bodyMd: `Save ${version}.` }), false, maya)
+      }
+      const list = await blog.revisions(id)
+      expect(list?.length).toBe(50)
+      // 52 versions were kept: the create's and Lee's are gone, the oldest left is the next save's.
+      expect((await blog.revision(id, list!.at(-1)!.id))?.bodyMd).toBe(`Save 3.`)
+      expect((await blog.revision(id, list![0].id))?.bodyMd).toBe(`Save 52.`)
+    })
+
+    await t.step(
+      `answers no version of another post, and no list for a post that is gone`,
+      async () => {
+        const other = uuidV7()
+        await blog.create(other, fields(`other`), maya)
+        const [mine] = (await blog.revisions(id))!
+        expect(await blog.revision(other, mine.id)).toBeNull()
+        expect(await blog.revisions(uuidV7())).toBeNull()
+      },
+    )
+
+    await t.step(`names an operator without a name by their address`, async () => {
+      const [{ id: nameless }] = await sql<{ id: number }[]>`
+        WITH auth_user AS (INSERT INTO auth_users DEFAULT VALUES RETURNING id)
+        INSERT INTO users (id, role) SELECT id, 3 FROM auth_user RETURNING id
+      `
+      await sql`INSERT INTO auth_email_owners (email, user_id) VALUES ('ops@example.com', ${nameless})`
+      const post = uuidV7()
+      await blog.create(post, fields(`nameless`), { userId: nameless, requestId: null })
+      expect((await blog.revisions(post))?.[0].savedBy).toBe(`ops@example.com`)
+    })
+
+    await t.step(`deletes a post's versions with it`, async () => {
+      const post = await blog.get(id)
+      await blog.delete(id, post!.version, maya)
+      const [{ rows }] = await sql<{ rows: number }[]>`
+        SELECT COUNT(*)::int AS rows FROM blog_post_revisions WHERE post_id = ${id}
+      `
+      expect(rows).toBe(0)
+    })
+
+    await t.step(`keeps no version of Seed's own posts from files`, async () => {
+      await upsertSeedPosts(sql, [seedPost(`from-a-file`)])
+      // The file changed: the next start writes the post again.
+      const edited = fields(`from-a-file`, { title: `Edited in the file` })
+      expect(await upsertSeedPosts(sql, [seedPost(`from-a-file`, { fields: edited })])).toBe(1)
+      const post = await bySlug(sql, `from-a-file`)
+      expect(post.title).toBe(`Edited in the file`)
+      expect(await blog.revisions(post.id)).toEqual([])
+    })
+  })
+})
+
 Deno.test(`blog: two operators publishing at once publish once`, async () => {
   await withSchema(async (sql) => {
     const blog = new PostgresBlogRepository(sql)
@@ -360,6 +462,75 @@ Deno.test(`blog: the public reads show live posts only`, async () => {
     expect(Object.keys(found!.post)).not.toContain(`id`)
     expect(JSON.stringify(found!.post.segments)).not.toContain(`<b>`)
     expect(found!.readNext).toEqual([])
+  })
+})
+
+Deno.test(`blog: a live post's old slugs lead to its current address, and only while it is live (#418)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const post = uuidV7()
+    const rows = async () =>
+      (await sql<{ slug: string; postId: string }[]>`
+        SELECT slug, post_id FROM blog_slug_redirects ORDER BY slug
+      `).map(({ slug, postId }) => `${slug} → ${postId === post ? `post` : postId}`)
+    await blog.create(post, fields(`first`, { language: `de` }), maya)
+    await blog.publish(post, 1, null, null, maya)
+
+    await t.step(`sends every old slug of a chain straight to the current one`, async () => {
+      await blog.changeUrl(post, 2, `second`, maya)
+      await blog.changeUrl(post, 3, `third`, maya)
+      for (const slug of [`first`, `second`]) {
+        expect(await readPublicPost(sql, slug)).toBeNull()
+        expect(await readMovedPost(sql, slug)).toEqual({ language: `de`, slug: `third` })
+      }
+      expect(await readMovedPost(sql, `third`)).toBeNull()
+      expect(await readMovedPost(sql, `never-was`)).toBeNull()
+    })
+
+    await t.step(`lists only the current address in the index and the feed`, async () => {
+      expect((await listPublicPosts(sql, null)).map(({ slug }) => slug)).toEqual([`third`])
+      expect((await listPublicFeed(sql)).map(({ slug }) => slug)).toEqual([`third`])
+    })
+
+    await t.step(`keeps no row for the slug a post moves back to`, async () => {
+      await blog.changeUrl(post, 4, `first`, maya)
+      expect(await rows()).toEqual([`second → post`, `third → post`])
+      expect((await readPublicPost(sql, `first`))?.post.slug).toBe(`first`)
+      expect(await readMovedPost(sql, `third`)).toEqual({ language: `de`, slug: `first` })
+    })
+
+    await t.step(`gives an old slug to the post that takes it, from its draft on`, async () => {
+      const other = uuidV7()
+      await blog.create(other, fields(`second`), maya)
+      expect(await rows()).toEqual([`third → post`])
+      expect(await readMovedPost(sql, `second`)).toBeNull()
+      await blog.publish(other, 1, null, null, maya)
+      expect((await readPublicPost(sql, `second`))?.post.title).toBe(`Post second`)
+    })
+
+    await t.step(`answers nothing for the old slug of a post that is not live`, async () => {
+      await blog.unpublish(post, 5, maya)
+      expect(await readMovedPost(sql, `third`)).toBeNull()
+      await blog.publish(post, 6, null, null, maya)
+      expect(await readMovedPost(sql, `third`)).toEqual({ language: `de`, slug: `first` })
+    })
+
+    await t.step(`keeps no row for a slug the public never saw`, async () => {
+      const draft = uuidV7()
+      await blog.create(draft, fields(`draft-a`), maya)
+      await blog.update(draft, 1, fields(`draft-b`), false, maya)
+      const scheduled = uuidV7()
+      await blog.create(scheduled, fields(`later-a`), maya)
+      await blog.publish(scheduled, 1, LATER(), null, maya)
+      await blog.changeUrl(scheduled, 2, `later-b`, maya)
+      expect(await rows()).toEqual([`third → post`])
+    })
+
+    await t.step(`deletes a post's old slugs with it`, async () => {
+      await blog.delete(post, 7, maya)
+      expect(await rows()).toEqual([])
+    })
   })
 })
 
@@ -1118,5 +1289,182 @@ Deno.test(`blog: Cancel on a post's job is refused, and the post keeps its job`,
     expect(outcome).toBe(AdminJobActionOutcome.NotCancellable)
     expect(await waitingJobs(sql, id)).toEqual([{ ...job, cancelledAt: null }])
     expect((await blog.get(id))!.status).toBe(`scheduled`)
+  })
+})
+
+const INDEXNOW: IndexNowSetup = {
+  key: `indexnow-test-key-0123`,
+  siteUrl: `https://www.example.com`,
+}
+
+/**
+ * A fake IndexNow that answers `status` (or throws when it is `null`) and records the addresses of
+ * every submission.
+ */
+function fakeIndexNow(status: number | null = 200) {
+  const sent: string[][] = []
+  const fetch = async (_input: string | URL | Request, init?: RequestInit) => {
+    sent.push(JSON.parse(String(init?.body)).urlList)
+    if (status === null) throw new TypeError(`connection refused`)
+    return new Response(null, { status })
+  }
+  return { sent, fetch: fetch as typeof globalThis.fetch }
+}
+
+/**
+ * Runs the `blog.indexnow` rows of post `id` that wait, as the worker would, and closes them.
+ * Answers how many ran.
+ */
+async function runIndexNow(
+  sql: postgres.Sql,
+  id: string,
+  deps: Omit<Parameters<typeof blogIndexNowJob>[0], `sql`>,
+): Promise<number> {
+  const rows = await sql<{ id: string }[]>`
+    SELECT id FROM outbox_events
+    WHERE event_kind = ${BLOG_INDEXNOW_JOB} AND aggregate_id = ${id} AND processed_at IS NULL
+  `
+  const job = blogIndexNowJob({ sql, ...deps })
+  for (const row of rows) {
+    await job({ id: row.id, aggregateId: id, eventKind: BLOG_INDEXNOW_JOB } as OutboxEvent)
+    await sql`UPDATE outbox_events SET processed_at = now() WHERE id = ${row.id}`
+  }
+  return rows.length
+}
+
+Deno.test(`blog: IndexNow hears every address of a post that goes live, moves, changes or leaves (#418)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const post = uuidV7()
+    const indexNow = fakeIndexNow()
+    const run = () =>
+      runIndexNow(sql, post, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch })
+    await blog.create(post, fields(`first`, { language: `de` }), maya)
+
+    await t.step(`queues nothing for a draft that was never live`, async () => {
+      await blog.update(
+        post,
+        1,
+        parseBlogPostEdit(fields(`first`, { language: `de` })),
+        false,
+        maya,
+      )
+      expect(await run()).toBe(0)
+    })
+
+    await t.step(`sends the post's address when it is published now`, async () => {
+      await blog.publish(post, 2, null, null, maya)
+      expect(await run()).toBe(1)
+      expect(indexNow.sent.at(-1)).toEqual([`https://www.example.com/de/blog/first`])
+    })
+
+    await t.step(`sends the new address and the old one after Change URL`, async () => {
+      await blog.changeUrl(post, 3, `second`, maya)
+      expect(await run()).toBe(1)
+      expect(indexNow.sent.at(-1)).toEqual([
+        `https://www.example.com/de/blog/second`,
+        `https://www.example.com/de/blog/first`,
+      ])
+    })
+
+    await t.step(
+      `sends them again when the live post is saved, once for saves before it ran`,
+      async () => {
+        const edit = parseBlogPostEdit(fields(`second`, { language: `de`, title: `Changed` }))
+        await blog.update(post, 4, edit, true, maya)
+        await blog.update(post, 5, edit, false, maya)
+        expect(await run()).toBe(1)
+        expect(indexNow.sent.at(-1)).toHaveLength(2)
+      },
+    )
+
+    await t.step(
+      `sends them when the post is unpublished, so the engines see it gone`,
+      async () => {
+        await blog.unpublish(post, 6, maya)
+        expect(await run()).toBe(1)
+        expect(indexNow.sent.at(-1)).toEqual([
+          `https://www.example.com/de/blog/second`,
+          `https://www.example.com/de/blog/first`,
+        ])
+      },
+    )
+  })
+})
+
+Deno.test(`blog: a scheduled post that goes live through its job is sent to IndexNow (#418)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const post = uuidV7()
+    const indexNow = fakeIndexNow()
+    await blog.create(post, fields(`later`), maya)
+    await blog.publish(post, 1, LATER(), null, maya)
+    expect(await runIndexNow(sql, post, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch }))
+      .toBe(0)
+
+    await makeDue(sql, post)
+    await blogPublishJob({ sql, brand: BRAND, setup: null, log: () => {} })(jobEvent(post))
+    await runIndexNow(sql, post, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch })
+
+    expect(indexNow.sent).toEqual([[`https://www.example.com/blog/later`]])
+  })
+})
+
+Deno.test(`blog: with IndexNow off a post goes live and nothing is sent (#418)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const post = uuidV7()
+    const indexNow = fakeIndexNow()
+    await blog.create(post, fields(`quiet`), maya)
+    await blog.publish(post, 1, null, null, maya)
+
+    expect(await runIndexNow(sql, post, { setup: null, log: () => {}, fetch: indexNow.fetch }))
+      .toBe(1)
+    expect(indexNow.sent).toEqual([])
+    expect((await bySlug(sql, `quiet`)).status).toBe(`published`)
+  })
+})
+
+Deno.test(`blog: a failing IndexNow is logged once without the key and fails no publish (#418)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    for (const [slug, status] of [[`refused`, 403], [`unreachable`, null]] as const) {
+      const post = uuidV7()
+      const lines: string[] = []
+      await blog.create(post, fields(slug), maya)
+      await blog.publish(post, 1, null, null, maya)
+
+      const indexNow = fakeIndexNow(status)
+      await runIndexNow(sql, post, {
+        setup: INDEXNOW,
+        log: (line) => lines.push(line),
+        fetch: indexNow.fetch,
+      })
+
+      expect(indexNow.sent).toHaveLength(1)
+      expect(lines).toHaveLength(1)
+      expect(lines[0]).toContain(`IndexNow was not told about blog post ${post}`)
+      expect(lines[0]).not.toContain(INDEXNOW.key)
+      expect((await bySlug(sql, slug)).status).toBe(`published`)
+    }
+  })
+})
+
+Deno.test(`blog: Seed's live post files are sent to IndexNow, a scheduled one only when it goes live (#418)`, async () => {
+  await withSchema(async (sql) => {
+    await upsertSeedPosts(sql, [seedPost(`live`), seedPost(`later`, { publishAt: LATER() })])
+    const queued = async (slug: string) => {
+      const [{ count }] = await sql<{ count: number }[]>`
+        SELECT COUNT(*)::int AS count FROM outbox_events o JOIN blog_posts p ON p.id = o.aggregate_id
+        WHERE o.event_kind = ${BLOG_INDEXNOW_JOB} AND p.slug = ${slug}
+      `
+      return count
+    }
+    expect(await queued(`live`)).toBe(1)
+    expect(await queued(`later`)).toBe(0)
   })
 })

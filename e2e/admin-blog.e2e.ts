@@ -6,7 +6,8 @@ import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * The blog's admin pages (#396): an operator writes a post from the keyboard, previews it as the
- * public page renders it, schedules it, publishes it now, finds it on the list and deletes it.
+ * public page renders it, schedules it, publishes it now, finds it on the list, changes its URL and
+ * deletes it.
  */
 
 const appBase = "http://app.localhost"
@@ -41,7 +42,7 @@ async function operatorPage(
   return { admin, ops }
 }
 
-test("an operator writes, previews, schedules, publishes and deletes a post from the keyboard", async ({ browser, request }) => {
+test("an operator writes, previews, schedules, publishes, moves and deletes a post from the keyboard", async ({ browser, request }) => {
   let admin: BrowserContext | null = null
   try {
     const signedIn = await operatorPage(browser, request)
@@ -139,15 +140,94 @@ test("an operator writes, previews, schedules, publishes and deletes a post from
     await expect(rows).toHaveCount(1)
     await expect(rows.first()).toContainText("Published")
 
-    // Deleted after a confirmation that names it; the website no longer has it.
+    // Change URL moves it; the old address now leads to the new one (#418).
+    const moved = `${slug}-moved`
     await ops.locator("[data-e2e=admin-blog-row]").click()
+    await ops.locator("[data-e2e=admin-blog-menu]").click()
+    await ops.locator("[data-e2e=admin-blog-change-url]").click()
+    await expect(ops.getByRole("alertdialog")).toContainText(
+      `Links to /blog/${slug} keep working: they redirect to the new URL.`,
+    )
+    await ops.locator("[data-e2e=admin-blog-new-slug]").fill(moved)
+    await ops.getByRole("button", { name: "Change URL", exact: true }).click()
+    await expect(ops.locator("[data-e2e=admin-blog-slug]")).toHaveValue(moved)
+    const old = await request.get(`${appBase}/api/blog/posts/${slug}`)
+    expect(await old.json()).toEqual({ moved: { language: "en", slug: moved } })
+
+    // Deleted after a confirmation that names it; the website no longer has it.
     await ops.locator("[data-e2e=admin-blog-menu]").click()
     await ops.locator("[data-e2e=admin-blog-delete]").click()
     await expect(ops.getByRole("alertdialog")).toContainText(`Delete "${title}"?`)
     await ops.getByRole("button", { name: "Delete post" }).click()
     await expect(ops).toHaveURL(`${adminBase}/blog`)
     await expect(ops.locator("[data-e2e=toasts]")).toContainText("Post deleted.")
-    expect((await request.get(`${appBase}/api/blog/posts/${slug}`)).status()).toBe(404)
+    for (const gone of [slug, moved]) {
+      expect((await request.get(`${appBase}/api/blog/posts/${gone}`)).status()).toBe(404)
+    }
+  } finally {
+    await admin?.close()
+  }
+})
+
+test("an operator brings an earlier version of a post back from History, by the keyboard (#418)", async ({ browser, request }) => {
+  let admin: BrowserContext | null = null
+  try {
+    const signedIn = await operatorPage(browser, request)
+    admin = signedIn.admin
+    const ops = signedIn.ops
+    const title = `History post ${uuidV7().slice(-6)}`
+
+    // Two saves: the first text, then a worse one over it.
+    await ops.goto(`${adminBase}/blog/new`)
+    const body = ops.locator("[data-e2e=admin-blog-body]")
+    await ops.locator("[data-e2e=admin-blog-title-field]").fill(title)
+    await ops.locator("[data-e2e=admin-blog-description]").fill("A post with a past.")
+    await body.fill("The good paragraph.")
+    await ops.keyboard.press("ControlOrMeta+s")
+    await expect(ops).toHaveURL(/\/blog\/[0-9a-f-]{36}$/)
+    await expect(ops.locator("[data-e2e=admin-blog-saved]")).toHaveText("Saved")
+    await body.fill("Worse.")
+    await ops.keyboard.press("ControlOrMeta+s")
+    await expect(ops.locator("[data-e2e=admin-blog-saved]")).toHaveText("Saved")
+
+    // History lists both saves, newest first, and shows the newest.
+    const menu = ops.locator("[data-e2e=admin-blog-menu]")
+    await menu.click()
+    await ops.locator("[data-e2e=admin-blog-history-open]").click()
+    const history = ops.getByRole("dialog", { name: "History" })
+    const versions = history.getByRole("radio")
+    await expect(versions).toHaveCount(2)
+    await expect(history.locator("[data-e2e=admin-blog-history-body]")).toHaveText("Worse.")
+    const axe = await new AxeBuilder({ page: ops })
+      .include("[data-e2e=admin-blog-history]")
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"])
+      .analyze()
+    expect(axe.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`))
+      .toEqual([])
+
+    // The arrow key picks the older one; Tab reaches its text, then the footer.
+    await versions.first().focus()
+    await ops.keyboard.press("ArrowDown")
+    await expect(versions.nth(1)).toBeChecked()
+    await expect(history.locator("[data-e2e=admin-blog-history-body]"))
+      .toHaveText("The good paragraph.")
+    await ops.keyboard.press("Tab")
+    await expect(history.locator("[data-e2e=admin-blog-history-body]")).toBeFocused()
+
+    // Restore puts it in the editor unsaved, and focus on the title.
+    await history.getByRole("button", { name: "Restore this version" }).click()
+    await expect(history).toBeHidden()
+    await expect(body).toHaveValue("The good paragraph.")
+    await expect(ops.locator("[data-e2e=admin-blog-title-field]")).toBeFocused()
+    await expect(ops.locator("[data-e2e=toasts]")).toContainText("Earlier version restored.")
+
+    // Escape closes History and gives focus back to More actions.
+    await menu.click()
+    await ops.locator("[data-e2e=admin-blog-history-open]").click()
+    await expect(history).toBeVisible()
+    await ops.keyboard.press("Escape")
+    await expect(history).toBeHidden()
+    await expect(menu).toBeFocused()
   } finally {
     await admin?.close()
   }

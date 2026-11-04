@@ -2,7 +2,7 @@
 /**
  * The api and worker services in `infra/compose/compose.shared.yml` pass their environment by name
  * and have no `env_file`, so a variable a process reads reaches its container only when it is
- * listed there. This holds the billing variables (`docs/billing.md`, "Configuration") to both lists:
+ * listed there. This holds the billing variables (`docs/billing.md`, "Settings") to both lists:
  * the worker reads the same billing setup to change a per-member subscription's quantity. Only the
  * API verifies webhooks, so only the API container receives the webhook signing secret. Both
  * receive the subscriber secrets: the worker signs the links the API checks.
@@ -65,6 +65,14 @@ for (const service of ["api", "worker"]) {
 for (const service of ["api", "worker"]) {
   Deno.test(`the ${service} container receives the website's host`, async () => {
     expect(await environmentOf(service)).toContain("MPA_DOMAIN")
+  })
+}
+
+// Without it the worker would never ping IndexNow, or the website would serve no key file for the
+// engines to check the pings against (docs/blog.md).
+for (const service of ["worker", "mpa"]) {
+  Deno.test(`the ${service} container receives the IndexNow key`, async () => {
+    expect(await environmentOf(service)).toContain("INDEXNOW_KEY")
   })
 }
 

@@ -475,7 +475,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Utilisez uniquement des minuscules, des chiffres et des tirets.",
   "AdminBlogDialogs.changeUrlTitle": "Changer l’URL de cet article ?",
   "AdminBlogDialogs.changeUrl": "Changer l’URL",
-  "AdminBlogDialogs.linksBreak": "Les liens vers <path>{path}</path> ne fonctionneront plus.",
+  "AdminBlogDialogs.linksRedirect":
+    "Les liens vers <path>{path}</path> continuent de fonctionner : ils redirigent vers la nouvelle URL.",
   "AdminBlogDialogs.newSlug": "Nouveau slug",
   "AdminBlogDialogs.slugHint": "Minuscules, chiffres et tirets.",
   "AdminBlogDialogs.futureTime": "Choisissez une date dans le futur.",
@@ -580,6 +581,7 @@ export default {
   "AdminBlogEditor.viewOnSite": "Voir sur le site",
   "AdminBlogEditor.changeUrl": "Changer l’URL…",
   "AdminBlogEditor.unpublish": "Dépublier…",
+  "AdminBlogEditor.history": "Historique…",
   "AdminBlogEditor.deletePost": "Supprimer l’article…",
   "AdminBlogEditor.editPost": "Modifier l’article",
   "AdminBlogEditor.newPost": "Nouvel article",
@@ -631,7 +633,7 @@ export default {
   "AdminBlogEditor.settings": "Paramètres de l’article",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Verrouillé après publication. Utilisez « Changer l’URL… » pour le modifier ; les anciens liens ne fonctionneront plus.",
+    "Verrouillé après publication. Utilisez « Changer l’URL… » pour le modifier ; les anciens liens redirigent vers la nouvelle.",
   "AdminBlogEditor.slugHint":
     "L’URL de l’article : <path>{path}</path>. Minuscules, chiffres et tirets.",
   "AdminBlogEditor.slugHintEmpty": "Rempli à partir du titre. Minuscules, chiffres et tirets.",
@@ -1941,4 +1943,14 @@ export default {
   "AdminBlogEditor.translationOfHint":
     "L’article dont celui-ci est la traduction. Le site relie les deux comme versions linguistiques dès qu’ils sont tous deux en ligne.",
   "AdminBlogEditor.translationNone": "Aucun : article original",
+  "AdminBlogHistory.title": "Historique",
+  "AdminBlogHistory.versions": "Versions précédentes",
+  "AdminBlogHistory.shown": "Version affichée",
+  "AdminBlogHistory.body": "Corps",
+  "AdminBlogHistory.savedBy": "Enregistrée le {date} par {name}",
+  "AdminBlogHistory.someone": "Inconnu",
+  "AdminBlogHistory.restore": "Restaurer cette version",
+  "AdminBlogHistory.empty":
+    "Aucune version précédente pour l’instant. Chaque enregistrement en garde une.",
+  "AdminBlogHistory.restored": "Version précédente restaurée. Enregistrez pour la garder.",
 } satisfies Catalog

@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "登録は不要です。サンプルデータ入りのゲストアカウントで使えて、データは毎晩リセットされます。",
   "SiteNav.features": "機能",
+  "SiteNav.docs": "ドキュメント",
   "SiteNav.blog": "ブログ",
   "SiteNav.compare": "比較",
   "SiteNav.pricing": "料金",
@@ -244,6 +245,7 @@ export default {
     "<init>init</init>がenvファイルをコピーし、すべてのシークレットとWebプッシュ用の鍵を生成します。<dev>dev</dev>でTraefikをはじめすべてが起動します。あとは<url>http://app.localhost</url>を開くだけです。すべての設定項目とデプロイ方法は<readme>README</readme>にまとめています。",
   "HomeQuickStart.agent": "AIエージェントに頼むこともできます：<prompt></prompt>。",
   "HomeQuickStart.terminal": "ターミナル",
+  "HomeQuickStart.guide": "手順ガイドを読む",
   "HomeStatus.eyebrow": "正直な現状",
   "HomeStatus.title": "今どこまでできているか",
   "HomeStatus.lead":
@@ -530,7 +532,7 @@ export default {
   "FeatureWebsite.fact3":
     "ダブルオプトイン、ワンクリック購読解除、受信者の言語で届くメールに対応したニュースレター",
   "FeatureWebsite.fact4":
-    "管理画面で書けるブログ。言語ごとの記事とその翻訳、トピック、読者が試せるインタラクティブな図、RSSフィード、記事の構造化データに対応",
+    "管理画面で書けるブログ。言語ごとの記事とその翻訳、トピック、読者が試せるインタラクティブな図、RSSフィード、記事の構造化データ、URLを変えても新しいURLへ転送される古いリンク、新しい記事や更新した記事をすぐ検索エンジンに知らせるIndexNow通知に対応",
   "FeatureWebsite.fact5": "連絡先リンクは管理画面で設定し、フッターと構造化データに表示",
   "FeatureWebsite.fact6":
     "ショップ用のオプションのカタログを管理画面で編集：写真、カラー、サイズ、サイズ表、売り切れのサイズを持つアイテムを、販売するすべての言語で。アイテムと共有先ごとに短いトラッキングリンクも作れます",

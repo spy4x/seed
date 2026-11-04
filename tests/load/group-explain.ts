@@ -1,7 +1,7 @@
 /**
  * `deno task load:group --explain <tier>`: the plans Postgres picks for the reads and the write
  * that a large group stresses, run with `EXPLAIN (ANALYZE, BUFFERS)` against the tier's group, and
- * the size of every table and index they use. The output is Markdown for docs/capacity.md.
+ * the size of every table and index they use. The output is Markdown for docs/large-group.md.
  *
  * Each query is a copy of the repository's, with the tier's values in place of the request's:
  * `libs/server/groups/group-changes.ts` (the changes pull), `postgres-note-repository.ts` (a list

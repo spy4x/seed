@@ -467,7 +467,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Nur Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogDialogs.changeUrlTitle": "URL des Beitrags ändern?",
   "AdminBlogDialogs.changeUrl": "URL ändern",
-  "AdminBlogDialogs.linksBreak": "Links auf <path>{path}</path> funktionieren dann nicht mehr.",
+  "AdminBlogDialogs.linksRedirect":
+    "Links auf <path>{path}</path> funktionieren weiter: sie leiten auf die neue URL um.",
   "AdminBlogDialogs.newSlug": "Neuer Slug",
   "AdminBlogDialogs.slugHint": "Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogDialogs.futureTime": "Wähle einen Zeitpunkt in der Zukunft.",
@@ -564,6 +565,7 @@ export default {
   "AdminBlogEditor.viewOnSite": "Auf der Website ansehen",
   "AdminBlogEditor.changeUrl": "URL ändern …",
   "AdminBlogEditor.unpublish": "Offline nehmen …",
+  "AdminBlogEditor.history": "Verlauf …",
   "AdminBlogEditor.deletePost": "Beitrag löschen …",
   "AdminBlogEditor.editPost": "Beitrag bearbeiten",
   "AdminBlogEditor.newPost": "Neuer Beitrag",
@@ -615,7 +617,7 @@ export default {
   "AdminBlogEditor.settings": "Einstellungen des Beitrags",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Nach der Veröffentlichung gesperrt. Ändern lässt er sich über „URL ändern …“; alte Links funktionieren dann nicht mehr.",
+    "Nach der Veröffentlichung gesperrt. Ändern lässt er sich über „URL ändern …“; alte Links leiten dann auf die neue URL um.",
   "AdminBlogEditor.slugHint":
     "Die URL des Beitrags: <path>{path}</path>. Kleinbuchstaben, Ziffern und Bindestriche.",
   "AdminBlogEditor.slugHintEmpty":
@@ -1873,4 +1875,13 @@ export default {
   "AdminBlogEditor.translationOfHint":
     "Der Beitrag, den dieser übersetzt. Sobald beide online sind, verknüpft die Website sie als Sprachversionen.",
   "AdminBlogEditor.translationNone": "Keiner: ein Originalbeitrag",
+  "AdminBlogHistory.title": "Verlauf",
+  "AdminBlogHistory.versions": "Frühere Versionen",
+  "AdminBlogHistory.shown": "Angezeigte Version",
+  "AdminBlogHistory.body": "Text",
+  "AdminBlogHistory.savedBy": "Gespeichert am {date} von {name}",
+  "AdminBlogHistory.someone": "Unbekannt",
+  "AdminBlogHistory.restore": "Diese Version wiederherstellen",
+  "AdminBlogHistory.empty": "Noch keine früheren Versionen. Jedes Speichern behält eine.",
+  "AdminBlogHistory.restored": "Frühere Version wiederhergestellt. Speichern, um sie zu behalten.",
 } satisfies Catalog

@@ -483,7 +483,8 @@ export default {
   "AdminBlogDialogs.slugRule": "استخدم أحرفًا لاتينية صغيرة وأرقامًا وشرطات فقط.",
   "AdminBlogDialogs.changeUrlTitle": "تغيير رابط هذه التدوينة؟",
   "AdminBlogDialogs.changeUrl": "تغيير الرابط",
-  "AdminBlogDialogs.linksBreak": "ستتوقف الروابط إلى <path>{path}</path> عن العمل.",
+  "AdminBlogDialogs.linksRedirect":
+    "ستبقى الروابط إلى <path>{path}</path> تعمل، وستنقل القارئ إلى الرابط الجديد.",
   "AdminBlogDialogs.newSlug": "المسار الجديد",
   "AdminBlogDialogs.slugHint": "أحرف لاتينية صغيرة وأرقام وشرطات.",
   "AdminBlogDialogs.futureTime": "اختر وقتًا في المستقبل.",
@@ -604,6 +605,7 @@ export default {
   "AdminBlogEditor.viewOnSite": "عرضها على الموقع",
   "AdminBlogEditor.changeUrl": "تغيير الرابط…",
   "AdminBlogEditor.unpublish": "إلغاء النشر…",
+  "AdminBlogEditor.history": "السجل…",
   "AdminBlogEditor.deletePost": "حذف التدوينة…",
   "AdminBlogEditor.editPost": "تعديل التدوينة",
   "AdminBlogEditor.newPost": "تدوينة جديدة",
@@ -659,7 +661,7 @@ export default {
   "AdminBlogEditor.settings": "إعدادات التدوينة",
   "AdminBlogEditor.slug": "المسار",
   "AdminBlogEditor.slugLocked":
-    "مقفل بعد النشر. لتغييره استخدم «تغيير الرابط…»، وستتوقف الروابط القديمة عن العمل.",
+    "مقفل بعد النشر. لتغييره استخدم «تغيير الرابط…»، وستنقل الروابط القديمة القارئ إلى الرابط الجديد.",
   "AdminBlogEditor.slugHint":
     "رابط التدوينة: <path>{path}</path>. أحرف لاتينية صغيرة وأرقام وشرطات.",
   "AdminBlogEditor.slugHintEmpty": "يُملأ تلقائيًا من العنوان. أحرف لاتينية صغيرة وأرقام وشرطات.",
@@ -2070,4 +2072,13 @@ export default {
   "AdminBlogEditor.translationOfHint":
     "التدوينة التي تترجمها هذه. يربط الموقع بينهما كنسختين لغويتين بعد نشر كلتيهما.",
   "AdminBlogEditor.translationNone": "لا شيء: تدوينة أصلية",
+  "AdminBlogHistory.title": "السجل",
+  "AdminBlogHistory.versions": "الإصدارات السابقة",
+  "AdminBlogHistory.shown": "الإصدار المعروض",
+  "AdminBlogHistory.body": "النص",
+  "AdminBlogHistory.savedBy": "حفظه {name} في {date}",
+  "AdminBlogHistory.someone": "غير معروف",
+  "AdminBlogHistory.restore": "استعادة هذا الإصدار",
+  "AdminBlogHistory.empty": "لا إصدارات سابقة بعد. كل حفظ يحتفظ بإصدار.",
+  "AdminBlogHistory.restored": "تمت استعادة الإصدار السابق. احفظ للإبقاء عليه.",
 } satisfies Catalog

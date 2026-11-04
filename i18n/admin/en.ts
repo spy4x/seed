@@ -456,7 +456,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Use lowercase letters, digits and hyphens only.",
   "AdminBlogDialogs.changeUrlTitle": "Change this post's URL?",
   "AdminBlogDialogs.changeUrl": "Change URL",
-  "AdminBlogDialogs.linksBreak": "Links to <path>{path}</path> stop working.",
+  "AdminBlogDialogs.linksRedirect":
+    "Links to <path>{path}</path> keep working: they redirect to the new URL.",
   "AdminBlogDialogs.newSlug": "New slug",
   "AdminBlogDialogs.slugHint": "Lowercase letters, digits and hyphens.",
   "AdminBlogDialogs.futureTime": "Pick a time in the future.",
@@ -549,6 +550,7 @@ export default {
   "AdminBlogEditor.viewOnSite": "View on website",
   "AdminBlogEditor.changeUrl": "Change URL…",
   "AdminBlogEditor.unpublish": "Unpublish…",
+  "AdminBlogEditor.history": "History…",
   "AdminBlogEditor.deletePost": "Delete post…",
   "AdminBlogEditor.editPost": "Edit post",
   "AdminBlogEditor.newPost": "New post",
@@ -594,7 +596,7 @@ export default {
   "AdminBlogEditor.settings": "Post settings",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Locked once published. Use Change URL… to change it; old links will break.",
+    "Locked once published. Use Change URL… to change it; old links redirect to the new one.",
   "AdminBlogEditor.slugHint":
     "The post's URL: <path>{path}</path>. Lowercase letters, digits and hyphens.",
   "AdminBlogEditor.slugHintEmpty":
@@ -1811,4 +1813,13 @@ export default {
   "AdminBlogEditor.translationOfHint":
     "The post this one translates. The website links the two as language versions once both are live.",
   "AdminBlogEditor.translationNone": "None: an original post",
+  "AdminBlogHistory.title": "History",
+  "AdminBlogHistory.versions": "Earlier versions",
+  "AdminBlogHistory.shown": "Version shown",
+  "AdminBlogHistory.body": "Body",
+  "AdminBlogHistory.savedBy": "Saved {date} by {name}",
+  "AdminBlogHistory.someone": "Unknown",
+  "AdminBlogHistory.restore": "Restore this version",
+  "AdminBlogHistory.empty": "No earlier versions yet. Each save keeps one.",
+  "AdminBlogHistory.restored": "Earlier version restored. Save to keep it.",
 } satisfies Catalog

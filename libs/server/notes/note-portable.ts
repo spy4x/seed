@@ -12,7 +12,7 @@ const WRITE_BATCH = 1_000
  * Notes in a group's export file: every live note with its text, its tags by their ids in the file
  * and its dates. Deleted notes stay behind, as they do in a move. On import each note gets a new id
  * and keeps the tags the file holds; a tag id the file has no tag for is ignored, as a create
- * ignores one (`docs/aggregates.md`, "Relations between aggregates"). They count against the new
+ * ignores one (`docs/aggregate-relations.md`). They count against the new
  * group's `maxNotes`.
  */
 export const notePortable = portable<NoteExportEntry>({

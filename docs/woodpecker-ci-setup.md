@@ -75,8 +75,8 @@ Every Deno step runs `deno install --frozen` first, so a `deno.lock` that does n
 
 ## Deploy is not wired up
 
-Deploys run from a developer's machine with `deno task deploy` (docs/deploy.md, "Production
-certificates"). `.woodpecker/deploy.yml.example` holds an old build and
+Deploys run from a developer's machine with `deno task deploy` ([Deploy an
+update](deploy-updates.md)). `.woodpecker/deploy.yml.example` holds an old build and
 deploy pipeline. Woodpecker ignores it because of the extension, and its steps have never run:
 its header lists what would have to change first. This guide documents no secrets or SSH keys for
 it, because nothing reads them.
@@ -103,7 +103,7 @@ Steps: `guard` (the tagged commit must be an ancestor of `main`), `build-base`, 
 `build-api`, `build-spa` and `build-mpa` in parallel, each followed by its `publish-*`. Kaniko
 builds into a tar file without any secret, and crane, the only step with the token, pushes it. A
 version without a pre-release suffix also gets `latest`. The worker and the migration run the API
-image, so there is no worker image. How to cut a release: [the deploy guide](deploy.md#releases).
+image, so there is no worker image. How to cut a release: [Publish a release](releases.md).
 
 ## Changing the Deno version
 

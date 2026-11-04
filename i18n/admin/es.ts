@@ -471,7 +471,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Usa solo minúsculas, números y guiones.",
   "AdminBlogDialogs.changeUrlTitle": "¿Cambiar la URL de esta entrada?",
   "AdminBlogDialogs.changeUrl": "Cambiar URL",
-  "AdminBlogDialogs.linksBreak": "Los enlaces a <path>{path}</path> dejarán de funcionar.",
+  "AdminBlogDialogs.linksRedirect":
+    "Los enlaces a <path>{path}</path> seguirán funcionando: redirigirán a la nueva URL.",
   "AdminBlogDialogs.newSlug": "Nuevo slug",
   "AdminBlogDialogs.slugHint": "Minúsculas, números y guiones.",
   "AdminBlogDialogs.futureTime": "Elige una fecha y hora futuras.",
@@ -574,6 +575,7 @@ export default {
   "AdminBlogEditor.viewOnSite": "Ver en el sitio web",
   "AdminBlogEditor.changeUrl": "Cambiar URL…",
   "AdminBlogEditor.unpublish": "Despublicar…",
+  "AdminBlogEditor.history": "Historial…",
   "AdminBlogEditor.deletePost": "Eliminar entrada…",
   "AdminBlogEditor.editPost": "Editar entrada",
   "AdminBlogEditor.newPost": "Nueva entrada",
@@ -628,7 +630,7 @@ export default {
   "AdminBlogEditor.settings": "Ajustes de la entrada",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Queda fijo al publicar. Para cambiarlo, usa «Cambiar URL…»; los enlaces antiguos dejarán de funcionar.",
+    "Queda fijo al publicar. Para cambiarlo, usa «Cambiar URL…»; los enlaces antiguos redirigirán a la nueva.",
   "AdminBlogEditor.slugHint":
     "La URL de la entrada: <path>{path}</path>. Minúsculas, números y guiones.",
   "AdminBlogEditor.slugHintEmpty": "Se rellena a partir del título. Minúsculas, números y guiones.",
@@ -1925,4 +1927,13 @@ export default {
   "AdminBlogEditor.translationOfHint":
     "La entrada que esta traduce. Cuando ambas estén publicadas, el sitio web las enlaza como versiones en distintos idiomas.",
   "AdminBlogEditor.translationNone": "Ninguna: es una entrada original",
+  "AdminBlogHistory.title": "Historial",
+  "AdminBlogHistory.versions": "Versiones anteriores",
+  "AdminBlogHistory.shown": "Versión mostrada",
+  "AdminBlogHistory.body": "Cuerpo",
+  "AdminBlogHistory.savedBy": "Guardada el {date} por {name}",
+  "AdminBlogHistory.someone": "Desconocido",
+  "AdminBlogHistory.restore": "Restaurar esta versión",
+  "AdminBlogHistory.empty": "Aún no hay versiones anteriores. Cada guardado conserva una.",
+  "AdminBlogHistory.restored": "Versión anterior restaurada. Guarda para conservarla.",
 } satisfies Catalog

@@ -248,6 +248,23 @@ export function staticFilesMiddleware() {
 }
 
 /**
+ * Answers `GET /<key>.txt` with the site's IndexNow key as plain text, which is how IndexNow checks
+ * that the worker's pings come from this site (docs/blog.md). Without a key it passes every
+ * request on, so the address is a 404 like any other.
+ */
+export function indexNowKeyMiddleware(config: Pick<MpaConfig, "indexNowKey">) {
+  const key = config.indexNowKey
+  return define.middleware((ctx) => {
+    if (!key || ctx.url.pathname !== `/${key}.txt` || !["GET", "HEAD"].includes(ctx.req.method)) {
+      return ctx.next()
+    }
+    return new Response(ctx.req.method === "HEAD" ? null : key, {
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    })
+  })
+}
+
+/**
  * `pageMiddleware` wired to the API's own word on the newsletter, as the website runs it. The API
  * is asked once here, before the first page, so that page already knows; after that, see
  * `NewsletterStatus.isOn`.

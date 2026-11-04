@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "Ohne Registrierung. Du bekommst ein Gastkonto mit Beispieldaten, das jede Nacht zurückgesetzt wird.",
   "SiteNav.features": "Funktionen",
+  "SiteNav.docs": "Doku",
   "SiteNav.blog": "Blog",
   "SiteNav.compare": "Vergleich",
   "SiteNav.pricing": "Preise",
@@ -248,6 +249,7 @@ export default {
     "<init>init</init> kopiert die Env-Datei und erzeugt alle Secrets und die Web-Push-Schlüssel; <dev>dev</dev> startet Traefik und alles andere. Dann öffne <url>http://app.localhost</url>. Im <readme>README</readme> stehen alle Einstellungen und wie du deployst.",
   "HomeQuickStart.agent": "Oder frag deinen KI-Agenten: <prompt></prompt>.",
   "HomeQuickStart.terminal": "Terminal",
+  "HomeQuickStart.guide": "Lies die Schritt-für-Schritt-Anleitung",
   "HomeStatus.eyebrow": "Ehrlicher Stand",
   "HomeStatus.title": "Wo es heute steht",
   "HomeStatus.lead":
@@ -555,7 +557,7 @@ export default {
   "FeatureWebsite.fact3":
     "Ein Newsletter mit Double-Opt-in, Abbestellen mit einem Klick und E-Mails in der Sprache des Empfängers",
   "FeatureWebsite.fact4":
-    "Ein Blog, geschrieben im Adminbereich, mit Beiträgen in jeder Sprache samt Übersetzungen, Themen, interaktiven Grafiken zum Ausprobieren, einem RSS-Feed und strukturierten Daten für Artikel",
+    "Ein Blog, geschrieben im Adminbereich, mit Beiträgen in jeder Sprache samt Übersetzungen, Themen, interaktiven Grafiken zum Ausprobieren, einem RSS-Feed, strukturierten Daten für Artikel, alten Links, die nach einer URL-Änderung auf die neue Adresse umleiten, und einem IndexNow-Ping, der Suchmaschinen sofort von neuen oder geänderten Beiträgen erfahren lässt",
   "FeatureWebsite.fact5":
     "Kontaktlinks, im Adminbereich festgelegt und im Footer und in den strukturierten Daten angezeigt",
   "FeatureWebsite.fact6":

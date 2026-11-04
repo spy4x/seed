@@ -44,7 +44,7 @@ export const envSchema = type({
   "ERROR_REPORT_DSN?": "string",
   /** Guest accounts (#224, docs/guests.md): on unless `false`. */
   "GUEST_MODE?": "string",
-  /** The SPA (docs/deploy.md, "Without the SPA"): on unless `false`. */
+  /** The SPA (docs/apps.md, "Without the SPA"): on unless `false`. */
   "SPA?": "string",
   /**
    * What one person may upload to note attachments per hour (docs/files.md, "Upload budget"):
@@ -74,7 +74,7 @@ export function readApiEnv(reader?: EnvReader) {
 }
 
 /**
- * Whether the SPA runs (docs/deploy.md, "Without the SPA"): on unless `SPA=false`, which closes
+ * Whether the SPA runs (docs/apps.md, "Without the SPA"): on unless `SPA=false`, which closes
  * every account route on every host but the admin host, sign-up among them.
  */
 export function isSpaOn(env: { SPA?: string }): boolean {

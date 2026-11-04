@@ -469,7 +469,8 @@ export default {
   "AdminBlogDialogs.slugRule": "Use só letras minúsculas, números e hifens.",
   "AdminBlogDialogs.changeUrlTitle": "Mudar a URL deste post?",
   "AdminBlogDialogs.changeUrl": "Mudar URL",
-  "AdminBlogDialogs.linksBreak": "Links para <path>{path}</path> vão parar de funcionar.",
+  "AdminBlogDialogs.linksRedirect":
+    "Links para <path>{path}</path> continuam funcionando: eles redirecionam para a nova URL.",
   "AdminBlogDialogs.newSlug": "Novo slug",
   "AdminBlogDialogs.slugHint": "Letras minúsculas, números e hifens.",
   "AdminBlogDialogs.futureTime": "Escolha um horário no futuro.",
@@ -571,6 +572,7 @@ export default {
   "AdminBlogEditor.viewOnSite": "Ver no site",
   "AdminBlogEditor.changeUrl": "Mudar URL…",
   "AdminBlogEditor.unpublish": "Despublicar…",
+  "AdminBlogEditor.history": "Histórico…",
   "AdminBlogEditor.deletePost": "Excluir post…",
   "AdminBlogEditor.editPost": "Editar post",
   "AdminBlogEditor.newPost": "Novo post",
@@ -623,7 +625,7 @@ export default {
   "AdminBlogEditor.settings": "Configurações do post",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Fica travado depois de publicado. Para mudar, use Mudar URL…; links antigos vão quebrar.",
+    "Fica travado depois de publicado. Para mudar, use Mudar URL…; links antigos redirecionam para a nova.",
   "AdminBlogEditor.slugHint":
     "A URL do post: <path>{path}</path>. Letras minúsculas, números e hifens.",
   "AdminBlogEditor.slugHintEmpty":
@@ -1915,4 +1917,13 @@ export default {
   "AdminBlogEditor.translationOfHint":
     "O post que este traduz. Quando os dois estiverem no ar, o site liga um ao outro como versões em idiomas diferentes.",
   "AdminBlogEditor.translationNone": "Nenhum: é um post original",
+  "AdminBlogHistory.title": "Histórico",
+  "AdminBlogHistory.versions": "Versões anteriores",
+  "AdminBlogHistory.shown": "Versão exibida",
+  "AdminBlogHistory.body": "Corpo",
+  "AdminBlogHistory.savedBy": "Salva em {date} por {name}",
+  "AdminBlogHistory.someone": "Desconhecido",
+  "AdminBlogHistory.restore": "Restaurar esta versão",
+  "AdminBlogHistory.empty": "Ainda não há versões anteriores. Cada salvamento guarda uma.",
+  "AdminBlogHistory.restored": "Versão anterior restaurada. Salve para mantê-la.",
 } satisfies Catalog
