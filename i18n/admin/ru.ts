@@ -587,6 +587,7 @@ export default {
   "AdminBlogEditor.viewOnSite": "Открыть на сайте",
   "AdminBlogEditor.changeUrl": "Изменить адрес…",
   "AdminBlogEditor.unpublish": "Снять с публикации…",
+  "AdminBlogEditor.history": "История…",
   "AdminBlogEditor.deletePost": "Удалить пост…",
   "AdminBlogEditor.editPost": "Редактирование поста",
   "AdminBlogEditor.newPost": "Новый пост",
@@ -1991,4 +1992,13 @@ export default {
   "AdminBlogEditor.translationOfHint":
     "Пост, который переводит этот. Когда оба выйдут, сайт свяжет их как языковые версии.",
   "AdminBlogEditor.translationNone": "Нет — это оригинал",
+  "AdminBlogHistory.title": "История",
+  "AdminBlogHistory.versions": "Прошлые версии",
+  "AdminBlogHistory.shown": "Выбранная версия",
+  "AdminBlogHistory.body": "Текст",
+  "AdminBlogHistory.savedBy": "Сохранил(а) {name}, {date}",
+  "AdminBlogHistory.someone": "Неизвестно",
+  "AdminBlogHistory.restore": "Восстановить эту версию",
+  "AdminBlogHistory.empty": "Прошлых версий пока нет. Каждое сохранение оставляет одну.",
+  "AdminBlogHistory.restored": "Прошлая версия восстановлена. Сохраните, чтобы её оставить.",
 } satisfies Catalog

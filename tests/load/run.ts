@@ -4,7 +4,7 @@
  * Postgres while each one runs: `deno task load` runs all three, `deno task load browse` one.
  * The large-group scenarios run only when named, with a tier: `deno task load group M` or
  * `deno task load group-reads M`, after `deno task load:group M` built that group.
- * docs/capacity.md says what they do and holds the numbers of a run.
+ * docs/load-tests.md says what they do; docs/capacity.md holds the numbers of a run.
  *
  * - The stack is the one `deno task dev` (or `deno task compose up -d kv api worker`) started from
  *   `infra/envs/.env`. The script refuses anything but `ENV=dev`: sign-up reads its code from the
@@ -15,7 +15,7 @@
  *   cannot reach the live demo or any other host.
  * - The rate limits of `.env.example` stop a run in its first seconds, since every load user comes
  *   from one address. Raise `RATE_LIMITER_LIMIT` and `RATE_LIMITER_STRICT_LIMIT` in the local env
- *   file for a run, as docs/capacity.md shows; the code's limits stay as they are.
+ *   file for a run, as docs/load-tests.md shows; the code's limits stay as they are.
  *
  * @module
  */

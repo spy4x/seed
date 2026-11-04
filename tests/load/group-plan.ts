@@ -1,7 +1,7 @@
 /**
  * What `deno task load:group` builds for each tier of one large group (spy4x/seed#440), and how
  * it reads its command line. No database here: `group-db.ts` writes what this plans, and
- * docs/capacity.md ("One large group") explains the proportions.
+ * docs/large-group.md explains the proportions.
  *
  * @module
  */
@@ -44,7 +44,7 @@ const GROUP_IDS: Record<Tier, string> = {
   XL: `019a3a40-0000-7440-8000-000000000004`,
 }
 
-/** The sizes of each tier; docs/capacity.md has the same table. */
+/** The sizes of each tier; docs/large-group.md has the same table. */
 const SIZES: Record<Tier, Omit<TierPlan, `tier` | `groupId` | `name`>> = {
   S: {
     notes: 1_000,

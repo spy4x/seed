@@ -114,9 +114,9 @@ These tests check the name and change with it: `libs/ui/admin-frame.test.tsx`,
   the env file ([The public demo](demo.md)).
 - **Set** whether the product has signed-in customers: a website and its admin panel only sets
   `SPA=false` in the env file, which keeps the SPA off and closes sign-up ([Without the
-  SPA](deploy.md#without-the-spa)), and drops the website's sign-in and sign-up links.
+  SPA](apps.md#without-the-spa)), and drops the website's sign-in and sign-up links.
 - **Create** the first operator on the server with `deno task operator:create <address>`, which
-  needs no mail ([The first operator](deploy.md#the-first-operator)).
+  needs no mail ([The first operator](operator-access.md#the-first-operator)).
 - **Set** where release images go, `IMAGE_PREFIX` in `.woodpecker/release.yml`.
 - **Set** `ADMIN_BILLING_SETUP_URL` in `libs/ui/admin-billing-list.tsx`: the admin app's
   "Billing is off" page links there, and it points at Seed's own `docs/billing.md` on GitHub.

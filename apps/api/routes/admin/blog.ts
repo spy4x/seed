@@ -20,6 +20,9 @@ import {
   type BlogPreviewBody,
   blogPreviewSchema,
   blogPublishSchema,
+  type BlogRevision,
+  type BlogRevisionListResponse,
+  type BlogRevisionSummary,
   blogSlugProblem,
   type BlogTopic,
   BlogVersionConflictError,
@@ -48,6 +51,10 @@ export const BLOG_BODY_MAX_BYTES = 1024 * 1024
 export interface AdminBlogService {
   list(filter: { status: BlogPostStatus | null; query: string }): Promise<AdminBlogListResponse>
   get(id: string): Promise<BlogPost | null>
+  /** The post's earlier versions, newest first; `null` when there is no such post. */
+  revisions(id: string): Promise<BlogRevisionSummary[] | null>
+  /** One earlier version of the post, or `null` when it has none with `revisionId`. */
+  revision(id: string, revisionId: string): Promise<BlogRevision | null>
   topics(): Promise<BlogTopic[]>
   create(id: string, fields: BlogPostFields, actor: BlogActor): Promise<BlogPost>
   update(
@@ -123,7 +130,7 @@ async function readBody<T>(
 
 /** The status a refusal answers with. */
 function statusOf(error: BlogError): 400 | 404 | 409 {
-  if (error.code === `POST_NOT_FOUND`) return 404
+  if (error.code === `POST_NOT_FOUND` || error.code === `REVISION_NOT_FOUND`) return 404
   if (error.code === `INVALID_REQUEST`) return 400
   return 409
 }
@@ -141,6 +148,9 @@ function actorOf(c: Context<APIContext>): BlogActor {
  *
  * - `GET /blog/posts?status=&q=` lists posts, most recently changed first, with each status's count.
  * - `GET /blog/posts/:id` answers one post with everything the editor shows.
+ * - `GET /blog/posts/:id/revisions` lists the post's earlier versions, newest first, without their
+ *   bodies, and `GET /blog/posts/:id/revisions/:revisionId` answers one with every field (#418).
+ *   Restoring one needs no route: the editor takes its fields and saves as usual.
  * - `POST /blog/posts` creates a draft: `{ id, title, slug, description, seoTitle?, tldr?, topic?,
  *   coverUrl?, coverAlt?, bodyMd }` with a client-made UUID v7 id. 201.
  * - `POST /blog/posts/:id` saves every field: the same body without `id`, plus `version` and
@@ -200,6 +210,21 @@ export function createAdminBlogRoutes(
       const post = await blog.get(idOf(c))
       if (!post) throw new BlogError(`POST_NOT_FOUND`, `This post does not exist.`)
       return c.json({ post })
+    })
+    .get(`/blog/posts/:id/revisions`, limit, async (c) => {
+      const revisions = await blog.revisions(idOf(c))
+      if (!revisions) throw new BlogError(`POST_NOT_FOUND`, `This post does not exist.`)
+      const answer: BlogRevisionListResponse = { revisions }
+      return c.json(answer)
+    })
+    .get(`/blog/posts/:id/revisions/:revisionId`, limit, async (c) => {
+      const id = idOf(c)
+      const revisionId = c.req.param(`revisionId`) ?? ``
+      const revision = isUuid(revisionId) ? await blog.revision(id, revisionId.toLowerCase()) : null
+      if (!revision) {
+        throw new BlogError(`REVISION_NOT_FOUND`, `This earlier version does not exist.`)
+      }
+      return c.json({ revision })
     })
     .post(`/blog/posts`, limit, async (c) => {
       const { id, ...input } = await readBody(c, blogPostCreateSchema)
@@ -273,6 +298,8 @@ export function createAdminBlog(sql: postgres.Sql): AdminBlogService {
   return {
     list: (filter) => repository.list(filter),
     get: (id) => repository.get(id),
+    revisions: (id) => repository.revisions(id),
+    revision: (id, revisionId) => repository.revision(id, revisionId),
     topics: () => repository.topics(),
     create: (id, fields, actor) => repository.create(id, fields, actor),
     update: (id, version, fields, significant, actor) =>

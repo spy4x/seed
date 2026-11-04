@@ -170,6 +170,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "Das ist im Tarif der Gruppe nicht enthalten.",
   "Reason.PLAN_LIMIT_REACHED": "Die Gruppe hat das Limit ihres Tarifs erreicht.",
   "Reason.POST_NOT_FOUND": "Diesen Beitrag gibt es nicht mehr.",
+  "Reason.REVISION_NOT_FOUND": "Diese frühere Fassung gibt es nicht mehr.",
   "Reason.PROVIDER_ERROR": "Der Zahlungsanbieter antwortet nicht. Versuche es noch einmal.",
   "Reason.REQUEST_ORIGIN_INVALID":
     "Wir konnten nicht prüfen, woher diese Anfrage kommt. Lade die Seite neu und versuche es noch einmal.",

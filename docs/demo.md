@@ -75,7 +75,9 @@ updates the demo in the same PR:
 - **The blog survives the wipe.** `blog_posts` is in `KEPT_TABLES`, because the posts on the
   product's website (seedsaas.com for the template) are real, not demo data. So is
   `blog_slug_redirects`, a moved post's old addresses (#418), which references only `blog_posts`
-  and needs no seed rows: "Change URL" on a live post writes them. A post keeps its author's name
+  and needs no seed rows: "Change URL" on a live post writes them. So is `blog_post_revisions`, a
+  post's earlier versions (#418), which references only `blog_posts` and names who saved each one
+  without a foreign key to `users`; the seed writes none, as every save in the admin writes one. A post keeps its author's name
   in `author_name`, and the page it links to in `author_url`, with no foreign key to `users`, so
   the wipe never takes them along. The wipe empties the job table and the audit log, so the worker
   queues a scheduled post's `blog.publish` job again after it (`queueDueBlogJobs`), and the

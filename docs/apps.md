@@ -2,69 +2,145 @@
 
 > Also on the website: [seedsaas.com/docs/apps](https://seedsaas.com/docs/apps).
 
-The SPA, the admin app and the website: what each does and how to deploy it.
+What the SPA, the admin app and the public website each do, and how to turn each one on.
 
 ## The SPA and the MPA
 
-The template ships two web apps over the same API, with different jobs.
+Seed ships two web apps over the same API, with different jobs.
 
 - **The SPA** (`apps/spa`, Preact and Vite) is the product. Everything a signed-in person does
-  happens there: sign-up and sign-in, notes, groups, billing, the profile. People see each other's
-  changes live over a WebSocket ([ADR 002](decisions/002-realtime-transport-and-sync.md)), and
-  it works offline ([the offline guide](offline.md)). Compose serves it at `DOMAIN`.
-- **The MPA** (`apps/mpa`, Fresh) is the product's public website: the home page, pricing read
-  from the `PLANS` catalog, privacy and terms pages to adapt, `robots.txt`, `sitemap.xml`,
-  `llms.txt` and the newsletter. Every page is rendered on the server and works with JavaScript
-  turned off. It has no session; its sign-in and sign-up links open the SPA at `DOMAIN`.
+  happens there: sign-up, sign-in, notes, groups, billing and the profile. Compose serves it at
+  `DOMAIN`.
+- **The MPA** (`apps/mpa`, Fresh) is the product's public website. It holds the home page, pricing,
+  the privacy and terms pages, the blog, the newsletter, `robots.txt`, `sitemap.xml` and
+  `llms.txt`. Its sign-in and sign-up links open the SPA.
 
-The MPA calls the API over HTTP from the server, only for the newsletter, and never touches the
-database itself. It needs `ENV` and `DOMAIN` (the same values as the API), its own host
-`MPA_DOMAIN`, and `API_URL`, the address the MPA's server reaches the API at, such as
-`http://<PROJECT>-api:8000` (Compose sets it); it refuses to start without any of them. To deploy
-it, set `COMPOSE_PROFILES=mpa` in the env file (join it with other profiles by commas) and
-`MPA_DOMAIN` to the website's own host, then run `deno task deploy` as usual: Compose builds the
-`mpa` service from `apps/mpa/dockerfile.prod` and serves it at `MPA_DOMAIN`, next to the SPA at
-`DOMAIN`. The API accepts a form only from `http(s)://DOMAIN`, so the MPA, after refusing any post
-that does not come from its own pages, presents its posts to the API with `DOMAIN`'s origin.
-`MPA_DOMAIN` needs a DNS record pointing at the server; Traefik gets its certificate as for
-`DOMAIN`. The API and the worker read `MPA_DOMAIN` too: when it is set, the newsletter's mailed
-confirm and unsubscribe links open the website's pages, which work without JavaScript, so set it
-only together with the profile. Without it the links open the SPA. Without the profile nothing about
-the deploy changes. The pair `MPA_UMAMI_ORIGIN` and `MPA_UMAMI_WEBSITE_ID` turns on visitor
-statistics in a self-hosted Umami: [analytics.md](analytics.md). `INDEXNOW_KEY`, read by the MPA and
-the worker, tells search engines about blog posts: [blog.md](blog.md#indexnow). The MPA's end-to-end test runs in
-CI on every pull request, and locally with `e2e/mpa/run.sh` against a running Postgres and Valkey
-(see the header of that script).
+In the SPA, people see each other's changes live over a WebSocket
+([ADR 002](decisions/002-realtime-transport-and-sync.md)). It also works offline
+([the offline guide](offline.md)).
+
+The MPA renders every page on the server, and every page works with JavaScript turned off. It has
+no session and never touches the database. It asks the API over HTTP for the blog's posts, the
+contact links, a few settings flags and the newsletter's sign-ups.
+
+The website's end-to-end test runs in CI on every pull request. To run it locally, start Postgres
+and Valkey, then run `e2e/mpa/run.sh`; the script's header says what it needs.
+
+## Deploy the website
+
+1. In the env file you deploy, add `mpa` to `COMPOSE_PROFILES`. Separate profiles with commas.
+2. Set `MPA_DOMAIN` to the website's host, and point that host's DNS record at the server.
+3. Deploy as usual:
+
+   ```sh
+   deno task deploy
+   ```
+
+Traefik gets the certificate for `MPA_DOMAIN` the same way as for `DOMAIN`.
+
+| Variable        | What it does                                                         |
+| --------------- | -------------------------------------------------------------------- |
+| `MPA_DOMAIN`    | The website's host. Also points the newsletter's mailed links at it. |
+| `API_URL`       | Where the website's server reaches the API. Compose sets it.         |
+| `ENV`, `DOMAIN` | The same values as the API's.                                        |
+
+The website refuses to start without any of them. Set `MPA_DOMAIN` only together with the `mpa`
+profile: the API and the worker build links to it, and without the website those links lead
+nowhere.
+
+Optional settings go with the website. `MPA_REDIRECT_RULE` sends other hosts, such as the
+`www` one, to `MPA_DOMAIN`
+([Redirect other hosts](certificates.md#redirect-other-hosts-to-the-website)).
+`MPA_UMAMI_ORIGIN` and `MPA_UMAMI_WEBSITE_ID` turn on visitor statistics ([Analytics](analytics.md)).
+`INDEXNOW_KEY`, which the worker reads too, tells search engines when a blog post changes
+([IndexNow](blog.md#indexnow)).
+[Settings](settings.md) lists them all.
+
+The API accepts a form only from `DOMAIN`'s origin. The website first refuses any post that does
+not come from its own pages, then sends the post on to the API with `DOMAIN`'s origin.
 
 ## The admin app
 
-The admin app (`apps/admin`, Preact and Vite) is the operator area: people who run the product
-find a person by address or name, filter by role and by blocked state, and open their page with
-their sign-in methods, sessions, groups and audit trail. From there they block or unblock the
-person, or end all their sessions. A block refuses every way in (password, Google, GitHub and API
-tokens), ends the person's sessions and closes their open pages. Each action is confirmed in a
-dialog, asks for no password, and writes an audit event naming the operator.
-Nobody acts on themselves or on someone whose role is theirs or higher.
+The admin app (`apps/admin`, Preact and Vite) is the operator area. An operator finds a person by
+address or name and filters by role or blocked state. The person's page shows their sign-in
+methods, sessions, groups and audit trail.
 
-It runs on a host of its own, `ADMIN_DOMAIN`, so its session cookie belongs to that host alone. It
-signs in with a password and a code only; Google and GitHub are not offered there. The API answers
-the operator area (`/api/admin`) on that host only, and there only the operator area and sign-in.
-A person below operator gets 404 from every operator route; the app's own check only says so.
+From there the operator blocks or unblocks the person, or ends all their sessions. A block refuses
+every way in (password, Google, GitHub and API tokens), ends the person's sessions and closes their
+open pages. Each action is confirmed in a dialog, asks for no password, and writes an audit event naming the operator.
+Nobody acts on themselves, or on someone whose role is theirs or higher.
 
-Roles are `viewer` (everyone, by default), `operator`, `supervisor` and `administrator`; operator
-and above open the admin app. To give someone a role, run
-`deno task user:role <address> <role>` with the database variables set, such as
-`deno task compose exec worker deno task user:role ada@example.com operator` on the server. It
-finds the person by the address they sign in with and exits with 1 when nobody does. A change
-writes an audit row on the person naming the script (`cli:user-role`). In the admin app, an
-administrator can give a role below their own; an administrator is made only with the script,
-`deno task operator:create`, which also creates the account when nobody signs in with the address
-([deploy.md](deploy.md#the-first-operator)), the development seed, or, on the public demo,
-`DEMO_ADMIN_PASSWORD` ([demo.md](demo.md)).
+The admin app runs on a host of its own, `ADMIN_DOMAIN`, so its session cookie belongs to that host
+alone. It signs in with a password and a code only, never Google or GitHub. The API answers the
+operator area (`/api/admin`) on that host only. A person below operator gets 404 from every
+operator route.
 
-To deploy it, add `admin` to `COMPOSE_PROFILES` in the env file and set `ADMIN_DOMAIN` to the
-app's host, such as `admin.example.com`, then run `deno task deploy`. Compose builds the `admin`
-service from `apps/admin/dockerfile.prod`, serves it at `ADMIN_DOMAIN` and sends that host's `/api`
-to the API. `ADMIN_DOMAIN` needs a DNS record pointing at the server; Traefik gets its certificate.
-In development, with the profile on, Compose serves it at `http://admin.localhost`, the
-`ADMIN_DOMAIN` that `infra/envs/.env.example` sets.
+Roles are `viewer` (everyone, by default), `operator`, `supervisor` and `administrator`. Operator
+and above open the admin app. [Give operators access](operator-access.md) says how to make the
+first one and how to give a role.
+
+## Deploy the admin app
+
+1. In the env file you deploy, add `admin` to `COMPOSE_PROFILES`.
+2. Set `ADMIN_DOMAIN` to the app's host, such as `admin.example.com`, and point that host's DNS
+   record at the server.
+3. Deploy as usual:
+
+   ```sh
+   deno task deploy
+   ```
+
+Compose serves the admin app at `ADMIN_DOMAIN` and sends that host's `/api` to the API. Traefik
+gets its certificate. In development, with the profile on, the app is at `http://admin.localhost`,
+the `ADMIN_DOMAIN` of `infra/envs/.env.example`.
+
+## Without the SPA
+
+A product that is only a website and its admin panel, with no signed-in customers, turns the SPA
+off:
+
+1. In the env file, set `SPA=false`.
+2. Remove the sign-in and sign-up links from the website's pages: they lead to the SPA.
+3. Deploy as usual.
+
+Then:
+
+- Compose runs no SPA container. The SPA's image is still built on a deploy.
+- The API keeps its route on `DOMAIN`, for the webhooks and the file store's links.
+- The API answers 404 to sign-up and every other route under `/api/auth` on every host but
+  `ADMIN_DOMAIN`. Nobody can make an account or sign in there.
+- The admin app's sign-in works as before. Its first operator comes from
+  [`deno task operator:create`](operator-access.md#the-first-operator).
+
+Any other value of `SPA`, or none, runs the SPA.
+
+## Runtime
+
+The API, the worker and the migration run on Deno unless the env file says otherwise. One line
+moves all three to Node or Bun:
+
+```sh
+APP_RUNTIME=node   # or bun; deno, empty or no line keeps Deno
+```
+
+- `deno task compose`, and so every deploy, then adds
+  [`compose.runtime-node.yml`](../infra/compose/compose.runtime-node.yml) (or `-bun`), which builds
+  [`apps/api/dockerfile.node`](../apps/api/dockerfile.node) (or `.bun`) for those three services.
+  The image bundles the code with `deno task server:build` at build time and runs the bundles on
+  Node 26 or Bun 1.4. Ports, environment variables and the order of the services stay the same.
+- Any other value stops `deno task compose` before it starts anything.
+- The bundles are made when the image is built, so on Node or Bun a code change shows only after
+  `deno task compose up -d --build`, in development too. Development with watch mode stays on Deno.
+- On Deno the worker may read and write only its image folder and run only `vips`. Node and Bun
+  have no such permission limits: there the worker is confined only by its container and its
+  non-root user.
+- The website, the SPA and the admin app are not affected: they keep their own images.
+
+To start them on a machine without containers, `deno task api:node`, `api:bun`, `worker:node` and
+`worker:bun` build the bundles into `dist/server/` and run them.
+
+## Next
+
+- [Deploy to a server](deploy.md)
+- [Give operators access](operator-access.md)
+- [Settings](settings.md)
