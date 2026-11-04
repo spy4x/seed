@@ -30,7 +30,7 @@ async function servicesOf(runtime: string): Promise<Record<string, Service>> {
 /** Every runtime but Deno, the default, which needs no file. */
 const OTHER_RUNTIMES = APP_RUNTIMES.filter((runtime) => runtime !== "deno")
 
-Deno.test("every runtime but Deno has a Compose file", () => {
+Deno.test("APP_RUNTIME knows Node and Bun besides Deno, the default", () => {
   expect(OTHER_RUNTIMES).toEqual(["node", "bun"])
 })
 
