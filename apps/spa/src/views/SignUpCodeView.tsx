@@ -5,7 +5,6 @@ import {
   SIGN_UP_CODE_MINUTES,
   type WaitingPasswordSignUp,
 } from "@domain/identity"
-import { MAILED_CODE_COOLDOWN_SECONDS } from "@ui/sign-in-code-screen.tsx"
 import {
   SIGN_UP_CODE_FAILURE,
   SIGN_UP_OFFLINE,
@@ -20,6 +19,14 @@ import {
   verifySignUp,
 } from "../state/auth.ts"
 import { handOffAddress } from "../state/address-handoff.ts"
+import {
+  forgetSentCode,
+  readSentCode,
+  rememberSentCode,
+  type SentCode,
+  sentCodeFor,
+} from "../state/sign-in-code.ts"
+import { readyAtOf } from "./SignInCodeView.tsx"
 import { sessionState } from "../state/session.ts"
 import { isGuestSession } from "../state/guest.ts"
 import { GUEST_PATHS } from "@ui/guest-screens.tsx"
@@ -51,15 +58,21 @@ export function SignUpCodeView() {
   const [error, setError] = useState<string | null>(null)
   const [resending, setResending] = useState(false)
   const [resendError, setResendError] = useState<string | null>(null)
-  // When this page last sent a code: a new one waits a minute after it (#752).
-  const [sentAt, setSentAt] = useState<number | null>(null)
+  // The last code sent, by the sign-up form or here: a new one waits a minute after it, also
+  // across a reload (#752).
+  const [sent, setSent] = useState<SentCode | null>(() => readSentCode(`sign-up`))
   const session = sessionState.value
   // A guest has a session but no sign-in method yet: the code step keeps that account (#224).
   const guest = isGuestSession(session.user)
 
   useEffect(() => {
     let shown = true
-    void readWaitingSignUp().then((found) => shown && setPending(found))
+    void readWaitingSignUp().then((found) => {
+      if (!shown) return
+      setPending(found)
+      if (found) setSent((kept) => sentCodeFor(kept, found.email))
+      else if (found === null) forgetSentCode(`sign-up`)
+    })
     return () => {
       shown = false
     }
@@ -71,6 +84,7 @@ export function SignUpCodeView() {
     const answer = await verifySignUp(code)
     setBusy(false)
     if (answer.ok) {
+      forgetSentCode(`sign-up`)
       // A guest keeping the account goes back to `/keep`, which says so; anyone else reloads in.
       if (guest) navigate(next ?? GUEST_PATHS.keep, { replace: true })
       else location.href = afterSignIn(next)
@@ -96,7 +110,11 @@ export function SignUpCodeView() {
     setResending(true)
     const answer = await resendSignUpCode()
     // `readyAt` moves in the same render that ends `resending`, so the step says the code went.
-    if (answer.ok) setSentAt(Date.now())
+    if (answer.ok && pending) {
+      const kept = { email: pending.email, sentAt: Date.now() }
+      rememberSentCode(kept, `sign-up`)
+      setSent(kept)
+    }
     setResending(false)
     if (answer.ok) {
       // The step leaves a complaint about the old code to its caller: a new code clears it.
@@ -109,6 +127,7 @@ export function SignUpCodeView() {
 
   const differentAddress = async () => {
     if (pending) handOffAddress(pending.email)
+    forgetSentCode(`sign-up`)
     await cancelPasswordSignUp()
     navigate(withNext(SCREEN_PATHS.signUp, next))
   }
@@ -128,7 +147,7 @@ export function SignUpCodeView() {
       error={error}
       resending={resending}
       resendError={resendError}
-      readyAt={sentAt === null ? undefined : sentAt + MAILED_CODE_COOLDOWN_SECONDS * 1000}
+      readyAt={readyAtOf(sent)}
       onSubmit={(code) => void submit(code)}
       onResend={() => void resend()}
       onDifferentAddress={() => void differentAddress()}

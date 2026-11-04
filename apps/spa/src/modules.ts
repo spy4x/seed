@@ -374,12 +374,14 @@ const KEPT_KEYS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * What a sign-out leaves in this tab's `sessionStorage`: the sign-in code the tab just asked for,
- * so the code step keeps its wait after the reload of a signed-out page, which wipes the device
+ * What a sign-out leaves in this tab's `sessionStorage`: the sign-in and sign-up codes the tab just
+ * asked for, so the code step keeps its wait after the reload of a signed-out page, which wipes the
+ * device
  * (#391, #752).
  */
 const KEPT_SESSION_KEYS: ReadonlySet<string> = new Set([
   "sign-in-code:sent", // `state/sign-in-code.ts`
+  "sign-up-code:sent", // `state/sign-in-code.ts`
 ])
 
 /**

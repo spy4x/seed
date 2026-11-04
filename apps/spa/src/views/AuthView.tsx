@@ -170,6 +170,7 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
     const answer = await signUp(email, password)
     setBusy(false)
     if (answer.ok) {
+      rememberSentCode({ email, sentAt: Date.now() }, "sign-up")
       navigate(withNext(SCREEN_PATHS.signUpCode, next))
       return
     }

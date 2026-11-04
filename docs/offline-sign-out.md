@@ -26,7 +26,8 @@ When the person ends the session themselves, `wipeDevice` in `apps/spa/src/modul
 
 - every IndexedDB database of the app, the queues of unsent writes included;
 - every `localStorage` key but the ones in the table below;
-- every `sessionStorage` key but `sign-in-link:sent`, so "Check your inbox" survives a reload.
+- every `sessionStorage` key but `sign-in-code:sent` and `sign-up-code:sent`, so the code step
+  keeps its wait for a new code after a reload.
 
 That covers the account menu's sign-out, the two-factor step's sign-out, a sign-out still owed to
 the server, and an account deletion. A write still in the queue is lost, so the app asks first

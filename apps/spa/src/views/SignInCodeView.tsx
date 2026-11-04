@@ -23,6 +23,7 @@ import {
   readSentCode,
   rememberSentCode,
   type SentCode,
+  sentCodeFor,
 } from "../state/sign-in-code.ts"
 import { lastSignIn } from "../state/last-sign-in.ts"
 import { sessionState } from "../state/session.ts"
@@ -105,7 +106,7 @@ export function SignInCodeView() {
     void readWaitingSignInCode().then((waiting) => {
       if (waiting === undefined) return
       if (waiting === null) return forget()
-      setSent((kept) => kept?.email === waiting ? kept : { email: waiting, sentAt: 0 })
+      setSent((kept) => sentCodeFor(kept, waiting))
     })
   }, [])
 
