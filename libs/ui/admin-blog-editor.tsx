@@ -931,7 +931,7 @@ function Settings(
       </button>
       <div
         id="blog-settings"
-        class={`${props.open ? `flex` : `hidden`} flex-col gap-4 lg:flex`}
+        class={`${props.open ? `flex` : `hidden`} flex-col gap-8 lg:flex`}
         data-e2e="admin-blog-settings"
       >
         {post && <PublishingFacts {...props} />}
