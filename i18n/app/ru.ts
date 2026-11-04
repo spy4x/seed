@@ -2168,7 +2168,7 @@ export default {
   "Benchmark.noLargeTitle": "Большой группы пока нет",
   "Benchmark.noLargeBody": "Создайте её генератором и перезагрузите эту страницу:",
   "Benchmark.copyCommand": "Скопировать команду",
-  "Benchmark.noLargeFoot": "Размеры и то, как снова удалить группу, описаны в docs/capacity.md.",
+  "Benchmark.noLargeFoot": "Размеры и то, как снова удалить группу, описаны в docs/large-group.md.",
   "Benchmark.lastStoppedTitle": "Прошлый запуск остановился на шаге «{measure}»",
   "Benchmark.lastStoppedBody":
     "Вкладка закрылась до конца запуска. Обычно это значит, что не хватило памяти или места. Группа: {group}, начало: {time}.",

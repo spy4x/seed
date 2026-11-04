@@ -13,9 +13,16 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 
 ## Guides
 
-- [Deploy and operate](deploy.md): certificates, the deploy, consoles, several projects on one
-  server, releases.
-- [Backups](backups.md): set up, restore, rehearse.
+- [Deploy to a server](deploy.md): from a fresh server to a healthy deployment with HTTPS.
+- [Deploy an update](deploy-updates.md): every deploy after the first, and rolling back.
+- [HTTPS certificates](certificates.md): how each host gets its certificate, and retrying one.
+- [Give operators access](operator-access.md): the first administrator, roles, and opening
+  Grafana.
+- [Run several projects on one server](several-projects.md): products that share one server and
+  one Traefik.
+- [Publish a release](releases.md): a version tag publishes the images to Docker Hub.
+- [Backups](backups.md): turn on the daily backup, and rehearse it.
+- [Restore from a backup](restore.md): bring back the database, the files and the push keys.
 - [Sign in with Google and GitHub](sign-in-providers.md): registering the providers and what a
   person gets.
 - [Guest accounts](guests.md): "Try it now" without signing up, keeping the account, the limits
@@ -30,7 +37,7 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [Offline](offline.md): the SPA's local data and write queue, and how to remove it.
 - [Adding a feature](aggregates.md): every file of the notes aggregate, in order.
 - [Admin modules](admin-modules.md)
-- [Capacity](capacity.md): load tests and how many users one server carries.
+- [Run the load tests](load-tests.md): run the k6 scenarios and build a large test group.
 - [Postgres 18 upgrade](postgres-18-upgrade.md): once per server that ran Postgres 16.
 
 ## Concepts
@@ -38,10 +45,14 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [The three apps](apps.md): the SPA, the admin app and the public website, and how to deploy each.
 - [Architecture](architecture.md) and [the diagram](architecture.svg)
 - [Ids](ids.md): every id is a UUID version 7.
+- [Capacity](capacity.md): how many users one server carries.
+- [One large group](large-group.md): how one group behaves from a thousand notes to a million.
 
 ## Reference
 
 - [Development](development.md): the local stack, every task, the browser tests and what CI runs.
+- [Settings](settings.md): every variable of the env file.
+- [Writing the docs](writing-docs.md): how a guide here is written and published.
 - [API errors](api-errors.md): the one error body every API answer that is not a success has.
 - [Security headers](security-headers.md)
 - [Woodpecker CI setup](woodpecker-ci-setup.md)

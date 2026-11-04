@@ -73,14 +73,14 @@
     "db:seed": "deno run -N=$DB_HOST:$DB_PORT -E -R=./libs/server/blog/seed-posts ./infra/scripts/seed-data.ts", // the fake population, and the dev administrator; see the script
     "subscribers:send": "deno run -N -E -R ./apps/worker/subscribers-send.ts", // queues an issue for a mailing list; run in the worker container, see docs/development.md
     "user:role": "deno run -N -E -R ./apps/worker/user-role.ts", // gives a person a role by their address, such as operator for the admin app; see docs/apps.md
-    "operator:create": "deno run -N -E -R ./apps/worker/operator-create.ts", // creates an administrator with a password typed at a prompt, or makes an existing person one; see docs/deploy.md
+    "operator:create": "deno run -N -E -R ./apps/worker/operator-create.ts", // creates an administrator with a password typed at a prompt, or makes an existing person one; see docs/operator-access.md
     "i18n:stamp": "deno run -R=i18n -W=i18n i18n/stamp.ts", // records which English each translation was made from, once it is translated; see i18n/TRANSLATING.md
     "deps:check": "deno outdated -r",
     "deps:update": "deno outdated -r -u -i",
     "update:ubuntu": "sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean && sudo apt --fix-broken install && sudo do-release-upgrade",
     "vapid-key:create": "deno run -W=infra/configs/vapid.json ./infra/scripts/vapid-keys-create.ts",
-    "load": "deno run -R=./infra/envs --allow-run=docker,podman ./tests/load/run.ts", // k6 load scenarios against the local dev stack, and the Postgres numbers; see docs/capacity.md
-    "load:group": "deno run --no-prompt -R=./infra/envs -N=127.0.0.1 -E ./tests/load/group.ts", // builds, removes or explains the large load-test group of a tier; see docs/capacity.md
+    "load": "deno run -R=./infra/envs --allow-run=docker,podman ./tests/load/run.ts", // k6 load scenarios against the local dev stack, and the Postgres numbers; see docs/load-tests.md
+    "load:group": "deno run --no-prompt -R=./infra/envs -N=127.0.0.1 -E ./tests/load/group.ts", // builds, removes or explains the large load-test group of a tier; see docs/load-tests.md
     "video:admin": "deno run -A docs/screenshots/admin-video.ts", // records the website's admin panel video from a local stack, see the script
     "demo-video": "deno run -A media/demo/recipe/record.ts", // records the README's demo video into media/demo (--encode re-encodes the last take), see media/demo/recipe/README.md
     "compose": "deno run -R=./infra,./.volumes --allow-run=docker,podman --allow-net=127.0.0.1,0.0.0.0 ./infra/scripts/compose.ts", // reads .volumes to refuse starting Postgres 18 beside unmoved Postgres 16 data; binds the host ports the project publishes, for a moment, to refuse a start when one is taken

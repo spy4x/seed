@@ -2100,7 +2100,7 @@ export default {
   "Benchmark.noLargeBody": "Crea uno con el generador y vuelve a cargar esta página:",
   "Benchmark.copyCommand": "Copiar comando",
   "Benchmark.noLargeFoot":
-    "Los tamaños y cómo eliminar el grupo después están en docs/capacity.md.",
+    "Los tamaños y cómo eliminar el grupo después están en docs/large-group.md.",
   "Benchmark.lastStoppedTitle": "La última prueba se detuvo en «{measure}»",
   "Benchmark.lastStoppedBody":
     "La pestaña se cerró antes de terminar, lo que suele indicar falta de memoria o de almacenamiento. Grupo: {group}, iniciada {time}.",
