@@ -1,7 +1,7 @@
 import { expect } from "@std/expect"
 import { it } from "@std/testing/bdd"
 import { createToastStore } from "@spy4x/preact-signals/toast"
-import type { BlogPost, BlogProblem } from "@domain/blog"
+import type { BlogPost, BlogProblem, BlogRevision } from "@domain/blog"
 import type { FigurePreview } from "./figure-preview.tsx"
 import type { AdminApiResult, AdminFetch } from "../../state.ts"
 import { blogListHref } from "./module.tsx"
@@ -365,3 +365,133 @@ it(`offers "View post" after publishing when the website's address is known`, as
   toasts.list.value.at(-1)?.action?.onAction()
   expect(opened).toEqual([`https://www.example.com/blog/hello`])
 })
+
+// #region History (#418)
+
+const NEWER = `0195f0b4-3c1e-7a00-8000-0000000000b2`
+const OLDER = `0195f0b4-3c1e-7a00-8000-0000000000b1`
+
+/** An earlier version of `post`: its fields as saved at `savedAt`, with `changes`. */
+const revisionOf = (id: string, changes: Partial<BlogRevision> = {}): BlogRevision => ({
+  id,
+  savedAt: `2026-10-22T10:00:00.000Z`,
+  savedBy: `Ann`,
+  slug: post.slug,
+  title: post.title,
+  seoTitle: post.seoTitle,
+  description: post.description,
+  tldr: post.tldr,
+  topic: post.topic,
+  coverUrl: post.coverUrl,
+  coverAlt: post.coverAlt,
+  authorUrl: post.authorUrl,
+  bodyMd: post.bodyMd,
+  language: post.language,
+  translationOf: post.translationOf,
+  ...changes,
+})
+
+const HISTORY = [
+  revisionOf(NEWER, { title: `Hello, rewritten`, bodyMd: `Worse.` }),
+  revisionOf(OLDER, { slug: `hello-first`, title: `Hello, first`, bodyMd: `The good text.` }),
+]
+
+/** Answers the post, its versions' list, and each version by id. */
+const historyAnswer = (opened: BlogPost = post): Answer => (path) => {
+  if (path.endsWith(`/revisions`)) {
+    return Promise.resolve(ok({
+      revisions: HISTORY.map(({ id, savedAt, savedBy, title }) => ({
+        id,
+        savedAt,
+        savedBy,
+        title,
+      })),
+    }))
+  }
+  const revision = HISTORY.find((entry) => path.endsWith(`/revisions/${entry.id}`))
+  return Promise.resolve(revision ? ok({ revision }) : ok({ post: opened }))
+}
+
+/** Lets the reads History starts on its own finish. */
+const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
+
+it(`History reads the list and the newest version, and reads a version picked again only once`, async () => {
+  const { state, calls } = build(historyAnswer())
+  await state.openPost(ID)
+  state.openDialog(`history`)
+  await settle()
+  expect(state.history.value.revisions?.map((entry) => entry.id)).toEqual([NEWER, OLDER])
+  expect(state.history.value.selected?.bodyMd).toBe(`Worse.`)
+  await state.selectRevision(OLDER)
+  await state.selectRevision(NEWER)
+  expect(state.history.value.selected?.id).toBe(NEWER)
+  expect(calls.slice(1)).toEqual([
+    `GET /api/admin/blog/posts/${ID}/revisions`,
+    `GET /api/admin/blog/posts/${ID}/revisions/${NEWER}`,
+    `GET /api/admin/blog/posts/${ID}/revisions/${OLDER}`,
+  ])
+})
+
+it(`History drops a version's answer that comes after another version was picked`, async () => {
+  let answerOlder: (value: AdminApiResult<unknown>) => void = () => {}
+  const { state } = build((path, init) =>
+    path.endsWith(`/revisions/${OLDER}`)
+      ? new Promise((resolve) => answerOlder = resolve)
+      : historyAnswer()(path, init)
+  )
+  await state.openPost(ID)
+  state.openDialog(`history`)
+  await settle()
+  const late = state.selectRevision(OLDER)
+  await state.selectRevision(NEWER)
+  answerOlder(ok({ revision: HISTORY[1] }))
+  await late
+  expect(state.history.value.selectedId).toBe(NEWER)
+  expect(state.history.value.selected?.bodyMd).toBe(`Worse.`)
+})
+
+it(`History says why its list failed, and Try again reads it again`, async () => {
+  let failing = true
+  const { state } = build((path, init) =>
+    failing && path.endsWith(`/revisions`)
+      ? Promise.resolve(fail(500, `Couldn't reach the server.`))
+      : historyAnswer()(path, init)
+  )
+  await state.openPost(ID)
+  state.openDialog(`history`)
+  await settle()
+  expect(state.history.value.listError).toBe(`Couldn't reach the server.`)
+  failing = false
+  await state.retryHistory()
+  expect(state.history.value.listError).toBe(null)
+  expect(state.history.value.selected?.id).toBe(NEWER)
+})
+
+it(`restoring a version puts its fields in the editor unsaved, closes History and says to save`, async () => {
+  const { state, calls, toasts } = build(historyAnswer())
+  await state.openPost(ID)
+  state.openDialog(`history`)
+  await settle()
+  state.restoreRevision(HISTORY[1])
+  expect(state.editor.value.value).toMatchObject({
+    slug: `hello-first`,
+    title: `Hello, first`,
+    bodyMd: `The good text.`,
+  })
+  expect(state.editor.value.saveStatus).toBe(`unsaved`)
+  expect(state.dialog.value.dialog).toBe(null)
+  expect(toasts.list.value.at(-1)?.body).toBe(`Earlier version restored. Save to keep it.`)
+  // Nothing is written: the operator saves the restored fields, or leaves them.
+  expect(calls.filter((call) => call.startsWith(`POST`))).toEqual([])
+})
+
+it(`restoring a version of a published post keeps its address, which only Change URL moves`, async () => {
+  const published = { ...post, status: `published` as const, publishedAt: post.createdAt }
+  const { state } = build(historyAnswer(published))
+  await state.openPost(ID)
+  state.restoreRevision(HISTORY[1])
+  expect(state.editor.value.value.slug).toBe(`hello`)
+  expect(state.editor.value.value.title).toBe(`Hello, first`)
+})
+
+// #endregion

@@ -820,26 +820,25 @@ export default {
   "OAuthNotice.kept":
     "ログイン方法を追加しました。今後はどのデバイスからでもこの方法でログインできます。",
   "OAuthNotice.guestTaken": "そのログイン方法は別のアカウントのものです。",
-  "PasswordResetScreen.forgotFailed": "リンクを送信できませんでした",
+  "PasswordResetScreen.forgotFailed": "コードを送信できませんでした",
   "PasswordResetScreen.resetFailed": "パスワードを変更できませんでした",
   "PasswordResetScreen.sent":
-    "このメールアドレスのアカウントがあれば、パスワード再設定用のリンクを送信しました。",
+    "<email>{email}</email>で登録されたアカウントがあれば、そのアドレスにコードを送信しました。",
   "PasswordResetScreen.forgotDescription": {
     "other":
-      "登録したメールアドレスを入力してください。新しいパスワードを設定するためのリンクをお送りします。リンクは1回だけ、{count}分間有効です。",
+      "登録したメールアドレスを入力してください。新しいパスワードを設定するためのコードをお送りします。コードは{count}分間有効です。",
   },
   "PasswordResetScreen.remembered": "思い出しましたか？<link>ログインに戻る</link>",
-  "PasswordResetScreen.send": "リンクを送信",
+  "PasswordResetScreen.send": "コードを送信",
   "PasswordResetScreen.doneTitle": "パスワードを変更しました",
   "PasswordResetScreen.done":
     "すべてのデバイスからログアウトしました。新しいパスワードでログインしてください。",
   "PasswordResetScreen.signIn": "ログイン",
-  "PasswordResetScreen.askNew": "新しいリンクをリクエスト",
   "PasswordResetScreen.chooseTitle": "新しいパスワードを設定",
   "PasswordResetScreen.choose":
     "<email>{email}</email>のパスワードです。保存すると、すべてのデバイスからログアウトされます。",
-  "PasswordResetScreen.expired":
-    "リンクの期限が切れましたか？<link>新しいリンクをリクエスト</link>",
+  "PasswordResetScreen.expired": "時間切れですか？<link>新しいコードを受け取る</link>",
+  "PasswordResetScreen.tookTooLong": "時間切れです。新しいコードを受け取ってください。",
   "PasswordResetScreen.newPassword": "新しいパスワード",
   "PasswordResetScreen.newPasswordHint": "{min}〜{max}文字。",
   "PasswordResetScreen.saving": "保存しています…",
@@ -1349,7 +1348,7 @@ export default {
   "ProfileView.tokenRevoked": "トークンを取り消しました",
   "ProfileView.tokenRevokedBody": "そのトークンはもう使えません。",
   "ProviderProof.passkey": "パスキー",
-  "ProviderProof.link": "ログインリンク",
+  "ProviderProof.link": "メールのコード",
   "ProviderProof.fresh": "少し前に{methods}でログインしたため、パスワードは不要です。",
   "ProviderProof.needed": {
     "other":
@@ -1357,51 +1356,26 @@ export default {
   },
   "ProviderProof.passkeyAgain": "もう一度パスキーでログイン",
   "ProviderProof.providerAgain": "もう一度{provider}でログイン",
-  "SignInLinkScreen.sendFailed":
-    "リンクを送信できませんでした。少し待ってから、もう一度お試しください。",
-  "SignInLinkScreen.unreachable":
-    "サーバーに接続できませんでした。接続を確認して、もう一度「続行」を押してください。",
-  "SignInLinkScreen.openFailed":
-    "ログインできませんでした。「続行」を押してもう一度試すか、新しいリンクをリクエストしてください。",
-  "SignInLinkScreen.title": "リンクでログイン",
-  "SignInLinkScreen.description":
-    "ログイン用のリンクをメールでお送りします。そのメールアドレスのアカウントがまだない場合は、リンクから作成されます。",
-  "SignInLinkScreen.ratherPassword": "パスワードを使いますか？<link>ログインに戻る</link>",
-  "SignInLinkScreen.submit": "リンクをメールで受け取る",
-  "SignInLinkScreen.sent": {
+  "SignInCodeScreen.sendFailed":
+    "コードを送信できませんでした。少し待ってからもう一度お試しください。",
+  "SignInCodeScreen.title": "メールのコードでログイン",
+  "SignInCodeScreen.description":
+    "ここに入力するコードをメールでお送りします。そのメールアドレスのアカウントがまだない場合は、コードで作成されます。",
+  "SignInCodeScreen.ratherPassword": "パスワードを使いますか？<link>ログインに戻る</link>",
+  "SignInCodeScreen.submit": "コードをメールで受け取る",
+  "SignInCodeScreen.confirmTitle": "本人確認",
+  "SignInCodeScreen.confirmDescription":
+    "<email>{email}</email>にコードをお送りします。次の画面でそのコードを入力して、本人確認を完了してください。",
+  "CodeStep.sent": "<email>{email}</email>にコードを送信しました。",
+  "CodeStep.invalid": "コードは8文字です。抜けている文字がないか確認してください。",
+  "SignInCodeScreen.guest":
+    "ゲストとしてアプリを使っています。ログインすると、ここで作ったものはこのメールアドレスで保存されます。このメールアドレスのアカウントがすでにある場合は、先にお尋ねします。",
+  "CodeStep.deadTitle": "このコードはもう使えません",
+  "CodeStep.dead": {
     "other":
-      "<email>{email}</email>にログインリンクを送信しました。リンクは1回だけ、{count}分間有効です。",
+      "コードは{count}分間、1回だけ使えます。間違えられるのは数回までです。新しいコードを受け取り、いちばん新しいメールに記載されたコードを使ってください。",
   },
-  "SignInLinkScreen.openHere":
-    "このデバイスでログインするには、このデバイスでリンクを開いてください。",
-  "SignInLinkScreen.newLink": "新しいリンクを送信",
-  "SignInLinkScreen.waiting": {
-    "other":
-      "届いていませんか？迷惑メールフォルダを確認してください。{count}秒後に新しいリンクを送信できます。",
-  },
-  "SignInLinkScreen.resent":
-    "新しいリンクを送信しました。どれか1つが使われるまで、以前のリンクも有効です。",
-  "SignInLinkScreen.refusedTitle": "このリンクはもう使えません",
-  "SignInLinkScreen.refused": {
-    "other":
-      "ログインリンクは1回だけ、{count}分間有効です。新しいリンクをリクエストして、最新のメールのリンクを使ってください。",
-  },
-  "SignInLinkScreen.elsewhereTitle": "このリンクは別のブラウザでリクエストされました",
-  "SignInLinkScreen.elsewhere":
-    "ログインは行われず、ゲストアカウントも変更されていません。ここでログインするには、このブラウザで新しいリンクをリクエストしてください。",
-  "SignInLinkScreen.incompleteTitle": "このリンクは不完全です",
-  "SignInLinkScreen.incomplete":
-    "メールのリンクをもう一度開くか、新しいリンクをリクエストしてください。",
-  "SignInLinkScreen.backToApp": "アプリに戻る",
-  "SignInLinkScreen.finishTitle": "ログインを完了",
-  "SignInLinkScreen.finish":
-    "続行すると、このデバイスでログインします。新しいメールアドレスの場合は、アカウントが作成されます。",
-  "SignInLinkScreen.signedInAs":
-    "現在<email>{email}</email>でログインしています。続行すると、代わりにリンクのアカウントでログインします。",
-  "SignInLinkScreen.guest":
-    "ゲストとしてアプリを使っています。このブラウザでリンクをリクエストした場合、続行するとこのゲストアカウントがリンクのメールアドレスで保存されます。そのメールアドレスのアカウントがすでにある場合は、先に確認します。",
-  "SignInLinkScreen.signingIn": "ログインしています…",
-  "SignInLinkScreen.stay": "ログインしたままにする",
+  "CodeStep.differentEmail": "別のメールアドレスを使う",
   "SignInMethods.failed": "ログイン方法を変更できませんでした",
   "SignInMethods.loadFailed":
     "ログイン方法を読み込めませんでした。接続を確認して、もう一度お試しください。",
@@ -1453,15 +1427,9 @@ export default {
   "SignUpCodeScreen.offline": "オフラインです。接続してから、もう一度お試しください。",
   "SignUpCodeScreen.title": "受信トレイを確認してください",
   "SignUpCodeScreen.loading": "読み込んでいます…",
-  "SignUpCodeScreen.sent": {
-    "other": "<email>{email}</email>にコードを送信しました。コードは{count}分間有効です。",
-  },
-  "SignUpCodeScreen.wrongAddress":
-    "メールアドレスが違いますか？<button>別のアドレスを使う</button>",
   "SignUpCodeScreen.code": "コード",
   "SignUpCodeScreen.checking": "確認しています…",
   "SignUpCodeScreen.resend": "新しいコードを送信",
-  "SignUpCodeScreen.resent": "新しいコードを送信しました。",
   "SignUpCodeScreen.resendFailed": "新しいコードを送信できませんでした",
   "SignUpCodeScreen.existsTitle": "すでにアカウントをお持ちです",
   "SignUpCodeScreen.exists":
@@ -1770,7 +1738,9 @@ export default {
   "AuthScreen.forgotten": "完了しました。このブラウザは前回のログイン方法を記憶しません。",
   "AuthScreen.lastPassword": "前回はパスワード<email>（{email}）</email>でログインしました。",
   "AuthScreen.lastPasskey": "前回はパスキー<email>（{email}）</email>でログインしました。",
-  "AuthScreen.lastLink": "前回はメールのリンク<email>（{email}）</email>でログインしました。",
+  "AuthScreen.lastLink": "前回はメールのコードでログインしました<email>（{email}）</email>。",
+  "AuthScreen.emailSignInCode": "ログインコードをメールで受け取る",
+  "AuthScreen.emailSignUpCode": "登録コードをメールで受け取る",
   "AuthScreen.lastProvider": "前回は{provider}<email>（{email}）</email>でログインしました。",
   "AuthScreen.forget": "アカウントが違いますか？別のアカウントを使う",
   "AuthScreen.openProfile": "プロフィールを開く",
@@ -1782,8 +1752,6 @@ export default {
   "AuthScreen.haveAccount": "すでにアカウントをお持ちですか？<link>ログイン</link>",
   "AuthScreen.lostDevice": "デバイスをなくしましたか？<link>ログインに戻る</link>",
   "AuthScreen.sending": "送信しています…",
-  "AuthScreen.emailSignInLink": "ログインリンクをメールで受け取る",
-  "AuthScreen.emailSignUpLink": "登録リンクをメールで受け取る",
   "AuthScreen.orCreate": "またはアカウントを作成",
   "AuthScreen.createAccount": "アカウントを作成",
   "AuthScreen.continue": "続行",
@@ -1910,7 +1878,7 @@ export default {
   "Benchmark.noLargeBody":
     "ジェネレーターでグループを作成してから、このページを再読み込みしてください：",
   "Benchmark.copyCommand": "コマンドをコピー",
-  "Benchmark.noLargeFoot": "サイズとグループの削除方法はdocs/capacity.mdにあります。",
+  "Benchmark.noLargeFoot": "サイズとグループの削除方法はdocs/large-group.mdにあります。",
   "Benchmark.lastStoppedTitle": "前回の実行は「{measure}」で停止しました",
   "Benchmark.lastStoppedBody":
     "実行が終わる前にタブが閉じました。多くの場合、メモリかストレージの不足が原因です。グループ：{group}、開始：{time}。",

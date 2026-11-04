@@ -1,7 +1,7 @@
 // One person in one large group, built first with `deno task load:group <tier>`: each iteration
 // reads the whole group through the changes pull as the SPA does after a fresh sign-in, then one
 // page of the notes list, three searches, one write and the pull of that one change. Run with
-// `deno task load group <tier>`; docs/capacity.md, "One large group", holds the numbers.
+// `deno task load group <tier>`; docs/large-group.md holds the numbers.
 import http from "k6/http"
 import { check } from "k6"
 import { Trend } from "k6/metrics"

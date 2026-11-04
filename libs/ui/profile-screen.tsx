@@ -479,7 +479,7 @@ function ProfileSection(
 /**
  * The ways in of an account that has no password ("Google", "Google and GitHub", "a passkey"),
  * or `null` for an account with one, or while the sign-in methods are not known. An account with
- * no linked method signs in with "a sign-in link" when `emailLink` says one reaches it (#391).
+ * no linked method signs in with "an email code" when `emailLink` says one reaches it (#391).
  */
 export function providerOnlyNames(
   t: Translator<string>,

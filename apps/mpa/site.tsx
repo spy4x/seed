@@ -279,6 +279,7 @@ export interface SiteFrameProps {
 /** The header's links, in display order, by catalog key. The Blog link joins them once a post is live. */
 export const NAV_LINKS = [
   { label: `SiteNav.features`, href: `/features` },
+  { label: `SiteNav.docs`, href: DOCS_PATH },
   { label: `SiteNav.blog`, href: BLOG_PATH },
   { label: `SiteNav.compare`, href: `/compare` }, // Seed's own site: see docs/start-a-product.md
   { label: `SiteNav.pricing`, href: `/pricing` },

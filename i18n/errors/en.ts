@@ -158,6 +158,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "The group's plan doesn't include this.",
   "Reason.PLAN_LIMIT_REACHED": "The group has reached its plan's limit.",
   "Reason.POST_NOT_FOUND": "This post no longer exists.",
+  "Reason.REVISION_NOT_FOUND": "This earlier version no longer exists.",
   "Reason.PROVIDER_ERROR": "The payment provider didn't respond. Try again.",
   "Reason.REQUEST_ORIGIN_INVALID":
     "We couldn't verify where this request came from. Reload the page and try again.",
@@ -165,8 +166,6 @@ export default {
   "Reason.SAME_GROUP": "This is already in that group.",
   "Reason.SEARCH_RATE_LIMITED": "Too many searches. Wait a minute and try again.",
   "Reason.SEAT_PRICE_NOT_ACCEPTED": "Confirm that each new member adds to the group's bill.",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE":
-    "This link was requested in another browser. Open it there.",
   "Reason.SLUG_LOCKED":
     "The address is locked once a post is published. Use Change URL to change it.",
   "Reason.SLUG_TAKEN": "This address is taken. Pick a different one.",

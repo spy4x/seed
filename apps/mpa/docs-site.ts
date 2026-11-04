@@ -5,22 +5,49 @@ import { API_DOCS_PATH } from "./api-docs.ts"
 import { REPOSITORY_URL } from "./brand.ts"
 import { CHANGELOG } from "./changelog.ts"
 import adminModules from "../../docs/admin-modules.md" with { type: "text" }
+import aggregateExtras from "../../docs/aggregate-extras.md" with { type: "text" }
+import aggregateLifecycle from "../../docs/aggregate-lifecycle.md" with { type: "text" }
+import aggregateOffline from "../../docs/aggregate-offline.md" with { type: "text" }
+import aggregateRelations from "../../docs/aggregate-relations.md" with { type: "text" }
 import aggregates from "../../docs/aggregates.md" with { type: "text" }
+import aiAgents from "../../docs/ai-agents.md" with { type: "text" }
 import apiErrors from "../../docs/api-errors.md" with { type: "text" }
 import apps from "../../docs/apps.md" with { type: "text" }
+import attachmentsAndPictures from "../../docs/attachments-and-pictures.md" with { type: "text" }
 import backups from "../../docs/backups.md" with { type: "text" }
 import billing from "../../docs/billing.md" with { type: "text" }
+import billingLifecycle from "../../docs/billing-lifecycle.md" with { type: "text" }
+import billingOperator from "../../docs/billing-operator.md" with { type: "text" }
+import billingPlans from "../../docs/billing-plans.md" with { type: "text" }
+import browserTests from "../../docs/browser-tests.md" with { type: "text" }
 import capacity from "../../docs/capacity.md" with { type: "text" }
 import catalog from "../../docs/catalog.md" with { type: "text" }
+import certificates from "../../docs/certificates.md" with { type: "text" }
 import dataExport from "../../docs/data-export.md" with { type: "text" }
 import deploy from "../../docs/deploy.md" with { type: "text" }
+import deployUpdates from "../../docs/deploy-updates.md" with { type: "text" }
 import development from "../../docs/development.md" with { type: "text" }
+import fileUploads from "../../docs/file-uploads.md" with { type: "text" }
 import files from "../../docs/files.md" with { type: "text" }
+import firstFeature from "../../docs/first-feature.md" with { type: "text" }
+import getStarted from "../../docs/get-started.md" with { type: "text" }
 import guests from "../../docs/guests.md" with { type: "text" }
 import ids from "../../docs/ids.md" with { type: "text" }
+import largeGroup from "../../docs/large-group.md" with { type: "text" }
+import loadTests from "../../docs/load-tests.md" with { type: "text" }
+import localStack from "../../docs/local-stack.md" with { type: "text" }
 import offline from "../../docs/offline.md" with { type: "text" }
+import offlineAppShell from "../../docs/offline-app-shell.md" with { type: "text" }
+import offlineData from "../../docs/offline-data.md" with { type: "text" }
+import offlineSignOut from "../../docs/offline-sign-out.md" with { type: "text" }
+import offlineWrites from "../../docs/offline-writes.md" with { type: "text" }
+import operatorAccess from "../../docs/operator-access.md" with { type: "text" }
 import products from "../../docs/products.md" with { type: "text" }
+import releases from "../../docs/releases.md" with { type: "text" }
+import restore from "../../docs/restore.md" with { type: "text" }
 import securityHeaders from "../../docs/security-headers.md" with { type: "text" }
+import settings from "../../docs/settings.md" with { type: "text" }
+import severalProjects from "../../docs/several-projects.md" with { type: "text" }
 import signInProviders from "../../docs/sign-in-providers.md" with { type: "text" }
 import startAProduct from "../../docs/start-a-product.md" with { type: "text" }
 import telegram from "../../docs/telegram.md" with { type: "text" }
@@ -46,32 +73,54 @@ export interface PublishedDoc {
  */
 export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedDoc[] }[] = [
   {
-    title: `Use`,
+    title: `Get started`,
     docs: [
-      {
-        slug: `apps`,
-        summary: `The SPA, the admin app and the public website, and how to deploy each.`,
-      },
+      { slug: `get-started`, summary: `Run Seed on your machine in four commands.` },
       {
         slug: `products`,
         summary: `Start a product, take Seed's later changes, give back to Seed.`,
       },
       { slug: `start-a-product`, summary: `What a new product deletes, replaces or sets.` },
+      { slug: `local-stack`, summary: `Run Seed on your machine with demo data, and reset it.` },
+      { slug: `first-feature`, summary: `A new kind of record, from the database to the screen.` },
       {
-        slug: `deploy`,
-        summary: `Certificates, the deploy, consoles, several projects on one server, releases.`,
+        slug: `ai-agents`,
+        summary: `Have an AI agent create a product from Seed, add features and check its work.`,
       },
+    ],
+  },
+  {
+    title: `Guides`,
+    docs: [
+      { slug: `deploy`, summary: `From a fresh server to a healthy deployment with HTTPS.` },
+      { slug: `deploy-updates`, summary: `Every deploy after the first, and rolling back.` },
+      { slug: `certificates`, summary: `How each host gets its certificate, and retrying one.` },
+      {
+        slug: `operator-access`,
+        summary: `The first administrator, roles, and opening Grafana.`,
+      },
+      { slug: `several-projects`, summary: `Products that share one server and one Traefik.` },
+      { slug: `releases`, summary: `A version tag publishes the images to Docker Hub.` },
+      { slug: `backups`, summary: `Turn on the daily backup, and rehearse it.` },
+      { slug: `restore`, summary: `Bring back the database, the files and the push keys.` },
+      { slug: `sign-in-providers`, summary: `Registering the providers and what a person gets.` },
       {
         slug: `guests`,
         summary:
           `"Try it now" without signing up, keeping the account, the limits and the clean-up.`,
       },
-      { slug: `sign-in-providers`, summary: `Registering the providers and what a person gets.` },
-      { slug: `backups`, summary: `Set up, restore, rehearse.` },
-      { slug: `files`, summary: `Garage or another S3 store, signed uploads and downloads.` },
+      { slug: `billing`, summary: `Paid plans through Stripe, test mode first, then live.` },
+      { slug: `billing-plans`, summary: `Change a plan, add one, or add a limit a plan sells.` },
+      {
+        slug: `billing-operator`,
+        summary: `The admin panel's Billing pages, transfers, and Stripe's dashboard.`,
+      },
+      { slug: `files`, summary: `Garage or another S3 store, its settings and the upload budget.` },
+      {
+        slug: `file-uploads`,
+        summary: `Upload and download files from a feature, and have photos made safe and small.`,
+      },
       { slug: `data-export`, summary: `Download my data, what the ZIP holds and how it expires.` },
-      { slug: `capacity`, summary: `Load tests and how many users one server carries.` },
-      { slug: `billing`, summary: `One subscription per group, paid through Stripe.` },
       {
         slug: `catalog`,
         summary: `A shop's items with photos, colours and sizes, edited in the admin panel.`,
@@ -80,23 +129,80 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         slug: `telegram`,
         summary: `BotFather, the webhook, linking a chat, and adding a product's commands.`,
       },
-      { slug: `offline`, summary: `The SPA's local data and write queue, and how to remove it.` },
       {
-        slug: `security-headers`,
-        summary: `The headers every answer of the API, SPA and MPA sends.`,
+        slug: `offline`,
+        summary: `Turn the offline layer or the WebSocket module off, or remove them.`,
+      },
+      { slug: `aggregates`, summary: `Every file of the notes aggregate, in order.` },
+      { slug: `aggregate-offline`, summary: `Read, and write, an aggregate with no network.` },
+      {
+        slug: `aggregate-relations`,
+        summary: `One aggregate naming another, with tags and notes as the example.`,
+      },
+      {
+        slug: `aggregate-lifecycle`,
+        summary: `Restore after delete, a move to another group, and the data export.`,
+      },
+      {
+        slug: `aggregate-extras`,
+        summary: `Group settings, the overview, the inbox and the rest of the app.`,
+      },
+      {
+        slug: `admin-modules`,
+        summary: `The operator area as a list of modules, and how to add one.`,
+      },
+      { slug: `load-tests`, summary: `Run the k6 scenarios and build a large test group.` },
+      {
+        slug: `browser-tests`,
+        summary: `The Playwright specs in e2e/, and which of them CI runs.`,
       },
     ],
   },
   {
-    title: `Build`,
+    title: `Concepts`,
     docs: [
-      { slug: `development`, summary: `The local stack, every task, the browser tests and CI.` },
-      { slug: `aggregates`, summary: `Every file of the notes aggregate, in order.` },
+      {
+        slug: `apps`,
+        summary: `The SPA, the admin app and the public website, and how to deploy each.`,
+      },
       { slug: `ids`, summary: `Every id is a UUID version 7.` },
+      { slug: `capacity`, summary: `How many users one server carries.` },
+      {
+        slug: `billing-lifecycle`,
+        summary: `A group's plan from checkout to cancellation, and its mails.`,
+      },
+      {
+        slug: `offline-data`,
+        summary: `What the SPA keeps on the device and how it reads offline.`,
+      },
+      {
+        slug: `offline-writes`,
+        summary: `How a change made offline reaches the server, or is refused.`,
+      },
+      {
+        slug: `offline-sign-out`,
+        summary: `What the SPA deletes, and keeps, when a person signs out.`,
+      },
+      {
+        slug: `offline-app-shell`,
+        summary: `How the service worker starts the app with no network.`,
+      },
+      {
+        slug: `attachments-and-pictures`,
+        summary: `Files kept on a note, and a person's picture in place of their initials.`,
+      },
+      { slug: `large-group`, summary: `How one group behaves from a thousand notes to a million.` },
+    ],
+  },
+  {
+    title: `Reference`,
+    docs: [
+      { slug: `development`, summary: `Every deno task, what it does and where it is explained.` },
+      { slug: `settings`, summary: `Every variable of the env file.` },
       { slug: `api-errors`, summary: `The one error body every failed API answer has.` },
       {
-        slug: `admin-modules`,
-        summary: `The operator area as a list of modules, and how to add one.`,
+        slug: `security-headers`,
+        summary: `The headers every answer of the API, SPA and MPA sends.`,
       },
     ],
   },
@@ -105,22 +211,49 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
 /** Each published guide's Markdown, by slug. */
 const SOURCES: Readonly<Record<string, string>> = {
   "admin-modules": adminModules,
+  "aggregate-extras": aggregateExtras,
+  "aggregate-lifecycle": aggregateLifecycle,
+  "aggregate-offline": aggregateOffline,
+  "aggregate-relations": aggregateRelations,
   aggregates,
+  "ai-agents": aiAgents,
   "api-errors": apiErrors,
   apps,
+  "attachments-and-pictures": attachmentsAndPictures,
   backups,
   billing,
+  "billing-lifecycle": billingLifecycle,
+  "billing-operator": billingOperator,
+  "billing-plans": billingPlans,
+  "browser-tests": browserTests,
   capacity,
   catalog,
+  certificates,
   "data-export": dataExport,
   deploy,
+  "deploy-updates": deployUpdates,
   development,
+  "file-uploads": fileUploads,
   files,
+  "first-feature": firstFeature,
+  "get-started": getStarted,
   guests,
   ids,
+  "large-group": largeGroup,
+  "load-tests": loadTests,
+  "local-stack": localStack,
   offline,
+  "offline-app-shell": offlineAppShell,
+  "offline-data": offlineData,
+  "offline-sign-out": offlineSignOut,
+  "offline-writes": offlineWrites,
+  "operator-access": operatorAccess,
   products,
+  releases,
+  restore,
   "security-headers": securityHeaders,
+  settings,
+  "several-projects": severalProjects,
   "sign-in-providers": signInProviders,
   "start-a-product": startAProduct,
   telegram,
@@ -131,7 +264,7 @@ export interface SiteDoc {
   slug: string
   /** The file's `#` heading. */
   title: string
-  /** The group it is listed under: `Use` or `Build`. */
+  /** The group it is listed under: `Get started`, `Guides`, `Concepts` or `Reference`. */
   group: string
   /** Its line on the index. */
   summary: string

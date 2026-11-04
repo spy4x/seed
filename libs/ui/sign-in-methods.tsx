@@ -61,8 +61,8 @@ export interface SignInMethodsProps {
   /** The account's ways in; `null` while the list is not known yet. */
   methods: readonly SignInMethod[] | null
   /**
-   * A sign-in link reaches the account (#391). It is no linked method, so the list never shows
-   * it; an account with no other way in is told it signs in with a link.
+   * A sign-in code reaches the account (#391, #752). It is no linked method, so the list never
+   * shows it; an account with no other way in is told it signs in with an e-mail code.
    */
   emailLink?: boolean
   /** The providers that are on and not linked yet: each gets a "Link" button. */

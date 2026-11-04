@@ -176,45 +176,52 @@ same field (`login`): a value `normalizeEmail` accepts is looked up as an
 address, anything else as a username. An address is attached to a key at
 sign-up or by a proven address change (below), so it is nullable, unique when
 set (`UNIQUE (method, subject)`), and compared after normalising. A username
-account has no address, so it cannot ask for a reset link until it adds one.
+account has no address, so it cannot ask for a reset code until it adds one.
 
-**Password reset.** `POST /api/auth/password/forgot` with `{ email }` answers the
-same body for every valid address and queues the `auth.password-reset-mail` job
-with the address in `password_reset_requests`, never in the job row. The
-worker issues the code (a challenge of `@spy4x/server/auth`: only its SHA-256
-is stored, one per address, 30 minutes, with no practical cap on wrong guesses: a small cap would
-let anyone lock an address's reset, and the per-IP limit stops floods) and mails the link in the
-same step, so the raw code exists only in the mail. `POST /api/auth/password/reset` with `{ email,
-code, newPassword }` spends the code, marks the address proven, sets the password and signs out
-every session of the user; it signs nobody in. An account waiting to be deleted comes back first
-(spy4x/template#357, `restoreInTx`), as a password sign-in would bring it back. It also revokes every API token, removes every push
-subscription (spy4x/template#409), ends the Telegram link with every link code and "Link" press
-made before it (#269), and drops a waiting address change. A subscribe stores its row
-under the lock the reset takes on the user, after checking that its session is still live, so one
-that started before the reset stores nothing. When the address was not proven before, it removes the
-authenticator app and every sign-in method but the password as well ("A squatted address" below); an
-address proven before keeps them. Limits: the IP limit of the other anonymous auth routes, and 3
-requests an hour per address (`ratelimit-reset` in Valkey, keyed by a hash of the address, refusing
-when Valkey is down).
+**Password reset (#752).** `POST /api/auth/password/forgot` with `{ email }` answers the same body
+for every valid address, writes a row to `password_reset_requests`, queues the
+`auth.password-reset-mail` job and sets the signed HttpOnly cookie `password_reset` (path
+`/api/auth/password/reset`). The worker issues a code for every address, so a wrong guess answers
+the same everywhere, but mails it only when an account signs in with a password and that address.
+The code is the sign-up code's kind (`libs/server/auth/mailed-codes.ts`: 8 base64url characters, a
+challenge of `@spy4x/server/auth` stored only as a SHA-256, 10 minutes, 5 wrong guesses over all of
+the request's codes) and exists only in the mail. `POST /api/auth/password/reset/verify` with
+`{ code }`, from the browser that asked, answers `{ token }`: a 32-byte proof of
+`libs/server/auth/password-reset.ts`, valid 10 minutes. A wrong code is 400 (`MAILED_CODE_WRONG`); a
+used, expired or locked-out code, or a browser without the cookie, is 410 (`MAILED_CODE_DEAD`).
+`POST /api/auth/password/reset` with `{ token, newPassword }` takes the address from the cookie's
+request, so neither the token nor the address ever travels in a URL. It spends the token, marks the
+address proven, sets the password and signs out every session of the user; it signs nobody in. An
+account waiting to be deleted comes back first (spy4x/template#357, `restoreInTx`), as a password
+sign-in would bring it back. It also revokes every API token, removes every push subscription
+(spy4x/template#409), ends the Telegram link with every link code and "Link" press made before it
+(#269), and drops a waiting address change. A subscribe stores its row under the lock the reset
+takes on the user, after checking that its session is still live, so one that started before the
+reset stores nothing. When the address was not proven before, it removes the authenticator app and
+every sign-in method but the password as well ("A squatted address" below); an address proven
+before keeps them. `resend` mails a new code that ends the old one and keeps the guesses spent;
+`cancel` ends the request. An operator's reset (`AdminUsers`) mails no code: it tells the person to
+use "Forgot password". Limits: the IP limit of the other anonymous auth routes, and 3 requests or
+new codes an hour per address (`ratelimit-reset` in Valkey, keyed by a hash of the address,
+refusing when Valkey is down).
 
-**Sign-in links (#391).** `POST /api/auth/link` with `{ email, next? }` answers the same body for
-every valid address, writes a row to `sign_in_link_requests` and queues the `auth.sign-in-link-mail`
-job, whose worker issues the secret (`randomBase64Url`, 32 bytes, a challenge of
-`@spy4x/server/auth` stored as a hash, 15 minutes) and mails `/sign-in/link/open#token=<id>.<secret>`
-in the same step. The token rides in the fragment, so no request, log or `Referer` carries it, and
-the page strips it with `history.replaceState`. Opening the page spends nothing, because mail
-scanners open links; Continue sends `POST /api/auth/link/redeem` with `{ token }`. One link used
-stops every other link of the address. The link signs in the owner of a proven address, or creates
-an account (proven) for a new one; an unproven password key on the address refuses it (409), since
-the link proves the mailbox, not that account. A guest uses only a link that guest asked for
-(`sign_in_link_requests.requested_by_user_id`): any other link is spent and refused with 403 and the
-code `SIGN_IN_LINK_ASKED_ELSEWHERE`, and the guest's session stays, since a guest key has no secret
-and a replaced session would lose the account. Sessions run on a per-user `email-link` key with no
-secret, which `GET /api/auth/methods` never lists (its `emailLink` says whether a link reaches the
-account) and which counts as provider proof like a passkey. A second factor still applies. Limits: 3
-links an hour per client share and 10 per address (`ratelimit-sign-in-link`). Code:
-`libs/server/auth/sign-in-links.ts`, `libs/server/jobs/sign-in-link-mail.ts`,
-`apps/api/services/sign-in.ts` (`redeemSignInLink`).
+**Sign-in codes (#391, #752).** `POST /api/auth/code` with `{ email, next? }` answers the same body
+for every valid address, writes a row to `sign_in_code_requests`, queues the
+`auth.sign-in-code-mail` job and sets the signed HttpOnly cookie `sign_in_code` (path
+`/api/auth/code`). The worker issues a code of the same kind as the reset's and mails it in the same
+step. `POST /api/auth/code/verify` with `{ code }` counts only from the browser that asked: another
+browser gets 410 and the asker's request goes on. A wrong code is 400; a used, expired or
+locked-out code is 410. One code used stops every other code of the address. The code signs in the
+owner of a proven address, or creates an account (proven) for a new one; an unproven password key
+on the address refuses it (409), since the code proves the mailbox, not that account. A guest uses
+only a code that guest asked for (`sign_in_code_requests.requested_by_user_id`): any other is
+refused with 410 and the guest's session stays, since a guest key has no secret and a replaced
+session would lose the account. Sessions run on a per-user `email-link` key with no secret (the
+stored name predates codes), which `GET /api/auth/methods` never lists (its `emailLink` says
+whether a code reaches the account) and which counts as provider proof like a passkey. A second
+factor still applies. Limits: 3 codes an hour per client share and 10 per address
+(`ratelimit-sign-in-code`), spent by `resend` too. Code: `libs/server/auth/sign-in-codes.ts`,
+`libs/server/jobs/sign-in-code-mail.ts`, `apps/api/services/sign-in.ts` (`completeSignInCode`).
 
 **Sign-up proves the address first (spy4x/template#142).** `POST /api/auth/password/sign-up` hashes
 the password, writes a waiting sign-up to `sign_up_requests` (10 minutes, `SIGN_UP_CODE_MINUTES`),
@@ -392,7 +399,7 @@ until it adds and proves one. The check is `hasProvenAddress`
 
 **Mail.** `libs/server/mail` picks the transport: with `ENV=dev` the console
 sender of `@spy4x/email` plus a copy in the `dev_mail` table, which the e2e
-specs read through `POST /api/test/last-mail` (reset links and codes alike); any other `ENV` uses
+specs read through `POST /api/test/last-mail` (sign-in, sign-up and reset codes alike); any other `ENV` uses
 SMTP when `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` and `SMTP_FROM` are all set, and
 otherwise sends nothing. The console sender never runs in production: it prints the link, and
 container logs are shipped. The SPA's nginx logs paths without the query string, and the reset pages
@@ -456,7 +463,7 @@ deno task check            # fmt, lint, types, unit tests
 deno task spa:build
 deno task mpa:check
 deno task dev              # compose up
-deno task e2e:local        # browser tests on a stack of its own (docs/development.md, "Browser tests")
+deno task e2e:local        # browser tests on a stack of its own (docs/browser-tests.md)
 ```
 
 Integration tests need a throwaway Postgres and Valkey (Valkey requires a password, as in
@@ -711,7 +718,7 @@ demotes the old owner to admin before it promotes the new one: the partial uniqu
 admin links are revoked, and their viewer and editor links stay; the new owner's links stay. The new
 owner gets a web push. A subscription that still renews refuses the transfer
 (`SUBSCRIPTION_RENEWS`); after it, the old owner's billing customer is handed over and the new owner
-checks out with their own ([the billing guide](billing.md), "Transfer of ownership").
+checks out with their own ([billing for operators](billing-operator.md#transfer-of-ownership)).
 
 Moving all of a group's data (spy4x/template#260): `POST /api/groups/:id/move-all` takes `{
 toGroupId }`, and the socket command `group.moveAll` takes `{ groupId, toGroupId }`. One transaction
@@ -722,7 +729,7 @@ lot. A group with nothing to move is refused (`NOTHING_TO_MOVE`), moving into th
 `SAME_GROUP`, and notes deleted earlier stay behind. The target's note cap is read by the gate and
 counted by the repository, which refuses with the plan refusal. The settings menu offers it as "Move
 all data to...", then the delete confirmation. A new aggregate registers as described in
-[the aggregate guide](aggregates.md), "Register it for move all data".
+[Delete, move and export an aggregate](aggregate-lifecycle.md), "Register it for move all data".
 
 ## Working agreements
 

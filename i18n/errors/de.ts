@@ -170,6 +170,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "Das ist im Tarif der Gruppe nicht enthalten.",
   "Reason.PLAN_LIMIT_REACHED": "Die Gruppe hat das Limit ihres Tarifs erreicht.",
   "Reason.POST_NOT_FOUND": "Diesen Beitrag gibt es nicht mehr.",
+  "Reason.REVISION_NOT_FOUND": "Diese frühere Fassung gibt es nicht mehr.",
   "Reason.PROVIDER_ERROR": "Der Zahlungsanbieter antwortet nicht. Versuche es noch einmal.",
   "Reason.REQUEST_ORIGIN_INVALID":
     "Wir konnten nicht prüfen, woher diese Anfrage kommt. Lade die Seite neu und versuche es noch einmal.",
@@ -179,8 +180,6 @@ export default {
     "Zu viele Suchen. Warte eine Minute und versuche es dann noch einmal.",
   "Reason.SEAT_PRICE_NOT_ACCEPTED":
     "Bestätige, dass jedes neue Mitglied die Rechnung der Gruppe erhöht.",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE":
-    "Dieser Link wurde in einem anderen Browser angefordert. Öffne ihn dort.",
   "Reason.SLUG_LOCKED":
     "Nach dem Veröffentlichen ist die Adresse gesperrt. Ändere sie über „URL ändern“.",
   "Reason.SLUG_TAKEN": "Diese Adresse ist schon vergeben. Nimm bitte eine andere.",

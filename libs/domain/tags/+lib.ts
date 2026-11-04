@@ -17,8 +17,8 @@ import { type FieldErrors, fieldErrors } from "@spy4x/validation"
 /**
  * Tags: the second reference aggregate, and the parent of notes. A tag belongs to one group, has a
  * name and a colour, and any number of the group's notes carry it. Every member reads a group's
- * tags and an editor or above writes them, as for notes. `docs/aggregates.md` ("Relations between
- * aggregates") walks through the files.
+ * tags and an editor or above writes them, as for notes. `docs/aggregate-relations.md` walks
+ * through the files.
  */
 
 /** The longest tag name, in characters, after trimming. */

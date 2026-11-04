@@ -96,7 +96,6 @@ function props(heard: string[], overrides: Partial<SignUpCodeScreenProps> = {}) 
     busy: false,
     error: null,
     resending: false,
-    resendNotice: null,
     resendError: null,
     onSubmit: (code: string) => void heard.push(`code ${code}`),
     onResend: () => void heard.push("resend"),
@@ -108,36 +107,36 @@ function props(heard: string[], overrides: Partial<SignUpCodeScreenProps> = {}) 
 }
 
 describe("SignUpCodeScreen", () => {
-  it("names the address the code went to and how long it works", async () => {
+  it("names the address the code went to and how long it works, on the shared code step", async () => {
     await mount(<SignUpCodeScreen {...props([])} />)
 
     expect(find("h1").textContent).toBe("Check your inbox")
-    expect(find("[data-e2e=sign-up-code]").textContent)
-      .toContain("We sent a code to ada@example.com. It works for 10 minutes.")
+    expect(find("[data-e2e=sign-up-code] [data-e2e=mailed-code-step]").textContent)
+      .toContain("We sent a code to ada@example.com. The code works for 10 minutes.")
   })
 
   it("focuses the code field when the step opens, and hands the typed code to the app", async () => {
     const heard: string[] = []
     await mount(<SignUpCodeScreen {...props(heard)} />)
 
-    expect(focused()).toBe("sign-up-code-input")
-    find<HTMLInputElement>("[data-e2e=sign-up-code-input]").value = "abcd1234"
-    await submit("[data-e2e=sign-up-code-submit]")
+    expect(focused()).toBe("mailed-code-step-code")
+    find<HTMLInputElement>("[data-e2e=mailed-code-step-code]").value = "abcd1234"
+    await submit("[data-e2e=mailed-code-step-submit]")
 
     expect(heard).toEqual(["code abcd1234"])
   })
 
   it("focuses the code field again after a wrong code, its text selected, the error tied to it", async () => {
     const mounted = await mount(<SignUpCodeScreen {...props([])} />)
-    const field = find<HTMLInputElement>("[data-e2e=sign-up-code-input]")
+    const field = find<HTMLInputElement>("[data-e2e=mailed-code-step-code]")
     field.value = "wrong-00"
     field.blur()
-    expect(focused()).not.toBe("sign-up-code-input")
+    expect(focused()).not.toBe("mailed-code-step-code")
 
     const refused = "This code is wrong or has expired. Ask for a new one."
     await act(() => render(<SignUpCodeScreen {...props([], { error: refused })} />, mounted))
 
-    expect(focused()).toBe("sign-up-code-input")
+    expect(focused()).toBe("mailed-code-step-code")
     expect([field.selectionStart, field.selectionEnd]).toEqual([0, "wrong-00".length])
     const described = field.getAttribute("aria-describedby")!
     expect(document.getElementById(described)?.textContent).toBe(refused)
@@ -147,44 +146,41 @@ describe("SignUpCodeScreen", () => {
     const heard: string[] = []
     await mount(<SignUpCodeScreen {...props(heard, { busy: true })} />)
 
-    await submit("[data-e2e=sign-up-code-submit]")
+    find<HTMLInputElement>("[data-e2e=mailed-code-step-code]").value = "abcd1234"
+    await submit("[data-e2e=mailed-code-step-submit]")
 
     expect(heard).toEqual([])
   })
 
-  it("asks for a new code, and says it is on its way", async () => {
+  it("asks for a new code, says it is on its way, and waits before offering another", async () => {
     const heard: string[] = []
     const mounted = await mount(<SignUpCodeScreen {...props(heard)} />)
 
-    await click("[data-e2e=sign-up-code-resend]")
+    await click("[data-e2e=resend-button-send]")
     await act(() =>
-      render(
-        <SignUpCodeScreen {...props(heard, { resendNotice: "A new code is on its way." })} />,
-        mounted,
-      )
+      render(<SignUpCodeScreen {...props(heard, { readyAt: Date.now() + 60_000 })} />, mounted)
     )
 
     expect(heard).toEqual(["resend"])
-    expect(find("[data-e2e=sign-up-code-resent]").getAttribute("role")).toBe("status")
+    expect(find("[data-e2e=resend-button-sent]").textContent).toBe("A new code is on its way.")
+    expect(document.querySelector("[data-e2e=resend-button-send]")).toBe(null)
+  })
+
+  it("shows why a new code was refused under the code field", async () => {
+    await mount(<SignUpCodeScreen {...props([], { resendError: "Too many codes. Wait a bit." })} />)
+
+    const field = find<HTMLInputElement>("[data-e2e=mailed-code-step-code]")
+    const described = field.getAttribute("aria-describedby")!
+    expect(document.getElementById(described)?.textContent).toBe("Too many codes. Wait a bit.")
   })
 
   it("goes back to another address on the app's call", async () => {
     const heard: string[] = []
     await mount(<SignUpCodeScreen {...props(heard)} />)
 
-    await click("[data-e2e=sign-up-different-address]")
+    await click("[data-e2e=mailed-code-step-change-email]")
 
     expect(heard).toEqual(["different address"])
-  })
-
-  it("draws Use a different address in the size of the sentence around it", async () => {
-    await mount(<SignUpCodeScreen {...props([])} />)
-
-    const button = find("[data-e2e=sign-up-different-address]")
-    // The sentence under the card is `text-sm`; the small button size would be `text-xs`.
-    expect(button.closest("p")!.classList.contains("text-sm")).toBe(true)
-    expect(button.classList.contains("text-xs")).toBe(false)
-    expect(button.classList.contains("text-sm")).toBe(true)
   })
 
   it("hands an account with a password over to sign-in, with the reset page beside it", async () => {

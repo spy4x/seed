@@ -1,17 +1,20 @@
 import { expect } from "@std/expect"
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd"
-import { SIGN_IN_LINK_ASKED_ELSEWHERE_CODE, type User, UserMFAStatus } from "@domain/identity"
+import { type User, UserMFAStatus } from "@domain/identity"
 import {
   bootstrapSession,
   confirmProviderSignUp,
   deleteAccount,
-  redeemSignInLink,
-  requestSignInLink,
+  requestSignInCode,
+  resendResetCode,
+  resetPassword,
   signIn,
   signOut,
   totpConnectFinish,
   totpDisconnect,
   useFlagStorage,
+  verifyResetCode,
+  verifySignInCode,
 } from "./auth.ts"
 import { sessionState, signOutChosen } from "./session.ts"
 
@@ -585,7 +588,7 @@ describe("deleteAccount", () => {
   })
 })
 
-describe("redeemSignInLink", () => {
+describe("the mailed code steps (#752)", () => {
   afterEach(() => {
     globalThis.fetch = realFetch
   })
@@ -601,48 +604,61 @@ describe("redeemSignInLink", () => {
       )
   }
 
-  it("tells a link another browser asked for apart from a used link and any other refusal", async () => {
-    answers(403, {
-      error: {
-        code: "forbidden",
-        message: "Asked for elsewhere",
-        reason: SIGN_IN_LINK_ASKED_ELSEWHERE_CODE,
-      },
+  it("tells a dead sign-in code apart from a wrong one, and a guest's taken address", async () => {
+    answers(410, { error: { code: "not_found", message: "This code no longer works." } })
+    expect(await verifySignInCode("aB3x_Q9k")).toEqual({ ok: false, dead: true })
+
+    answers(400, { error: { code: "bad_request", message: "That code isn't right." } })
+    expect(await verifySignInCode("aB3x_Q9k")).toEqual({
+      ok: false,
+      error: "That code isn't right.",
     })
-    expect(await redeemSignInLink("token")).toEqual({ ok: false, askedElsewhere: true })
 
-    answers(410, { error: { code: "not_found", message: "This link no longer works." } })
-    expect(await redeemSignInLink("token")).toEqual({ ok: false, refused: true })
-
-    // The origin guard's 403 carries no such code: it stays a failure with the API's words.
-    answers(403, { error: { code: "forbidden", message: "Forbidden" } })
-    expect(await redeemSignInLink("token")).toEqual({ ok: false, error: "Forbidden" })
+    answers(200, { guestTaken: true })
+    expect(await verifySignInCode("aB3x_Q9k")).toEqual({ ok: false, guestTaken: true })
   })
 
   it("passes on no message of a server failure, so the page shows its own", async () => {
     answers(500, {})
-    expect(await redeemSignInLink("token")).toEqual({ ok: false, error: undefined })
-  })
-})
-
-describe("requestSignInLink", () => {
-  afterEach(() => {
-    globalThis.fetch = realFetch
+    expect(await verifySignInCode("aB3x_Q9k")).toEqual({ ok: false, error: undefined })
+    expect(await verifyResetCode("aB3x_Q9k")).toEqual({ ok: false, error: undefined })
   })
 
   it("passes on no message of a server failure, and the API's words for a refusal", async () => {
     globalThis.fetch = () => Promise.resolve(new Response("Bad Gateway", { status: 502 }))
-    expect(await requestSignInLink("ann@example.com", null)).toEqual({
+    expect(await requestSignInCode("ann@example.com", null)).toEqual({
       ok: false,
       error: undefined,
       field: false,
     })
 
     globalThis.fetch = () => Promise.resolve(Response.json({ error: "Too many" }, { status: 429 }))
-    expect(await requestSignInLink("ann@example.com", null)).toEqual({
+    expect(await requestSignInCode("ann@example.com", null)).toEqual({
       ok: false,
       error: "Too many",
       field: false,
+    })
+  })
+
+  it("hands over the reset token of a right code, and says when a code is dead", async () => {
+    answers(200, { token: "reset-token" })
+    expect(await verifyResetCode("aB3x_Q9k")).toEqual({ ok: true, token: "reset-token" })
+
+    answers(410, { error: { code: "not_found", message: "This code no longer works." } })
+    expect(await verifyResetCode("aB3x_Q9k")).toEqual({ ok: false, dead: true })
+    expect(await resendResetCode()).toEqual({ ok: false, dead: true })
+  })
+
+  it("starts a reset again when its token is refused, but not when the password is", async () => {
+    answers(400, { error: { code: "bad_request", message: "This reset no longer works." } })
+    expect(await resetPassword("reset-token", "new-password")).toEqual({ ok: false, refused: true })
+
+    answers(400, {
+      error: { code: "bad_request", message: "Too short", reason: "validation" },
+    })
+    expect(await resetPassword("reset-token", "short")).toEqual({
+      ok: false,
+      error: "Some fields need fixing. Check them and try again.",
     })
   })
 })

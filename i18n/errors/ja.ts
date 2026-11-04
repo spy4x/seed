@@ -156,6 +156,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "グループのプランにはこの機能が含まれていません。",
   "Reason.PLAN_LIMIT_REACHED": "グループのプランの上限に達しました。",
   "Reason.POST_NOT_FOUND": "この記事はもう存在しません。",
+  "Reason.REVISION_NOT_FOUND": "この以前の版はもう存在しません。",
   "Reason.PROVIDER_ERROR": "決済サービスから応答がありませんでした。もう一度お試しください。",
   "Reason.REQUEST_ORIGIN_INVALID":
     "このリクエストの送信元を確認できませんでした。ページを再読み込みして、もう一度お試しください。",
@@ -164,8 +165,6 @@ export default {
   "Reason.SEARCH_RATE_LIMITED": "検索回数が多すぎます。1分ほど待ってから、もう一度お試しください。",
   "Reason.SEAT_PRICE_NOT_ACCEPTED":
     "メンバーを追加するたびにグループの請求額が増えることを確認してください。",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE":
-    "このリンクは別のブラウザでリクエストされました。そのブラウザで開いてください。",
   "Reason.SLUG_LOCKED":
     "記事を公開するとアドレスは固定されます。変更するには「URLを変更」を使ってください。",
   "Reason.SLUG_TAKEN": "このアドレスはすでに使われています。別のものを選んでください。",

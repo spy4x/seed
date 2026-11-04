@@ -2,9 +2,10 @@ import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { mailedCode, signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
+const lastMailUrl = `${apiBase}/api/test/last-mail`
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
 const password = "Passw0rd!"
 const newPassword = "N3w-Passw0rd"
@@ -16,19 +17,17 @@ async function cleanup(request: APIRequestContext, email: string, soft = false):
   ;(soft ? expect.soft : expect)(response.status(), await response.text()).toBe(200)
 }
 
-/** The path and query of the reset link in the newest mail to `email`, once the worker sent it. */
-async function resetLinkFor(request: APIRequestContext, email: string): Promise<string> {
-  let text = ""
-  await expect.poll(async () => {
-    const response = await request.post(`${apiBase}/api/test/last-mail`, { data: { email } })
-    if (!response.ok()) return response.status()
-    const mail = (await response.json()) as { subject: string; text: string }
-    text = mail.text
-    // Sign-up mails a code to prove the address first; wait for the reset mail after it.
-    return mail.subject
-  }, { timeout: 20_000, message: "the worker mails the reset link" }).toBe("Reset your password")
-  const link = new URL(text.match(/https?:\/\/\S+/)![0])
-  return link.pathname + link.search
+/** The code in the newest reset mail to `email`, once the worker sent it. */
+async function resetCodeFor(request: APIRequestContext, email: string): Promise<string> {
+  return await mailedCode(request, lastMailUrl, email, "Your code to reset your password")
+}
+
+/** Types `code` into the code step key by key, as a person does, and presses Enter. */
+async function enterCode(page: Page, code: string): Promise<void> {
+  const field = page.locator("[data-e2e=mailed-code-step-code]")
+  await expect(field).toBeFocused()
+  await field.pressSequentially(code)
+  await field.press("Enter")
 }
 
 /** Sends the sign-in form and leaves the outcome to the caller. */
@@ -39,7 +38,7 @@ async function trySignIn(page: Page, email: string, secret: string): Promise<voi
   await page.locator("[data-e2e=auth-form-submit]").click()
 }
 
-test("a forgotten password is reset through the mailed link, which works once", async ({ page, request }) => {
+test("a forgotten password is reset with the mailed code, which works once", async ({ page, request }) => {
   // A fresh address each run: the per-address limit allows three requests an hour.
   const email = `e2e-reset-${uuidV7().slice(-8)}@example.com`
   await cleanup(request, email)
@@ -54,24 +53,26 @@ test("a forgotten password is reset through the mailed link, which works once", 
     await gotoApp(page, "/sign-in", forgotLink)
     await forgotLink.click()
     await expect(page).toHaveURL("/forgot-password")
-    await page.locator("[data-e2e=forgot-password-email]").fill(email.toUpperCase())
+    await page.locator("[data-e2e=forgot-password-email]").fill(` ${email.toUpperCase()} `)
     await page.locator("[data-e2e=forgot-password-submit]").click()
-    await expect(page.locator("[data-e2e=forgot-password-sent]")).toBeVisible()
+    // The step names the address as the server keeps it, trimmed and in lower case.
+    await expect(page.locator("[data-e2e=mailed-code-step]")).toContainText(email)
+    await expect(page.locator("[data-e2e=mailed-code-step]")).not.toContainText(email.toUpperCase())
 
-    const link = await resetLinkFor(request, email)
-    expect(link).toMatch(/^\/reset-password\?/)
-    await gotoApp(page, link, page.locator("[data-e2e=reset-password-new]"))
-    // The code is in the address, so the page's own requests must not carry it as the Referer.
-    await expect(page.locator("meta[name=referrer]")).toHaveAttribute("content", "no-referrer")
+    const code = await resetCodeFor(request, email)
+    await enterCode(page, code)
+    // The token the code gave stays in the page: the address never carries it.
+    await expect(page).toHaveURL("/forgot-password")
     await page.locator("[data-e2e=reset-password-new]").fill(newPassword)
     await page.locator("[data-e2e=reset-password-submit]").click()
     await expect(page.locator("[data-e2e=reset-password-done]")).toBeVisible()
 
-    // The link was spent: opening it again offers nothing but a refusal.
-    await gotoApp(page, link, page.locator("[data-e2e=reset-password-new]"))
-    await page.locator("[data-e2e=reset-password-new]").fill("Other-Passw0rd")
-    await page.locator("[data-e2e=reset-password-submit]").click()
-    await expect(page.getByText("This link is invalid, used or expired")).toBeVisible()
+    // The code was spent: the same code from the same browser is refused.
+    const again = await page.request.post(`${apiBase}/api/auth/password/reset/verify`, {
+      headers,
+      data: { code },
+    })
+    expect(again.ok()).toBe(false)
 
     await trySignIn(page, email, password)
     await expect(page.getByText("Invalid e-mail, username or password")).toBeVisible()
@@ -81,27 +82,25 @@ test("a forgotten password is reset through the mailed link, which works once", 
   }
 })
 
-test("asking for a link answers the same for an address no account uses", async ({ page }) => {
+test("asking for a code answers the same for an address no account uses", async ({ page }) => {
+  const email = `e2e-nobody-${uuidV7().slice(-8)}@example.com`
   await gotoApp(page, "/forgot-password", page.locator("[data-e2e=forgot-password-email]"))
-  await page.locator("[data-e2e=forgot-password-email]").fill(
-    `e2e-nobody-${uuidV7().slice(-8)}@example.com`,
-  )
+  await page.locator("[data-e2e=forgot-password-email]").fill(email)
   await page.locator("[data-e2e=forgot-password-submit]").click()
-  await expect(page.locator("[data-e2e=forgot-password-sent]")).toContainText(
-    "If an account uses this email",
+  await expect(page.locator("[data-e2e=mailed-code-step]")).toContainText(
+    `If an account uses ${email}, we sent it a code.`,
   )
 })
 
-test("the answer to a link request is in the page's language, not the server's English", async ({ page }) => {
+test("the answer to a code request is in the page's language, not the server's English", async ({ page }) => {
+  const email = `e2e-nobody-${uuidV7().slice(-8)}@example.com`
   await page.addInitScript(() => localStorage.setItem("language", "de"))
   await gotoApp(page, "/forgot-password", page.locator("[data-e2e=forgot-password-email]"))
-  await page.locator("[data-e2e=forgot-password-email]").fill(
-    `e2e-nobody-${uuidV7().slice(-8)}@example.com`,
-  )
+  await page.locator("[data-e2e=forgot-password-email]").fill(email)
   await page.locator("[data-e2e=forgot-password-submit]").click()
   // The same neutral line as for any address, so it says nothing about whether an account exists.
-  await expect(page.locator("[data-e2e=forgot-password-sent] [role=status]")).toHaveText(
-    "Falls es ein Konto mit dieser E-Mail-Adresse gibt, haben wir einen Link zum Zurücksetzen des Passworts dorthin geschickt.",
+  await expect(page.locator("[data-e2e=mailed-code-step]")).toContainText(
+    `Falls es ein Konto mit ${email} gibt, haben wir einen Code dorthin geschickt.`,
   )
-  await expect(page.locator("[data-e2e=forgot-password-sent] h1")).toBeFocused()
+  await expect(page.locator("[data-e2e=mailed-code-step-code]")).toBeFocused()
 })

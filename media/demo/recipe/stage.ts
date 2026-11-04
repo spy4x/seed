@@ -26,13 +26,19 @@ export interface Person {
 export const ADMIN_EMAIL = "admin@example.com"
 
 /** A POST to the product app's API as its own pages send it. */
-async function post(app: string, path: string, body: unknown): Promise<Response> {
+async function post(
+  app: string,
+  path: string,
+  body: unknown,
+  cookie?: string,
+): Promise<Response> {
   return await fetch(`${app}/api${path}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Origin: app,
       "Sec-Fetch-Site": "same-origin",
+      ...(cookie ? { Cookie: cookie } : {}),
     },
     body: JSON.stringify(body),
   })
@@ -48,21 +54,21 @@ async function resetPassword(app: string, email: string): Promise<string> {
   const forgot = await post(app, "/auth/password/forgot", { email: email })
   if (!forgot.ok) throw new Error(`the reset request answered ${forgot.status}`)
   await forgot.body?.cancel()
+  // The reset belongs to the browser that asked, through this cookie.
+  const cookie = forgot.headers.getSetCookie().map((line) => line.split(";")[0]).join("; ")
   let code: string | null = null
   for (const deadline = Date.now() + 60_000; !code && Date.now() < deadline;) {
     const mail = await lastMail()
-    const fresh = mail?.subject === "Reset your password" && mail.text !== before
-    const link = fresh ? mail.text.match(/https?:\/\/\S+/) : null
-    code = link ? new URL(link[0]).searchParams.get("code") : null
+    const fresh = mail?.subject === "Your code to reset your password" && mail.text !== before
+    code = fresh ? mail.text.match(/^([A-Za-z0-9_-]{8})$/m)?.[1] ?? null : null
     if (!code) await new Promise((resolve) => setTimeout(resolve, 500))
   }
   if (!code) throw new Error(`no reset mail reached ${email} within 60 s`)
   const password = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(18))))
-  const reset = await post(app, "/auth/password/reset", {
-    email: email,
-    code,
-    newPassword: password,
-  })
+  const verified = await post(app, "/auth/password/reset/verify", { code }, cookie)
+  if (!verified.ok) throw new Error(`the reset code answered ${verified.status}`)
+  const { token } = await verified.json() as { token: string }
+  const reset = await post(app, "/auth/password/reset", { token, newPassword: password }, cookie)
   if (!reset.ok) throw new Error(`the reset answered ${reset.status}: ${await reset.text()}`)
   return password
 }

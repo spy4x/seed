@@ -930,29 +930,29 @@ export default {
   "OAuthNotice.kept":
     "Método de inicio de sesión añadido. Ya puedes usarlo para iniciar sesión en cualquier dispositivo.",
   "OAuthNotice.guestTaken": "Ese método de inicio de sesión pertenece a otra cuenta.",
-  "PasswordResetScreen.forgotFailed": "No se pudo enviar el enlace",
+  "PasswordResetScreen.forgotFailed": "No se pudo enviar el código",
   "PasswordResetScreen.resetFailed": "No se pudo cambiar la contraseña",
   "PasswordResetScreen.sent":
-    "Si hay una cuenta con este correo, le enviamos un enlace para restablecer la contraseña.",
+    "Si hay una cuenta con <email>{email}</email>, te enviamos un código.",
   "PasswordResetScreen.forgotDescription": {
     "one":
-      "Escribe el correo con el que te registraste. Te enviaremos un enlace para elegir una contraseña nueva. Sirve una sola vez, durante {count} minuto.",
+      "Escribe el correo con el que te registraste. Te enviaremos un código para elegir una contraseña nueva. Caduca en {count} minuto.",
     "many":
-      "Escribe el correo con el que te registraste. Te enviaremos un enlace para elegir una contraseña nueva. Sirve una sola vez, durante {count} minutos.",
+      "Escribe el correo con el que te registraste. Te enviaremos un código para elegir una contraseña nueva. Caduca en {count} minutos.",
     "other":
-      "Escribe el correo con el que te registraste. Te enviaremos un enlace para elegir una contraseña nueva. Sirve una sola vez, durante {count} minutos.",
+      "Escribe el correo con el que te registraste. Te enviaremos un código para elegir una contraseña nueva. Caduca en {count} minutos.",
   },
   "PasswordResetScreen.remembered": "¿Ya la recordaste? <link>Volver a iniciar sesión</link>",
-  "PasswordResetScreen.send": "Enviar el enlace",
+  "PasswordResetScreen.send": "Enviar un código",
   "PasswordResetScreen.doneTitle": "Contraseña cambiada",
   "PasswordResetScreen.done":
     "Se cerró tu sesión en todas partes. Inicia sesión con tu nueva contraseña.",
   "PasswordResetScreen.signIn": "Iniciar sesión",
-  "PasswordResetScreen.askNew": "Pedir un enlace nuevo",
   "PasswordResetScreen.chooseTitle": "Elige una contraseña nueva",
   "PasswordResetScreen.choose":
     "Para <email>{email}</email>. Al guardarla, se cerrará tu sesión en todos los dispositivos.",
-  "PasswordResetScreen.expired": "¿Caducó el enlace? <link>Pide uno nuevo</link>",
+  "PasswordResetScreen.expired": "¿Tardaste demasiado? <link>Pide un código nuevo</link>",
+  "PasswordResetScreen.tookTooLong": "Pasó demasiado tiempo. Pide un código nuevo.",
   "PasswordResetScreen.newPassword": "Nueva contraseña",
   "PasswordResetScreen.newPasswordHint": "De {min} a {max} caracteres.",
   "PasswordResetScreen.saving": "Guardando…",
@@ -1508,7 +1508,7 @@ export default {
   "ProfileView.tokenRevoked": "Token revocado",
   "ProfileView.tokenRevokedBody": "Ese token ya no funciona.",
   "ProviderProof.passkey": "una llave de acceso",
-  "ProviderProof.link": "un enlace de inicio de sesión",
+  "ProviderProof.link": "un código por correo",
   "ProviderProof.fresh":
     "Iniciaste sesión con {methods} hace un momento, así que no necesitas contraseña.",
   "ProviderProof.needed": {
@@ -1521,61 +1521,30 @@ export default {
   },
   "ProviderProof.passkeyAgain": "Volver a iniciar sesión con una llave de acceso",
   "ProviderProof.providerAgain": "Volver a iniciar sesión con {provider}",
-  "SignInLinkScreen.sendFailed": "No se pudo enviar el enlace. Vuelve a intentarlo en un momento.",
-  "SignInLinkScreen.unreachable":
-    "No se pudo conectar con el servidor. Revisa tu conexión y vuelve a pulsar «Continuar».",
-  "SignInLinkScreen.openFailed":
-    "No pudimos iniciar tu sesión. Pulsa «Continuar» para volver a intentarlo o pide un enlace nuevo.",
-  "SignInLinkScreen.title": "Iniciar sesión con un enlace",
-  "SignInLinkScreen.description":
-    "Te enviaremos por correo un enlace para iniciar sesión. ¿Todavía no hay una cuenta con ese correo? El enlace la crea.",
-  "SignInLinkScreen.ratherPassword":
+  "SignInCodeScreen.sendFailed": "No se pudo enviar el código. Inténtalo de nuevo en un momento.",
+  "SignInCodeScreen.title": "Inicia sesión con un código por correo",
+  "SignInCodeScreen.description":
+    "Te enviaremos un código por correo para que lo escribas aquí. ¿Aún no tienes cuenta con ese correo? El código la crea.",
+  "SignInCodeScreen.ratherPassword":
     "¿Prefieres una contraseña? <link>Volver a iniciar sesión</link>",
-  "SignInLinkScreen.submit": "Enviarme un enlace",
-  "SignInLinkScreen.sent": {
+  "SignInCodeScreen.submit": "Enviarme un código",
+  "SignInCodeScreen.confirmTitle": "Confirma que eres tú",
+  "SignInCodeScreen.confirmDescription":
+    "Te enviaremos un código a <email>{email}</email>. Escríbelo en el siguiente paso para confirmar que eres tú.",
+  "CodeStep.sent": "Enviamos un código a <email>{email}</email>.",
+  "CodeStep.invalid": "El código tiene 8 caracteres. Revisa si falta alguno.",
+  "SignInCodeScreen.guest":
+    "Estás usando la app como invitado. Al iniciar sesión, lo que creaste aquí se guarda con este correo. Si ese correo ya tiene una cuenta, te preguntaremos primero.",
+  "CodeStep.deadTitle": "Este código ya no funciona",
+  "CodeStep.dead": {
     "one":
-      "Enviamos un enlace de inicio de sesión a <email>{email}</email>. Sirve una sola vez, durante {count} minuto.",
+      "Cada código sirve una sola vez, durante {count} minuto, y admite pocos intentos fallidos. Pide uno nuevo y usa el correo más reciente.",
     "many":
-      "Enviamos un enlace de inicio de sesión a <email>{email}</email>. Sirve una sola vez, durante {count} minutos.",
+      "Cada código sirve una sola vez, durante {count} minutos, y admite pocos intentos fallidos. Pide uno nuevo y usa el correo más reciente.",
     "other":
-      "Enviamos un enlace de inicio de sesión a <email>{email}</email>. Sirve una sola vez, durante {count} minutos.",
+      "Cada código sirve una sola vez, durante {count} minutos, y admite pocos intentos fallidos. Pide uno nuevo y usa el correo más reciente.",
   },
-  "SignInLinkScreen.openHere": "Ábrelo en este dispositivo para iniciar sesión aquí.",
-  "SignInLinkScreen.newLink": "Enviar un enlace nuevo",
-  "SignInLinkScreen.waiting": {
-    "one":
-      "¿No te llegó? Revisa la carpeta de spam. Podrás enviar un enlace nuevo en {count} segundo.",
-    "many":
-      "¿No te llegó? Revisa la carpeta de spam. Podrás enviar un enlace nuevo en {count} segundos.",
-    "other":
-      "¿No te llegó? Revisa la carpeta de spam. Podrás enviar un enlace nuevo en {count} segundos.",
-  },
-  "SignInLinkScreen.resent":
-    "Te enviamos un enlace nuevo. Los anteriores siguen funcionando hasta que se use uno.",
-  "SignInLinkScreen.refusedTitle": "Este enlace ya no funciona",
-  "SignInLinkScreen.refused": {
-    "one":
-      "Los enlaces de inicio de sesión sirven una sola vez, durante {count} minuto. Pide uno nuevo y usa el correo más reciente.",
-    "many":
-      "Los enlaces de inicio de sesión sirven una sola vez, durante {count} minutos. Pide uno nuevo y usa el correo más reciente.",
-    "other":
-      "Los enlaces de inicio de sesión sirven una sola vez, durante {count} minutos. Pide uno nuevo y usa el correo más reciente.",
-  },
-  "SignInLinkScreen.elsewhereTitle": "Este enlace se pidió en otro navegador",
-  "SignInLinkScreen.elsewhere":
-    "No se inició tu sesión y tu cuenta de invitado no cambió. Pide un enlace nuevo en este navegador para iniciar sesión aquí.",
-  "SignInLinkScreen.incompleteTitle": "Este enlace está incompleto",
-  "SignInLinkScreen.incomplete": "Vuelve a abrir el enlace desde el correo o pide uno nuevo.",
-  "SignInLinkScreen.backToApp": "Volver a la app",
-  "SignInLinkScreen.finishTitle": "Termina de iniciar sesión",
-  "SignInLinkScreen.finish":
-    "Continúa para iniciar sesión en este dispositivo. Si el correo es nuevo, se creará tu cuenta.",
-  "SignInLinkScreen.signedInAs":
-    "Iniciaste sesión como <email>{email}</email>. Si continúas, entrarás en la cuenta del enlace.",
-  "SignInLinkScreen.guest":
-    "Estás usando la app con una cuenta de invitado. Si pediste este enlace en este navegador, al continuar se guardará esta cuenta de invitado con el correo del enlace. Si ese correo ya tiene una cuenta, te preguntaremos antes.",
-  "SignInLinkScreen.signingIn": "Iniciando sesión…",
-  "SignInLinkScreen.stay": "Mantener la sesión iniciada",
+  "CodeStep.differentEmail": "Usar otro correo",
   "SignInMethods.failed": "No se pudieron cambiar tus métodos de inicio de sesión",
   "SignInMethods.loadFailed":
     "No se pudieron cargar tus métodos de inicio de sesión. Revisa tu conexión y vuelve a intentarlo.",
@@ -1629,16 +1598,9 @@ export default {
   "SignUpCodeScreen.offline": "Estás sin conexión. Conéctate y vuelve a intentarlo.",
   "SignUpCodeScreen.title": "Revisa tu bandeja de entrada",
   "SignUpCodeScreen.loading": "Cargando…",
-  "SignUpCodeScreen.sent": {
-    "one": "Enviamos un código a <email>{email}</email>. Sirve durante {count} minuto.",
-    "many": "Enviamos un código a <email>{email}</email>. Sirve durante {count} minutos.",
-    "other": "Enviamos un código a <email>{email}</email>. Sirve durante {count} minutos.",
-  },
-  "SignUpCodeScreen.wrongAddress": "¿Correo equivocado? <button>Usa otro</button>",
   "SignUpCodeScreen.code": "Código",
   "SignUpCodeScreen.checking": "Comprobando…",
   "SignUpCodeScreen.resend": "Enviar un código nuevo",
-  "SignUpCodeScreen.resent": "Te enviamos un código nuevo.",
   "SignUpCodeScreen.resendFailed": "No se pudo enviar un código nuevo",
   "SignUpCodeScreen.existsTitle": "Ya tienes una cuenta",
   "SignUpCodeScreen.exists":
@@ -1987,7 +1949,9 @@ export default {
   "AuthScreen.lastPasskey":
     "La última vez iniciaste sesión con una llave de acceso<email> ({email})</email>.",
   "AuthScreen.lastLink":
-    "La última vez iniciaste sesión con un enlace por correo<email> ({email})</email>.",
+    "La última vez iniciaste sesión con un código por correo<email> ({email})</email>.",
+  "AuthScreen.emailSignInCode": "Enviarme un código para iniciar sesión",
+  "AuthScreen.emailSignUpCode": "Enviarme un código para registrarme",
   "AuthScreen.lastProvider":
     "La última vez iniciaste sesión con {provider}<email> ({email})</email>.",
   "AuthScreen.forget": "¿No eres tú? Usa otra cuenta",
@@ -2000,8 +1964,6 @@ export default {
   "AuthScreen.haveAccount": "¿Ya tienes una cuenta? <link>Inicia sesión</link>",
   "AuthScreen.lostDevice": "¿Perdiste tu dispositivo? <link>Volver a iniciar sesión</link>",
   "AuthScreen.sending": "Enviando…",
-  "AuthScreen.emailSignInLink": "Enviarme un enlace para iniciar sesión",
-  "AuthScreen.emailSignUpLink": "Enviarme un enlace para registrarme",
   "AuthScreen.orCreate": "o crea una cuenta",
   "AuthScreen.createAccount": "Crear cuenta",
   "AuthScreen.continue": "Continuar",
@@ -2135,7 +2097,7 @@ export default {
   "Benchmark.noLargeBody": "Crea uno con el generador y vuelve a cargar esta página:",
   "Benchmark.copyCommand": "Copiar comando",
   "Benchmark.noLargeFoot":
-    "Los tamaños y cómo eliminar el grupo después están en docs/capacity.md.",
+    "Los tamaños y cómo eliminar el grupo después están en docs/large-group.md.",
   "Benchmark.lastStoppedTitle": "La última prueba se detuvo en «{measure}»",
   "Benchmark.lastStoppedBody":
     "La pestaña se cerró antes de terminar, lo que suele indicar falta de memoria o de almacenamiento. Grupo: {group}, iniciada {time}.",

@@ -39,7 +39,7 @@
  *   a key deletes another user's unproven claim to that address, as a sign-up does, and that
  *   user gets the same audit row.
  * - **Unlinking.** Only a provider method, and never the last way in. An address another key holds
- *   proven counts as a way in, since a sign-in link reaches it (#406). The key's sessions end with
+ *   proven counts as a way in, since a sign-in code reaches it (#406). The key's sessions end with
  *   it through the foreign key, so unlinking the method this device signed in with signs it out.
  * - **A sign-in a moment ago stands in for the password (#384).** An account made with a provider
  *   has no password to confirm a deletion, a first password or a new address with. Its proof is
@@ -406,8 +406,8 @@ export function createOAuthOperations(
       const kind = kindOf(key)
       return kind === null ? [] : [{ key, kind }]
     })
-    // A sign-in link reaches the account while another key holds its address proven: the address
-    // stays the account's after `key` goes, so the link still finds it (#406).
+    // A sign-in code reaches the account while another key holds its address proven: the address
+    // stays the account's after `key` goes, so a code still finds it (#406).
     const linkOutlives = (key: AuthKey) =>
       keys.some((other) => other.id !== key.id && other.email !== null && other.provenAt !== null)
     return {
@@ -567,7 +567,7 @@ export function createOAuthOperations(
   async function proofUntil({ session }: AppAuthState): Promise<Date | null> {
     const key = await db.authStore.findKeyById(session.keyId)
     // A passkey sign-in proves as much as a provider's (#222): the device verified the person. A
-    // sign-in link proves the mailbox, which is what a reset link proves too (#391).
+    // sign-in code proves the mailbox, which is what a reset code proves too (#391).
     const proves = key &&
       (key.method.startsWith("oauth:") || key.method === PASSKEY_METHOD ||
         key.method === SIGN_IN_LINK_METHOD)

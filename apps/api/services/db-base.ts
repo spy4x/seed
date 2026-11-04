@@ -50,8 +50,9 @@ import { emailChanges } from "@server/auth/email-verification.ts"
 import type { Lockout } from "@spy4x/server/lockout"
 import { createPasswordCheckFailures } from "./password-locked.ts"
 import { signUpRequests } from "@server/auth/sign-up-requests.ts"
-import { signInLinkRequests } from "@server/auth/sign-in-links.ts"
-import { enqueueSignInLinkMail } from "@server/jobs/sign-in-link-mail.ts"
+import { signInCodeRequests } from "@server/auth/sign-in-codes.ts"
+import { enqueueSignInCodeMail } from "@server/jobs/sign-in-code-mail.ts"
+import { passwordResetRequests } from "@server/auth/password-reset.ts"
 import { enqueueSignUpCodeMail } from "@server/jobs/sign-up-code-mail.ts"
 import {
   accountDeletionBlockers,
@@ -102,7 +103,10 @@ import {
 import { markOnboarding, readOnboarding } from "@server/auth/onboarding.ts"
 import { preferencesStore, recordFirstDevice } from "@server/auth/preferences.ts"
 import { type ApiTokenRows, apiTokenRows } from "@server/api-tokens/api-tokens.ts"
-import { enqueuePasswordResetMail } from "@server/jobs/password-reset-mail.ts"
+import {
+  enqueuePasswordResetCodeMail,
+  enqueuePasswordResetMail,
+} from "@server/jobs/password-reset-mail.ts"
 import {
   exportAdminUsers,
   isUserBlocked,
@@ -177,21 +181,21 @@ export interface UserTotp {
 
 /**
  * The aggregates "move all of a group's data" moves, in the order it moves them. A new aggregate
- * joins here (`docs/aggregates.md`, "Making an aggregate movable"): put one that other aggregates
+ * joins here (`docs/aggregate-lifecycle.md`, "Make it movable"): put one that other aggregates
  * point at before the ones that point at it.
  */
 export const MOVABLE_AGGREGATES: readonly MovableAggregate[] = [tagMovable, noteMovable]
 
 /**
  * The aggregates a group's export file holds, in the order an import writes them. A new aggregate
- * joins here (`docs/aggregates.md`, "Making an aggregate exportable"): put one that other
+ * joins here (`docs/aggregate-lifecycle.md`, "Make it exportable"): put one that other
  * aggregates point at before the ones that point at it.
  */
 export const PORTABLE_AGGREGATES: readonly PortableAggregate[] = [tagPortable, notePortable]
 
 /**
- * The aggregates a device pulls the changes of, by group (`docs/aggregates.md`, "Taking part in
- * the changes pull"). Their `kind`s are the keys of the answer's `upserts`.
+ * The aggregates a device pulls the changes of, by group (`docs/aggregate-offline.md`, "Take part
+ * in the changes pull"). Their `kind`s are the keys of the answer's `upserts`.
  */
 export const CHANGES_AGGREGATES: readonly ChangesAggregate[] = [tagChanges, noteChanges]
 
@@ -613,9 +617,12 @@ export class AppDbBase extends DbServiceBase {
         setUserRoleByAddress(sql, address, role, actor),
       /** Gives the live person `userId` the role. Inside the action's `begin()`. */
       setRole: (userId: number, role: UserRole) => setUserRole(sql, userId, role),
-      /** The address a reset link for `userId` goes to, or `null` when none can reach them. */
+      /** The address a reset mail for `userId` goes to, or `null` when none can reach them. */
       resetAddress: (userId: number) => readPasswordResetAddress(sql, userId),
-      /** Queues the "Forgot password" mail to `email`, in the caller's transaction. */
+      /**
+       * Queues an operator's reset mail to `email`, in the caller's transaction: it tells the
+       * person to ask for a code on the "Forgot password" page (#752).
+       */
       queuePasswordReset: (email: string) => enqueuePasswordResetMail(sql, email),
       /** Every person `filter` matches, `batchSize` rows at a time, for the CSV export. */
       export: (filter: AdminUserFilter, batchSize: number) =>
@@ -664,17 +671,29 @@ export class AppDbBase extends DbServiceBase {
     }
   }
 
-  /** Sign-in links (#391): the requests, and queueing a link's mail. */
-  get signInLink() {
+  /**
+   * Sign-in codes (#391, #752): the requests, and queueing a code's mail. Built per access, like
+   * `group`, so a transaction's copy writes inside the transaction.
+   */
+  get signInCode() {
     const sql = this.sql
     return {
-      ...signInLinkRequests(sql),
-      /**
-       * Queues a link to `email`, already normalised, that opens `next` after sign-in, asked for
-       * by the guest `requestedBy` or by someone with no guest account (`null`).
-       */
-      queue: (email: string, next: string | null, requestedBy: number | null = null) =>
-        enqueueSignInLinkMail(sql, email, next, requestedBy),
+      ...signInCodeRequests(sql),
+      /** Queues a new code mail for the request `id`. */
+      queueCode: (id: string): Promise<void> => enqueueSignInCodeMail(sql, id),
+    }
+  }
+
+  /**
+   * Password resets waiting for their code (#752), and the code mails they ask for. Built per
+   * access, like `group`, so a transaction's copy writes inside the transaction.
+   */
+  get passwordReset() {
+    const sql = this.sql
+    return {
+      ...passwordResetRequests(sql),
+      /** Queues a new code mail for the reset request `id`. */
+      queueCode: (id: string): Promise<void> => enqueuePasswordResetCodeMail(sql, id),
     }
   }
 

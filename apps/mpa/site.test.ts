@@ -475,6 +475,7 @@ describe("the public website", () => {
       .map((match) => [linkText(match[1]), hrefOf(match[0])])
     expect(nav).toEqual(expect.arrayContaining([
       ["Features", "/features"],
+      ["Docs", "/docs"],
       ["Compare", "/compare"],
       ["Pricing", "/pricing"],
       ["Hire me (opens antonshubin.com)", HIRE_PAGE_URL.replaceAll("&", "&amp;")],
@@ -484,6 +485,26 @@ describe("the public website", () => {
     expect(linkNamed(header, "Sign in")).toBeUndefined()
     expect(hrefOf(linkNamed(footer, "Sign in"))).toBe(`${spa}/sign-in`)
     expect(header).not.toContain(`href="${site}/sign-`)
+  })
+
+  it("marks the header's Docs as the current page on the docs index, and as its section on every guide", async () => {
+    const pages = [["/docs", "Docs", "page"], ["/docs/get-started", "Docs", "true"], [
+      "/de/docs/deploy",
+      "Doku",
+      "true",
+    ]]
+    for (const [path, docs, current] of pages) {
+      const header = element((await page(path)).html, "header")!
+      expect(linkNamed(header, docs), path).toContain(`aria-current="${current}"`)
+    }
+    const header = element((await page("/features")).html, "header")!
+    expect(linkNamed(header, "Docs")).not.toContain(`aria-current`)
+  })
+
+  it("links the home page's quick start to the Get started guide", async () => {
+    const { html } = await page("/")
+    const link = /<a [^>]*data-e2e="home-get-started"[^>]*>/.exec(html)?.[0]
+    expect(hrefOf(link)).toBe("/docs/get-started")
   })
 
   it("marks the header's Hire me as leaving the site: an icon after its label, and words for a screen reader", async () => {
@@ -680,20 +701,28 @@ describe("the public website", () => {
 
     expect(html).toContain(`continue with Google or GitHub, sign in with a passkey`)
     expect(html).toContain(`Passkeys: only the public key is stored`)
-    expect(html).toContain(`Google and GitHub sign-in, passkeys, magic links, guest accounts, 2FA`)
+    expect(html).toContain(
+      `Google and GitHub sign-in, passkeys, email sign-in codes, guest accounts, 2FA`,
+    )
     expect(html).not.toContain(`issues/222`)
   })
 
-  it("lists magic links as built on the home page, /features and /compare (#391)", async () => {
+  it("lists email sign-in codes as built on the home page, /features and /compare (#391, #752)", async () => {
     const home = (await page("/")).html
     const features = (await page("/features")).html
     const { rows } = comparisonTable((await page("/compare")).html)
 
-    expect(home).toContain(`passkeys, magic links, 2FA`)
-    expect(features).toContain(`Magic links: one link signs in or signs up`)
-    expect(rows.find((row) => row.capability === "Magic links")?.values[0]).toBe("Yes")
+    expect(home).toContain(`passkeys, email sign-in codes, 2FA`)
+    expect(features).toContain(
+      `Email sign-in codes: an 8-character code signs in or signs up, works once, for 10 minutes, only in the browser that asked`,
+    )
+    expect(rows.find((row) => row.capability === "Passwordless email sign-in")?.values[0])
+      .toBe("Yes")
     // No "Not built yet" list, and no "gaps" line, names them any more.
-    for (const html of [home, features]) expect(html).not.toMatch(/>\s*Magic links\s*</)
+    for (const html of [home, features]) {
+      expect(html).not.toMatch(/>\s*Email sign-in codes\s*</)
+      expect(html).not.toMatch(/magic link/i)
+    }
   })
 
   it("lists note attachments as built on the home page, /features, /compare and /pricing (#225)", async () => {
@@ -904,13 +933,19 @@ describe("the public website", () => {
     )
   })
 
-  it("lists every published guide and the API reference on /docs, under Use and Build", async () => {
+  it("leads /docs with Get started, then lists every published guide and the API reference in the four sections", async () => {
     const { status, html } = await page("/docs")
 
     expect(status).toBe(200)
     expect(headingOne(html)).toBe("Seed docs")
-    const groups = [...html.matchAll(/<h2 id="docs-[^"]*"[^>]*>([^<]*)<\/h2>/g)].map((m) => m[1])
-    expect(groups).toEqual(["Use", "Build"])
+    const groups = [...html.matchAll(/<h2 id="docs-[^"]*"[^>]*>([\s\S]*?)<\/h2>/g)]
+      .map((m) => linkText(m[1]))
+    expect(groups).toEqual(["New to Seed?", "Get started", "Guides", "Concepts", "Reference"])
+    const first = /<section[^>]*data-e2e="docs-first"[\s\S]*?<\/section>/.exec(html)![0]
+    expect(hrefOf(linkNamed(first, "Get started"))).toBe("/docs/get-started")
+    expect(html.indexOf(`href="/docs/get-started"`)).toBeLessThan(
+      html.indexOf(`href="/docs/products"`),
+    )
     for (const slug of DOC_SLUGS) expect(html, slug).toContain(`href="/docs/${slug}"`)
     expect(html).toMatch(/<a href="\/docs\/api"[^>]*><span[^>]*>API reference<\/span>/)
   })
@@ -919,10 +954,10 @@ describe("the public website", () => {
     const { status, html } = await page("/docs/deploy")
 
     expect(status).toBe(200)
-    expect(headingOne(html)).toBe("Deploy and operate")
+    expect(headingOne(html)).toBe("Deploy to a server")
     expect(html).toContain(`<link rel="canonical" href="${site}/docs/deploy"`)
     const article = jsonLdGraph(html).find((entity) => isType(entity, "TechArticle"))
-    expect(article?.headline).toBe("Deploy and operate")
+    expect(article?.headline).toBe("Deploy to a server")
     expect(html).toContain(`href="/docs/apps"`)
     expect(html).not.toContain(`href="apps.md`)
     expect(html).not.toContain("Also on the website")

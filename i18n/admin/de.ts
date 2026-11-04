@@ -187,7 +187,7 @@ export default {
   "AdminAuditEvent.confirmationResent": "Newsletter-Bestätigung erneut gesendet",
   "AdminAuditEvent.subscribersExported": "Newsletter-Abonnenten exportiert",
   "AdminAuditEvent.roleChanged": "Rolle geändert",
-  "AdminAuditEvent.resetSent": "Link zum Zurücksetzen des Passworts von einem Operator gesendet",
+  "AdminAuditEvent.resetSent": "E-Mail zum Zurücksetzen des Passworts von einem Operator gesendet",
   "AdminAuditEvent.usersExported": "Personenliste exportiert",
   "AdminAuditEvent.passkeyRenamed": "Passkey umbenannt",
   "AdminAuditEvent.guestStarted": "Als Gast gestartet",
@@ -565,6 +565,7 @@ export default {
   "AdminBlogEditor.viewOnSite": "Auf der Website ansehen",
   "AdminBlogEditor.changeUrl": "URL ändern …",
   "AdminBlogEditor.unpublish": "Offline nehmen …",
+  "AdminBlogEditor.history": "Verlauf …",
   "AdminBlogEditor.deletePost": "Beitrag löschen …",
   "AdminBlogEditor.editPost": "Beitrag bearbeiten",
   "AdminBlogEditor.newPost": "Neuer Beitrag",
@@ -1725,7 +1726,8 @@ export default {
   "AdminUser.doneRoleOperator": "{name} ist jetzt Operator.",
   "AdminUser.doneRoleSupervisor": "{name} ist jetzt Supervisor.",
   "AdminUser.doneRoleAdmin": "{name} ist jetzt Administrator.",
-  "AdminUser.donePasswordReset": "{name} bekommt gleich einen Link zum Zurücksetzen des Passworts.",
+  "AdminUser.donePasswordReset":
+    "{name} bekommt gleich eine E-Mail zum Zurücksetzen des Passworts.",
   "AdminUser.doneDeleteGuest": "Gastkonto {name} gelöscht.",
   "AdminUser.doneUnlinkTelegram": "{name} ist nicht mehr mit Telegram verknüpft.",
   "AdminUser.doneRemovePicture": "Das Profilbild von {name} ist entfernt.",
@@ -1735,7 +1737,7 @@ export default {
   "AdminUser.unblock": "Entsperren",
   "AdminUser.block": "Sperren",
   "AdminUser.endAllSessions": "Alle Sitzungen beenden",
-  "AdminUser.sendReset": "Link zum Zurücksetzen des Passworts senden",
+  "AdminUser.sendReset": "E-Mail zum Zurücksetzen des Passworts senden",
   "AdminUser.noResetAddress": "Nur mit Passwort-Anmeldung und E-Mail-Adresse möglich",
   "AdminUser.unlinkTelegram": "Telegram trennen",
   "AdminUser.removePicture": "Profilbild entfernen",
@@ -1792,7 +1794,7 @@ export default {
   "AdminUser.methodPassword": "Passwort",
   "AdminUser.methodEmailCode": "Code per E-Mail",
   "AdminUser.methodPasskey": "Passkey",
-  "AdminUser.methodEmailLink": "Link per E-Mail",
+  "AdminUser.methodEmailLink": "Code per E-Mail",
   "AdminUser.blockTitle": "{name} sperren",
   "AdminUser.blockText":
     "Die Person wird sofort überall abgemeldet, und jeder Zugang wird abgewiesen: Passwort, Google, GitHub und API-Tokens. Ihre Daten bleiben erhalten. Du kannst sie später wieder entsperren.",
@@ -1813,10 +1815,10 @@ export default {
   "AdminUser.changeRoleText":
     "Die neue Rolle gilt ab der nächsten Anfrage der Person. Du kannst jede Rolle unterhalb deiner eigenen vergeben; Administratoren ernennt das Skript user:role.",
   "AdminUser.changing": "Wird geändert …",
-  "AdminUser.resetTitle": "{name} einen Link zum Zurücksetzen des Passworts senden",
+  "AdminUser.resetTitle": "{name} eine E-Mail zum Zurücksetzen des Passworts senden",
   "AdminUser.resetText":
-    "Die Person bekommt dieselbe E-Mail wie bei „Passwort vergessen“: einen Link, um ein neues Passwort festzulegen. Bis dahin funktioniert ihr bisheriges Passwort weiter.",
-  "AdminUser.sendLink": "Link senden",
+    "Die Person bekommt eine E-Mail, die erklärt, wie sie ihr Passwort über „Passwort vergessen“ mit einem Code zurücksetzt. Bis dahin funktioniert ihr bisheriges Passwort weiter.",
+  "AdminUser.sendLink": "E-Mail senden",
   "AdminUser.sending": "Wird gesendet …",
   "AdminUser.deleteGuestTitle": "Gastkonto {name} löschen",
   "AdminUser.deleteGuestText":
@@ -1837,7 +1839,7 @@ export default {
   "AdminUser.cancel": "Abbrechen",
   "AdminUsers.title": "Personen",
   "AdminUsers.subtitle":
-    "Alle mit einem Konto. Öffne eine Person, um sie zu sperren, eine Sitzung zu beenden oder einen Link zum Zurücksetzen des Passworts zu senden.",
+    "Alle mit einem Konto. Öffne eine Person, um sie zu sperren, eine Sitzung zu beenden oder eine E-Mail zum Zurücksetzen des Passworts zu senden.",
   "AdminUsers.export": "Als CSV exportieren",
   "AdminUsers.search": "Name oder E-Mail-Adresse",
   "AdminUsers.searching": "Wird gesucht …",
@@ -1880,4 +1882,13 @@ export default {
   "AdminBlogEditor.translationOfHint":
     "Der Beitrag, den dieser übersetzt. Sobald beide online sind, verknüpft die Website sie als Sprachversionen.",
   "AdminBlogEditor.translationNone": "Keiner: ein Originalbeitrag",
+  "AdminBlogHistory.title": "Verlauf",
+  "AdminBlogHistory.versions": "Frühere Versionen",
+  "AdminBlogHistory.shown": "Angezeigte Version",
+  "AdminBlogHistory.body": "Text",
+  "AdminBlogHistory.savedBy": "Gespeichert am {date} von {name}",
+  "AdminBlogHistory.someone": "Unbekannt",
+  "AdminBlogHistory.restore": "Diese Version wiederherstellen",
+  "AdminBlogHistory.empty": "Noch keine früheren Versionen. Jedes Speichern behält eine.",
+  "AdminBlogHistory.restored": "Frühere Version wiederhergestellt. Speichern, um sie zu behalten.",
 } satisfies Catalog

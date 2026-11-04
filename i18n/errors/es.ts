@@ -169,6 +169,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "El plan del grupo no incluye esto.",
   "Reason.PLAN_LIMIT_REACHED": "El grupo llegó al límite de su plan.",
   "Reason.POST_NOT_FOUND": "Esta entrada ya no existe.",
+  "Reason.REVISION_NOT_FOUND": "Esta versión anterior ya no existe.",
   "Reason.PROVIDER_ERROR": "El proveedor de pagos no respondió. Vuelve a intentarlo.",
   "Reason.REQUEST_ORIGIN_INVALID":
     "No pudimos comprobar de dónde venía esta solicitud. Recarga la página y vuelve a intentarlo.",
@@ -176,7 +177,6 @@ export default {
   "Reason.SAME_GROUP": "Esto ya está en ese grupo.",
   "Reason.SEARCH_RATE_LIMITED": "Demasiadas búsquedas. Espera un minuto y vuelve a intentarlo.",
   "Reason.SEAT_PRICE_NOT_ACCEPTED": "Confirma que cada miembro nuevo aumenta la factura del grupo.",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE": "Este enlace se pidió desde otro navegador. Ábrelo allí.",
   "Reason.SLUG_LOCKED":
     "La dirección ya no se puede editar una vez publicada la entrada. Usa «Cambiar URL» para cambiarla.",
   "Reason.SLUG_TAKEN": "Esta dirección ya está en uso. Elige otra.",

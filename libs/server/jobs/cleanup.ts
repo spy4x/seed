@@ -15,7 +15,7 @@ import { cleanUpGuests } from "../auth/guests.ts"
 import { removeStaleEmailCodeRequests } from "./email-code-mail.ts"
 import { removeExpiredAuthChallenges } from "./auth-challenges.ts"
 import { removeExpiredSignUps } from "./sign-up-code-mail.ts"
-import { removeStaleSignInLinkRequests } from "./sign-in-link-mail.ts"
+import { removeStaleSignInCodeRequests } from "./sign-in-code-mail.ts"
 import { removeStalePasswordResetRequests } from "./password-reset-mail.ts"
 import { removeStaleSubscriptionRequests } from "./subscriber-mail.ts"
 import { removeStaleTelegramMessages } from "./telegram-notification.ts"
@@ -38,17 +38,17 @@ export function cleanupSteps(
       const removed = await new PostgresOutboxRepository(sql).removeProcessed(OUTBOX_RETENTION_DAYS)
       if (removed > 0) console.log(`Removed ${removed} old processed outbox row(s)`)
     }],
-    ["remove unsent password reset requests", async () => {
+    ["remove old password reset requests", async () => {
       const stale = await removeStalePasswordResetRequests(sql)
-      if (stale > 0) console.log(`Removed ${stale} unsent password reset request(s)`)
+      if (stale > 0) console.log(`Removed ${stale} old password reset request(s)`)
     }],
     ["remove unsent e-mail code requests", async () => {
       const staleCodes = await removeStaleEmailCodeRequests(sql)
       if (staleCodes > 0) console.log(`Removed ${staleCodes} unsent e-mail code request(s)`)
     }],
-    ["remove unused sign-in links", async () => {
-      const links = await removeStaleSignInLinkRequests(sql)
-      if (links > 0) console.log(`Removed ${links} unused sign-in link request(s)`)
+    ["remove unused sign-in code requests", async () => {
+      const requests = await removeStaleSignInCodeRequests(sql)
+      if (requests > 0) console.log(`Removed ${requests} unused sign-in code request(s)`)
     }],
     ["remove unsent Telegram messages", async () => {
       const messages = await removeStaleTelegramMessages(sql)

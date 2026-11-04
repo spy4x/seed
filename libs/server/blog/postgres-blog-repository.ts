@@ -1,5 +1,6 @@
 import type postgres from "postgres"
 import { likeContains } from "@spy4x/server/db"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import {
   ADMIN_BLOG_LIST_MAX,
   type AdminBlogCounts,
@@ -8,12 +9,15 @@ import {
   BLOG_AUDIT_KINDS,
   BLOG_POST_ENTITY,
   BLOG_PUBLISH_JOB,
+  BLOG_REVISIONS_KEPT,
   type BlogAuditKind,
   BlogError,
   type BlogPost,
   type BlogPostEdit,
   type BlogPostFields,
   type BlogPostStatus,
+  type BlogRevision,
+  type BlogRevisionSummary,
   type BlogTopic,
   BlogVersionConflictError,
 } from "@domain/blog"
@@ -202,6 +206,33 @@ export class PostgresBlogRepository {
     return row ? toBlogPost(row) : null
   }
 
+  /**
+   * The post's earlier versions, newest first, without their bodies (#418); `null` when there is
+   * no post with `id`.
+   */
+  async revisions(id: string): Promise<BlogRevisionSummary[] | null> {
+    const [post] = await this.sql`SELECT 1 FROM blog_posts WHERE id = ${id}`
+    if (!post) return null
+    const rows = await this.sql<(Omit<BlogRevisionSummary, `savedAt`> & { savedAt: Date })[]>`
+      SELECT id, created_at AS saved_at, saved_by_name AS saved_by, title
+      FROM blog_post_revisions
+      WHERE post_id = ${id}
+      ORDER BY created_at DESC, id DESC
+    `
+    return rows.map((row) => ({ ...row, savedAt: row.savedAt.toISOString() }))
+  }
+
+  /** One earlier version of post `id` with every field, or `null` when the post has none such. */
+  async revision(id: string, revisionId: string): Promise<BlogRevision | null> {
+    const [row] = await this.sql<(Omit<BlogRevision, `savedAt`> & { savedAt: Date })[]>`
+      SELECT id, created_at AS saved_at, saved_by_name AS saved_by, title, slug, description,
+        seo_title, tldr, topic, cover_url, cover_alt, author_url, body_md, language, translation_of
+      FROM blog_post_revisions
+      WHERE id = ${revisionId} AND post_id = ${id}
+    `
+    return row ? { ...row, tldr: [...row.tldr], savedAt: row.savedAt.toISOString() } : null
+  }
+
   /** Every topic any post carries, drafts included, with how many posts carry it, A to Z. */
   async topics(): Promise<BlogTopic[]> {
     return await this.sql<BlogTopic[]>`
@@ -242,6 +273,7 @@ export class PostgresBlogRepository {
         ) return toBlogPost(first)
         throw new BlogError(`ID_ALREADY_EXISTS`, `A post with this id exists already.`)
       }
+      await keepRevision(tx, id, actor)
       await audit(tx, actor, BLOG_AUDIT_KINDS.created, row)
       return toBlogPost(row)
     })
@@ -290,6 +322,7 @@ export class PostgresBlogRepository {
         WHERE id = ${id}
         RETURNING *
       `
+      await keepRevision(tx, id, actor)
       if (row.status === `published`) await queueIndexNow(tx, id)
       await audit(tx, actor, BLOG_AUDIT_KINDS.updated, row)
       return toBlogPost(row)
@@ -499,6 +532,57 @@ async function queuePublishJob(
     id,
     when,
   )
+}
+
+/**
+ * Keeps the fields post `id` has now as one of its earlier versions (#418), saved by `actor`, in
+ * the save's transaction, and deletes its versions past the newest {@link BLOG_REVISIONS_KEPT}. A
+ * save that changed no field keeps nothing, so saving again and again does not push the older
+ * versions out. The operator's name, or else an address of theirs, is copied in, so the row
+ * still names them once the account is gone. The time is the clock's, not the transaction's
+ * start: a save that waited for another one's lock is the newer one.
+ */
+async function keepRevision(
+  tx: postgres.TransactionSql,
+  id: string,
+  actor: BlogActor,
+): Promise<void> {
+  await tx`
+    INSERT INTO blog_post_revisions (
+      id, post_id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt,
+      author_url, body_md, language, translation_of, saved_by_id, saved_by_name, created_at
+    )
+    SELECT ${uuidV7()}, post.id, post.slug, post.title, post.seo_title, post.description,
+      post.tldr, post.topic, post.cover_url, post.cover_alt, post.author_url, post.body_md,
+      post.language, post.translation_of, ${actor.userId},
+      COALESCE(
+        (SELECT NULLIF(btrim(concat_ws(' ', first_name, last_name)), '')
+          FROM users WHERE id = ${actor.userId}),
+        (SELECT min(email) FROM auth_email_owners WHERE user_id = ${actor.userId})
+      ),
+      clock_timestamp()
+    FROM blog_posts AS post
+    WHERE post.id = ${id} AND NOT EXISTS (
+      SELECT 1 FROM (
+        SELECT * FROM blog_post_revisions WHERE post_id = ${id}
+        ORDER BY created_at DESC, id DESC LIMIT 1
+      ) AS newest
+      WHERE (newest.slug, newest.title, newest.seo_title, newest.description, newest.tldr,
+          newest.topic, newest.cover_url, newest.cover_alt, newest.author_url, newest.body_md,
+          newest.language, newest.translation_of)
+        IS NOT DISTINCT FROM (post.slug, post.title, post.seo_title, post.description, post.tldr,
+          post.topic, post.cover_url, post.cover_alt, post.author_url, post.body_md,
+          post.language, post.translation_of)
+    )
+  `
+  await tx`
+    DELETE FROM blog_post_revisions
+    WHERE post_id = ${id} AND id NOT IN (
+      SELECT id FROM blog_post_revisions WHERE post_id = ${id}
+      ORDER BY created_at DESC, id DESC
+      LIMIT ${BLOG_REVISIONS_KEPT}
+    )
+  `
 }
 
 /** Writes the operator's audit row of one action on `post`. Its details name the post's slug. */

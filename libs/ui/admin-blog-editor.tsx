@@ -42,8 +42,10 @@ import {
   blogPostPath,
   type BlogPostStatus,
   type BlogProblem,
+  type BlogRevision,
   isHttpsUrl,
 } from "@domain/blog"
+import type { BlogHistoryState } from "./admin-blog-history.tsx"
 import { DEFAULT_LANGUAGE, type Language, LANGUAGES } from "@domain/identity"
 import { ADMIN_BLOG_PATHS, BlogStatusBadge } from "./admin-blog-list.tsx"
 import { Dialogs } from "./admin-blog-dialogs.tsx"
@@ -145,8 +147,25 @@ export function emptyBlogDraft(): BlogDraft {
   }
 }
 
-/** A saved post's fields, as the editor shows them. */
-export function blogDraftOf(post: BlogPost): BlogDraft {
+/** The fields a post and its earlier versions (#418) share: what the editor edits. */
+export type BlogDraftSource = Pick<
+  BlogPost,
+  | `title`
+  | `slug`
+  | `description`
+  | `seoTitle`
+  | `tldr`
+  | `topic`
+  | `coverUrl`
+  | `coverAlt`
+  | `bodyMd`
+  | `language`
+  | `translationOf`
+  | `authorUrl`
+>
+
+/** A saved post's fields, or an earlier version's, as the editor shows them. */
+export function blogDraftOf(post: BlogDraftSource): BlogDraft {
   return {
     title: post.title,
     slug: post.slug,
@@ -267,6 +286,7 @@ export type BlogDialog =
   | `unpublish`
   | `change-url`
   | `delete`
+  | `history`
 
 /** What the publish dialog sends: now (`at` is `null`) or at a time, and the list to email. */
 export interface BlogPublishChoice {
@@ -351,6 +371,14 @@ export interface AdminBlogEditorScreenProps {
   onUnpublish: () => void
   onChangeUrl: (slug: string) => void
   onDelete: () => void
+  /** The History dialog's list and the version picked (#418). */
+  history: BlogHistoryState
+  /** Picks a version in History, which reads it. */
+  onSelectRevision: (id: string) => void
+  /** Puts a version's fields in the editor as unsaved changes and closes History. */
+  onRestoreRevision: (revision: BlogRevision) => void
+  /** Reads History's list, or the picked version, again. */
+  onRetryHistory: () => void
   /** The time a schedule must lie after. */
   now: Date
   navigate?: Navigate
@@ -528,6 +556,12 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
       root.current?.querySelector<HTMLElement>(`#${BLOG_PROBLEMS_ID} button`)?.focus()
     )
   }
+  // History's "Restore this version": the fields change, the dialog closes, and focus moves to the
+  // title, the first field a version holds, so the keyboard carries on from the top of the form.
+  const restoreRevision = (revision: BlogRevision) => {
+    props.onRestoreRevision(revision)
+    setTimeout(() => root.current?.querySelector<HTMLElement>(`#blog-title`)?.focus())
+  }
 
   const edit = (patch: Partial<BlogDraft>) => onChange({ ...value, ...patch })
   const openPreview = (next: string) => {
@@ -617,6 +651,12 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
           </DropdownItem>
         </>
       )}
+      <DropdownItem
+        onClick={() => props.onOpenDialog(`history`)}
+        dataE2E="admin-blog-history-open"
+      >
+        {t.t(`AdminBlogEditor.history`)}
+      </DropdownItem>
       <DropdownItem
         danger
         onClick={() => props.onOpenDialog(`delete`)}
@@ -758,7 +798,7 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
           <div class="sm:hidden">{saveButton(`min-h-11 w-full`)}</div>
         </Stack>
       </ScreenForm>
-      <Dialogs {...props} onGoToProblems={goToProblems} />
+      <Dialogs {...props} onGoToProblems={goToProblems} onRestore={restoreRevision} />
     </>
   )
 }

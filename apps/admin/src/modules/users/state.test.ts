@@ -172,7 +172,7 @@ it("sends nothing for a role change without a role", async () => {
   expect(state.dialog.value.action).toBe("change-role")
 })
 
-it("asks the API to mail a password-reset link, and toasts it", async () => {
+it("asks the API to mail a password-reset email, and toasts it", async () => {
   const { request, calls } = fakeRequest()
   const { state, toasts } = await withDialog(request)
   state.openDialog("password-reset")
@@ -181,7 +181,7 @@ it("asks the API to mail a password-reset link, and toasts it", async () => {
     `POST /api/admin/users/42/password-reset`,
   ])
   expect(toasts.list.value.map((toast) => toast.body)).toEqual([
-    "A password-reset link is on its way to Grace Hopper.",
+    "A password-reset email is on its way to Grace Hopper.",
   ])
 })
 

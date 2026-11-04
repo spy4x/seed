@@ -375,7 +375,7 @@ describe("one person in the admin app, with the people actions", () => {
       const title of [
         "Role changed",
         "operator:7 from viewer to operator",
-        "Password-reset link sent by an operator",
+        "Password-reset email sent by an operator",
         "User list exported",
         "Profile picture removed by an operator",
         "operator:7 q=ada",

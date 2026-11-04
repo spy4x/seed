@@ -1,5 +1,5 @@
 /**
- * Processed images (#464, docs/files.md): an uploaded photo becomes upright AVIF and WebP widths
+ * Processed images (#464, docs/file-uploads.md): an uploaded photo becomes upright AVIF and WebP widths
  * with no metadata, and its original, which may carry where it was taken, is deleted.
  *
  * A feature that keeps a photo calls {@link queueImage} in the transaction that keeps it. The

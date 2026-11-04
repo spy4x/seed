@@ -185,6 +185,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "خطة المجموعة لا تشمل هذه الميزة.",
   "Reason.PLAN_LIMIT_REACHED": "وصلت المجموعة إلى حدّ خطتها.",
   "Reason.POST_NOT_FOUND": "هذا المقال لم يعد موجودًا.",
+  "Reason.REVISION_NOT_FOUND": "هذه النسخة السابقة لم تعد موجودة.",
   "Reason.PROVIDER_ERROR": "لم يستجب مزوّد الدفع. حاول مرة أخرى.",
   "Reason.REQUEST_ORIGIN_INVALID":
     "لم نتمكن من التحقق من مصدر هذا الطلب. أعد تحميل الصفحة وحاول مرة أخرى.",
@@ -192,7 +193,6 @@ export default {
   "Reason.SAME_GROUP": "هذا موجود في تلك المجموعة بالفعل.",
   "Reason.SEARCH_RATE_LIMITED": "عمليات بحث كثيرة. انتظر دقيقة وحاول مرة أخرى.",
   "Reason.SEAT_PRICE_NOT_ACCEPTED": "أكّد أن كل عضو جديد يزيد فاتورة المجموعة.",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE": "طُلب هذا الرابط من متصفح آخر. افتحه هناك.",
   "Reason.SLUG_LOCKED": "لا يمكن تعديل العنوان بعد نشر المقال. استخدم «تغيير الرابط» لتغييره.",
   "Reason.SLUG_TAKEN": "هذا العنوان مستخدم. اختر عنوانًا مختلفًا.",
   "Reason.SLUG_UNCHANGED": "هذا هو العنوان الحالي بالفعل.",

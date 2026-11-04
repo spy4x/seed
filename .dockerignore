@@ -11,6 +11,7 @@
 # The MPA renders the API reference and the published guides from these files
 # (apps/mpa/api-docs.ts, PUBLISHED_DOCS in apps/mpa/docs-site.ts); the other docs stay out.
 !docs/token-api.md
+!docs/get-started.md
 !docs/apps.md
 !docs/products.md
 !docs/start-a-product.md
@@ -31,6 +32,32 @@
 !docs/ids.md
 !docs/api-errors.md
 !docs/admin-modules.md
+!docs/ai-agents.md
+!docs/local-stack.md
+!docs/first-feature.md
+!docs/aggregate-offline.md
+!docs/aggregate-relations.md
+!docs/aggregate-lifecycle.md
+!docs/aggregate-extras.md
+!docs/browser-tests.md
+!docs/file-uploads.md
+!docs/attachments-and-pictures.md
+!docs/billing-plans.md
+!docs/billing-operator.md
+!docs/billing-lifecycle.md
+!docs/offline-data.md
+!docs/offline-writes.md
+!docs/offline-sign-out.md
+!docs/offline-app-shell.md
+!docs/certificates.md
+!docs/deploy-updates.md
+!docs/large-group.md
+!docs/load-tests.md
+!docs/operator-access.md
+!docs/releases.md
+!docs/restore.md
+!docs/settings.md
+!docs/several-projects.md
 # The website counts the browser test suites (apps/mpa/repo-facts.ts): the files at the top of
 # e2e/, which holds only suites there, and none of its folders. Never write this as
 # `!e2e/*.e2e.ts`: an exception with any wildcard but a trailing `/**` makes BuildKit read every

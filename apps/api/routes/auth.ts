@@ -13,28 +13,29 @@ import {
   authPasswordForgotSchema,
   authPasswordResetSchema,
   authPasswordSetSchema,
-  authSignInLinkRedeemSchema,
-  authSignInLinkSchema,
+  authSignInCodeSchema,
   authSignInSchema,
   authSignUpSchema,
   authTotpDisconnectSchema,
   emailToVerify,
   hasPasswordAddress,
-  SIGN_IN_LINK_ASKED_ELSEWHERE_CODE,
-  type SignInLinkRedeemed,
+  type PasswordResetVerified,
+  type SignInCodeAnswer,
   signInMethodProofSchema,
   type SignUpAccountExistsResponse,
   type SignUpGuestTakenResponse,
   type User,
   UserMFAStatus,
+  type WaitingCodeResponse,
   type WaitingPasswordSignUpResponse,
 } from "@domain/identity"
 import {
   EmailChangeOutcome,
   EmailVerifyOutcome,
+  PasswordResetOutcome,
   PasswordSetOutcome,
   type SignIn,
-  SignInLinkOutcome,
+  SignInCodeOutcome,
   SignUpOutcome,
 } from "@api/services/sign-in.ts"
 import { pageOrNull } from "@api/services/oauth-sign-in.ts"
@@ -64,23 +65,6 @@ export interface AuthRouteDependencies {
    * with a short lock (`services/password-failures.ts`).
    */
   passwordFailures: Lockout
-  /**
-   * Queues a reset link for a normalised address. The worker sends it only when an account signs
-   * in with the address, so this call does the same work either way.
-   */
-  requestPasswordReset(email: string): Promise<void>
-  /**
-   * Queues a sign-in link for a normalised address, with the checked page to open after sign-in
-   * (#391). The same work for every address: the link decides what happens once it is opened.
-   * `requestedBy` is the guest account that asks, else `null`: a guest uses only a link it asked for.
-   * `language` is the asking page's, for the mail (#277); `null` when it sent none.
-   */
-  requestSignInLink(
-    email: string,
-    next: string | null,
-    requestedBy: number | null,
-    language: string | null,
-  ): Promise<void>
   /** Persistent count of wrong e-mail codes per user, with a growing lock. */
   emailCodeFailures: Lockout
   /** Queues a mail with a new code for `email`, the address the user's account must prove. */
@@ -90,7 +74,7 @@ export interface AuthRouteDependencies {
 /** The answer to a reset request that was accepted, whether or not the address has an account. */
 export const PASSWORD_RESET_REQUESTED = {
   success: true,
-  message: "If an account uses this address, a link to reset its password is on its way.",
+  message: "If an account uses this address, a code to reset its password is on its way.",
 }
 
 /**
@@ -105,39 +89,41 @@ export const SIGN_UP_EXPIRED = "This sign-up expired. Start again."
 /** The answer when the address's code budget is spent; the same for every address. */
 export const SIGN_UP_CODES_TOO_MANY = "Too many codes for this address, try again later."
 
-/** The answer to a link request that was accepted: the same for every address (#391). */
-export const SIGN_IN_LINK_REQUESTED = { success: true }
+/** The answer to a code request that was accepted: the same for every address (#391). */
+export const SIGN_IN_CODE_REQUESTED = { success: true }
 
-/** The answer to an address `normalizeEmail` refuses, on the link request. */
-export const SIGN_IN_LINK_BAD_ADDRESS = "Enter an e-mail address, such as name@example.com."
+/** The answer to an address `normalizeEmail` refuses, on the code request. */
+export const SIGN_IN_CODE_BAD_ADDRESS = "Enter an e-mail address, such as name@example.com."
 
-/** The answer when the address's link budget is spent; the same for every address. */
-export function signInLinksTooMany(retryAfterMs: number): string {
+/** The answer when the address's code budget is spent; the same for every address. */
+export function signInCodesTooMany(retryAfterMs: number): string {
   const minutes = Math.max(1, Math.ceil(retryAfterMs / 60_000))
-  return `Too many links were asked for this address. Try again in ${minutes} ${
+  return `Too many codes were asked for this address. Try again in ${minutes} ${
     minutes === 1 ? "minute" : "minutes"
   }.`
 }
 
-/** The answer to a link that is unknown, expired or used: one answer for all. */
-export const SIGN_IN_LINK_REFUSED = "This link no longer works."
+/** The answer to a wrong code, while the request still takes guesses (#752). */
+export const MAILED_CODE_WRONG = "That code isn't right. Check the latest email and try again."
 
 /**
- * The answer when an account signs in with the link's address by password but never confirmed
- * it: the link proved the mailbox, not that account. Told only to whoever holds the mailbox.
+ * The answer when no request waits in this browser, it expired, its guesses ran out, or the
+ * account is blocked or gone: one answer for all.
  */
-export const SIGN_IN_LINK_UNCONFIRMED =
+export const MAILED_CODE_DEAD = "This code no longer works. Send a new one."
+
+/**
+ * The answer when an account signs in with the code's address by password but never confirmed
+ * it: the code proved the mailbox, not that account. Told only to whoever holds the mailbox.
+ */
+export const SIGN_IN_CODE_UNCONFIRMED =
   "An account uses this address but never confirmed it. Reset its password to sign in."
 
-/**
- * The answer to a guest who opens a link another browser asked for, with the code
- * `SIGN_IN_LINK_ASKED_ELSEWHERE_CODE`: the link is spent, and the guest stays signed in as before.
- */
-export const SIGN_IN_LINK_ASKED_ELSEWHERE =
-  "This link was asked for in another browser. Ask for a new one in this browser."
+/** The answer when the address's reset budget is spent; the same for every address. */
+export const PASSWORD_RESET_TOO_MANY = "Too many reset codes for this address, try again later."
 
-/** The answer to a reset link that cannot be used. */
-export const PASSWORD_RESET_REFUSED = "This link is invalid, used or expired. Ask for a new one."
+/** The answer to a reset token that cannot be used, or a reset no browser of this one waits for. */
+export const PASSWORD_RESET_REFUSED = "This reset no longer works. Ask for a new code."
 
 /** The answer to an e-mail code that cannot be used: wrong, expired or used up alike. */
 export const EMAIL_CODE_REFUSED = "This code is wrong or has expired. Ask for a new one."
@@ -273,8 +259,6 @@ export function createAuthRoute(
     rateLimits,
     totpFailures,
     passwordFailures,
-    requestPasswordReset,
-    requestSignInLink,
     emailCodeFailures,
     requestEmailCode,
   }: AuthRouteDependencies,
@@ -433,6 +417,8 @@ export function createAuthRoute(
       await signIn.cancelSignUp(c)
       return c.json({ success: true })
     })
+    // Password reset by code (#752). The same work and answer for every well-formed address; the
+    // worker mails the code only when an account signs in with a password and that address.
     .post(`/password/forgot`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
       const body = await readApiJson(c)
       const validationResult = validate(authPasswordForgotSchema, body)
@@ -445,92 +431,160 @@ export function createAuthRoute(
       }
       // Spent for every address, known or not, so a refusal tells nothing about an account.
       const decision = await rateLimits.resetByAddress(email)
-      if (!decision.allowed) {
-        c.header("Retry-After", String(Math.ceil(decision.retryAfterMs / 1000)))
-        return errorResponse(c, `rate_limited`, {
-          message: "Too many reset links for this address, try again later.",
-        })
-      }
-      await requestPasswordReset(email)
+      if (!decision.allowed) return tooMany(c, decision.retryAfterMs, PASSWORD_RESET_TOO_MANY)
+      await signIn.requestPasswordReset(c, email)
       return c.json(PASSWORD_RESET_REQUESTED)
     })
-    // Sign-in and sign-up by e-mail link (#391). The same work and answer for every well-formed
-    // address, as for a sign-up: whether an account uses it is decided only when the link is used.
-    .post(`/link`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
-      const body = await readApiJson(c)
-      const validationResult = validate(authSignInLinkSchema, body)
-      if (validationResult.error) {
-        return validationResponse(c, validationResult.error.details)
+    .get(`/password/reset`, rateLimits.normal, async (c) => {
+      const answer: WaitingCodeResponse = {
+        email: (await signIn.waitingPasswordReset(c))?.email ?? null,
       }
-      const email = normalizeEmail(validationResult.data.email)
-      if (email === null) {
-        return errorResponse(c, `bad_request`, { message: SIGN_IN_LINK_BAD_ADDRESS })
-      }
-      // Spent for every address, known or not; a stranger spends only their own share.
-      const decision = await rateLimits.signInLink(c, email)
-      if (!decision.allowed) {
-        return tooMany(c, decision.retryAfterMs, signInLinksTooMany(decision.retryAfterMs))
-      }
-      const asker = c.get("auth")?.user
-      await requestSignInLink(
-        email,
-        pageOrNull(validationResult.data.next),
-        asker?.guestSince ? asker.id : null,
-        validationResult.data.language ?? null,
-      )
-      return c.json(SIGN_IN_LINK_REQUESTED)
+      return c.json(answer)
     })
-    // A POST the link page sends when the person presses Continue: opening the link spends nothing,
-    // so a mail scanner that follows it leaves it working.
-    .post(`/link/redeem`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
-      const body = await readApiJson(c)
-      const validationResult = validate(authSignInLinkRedeemSchema, body)
-      if (validationResult.error) {
-        return validationResponse(c, validationResult.error.details)
-      }
-      const result = await signIn.redeemSignInLink(c, validationResult.data.token)
-      switch (result.outcome) {
-        case SignInLinkOutcome.SignedIn:
-        case SignInLinkOutcome.Created:
-        case SignInLinkOutcome.GuestKept: {
-          // Every guest session ended with the keep (#374): their sockets close.
-          if (result.outcome === SignInLinkOutcome.GuestKept) {
-            emitSignOut(c, result.signedIn.user.id)
-          }
-          const answer: SignInLinkRedeemed = {
-            email: result.email,
-            next: pageOrNull(result.next),
-            created: result.outcome !== SignInLinkOutcome.SignedIn,
-            secondFactorPending:
-              result.signedIn.session.secondFactor === SecondFactorStatus.Pending,
-          }
-          return c.json(answer)
+    .post(
+      `/password/reset/verify`,
+      mutationGuards.anonymous,
+      rateLimits.strictByIp,
+      async (c) => {
+        const body = await readApiJson(c)
+        const validationResult = validate(authEmailCodeSchema, body)
+        if (validationResult.error) {
+          return validationResponse(c, validationResult.error.details)
         }
-        case SignInLinkOutcome.GuestTaken: {
-          const answer: SignUpGuestTakenResponse = { guestTaken: true }
-          return c.json(answer)
+        const result = await signIn.verifyPasswordReset(c, validationResult.data.code)
+        switch (result.outcome) {
+          case PasswordResetOutcome.Verified: {
+            const answer: PasswordResetVerified = { token: result.token }
+            return c.json(answer)
+          }
+          case PasswordResetOutcome.WrongCode:
+            return errorResponse(c, `bad_request`, { message: MAILED_CODE_WRONG })
+          case PasswordResetOutcome.Expired:
+            return errorResponse(c, `not_found`, { message: MAILED_CODE_DEAD, status: 410 })
         }
-        case SignInLinkOutcome.Unconfirmed:
-          return errorResponse(c, `conflict`, { message: SIGN_IN_LINK_UNCONFIRMED })
-        case SignInLinkOutcome.Refused:
-          return errorResponse(c, `not_found`, { message: SIGN_IN_LINK_REFUSED, status: 410 })
-        case SignInLinkOutcome.AskedElsewhere:
-          return errorResponse(c, `forbidden`, {
-            message: SIGN_IN_LINK_ASKED_ELSEWHERE,
-            reason: SIGN_IN_LINK_ASKED_ELSEWHERE_CODE,
-          })
-      }
+      },
+    )
+    // The normal limit: the address's reset budget is what stops a flood of mails.
+    .post(
+      `/password/reset/resend`,
+      mutationGuards.anonymous,
+      rateLimits.normal,
+      async (c) => {
+        const waiting = await signIn.waitingPasswordReset(c)
+        if (waiting === null) {
+          return errorResponse(c, `not_found`, { message: MAILED_CODE_DEAD, status: 410 })
+        }
+        const decision = await rateLimits.resetByAddress(waiting.email)
+        if (!decision.allowed) return tooMany(c, decision.retryAfterMs, PASSWORD_RESET_TOO_MANY)
+        if (!(await signIn.resendPasswordReset(c))) {
+          return errorResponse(c, `not_found`, { message: MAILED_CODE_DEAD, status: 410 })
+        }
+        return c.json({ success: true })
+      },
+    )
+    .post(`/password/reset/cancel`, mutationGuards.anonymous, rateLimits.normal, async (c) => {
+      await signIn.cancelPasswordReset(c)
+      return c.json({ success: true })
     })
+    // The token from `/password/reset/verify` and the new password; the address is the one this
+    // browser's request names, so the token never travels with it in a URL.
     .post(`/password/reset`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
       const body = await readApiJson(c)
       const validationResult = validate(authPasswordResetSchema, body)
       if (validationResult.error) {
         return validationResponse(c, validationResult.error.details)
       }
-      const { email, code, newPassword } = validationResult.data
-      if (!(await signIn.resetPassword(email, code, newPassword, c))) {
+      const { token, newPassword } = validationResult.data
+      if (!(await signIn.finishPasswordReset(c, token, newPassword))) {
         return errorResponse(c, `bad_request`, { message: PASSWORD_RESET_REFUSED })
       }
+      return c.json({ success: true })
+    })
+    // Sign-in and sign-up by an e-mailed code (#391, #752). The same work and answer for every
+    // well-formed address, as for a sign-up: whether an account uses it is decided only when the
+    // right code comes back, from the browser that asked.
+    .post(`/code`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
+      const body = await readApiJson(c)
+      const validationResult = validate(authSignInCodeSchema, body)
+      if (validationResult.error) {
+        return validationResponse(c, validationResult.error.details)
+      }
+      const email = normalizeEmail(validationResult.data.email)
+      if (email === null) {
+        return errorResponse(c, `bad_request`, { message: SIGN_IN_CODE_BAD_ADDRESS })
+      }
+      // Spent for every address, known or not; a stranger spends only their own share.
+      const decision = await rateLimits.signInCode(c, email)
+      if (!decision.allowed) {
+        return tooMany(c, decision.retryAfterMs, signInCodesTooMany(decision.retryAfterMs))
+      }
+      await signIn.requestSignInCode(
+        c,
+        email,
+        pageOrNull(validationResult.data.next),
+        validationResult.data.language ?? null,
+      )
+      return c.json(SIGN_IN_CODE_REQUESTED)
+    })
+    .get(`/code`, rateLimits.normal, async (c) => {
+      const answer: WaitingCodeResponse = {
+        email: (await signIn.waitingSignInCode(c))?.email ?? null,
+      }
+      return c.json(answer)
+    })
+    .post(`/code/verify`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
+      const body = await readApiJson(c)
+      const validationResult = validate(authEmailCodeSchema, body)
+      if (validationResult.error) {
+        return validationResponse(c, validationResult.error.details)
+      }
+      const result = await signIn.completeSignInCode(c, validationResult.data.code)
+      switch (result.outcome) {
+        case SignInCodeOutcome.SignedIn:
+        case SignInCodeOutcome.Created:
+        case SignInCodeOutcome.GuestKept: {
+          // Every guest session ended with the keep (#374): their sockets close.
+          if (result.outcome === SignInCodeOutcome.GuestKept) {
+            emitSignOut(c, result.signedIn.user.id)
+          }
+          const answer: SignInCodeAnswer = {
+            email: result.email,
+            next: pageOrNull(result.next),
+            created: result.outcome !== SignInCodeOutcome.SignedIn,
+            secondFactorPending:
+              result.signedIn.session.secondFactor === SecondFactorStatus.Pending,
+          }
+          return c.json(answer)
+        }
+        case SignInCodeOutcome.GuestTaken: {
+          const answer: SignUpGuestTakenResponse = { guestTaken: true }
+          return c.json(answer)
+        }
+        case SignInCodeOutcome.WrongCode:
+          return errorResponse(c, `bad_request`, { message: MAILED_CODE_WRONG })
+        case SignInCodeOutcome.Unconfirmed:
+          return errorResponse(c, `conflict`, { message: SIGN_IN_CODE_UNCONFIRMED })
+        case SignInCodeOutcome.Refused:
+          return errorResponse(c, `not_found`, { message: MAILED_CODE_DEAD, status: 410 })
+      }
+    })
+    // The normal limit: the address's code budgets are what stop a flood of mails.
+    .post(`/code/resend`, mutationGuards.anonymous, rateLimits.normal, async (c) => {
+      const waiting = await signIn.waitingSignInCode(c)
+      if (waiting === null) {
+        return errorResponse(c, `not_found`, { message: MAILED_CODE_DEAD, status: 410 })
+      }
+      const decision = await rateLimits.signInCode(c, waiting.email)
+      if (!decision.allowed) {
+        return tooMany(c, decision.retryAfterMs, signInCodesTooMany(decision.retryAfterMs))
+      }
+      if (!(await signIn.resendSignInCode(c))) {
+        return errorResponse(c, `not_found`, { message: MAILED_CODE_DEAD, status: 410 })
+      }
+      return c.json({ success: true })
+    })
+    .post(`/code/cancel`, mutationGuards.anonymous, rateLimits.normal, async (c) => {
+      await signIn.cancelSignInCode(c)
       return c.json({ success: true })
     })
     .use(isAuthenticated1FA)

@@ -3,15 +3,16 @@ import {
   type AccountDeletionStatus,
   type ApiSuccessResponse,
   type ExistingAccountAnswer,
-  SIGN_IN_LINK_ASKED_ELSEWHERE_CODE,
+  type PasswordResetVerified,
   type SignedInDevice,
   type SignedInDevicesResponse,
-  type SignInLinkRedeemed,
+  type SignInCodeAnswer,
   type SignUpAccountExistsResponse,
   type SignUpGuestTakenResponse,
   type TotpConnectStartResponse,
   type User,
   UserMFAStatus,
+  type WaitingCodeResponse,
   type WaitingPasswordSignUp,
   type WaitingPasswordSignUpResponse,
 } from "@domain/identity"
@@ -326,35 +327,6 @@ export async function cancelPasswordSignUp(): Promise<void> {
 }
 
 /**
- * Asks for a reset link to `email`. The answer is the same whether or not an account uses it;
- * `message` is the API's wording of it.
- */
-export async function requestPasswordReset(
-  email: string,
-): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
-  const result = await apiFetch<{ success: boolean; message: string }>(
-    "/api/auth/password/forgot",
-    { method: "POST", body: JSON.stringify({ email }) },
-  )
-  if (!result.ok) return { ok: false, error: result.error.message }
-  return { ok: true, message: result.data.message }
-}
-
-/** Sets a new password with the address and code of a reset link. Signs nobody in. */
-export async function resetPassword(
-  email: string,
-  code: string,
-  newPassword: string,
-): Promise<{ ok: boolean; error?: string }> {
-  const result = await apiFetch<ApiSuccessResponse>("/api/auth/password/reset", {
-    method: "POST",
-    body: JSON.stringify({ email, code, newPassword }),
-  })
-  if (!result.ok) return { ok: false, error: result.error.message }
-  return { ok: true }
-}
-
-/**
  * The message of a refused request, or `undefined` when the server failed: a 5xx answer, such as a
  * proxy's page during a deploy, carries no message worth showing, so the screen says its own.
  */
@@ -362,29 +334,29 @@ function ownMessage(result: { status: number; error: { message: string } }): str
   return result.status >= 500 ? undefined : result.error.message
 }
 
-/** How asking for a sign-in link ended (#391). */
-export type SignInLinkRequestAnswer =
+/** How asking for a mailed code ended (#391, #752). */
+export type CodeRequestAnswer =
   | { ok: true }
   /** Refused: `field` when the address itself was, `offline` when the request never left. */
   | { ok: false; error?: string; field?: boolean; offline?: boolean }
 
-/**
- * Asks for a sign-in link to `email`, opening `next` once used. The answer is the same whether or
- * not an account uses the address; the link signs in, or signs up when none does.
- */
-export async function requestSignInLink(
-  email: string,
-  next: string | null,
-): Promise<SignInLinkRequestAnswer> {
+/** What a step of a mailed code answered: a new code, or a code typed (#752). */
+export type CodeStepAnswer =
+  | { ok: true }
+  /** The code expired, was used or took too many tries: only a new request goes on. */
+  | { ok: false; dead: true }
+  /** Refused with a message to show; `offline` when the request never left the browser. */
+  | { ok: false; dead?: false; error?: string; offline?: boolean }
+
+/** The answer of a code step's call that never reached the API. */
+const CODE_UNREACHED: CodeStepAnswer = { ok: false, offline: true }
+
+/** Sends `body` to `path` and answers how asking for a code ended. */
+async function requestCode(path: string, body: object): Promise<CodeRequestAnswer> {
   try {
-    const result = await apiFetch<ApiSuccessResponse>("/api/auth/link", {
-      method: "POST",
-      // The link's mail is written in the language the page shows now (#277).
-      body: JSON.stringify({
-        email,
-        ...(next === null ? {} : { next }),
-        language: languages.translator.peek().language,
-      }),
+    const result = await apiFetch<ApiSuccessResponse>(path, {
+      method: `POST`,
+      body: JSON.stringify(body),
     })
     if (result.ok) return { ok: true }
     return { ok: false, error: ownMessage(result), field: result.status === 400 }
@@ -393,40 +365,166 @@ export async function requestSignInLink(
   }
 }
 
-/** How pressing Continue on a sign-in link's page ended (#391). */
-export type SignInLinkRedeemAnswer =
-  | { ok: true; answer: SignInLinkRedeemed }
-  /** A guest's link reached an address another account uses: the choice waits on `/keep/taken`. */
-  | { ok: false; guestTaken: true }
-  /** The link was used, expired or never sent: a new one is the only way on. */
-  | { ok: false; refused: true }
-  /** A guest opened a link another browser asked for: it is spent, and the guest stays as before. */
-  | { ok: false; askedElsewhere: true }
-  /** Refused with a message; `offline` when the request never left, and the link is not spent. */
-  | { ok: false; error?: string; offline?: boolean }
+/**
+ * The address of the request this browser waits on at `path`, `null` when none waits, or
+ * `undefined` when the API could not be reached.
+ */
+async function readWaitingCode(path: string): Promise<string | null | undefined> {
+  try {
+    const result = await apiFetch<WaitingCodeResponse>(path)
+    return result.ok ? result.data.email : undefined
+  } catch (_unreachable) {
+    return undefined
+  }
+}
 
-/** Spends the sign-in link `token`: signs in, or signs up when no account uses its address. */
-export async function redeemSignInLink(token: string): Promise<SignInLinkRedeemAnswer> {
+/** Asks for a new code of the waiting request at `path`. */
+async function resendCode(path: string): Promise<CodeStepAnswer> {
+  try {
+    const result = await apiFetch<ApiSuccessResponse>(path, { method: `POST` })
+    if (result.ok) return { ok: true }
+    return result.status === 410
+      ? { ok: false, dead: true }
+      : { ok: false, error: ownMessage(result) }
+  } catch (_unreachable) {
+    return CODE_UNREACHED
+  }
+}
+
+/** Forgets the waiting request at `path`. Best effort: one whose cancel never arrives expires. */
+async function cancelCode(path: string): Promise<void> {
+  await apiFetch<ApiSuccessResponse>(path, { method: `POST` }).catch(() => {})
+}
+
+/**
+ * Mails a sign-in code to `email`, opening `next` once used. The answer is the same whether or not
+ * an account uses the address; the code signs in, or signs up when none does.
+ */
+export function requestSignInCode(email: string, next: string | null): Promise<CodeRequestAnswer> {
+  // The code's mail is written in the language the page shows now (#277).
+  return requestCode(`/api/auth/code`, {
+    email,
+    ...(next === null ? {} : { next }),
+    language: languages.translator.peek().language,
+  })
+}
+
+/** The address this browser's sign-in code went to, so the code step survives a reload. */
+export function readWaitingSignInCode(): Promise<string | null | undefined> {
+  return readWaitingCode(`/api/auth/code`)
+}
+
+/** How typing a sign-in code ended. */
+export type SignInCodeVerifyAnswer =
+  | { ok: true; answer: SignInCodeAnswer }
+  /** A guest's code reached an address another account uses: the choice waits on `/keep/taken`. */
+  | { ok: false; guestTaken: true }
+  | Exclude<CodeStepAnswer, { ok: true }>
+
+/** Spends the sign-in code: signs in, or signs up when no account uses its address. */
+export async function verifySignInCode(code: string): Promise<SignInCodeVerifyAnswer> {
   let result
   try {
-    result = await apiFetch<SignInLinkRedeemed | SignUpGuestTakenResponse>(
-      "/api/auth/link/redeem",
-      { method: "POST", body: JSON.stringify({ token }) },
+    result = await apiFetch<SignInCodeAnswer | SignUpGuestTakenResponse>(
+      `/api/auth/code/verify`,
+      { method: `POST`, body: JSON.stringify({ code }) },
     )
   } catch (_unreachable) {
     return { ok: false, offline: true }
   }
   if (!result.ok) {
-    if (result.error.reason === SIGN_IN_LINK_ASKED_ELSEWHERE_CODE) {
-      return { ok: false, askedElsewhere: true }
-    }
     return result.status === 410
-      ? { ok: false, refused: true }
+      ? { ok: false, dead: true }
       : { ok: false, error: ownMessage(result) }
   }
-  if ("guestTaken" in result.data) return { ok: false, guestTaken: true }
+  if (`guestTaken` in result.data) return { ok: false, guestTaken: true }
   setSignOutOwed(false)
   return { ok: true, answer: result.data }
+}
+
+/** Mails a new sign-in code; the earlier one stops working. */
+export function resendSignInCode(): Promise<CodeStepAnswer> {
+  return resendCode(`/api/auth/code/resend`)
+}
+
+/** "Use a different one": forgets the waiting sign-in code. */
+export function cancelSignInCode(): Promise<void> {
+  return cancelCode(`/api/auth/code/cancel`)
+}
+
+/**
+ * Mails a password-reset code to `email`. The answer is the same whether or not an account uses
+ * it; for an address with no account every code is wrong.
+ */
+export function requestPasswordReset(email: string): Promise<CodeRequestAnswer> {
+  return requestCode(`/api/auth/password/forgot`, { email })
+}
+
+/** The address this browser's reset code went to, so the code step survives a reload. */
+export function readWaitingReset(): Promise<string | null | undefined> {
+  return readWaitingCode(`/api/auth/password/reset`)
+}
+
+/** How typing a reset code ended: the right one gives the token that sets the new password. */
+export type ResetCodeVerifyAnswer =
+  | { ok: true; token: string }
+  | Exclude<CodeStepAnswer, { ok: true }>
+
+/** Checks the reset code. The token it answers stays in the page's memory, never in its address. */
+export async function verifyResetCode(code: string): Promise<ResetCodeVerifyAnswer> {
+  let result
+  try {
+    result = await apiFetch<PasswordResetVerified>(`/api/auth/password/reset/verify`, {
+      method: `POST`,
+      body: JSON.stringify({ code }),
+    })
+  } catch (_unreachable) {
+    return { ok: false, offline: true }
+  }
+  if (result.ok) return { ok: true, token: result.data.token }
+  return result.status === 410
+    ? { ok: false, dead: true }
+    : { ok: false, error: ownMessage(result) }
+}
+
+/** Mails a new reset code; the earlier one stops working. */
+export function resendResetCode(): Promise<CodeStepAnswer> {
+  return resendCode(`/api/auth/password/reset/resend`)
+}
+
+/** "Use a different one": forgets the waiting reset. */
+export function cancelReset(): Promise<void> {
+  return cancelCode(`/api/auth/password/reset/cancel`)
+}
+
+/** How saving the new password ended. */
+export type ResetPasswordAnswer =
+  | { ok: true }
+  /** The token ran out or was used: the reset starts again from the address. */
+  | { ok: false; refused: true }
+  /** Refused with a message, such as a password too short; `offline` when it never left. */
+  | { ok: false; refused?: false; error?: string; offline?: boolean }
+
+/** Sets a new password with the token a right reset code gave. Signs nobody in. */
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+): Promise<ResetPasswordAnswer> {
+  let result
+  try {
+    result = await apiFetch<ApiSuccessResponse>(`/api/auth/password/reset`, {
+      method: `POST`,
+      body: JSON.stringify({ token, newPassword }),
+    })
+  } catch (_unreachable) {
+    return { ok: false, offline: true }
+  }
+  if (result.ok) return { ok: true }
+  // A check of the fields is the person's to fix; any other refusal means the token is gone.
+  if (result.status === 400 && result.error.reason !== `validation`) {
+    return { ok: false, refused: true }
+  }
+  return { ok: false, error: ownMessage(result) }
 }
 
 /**

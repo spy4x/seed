@@ -524,7 +524,7 @@ describe("one person in the admin app", () => {
     )
 
     const row = find("[role=tabpanel] [data-e2e=admin-user-methods] li")
-    expect(row.textContent).toContain("Email link")
+    expect(row.textContent).toContain("Email code")
     expect(find("[data-e2e=admin-user-email-link]").textContent).toMatch(/^Last used .+/)
     expect(row.textContent).not.toMatch(/proven/i)
   })

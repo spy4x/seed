@@ -15,7 +15,9 @@ import {
 } from "@server/jobs/jobs.ts"
 import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { JOB_RETRY } from "@server/jobs/job-failures.ts"
+import { passwordResetExpiry, passwordResetRequests } from "@server/auth/password-reset.ts"
 import {
+  enqueuePasswordResetCodeMail,
   enqueuePasswordResetMail,
   PASSWORD_RESET_MAIL_JOB,
   removeStalePasswordResetRequests,
@@ -30,6 +32,7 @@ import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { isUuid, uuidV7 } from "@spy4x/platform/universal/uuid"
 import { expectVersion7Ids } from "./ids.ts"
+import { isMembersOnlyPath, SPA_ROUTE_PATHS } from "../../apps/spa/src/views/spa-paths.ts"
 
 const JOB = {
   eventKind: OUTBOX_CLEANUP_JOB,
@@ -133,13 +136,25 @@ Deno.test("password reset mails go through the worker's queue", async (t) => {
     const count = async (table: string) =>
       (await sql<{ count: number }[]>`SELECT count(*)::int AS count FROM ${sql(table)}`)[0].count
 
+    /** Writes a reset request a browser waits on, and queues its mail. */
+    const askForCode = async (email: string) => {
+      const id = uuidV7()
+      await passwordResetRequests(sql).create({
+        id,
+        email,
+        expiresAt: passwordResetExpiry(new Date()),
+        byOperator: false,
+      })
+      await enqueuePasswordResetCodeMail(sql, id)
+    }
+
     await t.step(
-      "only the address an account uses gets a mail, and no code is stored",
+      "a code is made for every address, mailed only to an account's, and never stored",
       async () => {
         const sender = recordingSender()
         const processor = createOutboxProcessor(sql, { store, sender, brand: BRAND, log: () => {} })
-        await enqueuePasswordResetMail(sql, "ann@example.com")
-        await enqueuePasswordResetMail(sql, "nobody@example.com")
+        await askForCode("ann@example.com")
+        await askForCode("nobody@example.com")
         expectVersion7Ids(await sql<{ id: string }[]>`SELECT id FROM password_reset_requests`)
 
         const result = await processor.drainOnce()
@@ -149,8 +164,11 @@ Deno.test("password reset mails go through the worker's queue", async (t) => {
           failed: 0,
         })
         expect(sender.sent.map((mail) => mail.to)).toEqual(["ann@example.com"])
-        const code = new URL(sender.sent[0].text!.match(/http\S+/)![0]).searchParams.get("code")!
-        expect(code.length).toBeGreaterThan(40)
+        const code = sender.sent[0].text!.match(/^([A-Za-z0-9_-]{8})$/m)![1]
+        expect(sender.sent[0].subject).not.toContain(code)
+        expect(sender.sent[0].text).not.toMatch(/https?:\/\//)
+        // A wrong guess at a stranger's address counts as one at an account's: both have a code.
+        expect(await count("auth_challenges")).toBe(2)
         const dump = JSON.stringify(
           await sql`
           SELECT (SELECT json_agg(c) FROM auth_challenges c) AS challenges,
@@ -158,6 +176,30 @@ Deno.test("password reset mails go through the worker's queue", async (t) => {
         `,
         )
         expect(dump).not.toContain(code)
+        // The requests wait for their codes.
+        expect(await count("password_reset_requests")).toBe(2)
+        await sql`DELETE FROM password_reset_requests`
+        await sql`DELETE FROM auth_challenges`
+      },
+    )
+
+    await t.step(
+      "an operator's reset mails a way to the reset page, with no code, to an account only",
+      async () => {
+        const sender = recordingSender()
+        const processor = createOutboxProcessor(sql, { store, sender, brand: BRAND, log: () => {} })
+        await enqueuePasswordResetMail(sql, "ann@example.com")
+        await enqueuePasswordResetMail(sql, "nobody@example.com")
+
+        expect((await processor.drainOnce()).published).toBe(2)
+
+        expect(sender.sent.map((mail) => mail.to)).toEqual(["ann@example.com"])
+        // The link opens the SPA's own page for asking a reset code, open to a signed-out person.
+        const link = (sender.sent[0]?.text ?? "").match(/http:\/\/app\.localhost\/\S*/)?.[0] ?? ""
+        const path = new URL(link).pathname
+        expect(SPA_ROUTE_PATHS).toContain(path)
+        expect(isMembersOnlyPath(path)).toBe(false)
+        expect(await count("auth_challenges")).toBe(0)
         expect(await count("password_reset_requests")).toBe(0)
       },
     )
@@ -185,21 +227,24 @@ Deno.test("password reset mails go through the worker's queue", async (t) => {
       expect(await count("password_reset_requests")).toBe(0)
     })
 
-    await t.step("with mail off the request is dropped and nothing is issued", async () => {
-      await sql`DELETE FROM auth_challenges`
-      await enqueuePasswordResetMail(sql, "ann@example.com")
+    await t.step(
+      "with mail off an operator's request is dropped and nothing is issued",
+      async () => {
+        await sql`DELETE FROM auth_challenges`
+        await enqueuePasswordResetMail(sql, "ann@example.com")
 
-      expect((await createOutboxProcessor(sql, mailOff(sql)).drainOnce()).published).toBe(1)
+        expect((await createOutboxProcessor(sql, mailOff(sql)).drainOnce()).published).toBe(1)
 
-      expect(await count("auth_challenges")).toBe(0)
-      expect(await count("password_reset_requests")).toBe(0)
-    })
+        expect(await count("auth_challenges")).toBe(0)
+        expect(await count("password_reset_requests")).toBe(0)
+      },
+    )
 
     await t.step("a request older than a day is removed by the cleanup", async () => {
       await sql`
-        INSERT INTO password_reset_requests (id, email, created_at) VALUES
-          (${uuidV7()}, 'old@example.com', now() - interval '25 hours'),
-          (${uuidV7()}, 'new@example.com', now() - interval '23 hours')
+        INSERT INTO password_reset_requests (id, email, created_at, expires_at) VALUES
+          (${uuidV7()}, 'old@example.com', now() - interval '25 hours', now()),
+          (${uuidV7()}, 'new@example.com', now() - interval '23 hours', now())
       `
 
       expect(await removeStalePasswordResetRequests(sql)).toBe(1)
@@ -676,7 +721,7 @@ Deno.test("the worker's processor when a job keeps failing", async (t) => {
         expect(result).toEqual({ claimed: 1, published: 0, failed: 1 })
         expect(await sql`SELECT 1 FROM groups WHERE name = 'expired'`).toEqual([])
         expect(logged[0]).toBe(
-          `error: nightly cleanup step "remove unsent password reset requests" failed: ` +
+          `error: nightly cleanup step "remove old password reset requests" failed: ` +
             `relation "password_reset_requests" does not exist`,
         )
         expect(logged[1]).toBe(

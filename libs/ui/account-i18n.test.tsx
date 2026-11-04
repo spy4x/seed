@@ -28,7 +28,7 @@ import { AuthScreen } from "./auth-screen.tsx"
 import { englishLeft as pageEnglish, PSEUDO } from "./i18n-testing.ts"
 import { ConfirmSignUpScreen } from "./confirm-sign-up-screen.tsx"
 import { SignUpCodeScreen } from "./sign-up-code-screen.tsx"
-import { LinkOpenScreen, LinkRequestScreen } from "./sign-in-link-screen.tsx"
+import { CodeStep, DeadCode, SignInCodeScreen } from "./sign-in-code-screen.tsx"
 import { ForgotPasswordScreen, ResetPasswordScreen } from "./password-reset-screen.tsx"
 import { ProfileScreen, type ProfileScreenProps } from "./profile-screen.tsx"
 import {
@@ -288,7 +288,6 @@ const screens: Record<string, VNode> = {
       busy={false}
       error={null}
       resending={false}
-      resendNotice={null}
       resendError={null}
       onSubmit={nothing}
       onResend={nothing}
@@ -306,7 +305,6 @@ const screens: Record<string, VNode> = {
       busy={false}
       error={null}
       resending={false}
-      resendNotice={null}
       resendError={null}
       onSubmit={nothing}
       onResend={nothing}
@@ -331,41 +329,110 @@ const screens: Record<string, VNode> = {
       onCreate={nothing}
     />
   ),
-  "link request": (
-    <LinkRequestScreen
+  "sign-in code form": (
+    <SignInCodeScreen
       email="ada@example.com"
       onEmailChange={nothing}
-      sentTo="ada@example.com"
+      sentTo={null}
+      dead={false}
       fieldError={null}
       error={null}
       pending={false}
       onSubmit={nothing}
+      guest
+      codeError={null}
+      checking={false}
+      onCode={nothing}
       resending={false}
       onResend={nothing}
       onDifferentAddress={nothing}
     />
   ),
-  "link open": (
-    <LinkOpenScreen
-      state="ready"
-      signedInAs="ada@example.com"
-      busy={false}
+  "sign-in code step": (
+    <SignInCodeScreen
+      email="ada@example.com"
+      onEmailChange={nothing}
+      sentTo="ada@example.com"
+      dead={false}
+      fieldError={null}
       error={null}
-      onContinue={nothing}
+      pending={false}
+      onSubmit={nothing}
+      codeError={null}
+      checking={false}
+      onCode={nothing}
+      resending={false}
+      onResend={nothing}
+      onDifferentAddress={nothing}
     />
   ),
+  "sign-in code, signed in": (
+    <SignInCodeScreen
+      email=""
+      onEmailChange={nothing}
+      sentTo={null}
+      dead={false}
+      fieldError={null}
+      error={null}
+      pending={false}
+      onSubmit={nothing}
+      codeError={null}
+      checking={false}
+      onCode={nothing}
+      resending={false}
+      onResend={nothing}
+      onDifferentAddress={nothing}
+      signedIn
+    />
+  ),
+  "sign-in code, confirming the account's address": (
+    <SignInCodeScreen
+      email=""
+      onEmailChange={nothing}
+      sentTo={null}
+      dead={false}
+      fieldError={null}
+      error={null}
+      pending={false}
+      onSubmit={nothing}
+      codeError={null}
+      checking={false}
+      onCode={nothing}
+      resending={false}
+      onResend={nothing}
+      onDifferentAddress={nothing}
+      fixedEmail="ada@example.com"
+      next="/profile/danger-zone"
+    />
+  ),
+  "dead code": (
+    <DeadCode minutes={15} resending={false} onResend={nothing} onDifferentAddress={nothing} />
+  ),
   "forgot password": (
-    <ForgotPasswordScreen email="" onEmailChange={nothing} sent error={null} pending={false} />
+    <ForgotPasswordScreen email="" onEmailChange={nothing} error={null} pending={false} />
+  ),
+  "reset code step": (
+    <CodeStep
+      email="ada@example.com"
+      sentence="PasswordResetScreen.sent"
+      minutes={15}
+      checking={false}
+      error={null}
+      onCode={nothing}
+      resending={false}
+      onResend={nothing}
+      onDifferentAddress={nothing}
+    />
   ),
   "reset password": (
     <ResetPasswordScreen
       email="ada@example.com"
-      code="code"
       newPassword=""
       onNewPasswordChange={nothing}
       done={false}
       error={null}
       pending={false}
+      onStartOver={nothing}
     />
   ),
   "profile account": <ProfileScreen {...profile} />,
@@ -417,18 +484,26 @@ describe(`the sign-in and profile screens`, () => {
 })
 
 describe(`what the server answered, said in the screen's own words`, () => {
-  it(`a requested reset link: the neutral German line, with focus on the title`, async () => {
+  it(`a requested reset code: the neutral German line names the address in bold`, async () => {
     await mount(
-      <ForgotPasswordScreen email="" onEmailChange={nothing} sent error={null} pending={false} />,
+      <CodeStep
+        email="ada@example.com"
+        sentence="PasswordResetScreen.sent"
+        minutes={15}
+        checking={false}
+        error={null}
+        onCode={nothing}
+        resending={false}
+        onResend={nothing}
+        onDifferentAddress={nothing}
+      />,
       GERMAN,
     )
-    await act(() => new Promise((done) => setTimeout(done, 0)))
-    const card = document.querySelector(`[data-e2e=forgot-password-sent]`)!
-    expect(card.querySelector(`[role=status]`)!.textContent).toBe(
-      appDe[`PasswordResetScreen.sent`],
-    )
-    expect(document.activeElement?.tagName).toBe(`H1`)
-    expect(card.contains(document.activeElement)).toBe(true)
+    const step = document.querySelector(`[data-e2e=mailed-code-step]`)!
+    const sentence = appDe[`PasswordResetScreen.sent`].replace(/<\/?email>/g, ``)
+      .replace(`{email}`, `ada@example.com`)
+    expect(step.textContent).toContain(sentence)
+    expect(step.querySelector(`strong bdi`)!.textContent).toBe(`ada@example.com`)
   })
 
   it(`a new code: the German sentence names the address, kept apart from the text`, async () => {
