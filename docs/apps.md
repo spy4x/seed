@@ -11,9 +11,10 @@ Seed ships two web apps over the same API, with different jobs.
 - **The SPA** (`apps/spa`, Preact and Vite) is the product. Everything a signed-in person does
   happens there: sign-up, sign-in, notes, groups, billing and the profile. Compose serves it at
   `DOMAIN`.
-- **The MPA** (`apps/mpa`, Fresh) is the product's public website. It holds the home page, pricing,
-  the privacy and terms pages, the blog, the newsletter, `robots.txt`, `sitemap.xml` and
-  `llms.txt`. Its sign-in and sign-up links open the SPA.
+- **The MPA** (`apps/mpa`, Preact on a small Fresh-compatible layer built with Vite:
+  [the website's server](website-server.md)) is the product's public website. It holds the home
+  page, pricing, the privacy and terms pages, the blog, the newsletter, `robots.txt`,
+  `sitemap.xml` and `llms.txt`. Its sign-in and sign-up links open the SPA.
 
 In the SPA, people see each other's changes live over a WebSocket
 ([ADR 002](decisions/002-realtime-transport-and-sync.md)). It also works offline

@@ -131,13 +131,13 @@ export default {
   "Architecture.worker": "Worker",
   "Architecture.mail": "E-mail, push",
   "Architecture.webAppNote": "Preact, no navegador",
-  "Architecture.websiteNote": "Fresh, como esta página",
+  "Architecture.websiteNote": "Preact, no servidor",
   "Architecture.apiNote": "Hono no Deno",
   "Architecture.postgresNote": "cada alteração",
   "Architecture.workerNote": "o trabalho pesado",
   "Architecture.mailNote": "e a limpeza",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "eventos, na mesma transação",
   "Architecture.caption": "Tudo num só servidor, atrás do Traefik, com Valkey e Grafana",
   "Architecture.captionTop": "Tudo num só servidor, atrás do Traefik,",
@@ -551,7 +551,8 @@ export default {
   "FeatureWebsite.title": "Um site público para você adaptar",
   "FeatureWebsite.lead":
     "Este site: rápido, renderizado no servidor e usável com o JavaScript desligado, com preços, páginas legais, blog e newsletter.",
-  "FeatureWebsite.fact1": "Fresh no servidor; toda ação é um link ou formulário de verdade",
+  "FeatureWebsite.fact1":
+    "Preact no servidor, compilado com Vite; toda ação é um link ou formulário de verdade",
   "FeatureWebsite.fact2": "Preços lidos do catálogo de planos do app",
   "FeatureWebsite.fact3":
     "Uma newsletter com confirmação por e-mail, cancelamento com um clique e e-mails no idioma de quem lê",

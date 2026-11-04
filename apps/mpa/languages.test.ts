@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { App } from "fresh"
+import { App } from "@spy4x/preact-server"
 import AppWrapper from "./routes/_app.tsx"
 import Layout from "./routes/_layout.tsx"
 import Pricing, { handler as pricing } from "./routes/[[lang]]/pricing.tsx"
@@ -142,7 +142,7 @@ describe("languageMiddleware", () => {
     }
   })
 
-  it("serves //pricing as /pricing, since Fresh collapses repeated slashes before it routes", async () => {
+  it("serves //pricing as /pricing, since the server collapses repeated slashes before it routes", async () => {
     expect((await get(guarded, `//pricing`)).status).toBe(200)
     expect((await get(pages, `//pricing`)).html).toContain(
       `<link rel="canonical" href="${site}/pricing"`,

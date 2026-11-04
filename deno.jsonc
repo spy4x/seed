@@ -119,7 +119,7 @@
     "lint:check": "deno lint",
     "ts:check": "deno run --allow-read --allow-run=deno infra/scripts/type-check.ts",
     // tests/spacing.test.ts, tests/ui-boundary.test.ts, tests/no-direct-date-format.test.ts, tests/api-error-shape.test.ts, tests/dockerfile-base.test.ts, tests/dockerignore.test.ts, tests/compose-migrate.test.ts, tests/offline-removal.test.ts and tests/spa-runtime-config.test.ts read files, so each runs on its own with its own read grant.
-    // apps/mpa runs on its own because Fresh reads its build id from DENO_DEPLOYMENT_ID, GITHUB_SHA or CI_COMMIT_SHA when it loads.
+    // apps/mpa runs on its own, with read access to the whole repository.
     // tests/no-uuid-v4.test.ts reads every text file of the repository (docs/ids.md), so it reads from the root.
     // tests/dockerfiles.test.ts looks for Dockerfiles in every directory, so it reads from the root too.
     // i18n/i18n.test.ts reads the catalogs, and the apps' and libraries' sources for the keys they name.
@@ -222,17 +222,18 @@
     // apps/tgbot
 
     // client
-    // spy4x/preact-components 13.10.0. Every package is published at one version together, so all
-    // six move in one change, and so does the npm copy of `@spy4x/preact-system` further down
+    // spy4x/preact-components 13.11.0. Every package is published at one version together, so all
+    // seven move in one change, and so does the npm copy of `@spy4x/preact-system` further down
     // (the Playwright config imports it under that name). They take preact and the signals
     // packages as caret ranges, so the versions below are the one copy that loads. wouter-preact
     // must stay on the version they pin, or two copies load.
-    "@spy4x/preact-charts": "jsr:@spy4x/preact-charts@13.10.0",
-    "@spy4x/preact-icons": "jsr:@spy4x/preact-icons@13.10.0",
-    "@spy4x/preact-signals": "jsr:@spy4x/preact-signals@13.10.0",
-    "@spy4x/preact-system": "jsr:@spy4x/preact-system@13.10.0",
-    "@spy4x/preact-theme": "jsr:@spy4x/preact-theme@13.10.0",
-    "@spy4x/preact-ui": "jsr:@spy4x/preact-ui@13.10.0",
+    "@spy4x/preact-charts": "jsr:@spy4x/preact-charts@13.11.0",
+    "@spy4x/preact-icons": "jsr:@spy4x/preact-icons@13.11.0",
+    "@spy4x/preact-server": "jsr:@spy4x/preact-server@13.11.0",
+    "@spy4x/preact-signals": "jsr:@spy4x/preact-signals@13.11.0",
+    "@spy4x/preact-system": "jsr:@spy4x/preact-system@13.11.0",
+    "@spy4x/preact-theme": "jsr:@spy4x/preact-theme@13.11.0",
+    "@spy4x/preact-ui": "jsr:@spy4x/preact-ui@13.11.0",
     "preact": "npm:preact@10.29.8",
     "wouter-preact": "npm:wouter-preact@3.9.0",
     "@preact/signals": "npm:@preact/signals@2.5.1",
@@ -257,8 +258,8 @@
     "playwright": "npm:playwright@1.57.0",
     // The website's browser tests check each page with axe-core (e2e/mpa).
     "@axe-core/playwright": "npm:@axe-core/playwright@4.13.0",
-    // The npm name of `@spy4x/preact-system` above, for Playwright's loader; it moves with the six.
-    "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@13.10.0",
+    // The npm name of `@spy4x/preact-system` above, for Playwright's loader; it moves with the seven.
+    "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@13.11.0",
     // The npm name of `@spy4x/platform` above, for the same reason: every e2e spec takes `uuidV7`
     // from it. It moves with the `@spy4x/*` packages.
     "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.114.0",

@@ -30,7 +30,7 @@ describe("the repository's test count", () => {
   it("leaves out installed packages and build output", () => {
     expect(countTestFiles([
       `apps/mpa/node_modules/pkg/index.test.ts`,
-      `apps/mpa/_fresh/server/site.test.ts`,
+      `apps/mpa/dist/server/site.test.ts`,
     ])).toBe(0)
   })
 

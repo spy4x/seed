@@ -22,7 +22,7 @@ export function isCountedTestFile(path: string): boolean {
   const parts = path.split(`/`)
   return COUNTED_FOLDERS.some((folder) => parts[0] === folder) &&
     /\.test\.tsx?$/.test(path) &&
-    !parts.some((part) => part === `node_modules` || part === `_fresh`)
+    !parts.some((part) => part === `node_modules` || part === `dist`)
 }
 
 /** Whether `path`, relative to the repository root, is a browser test suite. */

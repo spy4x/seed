@@ -21,7 +21,7 @@ both to a screen.
 
 The three apps have different jobs. The SPA (`apps/spa`) is the product: everything a signed-in
 person does happens there. The admin app (`apps/admin`) is the operator area, on a host of its own.
-The MPA (`apps/mpa`, Fresh) is the product's public website: the home page, pricing, the legal pages
+The MPA (`apps/mpa`, Preact on a small Fresh-compatible layer built with Vite) is the product's public website: the home page, pricing, the legal pages
 and the newsletter. It has no session, links to the SPA for sign-in and sign-up, and renders no
 `libs/ui` screen except the newsletter's (`subscribe-screen.tsx`).
 

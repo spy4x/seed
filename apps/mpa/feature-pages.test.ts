@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { App } from "fresh"
+import { App } from "@spy4x/preact-server"
 import AppWrapper from "./routes/_app.tsx"
 import Layout from "./routes/_layout.tsx"
 import Features from "./routes/[[lang]]/features.tsx"
@@ -113,7 +113,7 @@ describe("the feature pages", () => {
     ).toEqual([`what`, `how`, `limits`, `questions`])
   })
 
-  // `/features/admin` itself never reaches this handler on the built server: Fresh routes it to
+  // `/features/admin` itself never reaches this handler on the built server: the router sends it to
   // `routes/features/admin.ts` (e2e/mpa/features.mpa.ts checks it there).
   it("sends another language's /features/admin to the admin panel's page in that language", async () => {
     expect(await get(`/de/features/admin`)).toMatchObject({ status: 301, location: `/de/admin` })

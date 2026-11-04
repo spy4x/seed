@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { App } from "fresh"
+import { App } from "@spy4x/preact-server"
 import { handler as trackingLink } from "./routes/s/[code].ts"
 import { pageMiddleware } from "./middleware.ts"
 import type { State } from "./utils.ts"
