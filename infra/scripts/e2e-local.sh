@@ -139,8 +139,8 @@ CONTAINERS=()
 BUILT=0
 
 # Stops a process this script started, with its children: each is started with `setsid`, so it
-# leads a process group. `deno serve` does not exit on SIGTERM while it has open connections, so
-# the group is killed when it is still there after 4 s.
+# leads a process group. A server may not exit on SIGTERM while it has open connections, so the
+# group is killed when it is still there after 4 s.
 stop_group() {
   kill -TERM -- "-$1" 2>/dev/null || return 0
   for _ in $(seq 1 20); do
@@ -335,7 +335,7 @@ start files env FILES_PORT="$FILES_PORT" deno run --allow-net=127.0.0.1 \
 wait_for files "${PIDS[-1]}" 30 answers "http://127.0.0.1:$FILES_PORT/$S3_BUCKET"
 
 log "starting the API on 127.0.0.1:$API_PORT"
-start api deno serve --allow-all --port "$API_PORT" --host 127.0.0.1 apps/api/index.ts
+start api env API_HOST=127.0.0.1 API_PORT="$API_PORT" deno run --allow-all apps/api/+main.ts
 wait_for api "${PIDS[-1]}" 60 answers "http://127.0.0.1:$API_PORT/api/health"
 
 # The worker sends the mails the specs read back and announces changes to other tabs.

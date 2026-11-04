@@ -7,7 +7,7 @@ import {
 } from "@spy4x/platform/rate-limit"
 import {
   createRateLimitMiddleware,
-  denoServeRemoteAddr,
+  serveRemoteAddr,
   userThenIp,
 } from "@spy4x/platform/rate-limit/hono"
 import type { APIContext } from "../_types.ts"
@@ -52,7 +52,7 @@ export function createPublicReadRateLimit(
       { limit, onError: onStoreError },
     ),
     {
-      remoteAddr: denoServeRemoteAddr,
+      remoteAddr: serveRemoteAddr,
       keyResolver: userThenIp<APIContext>(() => undefined, { trustedProxy: `x-real-ip` }),
       keyPrefix: `public-read:`,
     },

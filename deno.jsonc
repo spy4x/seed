@@ -44,8 +44,13 @@
     "build": "deno task spa:build", // builds the SPA for production (CI's `build` step)
 
     // #region apps/api
-    "api:dev": "deno serve --allow-all --watch apps/api/index.ts", // used in docker-compose to start the API server in development mode
-    "api:prod": "deno serve --allow-all apps/api/index.ts", // production mode - no watch
+    "api:dev": "deno run --allow-all --watch apps/api/+main.ts", // used in docker-compose to start the API server in development mode
+    "api:prod": "deno run --allow-all apps/api/+main.ts", // production mode - no watch
+    "server:build": "deno bundle --platform deno -o dist/server/api.js apps/api/+main.ts && deno bundle --platform deno -o dist/server/worker.js apps/worker/+main.ts && deno bundle --platform deno -o dist/server/migrate.js infra/scripts/db-migrate.ts && deno bundle --platform deno -o dist/server/healthcheck.js apps/healthcheck.ts && rm -rf dist/server/seed-posts && cp -r libs/server/blog/seed-posts dist/server/seed-posts", // bundles the API, the worker, the migration and the healthcheck for Node and Bun (apps/api/dockerfile.node, apps/api/dockerfile.bun); the bundles read the demo's blog posts from dist/server/seed-posts
+    "api:node": "deno task server:build && node dist/server/api.js", // the API on Node, from the bundle
+    "api:bun": "deno task server:build && bun dist/server/api.js", // the API on Bun, from the bundle
+    "worker:node": "deno task server:build && node dist/server/worker.js", // the worker on Node, from the bundle
+    "worker:bun": "deno task server:build && bun dist/server/worker.js", // the worker on Bun, from the bundle
     // #endregion apps/api
 
     // #region apps/spa
