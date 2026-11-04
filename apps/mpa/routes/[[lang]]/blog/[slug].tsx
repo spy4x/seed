@@ -22,7 +22,7 @@ import {
   readPost,
   TOC_MIN_MINUTES,
 } from "../../../blog.ts"
-import { coverImage } from "../../../blog-covers.ts"
+import { coverImage, listCoverImage } from "../../../blog-covers.ts"
 import { CtaBand } from "../../../components/cta-band.tsx"
 import { featurePage } from "../../../features-data.tsx"
 import {
@@ -396,6 +396,7 @@ function ReadNext({ posts }: { posts: readonly PublicBlogPostSummary[] }): JSX.E
                 publishedAt: post.publishedAt,
                 readMinutes: post.readingMinutes,
                 lang: post.language,
+                image: listCoverImage(post),
               }))}
             />
           </>

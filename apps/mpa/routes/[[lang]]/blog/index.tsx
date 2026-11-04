@@ -5,6 +5,7 @@ import { badgeClasses } from "@spy4x/preact-ui/badge"
 import { PostList } from "@spy4x/preact-ui/post-list"
 import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
 import { BLOG_PATH, blogId, listPosts, postAddress, RSS_PATH } from "../../../blog.ts"
+import { listCoverImage } from "../../../blog-covers.ts"
 import { NewsletterForm, PERSON_JSON_LD, SITE_NAME, SiteFrame } from "../../../site.tsx"
 import { define } from "../../../utils.ts"
 import { localePath, siteTranslator } from "../../../languages.ts"
@@ -116,6 +117,7 @@ export const handler = define.handlers({
                 )
                 : (
                   <PostList
+                    eagerFirst
                     posts={posts.map((post) => ({
                       href: postAddress(post),
                       title: post.title,
@@ -123,6 +125,7 @@ export const handler = define.handlers({
                       publishedAt: post.publishedAt,
                       readMinutes: post.readingMinutes,
                       lang: post.language,
+                      image: listCoverImage(post),
                     }))}
                   />
                 )}

@@ -244,6 +244,29 @@ describe("the blog index", () => {
     expect(jsonLdGraph(body).map((node) => node["@type"])).toEqual([`Blog`, `BreadcrumbList`])
   })
 
+  it("draws each listed post's cover, the first one eager, and none for a post without one (#733)", async () => {
+    const covered = { ...NEWER, coverUrl: null, coverFile: `cron-jobs.webp` }
+    const later = { ...OLDER, coverUrl: null, coverFile: `hello-world.webp` }
+    const plain = { ...OLDER, slug: `plain`, title: `Plain`, coverUrl: null, coverFile: null }
+    const { body } = await (await blogSite(listing([covered, later, plain]))).get("/blog")
+
+    const images = (body.match(/<ul [^>]*data-e2e="post-list"[\s\S]*?<\/ul>/)?.[0] ?? ``)
+      .replace(/\?__frsh_c=\w+/g, ``)
+      .match(/<img [^>]*>/g) ?? []
+    expect(images).toHaveLength(2)
+    expect(images[0]).toContain(
+      `srcset="/blog/covers/cron-jobs-640.webp 640w, /blog/covers/cron-jobs.webp 1600w"`,
+    )
+    expect(images[0]).toContain(`sizes="(min-width: 640px) 192px, calc(100vw - 32px)"`)
+    expect(images[0]).toContain(`width="1600" height="900"`)
+    expect(images[0]).toMatch(/ alt(="")? /)
+    expect(images[0]).toContain(`loading="eager"`)
+    expect(images[0]).toContain(`fetchpriority="high"`)
+    expect(images[1]).toContain(`src="/blog/covers/hello-world.webp"`)
+    expect(images[1]).toContain(`loading="lazy"`)
+    expect(images[1]).not.toContain(`fetchpriority`)
+  })
+
   it("filters by topic through a plain link, marks it, and keeps the canonical address", async () => {
     const { get } = await blogSite(listing([NEWER, OLDER]))
     const { body } = await get("/blog?topic=Product")

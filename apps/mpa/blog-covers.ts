@@ -45,3 +45,15 @@ export function coverImage(
   }
   return post.coverUrl === null ? null : { src: post.coverUrl, ...COVER_SIZE }
 }
+
+/** How wide a cover is drawn in a post list: beside the text from 640 px, full width below. */
+export const LIST_COVER_SIZES = `(min-width: 640px) 192px, calc(100vw - 32px)`
+
+/** The cover of `post` as a `PostList` row draws it, or `undefined` when it has none. */
+export function listCoverImage(
+  post: Pick<PublicBlogPostSummary, `coverFile` | `coverUrl`>,
+): (CoverImage & { sizes?: string }) | undefined {
+  const cover = coverImage(post)
+  if (cover === null) return undefined
+  return cover.srcset ? { ...cover, sizes: LIST_COVER_SIZES } : cover
+}
