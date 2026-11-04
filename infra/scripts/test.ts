@@ -191,17 +191,13 @@ function covers(root: string, path: string): boolean {
   return path === root || path.startsWith(`${root}/`)
 }
 
-/**
- * The group that tests `path`: the one that names it exactly, else the one whose folder holds it
- * and does not ignore it. Undefined when no group tests it.
- */
+/** The group whose paths hold `path` and do not ignore it. Undefined when no group tests it. */
 export function groupOf(path: string): TestGroup | undefined {
   const clean = path.replace(/^\.\//, ``).replace(/\/$/, ``)
-  return GROUPS.find((group) => group.paths.includes(clean)) ??
-    GROUPS.find((group) =>
-      group.paths.some((root) => covers(root, clean)) &&
-      !group.ignore?.some((ignored) => covers(ignored, clean))
-    )
+  return GROUPS.find((group) =>
+    group.paths.some((root) => covers(root, clean)) &&
+    !group.ignore?.some((ignored) => covers(ignored, clean))
+  )
 }
 
 /** Test and step counts read from `deno test` summary lines. */
