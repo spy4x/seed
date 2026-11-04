@@ -225,6 +225,7 @@ describe("billing over REST", () => {
     expect(await response.json()).toEqual({ url: "https://pay.example/cs_1" })
     expect(recorder.checkouts).toEqual([{
       planId: "pro",
+      period: BillingPeriod.Monthly,
       successUrl: `https://app.example.com/groups/${groupId}/billing?checkout=done`,
       cancelUrl: `https://app.example.com/groups/${groupId}/billing`,
       reference: groupId,
@@ -360,7 +361,7 @@ describe("billing over REST", () => {
     expect(recorder.checkouts).toEqual([])
   })
 
-  it("opens a yearly checkout for a plan with a yearly price, and keeps yearly on cancel", async () => {
+  it("bills the period chosen for a plan with a yearly price, monthly when none is named, and keeps yearly on cancel", async () => {
     const plans = PAID_PLANS.map((plan) => ({ ...plan, yearlyAmount: plan.amount * 10 }))
     const yearly = stack({ plans })
     const monthly = stack({ plans })
@@ -372,6 +373,10 @@ describe("billing over REST", () => {
     await monthly.call(OWNER, "POST", "/checkout", { planId: "pro" })
 
     expect(response.status).toBe(200)
+    expect(yearly.recorder.checkouts.map((checkout) => checkout.period))
+      .toEqual([BillingPeriod.Yearly])
+    expect(monthly.recorder.checkouts.map((checkout) => checkout.period))
+      .toEqual([BillingPeriod.Monthly])
     expect(yearly.recorder.checkouts[0].cancelUrl)
       .toBe(`https://app.example.com/groups/${groupId}/billing?period=year`)
     expect(monthly.recorder.checkouts[0].cancelUrl)
@@ -469,6 +474,7 @@ describe("billing over REST", () => {
       // From 2026-10-01T10:00 to 2026-11-01T00:00 is 30 days and 14 hours: 31 whole days.
       expect(recorder.checkouts).toEqual([{
         planId: "pro",
+        period: BillingPeriod.Monthly,
         successUrl: `https://app.example.com/groups/${groupId}/billing?checkout=done`,
         cancelUrl: `https://app.example.com/groups/${groupId}/billing`,
         reference: groupId,

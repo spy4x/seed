@@ -104,6 +104,7 @@ export function createBillingCheckoutHandler(
     }
     const result = await provider.createCheckout({
       planId: data.planId,
+      period: data.period,
       successUrl: appUrl(dependencies, `/groups/${data.groupId}/billing?checkout=done`),
       // Coming back without paying keeps the period the owner chose selected.
       cancelUrl: appUrl(
