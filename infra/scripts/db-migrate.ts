@@ -8,29 +8,13 @@
  */
 import {
   createSqlFromEnv,
-  type MigrationReader,
   PostgresMigrationDriver,
   runMigrations,
 } from "@spy4x/server/db"
 import { exitProcess } from "@spy4x/platform/server/process"
-import { runtimeFileSystem } from "@spy4x/platform/server/runtime-fs"
-import { join } from "@std/path"
 import { postgresEnv } from "../../apps/api/services/db-direct.ts"
 
 const migrationsFolder = "./libs/server/db/migrations"
-
-/** The runner's default reader calls `Deno.readDir`; this one works on every runtime. */
-const reader: MigrationReader = {
-  list: async (folder) =>
-    (await runtimeFileSystem.readDir(folder)).filter((entry) => entry.isFile).map((entry) =>
-      entry.name
-    ),
-  readText: async (folder, fileName) => {
-    const text = await runtimeFileSystem.readText(join(folder, fileName))
-    if (text === null) throw new Error(`Migration ${fileName} disappeared while reading it`)
-    return text
-  },
-}
 
 const sql = createSqlFromEnv(postgresEnv())
 if (!sql) {
@@ -40,7 +24,7 @@ if (!sql) {
 
 try {
   const driver = new PostgresMigrationDriver({ sql })
-  const report = await runMigrations(driver, { folder: migrationsFolder, reader })
+  const report = await runMigrations(driver, { folder: migrationsFolder })
 
   if (report.applied.length) {
     console.log(`Applied ${report.applied.length} migration(s):`)
