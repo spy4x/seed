@@ -8,6 +8,9 @@ tldr:
   - A page needs 95 for performance and 100 for accessibility, best practices and SEO.
   - The blog is measured with this post, served by a small stand-in API, so no database is needed.
 topic: Guides
+intro: "Every pull request measures the public website on a slow phone. Here is what the check scores, how it runs without a database, and what to do when a page falls short."
+cover: covers/admin-panel-for-every-feature.webp
+coverAlt: "A row of potted violet plants on a shelf, each with its own round gauge on the control desk in front of it."
 author: Seed
 publishAt: 2026-01-01T09:00:00Z
 newsletter: false
