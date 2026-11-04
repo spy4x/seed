@@ -660,7 +660,7 @@ export default {
   "AdminTour.statsText": "Visitas al sitio y clics de pedido desde tu Umami. Solo totales.",
   "AdminTour.users": "Usuarios",
   "AdminTour.usersText":
-    "Busca a alguien: bloquéalo, cierra una sesión o envíale un correo para su clave.",
+    "Busca a alguien: bloquéalo, cierra una sesión o envíale un correo para restablecer la contraseña.",
   "AdminTour.groups": "Grupos",
   "AdminTour.groupsText": "Miembros, invitaciones y archivos. Borra un archivo o cambia el dueño.",
   "AdminTour.billing": "Facturación",

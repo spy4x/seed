@@ -657,7 +657,7 @@ export default {
   "AdminTour.statsText": "Visitas ao site e cliques em pedidos do seu Umami. Só totais.",
   "AdminTour.users": "Usuários",
   "AdminTour.usersText":
-    "Encontre uma pessoa, bloqueie, encerre uma sessão ou envie um e-mail de senha.",
+    "Encontre uma pessoa, bloqueie, encerre uma sessão ou envie um e-mail para redefinir a senha.",
   "AdminTour.groups": "Grupos",
   "AdminTour.groupsText": "Membros, convites e arquivos. Remova um arquivo ou troque o dono.",
   "AdminTour.billing": "Cobrança",
