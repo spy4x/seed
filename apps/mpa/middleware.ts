@@ -54,8 +54,9 @@ export function isPostPage(pathname: string): boolean {
 
 /**
  * Puts the security headers on every response: pages, static files, redirects, refusals and the
- * answer to an error a route throws. It goes first in the app, before the static files. The page has no inline script: its islands
- * wake from a script file (`@spy4x/preact-server`), so `'self'` covers it.
+ * answer to an error a route throws. It goes first in the app, before the static files. The page
+ * has no inline script: its islands wake from a script file (`@spy4x/preact-server`), so `'self'`
+ * covers it.
  */
 export async function securityHeadersMiddleware(config: MpaConfig) {
   const site = await securityHeaderSet(config, { postImages: false })
