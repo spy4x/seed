@@ -1543,7 +1543,7 @@ export default {
   "AdminUser.doneRoleOperator": "{name}现在是运营人员。",
   "AdminUser.doneRoleSupervisor": "{name}现在是主管。",
   "AdminUser.doneRoleAdmin": "{name}现在是管理员。",
-  "AdminUser.donePasswordReset": "重置密码邮件正在发送给{name}。",
+  "AdminUser.donePasswordReset": "重置密码邮件正在发往{name}。",
   "AdminUser.doneDeleteGuest": "访客账号{name}已删除。",
   "AdminUser.doneUnlinkTelegram": "已取消关联{name}的 Telegram 账号。",
   "AdminUser.doneRemovePicture": "已移除{name}的头像。",
@@ -1608,7 +1608,7 @@ export default {
   "AdminUser.methodPassword": "密码",
   "AdminUser.methodEmailCode": "邮箱验证码",
   "AdminUser.methodPasskey": "通行密钥",
-  "AdminUser.methodEmailLink": "邮件验证码",
+  "AdminUser.methodEmailLink": "邮箱验证码",
   "AdminUser.blockTitle": "封禁{name}",
   "AdminUser.blockText":
     "对方会立即在所有设备上退出登录，所有登录途径都会被拒绝：密码、Google、GitHub 和 API 令牌。对方的数据会保留。你之后可以解封。",

@@ -8,14 +8,14 @@ export default {
   "Mail.dontShare": "Ne partagez pas ce code. {host} ne vous le demandera jamais.",
   "PasswordResetMail.subject": "Votre code pour réinitialiser votre mot de passe",
   "PasswordResetMail.asked":
-    "Quelqu’un a demandé à réinitialiser le mot de passe de votre compte sur {host}. Saisissez ce code dans l’onglet où vous l’avez demandé :",
+    "Quelqu’un a demandé à réinitialiser le mot de passe de votre compte sur {host}. Saisissez ce code dans l’onglet où vous l’avez demandé :",
   "PasswordResetMail.valid": {
     "one":
-      "Il ne fonctionne qu’une fois, pendant {count} minute. En l’utilisant, vous serez déconnecté de tous vos appareils.",
+      "Il ne sert qu’une fois et reste valable {count} minute. Son utilisation vous déconnecte de tous vos appareils.",
     "many":
-      "Il ne fonctionne qu’une fois, pendant {count} minutes. En l’utilisant, vous serez déconnecté de tous vos appareils.",
+      "Il ne sert qu’une fois et reste valable {count} minutes. Son utilisation vous déconnecte de tous vos appareils.",
     "other":
-      "Il ne fonctionne qu’une fois, pendant {count} minutes. En l’utilisant, vous serez déconnecté de tous vos appareils.",
+      "Il ne sert qu’une fois et reste valable {count} minutes. Son utilisation vous déconnecte de tous vos appareils.",
   },
   "PasswordResetMail.ignore":
     "Si vous n’êtes pas à l’origine de cette demande, ignorez cet e-mail. Votre mot de passe ne changera pas.",
@@ -29,14 +29,14 @@ export default {
     "Si vous ne voulez pas de nouveau mot de passe, ignorez cet e-mail. Votre mot de passe ne changera pas.",
   "SignInCodeMail.subject": "Votre code de connexion à {host}",
   "SignInCodeMail.asked":
-    "Quelqu’un a demandé à se connecter à {host} avec cette adresse e-mail le {when}. Saisissez ce code dans l’onglet où vous l’avez demandé :",
+    "Quelqu’un a demandé à se connecter à {host} avec cette adresse e-mail le {when}. Saisissez ce code dans l’onglet où vous l’avez demandé :",
   "SignInCodeMail.valid": {
     "one":
-      "Il ne fonctionne qu’une fois, pendant {count} minute. Si aucun compte n’utilise encore cette adresse e-mail, il en crée un.",
+      "Il ne sert qu’une fois et reste valable {count} minute. Si aucun compte n’utilise encore cette adresse e-mail, il en crée un.",
     "many":
-      "Il ne fonctionne qu’une fois, pendant {count} minutes. Si aucun compte n’utilise encore cette adresse e-mail, il en crée un.",
+      "Il ne sert qu’une fois et reste valable {count} minutes. Si aucun compte n’utilise encore cette adresse e-mail, il en crée un.",
     "other":
-      "Il ne fonctionne qu’une fois, pendant {count} minutes. Si aucun compte n’utilise encore cette adresse e-mail, il en crée un.",
+      "Il ne sert qu’une fois et reste valable {count} minutes. Si aucun compte n’utilise encore cette adresse e-mail, il en crée un.",
   },
   "SignInCodeMail.ignore":
     "Si vous n’êtes pas à l’origine de cette demande, ignorez cet e-mail. Personne ne peut se connecter sans le code.",

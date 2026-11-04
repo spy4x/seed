@@ -358,7 +358,7 @@ export default {
   "FeatureSignIn.fact4":
     "Llaves de acceso: solo se guarda la clave pública y cada desafío de inicio de sesión sirve una vez",
   "FeatureSignIn.fact5":
-    "Códigos de inicio de sesión por correo: un código de 8 caracteres inicia sesión o registra, sirve una vez durante 10 minutos, solo en el navegador que lo pidió, y solo se guarda como hash",
+    "Códigos de inicio de sesión por correo: un código de 8 caracteres sirve para iniciar sesión o registrarse, funciona una sola vez durante 10 minutos, solo en el navegador que lo pidió, y solo se guarda como hash",
   "FeatureSignIn.fact6":
     "Cuentas de invitado (inicio de sesión anónimo): el visitante empieza con un clic y sin método de inicio de sesión, y después añade correo y contraseña, Google, GitHub o una llave de acceso a la misma cuenta",
   "FeatureSignIn.fact7":
@@ -660,7 +660,7 @@ export default {
   "AdminTour.statsText": "Visitas al sitio y clics de pedido desde tu Umami. Solo totales.",
   "AdminTour.users": "Usuarios",
   "AdminTour.usersText":
-    "Busca a alguien: bloquéalo, cierra una sesión o envíale un correo para restablecer la contraseña.",
+    "Busca a una persona, bloquéala, cierra una sesión o envíale un correo para restablecer la contraseña.",
   "AdminTour.groups": "Grupos",
   "AdminTour.groupsText": "Miembros, invitaciones y archivos. Borra un archivo o cambia el dueño.",
   "AdminTour.billing": "Facturación",
@@ -950,7 +950,7 @@ export default {
   "FeaturePageSignIn.name": "Inicio de sesión",
   "FeaturePageSignIn.title": "Autenticación para tu SaaS, sin servicio externo",
   "FeaturePageSignIn.description":
-    "Llaves de acceso, códigos por correo, Google, GitHub y 2FA, comprobados por tu API, sin servicio de autenticación ni pago por usuario. Gratis y MIT.",
+    "Llaves de acceso, códigos por correo, Google, GitHub y verificación en dos pasos, comprobados por tu propia API, sin servicio de autenticación ni pago por usuario. Gratis y con licencia MIT.",
   "FeaturePageSignIn.h1":
     "Llaves de acceso e inicio de sesión para tu SaaS, sin servicio de autenticación",
   "FeaturePageSignIn.answer":

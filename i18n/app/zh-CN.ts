@@ -745,7 +745,8 @@ export default {
   "OAuthNotice.guestTaken": "这种登录方式属于另一个账号。",
   "PasswordResetScreen.forgotFailed": "无法发送验证码",
   "PasswordResetScreen.resetFailed": "无法修改密码",
-  "PasswordResetScreen.sent": "如果有账号使用 <email>{email}</email>，我们已向它发送验证码。",
+  "PasswordResetScreen.sent":
+    "如果 <email>{email}</email> 注册过账号，我们已向这个邮箱发送验证码。",
   "PasswordResetScreen.forgotDescription": {
     "other": "输入你注册时用的邮箱。我们会发送验证码，让你设置新密码。验证码 {count} 分钟内有效。",
   },
@@ -756,8 +757,8 @@ export default {
   "PasswordResetScreen.signIn": "登录",
   "PasswordResetScreen.chooseTitle": "设置新密码",
   "PasswordResetScreen.choose": "账号：<email>{email}</email>。保存后，你会在所有设备上退出登录。",
-  "PasswordResetScreen.expired": "耗时太久？<link>重新获取验证码</link>",
-  "PasswordResetScreen.tookTooLong": "耗时太久，请重新获取验证码。",
+  "PasswordResetScreen.expired": "超时了？<link>重新获取验证码</link>",
+  "PasswordResetScreen.tookTooLong": "已超时，请重新获取验证码。",
   "PasswordResetScreen.newPassword": "新密码",
   "PasswordResetScreen.newPasswordHint": "{min} 到 {max} 个字符。",
   "PasswordResetScreen.saving": "正在保存…",
@@ -1225,7 +1226,7 @@ export default {
   "ProfileView.tokenRevoked": "令牌已撤销",
   "ProfileView.tokenRevokedBody": "那个令牌已失效。",
   "ProviderProof.passkey": "通行密钥",
-  "ProviderProof.link": "邮件验证码",
+  "ProviderProof.link": "邮箱验证码",
   "ProviderProof.fresh": "你刚刚用 {methods} 登录过，因此不需要密码。",
   "ProviderProof.needed": {
     "other":
@@ -1234,17 +1235,17 @@ export default {
   "ProviderProof.passkeyAgain": "重新用通行密钥登录",
   "ProviderProof.providerAgain": "重新用 {provider} 登录",
   "SignInCodeScreen.sendFailed": "无法发送验证码，请稍后再试。",
-  "SignInCodeScreen.title": "用邮件验证码登录",
+  "SignInCodeScreen.title": "邮箱验证码登录",
   "SignInCodeScreen.description":
-    "我们会给你发一封邮件，里面有要在这里输入的验证码。这个邮箱还没有账号？验证码会帮你创建一个。",
+    "我们会把验证码发到你的邮箱，在这里输入即可。这个邮箱还没有账号？输入验证码后会自动为你创建。",
   "SignInCodeScreen.ratherPassword": "想用密码？<link>返回登录</link>",
-  "SignInCodeScreen.submit": "给我发送验证码",
+  "SignInCodeScreen.submit": "获取验证码",
   "SignInCodeScreen.confirmTitle": "确认是你本人",
   "SignInCodeScreen.confirmDescription":
     "我们会向 <email>{email}</email> 发送验证码。请在下一步输入，确认是你本人。",
   "CodeStep.sent": "我们已向 <email>{email}</email> 发送验证码。",
   "SignInCodeScreen.guest":
-    "你正在以访客身份使用应用。登录后，你在这里创建的内容会保存到这个邮箱下。如果它已有账号，我们会先问你。",
+    "你正在以访客身份使用应用。登录后，你在这里创建的内容会保存到这个邮箱名下。如果这个邮箱已有账号，我们会先征求你的意见。",
   "CodeStep.deadTitle": "这个验证码已失效",
   "CodeStep.dead": {
     "other":
@@ -1584,9 +1585,9 @@ export default {
   "AuthScreen.forgotten": "好了，这个浏览器不会再记住你的登录方式。",
   "AuthScreen.lastPassword": "你上次使用密码登录<email>（{email}）</email>。",
   "AuthScreen.lastPasskey": "你上次使用通行密钥登录<email>（{email}）</email>。",
-  "AuthScreen.lastLink": "上次你用邮件验证码登录<email>（{email}）</email>。",
-  "AuthScreen.emailSignInCode": "给我发送登录验证码",
-  "AuthScreen.emailSignUpCode": "给我发送注册验证码",
+  "AuthScreen.lastLink": "你上次使用邮箱验证码登录<email>（{email}）</email>。",
+  "AuthScreen.emailSignInCode": "通过邮箱获取登录验证码",
+  "AuthScreen.emailSignUpCode": "通过邮箱获取注册验证码",
   "AuthScreen.lastProvider": "你上次使用 {provider} 登录<email>（{email}）</email>。",
   "AuthScreen.forget": "不是你？使用其他账号",
   "AuthScreen.openProfile": "打开你的个人资料",

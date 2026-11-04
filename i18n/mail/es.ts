@@ -23,13 +23,13 @@ export default {
   "PasswordResetNoticeMail.asked":
     "El equipo de {host} te envía este correo para que puedas elegir una contraseña nueva para tu cuenta.",
   "PasswordResetNoticeMail.how":
-    "Abre la página de abajo y escribe este correo. Allí te enviaremos un código y eliges la contraseña nueva.",
+    "Abre la página de abajo y escribe esta dirección de correo. Allí te enviaremos un código y podrás elegir la contraseña nueva.",
   "PasswordResetNoticeMail.button": "Restablecer la contraseña",
   "PasswordResetNoticeMail.ignore":
     "Si no quieres una contraseña nueva, ignora este correo. Tu contraseña seguirá siendo la misma.",
   "SignInCodeMail.subject": "Tu código para iniciar sesión en {host}",
   "SignInCodeMail.asked":
-    "Alguien pidió iniciar sesión en {host} con este correo electrónico el {when}. Escribe este código en la pestaña donde lo pediste:",
+    "Alguien pidió iniciar sesión en {host} con este correo el {when}. Escribe este código en la pestaña donde lo pediste:",
   "SignInCodeMail.valid": {
     "one":
       "Solo sirve una vez y caduca en {count} minuto. Si aún no hay una cuenta con este correo, se creará una.",

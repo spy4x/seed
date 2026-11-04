@@ -631,7 +631,8 @@ export default {
   "AdminTour.stats": "統計",
   "AdminTour.statsText": "Umamiから取得したWebサイトの訪問数と注文クリック数。合計値のみ。",
   "AdminTour.users": "ユーザー",
-  "AdminTour.usersText": "ユーザーを検索し、ブロック、セッションの終了、再設定メールの送信。",
+  "AdminTour.usersText":
+    "ユーザーの検索、ブロック、セッションの終了、パスワード再設定メールの送信。",
   "AdminTour.groups": "グループ",
   "AdminTour.groupsText": "メンバー、招待、ファイル。ファイルの削除やオーナーの変更。",
   "AdminTour.billing": "請求",

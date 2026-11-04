@@ -1762,7 +1762,7 @@ export default {
   "AdminUser.doneRoleOperator": "{name} agora tem a função de operador.",
   "AdminUser.doneRoleSupervisor": "{name} agora tem a função de supervisor.",
   "AdminUser.doneRoleAdmin": "{name} agora tem a função de administrador.",
-  "AdminUser.donePasswordReset": "Um e-mail para redefinir a senha está a caminho de {name}.",
+  "AdminUser.donePasswordReset": "Enviamos a {name} um e-mail para redefinir a senha.",
   "AdminUser.doneDeleteGuest": "Conta de visitante {name} excluída.",
   "AdminUser.doneUnlinkTelegram": "A conta do Telegram de {name} foi desvinculada.",
   "AdminUser.doneRemovePicture": "A foto de perfil de {name} foi removida.",

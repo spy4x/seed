@@ -353,7 +353,7 @@ export default {
   "FeatureSignIn.nav": "Konten und Anmeldung",
   "FeatureSignIn.title": "Anmeldung, erledigt",
   "FeatureSignIn.lead":
-    "Leute registrieren sich mit E-Mail-Adresse und Passwort und bestätigen die Adresse mit einem Code. Sie können ein vergessenes Passwort zurücksetzen, mit Google oder GitHub weitermachen, sich mit einem Passkey anmelden oder sich einen Anmeldecode per E-Mail schicken lassen, der sie auch gleich registriert. Oder sie probieren die App erst in einem Gastkonto aus und fügen später eine Anmeldemethode hinzu. Mit einer Authenticator-App kommt Zwei-Faktor-Schutz (2FA) dazu. Jeder sieht alle Geräte, auf denen er angemeldet ist, und kann die anderen abmelden. Wer eine Anmeldemethode ändert, muss sich ausweisen und bekommt eine E-Mail.",
+    "Leute registrieren sich mit E-Mail-Adresse und Passwort und bestätigen die Adresse mit einem Code. Sie können ein vergessenes Passwort zurücksetzen, mit Google oder GitHub weitermachen, sich mit einem Passkey anmelden oder sich einen Anmeldecode per E-Mail schicken lassen, der sie auch gleich registriert. Oder sie probieren die App erst in einem Gastkonto aus und fügen später eine Anmeldemethode hinzu. Mit einer Authenticator-App kommt Zwei-Faktor-Authentifizierung (2FA) dazu. Jeder sieht alle Geräte, auf denen er angemeldet ist, und kann die anderen abmelden. Wer eine Anmeldemethode ändert, muss sich ausweisen und bekommt eine E-Mail.",
   "FeatureSignIn.fact1":
     "Passwörter mit PBKDF2-SHA-256 über Web Crypto gehasht, standardmäßig mit 600.000 Runden",
   "FeatureSignIn.fact2": "Signierte Sitzungscookies und ein Audit-Trail für jedes Anmeldeereignis",
@@ -361,7 +361,7 @@ export default {
   "FeatureSignIn.fact4":
     "Passkeys: Gespeichert wird nur der öffentliche Schlüssel, und jede Anmelde-Challenge gilt nur einmal",
   "FeatureSignIn.fact5":
-    "Anmeldecodes per E-Mail: Ein 8-stelliger Code meldet an oder registriert, gilt einmal und 10 Minuten lang, nur im Browser, der ihn angefordert hat, und wird nur als Hash gespeichert",
+    "Anmeldecodes per E-Mail: Ein 8-stelliger Code meldet an oder registriert, gilt nur einmal, 10 Minuten lang und nur im Browser, der ihn angefordert hat, und wird nur als Hash gespeichert",
   "FeatureSignIn.fact6":
     "Gastkonten (anonyme Anmeldung): Besucher starten mit einem Klick ohne Anmeldemethode und fügen demselben Konto später E-Mail und Passwort, Google, GitHub oder einen Passkey hinzu",
   "FeatureSignIn.fact7":
@@ -658,7 +658,8 @@ export default {
   "AdminTour.stats": "Statistik",
   "AdminTour.statsText": "Website-Besuche und Bestellklicks aus deinem Umami. Nur Summen.",
   "AdminTour.users": "Personen",
-  "AdminTour.usersText": "Person finden, sperren, Sitzung beenden oder Reset-E-Mail schicken.",
+  "AdminTour.usersText":
+    "Person finden, sperren, Sitzung beenden oder E-Mail zum Zurücksetzen schicken.",
   "AdminTour.groups": "Gruppen",
   "AdminTour.groupsText": "Mitglieder, Einladungen, Dateien. Datei löschen oder Inhaber wechseln.",
   "AdminTour.billing": "Abrechnung",
@@ -958,12 +959,12 @@ export default {
   "FeaturePageSignIn.summary":
     "Passkeys, Anmeldecodes per E-Mail, Google, GitHub und 2FA, ohne Auth-Dienst.",
   "FeaturePageSignIn.how1":
-    "Die API prüft jede Anmeldung selbst und antwortet mit einem signierten Sitzungs-Cookie. Ein Passkey nutzt das eingebaute WebAuthn des Browsers: Der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal. Ein Anmeldecode per E-Mail meldet an oder registriert, gilt einmal und 10 Minuten lang, nur im Browser, der ihn angefordert hat, und wird nur als Hash gespeichert.",
+    "Die API prüft jede Anmeldung selbst und antwortet mit einem signierten Sitzungs-Cookie. Ein Passkey nutzt das eingebaute WebAuthn des Browsers: Der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal. Ein Anmeldecode per E-Mail meldet an oder registriert, gilt nur einmal, 10 Minuten lang und nur im Browser, der ihn angefordert hat, und wird nur als Hash gespeichert.",
   "FeaturePageSignIn.how2":
     "Eine Authenticator-App ergänzt die Anmeldung um einen zweiten Faktor. Das Profil listet jeden Zugang zum Konto und jedes angemeldete Gerät auf; wer einen Zugang ändert, muss sich ausweisen, und es geht eine E-Mail raus. Besucher können auch mit einem Gastkonto starten und später eine Anmeldemethode hinzufügen.",
   "FeaturePageSignIn.authServiceQuestion": "Brauche ich einen Auth-Dienst?",
   "FeaturePageSignIn.authServiceAnswer":
-    "Nein. Die eigene API von Seed prüft Passwörter, Passkeys, Anmeldecodes und die Antworten von Google und GitHub auf deinem Server, also wird nichts pro Nutzer berechnet.",
+    "Nein. Die eigene API von Seed prüft Passwörter, Passkeys, Anmeldecodes und die Antworten von Google und GitHub auf deinem Server, deshalb fallen keine Kosten pro Nutzer an.",
   "FeaturePageSignIn.passkeysQuestion": "Unterstützt Seed Passkeys?",
   "FeaturePageSignIn.passkeysAnswer":
     "Ja. Leute fügen in ihrem Profil einen Passkey hinzu und melden sich damit an; der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal.",

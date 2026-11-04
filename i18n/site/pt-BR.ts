@@ -359,7 +359,7 @@ export default {
   "FeatureSignIn.fact4":
     "Chaves de acesso: só a chave pública é guardada, e cada desafio de login vale uma vez",
   "FeatureSignIn.fact5":
-    "Códigos de login por e-mail: um código de 8 caracteres entra ou cria a conta, vale uma vez, por 10 minutos, só no navegador que o pediu, e é guardado só como hash",
+    "Códigos de login por e-mail: um código de 8 caracteres serve para entrar ou criar a conta, vale uma vez, por 10 minutos, só no navegador que o pediu, e é guardado só como hash",
   "FeatureSignIn.fact6":
     "Contas de visitante (login anônimo): a pessoa começa com um clique, sem forma de entrar, e depois adiciona e-mail e senha, Google, GitHub ou uma chave de acesso à mesma conta",
   "FeatureSignIn.fact7":
@@ -955,7 +955,7 @@ export default {
   "FeaturePageSignIn.summary":
     "Chaves de acesso, códigos de login por e-mail, Google, GitHub e 2FA, sem serviço de autenticação.",
   "FeaturePageSignIn.how1":
-    "A API verifica cada login por conta própria e responde com um cookie de sessão assinado. Uma chave de acesso usa o WebAuthn do próprio navegador: o servidor guarda só a chave pública, e cada desafio de login vale uma vez. Um código de login por e-mail entra ou cria a conta, vale uma vez, por 10 minutos, só no navegador que o pediu, e é guardado só como hash.",
+    "A API verifica cada login por conta própria e responde com um cookie de sessão assinado. Uma chave de acesso usa o WebAuthn do próprio navegador: o servidor guarda só a chave pública, e cada desafio de login vale uma vez. Um código de login por e-mail serve para entrar ou criar a conta, vale uma vez, por 10 minutos, só no navegador que o pediu, e é guardado só como hash.",
   "FeaturePageSignIn.how2":
     "Um app autenticador ativa a verificação em duas etapas. O perfil lista todas as formas de entrar na conta e todos os dispositivos conectados, e mudar uma forma de entrar exige confirmação e envia um e-mail. Quem chega também pode começar numa conta de visitante e adicionar uma forma de entrar depois.",
   "FeaturePageSignIn.authServiceQuestion": "Preciso de um serviço de autenticação?",

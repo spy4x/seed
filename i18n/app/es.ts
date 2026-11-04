@@ -933,14 +933,14 @@ export default {
   "PasswordResetScreen.forgotFailed": "No se pudo enviar el código",
   "PasswordResetScreen.resetFailed": "No se pudo cambiar la contraseña",
   "PasswordResetScreen.sent":
-    "Si hay una cuenta con <email>{email}</email>, le enviamos un código.",
+    "Si hay una cuenta con <email>{email}</email>, te enviamos un código.",
   "PasswordResetScreen.forgotDescription": {
     "one":
-      "Escribe el correo con el que te registraste. Te enviaremos un código para elegir una contraseña nueva. Funciona durante {count} minuto.",
+      "Escribe el correo con el que te registraste. Te enviaremos un código para elegir una contraseña nueva. Caduca en {count} minuto.",
     "many":
-      "Escribe el correo con el que te registraste. Te enviaremos un código para elegir una contraseña nueva. Funciona durante {count} minutos.",
+      "Escribe el correo con el que te registraste. Te enviaremos un código para elegir una contraseña nueva. Caduca en {count} minutos.",
     "other":
-      "Escribe el correo con el que te registraste. Te enviaremos un código para elegir una contraseña nueva. Funciona durante {count} minutos.",
+      "Escribe el correo con el que te registraste. Te enviaremos un código para elegir una contraseña nueva. Caduca en {count} minutos.",
   },
   "PasswordResetScreen.remembered": "¿Ya la recordaste? <link>Volver a iniciar sesión</link>",
   "PasswordResetScreen.send": "Enviar un código",
@@ -1524,7 +1524,7 @@ export default {
   "SignInCodeScreen.sendFailed": "No se pudo enviar el código. Inténtalo de nuevo en un momento.",
   "SignInCodeScreen.title": "Inicia sesión con un código por correo",
   "SignInCodeScreen.description":
-    "Te enviaremos por correo un código para escribirlo aquí. ¿Aún no hay una cuenta con ese correo? El código la crea.",
+    "Te enviaremos un código por correo para que lo escribas aquí. ¿Aún no tienes cuenta con ese correo? El código la crea.",
   "SignInCodeScreen.ratherPassword":
     "¿Prefieres una contraseña? <link>Volver a iniciar sesión</link>",
   "SignInCodeScreen.submit": "Enviarme un código",
@@ -1533,15 +1533,15 @@ export default {
     "Te enviaremos un código a <email>{email}</email>. Escríbelo en el siguiente paso para confirmar que eres tú.",
   "CodeStep.sent": "Enviamos un código a <email>{email}</email>.",
   "SignInCodeScreen.guest":
-    "Estás usando la app como invitado. Al iniciar sesión, lo que creaste aquí se guarda con este correo. Si ya tiene una cuenta, te preguntaremos primero.",
+    "Estás usando la app como invitado. Al iniciar sesión, lo que creaste aquí se guarda con este correo. Si ese correo ya tiene una cuenta, te preguntaremos primero.",
   "CodeStep.deadTitle": "Este código ya no funciona",
   "CodeStep.dead": {
     "one":
-      "Los códigos funcionan una vez, durante {count} minuto, y solo se permiten unos pocos intentos fallidos. Pide uno nuevo y usa el correo más reciente.",
+      "Cada código sirve una sola vez, durante {count} minuto, y admite pocos intentos fallidos. Pide uno nuevo y usa el correo más reciente.",
     "many":
-      "Los códigos funcionan una vez, durante {count} minutos, y solo se permiten unos pocos intentos fallidos. Pide uno nuevo y usa el correo más reciente.",
+      "Cada código sirve una sola vez, durante {count} minutos, y admite pocos intentos fallidos. Pide uno nuevo y usa el correo más reciente.",
     "other":
-      "Los códigos funcionan una vez, durante {count} minutos, y solo se permiten unos pocos intentos fallidos. Pide uno nuevo y usa el correo más reciente.",
+      "Cada código sirve una sola vez, durante {count} minutos, y admite pocos intentos fallidos. Pide uno nuevo y usa el correo más reciente.",
   },
   "CodeStep.differentEmail": "Usar otro correo",
   "SignInMethods.failed": "No se pudieron cambiar tus métodos de inicio de sesión",

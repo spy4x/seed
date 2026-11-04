@@ -923,7 +923,7 @@ export default {
   "PasswordResetScreen.chooseTitle": "Neues Passwort festlegen",
   "PasswordResetScreen.choose":
     "Für <email>{email}</email>. Beim Speichern wirst du auf allen Geräten abgemeldet.",
-  "PasswordResetScreen.expired": "Hat es zu lange gedauert? <link>Neuen Code anfordern</link>",
+  "PasswordResetScreen.expired": "Zu lange gedauert? <link>Neuen Code anfordern</link>",
   "PasswordResetScreen.tookTooLong": "Das hat zu lange gedauert. Fordere einen neuen Code an.",
   "PasswordResetScreen.newPassword": "Neues Passwort",
   "PasswordResetScreen.newPasswordHint": "{min} bis {max} Zeichen.",
@@ -1482,10 +1482,10 @@ export default {
   "ProviderProof.passkeyAgain": "Noch einmal mit Passkey anmelden",
   "ProviderProof.providerAgain": "Noch einmal mit {provider} anmelden",
   "SignInCodeScreen.sendFailed":
-    "Der Code konnte nicht gesendet werden. Versuch es gleich noch einmal.",
+    "Der Code konnte nicht gesendet werden. Versuche es gleich noch einmal.",
   "SignInCodeScreen.title": "Mit einem Code per E-Mail anmelden",
   "SignInCodeScreen.description":
-    "Wir schicken dir per E-Mail einen Code, den du hier eingibst. Noch kein Konto mit dieser E-Mail-Adresse? Dann erstellt der Code eines.",
+    "Wir schicken dir einen Code per E-Mail, den du hier eingibst. Noch kein Konto mit dieser E-Mail-Adresse? Dann legt der Code eins an.",
   "SignInCodeScreen.ratherPassword": "Lieber mit Passwort? <link>Zurück zur Anmeldung</link>",
   "SignInCodeScreen.submit": "Code per E-Mail senden",
   "SignInCodeScreen.confirmTitle": "Bestätige, dass du es bist",
@@ -1493,13 +1493,13 @@ export default {
     "Wir schicken einen Code an <email>{email}</email>. Gib ihn im nächsten Schritt ein, um zu bestätigen, dass du es bist.",
   "CodeStep.sent": "Wir haben einen Code an <email>{email}</email> geschickt.",
   "SignInCodeScreen.guest":
-    "Du nutzt die App als Gast. Wenn du dich anmeldest, wird alles, was du hier erstellt hast, unter dieser E-Mail-Adresse gespeichert. Gibt es dafür schon ein Konto, fragen wir dich vorher.",
+    "Du nutzt die App als Gast. Wenn du dich anmeldest, speichern wir alles, was du hier erstellt hast, unter dieser E-Mail-Adresse. Gibt es dafür schon ein Konto, fragen wir dich vorher.",
   "CodeStep.deadTitle": "Dieser Code funktioniert nicht mehr",
   "CodeStep.dead": {
     "one":
-      "Ein Code funktioniert einmal und {count} Minute lang, und nur wenige Fehlversuche sind erlaubt. Fordere einen neuen an und nimm die neueste E-Mail.",
+      "Ein Code gilt nur einmal und nur {count} Minute, und du hast nur wenige Versuche. Fordere einen neuen an und nimm den aus der neuesten E-Mail.",
     "other":
-      "Ein Code funktioniert einmal und {count} Minuten lang, und nur wenige Fehlversuche sind erlaubt. Fordere einen neuen an und nimm die neueste E-Mail.",
+      "Ein Code gilt nur einmal und nur {count} Minuten, und du hast nur wenige Versuche. Fordere einen neuen an und nimm den aus der neuesten E-Mail.",
   },
   "CodeStep.differentEmail": "Andere E-Mail-Adresse verwenden",
   "SignInMethods.failed": "Deine Anmeldemethoden konnten nicht geändert werden",

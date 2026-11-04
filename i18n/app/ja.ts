@@ -823,7 +823,7 @@ export default {
   "PasswordResetScreen.forgotFailed": "コードを送信できませんでした",
   "PasswordResetScreen.resetFailed": "パスワードを変更できませんでした",
   "PasswordResetScreen.sent":
-    "<email>{email}</email> を使うアカウントがあれば、コードを送信しました。",
+    "<email>{email}</email>で登録されたアカウントがあれば、そのアドレスにコードを送信しました。",
   "PasswordResetScreen.forgotDescription": {
     "other":
       "登録したメールアドレスを入力してください。新しいパスワードを設定するためのコードをお送りします。コードは{count}分間有効です。",
@@ -838,7 +838,7 @@ export default {
   "PasswordResetScreen.choose":
     "<email>{email}</email>のパスワードです。保存すると、すべてのデバイスからログアウトされます。",
   "PasswordResetScreen.expired": "時間切れですか？<link>新しいコードを受け取る</link>",
-  "PasswordResetScreen.tookTooLong": "時間がかかりすぎました。新しいコードを受け取ってください。",
+  "PasswordResetScreen.tookTooLong": "時間切れです。新しいコードを受け取ってください。",
   "PasswordResetScreen.newPassword": "新しいパスワード",
   "PasswordResetScreen.newPasswordHint": "{min}〜{max}文字。",
   "PasswordResetScreen.saving": "保存しています…",
@@ -1365,14 +1365,14 @@ export default {
   "SignInCodeScreen.submit": "コードをメールで受け取る",
   "SignInCodeScreen.confirmTitle": "本人確認",
   "SignInCodeScreen.confirmDescription":
-    "<email>{email}</email> にコードをお送りします。次の画面で入力して、本人確認を完了してください。",
-  "CodeStep.sent": "<email>{email}</email> にコードを送信しました。",
+    "<email>{email}</email>にコードをお送りします。次の画面でそのコードを入力して、本人確認を完了してください。",
+  "CodeStep.sent": "<email>{email}</email>にコードを送信しました。",
   "SignInCodeScreen.guest":
-    "ゲストとしてアプリを使っています。ログインすると、ここで作ったものはこのメールアドレスで保存されます。すでにアカウントがある場合は、先に確認します。",
+    "ゲストとしてアプリを使っています。ログインすると、ここで作ったものはこのメールアドレスで保存されます。このメールアドレスのアカウントがすでにある場合は、先にお尋ねします。",
   "CodeStep.deadTitle": "このコードはもう使えません",
   "CodeStep.dead": {
     "other":
-      "コードは{count}分間、1回だけ使えます。入力ミスは数回までです。新しいコードを受け取り、最新のメールのコードを使ってください。",
+      "コードは{count}分間、1回だけ使えます。間違えられるのは数回までです。新しいコードを受け取り、いちばん新しいメールに記載されたコードを使ってください。",
   },
   "CodeStep.differentEmail": "別のメールアドレスを使う",
   "SignInMethods.failed": "ログイン方法を変更できませんでした",

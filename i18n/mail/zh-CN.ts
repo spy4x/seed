@@ -14,9 +14,9 @@ export default {
   },
   "PasswordResetMail.ignore": "如果这不是你本人的操作，请忽略这封邮件，你的密码不会改变。",
   "PasswordResetNoticeMail.subject": "重置你的密码",
-  "PasswordResetNoticeMail.asked": "{host} 团队给你发这封邮件，方便你为账号设置新密码。",
+  "PasswordResetNoticeMail.asked": "这封邮件由 {host} 团队发送，方便你为账号设置新密码。",
   "PasswordResetNoticeMail.how":
-    "打开下面的页面并输入这个邮箱。我们会在那里给你发送验证码，然后你就可以设置新密码。",
+    "打开下方页面，输入这个邮箱地址。我们会给你发送验证码，然后你就可以设置新密码。",
   "PasswordResetNoticeMail.button": "重置密码",
   "PasswordResetNoticeMail.ignore": "如果你不需要新密码，请忽略这封邮件，你的密码不会改变。",
   "SignInCodeMail.subject": "你的 {host} 登录验证码",

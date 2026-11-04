@@ -5,10 +5,10 @@ export default {
   "Mail.signIn": "Entrar",
   "Mail.openProfile": "Abrir seu perfil",
   "Mail.openGroup": "Abrir o grupo",
-  "Mail.dontShare": "Não compartilhe este código. {host} nunca vai pedi-lo a você.",
+  "Mail.dontShare": "Não compartilhe este código. {host} nunca vai pedir esse código a você.",
   "PasswordResetMail.subject": "Seu código para redefinir a senha",
   "PasswordResetMail.asked":
-    "Alguém pediu para redefinir a senha da sua conta em {host}. Digite este código na aba em que você o pediu:",
+    "Alguém pediu para redefinir a senha da sua conta em {host}. Digite este código na aba em que fez o pedido:",
   "PasswordResetMail.valid": {
     "one":
       "Ele só funciona uma vez, por {count} minuto. Ao usá-lo, você sai da conta em todos os dispositivos.",
@@ -22,13 +22,13 @@ export default {
   "PasswordResetNoticeMail.asked":
     "A equipe de {host} enviou este e-mail para você escolher uma senha nova para a sua conta.",
   "PasswordResetNoticeMail.how":
-    "Abra a página abaixo e digite este e-mail. Lá enviaremos um código, e você escolhe a senha nova.",
+    "Abra a página abaixo e digite este e-mail. Lá, você recebe um código e escolhe a senha nova.",
   "PasswordResetNoticeMail.button": "Redefinir a senha",
   "PasswordResetNoticeMail.ignore":
     "Se você não quer uma senha nova, ignore este e-mail. Sua senha não vai mudar.",
   "SignInCodeMail.subject": "Seu código para entrar em {host}",
   "SignInCodeMail.asked":
-    "Alguém pediu para entrar em {host} com este e-mail em {when}. Digite este código na aba em que você o pediu:",
+    "Alguém pediu para entrar em {host} com este e-mail em {when}. Digite este código na aba em que fez o pedido:",
   "SignInCodeMail.valid": {
     "one":
       "Ele só funciona uma vez, por {count} minuto. Se ainda não houver uma conta com este e-mail, ele cria uma.",

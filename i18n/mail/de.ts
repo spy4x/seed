@@ -11,9 +11,9 @@ export default {
     "Jemand möchte das Passwort deines Kontos bei {host} zurücksetzen. Gib diesen Code in dem Tab ein, in dem du ihn angefordert hast:",
   "PasswordResetMail.valid": {
     "one":
-      "Er funktioniert einmal und gilt {count} Minute lang. Sobald du ihn benutzt, wirst du auf allen Geräten abgemeldet.",
+      "Der Code gilt nur einmal und {count} Minute lang. Sobald du ihn eingibst, wirst du auf allen Geräten abgemeldet.",
     "other":
-      "Er funktioniert einmal und gilt {count} Minuten lang. Sobald du ihn benutzt, wirst du auf allen Geräten abgemeldet.",
+      "Der Code gilt nur einmal und {count} Minuten lang. Sobald du ihn eingibst, wirst du auf allen Geräten abgemeldet.",
   },
   "PasswordResetMail.ignore":
     "Warst du das nicht? Dann ignoriere diese E-Mail einfach. Dein Passwort bleibt, wie es ist.",
@@ -30,9 +30,9 @@ export default {
     "Jemand wollte sich am {when} mit dieser E-Mail-Adresse bei {host} anmelden. Gib diesen Code in dem Tab ein, in dem du ihn angefordert hast:",
   "SignInCodeMail.valid": {
     "one":
-      "Er funktioniert einmal und gilt {count} Minute lang. Gibt es mit dieser E-Mail-Adresse noch kein Konto, wird eins angelegt.",
+      "Der Code gilt nur einmal und {count} Minute lang. Gibt es mit dieser E-Mail-Adresse noch kein Konto, legt er eins an.",
     "other":
-      "Er funktioniert einmal und gilt {count} Minuten lang. Gibt es mit dieser E-Mail-Adresse noch kein Konto, wird eins angelegt.",
+      "Der Code gilt nur einmal und {count} Minuten lang. Gibt es mit dieser E-Mail-Adresse noch kein Konto, legt er eins an.",
   },
   "SignInCodeMail.ignore":
     "Warst du das nicht? Dann ignoriere diese E-Mail einfach. Ohne den Code kann sich niemand anmelden.",

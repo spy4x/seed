@@ -963,14 +963,14 @@ export default {
   "PasswordResetScreen.forgotFailed": "Impossible d’envoyer le code",
   "PasswordResetScreen.resetFailed": "Impossible de changer le mot de passe",
   "PasswordResetScreen.sent":
-    "Si un compte utilise <email>{email}</email>, nous lui avons envoyé un code.",
+    "Si un compte utilise <email>{email}</email>, nous avons envoyé un code à cette adresse.",
   "PasswordResetScreen.forgotDescription": {
     "one":
-      "Saisissez l’adresse e-mail de votre inscription. Nous vous enverrons un code pour choisir un nouveau mot de passe. Il fonctionne pendant {count} minute.",
+      "Saisissez l’adresse e-mail utilisée lors de votre inscription. Nous vous enverrons un code pour choisir un nouveau mot de passe. Il reste valable {count} minute.",
     "many":
-      "Saisissez l’adresse e-mail de votre inscription. Nous vous enverrons un code pour choisir un nouveau mot de passe. Il fonctionne pendant {count} minutes.",
+      "Saisissez l’adresse e-mail utilisée lors de votre inscription. Nous vous enverrons un code pour choisir un nouveau mot de passe. Il reste valable {count} minutes.",
     "other":
-      "Saisissez l’adresse e-mail de votre inscription. Nous vous enverrons un code pour choisir un nouveau mot de passe. Il fonctionne pendant {count} minutes.",
+      "Saisissez l’adresse e-mail utilisée lors de votre inscription. Nous vous enverrons un code pour choisir un nouveau mot de passe. Il reste valable {count} minutes.",
   },
   "PasswordResetScreen.remembered": "Vous vous en souvenez ? <link>Retour à la connexion</link>",
   "PasswordResetScreen.send": "Envoyer un code",
@@ -981,7 +981,7 @@ export default {
   "PasswordResetScreen.chooseTitle": "Choisissez un nouveau mot de passe",
   "PasswordResetScreen.choose":
     "Pour <email>{email}</email>. L’enregistrer vous déconnecte sur tous vos appareils.",
-  "PasswordResetScreen.expired": "Trop tard ? <link>Demandez un nouveau code</link>",
+  "PasswordResetScreen.expired": "Délai dépassé ? <link>Demandez un nouveau code</link>",
   "PasswordResetScreen.tookTooLong": "Le délai est dépassé. Demandez un nouveau code.",
   "PasswordResetScreen.newPassword": "Nouveau mot de passe",
   "PasswordResetScreen.newPasswordHint": "De {min} à {max} caractères.",
@@ -1573,24 +1573,24 @@ export default {
   "SignInCodeScreen.sendFailed": "Impossible d’envoyer le code. Réessayez dans un instant.",
   "SignInCodeScreen.title": "Se connecter avec un code par e-mail",
   "SignInCodeScreen.description":
-    "Nous vous envoyons par e-mail un code à saisir ici. Pas encore de compte avec cette adresse ? Le code en crée un.",
+    "Nous vous envoyons par e-mail un code à saisir ici. Pas encore de compte avec cette adresse ? Le code en crée un.",
   "SignInCodeScreen.ratherPassword":
     "Vous préférez un mot de passe ? <link>Retour à la connexion</link>",
   "SignInCodeScreen.submit": "Recevoir un code",
-  "SignInCodeScreen.confirmTitle": "Confirmez qu’il s’agit bien de vous",
+  "SignInCodeScreen.confirmTitle": "Confirmez votre identité",
   "SignInCodeScreen.confirmDescription":
-    "Nous allons envoyer un code à <email>{email}</email>. Saisissez-le à l’étape suivante pour confirmer qu’il s’agit bien de vous.",
+    "Nous allons envoyer un code à <email>{email}</email>. Saisissez-le à l’étape suivante pour confirmer votre identité.",
   "CodeStep.sent": "Nous avons envoyé un code à <email>{email}</email>.",
   "SignInCodeScreen.guest":
-    "Vous utilisez l’app en tant qu’invité. En vous connectant, ce que vous avez créé ici est enregistré sous cette adresse. Si elle a déjà un compte, nous vous demanderons d’abord.",
+    "Vous utilisez l’app en tant qu’invité. Si vous vous connectez, ce que vous avez créé ici sera enregistré sous cette adresse. Si elle a déjà un compte, nous vous demanderons d’abord votre accord.",
   "CodeStep.deadTitle": "Ce code ne fonctionne plus",
   "CodeStep.dead": {
     "one":
-      "Un code fonctionne une seule fois, pendant {count} minute, et seuls quelques essais ratés sont permis. Demandez-en un nouveau et utilisez le dernier e-mail.",
+      "Un code ne sert qu’une fois, reste valable {count} minute et n’accepte que quelques erreurs de saisie. Demandez-en un nouveau et utilisez l’e-mail le plus récent.",
     "many":
-      "Un code fonctionne une seule fois, pendant {count} minutes, et seuls quelques essais ratés sont permis. Demandez-en un nouveau et utilisez le dernier e-mail.",
+      "Un code ne sert qu’une fois, reste valable {count} minutes et n’accepte que quelques erreurs de saisie. Demandez-en un nouveau et utilisez l’e-mail le plus récent.",
     "other":
-      "Un code fonctionne une seule fois, pendant {count} minutes, et seuls quelques essais ratés sont permis. Demandez-en un nouveau et utilisez le dernier e-mail.",
+      "Un code ne sert qu’une fois, reste valable {count} minutes et n’accepte que quelques erreurs de saisie. Demandez-en un nouveau et utilisez l’e-mail le plus récent.",
   },
   "CodeStep.differentEmail": "Utiliser une autre adresse",
   "SignInMethods.failed": "Impossible de modifier vos méthodes de connexion",

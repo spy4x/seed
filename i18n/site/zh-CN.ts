@@ -137,7 +137,7 @@ export default {
   "HomeProof.tests": "测试文件，覆盖各个应用和库，全部在 CI 中运行",
   "HomeProof.licence": "许可证：无需账号，没有付费墙",
   "HomeStatus.signIn":
-    "注册、登录、邮箱验证、重置密码、Google 和 GitHub 登录、通行密钥、邮件登录验证码、基于身份验证器应用的双重验证",
+    "注册、登录、邮箱验证、重置密码、Google 和 GitHub 登录、通行密钥、邮箱登录验证码、基于身份验证器应用的双重验证",
   "HomeStatus.guests": "访客账号：一键试用应用，添加一种登录方式即可保留账号",
   "HomeStatus.groups": "群组：成员、角色、邀请和所有权转让",
   "HomeStatus.export": "将群组导出为文件，或将文件导入为新群组",
@@ -188,7 +188,7 @@ export default {
   "HomeFeatures.signInAlt":
     "个人资料的安全页面：密码、“添加通行密钥”按钮、已开启的双重验证，以及已登录设备列表的开头部分。",
   "HomeFeatures.signInText":
-    "邮箱密码登录（含验证码）、重置密码、Google 和 GitHub 登录、通行密钥、邮件登录验证码、访客账号，以及基于身份验证器应用的双重验证。所有会话都能查看，也能随时结束。",
+    "邮箱密码登录（含验证码）、重置密码、Google 和 GitHub 登录、通行密钥、邮箱登录验证码、访客账号，以及基于身份验证器应用的双重验证。所有会话都能查看，也能随时结束。",
   "HomeFeatures.billingTitle": "按成员计费",
   "HomeFeatures.billingLink": "计费的工作原理",
   "HomeFeatures.billingText":
@@ -322,13 +322,13 @@ export default {
   "FeatureSignIn.nav": "账号与登录",
   "FeatureSignIn.title": "登录，已搞定",
   "FeatureSignIn.lead":
-    "用户用邮箱和密码注册，并通过验证码验证邮箱。忘记密码可以重置，也可以用 Google 或 GitHub 继续、用通行密钥登录，或者通过邮件获取登录验证码（没有账号时会顺便完成注册）。也可以先用访客账号试用应用，之后再添加登录方式。身份验证器应用可以开启双重验证（2FA）。用户能看到自己登录过的每台设备，并可以让其他设备退出登录。更改登录方式时需要验证身份，并会发送邮件通知。",
+    "用户用邮箱和密码注册，并通过验证码验证邮箱。忘记密码可以重置，也可以用 Google 或 GitHub 继续、用通行密钥登录，或者通过邮箱获取登录验证码（没有账号时会顺便完成注册）。也可以先用访客账号试用应用，之后再添加登录方式。身份验证器应用可以开启双重验证（2FA）。用户能看到自己登录过的每台设备，并可以让其他设备退出登录。更改登录方式时需要验证身份，并会发送邮件通知。",
   "FeatureSignIn.fact1": "密码通过 Web Crypto 用 PBKDF2-SHA-256 哈希，默认 600,000 轮",
   "FeatureSignIn.fact2": "签名的会话 Cookie，每次登录事件都有审计记录",
   "FeatureSignIn.fact3": "个人 API 令牌，只以带密钥的哈希形式存储",
   "FeatureSignIn.fact4": "通行密钥：只存储公钥，每次登录的挑战只能使用一次",
   "FeatureSignIn.fact5":
-    "邮件登录验证码：一个 8 位验证码即可登录或注册，只能使用一次，10 分钟内有效，且仅限发起请求的浏览器，并且只以哈希形式存储",
+    "邮箱登录验证码：一个 8 位验证码即可登录或注册，只能使用一次，10 分钟内有效，仅限发起请求的浏览器使用，且只以哈希形式存储",
   "FeatureSignIn.fact6":
     "访客账号（匿名登录）：访客一键开始，无需任何登录方式，之后可以在同一个账号上添加邮箱和密码、Google、GitHub 或通行密钥",
   "FeatureSignIn.fact7": "按登录名统计所有网络地址上的密码错误次数，超过后短暂锁定",
@@ -538,7 +538,7 @@ export default {
     "Seed 提供的功能：双重验证和社交账号登录、带角色的群组、按成员计费的 Stripe 订阅、实时同步、离线应用、管理后台、监控和备份。",
   "FeaturesHero.title": "Seed 提供的一切，以及还没有的部分",
   "FeaturesHero.lead":
-    "Seed 是一个免费、MIT 许可的 SaaS 启动模板，提供邮箱、Google 和 GitHub 登录、通行密钥、邮件登录验证码、访客账号、双重验证、带角色的群组、按成员计费的 Stripe 订阅、实时更新、离线应用、管理后台、监控，以及可选的每日加密备份。下面每个部分都附有代码链接。",
+    "Seed 是一个免费、MIT 许可的 SaaS 启动模板，提供邮箱、Google 和 GitHub 登录、通行密钥、邮箱登录验证码、访客账号、双重验证、带角色的群组、按成员计费的 Stripe 订阅、实时更新、离线应用、管理后台、监控，以及可选的每日加密备份。下面每个部分都附有代码链接。",
   "FeaturesHero.note":
     "Seed 现在就能用，并且在公开开发中。缺少的部分会在受影响的功能旁标注“尚未完成”，如有对应的 issue，也会附上链接。",
   "Features.compare": "Seed 与其他方案的对比",
@@ -585,7 +585,7 @@ export default {
   "AdminTour.stats": "统计",
   "AdminTour.statsText": "来自你的 Umami 的网站访问量和下单点击。只显示总数。",
   "AdminTour.users": "用户",
-  "AdminTour.usersText": "查找用户、封禁用户、结束会话或发送重置邮件。",
+  "AdminTour.usersText": "查找用户、封禁用户、结束会话或发送重置密码邮件。",
   "AdminTour.groups": "群组",
   "AdminTour.groupsText": "成员、邀请和文件。可以移除文件或更换所有者。",
   "AdminTour.billing": "账单",
@@ -860,7 +860,7 @@ export default {
   "FeaturePageSignIn.summary":
     "通行密钥、邮箱登录验证码、Google、GitHub 和双重验证，无需认证服务。",
   "FeaturePageSignIn.how1":
-    "每次登录都由 API 自己校验，并返回一个签名的会话 Cookie。通行密钥使用浏览器自带的 WebAuthn：服务器只保存其公钥，每个登录挑战只能使用一次。邮件登录验证码可用于登录或注册，只能使用一次，有效期 10 分钟，仅限发起请求的浏览器，并且只以哈希形式存储。",
+    "每次登录都由 API 自己校验，并返回一个签名的会话 Cookie。通行密钥使用浏览器自带的 WebAuthn：服务器只保存其公钥，每个登录挑战只能使用一次。邮箱登录验证码可用于登录或注册，只能使用一次，有效期 10 分钟，仅限发起请求的浏览器使用，且只以哈希形式存储。",
   "FeaturePageSignIn.how2":
     "身份验证器应用可以开启双重验证。个人资料页列出了进入账号的每种方式和每台已登录的设备；更改登录方式时需要验证身份，并会发送邮件通知。访客也可以先用访客账号开始，之后再添加登录方式。",
   "FeaturePageSignIn.authServiceQuestion": "我需要第三方认证服务吗？",

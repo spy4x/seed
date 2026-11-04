@@ -365,7 +365,7 @@ export default {
   "FeatureSignIn.fact4":
     "Clés d’accès : seule la clé publique est stockée, et chaque défi de connexion ne fonctionne qu’une fois",
   "FeatureSignIn.fact5":
-    "Codes de connexion par e-mail : un code de 8 caractères connecte ou crée le compte, ne fonctionne qu’une fois, pendant 10 minutes, seulement dans le navigateur qui l’a demandé, et n’est stocké que sous forme de hachage",
+    "Codes de connexion par e-mail : un code de 8 caractères connecte ou crée le compte, ne sert qu’une fois, reste valable 10 minutes, uniquement dans le navigateur qui l’a demandé, et n’est stocké que sous forme de hachage",
   "FeatureSignIn.fact6":
     "Comptes invités (connexion anonyme) : un visiteur démarre en un clic sans méthode de connexion, puis ajoute une adresse e-mail et un mot de passe, Google, GitHub ou une clé d’accès au même compte",
   "FeatureSignIn.fact7":
@@ -988,7 +988,7 @@ export default {
   "FeaturePageSignIn.summary":
     "Clés d’accès, codes de connexion par e-mail, Google, GitHub et double authentification, sans service d’authentification.",
   "FeaturePageSignIn.how1":
-    "L’API vérifie elle-même chaque connexion et répond avec un cookie de session signé. Une clé d’accès utilise le WebAuthn du navigateur : le serveur ne garde que sa clé publique, et chaque défi de connexion ne sert qu’une fois. Un code de connexion envoyé par e-mail connecte ou crée le compte, ne sert qu’une fois, reste valable 10 minutes, seulement dans le navigateur qui l’a demandé, et n’est stocké que sous forme de hachage.",
+    "L’API vérifie elle-même chaque connexion et répond avec un cookie de session signé. Une clé d’accès utilise le WebAuthn du navigateur : le serveur ne garde que sa clé publique, et chaque défi de connexion ne sert qu’une fois. Un code de connexion envoyé par e-mail connecte ou crée le compte, ne sert qu’une fois, reste valable 10 minutes, uniquement dans le navigateur qui l’a demandé, et n’est stocké que sous forme de hachage.",
   "FeaturePageSignIn.how2":
     "Une application d’authentification ajoute la double authentification. Le profil liste chaque méthode de connexion au compte et chaque appareil connecté, et changer une méthode de connexion demande une preuve et envoie un e-mail. Un visiteur peut aussi commencer dans un compte invité et ajouter une méthode de connexion plus tard.",
   "FeaturePageSignIn.authServiceQuestion": "Ai-je besoin d’un service d’authentification ?",

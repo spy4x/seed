@@ -938,7 +938,7 @@ export default {
       "Digite o e-mail que você usou no cadastro. Vamos enviar um código para você escolher uma nova senha. Ele funciona por {count} minutos.",
   },
   "PasswordResetScreen.remembered": "Lembrou? <link>Voltar para o login</link>",
-  "PasswordResetScreen.send": "Enviar um código",
+  "PasswordResetScreen.send": "Enviar código",
   "PasswordResetScreen.doneTitle": "Senha alterada",
   "PasswordResetScreen.done":
     "Você saiu da conta em todos os dispositivos. Entre com sua nova senha.",
@@ -947,7 +947,7 @@ export default {
   "PasswordResetScreen.choose":
     "Para <email>{email}</email>. Ao salvar, você sai da conta em todos os dispositivos.",
   "PasswordResetScreen.expired": "Demorou demais? <link>Peça um novo código</link>",
-  "PasswordResetScreen.tookTooLong": "Passou tempo demais. Peça um novo código.",
+  "PasswordResetScreen.tookTooLong": "Demorou demais. Peça um novo código.",
   "PasswordResetScreen.newPassword": "Nova senha",
   "PasswordResetScreen.newPasswordHint": "De {min} a {max} caracteres.",
   "PasswordResetScreen.saving": "Salvando…",
@@ -1515,13 +1515,13 @@ export default {
   "SignInCodeScreen.description":
     "Vamos enviar por e-mail um código para você digitar aqui. Ainda não tem conta com esse e-mail? O código cria uma.",
   "SignInCodeScreen.ratherPassword": "Prefere usar senha? <link>Voltar para o login</link>",
-  "SignInCodeScreen.submit": "Receber um código",
+  "SignInCodeScreen.submit": "Receber código por e-mail",
   "SignInCodeScreen.confirmTitle": "Confirme que é você",
   "SignInCodeScreen.confirmDescription":
     "Vamos enviar um código para <email>{email}</email>. Digite-o na próxima etapa para confirmar que é você.",
   "CodeStep.sent": "Enviamos um código para <email>{email}</email>.",
   "SignInCodeScreen.guest":
-    "Você está usando o app como convidado. Ao entrar, o que você criou aqui fica salvo com este e-mail. Se ele já tiver uma conta, perguntamos antes.",
+    "Você está usando o app como visitante. Ao entrar, o que você criou aqui fica salvo com este e-mail. Se ele já tiver uma conta, perguntamos antes.",
   "CodeStep.deadTitle": "Este código não funciona mais",
   "CodeStep.dead": {
     "one":
@@ -1932,7 +1932,7 @@ export default {
     "Da última vez, você entrou com uma chave de acesso<email> ({email})</email>.",
   "AuthScreen.lastLink":
     "Da última vez, você entrou com um código por e-mail<email> ({email})</email>.",
-  "AuthScreen.emailSignInCode": "Receber código de acesso por e-mail",
+  "AuthScreen.emailSignInCode": "Receber código de login por e-mail",
   "AuthScreen.emailSignUpCode": "Receber código de cadastro por e-mail",
   "AuthScreen.lastProvider": "Da última vez, você entrou com {provider}<email> ({email})</email>.",
   "AuthScreen.forget": "Não é você? Use outra conta",

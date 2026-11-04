@@ -1787,7 +1787,7 @@ export default {
   "AdminUser.doneRoleSupervisor": "{name} est maintenant superviseur.",
   "AdminUser.doneRoleAdmin": "{name} est maintenant administrateur.",
   "AdminUser.donePasswordReset":
-    "Un e-mail de réinitialisation du mot de passe est en route vers {name}.",
+    "Un e-mail de réinitialisation du mot de passe a été envoyé à {name}.",
   "AdminUser.doneDeleteGuest": "Compte invité {name} supprimé.",
   "AdminUser.doneUnlinkTelegram": "Le compte Telegram de {name} a été dissocié.",
   "AdminUser.doneRemovePicture": "La photo de profil de {name} a été retirée.",
@@ -1877,7 +1877,7 @@ export default {
   "AdminUser.changing": "Modification…",
   "AdminUser.resetTitle": "Envoyer à {name} un e-mail de réinitialisation du mot de passe",
   "AdminUser.resetText":
-    "Cette personne reçoit un e-mail qui lui explique comment réinitialiser son mot de passe avec « Mot de passe oublié », qui lui envoie un code. Son mot de passe actuel fonctionne jusque-là.",
+    "Cette personne reçoit un e-mail qui lui explique comment réinitialiser son mot de passe via « Mot de passe oublié ? » : elle recevra alors un code par e-mail. Son mot de passe actuel reste valable d’ici là.",
   "AdminUser.sendLink": "Envoyer l’e-mail",
   "AdminUser.sending": "Envoi…",
   "AdminUser.deleteGuestTitle": "Supprimer le compte invité {name}",
