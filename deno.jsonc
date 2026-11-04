@@ -80,6 +80,7 @@
     "user:role": "deno run -N -E -R ./apps/worker/user-role.ts", // gives a person a role by their address, such as operator for the admin app; see docs/apps.md
     "operator:create": "deno run -N -E -R ./apps/worker/operator-create.ts", // creates an administrator with a password typed at a prompt, or makes an existing person one; see docs/operator-access.md
     "i18n:stamp": "deno run -R=i18n -W=i18n i18n/stamp.ts", // records which English each translation was made from, once it is translated; see i18n/TRANSLATING.md
+    "blog:cover": "deno run -E=OPENAI_API_KEY -N=api.openai.com -R=libs/server/blog/seed-posts/covers -W=libs/server/blog/seed-posts/covers --allow-run=magick libs/server/blog/seed-posts/covers/blog-cover.ts", // makes a blog post's cover with the OpenAI Images API: <slug> <scene>; see libs/server/blog/seed-posts/covers/README.md
     "deps:check": "deno outdated -r",
     "deps:update": "deno outdated -r -u -i",
     "update:ubuntu": "sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean && sudo apt --fix-broken install && sudo do-release-upgrade",
