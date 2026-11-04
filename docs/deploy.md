@@ -291,6 +291,28 @@ A product that is a website and its admin panel only, with no signed-in customer
 Any other value, or none, runs the SPA. The website's links to sign-in and sign-up lead to the SPA,
 so a product without it removes them from its pages.
 
+## Runtime
+
+The API, the worker and the migration run on Deno unless the env file says otherwise. One line
+moves all three to Node or Bun:
+
+```sh
+APP_RUNTIME=node   # or bun; deno, empty or no line keeps Deno
+```
+
+- `deno task compose`, and so every deploy, then adds
+  [`compose.runtime-node.yml`](../infra/compose/compose.runtime-node.yml) (or `-bun`), which builds
+  [`apps/api/dockerfile.node`](../apps/api/dockerfile.node) (or `.bun`) for those three services.
+  The image bundles the code with `deno task server:build` at build time and runs the bundles on
+  Node 26 or Bun 1.4. Ports, environment variables and the order of the services stay the same.
+- Any other value stops `deno task compose` before it starts anything.
+- The bundles are made when the image is built, so on Node or Bun a code change shows only after
+  `deno task compose up -d --build`, in development too. Development with watch mode stays on Deno.
+- The website, the SPA and the admin app are not affected: they keep their own images.
+
+To start them on a machine without containers, `deno task api:node`, `api:bun`, `worker:node` and
+`worker:bun` build the bundles into `dist/server/` and run them.
+
 ## Admin consoles
 
 Grafana has no public address. It is published on the machine's own address only, on
@@ -345,8 +367,8 @@ host.
 
 ## Releases
 
-A version tag on `main` publishes the images to Docker Hub as `<IMAGE_PREFIX>-api`, `-spa` and
-`-mpa` (the worker runs the API image); `IMAGE_PREFIX` is set in
+A version tag on `main` publishes the images to Docker Hub as `<IMAGE_PREFIX>-api`, `-api-node`,
+`-api-bun`, `-spa` and `-mpa` (the worker runs the API image of its runtime); `IMAGE_PREFIX` is set in
 [`.woodpecker/release.yml`](../.woodpecker/release.yml). To cut a release:
 
 ```sh
@@ -360,5 +382,6 @@ The pipeline refuses a tag whose commit is not on `main`. Setup and the steps:
 
 **Release images are public.** A new Docker Hub repository is public unless the account says
 otherwise, and the API image holds the whole source tree, not only the build output. A private
-product makes its repositories private on Docker Hub (`-base`, `-api`, `-spa` and `-mpa`), or sets
+product makes its repositories private on Docker Hub (`-base`, `-api`, `-api-node`, `-api-bun`,
+`-spa` and `-mpa`), or sets
 the account's default visibility to private, before its first release tag.

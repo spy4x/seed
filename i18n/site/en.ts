@@ -560,7 +560,7 @@ export default {
     "No. Seed runs as long-lived containers with Docker Compose on one Linux server you rent, because the API keeps WebSocket connections open and a worker drains a queue.",
   "FeaturesFaq.runtimeQuestion": "Can Seed run on Node.js or Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Not yet. Seed runs on Deno today, and the move to run on Deno, Node and Bun is in progress. You can follow it in issue #623 on Seed's GitHub.",
+    "Not yet. The API and the background worker already run on Node and Bun as well as Deno: one setting in the env file, APP_RUNTIME, picks the runtime. The website and the development tools still need Deno. You can follow the rest in issue #623 on Seed's GitHub.",
   "FeaturesFaq.databaseQuestion": "Can Seed use a database other than Postgres?",
   "FeaturesFaq.databaseAnswer":
     "No. Seed is built on Postgres: its migrations, queries and integration tests assume it.",
@@ -909,7 +909,7 @@ export default {
   "FeaturePage.all": "All features",
   "FeaturePage.runtimeQuestion": "Does Seed run on Node or Bun?",
   "FeaturePage.runtimeAnswer":
-    "Not yet. Seed runs on Deno today, and the move to run on Deno, Node and Bun is in progress (#623). See the runtime plan on the features page.",
+    "Not yet. The API and the background worker already run on Deno, Node or Bun, picked by one setting (APP_RUNTIME). The website and the development tools still need Deno, and that part is in progress (#623). See the runtime plan on the features page.",
   "FeaturePageMissing.title": "This feature page isn't here",
   "FeaturePageMissing.description":
     "It may have moved. Every feature Seed ships is on the features page.",

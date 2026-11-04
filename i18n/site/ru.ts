@@ -578,7 +578,7 @@ export default {
     "Нет. Seed работает как долгоживущие контейнеры в Docker Compose на одном арендованном Linux-сервере: API держит открытые WebSocket-соединения, а воркер разбирает очередь.",
   "FeaturesFaq.runtimeQuestion": "Можно ли запустить Seed на Node.js или Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Пока нет. Сегодня Seed работает на Deno, а переход на Deno, Node и Bun уже идёт. Следить за ним можно в issue #623 на GitHub проекта Seed.",
+    "Пока не полностью. API и фоновый воркер уже работают не только на Deno, но и на Node и Bun: рантайм выбирает одна настройка в env-файле, APP_RUNTIME. Сайту и инструментам разработки пока нужен Deno. За остальным можно следить в issue #623 на GitHub проекта Seed.",
   "FeaturesFaq.databaseQuestion":
     "Можно ли использовать с Seed другую базу данных вместо Postgres?",
   "FeaturesFaq.databaseAnswer":
@@ -932,7 +932,7 @@ export default {
   "FeaturePage.all": "Все возможности",
   "FeaturePage.runtimeQuestion": "Seed работает на Node или Bun?",
   "FeaturePage.runtimeAnswer":
-    "Пока нет. Сейчас Seed работает на Deno, а переход на Deno, Node и Bun уже идёт (#623). План по рантайму — на странице возможностей.",
+    "Пока не полностью. API и фоновый воркер уже работают на Deno, Node или Bun — выбирает одна настройка (APP_RUNTIME). Сайту и инструментам разработки пока нужен Deno, над этим идёт работа (#623). План по рантайму — на странице возможностей.",
   "FeaturePageMissing.title": "Такой страницы о возможности нет",
   "FeaturePageMissing.description":
     "Возможно, она переехала. Все возможности Seed — на странице возможностей.",
