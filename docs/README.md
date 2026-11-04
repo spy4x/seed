@@ -41,6 +41,12 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [A person's data export](data-export.md): Download my data, what the ZIP holds and how it expires.
 - [The catalog](catalog.md): a shop's items with photos, colours and sizes, edited in the admin
   panel; off unless a product turns it on.
+- [Website analytics](analytics.md): count the public website's visits and clicks in a
+  self-hosted Umami.
+- [The blog](blog.md): write, schedule and publish posts in the admin app.
+- [The public demo](demo.md): the demo server, its sample data and nightly wipe, and what a
+  database change updates.
+- [Background jobs](jobs.md): add a job, queue a run, repeat it, and what happens when it fails.
 - [Telegram bot](telegram.md): BotFather, the webhook, linking a chat, and adding a product's
   commands.
 - [Offline in the SPA](offline.md): turn the offline layer or the WebSocket module off, or remove
@@ -85,6 +91,7 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [Settings](settings.md): every variable of the env file.
 - [Writing the docs](writing-docs.md): how a guide here is written and published.
 - [API errors](api-errors.md): the one error body every API answer that is not a success has.
+- [API reference](token-api.md): personal API tokens and the notes API they reach.
 - [Security headers](security-headers.md)
 - [Woodpecker CI setup](woodpecker-ci-setup.md)
 - [Handoff](handoff.md): the map of the repository, decisions made, traps.
@@ -98,8 +105,17 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [Decisions](decisions/): [ADR 001](decisions/001-deno-platform-template.md),
   [ADR 002](decisions/002-realtime-transport-and-sync.md),
   [ADR 003](decisions/003-swappable-transport-and-local-data.md)
-- [UI and design](design/)
-- [Group sync product requirements](prd/group-sync-platform.md)
+- [Design brief](design/brief.md): what every screen of Seed is for and how it should feel.
+- [Laying out a screen](design/ui-layout.md): how the SPA's screens place preact-components'
+  primitives.
 - [Financy extraction inventory](financy-extraction-inventory.md)
 - [Screenshots](screenshots/): `record.ts` re-records the README's pictures, and `admin-video.ts`
-  (`deno task video:admin`) the website's admin panel video.
+  (`deno task video:admin`) the website's admin panel video, under [its music](screenshots/MUSIC.md).
+
+## Archive
+
+Superseded designs, kept for their reasoning. Each says on its first line what replaced it.
+
+- [Group sync design](archive/group-sync.md)
+- [Group sync product requirements](archive/group-sync-platform.md)
+- [Realtime transport analysis](archive/realtime-websockets.md)
