@@ -1,7 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { App } from "fresh"
-import { COVER_FILES, handler } from "./routes/blog/covers/[file].ts"
+import { COVERS, handler } from "./routes/blog/covers/[file].ts"
 import type { State } from "./utils.ts"
 
 const info = {
@@ -15,7 +15,7 @@ const get = (name: string) =>
 
 describe("the blog's cover files (#733)", () => {
   it("serves each cover as WebP with a month in caches and an ETag", async () => {
-    const [name] = [...COVER_FILES]
+    const [name] = [...COVERS.names]
     expect(name).toBeDefined()
     const response = await get(name)
     expect(response.status).toBe(200)
