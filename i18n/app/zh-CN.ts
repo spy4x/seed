@@ -1736,7 +1736,7 @@ export default {
   "Benchmark.noLargeTitle": "还没有大型群组",
   "Benchmark.noLargeBody": "先用生成器创建一个，然后重新加载此页面：",
   "Benchmark.copyCommand": "复制命令",
-  "Benchmark.noLargeFoot": "群组规模以及如何再次移除群组，请参阅 docs/capacity.md。",
+  "Benchmark.noLargeFoot": "群组规模以及如何再次移除群组，请参阅 docs/large-group.md。",
   "Benchmark.lastStoppedTitle": "上次测试在“{measure}”停止",
   "Benchmark.lastStoppedBody":
     "测试完成前标签页就关闭了，这通常意味着内存或存储空间不足。群组：{group}，开始于{time}。",
