@@ -618,7 +618,7 @@ export default {
   "GroupBillingPanel.portalUnreachable":
     "تعذّر فتح صفحة الفوترة في Stripe. تحقّق من اتصالك وحاول مجددًا.",
   "GroupBillingPanel.title": "الفوترة",
-  "GroupBillingPanel.description": "ما تدفعه <group>{group}</group> كل شهر. تتولى Stripe الفوترة.",
+  "GroupBillingPanel.description": "ما تدفعه <group>{group}</group>. تتولى Stripe الفوترة.",
   "GroupBillingPanel.loading": "جارٍ تحميل الخطة",
   "GroupBillingPanel.statusTrial": "فترة تجريبية",
   "GroupBillingPanel.statusRenews": "تتجدد في {date}",
@@ -677,7 +677,7 @@ export default {
   "GroupBillingPanel.planHeading": "خطة <plan>{plan}</plan>",
   "GroupBillingPanel.confirming": "تؤكد Stripe خطتك الآن. ستتحدّث هذه الصفحة تلقائيًا.",
   "GroupBillingPanel.paymentMethod": "طريقة الدفع",
-  "GroupBillingPanel.paymentMethodText": "البطاقة التي تخصم منها Stripe كل شهر.",
+  "GroupBillingPanel.paymentMethodText": "البطاقة التي تخصم منها Stripe قيمة هذه الخطة.",
   "GroupBillingPanel.changeCard": "تغيير البطاقة",
   "GroupBillingPanel.invoices": "الفواتير",
   "GroupBillingPanel.invoicesText": "كل الفواتير والإيصالات، للاطلاع عليها أو تنزيلها.",
@@ -686,6 +686,37 @@ export default {
   "GroupBillingPanel.cancelFree": "لن تُحاسَب إن ألغيت قبل {date}.",
   "GroupBillingPanel.cancelKeep": "تبقى خطة {plan} معك حتى نهاية الفترة.",
   "GroupBillingPanel.cancelPlan": "إلغاء الخطة",
+  "GroupBillingPanel.periodTitle": "فترة الفوترة",
+  "GroupBillingPanel.monthly": "شهريًا",
+  "GroupBillingPanel.yearly": "سنويًا",
+  "GroupBillingPanel.priceYear": "تكلفة خطة {plan} هي {price} لكل عضو سنويًا.",
+  "GroupBillingPanel.priceForGroupYear": {
+    "zero": "دون أعضاء، ستدفع <group>{group}</group> {total} سنويًا.",
+    "one": "مع عضو واحد، ستدفع <group>{group}</group> {total} سنويًا.",
+    "two": "مع عضوين، ستدفع <group>{group}</group> {total} سنويًا.",
+    "few": "مع {count} أعضاء، ستدفع <group>{group}</group> {total} سنويًا.",
+    "many": "مع {count} عضوًا، ستدفع <group>{group}</group> {total} سنويًا.",
+    "other": "مع {count} عضو، ستدفع <group>{group}</group> {total} سنويًا.",
+  },
+  "GroupBillingPanel.saving": "أقل بمقدار {amount} من الدفع الشهري.",
+  "GroupBillingPanel.finePrintYear":
+    "تُدفع سنويًا لكل عضو. ألغِ متى شئت، وتبقى خطة {plan} معك حتى نهاية الفترة.",
+  "GroupBillingPanel.trialThenYear":
+    "بعد ذلك، تدفع <group>{group}</group> {total} سنويًا ما لم تُلغِ الاشتراك.",
+  "GroupBillingPanel.seatsYear": {
+    "zero": "{total} سنويًا، دون أعضاء بسعر {price} لكل عضو.",
+    "one": "{total} سنويًا، لعضو واحد بسعر {price}، وهو المالك.",
+    "two": "{total} سنويًا، لعضوين بسعر {price} لكل منهما، والمالك ضمنهما.",
+    "few": "{total} سنويًا، لـ{count} أعضاء بسعر {price} لكل عضو، والمالك ضمنهم.",
+    "many": "{total} سنويًا، لـ{count} عضوًا بسعر {price} لكل عضو، والمالك ضمنهم.",
+    "other": "{total} سنويًا، لـ{count} عضو بسعر {price} لكل عضو، والمالك ضمنهم.",
+  },
+  "GroupBillingPanel.periodMonthly":
+    "تدفع شهريًا. الدفع السنوي يكلّف {price} سنويًا، أي أقل بمقدار {saving}.",
+  "GroupBillingPanel.periodYearly": "تدفع سنويًا. الدفع الشهري يكلّف {price} شهريًا.",
+  "GroupBillingPanel.periodHint": "تعرض لك Stripe ما ستدفعه اليوم قبل أن تؤكد.",
+  "GroupBillingPanel.switchYearly": "التحويل إلى الدفع السنوي",
+  "GroupBillingPanel.switchMonthly": "التحويل إلى الدفع الشهري",
   "GroupBillingView.trialStarted": {
     "zero": "بدأت فترتك التجريبية لخطة {plan}",
     "one": "بدأت فترتك التجريبية لخطة {plan} ليوم واحد",
@@ -1383,6 +1414,8 @@ export default {
   "Preferences.updatedElsewhere": "حُدّثت الإعدادات من جهاز آخر.",
   "SeatPriceConfirm.hint":
     "كل عضو جديد يضيف {price} شهريًا، فعضو واحد إضافي يرفع تكلفة المجموعة من {now} إلى {next}. يُضاف الفرق عن بقية هذه الفترة إلى الفاتورة التالية.",
+  "SeatPriceConfirm.hintYear":
+    "كل عضو جديد يضيف {price} سنويًا، فعضو واحد إضافي يرفع تكلفة المجموعة من {now} إلى {next}. يُضاف الفرق عن بقية هذه الفترة إلى الفاتورة التالية.",
   "SeatPriceConfirm.accept": "أوافق على السعر الأعلى مع كل شخص ينضم",
   "ProfileAccount.name": "الاسم",
   "ProfileAccount.notSet": "غير محدد",

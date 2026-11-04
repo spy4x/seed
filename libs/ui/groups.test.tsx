@@ -1430,6 +1430,18 @@ describe("SeatPriceConfirm", () => {
     expect(ticks.calls).toEqual([[true]])
   })
 
+  it("says what one more member adds a month, or a year for a group billed yearly", async () => {
+    await mount(<SeatPriceConfirm seatPrice={seatPrice} checked={false} />)
+    expect(find("[data-e2e=seat-price]").textContent).toContain(
+      "Each new member adds €9.00 a month, so one more member takes the group from €18.00 to €27.00.",
+    )
+    const yearly = { ...seatPrice, amount: 4000, period: BillingPeriod.Yearly }
+    await rerender(<SeatPriceConfirm seatPrice={yearly} checked={false} />)
+    expect(find("[data-e2e=seat-price]").textContent).toContain(
+      "Each new member adds €40.00 a year, so one more member takes the group from €80.00 to €120.00.",
+    )
+  })
+
   it("moves focus to the price box when a create is refused for the price", async () => {
     await mount(<SeatPriceConfirm seatPrice={seatPrice} checked={false} />)
     expect(focused()).not.toBe("seat-price-accept")

@@ -504,8 +504,7 @@ export default {
   "GroupBillingPanel.portalUnreachable":
     "Could not open Stripe's billing page. Check your connection and try again.",
   "GroupBillingPanel.title": "Billing",
-  "GroupBillingPanel.description":
-    "What <group>{group}</group> pays each month. Stripe handles the billing.",
+  "GroupBillingPanel.description": "What <group>{group}</group> pays. Stripe handles the billing.",
   "GroupBillingPanel.loading": "Loading the plan",
   "GroupBillingPanel.statusTrial": "Trial",
   "GroupBillingPanel.statusRenews": "Renews on {date}",
@@ -549,7 +548,7 @@ export default {
   "GroupBillingPanel.confirming":
     "Stripe is confirming your plan. This page will update on its own.",
   "GroupBillingPanel.paymentMethod": "Payment method",
-  "GroupBillingPanel.paymentMethodText": "The card Stripe charges each month.",
+  "GroupBillingPanel.paymentMethodText": "The card Stripe charges for this plan.",
   "GroupBillingPanel.changeCard": "Change card",
   "GroupBillingPanel.invoices": "Invoices",
   "GroupBillingPanel.invoicesText": "Every invoice and receipt, to read or download.",
@@ -558,6 +557,28 @@ export default {
   "GroupBillingPanel.cancelFree": "You won't be charged if you cancel before {date}.",
   "GroupBillingPanel.cancelKeep": "You keep {plan} until the period ends.",
   "GroupBillingPanel.cancelPlan": "Cancel plan",
+  "GroupBillingPanel.periodTitle": "Billing period",
+  "GroupBillingPanel.monthly": "Monthly",
+  "GroupBillingPanel.yearly": "Yearly",
+  "GroupBillingPanel.priceYear": "{plan} costs {price} per member a year.",
+  "GroupBillingPanel.priceForGroupYear": {
+    "one": "With {count} member, <group>{group}</group> would pay {total} a year.",
+    "other": "With {count} members, <group>{group}</group> would pay {total} a year.",
+  },
+  "GroupBillingPanel.saving": "{amount} less than paying monthly.",
+  "GroupBillingPanel.finePrintYear":
+    "Billed yearly per member. Cancel anytime and keep {plan} until the period ends.",
+  "GroupBillingPanel.trialThenYear":
+    "After that, <group>{group}</group> pays {total} a year unless you cancel.",
+  "GroupBillingPanel.seatsYear": {
+    "one": "{total} a year, for {count} member at {price} each, the owner included.",
+    "other": "{total} a year, for {count} members at {price} each, the owner included.",
+  },
+  "GroupBillingPanel.periodMonthly": "You pay monthly. Yearly costs {price} a year, {saving} less.",
+  "GroupBillingPanel.periodYearly": "You pay yearly. Monthly costs {price} a month.",
+  "GroupBillingPanel.periodHint": "Stripe shows what you pay today before you confirm.",
+  "GroupBillingPanel.switchYearly": "Switch to yearly",
+  "GroupBillingPanel.switchMonthly": "Switch to monthly",
   "GroupBillingView.trialStarted": {
     "one": "Your {count}-day {plan} trial has started",
     "other": "Your {count}-day {plan} trial has started",
@@ -1175,6 +1196,8 @@ export default {
   "Preferences.updatedElsewhere": "Preferences updated from another device.",
   "SeatPriceConfirm.hint":
     "Each new member adds {price} a month, so one more member takes the group from {now} to {next}. The difference for the rest of this period is billed on the next invoice.",
+  "SeatPriceConfirm.hintYear":
+    "Each new member adds {price} a year, so one more member takes the group from {now} to {next}. The difference for the rest of this period is billed on the next invoice.",
   "SeatPriceConfirm.accept": "I accept the higher price for each person who joins",
   "ProfileAccount.name": "Name",
   "ProfileAccount.notSet": "Not set",
