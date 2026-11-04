@@ -70,8 +70,7 @@ The paths below are under `apps/mpa/` unless they say otherwise. `[[lang]]/` sta
   `[[lang]]/features/[slug].tsx`, and "the comparison" in `routes/index.tsx`.
 
 **The blog.** The posts load only in demo mode, but they describe Seed. A product writes its posts
-in the admin app. Point the post page in `lighthouse/lighthouserc.json` at one of the product's
-posts, or remove it.
+in the admin app. The Lighthouse run measures a fixture post of its own, so it needs no change.
 
 **Keep `/changelog` and `/docs`.** They read the product's own history and guides. In
 `changelog-overrides.ts`, set `CHANGELOG_START` to the full hash of the commit that copied Seed
