@@ -1,6 +1,6 @@
 import "./app.css"
 import type { ComponentChildren, ComponentType } from "preact"
-import { useEffect, useState } from "preact/hooks"
+import { useEffect, useRef, useState } from "preact/hooks"
 import { SWUpdater } from "@spy4x/preact-system/sw-updater"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { Toastr } from "@spy4x/preact-ui/toastr"
@@ -220,23 +220,41 @@ function Frame() {
   // document body when signing out swaps the shell. The app has no page titles yet, so the tab's
   // title stays.
   const [path] = useLocation()
-  // Moving between the profile's sections, the settings layout moves focus to the new section's
-  // heading itself; the announcer leaves it there.
-  useRouteAnnouncer({ path: announcedPage(path), keepPageFocus: isProfilePath(path) })
-  if (session.user && !session.isMfaRequired) {
-    return (
-      <AppShell user={session.user} wsStatus={connectionDisplay(session)}>
-        <InstallOffer />
-        <Routes />
-      </AppShell>
-    )
-  }
+  // A load of the home page (every sign-in without a `next`) is replaced by the page it opens
+  // (`HomeView`). That page is still the load, so the announcer starts afresh there, once, and
+  // moves no focus: the first Tab reaches the skip link, as on any other load.
+  const homeLoad = useRef(path === SCREEN_PATHS.home)
+  const leftHome = useRef(false)
+  if (homeLoad.current && path !== SCREEN_PATHS.home) leftHome.current = true
+  // The announcer stays first in the fragment, so a swap of the frame keeps it mounted.
   return (
-    <PublicFrame canSignOut={canSignOut(session)}>
-      <SignInGate />
-      <Routes visitor />
-    </PublicFrame>
+    <>
+      <RouteAnnouncer key={leftHome.current ? `after-home` : `load`} path={path} />
+      {session.user && !session.isMfaRequired
+        ? (
+          <AppShell user={session.user} wsStatus={connectionDisplay(session)}>
+            <InstallOffer />
+            <Routes />
+          </AppShell>
+        )
+        : (
+          <PublicFrame canSignOut={canSignOut(session)}>
+            <SignInGate />
+            <Routes visitor />
+          </PublicFrame>
+        )}
+    </>
   )
+}
+
+/**
+ * Announces each route change ({@link useRouteAnnouncer}). Moving between the profile's sections,
+ * the settings layout moves focus to the new section's heading itself; the announcer leaves it
+ * there.
+ */
+function RouteAnnouncer({ path }: { path: string }) {
+  useRouteAnnouncer({ path: announcedPage(path), keepPageFocus: isProfilePath(path) })
+  return null
 }
 
 /**
