@@ -9,7 +9,6 @@ async function run(cwd: string, args: string[], date = `2026-10-01T10:00:00Z`): 
     cwd,
     clearEnv: true,
     env: {
-      PATH: Deno.env.get(`PATH`) ?? ``,
       GIT_CONFIG_GLOBAL: `/dev/null`,
       GIT_CONFIG_NOSYSTEM: `1`,
       GIT_AUTHOR_DATE: date,
