@@ -1,7 +1,7 @@
 /**
- * Where the changelog (`/changelog`) starts: the full hash of the last commit it leaves out, or
- * `null` for the whole history. A product copied from Seed sets its own first commit after the
- * copy, so the changelog lists only the changes made after it, never Seed's history before it.
+ * Where the changelog (`/changelog`) starts: the full hash of a commit, or `null` for the whole
+ * history. The changelog lists only the commits after it. A product copied from Seed sets the
+ * commit that copied Seed in, so its changelog never shows Seed's history.
  *
  * `deno task changelog` reads it, so a change here needs a new run.
  */

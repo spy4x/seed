@@ -2,12 +2,14 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { gitAt, readChangelog } from "./changelog-write.ts"
 
-/** Runs `git` in `cwd` with no user or system config, committing at `date`; its trimmed output. */
+/** Runs `git` in `cwd` with no inherited environment (a hook's `GIT_DIR`) or config, committing at `date`; its trimmed output. */
 async function run(cwd: string, args: string[], date = `2026-10-01T10:00:00Z`): Promise<string> {
   const output = await new Deno.Command(`git`, {
     args: [`-c`, `user.name=Test`, `-c`, `user.email=test@example.com`, ...args],
     cwd,
+    clearEnv: true,
     env: {
+      PATH: Deno.env.get(`PATH`) ?? ``,
       GIT_CONFIG_GLOBAL: `/dev/null`,
       GIT_CONFIG_NOSYSTEM: `1`,
       GIT_AUTHOR_DATE: date,
