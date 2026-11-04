@@ -11,6 +11,9 @@ Operators write posts in the admin app; the public website shows the published o
 | `libs/server/blog/postgres-blog-repository.ts` | The admin's reads and writes, each write with its audit row in one transaction.   |
 | `libs/server/blog/public-blog.ts`          | The website's reads: live posts only.                                                 |
 | `libs/server/blog/blog-publish-job.ts`     | The `blog.publish` job (registered in `JOBS`), and `queueDueBlogJobs` for lost jobs. |
+| `libs/server/blog/blog-crosspost-job.ts`   | The `blog.crosspost` job, which copies a live post to Dev.to once ([below](#the-devto-cross-post)). |
+| `libs/server/blog/social-texts.ts`         | The LinkedIn, Telegram and X texts of a post, printed by `deno task blog:social` ([below](#channel-texts)). |
+| `apps/mpa/blog-covers.ts`, `apps/mpa/screenshots/blog-og.ts` | Covers as the pages draw them, and the link-preview cards of Seed's own posts ([below](#covers-and-link-previews)). |
 | `libs/server/blog/blog-indexnow-job.ts`    | The `blog.indexnow` job, which tells search engines about a post ([below](#indexnow)). |
 | `libs/server/blog/render.ts`               | Markdown to safe HTML and the reading time. The only place a body is rendered.        |
 | `libs/domain/blog/figures.ts`              | The check of a figure tag against the figures that exist, and the figures' ids.       |
@@ -108,8 +111,15 @@ next crawl. Without the key nothing is sent.
 ## The newsletter send
 
 Publishing with a list ("Also email this post") stores `newsletter_list`. When the post is live,
-the `blog.publish` job queues a newsletter issue: the title, the description, the key points and a
-"Read the post" button to the post's own address on `MPA_DOMAIN`. The issue id is the post's id.
+the `blog.publish` job queues a newsletter issue: the title, the intro (or, without one, the
+description), the key points and a "Read the post" button to the post's own address on
+`MPA_DOMAIN`. The issue id is the post's id.
+
+**Nothing goes out before the website shows the post** (#733). Before it queues the issue or the
+Dev.to cross-post, the job asks the website for the post's address: it must answer 200, without a
+redirect, with the post's title on the page. Otherwise the job fails with `BlogPostNotLiveError`
+and the job system tries again later ([jobs.md](jobs.md)), so no reader follows a link to a page
+that is not there yet. The question is asked only while an email or a cross-post waits.
 
 **An issue goes only to the subscribers of the post's language** (#527). A subscriber's language is
 the one of the page they signed up on (`subscribers.language`); one with none, such as an address
@@ -141,6 +151,53 @@ keeps the list it has, so an API client that publishes a scheduled post now with
 list still sends its email. While the newsletter is off, the publish dialog sends `null` for a
 scheduled post's list and says that the post will not be emailed.
 
+## The Dev.to cross-post
+
+With `DEVTO_API_KEY` set (a Dev.to API key, from Settings → Extensions on Dev.to) and `MPA_DOMAIN`
+set, a post that goes live is copied to Dev.to once, as the `blog.crosspost` job. The copy names
+the post's own address as its `canonical_url`, so search engines credit the website and not
+Dev.to. It carries the intro, the body (an interactive figure becomes a link to the original), the
+topic as its tag, the cover, and an "Originally published at" line.
+
+- **Once ever.** The job records `crossposted_at` (and `devto_url`, the article's address) and never
+  posts a post where it is set: not on a retry, not after unpublishing and publishing again. Two
+  runs at once are kept apart by a lock on the post. Before it posts, a run asks Dev.to for an
+  article with the post's canonical address, so a run that posted and then died finds the article
+  and records it instead of posting again.
+- **A failure is retried.** A Dev.to error fails the run, records nothing, and the job system tries
+  again later. The key never appears in a log line, an error or a response.
+- **Off without the key.** Each post that goes live is settled as never cross-posted, with one log
+  line, so setting the key later copies only the posts that go live after that. The same holds for
+  a translation, which is never cross-posted: Dev.to gets the original once.
+- **Seed's own posts** are cross-posted only when their file says `devto: true`. Posts that were
+  live before the cross-post existed are settled by its migration and never copied.
+
+## Channel texts
+
+`deno task blog:social <slug>` prints the texts the owner pastes into LinkedIn, Telegram and X
+for one of Seed's own posts once it is live: the title, the intro, the key points and the address,
+in the post's language. The X text keeps to 280 characters: it drops the intro first, then cuts
+the title. Nothing is posted for you.
+
+## Covers and link previews
+
+A post's cover shows at the top of the post, at its real size, and beside it in the blog's list
+and in "Read next": the first row of `/blog` loads at once, the others lazily.
+
+- **Seed's own posts** keep their covers as WebP files in `libs/server/blog/seed-posts/covers/`
+  (`<slug>.webp` at 1600 px and `<slug>-640.webp`), served at `/blog/covers/<file>`; a translation
+  shares its original's. How to make one: that folder's `README.md`.
+- **A post written in the admin** names an `https://` picture as its cover.
+- **The link preview.** Each of Seed's own posts has a card, 1200×630: "Seed blog", the title and
+  the reading time on the left, the cover on the right, one per language. `deno task og:blog` in
+  `apps/mpa` draws them into `libs/server/blog/seed-posts/og/`, and the website serves them at
+  `/blog/og/<slug>.jpg` as the post's `og:image`. They are files made beforehand, so no address of
+  the website draws text it was sent. Run it again after a post's title, cover or length changes;
+  `apps/mpa/og-cards.test.ts` fails while a post has no card. A post written in the admin shares its
+  cover, or the site's own image without one.
+
+Both kinds of file are cached for a month and then checked against their ETag.
+
 ## On the public website
 
 The website (`apps/mpa`) renders every blog page on its server, with no JavaScript needed:
@@ -148,7 +205,7 @@ The website (`apps/mpa`) renders every blog page on its server, with no JavaScri
 | Address        | What                                                                                                   |
 | -------------- | ------------------------------------------------------------------------------------------------------ |
 | `/blog`        | Every live post in the page's language, newest first; topics as `?topic=` links, whose canonical address stays `/blog`. `/<language>/blog` is the same for that language. |
-| `/blog/<slug>` | One post: trail, dates, reading time, cover, "In short", the body, one call to action and "Read next". |
+| `/blog/<slug>` | One post: trail, dates, reading time, the related feature's link, cover, "In short", the body, one call to action and "Read next". |
 | `/rss.xml`     | RSS 2.0 of the newest posts with their full HTML.                                                      |
 
 `apps/mpa/blog.ts` reads the public API and checks each answer's shape. A post that is not live
@@ -187,6 +244,12 @@ until it is typed by hand or the post is first published. The Preview tab asks t
 the body (`POST /api/admin/blog/preview`), so it shows exactly what the website will; the admin
 app never renders Markdown itself. A scheduled post keeps its newsletter list when it is
 published now or moved to another time, unless the operator unticks it or the newsletter is off.
+
+Beside the description and the "In short" points, a post has an **Intro**, two or three sentences
+that open its newsletter issue and its Dev.to copy but do not show on its page, and a **Related
+feature**, the slug of one of the website's feature pages (`realtime` for `/features/realtime`),
+which the post links under its byline. The website shows no link for a slug it has no page for.
+Both are kept in the post's earlier versions.
 
 A tag that will not show is listed in a Problems panel under the Write and Preview tabs, rechecked
 about a second after typing stops. Each row's "Line N" button selects that line in the body, and

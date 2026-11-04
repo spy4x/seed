@@ -34,6 +34,13 @@ Seed's own posts (seedsaas.com) are Markdown files in `libs/server/blog/seed-pos
 - **Changelog.** A monthly "What's new in Seed" post, and a post of its own for a major change: a
   new module, or something products must act on when they sync. The owner, 2026-11-01: "I agree,
   let's keep it as an local instruction/rule."
+- **A cover on every post.** Each post gets one AI-made illustration in Seed's violet and the one
+  house style of `seed-posts/covers/README.md`, never a meme, made with `deno task blog:cover` into
+  `seed-posts/covers/`; a translation shares its original's. Then run `deno task og:blog` in
+  `apps/mpa` for its link-preview card. The owner, 2026-11-03: "Shall we have cover images for
+  blog posts so they do not look dull/dim/plain and boring? Like antonshubin.com/blog, but not
+  memes. What other rules/features of my personal blog can we apply to Seed and make it a rule?",
+  then "I agree with you suggestions".
 - **Ideas go to the owner first.** Propose a post in chat (title, reader, the search question it
   answers, outline, interactive part) and file its issue only after the owner says yes. The
   owner, 2026-11-01: "I prefer it asks me this in the chat, before creating a github issue."
