@@ -17,6 +17,7 @@ export const KEPT_TABLES: readonly string[] = [
   `backup_status`,
   `blog_posts`,
   `blog_slug_redirects`,
+  `blog_post_revisions`,
   `contact_links`,
   `subscribers`,
   `subscriber_unsubscribes`,
