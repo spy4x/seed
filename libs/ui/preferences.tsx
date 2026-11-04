@@ -12,7 +12,7 @@ import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-
 import { useFormat, When } from "@spy4x/preact-ui/format"
 import { createFormatters, regionHourCycle } from "@spy4x/time/format"
 import { type LocaleOption, localeOptions } from "@spy4x/time/locale"
-import { timeZoneOptions, zoneCity, zoneLabel, zoneOffsetLabel } from "@spy4x/time/tz"
+import { zoneCity, zoneLabel, zoneOffsetLabel } from "@spy4x/time/tz"
 import type { AdminUserPreferences, Preferences, ThemePreference } from "@domain/identity"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { Rich } from "@spy4x/preact-ui/i18n"
@@ -21,6 +21,7 @@ import { LanguageDialog, languageName } from "@spy4x/preact-ui/language-picker"
 import type { AccountMenuLanguage } from "@spy4x/preact-system/account-menu"
 import { textDirection } from "@spy4x/platform/universal/i18n"
 import { useAdminText, useAppText } from "./i18n.ts"
+import { matching, TimeZonePicker } from "./time-zone-picker.tsx"
 
 /** The fields "Language and region" edits; the theme is under Appearance. */
 export type RegionPreferences = Pick<Preferences, "locale" | "timeZone" | "hourCycle">
@@ -140,13 +141,6 @@ interface RegionItem {
   searchText: string
 }
 
-interface ZoneItem {
-  /** The zone to store, or `null` for Automatic. */
-  value: string | null
-  label: string
-  searchText: string
-}
-
 /** The clock's choices: the region format's own, or one the person picked. */
 const CLOCKS = [`format`, `h12`, `h23`] as const
 
@@ -192,23 +186,14 @@ export function RegionSection(props: PreferencesProps): JSX.Element {
     })),
   ], [device.locale, t])
 
-  const zoneItems = useMemo<ZoneItem[]>(() => [
-    {
-      value: null,
-      label: t.t(`Preferences.automatic`, { value: zoneLabel(device.timeZone, now) }),
-      searchText: `${t.t(`Preferences.automaticSearch`)} automatic device ${
-        device.timeZone.replaceAll(`_`, ` `)
-      }`.toLowerCase(),
-    },
-    ...timeZoneOptions(now).map((option) => ({
-      value: option.value,
-      label: zoneLabel(option.value, now),
-      searchText: option.searchText,
-    })),
-  ], [device.timeZone, t])
+  const automatic = useMemo(() => ({
+    label: t.t(`Preferences.automatic`, { value: zoneLabel(device.timeZone, now) }),
+    searchText: `${t.t(`Preferences.automaticSearch`)} automatic device ${
+      device.timeZone.replaceAll(`_`, ` `)
+    }`.toLowerCase(),
+  }), [device.timeZone, t])
 
   const region = regionItems.find((item) => item.value === shown.locale) ?? regionItems[0]
-  const zone = zoneItems.find((item) => item.value === shown.timeZone) ?? zoneItems[0]
   const resolvedClock = clockLabel(t, regionHourCycle(shown.locale ?? device.locale))
 
   return (
@@ -262,20 +247,13 @@ export function RegionSection(props: PreferencesProps): JSX.Element {
           hint={t.t(`Preferences.timeZoneHint`)}
         >
           {(wiring) => (
-            <Combobox<ZoneItem>
+            <TimeZonePicker
               id={wiring.id}
-              ariaLabel={t.t(`Preferences.timeZone`)}
-              placeholder={t.t(`Preferences.timeZonePlaceholder`)}
               aria-describedby={wiring["aria-describedby"]}
-              items={zoneItems}
-              value={zone}
-              getLabel={(item) => item.label}
-              filter={(items, query) => matching(items, query)}
-              onChange={(item) =>
-                item && item.value !== shown.timeZone && save({ timeZone: item.value })}
-              showClearButton={false}
-              listboxClass="max-h-60"
-              emptyMessage={(query) => t.t(`Preferences.timeZoneEmpty`, { query })}
+              value={shown.timeZone ?? null}
+              now={now}
+              automatic={automatic}
+              onChange={(timeZone) => save({ timeZone })}
             />
           )}
         </Field>
@@ -386,19 +364,6 @@ function OtherZone(
 
 function pick(value: Preferences): RegionPreferences {
   return { locale: value.locale, timeZone: value.timeZone, hourCycle: value.hourCycle }
-}
-
-/** Every word of the query must appear in the option's label or its search text. */
-function matching<T extends { label: string; searchText: string }>(
-  items: readonly T[],
-  query: string,
-): T[] {
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
-  if (words.length === 0) return [...items]
-  return items.filter((item) => {
-    const text = `${item.label.toLowerCase()} ${item.searchText}`
-    return words.every((word) => text.includes(word))
-  })
 }
 
 /**
