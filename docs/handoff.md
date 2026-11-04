@@ -43,9 +43,9 @@ apps/api      REST, the /api/ws socket, the call route, auth, CQRS dispatch, the
 apps/spa      Preact + Vite PWA: the product. Commands go over the socket (over HTTP with the
               realtime module off), reads over REST; an IndexedDB copy and a queue of writes keep
               it working offline.
-apps/mpa      Fresh. The public website: server-rendered, works without JavaScript, no
-              session. Calls the API over HTTP (API_URL) for the newsletter only; in
-              compose under the `mpa` profile.
+apps/mpa      Preact SSR (`@spy4x/preact-server`). The public website: server-rendered,
+              works without JavaScript, no session. Calls the API over HTTP (API_URL) for
+              the newsletter only; in compose under the `mpa` profile.
 apps/admin    Preact + Vite. The operator area on its own host (ADMIN_DOMAIN), one module per
               area (apps/admin/src/modules). In compose under the `admin` profile.
 apps/worker   Drains outbox_events and announces group changes (pg_notify); sweeps

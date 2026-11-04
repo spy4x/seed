@@ -8,9 +8,10 @@ USER root
 COPY --chown=1000:1000 . .
 USER 1000:1000
 
-# The build puts its id into asset addresses (`?__frsh_c=`), which the server sends as immutable
+# The build puts its id into asset addresses (`?__v=`), which the server sends as immutable
 # for a year. It takes the id from CI_COMMIT_SHA, else from a hash of the client build's files
-# (`apps/mpa/framework/vite.ts`); the image has no .git, so a hash of the sources stands in.
+# (`website()` in `@spy4x/preact-server/vite`); the image has no .git, so a hash of the sources
+# stands in.
 RUN CI_COMMIT_SHA="$(find apps libs docs deno.jsonc deno.lock -name node_modules -prune -o -type f \
       -exec sha1sum {} + | sort | sha1sum | cut -d' ' -f1)" deno task mpa:build
 # The container healthcheck runs this file; cached here so it never downloads at run time.
