@@ -12,6 +12,7 @@ tldr:
   - 学習用の小さなコードが欲しい、ログインを自分流に作りたいなら、このスターターのままで十分です。
 topic: 質問
 intro: "Next.js SaaS Starter はきれいで小さな土台で、README 自身が学習用だと書いています。足りないものと、それらを最初から揃えたいときに選ぶべきスターターをまとめました。"
+relatedFeature: sign-in
 coverAlt: "一本の芽を囲む小さな木の枠と、その奥に紫の植物でいっぱいの完成したガラスの温室。"
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
@@ -43,13 +44,13 @@ Next.js SaaS Starter は MIT ライセンスの無料テンプレートで、メ
 
 課金はチームごとに一つのサブスクリプションです。Checkout は数量 1、14 日間のトライアルで始まり、数量は誰かが Customer Portal で変更したときにしか変わりません（[stripe.ts](https://github.com/nextjs/saas-starter/blob/main/lib/payments/stripe.ts)）。メンバーを追加しても請求額は変わりません。
 
-更新もゆっくりです。最新のコミットは 2025 年 12 月 11 日で、CVE-2025-55182 の修正のために Next.js `15.6.0-canary.59` へ上げたもの。その前は 2025 年 6 月でした。
+更新もゆっくりです。最近の 2 件のコミットは 2025 年 12 月 8 日と 11 日で、どちらも Next.js のセキュリティ更新です。2 件目は CVE-2025-55182 の修正のために Next.js `15.6.0-canary.59` へ上げたもの。その前は 2025 年 6 月でした。
 
 スターターが名乗っている役割から見れば、どれも欠点ではありません。お金を払うチームが最初に必要とする部分は、自分で書くことになる、というだけです。
 
 ## 代替を並べて比較
 
-|                | Next.js SaaS Starter     | Seed                            | Open SaaS                    | Makerkit                         | Supastarter                     |
+| 機能           | Next.js SaaS Starter     | Seed                            | Open SaaS                    | Makerkit                         | Supastarter                     |
 | -------------- | ------------------------ | ------------------------------- | ---------------------------- | -------------------------------- | ------------------------------- |
 | 価格           | 無料                     | 無料                            | 無料                         | 買い切り 299 ドルまたは 599 ドル | 買い切り 349〜1,499 ドル        |
 | ライセンス     | MIT                      | MIT                             | MIT                          | 有料。Lite キットは MIT          | 有料                            |
@@ -71,7 +72,7 @@ Next.js SaaS Starter は MIT ライセンスの無料テンプレートで、メ
 
 ## ホスティング費用は？ Vercel か、サーバー 1 台か
 
-スターターの README は Vercel にデプロイし、Postgres は任意の接続 URL を使います。Seed は借りたサーバー 1 台で動きます。よくある組み合わせとして Vercel Pro と Supabase Pro を例に、両方を並べました。チームに合わせてスライダーを動かしてみてください。
+スターターの README は Vercel にデプロイし、Postgres は任意の接続 URL を使います。Seed は借りたサーバー 1 台で動きます。よくある組み合わせとして Vercel Pro と Supabase Pro を例に、両方を並べました。サーバーを選び、チームに合わせてスライダーを動かしてみてください。
 
 <HostingCost server="cx23" developers={1} />
 

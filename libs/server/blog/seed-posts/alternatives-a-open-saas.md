@@ -12,6 +12,7 @@ tldr:
   - Gardez Open SaaS si l'on achète seul, si vous voulez déployer en une commande ou utiliser Polar et Paddle.
 topic: Questions
 intro: "Open SaaS est l'un des meilleurs starters SaaS gratuits, sincèrement. Mais il fait deux choix pour vous : un abonnement par personne et le framework Wasp. Voici quoi prendre si l'un des deux ne vous va pas."
+relatedFeature: groups
 coverAlt: "Une serre en verre avec une grande jardinière partagée de plantes violettes à l'intérieur et une rangée de cinq petits pots près de sa porte ouverte."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
@@ -72,7 +73,7 @@ Docker.
 
 ## Les alternatives côte à côte
 
-|                  | Open SaaS                         | Seed                                        | Makerkit                                   | Supastarter                           |
+| Fonctionnalité   | Open SaaS                         | Seed                                        | Makerkit                                   | Supastarter                           |
 | ---------------- | --------------------------------- | ------------------------------------------- | ------------------------------------------ | ------------------------------------- |
 | Prix             | Gratuit                           | Gratuit                                     | 299 $ ou 599 $, une fois                   | De 349 $ à 1 499 $, une fois          |
 | Licence          | MIT                               | MIT                                         | Payante ; le kit Lite est sous MIT         | Payante                               |
@@ -124,7 +125,7 @@ facturation.
   merchant of record est une idée ouverte ([#584](https://github.com/spy4x/seed/issues/584)), pas
   un plan.
 - Vous voulez déployer en une commande sur Fly.io ou Railway, sans serveur à entretenir.
-- Vous voulez une grande communauté : Wasp a un Discord, et Open SaaS a bien plus d'étoiles sur
+- Vous voulez une grande communauté : Wasp a un [Discord](https://discord.gg/rzdnErX), et Open SaaS a bien plus d'étoiles sur
   GitHub que Seed.
 
 Les risques de Seed, pour peser honnêtement : c'est un projet jeune avec un seul mainteneur. Son

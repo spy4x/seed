@@ -69,7 +69,7 @@ with one command, and the manual path goes to any host
 
 ## The alternatives side by side
 
-|                 | Open SaaS                        | Seed                                 | Makerkit                               | Supastarter                          |
+| Feature         | Open SaaS                        | Seed                                 | Makerkit                               | Supastarter                          |
 | --------------- | -------------------------------- | ------------------------------------ | -------------------------------------- | ------------------------------------ |
 | Price           | Free                             | Free                                 | $299 or $599 once                      | $349 to $1,499 once                  |
 | Licence         | MIT                              | MIT                                  | Paid; the Lite kit is MIT              | Paid                                 |
@@ -115,7 +115,7 @@ roles, and Supastarter bills by seat. Its free sibling, Makerkit Lite, has no te
 - You want Polar, Lemon Squeezy or Paddle. Seed bills through Stripe only; a merchant-of-record
   provider is an open idea ([#584](https://github.com/spy4x/seed/issues/584)), not a plan.
 - You want a one-command deploy to Fly.io or Railway, not a server to look after.
-- You want a big community to ask: Wasp has a Discord, and Open SaaS has far more GitHub stars than Seed.
+- You want a big community to ask: Wasp has a [Discord](https://discord.gg/rzdnErX), and Open SaaS has far more GitHub stars than Seed.
 
 Seed's own risks, so you can weigh them: it is a young project with one maintainer. Its API and
 worker also run on Node or Bun with one line in the env file

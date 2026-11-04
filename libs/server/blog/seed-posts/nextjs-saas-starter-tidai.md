@@ -12,6 +12,7 @@ tldr:
   - 如果你想要一份小代码来学习，或想按自己的方式写登录，就继续用这个模板。
 topic: 问答
 intro: "Next.js SaaS Starter 是一个干净的小底座，它的 README 自己就说它是用来学习的。下面说说它缺什么，以及需要这些功能现成可用时该选哪个模板。"
+relatedFeature: sign-in
 coverAlt: "一株幼苗外围着一个小木框，后面是一座建好的、种满紫色植物的玻璃温室。"
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
@@ -43,13 +44,13 @@ Next.js SaaS Starter 是一个采用 MIT 许可证的免费模板：邮箱和密
 
 计费是每个团队一个订阅。Checkout 以数量 1 和 14 天试用开始，只有有人在 Customer Portal 里修改时数量才会变（[stripe.ts](https://github.com/nextjs/saas-starter/blob/main/lib/payments/stripe.ts)）。添加成员不会改变账单。
 
-它的更新也很慢。最近一次提交在 2025 年 12 月 11 日，为修复 CVE-2025-55182 把 Next.js 升到 `15.6.0-canary.59`；再上一次是 2025 年 6 月。
+它的更新也很慢。最近两次提交在 2025 年 12 月 8 日和 11 日，都是 Next.js 的安全更新，第二次为修复 CVE-2025-55182 把 Next.js 升到 `15.6.0-canary.59`；再往前一次是 2025 年 6 月。
 
 对它自己声称的定位来说，这些都不算缺陷。只是意味着，付费团队最先需要的那部分要由你来写。
 
 ## 替代方案对比
 
-|            | Next.js SaaS Starter | Seed                            | Open SaaS                    | Makerkit                      | Supastarter                     |
+| 功能       | Next.js SaaS Starter | Seed                            | Open SaaS                    | Makerkit                      | Supastarter                     |
 | ---------- | -------------------- | ------------------------------- | ---------------------------- | ----------------------------- | ------------------------------- |
 | 价格       | 免费                 | 免费                            | 免费                         | 一次性 299 或 599 美元        | 一次性 349 到 1,499 美元        |
 | 许可证     | MIT                  | MIT                             | MIT                          | 付费；Lite 套件为 MIT         | 付费                            |
@@ -71,7 +72,7 @@ Next.js SaaS Starter 是一个采用 MIT 许可证的免费模板：邮箱和密
 
 ## 托管要花多少钱：Vercel 还是一台服务器？
 
-这个模板的 README 部署到 Vercel，Postgres 可以用任何连接地址。Seed 跑在一台你租的服务器上。下面把两者放在一起，用 Vercel Pro 加 Supabase Pro 作为常见的托管组合；按你的团队调整滑块：
+这个模板的 README 部署到 Vercel，Postgres 可以用任何连接地址。Seed 跑在一台你租的服务器上。下面把两者放在一起，用 Vercel Pro 加 Supabase Pro 作为常见的托管组合；选一台服务器，再按你的团队调整滑块：
 
 <HostingCost server="cx23" developers={1} />
 

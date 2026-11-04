@@ -12,6 +12,7 @@ tldr:
   - Bleiben Sie bei Open SaaS, wenn Einzelne kaufen, Sie mit einem Befehl deployen oder Polar und Paddle wollen.
 topic: Fragen
 intro: "Open SaaS ist eines der besten kostenlosen SaaS-Templates, ehrlich. Es trifft aber zwei Entscheidungen für Sie: ein Abo pro Person und das Framework Wasp. Hier steht, was Sie nehmen, wenn eine davon nicht passt."
+relatedFeature: groups
 coverAlt: "Ein Gewächshaus aus Glas mit einem großen gemeinsamen Pflanzkasten violetter Pflanzen darin und einer Reihe von fünf kleinen Töpfen neben der offenen Tür."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
@@ -72,7 +73,7 @@ nicht.
 
 ## Die Alternativen im Vergleich
 
-|                  | Open SaaS                            | Seed                                   | Makerkit                               | Supastarter                            |
+| Funktion         | Open SaaS                            | Seed                                   | Makerkit                               | Supastarter                            |
 | ---------------- | ------------------------------------ | -------------------------------------- | -------------------------------------- | -------------------------------------- |
 | Preis            | Kostenlos                            | Kostenlos                              | 299 $ oder 599 $, einmalig             | 349 $ bis 1.499 $, einmalig            |
 | Lizenz           | MIT                                  | MIT                                    | Kostenpflichtig; das Lite-Kit ist MIT  | Kostenpflichtig                        |
@@ -122,7 +123,7 @@ Abrechnung.
 - Sie wollen Polar, Lemon Squeezy oder Paddle. Seed rechnet nur über Stripe ab; ein Merchant of
   Record ist eine offene Idee ([#584](https://github.com/spy4x/seed/issues/584)), kein Plan.
 - Sie wollen mit einem Befehl zu Fly.io oder Railway deployen, ohne Server zu pflegen.
-- Sie wollen eine große Community: Wasp hat einen Discord, und Open SaaS hat weit mehr Sterne auf
+- Sie wollen eine große Community: Wasp hat einen [Discord](https://discord.gg/rzdnErX), und Open SaaS hat weit mehr Sterne auf
   GitHub als Seed.
 
 Die Risiken von Seed, damit Sie ehrlich abwägen können: Es ist ein junges Projekt mit einem

@@ -12,6 +12,7 @@ tldr:
   - Quédate con el starter si quieres un código pequeño para aprender o hacer el acceso a tu manera.
 topic: Preguntas
 intro: "Next.js SaaS Starter es una base limpia y pequeña, y su propio README dice que es para aprender. Esto es lo que le falta y qué plantilla elegir cuando necesitas esas partes ya hechas."
+relatedFeature: sign-in
 coverAlt: "Un pequeño armazón de madera alrededor de un solo brote, delante de un invernadero de cristal terminado y lleno de plantas violetas."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
@@ -58,15 +59,16 @@ cantidad solo cambia si alguien la edita en el Customer Portal
 ([stripe.ts](https://github.com/nextjs/saas-starter/blob/main/lib/payments/stripe.ts)). Añadir un
 miembro no cambia la factura.
 
-Y avanza despacio. El último commit, del 11 de diciembre de 2025, lo pasó a Next.js
-`15.6.0-canary.59` por la corrección de CVE-2025-55182; el anterior fue en junio de 2025.
+Y avanza despacio. Sus dos últimos commits, del 8 y el 11 de diciembre de 2025, fueron
+actualizaciones de seguridad de Next.js; el segundo lo pasó a Next.js `15.6.0-canary.59` por la
+corrección de CVE-2025-55182. El anterior a ellos fue en junio de 2025.
 
 Nada de esto es un defecto para lo que la plantilla dice ser. Solo significa que lo primero que
 necesita un equipo que paga sigue siendo trabajo tuyo.
 
 ## Las alternativas, lado a lado
 
-|                      | Next.js SaaS Starter   | Seed                          | Open SaaS                    | Makerkit                                 | Supastarter                      |
+| Función              | Next.js SaaS Starter   | Seed                          | Open SaaS                    | Makerkit                                 | Supastarter                      |
 | -------------------- | ---------------------- | ----------------------------- | ---------------------------- | ---------------------------------------- | -------------------------------- |
 | Precio               | Gratis                 | Gratis                        | Gratis                       | $299 o $599, pago único                  | De $349 a $1.499, pago único     |
 | Licencia             | MIT                    | MIT                           | MIT                          | De pago; el kit Lite es MIT              | De pago                          |
@@ -104,7 +106,7 @@ escribí sobre [sus alternativas](/es/blog/alternativas-a-open-saas).
 
 El README de la plantilla despliega en Vercel y acepta cualquier URL de Postgres. Seed corre en un
 servidor que alquilas. Aquí están los dos, con Vercel Pro y Supabase Pro como una pareja gestionada
-habitual; mueve los controles según tu equipo:
+habitual; elige un servidor y mueve el control según tu equipo:
 
 <HostingCost server="cx23" developers={1} />
 

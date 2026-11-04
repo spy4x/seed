@@ -12,6 +12,7 @@ tldr:
   - 個人が買うプロダクト、コマンド一つのデプロイ、Polar や Paddle が必要なら Open SaaS のままで十分です。
 topic: 質問
 intro: "Open SaaS は無料の SaaS テンプレートの中でも本当に優れたものです。ただし、1 人に 1 サブスクリプションという設計と Wasp フレームワークという二つを、最初から決めてしまいます。どちらかが合わないときに何を選ぶかをまとめました。"
+relatedFeature: groups
 coverAlt: "扉の開いたガラスの温室。中には紫の植物が育つ大きな共用プランターがあり、扉の横には小さな鉢が五つ並んでいる。"
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
@@ -47,7 +48,7 @@ Wasp はフルスタックフレームワークです。ページ、ルート、
 
 ## 代替を並べて比較
 
-|                | Open SaaS                        | Seed                             | Makerkit                         | Supastarter                     |
+| 機能           | Open SaaS                        | Seed                             | Makerkit                         | Supastarter                     |
 | -------------- | -------------------------------- | -------------------------------- | -------------------------------- | ------------------------------- |
 | 価格           | 無料                             | 無料                             | 買い切り 299 ドルまたは 599 ドル | 買い切り 349〜1,499 ドル        |
 | ライセンス     | MIT                              | MIT                              | 有料。Lite キットは MIT          | 有料                            |
@@ -80,7 +81,7 @@ Wasp はフルスタックフレームワークです。ページ、ルート、
 - Wasp の考え方が好き：仕様ファイル一つで、配線のコードがずっと少ない。
 - Polar、Lemon Squeezy、Paddle を使いたい。Seed の決済は Stripe だけで、Merchant of Record 型の決済代行は検討中のアイデア（[#584](https://github.com/spy4x/seed/issues/584)）であり、計画ではありません。
 - 自分でサーバーを管理せず、Fly.io や Railway にコマンド一つでデプロイしたい。
-- 大きなコミュニティが欲しい：Wasp には Discord があり、Open SaaS は GitHub のスター数で Seed をはるかに上回ります。
+- 大きなコミュニティが欲しい：Wasp には [Discord](https://discord.gg/rzdnErX) があり、Open SaaS は GitHub のスター数で Seed をはるかに上回ります。
 
 Seed のリスクも正直に書いておきます。まだ若いプロジェクトで、メンテナーは 1 人です。API とワーカーは env ファイルの 1 行で Node や Bun でも動きます（[ランタイムについて](https://github.com/spy4x/seed/blob/main/docs/apps.md#runtime)）が、Web サイトとツール類にはまだ Deno が必要です。Android アプリとデスクトップアプリは[まだありません](https://github.com/spy4x/seed/issues/202)。
 

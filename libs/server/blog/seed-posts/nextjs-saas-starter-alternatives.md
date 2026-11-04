@@ -59,15 +59,16 @@ and the quantity changes only when someone edits it in the Customer Portal
 ([stripe.ts](https://github.com/nextjs/saas-starter/blob/main/lib/payments/stripe.ts)). Adding a
 member does not change the bill.
 
-And it moves slowly. The last commit, on 11 December 2025, moved it to Next.js
-`15.6.0-canary.59` for the CVE-2025-55182 fix; the one before was in June 2025.
+And it moves slowly. Its last two commits, on 8 and 11 December 2025, were both Next.js security
+updates; the second moved it to Next.js `15.6.0-canary.59` for the CVE-2025-55182 fix. The one
+before them was in June 2025.
 
 None of this is a flaw for what the starter says it is. It just means the parts a paying team
 needs first are still yours to write.
 
 ## The alternatives side by side
 
-|                 | Next.js SaaS Starter | Seed                          | Open SaaS                    | Makerkit                               | Supastarter                          |
+| Feature         | Next.js SaaS Starter | Seed                          | Open SaaS                    | Makerkit                               | Supastarter                          |
 | --------------- | -------------------- | ----------------------------- | ---------------------------- | -------------------------------------- | ------------------------------------ |
 | Price           | Free                 | Free                          | Free                         | $299 or $599 once                      | $349 to $1,499 once                  |
 | Licence         | MIT                  | MIT                           | MIT                          | Paid; the Lite kit is MIT              | Paid                                 |
@@ -103,8 +104,8 @@ offline app and nine languages. The price: it is not Next.js, but Hono and Preac
 ## What does hosting cost: Vercel or one server?
 
 The starter's README deploys to Vercel and takes any Postgres URL. Seed runs on one server you
-rent. Here are both, with Vercel Pro and Supabase Pro as one common managed pair; move the sliders
-for your team:
+rent. Here are both, with Vercel Pro and Supabase Pro as one common managed pair; pick a server and
+move the slider for your team:
 
 <HostingCost server="cx23" developers={1} />
 

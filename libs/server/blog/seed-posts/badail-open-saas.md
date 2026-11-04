@@ -12,6 +12,7 @@ tldr:
   - ابقَ على Open SaaS إن كان المشتري فردًا، أو أردت النشر بأمر واحد، أو احتجت Polar وPaddle.
 topic: أسئلة
 intro: "Open SaaS من أفضل قوالب SaaS المجانية، وأقولها بصدق. لكنه يتخذ عنك قرارين: اشتراك واحد لكل شخص، وإطار Wasp. هنا ما تختاره إن لم يناسبك أحدهما."
+relatedFeature: groups
 coverAlt: "دفيئة زجاجية بابها مفتوح، في داخلها حوض زرع كبير مشترك فيه نباتات بنفسجية، وبجانب الباب صف من خمسة أصص صغيرة."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
@@ -47,7 +48,7 @@ Wasp إطار متكامل: تصف الصفحات والمسارات والدخ�
 
 ## البدائل جنبًا إلى جنب
 
-|                | Open SaaS                      | Seed                              | Makerkit                             | Supastarter                         |
+| الميزة         | Open SaaS                      | Seed                              | Makerkit                             | Supastarter                         |
 | -------------- | ------------------------------ | --------------------------------- | ------------------------------------ | ----------------------------------- |
 | السعر          | مجاني                          | مجاني                             | 299 أو 599 دولارًا مرة واحدة          | من 349 إلى 1,499 دولارًا مرة واحدة   |
 | الترخيص        | MIT                            | MIT                               | مدفوع؛ مجموعة Lite بترخيص MIT        | مدفوع                               |
@@ -80,7 +81,7 @@ Wasp إطار متكامل: تصف الصفحات والمسارات والدخ�
 - يعجبك نموذج Wasp: ملف مواصفات واحد وكود ربط أقل بكثير.
 - تريد Polar أو Lemon Squeezy أو Paddle. Seed يحاسب عبر Stripe فقط؛ ومزوّد بصفة «تاجر مسجَّل» (Merchant of Record) فكرة مفتوحة ([#584](https://github.com/spy4x/seed/issues/584))، لا خطة.
 - تريد النشر بأمر واحد إلى Fly.io أو Railway دون صيانة خادم.
-- تريد مجتمعًا كبيرًا: لدى Wasp خادم Discord، ونجوم Open SaaS على GitHub أكثر بكثير من نجوم Seed.
+- تريد مجتمعًا كبيرًا: لدى Wasp خادم [Discord](https://discord.gg/rzdnErX)، ونجوم Open SaaS على GitHub أكثر بكثير من نجوم Seed.
 
 مخاطر Seed، لتوازن بصدق: مشروع حديث بمطوّر واحد يصونه. يعمل الـ API والـ worker أيضًا على Node أو Bun بسطر واحد في ملف env ([عن بيئة التشغيل](https://github.com/spy4x/seed/blob/main/docs/apps.md#runtime))، لكن الموقع والأدوات ما زالت تحتاج Deno. وتطبيقا Android وسطح المكتب [لم يُبنيا بعد](https://github.com/spy4x/seed/issues/202).
 

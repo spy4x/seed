@@ -12,6 +12,7 @@ tldr:
   - 如果付费的是个人、想一条命令部署，或需要 Polar 和 Paddle，继续用 Open SaaS 就好。
 topic: 问答
 intro: "Open SaaS 是最好的免费 SaaS 模板之一，这点我是认真的。但它替你做了两个决定：一人一个订阅，以及 Wasp 框架。下面说说当其中一个不适合你时该选什么。"
+relatedFeature: groups
 coverAlt: "一座敞开门的玻璃温室，里面有一个种满紫色植物的大型共用花槽，门边摆着一排五个小花盆。"
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
@@ -47,7 +48,7 @@ Wasp 是一个全栈框架：你在一个文件 `main.wasp.ts` 里描述页面�
 
 ## 替代方案对比
 
-|            | Open SaaS                        | Seed                            | Makerkit                      | Supastarter                     |
+| 功能       | Open SaaS                        | Seed                            | Makerkit                      | Supastarter                     |
 | ---------- | -------------------------------- | ------------------------------- | ----------------------------- | ------------------------------- |
 | 价格       | 免费                             | 免费                            | 一次性 299 或 599 美元        | 一次性 349 到 1,499 美元        |
 | 许可证     | MIT                              | MIT                             | 付费；Lite 套件为 MIT         | 付费                            |
@@ -80,7 +81,7 @@ Wasp 是一个全栈框架：你在一个文件 `main.wasp.ts` 里描述页面�
 - 你喜欢 Wasp 的方式：一个规范文件，少写很多胶水代码。
 - 你想用 Polar、Lemon Squeezy 或 Paddle。Seed 只支持 Stripe；记录商户（Merchant of Record）类支付服务是一个待讨论的想法（[#584](https://github.com/spy4x/seed/issues/584)），不是计划。
 - 你想一条命令部署到 Fly.io 或 Railway，不用自己维护服务器。
-- 你想要一个大社区：Wasp 有 Discord，Open SaaS 在 GitHub 上的星数远多于 Seed。
+- 你想要一个大社区：Wasp 有 [Discord](https://discord.gg/rzdnErX)，Open SaaS 在 GitHub 上的星数远多于 Seed。
 
 Seed 的风险也说清楚，方便你权衡：它是一个年轻的项目，只有一位维护者。它的 API 和 worker 在 env 文件里改一行就能跑在 Node 或 Bun 上（[关于运行时](https://github.com/spy4x/seed/blob/main/docs/apps.md#runtime)），但网站和工具链仍然需要 Deno。Android 和桌面应用[还没有做](https://github.com/spy4x/seed/issues/202)。
 

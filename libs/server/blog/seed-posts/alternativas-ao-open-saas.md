@@ -12,6 +12,7 @@ tldr:
   - Fique com o Open SaaS se o produto é comprado por pessoas sozinhas, se quer deploy com um comando ou Polar e Paddle.
 topic: Perguntas
 intro: "O Open SaaS é um dos melhores templates SaaS grátis, sério. Mas ele decide duas coisas por você: uma assinatura por pessoa e o framework Wasp. Veja o que usar se uma delas não combina com você."
+relatedFeature: groups
 coverAlt: "Uma estufa de vidro com uma grande jardineira compartilhada de plantas violeta dentro e uma fileira de cinco vasinhos ao lado da porta aberta."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
@@ -69,7 +70,7 @@ comando, e o caminho manual serve para qualquer hospedagem
 
 ## As alternativas lado a lado
 
-|                | Open SaaS                        | Seed                                    | Makerkit                                   | Supastarter                             |
+| Recurso        | Open SaaS                        | Seed                                    | Makerkit                                   | Supastarter                             |
 | -------------- | -------------------------------- | --------------------------------------- | ------------------------------------------ | --------------------------------------- |
 | Preço          | Grátis                           | Grátis                                  | US$ 299 ou US$ 599, pagamento único        | De US$ 349 a US$ 1.499, pagamento único |
 | Licença        | MIT                              | MIT                                     | Paga; o kit Lite é MIT                     | Paga                                    |
@@ -117,7 +118,7 @@ Supastarter cobra por assento. O irmão grátis, Makerkit Lite, não tem times n
 - Você quer Polar, Lemon Squeezy ou Paddle. O Seed cobra só pelo Stripe; um provedor merchant of
   record é uma ideia aberta ([#584](https://github.com/spy4x/seed/issues/584)), não um plano.
 - Você quer deploy com um comando no Fly.io ou Railway, sem servidor para cuidar.
-- Você quer uma comunidade grande: o Wasp tem Discord, e o Open SaaS tem muito mais estrelas no
+- Você quer uma comunidade grande: o Wasp tem [Discord](https://discord.gg/rzdnErX), e o Open SaaS tem muito mais estrelas no
   GitHub que o Seed.
 
 Os riscos do Seed, para pesar com honestidade: é um projeto novo, com um mantenedor só. A API e o

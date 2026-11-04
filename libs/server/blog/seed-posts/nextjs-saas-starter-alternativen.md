@@ -12,6 +12,7 @@ tldr:
   - Behalten Sie den Starter, wenn Sie wenig Code zum Lernen wollen oder den Login selbst bauen.
 topic: Fragen
 intro: "Der Next.js SaaS Starter ist eine saubere, kleine Basis, und seine eigene README sagt, dass er zum Lernen gedacht ist. Hier steht, was ihm fehlt und welcher Starter passt, wenn Sie diese Teile fertig brauchen."
+relatedFeature: sign-in
 coverAlt: "Ein kleines Holzgerüst um einen einzelnen Keimling vor einem fertigen Glasgewächshaus voller violetter Pflanzen."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
@@ -58,15 +59,16 @@ Menge ändert sich nur, wenn jemand sie im Customer Portal anpasst
 ([stripe.ts](https://github.com/nextjs/saas-starter/blob/main/lib/payments/stripe.ts)). Ein neues
 Mitglied ändert die Rechnung nicht.
 
-Und er bewegt sich langsam. Der letzte Commit am 11. Dezember 2025 hob ihn auf Next.js
-`15.6.0-canary.59`, um CVE-2025-55182 zu schließen; der davor war im Juni 2025.
+Und er bewegt sich langsam. Die letzten zwei Commits am 8. und 11. Dezember 2025 waren beide
+Sicherheitsupdates für Next.js; der zweite hob ihn auf Next.js `15.6.0-canary.59`, um
+CVE-2025-55182 zu schließen. Der davor war im Juni 2025.
 
 Nichts davon ist ein Mangel für das, was der Starter sein will. Es heißt nur: Was ein zahlendes
 Team zuerst braucht, schreiben Sie selbst.
 
 ## Die Alternativen im Vergleich
 
-|                  | Next.js SaaS Starter  | Seed                            | Open SaaS                    | Makerkit                              | Supastarter                            |
+| Funktion         | Next.js SaaS Starter  | Seed                            | Open SaaS                    | Makerkit                              | Supastarter                            |
 | ---------------- | --------------------- | ------------------------------- | ---------------------------- | ------------------------------------- | -------------------------------------- |
 | Preis            | Kostenlos             | Kostenlos                       | Kostenlos                    | 299 $ oder 599 $, einmalig            | 349 $ bis 1.499 $, einmalig            |
 | Lizenz           | MIT                   | MIT                             | MIT                          | Kostenpflichtig; das Lite-Kit ist MIT | Kostenpflichtig                        |
@@ -105,7 +107,7 @@ geschrieben.
 
 Die README des Starters deployt auf Vercel und nimmt jede Postgres-URL. Seed läuft auf einem
 gemieteten Server. Hier beides, mit Vercel Pro und Supabase Pro als gängigem verwaltetem Paar;
-stellen Sie die Regler auf Ihr Team ein:
+wählen Sie einen Server und stellen Sie den Regler auf Ihr Team ein:
 
 <HostingCost server="cx23" developers={1} />
 
