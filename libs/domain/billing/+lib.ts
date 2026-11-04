@@ -1,6 +1,7 @@
 import { type } from "arktype"
 import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import type { Command, Query } from "@spy4x/platform/cqrs"
+import { BillingPeriod } from "@spy4x/billing"
 import type { Actor } from "@domain/identity"
 import { canManageBilling, canRead, GroupRole } from "@domain/groups"
 
@@ -67,14 +68,11 @@ export type EntitlementNeed = { feature: FeatureKey } | { limit: LimitKey }
 // #endregion Entitlements
 
 /**
- * How often a paid plan bills. The same names and numbers as `@spy4x/billing`'s `BillingPeriod`, and
- * the same numbers as preact-components' `BillingInterval`, so a screen passes it to `PricingTable`
- * as it is.
+ * How often a paid plan bills: `@spy4x/billing`'s own enum, so a period read from the provider's
+ * price needs no mapping. Its numbers match preact-components' `BillingInterval`, so a screen passes
+ * it to `PricingTable` as it is.
  */
-export enum BillingPeriod {
-  Monthly = 1,
-  Yearly = 2,
-}
+export { BillingPeriod }
 
 /** One plan of the catalog, as the pricing page shows it. */
 export interface Plan {
@@ -754,7 +752,7 @@ export function assertCanManageBilling(role: GroupRole | null): void {
  */
 export const billingCheckoutRequestSchema = type({
   planId: "0 < string <= 64",
-  "period?": "1 | 2",
+  "period?": type.enumerated(BillingPeriod.Monthly, BillingPeriod.Yearly),
   "+": "reject",
 })
 export type BillingCheckoutRequest = typeof billingCheckoutRequestSchema.infer
