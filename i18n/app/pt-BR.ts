@@ -925,29 +925,29 @@ export default {
   "OAuthNotice.busy": "Muitas tentativas. Espere um minuto e tente de novo.",
   "OAuthNotice.kept": "Forma de entrar adicionada. Agora você pode usá-la em qualquer dispositivo.",
   "OAuthNotice.guestTaken": "Essa forma de entrar pertence a outra conta.",
-  "PasswordResetScreen.forgotFailed": "Não foi possível enviar o link",
+  "PasswordResetScreen.forgotFailed": "Não foi possível enviar o código",
   "PasswordResetScreen.resetFailed": "Não foi possível trocar a senha",
   "PasswordResetScreen.sent":
-    "Se houver uma conta com este e-mail, enviamos para ela um link para redefinir a senha.",
+    "Se houver uma conta com <email>{email}</email>, enviamos um código para ela.",
   "PasswordResetScreen.forgotDescription": {
     "one":
-      "Digite o e-mail que você usou no cadastro. Vamos enviar um link para você escolher uma nova senha. Ele funciona uma vez, por {count} minuto.",
+      "Digite o e-mail que você usou no cadastro. Vamos enviar um código para você escolher uma nova senha. Ele funciona por {count} minuto.",
     "many":
-      "Digite o e-mail que você usou no cadastro. Vamos enviar um link para você escolher uma nova senha. Ele funciona uma vez, por {count} de minutos.",
+      "Digite o e-mail que você usou no cadastro. Vamos enviar um código para você escolher uma nova senha. Ele funciona por {count} de minutos.",
     "other":
-      "Digite o e-mail que você usou no cadastro. Vamos enviar um link para você escolher uma nova senha. Ele funciona uma vez, por {count} minutos.",
+      "Digite o e-mail que você usou no cadastro. Vamos enviar um código para você escolher uma nova senha. Ele funciona por {count} minutos.",
   },
   "PasswordResetScreen.remembered": "Lembrou? <link>Voltar para o login</link>",
-  "PasswordResetScreen.send": "Enviar o link",
+  "PasswordResetScreen.send": "Enviar código",
   "PasswordResetScreen.doneTitle": "Senha alterada",
   "PasswordResetScreen.done":
     "Você saiu da conta em todos os dispositivos. Entre com sua nova senha.",
   "PasswordResetScreen.signIn": "Entrar",
-  "PasswordResetScreen.askNew": "Pedir um novo link",
   "PasswordResetScreen.chooseTitle": "Escolha uma nova senha",
   "PasswordResetScreen.choose":
     "Para <email>{email}</email>. Ao salvar, você sai da conta em todos os dispositivos.",
-  "PasswordResetScreen.expired": "O link expirou? <link>Peça um novo</link>",
+  "PasswordResetScreen.expired": "Demorou demais? <link>Peça um novo código</link>",
+  "PasswordResetScreen.tookTooLong": "Demorou demais. Peça um novo código.",
   "PasswordResetScreen.newPassword": "Nova senha",
   "PasswordResetScreen.newPasswordHint": "De {min} a {max} caracteres.",
   "PasswordResetScreen.saving": "Salvando…",
@@ -1498,7 +1498,7 @@ export default {
   "ProfileView.tokenRevoked": "Token revogado",
   "ProfileView.tokenRevokedBody": "Esse token não funciona mais.",
   "ProviderProof.passkey": "uma chave de acesso",
-  "ProviderProof.link": "um link de acesso",
+  "ProviderProof.link": "um código por e-mail",
   "ProviderProof.fresh": "Você entrou com {methods} agora há pouco, então não precisa de senha.",
   "ProviderProof.needed": {
     "one":
@@ -1510,59 +1510,29 @@ export default {
   },
   "ProviderProof.passkeyAgain": "Entrar de novo com uma chave de acesso",
   "ProviderProof.providerAgain": "Entrar de novo com {provider}",
-  "SignInLinkScreen.sendFailed": "Não foi possível enviar o link. Tente de novo daqui a pouco.",
-  "SignInLinkScreen.unreachable":
-    "Não foi possível falar com o servidor. Confira sua conexão e toque em Continuar de novo.",
-  "SignInLinkScreen.openFailed":
-    "Não conseguimos fazer você entrar. Toque em Continuar para tentar de novo ou peça um novo link.",
-  "SignInLinkScreen.title": "Entrar com um link",
-  "SignInLinkScreen.description":
-    "Vamos enviar por e-mail um link que faz você entrar. Ainda não tem conta com esse e-mail? O link cria uma.",
-  "SignInLinkScreen.ratherPassword": "Prefere usar senha? <link>Voltar para o login</link>",
-  "SignInLinkScreen.submit": "Receber link por e-mail",
-  "SignInLinkScreen.sent": {
+  "SignInCodeScreen.sendFailed": "Não foi possível enviar o código. Tente de novo em instantes.",
+  "SignInCodeScreen.title": "Entrar com um código por e-mail",
+  "SignInCodeScreen.description":
+    "Vamos enviar por e-mail um código para você digitar aqui. Ainda não tem conta com esse e-mail? O código cria uma.",
+  "SignInCodeScreen.ratherPassword": "Prefere usar senha? <link>Voltar para o login</link>",
+  "SignInCodeScreen.submit": "Receber código por e-mail",
+  "SignInCodeScreen.confirmTitle": "Confirme que é você",
+  "SignInCodeScreen.confirmDescription":
+    "Vamos enviar um código para <email>{email}</email>. Digite-o na próxima etapa para confirmar que é você.",
+  "CodeStep.sent": "Enviamos um código para <email>{email}</email>.",
+  "CodeStep.invalid": "O código tem 8 caracteres. Veja se está faltando algum.",
+  "SignInCodeScreen.guest":
+    "Você está usando o app como visitante. Ao entrar, o que você criou aqui fica salvo com este e-mail. Se ele já tiver uma conta, perguntamos antes.",
+  "CodeStep.deadTitle": "Este código não funciona mais",
+  "CodeStep.dead": {
     "one":
-      "Enviamos um link de acesso para <email>{email}</email>. Ele funciona uma vez, por {count} minuto.",
+      "Cada código funciona uma vez, por {count} minuto, e só algumas tentativas erradas são permitidas. Peça um novo e use o e-mail mais recente.",
     "many":
-      "Enviamos um link de acesso para <email>{email}</email>. Ele funciona uma vez, por {count} de minutos.",
+      "Cada código funciona uma vez, por {count} de minutos, e só algumas tentativas erradas são permitidas. Peça um novo e use o e-mail mais recente.",
     "other":
-      "Enviamos um link de acesso para <email>{email}</email>. Ele funciona uma vez, por {count} minutos.",
+      "Cada código funciona uma vez, por {count} minutos, e só algumas tentativas erradas são permitidas. Peça um novo e use o e-mail mais recente.",
   },
-  "SignInLinkScreen.openHere": "Abra o link neste dispositivo para entrar aqui.",
-  "SignInLinkScreen.newLink": "Enviar novo link",
-  "SignInLinkScreen.waiting": {
-    "one": "Não chegou? Confira a pasta de spam. Você pode enviar um novo link em {count} segundo.",
-    "many":
-      "Não chegou? Confira a pasta de spam. Você pode enviar um novo link em {count} de segundos.",
-    "other":
-      "Não chegou? Confira a pasta de spam. Você pode enviar um novo link em {count} segundos.",
-  },
-  "SignInLinkScreen.resent":
-    "Um novo link está a caminho. Os links anteriores continuam funcionando até que um deles seja usado.",
-  "SignInLinkScreen.refusedTitle": "Este link não funciona mais",
-  "SignInLinkScreen.refused": {
-    "one":
-      "Os links de acesso funcionam uma vez, por {count} minuto. Peça um novo e use o e-mail mais recente.",
-    "many":
-      "Os links de acesso funcionam uma vez, por {count} de minutos. Peça um novo e use o e-mail mais recente.",
-    "other":
-      "Os links de acesso funcionam uma vez, por {count} minutos. Peça um novo e use o e-mail mais recente.",
-  },
-  "SignInLinkScreen.elsewhereTitle": "Este link foi pedido em outro navegador",
-  "SignInLinkScreen.elsewhere":
-    "Você não entrou, e sua conta de visitante não mudou. Peça um novo link neste navegador para entrar aqui.",
-  "SignInLinkScreen.incompleteTitle": "Este link está incompleto",
-  "SignInLinkScreen.incomplete": "Abra de novo o link do e-mail ou peça um novo.",
-  "SignInLinkScreen.backToApp": "Voltar para o app",
-  "SignInLinkScreen.finishTitle": "Terminar de entrar",
-  "SignInLinkScreen.finish":
-    "Continue para entrar neste dispositivo. Se o e-mail for novo, sua conta será criada.",
-  "SignInLinkScreen.signedInAs":
-    "Você está conectado como <email>{email}</email>. Se continuar, vai entrar na conta do link no lugar dela.",
-  "SignInLinkScreen.guest":
-    "Você está usando o app como visitante. Se pediu este link neste navegador, ao continuar esta conta de visitante fica salva com o e-mail do link. Se esse e-mail já tiver uma conta, perguntamos antes.",
-  "SignInLinkScreen.signingIn": "Entrando…",
-  "SignInLinkScreen.stay": "Continuar na conta atual",
+  "CodeStep.differentEmail": "Usar outro e-mail",
   "SignInMethods.failed": "Não foi possível alterar suas formas de entrar",
   "SignInMethods.loadFailed":
     "Não foi possível carregar suas formas de entrar. Confira sua conexão e tente de novo.",
@@ -1615,16 +1585,9 @@ export default {
   "SignUpCodeScreen.offline": "Você está offline. Conecte-se e tente de novo.",
   "SignUpCodeScreen.title": "Confira seu e-mail",
   "SignUpCodeScreen.loading": "Carregando…",
-  "SignUpCodeScreen.sent": {
-    "one": "Enviamos um código para <email>{email}</email>. Ele vale por {count} minuto.",
-    "many": "Enviamos um código para <email>{email}</email>. Ele vale por {count} de minutos.",
-    "other": "Enviamos um código para <email>{email}</email>. Ele vale por {count} minutos.",
-  },
-  "SignUpCodeScreen.wrongAddress": "E-mail errado? <button>Use outro</button>",
   "SignUpCodeScreen.code": "Código",
   "SignUpCodeScreen.checking": "Verificando…",
   "SignUpCodeScreen.resend": "Enviar novo código",
-  "SignUpCodeScreen.resent": "Um novo código está a caminho.",
   "SignUpCodeScreen.resendFailed": "Não foi possível enviar um novo código",
   "SignUpCodeScreen.existsTitle": "Você já tem uma conta",
   "SignUpCodeScreen.exists":
@@ -1969,7 +1932,9 @@ export default {
   "AuthScreen.lastPasskey":
     "Da última vez, você entrou com uma chave de acesso<email> ({email})</email>.",
   "AuthScreen.lastLink":
-    "Da última vez, você entrou com um link por e-mail<email> ({email})</email>.",
+    "Da última vez, você entrou com um código por e-mail<email> ({email})</email>.",
+  "AuthScreen.emailSignInCode": "Receber código de login por e-mail",
+  "AuthScreen.emailSignUpCode": "Receber código de cadastro por e-mail",
   "AuthScreen.lastProvider": "Da última vez, você entrou com {provider}<email> ({email})</email>.",
   "AuthScreen.forget": "Não é você? Use outra conta",
   "AuthScreen.openProfile": "Abrir seu perfil",
@@ -1981,8 +1946,6 @@ export default {
   "AuthScreen.haveAccount": "Já tem uma conta? <link>Entrar</link>",
   "AuthScreen.lostDevice": "Perdeu seu dispositivo? <link>Voltar para o login</link>",
   "AuthScreen.sending": "Enviando…",
-  "AuthScreen.emailSignInLink": "Receber link de acesso por e-mail",
-  "AuthScreen.emailSignUpLink": "Receber link de cadastro por e-mail",
   "AuthScreen.orCreate": "ou crie uma conta",
   "AuthScreen.createAccount": "Criar conta",
   "AuthScreen.continue": "Continuar",

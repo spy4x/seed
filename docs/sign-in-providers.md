@@ -110,7 +110,7 @@ sign-in.
 - Linking and unlinking ask for the password. An account without one is asked for a provider
   sign-in less than five minutes old instead.
 - The last way into an account cannot be unlinked. An address another method holds proven counts
-  as a way in, since a sign-in link reaches it.
+  as a way in, since a sign-in code mailed to it gets in.
 - Unlinking a method signs out the devices that signed in with it.
 - Every link and unlink is mailed to the account's proven address.
 

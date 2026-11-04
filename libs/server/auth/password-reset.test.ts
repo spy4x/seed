@@ -6,7 +6,6 @@ import {
   consumePasswordReset,
   issuePasswordReset,
   PASSWORD_RESET_TTL_MINUTES,
-  passwordResetLink,
 } from "./password-reset.ts"
 
 const NOW = new Date("2026-10-02T10:00:00Z")
@@ -78,7 +77,7 @@ describe("issuePasswordReset", () => {
 })
 
 describe("consumePasswordReset", () => {
-  it("accepts the code once, so the same link never works twice", async () => {
+  it("accepts the code once, so the same token never works twice", async () => {
     const store = await storeWithAccounts()
     const issued = (await issuePasswordReset(store, "ann@example.com", NOW))!
 
@@ -104,7 +103,7 @@ describe("consumePasswordReset", () => {
     expect(await consumePasswordReset(store, issued.email, issued.code, justInTime)).toBe(true)
   })
 
-  it("refuses an older link once a newer one is issued for the address", async () => {
+  it("refuses an older token once a newer one is issued for the address", async () => {
     const store = await storeWithAccounts()
     const first = (await issuePasswordReset(store, "ann@example.com", NOW))!
     const second = (await issuePasswordReset(store, "ann@example.com", minutesLater(1)))!
@@ -122,21 +121,5 @@ describe("consumePasswordReset", () => {
     expect(await consumePasswordReset(store, "bob@example.com", issued.code, NOW)).toBe(false)
     expect(await consumePasswordReset(store, issued.email, "", NOW)).toBe(false)
     expect(await consumePasswordReset(store, issued.email, undefined, NOW)).toBe(false)
-  })
-})
-
-describe("passwordResetLink", () => {
-  it("points at the app's reset page with the address and the code, encoded", () => {
-    const link = passwordResetLink("https://app.example.com", {
-      email: "ann+test@example.com",
-      userId: 1,
-      code: "abc_-123",
-      expiresAt: NOW,
-    })
-
-    const url = new URL(link)
-    expect(url.origin + url.pathname).toBe("https://app.example.com/reset-password")
-    expect(url.searchParams.get("email")).toBe("ann+test@example.com")
-    expect(url.searchParams.get("code")).toBe("abc_-123")
   })
 })

@@ -200,7 +200,7 @@ export async function writePeople(
       blocked_at: user.blockedAgo === null ? null : at(user.blockedAgo).toISOString(),
       first_group_name: user.firstGroupName,
     })
-    // Someone without Google or GitHub asks for a sign-in link now and then (#391).
+    // Someone without Google or GitHub signs in with an e-mailed code now and then (#391).
     const linkSignIns = user.provider ? [] : user.signIns.filter((_, n) => n % 3 === 1)
     for (const [n, signIn] of user.signIns.entries()) {
       // Someone with Google or GitHub uses it for every other sign-in.

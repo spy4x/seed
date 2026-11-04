@@ -20,7 +20,7 @@ export interface ProviderProof {
   providers: readonly OAuthProviderId[]
   /** The account has a passkey (#222). */
   passkeys?: boolean
-  /** A sign-in link reaches the account: it has a proven address (#391). */
+  /** A sign-in code reaches the account: it has a proven address (#391, #752). */
   emailLink?: boolean
   /** This device signed in with one of them less than `PROVIDER_PROOF_MINUTES` minutes ago. */
   fresh: boolean
@@ -103,13 +103,13 @@ export function ProviderProofNotice(
           </Button>
         ))}
         {proof.emailLink && (
-          // A plain link: the link's page reloads into the app once used.
+          // A plain link: the code page reloads into the app once the code is used.
           <Button
-            href={withNext(SCREEN_PATHS.signInLink, next)}
+            href={withNext(SCREEN_PATHS.signInCode, next)}
             variant="secondary"
             data-e2e="provider-proof-link"
           >
-            {t.t(`AuthScreen.emailSignInLink`)}
+            {t.t(`AuthScreen.emailSignInCode`)}
           </Button>
         )}
       </Cluster>

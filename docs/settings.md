@@ -181,7 +181,7 @@ one warning naming the missing ones.
 | `SMTP_PASS` | Its password.            | empty                    |
 | `SMTP_FROM` | The sender, with a name. | `"App <hi@example.com>"` |
 
-The worker sends the mail, such as password reset links.
+The worker sends the mail, such as sign-in and password reset codes.
 
 ## Billing
 

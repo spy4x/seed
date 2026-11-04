@@ -45,7 +45,7 @@ const signal = shutdownSignal()
 
 console.log("Worker started")
 
-// Mail goes out from here, never from the API: a reset link is made and sent in one step.
+// Mail goes out from here, never from the API: a reset code is made and sent in one step.
 const domain = processEnv.get("DOMAIN")
 if (!domain) {
   console.error("❌ Missing environment variable: DOMAIN")

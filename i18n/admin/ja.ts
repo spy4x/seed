@@ -181,7 +181,7 @@ export default {
   "AdminAuditEvent.confirmationResent": "ニュースレターの確認メールを再送信",
   "AdminAuditEvent.subscribersExported": "ニュースレターの購読者をエクスポート",
   "AdminAuditEvent.roleChanged": "ロールを変更",
-  "AdminAuditEvent.resetSent": "オペレーターがパスワード再設定リンクを送信",
+  "AdminAuditEvent.resetSent": "オペレーターがパスワード再設定メールを送信",
   "AdminAuditEvent.usersExported": "ユーザー一覧をエクスポート",
   "AdminAuditEvent.passkeyRenamed": "パスキーの名前を変更",
   "AdminAuditEvent.guestStarted": "ゲストとして開始",
@@ -1603,7 +1603,7 @@ export default {
   "AdminUser.doneRoleOperator": "{name}はオペレーターになりました。",
   "AdminUser.doneRoleSupervisor": "{name}はスーパーバイザーになりました。",
   "AdminUser.doneRoleAdmin": "{name}は管理者になりました。",
-  "AdminUser.donePasswordReset": "{name}にパスワード再設定リンクを送信しています。",
+  "AdminUser.donePasswordReset": "{name}にパスワード再設定メールを送信しています。",
   "AdminUser.doneDeleteGuest": "ゲストアカウント{name}を削除しました。",
   "AdminUser.doneUnlinkTelegram": "{name}のTelegramアカウントの連携を解除しました。",
   "AdminUser.doneRemovePicture": "{name}のプロフィール写真を削除しました。",
@@ -1613,7 +1613,7 @@ export default {
   "AdminUser.unblock": "ブロックを解除",
   "AdminUser.block": "ブロック",
   "AdminUser.endAllSessions": "すべてのセッションを終了",
-  "AdminUser.sendReset": "パスワード再設定リンクを送信",
+  "AdminUser.sendReset": "パスワード再設定メールを送信",
   "AdminUser.noResetAddress": "メールアドレスとパスワードでのログインが必要です",
   "AdminUser.unlinkTelegram": "Telegramの連携を解除",
   "AdminUser.removePicture": "プロフィール写真を削除",
@@ -1670,7 +1670,7 @@ export default {
   "AdminUser.methodPassword": "パスワード",
   "AdminUser.methodEmailCode": "メールのコード",
   "AdminUser.methodPasskey": "パスキー",
-  "AdminUser.methodEmailLink": "メールのリンク",
+  "AdminUser.methodEmailLink": "メールのコード",
   "AdminUser.blockTitle": "{name}をブロック",
   "AdminUser.blockText":
     "このユーザーはすぐにすべてのデバイスからログアウトされ、パスワード、Google、GitHub、APIトークンのいずれでもアクセスできなくなります。データは残ります。あとでブロックを解除できます。",
@@ -1691,10 +1691,10 @@ export default {
   "AdminUser.changeRoleText":
     "新しいロールは、このユーザーの次のリクエストから適用されます。自分より下のロールなら何でも付与できます。管理者にするには、user:roleスクリプトを使ってください。",
   "AdminUser.changing": "変更中…",
-  "AdminUser.resetTitle": "{name}にパスワード再設定リンクを送信",
+  "AdminUser.resetTitle": "{name}にパスワード再設定メールを送信",
   "AdminUser.resetText":
-    "「パスワードを忘れた場合」と同じメールが届き、リンクから新しいパスワードを設定できます。設定するまでは、現在のパスワードも使えます。",
-  "AdminUser.sendLink": "リンクを送信",
+    "「パスワードを忘れた場合」からコードを受け取ってパスワードを再設定する方法を案内するメールが届きます。設定するまでは、現在のパスワードも使えます。",
+  "AdminUser.sendLink": "メールを送信",
   "AdminUser.sending": "送信中…",
   "AdminUser.deleteGuestTitle": "ゲストアカウント{name}を削除",
   "AdminUser.deleteGuestText":
@@ -1715,7 +1715,7 @@ export default {
   "AdminUser.cancel": "キャンセル",
   "AdminUsers.title": "ユーザー",
   "AdminUsers.subtitle":
-    "アカウントを持つすべての人です。ユーザーを開くと、ブロック、セッションの終了、パスワード再設定リンクの送信ができます。",
+    "アカウントを持つすべての人です。ユーザーを開くと、ブロック、セッションの終了、パスワード再設定メールの送信ができます。",
   "AdminUsers.export": "CSVをエクスポート",
   "AdminUsers.search": "名前またはメールアドレス",
   "AdminUsers.searching": "検索中…",

@@ -153,7 +153,7 @@ export default {
     "fichiers de tests dans les applications et les bibliothèques, tous exécutés en CI",
   "HomeProof.licence": "licence : ni compte, ni paywall",
   "HomeStatus.signIn":
-    "Inscription, connexion, vérification de l’adresse e-mail, réinitialisation du mot de passe, connexion avec Google et GitHub, clés d’accès, liens magiques, 2FA avec une application d’authentification",
+    "Inscription, connexion, vérification de l’adresse e-mail, réinitialisation du mot de passe, connexion avec Google et GitHub, clés d’accès, codes de connexion par e-mail, 2FA avec une application d’authentification",
   "HomeStatus.guests":
     "Comptes invités : essayez l’application en un clic, gardez le compte en ajoutant une méthode de connexion",
   "HomeStatus.groups": "Groupes avec membres, rôles, invitations et transfert de propriété",
@@ -213,7 +213,7 @@ export default {
   "HomeFeatures.signInAlt":
     "La page de sécurité d’un profil : le mot de passe, un bouton Ajouter une clé d’accès, la double authentification activée, et le haut de la liste des appareils connectés.",
   "HomeFeatures.signInText":
-    "Adresse e-mail et mot de passe avec codes de vérification, réinitialisation du mot de passe, connexion avec Google et GitHub, clés d’accès, liens de connexion par e-mail, comptes invités et 2FA avec une application d’authentification. Des sessions que vous pouvez voir et fermer.",
+    "Adresse e-mail et mot de passe avec codes de vérification, réinitialisation du mot de passe, connexion avec Google et GitHub, clés d’accès, codes de connexion par e-mail, comptes invités et 2FA avec une application d’authentification. Des sessions que vous pouvez voir et fermer.",
   "HomeFeatures.billingTitle": "Facturation par membre",
   "HomeFeatures.billingLink": "Comment fonctionne la facturation",
   "HomeFeatures.billingText":
@@ -356,7 +356,7 @@ export default {
   "FeatureSignIn.nav": "Comptes et connexion",
   "FeatureSignIn.title": "La connexion, c’est réglé",
   "FeatureSignIn.lead":
-    "Les utilisateurs créent un compte avec une adresse e-mail et un mot de passe, puis confirment l’adresse avec un code. Ils peuvent réinitialiser un mot de passe oublié, continuer avec Google ou GitHub, se connecter avec une clé d’accès, ou recevoir par e-mail un lien de connexion qui crée aussi le compte. Ils peuvent aussi essayer d’abord l’application dans un compte invité et ajouter une méthode de connexion plus tard. Une application d’authentification ajoute la double authentification (2FA). Chacun voit tous les appareils sur lesquels il est connecté et peut déconnecter les autres. Changer de méthode de connexion demande une preuve et envoie un e-mail.",
+    "Les utilisateurs créent un compte avec une adresse e-mail et un mot de passe, puis confirment l’adresse avec un code. Ils peuvent réinitialiser un mot de passe oublié, continuer avec Google ou GitHub, se connecter avec une clé d’accès, ou recevoir par e-mail un code de connexion qui crée aussi le compte. Ils peuvent aussi essayer d’abord l’application dans un compte invité et ajouter une méthode de connexion plus tard. Une application d’authentification ajoute la double authentification (2FA). Chacun voit tous les appareils sur lesquels il est connecté et peut déconnecter les autres. Changer de méthode de connexion demande une preuve et envoie un e-mail.",
   "FeatureSignIn.fact1":
     "Mots de passe hachés avec PBKDF2-SHA-256 via Web Crypto, 600 000 itérations par défaut",
   "FeatureSignIn.fact2":
@@ -365,7 +365,7 @@ export default {
   "FeatureSignIn.fact4":
     "Clés d’accès : seule la clé publique est stockée, et chaque défi de connexion ne fonctionne qu’une fois",
   "FeatureSignIn.fact5":
-    "Liens magiques : un même lien connecte ou crée le compte, ne fonctionne qu’une fois, pendant 15 minutes, et n’est stocké que sous forme de hachage",
+    "Codes de connexion par e-mail : un code de 8 caractères connecte ou crée le compte, ne sert qu’une fois, reste valable 10 minutes, uniquement dans le navigateur qui l’a demandé, et n’est stocké que sous forme de hachage",
   "FeatureSignIn.fact6":
     "Comptes invités (connexion anonyme) : un visiteur démarre en un clic sans méthode de connexion, puis ajoute une adresse e-mail et un mot de passe, Google, GitHub ou une clé d’accès au même compte",
   "FeatureSignIn.fact7":
@@ -624,7 +624,7 @@ export default {
     "Ce que Seed fournit : 2FA et connexion sociale, groupes avec rôles, facturation Stripe par membre, temps réel, application hors ligne, espace d’administration, supervision et sauvegardes.",
   "FeaturesHero.title": "Tout ce que Seed fournit, et ce qu’il ne fournit pas encore",
   "FeaturesHero.lead":
-    "Seed est un starter SaaS gratuit sous licence MIT, avec connexion par e-mail, Google et GitHub, clés d’accès, liens magiques, comptes invités, 2FA, groupes avec rôles, facturation Stripe par membre, mises à jour en temps réel, application hors ligne, espace d’administration, supervision et sauvegardes quotidiennes chiffrées en option. Chaque section ci-dessous renvoie à son code.",
+    "Seed est un starter SaaS gratuit sous licence MIT, avec connexion par e-mail, Google et GitHub, clés d’accès, codes de connexion par e-mail, comptes invités, 2FA, groupes avec rôles, facturation Stripe par membre, mises à jour en temps réel, application hors ligne, espace d’administration, supervision et sauvegardes quotidiennes chiffrées en option. Chaque section ci-dessous renvoie à son code.",
   "FeaturesHero.note":
     "Seed est utilisable dès aujourd’hui, développé en public. Ce qui manque est marqué « Pas encore développé » à côté de la fonctionnalité concernée, avec un lien vers son issue quand elle est ouverte.",
   "Features.compare": "Seed face aux autres",
@@ -669,7 +669,7 @@ export default {
     "Le panneau d’administration de Seed : retrouvez une personne, fermez ses sessions, remboursez un paiement, relancez une tâche échouée. Les actions risquées demandent confirmation ; toutes sont journalisées. Gratuit, MIT.",
   "AdminTour.heroTitle": "Un panneau d’administration pour ceux qui font tourner votre produit",
   "AdminTour.heroLead":
-    "Seed fournit un espace opérateur sur son propre hôte. Vos opérateurs retrouvent une personne, voient ses méthodes de connexion, ses sessions et ses groupes, et l’aident : fermer une session, envoyer un lien de réinitialisation du mot de passe, rembourser un paiement. Les actions risquées demandent confirmation, et chaque action est consignée dans le journal d’audit.",
+    "Seed fournit un espace opérateur sur son propre hôte. Vos opérateurs retrouvent une personne, voient ses méthodes de connexion, ses sessions et ses groupes, et l’aident : fermer une session, envoyer un e-mail de réinitialisation du mot de passe, rembourser un paiement. Les actions risquées demandent confirmation, et chaque action est consignée dans le journal d’audit.",
   "AdminTour.code": "Lire le code de l’application d’administration",
   "AdminTour.dashboard": "Tableau de bord",
   "AdminTour.dashboardText":
@@ -679,7 +679,7 @@ export default {
     "Visites du site et clics de commande depuis votre Umami. Totaux uniquement.",
   "AdminTour.users": "Utilisateurs",
   "AdminTour.usersText":
-    "Retrouvez une personne, bloquez-la, fermez une session ou envoyez un lien de réinitialisation.",
+    "Retrouvez une personne, bloquez-la, fermez une session ou envoyez un e-mail de réinitialisation.",
   "AdminTour.groups": "Groupes",
   "AdminTour.groupsText":
     "Membres, invitations et fichiers. Retirez un fichier ou changez le propriétaire.",
@@ -709,7 +709,7 @@ export default {
     "Chaque jeton d’API, à qui il appartient et quand il a servi pour la dernière fois.",
   "AdminTour.operator": "Opérateur",
   "AdminTour.operatorText":
-    "Le support au quotidien : retrouver des personnes, fermer des sessions, envoyer des liens de réinitialisation du mot de passe, gérer les groupes.",
+    "Le support au quotidien : retrouver des personnes, fermer des sessions, envoyer des e-mails de réinitialisation du mot de passe, gérer les groupes.",
   "AdminTour.supervisor": "Superviseur",
   "AdminTour.supervisorText":
     "Peut aussi rembourser des paiements, résilier immédiatement un abonnement et confier un groupe à un autre membre.",
@@ -763,7 +763,7 @@ export default {
   "CompareRow.makerkitLite": "Makerkit : le kit Lite uniquement",
   "CompareRow.openSource": "Open source (MIT)",
   "CompareRow.password": "Connexion par mot de passe",
-  "CompareRow.magicLinks": "Liens magiques",
+  "CompareRow.magicLinks": "Connexion par e-mail sans mot de passe",
   "CompareRow.social": "Connexion sociale",
   "CompareRow.socialNote": "Seed : Google, GitHub",
   "CompareRow.totp": "2FA par application",
@@ -980,20 +980,20 @@ export default {
   "FeaturePageSignIn.name": "Connexion",
   "FeaturePageSignIn.title": "Authentification pour votre SaaS, sans service externe",
   "FeaturePageSignIn.description":
-    "Clés d’accès, liens magiques par e-mail, Google, GitHub et 2FA, vérifiés par votre API, sans service tiers ni frais par utilisateur. Gratuit, licence MIT.",
+    "Clés d’accès, codes de connexion par e-mail, Google, GitHub et 2FA, vérifiés par votre API, sans service tiers ni frais par utilisateur. Gratuit, licence MIT.",
   "FeaturePageSignIn.h1":
     "Clés d’accès et connexion pour votre SaaS, sans service d’authentification",
   "FeaturePageSignIn.answer":
-    "Seed connecte les utilisateurs par clé d’accès, par lien de connexion envoyé par e-mail, avec Google et avec GitHub, et sa propre API vérifie chaque connexion sur votre serveur, sans service d’authentification tiers. Mots de passe, clés d’accès et liens de connexion fonctionnent dès le déploiement, sans frais par utilisateur ; Google et GitHub demandent chacun deux clés dans le fichier env.",
+    "Seed connecte les utilisateurs par clé d’accès, par code de connexion envoyé par e-mail, avec Google et avec GitHub, et sa propre API vérifie chaque connexion sur votre serveur, sans service d’authentification tiers. Mots de passe, clés d’accès et codes de connexion fonctionnent dès le déploiement, sans frais par utilisateur ; Google et GitHub demandent chacun deux clés dans le fichier env.",
   "FeaturePageSignIn.summary":
-    "Clés d’accès, liens de connexion par e-mail, Google, GitHub et double authentification, sans service d’authentification.",
+    "Clés d’accès, codes de connexion par e-mail, Google, GitHub et double authentification, sans service d’authentification.",
   "FeaturePageSignIn.how1":
-    "L’API vérifie elle-même chaque connexion et répond avec un cookie de session signé. Une clé d’accès utilise le WebAuthn du navigateur : le serveur ne garde que sa clé publique, et chaque défi de connexion ne sert qu’une fois. Un lien de connexion connecte ou crée le compte, ne sert qu’une fois, reste valable 15 minutes et n’est stocké que sous forme de hachage.",
+    "L’API vérifie elle-même chaque connexion et répond avec un cookie de session signé. Une clé d’accès utilise le WebAuthn du navigateur : le serveur ne garde que sa clé publique, et chaque défi de connexion ne sert qu’une fois. Un code de connexion envoyé par e-mail connecte ou crée le compte, ne sert qu’une fois, reste valable 10 minutes, uniquement dans le navigateur qui l’a demandé, et n’est stocké que sous forme de hachage.",
   "FeaturePageSignIn.how2":
     "Une application d’authentification ajoute la double authentification. Le profil liste chaque méthode de connexion au compte et chaque appareil connecté, et changer une méthode de connexion demande une preuve et envoie un e-mail. Un visiteur peut aussi commencer dans un compte invité et ajouter une méthode de connexion plus tard.",
   "FeaturePageSignIn.authServiceQuestion": "Ai-je besoin d’un service d’authentification ?",
   "FeaturePageSignIn.authServiceAnswer":
-    "Non. La propre API de Seed vérifie les mots de passe, les clés d’accès, les liens de connexion et les réponses de Google et de GitHub, sur votre serveur : rien n’est facturé par utilisateur.",
+    "Non. La propre API de Seed vérifie les mots de passe, les clés d’accès, les codes de connexion et les réponses de Google et de GitHub, sur votre serveur : rien n’est facturé par utilisateur.",
   "FeaturePageSignIn.passkeysQuestion": "Seed prend-il en charge les clés d’accès (passkeys) ?",
   "FeaturePageSignIn.passkeysAnswer":
     "Oui. Les utilisateurs ajoutent une clé d’accès dans leur profil et s’en servent pour se connecter ; le serveur ne stocke que sa clé publique, et chaque défi de connexion ne sert qu’une fois.",

@@ -215,13 +215,12 @@ describe("AuthScreen in the browser", () => {
 const forgotDefaults: ForgotPasswordScreenProps = {
   email: "",
   onEmailChange: () => {},
-  sent: false,
   error: null,
   pending: false,
 }
 
 describe("ForgotPasswordScreen in the browser", () => {
-  it("reports the typed address and asks for the link through the app's callback", async () => {
+  it("reports the typed address and asks for the code through the app's callback", async () => {
     const change = spy<[string]>()
     const send = spy<[]>()
     await mount(
@@ -254,12 +253,12 @@ describe("ForgotPasswordScreen in the browser", () => {
 
 const resetDefaults: ResetPasswordScreenProps = {
   email: "ada@example.com",
-  code: "code-from-the-link",
   newPassword: "",
   onNewPasswordChange: () => {},
   done: false,
   error: null,
   pending: false,
+  onStartOver: () => {},
 }
 
 describe("ResetPasswordScreen in the browser", () => {
@@ -285,13 +284,22 @@ describe("ResetPasswordScreen in the browser", () => {
     await mount(<ResetPasswordScreen {...resetDefaults} />)
     find("[data-e2e=reset-password-submit]").focus()
 
-    await rerender(<ResetPasswordScreen {...resetDefaults} error="This link is used" />)
+    await rerender(<ResetPasswordScreen {...resetDefaults} error="Use 8 characters or more" />)
 
     const field = find("[data-e2e=reset-password-new]")
     const describedBy = field.getAttribute("aria-describedby") ?? ""
     expect(describedBy.split(" ").map((id) => document.getElementById(id)?.textContent))
-      .toContain("This link is used")
+      .toContain("Use 8 characters or more")
     expect(focused()).toBe("reset-password-new")
+  })
+
+  it("starts over through the app's callback when the code took too long", async () => {
+    const startOver = spy<[]>()
+    await mount(<ResetPasswordScreen {...resetDefaults} onStartOver={startOver.fn} />)
+
+    find("[data-e2e=reset-password-start-over]").click()
+
+    expect(startOver.calls).toHaveLength(1)
   })
 })
 
