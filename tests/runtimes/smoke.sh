@@ -10,7 +10,22 @@
 # `KV_PASSWORD`. Like e2e/mpa/run.sh it runs in a database of its own, `template_runtimes`, dropped
 # and created first. `RUNTIMES` picks the runtimes, by default `deno node bun`. `API_PORT` and
 # `MPA_PORT` default to 8000 and 8001.
+#
+# It runs in a copy of the checkout (the tracked and untracked files, not the ignored ones), made
+# in a scratch folder: the builds and vapid.json it writes would otherwise clash with CI steps that
+# share the checkout and run at the same time, such as `browser` (e2e/mpa/run.sh).
 set -euo pipefail
+
+if [ -z "${RUNTIMES_SMOKE_COPY:-}" ]; then
+  COPY=$(mktemp -d)
+  trap 'find "$COPY" -delete' EXIT INT TERM
+  git ls-files -z --cached --others --exclude-standard |
+    tar --null --ignore-failed-read -T - -cf - | tar -xf - -C "$COPY"
+  cd "$COPY"
+  deno install --frozen
+  RUNTIMES_SMOKE_COPY=1 bash tests/runtimes/smoke.sh
+  exit
+fi
 
 RUNTIMES=${RUNTIMES:-deno node bun}
 API_PORT=${API_PORT:-8000}

@@ -263,7 +263,8 @@ steps:
   runtimes:
     # Starts the API, the worker and the website on Deno, Node and Bun, and checks each answers
     # (tests/runtimes/smoke.sh, #623). The Node image gets Deno and Bun from their release zips,
-    # checked against their SHA-256.
+    # checked against their SHA-256. The script works in its own copy of the checkout, so it runs
+    # beside `browser` and `lighthouse` without sharing their builds or vapid.json.
     image: docker.io/library/node:26.13.0-bookworm@sha256:fa52d1669505e29b58c042875b1d65c229e0787a3610fd52869b22b68e480853
     environment:
       DB_HOST: postgres
@@ -285,7 +286,8 @@ steps:
           unzip -q -o -j /tmp/bun.zip bun-linux-x64/bun -d /usr/local/bin
           chmod +x /usr/local/bin/deno /usr/local/bin/bun
       - deno --version && node --version && bun --version
-      - deno install --frozen
+      # smoke.sh copies the checkout with git, which refuses a repository another user owns.
+      - git config --global --add safe.directory "$$PWD"
       - |
           deno eval '
           for (const [hostname, port] of [["postgres", 5432], ["valkey", 6379]]) {
