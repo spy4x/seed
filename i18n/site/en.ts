@@ -534,7 +534,7 @@ export default {
   "FeatureWebsite.fact3":
     "A newsletter with double opt-in, one-click unsubscribe and mails in the reader's language",
   "FeatureWebsite.fact4":
-    "A blog written in the admin panel, with posts in each language and their translations, topics, interactive figures readers can try, an RSS feed, article structured data, old links that redirect when a post's URL changes, and an IndexNow ping so search engines hear of a new or changed post at once",
+    "A blog written in the admin panel, with posts in each language and their translations, topics, interactive figures readers can try, an RSS feed, article structured data, old links that redirect when a post's URL changes, covers in the post lists, an optional Dev.to cross-post that names the post as the original, and an IndexNow ping so search engines hear of a new or changed post at once",
   "FeatureWebsite.fact5":
     "Contact links set in the admin panel, shown in the footer and the structured data",
   "FeatureWebsite.fact6":
