@@ -5,6 +5,10 @@ import { API_DOCS_PATH } from "./api-docs.ts"
 import { REPOSITORY_URL } from "./brand.ts"
 import { CHANGELOG } from "./changelog.ts"
 import adminModules from "../../docs/admin-modules.md" with { type: "text" }
+import aggregateExtras from "../../docs/aggregate-extras.md" with { type: "text" }
+import aggregateLifecycle from "../../docs/aggregate-lifecycle.md" with { type: "text" }
+import aggregateOffline from "../../docs/aggregate-offline.md" with { type: "text" }
+import aggregateRelations from "../../docs/aggregate-relations.md" with { type: "text" }
 import aggregates from "../../docs/aggregates.md" with { type: "text" }
 import apiErrors from "../../docs/api-errors.md" with { type: "text" }
 import apps from "../../docs/apps.md" with { type: "text" }
@@ -14,6 +18,7 @@ import billing from "../../docs/billing.md" with { type: "text" }
 import billingLifecycle from "../../docs/billing-lifecycle.md" with { type: "text" }
 import billingOperator from "../../docs/billing-operator.md" with { type: "text" }
 import billingPlans from "../../docs/billing-plans.md" with { type: "text" }
+import browserTests from "../../docs/browser-tests.md" with { type: "text" }
 import capacity from "../../docs/capacity.md" with { type: "text" }
 import catalog from "../../docs/catalog.md" with { type: "text" }
 import certificates from "../../docs/certificates.md" with { type: "text" }
@@ -23,11 +28,13 @@ import deployUpdates from "../../docs/deploy-updates.md" with { type: "text" }
 import development from "../../docs/development.md" with { type: "text" }
 import fileUploads from "../../docs/file-uploads.md" with { type: "text" }
 import files from "../../docs/files.md" with { type: "text" }
+import firstFeature from "../../docs/first-feature.md" with { type: "text" }
 import getStarted from "../../docs/get-started.md" with { type: "text" }
 import guests from "../../docs/guests.md" with { type: "text" }
 import ids from "../../docs/ids.md" with { type: "text" }
 import largeGroup from "../../docs/large-group.md" with { type: "text" }
 import loadTests from "../../docs/load-tests.md" with { type: "text" }
+import localStack from "../../docs/local-stack.md" with { type: "text" }
 import offline from "../../docs/offline.md" with { type: "text" }
 import offlineAppShell from "../../docs/offline-app-shell.md" with { type: "text" }
 import offlineData from "../../docs/offline-data.md" with { type: "text" }
@@ -73,6 +80,8 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         summary: `Start a product, take Seed's later changes, give back to Seed.`,
       },
       { slug: `start-a-product`, summary: `What a new product deletes, replaces or sets.` },
+      { slug: `local-stack`, summary: `Run Seed on your machine with demo data, and reset it.` },
+      { slug: `first-feature`, summary: `A new kind of record, from the database to the screen.` },
     ],
   },
   {
@@ -120,11 +129,28 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
         summary: `Turn the offline layer or the WebSocket module off, or remove them.`,
       },
       { slug: `aggregates`, summary: `Every file of the notes aggregate, in order.` },
+      { slug: `aggregate-offline`, summary: `Read, and write, an aggregate with no network.` },
+      {
+        slug: `aggregate-relations`,
+        summary: `One aggregate naming another, with tags and notes as the example.`,
+      },
+      {
+        slug: `aggregate-lifecycle`,
+        summary: `Restore after delete, a move to another group, and the data export.`,
+      },
+      {
+        slug: `aggregate-extras`,
+        summary: `Group settings, the overview, the inbox and the rest of the app.`,
+      },
       {
         slug: `admin-modules`,
         summary: `The operator area as a list of modules, and how to add one.`,
       },
       { slug: `load-tests`, summary: `Run the k6 scenarios and build a large test group.` },
+      {
+        slug: `browser-tests`,
+        summary: `The Playwright specs in e2e/, and which of them CI runs.`,
+      },
     ],
   },
   {
@@ -166,7 +192,7 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
   {
     title: `Reference`,
     docs: [
-      { slug: `development`, summary: `The local stack, every task, the browser tests and CI.` },
+      { slug: `development`, summary: `Every deno task, what it does and where it is explained.` },
       { slug: `settings`, summary: `Every variable of the env file.` },
       { slug: `api-errors`, summary: `The one error body every failed API answer has.` },
       {
@@ -180,6 +206,10 @@ export const PUBLISHED_DOCS: readonly { title: string; docs: readonly PublishedD
 /** Each published guide's Markdown, by slug. */
 const SOURCES: Readonly<Record<string, string>> = {
   "admin-modules": adminModules,
+  "aggregate-extras": aggregateExtras,
+  "aggregate-lifecycle": aggregateLifecycle,
+  "aggregate-offline": aggregateOffline,
+  "aggregate-relations": aggregateRelations,
   aggregates,
   "api-errors": apiErrors,
   apps,
@@ -189,6 +219,7 @@ const SOURCES: Readonly<Record<string, string>> = {
   "billing-lifecycle": billingLifecycle,
   "billing-operator": billingOperator,
   "billing-plans": billingPlans,
+  "browser-tests": browserTests,
   capacity,
   catalog,
   certificates,
@@ -198,11 +229,13 @@ const SOURCES: Readonly<Record<string, string>> = {
   development,
   "file-uploads": fileUploads,
   files,
+  "first-feature": firstFeature,
   "get-started": getStarted,
   guests,
   ids,
   "large-group": largeGroup,
   "load-tests": loadTests,
+  "local-stack": localStack,
   offline,
   "offline-app-shell": offlineAppShell,
   "offline-data": offlineData,

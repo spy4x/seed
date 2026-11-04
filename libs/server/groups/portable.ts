@@ -42,7 +42,7 @@ export interface PortableContext {
 }
 
 /**
- * An aggregate that joins export and import (`docs/aggregates.md`, "Making an aggregate
+ * An aggregate that joins export and import (`docs/aggregate-lifecycle.md`, "Make it
  * exportable"). The exporter reads it into the file, the importer checks every entry with `parse`
  * and `check` before anything is written, then calls `write` in one transaction, in the order of
  * the registry, so an aggregate other aggregates point at is written first.

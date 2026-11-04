@@ -10,6 +10,8 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
   back to Seed.
 - [Start a product: what belongs to Seed's own website](start-a-product.md): what a new product
   deletes, replaces or sets.
+- [Run the local stack](local-stack.md): run Seed on your machine with demo data, and reset it.
+- [Add your first feature](first-feature.md): a new kind of record, from the database to the screen.
 
 ## Guides
 
@@ -42,8 +44,18 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [Offline in the SPA](offline.md): turn the offline layer or the WebSocket module off, or remove
   them.
 - [Adding a feature](aggregates.md): every file of the notes aggregate, in order.
+- [Make an aggregate work offline](aggregate-offline.md): read, and write, an aggregate with no
+  network.
+- [Link two aggregates](aggregate-relations.md): one aggregate naming another, with tags and notes
+  as the example.
+- [Delete, move and export an aggregate](aggregate-lifecycle.md): restore after delete, a move to
+  another group, and the data export.
+- [Connect a feature to the app](aggregate-extras.md): group settings, the overview, the inbox and
+  the rest of the app.
 - [Admin modules](admin-modules.md)
 - [Run the load tests](load-tests.md): run the k6 scenarios and build a large test group.
+- [Run the browser tests](browser-tests.md): the Playwright specs in e2e/, and which of them CI
+  runs.
 - [Postgres 18 upgrade](postgres-18-upgrade.md): once per server that ran Postgres 16.
 
 ## Concepts
@@ -67,7 +79,7 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 
 ## Reference
 
-- [Development](development.md): the local stack, every task, the browser tests and what CI runs.
+- [Every task](development.md): every `deno task`, what it does and where it is explained.
 - [Settings](settings.md): every variable of the env file.
 - [Writing the docs](writing-docs.md): how a guide here is written and published.
 - [API errors](api-errors.md): the one error body every API answer that is not a success has.
