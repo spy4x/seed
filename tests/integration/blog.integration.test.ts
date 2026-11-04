@@ -1651,12 +1651,15 @@ Deno.test(`blog: a live post is cross-posted to Dev.to once ever, with its canon
     })
 
     await t.step(`a repeated job, and publishing again, post nothing more`, async () => {
-      await blogCrosspostJob({ sql, setup: devto.setup, log: () => {} })(crosspostEvent(id))
+      // A Dev.to whose search misses the article: only the post's own record stops a second one.
+      const blind = fakeDevto()
+      await blogCrosspostJob({ sql, setup: blind.setup, log: () => {} })(crosspostEvent(id))
       await blog.unpublish(id, 2, maya)
       await blog.publish(id, 3, null, null, maya)
-      const processor = processorFor(sql, null, devto.setup)
+      const processor = processorFor(sql, null, blind.setup)
       for (let run = 0; run < 3; run++) await processor.drainOnce()
       expect(devto.made).toHaveLength(1)
+      expect(blind.made).toHaveLength(0)
     })
   })
 })
