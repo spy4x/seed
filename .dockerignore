@@ -32,6 +32,13 @@
 !docs/ids.md
 !docs/api-errors.md
 !docs/admin-modules.md
+!docs/local-stack.md
+!docs/first-feature.md
+!docs/aggregate-offline.md
+!docs/aggregate-relations.md
+!docs/aggregate-lifecycle.md
+!docs/aggregate-extras.md
+!docs/browser-tests.md
 !docs/file-uploads.md
 !docs/attachments-and-pictures.md
 !docs/billing-plans.md

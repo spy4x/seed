@@ -18,7 +18,7 @@
  *
  * 1. Start a local stack (`deno task dev` behind `deno task proxy:start` serves the product app at
  *    http://app.localhost and the admin app at http://admin.localhost).
- * 2. Seed its database fresh: `ENV=dev deno task db:reset` with the values in docs/development.md,
+ * 2. Seed its database fresh: `ENV=dev deno task db:reset` with the values in docs/local-stack.md,
  *    then restart the API and the worker, which lose their database connection in the reset.
  *    The video shows the seed's fake example.com people, groups, customers and subscribers.
  * 3. Run the API as a release build runs: with `APP_VERSION` (the version, such as `v2.0.0`) and

@@ -1,130 +1,134 @@
 # Architecture
 
-Moved from the README. [ADR 001](decisions/001-deno-platform-template.md) and
-[ADR 002](decisions/002-realtime-transport-and-sync.md) are authoritative; this page summarises
-them. The diagram in the README, [`architecture.svg`](architecture.svg), shows what exists today.
+This page shows how Seed's apps, libraries and services fit together, and what each one owns.
 
-## Migration status
+You need:
 
-> **Migration status: WIP.** App boundaries, groups with members, roles, invitations and
-> ownership transfer, the notes reference aggregate ([aggregates.md](aggregates.md)) and tags, the
-> outbox worker with its delayed and repeating jobs, the public website (`apps/mpa`,
-> server-rendered, works without JavaScript), the offline SPA ([offline.md](offline.md)), the admin
-> app (`apps/admin`) and the `libs/shared` split into `libs/platform` and `libs/domain` now exist.
-> What is not built yet is listed on the [open issues](https://github.com/spy4x/seed/issues).
-> Target architecture below and ADR 001 are authoritative.
+- Nothing installed. [ADR 001](decisions/001-deno-platform-template.md) and
+  [ADR 002](decisions/002-realtime-transport-and-sync.md) hold the decisions; this page sums them
+  up.
 
-## Database evolution
+![Seed's apps, services and libraries](architecture.svg)
 
-Database evolution is forward-additive. A migration that rewrites rows is idempotent and safe to
-rerun during rollout.
+## The apps
 
-## Target architecture
+| App           | What it is                                                                         |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `apps/spa`    | The product, a Preact and Vite PWA. It keeps an offline copy in IndexedDB          |
+| `apps/admin`  | The operator area, on a host of its own ([Admin modules](admin-modules.md))        |
+| `apps/mpa`    | The public website on Fresh. It renders on the server and works without JavaScript |
+| `apps/api`    | Hono: REST, the call route, the WebSocket, auth and CQRS dispatch                  |
+| `apps/worker` | Runs the outbox jobs: mail, Telegram notices, data exports and the nightly cleanup |
 
-Apps compose bounded domain and platform libraries: Postgres is authoritative, browser data is
-a local projection in IndexedDB, and REST endpoints dispatch CQRS flows with versioned,
-cursor-based, idempotent sync.
+The MPA has no session. It reads the API for the blog, contact links, the catalog and the
+newsletter. [Seed's apps](apps.md) says which a product keeps.
 
-Target apps:
+## The data
 
-- `apps/api`: REST, auth, authorization, CQRS dispatch, and sync transport.
-- `apps/spa`: offline-capable Preact/Vite client backed by the shared data cache and outbox in
-  IndexedDB.
-- `apps/mpa`: the product's public website, server-rendered: home page, pricing, legal pages and
-  the newsletter. It has no session; the product itself is the SPA.
-- `apps/worker`: asynchronous event handlers, projections, and integrations.
+Postgres 18 is the source of truth; the apps reach it through PgBouncer. A browser's data is a
+local copy in IndexedDB, filled by a pull of what changed since its cursor
+([offline.md](offline.md)).
 
-Target libraries:
+A write runs as one command in one transaction. It records the change and any job in
+`outbox_events`, so the worker and the other open sockets learn of it from the same row. Every
+write is versioned and idempotent ([ADR 002](decisions/002-realtime-transport-and-sync.md)).
 
-- `libs/platform`: reusable technical primitives and contracts. Today these come from the
-  published `@spy4x/*` packages (spy4x/ts-libs) at an exact pinned version, not from code here.
-- `libs/domain`: business rules, commands, events, and queries.
-- `libs/server`: Postgres and server-side adapters.
-- `libs/ui`: the SPA's product screens. Generic Preact UI comes from the `@spy4x/preact-*` packages.
+| Service  | What it holds                                                                        |
+| -------- | ------------------------------------------------------------------------------------ |
+| Postgres | Every record, the outbox and the change log                                          |
+| Valkey   | Rate limits, passkey and sign-in-provider flows, the operation budget, the API cache |
+| Garage   | Uploaded files, an S3 store, with the `files` profile                                |
 
-Every group, including the one made at sign-up, uses one authorization and sync model. Full
-boundary and sync rules are recorded in [ADR 001](decisions/001-deno-platform-template.md).
+A migration only adds. One that rewrites rows is idempotent and safe to rerun during a rollout.
 
-Distribution proceeds in stages: Git template first, proven generic libraries on JSR second,
-then a CLI after generation and upgrade flows stabilize.
+## The libraries
+
+| Library       | What it holds                                                          |
+| ------------- | ---------------------------------------------------------------------- |
+| `libs/domain` | Business rules, commands, events and queries, one package per aggregate |
+| `libs/server` | Postgres repositories, jobs, mail and other server adapters           |
+| `libs/ui`     | The product's screens: props in, callbacks out                        |
+| `libs/platform` | The translation and keyboard shortcut helpers the apps share        |
+
+Generic code comes from the `@spy4x/*` packages on JSR, pinned to an exact version. Generic UI is
+`@spy4x/preact-*`.
+
+Every group, including the one made at sign-up, uses one authorization and sync model.
 
 ## Mail subscriptions
 
-Visitors join a mailing list through `@spy4x/server/subscribers`; template ships one list, `news`,
-and a product adds more in `SUBSCRIBER_LISTS` (`libs/domain/subscribers`) with no schema change. The
-send path copies the password reset: the API writes a `subscription_requests` row and an outbox
-job, and only the worker signs links and sends.
+Visitors join a mailing list through `@spy4x/server/subscribers`. Seed ships one list, `news`. A
+product adds more in `SUBSCRIBER_LISTS` (`libs/domain/subscribers`), with no schema change.
 
-| Job                        | Enqueued by                                    | The worker                                                          |
-| -------------------------- | ---------------------------------------------- | ------------------------------------------------------------------- |
-| `subscribers.confirm-mail` | `POST /api/subscribers`, the same for any address | signs the confirm token, sends, deletes the request row             |
-| `subscribers.welcome-mail` | a successful confirm                           | sends the welcome with a one-click `List-Unsubscribe`, if still listed |
-| `subscribers.send-issue`   | `deno task subscribers:send <list> <issue.json>` | runs `sendIssue` with the Postgres send log; a failed send throws, and the retry mails only the missed audience |
+The API writes a `subscription_requests` row and an outbox job. Only the worker signs links and
+sends mail, as with a password reset.
 
-- **Secrets.** `SUBSCRIBERS_SECRET` (at least 32 printable characters, `openssl rand -base64 48`)
-  signs every link, for the API and the worker alike; it and every previous secret must differ
-  from `AUTH_COOKIE_SECRET`, so rotating cookies keeps every sent unsubscribe link working, and
-  production refuses the public development secret. `SUBSCRIBERS_PREVIOUS_SECRETS`
-  (comma-separated, optional) still verifies links signed before a rotation. Each list signs with
-  its own key, derived from the secret. In production without a secret the routes answer 503 and the
-  worker drops subscriber jobs; in development a fixed, public dev secret is used.
-- **Pages.** `/subscribe`, `/subscribe/confirm` and `/unsubscribe` exist in the SPA and the MPA (the
-  public website).
-  Token pages answer `Cache-Control: no-store` and send no `Referer`, and a finished step leaves the
-  token out of the address (the MPA answers 303 to the page without it).
-- **One-click unsubscribe.** `POST /api/subscribers/unsubscribe` is the RFC 8058 target: a mail
-  client's post without browser headers passes, a cross-site browser post gets 403. Only this route
-  takes a post without browser headers. The unsubscribe routes refuse any token but the version 2
-  format template signs: the library still reads antonshubin.com's version 1 tokens, and checks
-  each against the whole list.
-- **Rate limits.** Per IP on subscribing and on every token check, and three confirm mails an hour
-  per address. The address budget is keyed by an HMAC under a key derived from the secret, so Valkey
-  holds no address and no plain hash of one.
-- **Issues.** In the worker container, `deno task subscribers:send news issue.json` (or `-` for
-  stdin) takes `{ id, subject, preheader?, blocks }`, where each block is `{ heading }`,
-  `{ paragraph }`, `{ list: [...] }` or `{ button: { href, label } }`. Rerunning the same `id`
-  mails only who has not got it. In development the mail lands in `dev_mail`; links in it use
-  plain HTTP, so the `List-Unsubscribe` header is left off there.
+| Job                        | Queued by                                         | The worker                                          |
+| -------------------------- | ------------------------------------------------- | --------------------------------------------------- |
+| `subscribers.confirm-mail` | `POST /api/subscribers`, alike for any address    | Signs the confirm token, sends, deletes the request |
+| `subscribers.welcome-mail` | A successful confirm                              | Sends the welcome, if the address is still listed   |
+| `subscribers.send-issue`   | `deno task subscribers:send <list> <issue.json>`  | Sends the issue; a retry mails only who missed it   |
+
+| Setting                        | What it does                                                    |
+| ------------------------------ | --------------------------------------------------------------- |
+| `SUBSCRIBERS_SECRET`           | Signs every link. At least 32 printable characters              |
+| `SUBSCRIBERS_PREVIOUS_SECRETS` | Comma-separated, optional. Still verifies links from before a rotation |
+
+The secret, and every previous one, must differ from `AUTH_COOKIE_SECRET`. So rotating cookies
+keeps every sent unsubscribe link working. Each list signs with its own key, derived from the
+secret. Make one with `openssl rand -base64 48`.
+
+Production refuses the public development secret. Without a secret there, the routes answer 503
+and the worker drops subscriber jobs.
+
+- **Pages.** `/subscribe`, `/subscribe/confirm` and `/unsubscribe` exist in the SPA and the MPA.
+  Token pages answer `Cache-Control: no-store` and send no `Referer`. A finished step leaves the
+  token out of the address.
+- **One-click unsubscribe.** `POST /api/subscribers/unsubscribe` is the RFC 8058 target. A mail
+  client's post passes, and a cross-site browser post gets 403. It accepts only the version 2
+  tokens Seed signs.
+- **Rate limits.** Per address on subscribing and on every token check, and three confirm mails an
+  hour per e-mail address. Valkey keys the budget by an HMAC, so it holds no address.
 - **Cleanup.** The nightly cleanup removes requests older than a day.
+
+**Issues.** `subscribers:send` runs in the worker container and reads `{ id, subject, preheader?,
+blocks }`. Each block is a `heading`, a `paragraph`, a `list` or a `button`. Rerunning the same
+`id` mails only who has not got it. In development the mail lands in `dev_mail`, without the
+`List-Unsubscribe` header.
 
 ## Operation budget
 
-Every operation, whether it arrives as `POST /api/call/<name>` or over the socket, spends one unit
-of its caller's budget before it runs (`apps/api/middlewares/operation-rate-limits.ts`, #429). So
-does every signed-in REST write (`POST`, `PUT`, `PATCH`, `DELETE`), such as
-`POST /api/groups/:groupId/notes` or `POST /api/groups`: it spends one command, with the same keys.
-The REST writes left out are those under `/api/auth` (sign-in has limits of its own), `/api/admin`
-(operators only) and `/api/call` (already counted as an operation); REST reads are not budgeted.
-Every transport shares the budget, which lives in Valkey, so it holds across API processes. Without
-it, anyone, a guest included, could create notes, tags and groups in a loop until the disk is full,
-since plan caps are lifted when billing is off.
+Every operation spends one unit of its caller's budget before it runs
+(`apps/api/middlewares/operation-rate-limits.ts`). That covers `POST /api/call/<name>`, the socket
+and every signed-in REST write. Without it, anyone could fill the disk with notes in a loop, since
+plan caps are lifted when billing is off.
 
-| Who                      | Counted by                          | Commands a minute | Queries a minute |
-| ------------------------ | ----------------------------------- | ----------------- | ---------------- |
-| A signed-in person       | user id, every device together      | 120               | 600              |
-| Every guest on an address | client address (IPv6: its /48)     | 60                | 300              |
+The REST writes left out are those under `/api/auth`, `/api/admin` and `/api/call`, which is
+already counted. REST reads are not budgeted. The budget lives in Valkey, so it holds across API
+processes.
 
-- **Guests by address.** A guest account costs a click, so a guest's budget follows the address
-  the request came from, read as the guest-start limit reads it (`signUpClient`: `X-Real-IP` from a
-  trusted proxy, else the connection). Opening more guest accounts gives no more writes. Behind
-  Cloudflare's proxy, Traefik sets `X-Real-IP` to a Cloudflare address, so every guest that comes
-  through one Cloudflare edge shares one budget.
-- **The refusal.** A call past the budget gets `rate_limited` (429 over HTTP) with the message "Too
-  many requests. Wait a minute", and its handler does not run. A refused REST write also carries
-  `Retry-After`. The SPA's calls treat
-  `rate_limited` as retryable: the offline queue keeps the write and sends it again after its
-  backoff.
-- **Store outage.** When Valkey cannot be reached, calls pass and the failure is logged, as the
-  normal auth limit does.
-- **Settings.** `OPERATION_COMMANDS_PER_MINUTE`, `OPERATION_QUERIES_PER_MINUTE`,
-  `GUEST_OPERATION_COMMANDS_PER_MINUTE` and `GUEST_OPERATION_QUERIES_PER_MINUTE`, whole numbers;
-  empty for the defaults above (`infra/envs/.env.example`).
+| Who                        | Counted by                          | Commands a minute | Queries a minute |
+| -------------------------- | ----------------------------------- | ----------------- | ---------------- |
+| A signed-in person         | User id, every device together      | 120               | 600              |
+| Every guest on an address  | Client address (IPv6: its /48)      | 60                | 300              |
 
-## Documentation
+| Setting                               | Default |
+| ------------------------------------- | ------- |
+| `OPERATION_COMMANDS_PER_MINUTE`       | 120     |
+| `OPERATION_QUERIES_PER_MINUTE`        | 600     |
+| `GUEST_OPERATION_COMMANDS_PER_MINUTE` | 60      |
+| `GUEST_OPERATION_QUERIES_PER_MINUTE`  | 300     |
 
-- [Architecture decision](decisions/001-deno-platform-template.md)
-- [Realtime transport and sync protocol](decisions/002-realtime-transport-and-sync.md)
-- [Swappable transport and local data](decisions/003-swappable-transport-and-local-data.md)
+- **Guests by address.** A guest account costs a click, so more guest accounts give no more
+  writes. The address is read as the guest-start limit reads it (`signUpClient`). Behind
+  Cloudflare's proxy, every guest through one Cloudflare edge shares one budget.
+- **The refusal.** A call past the budget gets `rate_limited` (429), "Too many requests. Wait a
+  minute", and its handler does not run. A refused REST write also carries `Retry-After`. The SPA's
+  offline queue keeps the write and sends it again later.
+- **Store outage.** When Valkey cannot be reached, calls pass and the failure is logged.
+
+## Next
+
+- [Seed's apps](apps.md)
+- [Offline](offline.md)
 - [Group sync design](design/group-sync.md)
-- [Realtime transport and sync-on-reconnect](design/realtime-websockets.md)
-- [Contributing](../CONTRIBUTING.md)

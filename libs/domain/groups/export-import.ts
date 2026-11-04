@@ -8,7 +8,7 @@ import type { MoveAllAllowances } from "./move-all.ts"
  * Exporting a group to one JSON file, and importing such a file as a new group (#230). The owner
  * downloads the file; anyone who may create a group imports it. An import never touches an
  * existing group: it creates a new one, with a new id for every entity in the file. Each aggregate
- * joins by registering itself (`docs/aggregates.md`, "Making an aggregate exportable").
+ * joins by registering itself (`docs/aggregate-lifecycle.md`, "Make it exportable").
  */
 
 /** What the `format` field of every export file says, so an import can tell it is one. */

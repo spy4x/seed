@@ -181,21 +181,21 @@ export interface UserTotp {
 
 /**
  * The aggregates "move all of a group's data" moves, in the order it moves them. A new aggregate
- * joins here (`docs/aggregates.md`, "Making an aggregate movable"): put one that other aggregates
+ * joins here (`docs/aggregate-lifecycle.md`, "Make it movable"): put one that other aggregates
  * point at before the ones that point at it.
  */
 export const MOVABLE_AGGREGATES: readonly MovableAggregate[] = [tagMovable, noteMovable]
 
 /**
  * The aggregates a group's export file holds, in the order an import writes them. A new aggregate
- * joins here (`docs/aggregates.md`, "Making an aggregate exportable"): put one that other
+ * joins here (`docs/aggregate-lifecycle.md`, "Make it exportable"): put one that other
  * aggregates point at before the ones that point at it.
  */
 export const PORTABLE_AGGREGATES: readonly PortableAggregate[] = [tagPortable, notePortable]
 
 /**
- * The aggregates a device pulls the changes of, by group (`docs/aggregates.md`, "Taking part in
- * the changes pull"). Their `kind`s are the keys of the answer's `upserts`.
+ * The aggregates a device pulls the changes of, by group (`docs/aggregate-offline.md`, "Take part
+ * in the changes pull"). Their `kind`s are the keys of the answer's `upserts`.
  */
 export const CHANGES_AGGREGATES: readonly ChangesAggregate[] = [tagChanges, noteChanges]
 
