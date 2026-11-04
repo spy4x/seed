@@ -125,11 +125,11 @@ export async function signUpInPage(
   const lastMailUrl = new URL(`/api/test/last-mail`, page.url()).href
   const before = await lastMail(page.request, lastMailUrl, email)
   await page.locator(`[data-e2e=auth-form-submit]`).click()
-  const field = page.locator(`[data-e2e=sign-up-code-input]`)
+  const field = page.locator(`[data-e2e=mailed-code-step-code]`)
   await expect(field).toBeFocused()
-  await field.fill(await nextCode(page.request, lastMailUrl, email, before))
+  await field.pressSequentially(await nextCode(page.request, lastMailUrl, email, before))
   await gotoApp(page, `/notes`, ready, async () => {
-    await page.locator(`[data-e2e=sign-up-code-submit]`).click()
+    await field.press(`Enter`)
     await page.waitForURL(`/notes`)
   })
 }

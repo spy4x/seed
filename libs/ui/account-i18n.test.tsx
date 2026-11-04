@@ -288,7 +288,6 @@ const screens: Record<string, VNode> = {
       busy={false}
       error={null}
       resending={false}
-      resendNotice={null}
       resendError={null}
       onSubmit={nothing}
       onResend={nothing}
@@ -306,7 +305,6 @@ const screens: Record<string, VNode> = {
       busy={false}
       error={null}
       resending={false}
-      resendNotice={null}
       resendError={null}
       onSubmit={nothing}
       onResend={nothing}
@@ -366,6 +364,45 @@ const screens: Record<string, VNode> = {
       resending={false}
       onResend={nothing}
       onDifferentAddress={nothing}
+    />
+  ),
+  "sign-in code, signed in": (
+    <SignInCodeScreen
+      email=""
+      onEmailChange={nothing}
+      sentTo={null}
+      dead={false}
+      fieldError={null}
+      error={null}
+      pending={false}
+      onSubmit={nothing}
+      codeError={null}
+      checking={false}
+      onCode={nothing}
+      resending={false}
+      onResend={nothing}
+      onDifferentAddress={nothing}
+      signedIn
+    />
+  ),
+  "sign-in code, confirming the account's address": (
+    <SignInCodeScreen
+      email=""
+      onEmailChange={nothing}
+      sentTo={null}
+      dead={false}
+      fieldError={null}
+      error={null}
+      pending={false}
+      onSubmit={nothing}
+      codeError={null}
+      checking={false}
+      onCode={nothing}
+      resending={false}
+      onResend={nothing}
+      onDifferentAddress={nothing}
+      fixedEmail="ada@example.com"
+      next="/profile/danger-zone"
     />
   ),
   "dead code": (

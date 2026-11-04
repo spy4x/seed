@@ -73,9 +73,9 @@ test(`keeping a guest account by e-mail keeps its user id, drops the banner and 
     await page.locator(`[data-e2e=keep-password]`).fill(`Passw0rd!`)
     await page.locator(`[data-e2e=keep-email-submit]`).click()
     await expect(page.getByRole(`heading`, { level: 1, name: `Check your inbox` })).toBeVisible()
-    await page.locator(`[data-e2e=sign-up-code-input]`)
-      .fill(await nextCode(request, lastMailUrl, email, before))
-    await page.locator(`[data-e2e=sign-up-code-submit]`).click()
+    const field = page.locator(`[data-e2e=mailed-code-step-code]`)
+    await field.pressSequentially(await nextCode(request, lastMailUrl, email, before))
+    await field.press(`Enter`)
 
     await expect(page.locator(`[data-e2e=keep-done]`)).toContainText(`your email`)
     const kept = await me(page)

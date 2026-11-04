@@ -52,19 +52,19 @@ test("two sign-ups of one address: the first code signs in, the second finds the
       await lastMail(request, lastMailUrl, email),
     )
 
-    await firstPage.locator("[data-e2e=sign-up-code-input]").fill(firstCode)
+    await firstPage.locator("[data-e2e=mailed-code-step-code]").pressSequentially(firstCode)
     await gotoApp(
       firstPage,
       "/notes",
       firstPage.locator("[data-e2e=shell-ws-status]"),
       async () => {
-        await firstPage.locator("[data-e2e=sign-up-code-submit]").click()
+        await firstPage.locator("[data-e2e=mailed-code-step-code]").press("Enter")
         await firstPage.waitForURL("/notes")
       },
     )
 
-    await secondPage.locator("[data-e2e=sign-up-code-input]").fill(secondCode)
-    await secondPage.locator("[data-e2e=sign-up-code-submit]").click()
+    await secondPage.locator("[data-e2e=mailed-code-step-code]").pressSequentially(secondCode)
+    await secondPage.locator("[data-e2e=mailed-code-step-code]").press("Enter")
     await expect(secondPage.getByRole("heading", { level: 1, name: "You already have an account" }))
       .toBeVisible()
     const signIn = secondPage.locator("[data-e2e=sign-up-exists-sign-in]")

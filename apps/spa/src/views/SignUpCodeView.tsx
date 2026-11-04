@@ -5,6 +5,7 @@ import {
   SIGN_UP_CODE_MINUTES,
   type WaitingPasswordSignUp,
 } from "@domain/identity"
+import { MAILED_CODE_COOLDOWN_SECONDS } from "@ui/sign-in-code-screen.tsx"
 import {
   SIGN_UP_CODE_FAILURE,
   SIGN_UP_OFFLINE,
@@ -49,8 +50,9 @@ export function SignUpCodeView() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [resending, setResending] = useState(false)
-  const [resendNotice, setResendNotice] = useState<string | null>(null)
   const [resendError, setResendError] = useState<string | null>(null)
+  // When this page last sent a code: a new one waits a minute after it (#752).
+  const [sentAt, setSentAt] = useState<number | null>(null)
   const session = sessionState.value
   // A guest has a session but no sign-in method yet: the code step keeps that account (#224).
   const guest = isGuestSession(session.user)
@@ -90,13 +92,18 @@ export function SignUpCodeView() {
   }
 
   const resend = async () => {
-    setResendNotice(null)
     setResendError(null)
     setResending(true)
     const answer = await resendSignUpCode()
+    // `readyAt` moves in the same render that ends `resending`, so the step says the code went.
+    if (answer.ok) setSentAt(Date.now())
     setResending(false)
-    if (answer.ok) setResendNotice(t.t(`SignUpCodeScreen.resent`))
-    else if (answer.expired) setPending(null)
+    if (answer.ok) {
+      // The step leaves a complaint about the old code to its caller: a new code clears it.
+      setError(null)
+      return
+    }
+    if (answer.expired) setPending(null)
     else setResendError(failure(t, answer, `SignUpCodeScreen.resendFailed`))
   }
 
@@ -120,8 +127,8 @@ export function SignUpCodeView() {
       busy={busy}
       error={error}
       resending={resending}
-      resendNotice={resendNotice}
       resendError={resendError}
+      readyAt={sentAt === null ? undefined : sentAt + MAILED_CODE_COOLDOWN_SECONDS * 1000}
       onSubmit={(code) => void submit(code)}
       onResend={() => void resend()}
       onDifferentAddress={() => void differentAddress()}
