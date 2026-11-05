@@ -35,7 +35,7 @@ export default function ChecklistActions(
       />
       <Button
         variant="outline"
-        size="sm"
+        class="h-8"
         onClick={() => globalThis.print()}
         data-e2e="checklist-print"
       >

@@ -227,7 +227,10 @@ export default define.page(function LaunchChecklistPage({ state }) {
   return (
     <SiteFrame state={state} path={CHECKLIST_PATH} head={head}>
       <div class="checklist-print">
-        <p class="hidden text-sm print:block" data-e2e="checklist-print-line">
+        <p
+          class="mx-auto hidden max-w-6xl px-4 text-sm sm:px-6 lg:px-8 print:block"
+          data-e2e="checklist-print-line"
+        >
           {t.t(`LaunchChecklist.printLine`, { address: `${host}${CHECKLIST_PATH}` })}
           <span data-checklist-printed />
         </p>
@@ -244,7 +247,7 @@ export default define.page(function LaunchChecklistPage({ state }) {
             <IconCheck class="mt-1 size-4 shrink-0 text-success" aria-hidden="true" />
             <span>{t.t(`LaunchChecklist.coverage`, COUNTS)}</span>
           </p>
-          <div class="min-h-8 print:hidden">
+          <div class="min-h-8 noscript:hidden print:hidden">
             <ChecklistActions
               copy={t.t(`LaunchChecklist.copyLink`)}
               copied={t.t(`LaunchChecklist.linkCopied`)}
@@ -263,7 +266,7 @@ export default define.page(function LaunchChecklistPage({ state }) {
               sections={CHECKLIST_COUNTS.sections}
             />
             <noscript>
-              <p class="-mt-36 text-sm text-muted">{t.t(`LaunchChecklist.noScript`)}</p>
+              <p class="text-sm text-muted">{t.t(`LaunchChecklist.noScript`)}</p>
             </noscript>
             <OnThisPage links={nav} />
           </div>

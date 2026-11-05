@@ -151,7 +151,7 @@ export default function LaunchChecklist(
 
   if (!state) {
     return (
-      <div class={SUMMARY} data-e2e="checklist-summary">
+      <div class={`${SUMMARY} min-h-44 lg:min-h-52 noscript:min-h-0`} data-e2e="checklist-summary">
         <p class="font-medium" data-e2e="checklist-count">
           {t.t(`LaunchChecklist.static`, { count: total, sections })}
         </p>
@@ -182,7 +182,7 @@ export default function LaunchChecklist(
       <p class="text-sm text-muted" data-e2e="checklist-storage">
         {t.t(state.storageOk ? `LaunchChecklist.storageOk` : `LaunchChecklist.storageBlocked`)}
       </p>
-      {/* `min-h-8` is the small button's height, so Clear and Undo appearing move nothing. */}
+      {/* `min-h-8` is the height of Clear and Undo, so Clear and Undo appearing move nothing. */}
       <div class="flex min-h-8 flex-wrap items-center gap-x-3 print:hidden">
         {cleared.length > 0
           ? (
@@ -192,7 +192,7 @@ export default function LaunchChecklist(
                 key="undo"
                 ref={undoButton}
                 type="button"
-                class={buttonClasses(`ghost`, `sm`)}
+                class={buttonClasses(`ghost`, `md`, `h-8`)}
                 onClick={undo}
                 data-e2e="checklist-undo"
               >
@@ -205,7 +205,7 @@ export default function LaunchChecklist(
               key="clear"
               ref={clearButton}
               type="button"
-              class={buttonClasses(`ghost`, `sm`, `-ms-2`)}
+              class={buttonClasses(`ghost`, `md`, `-ms-3 h-8`)}
               onClick={clearTicks}
               data-e2e="checklist-clear"
             >
@@ -219,7 +219,9 @@ export default function LaunchChecklist(
 }
 
 /**
- * The summary's box. Its height is reserved for the full summary before the script fills it, so
- * nothing below moves when it does.
+ * The summary's box. Before the script runs it reserves about the height of a first visit's
+ * summary (nothing checked yet; measured across the nine languages: 156-196 px on a phone, 176-260
+ * px beside the list), so the list barely moves when the script fills it. Without a script it
+ * reserves nothing.
  */
-const SUMMARY = `flex min-h-44 flex-col gap-2`
+const SUMMARY = `flex flex-col gap-2`

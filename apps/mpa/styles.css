@@ -85,6 +85,8 @@
   html:has(.checklist-print) body {
     background: white;
     color: black;
+    /* The dark theme's color-scheme would fill an empty native checkbox black on paper. */
+    color-scheme: light !important;
   }
   .checklist-print * {
     color: black !important;
@@ -93,6 +95,7 @@
   }
   .checklist-print input[type="checkbox"] {
     appearance: auto;
+    color-scheme: light !important;
     accent-color: black;
   }
   .checklist-print a[data-short]::after {
