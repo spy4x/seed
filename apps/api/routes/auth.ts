@@ -68,7 +68,7 @@ export function createAuthRoute(deps: AuthRouteDependencies): Hono<APIContext> {
         emit(
           new UserSignedOutEvent({
             userId: authData.user.id,
-            // trustedProxy: true keeps the old behaviour of trusting X-Forwarded-For / X-Real-IP.
+            // trustedProxy: true trusts X-Forwarded-For / X-Real-IP: Traefik overwrites them.
             request: requestInfoFromContext(c, { trustedProxy: true }),
           }),
         )

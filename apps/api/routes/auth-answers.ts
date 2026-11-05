@@ -84,7 +84,7 @@ export function signOutEmitter(emit: AuthRouteDependencies["emit"]) {
     emit(
       new UserSignedOutEvent({
         userId,
-        // trustedProxy: true keeps the old behaviour of trusting X-Forwarded-For / X-Real-IP.
+        // trustedProxy: true trusts X-Forwarded-For / X-Real-IP: Traefik overwrites them.
         request: requestInfoFromContext(c, { trustedProxy: true }),
       }),
     )

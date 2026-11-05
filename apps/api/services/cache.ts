@@ -14,7 +14,7 @@ import { createCacheService } from "./cache-service.ts"
 export const kv = await RedisKvStore.connect(config.kv.hostname, config.kv.port, "api", {
   password: config.kv.password,
 })
-console.log(`✅ Connected to KV`) // kept from the old client's connect log
+console.log(`✅ Connected to KV`)
 const cacheService = createCacheService(kv)
 
 function buildMethods<T>(prefix: string, schema?: Type) {
