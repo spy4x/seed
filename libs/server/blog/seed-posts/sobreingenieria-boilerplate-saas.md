@@ -4,7 +4,7 @@ language: es
 translationOf: over-engineering-a-saas-boilerplate
 title: "Lo que hice mal en Seed v1: sobreingeniería en un boilerplate SaaS"
 seoTitle: "Sobreingeniería en un boilerplate SaaS: lo que hice mal"
-description: "Seed v1 cumplió la mitad de su hoja de ruta y nada de lo que usa una persona. Cómo se veía la sobreingeniería de un boilerplate SaaS en su código, y qué hace Seed ahora."
+description: "Seed v1 cumplió la mitad de su hoja de ruta y casi nada de lo que usa una persona. Cómo se veía la sobreingeniería de un boilerplate SaaS en su código, y qué hace Seed ahora."
 tldr:
   - "Seed v1 (2019 a 2022) marcó 33 de los 66 puntos de su hoja de ruta, y ninguno de los 17 del cliente web, el panel de administración, la PWA y la subida de archivos."
   - "Tenía 31 proyectos de Nx, 23 clases de mensajes CQRS y nueve servicios en la nube alrededor de tres tablas."
@@ -95,7 +95,7 @@ Alrededor de ellos:
 - **31 proyectos de Nx**: tres aplicaciones, dos aplicaciones de pruebas end-to-end y 26
   bibliotecas. Solo el inicio de sesión compartido del frontend eran cuatro bibliotecas: container,
   guards, state y UI.
-- **65 archivos `index.ts`**, y todos se limitan a reexportar otros archivos.
+- **65 archivos `index.ts`**, y 63 de ellos se limitan a reexportar otros archivos.
 - **Una capa CQRS con sus propias clases base** sobre los buses de comandos, consultas y eventos,
   con 11 comandos, 5 consultas y 7 eventos, y 19 manejadores.
 - **Nueve servicios en la nube** en el documento de infraestructura (Cloud Run, Cloud SQL, Cloud
@@ -116,9 +116,9 @@ segundo factor, grupos con roles e invitaciones, cobro por miembro con Stripe, t
 que funciona sin conexión, almacenamiento de archivos, un panel de administración en su propio host
 y nueve idiomas ([README](https://github.com/spy4x/seed#readme)).
 
-Incluso sigue usando CQRS: comandos, consultas y eventos pasan por un solo bus, y cada cambio de
-grupo escribe su evento en un outbox que vacía un worker. El patrón nunca fue el culpable. Lo fue
-escribir cuatro bibliotecas de inicio de sesión antes de que existiera un solo grupo.
+Incluso sigue usando CQRS: comandos, consultas y eventos pasan cada uno por su propio bus, y cada
+cambio de grupo escribe su evento en un outbox que vacía un worker. El patrón nunca fue el culpable.
+Lo fue escribir cuatro bibliotecas de inicio de sesión antes de que existiera un solo grupo.
 
 ## ¿Qué hace Seed distinto ahora?
 
@@ -155,4 +155,5 @@ Tres comprobaciones rápidas, sacadas de los números de v1:
 
 O sáltate el andamio: [Seed](https://github.com/spy4x/seed) es gratis y con licencia MIT, y sus
 cimientos ya están construidos. Clónalo y
-[lanza tu primera funcionalidad](/blog/your-first-feature-copy-the-notes-aggregate) esta semana.
+[lanza tu primera funcionalidad](/blog/your-first-feature-copy-the-notes-aggregate) esta semana (en
+inglés).

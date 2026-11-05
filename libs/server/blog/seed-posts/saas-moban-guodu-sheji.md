@@ -4,7 +4,7 @@ language: zh-CN
 translationOf: over-engineering-a-saas-boilerplate
 title: "我在 Seed v1 上犯的错：SaaS 模板的过度设计"
 seoTitle: "SaaS 模板过度设计复盘：我在 Seed v1 上犯的错"
-description: "Seed v1 完成了路线图的一半，却没有完成任何一项用户真正会用的功能。SaaS 模板的过度设计在代码里是什么样子，以及 Seed 现在怎么做。"
+description: "Seed v1 完成了路线图的一半，却几乎没有完成用户真正会用的功能。SaaS 模板的过度设计在代码里是什么样子，以及 Seed 现在怎么做。"
 tldr:
   - "Seed v1（2019 到 2022 年）勾掉了路线图 66 项中的 33 项，但网页客户端、管理后台、PWA 和文件上传这 17 项一项都没完成。"
   - "它有 31 个 Nx 项目、23 个 CQRS 消息类和 9 个云服务，围着的却只是数据库里的 3 张表。"
@@ -66,7 +66,7 @@ Stripe 订阅在后端分区里，标着计划中。管理后台的用户列表�
 v1 的数据库 schema 只有三个模型：`User`、`UserDevice` 和 `Notification`。围绕它们的是：
 
 - **31 个 Nx 项目**：三个应用、两个端到端测试应用和 26 个库。光是前端共享的登录就拆成了四个库：container、guards、state 和 UI。
-- **65 个 `index.ts` 文件**，每一个都只是在重新导出别的文件。
+- **65 个 `index.ts` 文件**，其中 63 个只是在重新导出别的文件。
 - **一层自带基类的 CQRS**，建在命令、查询和事件总线之上，承载 11 个命令、5 个查询和 7 个事件，外加 19 个处理器。
 - **9 个云服务**，列在基础设施文档里（Cloud Run、Cloud SQL、Cloud Tasks、Cloud Logging、Cloud IAM、Firebase Authentication、Hosting 和 Storage，再加 Sentry），还有一份标着“WIP”、从手动步骤开始的初始化指南。
 - **104 个 npm 包**，写在根目录的 `package.json` 里，其中 50 个是运行时依赖。
@@ -77,7 +77,7 @@ v1 的数据库 schema 只有三个模型：`User`、`UserDevice` 和 `Notificat
 
 不是，这一点我想讲准确。过度设计是指把一个功能做得比它需要的更复杂：多余的分层、为极少见的时序问题加的防护、没人会跑的自动化。它不等于“这个功能没必要”。v1 的愿望清单本身没问题。现在的 Seed 拥有 v1 只停留在计划里的全部产品功能，还不止这些：通行密钥（passkey）和双重验证、带角色和邀请的群组、按成员计费的 Stripe 订阅、实时更新、能离线使用的应用、文件存储、独立域名上的管理后台，以及包括中文在内的九种语言（[README](https://github.com/spy4x/seed#readme)）。
 
-它甚至仍然在用 CQRS：命令、查询和事件走同一条总线，每次群组变更都把事件写进 outbox，由 worker 来处理。模式本身从来不是罪魁祸首。罪魁祸首是一个群组都还没有的时候，就先写了四个登录库。
+它甚至仍然在用 CQRS：命令、查询和事件各走各的总线，每次群组变更都把事件写进 outbox，由 worker 来处理。模式本身从来不是罪魁祸首。罪魁祸首是一个群组都还没有的时候，就先写了四个登录库。
 
 ## Seed 现在换了什么做法？
 
@@ -96,4 +96,4 @@ v1 的数据库 schema 只有三个模型：`User`、`UserDevice` 和 `Notificat
 2. 读一读路线图里“计划中”的那一半。如果用户会碰到的东西全在那里，你就是在造车间。
 3. 找出第一次能让人做点什么的那个提交。如果是第 38 个，你好，那就是我。
 
-或者干脆跳过脚手架：[Seed](https://github.com/spy4x/seed) 免费、MIT 许可，地基已经打好。克隆下来，这周就[上线你的第一个功能](/blog/your-first-feature-copy-the-notes-aggregate)。
+或者干脆跳过脚手架：[Seed](https://github.com/spy4x/seed) 免费、MIT 许可，地基已经打好。克隆下来，这周就[上线你的第一个功能](/blog/your-first-feature-copy-the-notes-aggregate)（英文）。

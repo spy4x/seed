@@ -4,7 +4,7 @@ language: pt-BR
 translationOf: over-engineering-a-saas-boilerplate
 title: "O que eu errei no Seed v1: overengineering num boilerplate SaaS"
 seoTitle: "Overengineering num boilerplate SaaS: o que eu errei"
-description: "O Seed v1 cumpriu metade do roadmap e nada do que uma pessoa usa. Como o overengineering de um boilerplate SaaS aparecia no código, e o que o Seed faz agora."
+description: "O Seed v1 cumpriu metade do roadmap e quase nada do que uma pessoa usa. Como o overengineering de um boilerplate SaaS aparecia no código, e o que o Seed faz agora."
 tldr:
   - "O Seed v1 (2019 a 2022) marcou 33 dos 66 itens do roadmap, e nenhum dos 17 do cliente web, do painel de administração, da PWA e do upload de arquivos."
   - "Ele tinha 31 projetos Nx, 23 classes de mensagem CQRS e nove serviços de nuvem em volta de três tabelas."
@@ -90,7 +90,7 @@ O schema do banco do v1 tem três modelos: `User`, `UserDevice` e `Notification`
 
 - **31 projetos Nx**: três apps, dois apps de teste end-to-end e 26 bibliotecas. Só o login
   compartilhado do frontend eram quatro bibliotecas: container, guards, state e UI.
-- **65 arquivos `index.ts`**, e todos apenas reexportam outros arquivos.
+- **65 arquivos `index.ts`**, e 63 deles apenas reexportam outros arquivos.
 - **Uma camada CQRS com classes base próprias** sobre os barramentos de comandos, consultas e
   eventos, com 11 comandos, 5 consultas e 7 eventos, e 19 handlers.
 - **Nove serviços de nuvem** no documento de infraestrutura (Cloud Run, Cloud SQL, Cloud Tasks,
@@ -111,9 +111,10 @@ v1 só planejou, e mais: passkeys e segundo fator, grupos com papéis e convites
 no Stripe, tempo real, um app que funciona offline, armazenamento de arquivos, um painel de
 administração no próprio host e nove idiomas ([README](https://github.com/spy4x/seed#readme)).
 
-Ele continua usando CQRS, inclusive: comandos, consultas e eventos passam por um único barramento,
-e cada mudança de grupo grava seu evento num outbox que um worker esvazia. O padrão nunca foi o
-culpado. Culpado foi escrever quatro bibliotecas de login antes de existir um único grupo.
+Ele continua usando CQRS, inclusive: comandos, consultas e eventos passam cada um pelo seu
+barramento, e cada mudança de grupo grava seu evento num outbox que um worker esvazia. O padrão
+nunca foi o culpado. Culpado foi escrever quatro bibliotecas de login antes de existir um único
+grupo.
 
 ## O que o Seed faz diferente agora?
 
@@ -148,7 +149,7 @@ Três checagens rápidas, tiradas dos números do v1:
 3. Ache o commit em que uma pessoa conseguiu fazer algo pela primeira vez. Se for o 38, oi, sou
    eu.
 
-Ou pule o andaime: o [Seed](https://github.com/spy4x/seed) é gratuito, com licença MIT, e a base
-já está pronta. Clone e
-[entregue sua primeira funcionalidade](/blog/your-first-feature-copy-the-notes-aggregate) ainda
-esta semana.
+Ou pule o andaime: o [Seed](https://github.com/spy4x/seed) é gratuito, com licença MIT, e a base já
+está pronta. Clone e
+[entregue sua primeira funcionalidade](/blog/your-first-feature-copy-the-notes-aggregate) ainda esta
+semana (em inglês).

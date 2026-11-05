@@ -4,7 +4,7 @@ language: fr
 translationOf: over-engineering-a-saas-boilerplate
 title: "Ce que j'ai raté dans Seed v1 : la sur-ingénierie d'un boilerplate SaaS"
 seoTitle: "Sur-ingénierie d'un boilerplate SaaS : mes erreurs sur Seed v1"
-description: "Seed v1 a coché la moitié de sa feuille de route et rien de ce qu'une personne utilise. À quoi ressemblait la sur-ingénierie d'un boilerplate SaaS dans son code, et ce que fait Seed aujourd'hui."
+description: "Seed v1 a coché la moitié de sa feuille de route et presque rien de ce qu'une personne utilise. À quoi ressemblait la sur-ingénierie d'un boilerplate SaaS dans son code, et ce que fait Seed aujourd'hui."
 tldr:
   - "Seed v1 (2019 à 2022) a coché 33 des 66 points de sa feuille de route, et aucun des 17 du client web, du panneau d'administration, de la PWA et de l'envoi de fichiers."
   - "Il comptait 31 projets Nx, 23 classes de messages CQRS et neuf services cloud autour de trois tables."
@@ -98,7 +98,7 @@ Le schéma de base de données de v1 compte trois modèles : `User`, `UserDevice
 - **31 projets Nx** : trois applications, deux applications de tests de bout en bout et 26
   bibliothèques. La connexion partagée du front à elle seule faisait quatre bibliothèques :
   container, guards, state et UI.
-- **65 fichiers `index.ts`**, qui tous se contentent de réexporter d'autres fichiers.
+- **65 fichiers `index.ts`**, dont 63 se contentent de réexporter d'autres fichiers.
 - **Une couche CQRS avec ses propres classes de base** au-dessus des bus de commandes, de requêtes
   et d'événements, portant 11 commandes, 5 requêtes et 7 événements, avec 19 handlers.
 - **Neuf services cloud** dans le document d'infrastructure (Cloud Run, Cloud SQL, Cloud Tasks,
@@ -120,10 +120,10 @@ groupes avec rôles et invitations, facturation Stripe par membre, temps réel, 
 marche hors-ligne, un stockage de fichiers, un panneau d'administration sur son propre hôte et neuf
 langues ([README](https://github.com/spy4x/seed#readme)).
 
-Il utilise même toujours CQRS : commandes, requêtes et événements passent par un seul bus, et chaque
-changement de groupe écrit son événement dans une outbox que vide un worker. Le pattern n'a jamais
-été le coupable. Le coupable, c'était d'écrire quatre bibliothèques de connexion avant qu'un seul
-groupe existe.
+Il utilise même toujours CQRS : commandes, requêtes et événements passent chacun par son propre bus,
+et chaque changement de groupe écrit son événement dans une outbox que vide un worker. Le pattern
+n'a jamais été le coupable. Le coupable, c'était d'écrire quatre bibliothèques de connexion avant
+qu'un seul groupe existe.
 
 ## Que fait Seed autrement aujourd'hui ?
 
@@ -162,4 +162,4 @@ Trois vérifications rapides, tirées des chiffres de v1 :
 Ou sautez l'échafaudage : [Seed](https://github.com/spy4x/seed) est gratuit, sous licence MIT, et
 ses fondations sont déjà construites. Clonez-le et
 [livrez votre première fonctionnalité](/blog/your-first-feature-copy-the-notes-aggregate) cette
-semaine.
+semaine (en anglais).

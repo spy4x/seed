@@ -4,7 +4,7 @@ language: de
 translationOf: over-engineering-a-saas-boilerplate
 title: "Was ich bei Seed v1 falsch gemacht habe: Over-Engineering eines SaaS-Boilerplates"
 seoTitle: "Over-Engineering im SaaS-Boilerplate: meine Fehler bei Seed v1"
-description: "Seed v1 hakte die Hälfte seiner Roadmap ab und nichts von dem, was ein Mensch benutzt. Wie Over-Engineering eines SaaS-Boilerplates im Code aussah, und was Seed heute tut."
+description: "Seed v1 hakte die Hälfte seiner Roadmap ab und fast nichts von dem, was ein Mensch benutzt. Wie Over-Engineering eines SaaS-Boilerplates im Code aussah, und was Seed heute tut."
 tldr:
   - "Seed v1 (2019 bis 2022) hakte 33 von 66 Roadmap-Punkten ab, aber keinen der 17 für Web-Client, Admin-Bereich, PWA und Datei-Uploads."
   - "Es hatte 31 Nx-Projekte, 23 CQRS-Nachrichtenklassen und neun Cloud-Dienste rund um drei Datenbanktabellen."
@@ -92,7 +92,7 @@ Das Datenbankschema von v1 hat drei Modelle: `User`, `UserDevice` und `Notificat
 
 - **31 Nx-Projekte**: drei Apps, zwei End-to-End-Test-Apps und 26 Bibliotheken. Allein die
   gemeinsame Anmeldung im Frontend bestand aus vier Bibliotheken: container, guards, state und UI.
-- **65 `index.ts`-Dateien**, und jede davon exportiert nur andere Dateien weiter.
+- **65 `index.ts`-Dateien**, und 63 davon exportieren nur andere Dateien weiter.
 - **Eine CQRS-Schicht mit eigenen Basisklassen** über den Bussen für Commands, Queries und Events,
   mit 11 Commands, 5 Queries und 7 Events sowie 19 Handlern.
 - **Neun Cloud-Dienste** im Infrastruktur-Dokument (Cloud Run, Cloud SQL, Cloud Tasks, Cloud
@@ -113,9 +113,9 @@ einen zweiten Faktor, Gruppen mit Rollen und Einladungen, Stripe-Abrechnung pro 
 Echtzeit-Updates, eine Offline-App, einen Dateispeicher, einen Admin-Bereich auf eigenem Host und
 neun Sprachen ([README](https://github.com/spy4x/seed#readme)).
 
-Es nutzt sogar weiterhin CQRS: Commands, Queries und Events laufen über einen Bus, und jede
-Gruppenänderung schreibt ihr Event in eine Outbox, die ein Worker abarbeitet. Das Muster war nie
-der Täter. Vier Anmelde-Bibliotheken zu schreiben, bevor es eine einzige Gruppe gab, war es.
+Es nutzt sogar weiterhin CQRS: Commands, Queries und Events laufen über je einen eigenen
+Bus, und jede Gruppenänderung schreibt ihr Event in eine Outbox, die ein Worker abarbeitet. Das
+Muster war nie der Täter. Vier Anmelde-Bibliotheken zu schreiben, bevor es eine einzige Gruppe gab, war es.
 
 ## Was macht Seed heute anders?
 
@@ -152,5 +152,5 @@ Drei schnelle Prüfungen, abgeleitet aus den Zahlen von v1:
 
 Oder lassen Sie das Gerüst weg: [Seed](https://github.com/spy4x/seed) ist kostenlos und
 MIT-lizenziert, das Fundament steht schon. Klonen Sie es und
-[liefern Sie Ihr erstes Feature](/blog/your-first-feature-copy-the-notes-aggregate) noch diese
-Woche.
+[liefern Sie Ihr erstes Feature](/blog/your-first-feature-copy-the-notes-aggregate) noch diese Woche
+(auf Englisch).

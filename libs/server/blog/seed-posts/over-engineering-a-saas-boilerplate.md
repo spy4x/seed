@@ -3,7 +3,7 @@ slug: over-engineering-a-saas-boilerplate
 language: en
 title: "What I got wrong in Seed v1: over-engineering a SaaS boilerplate"
 seoTitle: "Over-engineering a SaaS boilerplate: what I got wrong"
-description: "Seed v1 ticked half its roadmap and none of the parts a person uses. What over-engineering a SaaS boilerplate looked like in its code, and what Seed does now."
+description: "Seed v1 ticked half its roadmap and almost none of the parts a person uses. What over-engineering a SaaS boilerplate looked like in its code, and what Seed does now."
 tldr:
   - "Seed v1 (2019 to 2022) ticked 33 of its 66 roadmap items, and none of the 17 under the web client, the admin panel, the PWA and file uploads."
   - "It had 31 Nx projects, 23 CQRS message classes and nine cloud services around three database tables."
@@ -88,7 +88,7 @@ v1's database schema has three models: `User`, `UserDevice` and `Notification`. 
 
 - **31 Nx projects**: three apps, two end-to-end test apps and 26 libraries. Shared sign-in on the
   front end alone was four libraries: container, guards, state and UI.
-- **65 `index.ts` files**, and every one of them only re-exports other files.
+- **65 `index.ts` files**, and 63 of them only re-export other files.
 - **A CQRS layer with its own base classes** over the command, query and event buses, carrying 11
   commands, 5 queries and 7 events, with 19 handlers.
 - **Nine cloud services** in the infrastructure doc (Cloud Run, Cloud SQL, Cloud Tasks, Cloud
@@ -108,9 +108,9 @@ planned, and more: passkeys and a second factor, groups with roles and invitatio
 per member, realtime updates, an offline app, a file store, an admin panel on its own host and nine
 languages ([README](https://github.com/spy4x/seed#readme)).
 
-It even still uses CQRS: commands, queries and events go through one bus, and every group change
-writes its event to an outbox that a worker drains. The pattern was never the crime. Building four
-sign-in libraries before a single group existed was.
+It even still uses CQRS: commands, queries and events go through their own buses, and every group
+change writes its event to an outbox that a worker drains. The pattern was never the crime. Building
+four sign-in libraries before a single group existed was.
 
 ## What does Seed do differently now?
 
