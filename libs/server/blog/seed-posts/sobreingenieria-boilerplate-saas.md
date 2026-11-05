@@ -28,11 +28,12 @@ hook de pre-commit, clases base de CQRS, despliegues a Google Cloud. En la otra 
 todo lo que usa una persona: grupos, pagos, actualizaciones en tiempo real, trabajo sin conexión,
 subida de archivos y el panel de administración.
 
-Este artículo es para desarrolladores que construyen su propio boilerplate SaaS, o su primer SaaS,
-y sospechan que están puliendo el taller en vez de fabricar los muebles. Cada número sale del
-código: v1 sigue en el repositorio como la etiqueta
-[`v1-final`](https://github.com/spy4x/seed/tree/v1-final), y los comandos con los que conté están
-en el [pull request](PRLINK) que añadió este artículo. Ningún recuerdo salió herido: solo conté.
+Este artículo es para desarrolladores que construyen su propio boilerplate SaaS, o su primer SaaS, y
+sospechan que están puliendo el taller en vez de fabricar los muebles. Cada número sale del código:
+v1 sigue en el repositorio como la etiqueta
+[`v1-final`](https://github.com/spy4x/seed/tree/v1-final), y los comandos con los que conté están en
+el [pull request](https://github.com/spy4x/seed/pull/823) que añadió este artículo. Ningún recuerdo
+salió herido: solo conté.
 
 ## ¿Qué era Seed v1?
 

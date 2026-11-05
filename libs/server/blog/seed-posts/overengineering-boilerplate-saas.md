@@ -28,11 +28,11 @@ pre-commit, classes base de CQRS, deploys no Google Cloud. Na outra metade ficou
 uma pessoa usa: grupos, pagamentos, atualizações em tempo real, uso offline, upload de arquivos e o
 painel de administração.
 
-Este post é para quem está construindo o próprio boilerplate SaaS, ou o primeiro SaaS, e
-desconfia que está polindo a oficina em vez de fazer os móveis. Cada número abaixo vem do código: o
-v1 continua no repositório como a tag [`v1-final`](https://github.com/spy4x/seed/tree/v1-final), e
-os comandos que usei para contar estão no [pull request](PRLINK) que adicionou este post. Nenhuma
-lembrança foi ferida: eu só contei.
+Este post é para quem está construindo o próprio boilerplate SaaS, ou o primeiro SaaS, e desconfia
+que está polindo a oficina em vez de fazer os móveis. Cada número abaixo vem do código: o v1
+continua no repositório como a tag [`v1-final`](https://github.com/spy4x/seed/tree/v1-final), e os
+comandos que usei para contar estão no [pull request](https://github.com/spy4x/seed/pull/823) que
+adicionou este post. Nenhuma lembrança foi ferida: eu só contei.
 
 ## O que era o Seed v1?
 

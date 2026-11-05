@@ -32,8 +32,8 @@ Dieser Beitrag ist für Entwicklerinnen und Entwickler, die ein eigenes SaaS-Boi
 erstes SaaS bauen und den Verdacht haben, dass sie die Werkstatt polieren, statt Möbel zu bauen.
 Jede Zahl unten stammt aus dem Code: v1 liegt noch immer im Repository, als Tag
 [`v1-final`](https://github.com/spy4x/seed/tree/v1-final), und die Befehle, mit denen ich gezählt
-habe, stehen im [Pull Request](PRLINK) zu diesem Beitrag. Keine Erinnerung kam zu Schaden; ich habe
-gezählt.
+habe, stehen im [Pull Request](https://github.com/spy4x/seed/pull/823) zu diesem Beitrag. Keine
+Erinnerung kam zu Schaden; ich habe gezählt.
 
 ## Was war Seed v1?
 

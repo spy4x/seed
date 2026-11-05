@@ -31,7 +31,7 @@ This post is for developers building a SaaS boilerplate, or their own first SaaS
 are polishing the workshop instead of building the furniture. Every number below comes from the
 code: v1 is still in the repository as the tag
 [`v1-final`](https://github.com/spy4x/seed/tree/v1-final), and the commands are in the
-[pull request](PRLINK) that
+[pull request](https://github.com/spy4x/seed/pull/823) that
 added this post. No memories were harmed in the making of these numbers; I counted.
 
 ## What was Seed v1?

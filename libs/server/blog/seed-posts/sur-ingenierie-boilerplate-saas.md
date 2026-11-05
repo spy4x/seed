@@ -29,11 +29,11 @@ Google Cloud. L'autre moitié contenait presque tout ce qu'une personne utilise 
 paiements, le temps réel, le hors-ligne, l'envoi de fichiers et le panneau d'administration.
 
 Cet article s'adresse aux développeurs qui construisent leur propre boilerplate SaaS, ou leur
-premier SaaS, et qui se demandent s'ils ne sont pas en train de polir l'atelier au lieu de
-fabriquer les meubles. Chaque chiffre ci-dessous vient du code : v1 est toujours dans le dépôt,
-sous le tag [`v1-final`](https://github.com/spy4x/seed/tree/v1-final), et les commandes qui m'ont
-servi à compter sont dans la [pull request](PRLINK) qui a ajouté cet article. Aucun souvenir n'a
-été maltraité : j'ai compté.
+premier SaaS, et qui se demandent s'ils ne sont pas en train de polir l'atelier au lieu de fabriquer
+les meubles. Chaque chiffre ci-dessous vient du code : v1 est toujours dans le dépôt, sous le tag
+[`v1-final`](https://github.com/spy4x/seed/tree/v1-final), et les commandes qui m'ont servi à
+compter sont dans la [pull request](https://github.com/spy4x/seed/pull/823) qui a ajouté cet
+article. Aucun souvenir n'a été maltraité : j'ai compté.
 
 ## Qu'était Seed v1 ?
 

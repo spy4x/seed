@@ -23,7 +23,7 @@ devto: false
 
 我在 Seed v1 上犯了什么错？过度设计：产品还没有，我先给一个大产品搭好了脚手架。它自己的路线图就能说明这一点。66 项里勾掉了 33 项，而勾掉的这一半大多是工具和后端管线：monorepo、严格的 lint 规则、pre-commit 钩子、CQRS 基类、部署到 Google Cloud。另一半里留着几乎所有用户真正会用的东西：群组、支付、实时更新、离线使用、文件上传和管理后台。
 
-这篇文章写给正在做自己的 SaaS 模板（boilerplate），或者第一个 SaaS 的开发者：如果你怀疑自己一直在打磨车间，却没在做家具，那就是写给你的。下面每个数字都来自代码：v1 至今还在仓库里，标签是 [`v1-final`](https://github.com/spy4x/seed/tree/v1-final)，我用来统计的命令写在添加这篇文章的[合并请求](PRLINK)里。没有靠回忆，全是数出来的。
+这篇文章写给正在做自己的 SaaS 模板（boilerplate），或者第一个 SaaS 的开发者：如果你怀疑自己一直在打磨车间，却没在做家具，那就是写给你的。下面每个数字都来自代码：v1 至今还在仓库里，标签是 [`v1-final`](https://github.com/spy4x/seed/tree/v1-final)，我用来统计的命令写在添加这篇文章的[合并请求](https://github.com/spy4x/seed/pull/823)里。没有靠回忆，全是数出来的。
 
 ## Seed v1 是什么？
 
