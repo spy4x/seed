@@ -3,7 +3,7 @@ slug: self-hosted-saas-backup-and-restore
 language: en
 title: "Backups for a self-hosted SaaS, and how to prove the restore works"
 seoTitle: "Self-hosted SaaS backup and restore: Postgres, files, a tested restore"
-description: How to back up a self-hosted SaaS on one server (the Postgres database, the files and the keys) to storage off the server, and how to prove a restore works before you need it.
+description: How to back up a self-hosted SaaS (database, files, keys) off the server, and prove the restore works before you need it.
 tldr:
   - Back up the database, the uploaded files and any key that exists only on the server, to a bucket on another provider.
   - A backup is proven only by a restore. Rehearse one into a spare database; in Seed that is four commands.
