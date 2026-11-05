@@ -140,8 +140,10 @@ deno task dev
 ```
 
 The root `package.json` hands the common tasks (`init`, `dev`, `test`, `compose` and the others it
-lists) to Deno, so the docs' `deno task <name>` also runs as `npm run <name>` or `bun run <name>`. To run the product's servers on Node or Bun as well, set `APP_RUNTIME=node` or
-`APP_RUNTIME=bun` in `infra/envs/.env` before `dev`.
+lists) to Deno, so the docs' `deno task <name>` also runs as `npm run <name>` or
+`bun run <name>`. To run the product's servers on Node or Bun as well, set `APP_RUNTIME=node` or
+`APP_RUNTIME=bun` in `infra/envs/.env` before `dev`; to switch later, rebuild the images as
+[docs/apps.md](docs/apps.md#runtime) says.
 
 `init` checks that Docker runs, copies `infra/envs/.env.example` to `infra/envs/.env`, generates
 every secret and the web push keys, records the Seed commit your copy came from, and asks for the

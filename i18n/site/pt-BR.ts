@@ -509,7 +509,7 @@ export default {
   "FeatureTierRuntime.nav": "Runtimes",
   "FeatureTierRuntime.title": "Roda no Deno, no Node e no Bun",
   "FeatureTierRuntime.lead":
-    "A API, o worker e o site rodam sem nenhuma mudança no Deno, no Node e no Bun, e o CI sobe os três em cada alteração. Uma única linha no arquivo env, APP_RUNTIME, escolhe o runtime. O código é feito com padrões da web (fetch, Request, Web Crypto, WebSocket, módulos ES); as tarefas e os testes do próprio Seed rodam no Deno, que o npm ou o Bun instala para você. Em outubro de 2026, a equipe do Deno <announced>anunciou</announced> mais um ano de suporte, com versões mensais de correções e de segurança, e depois encerra o próprio desenvolvimento; o Deno continua de código aberto.",
+    "A API, o worker e o site rodam sem nenhuma mudança no Deno, no Node e no Bun, e o CI os inicia nos três runtimes a cada alteração. Uma única linha no arquivo env, APP_RUNTIME, escolhe o runtime. O código é feito com padrões da web (fetch, Request, Web Crypto, WebSocket, módulos ES); as tarefas e os testes do próprio Seed rodam no Deno, que o npm ou o Bun instala para você. Em outubro de 2026, a equipe do Deno <announced>anunciou</announced> mais um ano de suporte, com versões mensais de correções e de segurança, e depois encerra o próprio desenvolvimento; o Deno continua de código aberto.",
   "FeatureTierRuntime.pick": "Como escolher o runtime",
   "FeatureTierOperations.eyebrow": "Operação",
   "FeatureTierOperations.title": "Rode, acompanhe e dê suporte a quem usa",
