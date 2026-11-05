@@ -7,7 +7,10 @@ http://app.localhost.
 
 ## You need
 
-- [Deno](https://deno.com) 2.
+- [Deno](https://deno.com) 2, [Node](https://nodejs.org) or [Bun](https://bun.sh). Seed's tasks
+  run on Deno: on Node, `npm install -g deno` installs it, and on Bun, `bun add -g deno`. Then type
+  `npm run` or `bun run` where this page says `deno task`, as the
+  [README's quick start](https://github.com/spy4x/seed#quick-start) shows.
 - [Docker](https://docs.docker.com/get-started/get-docker/), installed and running. Podman works
   too: see [When a step fails](#when-a-step-fails).
 - The [GitHub CLI](https://cli.github.com), optional. Without it, press "Use this template" on

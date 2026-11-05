@@ -18,6 +18,7 @@ import {
 } from "../../components/features-section.tsx"
 import { SectionIntro } from "../../components/section-intro.tsx"
 import { ShotViewer } from "../../components/shot-viewer.tsx"
+import { DOCS_PATH } from "../../docs-site.ts"
 import { featurePath, pageOfFeature, tiers } from "../../features-data.tsx"
 import {
   PERSON_JSON_LD,
@@ -140,21 +141,18 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
   )
 }
 
-/** Deno's own announcement of its last year of development, which the runtime plan cites. */
+/** Deno's own announcement of its last year of development, which the runtimes section cites. */
 const DENO_ANNOUNCEMENT_URL = `https://deno.com/blog/cloudflare`
 
-/** The runtime Seed works on today, a name no language translates. */
-const RUNTIME_TODAY = `Deno 2`
+/** The runtimes Seed's servers start on, names no language translates. */
+const RUNTIMES = `Deno, Node, Bun`
 
-/** The issue that moves Seed to run unchanged on Deno, Node and Bun. */
-const RUNTIME_ISSUE_URL = `${REPOSITORY_URL}/issues/623`
+/** Where a product picks its runtime: the docs' runtime section. */
+const RUNTIME_DOC = `${DOCS_PATH}/apps#runtime`
 
-/**
- * Where Seed runs today and where it is going: Deno now, Node and Bun in progress (#623). When
- * #623 lands, the badge on the home page and this section's heading and status change with it.
- */
+/** The runtimes Seed runs on, and the one setting that picks among them. */
 function RuntimePlan(): JSX.Element {
-  const { t, rich } = useSite()
+  const { t, rich, href } = useSite()
   return (
     <FeatureTier
       id="runtime"
@@ -165,20 +163,11 @@ function RuntimePlan(): JSX.Element {
           <a href={DENO_ANNOUNCEMENT_URL} class="text-primary underline">{text}</a>
         ),
       })}
-      status={<bdi>{RUNTIME_TODAY}</bdi>}
+      status={<bdi>{RUNTIMES}</bdi>}
       statusMore={
-        <>
-          {/* The mark and what it marks wrap as one, so "In progress" never ends a line alone. */}
-          <span class="inline-flex flex-wrap items-center gap-x-2">
-            <StatusMark status="wip" label={t.t(`FeatureTierRuntime.wip`)} class="font-medium" />
-            <span class="text-muted">
-              {rich(`FeatureTierRuntime.wipRuntimes`, { name: (text) => <bdi>{text}</bdi> })}
-            </span>
-          </span>
-          <a href={RUNTIME_ISSUE_URL} class="text-primary underline" data-e2e="runtime-issue">
-            {rich(`FeatureTierRuntime.follow`, { issue: (text) => <bdi>{text}</bdi> })}
-          </a>
-        </>
+        <a href={href(RUNTIME_DOC)} class="text-primary underline" data-e2e="runtime-doc">
+          {t.t(`FeatureTierRuntime.pick`)}
+        </a>
       }
     />
   )

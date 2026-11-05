@@ -159,7 +159,7 @@ export function softwareJsonLd(origin: string, extra: Record<string, unknown> = 
     license: `https://opensource.org/licenses/MIT`,
     codeRepository: REPOSITORY_URL,
     programmingLanguage: `TypeScript`,
-    runtimePlatform: `Deno`,
+    runtimePlatform: [`Deno`, `Node.js`, `Bun`],
     author: { "@id": PERSON_JSON_LD["@id"] },
     // Only Seed itself is offered. The demo's plans are an example and are not sold.
     offers: { "@type": `Offer`, price: 0, priceCurrency: `USD` },

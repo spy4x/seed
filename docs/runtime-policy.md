@@ -1,7 +1,6 @@
 # Runtime policy
 
-Seed runs on Deno today and is moving to run unchanged on Deno, Node and Bun
-([#623](https://github.com/spy4x/seed/issues/623)). This policy replaces the "Deno only" rule of
+Seed runs unchanged on Deno, Node and Bun ([#623](https://github.com/spy4x/seed/issues/623)). This policy replaces the "Deno only" rule of
 [ADR 001](decisions/001-deno-platform-template.md).
 
 - **New code runs on all three runtimes**, and so does old code a change touches anyway. Write
