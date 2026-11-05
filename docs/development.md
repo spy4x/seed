@@ -31,7 +31,7 @@ To run the stack for the first time, follow [Run the local stack](local-stack.md
 | `lint:check`, `lint:fix`     | Lint, or lint and fix                                                                           |
 | `fmt:check`, `fmt:fix`       | Check the format, or format                                                                     |
 | `ts:check`                   | Type check                                                                                      |
-| `test`                       | Unit tests                                                                                      |
+| `test`                       | Unit tests, in parallel; one file or folder too (below the table)                               |
 | `test:integration`           | Integration tests against your Postgres and Valkey                                              |
 | `test:backup`                | Backs a database up and restores it, in containers of its own                                   |
 | `test:files`                 | The file store against a Garage container of its own                                            |
@@ -63,6 +63,11 @@ To run the stack for the first time, follow [Run the local stack](local-stack.md
 | `demo-video`                 | Records the README's demo video into `media/demo`                                               |
 | `deps:check`, `deps:update`  | Lists outdated dependencies, or updates them one by one                                         |
 | `update:ubuntu`              | Upgrades the packages of an Ubuntu server, with `sudo`                                          |
+
+`deno task test` prints the failures and one summary line. Give it files or folders to run only
+those, with their permissions and all their output: `deno task test apps/api/routes/auth.test.ts
+--filter=429`. `--verbose`, or `CI=true` as in CI, prints the whole output of every run. The test
+groups and their permissions are in `infra/scripts/test.ts`.
 
 Each app also has tasks of its own, in its `deno.json`. Run one from the root with
 `deno task --cwd apps/<app> <task>`. The website's `screenshots` and `loops` tasks record its
