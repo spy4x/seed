@@ -1083,4 +1083,271 @@ export default {
   "FeaturePageDeploy.backupQuestion": "هل يوجد نسخ احتياطي؟",
   "FeaturePageDeploy.backupAnswer":
     "نعم. نسخة احتياطية يومية مشفّرة لقاعدة البيانات عبر restic عند تفعيلها، مع خطوات استعادة مكتوبة.",
+  "SiteFooter.checklist": "قائمة التحقق قبل الإطلاق",
+  "LaunchChecklist.seoTitle": {
+    "zero": "قائمة التحقق لإطلاق منتج SaaS",
+    "one": "قائمة التحقق لإطلاق منتج SaaS: بند واحد قبل الإطلاق",
+    "two": "قائمة التحقق لإطلاق منتج SaaS: بندان قبل الإطلاق",
+    "few": "قائمة التحقق لإطلاق منتج SaaS: {count} بنود قبل الإطلاق",
+    "many": "قائمة التحقق لإطلاق منتج SaaS: {count} بندًا قبل الإطلاق",
+    "other": "قائمة التحقق لإطلاق منتج SaaS: {count} بند قبل الإطلاق",
+  },
+  "LaunchChecklist.description": {
+    "zero":
+      "راجِع ما يلزم قبل إطلاق منتج SaaS: الأمان والفوترة والنسخ الاحتياطي والجوانب القانونية والبحث. مجانًا ودون تسجيل.",
+    "one":
+      "راجِع بندًا واحدًا قبل إطلاق منتج SaaS: الأمان والفوترة والنسخ الاحتياطي والجوانب القانونية والبحث. مجانًا ودون تسجيل. يغطي Seed {covered} منها.",
+    "two":
+      "راجِع بندين قبل إطلاق منتج SaaS: الأمان والفوترة والنسخ الاحتياطي والجوانب القانونية والبحث. مجانًا ودون تسجيل. يغطي Seed {covered} منها.",
+    "few":
+      "راجِع {count} بنود قبل إطلاق منتج SaaS: الأمان والفوترة والنسخ الاحتياطي والجوانب القانونية والبحث. مجانًا ودون تسجيل. يغطي Seed {covered} منها.",
+    "many":
+      "راجِع {count} بندًا قبل إطلاق منتج SaaS: الأمان والفوترة والنسخ الاحتياطي والجوانب القانونية والبحث. مجانًا ودون تسجيل. يغطي Seed {covered} منها.",
+    "other":
+      "راجِع {count} بند قبل إطلاق منتج SaaS: الأمان والفوترة والنسخ الاحتياطي والجوانب القانونية والبحث. مجانًا ودون تسجيل. يغطي Seed {covered} منها.",
+  },
+  "LaunchChecklist.eyebrow": "قائمة تحقق",
+  "LaunchChecklist.title": "قائمة التحقق لإطلاق منتج SaaS",
+  "LaunchChecklist.crumb": "قائمة التحقق قبل الإطلاق",
+  "LaunchChecklist.lead": {
+    "zero":
+      "قائمة التحقق لإطلاق منتج SaaS هي ما يجب مراجعته قبل وصول المستخدمين والمدفوعات الحقيقية.",
+    "one":
+      "قائمة التحقق لإطلاق منتج SaaS هي ما يجب مراجعته قبل وصول المستخدمين والمدفوعات الحقيقية. تضم هذه القائمة بندًا واحدًا في {sections} أقسام، ويمكنك تحديده هنا دون حساب.",
+    "two":
+      "قائمة التحقق لإطلاق منتج SaaS هي ما يجب مراجعته قبل وصول المستخدمين والمدفوعات الحقيقية. تضم هذه القائمة بندين في {sections} أقسام، ويمكنك تحديدهما هنا دون حساب.",
+    "few":
+      "قائمة التحقق لإطلاق منتج SaaS هي ما يجب مراجعته قبل وصول المستخدمين والمدفوعات الحقيقية. تضم هذه القائمة {count} بنود في {sections} أقسام، ويمكنك تحديدها هنا دون حساب.",
+    "many":
+      "قائمة التحقق لإطلاق منتج SaaS هي ما يجب مراجعته قبل وصول المستخدمين والمدفوعات الحقيقية. تضم هذه القائمة {count} بندًا في {sections} أقسام، ويمكنك تحديدها هنا دون حساب.",
+    "other":
+      "قائمة التحقق لإطلاق منتج SaaS هي ما يجب مراجعته قبل وصول المستخدمين والمدفوعات الحقيقية. تضم هذه القائمة {count} بند في {sections} أقسام، ويمكنك تحديدها هنا دون حساب.",
+  },
+  "LaunchChecklist.coverage":
+    "يغطي Seed ‏{covered} من {count} جاهزةً، وهي معلَّمة أدناه. والباقي عليك.",
+  "LaunchChecklist.disclaimer":
+    "قائمة عملية، وليست استشارة قانونية أو ضريبية أو أمنية. تحقق مما ينطبق في بلدك.",
+  "LaunchChecklist.legend":
+    "البنود المعلَّمة بـ«مدمج في Seed» تأتي مع Seed. يوضح الرابط كيف، وما الذي يبقى عليك إعداده بنفسك.",
+  "LaunchChecklist.copyLink": "نسخ الرابط",
+  "LaunchChecklist.linkCopied": "تم نسخ الرابط.",
+  "LaunchChecklist.copyFailed": "تعذّر نسخ الرابط. انسخه من شريط العنوان.",
+  "LaunchChecklist.print": "طباعة القائمة",
+  "LaunchChecklist.printLine": "قائمة التحقق لإطلاق منتج SaaS، {address}",
+  "LaunchChecklist.printed": "طُبعت في {date}",
+  "LaunchChecklist.noScript": "تبقى العلامات حتى تغادر هذه الصفحة.",
+  "LaunchChecklist.static": {
+    "zero": "لا بنود",
+    "one": "بند واحد في {sections} أقسام",
+    "two": "بندان في {sections} أقسام",
+    "few": "{count} بنود في {sections} أقسام",
+    "many": "{count} بندًا في {sections} أقسام",
+    "other": "{count} بند في {sections} أقسام",
+  },
+  "LaunchChecklist.progress": {
+    "zero": "تم تحديد {done} من {count}",
+    "one": "تم تحديد {done} من {count}",
+    "two": "تم تحديد {done} من {count}",
+    "few": "تم تحديد {done} من {count}",
+    "many": "تم تحديد {done} من {count}",
+    "other": "تم تحديد {done} من {count}",
+  },
+  "LaunchChecklist.progressLabel": "التقدم في القائمة",
+  "LaunchChecklist.sectionItems": {
+    "zero": "لا بنود",
+    "one": "بند واحد",
+    "two": "بندان",
+    "few": "{count} بنود",
+    "many": "{count} بندًا",
+    "other": "{count} بند",
+  },
+  "LaunchChecklist.sectionProgress": {
+    "zero": "تم تحديد {done} من {count}",
+    "one": "تم تحديد {done} من {count}",
+    "two": "تم تحديد {done} من {count}",
+    "few": "تم تحديد {done} من {count}",
+    "many": "تم تحديد {done} من {count}",
+    "other": "تم تحديد {done} من {count}",
+  },
+  "LaunchChecklist.storageOk": "تُحفظ علاماتك في هذا المتصفح فقط. لا يُرسل إلينا أي شيء.",
+  "LaunchChecklist.storageBlocked":
+    "لا يسمح هذا المتصفح للصفحة بحفظ علاماتك، لذا تبقى حتى تغادر هذه الصفحة فقط.",
+  "LaunchChecklist.empty":
+    "لم تحدد شيئًا بعد. ابدأ بالجوانب القانونية والخصوصية، أو انتقل إلى أي قسم.",
+  "LaunchChecklist.allChecked": {
+    "zero": "تم تحديد كل البنود. احتفظ بهذه الصفحة لإطلاقك القادم، أو شاركها مع فريقك.",
+    "one": "تم تحديد البند الوحيد. احتفظ بهذه الصفحة لإطلاقك القادم، أو شاركها مع فريقك.",
+    "two": "تم تحديد البندين. احتفظ بهذه الصفحة لإطلاقك القادم، أو شاركها مع فريقك.",
+    "few": "تم تحديد البنود الـ{count} كلها. احتفظ بهذه الصفحة لإطلاقك القادم، أو شاركها مع فريقك.",
+    "many": "تم تحديد البنود الـ{count} كلها. احتفظ بهذه الصفحة لإطلاقك القادم، أو شاركها مع فريقك.",
+    "other": "تم تحديد البنود الـ{count} كلها. احتفظ بهذه الصفحة لإطلاقك القادم، أو شاركها مع فريقك.",
+  },
+  "LaunchChecklist.clear": "إزالة العلامات",
+  "LaunchChecklist.cleared": "أُزيلت العلامات.",
+  "LaunchChecklist.undo": "تراجع",
+  "LaunchChecklist.restored": "أُعيدت العلامات.",
+  "LaunchChecklist.builtIn": "مدمج في Seed",
+  "LaunchChecklist.partly": "مدمج جزئيًا في Seed",
+  "LaunchChecklist.builtInLabel": "مدمج في Seed: {doc}",
+  "LaunchChecklist.partlyLabel": "مدمج جزئيًا في Seed: {doc}",
+  "LaunchChecklist.itemLink": "رابط هذا البند: {title}",
+  "LaunchChecklist.source": "المصدر الرسمي:",
+  "LaunchChecklist.ctaTitle": "ابدأ منتج SaaS القادم وجزء من هذه القائمة منجز",
+  "LaunchChecklist.ctaLead":
+    "Seed قالب مجاني لبدء منتجات SaaS بترخيص MIT. البنود المعلَّمة بـ«مدمج في Seed» تأتي معه، فتبدأ ومربعات أقل تنتظر التحديد.",
+  "LaunchChecklist.getStarted": "ابدأ مع Seed",
+  "LaunchChecklistSource.gdpr": "اللائحة العامة لحماية البيانات (GDPR) على EUR-Lex",
+  "LaunchChecklistSource.eprivacy": "توجيه الخصوصية الإلكترونية على EUR-Lex",
+  "LaunchChecklistSource.vat": "نافذة الاتحاد الأوروبي الموحدة لضريبة القيمة المضافة",
+  "LaunchChecklistSection.legal": "القانون والخصوصية",
+  "LaunchChecklistSection.billing": "الفوترة",
+  "LaunchChecklistSection.security": "الأمان",
+  "LaunchChecklistSection.backups": "البيانات والنسخ الاحتياطي",
+  "LaunchChecklistSection.monitoring": "المراقبة",
+  "LaunchChecklistSection.email": "البريد الإلكتروني",
+  "LaunchChecklistSection.search": "البحث والمشاركة",
+  "LaunchChecklistSection.analytics": "التحليلات",
+  "LaunchChecklistSection.support": "الدعم والتشغيل",
+  "LaunchChecklistItem.legalPrivacyPolicy": "انشر سياسة خصوصية تطابق ما تجمعه فعلًا.",
+  "LaunchChecklistItem.legalPrivacyPolicyWhy":
+    "يقارنها الناس والجهات الرقابية بما يفعله منتجك حقًا، لذا فالسياسة المنسوخة أسوأ من عدمها.",
+  "LaunchChecklistItem.legalPrivacyPolicyLeft":
+    "الصفحة موجودة؛ وعليك إعادة كتابتها لبياناتك وخدماتك.",
+  "LaunchChecklistItem.legalTerms": "انشر شروط الخدمة.",
+  "LaunchChecklistItem.legalTermsWhy":
+    "تحدد الشروط ما تدين به للعميل وما لا تدين به، قبل أن يحدده أول نزاع.",
+  "LaunchChecklistItem.legalTermsLeft": "الصفحة موجودة؛ أما الشروط نفسها فعليك.",
+  "LaunchChecklistItem.legalCookieBanner":
+    "اعرض شريط موافقة فقط إذا كنت تضع ملفات تعريف ارتباط غير ضرورية.",
+  "LaunchChecklistItem.legalCookieBannerWhy":
+    "الشريط غير اللازم يكلّفك تسجيلات، وتجاوز الشريط اللازم مخالفة.",
+  "LaunchChecklistItem.legalDataExport": "اسمح للناس بتصدير بياناتهم.",
+  "LaunchChecklistItem.legalDataExportWhy":
+    "من حق الناس الحصول على نسخة من بياناتهم، وزرّ واحد يلبي هذا الطلب في ثوانٍ.",
+  "LaunchChecklistItem.legalAccountDeletion":
+    "اسمح للناس بحذف حساباتهم، واعرف متى تُمحى بياناتهم فعلًا.",
+  "LaunchChecklistItem.legalAccountDeletionWhy":
+    "الحساب المحذوف الذي تبقى بياناته وعدٌ أخلفته دون أن تدري.",
+  "LaunchChecklistItem.legalAccountDeletionLeft":
+    "تبقى البيانات في النسخ الاحتياطية حتى تنتهي صلاحيتها؛ اذكر المدة في سياستك.",
+  "LaunchChecklistItem.legalProcessors":
+    "اكتب قائمة بالخدمات الخارجية التي تحتفظ ببيانات مستخدميك، مع اتفاقية معالجة بيانات لكل منها.",
+  "LaunchChecklistItem.legalProcessorsWhy":
+    "يجب أن تسميها سياسة الخصوصية، وأنت مسؤول عما تفعله بالبيانات.",
+  "LaunchChecklistItem.legalEntityContact":
+    "اذكر كيانك القانوني وعنوانًا للتواصل في الصفحات القانونية.",
+  "LaunchChecklistItem.legalEntityContactWhy":
+    "يحتاج العملاء ومزودو الدفع والجهات الرقابية إلى معرفة من يدير الخدمة وكيف يصلون إليك.",
+  "LaunchChecklistItem.billingTestLive":
+    "اختبر المدفوعات من البداية إلى النهاية في وضع الاختبار، ثم مرة واحدة في الوضع الحقيقي.",
+  "LaunchChecklistItem.billingTestLiveWhy":
+    "المفاتيح الحقيقية وخطافات الويب وإعدادات الضرائب تختلف عن وضع الاختبار، ولا ينبغي أن يكتشف ذلك أول عميل حقيقي نيابةً عنك.",
+  "LaunchChecklistItem.billingPricingMatches": "اجعل صفحة الأسعار مطابقة لما يُحصَّل عند الدفع.",
+  "LaunchChecklistItem.billingPricingMatchesWhy":
+    "السعر الذي يتغير بين الصفحة وصفحة الدفع يضيّع البيع والثقة معًا.",
+  "LaunchChecklistItem.billingFailedPayments": "تعامل مع المدفوعات الفاشلة وإعادة المحاولة.",
+  "LaunchChecklistItem.billingFailedPaymentsWhy":
+    "تنتهي صلاحية البطاقات كل شهر، ودون إعادة المحاولة ومهلة سماح تخسر عملاء كانوا ينوون الدفع.",
+  "LaunchChecklistItem.billingCancelRefund": "حدّد كيف يعمل الإلغاء واسترداد الأموال.",
+  "LaunchChecklistItem.billingCancelRefundWhy":
+    "العميل الذي يلغي بسهولة يغادر بهدوء، ومن لا يستطيع يقدّم اعتراضًا على الدفع.",
+  "LaunchChecklistItem.billingTax": "قرّر كيف تتعامل مع ضريبة المبيعات وضريبة القيمة المضافة.",
+  "LaunchChecklistItem.billingTaxWhy":
+    "البيع إلى الخارج قد يُلزمك بالضريبة في بلدان عملائك منذ أول عملية بيع.",
+  "LaunchChecklistItem.billingTaxLeft":
+    "يشرح دليل الفوترة سلوك السعر الضريبي في Stripe؛ أما التسجيل والإقرارات فعليك.",
+  "LaunchChecklistItem.billingReceipts": "أرسل إيصالات وفواتير لكل دفعة.",
+  "LaunchChecklistItem.billingReceiptsWhy":
+    "لا تستطيع الشركات تسجيل دفعة في حساباتها دون فاتورة، وستطلبها.",
+  "LaunchChecklistItem.securityHttpsHsts": "قدّم كل صفحة عبر HTTPS مع HSTS.",
+  "LaunchChecklistItem.securityHttpsHstsWhy":
+    "يخبر HSTS المتصفحات ألا تجرب HTTP غير المشفّر أبدًا، فلا يستطيع أحد على الشبكة نزع التشفير.",
+  "LaunchChecklistItem.securityHeadersCsp": "أرسل ترويسات الأمان وسياسة أمان المحتوى (CSP).",
+  "LaunchChecklistItem.securityHeadersCspWhy":
+    "تمنع سياسة أمان المحتوى معظم السكربتات المحقونة من العمل، حتى لو سمح خطأ بدخول أحدها.",
+  "LaunchChecklistItem.securityTwoFactorPasskeys": "وفّر تسجيل الدخول بعاملين ومفاتيح المرور.",
+  "LaunchChecklistItem.securityTwoFactorPasskeysWhy":
+    "كلمة المرور المعاد استخدامها أكثر الطرق شيوعًا لاختراق الحسابات، والعامل الثاني يغلقها.",
+  "LaunchChecklistItem.securityRateLimits":
+    "حدّد معدل الطلبات لتسجيل الدخول ولكل مسار يمكن إساءة استخدامه.",
+  "LaunchChecklistItem.securityRateLimitsWhy":
+    "دون حدود، يستطيع سكربت تخمين كلمات المرور أو استنزاف حصة بريدك في ليلة واحدة.",
+  "LaunchChecklistItem.securitySecrets": "استخدم أسرارًا قوية وأبقِها خارج git.",
+  "LaunchChecklistItem.securitySecretsWhy":
+    "السر الموجود في سجل المستودع يبقى مقروءًا لكل من يحصل على نسخة منه يومًا.",
+  "LaunchChecklistItem.securitySecretsLeft":
+    "يقرأ النشر الأسرار من ملف env؛ أما إنشاؤها وحمايتها فعليك.",
+  "LaunchChecklistItem.securityAuditLog": "سجّل إجراءات المشغّلين في سجل تدقيق.",
+  "LaunchChecklistItem.securityAuditLogWhy":
+    "عندما يسأل عميل من غيّر حسابه، يجيب السجل بدل التخمين.",
+  "LaunchChecklistItem.securityDependencies": "حدّث الاعتماديات باستمرار واستقبل تنبيهات الثغرات.",
+  "LaunchChecklistItem.securityDependenciesWhy":
+    "تستغل معظم الهجمات ثغرات أُصلحت بالفعل في إصدار لم يثبّته أحد.",
+  "LaunchChecklistItem.securityDependenciesLeft":
+    "يعرض Seed الحزم القديمة؛ أما تنبيهات الثغرات فتفعّلها أنت.",
+  "LaunchChecklistItem.backupsAutomated": "شغّل نسخًا احتياطية تلقائية ومشفّرة وخارج الخادم.",
+  "LaunchChecklistItem.backupsAutomatedWhy":
+    "النسخة على الخادم نفسه تضيع معه، والنسخة اليدوية تُنسى في الأسبوع الذي تحتاجها فيه بالذات.",
+  "LaunchChecklistItem.backupsAutomatedLeft": "معطّلة حتى تفعّلها.",
+  "LaunchChecklistItem.backupsRestoreTested": "استعِد نسخة احتياطية مرة واحدة على خادم جديد.",
+  "LaunchChecklistItem.backupsRestoreTestedWhy":
+    "إلى أن تستعيد نسخة احتياطية، لا تعرف هل تعمل ولا كم تستغرق.",
+  "LaunchChecklistItem.backupsMissingAlert": "احصل على تنبيه عندما تغيب نسخة احتياطية.",
+  "LaunchChecklistItem.backupsMissingAlertWhy":
+    "تفشل النسخ الاحتياطية بصمت، وتكتشف ذلك يوم تحتاج إليها.",
+  "LaunchChecklistItem.monitoringErrors": "تتبّع الأخطاء في الخادم والمتصفح.",
+  "LaunchChecklistItem.monitoringErrorsWhy": "معظم من يصادفون خطأً يغادرون دون أن يخبروك.",
+  "LaunchChecklistItem.monitoringAlerts": "اجمع المقاييس والسجلات، مع تنبيهات إلى هاتفك.",
+  "LaunchChecklistItem.monitoringAlertsWhy":
+    "القرص الممتلئ أو الطابور العالق يجب أن يوقظك قبل أن يزعج عملاءك.",
+  "LaunchChecklistItem.monitoringUptimeStatus": "راقب التوفر من الخارج، وانشر صفحة حالة.",
+  "LaunchChecklistItem.monitoringUptimeStatusWhy":
+    "الخادم المتوقف لا يستطيع الإبلاغ عن توقفه، وصفحة الحالة توفر عليك مئة رسالة متطابقة.",
+  "LaunchChecklistItem.monitoringLoadTest": "أجرِ اختبار حمل للحركة التي تتوقعها.",
+  "LaunchChecklistItem.monitoringLoadTestWhy":
+    "يوم الإطلاق تأتي الحركة دفعة واحدة، ومن الأفضل أن تعرف الحد قبلها.",
+  "LaunchChecklistItem.emailTransactional": "أرسل رسائل المعاملات عبر خادم بريد حقيقي.",
+  "LaunchChecklistItem.emailTransactionalWhy":
+    "روابط تسجيل الدخول والإيصالات التي تقع في البريد المزعج تحجب الناس عن منتجك.",
+  "LaunchChecklistItem.emailDomainAuth": "اضبط SPF وDKIM وDMARC على نطاق الإرسال.",
+  "LaunchChecklistItem.emailDomainAuthWhy":
+    "يرفض كبار مزودي البريد الرسائل من النطاقات التي تفتقدها أو يدفنونها.",
+  "LaunchChecklistItem.emailReplySender": "أرسل من عنوان يمكن الرد عليه.",
+  "LaunchChecklistItem.emailReplySenderWhy":
+    "الرد كثيرًا ما يكون أول طلب دعم، وعنوان no-reply يرميه.",
+  "LaunchChecklistItem.emailReplySenderLeft": "المرسِل إعداد؛ أما صندوق بريد يقرؤه أحد فعليك.",
+  "LaunchChecklistItem.emailNewsletter": "شغّل النشرة البريدية بتأكيد مزدوج وإلغاء اشتراك.",
+  "LaunchChecklistItem.emailNewsletterWhy":
+    "المشتركون المؤكَّدون يحافظون على ثقة نطاق الإرسال، وإلغاء الاشتراك الفعّال إلزامي قانونًا في بلدان كثيرة.",
+  "LaunchChecklistItem.searchBasics":
+    "انشر خريطة الموقع وrobots.txt وllms.txt وبطاقات معاينة الروابط.",
+  "LaunchChecklistItem.searchBasicsWhy":
+    "تقرأ محركات البحث ومساعدات الذكاء الاصطناعي وتطبيقات الدردشة هذه الملفات أولًا، والرابط المشارَك دون بطاقة يحصد نقرات أقل.",
+  "LaunchChecklistItem.searchHreflang": "علّم كل نسخة لغوية بوسم hreflang.",
+  "LaunchChecklistItem.searchHreflangWhy":
+    "دونه تعرض محركات البحث اللغة الخطأ أو تعامل الترجمات كنسخ مكررة.",
+  "LaunchChecklistItem.searchLighthouseConsole":
+    "احتفظ بميزانية Lighthouse في التكامل المستمر، وتحقق من الموقع في Search Console.",
+  "LaunchChecklistItem.searchLighthouseConsoleWhy":
+    "الميزانية تمنع نشر صفحة بطيئة، وSearch Console يخبرك بما لا تستطيع محركات البحث فهرسته.",
+  "LaunchChecklistItem.searchLighthouseConsoleLeft":
+    "تعمل الميزانية في التكامل المستمر؛ أما التحقق من الموقع في Search Console فعليك.",
+  "LaunchChecklistItem.analyticsGoals":
+    "استخدم تحليلات تحترم الخصوصية، مع هدف ومسار تحويل حتى الإجراء الأهم.",
+  "LaunchChecklistItem.analyticsGoalsWhy":
+    "مشاهدات الصفحة تقول إن الناس جاؤوا؛ ومسار التحويل يبيّن أين يتوقفون قبل التسجيل أو الدفع.",
+  "LaunchChecklistItem.analyticsGoalsLeft": "الأحداث تُرسَل؛ وأنت تختار الهدف وتبني مسار التحويل.",
+  "LaunchChecklistItem.supportContact": "امنح الناس طريقة للوصول إلى إنسان.",
+  "LaunchChecklistItem.supportContactWhy":
+    "العميل الذي لا يصل إلى أحد يكتب تقييمًا سيئًا أو يعترض على الدفع بدلًا من ذلك.",
+  "LaunchChecklistItem.supportContactLeft": "روابط التواصل إعداد؛ أما الرد فعليك.",
+  "LaunchChecklistItem.supportAdminLookup": "جهّز لوحة إدارة للبحث عن عميل.",
+  "LaunchChecklistItem.supportAdminLookupWhy":
+    "دونها يعني الدعم قراءة قاعدة البيانات يدويًا، بكل ما في ذلك من مخاطر.",
+  "LaunchChecklistItem.supportErrorPages": "اعرض صفحات 404 و500 مفيدة.",
+  "LaunchChecklistItem.supportErrorPagesWhy":
+    "صفحة الخطأ المجردة توحي بأن المنتج معطّل، والصفحة المفيدة تعيد الناس إلى عملهم.",
+  "LaunchChecklistItem.supportDeployRollback": "دوّن كيف تنشر التحديثات وكيف تتراجع عنها.",
+  "LaunchChecklistItem.supportDeployRollbackWhy":
+    "أسوأ وقت لاكتشاف طريقة التراجع هو في منتصف نشر فاشل.",
 } satisfies Catalog
