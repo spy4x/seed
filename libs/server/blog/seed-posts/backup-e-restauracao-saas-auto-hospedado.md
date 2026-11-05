@@ -96,7 +96,7 @@ Algumas escolhas nesse script fazem a diferença entre um backup e um arquivo qu
   lock do restic para trás; toda execução remove primeiro os locks vencidos, e a que encontra um
   lock ativo tenta de novo em uma hora.
 
-Ligar o backup são quatro variáveis no arquivo de ambiente e um deploy. O perfil fica desligado até
+Ligar o backup é o perfil `backup` e quatro variáveis no arquivo de ambiente, depois um deploy. O perfil fica desligado até
 você configurar, então um produto novo não tem backup antes disso.
 
 ## Como saber que o backup continua rodando?

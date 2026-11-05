@@ -99,7 +99,7 @@ parece:
   bloqueo de restic; cada ejecución quita primero los bloqueos caducados, y la que encuentra uno
   vivo lo vuelve a intentar en una hora.
 
-Activarla son cuatro variables en el archivo de entorno y un despliegue. El perfil está apagado
+Activarla es el perfil `backup` y cuatro variables en el archivo de entorno, y luego un despliegue. El perfil está apagado
 hasta que lo configuras, así que un producto nuevo no tiene copia hasta entonces.
 
 ## ¿Cómo sabes que la copia sigue funcionando?

@@ -7,7 +7,7 @@ seoTitle: "Backup und Restore für selbst gehostetes SaaS: Postgres und Dateien"
 description: Wie Sie ein selbst gehostetes SaaS (Datenbank, Dateien, Schlüssel) außerhalb des Servers sichern und die Wiederherstellung vorher testen.
 tldr:
   - Sichern Sie Datenbank, hochgeladene Dateien und jeden Schlüssel, den es nur auf dem Server gibt, in einen Bucket bei einem anderen Anbieter.
-  - Ein Backup beweist erst die Wiederherstellung. Spielen Sie eine in eine Ersatzdatenbank ein; in Seed sind das vier Befehle.
+  - Erst eine Wiederherstellung beweist ein Backup. Spielen Sie eine in eine Ersatzdatenbank ein; in Seed sind das vier Befehle.
   - Seed sichert täglich einen pg_dump, die Dateien und die Web-Push-Schlüssel mit restic und warnt, wenn das letzte Backup zwei Tage alt ist.
   - Eine Wiederherstellung auf einen Zeitpunkt gibt es nicht, bis zu einem Tag an Schreibvorgängen kann verloren gehen, und die gespeicherten Daten prüft es nicht selbst.
 topic: Anleitungen
@@ -101,7 +101,7 @@ Datei, die nur so aussieht:
   restic zurücklassen; jeder Lauf entfernt zuerst veraltete Sperren, und ein Lauf, der auf eine
   aktive trifft, versucht es nach einer Stunde erneut.
 
-Einschalten heißt: vier Variablen in der Env-Datei und ein Deployment. Bis Sie es einrichten, ist
+Einschalten heißt: das Profil `backup` und vier Variablen in der Env-Datei, dann ein Deployment. Bis Sie es einrichten, ist
 das Profil aus; ein neues Produkt hat also kein Backup, bevor Sie es tun.
 
 ## Woran sehen Sie, dass das Backup noch läuft?

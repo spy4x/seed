@@ -92,7 +92,7 @@ A few choices in that script are the difference between a backup and a file that
   lock behind; every run removes stale locks first, and a run that meets a live lock tries again
   in an hour.
 
-Turning it on is four variables in the env file and a deploy. The profile is off until you set it
+Turning it on is the `backup` profile and four variables in the env file, then a deploy. The profile is off until you set it
 up, so a fresh product has no backup until you do.
 
 ## How do you know the backup still runs?

@@ -100,7 +100,7 @@ Quelques choix dans ce script font la différence entre une sauvegarde et un fic
   verrou de restic ; chaque exécution retire d'abord les verrous périmés, et celle qui tombe sur un
   verrou actif réessaie une heure plus tard.
 
-L'activer, ce sont quatre variables dans le fichier d'environnement et un déploiement. Le profil est
+L'activer, c'est le profil `backup` et quatre variables dans le fichier d'environnement, puis un déploiement. Le profil est
 éteint tant que vous ne l'avez pas configuré : un nouveau produit n'a donc pas de sauvegarde avant.
 
 ## Comment savoir que la sauvegarde tourne toujours ?
