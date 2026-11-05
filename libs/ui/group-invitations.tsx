@@ -86,7 +86,6 @@ export interface InviteFormProps {
   memberRoles?: boolean
   draft: InvitationDraft
   onDraftChange?: (draft: InvitationDraft) => void
-  /** A create is in flight. */
   creating?: boolean
   /** Why the create was refused, shown under the address field, or `null`. */
   createError?: string | null

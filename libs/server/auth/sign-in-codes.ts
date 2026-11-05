@@ -19,7 +19,6 @@ import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { isLanguage, SIGN_IN_CODE_MINUTES } from "@domain/identity"
 import { mailedCodes } from "./mailed-codes.ts"
 
-/** The codes of sign-in requests. */
 export const SIGN_IN_CODES = mailedCodes("app.sign-in-code")
 
 /** How long a request and its latest code work, in minutes. A new code starts it again. */

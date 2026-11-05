@@ -200,7 +200,6 @@ export interface AdminAuditEntry {
    * the person themselves otherwise. `null` when that account is gone.
    */
   actor: AdminAuditPerson | null
-  /** An operator did it. */
   byOperator: boolean
   /** The group a group entry belongs to, while the group exists. */
   group: { id: string; name: string } | null

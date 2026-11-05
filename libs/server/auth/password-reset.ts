@@ -27,7 +27,6 @@ import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { PASSWORD_RESET_CODE_MINUTES } from "@domain/identity"
 import { mailedCodes } from "./mailed-codes.ts"
 
-/** The codes of reset requests. */
 export const PASSWORD_RESET_CODES = mailedCodes("app.password-reset-code")
 
 /** When a reset request asked for at `now`, or given a new code at `now`, stops working. */

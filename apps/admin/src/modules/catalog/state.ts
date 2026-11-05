@@ -61,7 +61,6 @@ export interface CatalogItemEditorState {
   copying: string | null
 }
 
-/** The category editor. */
 export interface CatalogCategoryEditorState {
   id: string | null
   value: CatalogCategoryDraft
@@ -77,7 +76,6 @@ function categoryDraft(category: CatalogCategory | null): CatalogCategoryDraft {
     : BLANK_CATEGORY
 }
 
-/** The source editor. */
 export interface CatalogSourceEditorState {
   id: string | null
   value: CatalogSourceDraft

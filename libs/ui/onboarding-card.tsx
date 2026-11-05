@@ -165,7 +165,6 @@ export interface OnboardingCardProps {
   error?: string | null
   /** Whether the tour is still offered: the person has neither finished nor skipped it. */
   tourOffered: boolean
-  /** Whether the tour is running. */
   tourOpen: boolean
   /** The tour step shown. */
   tourIndex: number

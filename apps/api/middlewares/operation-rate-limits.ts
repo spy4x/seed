@@ -41,7 +41,6 @@ export const OPERATION_BUDGET: Readonly<OperationBudget> = {
 
 /** Who sent one call, as the adapter that received it knows. */
 export interface OperationCaller {
-  /** Whether the account is a guest. */
   guest: boolean
   /** The client address as the guest-start limit counts it (`signUpClient`). */
   client: string

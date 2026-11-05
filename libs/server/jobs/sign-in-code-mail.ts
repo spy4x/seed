@@ -12,7 +12,6 @@ import { readMailReader, requestReader } from "../mail/reader.ts"
 import { accountUsing } from "../auth/sign-up-requests.ts"
 import { enqueueJob, type JobHandler } from "./jobs.ts"
 
-/** The job that mails one sign-in code. */
 export const SIGN_IN_CODE_MAIL_JOB = "auth.sign-in-code-mail"
 
 /**

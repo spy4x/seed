@@ -28,7 +28,6 @@ export * from "./figures.ts"
 
 /** The longest slug: the post's address is `/blog/<slug>`. */
 export const BLOG_SLUG_MAX_LENGTH = 100
-/** The longest title. */
 export const BLOG_TITLE_MAX_LENGTH = 200
 /** The longest search-result title; search engines show about 60 characters. */
 export const BLOG_SEO_TITLE_MAX_LENGTH = 70

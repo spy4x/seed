@@ -111,7 +111,6 @@ export interface SignInOptions {
   cookieSecret: string
   /** Adds `Secure` to the cookies. `false` only for local development over plain HTTP. */
   secureCookie: boolean
-  /** Session lifetime in minutes. */
   sessionMinutes: number
   /** Service name shown in the authenticator app. */
   totpIssuer: string

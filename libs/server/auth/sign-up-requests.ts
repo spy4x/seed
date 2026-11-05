@@ -159,7 +159,6 @@ export async function attemptSignUpCode(
 /** How an account that already uses an address signs in. */
 export interface ExistingAccount {
   userId: number
-  /** It has a password. */
   password: boolean
   /** The providers it signs in with, in the order they were linked. */
   providers: OAuthProviderId[]
