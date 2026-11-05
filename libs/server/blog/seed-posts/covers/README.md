@@ -60,6 +60,7 @@ What each cover shows, in one sentence; a post's `coverAlt` takes it.
 | `nine-languages-and-right-to-left-from-day-one`    | A violet globe circled by empty speech bubbles, with arrows turning both ways around it.                                             |
 | `offline-first-preact-signals-local-database-sync` | A plant thriving inside a glass terrarium on a table, linked to a cloud above by a dashed line with arrows both ways.                |
 | `open-saas-alternatives`                           | A glass greenhouse with a shared planter of violet plants inside and a row of five single small pots by its open door.               |
+| `over-engineering-a-saas-boilerplate`              | A tall violet scaffolding tower built around a tiny seedling in a pot, next to a plain pot where a full plant grows on its own.      |
 | `passkeys-2fa-sessions-without-auth-saas`          | A key with a leaf for its handle floating towards a round violet door with two locks in a garden wall.                               |
 | `per-seat-billing-stripe-webhooks-retries`         | A row of violet theatre seats, each holding a potted plant, with a new seedling lowered on a string into one more seat.              |
 | `realtime-websocket-with-http-fallback`            | Two rocky islands joined by a bright bridge, with a small ferry waiting on the water below as a second way across.                   |
