@@ -162,7 +162,35 @@ steps:
     # lab performance falls when other work shares the CPU: beside `integration`, the home page
     # scored 0.74 to 0.97 on code that scores 0.99 on an idle machine. It costs about two minutes
     # of wall time. It builds the MPA itself, so it measures no leftover of an earlier step.
+    # A pull request runs it only when it changes a file the built website comes from (#821): the
+    # MPA, what its module graph imports (libs/ui, libs/domain, four libs/server members, the
+    # catalogs, the guides docs-site.ts publishes), the two API files of its stand-in blog API, and
+    # the manifests, the lockfile and this file. A push to `main` and a tag always run it. Woodpecker
+    # applies `path` to pull requests and pushes only, and runs the step when the forge lists no
+    # changed file.
     image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
+    when:
+      - event: pull_request
+        path:
+          - apps/mpa/**
+          - libs/ui/**
+          - libs/domain/**
+          - libs/server/blog/**
+          - libs/server/jobs/**
+          - libs/server/mail/**
+          - libs/server/subscribers/**
+          - apps/api/routes/blog.ts
+          - apps/api/services/error-response.ts
+          - i18n/**
+          - docs/*.md
+          - deno.json
+          - deno.jsonc
+          - deno.lock
+          - package.json
+          - .woodpecker/ci.yml
+      - event: push
+        branch: main
+      - event: tag
     commands:
       # npm's newest `deno` package lags the binary, so take the pinned release itself.
       - |
@@ -215,8 +243,13 @@ steps:
       - deno task e2e:local --smoke --max-failures=3
     # After `browser`: the run scripts keep the API's vapid.json in the shared checkout while they
     # run, and each starts a worker on the one Valkey service, where a worker would take another
-    # stack's jobs. After `lighthouse`, which measures alone.
-    depends_on: [lighthouse]
+    # stack's jobs. After `lighthouse`, which measures alone, when it runs: a pull request that
+    # cannot change the website skips it, and Woodpecker drops an optional dependency on a skipped
+    # step instead of failing the pipeline over it.
+    depends_on:
+      - browser
+      - name: lighthouse
+        optional: true
 
   e2e-full:
     # Every browser test of the product (`e2e/*.e2e.ts`), after a merge: only a push to `main`
@@ -258,7 +291,11 @@ steps:
       - echo "127.0.0.1 app.localhost" >> /etc/hosts
       # Stops after ten failed tests in a pass, for the same reason as in e2e-smoke.
       - deno task e2e:local --max-failures=10
-    depends_on: [lighthouse]
+    # As e2e-smoke. A push to `main` always runs lighthouse.
+    depends_on:
+      - browser
+      - name: lighthouse
+        optional: true
 
   runtimes:
     # Starts the API, the worker and the website on Deno, Node and Bun, and checks each answers
