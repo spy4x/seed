@@ -35,7 +35,7 @@ import {
 } from "./history.ts"
 import { seedSampleCatalog } from "@server/catalog/sample-catalog.ts"
 
-/** Who the audit rows of the seeded roles name (#425). */
+/** Who the audit rows of the seeded roles name. */
 export const SEED_ACTOR = `development seed`
 
 /** What the demo seed needs besides the database. */

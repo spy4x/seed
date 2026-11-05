@@ -1,5 +1,5 @@
 /**
- * The sign-in and profile screens in the `en-XA` pseudo-language (#275): it wraps every catalog
+ * The sign-in and profile screens in the `en-XA` pseudo-language: it wraps every catalog
  * message in `⟦ ⟧`, so a screen rendered in it shows no English outside those marks except data (a
  * name, an address, a device). English left in the code, past the catalog, fails here.
  */

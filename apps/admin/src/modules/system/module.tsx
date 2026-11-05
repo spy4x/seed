@@ -38,7 +38,7 @@ function SystemView({ context }: { context: AdminContext }): JSX.Element {
   )
 }
 
-/** The health of the services behind the product (#429); the jobs are the Jobs module's. */
+/** The health of the services behind the product; the jobs are the Jobs module's. */
 export const systemModule: AdminModule = {
   id: `system`,
   nav: { name: `AdminNav.system`, href: SYSTEM_PATH, Icon: IconServer },

@@ -559,7 +559,7 @@ describe("the sign-in page's passkey autofill", () => {
     await withPasskeyPage(true, async (page) => {
       page.focused = false
       await page.wait(renewal * 3)
-      // An abort here is what makes a password manager pull the tab to the front (#609).
+      // An abort here is what makes a password manager pull the tab to the front.
       expect([page.started, page.aborted]).toEqual([1, 0])
       await page.focus()
       expect([page.started, page.aborted]).toEqual([2, 1])

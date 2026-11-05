@@ -17,7 +17,7 @@ const password = "Passw0rd!"
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]
 const VIEWER = 1
 
-/** The widths of the spec (#433) and of the design review, a phone's and a desktop's, in both palettes. */
+/** The widths of the spec and of the design review, a phone's and a desktop's, in both palettes. */
 const VIEWS = [375, 390, 1280, 1440].flatMap((width) =>
   (["light", "dark"] as const).map((scheme) => ({ width, scheme }))
 )

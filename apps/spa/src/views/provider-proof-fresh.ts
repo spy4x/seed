@@ -11,7 +11,7 @@ export function isProviderProofFresh(until: string | null, now: number = Date.no
 }
 
 /**
- * `proof` with a passkey button (#222) when the account has a passkey and this browser can use
+ * `proof` with a passkey button when the account has a passkey and this browser can use
  * one: it signs in again on the spot, through the methods store, instead of on the sign-in page.
  */
 export function withPasskeyProof(

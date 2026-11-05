@@ -179,7 +179,7 @@ export interface AdminCatalogScreenProps {
 }
 
 /**
- * The catalog (#466): every item, newest change first, with its cover, category, price, stock and
+ * The catalog: every item, newest change first, with its cover, category, price, stock and
  * status. "Add item" is the page's one action; an item's name opens its editor. The categories
  * are a page of their own, reached from the menu, and the empty state sends a new catalog there
  * first, since an item goes live only in a category.

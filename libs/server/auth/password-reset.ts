@@ -1,5 +1,5 @@
 /**
- * Password reset by an e-mailed code (#752): the request a browser waits on, its code, and the
+ * Password reset by an e-mailed code: the request a browser waits on, its code, and the
  * token the right code buys.
  *
  * A request is one row of `password_reset_requests`, named by a signed cookie of the browser that
@@ -27,7 +27,6 @@ import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { PASSWORD_RESET_CODE_MINUTES } from "@domain/identity"
 import { mailedCodes } from "./mailed-codes.ts"
 
-/** The codes of reset requests. */
 export const PASSWORD_RESET_CODES = mailedCodes("app.password-reset-code")
 
 /** When a reset request asked for at `now`, or given a new code at `now`, stops working. */
@@ -43,7 +42,7 @@ export interface PasswordResetRequest {
   email: string
   expiresAt: Date
   /**
-   * An operator asked for it in the admin panel (#425). No browser waits for it, so its mail
+   * An operator asked for it in the admin panel. No browser waits for it, so its mail
    * carries no code and tells the person to ask for one.
    */
   byOperator: boolean
@@ -111,7 +110,7 @@ export const PASSWORD_FORGOT_PATH = "/forgot-password"
  * The account a reset reaches through `email`, already normalised: a live one whose password key
  * signs in with that address, or `null`. A username account whose username happens to look like an
  * address is none: that name was never claimed as an address, so its owner may not hold the
- * mailbox. An account waiting to be deleted is one (#388): its reset restores it.
+ * mailbox. An account waiting to be deleted is one: its reset restores it.
  */
 export async function resettableAccount(store: AuthStore, email: string): Promise<number | null> {
   const key = await store.findKey(PASSWORD_METHOD, email)
@@ -142,7 +141,7 @@ export interface IssuedPasswordReset {
  * refuses then. A username account whose username happens to look like an address gets no
  * code either: that name was never claimed as an address, so its owner may not hold the mailbox.
  *
- * An account waiting to be deleted gets a code (#388): a deletion request soft-deletes the `users`
+ * An account waiting to be deleted gets a code: a deletion request soft-deletes the `users`
  * profile, never the sign-in record read here, and the completed reset restores the account.
  */
 export async function issuePasswordReset(

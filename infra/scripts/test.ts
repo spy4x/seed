@@ -158,6 +158,7 @@ export const GROUPS: TestGroup[] = [
     flags: [`--allow-read=.`, `--allow-write=tests`, `--allow-run=git`],
     paths: [`tests/no-uuid-v4.test.ts`],
   },
+  { flags: [`--allow-read=apps,libs,e2e`], paths: [`tests/no-issue-numbers-in-comments.test.ts`] },
   {
     flags: [`--allow-read=.`, `--allow-env`, `--allow-sys`],
     paths: [`tests/playwright-retries.test.ts`],

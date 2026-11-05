@@ -5,7 +5,7 @@ import { languages } from "../i18n.ts"
 import { pageLanguage } from "../state/page-language.ts"
 
 /**
- * The language setting (#216) wherever `LanguageDialog` opens: the preferences' Language row, the
+ * The language setting wherever `LanguageDialog` opens: the preferences' Language row, the
  * account menu and the signed-out header. Read in a render, so the screen follows the choice, the
  * load and its failure.
  */

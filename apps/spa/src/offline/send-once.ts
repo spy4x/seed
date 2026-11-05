@@ -133,7 +133,7 @@ export async function countQueueOnce(
   const found = await findQueue(userId, databases)
   if (!found || (!found.hasNotes && !found.hasTags)) return 0
   // Read without the queue's lock: counting changes nothing, and a layer whose own read of the
-  // queue stalls holds the lock (#613).
+  // queue stalls holds the lock.
   const notes = found.hasNotes
     ? storage.openQueue?.(userId) ?? createIndexedDbOutboxStore({ name: found.notesName })
     : undefined

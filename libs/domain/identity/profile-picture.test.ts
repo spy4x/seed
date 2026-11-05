@@ -1,4 +1,4 @@
-/** The picture rules both the SPA and the API share (#228, #464). */
+/** The picture rules both the SPA and the API share. */
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { pictureContentType, PictureState, shownPictureId } from "./profile-picture.ts"

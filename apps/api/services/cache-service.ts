@@ -10,10 +10,10 @@ import {
 import { log } from "./log.ts"
 
 /**
- * Builds this app's `CacheService`, with the reviver that restores the template's old,
- * unconditional revival of every "*At"-suffixed cached string into a `Date`.
+ * Builds this app's `CacheService`, with the reviver that turns every
+ * "*At"-suffixed cached string into a `Date`.
  *
- * Extracted so it can be exercised directly in a test without connecting to Valkey - see
+ * A function of its own so a test can exercise it without connecting to Valkey - see
  * `cache-service.test.ts`. Swapping `reviveIsoDatesEndingInAt` for a no-op reviver here would
  * keep every other check green while silently breaking session-expiry checks that compare a
  * cached `expiresAt` against `Date.now()`; the test guards exactly that.

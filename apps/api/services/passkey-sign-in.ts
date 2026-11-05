@@ -66,7 +66,7 @@ export interface PasskeyInternals {
   sessionsOver(store: SessionStore<AuthSessionRecord>): SessionManager<AuthSessionRecord>
   /**
    * Ends `previous`, the session this browser held before signing in as `next`, in transaction
-   * `tx`, and moves or removes its push subscriptions with it (#572).
+   * `tx`, and moves or removes its push subscriptions with it.
    */
   endReplaced(tx: AppDbBase, previous: AppAuthState, next: AuthSessionRecord): Promise<void>
   cookie: SessionCookie
@@ -84,7 +84,7 @@ export interface PasskeyInternals {
    * sign in (blocked, or gone).
    */
   admit(c: Context, userId: number): Promise<SecondFactorStatus | null>
-  /** A guest's first passkey keeps the account (#224). */
+  /** A guest's first passkey keeps the account. */
   guests?: GuestKeeper
   /** The profile of a user who waits to be deleted with two-factor on, else `null`. */
   waitingForCode(userId: number): Promise<User | null>

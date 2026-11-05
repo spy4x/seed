@@ -11,7 +11,7 @@ import type { BlogRevision, BlogRevisionSummary } from "@domain/blog"
 import { useAdminText } from "./i18n.ts"
 
 /**
- * The blog editor's History (#418): a post's earlier versions, newest first, and the one picked,
+ * The blog editor's History: a post's earlier versions, newest first, and the one picked,
  * read-only. "Restore this version" puts its fields in the editor as unsaved changes; nothing is
  * overwritten until the operator saves, so it asks for no confirmation.
  *

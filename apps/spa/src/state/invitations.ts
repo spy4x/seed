@@ -78,7 +78,7 @@ export function createInvitationsStore(
     const message = code !== null && error
       ? apiErrorText(error)
       : appText(`GroupInvitations.somethingWrong`)
-    // A guest refused an invite (#224): the frame shows the refusal, as `apiFetch` does for others.
+    // A guest refused an invite: the frame shows the refusal, as `apiFetch` does for others.
     if (code === GUEST_REFUSAL_CODE) guestRefusal.value = refusedAction(url) ?? "other"
     return {
       ok: false,

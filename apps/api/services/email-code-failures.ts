@@ -1,5 +1,5 @@
 /**
- * The persistent count of wrong e-mail codes per user, with a lock that grows per failure (#140):
+ * The persistent count of wrong e-mail codes per user, with a lock that grows per failure:
  * `@spy4x/server/lockout`'s defaults, as for the authenticator app (`totp-failures.ts`), over the
  * `email_code_failures` table.
  *

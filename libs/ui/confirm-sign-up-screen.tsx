@@ -30,8 +30,8 @@ export interface ConfirmSignUpScreenProps {
 }
 
 /**
- * Asked after a provider sign-in that no account here is known by, before anything is created
- * (#142). A person who already has an account usually lands here by picking another method than
+ * Asked after a provider sign-in that no account here is known by, before anything is created.
+ * A person who already has an account usually lands here by picking another method than
  * last time, and one more press would leave them with two accounts. So going back is the main
  * action and comes first; creating the account is the second one.
  */

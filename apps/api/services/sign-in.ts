@@ -18,11 +18,11 @@
  *   anything else to a username provider over the same keys, so an older account signs in as before.
  *   The address is attached to the key, not to `users`: nullable (older keys), unique through the
  *   key's `(method, subject)` constraint, and compared after normalisation.
- * - **Audit rows in the same transaction (#191).** Sign-up, sign-in and sign-out each write their
+ * - **Audit rows in the same transaction.** Sign-up, sign-in and sign-out each write their
  *   `auth_audits` row inside the transaction that changes the session, so a failed row undoes the
  *   action. Sign-in checks the password with the package's `checkCredentials` first and creates
  *   the session itself, so the transaction holds no connection while a hash is verified.
- * - **An account with no password (#384).** One made with Google or GitHub confirms a deletion, a
+ * - **An account with no password.** One made with Google or GitHub confirms a deletion, a
  *   first password and a new address with a provider sign-in a moment ago (`oauth.proofUntil`)
  *   where the others give the password. Its first password is a new `password` key on the
  *   address the account already has, proven. Its new address has no password key to move to, so
@@ -111,7 +111,6 @@ export interface SignInOptions {
   cookieSecret: string
   /** Adds `Secure` to the cookies. `false` only for local development over plain HTTP. */
   secureCookie: boolean
-  /** Session lifetime in minutes. */
   sessionMinutes: number
   /** Service name shown in the authenticator app. */
   totpIssuer: string
@@ -121,7 +120,7 @@ export interface SignInOptions {
   oauth?: OAuthOptions
   /** Sign-in with passkeys (`passkey-sign-in.ts`). Left out, passkeys are off. */
   passkeys?: PasskeyOptions
-  /** Guest accounts (#224, `guest-sign-in.ts`): one click into the app. Left out, on. */
+  /** Guest accounts (`guest-sign-in.ts`): one click into the app. Left out, on. */
   guests?: boolean
 }
 
@@ -153,7 +152,7 @@ export interface SignIn
   oauth: OAuthOperations
   /** Adding passkeys and signing in with them (`passkey-sign-in.ts`). */
   passkeys: PasskeyOperations
-  /** Guest accounts: one click into the app, kept later with a sign-in method (#224). */
+  /** Guest accounts: one click into the app, kept later with a sign-in method. */
   guests: GuestOperations
 }
 
@@ -192,7 +191,7 @@ export function auditRow(
 }
 
 /**
- * Ends the person's Telegram link (#269), with its audit row naming why and which Telegram
+ * Ends the person's Telegram link, with its audit row naming why and which Telegram
  * account: `password-reset telegram:<id>`, and every link code and "Link" press made before, so
  * one prepared with a stolen session cannot link after the recovery.
  */
@@ -239,7 +238,7 @@ export function createSignIn(options: SignInOptions): SignIn {
   /**
    * Signs out every session of `userId` but `keep`, and removes the push subscriptions those
    * sessions stored, so a device signed out from elsewhere stops getting the account's
-   * notifications at once (#181). Runs inside the caller's transaction.
+   * notifications at once. Runs inside the caller's transaction.
    */
   const signOutOthers = async (tx: AppDbBase, userId: number, keep: number) => {
     await sessionsOver(tx.sessionStore).signOutUser(userId, { except: keep })
@@ -247,7 +246,7 @@ export function createSignIn(options: SignInOptions): SignIn {
   }
   /**
    * Ends `previous`, the session this browser held before it signed in as `next`, inside the
-   * caller's transaction (#572). The browser's notifications follow it when the same person signed
+   * caller's transaction. The browser's notifications follow it when the same person signed
    * in again, and stop when someone else did: a second person on a shared browser must not keep
    * receiving the first person's.
    */
@@ -261,7 +260,7 @@ export function createSignIn(options: SignInOptions): SignIn {
   const hasher = options.hasher ?? createPasswordHasher({ pepper: options.pepper })
 
   /**
-   * Runs `verify`, one password check of user `userId`, under the account's count (#406): see
+   * Runs `verify`, one password check of user `userId`, under the account's count: see
    * {@link SignIn.countPasswordCheck}. The count runs on the pool, never inside a transaction:
    * it needs a connection of its own.
    */
@@ -273,7 +272,7 @@ export function createSignIn(options: SignInOptions): SignIn {
     const waitMs = await passwordChecks.begin(userId)
     if (waitMs > 0) throw new PasswordLockedError(waitMs)
     // A `verify` that throws keeps the count `begin` took: a token create that fails after a right
-    // password leaves one (#178). Rare, and left as it is.
+    // password leaves one. Rare, and left as it is.
     const right = await verify()
     if (right === false) await passwordChecks.fail(userId)
     else await passwordChecks.refund(userId)
@@ -282,7 +281,7 @@ export function createSignIn(options: SignInOptions): SignIn {
 
   /**
    * The user a session belongs to, or `null` when the user is gone or may not sign in. A blocked
-   * user (#146) gets `null` here, so every request and every socket of a session they still hold
+   * user gets `null` here, so every request and every socket of a session they still hold
    * is refused, whatever ended or did not end it.
    */
   async function loadUser(userId: number): Promise<User | null> {
@@ -320,7 +319,7 @@ export function createSignIn(options: SignInOptions): SignIn {
     sessions.touch(userId, sessionId).catch((error) => {
       console.error("error: cannot record when a session was last used", error)
     })
-    // The person's own "last seen" (#152): the same activity, throttled per person in the query.
+    // The person's own "last seen": the same activity, throttled per person in the query.
     db.userSeen.touch(userId).catch((error) => {
       console.error("error: cannot record when a user was last seen", error)
     })
@@ -335,7 +334,7 @@ export function createSignIn(options: SignInOptions): SignIn {
       const state = c.get("auth")
       if (state) {
         touchSession(state.session.id, state.session.userId)
-        // A guest's session is the only way back in, so a day of use renews it to a year (#224).
+        // A guest's session is the only way back in, so a day of use renews it to a year.
         if (state.user.guestSince) {
           await guests.renew(c, state).catch((error) => {
             console.error("error: cannot renew a guest's session", error)
@@ -450,7 +449,7 @@ export function createSignIn(options: SignInOptions): SignIn {
     // As a password sign-in: an account that waits to be deleted is restored, unless only its
     // authenticator code may do that, and then the session owes the code.
     secondFactorFor: (c) => async (authUser) => {
-      // A blocked user is refused before anything is restored or a session is made (#146).
+      // A blocked user is refused before anything is restored or a session is made.
       if (await db.admin.isBlocked(authUser.id)) throw new MissingProfileError()
       if (await waitingForCode(authUser.id)) return SecondFactorStatus.Pending
       if (!(await restoreIfWaiting(c, authUser.id))) throw new MissingProfileError()
@@ -575,7 +574,7 @@ export function createSignIn(options: SignInOptions): SignIn {
       try {
         // The hash is verified before `db.begin()`, so no pool connection waits on it.
         checked = await provider.checkCredentials({ email: login, password })
-        // A blocked user (#146) gets the same answer as a wrong password, before an account
+        // A blocked user gets the same answer as a wrong password, before an account
         // waiting to be deleted is restored or a session is made.
         if (await db.admin.isBlocked(checked.user.id)) return null
         waiting = await waitingForCode(checked.user.id)
@@ -610,7 +609,7 @@ export function createSignIn(options: SignInOptions): SignIn {
         return { user, ...started }
       })
       // The session this browser held before ends, as after a code, provider or passkey sign-in:
-      // a second person on a shared browser must not keep the first person's notifications (#572).
+      // a second person on a shared browser must not keep the first person's notifications.
       await replaceSession(c, c.get("auth") as AppAuthState | null | undefined, created)
       return { user: created.user, session: created.session }
     },

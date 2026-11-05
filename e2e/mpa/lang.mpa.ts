@@ -11,7 +11,7 @@ import ja from "../../i18n/site/ja.ts"
 import zhCn from "../../i18n/site/zh-CN.ts"
 
 /**
- * One page per language (#276): its address, the English page's address (`x-default`), its
+ * One page per language: its address, the English page's address (`x-default`), its
  * direction and its heading from the language's catalog.
  */
 const PAGES = [

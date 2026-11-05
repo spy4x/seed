@@ -42,7 +42,7 @@ test("a new account proves its address with the mailed code before it exists, th
   await cleanup(request, email)
   await cleanup(request, next)
   try {
-    // Sign-up asks for the code before it creates anything (#142); a wrong one is refused there.
+    // Sign-up asks for the code before it creates anything; a wrong one is refused there.
     await gotoApp(page, "/sign-up", page.locator("[data-e2e=auth-form-login]"))
     await page.locator("[data-e2e=auth-form-login]").fill(email)
     await page.locator("[data-e2e=auth-form-password]").fill(password)

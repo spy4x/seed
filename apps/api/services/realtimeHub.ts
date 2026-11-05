@@ -25,7 +25,7 @@ import { noteListCursor } from "./note-list-cursor.ts"
 import { queryBus } from "./queryBus.ts"
 import { Realtime } from "./realtime.ts"
 
-/** The per-person budget both adapters spend from (#429); they `identify` each call's caller. */
+/** The per-person budget both adapters spend from; they `identify` each call's caller. */
 export const operationRateLimits = createOperationRateLimits({
   budget: config.operationBudget,
   store: (keyPrefix) => createRedisRateLimitStore(kv, { keyPrefix }),
@@ -71,7 +71,7 @@ export const operations: Operations<Actor> = operationRateLimits.limit({
     device: (command) => commandBus.execute(command),
   }),
   ...createPushOperations({
-    // A guest needs a sign-in method first (#224), on the socket as over REST.
+    // A guest needs a sign-in method first, on the socket as over REST.
     register: async (command) => {
       if (await db.guests.isGuest(command.data.actor.userId)) {
         const { error } = guestRefusal("push")
@@ -85,7 +85,7 @@ export const operations: Operations<Actor> = operationRateLimits.limit({
   ...createNoteOperations({
     create: async (command) => {
       const created = await commandBus.execute(command)
-      // A guest's first note gets the reminder to keep it (#224); sent once, and only to guests.
+      // A guest's first note gets the reminder to keep it; sent once, and only to guests.
       await signIn.guests.remind(command.data.actor.userId, GuestReminderKind.FirstNote)
       return created
     },

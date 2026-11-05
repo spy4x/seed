@@ -40,7 +40,7 @@ function path(text: string): JSX.Element {
 }
 
 /**
- * The blog editor's dialogs (#396): publish or schedule, unschedule, unpublish, change the URL and
+ * The blog editor's dialogs: publish or schedule, unschedule, unpublish, change the URL and
  * delete. Each one confirms; the ones that cannot be undone are drawn as danger.
  *
  * @module
@@ -146,7 +146,7 @@ function DialogBody(
   )
 }
 
-/** The new address of a published post, with the note that old links redirect to it (#418). */
+/** The new address of a published post, with the note that old links redirect to it. */
 function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
   const t = useAdminText()
   const old = props.post?.slug ?? ``
@@ -218,7 +218,7 @@ function inAnHour(now: Date): string {
  * on and the post was never emailed; the button then says so too. A scheduled post's list is
  * dropped while the newsletter is off, and a line says so, since the API refuses a list then.
  *
- * With tags in the body that readers will not see (#620), a warning lists them and its "Go to
+ * With tags in the body that readers will not see, a warning lists them and its "Go to
  * problems" takes first focus; the confirm button then says "anyway". It never blocks: a broken
  * tag hides one figure, and blocking would trap a post whose component a later deploy removed.
  */
@@ -244,8 +244,8 @@ function PublishDialog(props: DialogsProps & { title: string }): JSX.Element {
   const late = at === null || new Date(at).getTime() <= now.getTime()
   const atError = scheduling && tried && late ? t.t(`AdminBlogDialogs.futureTime`) : null
   const target = list ?? chosen?.list ?? null
-  // The issue goes only to the subscribers of the post's language (#527), so a list with none in
-  // it offers no email at all (#530).
+  // The issue goes only to the subscribers of the post's language, so a list with none in
+  // it offers no email at all.
   const readers = chosen?.byLanguage[value.language] ?? 0
   const sending = canEmail && emailing && target !== null && (chosen === undefined || readers > 0)
   const language = (text: string) => <span lang={value.language}>{text}</span>

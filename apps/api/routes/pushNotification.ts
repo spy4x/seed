@@ -48,13 +48,13 @@ export function createPushNotificationRoute(
             actor: actorFromAuth(c.get("auth")!),
             subscription,
             deviceId,
-            // trustedProxy: true keeps the old behaviour of trusting X-Forwarded-For / X-Real-IP.
+            // trustedProxy: true trusts X-Forwarded-For / X-Real-IP: Traefik overwrites them.
             request: requestInfoFromContext(c, { trustedProxy: true }),
           }),
         )
         return c.json({ userPushToken })
       } catch (error) {
-        // The session ended while the body was on its way, as at a password reset (#409).
+        // The session ended while the body was on its way, as at a password reset.
         if (error instanceof AccessError) {
           return errorResponse(c, `unauthorized`, { message: "Not authenticated" })
         }
@@ -72,7 +72,7 @@ export function createPushNotificationRoute(
         new PushRemoveCommand({
           actor: actorFromAuth(c.get("auth")!),
           deviceId,
-          // trustedProxy: true keeps the old behaviour of trusting X-Forwarded-For / X-Real-IP.
+          // trustedProxy: true trusts X-Forwarded-For / X-Real-IP: Traefik overwrites them.
           request: requestInfoFromContext(c, { trustedProxy: true }),
         }),
       )

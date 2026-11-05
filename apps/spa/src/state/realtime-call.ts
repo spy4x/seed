@@ -72,7 +72,7 @@ export function createAppCallPort(options: AppCallPortOptions): CallPort {
 
 /**
  * `port` whose refusals say their `message` in the page's language, translated by their code
- * through the `errors` catalog (#275). Code, reason, fields and details stay as the server sent
+ * through the `errors` catalog. Code, reason, fields and details stay as the server sent
  * them, so a store still branches on them; anything else a call rejects with passes through.
  */
 export function withTranslatedErrors<P extends CallPort>(port: P): P {
@@ -117,7 +117,7 @@ export function canCallAs(
  * read of `/api/auth/me`, the second-factor step and sign-in itself work as they always did.
  *
  * A refusal's `message` comes back in the page's language, translated by its code through the
- * `errors` catalog (#275), so a store shows it as it is.
+ * `errors` catalog, so a store shows it as it is.
  */
 export async function apiAsUser<T>(path: string, init?: RequestInit, fetcher: typeof send = send) {
   const userId = sessionState.value.user?.id

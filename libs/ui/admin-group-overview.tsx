@@ -29,10 +29,10 @@ export interface AdminOverviewWidget extends OverviewWidget {
 }
 
 /**
- * The admin group page's read-only "Overview widgets" section (#219): the widgets a member's
+ * The admin group page's read-only "Overview widgets" section: the widgets a member's
  * Overview page shows, in the default layout, with a range picker of its own. Nothing to hide or
  * reorder, and never a member's own layout. A widget that shows the group's own figures
- * (`operatorView: "never"`, #702) is not drawn: a line under the cards says so, and when none is
+ * (`operatorView: "never"`) is not drawn: a line under the cards says so, and when none is
  * left the section keeps only its title and that reason.
  */
 export function AdminGroupOverview(props: AdminGroupOverviewProps): JSX.Element {

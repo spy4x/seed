@@ -14,7 +14,7 @@ export enum TokenNeed {
 }
 
 /**
- * The messages an API token may send (#167), and what each one needs. Deny by default: anything
+ * The messages an API token may send, and what each one needs. Deny by default: anything
  * missing here is refused for a token, whatever the owner could do with a session, so a new
  * command never becomes reachable by a script by accident. Account actions (password, address,
  * deletion, sessions, tokens) are REST services, not messages, and the token API does not route to

@@ -65,7 +65,7 @@ export interface NoteRow {
   authorName?: string
   /** The author's own name for the avatar's initials, when `authorName` is "You". */
   authorAvatarName?: string
-  /** The author's profile picture (#228), in place of the initials. */
+  /** The author's profile picture, in place of the initials. */
   authorPictureUrl?: string
 }
 

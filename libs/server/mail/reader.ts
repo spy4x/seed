@@ -1,5 +1,5 @@
 /**
- * Who reads a mail (#277): the language, region format, zone and clock a mail to an account is
+ * Who reads a mail: the language, region format, zone and clock a mail to an account is
  * written in, from what the person saved and what their first device reported.
  *
  * @module

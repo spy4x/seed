@@ -40,7 +40,7 @@ const API = `/api/admin/catalog`
 /**
  * How many times an open item is read again while a photo is being prepared and none becomes
  * ready: a minute's worth. A photo that becomes ready starts the count again, so a large batch is
- * followed to its last photo (#514).
+ * followed to its last photo.
  */
 export const CATALOG_PREPARING_READS = 30
 
@@ -55,13 +55,12 @@ export interface CatalogItemEditorState {
   errors: CatalogFormErrors
   saving: boolean
   photos: CatalogPhotosState
-  /** The item's tracking links' addresses, by source id (#483). */
+  /** The item's tracking links' addresses, by source id. */
   links: Record<string, string>
   /** The source whose link is being made and copied. */
   copying: string | null
 }
 
-/** The category editor. */
 export interface CatalogCategoryEditorState {
   id: string | null
   value: CatalogCategoryDraft
@@ -77,7 +76,6 @@ function categoryDraft(category: CatalogCategory | null): CatalogCategoryDraft {
     : BLANK_CATEGORY
 }
 
-/** The source editor. */
 export interface CatalogSourceEditorState {
   id: string | null
   value: CatalogSourceDraft
@@ -94,7 +92,7 @@ function sourceDraft(source: CatalogLinkSource | null): CatalogSourceDraft {
 const NO_PHOTO_WORK: CatalogPhotosState = { uploading: 0, busy: false, error: null }
 
 /**
- * The catalog module's state (#466): the catalog's lists, the item editor with its photos, and the
+ * The catalog module's state: the catalog's lists, the item editor with its photos, and the
  * category editor. Every call goes through the app's `request`, which signs the app out on a 401.
  * A save checks the fields with the API's own rules first, so a wrong value is named under its
  * field; a refusal of the API's own shows under the form, on its field when it names one. After

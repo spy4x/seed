@@ -42,7 +42,7 @@ interface ConflictView {
  * The server's side of a conflict that carries no server copy: `gone` when the server deleted it,
  * and otherwise that its version is unknown. A refusal (`rejected`) never reads the server's copy,
  * and the queue fetches one for every version conflict, so an entry without it, such as one saved
- * by an older version, must not claim the item is gone (#613).
+ * by an older version, must not claim the item is gone.
  */
 function theirsUnknown(
   t: Translator<string>,

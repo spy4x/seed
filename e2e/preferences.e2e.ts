@@ -6,7 +6,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * Display preferences follow the person to every device (#163): a theme picked on the laptop paints
+ * Display preferences follow the person to every device: a theme picked on the laptop paints
  * the phone dark, and a time zone picked on the laptop, saved as it is picked, shows on the phone
  * without a reload. The laptop, now in another zone than the one picked, offers to switch back. A
  * region format and a clock saved on the profile write the dates on other screens and in the admin

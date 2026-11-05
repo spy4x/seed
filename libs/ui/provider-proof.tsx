@@ -18,9 +18,9 @@ import { useAppText } from "./i18n.ts"
 export interface ProviderProof {
   /** The providers the account signs in with. */
   providers: readonly OAuthProviderId[]
-  /** The account has a passkey (#222). */
+  /** The account has a passkey. */
   passkeys?: boolean
-  /** A sign-in code reaches the account: it has a proven address (#391, #752). */
+  /** A sign-in code reaches the account: it has a proven address. */
   emailLink?: boolean
   /** This device signed in with one of them less than `PROVIDER_PROOF_MINUTES` minutes ago. */
   fresh: boolean
@@ -36,7 +36,7 @@ export interface ProviderProof {
 /**
  * The proof an account with these sign-in methods confirms with, or `null` for an account that
  * has a password, or while the methods are not known. `emailLink` says a sign-in link reaches the
- * account, which then needs no linked method at all: one made by a link has none (#391).
+ * account, which then needs no linked method at all: one made by a link has none.
  */
 export function providerProofOf(
   methods: readonly SignInMethod[] | null | undefined,

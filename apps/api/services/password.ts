@@ -38,7 +38,7 @@ export interface PasswordOperations {
    * way it revokes every personal API token of the user, each with its audit row, in the same
    * transaction as the password, so a failed revoke leaves the old password in place, and answers
    * how many: a token is what a stolen session leaves behind, and a person who changes the
-   * password after a break-in expects it gone (#293). `null` when the current password is wrong or
+   * password after a break-in expects it gone. `null` when the current password is wrong or
    * the new one is refused. The current password is counted as {@link checkPassword} counts it.
    */
   changePassword(
@@ -53,7 +53,7 @@ export interface PasswordOperations {
    * checks it. A step that must not run on a stolen session alone, such as handing a group to
    * someone else, asks for it. `false` for an account with no password.
    *
-   * Counted per user (#406): a wrong password counts, a right one gives its count back, and while
+   * Counted per user: a wrong password counts, a right one gives its count back, and while
    * the account is locked the password is not looked at and {@link PasswordLockedError} is thrown,
    * right password or not. An account with no password has nothing to guess and is not counted.
    */
@@ -88,7 +88,7 @@ export interface PasswordOperations {
    * Gives an account that has no password its first one, after a provider sign-in a moment ago
    * ({@link confirmedByProvider}): a new password key on the address the account has, proven, and
    * an audit row, in one transaction. Every other session of the user ends, as a password change
-   * ends them; this one keeps its cookie (#406).
+   * ends them; this one keeps its cookie.
    */
   setPassword(c: Context, state: AppAuthState, newPassword: string): Promise<PasswordSetOutcome>
 }
@@ -125,7 +125,7 @@ export function createPasswordOperations(own: SignInParts): PasswordOperations {
     async changePassword(c, { user, session: current }, password, newPassword, endOthers = true) {
       const change = { userId: user.id, currentPassword: password, newPassword }
       const request = requestInfoFromContext(c, { trustedProxy: true })
-      // One transaction (#293): the password and the tokens change together or not at all, so a
+      // One transaction: the password and the tokens change together or not at all, so a
       // failed revoke never leaves a new password with live tokens. The provider is built over
       // the transaction's stores, as at sign-up. The connection is held for one hash and one
       // verify.
@@ -143,7 +143,7 @@ export function createPasswordOperations(own: SignInParts): PasswordOperations {
           if (endOthers) {
             session = (await passwords.changePassword({ ...change, device: deviceOf(c) })).session
             // Every session ended and this device got a new one: its notifications move to it,
-            // and every other device's go (#181).
+            // and every other device's go.
             await tx.pushTokens.moveToSession(user.id, current.id, session.session.id)
             await tx.pushTokens.removeAllBut(user.id, session.session.id)
           } else {
@@ -158,7 +158,7 @@ export function createPasswordOperations(own: SignInParts): PasswordOperations {
           return { session, revokedTokens }
         })
       const outcome: { changed?: Awaited<ReturnType<typeof run>> } = {}
-      // Counted as every password check of a signed-in step is (#406). Only a wrong current
+      // Counted as every password check of a signed-in step is. Only a wrong current
       // password is a guess; a new password the provider refuses gives the count back.
       await countedPasswordCheck(user.id, async () => {
         try {
@@ -166,7 +166,7 @@ export function createPasswordOperations(own: SignInParts): PasswordOperations {
           return true
         } catch (error) {
           // A key deleted between the check and this write reads as "invalid-credentials" too, so
-          // a right password then counts as wrong once (#178). Rare, and left as it is.
+          // a right password then counts as wrong once. Rare, and left as it is.
           if (error instanceof PasswordSignInError) return error.reason !== "invalid-credentials"
           throw error
         }
@@ -241,7 +241,7 @@ export function createPasswordOperations(own: SignInParts): PasswordOperations {
           // address later into this account. The key of a change that waits for its code stays.
           await dropCodeKeys(tx.authStore, user.id, pending)
           // A new way in, as a password change is: whoever else holds a session of the account
-          // is signed out, and this device stays signed in (#406).
+          // is signed out, and this device stays signed in.
           await signOutOthers(tx, user.id, session.id)
           await tx.authAudit.insert(
             auditRow(c, user.id, AuthAuditEventType.SIGN_IN_METHOD_LINKED, PASSWORD_METHOD),

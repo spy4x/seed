@@ -2,7 +2,7 @@ import { type DateRange, formatIsoDate, isValidDateRange, parseIsoDate } from "@
 import type { GroupRole } from "./+lib.ts"
 
 /**
- * The group overview (#219): a page of widgets, each a number or a chart about the group over a
+ * The group overview: a page of widgets, each a number or a chart about the group over a
  * range of days. Each aggregate lists its own widgets (`NOTE_WIDGETS` in `@domain/notes`); the
  * overview draws the ones the person's role may see, in the order the person chose.
  * `docs/aggregate-extras.md`, "Add a widget to the overview", walks through adding one.

@@ -32,7 +32,7 @@ const ERROR_TRACKER_VARIABLE = "$csp_error_tracker"
  *
  * - the error tracker the reporter posts to, when the deployment has one;
  * - the Google and GitHub image hosts, for the provider's picture of the person on "Create a new
- *   account?" (#142). The API drops a picture from any other host before it reaches the page.
+ *   account?". The API drops a picture from any other host before it reaches the page.
  *
  * The API and its WebSocket are on the SPA's own origin (the proxy routes `/api` and `/ws`), so
  * `'self'` covers them, as it covers the service worker, the web manifest and the fonts
@@ -151,7 +151,7 @@ export default defineConfig({
       find: /^@ui\//,
       replacement: fromFileUrl(new URL("../../libs/ui/", import.meta.url)),
     }, {
-      // The catalogs (#216), `i18n/<namespace>/<language>.ts`, resolved like `@ui/`.
+      // The catalogs, `i18n/<namespace>/<language>.ts`, resolved like `@ui/`.
       find: /^@i18n\//,
       replacement: fromFileUrl(new URL("../../i18n/", import.meta.url)),
     }],

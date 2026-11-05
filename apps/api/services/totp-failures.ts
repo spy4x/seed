@@ -1,5 +1,5 @@
 /**
- * The persistent count of wrong one-time codes per user, with a lock that grows per failure (#73).
+ * The persistent count of wrong one-time codes per user, with a lock that grows per failure.
  *
  * The flow and the policy are `@spy4x/server/lockout`'s defaults: 5 free failures, then 15 minutes
  * doubling up to one day, and 7 quiet days set the count back to 0. Each check is counted before
@@ -10,8 +10,7 @@
  * The per-user rate limit `otpByUser` in `middlewares/auth-rate-limits.ts` keeps its budget in
  * Valkey and stops a burst within its window. This counter lives in Postgres next to the
  * authenticator, and its lock grows with every failure. Together they cap a guesser at about 570 guesses a year for one user, a
- * chance of about 0.17% of hitting one of the 3 codes that are valid at any moment (arithmetic in
- * the pull request of #73).
+ * chance of about 0.17% of hitting one of the 3 codes that are valid at any moment.
  *
  * @module
  */

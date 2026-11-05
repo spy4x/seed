@@ -1,6 +1,6 @@
 // deno-lint-ignore-file ui-text/no-literal
 /**
- * The guest-account screens (#224) driven in a browser DOM (happy-dom): `/try`, `/keep`,
+ * The guest-account screens driven in a browser DOM (happy-dom): `/try`, `/keep`,
  * `/keep/taken`, the sign-out question, the refusal of a limited action, the Profile's delete and
  * the first steps for a guest. What each shows, what the app receives and where focus goes.
  */

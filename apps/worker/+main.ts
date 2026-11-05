@@ -82,7 +82,7 @@ const filesSetup = readServerFilesSetup(processEnv)
 if (!filesSetup.success) console.warn(filesSetup.error)
 const files = filesSetup.success ? s3ServerFiles(filesSetup.output) : null
 
-// Image processing (#464) runs `vips` on files: each run gets a folder of its own under the one
+// Image processing runs `vips` on files: each run gets a folder of its own under the one
 // directory the worker may read and write (`--allow-read`/`--allow-write` in compose), and removes
 // it when done.
 const IMAGE_SCRATCH_ROOT = `/tmp/images`
@@ -102,7 +102,7 @@ const imageScratch: ImageScratch = {
   close: (dir) => runtimeFileSystem.removeTree!(dir),
 }
 
-// Notifications also go to a linked Telegram chat (#269, docs/telegram.md) while the bot is on. The
+// Notifications also go to a linked Telegram chat (docs/telegram.md) while the bot is on. The
 // worker only sends, so it needs no webhook secret.
 const telegramSetup = readTelegramSetup(
   processEnv,
@@ -115,14 +115,14 @@ const telegram = telegramSetup
   ? new TelegramClient({ token: telegramSetup.token, apiBaseUrl: telegramSetup.apiBaseUrl })
   : null
 
-// IndexNow (#418, docs/blog.md): with `INDEXNOW_KEY` and `MPA_DOMAIN`, a blog post that goes live,
+// IndexNow (docs/blog.md): with `INDEXNOW_KEY` and `MPA_DOMAIN`, a blog post that goes live,
 // changes, moves or leaves is announced to the search engines. A malformed key stops the worker.
 const indexNow = readIndexNowSetup(processEnv, processEnv.get("ENV") === "dev" ? "dev" : "prod")
 if (!indexNow && processEnv.get("INDEXNOW_KEY")?.trim()) {
   console.warn("IndexNow is off: INDEXNOW_KEY is set, but MPA_DOMAIN is not")
 }
 
-// The Dev.to cross-post (#733, docs/blog.md): with `DEVTO_API_KEY` and `MPA_DOMAIN`, a live post
+// The Dev.to cross-post (docs/blog.md): with `DEVTO_API_KEY` and `MPA_DOMAIN`, a live post
 // is posted to Dev.to once ever, with its canonical address on the website. The key stays in the
 // client and is never logged.
 const crosspost = readCrosspostSetup(processEnv, processEnv.get("ENV") === "dev" ? "dev" : "prod")

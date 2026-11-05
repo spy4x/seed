@@ -1,5 +1,5 @@
 /**
- * A code mailed to an address for one request a browser waits on (#752): sign-in and password
+ * A code mailed to an address for one request a browser waits on: sign-in and password
  * reset both use it.
  *
  * The code is a challenge of `@spy4x/server/auth`: 48 random bits as 8 base64url characters, as

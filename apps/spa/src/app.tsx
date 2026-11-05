@@ -136,7 +136,7 @@ const PAGES: {
   "/sign-up/code": () => <SignUpCodeView />,
   "/sign-in": () => <AuthView key="sign-in" screen="sign-in" />,
   "/sign-in/code": () => <SignInCodeView />,
-  // Sign-in mailed a link until #752: an old bookmark or mail opens the code page, keeping `next`.
+  // Sign-in once mailed a link: an old bookmark or mail opens the code page, keeping `next`.
   "/sign-in/link": () => <Redirect to={SCREEN_PATHS.signInCode + location.search} replace />,
   "/sign-in/link/open": () => <Redirect to={SCREEN_PATHS.signInCode} replace />,
   "/try": () => <TryView />,
@@ -144,7 +144,7 @@ const PAGES: {
   "/keep/taken": () => <GuestTakenView />,
   "/totp": () => <AuthView key="one-time-code" screen="one-time-code" />,
   "/forgot-password": () => <ForgotPasswordView />,
-  // The reset mailed a link to this page until #752; the code step lives on `/forgot-password`.
+  // The reset once mailed a link to this page; the code step lives on `/forgot-password`.
   "/reset-password": () => <Redirect to={SCREEN_PATHS.forgotPassword} replace />,
   "/subscribe": () => <SubscribeView />,
   "/subscribe/confirm": () => <SubscriptionConfirmView />,
@@ -178,7 +178,7 @@ const PAGES: {
 
 /**
  * One `<Route>` per row of the route table, in its order, then the page for an address none of
- * them answers (#368): `visitor` when nobody is signed in. Wouter's `Switch` draws the first child
+ * them answers: `visitor` when nobody is signed in. Wouter's `Switch` draws the first child
  * whose `path` matches, and a child with no `path` matches every address, so the not-found screen
  * is a plain last child: no route, since it is no page of the table.
  */
@@ -259,8 +259,8 @@ function RouteAnnouncer({ path }: { path: string }) {
 
 /**
  * Clears the device once nobody is signed in. After the person's own sign-out or account deletion
- * nothing of theirs stays (#206); when the server ended the session (it expired, or was ended
- * elsewhere), their queue of unsent writes stays for their next sign-in (#612).
+ * nothing of theirs stays; when the server ended the session (it expired, or was ended
+ * elsewhere), their queue of unsent writes stays for their next sign-in.
  */
 function wipeSignedOut(): Promise<void> {
   return signOutChosen.value ? wipeDevice() : wipeDeviceKeepingQueue()
@@ -285,7 +285,7 @@ export function App() {
 
   useEffect(() => {
     // The user is remembered for the next start with no network. Signed out, the device keeps
-    // nothing of anyone (#206) but the unsent queue of a session the server ended (#612).
+    // nothing of anyone but the unsent queue of a session the server ended.
     const { user, isReady, isMfaRequired } = sessionState.value
     if (user && !isMfaRequired) {
       signOutChosen.value = false
@@ -293,7 +293,7 @@ export function App() {
     } else if (isReady && !user) void wipeSignedOut()
   }, [sessionState.value.user, sessionState.value.isReady, sessionState.value.isMfaRequired])
 
-  // The sign-in page of this browser later says which method the person used (#142).
+  // The sign-in page of this browser later says which method the person used.
   useEffect(() => void rememberSignIn(sessionState.value), [
     sessionState.value.user?.id,
     sessionState.value.isMfaRequired,
@@ -352,7 +352,7 @@ export function App() {
   }, [
     sessionState.value.user?.id,
     sessionState.value.isMfaRequired,
-    // Keeping a guest account ends the guest's session and starts a new one (#374): the socket,
+    // Keeping a guest account ends the guest's session and starts a new one: the socket,
     // still open on the old one, is opened again on the new cookie.
     isGuest(sessionState.value.user),
   ])
@@ -373,7 +373,7 @@ export function App() {
           toasts={toasts.list.value}
           onDismiss={toasts.remove}
           // From `md` up, where the rail replaces the phone's tab bar, the stack sits at the bottom
-          // right, clear of the page header's "More actions" menu (#236); on a phone it stays at
+          // right, clear of the page header's "More actions" menu; on a phone it stays at
           // the top, clear of the tab bar.
           class="md:top-auto! md:bottom-(--toastr-gap)!"
           dataE2E="toasts"

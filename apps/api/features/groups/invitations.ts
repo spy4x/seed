@@ -72,7 +72,7 @@ export interface InvitationMail {
   /** Spends one of the address's mails for the hour; a refusal sends nothing. */
   byAddress(email: string): Promise<RateLimitDecision>
   /**
-   * Who the mail is written for (#277): the inviter's language, zone and format, since the person
+   * Who the mail is written for: the inviter's language, zone and format, since the person
    * invited may have no account yet.
    */
   readerOf(userId: number): Promise<MailReader>
@@ -104,7 +104,7 @@ export interface InvitationHandlerDependencies {
 /**
  * Creates an invitation and, when asked, mails its link. The token is made here and handed back
  * once; the store keeps only its hash. Only an account whose own address is proven may invite, by
- * link or by address (#411): whoever signed up first with somebody else's address could otherwise
+ * link or by address: whoever signed up first with somebody else's address could otherwise
  * let a second account of theirs in, and keep it in the group after the owner takes the account
  * back with a password reset. Who may invite with which role, whether the plan allows that role,
  * and the group's member cap are checked by the store on locked rows. A mail that is not sent

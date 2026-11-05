@@ -4,9 +4,9 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The admin app's groups module (#426): an operator finds a group by its name, sees its members,
+ * The admin app's groups module: an operator finds a group by its name, sees its members,
  * its invitations and its activity, removes a member and revokes an invitation, and the group's
- * activity says an operator did both. The person page links to the group. In the Files tab (#478)
+ * activity says an operator did both. The person page links to the group. In the Files tab
  * the operator finds a file by its name among many, sees its thumbnail, opens and downloads it,
  * both written to the audit log, and removes it.
  */

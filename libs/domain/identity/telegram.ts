@@ -1,5 +1,5 @@
 /**
- * Telegram (#269): a person links their Telegram account to their account here, gets their
+ * Telegram: a person links their Telegram account to their account here, gets their
  * notifications in the chat with the product's bot, and uses the bot's commands as themselves.
  * The rules every app shares live here; the bot runs in the API (docs/telegram.md).
  *

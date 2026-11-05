@@ -86,7 +86,7 @@ function actorOf(c: Context<APIContext>): ContactLinkActor {
 }
 
 /**
- * The contact-link routes of the operator area (#465), mounted at `/api/admin` behind the gate in
+ * The contact-link routes of the operator area, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them, and every `POST` passed the
  * same-origin guard. Every change writes an audit row on the operator.
  *
@@ -171,7 +171,7 @@ export function createAdminContactLinks(sql: postgres.Sql): AdminContactLinksSer
   }
 }
 
-/** The contact-links module: where people reach the product, as the website shows it (#465). */
+/** The contact-links module: where people reach the product, as the website shows it. */
 export const contactLinksAdminModule: AdminApiModule = {
   id: `contact-links`,
   routes: ({ sql, limit }) =>

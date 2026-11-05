@@ -2,7 +2,7 @@ import { signal } from "@preact/signals"
 import type { GuestLimitedAction } from "@domain/identity"
 
 /**
- * The action the API last refused a guest (#224), or `null`. The app's frame shows the refusal
+ * The action the API last refused a guest, or `null`. The app's frame shows the refusal
  * with "Keep your account" wherever the action was, so no screen needs to know about guests.
  */
 export const guestRefusal = signal<GuestLimitedAction | "other" | null>(null)

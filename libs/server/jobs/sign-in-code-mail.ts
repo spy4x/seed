@@ -12,7 +12,6 @@ import { readMailReader, requestReader } from "../mail/reader.ts"
 import { accountUsing } from "../auth/sign-up-requests.ts"
 import { enqueueJob, type JobHandler } from "./jobs.ts"
 
-/** The job that mails one sign-in code (#391, #752). */
 export const SIGN_IN_CODE_MAIL_JOB = "auth.sign-in-code-mail"
 
 /**
@@ -49,7 +48,7 @@ export function signInCodeMailJob(deps: SignInCodeMailDeps): JobHandler {
     if (!request) return
     const code = await SIGN_IN_CODES.issue(deps.store, request, request.expiresAt)
     // The address's account, when one uses it, speaks its saved language; else the asking page's.
-    // The answer reaches only the mailbox, so it tells the asker nothing (#277).
+    // The answer reaches only the mailbox, so it tells the asker nothing.
     const account = await accountUsing(deps.store, request.email)
     const reader = account
       ? await readMailReader(sql, account.userId, request.language)

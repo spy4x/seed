@@ -9,7 +9,7 @@ COPY --chown=1000:1000 . .
 USER 1000:1000
 
 # The release pipeline names the tag and the commit it builds from; the operator area's System page
-# shows them (#429). A local build leaves both empty.
+# shows them. A local build leaves both empty.
 ARG APP_VERSION=
 ARG APP_COMMIT=
 ENV APP_VERSION=${APP_VERSION} APP_COMMIT=${APP_COMMIT}

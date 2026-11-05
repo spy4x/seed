@@ -1,5 +1,5 @@
 /**
- * The sign-up's code step (#142), driven in a browser DOM (happy-dom): "Check your inbox", "You
+ * The sign-up's code step, driven in a browser DOM (happy-dom): "Check your inbox", "You
  * already have an account" and "This sign-up expired". What each shows, what the app receives and
  * where focus goes.
  */

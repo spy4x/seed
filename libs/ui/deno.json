@@ -5,11 +5,11 @@
     // A browser DOM for the interaction tests: focus, form submission and FormData.
     "happy-dom": "npm:happy-dom@20.14.5"
   },
-  // `ui-text/no-literal` (#216) flags English text written in a component's markup: its text and
+  // `ui-text/no-literal` flags English text written in a component's markup: its text and
   // its DOM attributes. Every screen keeps to it; only a test file may opt out with
   // `// deno-lint-ignore-file ui-text/no-literal`.
   // The rule does not see English kept in constants or passed to a component's own props: the
-  // en-XA tests catch those (#275).
+  // en-XA tests catch those.
   "lint": {
     "plugins": ["jsr:@spy4x/preact-theme@13.11.1/lint"]
   }

@@ -1,5 +1,5 @@
 /**
- * Sign-in and sign-up by e-mail code (#391, #752) in a browser DOM (happy-dom): the code page,
+ * Sign-in and sign-up by e-mail code in a browser DOM (happy-dom): the code page,
  * the button on sign-in and sign-up, the last-sign-in hint, and the proof an account with no
  * password confirms a step with. Typing, pressing through the app's callbacks, and where focus goes.
  */

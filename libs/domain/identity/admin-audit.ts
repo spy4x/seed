@@ -1,5 +1,5 @@
 /**
- * The operator area's audit log (#429): every audit entry across the product, newest first. Two
+ * The operator area's audit log: every audit entry across the product, newest first. Two
  * tables feed it: `auth_audits`, each person's own trail (sign-ins, profile and token changes, and
  * what an operator did to them), and `audit_events`, the activity of groups and the operator's
  * actions on the system. Types only, plus the filter's parsing; the SQL is
@@ -26,13 +26,13 @@ export const ADMIN_AUDIT_EXPORT_MAX = 10_000
 /** The longest person search the log takes; the rest is cut off. */
 export const ADMIN_AUDIT_SEARCH_MAX = 100
 
-/** The `audit_events.event_kind` of an operator running a failed job again (#429). */
+/** The `audit_events.event_kind` of an operator running a failed job again. */
 export const ADMIN_JOB_RETRIED_KIND = "system.job_retried"
 
-/** The `audit_events.event_kind` of an operator running a waiting job now (#394). */
+/** The `audit_events.event_kind` of an operator running a waiting job now. */
 export const ADMIN_JOB_RUN_NOW_KIND = "system.job_run_now"
 
-/** The `audit_events.event_kind` of an operator cancelling a waiting job (#394). */
+/** The `audit_events.event_kind` of an operator cancelling a waiting job. */
 export const ADMIN_JOB_CANCELLED_KIND = "system.job_cancelled"
 
 /** The operator's actions on a job: each entry's details name the job's kind. */
@@ -42,16 +42,16 @@ export const ADMIN_JOB_AUDIT_KINDS: readonly string[] = [
   ADMIN_JOB_CANCELLED_KIND,
 ]
 
-/** The `audit_events.event_kind` of an operator downloading the log as a file (#429). */
+/** The `audit_events.event_kind` of an operator downloading the log as a file. */
 export const ADMIN_AUDIT_EXPORTED_KIND = "system.audit_exported"
 
 /**
- * The `audit_events.event_kind` of an operator opening one of a group's files in the admin app
- * (#478). The row belongs to the group and names the file in `details.name`.
+ * The `audit_events.event_kind` of an operator opening one of a group's files in the admin app.
+ * The row belongs to the group and names the file in `details.name`.
  */
 export const ADMIN_FILE_OPENED_KIND = "operator.file_opened"
 
-/** The `audit_events.event_kind` of an operator downloading one of a group's files (#478). */
+/** The `audit_events.event_kind` of an operator downloading one of a group's files. */
 export const ADMIN_FILE_DOWNLOADED_KIND = "operator.file_downloaded"
 
 /**
@@ -200,7 +200,6 @@ export interface AdminAuditEntry {
    * the person themselves otherwise. `null` when that account is gone.
    */
   actor: AdminAuditPerson | null
-  /** An operator did it. */
   byOperator: boolean
   /** The group a group entry belongs to, while the group exists. */
   group: { id: string; name: string } | null

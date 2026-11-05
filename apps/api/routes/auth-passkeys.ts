@@ -43,7 +43,7 @@ export const PASSKEY_NAME_INVALID = "Give the passkey a name of up to 64 charact
 const KEY_ID = /^[1-9][0-9]{0,9}$/
 
 /**
- * Passkeys (#222): adding one, renaming it, and signing in with one. Removing one is the methods
+ * Passkeys: adding one, renaming it, and signing in with one. Removing one is the methods
  * card's `DELETE /methods/:id` (`auth-oauth.ts`). Mounted at `/auth` before `createAuthRoute`, for
  * the reason `createOAuthRoute` gives: every route names its own middleware.
  */

@@ -171,7 +171,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   )
 
   // An account with no password and no proven address: a first password would be refused, so its
-  // dialog says the address comes first (#463). Unknown status shows the form; the API decides.
+  // dialog says the address comes first. Unknown status shows the form; the API decides.
   const emailStatus = emailStore.status.value
   const passwordNeedsEmail = providerProof && emailStatus && !hasPasswordAddress(emailStatus)
     ? { pending: emailStatus.pending }
@@ -251,7 +251,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   }, [section, exportRead])
 
   // A link started here comes back from the provider with `?oauth=`: say how it ended, once.
-  // A switch from a guest account (#224) lands here with `?moved=`, the groups that came along.
+  // A switch from a guest account lands here with `?moved=`, the groups that came along.
   useEffect(() => {
     const query = new URLSearchParams(search)
     const moved = Number(query.get("moved"))
@@ -388,7 +388,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       twoFactor ? values.passwordOtp : undefined,
     )
     // The refusal is set in the same render that ends the wait: the dialog closes on a wait that
-    // ends without an error, so an error set after the read below came too late (#463).
+    // ends without an error, so an error set after the read below came too late.
     if (!result.ok) setPasswordError(result.error || t.t(PROFILE_FAILURES.passwordSet))
     setBusyPassword(false)
     // Read again either way: a refusal may mean the provider sign-in is no longer recent.
@@ -404,7 +404,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
 
   /**
    * Starts the set-up after the "Turn on" dialog: with the password, or for an account with none
-   * after its provider sign-in a moment ago, as the deletion asks (#406).
+   * after its provider sign-in a moment ago, as the deletion asks.
    */
   const startTotp = async () => {
     setTotpError(null)
@@ -461,7 +461,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   }
 
   const registerPush = async () => {
-    // Before the browser asks for permission: the server refuses a guest's device anyway (#224).
+    // Before the browser asks for permission: the server refuses a guest's device anyway.
     if (isGuestSession()) {
       guestRefusal.value = "push"
       return

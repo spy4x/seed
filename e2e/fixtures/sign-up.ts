@@ -9,7 +9,7 @@ import { gotoApp } from "./app.ts"
 
 /**
  * The subject of the mail that carries a code to prove an address, in each language the page can
- * ask for it in (#277): `EmailCodeMail.subject` of `i18n/mail/<language>.ts`.
+ * ask for it in: `EmailCodeMail.subject` of `i18n/mail/<language>.ts`.
  */
 export const CODE_SUBJECTS: Record<string, string> = {
   en: `Your code to confirm your email`,
@@ -67,7 +67,7 @@ export async function nextCode(
 
 /**
  * Waits for a mail to `email` whose subject starts with `subject` (a subject can end in the host,
- * whose port differs between stacks), and answers the code in it (#752): the
+ * whose port differs between stacks), and answers the code in it: the
  * second paragraph, as with the sign-up code. Earlier mails, such as the sign-up code, are passed
  * over until it arrives.
  */
@@ -88,7 +88,7 @@ export async function mailedCode(
 }
 
 /**
- * Signs up through the API the way a person does since #142: posts the address and password to
+ * Signs up through the API the way a person does: posts the address and password to
  * `signUpUrl` (`…/api/auth/password/sign-up`, absolute or relative to `api`'s base URL), reads the
  * code the worker mails from the development route, and enters it at `…/verify` with the same
  * headers. Answers the verify response, which signs the new account in as the old one-step sign-up
@@ -109,7 +109,7 @@ export async function signUpWithCode(
 }
 
 /**
- * Signs up through the form, as a new person does since #142: the address and the password, then
+ * Signs up through the form, as a new person does: the address and the password, then
  * the code the worker mails, read from the development route. The app then loads its home page
  * itself; waits for `ready` there.
  */

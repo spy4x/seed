@@ -1,5 +1,5 @@
 /**
- * Linked Telegram accounts (#269) in Postgres: the link code, the link itself and the account a
+ * Linked Telegram accounts in Postgres: the link code, the link itself and the account a
  * Telegram user acts as.
  *
  * A link is a row of `auth_keys` with method {@link TELEGRAM_METHOD} and the Telegram user id as

@@ -28,7 +28,7 @@ const SEAT_PLAN_IDS = PLANS.filter((plan) => plan.perSeat).map((plan) => plan.id
 
 /**
  * A condition on `subscriptions` rows: the subscription's own customer has not been handed over by
- * a transfer of ownership (#250). The previous owner's subscription only runs out its period, and
+ * a transfer of ownership. The previous owner's subscription only runs out its period, and
  * the app never changes what their card is billed for a group they no longer own.
  */
 function notHandedOver(sql: postgres.Sql): postgres.PendingQuery<postgres.Row[]> {

@@ -29,7 +29,7 @@ export interface GuestRouteDependencies {
 }
 
 /**
- * Guest accounts (#224): starting one with one click, the choice after a sign-in method turned out
+ * Guest accounts: starting one with one click, the choice after a sign-in method turned out
  * to belong to another account, and deleting a guest account. Keeping one goes through the
  * existing paths (the sign-up code, a provider link, a new passkey), which see the guest session.
  * Mounted at `/auth` before `createAuthRoute`, for the reason `createOAuthRoute` gives.

@@ -125,7 +125,7 @@ export interface AdminUsersScreenProps {
 }
 
 /**
- * The people page (#424): everyone with an account, in a table the server sorts and pages, with a
+ * The people page: everyone with an account, in a table the server sorts and pages, with a
  * search by name or address and filter chips for status and role. Each name opens the person.
  */
 export function AdminUsersScreen(
@@ -223,7 +223,7 @@ export function AdminUsersScreen(
               mode="single"
               label={t.t(`AdminUsers.account`)}
               class="flex-nowrap sm:flex-wrap"
-              // Guest accounts (#224), made with one click and no sign-in method, or every other.
+              // Guest accounts, made with one click and no sign-in method, or every other.
               options={[
                 { value: `guest`, label: t.t(`AdminUsers.guests`) },
                 { value: `full`, label: t.t(`AdminUsers.withSignIn`) },

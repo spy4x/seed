@@ -63,7 +63,7 @@ function withNext(path: string, next: string | null): string {
 }
 
 /**
- * What a link and an unlink ask for (#384, #385), and adding a passkey (#222): the account's
+ * What a link and an unlink ask for, and adding a passkey: the account's
  * password, or for an account without one a sign-in with a provider or a passkey a moment ago.
  * `null` when the body gives it; otherwise the refusal to answer.
  */
@@ -76,7 +76,7 @@ export async function refusalWithoutProof(
   if (body.error) return validationResponse(c, body.error.details)
   const { password } = body.data
   // A guest has no sign-in method to prove: the session is the account's only way in, and adding
-  // the first method is what keeping the account means (#224). A kept account is proven as before.
+  // the first method is what keeping the account means. A kept account is proven as before.
   if (state.user.guestSince) return null
   if (await signIn.hasPassword(state.user.id)) {
     if (password === undefined) {
@@ -87,7 +87,7 @@ export async function refusalWithoutProof(
         return errorResponse(c, `bad_request`, { message: "Invalid password" })
       }
     } catch (error) {
-      // Too many wrong passwords at the signed-in steps (#406): the lock they all share runs.
+      // Too many wrong passwords at the signed-in steps: the lock they all share runs.
       if (!(error instanceof PasswordLockedError)) throw error
       c.header("Retry-After", String(Math.ceil(error.retryAfterMs / 1000)))
       return errorResponse(c, `rate_limited`, {
@@ -188,7 +188,7 @@ export function createOAuthRoute(
         if (result.kind === "notice") {
           if (result.notice === "guest-taken") return c.redirect(page(OAUTH_PAGES.keepTaken), 302)
           if (result.notice === "kept") {
-            // Every guest session ended with the keep (#374): their sockets close.
+            // Every guest session ended with the keep: their sockets close.
             emit(
               new UserSignedOutEvent({
                 userId: c.get("auth")!.user.id,
@@ -241,7 +241,7 @@ export function createOAuthRoute(
       return c.json(await oauth.methods(c.get("auth")!))
     })
     // A POST, not a link: another site must not be able to start a link for a signed-in person.
-    // It asks for what the deletion asks (#384): the password, or for an account without one a
+    // It asks for what the deletion asks: the password, or for an account without one a
     // sign-in with a provider a moment ago. A new provider account is a new way in, and a
     // sign-in with it would count as that proof; so a session left open cannot add one.
     .post(
@@ -260,7 +260,7 @@ export function createOAuthRoute(
         return c.json({ url })
       },
     )
-    // Asks for what a link asks (#385): a session left open must not take away the way in the
+    // Asks for what a link asks: a session left open must not take away the way in the
     // owner uses. The strict per-user limit, since a password is checked.
     .delete(
       `/methods/:id`,

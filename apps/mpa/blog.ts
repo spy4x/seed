@@ -69,7 +69,7 @@ const postsAnswer = type({ posts: summary.array() })
 
 const headings = type({ id: `string`, text: `string`, depth: `number` }).array()
 
-/** A body segment: a chunk of the API's safe HTML, or a component tag, unchecked (#620). */
+/** A body segment: a chunk of the API's safe HTML, or a component tag, unchecked. */
 const segments = type({ kind: `'html'`, html: `string` }).or({
   kind: `'component'`,
   tag: `string`,
@@ -92,7 +92,7 @@ const postAnswer = type({
   readNext: summary.array(),
 })
 
-/** The answer for a slug the post moved away from: where it lives now (#418). */
+/** The answer for a slug the post moved away from: where it lives now. */
 const movedAnswer = type({ moved: { language, slug: `string` } })
 
 const feedAnswer = type({
@@ -119,7 +119,7 @@ async function read<T>(
 
 /**
  * The error a page throws when the blog API did not answer what it needed: 429 when the API's
- * public read limit refused the visitor (#416), so the error page says so without logging a fault,
+ * public read limit refused the visitor, so the error page says so without logging a fault,
  * else 502, which the error page logs.
  */
 function apiFailure(status: number, path: string): HttpError {
@@ -133,7 +133,7 @@ export async function listPosts(api: Api): Promise<PublicBlogPostSummary[]> {
 
 /**
  * The live post at `slug` with up to three to read next; `{ moved }`, the post's current language
- * and slug, when a live post moved away from `slug` with "Change URL" (#418); or `null` when there
+ * and slug, when a live post moved away from `slug` with "Change URL"; or `null` when there
  * is neither.
  */
 export async function readPost(

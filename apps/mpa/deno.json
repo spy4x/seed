@@ -54,8 +54,8 @@
     ],
     "types": ["vite/client"]
   },
-  // `ui-text/no-literal` (#216) flags English text written in markup: the website's words live in
-  // the `site` catalog (`i18n/site`, #276). A page that is English at every address, such as a
+  // `ui-text/no-literal` flags English text written in markup: the website's words live in
+  // the `site` catalog (`i18n/site`). A page that is English at every address, such as a
   // legal page, opts out with `// deno-lint-ignore-file ui-text/no-literal` and the reason.
   "lint": {
     "plugins": ["jsr:@spy4x/preact-theme@13.11.1/lint"],

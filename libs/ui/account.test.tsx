@@ -1445,7 +1445,6 @@ function withDeletion(
   )
 }
 
-/** Opens the deletion dialog. */
 async function openDeletion(): Promise<void> {
   await click("[data-e2e=account-delete-open]")
 }

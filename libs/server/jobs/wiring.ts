@@ -46,11 +46,11 @@ import type { ServerFiles } from "../files/files.ts"
  *
  * `jobs` is {@link JOBS} unless a test passes its own list. `files` is where the data export jobs
  * keep the person's file; without it they fail and are retried (docs/data-export.md). With
- * `telegram`, a notification also goes to the person's linked Telegram chat (#269); without it,
- * those jobs send nothing. `imageScratch` is where image processing writes its files (#464);
+ * `telegram`, a notification also goes to the person's linked Telegram chat; without it,
+ * those jobs send nothing. `imageScratch` is where image processing writes its files;
  * without it, those jobs fail and are retried. With `indexNow`, the `blog.indexnow` job tells
- * IndexNow that a post's addresses changed (#418); without it, that job sends nothing. With
- * `crosspost`, a live post is cross-posted to Dev.to once (#733); without it, it is skipped.
+ * IndexNow that a post's addresses changed; without it, that job sends nothing. With
+ * `crosspost`, a live post is cross-posted to Dev.to once; without it, it is skipped.
  * `fetcher` is how `blog.publish` asks the website whether a post is live; tests pass a fake.
  *
  * @throws Error when two jobs share a kind: one handler would silently replace the other.

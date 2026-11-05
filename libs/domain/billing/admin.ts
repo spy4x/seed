@@ -13,7 +13,7 @@ import {
 } from "./+lib.ts"
 
 /**
- * The operator area's billing module (#196): who pays, what they pay, and the five things support
+ * The operator area's billing module: who pays, what they pay, and the five things support
  * may do about it. The shapes the API answers and the page reads, and the rules both sides share,
  * so the page shows the same status, amount and dates the server decided on.
  *
@@ -188,7 +188,7 @@ export type AdminBillingListResponse =
     pricingUrl: string | null
   }
 
-/** The figures above the list (decision 2 of #196). */
+/** The figures above the list. */
 export interface AdminBillingFigures {
   /** List price × seats of every active and past-due subscription, one entry per currency. */
   monthlyRevenue: Money[]
@@ -256,7 +256,7 @@ export interface AdminBillingPaymentResponse {
   payment: AdminBillingPayment | null
 }
 
-/** The lengths of time at no charge an operator may give (decision 5 of #196). */
+/** The lengths of time at no charge an operator may give. */
 export const ADMIN_BILLING_TIME_LENGTHS = ["7d", "14d", "30d", "1m", "3m", "6m", "12m"] as const
 export type AdminBillingTimeLength = typeof ADMIN_BILLING_TIME_LENGTHS[number]
 
@@ -373,7 +373,7 @@ export function monthlyRevenue(
     .sort((a, b) => a.currency.localeCompare(b.currency))
 }
 
-/** The one status word a customer shows (decision 3 of #196). */
+/** The one status word a customer shows. */
 export enum AdminBillingState {
   Active = 1,
   Trial = 2,

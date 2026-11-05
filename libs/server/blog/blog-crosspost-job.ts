@@ -13,7 +13,7 @@ import { readSiteUrl } from "../subscribers/subscribers.ts"
 import type { BlogPostRow } from "./postgres-blog-repository.ts"
 
 /**
- * The Dev.to cross-post of a live post (#733): the post's text on Dev.to, with its
+ * The Dev.to cross-post of a live post: the post's text on Dev.to, with its
  * `canonical_url` at the public website, so search engines credit the website and not the copy.
  * Off unless `DEVTO_API_KEY` is set; docs/blog.md says how it runs.
  *

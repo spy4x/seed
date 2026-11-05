@@ -29,11 +29,11 @@ export const NotificationKind = {
   /** The group's owner handed the group to the person. */
   OwnershipReceived: "group.ownership_received",
   /**
-   * A guest account's reminder to add a sign-in method (#224). Its payload carries the reminder's
+   * A guest account's reminder to add a sign-in method. Its payload carries the reminder's
    * `title` and `text`, both fixed sentences of the app, never anything the person wrote.
    */
   GuestReminder: "guest.reminder",
-  /** The person's data export is ready (#229). Its payload carries `expiresAt`, an ISO date. */
+  /** The person's data export is ready. Its payload carries `expiresAt`, an ISO date. */
   DataExportReady: "account.data_export_ready",
 } as const
 
@@ -173,7 +173,7 @@ const ROLE_SENTENCES: Record<string, { invited: string; role: string }> = {
 }
 
 /**
- * A guest reminder's sentence, by the English title the server stored in its payload (#224): the
+ * A guest reminder's sentence, by the English title the server stored in its payload: the
  * payload names no reminder kind, so its fixed title picks the translation.
  */
 const GUEST_REMINDER_KEYS: Record<string, string> = {
@@ -230,7 +230,7 @@ export function notificationMessage(
   }
 }
 
-/** The most notifications the operator area shows of one person, newest first (#427). */
+/** The most notifications the operator area shows of one person, newest first. */
 export const ADMIN_NOTIFICATIONS_LIMIT = 50
 
 /**

@@ -71,7 +71,7 @@ export interface BlogPreviewState {
   /** The Markdown the preview shows, or is rendering. */
   source: string | null
   preview: BlogPreview | null
-  /** The tags of the last body that rendered which readers will not see, by line (#620). */
+  /** The tags of the last body that rendered which readers will not see, by line. */
   problems: readonly BlogProblem[]
   pending: boolean
   error: string | null
@@ -83,7 +83,7 @@ export interface BlogStatePorts {
   now: () => Date
   /** Opens the public post in a new tab. */
   open: (url: string) => void
-  /** Loads the website's figures, which the preview draws and checks tags against (#620). */
+  /** Loads the website's figures, which the preview draws and checks tags against. */
   figures: () => Promise<FigurePreview>
 }
 
@@ -158,7 +158,7 @@ function refusal(result: AdminApiResult<unknown>): Partial<BlogEditorState> {
 }
 
 /**
- * The blog module's state (#396): the list, and the one post the editor has open with its
+ * The blog module's state: the list, and the one post the editor has open with its
  * dialogs and preview. Every call goes through the app's `request`, which signs the app out on a
  * 401. Writes name the version the editor read; a 409 marks the editor as in conflict, and it
  * saves nothing more until the operator reloads.
@@ -175,7 +175,7 @@ export function createBlogState(
   const editor = signal<BlogEditorState>(freshEditor(ports.newId()))
   const dialog = signal<BlogDialogState>(NO_DIALOG)
   const preview = signal<BlogPreviewState>(NO_PREVIEW)
-  /** The History dialog's list and the version picked (#418). */
+  /** The History dialog's list and the version picked. */
   const history = signal<BlogHistoryState>(NO_BLOG_HISTORY)
   /** The versions already read, by id: the list's arrow keys come back to them often. */
   const revisions = new Map<string, BlogRevision>()

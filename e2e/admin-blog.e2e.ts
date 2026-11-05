@@ -5,7 +5,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The blog's admin pages (#396): an operator writes a post from the keyboard, previews it as the
+ * The blog's admin pages: an operator writes a post from the keyboard, previews it as the
  * public page renders it, schedules it, publishes it now, finds it on the list, changes its URL and
  * deletes it.
  */
@@ -140,7 +140,7 @@ test("an operator writes, previews, schedules, publishes, moves and deletes a po
     await expect(rows).toHaveCount(1)
     await expect(rows.first()).toContainText("Published")
 
-    // Change URL moves it; the old address now leads to the new one (#418).
+    // Change URL moves it; the old address now leads to the new one.
     const moved = `${slug}-moved`
     await ops.locator("[data-e2e=admin-blog-row]").click()
     await ops.locator("[data-e2e=admin-blog-menu]").click()

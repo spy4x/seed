@@ -135,7 +135,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
 /**
  * What an entry's event is called, in the operator's language: one whole message per event code.
  * An event this page does not know shows its code. A sign-in or sign-up by e-mail link names the
- * method in the title (#391), from the entry's `identifier`.
+ * method in the title, from the entry's `identifier`.
  */
 export function auditEventLabel(
   t: Translator<string>,
@@ -218,7 +218,7 @@ export interface AdminAuditScreenProps {
 }
 
 /**
- * The audit log (#429): every entry across the product, newest first. The account trail of each
+ * The audit log: every entry across the product, newest first. The account trail of each
  * person, group activity and the operators' own actions are one list, filtered by event, person,
  * operator, UTC days and IP address. Each person links to their page. The table is dense; the
  * timeline reads like a story. The primary action downloads what the filter shows as CSV.

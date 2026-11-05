@@ -51,7 +51,7 @@ test.describe("plan limits", () => {
       await signIn(page, owner, password)
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
       const { groupId } = await (await page.request.get(`${apiBase}/api/groups/selected`)).json()
-      // The worker adds a welcome note (#165) that counts against the cap. Wait for it, so the
+      // The worker adds a welcome note that counts against the cap. Wait for it, so the
       // person's own notes fill the rest of the free plan and the cap is hit at the same count.
       await expect.poll(async () => {
         const listed = await page.request.get(`${apiBase}/api/groups/${groupId}/notes?limit=100`)

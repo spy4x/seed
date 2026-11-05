@@ -1,4 +1,4 @@
-# The API, the worker and the migration on Bun (#748), for a product that sets APP_RUNTIME=bun: the
+# The API, the worker and the migration on Bun, for a product that sets APP_RUNTIME=bun: the
 # Bun counterpart of apps/api/dockerfile (infra/compose/compose.runtime-bun.yml, docs/apps.md).
 #
 # Deno bundles the four entry points at build time (`deno task server:build`, into dist/server),
@@ -14,7 +14,7 @@ RUN deno install --frozen && deno task server:build
 
 FROM docker.io/oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a
 # `vips-tools` (libvips 8.15 or newer), `vips-heif` to read HEIC and `libheif-aom` to write AVIF,
-# as in Dockerfile.base (docs/files.md, #464).
+# as in Dockerfile.base (docs/files.md).
 RUN apk add --no-cache vips-tools vips-heif libheif-aom
 WORKDIR /app
 COPY --from=build --chown=1000:1000 /app/dist/server ./dist/server
@@ -23,7 +23,7 @@ COPY --from=build --chown=1000:1000 /app/libs/server/db/migrations ./libs/server
 USER 1000:1000
 
 # The release pipeline names the tag and the commit it builds from; the operator area's System page
-# shows them (#429). A local build leaves both empty.
+# shows them. A local build leaves both empty.
 ARG APP_VERSION=
 ARG APP_COMMIT=
 ENV APP_VERSION=${APP_VERSION} APP_COMMIT=${APP_COMMIT}

@@ -54,7 +54,7 @@ export function OverviewView({ groupId }: { groupId: string }) {
   const search = useSearch()
   const membership = groupsStore.groups.value.find((group) => group.id === groupId)
   const format = preferencesState.format.value
-  // Days are cut in the group's zone, the same for every member (#701). A list stored before
+  // Days are cut in the group's zone, the same for every member. A list stored before
   // groups had a zone falls back to the person's own until the server's answer arrives.
   const timeZone = membership ? groupTimeZone(membership, format.timeZone) : format.timeZone
   const [customising, setCustomising] = useState(false)

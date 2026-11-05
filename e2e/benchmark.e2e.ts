@@ -5,7 +5,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The benchmark page (#440) on a small group: choose it, run every measure, and read the results
+ * The benchmark page on a small group: choose it, run every measure, and read the results
  * line. The dev server serves the SPA here, which is what opens the page.
  */
 

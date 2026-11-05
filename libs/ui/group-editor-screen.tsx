@@ -922,7 +922,7 @@ function GroupForm(
 
 /**
  * What the create page says about the trial, or `null` to say nothing: billing is off, or no plan
- * has a trial and the person never used one. One trial per person (#205), so it names the rule.
+ * has a trial and the person never used one. One trial per person, so it names the rule.
  */
 export function trialText(t: Translator<string>, trial: PersonTrial | null): string | null {
   if (!trial?.enabled) return null

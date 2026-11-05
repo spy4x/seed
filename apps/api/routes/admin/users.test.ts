@@ -35,7 +35,7 @@ import {
 import { apiError } from "../../_testing/api-error.ts"
 
 /**
- * The people actions of #425 behind the real operator gate: one session, a role, a reset link and
+ * The people actions behind the real operator gate: one session, a role, a reset link and
  * the CSV export. The service is a fake; what it decides is tested against Postgres in
  * `tests/integration/admin-users.integration.test.ts`.
  */
@@ -117,7 +117,7 @@ const PICTURE = "0190a000-0000-7000-8000-0000000000a1"
 /** A WebP's first bytes, as the store would answer them. */
 const PICTURE_BYTES = new Uint8Array([82, 73, 70, 70, 0, 0, 0, 0, 87, 69, 66, 80])
 
-/** Every path #425 adds, and the profile picture's (#228). */
+/** Every people-action path, and the profile picture's. */
 const ROUTES = [
   { method: "POST", path: "/admin/users/42/sessions/9/end" },
   { method: "POST", path: "/admin/users/42/role", body: { role: UserRole.OPERATOR } },

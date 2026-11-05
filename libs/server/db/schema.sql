@@ -380,7 +380,7 @@ CREATE INDEX idx_notes_group_updated_id_deleted
     ON notes (group_id, updated_at DESC, id)
     WHERE deleted_at IS NOT NULL;
 CREATE INDEX idx_notes_deleted_at ON notes (deleted_at) WHERE deleted_at IS NOT NULL;
--- Search over live notes (#299). See migration 2026_11_22_0001.
+-- Search over live notes. See migration 2026_11_22_0001.
 CREATE INDEX idx_notes_search_vector_active ON notes USING GIN (search_vector)
     WHERE deleted_at IS NULL;
 
@@ -405,7 +405,7 @@ CREATE INDEX idx_user_settings_selected_group
     WHERE selected_group_id IS NOT NULL;
 
 -- Password reset by e-mail. See migrations 2026_10_06_0001_password_reset.sql and
--- 2026_12_14_0002_email_codes.sql (#752: a code, waited for in the browser that asked).
+-- 2026_12_14_0002_email_codes.sql (a code, waited for in the browser that asked).
 CREATE TABLE password_reset_requests (
     id UUID PRIMARY KEY,
     email TEXT NOT NULL,
@@ -426,7 +426,7 @@ CREATE TABLE dev_mail (
 
 CREATE INDEX dev_mail_to_address_idx ON dev_mail (to_address, id);
 
--- A new address waiting for its code; the old one stays until it is proven (#140).
+-- A new address waiting for its code; the old one stays until it is proven.
 CREATE TABLE email_changes (
     user_id INT4 PRIMARY KEY REFERENCES auth_users (id) ON DELETE CASCADE,
     email TEXT NOT NULL,
@@ -454,7 +454,7 @@ CREATE TABLE email_code_failures (
     CONSTRAINT email_code_failures_failed_attempts_check CHECK (failed_attempts >= 0)
 );
 
--- Wrong passwords per sign-in name (the SHA-256 of what was typed), with a short lock (#387).
+-- Wrong passwords per sign-in name (the SHA-256 of what was typed), with a short lock.
 CREATE TABLE password_failures (
     subject CHAR(64) PRIMARY KEY,
     failed_attempts INT4 DEFAULT 0 NOT NULL,
@@ -463,7 +463,7 @@ CREATE TABLE password_failures (
     CONSTRAINT password_failures_failed_attempts_check CHECK (failed_attempts >= 0)
 );
 
--- Wrong passwords a signed-in account types at the steps that ask for it again (#406).
+-- Wrong passwords a signed-in account types at the steps that ask for it again.
 CREATE TABLE password_check_failures (
     user_id INT4 PRIMARY KEY REFERENCES auth_users (id) ON DELETE CASCADE,
     failed_attempts INT4 DEFAULT 0 NOT NULL,
@@ -472,7 +472,7 @@ CREATE TABLE password_check_failures (
     CONSTRAINT password_check_failures_failed_attempts_check CHECK (failed_attempts >= 0)
 );
 
--- One subscription per group, paid through a provider (#202). See the migration for the why.
+-- One subscription per group, paid through a provider. See the migration for the why.
 CREATE TABLE billing_customers (
     group_id UUID PRIMARY KEY REFERENCES groups(id) ON DELETE CASCADE,
     provider_customer_id VARCHAR(255) NOT NULL,
@@ -482,7 +482,7 @@ CREATE TABLE billing_customers (
 CREATE UNIQUE INDEX idx_billing_customers_provider_customer_id
     ON billing_customers (provider_customer_id);
 
--- Customers handed over by a transfer of ownership (#250), for good. See the migration for the why.
+-- Customers handed over by a transfer of ownership, for good. See the migration for the why.
 CREATE TABLE billing_handed_over_customers (
     provider_customer_id VARCHAR(255) PRIMARY KEY,
     group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
@@ -504,21 +504,21 @@ CREATE TABLE subscriptions (
     provider_event_at TIMESTAMPTZ NOT NULL,
     provider_event_rank INT2 NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    -- When the provider first reported it past due (#204): the grace period counts from here. A
+    -- When the provider first reported it past due: the grace period counts from here. A
     -- later past-due event keeps it; any other status clears it.
     past_due_since TIMESTAMPTZ,
-    -- When the trial ends (#204), as the provider last reported it; `NULL` without a trial.
+    -- When the trial ends, as the provider last reported it; `NULL` without a trial.
     trial_end TIMESTAMPTZ,
-    -- The seats the provider last reported the subscription bills (#205). A per-member plan bills
+    -- The seats the provider last reported the subscription bills. A per-member plan bills
     -- one per member; the worker changes the subscription when the member count differs.
     quantity INTEGER,
-    -- Whether this subscription was ever active, so it has paid at least once (#247). Only then
+    -- Whether this subscription was ever active, so it has paid at least once. Only then
     -- does a failed payment get the grace period; a trial whose first charge fails gets none.
     ever_active BOOLEAN DEFAULT FALSE NOT NULL,
-    -- The customer this subscription bills (#250), so a handed-over customer's subscription is
+    -- The customer this subscription bills, so a handed-over customer's subscription is
     -- known by its own customer and not by the group's current one.
     provider_customer_id VARCHAR(255),
-    -- How often the price the provider last reported bills (#695); `NULL` when that price is in no
+    -- How often the price the provider last reported bills; `NULL` when that price is in no
     -- plan.
     billing_period INT2,
     CONSTRAINT subscriptions_status_check CHECK (status BETWEEN 1 AND 6),
@@ -545,7 +545,7 @@ CREATE TABLE billing_events (
     CONSTRAINT billing_events_event_type_check CHECK (event_type BETWEEN 1 AND 5)
 );
 
--- Invitations to a group (#131). See the migration for the why.
+-- Invitations to a group. See the migration for the why.
 CREATE TABLE group_invitations (
     id UUID PRIMARY KEY,
     group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
@@ -660,7 +660,7 @@ CREATE TABLE subscriber_issue_content (
   CONSTRAINT subscriber_issue_content_language_check CHECK (length(language) BETWEEN 2 AND 35)
 );
 
--- A person's request to delete their account (#144). See migration 2026_10_20_0001.
+-- A person's request to delete their account. See migration 2026_10_20_0001.
 CREATE TABLE account_deletions (
     id UUID PRIMARY KEY,
     user_id INT4 NOT NULL UNIQUE REFERENCES auth_users(id) ON DELETE CASCADE,
@@ -670,7 +670,7 @@ CREATE TABLE account_deletions (
 
 CREATE INDEX idx_account_deletions_delete_after ON account_deletions (delete_after);
 
--- A restore whose mail is not sent yet (#144). See migration 2026_10_20_0001.
+-- A restore whose mail is not sent yet. See migration 2026_10_20_0001.
 CREATE TABLE account_restorations (
     id UUID PRIMARY KEY,
     user_id INT4 NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
@@ -679,7 +679,7 @@ CREATE TABLE account_restorations (
 
 CREATE INDEX idx_account_restorations_user_id ON account_restorations (user_id);
 
--- A sign-in method linked or unlinked whose mail is not sent yet (#385). See migration
+-- A sign-in method linked or unlinked whose mail is not sent yet. See migration
 -- 2026_11_07_0001.
 CREATE TABLE sign_in_method_changes (
     id UUID PRIMARY KEY,
@@ -1109,7 +1109,7 @@ CREATE TABLE telegram_messages (
 CREATE INDEX idx_telegram_messages_user_id ON telegram_messages (user_id);
 CREATE INDEX idx_telegram_messages_notification_id ON telegram_messages (notification_id);
 
--- Note attachments (#225, docs/files.md). A file is kept in the file store under `object_key`;
+-- Note attachments (docs/files.md). A file is kept in the file store under `object_key`;
 -- this table says which note it belongs to. A note's group is the file's group, so a file moves
 -- with its note and needs no group column of its own. Deleting the note (its purge, its group's,
 -- its owner's account) deletes the row through the foreign key, and the trigger below queues the
@@ -1132,7 +1132,7 @@ CREATE INDEX idx_note_attachments_note ON note_attachments (note_id, created_at,
 CREATE INDEX idx_note_attachments_created_by ON note_attachments (created_by_user_id);
 
 -- An upload that was signed, by any feature: a note attachment's names its note, a profile
--- picture's (#228) has none. The browser PUTs to `staging_key`; the confirm settles this row
+-- picture's has none. The browser PUTs to `staging_key`; the confirm settles this row
 -- first (`settled_at`), so one upload is confirmed at most once, and only by `user_id`. The id is
 -- the file's id once confirmed. The worker deletes rows older than a day.
 CREATE TABLE file_uploads (

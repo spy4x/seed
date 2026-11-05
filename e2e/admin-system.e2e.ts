@@ -5,7 +5,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The admin app's System page (#429): an operator sees the database, the cache and the migrations
+ * The admin app's System page: an operator sees the database, the cache and the migrations
  * of the stack the test runs on badged OK, the job queue and the build, and checks again. No
  * setting, address or secret of the stack shows on it.
  */
@@ -89,7 +89,7 @@ test.describe("the admin System page", () => {
       await answered
       await expect(badge("admin-system-database")).toHaveAttribute("data-health", "ok")
 
-      // At 1440 px each label and the newest migration's name stay on one line (#453).
+      // At 1440 px each label and the newest migration's name stay on one line.
       await ops.setViewportSize({ width: 1440, height: 900 })
       const wrapped = await ops.locator(
         "[data-e2e=admin-system-cards] dt, [data-e2e=admin-system-migrations] dd",

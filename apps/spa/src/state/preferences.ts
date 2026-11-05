@@ -45,7 +45,7 @@ export interface PreferencesDependencies {
 }
 
 /**
- * The person's display preferences (#163): theme, region format, time zone and clock, kept on the
+ * The person's display preferences: theme, region format, time zone and clock, kept on the
  * server and followed by every device. preact-components' settings store holds the record and
  * saves optimistically; the theme store keeps its own copy for the paint before sign-in and syncs
  * through it. {@link format} is the one formatter every screen reads.

@@ -3,7 +3,7 @@ import type postgres from "postgres"
 /**
  * The tables the nightly wipe keeps: the migration history, so the schema is not migrated again,
  * the backup service's last good backup (`infra/backup/backup.sh`), which is about the server, not
- * the demo, the blog's posts, their old addresses (#418) and the contact links, which are the
+ * the demo, the blog's posts, their old addresses and the contact links, which are the
  * product's website's own, not demo data, the newsletter's subscribers, the replay guard of those
  * who left and the send log, because the website's sign-up is real too (the seed replaces only its
  * own fake rows on domains reserved for examples), and the queue of stored files to delete, which

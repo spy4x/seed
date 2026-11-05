@@ -33,7 +33,7 @@ function isAuthApiPath(path: string): boolean {
 }
 
 /**
- * Keeps the admin app (#146) and the web app apart on the API they share. The admin app runs on
+ * Keeps the admin app and the web app apart on the API they share. The admin app runs on
  * its own host (`ADMIN_DOMAIN`), so its session cookie is that host's alone. This gate makes the
  * API hold the same line:
  *

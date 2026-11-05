@@ -5,7 +5,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The people actions of the admin app (#425): an administrator finds their own row marked "You",
+ * The people actions of the admin app: an administrator finds their own row marked "You",
  * exports the filtered list as CSV, ends one of a person's two sessions, changes their role and
  * mails them the way to "Forgot password", and each shows on the person's Activity tab.
  */

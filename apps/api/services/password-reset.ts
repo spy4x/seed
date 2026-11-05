@@ -2,15 +2,15 @@
  * Password reset by a mailed code, wired from `createSignIn`. Not `@server/auth/password-reset.ts`,
  * which stores the request, its code and the reset token.
  *
- * - **Password reset by code (#752).** The browser that asks waits for a mailed code; the right
+ * - **Password reset by code.** The browser that asks waits for a mailed code; the right
  *   code buys a reset token, and `resetPassword` spends that token
  *   (`@server/auth/password-reset.ts`), proves the address (whoever holds the mailbox owns the
  *   account that signs in with it), sets the new password, signs out every session of the user, deletes every API token and removes every
- *   push subscription (#409). It signs nobody in: the person signs in again with the new
+ *   push subscription. It signs nobody in: the person signs in again with the new
  *   password, and their second factor if they have one. When the address was not proven
- *   before, the second factor and every other sign-in method of the account go too (#404):
+ *   before, the second factor and every other sign-in method of the account go too:
  *   whoever added them never proved they own the address. An account waiting to be deleted is
- *   restored by the reset (#388).
+ *   restored by the reset.
  *
  * @module
  */
@@ -28,7 +28,7 @@ import {
 import { waitingCookie } from "./sign-in-codes.ts"
 import type { SignInParts } from "./sign-in-parts.ts"
 
-/** What {@link PasswordResetOperations.verifyPasswordReset} did with a code (#752). */
+/** What {@link PasswordResetOperations.verifyPasswordReset} did with a code. */
 export enum PasswordResetOutcome {
   /** The right code: the token that sets the new password comes with it. */
   Verified = 1,
@@ -43,13 +43,13 @@ export type PasswordResetVerification =
   | { outcome: PasswordResetOutcome.Verified; token: string }
   | { outcome: PasswordResetOutcome.WrongCode | PasswordResetOutcome.Expired }
 
-/** The cookie that ties a browser to the password-reset code it waits for (#752). */
+/** The cookie that ties a browser to the password-reset code it waits for. */
 export const PASSWORD_RESET_COOKIE = "password_reset"
 
 /** The password-reset operations the routes call. */
 export interface PasswordResetOperations {
   /**
-   * Asks for a password-reset code to `email`, already normalised (#752): writes the request and
+   * Asks for a password-reset code to `email`, already normalised: writes the request and
    * its mail job, and names the request in this browser's cookie. The same work for every address;
    * the worker mails the code only when an account signs in with a password and that address.
    */
@@ -75,8 +75,8 @@ export interface PasswordResetOperations {
   /**
    * Spends the reset token for `email` and, when it was the live one, proves the address, replaces
    * the password, signs out every session of the user and revokes every API token, with an audit
-   * row each, and removes every push subscription of the user (#409). An account waiting to be
-   * deleted is restored too: the code proved the mailbox, so the person is back (#388). `c`,
+   * row each, and removes every push subscription of the user. An account waiting to be
+   * deleted is restored too: the code proved the mailbox, so the person is back. `c`,
    * when given, names the request in the restore's audit row.
    * `false`, and the password unchanged, when the token is wrong, expired, already used or
    * replaced, the new password is refused, or no live account signs in with the address.
@@ -195,15 +195,15 @@ export function createPasswordResetOperations(own: SignInParts): PasswordResetOp
         if (!key || key.email === null) return false
         const user = await tx.authStore.findUser(key.userId)
         if (!user || user.deletedAt !== null) return false
-        // An account waiting to be deleted comes back (#357, decision 5): the code reached the
+        // An account waiting to be deleted comes back (decision 5): the code reached the
         // mailbox, as a sign-in would prove the password. Its request row goes before the user row
         // is locked, the order a sign-in's restore and the delete for good take them in.
         const profile = await tx.user.findOne({ id: user.id, includeDeleted: true })
         if (profile && profile.deletedAt !== null) await restoreInTx(tx, c, user.id)
-        // A token create holds this row while it checks the password and inserts (#293), so the
+        // A token create holds this row while it checks the password and inserts, so the
         // revoke below runs after it and ends its token too.
         await tx.lockUser(user.id)
-        // A linked Telegram chat acts as the person too (#269): one linked with a stolen session
+        // A linked Telegram chat acts as the person too: one linked with a stolen session
         // goes, as the tokens below do. First, so the key clean-up of an unproven address does
         // not take it without its audit row.
         await unlinkTelegramOf(tx, c, user.id, "password-reset")
@@ -220,25 +220,25 @@ export function createPasswordResetOperations(own: SignInParts): PasswordResetOp
           // their claim, so the owner signs in with the new password alone.
           await tx.userTotp.remove(user.id)
           await tx.user.clearSecondFactor(user.id)
-          // Every other way in was added before anyone proved the address (#404): a linked Google
+          // Every other way in was added before anyone proved the address: a linked Google
           // or GitHub account, and a code key for another address. They go with the claim too, or
           // whoever signed up with the owner's address would sign in again through them. Deleting
           // a key ends its sessions and frees the address it had proven.
           for (const other of await tx.authStore.listKeys(user.id)) {
             if (other.id !== key.id) await tx.authStore.deleteKey(user.id, other.id)
           }
-          // An invitation made before the address was proven is a way in for whoever made it
-          // (#411): a second account of theirs could still join through the link after this reset.
+          // An invitation made before the address was proven is a way in for whoever made it:
+          // a second account of theirs could still join through the link after this reset.
           await tx.invitationRevocation.allOf(user.id)
         }
         await tx.authStore.updateKeySecret(key.id, secret)
         // The mailbox owner is back in control: an address change someone else asked for goes.
         await tx.emailChange.remove(user.id)
         await sessionsOver(tx.sessionStore).signOutUser(user.id)
-        // A reset is account recovery: a token minted with a stolen session goes too (#167), as
+        // A reset is account recovery: a token minted with a stolen session goes too, as
         // it does on a password change.
         await tx.apiTokens.revoke({ userId: user.id }, "password-reset")
-        // Every browser that switched the account's notifications on stops getting them (#409),
+        // Every browser that switched the account's notifications on stops getting them,
         // whoever it belongs to: the owner switches them on again where they want them.
         await tx.pushTokens.removeAllOf(user.id)
         return true

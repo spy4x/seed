@@ -16,24 +16,24 @@ import type { AppDbBase } from "./db-base.ts"
 import { type AppAuthState, auditRow } from "./sign-in.ts"
 import { telegramIdentifier } from "./telegram.ts"
 
-/** What an operator may do to a person (#146). */
+/** What an operator may do to a person. */
 export enum AdminActionKind {
   /** Refuse every sign-in and end every session, until unblocked. */
   Block = 1,
   Unblock = 2,
   /** End every session; the person may sign in again. */
   EndSessions = 3,
-  /** End one session, named by `input.sessionId` (#425). */
+  /** End one session, named by `input.sessionId`. */
   EndSession = 4,
-  /** Give the role `input.role` (#425). Administrators only, to a role below their own. */
+  /** Give the role `input.role`. Administrators only, to a role below their own. */
   ChangeRole = 5,
-  /** Mail the "Forgot password" link to the person's password address (#425). */
+  /** Mail the "Forgot password" link to the person's password address. */
   SendPasswordReset = 6,
-  /** Delete a guest account (#224) with everything in it, at once. Guests only. */
+  /** Delete a guest account with everything in it, at once. Guests only. */
   DeleteGuest = 7,
-  /** Unlink the person's Telegram account (#269): its chat stops acting for them. */
+  /** Unlink the person's Telegram account: its chat stops acting for them. */
   UnlinkTelegram = 8,
-  /** Remove the person's profile picture (#228); their initials show instead. */
+  /** Remove the person's profile picture; their initials show instead. */
   RemovePicture = 9,
 }
 
@@ -105,7 +105,7 @@ export interface AdminService {
     input?: AdminActInput,
   ): Promise<AdminActResult>
   /**
-   * Every person `filter` matches, on all its pages, in batches (#425). The audit row on `actor`
+   * Every person `filter` matches, on all its pages, in batches. The audit row on `actor`
    * is written before the first row is read, so an export that fails half-way is recorded too.
    */
   export(
@@ -202,7 +202,7 @@ export function createAdmin(
             if (target.blocked) return AdminActOutcome.Unchanged
             await tx.admin.setBlocked(targetId, now())
             await tx.sessionStore.signOutUser(targetId, null)
-            // Its devices stop getting the account's notifications too (#181).
+            // Its devices stop getting the account's notifications too.
             await tx.pushTokens.removeAllOf(targetId)
             await tx.authAudit.insert(
               auditRow(c, targetId, AuthAuditEventType.USER_BLOCKED, identifier),
@@ -217,7 +217,7 @@ export function createAdmin(
             break
           case AdminActionKind.EndSessions:
             await tx.sessionStore.signOutUser(targetId, null)
-            // Its devices stop getting the account's notifications too (#181).
+            // Its devices stop getting the account's notifications too.
             await tx.pushTokens.removeAllOf(targetId)
             await tx.authAudit.insert(
               auditRow(c, targetId, AuthAuditEventType.SESSIONS_ENDED, identifier),

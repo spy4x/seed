@@ -1,5 +1,5 @@
 /**
- * The frames and the preferences in every language (#216), in a browser DOM (happy-dom).
+ * The frames and the preferences in every language, in a browser DOM (happy-dom).
  *
  * - The `en-XA` pseudo-language wraps every catalog message in `⟦ ⟧`: rendered in it, a screen
  *   shows no English outside those marks except data (a name, an address, a date). English left

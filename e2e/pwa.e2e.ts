@@ -42,7 +42,7 @@ test.describe("installable app", () => {
     expect(manifest.start_url).toBe("/")
     expect(manifest.theme_color).toMatch(/^#[0-9a-f]{6}$/i)
     expect(manifest.background_color).toBeTruthy()
-    // One theme-color per palette (#444): the light one is the manifest's, the dark one ink's canvas.
+    // One theme-color per palette: the light one is the manifest's, the dark one ink's canvas.
     await expect(page.locator(`meta[name=theme-color][media="(prefers-color-scheme: light)"]`))
       .toHaveAttribute("content", manifest.theme_color as string)
     await expect(page.locator(`meta[name=theme-color][media="(prefers-color-scheme: dark)"]`))

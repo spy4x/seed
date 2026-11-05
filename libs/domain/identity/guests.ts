@@ -1,7 +1,7 @@
 import { type } from "arktype"
 
 /**
- * Guest accounts (#224): a person tries the app with one click, in a real account that has no
+ * Guest accounts: a person tries the app with one click, in a real account that has no
  * sign-in method yet. The session cookie is the only way back in, so the app keeps asking, at
  * moments that make sense, to "keep" the account by adding a sign-in method to the same user id.
  *
@@ -144,7 +144,7 @@ export interface GuestSwitchResponse {
 export const guestDeleteSchema = type({ confirm: "0 < string <= 50" }).onUndeclaredKey("reject")
 
 /**
- * The refusal of a guest start once the network made too many (#224), with the real wait in whole
+ * The refusal of a guest start once the network made too many, with the real wait in whole
  * minutes; an unknown wait reads as an hour. The screen's title already says what happened.
  */
 export function guestTooManyMessage(retryAfterSeconds: number | null): string {

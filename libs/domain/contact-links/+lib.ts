@@ -11,7 +11,7 @@ import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import type { FieldError, FieldErrors } from "@spy4x/validation"
 
 /**
- * Contact links (#465): the channels the public website names (Telegram, Zalo, WhatsApp,
+ * Contact links: the channels the public website names (Telegram, Zalo, WhatsApp,
  * Instagram, Facebook, a phone number, an e-mail address, a web page), which an operator edits in
  * the admin app. The website shows them in its footer and in its Organization structured data.
  * Checking a value and building its link are `@spy4x/platform/universal/contact`'s; this module
@@ -90,7 +90,7 @@ export class ContactLinkError extends Error {
     public readonly code: ContactLinkErrorCode,
     message: string,
     public readonly field: ContactLinkField | null = null,
-    /** Why `field` failed, by code, so a screen says it in the person's language (#275). */
+    /** Why `field` failed, by code, so a screen says it in the person's language. */
     failed?: FieldError,
   ) {
     super(message)

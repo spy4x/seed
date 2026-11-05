@@ -39,7 +39,7 @@ test.describe("two-factor sign-in", () => {
       await gotoApp(page, "/profile/security", page.locator("[data-e2e=totp-start]"))
       await expect(page.locator("[data-e2e=totp-disable]")).toHaveCount(0)
       await page.locator("[data-e2e=totp-start]").click()
-      // Turning it on asks for the password first (#406).
+      // Turning it on asks for the password first.
       await page.locator("[data-e2e=totp-start-password]").fill(password)
       await page.locator("[data-e2e=totp-start-submit]").click()
       const secret = (await page.locator("[data-e2e=totp-secret]").innerText()).trim()

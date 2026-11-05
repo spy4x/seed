@@ -21,7 +21,7 @@ export interface TelegramRouteDependencies {
 export const TELEGRAM_OFF = "Telegram is not set up here"
 
 /**
- * The person's Telegram link (#269), mounted at `/api/telegram`. Only a signed-in session with its
+ * The person's Telegram link, mounted at `/api/telegram`. Only a signed-in session with its
  * second factor reaches it: a linked chat acts as the person, so linking needs their full session.
  *
  * - `GET /` answers whether the bot is on and when the person linked: `TelegramStatusResponse`.

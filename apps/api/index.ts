@@ -144,7 +144,7 @@ const app = await createApiApp({
   }),
 })
 
-// Before every route: a guest (#224) needs a sign-in method before inviting, push, API tokens,
+// Before every route: a guest needs a sign-in method before inviting, push, API tokens,
 // uploads or checkout. The socket's `push.register` checks the same in `realtimeHub.ts`.
 for (const [action, paths] of Object.entries(GUEST_LIMITED_PATHS)) {
   const remind = action === "invite"
@@ -152,7 +152,7 @@ for (const [action, paths] of Object.entries(GUEST_LIMITED_PATHS)) {
     : undefined
   app.on("POST", [...paths], refuseGuests(action as GuestLimitedAction, remind))
 }
-// Before every route too: a REST write spends the same budget as an operation (#429).
+// Before every route too: a REST write spends the same budget as an operation.
 app.use("*", operationRateLimits.restWrites)
 
 app.route(
@@ -214,7 +214,7 @@ const tokenRateLimits = createTokenRateLimits({
   store: (keyPrefix) => createRedisRateLimitStore(kv, { keyPrefix }),
   onStoreError: (error) => log("error: API token rate limit store failed and was let pass", error),
 })
-// Personal API tokens (#167). The hash key comes from the pepper, so it needs no secret of its own;
+// Personal API tokens. The hash key comes from the pepper, so it needs no secret of its own;
 // changing the pepper makes every token stop working, as it ends every password.
 const apiTokens = createApiTokens({
   db,
@@ -237,7 +237,7 @@ app.route(
     tokens: apiTokens,
   }),
 )
-// A person's copy of their data (#229): asked for here, built by the worker, kept in the file store.
+// A person's copy of their data: asked for here, built by the worker, kept in the file store.
 app.route(
   "/account/data-export",
   createDataExportRoute({
@@ -263,20 +263,20 @@ app.route(
 const subscribersSetup = readSubscribersSetup(processEnv, config.isDev ? "dev" : "prod")
 const subscribersWarning = subscribersOffWarning(subscribersSetup)
 if (subscribersWarning) log(subscribersWarning)
-// The catalog (#466): off unless CATALOG=true. Its photos pass through the API to the file store.
-// Its tracking links (#483) need the website's address, and count visits in Umami when it is set.
+// The catalog: off unless CATALOG=true. Its photos pass through the API to the file store.
+// Its tracking links need the website's address, and count visits in Umami when it is set.
 const siteUrl = readSiteUrl(processEnv, config.isDev ? "dev" : "prod")
 const catalogSwitch = readCatalogSetup(processEnv)
 const trackingSetup = catalogSwitch.on ? readTrackingSetup(processEnv, siteUrl) : null
 const catalogSetup = { ...catalogSwitch, tracking: trackingSetup }
-// Stats (#485): the website's numbers from Umami, off until its three settings are set.
+// Stats: the website's numbers from Umami, off until its three settings are set.
 const websiteStats = {
   ...readWebsiteStatsSetup(processEnv),
   itemPath: trackingSetup?.itemPath ??
     (processEnv.get("CATALOG_ITEM_PATH")?.trim() || DEFAULT_ITEM_PATH),
 }
 const serverFiles = s3ServerFiles(config.files)
-// The operator area (#146) and its modules (#424). The gate answers 404 to anyone below operator.
+// The operator area and its modules. The gate answers 404 to anyone below operator.
 app.route(
   "/admin",
   createAdminRoute({
@@ -422,7 +422,7 @@ app.route(
     log,
   }),
 )
-// The Telegram bot (#269, docs/telegram.md): off without TELEGRAM_BOT_TOKEN, and then nothing here
+// The Telegram bot (docs/telegram.md): off without TELEGRAM_BOT_TOKEN, and then nothing here
 // calls Telegram. A setting that cannot work stops the API now, not at the first message.
 const telegramSetup = readTelegramSetup(processEnv, config.isDev ? "dev" : "prod")
 const telegramNote = telegramOffNote(telegramSetup)
@@ -577,7 +577,7 @@ if (config.isDev) {
 await listenForGroupNews(listenSql, realtime, log)
 // A change to a person's inbox becomes a hint on their sockets; the page reads the count.
 await listenForInboxNews(listenSql, realtime)
-// A picture the worker made ready or refused (#464) becomes a hint; the page reads the profile.
+// A picture the worker made ready or refused becomes a hint; the page reads the profile.
 await listenForPictureStates(listenSql, (userId) => realtime.notifyUserChange(userId))
 // Sockets whose session was signed out, expired or lost its second factor while open are closed
 // within this interval; the per-request check already refuses their frames.

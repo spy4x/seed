@@ -94,7 +94,7 @@ export interface AdminNewsletterRouteDependencies {
 }
 
 /**
- * The newsletter routes of the operator area (#428), mounted at `/api/admin` behind the gate in
+ * The newsletter routes of the operator area, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them, and every `POST` passed the
  * same-origin guard.
  *

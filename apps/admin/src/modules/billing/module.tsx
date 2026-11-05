@@ -135,7 +135,7 @@ function CustomerView(
   )
 }
 
-/** Who pays and what, and the support actions on one customer (#196). */
+/** Who pays and what, and the support actions on one customer. */
 export const billingModule: AdminModule = {
   id: `billing`,
   nav: { name: `AdminNav.billing`, href: ADMIN_BILLING_PATHS.list, Icon: IconCreditCard },

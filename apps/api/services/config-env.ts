@@ -17,7 +17,7 @@ export const envSchema = type({
   RATE_LIMITER_OTP_WINDOW_MS: "string.integer.parse",
   RATE_LIMITER_OTP_LIMIT: "string.integer.parse",
   DOMAIN: "string > 0",
-  /** The admin app's own host (#146); unset or empty turns the operator area off. */
+  /** The admin app's own host; unset or empty turns the operator area off. */
   "ADMIN_DOMAIN?": "string",
   /**
    * The proxies allowed to name the client in `X-Real-IP`, comma-separated: container names or IP
@@ -42,7 +42,7 @@ export const envSchema = type({
   S3_SECRET_ACCESS_KEY: "string > 0",
   /** `https://<key>@<host>/<project>` of an error tracker; unset or empty turns reporting off. */
   "ERROR_REPORT_DSN?": "string",
-  /** Guest accounts (#224, docs/guests.md): on unless `false`. */
+  /** Guest accounts (docs/guests.md): on unless `false`. */
   "GUEST_MODE?": "string",
   /** The SPA (docs/apps.md, "Without the SPA"): on unless `false`. */
   "SPA?": "string",

@@ -80,7 +80,7 @@ export interface AdminContactLinksScreenProps {
 }
 
 /**
- * The contact links (#465): every channel the website names, in the footer's order. "Add link" is
+ * The contact links: every channel the website names, in the footer's order. "Add link" is
  * the page's one action; a link's text opens its editor, and its menu moves it up or down or
  * removes it behind a confirmation. Focus stays on the moved row's menu, or after a removal goes
  * to the next row's, else the page's action.

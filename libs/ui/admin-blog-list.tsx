@@ -80,7 +80,7 @@ export interface AdminBlogListScreenProps {
 }
 
 /**
- * The blog's list (#396): every post with its status, topic and dates, filtered by status chips
+ * The blog's list: every post with its status, topic and dates, filtered by status chips
  * that show their counts and searched by title or slug. "New post" is the page's one action; a
  * title opens the post's editor. On a phone each row stacks its status, topic and date under the
  * title.

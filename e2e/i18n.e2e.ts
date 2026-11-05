@@ -5,7 +5,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The interface language (#216): a browser's languages pick the first frame's language, a choice
+ * The interface language: a browser's languages pick the first frame's language, a choice
  * kept on the device before sign-up becomes the account's, the account's language follows the
  * person to a new device and into the admin app, and an operator sees it on the person's screen.
  * The preferences' Language row and the operator's menu switch the page at once.

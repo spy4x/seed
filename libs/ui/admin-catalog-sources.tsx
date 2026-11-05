@@ -42,7 +42,7 @@ export interface AdminCatalogSourcesScreenProps {
 }
 
 /**
- * The places the shop shares its items in (#483), each with its own tracking link per item, so
+ * The places the shop shares its items in, each with its own tracking link per item, so
  * Umami can tell which brings visitors. "Add source" is the page's one action; a source's name
  * opens its editor, and its menu moves it or deletes it behind a confirmation that says how many
  * shared links stop working.

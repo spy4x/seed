@@ -58,7 +58,7 @@ function StatsView({ context }: { context: AdminContext }): JSX.Element {
   )
 }
 
-/** The website's numbers from Umami (#485): visits, sources, items and order channels. */
+/** The website's numbers from Umami: visits, sources, items and order channels. */
 export const statsModule: AdminModule = {
   id: `stats`,
   nav: { name: `AdminNav.stats`, href: ADMIN_STATS_PATH, Icon: IconTrendingUp },

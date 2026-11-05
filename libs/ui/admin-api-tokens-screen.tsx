@@ -83,7 +83,7 @@ export interface AdminApiTokensScreenProps {
 }
 
 /**
- * The API tokens page (#427): every token of everyone, newest first, with its owner, group and
+ * The API tokens page: every token of everyone, newest first, with its owner, group and
  * access, its state and dates. Chips filter by state and show how many tokens each holds. A live
  * token can be revoked after a confirm; the API writes the audit row on its owner.
  */

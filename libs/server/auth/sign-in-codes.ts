@@ -1,5 +1,5 @@
 /**
- * Sign-in and sign-up by an e-mailed code (#391, #752): the request a code answers, and the code.
+ * Sign-in and sign-up by an e-mailed code: the request a code answers, and the code.
  *
  * A request is one row of `sign_in_code_requests`: the address, the page to open after sign-in
  * and when the request stops working. The API writes it for every well-formed address, known or
@@ -19,7 +19,6 @@ import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { isLanguage, SIGN_IN_CODE_MINUTES } from "@domain/identity"
 import { mailedCodes } from "./mailed-codes.ts"
 
-/** The codes of sign-in requests. */
 export const SIGN_IN_CODES = mailedCodes("app.sign-in-code")
 
 /** How long a request and its latest code work, in minutes. A new code starts it again. */
@@ -47,7 +46,7 @@ export interface SignInCodeRequest {
    */
   requestedBy: number | null
   /**
-   * The language of the page that asked (#277), which the mail is written in when the address
+   * The language of the page that asked, which the mail is written in when the address
    * has no account or its account saved none. Only a language the apps offer, else `null`.
    */
   language?: string | null

@@ -1,5 +1,5 @@
 /**
- * The System page's reads over Postgres (#429): the database itself, the job and outbox queue
+ * The System page's reads over Postgres: the database itself, the job and outbox queue
  * (`outbox_events`), the latest backup and the migrations. The jobs themselves are the Jobs
  * module's (`admin-jobs.ts`). Who may
  * call them is the API's business (`apps/api/routes/admin/system.ts`); nothing here checks it.

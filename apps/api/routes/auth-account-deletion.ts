@@ -37,7 +37,7 @@ export function createAccountDeletionRoutes(
     })
     // Asks again for what a stolen session lacks: the password, and the authenticator code when
     // two-factor is on, as the sign-in does. An account with no password has signed in with
-    // Google or GitHub a moment ago instead (#384). Groups that stop it are named before anything is
+    // Google or GitHub a moment ago instead. Groups that stop it are named before anything is
     // checked, so the person learns what to do first without typing the password in vain.
     .post(`/account/delete`, rateLimits.strictByUser, async (c) => {
       const body = await readApiJson(c)

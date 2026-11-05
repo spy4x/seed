@@ -1,5 +1,5 @@
 /**
- * "Language and region" (#163) and "Appearance": the person's profile sections and the operator's
+ * "Language and region" and "Appearance": the person's profile sections and the operator's
  * read-only copy. What a person does in a browser DOM (happy-dom): pick a theme, pick a clock that
  * saves at once, see a refused save's notice, and switch to the device's zone.
  */

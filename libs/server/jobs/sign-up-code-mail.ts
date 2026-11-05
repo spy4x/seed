@@ -7,7 +7,7 @@ import { requestReader } from "../mail/reader.ts"
 import { enqueueJob, type JobHandler } from "./jobs.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
-/** The job that mails one code to the address of a waiting sign-up (#142). */
+/** The job that mails one code to the address of a waiting sign-up. */
 export const SIGN_UP_CODE_MAIL_JOB = "auth.sign-up-code-mail"
 
 /**
@@ -55,7 +55,7 @@ export function signUpCodeMailJob(deps: SignUpCodeMailDeps): JobHandler {
           to: signUp.email,
           code,
           validMinutes: SIGN_UP_TTL_MINUTES,
-          // No account is known yet: the mail speaks the language of the page that asked (#277).
+          // No account is known yet: the mail speaks the language of the page that asked.
           reader: requestReader(signUp.language),
         }),
       )

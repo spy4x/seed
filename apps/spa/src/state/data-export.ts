@@ -3,7 +3,7 @@ import { type DataExportJson, type DataExportView, parseDataExportJson } from "@
 import type { DataExportError } from "@ui/profile-export.tsx"
 import { apiFetch } from "./api.ts"
 
-/** The API path of the person's data export (#229). */
+/** The API path of the person's data export. */
 export const DATA_EXPORT_PATH = "/api/account/data-export"
 
 /** The address that downloads the ready file: the API answers with a short-lived signed link. */

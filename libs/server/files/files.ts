@@ -281,7 +281,7 @@ export function s3FileStore(settings: FileStoreSettings): FileStore {
 }
 
 /**
- * What a worker job needs to keep a file it made itself, such as a data export (#229): no browser
+ * What a worker job needs to keep a file it made itself, such as a data export: no browser
  * takes part, so nothing is signed and nothing is confirmed. `deleteOlderThan` removes every object
  * under `prefix` stored before `before`, the safety net for a file whose row or job was lost.
  */

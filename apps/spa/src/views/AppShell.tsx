@@ -91,7 +91,7 @@ function useSignOut(guest: boolean): { onSignOut: () => void; dialog: ComponentC
   const signOutNow = useSignOutNow()
   const [, navigate] = useLocation()
   const wait = useSignal<UnsentWait | null>(null)
-  // A guest is asked first (#224): signing out of an account with no sign-in method loses it.
+  // A guest is asked first: signing out of an account with no sign-in method loses it.
   const askingGuest = useSignal(false)
   const mounted = useRef(true)
   // The latest render's: the read can end after the page moved on.

@@ -27,7 +27,7 @@ export interface AdminContext {
   leaveGuard: LeaveGuard
   /** Every module's tabs for the person page, in registry order (`registry.ts`). */
   personTabs: readonly AdminPersonTab[]
-  /** The operator's own formatter: their region format, time zone and clock (#163). */
+  /** The operator's own formatter: their region format, time zone and clock. */
   format(): Formatters
 }
 

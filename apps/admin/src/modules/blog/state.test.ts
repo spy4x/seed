@@ -366,7 +366,7 @@ it(`offers "View post" after publishing when the website's address is known`, as
   expect(opened).toEqual([`https://www.example.com/blog/hello`])
 })
 
-// #region History (#418)
+// #region History
 
 const NEWER = `0195f0b4-3c1e-7a00-8000-0000000000b2`
 const OLDER = `0195f0b4-3c1e-7a00-8000-0000000000b1`

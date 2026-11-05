@@ -5,7 +5,7 @@ import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import type { Actor } from "@domain/identity"
 
 /**
- * Note attachments (#225, docs/attachments-and-pictures.md): images and PDFs kept on a note. Every member of the
+ * Note attachments (docs/attachments-and-pictures.md): images and PDFs kept on a note. Every member of the
  * group reads them and an editor or above adds and removes them, as for the note itself, so the
  * role checks are the notes' (`assertCanReadNotes`, `assertCanWriteNotes`). The limits come from
  * the group's plan: the file rules (`AttachmentRules`) and the caps `maxAttachments` and

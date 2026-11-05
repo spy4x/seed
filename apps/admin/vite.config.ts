@@ -80,7 +80,7 @@ export default defineConfig({
       find: /^@ui\//,
       replacement: fromFileUrl(new URL("../../libs/ui/", import.meta.url)),
     }, {
-      // The catalogs (#216), `i18n/<namespace>/<language>.ts`, resolved like `@ui/`.
+      // The catalogs, `i18n/<namespace>/<language>.ts`, resolved like `@ui/`.
       find: /^@i18n\//,
       replacement: fromFileUrl(new URL("../../i18n/", import.meta.url)),
     }],

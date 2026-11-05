@@ -1,6 +1,6 @@
 // deno-lint-ignore-file ui-text/no-literal
 // This page is English at every language's address: a translated reference could say something the
-// English does not, so it is not translated (#276). The frame around it is.
+// English does not, so it is not translated. The frame around it is.
 import { Prose, PROSE_LABELS } from "@spy4x/preact-ui/prose"
 import CodeCopy from "../../../islands/code-copy.tsx"
 import { API_DOCS_HEAD, API_DOCS_PATH, API_DOCS_SOURCE, renderApiDocs } from "../../../api-docs.ts"

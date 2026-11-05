@@ -1,5 +1,5 @@
 /**
- * Proving an e-mail address with a one-time code (#140): where an account's address stands, the
+ * Proving an e-mail address with a one-time code: where an account's address stands, the
  * address change that waits for its code, and the one check that later features ask before they
  * trust an address.
  *
@@ -58,7 +58,7 @@ export async function dropCodeKeys(
 }
 
 /**
- * Takes `address` off every key of the user that still carries it, keeping the keys (#403). After
+ * Takes `address` off every key of the user that still carries it, keeping the keys. After
  * an address change those are the provider keys: each keeps signing in by its provider's own user
  * id, but no longer says "this person owns the old address". Left in place, it would let any other
  * Google or GitHub identity that vouches for the old address, such as one the mailbox's next
@@ -102,8 +102,8 @@ export function emailChanges(sql: Sql) {
 /**
  * Where the user's address stands: the one they sign in with, its proof, and a pending change.
  * The password key's address when there is one. An account with no password has the address a
- * code proved for it when it changed its address (#384), else the one a provider vouched for
- * (#141), which is why an account made with Google reads as having a proven address.
+ * code proved for it when it changed its address, else the one a provider vouched for,
+ * which is why an account made with Google reads as having a proven address.
  */
 export async function readEmailStatus(
   changes: Pick<EmailChanges, "find">,
@@ -120,7 +120,7 @@ export async function readEmailStatus(
 
 /**
  * Whether the address the user signs in with is proven: `readEmailStatus`'s `proven`, without the
- * pending change. An account with no address at all (a username account made before #139) is not.
+ * pending change. An account with no address at all (an old username account) is not.
  */
 export async function hasProvenAddress(store: AuthStore, userId: number): Promise<boolean> {
   return isProven(addressKeyOf(await store.listKeys(userId)))
@@ -173,7 +173,7 @@ export async function proveEmailCode(
 /**
  * The user who owns `email` because a code proved it, or `null`: an unproven claim
  * owns nothing. Anything that trusts an address to name a person asks this first; today that is
- * an invitation by address (#131).
+ * an invitation by address.
  */
 export async function provenAddressOwner(store: AuthStore, email: unknown): Promise<number | null> {
   const address = normalizeEmail(email)

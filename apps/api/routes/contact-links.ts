@@ -4,7 +4,7 @@ import type { PublicContactLink, PublicContactLinksResponse } from "@domain/cont
 import { listPublicContactLinks } from "@server/contact-links/postgres-contact-links.ts"
 
 /**
- * The public contact links (#465), mounted at `/api/contact-links` for the public website, whose
+ * The public contact links, mounted at `/api/contact-links` for the public website, whose
  * footer and structured data name them. No session: the links are on every page anyway.
  *
  * - `GET /` lists every link in the operator's order: its kind, value and label, no id.

@@ -4,7 +4,7 @@ import { Explorable, type ExplorableProps } from "@spy4x/preact-ui/explorable"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 
 /**
- * What every figure island gets besides its own props (#620): its `id` on the page, and the words
+ * What every figure island gets besides its own props: its `id` on the page, and the words
  * it needs in the post's language. The server sends only those words, not the whole catalog.
  */
 export interface FigureFrame {

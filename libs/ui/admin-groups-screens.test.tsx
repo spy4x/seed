@@ -1,5 +1,5 @@
 /**
- * The admin app's group screens (#426), driven in a browser DOM (happy-dom): what the search and
+ * The admin app's group screens, driven in a browser DOM (happy-dom): what the search and
  * the sort send, what the group's page offers to whom, what each confirmed action sends, and that
  * the person page links to their groups.
  */

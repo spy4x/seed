@@ -15,7 +15,7 @@ interface CtaBandText {
 /** The demo first, GitHub second: for a page about what the product does. */
 interface DemoAsk extends CtaBandText {
   ask?: "demo"
-  /** The app's `/try`: the live demo, opened as a guest account (#224). */
+  /** The app's `/try`: the live demo, opened as a guest account. */
   demoHref: string
 }
 

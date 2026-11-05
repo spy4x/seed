@@ -71,7 +71,7 @@ export function notesCollection(
     classify: classifyNoteError,
     // Keys of the `app` catalog, kept with the queued write. `OfflineStatus` shows the one a
     // conflict holds through `messageText`, in the person's language at that time; an entry queued
-    // in English before #275 holds English, which it shows as it is.
+    // before the catalog existed holds English, which it shows as it is.
     messages: { version: `NoteSync.version`, gone: `NoteSync.gone` },
     cache: {
       put: (note) => cache.putNote(note),

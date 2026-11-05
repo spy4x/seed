@@ -116,7 +116,7 @@ function JobView(
   )
 }
 
-/** Every background job's runs, the repeating jobs, and run again, run now and cancel (#394). */
+/** Every background job's runs, the repeating jobs, and run again, run now and cancel. */
 export const jobsModule: AdminModule = {
   id: `jobs`,
   nav: { name: `AdminNav.jobs`, href: ADMIN_JOB_PATHS.list, Icon: IconClock },

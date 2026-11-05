@@ -26,7 +26,7 @@ export interface State {
   blog?: boolean
   /**
    * The languages with a live post (`blogLinkMiddleware`): the language links never send a reader
-   * to the blog of a language outside it, which would be empty (#530). Missing counts as none.
+   * to the blog of a language outside it, which would be empty. Missing counts as none.
    */
   blogLanguages?: ReadonlySet<Language>
   /**

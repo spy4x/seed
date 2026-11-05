@@ -5,7 +5,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * An address no page answers (#368) shows "Page not found" with one link back, in the SPA signed
+ * An address no page answers shows "Page not found" with one link back, in the SPA signed
  * in and signed out and in the admin app, instead of an empty page or a silent jump to the
  * dashboard. A signed-out visit to the admin app still goes to its sign-in.
  */

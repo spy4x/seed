@@ -29,7 +29,7 @@ function expectSecurityHeaders(response: APIResponse) {
   expect(directives).toContain(
     "img-src 'self' data: https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
   )
-  // Geist comes from the app's own /fonts/ (#444): no font host is allowed, so the policy sends no
+  // Geist comes from the app's own /fonts/: no font host is allowed, so the policy sends no
   // font-src and fonts fall back to default-src 'self'.
   expect(policy).not.toContain("font-src")
   // The origin of the container's SPA_ERROR_REPORT_DSN, and nothing else beyond the app itself.

@@ -1,6 +1,6 @@
 /**
- * The catalog's admin pages (#466), driven in a browser DOM (happy-dom): the list and its empty
- * states, the categories' menus and editor, the tracking link sources' menus and editor (#483),
+ * The catalog's admin pages, driven in a browser DOM (happy-dom): the list and its empty
+ * states, the categories' menus and editor, the tracking link sources' menus and editor,
  * and the item editor's language tabs, address, stock grid, sizes, publishing, photos and share
  * links, with where focus goes.
  */

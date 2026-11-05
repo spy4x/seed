@@ -1,5 +1,5 @@
 /**
- * The admin Stats screen's numbers (#485): the website's visits, where they come from, which items
+ * The admin Stats screen's numbers: the website's visits, where they come from, which items
  * people look at and order, and through which channel, read from the self-hosted Umami on the
  * server. The token never leaves the server, and only totals are read: no visitor, session, place
  * or address. Every operator shares one copy of the numbers for {@link STATS_CACHE_MS}; when

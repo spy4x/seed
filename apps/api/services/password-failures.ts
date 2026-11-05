@@ -1,5 +1,5 @@
 /**
- * The persistent count of wrong passwords per sign-in name, with a short lock (#387).
+ * The persistent count of wrong passwords per sign-in name, with a short lock.
  *
  * The rate limit on sign-in counts per network address (`middlewares/auth-rate-limits.ts`), so a
  * guesser who spreads the guesses over many addresses is not slowed for one account. This counter
@@ -28,7 +28,7 @@ import type { Clock } from "@spy4x/platform/universal/time"
 import { normalizeUsername } from "./sign-in.ts"
 import { PASSWORD_LOCK_POLICY } from "./password-locked.ts"
 
-// Defined beside the signed-in account's count (#406), which shares it.
+// Defined beside the signed-in account's count, which shares it.
 export { PASSWORD_LOCK_POLICY }
 
 /** Options for {@link createPasswordFailures}. */

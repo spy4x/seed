@@ -1,5 +1,5 @@
 /**
- * The sign-in or sign-up code this tab asked for last (#391, #752): the address and when, in
+ * The sign-in or sign-up code this tab asked for last: the address and when, in
  * `sessionStorage`, so a reload of the code step keeps the wait before a new code. It lives as long as the tab and
  * never leaves the browser. The server's cookie decides whether a code still waits; blocked
  * storage only loses the wait.

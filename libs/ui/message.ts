@@ -1,5 +1,5 @@
 /**
- * The words a store or a state module hands a screen (#275), and the API's refusals in the
+ * The words a store or a state module hands a screen, and the API's refusals in the
  * person's language. A store has no translator, so it names a message of the `app` catalog instead
  * of writing the sentence: the key alone, or the key with its values. The screen translates it in
  * the person's language. Text that is no key, such as the API's own message, is shown as it came.

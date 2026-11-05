@@ -33,13 +33,13 @@ export interface PushTokenStore extends Pick<PushSubscriptionStore, "deleteByEnd
   listByUser(userId: number): Promise<PushTokenRecord[]>
   /**
    * Creates the user's subscription for this device, or replaces the one already there. The row
-   * records no session, so ending the user's other sessions removes it (#181).
+   * records no session, so ending the user's other sessions removes it.
    */
   upsert(input: PushTokenInput): Promise<PushTokenRecord>
   /**
    * {@link upsert}, but only while session `sessionId` of the user is live; `null`, and nothing
    * stored, when it has ended. A request that authenticated before a password reset and stores
-   * after it is refused here (#409).
+   * after it is refused here.
    */
   upsertForSession(input: PushTokenInput & { sessionId: number }): Promise<PushTokenRecord | null>
   /** Marks the user's subscription for this device deleted. Other users' rows are never touched. */
@@ -107,7 +107,7 @@ export function createPushTokenStore(sql: Sql): PushTokenStore {
 
 /**
  * Marks every stored subscription of `userId` deleted, so no browser of the account gets its
- * notifications any more. A password reset calls it inside its transaction (#409): whoever had
+ * notifications any more. A password reset calls it inside its transaction: whoever had
  * the account before the owner took it back keeps no browser that the account pushes to. Other
  * users' rows are never touched.
  */
@@ -120,7 +120,7 @@ export async function removeAllPushTokensOf(sql: Sql, userId: number): Promise<v
 
 /**
  * Marks deleted every subscription of `userId` that session `keepSessionId` did not store, so the
- * devices whose sessions were just ended stop getting the account's notifications (#181). A row
+ * devices whose sessions were just ended stop getting the account's notifications. A row
  * stored before subscriptions recorded their session has none, and goes too. Other users' rows
  * are never touched.
  */
@@ -136,7 +136,7 @@ export async function removePushTokensOfOtherSessions(
       AND session_id IS DISTINCT FROM ${keepSessionId}`
 }
 
-/** Marks deleted the subscription session `sessionId` of `userId` stored, if any (#181). */
+/** Marks deleted the subscription session `sessionId` of `userId` stored, if any. */
 export async function removePushTokensOfSession(
   sql: Sql,
   userId: number,
@@ -167,7 +167,7 @@ export async function movePushTokensToSession(
 
 /**
  * Marks deleted the subscriptions stored by the sessions of `userId` that key `keyId` signed in.
- * Unlinking a method deletes its key, and its sessions go with it by cascade (#572), so this runs
+ * Unlinking a method deletes its key, and its sessions go with it by cascade, so this runs
  * first, while those sessions still name the key. Other users' rows are never touched.
  */
 export async function removePushTokensOfKey(

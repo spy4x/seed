@@ -4,9 +4,9 @@ import { UserRole } from "@domain/identity"
 import type { GroupColor, GroupRole } from "./+lib.ts"
 
 // ---------------------------------------------------------------------------------------------
-// The operator area's groups module (#426): `/api/admin/groups/...`. Counts and account facts
+// The operator area's groups module: `/api/admin/groups/...`. Counts and account facts
 // only: no note body, tag or description text ever reaches these shapes. The one exception is a
-// file's name and its note's title on the Files tab (#478), so an operator can find a file.
+// file's name and its note's title on the Files tab, so an operator can find a file.
 // ---------------------------------------------------------------------------------------------
 
 /** How many groups one page of the operator's group list shows. */
@@ -67,7 +67,7 @@ export interface AdminGroupListResponse {
 
 /** One member of a group, as the operator sees them. */
 export interface AdminGroupMember extends AdminGroupPerson {
-  /** Their profile picture (#228); `null` or absent for none. */
+  /** Their profile picture; `null` or absent for none. */
   pictureId?: string | null
   role: GroupRole
   /** The person's role in the product, which decides whether an operator may act on them. */
@@ -143,7 +143,7 @@ export const ADMIN_GROUP_FILE_SEARCH_MAX_LENGTH = 100
 /**
  * One file on a note of the group, as the operator sees it: its name, type, size, uploader, date
  * and its note's title. The name and the title are the exception to "counts only": an operator
- * needs them to find an abusive file among many (#478).
+ * needs them to find an abusive file among many.
  */
 export interface AdminGroupFile {
   id: string

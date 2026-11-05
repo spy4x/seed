@@ -58,7 +58,7 @@ export interface SecuritySectionProps {
   providerProof: ProviderProof | null
   /**
    * Set while an account with no password has no proven address, so a first password would be
-   * refused: the "Set a password" dialog says an address comes first instead of its form (#463).
+   * refused: the "Set a password" dialog says an address comes first instead of its form.
    * `pending` is the address that waits for its code, or `null` when there is none.
    */
   passwordNeedsEmail?: { pending: string | null } | null

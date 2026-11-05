@@ -3,13 +3,13 @@
  * `createSignIn`. Not `@server/auth/email-verification.ts`, which stores the codes and the waiting
  * change.
  *
- * - **Proving the address (#140).** `verifyEmail` checks a code from
+ * - **Proving the address.** `verifyEmail` checks a code from
  *   `@spy4x/server/auth/email-code` and proves the address it was sent to. A reset code proves the
  *   address too; when it was unproven until then, the reset also removes any second factor, since
  *   whoever set it up never showed they own the mailbox. A new address waits in `email_changes`
  *   until its code proves it; only then does the password key move to it, so the account signs in
  *   with the old address until that moment. Then a Google or GitHub key that carried the old
- *   address loses it and keeps signing in (#403): the old address no longer opens the account
+ *   address loses it and keeps signing in: the old address no longer opens the account
  *   through another provider identity that vouches for it.
  *
  * @module
@@ -81,7 +81,7 @@ export interface EmailChangeOperations {
    * Checks a code for the address that needs one (`emailToVerify`) and proves it. For a waiting
    * change, the password key then moves to the new address and a new session on it gets the
    * cookie; an account with no password has the key the code proved hold the new address, and an
-   * address held that way before goes. Either way every other session of the user ends (#406). A
+   * address held that way before goes. Either way every other session of the user ends. A
    * wrong code is counted in the same transaction and changes nothing else.
    */
   verifyEmail(c: Context, state: AppAuthState, code: string): Promise<EmailVerifyOutcome>
@@ -161,11 +161,11 @@ export function createEmailChangeOperations(own: SignInParts): EmailChangeOperat
         }
         if (status.pending === null) return { outcome: EmailVerifyOutcome.Verified }
 
-        // No password to move (#384): the key `proveAddress` just proved holds the new address.
+        // No password to move: the key `proveAddress` just proved holds the new address.
         // An address held that way before goes, and a provider key that carried the old address
-        // keeps signing in but carries it no more (#403), so the account has one address and the
+        // keeps signing in but carries it no more, so the account has one address and the
         // old one is free again. Every other session ends, as for an account with a password
-        // below (#406).
+        // below.
         if (key === null) {
           await dropCodeKeys(tx.authStore, user.id, target)
           if (status.email !== null) await releaseAddress(tx.authStore, user.id, status.email)
@@ -180,7 +180,7 @@ export function createEmailChangeOperations(own: SignInParts): EmailChangeOperat
         // ends its sessions. A provider key that carried the old address loses it but stays: the
         // Google or GitHub identity linked before the move keeps signing in by its own user id,
         // while a different identity that only vouches for the old address is no longer matched
-        // to this account (#403). No key is left on the old address, so it is free again. The
+        // to this account. No key is left on the old address, so it is free again. The
         // sessions that a provider sign-in started end too: only the new one stays.
         const moved = await tx.authStore.addKey(user.id, {
           method: PASSWORD_METHOD,

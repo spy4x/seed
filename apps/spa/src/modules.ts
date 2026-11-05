@@ -185,7 +185,7 @@ export interface StartOptions {
   queueReadDeadlineMs?: number
 }
 
-/** How long a sign-out waits for the device to read the queue (#613). */
+/** How long a sign-out waits for the device to read the queue. */
 export const QUEUE_READ_DEADLINE_MS = 3_000
 
 /**
@@ -361,7 +361,7 @@ export function forgetModules(): void {
  * What a sign-out leaves in `localStorage`. None of it is a person's data: the debts that finish
  * the sign-out (the server's sign-out, a deletion the device could not do yet) and the device's own
  * answers (the theme, the dismissed install offer), plus the masked hint of how someone last signed
- * in here, which the sign-in page shows and "Not you? Forget" drops (#142).
+ * in here, which the sign-in page shows and "Not you? Forget" drops.
  */
 const KEPT_KEYS: ReadonlySet<string> = new Set([
   "auth:sign-out-owed", // `state/auth.ts`
@@ -376,8 +376,7 @@ const KEPT_KEYS: ReadonlySet<string> = new Set([
 /**
  * What a sign-out leaves in this tab's `sessionStorage`: the sign-in and sign-up codes the tab just
  * asked for, so the code step keeps its wait after the reload of a signed-out page, which wipes the
- * device
- * (#391, #752).
+ * device.
  */
 const KEPT_SESSION_KEYS: ReadonlySet<string> = new Set([
   "sign-in-code:sent", // `state/sign-in-code.ts`
@@ -428,7 +427,7 @@ export function connectionDisplay(
 }
 
 /**
- * What the benchmark page (#440) measures of the local-data module, with the module's own code. A
+ * What the benchmark page measures of the local-data module, with the module's own code. A
  * product without the module has `benchmarkLocalData` `null`, which closes the page.
  */
 export interface BenchmarkLocalData {
@@ -463,7 +462,7 @@ export function currentLayer(): OfflineLayer | null {
  * device owes, or the device refused it) it reads the queue from the device: either way a sign-out
  * never deletes unsent writes without asking. A deletion the device owes runs first: one an earlier,
  * chosen sign-out left deletes this person's queue, and asking about it, or sending it, while it
- * goes would race it. Each wait ends after `queueReadDeadlineMs` (#613): a read that stalls makes
+ * goes would race it. Each wait ends after `queueReadDeadlineMs`: a read that stalls makes
  * it ask with the count the device gives, and with none in time either, the sign-out goes on. The
  * caller disposes it when the dialog closes.
  */
@@ -662,8 +661,8 @@ export function rememberUser(
 }
 
 /**
- * The person whose queue of unsent writes the device kept when their session ended on the server
- * (#612). Only their own next sign-in opens it ({@link startModules}); anyone else's sign-in, or a
+ * The person whose queue of unsent writes the device kept when their session ended on the server.
+ * Only their own next sign-in opens it ({@link startModules}); anyone else's sign-in, or a
  * chosen sign-out, deletes it.
  */
 const keptQueue = createSignedInHint<number>("offline:kept-queue", {
@@ -673,7 +672,7 @@ const keptQueue = createSignedInHint<number>("offline:kept-queue", {
 /**
  * Set by a chosen sign-out ({@link wipeDevice}) until the next sign-in ({@link startModules}). Every
  * tab of the browser shares it, so a session end that another tab of the same person sees a moment
- * later ({@link wipeDeviceKeepingQueue}) does not keep the queue the person chose to delete (#613).
+ * later ({@link wipeDeviceKeepingQueue}) does not keep the queue the person chose to delete.
  */
 const chosenSignOut = createSignedInHint("offline:signed-out")
 
@@ -797,7 +796,7 @@ function deleteDatabases(
 }
 
 /**
- * Signing out on this device (#206): deletes everything the app keeps in the browser, so the next
+ * Signing out on this device: deletes everything the app keeps in the browser, so the next
  * person on a shared device finds nothing of the last one. Every IndexedDB database goes, the
  * queue of unsent writes included, and so does every `localStorage` key but the few
  * {@link KEPT_KEYS}, and `sessionStorage` but {@link KEPT_SESSION_KEYS}. What the server owns comes back at the next sign-in.
@@ -817,7 +816,7 @@ export function wipeDevice(storage?: OfflineStorage, databases?: QueueDatabases)
 
 /**
  * The page settled with nobody signed in although nobody chose to sign out: the session expired or
- * was ended on the server (#612). Deletes everything {@link wipeDevice} does but the queue of unsent
+ * was ended on the server. Deletes everything {@link wipeDevice} does but the queue of unsent
  * writes of the person whose session it was (the one the device remembers, or already kept a queue
  * for): that is their work, not yet on the server. The device keeps their id, so only their own next
  * sign-in opens the queue and sends it; anyone else's sign-in deletes it first
@@ -832,7 +831,7 @@ export function wipeDeviceKeepingQueue(
   if (owner === undefined) return wipeDevice(storage, databases)
   // Kept before the hint is forgotten, so a page closed in between still knows whose queue it is.
   keptQueue.remember(owner)
-  // Read after the write: a chosen sign-out in another tab, before or meanwhile, wins (#613).
+  // Read after the write: a chosen sign-out in another tab, before or meanwhile, wins.
   if (chosenSignOut.recall()) return wipeDevice(storage, databases)
   void forgetUser(storage)
   clearBrowserStorage()

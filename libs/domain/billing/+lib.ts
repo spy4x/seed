@@ -622,8 +622,8 @@ export function readGroupBilling(value: unknown): GroupBilling | null {
 }
 
 /**
- * The trial a person may still start (`GET /api/billing/trial`). A trial is given once per person
- * (#205): the first group whose checkout they open gets it, and their later groups check out
+ * The trial a person may still start (`GET /api/billing/trial`). A trial is given once per person:
+ * the first group whose checkout they open gets it, and their later groups check out
  * without one. The create-group page says which.
  */
 export interface PersonTrial {

@@ -5,7 +5,7 @@ import { fromFileUrl } from "@std/path"
 
 /**
  * Pictures kept next to Seed's own posts (`libs/server/blog/seed-posts/<folder>/`), which the
- * website serves itself (#733): the covers and the link-preview cards.
+ * website serves itself: the covers and the link-preview cards.
  *
  * @module
  */

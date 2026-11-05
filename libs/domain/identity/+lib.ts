@@ -10,7 +10,7 @@ import type { GuestStats } from "./guests.ts"
 import { parseSort, serializeSort, type SortRule } from "@spy4x/platform/universal/sort"
 
 // Not in @spy4x/platform/model: too template-specific (a user's name length limit) to belong in a
-// general-purpose package. Moved here from the deleted libs/platform/types/+index.ts.
+// general-purpose package.
 export const NAME_MAX_LENGTH = 50
 
 export enum UserRole {
@@ -56,21 +56,21 @@ export const userBaseSchema = type({
   ),
   role: type.enumerated(...userRoleValues).default(UserRole.VIEWER),
   /**
-   * When an operator blocked the person (#146), or `null`. Optional because only the row read from
+   * When an operator blocked the person, or `null`. Optional because only the row read from
    * Postgres carries it: nothing a client sends sets it.
    */
   "blockedAt?": "Date | null",
   /**
-   * When the guest account was made (#224), or `null` for an account with a sign-in method, which
+   * When the guest account was made, or `null` for an account with a sign-in method, which
    * includes a guest who kept the account. Optional for the same reason as `blockedAt`.
    */
   "guestSince?": "Date | null",
   /**
-   * The person's profile picture (#228, `pictureUrl`), or `null` for none. Optional for the same
+   * The person's profile picture (`pictureUrl`), or `null` for none. Optional for the same
    * reason as `blockedAt`: only `picture.confirm` and `picture.remove` set it.
    */
   "pictureId?": "string | null",
-  /** Where that picture stands (#464, `PictureState`), or `null` for none. Optional likewise. */
+  /** Where that picture stands (`PictureState`), or `null` for none. Optional likewise. */
   "pictureState?": "1 | 2 | 3 | null",
 })
 export type UserBase = typeof userBaseSchema.infer
@@ -99,8 +99,7 @@ export type UserProfileBase = typeof userProfileBaseSchema.infer
 
 // A plain ASCII-digit regex, not `string.numeric`: arktype's `numeric` keyword accepts only a
 // well-formed number string, and a well-formed number has no leading zero, so any code starting
-// with `0` (about one TOTP code in ten) was refused with a 400 before verification. See
-// spy4x/template#27.
+// with `0` (about one TOTP code in ten) would be refused with a 400 before verification.
 export const authOTPSchema = type({
   otp: "/^[0-9]{6}$/",
 })
@@ -133,7 +132,7 @@ export const authPasswordSchema = type({
 export type AuthPassword = typeof authPasswordSchema.infer
 
 /**
- * The language of the page that asks for a mail (#277): a sign-up code or a sign-in code, sent
+ * The language of the page that asks for a mail: a sign-up code or a sign-in code, sent
  * before the server knows whose account the address is. Any short tag is accepted, so an app
  * that offers a language the server does not yet know still signs up; the server keeps only one
  * of {@link LANGUAGES}, and English otherwise.
@@ -153,7 +152,7 @@ export const authPasswordForgotSchema = authEmailSchema
 export type AuthPasswordForgot = typeof authPasswordForgotSchema.infer
 
 /**
- * The body of a password reset (#752): the token the right code gave, and the new password. The
+ * The body of a password reset: the token the right code gave, and the new password. The
  * address comes from the reset request the browser's cookie names.
  */
 export const authPasswordResetSchema = type({
@@ -192,7 +191,7 @@ export interface EmailStatus {
  * Whether an account with this address status can take a first password: a password signs in with
  * the account's proven address, so an account with none, or with one still waiting for its code,
  * cannot. The API refuses such a password before it spends an authenticator code, and the profile
- * says an address comes first instead of asking for one (#463).
+ * says an address comes first instead of asking for one.
  */
 export function hasPasswordAddress(
   status: EmailStatus,
@@ -245,7 +244,7 @@ export type AuthPasswordChange = typeof authPasswordChangeSchema.infer
 /**
  * Minutes after a sign-in with Google or GitHub during which that session confirms a step that
  * otherwise asks for the password. It proves the browser is signed in to the provider, not who sits
- * at it (#204). Deleting the account, setting a first password and changing the address each ask
+ * at it. Deleting the account, setting a first password and changing the address each ask
  * for it when the account has no password.
  */
 export const PROVIDER_PROOF_MINUTES = 5
@@ -323,7 +322,7 @@ export interface AccountDeletionStatus {
 // The longest value, in characters, of each text field of a push device: the library's own
 // `PUSH_SUBSCRIPTION_LIMITS`, which its request check (`pushSubscribeRequestSchema`) enforces. The
 // row schema below and the columns of `user_push_tokens` must agree with it, or a request that
-// passes the check does not fit the column (#355). `push-token-limits.test.ts` holds the row schema
+// passes the check does not fit the column. `push-token-limits.test.ts` holds the row schema
 // to these numbers, and `tests/integration/web-push.integration.test.ts` holds the columns to them.
 export const userPushTokenSchemaBase = type({
   userId: "number = 0",
@@ -392,7 +391,7 @@ export enum AuthAuditEventType {
    */
   UNCONFIRMED_ADDRESS_TAKEN = 15,
   /**
-   * An operator blocked the person (#146): every session ended and no sign-in is let in.
+   * An operator blocked the person: every session ended and no sign-in is let in.
    * `identifier` names the operator (`operator:<id>`). An operator ending all of a person's
    * sessions writes {@link SESSIONS_ENDED} with the same `identifier`.
    */
@@ -400,13 +399,13 @@ export enum AuthAuditEventType {
   /** An operator unblocked the person. `identifier` names the operator, as for `USER_BLOCKED`. */
   USER_UNBLOCKED = 17,
   /**
-   * An operator removed one of the person's push devices (#427). `identifier` names the operator
+   * An operator removed one of the person's push devices. `identifier` names the operator
    * and the device's row: `operator:<id> device=<row id>`. An operator revoking a token writes
    * {@link API_TOKEN_REVOKED} with `reason=operator:<id>`.
    */
   PUSH_DEVICE_REMOVED = 18,
   /**
-   * An operator removed an address from a mailing list (#428). The row is on the operator; its
+   * An operator removed an address from a mailing list. The row is on the operator; its
    * `identifier` is the list and the masked address (`news:j***@e***.com`), never the address
    * itself, which the removal erased.
    */
@@ -416,7 +415,7 @@ export enum AuthAuditEventType {
   /** An operator downloaded a list's addresses; `identifier` is the list and how many rows. */
   NEWSLETTER_SUBSCRIBERS_EXPORTED = 21,
   /**
-   * The person's role changed (#425). `identifier` names who changed it and both roles:
+   * The person's role changed. `identifier` names who changed it and both roles:
    * `operator:<id> from viewer to operator` from the admin app, `cli:user-role from …` from
    * `deno task user:role`.
    */
@@ -432,22 +431,22 @@ export enum AuthAuditEventType {
    */
   USERS_EXPORTED = 24,
   /**
-   * The person renamed one of their passkeys (#222). `identifier` names both names:
+   * The person renamed one of their passkeys. `identifier` names both names:
    * `passkey name=<new> from=<old>`. Numbers 25 to 29 are the billing events of
    * `@domain/billing/admin.ts`.
    */
   SIGN_IN_METHOD_RENAMED = 30,
-  /** A guest account was made with one click (#224). */
+  /** A guest account was made with one click. */
   GUEST_STARTED = 31,
   /** A guest kept the account by adding a sign-in method; `identifier` names the method. */
   GUEST_KEPT = 32,
   /**
-   * An operator deleted a guest account (#224). The row is the operator's, because the guest's
+   * An operator deleted a guest account. The row is the operator's, because the guest's
    * own rows go with the account: `identifier` is `user:<id>` of the deleted guest.
    */
   GUEST_DELETED_BY_OPERATOR = 33,
   /**
-   * The person linked a Telegram account (#269): its chat gets their notifications and its
+   * The person linked a Telegram account: its chat gets their notifications and its
    * messages to the bot act as them. `identifier` is `telegram:<Telegram user id>`.
    */
   TELEGRAM_LINKED = 34,
@@ -457,7 +456,7 @@ export enum AuthAuditEventType {
    */
   TELEGRAM_UNLINKED = 35,
   /**
-   * An operator removed the person's profile picture (#228). `identifier` names the operator
+   * An operator removed the person's profile picture. `identifier` names the operator
    * (`operator:<id>`). The person's own changes of it are {@link PROFILE_UPDATED} rows: a new
    * picture with the `identifier` `picture`, a removal with `picture-removed`
    * ({@link PICTURE_AUDIT}).
@@ -534,7 +533,7 @@ export type TotpConnectStartResponse = {
   secret: string
 }
 
-/** One device the person is signed in on, as `GET /api/auth/sessions` lists it (#151). */
+/** One device the person is signed in on, as `GET /api/auth/sessions` lists it. */
 export interface SignedInDevice {
   id: number
   /** "Firefox on Linux", worked out once at sign-in; "Unknown device" when nothing was recognised. */
@@ -554,7 +553,7 @@ export interface SignedInDevicesResponse {
   sessions: SignedInDevice[]
 }
 
-/** The providers a person can sign in with besides a password (#141), as the API's paths name them. */
+/** The providers a person can sign in with besides a password, as the API's paths name them. */
 export const OAUTH_PROVIDERS = ["google", "github"] as const
 export type OAuthProviderId = typeof OAUTH_PROVIDERS[number]
 
@@ -595,8 +594,8 @@ export interface OAuthProvidersResponse {
 }
 
 /**
- * A provider sign-in that would create a new account and waits for the person to confirm it
- * (#142), as `GET /api/auth/sign-up/pending` answers it.
+ * A provider sign-in that would create a new account and waits for the person to confirm it,
+ * as `GET /api/auth/sign-up/pending` answers it.
  */
 export interface PendingSignUp {
   provider: OAuthProviderId
@@ -619,11 +618,11 @@ export interface PendingSignUp {
   unconfirmedAccount: boolean
 }
 
-/** How long a sign-up and its mailed code work, in minutes (#142). A new code starts it again. */
+/** How long a sign-up and its mailed code work, in minutes. A new code starts it again. */
 export const SIGN_UP_CODE_MINUTES = 10
 
 /**
- * A sign-up with an address and a password that waits for the code mailed to the address (#142),
+ * A sign-up with an address and a password that waits for the code mailed to the address,
  * as `GET /api/auth/password/sign-up` answers it.
  */
 export interface WaitingPasswordSignUp {
@@ -656,20 +655,20 @@ export interface SignUpAccountExistsResponse {
 }
 
 /**
- * What the sign-up code answers for a guest whose address belongs to an account with a password
- * (#224): nothing changed, and `/keep/taken` asks what to do.
+ * What the sign-up code answers for a guest whose address belongs to an account with a password:
+ * nothing changed, and `/keep/taken` asks what to do.
  */
 export interface SignUpGuestTakenResponse {
   guestTaken: true
 }
 
 /**
- * How long a mailed sign-in code works, in minutes (#391, #752): the sign-up code's lifetime. A new
+ * How long a mailed sign-in code works, in minutes: the sign-up code's lifetime. A new
  * code of the same request starts it again; each code works once.
  */
 export const SIGN_IN_CODE_MINUTES = SIGN_UP_CODE_MINUTES
 
-/** How long a mailed password-reset code works, in minutes (#752): the sign-up code's lifetime. */
+/** How long a mailed password-reset code works, in minutes: the sign-up code's lifetime. */
 export const PASSWORD_RESET_CODE_MINUTES = SIGN_UP_CODE_MINUTES
 
 /** Characters in a mailed code: 6 random bytes as base64url (`EMAIL_CODE_BYTES`). */
@@ -693,18 +692,18 @@ export function mailedCodeOf(raw: string): string | null {
 }
 
 /**
- * The `auth_keys.method` of the key a mailed sign-in code signs in through (#391), and the
+ * The `auth_keys.method` of the key a mailed sign-in code signs in through, and the
  * `identifier` of the audit rows a code writes. It holds no secret: an account gets one such key,
  * and a code proves the mailbox each time. It is no sign-in method a person links or unlinks. The
- * stored value predates codes (sign-in mailed a link until #752) and stays, so older rows keep
+ * stored value predates codes (sign-in once mailed a link) and stays, so older rows keep
  * their meaning.
  */
 export const SIGN_IN_LINK_METHOD = "email-link"
 
 /**
  * The `identifier` of the person's own {@link AuthAuditEventType.PROFILE_UPDATED} rows for their
- * profile picture (#228): a new picture, and a removal (#453). Rows written before #453 say
- * `picture` for a removal too.
+ * profile picture: a new picture, and a removal. Older rows say `picture` for a
+ * removal too.
  */
 export const PICTURE_AUDIT = { changed: "picture", removed: "picture-removed" } as const
 
@@ -717,7 +716,7 @@ export const authSignInCodeSchema = authEmailSchema.and({
 }).and(mailLanguageSchema)
 export type AuthSignInCode = typeof authSignInCodeSchema.infer
 
-/** What `POST /api/auth/code/verify` answers when the code signed someone in (#391, #752). */
+/** What `POST /api/auth/code/verify` answers when the code signed someone in. */
 export interface SignInCodeAnswer {
   /** The address the code proved, for the sign-in page's "last time" hint. */
   email: string
@@ -737,7 +736,7 @@ export interface WaitingCodeResponse {
   email: string | null
 }
 
-/** What `POST /api/auth/password/reset/verify` answers for the right code (#752). */
+/** What `POST /api/auth/password/reset/verify` answers for the right code. */
 export interface PasswordResetVerified {
   /**
    * The proof that sets the new password, valid for {@link PASSWORD_RESET_CODE_MINUTES} minutes.
@@ -751,7 +750,7 @@ export interface PendingSignUpResponse {
   pending: PendingSignUp | null
 }
 
-/** Longest name a passkey may have, in characters (#222). */
+/** Longest name a passkey may have, in characters. */
 export const PASSKEY_NAME_MAX_LENGTH = 64
 
 /**
@@ -774,14 +773,14 @@ export interface PasskeyAdded {
   name: string
 }
 
-/** What a passkey row adds to a {@link SignInMethod} (#222). Dates are ISO 8601. */
+/** What a passkey row adds to a {@link SignInMethod}. Dates are ISO 8601. */
 export interface PasskeyDetails {
   name: string
   createdAt: string
   lastUsedAt: string | null
 }
 
-/** One way into the account, as `GET /api/auth/methods` lists it (#141). */
+/** One way into the account, as `GET /api/auth/methods` lists it. */
 export interface SignInMethod {
   /** The id to unlink it by. */
   id: number
@@ -811,7 +810,7 @@ export interface SignInMethodsResponse {
    */
   providerProofUntil: string | null
   /**
-   * The account has a proven address, so a mailed sign-in code reaches it (#391): an account with
+   * The account has a proven address, so a mailed sign-in code reaches it: an account with
    * no password can confirm a step with a code sign-in of a moment ago.
    */
   emailLink: boolean
@@ -832,9 +831,9 @@ export type OAuthNotice =
   | "link-taken"
   /** Too many attempts from this address in a minute; nothing was tried. */
   | "busy"
-  /** A guest linked the provider: the account is kept (#224). */
+  /** A guest linked the provider: the account is kept. */
   | "kept"
-  /** A guest's provider account signs in to another account here: the switch page asks (#224). */
+  /** A guest's provider account signs in to another account here: the switch page asks. */
   | "guest-taken"
 
 /**
@@ -852,7 +851,7 @@ export const OAUTH_PAGES = {
   home: "/",
   /** The profile's sign-in methods: where linking a provider reports how it ended. */
   signInMethods: "/profile/security",
-  /** Keeping a guest account (#224): where a guest's link reports. */
+  /** Keeping a guest account: where a guest's link reports. */
   keep: "/keep",
   /** "That sign-in belongs to another account": where a guest's taken link lands. */
   keepTaken: "/keep/taken",
@@ -881,7 +880,6 @@ export function oauthNotice(value: unknown): OAuthNotice | null {
 
 // The four response shapes below have no @spy4x/platform/api counterpart: they name this app's
 // own endpoint responses (a boolean success flag, a public key string), not a general envelope.
-// Moved here from the deleted libs/platform/types/+index.ts.
 export type ApiSuccessResponse = {
   success: boolean
 }
@@ -914,11 +912,11 @@ export interface Actor {
   sessionSecondFactor: SecondFactorStatus
   /**
    * The session the actor acts through, when a session does. A write that must not outlive the
-   * session, such as storing a push subscription (#409), checks it again under a lock.
+   * session, such as storing a push subscription, checks it again under a lock.
    */
   sessionId?: number
   /**
-   * Set when a personal API token acts instead of a session (#167). The session gate then lets
+   * Set when a personal API token acts instead of a session. The session gate then lets
    * through only the messages a token may send, in the token's group, and only reads when the
    * token cannot write.
    */
@@ -955,7 +953,7 @@ export class AccessError extends Error {
 export const SOCKET_USER_PROTOCOL = "user."
 
 // ---------------------------------------------------------------------------------------------
-// The operator area (#146): `/api/admin/...`, open to operators and the roles above them.
+// The operator area: `/api/admin/...`, open to operators and the roles above them.
 // ---------------------------------------------------------------------------------------------
 
 /** The lowest role that may open the operator area. Anyone below it gets 404 there. */
@@ -983,11 +981,11 @@ export interface AdminUserRow {
   /** When an operator blocked the person, or `null`. */
   blockedAt: string | null
   createdAt: string
-  /** The last signed-in activity, to within five minutes (#152), or `null` when never seen. */
+  /** The last signed-in activity, to within five minutes, or `null` when never seen. */
   lastSeenAt: string | null
-  /** When a guest account (#224) was started, or `null` (or absent) for a full account. */
+  /** When a guest account was started, or `null` (or absent) for a full account. */
   guestSince?: string | null
-  /** Their profile picture (#228); `null` or absent for none. */
+  /** Their profile picture; `null` or absent for none. */
   pictureId?: string | null
 }
 
@@ -1005,13 +1003,13 @@ export interface AdminUserListResponse {
 export interface AdminSignInMethod {
   /**
    * `password`, `oauth:google`, `oauth:github`, `email-code`, `passkey`, `email-link`, or
-   * `telegram` for a linked Telegram account (#269), which is no way in.
+   * `telegram` for a linked Telegram account, which is no way in.
    */
   method: string
-  /** A passkey's name and last use (#222), on a passkey row only. */
+  /** A passkey's name and last use, on a passkey row only. */
   passkey?: { name: string; lastUsedAt: string | null }
   /**
-   * On the `email-link` row only (#391): when a mailed code last signed the person in or up, or
+   * On the `email-link` row only: when a mailed code last signed the person in or up, or
    * `null` when the audit keeps no such row. ISO 8601.
    */
   lastUsedAt?: string | null
@@ -1056,9 +1054,9 @@ export interface AdminUserDetail {
   groups: AdminUserGroup[]
   /** The newest {@link ADMIN_AUDIT_LIMIT} rows of the person's audit trail. */
   audits: AdminAuditRow[]
-  /** Their theme, region format, time zone and clock, read-only (#163). */
+  /** Their theme, region format, time zone and clock, read-only. */
   preferences: AdminUserPreferences
-  /** When their one billing trial went to a group (#205), or `null` while unused. ISO 8601. */
+  /** When their one billing trial went to a group, or `null` while unused. ISO 8601. */
   trialUsedAt: string | null
 }
 
@@ -1068,7 +1066,7 @@ export const ADMIN_AUDIT_LIMIT = 50
 /** Whether the list shows blocked people, people who are not, or both. */
 export type AdminBlockedFilter = "any" | "blocked" | "active"
 
-/** Which kind of account the user list shows (#224): guests, or accounts with a sign-in method. */
+/** Which kind of account the user list shows: guests, or accounts with a sign-in method. */
 export type AdminAccountFilter = "guest" | "full"
 
 /** A column the user list sorts by, on the server. */
@@ -1094,7 +1092,7 @@ export interface AdminUserFilter {
   /** Only people with this role, or `null` for every role. */
   role: UserRole | null
   blocked: AdminBlockedFilter
-  /** Only guest accounts (#224), or only full ones; absent for both. */
+  /** Only guest accounts, or only full ones; absent for both. */
   account?: AdminAccountFilter
   /**
    * The order, most significant rule first. Empty means the default order, newest first; the
@@ -1179,7 +1177,7 @@ export interface AdminStats {
   generatedAt: string
   /**
    * True when `people`, `groups` or `notes` is the database's estimate rather than a count: a table
-   * that large is not counted on every load (#462). Absent means counted.
+   * that large is not counted on every load. Absent means counted.
    */
   approximate?: boolean
   /** People with an account that is not deleted. */
@@ -1200,7 +1198,7 @@ export interface AdminStats {
   signUpsPerDay: AdminDailyCount[]
   /** Active people per UTC day, oldest first, the same days. */
   activePerDay: AdminDailyCount[]
-  /** Guest accounts (#224) started, kept and cleaned up over the same days. */
+  /** Guest accounts started, kept and cleaned up over the same days. */
   guests?: GuestStats
 }
 
@@ -1213,7 +1211,7 @@ export const ADMIN_ROLE_CHOICES: readonly UserRole[] = [
 ]
 
 /**
- * The body of `POST /api/admin/users/:id/role` (#425): the new role, as its number. Only a number
+ * The body of `POST /api/admin/users/:id/role`: the new role, as its number. Only a number
  * that names a role passes; a role name or any other value is refused.
  */
 export const adminUserRoleSchema = type({
@@ -1221,12 +1219,12 @@ export const adminUserRoleSchema = type({
 })
 export type AdminUserRoleBody = typeof adminUserRoleSchema.infer
 
-/** The roles `operatorRole` may give: every role below its own (#425). */
+/** The roles `operatorRole` may give: every role below its own. */
 export function adminGrantableRoles(operatorRole: UserRole): UserRole[] {
   return ADMIN_ROLE_CHOICES.filter((role) => role < operatorRole)
 }
 
-/** Only an administrator changes a role, and only to one below their own (#425). */
+/** Only an administrator changes a role, and only to one below their own. */
 export function canChangeRoles(operatorRole: UserRole): boolean {
   return operatorRole === UserRole.ADMIN
 }
@@ -1237,7 +1235,7 @@ export function adminUsersExportPath(filter: AdminUserFilter): string {
   return `/api/admin/users/export.csv${query ? `?${query}` : ""}`
 }
 
-// #429: the audit log and the System page of the operator area.
+// The audit log and the System page of the operator area.
 export * from "./admin-audit.ts"
 export * from "./admin-system.ts"
 export * from "./admin-website-stats.ts"
@@ -1249,7 +1247,7 @@ export * from "./telegram.ts"
 export * from "./profile-picture.ts"
 
 /**
- * One push device of a person, as the operator area shows it (#427): never the endpoint or the
+ * One push device of a person, as the operator area shows it: never the endpoint or the
  * keys, which let anyone who holds them push to the device.
  */
 export interface AdminPushDevice {

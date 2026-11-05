@@ -69,7 +69,7 @@ export interface AdminStatsScreenProps {
 }
 
 /**
- * The website's numbers for a seller (#485): where visits come from, so they know where to post,
+ * The website's numbers for a seller: where visits come from, so they know where to post,
  * and which items people order or only look at, so they know what to restock or photograph again.
  * Totals only, from Umami on the server. It says "order clicks", never "orders": the order itself
  * happens in the chat.

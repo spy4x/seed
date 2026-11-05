@@ -2,7 +2,7 @@
  * Deleting one's own account, wired from `createSignIn`. Not `@server/auth/account-deletion.ts`,
  * which stores the request, its blockers and the restore.
  *
- * - **Deleting the account (#144).** `deleteAccount` soft-deletes the profile, writes the waiting
+ * - **Deleting the account.** `deleteAccount` soft-deletes the profile, writes the waiting
  *   request with its two jobs and signs out every session, in one transaction, after checking
  *   again under row locks that no group stops it (`@server/auth/account-deletion.ts`). A correct
  *   password during the wait restores the account before the sign-in goes on as usual, second

@@ -13,8 +13,8 @@ import {
   FakeSocketFactory,
   MemoryKeyValueStore,
 } from "@spy4x/realtime/testing"
-// The codec of the app deployed before the server's error frames gained `reason` and `fields`
-// (#430): the one a page left open across that deploy still runs.
+// The codec of the app deployed before the server's error frames gained `reason` and `fields`:
+// the one a page left open across that deploy still runs.
 import { createJsonCodec as createJsonCodec1910 } from "jsr:@spy4x/realtime@1.91.0/protocol"
 import {
   connectionDisplay,

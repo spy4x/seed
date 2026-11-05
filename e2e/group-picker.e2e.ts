@@ -29,7 +29,7 @@ async function signInOnline(page: Page, email: string): Promise<void> {
 }
 
 /**
- * Waits for the worker's welcome note in the group (#165), so what a spec adds next is ordered
+ * Waits for the worker's welcome note in the group, so what a spec adds next is ordered
  * after it. A spec that counts or lists a new account's notes must account for it.
  */
 async function welcomeNoteIn(page: Page, groupId: string): Promise<void> {

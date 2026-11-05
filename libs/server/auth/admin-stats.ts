@@ -1,5 +1,5 @@
 /**
- * The operator dashboard's numbers (#424): counts over `users`, `groups`, `notes`, `auth_audits`
+ * The operator dashboard's numbers: counts over `users`, `groups`, `notes`, `auth_audits`
  * and `audit_events`. Counts only: no name, address or note text leaves here. Who may read them is
  * the API's business (`apps/api/routes/admin/dashboard.ts`).
  *

@@ -1,5 +1,5 @@
 /**
- * The operator area's Jobs list and one job's page (#394), driven in a browser DOM (happy-dom):
+ * The operator area's Jobs list and one job's page, driven in a browser DOM (happy-dom):
  * the search and state chips, which actions each run offers, the confirmations a mail job asks
  * for, and where focus goes once an action went through.
  */

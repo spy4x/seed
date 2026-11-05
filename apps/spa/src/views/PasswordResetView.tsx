@@ -25,7 +25,7 @@ import { useAppText } from "@ui/i18n.ts"
 type ResetStep = "address" | "code" | "dead" | "choose" | "done"
 
 /**
- * `/forgot-password` (#752): the address, the mailed code, then the new password, on one route.
+ * `/forgot-password`: the address, the mailed code, then the new password, on one route.
  * The server's cookie says whether a code waits for this browser, so a reload stays on the code
  * step. The right code gives a token that this page keeps in memory only, never in its address, and
  * sends with the new password. A token that ran out sends the person back to the address, kept.
@@ -33,7 +33,7 @@ type ResetStep = "address" | "code" | "dead" | "choose" | "done"
 export function ForgotPasswordView() {
   const [, navigate] = useLocation()
   const t = useAppText()
-  // The address "Forgot your password?" handed over after a sign-up found its account (#142).
+  // The address "Forgot your password?" handed over after a sign-up found its account.
   const [email, setEmail] = useState(() => takeHandedOffAddress() ?? "")
   const [step, setStep] = useState<ResetStep>("address")
   const [sentAt, setSentAt] = useState<number | null>(null)

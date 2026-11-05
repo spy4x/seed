@@ -13,7 +13,7 @@ export const SITE_ICON = IconSprout
 export const REPOSITORY_URL = `https://github.com/spy4x/seed`
 
 /**
- * The website's way into the app (#224): every "try" button opens the app's `/try`, which starts
+ * The website's way into the app: every "try" button opens the app's `/try`, which starts
  * a guest account with one click. `label` is the button, `line` the sentence under the hero's,
  * each a key of the `site` catalog (`i18n/site`). A product built on Seed without the public demo
  * says `Try it now` and `No account needed. Add a sign-in method later to keep your work.` there.

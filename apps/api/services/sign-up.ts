@@ -37,7 +37,7 @@ export enum SignUpOutcome {
   WrongCode = 3,
   /** No sign-up waits: it took too long, the code was guessed at too often, or none was started. */
   Expired = 4,
-  /** A guest's sign-up (#224): the address and password were added to the guest, now kept. */
+  /** A guest's sign-up: the address and password were added to the guest, now kept. */
   GuestKept = 5,
   /**
    * A guest's sign-up whose address belongs to an account with a password: nothing changed, and
@@ -59,7 +59,7 @@ export interface WaitingSignUp {
   expiresAt: Date
 }
 
-/** The cookie that ties a browser to its waiting sign-up (#142). */
+/** The cookie that ties a browser to its waiting sign-up. */
 export const PASSWORD_SIGN_UP_COOKIE = "password_sign_up"
 
 /** The only path the sign-up cookie is sent to: the routes of the waiting sign-up. */
@@ -84,7 +84,7 @@ export interface SignUpOperations {
     firstGroupId?: string,
   ): Promise<SignedIn | null>
   /**
-   * Starts a sign-up that proves its address first (#142): hashes the password, writes the
+   * Starts a sign-up that proves its address first: hashes the password, writes the
    * waiting sign-up, queues its code mail and sets the cookie that names it. The same work and
    * the same answer for every address: it never asks whether an account uses `email`, which must
    * be normalised already. `false` only for a password the hasher refuses.
@@ -94,7 +94,7 @@ export interface SignUpOperations {
     email: string,
     password: string,
     guestUserId?: number | null,
-    /** The asking page's language, for the code mail (#277). */
+    /** The asking page's language, for the code mail. */
     language?: string | null,
   ): Promise<boolean>
   /** The sign-up the request's cookie names while it waits, or `null`. */
@@ -130,7 +130,7 @@ export function createSignUpOperations(own: SignInParts): SignUpOperations {
     deviceOf,
   } = own
   /**
-   * The right code of a guest's sign-up (#224): the address and password become the guest's first
+   * The right code of a guest's sign-up: the address and password become the guest's first
    * sign-in method, so the account is kept with the same user id and everything in it. The
    * browser must still carry that guest's session. When an account already uses the address and
    * has a password, nothing changes and the switch page asks for that password; one without a

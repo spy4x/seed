@@ -51,7 +51,7 @@ export function ApiTokenNewView(
     navigate(profilePath("api-tokens"))
   }
 
-  // A guest has no password to confirm a token with (#224): the refusal shows at once.
+  // A guest has no password to confirm a token with: the refusal shows at once.
   if (isGuestSession()) {
     return (
       <GuestRefusalDialog

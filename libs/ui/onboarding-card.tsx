@@ -26,7 +26,7 @@ export const ONBOARDING_FAILURE = `OnboardingCard.failed`
 /**
  * The first steps in the order a new person takes them, each with the link to the page that does
  * it. `groupId` is the person's selected group, where an invitation is made; without one the
- * step opens the groups page. For a guest (#224) the e-mail step is "Keep your account", and
+ * step opens the groups page. For a guest the e-mail step is "Keep your account", and
  * the invitation and notification steps wait until the account is kept, since both are refused.
  * The words are `t`'s.
  */
@@ -154,7 +154,7 @@ export interface OnboardingCardProps {
   groupId: string | null
   /** The app's router, for the steps that open another page. */
   navigate?: Navigate
-  /** The person is a guest (#224): the steps lead to keeping the account first. */
+  /** The person is a guest: the steps lead to keeping the account first. */
   guest?: boolean
   /** Called by Dismiss and, once every step is done, by Finish. The app stops rendering the card. */
   onDismiss: () => void
@@ -165,7 +165,6 @@ export interface OnboardingCardProps {
   error?: string | null
   /** Whether the tour is still offered: the person has neither finished nor skipped it. */
   tourOffered: boolean
-  /** Whether the tour is running. */
   tourOpen: boolean
   /** The tour step shown. */
   tourIndex: number
@@ -229,7 +228,7 @@ export function OnboardingCard(
           title={t.t(`OnboardingCard.title`)}
           steps={onboardingSteps(t, steps, groupId, navigate, guest)}
           onDismiss={onDismiss}
-          // The page header's "New note" is the screen's one primary action (#454).
+          // The page header's "New note" is the screen's one primary action.
           actionVariant="secondary"
           description={tourOffered
             ? (

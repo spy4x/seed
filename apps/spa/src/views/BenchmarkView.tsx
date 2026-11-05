@@ -33,7 +33,7 @@ import { sessionState } from "../state/session.ts"
 import type { TagItem } from "../state/tags.ts"
 
 /**
- * `/benchmark` (#440): runs the measures of `BenchmarkScreen` on this device with the SPA's own
+ * `/benchmark`: runs the measures of `BenchmarkScreen` on this device with the SPA's own
  * code: the changes pull and IndexedDB copy of the local-data module (`benchmarkLocalData`), the
  * real notes list and the list's own search and filter. Only in a development build or on the
  * public demo (`benchmarkOpen`).

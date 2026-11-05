@@ -45,7 +45,7 @@ import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule, AdminModuleContext } from "./module.ts"
 import { errorResponse, validationResponse } from "../../services/error-response.ts"
 
-/** The answer to every customer route while billing is off (decision 10 of #196). */
+/** The answer to every customer route while billing is off. */
 export const ADMIN_BILLING_OFF = `Billing is not set up`
 export const ADMIN_BILLING_NOT_FOUND = `This group has no subscription`
 export const ADMIN_BILLING_MEMBER =
@@ -158,7 +158,7 @@ function providerKey(action: AdminBillingActionKind, groupId: string, key: strin
 }
 
 /**
- * The billing routes of the operator area (#196), mounted at `/api/admin` behind the gate in
+ * The billing routes of the operator area, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them, and every write is same-site.
  *
  * - `GET /billing/figures` and `GET /billing/customers?q=&status=&page=` answer

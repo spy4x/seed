@@ -1,5 +1,5 @@
 /**
- * The blog's admin pages (#396), driven in a browser DOM (happy-dom): what the list's chips and
+ * The blog's admin pages, driven in a browser DOM (happy-dom): what the list's chips and
  * search send, the editor's errors and where focus goes, the Preview tab, and what each dialog
  * sends, the newsletter list above all.
  */
@@ -848,7 +848,7 @@ describe("the blog editor", () => {
 
 // #endregion
 
-// #region History (#418)
+// #region History
 
 /** Two earlier versions of `saved`, newest first: Lee's rewrite and the first draft. */
 const REVISIONS: BlogRevision[] = [
@@ -1025,7 +1025,7 @@ describe("the blog editor's History", () => {
 /** What the fake live figure in the preview says. */
 const LIVE_FIGURE = "Live"
 
-/** Two broken tags on lines 3 and 5 of a five-line body (#620). */
+/** Two broken tags on lines 3 and 5 of a five-line body. */
 const FIGURE_BODY = "Intro.\n\n<CostCalc members={4} />\n\n<CostCalculator members={0} />"
 const FIGURE_PROBLEMS: BlogProblem[] = [
   {

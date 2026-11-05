@@ -1,4 +1,4 @@
-# The website on Bun (#623), for a product that sets APP_RUNTIME=bun: the Bun counterpart of
+# The website on Bun, for a product that sets APP_RUNTIME=bun: the Bun counterpart of
 # apps/mpa/dockerfile.prod (infra/compose/compose.runtime-bun.yml, docs/apps.md).
 #
 # Deno builds the site with Vite (`deno task mpa:build`, into apps/mpa/dist) and bundles the

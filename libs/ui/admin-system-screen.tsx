@@ -72,9 +72,9 @@ export interface AdminSystemScreenProps {
 }
 
 /**
- * The System page (#429): the health of the stack as status cards with an OK, Warning or Error
+ * The System page: the health of the stack as status cards with an OK, Warning or Error
  * badge (database, cache, job queue, backup, migrations, build). The queue's card links to the Jobs
- * module (#394), at its failed runs while any failed. Names and states only: no setting, address
+ * module, at its failed runs while any failed. Names and states only: no setting, address
  * of a service or secret reaches this page.
  */
 export function AdminSystemScreen(props: AdminSystemScreenProps): JSX.Element {
@@ -148,7 +148,7 @@ function SystemBody(
       </div>
       {
         /* Two columns at most: a third left each card so narrow that its labels wrapped and the
-          newest migration's name broke mid-word at 1440 px (#453). */
+          newest migration's name broke mid-word at 1440 px. */
       }
       <section
         aria-label={t.t(`AdminSystem.services`)}
@@ -323,7 +323,7 @@ function StatusCard(
       <CardBody class="flex flex-col gap-3">
         {
           /* The rows pad themselves; the card already does at its edges. The width cap keeps each
-            label beside its value on a card that spans the page, such as the build's (#407). */
+            label beside its value on a card that spans the page, such as the build's. */
         }
         <FactList facts={facts} class="-my-3 max-w-xl" />
         {hint && <p class="text-xs text-muted">{hint}</p>}

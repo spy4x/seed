@@ -18,7 +18,7 @@ import { useAppText } from "./i18n.ts"
 import { ScreenForm } from "./progressive.tsx"
 
 /**
- * The benchmark page (#440): measures one large group on the device the page runs on. Pure: the
+ * The benchmark page: measures one large group on the device the page runs on. Pure: the
  * SPA's `BenchmarkView` runs the measurement and passes each step's state in.
  *
  * @module

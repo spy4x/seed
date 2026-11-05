@@ -1,11 +1,11 @@
 /**
- * The operator area's reads and writes over groups (#426): the searchable group list, one group's
+ * The operator area's reads and writes over groups: the searchable group list, one group's
  * page, its files, and the actions an operator takes on a group (revoke an invitation, remove a
  * member, transfer ownership, remove a file).
  *
  * Nothing written inside a group leaves here: no note or tag text, no group description, no note
  * title from the activity log, no invitation token or its hash. Counts and account facts only, but
- * for the Files tab (#478): a file's name and its note's title, so an operator can find the file a
+ * for the Files tab: a file's name and its note's title, so an operator can find the file a
  * report names. Opening or downloading a file writes an audit row naming the operator.
  *
  * Who may call these is the API's business (`apps/api/routes/admin/groups.ts`), except the rules
@@ -261,7 +261,7 @@ export async function listAdminGroups(
     WHERE ${where}
   `
   // The page is chosen first, reading only the columns its sort needs; the figures of a row (its
-  // owner's address, notes, plan) are read for the page's rows alone, not for every match (#462).
+  // owner's address, notes, plan) are read for the page's rows alone, not for every match.
   const keys = new Set(sortRules(filter.sort).map((rule) => rule.key))
   const rows = await sql<GroupRowRaw[]>`
     WITH page AS (
@@ -724,7 +724,7 @@ export async function transferOwnershipAsOperator(
 /**
  * One page of the group's files whose name holds `filter.query` (any case), newest first, those of
  * notes in the trash included, with how many match and the group's totals. Each with its name and
- * its note's title (#478). `null` when there is no such group.
+ * its note's title. `null` when there is no such group.
  */
 export async function readAdminGroupFiles(
   sql: postgres.Sql,

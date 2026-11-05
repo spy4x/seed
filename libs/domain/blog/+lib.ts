@@ -15,7 +15,7 @@ import type { BlogPreviewSegment, BlogProblem, BlogSegment } from "./figures.ts"
 export * from "./figures.ts"
 
 /**
- * The blog (#395): posts an operator writes in the admin app and the public website shows once
+ * The blog: posts an operator writes in the admin app and the public website shows once
  * they are published. A post is a draft, scheduled for a time, or published. `docs/blog.md` walks
  * through the life of a post; the SQL is `libs/server/blog/`.
  *
@@ -28,7 +28,6 @@ export * from "./figures.ts"
 
 /** The longest slug: the post's address is `/blog/<slug>`. */
 export const BLOG_SLUG_MAX_LENGTH = 100
-/** The longest title. */
 export const BLOG_TITLE_MAX_LENGTH = 200
 /** The longest search-result title; search engines show about 60 characters. */
 export const BLOG_SEO_TITLE_MAX_LENGTH = 70
@@ -64,7 +63,7 @@ export const BLOG_SCHEDULE_MAX_DAYS = 5 * 366
 export const BLOG_READ_NEXT_COUNT = 3
 /** How many posts the RSS feed carries, newest first. */
 export const BLOG_FEED_COUNT = 20
-/** How many earlier versions a post keeps; a save deletes the older ones (#418). */
+/** How many earlier versions a post keeps; a save deletes the older ones. */
 export const BLOG_REVISIONS_KEPT = 50
 
 /**
@@ -148,7 +147,7 @@ export interface BlogPost {
   version: number
 }
 
-/** One row of the admin list, with the cover a translation of it takes (#733). */
+/** One row of the admin list, with the cover a translation of it takes. */
 export type AdminBlogPostRow = Pick<
   BlogPost,
   | `id`
@@ -209,7 +208,7 @@ export interface RenderedBlogBody {
 
 /**
  * A mailing list the publish dialog offers, with how many confirmed subscribers it has in each
- * language: a post's issue goes only to its language's (#527). A language with none is left out.
+ * language: a post's issue goes only to its language's. A language with none is left out.
  */
 export interface BlogNewsletterList {
   list: string
@@ -278,7 +277,7 @@ export type PublicBlogFeedItem =
   & Pick<PublicBlogPost, `segments` | `headings` | `authorName`>
 
 /**
- * One earlier version of a post in the editor's History list (#418): who saved it, when, and the
+ * One earlier version of a post in the editor's History list: who saved it, when, and the
  * title it had. `savedBy` is the operator's name or address as it was, `null` when they had none.
  */
 export interface BlogRevisionSummary {
@@ -340,7 +339,7 @@ export class BlogError extends Error {
     public readonly code: BlogErrorCode,
     message: string,
     public readonly field: BlogField | null = null,
-    /** Why it failed, by code, so a screen says it in the person's language (#275). */
+    /** Why it failed, by code, so a screen says it in the person's language. */
     failed?: FieldError,
   ) {
     super(message)
@@ -674,7 +673,7 @@ export function parseBlogPostFields(
 
 /**
  * A save's fields: {@link BlogPostFields} with `language` and `translationOf` only when the request
- * named them, so a save that leaves them out keeps the post's language and its link (#530).
+ * named them, so a save that leaves them out keeps the post's language and its link.
  */
 export type BlogPostEdit =
   & Omit<BlogPostFields, `language` | `translationOf`>

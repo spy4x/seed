@@ -1,6 +1,6 @@
 // Seed's own site: see docs/start-a-product.md
 /**
- * Draws the link-preview card of each of Seed's own posts (#733): `deno task og:blog` in
+ * Draws the link-preview card of each of Seed's own posts: `deno task og:blog` in
  * `apps/mpa`. It renders `blog-og.html` at 1200×630 once per post file, each language's own words
  * over the post's shared cover, and writes `libs/server/blog/seed-posts/og/<slug>.jpg`, which the
  * website serves at `/blog/og/<slug>.jpg` as the post's `og:image`.

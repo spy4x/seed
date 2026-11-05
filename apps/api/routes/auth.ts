@@ -33,7 +33,7 @@ import { createAccountDeletionRoutes } from "./auth-account-deletion.ts"
 export interface AuthRouteDependencies {
   /** Without the provider sign-in: `auth-oauth.ts` has those routes. */
   signIn: Omit<SignIn, "oauth" | "passkeys" | "guests">
-  /** Announces a sign-out, so the person's open sockets close. Audit rows are not events (#191). */
+  /** Announces a sign-out, so the person's open sockets close. Audit rows are not events. */
   emit(event: UserSignedOutEvent): void
   mutationGuards: MutationGuards
   rateLimits: AuthRateLimits
@@ -55,7 +55,7 @@ export function createAuthRoute(deps: AuthRouteDependencies): Hono<APIContext> {
   const { signIn, emit, mutationGuards, rateLimits, passwordFailures } = deps
   const { isAuthenticated1FA, isAuthenticated2FA } = signIn.auth
   return new Hono<APIContext>()
-    // A password check of a signed-in step while the account is locked (#406). Every other error
+    // A password check of a signed-in step while the account is locked. Every other error
     // goes on to the app's handler.
     .onError((error, c) => {
       if (!(error instanceof PasswordLockedError)) throw error
@@ -68,7 +68,7 @@ export function createAuthRoute(deps: AuthRouteDependencies): Hono<APIContext> {
         emit(
           new UserSignedOutEvent({
             userId: authData.user.id,
-            // trustedProxy: true keeps the old behaviour of trusting X-Forwarded-For / X-Real-IP.
+            // trustedProxy: true trusts X-Forwarded-For / X-Real-IP: Traefik overwrites them.
             request: requestInfoFromContext(c, { trustedProxy: true }),
           }),
         )

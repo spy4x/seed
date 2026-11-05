@@ -184,12 +184,12 @@ export interface AdminGroupScreenProps {
 }
 
 /**
- * One group in the admin app (#426): a header card with its owner, plan and counts, then tabs for
+ * One group in the admin app: a header card with its owner, plan and counts, then tabs for
  * its members, its invitations, its files and its activity. An operator removes a member, revokes
  * an invitation or removes a file from the row's menu; a supervisor hands the group to another member from the page's
  * menu. Each is confirmed in a dialog and recorded in the group's activity with the operator's
  * name. Nothing written inside the group shows here but its files' names and their notes' titles,
- * which an operator needs to find a file a report names (#478).
+ * which an operator needs to find a file a report names.
  */
 export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
   const { detail, error, operator, navigate } = props
@@ -686,7 +686,7 @@ export function filesCount(
 const FILE_SEARCH_ID = `admin-group-files-q`
 
 /**
- * The group's files (#478): a search by name, how many match, one page of rows with a thumbnail
+ * The group's files: a search by name, how many match, one page of rows with a thumbnail
  * or a file icon, the name and where the file sits, then the pages and the group's room. An image
  * opens in the lightbox and any other file downloads; each row's menu downloads or removes it. An
  * operator sees the names and the notes' titles so they can find the file a report names.

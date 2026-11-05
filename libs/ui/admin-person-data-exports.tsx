@@ -27,7 +27,7 @@ const BADGES = {
 >
 
 /**
- * The person's "Data exports" tab (#229): each copy of their data they asked for, newest first,
+ * The person's "Data exports" tab: each copy of their data they asked for, newest first,
  * with its state, size and expiry. Metadata only: the file holds the person's data, so the
  * operator has no download here.
  */

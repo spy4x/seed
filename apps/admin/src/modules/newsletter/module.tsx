@@ -95,7 +95,7 @@ function NewsletterView({ context }: { context: AdminContext }): JSX.Element {
   )
 }
 
-/** The newsletter's subscribers, numbers and sent issues, with remove, resend and export (#428). */
+/** The newsletter's subscribers, numbers and sent issues, with remove, resend and export. */
 export const newsletterModule: AdminModule = {
   id: `newsletter`,
   nav: { name: `AdminNav.newsletter`, href: PATH, Icon: IconMail },

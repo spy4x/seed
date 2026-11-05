@@ -72,7 +72,7 @@ function pricingJsonLd(t: Translator<string>, origin: string, language: Language
 /**
  * `GET` shows what Seed costs and, below, the demo app's plans. `POST` is where a plan's "Try in
  * the demo" form goes without JavaScript, in every language: plans are chosen inside the app, so it sends the visitor
- * to the app's `/try`, which opens the demo as a guest account (#224).
+ * to the app's `/try`, which opens the demo as a guest account.
  */
 export const handler = define.handlers({
   POST(ctx) {

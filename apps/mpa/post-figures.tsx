@@ -13,7 +13,7 @@ import {
 import type { FigureFrame } from "./components/post-figure.tsx"
 
 /**
- * The interactive figures a post can hold (#620): one file each in `islands/post/`, named after
+ * The interactive figures a post can hold: one file each in `islands/post/`, named after
  * its tag (`CostCalculator.tsx` is `<CostCalculator />`). The folder is the list: a new file is a
  * new tag, with nothing else to edit. `docs/blog.md` says how to add one.
  *
@@ -202,7 +202,7 @@ export function feedHtml(
 /**
  * `html` with each relative `href` and `src` resolved against `base`, so a link inside a post
  * (`/docs`, `#part`, `other-post`) works in a feed reader that does not resolve it against the
- * item's link (#416). It relies on the API's safe HTML, the only HTML a body has: every attribute
+ * item's link. It relies on the API's safe HTML, the only HTML a body has: every attribute
  * is double-quoted, and a `"` in text is written `&quot;`, so ` href="` appears only inside a tag.
  * An address with a scheme (`https:`, `mailto:`) is left as it is.
  */

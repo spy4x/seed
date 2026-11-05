@@ -1,5 +1,5 @@
 /**
- * The contact links' admin pages (#465), driven in a browser DOM (happy-dom): what the list's
+ * The contact links' admin pages, driven in a browser DOM (happy-dom): what the list's
  * menus send, the removal's confirmation, and the editor's fields, hints, errors and focus.
  */
 import { expect } from "@std/expect"

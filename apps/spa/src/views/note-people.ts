@@ -11,7 +11,7 @@ export interface NotePerson {
 /**
  * The address of the profile picture of the member with `userId`, or `undefined` for initials.
  * The person's own comes from `you`, their session, which follows their picture as soon as it is
- * ready (#464); the members list is read again only on the group's changes.
+ * ready; the members list is read again only on the group's changes.
  */
 export function personPicture(
   userId: number | null,

@@ -4,7 +4,7 @@ import { REGION_FORMAT_LOCALES } from "@spy4x/time/locale"
 import { isValidTimeZone } from "@spy4x/time/tz"
 
 /**
- * A person's display preferences (#163): one record per person, kept on the server with a version,
+ * A person's display preferences: one record per person, kept on the server with a version,
  * so every device shows the same theme, language, region format, time zone and clock.
  *
  * `null` means "automatic": each device uses its own region format or zone. A zone or format the
@@ -25,7 +25,7 @@ const timeZoneSchema = type(`string <= ${NAME_MAX_LENGTH}`).narrow((value, conte
 const localeSchema = type.enumerated(...REGION_FORMAT_LOCALES)
 
 /**
- * The interface languages the apps ship (#216), English first. `language` in the preferences is
+ * The interface languages the apps ship, English first. `language` in the preferences is
  * one of these or `null`; a catalog import is picked only by a member of this list.
  */
 export const LANGUAGES = [`en`, `ru`, `es`, `de`, `pt-BR`, `ar`, `fr`, `ja`, `zh-CN`] as const
@@ -58,7 +58,7 @@ export function isLanguage(value: unknown): value is Language {
 export const OVERVIEW_LAYOUT_MAX_ENTRIES = 32
 
 /**
- * The group overview's layout (#219): widget ids in the person's order, each with whether the
+ * The group overview's layout: widget ids in the person's order, each with whether the
  * person hid it. Ids only, never what a widget shows. Ids the app no longer has are dropped when
  * the page reads it (`mergeLayout`), so an old record still reads.
  */
@@ -69,7 +69,7 @@ const overviewLayoutSchema = type({ id: `string <= ${NAME_MAX_LENGTH}`, hidden: 
 /** The record's shape. Every key has a default, so a record saved before a key existed reads. */
 export const preferencesSchema = type({
   theme: `'system' | 'light' | 'dark'`,
-  /** The interface language; `null` follows each device (#216). */
+  /** The interface language; `null` follows each device. */
   language: type.enumerated(...LANGUAGES).or(`null`),
   locale: localeSchema.or(`null`),
   timeZone: timeZoneSchema.or(`null`),

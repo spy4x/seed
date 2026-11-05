@@ -1,10 +1,10 @@
 /**
- * The operator area's audit log (#429): `auth_audits` and `audit_events` as one list, newest first,
+ * The operator area's audit log: `auth_audits` and `audit_events` as one list, newest first,
  * paged by a keyset so a page never shifts when new entries arrive. Who may call this is the API's
  * business (`apps/api/routes/admin/audit.ts`); nothing here checks it.
  *
  * Never reads `audit_events.details`, but for two facts of the operator's own entries: a job's kind,
- * and the name of a file an operator opened or downloaded (#478). Any other group entry's details
+ * and the name of a file an operator opened or downloaded. Any other group entry's details
  * can hold a note's title or a tag's name, and the operator area shows no content.
  *
  * @module

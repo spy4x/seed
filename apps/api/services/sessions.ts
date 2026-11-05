@@ -2,7 +2,7 @@
  * The signed-in devices: listing and ending sessions, and checking one again, wired from
  * `createSignIn`. Not `@server/auth/sessions.ts`, which records when a person was last seen.
  *
- * - **Signed-in devices (#151).** Every new session records a device name parsed once from the user
+ * - **Signed-in devices.** Every new session records a device name parsed once from the user
  *   agent and the address with its last part hidden, in the transaction that creates it when there
  *   is one; requests and live sockets record when it was last used, at most every few minutes. A
  *   person lists their live sessions and ends any other one, or all others, which deletes their

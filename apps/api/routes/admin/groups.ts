@@ -184,7 +184,7 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
 }
 
 /**
- * The group routes of the operator area (#426), mounted at `/api/admin` behind the gate in
+ * The group routes of the operator area, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them.
  *
  * - `GET /groups?q=&status=&sort=&page=` lists groups: `{ groups, total, page, pageSize }`.
@@ -196,7 +196,7 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
  *   operator. Like the people actions they ask for no password (owner's decision, 2026-10-15).
  * - `GET /groups/:id/files?q=&page=` is one page of the group's files whose name holds `q`, newest
  *   first, with the group's room: `AdminGroupFiles`. Each file's name, type, size, uploader, date
- *   and its note's title (#478). `POST /groups/:id/files/:fileId/remove?q=&page=` removes one,
+ *   and its note's title. `POST /groups/:id/files/:fileId/remove?q=&page=` removes one,
  *   from a note in the trash too, and answers that page of the files as it reads after it.
  * - `GET /groups/:id/files/:fileId/thumbnail` is the whole original image, shown as a 40 px tile, and
  *   writes no audit row;
@@ -207,7 +207,7 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
  *   found only through its own group's path. Every answer carries the confirmed type and `nosniff`;
  *   its sandbox policy is replaced by the app's own for now (spy4x/ts-libs#772).
  * - `GET /groups/:id/widgets/:widgetId?from=&to=&timeZone=` is one overview widget's data in the
- *   default layout, the same counts a member's overview shows (#219). Never a member's layout.
+ *   default layout, the same counts a member's overview shows. Never a member's layout.
  */
 export function createAdminGroupsRoutes(
   dependencies: AdminGroupsRouteDependencies,

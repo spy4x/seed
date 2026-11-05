@@ -244,7 +244,7 @@ export class AppDbBase extends DbServiceBase {
     return new PostgresGroupRepository(this.sql)
   }
 
-  /** Revokes every pending invitation a person made (#411). Built per access, like `group`. */
+  /** Revokes every pending invitation a person made. Built per access, like `group`. */
   get invitationRevocation() {
     const sql = this.sql
     return {
@@ -253,21 +253,21 @@ export class AppDbBase extends DbServiceBase {
   }
 
   /**
-   * A person's stored push subscriptions (#409). Built per access, like `group`, so a reset's
+   * A person's stored push subscriptions. Built per access, like `group`, so a reset's
    * transaction removes them inside it.
    */
   get pushTokens() {
     const sql = this.sql
     return {
       removeAllOf: (userId: number): Promise<void> => removeAllPushTokensOf(sql, userId),
-      /** Every subscription but the ones session `keep` stored (#181). */
+      /** Every subscription but the ones session `keep` stored. */
       removeAllBut: (userId: number, keep: number): Promise<void> =>
         removePushTokensOfOtherSessions(sql, userId, keep),
       removeOfSession: (userId: number, sessionId: number): Promise<void> =>
         removePushTokensOfSession(sql, userId, sessionId),
       moveToSession: (userId: number, from: number, to: number): Promise<void> =>
         movePushTokensToSession(sql, userId, from, to),
-      /** The ones stored by the sessions key `keyId` signed in, before the key is deleted (#572). */
+      /** The ones stored by the sessions key `keyId` signed in, before the key is deleted. */
       removeOfKey: (userId: number, keyId: number): Promise<void> =>
         removePushTokensOfKey(sql, userId, keyId),
     }
@@ -380,7 +380,7 @@ export class AppDbBase extends DbServiceBase {
    * (`@server/jobs/sign-in-method-mail.ts`). Built per access, like `group`: `queue` belongs inside
    * the change's `begin()`, beside its audit row.
    */
-  /** The passkey part of `passkey` keys (#222). Built per access, like `group`. */
+  /** The passkey part of `passkey` keys. Built per access, like `group`. */
   get passkeys() {
     const sql = this.sql
     return {
@@ -406,7 +406,7 @@ export class AppDbBase extends DbServiceBase {
 
   /**
    * Locks the user's row until the transaction ends. A token create, a password change and a
-   * password reset all take it (#293), so a create cannot commit a token made with the old
+   * password reset all take it, so a create cannot commit a token made with the old
    * password after the change revoked the others. Inside `begin()` only.
    */
   async lockUser(userId: number): Promise<void> {
@@ -416,7 +416,7 @@ export class AppDbBase extends DbServiceBase {
   /**
    * Locks a password key until the transaction ends: the user's, or the one whose subject is the
    * address. A password reset and an address move both take this lock first, so one waits for the
-   * other and neither copies a password hash the other is replacing (#140). Inside `begin()` only.
+   * other and neither copies a password hash the other is replacing. Inside `begin()` only.
    */
   async lockPasswordKey(where: { userId: number } | { subject: string }): Promise<void> {
     if ("userId" in where) {
@@ -496,7 +496,7 @@ export class AppDbBase extends DbServiceBase {
   }
 
   /**
-   * Guest accounts (#224, `@server/auth/guests.ts`). Built per access, like `group`, so inside
+   * Guest accounts (`@server/auth/guests.ts`). Built per access, like `group`, so inside
    * `begin()` every write joins the transaction. Keeping a guest also drops the cached `users` row,
    * whose `guestSince` the profile shows.
    */
@@ -550,7 +550,7 @@ export class AppDbBase extends DbServiceBase {
   }
 
   /**
-   * A person's display preferences (`@server/auth/preferences.ts`, #163). Built per access, like
+   * A person's display preferences (`@server/auth/preferences.ts`). Built per access, like
    * `group`.
    */
   get preferences() {
@@ -565,7 +565,7 @@ export class AppDbBase extends DbServiceBase {
   }
 
   /**
-   * Profile pictures (#228, `@server/auth/profile-pictures.ts`) and their signed uploads in the
+   * Profile pictures (`@server/auth/profile-pictures.ts`) and their signed uploads in the
    * ledger every feature shares (`@server/files/upload-ledger.ts`). Built per access, like `group`,
    * so inside `begin()` every write joins the transaction. A change of picture also drops the
    * cached `users` row, which the session and the profile show.
@@ -591,7 +591,7 @@ export class AppDbBase extends DbServiceBase {
   }
 
   /**
-   * The operator area's reads and writes (`@server/auth/admin-users.ts`, #146). Built per access,
+   * The operator area's reads and writes (`@server/auth/admin-users.ts`). Built per access,
    * like `group`: `lockTarget`, `setBlocked` and the audit row of an action share its `begin()`.
    */
   get admin() {
@@ -621,32 +621,32 @@ export class AppDbBase extends DbServiceBase {
       resetAddress: (userId: number) => readPasswordResetAddress(sql, userId),
       /**
        * Queues an operator's reset mail to `email`, in the caller's transaction: it tells the
-       * person to ask for a code on the "Forgot password" page (#752).
+       * person to ask for a code on the "Forgot password" page.
        */
       queuePasswordReset: (email: string) => enqueuePasswordResetMail(sql, email),
       /** Every person `filter` matches, `batchSize` rows at a time, for the CSV export. */
       export: (filter: AdminUserFilter, batchSize: number) =>
         exportAdminUsers(sql, filter, batchSize),
-      /** The dashboard's counts and 30-day series as of `now` (#424). */
+      /** The dashboard's counts and 30-day series as of `now`. */
       stats: (now: Date) => readAdminStats(sql, now),
     }
   }
 
   /**
-   * Linked Telegram accounts (#269, `@server/auth/telegram.ts`). Built per access, like `group`,
+   * Linked Telegram accounts (`@server/auth/telegram.ts`). Built per access, like `group`,
    * so inside `begin()` it uses the transaction.
    */
   get telegram(): TelegramLinks {
     return telegramLinks(this.sql)
   }
 
-  /** The operator area's group reads and actions (`@server/groups/admin-groups.ts`, #426). */
+  /** The operator area's group reads and actions (`@server/groups/admin-groups.ts`). */
   get adminGroups(): ReturnType<typeof adminGroupRows> {
     return adminGroupRows(this.sql)
   }
 
   /**
-   * The count of wrong passwords a signed-in account types (#406). Only the pool's is used: each
+   * The count of wrong passwords a signed-in account types. Only the pool's is used: each
    * update runs in a transaction of its own. Built per access, like `group`.
    */
   get passwordCheckFailures(): Lockout {
@@ -659,7 +659,7 @@ export class AppDbBase extends DbServiceBase {
   }
 
   /**
-   * Sign-ups waiting for their code (#142), and the code mails they ask for. Built per access,
+   * Sign-ups waiting for their code, and the code mails they ask for. Built per access,
    * like `group`, so a transaction's copy writes inside the transaction.
    */
   get signUpRequest() {
@@ -672,7 +672,7 @@ export class AppDbBase extends DbServiceBase {
   }
 
   /**
-   * Sign-in codes (#391, #752): the requests, and queueing a code's mail. Built per access, like
+   * Sign-in codes: the requests, and queueing a code's mail. Built per access, like
    * `group`, so a transaction's copy writes inside the transaction.
    */
   get signInCode() {
@@ -685,7 +685,7 @@ export class AppDbBase extends DbServiceBase {
   }
 
   /**
-   * Password resets waiting for their code (#752), and the code mails they ask for. Built per
+   * Password resets waiting for their code, and the code mails they ask for. Built per
    * access, like `group`, so a transaction's copy writes inside the transaction.
    */
   get passwordReset() {
@@ -792,7 +792,7 @@ export class AppDbBase extends DbServiceBase {
     }
   }
 
-  /** The operator area's audit log (`@server/auth/admin-audit.ts`, #429). Built per access. */
+  /** The operator area's audit log (`@server/auth/admin-audit.ts`). Built per access. */
   get adminAudit() {
     const sql = this.sql
     return {
@@ -807,7 +807,7 @@ export class AppDbBase extends DbServiceBase {
     }
   }
 
-  /** The operator area's System page (`@server/jobs/admin-system.ts`, #429). */
+  /** The operator area's System page (`@server/jobs/admin-system.ts`). */
   get adminSystem() {
     const sql = this.sql
     return {
@@ -819,7 +819,7 @@ export class AppDbBase extends DbServiceBase {
   }
 
   /**
-   * The operator area's Jobs module (`@server/jobs/admin-jobs.ts`, #394). Built per access, like
+   * The operator area's Jobs module (`@server/jobs/admin-jobs.ts`). Built per access, like
    * `group`: each action belongs inside `begin()`, beside its audit row.
    */
   get adminJobs() {
@@ -847,7 +847,7 @@ export class AppDbBase extends DbServiceBase {
   }
 
   /**
-   * The operator area's API tokens, push devices and notifications of people (#427). Built per
+   * The operator area's API tokens, push devices and notifications of people. Built per
    * access, like `group`, so inside `begin()` a remove and its audit row share the transaction.
    */
   get adminApiTokens() {

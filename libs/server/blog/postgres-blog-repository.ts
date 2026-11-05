@@ -131,7 +131,7 @@ async function checkTranslation(
   }
   if (original === id) throw translationInvalid(`A post cannot translate itself.`)
   // Held until the write ends, so a save that makes the original a translation itself waits for
-  // this one, and this one waits for it, and the two never build a chain (#530).
+  // this one, and this one waits for it, and the two never build a chain.
   const [target] = await tx<Pick<BlogPostRow, `language` | `translationOf`>[]>`
     SELECT language, translation_of FROM blog_posts WHERE id = ${original} FOR SHARE
   `
@@ -149,7 +149,7 @@ async function checkTranslation(
 }
 
 /**
- * The blog's reads and writes for the admin app (#395). It checks no role: only the operator area
+ * The blog's reads and writes for the admin app. It checks no role: only the operator area
  * calls it, behind its gate. Every write runs in one transaction that locks the post, checks the
  * version the operator saw, changes the post, queues its `blog.publish` job when one is due, and
  * writes the operator's audit row, so a write and its record are kept or undone together. Two
@@ -207,7 +207,7 @@ export class PostgresBlogRepository {
   }
 
   /**
-   * The post's earlier versions, newest first, without their bodies (#418); `null` when there is
+   * The post's earlier versions, newest first, without their bodies; `null` when there is
    * no post with `id`.
    */
   async revisions(id: string): Promise<BlogRevisionSummary[] | null> {
@@ -297,7 +297,7 @@ export class PostgresBlogRepository {
       const fields: BlogPostFields = {
         ...edit,
         // A post file's cover (`cover_file`) needs its description, which the admin app never
-        // edits: the parser drops the description of a post with no cover address (#733).
+        // edits: the parser drops the description of a post with no cover address.
         coverAlt: edit.coverAlt ?? (current.coverFile === null ? null : current.coverAlt),
         language: edit.language ?? current.language,
         translationOf: edit.translationOf === undefined
@@ -336,7 +336,7 @@ export class PostgresBlogRepository {
   /**
    * Publishes a draft or scheduled post now (`at` is `null`), or schedules it for `at`, which
    * the caller has checked lies ahead. A `blog.publish` job is queued for `at`, or at once when a
-   * post going live now has a newsletter to send or its cross-post was never settled (#733). `newsletterList` is the list to email when the
+   * post going live now has a newsletter to send or its cross-post was never settled. `newsletterList` is the list to email when the
    * post goes live, `null` for none, or `undefined` to keep the list the post has, so a client
    * that leaves it out never drops a scheduled post's email. Once a post's issue was queued, its
    * list stays as it was and nothing is sent again.
@@ -436,7 +436,7 @@ export class PostgresBlogRepository {
   /**
    * Gives the post a new slug, whatever its status. Once the post has been live, the old slug
    * redirects to the new one while the post is live: the database's trigger keeps it in
-   * `blog_slug_redirects` in this transaction (2026_12_13_0002_blog_slug_redirects.sql, #418).
+   * `blog_slug_redirects` in this transaction (2026_12_13_0002_blog_slug_redirects.sql).
    */
   async changeUrl(id: string, version: number, slug: string, actor: BlogActor): Promise<BlogPost> {
     return await this.write(async (tx) => {
@@ -458,7 +458,7 @@ export class PostgresBlogRepository {
 
   /**
    * Deletes the post for good, whatever its status. A job waiting for it finds nothing. An
-   * original's translations stay linked (#530): the one in the main language, else the oldest,
+   * original's translations stay linked: the one in the main language, else the oldest,
    * becomes the original, and the others translate it.
    */
   async delete(id: string, version: number, actor: BlogActor): Promise<void> {
@@ -539,7 +539,7 @@ async function queuePublishJob(
 }
 
 /**
- * Keeps the fields post `id` has now as one of its earlier versions (#418), saved by `actor`, in
+ * Keeps the fields post `id` has now as one of its earlier versions, saved by `actor`, in
  * the save's transaction, and deletes its versions past the newest {@link BLOG_REVISIONS_KEPT}. A
  * save that changed no field keeps nothing, so saving again and again does not push the older
  * versions out. The operator's name, or else an address of theirs, is copied in, so the row

@@ -56,7 +56,7 @@ export const ADMIN_PAGE_ACTIONS: Readonly<
  */
 const SAVE_PAGES = /^\/(blog|catalog)\/(?!categories(\/|$))[^/]+$/
 
-/** A post's editor, new or saved, whose body takes F8 to its figure problems (#620). */
+/** A post's editor, new or saved, whose body takes F8 to its figure problems. */
 const BLOG_POST_PAGE = /^\/blog\/[^/]+$/
 
 /** What the admin app's shortcuts act on. */

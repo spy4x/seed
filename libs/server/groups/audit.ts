@@ -1,7 +1,7 @@
 import type postgres from "postgres"
 import type { AuditDetails, AuditEntityType } from "@domain/groups"
 
-/** One audit event, as the activity log (#135) will later read it. */
+/** One audit event, as the activity log will later read it. */
 export interface AuditEventInput {
   eventKind: string
   actorId: number

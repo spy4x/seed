@@ -8,7 +8,7 @@ import type { GroupOwnershipTransferredEvent } from "../events.ts"
 /**
  * The group transfer handler over the API's services, apart from the singletons so a test can run
  * it with its own. The password goes through `checkPassword`, which counts a wrong one on the
- * account's one lock (#406), never through the uncounted `verifyPassword`.
+ * account's one lock, never through the uncounted `verifyPassword`.
  */
 export function wireGroupTransferHandler(
   { db, signIn, eventBus }: {

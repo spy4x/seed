@@ -93,7 +93,7 @@ export function createBillingCheckoutHandler(
     // plan of the one the group has. Any stored subscription that is not cancelled counts, even a
     // paused or incomplete one that shows as the free plan. The one exception is a
     // subscription the previous owner pays after a transfer and has cancelled at its period's end:
-    // the new owner checks out with a customer of their own, first charged when it ends (#250).
+    // the new owner checks out with a customer of their own, first charged when it ends.
     const [current, customerId, handedOver] = await Promise.all([
       dependencies.billing.get(data.groupId),
       dependencies.billing.customerOf(data.groupId),

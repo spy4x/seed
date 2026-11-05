@@ -1,5 +1,5 @@
 /**
- * The System screen (#429), driven in a browser DOM (happy-dom): each card's state, and the queue
+ * The System screen, driven in a browser DOM (happy-dom): each card's state, and the queue
  * card's way to the Jobs module.
  */
 import { expect } from "@std/expect"

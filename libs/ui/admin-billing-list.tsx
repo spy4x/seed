@@ -220,7 +220,7 @@ export interface AdminBillingListScreenProps {
 }
 
 /**
- * The billing page (#196): four figures from the stored subscriptions, then every customer with
+ * The billing page: four figures from the stored subscriptions, then every customer with
  * its status word, key date and monthly amount, searched by group or owner and filtered by status
  * chips that show their counts. Each name opens the customer's page, where the actions are.
  */
@@ -276,7 +276,7 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
           <EmptyState
             inset
             icon={<IconCreditCard class="size-8" aria-hidden="true" />}
-            // What the module says while billing is off (decision 10 of #196).
+            // What the module says while billing is off.
             title={t.t(`AdminBilling.off`)}
             description={t.t(`AdminBilling.offText`)}
             action={

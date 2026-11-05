@@ -95,7 +95,7 @@ export interface GuestKeeper {
   /**
    * Keeps guest `userId` in the transaction `tx` that just added key `keyId` of `method`: the
    * account stops being a guest, every guest session ends, a new session of a full account's
-   * length starts on `keyId`, and the audit row says so (#374). The caller sets the new session's
+   * length starts on `keyId`, and the audit row says so. The caller sets the new session's
    * cookie after `tx` commits, as a sign-in does: set earlier, a rollback would leave the browser
    * with a cookie of no session and the guest locked out. `null` for a user who is no guest:
    * nothing is written then.
@@ -147,7 +147,7 @@ export interface GuestInternals {
 export interface GuestOperations extends GuestKeeper {
   enabled: boolean
   /**
-   * Starts a guest account for a request with no full session (#224): an auth user with only the
+   * Starts a guest account for a request with no full session: an auth user with only the
    * guest key, a profile marked a guest, the first group and its starter data, a session of a
    * year and the cookie. A request that already carries a session creates nothing.
    */

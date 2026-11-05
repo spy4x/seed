@@ -1,5 +1,5 @@
 /**
- * What a product adds to the Telegram bot (#269, docs/telegram.md): its commands, button presses
+ * What a product adds to the Telegram bot (docs/telegram.md): its commands, button presses
  * and conversations, each run as the person whose Telegram account is linked. Seed's bot owns
  * `/start`, `/link`, `/unlink` and `/help`; a product lists the rest in `commands.ts`.
  *

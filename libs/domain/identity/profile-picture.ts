@@ -6,10 +6,10 @@ import { type FieldErrors, fieldErrors } from "@spy4x/validation"
 import type { Actor, User } from "./+lib.ts"
 
 /**
- * Profile pictures (#228, docs/attachments-and-pictures.md): a person's own picture in place of their initials. It is
+ * Profile pictures (docs/attachments-and-pictures.md): a person's own picture in place of their initials. It is
  * uploaded like a note attachment (signed, PUT straight to the store, confirmed), counts against
  * the same waiting uploads and hourly budget. The worker turns it into upright widths with no
- * metadata (#464, docs/file-uploads.md), and avatars show the narrowest WebP.
+ * metadata (docs/file-uploads.md), and avatars show the narrowest WebP.
  */
 
 /** The types a picture may be: those a browser shows and whose first bytes the store checks. */
@@ -27,7 +27,7 @@ export function pictureContentType(file: { name: string; type: string }): string
   return /\.hei[cf]$/i.test(file.name) ? `image/heic` : file.type
 }
 
-/** Where a person's picture stands once it is confirmed (#464); `null` while they have none. */
+/** Where a person's picture stands once it is confirmed; `null` while they have none. */
 export enum PictureState {
   /** The worker is making its small widths; nothing is shown yet. */
   Preparing = 1,

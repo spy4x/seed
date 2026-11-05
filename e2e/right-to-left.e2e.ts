@@ -5,7 +5,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * Right-to-left layouts (#215): in Arabic, the SPA and the admin app mirror. The page reads right
+ * Right-to-left layouts: in Arabic, the SPA and the admin app mirror. The page reads right
  * to left, the shell's rail sits at the window's right edge at 1440 px, and at 390 px nothing
  * scrolls sideways. Measured in a real browser, because happy-dom lays nothing out.
  */

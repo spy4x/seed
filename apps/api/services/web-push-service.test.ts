@@ -169,7 +169,7 @@ describe("WebPushService subscriptions", () => {
 })
 
 /**
- * The key file as `deno task vapid-key:create` wrote it before this change: `@negrel/webpush`
+ * A key file as an older `deno task vapid-key:create` wrote it: `@negrel/webpush`
  * 0.5.0's `exportVapidKeys` of an extractable ECDSA P-256 pair, which is WebCrypto's JWK export
  * of each half. Generated here; never a real key.
  */

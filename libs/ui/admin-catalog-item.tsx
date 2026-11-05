@@ -257,7 +257,7 @@ export interface AdminCatalogItemScreenProps {
   onPhotoMove: (from: number, to: number) => void
   onPhotoSave: (photoId: string, change: { alt: CatalogText; colourId: string | null }) => void
   onPhotoRemove: (photoId: string) => void
-  /** The item's tracking links (#483); left out while items get none. */
+  /** The item's tracking links; left out while items get none. */
   shareLinks?: CatalogShareLinksState
   navigate?: Navigate
 }
@@ -290,7 +290,7 @@ function fieldOrder(draft: CatalogItemDraft, languages: readonly string[]): stri
 }
 
 /**
- * One catalog item on a page of its own (#466), at `/catalog/new` and `/catalog/:id`. Its texts in
+ * One catalog item on a page of its own, at `/catalog/new` and `/catalog/:id`. Its texts in
  * each language the catalog keeps, one tab per language; its address, category and price; its
  * colours with swatches; its sizes, each with an optional height and weight range for the size
  * calculator; what is sold out, colour by size; and, once saved, its photos: uploaded several at
@@ -610,7 +610,7 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
 }
 
 /**
- * One short link per source (#483): the first "Copy link" makes it, later presses copy the same
+ * One short link per source: the first "Copy link" makes it, later presses copy the same
  * one. A source's row shows its link once it has one, so it can also be selected by hand.
  */
 function ShareLinks(
@@ -1202,7 +1202,7 @@ const PHOTO_STATE_WORDS: Record<CatalogPhoto[`state`], string | null> = {
 
 /**
  * The photos of a saved item: upload, order, cover, details and removal. A shown photo opens full
- * size in the lightbox, which the arrow keys move through and Escape closes (#514). The cover wears
+ * size in the lightbox, which the arrow keys move through and Escape closes. The cover wears
  * a ring and a badge, and its thumbnail's name says it is the cover.
  */
 function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX.Element {

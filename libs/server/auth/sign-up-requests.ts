@@ -1,5 +1,5 @@
 /**
- * Sign-up that proves the address first (#142): the sign-up waiting for its code, the code itself,
+ * Sign-up that proves the address first: the sign-up waiting for its code, the code itself,
  * and the one question asked only after the right code, whether an account already uses the
  * address.
  *
@@ -55,12 +55,12 @@ export interface SignUpRequest {
   secret: string
   expiresAt: Date
   /**
-   * The guest keeping their account with this address (#224): the right code adds the password to
+   * The guest keeping their account with this address: the right code adds the password to
    * that guest instead of making a new account. `null` or left out for a plain sign-up.
    */
   guestUserId?: number | null
   /**
-   * The language of the page that asked (#277), which the code mail is written in. Only a language
+   * The language of the page that asked, which the code mail is written in. Only a language
    * the apps offer; `null` or left out for English.
    */
   language?: string | null
@@ -159,7 +159,6 @@ export async function attemptSignUpCode(
 /** How an account that already uses an address signs in. */
 export interface ExistingAccount {
   userId: number
-  /** It has a password. */
   password: boolean
   /** The providers it signs in with, in the order they were linked. */
   providers: OAuthProviderId[]

@@ -81,8 +81,8 @@ export const STOCK_COUNTS = `
 const SHOWN = `EXISTS (SELECT 1 FROM image_variants v WHERE v.image_id = im.id)`
 
 /**
- * A photo's state from its image's row: ready for the admin once its narrowest width is stored
- * (#514), while the worker still makes the wider ones the website waits for.
+ * A photo's state from its image's row: ready for the admin once its narrowest width is stored,
+ * while the worker still makes the wider ones the website waits for.
  */
 function photoState(
   image: { shown: boolean; refused: number | null },
@@ -220,7 +220,7 @@ function slugTaken(error: unknown): unknown {
 }
 
 /**
- * The catalog's reads and writes for the admin app (#466). It checks no role: only the operator
+ * The catalog's reads and writes for the admin app. It checks no role: only the operator
  * area calls it, behind its gate. Every write runs in one transaction that locks what it changes
  * (the item, or the categories), checks the version the operator saw, and writes the operator's
  * audit row, so a write and its record are kept or undone together and two operators are served
@@ -413,7 +413,7 @@ export class PostgresCatalog {
 
   /**
    * Keeps the photo already stored at `objectKey` as the item's last photo and queues its
-   * processing (#464), in one transaction. A photo retried with the same id answers the first one.
+   * processing, in one transaction. A photo retried with the same id answers the first one.
    * Answers `null` when the item is gone, so the caller deletes the stored bytes.
    */
   async addPhoto(
@@ -537,7 +537,7 @@ export class PostgresCatalog {
 
   /**
    * The narrowest width of a catalog photo, for the admin's thumbnails, or its widest, for its
-   * lightbox (#514); WebP first, or `null` until one is stored. `final` once every width is made,
+   * lightbox; WebP first, or `null` until one is stored. `final` once every width is made,
    * so the widest no longer changes.
    */
   async photoWidth(

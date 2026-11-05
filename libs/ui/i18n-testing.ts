@@ -1,5 +1,5 @@
 /**
- * Translators and a check for the screens' tests (#275): the catalogs' English, and the `en-XA`
+ * Translators and a check for the screens' tests: the catalogs' English, and the `en-XA`
  * pseudo-language, for the product's screens and for the operator area's. Every catalog message of
  * the pseudo-language is wrapped in `⟦ ⟧`, so a screen rendered in it shows no English outside
  * those marks except data: a name, an address, a date. {@link englishLeft} lists what is left,
