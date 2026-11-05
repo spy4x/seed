@@ -100,7 +100,7 @@ Le schéma de base de données de v1 compte trois modèles : `User`, `UserDevice
   container, guards, state et UI.
 - **65 fichiers `index.ts`**, qui tous se contentent de réexporter d'autres fichiers.
 - **Une couche CQRS avec ses propres classes de base** au-dessus des bus de commandes, de requêtes
-  et d'événements, portant 11 commandes, 5 requêtes et 7 événements, avec 21 handlers.
+  et d'événements, portant 11 commandes, 5 requêtes et 7 événements, avec 19 handlers.
 - **Neuf services cloud** dans le document d'infrastructure (Cloud Run, Cloud SQL, Cloud Tasks,
   Cloud Logging, Cloud IAM, Firebase Authentication, Hosting et Storage, et Sentry), et un guide
   d'installation marqué « WIP » qui commençait par des étapes manuelles.

@@ -92,7 +92,7 @@ O schema do banco do v1 tem três modelos: `User`, `UserDevice` e `Notification`
   compartilhado do frontend eram quatro bibliotecas: container, guards, state e UI.
 - **65 arquivos `index.ts`**, e todos apenas reexportam outros arquivos.
 - **Uma camada CQRS com classes base próprias** sobre os barramentos de comandos, consultas e
-  eventos, com 11 comandos, 5 consultas e 7 eventos, e 21 handlers.
+  eventos, com 11 comandos, 5 consultas e 7 eventos, e 19 handlers.
 - **Nove serviços de nuvem** no documento de infraestrutura (Cloud Run, Cloud SQL, Cloud Tasks,
   Cloud Logging, Cloud IAM, Firebase Authentication, Hosting e Storage, e Sentry), e um guia de
   configuração marcado "WIP" que começava com passos manuais.

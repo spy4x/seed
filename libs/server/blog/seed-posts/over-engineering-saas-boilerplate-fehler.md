@@ -94,7 +94,7 @@ Das Datenbankschema von v1 hat drei Modelle: `User`, `UserDevice` und `Notificat
   gemeinsame Anmeldung im Frontend bestand aus vier Bibliotheken: container, guards, state und UI.
 - **65 `index.ts`-Dateien**, und jede davon exportiert nur andere Dateien weiter.
 - **Eine CQRS-Schicht mit eigenen Basisklassen** über den Bussen für Commands, Queries und Events,
-  mit 11 Commands, 5 Queries und 7 Events sowie 21 Handlern.
+  mit 11 Commands, 5 Queries und 7 Events sowie 19 Handlern.
 - **Neun Cloud-Dienste** im Infrastruktur-Dokument (Cloud Run, Cloud SQL, Cloud Tasks, Cloud
   Logging, Cloud IAM, Firebase Authentication, Hosting und Storage sowie Sentry) und eine als „WIP“
   markierte Einrichtungsanleitung, die mit Handarbeit begann.

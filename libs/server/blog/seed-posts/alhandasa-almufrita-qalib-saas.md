@@ -89,7 +89,7 @@ Angular في الواجهة، وNest.js وPrisma فوق PostgreSQL في الخل
   في الواجهة وحده كان أربع مكتبات: container وguards وstate وUI.
 - **65 ملف `index.ts`**، وكلها لا تفعل شيئًا سوى إعادة تصدير ملفات أخرى.
 - **طبقة CQRS بأصناف أساس خاصة بها** فوق نواقل الأوامر والاستعلامات والأحداث، تحمل 11 أمرًا و5
-  استعلامات و7 أحداث، ومعها 21 معالجًا.
+  استعلامات و7 أحداث، ومعها 19 معالجًا.
 - **تسع خدمات سحابية** في وثيقة البنية التحتية (Cloud Run وCloud SQL وCloud Tasks وCloud Logging
   وCloud IAM وFirebase Authentication وHosting وStorage، وSentry)، ودليل إعداد موسوم «WIP» يبدأ بخطوات
   يدوية.

@@ -67,7 +67,7 @@ v1 的数据库 schema 只有三个模型：`User`、`UserDevice` 和 `Notificat
 
 - **31 个 Nx 项目**：三个应用、两个端到端测试应用和 26 个库。光是前端共享的登录就拆成了四个库：container、guards、state 和 UI。
 - **65 个 `index.ts` 文件**，每一个都只是在重新导出别的文件。
-- **一层自带基类的 CQRS**，建在命令、查询和事件总线之上，承载 11 个命令、5 个查询和 7 个事件，外加 21 个处理器。
+- **一层自带基类的 CQRS**，建在命令、查询和事件总线之上，承载 11 个命令、5 个查询和 7 个事件，外加 19 个处理器。
 - **9 个云服务**，列在基础设施文档里（Cloud Run、Cloud SQL、Cloud Tasks、Cloud Logging、Cloud IAM、Firebase Authentication、Hosting 和 Storage，再加 Sentry），还有一份标着“WIP”、从手动步骤开始的初始化指南。
 - **104 个 npm 包**，写在根目录的 `package.json` 里，其中 50 个是运行时依赖。
 

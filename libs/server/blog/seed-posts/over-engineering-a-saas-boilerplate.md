@@ -90,7 +90,7 @@ v1's database schema has three models: `User`, `UserDevice` and `Notification`. 
   front end alone was four libraries: container, guards, state and UI.
 - **65 `index.ts` files**, and every one of them only re-exports other files.
 - **A CQRS layer with its own base classes** over the command, query and event buses, carrying 11
-  commands, 5 queries and 7 events, with 21 handlers.
+  commands, 5 queries and 7 events, with 19 handlers.
 - **Nine cloud services** in the infrastructure doc (Cloud Run, Cloud SQL, Cloud Tasks, Cloud
   Logging, Cloud IAM, Firebase Authentication, Hosting and Storage, and Sentry), and a setup guide
   marked "WIP" that started with manual steps.

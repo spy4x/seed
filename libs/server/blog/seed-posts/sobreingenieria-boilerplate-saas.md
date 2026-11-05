@@ -97,7 +97,7 @@ Alrededor de ellos:
   guards, state y UI.
 - **65 archivos `index.ts`**, y todos se limitan a reexportar otros archivos.
 - **Una capa CQRS con sus propias clases base** sobre los buses de comandos, consultas y eventos,
-  con 11 comandos, 5 consultas y 7 eventos, y 21 manejadores.
+  con 11 comandos, 5 consultas y 7 eventos, y 19 manejadores.
 - **Nueve servicios en la nube** en el documento de infraestructura (Cloud Run, Cloud SQL, Cloud
   Tasks, Cloud Logging, Cloud IAM, Firebase Authentication, Hosting y Storage, y Sentry), y una guía
   de configuración marcada «WIP» que empezaba con pasos manuales.
