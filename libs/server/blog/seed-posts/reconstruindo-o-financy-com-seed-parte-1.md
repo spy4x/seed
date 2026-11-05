@@ -2,7 +2,7 @@
 slug: reconstruindo-o-financy-com-seed-parte-1
 language: pt-BR
 translationOf: rebuilding-financy-on-seed-part-1
-title: "Reconstruindo o Financy com Seed, parte 1: um produto de verdade sobre um SaaS starter"
+title: "Reconstruindo o Financy com Seed, parte 1: um produto de verdade"
 seoTitle: "Reconstruindo o Financy com Seed: um produto de verdade"
 description: "Estou reconstruindo o Financy, meu controle financeiro de código aberto, com Seed. Parte 1: por que recomecei, como a cópia nasceu e como foi a primeira sincronização."
 tldr:
