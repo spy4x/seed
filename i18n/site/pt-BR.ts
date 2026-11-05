@@ -132,7 +132,7 @@ export default {
   "Architecture.mail": "E-mail, push",
   "Architecture.webAppNote": "Preact, no navegador",
   "Architecture.websiteNote": "Preact, no servidor",
-  "Architecture.apiNote": "Hono no Deno, Node ou Bun",
+  "Architecture.apiNote": "Deno · Node · Bun",
   "Architecture.postgresNote": "cada alteração",
   "Architecture.workerNote": "o trabalho pesado",
   "Architecture.mailNote": "e a limpeza",

@@ -123,7 +123,7 @@ export default {
   "Architecture.mail": "البريد والإشعارات",
   "Architecture.webAppNote": "Preact، في المتصفح",
   "Architecture.websiteNote": "Preact، على الخادم",
-  "Architecture.apiNote": "Hono على Deno أو Node أو Bun",
+  "Architecture.apiNote": "Deno · Node · Bun",
   "Architecture.postgresNote": "كل تغيير",
   "Architecture.workerNote": "المهام البطيئة",
   "Architecture.mailNote": "والتنظيف",

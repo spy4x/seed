@@ -135,7 +135,7 @@ export default {
   "Architecture.mail": "メール、プッシュ",
   "Architecture.webAppNote": "ブラウザで動くPreact",
   "Architecture.websiteNote": "サーバーで動くPreact",
-  "Architecture.apiNote": "Deno・Node・Bun上のHono",
+  "Architecture.apiNote": "Deno・Node・Bun",
   "Architecture.postgresNote": "すべての変更",
   "Architecture.workerNote": "時間のかかる処理",
   "Architecture.mailNote": "とクリーンアップ",

@@ -119,7 +119,7 @@ export default {
   "Architecture.mail": "邮件、推送",
   "Architecture.webAppNote": "Preact，运行在浏览器中",
   "Architecture.websiteNote": "Preact，运行在服务端",
-  "Architecture.apiNote": "Hono，运行在 Deno、Node 或 Bun 上",
+  "Architecture.apiNote": "Deno · Node · Bun",
   "Architecture.postgresNote": "每一次更改",
   "Architecture.workerNote": "耗时的工作",
   "Architecture.mailNote": "以及清理",
