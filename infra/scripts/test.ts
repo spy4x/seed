@@ -118,6 +118,10 @@ export const GROUPS: TestGroup[] = [
     flags: [`--allow-read=libs/server/db/migrations`],
     paths: [`tests/migration-names.test.ts`],
   },
+  {
+    flags: [`--allow-read=docs`],
+    paths: [`tests/docs-map.test.ts`],
+  },
   // infra/scripts is left out of the other tools (deno.jsonc "exclude"); its tests run here.
   {
     flags: [

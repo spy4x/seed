@@ -1,3 +1,7 @@
+> **Archived.** Superseded in part by [ADR 002](../decisions/002-realtime-transport-and-sync.md);
+> [ADR 003](../decisions/003-swappable-transport-and-local-data.md) is the latest transport decision.
+> Read "REST" as "through the shared CQRS handlers".
+
 # Group Sync Platform PRD
 
 > **Status: superseded in part by [ADR 002](../decisions/002-realtime-transport-and-sync.md).**

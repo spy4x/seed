@@ -113,7 +113,7 @@ return member?.role ?? null
 
 ## 为什么不用 Postgres 的行级安全？
 
-我考虑过，并把取舍写在了[群组同步设计文档](https://github.com/spy4x/seed/blob/main/docs/design/group-sync.md#9-tradeoffs)里。行级安全会把权限规则的第二份拷贝以 SQL 策略的形式放进数据库，而处理器无论如何都需要一份规则，才能用一个有用的错误回答“你是 viewer”。同一条规则的两份拷贝迟早会不一致。此外，每个数据库连接都得带上当前用户，这会让连接池、后台任务和迁移都变复杂。
+我考虑过，并把取舍写在了[群组同步设计文档](https://github.com/spy4x/seed/blob/main/docs/archive/group-sync.md#9-tradeoffs)里。行级安全会把权限规则的第二份拷贝以 SQL 策略的形式放进数据库，而处理器无论如何都需要一份规则，才能用一个有用的错误回答“你是 viewer”。同一条规则的两份拷贝迟早会不一致。此外，每个数据库连接都得带上当前用户，这会让连接池、后台任务和迁移都变复杂。
 
 坦白说代价也有：过滤写在应用代码里，只要有一条查询忘了 `group_id`，就可能泄露数据。Seed 用三种方式应对：
 
