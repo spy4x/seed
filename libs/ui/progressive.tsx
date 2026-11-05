@@ -124,7 +124,7 @@ export const NEXT_PARAM = "next"
  *
  * Every hop that carries `next` checks it again here, since a person can edit each one: the
  * sign-in and sign-up pages, their posts, the one-time-code page and its post. OAuth sign-in
- * (spy4x/template#141) plugs in here too: its start route checks `next` with this, keeps the
+ * plugs in here too: its start route checks `next` with this, keeps the
  * result in the flow state (`OAuthPendingFlow`) and redirects to that stored value after the
  * callback, never to a value read from the callback's query.
  */

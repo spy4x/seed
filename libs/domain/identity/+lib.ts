@@ -10,7 +10,7 @@ import type { GuestStats } from "./guests.ts"
 import { parseSort, serializeSort, type SortRule } from "@spy4x/platform/universal/sort"
 
 // Not in @spy4x/platform/model: too template-specific (a user's name length limit) to belong in a
-// general-purpose package. Moved here from the deleted libs/platform/types/+index.ts.
+// general-purpose package.
 export const NAME_MAX_LENGTH = 50
 
 export enum UserRole {
@@ -99,8 +99,7 @@ export type UserProfileBase = typeof userProfileBaseSchema.infer
 
 // A plain ASCII-digit regex, not `string.numeric`: arktype's `numeric` keyword accepts only a
 // well-formed number string, and a well-formed number has no leading zero, so any code starting
-// with `0` (about one TOTP code in ten) was refused with a 400 before verification. See
-// spy4x/template#27.
+// with `0` (about one TOTP code in ten) would be refused with a 400 before verification.
 export const authOTPSchema = type({
   otp: "/^[0-9]{6}$/",
 })
@@ -881,7 +880,6 @@ export function oauthNotice(value: unknown): OAuthNotice | null {
 
 // The four response shapes below have no @spy4x/platform/api counterpart: they name this app's
 // own endpoint responses (a boolean success flag, a public key string), not a general envelope.
-// Moved here from the deleted libs/platform/types/+index.ts.
 export type ApiSuccessResponse = {
   success: boolean
 }

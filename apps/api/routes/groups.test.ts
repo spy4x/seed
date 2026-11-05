@@ -376,7 +376,7 @@ describe("groups route", () => {
     )
     const response = await app.request("http://local/groups")
 
-    // The route no longer rejects: session strength is checked by the session gate on the buses,
+    // The route does not reject: session strength is checked by the session gate on the buses,
     // so a WebSocket transport is covered by the same check.
     expect(response.status).toBe(200)
     expect(deps.listQuery?.data.actor).toEqual({
