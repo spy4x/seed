@@ -96,8 +96,8 @@ function SeedMark({ item, host }: { item: ChecklistItem; host: string }): JSX.El
   const full = seed.coverage === Coverage.Full
   const link = proofLink(seed.path, href, host)
   return (
-    <p id={`${item.id}-seed`} class="flex items-start gap-1.5 text-sm text-muted">
-      <IconCheck class="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
+    <p id={`${item.id}-seed`} class="flex items-start gap-2 text-sm text-muted">
+      <IconCheck class="h-5 w-4 shrink-0 text-success" aria-hidden="true" />
       <span>
         <a
           href={link.href}
@@ -132,9 +132,9 @@ function Item({ item, host }: { item: ChecklistItem; host: string }): JSX.Elemen
         type="checkbox"
         id={item.id}
         aria-describedby={described}
-        class="pc-checkbox peer mt-1 size-5 shrink-0 scroll-mt-28"
+        class="pc-checkbox peer mt-1 size-5 shrink-0 scroll-mt-16"
       />
-      <div class="flex min-w-0 flex-1 flex-col gap-1.5 peer-checked:[&>div>label]:text-muted">
+      <div class="flex min-w-0 flex-1 flex-col gap-2 peer-checked:[&>div>label]:text-muted">
         <div class="group/item flex items-baseline gap-2">
           <label
             for={item.id}
@@ -178,7 +178,7 @@ function Section({ section, host }: { section: ChecklistSection; host: string })
       id={section.id}
       aria-labelledby={`${section.id}-title`}
       data-checklist-section={section.id}
-      class="flex scroll-mt-24 flex-col gap-1"
+      class="flex scroll-mt-16 flex-col gap-1"
     >
       <SectionHeading
         id={`${section.id}-title`}
@@ -256,7 +256,7 @@ export default define.page(function LaunchChecklistPage({ state }) {
             />
           </div>
         </PageHero>
-        <div class="mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-8 lg:py-16 print:block print:py-4">
+        <div class="mx-auto grid w-full max-w-6xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-8 lg:py-16 print:block print:py-4">
           <div class="flex flex-col gap-6 lg:sticky lg:top-24 lg:col-span-3 lg:self-start print:hidden">
             <LaunchChecklist
               language={language}
@@ -272,7 +272,7 @@ export default define.page(function LaunchChecklistPage({ state }) {
           </div>
           <div class="flex min-w-0 max-w-2xl flex-col gap-12 lg:col-span-9">
             <p class="flex items-start gap-2 text-sm text-muted text-pretty print:hidden">
-              <IconCheck class="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
+              <IconCheck class="h-5 w-4 shrink-0 text-success" aria-hidden="true" />
               <span>{t.t(`LaunchChecklist.legend`)}</span>
             </p>
             <div id={CHECKLIST_ROOT_ID} class="flex flex-col gap-12">
