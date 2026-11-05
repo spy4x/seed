@@ -158,7 +158,7 @@ viel die Gruppe bekommt. Die Abrechnung pro Platz und ihre Webhooks haben
 ## Warum nicht Row-Level Security von Postgres?
 
 Ich habe sie erwogen und den Kompromiss im
-[Entwurf der Gruppen-Synchronisation](https://github.com/spy4x/seed/blob/main/docs/design/group-sync.md#9-tradeoffs)
+[Entwurf der Gruppen-Synchronisation](https://github.com/spy4x/seed/blob/main/docs/archive/group-sync.md#9-tradeoffs)
 festgehalten. Row-Level Security würde eine zweite Kopie der Rechteregeln in die Datenbank legen, als
 SQL-Policies, neben die Kopie, die die Handler ohnehin brauchen, um „Sie sind viewer“ mit einer
 brauchbaren Fehlermeldung zu beantworten. Zwei Kopien einer Regel driften auseinander. Außerdem

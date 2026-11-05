@@ -156,7 +156,7 @@ por asientos y sus webhooks tienen [su propio artículo](/es/blog/facturacion-po
 ## ¿Por qué no row-level security de Postgres?
 
 La consideré y dejé escrito el compromiso en el
-[diseño de sincronización de grupos](https://github.com/spy4x/seed/blob/main/docs/design/group-sync.md#9-tradeoffs).
+[diseño de sincronización de grupos](https://github.com/spy4x/seed/blob/main/docs/archive/group-sync.md#9-tradeoffs).
 La row-level security pondría una segunda copia de las reglas de permisos en la base de datos, en
 políticas SQL, junto a la copia que los handlers necesitan igualmente para responder «eres viewer»
 con un error útil. Dos copias de una regla acaban divergiendo. Además, cada conexión tendría que

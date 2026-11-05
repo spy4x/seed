@@ -145,7 +145,7 @@ while the write waits» في `tests/integration/group-write-race.integration.tes
 ## لماذا لا row-level security في Postgres؟
 
 فكرت فيها، وكتبت المفاضلة في
-[تصميم مزامنة المجموعات](https://github.com/spy4x/seed/blob/main/docs/design/group-sync.md#9-tradeoffs).
+[تصميم مزامنة المجموعات](https://github.com/spy4x/seed/blob/main/docs/archive/group-sync.md#9-tradeoffs).
 الـrow-level security تضع نسخة ثانية من قواعد الصلاحيات في قاعدة البيانات، على شكل سياسات SQL، بجانب
 النسخة التي تحتاجها المعالجات على أي حال لترد على «أنت viewer» برسالة خطأ مفيدة. ونسختان من قاعدة واحدة
 تتباعدان مع الوقت. كما أن كل اتصال سيحمل الشخص الحالي، وهذا يعقّد تجميع الاتصالات والمهام الخلفية

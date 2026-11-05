@@ -100,7 +100,7 @@ names it in the same PR, so the site never lists a feature the product lacks and
 one it has.
 
 `deno task lighthouse` (CI step `lighthouse`) measures the website against the Lighthouse budget
-of the global agent rules. The pages it measures are listed in
+in the global `design` skill. The pages it measures are listed in
 `apps/mpa/lighthouse/lighthouserc.json`.
 
 ## The public demo
