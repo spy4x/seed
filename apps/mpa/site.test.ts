@@ -9,6 +9,7 @@ import AppWrapper from "./routes/_app.tsx"
 import Layout from "./routes/_layout.tsx"
 import Admin, { ADMIN_HEAD } from "./routes/[[lang]]/admin.tsx"
 import Compare from "./routes/[[lang]]/compare.tsx"
+import Checklist from "./routes/[[lang]]/saas-launch-checklist.tsx"
 import Features from "./routes/[[lang]]/features.tsx"
 import { handler as featurePage } from "./routes/[[lang]]/features/[slug].tsx"
 import Home, { HOME_HEAD, QUICK_START } from "./routes/index.tsx"
@@ -75,6 +76,7 @@ function siteWith(newsletter: () => boolean, siteConfig: MpaConfig = config) {
     .get("{/:lang}?/features/:slug", featurePage.GET!)
     .route("/admin", { component: view(Admin) })
     .route("/compare", { component: view(Compare) })
+    .route("/saas-launch-checklist", { component: view(Checklist) })
     .route("/pricing", { component: view(Pricing), handler: pricing })
     .get("/mvp", mvp.GET!)
     .route("/privacy", { component: view(Privacy) })

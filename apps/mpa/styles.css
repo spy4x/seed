@@ -77,3 +77,26 @@
 .arch-note {
   fill: var(--color-muted-foreground);
 }
+
+/* The launch checklist on paper: black on white in either theme, each box in its current state,
+   and each proof link followed by its short address, since a printed link cannot be clicked. */
+@media print {
+  html:has(.checklist-print),
+  html:has(.checklist-print) body {
+    background: white;
+    color: black;
+  }
+  .checklist-print * {
+    color: black !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .checklist-print input[type="checkbox"] {
+    appearance: auto;
+    accent-color: black;
+  }
+  .checklist-print a[data-short]::after {
+    content: " (" attr(data-short) ")";
+    font-weight: normal;
+  }
+}
