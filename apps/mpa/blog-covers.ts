@@ -1,7 +1,7 @@
 import type { PublicBlogPostSummary } from "@domain/blog"
 
 /**
- * Blog post covers (#733). A Seed post's cover is a file in the repository
+ * Blog post covers. A Seed post's cover is a file in the repository
  * (`libs/server/blog/seed-posts/covers/`, served at {@link COVERS_PATH}) in three widths; a
  * product's post may name an `https://` picture instead (`coverUrl`).
  *

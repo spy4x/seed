@@ -1,6 +1,6 @@
 /**
- * Sign-in with Google and GitHub (#141), and the question before a provider creates an account
- * (#142), on `@spy4x/server/auth/oauth`. The package does the protocol (PKCE, a single-use
+ * Sign-in with Google and GitHub, and the question before a provider creates an account,
+ * on `@spy4x/server/auth/oauth`. The package does the protocol (PKCE, a single-use
  * `state`, the token and profile requests) and decides who a provider account is: the user whose
  * key carries the provider's id, else the user who owns the provider's verified address proven,
  * else nobody. This file decides what the template adds:
@@ -39,19 +39,19 @@
  *   a key deletes another user's unproven claim to that address, as a sign-up does, and that
  *   user gets the same audit row.
  * - **Unlinking.** Only a provider method, and never the last way in. An address another key holds
- *   proven counts as a way in, since a sign-in code reaches it (#406). The key's sessions end with
+ *   proven counts as a way in, since a sign-in code reaches it. The key's sessions end with
  *   it through the foreign key, so unlinking the method this device signed in with signs it out.
- * - **A sign-in a moment ago stands in for the password (#384).** An account made with a provider
+ * - **A sign-in a moment ago stands in for the password.** An account made with a provider
  *   has no password to confirm a deletion, a first password or a new address with. Its proof is
  *   the session itself: one a provider sign-in started less than `PROVIDER_PROOF_MINUTES` ago
  *   (`proofUntil`). It proves the browser is signed in to the provider, not who sits at it: on a
  *   browser where the provider is still signed in, signing in again is one click. That is enough
- *   for this product, which aims below bank-level proofs (#204). An old session cannot make
+ *   for this product, which aims below bank-level proofs. An old session cannot make
  *   itself recent: the one way to get a provider sign-in without the owner's provider account
  *   would be to link another one, and starting a link asks for the same proof (the password, or
- *   this sign-in of a moment ago). Unlinking asks for the same proof (#385): a session left open
+ *   this sign-in of a moment ago). Unlinking asks for the same proof: a session left open
  *   must not take away the way in its owner uses.
- * - **Every link and unlink is mailed (#385)** to the account's proven address, naming the
+ * - **Every link and unlink is mailed** to the account's proven address, naming the
  *   provider and the time, from the same transaction as its audit row (`recordMethodChange`).
  *
  * Reads no environment and imports no singleton, like `sign-in.ts`.
@@ -217,7 +217,7 @@ export interface OAuthInternals {
   sessionsOver(store: SessionStore<AuthSessionRecord>): SessionManager<AuthSessionRecord>
   /**
    * Ends `previous`, the session this browser held before signing in as `next`, in transaction
-   * `tx`, and moves or removes its push subscriptions with it (#572).
+   * `tx`, and moves or removes its push subscriptions with it.
    */
   endReplaced(tx: AppDbBase, previous: AppAuthState, next: AuthSessionRecord): Promise<void>
   cookie: SessionCookie
@@ -246,7 +246,7 @@ export interface OAuthInternals {
   waitingForCode(userId: number): Promise<User | null>
   /** Whether `error` means "this user may not sign in" rather than a fault. */
   isRefusal(error: unknown): boolean
-  /** A guest's provider link keeps the account, or, when that provider account is taken, offers to switch (#224). */
+  /** A guest's provider link keeps the account, or, when that provider account is taken, offers to switch. */
   guests?: GuestKeeper
 }
 
@@ -407,7 +407,7 @@ export function createOAuthOperations(
       return kind === null ? [] : [{ key, kind }]
     })
     // A sign-in code reaches the account while another key holds its address proven: the address
-    // stays the account's after `key` goes, so a code still finds it (#406).
+    // stays the account's after `key` goes, so a code still finds it.
     const linkOutlives = (key: AuthKey) =>
       keys.some((other) => other.id !== key.id && other.email !== null && other.provenAt !== null)
     return {
@@ -537,7 +537,7 @@ export function createOAuthOperations(
 
   /**
    * A sign-in method linked to or unlinked from user `userId`: its audit row, and the mail that
-   * tells the person (#385), both in the change's transaction `tx`, so the mail goes exactly when
+   * tells the person, both in the change's transaction `tx`, so the mail goes exactly when
    * the change stands.
    */
   async function recordMethodChange(
@@ -566,8 +566,8 @@ export function createOAuthOperations(
 
   async function proofUntil({ session }: AppAuthState): Promise<Date | null> {
     const key = await db.authStore.findKeyById(session.keyId)
-    // A passkey sign-in proves as much as a provider's (#222): the device verified the person. A
-    // sign-in code proves the mailbox, which is what a reset code proves too (#391).
+    // A passkey sign-in proves as much as a provider's: the device verified the person. A
+    // sign-in code proves the mailbox, which is what a reset code proves too.
     const proves = key &&
       (key.method.startsWith("oauth:") || key.method === PASSKEY_METHOD ||
         key.method === SIGN_IN_LINK_METHOD)
@@ -771,7 +771,7 @@ export function createOAuthOperations(
           } else {
             // Someone signed up with this provider account, or proved its address, while the
             // question was open: the package signed that user in instead of making a second one.
-            // A blocked user is refused as a deleted one is (#146), and the session goes with
+            // A blocked user is refused as a deleted one is, and the session goes with
             // the transaction.
             if (await tx.admin.isBlocked(result.user.id)) throw new OAuthSignInError("user-deleted")
             user = await tx.user.updateOne({
@@ -829,8 +829,8 @@ export function createOAuthOperations(
         const method = methods.find((candidate) => candidate.id === keyId)
         if (!method || method.kind === "password") return UnlinkOutcome.NotFound
         if (!method.canUnlink) return UnlinkOutcome.LastMethod
-        // The devices that signed in with this method stop getting the account's notifications
-        // (#572). Their sessions go with the key, so their subscriptions are found first; a
+        // The devices that signed in with this method stop getting the account's notifications.
+        // Their sessions go with the key, so their subscriptions are found first; a
         // refusal below rolls this back with the rest.
         await tx.pushTokens.removeOfKey(user.id, keyId)
         if (method.kind === "passkey") {

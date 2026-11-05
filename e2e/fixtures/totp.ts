@@ -30,8 +30,8 @@ export const currentStep = (): number => Math.floor(Date.now() / 1000 / STEP_SEC
 
 /**
  * Turns two-factor sign-in on for the account `api` is signed in as, through the API: connects an
- * authenticator app, confirmed with the account's `password` (#406). Two-factor needs a proven
- * address, which sign-up's code proved (#142). `base` is the app's origin, which the API's
+ * authenticator app, confirmed with the account's `password`. Two-factor needs a proven
+ * address, which sign-up's code proved. `base` is the app's origin, which the API's
  * same-origin check compares.
  * Returns the app's secret and the step its enrolment code used, which the server will not accept
  * again.

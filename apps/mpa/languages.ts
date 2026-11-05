@@ -1,5 +1,5 @@
 /**
- * The website's languages (#276): which ones it serves, at which address, and the translator of
+ * The website's languages: which ones it serves, at which address, and the translator of
  * each. The language comes from the address alone: English (the default) at `/pricing`, every
  * other language under its own prefix, `/de/pricing`. No cookie, no redirect by the browser's
  * language, so a shared link opens in the language it was shared in and crawlers see every version.
@@ -152,7 +152,7 @@ export function siteTranslator(language: Language): Translator<string> {
 }
 
 /**
- * The words a post's figures need in `language` (#620), English where a translation is missing:
+ * The words a post's figures need in `language`, English where a translation is missing:
  * what the page sends each figure island, so it does not ship the whole catalog.
  */
 export function figureCatalog(language: Language): Catalog {

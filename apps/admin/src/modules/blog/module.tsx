@@ -93,7 +93,7 @@ function BlogEditorView(
     state.loadFigures()
   }, [context])
   const editor = state.editor.value
-  // The Problems panel rechecks the body about a second after typing stops (#620).
+  // The Problems panel rechecks the body about a second after typing stops.
   const body = editor.loading ? null : editor.value.bodyMd
   useEffect(() => {
     if (body === null) return
@@ -172,7 +172,7 @@ function BlogEditorView(
   )
 }
 
-/** Posts on the public website: the list and the editor (#396), over the API of #395. */
+/** Posts on the public website: the list and the editor. */
 export const blogModule: AdminModule = {
   id: `blog`,
   nav: { name: `AdminNav.blog`, href: ADMIN_BLOG_PATHS.list, Icon: IconPencilSquare },

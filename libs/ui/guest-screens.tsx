@@ -20,7 +20,7 @@ import { type Navigate, SCREEN_PATHS, ScreenForm, withNext } from "./progressive
 import { FORM_WIDTH, useWaited } from "./tag-editor-screen.tsx"
 import { isolate } from "@spy4x/preact-ui/bdi"
 
-/** The pages of guest accounts (#224). */
+/** The pages of guest accounts. */
 export const GUEST_PATHS = {
   /** One click into the app: the page starts a guest account with a `POST` and moves on. */
   try: "/try",
@@ -238,7 +238,7 @@ export function demoWipeLine(t: Translator<string>, wipeTime: string): string {
 }
 
 /**
- * The guest banner (#224), in the frame's banner slot: what a guest account is, and the way to
+ * The guest banner, in the frame's banner slot: what a guest account is, and the way to
  * keep it. `wipeAt` is the demo's next nightly wipe, on the demo only; the banner shows it in the
  * person's own time and clock.
  */
@@ -317,7 +317,7 @@ export interface KeepScreenProps {
 }
 
 /**
- * `/keep` (#224): adds the first sign-in method to a guest account, so it opens on any device. The
+ * `/keep`: adds the first sign-in method to a guest account, so it opens on any device. The
  * ways come in the order sign-up shows them: each provider, a passkey, then an e-mail address
  * with a password, whose code step follows on the sign-up code page. No password is asked first:
  * a guest has none, and this session is the account's only way in.
@@ -530,7 +530,7 @@ function MoveHint({ state }: { state: GuestSwitchState }): JSX.Element {
 }
 
 /**
- * `/keep/taken` (#224): the sign-in method the guest tried belongs to another account. Nothing
+ * `/keep/taken`: the sign-in method the guest tried belongs to another account. Nothing
  * was changed, and nothing is chosen for them: switch and move the guest's groups there, switch
  * and delete the guest's data (confirmed with the real counts), or keep the guest account. For an
  * address the person still proves that account with its password, and its code when it has one.
@@ -749,7 +749,7 @@ function OptionLabel(
 }
 
 /**
- * Asked before a guest signs out (#224): a guest account has no sign-in method, so signing out
+ * Asked before a guest signs out: a guest account has no sign-in method, so signing out
  * loses it. "Keep your account" is the primary way out; "Sign out anyway" does what was asked.
  */
 export function GuestSignOutDialog(

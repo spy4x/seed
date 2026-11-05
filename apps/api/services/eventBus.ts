@@ -3,7 +3,7 @@ import type { Event, EventConstructor } from "@spy4x/platform/cqrs"
 import { log } from "./log.ts"
 import { createCounter } from "@spy4x/platform/universal/metrics"
 
-/** Counts every listener that threw, by event and listener name. #159 alerts on it. */
+/** Counts every listener that threw, by event and listener name. */
 export const eventListenerFailures = createCounter(
   "event_listener_failures_total",
   "Event listeners that threw, by event and listener name",

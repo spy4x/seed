@@ -1,5 +1,5 @@
 /**
- * The Account section's "Profile picture" row (#228) driven in a browser DOM (happy-dom): which
+ * The Account section's "Profile picture" row driven in a browser DOM (happy-dom): which
  * buttons it offers, the removal's confirmation, what it announces and where focus goes.
  */
 import { expect } from "@std/expect"

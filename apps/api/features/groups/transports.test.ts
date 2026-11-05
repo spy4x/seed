@@ -101,7 +101,7 @@ function stack(plan = PRO_PLAN_ID) {
     createGroupTransferHandler(groups, {
       checkPassword: (userId, password) => {
         passwordChecks.push(userId)
-        // As the sign-in answers while the account's wrong passwords lock it (#406).
+        // As the sign-in answers while the account's wrong passwords lock it.
         if (password === LOCKED_PASSWORD) return Promise.reject(new PasswordLockedError(90_500))
         return Promise.resolve(password === PASSWORD)
       },

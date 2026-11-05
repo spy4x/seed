@@ -41,7 +41,7 @@ export const OPERATION_BUDGET: Readonly<OperationBudget> = {
 
 /** Who sent one call, as the adapter that received it knows. */
 export interface OperationCaller {
-  /** Whether the account is a guest (#224). */
+  /** Whether the account is a guest. */
   guest: boolean
   /** The client address as the guest-start limit counts it (`signUpClient`). */
   client: string
@@ -73,7 +73,7 @@ export interface OperationRateLimitSettings {
   clock?: Clock
 }
 
-/** The per-person budget of the operations table (#429). */
+/** The per-person budget of the operations table. */
 export interface OperationRateLimits {
   /**
    * `operations` with each call spending one unit of its caller's budget before it runs. Both

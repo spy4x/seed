@@ -49,7 +49,7 @@ export function createTotpRoutes(
         return errorResponse(c, `bad_request`, { message: "Invalid request format" })
       }
     })
-    // Asks for what the deletion asks (#406): the password, or for an account without one a
+    // Asks for what the deletion asks: the password, or for an account without one a
     // sign-in with Google or GitHub a moment ago. Finishing the set-up signs every other session
     // out, so a session left open must not be able to lock its owner out with an app of its own.
     .post(`/totp/connect/start`, rateLimits.strictByUser, async (c) => {

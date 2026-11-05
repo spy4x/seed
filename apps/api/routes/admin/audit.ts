@@ -162,7 +162,7 @@ function csvRowOf(entry: AdminAuditEntry): AuditCsvRow {
 }
 
 /**
- * The audit log routes of the operator area (#429), mounted at `/api/admin` behind the gate in
+ * The audit log routes of the operator area, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them.
  *
  * - `GET /audit?event=&person=&operator=&from=&to=&ip=&cursor=` is one page, newest first:

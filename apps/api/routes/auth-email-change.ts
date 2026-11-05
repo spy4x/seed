@@ -116,7 +116,7 @@ export function createEmailChangeRoutes(
       if (outcome === EmailVerifyOutcome.NothingToVerify) {
         return errorResponse(c, `bad_request`, { message: EMAIL_NOTHING_TO_VERIFY })
       }
-      // A new address signed the other devices out (#406): their sockets close now. Proving the
+      // A new address signed the other devices out: their sockets close now. Proving the
       // address the account has ends none, and the hub then finds nothing to close.
       emitSignOut(c, authData.user.id)
       return c.json({ success: true })

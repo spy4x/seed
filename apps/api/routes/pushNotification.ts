@@ -54,7 +54,7 @@ export function createPushNotificationRoute(
         )
         return c.json({ userPushToken })
       } catch (error) {
-        // The session ended while the body was on its way, as at a password reset (#409).
+        // The session ended while the body was on its way, as at a password reset.
         if (error instanceof AccessError) {
           return errorResponse(c, `unauthorized`, { message: "Not authenticated" })
         }

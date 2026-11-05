@@ -1,5 +1,5 @@
 /**
- * A person's display preferences (#163) in Postgres: the `user_preferences` row behind the
+ * A person's display preferences in Postgres: the `user_preferences` row behind the
  * `SettingsStore` port of `@spy4x/platform/universal/settings`. Every function takes the person's
  * id from the caller, which takes it from the session; nothing here reads a request.
  *

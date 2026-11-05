@@ -4,7 +4,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The operator area's API tokens (#427) on the admin host: an operator finds a person's token on
+ * The operator area's API tokens on the admin host: an operator finds a person's token on
  * the API tokens page and revokes it, then removes the person's push device from their page. The
  * token stops working, and the person's activity names both changes.
  */

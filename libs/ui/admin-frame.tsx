@@ -18,7 +18,7 @@ import { useAdminText } from "./i18n.ts"
 import { Rich } from "@spy4x/preact-ui/i18n"
 
 /**
- * The pages of the admin app (`apps/admin`, #146) that its screens link to. It runs on a host of
+ * The pages of the admin app (`apps/admin`) that its screens link to. It runs on a host of
  * its own. Its routes and its links name these, never a string of their own; a module's own page
  * names its path in its module (`apps/admin/src/modules/`).
  */
@@ -75,7 +75,7 @@ export interface AdminNavItem {
 }
 
 /**
- * The signed-in admin app's frame (#424, #453, #516): the library's `AppShell`, the same shell as
+ * The signed-in admin app's frame: the library's `AppShell`, the same shell as
  * the product's, so the two look made by one person.
  *
  * - The rail's top zone is empty: there is no group switcher, because operators work across every
@@ -165,7 +165,7 @@ export function adminNavPath(
 }
 
 /**
- * The page of a module that has nothing yet (#424): its title and a quiet "coming soon". It tells
+ * The page of a module that has nothing yet: its title and a quiet "coming soon". It tells
  * an operator the section exists and is planned, not broken.
  */
 export function AdminComingSoon(

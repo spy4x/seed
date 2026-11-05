@@ -1,5 +1,5 @@
 /**
- * The admin app's billing screens (#196), driven in a browser DOM (happy-dom): what the list's
+ * The admin app's billing screens, driven in a browser DOM (happy-dom): what the list's
  * figures, chips and rows show, what a customer's page offers to whom, what each confirmed action
  * sends, and what a dialog says when the result is unknown.
  */

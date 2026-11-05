@@ -26,7 +26,7 @@ function formOf(link: ContactLinkRecord): ContactLinkFormValue {
 }
 
 /**
- * The contact-links module's state (#465): the list, the editor and the moves and removals. Every
+ * The contact-links module's state: the list, the editor and the moves and removals. Every
  * call goes through the app's `request`, which signs the app out on a 401. A save checks the fields
  * in the page's words first, with the same rules the API applies, so a wrong value is named under
  * its field; a refusal of the API's own shows under the form. After every write the list is read

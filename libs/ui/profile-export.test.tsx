@@ -1,5 +1,5 @@
 /**
- * The profile's "Your data" row and the admin's "Data exports" tab (#229), driven in a browser DOM
+ * The profile's "Your data" row and the admin's "Data exports" tab, driven in a browser DOM
  * (happy-dom): what each state says, what the one action does, and where focus goes.
  */
 import { expect } from "@std/expect"

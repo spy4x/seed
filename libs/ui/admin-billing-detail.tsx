@@ -119,7 +119,7 @@ export interface AdminBillingCustomerScreenProps {
   plans?: readonly Plan[]
 }
 
-/** The menu item's second line when the operator's role is too low for it (decision 6 of #196). */
+/** The menu item's second line when the operator's role is too low for it. */
 const NEEDS_SUPERVISOR = `AdminBillingCustomer.needsSupervisor`
 
 /** Each length of free time as a person reads it, by catalog key. */
@@ -149,7 +149,7 @@ interface MenuEntry {
 }
 
 /**
- * The page's actions for this operator and this subscription (decisions 5 and 6 of #196). An
+ * The page's actions for this operator and this subscription. An
  * action that the subscription's state rules out is left out; one the operator's role or their
  * own membership rules out shows disabled with the reason. The API checks the same again.
  */
@@ -212,7 +212,7 @@ export function billingMenu(
 }
 
 /**
- * One customer in the admin app (#196): its stored subscription, its last payment as Stripe gives
+ * One customer in the admin app: its stored subscription, its last payment as Stripe gives
  * it when the page opens, a link to the customer in Stripe, and what operators did to it. The
  * actions sit in the header's "More actions" menu; each is confirmed in a dialog that names the
  * customer, the amount and what follows, and asks for an optional note for the audit log.

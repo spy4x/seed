@@ -1,10 +1,10 @@
 /**
- * The notes, tags, search and shortcuts screens in the `en-XA` pseudo-language (#275), in a
+ * The notes, tags, search and shortcuts screens in the `en-XA` pseudo-language, in a
  * browser DOM (happy-dom). `en-XA` wraps every catalog message in `⟦ ⟧`: rendered in it, a screen
  * shows no English outside those marks except data (a note's title, a group's name, a file's name,
  * a size, and the dates in `<time>`, which `Intl` words). English left in the code, past the
  * catalog, fails here. The overview's note widgets are drawn on their own, since the overview
- * screen around them belongs to another lane of #275.
+ * screen around them is tested in `overview.test.tsx`.
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"

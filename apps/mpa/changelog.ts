@@ -23,7 +23,7 @@ export interface ChangelogEntry {
   kind: ChangeKind
   /** The commit subject without its type, as one sentence. */
   text: string
-  /** The pull request it was merged in, from the subject's `(#612)`. */
+  /** The pull request it was merged in, from the `(#N)` that ends its subject. */
   number?: number
   /** When it was merged: the commit's date, ISO 8601. */
   date: string
@@ -39,7 +39,7 @@ export interface ChangelogData {
   docs: Record<string, string>
 }
 
-/** The `type(scope)!: subject (#123)` of a squash-merge commit. */
+/** The `type(scope)!: subject` of a squash-merge commit. */
 const SUBJECT = /^(\w+)(?:\([^)]*\))?!?:\s*(.+?)(?:\s+\(#(\d+)\))?\s*$/
 
 /**

@@ -74,7 +74,7 @@ export async function moveAllTagRows(
 }
 
 /**
- * Tags in "move all of a group's data" (#357, decision 8): every tag moves, the ones no note uses
+ * Tags in "move all of a group's data" (decision 8): every tag moves, the ones no note uses
  * too, so the emptied group keeps none. See {@link moveAllTagRows}.
  */
 export const tagMovable: MovableAggregate = {

@@ -42,7 +42,7 @@ function shownName(t: Translator<string>, method: SignInMethod): string {
   return method.passkey?.name ?? signInMethodName(t, method.kind)
 }
 
-/** Where each kind stands in the list (#222): the password, the passkeys, then the providers. */
+/** Where each kind stands in the list: the password, the passkeys, then the providers. */
 const ORDER: Record<SignInMethod["kind"], number> = {
   password: 0,
   passkey: 1,
@@ -61,7 +61,7 @@ export interface SignInMethodsProps {
   /** The account's ways in; `null` while the list is not known yet. */
   methods: readonly SignInMethod[] | null
   /**
-   * A sign-in code reaches the account (#391, #752). It is no linked method, so the list never
+   * A sign-in code reaches the account. It is no linked method, so the list never
    * shows it; an account with no other way in is told it signs in with an e-mail code.
    */
   emailLink?: boolean
@@ -96,7 +96,7 @@ export interface SignInMethodsProps {
    */
   onUnlink: (methodId: number, password?: string) => void
   /**
-   * Starts adding a passkey (#222): the app asks the server, then the device. `password` is what
+   * Starts adding a passkey: the app asks the server, then the device. `password` is what
    * the person typed, for an account that has one. Left out, or without `passkeysSupported`, there
    * is no "Add a passkey" button; existing passkeys stay listed and removable.
    */

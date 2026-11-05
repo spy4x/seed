@@ -65,7 +65,7 @@ export function tagsCollection(
     classify: classifyTagError,
     // Keys of the `app` catalog, kept with the queued write. `OfflineStatus` shows the one a
     // conflict holds through `messageText`, in the person's language at that time; an entry queued
-    // in English before #275 holds English, which it shows as it is. A refusal that carries the
+    // before the catalog existed holds English, which it shows as it is. A refusal that carries the
     // server's own words keeps those instead of `rejected`, and they show as they came.
     messages: { version: `TagSync.version`, gone: `TagSync.gone`, rejected: `TagSync.rejected` },
     cache: {

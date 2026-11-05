@@ -121,7 +121,7 @@ export interface AdminNewsletterScreenProps {
 }
 
 /**
- * The newsletter page of the operator area (#428): the list's numbers and its growth over 30 days,
+ * The newsletter page of the operator area: the list's numbers and its growth over 30 days,
  * then two tabs. "Subscribers" searches, filters and pages every confirmed and pending address,
  * each with Remove, and Resend while it waits for its confirm mail. "Sent issues" lists each issue
  * with how many it was for, how many got it and how many failed. The page's one primary action is

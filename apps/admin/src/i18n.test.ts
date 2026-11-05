@@ -1,6 +1,6 @@
 /**
  * The admin app's languages on a real page (happy-dom): `<html lang dir>` follows the language shown, so
- * an Arabic page reads right to left and mirrors its layout (#215).
+ * an Arabic page reads right to left and mirrors its layout.
  */
 import { expect } from "@std/expect"
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd"

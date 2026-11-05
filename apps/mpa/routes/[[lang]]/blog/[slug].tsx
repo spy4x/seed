@@ -64,7 +64,7 @@ export const POST_NOT_FOUND = postNotFound(siteEnglishText())
  * A post is written in one language and lives at that language's address (`/de/blog/<slug>` for
  * German); another language's address redirects there for good, so a link from before posts had a
  * language still works. A slug the post had before "Change URL" redirects to its current address
- * for good too, in every language, while the post is live (#418). Its page names its live
+ * for good too, in every language, while the post is live. Its page names its live
  * translations as language versions (`hreflang`) and links them by name under the byline, and
  * names nothing when it has none.
  */
@@ -179,7 +179,7 @@ export function postAuthor(
 
 /**
  * The page's side gutter, around a post's column. The article, the newsletter and "Read next" all
- * sit in one centred column of 42 rem inside it, so the three start at one left edge (#416).
+ * sit in one centred column of 42 rem inside it, so the three start at one left edge.
  */
 const GUTTER = `px-4 sm:px-6 lg:px-8`
 
@@ -327,7 +327,7 @@ function PostBody(
 
 /**
  * The post's live translations, each named in its own language and linked at its own address, as
- * a list in the page's language: "Deutsch, Español and Français" (#530).
+ * a list in the page's language: "Deutsch, Español and Français".
  */
 function TranslationLinks(
   { translations }: { translations: readonly BlogTranslation[] },
@@ -359,7 +359,7 @@ function TranslationLinks(
 
 /**
  * The newsletter as the post's one call to action: in the post's column, under a heading the size
- * of "Read next", so it reads as part of the post and not as a second title (#416).
+ * of "Read next", so it reads as part of the post and not as a second title.
  */
 function NewsletterBand(): JSX.Element {
   const { t } = useSite()

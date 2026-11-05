@@ -81,7 +81,7 @@ test(`keeping a guest account by e-mail keeps its user id, drops the banner and 
     const kept = await me(page)
     expect(kept).toMatchObject({ id: guest.id, guestSince: null })
     await expect(page.locator(`[data-e2e=guest-banner]`)).toHaveCount(0)
-    // The guest's session ended with the keep (#374): a new cookie, and the socket opens on it.
+    // The guest's session ended with the keep: a new cookie, and the socket opens on it.
     expect(await sessionCookie()).not.toBe(guestCookie)
     // A screen that asks the server through the socket opens, rather than signing the page out.
     await page.getByRole(`navigation`, { name: `Main navigation` })

@@ -37,9 +37,9 @@ export interface AdminUsersRouteDependencies {
   emit(event: UserSignedOutEvent | UserProfileUpdatedEvent): void
   /** The clock the export's file name reads. */
   now?: () => Date
-  /** The person's data exports (#229), newest first: what and when, never the file. */
+  /** The person's data exports, newest first: what and when, never the file. */
   dataExports(userId: number): Promise<DataExportView[]>
-  /** Any live person's profile picture (#228), by its id. */
+  /** Any live person's profile picture, by its id. */
   picture(pictureId: string): Promise<ShownPicture | null>
   readFile: FileStore["read"]
 }
@@ -104,7 +104,7 @@ const CLOSES_SOCKETS: ReadonlySet<AdminActionKind> = new Set([
 ])
 
 /**
- * The columns of the CSV export (#425): account facts only, never a secret. Every text cell goes
+ * The columns of the CSV export: account facts only, never a secret. Every text cell goes
  * through `csvField`, which quotes it and puts a `'` before a cell that would open as a formula.
  */
 export const ADMIN_EXPORT_COLUMNS: readonly CsvColumn<AdminUserRow>[] = [
@@ -132,24 +132,24 @@ function serialIdOf(raw: string): number | null {
 }
 
 /**
- * The people routes of the operator area (#146), mounted at `/api/admin` behind the gate in
+ * The people routes of the operator area, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them.
  *
  * - `GET /users?q=&role=&blocked=&sort=&page=` lists people: `{ users, total, page, pageSize }`.
- *   `sort` is `key:direction` rules, such as `name:asc,createdAt:desc` (#424).
+ *   `sort` is `key:direction` rules, such as `name:asc,createdAt:desc`.
  * - `GET /users/:id` is one person: `{ user, methods, sessions, groups, audits }`.
- * - `GET /users/pictures/:pictureId` is any person's profile picture (#228), for the avatars of
+ * - `GET /users/pictures/:pictureId` is any person's profile picture, for the avatars of
  *   the operator area. It answers the bytes, not a redirect: the store is on the product's host,
  *   which this host's `img-src 'self'` does not allow.
- * - `GET /users/:id/data-exports` is the person's data exports (#229): `{ exports }`, their
+ * - `GET /users/:id/data-exports` is the person's data exports: `{ exports }`, their
  *   status, size and dates. The operator never gets the file: it holds the person's private notes.
  * - `GET /users/export.csv?q=&role=&blocked=&sort=` is every person the filter matches, on all its
- *   pages, as CSV, read in batches and streamed (#425). It writes an audit row on the operator, so
+ *   pages, as CSV, read in batches and streamed. It writes an audit row on the operator, so
  *   it answers 403 unless `Sec-Fetch-Site` is `same-origin`: the session cookie is `SameSite=Lax`,
  *   which another site's link or top-level navigation still carries.
  * - `POST /users/:id/block`, `/unblock`, `/sessions/end`, `/password-reset`, `/guest/delete`
- *   (#224: a guest account only, deleted at once; the audit row is the operator's) and
- *   `/telegram/unlink` (#269: 409 when none is linked) and `/picture/remove` (#228: 409 when
+ *   (a guest account only, deleted at once; the audit row is the operator's) and
+ *   `/telegram/unlink` (409 when none is linked) and `/picture/remove` (409 when
  *   there is none; the worker deletes the file) take no body and answer `{ user }`.
  *   `/sessions/:sessionId/end` ends one session. `/role` takes `{ role }`.
  *   They ask for no fresh password or code: the owner chose the audit trail over a confirmation

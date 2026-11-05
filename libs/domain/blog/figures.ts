@@ -2,7 +2,7 @@ import { type } from "arktype"
 import { convertToKebabCase, levenshtein } from "@spy4x/platform/universal/text"
 
 /**
- * Interactive figures in a post's body (#620): a tag such as `<CostCalculator members={4} />` on
+ * Interactive figures in a post's body: a tag such as `<CostCalculator members={4} />` on
  * a line of its own. The parser splits the body around those tags; this module checks each tag
  * against the components that exist, so the public page, the RSS feed and the admin editor agree
  * on which figures show and why the others do not. `docs/blog.md` says how to write one.

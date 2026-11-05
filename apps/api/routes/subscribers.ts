@@ -72,7 +72,7 @@ export interface SubscribersRouteDependencies {
     email: string,
     language: Language | null,
   ) => Promise<void>
-  /** Keeps `language`, the page's the address confirmed on, as the subscriber's (#527). */
+  /** Keeps `language`, the page's the address confirmed on, as the subscriber's. */
   rememberLanguage: (list: SubscriberList, email: string, language: Language) => Promise<void>
   /** Where the library's flows write; they redact every address first. */
   log: SubscriberLog

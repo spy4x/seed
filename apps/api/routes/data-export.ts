@@ -27,7 +27,7 @@ export const DATA_EXPORT_TOO_SOON = "You can ask for one file a day."
 export const DATA_EXPORT_NOT_READY = "Your file is not ready, or it expired."
 
 /**
- * A person's copy of their data (#229, docs/data-export.md), mounted at
+ * A person's copy of their data (docs/data-export.md), mounted at
  * `/api/account/data-export`. Only a signed-in session with its second factor reaches it, and
  * every call reads the session's own person: there is no id to change.
  *

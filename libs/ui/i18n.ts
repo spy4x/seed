@@ -1,5 +1,5 @@
 /**
- * The translator Seed's own screens read (#216). Inside an app it is the app's, from the nearest
+ * The translator Seed's own screens read. Inside an app it is the app's, from the nearest
  * `I18nContext`. Without a provider, as in a test that renders one screen, the preact-components
  * default knows no key and would show the keys themselves, so the screens fall back to Seed's
  * English catalog of their namespace instead.

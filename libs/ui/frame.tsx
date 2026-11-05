@@ -72,7 +72,7 @@ export interface FrameUser {
   lastName: string
   /** The address the account signs in with; left out or `null` while unknown or for a username. */
   email?: string | null
-  /** Their profile picture's address (#228), shown in the account entry; left out for initials. */
+  /** Their profile picture's address, shown in the account entry; left out for initials. */
   avatarUrl?: string
 }
 

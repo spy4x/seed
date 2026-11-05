@@ -8,7 +8,7 @@ import { translatorFor } from "../telegram/words.ts"
 import { enqueueJob, type JobHandler, OUTBOX_RETENTION_DAYS } from "./jobs.ts"
 
 /**
- * The job that sends one notification to the person's linked Telegram chat (#269). Its aggregate
+ * The job that sends one notification to the person's linked Telegram chat. Its aggregate
  * id is a row of `telegram_messages`.
  */
 export const TELEGRAM_NOTIFICATION_JOB = `telegram.notification`

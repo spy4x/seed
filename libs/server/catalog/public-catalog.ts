@@ -14,7 +14,7 @@ import { catalogPhotoObjectKey } from "@domain/catalog"
 import { readCatalogSizes, STOCK_COUNTS, stockOf } from "./postgres-catalog.ts"
 
 /**
- * The website's reads of the catalog (#466): published items only, in categories, with the photos
+ * The website's reads of the catalog: published items only, in categories, with the photos
  * the worker has made widths of. A draft or a hidden item never leaves here, nor do item and
  * category ids; colour and size ids do, for the sold-out marks. The SQL of the admin's writes is `postgres-catalog.ts`.
  *
@@ -204,7 +204,7 @@ export interface TrackingTarget {
 }
 
 /**
- * The tracking link with `code` (#483), or `null` when there is none or its item is not
+ * The tracking link with `code`, or `null` when there is none or its item is not
  * published: a draft's or hidden item's link answers like an unknown one.
  */
 export async function readTrackingTarget(

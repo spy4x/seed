@@ -172,7 +172,7 @@ export type PasskeySignInAnswer =
   | { ok: false; cancelled: false; picked: boolean; error: string }
 
 /**
- * Signs in with a passkey (#222). Signed out, any passkey of the site will do, and `autofill`
+ * Signs in with a passkey. Signed out, any passkey of the site will do, and `autofill`
  * waits for the person to pick one in the e-mail field. Signed in (`confirm`), only the person's
  * own passkeys count, and the new session confirms the steps an account without a password
  * confirms with a fresh sign-in. A passkey the server no longer knows is signalled to the device,
@@ -229,7 +229,7 @@ export async function confirmProviderSignUp(): Promise<{
   return handleAuthResponse(result)
 }
 
-/** What a request of the sign-up's code step answered (#142). */
+/** What a request of the sign-up's code step answered. */
 export type SignUpStepAnswer =
   /** Done: a code is on its way, or the waiting sign-up was answered. */
   | { ok: true }
@@ -249,7 +249,7 @@ export async function signUp(email: string, password: string): Promise<SignUpSte
   try {
     const result = await apiFetch<ApiSuccessResponse>("/api/auth/password/sign-up", {
       method: "POST",
-      // The code mail is written in the language the page shows now (#277).
+      // The code mail is written in the language the page shows now.
       body: JSON.stringify({ email, password, language: languages.translator.peek().language }),
     })
     return result.ok ? { ok: true } : { ok: false, error: result.error.message }
@@ -276,7 +276,7 @@ export type SignUpVerifyAnswer =
   | SignUpStepAnswer
   /** An account already uses the address. Nothing was created; the sign-up is gone. */
   | { ok: false; accountExists: ExistingAccountAnswer }
-  /** A guest's address belongs to another account: the choice waits on `/keep/taken` (#224). */
+  /** A guest's address belongs to another account: the choice waits on `/keep/taken`. */
   | { ok: false; guestTaken: true }
 
 /**
@@ -334,13 +334,13 @@ function ownMessage(result: { status: number; error: { message: string } }): str
   return result.status >= 500 ? undefined : result.error.message
 }
 
-/** How asking for a mailed code ended (#391, #752). */
+/** How asking for a mailed code ended. */
 export type CodeRequestAnswer =
   | { ok: true }
   /** Refused: `field` when the address itself was, `offline` when the request never left. */
   | { ok: false; error?: string; field?: boolean; offline?: boolean }
 
-/** What a step of a mailed code answered: a new code, or a code typed (#752). */
+/** What a step of a mailed code answered: a new code, or a code typed. */
 export type CodeStepAnswer =
   | { ok: true }
   /** The code expired, was used or took too many tries: only a new request goes on. */
@@ -401,7 +401,7 @@ async function cancelCode(path: string): Promise<void> {
  * an account uses the address; the code signs in, or signs up when none does.
  */
 export function requestSignInCode(email: string, next: string | null): Promise<CodeRequestAnswer> {
-  // The code's mail is written in the language the page shows now (#277).
+  // The code's mail is written in the language the page shows now.
   return requestCode(`/api/auth/code`, {
     email,
     ...(next === null ? {} : { next }),
@@ -529,7 +529,7 @@ export async function resetPassword(
 
 /**
  * Ends this browser's push subscription, so the account's notifications stop reaching it once
- * nobody is signed in here (#409). Never throws, and sign-out never waits for it: the browser
+ * nobody is signed in here. Never throws, and sign-out never waits for it: the browser
  * drops the subscription at once, also offline, and the server deletes its stored row the next
  * time the push service answers that the subscription is gone. `getRegistration` rather than
  * `ready`, which never settles in a browser without the service worker.
@@ -661,7 +661,7 @@ export async function endOtherSessions(): Promise<{ ok: boolean; error?: string 
 }
 
 /**
- * Starts turning two-factor on. The API asks for proof that it is the account's owner (#406): the
+ * Starts turning two-factor on. The API asks for proof that it is the account's owner: the
  * password, or for an account without one, which sends none, a provider sign-in a moment ago.
  */
 export async function totpConnectStart(password: string | undefined): Promise<

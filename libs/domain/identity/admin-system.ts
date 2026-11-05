@@ -1,7 +1,7 @@
 /**
- * The operator area's System page (#429): how each part of the stack is doing, the job queue, the
+ * The operator area's System page: how each part of the stack is doing, the job queue, the
  * latest backup, the running build and the database's migrations. The jobs themselves are the
- * Jobs module's (`admin-jobs.ts`, #394). Types only,
+ * Jobs module's (`admin-jobs.ts`). Types only,
  * plus the thresholds that turn a reading into a status; the SQL is
  * `libs/server/jobs/admin-system.ts`.
  *

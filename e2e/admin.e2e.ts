@@ -5,7 +5,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The admin app (#146, #424) on its own host: an operator signs in there, lands on the dashboard,
+ * The admin app on its own host: an operator signs in there, lands on the dashboard,
  * finds a person and blocks them. The person's open page signs out, their session is gone and their password no longer
  * signs in.
  */
@@ -85,7 +85,7 @@ test.describe("the admin app", () => {
       const cell = await row.locator("xpath=ancestor::td").boundingBox()
       expect(cell?.width ?? 0).toBeGreaterThanOrEqual(192)
       // On a phone the table shows that column alone, with the role and status under the name, so
-      // nothing is cut at its edge (#453).
+      // nothing is cut at its edge.
       const table = ops.locator("[data-e2e=admin-users-list] table")
       expect(await table.evaluate((t) => t.scrollWidth - (t.parentElement?.clientWidth ?? 0)))
         .toBeLessThanOrEqual(0)

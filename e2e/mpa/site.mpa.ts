@@ -17,7 +17,7 @@ test("a visitor without JavaScript goes from the home page to pricing, to the de
     "Seed is free. Here is what it costs to run.",
   )
 
-  // Choosing a plan posts to the website, which sends the visitor to the app's /try (#224).
+  // Choosing a plan posts to the website, which sends the visitor to the app's /try.
   await page.getByRole("button", { name: "Try in the demo: Pro" }).click()
   await expect(page).toHaveURL(/\/try$/)
 

@@ -1,5 +1,5 @@
 /**
- * The routes of sign-up by password and a mailed code (#142). Not `@api/services/sign-up.ts`,
+ * The routes of sign-up by password and a mailed code. Not `@api/services/sign-up.ts`,
  * which holds the flow these routes call.
  *
  * @module
@@ -23,7 +23,7 @@ import { EMAIL_CODE_REFUSED, signInAnswer, signOutEmitter, tooMany } from "./aut
 
 /**
  * The answer to a sign-up that was accepted: a code is on its way to the address. The same for
- * every address, whether or not an account uses it (#142).
+ * every address, whether or not an account uses it.
  */
 export const SIGN_UP_REQUESTED = { success: true }
 
@@ -44,7 +44,7 @@ export function createSignUpRoutes(
 ): Hono<APIContext> {
   const emitSignOut = signOutEmitter(emit)
   return new Hono<APIContext>()
-    // Proves the address before anything is created (#142). The same work and the same answer
+    // Proves the address before anything is created. The same work and the same answer
     // for every well-formed address: nothing here asks whether an account uses it, so neither the
     // answer nor its timing tells a stranger which addresses have accounts.
     .post(`/password/sign-up`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
@@ -61,7 +61,7 @@ export function createSignUpRoutes(
       // sign-up budgets, not the account's own: a stranger's sign-ups must not lock its owner out.
       const decision = await rateLimits.signUpCode(c, email)
       if (!decision.allowed) return tooMany(c, decision.retryAfterMs, SIGN_UP_CODES_TOO_MANY)
-      // A guest's sign-up keeps the guest account instead of making a new one (#224).
+      // A guest's sign-up keeps the guest account instead of making a new one.
       const state = c.get("auth")
       const guestUserId = state?.user.guestSince ? state.user.id : null
       const { password, language = null } = validationResult.data
@@ -92,7 +92,7 @@ export function createSignUpRoutes(
         const result = await signIn.completeSignUp(c, validationResult.data.code)
         switch (result.outcome) {
           case SignUpOutcome.GuestKept:
-            // Every guest session ended with the keep (#374): their sockets close.
+            // Every guest session ended with the keep: their sockets close.
             emitSignOut(c, result.signedIn.user.id)
             return signInAnswer(c, result.signedIn)
           case SignUpOutcome.Created:

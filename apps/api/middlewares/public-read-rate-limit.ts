@@ -13,7 +13,7 @@ import {
 import type { APIContext } from "../_types.ts"
 
 /**
- * Reads of the public blog one client IP may make per {@link PUBLIC_READS_WINDOW_MS} (#416). Every
+ * Reads of the public blog one client IP may make per {@link PUBLIC_READS_WINDOW_MS}. Every
  * page of the blog is one read, and the website forwards the visitor's IP, so a person reading
  * fast, a feed reader and a search engine's crawler stay far below it; a script fetching every
  * post over and over does not.

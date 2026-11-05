@@ -258,8 +258,8 @@ function SourceView(
 }
 
 /**
- * The shop's catalog (#466): items with photos, colours and sizes, their categories, and the
- * sources of their tracking links (#483). Shown only while the API has it on (`CATALOG=true`).
+ * The shop's catalog: items with photos, colours and sizes, their categories, and the
+ * sources of their tracking links. Shown only while the API has it on (`CATALOG=true`).
  */
 export const catalogModule: AdminModule = {
   id: `catalog`,

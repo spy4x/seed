@@ -31,7 +31,7 @@ export interface GroupMemberRow {
    * the owner and admins; for anyone else it is absent and the row shows no address.
    */
   email?: string | null
-  /** Their profile picture (#228); `null` or absent for initials. */
+  /** Their profile picture; `null` or absent for initials. */
   pictureId?: string | null
   role: GroupRole
   /**

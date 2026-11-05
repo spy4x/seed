@@ -14,7 +14,7 @@ import { NoAccountYet, TryItNow, type TryLegalLinks, WordDivider } from "./guest
 /** The public demo's one line on sign-in and sign-up (docs/demo.md), by its key in `app`. */
 const DEMO_NOTE = `AuthScreen.demoNote`
 
-/** The same line while guest accounts are on (#224): it names both ways in. */
+/** The same line while guest accounts are on: it names both ways in. */
 const DEMO_GUEST_NOTE = `AuthScreen.demoGuestNote`
 
 /** The three screens `AuthScreen` draws: the two credential modes, and the second factor. */
@@ -112,7 +112,7 @@ export interface AuthScreenProps {
   providers?: readonly OAuthProviderId[]
   /**
    * How a person last signed in on this browser, shown on the sign-in screen so they pick the same
-   * way again (#142). `null` or left out: nothing is shown.
+   * way again. `null` or left out: nothing is shown.
    */
   lastSignIn?: LastSignInHint | null
   /** "Not you? Forget": the app drops what this browser remembered. */
@@ -123,19 +123,19 @@ export interface AuthScreenProps {
    */
   demo?: boolean
   /**
-   * The website's terms and privacy notice, which the line under "Try it now" links to (#224).
+   * The website's terms and privacy notice, which the line under "Try it now" links to.
    * Left out, as without a website, the line names them without links.
    */
   legal?: TryLegalLinks | null
   /**
-   * Signs in with a passkey (#222): "Sign in with a passkey" is the first of the other ways in on
+   * Signs in with a passkey: "Sign in with a passkey" is the first of the other ways in on
    * the sign-in screen. Left out, as in a browser without passkeys, there is no such button.
    */
   onPasskey?: () => void
   /** The passkey sign-in waits for the device: its button says so. */
   passkeyBusy?: boolean
   /**
-   * Guest accounts are on (#224): sign-up opens with "Try it now", the page's one accent button,
+   * Guest accounts are on: sign-up opens with "Try it now", the page's one accent button,
    * and sign-in ends with "No account yet?" under the card. Left out: neither is shown.
    */
   guest?: boolean
@@ -145,7 +145,7 @@ export interface AuthScreenProps {
    */
   passkeyAutofill?: boolean
   /**
-   * Sends a sign-in code (#391, #752): "Email me a sign-in code" on sign-in, "Email me a sign-up
+   * Sends a sign-in code: "Email me a sign-in code" on sign-in, "Email me a sign-up
    * code" on sign-up, in the other ways in. Called with what the login field holds, as typed: the
    * app sends the code when it is an address and opens the code page otherwise. Left out: no such
    * button.
@@ -159,7 +159,7 @@ export interface AuthScreenProps {
 
 /** What the sign-in screen says about the last sign-in on this browser. */
 export interface LastSignInHint {
-  /** A linked method, or `link` for a sign-in link (#391), which is never a linked method. */
+  /** A linked method, or `link` for a sign-in link, which is never a linked method. */
   method: SignInMethod["kind"] | "link"
   /** The address, already masked (`j***@example.com`), or `null` when none was kept. */
   email: string | null

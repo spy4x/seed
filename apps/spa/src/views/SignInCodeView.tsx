@@ -53,7 +53,7 @@ export function readyAtOf(sent: SentCode | null): number | undefined {
 
 /**
  * Whether `next` is a page of the profile, where the danger zone's proof button sends a signed-in
- * person for a code to their own address (#752).
+ * person for a code to their own address.
  */
 export function isProofReturn(next: string): boolean {
   const path = new URL(next, `http://app.invalid`).pathname
@@ -61,10 +61,10 @@ export function isProofReturn(next: string): boolean {
 }
 
 /**
- * Wires `SignInCodeScreen` (#391, #752). The server's cookie says whether a code waits for this
+ * Wires `SignInCodeScreen`. The server's cookie says whether a code waits for this
  * browser, so a reload stays on the code step; the tab keeps when the code went out
  * (`sessionStorage`) for the wait before a new one. An address handed over by the sign-in page
- * fills the field, and "Back to sign in" hands the typed one back (#406). The right code reloads
+ * fills the field, and "Back to sign in" hands the typed one back. The right code reloads
  * onto the next page: the authenticator's code page while a second factor is owed, `/keep` for a
  * guest who kept the account, or the page asked for when the code was. Signed in, the page shows
  * "You're signed in", unless the profile asked for proof: then the code goes to the account's own
@@ -86,7 +86,7 @@ export function SignInCodeView() {
   const session = sessionState.value
   const guest = isGuestSession(session.user)
   const signedIn = session.user !== null && !session.isMfaRequired && !guest
-  // The profile's proof button (#752): a code to the account's own proven address, back to `next`.
+  // The profile's proof button: a code to the account's own proven address, back to `next`.
   const proving = signedIn && next !== null && isProofReturn(next)
   const status = emailStore.status.value
   const fixedEmail = !proving

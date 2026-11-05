@@ -59,7 +59,7 @@ export interface PictureRouteDependencies {
 }
 
 /**
- * Profile pictures (#228), mounted at `/api/pictures`. `GET /:pictureId` answers a redirect to the
+ * Profile pictures, mounted at `/api/pictures`. `GET /:pictureId` answers a redirect to the
  * picture for a signed-in person who may see it, and 404 for anyone else and for no such picture,
  * so the answer never tells whether one exists.
  */

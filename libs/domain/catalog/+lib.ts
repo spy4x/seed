@@ -6,7 +6,7 @@ import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import type { FieldError, FieldErrors } from "@spy4x/validation"
 
 /**
- * The catalog (#466): categories and items with colours, sizes and photos, which an operator edits
+ * The catalog: categories and items with colours, sizes and photos, which an operator edits
  * in the admin app and the public website shows. A shop, a menu, a rental list or a portfolio
  * starts from it. Every text a visitor reads is kept per language of the catalog; the price is a
  * whole number of the smallest unit of the one currency the catalog is set to. `docs/catalog.md`
@@ -43,7 +43,7 @@ export const CATALOG_ITEMS_MAX = 1000
 export const CATALOG_PRICE_MAX = 1_000_000_000_000
 /** The most languages a catalog keeps its texts in. */
 export const CATALOG_LANGUAGES_MAX = 10
-/** A tracking link source's name, such as `Zalo group A` (#483). */
+/** A tracking link source's name, such as `Zalo group A`. */
 export const CATALOG_SOURCE_NAME_MAX_LENGTH = 60
 /** The most sources the catalog keeps: one per place the shop shares its items in. */
 export const CATALOG_SOURCES_MAX = 50
@@ -175,8 +175,8 @@ export interface CatalogCombination {
 }
 
 /**
- * A photo's processing (#464): `ready` once the worker stored its narrowest width, which the admin
- * shows, about a second after the upload (#514). The website shows it once every width is made.
+ * A photo's processing: `ready` once the worker stored its narrowest width, which the admin
+ * shows, about a second after the upload. The website shows it once every width is made.
  */
 export type CatalogPhotoState = `preparing` | `ready` | `refused`
 
@@ -257,7 +257,7 @@ export interface AdminCatalogResponse {
   settings: CatalogSettings
   categories: CatalogCategory[]
   items: CatalogItemRow[]
-  /** The tracking links' sources, in order (#483). */
+  /** The tracking links' sources, in order. */
   sources: CatalogLinkSource[]
   /**
    * Whether items get tracking links: the website's address (`MPA_DOMAIN`) is set. Off, the item
@@ -267,7 +267,7 @@ export interface AdminCatalogResponse {
 }
 
 /**
- * A place the shop shares its items in, such as a Zalo group (#483). Its `slug` is the
+ * A place the shop shares its items in, such as a Zalo group. Its `slug` is the
  * `utm_source` of its tracking links.
  */
 export interface CatalogLinkSource {
@@ -377,7 +377,7 @@ export class CatalogError extends Error {
     public readonly code: CatalogErrorCode,
     message: string,
     public readonly field: string | null = null,
-    /** Why `field` failed, by code, so a screen says it in the person's language (#275). */
+    /** Why `field` failed, by code, so a screen says it in the person's language. */
     failed?: FieldError,
   ) {
     super(message)

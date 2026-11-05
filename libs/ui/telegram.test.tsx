@@ -1,5 +1,5 @@
 /**
- * The Telegram link of #269 in a browser DOM (happy-dom): the profile's row and its code dialog,
+ * The Telegram link in a browser DOM (happy-dom): the profile's row and its code dialog,
  * and the admin user screen's Telegram row, unlink action and audit titles.
  */
 import { expect } from "@std/expect"

@@ -4,7 +4,7 @@ import { CODE_SUBJECTS, lastMail } from "./fixtures/sign-up.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 /**
- * E-mails in the reader's language (#277): the sign-up code goes out before any account exists,
+ * E-mails in the reader's language: the sign-up code goes out before any account exists,
  * so it is written in the language the page shows, which the SPA sends with the sign-up. One mail
  * per language lands in the development mailbox (`dev_mail`). The other mails, their dates and
  * the Arabic direction are covered by `libs/server/mail/mail.test.ts`.

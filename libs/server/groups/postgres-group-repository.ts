@@ -362,7 +362,7 @@ export class PostgresGroupRepository implements GroupRepository {
   }
 
   /**
-   * Creates the group an import fills (#230), owned by the importer, with `imported_at` set, and
+   * Creates the group an import fills, owned by the importer, with `imported_at` set, and
    * records its change under `group.imported`. Inside the import's transaction only: the caller
    * writes the file's entities stamped with the answered sequence, then the audit event, so the
    * group and all it holds are kept or undone together. A taken id fails the statement.
@@ -1026,7 +1026,7 @@ export class PostgresGroupRepository implements GroupRepository {
   /**
    * Deletes one membership, the one way a person leaves a group or is removed from it. What the
    * member wrote stays in the group with their name on it. Their API tokens for the group are
-   * revoked, so none works again if the person is added back (#293). A member left with no active
+   * revoked, so none works again if the person is added back. A member left with no active
    * group gets a new one, as a delete gives them.
    */
   private async dropMember(groupId: string, userId: number): Promise<void> {

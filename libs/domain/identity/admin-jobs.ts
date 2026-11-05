@@ -1,5 +1,5 @@
 /**
- * The operator area's Jobs module (#394): every background job's runs, the repeating jobs and the
+ * The operator area's Jobs module: every background job's runs, the repeating jobs and the
  * operator's actions on them. Types only, plus the list filter's parsing; the SQL is
  * `libs/server/jobs/admin-jobs.ts` and the job names come from the job registry
  * (`libs/server/jobs/registry.ts`).
@@ -107,7 +107,7 @@ export function adminJobFilterQuery(filter: AdminJobFilter): string {
   return params.toString()
 }
 
-/** The catalog photo an image job processes (#514), with the item it belongs to. */
+/** The catalog photo an image job processes, with the item it belongs to. */
 export interface AdminJobPhoto {
   /** The photo's id, which is its image's: the admin's thumbnail route takes it. */
   id: string

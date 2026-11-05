@@ -64,7 +64,7 @@ export interface FakeUser {
   /** Sessions still signed in, by their index in `devices`. */
   sessions: { device: number; createdAgo: number; lastUsedAgo: number }[]
   /**
-   * A passkey (#222) made on one of `devices`, added `addedAgo` minutes ago and last used
+   * A passkey made on one of `devices`, added `addedAgo` minutes ago and last used
    * `lastUsedAgo` minutes ago (`null`: never); `null` for none.
    */
   passkey: { device: number; addedAgo: number; lastUsedAgo: number | null } | null

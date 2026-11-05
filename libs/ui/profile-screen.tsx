@@ -67,7 +67,7 @@ export interface ProfileValues {
   /** The authenticator code a first password needs while two-factor is on. */
   passwordOtp: string
   otp: string
-  /** The password typed to turn two-factor on (#406). */
+  /** The password typed to turn two-factor on. */
   totpPassword: string
   /** The password or the authenticator code typed to turn two-factor off. */
   twoFactorProof: string
@@ -196,7 +196,7 @@ export interface ProfileScreenProps {
   /**
    * Called when the person submits the "Turn on" dialog, with the password in
    * `values.totpPassword`; an account with no password confirms with a provider sign-in a moment
-   * ago instead, as the deletion does (#406).
+   * ago instead, as the deletion does.
    */
   onStartTotp?: () => void
   /** Drops what was typed in the "Turn on" dialog and its errors, when the person closes it. */
@@ -217,7 +217,7 @@ export interface ProfileScreenProps {
    */
   onRegisterPush?: () => void
   onRemovePush: (deviceId: string) => void
-  /** Telegram (#269), under Notifications. Without it, or while the bot is off, no row shows. */
+  /** Telegram, under Notifications. Without it, or while the bot is off, no row shows. */
   telegram?: TelegramLinkProps
   /**
    * The "Delete account" section. Without it the section is empty. `twoFactor` and `navigate`
@@ -225,19 +225,19 @@ export interface ProfileScreenProps {
    */
   accountDeletion?: Omit<AccountDeleteProps, "twoFactor" | "navigate" | "providerProof">
   /**
-   * Set for a guest account (#224), which has no sign-in method: the Profile says so with a way to
+   * Set for a guest account, which has no sign-in method: the Profile says so with a way to
    * keep it, shows no password or two-factor rows, and deletes with a typed word.
    */
   guest?: GuestAccountDeleteProps
-  /** The Account section's "Your data" row (#229). Without it the row is left out. */
+  /** The Account section's "Your data" row. Without it the row is left out. */
   dataExport?: DataExportRowProps
-  /** The Account section's "Profile picture" row (#228); its `src` is the intro's avatar too. */
+  /** The Account section's "Profile picture" row; its `src` is the intro's avatar too. */
   picture?: PictureRowProps
   navigate?: Navigate
 }
 
 /**
- * The profile, split into sections at `/profile/<section>` (#327): a navigation beside the open
+ * The profile, split into sections at `/profile/<section>`: a navigation beside the open
  * section from `md` up, and on a phone the list of sections first, then one section under a link
  * back to it. Account holds the name and the e-mail address; Sign-in and security the ways to
  * sign in, two-factor sign-in and the signed-in devices; then Language and region, Appearance,
@@ -299,7 +299,7 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
     description: t.t(PROFILE_SECTION_TEXT[id].description),
     href: profilePath(id),
     tone: id === "danger-zone" ? "danger" : undefined,
-    // A guest has no two-factor to turn on (#224).
+    // A guest has no two-factor to turn on.
     value: id === "security"
       ? props.guest
         ? undefined
@@ -479,7 +479,7 @@ function ProfileSection(
 /**
  * The ways in of an account that has no password ("Google", "Google and GitHub", "a passkey"),
  * or `null` for an account with one, or while the sign-in methods are not known. An account with
- * no linked method signs in with "an email code" when `emailLink` says one reaches it (#391).
+ * no linked method signs in with "an email code" when `emailLink` says one reaches it.
  */
 export function providerOnlyNames(
   t: Translator<string>,

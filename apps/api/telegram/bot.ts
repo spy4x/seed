@@ -1,5 +1,5 @@
 /**
- * Seed's Telegram bot (#269, docs/telegram.md): linking and unlinking a Telegram account, `/help`,
+ * Seed's Telegram bot (docs/telegram.md): linking and unlinking a Telegram account, `/help`,
  * and the product's commands from `commands.ts`, each run as the linked person. Built on the
  * router of `@spy4x/integrations/telegram`; this file holds only what is Seed's.
  *

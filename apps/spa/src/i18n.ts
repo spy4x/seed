@@ -1,5 +1,5 @@
 /**
- * The SPA's languages (#216): its English catalogs, bundled, and one loader per other language.
+ * The SPA's languages: its English catalogs, bundled, and one loader per other language.
  * Each loader is a fixed `import()`, so the build makes one chunk per language and loads only the
  * one shown. Only a member of `LANGUAGES` reaches a loader (`createLanguages`).
  *
@@ -50,7 +50,7 @@ export function appText(key: string, values?: MessageValues): string {
 
 /**
  * What a refused call says about `field`, in the language the page shows now, or `null` when the
- * refusal names no failure of that field. A form shows it under the field (#275).
+ * refusal names no failure of that field. A form shows it under the field.
  */
 export function refusedField(cause: unknown, field: string): string | null {
   const fields = cause instanceof Error ? (cause as Partial<ErrorAnswer>).fields : undefined

@@ -1,6 +1,6 @@
 /**
  * The operator area's reads and writes over a person's push devices (`user_push_tokens`) and
- * notifications (#427). Who may call them is the API's business
+ * notifications. Who may call them is the API's business
  * (`apps/api/routes/admin/api-tokens.ts`); nothing here checks it.
  *
  * Every statement names its columns: a device's `endpoint`, `auth` and `p256dh` (what lets anyone

@@ -55,7 +55,7 @@ export interface PictureRowProps {
 }
 
 /**
- * The Account section's "Profile picture" row (#228): the avatar, the rule for the file and
+ * The Account section's "Profile picture" row: the avatar, the rule for the file and
  * "Upload", or "Change" and "Remove". The button opens the chooser at once; the upload shows the
  * chosen image in place while it runs. "Remove" asks first. When "Change" gives way to "Upload"
  * after a removal, focus moves to it instead of falling to the page.

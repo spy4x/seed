@@ -1,5 +1,5 @@
 /**
- * The first-steps checklist and the tour of the SPA (#298): what a person has already done, read
+ * The first-steps checklist and the tour of the SPA: what a person has already done, read
  * from the tables that hold it, and the two answers kept on their `users` row.
  *
  * Reads no environment and imports no singleton.

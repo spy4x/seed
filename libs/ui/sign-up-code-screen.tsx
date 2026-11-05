@@ -55,7 +55,7 @@ export interface SignUpCodeScreenProps {
 }
 
 /**
- * The step between the sign-up form and the app (#142): "Check your inbox" asks for the code mailed
+ * The step between the sign-up form and the app: "Check your inbox" asks for the code mailed
  * to the address, the same for every address. The right code either signs the new account in,
  * which the app does, or ends here at "You already have an account", which hands the person the
  * account's own way in. With no sign-up waiting, "This sign-up expired" starts again.
@@ -89,7 +89,7 @@ export function SignUpCodeScreen(props: SignUpCodeScreenProps): JSX.Element {
 }
 
 /**
- * The code step, the same `CodeStep` as sign-in and reset (#752): the code field, a new code once
+ * The code step, the same `CodeStep` as sign-in and reset: the code field, a new code once
  * the wait ends, and the way back to another address.
  */
 function CheckInbox(

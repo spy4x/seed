@@ -1,5 +1,5 @@
 /**
- * The audit log screen (#429), driven in a browser DOM (happy-dom): what the filter form sends,
+ * The audit log screen, driven in a browser DOM (happy-dom): what the filter form sends,
  * where each person links, what each view shows and how older entries are asked for.
  */
 import { expect } from "@std/expect"

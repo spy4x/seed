@@ -1,6 +1,6 @@
 /**
- * The operator area's API tokens page and the person's tokens, devices and notifications tabs
- * (#427), driven in a browser DOM (happy-dom): what each shows, which actions they offer, and what
+ * The operator area's API tokens page and the person's tokens, devices and notifications tabs,
+ * driven in a browser DOM (happy-dom): what each shows, which actions they offer, and what
  * the confirm dialog sends.
  */
 import { expect } from "@std/expect"

@@ -87,7 +87,7 @@ export function ogImageAlt(key: OgImageKey): string {
 export const OG_IMAGE_SIZE = { width: 1200, height: 630 } as const
 
 /**
- * The SPA's sign-in and sign-up pages, and `/try`, which starts a guest account (#224): the
+ * The SPA's sign-in and sign-up pages, and `/try`, which starts a guest account: the
  * website has no session, the product signs people in. A link to `try` carries `rel="nofollow"`
  * ({@link TRY_REL}), and the app's `robots.txt` keeps crawlers off it.
  */
@@ -310,7 +310,7 @@ export function SiteFrame(
   const origin = state.webAppOrigin
   const navLinks = blog ? NAV_LINKS : NAV_LINKS.filter((link) => link.href !== BLOG_PATH)
   // This page in another language: its translated version, or where the page says to go instead;
-  // the home page in place of another language's blog index while it has no posts (#530).
+  // the home page in place of another language's blog index while it has no posts.
   const languageHref = (tag: string) => {
     const target = isSiteLanguage(tag) ? tag : DEFAULT_LANGUAGE
     const version = head.alternates?.find(({ language }) => language === target)

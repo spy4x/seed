@@ -54,13 +54,13 @@ export interface AppProps {
 }
 
 /**
- * The admin app (#146, #424): the operator area. It runs on its own host, signs in with a password
+ * The admin app: the operator area. It runs on its own host, signs in with a password
  * (and code) against the same API, and holds no code of the SPA. Signed in, it shows the shell with
  * one sidebar entry per module (`modules/registry.ts`) and the pages each module registers.
  */
 export function App(props: AppProps): JSX.Element {
   const languages = props.languages ?? pageLanguages
-  // Every word in the operator's language: the one they chose, else this device's (#216).
+  // Every word in the operator's language: the one they chose, else this device's.
   return (
     <I18nContext.Provider value={languages.translator.value}>
       <Operator {...props} languages={languages} />
@@ -158,7 +158,7 @@ function Operator(
   // Numbers inside messages follow the operator's region format.
   const numberLocale = own.format.value.locale
   useEffect(() => languages.setNumberLocale(numberLocale), [numberLocale])
-  // The operator's address, the account cell's name when they have none (#172).
+  // The operator's address, the account cell's name when they have none.
   const [email, setEmail] = useState<string | null>(null)
   useEffect(() => {
     setEmail(null)

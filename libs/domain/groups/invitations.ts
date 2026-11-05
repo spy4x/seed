@@ -19,7 +19,7 @@ export const INVITATION_TOKEN_BYTES = 32
 /** Why an invitation was refused. */
 export type InvitationErrorCode =
   /**
-   * The creator's own address is not proven (#411). Whoever signed up with somebody else's address
+   * The creator's own address is not proven. Whoever signed up with somebody else's address
    * could otherwise let a second account of theirs into the group before the owner takes the
    * account back with a password reset.
    */

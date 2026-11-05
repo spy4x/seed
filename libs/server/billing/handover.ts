@@ -8,7 +8,7 @@ interface HeldRow extends postgres.Row {
 }
 
 /**
- * The billing half of a transfer of ownership (#250), run in the transfer's transaction after the
+ * The billing half of a transfer of ownership, run in the transfer's transaction after the
  * group row is locked.
  *
  * - A subscription that still renews refuses the transfer (`SUBSCRIPTION_RENEWS`): the old owner

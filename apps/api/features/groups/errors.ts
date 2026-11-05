@@ -89,8 +89,8 @@ const IDEMPOTENCY_CODES: Record<IdempotencyError["code"], GroupFeatureErrorCode>
 }
 
 export function groupErrorResponse(c: Context<APIContext>, error: unknown): Response {
-  // Handing a group over asks for the password, which the account's lock may refuse to check
-  // (#406): the refusal says when to try again.
+  // Handing a group over asks for the password, which the account's lock may refuse to check:
+  // the refusal says when to try again.
   if (error instanceof PasswordLockedError) {
     c.header("Retry-After", String(Math.ceil(error.retryAfterMs / 1000)))
     return errorResponse(c, `rate_limited`, {

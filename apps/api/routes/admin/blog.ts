@@ -141,7 +141,7 @@ function actorOf(c: Context<APIContext>): BlogActor {
 }
 
 /**
- * The blog routes of the operator area (#395), mounted at `/api/admin` behind the gate in
+ * The blog routes of the operator area, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them, and every `POST` passed the
  * same-origin guard. Every change names the version the operator saw, and is refused with 409 and
  * the current version when the post moved on; each one writes an audit row on the operator.
@@ -149,7 +149,7 @@ function actorOf(c: Context<APIContext>): BlogActor {
  * - `GET /blog/posts?status=&q=` lists posts, most recently changed first, with each status's count.
  * - `GET /blog/posts/:id` answers one post with everything the editor shows.
  * - `GET /blog/posts/:id/revisions` lists the post's earlier versions, newest first, without their
- *   bodies, and `GET /blog/posts/:id/revisions/:revisionId` answers one with every field (#418).
+ *   bodies, and `GET /blog/posts/:id/revisions/:revisionId` answers one with every field.
  *   Restoring one needs no route: the editor takes its fields and saves as usual.
  * - `POST /blog/posts` creates a draft: `{ id, title, slug, description, seoTitle?, tldr?, topic?,
  *   coverUrl?, coverAlt?, bodyMd }` with a client-made UUID v7 id. 201.
@@ -333,7 +333,7 @@ export function blogNewsletterEnabled(setup: SubscribersSetup | null): boolean {
   return typeof setup?.siteUrl === `string`
 }
 
-/** The blog module: posts, publishing and the newsletter send (#395). */
+/** The blog module: posts, publishing and the newsletter send. */
 export const blogAdminModule: AdminApiModule = {
   id: `blog`,
   routes: ({ sql, subscribers, limit, now, siteUrl }) =>

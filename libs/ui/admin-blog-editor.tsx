@@ -89,7 +89,7 @@ export interface BlogDraft {
 export type BlogFormErrors = Partial<Record<BlogField | `at` | `form`, string>>
 
 /**
- * The fields in the order the page shows them, the settings in their four groups (#733), so focus
+ * The fields in the order the page shows them, the settings in their four groups, so focus
  * goes to the first one in error.
  */
 export const BLOG_FIELD_ORDER: readonly BlogField[] = [
@@ -150,7 +150,7 @@ export function emptyBlogDraft(): BlogDraft {
   }
 }
 
-/** The fields a post and its earlier versions (#418) share: what the editor edits. */
+/** The fields a post and its earlier versions share: what the editor edits. */
 export type BlogDraftSource = Pick<
   BlogPost,
   | `title`
@@ -280,7 +280,7 @@ export interface BlogOriginal {
   id: string
   title: string
   language: Language
-  /** The original's cover, which a translation of it takes (#733). */
+  /** The original's cover, which a translation of it takes. */
   coverUrl: string | null
   coverAlt: string | null
 }
@@ -362,7 +362,7 @@ export interface AdminBlogEditorScreenProps {
   /** Renders the body for the Preview tab. Called when the tab opens. */
   onPreview: () => void
   /**
-   * The tags in the body that readers will not see, by line (#620), from the last check that
+   * The tags in the body that readers will not see, by line, from the last check that
    * worked. The Problems panel lists them and the publish dialog warns about them.
    */
   problems: readonly BlogProblem[]
@@ -379,7 +379,7 @@ export interface AdminBlogEditorScreenProps {
   onUnpublish: () => void
   onChangeUrl: (slug: string) => void
   onDelete: () => void
-  /** The History dialog's list and the version picked (#418). */
+  /** The History dialog's list and the version picked. */
   history: BlogHistoryState
   /** Picks a version in History, which reads it. */
   onSelectRevision: (id: string) => void
@@ -393,7 +393,7 @@ export interface AdminBlogEditorScreenProps {
 }
 
 /**
- * One post's editor (#396): the title and the Markdown body with a Write and a Preview tab in the
+ * One post's editor: the title and the Markdown body with a Write and a Preview tab in the
  * writing column, and the post's settings in a 20rem column beside it from `lg` up (folded under
  * "Post settings" on a phone). The header names the status and whether the text is saved, and
  * holds the actions the status allows: a draft is saved and published; a scheduled or published
@@ -893,8 +893,8 @@ function Counter({ length, shown, id }: { length: number; shown: number; id: str
 }
 
 /**
- * The settings column: where publishing stands, then four groups in the order of the design
- * (#733): the address and language, the summary, the cover and the links. Below `lg` it folds
+ * The settings column: where publishing stands, then four groups in the order of the design:
+ * the address and language, the summary, the cover and the links. Below `lg` it folds
  * under "Post settings".
  */
 function Settings(
@@ -906,7 +906,7 @@ function Settings(
   const edit = (patch: Partial<BlogDraft>) => onChange({ ...value, ...patch })
   const description = Array.from(value.description).length
   const seo = Array.from(value.seoTitle).length
-  // A published post's address carries its language: where a new language moves it (#530).
+  // A published post's address carries its language: where a new language moves it.
   const movedTo = locked && post && value.language !== post.language
     ? blogPostPath({ language: value.language, slug: post.slug })
     : null
@@ -1159,7 +1159,7 @@ function SettingsGroup(
 
 /**
  * What choosing `translationOf` changes: a translation takes its original's cover, as the cover
- * group says, so the post shows the same picture in every language (#733).
+ * group says, so the post shows the same picture in every language.
  */
 export function translationPatch(
   translationOf: string,
@@ -1269,7 +1269,7 @@ function PublishingFacts(props: AdminBlogEditorScreenProps): JSX.Element | null 
   const { post } = props
   const format = useFormat()
   const t = useAdminText()
-  // A post settled as never emailed has a send time and no list: nothing went (#414).
+  // A post settled as never emailed has a send time and no list: nothing went.
   const emailedAt = post?.newsletterList != null ? post.newsletterSentAt : null
   if (!post || post.status === `draft` && emailedAt === null) return null
   return (

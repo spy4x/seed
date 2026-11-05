@@ -55,7 +55,7 @@ export function createSubscribersApi(fetcher: SubscribersFetch = (url, init) => 
           method: "POST",
           credentials: "include",
           headers: { "content-type": "application/json" },
-          // The mails are written in the language the page shows now (#527).
+          // The mails are written in the language the page shows now.
           body: JSON.stringify({ email, list, language: languages.translator.peek().language }),
         })
         if (response.ok) return { ok: true }

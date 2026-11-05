@@ -145,7 +145,7 @@ interface RegionItem {
 const CLOCKS = [`format`, `h12`, `h23`] as const
 
 /**
- * The profile's "Language and region" section (#163): the region format, the time zone and the
+ * The profile's "Language and region" section: the region format, the time zone and the
  * clock, which follow the person to every device. One form, with no Save button: each change is
  * saved as it is made, on the version it was made on, so a change another device saved meanwhile
  * is refused and the form then shows the values that won. A line above the form shows a date and
@@ -367,7 +367,7 @@ function pick(value: Preferences): RegionPreferences {
 }
 
 /**
- * The operator area's read-only "Language and region" group on a person's Overview (#163, #216):
+ * The operator area's read-only "Language and region" group on a person's Overview:
  * the person's language and choices, their local time now, and when they last changed them.
  * Operators cannot change them. "Automatic" is the person's device, which the operator cannot see:
  * the zone and region format the person signed up with are shown instead, when known. Names of

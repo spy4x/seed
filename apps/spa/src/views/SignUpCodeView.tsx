@@ -43,7 +43,7 @@ function failure(t: Translator<string>, answer: SignUpStepAnswer, fallback: stri
 }
 
 /**
- * Wires `SignUpCodeScreen` (#142): reads back the sign-up that waits for its code, so a reload
+ * Wires `SignUpCodeScreen`: reads back the sign-up that waits for its code, so a reload
  * stays on the step, and answers it. The right code for a new address reloads onto the page the
  * person asked for, as sign-in does; for an address an account uses, the page says so and hands
  * the address to sign-in or the reset page in memory.
@@ -59,10 +59,10 @@ export function SignUpCodeView() {
   const [resending, setResending] = useState(false)
   const [resendError, setResendError] = useState<string | null>(null)
   // The last code sent, by the sign-up form or here: a new one waits a minute after it, also
-  // across a reload (#752).
+  // across a reload.
   const [sent, setSent] = useState<SentCode | null>(() => readSentCode(`sign-up`))
   const session = sessionState.value
-  // A guest has a session but no sign-in method yet: the code step keeps that account (#224).
+  // A guest has a session but no sign-in method yet: the code step keeps that account.
   const guest = isGuestSession(session.user)
 
   useEffect(() => {

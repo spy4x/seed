@@ -1,5 +1,5 @@
 /**
- * The routes of sign-in and sign-up by a mailed code (#391, #752). Not
+ * The routes of sign-in and sign-up by a mailed code. Not
  * `@api/services/sign-in-codes.ts`, which holds the flow these routes call.
  *
  * @module
@@ -23,7 +23,7 @@ import {
 } from "@domain/identity"
 import { MAILED_CODE_DEAD, MAILED_CODE_WRONG, signOutEmitter, tooMany } from "./auth-answers.ts"
 
-/** The answer to a code request that was accepted: the same for every address (#391). */
+/** The answer to a code request that was accepted: the same for every address. */
 export const SIGN_IN_CODE_REQUESTED = { success: true }
 
 /** The answer to an address `normalizeEmail` refuses, on the code request. */
@@ -55,7 +55,7 @@ export function createSignInCodeRoutes(
 ): Hono<APIContext> {
   const emitSignOut = signOutEmitter(emit)
   return new Hono<APIContext>()
-    // Sign-in and sign-up by an e-mailed code (#391, #752). The same work and answer for every
+    // Sign-in and sign-up by an e-mailed code. The same work and answer for every
     // well-formed address, as for a sign-up: whether an account uses it is decided only when the
     // right code comes back, from the browser that asked.
     .post(`/code`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
@@ -98,7 +98,7 @@ export function createSignInCodeRoutes(
         case SignInCodeOutcome.SignedIn:
         case SignInCodeOutcome.Created:
         case SignInCodeOutcome.GuestKept: {
-          // Every guest session ended with the keep (#374): their sockets close.
+          // Every guest session ended with the keep: their sockets close.
           if (result.outcome === SignInCodeOutcome.GuestKept) {
             emitSignOut(c, result.signedIn.user.id)
           }

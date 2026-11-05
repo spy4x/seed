@@ -19,7 +19,7 @@ export interface AdminWebsiteStatsRouteDependencies {
 
 /**
  * `GET /website-stats?days=7|30|90&source=<slug>&fresh=1` answers the Stats screen's
- * {@link WebsiteStatsResponse} (#485): the website's totals from Umami, never a visitor, a session,
+ * {@link WebsiteStatsResponse}: the website's totals from Umami, never a visitor, a session,
  * a place or an address. `days` outside the three periods reads as 30; `fresh=1` skips the shared
  * copy ("Refresh numbers"). The Umami token stays on the server.
  */
@@ -49,7 +49,7 @@ export interface WebsiteStatsContext {
 }
 
 /**
- * The Stats module (#485): the website's visits, their sources, the catalog's items and the order
+ * The Stats module: the website's visits, their sources, the catalog's items and the order
  * channels, from Umami. Always on, so the screen can say how to turn Stats on.
  */
 export const statsAdminModule: AdminApiModule = {

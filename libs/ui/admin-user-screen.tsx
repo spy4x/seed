@@ -113,7 +113,7 @@ export function auditTone(eventType: AuthAuditEventType): TimelineTone {
 }
 
 /**
- * What each audit row says happened, as a catalog key per event code: the audit log (#429) uses the
+ * What each audit row says happened, as a catalog key per event code: the audit log uses the
  * same words. Each title is one whole message, never built from parts.
  */
 export const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
@@ -279,10 +279,10 @@ export interface AdminUserScreenProps {
 }
 
 /**
- * One person in the admin app (#424): a header card with their avatar, name, badges and the one
+ * One person in the admin app: a header card with their avatar, name, badges and the one
  * "More actions" menu, then tabs for their account, how they sign in, their sessions, their groups
  * and their activity, plus any tab a module adds. The menu blocks, unblocks, ends every session,
- * sends a password-reset email and, for an administrator, changes the role (#425); the Sessions tab
+ * sends a password-reset email and, for an administrator, changes the role; the Sessions tab
  * ends one session or all. Each is confirmed in a dialog. No password is asked: the audit trail
  * records who acted.
  */
@@ -595,7 +595,7 @@ function Overview({ detail, now }: { detail: AdminUserDetail; now: Date }): JSX.
 }
 
 /**
- * The person's linked Telegram account (#269), or `undefined`. It is no way in, so the Sign-in
+ * The person's linked Telegram account, or `undefined`. It is no way in, so the Sign-in
  * methods tab leaves it out and the Overview shows it.
  */
 export function telegramOf(
@@ -620,14 +620,14 @@ function Methods({ detail }: { detail: AdminUserDetail }): JSX.Element {
           )}
           {method.method === SIGN_IN_LINK_METHOD
             ? (
-              // A sign-in code is no stored method: when one was last used, read-only (#391).
+              // A sign-in code is no stored method: when one was last used, read-only.
               <span class="text-sm text-muted" data-e2e="admin-user-email-link">
                 {lastUsed(method.lastUsedAt)}
               </span>
             )
             : method.passkey
             ? (
-              // A passkey proves no address: its name and dates, read-only (#222).
+              // A passkey proves no address: its name and dates, read-only.
               <span class="text-sm text-muted wrap-anywhere" data-e2e="admin-user-passkey">
                 <Rich
                   parts={t.parts(`AdminUser.passkeyAdded`, { name: method.passkey.name })}
@@ -718,7 +718,7 @@ function sessionName(t: Translator<string>, deviceName: string): string {
   return deviceName || t.t(`AdminUser.unknownDevice`)
 }
 
-/** The person's groups; each name opens the group's page in the groups module (#426). */
+/** The person's groups; each name opens the group's page in the groups module. */
 function Groups(
   { detail, navigate }: { detail: AdminUserDetail; navigate?: Navigate },
 ): JSX.Element {
@@ -769,8 +769,8 @@ export function auditDetail(
 
 /**
  * The title key of a row whose `identifier` says what happened, so the title names it and the
- * identifier is not repeated under it: a sign-in or sign-up by e-mail link (#391), "Signed in with
- * an e-mail link", and the person's own change of profile picture (#453), "Profile picture
+ * identifier is not repeated under it: a sign-in or sign-up by e-mail link, "Signed in with
+ * an e-mail link", and the person's own change of profile picture, "Profile picture
  * changed". `null` for every other row.
  */
 export function identifiedAuditTitle(

@@ -5,7 +5,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The admin app's audit log (#429): an operator finds a person's sign-up by their address, opens
+ * The admin app's audit log: an operator finds a person's sign-up by their address, opens
  * the person from the log, switches to the timeline and downloads the CSV, which the log then
  * records as the operator's own action.
  */

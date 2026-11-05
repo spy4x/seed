@@ -38,7 +38,7 @@ export interface DataExportRowProps {
 }
 
 /**
- * The Account section's "Your data" row (#229): the newest export's state and the one action it
+ * The Account section's "Your data" row: the newest export's state and the one action it
  * allows. The value is a live region from the first render, so "Preparing your file" and the file
  * turning ready are read out without moving focus. When a render takes the focused control away,
  * such as a request that leaves the file in preparation, focus moves to the value instead of

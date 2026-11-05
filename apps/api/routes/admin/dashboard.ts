@@ -12,7 +12,7 @@ export interface AdminStatsRouteDependencies {
 }
 
 /**
- * `GET /stats` answers the dashboard's {@link AdminStats} (#424): counts and two 30-day series,
+ * `GET /stats` answers the dashboard's {@link AdminStats}: counts and two 30-day series,
  * never a name, an address or any content.
  */
 export function createAdminStatsRoutes(

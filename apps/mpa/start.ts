@@ -1,5 +1,5 @@
 /**
- * Starts the built website on Node or Bun (#623); Deno runs `deno serve dist/server.js` instead.
+ * Starts the built website on Node or Bun; Deno runs `deno serve dist/server.js` instead.
  * `deno task mpa:build` bundles this file into `dist/start.js`, next to the `dist/server.js` the
  * Vite build writes, and it serves that file's `fetch` with `serve` of
  * `@spy4x/platform/server/serve`, which hands it the connection's address as `deno serve` does.

@@ -59,7 +59,7 @@ function decodeEntities(html: string): string {
 }
 
 /**
- * Checks that the post is live on the public website (#733): a GET of its address answers 200,
+ * Checks that the post is live on the public website: a GET of its address answers 200,
  * without a redirect, and the page carries its title. Throws {@link BlogPostNotLiveError}
  * otherwise, also when the website does not answer in time.
  */
@@ -131,7 +131,7 @@ export function blogTeaserIssue(
  *    gets a link to a page that is not there.
  * 3. in a second transaction that locks the post, queues the post's newsletter issue when the post
  *    is still live, has a list and has never been emailed, and records when and to how many
- *    confirmed subscribers. The issue goes only to the subscribers of the post's language (#527).
+ *    confirmed subscribers. The issue goes only to the subscribers of the post's language.
  *    That record is written in the same transaction as the issue's job, so a retried, repeated or
  *    concurrent run, or publishing again after unpublishing, never queues a second issue.
  * 4. in that transaction, queues the post's `blog.crosspost` job when its cross-post was never

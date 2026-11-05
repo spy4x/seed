@@ -15,7 +15,7 @@ export interface ShownPicture extends StoredPicture {
 
 /**
  * The columns of a shown picture, for `FROM users AS owner`: the narrowest WebP variant once the
- * worker made it (#464). A picture kept before images were processed has no `images` row and is
+ * worker made it. A picture kept before images were processed has no `images` row and is
  * served as it was stored. One whose row has no variant yet, or was refused, is not served, so
  * its original, which may say where it was taken, never is.
  */
@@ -33,12 +33,15 @@ const shown = (sql: postgres.Sql) =>
   ) AS variant ON true
 `
 
-/** Whether the joined picture may be served: kept before #464, or processed into a variant. */
+/**
+ * Whether the joined picture may be served: kept before pictures were processed, or processed
+ * into a variant.
+ */
 const servable = (sql: postgres.Sql) => sql`(images.id IS NULL OR variant.object_key IS NOT NULL)`
 
 /**
- * Sets the live person's picture (#228), or clears it with `null`, and answers the person and the
- * id of the picture it replaced. A new picture is queued for processing (#464) and stays
+ * Sets the live person's picture, or clears it with `null`, and answers the person and the
+ * id of the picture it replaced. A new picture is queued for processing and stays
  * `PictureState.Preparing` until the worker is done. The `users` trigger queues the replaced
  * picture's object and image for deletion. Clearing when there is no picture writes nothing. `null`
  * when there is no live person. Inside a transaction: the row is locked first, so two changes at

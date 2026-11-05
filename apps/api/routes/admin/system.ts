@@ -156,12 +156,12 @@ export async function readSystemSnapshot(
 }
 
 /**
- * The System routes of the operator area (#429), mounted at `/api/admin` behind the gate in
+ * The System routes of the operator area, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them.
  *
  * - `GET /system` is the snapshot: each part of the stack with its status, the queue, the backup,
  *   the migrations and the build. Names and states only: no environment value, address of a
- *   service or secret. The jobs themselves are the Jobs module's (`jobs.ts`, #394).
+ *   service or secret. The jobs themselves are the Jobs module's (`jobs.ts`).
  */
 export function createAdminSystemRoutes(
   dependencies: AdminSystemRouteDependencies,

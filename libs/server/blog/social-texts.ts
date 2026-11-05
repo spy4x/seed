@@ -1,7 +1,7 @@
 import { type BlogPostFields, blogPostPath } from "@domain/blog"
 
 /**
- * The texts the owner pastes into LinkedIn, Telegram and X when a post goes live (#733), built
+ * The texts the owner pastes into LinkedIn, Telegram and X when a post goes live, built
  * from the post's own words: its title, its intro (else its description) and its "In short"
  * points, then its address. They use no label of their own, so each reads in the post's language.
  *

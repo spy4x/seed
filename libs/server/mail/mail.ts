@@ -125,7 +125,7 @@ export interface MailBrand {
 }
 
 /**
- * Who reads a mail (#277): the language it is written in, and the region format, zone and clock
+ * Who reads a mail: the language it is written in, and the region format, zone and clock
  * its dates use. {@link readMailReader} reads it for an account.
  */
 export interface MailReader {
@@ -358,7 +358,7 @@ function hostOf(brand: MailBrand): string {
 }
 
 /**
- * The mail that carries a password-reset code (#752). The code works only in the tab that asked;
+ * The mail that carries a password-reset code. The code works only in the tab that asked;
  * the mail holds no link, so nothing in it resets anything by itself.
  */
 export function passwordResetMail(
@@ -382,7 +382,7 @@ export function passwordResetMail(
 }
 
 /**
- * The mail an operator's password reset sends (#425, #752). No browser waits for a code, so it
+ * The mail an operator's password reset sends. No browser waits for a code, so it
  * carries none: it links to the page where the person asks for one.
  */
 export function passwordResetNoticeMail(
@@ -399,7 +399,7 @@ export function passwordResetNoticeMail(
 }
 
 /**
- * The mail that carries a sign-in code (#391, #752). The same mail whether or not an account uses
+ * The mail that carries a sign-in code. The same mail whether or not an account uses
  * the address: the code signs in to the account, or creates one, and only in the tab that asked.
  */
 export function signInCodeMail(
@@ -520,7 +520,7 @@ export function accountRestoredMail(
 }
 
 /**
- * The mail that tells a person their data export is ready (#229). It links to the profile, never
+ * The mail that tells a person their data export is ready. It links to the profile, never
  * to the file: the download needs the person's session.
  */
 export function dataExportReadyMail(
@@ -546,13 +546,13 @@ export interface SignInMethodChangedMailInput {
   /** `true` for a link, `false` for an unlink. */
   linked: boolean
   at: Date
-  /** The method is a passkey (#222), which is added and removed rather than linked. */
+  /** The method is a passkey, which is added and removed rather than linked. */
   passkey?: boolean
   reader: MailReader
 }
 
 /**
- * The mail sent when a sign-in method is linked to the account or unlinked from it (#385), so a
+ * The mail sent when a sign-in method is linked to the account or unlinked from it, so a
  * change made by someone else in an open session does not go unnoticed. A link is a new way in,
  * an unlink takes one away; either way the mail says which provider and when, and what to do when
  * it was not the owner.
@@ -607,7 +607,7 @@ export interface ApiTokenCreatedMailInput {
 
 /**
  * The mail sent when a personal API token is created, so a token made by someone else in a stolen
- * session does not go unnoticed (#293). It says which token and what it can do, and how to end it:
+ * session does not go unnoticed. It says which token and what it can do, and how to end it:
  * revoke it on the profile page, and change the password, which revokes every token.
  */
 export function apiTokenCreatedMail(

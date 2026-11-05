@@ -69,14 +69,14 @@ export const SCREEN_PATHS = {
   signUpCode: "/sign-up/code",
   oneTimeCode: "/totp",
   forgotPassword: "/forgot-password",
-  /** Asks for the address a sign-in code goes to, then for the code (#391, #752). */
+  /** Asks for the address a sign-in code goes to, then for the code. */
   signInCode: "/sign-in/code",
   /** The profile: its list of sections on a phone, its first section from `md` up. */
   profile: "/profile",
   groups: "/groups",
   /** The in-app inbox. */
   notifications: "/notifications",
-  /** The benchmark page (#440): development builds and the public demo only. */
+  /** The benchmark page: development builds and the public demo only. */
   benchmark: "/benchmark",
   /**
    * The e-mail address, on the profile's Account section, with the dialog open at its code while an

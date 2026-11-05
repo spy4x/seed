@@ -13,7 +13,7 @@ import { type Language, LANGUAGES } from "@domain/identity"
 import { renderBlogBody } from "./render.ts"
 
 /**
- * The public website's reads of the blog (#395). Each reads only posts that are live: published,
+ * The public website's reads of the blog. Each reads only posts that are live: published,
  * and due (`publish_at` passed). A draft, a scheduled post and a post taken back are never read, and
  * no answer carries a post's id, its author's account or address, or its newsletter.
  */
@@ -44,7 +44,7 @@ interface PostRow extends SummaryRow {
   authorUrl: string | null
 }
 
-/** The columns of a summary: never the body, which a list does not need (#416). */
+/** The columns of a summary: never the body, which a list does not need. */
 function summaryColumns(sql: postgres.Sql) {
   return sql`slug, language, title, description, topic, published_at, content_updated_at,
     reading_minutes, cover_url, cover_file`
@@ -52,7 +52,7 @@ function summaryColumns(sql: postgres.Sql) {
 
 /**
  * The condition every public read starts from. A post in a language the apps no longer ship is
- * left out, so the website, which reads only those, never fails on it (#530).
+ * left out, so the website, which reads only those, never fails on it.
  */
 function live(sql: postgres.Sql) {
   return sql`status = 'published' AND publish_at <= now() AND published_at IS NOT NULL
@@ -140,7 +140,7 @@ export async function readPublicPost(
 }
 
 /**
- * Where the post that once lived at `slug` lives now (#418): its language and current slug, read
+ * Where the post that once lived at `slug` lives now: its language and current slug, read
  * from `blog_slug_redirects` (2026_12_13_0002_blog_slug_redirects.sql). `null` when no post moved
  * from `slug`, and when the post that did is not live, so an old address never tells that a draft,
  * a scheduled or an unpublished post exists. The website asks only after {@link readPublicPost}
@@ -168,7 +168,7 @@ export async function listPublicTopics(sql: postgres.Sql): Promise<BlogTopic[]> 
 }
 
 /**
- * Logs one warning naming a live post's tag lines that show nothing (#620): a tag in a list or a
+ * Logs one warning naming a live post's tag lines that show nothing: a tag in a list or a
  * quote, or one that does not read. The public website logs the tags no component accepts.
  */
 function warnUnusableTags(slug: string, problems: BlogProblem[]): void {
@@ -185,7 +185,7 @@ interface FeedRow extends SummaryRow {
 
 /**
  * The {@link BLOG_FEED_COUNT} newest live posts with their full body, for the RSS feed, as one
- * function per API process that keeps the last feed it rendered (#416). Each call first reads the
+ * function per API process that keeps the last feed it rendered. Each call first reads the
  * id and version of the feed's posts, a few bytes per post; while they are the same as last time,
  * the kept feed is answered without reading or rendering a body. A write to a post bumps its
  * version, and a post that goes live, is taken back or is deleted changes the list, so the feed is

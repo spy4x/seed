@@ -9,7 +9,7 @@ import type {
 
 /**
  * Renders a post's Markdown to HTML that is safe to put on the public page, split around its
- * component tags (#620), with its headings for "On this page", the tag lines the parser could not
+ * component tags, with its headings for "On this page", the tag lines the parser could not
  * use, its word count and its reading time (at least one minute). Every page that shows a body
  * (the public post, the RSS feed, the admin preview) renders it here, so they all agree.
  *

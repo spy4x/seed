@@ -433,7 +433,7 @@ export interface FeaturePage {
   summary: string
   /** "How it works", one or two short paragraphs. Empty, the section is not drawn. */
   how: readonly string[]
-  /** The written guide on GitHub, until the site has the docs (#268). */
+  /** The written guide on GitHub, until the site has the docs. */
   guide?: string
   /** The code "Read the code" opens, when the feature's own code link is a guide. */
   code?: string

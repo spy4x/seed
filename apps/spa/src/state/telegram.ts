@@ -36,7 +36,7 @@ export const TELEGRAM_WAIT_MS = 3_000
 export type Sleep = (ms: number) => Promise<void>
 
 /**
- * The profile's Telegram row (#269): the status, a link code and its dialog, and unlinking. While
+ * The profile's Telegram row: the status, a link code and its dialog, and unlinking. While
  * the dialog is open the store reads the status every {@link TELEGRAM_WAIT_MS} until the bot has
  * linked the account, the code has expired or the dialog is closed; it then closes the dialog and
  * calls `onLinked`.

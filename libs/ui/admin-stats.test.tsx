@@ -1,5 +1,5 @@
 /**
- * The Stats screen (#485), driven in a browser DOM (happy-dom): the period and source in the
+ * The Stats screen, driven in a browser DOM (happy-dom): the period and source in the
  * address, the ranked lists and their presses, every state, and the skeleton's delay.
  */
 import { expect } from "@std/expect"

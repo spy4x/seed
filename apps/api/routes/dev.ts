@@ -46,8 +46,8 @@ export interface DevRouteDeps {
  * granted in other groups.
  * It answers 200 when the login has no user, so a spec can call it before its own sign-up. For an
  * address it also forgets the code mails the address was sent this hour, which every sign-up
- * spends (#142), so the caller's next sign-up of the address gets its code. A sign-up is counted
- * per address and client together (#494), and the caller's client share is the one forgotten: the
+ * spends, so the caller's next sign-up of the address gets its code. A sign-up is counted
+ * per address and client together, and the caller's client share is the one forgotten: the
  * e2e specs call this route through the same proxy as the browser they sign up with.
  *
  * `POST /add-member` with `{ login, groupId, role }` makes that user a member of a shared group
@@ -213,7 +213,7 @@ async function readLogin(
   }
   const key = await findPasswordKey(deps, validation.data.login)
   const email = normalizeEmail(validation.data.login)
-  // An account a sign-in code made has no password key: its proven address finds it (#391).
+  // An account a sign-in code made has no password key: its proven address finds it.
   const userId = key?.userId ??
     (email === null ? null : await deps.db.authStore.findUserIdByProvenEmail(email))
   return { userId, email }

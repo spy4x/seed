@@ -5,7 +5,7 @@ import { canRead, type GroupColor, GroupError, GroupRole, type GroupSummary } fr
 import type { MoveAllAllowances } from "./move-all.ts"
 
 /**
- * Exporting a group to one JSON file, and importing such a file as a new group (#230). The owner
+ * Exporting a group to one JSON file, and importing such a file as a new group. The owner
  * downloads the file; anyone who may create a group imports it. An import never touches an
  * existing group: it creates a new one, with a new id for every entity in the file. Each aggregate
  * joins by registering itself (`docs/aggregate-lifecycle.md`, "Make it exportable").
@@ -21,7 +21,7 @@ export const GROUP_EXPORT_FORMAT = "seed.group-export"
 export const GROUP_EXPORT_VERSION = 1
 
 /**
- * The six colour names tags and groups had before any `#rrggbb` was allowed (#329), with the hex
+ * The six colour names tags and groups had before any `#rrggbb` was allowed, with the hex
  * the migration `2026_11_27_0001_hex_colours.sql` gave each. A version 1 file written before then
  * names its colours this way, so an import reads them through {@link legacyExportColor}.
  */
@@ -90,7 +90,7 @@ export type GroupImportProblem =
   /**
    * One part of the file is wrong. `where` names it ("Note 3", "Group settings", "Tags") and
    * `problem` says what is wrong with it, both in English for API clients and logs. `place` and
-   * `issue` say the same by code, so a screen words them in the person's language (#275).
+   * `issue` say the same by code, so a screen words them in the person's language.
    */
   | {
     kind: "invalid"

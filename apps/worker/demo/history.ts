@@ -201,7 +201,7 @@ export async function writePeople(
       blocked_at: user.blockedAgo === null ? null : at(user.blockedAgo).toISOString(),
       first_group_name: user.firstGroupName,
     })
-    // Someone without Google or GitHub signs in with an e-mailed code now and then (#391).
+    // Someone without Google or GitHub signs in with an e-mailed code now and then.
     const linkSignIns = user.provider ? [] : user.signIns.filter((_, n) => n % 3 === 1)
     for (const [n, signIn] of user.signIns.entries()) {
       // Someone with Google or GitHub uses it for every other sign-in.
@@ -337,7 +337,7 @@ export async function writePeople(
 }
 
 /**
- * The fake people's passkeys (#222): a key of method `passkey` and its `auth_passkeys` row each.
+ * The fake people's passkeys: a key of method `passkey` and its `auth_passkeys` row each.
  * The credential id is marked as fake and the public key is random bytes, which no device holds a
  * private key for: nobody can sign in with one.
  */

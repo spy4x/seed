@@ -4,7 +4,7 @@
  *
  * - **Authenticator app.** Secret and last accepted time step live in `user_totp`; `users.mfa`
  *   keeps its three states. An account whose address is not proven cannot turn one on: whoever
- *   squats someone else's address must not lock its owner out with a second factor (#140).
+ *   squats someone else's address must not lock its owner out with a second factor.
  *
  * @module
  */
@@ -28,7 +28,7 @@ export const TOTP_NEEDS_PROVEN_EMAIL = "Verify your e-mail address before you tu
 export interface TotpOperations {
   /**
    * Starts authenticator-app enrolment, or returns the unfinished one. The caller checks the
-   * password, or the provider sign-in of an account without one, first (#406).
+   * password, or the provider sign-in of an account without one, first.
    */
   connectTotpStart(state: AppAuthState): Promise<TotpConnectStart>
   /** Finishes enrolment with a code; signs out every other session of the user. */
@@ -82,7 +82,7 @@ export function createTotpOperations(own: SignInParts): TotpOperations {
       }
       const { qrCodeSvg } = totpEnrolment(secret, {
         issuer: accountPart(options.totpIssuer, "App"),
-        // A code key's subject is an id: the account's address names it instead (#391).
+        // A code key's subject is an id: the account's address names it instead.
         label: accountPart(
           key.method === SIGN_IN_LINK_METHOD
             ? (await readEmailStatus(db.emailChange, db.authStore, user.id)).email ?? ""

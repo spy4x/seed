@@ -8,10 +8,10 @@ import type { AdminFetch } from "./state.ts"
 export const OWN_PREFERENCES_PATH = `/api/admin/me/preferences`
 
 /**
- * The operator's own formatter (#163): every date in the admin app follows the region format, time
+ * The operator's own formatter: every date in the admin app follows the region format, time
  * zone and clock the operator chose in the product's app. Until the answer comes, or when it fails,
  * the device's own format is used, so a screen never waits on it. The operator's chosen interface
- * language (#216) comes with it: `null` until it loads, and when they follow their device.
+ * language comes with it: `null` until it loads, and when they follow their device.
  */
 export function createOperatorFormat(request: AdminFetch) {
   const format = signal<Formatters>(createFormatters())

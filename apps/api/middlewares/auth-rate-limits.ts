@@ -101,7 +101,7 @@ export function signUpClient(c: Context<APIContext>): string {
 
 /**
  * Sign-in codes one client, as {@link signUpClient} counts it, may have sent to one address per
- * {@link SIGN_IN_CODE_WINDOW_MS} (#391, #752). Keyed by the address and the client together, like
+ * {@link SIGN_IN_CODE_WINDOW_MS}. Keyed by the address and the client together, like
  * the sign-up codes: a stranger who keeps asking for an address's codes spends only their own share.
  */
 export const SIGN_IN_CODE_MAILS_PER_CLIENT = 3
@@ -164,7 +164,7 @@ export interface AuthRateLimits {
    */
   otpByUser: MiddlewareHandler<APIContext>
   /**
-   * Spends one of the client's {@link GUEST_STARTS_PER_HOUR} new guest accounts an hour (#224),
+   * Spends one of the client's {@link GUEST_STARTS_PER_HOUR} new guest accounts an hour,
    * counted per address as the sign-up mails are (an IPv6 client by its prefix), and says whether
    * it was allowed. Refuses the same way as `emailCodeByAddress` when the store fails: this budget
    * stands between a script and a database full of empty accounts.
@@ -326,7 +326,7 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
     limit: SIGN_UP_CODE_MAILS_PER_ADDRESS,
     clock,
   })
-  // The same two budgets for sign-in codes (#391), in a store of their own.
+  // The same two budgets for sign-in codes, in a store of their own.
   const codeStore = store(SIGN_IN_CODE_STORE)
   const codeByClient = createStoreLimiter(codeStore, {
     windowMs: SIGN_IN_CODE_WINDOW_MS,

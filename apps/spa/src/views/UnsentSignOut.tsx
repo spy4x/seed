@@ -30,7 +30,7 @@ export function UnsentSignOut(
       sent={view.sent}
       state={view.state}
       labels={{
-        // Signing out deletes everything the app keeps on this browser, the queue too (#206).
+        // Signing out deletes everything the app keeps on this browser, the queue too.
         kept: "If you sign out now, they're deleted from this browser and never reach the server.",
         // Nothing is being sent while the device is offline; "Sending…" would say otherwise.
         ...(view.state === "offline" ? { sendBusy: "Waiting…" } : {}),

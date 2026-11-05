@@ -92,11 +92,11 @@ export interface SearchPaletteProps {
    */
   slashKey?: boolean
   /**
-   * The person is a guest (#224): "Keep your account" leads the actions, found by the words a
+   * The person is a guest: "Keep your account" leads the actions, found by the words a
    * person would try ("sign up", "register", "save").
    */
   guest?: boolean
-  /** Whether "Open benchmark" is listed: development builds and the public demo only (#440). */
+  /** Whether "Open benchmark" is listed: development builds and the public demo only. */
   benchmark?: boolean
 }
 

@@ -86,7 +86,7 @@ export function demoSavings(t: Translator<string>, catalog: readonly Plan[] = PL
 /**
  * The demo app's plans as an example of the billing Seed ships, kept apart from Seed's own prices.
  * Each plan's button is a form that posts to `/pricing` in the page's language, which opens the
- * demo as a guest account (#224), so it works without JavaScript.
+ * demo as a guest account, so it works without JavaScript.
  */
 export function PricingDemoPlans(): JSX.Element {
   const { t, href, rich } = useSite()

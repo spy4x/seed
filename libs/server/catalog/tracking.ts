@@ -18,7 +18,7 @@ export interface UmamiSetup {
   token: string
 }
 
-/** How tracking links are made (#483, docs/catalog.md). */
+/** How tracking links are made (docs/catalog.md). */
 export interface TrackingSetup {
   /** The website's origin, from `MPA_DOMAIN`: `/s/<code>` and the item pages are on it. */
   siteUrl: string

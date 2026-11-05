@@ -1,5 +1,5 @@
 /**
- * The operator area's billing module (#196) over Postgres: the figures, the customer list, one
+ * The operator area's billing module over Postgres: the figures, the customer list, one
  * customer's stored facts and operator history, and the bookkeeping that makes each action audited
  * once per idempotency key. It reads what the webhooks stored; it never calls the provider.
  *

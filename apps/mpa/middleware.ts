@@ -26,7 +26,7 @@ import { securityHeaderList, withSecurityHeaders } from "@spy4x/server/http/secu
  * With `postImages`, `img-src` also allows any `https:` image: a blog post's cover and the images
  * in its body are `https:` addresses wherever the operator keeps them. Only operators write posts,
  * and an image runs no code. Only the blog's post pages get it ({@link isPostPage}); every other
- * page keeps `img-src 'self' data:` (#416).
+ * page keeps `img-src 'self' data:`.
  */
 function securityHeaderSet(
   config: MpaConfig,

@@ -8,17 +8,17 @@ export const SPA_ROUTES = {
   "/sign-up": { open: true },
   // The question after a provider sign-in that nobody here is known by.
   "/sign-up/confirm": { open: true },
-  // The code mailed to the address a sign-up gave, before the account is created (#142).
+  // The code mailed to the address a sign-up gave, before the account is created.
   "/sign-up/code": { open: true },
   "/sign-in": { open: true },
-  // Asks for a sign-in code, which a signed-in person may open too for fresh proof (#391, #752).
+  // Asks for a sign-in code, which a signed-in person may open too for fresh proof.
   "/sign-in/code": { open: true },
-  // Sign-in mailed a link until #752: both old pages redirect to the code page.
+  // Sign-in once mailed a link: both old pages redirect to the code page.
   "/sign-in/link": { open: true },
   "/sign-in/link/open": { open: true },
-  // Starts a guest account with one POST as it opens (#224); the app's robots.txt keeps it unlisted.
+  // Starts a guest account with one POST as it opens; the app's robots.txt keeps it unlisted.
   "/try": { open: true },
-  // A guest adds a sign-in method to keep the account, or answers the method being taken (#224).
+  // A guest adds a sign-in method to keep the account, or answers the method being taken.
   "/keep": { open: false },
   "/keep/taken": { open: false },
   "/totp": { open: true },
@@ -55,7 +55,7 @@ export const SPA_ROUTES = {
   // The create-only API token page. Not `/api-tokens/new`: the proxy sends every address that
   // starts with `/api` to the API, so a reload there would never reach the SPA.
   "/tokens/new": { open: false },
-  // The benchmark (#440): only in a development build and on the public demo (`benchmarkOpen`).
+  // The benchmark: only in a development build and on the public demo (`benchmarkOpen`).
   "/benchmark": { open: false },
   // The profile: the list of its sections, and one section (`/profile/security`).
   "/profile/:section?": { open: false },

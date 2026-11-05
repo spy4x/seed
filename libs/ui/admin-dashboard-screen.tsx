@@ -67,7 +67,7 @@ export interface AdminDashboardScreenProps {
 }
 
 /**
- * The admin app's first page (#424): stat cards with the change against the period before, and
+ * The admin app's first page: stat cards with the change against the period before, and
  * two 30-day charts, sign-ups and active people per day. Counts only: nobody's name or content.
  */
 export function AdminDashboardScreen(
@@ -220,7 +220,7 @@ function DailyChart(
 }
 
 /**
- * Guest accounts (#224) over the dashboard's days: how many were made with one click, how many of
+ * Guest accounts over the dashboard's days: how many were made with one click, how many of
  * them got a sign-in method, and how many the clean-up deleted.
  */
 function GuestKpis({ guests, days }: { guests: GuestStats; days: number }): JSX.Element {

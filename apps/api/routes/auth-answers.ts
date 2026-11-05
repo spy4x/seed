@@ -14,7 +14,7 @@ import { errorResponse } from "../services/error-response.ts"
 import type { AuthRouteDependencies } from "./auth.ts"
 import type { User } from "@domain/identity"
 
-/** The answer to a wrong code, while the request still takes guesses (#752). */
+/** The answer to a wrong code, while the request still takes guesses. */
 export const MAILED_CODE_WRONG = "That code isn't right. Check the latest email and try again."
 
 /**

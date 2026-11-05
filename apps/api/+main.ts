@@ -1,5 +1,5 @@
 /**
- * Starts the API on Deno, Node or Bun (#748): `serve` of `@spy4x/platform/server/serve` answers
+ * Starts the API on Deno, Node or Bun: `serve` of `@spy4x/platform/server/serve` answers
  * every request with the Hono app of `index.ts` and hands it the connection's address, as
  * `deno serve` did, so the rate limits read the peer from the connection.
  *

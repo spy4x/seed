@@ -1,5 +1,5 @@
 /**
- * The people actions of #425 on the admin screens, driven in a browser DOM (happy-dom): the "You"
+ * The people actions on the admin screens, driven in a browser DOM (happy-dom): the "You"
  * row, a person without a name shown once, the CSV export link, the role picker, the reset link
  * and ending one session from the Sessions tab.
  */

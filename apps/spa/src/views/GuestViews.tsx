@@ -38,7 +38,7 @@ import { rememberSentCode } from "../state/sign-in-code.ts"
 const GUEST_HOME = "/notes"
 
 /**
- * `/try` (#224): starts a guest account with a `POST` as the page opens, then replaces itself
+ * `/try`: starts a guest account with a `POST` as the page opens, then replaces itself
  * with the app, so Back never lands here again. A browser that already has a guest goes straight
  * in; one with a full account is told so and nothing is made.
  */
@@ -79,7 +79,7 @@ function keptMethod(method: string | undefined): KeepMethod | null {
 }
 
 /**
- * `/keep` (#224): a guest adds the first sign-in method, and the account stays the same with
+ * `/keep`: a guest adds the first sign-in method, and the account stays the same with
  * everything in it. A provider leaves the app and comes back with `?oauth=kept`; the e-mail path
  * goes through the sign-up code page and comes back with `?kept=email`. Done returns to the page
  * the person came from.
@@ -192,7 +192,7 @@ export function withKept(next: string | null): string {
 }
 
 /**
- * `/keep/taken` (#224): the method belonged to another account. Reads the waiting choice and
+ * `/keep/taken`: the method belonged to another account. Reads the waiting choice and
  * answers it: a switch reloads onto that account's first page with a status line, "Keep the guest
  * account" goes back to `/keep`.
  */

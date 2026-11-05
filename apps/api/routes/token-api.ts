@@ -55,7 +55,7 @@ const TOKEN_ERRORS: Record<ApiTokenErrorCode, { status: ContentfulStatusCode; me
 }
 
 /**
- * The API for personal tokens (#167), mounted at `/api/v1`: the only routes that accept one, and
+ * The API for personal tokens, mounted at `/api/v1`: the only routes that accept one, and
  * the only thing they accept. A session cookie is ignored here, and a token is ignored everywhere
  * else, so a token can never reach an account action (password, address, deletion, sessions,
  * tokens). Send it as `Authorization: Bearer tpl_…`.

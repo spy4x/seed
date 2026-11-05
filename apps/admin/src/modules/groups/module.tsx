@@ -118,7 +118,7 @@ function GroupView(
     goFiles({ query: page.query, page: Math.ceil(page.total / page.pageSize) }, true)
   }, [page])
   const overview = overviewState(context)
-  // The overview counts the group's days, in the group's zone (#701), as its members see them.
+  // The overview counts the group's days, in the group's zone, as its members see them.
   const viewerTimeZone = useFormat().timeZone
   const shownGroup = current ? group.detail?.group : undefined
   const timeZone = shownGroup ? groupTimeZone(shownGroup, viewerTimeZone) : viewerTimeZone
@@ -191,7 +191,7 @@ function GroupView(
   )
 }
 
-/** Every group, and one group's page with its members, invitations, files and activity (#426). */
+/** Every group, and one group's page with its members, invitations, files and activity. */
 export const groupsModule: AdminModule = {
   id: `groups`,
   nav: { name: `AdminNav.groups`, href: ADMIN_GROUP_PATHS.list, Icon: IconFolder },

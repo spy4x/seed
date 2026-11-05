@@ -16,7 +16,7 @@ import {
 } from "../../../../mpa/post-figures.tsx"
 
 /**
- * The editor's figures (#620): the public website's own islands (`apps/mpa/islands/post/`), so the
+ * The editor's figures: the public website's own islands (`apps/mpa/islands/post/`), so the
  * Preview tab draws each figure live, as a reader sees it. The state loads this module on demand,
  * which keeps the islands and their words out of the admin app's first download.
  *

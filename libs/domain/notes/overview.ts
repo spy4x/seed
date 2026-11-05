@@ -16,7 +16,7 @@ import { NoteError } from "./+lib.ts"
 import { fieldErrors } from "@spy4x/validation"
 
 /**
- * The notes' widgets on the group overview (#219). Every member of the group sees them, as every
+ * The notes' widgets on the group overview. Every member of the group sees them, as every
  * member reads the notes. Counts only: who wrote what stays out, so the page never ranks people.
  *
  * Edits leave no trace a count could use (an update writes no audit row), so the second number is

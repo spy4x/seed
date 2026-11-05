@@ -1,5 +1,5 @@
 /**
- * Personal API tokens (#167) over the `api_tokens` table. The table holds a keyed hash of each
+ * Personal API tokens over the `api_tokens` table. The table holds a keyed hash of each
  * token, never the token: {@link hashApiToken} turns what a client presents into the value to look
  * up, so a database dump gives nobody a working token.
  *
@@ -10,7 +10,7 @@
  *
  * A revoked token keeps its row, marked `revoked_at`, until the worker's purge: it never works
  * again, is not listed and is not counted, but a later request with it can still be tied to its
- * owner and audited (#293).
+ * owner and audited.
  *
  * Every `auth_audits` row about a token names it in `identifier` as
  * `<id> group=<group id> access=<read|write>[ reason=<reason>] name=<name>`, written from the
@@ -69,7 +69,7 @@ export type ApiTokenRevokeReason =
   | "membership-ended"
   /** The group was deleted. */
   | "group-deleted"
-  /** An operator revoked it in the operator area (#427); names the operator, as `operator:7`. */
+  /** An operator revoked it in the operator area; names the operator, as `operator:7`. */
   | `operator:${number}`
 
 /** Why a request with a token was refused, as its audit row says it. */
@@ -162,7 +162,7 @@ export interface ApiTokenRows {
     request?: ApiTokenAuditRequest,
   ): Promise<number>
   /**
-   * The token whose hash is `hash`, when its owner's account is live and not blocked (#146); a
+   * The token whose hash is `hash`, when its owner's account is live and not blocked; a
    * blocked owner's token answers as no token does, and works again once they are unblocked.
    * `refused` says why it may not act now, when it was revoked or has expired. `null` for a hash
    * no token has. Membership of the group is not checked here: the handlers check the owner's role

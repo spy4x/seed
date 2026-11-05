@@ -211,7 +211,7 @@ const TABLE_CLASS = [
   `max-sm:[&_:is(th,td):nth-child(n+2)]:hidden`,
 ].join(` `)
 
-/** "Photo of Zip jacket", the item name a link to its page: what an image job processes (#514). */
+/** "Photo of Zip jacket", the item name a link to its page: what an image job processes. */
 function PhotoOf(
   { photo, t, navigate }: { photo: AdminJobPhoto; t: Translator<string>; navigate?: Navigate },
 ): JSX.Element {
@@ -330,7 +330,7 @@ export interface AdminJobsScreenProps {
 }
 
 /**
- * The Jobs page (#394): every run of a background job, filtered by state and searched by name, and
+ * The Jobs page: every run of a background job, filtered by state and searched by name, and
  * the repeating jobs with their schedules. A run's name opens its page. Names, states, attempts,
  * error classes and times only: a job keeps no data and no error message.
  */
@@ -737,7 +737,7 @@ function Time({ at }: { at: string | null }): JSX.Element {
 }
 
 /**
- * One run of a job (#394): its state and the action that fits it as the page's primary action
+ * One run of a job: its state and the action that fits it as the page's primary action
  * (Run again for a failed run, Run now for a waiting one), its facts, what it is about and when it
  * happened. Cancel and Copy id sit in More actions. A run that sends mail, and every cancel, asks
  * first.

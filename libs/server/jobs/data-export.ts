@@ -1,5 +1,5 @@
 /**
- * The worker's side of a person's data export (#229, docs/data-export.md): building the ZIP,
+ * The worker's side of a person's data export (docs/data-export.md): building the ZIP,
  * storing it, telling the person, and deleting the file when its days are over.
  *
  * @module

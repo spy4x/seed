@@ -32,7 +32,7 @@ export interface GroupFilesRouteDependencies {
 }
 
 /**
- * A group's export file and the import of one (#230), under `/api/groups`. HTTP only, never the
+ * A group's export file and the import of one, under `/api/groups`. HTTP only, never the
  * socket: a file is a download or an upload.
  *
  * - `GET /:groupId/export` streams the owner's file as an attachment.

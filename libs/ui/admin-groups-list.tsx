@@ -125,7 +125,7 @@ export interface AdminGroupsListScreenProps {
 }
 
 /**
- * The groups page (#426): every group, in a table the server sorts and pages, with a search by
+ * The groups page: every group, in a table the server sorts and pages, with a search by
  * the group's name or its owner and chips for active groups and groups in the trash. Each name
  * opens the group. Counts only: nothing written inside a group shows here.
  */

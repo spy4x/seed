@@ -20,7 +20,7 @@ import { queueIndexNow } from "./blog-indexnow-job.ts"
 import type { BlogPostRow } from "./postgres-blog-repository.ts"
 
 /**
- * Seed's own blog posts (#621): Markdown files with YAML front matter in `seed-posts/`, loaded into
+ * Seed's own blog posts: Markdown files with YAML front matter in `seed-posts/`, loaded into
  * the blog's database only in demo mode, so a product built on Seed, which runs without it, never
  * gets them. The folder's README shows the format.
  *
@@ -42,7 +42,7 @@ export const SEED_COVERS_DIR = join(SEED_POSTS_DIR, `covers`)
 /** A post file's `cover`: a WebP file in `covers/`, named as a slug. */
 const COVER_PATTERN = /^covers\/([a-z0-9]+(?:-[a-z0-9]+)*\.webp)$/
 
-/** How many "In short" points a Seed post has: two to four (#733). */
+/** How many "In short" points a Seed post has: two to four. */
 export const SEED_TLDR_MIN = 2
 export const SEED_TLDR_MAX = 4
 
@@ -104,7 +104,7 @@ const frontMatterSchema = type({
  * matter, a field the blog's own checks refuse, a name other than `<slug>.md`, an empty body, a
  * `cover` that is no WebP file in `covers/`, or fewer than {@link SEED_TLDR_MIN} or more than
  * {@link SEED_TLDR_MAX} "In short" points. A cover, its description and an intro are required
- * of Seed's own posts, unlike the admin app's (#733); a translation names no cover, it shares its
+ * of Seed's own posts, unlike the admin app's; a translation names no cover, it shares its
  * original's.
  */
 export function parseSeedPost(file: string, text: string): SeedPost {

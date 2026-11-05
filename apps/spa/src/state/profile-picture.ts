@@ -74,7 +74,7 @@ function refusalOf(error: unknown, file: File): KeyedMessage {
 }
 
 /**
- * The Account section's profile picture (#228). A chosen image shows in the row at once, is signed,
+ * The Account section's profile picture. A chosen image shows in the row at once, is signed,
  * PUT straight to the store and confirmed; the answer is the person, which the session takes. A
  * refusal brings the previous picture back. A signed upload that is not confirmed is cancelled on
  * the server, so it stops counting as waiting.

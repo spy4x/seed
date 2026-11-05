@@ -1,4 +1,4 @@
-# The website on Node (#623), for a product that sets APP_RUNTIME=node: the Node counterpart of
+# The website on Node, for a product that sets APP_RUNTIME=node: the Node counterpart of
 # apps/mpa/dockerfile.prod (infra/compose/compose.runtime-node.yml, docs/apps.md).
 #
 # Deno builds the site with Vite (`deno task mpa:build`, into apps/mpa/dist) and bundles the

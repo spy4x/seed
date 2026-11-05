@@ -1,5 +1,5 @@
 /**
- * The newsletter page of the operator area (#428), driven in a browser DOM (happy-dom): what the
+ * The newsletter page of the operator area, driven in a browser DOM (happy-dom): what the
  * search and the chips send, what each row offers, what the dialog confirms, where focus goes, and
  * the empty, loading and error states.
  */

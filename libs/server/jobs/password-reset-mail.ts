@@ -29,7 +29,7 @@ export async function enqueuePasswordResetCodeMail(sql: postgres.Sql, id: string
 }
 
 /**
- * Queues an operator's reset mail for `email`, already normalised (#425): a request no browser
+ * Queues an operator's reset mail for `email`, already normalised: a request no browser
  * waits on, whose mail tells the person to ask for a code. The request row is written before its
  * job. Given a transaction, as the operator area's reset does, both writes commit or roll back
  * together.

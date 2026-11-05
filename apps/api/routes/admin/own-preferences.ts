@@ -11,7 +11,7 @@ export interface AdminOwnPreferencesRouteDependencies {
 }
 
 /**
- * `GET /me/preferences` answers the signed-in operator's own display preferences (#163), so the
+ * `GET /me/preferences` answers the signed-in operator's own display preferences, so the
  * admin app writes every date in the operator's region format, zone and clock. Read-only: the
  * operator changes them in the product's app. Mounted behind the gate in `+routes.ts`, beside the
  * modules; it is no module, so it has no page in the admin app's sidebar.

@@ -53,7 +53,7 @@ export interface ForgotPasswordScreenProps {
 }
 
 /**
- * Asks for the address a reset code goes to (#752). The app takes the submit over with `onSubmit`;
+ * Asks for the address a reset code goes to. The app takes the submit over with `onSubmit`;
  * the form names no route of its own. The answer is the same whether or not an account uses the
  * address, so the code step that follows never says which.
  */
@@ -132,7 +132,7 @@ export interface ResetPasswordScreenProps {
 }
 
 /**
- * Sets a new password once the reset code was right (#752). The form shows the new password only;
+ * Sets a new password once the reset code was right. The form shows the new password only;
  * the app sends it with the token the code gave, which never appears in the page's address.
  */
 export function ResetPasswordScreen(

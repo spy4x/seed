@@ -9,7 +9,7 @@ const UMAMI = Deno.env.get("MPA_UMAMI_ORIGIN")!
 
 /**
  * Checks the headers of `response`. No answer allows an inline script: a page's islands wake from
- * a script file. Only a blog post's page (`postPage`) allows `https:` images (#416).
+ * a script file. Only a blog post's page (`postPage`) allows `https:` images.
  */
 function expectSecurityHeaders(response: APIResponse, postPage = false) {
   const headers = response.headers()

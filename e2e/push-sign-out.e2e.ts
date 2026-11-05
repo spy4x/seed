@@ -5,7 +5,7 @@ import { cleanup, password, signUp } from "./fixtures/tags.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 /**
- * Sign-out ends this browser's push subscription (#409), so the account's notifications stop
+ * Sign-out ends this browser's push subscription, so the account's notifications stop
  * reaching a shared computer. Chromium under test has no push service to subscribe with, so the
  * page's `PushManager` is replaced by one that keeps a single subscription in memory; everything
  * else is the real app: the service worker, the profile's "Add this device", the API that stores

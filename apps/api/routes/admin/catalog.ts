@@ -70,7 +70,7 @@ export type CatalogPhotoSize = `thumbnail` | `full`
 
 export interface AdminCatalogService {
   settings: CatalogSettings
-  /** Whether items get tracking links: the website's address is set (#483). */
+  /** Whether items get tracking links: the website's address is set. */
   tracking: boolean
   read(): Promise<Omit<AdminCatalogResponse, `settings` | `tracking`>>
   getItem(id: string): Promise<CatalogItem | null>
@@ -227,7 +227,7 @@ function photoTypeOf(c: Context<APIContext>): string {
 const TOO_LARGE = `A photo can be up to ${CATALOG_PHOTO_MAX_BYTES / 1024 / 1024} MB.`
 
 /**
- * The catalog routes of the operator area (#466), mounted at `/api/admin` behind the gate in
+ * The catalog routes of the operator area, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them, and every `POST` passed the
  * same-origin guard. Every change writes an audit row on the operator.
  *
@@ -240,16 +240,16 @@ const TOO_LARGE = `A photo can be up to ${CATALOG_PHOTO_MAX_BYTES / 1024 / 1024}
  *   type as `Content-Type` (JPEG, PNG, WebP or HEIC, up to {@link CATALOG_PHOTO_MAX_BYTES}). The
  *   bytes pass through the API: the admin host's policy lets it reach no other origin, so it
  *   cannot upload to the file store itself. They are checked against the type, stored, and
- *   processed by the worker (#464). The same photo id again answers the first photo. 201.
+ *   processed by the worker. The same photo id again answers the first photo. 201.
  * - `POST /catalog/items/:id/photos/order` takes `{ ids }`; `.../photos/:photoId` saves
  *   `{ alt, colourId }`; `.../photos/:photoId/delete` removes it.
  * - `GET /catalog/photos/:photoId/thumbnail` answers the photo's narrowest width, for the admin's
- *   lists, and `.../full` its widest, for the lightbox (#514): this host's `img-src 'self'` cannot
+ *   lists, and `.../full` its widest, for the lightbox: this host's `img-src 'self'` cannot
  *   load the file store. While the wider widths are made, `full` is the narrowest and not cached.
  * - `POST /catalog/categories` adds one (201); `/categories/order` takes `{ ids }`;
  *   `/categories/:id` saves `{ version, slug, name }`; `/categories/:id/delete` takes `{ version }`.
  * - `POST /catalog/sources` adds a tracking link source (201); `/sources/order`, `/sources/:id` and
- *   `/sources/:id/delete` work as the categories' do (#483).
+ *   `/sources/:id/delete` work as the categories' do.
  * - `POST /catalog/items/:id/links` takes `{ sourceId }` and answers the item's link for that
  *   source, made the first time. 409 `TRACKING_OFF` while the website's address is unset.
  *
@@ -461,7 +461,7 @@ export function createAdminCatalogRoutes(
 export interface AdminCatalogSetup {
   settings: CatalogSettings
   files: Pick<ServerFiles, `put` | `delete` | `read`>
-  /** How tracking links are made, or `null` while the website's address is unset (#483). */
+  /** How tracking links are made, or `null` while the website's address is unset. */
   tracking?: TrackingSetup | null
   /** Umami, while it is set up; `null` makes links that go straight to the item. */
   umami?: UmamiLinks | null
@@ -564,7 +564,7 @@ export function createAdminCatalog(
 }
 
 /**
- * The catalog module (#466): the shop's categories and items, as the website shows them. Its
+ * The catalog module: the shop's categories and items, as the website shows them. Its
  * routes exist only with `CATALOG=true`; off, the admin app shows no Catalog entry.
  */
 export const catalogAdminModule: AdminApiModule = {

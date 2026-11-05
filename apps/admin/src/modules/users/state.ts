@@ -97,7 +97,7 @@ export function createUsersState(request: AdminFetch, toasts: ToastStore) {
     dialog,
     dataExports,
 
-    /** Reads the person's data exports (#229), dropping an answer for a person the page has left. */
+    /** Reads the person's data exports, dropping an answer for a person the page has left. */
     async loadDataExports(userId: number): Promise<void> {
       if (dataExports.value.userId !== userId) {
         dataExports.value = { userId, exports: null, error: null }

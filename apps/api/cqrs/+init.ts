@@ -203,7 +203,7 @@ import { pushOnOwnershipTransferredHandler } from "@api/cqrs/event-handlers/push
 
 // Audit rows have no listener: sign-up, sign-in, sign-out and the profile change write their
 // `auth_audits` row in the transaction of the change itself, so the change and its row are kept
-// or undone together (#191).
+// or undone together.
 //
 // Every listener is best-effort: a failure is logged and counted (`services/eventBus.ts`) and
 // nothing retries it, because the in-process bus holds no copy of the event.

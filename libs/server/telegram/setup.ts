@@ -1,5 +1,5 @@
 /**
- * The Telegram bot's settings (#269, docs/telegram.md), read from the environment once at start.
+ * The Telegram bot's settings (docs/telegram.md), read from the environment once at start.
  * The API runs the bot; the worker only sends notifications through it. Without
  * `TELEGRAM_BOT_TOKEN` the bot is off: no route answers for it, no job sends, nothing calls
  * Telegram.

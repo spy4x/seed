@@ -1,5 +1,5 @@
 /**
- * The product's own Telegram commands (#269, docs/telegram.md): the one file a product edits to
+ * The product's own Telegram commands (docs/telegram.md): the one file a product edits to
  * extend the bot. Each handler runs as the linked person, with their `actor` on every message it
  * dispatches, so the buses check what it may read and do as they do for the app.
  *

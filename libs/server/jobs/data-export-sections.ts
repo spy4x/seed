@@ -1,5 +1,5 @@
 /**
- * What a person's data export holds (#229, docs/data-export.md): one section per kind of row, each
+ * What a person's data export holds (docs/data-export.md): one section per kind of row, each
  * a list of rows in the JSON file and a CSV file of its own. A new table that holds a person's
  * data adds its section here (docs/aggregate-lifecycle.md, "Put it in the person's data export").
  *
@@ -123,7 +123,7 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
       ORDER BY id`,
   },
   {
-    // The linked Telegram account (#269, docs/telegram.md): Seed keeps its user id only, no
+    // The linked Telegram account (docs/telegram.md): Seed keeps its user id only, no
     // Telegram name and no messages.
     name: `telegram`,
     columns: [`telegramUserId`, `linkedAt`],

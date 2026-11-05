@@ -1,5 +1,5 @@
 /**
- * The interface language of an app (#216), shared by the SPA and the admin app: which language to
+ * The interface language of an app, shared by the SPA and the admin app: which language to
  * show, the choice this device keeps, and the translator built from the catalogs of the language
  * shown. Each app lists its own catalogs: its English ones, bundled, and one loader per language,
  * a fixed `import()` each, so the build makes one chunk per language and loads only the one shown.

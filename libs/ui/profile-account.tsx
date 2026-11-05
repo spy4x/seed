@@ -69,21 +69,21 @@ export interface AccountSectionProps {
   /** What an account with no password confirms an address change with. */
   providerProof?: ProviderProof | null
   /**
-   * A guest's account type row (#224), drawn first. With it the e-mail row is left out: a guest
+   * A guest's account type row, drawn first. With it the e-mail row is left out: a guest
    * adds an address on `/keep`, which that row leads to.
    */
   guestRow?: ComponentChildren
-  /** The "Your data" row (#229). Without it the section has none. */
+  /** The "Your data" row. Without it the section has none. */
   dataExport?: DataExportRowProps
-  /** The "Profile picture" row (#228), above the name. Without it the section has none. */
+  /** The "Profile picture" row, above the name. Without it the section has none. */
   picture?: PictureRowProps
 }
 
 /**
- * The profile's Account section: the profile picture (#228), the name, edited in a dialog, the e-mail address, changed in
+ * The profile's Account section: the profile picture, the name, edited in a dialog, the e-mail address, changed in
  * one dialog that asks for the new address and the password, then for the code mailed there. While
  * an address waits for its code the row offers "Enter code" too, which opens the same dialog at the
- * code. Last, "Your data": a copy of everything the app keeps about the person (#229).
+ * code. Last, "Your data": a copy of everything the app keeps about the person.
  */
 export function AccountSection(
   {
@@ -282,7 +282,7 @@ function EmailValue(
     return (
       <span data-e2e="email-current">
         {provider === null ? t.t(`ProfileAccount.noneUsername`) : provider === ""
-          // A passkey carries no address (#222).
+          // A passkey carries no address.
           ? t.t(`ProfileAccount.none`)
           : t.t(`ProfileAccount.noneProvider`, { provider })}
       </span>

@@ -18,7 +18,7 @@ export interface NotFoundScreenProps {
 }
 
 /**
- * What an address no page answers shows (#368), in the SPA and the admin app: the page's heading,
+ * What an address no page answers shows, in the SPA and the admin app: the page's heading,
  * one sentence and one link back. The apps draw it from their router's last, pathless route. A
  * signed-out visitor gets it in the card of the sign-in pages, with a link to sign in.
  */

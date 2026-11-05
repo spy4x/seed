@@ -86,7 +86,7 @@ export function createPasswordRoutes(
         if (await signIn.hasPassword(authData.user.id)) {
           return errorResponse(c, `bad_request`, { message: PASSWORD_ALREADY_SET })
         }
-        // No address: `setPassword` would refuse it after the code was spent (#463).
+        // No address: `setPassword` would refuse it after the code was spent.
         if (!hasPasswordAddress(await signIn.emailStatus(authData))) {
           return errorResponse(c, `bad_request`, { message: PASSWORD_NEEDS_ADDRESS })
         }
@@ -104,7 +104,7 @@ export function createPasswordRoutes(
       }
       const outcome = await signIn.setPassword(c, authData, newPassword)
       if (outcome === PasswordSetOutcome.Set) {
-        // The other devices were signed out (#406): their sockets close now.
+        // The other devices were signed out: their sockets close now.
         emitSignOut(c, authData.user.id)
         return c.json({ success: true })
       }

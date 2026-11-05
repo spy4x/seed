@@ -5,7 +5,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The SPA and the admin draw the same frame, the library's `AppShell` (#516): at 1440 px the same
+ * The SPA and the admin draw the same frame, the library's `AppShell`: at 1440 px the same
  * 72 px rail of 48 px cells with the page centred in the rest of the window, and at 390 px the same
  * tab bar in place of the rail. Measured in a real browser, because happy-dom lays nothing out.
  */

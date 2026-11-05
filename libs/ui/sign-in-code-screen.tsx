@@ -16,7 +16,7 @@ import { useAppText } from "./i18n.ts"
 import { type Navigate, SCREEN_PATHS, ScreenForm, withNext } from "./progressive.tsx"
 
 /**
- * The messages of the sign-in code page (#391, #752) that the API does not word itself, by their
+ * The messages of the sign-in code page that the API does not word itself, by their
  * keys in `app`.
  */
 export const SIGN_IN_CODE_MESSAGES = {
@@ -209,7 +209,7 @@ export interface SignInCodeScreenProps {
   /** Signed in, outside a proof the profile asked for: the page says so and asks for nothing. */
   signedIn?: boolean
   /**
-   * The profile asked for proof (#752): the code goes to the account's own address, shown as text
+   * The profile asked for proof: the code goes to the account's own address, shown as text
    * and never as a field, and the right code returns to `next` with fresh proof. `null` while the
    * address is being read.
    */
@@ -217,7 +217,7 @@ export interface SignInCodeScreenProps {
 }
 
 /**
- * `/sign-in/code` (#391, #752): asks for the address a sign-in code goes to, then for the code,
+ * `/sign-in/code`: asks for the address a sign-in code goes to, then for the code,
  * which works only in this browser. The answer is the same whether or not an account uses the
  * address, so the screen never says which; the code creates the account if none does.
  */

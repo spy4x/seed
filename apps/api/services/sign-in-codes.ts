@@ -23,13 +23,13 @@ import { signUpCookieSchema } from "./sign-up.ts"
 import type { AppAuthState, SignedIn, SignInOptions } from "./sign-in.ts"
 import type { SignInParts } from "./sign-in-parts.ts"
 
-/** What {@link SignInCodeOperations.completeSignInCode} did with a code (#391, #752). */
+/** What {@link SignInCodeOperations.completeSignInCode} did with a code. */
 export enum SignInCodeOutcome {
   /** The code's address belongs to an account: it is signed in, its second factor still owed. */
   SignedIn = 1,
   /** No account used the address: a new one is made with it proven, and signed in. */
   Created = 2,
-  /** A guest's code to a new address: the address became the guest's, now kept (#224). */
+  /** A guest's code to a new address: the address became the guest's, now kept. */
   GuestKept = 3,
   /**
    * A guest's code to an address another account owns: nothing changed, and the switch page asks
@@ -65,16 +65,16 @@ export type SignInCodeRedemption =
     outcome: SignInCodeOutcome.Refused | SignInCodeOutcome.Unconfirmed | SignInCodeOutcome.WrongCode
   }
 
-/** The cookie that ties a browser to the sign-in code it waits for (#752). */
+/** The cookie that ties a browser to the sign-in code it waits for. */
 export const SIGN_IN_CODE_COOKIE = "sign_in_code"
 
 /** The sign-in code operations the routes call. */
 export interface SignInCodeOperations {
   /**
-   * Asks for a sign-in code to `email`, already normalised (#391, #752): writes the request and
+   * Asks for a sign-in code to `email`, already normalised: writes the request and
    * its mail job, and names the request in this browser's cookie. The same work for every address;
    * the code decides what happens once entered. A guest who asks is recorded, so that guest keeps
-   * their account through the code. `language` is the asking page's, for the mail (#277).
+   * their account through the code. `language` is the asking page's, for the mail.
    */
   requestSignInCode(
     c: Context,
@@ -136,7 +136,7 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
   }
 
   /**
-   * The key a sign-in code signs user `userId` in through (#391), added the first time. It holds
+   * The key a sign-in code signs user `userId` in through, added the first time. It holds
    * no secret and no address: the code proved the mailbox, and the account's own keys hold its
    * address. Its sessions show as e-mail sessions, and a code sign-up's key carries the new
    * address itself (see {@link signInByCode}).
@@ -154,7 +154,7 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
   }
 
   /**
-   * What a right code does (#391, #752), for the request's normalised address `email`:
+   * What a right code does, for the request's normalised address `email`:
    *
    * - **An owner of the proven address** is signed in, as a password would sign them in: a blocked
    *   account is refused, one waiting to be deleted is restored (or owes its code first), and an
@@ -162,7 +162,7 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
    * - **A password key that claims the address without having proven it** is left alone: the code
    *   proves the mailbox, not that account, whose password may be someone else's.
    * - **Nobody** has the address: a new account is made with a code key that carries it, proven;
-   *   a guest keeps theirs with that key instead (#224).
+   *   a guest keeps theirs with that key instead.
    *
    * When someone proves the address between the read and the write, the write fails and this runs
    * once more, then finds that owner.
@@ -353,7 +353,7 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
 }
 
 /**
- * A signed cookie that names one waiting request of a mailed code (#752), sent only to the
+ * A signed cookie that names one waiting request of a mailed code, sent only to the
  * routes under `path`, so only the browser that asked can enter the code. A cookie this API did
  * not sign, or one changed since, names nothing.
  */

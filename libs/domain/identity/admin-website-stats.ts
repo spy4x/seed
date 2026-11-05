@@ -1,5 +1,5 @@
 /**
- * The admin Stats screen's shapes (#485): the website's visits, where they come from, which items
+ * The admin Stats screen's shapes: the website's visits, where they come from, which items
  * people look at and order, and how they order, read from Umami. Totals only: no visitor, session,
  * place or address ever reaches the operator area.
  *

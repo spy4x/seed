@@ -1,5 +1,5 @@
 /**
- * The routes of password reset by a mailed code (#752). Not
+ * The routes of password reset by a mailed code. Not
  * `@api/services/password-reset.ts`, which holds the flow these routes call.
  *
  * @module
@@ -42,7 +42,7 @@ export function createPasswordResetRoutes(
   }: AuthRouteDependencies,
 ): Hono<APIContext> {
   return new Hono<APIContext>()
-    // Password reset by code (#752). The same work and answer for every well-formed address; the
+    // Password reset by code. The same work and answer for every well-formed address; the
     // worker mails the code only when an account signs in with a password and that address.
     .post(`/password/forgot`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
       const body = await readApiJson(c)

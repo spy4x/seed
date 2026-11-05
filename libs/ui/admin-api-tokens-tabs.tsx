@@ -85,7 +85,7 @@ interface ActionPanelProps {
 }
 
 /**
- * The person's "API tokens" tab (#427): their tokens, newest first, with the same columns as the
+ * The person's "API tokens" tab: their tokens, newest first, with the same columns as the
  * API tokens page but without the owner. A live one can be revoked after a confirm.
  */
 export function AdminPersonTokensPanel(
@@ -134,7 +134,7 @@ export function AdminPersonTokensPanel(
 }
 
 /**
- * The person's "Devices" tab (#427): the browsers and phones that get their push notifications,
+ * The person's "Devices" tab: the browsers and phones that get their push notifications,
  * named as the person's own profile names them. One can be removed after a confirm.
  */
 export function AdminPersonDevicesPanel(
@@ -204,7 +204,7 @@ export function AdminPersonDevicesPanel(
 }
 
 /**
- * The person's "Notifications" tab (#427): what the product told them, newest first, by kind, and
+ * The person's "Notifications" tab: what the product told them, newest first, by kind, and
  * whether they read it. Never what a notification said, which names their groups.
  */
 export function AdminPersonNotificationsPanel(
