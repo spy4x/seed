@@ -21,13 +21,10 @@ import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
 import { createGuestRoute } from "../../apps/api/routes/auth-guest.ts"
 import { createOAuthRoute } from "../../apps/api/routes/auth-oauth.ts"
-import {
-  createAuthRoute,
-  MAILED_CODE_DEAD,
-  MAILED_CODE_WRONG,
-  PASSWORD_RESET_REFUSED,
-  SIGN_IN_CODE_UNCONFIRMED,
-} from "../../apps/api/routes/auth.ts"
+import { MAILED_CODE_DEAD, MAILED_CODE_WRONG } from "../../apps/api/routes/auth-answers.ts"
+import { PASSWORD_RESET_REFUSED } from "../../apps/api/routes/auth-password-reset.ts"
+import { SIGN_IN_CODE_UNCONFIRMED } from "../../apps/api/routes/auth-sign-in-codes.ts"
+import { createAuthRoute } from "../../apps/api/routes/auth.ts"
 import { createMutationGuards } from "../../apps/api/middlewares/mutation-guards.ts"
 import type { AuthRateLimits } from "../../apps/api/middlewares/auth-rate-limits.ts"
 import type { APIContext } from "../../apps/api/_types.ts"

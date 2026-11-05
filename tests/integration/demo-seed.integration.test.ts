@@ -14,11 +14,8 @@ import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { createListCrypto, DEV_SUBSCRIBERS_SECRET } from "@server/subscribers/subscribers.ts"
 import { createPostgresSubscriberStore } from "@spy4x/server/subscribers/postgres"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
-import {
-  type AppAuthState,
-  createSignIn,
-  EmailChangeOutcome,
-} from "../../apps/api/services/sign-in.ts"
+import { type AppAuthState, createSignIn } from "../../apps/api/services/sign-in.ts"
+import { EmailChangeOutcome } from "../../apps/api/services/email-change.ts"
 import {
   FAKE_COUNTS,
   FAKE_PASSKEYS,

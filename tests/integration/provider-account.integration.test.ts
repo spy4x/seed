@@ -19,14 +19,14 @@ import { createTotpFailures } from "../../apps/api/services/totp-failures.ts"
 import { createEmailCodeFailures } from "../../apps/api/services/email-code-failures.ts"
 import { createPasswordFailures } from "../../apps/api/services/password-failures.ts"
 import { createOAuthRoute, METHOD_IS_LAST } from "../../apps/api/routes/auth-oauth.ts"
+import { PROVIDER_PROOF_REQUIRED } from "../../apps/api/routes/auth-answers.ts"
+import { EMAIL_ALREADY_CARRIED } from "../../apps/api/routes/auth-email-change.ts"
 import {
-  createAuthRoute,
-  EMAIL_ALREADY_CARRIED,
   PASSWORD_ALREADY_SET,
   PASSWORD_NEEDS_ADDRESS,
   PASSWORD_SET_CODE_REQUIRED,
-  PROVIDER_PROOF_REQUIRED,
-} from "../../apps/api/routes/auth.ts"
+} from "../../apps/api/routes/auth-password.ts"
+import { createAuthRoute } from "../../apps/api/routes/auth.ts"
 import { createMutationGuards } from "../../apps/api/middlewares/mutation-guards.ts"
 import { createAuthRateLimits } from "../../apps/api/middlewares/auth-rate-limits.ts"
 import type { APIContext } from "../../apps/api/_types.ts"
