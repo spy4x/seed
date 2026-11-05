@@ -65,6 +65,7 @@ What each cover shows, in one sentence; a post's `coverAlt` takes it.
 | `per-seat-billing-stripe-webhooks-retries`         | A row of violet theatre seats, each holding a potted plant, with a new seedling lowered on a string into one more seat.              |
 | `realtime-websocket-with-http-fallback`            | Two rocky islands joined by a bright bridge, with a small ferry waiting on the water below as a second way across.                   |
 | `saas-pegasus-alternatives`                        | A balance scale holding a locked treasure chest with a blank price tag on one side and two open seed packets on the other.           |
+| `self-hosted-saas-backup-and-restore`              | A violet plant on a server on one island, and on another a sealed jar with a cutting of it beside a pot it is replanted into.        |
 | `shipfast-alternatives`                            | Seven sailboats of different shapes lined up on calm water, one of them violet.                                                      |
 | `start-a-product-from-seed-and-keep-its-updates`   | A large violet plant and a young cutting of it in a separate pot, joined by a thin line carrying drops from one to the other.        |
 | `supastarter-alternatives`                         | A long violet rowing boat with many oars and empty seats, tied to a pier where a grey yacht with a blank price tag is moored.        |
