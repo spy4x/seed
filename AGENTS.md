@@ -12,11 +12,10 @@ deno task check                       # lint, fmt, types and every unit test
 deno task fix                         # lint and fmt fixes
 deno task dev                         # the development stack in compose
 deno task e2e:local e2e/notes.e2e.ts  # one browser spec, on a stack of its own
-deno test --no-prompt --allow-env=WS_NO_BUFFER_UTIL,WS_NO_UTF_8_VALIDATE libs/ui/notes.test.tsx
+deno task test libs/ui/notes.test.tsx # one test file, with its group's grants
 ```
 
-The last runs one test file; a test that reads files also needs the grant the `test` task in
-`deno.jsonc` gives it. [docs/development.md](docs/development.md) lists every task.
+[docs/development.md](docs/development.md) lists every task.
 
 ## Three layers of UI
 
