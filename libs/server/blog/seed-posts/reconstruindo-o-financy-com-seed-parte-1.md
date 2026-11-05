@@ -41,7 +41,7 @@ estado e a sincronização teriam de mudar de qualquer jeito para virar o produt
 A outra metade da resposta é o que faltava ao Financy. Um controle financeiro para a casa precisa de
 login com autenticação em dois fatores, grupos com papéis, atualizações ao vivo em todo aparelho, um
 app que funcione offline, um painel de administração e um site público. Isso é o encanamento de
-qualquer SaaS, não finanças, e eu tinha acabado de passar outubro construindo tudo isso no Seed
+qualquer SaaS, não finanças, e eu tinha acabado de passar outubro construindo quase tudo isso no Seed
 ([o que chegou em outubro](/blog/whats-new-in-seed-october-2026), em inglês). Escrever de novo dentro
 do Financy seria exatamente o erro que o Seed existe para evitar.
 
@@ -108,8 +108,8 @@ depois": "depois" é como um fork se afasta.
 Três itens da lista acima são exatamente isso. O Financy precisa de cobrança anual, o mês de uma
 casa precisa de um só fuso horário para todos os membros, e o changelog não pode começar com anos de
 commits do app antigo. Nada disso é sobre dinheiro, então cada item foi construído no Seed e chegou
-ao Financy pela sincronização. Entre 3 e 5 de novembro, 31 issues novas no Seed citaram o Financy, e
-8 delas já estão fechadas.
+ao Financy pela sincronização. Em 3 e 4 de novembro, 31 issues novas no Seed citaram o Financy, e
+até 5 de novembro 8 delas já estavam fechadas.
 
 A reconstrução também achou buracos na minha própria receita. A lista do que um produto remove do
 site do Seed esquecia vários arquivos, e o passo 1 registrava o commit mais novo do Seed, que pode

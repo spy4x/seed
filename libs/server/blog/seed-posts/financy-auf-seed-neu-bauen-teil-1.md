@@ -43,7 +43,7 @@ zu werden, das ich will.
 Die andere Hälfte der Antwort ist das, was Financy fehlte. Ein Finanztracker für einen Haushalt
 braucht eine Anmeldung mit Zwei-Faktor-Authentifizierung, Gruppen mit Rollen, Live-Updates auf jedem
 Gerät, eine App, die offline funktioniert, ein Admin-Panel und eine öffentliche Website. Das ist die
-Infrastruktur jedes SaaS, keine Finanzlogik, und genau die hatte ich den ganzen Oktober in Seed
+Infrastruktur jedes SaaS, keine Finanzlogik, und das meiste davon hatte ich im Oktober in Seed
 gebaut ([was im Oktober dazukam](/blog/whats-new-in-seed-october-2026), auf Englisch). Sie in
 Financy ein zweites Mal zu schreiben, wäre genau der Fehler, vor dem Seed bewahren soll.
 
@@ -110,8 +110,8 @@ Buchungen, Budgets, Kurse), bleibt in Financy. Keine lokalen Notlösungen „zum
 Drei Punkte aus der Liste oben sind genau das. Financy braucht jährliche Abrechnung, der Monat eines
 Haushalts braucht eine Zeitzone für alle Mitglieder, und sein Changelog darf nicht mit Jahren an
 Commits der alten App beginnen. Nichts davon hat mit Geld zu tun, also wurde jedes in Seed gebaut
-und kam per Abgleich in Financy an. Zwischen dem 3. und dem 5. November entstanden in Seed 31 neue
-Issues, die Financy nennen, und 8 davon sind schon geschlossen.
+und kam per Abgleich in Financy an. Am 3. und 4. November entstanden in Seed 31 neue
+Issues, die Financy nennen, und bis zum 5. November waren 8 davon geschlossen.
 
 Der Neubau hat auch Lücken in meinem eigenen Rezept gefunden. Die Liste dessen, was ein Produkt von
 der Website von Seed entfernt, ließ mehrere Dateien aus, und Schritt 1 hielt den neuesten Commit von

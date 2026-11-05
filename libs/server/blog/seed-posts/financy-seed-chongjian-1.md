@@ -36,7 +36,7 @@ devto: false
 
 答案的另一半，是 Financy 缺的东西。一个家庭记账应用需要带双因素认证的登录、带角色的群组、在所有设备上
 实时更新、能离线使用的应用、管理后台和公开网站。这些是任何 SaaS 的基础设施，不是记账本身，而我刚好用整个
-10 月把它们都做进了 Seed（[10 月新增内容](/blog/whats-new-in-seed-october-2026)，英文）。在 Financy 里再写
+10 月把其中大部分做进了 Seed（[10 月新增内容](/blog/whats-new-in-seed-october-2026)，英文）。在 Financy 里再写
 一遍，恰恰是 Seed 想帮人避免的错误。
 
 所以旧版 Financy 冻结在 [`legacy`](https://github.com/spy4x/financy/tree/legacy) 分支里。它是 Financy
@@ -91,7 +91,7 @@ Financy 删掉了它，并写进 `.seed/skip`，这样以后的同步不会再�
 
 上面列表里有三项正是这样。Financy 需要按年计费，一个家庭的“一个月”需要所有成员共用一个时区，它的更新日志
 也不能从旧应用好几年的提交开始。这些都和钱无关，所以都先在 Seed 里实现，再通过同步来到 Financy。11 月 3
-日到 5 日之间，Seed 新开了 31 个提到 Financy 的 issue，其中 8 个已经关闭。
+日和 4 日，Seed 新开了 31 个提到 Financy 的 issue，到 11 月 5 日其中 8 个已经关闭。
 
 重建还发现了我自己步骤里的漏洞。产品要从 Seed 网站上去掉的东西的清单漏了好几个文件；第 1 步记录的是 Seed
 最新的提交，而它可能比副本更新，这样第一次同步就会悄悄跳过中间的提交。两处都已在 Seed 修好

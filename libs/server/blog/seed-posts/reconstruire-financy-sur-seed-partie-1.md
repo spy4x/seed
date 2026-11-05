@@ -43,7 +43,7 @@ L'autre moitié de la réponse, c'est ce qui manquait à Financy. Un outil de fi
 besoin d'une connexion avec double authentification, de groupes avec des rôles, de mises à jour en
 direct sur chaque appareil, d'une app qui marche hors ligne, d'un panneau d'administration et d'un
 site public. C'est la plomberie de n'importe quel SaaS, pas de la finance, et je venais de passer
-octobre à la construire dans Seed ([ce qui est arrivé en octobre](/blog/whats-new-in-seed-october-2026),
+octobre à en construire l'essentiel dans Seed ([ce qui est arrivé en octobre](/blog/whats-new-in-seed-october-2026),
 en anglais). La réécrire dans Financy serait précisément l'erreur que Seed existe pour éviter.
 
 L'ancien Financy est donc figé dans sa branche
@@ -111,8 +111,8 @@ Trois éléments de la liste ci-dessus sont exactement ça. Financy a besoin d'u
 annuelle, le mois d'un foyer a besoin d'un seul fuseau horaire pour tous ses membres, et son
 changelog ne doit pas commencer par des années de commits de l'ancienne app. Rien de tout ça ne
 concerne l'argent, donc chacun a été construit dans Seed et est arrivé dans Financy par la
-synchronisation. Entre le 3 et le 5 novembre, 31 nouvelles issues de Seed ont cité Financy, et 8
-sont déjà fermées.
+synchronisation. Les 3 et 4 novembre, 31 nouvelles issues de Seed ont cité Financy, et au 5 novembre 8
+étaient déjà fermées.
 
 La reconstruction a aussi trouvé des trous dans ma propre recette. La liste de ce qu'un produit
 retire du site de Seed oubliait plusieurs fichiers, et l'étape 1 enregistrait le commit le plus

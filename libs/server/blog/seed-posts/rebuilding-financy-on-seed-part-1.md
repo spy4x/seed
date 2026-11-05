@@ -40,7 +40,7 @@ sync would all have to change to become the product I want.
 The other half of the answer is what Financy was missing. A finance tracker for a household needs
 sign-in with two-factor authentication, groups with roles, live updates on every device, an app that
 works offline, an admin panel and a public website. That is a SaaS's plumbing, not finance, and I
-had just spent October building all of it into Seed ([what landed in October](/blog/whats-new-in-seed-october-2026)).
+had just spent October building most of it into Seed ([what landed in October](/blog/whats-new-in-seed-october-2026)).
 Writing it a second time inside Financy would be the exact mistake Seed exists to prevent.
 
 So the old Financy is frozen on its [`legacy`](https://github.com/spy4x/financy/tree/legacy) branch.
@@ -103,8 +103,8 @@ There are no local stand-ins "to move later", because later is how a fork drifts
 Three items in the list above are exactly that. Financy needs yearly billing, a household's
 month needs one time zone for every member, and its changelog must not start with years of the old
 app's commits. None of these is about money, so each was built in Seed and reached Financy through
-the sync. Between 3 and 5 November, 31 new Seed issues named Financy, and 8 of them are closed
-already.
+the sync. On 3 and 4 November, 31 new Seed issues named Financy, and by 5 November 8 of them
+were closed.
 
 The rebuild also found holes in my own recipe. Seed's checklist of what a product removes from
 Seed's website missed several files, and step 1 recorded Seed's newest commit, which can be newer

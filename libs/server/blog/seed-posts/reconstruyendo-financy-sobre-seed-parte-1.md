@@ -41,7 +41,7 @@ del estado y su sincronización habrían tenido que cambiar igualmente para ser 
 La otra mitad de la respuesta es lo que le faltaba. Un gestor de finanzas para un hogar necesita
 inicio de sesión con doble factor, grupos con roles, cambios en vivo en todos los dispositivos, una
 app que funcione sin conexión, un panel de administración y una web pública. Eso es la fontanería de
-cualquier SaaS, no finanzas, y acababa de pasar octubre construyéndola en Seed
+cualquier SaaS, no finanzas, y acababa de pasar octubre construyendo casi toda en Seed
 ([lo que llegó en octubre](/blog/whats-new-in-seed-october-2026), en inglés). Escribirla otra vez
 dentro de Financy sería justo el error que Seed existe para evitar.
 
@@ -109,8 +109,8 @@ moverlos luego»: «luego» es como un fork se aleja.
 Tres puntos de la lista de arriba son exactamente eso. Financy necesita cobro anual, el mes de un
 hogar necesita una sola zona horaria para todos sus miembros, y su changelog no debe empezar con
 años de commits de la app vieja. Nada de eso es sobre dinero, así que cada uno se construyó en Seed
-y llegó a Financy con la sincronización. Entre el 3 y el 5 de noviembre se abrieron en Seed 31
-issues nuevas que mencionan Financy, y 8 ya están cerradas.
+y llegó a Financy con la sincronización. El 3 y el 4 de noviembre se abrieron en Seed 31
+issues nuevas que mencionan Financy, y el 5 de noviembre 8 ya estaban cerradas.
 
 La reconstrucción también encontró agujeros en mi propia receta. La lista de lo que un producto
 quita de la web de Seed se saltaba varios archivos, y el paso 1 registraba el commit más reciente
