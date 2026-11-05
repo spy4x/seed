@@ -2,10 +2,10 @@
 
 # Seed
 
-**Seed: the free SaaS starter built on web standards. Runs on Deno.** The groundwork of your SaaS,
-already built: sign-in with a second factor, groups with roles, per-member Stripe billing, realtime,
-an offline app and an admin area, on Postgres and Docker Compose. MIT-licensed, usable today, built
-in public.
+**Seed: the free SaaS starter built on web standards. Runs on Deno, Node and Bun.** The groundwork
+of your SaaS, already built: sign-in with a second factor, groups with roles, per-member Stripe
+billing, realtime, an offline app and an admin area, on Postgres and Docker Compose. MIT-licensed,
+usable today, built in public.
 
 [![CI](https://ci.antonshubin.com/api/badges/15/status.svg)](https://ci.antonshubin.com/repos/15)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -75,9 +75,9 @@ with a blog and a newsletter. All of it is tested in CI, and most of it runs in 
   writes its event to `outbox_events`, and the worker drains that table.
 - **Safe API defaults.** Every mutation must come from the web app's own origin, and group lists
   page with HMAC-signed cursors.
-- **Built on web standards.** Hono handlers take a Fetch `Request` and return a `Response`;
-  password hashes and cursor signatures use Web Crypto; live updates travel over a standard
-  WebSocket; everything is an ES module. The servers run on Deno 2 in Docker on any Linux host you
+- **Built on web standards.** Hono handlers take a Fetch `Request` and return a `Response`; password
+  hashes and cursor signatures use Web Crypto; live updates travel over a standard WebSocket;
+  everything is an ES module. The servers run on Deno, Node or Bun in Docker on any Linux host you
   control, and the clients run in any modern browser.
 - **Operations included.** Docker Compose for development and single-node production: Traefik,
   Postgres, Valkey, VictoriaMetrics, VictoriaLogs and Grafana.
@@ -89,7 +89,8 @@ server you run.
 ## Runtimes
 
 Seed runs on Deno, Node and Bun. The API, the worker, the migration and the website start
-unchanged on each, and CI starts them on all three for every pull request. One line in the env
+unchanged on each, and CI starts the API, the worker and the website on all three for every pull
+request. One line in the env
 file picks the runtime of a product's servers ([docs/apps.md](docs/apps.md#runtime)):
 
 ```sh
