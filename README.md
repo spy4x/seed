@@ -2,10 +2,10 @@
 
 # Seed
 
-**Seed: the free SaaS starter built on web standards. Runs on Deno.** The groundwork of your SaaS,
-already built: sign-in with a second factor, groups with roles, per-member Stripe billing, realtime,
-an offline app and an admin area, on Postgres and Docker Compose. MIT-licensed, usable today, built
-in public.
+**Seed: the free SaaS starter built on web standards. Runs on Deno, Node and Bun.** The groundwork
+of your SaaS, already built: sign-in with a second factor, groups with roles, per-member Stripe
+billing, realtime, an offline app and an admin area, on Postgres and Docker Compose. MIT-licensed,
+usable today, built in public.
 
 [![CI](https://ci.antonshubin.com/api/badges/15/status.svg)](https://ci.antonshubin.com/repos/15)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -75,9 +75,9 @@ with a blog and a newsletter. All of it is tested in CI, and most of it runs in 
   writes its event to `outbox_events`, and the worker drains that table.
 - **Safe API defaults.** Every mutation must come from the web app's own origin, and group lists
   page with HMAC-signed cursors.
-- **Built on web standards.** Hono handlers take a Fetch `Request` and return a `Response`;
-  password hashes and cursor signatures use Web Crypto; live updates travel over a standard
-  WebSocket; everything is an ES module. The servers run on Deno 2 in Docker on any Linux host you
+- **Built on web standards.** Hono handlers take a Fetch `Request` and return a `Response`; password
+  hashes and cursor signatures use Web Crypto; live updates travel over a standard WebSocket;
+  everything is an ES module. The servers run on Deno, Node or Bun in Docker on any Linux host you
   control, and the clients run in any modern browser.
 - **Operations included.** Docker Compose for development and single-node production: Traefik,
   Postgres, Valkey, VictoriaMetrics, VictoriaLogs and Grafana.
@@ -86,24 +86,52 @@ with a blog and a newsletter. All of it is tested in CI, and most of it runs in 
 settled before the first feature. **Skip it if** you deploy to serverless functions rather than a
 server you run.
 
-## Runtime plan
+## Runtimes
 
-Seed runs on Deno today: the servers run on Deno 2 in Docker, and the tasks and tests use Deno.
-Seed is moving to run unchanged on Deno, Node and Bun
-([#623](https://github.com/spy4x/seed/issues/623)). There is no date yet.
+Seed runs on Deno, Node and Bun. The API, the worker, the migration and the website start
+unchanged on each, and CI starts the API, the worker and the website on all three for every pull
+request. One line in the env
+file picks the runtime of a product's servers ([docs/apps.md](docs/apps.md#runtime)):
 
-Most of the code is already independent of the runtime, because it is built on web standards: Fetch
-`Request` and `Response`, Web Crypto, WebSocket and ES modules. On 9 October 2026 the Deno team
-[announced](https://deno.com/blog/cloudflare) one more year of support for the runtime, with monthly
-bug-fix and security releases, after which it ends its own development; Deno stays open source.
-Running on all three runtimes keeps that choice with you. Seed never used Deno Deploy, so Deploy's
-shutdown does not affect a Seed product.
+```sh
+APP_RUNTIME=node   # or bun; deno, empty or no line keeps Deno
+```
+
+The code is built on web standards: Fetch `Request` and `Response`, Web Crypto, WebSocket and ES
+modules. Seed's own tasks and tests run on Deno 2, which npm or Bun installs for you below. On 9
+October 2026 the Deno team [announced](https://deno.com/blog/cloudflare) one more year of support
+for the runtime, with monthly bug-fix and security releases, after which it ends its own
+development; Deno stays open source. Running on all three runtimes keeps that choice with you. Seed
+never used Deno Deploy, so Deploy's shutdown does not affect a Seed product.
 
 ## Quick start
 
-Requires [Deno](https://deno.com) 2 and Docker. The services run in Docker; the tasks that set
-them up run on Deno. The [GitHub CLI](https://cli.github.com) is optional: GitHub's "Use this
-template" button and a clone do the same as the first line.
+Requires Docker and one of Node, Bun or Deno. The services run in Docker; the tasks that set them
+up run on Deno, which the first command installs on Node and Bun. The
+[GitHub CLI](https://cli.github.com) is optional: GitHub's "Use this template" button and a clone
+do the same as the `gh` line.
+
+### Node
+
+```sh
+npm install -g deno
+gh repo create my-product --template spy4x/seed --private --clone
+cd my-product
+npm run init
+npm run dev
+```
+
+### Bun
+
+```sh
+bun add -g deno
+gh repo create my-product --template spy4x/seed --private --clone
+cd my-product
+bun run init
+bun run dev
+```
+
+### Deno
 
 ```sh
 gh repo create my-product --template spy4x/seed --private --clone
@@ -111,6 +139,12 @@ cd my-product
 deno task init
 deno task dev
 ```
+
+The root `package.json` hands the common tasks (`init`, `dev`, `test`, `compose` and the others it
+lists) to Deno, so the docs' `deno task <name>` also runs as `npm run <name>` or
+`bun run <name>`. To run the product's servers on Node or Bun as well, set `APP_RUNTIME=node` or
+`APP_RUNTIME=bun` in `infra/envs/.env` before `dev`; to switch later, rebuild the images as
+[docs/apps.md](docs/apps.md#runtime) says.
 
 `init` checks that Docker runs, copies `infra/envs/.env.example` to `infra/envs/.env`, generates
 every secret and the web push keys, records the Seed commit your copy came from, and asks for the
