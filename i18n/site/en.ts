@@ -1232,7 +1232,7 @@ export default {
     "A content security policy stops most injected scripts from running, even when a bug lets one in.",
   "LaunchChecklistItem.securityTwoFactorPasskeys": "Offer two-factor sign-in and passkeys.",
   "LaunchChecklistItem.securityTwoFactorPasskeysWhy":
-    "A reused password is the most common way into an account, and a second factor closes it.",
+    "A reused password is the most common way into an account, and two-factor authentication (2FA) closes it.",
   "LaunchChecklistItem.securityRateLimits": "Rate-limit sign-in and any route that can be abused.",
   "LaunchChecklistItem.securityRateLimitsWhy":
     "Without limits, a script can guess passwords or send your mail quota away overnight.",
