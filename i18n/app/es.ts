@@ -641,6 +641,32 @@ export default {
   "GroupBillingPanel.periodHint": "Stripe te muestra lo que pagas hoy antes de que confirmes.",
   "GroupBillingPanel.switchYearly": "Cambiar a anual",
   "GroupBillingPanel.switchMonthly": "Cambiar a mensual",
+  "GroupBillingPanel.startHeading": "Empieza con <plan>{plan}</plan>",
+  "GroupBillingPanel.unitMonth": "al mes",
+  "GroupBillingPanel.unitYear": "al año",
+  "GroupBillingPanel.unitMemberMonth": "por miembro al mes",
+  "GroupBillingPanel.unitMemberYear": "por miembro al año",
+  "GroupBillingPanel.wholeGroup": {
+    "one": "Para todo el grupo, hasta {count} miembro.",
+    "many": "Para todo el grupo, hasta {count} miembros.",
+    "other": "Para todo el grupo, hasta {count} miembros.",
+  },
+  "GroupBillingPanel.wholeGroupNoCap": "Para todo el grupo.",
+  "GroupBillingPanel.continueToPayment": "Continuar al pago",
+  "GroupBillingPanel.priceFlat": "{plan} cuesta {price} al mes para todo el grupo.",
+  "GroupBillingPanel.priceFlatYear": "{plan} cuesta {price} al año para todo el grupo.",
+  "GroupBillingPanel.finePrintFlat":
+    "Se cobra cada mes. Cancela cuando quieras y conserva {plan} hasta que termine el periodo.",
+  "GroupBillingPanel.finePrintFlatYear":
+    "Se cobra cada año. Cancela cuando quieras y conserva {plan} hasta que termine el periodo.",
+  "GroupBillingPanel.refund": {
+    "one": "¿Cambiaste de opinión? Pide el reembolso completo en un plazo de {count} día.",
+    "many": "¿Cambiaste de opinión? Pide el reembolso completo en un plazo de {count} días.",
+    "other": "¿Cambiaste de opinión? Pide el reembolso completo en un plazo de {count} días.",
+  },
+  "GroupBillingPanel.joinInstead":
+    "¿Quieres unirte al grupo de otra persona? Pídele a su propietario un enlace de invitación en lugar de pagar.",
+  "HomeView.opening": "Abriendo la app…",
   "GroupBillingView.trialStarted": {
     "one": "Empezó tu prueba de {plan} de {count} día",
     "many": "Empezó tu prueba de {plan} de {count} días",
@@ -760,6 +786,8 @@ export default {
   "OverviewScreen.emptyGroupText":
     "El resumen se irá llenando a medida que las personas del grupo añadan notas.",
   "OverviewScreen.newNote": "Nueva nota",
+  "OverviewScreen.choosePlanText": "Elige un plan para empezar a añadir contenido.",
+  "OverviewScreen.choosePlan": "Elegir un plan",
   "OverviewScreen.allHidden": "Todos los widgets están ocultos",
   "OverviewScreen.allHiddenText": "Elige los que quieras ver.",
   "OverviewScreen.gridLabel": "Resumen de {group}",
@@ -814,6 +842,9 @@ export default {
     "Con el plan de este grupo puedes bajar el rol de un miembro o quitarlo, pero no ascenderlo.",
   "PlanRefusalNotice.openBilling": "Abrir la pestaña Facturación",
   "PlanRefusalNotice.askOwner": "Pídele al propietario del grupo que mejore el plan.",
+  "PlanRefusalNotice.noPlanTitle": "{group} no tiene un plan de pago",
+  "PlanRefusalNotice.noPlanTitleUnnamed": "Este grupo no tiene un plan de pago",
+  "PlanRefusalNotice.noPlanText": "Elige un plan para empezar a añadir contenido.",
   "GuestProfile.accountType": "Tipo de cuenta",
   "GuestProfile.guestAccount": "Cuenta de invitado. Solo este navegador puede abrirla.",
   "GuestProfile.methods": "Métodos de inicio de sesión",

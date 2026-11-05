@@ -23,6 +23,7 @@ import {
   findPlan,
   FREE_PLAN_ID,
   type GroupBilling,
+  needsFirstPlan,
   PAID_PLANS,
   periodsOf,
   type PersonTrial,
@@ -132,6 +133,11 @@ export interface GroupBillingPanelProps {
    * sell, such as one with a yearly price.
    */
   plan?: Plan
+  /**
+   * The plan catalog that decides whether the free plan allows nothing, which turns a new owner's
+   * free state into the start state: `PLANS` unless a test passes its own.
+   */
+  plans?: readonly Plan[]
   /** The billing period a free group's owner has chosen for checkout; monthly when unset. */
   period?: BillingPeriod
   /** The owner picked another period: the view keeps it, in the address too. */
@@ -220,6 +226,8 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
   const yearly = chosen === BillingPeriod.Yearly
   const state = billingState(billing)
   const owner = billing.canManage
+  /** A new owner under a free plan that allows nothing: the card asks them to start the plan. */
+  const start = state === BillingState.FREE && needsFirstPlan(billing, props.plans)
   const t = useAppText()
   const format = useFormat()
   const name = planName(t, billing.planId)
@@ -275,34 +283,64 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
     const withTrial = paid.trialDays > 0 && !trialUsed && !billing.hasCustomer
     const price = priceOf(paid, chosen) ?? paid.amount
     const saving = yearlySavingOf(paid)
-    const prices = (
-      <p aria-live={sellsYearly ? "polite" : undefined} data-e2e="billing-price">
-        {t.t(yearly ? `GroupBillingPanel.priceYear` : `GroupBillingPanel.price`, {
-          plan: pro,
-          price: money(price),
-        })}
-        {memberCount !== null && (
-          <>
-            {" "}
-            {group(
-              yearly ? `GroupBillingPanel.priceForGroupYear` : `GroupBillingPanel.priceForGroup`,
-              {
-                count: memberCount,
-                total: money(price * memberCount),
-              },
-            )}
-          </>
-        )}
-        {yearly && saving > 0 && (
-          <>
-            {" "}
-            <span data-e2e="billing-saving">
-              {t.t(`GroupBillingPanel.saving`, { amount: money(saving) })}
-            </span>
-          </>
-        )}
-      </p>
+    const savingText = yearly && saving > 0 && (
+      <>
+        {" "}
+        <span data-e2e="billing-saving">
+          {t.t(`GroupBillingPanel.saving`, { amount: money(saving) })}
+        </span>
+      </>
     )
+    // A flat plan costs the same however many join, so its sentences never say "per member".
+    const cap = paid.entitlements.limits.maxMembers
+    const whole = cap === null
+      ? t.t(`GroupBillingPanel.wholeGroupNoCap`)
+      : t.t(`GroupBillingPanel.wholeGroup`, { count: cap })
+    const forGroup = memberCount !== null && group(
+      yearly ? `GroupBillingPanel.priceForGroupYear` : `GroupBillingPanel.priceForGroup`,
+      { count: memberCount, total: money(price * memberCount) },
+    )
+    const unit = paid.perSeat
+      ? (yearly ? `GroupBillingPanel.unitMemberYear` : `GroupBillingPanel.unitMemberMonth`)
+      : (yearly ? `GroupBillingPanel.unitYear` : `GroupBillingPanel.unitMonth`)
+    const prices = start
+      ? (
+        // The start state's first question is "how much": the price is the largest thing on it.
+        <div aria-live={sellsYearly ? "polite" : undefined} data-e2e="billing-price">
+          <p class="flex flex-wrap items-baseline gap-x-2">
+            <span
+              class="text-2xl font-semibold tabular-nums text-foreground"
+              data-e2e="billing-amount"
+            >
+              {money(price)}
+            </span>
+            <span>{t.t(unit)}</span>
+          </p>
+          <p>
+            {paid.perSeat ? forGroup : whole}
+            {savingText}
+          </p>
+        </div>
+      )
+      : (
+        <p aria-live={sellsYearly ? "polite" : undefined} data-e2e="billing-price">
+          {paid.perSeat
+            ? (
+              <>
+                {t.t(yearly ? `GroupBillingPanel.priceYear` : `GroupBillingPanel.price`, {
+                  plan: pro,
+                  price: money(price),
+                })}
+                {forGroup && <>{" "}{forGroup}</>}
+              </>
+            )
+            : t.t(yearly ? `GroupBillingPanel.priceFlatYear` : `GroupBillingPanel.priceFlat`, {
+              plan: pro,
+              price: money(price),
+            })}
+          {savingText}
+        </p>
+      )
     body = sellsYearly
       ? (
         <div class="flex flex-col gap-3">
@@ -334,7 +372,10 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
       >
         {withTrial
           ? t.t(`GroupBillingPanel.startTrial`, { count: paid.trialDays })
+          : start
+          ? t.t(`GroupBillingPanel.continueToPayment`)
           : t.t(`GroupBillingPanel.upgrade`, { plan: pro })} {opensStripe}
+        {start && <IconArrowUpRight class="size-4" aria-hidden="true" />}
       </Button>
     )
     fine = !billing.subscribed && !confirming && (
@@ -344,9 +385,20 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
             {t.t(`GroupBillingPanel.trialUsed`)}
           </span>
         )}
-        {t.t(yearly ? `GroupBillingPanel.finePrintYear` : `GroupBillingPanel.finePrint`, {
-          plan: pro,
-        })}
+        {t.t(
+          paid.perSeat
+            ? (yearly ? `GroupBillingPanel.finePrintYear` : `GroupBillingPanel.finePrint`)
+            : (yearly ? `GroupBillingPanel.finePrintFlatYear` : `GroupBillingPanel.finePrintFlat`),
+          { plan: pro },
+        )}
+        {paid.refundDays !== undefined && paid.refundDays > 0 && (
+          <>
+            {" "}
+            <span data-e2e="billing-refund">
+              {t.t(`GroupBillingPanel.refund`, { count: paid.refundDays })}
+            </span>
+          </>
+        )}
       </>
     )
   } else if (state === BillingState.TRIAL) {
@@ -407,12 +459,14 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
     )
   }
 
-  return (
+  const card = (
     <Card>
-      <div class="flex flex-col gap-3 px-4 py-4 sm:px-6">
+      <div class="flex flex-col gap-3 px-4 py-4 sm:px-6" data-start={start || undefined}>
         <h3 class="text-base font-medium text-foreground">
           <Rich
-            parts={t.parts(`GroupBillingPanel.planHeading`, { plan: name })}
+            parts={start
+              ? t.parts(`GroupBillingPanel.startHeading`, { plan: pro })
+              : t.parts(`GroupBillingPanel.planHeading`, { plan: name })}
             tags={{ plan: (text) => <span data-e2e="billing-plan-name">{text}</span> }}
           />{" "}
           {status && (
@@ -429,6 +483,16 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
         {fine && <p class="text-sm text-muted sm:text-end" data-e2e="billing-fine-print">{fine}</p>}
       </div>
     </Card>
+  )
+  if (!start) return card
+  // The likeliest wrong turn in a household: a partner who signed up instead of opening the link.
+  return (
+    <>
+      {card}
+      <p class="text-sm text-muted" data-e2e="billing-join-instead">
+        {t.t(`GroupBillingPanel.joinInstead`)}
+      </p>
+    </>
   )
 }
 

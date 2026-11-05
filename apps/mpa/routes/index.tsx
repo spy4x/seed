@@ -467,7 +467,13 @@ function QuickStart(): JSX.Element {
             eyebrow={t.t(`HomeHero.quickStart`)}
             title={t.t(`HomeQuickStart.title`)}
           />
-          <p class="text-muted">{t.t(`HomeQuickStart.needs`)}</p>
+          <p class="text-muted text-pretty">
+            {rich(`HomeQuickStart.needs`, {
+              readme: (text) => (
+                <a href={`${REPOSITORY_URL}#quick-start`} class="text-primary underline">{text}</a>
+              ),
+            })}
+          </p>
           <p class="text-muted text-pretty">
             {rich(`HomeQuickStart.text`, {
               init: command,

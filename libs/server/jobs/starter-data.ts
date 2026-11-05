@@ -1,5 +1,5 @@
 import type postgres from "postgres"
-import { effectivePlanId, entitlementsOf, PlanError } from "@domain/billing"
+import { effectivePlanId, entitlementsOf, type Plan, PlanError } from "@domain/billing"
 import { NoteError } from "@domain/notes"
 import { PostgresBillingRepository } from "../billing/postgres-billing-repository.ts"
 import { PostgresNoteRepository } from "../notes/postgres-note-repository.ts"
@@ -43,6 +43,11 @@ export interface StarterDataPlan {
    * groups (docs/demo.md). It must add nothing when it runs again for the same account.
    */
   sampleData?: ((userId: number) => Promise<void>) | null
+  /**
+   * The plan catalog the cap is read from, `PLANS` unless a test passes its own. A free plan that
+   * allows no note gives a new group nothing, so it starts empty.
+   */
+  plans?: readonly Plan[]
 }
 
 /**
@@ -80,6 +85,7 @@ export function starterDataJob(sql: postgres.Sql, plan: StarterDataPlan = {}): J
           ? entitlementsOf(
             effectivePlanId(await billing.get(group.id), new Date(), plan.graceDays ?? 0),
             true,
+            plan.plans,
           ).limits.maxNotes
           : null
         await new PostgresNoteRepository(sql).create(

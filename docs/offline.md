@@ -61,7 +61,7 @@ warning names up to three of them.
    - the `realtime` switch.
 3. Make `advanceGroupCursor` an empty function, and make `connectionDisplay` always answer
    `"idle"`.
-4. Delete `tests/realtime-removal.test.ts` and its clause in the `test` task in `deno.jsonc`.
+4. Delete `tests/realtime-removal.test.ts` and its entry in `infra/scripts/test.ts`.
 5. Delete the e2e specs that test the socket itself: `e2e/groups-socket.e2e.ts` and
    `e2e/realtime-resume.e2e.ts`.
 
@@ -124,7 +124,7 @@ from these steps.
 11. Delete the specs `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts` and `e2e/search-offline.e2e.ts`,
     and their names in `OFFLINE_SPECS` of `infra/scripts/e2e-local-plan.ts`.
 12. In `e2e/tags.e2e.ts`, delete the test named "a tag made and renamed with no network...".
-13. Delete `tests/offline-removal.test.ts` and its clause in the `test` task in `deno.jsonc`.
+13. Delete `tests/offline-removal.test.ts` and its group in `infra/scripts/test.ts`.
 
 The app then reads and writes over the network only. The server's changes read (`group.changes`)
 stays and is not called; the notes store pages the REST list instead.

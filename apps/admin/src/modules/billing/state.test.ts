@@ -92,6 +92,19 @@ it(`reads the customer list with the search, status chip and page in the query`,
   ])
 })
 
+it(`reads the groups that never paid a page at a time, the first page without a query`, async () => {
+  const { request, calls } = fakeRequest()
+  const state = createBillingState(request, createToastStore(), fakeClock())
+  await state.loadNeverPaid(1)
+  await state.loadNeverPaid(3)
+  expect(calls.map((call) => call.path)).toEqual([
+    `/api/admin/billing/never-paid`,
+    `/api/admin/billing/never-paid?page=3`,
+  ])
+  expect(state.neverPaid.value.page).toBe(3)
+  expect(state.neverPaid.value.pending).toBe(false)
+})
+
 it(`sends the key made when the dialog opened with every try, and a new one after reopening`, async () => {
   const { state, calls } = await opened((_path, init) =>
     init?.method === `POST`

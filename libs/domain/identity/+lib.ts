@@ -848,7 +848,7 @@ export const OAUTH_PAGES = {
   confirmSignUp: "/sign-up/confirm",
   /** Asks for the authenticator code a provider sign-in still owes. */
   oneTimeCode: "/totp",
-  /** The app's home, which opens the notes: where sign-in lands without a `next`. */
+  /** The app's home, where sign-in lands without a `next`: the notes, or a new owner's plan. */
   home: "/",
   /** The profile's sign-in methods: where linking a provider reports how it ended. */
   signInMethods: "/profile/security",

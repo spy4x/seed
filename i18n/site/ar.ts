@@ -123,7 +123,7 @@ export default {
   "Architecture.mail": "البريد والإشعارات",
   "Architecture.webAppNote": "Preact، في المتصفح",
   "Architecture.websiteNote": "Preact، على الخادم",
-  "Architecture.apiNote": "Hono على Deno",
+  "Architecture.apiNote": "Deno · Node · Bun",
   "Architecture.postgresNote": "كل تغيير",
   "Architecture.workerNote": "المهام البطيئة",
   "Architecture.mailNote": "والتنظيف",
@@ -137,7 +137,7 @@ export default {
     "كيف تترابط أجزاء Seed: تطبيق الويب والموقع يتصلان بالـAPI، والـAPI يكتب كل تغيير وأحداثه في Postgres، والعامل يرسل البريد والإشعارات انطلاقًا من تلك الأحداث. وكل ذلك يعمل على خادم واحد.",
   "Home.title": "Seed: قالب SaaS المجاني المبني على معايير الويب",
   "Home.description":
-    "قالب SaaS المجاني بترخيص MIT، مبني على معايير الويب: تسجيل دخول مع التحقق بخطوتين، ومجموعات بأدوار، وفوترة Stripe لكل عضو، وتحديث فوري. يعمل على Deno.",
+    "قالب SaaS المجاني بترخيص MIT، مبني على معايير الويب: تسجيل دخول مع التحقق بخطوتين، ومجموعات بأدوار، وفوترة Stripe، وتحديث فوري. يعمل على Deno وNode وBun.",
   "HomeProof.tests": "ملفات اختبار في التطبيقات والمكتبات، وتعمل كلها في CI",
   "HomeProof.licence": "الترخيص: بلا حساب وبلا دفع",
   "HomeStatus.signIn":
@@ -164,7 +164,7 @@ export default {
   "HomeFaq.freeQuestion": "هل Seed مجاني فعلًا؟",
   "HomeFaq.freeAnswer":
     "نعم. ترخيصه MIT: استخدمه في أي عدد من المنتجات، تجارية أو غير تجارية، وانشر نسختك المعدّلة، دون الحاجة إلى حساب. لا تدفع إلا ثمن الخادم الذي تستأجره والخدمات التي تفعّلها، مثل Stripe أو مزوّد البريد الإلكتروني.",
-  "HomeFaq.stackQuestion": "لماذا Deno وPreact بدلًا من Next.js؟",
+  "HomeFaq.stackQuestion": "لماذا Hono وPreact بدلًا من Next.js؟",
   "HomeFaq.stackAnswer":
     "لأنهما مبنيّان على معايير الويب (<code>fetch</code> و<code>Request</code> وWeb Crypto ووحدات ES)، ويبدآن بسرعة، ويحتاجان إلى القليل من التبعيات، فيقلّ ما يحتاج إلى تحديث وما قد يتعطّل. وإذا كنت تعمل في منظومة Next.js، فقالب مبني على Next.js سيناسبك أكثر، و<compare>المقارنة</compare> تذكر قوالب جيدة منها.",
   "HomeFaq.clientQuestion": "هل يمكنني استخدامه في مشاريع العملاء؟",
@@ -173,10 +173,10 @@ export default {
   "HomeFaq.productionQuestion": "هل هو جاهز للإنتاج؟",
   "HomeFaq.productionAnswer":
     "الأجزاء المدرجة تحت «يعمل اليوم» لها اختبارات في CI: كل طلب دمج يشغّل اختبارات تسجيل الدخول والملف الشخصي والملاحظات والمجموعات، وتعمل المجموعة الكاملة بعد كل دمج. Seed صالح للاستخدام اليوم وما زال ينمو، فاقرأ قائمة الحالة قبل أن تعتمد على أي جزء.",
-  "HomeHero.badge": "يعمل على Deno 2",
+  "HomeHero.badge": "يعمل على Deno وNode وBun",
   "HomeHero.title": "أساس منتج SaaS الخاص بك، مبنيّ وجاهز.",
   "HomeHero.lead":
-    "Seed هو قالب SaaS المجاني المبني على معايير الويب، فيه تسجيل الدخول مع التحقق بخطوتين، ومجموعات بأدوار، وفوترة Stripe لكل عضو، وتحديث فوري، وتطبيق يعمل دون اتصال، ولوحة إدارة. ترخيصه MIT، ويعمل اليوم على Deno، وتنشره باستخدام Docker Compose على خادم Linux واحد تستأجره.",
+    "Seed هو قالب SaaS المجاني المبني على معايير الويب، فيه تسجيل الدخول مع التحقق بخطوتين، ومجموعات بأدوار، وفوترة Stripe لكل عضو، وتحديث فوري، وتطبيق يعمل دون اتصال، ولوحة إدارة. ترخيصه MIT، ويعمل على Deno وNode وBun، وتنشره باستخدام Docker Compose على خادم Linux واحد تستأجره.",
   "HomeHero.github": "عرض على GitHub",
   "HomeHero.status": "Seed صالح للاستخدام اليوم، ويُبنى علنًا: <status>اطّلع على ما يعمل</status>.",
   "HomeHero.quickStart": "البدء السريع",
@@ -227,7 +227,8 @@ export default {
   "HomeServer.skip":
     "تجاوز Seed إن كنت تريد الدوال بلا خادم (serverless) أو Vercel: فهو مصمّم لخادم تتحكم فيه.",
   "HomeQuickStart.title": "تشغيل محلي بأربعة أوامر",
-  "HomeQuickStart.needs": "تحتاج إلى Deno 2 وDocker، أما GitHub CLI فاختياري.",
+  "HomeQuickStart.needs":
+    "تحتاج إلى Docker وDeno 2، أما GitHub CLI فاختياري. وإن كنت تعمل على Node أو Bun، فاتّبع <readme>ملف README</readme>: يُثبَّت Deno لك تلقائيًا، وتجد فيه الأوامر نفسها مع npm أو bun.",
   "HomeQuickStart.text":
     "ينسخ <init>init</init> ملف البيئة، ويولّد كل الأسرار ومفاتيح إشعارات الويب، ويشغّل <dev>dev</dev> خادم Traefik وكل ما سواه. ثم افتح <url>http://app.localhost</url>. يشرح ملف <readme>README</readme> كل الإعدادات وطريقة النشر.",
   "HomeQuickStart.agent": "أو اطلب من وكيل الذكاء الاصطناعي: <prompt></prompt>.",
@@ -478,13 +479,11 @@ export default {
   "FeatureYourFeature.fact3": "كل معرّف UUID مرتّب زمنيًا (الإصدار 7)",
   "FeatureYourFeature.code": "اقرأ docs/aggregates.md",
   "FeatureTierRuntime.eyebrow": "بيئة التشغيل",
-  "FeatureTierRuntime.nav": "خطة بيئة التشغيل",
-  "FeatureTierRuntime.title": "يعمل على Deno اليوم",
+  "FeatureTierRuntime.nav": "بيئات التشغيل",
+  "FeatureTierRuntime.title": "يعمل على Deno وNode وBun",
   "FeatureTierRuntime.lead":
-    "يعمل Seed اليوم على Deno، والعمل جارٍ ليعمل دون تعديل على Deno وNode وBun، ولا يوجد موعد بعد. شيفرته مبنية على معايير الويب (fetch وRequest وWeb Crypto وWebSocket ووحدات ES)، لذا لا يعتمد معظمها على بيئة التشغيل. في أكتوبر 2026 <announced>أعلن</announced> فريق Deno عن عام آخر من الدعم مع إصدارات شهرية لإصلاح الأخطاء والثغرات الأمنية، ينهي بعده تطويره الخاص؛ ويبقى Deno مفتوح المصدر.",
-  "FeatureTierRuntime.wip": "قيد العمل",
-  "FeatureTierRuntime.wipRuntimes": "<name>Node</name> و<name>Bun</name>",
-  "FeatureTierRuntime.follow": "تابع الخطة على GitHub (المشكلة <issue>#623</issue>)",
+    "تعمل الواجهة البرمجية (API) والعامل الخلفي والموقع دون أي تعديل على Deno وNode وBun، ويشغّلها CI على البيئات الثلاث مع كل تغيير. سطر واحد في ملف env، هو APP_RUNTIME، يختار بيئة التشغيل. الشيفرة مبنية على معايير الويب (fetch وRequest وWeb Crypto وWebSocket ووحدات ES)، أما مهام Seed واختباراته فتعمل على Deno، ويثبّته لك npm أو Bun. في أكتوبر 2026 <announced>أعلن</announced> فريق Deno عن عام آخر من الدعم مع إصدارات شهرية لإصلاح الأخطاء والثغرات الأمنية، ينهي بعده تطويره الخاص؛ ويبقى Deno مفتوح المصدر.",
+  "FeatureTierRuntime.pick": "كيف تختار بيئة التشغيل",
   "FeatureTierOperations.eyebrow": "التشغيل",
   "FeatureTierOperations.title": "شغّله، وراقبه، وادعم مستخدميه",
   "FeatureTierOperations.lead":
@@ -565,7 +564,7 @@ export default {
     "لا. يعمل Seed كحاويات دائمة التشغيل عبر Docker Compose على خادم Linux واحد تستأجره، لأن الـAPI يُبقي اتصالات WebSocket مفتوحة، والعامل يفرّغ قائمة انتظار.",
   "FeaturesFaq.runtimeQuestion": "هل يعمل Seed على Node.js أو Bun؟",
   "FeaturesFaq.runtimeAnswer":
-    "ليس بالكامل بعد. تعمل الواجهة البرمجية (API) والعامل الخلفي بالفعل على Node وBun إلى جانب Deno: إعداد واحد في ملف env، هو APP_RUNTIME، يختار بيئة التشغيل. أما الموقع وأدوات التطوير فما زالت تحتاج إلى Deno. يمكنك متابعة الباقي في المشكلة #623 على GitHub الخاص بـ Seed.",
+    "نعم. تعمل الواجهة البرمجية (API) والعامل الخلفي والموقع على Deno أو Node أو Bun: إعداد واحد في ملف env، هو APP_RUNTIME، يختار بيئة التشغيل. أما مهام Seed واختباراته فتعمل على Deno، ويثبّته لك npm أو Bun، فلا تحتاج إلى تثبيت Deno بنفسك.",
   "FeaturesFaq.databaseQuestion": "هل يمكن أن يستخدم Seed قاعدة بيانات غير Postgres؟",
   "FeaturesFaq.databaseAnswer":
     "لا. Seed مبني على Postgres: ترحيلاته واستعلاماته واختبارات التكامل فيه تفترض وجوده.",
@@ -916,7 +915,7 @@ export default {
   "FeaturePage.all": "كل الميزات",
   "FeaturePage.runtimeQuestion": "هل يعمل Seed على Node أو Bun؟",
   "FeaturePage.runtimeAnswer":
-    "ليس بالكامل بعد. تعمل الواجهة البرمجية (API) والعامل الخلفي بالفعل على Deno أو Node أو Bun، ويختار بينها إعداد واحد (APP_RUNTIME). أما الموقع وأدوات التطوير فما زالت تحتاج إلى Deno، والعمل جارٍ على ذلك (#623). اطّلع على خطة بيئة التشغيل في صفحة الميزات.",
+    "نعم. تعمل الواجهة البرمجية (API) والعامل الخلفي والموقع على Deno أو Node أو Bun، ويختار بينها إعداد واحد (APP_RUNTIME). أما مهام Seed فتعمل على Deno، ويثبّته لك npm أو Bun. اطّلع على قسم بيئات التشغيل في صفحة الميزات.",
   "FeaturePageMissing.title": "صفحة هذه الميزة غير موجودة",
   "FeaturePageMissing.description": "ربما نُقلت. كل ميزة يقدمها Seed موجودة في صفحة الميزات.",
   "FeaturePageMissing.action": "عرض كل الميزات",

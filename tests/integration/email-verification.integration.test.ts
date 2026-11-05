@@ -6,13 +6,9 @@ import * as OTPAuth from "@hectorm/otpauth"
 import { generateTotpSecret, SecondFactorStatus } from "@spy4x/server/sign-in"
 import { UserMFAStatus } from "@domain/identity"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
-import {
-  createSignIn,
-  EmailChangeOutcome,
-  EmailVerifyOutcome,
-  type SignIn,
-  TOTP_NEEDS_PROVEN_EMAIL,
-} from "../../apps/api/services/sign-in.ts"
+import { createSignIn, type SignIn } from "../../apps/api/services/sign-in.ts"
+import { EmailChangeOutcome, EmailVerifyOutcome } from "../../apps/api/services/email-change.ts"
+import { TOTP_NEEDS_PROVEN_EMAIL } from "../../apps/api/services/totp.ts"
 import type { APIContext } from "../../apps/api/_types.ts"
 import { issuePasswordReset } from "../../libs/server/auth/password-reset.ts"
 import { sendEmailCode } from "../../libs/server/auth/email-verification.ts"
