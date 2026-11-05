@@ -53,7 +53,10 @@ the merge. Every step of the pipeline is in [the CI guide](woodpecker-ci-setup.m
 | Push to `main`          | `e2e-full`   | Every `e2e/*.e2e.ts` (`deno task e2e:local`)             |
 | All three               | `browser`    | The website's `e2e/mpa/*.mpa.ts`                         |
 | All three               | `browser`    | `e2e/spa/*.spa.ts`, on the SPA behind nginx              |
-| All three               | `lighthouse` | The website's Lighthouse budget (`deno task lighthouse`) |
+| All three, see below    | `lighthouse` | The website's Lighthouse budget (`deno task lighthouse`) |
+
+A pull request runs `lighthouse` only when it changes a file the website is built from; a push to
+`main` and a tag always run it. The file list is in [the CI guide](woodpecker-ci-setup.md).
 
 The smoke set is `SMOKE_SPECS` in
 [`infra/scripts/e2e-local-plan.ts`](../infra/scripts/e2e-local-plan.ts):

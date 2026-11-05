@@ -15,11 +15,15 @@ pull request to run the pipeline. This is the one list of CI's steps; other page
 check ──┬── integration      (Postgres and Valkey services) ──┐
         ├── backup-restore   (Postgres service)               │
         ├── alert-rules                                       ├── lighthouse
-        └── browser          (build, e2e-mpa, e2e-spa) ───────┘       │
+        └── browser          (build, e2e-mpa, e2e-spa) ───────┘   (website changes,
+                                                                   push to `main`, tag)
                                                         ┌─────────────┴─┐
                                                    e2e-smoke         e2e-full
                                             (pull request, tag)   (push to `main`)
 ```
+
+A pull request that changes no file of the website skips `lighthouse`; `e2e-smoke` then starts
+right after `browser`'s stage.
 
 Woodpecker runs steps in stages: a step starts only when the whole stage before it has ended, so
 the wall time is the slowest step of each stage, added up. Checks that must run one after another
@@ -44,7 +48,12 @@ performance falls when another step shares the CPU.
   the website's pages, served behind nginx with gzip, must score at least 95 for performance and
   100 for accessibility, best practices and SEO in Lighthouse mobile. The pages are listed in
   `apps/mpa/lighthouse/lighthouserc.json`. It starts when every step before it has ended, and the
-  e2e steps wait for it, so nothing else of the pipeline runs beside it.
+  e2e steps wait for it, so nothing else of the pipeline runs beside it. A push to `main` and a tag
+  always run it. A pull request runs it only when it changes a file the website is built from: the
+  `path` list of the step in `ci.yml` (`apps/mpa`, `libs/ui`, `libs/domain`, the `libs/server`
+  members the website imports, the two API files its stand-in blog API serves, `i18n`, the guides
+  in `docs/*.md`, the manifests, `deno.lock` and `ci.yml` itself). A new import of the website from another folder adds that folder to the list.
+  The e2e steps depend on it as optional, so they still run when it is skipped.
 - `e2e-smoke` runs the product's smoke set on every pull request and tag:
   `deno task e2e:local --smoke --max-failures=3`, the script a developer runs, against the Postgres
   and Valkey services (`E2E_SERVICES=environment`). The set is `SMOKE_SPECS` in
