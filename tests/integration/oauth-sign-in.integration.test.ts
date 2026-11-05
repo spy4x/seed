@@ -24,7 +24,7 @@ import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
 import { enabledOAuthProviders } from "../../apps/api/services/oauth-providers.ts"
 import { createOAuthRoute, METHOD_IS_LAST } from "../../apps/api/routes/auth-oauth.ts"
-import { PROVIDER_PROOF_REQUIRED } from "../../apps/api/routes/auth.ts"
+import { PROVIDER_PROOF_REQUIRED } from "../../apps/api/routes/auth-answers.ts"
 import {
   SIGN_IN_METHOD_MAIL_JOB,
   signInMethodMailJob,

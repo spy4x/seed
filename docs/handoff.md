@@ -18,10 +18,10 @@ does not belong here. Code any project could reuse lives in the JSR packages of
 
 ## Ground rules
 
-- **Deno today; Deno, Node and Bun next.** Seed runs on Deno and is moving to
-  all three (#623). New code uses web standards, with runtime-specific calls
-  behind `@spy4x/platform` adapters; Deno stays the toolchain (`deno task`).
-  See the [runtime policy](runtime-policy.md).
+- **Deno, Node and Bun.** Seed's servers run on all three (#623). New code
+  uses web standards, with runtime-specific calls behind `@spy4x/platform`
+  adapters; Deno stays the toolchain (`deno task`). See the
+  [runtime policy](runtime-policy.md).
 - Enums start at 1, never 0.
 - Money is integers.
 - `BIGINT` crosses JSON as a decimal string (`::text` in SQL), because

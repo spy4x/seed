@@ -132,7 +132,7 @@ export default {
   "Architecture.mail": "E-mail, push",
   "Architecture.webAppNote": "Preact, no navegador",
   "Architecture.websiteNote": "Preact, no servidor",
-  "Architecture.apiNote": "Hono no Deno",
+  "Architecture.apiNote": "Deno · Node · Bun",
   "Architecture.postgresNote": "cada alteração",
   "Architecture.workerNote": "o trabalho pesado",
   "Architecture.mailNote": "e a limpeza",
@@ -146,7 +146,7 @@ export default {
     "Como as peças do Seed se encaixam: o app web e o site chamam a API, a API grava cada alteração e seus eventos no Postgres, e o worker envia e-mails e notificações push a partir desses eventos. Tudo roda num só servidor.",
   "Home.title": "Seed: o starter kit de SaaS gratuito com padrões da web",
   "Home.description":
-    "O starter kit de SaaS gratuito, com licença MIT, feito com padrões da web: login com 2FA, grupos com funções, cobrança por membro no Stripe. Roda no Deno.",
+    "Starter kit de SaaS gratuito, com licença MIT, feito com padrões da web: login com 2FA, grupos com funções, cobrança no Stripe. Roda em Deno, Node e Bun.",
   "HomeProof.tests": "arquivos de teste nos apps e nas bibliotecas, todos rodando no CI",
   "HomeProof.licence": "licença: sem conta, sem paywall",
   "HomeStatus.signIn":
@@ -175,7 +175,7 @@ export default {
   "HomeFaq.freeQuestion": "O Seed é gratuito mesmo?",
   "HomeFaq.freeAnswer":
     "É. A licença é MIT: use em quantos produtos quiser, comerciais ou não, publique seu fork, sem precisar de conta. Você só paga o servidor que alugar e os serviços que ativar, como o Stripe ou um provedor de e-mail.",
-  "HomeFaq.stackQuestion": "Por que Deno e Preact em vez de Next.js?",
+  "HomeFaq.stackQuestion": "Por que Hono e Preact em vez de Next.js?",
   "HomeFaq.stackAnswer":
     "Eles se apoiam em padrões da web (<code>fetch</code>, <code>Request</code>, Web Crypto, módulos ES), iniciam rápido e precisam de poucas dependências, então há menos para atualizar e menos para quebrar. Se você trabalha no ecossistema do Next.js, um starter de Next.js vai servir melhor; <compare>a comparação</compare> indica bons exemplos.",
   "HomeFaq.clientQuestion": "Posso usar em projetos para clientes?",
@@ -184,10 +184,10 @@ export default {
   "HomeFaq.productionQuestion": "Está pronto para produção?",
   "HomeFaq.productionAnswer":
     "As partes listadas em “Já funciona” têm testes no CI: todo pull request roda os testes de login, perfil, notas e grupos, e a suíte completa roda depois de cada merge. O Seed já pode ser usado e continua crescendo; leia a lista de status antes de confiar numa parte.",
-  "HomeHero.badge": "Roda no Deno 2",
+  "HomeHero.badge": "Roda no Deno, Node e Bun",
   "HomeHero.title": "A base do seu SaaS, já pronta.",
   "HomeHero.lead":
-    "O Seed é o starter kit de SaaS gratuito feito com padrões da web: login com verificação em duas etapas (2FA), grupos com funções, cobrança por membro no Stripe, tempo real, um app offline e um painel de administração. Tem licença MIT, roda no Deno hoje e você faz o deploy com Docker Compose num único servidor Linux alugado.",
+    "O Seed é o starter kit de SaaS gratuito feito com padrões da web: login com verificação em duas etapas (2FA), grupos com funções, cobrança por membro no Stripe, tempo real, um app offline e um painel de administração. Tem licença MIT, roda no Deno, no Node e no Bun, e você faz o deploy com Docker Compose num único servidor Linux alugado.",
   "HomeHero.github": "Ver no GitHub",
   "HomeHero.status":
     "O Seed já pode ser usado e é construído à vista de todos: <status>veja o que funciona</status>.",
@@ -239,7 +239,8 @@ export default {
   "HomeServer.skip":
     "Se você quer funções serverless ou a Vercel, o Seed não é para você: ele foi feito para um servidor que você controla.",
   "HomeQuickStart.title": "Rodando localmente em quatro comandos",
-  "HomeQuickStart.needs": "Você precisa do Deno 2 e do Docker; a CLI do GitHub é opcional.",
+  "HomeQuickStart.needs":
+    "Você precisa do Docker e do Deno 2; a CLI do GitHub é opcional. No Node ou no Bun, <readme>o README</readme> instala o Deno para você e mostra os mesmos comandos com npm ou bun.",
   "HomeQuickStart.text":
     "O <init>init</init> copia o arquivo de ambiente e gera todos os segredos e as chaves de push da web; o <dev>dev</dev> sobe o Traefik e todo o resto. Depois, abra <url>http://app.localhost</url>. O <readme>README</readme> lista todas as configurações e explica o deploy.",
   "HomeQuickStart.agent": "Ou peça ao seu agente de IA: <prompt></prompt>.",
@@ -505,13 +506,11 @@ export default {
   "FeatureYourFeature.fact3": "Todo id é um UUID ordenado no tempo (versão 7)",
   "FeatureYourFeature.code": "Ler docs/aggregates.md",
   "FeatureTierRuntime.eyebrow": "Runtime",
-  "FeatureTierRuntime.nav": "Plano de runtime",
-  "FeatureTierRuntime.title": "Roda no Deno hoje",
+  "FeatureTierRuntime.nav": "Runtimes",
+  "FeatureTierRuntime.title": "Roda no Deno, no Node e no Bun",
   "FeatureTierRuntime.lead":
-    "O Seed roda no Deno hoje e está a caminho de rodar sem mudanças no Deno, no Node e no Bun; ainda não há data. O código é feito com padrões da web (fetch, Request, Web Crypto, WebSocket, módulos ES), então a maior parte dele não depende do runtime. Em outubro de 2026, a equipe do Deno <announced>anunciou</announced> mais um ano de suporte, com versões mensais de correções e de segurança, e depois encerra o próprio desenvolvimento; o Deno continua de código aberto.",
-  "FeatureTierRuntime.wip": "Em andamento",
-  "FeatureTierRuntime.wipRuntimes": "<name>Node</name> e <name>Bun</name>",
-  "FeatureTierRuntime.follow": "Acompanhe o plano no GitHub (issue <issue>#623</issue>)",
+    "A API, o worker e o site rodam sem nenhuma mudança no Deno, no Node e no Bun, e o CI os inicia nos três runtimes a cada alteração. Uma única linha no arquivo env, APP_RUNTIME, escolhe o runtime. O código é feito com padrões da web (fetch, Request, Web Crypto, WebSocket, módulos ES); as tarefas e os testes do próprio Seed rodam no Deno, que o npm ou o Bun instala para você. Em outubro de 2026, a equipe do Deno <announced>anunciou</announced> mais um ano de suporte, com versões mensais de correções e de segurança, e depois encerra o próprio desenvolvimento; o Deno continua de código aberto.",
+  "FeatureTierRuntime.pick": "Como escolher o runtime",
   "FeatureTierOperations.eyebrow": "Operação",
   "FeatureTierOperations.title": "Rode, acompanhe e dê suporte a quem usa",
   "FeatureTierOperations.lead":
@@ -587,7 +586,7 @@ export default {
     "Não. O Seed roda como contêineres de longa duração com Docker Compose num servidor Linux que você aluga, porque a API mantém conexões WebSocket abertas e um worker esvazia uma fila.",
   "FeaturesFaq.runtimeQuestion": "O Seed roda no Node.js ou no Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Ainda não por completo. A API e o worker em segundo plano já rodam no Node e no Bun, além do Deno: uma única configuração no arquivo env, APP_RUNTIME, escolhe o runtime. O site e as ferramentas de desenvolvimento ainda precisam do Deno. Dá para acompanhar o resto na issue #623 do GitHub do Seed.",
+    "Sim. A API, o worker em segundo plano e o site rodam no Deno, no Node ou no Bun: uma única configuração no arquivo env, APP_RUNTIME, escolhe o runtime. As tarefas e os testes do próprio Seed rodam no Deno, que o npm ou o Bun instala para você, então não é preciso instalar o Deno à parte.",
   "FeaturesFaq.databaseQuestion": "O Seed funciona com outro banco além do Postgres?",
   "FeaturesFaq.databaseAnswer":
     "Não. O Seed foi feito sobre o Postgres: as migrações, as consultas e os testes de integração contam com ele.",
@@ -943,7 +942,7 @@ export default {
   "FeaturePage.all": "Todos os recursos",
   "FeaturePage.runtimeQuestion": "O Seed roda no Node ou no Bun?",
   "FeaturePage.runtimeAnswer":
-    "Ainda não por completo. A API e o worker em segundo plano já rodam no Deno, no Node ou no Bun, escolhidos por uma única configuração (APP_RUNTIME). O site e as ferramentas de desenvolvimento ainda precisam do Deno, e essa parte está em andamento (#623). Veja o plano de runtimes na página de recursos.",
+    "Sim. A API, o worker em segundo plano e o site rodam no Deno, no Node ou no Bun, escolhidos por uma única configuração (APP_RUNTIME). As tarefas do próprio Seed rodam no Deno, que o npm ou o Bun instala para você. Veja a seção de runtimes na página de recursos.",
   "FeaturePageMissing.title": "Esta página de recurso não está aqui",
   "FeaturePageMissing.description":
     "Ela pode ter mudado de lugar. Todos os recursos que o Seed oferece estão na página de recursos.",

@@ -135,7 +135,7 @@ export default {
   "Architecture.mail": "メール、プッシュ",
   "Architecture.webAppNote": "ブラウザで動くPreact",
   "Architecture.websiteNote": "サーバーで動くPreact",
-  "Architecture.apiNote": "Deno上のHono",
+  "Architecture.apiNote": "Deno・Node・Bun",
   "Architecture.postgresNote": "すべての変更",
   "Architecture.workerNote": "時間のかかる処理",
   "Architecture.mailNote": "とクリーンアップ",
@@ -149,7 +149,7 @@ export default {
     "Seedの構成：WebアプリとWebサイトがAPIを呼び出し、APIはすべての変更とそのイベントをPostgresに書き込み、ワーカーがそのイベントからメールとプッシュ通知を送ります。すべてが1台のサーバーで動きます。",
   "Home.title": "Seed：Web標準で作られた無料のSaaSスターター",
   "Home.description":
-    "Web標準で作られた、無料でMITライセンスのSaaSスターター。2段階認証付きログイン、ロール付きグループ、メンバー単位のStripe課金、リアルタイム、オフライン対応。Denoで動作します。",
+    "Web標準で作られた、無料でMITライセンスのSaaSスターター。2段階認証付きログイン、ロール付きグループ、メンバー単位のStripe課金、リアルタイム、オフライン対応。Deno・Node・Bunで動作します。",
   "HomeProof.tests": "アプリとライブラリのテストファイル数。すべてCIで実行",
   "HomeProof.licence": "ライセンス：アカウント不要、ペイウォールなし",
   "HomeStatus.signIn":
@@ -176,7 +176,7 @@ export default {
   "HomeFaq.freeQuestion": "Seedは本当に無料ですか？",
   "HomeFaq.freeAnswer":
     "はい。MITライセンスなので、商用・非商用を問わずいくつのプロダクトにも使えますし、フォークの公開も自由で、アカウントも不要です。かかる費用は、借りるサーバー1台分と、Stripeやメール配信サービスなど自分で有効にしたサービスの料金だけです。",
-  "HomeFaq.stackQuestion": "なぜNext.jsではなくDenoとPreactなのですか？",
+  "HomeFaq.stackQuestion": "なぜNext.jsではなくHonoとPreactなのですか？",
   "HomeFaq.stackAnswer":
     "Web標準（<code>fetch</code>、<code>Request</code>、Web Crypto、ESモジュール）の上で動き、起動が速く、依存関係も少ないため、更新するものも壊れるものも少なくて済みます。Next.jsのエコシステムで開発しているなら、Next.jsのスターターのほうが合っているでしょう。おすすめは<compare>比較ページ</compare>で紹介しています。",
   "HomeFaq.clientQuestion": "受託開発に使えますか？",
@@ -185,10 +185,10 @@ export default {
   "HomeFaq.productionQuestion": "本番環境で使えますか？",
   "HomeFaq.productionAnswer":
     "「現在の対応状況」に載っている部分はCIでテストされています。すべてのプルリクエストでログイン、プロフィール、メモ、グループのテストが走り、マージのたびに全テストが実行されます。Seedは今すぐ使えて、今も成長中です。各部分を本番で頼る前に、対応状況の一覧を確認してください。",
-  "HomeHero.badge": "Deno 2で動作",
+  "HomeHero.badge": "Deno・Node・Bunで動作",
   "HomeHero.title": "SaaSの土台は、もうできています。",
   "HomeHero.lead":
-    "Seedは、Web標準で作られた無料のSaaSスターターです。ログインと2段階認証（2FA）、ロール付きグループ、メンバー単位のStripe課金、リアルタイム更新、オフラインアプリ、管理画面がそろっています。MITライセンスで、現在はDenoで動き、Docker Composeで借りたLinuxサーバー1台にデプロイできます。",
+    "Seedは、Web標準で作られた無料のSaaSスターターです。ログインと2段階認証（2FA）、ロール付きグループ、メンバー単位のStripe課金、リアルタイム更新、オフラインアプリ、管理画面がそろっています。MITライセンスで、Deno・Node・Bunのどれでも動き、Docker Composeで借りたLinuxサーバー1台にデプロイできます。",
   "HomeHero.github": "GitHubで見る",
   "HomeHero.status":
     "Seedは今すぐ使えて、公開しながら開発中です。<status>対応状況を見る</status>。",
@@ -240,7 +240,8 @@ export default {
   "HomeServer.skip":
     "サーバーレス関数やVercelを使いたいなら、Seedは向いていません。自分で管理するサーバー向けに作られています。",
   "HomeQuickStart.title": "4つのコマンドでローカル起動",
-  "HomeQuickStart.needs": "必要なのはDeno 2とDockerです。GitHub CLIは任意です。",
+  "HomeQuickStart.needs":
+    "必要なのはDockerとDeno 2です。GitHub CLIは任意です。NodeやBunを使う場合は、<readme>README</readme>の手順でDenoが自動でインストールされ、同じコマンドをnpmやbunで実行できます。",
   "HomeQuickStart.text":
     "<init>init</init>がenvファイルをコピーし、すべてのシークレットとWebプッシュ用の鍵を生成します。<dev>dev</dev>でTraefikをはじめすべてが起動します。あとは<url>http://app.localhost</url>を開くだけです。すべての設定項目とデプロイ方法は<readme>README</readme>にまとめています。",
   "HomeQuickStart.agent": "AIエージェントに頼むこともできます：<prompt></prompt>。",
@@ -487,13 +488,11 @@ export default {
   "FeatureYourFeature.fact3": "IDはすべて時系列順のUUID（バージョン7）",
   "FeatureYourFeature.code": "docs/aggregates.mdを読む",
   "FeatureTierRuntime.eyebrow": "ランタイム",
-  "FeatureTierRuntime.nav": "ランタイム計画",
-  "FeatureTierRuntime.title": "現在はDenoで動作",
+  "FeatureTierRuntime.nav": "ランタイム",
+  "FeatureTierRuntime.title": "Deno・Node・Bunで動作",
   "FeatureTierRuntime.lead":
-    "Seedは現在Denoで動いており、今後はDeno・Node・Bunのどれでもそのまま動くようにする予定です。時期はまだ決まっていません。コードはWeb標準（fetch、Request、Web Crypto、WebSocket、ESモジュール）の上に作られているため、大部分はランタイムに依存しません。2026年10月、Denoチームはあと1年間サポートを続け、毎月バグ修正とセキュリティのリリースを出したうえで、自らの開発を終えると<announced>発表</announced>しました。Denoはオープンソースのまま残ります。",
-  "FeatureTierRuntime.wip": "対応中",
-  "FeatureTierRuntime.wipRuntimes": "<name>Node</name>と<name>Bun</name>",
-  "FeatureTierRuntime.follow": "GitHubで計画を見る（issue <issue>#623</issue>）",
+    "API、ワーカー、WebサイトはDeno・Node・Bunのどれでもそのまま動き、CIは変更のたびに3つすべてで起動を確認しています。ランタイムはenvファイルの1行（APP_RUNTIME）で選べます。コードはWeb標準（fetch、Request、Web Crypto、WebSocket、ESモジュール）の上に作られています。Seed自体のタスクとテストはDenoで動きますが、DenoはnpmやBunが自動でインストールします。2026年10月、Denoチームはあと1年間サポートを続け、毎月バグ修正とセキュリティのリリースを出したうえで、自らの開発を終えると<announced>発表</announced>しました。Denoはオープンソースのまま残ります。",
+  "FeatureTierRuntime.pick": "ランタイムの選び方",
   "FeatureTierOperations.eyebrow": "運用",
   "FeatureTierOperations.title": "動かして、見守って、ユーザーをサポートする",
   "FeatureTierOperations.lead":
@@ -559,7 +558,7 @@ export default {
     "いいえ。Seedは、借りたLinuxサーバー1台の上でDocker Composeによる常駐コンテナとして動きます。APIがWebSocket接続を開いたままにし、ワーカーがキューを処理するためです。",
   "FeaturesFaq.runtimeQuestion": "SeedはNode.jsやBunで動きますか？",
   "FeaturesFaq.runtimeAnswer":
-    "まだ一部だけです。APIとバックグラウンドのワーカーは、すでにDenoに加えてNodeとBunでも動きます。envファイルの設定ひとつ（APP_RUNTIME）でランタイムを選べます。WebサイトとSeedの開発ツールは今もDenoが必要です。残りの進み具合はSeedのGitHubにあるissue #623で確認できます。",
+    "はい。API、バックグラウンドのワーカー、WebサイトはDeno・Node・Bunのどれでも動きます。ランタイムはenvファイルの設定ひとつ（APP_RUNTIME）で選べます。Seed自体のタスクとテストはDenoで動きますが、DenoはnpmやBunが自動でインストールするので、別途入れる必要はありません。",
   "FeaturesFaq.databaseQuestion": "Postgres以外のデータベースを使えますか？",
   "FeaturesFaq.databaseAnswer":
     "いいえ。SeedはPostgresを前提に作られていて、マイグレーション、クエリ、結合テストもPostgresを想定しています。",
@@ -911,7 +910,7 @@ export default {
   "FeaturePage.all": "すべての機能",
   "FeaturePage.runtimeQuestion": "SeedはNodeやBunで動きますか？",
   "FeaturePage.runtimeAnswer":
-    "まだ一部だけです。APIとバックグラウンドのワーカーは、すでに設定ひとつ（APP_RUNTIME）でDeno・Node・Bunのどれでも動きます。Webサイトと開発ツールは今もDenoが必要で、こちらは作業中です（#623）。機能ページのランタイム計画をご覧ください。",
+    "はい。API、バックグラウンドのワーカー、Webサイトは、設定ひとつ（APP_RUNTIME）でDeno・Node・Bunのどれでも動きます。Seed自体のタスクはDenoで動きますが、DenoはnpmやBunが自動でインストールします。詳しくは機能ページのランタイムの項目をご覧ください。",
   "FeaturePageMissing.title": "この機能ページは見つかりません",
   "FeaturePageMissing.description":
     "移動した可能性があります。Seedのすべての機能は機能ページに載っています。",

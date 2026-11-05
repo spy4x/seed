@@ -1,7 +1,7 @@
 # Runtime policy
 
-Seed runs on Deno today and is moving to run unchanged on Deno, Node and Bun
-([#623](https://github.com/spy4x/seed/issues/623)). This policy replaces the "Deno only" rule of
+Seed runs unchanged on Deno, Node and Bun ([#623](https://github.com/spy4x/seed/issues/623)).
+This policy replaces the "Deno only" rule of
 [ADR 001](decisions/001-deno-platform-template.md).
 
 - **New code runs on all three runtimes**, and so does old code a change touches anyway. Write
@@ -11,7 +11,7 @@ Seed runs on Deno today and is moving to run unchanged on Deno, Node and Bun
 - **Runtime-specific calls go behind an adapter.** `Deno.*`, `process`, `Bun.*` and `node:*` modules
   for env, files, subprocesses, sockets and key-value stores belong in a small adapter in
   `@spy4x/platform` ([ts-libs](https://github.com/spy4x/ts-libs)), never in application code. The
-  `Deno.*` calls that remain move under #623, or when a change touches them anyway.
+  `Deno.*` calls that remain move when a change touches them anyway.
 - **Deno stays the toolchain for now.** Development, checks, builds, tests and the scripts in
   `infra/scripts` use `deno` and `deno task`. Tests stay on `Deno.test`. The runtime review due
   2027-01-10 decides whether that changes.

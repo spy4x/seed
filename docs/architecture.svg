@@ -127,5 +127,5 @@
   <text class="t m" x="752" y="600">CQRS, auth, outbox, UI</text>
 
   <text class="t m" x="40" y="664">Docker Compose also runs Traefik and, with the monitoring profile, VictoriaMetrics, VictoriaLogs and Grafana.</text>
-  <text class="t m" x="40" y="684">Every app runs on Deno.</text>
+  <text class="t m" x="40" y="684">Every app runs on Deno, Node or Bun.</text>
 </svg>

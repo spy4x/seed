@@ -25,7 +25,8 @@ for await (const entry of Deno.readDir(".")) {
 sourceFiles.sort()
 
 const command = new Deno.Command("deno", {
-  args: ["check", ...sourceFiles],
+  // --quiet drops the "Check <file>" line of every file; errors still print.
+  args: ["check", "--quiet", ...sourceFiles],
   stdin: "null",
   stdout: "inherit",
   stderr: "inherit",
