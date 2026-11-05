@@ -145,7 +145,7 @@ export default {
     "Cómo encaja Seed: la aplicación web y el sitio web llaman a la API, la API guarda cada cambio y sus eventos en Postgres, y el worker envía correos y notificaciones push a partir de esos eventos. Todo funciona en un solo servidor.",
   "Home.title": "Seed: el starter SaaS gratuito basado en estándares web",
   "Home.description":
-    "El starter SaaS gratuito con licencia MIT, basado en estándares web: inicio de sesión con 2FA, grupos con roles, facturación con Stripe. Funciona con Deno, Node y Bun.",
+    "Starter SaaS gratuito con licencia MIT, basado en estándares web: acceso con 2FA, grupos con roles, facturación con Stripe. Funciona con Deno, Node y Bun.",
   "HomeProof.tests": "archivos de pruebas en las apps y las bibliotecas, todos se ejecutan en CI",
   "HomeProof.licence": "licencia: sin cuenta y sin muro de pago",
   "HomeStatus.signIn":
