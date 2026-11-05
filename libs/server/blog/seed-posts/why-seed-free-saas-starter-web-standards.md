@@ -66,11 +66,10 @@ runtime and browser implements:
 - Live updates travel over a standard WebSocket.
 - Everything is an ES module.
 
-Today the servers run on Deno 2 in Docker. On 9 October 2026 the Deno team
-[announced](https://deno.com/blog/cloudflare) one more year of monthly bug-fix and security
-releases before it ends its own development. Because most of Seed already speaks the standards,
-moving it to run unchanged on Deno, Node and Bun is work on the edges, not a rewrite. It is
-[issue #623](https://github.com/spy4x/seed/issues/623), with no date yet. Seed never used Deno
+On 9 October 2026 the Deno team [announced](https://deno.com/blog/cloudflare) one more year of
+monthly bug-fix and security releases before it ends its own development. Because most of Seed
+already speaks the standards, moving it to run unchanged on Deno, Node and Bun was work on the
+edges, not a rewrite, and it is done: [Seed now runs on all three](/blog/seed-runs-on-deno-node-and-bun). Seed never used Deno
 Deploy, so that service closing changes nothing for a Seed product.
 
 ## Is it a framework?
