@@ -113,6 +113,8 @@ Deno.test("every Dockerfile of the repository is found, in any letter case", asy
     "apps/api/dockerfile",
     "apps/api/dockerfile.bun",
     "apps/api/dockerfile.node",
+    "apps/mpa/dockerfile.bun",
+    "apps/mpa/dockerfile.node",
     "apps/mpa/dockerfile.prod",
     "apps/spa/dockerfile.dev",
     "apps/spa/dockerfile.prod",
@@ -153,6 +155,9 @@ Deno.test("every deno install and deno cache in every Dockerfile runs with --fro
 /** The images of the API on Node and Bun (#748). */
 const NODE_BUN_DOCKERFILES = ["apps/api/dockerfile.node", "apps/api/dockerfile.bun"]
 
+/** The images of the website on Node and Bun (#623). */
+const WEBSITE_NODE_BUN_DOCKERFILES = ["apps/mpa/dockerfile.node", "apps/mpa/dockerfile.bun"]
+
 /** The image of every `FROM` that is not pinned by a digest; an earlier stage is no image. */
 export function imagesWithoutDigest(dockerfile: string): string[] {
   const stages = new Set<string>()
@@ -169,7 +174,7 @@ export function imagesWithoutDigest(dockerfile: string): string[] {
 }
 
 Deno.test("the Node and Bun images pin every image they start from by digest", async () => {
-  for (const path of NODE_BUN_DOCKERFILES) {
+  for (const path of [...NODE_BUN_DOCKERFILES, ...WEBSITE_NODE_BUN_DOCKERFILES]) {
     const dockerfile = await read(path)
     expect({ path, loose: imagesWithoutDigest(dockerfile) }).toEqual({ path, loose: [] })
     expect(instructions(dockerfile).filter((line) => /^FROM\s/i.test(line)).length).toBe(2)
@@ -182,6 +187,15 @@ Deno.test("the Node image runs the API on Node, and the Bun image on Bun", async
       /^CMD\s/i.test(line)
     )
     expect(final).toEqual([`CMD ["${runtime}", "dist/server/api.js"]`])
+  }
+})
+
+Deno.test("the website's Node image runs it on Node, and its Bun image on Bun", async () => {
+  for (const runtime of ["node", "bun"]) {
+    const final = instructions(await read(`apps/mpa/dockerfile.${runtime}`)).filter((line) =>
+      /^CMD\s/i.test(line)
+    )
+    expect(final).toEqual([`CMD ["${runtime}", "apps/mpa/dist/start.js"]`])
   }
 })
 
