@@ -129,7 +129,7 @@ export default {
   "Architecture.mail": "Почта, пуши",
   "Architecture.webAppNote": "Preact, в браузере",
   "Architecture.websiteNote": "Preact, на сервере",
-  "Architecture.apiNote": "Hono на Deno",
+  "Architecture.apiNote": "Hono на Deno, Node или Bun",
   "Architecture.postgresNote": "каждое изменение",
   "Architecture.workerNote": "долгая работа",
   "Architecture.mailNote": "и уборка",
@@ -143,7 +143,7 @@ export default {
     "Как устроен Seed: веб-приложение и сайт обращаются к API, API записывает каждое изменение вместе с его событиями в Postgres, а воркер по этим событиям отправляет письма и пуш-уведомления. Всё работает на одном сервере.",
   "Home.title": "Seed: бесплатный стартер SaaS на веб-стандартах",
   "Home.description":
-    "Бесплатный стартер SaaS под MIT на веб-стандартах: вход с 2FA, группы с ролями, оплата за участника через Stripe, реальное время, офлайн. Работает на Deno.",
+    "Бесплатный стартер SaaS под MIT на веб-стандартах: вход с 2FA, группы с ролями, оплата за участника через Stripe, реальное время, офлайн. Работает на Deno, Node и Bun.",
   "HomeProof.tests": "тестовые файлы в приложениях и библиотеках, все запускаются в CI",
   "HomeProof.licence": "лицензия: без аккаунта и платного доступа",
   "HomeStatus.signIn":
@@ -170,7 +170,7 @@ export default {
   "HomeFaq.freeQuestion": "Seed правда бесплатный?",
   "HomeFaq.freeAnswer":
     "Да. Он под лицензией MIT: делайте на нём сколько угодно продуктов, коммерческих и нет, публикуйте свой форк, никаких аккаунтов. Платите вы только за арендованный сервер и за сервисы, которые подключите сами, например Stripe или почтовый сервис.",
-  "HomeFaq.stackQuestion": "Почему Deno и Preact, а не Next.js?",
+  "HomeFaq.stackQuestion": "Почему Hono и Preact, а не Next.js?",
   "HomeFaq.stackAnswer":
     "Они построены на веб-стандартах (<code>fetch</code>, <code>Request</code>, Web Crypto, ES-модули), быстро запускаются и обходятся малым числом зависимостей — меньше обновлять и меньше ломается. Если вы живёте в экосистеме Next.js, вам лучше подойдёт стартер на Next.js; хорошие перечислены в <compare>сравнении</compare>.",
   "HomeFaq.clientQuestion": "Можно ли использовать его в работе на заказ?",
@@ -179,10 +179,10 @@ export default {
   "HomeFaq.productionQuestion": "Он готов к продакшену?",
   "HomeFaq.productionAnswer":
     "Всё, что перечислено в разделе «Уже работает», покрыто тестами в CI: каждый пул-реквест прогоняет тесты входа, профиля, заметок и групп, а после каждого слияния запускается полный набор. Seed уже можно использовать, и он продолжает расти: прежде чем полагаться на какую-то часть, загляните в список статусов.",
-  "HomeHero.badge": "Работает на Deno 2",
+  "HomeHero.badge": "Работает на Deno, Node и Bun",
   "HomeHero.title": "Фундамент вашего SaaS уже готов.",
   "HomeHero.lead":
-    "Seed — бесплатный стартер SaaS на веб-стандартах: вход с двухфакторной защитой (2FA), группы с ролями, оплата за участника через Stripe, обновления в реальном времени, офлайн-приложение и админ-панель. Лицензия MIT, сегодня работает на Deno, разворачивается через Docker Compose на одном арендованном Linux-сервере.",
+    "Seed — бесплатный стартер SaaS на веб-стандартах: вход с двухфакторной защитой (2FA), группы с ролями, оплата за участника через Stripe, обновления в реальном времени, офлайн-приложение и админ-панель. Лицензия MIT, работает на Deno, Node и Bun, разворачивается через Docker Compose на одном арендованном Linux-сервере.",
   "HomeHero.github": "Открыть на GitHub",
   "HomeHero.status":
     "Seed уже можно использовать, и я делаю его в открытую: <status>посмотрите, что работает</status>.",
@@ -234,7 +234,8 @@ export default {
   "HomeServer.skip":
     "Если вам нужны serverless-функции или Vercel, Seed не для вас: он сделан для сервера, которым вы управляете сами.",
   "HomeQuickStart.title": "Локальный запуск в четыре команды",
-  "HomeQuickStart.needs": "Понадобятся Deno 2 и Docker; GitHub CLI — по желанию.",
+  "HomeQuickStart.needs":
+    "Понадобятся Docker и Deno 2; GitHub CLI — по желанию. Работаете с Node или Bun? В <readme>README</readme> — те же команды для npm или bun, а Deno они поставят сами.",
   "HomeQuickStart.text":
     "<init>init</init> копирует env-файл и генерирует все секреты и ключи для веб-пушей; <dev>dev</dev> запускает Traefik и всё остальное. Потом откройте <url>http://app.localhost</url>. В <readme>README</readme> описаны все настройки и деплой.",
   "HomeQuickStart.agent": "Или попросите своего ИИ-агента: <prompt></prompt>.",
@@ -499,13 +500,11 @@ export default {
   "FeatureYourFeature.fact3": "Каждый id — упорядоченный по времени UUID (версия 7)",
   "FeatureYourFeature.code": "Читать docs/aggregates.md",
   "FeatureTierRuntime.eyebrow": "Рантайм",
-  "FeatureTierRuntime.nav": "План по рантайму",
-  "FeatureTierRuntime.title": "Сегодня работает на Deno",
+  "FeatureTierRuntime.nav": "Рантаймы",
+  "FeatureTierRuntime.title": "Работает на Deno, Node и Bun",
   "FeatureTierRuntime.lead":
-    "Сегодня Seed работает на Deno, а дальше будет без изменений работать на Deno, Node и Bun; срока пока нет. Код построен на веб-стандартах (fetch, Request, Web Crypto, WebSocket, ES-модули), поэтому бо́льшая его часть от рантайма не зависит. В октябре 2026 года команда Deno <announced>объявила</announced>, что ещё год будет поддерживать рантайм и каждый месяц выпускать исправления ошибок и уязвимостей, а затем прекратит собственную разработку; код Deno остаётся открытым.",
-  "FeatureTierRuntime.wip": "В работе",
-  "FeatureTierRuntime.wipRuntimes": "<name>Node</name> и <name>Bun</name>",
-  "FeatureTierRuntime.follow": "Следить за планом на GitHub (issue <issue>#623</issue>)",
+    "API, воркер и сайт без изменений работают на Deno, Node и Bun, и CI на каждое изменение запускает их на всех трёх. Рантайм выбирает одна строка в env-файле — APP_RUNTIME. Код построен на веб-стандартах (fetch, Request, Web Crypto, WebSocket, ES-модули); собственные задачи и тесты Seed работают на Deno, а его за вас поставит npm или Bun. В октябре 2026 года команда Deno <announced>объявила</announced>, что ещё год будет поддерживать рантайм и каждый месяц выпускать исправления ошибок и уязвимостей, а затем прекратит собственную разработку; код Deno остаётся открытым.",
+  "FeatureTierRuntime.pick": "Как выбрать рантайм",
   "FeatureTierOperations.eyebrow": "Эксплуатация",
   "FeatureTierOperations.title": "Запускайте, наблюдайте, помогайте людям",
   "FeatureTierOperations.lead":
@@ -583,7 +582,7 @@ export default {
     "Нет. Seed работает как долгоживущие контейнеры в Docker Compose на одном арендованном Linux-сервере: API держит открытые WebSocket-соединения, а воркер разбирает очередь.",
   "FeaturesFaq.runtimeQuestion": "Можно ли запустить Seed на Node.js или Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Пока не полностью. API и фоновый воркер уже работают не только на Deno, но и на Node и Bun: рантайм выбирает одна настройка в env-файле, APP_RUNTIME. Сайту и инструментам разработки пока нужен Deno. За остальным можно следить в issue #623 на GitHub проекта Seed.",
+    "Да. API, фоновый воркер и сайт работают на Deno, Node или Bun: рантайм выбирает одна настройка в env-файле, APP_RUNTIME. Собственные задачи и тесты Seed работают на Deno, а его за вас поставит npm или Bun, так что отдельно устанавливать Deno не нужно.",
   "FeaturesFaq.databaseQuestion":
     "Можно ли использовать с Seed другую базу данных вместо Postgres?",
   "FeaturesFaq.databaseAnswer":
@@ -938,7 +937,7 @@ export default {
   "FeaturePage.all": "Все возможности",
   "FeaturePage.runtimeQuestion": "Seed работает на Node или Bun?",
   "FeaturePage.runtimeAnswer":
-    "Пока не полностью. API и фоновый воркер уже работают на Deno, Node или Bun — выбирает одна настройка (APP_RUNTIME). Сайту и инструментам разработки пока нужен Deno, над этим идёт работа (#623). План по рантайму — на странице возможностей.",
+    "Да. API, фоновый воркер и сайт работают на Deno, Node или Bun — выбирает одна настройка (APP_RUNTIME). Собственные задачи Seed работают на Deno, а его за вас поставит npm или Bun. Подробнее — в разделе о рантаймах на странице возможностей.",
   "FeaturePageMissing.title": "Такой страницы о возможности нет",
   "FeaturePageMissing.description":
     "Возможно, она переехала. Все возможности Seed — на странице возможностей.",
