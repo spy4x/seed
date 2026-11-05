@@ -140,7 +140,7 @@ export default {
     "How Seed fits together: the web app and the website call the API, the API writes every change and its events to Postgres, and the worker sends mail and push from those events. Everything runs on one server.",
   "Home.title": "Seed: the free SaaS starter built on web standards",
   "Home.description":
-    "The free, MIT-licensed SaaS starter built on web standards: 2FA sign-in, groups with roles, per-member Stripe billing, realtime, offline. Runs on Deno, Node and Bun.",
+    "The free, MIT-licensed SaaS starter built on web standards: 2FA sign-in, groups with roles, Stripe billing, realtime, offline. Runs on Deno, Node and Bun.",
   "HomeProof.tests": "test files in the apps and libraries, all run in CI",
   "HomeProof.licence": "licence: no account, no paywall",
   "HomeStatus.signIn":
