@@ -77,12 +77,29 @@ test.describe("with JavaScript", () => {
     await expect(page.locator("#checklist input").first()).toBeFocused()
   })
 
-  test("the page has no WCAG violations with ticks, and Copy link and Print appear", async ({ page }) => {
+  test("the page has no WCAG violations in light or dark, and Copy link and Print appear", async ({ page }) => {
     await page.goto(PATH)
     await summaryReady(page)
     await page.getByLabel("Publish terms of service.", { exact: true }).check()
     await expect(page.locator("[data-e2e=checklist-copy]")).toBeVisible()
     await expect(page.locator("[data-e2e=checklist-print]")).toBeVisible()
+    expect(await axeViolations(page)).toEqual([])
+    await page.emulateMedia({ colorScheme: "dark" })
+    await page.reload()
+    await summaryReady(page)
+    await expect(page.locator("html")).toHaveClass(/\bdark\b/)
+    expect(await axeViolations(page)).toEqual([])
+  })
+
+  test("the Arabic page is right to left, keeps the same item ids and has no WCAG violations", async ({ page }) => {
+    await page.goto(`/ar${PATH}`)
+    // The storage line appears once the island has read the boxes.
+    await expect(page.locator("[data-e2e=checklist-storage]")).toBeVisible()
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl")
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "قائمة التحقق لإطلاق منتج SaaS",
+    )
+    await expect(page.locator("#backups-restore-tested")).toHaveCount(1)
     expect(await axeViolations(page)).toEqual([])
   })
 })
@@ -103,16 +120,5 @@ test.describe("without JavaScript", () => {
     await expect(box).toBeChecked()
     const proof = page.getByRole("link", { name: "Built into Seed: Restore from a backup" })
     await expect(proof).toHaveAttribute("href", "/docs/restore#rehearse-a-restore")
-    expect(await axeViolations(page)).toEqual([])
-  })
-
-  test("the Arabic page is right to left, in Arabic, with the same items", async ({ page }) => {
-    await page.goto(`/ar${PATH}`)
-    await expect(page.locator("html")).toHaveAttribute("dir", "rtl")
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      "قائمة التحقق لإطلاق منتج SaaS",
-    )
-    await expect(page.locator("#backups-restore-tested")).toHaveCount(1)
-    expect(await axeViolations(page)).toEqual([])
   })
 })
