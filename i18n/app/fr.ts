@@ -665,6 +665,32 @@ export default {
     "Stripe vous indique ce que vous payez aujourd’hui avant que vous confirmiez.",
   "GroupBillingPanel.switchYearly": "Passer à l’annuel",
   "GroupBillingPanel.switchMonthly": "Passer au mensuel",
+  "GroupBillingPanel.startHeading": "Commencez avec <plan>{plan}</plan>",
+  "GroupBillingPanel.unitMonth": "par mois",
+  "GroupBillingPanel.unitYear": "par an",
+  "GroupBillingPanel.unitMemberMonth": "par membre et par mois",
+  "GroupBillingPanel.unitMemberYear": "par membre et par an",
+  "GroupBillingPanel.wholeGroup": {
+    "one": "Pour tout le groupe, jusqu’à {count} membre.",
+    "many": "Pour tout le groupe, jusqu’à {count} membres.",
+    "other": "Pour tout le groupe, jusqu’à {count} membres.",
+  },
+  "GroupBillingPanel.wholeGroupNoCap": "Pour tout le groupe.",
+  "GroupBillingPanel.continueToPayment": "Passer au paiement",
+  "GroupBillingPanel.priceFlat": "{plan} coûte {price} par mois pour tout le groupe.",
+  "GroupBillingPanel.priceFlatYear": "{plan} coûte {price} par an pour tout le groupe.",
+  "GroupBillingPanel.finePrintFlat":
+    "Facturé chaque mois. Résiliez à tout moment et gardez {plan} jusqu’à la fin de la période.",
+  "GroupBillingPanel.finePrintFlatYear":
+    "Facturé chaque année. Résiliez à tout moment et gardez {plan} jusqu’à la fin de la période.",
+  "GroupBillingPanel.refund": {
+    "one": "Vous avez changé d’avis ? Demandez un remboursement complet sous {count} jour.",
+    "many": "Vous avez changé d’avis ? Demandez un remboursement complet sous {count} jours.",
+    "other": "Vous avez changé d’avis ? Demandez un remboursement complet sous {count} jours.",
+  },
+  "GroupBillingPanel.joinInstead":
+    "Vous voulez rejoindre le groupe de quelqu’un d’autre ? Demandez à son propriétaire un lien d’invitation au lieu de payer.",
+  "HomeView.opening": "Ouverture de l’app…",
   "GroupBillingView.trialStarted": {
     "one": "Votre essai {plan} de {count} jour a commencé",
     "many": "Votre essai {plan} de {count} jours a commencé",
@@ -788,6 +814,8 @@ export default {
   "OverviewScreen.emptyGroupText":
     "La vue d’ensemble se remplit à mesure que les membres du groupe ajoutent des notes.",
   "OverviewScreen.newNote": "Nouvelle note",
+  "OverviewScreen.choosePlanText": "Choisissez un forfait pour commencer à ajouter du contenu.",
+  "OverviewScreen.choosePlan": "Choisir un forfait",
   "OverviewScreen.allHidden": "Tous les widgets sont masqués",
   "OverviewScreen.allHiddenText": "Choisissez ceux que vous voulez voir.",
   "OverviewScreen.gridLabel": "Vue d’ensemble de {group}",
@@ -842,6 +870,9 @@ export default {
     "Avec le forfait de ce groupe, vous pouvez abaisser le rôle d’un membre ou le retirer, mais pas le promouvoir.",
   "PlanRefusalNotice.openBilling": "Ouvrir l’onglet Facturation",
   "PlanRefusalNotice.askOwner": "Demandez au propriétaire du groupe de changer de forfait.",
+  "PlanRefusalNotice.noPlanTitle": "{group} n’a pas de forfait payant",
+  "PlanRefusalNotice.noPlanTitleUnnamed": "Ce groupe n’a pas de forfait payant",
+  "PlanRefusalNotice.noPlanText": "Choisissez un forfait pour commencer à ajouter du contenu.",
   "GuestProfile.accountType": "Type de compte",
   "GuestProfile.guestAccount": "Compte invité. Seul ce navigateur peut l’ouvrir.",
   "GuestProfile.methods": "Méthodes de connexion",

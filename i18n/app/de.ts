@@ -621,6 +621,32 @@ export default {
   "GroupBillingPanel.periodHint": "Stripe zeigt dir vor dem Bestätigen, was du heute zahlst.",
   "GroupBillingPanel.switchYearly": "Zu jährlich wechseln",
   "GroupBillingPanel.switchMonthly": "Zu monatlich wechseln",
+  "GroupBillingPanel.startHeading": "Starte mit <plan>{plan}</plan>",
+  "GroupBillingPanel.unitMonth": "im Monat",
+  "GroupBillingPanel.unitYear": "im Jahr",
+  "GroupBillingPanel.unitMemberMonth": "pro Mitglied und Monat",
+  "GroupBillingPanel.unitMemberYear": "pro Mitglied und Jahr",
+  "GroupBillingPanel.wholeGroup": {
+    "one": "Für die ganze Gruppe, bis zu {count} Mitglied.",
+    "other": "Für die ganze Gruppe, bis zu {count} Mitglieder.",
+  },
+  "GroupBillingPanel.wholeGroupNoCap": "Für die ganze Gruppe.",
+  "GroupBillingPanel.continueToPayment": "Weiter zur Zahlung",
+  "GroupBillingPanel.priceFlat": "{plan} kostet {price} im Monat für die ganze Gruppe.",
+  "GroupBillingPanel.priceFlatYear": "{plan} kostet {price} im Jahr für die ganze Gruppe.",
+  "GroupBillingPanel.finePrintFlat":
+    "Monatliche Abrechnung. Jederzeit kündbar, {plan} bleibt bis zum Ende des Zeitraums.",
+  "GroupBillingPanel.finePrintFlatYear":
+    "Jährliche Abrechnung. Jederzeit kündbar, {plan} bleibt bis zum Ende des Zeitraums.",
+  "GroupBillingPanel.refund": {
+    "one":
+      "Anders überlegt? Melde dich innerhalb von {count} Tag und du bekommst den vollen Betrag zurück.",
+    "other":
+      "Anders überlegt? Melde dich innerhalb von {count} Tagen und du bekommst den vollen Betrag zurück.",
+  },
+  "GroupBillingPanel.joinInstead":
+    "Du möchtest der Gruppe einer anderen Person beitreten? Bitte ihren Inhaber um einen Einladungslink, statt selbst zu bezahlen.",
+  "HomeView.opening": "App wird geöffnet …",
   "GroupBillingView.trialStarted": {
     "one": "Deine {count}-tägige Testphase für {plan} hat begonnen",
     "other": "Deine {count}-tägige Testphase für {plan} hat begonnen",
@@ -738,6 +764,8 @@ export default {
   "OverviewScreen.emptyGroupText":
     "Die Übersicht füllt sich, sobald Leute in der Gruppe Notizen anlegen.",
   "OverviewScreen.newNote": "Neue Notiz",
+  "OverviewScreen.choosePlanText": "Wähle einen Tarif, um etwas hinzuzufügen.",
+  "OverviewScreen.choosePlan": "Tarif wählen",
   "OverviewScreen.allHidden": "Alle Widgets sind ausgeblendet",
   "OverviewScreen.allHiddenText": "Wähle aus, welche du sehen willst.",
   "OverviewScreen.gridLabel": "Übersicht von {group}",
@@ -787,6 +815,9 @@ export default {
     "Im Tarif dieser Gruppe kannst du die Rolle eines Mitglieds herabstufen oder es entfernen, aber nicht hochstufen.",
   "PlanRefusalNotice.openBilling": "Reiter „Abrechnung“ öffnen",
   "PlanRefusalNotice.askOwner": "Bitte den Inhaber der Gruppe, den Tarif zu upgraden.",
+  "PlanRefusalNotice.noPlanTitle": "{group} hat keinen bezahlten Tarif",
+  "PlanRefusalNotice.noPlanTitleUnnamed": "Diese Gruppe hat keinen bezahlten Tarif",
+  "PlanRefusalNotice.noPlanText": "Wähle einen Tarif, um etwas hinzuzufügen.",
   "GuestProfile.accountType": "Kontotyp",
   "GuestProfile.guestAccount": "Gastkonto. Nur dieser Browser kann es öffnen.",
   "GuestProfile.methods": "Anmeldemethoden",

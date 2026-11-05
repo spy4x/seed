@@ -109,6 +109,9 @@ function buildApp(setup: Setup = {}, auth?: APIContext["Variables"]["auth"]) {
         total: 0,
         counts: { paying: 0, trial: 0, past_due: 0, ending: 0, cancelled: 0, all: 0 },
       }),
+    neverPaid: (page, pageSize) => (
+      calls.push([`neverPaid`, page, pageSize]), Promise.resolve({ groups: [], total: 0 })
+    ),
     record: (groupId) => Promise.resolve(groupId === GROUP ? setup.stored ?? record : null),
     isOwnerOrMember: () => Promise.resolve(setup.member ?? false),
     claim: (claim) => {
@@ -406,6 +409,28 @@ describe(`operator billing routes`, () => {
     expect(action.status).toBe(404)
     expect((await apiError(action)).message).toBe(ADMIN_BILLING_OFF)
     expect(calls).toEqual([])
+  })
+
+  it(`lists the groups that never paid a page at a time, and nothing while billing is off`, async () => {
+    const { app, calls } = buildApp()
+    const response = await app.request(`${API_URL}/admin/billing/never-paid?page=3`, {
+      headers: { ...sameOriginHeaders },
+    })
+    expect(await response.json()).toEqual({
+      enabled: true,
+      groups: [],
+      total: 0,
+      page: 3,
+      pageSize: 25,
+    })
+    expect(calls).toEqual([[`neverPaid`, 3, 25]])
+
+    const off = buildApp({ billingOn: false })
+    const answer = await off.app.request(`${API_URL}/admin/billing/never-paid`, {
+      headers: { ...sameOriginHeaders },
+    })
+    expect(await answer.json()).toEqual({ enabled: false })
+    expect(off.calls).toEqual([])
   })
 
   it(`links the customer to Stripe's dashboard on their page`, async () => {

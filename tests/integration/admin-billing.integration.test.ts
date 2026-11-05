@@ -16,6 +16,7 @@ import {
   claimAdminBillingAction,
   isOwnerOrMember,
   listAdminBillingCustomers,
+  listNeverPaidGroups,
   readAdminBillingFigures,
   readAdminBillingRecord,
   releaseAdminBillingAction,
@@ -241,5 +242,56 @@ Deno.test(`admin billing: a key acts and audits once, and is refused for another
     expect(await isOwnerOrMember(sql, groupId, owner)).toBe(true)
     expect(await isOwnerOrMember(sql, groupId, viewer)).toBe(true)
     expect(await isOwnerOrMember(sql, groupId, operator)).toBe(false)
+  })
+})
+
+Deno.test(`admin billing: never paid lists the groups no subscription ever paid for, newest first`, async () => {
+  await withSchema(async (sql) => {
+    const repository = new PostgresGroupRepository(sql)
+    const owner = await insertUser(sql)
+    await sql`UPDATE users SET first_name = 'Ada', last_name = 'Lovelace' WHERE id = ${owner}`
+    await sql`
+      INSERT INTO auth_keys (user_id, method, subject, email)
+      VALUES (${owner}, 'email', 'ada@example.com', 'ada@example.com')
+    `
+    const make = async (name: string, daysAgo: number) => {
+      const { group } = await repository.create({ id: uuidV7(), name }, owner)
+      await sql`
+        UPDATE groups SET created_at = ${new Date(NOW.getTime() - daysAgo * DAY)}
+        WHERE id = ${group.id}
+      `
+      return group.id
+    }
+    const older = await make(`Older`, 9)
+    const newer = await make(`Newer`, 1)
+    // A trial that has not paid yet has never paid either.
+    const trial = await subscribe(sql, repository, owner, {
+      name: `Trial`,
+      status: BillingStatus.Trialing,
+      trialEndInDays: 5,
+    })
+    await sql`UPDATE groups SET created_at = ${new Date(
+      NOW.getTime() - 5 * DAY,
+    )} WHERE id = ${trial}`
+    const paid = await subscribe(sql, repository, owner, {
+      name: `Paid`,
+      status: BillingStatus.Canceled,
+    })
+    await sql`UPDATE subscriptions SET ever_active = TRUE WHERE group_id = ${paid}`
+    const trashed = await make(`Trashed`, 0)
+    await sql`UPDATE groups SET deleted_at = ${NOW} WHERE id = ${trashed}`
+
+    const first = await listNeverPaidGroups(sql, 1, 2)
+
+    expect(first.total).toBe(3)
+    expect(first.groups.map((group) => group.groupId)).toEqual([newer, trial])
+    expect(first.groups[0]).toEqual({
+      groupId: newer,
+      groupName: `Newer`,
+      owner: { id: owner, name: `Ada Lovelace`, email: `ada@example.com` },
+      createdAt: new Date(NOW.getTime() - DAY).toISOString(),
+    })
+    const second = await listNeverPaidGroups(sql, 2, 2)
+    expect(second.groups.map((group) => group.groupId)).toEqual([older])
   })
 })

@@ -35,6 +35,7 @@ import {
   claimAdminBillingAction,
   isOwnerOrMember,
   listAdminBillingCustomers,
+  listNeverPaidGroups,
   readAdminBillingFigures,
   readAdminBillingRecord,
   releaseAdminBillingAction,
@@ -77,6 +78,7 @@ export interface AdminBillingSettings {
 export interface AdminBillingStore {
   figures(now: Date): Promise<AdminBillingFigures>
   list(filter: AdminBillingFilter, pageSize: number): ReturnType<typeof listAdminBillingCustomers>
+  neverPaid(page: number, pageSize: number): ReturnType<typeof listNeverPaidGroups>
   record(groupId: string): Promise<AdminBillingRecord | null>
   isOwnerOrMember(groupId: string, userId: number): Promise<boolean>
   claim(claim: AdminBillingClaim): ReturnType<typeof claimAdminBillingAction>
@@ -96,6 +98,7 @@ export function createAdminBillingStore(sql: postgres.Sql): AdminBillingStore {
   return {
     figures: (now) => readAdminBillingFigures(sql, now),
     list: (filter, pageSize) => listAdminBillingCustomers(sql, filter, pageSize),
+    neverPaid: (page, pageSize) => listNeverPaidGroups(sql, page, pageSize),
     record: (groupId) => readAdminBillingRecord(sql, groupId),
     isOwnerOrMember: (groupId, userId) => isOwnerOrMember(sql, groupId, userId),
     claim: (claim) => claimAdminBillingAction(sql, claim),
@@ -304,6 +307,12 @@ export function createAdminBillingRoutes(
         graceDays: billing.graceDays,
         pricingUrl: billing.pricingUrl,
       })
+    })
+    .get(`/billing/never-paid`, limit, async (c) => {
+      if (billing === null) return c.json({ enabled: false })
+      const { page } = parseAdminBillingFilter(new URL(c.req.url).searchParams)
+      const { groups, total } = await store.neverPaid(page, ADMIN_BILLING_PAGE_SIZE)
+      return c.json({ enabled: true, groups, total, page, pageSize: ADMIN_BILLING_PAGE_SIZE })
     })
     .get(`/billing/:groupId`, limit, async (c) => {
       const groupId = c.req.param(`groupId`)

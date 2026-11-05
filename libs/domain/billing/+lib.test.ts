@@ -18,10 +18,12 @@ import {
   effectivePlanId,
   entitlementsOf,
   FREE_PLAN_ID,
+  freePlanAllowsNothing,
   graceEndsAt,
   handoverTrialDays,
   hasLiveSubscription,
   isSeatBilled,
+  needsFirstPlan,
   periodsOf,
   type Plan,
   PlanError,
@@ -528,6 +530,56 @@ describe("billing domain", () => {
       const ended = { ...subscription(BillingStatus.Canceled), period: BillingPeriod.Yearly }
 
       expect(toGroupBilling(ended, GroupRole.OWNER, true, true, NOW, 7, 1).period).toBeNull()
+    })
+  })
+
+  describe("a free plan that allows nothing", () => {
+    const [free, pro] = PLANS
+    const nothing = (limits: Partial<Plan["entitlements"]["limits"]> = {}): Plan[] => [
+      {
+        ...free,
+        entitlements: {
+          ...free.entitlements,
+          limits: { maxMembers: 1, maxNotes: 0, maxAttachments: 0, storageBytes: 0, ...limits },
+        },
+      },
+      pro,
+    ]
+
+    it("is noticed when every free cap is 0 and the owner is the only member", () => {
+      expect(freePlanAllowsNothing(nothing())).toBe(true)
+      expect(freePlanAllowsNothing(nothing({ maxMembers: 0 }))).toBe(true)
+    })
+
+    it("is not noticed with Seed's own plans or any free cap above 0", () => {
+      expect(freePlanAllowsNothing()).toBe(false)
+      expect(freePlanAllowsNothing(nothing({ maxNotes: 1 }))).toBe(false)
+      expect(freePlanAllowsNothing(nothing({ maxAttachments: 1 }))).toBe(false)
+      expect(freePlanAllowsNothing(nothing({ storageBytes: 1 }))).toBe(false)
+      expect(freePlanAllowsNothing(nothing({ maxMembers: 2 }))).toBe(false)
+      expect(freePlanAllowsNothing(nothing({ maxMembers: null }))).toBe(false)
+      expect(freePlanAllowsNothing([pro])).toBe(false)
+    })
+
+    it("sends only the owner of a group that never had a subscription to choose a plan", () => {
+      const billing = (
+        subscribed: StoredSubscription | null,
+        role = GroupRole.OWNER,
+        enabled = true,
+      ) => toGroupBilling(subscribed, role, enabled, subscribed !== null, NOW, 7, 1)
+
+      expect(needsFirstPlan(billing(null), nothing())).toBe(true)
+      expect(needsFirstPlan(billing(null), PLANS)).toBe(false)
+      expect(needsFirstPlan(billing(null, GroupRole.ADMIN), nothing())).toBe(false)
+      expect(needsFirstPlan(billing(null, GroupRole.OWNER, false), nothing())).toBe(false)
+      expect(needsFirstPlan(billing(subscription(BillingStatus.Active)), nothing())).toBe(false)
+      // A group that paid once and lapsed is back on Free, but it is not new.
+      expect(needsFirstPlan(billing(subscription(BillingStatus.Canceled)), nothing())).toBe(false)
+    })
+
+    it("reads a cap of 0 from the catalog it is given", () => {
+      expect(entitlementsOf(FREE_PLAN_ID, true, nothing()).limits.maxNotes).toBe(0)
+      expect(entitlementsOf("gone", true, nothing()).limits.maxNotes).toBe(0)
     })
   })
 })

@@ -43,6 +43,13 @@ const REFUSAL_KEYS: Record<
   },
 }
 
+/** What a refusal says when the plan allows none of the thing, whatever it is. */
+const NO_PLAN_KEYS = {
+  named: `PlanRefusalNotice.noPlanTitle`,
+  unnamed: `PlanRefusalNotice.noPlanTitleUnnamed`,
+  message: `PlanRefusalNotice.noPlanText`,
+}
+
 export interface PlanRefusalNoticeProps {
   groupId: string
   /** The refusal the API sent with its 402, or the socket with its `forbidden`. */
@@ -66,11 +73,14 @@ export function PlanRefusalNotice(
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => box.current?.focus(), [refusal])
   const t = useAppText()
-  const keys = REFUSAL_KEYS[refusal.entitlement]
+  // A cap of 0 is no limit reached: the plan allows none of it, so the notice asks for a plan.
+  const keys = refusal.limit === 0 ? NO_PLAN_KEYS : REFUSAL_KEYS[refusal.entitlement]
   const title = groupName === undefined
     ? t.t(keys.unnamed)
     : t.t(keys.named, { group: isolate(groupName) })
-  const message = t.t(keys.message, { count: refusal.limit ?? 0 })
+  const message = refusal.limit === 0
+    ? t.t(NO_PLAN_KEYS.message)
+    : t.t(keys.message, { count: refusal.limit ?? 0 })
   return (
     <div
       ref={box}

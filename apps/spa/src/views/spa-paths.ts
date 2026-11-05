@@ -59,7 +59,7 @@ export const SPA_ROUTES = {
   "/benchmark": { open: false },
   // The profile: the list of its sections, and one section (`/profile/security`).
   "/profile/:section?": { open: false },
-  // The home page opens the notes; signed out, the notes send the visitor to sign-in.
+  // The home page (`HomeView`) opens the notes, or a new owner's plan; signed out, sign-in.
   "/": { open: true },
 } as const satisfies Record<string, { open: boolean }>
 

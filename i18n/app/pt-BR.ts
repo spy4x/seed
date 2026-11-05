@@ -636,6 +636,32 @@ export default {
   "GroupBillingPanel.periodHint": "O Stripe mostra quanto você paga hoje antes de você confirmar.",
   "GroupBillingPanel.switchYearly": "Mudar para anual",
   "GroupBillingPanel.switchMonthly": "Mudar para mensal",
+  "GroupBillingPanel.startHeading": "Comece com o <plan>{plan}</plan>",
+  "GroupBillingPanel.unitMonth": "por mês",
+  "GroupBillingPanel.unitYear": "por ano",
+  "GroupBillingPanel.unitMemberMonth": "por membro por mês",
+  "GroupBillingPanel.unitMemberYear": "por membro por ano",
+  "GroupBillingPanel.wholeGroup": {
+    "one": "Para o grupo todo, até {count} membro.",
+    "many": "Para o grupo todo, até {count} de membros.",
+    "other": "Para o grupo todo, até {count} membros.",
+  },
+  "GroupBillingPanel.wholeGroupNoCap": "Para o grupo todo.",
+  "GroupBillingPanel.continueToPayment": "Ir para o pagamento",
+  "GroupBillingPanel.priceFlat": "O {plan} custa {price} por mês para o grupo todo.",
+  "GroupBillingPanel.priceFlatYear": "O {plan} custa {price} por ano para o grupo todo.",
+  "GroupBillingPanel.finePrintFlat":
+    "Cobrança mensal. Cancele quando quiser e continue no {plan} até o fim do período.",
+  "GroupBillingPanel.finePrintFlatYear":
+    "Cobrança anual. Cancele quando quiser e continue no {plan} até o fim do período.",
+  "GroupBillingPanel.refund": {
+    "one": "Mudou de ideia? Peça o reembolso total em até {count} dia.",
+    "many": "Mudou de ideia? Peça o reembolso total em até {count} de dias.",
+    "other": "Mudou de ideia? Peça o reembolso total em até {count} dias.",
+  },
+  "GroupBillingPanel.joinInstead":
+    "Quer entrar no grupo de outra pessoa? Peça ao dono dele um link de convite em vez de pagar.",
+  "HomeView.opening": "Abrindo o app…",
   "GroupBillingView.trialStarted": {
     "one": "Seu teste do {plan} de {count} dia começou",
     "many": "Seu teste do {plan} de {count} de dias começou",
@@ -754,6 +780,8 @@ export default {
   "OverviewScreen.emptyGroupText":
     "A visão geral vai se preenchendo conforme as pessoas do grupo criam notas.",
   "OverviewScreen.newNote": "Nova nota",
+  "OverviewScreen.choosePlanText": "Escolha um plano para começar a adicionar.",
+  "OverviewScreen.choosePlan": "Escolher um plano",
   "OverviewScreen.allHidden": "Todos os widgets estão ocultos",
   "OverviewScreen.allHiddenText": "Escolha os que você quer ver.",
   "OverviewScreen.gridLabel": "Visão geral de {group}",
@@ -808,6 +836,9 @@ export default {
     "No plano deste grupo, você pode rebaixar a função de um membro ou removê-lo, mas não promovê-lo.",
   "PlanRefusalNotice.openBilling": "Abrir a aba Cobrança",
   "PlanRefusalNotice.askOwner": "Peça ao dono do grupo para mudar de plano.",
+  "PlanRefusalNotice.noPlanTitle": "{group} não tem plano pago",
+  "PlanRefusalNotice.noPlanTitleUnnamed": "Este grupo não tem plano pago",
+  "PlanRefusalNotice.noPlanText": "Escolha um plano para começar a adicionar.",
   "GuestProfile.accountType": "Tipo de conta",
   "GuestProfile.guestAccount": "Conta de visitante. Só este navegador consegue abri-la.",
   "GuestProfile.methods": "Formas de entrar",

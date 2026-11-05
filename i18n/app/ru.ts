@@ -679,6 +679,34 @@ export default {
     "Перед подтверждением Stripe покажет, сколько нужно заплатить сегодня.",
   "GroupBillingPanel.switchYearly": "Перейти на оплату за год",
   "GroupBillingPanel.switchMonthly": "Перейти на помесячную оплату",
+  "GroupBillingPanel.startHeading": "Подключите тариф <plan>{plan}</plan>",
+  "GroupBillingPanel.unitMonth": "в месяц",
+  "GroupBillingPanel.unitYear": "в год",
+  "GroupBillingPanel.unitMemberMonth": "в месяц за участника",
+  "GroupBillingPanel.unitMemberYear": "в год за участника",
+  "GroupBillingPanel.wholeGroup": {
+    "one": "За всю группу, до {count} участника.",
+    "few": "За всю группу, до {count} участников.",
+    "many": "За всю группу, до {count} участников.",
+    "other": "За всю группу, до {count} участника.",
+  },
+  "GroupBillingPanel.wholeGroupNoCap": "За всю группу.",
+  "GroupBillingPanel.continueToPayment": "Перейти к оплате",
+  "GroupBillingPanel.priceFlat": "Тариф {plan} — {price} в месяц за всю группу.",
+  "GroupBillingPanel.priceFlatYear": "Тариф {plan} — {price} в год за всю группу.",
+  "GroupBillingPanel.finePrintFlat":
+    "Оплата ежемесячно. Отменить можно в любой момент — {plan} останется до конца оплаченного периода.",
+  "GroupBillingPanel.finePrintFlatYear":
+    "Оплата раз в год. Отменить можно в любой момент — {plan} останется до конца оплаченного периода.",
+  "GroupBillingPanel.refund": {
+    "one": "Передумали? Попросите о возврате в течение {count} дня — вернём всю сумму.",
+    "few": "Передумали? Попросите о возврате в течение {count} дней — вернём всю сумму.",
+    "many": "Передумали? Попросите о возврате в течение {count} дней — вернём всю сумму.",
+    "other": "Передумали? Попросите о возврате в течение {count} дня — вернём всю сумму.",
+  },
+  "GroupBillingPanel.joinInstead":
+    "Хотите присоединиться к чужой группе? Попросите её владельца прислать ссылку-приглашение — платить не нужно.",
+  "HomeView.opening": "Открываем приложение…",
   "GroupBillingView.trialStarted": {
     "one": "Начался пробный период {plan} на {count} день",
     "few": "Начался пробный период {plan} на {count} дня",
@@ -800,6 +828,8 @@ export default {
   "OverviewScreen.emptyGroupText":
     "Обзор наполнится, когда участники группы начнут добавлять заметки.",
   "OverviewScreen.newNote": "Новая заметка",
+  "OverviewScreen.choosePlanText": "Чтобы что-то добавить, выберите тариф.",
+  "OverviewScreen.choosePlan": "Выбрать тариф",
   "OverviewScreen.allHidden": "Все виджеты скрыты",
   "OverviewScreen.allHiddenText": "Выберите, какие показывать.",
   "OverviewScreen.gridLabel": "Обзор группы {group}",
@@ -859,6 +889,9 @@ export default {
     "На тарифе этой группы можно понизить роль участника или исключить его, но не повысить.",
   "PlanRefusalNotice.openBilling": "Открыть вкладку «Оплата»",
   "PlanRefusalNotice.askOwner": "Попросите владельца группы перейти на платный тариф.",
+  "PlanRefusalNotice.noPlanTitle": "У группы {group} нет платного тарифа",
+  "PlanRefusalNotice.noPlanTitleUnnamed": "У этой группы нет платного тарифа",
+  "PlanRefusalNotice.noPlanText": "Чтобы что-то добавить, выберите тариф.",
   "GuestProfile.accountType": "Тип аккаунта",
   "GuestProfile.guestAccount": "Гостевой аккаунт. Открывается только в этом браузере.",
   "GuestProfile.methods": "Способы входа",

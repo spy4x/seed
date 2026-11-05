@@ -104,6 +104,11 @@ export interface Plan {
    * `maxMembers` caps.
    */
   perSeat: boolean
+  /**
+   * Days after the first payment within which the product refunds it in full, shown next to the
+   * checkout button. Leave it out unless the product honours it: the page then promises nothing.
+   */
+  refundDays?: number
 }
 
 /** Every plan, free first. The paid ones are the ones a checkout may name. */
@@ -188,11 +193,30 @@ export function yearlySavingOf(plan: Plan): number {
 
 /**
  * What a group may do: its plan's entitlements, or {@link UNLIMITED} while billing is off, since
- * nobody could pay to lift a cap. An id no plan has gets the free plan's.
+ * nobody could pay to lift a cap. An id no plan has gets the free plan's. `plans` is the catalog,
+ * {@link PLANS} unless a test passes its own.
  */
-export function entitlementsOf(planId: string, billingEnabled: boolean): Entitlements {
+export function entitlementsOf(
+  planId: string,
+  billingEnabled: boolean,
+  plans: readonly Plan[] = PLANS,
+): Entitlements {
   if (!billingEnabled) return UNLIMITED
-  return (findPlan(planId) ?? PLANS[0]).entitlements
+  return (plans.find((plan) => plan.id === planId) ?? plans[0]).entitlements
+}
+
+/**
+ * Whether the free plan allows nothing: no note, no file, no storage, and no member but the owner.
+ * A product that is paid from sign-up sets its free caps so, and its new owners are then sent to
+ * checkout (see {@link needsFirstPlan}). `plans` is the catalog, {@link PLANS} unless a test passes
+ * its own.
+ */
+export function freePlanAllowsNothing(plans: readonly Plan[] = PLANS): boolean {
+  const free = plans.find((plan) => plan.id === FREE_PLAN_ID)
+  if (!free) return false
+  const { maxMembers, maxNotes, maxAttachments, storageBytes } = free.entitlements.limits
+  return maxNotes === 0 && maxAttachments === 0 && storageBytes === 0 &&
+    maxMembers !== null && maxMembers <= 1
 }
 
 /**
@@ -512,6 +536,17 @@ export function toGroupBilling(
       ? { seats: members, amount: seatAmount, currency: seatPlan.currency, period: seatPeriod }
       : null,
   }
+}
+
+/**
+ * Whether the group's owner should choose a plan before anything else: the free plan allows nothing
+ * ({@link freePlanAllowsNothing}), billing is on, the person reading is the owner, and the group is
+ * on the free plan and never had a subscription. An abandoned checkout leaves no subscription, so
+ * this stays true after it; a group that paid once and lapsed is not new and gets `false`.
+ */
+export function needsFirstPlan(billing: GroupBilling, plans: readonly Plan[] = PLANS): boolean {
+  return billing.enabled && billing.canManage && billing.planId === FREE_PLAN_ID &&
+    billing.status === null && !billing.subscribed && freePlanAllowsNothing(plans)
 }
 
 /** A date as JSON carries it, an ISO string, back to a date; `undefined` for anything else. */

@@ -557,6 +557,28 @@ export default {
   "GroupBillingPanel.periodHint": "確定する前に、今日のお支払い額がStripeに表示されます。",
   "GroupBillingPanel.switchYearly": "年払いに切り替える",
   "GroupBillingPanel.switchMonthly": "月払いに切り替える",
+  "GroupBillingPanel.startHeading": "<plan>{plan}</plan>プランで始める",
+  "GroupBillingPanel.unitMonth": "/月",
+  "GroupBillingPanel.unitYear": "/年",
+  "GroupBillingPanel.unitMemberMonth": "メンバー1人あたり/月",
+  "GroupBillingPanel.unitMemberYear": "メンバー1人あたり/年",
+  "GroupBillingPanel.wholeGroup": {
+    "other": "グループ全体の料金です（メンバー{count}人まで）。",
+  },
+  "GroupBillingPanel.wholeGroupNoCap": "グループ全体の料金です。",
+  "GroupBillingPanel.continueToPayment": "支払いに進む",
+  "GroupBillingPanel.priceFlat": "{plan}の料金は、グループ全体で月額{price}です。",
+  "GroupBillingPanel.priceFlatYear": "{plan}の料金は、グループ全体で年額{price}です。",
+  "GroupBillingPanel.finePrintFlat":
+    "毎月請求されます。いつでも解約でき、期間の終わりまで{plan}を使えます。",
+  "GroupBillingPanel.finePrintFlatYear":
+    "毎年請求されます。いつでも解約でき、期間の終わりまで{plan}を使えます。",
+  "GroupBillingPanel.refund": {
+    "other": "気が変わったら、{count}日以内にお申し出いただければ全額返金します。",
+  },
+  "GroupBillingPanel.joinInstead":
+    "ほかの人のグループに参加する場合は、支払いはせずに、そのグループのオーナーから招待リンクをもらってください。",
+  "HomeView.opening": "アプリを開いています…",
   "GroupBillingView.trialStarted": {
     "other": "{plan}の{count}日間トライアルが始まりました",
   },
@@ -663,6 +685,8 @@ export default {
   "OverviewScreen.emptyGroup": "{group}にはまだメモがありません",
   "OverviewScreen.emptyGroupText": "グループのメンバーがメモを追加すると、概要が埋まっていきます。",
   "OverviewScreen.newNote": "新しいメモ",
+  "OverviewScreen.choosePlanText": "追加を始めるには、プランを選んでください。",
+  "OverviewScreen.choosePlan": "プランを選ぶ",
   "OverviewScreen.allHidden": "すべてのウィジェットが非表示です",
   "OverviewScreen.allHiddenText": "表示したいウィジェットを選んでください。",
   "OverviewScreen.gridLabel": "{group}の概要",
@@ -707,6 +731,9 @@ export default {
     "このグループのプランでは、メンバーのロールを下げたり外したりはできますが、上げることはできません。",
   "PlanRefusalNotice.openBilling": "「請求」タブを開く",
   "PlanRefusalNotice.askOwner": "グループのオーナーにプランのアップグレードを依頼してください。",
+  "PlanRefusalNotice.noPlanTitle": "{group}には有料プランがありません",
+  "PlanRefusalNotice.noPlanTitleUnnamed": "このグループには有料プランがありません",
+  "PlanRefusalNotice.noPlanText": "追加を始めるには、プランを選んでください。",
   "GuestProfile.accountType": "アカウントの種類",
   "GuestProfile.guestAccount": "ゲストアカウント。このブラウザからしか開けません。",
   "GuestProfile.methods": "ログイン方法",

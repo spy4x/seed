@@ -5,13 +5,16 @@ import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { type LayoutEntry, mergeLayout, setLayoutHidden } from "@spy4x/preact-ui/layout-customiser"
 import { rangeForPreset } from "@spy4x/preact-ui/date-range"
 import { rangeFromSearch, rangeToSearch } from "@spy4x/preact-ui/date-range-search"
-import { canMutateNotes, type CountWidgetResult, groupTimeZone } from "@domain/groups"
+import { canMutateNotes, type CountWidgetResult, GroupRole, groupTimeZone } from "@domain/groups"
+import { freePlanAllowsNothing, needsFirstPlan } from "@domain/billing"
 import { NOTE_WIDGET_IDS } from "@domain/notes"
 import { OVERVIEW_DEFAULT_PRESET, OVERVIEW_PRESETS, OverviewScreen } from "@ui/overview-screen.tsx"
 import { OVERVIEW_VIEWS, OVERVIEW_WIDGETS } from "@ui/overview-widgets.ts"
-import { OVERVIEW_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { GROUP_PATHS, OVERVIEW_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { useAppText } from "@ui/i18n.ts"
+import { billingStore } from "../state/billing.ts"
 import { groupsStore } from "../state/groups.ts"
+import { isGuestSession } from "../state/guest.ts"
 import { overviewStore } from "../state/overview.ts"
 import { preferencesState } from "../state/preferences.ts"
 import { selectionStore } from "../state/selection.ts"
@@ -82,6 +85,17 @@ export function OverviewView({ groupId }: { groupId: string }) {
     if (!membership) return
     overviewStore.open({ groupId, range: choice.range, timeZone }, shown)
   }, [groupId, membership?.role, choice.range.from, choice.range.to, timeZone, shownKey])
+
+  // The owner of a new group under a free plan that allows nothing is told to choose a plan, as the
+  // home page tells them on sign-in, and with the same exceptions (`landingPath`).
+  const asksForPlan = membership?.role === GroupRole.OWNER && freePlanAllowsNothing() &&
+    !isGuestSession() &&
+    groupsStore.groups.value.every((group) => group.role === GroupRole.OWNER)
+  useEffect(() => {
+    if (asksForPlan) void billingStore.load(groupId)
+  }, [asksForPlan, groupId, membership?.changeSequence])
+  const billing = billingStore.current.value
+  const choosePlan = asksForPlan && billing?.groupId === groupId && needsFirstPlan(billing.billing)
 
   useEffect(() => {
     overviewPageActions.value = {
@@ -180,8 +194,9 @@ export function OverviewView({ groupId }: { groupId: string }) {
           () => {},
         )}
       emptyGroup={totalNow === 0 && membership
-        ? { canCreate: isSelected && canMutateNotes(membership.role) }
+        ? { canCreate: isSelected && canMutateNotes(membership.role) && !choosePlan }
         : null}
+      choosePlanHref={choosePlan ? GROUP_PATHS.billing(groupId) : null}
       rangeDataE2E={RANGE_E2E}
       navigate={navigate}
     />

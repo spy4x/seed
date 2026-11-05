@@ -59,7 +59,10 @@ export const API_DOCS_PATH = "/docs/api"
 
 /** The pages these screens link to. */
 export const SCREEN_PATHS = {
-  /** The app's home, which opens the notes. */
+  /**
+   * The app's home: where sign-in lands without a `next`. It opens the notes, or the Billing tab for
+   * the owner of a new group when the free plan allows nothing.
+   */
   home: "/",
   signIn: "/sign-in",
   signUp: "/sign-up",
@@ -148,9 +151,12 @@ export function withNext(path: string, next: string | null): string {
   return next ? `${path}?${new URLSearchParams({ [NEXT_PARAM]: next })}` : path
 }
 
-/** Where a finished sign-in goes: the checked `next`, or the notes list without one. */
+/**
+ * Where a finished sign-in goes: the checked `next`, or the app's home without one, which decides
+ * between the notes and the plan (`apps/spa/src/views/HomeView.tsx`).
+ */
 export function afterSignIn(next: string | null): string {
-  return next ?? NOTE_PATHS.list
+  return next ?? SCREEN_PATHS.home
 }
 
 /** Where the group overview lives: `/overview` opens the selected group's. */
