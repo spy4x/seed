@@ -13,7 +13,7 @@ topic: Guides
 intro: "Self-hosting a SaaS on one server is cheap until the disk dies. Here is what to back up, where to keep it and how to prove the restore works, with the backup Seed ships as the worked example."
 relatedFeature: deploy
 cover: covers/self-hosted-saas-backup-and-restore.webp
-coverAlt: "A violet plant growing from a server tower on one small island, and on a second island across the water a sealed glass jar with a cutting of the same plant, beside a pot the cutting is being replanted into."
+coverAlt: "A violet plant on a server on one island, and on another a sealed jar with a cutting of it beside a pot it is replanted into."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-08T09:00:00Z
