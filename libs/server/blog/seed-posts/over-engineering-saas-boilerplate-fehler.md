@@ -2,7 +2,7 @@
 slug: over-engineering-saas-boilerplate-fehler
 language: de
 translationOf: over-engineering-a-saas-boilerplate
-title: "Was ich bei Seed v1 falsch gemacht habe: Over-Engineering eines SaaS-Boilerplates"
+title: "Was ich bei Seed v1 falsch gemacht habe: zu viel gebaut"
 seoTitle: "Over-Engineering im SaaS-Boilerplate: meine Fehler bei Seed v1"
 description: "Seed v1 hakte die Hälfte seiner Roadmap ab und fast nichts von dem, was ein Mensch benutzt. Wie Over-Engineering eines SaaS-Boilerplates im Code aussah, und was Seed heute tut."
 tldr:
