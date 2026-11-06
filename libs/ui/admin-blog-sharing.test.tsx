@@ -232,6 +232,11 @@ function props(
   }
 }
 
+/** The channel of the row that has focus, compared as text so a failure prints a short diff. */
+function focusedChannel(): string | undefined {
+  return (document.activeElement as HTMLElement | null)?.dataset.channel
+}
+
 function rowFor(channel: BlogChannel): HTMLElement {
   return find(`[data-e2e=blog-share-row][data-channel="${channel.id}"]`)
 }
@@ -322,16 +327,16 @@ describe("the sharing checklist", () => {
       ...ROWS.slice(1),
     ]
     await mount(<AdminBlogSharingScreen {...props(calls, { sharing: sharingOf(after) })} />)
-    expect(document.activeElement).toBe(rowFor(TELEGRAM))
+    expect(focusedChannel()).toBe(TELEGRAM.id)
   })
 
   it("moves between rows with j and k and opens the skip dialog with s", async () => {
     await mount(<AdminBlogSharingScreen {...props([])} />)
     rowFor(REDDIT).focus()
     await press(rowFor(REDDIT), "j")
-    expect(document.activeElement).toBe(rowFor(TELEGRAM))
+    expect(focusedChannel()).toBe(TELEGRAM.id)
     await press(rowFor(TELEGRAM), "k")
-    expect(document.activeElement).toBe(rowFor(REDDIT))
+    expect(focusedChannel()).toBe(REDDIT.id)
     await press(rowFor(REDDIT), "s")
     expect(find("[data-e2e=blog-share-skip-dialog]").textContent).toContain("r/selfhosted")
   })
@@ -341,7 +346,7 @@ describe("the sharing checklist", () => {
     const field = find<HTMLInputElement>("[data-e2e=blog-share-link]", rowFor(REDDIT))
     field.focus()
     await press(field, "s")
-    expect(document.querySelector("[data-e2e=blog-share-skip-dialog]")).toBeNull()
+    expect(document.querySelectorAll("[data-e2e=blog-share-skip-dialog]").length).toBe(0)
   })
 
   it("sends only the numbers the channel shows from the results dialog", async () => {
@@ -350,7 +355,7 @@ describe("the sharing checklist", () => {
     await clickOn(find("[data-e2e=blog-share-status]", rowFor(DEVTO)))
     await clickOn(find("[data-e2e=blog-share-results]", rowFor(DEVTO)))
     const dialog = find("[data-e2e=blog-share-results-dialog]")
-    expect(dialog.querySelector("[data-e2e=blog-share-result-score]")).toBeNull()
+    expect(dialog.querySelectorAll("[data-e2e=blog-share-result-score]").length).toBe(0)
     await type(find<HTMLInputElement>("[data-e2e=blog-share-result-views]"), "150")
     await type(find<HTMLInputElement>("[data-e2e=blog-share-result-comments]"), "")
     await submit(find("[data-e2e=blog-share-results-save]"))
@@ -366,7 +371,7 @@ describe("the sharing checklist", () => {
     const draft = { ...sharingOf([]), post: { ...sharingOf().post, status: "draft" as const } }
     await mount(<AdminBlogSharingScreen {...props([], { sharing: draft })} />)
     expect(document.body.textContent).toContain("Once this post is live")
-    expect(document.querySelector("[data-e2e=blog-share-row]")).toBeNull()
+    expect(document.querySelectorAll("[data-e2e=blog-share-row]").length).toBe(0)
   })
 
   it("names the missing Umami settings next to a posted row's visits", async () => {

@@ -173,7 +173,7 @@ describe("the sharing channels list", () => {
     expect(names).toEqual(["r/selfhosted", "Dev.to"])
     expect(row(1).querySelector("[data-e2e=blog-channel-key-missing]")?.textContent)
       .toContain("DEVTO_API_KEY")
-    expect(document.querySelector("[data-e2e=blog-channels-filter]")).toBeNull()
+    expect(document.querySelectorAll("[data-e2e=blog-channels-filter]").length).toBe(0)
   })
 
   it("offers Delete only on a channel without shares, and archives through the menu", async () => {
@@ -287,7 +287,7 @@ describe("the channel form", () => {
       />,
     )
     const field = find<HTMLInputElement>("[data-e2e=blog-channel-address]")
-    expect(document.activeElement).toBe(field)
+    expect(document.activeElement?.id).toBe(field.id)
     const described = (field.getAttribute("aria-describedby") ?? "").split(" ")
       .map((id) => document.getElementById(id)?.textContent).join(" ")
     expect(described).toContain("Start the link with https://.")
