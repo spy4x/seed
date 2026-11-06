@@ -21,12 +21,18 @@ import { describeCron, parseCron } from "@spy4x/time/cron"
 import type { BillingProvider } from "@spy4x/billing"
 import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import { BillingNoticeKind, type Plan } from "@domain/billing"
-import { BLOG_CROSSPOST_JOB, BLOG_INDEXNOW_JOB, BLOG_PUBLISH_JOB } from "@domain/blog"
+import {
+  BLOG_CROSSPOST_JOB,
+  BLOG_INDEXNOW_JOB,
+  BLOG_PUBLISH_JOB,
+  BLOG_SHARE_RESULTS_JOB,
+} from "@domain/blog"
 import { BILLING_NOTICE_JOBS } from "../billing/billing-notices.ts"
 import { SEAT_SYNC_JOB, seatSyncJob } from "../billing/seat-sync.ts"
 import { blogPublishJob } from "../blog/blog-publish-job.ts"
 import { blogIndexNowJob, type IndexNowSetup } from "../blog/blog-indexnow-job.ts"
 import { blogCrosspostJob, type BlogCrosspostSetup } from "../blog/blog-crosspost-job.ts"
+import { blogShareResultsJob, type ShareResultsSetup } from "../blog/blog-share-results-job.ts"
 import type { SubscribersSetup } from "../subscribers/subscribers.ts"
 import {
   ACCOUNT_DELETION_MAIL_JOB,
@@ -95,6 +101,8 @@ export interface JobDeps {
   indexNow: IndexNowSetup | null
   /** The website's origin and a Dev.to client, or `null` while the cross-post is off. */
   crosspost: BlogCrosspostSetup | null
+  /** The readers of each channel's numbers, or `null` to read none (tests of other jobs). */
+  shareResults: ShareResultsSetup | null
   /** How jobs ask the public website something, such as whether a post is live. */
   fetch: typeof fetch
   /** The plan catalog the billing jobs read, `PLANS` unless a test passes its own. */
@@ -381,6 +389,14 @@ export const JOBS: readonly JobDefinition[] = [
     kind: BLOG_INDEXNOW_JOB,
     label: `Tell search engines a blog post changed`,
     handler: ({ sql, mail, indexNow }) => blogIndexNowJob({ sql, setup: indexNow, log: mail.log }),
+  }),
+  // Reads only: a run that is repeated or retried stores one more reading, never a second post.
+  defineJob({
+    kind: BLOG_SHARE_RESULTS_JOB,
+    label: `Read blog sharing results`,
+    repeat: { cron: `17 * * * *` },
+    handler: ({ sql, mail, shareResults }) =>
+      blogShareResultsJob({ sql, setup: shareResults, log: mail.log }),
   }),
 ]
 

@@ -9,6 +9,7 @@ import { readTelegramSetup } from "@server/telegram/setup.ts"
 import { queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
 import { readIndexNowSetup } from "@server/blog/blog-indexnow-job.ts"
 import { readCrosspostSetup } from "@server/blog/blog-crosspost-job.ts"
+import { readShareResultsSetup } from "@server/blog/blog-share-results-job.ts"
 import { loadDemoBlogPosts } from "@server/blog/seed-posts.ts"
 import { PostgresIdempotencyStore } from "@spy4x/server/idempotency"
 import { startIdempotencySweep } from "./idempotency-sweep.ts"
@@ -130,6 +131,14 @@ if (!crosspost && processEnv.get("DEVTO_API_KEY")?.trim()) {
   console.warn("The Dev.to cross-post is off: DEVTO_API_KEY is set, but MPA_DOMAIN is not")
 }
 
+// Sharing results (docs/blog.md): every hour, the numbers of each copy posted to Dev.to, Reddit,
+// Hacker News, Mastodon, Bluesky or Hashnode in the last 90 days are read when due. Dev.to reads
+// with `DEVTO_API_KEY`; Dev.to and Reddit need `MPA_DOMAIN`; the others read public numbers.
+const shareResults = readShareResultsSetup(
+  processEnv,
+  processEnv.get("ENV") === "dev" ? "dev" : "prod",
+)
+
 // The public demo (docs/demo.md) gives every new account its own sample groups.
 const demo = isDemoMode(readEnvRecord([`DEMO_MODE`]))
 // The owner's private administrator on the demo, when `DEMO_ADMIN_PASSWORD` is set. A bad value
@@ -176,6 +185,8 @@ const processor = createOutboxProcessor(
   imageScratch,
   indexNow,
   crosspost,
+  undefined,
+  shareResults,
 )
 
 // Starts the nightly chain the first time; a restart finds the waiting row and adds nothing. A run
