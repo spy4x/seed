@@ -527,7 +527,7 @@ function ShareRow(
                 href={open}
                 target="_blank"
                 rel="noopener noreferrer"
-                variant="ghost"
+                variant="secondary"
                 class="min-h-11 w-full sm:min-h-9 sm:w-auto"
                 data-e2e="blog-share-open"
               >
@@ -661,40 +661,41 @@ function LinkForm(
         if (url !== ``) onPost(url)
       }}
     >
-      <div class="flex items-end gap-2">
-        <div class="min-w-0 flex-1">
-          <Field
-            id={id}
-            label={label}
-            hint={t.t(`AdminBlogSharing.linkHint`, { channel: row.channel.name })}
-            error={missing ? t.t(`AdminBlogSharing.linkRequired`) : error}
-          >
+      <Field
+        id={id}
+        label={label}
+        hint={t.t(`AdminBlogSharing.linkHint`, { channel: row.channel.name })}
+        error={missing ? t.t(`AdminBlogSharing.linkRequired`) : error}
+      >
+        {(wiring) => (
+          <div class="flex flex-col gap-2 sm:flex-row">
             <Input
+              id={wiring.id}
+              aria-describedby={wiring[`aria-describedby`]}
+              aria-invalid={missing || error !== null ? true : undefined}
               name="url"
               type="url"
               inputMode="url"
               autocomplete="off"
               maxLength={BLOG_SHARE_URL_MAX_LENGTH}
-              class="font-mono"
+              class="min-w-0 font-mono sm:flex-1"
               disabled={disabled}
               data-e2e="blog-share-link"
               onInput={() => setMissing(false)}
             />
-          </Field>
-        </div>
-      </div>
-      <div class="mt-2 flex sm:justify-end">
-        <Button
-          type="submit"
-          variant="secondary"
-          class="min-h-11 w-full sm:min-h-9 sm:w-auto"
-          busy={pending}
-          disabled={disabled && !pending}
-          data-e2e="blog-share-mark-posted"
-        >
-          {t.t(`AdminBlogSharing.markPosted`)}
-        </Button>
-      </div>
+            <Button
+              type="submit"
+              variant="secondary"
+              class="min-h-11 w-full shrink-0 sm:min-h-0 sm:w-auto"
+              busy={pending}
+              disabled={disabled && !pending}
+              data-e2e="blog-share-mark-posted"
+            >
+              {t.t(`AdminBlogSharing.markPosted`)}
+            </Button>
+          </div>
+        )}
+      </Field>
     </ScreenForm>
   )
 }
