@@ -26,7 +26,7 @@ them to it: `apps/admin/src/modules/registry.test.ts` and `apps/api/routes/admin
 | `groups`        | `/groups`, `/groups/:id`                                    | `/groups/*`            |
 | `billing`       | `/billing`, `/billing/:groupId`                             | `/billing/*`           |
 | `newsletter`    | `/newsletter`                                               | `/newsletter/*`        |
-| `blog`          | `/blog`, `/blog/new`, `/blog/:id`                           | `/blog/*`              |
+| `blog`          | `/blog`, `/blog/new`, `/blog/:id`, `/blog/:id/sharing`, `/blog/channels` and `/:id` | `/blog/*`              |
 | `contact-links` | `/contact-links`, `/contact-links/new`, `/contact-links/:id` | `/contact-links*`      |
 | `catalog`       | `/catalog`, `/catalog/:id`, `/catalog/categories` and `/:id` | `/catalog*`            |
 | `audit`         | `/audit`                                                    | `/audit*`              |
