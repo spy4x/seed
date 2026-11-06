@@ -637,6 +637,9 @@ export default {
   "AdminBlogSharing.numbersFrom": "Numbers from {time}",
   "AdminBlogSharing.numbersFromHand": "Numbers from {time}, entered by hand",
   "AdminBlogSharing.noNumbers": "No numbers yet",
+  "AdminBlogSharing.readFailed":
+    "Couldn't read new numbers from {channel}. Showing numbers from {time}.",
+  "AdminBlogSharing.readFailedNone": "Couldn't read numbers from {channel} yet.",
   "AdminBlogSharing.umamiOff":
     "Visits need Umami. Set <keys>{keys}</keys> in the server's env file and deploy.",
   "AdminBlogSharing.resultsTitle": "Enter results for {channel}",

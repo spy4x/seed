@@ -753,6 +753,9 @@ export const BLOG_CROSSPOST_JOB = `blog.crosspost`
 /** The job that tells IndexNow a post's addresses changed: it went live, changed, moved or left. */
 export const BLOG_INDEXNOW_JOB = `blog.indexnow`
 
+/** The repeating job that reads how each posted copy did on the channels that report it. */
+export const BLOG_SHARE_RESULTS_JOB = `blog.share-results`
+
 /** An IndexNow key: 8 to 128 letters, digits and dashes, as the protocol asks. */
 const INDEXNOW_KEY_PATTERN = /^[A-Za-z0-9-]{8,128}$/
 

@@ -704,6 +704,8 @@ AdminBlogSharing.presetLanguage	b725e03b4197eac5
 AdminBlogSharing.presetLater	73b6e48a1b552d11
 AdminBlogSharing.presetNotFit	97a0686fe66f292b
 AdminBlogSharing.reactions	8a7ede6b5f07f792
+AdminBlogSharing.readFailed	36fbdfaa4768bb57
+AdminBlogSharing.readFailedNone	4a02198e77205f14
 AdminBlogSharing.reason	0f7d4664a9bcd28a
 AdminBlogSharing.reasonHint	3023af7f84593dd9
 AdminBlogSharing.resultsOne	7092101cabd5ef3b

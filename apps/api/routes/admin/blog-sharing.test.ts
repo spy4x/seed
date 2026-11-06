@@ -65,6 +65,8 @@ function share(channelId: string, fields: Partial<BlogShare> = {}): BlogShare {
     skipReason: null,
     automatic: false,
     error: null,
+    readError: null,
+    readFailedAt: null,
     updatedAt: NOW,
     ...fields,
   }

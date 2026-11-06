@@ -2,7 +2,12 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type postgres from "postgres"
 import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
-import { BLOG_CROSSPOST_JOB, BLOG_INDEXNOW_JOB, BLOG_PUBLISH_JOB } from "@domain/blog"
+import {
+  BLOG_CROSSPOST_JOB,
+  BLOG_INDEXNOW_JOB,
+  BLOG_PUBLISH_JOB,
+  BLOG_SHARE_RESULTS_JOB,
+} from "@domain/blog"
 import { BILLING_NOTICE_JOBS } from "../billing/billing-notices.ts"
 import { SEAT_SYNC_JOB } from "../billing/seat-sync.ts"
 import {
@@ -60,6 +65,7 @@ const QUEUED_KINDS = [
   BLOG_PUBLISH_JOB,
   BLOG_INDEXNOW_JOB,
   BLOG_CROSSPOST_JOB,
+  BLOG_SHARE_RESULTS_JOB,
 ]
 
 const noop = () => async () => {}
@@ -81,11 +87,12 @@ describe(`job registry`, () => {
     }
   })
 
-  it(`repeats only the nightly cleanup, every day at 03:00 UTC`, () => {
+  it(`repeats the nightly cleanup at 03:00 UTC and the sharing results read hourly`, () => {
     expect(repeatSchedules(JOBS)).toEqual({
       repeatEveryMs: {},
-      repeatCron: { [OUTBOX_CLEANUP_JOB]: `0 3 * * *` },
+      repeatCron: { [OUTBOX_CLEANUP_JOB]: `0 3 * * *`, [BLOG_SHARE_RESULTS_JOB]: `17 * * * *` },
     })
+    expect(describeRepeat({ cron: `17 * * * *` })).toBe(`Every hour at minute 17`)
   })
 
   it(`names a kind by its label, and an unknown kind by itself`, () => {

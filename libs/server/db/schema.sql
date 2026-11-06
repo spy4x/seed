@@ -1469,11 +1469,16 @@ CREATE TABLE blog_post_shares (
     error VARCHAR(500),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    -- Why the results job's last read failed, and when; both NULL after a good read.
+    read_error VARCHAR(500),
+    read_failed_at TIMESTAMPTZ,
     CONSTRAINT blog_post_shares_post_channel_unique UNIQUE (post_id, channel_id),
     CONSTRAINT blog_post_shares_status_check
         CHECK (status IN ('todo', 'suggested', 'posted', 'skipped')),
     CONSTRAINT blog_post_shares_url_check CHECK (url IS NULL OR url LIKE 'https://%'),
-    CONSTRAINT blog_post_shares_skip_reason_check CHECK (skip_reason IS NULL OR status = 'skipped')
+    CONSTRAINT blog_post_shares_skip_reason_check CHECK (skip_reason IS NULL OR status = 'skipped'),
+    CONSTRAINT blog_post_shares_read_error_check
+        CHECK ((read_error IS NULL) = (read_failed_at IS NULL))
 );
 
 CREATE INDEX idx_blog_post_shares_channel ON blog_post_shares (channel_id);

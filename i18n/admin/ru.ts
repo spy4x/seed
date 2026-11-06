@@ -669,6 +669,9 @@ export default {
   "AdminBlogSharing.numbersFrom": "Данные на {time}",
   "AdminBlogSharing.numbersFromHand": "Данные на {time}, внесены вручную",
   "AdminBlogSharing.noNumbers": "Данных пока нет",
+  "AdminBlogSharing.readFailed":
+    "Не удалось получить свежие данные из {channel}. Показаны данные на {time}.",
+  "AdminBlogSharing.readFailedNone": "Пока не удалось получить данные из {channel}.",
   "AdminBlogSharing.umamiOff":
     "Для визитов нужен Umami. Укажите <keys>{keys}</keys> в env-файле сервера и выполните деплой.",
   "AdminBlogSharing.resultsTitle": "Результаты в {channel}",

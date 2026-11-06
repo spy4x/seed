@@ -91,7 +91,8 @@ updates the demo in the same PR:
   from files ([below](#seeds-own-blog-posts)).
 - **Where the posts were shared survives the wipe** for the same reason: `blog_channels`,
   `blog_post_shares` and `blog_share_results` record where the website's real posts went, and
-  reference only `blog_posts`. The demo seeds none of them; `deno task db:seed` in development
+  reference only `blog_posts`. A share's last failed read (`read_error`, `read_failed_at`) stays
+  with it; the results job writes it, and the seed writes none. The demo seeds none of them; `deno task db:seed` in development
   adds four sample channels, one post shared on one and skipped on another, and plainly fake
   numbers (`libs/server/blog/sample-sharing.ts`).
 - **The contact links survive the wipe** for the same reason: `contact_links` holds the

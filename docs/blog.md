@@ -13,6 +13,7 @@ Operators write posts in the admin app; the public website shows the published o
 | `libs/server/blog/blog-publish-job.ts`     | The `blog.publish` job (registered in `JOBS`), and `queueDueBlogJobs` for lost jobs. |
 | `libs/server/blog/blog-crosspost-job.ts`   | The `blog.crosspost` job, which copies a live post to Dev.to once ([below](#the-devto-cross-post)). |
 | `libs/domain/blog/sharing.ts`, `libs/server/blog/postgres-sharing-repository.ts` | Sharing channels, each post's checklist and its results ([below](#sharing-channels)). |
+| `libs/server/blog/blog-share-results-job.ts` | The hourly `blog.share-results` job, which reads each posted copy's numbers ([below](#sharing-results)). |
 | `libs/server/blog/social-texts.ts`         | The LinkedIn, Telegram and X texts of a post, printed by `deno task blog:social` ([below](#channel-texts)). |
 | `apps/mpa/blog-covers.ts`, `apps/mpa/screenshots/blog-og.ts` | Covers as the pages draw them, and the link-preview cards of Seed's own posts ([below](#covers-and-link-previews)). |
 | `libs/server/blog/blog-indexnow-job.ts`    | The `blog.indexnow` job, which tells search engines about a post ([below](#indexnow)). |
@@ -196,11 +197,47 @@ and `e` enters its numbers.
 - **`utm_source` on links.** Every link the page hands out (the copied text, the submit form, the
   shown address) carries the channel's source tag unless its "Add utm_source to links" is off.
   The post's canonical address and the Dev.to `canonical_url` stay clean.
-- **Results are counts only:** views, reactions, comments and score, typed in by hand for now.
-  Each reading is a new row and the latest one shows; an unknown number shows as "–".
+- **Results are counts only:** views, reactions, comments and score, read by a job
+  ([below](#sharing-results)) or typed in by hand. Each reading is a new row and the latest one
+  shows, with when it was read and whether by hand; an unknown number shows as "–".
 - **Visits** come from Umami, by the link's `utm_source`, through Stats' five-minute copy, so they
   show only when `UMAMI_API_URL`, `UMAMI_API_TOKEN` and `UMAMI_WEBSITE_ID` are set. The token
   stays on the server.
+
+## Sharing results
+
+The `blog.share-results` job runs every hour, at minute 17 (UTC). It reads the numbers of each copy
+that is marked posted with a link, on an active channel of a kind that reports them, and stores
+each reading as a new row (`source = 'job'`). A number the channel does not report stays empty
+("–"), never 0.
+
+| Kind        | Numbers                       | Needs                                                              |
+| ----------- | ----------------------------- | ------------------------------------------------------------------ |
+| Dev.to      | views, reactions, comments    | `DEVTO_API_KEY` (the cross-post's key) and `MPA_DOMAIN`           |
+| Reddit      | score, comments               | `MPA_DOMAIN`, named in the `User-Agent` Reddit asks for            |
+| Hacker News | score, comments               | nothing: Algolia's public search                                   |
+| Mastodon    | reactions (favourites), replies | nothing: a public or unlisted status                             |
+| Bluesky     | reactions (likes), replies    | nothing: the public AppView                                        |
+| Hashnode    | views, reactions, comments    | nothing, but Hashnode answers only for a publication on its Pro plan |
+
+- **When.** A copy is read for its first 90 days after it was shared, then never again: daily
+  while it is under 14 days old, weekly after that. "Daily" means at least 23 hours since the last
+  read, and "weekly" 6 days and 23 hours: the hour of slack keeps an hourly job from drifting a
+  day later each time. A run reads at most 50 copies, those read longest ago first.
+- **Which copy.** The id comes from the copy's link, checked strictly: a Dev.to article
+  (`https://dev.to/you/post`, read by the post's canonical address, as the cross-post set it), a
+  Reddit post (`/r/name/comments/id/…` or `redd.it/id`), a Hacker News item (`item?id=`), a
+  Mastodon status on the channel's own instance (`https://instance/@you/id`), a Bluesky post page
+  that names the account's `did:` (a link with a handle is refused, as reading it would need a
+  lookup the reader does not do), and a Hashnode post (`https://host/slug`). Only Mastodon's
+  request goes to a host taken from the database, and only to the instance in the channel's address.
+- **A failed read is kept on the copy** (`read_error`, `read_failed_at`), and the checklist says
+  "Couldn't read new numbers from {channel}. Showing numbers from {time}." with the reason. The
+  copy then waits as long as after a good read, so a refusal, such as Reddit's `403` to
+  unauthenticated reads from some hosts, is not retried every hour. One copy's failure never
+  stops the others. A good read, or a new link from the operator, clears it.
+- **Off without its setting.** A kind whose setting is missing is skipped, with one log line per
+  run. Keys stay in the env, never in the database or the admin panel, and never in a log line.
 
 ## Channel texts
 

@@ -679,6 +679,8 @@ export default {
   "AdminBlogSharing.numbersFrom": "أرقام {time}",
   "AdminBlogSharing.numbersFromHand": "أرقام {time}، أُدخلت يدويًا",
   "AdminBlogSharing.noNumbers": "لا أرقام بعد",
+  "AdminBlogSharing.readFailed": "تعذّرت قراءة أرقام جديدة من {channel}. المعروض أرقام {time}.",
+  "AdminBlogSharing.readFailedNone": "تعذّرت قراءة الأرقام من {channel} حتى الآن.",
   "AdminBlogSharing.umamiOff":
     "تحتاج الزيارات إلى Umami. اضبط <keys>{keys}</keys> في ملف env على الخادم، ثم انشر.",
   "AdminBlogSharing.resultsTitle": "إدخال نتائج {channel}",
