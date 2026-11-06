@@ -44,6 +44,11 @@ before the field existed.
 Other members need nothing new. `recordChange()` sends a hint to their sockets, and their pages
 read the group again. `e2e/groups-details.e2e.ts` tests this with two pages.
 
+A setting only your product has, such as a finance product's main currency, keeps its own table
+and command instead, so taking Seed's later changes never conflicts in the group files. Pass its
+section as `settings` to `GroupEditorScreen` in `apps/spa/src/views/GroupEditorView.tsx`: it shows
+under the General tab's details, for every role, and the section itself decides who may change it.
+
 ## Add a widget to the overview
 
 The group overview (`/overview/:groupId`) is a page of numbers and charts about the group over a

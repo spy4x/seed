@@ -948,6 +948,24 @@ describe("GroupEditorScreen tabs", () => {
     }
   })
 
+  it("draws a product's own settings under the General tab's details, for every role", async () => {
+    const settings = <p data-e2e="product-settings">Main currency</p>
+    for (const role of [GroupRole.OWNER, GroupRole.VIEWER]) {
+      await mount(<GroupEditorScreen {...defaults} group={{ ...team, role }} settings={settings} />)
+      expect(has("[role=tabpanel] [data-e2e=product-settings]")).toBe(true)
+      await rerender(
+        <GroupEditorScreen
+          {...defaults}
+          group={{ ...team, role }}
+          tab={GroupTab.MEMBERS}
+          settings={settings}
+        />,
+      )
+      expect(has("[data-e2e=product-settings]")).toBe(false)
+      await act(() => render(null, root!))
+    }
+  })
+
   it("follows a chosen tab to its own address", async () => {
     const navigate = spy<[string]>()
     await mount(<GroupEditorScreen {...defaults} navigate={navigate.fn} />)
