@@ -190,7 +190,8 @@ live on or after the channel's start, and the channel has no row for it or its r
 row can also be suggested, posted (with its link) or skipped (with an optional reason); every
 change takes effect at once and offers Undo. A translation shows a channel the original was
 already shared on as covered. Keys `j` and `k` move between rows, `t` copies its text, `o` opens
-the channel's submit page, `p` marks it posted, `s` skips it and `e` enters its numbers.
+the channel's own page, `p` moves to the link field (Enter there marks the row posted), `s` skips it
+and `e` enters its numbers.
 
 - **`utm_source` on links.** Every link the page hands out (the copied text, the submit form, the
   shown address) carries the channel's source tag unless its "Add utm_source to links" is off.
