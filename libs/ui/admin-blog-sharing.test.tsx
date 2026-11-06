@@ -264,6 +264,45 @@ describe("the sharing checklist", () => {
       .toContain("120")
   })
 
+  it("says when the numbers were read, and by hand when they were typed", async () => {
+    await mount(<AdminBlogSharingScreen {...props([])} />)
+    const numbers = find("[data-e2e=blog-share-numbers]", rowFor(DEVTO))
+    expect(numbers.textContent).toContain("Numbers from")
+    expect(numbers.textContent).not.toContain("entered by hand")
+    const hand = ROWS.map((row) =>
+      row.channel.id === DEVTO.id
+        ? { ...row, result: { ...row.result!, source: "hand" as const } }
+        : row
+    )
+    await mount(<AdminBlogSharingScreen {...props([], { sharing: sharingOf(hand) })} />)
+    expect(find("[data-e2e=blog-share-numbers]", rowFor(DEVTO)).textContent)
+      .toContain("entered by hand")
+  })
+
+  it("says a failed read shows older numbers, with the reason, or that none were read", async () => {
+    const failed = (result: AdminBlogShareRow["result"]) =>
+      ROWS.map((row) =>
+        row.channel.id === DEVTO.id
+          ? {
+            ...row,
+            result,
+            share: { ...row.share!, readError: "Dev.to answered 503", readFailedAt: NOW },
+          }
+          : row
+      )
+    await mount(
+      <AdminBlogSharingScreen {...props([], { sharing: sharingOf(failed(ROWS[3].result)) })} />,
+    )
+    const line = find("[data-e2e=blog-share-read-failed]", rowFor(DEVTO)).textContent ?? ""
+    expect(line).toContain("Couldn't read new numbers from Dev.to. Showing numbers from")
+    expect(line).toContain("Dev.to answered 503")
+    expect(find("[data-e2e=blog-share-numbers]", rowFor(DEVTO)).textContent).toContain("120")
+
+    await mount(<AdminBlogSharingScreen {...props([], { sharing: sharingOf(failed(null)) })} />)
+    expect(find("[data-e2e=blog-share-read-failed]", rowFor(DEVTO)).textContent)
+      .toContain("Couldn't read numbers from Dev.to yet.")
+  })
+
   it("marks a row posted with the pasted link on Enter", async () => {
     const calls: unknown[][] = []
     await mount(<AdminBlogSharingScreen {...props(calls)} />)

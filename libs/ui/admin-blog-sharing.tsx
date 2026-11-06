@@ -741,11 +741,15 @@ function LinkForm(
   )
 }
 
-/** A posted row's latest numbers, the visits Umami counted, and when they were read. */
+/**
+ * A posted row's latest numbers, the visits Umami counted, and when they were read; or, when the
+ * results job's last read failed, that the numbers shown are older, with the reason.
+ */
 function Results({ row, visits }: { row: AdminBlogShareRow; visits: AdminBlogVisits }) {
   const t = useAdminText()
   const format = useFormat()
   const { result, channel } = row
+  const readError = row.share?.readError ?? null
   const fields = BLOG_RESULT_FIELDS[channel.kind]
   const number = (value: number | null) => value === null ? `–` : format.number(value)
   return (
@@ -769,16 +773,30 @@ function Results({ row, visits }: { row: AdminBlogShareRow; visits: AdminBlogVis
           </div>
         )}
       </dl>
-      <p class="text-xs text-muted">
-        {result
-          ? t.t(
-            result.source === `hand`
-              ? `AdminBlogSharing.numbersFromHand`
-              : `AdminBlogSharing.numbersFrom`,
-            { time: format.date(result.readAt) },
-          )
-          : t.t(`AdminBlogSharing.noNumbers`)}
-      </p>
+      {readError === null
+        ? (
+          <p class="text-xs text-muted">
+            {result
+              ? t.t(
+                result.source === `hand`
+                  ? `AdminBlogSharing.numbersFromHand`
+                  : `AdminBlogSharing.numbersFrom`,
+                { time: format.date(result.readAt) },
+              )
+              : t.t(`AdminBlogSharing.noNumbers`)}
+          </p>
+        )
+        : (
+          <p class="text-xs text-warning wrap-anywhere" data-e2e="blog-share-read-failed">
+            {result
+              ? t.t(`AdminBlogSharing.readFailed`, {
+                channel: channel.name,
+                time: format.date(result.readAt),
+              })
+              : t.t(`AdminBlogSharing.readFailedNone`, { channel: channel.name })}{" "}
+            <span class="text-muted">{readError}</span>
+          </p>
+        )}
       {channel.addUtm && !visits.setup && (
         <p class="text-xs text-muted" data-e2e="blog-share-umami-off">
           <Rich
