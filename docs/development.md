@@ -54,6 +54,7 @@ To run the stack for the first time, follow [Run the local stack](local-stack.md
 | `deploy`                     | Copies the production files to the server and starts them ([deploy](deploy.md))                 |
 | `user:role`                  | Gives a person a role by their address ([apps](apps.md#the-admin-app))                          |
 | `operator:create`            | Creates an administrator without mail ([access](operator-access.md#the-first-operator))         |
+| `linkedin:sign-in` | Signs in to LinkedIn and prints the env lines the worker posts with ([blog](blog.md#linkedin)) |
 | `subscribers:send`           | Queues an issue for a mailing list, in the worker container ([below](#mailing-list-issues))     |
 | `env:encrypt`, `env:decrypt` | Encrypts or decrypts the env files ([below](#env-files))                                        |
 | `env:status`, `env:keygen`   | Lists the env files and whether a key is present, or makes a new key                            |
