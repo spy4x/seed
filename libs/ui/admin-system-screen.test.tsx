@@ -154,10 +154,19 @@ describe("system screen", () => {
     expect(build).not.toContain("abc1234def5678")
   })
 
-  it("caps the build card's fact list so each label sits beside its value", async () => {
+  it("gives the migrations card both columns, last, so a long migration name has room", async () => {
     await mount(<AdminSystemScreen {...props([])} />)
 
-    const list = find("[data-e2e=admin-system-build] [data-e2e=fact-list]")
+    const cards = [...document.querySelectorAll("[data-e2e=admin-system-cards] > [data-e2e]")]
+    const wide = cards.filter((card) => card.getAttribute("class")?.includes("lg:col-span-2"))
+    expect(wide.map((card) => card.getAttribute("data-e2e"))).toEqual(["admin-system-migrations"])
+    expect(cards.at(-1)?.getAttribute("data-e2e")).toBe("admin-system-migrations")
+  })
+
+  it("caps the migrations card's fact list so each label sits beside its value", async () => {
+    await mount(<AdminSystemScreen {...props([])} />)
+
+    const list = find("[data-e2e=admin-system-migrations] [data-e2e=fact-list]")
     expect(list.getAttribute("class")).toContain("max-w-xl")
   })
 
