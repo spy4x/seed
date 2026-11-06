@@ -171,7 +171,7 @@ Deno.test(`sharing: the migration makes no channel when nothing was cross-posted
   })
 })
 
-Deno.test(`sharing: the Dev.to job writes the post's share row: posted, failed, or waiting for its key`, async (t) => {
+Deno.test(`sharing: the Dev.to job writes the post's share row: posted, failed, or waiting for its key, never over a skip`, async (t) => {
   await withSchema(async (sql) => {
     const maya = await operator(sql)
     const sharing = new PostgresSharingRepository(sql)
@@ -224,6 +224,19 @@ Deno.test(`sharing: the Dev.to job writes the post's share row: posted, failed, 
         { status: `todo`, url: null, automatic: true, error: DEVTO_KEY_MISSING },
       ])
       expect(await shareOf(sql, german)).toEqual([])
+    })
+
+    await t.step(`a later error leaves a row the operator skipped as it was`, async () => {
+      const id = await livePost(sql, maya, post(`skipped`))
+      const [{ id: channelId }] = await sql`SELECT id FROM blog_channels WHERE kind = 'devto'`
+      await sql`
+        INSERT INTO blog_post_shares (id, post_id, channel_id, status, skip_reason)
+        VALUES (${uuidV7()}, ${id}, ${channelId}, 'skipped', 'Not for Dev.to')
+      `
+      await blogCrosspostJob({ sql, setup: null, log: () => {} })(crosspostEvent(id))
+      expect(await shareOf(sql, id)).toEqual([
+        { status: `skipped`, url: null, automatic: false, error: null },
+      ])
     })
   })
 })
