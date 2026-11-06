@@ -68,14 +68,14 @@ export const BLOG_AUTOMATIC_KINDS: ReadonlySet<BlogChannelKind> = new Set([
   `linkedin`,
 ])
 
-/** The env key an automatic kind waits for, named on its rows while it is unset. */
-export const BLOG_AUTO_POST_KEYS: Readonly<Partial<Record<BlogChannelKind, string>>> = {
-  devto: `DEVTO_API_KEY`,
-  telegram: `TELEGRAM_BOT_TOKEN`,
-  mastodon: `MASTODON_ACCESS_TOKEN`,
-  bluesky: `BLUESKY_APP_PASSWORD`,
-  hashnode: `HASHNODE_TOKEN`,
-  linkedin: `LINKEDIN_ACCESS_TOKEN`,
+/** The env keys an automatic kind needs, named on its rows while one of them is unset. */
+export const BLOG_AUTO_POST_KEYS: Readonly<Partial<Record<BlogChannelKind, readonly string[]>>> = {
+  devto: [`DEVTO_API_KEY`],
+  telegram: [`TELEGRAM_BOT_TOKEN`],
+  mastodon: [`MASTODON_ACCESS_TOKEN`, `MASTODON_INSTANCE_URL`],
+  bluesky: [`BLUESKY_IDENTIFIER`, `BLUESKY_APP_PASSWORD`],
+  hashnode: [`HASHNODE_TOKEN`],
+  linkedin: [`LINKEDIN_ACCESS_TOKEN`],
 }
 
 /** The `error` an automatic row keeps while its kind's key is not set in the env. */

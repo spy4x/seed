@@ -566,6 +566,34 @@ describe("the sharing checklist", () => {
     expect(rowFor(TELEGRAM).querySelector("[data-e2e=blog-share-retry]")).toBeNull()
   })
 
+  it("says on a row of a post that is already live that the automatic post goes out now", async () => {
+    const auto = { ...TELEGRAM, autoPost: true }
+    const rows = [rowOf(auto, "todo", { text: "Seed is out", posting: false })]
+    await mount(<AdminBlogSharingScreen {...props([], { sharing: sharingOf(rows) })} />)
+    expect(rowFor(auto).textContent).not.toContain("Posts automatically when the post goes live")
+    expect(rowFor(auto).textContent).toContain("goes out automatically now")
+  })
+
+  it("names every env key a Mastodon row needs when one of them is missing", async () => {
+    const mastodon = {
+      ...channelOf("0195f0b4-3c1e-7a00-8000-000000000006", {}),
+      kind: "mastodon" as const,
+      address: "https://mastodon.social/@seed",
+      autoPost: true,
+    }
+    const failed = shareOf(mastodon.id, {
+      status: "todo",
+      sharedAt: null,
+      automatic: true,
+      error: "key-missing",
+    })
+    const rows = [rowOf(mastodon, "todo", { text: "Seed is out", share: failed })]
+    await mount(<AdminBlogSharingScreen {...props([], { sharing: sharingOf(rows) })} />)
+    const note = find("[data-e2e=blog-share-key-missing]", rowFor(mastodon)).textContent ?? ""
+    expect(note).toContain("MASTODON_ACCESS_TOKEN")
+    expect(note).toContain("MASTODON_INSTANCE_URL")
+  })
+
   it("says on a LinkedIn row that its sign-in expired, and offers Try again", async () => {
     const linkedin = channelOf("0195f0b4-3c1e-7a00-8000-000000000005", {
       name: "LinkedIn",

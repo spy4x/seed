@@ -672,6 +672,7 @@ export default {
   "AdminBlogSharing.presetLater": "Позже",
   "AdminBlogSharing.linkRequired": "Добавьте ссылку.",
   "AdminBlogSharing.autoHint": "Разместится автоматически, когда пост выйдет.",
+  "AdminBlogSharing.autoLive": "Пост уже вышел, поэтому он публикуется автоматически прямо сейчас.",
   "AdminBlogSharing.posting": "Размещаем…",
   "AdminBlogSharing.autoFailed":
     "Не удалось разместить: {reason}. Попробуйте ещё раз или разместите вручную и отметьте размещённым.",

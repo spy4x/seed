@@ -603,6 +603,7 @@ export default {
   "AdminBlogSharing.presetLater": "以后再说",
   "AdminBlogSharing.linkRequired": "请添加链接。",
   "AdminBlogSharing.autoHint": "文章发布后，会自动发到这个渠道。",
+  "AdminBlogSharing.autoLive": "文章已发布，会立即自动发到这个渠道。",
   "AdminBlogSharing.posting": "正在发布…",
   "AdminBlogSharing.autoFailed": "无法发布：{reason}。请重试，或自己发布后标记为已发布。",
   "AdminBlogSharing.autoNoKey":

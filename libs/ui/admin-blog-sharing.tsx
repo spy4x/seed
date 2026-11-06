@@ -30,6 +30,7 @@ import {
   type BlogShareStatus,
   blogSharingCounts,
   channelPostsAutomatically,
+  linkedinSignInState,
 } from "@domain/blog"
 import { ADMIN_BLOG_PATHS } from "./admin-blog-list.tsx"
 import {
@@ -324,7 +325,13 @@ export function AdminBlogSharingScreen(props: AdminBlogSharingScreenProps): JSX.
           />
         )
         : GROUPS.map((group) => {
-          const members = rows.filter((row) => group.states.includes(row.state))
+          // Automatic rows go below the manual ones; the sort is stable, so names stay in order.
+          const members = rows
+            .filter((row) => group.states.includes(row.state))
+            .sort((a, b) =>
+              Number(channelPostsAutomatically(a.channel, sharing.post.translationOf !== null)) -
+              Number(channelPostsAutomatically(b.channel, sharing.post.translationOf !== null))
+            )
           if (members.length === 0) return null
           const heading = t.t(group.key, { count: members.length })
           const list = (
@@ -341,6 +348,7 @@ export function AdminBlogSharingScreen(props: AdminBlogSharingScreenProps): JSX.
                   onDialog={setDialog}
                   auto={{
                     translation: sharing.post.translationOf !== null,
+                    live,
                     linkedinExpiresAt: sharing.linkedinExpiresAt,
                     now: props.now ?? Date.now(),
                     onRetry: props.onRetryPost,
@@ -671,6 +679,8 @@ function RowFacts({ row }: { row: AdminBlogShareRow }): JSX.Element | null {
 interface AutoPostContext {
   /** The post is a translation, which Dev.to never takes. */
   translation: boolean
+  /** The post is live, so an automatic post goes out now rather than when it goes live. */
+  live: boolean
   linkedinExpiresAt: string | null
   now: number
   onRetry: (channelId: string) => void
@@ -702,9 +712,19 @@ function AutomaticNote(
     )
   }
   if (error === null) {
+    // Before the post is live the hint says it goes out when it goes live; once live it says the
+    // post goes out now. Neither shows while a LinkedIn sign-in has expired (its own line says the
+    // posts wait).
+    const expired = channel.kind === `linkedin` &&
+      linkedinSignInState(auto.linkedinExpiresAt, auto.now).state === `expired`
+    const hint = expired
+      ? null
+      : auto.live
+      ? `AdminBlogSharing.autoLive`
+      : `AdminBlogSharing.autoHint`
     return (
       <div class="flex flex-col gap-1">
-        <p class="text-sm text-muted">{t.t(`AdminBlogSharing.autoHint`)}</p>
+        {hint !== null && <p class="text-sm text-muted">{t.t(hint)}</p>}
         {linkedin}
       </div>
     )

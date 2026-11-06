@@ -670,6 +670,7 @@ export default {
   "AdminBlogSharing.presetLater": "Plus tard",
   "AdminBlogSharing.linkRequired": "Ajoutez le lien.",
   "AdminBlogSharing.autoHint": "Publie automatiquement dès que l’article est en ligne.",
+  "AdminBlogSharing.autoLive": "L’article est déjà en ligne : il part automatiquement maintenant.",
   "AdminBlogSharing.posting": "Publication en cours…",
   "AdminBlogSharing.autoFailed":
     "Publication impossible : {reason}. Réessayez, ou publiez-le vous-même et marquez-le comme publié.",

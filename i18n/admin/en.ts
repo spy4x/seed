@@ -635,6 +635,7 @@ export default {
   "AdminBlogSharing.presetLater": "Later",
   "AdminBlogSharing.linkRequired": "Add the link.",
   "AdminBlogSharing.autoHint": "Posts automatically when the post goes live.",
+  "AdminBlogSharing.autoLive": "The post is live, so this goes out automatically now.",
   "AdminBlogSharing.posting": "Posting…",
   "AdminBlogSharing.autoFailed":
     "Couldn't post: {reason}. Try again, or post it yourself and mark it posted.",

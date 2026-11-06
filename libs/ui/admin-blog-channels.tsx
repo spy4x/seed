@@ -114,7 +114,7 @@ export function AutoPostProblem(
     return (
       <span class="text-sm text-warning" data-e2e={`${dataE2E}-key-missing`}>
         <Rich
-          parts={t.parts(keyText, { key: BLOG_AUTO_POST_KEYS[kind] ?? `` })}
+          parts={t.parts(keyText, { key: (BLOG_AUTO_POST_KEYS[kind] ?? []).join(`, `) })}
           tags={{ key: literal }}
         />
       </span>

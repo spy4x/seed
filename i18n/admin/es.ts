@@ -665,6 +665,7 @@ export default {
   "AdminBlogSharing.presetLater": "Más tarde",
   "AdminBlogSharing.linkRequired": "Añade el enlace.",
   "AdminBlogSharing.autoHint": "Se publica automáticamente cuando se publica la entrada.",
+  "AdminBlogSharing.autoLive": "La entrada ya está publicada, así que se publica automáticamente ahora.",
   "AdminBlogSharing.posting": "Publicando…",
   "AdminBlogSharing.autoFailed":
     "No se pudo publicar: {reason}. Inténtalo de nuevo, o publícala tú y márcala como publicada.",

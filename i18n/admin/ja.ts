@@ -627,6 +627,7 @@ export default {
   "AdminBlogSharing.presetLater": "あとで",
   "AdminBlogSharing.linkRequired": "リンクを入力してください。",
   "AdminBlogSharing.autoHint": "記事が公開されると自動で投稿されます。",
+  "AdminBlogSharing.autoLive": "記事は公開済みのため、今すぐ自動で投稿されます。",
   "AdminBlogSharing.posting": "投稿中…",
   "AdminBlogSharing.autoFailed":
     "投稿できませんでした：{reason}。もう一度お試しいただくか、手動で投稿して投稿済みにしてください。",

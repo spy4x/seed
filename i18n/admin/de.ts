@@ -657,6 +657,7 @@ export default {
   "AdminBlogSharing.presetLater": "Später",
   "AdminBlogSharing.linkRequired": "Füge den Link ein.",
   "AdminBlogSharing.autoHint": "Postet automatisch, sobald der Beitrag veröffentlicht ist.",
+  "AdminBlogSharing.autoLive": "Der Beitrag ist schon live, daher wird er jetzt automatisch gepostet.",
   "AdminBlogSharing.posting": "Wird gepostet…",
   "AdminBlogSharing.autoFailed":
     "Posten fehlgeschlagen: {reason}. Versuche es noch einmal, oder poste ihn selbst und markiere ihn als gepostet.",

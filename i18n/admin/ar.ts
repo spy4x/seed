@@ -684,6 +684,7 @@ export default {
   "AdminBlogSharing.presetLater": "لاحقًا",
   "AdminBlogSharing.linkRequired": "أضف الرابط.",
   "AdminBlogSharing.autoHint": "تُنشر تلقائيًا عندما تُنشر التدوينة.",
+  "AdminBlogSharing.autoLive": "التدوينة منشورة الآن، لذا تُنشر هذه تلقائيًا الآن.",
   "AdminBlogSharing.posting": "جارٍ النشر…",
   "AdminBlogSharing.autoFailed":
     "تعذّر النشر: {reason}. حاول مرة أخرى، أو انشرها بنفسك وعلّمها كمنشورة.",
