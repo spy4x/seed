@@ -237,6 +237,11 @@ function focusedChannel(): string | undefined {
   return (document.activeElement as HTMLElement | null)?.dataset.channel
 }
 
+/** The `data-e2e` hook of the element that has focus, as text for the same reason. */
+function focusedHook(): string | null | undefined {
+  return document.activeElement?.getAttribute("data-e2e")
+}
+
 function rowFor(channel: BlogChannel): HTMLElement {
   return find(`[data-e2e=blog-share-row][data-channel="${channel.id}"]`)
 }
@@ -346,8 +351,8 @@ describe("the sharing checklist", () => {
     await press(document.body, "j")
     expect(focusedChannel()).toBe(REDDIT.id)
     await press(document.body, "p")
-    expect(document.activeElement)
-      .toBe(find("[data-e2e=blog-share-link]", rowFor(REDDIT)))
+    expect(focusedHook()).toBe("blog-share-link")
+    expect(rowFor(REDDIT).contains(document.activeElement)).toBe(true)
   })
 
   it("leaves a row key that follows g to the shell's Go to sequence", async () => {
@@ -380,7 +385,7 @@ describe("the sharing checklist", () => {
     await mount(<AdminBlogSharingScreen {...props(calls, { sharing: sharingOf(done) })} />)
     // A heading takes focus in a browser only with a tabindex; happy-dom does not check.
     expect(find("h1").getAttribute("tabindex")).toBe("-1")
-    expect(document.activeElement).toBe(find("h1"))
+    expect(document.activeElement?.tagName).toBe("H1")
   })
 
   it("opens each dialog on its first field", async () => {

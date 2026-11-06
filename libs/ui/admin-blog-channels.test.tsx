@@ -200,9 +200,10 @@ describe("the sharing channels list", () => {
     await mount(<AdminBlogChannelsScreen {...listProps([])} />)
     await openMenu(1)
     await clickOn(row(1).querySelector("[data-e2e=blog-channel-delete]")!)
-    expect(document.activeElement).toBe(
-      find("[data-e2e=blog-channel-delete-dialog] [data-e2e=confirm-dialog-cancel]"),
-    )
+    const focused = document.activeElement
+    // Compared as text: a failing comparison of two elements prints the whole document.
+    expect(focused?.getAttribute("data-e2e")).toBe("confirm-dialog-cancel")
+    expect(find("[data-e2e=blog-channel-delete-dialog]").contains(focused)).toBe(true)
   })
 
   it("moves focus to the next row's menu after an archive", async () => {
