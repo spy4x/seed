@@ -15,6 +15,13 @@ export default {
   "Field.before": "Wähle ein Datum vor {rule}.",
   "Field.categorySlugTaken":
     "Diese Adresse hat schon eine andere Kategorie. Nimm bitte eine andere.",
+  "Field.channelAddress": "Gib eine Adresse ein.",
+  "Field.channelHttps": "Der Link muss mit https:// beginnen.",
+  "Field.channelLanguages": "Wähle mindestens eine Sprache.",
+  "Field.channelName": "Gib einen Namen ein.",
+  "Field.channelNameTaken": "Diesen Namen hat schon ein anderer Kanal.",
+  "Field.channelSource": "Gib einen Quell-Tag ein.",
+  "Field.channelSourceTaken": "Diesen Quell-Tag hat schon ein anderer Kanal.",
   "Field.contactValue": "Das passt nicht zu dieser Art von Kontakt. Prüfe das Format.",
   "Field.divisor": "Gib ein Vielfaches von {rule} ein.",
   "Field.domain": "Hier wird eine andere Art von Wert erwartet.",
@@ -111,6 +118,7 @@ export default {
   "Reason.CATEGORY_NOT_FOUND": "Diese Kategorie gibt es nicht mehr. Wähle eine andere.",
   "Reason.CATEGORY_REQUIRED":
     "Ein veröffentlichter Artikel braucht eine Kategorie. Wähle eine aus oder blende den Artikel vorher aus.",
+  "Reason.CHANNEL_NOT_FOUND": "Diesen Kanal gibt es nicht mehr.",
   "Reason.FILE_CONTENT": "Der Inhalt dieser Datei passt nicht zu ihrem Dateityp.",
   "Reason.FILE_MISSING":
     "Es ist keine Datei angekommen. Wähle eine aus und versuche es noch einmal.",
@@ -145,8 +153,11 @@ export default {
   "Reason.LINK_NOT_FOUND": "Diesen Link gibt es nicht mehr.",
   "Reason.MEMBER_NOT_FOUND": "Diese Person ist kein Mitglied der Gruppe.",
   "Reason.MFA_REQUIRED": "Gib zuerst deinen Einmalcode ein.",
+  "Reason.HAS_SHARES":
+    "Über diesen Kanal wurde schon geteilt, daher kannst du ihn nur archivieren.",
   "Reason.NAME_MISMATCH":
     "Das ist nicht der Name der Gruppe. Tippe ihn genau so ab, wie er angezeigt wird.",
+  "Reason.NAME_TAKEN": "Diesen Namen hat schon ein anderer Kanal.",
   "Reason.NEWSLETTER_OFF":
     "Der Newsletter ist ausgeschaltet, deshalb geht das nicht per E-Mail raus.",
   "Reason.NOTE_FULL": "An diese Notiz passen keine weiteren Dateien. Entferne zuerst eine.",
@@ -182,6 +193,7 @@ export default {
     "Zu viele Suchen. Warte eine Minute und versuche es dann noch einmal.",
   "Reason.SEAT_PRICE_NOT_ACCEPTED":
     "Bestätige, dass jedes neue Mitglied die Rechnung der Gruppe erhöht.",
+  "Reason.SHARE_NOT_FOUND": "Diesen geteilten Eintrag gibt es nicht mehr.",
   "Reason.SLUG_LOCKED":
     "Nach dem Veröffentlichen ist die Adresse gesperrt. Ändere sie über „URL ändern“.",
   "Reason.SLUG_TAKEN": "Diese Adresse ist schon vergeben. Nimm bitte eine andere.",
@@ -195,6 +207,7 @@ export default {
   "Reason.TOKEN_NOT_FOUND": "Dieses Token gibt es nicht mehr.",
   "Reason.TOKEN_SCOPE": "Dieses Token darf das nicht.",
   "Reason.TOO_MANY": "Hier ist alles voll. Lösche zuerst einen Eintrag.",
+  "Reason.TOO_MANY_CHANNELS": "Mehr Kanäle passen nicht. Lösche zuerst einen.",
   "Reason.TOO_MANY_LINKS": "Mehr Links passen nicht. Entferne zuerst einen.",
   "Reason.TOO_MANY_TOKENS": "Mehr Tokens passen nicht. Widerrufe zuerst eines.",
   "Reason.TOO_SOON":
@@ -205,6 +218,7 @@ export default {
   "Reason.UPLOAD_BUDGET":
     "Du hast das stündliche Upload-Limit erreicht. Versuche es später noch einmal.",
   "Reason.UPLOAD_NOT_FOUND": "Diesen Upload gibt es nicht mehr.",
+  "Reason.UTM_SOURCE_TAKEN": "Diesen Quell-Tag hat schon ein anderer Kanal.",
   "Reason.USER_NOT_ACTIVE": "Dieses Konto ist nicht aktiv.",
   "Reason.VERSION_CONFLICT":
     "Jemand anderes hat das geändert. Lade die Seite neu, um die Änderungen zu sehen.",
