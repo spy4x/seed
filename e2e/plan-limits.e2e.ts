@@ -80,7 +80,9 @@ test.describe("plan limits", () => {
 
       const refusal = page.locator("[data-e2e=plan-refusal]")
       await expect(refusal).toBeFocused()
-      await expect(refusal).toContainText(`up to ${freeNotes} note`)
+      await expect(refusal).toContainText(
+        freeNotes > 0 ? `up to ${freeNotes} note` : "Choose a plan to start adding.",
+      )
       await expect(title).toHaveValue("One too many")
       const listed = await page.request.get(`${apiBase}/api/groups/${groupId}/notes?limit=100`)
       expect((await listed.json()).notes).toHaveLength(freeNotes)

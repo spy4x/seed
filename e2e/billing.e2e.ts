@@ -53,11 +53,11 @@ test.describe("group billing", () => {
 
       // The development provider's checkout is no page of its own: it sends the browser straight
       // back to the checkout's success URL, the Billing tab, as Stripe does once paid.
-      await page.getByRole("button", {
-        name: days > 0
-          ? `Start ${days}-day free trial (opens Stripe)`
-          : /^Upgrade to .+ \(opens Stripe\)$/,
-      }).click()
+      const checkout = page.locator("[data-e2e=billing-checkout]")
+      if (days > 0) {
+        await expect(checkout).toHaveAccessibleName(`Start ${days}-day free trial (opens Stripe)`)
+      }
+      await checkout.click()
       // The tab drops the success URL's query, so a reload does not say it again.
       await expect(page).toHaveURL(`/groups/${groupId}/billing`)
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")

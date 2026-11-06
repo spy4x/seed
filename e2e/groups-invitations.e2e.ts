@@ -160,10 +160,21 @@ test.describe("group invitations", () => {
           data: { id: groupId, name },
         })
         expect(created.status(), await created.text()).toBe(201)
-        const invited = await request.post(`${apiBase}/api/groups/${groupId}/invitations`, {
-          headers,
-          data: { role: 1, expiresInDays: 7, maxUses: 1, email, sendEmail: false },
-        })
+        const invite = () =>
+          request.post(`${apiBase}/api/groups/${groupId}/invitations`, {
+            headers,
+            data: { role: 1, expiresInDays: 7, maxUses: 1, email, sendEmail: false },
+          })
+        let invited = await invite()
+        // A catalog whose free plan holds the owner alone: put the group on the paid plan.
+        if (invited.status() === 402) {
+          const upgraded = await request.post(
+            `${apiBase}${BILLING_WEBHOOK_PATH}`,
+            await proWebhook(groupId),
+          )
+          expect(upgraded.status(), await upgraded.text()).toBe(200)
+          invited = await invite()
+        }
         expect(invited.status(), await invited.text()).toBe(201)
         tokens.push(((await invited.json()) as { token: string }).token)
       }
