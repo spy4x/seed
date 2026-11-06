@@ -173,7 +173,7 @@ describe(`parseBlogShareFields`, () => {
 })
 
 describe(`blogSharingCounts`, () => {
-  it(`counts posted and covered rows as done, and leaves archived channels out`, () => {
+  it(`counts every row shown, an archived channel's posted row among the done`, () => {
     const row = (
       state: `todo` | `suggested` | `posted` | `skipped` | `covered`,
       archived = false,
@@ -190,6 +190,6 @@ describe(`blogSharingCounts`, () => {
       row(`skipped`),
       row(`posted`, true),
     ]
-    expect(blogSharingCounts(rows)).toEqual({ total: 6, done: 2, toDo: 2, suggested: 1 })
+    expect(blogSharingCounts(rows)).toEqual({ total: 7, done: 3, toDo: 2, suggested: 1 })
   })
 })

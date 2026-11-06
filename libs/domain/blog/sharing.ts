@@ -299,7 +299,7 @@ export function channelPostCount(
 
 /** A checklist's tally, for the sharing page's subtitle and the editor's summary. */
 export interface BlogSharingCounts {
-  /** Channels the post fits that are still active. */
+  /** Every row the checklist shows, an archived channel's handled row included. */
   total: number
   /** Of those, the ones posted, or covered by the original. */
   done: number
@@ -307,15 +307,15 @@ export interface BlogSharingCounts {
   suggested: number
 }
 
-/** Counts a checklist's rows. A row on an archived channel shows what happened but counts nothing. */
-export function blogSharingCounts(
-  rows: readonly { channel: Pick<BlogChannel, `archivedAt`>; state: BlogShareState }[],
-): BlogSharingCounts {
-  const active = rows.filter((row) => row.channel.archivedAt === null)
+/**
+ * Counts a checklist's rows, every one it shows, so the subtitle agrees with the groups. An
+ * archived channel's row is shown only once it was handled, so it never adds a to-do.
+ */
+export function blogSharingCounts(rows: readonly { state: BlogShareState }[]): BlogSharingCounts {
   const count = (...states: BlogShareState[]) =>
-    active.filter((row) => states.includes(row.state)).length
+    rows.filter((row) => states.includes(row.state)).length
   return {
-    total: active.length,
+    total: rows.length,
     done: count(`posted`, `covered`),
     toDo: count(`todo`),
     suggested: count(`suggested`),
