@@ -298,6 +298,8 @@ export function createNotesStore(dependencies: NotesDependencies) {
       openId = noteId
       void showLocal(nextGroupId)
       await load()
+      // A later open (a note's page after its list) took over while the read ran.
+      if (openId !== noteId) return
     } else openId = noteId
     if (noteId === null) {
       editing.value = null
@@ -336,6 +338,7 @@ export function createNotesStore(dependencies: NotesDependencies) {
     const stale = () => groupId.value !== forGroup || openId !== noteId
     try {
       const { note } = await dependencies.get(forGroup, noteId)
+      if (stale()) return
       editing.value = toEdit(note)
       editErrors.value = NO_ERRORS
       notes.value = notes.value.map((existing) => existing.id === note.id ? note : existing)
