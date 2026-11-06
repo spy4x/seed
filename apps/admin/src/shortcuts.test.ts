@@ -4,6 +4,9 @@ import { ADMIN_MODULES } from "./modules/registry.ts"
 import { adminShortcutRows } from "./shortcuts.ts"
 import { adminText } from "./i18n.ts"
 
+/** The blog's own pages' `g` sequences, next to the modules'. */
+const BLOG_PAGE_KEYS = new Set(["g h", "g n"])
+
 function rows(path: string, modules = ADMIN_MODULES) {
   const seen = { navigated: [] as string[], filters: 0, shortcuts: 0 }
   const list = adminShortcutRows({
@@ -20,13 +23,35 @@ function rows(path: string, modules = ADMIN_MODULES) {
 describe("admin keyboard shortcuts", () => {
   it("has one distinct g sequence per module, named and aimed as its rail entry", () => {
     const { list, seen } = rows("/")
-    const goTo = list.filter((row) => row.keys.startsWith("g "))
+    const goTo = list.filter((row) => row.keys.startsWith("g ") && !BLOG_PAGE_KEYS.has(row.keys))
     expect(goTo.map((row) => row.description)).toEqual(
       ADMIN_MODULES.map((m) => adminText().t(m.nav.name)),
     )
-    expect(new Set(goTo.map((row) => row.keys)).size).toBe(goTo.length)
+    const keys = list.filter((row) => row.keys.startsWith("g ")).map((row) => row.keys)
+    expect(new Set(keys).size).toBe(keys.length)
     for (const row of goTo) row.run!()
     expect(seen.navigated).toEqual(ADMIN_MODULES.map((m) => m.nav.href))
+  })
+
+  it("opens the sharing channels with g h and the posts that need sharing with g n, while the blog is shown", () => {
+    const { list, seen } = rows("/")
+    list.find((row) => row.keys === "g h")!.run!()
+    list.find((row) => row.keys === "g n")!.run!()
+    expect(seen.navigated).toEqual(["/blog/channels", "/blog?sharing=todo"])
+    const noBlog = ADMIN_MODULES.filter((module) => module.id !== "blog")
+    expect(rows("/", noBlog).list.some((row) => BLOG_PAGE_KEYS.has(row.keys))).toBe(false)
+  })
+
+  it("adds a channel with c on the channels page, and lists the checklist's row keys there only", () => {
+    const channels = rows("/blog/channels")
+    channels.list.find((row) => row.keys === "c")!.run!()
+    expect(channels.seen.navigated).toEqual(["/blog/channels/new"])
+    expect(channels.list.some((row) => row.keys === "mod+s" || row.keys === "f8")).toBe(false)
+    const checklist = rows("/blog/0195f0b4-3c1e-7a00-8000-000000000001/sharing").list
+    expect(checklist.filter((row) => row.keys.length === 1).map((row) => row.keys))
+      .toEqual(expect.arrayContaining(["j", "k", "t", "o", "p", "s", "e"]))
+    expect(rows("/blog/0195f0b4-3c1e-7a00-8000-000000000001").list.some((row) => row.keys === "j"))
+      .toBe(false)
   })
 
   it("lists the g sequences of the modules shown, in the rail's order", () => {
