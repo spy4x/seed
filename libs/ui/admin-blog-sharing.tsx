@@ -14,13 +14,13 @@ import { Input } from "@spy4x/preact-ui/input"
 import { useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
+import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import {
   type AdminBlogShareRow,
   type AdminBlogSharingResponse,
   type AdminBlogVisits,
-  BLOG_AUTOMATIC_KINDS,
   BLOG_RESULT_FIELDS,
   BLOG_SHARE_SKIP_REASON_MAX_LENGTH,
   BLOG_SHARE_URL_MAX_LENGTH,
@@ -30,12 +30,13 @@ import {
   type BlogShareState,
   type BlogShareStatus,
   blogSharingCounts,
+  channelPostsAutomatically,
 } from "@domain/blog"
 import { ADMIN_BLOG_PATHS } from "./admin-blog-list.tsx"
 import {
   ADMIN_BLOG_SHARING_PATHS,
-  DEVTO_KEY_MISSING,
-  DEVTO_KEY_NAME,
+  AutoPostProblem,
+  LinkedinSignIn,
 } from "./admin-blog-channels.tsx"
 import { ListEmpty } from "./notes-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
@@ -75,6 +76,10 @@ export interface AdminBlogSharingScreenProps {
   /** A refused change's message, by channel id, shown under that row's link field. */
   rowErrors: Readonly<Record<string, string>>
   onChange: (change: BlogShareChange) => void
+  /** Asks for a channel's failed automatic post again. */
+  onRetryPost: (channelId: string) => void
+  /** The time the LinkedIn sign-in is measured against; the clock's by default. */
+  now?: number
   /** The results dialog's save is on its way, and its refusal. */
   resultsPending: boolean
   resultsError: string | null
@@ -335,6 +340,12 @@ export function AdminBlogSharingScreen(props: AdminBlogSharingScreenProps): JSX.
                   copy={props.copy}
                   onChange={change}
                   onDialog={setDialog}
+                  auto={{
+                    translation: sharing.post.translationOf !== null,
+                    linkedinExpiresAt: sharing.linkedinExpiresAt,
+                    now: props.now ?? Date.now(),
+                    onRetry: props.onRetryPost,
+                  }}
                 />
               ))}
             </ul>
@@ -400,7 +411,7 @@ export function AdminBlogSharingScreen(props: AdminBlogSharingScreenProps): JSX.
 
 /** One channel's row: its name, address and status menu, then what its state asks for. */
 function ShareRow(
-  { row, visits, pending, error, copy, onChange, onDialog }: {
+  { row, visits, pending, error, copy, onChange, onDialog, auto }: {
     row: AdminBlogShareRow
     visits: AdminBlogVisits
     pending: string | null
@@ -408,6 +419,7 @@ function ShareRow(
     copy?: CopyPort
     onChange: (change: BlogShareChange) => void
     onDialog: (dialog: SharingDialog) => void
+    auto: AutoPostContext
   },
 ): JSX.Element {
   const t = useAdminText()
@@ -417,7 +429,7 @@ function ShareRow(
   const name = channel.name
   const statusWord = t.t(STATUS_WORDS[state])
   const open = blogChannelHref(channel)
-  const automatic = BLOG_AUTOMATIC_KINDS.has(channel.kind)
+  const automatic = channelPostsAutomatically(channel, auto.translation)
   const muted = state === `covered` || channel.archivedAt !== null
   return (
     <li
@@ -524,7 +536,7 @@ function ShareRow(
       <RowFacts row={row} />
 
       {(state === `todo` || state === `suggested`) && automatic && (
-        <AutomaticNote error={share?.error ?? null} />
+        <AutomaticNote row={row} busy={busy} auto={auto} />
       )}
 
       {state === `todo` && (
@@ -656,27 +668,65 @@ function RowFacts({ row }: { row: AdminBlogShareRow }): JSX.Element | null {
   return null
 }
 
-/** What an automatic channel does for a post still to do: posts by itself, waits for its key, or failed. */
-function AutomaticNote({ error }: { error: string | null }): JSX.Element {
+/** What a row needs to show its automatic post. */
+interface AutoPostContext {
+  /** The post is a translation, which Dev.to never takes. */
+  translation: boolean
+  linkedinExpiresAt: string | null
+  now: number
+  onRetry: (channelId: string) => void
+}
+
+/**
+ * What an automatic channel does for a post still to do: posting now, posts by itself, waits for
+ * its key or a new LinkedIn sign-in, or failed. Any of the last three offers "Try again".
+ */
+function AutomaticNote(
+  { row, busy, auto }: { row: AdminBlogShareRow; busy: boolean; auto: AutoPostContext },
+): JSX.Element {
   const t = useAdminText()
-  if (error === DEVTO_KEY_MISSING) {
+  const { channel, share } = row
+  const error = share?.error ?? null
+  const linkedin = channel.kind === `linkedin` && (
+    <LinkedinSignIn expiresAt={auto.linkedinExpiresAt} now={auto.now} />
+  )
+  if (row.posting) {
     return (
-      <p class="text-sm text-warning" data-e2e="blog-share-key-missing">
-        <Rich
-          parts={t.parts(`AdminBlogSharing.autoNoKey`, { key: DEVTO_KEY_NAME })}
-          tags={{ key: literal }}
-        />
+      <p class="flex items-center gap-2 text-sm text-muted" data-e2e="blog-share-posting">
+        <LoadingSpinner size="sm" />
+        {t.t(`AdminBlogSharing.posting`)}
       </p>
     )
   }
-  if (error !== null) {
+  if (error === null) {
     return (
-      <p class="text-sm text-danger wrap-anywhere" data-e2e="blog-share-failed">
-        {t.t(`AdminBlogSharing.autoFailed`, { reason: error })}
-      </p>
+      <div class="flex flex-col gap-1">
+        <p class="text-sm text-muted">{t.t(`AdminBlogSharing.autoHint`)}</p>
+        {linkedin}
+      </div>
     )
   }
-  return <p class="text-sm text-muted">{t.t(`AdminBlogSharing.autoHint`)}</p>
+  return (
+    <div class="flex flex-col items-start gap-2">
+      <AutoPostProblem
+        kind={channel.kind}
+        error={error}
+        keyText="AdminBlogSharing.autoNoKey"
+        failedText="AdminBlogSharing.autoFailed"
+        dataE2E="blog-share"
+      />
+      {linkedin}
+      <Button
+        variant="secondary"
+        class="min-h-11 w-full sm:min-h-9 sm:w-auto"
+        disabled={busy}
+        data-e2e="blog-share-retry"
+        onClick={() => auto.onRetry(channel.id)}
+      >
+        {t.t(`AdminBlogSharing.retry`)}
+      </Button>
+    </div>
+  )
 }
 
 /** The link field: paste the copy's address and press Enter, and the row is posted. */

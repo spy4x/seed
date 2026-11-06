@@ -180,6 +180,7 @@ export function createSharingState(
       return value.name !== saved.name || value.kind !== saved.kind ||
         value.address !== saved.address || value.utmSource !== saved.utmSource ||
         value.addUtm !== saved.addUtm || value.which !== saved.which ||
+        value.autoPost !== saved.autoPost ||
         value.languages.join() !== saved.languages.join()
     },
 
@@ -195,6 +196,7 @@ export function createSharingState(
         address: value.address,
         utmSource: value.utmSource,
         addUtm: value.addUtm,
+        autoPost: value.autoPost,
         languages: value.languages,
         startsAt: value.which === `all` ? null : channel?.startsAt ?? ports.now(),
       }
@@ -340,6 +342,35 @@ export function createSharingState(
         })
       }
       return true
+    },
+
+    /**
+     * Queues another automatic try of one channel's copy and reads the checklist again, so the row
+     * shows "Posting…". A refusal shows on that row.
+     */
+    async retryPost(channelId: string): Promise<boolean> {
+      const open = sharing.value
+      const postId = open.postId
+      if (postId === null || open.pending !== null) return false
+      const rowErrors = { ...open.rowErrors }
+      delete rowErrors[channelId]
+      sharing.value = { ...open, pending: channelId, rowErrors }
+      const result = await request(`${API}/posts/${postId}/shares/${channelId}/retry`, post({}))
+      if (sharing.value.postId !== postId) return false
+      if (result.ok) await state.loadSharing(postId)
+      sharing.value = {
+        ...sharing.value,
+        pending: null,
+        ...(!result.ok && {
+          rowErrors: { ...sharing.value.rowErrors, [channelId]: result.error.message },
+        }),
+      }
+      return result.ok
+    },
+
+    /** Whether a row of the open checklist waits for its automatic post, so the page reads again. */
+    posting(): boolean {
+      return sharing.value.data?.rows.some((row) => row.posting) ?? false
     },
 
     /** Saves the numbers typed for one channel's copy. */

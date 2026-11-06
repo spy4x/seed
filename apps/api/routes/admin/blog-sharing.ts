@@ -43,7 +43,7 @@ export const SHARING_BODY_MAX_BYTES = 16 * 1024
 
 /** What the sharing routes call. Who may call it is the route's business. */
 export interface AdminSharingService {
-  channels(): Promise<AdminBlogChannelsResponse>
+  channels(): Promise<Omit<AdminBlogChannelsResponse, `linkedinExpiresAt`>>
   gaps(): Promise<SharingGaps>
   postSharing(postId: string): Promise<PostSharing | null>
   createChannel(id: string, fields: BlogChannelFields, actor: SharingActor): Promise<BlogChannel>
@@ -72,6 +72,7 @@ export interface AdminSharingService {
     counts: BlogShareResultsRequest,
     actor: SharingActor,
   ): Promise<BlogShareResult>
+  retryShare(postId: string, channelId: string, actor: SharingActor): Promise<void>
 }
 
 /** What the sharing routes need. */
@@ -82,6 +83,8 @@ export interface AdminSharingRouteDependencies {
   siteUrl: string | null
   /** Umami's visits to one page by `utm_source`. */
   pathVisits(path: string, since: number): Promise<WebsitePathVisits>
+  /** When the LinkedIn sign-in in the env expires (`LINKEDIN_TOKEN_EXPIRES_AT`); never the token. */
+  linkedinExpiresAt: string | null
 }
 
 function invalid(message: string): BlogSharingError {
@@ -166,6 +169,7 @@ export function sharingRows(
       submitUrl: siteUrl === null ? null : blogSubmitUrl(channel, post.title, link),
       result: share ? read.results.get(share.id) ?? null : null,
       visits: bySource === null || source === null ? null : bySource[source] ?? 0,
+      posting: read.posting.has(channel.id),
     })
   }
   return {
@@ -195,9 +199,15 @@ export function sharingRows(
  * - `POST /blog/posts/:id/shares` sets `{ channelIds, status, url?, skipReason?, sharedAt? }`.
  * - `POST /blog/posts/:id/shares/:channelId/results` records `{ views, reactions, comments, score }`
  *   typed by hand.
+ * - `POST /blog/posts/:id/shares/:channelId/retry` asks for the channel's automatic post again
+ *   after it failed: 202. A channel that does not post by itself is refused with 409
+ *   `NOT_AUTOMATIC`.
+ *
+ * The channel list and the checklist also carry when the LinkedIn sign-in expires, never its
+ * token.
  */
 export function createAdminSharingRoutes(
-  { limit, sharing, siteUrl, pathVisits }: AdminSharingRouteDependencies,
+  { limit, sharing, siteUrl, pathVisits, linkedinExpiresAt }: AdminSharingRouteDependencies,
 ): Hono<APIContext> {
   const route = new Hono<APIContext>()
   route.onError((error, c) => {
@@ -228,7 +238,10 @@ export function createAdminSharingRoutes(
   }
 
   return route
-    .get(`/blog/channels`, limit, async (c) => c.json(await sharing.channels()))
+    .get(`/blog/channels`, limit, async (c) => {
+      const answer: AdminBlogChannelsResponse = { ...await sharing.channels(), linkedinExpiresAt }
+      return c.json(answer)
+    })
     .post(`/blog/channels`, limit, async (c) => {
       const { id, ...input } = await readBody(c, blogChannelCreateSchema)
       const channel = await sharing.createChannel(id, parseBlogChannelFields(input), actorOf(c))
@@ -268,6 +281,7 @@ export function createAdminSharingRoutes(
         hasChannels: read.channels.length > 0,
         rows: live ? rows : [],
         visits: summary,
+        linkedinExpiresAt,
       }
       return c.json(answer)
     })
@@ -302,5 +316,11 @@ export function createAdminSharingRoutes(
       }
       const result = await sharing.enterResults(postId, channelId, counts, actorOf(c))
       return c.json({ result }, 201)
+    })
+    .post(`/blog/posts/:id/shares/:channelId/retry`, limit, async (c) => {
+      const postId = idOf(c, `id`, `POST_NOT_FOUND`)
+      const channelId = idOf(c, `channelId`, `CHANNEL_NOT_FOUND`)
+      await sharing.retryShare(postId, channelId, actorOf(c))
+      return c.json({ queued: true }, 202)
     })
 }

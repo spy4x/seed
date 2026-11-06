@@ -500,6 +500,15 @@ export default {
   "AdminBlogChannels.keyMissing":
     "Waiting for its key. Set <key>{key}</key> in the server's env file and deploy.",
   "AdminBlogChannels.lastFailed": "Last post failed: {reason}",
+  "AdminBlogChannels.signInOk": "LinkedIn sign-in valid until {date}.",
+  "AdminBlogChannels.signInSoon": {
+    "one":
+      "LinkedIn sign-in expires in {count} day, on {date}. Renew it with <cmd>{command}</cmd>.",
+    "other":
+      "LinkedIn sign-in expires in {count} days, on {date}. Renew it with <cmd>{command}</cmd>.",
+  },
+  "AdminBlogChannels.signInExpired":
+    "LinkedIn sign-in expired on {date}. Posts wait for you until you run <cmd>{command}</cmd>.",
   "AdminBlogChannels.loading": "Loading sharing channels",
   "AdminBlogChannels.listError": "Couldn't load sharing channels. Try again in a moment.",
   "AdminBlogChannels.retry": "Try again",
@@ -538,6 +547,9 @@ export default {
   "AdminBlogChannels.sourcePreview": "Links carry <tag>?utm_source={tag}</tag>",
   "AdminBlogChannels.addUtm": "Add utm_source to links",
   "AdminBlogChannels.addUtmOff": "Visits from this channel aren't counted.",
+  "AdminBlogChannels.autoPost": "Post automatically",
+  "AdminBlogChannels.autoPostOn": "Each post goes here by itself once it's live.",
+  "AdminBlogChannels.autoPostOff": "Each post shows here as a to-do, and you post it yourself.",
   "AdminBlogChannels.languages": "Languages",
   "AdminBlogChannels.languagesHint": "Posts in these languages list this channel.",
   "AdminBlogChannels.which": "Which posts",
@@ -623,6 +635,7 @@ export default {
   "AdminBlogSharing.presetLater": "Later",
   "AdminBlogSharing.linkRequired": "Add the link.",
   "AdminBlogSharing.autoHint": "Posts automatically when the post goes live.",
+  "AdminBlogSharing.posting": "Posting…",
   "AdminBlogSharing.autoFailed":
     "Couldn't post: {reason}. Try again, or post it yourself and mark it posted.",
   "AdminBlogSharing.autoNoKey":

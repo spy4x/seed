@@ -44,6 +44,7 @@ function channel(id: string, fields: Partial<BlogChannel> = {}): BlogChannel {
     address: `r/selfhosted`,
     utmSource: `r-selfhosted`,
     addUtm: true,
+    autoPost: false,
     languages: [`en`, `ru`],
     startsAt: null,
     archivedAt: null,
@@ -100,6 +101,7 @@ function sharing(fields: Partial<PostSharing> = {}): PostSharing {
     own: new Map(),
     original: new Map(),
     results: new Map(),
+    posting: new Set(),
     ...fields,
   }
 }
@@ -118,6 +120,7 @@ function buildApp(
     fail = null as Error | null,
     read = sharing() as PostSharing | null,
     visits = { state: `off`, missing: [`UMAMI_URL`] } as WebsitePathVisits,
+    linkedinExpiresAt = null as string | null,
   } = {},
 ) {
   const calls: unknown[][] = []
@@ -134,6 +137,7 @@ function buildApp(
     archiveChannel: write(`archiveChannel`, REDDIT),
     deleteChannel: write(`deleteChannel`, undefined),
     setShares: write(`setShares`, undefined),
+    retryShare: write(`retryShare`, undefined),
     enterResults: write(`enterResults`, {
       readAt: NOW,
       source: `hand` as const,
@@ -151,6 +155,7 @@ function buildApp(
         limit: passThrough,
         sharing: service,
         siteUrl: SITE,
+        linkedinExpiresAt,
         pathVisits: (
           path,
           since,
@@ -204,6 +209,7 @@ const ROUTES: { method: string; path: string; body?: unknown }[] = [
     path: `/posts/${POST_ID}/shares/${REDDIT_ID}/results`,
     body: { views: 3, reactions: null, comments: null, score: null },
   },
+  { method: `POST`, path: `/posts/${POST_ID}/shares/${TELEGRAM_ID}/retry`, body: {} },
 ]
 
 describe(`operator area: sharing routes`, () => {
@@ -247,7 +253,7 @@ describe(`operator area: sharing routes`, () => {
     expect(calls).toEqual([[
       `createChannel`,
       REDDIT_ID,
-      { ...FIELDS, name: `r/selfhosted` },
+      { ...FIELDS, name: `r/selfhosted`, autoPost: false },
       ACTOR,
     ]])
   })
@@ -296,6 +302,63 @@ describe(`operator area: sharing routes`, () => {
       expect(response.status).toBe(status)
       expect((await apiError(response)).reason).toBe(reason)
     }
+  })
+
+  it(`turns Post automatically on for a new automatic channel unless the body turns it off`, async () => {
+    const telegram = { ...FIELDS, kind: `telegram`, address: `https://t.me/seednews` }
+    const { app, calls } = buildApp()
+    await request(app, `POST`, `/channels`, { id: TELEGRAM_ID, ...telegram })
+    await request(app, `POST`, `/channels`, { id: OLD_ID, ...telegram, autoPost: false })
+    await request(app, `POST`, `/channels`, { id: REDDIT_ID, ...FIELDS, autoPost: true })
+
+    expect(calls.map((call) => (call[2] as { autoPost: boolean }).autoPost)).toEqual([
+      true,
+      false,
+      false,
+    ])
+  })
+
+  it(`queues another automatic try with the post, the channel and the operator as actor`, async () => {
+    const { app, calls } = buildApp()
+    const response = await request(app, `POST`, `/posts/${POST_ID}/shares/${TELEGRAM_ID}/retry`, {})
+
+    expect(response.status).toBe(202)
+    expect(await response.json()).toEqual({ queued: true })
+    expect(calls).toEqual([[`retryShare`, POST_ID, TELEGRAM_ID, ACTOR]])
+  })
+
+  it(`refuses a try on a channel that does not post by itself with 409`, async () => {
+    const fail = new BlogSharingError(`NOT_AUTOMATIC`, `Not automatic.`)
+    const { app } = buildApp(operator(), { fail })
+    const response = await request(app, `POST`, `/posts/${POST_ID}/shares/${REDDIT_ID}/retry`, {})
+
+    expect(response.status).toBe(409)
+    expect((await apiError(response)).reason).toBe(`NOT_AUTOMATIC`)
+  })
+
+  it(`refuses a cross-site try with 403 and queues nothing`, async () => {
+    const { app, calls } = buildApp()
+    const response = await request(
+      app,
+      `POST`,
+      `/posts/${POST_ID}/shares/${TELEGRAM_ID}/retry`,
+      {},
+      { ...crossSiteHeaders },
+    )
+
+    expect(response.status).toBe(403)
+    expect(calls).toEqual([])
+  })
+
+  it(`sends the LinkedIn sign-in's expiry date and nothing else of it`, async () => {
+    const expiry = `2027-01-01T00:00:00.000Z`
+    const { app } = buildApp(operator(), { linkedinExpiresAt: expiry })
+    const list = await (await request(app, `GET`, `/channels`)).json()
+    const page = await (await request(app, `GET`, `/posts/${POST_ID}/sharing`)).json()
+
+    expect(list.linkedinExpiresAt).toBe(expiry)
+    expect(page.linkedinExpiresAt).toBe(expiry)
+    expect(JSON.stringify([list, page])).not.toMatch(/token|LINKEDIN_/i)
   })
 
   it(`answers a version conflict with the current version`, async () => {
@@ -430,6 +493,12 @@ describe(`sharingRows`, () => {
     ])
     expect(rows[0].submitUrl).toContain(`reddit.com/r/selfhosted/submit`)
     expect(rows[1].text).toContain(`${SITE}/blog/hello`)
+  })
+
+  it(`marks only the row whose automatic post waits for a job as posting`, () => {
+    const read = sharing({ posting: new Set([TELEGRAM_ID]) })
+
+    expect(sharingRows(read, SITE, OFF).rows.map((row) => row.posting)).toEqual([false, true])
   })
 
   it(`marks a translation covered by its original's post`, () => {
