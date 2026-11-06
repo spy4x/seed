@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
-import { type AttachmentRules, type Entitlements, PlanError, PLANS } from "@domain/billing"
+import { type AttachmentRules, type Entitlements, PlanError } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import {
   type Attachment,
@@ -24,6 +24,7 @@ import {
   createAttachmentRemoveHandler,
   createAttachmentSignHandler,
 } from "./attachments.ts"
+import { TEST_FREE_PLAN } from "../../../../libs/domain/billing/test-plans.ts"
 
 const GROUP = `0190a000-0000-7000-8000-000000000001`
 const OTHER_GROUP = `0190a000-0000-7000-8000-000000000002`
@@ -33,7 +34,7 @@ const VIEWER = 2
 const OTHER_EDITOR = 3
 const MB = 1024 * 1024
 
-const FREE = PLANS[0]
+const FREE = TEST_FREE_PLAN
 
 /** Attachments in memory: one live note in {@link GROUP}. */
 function memoryAttachments() {

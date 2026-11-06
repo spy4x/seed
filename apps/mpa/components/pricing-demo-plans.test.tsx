@@ -1,24 +1,25 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { renderToString } from "preact-render-to-string"
-import { PLANS, PRO_PLAN_ID } from "@domain/billing"
+import { PRO_PLAN_ID } from "@domain/billing"
 import { BillingInterval, PricingTable } from "@spy4x/preact-ui/billing"
 import { siteTranslator } from "../languages.ts"
 import { demoPlans, demoSavings } from "./pricing-demo-plans.tsx"
+import { TEST_PLANS } from "../../../libs/domain/billing/test-plans.ts"
 
 const t = siteTranslator(`en`)
 
-/** Seed's catalog with Pro sold yearly too, at $40 against $4 a month, as Financy sells it. */
-const YEARLY = PLANS.map((plan) =>
+/** The test catalog with Pro sold yearly too, at $40 against $4 a month, as Financy sells it. */
+const YEARLY = TEST_PLANS.map((plan) =>
   plan.id === PRO_PLAN_ID ? { ...plan, amount: 400, yearlyAmount: 4000, currency: `USD` } : plan
 )
 
 describe("demoPlans", () => {
   it("lists one monthly entry per plan when no plan sells yearly", () => {
-    const plans = demoPlans(t)
+    const plans = demoPlans(t, TEST_PLANS)
 
     expect(plans.map((plan) => [plan.id, plan.interval])).toEqual(
-      PLANS.map((plan) => [plan.id, BillingInterval.Month]),
+      TEST_PLANS.map((plan) => [plan.id, BillingInterval.Month]),
     )
   })
 
@@ -55,7 +56,7 @@ describe("demoSavings", () => {
       plan.id === PRO_PLAN_ID ? { ...plan, yearlyAmount: 4800 } : plan
     )
 
-    expect(demoSavings(t)).toEqual([])
+    expect(demoSavings(t, TEST_PLANS)).toEqual([])
     expect(demoSavings(t, even)).toEqual([])
   })
 })

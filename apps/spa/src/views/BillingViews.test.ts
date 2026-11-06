@@ -5,6 +5,7 @@ import { createTranslator } from "@spy4x/platform/universal/i18n"
 import { createFormatters } from "@spy4x/time/format"
 import app from "@i18n/app/en.ts"
 import { checkoutDoneToast, periodFromSearch } from "./BillingViews.tsx"
+import { TEST_PLANS } from "../../../../libs/domain/billing/test-plans.ts"
 
 const t = createTranslator({ language: "en", catalogs: [{ source: app }] })
 const format = createFormatters({ locale: "en-US", timeZone: "Asia/Tokyo" })
@@ -31,7 +32,7 @@ describe("checkoutDoneToast", () => {
       status: BillingStatus.Trialing,
       trialEnd: new Date("2026-11-04T00:00:00Z"),
     }
-    expect(checkoutDoneToast(t, format, trial, "Team")).toEqual({
+    expect(checkoutDoneToast(t, format, trial, "Team", TEST_PLANS)).toEqual({
       title: "Your 14-day Pro trial has started",
       body: `“\u2068Team\u2069” is on Pro until November 4, 2026.`,
     })

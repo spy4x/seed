@@ -5,6 +5,7 @@ import { h } from "preact"
 import { renderToString } from "preact-render-to-string"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { PLANS } from "@domain/billing"
+import { demoPlans, demoSavings } from "./components/pricing-demo-plans.tsx"
 import AppWrapper from "./routes/_app.tsx"
 import Layout from "./routes/_layout.tsx"
 import Admin, { ADMIN_HEAD } from "./routes/[[lang]]/admin.tsx"
@@ -36,7 +37,7 @@ import { NotYetList } from "./components/features-section.tsx"
 import { SiteLanguage } from "./use-site.tsx"
 import { SITE_PAGES, type SitePage } from "./pages.ts"
 import { DOC_SLUGS } from "./docs-site.ts"
-import { localePath, pathLanguage, SITE_LANGUAGES } from "./languages.ts"
+import { localePath, pathLanguage, SITE_LANGUAGES, siteTranslator } from "./languages.ts"
 import type { MpaConfig } from "./config.ts"
 import type { State } from "./utils.ts"
 
@@ -58,6 +59,10 @@ const info = {
   remoteAddr: { transport: "tcp", hostname: "192.0.2.7", port: 4000 },
   completed: Promise.resolve(),
 } as Deno.ServeHandlerInfo<Deno.NetAddr>
+
+/** The pricing page's demo entries and saving sentences, in English, from the catalog it renders. */
+const DEMO_PLANS = demoPlans(siteTranslator(`en`))
+const DEMO_SAVINGS = demoSavings(siteTranslator(`en`))
 
 const neverCalled = () => Promise.reject(new Error("the website called the API"))
 
@@ -734,7 +739,8 @@ describe("the public website", () => {
     expect(home).toContain(`Images and PDFs attached to notes`)
     expect(features).toContain(`for images and PDFs on notes`)
     expect(rows.find((row) => row.capability === "File uploads")?.values[0]).toBe("Yes")
-    expect(pricing).toContain(`100 files, 200 MB in all`)
+    // The pricing page lists the catalog's own lines, so a catalog that sells files names them.
+    for (const feature of PLANS.flatMap((plan) => plan.features)) expect(pricing).toContain(feature)
     for (const html of [home, features]) {
       expect(html).not.toContain(`no screen uses`)
       expect(html).not.toContain(`issues/225`)
@@ -894,11 +900,12 @@ describe("the public website", () => {
       expect(html).toContain(`name="planId" value="${plan.id}"`)
     }
     expect(html.match(/<form [^>]*action="\/pricing"[^>]*method="post"/g)).toHaveLength(
-      PLANS.length,
+      DEMO_PLANS.length,
     )
-    // Seed's own catalog sells no yearly price: no toggle and no saving sentence.
-    expect(html).not.toContain(`data-pricing-interval`)
-    expect(html).not.toContain(`data-e2e="pricing-saving"`)
+    // A catalog that sells no yearly price shows no toggle and no saving sentence.
+    const yearly = PLANS.some((plan) => plan.yearlyAmount !== null)
+    expect(html.includes(`data-pricing-interval`)).toBe(yearly)
+    expect(html.includes(`data-e2e="pricing-saving"`)).toBe(DEMO_SAVINGS.length > 0)
   })
 
   it("offers only Seed itself, at no cost, in the pricing page's structured data", async () => {
@@ -1037,10 +1044,14 @@ describe("the public website", () => {
   it("names the trial of every plan that has one, with its length from the catalog", async () => {
     const { html } = await page("/pricing")
 
-    const withTrial = PLANS.filter((plan) => plan.trialDays > 0)
-    expect(withTrial.length).toBeGreaterThan(0)
-    for (const plan of withTrial) expect(html).toContain(`The first ${plan.trialDays} days free`)
-    expect(html.match(/days free/g)).toHaveLength(withTrial.length)
+    // A plan sold yearly too has two entries, each with its trial line.
+    const withTrial = DEMO_PLANS.filter((entry) =>
+      PLANS.some((plan) => plan.trialDays > 0 && entry.id.replace(/-yearly$/, ``) === plan.id)
+    )
+    for (const plan of PLANS.filter((plan) => plan.trialDays > 0)) {
+      expect(html).toContain(`The first ${plan.trialDays} days free`)
+    }
+    expect(html.match(/days free/g) ?? []).toHaveLength(withTrial.length)
   })
 
   it("names every demo plan's button with its visible text, then the plan", async () => {
@@ -1048,8 +1059,8 @@ describe("the public website", () => {
 
     const buttons = [...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)]
       .filter((match) => match[1].includes(`type="submit"`) && match[2].includes("demo"))
-    expect(buttons).toHaveLength(PLANS.length)
-    for (const [index, plan] of PLANS.entries()) {
+    expect(buttons).toHaveLength(DEMO_PLANS.length)
+    for (const [index, plan] of DEMO_PLANS.entries()) {
       const [, attributes, content] = buttons[index]
       const visible = content.replace(/<[^>]+>/g, "").trim()
       const name = attributes.match(/aria-label="([^"]*)"/)?.[1]

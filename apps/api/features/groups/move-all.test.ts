@@ -22,6 +22,7 @@ import { Realtime } from "../../services/realtime.ts"
 import { createGroupMoveAllHandler } from "./handlers.ts"
 import { createGroupOperations } from "./operations.ts"
 import { apiError } from "../../_testing/api-error.ts"
+import { TEST_PLANS } from "../../../../libs/domain/billing/test-plans.ts"
 
 /**
  * Moving all of a group's data over both transports, on the bus as the API wires it (session gate,
@@ -69,6 +70,7 @@ function stack(plans: Record<string, string> = { [FROM]: PRO_PLAN_ID, [TO]: PRO_
   commands.use(createSessionGate([]))
   commands.use(createEntitlementGate({
     billingEnabled: true,
+    plans: TEST_PLANS,
     planOf: (groupId) => Promise.resolve(plans[groupId]),
     roleOf: (groupId, userId) => Promise.resolve(ROLES[groupId]?.[userId] ?? null),
     usage: {
