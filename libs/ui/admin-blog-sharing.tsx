@@ -180,7 +180,8 @@ export function AdminBlogSharingScreen(props: AdminBlogSharingScreenProps): JSX.
   const rowsShown = () => {
     const all = [...page.current?.querySelectorAll<HTMLElement>(ROW) ?? []]
       .filter((row) => row.closest(`details`)?.open !== false)
-    const current = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>(ROW)
+    const current = (page.current?.ownerDocument.activeElement as HTMLElement | null | undefined)
+      ?.closest<HTMLElement>(ROW)
     return { all, at: current ? all.indexOf(current) : -1 }
   }
   /** Runs `act` on the focused row and its data; does nothing when focus is on no row. */
