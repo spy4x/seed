@@ -1,6 +1,6 @@
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
-import { IconChevronDown } from "@spy4x/preact-icons"
+import { IconChevronDown, IconSpinner } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { CopyBlock } from "@spy4x/preact-ui/copy-block"
 import type { ComponentProps } from "preact"
@@ -14,7 +14,6 @@ import { Input } from "@spy4x/preact-ui/input"
 import { useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
-import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import {
@@ -692,10 +691,14 @@ function AutomaticNote(
   )
   if (row.posting) {
     return (
-      <p class="flex items-center gap-2 text-sm text-muted" data-e2e="blog-share-posting">
-        <LoadingSpinner size="sm" />
+      <div
+        role="status"
+        class="flex items-center gap-2 text-sm text-muted"
+        data-e2e="blog-share-posting"
+      >
+        <IconSpinner class="size-5 shrink-0 motion-reduce:animate-none" aria-hidden="true" />
         {t.t(`AdminBlogSharing.posting`)}
-      </p>
+      </div>
     )
   }
   if (error === null) {

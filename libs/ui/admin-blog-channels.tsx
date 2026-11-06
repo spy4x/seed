@@ -192,6 +192,11 @@ export function AdminBlogChannelsScreen(props: AdminBlogChannelsScreenProps): JS
   const now = props.now ?? Date.now()
   const t = useAdminText()
   const format = useFormat()
+  const linkedinExpired =
+    linkedinSignInState(list?.linkedinExpiresAt ?? null, now).state === `expired`
+  /** Whether the channel posts by itself now: a LinkedIn channel past its sign-in waits for it. */
+  const postsByItself = (channel: AdminBlogChannelRow) =>
+    channelPostsAutomatically(channel, false) && !(channel.kind === `linkedin` && linkedinExpired)
   const [deleting, setDeleting] = useState<AdminBlogChannelRow | null>(null)
   /** The row to focus once the list read after a change arrives, and the list it replaces. */
   const [focusAt, setFocusAt] = useState<{ index: number; list: typeof list } | null>(null)
@@ -324,7 +329,7 @@ export function AdminBlogChannelsScreen(props: AdminBlogChannelsScreenProps): JS
                       >
                         {channel.name}
                       </Link>
-                      {channelPostsAutomatically(channel, false) && (
+                      {postsByItself(channel) && (
                         <Badge
                           text={t.t(`AdminBlogChannels.automatic`)}
                           color="blue"

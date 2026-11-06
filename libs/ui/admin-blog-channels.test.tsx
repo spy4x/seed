@@ -295,6 +295,28 @@ describe("the automatic channels on the list", () => {
     )
     expect(signIn()).toBeNull()
   })
+
+  it("drops the Posts automatically badge from a LinkedIn channel once its sign-in has expired", async () => {
+    const facts = () => find("[data-e2e=blog-channel-row]").textContent
+    await mount(
+      <AdminBlogChannelsScreen
+        {...listProps([], {
+          list: listOf(linkedin(), new Date(TODAY + DAY).toISOString()),
+          now: TODAY,
+        })}
+      />,
+    )
+    expect(facts()).toContain("Posts automatically")
+    await mount(
+      <AdminBlogChannelsScreen
+        {...listProps([], {
+          list: listOf(linkedin(), new Date(TODAY - DAY).toISOString()),
+          now: TODAY,
+        })}
+      />,
+    )
+    expect(facts()).not.toContain("Posts automatically")
+  })
 })
 
 function formProps(

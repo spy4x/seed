@@ -529,11 +529,16 @@ describe("the sharing checklist", () => {
       .toContain("UMAMI_API_TOKEN")
   })
 
-  it("shows Posting… on a row whose automatic post waits, with no Try again", async () => {
+  it("shows Posting… on one line, as its own status, on a row whose automatic post waits, with no Try again", async () => {
     const auto = { ...TELEGRAM, autoPost: true }
     const rows = [rowOf(auto, "todo", { text: "Seed is out", posting: true })]
     await mount(<AdminBlogSharingScreen {...props([], { sharing: sharingOf(rows) })} />)
-    expect(find("[data-e2e=blog-share-posting]", rowFor(auto)).textContent).toContain("Posting…")
+    const posting = find("[data-e2e=blog-share-posting]", rowFor(auto))
+    expect(posting.textContent).toContain("Posting…")
+    // One status region that says the words itself, not a spinner's own "Loading" region in a <p>.
+    expect(posting.getAttribute("role")).toBe("status")
+    expect(posting.tagName).toBe("DIV")
+    expect(posting.querySelector("[role=status], div") === null).toBe(true)
     expect(rowFor(auto).querySelector("[data-e2e=blog-share-retry]")).toBeNull()
   })
 
