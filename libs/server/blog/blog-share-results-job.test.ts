@@ -130,6 +130,9 @@ describe(`readShareResultsSetup`, () => {
     const site = readShareResultsSetup(env({ MPA_DOMAIN: `www.example.com` }), `prod`)
     expect(site.readers.reddit).toBeDefined()
     expect(site.missing).toEqual({ devto: `DEVTO_API_KEY is unset` })
+    const keyOnly = readShareResultsSetup(env({ DEVTO_API_KEY: `<REDACTED:API_KEY>` }), `prod`)
+    expect(keyOnly.readers.devto).toBeUndefined()
+    expect(keyOnly.missing.devto).toBe(`MPA_DOMAIN is unset`)
     const both = readShareResultsSetup(
       env({ MPA_DOMAIN: `www.example.com`, DEVTO_API_KEY: `<REDACTED:API_KEY>` }),
       `prod`,
