@@ -29,6 +29,7 @@ default, never a value to keep for a secret.
 | `INDEXNOW_KEY`         | The website's IndexNow key, 8 to 128 letters, digits and dashes. Public. Empty turns IndexNow off.           | empty              | [Blog](blog.md#indexnow)                       |
 | `DEVTO_API_KEY`        | A Dev.to API key, read by the worker. Secret. Set, it copies each live post to Dev.to once. Empty turns it off. | empty              | [Blog](blog.md#the-devto-cross-post)           |
 | `MASTODON_ACCESS_TOKEN` | A Mastodon access token (`write:statuses`), read by the worker. Secret. Empty keeps Mastodon manual. | empty | [Blog](blog.md#automatic-posts) |
+| `MASTODON_INSTANCE_URL` | The `https` address of the token's Mastodon server; the token is sent only there. Empty keeps Mastodon manual. | empty | [Blog](blog.md#automatic-posts) |
 | `BLUESKY_IDENTIFIER` | The Bluesky handle the worker posts as. Set it with the app password. | empty | [Blog](blog.md#automatic-posts) |
 | `BLUESKY_APP_PASSWORD` | A Bluesky app password, read by the worker. Secret. Empty keeps Bluesky manual. | empty | [Blog](blog.md#automatic-posts) |
 | `BLUESKY_SERVICE` | Another Bluesky server than `https://bsky.social`. | empty | [Blog](blog.md#automatic-posts) |

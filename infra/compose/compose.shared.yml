@@ -957,6 +957,7 @@ services:
       # Automatic posts (docs/blog.md): with MPA_DOMAIN, a live post goes by itself to each channel
       # with "Post automatically" on whose keys are set. Unset → that kind stays manual.
       - MASTODON_ACCESS_TOKEN=${MASTODON_ACCESS_TOKEN:-}
+      - MASTODON_INSTANCE_URL=${MASTODON_INSTANCE_URL:-}
       - BLUESKY_IDENTIFIER=${BLUESKY_IDENTIFIER:-}
       - BLUESKY_APP_PASSWORD=${BLUESKY_APP_PASSWORD:-}
       - BLUESKY_SERVICE=${BLUESKY_SERVICE:-}
