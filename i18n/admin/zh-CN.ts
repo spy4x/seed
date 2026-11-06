@@ -606,6 +606,8 @@ export default {
   "AdminBlogSharing.numbersFrom": "数据截至{time}",
   "AdminBlogSharing.numbersFromHand": "数据截至{time}，手动录入",
   "AdminBlogSharing.noNumbers": "还没有数据",
+  "AdminBlogSharing.readFailed": "没能从{channel}读取新数据，当前显示的是截至{time}的数据。",
+  "AdminBlogSharing.readFailedNone": "还没能从{channel}读取到数据。",
   "AdminBlogSharing.umamiOff":
     "统计访问需要 Umami。请在服务器的 env 文件中设置<keys>{keys}</keys>，然后部署。",
   "AdminBlogSharing.resultsTitle": "录入{channel}的数据",

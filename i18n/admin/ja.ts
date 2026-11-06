@@ -631,6 +631,9 @@ export default {
   "AdminBlogSharing.numbersFrom": "{time}時点の数値",
   "AdminBlogSharing.numbersFromHand": "{time}時点の数値（手動入力）",
   "AdminBlogSharing.noNumbers": "数値はまだありません",
+  "AdminBlogSharing.readFailed":
+    "{channel}から最新の数値を取得できませんでした。{time}時点の数値を表示しています。",
+  "AdminBlogSharing.readFailedNone": "{channel}からまだ数値を取得できていません。",
   "AdminBlogSharing.umamiOff":
     "訪問数の表示にはUmamiが必要です。サーバーのenvファイルに<keys>{keys}</keys>を設定してデプロイしてください。",
   "AdminBlogSharing.resultsTitle": "{channel}の成果を入力",
