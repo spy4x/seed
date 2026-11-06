@@ -357,7 +357,7 @@ describe(`operator area: sharing routes`, () => {
     })
 
     expect(response.status).toBe(400)
-    expect((await apiError(response)).fields?.url?.code).toBe(`httpsUrl`)
+    expect((await apiError(response)).fields?.url?.code).toBe(`channelHttps`)
     expect(calls).toEqual([])
   })
 

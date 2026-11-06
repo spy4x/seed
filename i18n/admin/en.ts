@@ -614,7 +614,7 @@ export default {
   "AdminBlogSharing.noText": "No ready-made text for this type. Use the post's intro.",
   "AdminBlogSharing.skipTitle": "Skip {channel} for this post?",
   "AdminBlogSharing.reason": "Reason (optional)",
-  "AdminBlogSharing.reasonHint": 'Such as "Off-topic for this subreddit". Shown on the row.',
+  "AdminBlogSharing.reasonHint": 'Such as "Off-topic for this channel". Shown on the row.',
   "AdminBlogSharing.skipConfirm": "Skip channel",
   "AdminBlogSharing.cancel": "Cancel",
   "AdminBlogSharing.presetNotFit": "Not a fit",

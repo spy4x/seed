@@ -13,6 +13,7 @@ export default {
   "Field.before": "Use a date before {rule}.",
   "Field.categorySlugTaken": "Another category uses this address. Pick a different one.",
   "Field.channelAddress": "Add an address.",
+  "Field.channelHttps": "Start the link with https://.",
   "Field.channelLanguages": "Pick at least one language.",
   "Field.channelName": "Add a name.",
   "Field.channelNameTaken": "Another channel already uses this name.",

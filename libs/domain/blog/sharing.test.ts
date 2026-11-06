@@ -154,7 +154,7 @@ describe(`parseBlogChannelFields`, () => {
   it(`names the field and the reason of each refusal`, () => {
     expect(failure({ name: ` ` })).toEqual([`name`, `channelName`])
     expect(failure({ address: `` })).toEqual([`address`, `channelAddress`])
-    expect(failure({ kind: `telegram`, address: `http://t.me/x` })).toEqual([`address`, `httpsUrl`])
+    expect(failure({ kind: `telegram`, address: `http://t.me/x` })).toEqual([`address`, `channelHttps`])
     expect(failure({ utmSource: `` })).toEqual([`utmSource`, `channelSource`])
     expect(failure({ utmSource: `R_Self` })).toEqual([`utmSource`, `slug`])
     expect(failure({ languages: [] })).toEqual([`languages`, `channelLanguages`])

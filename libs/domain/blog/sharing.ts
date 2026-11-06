@@ -573,7 +573,7 @@ export function parseBlogChannelFields(
   if (fields.address === ``) fail(`address`, `Add an address.`, { code: `channelAddress` })
   if (LINK_KINDS.has(kind)) {
     if (!isHttps(fields.address)) {
-      fail(`address`, `Start the link with https://.`, { code: `httpsUrl` })
+      fail(`address`, `Start the link with https://.`, { code: `channelHttps` })
     }
     fields.address = new URL(fields.address).href
   }
@@ -616,7 +616,7 @@ export function parseBlogShareFields(
   }
   let url = input.url?.trim() || null
   if (url !== null) {
-    if (!isHttps(url)) fail(`url`, `Start the link with https://.`, { code: `httpsUrl` })
+    if (!isHttps(url)) fail(`url`, `Start the link with https://.`, { code: `channelHttps` })
     url = new URL(url).href
     if (characters(url) > BLOG_SHARE_URL_MAX_LENGTH) {
       fail(`url`, `Keep the link shorter.`, { code: `maxLength`, values: { rule: 2000 } })
