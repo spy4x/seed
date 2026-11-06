@@ -141,4 +141,15 @@ describe(`readShareResultsSetup`, () => {
     expect(both.missing).toEqual({})
     expect(both.siteUrl).toBe(`https://www.example.com`)
   })
+
+  it(`never lets the Mastodon reader reach a private address`, async () => {
+    const { readers } = readShareResultsSetup(env({}), `prod`)
+    const read = await readers.mastodon!({
+      kind: `mastodon`,
+      instanceUrl: `https://127.0.0.1`,
+      statusId: `1`,
+    })
+    expect(read.success).toBe(false)
+    expect(read.error).toContain(`UrlValidationError`)
+  })
 })

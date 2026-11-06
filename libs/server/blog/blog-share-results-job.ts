@@ -8,6 +8,7 @@ import { readHackerNewsItemResults } from "@spy4x/integrations/hackernews"
 import { readMastodonStatusResults } from "@spy4x/integrations/mastodon"
 import { readBlueskyPostResults } from "@spy4x/integrations/bluesky"
 import { readHashnodePostResults } from "@spy4x/integrations/hashnode"
+import { safeFetch } from "@spy4x/net/safe-fetch"
 import {
   BLOG_READ_KINDS,
   BLOG_SHARE_RESULT_MAX,
@@ -191,6 +192,18 @@ export function shareTarget(
 // #region Setup
 
 /**
+ * `fetch` for a host taken from an operator's link (a Mastodon instance): it refuses private,
+ * loopback and link-local addresses, also after DNS, and follows no redirect.
+ */
+const publicFetch: typeof fetch = async (input, init) =>
+  (await safeFetch(input instanceof Request ? input.url : String(input), {
+    method: init?.method,
+    headers: init?.headers,
+    body: init?.body ?? undefined,
+    maxRedirects: 0,
+  })).response
+
+/**
  * The readers from the env. Hacker News, Mastodon, Bluesky and Hashnode read public numbers with
  * no key. Dev.to reads with `DEVTO_API_KEY`, the cross-post's key, and needs `MPA_DOMAIN` for the
  * post's canonical address. Reddit needs `MPA_DOMAIN` too: Reddit refuses a request without a
@@ -206,7 +219,8 @@ export function readShareResultsSetup(
   const apiKey = env.get(`DEVTO_API_KEY`)?.trim() ?? ``
   const readers: ShareReaders = {
     hackernews: ({ id }) => readHackerNewsItemResults({ id }),
-    mastodon: ({ instanceUrl, statusId }) => readMastodonStatusResults({ instanceUrl, statusId }),
+    mastodon: ({ instanceUrl, statusId }) =>
+      readMastodonStatusResults({ instanceUrl, statusId, fetch: publicFetch }),
     bluesky: ({ uri }) => readBlueskyPostResults({ uri }),
     hashnode: ({ host, slug }) => readHashnodePostResults({ host, slug }),
   }
