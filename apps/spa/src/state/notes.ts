@@ -298,6 +298,8 @@ export function createNotesStore(dependencies: NotesDependencies) {
       openId = noteId
       void showLocal(nextGroupId)
       await load()
+      // A later open of this group (a note's page after its list) took over while the read ran.
+      if (openId !== noteId) return
     } else openId = noteId
     if (noteId === null) {
       editing.value = null
