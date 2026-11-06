@@ -147,8 +147,9 @@ function SystemBody(
         <Notice tone={summary.tone}>{t.t(summary.key)}</Notice>
       </div>
       {
-        /* Two columns at most: a third left each card so narrow that its labels wrapped and the
-          newest migration's name broke mid-word at 1440 px. */
+        /* Two columns at most: a third left each card so narrow that its labels wrapped. The
+          migrations card spans both, last, so a long migration name stays on one line at 1440 px;
+          six half cards before it leave no gap. */
       }
       <section
         aria-label={t.t(`AdminSystem.services`)}
@@ -248,27 +249,8 @@ function SystemBody(
           }]}
         />
         <StatusCard
-          title={t.t(`AdminSystem.migrations`)}
-          health={migrations.health}
-          dataE2E="admin-system-migrations"
-          facts={[{ label: t.t(`AdminSystem.applied`), value: NUMBER.format(migrations.applied) }, {
-            label: t.t(`AdminSystem.newest`),
-            value: (
-              <span class="font-mono text-xs">
-                {migrations.latest ?? t.t(`AdminSystem.none`)}
-              </span>
-            ),
-          }, {
-            label: t.t(`AdminSystem.appliedAt`),
-            value: migrations.latestAt
-              ? <When at={migrations.latestAt} />
-              : t.t(`AdminSystem.never`),
-          }]}
-        />
-        <StatusCard
           title={t.t(`AdminSystem.build`)}
           dataE2E="admin-system-build"
-          class="lg:col-span-2"
           facts={[
             {
               label: t.t(`AdminSystem.version`),
@@ -288,6 +270,25 @@ function SystemBody(
               value: <When at={build.startedAt} />,
             },
           ]}
+        />
+        <StatusCard
+          title={t.t(`AdminSystem.migrations`)}
+          health={migrations.health}
+          dataE2E="admin-system-migrations"
+          class="lg:col-span-2"
+          facts={[{ label: t.t(`AdminSystem.applied`), value: NUMBER.format(migrations.applied) }, {
+            label: t.t(`AdminSystem.newest`),
+            value: (
+              <span class="font-mono text-xs">
+                {migrations.latest ?? t.t(`AdminSystem.none`)}
+              </span>
+            ),
+          }, {
+            label: t.t(`AdminSystem.appliedAt`),
+            value: migrations.latestAt
+              ? <When at={migrations.latestAt} />
+              : t.t(`AdminSystem.never`),
+          }]}
         />
       </section>
     </>
@@ -323,7 +324,7 @@ function StatusCard(
       <CardBody class="flex flex-col gap-3">
         {
           /* The rows pad themselves; the card already does at its edges. The width cap keeps each
-            label beside its value on a card that spans the page, such as the build's. */
+            label beside its value on a card that spans the page, such as the migrations'. */
         }
         <FactList facts={facts} class="-my-3 max-w-xl" />
         {hint && <p class="text-xs text-muted">{hint}</p>}
