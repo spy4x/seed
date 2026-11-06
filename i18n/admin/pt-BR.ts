@@ -568,7 +568,8 @@ export default {
   "AdminBlogChannels.addUtmOff": "As visitas vindas deste canal não são contadas.",
   "AdminBlogChannels.autoPost": "Publicar automaticamente",
   "AdminBlogChannels.autoPostOn": "Cada post é publicado aqui sozinho assim que entra no ar.",
-  "AdminBlogChannels.autoPostOff": "Cada post aparece aqui como pendente, e você mesmo publica.",
+  "AdminBlogChannels.autoPostOff":
+    "Cada post aparece aqui como pendente, e você mesmo o publica no canal.",
   "AdminBlogChannels.languages": "Idiomas",
   "AdminBlogChannels.languagesHint": "Posts nesses idiomas mostram este canal.",
   "AdminBlogChannels.which": "Quais posts",

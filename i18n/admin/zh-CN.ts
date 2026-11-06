@@ -482,7 +482,7 @@ export default {
     "other": "LinkedIn 登录将在 {count} 天后（{date}）过期。请运行<cmd>{command}</cmd>续期。",
   },
   "AdminBlogChannels.signInExpired":
-    "LinkedIn 登录已于 {date} 过期。运行<cmd>{command}</cmd>之前，文章会一直等待发布。",
+    "LinkedIn 登录已于 {date} 过期。在你运行<cmd>{command}</cmd>之前，文章会一直等着发到 LinkedIn。",
   "AdminBlogChannels.loading": "正在加载分享渠道",
   "AdminBlogChannels.listError": "无法加载分享渠道，请稍后重试。",
   "AdminBlogChannels.retry": "重试",

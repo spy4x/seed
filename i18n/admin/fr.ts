@@ -575,7 +575,7 @@ export default {
   "AdminBlogChannels.autoPost": "Publier automatiquement",
   "AdminBlogChannels.autoPostOn": "Chaque article y est publié tout seul dès qu’il est en ligne.",
   "AdminBlogChannels.autoPostOff":
-    "Chaque article affiche ce canal comme une tâche à faire, et vous le publiez vous-même.",
+    "Chaque article affiche ce canal comme une tâche à faire, et vous l’y publiez vous-même.",
   "AdminBlogChannels.languages": "Langues",
   "AdminBlogChannels.languagesHint": "Les articles dans ces langues affichent ce canal.",
   "AdminBlogChannels.which": "Quels articles",
