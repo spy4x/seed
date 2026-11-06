@@ -378,6 +378,8 @@ describe("the sharing checklist", () => {
     )
     const done = [rowOf(REDDIT, "posted", { share: shareOf(REDDIT.id, {}) }), ROWS[3]]
     await mount(<AdminBlogSharingScreen {...props(calls, { sharing: sharingOf(done) })} />)
+    // A heading takes focus in a browser only with a tabindex; happy-dom does not check.
+    expect(find("h1").getAttribute("tabindex")).toBe("-1")
     expect(document.activeElement).toBe(find("h1"))
   })
 
