@@ -40,6 +40,7 @@ import {
 import { ListEmpty } from "./notes-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useAdminText } from "./i18n.ts"
+import { languageNameIn } from "./preferences.tsx"
 
 /** The clipboard port `CopyBlock` takes. */
 type CopyPort = ComponentProps<typeof CopyBlock>[`copy`]
@@ -113,16 +114,6 @@ const ROW = `[data-e2e=blog-share-row]`
 /** A value inside a sentence: code-like, isolated, never machine-translated. */
 function literal(text: string): JSX.Element {
   return <code class="font-mono text-xs" translate={false}>{text}</code>
-}
-
-/** A language's name for a reader of `inLanguage`: `ru` is "Russian" on an English page. */
-function languageFor(language: string, inLanguage: string): string {
-  try {
-    const name = new Intl.DisplayNames([inLanguage], { type: `language` }).of(language) ?? language
-    return name.charAt(0).toLocaleUpperCase(inLanguage) + name.slice(1)
-  } catch {
-    return language
-  }
 }
 
 /** Where focus goes once the change on its way lands: the next to-do row, or a given row. */
@@ -253,7 +244,7 @@ export function AdminBlogSharingScreen(props: AdminBlogSharingScreenProps): JSX.
   const { post, rows } = sharing
   const counts = blogSharingCounts(rows)
   const toDo = rows.filter((row) => row.state === `todo`)
-  const language = languageFor(post.language, t.language)
+  const language = languageNameIn(post.language, t.language) ?? post.language
   const subtitle = [
     language,
     ...(live && counts.total > 0
