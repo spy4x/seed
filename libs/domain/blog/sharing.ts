@@ -209,8 +209,15 @@ export interface AdminBlogSharingResponse {
   hasChannels: boolean
   rows: AdminBlogShareRow[]
   visits: AdminBlogVisits
-  /** Whether Dev.to's key is set where the job runs, as far as the API knows. */
-  devtoKeyMissing: boolean
+}
+
+/** What the blog list shows of sharing: how many channels are active and each post's to-dos. */
+export interface AdminBlogSharingSummary {
+  activeChannels: number
+  /** How many live posts list at least one channel as to do. */
+  needsSharing: number
+  /** Each post with something to do, by id: how many channels it still lists as to do. */
+  toDo: Record<string, number>
 }
 
 // #endregion

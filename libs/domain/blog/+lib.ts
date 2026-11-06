@@ -11,6 +11,7 @@ import {
   sitePath,
 } from "../identity/preferences.ts"
 import type { BlogPreviewSegment, BlogProblem, BlogSegment } from "./figures.ts"
+import type { AdminBlogSharingSummary } from "./sharing.ts"
 
 export * from "./figures.ts"
 export * from "./sharing.ts"
@@ -177,6 +178,8 @@ export interface AdminBlogCounts {
 export interface AdminBlogListResponse {
   posts: AdminBlogPostRow[]
   counts: AdminBlogCounts
+  /** Left out by the repository; the route adds it. */
+  sharing?: AdminBlogSharingSummary
 }
 
 /** One topic and how many posts carry it. */
