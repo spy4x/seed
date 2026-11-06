@@ -19,6 +19,8 @@ const posted: BlogShare = {
   skipReason: null,
   automatic: true,
   error: `Dev.to answered 503 once`,
+  readError: null,
+  readFailedAt: null,
   updatedAt: NOW,
 }
 

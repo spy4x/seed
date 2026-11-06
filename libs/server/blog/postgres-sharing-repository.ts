@@ -73,8 +73,9 @@ interface ChannelRow
   updatedAt: Date
 }
 
-interface ShareRow extends Omit<BlogShare, `sharedAt` | `updatedAt`> {
+interface ShareRow extends Omit<BlogShare, `sharedAt` | `readFailedAt` | `updatedAt`> {
   sharedAt: Date | null
+  readFailedAt: Date | null
   updatedAt: Date
 }
 
@@ -112,6 +113,8 @@ function toShare(row: ShareRow): BlogShare {
     skipReason: row.skipReason,
     automatic: row.automatic,
     error: row.error,
+    readError: row.readError,
+    readFailedAt: iso(row.readFailedAt),
     updatedAt: row.updatedAt.toISOString(),
   }
 }
@@ -119,7 +122,7 @@ function toShare(row: ShareRow): BlogShare {
 const CHANNEL_COLUMNS = `id, name, kind, address, utm_source, add_utm, languages, starts_at,
   archived_at, created_at, updated_at, version`
 const SHARE_COLUMNS = `id, post_id, channel_id, status, url, shared_at, skip_reason, automatic,
-  error, updated_at`
+  error, read_error, read_failed_at, updated_at`
 
 /**
  * The sharing channels' reads and writes for the admin app. It checks no role: only the operator
@@ -392,6 +395,11 @@ export class PostgresSharingRepository {
               WHEN EXCLUDED.status = 'posted' THEN NULL
               ELSE blog_post_shares.error
             END,
+            -- A new link is read afresh: the old link's failure no longer says anything.
+            read_error = CASE WHEN blog_post_shares.url IS DISTINCT FROM EXCLUDED.url
+              THEN NULL ELSE blog_post_shares.read_error END,
+            read_failed_at = CASE WHEN blog_post_shares.url IS DISTINCT FROM EXCLUDED.url
+              THEN NULL ELSE blog_post_shares.read_failed_at END,
             updated_at = now()
         `
       }

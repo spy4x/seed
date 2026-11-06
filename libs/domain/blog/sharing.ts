@@ -58,6 +58,16 @@ const LINK_KINDS: ReadonlySet<BlogChannelKind> = new Set([
 /** The kinds Seed posts to by itself. The others are posted by hand. */
 export const BLOG_AUTOMATIC_KINDS: ReadonlySet<BlogChannelKind> = new Set([`devto`])
 
+/** The kinds whose numbers the `blog.share-results` job reads by itself (docs/blog.md). */
+export const BLOG_READ_KINDS: ReadonlySet<BlogChannelKind> = new Set([
+  `devto`,
+  `reddit`,
+  `hackernews`,
+  `mastodon`,
+  `bluesky`,
+  `hashnode`,
+])
+
 /** What happened to one post on one channel. No row is the same as `todo`. */
 export type BlogShareStatus = `todo` | `suggested` | `posted` | `skipped`
 
@@ -140,6 +150,10 @@ export interface BlogShare {
   automatic: boolean
   /** Why the last automatic post failed, such as `key-missing`; `null` when it did not. */
   error: string | null
+  /** Why the results job's last read failed; `null` after a good read or before any. */
+  readError: string | null
+  /** When that read failed; set exactly when {@link readError} is. */
+  readFailedAt: string | null
   updatedAt: string
 }
 

@@ -129,6 +129,8 @@ function shareOf(channelId: string, overrides: Partial<BlogShare>): BlogShare {
     skipReason: null,
     automatic: false,
     error: null,
+    readError: null,
+    readFailedAt: null,
     updatedAt: NOW,
     ...overrides,
   }
