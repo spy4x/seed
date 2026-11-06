@@ -15,6 +15,7 @@ import {
 } from "@spy4x/preact-theme/vite"
 import { nginxAddHeaders, securityHeaderList } from "@spy4x/server/http/security-headers"
 import { PROVIDER_AVATAR_ORIGINS } from "@domain/identity"
+import { PRODUCT_NAME } from "@ui/brand.ts"
 
 const SW_ENTRY = fromFileUrl(new URL("./src/sw.ts", import.meta.url))
 const BUILT_PAGE = fromFileUrl(new URL("./dist/index.html", import.meta.url))
@@ -81,9 +82,8 @@ export default defineConfig({
     webManifest({
       writeTextFile: Deno.writeTextFile,
       manifest: {
-        // Seed's own site: see docs/start-a-product.md
-        name: `Seed`,
-        short_name: `Seed`,
+        name: PRODUCT_NAME,
+        short_name: PRODUCT_NAME,
         // The light palette's canvas, as index.html's light theme-color: a manifest holds one.
         theme_color: `#f3f4f6`,
         background_color: `#f3f4f6`,

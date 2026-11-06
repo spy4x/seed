@@ -122,16 +122,15 @@ draws them on the website: replace both with the product's own clips, or delete 
 
 ## The product's name, icon and colour in the apps
 
-| File                         | What says "Seed"                                       |
-| ---------------------------- | ------------------------------------------------------ |
-| `apps/spa/index.html`        | `<title>` and `apple-mobile-web-app-title`             |
-| `apps/spa/vite.config.ts`    | `name` and `short_name` in the web app manifest        |
-| `apps/admin/index.html`      | `<title>`                                              |
-| `libs/ui/frame.tsx`          | The `name` of the `BrandMark`                          |
-| `libs/ui/admin-frame.tsx`    | `ADMIN_PRODUCT`, the admin's tab titles and brand mark |
+| File                      | What says "Seed"                                                       |
+| ------------------------- | ---------------------------------------------------------------------- |
+| `libs/ui/brand.ts`        | `PRODUCT_NAME`: the brand marks, the manifest and the admin tab titles |
+| `apps/spa/index.html`     | `<title>` and `apple-mobile-web-app-title`                             |
+| `apps/admin/index.html`   | `<title>`                                                              |
+| `libs/ui/frame.tsx`       | The `Icon` of the `BrandMark`                                          |
 
-These tests check the name: `libs/ui/admin-frame.test.tsx`, `libs/ui/account.test.tsx`,
-`e2e/pwa.e2e.ts` and `e2e/app-shell-parity.e2e.ts`.
+The browser specs read `PRODUCT_NAME`, so they pass unchanged after a rename. These unit tests
+check the name: `libs/ui/admin-frame.test.tsx` and `libs/ui/account.test.tsx`.
 
 The pictures carry no mark. Replace each with the product's own, at the same size and name:
 
