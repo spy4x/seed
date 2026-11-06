@@ -230,7 +230,7 @@ function posters() {
   }
   const made: Record<BlogPostJobKind, AutoPoster> = {
     telegram: telegramPoster(telegram, TOKEN),
-    mastodon: mastodonPoster(mastodon, TOKEN),
+    mastodon: mastodonPoster(mastodon, TOKEN, `https://mastodon.social`),
     bluesky: blueskyPoster(bluesky, TOKEN),
     hashnode: hashnodePoster(hashnode, TOKEN),
     linkedin: linkedinPoster(linkedin, { accessToken: TOKEN, expiresAt: null }),
@@ -440,6 +440,34 @@ Deno.test(`auto-post: after a Hashnode failure that may have posted, a copy the 
     expect(fake.calls.map((call) => call.method)).toEqual([`post`, `find`])
     expect(await rowOf(sql, postId, channelId)).toMatchObject({ status: `posted`, url: copy })
   })
+})
+
+Deno.test(`auto-post: a Bluesky or Hashnode run that dies after its post lands is followed by a lookup that records the copy, with no second post`, async () => {
+  for (const kind of [`bluesky`, `hashnode`] as const) {
+    await withSchema(async (sql) => {
+      const { postId, channelId, shareId } = await queued(sql, kind, `died-${kind}`)
+      const fake = posters()
+      const copy = `https://${kind}/landed`
+      fake.script[`${kind}.find`] = [ok({ url: copy })]
+      const gone = (): Promise<never> => Promise.reject(new Error(`worker gone`))
+      const dying: Record<typeof kind, AutoPoster> = {
+        bluesky: blueskyPoster({ post: gone, find: () => gone() }, TOKEN),
+        hashnode: hashnodePoster({ publish: gone, find: () => gone() }, TOKEN),
+      }
+      const slept: number[] = []
+
+      await expect(jobOf(sql, kind, dying[kind])(eventOf(kind, shareId))).rejects.toThrow(
+        `worker gone`,
+      )
+      expect(await rowOf(sql, postId, channelId)).toMatchObject({ status: `todo`, attempted: true })
+
+      await jobOf(sql, kind, fake.made[kind], { slept })(eventOf(kind, shareId))
+
+      expect(fake.calls.map((call) => call.method)).toEqual([`find`])
+      expect(slept).toEqual(kind === `bluesky` ? [BLUESKY_FIND_WAIT_MS] : [])
+      expect(await rowOf(sql, postId, channelId)).toMatchObject({ status: `posted`, url: copy })
+    })
+  }
 })
 
 Deno.test(`auto-post: after a Telegram or LinkedIn failure that may have posted, the row keeps the reason and is never posted again`, async () => {

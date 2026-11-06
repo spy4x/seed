@@ -57,9 +57,10 @@ export type AutoPostOutcome =
  * How a kind posts, and how a retried run avoids a second copy:
  *
  * - `idempotent`: the channel itself answers a repeat with the first copy (Mastodon's
- *   `Idempotency-Key`), so every run just posts.
- * - `lookup`: after a run that may have posted, the next one looks the copy up first and posts
- *   only when it finds none (Bluesky, Hashnode).
+ *   `Idempotency-Key`, which Mastodon keeps for about an hour), so every run just posts.
+ * - `lookup`: the row is marked before posting, so the run after one that may have posted (it
+ *   failed unsure, or died) looks the copy up first and posts only when it finds none (Bluesky,
+ *   Hashnode).
  * - `once`: there is no lookup, so the row is marked before posting, and a row that is marked and
  *   not posted is never posted again by itself: the operator decides (Telegram, LinkedIn).
  */
@@ -243,14 +244,11 @@ async function recordProblem(
   sql: postgres.Sql | postgres.TransactionSql,
   shareId: string,
   reason: string,
-  attempted: `keep` | `set` | `clear`,
+  attempted: `keep` | `clear`,
 ): Promise<void> {
   await sql`
     UPDATE blog_post_shares SET error = ${reason}, automatic = true, updated_at = now(),
-      post_attempted_at = CASE ${attempted}
-        WHEN 'set' THEN COALESCE(post_attempted_at, now())
-        WHEN 'clear' THEN NULL
-        ELSE post_attempted_at END
+      post_attempted_at = CASE WHEN ${attempted} = 'clear' THEN NULL ELSE post_attempted_at END
     WHERE id = ${shareId} AND status = 'todo'
   `
 }
@@ -270,15 +268,19 @@ async function recordPosted(sql: postgres.Sql, shareId: string, url: string): Pr
  * Its event's `aggregateId` is the share's id.
  *
  * A row is posted only while it is still to do, its post is live, and its channel is active, has
- * "Post automatically" on, is of the poster's kind and still lists the post. Two runs at once are
- * kept apart by a lock on the row's id. A copy that lands marks the row posted with its address.
+ * "Post automatically" on, is of the poster's kind and still lists the post. A copy that lands
+ * marks the row posted with its address. The lock on the row's id only keeps two runs from
+ * planning at once; it is released before the network call.
  *
- * A retried or repeated run never posts twice: a posted row is done, and each {@link AutoPostMode}
- * says how a run after one that may have posted avoids a second copy. A clear refusal stores its
- * reason and fails the run, so the job system tries again. A failure that may have posted fails the
- * run of a `lookup` kind (the retry looks first) and ends a `once` kind's run with its reason
- * stored, so the operator decides. Without the kind's key, or without the website's address, the
- * row keeps `key-missing` and one log line says so; the post stays live.
+ * A posted row is done. Each {@link AutoPostMode} says how a later run avoids a second copy after
+ * one that may have posted, whether it failed unsure, died, or outlived its lease: `lookup` and
+ * `once` kinds mark the row before the call, Mastodon relies on its idempotency key. That key
+ * lasts about an hour, so a Mastodon copy that landed while every retry in that hour failed in
+ * transport can be posted again; a lookup that misses a copy (Bluesky's feed lags) can too. A clear
+ * refusal stores its reason and fails the run, so the job system tries again. A failure that may
+ * have posted fails the run of a `lookup` kind (the retry looks first) and ends a `once` kind's run
+ * with its reason stored, so the operator decides. Without the kind's key, or without the
+ * website's address, the row keeps `key-missing` and one log line says so; the post stays live.
  */
 export function autoPostJob(kind: BlogPostJobKind, deps: AutoPostJobDeps): JobHandler {
   const sleep = deps.sleep ?? ((ms: number) => new Promise((done) => setTimeout(done, ms)))
@@ -313,15 +315,16 @@ export function autoPostJob(kind: BlogPostJobKind, deps: AutoPostJobDeps): JobHa
         return null
       }
       const attempted = share.postAttemptedAt !== null
-      if (deps.poster.mode === `once`) {
-        if (attempted) {
-          // An earlier run may have posted: never again by itself.
-          if (share.error === null) {
-            await recordProblem(tx, share.id, AUTO_POST_INTERRUPTED, `keep`)
-          }
-          return null
+      if (deps.poster.mode === `once` && attempted) {
+        // An earlier run may have posted: never again by itself.
+        if (share.error === null) {
+          await recordProblem(tx, share.id, AUTO_POST_INTERRUPTED, `keep`)
         }
-        // Committed before the post, so a run that dies half way leaves the mark behind.
+        return null
+      }
+      if (deps.poster.mode !== `idempotent` && !attempted) {
+        // Committed before the post, so a run that dies half way leaves the mark behind: a `once`
+        // row then waits for the operator, and a `lookup` row's next run looks the copy up first.
         await tx`UPDATE blog_post_shares SET post_attempted_at = now() WHERE id = ${share.id}`
       }
       const canonical = `${deps.siteUrl}${blogPostPath(post)}`
@@ -334,7 +337,7 @@ export function autoPostJob(kind: BlogPostJobKind, deps: AutoPostJobDeps): JobHa
         link: withUtmSource(canonical, channelUtmSource(fits)),
         cover: post.coverFile ? `${deps.siteUrl}/blog/covers/${post.coverFile}` : post.coverUrl,
       }
-      return { context, lookFirst: attempted && deps.poster.mode === `lookup` }
+      return { context, lookFirst: attempted }
     })
     if (plan === null) return
     const poster = deps.poster!
@@ -357,15 +360,15 @@ export function autoPostJob(kind: BlogPostJobKind, deps: AutoPostJobDeps): JobHa
     if (`url` in outcome) return void await recordPosted(deps.sql, context.shareId, outcome.url)
     const why = reason(outcome.problem)
     if (!outcome.uncertain) {
-      await recordProblem(deps.sql, context.shareId, why, `clear`)
+      // A sure refusal of this run's only try clears the mark; one after an earlier try that may
+      // have landed keeps it, so the next run still looks first.
+      await recordProblem(deps.sql, context.shareId, why, plan.lookFirst ? `keep` : `clear`)
       throw new AutoPostError(kind, context.shareId, why)
     }
-    if (poster.mode === `once`) {
-      // The mark stays: the operator checks the channel, then tries again or marks it posted.
-      await recordProblem(deps.sql, context.shareId, why, `keep`)
-      return
-    }
-    await recordProblem(deps.sql, context.shareId, why, poster.mode === `lookup` ? `set` : `keep`)
+    // The mark stays. A `once` row waits for the operator, who checks the channel, then tries again
+    // or marks it posted; a `lookup` row's retry looks the copy up first.
+    await recordProblem(deps.sql, context.shareId, why, `keep`)
+    if (poster.mode === `once`) return
     throw new AutoPostError(kind, context.shareId, why)
   }
 }
