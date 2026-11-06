@@ -7,7 +7,7 @@ import { signUpWithCode } from "./fixtures/sign-up.ts"
 /**
  * The blog's admin pages: an operator writes a post from the keyboard, previews it as the
  * public page renders it, schedules it, publishes it now, finds it on the list, changes its URL and
- * deletes it.
+ * deletes it. A post that went live gets a sharing checklist, and the list counts what is left.
  */
 
 const appBase = "http://app.localhost"
@@ -228,6 +228,96 @@ test("an operator brings an earlier version of a post back from History, by the 
     await ops.keyboard.press("Escape")
     await expect(history).toBeHidden()
     await expect(menu).toBeFocused()
+  } finally {
+    await admin?.close()
+  }
+})
+
+test("an operator adds a sharing channel, pastes a live post's link on it, and the list's to-do count drops", async ({ browser, request }) => {
+  let admin: BrowserContext | null = null
+  try {
+    const signedIn = await operatorPage(browser, request)
+    admin = signedIn.admin
+    const ops = signedIn.ops
+    const suffix = uuidV7().slice(-6)
+    const title = `Shared post ${suffix}`
+    const slug = title.toLowerCase().replaceAll(" ", "-")
+    const channel = `E2E Reddit ${suffix}`
+
+    // A live English post.
+    await ops.goto(`${adminBase}/blog/new`)
+    await ops.locator("[data-e2e=admin-blog-title-field]").fill(title)
+    await ops.locator("[data-e2e=admin-blog-description]").fill("A post to share.")
+    await ops.locator("[data-e2e=admin-blog-body]").fill("Worth sharing.")
+    await ops.getByRole("button", { name: "Add point" }).click()
+    await ops.getByLabel("Key point 1", { exact: true }).fill("Worth sharing")
+    await ops.keyboard.press("ControlOrMeta+s")
+    await expect(ops).toHaveURL(/\/blog\/[0-9a-f-]{36}$/)
+    await ops.locator("[data-e2e=admin-blog-publish]").click()
+    await ops.getByRole("alertdialog").locator("[data-e2e=confirm-dialog-confirm]").click()
+    await expect(ops.locator("[data-e2e=toasts]")).toContainText("Published.")
+
+    // A Reddit channel for English posts, old ones included, added from the keyboard.
+    await ops.goto(`${adminBase}/blog/channels`)
+    await expect(ops.locator("[data-e2e=blog-channels-title]")).toBeVisible()
+    await ops.keyboard.press("c")
+    await expect(ops).toHaveURL(`${adminBase}/blog/channels/new`)
+    await ops.locator("[data-e2e=blog-channel-name]").fill(channel)
+    await expect(ops.locator("[data-e2e=blog-channel-source]")).toHaveValue(
+      `e2e-reddit-${suffix}`,
+    )
+    await ops.locator("[data-e2e=blog-channel-address]").fill("https://www.reddit.com/r/e2e/")
+    await ops.locator("[data-e2e=blog-channel-save]").click()
+    await expect(ops).toHaveURL(`${adminBase}/blog/channels`)
+    await expect(ops.locator("[data-e2e=blog-channel-list]")).toContainText(channel)
+
+    // The list counts the post's channels to do and links to its checklist.
+    const list = async () => {
+      await ops.goto(`${adminBase}/blog`)
+      await ops.locator("[data-e2e=admin-blog-search]").fill(slug)
+      await ops.keyboard.press("Enter")
+      const rows = ops.locator("[data-e2e=admin-blog-list] tbody tr")
+      await expect(rows).toHaveCount(1)
+      return rows.first()
+    }
+    const toDo = (await list()).locator("[data-e2e=admin-blog-sharing]:visible")
+    await expect(toDo).toHaveText(/^\d+ to do$/)
+    const before = Number((await toDo.textContent())!.split(" ")[0])
+    await toDo.click()
+    await expect(ops).toHaveURL(/\/blog\/[0-9a-f-]{36}\/sharing$/)
+
+    // The row keys work on a fresh load: j reaches the first row, s opens Skip on its reason
+    // field, Escape closes it, and p moves to the row's link field.
+    const first = ops.locator("[data-e2e=blog-share-row]").first()
+    await expect(first).toBeVisible()
+    await ops.keyboard.press("j")
+    await expect(first).toBeFocused()
+    await ops.keyboard.press("s")
+    await expect(ops.locator("[data-e2e=blog-share-skip-reason]")).toBeFocused()
+    await ops.keyboard.press("Escape")
+    await expect(ops.locator("[data-e2e=blog-share-skip-dialog]")).toBeHidden()
+    await expect(first).toBeFocused()
+    await ops.keyboard.press("p")
+    await expect(first.locator("[data-e2e=blog-share-link]")).toBeFocused()
+
+    // The channel's row takes the link and moves to Posted.
+    const row = ops.locator("[data-e2e=blog-share-row]", { hasText: channel })
+    await expect(row).toHaveAttribute("data-state", "todo")
+    await row.locator("[data-e2e=blog-share-link]").fill(
+      "https://www.reddit.com/r/e2e/comments/abc/shared/",
+    )
+    await row.locator("[data-e2e=blog-share-mark-posted]").click()
+    await expect(ops.locator("[data-e2e=toasts]")).toContainText("Marked posted.")
+    await expect(row).toHaveAttribute("data-state", "posted")
+
+    // Back on the list, one channel fewer is left.
+    const after = await list()
+    if (before === 1) await expect(after).toContainText("Done")
+    else {
+      await expect(after.locator("[data-e2e=admin-blog-sharing]:visible")).toHaveText(
+        `${before - 1} to do`,
+      )
+    }
   } finally {
     await admin?.close()
   }

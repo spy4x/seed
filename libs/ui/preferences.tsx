@@ -446,6 +446,19 @@ export function AdminPreferencesGroup(
 }
 
 /**
+ * A language's name for a reader of `inLanguage`: `ru` is "Russian" on an English page; `null` when
+ * `Intl` cannot read the tag.
+ */
+export function languageNameIn(language: string, inLanguage: string): string | null {
+  try {
+    const name = new Intl.DisplayNames([inLanguage], { type: `language` }).of(language) ?? language
+    return name.charAt(0).toLocaleUpperCase(inLanguage) + name.slice(1)
+  } catch {
+    return null
+  }
+}
+
+/**
  * A language's name for a reader of `inLanguage`, with the name in the language itself after it
  * when the two differ, in that language: `German (Deutsch)`, so an operator who reads neither
  * still recognises it.
@@ -454,13 +467,8 @@ export function LanguageLabel(
   { language, inLanguage }: { language: string; inLanguage: string },
 ): JSX.Element {
   const own = languageName(language)
-  let theirs = own
-  try {
-    const text = new Intl.DisplayNames([inLanguage], { type: `language` }).of(language) ?? language
-    theirs = text.charAt(0).toLocaleUpperCase(inLanguage) + text.slice(1)
-  } catch {
-    // A tag `Intl` cannot read: its own name alone.
-  }
+  // A tag `Intl` cannot read: its own name alone.
+  const theirs = languageNameIn(language, inLanguage) ?? own
   const ownName = <span lang={language} dir={textDirection(language)}>{own}</span>
   return theirs === own ? ownName : <>{theirs} ({ownName})</>
 }

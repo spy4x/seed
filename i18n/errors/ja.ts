@@ -14,6 +14,13 @@ export default {
   "Field.before": "{rule}より前の日付を指定してください。",
   "Field.categorySlugTaken":
     "このアドレスは別のカテゴリーで使われています。別のものを選んでください。",
+  "Field.channelAddress": "アドレスを入力してください。",
+  "Field.channelHttps": "リンクはhttps://で始めてください。",
+  "Field.channelLanguages": "言語を1つ以上選んでください。",
+  "Field.channelName": "名前を入力してください。",
+  "Field.channelNameTaken": "この名前はほかのチャンネルで使われています。",
+  "Field.channelSource": "ソースタグを入力してください。",
+  "Field.channelSourceTaken": "このソースタグはほかのチャンネルで使われています。",
   "Field.contactValue": "この連絡先の種類としては正しくないようです。形式を確認してください。",
   "Field.divisor": "{rule}の倍数を入力してください。",
   "Field.domain": "ここには入力できない種類の値です。",
@@ -100,6 +107,7 @@ export default {
   "Reason.CATEGORY_NOT_FOUND": "このカテゴリーはもう存在しません。別のものを選んでください。",
   "Reason.CATEGORY_REQUIRED":
     "公開するアイテムにはカテゴリーが必要です。カテゴリーを選ぶか、先にアイテムを非公開にしてください。",
+  "Reason.CHANNEL_NOT_FOUND": "このチャンネルはもう存在しません。",
   "Reason.FILE_CONTENT": "ファイルの中身が種類と一致しません。",
   "Reason.FILE_MISSING": "ファイルが届きませんでした。ファイルを選んで、もう一度お試しください。",
   "Reason.FILE_TOO_LARGE": "ファイルが大きすぎます。",
@@ -133,7 +141,9 @@ export default {
   "Reason.LINK_NOT_FOUND": "このリンクはもう存在しません。",
   "Reason.MEMBER_NOT_FOUND": "この人はグループのメンバーではありません。",
   "Reason.MFA_REQUIRED": "先にワンタイムコードを入力してください。",
+  "Reason.HAS_SHARES": "このチャンネルには共有の記録があるため、アーカイブのみできます。",
   "Reason.NAME_MISMATCH": "グループ名が一致しません。表示されているとおりに入力してください。",
+  "Reason.NAME_TAKEN": "この名前はほかのチャンネルで使われています。",
   "Reason.NEWSLETTER_OFF": "ニュースレターがオフのため、メールで送信できません。",
   "Reason.NOTE_FULL": "このメモに添付できるファイルは上限に達しています。先に1つ外してください。",
   "Reason.NOTE_NOT_FOUND": "このメモはもう存在しません。",
@@ -167,6 +177,7 @@ export default {
   "Reason.SEARCH_RATE_LIMITED": "検索回数が多すぎます。1分ほど待ってから、もう一度お試しください。",
   "Reason.SEAT_PRICE_NOT_ACCEPTED":
     "メンバーを追加するたびにグループの請求額が増えることを確認してください。",
+  "Reason.SHARE_NOT_FOUND": "この共有の記録はもう存在しません。",
   "Reason.SLUG_LOCKED":
     "記事を公開するとアドレスは固定されます。変更するには「URLを変更」を使ってください。",
   "Reason.SLUG_TAKEN": "このアドレスはすでに使われています。別のものを選んでください。",
@@ -181,6 +192,7 @@ export default {
   "Reason.TOKEN_NOT_FOUND": "このトークンはもう存在しません。",
   "Reason.TOKEN_SCOPE": "このトークンにはこの操作の権限がありません。",
   "Reason.TOO_MANY": "上限に達しています。先に1つ削除してください。",
+  "Reason.TOO_MANY_CHANNELS": "これ以上チャンネルを追加できません。先に1つ削除してください。",
   "Reason.TOO_MANY_LINKS": "これ以上リンクを追加できません。先に1つ外してください。",
   "Reason.TOO_MANY_TOKENS": "これ以上トークンを追加できません。先に1つ取り消してください。",
   "Reason.TOO_SOON": "前回のリクエストから1日経っていません。明日もう一度お試しください。",
@@ -190,6 +202,7 @@ export default {
   "Reason.UPLOAD_BUDGET":
     "1時間あたりのアップロード上限に達しました。しばらくしてからお試しください。",
   "Reason.UPLOAD_NOT_FOUND": "このアップロードはもう存在しません。",
+  "Reason.UTM_SOURCE_TAKEN": "このソースタグはほかのチャンネルで使われています。",
   "Reason.USER_NOT_ACTIVE": "このアカウントは有効ではありません。",
   "Reason.VERSION_CONFLICT":
     "ほかの人がこの内容を変更しました。再読み込みすると変更内容を確認できます。",

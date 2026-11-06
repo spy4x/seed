@@ -13,11 +13,13 @@ import { Input } from "@spy4x/preact-ui/input"
 import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
+import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import {
   type AdminBlogListResponse,
   type AdminBlogPostRow,
+  type AdminBlogSharingSummary,
   BLOG_SEARCH_MAX_LENGTH,
   blogPostPath,
   type BlogPostStatus,
@@ -31,15 +33,23 @@ export const ADMIN_BLOG_PATHS = {
   list: `/blog`,
   create: `/blog/new`,
   post: (id: string) => `/blog/${encodeURIComponent(id)}`,
+  channels: `/blog/channels`,
 } as const
 
-/** What the list shows: one status or every post, and the search text (title or slug). */
+/**
+ * What the list shows: one status or every post, and the search text (title or slug). `sharing`
+ * keeps the live posts that still list a channel as to do; it takes the status chips' place.
+ */
 export interface AdminBlogFilter {
   status: BlogPostStatus | null
   query: string
+  sharing?: boolean
 }
 
 export const ADMIN_BLOG_NO_FILTER: AdminBlogFilter = { status: null, query: `` }
+
+/** The chip value of the sharing filter, next to the statuses. */
+const NEEDS_SHARING = `sharing`
 
 /** Each status's badge (its word as a catalog key), the same in the list and in the editor's header. */
 const BLOG_STATUS_BADGES: Record<
@@ -103,7 +113,9 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
     asked.current = true
     onFilter(next)
   }
-  const filtered = filter.query !== `` || filter.status !== null
+  const filtered = filter.query !== `` || filter.status !== null || filter.sharing === true
+  // Sharing shows once a channel exists: before that there is nothing to share a post on.
+  const sharing = list?.sharing && list.sharing.activeChannels > 0 ? list.sharing : null
   // No post at all: the counts follow the search, so only an empty search says so.
   const none = list !== null && list.counts.all === 0 && filter.query === ``
   const newPost = (
@@ -123,6 +135,16 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
         subtitle={t.t(`AdminBlog.subtitle`)}
         titleDataE2E="admin-blog-title"
         action={newPost}
+        menuDataE2E="admin-blog-list-menu"
+        menu={
+          <DropdownItem
+            href={ADMIN_BLOG_PATHS.channels}
+            navigate={navigate}
+            dataE2E="admin-blog-channels"
+          >
+            {t.t(`AdminBlog.channels`)}
+          </DropdownItem>
+        }
       />
       {none
         ? (
@@ -184,17 +206,30 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
                   mode="single"
                   label={t.t(`AdminBlog.status`)}
                   class="flex-nowrap sm:flex-wrap"
-                  options={STATUS_CHIPS.map((chip) => ({
-                    value: chip.value,
-                    label: list
-                      ? t.t(chip.counted, { count: list.counts[chip.value] })
-                      : t.t(chip.label),
-                  }))}
-                  value={filter.status ?? `all`}
+                  options={[
+                    ...STATUS_CHIPS.map((chip) => ({
+                      value: chip.value as string,
+                      label: list
+                        ? t.t(chip.counted, { count: list.counts[chip.value] })
+                        : t.t(chip.label),
+                    })),
+                    ...(sharing || filter.sharing
+                      ? [{
+                        value: NEEDS_SHARING,
+                        label: sharing
+                          ? t.t(`AdminBlog.chipNeedsSharing`, { count: sharing.needsSharing })
+                          : t.t(`AdminBlog.needsSharing`),
+                      }]
+                      : []),
+                  ]}
+                  value={filter.sharing ? NEEDS_SHARING : filter.status ?? `all`}
                   onChange={(value) =>
                     change({
                       ...filter,
-                      status: value === null || value === `all` ? null : value as BlogPostStatus,
+                      sharing: value === NEEDS_SHARING ? true : undefined,
+                      status: value === null || value === `all` || value === NEEDS_SHARING
+                        ? null
+                        : value as BlogPostStatus,
                     })}
                 />
               </div>
@@ -232,29 +267,46 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
                   <DataTable
                     mode="server"
                     class={TABLE_CLASS}
-                    columns={postColumns(t, navigate)}
+                    columns={postColumns(t, sharing, navigate)}
                     rows={list.posts.map((post) => ({ post }))}
                     caption={t.t(`AdminBlog.posts`)}
                     captionHidden
                     rowKey={(row) => row.post.id}
                     sort={NO_SORT}
                     onSortChange={() => {}}
-                    empty={
-                      <EmptyState
-                        inset
-                        title={t.t(`AdminBlog.noMatch`)}
-                        description={t.t(`AdminBlog.noMatchHint`)}
-                        action={filtered && (
-                          <Button
-                            variant="ghost"
-                            data-e2e="admin-blog-clear"
-                            onClick={() => change(ADMIN_BLOG_NO_FILTER)}
-                          >
-                            {t.t(`AdminBlog.clear`)}
-                          </Button>
-                        )}
-                      />
-                    }
+                    empty={filter.sharing && filter.query === ``
+                      ? (
+                        <EmptyState
+                          inset
+                          title={t.t(`AdminBlog.allShared`)}
+                          description={t.t(`AdminBlog.allSharedHint`)}
+                          action={
+                            <Button
+                              variant="ghost"
+                              data-e2e="admin-blog-clear"
+                              onClick={() => change(ADMIN_BLOG_NO_FILTER)}
+                            >
+                              {t.t(`AdminBlog.showAll`)}
+                            </Button>
+                          }
+                        />
+                      )
+                      : (
+                        <EmptyState
+                          inset
+                          title={t.t(`AdminBlog.noMatch`)}
+                          description={t.t(`AdminBlog.noMatchHint`)}
+                          action={filtered && (
+                            <Button
+                              variant="ghost"
+                              data-e2e="admin-blog-clear"
+                              onClick={() => change(ADMIN_BLOG_NO_FILTER)}
+                            >
+                              {t.t(`AdminBlog.clear`)}
+                            </Button>
+                          )}
+                        />
+                      )}
                   />
                 </div>
               )}
@@ -302,21 +354,63 @@ function PublishedCell({ post }: { post: AdminBlogPostRow }): JSX.Element {
   return <span class="text-sm text-muted">{t.t(`AdminBlog.notYet`)}</span>
 }
 
+/**
+ * A post's sharing: how many channels still list it as to do, as a link to its checklist, "Done"
+ * for a live post with none left, and a dash for a post that is not live.
+ */
+function SharingCell(
+  { post, sharing, navigate }: {
+    post: AdminBlogPostRow
+    sharing: AdminBlogSharingSummary
+    navigate?: Navigate
+  },
+): JSX.Element {
+  const t = useAdminText()
+  const toDo = sharing.toDo[post.id] ?? 0
+  if (post.status !== `published`) {
+    return <span class="text-sm text-muted">{t.t(`AdminBlog.sharingNone`)}</span>
+  }
+  if (toDo === 0) return <span class="text-sm text-muted">{t.t(`AdminBlog.sharingDone`)}</span>
+  return (
+    <Link
+      href={ADMIN_BLOG_SHARING_PATH(post.id)}
+      navigate={navigate}
+      class="pc-link whitespace-nowrap text-sm font-medium"
+      data-e2e="admin-blog-sharing"
+    >
+      {t.t(`AdminBlog.sharingToDo`, { count: toDo })}
+    </Link>
+  )
+}
+
+/** A post's sharing checklist. */
+const ADMIN_BLOG_SHARING_PATH = (id: string) => `${ADMIN_BLOG_PATHS.post(id)}/sharing`
+
 function postColumns(
   t: Translator<string>,
+  sharing: AdminBlogSharingSummary | null,
   navigate?: Navigate,
 ): DataTableColumn<PostRow, `post`>[] {
   return [
     {
       id: `title`,
       header: t.t(`AdminBlog.colTitle`),
-      render: ({ post }) => <TitleCell post={post} navigate={navigate} />,
+      render: ({ post }) => <TitleCell post={post} sharing={sharing} navigate={navigate} />,
     },
     {
       id: `status`,
       header: t.t(`AdminBlog.status`),
       render: ({ post }) => <BlogStatusBadge status={post.status} />,
     },
+    ...(sharing
+      ? [{
+        id: `sharing`,
+        header: t.t(`AdminBlog.colSharing`),
+        render: ({ post }: PostRow) => (
+          <SharingCell post={post} sharing={sharing} navigate={navigate} />
+        ),
+      }]
+      : []),
     {
       id: `topic`,
       header: t.t(`AdminBlog.colTopic`),
@@ -350,7 +444,13 @@ function postColumns(
  * The title column: the title as the link to the editor, the address under it, and on a phone the
  * status, topic and publish date under that.
  */
-function TitleCell({ post, navigate }: { post: AdminBlogPostRow; navigate?: Navigate }) {
+function TitleCell(
+  { post, sharing, navigate }: {
+    post: AdminBlogPostRow
+    sharing: AdminBlogSharingSummary | null
+    navigate?: Navigate
+  },
+) {
   return (
     <div class="flex min-w-48 max-w-md flex-col gap-1 max-sm:min-w-0">
       <Link
@@ -370,6 +470,9 @@ function TitleCell({ post, navigate }: { post: AdminBlogPostRow; navigate?: Navi
         <BlogStatusBadge status={post.status} />
         {post.topic && <span class="text-sm wrap-anywhere" translate={false}>{post.topic}</span>}
         <PublishedCell post={post} />
+        {sharing && (sharing.toDo[post.id] ?? 0) > 0 && (
+          <SharingCell post={post} sharing={sharing} navigate={navigate} />
+        )}
       </div>
     </div>
   )

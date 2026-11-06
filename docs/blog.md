@@ -12,6 +12,7 @@ Operators write posts in the admin app; the public website shows the published o
 | `libs/server/blog/public-blog.ts`          | The website's reads: live posts only.                                                 |
 | `libs/server/blog/blog-publish-job.ts`     | The `blog.publish` job (registered in `JOBS`), and `queueDueBlogJobs` for lost jobs. |
 | `libs/server/blog/blog-crosspost-job.ts`   | The `blog.crosspost` job, which copies a live post to Dev.to once ([below](#the-devto-cross-post)). |
+| `libs/domain/blog/sharing.ts`, `libs/server/blog/postgres-sharing-repository.ts` | Sharing channels, each post's checklist and its results ([below](#sharing-channels)). |
 | `libs/server/blog/social-texts.ts`         | The LinkedIn, Telegram and X texts of a post, printed by `deno task blog:social` ([below](#channel-texts)). |
 | `apps/mpa/blog-covers.ts`, `apps/mpa/screenshots/blog-og.ts` | Covers as the pages draw them, and the link-preview cards of Seed's own posts ([below](#covers-and-link-previews)). |
 | `libs/server/blog/blog-indexnow-job.ts`    | The `blog.indexnow` job, which tells search engines about a post ([below](#indexnow)). |
@@ -21,7 +22,7 @@ Operators write posts in the admin app; the public website shows the published o
 | `apps/mpa/post-figures.tsx`                | The folder's registry, and a body's figures resolved for the page, the feed and the admin. |
 | `libs/server/blog/seed-posts.ts`, `seed-posts/` | Seed's own posts as Markdown files, loaded only in demo mode and by `deno task db:seed` ([demo.md](demo.md#seeds-own-blog-posts)). |
 | `apps/api/routes/admin/blog.ts`            | `/api/admin/blog/*`, behind the operator gate.                                        |
-| `apps/admin/src/modules/blog/`             | The admin pages: the list (`/blog`) and the editor (`/blog/new`, `/blog/:id`).        |
+| `apps/admin/src/modules/blog/`             | The admin pages: the list (`/blog`), the editor (`/blog/new`, `/blog/:id`), the channels (`/blog/channels`) and a post's sharing page (`/blog/:id/sharing`). |
 | `libs/ui/admin-blog-*.tsx`                 | Their screens: the list, the editor and its dialogs.                                  |
 | `apps/api/routes/blog.ts`                  | `/api/blog/*`, public: `posts?topic=`, `posts/:slug`, `topics`, `feed`.               |
 | `apps/mpa/routes/[[lang]]/blog/`, `apps/mpa/blog.ts` | The public pages, below.                                                             |
@@ -169,14 +170,44 @@ topic as its tag, the cover, and an "Originally published at" line.
 - **Off without the key.** Each post that goes live is settled as never cross-posted, with one log
   line, so setting the key later copies only the posts that go live after that. The same holds for
   a translation, which is never cross-posted: Dev.to gets the original once.
+- **It fills the checklist.** A copy that lands, or an article found, also marks the post posted
+  on the active Dev.to channel with the article's address, and a missing key or a refusal is kept
+  on that row, so the sharing page says why nothing was posted.
 - **Seed's own posts** are cross-posted only when their file says `devto: true`. Posts that were
   live before the cross-post existed are settled by its migration and never copied.
+
+## Sharing channels
+
+The channels page (`/blog/channels`) lists the places posts go: Dev.to, Telegram, Mastodon,
+Bluesky, Hashnode, LinkedIn, X, Reddit, Hacker News, a newsletter or anything else. Each channel
+takes one or more languages and either every live post or only those from the day it was added.
+A channel with shares is archived, never deleted; one without can be deleted after a confirmation.
+
+Each live post has a checklist (`/blog/:id/sharing`), reached from the blog list's Sharing column,
+its "Needs sharing" chip (`?sharing=todo`) and the editor's summary. A channel is **to do** for a
+post when the post is live, the channel is active and takes the post's language, the post went
+live on or after the channel's start, and the channel has no row for it or its row is to do. A
+row can also be suggested, posted (with its link) or skipped (with an optional reason); every
+change takes effect at once and offers Undo. A translation shows a channel the original was
+already shared on as covered. Keys `j` and `k` move between rows, `t` copies its text, `o` opens
+the channel's own page, `p` moves to the link field (Enter there marks the row posted), `s` skips it
+and `e` enters its numbers.
+
+- **`utm_source` on links.** Every link the page hands out (the copied text, the submit form, the
+  shown address) carries the channel's source tag unless its "Add utm_source to links" is off.
+  The post's canonical address and the Dev.to `canonical_url` stay clean.
+- **Results are counts only:** views, reactions, comments and score, typed in by hand for now.
+  Each reading is a new row and the latest one shows; an unknown number shows as "–".
+- **Visits** come from Umami, by the link's `utm_source`, through Stats' five-minute copy, so they
+  show only when `UMAMI_API_URL`, `UMAMI_API_TOKEN` and `UMAMI_WEBSITE_ID` are set. The token
+  stays on the server.
 
 ## Channel texts
 
 `deno task blog:social <slug>` prints the texts the owner pastes into LinkedIn, Telegram and X
 for one of Seed's own posts once it is live: the title, the intro, the key points and the address,
-in the post's language. The X text keeps to 280 characters: it drops the intro first, then cuts
+in the post's language, with a clean address; the sharing page's copies of the same texts carry
+each channel's `utm_source`. The X text keeps to 280 characters: it drops the intro first, then cuts
 the title. Nothing is posted for you.
 
 ## Covers and link previews
@@ -304,7 +335,7 @@ is the example to copy, and `apps/mpa/post-figures.test.tsx` checks every file i
 
 ## Demo and development
 
-The public demo's nightly wipe keeps `blog_posts` and `blog_slug_redirects` ([demo.md](demo.md)); the
-demo seeds no posts.
+The public demo's nightly wipe keeps `blog_posts`, `blog_slug_redirects` and the sharing tables
+([demo.md](demo.md)); the demo seeds no posts and no channels.
 In development, `deno task db:seed` adds a published, a scheduled and a draft post by
-`admin@example.com`.
+`admin@example.com`, and four sample channels (`libs/server/blog/sample-sharing.ts`).

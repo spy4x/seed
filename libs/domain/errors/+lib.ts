@@ -16,7 +16,7 @@ import { REALTIME_ERROR_CODES, type RealtimeErrorCode } from "@spy4x/realtime"
 import { fieldErrorsSchema } from "@spy4x/validation"
 import type { ApiTokenErrorCode } from "@domain/api-tokens"
 import type { BillingErrorCode, PlanErrorCode } from "@domain/billing"
-import type { BlogErrorCode } from "@domain/blog"
+import type { BlogErrorCode, BlogSharingErrorCode } from "@domain/blog"
 import type { CatalogErrorCode } from "@domain/catalog"
 import type { ContactLinkErrorCode } from "@domain/contact-links"
 import type { GroupErrorCode, InvitationErrorCode } from "@domain/groups"
@@ -69,6 +69,7 @@ export type ErrorReason =
   | ApiTokenErrorCode
   | BillingErrorCode
   | BlogErrorCode
+  | BlogSharingErrorCode
   | CatalogErrorCode
   | ContactLinkErrorCode
   | GroupErrorCode

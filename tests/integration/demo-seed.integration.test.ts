@@ -36,6 +36,7 @@ import { KEPT_TABLES, wipeDatabase } from "../../apps/worker/demo/wipe.ts"
 import { readSeedPosts, upsertSeedPosts } from "@server/blog/seed-posts.ts"
 import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
 import { SAMPLE_CONTACT_LINKS, seedSampleContactLinks } from "@server/contact-links/sample-links.ts"
+import { SAMPLE_CHANNELS, seedSampleSharing } from "@server/blog/sample-sharing.ts"
 import { isDemoSeeded, resetDemo } from "../../apps/worker/demo/run.ts"
 import { demoDataSeed } from "../../apps/worker/demo/reset.ts"
 import { sendEmailCode } from "@server/auth/email-verification.ts"
@@ -503,7 +504,7 @@ Deno.test("the demo seed fails when sign-up refuses an account that does not exi
   })
 })
 
-Deno.test("the wipe empties every table but the kept ones, keeps the blog, its old addresses, its earlier versions and the contact links, queues every stored file for deletion, and never reuses an id", async () => {
+Deno.test("the wipe empties every table but the kept ones, keeps the blog, its old addresses, its earlier versions, where it was shared and the contact links, queues every stored file for deletion, and never reuses an id", async () => {
   await withSchema(async (sql) => {
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     await sql`INSERT INTO backup_status (target, succeeded_at) VALUES ('database', now())`
@@ -525,6 +526,9 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog, its o
       FROM blog_posts ORDER BY id LIMIT 1
     `
     await seedSampleContactLinks(sql)
+    // Where the posts were shared, seeded twice: the second run adds nothing.
+    await seedSampleSharing(sql)
+    await seedSampleSharing(sql)
     // A website reader who left: the seed writes no unsubscribes, so this is the kept row.
     await websiteReader(sql, `left@seed.test`, { leaves: true })
     // A visitor's sample groups, whose files' objects the wipe queues for deletion.
@@ -586,6 +590,12 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog, its o
       { links: number }[]
     >`SELECT COUNT(*)::int AS links FROM contact_links`
     expect(links).toBe(SAMPLE_CONTACT_LINKS.length)
+    const [shared] = await sql<{ channels: number; shares: number; results: number }[]>`
+      SELECT (SELECT COUNT(*)::int FROM blog_channels) AS channels,
+        (SELECT COUNT(*)::int FROM blog_post_shares) AS shares,
+        (SELECT COUNT(*)::int FROM blog_share_results) AS results
+    `
+    expect(shared).toEqual({ channels: SAMPLE_CHANNELS.length, shares: 2, results: 1 })
 
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     const [{ after }] = await sql<{ after: number }[]>`SELECT min(id) AS after FROM users`
