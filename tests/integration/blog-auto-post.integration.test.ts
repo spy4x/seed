@@ -344,6 +344,25 @@ Deno.test(`auto-post: a row the operator skipped or posted by hand posts nothing
   })
 })
 
+Deno.test(`auto-post: a channel switched to manual or archived after the queueing posts nothing`, async () => {
+  for (const change of [`manual`, `archived`] as const) {
+    await withSchema(async (sql) => {
+      const { postId, channelId, shareId } = await queued(sql, `mastodon`, `changed-${change}`)
+      const fake = posters()
+      if (change === `manual`) {
+        await sql`UPDATE blog_channels SET auto_post = false WHERE id = ${channelId}`
+      } else {
+        await sql`UPDATE blog_channels SET archived_at = now() WHERE id = ${channelId}`
+      }
+
+      await jobOf(sql, `mastodon`, fake.made.mastodon)(eventOf(`mastodon`, shareId))
+
+      expect(fake.calls).toEqual([])
+      expect((await rowOf(sql, postId, channelId)).status).toBe(`todo`)
+    })
+  }
+})
+
 Deno.test(`auto-post: Mastodon sends the share's id as its idempotency key, the same on a retry`, async () => {
   await withSchema(async (sql) => {
     const { postId, channelId, shareId } = await queued(sql, `mastodon`, `mastodon-twice`)
@@ -403,6 +422,23 @@ Deno.test(`auto-post: after a Hashnode failure that may have posted, the retry l
       status: `posted`,
       attempted: false,
     })
+  })
+})
+
+Deno.test(`auto-post: after a Hashnode failure that may have posted, a copy the retry finds is recorded and not posted again`, async () => {
+  await withSchema(async (sql) => {
+    const { postId, channelId, shareId } = await queued(sql, `hashnode`, `hashnode-found`)
+    const fake = posters()
+    const copy = `https://seed.hashnode.dev/hashnode-found`
+    fake.script[`hashnode.post`] = [failed(`Hashnode answered 502; the article may exist`)]
+    fake.script[`hashnode.find`] = [ok({ url: copy })]
+    const job = jobOf(sql, `hashnode`, fake.made.hashnode)
+
+    await expect(job(eventOf(`hashnode`, shareId))).rejects.toThrow(AutoPostError)
+    await job(eventOf(`hashnode`, shareId))
+
+    expect(fake.calls.map((call) => call.method)).toEqual([`post`, `find`])
+    expect(await rowOf(sql, postId, channelId)).toMatchObject({ status: `posted`, url: copy })
   })
 })
 
