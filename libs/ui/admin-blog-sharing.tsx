@@ -11,7 +11,7 @@ import { Field } from "@spy4x/preact-ui/field"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { Input } from "@spy4x/preact-ui/input"
-import { languageName } from "@spy4x/preact-ui/language-picker"
+import { useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Modal } from "@spy4x/preact-ui/modal"
@@ -115,47 +115,122 @@ function literal(text: string): JSX.Element {
   return <code class="font-mono text-xs" translate={false}>{text}</code>
 }
 
-/** Whether a key press belongs to a field, a menu or a dialog rather than to the page. */
-function typing(event: KeyboardEvent): boolean {
-  const target = event.target as HTMLElement | null
-  return event.ctrlKey || event.metaKey || event.altKey ||
-    target?.closest(`input, textarea, select, [contenteditable], dialog, [role=menu]`) != null
+/** A language's name for a reader of `inLanguage`: `ru` is "Russian" on an English page. */
+function languageFor(language: string, inLanguage: string): string {
+  try {
+    const name = new Intl.DisplayNames([inLanguage], { type: `language` }).of(language) ?? language
+    return name.charAt(0).toLocaleUpperCase(inLanguage) + name.slice(1)
+  } catch {
+    return language
+  }
 }
+
+/** Where focus goes once the change on its way lands: the next to-do row, or a given row. */
+type FocusAfter = { kind: `next` } | { kind: `row`; channelId: string }
 
 /**
  * A post's sharing checklist, at `/blog/:id/sharing`: every channel the post fits, grouped by its
  * next step (to do, suggested, posted, skipped) with the finished groups folded. A to-do row has
  * the text to paste, the submit form for Reddit and Hacker News, and the link field: pasting the
  * copy's link and pressing Enter marks it posted. The status menu changes a row at once; the app
- * shows a toast with Undo. After a change focus moves to the next to-do row. `j` and `k` move
- * between rows; `t`, `o`, `p`, `s` and `e` copy, open, paste, skip and enter results on the row.
+ * shows a toast with Undo. After a change focus moves to the next to-do row, or to the heading
+ * once none is left; after Undo it moves to the row put back. Page-wide keys, off in a text field
+ * and in a dialog: `j` and `k` move between rows; `t`, `o`, `p`, `s` and `e` copy the row's text,
+ * open its channel, focus its link field, skip it and enter its results.
  */
 export function AdminBlogSharingScreen(props: AdminBlogSharingScreenProps): JSX.Element {
   const { sharing, navigate } = props
   const t = useAdminText()
   const [dialog, setDialog] = useState<SharingDialog | null>(null)
   const page = useRef<HTMLDivElement>(null)
-  // Set by a change: once it lands, focus goes to the first to-do row, else the page's heading.
-  const moveOn = useRef(false)
+  const focusAfter = useRef<FocusAfter | null>(null)
+  // Set by a `g`, so the key after it belongs to the shell's "Go to" sequence, not to a row.
+  const afterG = useRef(false)
   const back = { href: ADMIN_BLOG_PATHS.post(props.postId), label: t.t(`AdminBlogSharing.back`) }
+  const title = sharing?.post.title ?? t.t(`AdminBlogSharing.title`)
 
   useEffect(() => {
-    if (!moveOn.current || props.pending !== null || dialog !== null) return
-    moveOn.current = false
-    const next = page.current?.querySelector<HTMLElement>(`${ROW}[data-state=todo]`) ??
-      page.current?.querySelector<HTMLElement>(`h1`)
-    next?.focus()
+    if (props.pending !== null) {
+      // A change the screen did not start is Undo: focus follows the row it puts back.
+      focusAfter.current ??= { kind: `row`, channelId: props.pending }
+      return
+    }
+    const after = focusAfter.current
+    if (after === null || dialog !== null || !page.current) return
+    focusAfter.current = null
+    const root = page.current
+    let target = after.kind === `row`
+      ? root.querySelector<HTMLElement>(`${ROW}[data-channel="${after.channelId}"]`)
+      : root.querySelector<HTMLElement>(`${ROW}[data-state=todo]`)
+    const folded = target?.closest(`details`)
+    if (folded && !folded.open) folded.open = true
+    if (!target) {
+      target = root.querySelector<HTMLElement>(`h1`)
+      if (target && !target.hasAttribute(`tabindex`)) target.tabIndex = -1
+    }
+    target?.focus()
   }, [props.pending, sharing, dialog])
 
   const change = (change: BlogShareChange) => {
-    moveOn.current = true
+    focusAfter.current = { kind: `next` }
     props.onChange(change)
   }
 
+  /** The row focus is in, or the first one, and the shown rows in order. */
+  const rowsShown = () => {
+    const all = [...page.current?.querySelectorAll<HTMLElement>(ROW) ?? []]
+      .filter((row) => row.closest(`details`)?.open !== false)
+    const current = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>(ROW)
+    return { all, at: current ? all.indexOf(current) : -1 }
+  }
+  /** Runs `act` on the focused row and its data; does nothing when focus is on no row. */
+  const onRow = (act: (element: HTMLElement, row: AdminBlogShareRow) => void) => () => {
+    const { all, at } = rowsShown()
+    const row = sharing?.rows.find((candidate) => candidate.channel.id === all[at]?.dataset.channel)
+    if (row) act(all[at], row)
+  }
+  const live = sharing?.post.status === `published`
+  const key = (keys: string, handler: () => void) => ({
+    keys,
+    handler: () => {
+      const skip = afterG.current
+      afterG.current = false
+      if (!skip && sharing && dialog === null) handler()
+    },
+  })
+  useHotkeys([
+    { keys: `g`, preventDefault: false, handler: () => afterG.current = true },
+    ...[`j`, `k`].map((keys) =>
+      key(keys, () => {
+        const { all, at } = rowsShown()
+        all[keys === `j` ? at + 1 : at < 0 ? 0 : at - 1]?.focus()
+      })
+    ),
+    key(
+      `t`,
+      onRow((element) =>
+        element.querySelector<HTMLElement>(`[data-e2e=blog-share-text] button`)?.click()
+      ),
+    ),
+    key(
+      `o`,
+      onRow((element) => element.querySelector<HTMLElement>(`[data-e2e=blog-share-open]`)?.click()),
+    ),
+    key(
+      `p`,
+      onRow((element) => element.querySelector<HTMLElement>(`[data-e2e=blog-share-link]`)?.focus()),
+    ),
+    key(`s`, onRow((_, row) => live && setDialog({ kind: `skip`, row }))),
+    key(
+      `e`,
+      onRow((_, row) => row.share?.status === `posted` && setDialog({ kind: `results`, row })),
+    ),
+  ])
+
   if (!sharing) {
     return (
-      <Stack gap="xl">
-        <PageHeader back={back} navigate={navigate} title={t.t(`AdminBlogChannels.title`)} />
+      <div ref={page} class="flex flex-col gap-8">
+        <PageHeader back={back} navigate={navigate} title={title} />
         {props.loadError
           ? (
             <div class="flex flex-col items-center gap-3" data-e2e="blog-sharing-error">
@@ -170,15 +245,14 @@ export function AdminBlogSharingScreen(props: AdminBlogSharingScreenProps): JSX.
               <LoadingSkeleton rows={5} />
             </div>
           )}
-      </Stack>
+      </div>
     )
   }
 
   const { post, rows } = sharing
   const counts = blogSharingCounts(rows)
-  const live = post.status === `published`
   const toDo = rows.filter((row) => row.state === `todo`)
-  const language = languageName(post.language)
+  const language = languageFor(post.language, t.language)
   const subtitle = [
     language,
     ...(live && counts.total > 0
@@ -194,43 +268,12 @@ export function AdminBlogSharingScreen(props: AdminBlogSharingScreenProps): JSX.
       : []),
   ].join(` · `)
 
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (typing(event) || dialog !== null) return
-    const all = [...page.current?.querySelectorAll<HTMLElement>(ROW) ?? []]
-      .filter((row) => row.offsetParent !== null || row.closest(`details`)?.open !== false)
-    const current = (event.target as HTMLElement | null)?.closest<HTMLElement>(ROW) ?? null
-    const at = current ? all.indexOf(current) : -1
-    if (event.key === `j` || event.key === `k`) {
-      const next = all[event.key === `j` ? at + 1 : at < 0 ? 0 : at - 1]
-      if (next) {
-        event.preventDefault()
-        next.focus()
-      }
-      return
-    }
-    if (!current) return
-    const row = rows.find((candidate) => candidate.channel.id === current.dataset.channel)
-    if (!row) return
-    const click = (selector: string) => current.querySelector<HTMLElement>(selector)?.click()
-    const run: Record<string, () => void> = {
-      t: () => click(`[data-e2e=blog-share-text] button`),
-      o: () => click(`[data-e2e=blog-share-open]`),
-      p: () => current.querySelector<HTMLElement>(`[data-e2e=blog-share-link]`)?.focus(),
-      s: () => live && setDialog({ kind: `skip`, row }),
-      e: () => row.share?.status === `posted` && setDialog({ kind: `results`, row }),
-    }
-    if (run[event.key]) {
-      event.preventDefault()
-      run[event.key]()
-    }
-  }
-
   return (
-    <div ref={page} class="mx-auto flex w-full max-w-3xl flex-col gap-8" onKeyDown={onKeyDown}>
+    <div ref={page} class="flex flex-col gap-8">
       <PageHeader
         back={back}
         navigate={navigate}
-        title={post.title}
+        title={title}
         subtitle={subtitle}
         subtitleDataE2E="blog-sharing-subtitle"
         titleDataE2E="blog-sharing-title"
@@ -278,8 +321,8 @@ export function AdminBlogSharingScreen(props: AdminBlogSharingScreenProps): JSX.
           <ListEmpty
             title={t.t(`AdminBlogSharing.noneFit`, { language })}
             action={
-              <Button href={ADMIN_BLOG_SHARING_PATHS.channels} navigate={navigate}>
-                {t.t(`AdminBlogSharing.manage`)}
+              <Button href={ADMIN_BLOG_SHARING_PATHS.newChannel} navigate={navigate}>
+                {t.t(`AdminBlogSharing.addChannel`)}
               </Button>
             }
           />

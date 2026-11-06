@@ -341,6 +341,98 @@ describe("the sharing checklist", () => {
     expect(find("[data-e2e=blog-share-skip-dialog]").textContent).toContain("r/selfhosted")
   })
 
+  it("takes the row keys on a fresh load, with focus still on the page", async () => {
+    await mount(<AdminBlogSharingScreen {...props([])} />)
+    await press(document.body, "j")
+    expect(focusedChannel()).toBe(REDDIT.id)
+    await press(document.body, "p")
+    expect(document.activeElement)
+      .toBe(find("[data-e2e=blog-share-link]", rowFor(REDDIT)))
+  })
+
+  it("leaves a row key that follows g to the shell's Go to sequence", async () => {
+    await mount(<AdminBlogSharingScreen {...props([])} />)
+    rowFor(REDDIT).focus()
+    await press(document.body, "g")
+    await press(document.body, "j")
+    expect(focusedChannel()).toBe(REDDIT.id)
+  })
+
+  it("moves focus to the row Undo puts back, opening its folded group", async () => {
+    await mount(<AdminBlogSharingScreen {...props([])} />)
+    await mount(<AdminBlogSharingScreen {...props([], { pending: DEVTO.id })} />)
+    await mount(<AdminBlogSharingScreen {...props([], { sharing: sharingOf() })} />)
+    expect(focusedChannel()).toBe(DEVTO.id)
+    expect(rowFor(DEVTO).closest("details")?.open).toBe(true)
+  })
+
+  it("moves focus to the heading once the last row to do is handled", async () => {
+    const calls: unknown[][] = []
+    const one = [ROWS[0], ROWS[3]]
+    await mount(<AdminBlogSharingScreen {...props(calls, { sharing: sharingOf(one) })} />)
+    const field = find<HTMLInputElement>("[data-e2e=blog-share-link]", rowFor(REDDIT))
+    await type(field, "https://www.reddit.com/r/selfhosted/comments/1")
+    await submit(field)
+    await mount(
+      <AdminBlogSharingScreen {...props(calls, { sharing: sharingOf(one), pending: REDDIT.id })} />,
+    )
+    const done = [rowOf(REDDIT, "posted", { share: shareOf(REDDIT.id, {}) }), ROWS[3]]
+    await mount(<AdminBlogSharingScreen {...props(calls, { sharing: sharingOf(done) })} />)
+    expect(document.activeElement).toBe(find("h1"))
+  })
+
+  it("opens each dialog on its first field", async () => {
+    const firstFocus = () =>
+      [...find("dialog").querySelectorAll("[autofocus]")].map((element) =>
+        element.getAttribute("data-e2e")
+      )
+    await mount(<AdminBlogSharingScreen {...props([])} />)
+    await clickOn(find("[data-e2e=blog-share-status]", rowFor(TELEGRAM)))
+    await clickOn(find("[data-e2e=blog-share-skip]", rowFor(TELEGRAM)))
+    // `showModal()` focuses the control marked `autofocus`.
+    expect(firstFocus()).toEqual(["blog-share-skip-reason"])
+    const cancel = () =>
+      clickOn(
+        [...find("dialog").querySelectorAll("button")].find((button) =>
+          button.textContent === "Cancel"
+        )!,
+      )
+    await cancel()
+    await clickOn(find("[data-e2e=blog-share-status]", rowFor(DEVTO)))
+    await clickOn(find("[data-e2e=blog-share-edit-link]", rowFor(DEVTO)))
+    expect(firstFocus()).toEqual(["blog-share-link-edit"])
+    await cancel()
+    await clickOn(find("[data-e2e=blog-share-status]", rowFor(DEVTO)))
+    await clickOn(find("[data-e2e=blog-share-results]", rowFor(DEVTO)))
+    expect(firstFocus()).toEqual(["blog-share-result-views"])
+  })
+
+  it("names the post's language in English when no channel fits, and offers Add channel", async () => {
+    const russian = { ...sharingOf([]), post: { ...sharingOf().post, language: "ru" as const } }
+    await mount(<AdminBlogSharingScreen {...props([], { sharing: russian })} />)
+    expect(document.body.textContent).toContain("No active channel takes posts in Russian.")
+    const add = [...document.querySelectorAll("a")].find((link) =>
+      link.textContent === "Add channel"
+    )
+    expect(add?.getAttribute("href")).toBe("/blog/channels/new")
+  })
+
+  it("says there is no ready-made text only for a row with no text and no submit form", async () => {
+    const rows = [
+      rowOf(REDDIT, "todo", { submitUrl: "https://www.reddit.com/r/selfhosted/submit?url=x" }),
+      rowOf(TELEGRAM, "todo"),
+    ]
+    await mount(<AdminBlogSharingScreen {...props([], { sharing: sharingOf(rows) })} />)
+    expect(rowFor(REDDIT).textContent).not.toContain("No ready-made text")
+    expect(rowFor(TELEGRAM).textContent).toContain("No ready-made text")
+  })
+
+  it("shows the checklist's own header while it loads", async () => {
+    await mount(<AdminBlogSharingScreen {...props([], { sharing: null })} />)
+    expect(find("h1").textContent).toBe("Sharing checklist")
+    expect(find("[data-e2e=page-back]").getAttribute("aria-label")).toBe("Back to post")
+  })
+
   it("leaves the row keys alone while the link field has focus", async () => {
     await mount(<AdminBlogSharingScreen {...props([])} />)
     const field = find<HTMLInputElement>("[data-e2e=blog-share-link]", rowFor(REDDIT))

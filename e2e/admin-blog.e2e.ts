@@ -286,6 +286,20 @@ test("an operator adds a sharing channel, pastes a live post's link on it, and t
     await toDo.click()
     await expect(ops).toHaveURL(/\/blog\/[0-9a-f-]{36}\/sharing$/)
 
+    // The row keys work on a fresh load: j reaches the first row, s opens Skip on its reason
+    // field, Escape closes it, and p moves to the row's link field.
+    const first = ops.locator("[data-e2e=blog-share-row]").first()
+    await expect(first).toBeVisible()
+    await ops.keyboard.press("j")
+    await expect(first).toBeFocused()
+    await ops.keyboard.press("s")
+    await expect(ops.locator("[data-e2e=blog-share-skip-reason]")).toBeFocused()
+    await ops.keyboard.press("Escape")
+    await expect(ops.locator("[data-e2e=blog-share-skip-dialog]")).toBeHidden()
+    await expect(first).toBeFocused()
+    await ops.keyboard.press("p")
+    await expect(first.locator("[data-e2e=blog-share-link]")).toBeFocused()
+
     // The channel's row takes the link and moves to Posted.
     const row = ops.locator("[data-e2e=blog-share-row]", { hasText: channel })
     await expect(row).toHaveAttribute("data-state", "todo")

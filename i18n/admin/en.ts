@@ -560,6 +560,7 @@ export default {
   "AdminBlogChannels.doneRestored": "Channel restored. Posts it fits list it again.",
   "AdminBlogChannels.doneDeleted": "Channel deleted.",
   "AdminBlogChannels.undo": "Undo",
+  "AdminBlogSharing.title": "Sharing checklist",
   "AdminBlogSharing.back": "Back to post",
   "AdminBlogSharing.manage": "Manage channels",
   "AdminBlogSharing.shared": "Shared on {done} of {total}",
