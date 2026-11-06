@@ -206,9 +206,13 @@ Deno.test(`share results: a good read stores a job row with unknown numbers left
   })
 })
 
-Deno.test(`share results: a failed read is stored on its copy, waits a day, and the other copies are still read`, async () => {
+Deno.test(`share results: a failed or crashing read is stored on its copy, waits a day, and the other copies are still read`, async () => {
   await withSchema(async (sql) => {
     const post = await livePost(sql, `mixed`)
+    // Read first, so a crash that escaped the job would stop the copies after it.
+    const crashed = await share(sql, post, await channel(sql, `bluesky`, `bluesky`), {
+      url: `https://bsky.app/profile/did:plc:abc123/post/3kxyz`,
+    })
     const refused = await share(sql, post, await channel(sql, `reddit`, `reddit`), {
       url: `https://redd.it/abc`,
     })
@@ -229,6 +233,7 @@ Deno.test(`share results: a failed read is stored on its copy, waits a day, and 
         reddit: () =>
           Promise.resolve({ success: false, output: null, error: `reddit answered 403` }),
         hackernews: () => Promise.reject(new Error(`must not be asked`)),
+        bluesky: () => Promise.reject(new Error(`socket hang up`)),
         mastodon: () => Promise.resolve(ok({ reactions: 3, comments: 1 })),
       },
     }, (line) => lines.push(line))
@@ -238,13 +243,14 @@ Deno.test(`share results: a failed read is stored on its copy, waits a day, and 
     `
     expect(failures).toEqual(
       [
+        { id: crashed, readError: `the reader failed: Error: socket hang up` },
         { id: refused, readError: `reddit answered 403` },
         { id: broken, readError: expect.stringContaining(`Hacker News item`) },
       ].sort((a, b) => a.id.localeCompare(b.id)),
     )
     const results = await sql`SELECT share_id, reactions FROM blog_share_results`
     expect(results).toEqual([{ shareId: read, reactions: 3 }])
-    expect(lines).toHaveLength(2)
+    expect(lines).toHaveLength(3)
     // A refusal is not asked again an hour later.
     const later = new Date(NOW.getTime() + 3_600_000)
     expect(await sharesToRead(sql, later)).toEqual([])
