@@ -445,7 +445,10 @@ export function AdminPreferencesGroup(
   )
 }
 
-/** A language's name for a reader of `inLanguage`: `ru` is "Russian" on an English page; `null` when `Intl` cannot read the tag. */
+/**
+ * A language's name for a reader of `inLanguage`: `ru` is "Russian" on an English page; `null` when
+ * `Intl` cannot read the tag.
+ */
 export function languageNameIn(language: string, inLanguage: string): string | null {
   try {
     const name = new Intl.DisplayNames([inLanguage], { type: `language` }).of(language) ?? language
