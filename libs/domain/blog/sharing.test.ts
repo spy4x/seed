@@ -3,6 +3,7 @@ import { describe, it } from "@std/testing/bdd"
 import {
   blogChannelHref,
   blogShareState,
+  blogSharingCounts,
   BlogSharingError,
   blogSharingToDo,
   blogSubmitUrl,
@@ -168,5 +169,27 @@ describe(`parseBlogShareFields`, () => {
       .toEqual({ url: `https://x.com/1`, skipReason: null })
     expect(parseBlogShareFields({ status: `skipped`, skipReason: ` Not a fit ` }))
       .toEqual({ url: null, skipReason: `Not a fit` })
+  })
+})
+
+describe(`blogSharingCounts`, () => {
+  it(`counts posted and covered rows as done, and leaves archived channels out`, () => {
+    const row = (
+      state: `todo` | `suggested` | `posted` | `skipped` | `covered`,
+      archived = false,
+    ) => ({
+      channel: { archivedAt: archived ? `2026-11-02T00:00:00.000Z` : null },
+      state,
+    })
+    const rows = [
+      row(`posted`),
+      row(`covered`),
+      row(`todo`),
+      row(`todo`),
+      row(`suggested`),
+      row(`skipped`),
+      row(`posted`, true),
+    ]
+    expect(blogSharingCounts(rows)).toEqual({ total: 6, done: 2, toDo: 2, suggested: 1 })
   })
 })
