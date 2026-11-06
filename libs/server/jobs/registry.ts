@@ -20,7 +20,7 @@ import { stepsJob } from "@spy4x/server/outbox"
 import { describeCron, parseCron } from "@spy4x/time/cron"
 import type { BillingProvider } from "@spy4x/billing"
 import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
-import { BillingNoticeKind } from "@domain/billing"
+import { BillingNoticeKind, type Plan } from "@domain/billing"
 import { BLOG_CROSSPOST_JOB, BLOG_INDEXNOW_JOB, BLOG_PUBLISH_JOB } from "@domain/blog"
 import { BILLING_NOTICE_JOBS } from "../billing/billing-notices.ts"
 import { SEAT_SYNC_JOB, seatSyncJob } from "../billing/seat-sync.ts"
@@ -97,6 +97,8 @@ export interface JobDeps {
   crosspost: BlogCrosspostSetup | null
   /** How jobs ask the public website something, such as whether a post is live. */
   fetch: typeof fetch
+  /** The plan catalog the billing jobs read, `PLANS` unless a test passes its own. */
+  plans?: readonly Plan[]
 }
 
 /**
@@ -201,14 +203,15 @@ export const JOBS: readonly JobDefinition[] = [
     kind: OUTBOX_CLEANUP_JOB,
     label: `Nightly cleanup`,
     repeat: { cron: `0 3 * * *` },
-    handler: ({ sql, provider, mail, files }) =>
-      stepsJob(`nightly cleanup`, cleanupSteps(sql, provider, mail.log, files), mail.log),
+    handler: ({ sql, provider, mail, files, plans }) =>
+      stepsJob(`nightly cleanup`, cleanupSteps(sql, provider, mail.log, files, plans), mail.log),
   }),
   defineJob({
     kind: SEAT_SYNC_JOB,
     label: `Seat count sync`,
     about: { group: true },
-    handler: ({ sql, provider }) => provider ? seatSyncJob({ sql, provider }) : async () => {},
+    handler: ({ sql, provider, plans }) =>
+      provider ? seatSyncJob({ sql, provider, plans }) : async () => {},
   }),
   defineJob({
     kind: PASSWORD_RESET_MAIL_JOB,
