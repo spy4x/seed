@@ -57,11 +57,12 @@ export const SAMPLE_CHANNELS: readonly SampleChannel[] = [
  */
 export async function seedSampleSharing(sql: postgres.Sql): Promise<void> {
   for (const channel of SAMPLE_CHANNELS) {
+    // Manual (`auto_post` false): the sample addresses are fake, so nothing is posted to them.
     await sql`
-      INSERT INTO blog_channels (id, name, kind, address, utm_source, add_utm, languages)
+      INSERT INTO blog_channels (id, name, kind, address, utm_source, add_utm, languages, auto_post)
       VALUES (
         ${channel.id}, ${channel.name}, ${channel.kind}, ${channel.address},
-        ${channel.utmSource}, ${channel.addUtm}, ${[`en`]}
+        ${channel.utmSource}, ${channel.addUtm}, ${[`en`]}, false
       )
       ON CONFLICT DO NOTHING
     `

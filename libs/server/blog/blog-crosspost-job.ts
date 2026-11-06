@@ -11,6 +11,7 @@ import {
 import { blogPostPath } from "@domain/blog"
 import type { JobHandler } from "../jobs/jobs.ts"
 import { readSiteUrl } from "../subscribers/subscribers.ts"
+import { autoPostTargets } from "./auto-post.ts"
 import type { BlogPostRow } from "./postgres-blog-repository.ts"
 
 /**
@@ -124,7 +125,7 @@ export interface BlogCrosspostJobDeps {
 
 /** The cross-post failed; the job system tries again later. The message never holds the key. */
 export class DevtoCrosspostError extends Error {
-  constructor(postId: string, readonly problem: string) {
+  constructor(postId: string, readonly channelId: string, readonly problem: string) {
     super(`Dev.to cross-post of blog post ${postId} failed: ${problem}`)
     this.name = `DevtoCrosspostError`
   }
@@ -134,23 +135,20 @@ export class DevtoCrosspostError extends Error {
 export const DEVTO_KEY_MISSING = `key-missing`
 
 /**
- * Records the cross-post on the post's row of the first active Dev.to sharing channel, when there
- * is one: posted at `url`, or still to do with `error`. An error never overwrites a row the
- * operator already moved on from "to do".
+ * Records the cross-post on the post's row of the Dev.to channel that posts it: posted at `url`,
+ * or still to do with `error`. An error never overwrites a row the operator already moved on from
+ * "to do".
  */
 async function recordDevtoShare(
   sql: postgres.Sql | postgres.TransactionSql,
   postId: string,
+  channelId: string,
   outcome: { url: string } | { error: string },
 ): Promise<void> {
-  const channel = sql`
-    SELECT id FROM blog_channels WHERE kind = 'devto' AND archived_at IS NULL
-    ORDER BY created_at, id LIMIT 1
-  `
   if (`url` in outcome) {
     await sql`
       INSERT INTO blog_post_shares (id, post_id, channel_id, status, url, shared_at, automatic)
-      SELECT ${uuidV7()}, ${postId}, id, 'posted', ${outcome.url}, now(), true FROM (${channel}) c
+      VALUES (${uuidV7()}, ${postId}, ${channelId}, 'posted', ${outcome.url}, now(), true)
       ON CONFLICT (post_id, channel_id) DO UPDATE SET status = 'posted', url = EXCLUDED.url,
         shared_at = now(), skip_reason = NULL, automatic = true, error = NULL, updated_at = now()
     `
@@ -158,11 +156,23 @@ async function recordDevtoShare(
   }
   await sql`
     INSERT INTO blog_post_shares (id, post_id, channel_id, status, automatic, error)
-    SELECT ${uuidV7()}, ${postId}, id, 'todo', true, ${outcome.error.slice(0, 500)}
-    FROM (${channel}) c
+    VALUES (${uuidV7()}, ${postId}, ${channelId}, 'todo', true, ${outcome.error.slice(0, 500)})
     ON CONFLICT (post_id, channel_id) DO UPDATE SET error = EXCLUDED.error, updated_at = now()
     WHERE blog_post_shares.status = 'todo'
   `
+}
+
+/**
+ * The Dev.to channel that posts `post` by itself: active, "Post automatically" on, listing the
+ * post, with its row still to do ({@link autoPostTargets}). `null` for none.
+ */
+async function devtoTarget(
+  sql: postgres.Sql | postgres.TransactionSql,
+  post: BlogPostRow,
+): Promise<string | null> {
+  if (post.translationOf !== null) return null
+  const [channel] = await autoPostTargets(sql, post, [`devto`])
+  return channel?.id ?? null
 }
 
 /**
@@ -176,11 +186,13 @@ async function recordDevtoShare(
  * error fails the run, and the job system tries again later (docs/jobs.md).
  *
  * A post that is no longer live is left for its next publish, which queues this job again. A
- * translation, or any post while the cross-post is off, is settled as never cross-posted.
+ * translation, a post no Dev.to channel posts by itself (none with "Post automatically" on lists
+ * it, or its row there is posted, suggested or skipped), or any post while the cross-post is off,
+ * is settled as never cross-posted.
  *
- * With an active Dev.to sharing channel, the post's row on it says what happened: posted with the
- * article's address, or still to do with the failure (`key-missing` while the key is unset), so the
- * operator can post it by hand.
+ * The post's row on the Dev.to channel says what happened: posted with the article's address, or
+ * still to do with the failure (`key-missing` while the key is unset), so the operator can post it
+ * by hand.
  */
 export function blogCrosspostJob(deps: BlogCrosspostJobDeps): JobHandler {
   return async (event) => {
@@ -189,7 +201,9 @@ export function blogCrosspostJob(deps: BlogCrosspostJobDeps): JobHandler {
     } catch (error) {
       // Kept apart from the rolled-back run, so the checklist says why the post is not there.
       if (error instanceof DevtoCrosspostError) {
-        await recordDevtoShare(deps.sql, event.aggregateId, { error: error.problem })
+        await recordDevtoShare(deps.sql, event.aggregateId, error.channelId, {
+          error: error.problem,
+        })
       }
       throw error
     }
@@ -208,24 +222,23 @@ async function crosspost(deps: BlogCrosspostJobDeps, postId: string): Promise<vo
       BlogPostRow[]
     >`SELECT * FROM blog_posts WHERE id = ${postId}`
     if (!post || post.crosspostedAt !== null || post.status !== `published`) return
-    if (deps.setup === null || post.translationOf !== null) {
+    const channelId = await devtoTarget(tx, post)
+    if (deps.setup === null || channelId === null) {
       await tx`UPDATE blog_posts SET crossposted_at = now() WHERE id = ${post.id}`
-      if (deps.setup === null) {
+      if (channelId !== null) {
         deps.log(`blog post ${post.id}: no Dev.to cross-post: DEVTO_API_KEY is unset`)
-        if (post.translationOf === null) {
-          await recordDevtoShare(tx, post.id, { error: DEVTO_KEY_MISSING })
-        }
+        await recordDevtoShare(tx, post.id, channelId, { error: DEVTO_KEY_MISSING })
       }
       return
     }
     const { siteUrl, client } = deps.setup
     const article = devtoArticle(post, siteUrl)
     const found = await client.find(article.canonical_url)
-    if (!found.success) throw new DevtoCrosspostError(post.id, found.error)
+    if (!found.success) throw new DevtoCrosspostError(post.id, channelId, found.error)
     let url = found.output?.url
     if (url === undefined) {
       const made = await client.create(article)
-      if (!made.success) throw new DevtoCrosspostError(post.id, made.error)
+      if (!made.success) throw new DevtoCrosspostError(post.id, channelId, made.error)
       url = made.output.url
     }
     // Not a new version: the operator's open editor keeps saving; only the record changes.
@@ -233,6 +246,6 @@ async function crosspost(deps: BlogCrosspostJobDeps, postId: string): Promise<vo
     await tx`
       UPDATE blog_posts SET crossposted_at = now(), devto_url = ${devtoUrl} WHERE id = ${post.id}
     `
-    if (devtoUrl !== null) await recordDevtoShare(tx, post.id, { url: devtoUrl })
+    if (devtoUrl !== null) await recordDevtoShare(tx, post.id, channelId, { url: devtoUrl })
   })
 }

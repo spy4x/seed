@@ -5,20 +5,27 @@ import {
   type AdminBlogChannelsResponse,
   BLOG_CHANNEL_ENTITY,
   BLOG_CHANNELS_MAX,
+  BLOG_CROSSPOST_JOB,
   BLOG_POST_ENTITY,
+  BLOG_POST_JOBS,
   BLOG_SHARING_AUDIT_KINDS,
   type BlogChannel,
   type BlogChannelFields,
+  type BlogChannelKind,
   BlogChannelVersionConflictError,
+  type BlogPostJobKind,
   type BlogShare,
   type BlogShareResult,
   type BlogShareResultsRequest,
   type BlogShareStatus,
   BlogSharingError,
   blogSharingToDo,
+  channelPostsAutomatically,
   type SharingPost,
 } from "@domain/blog"
 import type { Language } from "@domain/identity"
+import { enqueueJob, JOB_AGGREGATE } from "../jobs/jobs.ts"
+import { queueAutoPost } from "./auto-post.ts"
 
 /** The operator behind a write, for its audit row. */
 export interface SharingActor {
@@ -46,6 +53,8 @@ export interface PostSharing {
   original: Map<string, BlogShare>
   /** The latest numbers of each of the post's rows, by share id. */
   results: Map<string, BlogShareResult>
+  /** The channels whose automatic post of this post is waiting or running. */
+  posting: Set<string>
 }
 
 /** How many channels list each live post as to do, and how many channels are active. */
@@ -99,6 +108,7 @@ function toChannel(row: ChannelRow): BlogChannel {
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     version: row.version,
+    autoPost: row.autoPost,
   }
 }
 
@@ -120,7 +130,7 @@ function toShare(row: ShareRow): BlogShare {
 }
 
 const CHANNEL_COLUMNS = `id, name, kind, address, utm_source, add_utm, languages, starts_at,
-  archived_at, created_at, updated_at, version`
+  archived_at, created_at, updated_at, version, auto_post`
 const SHARE_COLUMNS = `id, post_id, channel_id, status, url, shared_at, skip_reason, automatic,
   error, read_error, read_failed_at, updated_at`
 
@@ -134,7 +144,7 @@ export class PostgresSharingRepository {
   constructor(private readonly sql: postgres.Sql) {}
 
   /** Every channel with its counts, and every live post's language and time. */
-  async channels(): Promise<AdminBlogChannelsResponse> {
+  async channels(): Promise<Omit<AdminBlogChannelsResponse, `linkedinExpiresAt`>> {
     const [channels, posts, shares, counts] = await Promise.all([
       this.listChannels(this.sql),
       this.livePosts(),
@@ -216,6 +226,7 @@ export class PostgresSharingRepository {
       own,
       original,
       results,
+      posting: await this.posting(post.id, ownIds),
     }
   }
 
@@ -250,10 +261,11 @@ export class PostgresSharingRepository {
       await taken(tx, id, fields)
       const [row] = await tx<ChannelRow[]>`
         INSERT INTO blog_channels (
-          id, name, kind, address, utm_source, add_utm, languages, starts_at
+          id, name, kind, address, utm_source, add_utm, languages, starts_at, auto_post
         ) VALUES (
           ${id}, ${fields.name}, ${fields.kind}, ${fields.address}, ${fields.utmSource},
-          ${fields.addUtm}, ${tx.array(fields.languages)}::text[], ${fields.startsAt}
+          ${fields.addUtm}, ${tx.array(fields.languages)}::text[], ${fields.startsAt},
+          ${fields.autoPost}
         )
         RETURNING ${tx.unsafe(CHANNEL_COLUMNS)}
       `
@@ -276,7 +288,7 @@ export class PostgresSharingRepository {
         UPDATE blog_channels SET name = ${fields.name}, kind = ${fields.kind},
           address = ${fields.address}, utm_source = ${fields.utmSource}, add_utm = ${fields.addUtm},
           languages = ${tx.array(fields.languages)}::text[], starts_at = ${fields.startsAt},
-          updated_at = now(), version = version + 1
+          auto_post = ${fields.autoPost}, updated_at = now(), version = version + 1
         WHERE id = ${id}
         RETURNING ${tx.unsafe(CHANNEL_COLUMNS)}
       `
@@ -444,6 +456,86 @@ export class PostgresSharingRepository {
       `
       return { ...row, readAt: row.readAt.toISOString() }
     }) as BlogShareResult
+  }
+
+  /**
+   * Asks for post `postId`'s automatic post to channel `channelId` again, after it failed or was
+   * left to the operator: the row goes back to "to do" without its error or its mark of an earlier
+   * try, and its kind's job is queued unless one waits already. Refused with `NOT_AUTOMATIC` for a
+   * channel that does not post by itself, `NOT_PUBLISHED` for a post that is not live, and
+   * `SHARE_NOT_FOUND` for a row already posted, suggested or skipped. Writes one audit row on the
+   * post. Asking twice queues one job.
+   */
+  async retryShare(postId: string, channelId: string, actor: SharingActor): Promise<void> {
+    await this.sql.begin(async (tx) => {
+      const [post] = await tx<{ status: string; translationOf: string | null }[]>`
+        SELECT status, translation_of FROM blog_posts WHERE id = ${postId} FOR UPDATE
+      `
+      if (!post) throw new BlogSharingError(`POST_NOT_FOUND`, `This post does not exist.`)
+      if (post.status !== `published`) {
+        throw new BlogSharingError(`NOT_PUBLISHED`, `Only a live post can be shared.`)
+      }
+      const [channel] = await tx<{ kind: BlogChannelKind; autoPost: boolean }[]>`
+        SELECT kind, auto_post FROM blog_channels
+        WHERE id = ${channelId} AND archived_at IS NULL
+      `
+      if (!channel) {
+        throw new BlogSharingError(`CHANNEL_NOT_FOUND`, `This channel does not exist any more.`)
+      }
+      if (!channelPostsAutomatically(channel, post.translationOf !== null)) {
+        throw new BlogSharingError(`NOT_AUTOMATIC`, `This channel does not post by itself.`)
+      }
+      const [share] = await tx<{ id: string }[]>`
+        INSERT INTO blog_post_shares (id, post_id, channel_id, status, automatic)
+        VALUES (${uuidV7()}, ${postId}, ${channelId}, 'todo', true)
+        ON CONFLICT (post_id, channel_id) DO UPDATE SET automatic = true, error = NULL,
+          post_attempted_at = NULL, updated_at = now()
+        WHERE blog_post_shares.status = 'todo'
+        RETURNING id
+      `
+      if (!share) {
+        throw new BlogSharingError(`SHARE_NOT_FOUND`, `This post is not to do on this channel.`)
+      }
+      if (channel.kind === `devto`) {
+        // The cross-post settles once ever; asking again unsettles a post Dev.to never got.
+        await tx`
+          UPDATE blog_posts SET crossposted_at = NULL
+          WHERE id = ${postId} AND devto_url IS NULL
+        `
+        const [waiting] = await tx`
+          SELECT 1 FROM outbox_events
+          WHERE aggregate_type = ${JOB_AGGREGATE} AND aggregate_id = ${postId}
+            AND event_kind = ${BLOG_CROSSPOST_JOB} AND processed_at IS NULL
+        `
+        if (!waiting) await enqueueJob(tx, BLOG_CROSSPOST_JOB, postId, { inMs: 0 })
+      } else {
+        await queueAutoPost(tx, channel.kind as BlogPostJobKind, share.id)
+      }
+      await tx`
+        INSERT INTO audit_events (event_kind, actor_user_id, request_id, entity_type, entity_id, details)
+        VALUES (
+          ${BLOG_SHARING_AUDIT_KINDS.shareRetried}, ${actor.userId}, ${actor.requestId},
+          ${BLOG_POST_ENTITY}, ${postId}, ${tx.json({ channelId, kind: channel.kind })}
+        )
+      `
+    })
+  }
+
+  /** The channels of post `postId` whose automatic post is waiting or running. */
+  private async posting(postId: string, shareIds: readonly string[]): Promise<Set<string>> {
+    const rows = await this.sql<{ channelId: string }[]>`
+      SELECT share.channel_id FROM blog_post_shares share
+      JOIN outbox_events job ON job.aggregate_id = share.id
+      WHERE share.id IN ${this.sql(shareIds.length > 0 ? shareIds : [postId])}
+        AND job.aggregate_type = ${JOB_AGGREGATE} AND job.processed_at IS NULL
+        AND job.event_kind IN ${this.sql(Object.values(BLOG_POST_JOBS))}
+      UNION
+      SELECT channel.id FROM blog_channels channel
+      JOIN outbox_events job ON job.aggregate_id = ${postId}
+      WHERE channel.kind = 'devto' AND job.aggregate_type = ${JOB_AGGREGATE}
+        AND job.processed_at IS NULL AND job.event_kind = ${BLOG_CROSSPOST_JOB}
+    `
+    return new Set(rows.map((row) => row.channelId))
   }
 
   private async listChannels(sql: postgres.Sql | postgres.TransactionSql): Promise<BlogChannel[]> {

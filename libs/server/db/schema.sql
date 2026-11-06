@@ -1442,6 +1442,7 @@ CREATE TABLE blog_channels (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     version INT4 DEFAULT 1 NOT NULL,
+    auto_post BOOLEAN DEFAULT false NOT NULL,
     CONSTRAINT blog_channels_utm_source_unique UNIQUE (utm_source),
     CONSTRAINT blog_channels_kind_check CHECK (kind IN (
         'devto', 'telegram', 'mastodon', 'bluesky', 'hashnode', 'linkedin', 'x', 'reddit',
@@ -1472,6 +1473,7 @@ CREATE TABLE blog_post_shares (
     -- Why the results job's last read failed, and when; both NULL after a good read.
     read_error VARCHAR(500),
     read_failed_at TIMESTAMPTZ,
+    post_attempted_at TIMESTAMPTZ,
     CONSTRAINT blog_post_shares_post_channel_unique UNIQUE (post_id, channel_id),
     CONSTRAINT blog_post_shares_status_check
         CHECK (status IN ('todo', 'suggested', 'posted', 'skipped')),

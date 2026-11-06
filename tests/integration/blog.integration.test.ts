@@ -1621,6 +1621,14 @@ async function crosspostOf(sql: postgres.Sql, id: string) {
   return row
 }
 
+/** A Dev.to channel with "Post automatically" on, which a cross-post needs (#839). */
+async function devtoChannel(sql: postgres.Sql, autoPost = true): Promise<void> {
+  await sql`
+    INSERT INTO blog_channels (id, name, kind, address, utm_source, languages, auto_post)
+    VALUES (${uuidV7()}, 'Dev.to', 'devto', 'https://dev.to/seed', 'devto', '{en}', ${autoPost})
+  `
+}
+
 /** The job's event for post `id`'s cross-post. */
 function crosspostEvent(id: string): OutboxEvent {
   return { id: uuidV7(), aggregateId: id, eventKind: BLOG_CROSSPOST_JOB } as OutboxEvent
@@ -1631,6 +1639,7 @@ Deno.test(`blog: a live post is cross-posted to Dev.to once ever, with its canon
     const blog = new PostgresBlogRepository(sql)
     const maya = await operator(sql)
     const devto = fakeDevto()
+    await devtoChannel(sql)
     const id = uuidV7()
     await blog.create(id, fields(`crossed`, { intro: `Why I built it.` }), maya)
     await blog.publish(id, 1, null, null, maya)
@@ -1668,6 +1677,7 @@ Deno.test(`blog: a cross-post that died before it was recorded finds its article
   await withSchema(async (sql) => {
     const blog = new PostgresBlogRepository(sql)
     const maya = await operator(sql)
+    await devtoChannel(sql)
     const id = uuidV7()
     await blog.create(id, fields(`half-done`), maya)
     await blog.publish(id, 1, null, null, maya)
@@ -1690,6 +1700,7 @@ Deno.test(`blog: a Dev.to error fails the cross-post for a retry, and records no
   await withSchema(async (sql) => {
     const blog = new PostgresBlogRepository(sql)
     const maya = await operator(sql)
+    await devtoChannel(sql)
     const id = uuidV7()
     await blog.create(id, fields(`flaky`), maya)
     await blog.publish(id, 1, null, null, maya)
@@ -1719,6 +1730,7 @@ Deno.test(`blog: with the cross-post off, or for a translation, a post is settle
     const blog = new PostgresBlogRepository(sql)
     const maya = await operator(sql)
     const [off, original, german] = [uuidV7(), uuidV7(), uuidV7()]
+    await devtoChannel(sql)
 
     await t.step(
       `off: settled with a log line, and turning it on later posts nothing`,
@@ -1753,6 +1765,57 @@ Deno.test(`blog: with the cross-post off, or for a translation, a post is settle
       expect((await crosspostOf(sql, german)).crosspostedAt).not.toBeNull()
       expect((await crosspostOf(sql, german)).devtoUrl).toBeNull()
     })
+  })
+})
+
+Deno.test(`blog: a Dev.to channel with Post automatically off gets no cross-post (#839)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    await devtoChannel(sql, false)
+    const devto = fakeDevto()
+    const id = uuidV7()
+    await blog.create(id, fields(`manual-devto`), maya)
+    await blog.publish(id, 1, null, null, maya)
+
+    await blogCrosspostJob({ sql, setup: devto.setup, log: () => {} })(crosspostEvent(id))
+
+    expect(devto.made).toHaveLength(0)
+    expect((await crosspostOf(sql, id)).crosspostedAt).not.toBeNull()
+  })
+})
+
+Deno.test(`blog: a post going live queues each automatic channel's job once, with the newsletter off (#839)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const channel = uuidV7()
+    await sql`
+      INSERT INTO blog_channels (id, name, kind, address, utm_source, languages, auto_post)
+      VALUES (${channel}, 'News', 'telegram', 'https://t.me/seednews', 'telegram', '{en}', true)
+    `
+    const id = uuidV7()
+    await blog.create(id, fields(`told`), maya)
+    await blog.publish(id, 1, null, null, maya)
+    const job = blogPublishJob({
+      sql,
+      fetch: liveSite(sql),
+      brand: BRAND,
+      setup: null,
+      siteUrl: SETUP.siteUrl,
+      log: () => {},
+    })
+
+    await job(jobEvent(id))
+    await job(jobEvent(id))
+
+    const jobs = await sql`
+      SELECT job.event_kind FROM outbox_events job
+      JOIN blog_post_shares share ON share.id = job.aggregate_id
+      WHERE share.post_id = ${id} AND share.channel_id = ${channel} AND share.automatic
+        AND share.status = 'todo'
+    `
+    expect(jobs).toEqual([{ eventKind: `blog.post-telegram` }])
   })
 })
 

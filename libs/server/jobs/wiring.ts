@@ -73,6 +73,7 @@ export function createOutboxProcessor(
   crosspost: JobDeps["crosspost"] = null,
   fetcher: JobDeps["fetch"] = globalThis.fetch,
   shareResults: JobDeps["shareResults"] = null,
+  autoPost: JobDeps["autoPost"] = undefined,
 ): OutboxProcessor {
   const notifier = new GroupChangeNotifier(sql)
   const deps: JobDeps = {
@@ -89,6 +90,7 @@ export function createOutboxProcessor(
     indexNow,
     crosspost,
     shareResults,
+    autoPost,
     fetch: fetcher,
   }
   const kinds = jobs.map((job) => job.kind)
