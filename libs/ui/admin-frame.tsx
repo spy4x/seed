@@ -16,6 +16,7 @@ import { ShortcutsList } from "./shortcuts.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useAdminText } from "./i18n.ts"
 import { Rich } from "@spy4x/preact-ui/i18n"
+import { PRODUCT_NAME } from "./brand.ts"
 
 /**
  * The pages of the admin app (`apps/admin`) that its screens link to. It runs on a host of
@@ -29,10 +30,6 @@ export const ADMIN_PATHS = {
   signIn: "/sign-in",
   oneTimeCode: "/one-time-code",
 } as const
-
-// Seed's own site: see docs/start-a-product.md
-/** The product's name, the last part of every admin page's title. */
-export const ADMIN_PRODUCT = "Seed"
 
 /**
  * The word that marks the operator area, in English: the titles' middle part where no translator
@@ -53,7 +50,7 @@ function AdminBrand({ navigate }: { navigate?: Navigate }): JSX.Element {
       navigate={navigate}
       class="-ms-2 flex min-h-11 shrink-0 items-center gap-2 rounded-md px-2"
     >
-      <span class="text-base font-semibold text-foreground">{ADMIN_PRODUCT}</span>
+      <span class="text-base font-semibold text-foreground">{PRODUCT_NAME}</span>
       <span data-e2e="admin-mark">
         <AccountTag tag={t.t("AdminFrame.tag")} />
       </span>
@@ -145,7 +142,7 @@ export function adminPageTitle(
 ): string {
   const href = adminNavPath(navItems, path)
   const page = navItems.find((item) => item.href === href)?.name
-  return [page, tag, ADMIN_PRODUCT].filter(Boolean).join(" · ")
+  return [page, tag, PRODUCT_NAME].filter(Boolean).join(" · ")
 }
 
 /**

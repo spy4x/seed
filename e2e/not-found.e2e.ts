@@ -3,6 +3,7 @@ import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { PRODUCT_NAME } from "../libs/ui/brand.ts"
 
 /**
  * An address no page answers shows "Page not found" with one link back, in the SPA signed
@@ -84,7 +85,7 @@ test.describe("an unknown address", () => {
       const screen = ops.locator("[data-e2e=not-found]")
       await expect(screen.getByRole("heading", { level: 1 })).toHaveText("Page not found")
       await expect(ops).toHaveURL(`${adminBase}/no-such-page`)
-      await expect(ops).toHaveTitle("Page not found · Admin · Seed")
+      await expect(ops).toHaveTitle(`Page not found · Admin · ${PRODUCT_NAME}`)
       await ops.locator("[data-e2e=not-found-link]").click()
       await expect(ops).toHaveURL(`${adminBase}/`)
       await expect(ops.locator("[data-e2e=admin-dashboard-title]")).toBeVisible()

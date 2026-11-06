@@ -476,6 +476,8 @@ CONFIG
 OFFLINE_SPECS=" $(deno eval 'import { OFFLINE_SPECS } from "./infra/scripts/e2e-local-plan.ts"; console.log(OFFLINE_SPECS.join(" "))') "
 
 # Leaves in the copy the specs pass <specs> may see: `all`, `offline`, or `other` (the rest).
+# The copy sits two folders below `e2e/`, so an import of a file outside `e2e/` (`from "../`)
+# gets two more `../` to reach the same file.
 copy_specs() { # <all|offline|other>
   local spec name kind
   find "$COPY_DIR" -maxdepth 1 -name '*.e2e.ts' -delete
@@ -485,6 +487,7 @@ copy_specs() { # <all|offline|other>
     [[ "$OFFLINE_SPECS" == *" $name "* ]] && kind=offline
     [ "$1" = all ] || [ "$1" = "$kind" ] || continue
     sed -e "s#http://app.localhost\"#http://app.localhost:$FRONT_PORT\"#g" \
+      -e 's#from "\.\./#from "../../../#' \
       -e "s#http://admin.localhost\"#http://admin.localhost:$ADMIN_FRONT_PORT\"#g" "$spec" \
       >"$COPY_DIR/$name"
   done

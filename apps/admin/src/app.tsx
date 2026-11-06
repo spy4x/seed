@@ -10,7 +10,6 @@ import { matchRoute, Redirect, Route, Switch, useLocation, useRouter } from "wou
 import { useRouteAnnouncer } from "@spy4x/preact-system/route-announcer"
 import {
   ADMIN_PATHS,
-  ADMIN_PRODUCT,
   AdminFrame,
   AdminNoAccess,
   adminPageTitle,
@@ -18,6 +17,7 @@ import {
   AdminSignInScreen,
 } from "@ui/admin-frame.tsx"
 import { NotFoundScreen } from "@ui/not-found-screen.tsx"
+import { PRODUCT_NAME } from "@ui/brand.ts"
 import { type AdminStore, hasAdminAccess, operatorName, readOperatorEmail } from "./state.ts"
 import { ADMIN_MODULES, adminPersonTabs, shownModules } from "./modules/registry.ts"
 import type { AdminContext, AdminModule } from "./modules/types.ts"
@@ -118,10 +118,10 @@ function Operator(
     module.routes.some((route) => matchRoute(parser, route.path, path)[0])
   )
   const title = !user || !hasAdminAccess(user)
-    ? `${tag} · ${ADMIN_PRODUCT}`
+    ? `${tag} · ${PRODUCT_NAME}`
     : found
     ? adminPageTitle(navItems, path, tag)
-    : [t.t(`AdminNotFound.title`), tag, ADMIN_PRODUCT].join(" · ")
+    : [t.t(`AdminNotFound.title`), tag, PRODUCT_NAME].join(" · ")
   useRouteAnnouncer({ path, title })
   // A new page starts at its top; the router keeps the old page's scroll, so a person opened from
   // far down the list would show with their header under the top bar. A tab change (`?tab=`) keeps
