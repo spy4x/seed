@@ -13,6 +13,7 @@ import {
 import type { BlogPreviewSegment, BlogProblem, BlogSegment } from "./figures.ts"
 
 export * from "./figures.ts"
+export * from "./sharing.ts"
 
 /**
  * The blog: posts an operator writes in the admin app and the public website shows once
