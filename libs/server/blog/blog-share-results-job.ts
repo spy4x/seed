@@ -329,7 +329,8 @@ export function blogShareResultsJob(deps: BlogShareResultsJobDeps): JobHandler {
   return async () => {
     const { sql, setup, log } = deps
     if (setup === null) return
-    const shares = await sharesToRead(sql, deps.now?.() ?? new Date())
+    const now = deps.now?.() ?? new Date()
+    const shares = await sharesToRead(sql, now)
     const skipped = new Set<BlogChannelKind>()
     for (const share of shares) {
       if (setup.readers[share.kind as keyof ShareReaders] === undefined) {
@@ -367,7 +368,7 @@ export function blogShareResultsJob(deps: BlogShareResultsJobDeps): JobHandler {
         log(`blog share results: share ${share.id} on ${share.kind} not read: ${problem}`)
         await sql`
           UPDATE blog_post_shares SET read_error = ${String(problem).slice(0, 500)},
-            read_failed_at = now()
+            read_failed_at = ${now}
           WHERE id = ${share.id} AND url = ${share.url}
         `
         continue
@@ -380,9 +381,10 @@ export function blogShareResultsJob(deps: BlogShareResultsJobDeps): JobHandler {
         `
         if (!current) return
         await tx`
-          INSERT INTO blog_share_results (id, share_id, source, views, reactions, comments, score)
+          INSERT INTO blog_share_results
+            (id, share_id, source, read_at, views, reactions, comments, score)
           VALUES (
-            ${uuidV7()}, ${share.id}, 'job', ${counts.views}, ${counts.reactions},
+            ${uuidV7()}, ${share.id}, 'job', ${now}, ${counts.views}, ${counts.reactions},
             ${counts.comments}, ${counts.score}
           )
         `
