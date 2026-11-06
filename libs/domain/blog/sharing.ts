@@ -367,6 +367,7 @@ export function blogChannelHref(channel: Pick<BlogChannel, `kind` | `address`>):
 
 export type BlogSharingErrorCode =
   | `CHANNEL_NOT_FOUND`
+  | `SHARE_NOT_FOUND`
   | `POST_NOT_FOUND`
   | `NOT_PUBLISHED`
   | `INVALID_REQUEST`
@@ -444,11 +445,12 @@ export const blogChannelVersionSchema = type({ version: `number.integer >= 1`, "
 
 /**
  * `POST /api/admin/blog/posts/:id/shares`: set `status` on the post's rows of `channelIds`. Serves
- * one row's change, its Undo (which sends the row back as it was) and "Skip the rest".
+ * one row's change, its Undo (which sends the row back as it was) and "Skip the rest". `none`
+ * removes a row that has no results, which is how Undo takes back a row the change made.
  */
 export const blogShareSetSchema = type({
   channelIds: type(UUID_PATTERN).array().atLeastLength(1).atMostLength(BLOG_CHANNELS_MAX),
-  status: `'todo' | 'suggested' | 'posted' | 'skipped'`,
+  status: `'todo' | 'suggested' | 'posted' | 'skipped' | 'none'`,
   "url?": `string | null`,
   "skipReason?": `string | null`,
   "sharedAt?": `string | null`,
