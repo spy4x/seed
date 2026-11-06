@@ -1,4 +1,4 @@
-import type { JSX } from "preact"
+import { Fragment, type JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { slugify } from "@spy4x/platform/universal/text"
 import { IconEllipsisVertical, IconPlus, IconShare } from "@spy4x/preact-icons"
@@ -289,7 +289,12 @@ export function AdminBlogChannelsScreen(props: AdminBlogChannelsScreenProps): JS
                             ? t.t(`AdminBlogChannels.toDo`, { count: channel.toDo })
                             : t.t(`AdminBlogChannels.noneToDo`)
                           : null,
-                      ].filter((fact) => fact !== null).join(` · `)}
+                      ].filter((fact) => fact !== null).map((fact, index) => (
+                        <Fragment key={index}>
+                          {index > 0 && ` · `}
+                          <span class="inline-block max-w-full">{fact}</span>
+                        </Fragment>
+                      ))}
                     </span>
                     <ChannelProblem
                       error={channel.lastError}
