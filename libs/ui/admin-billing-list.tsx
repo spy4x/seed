@@ -49,7 +49,7 @@ import { useAdminText } from "./i18n.ts"
 /** The billing module's pages in the admin app. */
 export const ADMIN_BILLING_PATHS = {
   list: `/billing`,
-  /** The groups that have never paid (#706). */
+  /** The groups that have never paid. */
   neverPaid: `/billing/never-paid`,
   customer: (groupId: string) => `/billing/${encodeURIComponent(groupId)}`,
 } as const
