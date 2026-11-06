@@ -490,7 +490,7 @@ export default {
     "one": "{count} to do",
     "other": "{count} to do",
   },
-  "AdminBlogChannels.noneToDo": "None",
+  "AdminBlogChannels.noneToDo": "nothing to do",
   "AdminBlogChannels.actionsFor": "Actions for {name}",
   "AdminBlogChannels.edit": "Edit channel",
   "AdminBlogChannels.archive": "Archive channel",
