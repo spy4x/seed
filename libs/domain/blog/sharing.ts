@@ -378,7 +378,6 @@ export function blogAutoPostTargets<C extends AutoPostChannel>(
     const original = post.translationOf === null
       ? undefined
       : shares(post.translationOf, channel.id)
-    if (original?.status === `posted` || original?.status === `suggested`) return false
     return blogShareState(channel, post, shares(post.id, channel.id), original) === `todo`
   })
 }
