@@ -91,9 +91,17 @@ export function money(value: Money): string {
   return formatMoney(value.amount, value.currency)
 }
 
-/** The plan's name, `Pro`, or `Unknown plan` (in the operator's language) for a price no plan maps to. */
-export function billingPlanName(t: Translator<string>, planId: string | null): string {
-  return (planId === null ? null : findPlan(planId))?.name ?? t.t(`AdminBilling.unknownPlan`)
+/**
+ * The plan's name, `Pro`, or `Unknown plan` (in the operator's language) for a price no plan maps
+ * to. `plans` is the catalog, `PLANS` unless a test passes its own.
+ */
+export function billingPlanName(
+  t: Translator<string>,
+  planId: string | null,
+  plans?: readonly Plan[],
+): string {
+  return (planId === null ? null : findPlan(planId, plans))?.name ??
+    t.t(`AdminBilling.unknownPlan`)
 }
 
 const STATE_BADGES: Record<AdminBillingState, { key: string; color: BadgeColor }> = {
