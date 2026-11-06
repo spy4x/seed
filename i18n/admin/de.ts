@@ -610,7 +610,7 @@ export default {
   "AdminBlogSharing.shareToo": "Diesen auch teilen",
   "AdminBlogSharing.statusFor": "Status auf {channel}: {status}",
   "AdminBlogSharing.postedOn": "Gepostet am {date}",
-  "AdminBlogSharing.openCopy": "Beitrag öffnen",
+  "AdminBlogSharing.openCopy": "Geteilten Beitrag öffnen",
   "AdminBlogSharing.suggestedOn": "Vorgeschlagen am {date}",
   "AdminBlogSharing.postedAutomatically": "Automatisch gepostet am {date}",
   "AdminBlogSharing.copyText": "Text kopieren",

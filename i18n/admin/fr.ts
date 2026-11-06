@@ -635,7 +635,7 @@ export default {
   "AdminBlogSharing.openChannel": "Ouvrir le canal",
   "AdminBlogSharing.link": "Lien de la publication",
   "AdminBlogSharing.linkHint":
-    "L’adresse de l’article sur {channel}. Appuyez sur Enter pour le marquer comme publié.",
+    "L’adresse de l’article sur {channel}. Appuyez sur Entrée pour le marquer comme publié.",
   "AdminBlogSharing.itRan": "C’est paru ? Collez son lien",
   "AdminBlogSharing.markPosted": "Marquer comme publié",
   "AdminBlogSharing.enterResults": "Saisir les résultats…",
@@ -676,7 +676,7 @@ export default {
     "Saisissez ce que {channel} affiche aujourd’hui. Laissez une case vide si ce chiffre n’y apparaît pas.",
   "AdminBlogSharing.resultsSave": "Enregistrer les résultats",
   "AdminBlogSharing.resultsWhole": "Saisissez un nombre entier, 0 ou plus.",
-  "AdminBlogSharing.resultsOne": "Saisissez au moins un chiffre.",
+  "AdminBlogSharing.resultsOne": "Saisissez au moins un nombre.",
   "AdminBlogSharing.donePosted": "Marqué comme publié.",
   "AdminBlogSharing.doneSuggested": "Marqué comme proposé.",
   "AdminBlogSharing.doneSkipped": "Ignoré.",
