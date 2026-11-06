@@ -6,6 +6,7 @@ import {
   entitlementsOf,
   type FeatureKey,
   type LimitKey,
+  type Plan,
 } from "@domain/billing"
 import type { GroupRole } from "@domain/groups"
 
@@ -73,6 +74,8 @@ export interface EntitlementGateDependencies {
   roleOf(groupId: string, userId: number): Promise<GroupRole | null>
   /** How much of each capped count the group uses now. A cap a command names must be here. */
   usage: Partial<Record<LimitKey, (groupId: string) => Promise<number>>>
+  /** The plan catalog the caps are read from: `PLANS` unless a test passes its own. */
+  plans?: readonly Plan[]
 }
 
 function actorIdOf(command: AnyCommand): number | null {
@@ -117,7 +120,11 @@ export function createEntitlementGate(
         (userId) => dependencies.roleOf(groupId, userId),
         dependencies.roleOf,
       )
-    const entitlements = entitlementsOf(await dependencies.planOf(groupId), true)
+    const entitlements = entitlementsOf(
+      await dependencies.planOf(groupId),
+      true,
+      dependencies.plans,
+    )
     if ("limit" in entry.need) {
       const max = entitlements.limits[entry.need.limit]
       command.allowance = max

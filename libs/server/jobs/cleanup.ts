@@ -1,6 +1,7 @@
 import type postgres from "postgres"
 import { type JobStep, PostgresOutboxRepository } from "@spy4x/server/outbox"
 import type { BillingProvider } from "@spy4x/billing"
+import type { Plan } from "@domain/billing"
 import { cleanUpAttachments } from "../notes/attachment-cleanup.ts"
 import { queueSeatDrift } from "../billing/seat-sync.ts"
 import { purgeDeadInvitations } from "../groups/purge-dead-invitations.ts"
@@ -32,6 +33,7 @@ export function cleanupSteps(
   provider: BillingProvider | null,
   log: (line: string) => void,
   files: ServerFiles | null = null,
+  plans?: readonly Plan[],
 ): JobStep[] {
   return [
     ["remove old processed outbox rows", async () => {
@@ -135,7 +137,7 @@ export function cleanupSteps(
     }],
     ["queue seat syncs for drifted groups", async () => {
       if (!provider) return
-      const drifted = await queueSeatDrift(sql)
+      const drifted = await queueSeatDrift(sql, undefined, plans)
       if (drifted > 0) console.log(`Queued a seat sync for ${drifted} group(s)`)
     }],
   ]

@@ -12,7 +12,6 @@ import {
   BillingPortalCommand,
   BillingStatus,
   BillingTrialQuery,
-  PAID_PLANS,
   type Plan,
   type StoredSubscription,
 } from "@domain/billing"
@@ -28,6 +27,7 @@ import {
   createBillingTrialHandler,
 } from "./handlers.ts"
 import { apiError } from "../../_testing/api-error.ts"
+import { TEST_PLANS } from "../../../../libs/domain/billing/test-plans.ts"
 
 /**
  * The billing route over the real handlers on buses with the session gate, as the API wires them.
@@ -76,9 +76,9 @@ function stack(
     members = 1,
     handedOver = false,
     trialGroup = null,
-    plans,
+    plans = TEST_PLANS,
   }: {
-    /** The plans a checkout may name, when a test needs a catalog Seed does not sell. */
+    /** The plan catalog: the test catalog unless a test needs another. */
     plans?: readonly Plan[]
     /** The group each person's one trial went to, as `users.trial_group_id` holds it. */
     trialGroup?: string | null
@@ -362,7 +362,7 @@ describe("billing over REST", () => {
   })
 
   it("bills the period chosen for a plan with a yearly price, monthly when none is named, and keeps yearly on cancel", async () => {
-    const plans = PAID_PLANS.map((plan) => ({ ...plan, yearlyAmount: plan.amount * 10 }))
+    const plans = TEST_PLANS.map((plan) => ({ ...plan, yearlyAmount: plan.amount * 10 }))
     const yearly = stack({ plans })
     const monthly = stack({ plans })
 

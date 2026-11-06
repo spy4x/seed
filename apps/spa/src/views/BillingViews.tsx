@@ -6,6 +6,8 @@ import {
   findPlan,
   FREE_PLAN_ID,
   type GroupBilling,
+  type Plan,
+  PLANS,
 } from "@domain/billing"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import type { Formatters } from "@spy4x/time/format"
@@ -34,13 +36,15 @@ export function periodFromSearch(search: string): BillingPeriod {
 /**
  * What the toast says once the provider confirmed the owner's checkout: a started trial is no
  * payment, so it names the trial and its end; a paid start names the plan. In `t`'s words, the
- * group's name isolated from the sentence's direction.
+ * group's name isolated from the sentence's direction. The trial's length is read from `plans`,
+ * `PLANS` unless a test passes its own.
  */
 export function checkoutDoneToast(
   t: Translator<string>,
   format: Formatters,
   billing: GroupBilling,
   groupName: string,
+  plans: readonly Plan[] = PLANS,
 ): { title: string; body: string } {
   const plan = planName(t, billing.planId)
   const group = isolate(groupName)
@@ -50,7 +54,7 @@ export function checkoutDoneToast(
   return trialEnd
     ? {
       title: t.t(`GroupBillingView.trialStarted`, {
-        count: findPlan(billing.planId)?.trialDays ?? 14,
+        count: findPlan(billing.planId, plans)?.trialDays ?? 14,
         plan,
       }),
       body: t.t(`GroupBillingView.trialUntil`, {

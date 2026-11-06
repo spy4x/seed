@@ -26,6 +26,8 @@ import { queueSeatDrift, queueSeatSync, SEAT_SYNC_JOB } from "@server/billing/se
 import { billingNoticeMailJob } from "@server/jobs/billing-notice-mail.ts"
 import type { JobHandler } from "@server/jobs/jobs.ts"
 import { createOutboxProcessor } from "@server/jobs/wiring.ts"
+import { TEST_PLANS } from "../../libs/domain/billing/test-plans.ts"
+import { JOBS_ON_TEST_PLANS } from "./jobs-on-test-plans.ts"
 import {
   type BillingHandlerDependencies,
   createBillingCheckoutHandler,
@@ -136,7 +138,7 @@ const NO_MAIL = {
 
 Deno.test("transfer of a subscribed group moves its billing to the new owner", async (t) => {
   await withSchema(async (sql) => {
-    const billing = new PostgresBillingRepository(sql)
+    const billing = new PostgresBillingRepository(sql, TEST_PLANS)
     const { provider, checkouts, portals, seatChanges } = recordingProvider()
     const { repository, groupId, owner, admin, viewer } = await team(sql)
     const dependencies: BillingHandlerDependencies = {
@@ -150,6 +152,7 @@ Deno.test("transfer of a subscribed group moves its billing to the new owner", a
       graceDays: 7,
       trialRequiresCard: true,
       now: () => NOW,
+      plans: TEST_PLANS,
     }
     const checkout = createBillingCheckoutHandler(dependencies)
     const portal = createBillingPortalHandler(dependencies)
@@ -217,12 +220,21 @@ Deno.test("transfer of a subscribed group moves its billing to the new owner", a
     })
 
     await t.step("a member who leaves changes nothing on the old owner's bill", async () => {
-      const processor = createOutboxProcessor(sql, NO_MAIL, provider)
+      const processor = createOutboxProcessor(
+        sql,
+        NO_MAIL,
+        provider,
+        null,
+        0,
+        true,
+        null,
+        JOBS_ON_TEST_PLANS,
+      )
 
       expect(await repository.leave(groupId, viewer)).toBe(true)
       // The leave queues a seat sync when the worker publishes it; the nightly drift check queues
       // none for a handed-over subscription, and a sync queued anyway changes nothing.
-      expect(await queueSeatDrift(sql, NOW)).toBe(0)
+      expect(await queueSeatDrift(sql, NOW, TEST_PLANS)).toBe(0)
       await queueSeatSync(sql, groupId)
       for (let round = 0; round < 3; round++) {
         expect((await processor.drainOnce()).failed).toBe(0)
@@ -302,7 +314,7 @@ Deno.test("transfer of a subscribed group moves its billing to the new owner", a
         await portalAs(admin)
         expect(portals.map((request) => request.customerId)).toEqual(["cus_new"])
         // The old subscription bills five seats, the group has four members: nothing to correct.
-        expect(await queueSeatDrift(sql, NOW)).toBe(0)
+        expect(await queueSeatDrift(sql, NOW, TEST_PLANS)).toBe(0)
       },
     )
   })

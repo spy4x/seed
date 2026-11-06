@@ -43,7 +43,7 @@ import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { SessionStatus } from "@spy4x/server/sign-in"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
-import { BILLING_AUDIT_EVENTS, BillingStatus } from "@domain/billing"
+import { BILLING_AUDIT_EVENTS, BillingStatus, findPlan, PRO_PLAN_ID } from "@domain/billing"
 import { AuthAuditEventType } from "@domain/identity"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { isExampleAddress } from "@spy4x/email/address"
@@ -915,14 +915,15 @@ Deno.test("the development billing provider tells the seeded customers' payments
       FROM subscriptions
     `
     const month = 30 * 24 * 60 * 60_000
+    const PRO = findPlan(PRO_PLAN_ID)!
     for (const subscription of subscriptions) {
       const payment = await payments(subscription.id)
       if (subscription.status === BillingStatus.Trialing) {
         expect(payment).toBeNull()
         continue
       }
-      // The price of every seat, at the start of the period paid for.
-      expect(payment!.amount).toBe(900 * subscription.quantity)
+      // The plan's price, for every seat of a per-member plan, at the start of the period paid for.
+      expect(payment!.amount).toBe(PRO.amount * (PRO.perSeat ? subscription.quantity : 1))
       const due = subscription.pastDueSince ?? subscription.currentPeriodEnd
       expect(payment!.paidAt.getTime()).toBe(due.getTime() - month)
     }

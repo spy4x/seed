@@ -74,15 +74,29 @@ test.describe("group invitations", () => {
       ])
       await section.locator("[data-e2e=invitation-role]").selectOption({ label: "Editor" })
       await section.locator("[data-e2e=invitation-uses]").fill("2")
-      // Pro is billed per member: the admin sees what one more member costs and must accept it.
+      // A plan billed per member shows the admin what one more member costs, and the admin must
+      // accept it; a flat plan asks nothing. The catalog the stack runs decides which.
       const seatPrice = section.locator("[data-e2e=seat-price]")
-      await expect(seatPrice).toContainText(
-        "so one more member takes the group from €18.00 to €27.00",
-      )
-      await section.locator("[data-e2e=invitation-create]").click()
-      await expect(seatPrice.locator("#invitation-seat-price-error")).toBeVisible()
-      await expect(section.locator("[data-e2e=seat-price-accept]")).toBeFocused()
-      await section.locator("[data-e2e=seat-price-accept]").check()
+      const { billing } = await (await page.request.get(`${apiBase}/api/groups/${groupId}/billing`))
+        .json()
+      const seat: { seats: number; amount: number; currency: string } | null = billing.seatPrice
+      if (seat) {
+        expect(seat.seats, "the owner and the admin").toBe(2)
+        const money = (cents: number) =>
+          new Intl.NumberFormat("en", { style: "currency", currency: seat.currency })
+            .format(cents / 100)
+        await expect(seatPrice).toContainText(
+          `so one more member takes the group from ${money(seat.amount * 2)} to ${
+            money(seat.amount * 3)
+          }`,
+        )
+        await section.locator("[data-e2e=invitation-create]").click()
+        await expect(seatPrice.locator("#invitation-seat-price-error")).toBeVisible()
+        await expect(section.locator("[data-e2e=seat-price-accept]")).toBeFocused()
+        await section.locator("[data-e2e=seat-price-accept]").check()
+      } else {
+        await expect(seatPrice).toHaveCount(0)
+      }
       await section.locator("[data-e2e=invitation-create]").click()
       const link = await section.locator("[data-e2e=invitation-created] code").textContent()
       expect(link).toMatch(/\/invite\/[A-Za-z0-9_-]{43}$/)
@@ -146,10 +160,21 @@ test.describe("group invitations", () => {
           data: { id: groupId, name },
         })
         expect(created.status(), await created.text()).toBe(201)
-        const invited = await request.post(`${apiBase}/api/groups/${groupId}/invitations`, {
-          headers,
-          data: { role: 1, expiresInDays: 7, maxUses: 1, email, sendEmail: false },
-        })
+        const invite = () =>
+          request.post(`${apiBase}/api/groups/${groupId}/invitations`, {
+            headers,
+            data: { role: 1, expiresInDays: 7, maxUses: 1, email, sendEmail: false },
+          })
+        let invited = await invite()
+        // A catalog whose free plan holds the owner alone: put the group on the paid plan.
+        if (invited.status() === 402) {
+          const upgraded = await request.post(
+            `${apiBase}${BILLING_WEBHOOK_PATH}`,
+            await proWebhook(groupId),
+          )
+          expect(upgraded.status(), await upgraded.text()).toBe(200)
+          invited = await invite()
+        }
         expect(invited.status(), await invited.text()).toBe(201)
         tokens.push(((await invited.json()) as { token: string }).token)
       }

@@ -1,3 +1,4 @@
+import { type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
 import { BILLING_WEBHOOK_PATH, stripeSignature, subscriptionEvent } from "./fixtures/billing.ts"
@@ -7,8 +8,21 @@ import { signUpWithCode } from "./fixtures/sign-up.ts"
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
 
+/**
+ * The trial a new person gets, in days: the longest trial of any plan in the catalog the stack
+ * runs, 0 when no plan has one. Read from the API, so a product that changes its plans keeps
+ * these specs.
+ */
+async function trialDays(page: Page): Promise<number> {
+  const response = await page.request.get(`${apiBase}/api/billing/trial`)
+  expect(response.status(), await response.text()).toBe(200)
+  const { trial } = await response.json()
+  expect(trial.enabled).toBe(true)
+  return trial.days
+}
+
 test.describe("group billing", () => {
-  test("the owner starts a group's Pro trial, and the page shows it once the signed webhook arrives", async ({ page, request }) => {
+  test("the owner checks out a group's paid plan, with the catalog's trial, and the page shows it once the signed webhook arrives", async ({ page, request }) => {
     const email = "e2e_billing_owner@example.com"
     const password = "Passw0rd!"
     const cleanup = async ({ soft = false } = {}) => {
@@ -35,10 +49,15 @@ test.describe("group billing", () => {
       await openGroupTab(page, "Billing")
       const plan = page.locator("[data-e2e=billing-plan]")
       await expect(plan).toHaveAttribute("data-plan", "free")
+      const days = await trialDays(page)
 
       // The development provider's checkout is no page of its own: it sends the browser straight
       // back to the checkout's success URL, the Billing tab, as Stripe does once paid.
-      await page.getByRole("button", { name: "Start 14-day free trial (opens Stripe)" }).click()
+      const checkout = page.locator("[data-e2e=billing-checkout]")
+      if (days > 0) {
+        await expect(checkout).toHaveAccessibleName(`Start ${days}-day free trial (opens Stripe)`)
+      }
+      await checkout.click()
       // The tab drops the success URL's query, so a reload does not say it again.
       await expect(page).toHaveURL(`/groups/${groupId}/billing`)
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
@@ -47,7 +66,10 @@ test.describe("group billing", () => {
       // While Stripe confirms, a second checkout could be paid twice: none is offered.
       await expect(page.locator("[data-e2e=billing-checkout]")).toHaveCount(0)
 
-      const body = subscriptionEvent({ reference: groupId, status: "trialing" })
+      const body = subscriptionEvent({
+        reference: groupId,
+        status: days > 0 ? "trialing" : "active",
+      })
       const delivered = await request.post(`${apiBase}${BILLING_WEBHOOK_PATH}`, {
         headers: {
           "content-type": "application/json",
@@ -60,7 +82,7 @@ test.describe("group billing", () => {
       // No reload: the plan change reaches the open page through the group's change hint.
       await expect(plan).toHaveAttribute("data-plan", "pro")
       await expect(page.locator("[data-e2e=billing-upgraded]"))
-        .toContainText("Your 14-day Pro trial has started")
+        .toContainText(days > 0 ? new RegExp(`Your ${days}-day .+ trial has started`) : "You’re on")
       await expect(page.getByRole("button", { name: "Change card (opens Stripe)" })).toBeVisible()
 
       const replayed = await request.post(`${apiBase}${BILLING_WEBHOOK_PATH}`, {
@@ -73,7 +95,7 @@ test.describe("group billing", () => {
     }
   })
 
-  test("the create-group page offers the person's trial until a group's checkout takes it", async ({ page, request }) => {
+  test("the create-group page offers the person's trial until a group's checkout takes it, and none when no plan has one", async ({ page, request }) => {
     const email = "e2e_billing_trial@example.com"
     const password = "Passw0rd!"
     const cleanup = async ({ soft = false } = {}) => {
@@ -95,16 +117,25 @@ test.describe("group billing", () => {
         .getByRole("link", { name: "Groups" })
       const trial = page.locator("[data-e2e=group-trial]")
 
+      const days = await trialDays(page)
       await groups.click()
       await page.locator("[data-e2e=group-new]").click()
-      await expect(trial).toContainText("Your 14-day free trial goes to")
+      if (days === 0) {
+        await expect(page.locator("[data-e2e=group-name]")).toBeVisible()
+        await expect(trial).toHaveCount(0)
+        return
+      }
+      await expect(trial).toContainText(`Your ${days}-day free trial goes to`)
       await page.locator("[data-e2e=group-name]").fill("First")
       await page.locator("[data-e2e=group-create]").click()
       await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/)
       const groupId = new URL(page.url()).pathname.replace("/groups/", "")
 
       await openGroupTab(page, "Billing")
-      await page.getByRole("button", { name: "Start 14-day free trial (opens Stripe)" }).click()
+      await page.getByRole("button", { name: `Start ${days}-day free trial (opens Stripe)` })
+        .click()
+      // The tab is on this address before the checkout too: wait for the return to land.
+      await expect(page.locator("[data-e2e=billing-confirming]")).toBeVisible()
       await expect(page).toHaveURL(`/groups/${groupId}/billing`)
 
       await groups.click()
