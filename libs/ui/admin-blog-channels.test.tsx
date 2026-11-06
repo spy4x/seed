@@ -196,6 +196,15 @@ describe("the sharing channels list", () => {
     expect(calls).toEqual([["delete", DEVTO.id]])
   })
 
+  it("opens the delete dialog on Cancel", async () => {
+    await mount(<AdminBlogChannelsScreen {...listProps([])} />)
+    await openMenu(1)
+    await clickOn(row(1).querySelector("[data-e2e=blog-channel-delete]")!)
+    expect(document.activeElement).toBe(
+      find("[data-e2e=blog-channel-delete-dialog] [data-e2e=confirm-dialog-cancel]"),
+    )
+  })
+
   it("moves focus to the next row's menu after an archive", async () => {
     const calls: unknown[][] = []
     await mount(<AdminBlogChannelsScreen {...listProps(calls)} />)

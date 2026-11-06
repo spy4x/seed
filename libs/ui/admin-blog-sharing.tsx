@@ -788,6 +788,7 @@ function SkipDialog(
               name="reason"
               autocomplete="off"
               maxLength={BLOG_SHARE_SKIP_REASON_MAX_LENGTH}
+              autofocus
               value={reason}
               data-e2e="blog-share-skip-reason"
               onInput={(event) => setReason(event.currentTarget.value)}
@@ -852,6 +853,7 @@ function LinkDialog(
               autocomplete="off"
               class="font-mono"
               maxLength={BLOG_SHARE_URL_MAX_LENGTH}
+              autofocus
               value={url}
               data-e2e="blog-share-link-edit"
               onInput={(event) => setUrl(event.currentTarget.value)}
@@ -930,7 +932,7 @@ function ResultsDialog(
             {t.t(`AdminBlogSharing.resultsText`, { channel: row.channel.name })}
           </p>
           <div class="grid grid-cols-2 gap-3">
-            {fields.map((field) => (
+            {fields.map((field, index) => (
               <Field key={field} id={`blog-share-result-${field}`} label={t.t(RESULT_WORDS[field])}>
                 <Input
                   name={field}
@@ -938,6 +940,7 @@ function ResultsDialog(
                   inputMode="numeric"
                   min={0}
                   step={1}
+                  autofocus={index === 0}
                   defaultValue={row.result?.[field]?.toString() ?? ``}
                   data-e2e={`blog-share-result-${field}`}
                 />

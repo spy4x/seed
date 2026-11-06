@@ -159,6 +159,14 @@ export function AdminBlogChannelsScreen(props: AdminBlogChannelsScreenProps): JS
     setFocusAt(null)
   }, [focusAt, list, props.busy])
 
+  // Delete opens on Cancel: the safe answer to a question that cannot be undone.
+  const confirm = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (deleting) {
+      confirm.current?.querySelector<HTMLElement>(`[data-e2e=confirm-dialog-cancel]`)?.focus()
+    }
+  }, [deleting])
+
   const act = (index: number, run: () => void) => {
     setFocusAt({ index, list })
     run()
@@ -339,25 +347,27 @@ export function AdminBlogChannelsScreen(props: AdminBlogChannelsScreenProps): JS
           )}
       </Stack>
       {deleting && channels && (
-        <ConfirmDialog
-          title={
-            <Isolated
-              message={(name) => t.t(`AdminBlogChannels.deleteTitle`, { name })}
-              value={deleting.name}
-            />
-          }
-          message={t.t(`AdminBlogChannels.deleteText`)}
-          confirmLabel={t.t(`AdminBlogChannels.deleteConfirm`)}
-          cancelLabel={t.t(`AdminBlogChannels.cancel`)}
-          tone="danger"
-          dataE2E="blog-channel-delete-dialog"
-          onCancel={() => setDeleting(null)}
-          onConfirm={() => {
-            const channel = deleting
-            setDeleting(null)
-            act(channels.findIndex((row) => row.id === channel.id), () => props.onDelete(channel))
-          }}
-        />
+        <div ref={confirm} class="contents">
+          <ConfirmDialog
+            title={
+              <Isolated
+                message={(name) => t.t(`AdminBlogChannels.deleteTitle`, { name })}
+                value={deleting.name}
+              />
+            }
+            message={t.t(`AdminBlogChannels.deleteText`)}
+            confirmLabel={t.t(`AdminBlogChannels.deleteConfirm`)}
+            cancelLabel={t.t(`AdminBlogChannels.cancel`)}
+            tone="danger"
+            dataE2E="blog-channel-delete-dialog"
+            onCancel={() => setDeleting(null)}
+            onConfirm={() => {
+              const channel = deleting
+              setDeleting(null)
+              act(channels.findIndex((row) => row.id === channel.id), () => props.onDelete(channel))
+            }}
+          />
+        </div>
       )}
     </div>
   )
