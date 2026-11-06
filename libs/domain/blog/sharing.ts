@@ -486,6 +486,9 @@ export const blogShareSetSchema = type({
   "url?": `string | null`,
   "skipReason?": `string | null`,
   "sharedAt?": `string | null`,
+  /** Sent only by Undo, with `error`: the row comes back automatic or not, with its error. */
+  "automatic?": `boolean`,
+  "error?": `string <= 500 | null`,
   "+": `reject`,
 })
 export type BlogShareSetRequest = typeof blogShareSetSchema.infer

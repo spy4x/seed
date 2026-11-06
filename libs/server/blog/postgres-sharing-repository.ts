@@ -61,6 +61,8 @@ export interface ShareChange {
   skipReason: string | null
   /** When it was posted or suggested; `null` takes now. */
   sharedAt: string | null
+  /** Undo's row as it was: whether it was automatic and its error. `null` for a change by hand. */
+  restore: { automatic: boolean; error: string | null } | null
 }
 
 interface ChannelRow
@@ -363,15 +365,33 @@ export class PostgresSharingRepository {
           url: change.url,
           shared_at: at,
           skip_reason: change.skipReason,
+          automatic: change.restore?.automatic ?? false,
+          error: change.restore?.error ?? null,
         }))
+        const restore = change.restore !== null
         await tx`
           INSERT INTO blog_post_shares ${
-          tx(rows, `id`, `post_id`, `channel_id`, `status`, `url`, `shared_at`, `skip_reason`)
+          tx(
+            rows,
+            `id`,
+            `post_id`,
+            `channel_id`,
+            `status`,
+            `url`,
+            `shared_at`,
+            `skip_reason`,
+            `automatic`,
+            `error`,
+          )
         }
           ON CONFLICT (post_id, channel_id) DO UPDATE SET
             status = EXCLUDED.status, url = EXCLUDED.url, shared_at = EXCLUDED.shared_at,
-            skip_reason = EXCLUDED.skip_reason, automatic = false,
-            error = CASE WHEN EXCLUDED.status = 'posted' THEN NULL ELSE blog_post_shares.error END,
+            skip_reason = EXCLUDED.skip_reason, automatic = EXCLUDED.automatic,
+            error = CASE
+              WHEN ${restore} THEN EXCLUDED.error
+              WHEN EXCLUDED.status = 'posted' THEN NULL
+              ELSE blog_post_shares.error
+            END,
             updated_at = now()
         `
       }

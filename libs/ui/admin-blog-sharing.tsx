@@ -50,6 +50,10 @@ export interface BlogShareChange {
   status: BlogShareStatus | `none`
   url?: string | null
   skipReason?: string | null
+  /** Sent only by Undo, so the row comes back with its date, its automatic flag and its error. */
+  sharedAt?: string | null
+  automatic?: boolean
+  error?: string | null
 }
 
 /** The dialog open on the page, if any. */

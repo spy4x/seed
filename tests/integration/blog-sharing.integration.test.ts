@@ -275,6 +275,7 @@ Deno.test(`sharing: channel writes check names, source tags and versions, and a 
       url: `https://reddit.com/1`,
       skipReason: null,
       sharedAt: null,
+      restore: null,
     }, maya)
     expect(await refusal(sharing.deleteChannel(id, 1, maya))).toEqual([`HAS_SHARES`, null])
     const archived = await sharing.archiveChannel(id, 1, true, maya)
@@ -310,7 +311,7 @@ Deno.test(`sharing: the gaps count old posts, cover translations, respect start 
 
     expect((await sharing.gaps()).toDo).toEqual({ [old]: 1, [recent]: 2, [german]: 2 })
 
-    const none = { url: null, skipReason: null, sharedAt: null }
+    const none = { url: null, skipReason: null, sharedAt: null, restore: null }
     await sharing.setShares(recent, [all.id], { ...none, status: `posted` }, maya)
     await sharing.setShares(recent, [later.id], { ...none, status: `suggested` }, maya)
     expect((await sharing.gaps()).toDo).toEqual({ [old]: 1 })
@@ -329,6 +330,44 @@ Deno.test(`sharing: the gaps count old posts, cover translations, respect start 
   })
 })
 
+Deno.test(`sharing: Undo puts an automatic posted row back with its date, flag and error`, async () => {
+  await withSchema(async (sql) => {
+    const maya = await operator(sql)
+    const sharing = new PostgresSharingRepository(sql)
+    const devto = await sharing.createChannel(uuidV7(), channel(`devto`, { kind: `devto` }), maya)
+    const postId = await livePost(sql, maya, post(`undone`))
+    const sharedAt = `2026-11-02T09:30:00.000Z`
+    await sql`
+      INSERT INTO blog_post_shares
+        (id, post_id, channel_id, status, url, shared_at, automatic, error)
+      VALUES (
+        ${uuidV7()}, ${postId}, ${devto.id}, 'posted', 'https://dev.to/seed/undone', ${sharedAt},
+        true, 'Dev.to answered 503 once'
+      )
+    `
+    const none = { url: null, skipReason: null, sharedAt: null, restore: null }
+    await sharing.setShares(postId, [devto.id], { ...none, status: `todo` }, maya)
+    await sharing.setShares(postId, [devto.id], {
+      status: `posted`,
+      url: `https://dev.to/seed/undone`,
+      skipReason: null,
+      sharedAt,
+      restore: { automatic: true, error: `Dev.to answered 503 once` },
+    }, maya)
+    const [row] = await sql`
+      SELECT status, url, shared_at, automatic, error FROM blog_post_shares
+      WHERE post_id = ${postId}
+    `
+    expect(row).toEqual({
+      status: `posted`,
+      url: `https://dev.to/seed/undone`,
+      sharedAt: new Date(sharedAt),
+      automatic: true,
+      error: `Dev.to answered 503 once`,
+    })
+  })
+})
+
 Deno.test(`sharing: numbers typed by hand are kept per share, the latest first`, async () => {
   await withSchema(async (sql) => {
     const maya = await operator(sql)
@@ -336,7 +375,7 @@ Deno.test(`sharing: numbers typed by hand are kept per share, the latest first`,
     const hn = await sharing.createChannel(uuidV7(), channel(`hn`, { kind: `hackernews` }), maya)
     const postId = await livePost(sql, maya, post(`numbers`))
     const counts = { views: null, reactions: null, comments: 4, score: 12 }
-    const none = { url: null, skipReason: null, sharedAt: null }
+    const none = { url: null, skipReason: null, sharedAt: null, restore: null }
     await expect(sharing.enterResults(postId, hn.id, counts, maya)).rejects.toThrow(
       BlogSharingError,
     )

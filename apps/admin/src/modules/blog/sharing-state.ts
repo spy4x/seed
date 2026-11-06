@@ -83,6 +83,9 @@ function undoOf(row: AdminBlogShareRow): BlogShareChange {
     status: share.status,
     url: share.url,
     skipReason: share.skipReason,
+    sharedAt: share.sharedAt,
+    automatic: share.automatic,
+    error: share.error,
   }
 }
 

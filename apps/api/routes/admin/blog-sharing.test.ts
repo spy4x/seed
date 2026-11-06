@@ -316,7 +316,34 @@ describe(`operator area: sharing routes`, () => {
       `setShares`,
       POST_ID,
       [REDDIT_ID, TELEGRAM_ID],
-      { status: `skipped`, url: null, skipReason: `Not a fit`, sharedAt: null },
+      { status: `skipped`, url: null, skipReason: `Not a fit`, sharedAt: null, restore: null },
+      ACTOR,
+    ]])
+  })
+
+  it(`passes Undo's date, automatic flag and error through to the row`, async () => {
+    const { app, calls } = buildApp()
+    const response = await request(app, `POST`, `/posts/${POST_ID}/shares`, {
+      channelIds: [REDDIT_ID],
+      status: `posted`,
+      url: `https://dev.to/seed/1`,
+      sharedAt: `2026-11-02T09:30:00.000Z`,
+      automatic: true,
+      error: `Dev.to answered 503`,
+    })
+
+    expect(response.status).toBe(200)
+    expect(calls).toEqual([[
+      `setShares`,
+      POST_ID,
+      [REDDIT_ID],
+      {
+        status: `posted`,
+        url: `https://dev.to/seed/1`,
+        skipReason: null,
+        sharedAt: `2026-11-02T09:30:00.000Z`,
+        restore: { automatic: true, error: `Dev.to answered 503` },
+      },
       ACTOR,
     ]])
   })

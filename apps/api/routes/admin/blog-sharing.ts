@@ -281,7 +281,10 @@ export function createAdminSharingRoutes(
         if (Number.isNaN(at)) throw invalid(`sharedAt is no date.`)
         sharedAt = new Date(at).toISOString()
       }
-      const change: ShareChange = { status: body.status, ...fields, sharedAt }
+      const restore = body.automatic === undefined
+        ? null
+        : { automatic: body.automatic, error: body.error ?? null }
+      const change: ShareChange = { status: body.status, ...fields, sharedAt, restore }
       await sharing.setShares(
         postId,
         body.channelIds.map((id) => id.toLowerCase()),
