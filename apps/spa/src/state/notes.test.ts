@@ -149,6 +149,29 @@ describe("notes store", () => {
     expect(store.editing.value?.title).toBe(`Garden notes`)
   })
 
+  it("drops a late read of a note the person has left for another", async () => {
+    let answerX: (value: { note: NoteItem }) => void = () => {}
+    const store = createNotesStore({
+      fetchPage: () => Promise.resolve({ notes: [item("a", 1, `A`)], nextCursor: null }),
+      get: () => new Promise((resolve) => (answerX = resolve)),
+      create: () => Promise.reject(new Error("unused")),
+      update: () => Promise.reject(new Error("unused")),
+      delete: () => Promise.reject(new Error("unused")),
+      restore: () => Promise.reject(new Error("unused")),
+      move: () => Promise.reject(new Error("unused")),
+      newId: () => "id",
+    })
+
+    await store.open(groupId, null)
+    const leaving = store.open(groupId, "x")
+    await store.open(groupId, "a")
+    expect(store.editing.value?.title).toBe(`A`)
+
+    answerX({ note: item("x", 1, `X`) })
+    await leaving
+    expect(store.editing.value?.title).toBe(`A`)
+  })
+
   it("reads every page of the group it opens", async () => {
     const { store, reads } = harness({
       pages: [
