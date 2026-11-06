@@ -170,6 +170,8 @@ export default {
   "Reason.NOTHING_TO_MOVE": "Переносить нечего.",
   "Reason.NOTIFICATION_NOT_FOUND": "Этого уведомления больше нет.",
   "Reason.NOT_DRAFT_OR_SCHEDULED": "Этот пост уже опубликован.",
+  "Reason.NOT_AUTOMATIC":
+    "Этот канал не размещает посты сам. Сначала включите «Размещать автоматически».",
   "Reason.NOT_PUBLISHED": "Это ещё не опубликовано.",
   "Reason.NOT_SCHEDULED": "Публикация этого поста не запланирована.",
   "Reason.NO_SUBSCRIPTION": "У этой группы нет подписки.",

@@ -167,6 +167,8 @@ export default {
   "Reason.NOTHING_TO_MOVE": "Il n’y a rien à déplacer.",
   "Reason.NOTIFICATION_NOT_FOUND": "Cette notification n’existe plus.",
   "Reason.NOT_DRAFT_OR_SCHEDULED": "Cet article de blog est déjà publié.",
+  "Reason.NOT_AUTOMATIC":
+    "Ce canal ne publie pas tout seul. Activez d’abord « Publier automatiquement ».",
   "Reason.NOT_PUBLISHED": "Ce n’est pas publié.",
   "Reason.NOT_SCHEDULED": "Cet article de blog n’est pas programmé.",
   "Reason.NO_SUBSCRIPTION": "Ce groupe n’a pas d’abonnement.",

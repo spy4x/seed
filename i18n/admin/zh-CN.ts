@@ -477,6 +477,12 @@ export default {
   "AdminBlogChannels.keyMissing":
     "正在等待密钥。请在服务器的 env 文件中设置<key>{key}</key>，然后部署。",
   "AdminBlogChannels.lastFailed": "上次发布失败：{reason}",
+  "AdminBlogChannels.signInOk": "LinkedIn 登录有效期至 {date}。",
+  "AdminBlogChannels.signInSoon": {
+    "other": "LinkedIn 登录将在 {count} 天后（{date}）过期。请运行<cmd>{command}</cmd>续期。",
+  },
+  "AdminBlogChannels.signInExpired":
+    "LinkedIn 登录已于 {date} 过期。运行<cmd>{command}</cmd>之前，文章会一直等待发布。",
   "AdminBlogChannels.loading": "正在加载分享渠道",
   "AdminBlogChannels.listError": "无法加载分享渠道，请稍后重试。",
   "AdminBlogChannels.retry": "重试",
@@ -513,6 +519,9 @@ export default {
   "AdminBlogChannels.sourcePreview": "链接会带上<tag>?utm_source={tag}</tag>",
   "AdminBlogChannels.addUtm": "在链接中添加 utm_source",
   "AdminBlogChannels.addUtmOff": "不会统计来自这个渠道的访问。",
+  "AdminBlogChannels.autoPost": "自动发布",
+  "AdminBlogChannels.autoPostOn": "每篇文章上线后，都会自动发到这里。",
+  "AdminBlogChannels.autoPostOff": "每篇文章会在这里显示为待办，由你自己发布。",
   "AdminBlogChannels.languages": "语言",
   "AdminBlogChannels.languagesHint": "这些语言的文章会列出这个渠道。",
   "AdminBlogChannels.which": "哪些文章",
@@ -594,6 +603,7 @@ export default {
   "AdminBlogSharing.presetLater": "以后再说",
   "AdminBlogSharing.linkRequired": "请添加链接。",
   "AdminBlogSharing.autoHint": "文章发布后，会自动发到这个渠道。",
+  "AdminBlogSharing.posting": "正在发布…",
   "AdminBlogSharing.autoFailed": "无法发布：{reason}。请重试，或自己发布后标记为已发布。",
   "AdminBlogSharing.autoNoKey":
     "在服务器的 env 文件中设置<key>{key}</key>后，会自动发布。在此之前，请自己发布。",

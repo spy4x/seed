@@ -181,6 +181,7 @@ export default {
   "Reason.NOTHING_TO_MOVE": "لا يوجد ما يمكن نقله.",
   "Reason.NOTIFICATION_NOT_FOUND": "هذا الإشعار لم يعد موجودًا.",
   "Reason.NOT_DRAFT_OR_SCHEDULED": "هذا المقال منشور بالفعل.",
+  "Reason.NOT_AUTOMATIC": "هذه القناة لا تنشر من تلقاء نفسها. فعّل «النشر تلقائيًا» أولًا.",
   "Reason.NOT_PUBLISHED": "هذا غير منشور.",
   "Reason.NOT_SCHEDULED": "هذا المقال غير مجدول للنشر.",
   "Reason.NO_SUBSCRIPTION": "ليس لهذه المجموعة اشتراك.",

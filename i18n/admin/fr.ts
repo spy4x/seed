@@ -520,6 +520,17 @@ export default {
   "AdminBlogChannels.keyMissing":
     "En attente de sa clé. Définissez <key>{key}</key> dans le fichier env du serveur et déployez.",
   "AdminBlogChannels.lastFailed": "Échec de la dernière publication : {reason}",
+  "AdminBlogChannels.signInOk": "Connexion LinkedIn valide jusqu’au {date}.",
+  "AdminBlogChannels.signInSoon": {
+    "one":
+      "La connexion LinkedIn expire dans {count} jour, le {date}. Renouvelez-la avec <cmd>{command}</cmd>.",
+    "many":
+      "La connexion LinkedIn expire dans {count} jours, le {date}. Renouvelez-la avec <cmd>{command}</cmd>.",
+    "other":
+      "La connexion LinkedIn expire dans {count} jours, le {date}. Renouvelez-la avec <cmd>{command}</cmd>.",
+  },
+  "AdminBlogChannels.signInExpired":
+    "La connexion LinkedIn a expiré le {date}. Les publications restent en attente jusqu’à ce que vous exécutiez <cmd>{command}</cmd>.",
   "AdminBlogChannels.loading": "Chargement des canaux de partage",
   "AdminBlogChannels.listError":
     "Impossible de charger les canaux de partage. Réessayez dans un instant.",
@@ -561,6 +572,10 @@ export default {
   "AdminBlogChannels.sourcePreview": "Les liens portent <tag>?utm_source={tag}</tag>",
   "AdminBlogChannels.addUtm": "Ajouter utm_source aux liens",
   "AdminBlogChannels.addUtmOff": "Les visites venant de ce canal ne sont pas comptées.",
+  "AdminBlogChannels.autoPost": "Publier automatiquement",
+  "AdminBlogChannels.autoPostOn": "Chaque article y est publié tout seul dès qu’il est en ligne.",
+  "AdminBlogChannels.autoPostOff":
+    "Chaque article affiche ce canal comme une tâche à faire, et vous le publiez vous-même.",
   "AdminBlogChannels.languages": "Langues",
   "AdminBlogChannels.languagesHint": "Les articles dans ces langues affichent ce canal.",
   "AdminBlogChannels.which": "Quels articles",
@@ -655,6 +670,7 @@ export default {
   "AdminBlogSharing.presetLater": "Plus tard",
   "AdminBlogSharing.linkRequired": "Ajoutez le lien.",
   "AdminBlogSharing.autoHint": "Publie automatiquement dès que l’article est en ligne.",
+  "AdminBlogSharing.posting": "Publication en cours…",
   "AdminBlogSharing.autoFailed":
     "Publication impossible : {reason}. Réessayez, ou publiez-le vous-même et marquez-le comme publié.",
   "AdminBlogSharing.autoNoKey":

@@ -557,7 +557,7 @@ export default {
   "FeatureWebsite.fact3":
     "Un boletín con doble confirmación, baja con un clic y correos en el idioma de quien los lee",
   "FeatureWebsite.fact4":
-    "Un blog que se escribe en el panel de administración, con entradas en cada idioma y sus traducciones, temas, figuras interactivas que el lector puede probar, un feed RSS, datos estructurados de artículo, enlaces antiguos que redirigen cuando cambia la URL de una entrada, portadas en las listas, una copia opcional en Dev.to que señala la entrada como original y un aviso a IndexNow para que los buscadores sepan al instante de una entrada nueva o cambiada",
+    "Un blog que se escribe en el panel de administración, con entradas en cada idioma y sus traducciones, temas, figuras interactivas que el lector puede probar, un feed RSS, datos estructurados de artículo, enlaces antiguos que redirigen cuando cambia la URL de una entrada, portadas en las listas, una copia opcional en Dev.to que señala la entrada como original, publicaciones automáticas en Telegram, Mastodon, Bluesky, Hashnode y LinkedIn, y un aviso a IndexNow para que los buscadores sepan al instante de una entrada nueva o cambiada",
   "FeatureWebsite.fact5":
     "Enlaces de contacto configurados en el panel de administración, mostrados en el pie de página y en los datos estructurados",
   "FeatureWebsite.fact6":
@@ -670,7 +670,8 @@ export default {
   "AdminTour.newsletter": "Boletín",
   "AdminTour.newsletterText": "Quién está suscrito y qué se envió. Exporta la lista en CSV.",
   "AdminTour.blog": "Blog",
-  "AdminTour.blogText": "Entradas del sitio en cada idioma, del borrador a la publicación.",
+  "AdminTour.blogText":
+    "Entradas del sitio en cada idioma, del borrador a la publicación, compartidas en tus canales automáticamente.",
   "AdminTour.contactLinks": "Enlaces de contacto",
   "AdminTour.contactLinksText": "Dónde te contactan, en el pie del sitio, sin desplegar.",
   "AdminTour.catalog": "Catálogo",

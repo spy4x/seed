@@ -140,6 +140,7 @@ export default {
   "Reason.NOTHING_TO_MOVE": "没有可移动的内容。",
   "Reason.NOTIFICATION_NOT_FOUND": "这条通知已不存在。",
   "Reason.NOT_DRAFT_OR_SCHEDULED": "这篇文章已经发布了。",
+  "Reason.NOT_AUTOMATIC": "这个渠道不会自动发布。请先打开“自动发布”。",
   "Reason.NOT_PUBLISHED": "该内容尚未发布。",
   "Reason.NOT_SCHEDULED": "这篇文章没有设置定时发布。",
   "Reason.NO_SUBSCRIPTION": "这个群组没有订阅。",

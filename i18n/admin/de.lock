@@ -428,6 +428,9 @@ AdminBlogChannels.addressReddit	b35efe42479e73b7
 AdminBlogChannels.addressTelegram	29fdadc9d881810f
 AdminBlogChannels.allPosts	af75cd30fc15270b
 AdminBlogChannels.archive	e61d2bc4a844c246
+AdminBlogChannels.autoPost	e0dcf22e0d4ea068
+AdminBlogChannels.autoPostOff	691dc30ccb210d99
+AdminBlogChannels.autoPostOn	c8f3828289fb2e56
 AdminBlogChannels.automatic	79ee63db6f2844ba
 AdminBlogChannels.back	69f7dcf78f3c3cd6
 AdminBlogChannels.backToChannels	bfcd9a5b4518c0b7
@@ -473,6 +476,9 @@ AdminBlogChannels.retry	d8b8392e2c542950
 AdminBlogChannels.save	694a13e94ba42bbb
 AdminBlogChannels.saving	23e39291d6135814
 AdminBlogChannels.show	0df6f1cad36c49da
+AdminBlogChannels.signInExpired	e155def8c5d0fd53
+AdminBlogChannels.signInOk	0416170a91a9c6da
+AdminBlogChannels.signInSoon	6da8df6a369f9bde
 AdminBlogChannels.source	94d27a9e759f1a8b
 AdminBlogChannels.sourceHint	fcdf7c6c8c6cc439
 AdminBlogChannels.sourcePreview	70f91fb7427bca93
@@ -700,6 +706,7 @@ AdminBlogSharing.openChannel	c1d7ae27ccaff4a0
 AdminBlogSharing.openCopy	2c6d8d9c7563f4cb
 AdminBlogSharing.postedAutomatically	d3a1b2fa5767b928
 AdminBlogSharing.postedOn	91d951bc1e76ec2c
+AdminBlogSharing.posting	648a2ef491ba918c
 AdminBlogSharing.presetLanguage	b725e03b4197eac5
 AdminBlogSharing.presetLater	73b6e48a1b552d11
 AdminBlogSharing.presetNotFit	97a0686fe66f292b

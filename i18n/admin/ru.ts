@@ -524,6 +524,19 @@ export default {
   "AdminBlogChannels.keyMissing":
     "Ждёт ключа. Укажите <key>{key}</key> в env-файле сервера и выполните деплой.",
   "AdminBlogChannels.lastFailed": "Последнее размещение не удалось: {reason}",
+  "AdminBlogChannels.signInOk": "Вход в LinkedIn действует до {date}.",
+  "AdminBlogChannels.signInSoon": {
+    "one":
+      "Вход в LinkedIn истекает через {count} день, {date}. Продлите его командой <cmd>{command}</cmd>.",
+    "few":
+      "Вход в LinkedIn истекает через {count} дня, {date}. Продлите его командой <cmd>{command}</cmd>.",
+    "many":
+      "Вход в LinkedIn истекает через {count} дней, {date}. Продлите его командой <cmd>{command}</cmd>.",
+    "other":
+      "Вход в LinkedIn истекает через {count} дня, {date}. Продлите его командой <cmd>{command}</cmd>.",
+  },
+  "AdminBlogChannels.signInExpired":
+    "Вход в LinkedIn истёк {date}. Посты подождут, пока вы не выполните <cmd>{command}</cmd>.",
   "AdminBlogChannels.loading": "Загружаем каналы продвижения",
   "AdminBlogChannels.listError": "Не удалось загрузить каналы продвижения. Попробуйте чуть позже.",
   "AdminBlogChannels.retry": "Повторить",
@@ -563,6 +576,10 @@ export default {
   "AdminBlogChannels.sourcePreview": "К ссылкам добавится <tag>?utm_source={tag}</tag>",
   "AdminBlogChannels.addUtm": "Добавлять utm_source к ссылкам",
   "AdminBlogChannels.addUtmOff": "Визиты из этого канала не будут считаться.",
+  "AdminBlogChannels.autoPost": "Размещать автоматически",
+  "AdminBlogChannels.autoPostOn": "Каждый пост разместится здесь сам, как только выйдет.",
+  "AdminBlogChannels.autoPostOff":
+    "Каждый пост появится здесь как задача, и вы разместите его сами.",
   "AdminBlogChannels.languages": "Языки",
   "AdminBlogChannels.languagesHint": "Канал появится у постов на этих языках.",
   "AdminBlogChannels.which": "Какие посты",
@@ -655,6 +672,7 @@ export default {
   "AdminBlogSharing.presetLater": "Позже",
   "AdminBlogSharing.linkRequired": "Добавьте ссылку.",
   "AdminBlogSharing.autoHint": "Разместится автоматически, когда пост выйдет.",
+  "AdminBlogSharing.posting": "Размещаем…",
   "AdminBlogSharing.autoFailed":
     "Не удалось разместить: {reason}. Попробуйте ещё раз или разместите вручную и отметьте размещённым.",
   "AdminBlogSharing.autoNoKey":

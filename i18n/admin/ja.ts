@@ -494,6 +494,13 @@ export default {
   "AdminBlogChannels.keyMissing":
     "キーの設定待ちです。サーバーのenvファイルに<key>{key}</key>を設定してデプロイしてください。",
   "AdminBlogChannels.lastFailed": "前回の投稿に失敗しました：{reason}",
+  "AdminBlogChannels.signInOk": "LinkedInのログインは{date}まで有効です。",
+  "AdminBlogChannels.signInSoon": {
+    "other":
+      "LinkedInのログインはあと{count}日、{date}に期限が切れます。<cmd>{command}</cmd>で更新してください。",
+  },
+  "AdminBlogChannels.signInExpired":
+    "LinkedInのログインは{date}に期限が切れました。<cmd>{command}</cmd>を実行するまで、投稿は保留されます。",
   "AdminBlogChannels.loading": "共有チャンネルを読み込み中",
   "AdminBlogChannels.listError":
     "共有チャンネルを読み込めませんでした。少し待ってから、もう一度お試しください。",
@@ -532,6 +539,9 @@ export default {
   "AdminBlogChannels.sourcePreview": "リンクに<tag>?utm_source={tag}</tag>が付きます",
   "AdminBlogChannels.addUtm": "リンクにutm_sourceを付ける",
   "AdminBlogChannels.addUtmOff": "このチャンネルからの訪問は集計されません。",
+  "AdminBlogChannels.autoPost": "自動で投稿する",
+  "AdminBlogChannels.autoPostOn": "記事が公開されると、ここに自動で投稿されます。",
+  "AdminBlogChannels.autoPostOff": "記事はここに未対応として表示されます。手動で投稿してください。",
   "AdminBlogChannels.languages": "言語",
   "AdminBlogChannels.languagesHint": "これらの言語の記事に、このチャンネルが表示されます。",
   "AdminBlogChannels.which": "対象の記事",
@@ -617,6 +627,7 @@ export default {
   "AdminBlogSharing.presetLater": "あとで",
   "AdminBlogSharing.linkRequired": "リンクを入力してください。",
   "AdminBlogSharing.autoHint": "記事が公開されると自動で投稿されます。",
+  "AdminBlogSharing.posting": "投稿中…",
   "AdminBlogSharing.autoFailed":
     "投稿できませんでした：{reason}。もう一度お試しいただくか、手動で投稿して投稿済みにしてください。",
   "AdminBlogSharing.autoNoKey":

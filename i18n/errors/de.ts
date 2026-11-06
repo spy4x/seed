@@ -165,6 +165,8 @@ export default {
   "Reason.NOTHING_TO_MOVE": "Es gibt nichts zu verschieben.",
   "Reason.NOTIFICATION_NOT_FOUND": "Diese Benachrichtigung gibt es nicht mehr.",
   "Reason.NOT_DRAFT_OR_SCHEDULED": "Dieser Beitrag ist schon veröffentlicht.",
+  "Reason.NOT_AUTOMATIC":
+    "Dieser Kanal postet nicht von selbst. Schalte zuerst „Automatisch posten“ ein.",
   "Reason.NOT_PUBLISHED": "Das ist nicht veröffentlicht.",
   "Reason.NOT_SCHEDULED": "Dieser Beitrag ist nicht geplant.",
   "Reason.NO_SUBSCRIPTION": "Diese Gruppe hat kein Abo.",

@@ -150,6 +150,8 @@ export default {
   "Reason.NOTHING_TO_MOVE": "移動するものはありません。",
   "Reason.NOTIFICATION_NOT_FOUND": "この通知はもう存在しません。",
   "Reason.NOT_DRAFT_OR_SCHEDULED": "この記事はすでに公開されています。",
+  "Reason.NOT_AUTOMATIC":
+    "このチャンネルは自動で投稿しません。先に「自動で投稿する」をオンにしてください。",
   "Reason.NOT_PUBLISHED": "まだ公開されていません。",
   "Reason.NOT_SCHEDULED": "この記事は予約されていません。",
   "Reason.NO_SUBSCRIPTION": "このグループにはサブスクリプションがありません。",

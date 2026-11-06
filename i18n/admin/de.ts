@@ -511,6 +511,15 @@ export default {
   "AdminBlogChannels.keyMissing":
     "Wartet auf seinen Schlüssel. Setze <key>{key}</key> in der Env-Datei des Servers und deploye.",
   "AdminBlogChannels.lastFailed": "Letzter Post fehlgeschlagen: {reason}",
+  "AdminBlogChannels.signInOk": "LinkedIn-Anmeldung gültig bis {date}.",
+  "AdminBlogChannels.signInSoon": {
+    "one":
+      "LinkedIn-Anmeldung läuft in {count} Tag ab, am {date}. Erneuere sie mit <cmd>{command}</cmd>.",
+    "other":
+      "LinkedIn-Anmeldung läuft in {count} Tagen ab, am {date}. Erneuere sie mit <cmd>{command}</cmd>.",
+  },
+  "AdminBlogChannels.signInExpired":
+    "LinkedIn-Anmeldung am {date} abgelaufen. Posts warten, bis du <cmd>{command}</cmd> ausführst.",
   "AdminBlogChannels.loading": "Kanäle zum Teilen werden geladen",
   "AdminBlogChannels.listError":
     "Die Kanäle zum Teilen konnten nicht geladen werden. Versuche es gleich noch einmal.",
@@ -551,6 +560,11 @@ export default {
   "AdminBlogChannels.sourcePreview": "Links enthalten <tag>?utm_source={tag}</tag>",
   "AdminBlogChannels.addUtm": "utm_source an Links anhängen",
   "AdminBlogChannels.addUtmOff": "Besuche über diesen Kanal werden nicht gezählt.",
+  "AdminBlogChannels.autoPost": "Automatisch posten",
+  "AdminBlogChannels.autoPostOn":
+    "Jeder Beitrag wird hier von selbst gepostet, sobald er online ist.",
+  "AdminBlogChannels.autoPostOff":
+    "Jeder Beitrag erscheint hier als Aufgabe, und du postest ihn selbst.",
   "AdminBlogChannels.languages": "Sprachen",
   "AdminBlogChannels.languagesHint":
     "Beiträge in diesen Sprachen zeigen diesen Kanal in ihrer Checkliste.",
@@ -643,6 +657,7 @@ export default {
   "AdminBlogSharing.presetLater": "Später",
   "AdminBlogSharing.linkRequired": "Füge den Link ein.",
   "AdminBlogSharing.autoHint": "Postet automatisch, sobald der Beitrag veröffentlicht ist.",
+  "AdminBlogSharing.posting": "Wird gepostet…",
   "AdminBlogSharing.autoFailed":
     "Posten fehlgeschlagen: {reason}. Versuche es noch einmal, oder poste ihn selbst und markiere ihn als gepostet.",
   "AdminBlogSharing.autoNoKey":
