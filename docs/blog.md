@@ -192,12 +192,15 @@ With the switch off, the row is a to-do the operator posts by hand.
 | Kind     | What it posts                                              | Keys (worker)                                                     |
 | -------- | ---------------------------------------------------------- | ----------------------------------------------------------------- |
 | Telegram | The Telegram text and the cover, by the bot, to `@name`    | `TELEGRAM_BOT_TOKEN`; the bot must be an admin of the channel     |
-| Mastodon | The short text with the link, which makes the link card     | `MASTODON_ACCESS_TOKEN` (scope `write:statuses`)                  |
+| Mastodon | The short text with the link, which makes the link card     | `MASTODON_ACCESS_TOKEN` (scope `write:statuses`), `MASTODON_INSTANCE_URL` |
 | Bluesky  | The short text with the link and a link card               | `BLUESKY_IDENTIFIER`, `BLUESKY_APP_PASSWORD`, `BLUESKY_SERVICE`   |
 | Hashnode | The whole article, naming the post as its canonical address | `HASHNODE_TOKEN`, `HASHNODE_PUBLICATION_ID`                       |
 | LinkedIn | The LinkedIn text on the owner's profile, with a link card | `LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_MEMBER_ID`, `LINKEDIN_TOKEN_EXPIRES_AT` |
 
 The channel's address says where: `https://t.me/name` for Telegram, `@you@instance` for Mastodon.
+The Mastodon token goes only to the server `MASTODON_INSTANCE_URL` names: a channel on another
+server is refused with that reason and no request, so an operator who edits a channel's address
+cannot send the token elsewhere.
 Bluesky, Hashnode and LinkedIn post to the account the keys belong to. Telegram sends the text as
 the photo's caption, or, over Telegram's 1,024 characters, as a message with the post's own preview
 above it. A Hashnode translation's address ends in `-<language>`.
@@ -205,12 +208,15 @@ above it. A Hashnode translation's address ends in `-<language>`.
 - **A copy that lands** marks the row posted with its address, the date and "automatic", so
   [Sharing results](#sharing-results) reads its numbers. The checklist shows "Posting…" while the
   job waits or runs, and reads itself again every 5 seconds until it is done.
-- **Never two copies.** A posted row is done. Each kind avoids a second copy after a failure that
-  may have posted in its own way: Mastodon sends the row's id as its idempotency key, so a repeat
-  returns the first status (Mastodon keeps keys for an hour); Bluesky and Hashnode look the copy up
-  before they post again, Bluesky after a 5-second wait for its search to catch up; Telegram and
-  LinkedIn have no lookup, so the row is marked before the post and a marked row is never posted
-  again by itself: it keeps "Couldn't post: {reason}" and the operator checks the channel.
+- **A second copy is avoided, not ruled out.** A posted row is done. Each kind guards against a
+  second copy after a run that may have posted, whether it failed unsure, died, or ran past its
+  job lease. Mastodon sends the row's id as its idempotency key, so a repeat returns the first
+  status; Mastodon keeps that key for about an hour, so a copy that landed while every retry in
+  that hour failed in transport can be posted again. Bluesky, Hashnode, Telegram and LinkedIn mark
+  the row before the post. A marked Bluesky or Hashnode row looks the copy up before it posts
+  again, Bluesky after a 5-second wait for its search to catch up; a copy its search has not shown
+  yet can still be posted twice. A marked Telegram or LinkedIn row is never posted again by itself:
+  they have no lookup, so it keeps "Couldn't post: {reason}" and the operator checks the channel.
 - **A clear refusal is retried** by the job system and the row shows the reason meanwhile.
   "Try again" on the row asks once more (`POST /api/admin/blog/posts/:id/shares/:channelId/retry`,
   operators only, written to the audit log) and clears the mark, so use it only once the channel
