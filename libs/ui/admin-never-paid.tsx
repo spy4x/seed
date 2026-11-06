@@ -45,7 +45,7 @@ const TABLE_CLASS = [
 ].join(` `)
 
 /**
- * The groups that have never paid, newest first (#706): who signed up and stopped at the plan, for
+ * The groups that have never paid, newest first: who signed up and stopped at the plan, for
  * an operator to follow up. Each name opens the group's admin page; the owner and the day the group
  * was made sit beside it.
  */
