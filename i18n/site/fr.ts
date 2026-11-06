@@ -1158,4 +1158,269 @@ export default {
   "FeaturePageDeploy.backupQuestion": "Y a-t-il une sauvegarde ?",
   "FeaturePageDeploy.backupAnswer":
     "Oui. Une sauvegarde restic quotidienne et chiffrée de la base de données, à activer, avec une procédure de restauration écrite.",
+  "SiteFooter.checklist": "Checklist de lancement",
+  "LaunchChecklist.seoTitle": {
+    "one": "Checklist de lancement SaaS : {count} vérification avant la mise en ligne",
+    "many": "Checklist de lancement SaaS : {count} vérifications avant la mise en ligne",
+    "other": "Checklist de lancement SaaS : {count} vérifications avant la mise en ligne",
+  },
+  "LaunchChecklist.description": {
+    "one":
+      "Cochez {count} point avant de lancer votre SaaS : sécurité, facturation, sauvegardes, juridique, référencement. Gratuit, sans inscription. Seed en couvre {covered}.",
+    "many":
+      "Cochez {count} points avant de lancer votre SaaS : sécurité, facturation, sauvegardes, juridique, référencement. Gratuit, sans inscription. Seed en couvre {covered}.",
+    "other":
+      "Cochez {count} points avant de lancer votre SaaS : sécurité, facturation, sauvegardes, juridique, référencement. Gratuit, sans inscription. Seed en couvre {covered}.",
+  },
+  "LaunchChecklist.eyebrow": "Checklist",
+  "LaunchChecklist.title": "Checklist de lancement SaaS",
+  "LaunchChecklist.crumb": "Checklist de lancement",
+  "LaunchChecklist.lead": {
+    "one":
+      "Une checklist de lancement SaaS, c’est ce qu’il faut vérifier avant l’arrivée de vrais utilisateurs et de vrais paiements. Celle-ci compte {count} point en {sections} sections, et vous pouvez le cocher ici sans créer de compte.",
+    "many":
+      "Une checklist de lancement SaaS, c’est ce qu’il faut vérifier avant l’arrivée de vrais utilisateurs et de vrais paiements. Celle-ci compte {count} points en {sections} sections, et vous pouvez les cocher ici sans créer de compte.",
+    "other":
+      "Une checklist de lancement SaaS, c’est ce qu’il faut vérifier avant l’arrivée de vrais utilisateurs et de vrais paiements. Celle-ci compte {count} points en {sections} sections, et vous pouvez les cocher ici sans créer de compte.",
+  },
+  "LaunchChecklist.coverage":
+    "Seed en couvre {covered} sur {count} d’origine, signalés ci-dessous. Le reste vous revient.",
+  "LaunchChecklist.disclaimer":
+    "Une checklist pratique, pas un conseil juridique, fiscal ou de sécurité. Vérifiez ce qui s’applique dans votre pays.",
+  "LaunchChecklist.legend":
+    "Les points marqués « Inclus dans Seed » sont fournis avec Seed. Le lien montre comment, et ce qu’il vous reste à configurer.",
+  "LaunchChecklist.copyLink": "Copier le lien",
+  "LaunchChecklist.linkCopied": "Lien copié.",
+  "LaunchChecklist.copyFailed":
+    "Impossible de copier le lien. Copiez-le depuis la barre d’adresse.",
+  "LaunchChecklist.print": "Imprimer la checklist",
+  "LaunchChecklist.printLine": "Checklist de lancement SaaS, {address}",
+  "LaunchChecklist.printed": "imprimée le {date}",
+  "LaunchChecklist.noScript": "Les coches restent jusqu’à ce que vous quittiez cette page.",
+  "LaunchChecklist.static": {
+    "one": "{count} point en {sections} sections",
+    "many": "{count} points en {sections} sections",
+    "other": "{count} points en {sections} sections",
+  },
+  "LaunchChecklist.progress": {
+    "one": "{done} sur {count} coché",
+    "many": "{done} sur {count} cochés",
+    "other": "{done} sur {count} cochés",
+  },
+  "LaunchChecklist.progressLabel": "Progression de la checklist",
+  "LaunchChecklist.sectionItems": {
+    "one": "{count} point",
+    "many": "{count} points",
+    "other": "{count} points",
+  },
+  "LaunchChecklist.sectionProgress": {
+    "one": "{done} sur {count} coché",
+    "many": "{done} sur {count} cochés",
+    "other": "{done} sur {count} cochés",
+  },
+  "LaunchChecklist.storageOk":
+    "Vos coches sont enregistrées dans ce navigateur uniquement. Rien ne nous est envoyé.",
+  "LaunchChecklist.storageBlocked":
+    "Ce navigateur ne laisse pas la page enregistrer vos coches : elles restent jusqu’à ce que vous quittiez cette page.",
+  "LaunchChecklist.empty":
+    "Rien de coché pour l’instant. Commencez par le juridique et la confidentialité, ou allez directement à une section.",
+  "LaunchChecklist.allChecked": {
+    "one":
+      "{count} sur {count} coché. Gardez cette page pour votre prochain lancement, ou partagez-la avec votre équipe.",
+    "many":
+      "Les {count} points sont cochés. Gardez cette page pour votre prochain lancement, ou partagez-la avec votre équipe.",
+    "other":
+      "Les {count} points sont cochés. Gardez cette page pour votre prochain lancement, ou partagez-la avec votre équipe.",
+  },
+  "LaunchChecklist.clear": "Effacer les coches",
+  "LaunchChecklist.cleared": "Coches effacées.",
+  "LaunchChecklist.undo": "Annuler",
+  "LaunchChecklist.restored": "Coches rétablies.",
+  "LaunchChecklist.builtIn": "Inclus dans Seed",
+  "LaunchChecklist.partly": "En partie inclus dans Seed",
+  "LaunchChecklist.builtInLabel": "Inclus dans Seed : {doc}",
+  "LaunchChecklist.partlyLabel": "En partie inclus dans Seed : {doc}",
+  "LaunchChecklist.itemLink": "Lien vers ce point : {title}",
+  "LaunchChecklist.source": "Source officielle :",
+  "LaunchChecklist.ctaTitle":
+    "Démarrez votre prochain SaaS avec une partie de cette liste déjà faite",
+  "LaunchChecklist.ctaLead":
+    "Seed est un starter SaaS gratuit, sous licence MIT. Les points marqués « Inclus dans Seed » sont fournis avec, vous démarrez donc avec moins de cases à cocher.",
+  "LaunchChecklist.getStarted": "Démarrer avec Seed",
+  "LaunchChecklistSource.gdpr": "le RGPD sur EUR-Lex",
+  "LaunchChecklistSource.eprivacy": "la directive ePrivacy sur EUR-Lex",
+  "LaunchChecklistSource.vat": "le guichet unique TVA de l’UE",
+  "LaunchChecklistSection.legal": "Juridique et confidentialité",
+  "LaunchChecklistSection.billing": "Facturation",
+  "LaunchChecklistSection.security": "Sécurité",
+  "LaunchChecklistSection.backups": "Données et sauvegardes",
+  "LaunchChecklistSection.monitoring": "Supervision",
+  "LaunchChecklistSection.email": "E-mail",
+  "LaunchChecklistSection.search": "Référencement et partage",
+  "LaunchChecklistSection.analytics": "Statistiques",
+  "LaunchChecklistSection.support": "Support et exploitation",
+  "LaunchChecklistItem.legalPrivacyPolicy":
+    "Publiez une politique de confidentialité conforme à ce que vous collectez.",
+  "LaunchChecklistItem.legalPrivacyPolicyWhy":
+    "Utilisateurs et autorités la comparent à ce que fait réellement votre produit : une politique copiée est pire que pas de politique du tout.",
+  "LaunchChecklistItem.legalPrivacyPolicyLeft":
+    "La page existe ; c’est à vous de la réécrire pour vos données et vos services.",
+  "LaunchChecklistItem.legalTerms": "Publiez des conditions d’utilisation.",
+  "LaunchChecklistItem.legalTermsWhy":
+    "Les conditions fixent ce que vous devez à un client et ce que vous ne lui devez pas, avant que le premier litige ne le fasse.",
+  "LaunchChecklistItem.legalTermsLeft":
+    "La page existe ; les conditions elles-mêmes vous reviennent.",
+  "LaunchChecklistItem.legalCookieBanner":
+    "N’affichez un bandeau de consentement que si vous déposez des cookies non essentiels.",
+  "LaunchChecklistItem.legalCookieBannerWhy":
+    "Un bandeau inutile coûte des inscriptions, et omettre un bandeau nécessaire est une infraction.",
+  "LaunchChecklistItem.legalDataExport": "Permettez aux utilisateurs d’exporter leurs données.",
+  "LaunchChecklistItem.legalDataExportWhy":
+    "Chacun a droit à une copie de ses données, et un bouton répond à cette demande en quelques secondes.",
+  "LaunchChecklistItem.legalAccountDeletion":
+    "Permettez de supprimer son compte, et sachez quand les données sont réellement effacées.",
+  "LaunchChecklistItem.legalAccountDeletionWhy":
+    "Un compte supprimé dont les données survivent, c’est une promesse rompue sans le savoir.",
+  "LaunchChecklistItem.legalAccountDeletionLeft":
+    "Les sauvegardes gardent les données jusqu’à leur expiration ; indiquez la durée dans votre politique.",
+  "LaunchChecklistItem.legalProcessors":
+    "Listez les services externes qui détiennent les données de vos utilisateurs, avec un accord de sous-traitance pour chacun.",
+  "LaunchChecklistItem.legalProcessorsWhy":
+    "Votre politique de confidentialité doit les nommer, et vous répondez de ce qu’ils font des données.",
+  "LaunchChecklistItem.legalEntityContact":
+    "Indiquez votre entité juridique et une adresse de contact dans les pages légales.",
+  "LaunchChecklistItem.legalEntityContactWhy":
+    "Clients, prestataires de paiement et autorités doivent savoir qui exploite le service et comment vous joindre.",
+  "LaunchChecklistItem.billingTestLive":
+    "Testez les paiements de bout en bout en mode test, puis une fois en production.",
+  "LaunchChecklistItem.billingTestLiveWhy":
+    "Les clés de production, les webhooks et les réglages de taxes diffèrent du mode test, et ce n’est pas à votre premier vrai client de le découvrir.",
+  "LaunchChecklistItem.billingPricingMatches":
+    "Faites correspondre la page de tarifs à ce que facture le paiement.",
+  "LaunchChecklistItem.billingPricingMatchesWhy":
+    "Un prix qui change entre la page et le paiement coûte la vente et la confiance.",
+  "LaunchChecklistItem.billingFailedPayments":
+    "Gérez les paiements échoués et les nouvelles tentatives.",
+  "LaunchChecklistItem.billingFailedPaymentsWhy":
+    "Des cartes expirent chaque mois, et sans nouvelles tentatives ni délai de grâce vous perdez des clients qui voulaient payer.",
+  "LaunchChecklistItem.billingCancelRefund":
+    "Décidez comment fonctionnent la résiliation et les remboursements.",
+  "LaunchChecklistItem.billingCancelRefundWhy":
+    "Un client qui résilie facilement part sereinement ; celui qui n’y arrive pas lance une contestation de paiement.",
+  "LaunchChecklistItem.billingTax":
+    "Décidez comment vous gérez la TVA et les taxes sur les ventes.",
+  "LaunchChecklistItem.billingTaxWhy":
+    "Vendre à l’étranger peut vous rendre redevable de taxes dans les pays de vos clients dès la première vente.",
+  "LaunchChecklistItem.billingTaxLeft":
+    "Le guide de facturation traite du comportement fiscal d’un prix dans Stripe ; l’immatriculation et les déclarations vous reviennent.",
+  "LaunchChecklistItem.billingReceipts": "Envoyez des reçus et des factures pour chaque paiement.",
+  "LaunchChecklistItem.billingReceiptsWhy":
+    "Une entreprise ne peut pas comptabiliser un paiement sans facture, et elle vous la demandera.",
+  "LaunchChecklistItem.securityHttpsHsts": "Servez chaque page en HTTPS, avec HSTS.",
+  "LaunchChecklistItem.securityHttpsHstsWhy":
+    "HSTS indique aux navigateurs de ne jamais essayer le HTTP en clair : personne sur le réseau ne peut retirer le chiffrement.",
+  "LaunchChecklistItem.securityHeadersCsp":
+    "Envoyez des en-têtes de sécurité et une politique de sécurité du contenu (CSP).",
+  "LaunchChecklistItem.securityHeadersCspWhy":
+    "Une CSP empêche la plupart des scripts injectés de s’exécuter, même quand un bug en laisse passer un.",
+  "LaunchChecklistItem.securityTwoFactorPasskeys":
+    "Proposez la connexion à deux facteurs et les clés d’accès (passkeys).",
+  "LaunchChecklistItem.securityTwoFactorPasskeysWhy":
+    "Un mot de passe réutilisé est le moyen le plus courant d’entrer dans un compte, et un second facteur ferme cette porte.",
+  "LaunchChecklistItem.securityRateLimits":
+    "Limitez le débit de la connexion et de toute route dont on peut abuser.",
+  "LaunchChecklistItem.securityRateLimitsWhy":
+    "Sans limites, un script devine des mots de passe ou épuise votre quota d’e-mails en une nuit.",
+  "LaunchChecklistItem.securitySecrets": "Utilisez des secrets robustes et gardez-les hors de git.",
+  "LaunchChecklistItem.securitySecretsWhy":
+    "Un secret dans l’historique d’un dépôt reste lisible par quiconque en obtient un jour une copie.",
+  "LaunchChecklistItem.securitySecretsLeft":
+    "Le déploiement lit les secrets dans un fichier env ; les créer et les protéger vous revient.",
+  "LaunchChecklistItem.securityAuditLog":
+    "Enregistrez les actions des opérateurs dans un journal d’audit.",
+  "LaunchChecklistItem.securityAuditLogWhy":
+    "Quand un client demande qui a modifié son compte, le journal répond à la place d’une supposition.",
+  "LaunchChecklistItem.securityDependencies":
+    "Tenez les dépendances à jour et recevez des alertes de vulnérabilités.",
+  "LaunchChecklistItem.securityDependenciesWhy":
+    "La plupart des attaques exploitent des failles déjà corrigées, dans une version que personne n’a installée.",
+  "LaunchChecklistItem.securityDependenciesLeft":
+    "Seed liste les paquets obsolètes ; les alertes de vulnérabilités sont à activer de votre côté.",
+  "LaunchChecklistItem.backupsAutomated":
+    "Faites des sauvegardes automatiques, chiffrées et hors site.",
+  "LaunchChecklistItem.backupsAutomatedWhy":
+    "Une sauvegarde sur le même serveur disparaît avec lui, et une sauvegarde manuelle saute justement la semaine où vous en avez besoin.",
+  "LaunchChecklistItem.backupsAutomatedLeft": "Désactivé tant que vous ne l’activez pas.",
+  "LaunchChecklistItem.backupsRestoreTested":
+    "Restaurez une sauvegarde une fois, sur un serveur neuf.",
+  "LaunchChecklistItem.backupsRestoreTestedWhy":
+    "Tant que vous n’avez pas restauré une sauvegarde, vous ne savez ni si elle marche ni combien de temps cela prend.",
+  "LaunchChecklistItem.backupsMissingAlert": "Recevez une alerte quand une sauvegarde manque.",
+  "LaunchChecklistItem.backupsMissingAlertWhy":
+    "Les sauvegardes échouent en silence, et vous l’apprenez le jour où il vous en faut une.",
+  "LaunchChecklistItem.monitoringErrors": "Suivez les erreurs côté serveur et dans le navigateur.",
+  "LaunchChecklistItem.monitoringErrorsWhy":
+    "La plupart des gens qui tombent sur une erreur partent sans vous prévenir.",
+  "LaunchChecklistItem.monitoringAlerts":
+    "Collectez métriques et logs, avec des alertes sur votre téléphone.",
+  "LaunchChecklistItem.monitoringAlertsWhy":
+    "Un disque plein ou une file bloquée doit vous réveiller avant de réveiller vos clients.",
+  "LaunchChecklistItem.monitoringUptimeStatus":
+    "Surveillez la disponibilité depuis l’extérieur et publiez une page de statut.",
+  "LaunchChecklistItem.monitoringUptimeStatusWhy":
+    "Un serveur en panne ne peut pas signaler sa panne, et une page de statut vous évite cent e-mails identiques.",
+  "LaunchChecklistItem.monitoringLoadTest": "Faites un test de charge pour le trafic attendu.",
+  "LaunchChecklistItem.monitoringLoadTestWhy":
+    "Le jour du lancement, le trafic arrive d’un coup, et mieux vaut connaître la limite avant.",
+  "LaunchChecklistItem.emailTransactional":
+    "Envoyez les e-mails transactionnels par un vrai serveur de messagerie.",
+  "LaunchChecklistItem.emailTransactionalWhy":
+    "Des liens de connexion et des reçus qui finissent en spam privent les gens de votre produit.",
+  "LaunchChecklistItem.emailDomainAuth": "Configurez SPF, DKIM et DMARC sur le domaine d’envoi.",
+  "LaunchChecklistItem.emailDomainAuthWhy":
+    "Les grandes messageries rejettent ou cachent les e-mails des domaines qui n’en ont pas.",
+  "LaunchChecklistItem.emailReplySender": "Envoyez depuis une adresse à laquelle on peut répondre.",
+  "LaunchChecklistItem.emailReplySenderWhy":
+    "Une réponse est souvent la première demande de support, et une adresse no-reply la jette.",
+  "LaunchChecklistItem.emailReplySenderLeft":
+    "L’expéditeur est un réglage ; une boîte que quelqu’un lit vous revient.",
+  "LaunchChecklistItem.emailNewsletter":
+    "Gérez la newsletter avec double opt-in et désinscription.",
+  "LaunchChecklistItem.emailNewsletterWhy":
+    "Des abonnés confirmés gardent votre domaine d’envoi digne de confiance, et une désinscription qui marche est obligatoire dans de nombreux pays.",
+  "LaunchChecklistItem.searchBasics":
+    "Publiez un sitemap, robots.txt, llms.txt et des cartes d’aperçu de liens.",
+  "LaunchChecklistItem.searchBasicsWhy":
+    "Moteurs de recherche, assistants IA et messageries les lisent en premier, et un lien partagé sans carte reçoit moins de clics.",
+  "LaunchChecklistItem.searchHreflang": "Signalez chaque version linguistique avec hreflang.",
+  "LaunchChecklistItem.searchHreflangWhy":
+    "Sans lui, les moteurs affichent la mauvaise langue ou prennent les traductions pour des copies.",
+  "LaunchChecklistItem.searchLighthouseConsole":
+    "Gardez un budget Lighthouse dans la CI, et validez le site dans la Search Console.",
+  "LaunchChecklistItem.searchLighthouseConsoleWhy":
+    "Le budget bloque la mise en ligne d’une page lente, et la Search Console vous dit ce que les moteurs n’arrivent pas à indexer.",
+  "LaunchChecklistItem.searchLighthouseConsoleLeft":
+    "Le budget tourne dans la CI ; valider le site dans la Search Console vous revient.",
+  "LaunchChecklistItem.analyticsGoals":
+    "Utilisez des statistiques respectueuses de la vie privée, avec un objectif et un entonnoir vers votre action clé.",
+  "LaunchChecklistItem.analyticsGoalsWhy":
+    "Les pages vues disent que les gens sont venus ; un entonnoir montre où ils s’arrêtent avant l’inscription ou le paiement.",
+  "LaunchChecklistItem.analyticsGoalsLeft":
+    "Les événements sont envoyés ; vous choisissez l’objectif et construisez l’entonnoir.",
+  "LaunchChecklistItem.supportContact": "Donnez aux gens un moyen de joindre un humain.",
+  "LaunchChecklistItem.supportContactWhy":
+    "Un client qui ne joint personne écrit un avis ou conteste le paiement à la place.",
+  "LaunchChecklistItem.supportContactLeft":
+    "Les liens de contact sont un réglage ; répondre vous revient.",
+  "LaunchChecklistItem.supportAdminLookup":
+    "Ayez un panneau d’administration pour retrouver un client.",
+  "LaunchChecklistItem.supportAdminLookupWhy":
+    "Sans lui, faire du support veut dire lire la base de données à la main, avec tous les risques que cela comporte.",
+  "LaunchChecklistItem.supportErrorPages": "Affichez des pages 404 et 500 utiles.",
+  "LaunchChecklistItem.supportErrorPagesWhy":
+    "Une page d’erreur nue donne l’impression d’un produit cassé, une page utile renvoie les gens à leur travail.",
+  "LaunchChecklistItem.supportDeployRollback":
+    "Écrivez comment vous déployez et comment vous revenez en arrière.",
+  "LaunchChecklistItem.supportDeployRollbackWhy":
+    "Le pire moment pour découvrir comment revenir en arrière, c’est pendant un déploiement raté.",
 } satisfies Catalog

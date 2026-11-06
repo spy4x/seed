@@ -9,6 +9,7 @@ import AppWrapper from "./routes/_app.tsx"
 import Layout from "./routes/_layout.tsx"
 import Admin, { ADMIN_HEAD } from "./routes/[[lang]]/admin.tsx"
 import Compare from "./routes/[[lang]]/compare.tsx"
+import Checklist from "./routes/[[lang]]/saas-launch-checklist.tsx"
 import Features from "./routes/[[lang]]/features.tsx"
 import { handler as featurePage } from "./routes/[[lang]]/features/[slug].tsx"
 import Home, { HOME_HEAD, QUICK_START } from "./routes/index.tsx"
@@ -75,6 +76,7 @@ function siteWith(newsletter: () => boolean, siteConfig: MpaConfig = config) {
     .get("{/:lang}?/features/:slug", featurePage.GET!)
     .route("/admin", { component: view(Admin) })
     .route("/compare", { component: view(Compare) })
+    .route("/saas-launch-checklist", { component: view(Checklist) })
     .route("/pricing", { component: view(Pricing), handler: pricing })
     .get("/mvp", mvp.GET!)
     .route("/privacy", { component: view(Privacy) })
@@ -1255,6 +1257,15 @@ describe("the public website", () => {
         "/fr/pricing",
         "/ja/pricing",
         "/zh-CN/pricing",
+        "/saas-launch-checklist",
+        "/ru/saas-launch-checklist",
+        "/es/saas-launch-checklist",
+        "/de/saas-launch-checklist",
+        "/pt-BR/saas-launch-checklist",
+        "/ar/saas-launch-checklist",
+        "/fr/saas-launch-checklist",
+        "/ja/saas-launch-checklist",
+        "/zh-CN/saas-launch-checklist",
         "/docs/api",
         "/docs",
         ...DOC_SLUGS.map((slug) => `/docs/${slug}`),
@@ -1308,8 +1319,9 @@ describe("the public website", () => {
       "/changelog": "2026-11-01T00:00:00.000Z",
       "/compare": "2026-10-16T00:00:00.000Z",
       "/pricing": "2026-10-21T00:00:00.000Z",
+      "/saas-launch-checklist": "2026-11-06T00:00:00.000Z",
       "/subscribe": "2026-10-30T00:00:00.000Z",
-      "/privacy": "2026-10-23T00:00:00.000Z",
+      "/privacy": "2026-11-06T00:00:00.000Z",
       "/terms": "2026-10-21T00:00:00.000Z",
     })
   })

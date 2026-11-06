@@ -1114,4 +1114,267 @@ export default {
   "FeaturePageDeploy.backupQuestion": "Есть ли резервное копирование?",
   "FeaturePageDeploy.backupAnswer":
     "Да. Ежедневная зашифрованная резервная копия базы данных через restic, включается по желанию, с инструкцией по восстановлению.",
+  "SiteFooter.checklist": "Чек-лист запуска",
+  "LaunchChecklist.seoTitle": {
+    "one": "Чек-лист запуска SaaS: {count} проверка перед релизом",
+    "few": "Чек-лист запуска SaaS: {count} проверки перед релизом",
+    "many": "Чек-лист запуска SaaS: {count} проверок перед релизом",
+    "other": "Чек-лист запуска SaaS: {count} проверки перед релизом",
+  },
+  "LaunchChecklist.description": {
+    "one":
+      "{count} проверка перед запуском SaaS: безопасность, оплата, бэкапы, юридические вопросы, поиск. Бесплатно и без регистрации. Seed закрывает {covered} из них.",
+    "few":
+      "{count} проверки перед запуском SaaS: безопасность, оплата, бэкапы, юридические вопросы, поиск. Бесплатно и без регистрации. Seed закрывает {covered} из них.",
+    "many":
+      "{count} проверок перед запуском SaaS: безопасность, оплата, бэкапы, юридические вопросы, поиск. Бесплатно и без регистрации. Seed закрывает {covered} из них.",
+    "other":
+      "{count} проверки перед запуском SaaS: безопасность, оплата, бэкапы, юридические вопросы, поиск. Бесплатно и без регистрации. Seed закрывает {covered} из них.",
+  },
+  "LaunchChecklist.eyebrow": "Чек-лист",
+  "LaunchChecklist.title": "Чек-лист запуска SaaS",
+  "LaunchChecklist.crumb": "Чек-лист запуска",
+  "LaunchChecklist.lead": {
+    "one":
+      "Чек-лист запуска SaaS — это то, что стоит проверить до прихода настоящих пользователей и платежей. Здесь {count} пункт, разделов: {sections}. Отмечайте их прямо на странице, без аккаунта.",
+    "few":
+      "Чек-лист запуска SaaS — это то, что стоит проверить до прихода настоящих пользователей и платежей. Здесь {count} пункта, разделов: {sections}. Отмечайте их прямо на странице, без аккаунта.",
+    "many":
+      "Чек-лист запуска SaaS — это то, что стоит проверить до прихода настоящих пользователей и платежей. Здесь {count} пунктов, разделов: {sections}. Отмечайте их прямо на странице, без аккаунта.",
+    "other":
+      "Чек-лист запуска SaaS — это то, что стоит проверить до прихода настоящих пользователей и платежей. Здесь {count} пункта, разделов: {sections}. Отмечайте их прямо на странице, без аккаунта.",
+  },
+  "LaunchChecklist.coverage":
+    "Seed закрывает {covered} из {count} пунктов из коробки, они отмечены ниже. Остальное — ваше.",
+  "LaunchChecklist.disclaimer":
+    "Это практический чек-лист, а не консультация юриста, налогового консультанта или специалиста по безопасности. Уточните, что действует в вашей стране.",
+  "LaunchChecklist.legend":
+    "Пункты с пометкой «Есть в Seed» уже входят в Seed. По ссылке видно, как именно, и что вам ещё нужно настроить самим.",
+  "LaunchChecklist.copyLink": "Скопировать ссылку",
+  "LaunchChecklist.linkCopied": "Ссылка скопирована.",
+  "LaunchChecklist.copyFailed": "Не удалось скопировать ссылку. Скопируйте её из адресной строки.",
+  "LaunchChecklist.print": "Распечатать чек-лист",
+  "LaunchChecklist.printLine": "Чек-лист запуска SaaS, {address}",
+  "LaunchChecklist.printed": "распечатано {date}",
+  "LaunchChecklist.noScript": "Отметки сохранятся, пока вы на этой странице.",
+  "LaunchChecklist.static": {
+    "one": "{count} пункт, разделов: {sections}",
+    "few": "{count} пункта, разделов: {sections}",
+    "many": "{count} пунктов, разделов: {sections}",
+    "other": "{count} пункта, разделов: {sections}",
+  },
+  "LaunchChecklist.progress": {
+    "one": "Отмечено {done} из {count}",
+    "few": "Отмечено {done} из {count}",
+    "many": "Отмечено {done} из {count}",
+    "other": "Отмечено {done} из {count}",
+  },
+  "LaunchChecklist.progressLabel": "Прогресс по чек-листу",
+  "LaunchChecklist.sectionItems": {
+    "one": "{count} пункт",
+    "few": "{count} пункта",
+    "many": "{count} пунктов",
+    "other": "{count} пункта",
+  },
+  "LaunchChecklist.sectionProgress": {
+    "one": "Отмечено {done} из {count}",
+    "few": "Отмечено {done} из {count}",
+    "many": "Отмечено {done} из {count}",
+    "other": "Отмечено {done} из {count}",
+  },
+  "LaunchChecklist.storageOk":
+    "Отметки хранятся только в этом браузере. Нам ничего не отправляется.",
+  "LaunchChecklist.storageBlocked":
+    "Этот браузер не даёт странице сохранить отметки, поэтому они пропадут, когда вы уйдёте со страницы.",
+  "LaunchChecklist.empty":
+    "Пока ничего не отмечено. Начните с юридических вопросов или перейдите к любому разделу.",
+  "LaunchChecklist.allChecked": {
+    "one":
+      "Отмечен {count} пункт из {count}. Сохраните страницу для следующего запуска или отправьте её команде.",
+    "few":
+      "Отмечены все {count} пункта. Сохраните страницу для следующего запуска или отправьте её команде.",
+    "many":
+      "Отмечены все {count} пунктов. Сохраните страницу для следующего запуска или отправьте её команде.",
+    "other":
+      "Отмечены все {count} пункта. Сохраните страницу для следующего запуска или отправьте её команде.",
+  },
+  "LaunchChecklist.clear": "Снять отметки",
+  "LaunchChecklist.cleared": "Отметки сняты.",
+  "LaunchChecklist.undo": "Отменить",
+  "LaunchChecklist.restored": "Отметки возвращены.",
+  "LaunchChecklist.builtIn": "Есть в Seed",
+  "LaunchChecklist.partly": "Частично есть в Seed",
+  "LaunchChecklist.builtInLabel": "Есть в Seed: {doc}",
+  "LaunchChecklist.partlyLabel": "Частично есть в Seed: {doc}",
+  "LaunchChecklist.itemLink": "Ссылка на этот пункт: {title}",
+  "LaunchChecklist.source": "Официальный источник:",
+  "LaunchChecklist.ctaTitle": "Начните следующий SaaS с частью списка, которая уже готова",
+  "LaunchChecklist.ctaLead":
+    "Seed — бесплатный SaaS-стартер с лицензией MIT. Пункты с пометкой «Есть в Seed» идут вместе с ним, так что отмечать придётся меньше.",
+  "LaunchChecklist.getStarted": "Начать работу с Seed",
+  "LaunchChecklistSource.gdpr": "GDPR на EUR-Lex",
+  "LaunchChecklistSource.eprivacy": "Директива ePrivacy на EUR-Lex",
+  "LaunchChecklistSource.vat": "единое окно ЕС по НДС (One Stop Shop)",
+  "LaunchChecklistSection.legal": "Право и приватность",
+  "LaunchChecklistSection.billing": "Оплата",
+  "LaunchChecklistSection.security": "Безопасность",
+  "LaunchChecklistSection.backups": "Данные и бэкапы",
+  "LaunchChecklistSection.monitoring": "Мониторинг",
+  "LaunchChecklistSection.email": "Почта",
+  "LaunchChecklistSection.search": "Поиск и ссылки",
+  "LaunchChecklistSection.analytics": "Аналитика",
+  "LaunchChecklistSection.support": "Поддержка и эксплуатация",
+  "LaunchChecklistItem.legalPrivacyPolicy":
+    "Опубликуйте политику конфиденциальности, которая совпадает с тем, что вы собираете.",
+  "LaunchChecklistItem.legalPrivacyPolicyWhy":
+    "Пользователи и регуляторы сверяют её с тем, что продукт делает на самом деле, поэтому скопированная политика хуже, чем никакой.",
+  "LaunchChecklistItem.legalPrivacyPolicyLeft":
+    "Страница есть; текст под ваши данные и сервисы пишете вы.",
+  "LaunchChecklistItem.legalTerms": "Опубликуйте пользовательское соглашение.",
+  "LaunchChecklistItem.legalTermsWhy":
+    "Соглашение определяет, что вы должны клиенту, а что нет, до того как это решит первый спор.",
+  "LaunchChecklistItem.legalTermsLeft": "Страница есть; сами условия — ваши.",
+  "LaunchChecklistItem.legalCookieBanner":
+    "Показывайте баннер согласия, только если ставите необязательные cookie.",
+  "LaunchChecklistItem.legalCookieBannerWhy":
+    "Лишний баннер стоит вам регистраций, а нужный, но пропущенный — это нарушение.",
+  "LaunchChecklistItem.legalDataExport": "Дайте людям выгрузить свои данные.",
+  "LaunchChecklistItem.legalDataExportWhy":
+    "У людей есть право на копию своих данных, и кнопка отвечает на такой запрос за секунды.",
+  "LaunchChecklistItem.legalAccountDeletion":
+    "Дайте людям удалить аккаунт и знайте, когда данные стираются по-настоящему.",
+  "LaunchChecklistItem.legalAccountDeletionWhy":
+    "Удалённый аккаунт, чьи данные живут дальше, — это нарушенное обещание, о котором вы не знаете.",
+  "LaunchChecklistItem.legalAccountDeletionLeft":
+    "В бэкапах данные остаются до их истечения; укажите срок в политике.",
+  "LaunchChecklistItem.legalProcessors":
+    "Составьте список внешних сервисов, где хранятся данные пользователей, и заключите с каждым договор об обработке данных.",
+  "LaunchChecklistItem.legalProcessorsWhy":
+    "Политика конфиденциальности должна их назвать, а за то, что они делают с данными, отвечаете вы.",
+  "LaunchChecklistItem.legalEntityContact":
+    "Укажите юрлицо и контактный адрес на юридических страницах.",
+  "LaunchChecklistItem.legalEntityContactWhy":
+    "Клиентам, платёжным провайдерам и регуляторам нужно знать, кто стоит за сервисом и как с вами связаться.",
+  "LaunchChecklistItem.billingTestLive":
+    "Проверьте оплату от начала до конца в тестовом режиме, а затем один раз вживую.",
+  "LaunchChecklistItem.billingTestLiveWhy":
+    "Боевые ключи, вебхуки и налоговые настройки отличаются от тестовых, и первый настоящий клиент не должен узнать об этом за вас.",
+  "LaunchChecklistItem.billingPricingMatches":
+    "Проверьте, что страница цен совпадает с суммой на оплате.",
+  "LaunchChecklistItem.billingPricingMatchesWhy":
+    "Цена, которая меняется между страницей и оплатой, стоит и продажи, и доверия.",
+  "LaunchChecklistItem.billingFailedPayments":
+    "Обработайте неудачные платежи и повторные списания.",
+  "LaunchChecklistItem.billingFailedPaymentsWhy":
+    "Карты истекают каждый месяц, и без повторных попыток и льготного периода вы теряете клиентов, которые собирались платить.",
+  "LaunchChecklistItem.billingCancelRefund": "Решите, как работают отмена подписки и возвраты.",
+  "LaunchChecklistItem.billingCancelRefundWhy":
+    "Клиент, который легко отменил подписку, уходит спокойно; тот, кто не смог, оформляет чарджбэк.",
+  "LaunchChecklistItem.billingTax": "Решите, как вы платите НДС и налог с продаж.",
+  "LaunchChecklistItem.billingTaxWhy":
+    "Продажи за рубеж могут обязать вас платить налог в странах клиентов с первой же продажи.",
+  "LaunchChecklistItem.billingTaxLeft":
+    "Инструкция по оплате описывает налоговое поведение цены в Stripe; регистрация и отчётность — ваши.",
+  "LaunchChecklistItem.billingReceipts": "Отправляйте чеки и счета за каждый платёж.",
+  "LaunchChecklistItem.billingReceiptsWhy":
+    "Компании не могут провести платёж без счёта, и они его попросят.",
+  "LaunchChecklistItem.securityHttpsHsts": "Отдавайте каждую страницу по HTTPS с HSTS.",
+  "LaunchChecklistItem.securityHttpsHstsWhy":
+    "HSTS запрещает браузеру пробовать обычный HTTP, и никто в сети не сможет снять шифрование.",
+  "LaunchChecklistItem.securityHeadersCsp":
+    "Отправляйте заголовки безопасности и политику безопасности контента (CSP).",
+  "LaunchChecklistItem.securityHeadersCspWhy":
+    "CSP не даёт запуститься большинству внедрённых скриптов, даже если ошибка пропустила один из них.",
+  "LaunchChecklistItem.securityTwoFactorPasskeys":
+    "Предложите двухфакторный вход и ключи доступа (passkeys).",
+  "LaunchChecklistItem.securityTwoFactorPasskeysWhy":
+    "Повторно использованный пароль — самый частый путь в чужой аккаунт, и второй фактор его закрывает.",
+  "LaunchChecklistItem.securityRateLimits":
+    "Ограничьте частоту запросов на вход и на всех маршрутах, которыми можно злоупотребить.",
+  "LaunchChecklistItem.securityRateLimitsWhy":
+    "Без лимитов скрипт за ночь подберёт пароли или израсходует ваш почтовый лимит.",
+  "LaunchChecklistItem.securitySecrets": "Используйте стойкие секреты и не храните их в git.",
+  "LaunchChecklistItem.securitySecretsWhy":
+    "Секрет в истории репозитория остаётся доступен всем, у кого когда-либо была его копия.",
+  "LaunchChecklistItem.securitySecretsLeft":
+    "Деплой читает секреты из env-файла; создать и уберечь их — ваша задача.",
+  "LaunchChecklistItem.securityAuditLog": "Записывайте действия операторов в журнал аудита.",
+  "LaunchChecklistItem.securityAuditLogWhy":
+    "Когда клиент спросит, кто изменил его аккаунт, ответит журнал, а не догадка.",
+  "LaunchChecklistItem.securityDependencies":
+    "Обновляйте зависимости и получайте оповещения об уязвимостях.",
+  "LaunchChecklistItem.securityDependenciesWhy":
+    "Большинство атак использует дыры, давно исправленные в новой версии, которую никто не поставил.",
+  "LaunchChecklistItem.securityDependenciesLeft":
+    "Seed показывает устаревшие пакеты; оповещения об уязвимостях включаете вы.",
+  "LaunchChecklistItem.backupsAutomated":
+    "Настройте автоматические зашифрованные бэкапы на другой площадке.",
+  "LaunchChecklistItem.backupsAutomatedWhy":
+    "Бэкап на том же сервере пропадёт вместе с ним, а ручной забудут сделать именно в ту неделю, когда он понадобится.",
+  "LaunchChecklistItem.backupsAutomatedLeft": "Выключено, пока вы не включите.",
+  "LaunchChecklistItem.backupsRestoreTested": "Один раз восстановите бэкап на чистом сервере.",
+  "LaunchChecklistItem.backupsRestoreTestedWhy":
+    "Пока вы не восстановили бэкап, вы не знаете, работает ли он и сколько это займёт.",
+  "LaunchChecklistItem.backupsMissingAlert": "Получайте оповещение, если бэкапа нет.",
+  "LaunchChecklistItem.backupsMissingAlertWhy":
+    "Бэкапы ломаются молча, и вы узнаёте об этом в тот день, когда бэкап нужен.",
+  "LaunchChecklistItem.monitoringErrors": "Отслеживайте ошибки на сервере и в браузере.",
+  "LaunchChecklistItem.monitoringErrorsWhy":
+    "Большинство людей, наткнувшись на ошибку, уходят молча.",
+  "LaunchChecklistItem.monitoringAlerts": "Собирайте метрики и логи и шлите оповещения на телефон.",
+  "LaunchChecklistItem.monitoringAlertsWhy":
+    "Переполненный диск или застрявшая очередь должны разбудить вас раньше, чем клиентов.",
+  "LaunchChecklistItem.monitoringUptimeStatus":
+    "Проверяйте доступность снаружи и опубликуйте страницу статуса.",
+  "LaunchChecklistItem.monitoringUptimeStatusWhy":
+    "Упавший сервер не сообщит о своём падении, а страница статуса избавит вас от сотни одинаковых писем.",
+  "LaunchChecklistItem.monitoringLoadTest": "Проведите нагрузочный тест под ожидаемый трафик.",
+  "LaunchChecklistItem.monitoringLoadTestWhy":
+    "В день запуска трафик приходит одной волной, и предел лучше узнать заранее.",
+  "LaunchChecklistItem.emailTransactional":
+    "Отправляйте транзакционные письма через настоящий почтовый сервер.",
+  "LaunchChecklistItem.emailTransactionalWhy":
+    "Ссылки для входа и чеки, попавшие в спам, отрезают людей от продукта.",
+  "LaunchChecklistItem.emailDomainAuth": "Настройте SPF, DKIM и DMARC для домена отправки.",
+  "LaunchChecklistItem.emailDomainAuthWhy":
+    "Крупные почтовые сервисы отклоняют или прячут письма с доменов без них.",
+  "LaunchChecklistItem.emailReplySender": "Отправляйте с адреса, на который можно ответить.",
+  "LaunchChecklistItem.emailReplySenderWhy":
+    "Ответ на письмо часто и есть первое обращение в поддержку, а адрес no-reply его выбрасывает.",
+  "LaunchChecklistItem.emailReplySenderLeft":
+    "Отправитель задаётся в настройках; ящик, который кто-то читает, — ваш.",
+  "LaunchChecklistItem.emailNewsletter": "Ведите рассылку с двойным подтверждением и отпиской.",
+  "LaunchChecklistItem.emailNewsletterWhy":
+    "Подтверждённые подписчики берегут репутацию домена, а рабочая отписка во многих странах обязательна по закону.",
+  "LaunchChecklistItem.searchBasics":
+    "Опубликуйте sitemap, robots.txt, llms.txt и карточки превью ссылок.",
+  "LaunchChecklistItem.searchBasicsWhy":
+    "Поисковики, ИИ-ассистенты и мессенджеры читают их первыми, а ссылка без карточки собирает меньше кликов.",
+  "LaunchChecklistItem.searchHreflang": "Отметьте каждую языковую версию через hreflang.",
+  "LaunchChecklistItem.searchHreflangWhy":
+    "Без него поисковики показывают людям не тот язык или считают переводы копиями.",
+  "LaunchChecklistItem.searchLighthouseConsole":
+    "Держите бюджет Lighthouse в CI и подтвердите сайт в Search Console.",
+  "LaunchChecklistItem.searchLighthouseConsoleWhy":
+    "Бюджет не даст выпустить медленную страницу, а Search Console покажет, что поисковик не может проиндексировать.",
+  "LaunchChecklistItem.searchLighthouseConsoleLeft":
+    "Бюджет проверяется в CI; подтвердить сайт в Search Console — ваша задача.",
+  "LaunchChecklistItem.analyticsGoals":
+    "Подключите аналитику без слежки, с целью и воронкой до ключевого действия.",
+  "LaunchChecklistItem.analyticsGoalsWhy":
+    "Просмотры говорят, что люди пришли; воронка показывает, где они останавливаются перед регистрацией или оплатой.",
+  "LaunchChecklistItem.analyticsGoalsLeft": "События отправляются; цель и воронку выбираете вы.",
+  "LaunchChecklistItem.supportContact": "Дайте людям способ связаться с живым человеком.",
+  "LaunchChecklistItem.supportContactWhy":
+    "Клиент, который ни до кого не достучался, вместо письма пишет отзыв или оформляет чарджбэк.",
+  "LaunchChecklistItem.supportContactLeft": "Контакты задаются в настройках; отвечать — вам.",
+  "LaunchChecklistItem.supportAdminLookup": "Заведите админку, где можно найти клиента.",
+  "LaunchChecklistItem.supportAdminLookupWhy":
+    "Без неё поддержка означает ручные запросы к базе со всеми их рисками.",
+  "LaunchChecklistItem.supportErrorPages": "Сделайте понятные страницы 404 и 500.",
+  "LaunchChecklistItem.supportErrorPagesWhy":
+    "Голая страница ошибки выглядит как сломанный продукт, а полезная возвращает людей к работе.",
+  "LaunchChecklistItem.supportDeployRollback": "Запишите, как вы деплоите и как откатываетесь.",
+  "LaunchChecklistItem.supportDeployRollbackWhy":
+    "Хуже всего разбираться с откатом посреди неудачного деплоя.",
 } satisfies Catalog

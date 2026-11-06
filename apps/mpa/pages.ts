@@ -1,6 +1,8 @@
 import { API_DOCS_HEAD, API_DOCS_PATH } from "./api-docs.ts"
 import { ADMIN_HEAD, ADMIN_UPDATED } from "./routes/[[lang]]/admin.tsx"
 import { CHECKED_ON, COMPARE_HEAD } from "./routes/[[lang]]/compare.tsx"
+import { CHECKLIST_HEAD, CHECKLIST_UPDATED } from "./routes/[[lang]]/saas-launch-checklist.tsx"
+import { CHECKLIST_PATH } from "./launch-checklist.ts"
 import { FEATURES_HEAD, FEATURES_UPDATED } from "./routes/[[lang]]/features.tsx"
 import { FEATURE_PAGES, featurePageIn, featurePath } from "./features-data.tsx"
 import { HOME_HEAD, HOME_UPDATED } from "./routes/index.tsx"
@@ -81,6 +83,7 @@ export const SITE_PAGES: readonly SitePage[] = [
   // Seed's own site: see docs/start-a-product.md
   sitePage(`/compare`, COMPARE_HEAD, CHECKED_ON),
   sitePage(`/pricing`, PRICING_HEAD, PRICING_UPDATED),
+  sitePage(CHECKLIST_PATH, CHECKLIST_HEAD, CHECKLIST_UPDATED),
   sitePage(API_DOCS_PATH, API_DOCS_HEAD, API_DOCS_HEAD.updated, true),
   sitePage(DOCS_PATH, DOCS_HEAD, day(DOC_PAGES.map(({ updated }) => updated).sort().at(-1)), true),
   ...DOC_PAGES,

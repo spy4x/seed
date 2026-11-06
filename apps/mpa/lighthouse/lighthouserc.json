@@ -9,6 +9,7 @@
         "http://127.0.0.1:48411/features/shortcuts",
         "http://127.0.0.1:48411/pricing",
         "http://127.0.0.1:48411/compare",
+        "http://127.0.0.1:48411/saas-launch-checklist",
         "http://127.0.0.1:48411/admin",
         "http://127.0.0.1:48411/privacy",
         "http://127.0.0.1:48411/docs/api",
@@ -23,7 +24,8 @@
         "http://127.0.0.1:48411/ar",
         "http://127.0.0.1:48411/ru/features",
         "http://127.0.0.1:48411/es/pricing",
-        "http://127.0.0.1:48411/pt-BR/compare"
+        "http://127.0.0.1:48411/pt-BR/compare",
+        "http://127.0.0.1:48411/ar/saas-launch-checklist"
       ],
       "numberOfRuns": 3,
       "settings": {
