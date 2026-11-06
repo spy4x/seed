@@ -134,6 +134,8 @@ test.describe("group billing", () => {
       await openGroupTab(page, "Billing")
       await page.getByRole("button", { name: `Start ${days}-day free trial (opens Stripe)` })
         .click()
+      // The tab is on this address before the checkout too: wait for the return to land.
+      await expect(page.locator("[data-e2e=billing-confirming]")).toBeVisible()
       await expect(page).toHaveURL(`/groups/${groupId}/billing`)
 
       await groups.click()
