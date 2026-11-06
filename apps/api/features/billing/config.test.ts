@@ -11,6 +11,7 @@ import {
 import { readBillingSetup } from "@server/billing/setup.ts"
 import { billingSettingsOf, createPlanOf, createSeatPriced } from "./config.ts"
 import { createBillingGetHandler } from "./handlers.ts"
+import { TEST_PLANS } from "../../../../libs/domain/billing/test-plans.ts"
 
 describe("billing configuration", () => {
   it("hands the billing handlers the trial card setting the setup read", () => {
@@ -113,6 +114,7 @@ describe("billing configuration", () => {
         { get: () => Promise.resolve(stored) },
         () => Promise.resolve(role),
         enabled,
+        TEST_PLANS,
       )(groupId, 1)
 
     it("asks the owner and an admin of a group on a live per-member plan", async () => {

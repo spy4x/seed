@@ -24,6 +24,7 @@ import { createTokenRateLimits } from "../middlewares/token-rate-limits.ts"
 import { createTokenApiRoute } from "./token-api.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { apiError } from "../_testing/api-error.ts"
+import { TEST_PLANS } from "../../../libs/domain/billing/test-plans.ts"
 
 /**
  * The token API over real buses, the real session gate and the real note handlers, with notes in
@@ -79,6 +80,7 @@ function buildApp(limit = 100) {
   commands.use(createSessionGate([]))
   commands.use(createEntitlementGate({
     billingEnabled: true,
+    plans: TEST_PLANS,
     planOf: () => Promise.resolve(FREE_PLAN_ID),
     roleOf: (group, user) => groups.roleOf(group, user),
     usage: {

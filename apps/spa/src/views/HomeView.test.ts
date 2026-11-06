@@ -1,12 +1,13 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { BillingStatus, type Plan, PLANS, PRO_PLAN_ID, toGroupBilling } from "@domain/billing"
+import { BillingStatus, type Plan, PRO_PLAN_ID, toGroupBilling } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import { GROUP_PATHS, NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { type Landing, landingPath } from "./HomeView.tsx"
+import { TEST_PLANS } from "../../../../libs/domain/billing/test-plans.ts"
 
 const NOW = new Date("2026-11-04T10:00:00Z")
-const [FREE, PRO] = PLANS
+const [FREE, PRO] = TEST_PLANS
 
 /** A catalog whose free plan allows nothing, as a product paid from sign-up sets it. */
 const PAID_FROM_SIGN_UP: Plan[] = [
@@ -20,7 +21,7 @@ const PAID_FROM_SIGN_UP: Plan[] = [
   PRO,
 ]
 
-const never = toGroupBilling(null, GroupRole.OWNER, true, false, NOW, 7, 1)
+const never = toGroupBilling(null, GroupRole.OWNER, true, false, NOW, 7, 1, false, TEST_PLANS)
 const paying = toGroupBilling(
   {
     groupId: "g",
@@ -41,6 +42,8 @@ const paying = toGroupBilling(
   NOW,
   7,
   1,
+  false,
+  TEST_PLANS,
 )
 
 /** A new owner, signed in, alone in the first group sign-up gave them. */
@@ -59,8 +62,8 @@ describe("landingPath", () => {
     expect(landingPath(owner())).toBe(GROUP_PATHS.billing("g"))
   })
 
-  it("opens the notes at once with Seed's own plans", () => {
-    expect(landingPath(owner({ plans: PLANS, groups: null, billing: undefined })))
+  it("opens the notes at once when the free plan allows something", () => {
+    expect(landingPath(owner({ plans: TEST_PLANS, groups: null, billing: undefined })))
       .toBe(NOTE_PATHS.list)
   })
 

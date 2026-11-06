@@ -12,10 +12,15 @@ import { NoteCreateCommand } from "@domain/notes"
 import { UserMFAStatus } from "@domain/identity"
 import { createEntitlementGate, type EntitlementGateDependencies } from "./entitlement-gate.ts"
 import { ENTITLEMENT_NEEDS } from "./entitlement-needs.ts"
+import { TEST_FREE_PLAN, TEST_PLANS } from "../../../libs/domain/billing/test-plans.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
 const actor = (userId: number) => ({ userId, userMfa: UserMFAStatus.NOT_CONFIGURED })
+
+/** The test catalog's free caps, which the gate below reads. */
+const NOTE_CAP = TEST_FREE_PLAN.entitlements.limits.maxNotes!
+const MEMBER_CAP = TEST_FREE_PLAN.entitlements.limits.maxMembers!
 
 const ROLES: Record<number, GroupRole> = {
   1: GroupRole.OWNER,
@@ -33,6 +38,7 @@ function bus(overrides: Partial<EntitlementGateDependencies> = {}, notes = 0, me
     planOf: () => Promise.resolve(FREE_PLAN_ID),
     roleOf: (_group, userId) => Promise.resolve(ROLES[userId] ?? null),
     usage: { maxNotes: () => Promise.resolve(notes), maxMembers: () => Promise.resolve(members) },
+    plans: TEST_PLANS,
     ...overrides,
   }, ENTITLEMENT_NEEDS))
   commands.register(NoteCreateCommand, (command) => {
@@ -99,13 +105,13 @@ describe("the entitlement gate", () => {
   })
 
   it("refuses a capped command at the cap before the handler runs, and lets one under it through", async () => {
-    const full = bus({}, 10)
+    const full = bus({}, NOTE_CAP)
     await expect(full.commands.execute(createNote(3))).rejects.toThrow(PlanError)
     expect(full.ran).toEqual([])
 
-    const room = bus({}, 9)
+    const room = bus({}, NOTE_CAP - 1)
     await room.commands.execute(createNote(3))
-    expect(room.ran).toEqual([{ command: "note.create", allowance: 10 }])
+    expect(room.ran).toEqual([{ command: "note.create", allowance: NOTE_CAP }])
   })
 
   it("hands the handler no cap on a plan without one", async () => {
@@ -117,7 +123,7 @@ describe("the entitlement gate", () => {
   })
 
   it("passes a stranger and a role the command does not allow on to the handler", async () => {
-    const { commands, ran } = bus({}, 10)
+    const { commands, ran } = bus({}, NOTE_CAP)
 
     await commands.execute(createNote(9))
     await commands.execute(createNote(4))
@@ -129,11 +135,11 @@ describe("the entitlement gate", () => {
       "group.setRole",
     ])
     // The handler still writes under the cap, so a viewer who slipped past cannot exceed it.
-    expect(ran[0].allowance).toBe(10)
+    expect(ran[0].allowance).toBe(NOTE_CAP)
   })
 
   it("lets everything through with no cap while billing is off", async () => {
-    const { commands, ran } = bus({ billingEnabled: false }, 10)
+    const { commands, ran } = bus({ billingEnabled: false }, NOTE_CAP)
 
     await commands.execute(setRole(1))
     await commands.execute(createNote(1))
@@ -165,22 +171,22 @@ describe("the entitlement gate", () => {
   })
 
   it("refuses an invitation once the members fill the plan, and passes the cap on under it", async () => {
-    const full = bus({}, 0, 3)
-    const room = bus({}, 0, 2)
+    const full = bus({}, 0, MEMBER_CAP)
+    const room = bus({}, 0, MEMBER_CAP - 1)
 
     await expect(full.commands.execute(invite(2))).rejects.toThrow(PlanError)
     await room.commands.execute(invite(2))
 
     expect(full.ran).toEqual([])
-    expect(room.ran).toEqual([{ command: "group.invite", allowance: 3 }])
+    expect(room.ran).toEqual([{ command: "group.invite", allowance: MEMBER_CAP }])
   })
 
   it("leaves an invitation the actor may not give to the handler, even on a full plan", async () => {
-    const full = bus({}, 0, 3)
+    const full = bus({}, 0, MEMBER_CAP)
 
     await full.commands.execute(invite(2, GroupRole.ADMIN))
 
     // Not refused for the plan: the handler refuses the role itself, the same on every plan.
-    expect(full.ran).toEqual([{ command: "group.invite", allowance: 3 }])
+    expect(full.ran).toEqual([{ command: "group.invite", allowance: MEMBER_CAP }])
   })
 })

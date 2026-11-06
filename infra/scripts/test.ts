@@ -68,7 +68,10 @@ export const GROUPS: TestGroup[] = [
     paths: [`apps/mpa/changelog-start.test.ts`],
   },
   // Each test below reads files, so it runs with its own read grant.
-  { flags: [`--allow-read=apps,libs`], paths: [`tests/spacing.test.ts`] },
+  {
+    flags: [`--allow-read=apps,libs`],
+    paths: [`tests/spacing.test.ts`, `tests/test-catalog-boundary.test.ts`],
+  },
   {
     flags: [`--allow-read=apps,libs/ui`],
     paths: [`tests/ui-boundary.test.ts`, `tests/no-direct-date-format.test.ts`],

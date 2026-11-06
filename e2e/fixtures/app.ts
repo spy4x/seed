@@ -107,12 +107,21 @@ export async function submitAuthForm(page: Page, url: string, ready: Locator): P
   })
 }
 
-/** Signs `email` in through the form and waits until the app has booted on the notes list. */
+/**
+ * Where sign-in lands: the notes list, or the group's Billing tab for the owner of a group that
+ * never paid when the catalog's free plan allows nothing.
+ */
+const SIGNED_IN_LANDING = /\/(notes|groups\/[0-9a-f-]{36}\/billing)$/
+
+/** Signs `email` in through the form and waits until the app has booted where sign-in lands. */
 export async function signIn(page: Page, email: string, password: string): Promise<void> {
   await gotoApp(page, "/sign-in", page.locator("[data-e2e=auth-form-login]"))
   await page.locator("[data-e2e=auth-form-login]").fill(email)
   await page.locator("[data-e2e=auth-form-password]").fill(password)
-  await submitAuthForm(page, "/notes", page.locator("[data-e2e=shell-ws-status]"))
+  await gotoApp(page, "/notes", page.locator("[data-e2e=shell-ws-status]"), async () => {
+    await page.locator("[data-e2e=auth-form-submit]").click()
+    await page.waitForURL(SIGNED_IN_LANDING)
+  })
 }
 
 /**

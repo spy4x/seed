@@ -1,6 +1,6 @@
 import type { BillingHandlerDependencies } from "./handlers.ts"
 import type { BillingSetup } from "@server/billing/setup.ts"
-import { type BillingRepository, effectivePlanId, isSeatBilled } from "@domain/billing"
+import { type BillingRepository, effectivePlanId, isSeatBilled, type Plan } from "@domain/billing"
 import { canManageInvitations, type GroupRole } from "@domain/groups"
 
 /** What the API decides a group's plan with: the setup's grace period and the system clock. */
@@ -39,17 +39,19 @@ export function createPlanOf(
 /**
  * Whether a new invitation to the group needs its creator to confirm the per-member price: billing
  * is on, the creator may manage invitations, and the group pays per member. Anyone else learns
- * nothing about the group's bill from the answer.
+ * nothing about the group's bill from the answer. `plans` is the catalog, `PLANS` unless a test
+ * passes its own.
  */
 export function createSeatPriced(
   billing: Pick<BillingRepository, "get">,
   roleOf: (groupId: string, userId: number) => Promise<GroupRole | null>,
   enabled: boolean,
+  plans?: readonly Plan[],
 ): (groupId: string, userId: number) => Promise<boolean> {
   return async (groupId, userId) => {
     if (!enabled) return false
     const role = await roleOf(groupId, userId)
     if (role === null || !canManageInvitations(role)) return false
-    return isSeatBilled(await billing.get(groupId))
+    return isSeatBilled(await billing.get(groupId), plans)
   }
 }

@@ -316,7 +316,7 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
         <Fact label={t.t(`AdminBillingCustomer.status`)}>
           <BillingStatusLine view={view} dataE2E="admin-billing-status" />
         </Fact>
-        <Fact label={t.t(`AdminBillingCustomer.plan`)}>{planLine(t, customer)}</Fact>
+        <Fact label={t.t(`AdminBillingCustomer.plan`)}>{planLine(t, customer, props.plans)}</Fact>
         {customer.period !== null && (
           <Fact label={t.t(`AdminBillingCustomer.period`)}>
             <span data-e2e="admin-billing-period" data-period={customer.period}>
@@ -415,9 +415,13 @@ function Fact({ label, children }: { label: string; children: ComponentChildren 
 }
 
 /** `Pro, 4 members`. */
-function planLine(t: Translator<string>, customer: AdminBillingCustomer): string {
+function planLine(
+  t: Translator<string>,
+  customer: AdminBillingCustomer,
+  plans?: readonly Plan[],
+): string {
   return t.t(`AdminBillingCustomer.planLine`, {
-    plan: billingPlanName(t, customer.planId),
+    plan: billingPlanName(t, customer.planId, plans),
     count: seatsOf(customer),
   })
 }
@@ -607,7 +611,7 @@ function ActionDialog(
   const format = useFormat()
   const t = useAdminText()
   const group = customer.groupName
-  const plan = billingPlanName(t, customer.planId)
+  const plan = billingPlanName(t, customer.planId, props.plans)
   // What the next renewal charges: a yearly subscription renews at its yearly price.
   const price = billedPriceOf(customer, props.plans)
   const charge = price ? money(price) : t.t(`AdminBillingCustomer.itsPlanPrice`)

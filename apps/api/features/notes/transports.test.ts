@@ -46,6 +46,7 @@ import {
 import { createNoteOperations } from "./operations.ts"
 import { isUuid, uuidV7 } from "@spy4x/platform/universal/uuid"
 import { checkedError } from "../../_testing/api-error.ts"
+import { TEST_PLANS } from "../../../../libs/domain/billing/test-plans.ts"
 
 /**
  * Every transport over one pair of buses, as the API wires them. The socket and the call route
@@ -84,6 +85,7 @@ function stack(plan = FREE_PLAN_ID, plans: Record<string, string> = {}) {
   commands.use(createSessionGate([]))
   commands.use(createEntitlementGate({
     billingEnabled: true,
+    plans: TEST_PLANS,
     planOf: (group) => Promise.resolve(plans[group] ?? plan),
     roleOf: (group, user) => dependencies.groups.roleOf(group, user),
     usage: {

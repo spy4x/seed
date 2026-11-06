@@ -19,7 +19,6 @@ import {
   BILLING_AUDIT_EVENTS,
   BillingPeriod,
   BillingStatus,
-  PLANS,
   PRO_PLAN_ID,
 } from "@domain/billing"
 import { UserRole } from "@domain/identity"
@@ -39,6 +38,7 @@ import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
 const day = (at: string) => createFormatters().date(at)
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { TEST_PLANS } from "../domain/billing/test-plans.ts"
 const window = new Window({ url: `http://admin.localhost/` })
 const own = {
   document: globalThis.document,
@@ -141,8 +141,8 @@ function customer(overrides: Partial<AdminBillingCustomer> = {}): AdminBillingCu
   }
 }
 
-/** Seed's catalog with Pro sold yearly too, at €90.00 a member a year against €9.00 a month. */
-const YEARLY_PLANS = PLANS.map((plan) =>
+/** The test catalog with Pro sold yearly too, at €90.00 a member a year against €9.00 a month. */
+const YEARLY_PLANS = TEST_PLANS.map((plan) =>
   plan.id === PRO_PLAN_ID ? { ...plan, yearlyAmount: 9000 } : plan
 )
 
@@ -185,6 +185,7 @@ function listProps(calls: unknown[][], props: Partial<AdminBillingListScreenProp
     onSearch: (filter) => void calls.push([`search`, filter]),
     onPage: (page) => void calls.push([`page`, page]),
     onRetry: () => void calls.push([`retry`]),
+    plans: TEST_PLANS,
     ...props,
   } satisfies AdminBillingListScreenProps
 }
@@ -398,6 +399,7 @@ function customerProps(
     actionError: null,
     pending: false,
     onAction: (action) => void calls.push([`action`, action]),
+    plans: TEST_PLANS,
     waiting: null,
     navigate: undefined,
     ...props,
