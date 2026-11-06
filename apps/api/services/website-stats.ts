@@ -122,6 +122,12 @@ export interface WebsiteStatsQuery {
   fresh: boolean
 }
 
+/** The visits to one page by `utm_source`, as {@link createWebsiteStats}' `pathVisits` reads them. */
+export type WebsitePathVisits =
+  | { state: `off`; missing: string[] }
+  | { state: `failed` }
+  | { state: `ready`; bySource: Record<string, number>; readAt: string; stale: boolean }
+
 /** Why a read of Umami failed, as the screen tells it. */
 type Problem = `token-refused` | `unknown-website` | `unreachable`
 
@@ -237,21 +243,21 @@ export function createWebsiteStats(dependencies: WebsiteStatsDependencies) {
     }
   }
 
+  /** A read's output, or a {@link UmamiFailure} with Umami's status. */
+  async function ok<T>(result: Promise<UmamiReadResult<T>>): Promise<T> {
+    const answer = await result
+    if (answer.success) return answer.output
+    log(`Stats: Umami read failed: ${answer.error}`)
+    // A refused token or website shows up as 401, 403 or 404; anything else is an outage.
+    const refused = answer.status === 401 || answer.status === 403 || answer.status === 404
+    throw new UmamiFailure(refused ? answer.status : null, answer.error)
+  }
+
   return {
     async read(query: WebsiteStatsQuery): Promise<WebsiteStatsResponse> {
       if (setup === null) return { state: `off`, missing: [...missing] }
       const umamiUrl = `${setup.url.replace(/\/+$/, ``)}/websites/${setup.websiteId}`
       const connection = { baseUrl: setup.url, token: setup.token, websiteId: setup.websiteId }
-
-      /** A read's output, or a {@link UmamiFailure} with Umami's status. */
-      async function ok<T>(result: Promise<UmamiReadResult<T>>): Promise<T> {
-        const answer = await result
-        if (answer.success) return answer.output
-        log(`Stats: Umami read failed: ${answer.error}`)
-        // A refused token or website shows up as 401, 403 or 404; anything else is an outage.
-        const refused = answer.status === 401 || answer.status === 403 || answer.status === 404
-        throw new UmamiFailure(refused ? answer.status : null, answer.error)
-      }
 
       const end = now()
       const start = Date.parse(`${utcDay(end)}T00:00:00Z`) - (query.days - 1) * DAY_MS
@@ -439,6 +445,37 @@ export function createWebsiteStats(dependencies: WebsiteStatsDependencies) {
         if (check.problem === `token`) return `token-refused`
         if (check.problem === `website`) return `unknown-website`
         return `unreachable`
+      }
+    },
+
+    /**
+     * The visits to the website's `path` since `since`, by `utm_source`, read through the same
+     * five-minute copy as the rest of Stats: the blog's sharing checklist shows them per channel.
+     * `off` while Stats is off, `failed` when Umami refused or did not answer and no copy is left.
+     */
+    async pathVisits(path: string, since: number): Promise<WebsitePathVisits> {
+      if (setup === null) return { state: `off`, missing: [...missing] }
+      const connection = { baseUrl: setup.url, token: setup.token, websiteId: setup.websiteId }
+      const span = { ...connection, startAt: since, endAt: now() }
+      try {
+        const entry = await cached(`path:${path}:${since}`, false, async () => {
+          const rows = await ok(umami.metrics({
+            ...span,
+            type: `utmSource`,
+            limit: 500,
+            filters: { path },
+          }))
+          return Object.fromEntries(rows.map((row) => [row.x, row.y]))
+        })
+        return {
+          state: `ready`,
+          bySource: entry.value,
+          readAt: new Date(entry.at).toISOString(),
+          stale: entry.stale,
+        }
+      } catch (error) {
+        if (!(error instanceof UmamiFailure)) throw error
+        return { state: `failed` }
       }
     },
   }

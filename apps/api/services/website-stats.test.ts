@@ -346,3 +346,65 @@ describe(`Stats copy and failures`, () => {
     expect(websiteAnswer.state).toBe(`unknown-website`)
   })
 })
+
+describe(`pathVisits`, () => {
+  const reads = (metrics: UmamiReads[`metrics`]): UmamiReads => ({
+    check: () => Promise.resolve({ success: true }) as ReturnType<UmamiReads[`check`]>,
+    stats: () => down(),
+    metrics,
+    pageviews: () => down(),
+    eventValues: () => down(),
+  })
+
+  it(`reads one page's visits by utm_source, and keeps the last copy marked stale when Umami goes down`, async () => {
+    let clock = NOW
+    let up = true
+    const asked: unknown[] = []
+    const stats = createWebsiteStats({
+      setup: SETUP,
+      missing: [],
+      sources: () => Promise.resolve([]),
+      items: null,
+      now: () => clock,
+      log: () => {},
+      umami: reads((query) => {
+        asked.push(query.filters)
+        return up ? ok([{ x: `r-selfhosted`, y: 12 }, { x: `hn`, y: 3 }]) : down()
+      }),
+    })
+    const first = await stats.pathVisits(`/blog/hello`, NOW - 1000)
+    expect(first).toEqual({
+      state: `ready`,
+      bySource: { "r-selfhosted": 12, hn: 3 },
+      readAt: new Date(NOW).toISOString(),
+      stale: false,
+    })
+    expect(asked).toEqual([{ path: `/blog/hello` }])
+    up = false
+    clock += STATS_CACHE_MS + 1
+    const later = await stats.pathVisits(`/blog/hello`, NOW - 1000)
+    expect(later).toMatchObject({ state: `ready`, bySource: { hn: 3 }, stale: true })
+  })
+
+  it(`says off without Umami's settings, and failed when Umami refuses with no copy`, async () => {
+    const off = createWebsiteStats({
+      setup: null,
+      missing: [`UMAMI_API_TOKEN`],
+      sources: () => Promise.resolve([]),
+      items: null,
+    })
+    expect(await off.pathVisits(`/blog/hello`, 0)).toEqual({
+      state: `off`,
+      missing: [`UMAMI_API_TOKEN`],
+    })
+    const refusing = createWebsiteStats({
+      setup: SETUP,
+      missing: [],
+      sources: () => Promise.resolve([]),
+      items: null,
+      log: () => {},
+      umami: reads(() => refused()),
+    })
+    expect(await refusing.pathVisits(`/blog/hello`, 0)).toEqual({ state: `failed` })
+  })
+})
