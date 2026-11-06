@@ -26,15 +26,16 @@ import {
   createNoteUpdateHandler,
 } from "../../apps/api/features/notes/handlers.ts"
 import { team, withSchema } from "./group-team.ts"
+import { TEST_FREE_PLAN, TEST_PLANS } from "../../libs/domain/billing/test-plans.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
- * The free plan's cap on notes, enforced by the command bus's entitlement gate and the note
+ * The test catalog's free cap on notes, enforced by the command bus's entitlement gate and the note
  * handlers on a real Postgres. Needs "DB_HOST", "DB_USER", "DB_PASS" and "DB_NAME" (recipe in
  * docs/handoff.md); it fails when they are missing.
  */
 
-const FREE_NOTES = 10
+const FREE_NOTES = TEST_FREE_PLAN.entitlements.limits.maxNotes!
 
 /** A bus wired as the API wires it: the gate on Postgres, then the real note handlers. */
 function noteBus(sql: postgres.Sql, usage?: EntitlementGateDependencies["usage"]) {
@@ -50,7 +51,8 @@ function noteBus(sql: postgres.Sql, usage?: EntitlementGateDependencies["usage"]
   bus.use(createEntitlementGate({
     billingEnabled: true,
     planOf: async (groupId) =>
-      effectivePlanId(await billing.get(groupId), new Date(), DEFAULT_GRACE_DAYS),
+      effectivePlanId(await billing.get(groupId), new Date(), DEFAULT_GRACE_DAYS, TEST_PLANS),
+    plans: TEST_PLANS,
     roleOf: groups.roleOf,
     usage: usage ?? {
       maxNotes: (groupId) => notes.count(groupId),
