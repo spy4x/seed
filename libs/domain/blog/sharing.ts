@@ -493,7 +493,10 @@ export const blogShareSetSchema = type({
 })
 export type BlogShareSetRequest = typeof blogShareSetSchema.infer
 
-const count = `number.integer >= 0 | null`
+/** The largest count a result holds: the top of a Postgres `integer`. */
+export const BLOG_SHARE_RESULT_MAX = 2147483647
+
+const count = `0 <= number.integer <= ${BLOG_SHARE_RESULT_MAX} | null` as const
 
 /** `POST /api/admin/blog/posts/:id/shares/:channelId/results`: numbers typed by hand. */
 export const blogShareResultsSchema = type({

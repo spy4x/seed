@@ -374,6 +374,17 @@ describe(`operator area: sharing routes`, () => {
     expect(calls).toEqual([])
   })
 
+  it(`refuses a count above the database's integer limit and calls nothing`, async () => {
+    const { app, calls } = buildApp()
+    const path = `/posts/${POST_ID}/shares/${REDDIT_ID}/results`
+    const at = { views: null, reactions: null, comments: null, score: 2147483647 }
+    expect((await request(app, `POST`, path, at)).status).toBe(201)
+    const above = await request(app, `POST`, path, { ...at, score: 2147483648 })
+
+    expect(above.status).toBe(400)
+    expect(calls).toHaveLength(1)
+  })
+
   it(`answers a live post's checklist and reads its visits from the time it went live`, async () => {
     const { app, calls } = buildApp(operator(), {
       visits: { state: `ready`, bySource: { "r-selfhosted": 12 }, readAt: NOW, stale: false },
