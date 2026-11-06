@@ -44,9 +44,13 @@ passing. They do not read `PLANS`:
   `libs/domain/billing/test-plans.ts`, a copy of Seed's Free and Pro. A function that reads the
   catalog takes it as its last parameter, `PLANS` by default, and the tests pass `TEST_PLANS`.
   Production code never imports that file; `tests/test-catalog-boundary.test.ts` fails if it does.
-- The website's tests and the demo seed read `PLANS` itself, since they check what the site shows.
+  The worker's billing jobs take the catalog as `JobDeps.plans`.
+- The website's tests and the demo seed's test read `PLANS` itself: they check what the site and the
+  demo show.
 - The browser tests read what the running stack answers: the trial from `GET /api/billing/trial`,
-  the note cap from the API's refusal and the seat price from the group's billing.
+  the note cap from the API's refusal and the seat price from the group's billing. When the free
+  plan allows nothing, a spec that needs a note or a second member puts its group on the paid plan
+  first, through the development provider's webhook.
 
 Keep the ids `free` and `pro` (`FREE_PLAN_ID` and `PRO_PLAN_ID`): the code names the free plan and
 the development provider maps its prices to `pro`. To rename the paid plan, change its `name`.
