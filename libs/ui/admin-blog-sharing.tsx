@@ -507,7 +507,9 @@ function ShareRow(
                 />
               </div>
             )
-            : !automatic && <p class="text-sm text-muted">{t.t(`AdminBlogSharing.noText`)}</p>}
+            : !automatic && !row.submitUrl && (
+              <p class="text-sm text-muted">{t.t(`AdminBlogSharing.noText`)}</p>
+            )}
           <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             {row.submitUrl && (
               <Button
