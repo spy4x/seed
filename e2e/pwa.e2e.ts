@@ -2,6 +2,7 @@ import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { PRODUCT_NAME } from "../libs/ui/brand.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -36,8 +37,8 @@ test.describe("installable app", () => {
     await gotoApp(page, "/sign-in", page.locator("[data-e2e=auth-form-login]"))
     const { url, manifest } = await linkedManifest(page)
 
-    expect(manifest.name).toBe("Seed")
-    expect(manifest.short_name).toBe("Seed")
+    expect(manifest.name).toBe(PRODUCT_NAME)
+    expect(manifest.short_name).toBe(PRODUCT_NAME)
     expect(manifest.display).toBe("standalone")
     expect(manifest.start_url).toBe("/")
     expect(manifest.theme_color).toMatch(/^#[0-9a-f]{6}$/i)
