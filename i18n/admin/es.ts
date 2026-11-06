@@ -517,6 +517,17 @@ export default {
   "AdminBlogChannels.keyMissing":
     "Falta su clave. Define <key>{key}</key> en el archivo env del servidor y despliega.",
   "AdminBlogChannels.lastFailed": "La última publicación falló: {reason}",
+  "AdminBlogChannels.signInOk": "Sesión de LinkedIn válida hasta el {date}.",
+  "AdminBlogChannels.signInSoon": {
+    "one":
+      "La sesión de LinkedIn caduca en {count} día, el {date}. Renuévala con <cmd>{command}</cmd>.",
+    "many":
+      "La sesión de LinkedIn caduca en {count} días, el {date}. Renuévala con <cmd>{command}</cmd>.",
+    "other":
+      "La sesión de LinkedIn caduca en {count} días, el {date}. Renuévala con <cmd>{command}</cmd>.",
+  },
+  "AdminBlogChannels.signInExpired":
+    "La sesión de LinkedIn caducó el {date}. Las publicaciones esperan hasta que ejecutes <cmd>{command}</cmd>.",
   "AdminBlogChannels.loading": "Cargando los canales de difusión",
   "AdminBlogChannels.listError":
     "No se pudieron cargar los canales de difusión. Inténtalo de nuevo en un momento.",
@@ -557,6 +568,9 @@ export default {
   "AdminBlogChannels.sourcePreview": "Los enlaces llevan <tag>?utm_source={tag}</tag>",
   "AdminBlogChannels.addUtm": "Añadir utm_source a los enlaces",
   "AdminBlogChannels.addUtmOff": "Las visitas desde este canal no se cuentan.",
+  "AdminBlogChannels.autoPost": "Publicar automáticamente",
+  "AdminBlogChannels.autoPostOn": "Cada entrada se publica aquí sola en cuanto está en línea.",
+  "AdminBlogChannels.autoPostOff": "Cada entrada aparece aquí como pendiente, y la publicas tú.",
   "AdminBlogChannels.languages": "Idiomas",
   "AdminBlogChannels.languagesHint": "Las entradas en estos idiomas incluyen este canal.",
   "AdminBlogChannels.which": "Qué entradas",
@@ -651,6 +665,7 @@ export default {
   "AdminBlogSharing.presetLater": "Más tarde",
   "AdminBlogSharing.linkRequired": "Añade el enlace.",
   "AdminBlogSharing.autoHint": "Se publica automáticamente cuando se publica la entrada.",
+  "AdminBlogSharing.posting": "Publicando…",
   "AdminBlogSharing.autoFailed":
     "No se pudo publicar: {reason}. Inténtalo de nuevo, o publícala tú y márcala como publicada.",
   "AdminBlogSharing.autoNoKey":

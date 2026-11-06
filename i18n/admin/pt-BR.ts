@@ -515,6 +515,17 @@ export default {
   "AdminBlogChannels.keyMissing":
     "Aguardando a chave. Defina <key>{key}</key> no arquivo env do servidor e faça o deploy.",
   "AdminBlogChannels.lastFailed": "A última publicação falhou: {reason}",
+  "AdminBlogChannels.signInOk": "O login no LinkedIn vale até {date}.",
+  "AdminBlogChannels.signInSoon": {
+    "one":
+      "O login no LinkedIn expira daqui a {count} dia, em {date}. Renove com <cmd>{command}</cmd>.",
+    "many":
+      "O login no LinkedIn expira daqui a {count} dias, em {date}. Renove com <cmd>{command}</cmd>.",
+    "other":
+      "O login no LinkedIn expira daqui a {count} dias, em {date}. Renove com <cmd>{command}</cmd>.",
+  },
+  "AdminBlogChannels.signInExpired":
+    "O login no LinkedIn expirou em {date}. Os posts ficam esperando até você rodar <cmd>{command}</cmd>.",
   "AdminBlogChannels.loading": "Carregando canais de divulgação",
   "AdminBlogChannels.listError":
     "Não foi possível carregar os canais de divulgação. Tente de novo daqui a pouco.",
@@ -555,6 +566,10 @@ export default {
   "AdminBlogChannels.sourcePreview": "Os links levam <tag>?utm_source={tag}</tag>",
   "AdminBlogChannels.addUtm": "Adicionar utm_source aos links",
   "AdminBlogChannels.addUtmOff": "As visitas vindas deste canal não são contadas.",
+  "AdminBlogChannels.autoPost": "Publicar automaticamente",
+  "AdminBlogChannels.autoPostOn": "Cada post é publicado aqui sozinho assim que entra no ar.",
+  "AdminBlogChannels.autoPostOff":
+    "Cada post aparece aqui como pendente, e você mesmo o publica no canal.",
   "AdminBlogChannels.languages": "Idiomas",
   "AdminBlogChannels.languagesHint": "Posts nesses idiomas mostram este canal.",
   "AdminBlogChannels.which": "Quais posts",
@@ -648,6 +663,7 @@ export default {
   "AdminBlogSharing.presetLater": "Mais tarde",
   "AdminBlogSharing.linkRequired": "Adicione o link.",
   "AdminBlogSharing.autoHint": "Publica automaticamente quando o post for ao ar.",
+  "AdminBlogSharing.posting": "Publicando…",
   "AdminBlogSharing.autoFailed":
     "Não foi possível publicar: {reason}. Tente de novo ou publique manualmente e marque como publicado.",
   "AdminBlogSharing.autoNoKey":

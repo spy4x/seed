@@ -155,8 +155,9 @@ scheduled post's list and says that the post will not be emailed.
 
 ## The Dev.to cross-post
 
-With `DEVTO_API_KEY` set (a Dev.to API key, from Settings → Extensions on Dev.to) and `MPA_DOMAIN`
-set, a post that goes live is copied to Dev.to once, as the `blog.crosspost` job. The copy names
+With `DEVTO_API_KEY` set (a Dev.to API key, from Settings → Extensions on Dev.to), `MPA_DOMAIN`
+set and an active Dev.to channel with "Post automatically" on, a post that goes live is copied to
+Dev.to once, as the `blog.crosspost` job. The copy names
 the post's own address as its `canonical_url`, so search engines credit the website and not
 Dev.to. It carries the intro, the body (an interactive figure becomes a link to the original), the
 topic as its tag, the cover, and an "Originally published at" line.
@@ -176,6 +177,69 @@ topic as its tag, the cover, and an "Originally published at" line.
   on that row, so the sharing page says why nothing was posted.
 - **Seed's own posts** are cross-posted only when their file says `devto: true`. Posts that were
   live before the cross-post existed are settled by its migration and never copied.
+
+## Automatic posts
+
+A channel of a kind Seed can post to (Dev.to, Telegram, Mastodon, Bluesky, Hashnode and LinkedIn)
+has a "Post automatically" switch, on for a new channel. With it on, a post that goes live goes to
+the channel by itself: `blog.publish` gives each such channel that has the post to do an automatic
+"to do" row and queues its kind's job (`blog.post-telegram`, `blog.post-mastodon`,
+`blog.post-bluesky`, `blog.post-hashnode`, `blog.post-linkedin`; Dev.to keeps its
+[cross-post](#the-devto-cross-post)). A row the operator already marked posted, suggested or
+skipped is left alone, and a translation never goes where its original was posted or suggested.
+With the switch off, the row is a to-do the operator posts by hand.
+
+| Kind     | What it posts                                              | Keys (worker)                                                     |
+| -------- | ---------------------------------------------------------- | ----------------------------------------------------------------- |
+| Telegram | The Telegram text and the cover, by the bot, to `@name`    | `TELEGRAM_BOT_TOKEN`; the bot must be an admin of the channel     |
+| Mastodon | The short text with the link, which makes the link card     | `MASTODON_ACCESS_TOKEN` (scope `write:statuses`), `MASTODON_INSTANCE_URL` |
+| Bluesky  | The short text with the link and a link card               | `BLUESKY_IDENTIFIER`, `BLUESKY_APP_PASSWORD`, `BLUESKY_SERVICE`   |
+| Hashnode | The whole article, naming the post as its canonical address | `HASHNODE_TOKEN`, `HASHNODE_PUBLICATION_ID`                       |
+| LinkedIn | The LinkedIn text on the owner's profile, with a link card | `LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_MEMBER_ID`, `LINKEDIN_TOKEN_EXPIRES_AT` |
+
+The channel's address says where: `https://t.me/name` for Telegram, `@you@instance` for Mastodon.
+The Mastodon token goes only to the server `MASTODON_INSTANCE_URL` names: a channel on another
+server is refused with that reason and no request, so an operator who edits a channel's address
+cannot send the token elsewhere.
+Bluesky, Hashnode and LinkedIn post to the account the keys belong to. Telegram sends the text as
+the photo's caption, or, over Telegram's 1,024 characters, as a message with the post's own preview
+above it. A Hashnode translation's address ends in `-<language>`.
+
+- **A copy that lands** marks the row posted with its address, the date and "automatic", so
+  [Sharing results](#sharing-results) reads its numbers. The checklist shows "Posting…" while the
+  job waits or runs, and reads itself again every 5 seconds until it is done.
+- **A second copy is avoided, not ruled out.** A posted row is done. Each kind guards against a
+  second copy after a run that may have posted, whether it failed unsure, died, or ran past its
+  job lease. Mastodon sends the row's id as its idempotency key, so a repeat returns the first
+  status; Mastodon keeps that key for about an hour, so a copy that landed while every retry in
+  that hour failed in transport can be posted again. Bluesky, Hashnode, Telegram and LinkedIn mark
+  the row before the post. A marked Bluesky or Hashnode row looks the copy up before it posts
+  again, Bluesky after a 5-second wait for its search to catch up; a copy its search has not shown
+  yet can still be posted twice. A marked Telegram or LinkedIn row is never posted again by itself:
+  they have no lookup, so it keeps "Couldn't post: {reason}" and the operator checks the channel.
+- **A clear refusal is retried** by the job system and the row shows the reason meanwhile.
+  "Try again" on the row asks once more (`POST /api/admin/blog/posts/:id/shares/:channelId/retry`,
+  operators only, written to the audit log) and clears the mark, so use it only once the channel
+  shows no copy.
+- **Without its keys** a kind stays manual: the row says which key is missing and the worker logs
+  one line. Setting the key later posts nothing by itself; "Try again" does. Keys stay in the
+  env, never in the database or the admin panel, and a stored reason has every key replaced by
+  `<REDACTED:TOKEN>`.
+
+### LinkedIn
+
+LinkedIn has no lasting key: the owner signs in once and the token lasts 60 days.
+
+1. Create an app at linkedin.com/developers with the "Share on LinkedIn" and "Sign In with LinkedIn
+   using OpenID Connect" products, and add `http://localhost:8789/callback` to its redirect URLs.
+2. Run `LINKEDIN_CLIENT_ID=… LINKEDIN_CLIENT_SECRET=… deno task linkedin:sign-in` on your own
+   computer, open the address it prints and sign in. Keep the client secret out of the env file.
+3. Paste the three lines it prints (`LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_TOKEN_EXPIRES_AT`,
+   `LINKEDIN_MEMBER_ID`) into the server's env file and deploy.
+
+The channels list and the LinkedIn row show when the sign-in runs out and warn 14 days before; the
+API sends the admin only that date. Past it, the channel stays manual until you sign in again
+(`LINKEDIN_REDIRECT_PORT` picks another port than 8789).
 
 ## Sharing channels
 

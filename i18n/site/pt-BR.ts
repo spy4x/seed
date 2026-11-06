@@ -556,7 +556,7 @@ export default {
   "FeatureWebsite.fact3":
     "Uma newsletter com confirmação por e-mail, cancelamento com um clique e e-mails no idioma de quem lê",
   "FeatureWebsite.fact4":
-    "Um blog escrito no painel de administração, com posts em cada idioma e suas traduções, tópicos, figuras interativas que o leitor pode testar, feed RSS, dados estruturados de artigo, links antigos que redirecionam quando a URL de um post muda, capas nas listas, uma cópia opcional no Dev.to que aponta o post como original e um aviso ao IndexNow para que os buscadores saibam na hora de um post novo ou alterado",
+    "Um blog escrito no painel de administração, com posts em cada idioma e suas traduções, tópicos, figuras interativas que o leitor pode testar, feed RSS, dados estruturados de artigo, links antigos que redirecionam quando a URL de um post muda, capas nas listas, uma cópia opcional no Dev.to que aponta o post como original, publicação automática no Telegram, Mastodon, Bluesky, Hashnode e LinkedIn e um aviso ao IndexNow para que os buscadores saibam na hora de um post novo ou alterado",
   "FeatureWebsite.fact5":
     "Links de contato definidos no painel de administração, exibidos no rodapé e nos dados estruturados",
   "FeatureWebsite.fact6":
@@ -667,7 +667,8 @@ export default {
   "AdminTour.newsletter": "Newsletter",
   "AdminTour.newsletterText": "Quem assinou e o que foi enviado. Exporte a lista em CSV.",
   "AdminTour.blog": "Blog",
-  "AdminTour.blogText": "Posts do site em cada idioma, do rascunho à publicação.",
+  "AdminTour.blogText":
+    "Posts do site em cada idioma, do rascunho à publicação, divulgados automaticamente nos seus canais.",
   "AdminTour.contactLinks": "Links de contato",
   "AdminTour.contactLinksText": "Onde as pessoas falam com você, no rodapé do site, sem deploy.",
   "AdminTour.catalog": "Catálogo",

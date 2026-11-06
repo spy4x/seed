@@ -163,6 +163,7 @@ export default {
   "Reason.NOTHING_TO_MOVE": "No hay nada que mover.",
   "Reason.NOTIFICATION_NOT_FOUND": "Esta notificación ya no existe.",
   "Reason.NOT_DRAFT_OR_SCHEDULED": "Esta entrada ya está publicada.",
+  "Reason.NOT_AUTOMATIC": "Este canal no publica solo. Activa primero Publicar automáticamente.",
   "Reason.NOT_PUBLISHED": "Esto no está publicado.",
   "Reason.NOT_SCHEDULED": "Esta entrada no está programada.",
   "Reason.NO_SUBSCRIPTION": "Este grupo no tiene suscripción.",

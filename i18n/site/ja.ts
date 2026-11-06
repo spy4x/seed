@@ -533,7 +533,7 @@ export default {
   "FeatureWebsite.fact3":
     "ダブルオプトイン、ワンクリック購読解除、受信者の言語で届くメールに対応したニュースレター",
   "FeatureWebsite.fact4":
-    "管理画面で書けるブログ。言語ごとの記事とその翻訳、トピック、読者が試せるインタラクティブな図、RSSフィード、記事の構造化データ、URLを変えても新しいURLへ転送される古いリンク、記事一覧のカバー画像、元記事を示すDev.toへの任意の転載、新しい記事や更新した記事をすぐ検索エンジンに知らせるIndexNow通知に対応",
+    "管理画面で書けるブログ。言語ごとの記事とその翻訳、トピック、読者が試せるインタラクティブな図、RSSフィード、記事の構造化データ、URLを変えても新しいURLへ転送される古いリンク、記事一覧のカバー画像、元記事を示すDev.toへの任意の転載、Telegram・Mastodon・Bluesky・Hashnode・LinkedInへの自動投稿、新しい記事や更新した記事をすぐ検索エンジンに知らせるIndexNow通知に対応",
   "FeatureWebsite.fact5": "連絡先リンクは管理画面で設定し、フッターと構造化データに表示",
   "FeatureWebsite.fact6":
     "ショップ用のオプションのカタログを管理画面で編集：写真、カラー、サイズ、サイズ表、売り切れのサイズを持つアイテムを、販売するすべての言語で。アイテムと共有先ごとに短いトラッキングリンクも作れます",
@@ -641,7 +641,8 @@ export default {
   "AdminTour.newsletter": "ニュースレター",
   "AdminTour.newsletterText": "購読者と配信済みの内容。リストはCSVでエクスポート。",
   "AdminTour.blog": "ブログ",
-  "AdminTour.blogText": "サイトの記事を言語ごとに、下書きから公開まで。",
+  "AdminTour.blogText":
+    "サイトの記事を言語ごとに、下書きから公開まで。公開後は各チャンネルへ自動で投稿。",
   "AdminTour.contactLinks": "連絡先",
   "AdminTour.contactLinksText": "サイトのフッターに載せる連絡先を、デプロイなしで変更。",
   "AdminTour.catalog": "カタログ",

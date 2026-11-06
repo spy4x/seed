@@ -33,6 +33,7 @@ function sharingOf(share: BlogShare): AdminBlogSharingResponse {
       address: `https://dev.to/seed`,
       utmSource: `devto`,
       addUtm: true,
+      autoPost: true,
       languages: [`en`],
       startsAt: null,
       archivedAt: null,
@@ -47,6 +48,7 @@ function sharingOf(share: BlogShare): AdminBlogSharingResponse {
     submitUrl: null,
     result: null,
     visits: null,
+    posting: false,
   }
   return {
     post: {
@@ -58,6 +60,7 @@ function sharingOf(share: BlogShare): AdminBlogSharingResponse {
       publishedAt: NOW,
     },
     hasChannels: true,
+    linkedinExpiresAt: null,
     rows: [row],
     visits: { setup: false, missing: [], readAt: null, stale: false },
   }
@@ -91,5 +94,47 @@ it(`undoes a change by sending the row back with its date, its automatic flag an
     sharedAt: `2026-11-02T09:30:00.000Z`,
     automatic: true,
     error: `Dev.to answered 503 once`,
+  })
+})
+
+it(`tries an automatic post again on its own route, then reads the checklist with the row posting`, async () => {
+  const paths: string[] = []
+  let current = sharingOf({ ...posted, status: `todo`, url: null, sharedAt: null })
+  const request = ((path: string, init?: RequestInit) => {
+    paths.push(`${init?.method ?? `GET`} ${path}`)
+    if (init?.method === `POST`) {
+      current = { ...current, rows: current.rows.map((row) => ({ ...row, posting: true })) }
+      return Promise.resolve({ ok: true, status: 202, data: { queued: true } })
+    }
+    return Promise.resolve({ ok: true, status: 200, data: current })
+  }) as unknown as AdminFetch
+  const state = createSharingState(request, createToastStore())
+  await state.loadSharing(POST_ID)
+  expect(state.posting()).toBe(false)
+
+  expect(await state.retryPost(CHANNEL_ID)).toBe(true)
+
+  expect(paths).toEqual([
+    `GET /api/admin/blog/posts/${POST_ID}/sharing`,
+    `POST /api/admin/blog/posts/${POST_ID}/shares/${CHANNEL_ID}/retry`,
+    `GET /api/admin/blog/posts/${POST_ID}/sharing`,
+  ])
+  expect(state.posting()).toBe(true)
+  expect(state.sharing.value.pending).toBeNull()
+})
+
+it(`shows a refused try on its row`, async () => {
+  const request = ((_path: string, init?: RequestInit) =>
+    Promise.resolve(
+      init?.method === `POST`
+        ? { ok: false, status: 409, error: { message: `Turn on Post automatically first.` } }
+        : { ok: true, status: 200, data: sharingOf(posted) },
+    )) as unknown as AdminFetch
+  const state = createSharingState(request, createToastStore())
+  await state.loadSharing(POST_ID)
+
+  expect(await state.retryPost(CHANNEL_ID)).toBe(false)
+  expect(state.sharing.value.rowErrors).toEqual({
+    [CHANNEL_ID]: `Turn on Post automatically first.`,
   })
 })

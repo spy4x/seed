@@ -5,6 +5,7 @@ import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constant
 import {
   BLOG_CROSSPOST_JOB,
   BLOG_INDEXNOW_JOB,
+  BLOG_POST_JOBS,
   BLOG_PUBLISH_JOB,
   BLOG_SHARE_RESULTS_JOB,
 } from "@domain/blog"
@@ -66,6 +67,7 @@ const QUEUED_KINDS = [
   BLOG_INDEXNOW_JOB,
   BLOG_CROSSPOST_JOB,
   BLOG_SHARE_RESULTS_JOB,
+  ...Object.values(BLOG_POST_JOBS),
 ]
 
 const noop = () => async () => {}

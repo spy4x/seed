@@ -25,6 +25,9 @@ import { type Language, LANGUAGES } from "@domain/identity"
 import {
   type AdminBlogChannelRow,
   type AdminBlogChannelsResponse,
+  BLOG_AUTO_POST_KEY_MISSING,
+  BLOG_AUTO_POST_KEYS,
+  BLOG_AUTO_POST_SIGN_IN_EXPIRED,
   BLOG_AUTOMATIC_KINDS,
   BLOG_CHANNEL_ADDRESS_MAX_LENGTH,
   BLOG_CHANNEL_KINDS,
@@ -33,6 +36,8 @@ import {
   type BlogChannel,
   type BlogChannelKind,
   channelPostCount,
+  channelPostsAutomatically,
+  linkedinSignInState,
 } from "@domain/blog"
 import { ListCard, ListEmpty, MENU_TRIGGER_CLASSES } from "./notes-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
@@ -47,11 +52,8 @@ export const ADMIN_BLOG_SHARING_PATHS = {
   needsSharing: `/blog?sharing=todo`,
 } as const
 
-/** The env key the Dev.to job needs, named on a channel that waits for it. */
-export const DEVTO_KEY_NAME = `DEVTO_API_KEY`
-
-/** The error the Dev.to job leaves on its row while the key is not set. */
-export const DEVTO_KEY_MISSING = `key-missing`
+/** The command that signs in to LinkedIn again and prints the new keys. */
+export const LINKEDIN_SIGN_IN_COMMAND = `deno task linkedin:sign-in`
 
 /** Brand names stay as they are; the two plain words come from the catalog. */
 const KIND_NAMES: Record<BlogChannelKind, string> = {
@@ -93,22 +95,69 @@ function literal(text: string): JSX.Element {
   return <code class="font-mono text-xs" translate={false}>{text}</code>
 }
 
-/** What an automatic channel's last post left: waiting for its key, or why it failed. */
-export function ChannelProblem(
-  { error, keyText }: { error: string | null; keyText: string },
+/**
+ * What an automatic channel's last post left: waiting for its kind's key, waiting for a new
+ * LinkedIn sign-in, or why it failed. `keyText` and `failedText` are catalog keys.
+ */
+export function AutoPostProblem(
+  { kind, error, keyText, failedText, dataE2E }: {
+    kind: BlogChannelKind
+    error: string | null
+    keyText: string
+    failedText: string
+    dataE2E: string
+  },
 ): JSX.Element | null {
   const t = useAdminText()
-  if (error === null) return null
-  if (error === DEVTO_KEY_MISSING) {
+  if (error === null || error === BLOG_AUTO_POST_SIGN_IN_EXPIRED) return null
+  if (error === BLOG_AUTO_POST_KEY_MISSING) {
     return (
-      <span class="text-sm text-warning" data-e2e="blog-channel-key-missing">
-        <Rich parts={t.parts(keyText, { key: DEVTO_KEY_NAME })} tags={{ key: literal }} />
+      <span class="text-sm text-warning" data-e2e={`${dataE2E}-key-missing`}>
+        <Rich
+          parts={t.parts(keyText, { key: BLOG_AUTO_POST_KEYS[kind] ?? `` })}
+          tags={{ key: literal }}
+        />
       </span>
     )
   }
   return (
-    <span class="text-sm text-danger wrap-anywhere" data-e2e="blog-channel-failed">
-      {t.t(`AdminBlogChannels.lastFailed`, { reason: error })}
+    <span class="text-sm text-danger wrap-anywhere" data-e2e={`${dataE2E}-failed`}>
+      {t.t(failedText, { reason: error })}
+    </span>
+  )
+}
+
+/**
+ * Where the LinkedIn sign-in stands, for a LinkedIn channel that posts by itself: when it
+ * expires, a warning from `LINKEDIN_RENEW_DAYS` (14) days before, and that posts wait for the
+ * operator once it has expired. Nothing while no sign-in is set: the missing key says so.
+ */
+export function LinkedinSignIn(
+  { expiresAt, now }: { expiresAt: string | null; now: number },
+): JSX.Element | null {
+  const t = useAdminText()
+  const format = useFormat()
+  const sign = linkedinSignInState(expiresAt, now)
+  if (sign.state === `none`) return null
+  const date = format.date(sign.expiresAt)
+  const values = { date, count: sign.daysLeft, command: LINKEDIN_SIGN_IN_COMMAND }
+  if (sign.state === `ok`) {
+    return (
+      <span class="text-sm text-muted" data-e2e="blog-linkedin-sign-in" data-state="ok">
+        {t.t(`AdminBlogChannels.signInOk`, values)}
+      </span>
+    )
+  }
+  const key = sign.state === `soon`
+    ? `AdminBlogChannels.signInSoon`
+    : `AdminBlogChannels.signInExpired`
+  return (
+    <span
+      class={`text-sm wrap-anywhere ${sign.state === `soon` ? `text-warning` : `text-danger`}`}
+      data-e2e="blog-linkedin-sign-in"
+      data-state={sign.state}
+    >
+      <Rich parts={t.parts(key, values)} tags={{ cmd: literal }} />
     </span>
   )
 }
@@ -127,6 +176,8 @@ export interface AdminBlogChannelsScreenProps {
   onArchive: (channel: AdminBlogChannelRow, archived: boolean) => void
   /** Deletes a channel without shares, after the operator confirms. */
   onDelete: (channel: AdminBlogChannelRow) => void
+  /** The time the LinkedIn sign-in is measured against; the clock's by default. */
+  now?: number
   navigate?: Navigate
 }
 
@@ -138,8 +189,14 @@ export interface AdminBlogChannelsScreenProps {
  */
 export function AdminBlogChannelsScreen(props: AdminBlogChannelsScreenProps): JSX.Element {
   const { list, navigate, archived } = props
+  const now = props.now ?? Date.now()
   const t = useAdminText()
   const format = useFormat()
+  const linkedinExpired =
+    linkedinSignInState(list?.linkedinExpiresAt ?? null, now).state === `expired`
+  /** Whether the channel posts by itself now: a LinkedIn channel past its sign-in waits for it. */
+  const postsByItself = (channel: AdminBlogChannelRow) =>
+    channelPostsAutomatically(channel, false) && !(channel.kind === `linkedin` && linkedinExpired)
   const [deleting, setDeleting] = useState<AdminBlogChannelRow | null>(null)
   /** The row to focus once the list read after a change arrives, and the list it replaces. */
   const [focusAt, setFocusAt] = useState<{ index: number; list: typeof list } | null>(null)
@@ -272,7 +329,7 @@ export function AdminBlogChannelsScreen(props: AdminBlogChannelsScreenProps): JS
                       >
                         {channel.name}
                       </Link>
-                      {BLOG_AUTOMATIC_KINDS.has(channel.kind) && (
+                      {postsByItself(channel) && (
                         <Badge
                           text={t.t(`AdminBlogChannels.automatic`)}
                           color="blue"
@@ -304,10 +361,16 @@ export function AdminBlogChannelsScreen(props: AdminBlogChannelsScreenProps): JS
                         </Fragment>
                       ))}
                     </span>
-                    <ChannelProblem
+                    <AutoPostProblem
+                      kind={channel.kind}
                       error={channel.lastError}
                       keyText="AdminBlogChannels.keyMissing"
+                      failedText="AdminBlogChannels.lastFailed"
+                      dataE2E="blog-channel"
                     />
+                    {channel.kind === `linkedin` && channelPostsAutomatically(channel, false) && (
+                      <LinkedinSignIn expiresAt={list?.linkedinExpiresAt ?? null} now={now} />
+                    )}
                   </div>
                   <div class="relative -my-2 -me-2 shrink-0">
                     <Dropdown
@@ -385,6 +448,8 @@ export interface BlogChannelFormValue {
   /** Whether the operator typed the source tag; until then it follows the name. */
   utmEdited: boolean
   addUtm: boolean
+  /** "Post automatically", kept while a kind that cannot post is picked. */
+  autoPost: boolean
   languages: Language[]
   which: BlogChannelWhich
 }
@@ -403,6 +468,7 @@ export function blankChannelForm(kind: BlogChannelKind = `reddit`): BlogChannelF
     utmSource: ``,
     utmEdited: false,
     addUtm: kind !== `hackernews`,
+    autoPost: true,
     languages: [`en`],
     which: kind === `newsletter` ? `from` : `all`,
   }
@@ -417,6 +483,7 @@ export function channelForm(channel: BlogChannel): BlogChannelFormValue {
     utmSource: channel.utmSource,
     utmEdited: true,
     addUtm: channel.addUtm,
+    autoPost: BLOG_AUTOMATIC_KINDS.has(channel.kind) ? channel.autoPost : true,
     languages: [...channel.languages],
     which: channel.startsAt === null ? `all` : `from`,
   }
@@ -565,6 +632,21 @@ export function AdminBlogChannelScreen(props: AdminBlogChannelScreenProps): JSX.
                 }}
               />
             </Field>
+            {BLOG_AUTOMATIC_KINDS.has(value.kind) && (
+              <div data-e2e="blog-channel-auto-post">
+                <ToggleField
+                  id={blogChannelFieldId(`autoPost`)}
+                  label={t.t(`AdminBlogChannels.autoPost`)}
+                  value={value.autoPost}
+                  onToggle={(autoPost) => props.onChange({ ...value, autoPost })}
+                  description={t.t(
+                    value.autoPost
+                      ? `AdminBlogChannels.autoPostOn`
+                      : `AdminBlogChannels.autoPostOff`,
+                  )}
+                />
+              </div>
+            )}
             <Field
               id={blogChannelFieldId(`address`)}
               label={t.t(`AdminBlogChannels.address`)}

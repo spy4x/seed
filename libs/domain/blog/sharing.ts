@@ -55,8 +55,37 @@ const LINK_KINDS: ReadonlySet<BlogChannelKind> = new Set([
   `other`,
 ])
 
-/** The kinds Seed posts to by itself. The others are posted by hand. */
-export const BLOG_AUTOMATIC_KINDS: ReadonlySet<BlogChannelKind> = new Set([`devto`])
+/**
+ * The kinds Seed can post to by itself, each by a job of its own, when the channel's "Post
+ * automatically" is on (docs/blog.md). The others are posted by hand.
+ */
+export const BLOG_AUTOMATIC_KINDS: ReadonlySet<BlogChannelKind> = new Set([
+  `devto`,
+  `telegram`,
+  `mastodon`,
+  `bluesky`,
+  `hashnode`,
+  `linkedin`,
+])
+
+/** The env key an automatic kind waits for, named on its rows while it is unset. */
+export const BLOG_AUTO_POST_KEYS: Readonly<Partial<Record<BlogChannelKind, string>>> = {
+  devto: `DEVTO_API_KEY`,
+  telegram: `TELEGRAM_BOT_TOKEN`,
+  mastodon: `MASTODON_ACCESS_TOKEN`,
+  bluesky: `BLUESKY_APP_PASSWORD`,
+  hashnode: `HASHNODE_TOKEN`,
+  linkedin: `LINKEDIN_ACCESS_TOKEN`,
+}
+
+/** The `error` an automatic row keeps while its kind's key is not set in the env. */
+export const BLOG_AUTO_POST_KEY_MISSING = `key-missing`
+
+/** The `error` a LinkedIn row keeps once the LinkedIn sign-in has expired. */
+export const BLOG_AUTO_POST_SIGN_IN_EXPIRED = `sign-in-expired`
+
+/** How many days before the LinkedIn sign-in expires the admin warns about it. */
+export const LINKEDIN_RENEW_DAYS = 14
 
 /** The kinds whose numbers the `blog.share-results` job reads by itself (docs/blog.md). */
 export const BLOG_READ_KINDS: ReadonlySet<BlogChannelKind> = new Set([
@@ -133,6 +162,8 @@ export interface BlogChannel {
   /** Only posts that went live on or after it list the channel; `null` lists every post. */
   startsAt: string | null
   archivedAt: string | null
+  /** Seed posts each post here by itself; only for a kind in {@link BLOG_AUTOMATIC_KINDS}. */
+  autoPost: boolean
   createdAt: string
   updatedAt: string
   version: number
@@ -180,6 +211,8 @@ export interface AdminBlogChannelsResponse {
   channels: AdminBlogChannelRow[]
   /** Every live post's language and time, so the form says how many posts a choice lists it on. */
   livePosts: { language: Language; publishedAt: string }[]
+  /** When the LinkedIn sign-in in the server's env expires, `null` when none is set. */
+  linkedinExpiresAt: string | null
 }
 
 /** One channel on a post's checklist. */
@@ -196,6 +229,8 @@ export interface AdminBlogShareRow {
   result: BlogShareResult | null
   /** Visits Umami counted under the channel's `utm_source`; `null` when it was not read. */
   visits: number | null
+  /** A job that posts this row by itself is waiting or running. */
+  posting: boolean
 }
 
 /** What the checklist knows of the website's visits. */
@@ -223,6 +258,8 @@ export interface AdminBlogSharingResponse {
   hasChannels: boolean
   rows: AdminBlogShareRow[]
   visits: AdminBlogVisits
+  /** When the LinkedIn sign-in in the server's env expires, `null` when none is set. */
+  linkedinExpiresAt: string | null
 }
 
 /** What the blog list shows of sharing: how many channels are active and each post's to-dos. */
@@ -307,6 +344,59 @@ export function channelPostCount(
   return livePosts.filter((post) =>
     languages.includes(post.language) && (from === null || Date.parse(post.publishedAt) >= from)
   ).length
+}
+
+/**
+ * Whether `channel` posts by itself: "Post automatically" on, of a kind Seed can post to, and not
+ * Dev.to for a translation, which Dev.to never takes.
+ */
+export function channelPostsAutomatically(
+  channel: Pick<BlogChannel, `kind` | `autoPost`>,
+  translation: boolean,
+): boolean {
+  if (!channel.autoPost || !BLOG_AUTOMATIC_KINDS.has(channel.kind)) return false
+  return !(channel.kind === `devto` && translation)
+}
+
+/** What the automatic posts need of a channel. */
+export type AutoPostChannel = SharingChannel & Pick<BlogChannel, `kind` | `autoPost`>
+
+/**
+ * The channels a post that just went live is posted to by itself: each active channel with "Post
+ * automatically" on, of a kind Seed can post to, that lists the post and still has it to do. A row
+ * the operator moved on from (posted, suggested or skipped, also before the post went live) stops
+ * it, and so does a translation's original posted or suggested there. Dev.to never takes a
+ * translation: it gets the original once.
+ */
+export function blogAutoPostTargets<C extends AutoPostChannel>(
+  post: SharingPost,
+  channels: readonly C[],
+  shares: (postId: string, channelId: string) => Pick<BlogShare, `status`> | undefined,
+): C[] {
+  return channels.filter((channel) => {
+    if (!channelPostsAutomatically(channel, post.translationOf !== null)) return false
+    const original = post.translationOf === null
+      ? undefined
+      : shares(post.translationOf, channel.id)
+    return blogShareState(channel, post, shares(post.id, channel.id), original) === `todo`
+  })
+}
+
+/** Where the LinkedIn sign-in stands: none set, fine, due for renewal, or expired. */
+export type LinkedinSignInState =
+  | { state: `none` }
+  | { state: `ok` | `soon` | `expired`; expiresAt: string; daysLeft: number }
+
+/**
+ * The LinkedIn sign-in's state at `now`: `soon` from {@link LINKEDIN_RENEW_DAYS} days before it
+ * expires, `expired` from its expiry on. `daysLeft` counts whole days, rounded up.
+ */
+export function linkedinSignInState(expiresAt: string | null, now: number): LinkedinSignInState {
+  if (expiresAt === null) return { state: `none` }
+  const left = Date.parse(expiresAt) - now
+  const daysLeft = Math.max(0, Math.ceil(left / 86_400_000))
+  if (left <= 0) return { state: `expired`, expiresAt, daysLeft }
+  return { state: daysLeft <= LINKEDIN_RENEW_DAYS ? `soon` : `ok`, expiresAt, daysLeft }
 }
 
 // #endregion
@@ -423,6 +513,7 @@ export type BlogSharingErrorCode =
   | `HAS_SHARES`
   | `TOO_MANY_CHANNELS`
   | `VERSION_CONFLICT`
+  | `NOT_AUTOMATIC`
 
 /** The fields of the channel form and of a share, as the request bodies name them. */
 export type BlogSharingField =
@@ -472,6 +563,8 @@ const channelFields = {
   addUtm: `boolean`,
   languages: type.enumerated(...LANGUAGES).array().atMostLength(20),
   startsAt: `string | null`,
+  /** Left out, a channel of a kind that can post does. */
+  "autoPost?": `boolean`,
 } as const
 
 /** `POST /api/admin/blog/channels`: a new channel, with the id the admin app made for it. */
@@ -535,6 +628,7 @@ export interface BlogChannelFields {
   addUtm: boolean
   languages: Language[]
   startsAt: string | null
+  autoPost: boolean
 }
 
 const characters = (text: string) => Array.from(text).length
@@ -574,6 +668,7 @@ export function parseBlogChannelFields(
     addUtm: input.addUtm,
     languages: [...new Set(input.languages)] as Language[],
     startsAt: input.startsAt,
+    autoPost: BLOG_AUTOMATIC_KINDS.has(kind) && (input.autoPost ?? true),
   }
   for (const field of [`name`, `address`, `utmSource`] as const) {
     if (hasUnstorableTextCharacters(fields[field])) {
@@ -669,6 +764,7 @@ export const BLOG_SHARING_AUDIT_KINDS = {
   channelDeleted: `blog.channel_deleted`,
   shareChanged: `blog.share_changed`,
   resultsEntered: `blog.share_results_entered`,
+  shareRetried: `blog.share_retried`,
 } as const
 
 // #endregion

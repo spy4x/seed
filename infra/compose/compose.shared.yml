@@ -832,6 +832,9 @@ services:
       - UMAMI_API_TOKEN=${UMAMI_API_TOKEN:-}
       # The website's id in Umami: with the two above, the admin app's Stats page (docs/analytics.md).
       - MPA_UMAMI_WEBSITE_ID=${MPA_UMAMI_WEBSITE_ID:-}
+      # When the LinkedIn sign-in runs out (docs/blog.md): the admin warns 14 days before. Only the
+      # date: the API never gets the token.
+      - LINKEDIN_TOKEN_EXPIRES_AT=${LINKEDIN_TOKEN_EXPIRES_AT:-}
       # Mail subscriptions: the API checks the links the worker signs. Unset → off in production.
       - SUBSCRIBERS_SECRET=${SUBSCRIBERS_SECRET:-}
       - SUBSCRIBERS_PREVIOUS_SECRETS=${SUBSCRIBERS_PREVIOUS_SECRETS:-}
@@ -951,6 +954,18 @@ services:
       - INDEXNOW_KEY=${INDEXNOW_KEY:-}
       # Dev.to (docs/blog.md): with MPA_DOMAIN, a live post is cross-posted once. Unset → off.
       - DEVTO_API_KEY=${DEVTO_API_KEY:-}
+      # Automatic posts (docs/blog.md): with MPA_DOMAIN, a live post goes by itself to each channel
+      # with "Post automatically" on whose keys are set. Unset → that kind stays manual.
+      - MASTODON_ACCESS_TOKEN=${MASTODON_ACCESS_TOKEN:-}
+      - MASTODON_INSTANCE_URL=${MASTODON_INSTANCE_URL:-}
+      - BLUESKY_IDENTIFIER=${BLUESKY_IDENTIFIER:-}
+      - BLUESKY_APP_PASSWORD=${BLUESKY_APP_PASSWORD:-}
+      - BLUESKY_SERVICE=${BLUESKY_SERVICE:-}
+      - HASHNODE_TOKEN=${HASHNODE_TOKEN:-}
+      - HASHNODE_PUBLICATION_ID=${HASHNODE_PUBLICATION_ID:-}
+      - LINKEDIN_ACCESS_TOKEN=${LINKEDIN_ACCESS_TOKEN:-}
+      - LINKEDIN_MEMBER_ID=${LINKEDIN_MEMBER_ID:-}
+      - LINKEDIN_TOKEN_EXPIRES_AT=${LINKEDIN_TOKEN_EXPIRES_AT:-}
       # The public demo (docs/demo.md): `true` wipes and seeds the database every night and gives
       # every new account sample groups. Unset → off.
       - DEMO_MODE=${DEMO_MODE:-}

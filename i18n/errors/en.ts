@@ -154,6 +154,7 @@ export default {
   "Reason.NOTHING_TO_MOVE": "There's nothing to move.",
   "Reason.NOTIFICATION_NOT_FOUND": "This notification no longer exists.",
   "Reason.NOT_DRAFT_OR_SCHEDULED": "This post is already published.",
+  "Reason.NOT_AUTOMATIC": "This channel doesn't post by itself. Turn on Post automatically first.",
   "Reason.NOT_PUBLISHED": "This isn't published.",
   "Reason.NOT_SCHEDULED": "This post isn't scheduled.",
   "Reason.NO_SUBSCRIPTION": "This group has no subscription.",

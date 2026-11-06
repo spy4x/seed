@@ -52,6 +52,11 @@ export interface AdminModuleContext {
    * deployed. Read on its own, so it holds while the newsletter is off.
    */
   siteUrl: string | null
+  /**
+   * When the LinkedIn sign-in expires (`LINKEDIN_TOKEN_EXPIRES_AT`, `readLinkedinExpiry`), or
+   * `null` when unset. Only the date: the token never reaches the API. Left out, it is `null`.
+   */
+  linkedinExpiresAt?: string | null
   /** The payment provider for the billing module; `provider` is `null` while billing is off. */
   billing: {
     provider: Required<BillingProvider> | null

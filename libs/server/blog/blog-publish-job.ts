@@ -14,6 +14,7 @@ import { enqueueJob, JOB_AGGREGATE, type JobHandler } from "../jobs/jobs.ts"
 import type { BlogPostRow } from "./postgres-blog-repository.ts"
 import { queueIndexNow } from "./blog-indexnow-job.ts"
 import type { BlogCrosspostSetup } from "./blog-crosspost-job.ts"
+import { autoPostTargets, queueAutoPosts } from "./auto-post.ts"
 
 /** What the `blog.publish` job needs. */
 export interface BlogPublishJobDeps {
@@ -26,6 +27,8 @@ export interface BlogPublishJobDeps {
   log: (line: string) => void
   /** `null` while the Dev.to cross-post is off (`DEVTO_API_KEY` unset): it is skipped. */
   crosspost?: BlogCrosspostSetup | null
+  /** The website's origin for the automatic posts' live check, `null` without `MPA_DOMAIN`. */
+  siteUrl?: string | null
   /** Defaults to `globalThis.fetch`; tests pass a fake. */
   fetch?: typeof fetch
 }
@@ -137,6 +140,9 @@ export function blogTeaserIssue(
  * 4. in that transaction, queues the post's `blog.crosspost` job when its cross-post was never
  *    settled; that job posts it to Dev.to once ever. A translation, or a post while the cross-post
  *    is off, is settled as never cross-posted, so turning it on later posts only newer posts.
+ * 5. in that transaction, queues one automatic post job per channel that posts the post by itself
+ *    (`queueAutoPosts`): Telegram, Mastodon, Bluesky, Hashnode or LinkedIn with "Post
+ *    automatically" on, listing the post, and with its row still to do.
  *
  * With mail subscriptions off, without the public website's address (`MPA_DOMAIN`) or with a list
  * the app no longer has, the post still goes live and is settled as never emailed: its list is
@@ -175,8 +181,9 @@ export function blogPublishJob(deps: BlogPublishJobDeps): JobHandler {
       }
       return post.status === `published` ? post : null
     })
-    if (!post || !hasSomethingToSend(post)) return
-    const siteUrl = deps.setup?.siteUrl ?? deps.crosspost?.siteUrl ?? null
+    if (!post) return
+    if (!hasSomethingToSend(post) && (await autoPostTargets(deps.sql, post)).length === 0) return
+    const siteUrl = deps.setup?.siteUrl ?? deps.crosspost?.siteUrl ?? deps.siteUrl ?? null
     if (siteUrl !== null) await checkBlogPostLive(post, siteUrl, deps.fetch)
     await deps.sql.begin(async (tx) => {
       const [now] = await tx<BlogPostRow[]>`
@@ -186,6 +193,7 @@ export function blogPublishJob(deps: BlogPublishJobDeps): JobHandler {
       if (!now || now.status !== `published`) return
       await queueNewsletter(tx, deps, now)
       await settleCrosspost(tx, deps, now)
+      await queueAutoPosts(tx, now)
     })
   }
 }

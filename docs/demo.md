@@ -92,7 +92,10 @@ updates the demo in the same PR:
 - **Where the posts were shared survives the wipe** for the same reason: `blog_channels`,
   `blog_post_shares` and `blog_share_results` record where the website's real posts went, and
   reference only `blog_posts`. A share's last failed read (`read_error`, `read_failed_at`) stays
-  with it; the results job writes it, and the seed writes none. The demo seeds none of them; `deno task db:seed` in development
+  with it; the results job writes it, and the seed writes none. A channel's "Post automatically" switch (`auto_post`)
+  and a share's mark for an automatic post that may have landed (`post_attempted_at`) stay with
+  them too (#839); the jobs write the mark, and the sample channels are manual, so a development
+  seed never posts anywhere. The demo seeds none of them; `deno task db:seed` in development
   adds four sample channels, one post shared on one and skipped on another, and plainly fake
   numbers (`libs/server/blog/sample-sharing.ts`).
 - **The contact links survive the wipe** for the same reason: `contact_links` holds the
@@ -162,5 +165,6 @@ They are reviewed in pull requests like code, and a product built on Seed delete
 - **Translations** name their original's slug in `translationOf`, and are linked through
   `translation_of`.
 - **Cross-posted only when asked.** `devto: true` copies an original to Dev.to once it is live,
-  when the server has `DEVTO_API_KEY` ([blog.md](blog.md#the-devto-cross-post)); without it, or with
-  `devto: false`, the post is settled as never cross-posted.
+  when the server has `DEVTO_API_KEY` and a Dev.to channel with "Post automatically" on
+  ([blog.md](blog.md#the-devto-cross-post)); without them, or with `devto: false`, the post is
+  settled as never cross-posted.

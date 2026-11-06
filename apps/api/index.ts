@@ -77,6 +77,7 @@ import { createHealthRoute } from "./routes/health.ts"
 import { isCacheConnected, kv } from "./services/cache.ts"
 import { files } from "./services/files.ts"
 import { s3ServerFiles } from "@server/files/files.ts"
+import { readLinkedinExpiry } from "@server/blog/blog-post-linkedin-job.ts"
 import { readCatalogSetup } from "@server/catalog/setup.ts"
 import { createUmamiLinks, DEFAULT_ITEM_PATH, readTrackingSetup } from "@server/catalog/tracking.ts"
 import { readWebsiteStatsSetup } from "./services/website-stats.ts"
@@ -287,6 +288,7 @@ app.route(
       sql,
       subscribers: subscribersSetup,
       siteUrl,
+      linkedinExpiresAt: readLinkedinExpiry(processEnv),
       limit: rateLimits.normal,
       resetByAddress: rateLimits.resetByAddress,
       emit,

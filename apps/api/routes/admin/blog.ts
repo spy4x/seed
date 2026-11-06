@@ -361,7 +361,7 @@ export function blogNewsletterEnabled(setup: SubscribersSetup | null): boolean {
  */
 export const blogAdminModule: AdminApiModule = {
   id: `blog`,
-  routes: ({ sql, subscribers, limit, now, siteUrl, websiteStats }) => {
+  routes: ({ sql, subscribers, limit, now, siteUrl, websiteStats, linkedinExpiresAt }) => {
     const sharing = new PostgresSharingRepository(sql)
     const stats = createWebsiteStats({
       setup: websiteStats.setup,
@@ -383,6 +383,7 @@ export const blogAdminModule: AdminApiModule = {
         sharing,
         siteUrl,
         pathVisits: (path, since) => stats.pathVisits(path, since),
+        linkedinExpiresAt: linkedinExpiresAt ?? null,
       }),
     )
   },

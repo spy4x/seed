@@ -32,6 +32,7 @@ import { applyMigrations, migrationNames } from "./migrations.ts"
  */
 
 const SHARING_MIGRATION = `2026_12_15_0002_blog_sharing_channels.sql`
+const AUTO_POST_MIGRATION = `2026_12_16_0002_blog_auto_post.sql`
 
 async function withSchema(
   body: (sql: postgres.Sql) => Promise<void>,
@@ -94,6 +95,7 @@ function channel(name: string, extra: Partial<BlogChannelFields> = {}): BlogChan
     address: `https://example.com/${name}`,
     utmSource: name,
     addUtm: true,
+    autoPost: false,
     languages: [`en`, `de`],
     startsAt: null,
     ...extra,
@@ -151,8 +153,10 @@ Deno.test(`sharing: the migration turns Dev.to cross-posts into one channel and 
     await applyMigrations(sql, names.slice(at))
     await applyMigrations(sql, [SHARING_MIGRATION])
 
-    const channels = await sql`SELECT kind, utm_source, languages FROM blog_channels`
-    expect(channels).toEqual([{ kind: `devto`, utmSource: `devto`, languages: [`en`] }])
+    const channels = await sql`SELECT kind, utm_source, languages, auto_post FROM blog_channels`
+    expect(channels).toEqual([
+      { kind: `devto`, utmSource: `devto`, languages: [`en`], autoPost: true },
+    ])
     const shares = await sql`
       SELECT post.slug, share.status, share.url, share.automatic
       FROM blog_post_shares share JOIN blog_posts post ON post.id = share.post_id
@@ -162,6 +166,33 @@ Deno.test(`sharing: the migration turns Dev.to cross-posts into one channel and 
     ])
     const [{ devtoUrl }] = await sql`SELECT devto_url FROM blog_posts WHERE slug = 'crossed'`
     expect(devtoUrl).toBe(`https://dev.to/a/1`)
+  }, names.slice(0, at))
+})
+
+Deno.test(`sharing: the auto-post migration turns on only Dev.to channels, and a second run turns nothing back on`, async () => {
+  const names = migrationNames()
+  const at = names.indexOf(AUTO_POST_MIGRATION)
+  expect(at).toBeGreaterThan(0)
+  await withSchema(async (sql) => {
+    for (const kind of [`devto`, `telegram`]) {
+      await sql`
+        INSERT INTO blog_channels (id, name, kind, address, utm_source, languages)
+        VALUES (${uuidV7()}, ${kind}, ${kind}, ${`https://example.com/${kind}`}, ${kind}, '{en}')
+      `
+    }
+    await applyMigrations(sql, names.slice(at))
+    const autoPost = async () => await sql`SELECT kind, auto_post FROM blog_channels ORDER BY kind`
+    expect(await autoPost()).toEqual([
+      { kind: `devto`, autoPost: true },
+      { kind: `telegram`, autoPost: false },
+    ])
+
+    await sql`UPDATE blog_channels SET auto_post = false`
+    await applyMigrations(sql, [AUTO_POST_MIGRATION])
+    expect(await autoPost()).toEqual([
+      { kind: `devto`, autoPost: false },
+      { kind: `telegram`, autoPost: false },
+    ])
   }, names.slice(0, at))
 })
 
@@ -175,7 +206,7 @@ Deno.test(`sharing: the Dev.to job writes the post's share row: posted, failed, 
   await withSchema(async (sql) => {
     const maya = await operator(sql)
     const sharing = new PostgresSharingRepository(sql)
-    await sharing.createChannel(uuidV7(), channel(`devto`, { kind: `devto` }), maya)
+    await sharing.createChannel(uuidV7(), channel(`devto`, { kind: `devto`, autoPost: true }), maya)
 
     await t.step(
       `a cross-post records a posted, automatic row with the article's address`,

@@ -108,6 +108,7 @@ function channelOf(id: string, overrides: Partial<BlogChannel>): BlogChannel {
     address: "https://www.reddit.com/r/selfhosted/",
     utmSource: "reddit-selfhosted",
     addUtm: true,
+    autoPost: false,
     languages: ["en"],
     startsAt: null,
     archivedAt: null,
@@ -150,6 +151,7 @@ function rowOf(
     submitUrl: null,
     result: null,
     visits: null,
+    posting: false,
     ...overrides,
   }
 }
@@ -172,6 +174,7 @@ const DEVTO = channelOf("0195f0b4-3c1e-7a00-8000-000000000004", {
   kind: "devto",
   address: "https://dev.to/seed",
   utmSource: "devto",
+  autoPost: true,
 })
 
 const ROWS: AdminBlogShareRow[] = [
@@ -208,6 +211,7 @@ function sharingOf(rows: AdminBlogShareRow[] = ROWS): AdminBlogSharingResponse {
       publishedAt: NOW,
     },
     hasChannels: true,
+    linkedinExpiresAt: null,
     rows,
     visits: { setup: true, missing: [], readAt: NOW, stale: false },
   }
@@ -228,6 +232,7 @@ function props(
     resultsPending: false,
     resultsError: null,
     onResults: (channelId, counts) => calls.push(["results", channelId, counts]),
+    onRetryPost: (channelId) => calls.push(["retryPost", channelId]),
     announcement: "",
     copy: () => Promise.resolve(true),
     ...overrides,
@@ -522,5 +527,65 @@ describe("the sharing checklist", () => {
     await mount(<AdminBlogSharingScreen {...props([], { sharing: off })} />)
     expect(find("[data-e2e=blog-share-umami-off]", rowFor(DEVTO)).textContent)
       .toContain("UMAMI_API_TOKEN")
+  })
+
+  it("shows Posting… on one line, as its own status, on a row whose automatic post waits, with no Try again", async () => {
+    const auto = { ...TELEGRAM, autoPost: true }
+    const rows = [rowOf(auto, "todo", { text: "Seed is out", posting: true })]
+    await mount(<AdminBlogSharingScreen {...props([], { sharing: sharingOf(rows) })} />)
+    const posting = find("[data-e2e=blog-share-posting]", rowFor(auto))
+    expect(posting.textContent).toContain("Posting…")
+    // One status region that says the words itself, not a spinner's own "Loading" region in a <p>.
+    expect(posting.getAttribute("role")).toBe("status")
+    expect(posting.tagName).toBe("DIV")
+    expect(posting.querySelector("[role=status], div") === null).toBe(true)
+    expect(rowFor(auto).querySelector("[data-e2e=blog-share-retry]")).toBeNull()
+  })
+
+  it("says why the automatic post failed and tries again through its callback", async () => {
+    const calls: unknown[][] = []
+    const auto = { ...TELEGRAM, autoPost: true }
+    const failed = shareOf(auto.id, {
+      status: "todo",
+      sharedAt: null,
+      automatic: true,
+      error: "Telegram answered 400: chat not found",
+    })
+    const rows = [rowOf(auto, "todo", { text: "Seed is out", share: failed })]
+    await mount(<AdminBlogSharingScreen {...props(calls, { sharing: sharingOf(rows) })} />)
+    expect(find("[data-e2e=blog-share-failed]", rowFor(auto)).textContent)
+      .toContain("Couldn't post: Telegram answered 400: chat not found")
+    await clickOn(find("[data-e2e=blog-share-retry]", rowFor(auto)))
+    expect(calls).toEqual([["retryPost", auto.id]])
+  })
+
+  it("shows no automatic note on a channel with Post automatically off", async () => {
+    const rows = [rowOf(TELEGRAM, "todo", { text: "Seed is out", posting: false })]
+    await mount(<AdminBlogSharingScreen {...props([], { sharing: sharingOf(rows) })} />)
+    expect(rowFor(TELEGRAM).textContent).not.toContain("Posts automatically")
+    expect(rowFor(TELEGRAM).querySelector("[data-e2e=blog-share-retry]")).toBeNull()
+  })
+
+  it("says on a LinkedIn row that its sign-in expired, and offers Try again", async () => {
+    const linkedin = channelOf("0195f0b4-3c1e-7a00-8000-000000000005", {
+      name: "LinkedIn",
+      kind: "linkedin",
+      address: "https://www.linkedin.com/in/seed",
+      autoPost: true,
+    })
+    const stopped = shareOf(linkedin.id, {
+      status: "todo",
+      sharedAt: null,
+      automatic: true,
+      error: "sign-in-expired",
+    })
+    const rows = [rowOf(linkedin, "todo", { text: "Seed is out", share: stopped })]
+    const sharing = { ...sharingOf(rows), linkedinExpiresAt: "2026-10-30T00:00:00.000Z" }
+    await mount(<AdminBlogSharingScreen {...props([], { sharing, now: Date.parse(NOW) })} />)
+    const note = find("[data-e2e=blog-linkedin-sign-in]", rowFor(linkedin))
+    expect(note.dataset.state).toBe("expired")
+    expect(note.textContent).toContain("deno task linkedin:sign-in")
+    expect(rowFor(linkedin).querySelector("[data-e2e=blog-share-failed]")).toBeNull()
+    expect(rowFor(linkedin).querySelector("[data-e2e=blog-share-retry]")).not.toBeNull()
   })
 })

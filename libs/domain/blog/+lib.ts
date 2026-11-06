@@ -750,6 +750,21 @@ export const BLOG_PUBLISH_JOB = `blog.publish`
 /** The job that cross-posts a live post to Dev.to once ever, after its live check. */
 export const BLOG_CROSSPOST_JOB = `blog.crosspost`
 
+/**
+ * The jobs that post a live post to one channel by themselves, by kind, each about one share row
+ * (docs/blog.md). Dev.to keeps {@link BLOG_CROSSPOST_JOB}, about the post.
+ */
+export const BLOG_POST_JOBS = {
+  telegram: `blog.post-telegram`,
+  mastodon: `blog.post-mastodon`,
+  bluesky: `blog.post-bluesky`,
+  hashnode: `blog.post-hashnode`,
+  linkedin: `blog.post-linkedin`,
+} as const
+
+/** A kind one of {@link BLOG_POST_JOBS} posts to. */
+export type BlogPostJobKind = keyof typeof BLOG_POST_JOBS
+
 /** The job that tells IndexNow a post's addresses changed: it went live, changed, moved or left. */
 export const BLOG_INDEXNOW_JOB = `blog.indexnow`
 

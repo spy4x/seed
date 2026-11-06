@@ -28,6 +28,16 @@ default, never a value to keep for a secret.
 | `MPA_UMAMI_WEBSITE_ID` | The website's id in that Umami. It is public.                                                                | empty              | [Analytics](analytics.md)                      |
 | `INDEXNOW_KEY`         | The website's IndexNow key, 8 to 128 letters, digits and dashes. Public. Empty turns IndexNow off.           | empty              | [Blog](blog.md#indexnow)                       |
 | `DEVTO_API_KEY`        | A Dev.to API key, read by the worker. Secret. Set, it copies each live post to Dev.to once. Empty turns it off. | empty              | [Blog](blog.md#the-devto-cross-post)           |
+| `MASTODON_ACCESS_TOKEN` | A Mastodon access token (`write:statuses`), read by the worker. Secret. Empty keeps Mastodon manual. | empty | [Blog](blog.md#automatic-posts) |
+| `MASTODON_INSTANCE_URL` | The `https` address of the token's Mastodon server; the token is sent only there. Empty keeps Mastodon manual. | empty | [Blog](blog.md#automatic-posts) |
+| `BLUESKY_IDENTIFIER` | The Bluesky handle the worker posts as. Set it with the app password. | empty | [Blog](blog.md#automatic-posts) |
+| `BLUESKY_APP_PASSWORD` | A Bluesky app password, read by the worker. Secret. Empty keeps Bluesky manual. | empty | [Blog](blog.md#automatic-posts) |
+| `BLUESKY_SERVICE` | Another Bluesky server than `https://bsky.social`. | empty | [Blog](blog.md#automatic-posts) |
+| `HASHNODE_TOKEN` | A Hashnode personal access token, read by the worker. Secret. Empty keeps Hashnode manual. | empty | [Blog](blog.md#automatic-posts) |
+| `HASHNODE_PUBLICATION_ID` | The Hashnode publication the worker publishes to. | empty | [Blog](blog.md#automatic-posts) |
+| `LINKEDIN_ACCESS_TOKEN` | From `deno task linkedin:sign-in`, read by the worker. Secret. Empty keeps LinkedIn manual. | empty | [Blog](blog.md#linkedin) |
+| `LINKEDIN_MEMBER_ID` | From `deno task linkedin:sign-in`: the profile the worker posts on. | empty | [Blog](blog.md#linkedin) |
+| `LINKEDIN_TOKEN_EXPIRES_AT` | From `deno task linkedin:sign-in`: when the sign-in runs out (ISO 8601). The admin warns 14 days before. | empty | [Blog](blog.md#linkedin) |
 | `ADMIN_DOMAIN`         | The admin app's host, with the `admin` profile. Empty turns the operator area off.                           | `admin.localhost`  | [The three apps](apps.md#deploy-the-admin-app) |
 
 | Profile           | What it starts                                                                   | Guide                                   |

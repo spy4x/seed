@@ -191,6 +191,10 @@
       "command": "sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean && sudo apt --fix-broken install && sudo do-release-upgrade",
       "description": "Upgrades the packages of an Ubuntu server, with sudo"
     },
+    "linkedin:sign-in": {
+      "command": "deno run -E=LINKEDIN_CLIENT_ID,LINKEDIN_CLIENT_SECRET,LINKEDIN_REDIRECT_PORT -N=www.linkedin.com,api.linkedin.com,127.0.0.1 ./infra/scripts/linkedin-sign-in.ts",
+      "description": "Signs in to LinkedIn for the blog's automatic posts and prints the three env lines (docs/blog.md)"
+    },
     "vapid-key:create": {
       "command": "deno run -W=infra/configs/vapid.json ./infra/scripts/vapid-keys-create.ts",
       "description": "Writes new web push keys to infra/configs/vapid.json"

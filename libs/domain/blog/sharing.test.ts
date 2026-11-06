@@ -1,6 +1,8 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import {
+  type AutoPostChannel,
+  blogAutoPostTargets,
   blogChannelHref,
   blogShareState,
   blogSharingCounts,
@@ -8,6 +10,8 @@ import {
   blogSharingToDo,
   blogSubmitUrl,
   channelPostCount,
+  channelPostsAutomatically,
+  linkedinSignInState,
   parseBlogChannelFields,
   parseBlogShareFields,
   type SharingChannel,
@@ -194,5 +198,84 @@ describe(`blogSharingCounts`, () => {
       row(`posted`, true),
     ]
     expect(blogSharingCounts(rows)).toEqual({ total: 7, done: 3, toDo: 2, suggested: 1 })
+  })
+})
+
+describe(`the automatic posts`, () => {
+  const auto = (id: string, kind: AutoPostChannel[`kind`], fields: Partial<AutoPostChannel> = {}) =>
+    ({ ...CHANNEL, id, kind, autoPost: true, ...fields }) satisfies AutoPostChannel
+  const TELEGRAM = auto(`telegram`, `telegram`)
+  const DEVTO = auto(`devto`, `devto`)
+  const none = () => undefined
+
+  it(`posts a live post to each automatic channel that has it to do`, () => {
+    const channels = [
+      TELEGRAM,
+      DEVTO,
+      auto(`reddit`, `reddit`),
+      auto(`off`, `mastodon`, {
+        autoPost: false,
+      }),
+    ]
+    expect(blogAutoPostTargets(POST, channels, none).map((c) => c.id)).toEqual([
+      `telegram`,
+      `devto`,
+    ])
+  })
+
+  it(`posts nothing where the row is posted, suggested or skipped`, () => {
+    for (const status of [`posted`, `suggested`, `skipped`] as const) {
+      expect(blogAutoPostTargets(POST, [TELEGRAM], () => ({ status }))).toEqual([])
+    }
+    expect(blogAutoPostTargets(POST, [TELEGRAM], () => ({ status: `todo` }))).toEqual([TELEGRAM])
+  })
+
+  it(`posts nothing for a draft, an archived channel or a language the channel does not list`, () => {
+    expect(blogAutoPostTargets({ ...POST, status: `draft`, publishedAt: null }, [TELEGRAM], none))
+      .toEqual([])
+    expect(
+      blogAutoPostTargets(POST, [auto(`a`, `telegram`, { archivedAt: POST.publishedAt })], none),
+    )
+      .toEqual([])
+    expect(blogAutoPostTargets(POST, [auto(`de`, `telegram`, { languages: [`de`] })], none))
+      .toEqual([])
+  })
+
+  it(`never posts a translation where its original was posted or suggested`, () => {
+    const original = (status: `posted` | `suggested` | `skipped`) => (postId: string) =>
+      postId === POST.id ? { status } : undefined
+    expect(blogAutoPostTargets(TRANSLATION, [TELEGRAM], original(`posted`))).toEqual([])
+    expect(blogAutoPostTargets(TRANSLATION, [TELEGRAM], original(`suggested`))).toEqual([])
+    expect(blogAutoPostTargets(TRANSLATION, [TELEGRAM], original(`skipped`))).toEqual([TELEGRAM])
+  })
+
+  it(`never posts a translation to Dev.to`, () => {
+    expect(blogAutoPostTargets(TRANSLATION, [DEVTO, TELEGRAM], none)).toEqual([TELEGRAM])
+    expect(channelPostsAutomatically(DEVTO, true)).toBe(false)
+    expect(channelPostsAutomatically(DEVTO, false)).toBe(true)
+  })
+})
+
+describe(`linkedinSignInState`, () => {
+  const EXPIRES = `2027-01-15T00:00:00.000Z`
+  const daysBefore = (days: number) => Date.parse(EXPIRES) - days * 86_400_000
+
+  it(`is none without an expiry date`, () => {
+    expect(linkedinSignInState(null, daysBefore(1))).toEqual({ state: `none` })
+  })
+
+  it(`warns from 14 days before the expiry, and not at 15`, () => {
+    expect(linkedinSignInState(EXPIRES, daysBefore(15)).state).toBe(`ok`)
+    expect(linkedinSignInState(EXPIRES, daysBefore(14))).toEqual({
+      state: `soon`,
+      expiresAt: EXPIRES,
+      daysLeft: 14,
+    })
+    expect(linkedinSignInState(EXPIRES, daysBefore(0.5))).toMatchObject({ daysLeft: 1 })
+  })
+
+  it(`is expired from the expiry on`, () => {
+    expect(linkedinSignInState(EXPIRES, daysBefore(0)).state).toBe(`expired`)
+    expect(linkedinSignInState(EXPIRES, daysBefore(-3)).state).toBe(`expired`)
   })
 })

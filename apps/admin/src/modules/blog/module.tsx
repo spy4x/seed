@@ -274,7 +274,10 @@ function BlogChannelView(
   )
 }
 
-/** A post's sharing checklist, at `/blog/:id/sharing`. */
+/** How often an open checklist with a row still posting reads itself again. */
+const SHARING_POLL_MS = 5000
+
+/** A post's sharing checklist, at `/blog/:id/sharing`; it reads again while a row is posting. */
 function BlogSharingView(
   { context, params }: { context: AdminContext; params: Record<string, string> },
 ): JSX.Element {
@@ -285,6 +288,12 @@ function BlogSharingView(
   }, [postId, context])
   const page = state.sharing.value
   const current = page.postId === postId
+  const posting = current && state.posting()
+  useEffect(() => {
+    if (!posting) return
+    const timer = setInterval(() => void state.loadSharing(postId), SHARING_POLL_MS)
+    return () => clearInterval(timer)
+  }, [posting, postId, context])
   return (
     <AdminBlogSharingScreen
       postId={postId}
@@ -297,6 +306,7 @@ function BlogSharingView(
       resultsPending={page.resultsPending}
       resultsError={page.resultsError}
       onResults={(channelId, counts) => void state.enterResults(channelId, counts)}
+      onRetryPost={(channelId) => void state.retryPost(channelId)}
       announcement={page.announcement}
       navigate={context.navigate}
     />

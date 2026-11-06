@@ -104,6 +104,7 @@ function channelOf(id: string, overrides: Partial<AdminBlogChannelRow> = {}): Ad
     address: "https://www.reddit.com/r/selfhosted/",
     utmSource: "reddit-selfhosted",
     addUtm: true,
+    autoPost: false,
     languages: ["en"],
     startsAt: null,
     archivedAt: null,
@@ -123,6 +124,7 @@ const DEVTO = channelOf("0195f0b4-3c1e-7a00-8000-000000000002", {
   kind: "devto",
   address: "https://dev.to/seed",
   utmSource: "devto",
+  autoPost: true,
   shares: 0,
   toDo: 0,
   lastError: "key-missing",
@@ -130,6 +132,7 @@ const DEVTO = channelOf("0195f0b4-3c1e-7a00-8000-000000000002", {
 
 const LIST: AdminBlogChannelsResponse = {
   channels: [REDDIT, DEVTO],
+  linkedinExpiresAt: null,
   livePosts: [
     { language: "en", publishedAt: "2026-10-01T10:00:00.000Z" },
     { language: "en", publishedAt: "2026-10-20T10:00:00.000Z" },
@@ -224,6 +227,98 @@ describe("the sharing channels list", () => {
   })
 })
 
+describe("the automatic channels on the list", () => {
+  const DAY = 86_400_000
+  const TODAY = Date.parse(NOW)
+  const linkedin = (fields: Partial<AdminBlogChannelRow> = {}) =>
+    channelOf("0195f0b4-3c1e-7a00-8000-000000000003", {
+      name: "LinkedIn",
+      kind: "linkedin",
+      address: "https://www.linkedin.com/in/seed",
+      autoPost: true,
+      lastError: null,
+      ...fields,
+    })
+  const listOf = (channel: AdminBlogChannelRow, expiresAt: string | null) => ({
+    ...LIST,
+    channels: [channel],
+    linkedinExpiresAt: expiresAt,
+  })
+  const signIn = () => document.querySelector<HTMLElement>("[data-e2e=blog-linkedin-sign-in]")
+
+  it("names the missing key of each automatic kind", async () => {
+    const mastodon = channelOf("0195f0b4-3c1e-7a00-8000-000000000005", {
+      kind: "mastodon",
+      address: "https://mastodon.social/@seed",
+      autoPost: true,
+      lastError: "key-missing",
+    })
+    await mount(
+      <AdminBlogChannelsScreen {...listProps([], { list: { ...LIST, channels: [mastodon] } })} />,
+    )
+    expect(find("[data-e2e=blog-channel-key-missing]").textContent).toContain(
+      "MASTODON_ACCESS_TOKEN",
+    )
+  })
+
+  it("warns about the LinkedIn sign-in from 14 days before it expires, with the renewal command", async () => {
+    const expires = new Date(TODAY + 15 * DAY).toISOString()
+    await mount(
+      <AdminBlogChannelsScreen
+        {...listProps([], { list: listOf(linkedin(), expires), now: TODAY })}
+      />,
+    )
+    expect(signIn()?.dataset.state).toBe("ok")
+    await mount(
+      <AdminBlogChannelsScreen
+        {...listProps([], { list: listOf(linkedin(), expires), now: TODAY + DAY })}
+      />,
+    )
+    expect(signIn()?.dataset.state).toBe("soon")
+    expect(signIn()?.textContent).toContain("14 days")
+    expect(signIn()?.textContent).toContain("deno task linkedin:sign-in")
+  })
+
+  it("says the LinkedIn sign-in expired instead of a failure, and hides it when the channel is manual", async () => {
+    const expired = new Date(TODAY - DAY).toISOString()
+    const stopped = linkedin({ lastError: "sign-in-expired" })
+    await mount(
+      <AdminBlogChannelsScreen
+        {...listProps([], { list: listOf(stopped, expired), now: TODAY })}
+      />,
+    )
+    expect(signIn()?.dataset.state).toBe("expired")
+    expect(document.querySelector("[data-e2e=blog-channel-failed]")).toBeNull()
+    const manual = linkedin({ autoPost: false })
+    await mount(
+      <AdminBlogChannelsScreen {...listProps([], { list: listOf(manual, expired), now: TODAY })} />,
+    )
+    expect(signIn()).toBeNull()
+  })
+
+  it("drops the Posts automatically badge from a LinkedIn channel once its sign-in has expired", async () => {
+    const facts = () => find("[data-e2e=blog-channel-row]").textContent
+    await mount(
+      <AdminBlogChannelsScreen
+        {...listProps([], {
+          list: listOf(linkedin(), new Date(TODAY + DAY).toISOString()),
+          now: TODAY,
+        })}
+      />,
+    )
+    expect(facts()).toContain("Posts automatically")
+    await mount(
+      <AdminBlogChannelsScreen
+        {...listProps([], {
+          list: listOf(linkedin(), new Date(TODAY - DAY).toISOString()),
+          now: TODAY,
+        })}
+      />,
+    )
+    expect(facts()).not.toContain("Posts automatically")
+  })
+})
+
 function formProps(
   calls: unknown[][],
   overrides: Partial<AdminBlogChannelScreenProps> = {},
@@ -279,6 +374,19 @@ describe("the channel form", () => {
     const fromToday = { ...blankChannelForm(), which: "from" as const }
     await mount(<AdminBlogChannelScreen {...formProps([], { value: fromToday })} />)
     expect(find("[data-e2e=blog-channel-count]").textContent).toContain("0")
+  })
+
+  it("shows Post automatically only for a kind Seed can post to, on for a new channel", async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminBlogChannelScreen {...formProps(calls)} />)
+    expect(document.querySelector("[data-e2e=blog-channel-auto-post]")).toBeNull()
+    expect(blankChannelForm().autoPost).toBe(true)
+    const telegram = { ...blankChannelForm(), kind: "telegram" as const }
+    await mount(<AdminBlogChannelScreen {...formProps(calls, { value: telegram })} />)
+    const toggle = find("[data-e2e=blog-channel-auto-post] [role=switch]")
+    expect(toggle.getAttribute("aria-checked")).toBe("true")
+    await clickOn(toggle)
+    expect(lastValue(calls)).toMatchObject({ kind: "telegram", autoPost: false })
   })
 
   it("saves through its callback on submit", async () => {

@@ -533,6 +533,22 @@ export default {
   "AdminBlogChannels.keyMissing":
     "بانتظار مفتاحها. اضبط <key>{key}</key> في ملف env على الخادم، ثم انشر.",
   "AdminBlogChannels.lastFailed": "فشل آخر نشر: {reason}",
+  "AdminBlogChannels.signInOk": "تسجيل الدخول إلى LinkedIn صالح حتى {date}.",
+  "AdminBlogChannels.signInSoon": {
+    "zero":
+      "ينتهي تسجيل الدخول إلى LinkedIn خلال {count} يوم، في {date}. جدّده بالأمر <cmd>{command}</cmd>.",
+    "one":
+      "ينتهي تسجيل الدخول إلى LinkedIn خلال يوم واحد، في {date}. جدّده بالأمر <cmd>{command}</cmd>.",
+    "two": "ينتهي تسجيل الدخول إلى LinkedIn خلال يومين، في {date}. جدّده بالأمر <cmd>{command}</cmd>.",
+    "few":
+      "ينتهي تسجيل الدخول إلى LinkedIn خلال {count} أيام، في {date}. جدّده بالأمر <cmd>{command}</cmd>.",
+    "many":
+      "ينتهي تسجيل الدخول إلى LinkedIn خلال {count} يومًا، في {date}. جدّده بالأمر <cmd>{command}</cmd>.",
+    "other":
+      "ينتهي تسجيل الدخول إلى LinkedIn خلال {count} يوم، في {date}. جدّده بالأمر <cmd>{command}</cmd>.",
+  },
+  "AdminBlogChannels.signInExpired":
+    "انتهى تسجيل الدخول إلى LinkedIn في {date}. ستنتظرك التدوينات حتى تشغّل <cmd>{command}</cmd>.",
   "AdminBlogChannels.loading": "جارٍ تحميل قنوات المشاركة",
   "AdminBlogChannels.listError": "تعذّر تحميل قنوات المشاركة. حاول مرة أخرى بعد قليل.",
   "AdminBlogChannels.retry": "إعادة المحاولة",
@@ -569,6 +585,9 @@ export default {
   "AdminBlogChannels.sourcePreview": "تحمل الروابط <tag>?utm_source={tag}</tag>",
   "AdminBlogChannels.addUtm": "إضافة utm_source إلى الروابط",
   "AdminBlogChannels.addUtmOff": "لن تُحتسب الزيارات القادمة من هذه القناة.",
+  "AdminBlogChannels.autoPost": "النشر تلقائيًا",
+  "AdminBlogChannels.autoPostOn": "تُنشر كل تدوينة هنا من تلقاء نفسها فور نشرها على الموقع.",
+  "AdminBlogChannels.autoPostOff": "تظهر كل تدوينة هنا كمهمة عليك، وتنشرها بنفسك.",
   "AdminBlogChannels.languages": "اللغات",
   "AdminBlogChannels.languagesHint": "تظهر هذه القناة في التدوينات المكتوبة بهذه اللغات.",
   "AdminBlogChannels.which": "أي التدوينات",
@@ -665,6 +684,7 @@ export default {
   "AdminBlogSharing.presetLater": "لاحقًا",
   "AdminBlogSharing.linkRequired": "أضف الرابط.",
   "AdminBlogSharing.autoHint": "تُنشر تلقائيًا عندما تُنشر التدوينة.",
+  "AdminBlogSharing.posting": "جارٍ النشر…",
   "AdminBlogSharing.autoFailed":
     "تعذّر النشر: {reason}. حاول مرة أخرى، أو انشرها بنفسك وعلّمها كمنشورة.",
   "AdminBlogSharing.autoNoKey":

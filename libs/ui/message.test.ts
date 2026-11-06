@@ -68,6 +68,7 @@ const REASONS: Record<ErrorReason, true> = {
   NOTE_NOT_FOUND: true,
   NOTHING_TO_MOVE: true,
   NOTIFICATION_NOT_FOUND: true,
+  NOT_AUTOMATIC: true,
   NOT_PUBLISHED: true,
   "not-recognised": true,
   NOT_SCHEDULED: true,
