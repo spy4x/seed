@@ -314,6 +314,22 @@ export interface PublicCatalogCategory {
   name: CatalogText
 }
 
+/** A size in the website's lists. */
+export interface PublicCatalogSize {
+  label: string
+  /** Every combination holding this size is sold out. */
+  soldOut: boolean
+}
+
+/** A colour in the website's lists. */
+export interface PublicCatalogColour {
+  name: CatalogText
+  /** `#rrggbb`, lower case. */
+  swatch: string
+  /** Every combination holding this colour is sold out. */
+  soldOut: boolean
+}
+
 /** A published item in the website's lists. */
 export interface PublicCatalogItemSummary {
   slug: string
@@ -322,6 +338,10 @@ export interface PublicCatalogItemSummary {
   price: number
   stock: CatalogStock
   cover: PublicCatalogPhoto | null
+  /** In the item's order. */
+  sizes: PublicCatalogSize[]
+  /** In the item's order. */
+  colours: PublicCatalogColour[]
   publishedAt: string
   updatedAt: string
 }
@@ -332,8 +352,8 @@ export interface PublicCatalogItem extends PublicCatalogItemSummary {
   material: CatalogText
   fit: CatalogText
   care: CatalogText
-  colours: CatalogColour[]
-  sizes: CatalogSize[]
+  colours: (CatalogColour & PublicCatalogColour)[]
+  sizes: (CatalogSize & PublicCatalogSize)[]
   soldOut: CatalogCombination[]
   photos: PublicCatalogPhoto[]
 }
