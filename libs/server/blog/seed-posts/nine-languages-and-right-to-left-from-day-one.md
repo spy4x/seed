@@ -110,8 +110,8 @@ AI agents, following a written guide, `i18n/TRANSLATING.md`. It sets the voice p
 in German, `vous` in French, です/ます in Japanese), a glossary so one thing has one name on every
 screen, and the rule to translate the situation, not the words. A second agent reads each new
 translation back into English and compares the meaning, and I fix any wording that reads badly.
-It is not a professional translation agency, and I won't pretend it is. It is far better than a screen
-nobody can read.
+It is not a professional translation agency, and I won't pretend it is. It is far better than a
+screen nobody can read.
 
 ## Adding a tenth language
 
