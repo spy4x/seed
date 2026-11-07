@@ -372,10 +372,12 @@ export function App() {
         <Toastr
           toasts={toasts.list.value}
           onDismiss={toasts.remove}
-          // From `md` up, where the rail replaces the phone's tab bar, the stack sits at the bottom
-          // right, clear of the page header's "More actions" menu; on a phone it stays at
-          // the top, clear of the tab bar.
-          class="md:top-auto! md:bottom-(--toastr-gap)!"
+          // The stack sits at the bottom, clear of the page header's title and "More actions" menu.
+          // On a phone it sits 1rem above the tab bar: the bar's 64 px row, its 1 px top
+          // rule and the device's bottom inset. From `md` up, where the rail replaces the bar, it
+          // sits in the bottom right corner.
+          corner="bottom-right"
+          class="max-md:bottom-[calc(5rem+1px+env(safe-area-inset-bottom,0px))]!"
           dataE2E="toasts"
         />
         <SWUpdater />
