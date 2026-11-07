@@ -90,9 +90,10 @@ register stays behind and is lost with the group.
    failure after yours leaves nothing moved.
 
 The mover has already locked both groups, checked edit rights in both and recorded both changes.
-Only the notes cap is wired: the gate hands one number, `allowance`, to the handler
-(`apps/api/cqrs/entitlement-needs.ts`). A second capped aggregate needs the gate to read several
-caps first; that is not built.
+The entitlement gate hands every cap of the target group's plan to the mover as
+`context.allowances`, the product's own limit keys included. A capped aggregate reads its own,
+such as `context.allowances.maxNotes`, counts what it moves under the group's lock and refuses
+with a `PlanError` when the target would pass it. Nothing in Seed's files changes for it.
 
 ## Make it exportable
 

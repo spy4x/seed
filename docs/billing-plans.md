@@ -148,6 +148,9 @@ owner.
 4. For a limit, add a usage count to `usage` in `apps/api/cqrs/entitlements.ts`. The gate refuses
    to start without one.
 5. For a limit, count again inside the write's transaction, as the note repository does.
+6. For a limit on an aggregate that "move all of a group's data" moves, its `MovableAggregate`
+   counts what it moves against `context.allowances.<key>`, every cap of the target's plan, which
+   the gate fills in (`docs/aggregate-lifecycle.md`).
 
 Step 5 closes a race: the gate counts before the handler runs, so two requests can both pass it for
 the last free slot. The gate passes the cap to the handler (`allowance` on the command). The

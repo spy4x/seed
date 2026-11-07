@@ -10,7 +10,7 @@ import {
   type GroupRepository,
   GroupRole,
 } from "@domain/groups"
-import { FREE_PLAN_ID, PlanError, PRO_PLAN_ID } from "@domain/billing"
+import { FREE_PLAN_ID, type Plan, PlanError, PRO_PLAN_ID, UNLIMITED } from "@domain/billing"
 import { TagError } from "@domain/tags"
 import { createSessionGate } from "../../cqrs/session-gate.ts"
 import { createEntitlementGate } from "../../cqrs/entitlement-gate.ts"
@@ -22,7 +22,12 @@ import { Realtime } from "../../services/realtime.ts"
 import { createGroupMoveAllHandler } from "./handlers.ts"
 import { createGroupOperations } from "./operations.ts"
 import { apiError } from "../../_testing/api-error.ts"
-import { TEST_PLANS } from "../../../../libs/domain/billing/test-plans.ts"
+import {
+  TEST_FREE_PLAN,
+  TEST_PLANS,
+  TEST_PRO_PLAN,
+  testUsage,
+} from "../../../../libs/domain/billing/test-plans.ts"
 
 /**
  * Moving all of a group's data over both transports, on the bus as the API wires it (session gate,
@@ -52,7 +57,13 @@ const ROLES: Record<string, Record<number, GroupRole>> = {
   },
 }
 
-function stack(plans: Record<string, string> = { [FROM]: PRO_PLAN_ID, [TO]: PRO_PLAN_ID }) {
+function stack(
+  plans: Record<string, string> = { [FROM]: PRO_PLAN_ID, [TO]: PRO_PLAN_ID },
+  { catalog = TEST_PLANS, billingEnabled = true }: {
+    catalog?: readonly Plan[]
+    billingEnabled?: boolean
+  } = {},
+) {
   const repository = {
     getForMember: (groupId: string, userId: number) => {
       const role = ROLES[groupId]?.[userId]
@@ -69,14 +80,13 @@ function stack(plans: Record<string, string> = { [FROM]: PRO_PLAN_ID, [TO]: PRO_
   const commands = new CommandBus()
   commands.use(createSessionGate([]))
   commands.use(createEntitlementGate({
-    billingEnabled: true,
-    plans: TEST_PLANS,
+    billingEnabled,
+    plans: catalog,
     planOf: (groupId) => Promise.resolve(plans[groupId]),
     roleOf: (groupId, userId) => Promise.resolve(ROLES[groupId]?.[userId] ?? null),
-    usage: {
+    usage: testUsage({
       maxNotes: () => Promise.reject(new Error("the move counts in its own transaction")),
-      maxMembers: () => Promise.reject(new Error("not part of this test")),
-    },
+    }),
   }, ENTITLEMENT_NEEDS))
   commands.register(GroupMoveAllCommand, createGroupMoveAllHandler(repository, mover))
   const unused = () => Promise.reject(new Error("not part of this test"))
@@ -164,7 +174,7 @@ describe("moving all of a group's data over REST", () => {
     expect(calls).toEqual([{
       input: { fromGroupId: FROM, toGroupId: TO, requestId: "req-move-all" },
       actorId: EDITOR,
-      allowances: { maxNotes: null },
+      allowances: TEST_PRO_PLAN.entitlements.limits,
     }])
   })
 
@@ -221,15 +231,40 @@ describe("moving all of a group's data over REST", () => {
     expect(calls).toEqual([])
   })
 
-  it("hands the mover the cap of the target group's plan, not the source's", async () => {
+  it("hands the mover every cap of the target group's plan, not the source's", async () => {
     const intoFree = stack({ [FROM]: PRO_PLAN_ID, [TO]: FREE_PLAN_ID })
     const fromFree = stack({ [FROM]: FREE_PLAN_ID, [TO]: PRO_PLAN_ID })
 
     await rest(intoFree.buses, EDITOR)(`/${FROM}/move-all`, { toGroupId: TO })
     await rest(fromFree.buses, EDITOR)(`/${FROM}/move-all`, { toGroupId: TO })
 
-    expect(intoFree.calls[0].allowances).toEqual({ maxNotes: 10 })
-    expect(fromFree.calls[0].allowances).toEqual({ maxNotes: null })
+    expect(intoFree.calls[0].allowances).toEqual(TEST_FREE_PLAN.entitlements.limits)
+    expect(fromFree.calls[0].allowances).toEqual(TEST_PRO_PLAN.entitlements.limits)
+  })
+
+  it("hands the mover a cap the product adds to the target group's plan", async () => {
+    // A product's own limit key, such as Financy's cap on money accounts, reaches its movable
+    // aggregate without an edit to the gate, the handler or the mover.
+    const limits = { ...TEST_FREE_PLAN.entitlements.limits, maxAccounts: 2 }
+    const free = { ...TEST_FREE_PLAN, entitlements: { ...TEST_FREE_PLAN.entitlements, limits } }
+    const { buses, calls } = stack({ [FROM]: PRO_PLAN_ID, [TO]: FREE_PLAN_ID }, {
+      catalog: [free, TEST_PRO_PLAN],
+    })
+
+    await rest(buses, EDITOR)(`/${FROM}/move-all`, { toGroupId: TO })
+
+    expect(calls[0].allowances).toMatchObject({ maxNotes: 10, maxAccounts: 2 })
+  })
+
+  it("hands the mover no cap at all while billing is off", async () => {
+    const { buses, calls } = stack({ [FROM]: PRO_PLAN_ID, [TO]: FREE_PLAN_ID }, {
+      billingEnabled: false,
+    })
+
+    const response = await rest(buses, EDITOR)(`/${FROM}/move-all`, { toGroupId: TO })
+
+    expect(response.status).toBe(200)
+    expect(calls[0].allowances).toEqual(UNLIMITED.limits)
   })
 
   it("answers 409 when the group's tags do not fit the target group", async () => {
