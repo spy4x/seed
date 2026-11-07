@@ -87,9 +87,25 @@ test.describe("restoring deleted notes", () => {
       await expect(memberTitles).toHaveText(["Trip"], { timeout: 5_000 })
       await expect(toast).toHaveCount(0)
 
+      // The toast a delete shows leaves the page header's "More actions" menu clickable, on a
+      // phone and on a desktop: the menu opens while the toast still shows, so the click
+      // did not wait for the toast to leave.
+      const openNotesMenuOverToast = async (width: number) => {
+        await ownerPage.setViewportSize({ width, height: 844 })
+        await deleteTrip()
+        await expect(toast, `${width} px`).toBeVisible()
+        await ownerPage.locator("[data-e2e=notes-menu]").click()
+        await expect(ownerPage.getByRole("menuitem", { name: "Show deleted notes" })).toBeVisible()
+        await expect(toast, `${width} px`).toBeVisible()
+      }
+      await openNotesMenuOverToast(390)
+      await ownerPage.keyboard.press("Escape")
+      await toast.getByRole("button", { name: "Undo" }).click()
+      await expect(ownerTitles).toHaveText(["Trip"])
+      await expect(memberTitles).toHaveText(["Trip"], { timeout: 5_000 })
+
       // Delete, then Show deleted notes and Restore.
-      await deleteTrip()
-      await ownerPage.locator("[data-e2e=notes-menu]").click()
+      await openNotesMenuOverToast(1440)
       await ownerPage.getByRole("menuitem", { name: "Show deleted notes" }).click()
       await expect(ownerTitles).toHaveText(["Trip"])
       await expect(ownerPage.locator("[data-e2e=notes-deleted-banner]")).toContainText("30 days")
