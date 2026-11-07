@@ -22,6 +22,7 @@ import { PostgresTagRepository } from "@server/tags/postgres-tag-repository.ts"
 import { createSessionGate } from "../../apps/api/cqrs/session-gate.ts"
 import { createEntitlementGate } from "../../apps/api/cqrs/entitlement-gate.ts"
 import { ENTITLEMENT_NEEDS } from "../../apps/api/cqrs/entitlement-needs.ts"
+import { testUsage } from "../../libs/domain/billing/test-plans.ts"
 import {
   createNoteCreateHandler,
   createNoteGetHandler,
@@ -111,10 +112,7 @@ function buses(sql: postgres.Sql) {
     billingEnabled: false,
     planOf: () => Promise.reject(new Error("billing is off")),
     roleOf,
-    usage: {
-      maxNotes: () => Promise.reject(new Error("billing is off")),
-      maxMembers: () => Promise.reject(new Error("billing is off")),
-    },
+    usage: testUsage(),
   }, ENTITLEMENT_NEEDS))
   commands.register(NoteCreateCommand, createNoteCreateHandler(noteDependencies))
   commands.register(NoteUpdateCommand, createNoteUpdateHandler(noteDependencies))

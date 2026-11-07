@@ -45,6 +45,10 @@ passing. They do not read `PLANS`:
   catalog takes it as its last parameter, `PLANS` by default, and the tests pass `TEST_PLANS`.
   Production code never imports that file; `tests/test-catalog-boundary.test.ts` fails if it does.
   The worker's billing jobs take the catalog as `JobDeps.plans`.
+- A test spells out only the caps it is about: `testLimits` in the same file fills in every other
+  limit key, and `testUsage` gives the entitlement gate a count for every key that fails the test if
+  read. A limit key the product adds needs no edit in Seed's tests, and the test plans give it no
+  cap.
 - The website's tests and the demo seed's test read `PLANS` itself: they check what the site and the
   demo show.
 - The browser tests read what the running stack answers: the trial from `GET /api/billing/trial`,
