@@ -62,6 +62,7 @@ The paths below are under `apps/mpa/` unless they say otherwise. `[[lang]]/` sta
 | Set     | The licence line of `llms.txt`         | "Source code" in `routes/llms.txt.ts`                    |
 | Replace | The privacy policy and terms           | `[[lang]]/privacy.tsx`, `[[lang]]/terms.tsx`             |
 | Set     | Name, icon and repository              | `SITE_NAME`, `SITE_ICON`, `REPOSITORY_URL` in `brand.ts` |
+| Set     | The product's name in the translators' guide | "Seed" in `i18n/TRANSLATING.md`: its opening lines and "Terms kept in English" |
 | Replace | The newsletter's voice                 | Four keys in `i18n/site/` (below)                        |
 | Replace | Open Graph images                      | `static/og/`, drawn by `screenshots/og.html`             |
 | Replace | Browser frames titled `app.seedsaas.com/…` | `routes/index.tsx`, `features-data.tsx`, `components/features-visuals.tsx` |
