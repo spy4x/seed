@@ -66,6 +66,7 @@ What each cover shows, in one sentence; a post's `coverAlt` takes it.
 | `realtime-websocket-with-http-fallback`            | Two rocky islands joined by a bright bridge, with a small ferry waiting on the water below as a second way across.                   |
 | `rebuilding-financy-on-seed-part-1`                | A young violet plant moved from a cracked grey pot into a new violet pot, watered by a big violet plant.                             |
 | `saas-pegasus-alternatives`                        | A balance scale holding a locked treasure chest with a blank price tag on one side and two open seed packets on the other.           |
+| `seed-runs-on-deno-node-and-bun`                   | A violet seedling in a pot on top of a hill, with three paths leading up to it: stepping stones, wooden planks and gravel.           |
 | `self-hosted-saas-backup-and-restore`              | A violet plant on a server on one island, and on another a sealed jar with a cutting of it beside a pot it is replanted into.        |
 | `shipfast-alternatives`                            | Seven sailboats of different shapes lined up on calm water, one of them violet.                                                      |
 | `start-a-product-from-seed-and-keep-its-updates`   | A large violet plant and a young cutting of it in a separate pot, joined by a thin line carrying drops from one to the other.        |
