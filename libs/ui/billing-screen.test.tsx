@@ -30,7 +30,12 @@ import {
   type GroupBillingPanelProps,
   SeatPriceConfirm,
 } from "./billing-screen.tsx"
-import { TEST_FREE_PLAN, TEST_PLANS, TEST_PRO_PLAN } from "../domain/billing/test-plans.ts"
+import {
+  TEST_FREE_PLAN,
+  TEST_PLANS,
+  TEST_PRO_PLAN,
+  testLimits,
+} from "../domain/billing/test-plans.ts"
 
 const NOW = new Date("2026-10-21T12:00:00Z")
 
@@ -178,7 +183,7 @@ const PAID_FROM_SIGN_UP: Plan[] = [
     ...TEST_FREE_PLAN,
     entitlements: {
       ...TEST_FREE_PLAN.entitlements,
-      limits: { maxMembers: 1, maxNotes: 0, maxAttachments: 0, storageBytes: 0 },
+      limits: testLimits(0, { maxMembers: 1 }),
     },
   },
   FLAT_PRO,

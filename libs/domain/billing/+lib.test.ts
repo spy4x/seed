@@ -40,7 +40,7 @@ import {
   UNLIMITED,
   yearlySavingOf,
 } from "./+lib.ts"
-import { TEST_FREE_PLAN, TEST_PLANS, TEST_PRO_PLAN } from "./test-plans.ts"
+import { TEST_FREE_PLAN, TEST_PLANS, TEST_PRO_PLAN, testLimits } from "./test-plans.ts"
 import { type } from "arktype"
 
 /** {@link effectivePlanIdOf} on the test catalog. */
@@ -558,7 +558,7 @@ describe("billing domain", () => {
         ...free,
         entitlements: {
           ...free.entitlements,
-          limits: { maxMembers: 1, maxNotes: 0, maxAttachments: 0, storageBytes: 0, ...limits },
+          limits: testLimits(0, { maxMembers: 1, ...limits }),
         },
       },
       pro,

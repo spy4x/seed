@@ -16,7 +16,7 @@ import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { expectVersion7Ids } from "./ids.ts"
-import { TEST_FREE_PLAN, TEST_PLANS } from "../../libs/domain/billing/test-plans.ts"
+import { TEST_FREE_PLAN, TEST_PLANS, testLimits } from "../../libs/domain/billing/test-plans.ts"
 
 /** Runs `body` on a fresh schema built from schema.sql. */
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
@@ -238,7 +238,7 @@ Deno.test("the welcome note respects the group's plan cap", async (t) => {
           ...freePlan,
           entitlements: {
             ...freePlan.entitlements,
-            limits: { maxMembers: 1, maxNotes: 0, maxAttachments: 0, storageBytes: 0 },
+            limits: testLimits(0, { maxMembers: 1 }),
           },
         },
         ...paid,

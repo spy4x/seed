@@ -4,7 +4,7 @@ import { BillingStatus, type Plan, PRO_PLAN_ID, toGroupBilling } from "@domain/b
 import { GroupRole } from "@domain/groups"
 import { GROUP_PATHS, NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { type Landing, landingPath } from "./HomeView.tsx"
-import { TEST_PLANS } from "../../../../libs/domain/billing/test-plans.ts"
+import { TEST_PLANS, testLimits } from "../../../../libs/domain/billing/test-plans.ts"
 
 const NOW = new Date("2026-11-04T10:00:00Z")
 const [FREE, PRO] = TEST_PLANS
@@ -15,7 +15,7 @@ const PAID_FROM_SIGN_UP: Plan[] = [
     ...FREE,
     entitlements: {
       ...FREE.entitlements,
-      limits: { maxMembers: 1, maxNotes: 0, maxAttachments: 0, storageBytes: 0 },
+      limits: testLimits(0, { maxMembers: 1 }),
     },
   },
   PRO,

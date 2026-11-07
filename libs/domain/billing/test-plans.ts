@@ -1,10 +1,35 @@
-import { FREE_PLAN_ID, type Plan, PRO_PLAN_ID } from "./+lib.ts"
+import { FREE_PLAN_ID, type LimitKey, type Plan, PRO_PLAN_ID, UNLIMITED } from "./+lib.ts"
+
+type Limits = Record<LimitKey, number | null>
+
+/**
+ * Plan limits with every key the product defines (`UNLIMITED.limits`) set to `value`, then
+ * `overrides`. A test spells out only the caps it is about, so a product that adds a limit key
+ * edits no test of Seed's: `testLimits(0, { maxMembers: 1 })` is a free plan that allows nothing.
+ */
+export function testLimits(value: number | null, overrides: Partial<Limits> = {}): Limits {
+  const limits = Object.fromEntries(Object.keys(UNLIMITED.limits).map((key) => [key, value]))
+  return { ...limits, ...overrides } as Limits
+}
+
+/**
+ * The entitlement gate's usage counts for a test: `counts`, and for every other limit key the
+ * product defines a count that fails the test if the gate ever reads it.
+ */
+export function testUsage(
+  counts: Partial<Record<LimitKey, (groupId: string) => Promise<number>>> = {},
+): Record<LimitKey, (groupId: string) => Promise<number>> {
+  const unread = () => Promise.reject(new Error("not part of this test"))
+  const usage = Object.fromEntries(Object.keys(UNLIMITED.limits).map((key) => [key, unread]))
+  return { ...usage, ...counts } as Record<LimitKey, (groupId: string) => Promise<number>>
+}
 
 /**
  * The plan catalog Seed's tests run on, whatever `PLANS` a product sells: a free plan with small
  * caps and a paid plan billed per member, with a trial. A test that needs a price or a cap reads it
  * from here, and passes this catalog where the code reads `PLANS`, so a product edits `PLANS` and
- * keeps every test passing (`docs/billing-plans.md`, "Replace the catalog in a product").
+ * keeps every test passing (`docs/billing-plans.md`, "Replace the catalog in a product"). A limit
+ * key the product adds is no cap on either plan here.
  *
  * No production code imports this file.
  */
@@ -18,12 +43,12 @@ export const TEST_FREE_PLAN: Plan = {
   features: ["Up to 10 notes", "Up to 3 members", "100 files, 200 MB in all"],
   entitlements: {
     features: { memberRoles: false },
-    limits: {
+    limits: testLimits(null, {
       maxMembers: 3,
       maxNotes: 10,
       maxAttachments: 100,
       storageBytes: 200 * 1024 * 1024,
-    },
+    }),
   },
   attachments: { maxFileBytes: 2 * 1024 * 1024, maxPerNote: 10 },
   trialDays: 0,
@@ -47,12 +72,7 @@ export const TEST_PRO_PLAN: Plan = {
   ],
   entitlements: {
     features: { memberRoles: true },
-    limits: {
-      maxMembers: 50,
-      maxNotes: null,
-      maxAttachments: null,
-      storageBytes: 10 * 1024 * 1024 * 1024,
-    },
+    limits: testLimits(null, { maxMembers: 50, storageBytes: 10 * 1024 * 1024 * 1024 }),
   },
   attachments: { maxFileBytes: 2 * 1024 * 1024, maxPerNote: 10 },
   trialDays: 14,

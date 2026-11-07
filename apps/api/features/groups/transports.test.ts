@@ -56,7 +56,7 @@ import { isUuid } from "@spy4x/platform/universal/uuid"
 import { PasswordLockedError } from "../../services/password-locked.ts"
 import { apiError } from "../../_testing/api-error.ts"
 import { checkedError } from "../../_testing/api-error.ts"
-import { TEST_PLANS } from "../../../../libs/domain/billing/test-plans.ts"
+import { TEST_PLANS, testUsage } from "../../../../libs/domain/billing/test-plans.ts"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
 const VIEWER = 2
@@ -83,10 +83,7 @@ function stack(plan = PRO_PLAN_ID) {
     plans: TEST_PLANS,
     planOf: () => Promise.resolve(plan),
     roleOf: async (_group, user) => (await groups.getForMember(groupId, user))?.role ?? null,
-    usage: {
-      maxNotes: () => Promise.reject(new Error("not part of this test")),
-      maxMembers: () => Promise.reject(new Error("not part of this test")),
-    },
+    usage: testUsage(),
   }, ENTITLEMENT_NEEDS))
   commands.register(GroupRenameCommand, createGroupRenameHandler(groups))
   commands.register(GroupUpdateDetailsCommand, createGroupUpdateDetailsHandler(groups))
