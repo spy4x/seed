@@ -965,7 +965,15 @@ Deno.test("the development seed adds the operator's refund, blocks and a recent 
       entry.event === BILLING_AUDIT_EVENTS.paymentRefunded
     )
     expect(refund?.operator).toBe("Emma Walsh")
-    expect(refund?.amount?.amount).toBeGreaterThan(0)
+    // The refund gives back the payment the development provider reports, in the plan's currency.
+    const [{ id }] = await sql<{ id: string }[]>`
+      SELECT provider_subscription_id AS id FROM subscriptions WHERE group_id = ${groupId}
+    `
+    const paid = await postgresFakePayments(sql)(id)
+    expect(refund?.amount).toMatchObject({
+      amount: paid!.amount,
+      currency: findPlan(PRO_PLAN_ID)!.currency,
+    })
     const blocks = await sql`
       SELECT 1 FROM auth_audits WHERE event_type = ${AuthAuditEventType.USER_BLOCKED}
     `

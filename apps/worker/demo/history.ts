@@ -11,10 +11,13 @@ import {
   billingAuditIdentifier,
   BillingPeriod,
   BillingStatus,
+  findPlan,
   PRO_PLAN_ID,
 } from "@domain/billing"
+import { currencyDecimals } from "@spy4x/platform/universal/money"
 import { AuthAuditEventType, SIGN_IN_LINK_METHOD } from "@domain/identity"
 import { PASSKEY_METHOD, passkeyIdentifier } from "@server/auth/passkeys.ts"
+import { periodCharge } from "@server/billing/fake-payments.ts"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { isExampleAddress } from "@spy4x/email/address"
 import { BACKUP_TARGET_DATABASE } from "@server/jobs/admin-system.ts"
@@ -570,11 +573,17 @@ export async function writeOperator(
         const seeded = subscriptions[action.subscription]
         if (!seeded) break
         const subscription = data.subscriptions[action.subscription]
+        // The last monthly payment of Pro, as the development provider reads it for this row.
+        const pro = findPlan(PRO_PLAN_ID)!
         const identifier = action.kind === `refund`
           ? billingAuditIdentifier({
             groupId: seeded.groupId,
             objectId: `pi_fake_${seeded.subscriptionId}`,
-            amount: { amount: 900 * subscription.seats, currency: `EUR`, decimals: 2 },
+            amount: {
+              amount: periodCharge(pro, BillingPeriod.Monthly, subscription.seats)!,
+              currency: pro.currency,
+              decimals: currencyDecimals(pro.currency),
+            },
             note: action.note,
           })
           : billingAuditIdentifier({

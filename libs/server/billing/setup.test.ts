@@ -3,7 +3,7 @@ import { describe, it } from "@std/testing/bdd"
 import { createEnvReader, type EnvReader } from "@spy4x/server/config"
 import { BillingPeriod } from "@spy4x/billing"
 import { DEFAULT_GRACE_DAYS, type Plan, PRO_PLAN_ID } from "@domain/billing"
-import { TEST_PAID_PLANS } from "../../domain/billing/test-plans.ts"
+import { TEST_PAID_PLANS, TEST_PRO_PLAN } from "../../domain/billing/test-plans.ts"
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import {
   DEV_PRO_PRICE_ID,
@@ -290,7 +290,7 @@ describe("billing configuration", () => {
   })
 
   it("refunds the development payment once, and answers a retry with the same refund", async () => {
-    const billing = createFakeBilling("price_dev")
+    const billing = createFakeBilling("price_dev", undefined, undefined, TEST_PAID_PLANS)
     const read = await billing.readLastPayment({ subscriptionId: "sub_dev" })
     if (!read.ok || read.value === null) throw new Error("expected a payment")
     expect(read.value.refunded).toBe(false)
@@ -305,7 +305,22 @@ describe("billing configuration", () => {
     expect(other).toMatchObject({ ok: false, error: { code: "provider_error" } })
     expect(await billing.readLastPayment({ subscriptionId: "sub_dev" })).toMatchObject({
       ok: true,
-      value: { refunded: true, amountRefunded: 900 },
+      value: { refunded: true, amountRefunded: TEST_PRO_PLAN.amount },
+    })
+  })
+
+  it("charges and refunds the development payment at Pro's price, in Pro's currency", async () => {
+    const yen = [{ ...TEST_PRO_PLAN, amount: 1200, currency: "JPY" }]
+    const billing = createFakeBilling("price_dev", undefined, undefined, yen)
+
+    const read = await billing.readLastPayment({ subscriptionId: "sub_dev" })
+    if (!read.ok || read.value === null) throw new Error("expected a payment")
+    const refund = await billing.refundPayment({ paymentId: read.value.id, idempotencyKey: "k" })
+
+    expect(read.value).toMatchObject({ amount: 1200, currency: "JPY", decimals: 0 })
+    expect(refund).toMatchObject({
+      ok: true,
+      value: { amount: 1200, currency: "JPY", decimals: 0 },
     })
   })
 
