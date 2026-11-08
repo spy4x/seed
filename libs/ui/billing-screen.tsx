@@ -28,8 +28,8 @@ import {
   periodsOf,
   type PersonTrial,
   type Plan,
+  PLANS,
   priceOf,
-  PRO_PLAN_ID,
   type SeatPrice,
   yearlySavingOf,
 } from "@domain/billing"
@@ -40,16 +40,18 @@ const DEFAULT_PLAN = PAID_PLANS[0]
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-/** The plans' names, by plan id and key in the `app` catalog; another id shows the catalog's name. */
-const PLAN_NAME_KEYS: Record<string, string> = {
-  [FREE_PLAN_ID]: `GroupBillingPanel.planFree`,
-  [PRO_PLAN_ID]: `GroupBillingPanel.planPro`,
-}
-
-/** A plan's name in the person's language. */
-export function planName(t: Translator<string>, planId: string): string {
-  const key = PLAN_NAME_KEYS[planId]
-  return key ? t.t(key) : findPlan(planId)?.name ?? planId
+/**
+ * A plan's name: the free plan's in the person's language, a paid plan's as `plans` (`PLANS` unless
+ * a test passes its own) names it, since a product's plan name is a brand and is not translated.
+ */
+export function planName(
+  t: Translator<string>,
+  planId: string,
+  plans: readonly Plan[] = PLANS,
+): string {
+  return planId === FREE_PLAN_ID
+    ? t.t(`GroupBillingPanel.planFree`)
+    : findPlan(planId, plans)?.name ?? planId
 }
 
 /** A billing date as the person's format writes it: in UTC, the same on the server and here. */
@@ -230,8 +232,8 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
   const start = state === BillingState.FREE && needsFirstPlan(billing, props.plans)
   const t = useAppText()
   const format = useFormat()
-  const name = planName(t, billing.planId)
-  const pro = planName(t, paid.id)
+  const pro = paid.name
+  const name = billing.planId === paid.id ? pro : planName(t, billing.planId, props.plans)
   const money = (amount: number) => formatMoney(amount, paid.currency, format.locale)
   const seats = billing.seatPrice
   const total = seats && formatMoney(seats.amount * seats.seats, seats.currency, format.locale)
@@ -508,7 +510,7 @@ function PortalRows(props: GroupBillingPanelProps & { billing: GroupBilling }): 
   const t = useAppText()
   const format = useFormat()
   const paid = props.plan ?? DEFAULT_PLAN
-  const pro = planName(t, paid.id)
+  const pro = paid.name
   const trialEnd = billing.trialEnd ?? billing.currentPeriodEnd
   const renews = state === BillingState.TRIAL || state === BillingState.PRO
   // The period row: the other period is one portal visit away, for a plan sold for both.

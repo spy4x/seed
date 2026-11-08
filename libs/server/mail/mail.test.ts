@@ -2,6 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { Sql } from "@spy4x/server/db"
 import { BillingNoticeKind, PRO_PLAN_ID } from "@domain/billing"
+import { TEST_FREE_PLAN, TEST_PRO_PLAN } from "../../domain/billing/test-plans.ts"
 import { GroupRole } from "@domain/groups"
 import { LANGUAGES } from "@domain/identity"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
@@ -467,6 +468,24 @@ describe("billingNoticeMail", () => {
     expect(trial.subject).toBe("Your Pro trial ends on October 15, 2026")
     expect(trial.text).toContain("your card is charged. To stop it, cancel before then")
     expect(trial.text).toContain(link)
+  })
+
+  it("names the paid plan as the product's catalog names it, not Pro", () => {
+    const household = billingNoticeMail(brand, {
+      to: "ann@example.com",
+      reader: EN,
+      kind: BillingNoticeKind.PaymentFailed,
+      groupName: "Tea <club>",
+      planId: PRO_PLAN_ID,
+      at: new Date("2026-10-15T23:30:00Z"),
+      link,
+      planKeptUntil: new Date("2026-10-22T23:30:00Z"),
+      trialHasCard: true,
+      plans: [TEST_FREE_PLAN, { ...TEST_PRO_PLAN, name: "Household" }],
+    })
+
+    expect(household.subject).toBe("A payment for Household failed")
+    expect(household.text).not.toContain("Pro")
   })
 
   it("says a payment failed and the card needs updating to keep the plan", () => {
