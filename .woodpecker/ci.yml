@@ -185,8 +185,9 @@ steps:
     # scored 0.74 to 0.97 on code that scores 0.99 on an idle machine. It builds the MPA itself, so
     # it measures no leftover of an earlier step.
     # A pull request measures only the pages in apps/mpa/lighthouse/quick.ts, one run each
-    # (`LIGHTHOUSE_PAGES=quick`, #876), against the same scores: QUICK_MINUTES of wall time. A push
-    # to `main` and a tag measure every page three times, which took a median of 13.4 minutes.
+    # (`LIGHTHOUSE_PAGES=quick`, #876), against the same scores: 1.3 minutes in its first run
+    # (#877). A push to `main` and a tag measure every page three times, which took a median of
+    # 13.4 minutes.
     # A pull request runs it only when it changes a file the built website comes from (#821): the
     # MPA, what its module graph imports (libs/ui, libs/domain, four libs/server members, the
     # catalogs, the guides docs-site.ts publishes), the two API files of its stand-in blog API, and
