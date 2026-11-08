@@ -114,15 +114,17 @@ Deno.test("the free plan's note cap on Postgres", async (t) => {
         let arrived = 0
         let bothCounted!: () => void
         const counted = new Promise<void>((resolve) => bothCounted = resolve)
-        const { bus, notes } = noteBus(sql, {
-          maxNotes: async (id) => {
-            const used = await seed.notes.count(id)
-            if (++arrived === 2) bothCounted()
-            await counted
-            return used
-          },
-          maxMembers: () => Promise.reject(new Error("not part of this test")),
-        })
+        const { bus, notes } = noteBus(
+          sql,
+          testUsage({
+            maxNotes: async (id) => {
+              const used = await seed.notes.count(id)
+              if (++arrived === 2) bothCounted()
+              await counted
+              return used
+            },
+          }),
+        )
 
         const outcomes = await Promise.allSettled([
           bus.execute(createNote(groupId, owner, "Owner's")),
