@@ -20,6 +20,7 @@ import { pageHeading } from "@spy4x/preact-system/route-announcer"
 import { isSpaPath } from "./spa-paths.ts"
 import { personName } from "./note-people.ts"
 import { movedToast } from "./note-toasts.ts"
+import { clickAfterPalette } from "./palette-attach.ts"
 import { useAppText } from "@ui/i18n.ts"
 import { messageText } from "@ui/message.ts"
 import { isolate } from "@spy4x/preact-ui/bdi"
@@ -92,15 +93,8 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
   useEffect(() => {
     if (!canWrite) return
     noteEditorPageActions.value = {
-      // Focus lands on the button too, so the person is there once the chooser closes. The palette
-      // sends focus back where it was as its dialog closes, so the move waits for that close.
-      attach: () => {
-        const button = document.getElementById(ATTACH_BUTTON_ID)
-        button?.click()
-        const focus = () => setTimeout(() => button?.focus())
-        if (!document.querySelector("dialog[open]")) return focus()
-        document.addEventListener("close", focus, { capture: true, once: true })
-      },
+      // Focus lands on the button too, so the person is there once the chooser closes.
+      attach: () => clickAfterPalette(document, document.getElementById(ATTACH_BUTTON_ID)),
     }
     return () => noteEditorPageActions.value = null
   }, [canWrite])
