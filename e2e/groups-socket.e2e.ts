@@ -138,8 +138,7 @@ test.describe("groups over the socket", () => {
       await page.locator("[data-e2e=auth-form-login]").waitFor()
 
       // The API closes the other tab's socket when the session ends, so it does not have to wait
-      // for the 15 second sweep. The 5 s limit stays explicit and well below that sweep, so the
-      // sweep cannot pass this check for a missing close.
+      // for the 15 second sweep.
       await expect(other.locator("[data-e2e=auth-form-login]")).toBeVisible({ timeout: 5_000 })
     } finally {
       await request.post(`${apiBase}/api/test/cleanup-user`, { data: { login: email } })
