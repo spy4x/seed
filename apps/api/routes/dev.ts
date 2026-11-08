@@ -73,6 +73,11 @@ export interface DevRouteDeps {
  * development (`dev_mail`): `{ subject, text }`, or 404 when there is none. The e2e specs read
  * sign-in, sign-up and password-reset codes this way.
  *
+ * `POST /starter-data` with `{ login }` answers `{ done }`: whether the worker has handled every
+ * starter data request of that user (the welcome note), or 404 when the user does not exist. The
+ * e2e sign-up fixture waits for it before it pays for a new group, so the welcome note never
+ * depends on which of the two came first.
+ *
  * `GET /free-plan` answers `{ allowsNothing }`: whether billing is on and the free plan allows
  * nothing. The e2e sign-up fixture then puts each new group on the paid plan, so the specs run on
  * any product's catalog.
@@ -153,6 +158,16 @@ export function createDevRoute(deps: DevRouteDeps) {
         UPDATE users SET role = ${validation.data.role}, updated_at = NOW() WHERE id = ${key.userId}
       `
       return c.json({ success: true })
+    })
+    .post("/starter-data", async (c) => {
+      const user = await readLogin(c, deps)
+      if (user instanceof Response) return user
+      if (user.userId === null) return errorResponse(c, `not_found`, { message: "No such user" })
+      const [pending] = await deps.sql<{ count: number }[]>`
+        SELECT count(*)::int AS count FROM starter_data_requests
+        WHERE user_id = ${user.userId} AND done_at IS NULL
+      `
+      return c.json({ done: pending.count === 0 })
     })
     .post("/close-sockets", async (c) => {
       const user = await readLogin(c, deps)
