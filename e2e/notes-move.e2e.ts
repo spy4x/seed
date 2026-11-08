@@ -97,8 +97,8 @@ test.describe("moving notes to another group", () => {
       )
       await expect(ownerTitles).toHaveCount(3)
       await expect(ownerPage.getByRole("link", { name: "One", exact: true })).toHaveCount(0)
-      await expect(sourceTitles).toHaveCount(3, { timeout: 5_000 })
-      await expect(targetTitles).toHaveText(["One"], { timeout: 5_000 })
+      await expect(sourceTitles).toHaveCount(3)
+      await expect(targetTitles).toHaveText(["One"])
 
       // The move went over the socket, as one command with an idempotency key.
       const single = framesSent.map((payload) => JSON.parse(payload)).find(
@@ -113,7 +113,7 @@ test.describe("moving notes to another group", () => {
       await ownerPage.locator("[data-e2e=note-move-dialog]").getByRole("button", { name: "Target" })
         .click()
       await expect(ownerTitles).toHaveCount(2)
-      await expect(targetTitles).toHaveCount(2, { timeout: 5_000 })
+      await expect(targetTitles).toHaveCount(2)
 
       // Ticked notes, from the list: check boxes appear only once the person asks to select.
       await expect(ownerPage.locator("[data-e2e=note-select]")).toHaveCount(0)
@@ -128,8 +128,8 @@ test.describe("moving notes to another group", () => {
       await ownerPage.locator("[data-e2e=notes-move-to]").selectOption({ label: "Target" })
       await ownerPage.locator("[data-e2e=notes-move-submit]").click()
       await expect(ownerPage.getByText("No notes yet")).toBeVisible()
-      await expect(targetTitles).toHaveCount(4, { timeout: 5_000 })
-      await expect(sourcePage.getByText("No notes yet")).toBeVisible({ timeout: 5_000 })
+      await expect(targetTitles).toHaveCount(4)
+      await expect(sourcePage.getByText("No notes yet")).toBeVisible()
 
       // Delete from a row's menu goes at once, with Undo in a toast; the members see it go.
       await openNotes(ownerPage, "Target")
@@ -139,7 +139,7 @@ test.describe("moving notes to another group", () => {
       await expect(ownerPage.locator("[data-e2e=note-undo-toast]")).toBeVisible()
       await expect(ownerTitles).toHaveCount(3)
       await expect(ownerPage.getByRole("link", { name: "One", exact: true })).toHaveCount(0)
-      await expect(targetTitles).toHaveCount(3, { timeout: 5_000 })
+      await expect(targetTitles).toHaveCount(3)
     } finally {
       for (const context of contexts) await context.close()
       for (const email of emails) await cleanup(request, email)

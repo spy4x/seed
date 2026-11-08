@@ -139,7 +139,7 @@ test.describe("groups over the socket", () => {
 
       // The API closes the other tab's socket when the session ends, so it does not have to wait
       // for the 15 second sweep.
-      await expect(other.locator("[data-e2e=auth-form-login]")).toBeVisible({ timeout: 5_000 })
+      await expect(other.locator("[data-e2e=auth-form-login]")).toBeVisible()
     } finally {
       await request.post(`${apiBase}/api/test/cleanup-user`, { data: { login: email } })
     }

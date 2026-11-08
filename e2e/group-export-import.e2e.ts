@@ -71,7 +71,7 @@ test.describe("exporting and importing a group", () => {
       await expect(page.locator("[data-e2e=group-general-name]")).toHaveText("Family copy")
 
       await openNotes(page, "Family copy")
-      await expect(page.locator("[data-e2e=note-item-title]")).toHaveCount(3, { timeout: 5_000 })
+      await expect(page.locator("[data-e2e=note-item-title]")).toHaveCount(3)
       expect((await page.locator("[data-e2e=note-item-title]").allTextContents()).sort())
         .toEqual(titles)
       // The original is still there, with its notes.
