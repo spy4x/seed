@@ -187,7 +187,8 @@ steps:
     # A pull request measures only the pages in apps/mpa/lighthouse/quick.ts, one run each
     # (`LIGHTHOUSE_PAGES=quick`, #876), against the same scores: 1.3 minutes in its first run
     # (#877). A push to `main` and a tag measure every page three times, which took a median of
-    # 13.4 minutes.
+    # 13.4 minutes. The light run is on trial until 2026-11-15: if a speed regression reaches
+    # `main` and stays there more than a day, the full run goes back on pull requests.
     # A pull request runs it only when it changes a file the built website comes from (#821): the
     # MPA, what its module graph imports (libs/ui, libs/domain, four libs/server members, the
     # catalogs, the guides docs-site.ts publishes), the two API files of its stand-in blog API, and
