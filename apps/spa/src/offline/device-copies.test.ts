@@ -140,7 +140,7 @@ function settle(): Promise<void> {
 
 /**
  * Waits until `done` holds, such as a call reaching the server, however slow the machine is. A fixed
- * wait failed under load in CI (#869). Throws after 5 seconds.
+ * wait failed under load in CI. Throws after 5 seconds.
  */
 async function until(done: () => boolean): Promise<void> {
   for (const deadline = Date.now() + 5_000; !done(); await settle()) {
@@ -300,7 +300,7 @@ describe("an answer that arrives after the sign-out", () => {
     const server = pendingServer()
     signIn(storage)
     const opening = offlineNotes(server.notes, currentLayer).get(groupId, "late")
-    await settle()
+    await until(server.asked)
 
     await stopOffline({ forget: true })
     server.answer({ note: note("late") })
