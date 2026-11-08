@@ -13,7 +13,7 @@ afterAll(() => window.happyDOM.close())
 const nextTask = () => new Promise((resolve) => window.setTimeout(resolve))
 
 describe("clickAfterPalette", () => {
-  it("leaves focus on the button when the palette's close event comes after a timer", async () => {
+  it("clicks the button and leaves focus on it when the palette's close event comes after a timer", async () => {
     doc.body.innerHTML = `<button id="trigger">Search</button><button id="attach">Attach</button>` +
       `<dialog id="palette"></dialog>`
     const trigger = doc.getElementById("trigger")!
@@ -31,6 +31,7 @@ describe("clickAfterPalette", () => {
     await nextTask()
 
     expect(clicks).toBe(1)
-    expect(doc.activeElement).toBe(button)
+    // By id: a failed match of two elements would print the whole page's object graph.
+    expect(doc.activeElement?.id).toBe("attach")
   })
 })
