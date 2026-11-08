@@ -46,10 +46,11 @@ async function browseApp(context: BrowserContext, email: string, headers: Record
  * than the 10 s navigation timeout when the machine is busy, and whichever spec ran first failed
  * with `page.goto: Timeout 10000ms exceeded`.
  *
- * A dependency Vite finds only while a page loads makes it bundle its dependencies again, and it
- * answers the modules of the old bundle with `504 (Outdated Optimize Dep)`: that page never boots.
- * An attempt that failed after such an answer is made again in a fresh context, up to three
- * times; by then Vite has its new bundle, so the specs never meet it.
+ * A busy machine can fail the warm-up itself. A dependency Vite finds only while a page loads
+ * makes it bundle its dependencies again, and it answers the modules of the old bundle with
+ * `504 (Outdated Optimize Dep)`, so that page never boots; and a cold dev server can take longer
+ * than the 30 s navigation timeout. Vite goes on with its work either way, so a failed attempt is
+ * made again in a fresh context, up to three times, and the specs start on a warm server.
  */
 async function warmUp(browser: Browser, api: APIRequestContext, baseURL: string, email: string) {
   const headers = { origin: new URL(baseURL).origin, "sec-fetch-site": "same-origin" }
@@ -68,16 +69,13 @@ async function warmUp(browser: Browser, api: APIRequestContext, baseURL: string,
   try {
     for (let attempt = 1;; attempt++) {
       const context = await browser.newContext({ baseURL })
-      let outdated = false
-      context.on("response", (response) => {
-        if (response.status() === 504) outdated = true
-      })
       try {
         await browseApp(context, email, headers)
         break
       } catch (error) {
-        if (!outdated || attempt === WARM_ATTEMPTS) throw error
-        console.warn(`warm-up attempt ${attempt} of ${WARM_ATTEMPTS} met a 504 from Vite`)
+        if (attempt === WARM_ATTEMPTS) throw error
+        const reason = error instanceof Error ? error.message.split("\n")[0] : String(error)
+        console.warn(`warm-up attempt ${attempt} of ${WARM_ATTEMPTS} failed, again: ${reason}`)
       } finally {
         await context.close()
       }
