@@ -1,7 +1,7 @@
 import type { APIRequestContext, BrowserContext } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * The admin app's groups module: an operator finds a group by its name, sees its members,
@@ -93,9 +93,17 @@ test.describe(`the admin app's groups`, () => {
         data: { id: groupId, name: groupName },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(request, appBase, groupId)
       const invited = await request.post(`${appBase}/api/groups/${groupId}/invitations`, {
         headers,
-        data: { role: 1, expiresInDays: 7, maxUses: 1, email: null, sendEmail: false },
+        data: {
+          role: 1,
+          expiresInDays: 7,
+          maxUses: 1,
+          email: null,
+          sendEmail: false,
+          acceptSeatPrice: true,
+        },
       })
       expect(invited.status(), await invited.text()).toBe(201)
       await signOut(request)
@@ -229,6 +237,7 @@ test.describe(`the admin app's groups`, () => {
         data: { id: groupId, name: groupName },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(request, appBase, groupId)
       for (let note = 0; note < 3; note++) {
         const noteId = uuidV7()
         const title = note === 0 ? `Trip receipts` : `Album ${note}`

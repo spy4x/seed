@@ -6,7 +6,7 @@ import {
   type Page,
 } from "@playwright/test"
 import { gotoApp } from "./app.ts"
-import { BILLING_WEBHOOK_PATH, proWebhook } from "./billing.ts"
+import { BILLING_WEBHOOK_PATH, stripeSignature, subscriptionEvent } from "./billing.ts"
 
 /**
  * The subject of the mail that carries a code to prove an address, in each language the page can
@@ -95,13 +95,13 @@ export async function mailedCode(
  * headers. Answers the verify response, which signs the new account in as the old one-step sign-up
  * did, or the sign-up's own response when that one was refused. When the stack's free plan allows
  * nothing, the new group is then put on the paid plan, unless `plan.keepFree` (see
- * {@link SignUpPlan}).
+ * {@link NewGroupPlan}).
  */
 export async function signUpWithCode(
   api: APIRequestContext,
   signUpUrl: string,
   options: PostOptions,
-  plan: SignUpPlan = {},
+  plan: NewGroupPlan = {},
 ): Promise<APIResponse> {
   const email = String((options.data as { email: string }).email)
   const origin = signUpUrl.replace(`/api/auth/password/sign-up`, ``)
@@ -115,7 +115,7 @@ export async function signUpWithCode(
     data: { code },
   })
   if (verified.ok() && !plan.keepFree && await freePlanAllowsNothing(api, origin)) {
-    await payForSelectedGroup(api, origin)
+    await payForSelectedGroup(api, origin, email)
   }
   return verified
 }
@@ -148,7 +148,7 @@ export async function signUpInPage(
       await field.press(`Enter`)
       await page.waitForURL(BILLING_LANDING)
     })
-    await payForSelectedGroup(page.request, origin)
+    await payForSelectedGroup(page.request, origin, email)
     await gotoApp(page, `/notes`, ready)
     return
   }
@@ -161,8 +161,8 @@ export async function signUpInPage(
 /** Where a new owner lands when the free plan allows nothing: the group's Billing tab. */
 export const BILLING_LANDING = /\/groups\/[0-9a-f-]{36}\/billing$/
 
-/** What a sign-up does about the new group's plan. */
-export interface SignUpPlan {
+/** What a sign-up, or a fixture that creates a group, does about the new group's plan. */
+export interface NewGroupPlan {
   /**
    * Keep the new group on the free plan. Leave it out and, when the stack's free plan allows
    * nothing, the group is put on the paid plan, so a spec about anything else can add notes and
@@ -199,12 +199,76 @@ export function freePlanAllowsNothing(api: APIRequestContext, origin: string): P
 
 /**
  * Puts the group the signed-in person of `api` has selected (the one sign-up made) on the paid
- * plan, through the development provider's webhook, as a customer's checkout would.
+ * plan, as {@link payForGroup} does. It waits for the worker to finish `email`'s starter data
+ * first: on the free plan that allows nothing the welcome note is refused, so every run gets none,
+ * whichever of the job and the payment would have come first.
  */
-async function payForSelectedGroup(api: APIRequestContext, origin: string): Promise<void> {
+async function payForSelectedGroup(
+  api: APIRequestContext,
+  origin: string,
+  email: string,
+): Promise<void> {
+  await expect.poll(async () => {
+    const response = await api.post(`${origin}/api/test/starter-data`, { data: { login: email } })
+    if (!response.ok()) throw new Error(`starter data of ${email}: ${response.status()}`)
+    return (await response.json() as { done: boolean }).done
+  }, { timeout: 20_000, message: `the worker handles the starter data of ${email}` }).toBe(true)
   const selected = await api.get(`${origin}/api/groups/selected`)
   const { groupId } = await selected.json() as { groupId: string | null }
   if (!groupId) throw new Error(`sign-up found no selected group: ${selected.status()}`)
-  const paid = await api.post(`${origin}${BILLING_WEBHOOK_PATH}`, await proWebhook(groupId))
-  if (!paid.ok()) throw new Error(`paying for ${groupId} failed: ${paid.status()}`)
+  await pay(api, origin, groupId)
+}
+
+/**
+ * Puts a group a spec created on the paid plan when the stack's free plan allows nothing, so the
+ * spec can add notes, files and members to it on any product's catalog; on a free plan that allows
+ * something it does nothing. It pays through the development provider's webhook, as a customer's
+ * checkout would. A spec about the free plan itself does not call it.
+ */
+export async function payForGroup(
+  api: APIRequestContext,
+  origin: string,
+  groupId: string,
+): Promise<void> {
+  if (await freePlanAllowsNothing(api, origin)) await pay(api, origin, groupId)
+}
+
+/**
+ * Cancels the subscription {@link payForGroup} gave `groupId`, so the spec can delete the group: a
+ * group someone still pays for cannot be deleted. It does nothing when nothing was paid.
+ */
+export async function stopPaying(
+  api: APIRequestContext,
+  origin: string,
+  groupId: string,
+): Promise<void> {
+  if (await freePlanAllowsNothing(api, origin)) await pay(api, origin, groupId, `canceled`)
+}
+
+/**
+ * Sends the development provider's signed webhook for `groupId`'s subscription. The subscription
+ * and customer ids come from the group's, so specs that pay side by side never share one, and the
+ * cancellation finds the subscription the payment made; it is a second later, so it is not older.
+ */
+async function pay(
+  api: APIRequestContext,
+  origin: string,
+  groupId: string,
+  status: `active` | `canceled` = `active`,
+): Promise<void> {
+  const id = groupId.replaceAll(`-`, ``)
+  const data = subscriptionEvent({
+    type: status === `active` ? `customer.subscription.created` : `customer.subscription.deleted`,
+    reference: groupId,
+    subscriptionId: `sub_${id}`,
+    customerId: `cus_${id}`,
+    status,
+    createdAt: status === `active` ? 1679609768 : 1679609769,
+  })
+  const headers = {
+    "content-type": `application/json`,
+    "stripe-signature": await stripeSignature(data),
+  }
+  const sent = await api.post(`${origin}${BILLING_WEBHOOK_PATH}`, { headers, data })
+  if (!sent.ok()) throw new Error(`the ${status} webhook for ${groupId} failed: ${sent.status()}`)
 }

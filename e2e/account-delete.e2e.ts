@@ -16,11 +16,15 @@ async function cleanup(request: APIRequestContext, email: string, { soft = false
   ;(soft ? expect.soft : expect)(response.status(), await response.text()).toBe(200)
 }
 
+/**
+ * Signs `email` up and keeps its group on the free plan: a group someone pays for stops the
+ * deletion, which only the blocker test is about.
+ */
 async function signUp(request: APIRequestContext, email: string) {
   const response = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
     headers,
     data: { email, password },
-  })
+  }, { keepFree: true })
   expect(response.ok(), await response.text()).toBe(true)
 }
 

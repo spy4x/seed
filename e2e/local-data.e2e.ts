@@ -14,7 +14,7 @@ import {
   openGroups,
   openNotes,
 } from "./fixtures/groups.ts"
-import { signUpInPage, signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpInPage, signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * The local-data module as a swappable part (ADR 003, sections 1, 4 and 5), in a real browser with
@@ -47,6 +47,7 @@ async function createGroup(api: APIRequestContext, name: string): Promise<string
   const groupId = uuidV7()
   const group = await api.post(`${apiBase}/api/groups`, { headers, data: { id: groupId, name } })
   expect(group.status(), await group.text()).toBe(201)
+  await payForGroup(api, apiBase, groupId)
   return groupId
 }
 

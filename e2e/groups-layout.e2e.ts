@@ -3,7 +3,7 @@ import { AxeBuilder } from "@axe-core/playwright"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -118,13 +118,21 @@ test.describe("group screens in the shared column", () => {
         data: { id: groupId, name: "A team with a long name that has to wrap on a phone" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(page.request, apiBase, groupId)
       const added = await request.post(`${apiBase}/api/test/add-member`, {
         data: { login: admin, groupId, role: ADMIN },
       })
       expect(added.status(), await added.text()).toBe(200)
       const invited = await page.request.post(`${apiBase}/api/groups/${groupId}/invitations`, {
         headers,
-        data: { role: 1, expiresInDays: 7, maxUses: 1, email: null, sendEmail: false },
+        data: {
+          role: 1,
+          expiresInDays: 7,
+          maxUses: 1,
+          email: null,
+          sendEmail: false,
+          acceptSeatPrice: true,
+        },
       })
       expect(invited.status(), await invited.text()).toBe(201)
       const note = await page.request.post(`${apiBase}/api/groups/${groupId}/notes`, {

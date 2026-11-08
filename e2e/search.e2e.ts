@@ -1,7 +1,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
@@ -32,6 +32,7 @@ async function groupWithNote(page: Page, name: string, title: string, body: stri
     data: { id: groupId, name },
   })
   expect(group.status(), await group.text()).toBe(201)
+  await payForGroup(page.request, apiBase, groupId)
   const note = await page.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
     headers,
     data: { id: noteId, title, body },

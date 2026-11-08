@@ -163,7 +163,14 @@ test.describe("group invitations", () => {
         const invite = () =>
           request.post(`${apiBase}/api/groups/${groupId}/invitations`, {
             headers,
-            data: { role: 1, expiresInDays: 7, maxUses: 1, email, sendEmail: false },
+            data: {
+              role: 1,
+              expiresInDays: 7,
+              maxUses: 1,
+              email,
+              sendEmail: false,
+              acceptSeatPrice: true,
+            },
           })
         let invited = await invite()
         // A catalog whose free plan holds the owner alone: put the group on the paid plan.

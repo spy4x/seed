@@ -2,7 +2,7 @@ import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { freePlanAllowsNothing, payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -30,13 +30,17 @@ async function signInOnline(page: Page, email: string): Promise<void> {
 
 /**
  * Waits for the worker's welcome note in the group, so what a spec adds next is ordered
- * after it. A spec that counts or lists a new account's notes must account for it.
+ * after it. A spec that counts or lists a new account's notes must account for it. When the free
+ * plan allows nothing there is none: the sign-up fixture pays only after the worker was refused.
+ * Returns the titles the group starts with.
  */
-async function welcomeNoteIn(page: Page, groupId: string): Promise<void> {
+async function welcomeNoteIn(page: Page, groupId: string): Promise<string[]> {
+  const expected = await freePlanAllowsNothing(page.request, apiBase) ? [] : ["Welcome"]
   await expect.poll(async () => {
     const listed = await page.request.get(`${apiBase}/api/groups/${groupId}/notes?limit=100`)
     return (await listed.json()).notes.map((note: { title: string }) => note.title)
-  }, { message: "the worker makes the welcome note", timeout: 15_000 }).toEqual(["Welcome"])
+  }, { message: "the worker makes the welcome note", timeout: 15_000 }).toEqual(expected)
+  return expected
 }
 
 /** One group of the person's, with a note in it. */
@@ -55,6 +59,7 @@ async function sharedGroup(page: Page, name: string): Promise<string> {
     data: { id, name },
   })
   expect(created.status(), await created.text()).toBe(201)
+  await payForGroup(page.request, apiBase, id)
   return id
 }
 
@@ -101,7 +106,7 @@ test.describe("notes at /notes with a group picker", () => {
       const page = await context.newPage()
       await signInOnline(page, user)
       const personal = await personalGroup(page)
-      await welcomeNoteIn(page, personal.id)
+      const starter = await welcomeNoteIn(page, personal.id)
       const team = await sharedGroup(page, "Team B")
       await noteIn(page, personal.id, "Only in personal")
       await noteIn(page, team, "Only in team")
@@ -110,7 +115,7 @@ test.describe("notes at /notes with a group picker", () => {
       await expect(heading(page, personal.name)).toBeVisible()
       const titles = page.locator("[data-e2e=note-item-title]")
       // Newest change first: the person's note, then the welcome note the worker made.
-      await expect(titles).toHaveText(["Only in personal", "Welcome"])
+      await expect(titles).toHaveText(["Only in personal", ...starter])
 
       await pickWithKeyboard(page, "Team B")
       await expect(heading(page, "Team B")).toBeVisible()
