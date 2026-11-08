@@ -12,6 +12,10 @@ const password = "Passw0rd!"
 
 const VIEWER = 1
 
+// Several tests here sign in two people or check two widths. On a busy dev server they run past
+// the config's 60 s per test (#889), so the file allows two minutes.
+test.describe.configure({ timeout: 120_000 })
+
 /** The WCAG A and AA rules axe-core checks a page against. */
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]
 
