@@ -53,8 +53,11 @@ passing. They do not read `PLANS`:
   demo show.
 - The browser tests read what the running stack answers: the trial from `GET /api/billing/trial`,
   the note cap from the API's refusal and the seat price from the group's billing. When the free
-  plan allows nothing, a spec that needs a note or a second member puts its group on the paid plan
-  first, through the development provider's webhook.
+  plan allows nothing (the development route `GET /api/test/free-plan` says so), the sign-up
+  fixture (`e2e/fixtures/sign-up.ts`) puts every new group on the paid plan through the development
+  provider's webhook, so the specs run on any catalog. A spec about the free plan itself opts out
+  with `{ keepFree: true }`, as `e2e/plan-limits.e2e.ts` does. A group a spec creates after sign-up
+  starts on the free plan.
 
 Keep the ids `free` and `pro` (`FREE_PLAN_ID` and `PRO_PLAN_ID`): the code names the free plan and
 the development provider maps its prices to `pro`. To rename the paid plan, change its `name`.
@@ -141,8 +144,9 @@ owner.
 
 1. Add the key to `FeatureKey` or `LimitKey` in `libs/domain/billing/+lib.ts`. TypeScript then asks
    for it in every plan and in `UNLIMITED`.
-2. Add its wording to `REFUSAL_KEYS` in `libs/ui/plan-refusal.tsx`, and the keys to the app's
-   catalogs in `i18n/app/`.
+2. Give it a refusal message: its wording in `REFUSAL_KEYS` (`libs/ui/plan-refusal.tsx`), and
+   those keys in the app's catalogs in `i18n/app/`. TypeScript asks for the entry; without it the
+   app cannot say why the plan refused.
 3. List each command that needs it in `ENTITLEMENT_NEEDS` (`apps/api/cqrs/entitlement-needs.ts`),
    with `needsFeature` or `needsRoom`.
 4. For a limit, add a usage count to `usage` in `apps/api/cqrs/entitlements.ts`. The gate refuses
