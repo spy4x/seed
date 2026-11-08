@@ -19,6 +19,28 @@ when:
     branch: main
   - event: tag
 
+variables:
+  # When the four image steps run: see image-node.
+  - &image_when
+    - event: pull_request
+      path:
+        # What .dockerignore lets into the build context, the Dockerfiles among apps/, and this
+        # file.
+        - apps/**
+        - libs/**
+        - i18n/**
+        - infra/**
+        - docs/*.md
+        - e2e/*
+        - media/demo/*
+        - deno.jsonc
+        - deno.lock
+        - .dockerignore
+        - .woodpecker/ci.yml
+    - event: push
+      branch: main
+    - event: tag
+
 steps:
   check:
     # The deploy tests (infra/scripts/deploy.test.ts) run the real `git status` in a repository of
@@ -358,7 +380,11 @@ steps:
     # nothing (`--no-push`), as in release.yml. All four are self-contained, so no base image has
     # to be published first. One step each: kaniko builds in its own root
     # filesystem, so two builds in one container would share it.
+    # A pull request builds them only when it changes a file that goes into an image (#876): the
+    # build context that .dockerignore lets in (each Dockerfile copies it whole), the Dockerfiles,
+    # and this file. A push to `main` and a tag always build them.
     image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
+    when: *image_when
     commands:
       - executor --context "$$PWD" --dockerfile apps/api/dockerfile.node --no-push
     depends_on: []
@@ -366,6 +392,7 @@ steps:
   image-bun:
     # See image-node.
     image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
+    when: *image_when
     commands:
       - executor --context "$$PWD" --dockerfile apps/api/dockerfile.bun --no-push
     depends_on: []
@@ -373,6 +400,7 @@ steps:
   image-mpa-node:
     # See image-node.
     image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
+    when: *image_when
     commands:
       - executor --context "$$PWD" --dockerfile apps/mpa/dockerfile.node --no-push
     depends_on: []
@@ -380,6 +408,7 @@ steps:
   image-mpa-bun:
     # See image-node.
     image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
+    when: *image_when
     commands:
       - executor --context "$$PWD" --dockerfile apps/mpa/dockerfile.bun --no-push
     depends_on: []
