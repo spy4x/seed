@@ -100,7 +100,8 @@ one it has.
 
 `deno task lighthouse` (CI step `lighthouse`) measures the website against the Lighthouse budget
 in the global `design` skill. The pages it measures are listed in
-`apps/mpa/lighthouse/lighthouserc.json`.
+`apps/mpa/lighthouse/lighthouserc.json`; a pull request measures only those in
+`apps/mpa/lighthouse/quick.ts`.
 
 ## The public demo
 

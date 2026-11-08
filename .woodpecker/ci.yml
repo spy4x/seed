@@ -19,6 +19,28 @@ when:
     branch: main
   - event: tag
 
+variables:
+  # When the four image steps run: see image-node.
+  - &image_when
+    - event: pull_request
+      path:
+        # What .dockerignore lets into the build context, the Dockerfiles among apps/, and this
+        # file.
+        - apps/**
+        - libs/**
+        - i18n/**
+        - infra/**
+        - docs/*.md
+        - e2e/*
+        - media/demo/*
+        - deno.jsonc
+        - deno.lock
+        - .dockerignore
+        - .woodpecker/ci.yml
+    - event: push
+      branch: main
+    - event: tag
+
 steps:
   check:
     # The deploy tests (infra/scripts/deploy.test.ts) run the real `git status` in a repository of
@@ -160,8 +182,13 @@ steps:
     # in production.
     # A stage of its own, after every step of the stage before and before the e2e steps, because
     # lab performance falls when other work shares the CPU: beside `integration`, the home page
-    # scored 0.74 to 0.97 on code that scores 0.99 on an idle machine. It costs about two minutes
-    # of wall time. It builds the MPA itself, so it measures no leftover of an earlier step.
+    # scored 0.74 to 0.97 on code that scores 0.99 on an idle machine. It builds the MPA itself, so
+    # it measures no leftover of an earlier step.
+    # A pull request measures only the pages in apps/mpa/lighthouse/quick.ts, one run each
+    # (`LIGHTHOUSE_PAGES=quick`, #876), against the same scores: 1.3 minutes in its first run
+    # (#877). A push to `main` and a tag measure every page three times, which took a median of
+    # 13.4 minutes. The light run is on trial until 2026-11-15: if a speed regression reaches
+    # `main` and stays there more than a day, the full run goes back on pull requests.
     # A pull request runs it only when it changes a file the built website comes from (#821): the
     # MPA, what its module graph imports (libs/ui, libs/domain, four libs/server members, the
     # catalogs, the guides docs-site.ts publishes), the two API files of its stand-in blog API, and
@@ -202,6 +229,8 @@ steps:
       - deno --version
       - deno install --frozen
       - deno task mpa:build
+      # The commands share one shell, so the variable reaches the next one.
+      - if [ "$${CI_PIPELINE_EVENT}" = pull_request ]; then export LIGHTHOUSE_PAGES=quick; fi
       - deno task lighthouse
     depends_on: [integration, backup-restore, alert-rules, browser]
 
@@ -353,7 +382,11 @@ steps:
     # nothing (`--no-push`), as in release.yml. All four are self-contained, so no base image has
     # to be published first. One step each: kaniko builds in its own root
     # filesystem, so two builds in one container would share it.
+    # A pull request builds them only when it changes a file that goes into an image (#876): the
+    # build context that .dockerignore lets in (each Dockerfile copies it whole), the Dockerfiles,
+    # and this file. A push to `main` and a tag always build them.
     image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
+    when: *image_when
     commands:
       - executor --context "$$PWD" --dockerfile apps/api/dockerfile.node --no-push
     depends_on: []
@@ -361,6 +394,7 @@ steps:
   image-bun:
     # See image-node.
     image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
+    when: *image_when
     commands:
       - executor --context "$$PWD" --dockerfile apps/api/dockerfile.bun --no-push
     depends_on: []
@@ -368,6 +402,7 @@ steps:
   image-mpa-node:
     # See image-node.
     image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
+    when: *image_when
     commands:
       - executor --context "$$PWD" --dockerfile apps/mpa/dockerfile.node --no-push
     depends_on: []
@@ -375,6 +410,7 @@ steps:
   image-mpa-bun:
     # See image-node.
     image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
+    when: *image_when
     commands:
       - executor --context "$$PWD" --dockerfile apps/mpa/dockerfile.bun --no-push
     depends_on: []

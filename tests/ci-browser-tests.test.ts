@@ -7,7 +7,9 @@
  * seen but blocks nobody. `docs/browser-tests.md` and `docs/woodpecker-ci-setup.md` name the specs
  * of the set. Lighthouse measures in a stage of its own, with no other step of the pipeline beside
  * it. A pull request runs it only when it changes a file the website is built from (#821); a push
- * to `main` and a tag always run it, and the e2e steps run whether it ran or not.
+ * to `main` and a tag always run it, and the e2e steps run whether it ran or not. A pull request
+ * measures only the quick pages (#876). The four image builds follow the same pattern: a pull
+ * request builds them only when it changes a file that goes into an image.
  */
 
 import { expect } from "@std/expect"
@@ -233,6 +235,56 @@ Deno.test("a push to main and a tag run Lighthouse whatever they change", async 
   for (const event of [`push`, `tag`]) {
     const steps = blockingSteps(ci, `deno task lighthouse`, event, `main`, [`apps/api/x.ts`])
     expect({ event, steps }).toEqual({ event, steps: [`lighthouse`] })
+  }
+})
+
+Deno.test("a pull request measures the quick pages, and a push to main and a tag every page", async () => {
+  // run.sh measures every page unless LIGHTHOUSE_PAGES=quick; only a pull request may set it.
+  const commands = list((await workflow()).steps?.lighthouse?.commands).map((line) => line.trim())
+  const at = commands.indexOf(`deno task lighthouse`)
+  expect(commands.slice(at - 1, at)).toEqual([
+    `if [ "$\${CI_PIPELINE_EVENT}" = pull_request ]; then export LIGHTHOUSE_PAGES=quick; fi`,
+  ])
+  expect(commands.filter((line) => line.includes(`LIGHTHOUSE_PAGES`))).toHaveLength(1)
+})
+
+const IMAGES = [`image-node`, `image-bun`, `image-mpa-node`, `image-mpa-bun`]
+
+/** The image steps that run for `event` on `main` when `changed` files changed. */
+const imagesFor = async (event: string, changed: string[]) => {
+  const steps = (await workflow()).steps ?? {}
+  return IMAGES.filter((name) => steps[name] && runsFor(steps[name], event, `main`, changed))
+}
+
+Deno.test("a pull request that changes no file of an image builds none, and a push to main and a tag build all four", async () => {
+  for (const file of [`docs/screenshots/a.png`, `README.md`, `tests/x.test.ts`, `.claude/x.md`]) {
+    expect({ file, images: await imagesFor(`pull_request`, [file]) }).toEqual({ file, images: [] })
+  }
+  for (const event of [`push`, `tag`]) {
+    expect({ event, images: await imagesFor(event, [`README.md`]) }).toEqual({
+      event,
+      images: IMAGES,
+    })
+  }
+})
+
+Deno.test("a pull request that changes an app, a library, a Dockerfile or the lockfile builds all four images", async () => {
+  const files = [
+    `apps/api/dockerfile.node`,
+    `apps/mpa/routes/index.tsx`,
+    `libs/server/db/x.ts`,
+    `i18n/de.json`,
+    `docs/billing.md`,
+    `media/demo/demo.webm`,
+    `deno.lock`,
+    `deno.jsonc`,
+    `.dockerignore`,
+  ]
+  for (const file of files) {
+    expect({ file, images: await imagesFor(`pull_request`, [file]) }).toEqual({
+      file,
+      images: IMAGES,
+    })
   }
 })
 

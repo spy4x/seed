@@ -47,13 +47,19 @@ performance falls when another step shares the CPU.
 - `lighthouse` builds the website and runs `deno task lighthouse` (`apps/mpa/lighthouse/run.sh`):
   the website's pages, served behind nginx with gzip, must score at least 95 for performance and
   100 for accessibility, best practices and SEO in Lighthouse mobile. The pages are listed in
-  `apps/mpa/lighthouse/lighthouserc.json`. It starts when every step before it has ended, and the
+  `apps/mpa/lighthouse/lighthouserc.json`, and a push to `main` and a tag measure each three times. A
+  pull request measures only the pages in `apps/mpa/lighthouse/quick.ts`, one run each
+  (`LIGHTHOUSE_PAGES=quick`), against the same scores. It starts when every step before it has ended, and the
   e2e steps wait for it, so nothing else of the pipeline runs beside it. A push to `main` and a tag
   always run it. A pull request runs it only when it changes a file the website is built from: the
   `path` list of the step in `ci.yml` (`apps/mpa`, `libs/ui`, `libs/domain`, the `libs/server`
   members the website imports, the two API files its stand-in blog API serves, `i18n`, the guides
   in `docs/*.md`, the manifests, `deno.lock` and `ci.yml` itself). A new import of the website from another folder adds that folder to the list.
   The e2e steps depend on it as optional, so they still run when it is skipped.
+- `image-node`, `image-bun`, `image-mpa-node` and `image-mpa-bun` build the Node and Bun images of
+  the API and the website with kaniko, pushing nothing. A push to `main` and a tag always build them;
+  a pull request only when it changes a file that goes into an image: the `path` list under
+  `variables` in `ci.yml`, which follows `.dockerignore`.
 - `e2e-smoke` runs the product's smoke set on every pull request and tag:
   `deno task e2e:local --smoke --max-failures=3`, the script a developer runs, against the Postgres
   and Valkey services (`E2E_SERVICES=environment`). The set is `SMOKE_SPECS` in
