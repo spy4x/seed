@@ -143,7 +143,7 @@ steps:
     commands:
       # npm's newest `deno` package lags the binary, so take the pinned release itself.
       - |
-          curl -fsSL -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
           echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
           apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip nginx
           unzip -q -o /tmp/deno.zip -d /usr/local/bin
@@ -221,7 +221,7 @@ steps:
     commands:
       # npm's newest `deno` package lags the binary, so take the pinned release itself.
       - |
-          curl -fsSL -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
           echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
           apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip nginx
           unzip -q -o /tmp/deno.zip -d /usr/local/bin
@@ -258,7 +258,7 @@ steps:
     commands:
       # npm's newest `deno` package lags the binary, so take the pinned release itself.
       - |
-          curl -fsSL -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
           echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
           apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
           unzip -q -o /tmp/deno.zip -d /usr/local/bin
@@ -310,7 +310,7 @@ steps:
     commands:
       # npm's newest `deno` package lags the binary, so take the pinned release itself.
       - |
-          curl -fsSL -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
           echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
           apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
           unzip -q -o /tmp/deno.zip -d /usr/local/bin
@@ -344,10 +344,10 @@ steps:
     commands:
       - |
           apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
-          curl -fsSL -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
           echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
           unzip -q -o /tmp/deno.zip -d /usr/local/bin
-          curl -fsSL -o /tmp/bun.zip https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-linux-x64.zip
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/bun.zip https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-linux-x64.zip
           echo "bf8ccbfb2b0b80159e0f9a6d15c55317add8077534dbc6130a3edb52fccb395c  /tmp/bun.zip" | sha256sum -c -
           unzip -q -o -j /tmp/bun.zip bun-linux-x64/bun -d /usr/local/bin
           chmod +x /usr/local/bin/deno /usr/local/bin/bun
