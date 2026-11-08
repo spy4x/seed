@@ -2,7 +2,6 @@ import { type APIRequestContext, type Browser, expect, test as base } from "@pla
 import { gotoApp, signIn } from "./app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./sign-up.ts"
-import { BILLING_WEBHOOK_PATH, proWebhook } from "./billing.ts"
 
 const WARM_PASSWORD = "Passw0rd!"
 
@@ -35,18 +34,11 @@ async function warmUp(browser: Browser, api: APIRequestContext, baseURL: string,
     const { groupId } = await selected.json()
     if (!groupId) throw new Error(`warm-up found no selected group: ${selected.status()}`)
     const noteId = uuidV7()
-    const addNote = () =>
-      page.request.post(`/api/groups/${groupId}/notes`, {
-        headers,
-        data: { id: noteId, title: "Warm-up", body: "" },
-      })
-    let note = await addNote()
-    // A catalog whose free plan holds no note: put the group on the paid plan, as a customer would.
-    if (note.status() === 402) {
-      const upgraded = await api.post(BILLING_WEBHOOK_PATH, await proWebhook(groupId))
-      if (!upgraded.ok()) throw new Error(`warm-up upgrade failed: ${upgraded.status()}`)
-      note = await addNote()
-    }
+    // Sign-up put the group on the paid plan when the free plan holds no note.
+    const note = await page.request.post(`/api/groups/${groupId}/notes`, {
+      headers,
+      data: { id: noteId, title: "Warm-up", body: "" },
+    })
     if (note.status() !== 201) {
       throw new Error(`warm-up note failed: ${note.status()} ${await note.text()}`)
     }

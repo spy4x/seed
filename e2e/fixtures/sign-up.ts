@@ -6,6 +6,7 @@ import {
   type Page,
 } from "@playwright/test"
 import { gotoApp } from "./app.ts"
+import { BILLING_WEBHOOK_PATH, proWebhook } from "./billing.ts"
 
 /**
  * The subject of the mail that carries a code to prove an address, in each language the page can
@@ -92,26 +93,38 @@ export async function mailedCode(
  * `signUpUrl` (`…/api/auth/password/sign-up`, absolute or relative to `api`'s base URL), reads the
  * code the worker mails from the development route, and enters it at `…/verify` with the same
  * headers. Answers the verify response, which signs the new account in as the old one-step sign-up
- * did, or the sign-up's own response when that one was refused.
+ * did, or the sign-up's own response when that one was refused. When the stack's free plan allows
+ * nothing, the new group is then put on the paid plan, unless `plan.keepFree` (see
+ * {@link SignUpPlan}).
  */
 export async function signUpWithCode(
   api: APIRequestContext,
   signUpUrl: string,
   options: PostOptions,
+  plan: SignUpPlan = {},
 ): Promise<APIResponse> {
   const email = String((options.data as { email: string }).email)
-  const lastMailUrl = signUpUrl.replace(`/api/auth/password/sign-up`, `/api/test/last-mail`)
+  const origin = signUpUrl.replace(`/api/auth/password/sign-up`, ``)
+  const lastMailUrl = `${origin}/api/test/last-mail`
   const before = await lastMail(api, lastMailUrl, email)
   const requested = await api.post(signUpUrl, options)
   if (!requested.ok()) return requested
   const code = await nextCode(api, lastMailUrl, email, before)
-  return await api.post(`${signUpUrl}/verify`, { headers: options.headers, data: { code } })
+  const verified = await api.post(`${signUpUrl}/verify`, {
+    headers: options.headers,
+    data: { code },
+  })
+  if (verified.ok() && !plan.keepFree && await freePlanAllowsNothing(api, origin)) {
+    await payForSelectedGroup(api, origin)
+  }
+  return verified
 }
 
 /**
  * Signs up through the form, as a new person does: the address and the password, then
  * the code the worker mails, read from the development route. The app then loads its home page
- * itself; waits for `ready` there.
+ * itself; waits for `ready` there. When the stack's free plan allows nothing, the app lands on the
+ * group's Billing tab instead: the group is put on the paid plan and the notes opened.
  */
 export async function signUpInPage(
   page: Page,
@@ -122,14 +135,76 @@ export async function signUpInPage(
   await gotoApp(page, `/sign-up`, page.locator(`[data-e2e=auth-form-login]`))
   await page.locator(`[data-e2e=auth-form-login]`).fill(email)
   await page.locator(`[data-e2e=auth-form-password]`).fill(password)
-  const lastMailUrl = new URL(`/api/test/last-mail`, page.url()).href
+  const origin = new URL(page.url()).origin
+  const lastMailUrl = `${origin}/api/test/last-mail`
   const before = await lastMail(page.request, lastMailUrl, email)
   await page.locator(`[data-e2e=auth-form-submit]`).click()
   const field = page.locator(`[data-e2e=mailed-code-step-code]`)
   await expect(field).toBeFocused()
   await field.pressSequentially(await nextCode(page.request, lastMailUrl, email, before))
+  if (await freePlanAllowsNothing(page.request, origin)) {
+    // The app sends the owner of a group that never paid to its Billing tab; pay, then go on.
+    await gotoApp(page, `/notes`, page.locator(`[data-e2e=shell-ws-status]`), async () => {
+      await field.press(`Enter`)
+      await page.waitForURL(BILLING_LANDING)
+    })
+    await payForSelectedGroup(page.request, origin)
+    await gotoApp(page, `/notes`, ready)
+    return
+  }
   await gotoApp(page, `/notes`, ready, async () => {
     await field.press(`Enter`)
     await page.waitForURL(`/notes`)
   })
+}
+
+/** Where a new owner lands when the free plan allows nothing: the group's Billing tab. */
+export const BILLING_LANDING = /\/groups\/[0-9a-f-]{36}\/billing$/
+
+/** What a sign-up does about the new group's plan. */
+export interface SignUpPlan {
+  /**
+   * Keep the new group on the free plan. Leave it out and, when the stack's free plan allows
+   * nothing, the group is put on the paid plan, so a spec about anything else can add notes and
+   * members on any product's catalog. Only a spec about the free plan itself sets it.
+   */
+  keepFree?: boolean
+}
+
+/** One answer per stack: the catalog does not change while it runs. */
+const freePlanAnswers = new Map<string, Promise<boolean>>()
+
+/**
+ * Whether the stack at `origin` (`http://app.localhost`, or `` for `api`'s base URL) takes
+ * payments and its free plan allows nothing, from the development route `/api/test/free-plan`.
+ * Throws when the route does not answer, so a spec never quietly runs on the wrong plan.
+ */
+export function freePlanAllowsNothing(api: APIRequestContext, origin: string): Promise<boolean> {
+  const url = `${origin}/api/test/free-plan`
+  let answer = freePlanAnswers.get(url)
+  if (!answer) {
+    answer = (async () => {
+      const response = await api.get(url)
+      if (!response.ok()) {
+        throw new Error(`${url} answered ${response.status()}: ${await response.text()}`)
+      }
+      return (await response.json() as { allowsNothing: boolean }).allowsNothing
+    })()
+    // A failed read is not kept: the next spec asks again and reports its own failure.
+    answer.catch(() => freePlanAnswers.delete(url))
+    freePlanAnswers.set(url, answer)
+  }
+  return answer
+}
+
+/**
+ * Puts the group the signed-in person of `api` has selected (the one sign-up made) on the paid
+ * plan, through the development provider's webhook, as a customer's checkout would.
+ */
+async function payForSelectedGroup(api: APIRequestContext, origin: string): Promise<void> {
+  const selected = await api.get(`${origin}/api/groups/selected`)
+  const { groupId } = await selected.json() as { groupId: string | null }
+  if (!groupId) throw new Error(`sign-up found no selected group: ${selected.status()}`)
+  const paid = await api.post(`${origin}${BILLING_WEBHOOK_PATH}`, await proWebhook(groupId))
+  if (!paid.ok()) throw new Error(`paying for ${groupId} failed: ${paid.status()}`)
 }
