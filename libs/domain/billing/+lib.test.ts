@@ -579,6 +579,18 @@ describe("billing domain", () => {
       expect(freePlanAllowsNothing([pro])).toBe(false)
     })
 
+    it("is not noticed when a limit key the product added is above 0 on the free plan", () => {
+      // A product's own key, such as Financy's accounts, is not in Seed's `LimitKey`.
+      const withProductKey = (cap: number | null): Plan[] => {
+        const [free] = nothing()
+        const limits = { ...free.entitlements.limits, maxAccounts: cap }
+        return [{ ...free, entitlements: { ...free.entitlements, limits } }, pro]
+      }
+      expect(freePlanAllowsNothing(withProductKey(0))).toBe(true)
+      expect(freePlanAllowsNothing(withProductKey(1))).toBe(false)
+      expect(freePlanAllowsNothing(withProductKey(null))).toBe(false)
+    })
+
     it("sends only the owner of a group that never had a subscription to choose a plan", () => {
       const billing = (
         subscribed: StoredSubscription | null,

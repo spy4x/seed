@@ -206,17 +206,17 @@ export function entitlementsOf(
 }
 
 /**
- * Whether the free plan allows nothing: no note, no file, no storage, and no member but the owner.
- * A product that is paid from sign-up sets its free caps so, and its new owners are then sent to
- * checkout (see {@link needsFirstPlan}). `plans` is the catalog, {@link PLANS} unless a test passes
- * its own.
+ * Whether the free plan allows nothing: every cap is 0, except `maxMembers`, which lets the owner
+ * alone in. Every limit key counts, a product's own ones (such as accounts) too. A product that is
+ * paid from sign-up sets its free caps so, and its new owners are then sent to checkout (see
+ * {@link needsFirstPlan}). `plans` is the catalog, {@link PLANS} unless a test passes its own.
  */
 export function freePlanAllowsNothing(plans: readonly Plan[] = PLANS): boolean {
   const free = plans.find((plan) => plan.id === FREE_PLAN_ID)
   if (!free) return false
-  const { maxMembers, maxNotes, maxAttachments, storageBytes } = free.entitlements.limits
-  return maxNotes === 0 && maxAttachments === 0 && storageBytes === 0 &&
-    maxMembers !== null && maxMembers <= 1
+  return Object.entries(free.entitlements.limits).every(([key, cap]) =>
+    key === "maxMembers" ? cap !== null && cap <= 1 : cap === 0
+  )
 }
 
 /**
