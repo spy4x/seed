@@ -470,6 +470,10 @@ export default defineConfig({
   }),
   testDir: "$COPY_DIR",
   outputDir: "$COPY_DIR/results",
+  // The same limits as the root playwright.config.ts: a loaded machine fails healthy specs at the
+  // base 30 s per test and 5 s per assertion.
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
 })
 CONFIG
 
