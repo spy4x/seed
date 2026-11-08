@@ -39,9 +39,10 @@ The worker installs on the first, online, visit. The app can start offline from 
 
 ## Offline tests run against the built SPA
 
-Four e2e specs start the app with no network: `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts`,
-`e2e/search-offline.e2e.ts` and `e2e/notes-restore-offline.e2e.ts`. `deno task e2e:local` runs
-them against the image of `apps/spa/dockerfile.prod`, in a Playwright pass of their own (`OFFLINE_SPECS` in
+Five e2e specs start the app with no network: `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts`,
+`e2e/search-offline.e2e.ts`, `e2e/tags-offline.e2e.ts` and `e2e/notes-restore-offline.e2e.ts`.
+`deno task e2e:local` runs them against the image of `apps/spa/dockerfile.prod`, in a Playwright
+pass of their own (`OFFLINE_SPECS` in
 `infra/scripts/e2e-local-plan.ts`). Every other spec runs against the dev server.
 
 The built app is what a person runs offline: a few files named by hash. The dev server serves

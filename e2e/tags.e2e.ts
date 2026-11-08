@@ -12,9 +12,6 @@ import {
   TagsPage,
 } from "./fixtures/tags.ts"
 
-/** The sync line while changes wait or the device is offline; absent once everything is sent. */
-const WAITING = "[data-e2e=offline-status] [data-sync-state]:not([data-sync-state=synced])"
-
 async function signInOnline(page: Page, email: string): Promise<void> {
   await signIn(page, email, password)
   await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
@@ -136,63 +133,6 @@ test.describe("tags", () => {
       expect(await serverTags(page, first)).toEqual([])
     } finally {
       await context.close()
-      await cleanup(request, user)
-    }
-  })
-
-  test("a tag made and renamed with no network, and a note that names it, reach the server in order and show in a second browser", async ({ browser, request }) => {
-    const user = "e2e_tags_offline@example.com"
-    await cleanup(request, user)
-    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
-    const other = await browser.newContext({ baseURL: test.info().project.use.baseURL })
-    try {
-      await signUp(request, user)
-      const page = await context.newPage()
-      await signInOnline(page, user)
-      const groupId = await selectedGroup(page, "Offline tag team")
-      await gotoApp(page, "/notes", page.locator("[data-e2e=shell-ws-status]"))
-      await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
-      await page.evaluate(async () => {
-        await navigator.serviceWorker.ready
-      })
-      await gotoApp(page, "/notes", page.locator("[data-e2e=shell-ws-status]"))
-
-      await context.setOffline(true)
-      await page.reload()
-      await expect(page.locator("[data-e2e=shell-ws-status]")).not.toHaveText("Online")
-
-      const tags = new TagsPage(page)
-      const notes = new NotesTags(page)
-      await tags.openFromNotes()
-      await tags.create("Errnds")
-      await tags.rename("Errnds", "Errands", "Green")
-      await tags.toNotes()
-      await notes.create("Buy stamps", ["Errands"])
-      await expect(notes.labels("Buy stamps")).toHaveText(["Errands"])
-      await expect(page.locator(WAITING)).toHaveCount(1)
-
-      await context.setOffline(false)
-      await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online", {
-        timeout: 20_000,
-      })
-      await expect(page.locator(WAITING)).toHaveCount(0)
-
-      // The note could only name the tag because the tag reached the server first.
-      await expect.poll(async () => (await serverTags(page, groupId)).map((t) => t.name))
-        .toEqual(["Errands"])
-      const [tag] = await serverTags(page, groupId)
-      expect(tag.color).toBe("#15803d")
-      await expect.poll(async () => (await serverNotes(page, groupId)).map((n) => n.tagIds))
-        .toEqual([[tag.id]])
-
-      // A second browser of the same person sees both.
-      const second = await other.newPage()
-      await signInOnline(second, user)
-      await gotoApp(second, "/notes", second.locator("[data-e2e=note-list]"))
-      await expect(new NotesTags(second).labels("Buy stamps")).toHaveText(["Errands"])
-    } finally {
-      await context.close()
-      await other.close()
       await cleanup(request, user)
     }
   })
