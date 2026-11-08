@@ -16,6 +16,9 @@ style and image the page names. Then:
 - **Every other request** goes to the network first, and to the cache only when the network fails.
   A deploy shows at once. Every route is the same page, so any page load is stored under `/`.
 - **`/api` and `/ws`** are never touched. An e2e test checks that no cached URL starts with either.
+- **On the dev server**, Vite's modules (`/@id`, `/@fs`, `/@vite`, `/src`, `/node_modules`) are
+  never touched either. When the worker's own fetch of one failed, the page saw `net::ERR_FAILED`
+  and never booted (spy4x/seed#893).
 
 `/config.json` holds the runtime settings the app reads before it renders, so it is cached on
 install too, and the app starts offline.

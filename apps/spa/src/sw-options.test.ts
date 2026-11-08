@@ -103,6 +103,35 @@ Deno.test(`the worker leaves /api and /ws requests to the network`, () => {
   }
 })
 
+/** Whether the worker answers a GET of `path` itself, rather than leaving it to the browser. */
+function answers(buildId: string, path: string): boolean {
+  const { handlers } = loadWorker(() => new Response(`x`), buildId)
+  let answered = false
+  handlers.get(`fetch`)!({
+    request: new Request(`https://app.example${path}`),
+    respondWith: () => (answered = true),
+    waitUntil: () => {},
+  })
+  return answered
+}
+
+const DEV_MODULES = [
+  `/@id/__x00__deno::TSX::https://jsr.io/@spy4x/preact-ui/13.11.1/combobox.tsx`,
+  `/@fs/home/me/seed/libs/domain/notes/+lib.ts`,
+  `/@vite/client`,
+  `/src/main.tsx`,
+  `/node_modules/.vite/deps/preact.js?v=1a2b3c4d`,
+]
+
+Deno.test(`the dev server's worker leaves the app's modules to the browser`, () => {
+  for (const path of DEV_MODULES) expect(answers(`dev`, path), path).toBe(false)
+  expect(answers(`dev`, `/config.json`)).toBe(true)
+})
+
+Deno.test(`a built worker still answers those paths, as it answers any file outside /api and /ws`, () => {
+  for (const path of DEV_MODULES) expect(answers(`abc123`, path), path).toBe(true)
+})
+
 Deno.test(`a new build stores the shell under a new cache name and drops the old one`, async () => {
   const { caches, handlers } = loadWorker(() => new Response(`x`), `two`)
   caches.set(`shell-one`, new Map())
