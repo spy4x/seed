@@ -42,8 +42,9 @@
 # first pass's that is not 0. One exception: of two passes, one in which Playwright found no test
 # (a `-g` that matches tests of the other pass only) does not fail the run; it fails when neither
 # pass found one. The last lines give the counts of each pass, when the reporter prints them. The
-# report of the second of two passes is in `e2e/report/offline`. With `E2E_SPA` set, every spec
-# asked for runs in one pass against that server.
+# report of the second of two passes is in `e2e/report/offline`. Each pass's test output, with the
+# traces of its failed tests, is kept in `results/` of its report folder, whatever the reporter.
+# With `E2E_SPA` set, every spec asked for runs in one pass against that server.
 #
 # CI runs this script too (.woodpecker/ci.yml), in a container that is thrown away afterwards and
 # has no container tool. Two variables stand in for the containers there:
@@ -540,6 +541,14 @@ for i in "${!PASS_SERVER[@]}"; do
     [ "$PASSES" = 1 ] || PASS_STATUS=0
   fi
   SUMMARY+=("pass $((i + 1)), $server: ${COUNTS:+$COUNTS }(exit $SHOWN)")
+  # The cleanup deletes the copy, and the next pass's Playwright empties its output folder, so the
+  # traces of this pass's failed tests are copied next to its report, in place of older ones.
+  find "$REPORT/results" -delete 2>/dev/null || true
+  if [ -n "$(ls -A "$COPY_DIR/results" 2>/dev/null)" ]; then
+    mkdir -p "$REPORT"
+    cp -r "$COPY_DIR/results" "$REPORT/results"
+    [ "$SHOWN" = 0 ] || log "pass $((i + 1)): the traces of its failed tests are in ${REPORT#"$ROOT/"}/results"
+  fi
   [ "$STATUS" != 0 ] || STATUS=$PASS_STATUS
 done
 for line in "${SUMMARY[@]}"; do log "$line"; done

@@ -121,9 +121,9 @@ from these steps.
 9. Delete `apps/spa/src/views/UnsentSignOut.tsx` and `apps/spa/src/views/UnsentSignOut.test.tsx`.
 10. In `apps/spa/src/views/NotesView.tsx`, `apps/spa/src/views/NoteEditorView.tsx` and
     `apps/spa/src/views/TagsView.tsx`, delete the `OfflineStatus` import and element.
-11. Delete the specs `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts`, `e2e/search-offline.e2e.ts`
-    and `e2e/tags-offline.e2e.ts`, and their names in `OFFLINE_SPECS` of
-    `infra/scripts/e2e-local-plan.ts`.
+11. Delete the specs `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts`, `e2e/search-offline.e2e.ts`,
+    `e2e/tags-offline.e2e.ts` and `e2e/notes-restore-offline.e2e.ts`, and their names in
+    `OFFLINE_SPECS` of `infra/scripts/e2e-local-plan.ts`.
 12. Delete `tests/offline-removal.test.ts` and its group in `infra/scripts/test.ts`.
 
 The app then reads and writes over the network only. The server's changes read (`group.changes`)

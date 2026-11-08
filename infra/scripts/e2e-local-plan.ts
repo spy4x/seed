@@ -26,6 +26,7 @@ export const OFFLINE_SPECS = [
   `local-data.e2e.ts`,
   `search-offline.e2e.ts`,
   `tags-offline.e2e.ts`,
+  `notes-restore-offline.e2e.ts`,
 ]
 
 /**

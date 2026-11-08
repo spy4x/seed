@@ -32,14 +32,17 @@ reads, and the process cap to allow when you run it under one.
 
 ## The two passes
 
-Four specs start the app with no network: `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts`,
-`e2e/search-offline.e2e.ts` and `e2e/tags-offline.e2e.ts`. They run against the built SPA, the image a deploy serves. Every
-other spec runs against the dev server. [The app shell](offline-app-shell.md#offline-tests-run-against-the-built-spa) says why.
+Five specs start the app with no network: `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts`,
+`e2e/search-offline.e2e.ts`, `e2e/tags-offline.e2e.ts` and `e2e/notes-restore-offline.e2e.ts`.
+They run against the built SPA, the image a deploy serves. Every other spec runs against the dev
+server. [The app shell](offline-app-shell.md#offline-tests-run-against-the-built-spa) says why.
 
 A run that needs both makes two passes: the dev server first, then the built SPA in its place.
 
 - The run fails when either pass fails. Its last lines give the counts of each pass.
 - The second pass's report is in `e2e/report/offline`. `e2e:report` does not open it.
+- The traces of a pass's failed tests stay in `results/` of its report folder, whatever the
+  reporter: open one with `deno run -A npm:playwright@1.57.0 show-trace <trace.zip>`.
 - `E2E_SPA=dev` or `E2E_SPA=built` puts every spec on that one server.
 
 ## What CI runs
