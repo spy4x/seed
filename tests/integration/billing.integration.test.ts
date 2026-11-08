@@ -12,6 +12,7 @@ import {
   BILLING_EVENTS,
   BillingNoticeKind,
   effectivePlanId,
+  findPlan,
   FREE_PLAN_ID,
   PRO_PLAN_ID,
 } from "@domain/billing"
@@ -74,6 +75,9 @@ async function seedGroup(sql: postgres.Sql): Promise<{ groupId: string; owner: n
 }
 
 const T0 = new Date("2026-10-01T10:00:00Z")
+// The worker names the plan from the product's own catalog, so a product that renames it still
+// passes.
+const PRO_NAME = findPlan(PRO_PLAN_ID)!.name
 
 function event(
   input: {
@@ -1243,11 +1247,14 @@ Deno.test("billing notices reach the owner through the worker's queue", async (t
 
         expect(result.failed).toBe(0)
         expect(sender.sent.map((mail) => [mail.to, mail.subject]).sort()).toEqual([
-          ["ending@example.com", "Your Pro plan ends on " + longDate(start.getTime() + 20 * DAY)],
-          ["failed@example.com", "A payment for Pro failed"],
-          ["moved@example.com", "Your Pro trial ends on " + longDate(movedEnd.getTime())],
-          ["renewal@example.com", "A payment for Pro failed"],
-          ["trial@example.com", "Your Pro trial ends on " + longDate(trialEnd.getTime())],
+          [
+            "ending@example.com",
+            `Your ${PRO_NAME} plan ends on ${longDate(start.getTime() + 20 * DAY)}`,
+          ],
+          ["failed@example.com", `A payment for ${PRO_NAME} failed`],
+          ["moved@example.com", `Your ${PRO_NAME} trial ends on ${longDate(movedEnd.getTime())}`],
+          ["renewal@example.com", `A payment for ${PRO_NAME} failed`],
+          ["trial@example.com", `Your ${PRO_NAME} trial ends on ${longDate(trialEnd.getTime())}`],
         ])
         const textTo = (to: string) => sender.sent.find((mail) => mail.to === to)?.text
         expect(textTo("failed@example.com")).toContain("The group is now on the free plan.")
@@ -1341,7 +1348,9 @@ Deno.test("billing notices reach the owner through the worker's queue", async (t
 
         expect((await processor.drainOnce()).failed).toBe(0)
 
-        const failed = sender.sent.find((mail) => mail.subject === "A payment for Pro failed")
+        const failed = sender.sent.find((mail) =>
+          mail.subject === `A payment for ${PRO_NAME} failed`
+        )
         expect(failed?.to).toBe("leaving@example.com")
         expect(failed?.text).toContain(
           `You keep the plan until ${longDate(periodEnd.getTime())} while`,

@@ -2,7 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { Sql } from "@spy4x/server/db"
 import { BillingNoticeKind, PRO_PLAN_ID } from "@domain/billing"
-import { TEST_FREE_PLAN, TEST_PRO_PLAN } from "../../domain/billing/test-plans.ts"
+import { TEST_FREE_PLAN, TEST_PLANS, TEST_PRO_PLAN } from "../../domain/billing/test-plans.ts"
 import { GroupRole } from "@domain/groups"
 import { LANGUAGES } from "@domain/identity"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
@@ -455,6 +455,7 @@ describe("billingNoticeMail", () => {
       kind,
       groupName: "Tea <club>",
       planId: PRO_PLAN_ID,
+      plans: TEST_PLANS,
       at: new Date("2026-10-15T23:30:00Z"),
       link,
       planKeptUntil: new Date("2026-10-22T23:30:00Z"),
@@ -502,6 +503,7 @@ describe("billingNoticeMail", () => {
       kind: BillingNoticeKind.PaymentFailed,
       groupName: "Tea club",
       planId: PRO_PLAN_ID,
+      plans: TEST_PLANS,
       at: new Date("2026-10-15T23:30:00Z"),
       link,
       planKeptUntil: null,
@@ -527,6 +529,7 @@ describe("billingNoticeMail", () => {
       kind: BillingNoticeKind.TrialEnding,
       groupName: "Tea club",
       planId: PRO_PLAN_ID,
+      plans: TEST_PLANS,
       at: new Date("2026-10-15T23:30:00Z"),
       link,
       planKeptUntil: null,
@@ -604,6 +607,7 @@ function everyMail(reader: MailReader) {
       kind: BillingNoticeKind.TrialEnding,
       groupName: "Team",
       planId: PRO_PLAN_ID,
+      plans: TEST_PLANS,
       at: AT,
       link,
       planKeptUntil: null,
@@ -731,6 +735,7 @@ describe("mail and a hostile value (#277)", () => {
       kind: BillingNoticeKind.PlanEnding,
       groupName: hostile,
       planId: PRO_PLAN_ID,
+      plans: TEST_PLANS,
       at: AT,
       link: "https://app.example.com/groups/1/billing",
       planKeptUntil: null,
@@ -855,6 +860,7 @@ describe("mail and a value in another direction (#277)", () => {
       kind: BillingNoticeKind.PlanEnding,
       groupName: value,
       planId: PRO_PLAN_ID,
+      plans: TEST_PLANS,
       at: AT,
       link: "https://app.example.com/x",
       planKeptUntil: null,

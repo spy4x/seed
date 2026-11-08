@@ -43,7 +43,7 @@ describe("checkoutDoneToast", () => {
   })
 
   it("says You're on Pro after a paid start", () => {
-    expect(checkoutDoneToast(t, format, PRO, "Team")).toEqual({
+    expect(checkoutDoneToast(t, format, PRO, "Team", TEST_PLANS)).toEqual({
       title: "You’re on Pro",
       body: `Stripe confirmed the payment for “\u2068Team\u2069”.`,
     })
