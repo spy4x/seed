@@ -53,11 +53,17 @@ passing. They do not read `PLANS`:
   demo show.
 - The browser tests read what the running stack answers: the trial from `GET /api/billing/trial`,
   the note cap from the API's refusal and the seat price from the group's billing. When the free
-  plan allows nothing (the development route `GET /api/test/free-plan` says so), the sign-up
-  fixture (`e2e/fixtures/sign-up.ts`) puts every new group on the paid plan through the development
-  provider's webhook, so the specs run on any catalog. A spec about the free plan itself opts out
-  with `{ keepFree: true }`, as `e2e/plan-limits.e2e.ts` does. A group a spec creates after sign-up
-  starts on the free plan.
+  plan allows nothing (the development route `GET /api/test/free-plan` says so), the fixtures put
+  every new group on the paid plan through the development provider's webhook, so the specs run on
+  any catalog: the sign-up fixture (`e2e/fixtures/sign-up.ts`) pays for the group sign-up made,
+  `createGroup` (`e2e/fixtures/groups.ts`) for a group made on its page, and a spec that creates a
+  group through the API calls `payForGroup` after it. A spec about the free plan itself opts out
+  with `{ keepFree: true }`, as `e2e/plan-limits.e2e.ts` and `e2e/billing.e2e.ts` do. In that mode:
+  - sign-up waits for the worker to finish the starter data first (`POST /api/test/starter-data`),
+    so a new account has no welcome note, every run the same;
+  - a paid group bills per seat, so a spec that invites through the API sends
+    `acceptSeatPrice: true`;
+  - an imported group starts on the free plan, so the import is refused.
 
 Keep the ids `free` and `pro` (`FREE_PLAN_ID` and `PRO_PLAN_ID`): the code names the free plan and
 the development provider maps its prices to `pro`. To rename the paid plan, change its `name`.
