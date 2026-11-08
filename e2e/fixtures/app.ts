@@ -108,10 +108,10 @@ export async function submitAuthForm(page: Page, url: string, ready: Locator): P
 }
 
 /**
- * Where sign-in lands: the notes list, or the group's Billing tab for the owner of a group that
- * never paid when the catalog's free plan allows nothing.
+ * Where sign-in and sign-up land: the notes list, or the group's Billing tab for the owner of a
+ * group that never paid when the catalog's free plan allows nothing.
  */
-const SIGNED_IN_LANDING = /\/(notes|groups\/[0-9a-f-]{36}\/billing)$/
+export const SIGNED_IN_LANDING = /\/(notes|groups\/[0-9a-f-]{36}\/billing)$/
 
 /** Signs `email` in through the form and waits until the app has booted where sign-in lands. */
 export async function signIn(page: Page, email: string, password: string): Promise<void> {

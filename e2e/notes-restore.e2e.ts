@@ -3,7 +3,7 @@ import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { openNotes } from "./fixtures/groups.ts"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 /** The sync line while changes wait or the device is offline; absent once everything is sent. */
 const WAITING = "[data-e2e=offline-status] [data-sync-state]:not([data-sync-state=synced])"
@@ -51,6 +51,7 @@ test.describe("restoring deleted notes", () => {
         data: { id: groupId, name: "Restore team" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(ownerPage.request, apiBase, groupId)
       const added = await request.post(`${apiBase}/api/test/add-member`, {
         data: { login: member, groupId, role: VIEWER },
       })

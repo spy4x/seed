@@ -3,7 +3,7 @@ import { expect, test } from "./fixtures/stack.ts"
 import { openProfile, signIn } from "./fixtures/app.ts"
 import { openNotes } from "./fixtures/groups.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * Display preferences follow the person to every device: a theme picked on the laptop paints
@@ -141,6 +141,7 @@ test.describe("preferences across devices", () => {
         data: { id: groupId, name: "Format team" },
       })
       expect(group.status(), await group.text()).toBe(201)
+      await payForGroup(page.request, appBase, groupId)
       const noteId = uuidV7()
       const note = await page.request.post(`${appBase}/api/groups/${groupId}/notes`, {
         headers,

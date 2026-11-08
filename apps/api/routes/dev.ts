@@ -32,6 +32,11 @@ export interface DevRouteDeps {
    * fixed address up again and again is not refused with 429 on a dev stack that outlives one run.
    */
   forgetCodeBudget(email: string, client: string): Promise<void>
+  /**
+   * Billing is on and the catalog's free plan allows nothing (`freePlanAllowsNothing`), so a new
+   * owner must pay before the group holds anything.
+   */
+  freePlanAllowsNothing: boolean
 }
 
 /**
@@ -67,6 +72,15 @@ export interface DevRouteDeps {
  * `POST /last-mail` with `{ email }` answers the newest mail the worker sent to that address in
  * development (`dev_mail`): `{ subject, text }`, or 404 when there is none. The e2e specs read
  * sign-in, sign-up and password-reset codes this way.
+ *
+ * `POST /starter-data` with `{ login }` answers `{ done }`: whether the worker has handled every
+ * starter data request of that user (the welcome note), or 404 when the user does not exist. The
+ * e2e sign-up fixture waits for it before it pays for a new group, so the welcome note never
+ * depends on which of the two came first.
+ *
+ * `GET /free-plan` answers `{ allowsNothing }`: whether billing is on and the free plan allows
+ * nothing. The e2e sign-up fixture then puts each new group on the paid plan, so the specs run on
+ * any product's catalog.
  */
 export function createDevRoute(deps: DevRouteDeps) {
   return new Hono<APIContext>()
@@ -145,11 +159,25 @@ export function createDevRoute(deps: DevRouteDeps) {
       `
       return c.json({ success: true })
     })
+    .post("/starter-data", async (c) => {
+      const user = await readLogin(c, deps)
+      if (user instanceof Response) return user
+      if (user.userId === null) return errorResponse(c, `not_found`, { message: "No such user" })
+      const [pending] = await deps.sql<{ count: number }[]>`
+        SELECT count(*)::int AS count FROM starter_data_requests
+        WHERE user_id = ${user.userId} AND done_at IS NULL
+      `
+      return c.json({ done: pending.count === 0 })
+    })
     .post("/close-sockets", async (c) => {
       const user = await readLogin(c, deps)
       if (user instanceof Response) return user
       const closed = user.userId === null ? 0 : deps.closeSockets(user.userId)
       return c.json({ success: true, closed })
+    })
+    .get("/free-plan", (c) => {
+      if (!deps.isDev) return errorResponse(c, `forbidden`, { message: "Not allowed" })
+      return c.json({ allowsNothing: deps.freePlanAllowsNothing })
     })
     .post("/last-mail", async (c) => {
       if (!deps.isDev) return errorResponse(c, `forbidden`, { message: "Not allowed" })

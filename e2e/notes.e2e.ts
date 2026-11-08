@@ -4,7 +4,7 @@ import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { openNotes } from "./fixtures/groups.ts"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -48,6 +48,7 @@ async function sharedGroup(
     data: { id: groupId, name },
   })
   expect(created.status(), await created.text()).toBe(201)
+  await payForGroup(owner.request, apiBase, groupId)
   const added = await request.post(`${apiBase}/api/test/add-member`, {
     data: { login: member, groupId, role: VIEWER },
   })
@@ -256,6 +257,7 @@ test.describe("notes in a shared group", () => {
         data: { id: otherGroup, name: "Other team" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(page.request, apiBase, otherGroup)
       const noteId = uuidV7()
       const note = await page.request.post(`${apiBase}/api/groups/${otherGroup}/notes`, {
         headers,
@@ -303,6 +305,7 @@ test.describe("notes in a shared group", () => {
         data: { id: theirGroup, name: "Their secret group" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(strangerPage.request, apiBase, theirGroup)
       const theirNote = uuidV7()
       const note = await strangerPage.request.post(`${apiBase}/api/groups/${theirGroup}/notes`, {
         headers,
@@ -404,6 +407,7 @@ test.describe("notes in a shared group", () => {
         data: { id: groupId, name: "Focus team" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(request, apiBase, groupId)
       const page = await context.newPage()
       await signInOnline(page, owner)
       await openNotes(page, "Focus team")

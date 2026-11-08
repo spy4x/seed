@@ -14,7 +14,12 @@ import {
   openGroups,
   openNotes,
 } from "./fixtures/groups.ts"
-import { signUpInPage, signUpWithCode } from "./fixtures/sign-up.ts"
+import {
+  freePlanAllowsNothing,
+  payForGroup,
+  signUpInPage,
+  signUpWithCode,
+} from "./fixtures/sign-up.ts"
 
 /**
  * The local-data module as a swappable part (ADR 003, sections 1, 4 and 5), in a real browser with
@@ -47,6 +52,7 @@ async function createGroup(api: APIRequestContext, name: string): Promise<string
   const groupId = uuidV7()
   const group = await api.post(`${apiBase}/api/groups`, { headers, data: { id: groupId, name } })
   expect(group.status(), await group.text()).toBe(201)
+  await payForGroup(api, apiBase, groupId)
   return groupId
 }
 
@@ -260,6 +266,9 @@ test.describe("the app with no network, after one visit online", () => {
         page.locator("[data-e2e=group-general-name]"),
       )
       await page.getByRole("link", { name: "Invite" }).click()
+      // A group the fixtures paid for bills per seat, so the owner accepts the price first.
+      const paid = await freePlanAllowsNothing(page.request, apiBase)
+      if (paid) await page.locator("[data-e2e=seat-price-accept]").check()
       await page.locator("[data-e2e=invitation-create]").click()
       await page.locator("[data-e2e=invitation-done]").click()
       await expect(page).toHaveURL(`/groups/${groupId}/members`)
@@ -270,7 +279,7 @@ test.describe("the app with no network, after one visit online", () => {
       await gotoApp(page, `/groups/${groupId}/members`, invitations)
       const plan = page.locator("[data-e2e=billing-plan]")
       await gotoApp(page, `/groups/${groupId}/billing`, plan)
-      await expect(plan).toHaveAttribute("data-plan", "free")
+      await expect(plan).toHaveAttribute("data-plan", paid ? "pro" : "free")
 
       const activity = page.locator("[data-e2e=activity-list] [data-e2e=activity-text]")
       await gotoApp(page, `/groups/${groupId}/activity`, activity.first())
@@ -311,7 +320,7 @@ test.describe("the app with no network, after one visit online", () => {
       await expect(page.locator("[data-e2e=group-member]")).toHaveCount(1)
       await expect(invitations).toHaveCount(1)
       await openOffline(page, `/groups/${groupId}/billing`)
-      await expect(plan).toHaveAttribute("data-plan", "free")
+      await expect(plan).toHaveAttribute("data-plan", paid ? "pro" : "free")
 
       await openOffline(page, `/groups/${groupId}/activity`)
       await expect(activity).toHaveText(activityOnline)

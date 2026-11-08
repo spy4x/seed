@@ -21,6 +21,7 @@ async function trialDays(page: Page): Promise<number> {
   return trial.days
 }
 
+// These specs check out from the free plan, so their sign-ups and groups keep it.
 test.describe("group billing", () => {
   test("the owner checks out a group's paid plan, with the catalog's trial, and the page shows it once the signed webhook arrives", async ({ page, request }) => {
     const email = "e2e_billing_owner@example.com"
@@ -37,14 +38,14 @@ test.describe("group billing", () => {
       const signUp = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
         headers,
         data: { email, password },
-      })
+      }, { keepFree: true })
       expect(signUp.ok()).toBe(true)
       await signIn(page, email, password)
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
       await page.getByRole("navigation", { name: "Main navigation" })
         .getByRole("link", { name: "Groups" }).click()
-      await createGroup(page, "Club")
+      await createGroup(page, "Club", { keepFree: true })
       const groupId = new URL(page.url()).pathname.replace("/groups/", "")
       await openGroupTab(page, "Billing")
       const plan = page.locator("[data-e2e=billing-plan]")
@@ -110,7 +111,7 @@ test.describe("group billing", () => {
       const signUp = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
         headers,
         data: { email, password },
-      })
+      }, { keepFree: true })
       expect(signUp.ok()).toBe(true)
       await signIn(page, email, password)
       const groups = page.getByRole("navigation", { name: "Main navigation" })

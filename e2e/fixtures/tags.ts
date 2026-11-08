@@ -1,7 +1,7 @@
 import { type APIRequestContext, expect, type Locator, type Page, test } from "@playwright/test"
 import { gotoApp } from "./app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { signUpWithCode } from "./sign-up.ts"
+import { payForGroup, signUpWithCode } from "./sign-up.ts"
 
 /** Page objects and API helpers for the tag specs. */
 
@@ -56,6 +56,7 @@ export async function selectedGroup(page: Page, name: string): Promise<string> {
     data: { id: groupId, name },
   })
   expect(group.status(), await group.text()).toBe(201)
+  await payForGroup(page.request, origin(), groupId)
   const selected = await page.request.put(`${origin()}/api/groups/selected`, {
     headers: headers(),
     data: { groupId },
