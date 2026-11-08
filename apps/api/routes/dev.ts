@@ -32,6 +32,11 @@ export interface DevRouteDeps {
    * fixed address up again and again is not refused with 429 on a dev stack that outlives one run.
    */
   forgetCodeBudget(email: string, client: string): Promise<void>
+  /**
+   * Billing is on and the catalog's free plan allows nothing (`freePlanAllowsNothing`), so a new
+   * owner must pay before the group holds anything.
+   */
+  freePlanAllowsNothing: boolean
 }
 
 /**
@@ -67,6 +72,10 @@ export interface DevRouteDeps {
  * `POST /last-mail` with `{ email }` answers the newest mail the worker sent to that address in
  * development (`dev_mail`): `{ subject, text }`, or 404 when there is none. The e2e specs read
  * sign-in, sign-up and password-reset codes this way.
+ *
+ * `GET /free-plan` answers `{ allowsNothing }`: whether billing is on and the free plan allows
+ * nothing. The e2e sign-up fixture then puts each new group on the paid plan, so the specs run on
+ * any product's catalog.
  */
 export function createDevRoute(deps: DevRouteDeps) {
   return new Hono<APIContext>()
@@ -150,6 +159,10 @@ export function createDevRoute(deps: DevRouteDeps) {
       if (user instanceof Response) return user
       const closed = user.userId === null ? 0 : deps.closeSockets(user.userId)
       return c.json({ success: true, closed })
+    })
+    .get("/free-plan", (c) => {
+      if (!deps.isDev) return errorResponse(c, `forbidden`, { message: "Not allowed" })
+      return c.json({ allowsNothing: deps.freePlanAllowsNothing })
     })
     .post("/last-mail", async (c) => {
       if (!deps.isDev) return errorResponse(c, `forbidden`, { message: "Not allowed" })

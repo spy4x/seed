@@ -90,6 +90,7 @@ function buildApp(sql: postgres.Sql, isDev: boolean) {
       sql,
       closeSockets: () => 0,
       forgetCodeBudget: (email) => Promise.resolve(void forgotten.push(email)),
+      freePlanAllowsNothing: false,
     }),
   )
   const post = (path: string, body: unknown) =>

@@ -49,6 +49,7 @@ import { invitationRateLimits } from "./cqrs/invitation-dependencies.ts"
 import { createBillingRoute, createBillingTrialRoute } from "./routes/billing.ts"
 import { createBillingWebhookRoute } from "./routes/billing-webhook.ts"
 import { billingSetup } from "./services/billing.ts"
+import { freePlanAllowsNothing } from "@domain/billing"
 import { createMutationGuards } from "./middlewares/mutation-guards.ts"
 import { createTotpFailures } from "./services/totp-failures.ts"
 import { createEmailCodeFailures } from "./services/email-code-failures.ts"
@@ -558,6 +559,7 @@ if (config.isDev) {
       isDev: config.isDev,
       db,
       sql,
+      freePlanAllowsNothing: billingSetup.provider !== null && freePlanAllowsNothing(),
       closeSockets: (userId) => realtime.closeUser(userId, "closed by a development script", 1012),
       forgetCodeBudget: async (email, client) => {
         await createRedisRateLimitStore(kv, { keyPrefix: EMAIL_CODE_STORE })
