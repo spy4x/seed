@@ -83,8 +83,11 @@ pass. A red step may list only some failures, so run the specs on your machine f
 1. Run it ten times in a row on a healthy branch:
 
    ```sh
-   deno task e2e:local e2e/<spec> --repeat-each=10
+   E2E_LOCAL_TIMEOUT=3600 deno task e2e:local e2e/<spec> --repeat-each=10 --workers=1
    ```
+
+   Ten runs take ten times as long as one. `E2E_LOCAL_TIMEOUT` is the deadline of one pass, 1500 s
+   by default, which ten runs of a long spec such as `e2e/notes.e2e.ts` outgrow on a busy machine.
 
 2. Add it to `SMOKE_SPECS` only when every run passed. A spec that fails once blocks every pull
    request.
