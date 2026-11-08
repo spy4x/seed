@@ -42,7 +42,7 @@ The steps of [the aggregate reference](aggregates.md), as tags fill them:
 | 5. Transports | `apps/api/features/tags/operations.ts`, `errors.ts`, `apps/api/routes/tags.ts`, `realtimeHub.ts` |
 | 6. Screens    | `libs/ui/tags-screen.tsx`, `tag-parts.tsx`, the tag parts of the two note screens, `tags.test.tsx` |
 | 7. SPA wiring | `state/tags.ts`, `offline/tags-collection.ts`, `tags-cache.ts`, `views/TagsView.tsx`, the tag parts of the note views, `pull.ts`, `OfflineStatus.tsx` |
-| 8. Tests      | `apps/api/features/tags/transports.test.ts`, `tests/integration/tags.integration.test.ts`, `state/tags.test.ts`, `offline/tags-collection.test.ts`, `e2e/tags.e2e.ts`, `e2e/tags-realtime-off.e2e.ts` |
+| 8. Tests      | `apps/api/features/tags/transports.test.ts`, `tests/integration/tags.integration.test.ts`, `state/tags.test.ts`, `offline/tags-collection.test.ts`, `e2e/tags.e2e.ts`, `e2e/tags-offline.e2e.ts`, `e2e/tags-realtime-off.e2e.ts` |
 
 The public website has no session, so tags exist in the SPA only.
 
