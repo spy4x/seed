@@ -138,6 +138,16 @@ function settle(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 20))
 }
 
+/**
+ * Waits until `done` holds, such as a call reaching the server, however slow the machine is. A fixed
+ * wait failed under load in CI. Throws after 5 seconds.
+ */
+async function until(done: () => boolean): Promise<void> {
+  for (const deadline = Date.now() + 5_000; !done(); await settle()) {
+    if (Date.now() > deadline) throw new Error(`waited 5 s for ${done}`)
+  }
+}
+
 /** Starts the layer of user 7 with a server that takes no queued write and answers no read. */
 function signIn(
   storage: OfflineStorage,
@@ -257,8 +267,7 @@ describe("an answer that arrives after the sign-out", () => {
     await copyOf(7, [changes(0, 1, { notes: [note("old")] })]).pull(groupId)
     signIn(storage, undefined, server.query)
     const reading = offlineNotes(server.notes, currentLayer).fetchPage(groupId, null)
-    await settle()
-    expect(server.asked()).toBe(true)
+    await until(server.asked)
 
     await stopOffline({ forget: true })
     expect(await notesOf(7)).toEqual([])
@@ -275,8 +284,7 @@ describe("an answer that arrives after the sign-out", () => {
     await copyOf(7, [changes(0, 1, { tags: [tag("old")] })]).pull(groupId)
     signIn(storage, undefined, server.query)
     const reading = offlineTags(server.tags, currentLayer).fetchList(groupId)
-    await settle()
-    expect(server.asked()).toBe(true)
+    await until(server.asked)
 
     await stopOffline({ forget: true })
     expect(await tagsOf(7)).toEqual([])
@@ -292,7 +300,7 @@ describe("an answer that arrives after the sign-out", () => {
     const server = pendingServer()
     signIn(storage)
     const opening = offlineNotes(server.notes, currentLayer).get(groupId, "late")
-    await settle()
+    await until(server.asked)
 
     await stopOffline({ forget: true })
     server.answer({ note: note("late") })
@@ -315,8 +323,7 @@ describe("an answer that arrives after the sign-out", () => {
       entityId: "late-tag",
       payload: { groupId, name: "Late", color: "#4b5563" },
     })
-    await settle()
-    expect(sends.length).toBe(1)
+    await until(() => sends.length === 1)
 
     await stopOffline({ forget: true })
     sends[0].answer({ tag: tag("late-tag") })
@@ -373,7 +380,7 @@ describe("an answer that arrives after the sign-out", () => {
 
     signIn(storage, undefined, server.query)
     const reading = offlineNotes(server.notes, currentLayer).fetchPage(groupId, null)
-    await settle()
+    await until(server.asked)
     server.answer(changes(0, 1, { notes: [note("fresh")] }))
     await reading
 
