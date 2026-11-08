@@ -236,6 +236,16 @@ Deno.test("a push to main and a tag run Lighthouse whatever they change", async 
   }
 })
 
+Deno.test("a pull request measures the quick pages, and a push to main and a tag every page", async () => {
+  // run.sh measures every page unless LIGHTHOUSE_PAGES=quick; only a pull request may set it.
+  const commands = list((await workflow()).steps?.lighthouse?.commands).map((line) => line.trim())
+  const at = commands.indexOf(`deno task lighthouse`)
+  expect(commands.slice(at - 1, at)).toEqual([
+    `if [ "$\${CI_PIPELINE_EVENT}" = pull_request ]; then export LIGHTHOUSE_PAGES=quick; fi`,
+  ])
+  expect(commands.filter((line) => line.includes(`LIGHTHOUSE_PAGES`))).toHaveLength(1)
+})
+
 Deno.test("the smoke set holds the sign-in and the notes specs", () => {
   expect(SMOKE_SPECS).toContain("auth-profile-ws-push.e2e.ts")
   expect(SMOKE_SPECS).toContain("sign-in-next.e2e.ts")

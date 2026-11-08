@@ -91,6 +91,9 @@ shared ones. Delete those of pages the product deleted, and point the rest at th
 - `/docs/api`, `/docs/get-started` and `/docs/capacity`: guides listed in the product's
   `PUBLISHED_DOCS`.
 
+A pull request measures only `QUICK_PATHS` in `lighthouse/quick.ts` (the home page, `/pricing`,
+the fixture blog post and `/docs`); each must stay in `lighthouserc.json`, or the check fails.
+
 **Keep `/changelog` and `/docs`.** They read the product's own history and guides. In
 `changelog-overrides.ts`, set `CHANGELOG_START` to the full hash of the commit that copied Seed
 in, so `/changelog` lists only the changes after it, and empty `CHANGELOG_OVERRIDES`, whose

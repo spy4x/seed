@@ -4,7 +4,7 @@ language: en
 title: How the website's speed check works
 description: What the Lighthouse check measures on every pull request, the scores a page must reach, how it runs without a database, and what to do when a page falls below the budget.
 tldr:
-  - Every pull request measures the public website in Lighthouse mobile, three runs per page.
+  - A pull request measures four key pages in Lighthouse mobile once; a merge measures every page three times.
   - A page needs 95 for performance and 100 for accessibility, best practices and SEO.
   - The blog is measured with this post, served by a small stand-in API, so no database is needed.
 topic: Guides
@@ -23,9 +23,10 @@ one. What it says is true of the check itself.
 
 ## What is measured
 
-The check opens every address in `lighthouserc.json` in Lighthouse's mobile mode: a slow phone on
-a throttled network. Each page runs three times and the median counts, so one slow run on a busy
-machine does not fail a pull request.
+The check opens addresses from `lighthouserc.json` in Lighthouse's mobile mode: a slow phone on
+a throttled network. A pull request measures one page of each kind (the home page, pricing, a blog
+post and the docs, listed in `quick.ts`) once each, so it waits about a minute. A merge to `main`
+measures every address three times, and the median counts.
 
 | Category       | Minimum score | What it looks at                                      |
 | -------------- | ------------- | ----------------------------------------------------- |
