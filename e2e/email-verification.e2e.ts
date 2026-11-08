@@ -1,6 +1,6 @@
 import type { APIRequestContext, Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
-import { gotoApp, signIn } from "./fixtures/app.ts"
+import { gotoApp, SIGNED_IN_LANDING, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { lastMail, nextCode, signUpWithCode } from "./fixtures/sign-up.ts"
 
@@ -62,7 +62,7 @@ test("a new account proves its address with the mailed code before it exists, th
     await field.pressSequentially(code)
     await gotoApp(page, "/notes", page.locator("[data-e2e=shell-ws-status]"), async () => {
       await field.press("Enter")
-      await page.waitForURL("/notes")
+      await page.waitForURL(SIGNED_IN_LANDING)
     })
 
     // The code proved the address: no page asks for it again.

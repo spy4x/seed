@@ -1,6 +1,6 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
-import { gotoApp } from "./fixtures/app.ts"
+import { gotoApp, SIGNED_IN_LANDING } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { mailedCode, signUpWithCode } from "./fixtures/sign-up.ts"
 
@@ -43,7 +43,7 @@ test("a new address signs up by the mailed code, which works once", async ({ pag
     const code = await codeFor(request, email)
     expect(code).toMatch(/^[A-Za-z0-9_-]{8}$/)
     await enterCode(page, code)
-    await page.waitForURL("/notes")
+    await page.waitForURL(SIGNED_IN_LANDING)
 
     // The code was spent: the same code from the same browser is refused.
     const again = await page.request.post(`${apiBase}/api/auth/code/verify`, {
@@ -66,7 +66,7 @@ test("signed in, the code page says so, and from the profile it confirms the acc
     await button.click()
     const first = await codeFor(request, email)
     await enterCode(page, first)
-    await page.waitForURL("/notes")
+    await page.waitForURL(SIGNED_IN_LANDING)
 
     await gotoApp(page, "/sign-in/code", page.locator("[data-e2e=sign-in-code-signed-in]"))
     await expect(page.locator("[data-e2e=sign-in-code-email]")).toHaveCount(0)

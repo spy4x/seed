@@ -1,6 +1,6 @@
 import type { APIRequestContext, Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
-import { gotoApp } from "./fixtures/app.ts"
+import { gotoApp, SIGNED_IN_LANDING } from "./fixtures/app.ts"
 import { lastMail, type Mail, nextCode } from "./fixtures/sign-up.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
@@ -76,7 +76,7 @@ test("two sign-ups of one address: the first code signs in, the second finds the
       firstPage.locator("[data-e2e=shell-ws-status]"),
       async () => {
         await firstPage.locator("[data-e2e=mailed-code-step-code]").press("Enter")
-        await firstPage.waitForURL("/notes")
+        await firstPage.waitForURL(SIGNED_IN_LANDING)
       },
     )
 

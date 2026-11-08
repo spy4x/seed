@@ -1,7 +1,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
-import { signUpInPage } from "./fixtures/sign-up.ts"
+import { freePlanAllowsNothing, signUpInPage } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const password = "Passw0rd!"
@@ -80,12 +80,14 @@ test.describe("first steps", () => {
       await expect(card(page).getByRole("listitem")).toHaveCount(5)
       await expect(step(page, "Write your first note")).toContainText("To do:")
 
-      // The worker gives the new account a welcome note. It is not the person's own.
+      // The worker gives the new account a welcome note. It is not the person's own. A free plan
+      // that allows nothing gets none: the sign-up fixture pays only after the worker was refused.
+      const welcome = await freePlanAllowsNothing(request, apiBase) ? [] : ["Welcome"]
       const { groupId } = await (await page.request.get(`${apiBase}/api/groups/selected`)).json()
       await expect.poll(async () => {
         const listed = await page.request.get(`${apiBase}/api/groups/${groupId}/notes?limit=100`)
         return (await listed.json()).notes.map((note: { title: string }) => note.title)
-      }, { message: "the worker makes the welcome note", timeout: 15_000 }).toEqual(["Welcome"])
+      }, { message: "the worker makes the welcome note", timeout: 15_000 }).toEqual(welcome)
       const before = answers.count
       await openHome(page)
       await expect.poll(() => answers.count).toBeGreaterThan(before)
