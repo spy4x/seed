@@ -40,6 +40,8 @@ A run that needs both makes two passes: the dev server first, then the built SPA
 
 - The run fails when either pass fails. Its last lines give the counts of each pass.
 - The second pass's report is in `e2e/report/offline`. `e2e:report` does not open it.
+- The traces of a pass's failed tests stay in `results/` of its report folder, whatever the
+  reporter: open one with `deno run -A npm:playwright@1.57.0 show-trace <trace.zip>`.
 - `E2E_SPA=dev` or `E2E_SPA=built` puts every spec on that one server.
 
 ## What CI runs
