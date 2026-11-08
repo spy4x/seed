@@ -33,8 +33,8 @@ mention `restore`.
    never queues a restore: it needs the server.
 7. **Tests.** Both transports (every role, a stranger, a live row, the cap), Postgres (version,
    sequence, audit row, the deleted list's cursor), the purge with a fixed clock, the store, the
-   screens and an e2e spec. Notes: `e2e/notes-restore.e2e.ts` and
-   `tests/integration/notes-purge.integration.test.ts`.
+   screens and an e2e spec. Notes: `e2e/notes-restore.e2e.ts`, `e2e/notes-restore-offline.e2e.ts`
+   and `tests/integration/notes-purge.integration.test.ts`.
 
 Anything that hangs off the row, such as attachments, must go with it in the purge, or it is left
 behind.
