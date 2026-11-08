@@ -601,7 +601,6 @@ export default {
   "InvitationNew.discardLeave": "تجاهل التغييرات",
   "InvitationNew.discardStay": "متابعة التعديل",
   "GroupBillingPanel.planFree": "مجانية",
-  "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
     "zero":
       "تعذّرت عملية دفع. للإبقاء على خطة {plan}، حدّث بطاقتك عبر «تغيير البطاقة» اليوم، قبل {date}.",

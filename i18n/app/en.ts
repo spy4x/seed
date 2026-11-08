@@ -494,7 +494,6 @@ export default {
   "InvitationNew.discardLeave": "Discard changes",
   "InvitationNew.discardStay": "Keep editing",
   "GroupBillingPanel.planFree": "Free",
-  "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
     "one":
       "A payment failed. To keep {plan}, update your card with Change card within {count} day, by {date}.",

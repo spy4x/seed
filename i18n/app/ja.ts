@@ -470,7 +470,6 @@ export default {
   "InvitationNew.discardLeave": "変更を破棄",
   "InvitationNew.discardStay": "編集を続ける",
   "GroupBillingPanel.planFree": "無料",
-  "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
     "other":
       "支払いに失敗しました。{plan}を続けるには、{count}日以内（{date}まで）に「カードを変更」からカード情報を更新してください。",

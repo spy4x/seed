@@ -46,7 +46,7 @@ export function checkoutDoneToast(
   groupName: string,
   plans: readonly Plan[] = PLANS,
 ): { title: string; body: string } {
-  const plan = planName(t, billing.planId)
+  const plan = planName(t, billing.planId, plans)
   const group = isolate(groupName)
   const trialEnd = billing.status === BillingStatus.Trialing
     ? billing.trialEnd ?? billing.currentPeriodEnd

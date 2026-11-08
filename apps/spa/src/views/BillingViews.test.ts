@@ -5,7 +5,11 @@ import { createTranslator } from "@spy4x/platform/universal/i18n"
 import { createFormatters } from "@spy4x/time/format"
 import app from "@i18n/app/en.ts"
 import { checkoutDoneToast, periodFromSearch } from "./BillingViews.tsx"
-import { TEST_PLANS } from "../../../../libs/domain/billing/test-plans.ts"
+import {
+  TEST_FREE_PLAN,
+  TEST_PLANS,
+  TEST_PRO_PLAN,
+} from "../../../../libs/domain/billing/test-plans.ts"
 
 const t = createTranslator({ language: "en", catalogs: [{ source: app }] })
 const format = createFormatters({ locale: "en-US", timeZone: "Asia/Tokyo" })
@@ -43,6 +47,11 @@ describe("checkoutDoneToast", () => {
       title: "You’re on Pro",
       body: `Stripe confirmed the payment for “\u2068Team\u2069”.`,
     })
+  })
+
+  it("names the paid plan as the product's catalog names it, not Pro", () => {
+    const plans = [TEST_FREE_PLAN, { ...TEST_PRO_PLAN, name: "Household" }]
+    expect(checkoutDoneToast(t, format, PRO, "Team", plans).title).toBe("You’re on Household")
   })
 })
 

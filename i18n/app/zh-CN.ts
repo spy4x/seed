@@ -434,7 +434,6 @@ export default {
   "InvitationNew.discardLeave": "放弃修改",
   "InvitationNew.discardStay": "继续编辑",
   "GroupBillingPanel.planFree": "免费版",
-  "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
     "other":
       "一笔付款失败了。要继续使用 {plan}，请在 {count} 天内（{date}之前）通过“更换银行卡”更新你的银行卡。",

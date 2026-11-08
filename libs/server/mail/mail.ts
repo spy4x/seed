@@ -22,7 +22,7 @@ import type { EmailMessage } from "@spy4x/email/message"
 import type { Sql } from "@spy4x/server/db"
 import { type Catalog, createTranslator, type Translator } from "@spy4x/platform/universal/i18n"
 import { createFormatters, type Formatters, type HourCycle } from "@spy4x/time/format"
-import { BillingNoticeKind, findPlan, FREE_PLAN_ID, PRO_PLAN_ID } from "@domain/billing"
+import { BillingNoticeKind, findPlan, FREE_PLAN_ID, type Plan, PLANS } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import type { Language } from "@domain/identity"
 import appEn from "@i18n/app/en.ts"
@@ -656,12 +656,8 @@ export interface BillingNoticeMailInput {
    */
   trialHasCard: boolean
   reader: MailReader
-}
-
-/** Each plan's name, by its key in the `app` catalog, as the billing screen names it. */
-const PLAN_KEYS: Record<string, string> = {
-  [FREE_PLAN_ID]: `GroupBillingPanel.planFree`,
-  [PRO_PLAN_ID]: `GroupBillingPanel.planPro`,
+  /** The plan catalog that names `planId`: `PLANS` unless a test passes its own. */
+  plans?: readonly Plan[]
 }
 
 /**
@@ -672,14 +668,15 @@ const PLAN_KEYS: Record<string, string> = {
  */
 export function billingNoticeMail(
   brand: MailBrand,
-  { to, kind, groupName, planId, at, link, planKeptUntil, trialHasCard, reader }:
+  { to, kind, groupName, planId, at, link, planKeptUntil, trialHasCard, reader, plans = PLANS }:
     BillingNoticeMailInput,
 ): EmailMessage {
   const w = writerFor(reader)
   const utc = w.format.utc()
-  const plan = planId && PLAN_KEYS[planId]
-    ? w.t.t(PLAN_KEYS[planId])
-    : findPlan(planId ?? ``)?.name ?? w.t.t(`BillingNoticeMail.paidPlan`)
+  // The billing screen's names: the free plan's translated, a paid plan's the catalog's brand name.
+  const plan = planId === FREE_PLAN_ID
+    ? w.t.t(`GroupBillingPanel.planFree`)
+    : findPlan(planId ?? ``, plans)?.name ?? w.t.t(`BillingNoticeMail.paidPlan`)
   const values = { plan, group: isolate(groupName), date: utc.date(at, `long`) }
   const [subject, what, next] = {
     [BillingNoticeKind.TrialEnding]: [

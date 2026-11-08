@@ -533,7 +533,6 @@ export default {
   "InvitationNew.discardLeave": "Descartar",
   "InvitationNew.discardStay": "Continuar editando",
   "GroupBillingPanel.planFree": "Gratuito",
-  "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
     "one":
       "Um pagamento não foi aprovado. Para continuar no {plan}, atualize o cartão em Trocar cartão até {date} (daqui a {count} dia).",
