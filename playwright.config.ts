@@ -16,4 +16,8 @@ export default defineConfig({
   }),
   // The base config retries twice in CI; a test that fails once must fail the run (#394).
   retries: 0,
+  // A machine running several stacks at once is slow: the base 30 s per test and 5 s per assertion
+  // fail healthy specs there. A real hang still fails, only later.
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
 })

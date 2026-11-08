@@ -105,10 +105,10 @@ test.describe("notes in a shared group", () => {
       const notePath = new URL(ownerPage.url()).pathname
       await ownerPage.locator("[data-e2e=page-back]").click()
       await expect(ownerTitles).toHaveText(["Groceries"])
-      await expect(memberTitles).toHaveText(["Groceries"], { timeout: 5_000 })
+      await expect(memberTitles).toHaveText(["Groceries"])
       // Each row names who wrote it: "You" for the author, the author's name for everyone else.
       await expect(ownerPage.locator("[data-e2e=note-author]")).toHaveText(["You"])
-      await expect(memberPage.locator("[data-e2e=note-author]")).toHaveCount(1, { timeout: 5_000 })
+      await expect(memberPage.locator("[data-e2e=note-author]")).toHaveCount(1)
       await expect(memberPage.locator("[data-e2e=note-author]")).not.toHaveText(["You"])
 
       // The create went over the socket, as a command with an idempotency key.
@@ -124,7 +124,7 @@ test.describe("notes in a shared group", () => {
       await ownerPage.locator("[data-e2e=note-save]").click()
       await expect(ownerPage).toHaveURL("/notes")
       await expect(ownerTitles).toHaveText(["Groceries for Friday"])
-      await expect(memberTitles).toHaveText(["Groceries for Friday"], { timeout: 5_000 })
+      await expect(memberTitles).toHaveText(["Groceries for Friday"])
 
       // Delete asks first: keeping the note leaves it, confirming deletes it.
       await ownerPage.getByRole("link", { name: "Groceries for Friday" }).click()
@@ -140,7 +140,7 @@ test.describe("notes in a shared group", () => {
       await dialog.getByRole("button", { name: "Delete note", exact: true }).click()
       await expect(ownerPage).toHaveURL("/notes")
       await expect(ownerTitles).toHaveCount(0)
-      await expect(memberTitles).toHaveCount(0, { timeout: 5_000 })
+      await expect(memberTitles).toHaveCount(0)
       await expect(memberPage.getByText("No notes yet")).toBeVisible()
 
       expect({ memberSockets, memberLoads }).toEqual(settled)

@@ -75,7 +75,7 @@ test.describe("restoring deleted notes", () => {
         // A row's Delete needs no confirmation: Undo in the toast takes it back.
         await ownerPage.getByRole("menuitem", { name: "Delete" }).click()
         await expect(ownerTitles).toHaveCount(0)
-        await expect(memberTitles).toHaveCount(0, { timeout: 5_000 })
+        await expect(memberTitles).toHaveCount(0)
       }
 
       // Delete, then Undo from the toast.
@@ -84,7 +84,7 @@ test.describe("restoring deleted notes", () => {
       await expect(toast).toContainText(`"\u2068Trip\u2069" was deleted.`)
       await toast.getByRole("button", { name: "Undo" }).click()
       await expect(ownerTitles).toHaveText(["Trip"])
-      await expect(memberTitles).toHaveText(["Trip"], { timeout: 5_000 })
+      await expect(memberTitles).toHaveText(["Trip"])
       await expect(toast).toHaveCount(0)
 
       // The toast a delete shows leaves the page header's "More actions" menu clickable, on a
@@ -102,7 +102,7 @@ test.describe("restoring deleted notes", () => {
       await ownerPage.keyboard.press("Escape")
       await toast.getByRole("button", { name: "Undo" }).click()
       await expect(ownerTitles).toHaveText(["Trip"])
-      await expect(memberTitles).toHaveText(["Trip"], { timeout: 5_000 })
+      await expect(memberTitles).toHaveText(["Trip"])
 
       // Delete, then Show deleted notes and Restore.
       await openNotesMenuOverToast(1440)
@@ -121,7 +121,7 @@ test.describe("restoring deleted notes", () => {
       await ownerPage.locator("[data-e2e=notes-show-live]").click()
       await expect(ownerTitles).toHaveText(["Trip"])
       // The viewer's deleted list follows: the note left it.
-      await expect(memberPage.getByText("No deleted notes")).toBeVisible({ timeout: 5_000 })
+      await expect(memberPage.getByText("No deleted notes")).toBeVisible()
       await memberPage.locator("[data-e2e=notes-show-live]").click()
       await expect(memberTitles).toHaveText(["Trip"])
 

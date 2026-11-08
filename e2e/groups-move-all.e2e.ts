@@ -98,9 +98,7 @@ test.describe("moving all of a group's data", () => {
       await expect(dialog.locator("[data-e2e=group-move-all-done]")).toContainText(
         `Moved 3 notes from "Source" to "Target".`,
       )
-      await expect(watcherPage.locator("[data-e2e=note-item-title]")).toHaveCount(3, {
-        timeout: 5_000,
-      })
+      await expect(watcherPage.locator("[data-e2e=note-item-title]")).toHaveCount(3)
 
       // The emptied group can be deleted from the same dialog.
       await dialog.locator("[data-e2e=group-move-all-delete]").click()
