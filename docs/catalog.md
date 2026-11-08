@@ -106,12 +106,18 @@ visits:
 The admin routes are under `/api/admin/catalog`, for operators only, and every write is audited.
 The public routes need no session:
 
-| Route                               | What it answers                                                                          |
-| ----------------------------------- | ---------------------------------------------------------------------------------------- |
-| `GET /api/catalog`                  | The settings, categories with a published item, and every published item with its cover. |
-| `GET /api/catalog/items/:slug`      | One published item with its texts, colours, sizes, size chart, sold-out list and photos. |
-| `GET /api/catalog/photos/:id/:file` | One width of a published photo, such as `960.webp`.                                      |
-| `GET /api/catalog/links/:code`      | `{ location }`: where the website's `/s/<code>` sends the visitor.                       |
+| Route                               | What it answers                                                                                             |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `GET /api/catalog`                  | The settings, categories with a published item, and every published item with its cover, sizes and colours. |
+| `GET /api/catalog/items/:slug`      | One published item with its texts, colours, sizes, size chart, sold-out list and photos.                    |
+| `GET /api/catalog/photos/:id/:file` | One width of a published photo, such as `960.webp`.                                                         |
+| `GET /api/catalog/links/:code`      | `{ location }`: where the website's `/s/<code>` sends the visitor.                                          |
+
+In the list, each item carries its sizes and colours in the item's order, without ids, the size
+chart or the other photos: `"sizes": [{ "label": "S", "soldOut": true }]` and
+`"colours": [{ "name": { "en": "Red" }, "swatch": "#aa0000", "soldOut": false }]`. A size or a
+colour is sold out when every combination holding it is. The item's page has the same `soldOut` on
+each of its colours and sizes. The list takes five queries, whatever the number of items.
 
 Photos are JPEG, PNG, WebP or HEIC, up to 20 MB. A category can be deleted only when empty. Item
 and source ids are UUID version 7, made by the client. `apps/api/routes/admin/catalog.ts` holds the

@@ -34,7 +34,11 @@ import { applyMigrations } from "./migrations.ts"
  * they are missing rather than skipping.
  */
 
-async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
+/** Runs `body` in a fresh schema, with every query the client sends pushed to `queries`. */
+async function withSchema(
+  body: (sql: postgres.Sql, queries: string[]) => Promise<void>,
+): Promise<void> {
+  const queries: string[] = []
   const settings = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...settings, max: 1, onnotice: () => {} })
   const schema = `catalog_test_${uuidV7().replaceAll(`-`, ``)}`
@@ -44,11 +48,12 @@ async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<v
     transform: postgres.camel,
     connection: { options: `-c search_path=${schema}` },
     onnotice: () => {},
+    debug: (_connection, query) => queries.push(query),
   })
   try {
     await admin`CREATE SCHEMA ${admin(schema)}`
     await applyMigrations(sql)
-    await body(sql)
+    await body(sql, queries)
   } finally {
     await sql.end({ timeout: 5 })
     await admin`DROP SCHEMA IF EXISTS ${admin(schema)} CASCADE`
@@ -476,6 +481,101 @@ Deno.test(`the website reads published items only, with the photos that are read
     await catalog.setStatus(live.id, 2, `hidden`, actor)
     expect((await readPublicCatalog(sql, settings)).items).toEqual([])
     expect(await readPublicPhotoFile(sql, ready, `480.webp`)).toBeNull()
+  })
+})
+
+Deno.test(`the website's list shows each item's sizes and colours, sold out when every combination is, in five queries`, async () => {
+  await withSchema(async (sql, queries) => {
+    const catalog = new PostgresCatalog(sql)
+    const actor = await operator(sql)
+    const category = await catalog.createCategory(uuidV7(), {
+      slug: `clothes`,
+      name: { en: `Clothes` },
+    }, actor)
+    const publish = async (fields: CatalogItemFields) => {
+      const item = await catalog.createItem(uuidV7(), { ...fields, categoryId: category.id }, actor)
+      await catalog.setStatus(item.id, 1, `published`, actor)
+    }
+    const settings = { currency: `VND`, languages: [`en`] }
+    const listed = async () => {
+      queries.length = 0
+      const { items } = await readPublicCatalog(sql, settings)
+      return { items, queries: queries.length }
+    }
+
+    // The S in both colours and the red M: the S and the red are sold out, the M and the blue not.
+    const { fields, red, blue, small, medium } = jacket()
+    await publish({
+      ...fields,
+      soldOut: [
+        { colourId: red, sizeId: small },
+        { colourId: blue, sizeId: small },
+        { colourId: red, sizeId: medium },
+      ],
+    })
+    const one = await listed()
+    expect(one.items.map(({ sizes, colours }) => ({ sizes, colours }))).toEqual([{
+      sizes: [{ label: `S`, soldOut: true }, { label: `M`, soldOut: false }],
+      colours: [
+        { name: { en: `Red` }, swatch: `#aa0000`, soldOut: true },
+        { name: { en: `Blue` }, swatch: `#0000aa`, soldOut: false },
+      ],
+    }])
+
+    const page = await readPublicItem(sql, `zip-jacket`)
+    expect(page?.sizes).toEqual([
+      {
+        id: small,
+        label: `S`,
+        heightCm: { min: 150, max: 162 },
+        weightKg: { min: 40, max: 52 },
+        soldOut: true,
+      },
+      { id: medium, label: `M`, heightCm: null, weightKg: null, soldOut: false },
+    ])
+    expect(page?.colours.map(({ id, soldOut }) => ({ id, soldOut }))).toEqual([
+      { id: red, soldOut: true },
+      { id: blue, soldOut: false },
+    ])
+
+    // Sizes only: its one sold-out row has no colour and sells the size out.
+    const [tall, short] = [uuidV7(), uuidV7()]
+    await publish(
+      jacket({
+        slug: `tee`,
+        colours: [],
+        sizes: [
+          { id: tall, label: `L`, heightCm: null, weightKg: null },
+          { id: short, label: `XS`, heightCm: null, weightKg: null },
+        ],
+        soldOut: [{ colourId: null, sizeId: short }],
+      }).fields,
+    )
+    // Colours only, all sold out.
+    const green = uuidV7()
+    await publish(
+      jacket({
+        slug: `scarf`,
+        colours: [{ id: green, name: { en: `Green` }, swatch: `#00aa00` }],
+        sizes: [],
+        soldOut: [{ colourId: green, sizeId: null }],
+      }).fields,
+    )
+
+    const three = await listed()
+    const bySlug = new Map(three.items.map((item) => [item.slug, item]))
+    expect(bySlug.get(`tee`)).toMatchObject({
+      stock: `some-sold-out`,
+      sizes: [{ label: `L`, soldOut: false }, { label: `XS`, soldOut: true }],
+      colours: [],
+    })
+    expect(bySlug.get(`scarf`)).toMatchObject({
+      stock: `sold-out`,
+      sizes: [],
+      colours: [{ name: { en: `Green` }, swatch: `#00aa00`, soldOut: true }],
+    })
+    expect(three.queries).toBe(one.queries)
+    expect(three.queries).toBe(5)
   })
 })
 
