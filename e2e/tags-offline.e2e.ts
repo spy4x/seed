@@ -38,16 +38,23 @@ test.describe("tags", () => {
       const page = await context.newPage()
       await signInOnline(page, user)
       const groupId = await selectedGroup(page, "Offline tag team")
+      // The group was selected through the API, so wait until the page has read it from the
+      // server: a navigation that cuts that read short leaves the device on the group it knew
+      // before, and the offline writes below would go there.
+      const group = page.locator("[data-e2e=notes-group]")
       await gotoApp(page, "/notes", page.locator("[data-e2e=shell-ws-status]"))
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
+      await expect(group).toHaveText("Offline tag team")
       await page.evaluate(async () => {
         await navigator.serviceWorker.ready
       })
       await gotoApp(page, "/notes", page.locator("[data-e2e=shell-ws-status]"))
+      await expect(group).toHaveText("Offline tag team")
 
       await context.setOffline(true)
       await page.reload()
       await expect(page.locator("[data-e2e=shell-ws-status]")).not.toHaveText("Online")
+      await expect(group).toHaveText("Offline tag team")
 
       const tags = new TagsPage(page)
       const notes = new NotesTags(page)
