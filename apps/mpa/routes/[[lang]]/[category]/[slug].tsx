@@ -20,7 +20,7 @@ import {
   readCatalog,
   readItem,
 } from "../../../catalog.ts"
-import { catalogPrice, NO_PHOTO } from "../../../components/catalog.tsx"
+import { catalogPrice, NO_PHOTO, Swatch } from "../../../components/catalog.tsx"
 import { DEFAULT_LANGUAGE, localePath, siteTranslator } from "../../../languages.ts"
 import { SITE_NAME, SiteFrame } from "../../../site.tsx"
 import { useSite } from "../../../use-site.tsx"
@@ -29,6 +29,8 @@ import { define, type State } from "../../../utils.ts"
 /** The query that picks a colour and a size, by id: what each variant's address sets. */
 const COLOUR = `colour`
 const SIZE = `size`
+/** The id of the colours and sizes, where a pick link lands so a phone keeps its place. */
+const OPTIONS = `options`
 
 /**
  * One published item at `/<category>/<item>`, the address tracking links lead to: its photos, cover
@@ -314,71 +316,69 @@ function ItemBody(
               {allSoldOut && <span class="text-base font-semibold">{t.t(`LookTile.soldOut`)}</span>}
             </p>
           </div>
-          {item.colours.length > 0 && (
-            <div class="flex flex-col gap-2">
-              <h2 class="text-sm font-semibold">{t.t(`LookTile.colors`)}</h2>
-              <ul class="flex flex-wrap gap-2" data-e2e="catalog-item-colours">
-                {item.colours.map((option) => {
-                  const label = text(option.name)
-                  const here = option.id === colour?.id
-                  return (
-                    <li key={option.id}>
-                      <a
-                        href={pickQuery(option.id, size?.id ?? null)}
-                        aria-current={here ? `true` : undefined}
-                        class={chipClass(here)}
-                      >
-                        <span
-                          aria-hidden="true"
-                          class="block size-4 rounded-full border border-strong"
-                          style={{ backgroundColor: option.swatch }}
-                        />
-                        <span lang={own(label.lang)} class={option.soldOut ? `text-muted` : ``}>
-                          {option.soldOut ? <s>{label.text}</s> : label.text}
-                        </span>
-                        {option.soldOut && (
-                          <span class="sr-only">{`, ${t.t(`LookTile.sizeSoldOut`)}`}</span>
-                        )}
-                      </a>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          )}
-          {item.sizes.length > 0 && (
-            <div class="flex flex-col gap-2">
-              <h2 class="text-sm font-semibold">{t.t(`LookTile.sizes`)}</h2>
-              <ul class="flex flex-wrap gap-2" data-e2e="catalog-item-sizes">
-                {item.sizes.map((option) => {
-                  const here = option.id === size?.id
-                  return (
-                    <li key={option.id}>
-                      <a
-                        href={pickQuery(colour?.id ?? null, option.id)}
-                        aria-current={here ? `true` : undefined}
-                        class={chipClass(here)}
-                      >
-                        <span class={option.soldOut ? `text-muted` : ``}>
-                          {option.soldOut ? <s>{option.label}</s> : option.label}
-                        </span>
-                        {option.soldOut && (
-                          <span class="sr-only">{`, ${t.t(`LookTile.sizeSoldOut`)}`}</span>
-                        )}
-                      </a>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          )}
-          {complete && (
-            <p class="font-semibold" data-e2e="catalog-item-choice">
-              {soldOut(item, colour?.id ?? null, size?.id ?? null)
-                ? t.t(`CatalogItem.soldOut`, { choice })
-                : t.t(`CatalogItem.inStock`, { choice })}
-            </p>
-          )}
+          <div id={OPTIONS} class="flex scroll-mt-16 flex-col gap-6">
+            {item.colours.length > 0 && (
+              <div class="flex flex-col gap-2">
+                <h2 class="text-sm font-semibold">{t.t(`LookTile.colors`)}</h2>
+                <ul class="flex flex-wrap gap-2" data-e2e="catalog-item-colours">
+                  {item.colours.map((option) => {
+                    const label = text(option.name)
+                    const here = option.id === colour?.id
+                    return (
+                      <li key={option.id}>
+                        <a
+                          href={`${pickQuery(option.id, size?.id ?? null)}#${OPTIONS}`}
+                          aria-current={here ? `true` : undefined}
+                          class={chipClass(here)}
+                        >
+                          <Swatch color={option.swatch} class="size-4" />
+                          <span lang={own(label.lang)} class={option.soldOut ? `text-muted` : ``}>
+                            {option.soldOut ? <s>{label.text}</s> : label.text}
+                          </span>
+                          {option.soldOut && (
+                            <span class="sr-only">{`, ${t.t(`LookTile.sizeSoldOut`)}`}</span>
+                          )}
+                        </a>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            )}
+            {item.sizes.length > 0 && (
+              <div class="flex flex-col gap-2">
+                <h2 class="text-sm font-semibold">{t.t(`LookTile.sizes`)}</h2>
+                <ul class="flex flex-wrap gap-2" data-e2e="catalog-item-sizes">
+                  {item.sizes.map((option) => {
+                    const here = option.id === size?.id
+                    return (
+                      <li key={option.id}>
+                        <a
+                          href={`${pickQuery(colour?.id ?? null, option.id)}#${OPTIONS}`}
+                          aria-current={here ? `true` : undefined}
+                          class={chipClass(here)}
+                        >
+                          <span class={option.soldOut ? `text-muted` : ``}>
+                            {option.soldOut ? <s>{option.label}</s> : option.label}
+                          </span>
+                          {option.soldOut && (
+                            <span class="sr-only">{`, ${t.t(`LookTile.sizeSoldOut`)}`}</span>
+                          )}
+                        </a>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            )}
+            {complete && (
+              <p class="font-semibold" data-e2e="catalog-item-choice">
+                {soldOut(item, colour?.id ?? null, size?.id ?? null)
+                  ? t.t(`CatalogItem.soldOut`, { choice })
+                  : t.t(`CatalogItem.inStock`, { choice })}
+              </p>
+            )}
+          </div>
           {description.text !== `` && (
             <p
               class="whitespace-pre-line text-pretty text-muted"

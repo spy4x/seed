@@ -17,6 +17,28 @@ export const NO_PHOTO: readonly ResponsiveImageVariant[] = [
   { url: `/catalog-no-photo.svg`, width: 600, height: 800, type: `image/svg+xml` },
 ]
 
+/** A swatch the API may send: `#rrggbb`, the only value that reaches an SVG `fill`. */
+const SWATCH = /^#[0-9a-f]{6}$/
+
+/**
+ * A colour's dot. The colour is an SVG `fill`, not a `style` attribute, which the site's
+ * `style-src 'self'` policy would block. Hidden from screen readers: the colour's name says it.
+ * Nothing for a value that is not `#rrggbb`.
+ */
+export function Swatch({ color, class: className }: { color: string; class: string }) {
+  if (!SWATCH.test(color)) return null
+  return (
+    <span
+      aria-hidden="true"
+      class={`block shrink-0 overflow-hidden rounded-full border border-strong ${className}`}
+    >
+      <svg viewBox="0 0 1 1" class="block size-full">
+        <rect width="1" height="1" fill={color} />
+      </svg>
+    </span>
+  )
+}
+
 /**
  * A price in the catalog's currency, as the page's language writes it: `$19.99`, `250.000 ₫`.
  * English is British English, like the rest of the site.
@@ -79,7 +101,8 @@ export function CategoryLinks(
 /**
  * The items as tiles: the cover (or {@link NO_PHOTO}), the name, the price, the sizes with the
  * sold-out ones struck through and said, and the colours as dots. The first tile's photo loads
- * first.
+ * first. The dots are drawn here under each `LookTile`, as {@link Swatch}es: `LookTile` paints its
+ * own with a `style` attribute, which the site's policy blocks.
  */
 export function CatalogGrid(
   { catalog, items, label }: {
@@ -88,7 +111,7 @@ export function CatalogGrid(
     label: string
   },
 ): JSX.Element | null {
-  const { href, language } = useSite()
+  const { t, href, language } = useSite()
   const { settings } = catalog
   return (
     <LookGrid label={label}>
@@ -96,22 +119,29 @@ export function CatalogGrid(
         const name = catalogText(item.name, language, settings).text
         const alt = item.cover ? catalogText(item.cover.alt, language, settings).text : ``
         return (
-          <LookTile
-            key={item.slug}
-            href={href(itemPath(item))}
-            name={name}
-            price={catalogPrice(item.price, settings.currency, language)}
-            photo={item.cover
-              ? { variants: photoVariants(item.cover), alt: alt || name }
-              : { variants: NO_PHOTO, alt: `` }}
-            sizes={item.sizes}
-            colors={item.colours.map((colour) => ({
-              name: catalogText(colour.name, language, settings).text,
-              color: colour.swatch,
-            }))}
-            soldOut={item.stock === `sold-out`}
-            priority={index === 0}
-          />
+          <div key={item.slug} class="flex flex-col gap-2">
+            <LookTile
+              href={href(itemPath(item))}
+              name={name}
+              price={catalogPrice(item.price, settings.currency, language)}
+              photo={item.cover
+                ? { variants: photoVariants(item.cover), alt: alt || name }
+                : { variants: NO_PHOTO, alt: `` }}
+              sizes={item.sizes}
+              soldOut={item.stock === `sold-out`}
+              priority={index === 0}
+            />
+            {item.colours.length > 0 && (
+              <ul aria-label={t.t(`LookTile.colors`)} class="flex gap-1">
+                {item.colours.map((colour, at) => (
+                  <li key={at}>
+                    <Swatch color={colour.swatch} class="size-3" />
+                    <span class="sr-only">{catalogText(colour.name, language, settings).text}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )
       })}
     </LookGrid>
