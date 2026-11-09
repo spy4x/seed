@@ -304,11 +304,11 @@ steps:
       E2E_BUILT: nginx
       # The deadline of one Playwright pass, in seconds. The whole suite runs on one Playwright
       # worker and took 20 to 23 minutes of the script's default 25, so a slow run, or one failed
-      # test with its retries, ran out of time. This step starts about 23 minutes in, and the
-      # offline pass after it takes about 1, so a run to this deadline ends near minute 59. The
-      # repository's Woodpecker timeout, set on the CI server rather than in this file, is 75
-      # minutes (#751), so the script's own timeout message, not Woodpecker's kill, ends such a run,
-      # even when lighthouse or the agent queue runs slow.
+      # test with its retries, ran out of time. This step starts 22 to 26 minutes in, and the
+      # offline pass after this one takes about 2, so a run to this deadline ends at about minute 60
+      # to 64: Woodpecker's 60-minute limit killed pipelines 1537 and 1544 before the script's own
+      # timeout message. The repository's Woodpecker timeout, set on the CI server rather than in
+      # this file, is therefore 75 minutes (#751).
       E2E_LOCAL_TIMEOUT: "2100"
     commands:
       # npm's newest `deno` package lags the binary, so take the pinned release itself.
