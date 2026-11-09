@@ -378,9 +378,16 @@ describe("an item page", () => {
 
     expect((await get(`/shirts/zip-jacket`)).status).toBe(404)
     expect((await get(`/jackets/no-such-item`)).status).toBe(404)
-    expect((await get(`/de/zip-jacket`)).status).toBe(404)
     expect((await get(`/fr/jackets/zip-jacket`)).status).toBe(404)
     expect((await get(`/de/jackets/zip-jacket`)).status).toBe(200)
+  })
+
+  it("is the 404 page for an item whose category is named like a language", async () => {
+    const shadowed = { ...JACKET, categorySlug: `de` }
+    const { get } = catalogSite(catalogOn(shadowed))
+
+    // `/de/zip-jacket` is German for the address `/zip-jacket`, never the category `de`.
+    expect((await get(`/de/zip-jacket`)).status).toBe(404)
   })
 
   it("lives at the address tracking links lead to by default", () => {
