@@ -30,6 +30,20 @@ export interface Api {
    * than the timeout as 504, both with a `null` body, so a page shows its own error.
    */
   call(method: string, path: `/api/${string}`, json?: unknown): Promise<ApiAnswer>
+  /**
+   * A file the API serves, such as one width of a catalog photo, read whole: its status, its
+   * `Content-Type` and `Cache-Control`, and its bytes (`null` unless the status is 200). Never
+   * rejects, like {@link Api.call}.
+   */
+  file(path: `/api/${string}`): Promise<ApiFile>
+}
+
+/** What {@link Api.file} answers. */
+export interface ApiFile {
+  status: number
+  type: string | null
+  cacheControl: string | null
+  bytes: Uint8Array | null
 }
 
 /** How long one API call may take before the page answers without it. */
@@ -70,26 +84,49 @@ export function createApi(
     log?: (line: string) => void
   },
 ): Api {
+  /**
+   * Sends one request with the browser's {@link FORWARDED_HEADERS} and reads its answer with
+   * `read`, both within the timeout. A failure is logged and answered as `failed(status)`.
+   */
+  async function send<T>(
+    method: string,
+    path: `/api/${string}`,
+    json: unknown,
+    read: (response: Response) => Promise<T>,
+    failed: (status: number) => T,
+  ): Promise<T> {
+    const headers = new Headers()
+    for (const name of FORWARDED_HEADERS) {
+      const value = request.headers.get(name)
+      if (value !== null) headers.set(name, value)
+    }
+    if (origins && headers.get("origin") === origins.page) headers.set("origin", origins.api)
+    if (!headers.has("x-real-ip") && remoteAddress) headers.set("x-real-ip", remoteAddress)
+    if (json !== undefined) headers.set("content-type", "application/json")
+    const abort = new AbortController()
+    const timer = setTimeout(() => abort.abort(), timeoutMs)
+    try {
+      const response = await fetch(new URL(path, apiUrl), {
+        method,
+        headers,
+        body: json === undefined ? undefined : JSON.stringify(json),
+        redirect: "manual",
+        signal: abort.signal,
+      })
+      return await read(response)
+    } catch (error) {
+      const timedOut = abort.signal.aborted
+      const kind = timedOut ? "timeout" : error instanceof Error ? error.name : "error"
+      log(`API call failed: ${method} ${path.split("?")[0]} (${kind})`)
+      return failed(timedOut ? 504 : 502)
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
   return {
-    async call(method, path, json) {
-      const headers = new Headers()
-      for (const name of FORWARDED_HEADERS) {
-        const value = request.headers.get(name)
-        if (value !== null) headers.set(name, value)
-      }
-      if (origins && headers.get("origin") === origins.page) headers.set("origin", origins.api)
-      if (!headers.has("x-real-ip") && remoteAddress) headers.set("x-real-ip", remoteAddress)
-      if (json !== undefined) headers.set("content-type", "application/json")
-      const abort = new AbortController()
-      const timer = setTimeout(() => abort.abort(), timeoutMs)
-      try {
-        const response = await fetch(new URL(path, apiUrl), {
-          method,
-          headers,
-          body: json === undefined ? undefined : JSON.stringify(json),
-          redirect: "manual",
-          signal: abort.signal,
-        })
+    call(method, path, json) {
+      return send(method, path, json, async (response): Promise<ApiAnswer> => {
         const text = await response.text()
         let body: unknown = null
         try {
@@ -101,14 +138,20 @@ export function createApi(
         return retryAfter === null
           ? { status: response.status, body }
           : { status: response.status, body, retryAfter }
-      } catch (error) {
-        const timedOut = abort.signal.aborted
-        const kind = timedOut ? "timeout" : error instanceof Error ? error.name : "error"
-        log(`API call failed: ${method} ${path.split("?")[0]} (${kind})`)
-        return { status: timedOut ? 504 : 502, body: null }
-      } finally {
-        clearTimeout(timer)
-      }
+      }, (status) => ({ status, body: null }))
+    },
+    file(path) {
+      return send("GET", path, undefined, async (response): Promise<ApiFile> => {
+        const ok = response.status === 200
+        const bytes = ok ? new Uint8Array(await response.arrayBuffer()) : null
+        if (!ok) await response.body?.cancel()
+        return {
+          status: response.status,
+          type: response.headers.get("content-type"),
+          cacheControl: response.headers.get("cache-control"),
+          bytes,
+        }
+      }, (status) => ({ status, type: null, cacheControl: null, bytes: null }))
     },
   }
 }
