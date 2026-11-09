@@ -1126,4 +1126,18 @@ export default {
   "FeaturePageDeploy.backupQuestion": "Gibt es ein Backup?",
   "FeaturePageDeploy.backupAnswer":
     "Ja. Ein optionales tägliches, verschlüsseltes restic-Backup der Datenbank, mit einer schriftlichen Anleitung zur Wiederherstellung.",
+  "Catalog.title": "Katalog",
+  "Catalog.intro": "Alles, was wir verkaufen, mit Preisen, Größen und Farben.",
+  "Catalog.categories": "Kategorien",
+  "Catalog.all": "Alle",
+  "Catalog.empty": "Noch nichts im Angebot",
+  "Catalog.emptyLead": "Neue Artikel erscheinen hier, sobald sie bereit sind.",
+  "Catalog.categoryIntro": "{category}: Preise, Größen und Farben.",
+  "CatalogItem.intro": "{item}: Preis, Größen und Farben.",
+  "CatalogItem.photos": "Fotos",
+  "CatalogItem.material": "Material",
+  "CatalogItem.fit": "Passform",
+  "CatalogItem.care": "Pflege",
+  "CatalogItem.inStock": "{choice}: auf Lager",
+  "CatalogItem.soldOut": "{choice}: ausverkauft",
 } satisfies Catalog

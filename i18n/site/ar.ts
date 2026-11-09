@@ -1083,4 +1083,18 @@ export default {
   "FeaturePageDeploy.backupQuestion": "هل يوجد نسخ احتياطي؟",
   "FeaturePageDeploy.backupAnswer":
     "نعم. نسخة احتياطية يومية مشفّرة لقاعدة البيانات عبر restic عند تفعيلها، مع خطوات استعادة مكتوبة.",
+  "Catalog.title": "الكتالوج",
+  "Catalog.intro": "كل ما نبيعه، مع الأسعار والمقاسات والألوان.",
+  "Catalog.categories": "الفئات",
+  "Catalog.all": "الكل",
+  "Catalog.empty": "لا يوجد شيء للبيع بعد",
+  "Catalog.emptyLead": "ستظهر المنتجات الجديدة هنا فور جاهزيتها.",
+  "Catalog.categoryIntro": "{category}: الأسعار والمقاسات والألوان.",
+  "CatalogItem.intro": "{item}: السعر والمقاسات والألوان.",
+  "CatalogItem.photos": "الصور",
+  "CatalogItem.material": "الخامة",
+  "CatalogItem.fit": "القَصّة",
+  "CatalogItem.care": "العناية",
+  "CatalogItem.inStock": "{choice}: متوفر",
+  "CatalogItem.soldOut": "{choice}: نفد من المخزون",
 } satisfies Catalog

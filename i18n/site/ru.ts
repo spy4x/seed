@@ -1115,4 +1115,18 @@ export default {
   "FeaturePageDeploy.backupQuestion": "Есть ли резервное копирование?",
   "FeaturePageDeploy.backupAnswer":
     "Да. Ежедневная зашифрованная резервная копия базы данных через restic, включается по желанию, с инструкцией по восстановлению.",
+  "Catalog.title": "Каталог",
+  "Catalog.intro": "Всё, что есть в продаже: цены, размеры и цвета.",
+  "Catalog.categories": "Категории",
+  "Catalog.all": "Все",
+  "Catalog.empty": "Пока ничего нет в продаже",
+  "Catalog.emptyLead": "Новые товары появятся здесь, как только будут готовы.",
+  "Catalog.categoryIntro": "{category}: цены, размеры и цвета.",
+  "CatalogItem.intro": "{item}: цена, размеры и цвета.",
+  "CatalogItem.photos": "Фото",
+  "CatalogItem.material": "Материал",
+  "CatalogItem.fit": "Посадка",
+  "CatalogItem.care": "Уход",
+  "CatalogItem.inStock": "{choice}: в наличии",
+  "CatalogItem.soldOut": "{choice}: нет в наличии",
 } satisfies Catalog
