@@ -285,7 +285,11 @@ describe("an item page", () => {
     const text = textOf(content)
     expect(text).toContain(`Brown zip jacket US$19.99`)
     expect(text).toMatch(/Colours Brown Black Sizes S M , sold out/)
-    expect(content).toContain(`style="background-color:#7a5230;"`)
+    expect(content).toContain(`fill="#7a5230"`)
+    expect(content).toContain(`href="?colour=${BROWN}#options"`)
+    expect(content).toContain(`id="options"`)
+    expect(body).toContain(`<title>Brown zip jacket · Seed</title>`)
+    expect(body).toContain(`<meta property="og:title" content="Brown zip jacket · Seed"`)
     expect(text).toContain(`A warm jacket with a zip. Lined.`)
     expect(text).toContain(`Material Wool Care Dry clean only`)
     expect(text).not.toContain(`Fit`)
@@ -390,10 +394,29 @@ describe("an item page", () => {
     expect((await get(`/de/zip-jacket`)).status).toBe(404)
   })
 
+  it("asks the API nothing for an address whose item slug climbs out of the catalog", async () => {
+    const { get, asked } = catalogSite(catalogOn())
+
+    expect((await get(`/jackets/..%2F..%2Fadmin%2Fx`)).status).toBe(404)
+    expect(asked).toEqual([`/api/catalog`])
+  })
+
   it("lives at the address tracking links lead to by default", () => {
     expect(itemPath({ slug: `zip-jacket`, categorySlug: `jackets` })).toBe(
       catalogItemPath(DEFAULT_ITEM_PATH, { itemSlug: `zip-jacket`, categorySlug: `jackets` }),
     )
+  })
+})
+
+describe("the catalog's markup", () => {
+  it("draws every page, colour dots included, without a style attribute, which the site's policy blocks", async () => {
+    const { get } = catalogSite(catalogOn())
+
+    for (const path of [`/catalog`, `/catalog/jackets`, `/jackets/zip-jacket`]) {
+      const content = main((await get(path)).body)
+      expect(content).toContain(`fill="#7a5230"`)
+      expect(content).not.toContain(`style=`)
+    }
   })
 })
 
