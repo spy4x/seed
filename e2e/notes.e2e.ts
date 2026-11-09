@@ -12,6 +12,10 @@ const password = "Passw0rd!"
 
 const VIEWER = 1
 
+// Several tests here sign in two people or check two widths. On a busy dev server they run past
+// the config's 60 s per test, so the file allows two minutes.
+test.describe.configure({ timeout: 120_000 })
+
 /** The WCAG A and AA rules axe-core checks a page against. */
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]
 
@@ -493,21 +497,23 @@ test.describe("the notes list", () => {
     const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
     try {
       await signUp(request, owner)
-      const page = await context.newPage()
-      await signInOnline(page, owner)
-      const { groupId } = await (await page.request.get(`${apiBase}/api/groups/selected`)).json()
+      // The notes exist before the browser first reads the list, so the device's copy holds them
+      // and the page's later loads show them at once, with no wait for a sync to bring them.
+      const { groupId } = await (await request.get(`${apiBase}/api/groups/selected`)).json()
       const titles = [
         "Quarterly planning notes for the team offsite, with every open question in one place",
         "Groceries",
         "Trip",
       ]
       for (const title of titles) {
-        const note = await page.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
+        const note = await request.post(`${apiBase}/api/groups/${groupId}/notes`, {
           headers,
           data: { id: uuidV7(), title, body: "" },
         })
         expect(note.status(), await note.text()).toBe(201)
       }
+      const page = await context.newPage()
+      await signInOnline(page, owner)
 
       const rows = page.locator("[data-e2e=note-list] > li")
       // Tall enough that no row sits under the phone's fixed tab bar: axe-core's target-size

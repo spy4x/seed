@@ -457,7 +457,7 @@ getent hosts app.localhost >/dev/null 2>&1 ||
 mkdir -p "$COPY_DIR"
 cp -r e2e/fixtures "$COPY_DIR/fixtures"
 LAUNCH=""
-[ -n "${E2E_CHROMIUM:-}" ] && LAUNCH="use: { launchOptions: { executablePath: \"$E2E_CHROMIUM\" } },"
+[ -n "${E2E_CHROMIUM:-}" ] && LAUNCH="launchOptions: { executablePath: \"$E2E_CHROMIUM\" },"
 cat >"$COPY_DIR/playwright.config.ts" <<CONFIG
 import { defineConfig, devices } from "@playwright/test"
 import { playwrightBaseConfig } from "@jsr/spy4x__preact-system/playwright"
@@ -467,12 +467,12 @@ export default defineConfig({
     baseURL: "http://app.localhost:$FRONT_PORT",
     ci: !!Deno.env.get("CI"),
     chromium: devices["Desktop Chrome"],
-    $LAUNCH
+    use: { actionTimeout: 30_000, navigationTimeout: 30_000, $LAUNCH },
   }),
   testDir: "$COPY_DIR",
   outputDir: "$COPY_DIR/results",
   // The same limits as the root playwright.config.ts: a loaded machine fails healthy specs at the
-  // base 30 s per test and 5 s per assertion.
+  // base 30 s per test, 5 s per assertion and 10 s per action or navigation (\`use\` above).
   timeout: 60_000,
   expect: { timeout: 10_000 },
 })

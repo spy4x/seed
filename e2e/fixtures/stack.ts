@@ -43,8 +43,8 @@ async function browseApp(context: BrowserContext, email: string, headers: Record
 /**
  * Loads every screen of the signed-in app once, so Vite's dev server has compiled the modules
  * before the first spec needs them. On a cold dev server the first load of a route takes longer
- * than the 10 s navigation timeout when the machine is busy, and whichever spec ran first failed
- * with `page.goto: Timeout 10000ms exceeded`.
+ * than the navigation timeout when the machine is busy, and whichever spec ran first failed with
+ * `page.goto: Timeout 10000ms exceeded`.
  *
  * A busy machine can fail the warm-up itself. A dependency Vite finds only while a page loads
  * makes it bundle its dependencies again, and it answers the modules of the old bundle with
