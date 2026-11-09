@@ -154,7 +154,7 @@ work without JavaScript.
 
 - **The item's address** is `CATALOG_ITEM_PATH`'s default, `/{category}/{slug}`, where tracking
   links lead. Every other page of the website wins over it, so a category whose slug is the name of
-  a page (`blog`, `docs`, `features`, `pricing`, `catalog`, `s`) or a language code (`de`) is never
+  a page (`blog`, `docs`, `features`, `pricing`, `catalog`, `s`, `video`) or a language code (`de`) is never
   reached at that address. Pick category slugs that are none of these.
 - **Colours and sizes** are links (`?colour=<id>&size=<id>`). Once both are picked, the page says
   whether that choice is in stock. The canonical address stays the item's.
@@ -164,8 +164,8 @@ work without JavaScript.
 - **Prices** are formatted for the page's language in the catalog's currency.
 - **Photos** are served from the website's own host, at `/catalog/photos/<id>/<width>.<avif|webp>`,
   read from the API's photo address. An item without a ready photo shows a neutral placeholder.
-- **Structured data.** The catalog and category pages publish an `ItemList` of their items; the
-  category and item pages a `BreadcrumbList`. An item with photos publishes a `Product` with one
+- **Structured data.** The catalog and category pages publish an `ItemList` of their items, and
+  every catalog page a `BreadcrumbList`. An item with photos publishes a `Product` with one
   `Offer`, or a `ProductGroup` with one variant per colour and size, each `InStock` or `OutOfStock`.
   Google's product result needs a photo, so an item without one publishes none.
 - **Sitemap and `llms.txt`.** The sitemap lists the catalog, category and item pages, each item with
