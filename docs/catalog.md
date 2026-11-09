@@ -135,11 +135,45 @@ admin routes.
 | `libs/server/catalog/tracking.ts`         | Tracking links: the settings, Umami, where `/s/<code>` leads.   |
 | `apps/admin/src/modules/catalog/`         | The admin pages.                                                |
 | `apps/mpa/routes/s/[code].ts`             | The website's `/s/<code>` redirect.                             |
+| `apps/mpa/catalog.ts`                     | The website's reads, addresses, texts and sitemap entries.      |
+| `apps/mpa/components/catalog.tsx`         | The tiles, the category links and the price.                    |
+| `apps/mpa/routes/[[lang]]/catalog/`       | The catalog and category pages.                                 |
+| `apps/mpa/routes/[[lang]]/[category]/`    | The item page.                                                  |
+| `apps/mpa/routes/catalog/photos/`         | The photos, served from the website's host.                     |
 
-## Not built yet
+## The website's pages
 
-The website's shop pages need builders that `ts-libs` does not have yet: Product and ItemList
-JSON-LD, images in a sitemap entry, and an IndexNow client. They come first in `ts-libs`, then here.
+While the catalog is on, the website (`apps/mpa`) shows it. The pages are rendered on the server and
+work without JavaScript.
+
+| Address               | What it shows                                                                                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/catalog`            | Every published item as a tile: the cover, the name, the price, the sizes and colours, and "Sold out". Links to each category.                                |
+| `/catalog/<category>` | That category's items. A category with no published item is the 404 page.                                                                                     |
+| `/<category>/<slug>`  | One item: its photos, cover first, the price, the colours and sizes with the sold-out ones marked, the description, material, fit and care, and a breadcrumb. |
+
+- **The item's address** is `CATALOG_ITEM_PATH`'s default, `/{category}/{slug}`, where tracking
+  links lead. Every other page of the website wins over it, so a category whose slug is the name of
+  a page (`blog`, `docs`, `features`, `pricing`, `catalog`, `s`) or a language code (`de`) is never
+  reached at that address. Pick category slugs that are none of these.
+- **Colours and sizes** are links (`?colour=<id>&size=<id>`). Once both are picked, the page says
+  whether that choice is in stock. The canonical address stays the item's.
+- **Languages.** The address without a language prefix always exists; `/de/catalog` and the like
+  exist only for languages both the website and the catalog keep. A text missing in the page's
+  language is shown in the catalog's default language.
+- **Prices** are formatted for the page's language in the catalog's currency.
+- **Photos** are served from the website's own host, at `/catalog/photos/<id>/<width>.<avif|webp>`,
+  read from the API's photo address. An item without a ready photo shows a neutral placeholder.
+- **Structured data.** The catalog and category pages publish an `ItemList` of their items; the
+  category and item pages a `BreadcrumbList`. An item with photos publishes a `Product` with one
+  `Offer`, or a `ProductGroup` with one variant per colour and size, each `InStock` or `OutOfStock`.
+  Google's product result needs a photo, so an item without one publishes none.
+- **Sitemap and `llms.txt`.** The sitemap lists the catalog, category and item pages, each item with
+  its cover as an image entry. `llms.txt` has a Catalog section with the catalog and each category.
+
+While the catalog is off (`/api/catalog` answers 404), every one of these addresses is the 404
+page, and neither the sitemap nor `llms.txt` names the catalog. The website has no menu link to the
+catalog: a product adds its own.
 
 ## Next
 
