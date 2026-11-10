@@ -1,5 +1,6 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
+import { ImportStatus } from "@domain/imports"
 import { type Context, Hono } from "hono"
 import postgres from "postgres"
 import { GroupRole } from "@domain/groups"
@@ -328,6 +329,26 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
     expect([...imported]).toEqual([{
       name: data.groups.find((group) => group.imported)!.name,
       kinds: [`group.imported`],
+    }])
+    // The notes the fake data marks as from a file are one saved import's batch, its file gone.
+    const fromFile = data.groups.flatMap((group) => group.notes.filter((note) => note.fromFile))
+    expect(fromFile.length).toBeGreaterThan(0)
+    const imports = await sql<
+      { status: number; hasFile: boolean; records: number; live: number }[]
+    >`
+      SELECT i.status, i.file IS NOT NULL AS "hasFile", COUNT(r.record_id)::int AS records,
+        COUNT(n.id)::int AS live
+      FROM imports i
+      JOIN import_records r ON r.import_id = i.id
+      LEFT JOIN notes n ON n.id = r.record_id AND n.group_id = i.group_id
+        AND n.created_by_user_id = i.user_id AND n.deleted_at IS NULL
+      GROUP BY i.id
+    `
+    expect([...imports]).toEqual([{
+      status: ImportStatus.COMMITTED,
+      hasFile: false,
+      records: fromFile.length,
+      live: fromFile.length,
     }])
     expect(counts.subscribers).toBe(FAKE_COUNTS.subscribers)
     expect(counts.activeSessions).toBe(
