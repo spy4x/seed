@@ -76,7 +76,7 @@ function siteWith(newsletter: () => boolean, siteConfig: MpaConfig = config) {
     .appWrapper(view(AppWrapper))
     .layout("*", view(Layout))
     .route("/", { component: view(Home) })
-    .route("/features", { component: view(Features) })
+    .route("{/:lang}?/features", { component: view(Features) })
     .get("{/:lang}?/features/:slug", featurePage.GET!)
     .route("/admin", { component: view(Admin) })
     .route("/compare", { component: view(Compare) })
@@ -710,6 +710,23 @@ describe("the public website", () => {
       `Google and GitHub sign-in, passkeys, email sign-in codes, guest accounts, 2FA`,
     )
     expect(html).not.toContain(`issues/222`)
+  })
+
+  it("names the catalog on /features as off until CATALOG=true, linking its guide in the page's language (#899)", async () => {
+    for (
+      const [path, off, guide] of [
+        [`/features`, `Off until you set CATALOG=true`, `/docs/catalog`],
+        [`/de/features`, `Aus, bis du CATALOG=true setzt`, `/de/docs/catalog`],
+      ]
+    ) {
+      const { html } = await page(path)
+      const start = html.indexOf(`id="catalog"`)
+      expect(start, path).toBeGreaterThan(-1)
+      const section = html.slice(start, html.indexOf(`</section>`, start))
+
+      expect(section, path).toContain(off)
+      expect(section, path).toContain(`href="${guide}"`)
+    }
   })
 
   it("lists email sign-in codes as built on the home page, /features and /compare (#391, #752)", async () => {

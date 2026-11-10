@@ -496,6 +496,19 @@ export default {
   "FeatureWorker.fact4":
     "Uma tentativa que falha é repetida com esperas cada vez maiores; os operadores veem cada execução no painel de administração",
   "FeatureWorker.code": "Ler docs/jobs.md",
+  "FeatureCatalog.nav": "Catálogo",
+  "FeatureCatalog.title": "Um catálogo para loja, cardápio ou aluguel",
+  "FeatureCatalog.lead":
+    "Seus operadores cadastram itens com fotos, cores e tamanhos no painel de administração, e o site mostra tudo em páginas que os buscadores entendem, com o que está esgotado marcado.",
+  "FeatureCatalog.fact1":
+    "Desligado até você definir CATALOG=true; a moeda e os idiomas são mais duas configurações",
+  "FeatureCatalog.fact2":
+    "Preços na menor unidade, textos em cada idioma que você mantém, esgotado por cor e tamanho",
+  "FeatureCatalog.fact3":
+    "O worker converte as fotos para AVIF e WebP, e cada mudança no painel de administração fica no registro de auditoria",
+  "FeatureCatalog.fact4":
+    "Um link de rastreamento para cada lugar onde você compartilha um item, contado no Umami: <guide>leia o guia do catálogo</guide>",
+  "FeatureCatalog.code": "Ler o código do catálogo",
   "FeatureYourFeature.nav": "Seus próprios recursos",
   "FeatureYourFeature.title": "Crie um recurso copiando outro",
   "FeatureYourFeature.lead":

@@ -118,6 +118,25 @@ export function AggregateFiles(): JSX.Element {
   )
 }
 
+/** The env file's catalog lines, as `docs/catalog.md` sets them: the switch and two settings. */
+const CATALOG_ENV = [
+  `CATALOG=true`,
+  `CATALOG_CURRENCY=VND`,
+  `CATALOG_LANGUAGES=vi,en`,
+] as const
+
+/** The env file those lines go in, the terminal's title: a path, the same in every language. */
+const CATALOG_ENV_FILE = `infra/envs/.env`
+
+/** The env file that turns the catalog on, as a terminal shows it. */
+export function CatalogEnv(): JSX.Element {
+  return (
+    <WindowFrame variant="terminal" title={CATALOG_ENV_FILE}>
+      <TerminalText>{CATALOG_ENV.join(`\n`)}</TerminalText>
+    </WindowFrame>
+  )
+}
+
 /** What `deno task deploy` prints: its step labels, without the rsync and Compose output between. */
 const DEPLOY_OUTPUT = [
   `$ deno task deploy`,

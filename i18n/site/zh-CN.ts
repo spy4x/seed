@@ -441,6 +441,17 @@ export default {
   "FeatureWorker.fact3": "一个任务就是一个定义：名称、处理函数，如果需要重复执行，再加上调度计划",
   "FeatureWorker.fact4": "失败的尝试会以逐渐延长的间隔重试；运营人员可以在管理后台看到每一次运行",
   "FeatureWorker.code": "阅读 docs/jobs.md",
+  "FeatureCatalog.nav": "商品目录",
+  "FeatureCatalog.title": "适合网店、菜单或租赁的商品目录",
+  "FeatureCatalog.lead":
+    "运营人员在管理后台添加商品，配上照片、颜色和尺码；网站把它们展示在搜索引擎看得懂的页面上，并标出已售罄的款式。",
+  "FeatureCatalog.fact1": "默认关闭，设置 CATALOG=true 即可开启；货币和语言另有两项设置",
+  "FeatureCatalog.fact2":
+    "价格以最小货币单位存储，文案支持你维护的每种语言，售罄按颜色和尺码分别记录",
+  "FeatureCatalog.fact3": "Worker 把照片转成 AVIF 和 WebP，管理后台的每次修改都写入审计日志",
+  "FeatureCatalog.fact4":
+    "在每个分享商品的地方各用一个追踪链接，由 Umami 统计：<guide>阅读商品目录指南</guide>",
+  "FeatureCatalog.code": "阅读商品目录代码",
   "FeatureYourFeature.nav": "你自己的功能",
   "FeatureYourFeature.title": "复制一个功能，就能添加一个新功能",
   "FeatureYourFeature.lead":

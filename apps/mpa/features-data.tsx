@@ -11,7 +11,12 @@
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { appAddress } from "./brand.ts"
 import type { FeatureSectionProps, FeatureTierProps } from "./components/features-section.tsx"
-import { AggregateFiles, DeployVisual, OutboxDiagram } from "./components/features-visuals.tsx"
+import {
+  AggregateFiles,
+  CatalogEnv,
+  DeployVisual,
+  OutboxDiagram,
+} from "./components/features-visuals.tsx"
 import { FeatureLoop } from "./components/feature-loop.tsx"
 import { AdminVideoStill } from "./components/admin-video.tsx"
 import { ADMIN_TOUR_MODULES } from "./admin-modules.ts"
@@ -297,6 +302,26 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
           ],
           code: { label: t.t(`FeatureWorker.code`), href: source(`docs/jobs.md`) },
           visual: <OutboxDiagram />,
+        },
+        {
+          id: `catalog`,
+          nav: t.t(`FeatureCatalog.nav`),
+          title: t.t(`FeatureCatalog.title`),
+          lead: t.t(`FeatureCatalog.lead`),
+          facts: [
+            t.t(`FeatureCatalog.fact1`),
+            t.t(`FeatureCatalog.fact2`),
+            t.t(`FeatureCatalog.fact3`),
+            <span key="guide">
+              {rich(`FeatureCatalog.fact4`, {
+                guide: (text) => (
+                  <a href={href(`/docs/catalog`)} class="text-primary underline">{text}</a>
+                ),
+              })}
+            </span>,
+          ],
+          code: { label: t.t(`FeatureCatalog.code`), href: source(`libs/server/catalog/`) },
+          visual: <CatalogEnv />,
         },
         {
           id: `your-feature`,
