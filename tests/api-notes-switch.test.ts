@@ -2,7 +2,7 @@
 /**
  * `NOTES=false` reaches every part of the API that serves notes (docs/start-a-product.md,
  * "Settings"). `readNotesSetup`, `mountNotesRoutes`, `createNotesOperations`, the admin routes and
- * `changesAggregatesOf` have tests of their own; the files below run against the real environment
+ * `AppDbBase`'s notes option have tests of their own; the files below run against the real environment
  * and database at import, so this reads their source to check each one is handed the switch.
  */
 
@@ -32,10 +32,8 @@ Deno.test("the operations table takes the notes' operations only through their s
   )
 })
 
-Deno.test("the changes pull of the API's database reads through the notes switch", async () => {
-  expect(await read(`apps/api/services/db.ts`)).toContain(
-    `changes: changesAggregatesOf(config.notes)`,
-  )
+Deno.test("the API's database takes the notes switch", async () => {
+  expect(await read(`apps/api/services/db.ts`)).toContain(`notes: config.notes`)
 })
 
 Deno.test("the buses register every note, tag and attachment handler only with the notes on", async () => {

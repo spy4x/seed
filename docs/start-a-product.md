@@ -188,7 +188,8 @@ there.
 merge cleanly. The API then answers 404 to every note, tag and attachment route and to the
 personal-token API (`/api/v1`), which serves notes only, and refuses their operations over the
 socket and `/api/call` as unknown ones. The changes pull, the admin app's group widgets and files
-and the Telegram bot's `/notes` leave them out too. The tables and migrations stay, as the
+and the Telegram bot's `/notes` leave them out too; moving a group's data leaves notes and tags
+where they are, and a new account gets no welcome note. The tables and migrations stay, as the
 catalog's do. Unset or anything but `false` keeps the notes on. The app's screens, the export and
 the demo still show notes for now.
 

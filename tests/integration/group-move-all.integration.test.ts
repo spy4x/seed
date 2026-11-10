@@ -8,7 +8,8 @@ import type { MovableAggregate } from "@server/groups/movable.ts"
 import { noteMovable } from "@server/notes/note-movable.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { TAG_MAX_PER_GROUP } from "@domain/tags"
-import { MOVABLE_AGGREGATES } from "../../apps/api/services/db-base.ts"
+import { AppDbBase, MOVABLE_AGGREGATES } from "../../apps/api/services/db-base.ts"
+import { NOTES_OFF } from "@server/notes/setup.ts"
 import { insertUser, runBlockedOnLock, withSchema } from "./group-team.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
@@ -308,6 +309,26 @@ Deno.test("moving all of a group's data", async (t) => {
         expect((await tagsOf(sql, from)).map((tag) => tag.id)).toEqual([idle])
         expect(await notes.count(from)).toBe(1)
         expect((await notes.list(from, { limit: 10 })).notes.map((note) => note.id)).toEqual(ids)
+      },
+    )
+
+    await t.step(
+      "with the notes off, moving a group's data leaves its notes and tags where they were",
+      async () => {
+        const off = new AppDbBase({ sql, notes: NOTES_OFF }).groupData
+        const { editor, from, to, ids, notes } = await seed(sql, ["a"])
+        const tag = await insertTag(sql, from, "Work", editor)
+        await link(sql, ids[0], tag)
+
+        const refused = await refusal(
+          off.moveAll({ fromGroupId: from, toGroupId: to }, editor, NO_CAP),
+        )
+
+        expect(refused).toMatchObject({ code: "NOTHING_TO_MOVE" })
+        expect((await notes.list(from, { limit: 10 })).notes.map((note) => note.id)).toEqual(ids)
+        expect(await notes.count(to)).toBe(0)
+        expect((await tagsOf(sql, from)).map((row) => row.id)).toEqual([tag])
+        expect(await tagsOf(sql, to)).toEqual([])
       },
     )
 
