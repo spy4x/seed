@@ -757,12 +757,9 @@ export function createOAuthOperations(
           let user: User | undefined
           if (result.outcome === OAuthOutcome.SignedUp) {
             // Asked here, not before, so a confirm that signs an existing user in is never
-            // refused; throwing undoes the auth user and key the package just wrote. Only an
-            // address the provider verified can match an invitation tied to one.
-            await own.assertSignUpAllowed(
-              invitation,
-              result.key.provenAt ? result.key.email : null,
-            )
+            // refused; throwing undoes the auth user and key the package just wrote. The key keeps
+            // only an address the provider verified, so no other can match an invitation.
+            await own.assertSignUpAllowed(invitation, result.key.email)
             user = await tx.user.createForAuthUser(result.user.id, {
               firstName: "",
               lastName: "",
