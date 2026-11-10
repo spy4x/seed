@@ -98,6 +98,11 @@ git rev-parse FETCH_HEAD > .seed/commit
 When the product deletes one of Seed's files, or takes it over completely, the same pull request
 adds its path to `.seed/skip`.
 
+Some files are slots that Seed ships empty for the product to replace, such as the product's own
+kinds of group activity, `libs/domain/groups/product-activity.ts`
+([Connect a feature to the app](aggregate-extras.md#add-a-kind-to-the-activity-log)). Replace the
+file and list it in `.seed/skip` too.
+
 ## Give back to Seed
 
 Code that any product built on Seed would need belongs in Seed. Code that any project could use

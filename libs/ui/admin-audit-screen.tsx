@@ -18,7 +18,7 @@ import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import { BLOG_AUDIT_KINDS, BLOG_SHARING_AUDIT_KINDS } from "@domain/blog"
 import { CONTACT_LINK_AUDIT_KINDS } from "@domain/contact-links"
 import { CATALOG_AUDIT_KINDS } from "@domain/catalog"
-import { ACTIVITY_KINDS } from "@domain/groups"
+import { ACTIVITY_KINDS, PRODUCT_ACTIVITY_KINDS, type ProductActivityKind } from "@domain/groups"
 import {
   accountAuditEvent,
   activityAuditEvent,
@@ -142,12 +142,14 @@ const ACTIVITY_LABELS: Record<string, string> = {
 /**
  * What an entry's event is called, in the operator's language: one whole message per event code.
  * An event this page does not know shows its code. A sign-in or sign-up by e-mail link names the
- * method in the title, from the entry's `identifier`.
+ * method in the title, from the entry's `identifier`. A product's kind (`productKinds`) shows its
+ * `label`.
  */
 export function auditEventLabel(
   t: Translator<string>,
   event: string,
   identifier: string | null = null,
+  productKinds: readonly ProductActivityKind[] = PRODUCT_ACTIVITY_KINDS,
 ): string {
   const parsed = parseAuditEvent(event)
   if (!parsed) return event
@@ -155,7 +157,8 @@ export function auditEventLabel(
     return auditEventTitle(t, parsed.eventType, identifier) ??
       t.t(`AdminAudit.accountEvent`, { code: String(parsed.eventType) })
   }
-  const key = ACTIVITY_LABELS[parsed.kind]
+  const key = ACTIVITY_LABELS[parsed.kind] ??
+    productKinds.find((product) => product.kind === parsed.kind)?.label
   return key ? t.t(key) : parsed.kind
 }
 
@@ -169,8 +172,14 @@ function entryTone(entry: AdminAuditEntry): TimelineTone {
   return entry.byOperator ? "warning" : "neutral"
 }
 
-/** Every event the filter offers: the account events, then group activity, then operator actions. */
-function eventOptions(t: Translator<string>): SelectOption[] {
+/**
+ * Every event the filter offers: the account events, then group activity (Seed's kinds, then the
+ * product's), then operator actions.
+ */
+export function eventOptions(
+  t: Translator<string>,
+  productKinds: readonly ProductActivityKind[] = PRODUCT_ACTIVITY_KINDS,
+): SelectOption[] {
   const label = (key: string, event: string | undefined, code: string) =>
     t.t(key, { event: event ? t.t(event) : code })
   return [
@@ -181,6 +190,10 @@ function eventOptions(t: Translator<string>): SelectOption[] {
     ...ACTIVITY_KINDS.map((kind) => ({
       value: activityAuditEvent(kind),
       label: label(`AdminAudit.optionGroup`, ACTIVITY_LABELS[kind], kind),
+    })),
+    ...productKinds.map(({ kind, label: event }) => ({
+      value: activityAuditEvent(kind),
+      label: label(`AdminAudit.optionGroup`, event, kind),
     })),
     ...ADMIN_OPERATOR_ACTIVITY_KINDS.map((kind) => ({
       value: activityAuditEvent(kind),
