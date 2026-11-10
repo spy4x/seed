@@ -6,6 +6,7 @@ import { NoteListQuery } from "@domain/notes"
 import type { TelegramAccountLabel } from "@server/auth/telegram.ts"
 import { botText, createSeedBot, menuCommands, type TelegramLinkService } from "./bot.ts"
 import { createTelegramProduct } from "./commands.ts"
+import { NOTES_OFF } from "@server/notes/setup.ts"
 import type { TelegramProduct } from "./extension.ts"
 import { callbackUpdate, fakeTelegram, TELEGRAM_USER_ID, textUpdate } from "./fake-telegram.ts"
 
@@ -343,5 +344,15 @@ describe(`the example product command /notes`, () => {
     expect(list).toBeInstanceOf(NoteListQuery)
     expect(list.data.groupId).toBe(groupId)
     expect(list.data.actor.userId).toBe(USER_ID)
+  })
+})
+
+describe(`the example product command /notes with the notes off`, () => {
+  it(`is not offered, so the bot reads no note`, () => {
+    const queryBus = {
+      execute: () => Promise.reject(new Error(`no query may run`)),
+    } as unknown as Parameters<typeof createTelegramProduct>[0]["queryBus"]
+
+    expect(createTelegramProduct({ queryBus, notes: NOTES_OFF }).commands).toEqual([])
   })
 })
