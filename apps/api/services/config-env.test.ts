@@ -108,3 +108,16 @@ Deno.test("the SPA is off only when the environment sets SPA=false", () => {
       .toEqual({ value, on: true })
   }
 })
+
+Deno.test("SIGN_UP=maybe stops the API at start, and the error names SIGN_UP", () => {
+  const env = { ...REQUIRED_ENV, KV_PASSWORD: `a-test-password`, SIGN_UP: `maybe` }
+  expect(() => readApiEnv(createEnvReader(env))).toThrow(`SIGN_UP`)
+})
+
+Deno.test("SIGN_UP takes open and invite, and unset or empty leaves it unset", () => {
+  const env = { ...REQUIRED_ENV, KV_PASSWORD: `a-test-password` }
+  expect(readApiEnv(createEnvReader({ ...env, SIGN_UP: `invite` })).SIGN_UP).toBe(`invite`)
+  expect(readApiEnv(createEnvReader({ ...env, SIGN_UP: `open` })).SIGN_UP).toBe(`open`)
+  expect(readApiEnv(createEnvReader({ ...env, SIGN_UP: `` })).SIGN_UP).toBe(undefined)
+  expect(readApiEnv(createEnvReader(env)).SIGN_UP).toBe(undefined)
+})
