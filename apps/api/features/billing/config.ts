@@ -1,6 +1,14 @@
 import type { BillingHandlerDependencies } from "./handlers.ts"
 import type { BillingSetup } from "@server/billing/setup.ts"
-import { type BillingRepository, effectivePlanId, isSeatBilled, type Plan } from "@domain/billing"
+import {
+  type BillingRepository,
+  effectivePlanId,
+  entitlementsOf,
+  isSeatBilled,
+  type Plan,
+  UNLIMITED,
+} from "@domain/billing"
+import type { InvitationPlan } from "@server/groups/postgres-invitation-repository.ts"
 import { canManageInvitations, type GroupRole } from "@domain/groups"
 
 /** What the API decides a group's plan with: the setup's grace period and the system clock. */
@@ -34,6 +42,24 @@ export function createPlanOf(
 ): (groupId: string) => Promise<string> {
   const { graceDays, now } = planClockOf(setup)
   return async (groupId) => effectivePlanId(await billing.get(groupId), now(), graceDays)
+}
+
+/**
+ * What a group's plan allows an invitation, as the entitlement gate reads it: the member cap and
+ * whether roles other than the default may be given. Everything while billing is off. The accept
+ * route and a sign-up by invitation both read it here.
+ */
+export function createInvitationPlanOf(
+  billing: Pick<BillingRepository, "get">,
+  setup: Pick<BillingSetup, "graceDays" | "provider">,
+): (groupId: string) => Promise<InvitationPlan> {
+  const planOf = createPlanOf(billing, setup)
+  return async (groupId) => {
+    const { limits, features } = setup.provider === null
+      ? UNLIMITED
+      : entitlementsOf(await planOf(groupId), true)
+    return { maxMembers: limits.maxMembers, memberRoles: features.memberRoles }
+  }
 }
 
 /**
