@@ -179,9 +179,18 @@ there.
 | Set    | Analytics ids ([Analytics](analytics.md)) | `MPA_UMAMI_ORIGIN`, `MPA_UMAMI_WEBSITE_ID` in the env file |
 | Set    | Domains and the demo ([demo](demo.md))   | `MPA_DOMAIN`, `DOMAIN`, `DEMO_MODE` in the env file     |
 | Set    | A website with no customers              | `SPA=false` ([Without the SPA](apps.md#without-the-spa)) |
+| Set    | A product without the notes example      | `NOTES=false` (below)                                   |
 | Set    | Where release images go                  | `IMAGE_PREFIX` in `.woodpecker/release.yml`             |
 | Set    | The billing guide link                   | `ADMIN_BILLING_SETUP_URL` in `libs/ui/admin-billing-list.tsx` |
 | Set    | The Stats guide link                     | `ADMIN_STATS_SETUP_URL` in `libs/ui/admin-stats-screen.tsx` |
+
+`NOTES=false` turns the notes example off while its files stay as Seed has them, so later syncs
+merge cleanly. The API then answers 404 to every note, tag and attachment route and to the
+personal-token API (`/api/v1`), which serves notes only, and refuses their operations over the
+socket and `/api/call` as unknown ones. The changes pull, the admin app's group widgets and files
+and the Telegram bot's `/notes` leave them out too. The tables and migrations stay, as the
+catalog's do. Unset or anything but `false` keeps the notes on. The app's screens, the export and
+the demo still show notes for now.
 
 Create the first operator on the server; it needs no mail
 ([The first operator](operator-access.md#the-first-operator)):

@@ -1,4 +1,5 @@
 import type { FileStore, ServerFiles } from "@server/files/files.ts"
+import type { NotesSetup } from "@server/notes/setup.ts"
 import type { CatalogSetup } from "@server/catalog/setup.ts"
 import type { WebsiteStatsContext } from "./stats.ts"
 import type { Hono, MiddlewareHandler } from "hono"
@@ -65,6 +66,8 @@ export interface AdminModuleContext {
   }
   /** Whether the catalog is on (`CATALOG=true`), with its currency and languages. */
   catalog: CatalogSetup
+  /** Whether the notes are on (`readNotesSetup`); left out, they are. */
+  notes?: NotesSetup
   /** The file store's server-side writes, for files that pass through the API. */
   files: Pick<ServerFiles, `put` | `read` | `delete`>
   /** Stats' Umami settings, or which are missing, and the website's item address. */

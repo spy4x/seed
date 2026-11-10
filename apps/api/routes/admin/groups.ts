@@ -32,6 +32,7 @@ import {
   type NoteOverviewRepository,
   parseNoteWidgetRequest,
 } from "@domain/notes"
+import { NOTES_ON, type NotesSetup } from "@server/notes/setup.ts"
 import { entitlementsOf } from "@domain/billing"
 import { createPlanOf } from "../../features/billing/config.ts"
 import { NOTE_WIDGET_READERS, type NoteWidgetRequest } from "../../features/notes/widgets.ts"
@@ -88,6 +89,8 @@ export interface AdminGroupsRouteDependencies {
   /** The normal per-user budget the session routes spend too. */
   limit: MiddlewareHandler<APIContext>
   groups: AdminGroupsService
+  /** The notes' switch; off, the widget and file routes, which read notes, are not mounted. */
+  notes?: NotesSetup
 }
 
 export const ADMIN_GROUP_NOT_FOUND = `Group not found`
@@ -212,7 +215,7 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
 export function createAdminGroupsRoutes(
   dependencies: AdminGroupsRouteDependencies,
 ): Hono<APIContext> {
-  const { groups, limit } = dependencies
+  const { groups, limit, notes = NOTES_ON } = dependencies
 
   /** The answer after an action: the group as it reads now, or the refusal. */
   async function answer(c: Context<APIContext>, groupId: string, outcome: AdminGroupActOutcome) {
@@ -253,17 +256,9 @@ export function createAdminGroupsRoutes(
     return fileBody(file, bytes, disposition, `no-store`)
   }
 
-  return new Hono<APIContext>()
-    .get(`/groups`, limit, async (c) => {
-      return c.json(await groups.list(parseAdminGroupFilter(new URL(c.req.url).searchParams)))
-    })
-    .get(`/groups/:id`, limit, async (c) => {
-      const groupId = c.req.param(`id`)
-      const detail = isUuid(groupId) ? await groups.detail(groupId) : null
-      if (!detail) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
-      return c.json(detail)
-    })
-    .get(`/groups/:id/widgets/:widgetId`, limit, async (c) => {
+  /** The overview widget and file routes, which read notes: mounted only with the notes on. */
+  function mountNoteReads(app: Hono<APIContext>) {
+    app.get(`/groups/:id/widgets/:widgetId`, limit, async (c) => {
       const groupId = c.req.param(`id`)
       if (!isUuid(groupId)) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       let request: NoteWidgetRequest
@@ -284,35 +279,50 @@ export function createAdminGroupsRoutes(
       if (data === null) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       return c.json(data)
     })
-    .get(`/groups/:id/files`, limit, async (c) => {
-      const groupId = c.req.param(`id`)
-      const filter = parseAdminGroupFileFilter(new URL(c.req.url).searchParams)
-      const files = isUuid(groupId) ? await groups.files(groupId, filter) : null
-      if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
-      return c.json(files)
+      .get(`/groups/:id/files`, limit, async (c) => {
+        const groupId = c.req.param(`id`)
+        const filter = parseAdminGroupFileFilter(new URL(c.req.url).searchParams)
+        const files = isUuid(groupId) ? await groups.files(groupId, filter) : null
+        if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
+        return c.json(files)
+      })
+      .get(`/groups/:id/files/:fileId/thumbnail`, limit, (c) => serveFile(c, `thumbnail`))
+      .get(`/groups/:id/files/:fileId/open`, limit, (c) => serveFile(c, `open`))
+      .get(`/groups/:id/files/:fileId/download`, limit, (c) => serveFile(c, `download`))
+      .post(`/groups/:id/files/:fileId/remove`, limit, async (c) => {
+        const groupId = c.req.param(`id`)
+        const fileId = c.req.param(`fileId`)
+        if (!isUuid(groupId) || !isUuid(fileId)) {
+          return errorResponse(c, `not_found`, { message: ADMIN_GROUP_FILE_NOT_FOUND })
+        }
+        const outcome = await groups.removeFile(operatorOf(c), groupId, fileId)
+        if (outcome === AdminGroupActOutcome.NotFound) {
+          return errorResponse(c, `not_found`, { message: ADMIN_GROUP_FILE_NOT_FOUND })
+        }
+        if (outcome !== AdminGroupActOutcome.Done) {
+          const { status, error } = REFUSALS[outcome]
+          return errorResponse(c, codeForStatus(status), { message: error, status })
+        }
+        const filter = parseAdminGroupFileFilter(new URL(c.req.url).searchParams)
+        const files = await groups.files(groupId, filter)
+        if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
+        return c.json(files)
+      })
+  }
+
+  const routes = new Hono<APIContext>()
+    .get(`/groups`, limit, async (c) => {
+      return c.json(await groups.list(parseAdminGroupFilter(new URL(c.req.url).searchParams)))
     })
-    .get(`/groups/:id/files/:fileId/thumbnail`, limit, (c) => serveFile(c, `thumbnail`))
-    .get(`/groups/:id/files/:fileId/open`, limit, (c) => serveFile(c, `open`))
-    .get(`/groups/:id/files/:fileId/download`, limit, (c) => serveFile(c, `download`))
-    .post(`/groups/:id/files/:fileId/remove`, limit, async (c) => {
+    .get(`/groups/:id`, limit, async (c) => {
       const groupId = c.req.param(`id`)
-      const fileId = c.req.param(`fileId`)
-      if (!isUuid(groupId) || !isUuid(fileId)) {
-        return errorResponse(c, `not_found`, { message: ADMIN_GROUP_FILE_NOT_FOUND })
-      }
-      const outcome = await groups.removeFile(operatorOf(c), groupId, fileId)
-      if (outcome === AdminGroupActOutcome.NotFound) {
-        return errorResponse(c, `not_found`, { message: ADMIN_GROUP_FILE_NOT_FOUND })
-      }
-      if (outcome !== AdminGroupActOutcome.Done) {
-        const { status, error } = REFUSALS[outcome]
-        return errorResponse(c, codeForStatus(status), { message: error, status })
-      }
-      const filter = parseAdminGroupFileFilter(new URL(c.req.url).searchParams)
-      const files = await groups.files(groupId, filter)
-      if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
-      return c.json(files)
+      const detail = isUuid(groupId) ? await groups.detail(groupId) : null
+      if (!detail) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
+      return c.json(detail)
     })
+  // The overview's widgets count notes and every file sits on a note: off with the notes.
+  if (notes.on) mountNoteReads(routes)
+  return routes
     .post(`/groups/:id/invitations/:invitationId/revoke`, limit, async (c) => {
       const groupId = c.req.param(`id`)
       const invitationId = c.req.param(`invitationId`)
@@ -429,7 +439,7 @@ export function createAdminGroups(
 /** The groups module: the list, one group and the operator's actions on it. */
 export const groupsAdminModule: AdminApiModule = {
   id: `groups`,
-  routes: ({ db, limit, billing, readFile }) => {
+  routes: ({ db, limit, billing, readFile, notes }) => {
     // Read on the first call: the routes are built before any database is reached.
     const fileCaps: AdminFileCaps = async (groupId) => {
       const plan = await createPlanOf(db.billing, billing)(groupId)
@@ -439,6 +449,7 @@ export const groupsAdminModule: AdminApiModule = {
     return createAdminGroupsRoutes({
       limit,
       groups: createAdminGroups(db, ADMIN_GROUPS_PAGE_SIZE, fileCaps, readFile, ADMIN_WIDGETS),
+      notes,
     })
   },
 }
