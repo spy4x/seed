@@ -17,6 +17,8 @@ export interface State {
   webAppOrigin: string
   /** The origin of the SPA, the product itself, as `MpaConfig.apiOrigin`: links to the app use it. */
   spaOrigin: string
+  /** The origin of a demo on its own host, as `MpaConfig.demoOrigin`: the try links go there. */
+  demoOrigin?: string
   /** Whether the API takes newsletter subscriptions; `false` hides every newsletter form. */
   newsletter: boolean
   /**

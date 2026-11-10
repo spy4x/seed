@@ -16,6 +16,19 @@ server holds real people's data.
 Set `DEMO_MODE=true` in the server's env file (`infra/envs/.env.prod`, which `deno task deploy`
 copies). The worker and the SPA read it (`infra/compose/compose.shared.yml`); the API does not.
 
+## A demo on its own host
+
+A product with real users keeps guests off its production app and runs the demo as a deployment
+of its own, with its own database. The website's try links then go to that demo:
+
+| Deployment | Env file lines                                                                          |
+| ---------- | --------------------------------------------------------------------------------------- |
+| Production | `DEMO_ORIGIN=https://demo.example.com`, `GUEST_MODE=false`, and `DEMO_MODE` left unset |
+| The demo   | `DEMO_MODE=true`, `DOMAIN=demo.example.com`, and its own database                       |
+
+`DEMO_ORIGIN` must be an `https://` origin with no path; anything else stops the website at
+start. Sign-in and sign-up links stay on the production app.
+
 ## What it does
 
 | Part | Where | What |

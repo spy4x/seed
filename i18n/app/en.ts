@@ -2005,4 +2005,13 @@ export default {
   "Search.benchmarkDetail": "Measure how a large group performs on this device",
   "Shortcuts.runBenchmark": "Run the benchmark",
   "Shortcuts.copyResults": "Copy the results",
+  "NoteSpreadsheet.id": "ID",
+  "NoteSpreadsheet.title": "Title",
+  "NoteSpreadsheet.text": "Text",
+  "NoteSpreadsheet.tagIds": "Tag IDs",
+  "NoteSpreadsheet.created": "Created",
+  "NoteSpreadsheet.updated": "Last changed",
+  "GroupSpreadsheets.readme":
+    "This group's data as spreadsheets: one CSV file for each kind of item, UTF-8 with a heading row. Dates and times are ISO 8601, in UTC. To move the group to another app, download the JSON file instead: only that file can be imported.",
+  "GroupSpreadsheets.notSpreadsheets": "Not available as a spreadsheet (the JSON file holds them):",
 } satisfies Catalog

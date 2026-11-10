@@ -33,6 +33,7 @@ import { queryBus } from "@api/services/queryBus.ts"
 import { subscribe } from "@api/services/eventBus.ts"
 import { sql } from "@api/services/db.ts"
 import { log } from "@api/services/log.ts"
+import { config } from "@api/services/config.ts"
 import { createIdempotencyMiddleware, PostgresIdempotencyStore } from "@spy4x/server/idempotency"
 import { entitlementGate } from "@api/cqrs/entitlements.ts"
 import { useCommandMiddleware } from "@api/cqrs/command-middleware.ts"
@@ -287,28 +288,16 @@ commandBus.register(
   GroupInvitationDeclineCommand,
   createInvitationDeclineHandler(invitationDependencies),
 )
-commandBus.register(NoteCreateCommand, noteCreateHandler)
-commandBus.register(NoteUpdateCommand, noteUpdateHandler)
-commandBus.register(NoteDeleteCommand, noteDeleteHandler)
-commandBus.register(NoteRestoreCommand, noteRestoreHandler)
-commandBus.register(NoteMoveCommand, noteMoveHandler)
-commandBus.register(TagCreateCommand, tagCreateHandler)
-commandBus.register(AttachmentSignCommand, createAttachmentSignHandler(attachmentDependencies))
-commandBus.register(
-  AttachmentConfirmCommand,
-  createAttachmentConfirmHandler(attachmentDependencies),
-)
-commandBus.register(AttachmentRemoveCommand, createAttachmentRemoveHandler(attachmentDependencies))
-commandBus.register(AttachmentCancelCommand, createAttachmentCancelHandler(attachmentDependencies))
 commandBus.register(PictureSignCommand, createPictureSignHandler(pictureDependencies))
 commandBus.register(PictureConfirmCommand, createPictureConfirmHandler(pictureDependencies))
 commandBus.register(PictureCancelCommand, createPictureCancelHandler(pictureDependencies))
 commandBus.register(PictureRemoveCommand, createPictureRemoveHandler(pictureDependencies))
-commandBus.register(TagUpdateCommand, tagUpdateHandler)
-commandBus.register(TagDeleteCommand, tagDeleteHandler)
 commandBus.register(ImportCreateCommand, importCreateHandler)
 commandBus.register(ImportCommitCommand, importCommitHandler)
 commandBus.register(ImportUndoCommand, importUndoHandler)
+queryBus.register(ImportGetQuery, importGetHandler)
+queryBus.register(ImportListQuery, importListHandler)
+queryBus.register(ImportCheckQuery, importCheckHandler)
 commandBus.register(BillingCheckoutCommand, billingCheckoutHandler)
 commandBus.register(BillingPortalCommand, billingPortalHandler)
 queryBus.register(UserProfileGetQuery, userProfileGetHandler)
@@ -326,25 +315,51 @@ queryBus.register(GroupActivityQuery, groupActivityHandler)
 queryBus.register(GroupInvitationsQuery, createInvitationListHandler(invitationDependencies))
 queryBus.register(InvitationPreviewQuery, createInvitationPreviewHandler(invitationDependencies))
 queryBus.register(MyInvitationsQuery, createMyInvitationsHandler(invitationDependencies))
-queryBus.register(NoteListQuery, noteListHandler)
-queryBus.register(NoteGetQuery, noteGetHandler)
-queryBus.register(NoteLocateQuery, noteLocateHandler)
-queryBus.register(NoteSearchQuery, noteSearchHandler)
-queryBus.register(NoteTotalWidgetQuery, noteTotalWidgetHandler)
-queryBus.register(NoteAddedWidgetQuery, noteAddedWidgetHandler)
-queryBus.register(NoteSeriesWidgetQuery, noteSeriesWidgetHandler)
-queryBus.register(TagListQuery, tagListHandler)
-queryBus.register(AttachmentListQuery, createAttachmentListHandler(attachmentDependencies))
-queryBus.register(AttachmentDownloadQuery, createAttachmentDownloadHandler(attachmentDependencies))
-queryBus.register(TagGetQuery, tagGetHandler)
-queryBus.register(ImportGetQuery, importGetHandler)
-queryBus.register(ImportListQuery, importListHandler)
-queryBus.register(ImportCheckQuery, importCheckHandler)
 queryBus.register(BillingGetQuery, billingGetHandler)
 queryBus.register(BillingTrialQuery, billingTrialHandler)
 queryBus.register(NotificationListQuery, notificationListHandler)
 queryBus.register(NotificationUnreadCountQuery, notificationUnreadCountHandler)
 commandBus.register(NotificationMarkReadCommand, notificationMarkReadHandler)
 commandBus.register(NotificationMarkAllReadCommand, notificationMarkAllReadHandler)
+
+// The notes example: off with NOTES=false, and then the buses refuse every note, tag, attachment
+// and note-widget command and query as one with no handler.
+if (config.notes.on) {
+  commandBus.register(NoteCreateCommand, noteCreateHandler)
+  commandBus.register(NoteUpdateCommand, noteUpdateHandler)
+  commandBus.register(NoteDeleteCommand, noteDeleteHandler)
+  commandBus.register(NoteRestoreCommand, noteRestoreHandler)
+  commandBus.register(NoteMoveCommand, noteMoveHandler)
+  commandBus.register(TagCreateCommand, tagCreateHandler)
+  commandBus.register(AttachmentSignCommand, createAttachmentSignHandler(attachmentDependencies))
+  commandBus.register(
+    AttachmentConfirmCommand,
+    createAttachmentConfirmHandler(attachmentDependencies),
+  )
+  commandBus.register(
+    AttachmentRemoveCommand,
+    createAttachmentRemoveHandler(attachmentDependencies),
+  )
+  commandBus.register(
+    AttachmentCancelCommand,
+    createAttachmentCancelHandler(attachmentDependencies),
+  )
+  commandBus.register(TagUpdateCommand, tagUpdateHandler)
+  commandBus.register(TagDeleteCommand, tagDeleteHandler)
+  queryBus.register(NoteListQuery, noteListHandler)
+  queryBus.register(NoteGetQuery, noteGetHandler)
+  queryBus.register(NoteLocateQuery, noteLocateHandler)
+  queryBus.register(NoteSearchQuery, noteSearchHandler)
+  queryBus.register(NoteTotalWidgetQuery, noteTotalWidgetHandler)
+  queryBus.register(NoteAddedWidgetQuery, noteAddedWidgetHandler)
+  queryBus.register(NoteSeriesWidgetQuery, noteSeriesWidgetHandler)
+  queryBus.register(TagListQuery, tagListHandler)
+  queryBus.register(AttachmentListQuery, createAttachmentListHandler(attachmentDependencies))
+  queryBus.register(
+    AttachmentDownloadQuery,
+    createAttachmentDownloadHandler(attachmentDependencies),
+  )
+  queryBus.register(TagGetQuery, tagGetHandler)
+}
 
 console.log("✅ CQRS handlers initialized")

@@ -1536,3 +1536,67 @@ describe("the public website", () => {
     expect(html).not.toContain("Umami")
   })
 })
+
+describe("a demo on its own host (DEMO_ORIGIN)", () => {
+  const demo = "https://demo.example.com"
+  const withDemo = siteWith(() => true, { ...config, demoOrigin: demo })
+
+  /** Every link to a `/try`, on any host, of the home page and a feature page that names a screen. */
+  async function tryLinks(app: typeof handler): Promise<string[]> {
+    const hrefs: string[] = []
+    for (const path of ["/", "/features/sign-in"]) {
+      const { html } = await page(path, app)
+      for (const [tag] of html.matchAll(/<a\b[^>]*>/g)) {
+        const href = hrefOf(tag)?.replaceAll("&amp;", "&")
+        if (href && new URL(href, site).pathname === "/try") hrefs.push(href)
+      }
+    }
+    return hrefs
+  }
+
+  it("sends the header's, the hero's, the footer's and the feature page's try links to the demo", async () => {
+    const { html } = await page("/", withDemo)
+    expect(hrefOf(html.match(/<a[^>]*data-e2e="site-try-demo"[^>]*>/)?.[0])).toBe(`${demo}/try`)
+    expect(hrefOf(html.match(/<a[^>]*data-e2e="home-try-demo"[^>]*>/)?.[0])).toBe(`${demo}/try`)
+    const footer = html.slice(html.indexOf("<footer"))
+    expect(hrefOf(linkNamed(footer, "Try the demo"))).toBe(`${demo}/try`)
+
+    const links = await tryLinks(withDemo)
+    expect(links).toContain(`${demo}/try?next=%2Fprofile%2Fsecurity`)
+    for (const href of links) expect(href).toMatch(new RegExp(`^${demo}/try(\\?|$)`))
+  })
+
+  it("keeps sign-in and sign-up on the app, since accounts live there", async () => {
+    const { html } = await page("/", withDemo)
+    expect(html).toContain(`href="${spa}/sign-in"`)
+    expect(html).not.toContain(`href="${demo}/sign-in"`)
+  })
+
+  it("keeps every try link on the app's own /try while DEMO_ORIGIN is empty", async () => {
+    const links = await tryLinks(handler)
+    expect(links).toContain(`${spa}/try`)
+    expect(links).toContain(`${spa}/try?next=%2Fprofile%2Fsecurity`)
+    for (const href of links) expect(href).toMatch(new RegExp(`^${spa}/try(\\?|$)`))
+  })
+
+  it("sends a plan chosen without JavaScript to the demo's /try", async () => {
+    const response = await withDemo(
+      new Request(`${site}/pricing`, {
+        method: "POST",
+        headers: { origin: site, "sec-fetch-site": "same-origin" },
+        body: new URLSearchParams({ planId: PLANS[0].id }),
+      }),
+      info,
+    )
+
+    expect(response.headers.get("location")).toBe(`${demo}/try`)
+  })
+
+  it("tells the analytics script the demo's origin, so a click on a try link counts as try-demo", async () => {
+    const app = siteWith(() => true, { ...config, demoOrigin: demo, analytics: UMAMI })
+    const { html } = await page("/", app)
+    expect(html.match(/<script[^>]*src="\/analytics\.js"[^>]*>/)?.[0]).toContain(
+      `data-demo-origin="${demo}"`,
+    )
+  })
+})

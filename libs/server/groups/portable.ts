@@ -1,5 +1,6 @@
 import type postgres from "postgres"
 import { type } from "arktype"
+import { Zip, ZipDeflate } from "fflate"
 import type { LimitKey } from "@domain/billing"
 import {
   GROUP_EXPORT_FORMAT,
@@ -19,6 +20,13 @@ import {
   parseGroupName,
   parseGroupTimeZone,
 } from "@domain/groups"
+import {
+  CSV_BYTE_ORDER_MARK,
+  type CsvColumn,
+  csvHeaderRow,
+  csvRow,
+} from "@spy4x/platform/universal/csv"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 import { isRecord } from "@spy4x/platform/universal/is-record"
 import { FORM_FIELD } from "@spy4x/validation"
 
@@ -64,6 +72,13 @@ export interface PortableAggregate<E extends PortableEntry = PortableEntry> {
   ): readonly { index: number | null; problem: string; issue?: GroupImportIssue }[]
   /** The group's entities, in pages, for the file. Never a person, a secret or a deleted row. */
   read(sql: postgres.Sql, groupId: string): AsyncIterable<readonly E[]>
+  /**
+   * Its spreadsheet, `<kind>.csv` in the ZIP export; left out, the aggregate is not in the ZIP and
+   * its `README.txt` says so. Each column's `header` is an `app` catalog key, translated into the
+   * person's language, and its `format` turns the entry's field into the cell (a `Date` into its
+   * ISO 8601 text). The writer guards every text cell against spreadsheet formulas.
+   */
+  csv?: { columns: readonly CsvColumn<E>[] }
   /**
    * Writes the entries into the new group under new UUID v7 ids, mapping what they name through
    * `context.newIdOf`, and answers the new id of each by its id in the file.
@@ -350,4 +365,68 @@ export async function* writeGroupFile(
     yield "]"
   }
   yield "}}"
+}
+
+/** What a spreadsheet ZIP writes its headings and its `README.txt` with: the person's words. */
+export type SpreadsheetTranslator = Pick<Translator<string>, "t">
+
+/**
+ * A group's spreadsheets, as the bytes of one ZIP in pieces: a `<kind>.csv` for every registered
+ * aggregate with a `csv` part (UTF-8 with a byte order mark, so spreadsheets read accents, a
+ * heading row in the person's language, CRLF rows), then a `README.txt` that names every aggregate
+ * left out. Rows go into the ZIP page by page as `read` gives them, and the compressed bytes are
+ * handed on after each page, so a large group is never held whole. Nothing is handed on before the
+ * first page is read: a read that fails at once fails the first piece.
+ */
+export async function* writeGroupSpreadsheets(
+  sql: postgres.Sql,
+  groupId: string,
+  aggregates: readonly PortableAggregate[],
+  { t }: SpreadsheetTranslator,
+  now: Date,
+): AsyncGenerator<Uint8Array> {
+  const ready: Uint8Array[] = []
+  let failure: Error | null = null
+  const zip = new Zip((error, chunk) => {
+    if (error) failure = error
+    else ready.push(chunk)
+  })
+  const encoder = new TextEncoder()
+  const file = (name: string) => {
+    const entry = new ZipDeflate(name, { level: 6 })
+    entry.mtime = now
+    zip.add(entry)
+    return {
+      write: (text: string) => entry.push(encoder.encode(text)),
+      end: () => entry.push(new Uint8Array(0), true),
+    }
+  }
+  // The compressed bytes so far; the ZIP writes them synchronously as each push goes in.
+  const take = (): Uint8Array[] => {
+    if (failure) throw failure
+    return ready.splice(0)
+  }
+
+  for (const aggregate of aggregates) {
+    if (!aggregate.csv) continue
+    const columns = aggregate.csv.columns.map((column) => ({ ...column, header: t(column.header) }))
+    const csv = file(`${aggregate.kind}.csv`)
+    csv.write(`${CSV_BYTE_ORDER_MARK}${csvHeaderRow(columns)}\r\n`)
+    for await (const page of aggregate.read(sql, groupId)) {
+      csv.write(page.map((entry) => `${csvRow(columns, entry)}\r\n`).join(""))
+      yield* take()
+    }
+    csv.end()
+  }
+
+  const missing = aggregates.filter((aggregate) => !aggregate.csv).map(({ kind }) => kind)
+  const readme = file("README.txt")
+  readme.write(`${t("GroupSpreadsheets.readme")}\n`)
+  if (missing.length > 0) {
+    readme.write(`\n${t("GroupSpreadsheets.notSpreadsheets")}\n`)
+    readme.write(missing.map((kind) => `- ${kind}\n`).join(""))
+  }
+  readme.end()
+  zip.end()
+  yield* take()
 }

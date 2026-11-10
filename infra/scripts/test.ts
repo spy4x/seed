@@ -78,7 +78,11 @@ export const GROUPS: TestGroup[] = [
   },
   {
     flags: [`--allow-read=apps/api`],
-    paths: [`tests/api-error-shape.test.ts`, `tests/api-spa-switch.test.ts`],
+    paths: [
+      `tests/api-error-shape.test.ts`,
+      `tests/api-spa-switch.test.ts`,
+      `tests/api-notes-switch.test.ts`,
+    ],
   },
   {
     flags: [

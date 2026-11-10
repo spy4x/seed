@@ -1,7 +1,13 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { type } from "arktype"
-import { GroupError, groupExportFileName, parseGroupImportBody, plainEntryProblem } from "./+lib.ts"
+import {
+  GroupError,
+  groupExportFileName,
+  parseGroupExportQuery,
+  parseGroupImportBody,
+  plainEntryProblem,
+} from "./+lib.ts"
 
 describe("groupExportFileName", () => {
   const at = new Date("2026-10-21T23:30:00.000Z")
@@ -13,6 +19,26 @@ describe("groupExportFileName", () => {
 
   it("falls back to group for a name with no letter or digit", () => {
     expect(groupExportFileName("🏡 ✨", at)).toBe("group-2026-10-21.json")
+  })
+
+  it("names the spreadsheets a ZIP, with no quote or line break from the name", () => {
+    expect(groupExportFileName(`Ours"\r\nSet-Cookie: x`, at, "csv"))
+      .toBe("ours-set-cookie-x-2026-10-21.zip")
+  })
+})
+
+describe("parseGroupExportQuery", () => {
+  it("takes json when no format is asked for, and keeps the asked language", () => {
+    expect(parseGroupExportQuery({})).toEqual({ format: "json" })
+    expect(parseGroupExportQuery({ format: "json" })).toEqual({ format: "json" })
+    expect(parseGroupExportQuery({ format: "csv", language: "de" }))
+      .toEqual({ format: "csv", language: "de" })
+  })
+
+  it("refuses a format it does not write, and a language tag too long to be one", () => {
+    for (const query of [{ format: "xlsx" }, { format: "" }, { language: "x".repeat(36) }]) {
+      expect(() => parseGroupExportQuery(query)).toThrow(GroupError)
+    }
   })
 })
 

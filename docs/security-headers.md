@@ -102,6 +102,7 @@ so a refusal, a 404 and a 500 carry them too. A WebSocket upgrade passes through
 | `script-src`, `connect-src`                             | also the Umami origin | With `MPA_UMAMI_ORIGIN` set ([Analytics](analytics.md)). |
 | `form-action`                                           | `'self'`              | Always.                                                  |
 | `form-action`                                           | also the SPA's origin | When `MPA_DOMAIN` differs from `DOMAIN`.                 |
+| `form-action` | also the demo's origin | When `DEMO_ORIGIN` is set ([demo](demo.md#a-demo-on-its-own-host)). |
 | `object-src`                                            | `'none'`              | Always.                                                  |
 | `base-uri`                                              | `'self'`              | Always.                                                  |
 | `frame-ancestors`                                       | `'none'`              | Always.                                                  |
@@ -112,7 +113,7 @@ blog's index included, keeps `img-src 'self' data:`.
 
 No page has an inline script: the script that wakes a page's islands is a file from the site's own
 origin, so `'self'` covers it. The pricing page's form posts to the MPA, which redirects to the
-SPA's sign-up; a browser applies `form-action` to that redirect too.
+app's `/try` (or the demo's, with `DEMO_ORIGIN`); a browser applies `form-action` to that redirect too.
 
 `securityHeadersMiddleware` in `apps/mpa/middleware.ts` sets the headers. It runs before the static
 files, and also answers errors no route caught, which the website's server would otherwise answer

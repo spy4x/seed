@@ -27,6 +27,7 @@ default, never a value to keep for a secret.
 | `MPA_UMAMI_ORIGIN`     | The website's self-hosted Umami. Set both Umami values or neither.                                           | empty              | [Analytics](analytics.md)                      |
 | `MPA_UMAMI_WEBSITE_ID` | The website's id in that Umami. It is public.                                                                | empty              | [Analytics](analytics.md)                      |
 | `INDEXNOW_KEY`         | The website's IndexNow key, 8 to 128 letters, digits and dashes. Public. Empty turns IndexNow off.           | empty              | [Blog](blog.md#indexnow)                       |
+| `DEMO_ORIGIN` | A demo on its own host, an `https://` origin. Every try link goes to its `/try`. Empty keeps them on the app. | empty | [The public demo](demo.md#a-demo-on-its-own-host) |
 | `DEVTO_API_KEY`        | A Dev.to API key, read by the worker. Secret. Set, it copies each live post to Dev.to once. Empty turns it off. | empty              | [Blog](blog.md#the-devto-cross-post)           |
 | `MASTODON_ACCESS_TOKEN` | A Mastodon access token (`write:statuses`), read by the worker. Secret. Empty keeps Mastodon manual. | empty | [Blog](blog.md#automatic-posts) |
 | `MASTODON_INSTANCE_URL` | The `https` address of the token's Mastodon server; the token is sent only there. Empty keeps Mastodon manual. | empty | [Blog](blog.md#automatic-posts) |
@@ -163,6 +164,7 @@ no default, so keep them in the env file.
 | `DEMO_ADMIN_PASSWORD`                    | With `DEMO_MODE=true`, the password of `admin@example.com` after every reset. Unset: no operator. | empty            | [The public demo](demo.md)                |
 | `GUEST_MODE`                             | "Try it now" without signing up. On unless `false`.                                               | empty            | [Guests](guests.md)                       |
 | `SPA`                                    | The signed-in app. On unless `false`, which also closes sign-up.                                  | empty            | [The three apps](apps.md#without-the-spa) |
+| `NOTES`                                  | The notes example: notes, tags, attachments. On unless `false`, which turns their API off.        | empty            | [Start a product](start-a-product.md#settings) |
 | `ATTACHMENT_UPLOAD_FILES_PER_HOUR`       | Files one person may upload per hour. Empty: 50.                                                  | empty            | [Files](files.md)                         |
 | `ATTACHMENT_UPLOAD_BYTES_PER_HOUR`       | Bytes one person may upload per hour. Empty: 52428800 (50 MiB).                                   | empty            | [Files](files.md)                         |
 | `OPERATION_COMMANDS_PER_MINUTE`          | Writes one signed-in person may make per minute. Empty: 120.                                      | empty            | [Architecture](architecture.md)           |

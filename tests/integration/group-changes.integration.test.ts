@@ -15,7 +15,8 @@ import { noteMovable } from "@server/notes/note-movable.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { PostgresTagRepository } from "@server/tags/postgres-tag-repository.ts"
 import { tagMovable } from "@server/tags/tag-movable.ts"
-import { CHANGES_AGGREGATES } from "../../apps/api/services/db-base.ts"
+import { CHANGES_AGGREGATES, changesAggregatesOf } from "../../apps/api/services/db-base.ts"
+import { NOTES_OFF } from "@server/notes/setup.ts"
 import { createSessionGate } from "../../apps/api/cqrs/session-gate.ts"
 import { createGroupChangesHandler } from "../../apps/api/features/groups/handlers.ts"
 import {
@@ -160,6 +161,19 @@ Deno.test("group changes against Postgres", async (t) => {
       const answer = await call(viewer, { groupId, after: cursor })
       expect(JSON.stringify(answer)).not.toContain("Secret plans")
     })
+
+    await t.step(
+      "with the notes off a page holds no note or tag, and no tombstone of one",
+      async () => {
+        const off = changesAggregatesOf(NOTES_OFF)
+        for (const after of [0, cursor]) {
+          const answer = page(await readGroupChanges(sql, off, groupId, after))
+          expect(answer.upserts).toEqual({})
+          expect(answer.tombstones).toEqual([])
+          expect(answer.through).toBe(await current(sql, groupId))
+        }
+      },
+    )
 
     await t.step("the group a note moved into gets it as a row, not a tombstone", async () => {
       const answer = page(await call(owner, { groupId: other, after: 0 }))
