@@ -146,6 +146,14 @@ Without one, the API answers 403 with the reason `SIGN_UP_CLOSED`, and no accoun
 who already have an account sign in as before. Guest accounts are off, as with `GUEST_MODE=false`.
 The operator command and the demo seed still make accounts.
 
+Signing up uses the invitation up, as accepting it does: the new person joins its group, and a
+one-use invitation admits one account only. An invitation that is used up, revoked or expired, or
+whose group is full, makes no account and answers `SIGN_UP_CLOSED`.
+
+Until [#913](https://github.com/spy4x/seed/issues/913) ships, the sign-up screens send no
+invitation. So for now `invite` closes sign-up to everyone; only the operator command line makes
+accounts.
+
 Any value other than `open` or `invite` stops the API at start-up with a message naming `SIGN_UP`.
 
 ## The first deploy
