@@ -372,7 +372,7 @@ function Questions(): JSX.Element {
  * way into the demo. Server-rendered; it needs no JavaScript.
  */
 export default define.page(function Compare({ state }) {
-  const spa = spaLinks(state.spaOrigin)
+  const spa = spaLinks(state)
   const t = siteTranslator(state.language)
   const head: SitePageHead = {
     ...compareHead(t),

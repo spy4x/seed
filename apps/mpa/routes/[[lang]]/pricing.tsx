@@ -76,7 +76,7 @@ function pricingJsonLd(t: Translator<string>, origin: string, language: Language
  */
 export const handler = define.handlers({
   POST(ctx) {
-    return ctx.redirect(spaLinks(ctx.state.spaOrigin).try, 303)
+    return ctx.redirect(spaLinks(ctx.state).try, 303)
   },
 })
 
@@ -86,7 +86,7 @@ export const handler = define.handlers({
  */
 export default define.page(function Pricing({ state }) {
   const { t, language } = useSite()
-  const spa = spaLinks(state.spaOrigin)
+  const spa = spaLinks(state)
   const head: SitePageHead = {
     ...pricingHead(t),
     og: `pricing`,

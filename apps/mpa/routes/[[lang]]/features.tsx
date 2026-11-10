@@ -179,7 +179,7 @@ function RuntimePlan(): JSX.Element {
 export default define.page(function Features({ state }) {
   const site = useSite()
   const { t, href } = site
-  const spa = spaLinks(state.spaOrigin)
+  const spa = spaLinks(state)
   const head: SitePageHead = {
     ...featuresHead(t),
     og: `features`,

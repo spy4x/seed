@@ -1089,6 +1089,8 @@ services:
       - MPA_UMAMI_WEBSITE_ID=${MPA_UMAMI_WEBSITE_ID:-}
       # IndexNow (docs/blog.md): served at /<key>.txt, the same key the worker pings with.
       - INDEXNOW_KEY=${INDEXNOW_KEY:-}
+      # A demo on its own host (docs/demo.md): the try links go to its /try. Empty: the app's.
+      - DEMO_ORIGIN=${DEMO_ORIGIN:-}
       # Not `http://api`: on the shared `proxy` network that name is any project's API.
       - API_URL=http://${PROJECT}-api:${API_PORT}
       - DENO_LOG=${DENO_LOG}
