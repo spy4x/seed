@@ -39,6 +39,7 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [Add file uploads to a feature](file-uploads.md): upload and download files from a feature, and
   have photos made safe and small.
 - [A person's data export](data-export.md): Download my data, what the ZIP holds and how it expires.
+- [Imports](imports.md): bring records into a group from a file, and add a kind of file.
 - [The catalog](catalog.md): a shop's items with photos, colours and sizes, edited in the admin
   panel; off unless a product turns it on.
 - [Website analytics](analytics.md): count the public website's visits and clicks in a
