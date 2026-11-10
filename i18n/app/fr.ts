@@ -2234,4 +2234,13 @@ export default {
   "Search.benchmarkDetail": "Mesurer les performances d’un grand groupe sur cet appareil",
   "Shortcuts.runBenchmark": "Lancer le benchmark",
   "Shortcuts.copyResults": "Copier les résultats",
+  "NoteSpreadsheet.id": "ID",
+  "NoteSpreadsheet.title": "Titre",
+  "NoteSpreadsheet.text": "Texte",
+  "NoteSpreadsheet.tagIds": "ID des étiquettes",
+  "NoteSpreadsheet.created": "Créée le",
+  "NoteSpreadsheet.updated": "Dernière modification",
+  "GroupSpreadsheets.readme":
+    "Les données du groupe sous forme de tableurs : un fichier CSV par type d’élément, en UTF-8 avec une ligne d’en-têtes. Les dates et heures sont au format ISO 8601, en UTC. Pour emporter le groupe dans une autre app, téléchargez plutôt le fichier JSON : c’est le seul qui peut être importé.",
+  "GroupSpreadsheets.notSpreadsheets": "Non disponible en tableur (présent dans le fichier JSON) :",
 } satisfies Catalog

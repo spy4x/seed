@@ -2311,4 +2311,13 @@ export default {
   "Search.benchmarkDetail": "قياس أداء مجموعة كبيرة على هذا الجهاز",
   "Shortcuts.runBenchmark": "تشغيل اختبار الأداء",
   "Shortcuts.copyResults": "نسخ النتائج",
+  "NoteSpreadsheet.id": "المعرّف",
+  "NoteSpreadsheet.title": "العنوان",
+  "NoteSpreadsheet.text": "النص",
+  "NoteSpreadsheet.tagIds": "معرّفات الوسوم",
+  "NoteSpreadsheet.created": "تاريخ الإنشاء",
+  "NoteSpreadsheet.updated": "آخر تعديل",
+  "GroupSpreadsheets.readme":
+    "بيانات المجموعة في جداول بيانات: ملف CSV لكل نوع من العناصر، بترميز UTF-8 مع صف للعناوين. التواريخ والأوقات بتنسيق ISO 8601 وبتوقيت UTC. لنقل المجموعة إلى تطبيق آخر، نزّل ملف JSON بدلًا من ذلك: فهو الملف الوحيد الذي يمكن استيراده.",
+  "GroupSpreadsheets.notSpreadsheets": "غير متاح كجدول بيانات (موجود في ملف JSON):",
 } satisfies Catalog
