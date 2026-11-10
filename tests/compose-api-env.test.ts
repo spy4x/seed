@@ -46,6 +46,20 @@ Deno.test("the worker container receives the billing variables but not the webho
   expect(names).not.toContain("STRIPE_WEBHOOK_SECRET")
 })
 
+// Without it `NOTES=false` in `.env` would leave notes in a data export: the worker builds the file.
+Deno.test("the worker container receives the notes switch", async () => {
+  expect(await environmentOf("worker")).toContain("NOTES")
+})
+
+// The worker builds every job's dependencies once, so the switch must reach its outbox processor.
+Deno.test("the worker hands the notes switch from its environment to its jobs", async () => {
+  const worker = await Deno.readTextFile(new URL("../apps/worker/+main.ts", import.meta.url))
+  const processor = worker.slice(worker.indexOf(`createOutboxProcessor(`))
+  expect(processor.slice(0, processor.indexOf(`\n)\n`))).toMatch(
+    /^\s+readNotesSetup\(processEnv\),$/m,
+  )
+})
+
 // Without the secret in its container, a worker that asked for webhooks would refuse to start.
 Deno.test("the worker reads the billing setup without webhooks", async () => {
   const worker = await Deno.readTextFile(new URL("../apps/worker/+main.ts", import.meta.url))

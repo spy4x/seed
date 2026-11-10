@@ -14,6 +14,7 @@
 
 import type postgres from "postgres"
 import { TELEGRAM_METHOD } from "@domain/identity"
+import type { NotesSetup } from "../notes/setup.ts"
 
 /** One kind of row in the export. */
 export interface DataExportSection {
@@ -285,3 +286,13 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
       ORDER BY requested_at`,
   },
 ]
+
+/** The sections the notes example adds: none of them is in the file with the notes off. */
+const NOTES_SECTIONS = [`notes`, `note_attachments`, `tags`]
+
+/** The sections the export holds: with the notes off (`NOTES=false`), no note, attachment or tag. */
+export function dataExportSectionsOf(notes: NotesSetup): readonly DataExportSection[] {
+  return notes.on
+    ? DATA_EXPORT_SECTIONS
+    : DATA_EXPORT_SECTIONS.filter((section) => !NOTES_SECTIONS.includes(section.name))
+}

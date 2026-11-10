@@ -21,6 +21,8 @@ import {
   dataExportExpireJob,
 } from "@server/jobs/data-export.ts"
 import { DATA_EXPORT_SECTIONS } from "@server/jobs/data-export-sections.ts"
+import { type JobDeps, JOBS } from "@server/jobs/registry.ts"
+import { NOTES_OFF, NOTES_ON, type NotesSetup } from "@server/notes/setup.ts"
 import { team, withSchema } from "./group-team.ts"
 
 /**
@@ -368,5 +370,70 @@ Deno.test("data export: a person downloads only their own file", async () => {
     expect(await readyDataExportFile(sql, viewer)).toBeNull()
     expect(await latestDataExport(sql, viewer)).toBeNull()
     expect((await readyDataExportFile(sql, editor))!.key).toBe(dataExportKey(output.id))
+  })
+})
+
+/** The worker's build job as the registry wires it, run with the notes switch `notes`. */
+async function exportThroughRegistry(sql: postgres.Sql, userId: number, notes: NotesSetup) {
+  const { output } = await requestDataExport(sql, userId)
+  const { files, stored } = memoryFiles()
+  const job = JOBS.find((definition) => definition.kind === DATA_EXPORT_BUILD_JOB)!
+  await job.handler({ sql, files, notes } as unknown as JobDeps)(
+    { aggregateId: output.id } as Parameters<ReturnType<typeof dataExportBuildJob>>[0],
+  )
+  return unzip(stored.get(dataExportKey(output.id))!)
+}
+
+/** A note, a tag on it and a file attached to it, all the person's own. */
+async function notesOf(sql: postgres.Sql, groupId: string, userId: number) {
+  const noted = await note(sql, groupId, userId, `My own note`)
+  const tag = uuidV7()
+  await sql`
+    INSERT INTO tags (id, group_id, name, change_sequence, created_by_user_id)
+    VALUES (${tag}, ${groupId}, 'My own tag', 1, ${userId})
+  `
+  await sql`INSERT INTO note_tags (note_id, tag_id) VALUES (${noted}, ${tag})`
+  const attachment = uuidV7()
+  await sql`
+    INSERT INTO note_attachments (
+      id, note_id, object_key, name, content_type, size_bytes, created_by_user_id
+    ) VALUES (${attachment}, ${noted}, ${`attachments/${attachment}`}, 'my-scan.pdf',
+      'application/pdf', 700, ${userId})
+  `
+}
+
+Deno.test("data export: with the notes off, the build job writes no note, tag or attachment", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    await notesOf(sql, groupId, editor)
+
+    const files = await exportThroughRegistry(sql, editor, NOTES_OFF)
+
+    const left = [`notes`, `note_attachments`, `tags`]
+    const kept = DATA_EXPORT_SECTIONS.filter((section) => !left.includes(section.name))
+    expect(Object.keys(files).sort()).toEqual(
+      [`README.txt`, `data.json`, ...kept.map((section) => `${section.name}.csv`)].sort(),
+    )
+    expect(Object.keys(JSON.parse(files[`data.json`]).sections)).toEqual(
+      kept.map((section) => section.name),
+    )
+    const text = Object.values(files).join(`\n`)
+    for (const word of [`My own note`, `My own tag`, `my-scan.pdf`, `Notes and tags`]) {
+      expect(text, word).not.toContain(word)
+    }
+  })
+})
+
+Deno.test("data export: with the notes on, the build job writes the person's notes, tags and attachments", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    await notesOf(sql, groupId, editor)
+
+    const files = await exportThroughRegistry(sql, editor, NOTES_ON)
+
+    const text = Object.values(files).join(`\n`)
+    for (const word of [`My own note`, `My own tag`, `my-scan.pdf`, `Notes and tags`]) {
+      expect(text, word).toContain(word)
+    }
   })
 })
