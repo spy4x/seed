@@ -325,7 +325,7 @@ function renderOff(
   path: string,
   head: (t: Translator<string>) => SitePageHead,
 ): Response | Promise<Response> {
-  const spa = spaLinks(ctx.state.spaOrigin)
+  const spa = spaLinks(ctx.state)
   const { t } = speech(ctx)
   return ctx.render(
     <SiteLanguage language={ctx.state.language}>
