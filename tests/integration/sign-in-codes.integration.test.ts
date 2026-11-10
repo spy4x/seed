@@ -172,6 +172,7 @@ async function withFixture(
       sessionMinutes: 60,
       totpIssuer: "example.test",
       signUp,
+      invitationPlan: () => Promise.resolve({ maxMembers: null, memberRoles: true }),
     })
     const mutationGuards = createMutationGuards(WEB_APP_URL)
     const app = new Hono<APIContext>().basePath("/api")
@@ -873,6 +874,43 @@ function askSignUp(browser: Browser, email: string, invitation?: string) {
   return browser.call("POST", "/auth/password/sign-up", { email, password: PASSWORD, invitation })
 }
 
+/** How often the one invitation was used, and how many people its group has, its owner included. */
+async function invitationUse(sql: postgres.Sql): Promise<{ uses: number; members: number }> {
+  const [row] = await sql`
+    SELECT group_invitations.uses, count(group_members.user_id)::int AS members
+    FROM group_invitations INNER JOIN group_members USING (group_id)
+    GROUP BY group_invitations.id`
+  return { uses: row.uses, members: row.members }
+}
+
+Deno.test("with SIGN_UP=invite a one-use link admits one password sign-up, who joins its group, and refuses the next", async () => {
+  await withFixture(async (fixture) => {
+    const invitation = await invitationFor(fixture, null)
+    const users = await fixture.count("users")
+    // Both ask before either finishes, so only the use counted at completion tells them apart.
+    const ada = fixture.browser()
+    const eve = fixture.browser()
+    expect((await askSignUp(ada, "ada@example.com", invitation)).status).toBe(200)
+    expect((await askSignUp(eve, "eve@example.com", invitation)).status).toBe(200)
+    const adaCode = await fixture.mailedCode("ada@example.com")
+    const eveCode = await fixture.mailedCode("eve@example.com")
+
+    const first = await ada.call("POST", "/auth/password/sign-up/verify", {
+      code: adaCode,
+      invitation,
+    })
+    const second = await eve.call("POST", "/auth/password/sign-up/verify", {
+      code: eveCode,
+      invitation,
+    })
+
+    expect(first.status).toBe(200)
+    expect(second).toMatchObject(closed)
+    expect(await fixture.count("users")).toBe(users + 1)
+    expect(await invitationUse(fixture.sql)).toEqual({ uses: 1, members: 2 })
+  }, "invite")
+})
+
 Deno.test("with SIGN_UP=invite a password sign-up without an invitation gets SIGN_UP_CLOSED and writes nothing", async () => {
   await withFixture(async (fixture) => {
     const asked = await askSignUp(fixture.browser(), "eve@example.com")
@@ -978,6 +1016,29 @@ Deno.test("with SIGN_UP=invite a sign-in code with an invitation for the address
 
     expect(verified).toMatchObject({ status: 200, body: { created: true } })
     expect(await fixture.count("users")).toBe(users + 1)
+  }, "invite")
+})
+
+Deno.test("with SIGN_UP=invite a one-use link admits one account by sign-in code, who joins its group, and refuses the next", async () => {
+  await withFixture(async (fixture) => {
+    const invitation = await invitationFor(fixture, null)
+    const users = await fixture.count("users")
+    const ada = fixture.browser()
+    const eve = fixture.browser()
+
+    const first = await ada.call("POST", "/auth/code/verify", {
+      code: await fixture.codeFor(ada, "ada@example.com"),
+      invitation,
+    })
+    const second = await eve.call("POST", "/auth/code/verify", {
+      code: await fixture.codeFor(eve, "eve@example.com"),
+      invitation,
+    })
+
+    expect(first).toMatchObject({ status: 200, body: { created: true } })
+    expect(second).toMatchObject(closed)
+    expect(await fixture.count("users")).toBe(users + 1)
+    expect(await invitationUse(fixture.sql)).toEqual({ uses: 1, members: 2 })
   }, "invite")
 })
 

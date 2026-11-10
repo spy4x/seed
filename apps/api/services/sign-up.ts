@@ -26,6 +26,7 @@ import {
 } from "@server/auth/sign-up-requests.ts"
 import type { AppAuthState, SignedIn } from "./sign-in.ts"
 import type { SignInParts } from "./sign-in-parts.ts"
+import { SignUpClosedError } from "./sign-up-gate.ts"
 
 /** What {@link SignUpOperations.completeSignUp} did with a code. */
 export enum SignUpOutcome {
@@ -113,9 +114,9 @@ export interface SignUpOperations {
    * Checks `code` for the waiting sign-up. The right one creates the account, as `signUp` does but
    * with its address proven, and signs it in; or, when an account already uses the address, it
    * creates nothing and says how that account signs in. Either way the waiting sign-up is gone.
-   * Where sign-up is by invitation, `invitation` is asked again before the account is made, since
-   * it may have stopped working meanwhile: without one that admits the address the sign-up ends
-   * and this throws `SignUpClosedError`.
+   * Where sign-up is by invitation, the new account accepts `invitation` in the transaction that
+   * makes it, which uses it up and joins its group; when it no longer admits the address (used up
+   * or revoked meanwhile), nothing is made, the sign-up ends and this throws `SignUpClosedError`.
    *
    * @param firstGroupId The id of the person's first group. Defaults to a random UUID.
    */
@@ -139,6 +140,7 @@ export function createSignUpOperations(own: SignInParts): SignUpOperations {
     guests,
     createProfile,
     assertSignUpAllowed,
+    joinInvitedGroup,
     deviceOf,
   } = own
   /**
@@ -365,12 +367,6 @@ export function createSignUpOperations(own: SignInParts): SignUpOperations {
       }
       if (request.guestUserId) return await keepGuestByAddress(c, request, now)
       if (await accountUsing(db.authStore, request.email)) return await existing()
-      try {
-        await assertSignUpAllowed(invitation, request.email)
-      } catch (error) {
-        await endSignUp(c, request.id)
-        throw error
-      }
 
       let created
       try {
@@ -391,11 +387,14 @@ export function createSignUpOperations(own: SignInParts): SignUpOperations {
             secondFactor: SecondFactorStatus.NotRequired,
           }, deviceOf(c))
           const user = await createProfile(c, tx, signedUp.user.id, request.email, firstGroupId)
+          await joinInvitedGroup(tx, invitation, user.id)
           await tx.signUpRequest.remove(request.id)
           return { user, ...started }
         })
       } catch (error) {
         if (error instanceof AuthConflictError) return await existing()
+        // The invitation stopped working while the code was in the mail: the sign-up is over.
+        if (error instanceof SignUpClosedError) await endSignUp(c, request.id)
         throw error
       }
       deleteCookie(c, PASSWORD_SIGN_UP_COOKIE, signUpCookieOptions)

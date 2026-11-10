@@ -56,7 +56,13 @@ import {
   type PasswordSignInOptions,
 } from "@spy4x/server/auth/password"
 import { requestInfoFromContext } from "@spy4x/platform/request-info"
-import { signUpAllowed, SignUpClosedError, type SignUpMode } from "./sign-up-gate.ts"
+import {
+  joinInvitedGroup,
+  signUpAllowed,
+  SignUpClosedError,
+  type SignUpMode,
+} from "./sign-up-gate.ts"
+import type { InvitationPlan } from "@server/groups/postgres-invitation-repository.ts"
 import { ipHint } from "@spy4x/net/ip"
 import { deviceName } from "@spy4x/net/user-agent"
 import { GroupError } from "@domain/groups"
@@ -128,6 +134,11 @@ export interface SignInOptions {
    * the demo seed build their sign-in so, and never meet the gate.
    */
   signUp?: SignUpMode
+  /**
+   * What the plan of an invitation's group allows (its member cap and roles), read as the accept
+   * route reads it. Required with `signUp: invite`, whose sign-up accepts the invitation.
+   */
+  invitationPlan?: (groupId: string) => Promise<InvitationPlan>
 }
 
 /** The sign-in operations the routes call. */
@@ -243,6 +254,10 @@ export function createSignIn(options: SignInOptions): SignIn {
     if (!(await signUpAllowed(signUpMode, db.invitations, invitation, email))) {
       throw new SignUpClosedError()
     }
+  }
+  const { invitationPlan } = options
+  if (signUpMode === `invite` && !invitationPlan) {
+    throw new Error(`SIGN_UP=invite needs invitationPlan, to accept an invitation at sign-up`)
   }
   const sessionsOver = (store: SessionStore<AuthSessionRecord>, minutes = options.sessionMinutes) =>
     new SessionManager<AuthSessionRecord>({
@@ -479,7 +494,8 @@ export function createSignIn(options: SignInOptions): SignIn {
     ),
     waitingForCode,
     isRefusal: (error) => error instanceof MissingProfileError,
-    assertSignUpAllowed,
+    joinInvitedGroup: (tx, invitation, userId) =>
+      joinInvitedGroup(signUpMode, tx.invitations, invitationPlan!, invitation, userId),
   })
 
   const passkeys = createPasskeyOperations(options.passkeys, {
@@ -563,6 +579,8 @@ export function createSignIn(options: SignInOptions): SignIn {
     oauth,
     createProfile,
     assertSignUpAllowed,
+    joinInvitedGroup: (tx, invitation, userId) =>
+      joinInvitedGroup(signUpMode, tx.invitations, invitationPlan!, invitation, userId),
     replaceSession,
     auditRow,
     deviceOf,

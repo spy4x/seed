@@ -122,7 +122,7 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
     restoreIfWaiting,
     guests,
     createProfile,
-    assertSignUpAllowed,
+    joinInvitedGroup,
     replaceSession,
     auditRow,
     deviceOf,
@@ -169,8 +169,8 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
    * - **A password key that claims the address without having proven it** is left alone: the code
    *   proves the mailbox, not that account, whose password may be someone else's.
    * - **Nobody** has the address: a new account is made with a code key that carries it, proven;
-   *   a guest keeps theirs with that key instead. A new account needs `invitation` where sign-up
-   *   is by invitation (`assertSignUpAllowed`).
+   *   a guest keeps theirs with that key instead. Where sign-up is by invitation, the new account
+   *   accepts `invitation` in the same transaction (`joinInvitedGroup`).
    *
    * When someone proves the address between the read and the write, the write fails and this runs
    * once more, then finds that owner.
@@ -218,7 +218,6 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
             next,
           }
         }
-        await assertSignUpAllowed(invitation, email)
         const created = await db.begin(async (tx) => {
           const signedUp = await tx.authStore.createUserWithKey(codeKey)
           const started = await sessionsOver(tx.sessionStore).create({
@@ -233,6 +232,7 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
             SIGN_IN_LINK_METHOD,
             firstGroupId,
           )
+          await joinInvitedGroup(tx, invitation, user.id)
           return { user, ...started }
         })
         await replaceSession(c, state, created)

@@ -246,8 +246,12 @@ export interface OAuthInternals {
   waitingForCode(userId: number): Promise<User | null>
   /** Whether `error` means "this user may not sign in" rather than a fault. */
   isRefusal(error: unknown): boolean
-  /** Throws `SignUpClosedError` unless a new account for `email` may be made (`sign-up-gate.ts`). */
-  assertSignUpAllowed(invitation: string | null | undefined, email: string | null): Promise<void>
+  /** Accepts `invitation` for the new account inside `tx`, or throws `SignUpClosedError`. */
+  joinInvitedGroup(
+    tx: AppDbBase,
+    invitation: string | null | undefined,
+    userId: number,
+  ): Promise<void>
   /** A guest's provider link keeps the account, or, when that provider account is taken, offers to switch. */
   guests?: GuestKeeper
 }
@@ -756,10 +760,6 @@ export function createOAuthOperations(
           }).confirmSignUp(waiting.token, own.deviceOf(c))
           let user: User | undefined
           if (result.outcome === OAuthOutcome.SignedUp) {
-            // Asked here, not before, so a confirm that signs an existing user in is never
-            // refused; throwing undoes the auth user and key the package just wrote. The key keeps
-            // only an address the provider verified, so no other can match an invitation.
-            await own.assertSignUpAllowed(invitation, result.key.email)
             user = await tx.user.createForAuthUser(result.user.id, {
               firstName: "",
               lastName: "",
@@ -768,6 +768,10 @@ export function createOAuthOperations(
               lastLoginAt: new Date(),
             })
             await tx.group.createFirst({ id: firstGroupId, name: "Personal" }, user.id)
+            // Here, not before, so a confirm that signs an existing user in is never refused;
+            // throwing undoes the auth user and key the package just wrote. The key keeps only an
+            // address the provider verified, so no other can match an address-bound invitation.
+            await own.joinInvitedGroup(tx, invitation, user.id)
             await tx.starterData.queue(user.id)
             await tx.authAudit.insert(
               own.auditRow(

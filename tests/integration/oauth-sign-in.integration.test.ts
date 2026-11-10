@@ -170,6 +170,7 @@ function buildApp(
     sessionMinutes: 60,
     totpIssuer: "example.test",
     signUp,
+    invitationPlan: () => Promise.resolve({ maxMembers: null, memberRoles: true }),
     oauth: {
       providers: enabledOAuthProviders(Object.fromEntries(on.map((id) => [id, credentials]))),
       origin: ORIGIN,
@@ -1922,5 +1923,30 @@ Deno.test("with SIGN_UP=invite an address invitation admits no provider address 
 
     expect(await refusal(confirmed)).toEqual({ status: 403, reason: SIGN_UP_CLOSED })
     expect(await accounts(sql)).toEqual({ authUsers: 1, profiles: 1 })
+  })
+})
+
+Deno.test("with SIGN_UP=invite a one-use link admits one provider sign-up, who joins its group, and refuses the next", async () => {
+  await withSchema(async (sql) => {
+    const eve: ProviderPerson = { sub: "1002", email: "eve@example.com", verified: true }
+    const app = buildApp(sql, { ada: ADA, eve }, undefined, undefined, "invite")
+    const owner = await provenPasswordAccount(app, browser(app), "owner@example.com")
+    const invitation = await invitationFor(sql, owner, null)
+    const ada = browser(app)
+    const other = browser(app)
+    expect(target(await ada.through("google", "ada"))).toBe("/sign-up/confirm")
+    expect(target(await other.through("google", "eve"))).toBe("/sign-up/confirm")
+
+    const first = await ada.post("/auth/sign-up/confirm", { invitation })
+    const second = await other.post("/auth/sign-up/confirm", { invitation })
+
+    expect(first.status).toBe(201)
+    expect(await refusal(second)).toEqual({ status: 403, reason: SIGN_UP_CLOSED })
+    expect(await accounts(sql)).toEqual({ authUsers: 2, profiles: 2 })
+    const [use] = await sql`
+      SELECT group_invitations.uses, count(group_members.user_id)::int AS members
+      FROM group_invitations INNER JOIN group_members USING (group_id)
+      GROUP BY group_invitations.id`
+    expect({ uses: use.uses, members: use.members }).toEqual({ uses: 1, members: 2 })
   })
 })
