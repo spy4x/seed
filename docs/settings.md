@@ -27,6 +27,7 @@ default, never a value to keep for a secret.
 | `MPA_UMAMI_ORIGIN`     | The website's self-hosted Umami. Set both Umami values or neither.                                           | empty              | [Analytics](analytics.md)                      |
 | `MPA_UMAMI_WEBSITE_ID` | The website's id in that Umami. It is public.                                                                | empty              | [Analytics](analytics.md)                      |
 | `INDEXNOW_KEY`         | The website's IndexNow key, 8 to 128 letters, digits and dashes. Public. Empty turns IndexNow off.           | empty              | [Blog](blog.md#indexnow)                       |
+| `DEMO_ORIGIN` | A demo on its own host, an `https://` origin. Every try link goes to its `/try`. Empty keeps them on the app. | empty | [The public demo](demo.md#a-demo-on-its-own-host) |
 | `DEVTO_API_KEY`        | A Dev.to API key, read by the worker. Secret. Set, it copies each live post to Dev.to once. Empty turns it off. | empty              | [Blog](blog.md#the-devto-cross-post)           |
 | `MASTODON_ACCESS_TOKEN` | A Mastodon access token (`write:statuses`), read by the worker. Secret. Empty keeps Mastodon manual. | empty | [Blog](blog.md#automatic-posts) |
 | `MASTODON_INSTANCE_URL` | The `https` address of the token's Mastodon server; the token is sent only there. Empty keeps Mastodon manual. | empty | [Blog](blog.md#automatic-posts) |
