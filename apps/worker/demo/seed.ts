@@ -13,6 +13,7 @@ import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { AppDbBase } from "../../api/services/db-base.ts"
 import type { ServerFiles } from "@server/files/files.ts"
 import { attachmentObjectKey } from "@domain/notes"
+import { ImportStatus } from "@domain/imports"
 import { sampleFile } from "./sample-files.ts"
 import { createSignIn } from "../../api/services/sign-in.ts"
 import {
@@ -232,6 +233,35 @@ export async function createAdmin(
  * The content of the group `you` own is written by its made-up members, never by `you`: the
  * "Get started" checklist counts the notes and invitations a person made.
  */
+/**
+ * One saved notes import, as the flow leaves it (docs/imports.md): its file gone, its batch the
+ * notes it made, read and saved a minute after the upload.
+ */
+async function seedImport(
+  sql: postgres.Sql,
+  groupId: string,
+  userId: number,
+  noteIds: readonly string[],
+  savedAt: Date,
+): Promise<void> {
+  const id = uuidV7()
+  const uploadedAt = new Date(savedAt.getTime() - 60_000)
+  await sql`
+    INSERT INTO imports (
+      id, group_id, user_id, kind, status, file_name, file_size, columns, sample, mapping,
+      row_count, saved_count, error_count, created_at, read_at, commit_requested_at, committed_at
+    ) VALUES (
+      ${id}, ${groupId}, ${userId}, 'notes', ${ImportStatus.COMMITTED}, 'notes.csv',
+      ${noteIds.length * 120}, ${sql.json([`title`, `body`])}, ${sql.json([])},
+      ${sql.json({ title: 0, body: 1 })}, ${noteIds.length}, ${noteIds.length}, 0,
+      ${uploadedAt}, ${uploadedAt}, ${savedAt}, ${savedAt}
+    )
+  `
+  await sql`
+    INSERT INTO import_records ${sql(noteIds.map((recordId) => ({ importId: id, recordId })))}
+  `
+}
+
 async function seedGroups(
   db: AppDbBase,
   sql: postgres.Sql,
@@ -315,8 +345,10 @@ async function seedGroups(
       await dateAudit(sql, id, when)
       tagIds.set(tag.name, id)
     }
+    const fromFile: string[] = []
     for (const note of content.notes) {
       const id = uuidV7()
+      if (note.fromFile) fromFile.push(id)
       const when = at(note.createdAgo)
       const author = writer(note.author)
       await db.note.create(
@@ -360,6 +392,10 @@ async function seedGroups(
         await sql`UPDATE note_attachments SET created_at = ${when} WHERE id = ${fileId}`
       }
       await dateAudit(sql, id, when)
+    }
+    const imported = content.notes.find((note) => note.fromFile)
+    if (imported) {
+      await seedImport(sql, groupId, writer(imported.author), fromFile, at(imported.createdAgo))
     }
     for (const invitation of content.invitations) {
       const made = await invitations.create(
