@@ -1103,7 +1103,28 @@ export default {
     "Partagez le lien propre à chaque endroit, pour voir lequel amène des visiteurs.",
   "AdminCatalogItem.linksOpenLater": "Les liens fonctionnent dès que le produit est sur le site.",
   "AdminCatalogItem.addSource": "Ajouter une source",
-  "AdminCatalogItem.noLinkYet": "Pas encore de lien · utm_source={source}",
+  "AdminCatalogItem.noLinkYet": "Pas encore de lien",
+  "AdminCatalogItem.statsSummary": "30 derniers jours : {views} · {clicks}",
+  "AdminCatalogItem.views": {
+    "one": "{count} vue",
+    "many": "{count} vues",
+    "other": "{count} vues",
+  },
+  "AdminCatalogItem.visits": {
+    "one": "{count} visite",
+    "many": "{count} visites",
+    "other": "{count} visites",
+  },
+  "AdminCatalogItem.orderClicks": {
+    "one": "{count} clic de commande",
+    "many": "{count} clics de commande",
+    "other": "{count} clics de commande",
+  },
+  "AdminCatalogItem.noVisitsYet": "Pas encore de visites",
+  "AdminCatalogItem.statsLoading": "Chargement des statistiques de ce produit…",
+  "AdminCatalogItem.statsOff": "Activez les statistiques pour voir les visites de chaque lien.",
+  "AdminCatalogItem.statsFailed": "Chiffres indisponibles pour le moment.",
+  "AdminCatalogItem.seeInStats": "Voir dans Stats",
   "AdminCatalogItem.copyLinkFor": "Copier le lien pour {name}",
   "AdminCatalogItem.copying": "Copie…",
   "AdminCatalogItem.copyLink": "Copier le lien",
@@ -1194,7 +1215,7 @@ export default {
     "L’endroit où vous partagez, comme le groupe Zalo A. Seuls les opérateurs le voient.",
   "AdminCatalogSource.slug": "Étiquette de source",
   "AdminCatalogSource.slugHint":
-    "Umami y range les visites sous utm_source : minuscules, chiffres et tirets. Elle suit le nom tant que vous ne la modifiez pas.",
+    "Les statistiques s’en servent pour distinguer vos sources : minuscules, chiffres et tirets. Elle suit le nom tant que vous ne la modifiez pas.",
   "AdminCatalogSource.linksNote": {
     "one": "Son lien reste le même ; la nouvelle étiquette compte dès la prochaine visite.",
     "many":

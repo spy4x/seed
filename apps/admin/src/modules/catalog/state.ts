@@ -18,6 +18,7 @@ import {
   parseCatalogCategoryFields,
   parseCatalogSourceFields,
 } from "@domain/catalog"
+import type { WebsiteItemStatsResponse } from "@domain/identity"
 import type { CatalogSourceDraft } from "@ui/admin-catalog-sources.tsx"
 import {
   ADMIN_CATALOG_NO_FILTER,
@@ -59,6 +60,8 @@ export interface CatalogItemEditorState {
   links: Record<string, string>
   /** The source whose link is being made and copied. */
   copying: string | null
+  /** The item's numbers for its share links, `loading` until {@link readItemStats} has them. */
+  stats: WebsiteItemStatsResponse | `loading`
 }
 
 export interface CatalogCategoryEditorState {
@@ -136,6 +139,7 @@ export function createCatalogState(
       photos: NO_PHOTO_WORK,
       links: {},
       copying: null,
+      stats: `loading`,
     }
   }
 
@@ -203,6 +207,18 @@ export function createCatalogState(
           (result.data.links ?? []).map((link) => [link.sourceId, link.url]),
         ),
       })
+    },
+
+    /**
+     * Reads the open item's share-link numbers from Stats. It runs on its own after the item is
+     * read, so the editor never waits for Umami; when our API fails, the card says the numbers are
+     * unavailable rather than showing zeros.
+     */
+    async readItemStats(id: string): Promise<void> {
+      const result = await request<WebsiteItemStatsResponse>(
+        `/api/admin/website-stats/items/${id}`,
+      )
+      patchItem(id, { stats: result.ok ? result.data : { state: `failed` } })
     },
 
     /**

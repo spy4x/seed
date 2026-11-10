@@ -962,7 +962,22 @@ export default {
   "AdminCatalogItem.sourcesText": "在每个渠道分享它的专属链接，就能看出哪个渠道带来了访客。",
   "AdminCatalogItem.linksOpenLater": "商品上架后，这些链接才能打开。",
   "AdminCatalogItem.addSource": "添加来源",
-  "AdminCatalogItem.noLinkYet": "尚无链接 · utm_source={source}",
+  "AdminCatalogItem.noLinkYet": "尚无链接",
+  "AdminCatalogItem.statsSummary": "最近 30 天：{views} · {clicks}",
+  "AdminCatalogItem.views": {
+    "other": "{count} 次浏览",
+  },
+  "AdminCatalogItem.visits": {
+    "other": "{count} 次访问",
+  },
+  "AdminCatalogItem.orderClicks": {
+    "other": "{count} 次下单点击",
+  },
+  "AdminCatalogItem.noVisitsYet": "暂无访问",
+  "AdminCatalogItem.statsLoading": "正在加载该商品的统计…",
+  "AdminCatalogItem.statsOff": "开启统计后，即可查看每个链接的访问量。",
+  "AdminCatalogItem.statsFailed": "暂时无法显示数据。",
+  "AdminCatalogItem.seeInStats": "在统计中查看",
   "AdminCatalogItem.copyLinkFor": "复制{name}的链接",
   "AdminCatalogItem.copying": "正在复制…",
   "AdminCatalogItem.copyLink": "复制链接",
@@ -1047,7 +1062,7 @@ export default {
   "AdminCatalogSource.nameHint": "你分享的地方，比如“Zalo 群 A”。只有运营人员能看到。",
   "AdminCatalogSource.slug": "来源标识",
   "AdminCatalogSource.slugHint":
-    "Umami 会以 utm_source 的形式按它统计访问：小写字母、数字和连字符。在你手动修改之前，它会跟随名称自动更新。",
+    "统计用它区分你的来源：小写字母、数字和连字符。在你手动修改之前，它会跟随名称自动更新。",
   "AdminCatalogSource.linksNote": {
     "other": "它的 {count} 条链接保持不变；新标识从下一次访问开始统计。",
   },
