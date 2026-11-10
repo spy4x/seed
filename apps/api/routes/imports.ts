@@ -1,7 +1,7 @@
 import { Hono } from "hono"
 import type { Context, MiddlewareHandler } from "hono"
 import { isUuid } from "@spy4x/platform/universal/uuid"
-import { PayloadTooLargeError, readBoundedBody, readContentLength } from "@spy4x/net/bounded-body"
+import { PayloadTooLargeError, readBoundedBody } from "@spy4x/net/bounded-body"
 import { createSameOriginMutationGuard } from "@spy4x/server/http/same-origin"
 import type { Actor } from "@domain/identity"
 import {
@@ -129,7 +129,6 @@ async function readFile(c: Context<APIContext>): Promise<Uint8Array> {
       "FILE_TOO_LARGE",
       `The file is larger than ${IMPORT_FILE_MAX_BYTES / 1024 / 1024} MiB`,
     )
-  if ((readContentLength(c.req.raw.headers) ?? 0) > IMPORT_FILE_MAX_BYTES) throw tooLarge()
   try {
     return await readBoundedBody(c.req.raw, { maxBytes: IMPORT_FILE_MAX_BYTES })
   } catch (error) {
