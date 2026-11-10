@@ -21,6 +21,7 @@ import type { CatalogErrorCode } from "@domain/catalog"
 import type { ContactLinkErrorCode } from "@domain/contact-links"
 import type { GroupErrorCode, InvitationErrorCode } from "@domain/groups"
 import type { AccessErrorCode, GUEST_REFUSAL_CODE, PictureErrorCode } from "@domain/identity"
+import type { ImportErrorCode } from "@domain/imports"
 import type { AttachmentErrorCode, NoteErrorCode } from "@domain/notes"
 import type { NotificationErrorCode } from "@domain/notifications"
 import type { SubscriberTokenRefusal } from "@domain/subscribers"
@@ -74,6 +75,7 @@ export type ErrorReason =
   | ContactLinkErrorCode
   | GroupErrorCode
   | InvitationErrorCode
+  | ImportErrorCode
   | AttachmentErrorCode
   | NoteErrorCode
   | NotificationErrorCode

@@ -1,7 +1,7 @@
 import postgres from "postgres"
 import { createSqlFromEnv, type Sql } from "@spy4x/server/db"
 import { publicAPICache } from "./cache.ts"
-import { AppDbBase, changesAggregatesOf } from "./db-base.ts"
+import { AppDbBase } from "./db-base.ts"
 import { config } from "./config.ts"
 import { listenPostgresEnv, postgresEnv } from "./db-direct.ts"
 // import { getLatestMetrics } from "../routes/metric.ts"
@@ -46,7 +46,7 @@ export const listenSql: Sql = (() => {
 
 export class DbService extends AppDbBase {
   constructor() {
-    super({ sql, userCache: publicAPICache.user, changes: changesAggregatesOf(config.notes) })
+    super({ sql, userCache: publicAPICache.user, notes: config.notes })
   }
 }
 

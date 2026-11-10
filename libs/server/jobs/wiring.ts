@@ -76,6 +76,7 @@ export function createOutboxProcessor(
   shareResults: JobDeps["shareResults"] = null,
   autoPost: JobDeps["autoPost"] = undefined,
   catalogPages: JobDeps["catalogPages"] = undefined,
+  notes: JobDeps["notes"] = undefined,
 ): OutboxProcessor {
   const notifier = new GroupChangeNotifier(sql)
   const deps: JobDeps = {
@@ -94,6 +95,7 @@ export function createOutboxProcessor(
     shareResults,
     autoPost,
     catalogPages,
+    notes,
     fetch: fetcher,
   }
   const kinds = jobs.map((job) => job.kind)

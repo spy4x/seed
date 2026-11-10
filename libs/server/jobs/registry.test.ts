@@ -32,6 +32,7 @@ import { SIGN_IN_CODE_MAIL_JOB } from "./sign-in-code-mail.ts"
 import { STARTER_DATA_JOB } from "./starter-data.ts"
 import { IMAGE_PROCESS_JOB, IMAGE_WIDTHS_JOB } from "../files/images.ts"
 import { TELEGRAM_NOTIFICATION_JOB } from "./telegram-notification.ts"
+import { IMPORT_COMMIT_JOB, IMPORT_READ_JOB } from "../imports/postgres-import-repository.ts"
 import {
   SUBSCRIBER_CONFIRM_MAIL_JOB,
   SUBSCRIBER_SEND_ISSUE_JOB,
@@ -70,6 +71,8 @@ const QUEUED_KINDS = [
   BLOG_CROSSPOST_JOB,
   BLOG_SHARE_RESULTS_JOB,
   ...Object.values(BLOG_POST_JOBS),
+  IMPORT_READ_JOB,
+  IMPORT_COMMIT_JOB,
 ]
 
 const noop = () => async () => {}

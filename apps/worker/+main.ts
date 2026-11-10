@@ -12,6 +12,7 @@ import { readCatalogSetup } from "@server/catalog/setup.ts"
 import { readCatalogItemPath } from "@server/catalog/tracking.ts"
 import { readCrosspostSetup } from "@server/blog/blog-crosspost-job.ts"
 import { readShareResultsSetup } from "@server/blog/blog-share-results-job.ts"
+import { readNotesSetup } from "@server/notes/setup.ts"
 import type { AutoPostSetup } from "@server/blog/auto-post.ts"
 import { telegramPoster } from "@server/blog/blog-post-telegram-job.ts"
 import { readMastodonPoster } from "@server/blog/blog-post-mastodon-job.ts"
@@ -222,6 +223,8 @@ const processor = createOutboxProcessor(
   shareResults,
   autoPost,
   catalogPages,
+  // The API reads the same switch: with the notes off, no import job creates a note.
+  readNotesSetup(processEnv),
 )
 
 // Starts the nightly chain the first time; a restart finds the waiting row and adds nothing. A run

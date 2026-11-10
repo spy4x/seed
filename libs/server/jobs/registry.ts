@@ -71,6 +71,10 @@ import {
 import { SIGN_IN_METHOD_MAIL_JOB, signInMethodMailJob } from "./sign-in-method-mail.ts"
 import { SIGN_UP_CODE_MAIL_JOB, signUpCodeMailJob } from "./sign-up-code-mail.ts"
 import { SIGN_IN_CODE_MAIL_JOB, signInCodeMailJob } from "./sign-in-code-mail.ts"
+import { importKinds } from "../imports/registry.ts"
+import { NOTES_ON, type NotesSetup } from "../notes/setup.ts"
+import { importCommitJob, importReadJob } from "../imports/import-jobs.ts"
+import { IMPORT_COMMIT_JOB, IMPORT_READ_JOB } from "../imports/postgres-import-repository.ts"
 import { STARTER_DATA_JOB, starterDataJob, type StarterDataPlan } from "./starter-data.ts"
 import {
   TELEGRAM_NOTIFICATION_JOB,
@@ -121,6 +125,8 @@ export interface JobDeps {
   fetch: typeof fetch
   /** The plan catalog the billing jobs read, `PLANS` unless a test passes its own. */
   plans?: readonly Plan[]
+  /** Whether the notes are on (`readNotesSetup`), which decides the import kinds; left out, on. */
+  notes?: NotesSetup
 }
 
 /**
@@ -449,6 +455,25 @@ export const JOBS: readonly JobDefinition[] = [
     repeat: { cron: `17 * * * *` },
     handler: ({ sql, mail, shareResults }) =>
       blogShareResultsJob({ sql, setup: shareResults, log: mail.log }),
+  }),
+  // Both run only on an import in the step they finish, so a rerun changes nothing.
+  defineJob({
+    kind: IMPORT_READ_JOB,
+    label: `Read an imported file`,
+    about: { userIn: `imports` },
+    handler: ({ sql, notes = NOTES_ON }) => importReadJob(sql, importKinds(notes)),
+  }),
+  defineJob({
+    kind: IMPORT_COMMIT_JOB,
+    label: `Save an import`,
+    about: { userIn: `imports` },
+    handler: ({ sql, provider, graceDays, plans, notes = NOTES_ON }) =>
+      importCommitJob(sql, {
+        kinds: importKinds(notes),
+        billingEnabled: provider !== null,
+        graceDays,
+        plans,
+      }),
   }),
 ]
 

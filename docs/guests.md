@@ -52,7 +52,7 @@ These actions answer 403 with the code `GUEST_NEEDS_SIGN_IN_METHOD`:
 - inviting people to a group;
 - adding a push device;
 - making API tokens, and so using the MCP server;
-- importing a group;
+- importing a group, or uploading a file to import records into one;
 - checkout (paying for a plan);
 - linking Telegram.
 
