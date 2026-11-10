@@ -89,7 +89,11 @@ a hidden or draft item, or of a deleted source, answers 404.
 
 Set `UMAMI_API_URL` and `UMAMI_API_TOKEN` together or not at all. The admin app's Stats page reads
 each source's visits and order clicks back from Umami
-([analytics.md](analytics.md#stats-in-the-admin-app)).
+([analytics.md](analytics.md#stats-in-the-admin-app)). With Stats on, the item's **Share links**
+card shows the last 30 days too: the item's views and order clicks in its header, with a **See in
+Stats** button, and each source's visits and order clicks on the item's page under its link. The
+numbers load after the item, and the links and **Copy link** work while they load, while Stats is
+off and while Umami does not answer.
 
 ### Order buttons
 

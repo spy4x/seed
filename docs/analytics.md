@@ -124,6 +124,11 @@ browser. The page also names a refused token and an unknown website id.
 - **A source's order clicks** count only the clicks on the page its share link opened, because
   Umami ties an event to the address it happened on. A visitor who came from a share link and
   ordered from another page counts as "No source" there. The page says so.
+- **On an item's page**: the catalog item's **Share links** card reads the last 30 days from
+  `GET /api/admin/website-stats/items/:id`: the item's views, the order clicks on its page, and per
+  source the visits to its page through that source's links and the order clicks during them. A
+  source Umami has no numbers for reads "No visits yet". The card names no `utm_source`; the
+  source's name says which place it is.
 - **Freshness**: the API keeps each answer for 5 minutes, one copy for every operator, and shows the
   last one with a warning while Umami does not answer. "Refresh numbers" reads past it.
 
