@@ -189,8 +189,9 @@ merge cleanly. The API then answers 404 to every note, tag and attachment route 
 personal-token API (`/api/v1`), which serves notes only, and refuses their operations over the
 socket and `/api/call` as unknown ones. The changes pull, the admin app's group widgets and files
 and the Telegram bot's `/notes` leave them out too. The tables and migrations stay, as the
-catalog's do. Unset or anything but `false` keeps the notes on. The app's screens, the export and
-the demo still show notes for now.
+catalog's do. A person's data export, a group's export file and spreadsheets leave them out, and
+a group import skips them (the worker reads `NOTES` too, for the data export). Unset or anything
+but `false` keeps the notes on. The app's screens and the demo still show notes for now.
 
 Create the first operator on the server; it needs no mail
 ([The first operator](operator-access.md#the-first-operator)):

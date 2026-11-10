@@ -112,7 +112,9 @@ ones without. Nothing imports it; it is for a person to open.
 2. **Server.** Write a `PortableAggregate` (`libs/server/groups/portable.ts`) beside the
    repository, as `libs/server/notes/note-portable.ts` does. Its parts are in the table below.
 3. Add it to `PORTABLE_AGGREGATES` in `apps/api/services/db-base.ts`. The order is the order of
-   the writes, so tags come before the notes that point at them.
+   the writes, so tags come before the notes that point at them. With the notes off
+   (`NOTES=false`), `portableAggregatesOf` leaves notes and tags out: an export holds neither, and
+   an import skips their parts of a file without a word, so its check lists neither.
 4. A change an older file cannot satisfy raises `GROUP_EXPORT_VERSION`
    (`libs/domain/groups/export-import.ts`) and still reads the older version.
 5. Add it to `tests/integration/group-files.integration.test.ts`: a round trip gives the same
