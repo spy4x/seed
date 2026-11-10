@@ -125,7 +125,7 @@ describe("uploading a file", () => {
     expect(writes).toEqual([`create notes.csv ${FILE.byteLength}`])
   })
 
-  it("refuses a body declared larger than the cap with 413, before reading it", async () => {
+  it("refuses a body declared larger than the cap with 413", async () => {
     const { hono, writes } = app()
     const response = await hono.request(`${base}?kind=notes&name=notes.csv`, {
       method: `POST`,
