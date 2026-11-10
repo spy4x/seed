@@ -1097,7 +1097,28 @@ export default {
   "AdminCatalogItem.linksOpenLater":
     "Los enlaces funcionarán cuando el artículo esté en el sitio web.",
   "AdminCatalogItem.addSource": "Añadir una fuente",
-  "AdminCatalogItem.noLinkYet": "Aún sin enlace · utm_source={source}",
+  "AdminCatalogItem.noLinkYet": "Aún sin enlace",
+  "AdminCatalogItem.statsSummary": "Últimos 30 días: {views} · {clicks}",
+  "AdminCatalogItem.views": {
+    "one": "{count} vista",
+    "many": "{count} vistas",
+    "other": "{count} vistas",
+  },
+  "AdminCatalogItem.visits": {
+    "one": "{count} visita",
+    "many": "{count} visitas",
+    "other": "{count} visitas",
+  },
+  "AdminCatalogItem.orderClicks": {
+    "one": "{count} clic para pedir",
+    "many": "{count} clics para pedir",
+    "other": "{count} clics para pedir",
+  },
+  "AdminCatalogItem.noVisitsYet": "Aún sin visitas",
+  "AdminCatalogItem.statsLoading": "Cargando las estadísticas de este artículo…",
+  "AdminCatalogItem.statsOff": "Activa las estadísticas para ver las visitas de cada enlace.",
+  "AdminCatalogItem.statsFailed": "Las cifras no están disponibles ahora mismo.",
+  "AdminCatalogItem.seeInStats": "Ver en Estadísticas",
   "AdminCatalogItem.copyLinkFor": "Copiar el enlace de {name}",
   "AdminCatalogItem.copying": "Copiando…",
   "AdminCatalogItem.copyLink": "Copiar enlace",
@@ -1188,7 +1209,7 @@ export default {
     "Dónde compartes, por ejemplo «Grupo A de Zalo». Solo lo ven los operadores.",
   "AdminCatalogSource.slug": "Etiqueta de la fuente",
   "AdminCatalogSource.slugHint":
-    "Umami agrupa las visitas con ella como utm_source: minúsculas, números y guiones. Sigue al nombre hasta que la cambies.",
+    "Con ella, Estadísticas distingue tus fuentes: minúsculas, números y guiones. Sigue al nombre hasta que la cambies.",
   "AdminCatalogSource.linksNote": {
     "one": "Su enlace no cambia; la nueva etiqueta cuenta desde la próxima visita.",
     "many": "Sus {count} enlaces no cambian; la nueva etiqueta cuenta desde la próxima visita.",

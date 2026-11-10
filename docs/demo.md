@@ -51,7 +51,8 @@ or backup for it, so the admin panel shows the demo as it is. Unset, the demo ha
 
 Its Stats page says "Stats are off" and names `UMAMI_API_URL` and `UMAMI_API_TOKEN`: the demo's
 server sets only the website's tracker (`MPA_UMAMI_ORIGIN`, `MPA_UMAMI_WEBSITE_ID`), and the demo
-has no fake Umami to read ([analytics.md](analytics.md#stats-in-the-admin-app)). Stats adds no
+has no fake Umami to read ([analytics.md](analytics.md#stats-in-the-admin-app)). For the same
+reason, an item's "Share links" card says "Turn on stats to see visits per link." Stats adds no
 table, so the wipe and the seed are unchanged.
 
 In development, `deno task db:seed` adds `admin@example.com`, an administrator, so the admin app

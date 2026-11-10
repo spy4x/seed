@@ -93,6 +93,11 @@ function ItemView(
     return () => clearTimeout(timer)
   }, [editor.item])
   const catalog = state.catalog.value
+  const tracking = catalog?.tracking === true
+  // The share links' numbers come after the item, so the editor never waits for them.
+  useEffect(() => {
+    if (tracking && editor.item) void state.readItemStats(editor.item.id)
+  }, [editor.item?.id, tracking])
   return (
     <>
       <AdminCatalogItemScreen
@@ -125,6 +130,7 @@ function ItemView(
             links: editor.links,
             copying: editor.copying,
             onCopy: (sourceId) => void state.copyLink(sourceId),
+            stats: editor.stats,
           }
           : undefined}
         navigate={context.navigate}

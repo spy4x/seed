@@ -69,6 +69,8 @@ import {
   CatalogStatusBadge,
   CatalogThumbnail,
 } from "./admin-catalog.tsx"
+import type { WebsiteItemStatsResponse } from "@domain/identity"
+import { ADMIN_STATS_PATH } from "./admin-stats-screen.tsx"
 import { ListEmpty, MENU_TRIGGER_CLASSES } from "./notes-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useAdminText } from "./i18n.ts"
@@ -271,6 +273,11 @@ export interface CatalogShareLinksState {
   copying: string | null
   /** Makes the source's link when it has none, then copies it. */
   onCopy: (sourceId: string) => void
+  /**
+   * The item's numbers over the last 30 days, `loading` until they come. Left out, the card
+   * shows no numbers. The links work in every state.
+   */
+  stats?: WebsiteItemStatsResponse | `loading`
 }
 
 const BACK_HREF = ADMIN_CATALOG_PATHS.list
@@ -640,6 +647,26 @@ function ShareLinks(
       />
       <CardBody>
         <Stack>
+          {state.stats !== undefined && (
+            <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+              <p
+                class="text-sm text-muted"
+                role="status"
+                data-e2e="catalog-item-stats"
+              >
+                {statsSummary(state.stats, t)}
+              </p>
+              <Button
+                href={ADMIN_STATS_PATH}
+                navigate={navigate}
+                variant="ghost"
+                class="ms-auto min-h-11 sm:min-h-9"
+                data-e2e="catalog-item-see-stats"
+              >
+                {t.t(`AdminCatalogItem.seeInStats`)}
+              </Button>
+            </div>
+          )}
           <p class="text-sm text-muted">
             {state.sources.length === 0
               ? t.t(`AdminCatalogItem.sourcesEmpty`)
@@ -668,6 +695,10 @@ function ShareLinks(
                 {state.sources.map((source) => {
                   const link = state.links[source.id]
                   const copying = state.copying === source.id
+                  const numbers = typeof state.stats === `object` && state.stats.state === `ready`
+                    ? state.stats.sources.find(({ slug }) => slug === source.slug) ??
+                      { visits: 0, orderClicks: 0 }
+                    : null
                   return (
                     <li
                       key={source.id}
@@ -682,8 +713,17 @@ function ShareLinks(
                           }`}
                           data-e2e="catalog-item-link-url"
                         >
-                          {link ?? t.t(`AdminCatalogItem.noLinkYet`, { source: source.slug })}
+                          {link ?? t.t(`AdminCatalogItem.noLinkYet`)}
                         </span>
+                        {numbers && (
+                          <span class="text-sm text-muted" data-e2e="catalog-item-link-stats">
+                            {numbers.visits === 0 && numbers.orderClicks === 0
+                              ? t.t(`AdminCatalogItem.noVisitsYet`)
+                              : `${t.t(`AdminCatalogItem.visits`, { count: numbers.visits })} · ${
+                                t.t(`AdminCatalogItem.orderClicks`, { count: numbers.orderClicks })
+                              }`}
+                          </span>
+                        )}
                       </div>
                       <Button
                         type="button"
@@ -708,6 +748,20 @@ function ShareLinks(
       </CardBody>
     </Card>
   )
+}
+
+/** The "Share links" card's summary line for the item's numbers, in every state. */
+function statsSummary(
+  stats: WebsiteItemStatsResponse | `loading`,
+  t: ReturnType<typeof useAdminText>,
+): string {
+  if (stats === `loading`) return t.t(`AdminCatalogItem.statsLoading`)
+  if (stats.state === `off`) return t.t(`AdminCatalogItem.statsOff`)
+  if (stats.state === `failed`) return t.t(`AdminCatalogItem.statsFailed`)
+  return t.t(`AdminCatalogItem.statsSummary`, {
+    views: t.t(`AdminCatalogItem.views`, { count: stats.views }),
+    clicks: t.t(`AdminCatalogItem.orderClicks`, { count: stats.orderClicks }),
+  })
 }
 
 /** The optional texts after the name, each with its label's key in the `admin` catalog. */

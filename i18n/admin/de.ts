@@ -1080,7 +1080,25 @@ export default {
   "AdminCatalogItem.linksOpenLater":
     "Die Links funktionieren, sobald der Artikel auf der Website ist.",
   "AdminCatalogItem.addSource": "Quelle hinzufügen",
-  "AdminCatalogItem.noLinkYet": "Noch kein Link · utm_source={source}",
+  "AdminCatalogItem.noLinkYet": "Noch kein Link",
+  "AdminCatalogItem.statsSummary": "Letzte 30 Tage: {views} · {clicks}",
+  "AdminCatalogItem.views": {
+    "one": "{count} Aufruf",
+    "other": "{count} Aufrufe",
+  },
+  "AdminCatalogItem.visits": {
+    "one": "{count} Besuch",
+    "other": "{count} Besuche",
+  },
+  "AdminCatalogItem.orderClicks": {
+    "one": "{count} Bestellklick",
+    "other": "{count} Bestellklicks",
+  },
+  "AdminCatalogItem.noVisitsYet": "Noch keine Besuche",
+  "AdminCatalogItem.statsLoading": "Statistik des Artikels wird geladen…",
+  "AdminCatalogItem.statsOff": "Schalte die Statistik ein, um die Besuche pro Link zu sehen.",
+  "AdminCatalogItem.statsFailed": "Die Zahlen sind gerade nicht verfügbar.",
+  "AdminCatalogItem.seeInStats": "In der Statistik ansehen",
   "AdminCatalogItem.copyLinkFor": "Link für {name} kopieren",
   "AdminCatalogItem.copying": "Wird kopiert …",
   "AdminCatalogItem.copyLink": "Link kopieren",
@@ -1171,7 +1189,7 @@ export default {
     "Wo du teilst, etwa „Zalo-Gruppe A“. Nur Operatoren sehen den Namen.",
   "AdminCatalogSource.slug": "Quellen-Tag",
   "AdminCatalogSource.slugHint":
-    "Unter diesem Wert listet Umami die Besuche als utm_source: Kleinbuchstaben, Ziffern und Bindestriche. Er folgt dem Namen, bis du ihn selbst änderst.",
+    "Daran unterscheidet die Statistik deine Quellen: Kleinbuchstaben, Ziffern und Bindestriche. Er folgt dem Namen, bis du ihn selbst änderst.",
   "AdminCatalogSource.linksNote": {
     "one": "Ihr Link bleibt gleich; der neue Tag zählt ab dem nächsten Besuch.",
     "other": "Ihre {count} Links bleiben gleich; der neue Tag zählt ab dem nächsten Besuch.",

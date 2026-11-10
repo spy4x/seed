@@ -408,3 +408,107 @@ describe(`pathVisits`, () => {
     expect(await refusing.pathVisits(`/blog/hello`, 0)).toEqual({ state: `failed` })
   })
 })
+
+describe(`item numbers`, () => {
+  const ITEM = { id: `019a3b1c-7d2e-7f00-8a00-000000000001`, path: `/shirts/linen` }
+  /** Umami's numbers on the item's page, per source's tag; `page` for the page as a whole. */
+  const PAGE: Record<string, { visitors: number; visits: number; events: UmamiMetric[] }> = {
+    page: {
+      visitors: 120,
+      visits: 150,
+      events: [{ x: `order-zalo`, y: 6 }, { x: `order-telegram`, y: 3 }, { x: `share`, y: 4 }],
+    },
+    "zalo-a": { visitors: 30, visits: 34, events: [{ x: `order-zalo`, y: 3 }] },
+    facebook: {
+      visitors: 20,
+      visits: 21,
+      events: [{ x: `order-telegram`, y: 1 }, { x: `x`, y: 2 }],
+    },
+  }
+
+  function itemUmami() {
+    const asked: UmamiWebsiteRead[] = []
+    let up = true
+    const numbers = (options: UmamiWebsiteRead) => {
+      asked.push(options)
+      return PAGE[options.filters?.utmSource ?? `page`] ??
+        { visitors: 0, visits: 0, events: [] }
+    }
+    const reads: UmamiReads = {
+      check: () => Promise.resolve({ success: true }) as ReturnType<UmamiReads[`check`]>,
+      stats: (options) => {
+        const page = numbers(options)
+        if (!up) return down()
+        return ok({
+          ...totals(0),
+          visitors: page.visitors,
+          visits: page.visits,
+          comparison: totals(0),
+        })
+      },
+      metrics: (options) => {
+        const page = numbers(options)
+        if (!up) return down()
+        return ok(options.type === `event` ? page.events : [])
+      },
+      pageviews: () => down(),
+      eventValues: () => down(),
+    }
+    return { reads, asked, goDown: () => (up = false) }
+  }
+
+  it(`reads the item's views and order clicks, and each source's on its page, over 30 days`, async () => {
+    const umami = itemUmami()
+    const { service } = stats({ umami: umami.reads })
+    expect(await service.item(ITEM)).toEqual({
+      state: `ready`,
+      views: 120,
+      orderClicks: 9,
+      sources: [
+        { slug: `friends`, visits: 0, orderClicks: 0 },
+        { slug: `zalo-a`, visits: 34, orderClicks: 3 },
+        { slug: `facebook`, visits: 21, orderClicks: 1 },
+      ],
+    })
+    // Every read is the item's page only, from the start of the 30th UTC day back to now.
+    expect(umami.asked.every((read) => read.filters?.path === ITEM.path)).toBe(true)
+    expect(new Set(umami.asked.map((read) => read.startAt))).toEqual(
+      new Set([Date.parse(`2026-09-29T00:00:00Z`)]),
+    )
+    expect(new Set(umami.asked.map((read) => read.endAt))).toEqual(new Set([NOW]))
+  })
+
+  it(`keeps one copy per item for five minutes, and shows it while Umami stops answering`, async () => {
+    const umami = itemUmami()
+    const { service, later } = stats({ umami: umami.reads })
+    const first = await service.item(ITEM)
+    const once = umami.asked.length
+    await service.item(ITEM)
+    expect(umami.asked.length).toBe(once)
+    await service.item({ ...ITEM, id: `019a3b1c-7d2e-7f00-8a00-000000000002` })
+    expect(umami.asked.length).toBe(once * 2)
+    later(STATS_CACHE_MS)
+    umami.goDown()
+    expect(await service.item(ITEM)).toEqual(first)
+    expect(umami.asked.length).toBe(once * 3)
+  })
+
+  it(`answers failed, never zeros, when Umami does not answer and nothing is kept`, async () => {
+    const umami = itemUmami()
+    umami.goDown()
+    expect(await stats({ umami: umami.reads }).service.item(ITEM)).toEqual({ state: `failed` })
+    const refusing = fakeUmami(WORLD, { up: true, token: false })
+    expect(await stats({ umami: refusing.reads }).service.item(ITEM)).toEqual({ state: `failed` })
+  })
+
+  it(`says off, naming what is missing, without asking Umami`, async () => {
+    const umami = itemUmami()
+    const { service } = stats({
+      setup: null,
+      missing: [`MPA_UMAMI_WEBSITE_ID`],
+      umami: umami.reads,
+    })
+    expect(await service.item(ITEM)).toEqual({ state: `off`, missing: [`MPA_UMAMI_WEBSITE_ID`] })
+    expect(umami.asked).toEqual([])
+  })
+})

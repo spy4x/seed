@@ -18,7 +18,9 @@ import {
   type UmamiReadResult,
 } from "@spy4x/integrations/umami"
 import {
+  WEBSITE_ITEM_STATS_DAYS,
   WEBSITE_STATS_SETTINGS,
+  type WebsiteItemStatsResponse,
   type WebsiteStatsChannel,
   type WebsiteStatsDay,
   type WebsiteStatsItem,
@@ -175,6 +177,11 @@ function utcDay(at: number): string {
   return new Date(at).toISOString().slice(0, 10)
 }
 
+/** The start of a period of `days` UTC days that ends at `end`, today included. */
+function periodStart(end: number, days: number): number {
+  return Date.parse(`${utcDay(end)}T00:00:00Z`) - (days - 1) * DAY_MS
+}
+
 /** Runs `run` over `items`, at most `limit` at once, keeping their order. */
 async function mapLimit<T, R>(
   items: readonly T[],
@@ -260,7 +267,7 @@ export function createWebsiteStats(dependencies: WebsiteStatsDependencies) {
       const connection = { baseUrl: setup.url, token: setup.token, websiteId: setup.websiteId }
 
       const end = now()
-      const start = Date.parse(`${utcDay(end)}T00:00:00Z`) - (query.days - 1) * DAY_MS
+      const start = periodStart(end, query.days)
       const previousStart = start - query.days * DAY_MS
       const span = { ...connection, startAt: start, endAt: end }
       const previousSpan = { ...connection, startAt: previousStart, endAt: start - 1 }
@@ -445,6 +452,53 @@ export function createWebsiteStats(dependencies: WebsiteStatsDependencies) {
         if (check.problem === `token`) return `token-refused`
         if (check.problem === `website`) return `unknown-website`
         return `unreachable`
+      }
+    },
+
+    /**
+     * One item's numbers over the last {@link WEBSITE_ITEM_STATS_DAYS} days, for its "Share
+     * links" card: its views and order clicks, and per defined source the visits and order clicks
+     * on its page through that source's links. Kept like the rest of Stats, one copy per item and
+     * sources for {@link STATS_CACHE_MS}; when Umami does not answer the last copy is shown, and
+     * without one the answer is `failed`, never zeros.
+     */
+    async item(item: { id: string; path: string }): Promise<WebsiteItemStatsResponse> {
+      if (setup === null) return { state: `off`, missing: [...missing] }
+      const connection = { baseUrl: setup.url, token: setup.token, websiteId: setup.websiteId }
+      const end = now()
+      const span = {
+        ...connection,
+        startAt: periodStart(end, WEBSITE_ITEM_STATS_DAYS),
+        endAt: end,
+      }
+      const page = { path: item.path }
+      try {
+        const sources = await dependencies.sources()
+        const key = `item:${item.id}:${item.path}:${sources.map(({ slug }) => slug).join(`,`)}`
+        const entry = await cached(key, false, async () => {
+          const [totals, events, perSource] = await Promise.all([
+            ok(umami.stats({ ...span, filters: page })),
+            ok(umami.metrics({ ...span, type: `event`, filters: page })),
+            mapLimit(sources, UMAMI_CONCURRENCY, async ({ slug }) => {
+              const filters = { ...page, utmSource: slug }
+              const [stats, sourceEvents] = await Promise.all([
+                ok(umami.stats({ ...span, filters })),
+                ok(umami.metrics({ ...span, type: `event`, filters })),
+              ])
+              return { slug, visits: stats.visits, orderClicks: orderClicksOf(sourceEvents) }
+            }),
+          ])
+          return {
+            state: `ready` as const,
+            views: totals.visitors,
+            orderClicks: orderClicksOf(events),
+            sources: perSource,
+          }
+        })
+        return entry.value
+      } catch (error) {
+        if (!(error instanceof UmamiFailure)) throw error
+        return { state: `failed` }
       }
     },
 

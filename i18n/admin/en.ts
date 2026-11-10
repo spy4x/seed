@@ -1035,7 +1035,25 @@ export default {
     "Share each place's own link, so you can see which one brings visitors.",
   "AdminCatalogItem.linksOpenLater": "The links work once the item is on the website.",
   "AdminCatalogItem.addSource": "Add a source",
-  "AdminCatalogItem.noLinkYet": "No link yet · utm_source={source}",
+  "AdminCatalogItem.noLinkYet": "No link yet",
+  "AdminCatalogItem.statsSummary": "Last 30 days: {views} · {clicks}",
+  "AdminCatalogItem.views": {
+    "one": "{count} view",
+    "other": "{count} views",
+  },
+  "AdminCatalogItem.visits": {
+    "one": "{count} visit",
+    "other": "{count} visits",
+  },
+  "AdminCatalogItem.orderClicks": {
+    "one": "{count} order click",
+    "other": "{count} order clicks",
+  },
+  "AdminCatalogItem.noVisitsYet": "No visits yet",
+  "AdminCatalogItem.statsLoading": "Loading this item's stats…",
+  "AdminCatalogItem.statsOff": "Turn on stats to see visits per link.",
+  "AdminCatalogItem.statsFailed": "Numbers unavailable right now.",
+  "AdminCatalogItem.seeInStats": "See in Stats",
   "AdminCatalogItem.copyLinkFor": "Copy link for {name}",
   "AdminCatalogItem.copying": "Copying…",
   "AdminCatalogItem.copyLink": "Copy link",
@@ -1122,7 +1140,7 @@ export default {
   "AdminCatalogSource.nameHint": "Where you share, such as Zalo group A. Only operators see it.",
   "AdminCatalogSource.slug": "Source tag",
   "AdminCatalogSource.slugHint":
-    "Umami lists visits under it as utm_source: lowercase letters, digits and hyphens. It follows the name until you change it.",
+    "Stats tells your sources apart by it: lowercase letters, digits and hyphens. It follows the name until you change it.",
   "AdminCatalogSource.linksNote": {
     "one": "Its link stays the same; the new tag counts from the next visit.",
     "other": "Its {count} links stay the same; the new tag counts from the next visit.",

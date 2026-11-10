@@ -1012,7 +1012,22 @@ export default {
     "場所ごとの専用リンクを共有すると、どこから訪問者が来ているか分かります。",
   "AdminCatalogItem.linksOpenLater": "リンクはアイテムがサイトに公開されると使えるようになります。",
   "AdminCatalogItem.addSource": "ソースを追加",
-  "AdminCatalogItem.noLinkYet": "リンクはまだありません · utm_source={source}",
+  "AdminCatalogItem.noLinkYet": "リンクはまだありません",
+  "AdminCatalogItem.statsSummary": "過去30日間: {views} · {clicks}",
+  "AdminCatalogItem.views": {
+    "other": "閲覧 {count}",
+  },
+  "AdminCatalogItem.visits": {
+    "other": "訪問 {count}",
+  },
+  "AdminCatalogItem.orderClicks": {
+    "other": "注文クリック {count}",
+  },
+  "AdminCatalogItem.noVisitsYet": "まだ訪問はありません",
+  "AdminCatalogItem.statsLoading": "このアイテムの統計を読み込み中…",
+  "AdminCatalogItem.statsOff": "統計を有効にすると、リンクごとの訪問数を確認できます。",
+  "AdminCatalogItem.statsFailed": "現在、数値を表示できません。",
+  "AdminCatalogItem.seeInStats": "統計で見る",
   "AdminCatalogItem.copyLinkFor": "{name}のリンクをコピー",
   "AdminCatalogItem.copying": "コピー中…",
   "AdminCatalogItem.copyLink": "リンクをコピー",
@@ -1101,7 +1116,7 @@ export default {
     "共有する場所の名前です（例：ZaloグループA）。オペレーターにのみ表示されます。",
   "AdminCatalogSource.slug": "ソースタグ",
   "AdminCatalogSource.slugHint":
-    "Umamiはこのタグをutm_sourceとして訪問を集計します。小文字の英字、数字、ハイフンを使います。変更するまでは名前に合わせて自動で入力されます。",
+    "統計はこのタグでソースを区別します。小文字の英字、数字、ハイフンを使います。変更するまでは名前に合わせて自動で入力されます。",
   "AdminCatalogSource.linksNote": {
     "other": "{count}件のリンクはそのまま使えます。新しいタグは次の訪問から集計されます。",
   },

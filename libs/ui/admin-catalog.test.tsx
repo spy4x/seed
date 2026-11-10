@@ -17,6 +17,7 @@ import type {
   CatalogItemRow,
   CatalogLinkSource,
 } from "@domain/catalog"
+import type { WebsiteItemStatsResponse } from "@domain/identity"
 import {
   ADMIN_CATALOG_NO_FILTER,
   AdminCatalogCategoriesScreen,
@@ -49,6 +50,7 @@ const own = {
   document: globalThis.document,
   FormData: globalThis.FormData,
   getComputedStyle: globalThis.getComputedStyle,
+  location: globalThis.location,
 }
 
 beforeAll(() => {
@@ -56,6 +58,8 @@ beforeAll(() => {
     document: window.document,
     FormData: window.FormData,
     getComputedStyle: window.getComputedStyle.bind(window),
+    // The links' own-origin check reads it, so a link's click goes through `navigate`.
+    location: window.location,
   })
 })
 
@@ -402,6 +406,7 @@ function ItemEditor(
     onPhotoSave: (id, change) => calls.push(["photo", id, change]),
     onPhotoRemove: (id) => calls.push(["remove", id]),
     shareLinks,
+    navigate: (to: string) => calls.push(["navigate", to]),
   }
   return <AdminCatalogItemScreen {...props} />
 }
@@ -548,7 +553,7 @@ describe("the item editor's share links", () => {
     const [zalo, friends] = rows()
     expect(zalo.querySelector("[data-e2e=catalog-item-link-url]")!.textContent).toBe(LINK)
     expect(friends.querySelector("[data-e2e=catalog-item-link-url]")!.textContent)
-      .toBe("No link yet · utm_source=friends")
+      .toBe("No link yet")
     const copy = friends.querySelector<HTMLButtonElement>("[data-e2e=catalog-item-link-copy]")!
     expect(copy.getAttribute("aria-label")).toBe("Copy link for Friends")
     expect(copy.type).toBe("button")
@@ -566,6 +571,50 @@ describe("the item editor's share links", () => {
     expect(document.body.textContent).toContain(
       "The links work once the item is on the website.",
     )
+  })
+
+  it("shows the last 30 days per link and in the header, with a way to Stats", async () => {
+    const calls: unknown[][] = []
+    const stats: WebsiteItemStatsResponse = {
+      state: "ready",
+      views: 120,
+      orderClicks: 1,
+      // Friends has no row: a source Umami has no numbers for reads "No visits yet".
+      sources: [{ slug: "zalo-a", visits: 34, orderClicks: 3 }],
+    }
+    await mount(<ItemEditor calls={calls} item={ITEM_SAVED} shareLinks={share(calls, { stats })} />)
+    expect(find("[data-e2e=catalog-item-stats]").textContent)
+      .toBe("Last 30 days: 120 views · 1 order click")
+    expect(find("[data-e2e=catalog-item-stats]").getAttribute("role")).toBe("status")
+    const [zalo, friends] = rows()
+    expect(zalo.querySelector("[data-e2e=catalog-item-link-stats]")!.textContent)
+      .toBe("34 visits · 3 order clicks")
+    expect(friends.querySelector("[data-e2e=catalog-item-link-stats]")!.textContent)
+      .toBe("No visits yet")
+    const seeStats = find("[data-e2e=catalog-item-see-stats]")
+    expect(seeStats.getAttribute("href")).toBe("/stats")
+    await clickOn(seeStats)
+    expect(calls).toContainEqual(["navigate", "/stats"])
+  })
+
+  it("keeps every link and Copy usable while the numbers load, are off or unavailable", async () => {
+    const states: [WebsiteItemStatsResponse | "loading", string][] = [
+      ["loading", "Loading this item's stats…"],
+      [{ state: "off", missing: ["UMAMI_API_URL"] }, "Turn on stats to see visits per link."],
+      [{ state: "failed" }, "Numbers unavailable right now."],
+    ]
+    for (const [stats, line] of states) {
+      const calls: unknown[][] = []
+      await mount(
+        <ItemEditor calls={calls} item={ITEM_SAVED} shareLinks={share(calls, { stats })} />,
+      )
+      expect(find("[data-e2e=catalog-item-stats]").textContent).toBe(line)
+      expect(document.querySelector("[data-e2e=catalog-item-link-stats]") === null).toBe(true)
+      expect(rows()[0].querySelector("[data-e2e=catalog-item-link-url]")!.textContent).toBe(LINK)
+      await clickOn(rows()[1].querySelector("[data-e2e=catalog-item-link-copy]")!)
+      expect(calls).toEqual([["copy", FRIENDS]])
+      await act(() => render(null, root!))
+    }
   })
 
   it("offers a first source when there are none, and shows nothing on a new item", async () => {
@@ -892,9 +941,19 @@ describe("the item editor in en-XA", () => {
     await clickOn(find("[data-e2e=catalog-item-add-colour]"))
     await clickOn(find("[data-e2e=catalog-item-add-size]"))
     left.push(...englishLeft(document.body, data))
-    // A saved draft with its share links, the menu of a photo, then the publish dialog.
+    // A saved draft with its share links and their numbers, the menu of a photo, then the publish dialog.
     const sources = [sourceOf(), sourceOf({ id: FRIENDS, name: "Friends", slug: "friends" })]
-    const share = { ...emptyShare, sources, links: { [ZALO]: "https://shop.example/s/AbCd" } }
+    const share = {
+      ...emptyShare,
+      sources,
+      links: { [ZALO]: "https://shop.example/s/AbCd" },
+      stats: {
+        state: "ready",
+        views: 120,
+        orderClicks: 9,
+        sources: [{ slug: "zalo-a", visits: 34, orderClicks: 3 }],
+      },
+    } satisfies CatalogShareLinksState
     await mount(
       pseudo(<ItemEditor key="saved" calls={calls} item={ITEM_SAVED} shareLinks={share} />),
     )

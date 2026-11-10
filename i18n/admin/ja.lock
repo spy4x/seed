@@ -886,11 +886,13 @@ AdminCatalogItem.nameOptional	e09b37bcc4f301f4
 AdminCatalogItem.newTitle	b84cad41b23175e8
 AdminCatalogItem.noCategory	b91b9cac5041cc5e
 AdminCatalogItem.noDescription	e5f2eea1f7651295
-AdminCatalogItem.noLinkYet	2cc657e1a5fe5f70
+AdminCatalogItem.noLinkYet	60e5be6136dd3653
 AdminCatalogItem.noPhotos	484a7ea3db77aaa8
+AdminCatalogItem.noVisitsYet	aa32d0536bab7e63
 AdminCatalogItem.notFound	fe0abe1558343602
 AdminCatalogItem.notFoundText	992276f72e41846e
 AdminCatalogItem.openPhoto	e9b13857525db46f
+AdminCatalogItem.orderClicks	d0b9a27c8ab61d1e
 AdminCatalogItem.photoColour	7002c162972122cc
 AdminCatalogItem.photoLeftOut	7ddf71faec7e0ac2
 AdminCatalogItem.photoNumber	21e78e26e8afb4a8
@@ -918,6 +920,7 @@ AdminCatalogItem.saveChanges	dd0ae7a5cbcf2339
 AdminCatalogItem.saveDraft	3de100106dd4e52e
 AdminCatalogItem.savePhoto	149e02b675fa5de6
 AdminCatalogItem.saving	23e39291d6135814
+AdminCatalogItem.seeInStats	b5b046c638bd58aa
 AdminCatalogItem.shareLinks	16ce9683d9ed4527
 AdminCatalogItem.size	1af851907331c0ed
 AdminCatalogItem.sizeNumber	26a60ac1a4d08fc8
@@ -927,6 +930,10 @@ AdminCatalogItem.slug	56ef8f20955f2564
 AdminCatalogItem.slugHint	67c069bb73e593ff
 AdminCatalogItem.sourcesEmpty	86a41cb1a8d892c8
 AdminCatalogItem.sourcesText	c1684993b81c2f79
+AdminCatalogItem.statsFailed	3eea3bd934329032
+AdminCatalogItem.statsLoading	7e29bf3978ee8bcb
+AdminCatalogItem.statsOff	5733c0ef57b23175
+AdminCatalogItem.statsSummary	3edad54ecf387342
 AdminCatalogItem.stockHint	3986d881a7c7cab3
 AdminCatalogItem.swatch	70f0b62138649fed
 AdminCatalogItem.swatchBeige	5f10cf309e5fbbba
@@ -942,6 +949,8 @@ AdminCatalogItem.title	652bcc3a47842889
 AdminCatalogItem.unnamedColour	c1d0d3a8538f0aa8
 AdminCatalogItem.unnamedSize	458afae941b312fb
 AdminCatalogItem.uploading	3cf52b71511b840c
+AdminCatalogItem.views	5df83a0fd30be9d5
+AdminCatalogItem.visits	eaca6b77d468ad08
 AdminCatalogItem.weightFrom	ca64e81f0946e055
 AdminCatalogItem.weightTo	a3b1db728628204e
 AdminCatalogSource.back	938a4d2ccab55de5
@@ -956,7 +965,7 @@ AdminCatalogSource.notFoundText	992276f72e41846e
 AdminCatalogSource.save	36d26ce8c3f6dae5
 AdminCatalogSource.saving	23e39291d6135814
 AdminCatalogSource.slug	94d27a9e759f1a8b
-AdminCatalogSource.slugHint	fcdf7c6c8c6cc439
+AdminCatalogSource.slugHint	446d113c2c228d8b
 AdminCatalogSource.title	0e570ca6fabe24f9
 AdminCatalogSources.actionsFor	aac6defa1846338b
 AdminCatalogSources.add	6ea6c9ec2a76b459

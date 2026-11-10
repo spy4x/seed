@@ -206,6 +206,27 @@ it(`copies an item's link for a source and keeps it in its row`, async () => {
   expect(state.itemEditor.value.copying).toBeNull()
 })
 
+it(`reads the open item's share-link numbers, and calls them unavailable when our API fails`, async () => {
+  const numbers = { state: `ready`, views: 12, orderClicks: 2, sources: [] }
+  let answer: AdminApiResult<unknown> = ok(numbers)
+  const { state, calls } = build({
+    [`GET /api/admin/website-stats/items/${ID}`]: () => answer,
+  })
+  await state.openItem(ID)
+  expect(state.itemEditor.value.stats).toBe(`loading`)
+  await state.readItemStats(ID)
+  expect(calls.at(-1)).toBe(`GET /api/admin/website-stats/items/${ID}`)
+  expect(state.itemEditor.value.stats).toEqual(numbers)
+  answer = fail(500, `Something went wrong`)
+  await state.readItemStats(ID)
+  expect(state.itemEditor.value.stats).toEqual({ state: `failed` })
+  // An answer for an item no longer open is dropped.
+  await state.openItem(null)
+  answer = ok(numbers)
+  await state.readItemStats(ID)
+  expect(state.itemEditor.value.stats).toBe(`loading`)
+})
+
 it(`shows the link in its row when the clipboard refuses it`, async () => {
   const { state, toasts } = build({
     [`POST /api/admin/catalog/items/${ID}/links`]: () =>

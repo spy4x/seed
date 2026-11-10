@@ -1088,7 +1088,28 @@ export default {
     "Compartilhe o link próprio de cada lugar, para ver qual traz visitantes.",
   "AdminCatalogItem.linksOpenLater": "Os links funcionam quando o item estiver no site.",
   "AdminCatalogItem.addSource": "Adicionar uma origem",
-  "AdminCatalogItem.noLinkYet": "Ainda sem link · utm_source={source}",
+  "AdminCatalogItem.noLinkYet": "Ainda sem link",
+  "AdminCatalogItem.statsSummary": "Últimos 30 dias: {views} · {clicks}",
+  "AdminCatalogItem.views": {
+    "one": "{count} visualização",
+    "many": "{count} visualizações",
+    "other": "{count} visualizações",
+  },
+  "AdminCatalogItem.visits": {
+    "one": "{count} visita",
+    "many": "{count} visitas",
+    "other": "{count} visitas",
+  },
+  "AdminCatalogItem.orderClicks": {
+    "one": "{count} clique em pedir",
+    "many": "{count} cliques em pedir",
+    "other": "{count} cliques em pedir",
+  },
+  "AdminCatalogItem.noVisitsYet": "Ainda sem visitas",
+  "AdminCatalogItem.statsLoading": "Carregando as estatísticas deste item…",
+  "AdminCatalogItem.statsOff": "Ative as estatísticas para ver as visitas de cada link.",
+  "AdminCatalogItem.statsFailed": "Números indisponíveis no momento.",
+  "AdminCatalogItem.seeInStats": "Ver em Estatísticas",
   "AdminCatalogItem.copyLinkFor": "Copiar o link de {name}",
   "AdminCatalogItem.copying": "Copiando…",
   "AdminCatalogItem.copyLink": "Copiar link",
@@ -1179,7 +1200,7 @@ export default {
     "Onde você compartilha, por exemplo Grupo A do Zalo. Só operadores veem.",
   "AdminCatalogSource.slug": "Código da origem",
   "AdminCatalogSource.slugHint":
-    "O Umami agrupa as visitas por esse código, como utm_source: letras minúsculas, números e hifens. Acompanha o nome até você mudá-lo.",
+    "As estatísticas usam esse código para diferenciar suas fontes: letras minúsculas, números e hifens. Acompanha o nome até você mudá-lo.",
   "AdminCatalogSource.linksNote": {
     "one": "O link continua o mesmo; o novo código conta a partir da próxima visita.",
     "many": "Os {count} links continuam os mesmos; o novo código conta a partir da próxima visita.",
