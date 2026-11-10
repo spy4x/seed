@@ -1127,4 +1127,18 @@ export default {
   "FeaturePageDeploy.backupQuestion": "¿Hay copias de seguridad?",
   "FeaturePageDeploy.backupAnswer":
     "Sí. Una copia de seguridad diaria y cifrada de la base de datos con restic, opcional, y un procedimiento de restauración por escrito.",
+  "Catalog.title": "Catálogo",
+  "Catalog.intro": "Todo lo que vendemos, con precios, tallas y colores.",
+  "Catalog.categories": "Categorías",
+  "Catalog.all": "Todo",
+  "Catalog.empty": "Aún no hay nada a la venta",
+  "Catalog.emptyLead": "Los nuevos artículos aparecerán aquí en cuanto estén listos.",
+  "Catalog.categoryIntro": "{category}: precios, tallas y colores.",
+  "CatalogItem.intro": "{item}: precio, tallas y colores.",
+  "CatalogItem.photos": "Fotos",
+  "CatalogItem.material": "Material",
+  "CatalogItem.fit": "Corte",
+  "CatalogItem.care": "Cuidados",
+  "CatalogItem.inStock": "{choice}: disponible",
+  "CatalogItem.soldOut": "{choice}: agotado",
 } satisfies Catalog

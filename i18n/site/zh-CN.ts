@@ -1011,4 +1011,18 @@ export default {
   "FeaturePageDeploy.backupQuestion": "有备份吗？",
   "FeaturePageDeploy.backupAnswer":
     "有。可选开启的每日加密 restic 数据库备份，并附有书面恢复步骤。",
+  "Catalog.title": "商品目录",
+  "Catalog.intro": "在售的全部商品，附价格、尺码和颜色。",
+  "Catalog.categories": "分类",
+  "Catalog.all": "全部",
+  "Catalog.empty": "暂无在售商品",
+  "Catalog.emptyLead": "新商品准备好后会第一时间出现在这里。",
+  "Catalog.categoryIntro": "{category}：价格、尺码和颜色。",
+  "CatalogItem.intro": "{item}：价格、尺码和颜色。",
+  "CatalogItem.photos": "照片",
+  "CatalogItem.material": "材质",
+  "CatalogItem.fit": "版型",
+  "CatalogItem.care": "洗护",
+  "CatalogItem.inStock": "{choice}：有货",
+  "CatalogItem.soldOut": "{choice}：已售罄",
 } satisfies Catalog

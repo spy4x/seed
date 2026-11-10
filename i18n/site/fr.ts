@@ -1159,4 +1159,18 @@ export default {
   "FeaturePageDeploy.backupQuestion": "Y a-t-il une sauvegarde ?",
   "FeaturePageDeploy.backupAnswer":
     "Oui. Une sauvegarde restic quotidienne et chiffrée de la base de données, à activer, avec une procédure de restauration écrite.",
+  "Catalog.title": "Catalogue",
+  "Catalog.intro": "Tout ce que nous vendons, avec les prix, les tailles et les couleurs.",
+  "Catalog.categories": "Catégories",
+  "Catalog.all": "Tout",
+  "Catalog.empty": "Rien en vente pour le moment",
+  "Catalog.emptyLead": "Les nouveaux articles apparaissent ici dès qu’ils sont prêts.",
+  "Catalog.categoryIntro": "{category} : prix, tailles et couleurs.",
+  "CatalogItem.intro": "{item} : prix, tailles et couleurs.",
+  "CatalogItem.photos": "Photos",
+  "CatalogItem.material": "Matière",
+  "CatalogItem.fit": "Coupe",
+  "CatalogItem.care": "Entretien",
+  "CatalogItem.inStock": "{choice} : en stock",
+  "CatalogItem.soldOut": "{choice} : épuisé",
 } satisfies Catalog

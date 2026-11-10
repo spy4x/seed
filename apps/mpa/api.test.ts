@@ -91,6 +91,30 @@ describe("createApi", () => {
   })
 })
 
+describe("createApi's file", () => {
+  it("reads a file's bytes, type and cache rule, and no bytes for any other status", async () => {
+    const photo = fakeFetch(
+      new Response(new Uint8Array([1, 2, 3]), {
+        headers: { "content-type": "image/webp", "cache-control": "public, max-age=60" },
+      }),
+    )
+    const missing = fakeFetch(Response.json({ error: { code: "not_found" } }, { status: 404 }))
+    const file = (fetch: typeof globalThis.fetch) =>
+      createApi({ apiUrl: "http://api:8000", request: browserRequest, remoteAddress: "", fetch })
+        .file("/api/catalog/photos/0199a000-0000-7000-8000-000000000001/960.webp")
+
+    expect(await file(photo.fetch)).toEqual({
+      status: 200,
+      type: "image/webp",
+      cacheControl: "public, max-age=60",
+      bytes: new Uint8Array([1, 2, 3]),
+    })
+    expect(photo.seen[0].method).toBe("GET")
+    expect(photo.seen[0].headers.has("cookie")).toBe(false)
+    expect(await file(missing.fetch)).toMatchObject({ status: 404, bytes: null })
+  })
+})
+
 describe("createApi without an API that answers", () => {
   const tokenRequest = new Request("https://www.example.com/subscribe/confirm")
   const path = "/api/subscribers/confirm?list=news&token=token-from-the-link"
