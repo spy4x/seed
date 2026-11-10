@@ -195,6 +195,18 @@ export const MOVABLE_AGGREGATES: readonly MovableAggregate[] = [tagMovable, note
 export const PORTABLE_AGGREGATES: readonly PortableAggregate[] = [tagPortable, notePortable]
 
 /**
+ * The aggregates a group's export file holds and an import writes: with the notes off
+ * (`NOTES=false`), not notes or tags. An import skips the parts of the ones left out.
+ */
+export function portableAggregatesOf(notes: NotesSetup): readonly PortableAggregate[] {
+  return notes.on
+    ? PORTABLE_AGGREGATES
+    : PORTABLE_AGGREGATES.filter((aggregate) =>
+      aggregate !== tagPortable && aggregate !== notePortable
+    )
+}
+
+/**
  * The aggregates a device pulls the changes of, by group (`docs/aggregate-offline.md`, "Take part
  * in the changes pull"). Their `kind`s are the keys of the answer's `upserts`.
  */
@@ -226,6 +238,8 @@ export interface AppDbBaseOptions {
   userCache?: RowCache<User>
   /** The aggregates the changes pull reads (`changesAggregatesOf`). Defaults to every one. */
   changes?: readonly ChangesAggregate[]
+  /** The aggregates a group's export and import hold (`portableAggregatesOf`). Defaults to every one. */
+  portable?: readonly PortableAggregate[]
 }
 
 /**
@@ -243,11 +257,14 @@ export class AppDbBase extends DbServiceBase {
   private readonly userCache: RowCache<User>
   /** Not `#private` either, for the same reason. */
   private readonly changes: readonly ChangesAggregate[]
+  /** Not `#private` either, for the same reason. */
+  private readonly portable: readonly PortableAggregate[]
 
   constructor(options: AppDbBaseOptions) {
     super({ sql: options.sql })
     this.userCache = options.userCache ?? noCache
     this.changes = options.changes ?? CHANGES_AGGREGATES
+    this.portable = options.portable ?? PORTABLE_AGGREGATES
   }
 
   /**
@@ -313,7 +330,9 @@ export class AppDbBase extends DbServiceBase {
 
   /** A group's export file and the import of one. Built per access, like `group`. */
   get groupFiles(): PostgresGroupPorter {
-    return new PostgresGroupPorter(this.sql, PORTABLE_AGGREGATES)
+    // The registered aggregates switched off: an import skips their parts instead of refusing them.
+    const ignored = PORTABLE_AGGREGATES.filter((aggregate) => !this.portable.includes(aggregate))
+    return new PostgresGroupPorter(this.sql, this.portable, ignored.map(({ kind }) => kind))
   }
 
   /** The notes repository. Built per access, like `group`, so inside `begin()` it uses the transaction. */

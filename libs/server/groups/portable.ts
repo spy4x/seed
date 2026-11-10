@@ -147,11 +147,14 @@ const SETTINGS: GroupImportPlace = { part: "settings" }
  * {@link GroupImportError} with the problems found. Reading stops at
  * {@link GROUP_IMPORT_PROBLEMS_MAX} problems, and a list longer than
  * {@link GROUP_IMPORT_ENTRIES_MAX} is refused unread. A file that is not an export, or is from a
- * newer version, is refused before its parts are read. Nothing here reads the database.
+ * newer version, is refused before its parts are read. A part whose kind is in `ignored` (an
+ * aggregate this app has switched off, such as the notes with `NOTES=false`) is skipped unread.
+ * Nothing here reads the database.
  */
 export function parseGroupFile(
   value: unknown,
   aggregates: readonly PortableAggregate[],
+  ignored: readonly string[] = [],
 ): ParsedGroupFile {
   if (!isRecord(value) || value.format !== GROUP_EXPORT_FORMAT) {
     throw new GroupImportError([{ kind: "not_export" }])
@@ -197,7 +200,7 @@ export function parseGroupFile(
   } else {
     const known = new Set(aggregates.map((aggregate) => aggregate.kind))
     for (const kind of Object.keys(parts)) {
-      if (!known.has(kind)) {
+      if (!known.has(kind) && !ignored.includes(kind)) {
         report("The file", `it holds "${kind}", which this app does not know`, FILE, {
           code: "unknownKey",
           values: { key: kind },

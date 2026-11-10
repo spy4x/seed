@@ -38,6 +38,12 @@ Deno.test("the changes pull of the API's database reads through the notes switch
   )
 })
 
+Deno.test("the group export and import of the API's database read through the notes switch", async () => {
+  expect(await read(`apps/api/services/db.ts`)).toContain(
+    `portable: portableAggregatesOf(config.notes)`,
+  )
+})
+
 Deno.test("the buses register every note, tag and attachment handler only with the notes on", async () => {
   const init = await read(`apps/api/cqrs/+init.ts`)
   const start = init.indexOf(`if (config.notes.on) {`)

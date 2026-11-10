@@ -118,6 +118,16 @@ describe("parseGroupFile", () => {
     ).toBe(2)
   })
 
+  it("skips a part whose kind the app switched off, unread, even a broken one", () => {
+    const parsed = parseGroupFile(
+      file({ tags: [tag("Work")], notes: [{ title: "" }, "not a note"] }),
+      [tagPortable],
+      ["notes"],
+    )
+    expect([...parsed.entries.keys()]).toEqual(["tags"])
+    expect(parsed.entries.get("tags")).toHaveLength(1)
+  })
+
   it("treats a kind the file leaves out as empty", () => {
     expect(parseGroupFile(file({ notes: [note("One")] }), AGGREGATES).entries.get("tags"))
       .toEqual([])
