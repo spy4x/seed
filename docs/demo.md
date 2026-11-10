@@ -141,6 +141,9 @@ updates the demo in the same PR:
   `billing_*`, `subscriber*`, `user_totp`, `backup_status`); fix it there. The seed dates rows after
   writing them, so it then renumbers the `audit_events` and `auth_audits` rows written since it
   started to follow their times (`orderIdsByTime`), because feeds sort by id.
+- **Imports** (`imports`, `import_records`, [imports.md](imports.md)) are demo data: the wipe
+  empties both, and the seed writes one saved notes import in the first themed group, whose
+  batch is a few of its owner's notes (`fromFile` in `fake-data.ts`, `seedImport` in `seed.ts`).
 - **Data exports** need no change: the wipe empties `data_exports`, the seed writes none (a ready
   row would have no file behind it), and the nightly clean-up deletes the files the wipe left in
   the file store. A new table that holds a person's data adds a section to the export instead

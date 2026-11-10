@@ -48,7 +48,7 @@ export const GUEST_LIMITED_PATHS: Record<GuestLimitedAction, readonly string[]> 
   invite: ["/groups/:groupId/invitations"],
   push: ["/push"],
   "api-token": ["/tokens"],
-  upload: ["/groups/import", "/groups/import/check"],
+  upload: ["/groups/import", "/groups/import/check", "/groups/:groupId/imports"],
   billing: ["/groups/:groupId/billing/checkout"],
   telegram: ["/telegram/code"],
 }

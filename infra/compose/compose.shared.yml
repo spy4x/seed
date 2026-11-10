@@ -971,6 +971,9 @@ services:
       # The public demo (docs/demo.md): `true` wipes and seeds the database every night and gives
       # every new account sample groups. Unset → off.
       - DEMO_MODE=${DEMO_MODE:-}
+      # The notes example (docs/start-a-product.md): `false` leaves the notes kind out of the import
+      # jobs, as the API leaves it out of the import routes. On unless `false`.
+      - NOTES=${NOTES:-}
       # The demo's private administrator (docs/demo.md): the reset seeds admin@example.com with
       # this password, hashed with the API's pepper so the API accepts it. Unset → none.
       - DEMO_ADMIN_PASSWORD=${DEMO_ADMIN_PASSWORD:-}

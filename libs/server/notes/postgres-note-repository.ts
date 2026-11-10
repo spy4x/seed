@@ -248,6 +248,96 @@ export async function moveNoteRows(
   return moved.length
 }
 
+/** What {@link insertNoteRows} and {@link trashNoteRows} write, in a caller's transaction. */
+export interface NoteRowsInput {
+  groupId: string
+  actorId: number
+  /** The sequence of the change the caller recorded for this write; the notes are stamped. */
+  changeSequence: string
+  requestId?: string
+}
+
+/** Rows one statement writes: well under Postgres's 65,535 parameters at seven columns a row. */
+const NOTE_ROWS_BATCH = 1_000
+
+/**
+ * Many creates at once, for a caller that has locked the group, checked the actor's role and
+ * recorded one change for them all (an import): the notes, then one `note.created` audit row each,
+ * as a create writes. Counts against no cap; the caller checks its own. Returns the new ids.
+ */
+export async function insertNoteRows(
+  transaction: postgres.TransactionSql,
+  input: NoteRowsInput,
+  notes: readonly { title: string; body: string }[],
+): Promise<string[]> {
+  const rows = notes.map((note) => ({
+    id: uuidV7(),
+    group_id: input.groupId,
+    title: note.title,
+    body: note.body,
+    change_sequence: input.changeSequence,
+    created_by_user_id: input.actorId,
+    updated_by_user_id: input.actorId,
+  }))
+  for (let start = 0; start < rows.length; start += NOTE_ROWS_BATCH) {
+    const batch = rows.slice(start, start + NOTE_ROWS_BATCH)
+    await transaction`INSERT INTO notes ${transaction(batch)}`
+    await auditNoteRows(transaction, input, NOTE_EVENTS.created, batch.map((row) => row.id))
+  }
+  return rows.map((row) => row.id)
+}
+
+/**
+ * Many deletes at once, as {@link PostgresNoteRepository.delete} does one: each live note of `ids`
+ * in the group goes to the trash with its version grown by one, its audit row and its tombstone,
+ * stamped with the caller's change. A note already deleted, purged or moved away is skipped; no
+ * version is checked, so a note edited since goes too. Returns how many went.
+ */
+export async function trashNoteRows(
+  transaction: postgres.TransactionSql,
+  input: NoteRowsInput,
+  ids: readonly string[],
+): Promise<number> {
+  let trashed = 0
+  for (let start = 0; start < ids.length; start += NOTE_ROWS_BATCH) {
+    const batch = ids.slice(start, start + NOTE_ROWS_BATCH)
+    const gone = await transaction<{ id: string }[]>`
+      UPDATE notes
+      SET deleted_at = CURRENT_TIMESTAMP,
+          version = version + 1,
+          updated_by_user_id = ${input.actorId},
+          updated_at = CURRENT_TIMESTAMP,
+          change_sequence = ${input.changeSequence}::bigint
+      WHERE group_id = ${input.groupId} AND deleted_at IS NULL AND id IN ${transaction(batch)}
+      RETURNING id
+    `
+    const goneIds = gone.map((row) => row.id)
+    await auditNoteRows(transaction, input, NOTE_EVENTS.deleted, goneIds)
+    await recordTombstones(transaction, input.groupId, "notes", goneIds, input.changeSequence)
+    trashed += goneIds.length
+  }
+  return trashed
+}
+
+/** One audit row of `eventKind` per note of `ids`, with its title cut as a single write keeps it. */
+async function auditNoteRows(
+  transaction: postgres.TransactionSql,
+  input: NoteRowsInput,
+  eventKind: string,
+  ids: readonly string[],
+): Promise<void> {
+  if (ids.length === 0) return
+  await transaction`
+    INSERT INTO audit_events (
+      event_kind, actor_user_id, group_id, request_id, entity_type, entity_id, details
+    )
+    SELECT ${eventKind}, ${input.actorId}, ${input.groupId}, ${input.requestId || null}, 'note',
+      notes.id, jsonb_build_object('title', left(notes.title, ${AUDIT_TITLE_MAX}))
+    FROM notes WHERE notes.id IN ${transaction(ids)}
+    ORDER BY notes.id
+  `
+}
+
 /**
  * Notes in Postgres. Every write runs in one transaction that first checks the actor's role on
  * the locked membership row and then records the change on the group (`recordGroupChange`): the

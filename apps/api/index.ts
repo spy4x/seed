@@ -22,6 +22,7 @@ import { createGroupActivityRoute } from "./routes/group-activity.ts"
 import { createGroupsRoute } from "./routes/groups.ts"
 import { createGroupFilesRoute } from "./routes/group-files.ts"
 import { createGroupFileRateLimits } from "./features/groups/file-rate-limits.ts"
+import { createImportsRoute } from "./routes/imports.ts"
 import { createApiTokensRoute } from "./routes/api-tokens.ts"
 import { mountNotesRoutes } from "./features/notes/switch.ts"
 import { createDataExportRoute } from "./routes/data-export.ts"
@@ -351,6 +352,18 @@ mountNotesRoutes(app, config.notes, {
     limitByToken: tokenRateLimits.byToken,
   },
 })
+app.route(
+  "/groups/:groupId/imports",
+  createImportsRoute({
+    create: (command) => commandBus.execute(command),
+    list: (query) => queryBus.execute(query),
+    get: (query) => queryBus.execute(query),
+    check: (query) => queryBus.execute(query),
+    commit: (command) => commandBus.execute(command),
+    undo: (command) => commandBus.execute(command),
+    expectedOrigin,
+  }),
+)
 // Before "/groups" too, for the same reason.
 app.route(
   "/groups/:groupId/activity",
