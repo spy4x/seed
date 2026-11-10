@@ -6,6 +6,7 @@ import { runtimeFileSystem } from "@spy4x/platform/server/runtime-fs"
 import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { TelegramClient } from "@spy4x/integrations/telegram"
 import { readTelegramSetup } from "@server/telegram/setup.ts"
+import { readNotesSetup } from "@server/notes/setup.ts"
 import { queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
 import { readIndexNowSetup } from "@server/blog/blog-indexnow-job.ts"
 import { readCrosspostSetup } from "@server/blog/blog-crosspost-job.ts"
@@ -92,6 +93,8 @@ const billingSetup = readBillingSetup(
 const filesSetup = readServerFilesSetup(processEnv)
 if (!filesSetup.success) console.warn(filesSetup.error)
 const files = filesSetup.success ? s3ServerFiles(filesSetup.output) : null
+// With `NOTES=false` the demo's seed and sample data write no notes, tags or attachments.
+const notes = readNotesSetup(processEnv)
 
 // Image processing runs `vips` on files: each run gets a folder of its own under the one
 // directory the worker may read and write (`--allow-read`/`--allow-write` in compose), and removes
@@ -201,6 +204,7 @@ const processor = createOutboxProcessor(
         demoDataSeed(new Date()),
         new Date(),
         files,
+        notes,
       )
     : null,
   undefined,
@@ -250,7 +254,7 @@ if (demo) {
     signal,
     isSeeded: () => isDemoSeeded(sql, new Date(), demoAdmin !== null),
     reset: async () => {
-      await resetDemo(sql, { subscribers: subscribersSetup, admin: demoAdmin })
+      await resetDemo(sql, { subscribers: subscribersSetup, admin: demoAdmin, notes })
       console.log("Demo wiped and seeded again")
     },
     now: () => new Date(),

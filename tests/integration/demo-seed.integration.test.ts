@@ -61,6 +61,7 @@ import {
   readAdminNewsletterStats,
 } from "@server/subscribers/admin-newsletter.ts"
 import { SAMPLE_CATALOG_ITEMS, SAMPLE_CATALOG_SOURCES } from "@server/catalog/sample-catalog.ts"
+import { NOTES_OFF, NOTES_ON } from "@server/notes/setup.ts"
 
 /**
  * The public demo's seed, sample groups, wipe and reset (docs/demo.md) against a real Postgres with every
@@ -1003,5 +1004,80 @@ Deno.test("a visitor's sample groups have notes by several people on different d
       expect(group.authors).toBeGreaterThanOrEqual(2)
       expect(group.days).toBeGreaterThan(1)
     }
+  })
+})
+
+/** The rows of the notes example: notes, tags, their links and attachments, and their audit rows. */
+async function notesRows(sql: postgres.Sql) {
+  const [row] = await sql<
+    { notes: number; tags: number; noteTags: number; attachments: number; audits: number }[]
+  >`
+    SELECT
+      (SELECT COUNT(*)::int FROM notes) AS notes,
+      (SELECT COUNT(*)::int FROM tags) AS tags,
+      (SELECT COUNT(*)::int FROM note_tags) AS note_tags,
+      (SELECT COUNT(*)::int FROM note_attachments) AS attachments,
+      (SELECT COUNT(*)::int FROM audit_events
+        WHERE event_kind LIKE 'note.%' OR event_kind LIKE 'tag.%')
+        AS audits
+  `
+  return row
+}
+
+const NO_NOTES = { notes: 0, tags: 0, noteTags: 0, attachments: 0, audits: 0 }
+
+Deno.test("with notes off, the demo seed writes every person and group but no notes, tags or attachments", async () => {
+  await withSchema(async (sql) => {
+    expect(await seedDemo(new AppDbBase({ sql }), sql, { ...DEV_OPTIONS, notes: NOTES_OFF }))
+      .toBe(true)
+
+    expect(await notesRows(sql)).toEqual(NO_NOTES)
+    const counts = await count(sql)
+    // The fake people and the administrator.
+    expect(counts.users).toBe(FAKE_COUNTS.users + 1)
+    expect(counts.groups).toBeGreaterThan(FAKE_COUNTS.users)
+    expect(counts.invitations).toBeGreaterThan(0)
+    // Every starter-data request is closed, so the job writes no welcome note later.
+    expect(await sql`SELECT 1 FROM starter_data_requests WHERE done_at IS NULL`).toHaveLength(0)
+    // The imported group's import counts nothing it does not hold.
+    const [imported] = await sql<{ details: { notes: number; tags: number; count: number } }[]>`
+      SELECT details FROM audit_events WHERE event_kind = 'group.imported'
+    `
+    expect(imported.details).toEqual({ notes: 0, tags: 0, count: 0 })
+  })
+})
+
+Deno.test("with notes off, a visitor's sample groups have members but no notes, tags or files", async () => {
+  await withSchema(async (sql) => {
+    const db = new AppDbBase({ sql })
+    await seedDemo(db, sql, { ...OPTIONS, notes: NOTES_OFF })
+    const userId = await signUpVisitor(sql, "visitor@example.net")
+    const files = fakeFiles()
+
+    await seedWorkspace(db, sql, userId, OPTIONS.dataSeed, new Date(), files, NOTES_OFF)
+
+    const { groups } = await workspaceOf(sql, userId)
+    // The visitor's own first group and the three sample groups.
+    expect(groups).toHaveLength(fakeWorkspace(OPTIONS.dataSeed).length + 1)
+    const [{ members }] = await sql<{ members: number }[]>`
+      SELECT COUNT(*)::int AS members FROM group_members
+      WHERE group_id IN (SELECT group_id FROM group_members WHERE user_id = ${userId})
+    `
+    expect(members).toBeGreaterThan(groups.length)
+    expect(await notesRows(sql)).toEqual(NO_NOTES)
+    expect(files.stored.size).toBe(0)
+  })
+})
+
+Deno.test("with notes off, the reset wipes yesterday's notes and seeds the demo without any", async () => {
+  await withSchema(async (sql) => {
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null, notes: NOTES_ON }, DAY)
+    expect((await notesRows(sql)).notes).toBeGreaterThan(0)
+
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null, notes: NOTES_OFF }, DAY)
+
+    expect(await isDemoSeeded(sql, DAY)).toBe(true)
+    expect(await notesRows(sql)).toEqual(NO_NOTES)
+    expect((await count(sql)).users).toBe(FAKE_COUNTS.users)
   })
 })
