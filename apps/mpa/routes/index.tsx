@@ -704,7 +704,7 @@ function Questions(): JSX.Element {
  */
 export default define.page(function Home({ state }) {
   const { t } = useSite()
-  const spa = spaLinks(state.spaOrigin)
+  const spa = spaLinks(state)
   const head: SitePageHead = {
     ...homeHead(t),
     og: `home`,

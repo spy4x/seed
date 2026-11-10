@@ -7,7 +7,13 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
-import { type ActivityEvent, GroupRole, OPERATOR_DETAIL } from "@domain/groups"
+import {
+  type ActivityEvent,
+  GroupRole,
+  OPERATOR_DETAIL,
+  PRODUCT_ACTIVITY_KINDS,
+  type ProductActivityKind,
+} from "@domain/groups"
 import { type Navigate, NOTE_PATHS } from "./progressive.tsx"
 import { When } from "@spy4x/preact-ui/format"
 import { useAppText } from "./i18n.ts"
@@ -156,9 +162,13 @@ function text(value: unknown): string | null {
  * its own for every set of facts it may have kept (a title or none, a count or none), so no
  * sentence is built from pieces. `who` and `target` are filled in by {@link ActivitySentence};
  * `title`, `name`, `from`, `to` and `group` are what members typed, `role`, `fromRole` and
- * `toRole` are role numbers the sentence names, and `count` picks the plural form.
+ * `toRole` are role numbers the sentence names, and `count` picks the plural form. A product's kind
+ * (`productKinds`) reads as its own `message` says; a kind nobody knows reads as a generic sentence.
  */
-export function activityMessage(event: Pick<ActivityEvent, "kind" | "details">): ActivityMessage {
+export function activityMessage(
+  event: Pick<ActivityEvent, "kind" | "details">,
+  productKinds: readonly ProductActivityKind[] = PRODUCT_ACTIVITY_KINDS,
+): ActivityMessage {
   const { details } = event
   const count = typeof details.count === "number" ? details.count : null
   const group = text(details.groupName)
@@ -287,7 +297,8 @@ export function activityMessage(event: Pick<ActivityEvent, "kind" | "details">):
         : one(`GroupActivity.tagDeletedUnnamed`)
     }
     default:
-      return one(`GroupActivity.unknown`)
+      return productKinds.find((product) => product.kind === event.kind)?.message(details) ??
+        one(`GroupActivity.unknown`)
   }
 }
 
@@ -303,14 +314,16 @@ function roleIn(t: Translator<string>, role: string | number): string {
  * isolated (`<bdi>`), so a name in another script does not reorder the sentence, and are kept from
  * page translation. An operator reads "Support team", an account that is gone "Deleted user", a
  * person with no name "Someone"; those are the app's own words, so they are translated.
+ * `productKinds` are the product's own kinds, `PRODUCT_ACTIVITY_KINDS` unless a test passes others.
  */
 export function ActivitySentence(
-  { event }: {
+  { event, productKinds }: {
     event: Pick<ActivityEvent, "kind" | "actor" | "target" | "details"> & { at?: string | Date }
+    productKinds?: readonly ProductActivityKind[]
   },
 ): JSX.Element {
   const t = useAppText()
-  const message = activityMessage(event)
+  const message = activityMessage(event, productKinds)
   const { values } = message
   const operator = OPERATOR_DETAIL in event.details
   const actorName = operator || event.actor.userId === null ? `` : event.actor.name

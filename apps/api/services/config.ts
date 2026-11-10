@@ -2,6 +2,7 @@ import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/notes"
 import { OPERATION_BUDGET, type OperationBudget } from "../middlewares/operation-rate-limits.ts"
 import { processEnv } from "@spy4x/platform/server/process"
 import { isSpaOn, readApiEnv } from "./config-env.ts"
+import { readNotesSetup } from "@server/notes/setup.ts"
 
 const env = readApiEnv(processEnv)
 // loadConfig names a failing variable but not the rule it broke, so this one says it outright.
@@ -37,6 +38,8 @@ export class Config {
   guestMode = env.GUEST_MODE !== "false"
   /** Whether the SPA runs (`isSpaOn`); `false` closes its account routes. */
   spa = isSpaOn(env)
+  /** The notes example: on unless `NOTES=false` (`readNotesSetup`); off, nothing serves notes. */
+  notes = readNotesSetup(processEnv)
   /** What one person may upload to note attachments per hour (docs/files.md, "Upload budget"). */
   attachmentUploadBudget = {
     files: wholeNumber(

@@ -101,6 +101,10 @@ The owner of a group downloads it as one JSON file, and anyone who may create a 
 from such a file. The file holds one list per registered aggregate, keyed by its `kind`. An
 aggregate that does not register is left out of every export.
 
+The owner can also download the group as spreadsheets (`GET /api/groups/:groupId/export?format=csv`):
+a ZIP with one `<kind>.csv` per aggregate that has a `csv` part, and a `README.txt` that names the
+ones without. Nothing imports it; it is for a person to open.
+
 1. **Domain.** Write the entry's arktype schema and a parser that reuses the aggregate's field
    rules (`noteExportEntrySchema` and `parseNoteExportEntry`). An entry has an `id`, what a person
    wrote, and the ids it points at. Never a person, a secret, a version or a deleted row. Refuse
@@ -113,6 +117,13 @@ aggregate that does not register is left out of every export.
    (`libs/domain/groups/export-import.ts`) and still reads the older version.
 5. Add it to `tests/integration/group-files.integration.test.ts`: a round trip gives the same
    contents under new ids, and a failure halfway writes nothing.
+6. **Spreadsheet.** Give it a `csv` part: the columns of `CsvColumn` (`@spy4x/platform/universal/csv`),
+   each a field of the entry, its `header` an `app` catalog key such as `NoteSpreadsheet.title`
+   (add the key to `i18n/app/*.ts` in every language, `i18n/TRANSLATING.md`), and a `format` for a
+   field that is not text: a date as its ISO 8601 text, a list joined into one cell. The writer
+   adds the byte order mark and guards every text cell against spreadsheet formulas; never write a
+   second guard. Without a `csv` part the aggregate is listed in the ZIP's `README.txt` as not
+   available as a spreadsheet.
 
 | Part                           | What it does                                                               |
 | ------------------------------ | -------------------------------------------------------------------------- |
@@ -122,6 +133,7 @@ aggregate that does not register is left out of every export.
 | `parse`, `check`               | One entry, and what is wrong across entries, such as a duplicate name      |
 | `read(sql, groupId)`           | The group's live rows, in pages                                            |
 | `write(tx, entries, context)`  | Writes the rows with new ids, and returns the new id of each file id      |
+| `csv`                          | The columns of its spreadsheet, if it has one                              |
 
 `write` gives every row a new `uuidV7()` id and stamps it with `context.changeSequence`. It maps
 what a row points at with `context.newIdOf(kind, fileId)`.

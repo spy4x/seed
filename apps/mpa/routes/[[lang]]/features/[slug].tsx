@@ -78,15 +78,15 @@ export const handler = define.handlers({
           jsonLd: pageJsonLd(t, ctx.state.webAppOrigin, page, language),
         }}
       >
-        <FeaturePageBody page={page} demo={demoAddress(ctx.state.spaOrigin, page)} />
+        <FeaturePageBody page={page} demo={demoAddress(ctx.state, page)} />
       </SiteFrame>,
     )
   },
 })
 
 /** The demo's `/try`, opening on the screen where the feature shows when the page names one. */
-function demoAddress(spaOrigin: string, page: FeaturePage): string {
-  const start = spaLinks(spaOrigin).try
+function demoAddress(state: Parameters<typeof spaLinks>[0], page: FeaturePage): string {
+  const start = spaLinks(state).try
   return page.demo ? `${start}?${new URLSearchParams({ next: page.demo })}` : start
 }
 

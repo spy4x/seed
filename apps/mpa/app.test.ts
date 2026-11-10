@@ -271,6 +271,18 @@ describe("securityHeadersMiddleware", () => {
     )
   })
 
+  it("lets the pricing form redirect to a demo on its own host", async () => {
+    const response =
+      await (await securedApp({ ...config, demoOrigin: "https://demo.example.com" }))(
+        new Request(`${config.webAppOrigin}/page`),
+        info,
+      )
+
+    expect(response.headers.get("content-security-policy")).toBe(
+      policy.replace("form-action 'self'", "form-action 'self' https://demo.example.com"),
+    )
+  })
+
   it("allows the Umami origin to load its tracker and take its events, and nothing more", async () => {
     const analytics = { origin: "https://stats.example.com", websiteId: "site" }
 

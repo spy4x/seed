@@ -1,6 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { MiddlewareHandler } from "hono"
+import { NOTES_OFF, type NotesSetup } from "@server/notes/setup.ts"
 import {
   ADMIN_GROUP_NO_FILTER,
   type AdminGroupDetail,
@@ -118,7 +119,13 @@ function buildApp(
     outcome = AdminGroupActOutcome.Done,
     stored = true,
     auditFails = false,
-  }: { outcome?: AdminGroupActOutcome; stored?: boolean; auditFails?: boolean } = {},
+    notes,
+  }: {
+    outcome?: AdminGroupActOutcome
+    stored?: boolean
+    auditFails?: boolean
+    notes?: NotesSetup
+  } = {},
 ) {
   const calls: unknown[][] = []
   const groups: AdminGroupsService = {
@@ -161,7 +168,7 @@ function buildApp(
   const route = createAdminRoute({
     auth: testSessionGuards(),
     mutationGuards: testMutationGuards,
-    modules: [createAdminGroupsRoutes({ limit: passThrough, groups })],
+    modules: [createAdminGroupsRoutes({ limit: passThrough, groups, notes })],
   })
   return { app: mountRoute(`/admin`, route, auth), calls }
 }
@@ -226,6 +233,20 @@ describe(`operator area group routes`, () => {
       expect(calls).toEqual([])
     })
   }
+
+  it(`answers 404 on every widget and file route with the notes off, reading nothing`, async () => {
+    const { app, calls } = buildApp(operator(), { notes: NOTES_OFF })
+    const noteReads = ROUTES.filter(({ path }) => /\/(widgets|files)\b/.test(path))
+    expect(noteReads).toHaveLength(6)
+    for (const route of noteReads) {
+      expect({ ...route, status: (await send(app, route)).status }).toEqual({
+        ...route,
+        status: 404,
+      })
+    }
+    expect(calls).toEqual([])
+    expect((await send(app, ROUTES[2])).status).toBe(200)
+  })
 
   it(`lists groups with the search, status, sort and page the address asks for`, async () => {
     const { app, calls } = buildApp()

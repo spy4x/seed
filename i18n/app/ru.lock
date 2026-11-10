@@ -597,6 +597,8 @@ GroupPicker.menu	4e8d467dd755ee8e
 GroupPicker.new	df796c655f6f5ed4
 GroupPicker.sheetHeading	34ca0e76608842ff
 GroupPicker.tip	7de5ae49b9765b99
+GroupSpreadsheets.notSpreadsheets	cadd23232e3de41d
+GroupSpreadsheets.readme	541e4f79676f4022
 GroupTransfer.cancel	19766ed6ccb2f4a3
 GroupTransfer.explanation	592e57b0d0602343
 GroupTransfer.failed	952fc777dd1c025d
@@ -845,6 +847,12 @@ NoteMessages.titleRequired	8b33880c49b7c754
 NotePeople.former	1ef1541722cf6680
 NotePeople.unnamed	aab150636b979b37
 NotePeople.you	08b041935798fbf6
+NoteSpreadsheet.created	d70b9e24bca26b40
+NoteSpreadsheet.id	3843971dcfdee508
+NoteSpreadsheet.tagIds	3658a04cf48c7a53
+NoteSpreadsheet.text	71988c4d8e0803ba
+NoteSpreadsheet.title	7e8cd2056da73a7f
+NoteSpreadsheet.updated	d8c5670ad98e508b
 NoteSync.gone	86c9b552d175813f
 NoteSync.version	5cd26eb9db6ed796
 NoteToasts.moved	5424e6438bdccb89

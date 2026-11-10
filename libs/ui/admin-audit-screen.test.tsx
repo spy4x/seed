@@ -15,6 +15,7 @@ import {
   type AdminAuditEntry,
   type AdminAuditFilter,
   AuthAuditEventType,
+  parseAuditEvent,
 } from "@domain/identity"
 import { BILLING_AUDIT_EVENTS } from "@domain/billing"
 import { FormatContext } from "@spy4x/preact-ui/format"
@@ -23,10 +24,14 @@ import {
   AdminAuditScreen,
   type AdminAuditScreenProps,
   auditEventLabel,
+  eventOptions,
 } from "./admin-audit-screen.tsx"
 import { ADMIN_ENGLISH as T, ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import { ACTIVITY_KINDS, type ProductActivityKind } from "@domain/groups"
+import admin from "@i18n/admin/en.ts"
 const window = new Window({ url: "http://admin.localhost/audit" })
 const own = {
   document: globalThis.document,
@@ -460,5 +465,37 @@ describe("the audit log in en-XA", () => {
         `Firefox on Linux`,
       ]),
     ).toEqual([])
+  })
+})
+
+describe("a product's own activity kind in the audit log", () => {
+  const currencyChanged: ProductActivityKind = {
+    kind: `household.base_currency_changed`,
+    label: `AdminAuditEvent.baseCurrencyChanged`,
+    message: () => ({ key: `GroupActivity.baseCurrencyChanged`, values: {} }),
+    describe: (who) => `${who} changed the main currency`,
+  }
+  // The product's key sits in its own copy of the `admin` catalog; this translator stands in for it.
+  const t = createTranslator({
+    language: `en`,
+    catalogs: [{
+      source: { ...admin, "AdminAuditEvent.baseCurrencyChanged": `Main currency changed` },
+    }],
+  })
+  const event = activityAuditEvent(currencyChanged.kind)
+
+  it("titles the product's entry with the product's label", () => {
+    expect(auditEventLabel(t, event, null, [currencyChanged])).toBe(`Main currency changed`)
+  })
+
+  it("offers the product's kind in the event filter, after Seed's group kinds", () => {
+    const options = eventOptions(t, [currencyChanged])
+    const index = options.findIndex((option) => option.value === event)
+    expect(options[index]?.label).toBe(`Group: Main currency changed`)
+    expect(options[index - 1]?.value).toBe(activityAuditEvent(ACTIVITY_KINDS.at(-1)!))
+  })
+
+  it("accepts the product's kind as a filter value", () => {
+    expect(parseAuditEvent(event)).toEqual({ source: `activity`, kind: currencyChanged.kind })
   })
 })

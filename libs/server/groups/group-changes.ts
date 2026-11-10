@@ -79,7 +79,8 @@ export async function forgetChangesBefore(
  * whose row is live again in the group on the same page (a restored note, a note moved back) is
  * left out, because the device applies upserts before tombstones and would delete the row it just
  * put. The row's own sequence is always newer than its tombstone's, so when the row is on a later
- * page the tombstone comes first and the row puts it back.
+ * page the tombstone comes first and the row puts it back. Only `aggregates` are read, their
+ * tombstones too: an aggregate left out (notes with `NOTES=false`) sends nothing.
  */
 export async function readGroupChanges(
   sql: postgres.Sql,
@@ -106,8 +107,11 @@ export async function readGroupChanges(
           WHERE group_id = ${groupId} AND change_sequence > ${after}
         `)
       }
-      const union = parts.reduce((all, part) => transaction`${all} UNION ALL ${part}`)
-      const boundary = (
+      // No aggregate and no tombstones to read (a first pull with every aggregate off): no page end.
+      const union = parts.length > 0
+        ? parts.reduce((all, part) => transaction`${all} UNION ALL ${part}`)
+        : null
+      const boundary = union && (
         await transaction<{ boundary: string }[]>`
           SELECT changes.sequence::text AS boundary FROM (${union}) AS changes
           ORDER BY changes.sequence OFFSET ${limit} LIMIT 1
@@ -122,6 +126,8 @@ export async function readGroupChanges(
       if (plan.status === "too-old") return { status: "too-old", current }
       const upserts: Record<string, unknown[]> = {}
       const live = new Set<string>()
+      // Only the tombstones of the aggregates read: one switched off leaves none of its ids.
+      const kinds = new Set(aggregates.map((aggregate) => aggregate.kind))
       for (const aggregate of aggregates) {
         const rows = await aggregate.rows(transaction, groupId, after, plan.through)
         upserts[aggregate.kind] = rows
@@ -135,7 +141,7 @@ export async function readGroupChanges(
             AND change_sequence <= ${plan.through}
           ORDER BY change_sequence, kind, entity_id
         `
-      ).filter((gone) => !live.has(`${gone.kind}:${gone.id}`))
+      ).filter((gone) => kinds.has(gone.kind) && !live.has(`${gone.kind}:${gone.id}`))
       return {
         status: "changes",
         after,

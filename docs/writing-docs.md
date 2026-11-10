@@ -5,7 +5,7 @@ scan first, then copy a command. Every page under `docs/` that the website publi
 
 ## The four sections
 
-`apps/mpa/docs-site.ts` (`PUBLISHED_DOCS`) and `docs/README.md` list the guides in four groups:
+`apps/mpa/docs-list.ts` (`PUBLISHED_DOCS`) and `docs/README.md` list the guides in four groups:
 
 | Group       | What goes there                                                        |
 | ----------- | ---------------------------------------------------------------------- |
@@ -70,9 +70,13 @@ The website refuses to start without any of them.
 
 - The pointer line under the heading stays: `> Also on the website: …` (`pointerLine` in
   `docs-site.ts`).
-- A new published page needs its import and its `PUBLISHED_DOCS` entry in `docs-site.ts`, its line
-  in `.dockerignore` and in `infra/deploy/include.txt`, and the pointer line.
-  `apps/mpa/docs-site.test.ts` checks all four. List it in `docs/README.md` too.
+- A new published page needs its import and its `PUBLISHED_DOCS` entry in
+  `apps/mpa/docs-list.ts`, its line in `.dockerignore` and in `infra/deploy/include.txt`, and the
+  pointer line. `apps/mpa/docs-site.test.ts` and `tests/dockerignore.test.ts` check all four. List
+  it in `docs/README.md` too.
+- The entry names the file by its path from the repository's root, so a page may sit in a folder
+  such as `docs/<product>/`. Its relative links resolve from that folder, and `include.txt` needs
+  the folder's own line too ([start-a-product.md](start-a-product.md#seeds-own-pages-and-copy)).
 - Moving a section breaks links to its anchor. Before you finish, run `git grep -n '<file>.md#'`
   for each file you changed and fix every hit: code comments, `AGENTS.md`, `i18n/`, other docs and
   the website's feature pages all link into the guides.

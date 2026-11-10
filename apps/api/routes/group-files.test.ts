@@ -112,8 +112,8 @@ function post(path: string, body: string, headers: Record<string, string> = same
   return new Request(`http://local/groups${path}`, { method: "POST", headers, body })
 }
 
-function exportRequest(site = "same-origin") {
-  return new Request(`http://local/groups/${GROUP_ID}/export`, {
+function exportRequest(site = "same-origin", query = "") {
+  return new Request(`http://local/groups/${GROUP_ID}/export${query}`, {
     headers: { "sec-fetch-site": site },
   })
 }
@@ -135,6 +135,7 @@ describe("group export route", () => {
     exportGroup: () =>
       Promise.resolve({
         fileName: "family-2026-10-21.json",
+        contentType: "application/json; charset=utf-8",
         chunks: (async function* () {
           yield `{"a":`
           yield `1}`
@@ -153,20 +154,88 @@ describe("group export route", () => {
     expect(await response.json()).toEqual({ a: 1 })
   })
 
-  it("refuses every member but the owner, and a stranger as a missing group", async () => {
-    for (
-      const [role, status, code] of [
-        [GroupRole.ADMIN, 403, "ROLE_INSUFFICIENT"],
-        [GroupRole.EDITOR, 403, "ROLE_INSUFFICIENT"],
-        [GroupRole.VIEWER, 403, "ROLE_INSUFFICIENT"],
-        [undefined, 404, "GROUP_NOT_FOUND"],
-      ] as const
-    ) {
-      const roles: Record<number, GroupRole> = role === undefined ? {} : { [OWNER]: role }
-      const response = await app({ roles, porter: streaming }).request(exportRequest())
-      expect(response.status).toBe(status)
-      expect((await apiError(response)).reason).toBe(code)
+  it("refuses every member but the owner, and a stranger as a missing group, in each format", async () => {
+    for (const query of ["", "?format=json", "?format=csv"]) {
+      for (
+        const [role, status, code] of [
+          [GroupRole.ADMIN, 403, "ROLE_INSUFFICIENT"],
+          [GroupRole.EDITOR, 403, "ROLE_INSUFFICIENT"],
+          [GroupRole.VIEWER, 403, "ROLE_INSUFFICIENT"],
+          [undefined, 404, "GROUP_NOT_FOUND"],
+        ] as const
+      ) {
+        const roles: Record<number, GroupRole> = role === undefined ? {} : { [OWNER]: role }
+        const response = await app({ roles, porter: streaming })
+          .request(exportRequest("same-origin", query))
+        expect(response.status).toBe(status)
+        expect((await apiError(response)).reason).toBe(code)
+      }
     }
+  })
+
+  it("streams the spreadsheets as a ZIP attachment in the format and language asked for", async () => {
+    let asked: unknown = null
+    const zip = new Uint8Array([0x50, 0x4b, 0x03, 0x04])
+    const response = await app({
+      roles: { [OWNER]: GroupRole.OWNER },
+      porter: {
+        exportGroup: (_groupId, _actorId, _requestId, options) => {
+          asked = options
+          return Promise.resolve({
+            fileName: "family-2026-10-21.zip",
+            contentType: "application/zip",
+            chunks: (async function* () {
+              yield zip
+            })(),
+          })
+        },
+      },
+    }).request(exportRequest("same-origin", "?format=csv&language=de"))
+    expect(response.status).toBe(200)
+    expect(asked).toEqual({ format: "csv", language: "de" })
+    expect(response.headers.get("content-type")).toBe("application/zip")
+    expect(response.headers.get("content-disposition")).toBe(
+      `attachment; filename="family-2026-10-21.zip"`,
+    )
+    expect(response.headers.get("cache-control")).toBe("no-store")
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(zip)
+  })
+
+  it("refuses a format it does not write before the group is read", async () => {
+    let reached = false
+    const owner = app({
+      roles: { [OWNER]: GroupRole.OWNER },
+      porter: {
+        exportGroup: () => {
+          reached = true
+          return streaming.exportGroup!(GROUP_ID, OWNER)
+        },
+      },
+    })
+    for (const query of ["?format=xlsx", "?format=", "?format=CSV"]) {
+      const response = await owner.request(exportRequest("same-origin", query))
+      expect(response.status).toBe(400)
+      expect((await apiError(response)).reason).toBe("INVALID_REQUEST")
+    }
+    expect(reached).toBe(false)
+  })
+
+  it("answers a 500, not half a ZIP, when the first piece cannot be read", async () => {
+    const response = await app({
+      roles: { [OWNER]: GroupRole.OWNER },
+      porter: {
+        exportGroup: () =>
+          Promise.resolve({
+            fileName: "family-2026-10-21.zip",
+            contentType: "application/zip",
+            // deno-lint-ignore require-yield
+            chunks: (async function* () {
+              throw new Error("the database is down")
+            })(),
+          }),
+      },
+    }).request(exportRequest("same-origin", "?format=csv"))
+    expect(response.status).toBe(500)
   })
 
   it("stops a person's exports past the hourly budget, which other sites cannot spend", async () => {
@@ -175,6 +244,7 @@ describe("group export route", () => {
       exportGroup: () =>
         Promise.resolve({
           fileName: "family-2026-10-21.json",
+          contentType: "application/json; charset=utf-8",
           chunks: (async function* () {
             yield `{}`
           })(),

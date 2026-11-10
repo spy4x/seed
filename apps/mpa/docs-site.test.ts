@@ -10,6 +10,7 @@ import {
   firstSentence,
   isPublishedDoc,
   pointerLine,
+  PUBLISHED_GUIDES,
   readDoc,
   rewriteDocLinks,
 } from "./docs-site.ts"
@@ -48,6 +49,42 @@ describe(`rewriteDocLinks`, () => {
       .toBe(`<p><a href="#2-database-libs-server-db">x</a></p>`)
     expect(rewrite(`aggregates.md#2-database-libsserverdb`))
       .toBe(`<p><a href="/docs/aggregates#2-database-libs-server-db">x</a></p>`)
+  })
+
+  it(`resolves the links of a guide in a subfolder of docs/ against that folder`, () => {
+    const guide = (file: string, slug: string, text = `# ${slug}\n`) => ({
+      file,
+      slug,
+      summary: slug,
+      text,
+    })
+    const groups = [{
+      title: `Guides`,
+      docs: [
+        guide(`docs/product/install.md`, `install`),
+        guide(`docs/product/backups.md`, `backups`, `# Backups\n\n## Daily runs\n`),
+        guide(`docs/deploy.md`, `deploy`),
+      ],
+    }]
+    const html = [
+      `backups.md#daily-runs`,
+      `./backups.md`,
+      `../deploy.md`,
+      `../handoff.md`,
+      `../token-api.md`,
+    ]
+      .map((href) => `<a href="${href}">x</a>`).join(``)
+
+    const links = [...rewriteDocLinks(html, german, `install`, groups).matchAll(/href="([^"]*)"/g)]
+      .map((match) => match[1])
+
+    expect(links).toEqual([
+      `/de/docs/backups#daily-runs`,
+      `/de/docs/backups`,
+      `/de/docs/deploy`,
+      `${REPOSITORY_URL}/blob/main/docs/handoff.md`,
+      `/de/docs/api`,
+    ])
   })
 
   it(`leaves an anchor in the page and a link to another site as they are`, () => {
@@ -89,10 +126,11 @@ describe(`the published guides`, () => {
     }
   })
 
-  it(`starts every published guide with its pointer to the website`, async () => {
-    for (const slug of DOC_SLUGS) {
-      const source = await Deno.readTextFile(`${ROOT}docs/${slug}.md`)
-      expect(source.split(`\n`).slice(0, 3), slug).toEqual([
+  it(`imports every published guide from the file it names, which starts with its pointer to the website`, async () => {
+    for (const { file, slug, text } of PUBLISHED_GUIDES) {
+      const source = await Deno.readTextFile(`${ROOT}${file}`)
+      expect(text === source, file).toBe(true)
+      expect(source.split(`\n`).slice(0, 3), file).toEqual([
         expect.stringMatching(/^# /),
         ``,
         pointerLine(slug),

@@ -92,4 +92,29 @@ describe("readMpaConfig", () => {
       "INDEXNOW_KEY must be",
     )
   })
+
+  it("keeps the try links on the app when DEMO_ORIGIN is empty, and keeps only the demo's origin", () => {
+    expect(readMpaConfig(env(prod)).demoOrigin).toBeUndefined()
+    expect(readMpaConfig(env({ ...prod, DEMO_ORIGIN: "" })).demoOrigin).toBeUndefined()
+    expect(readMpaConfig(env({ ...prod, DEMO_ORIGIN: "https://Demo.example.com/" })).demoOrigin)
+      .toBe("https://demo.example.com")
+  })
+
+  it("refuses to start with a DEMO_ORIGIN that is not a bare https origin", () => {
+    for (
+      const origin of [
+        "javascript:alert(1)",
+        "http://demo.example.com",
+        "demo.example.com",
+        "https://demo.example.com/try",
+        "https://demo.example.com/?next=1",
+        "https://demo.example.com/#top",
+        "https://user@demo.example.com",
+      ]
+    ) {
+      expect(() => readMpaConfig(env({ ...prod, DEMO_ORIGIN: origin })), origin).toThrow(
+        "DEMO_ORIGIN must be an origin",
+      )
+    }
+  })
 })

@@ -15,6 +15,11 @@ export interface MpaConfig {
    * derives from `ENV` and `DOMAIN`, where the SPA is served.
    */
   apiOrigin: string
+  /**
+   * The origin of a demo on a host of its own, such as `https://demo.example.com`, from
+   * `DEMO_ORIGIN`: every "try it" link goes to its `/try`. `undefined` keeps them on the app.
+   */
+  demoOrigin?: string
   /** Where page views and events go, or `undefined` when the website runs without analytics. */
   analytics?: AnalyticsConfig
   /**
@@ -58,9 +63,10 @@ export const ROBOTS_POLICY: RobotsPolicy = {
 /**
  * Reads the configuration from the environment: `ENV`, `DOMAIN` (as the API reads them), `API_URL`
  * and `MPA_DOMAIN`, the optional pair `MPA_UMAMI_ORIGIN` and `MPA_UMAMI_WEBSITE_ID`, and the
- * optional `INDEXNOW_KEY`. Throws when a required one is missing, when `MPA_DOMAIN` carries a scheme
- * (it would become the host `https`), when only one of the Umami pair is set, or when the IndexNow
- * key is malformed, so a misconfigured MPA refuses to start.
+ * optional `INDEXNOW_KEY` and `DEMO_ORIGIN`. Throws when a required one is missing, when
+ * `MPA_DOMAIN` carries a scheme (it would become the host `https`), when only one of the Umami pair
+ * is set, when the IndexNow key is malformed, or when `DEMO_ORIGIN` is not a bare `https:` origin,
+ * so a misconfigured MPA refuses to start.
  */
 export function readMpaConfig(env: { get(name: string): string | undefined }): MpaConfig {
   const required = (name: string): string => {
@@ -79,7 +85,18 @@ export function readMpaConfig(env: { get(name: string): string | undefined }): M
     apiOrigin,
     analytics: readAnalytics(env),
     indexNowKey: readIndexNowKey(env) ?? undefined,
+    demoOrigin: readDemoOrigin(env.get("DEMO_ORIGIN")),
   }
+}
+
+/** An `https:` origin and nothing more, or `undefined` when the setting is empty. */
+function readDemoOrigin(value = ""): string | undefined {
+  if (!value) return undefined
+  const url = URL.parse(value)
+  if (url?.protocol !== `https:` || `${url.origin}/` !== url.href) {
+    throw new Error(`DEMO_ORIGIN must be an origin such as https://demo.example.com`)
+  }
+  return url.origin
 }
 
 /** Both Umami values, or neither: one alone is a mistake, not a choice to turn analytics off. */

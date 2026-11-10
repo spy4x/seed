@@ -102,6 +102,8 @@ content.
 One exception helps the operator remove abusive content. A group's Files tab shows each file's name
 and the title of its note. The operator can open or download the file through the admin API, since
 the admin host's `img-src 'self'` cannot load the file store.
+With the notes off (`NOTES=false`), the group's file and overview widget routes are not mounted
+and answer 404, since every file sits on a note and every widget counts notes.
 
 | Route under `/api/admin/groups/:id/files/:fileId` | Audit row |
 | ------------------------------------------------- | --------- |
