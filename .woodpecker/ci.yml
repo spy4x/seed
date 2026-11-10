@@ -385,6 +385,9 @@ steps:
     # nothing (`--no-push`), as in release.yml. All four are self-contained, so no base image has
     # to be published first. One step each: kaniko builds in its own root
     # filesystem, so two builds in one container would share it.
+    # Base images come through Google's public Docker Hub mirror (`--registry-mirror`), because
+    # anonymous pulls from Docker Hub hit its rate limit and failed all four steps (#923). The
+    # mirror needs no login; an image it lacks is pulled from Docker Hub as before.
     # A pull request builds them only when it changes a file that goes into an image (#876): the
     # build context that .dockerignore lets in (each Dockerfile copies it whole), the Dockerfiles,
     # and this file. A push to `main` and a tag always build them.
@@ -392,6 +395,7 @@ steps:
     when: *image_when
     commands:
       - executor --context "$$PWD" --dockerfile apps/api/dockerfile.node --no-push
+        --registry-mirror mirror.gcr.io
     depends_on: []
 
   image-bun:
@@ -400,6 +404,7 @@ steps:
     when: *image_when
     commands:
       - executor --context "$$PWD" --dockerfile apps/api/dockerfile.bun --no-push
+        --registry-mirror mirror.gcr.io
     depends_on: []
 
   image-mpa-node:
@@ -408,6 +413,7 @@ steps:
     when: *image_when
     commands:
       - executor --context "$$PWD" --dockerfile apps/mpa/dockerfile.node --no-push
+        --registry-mirror mirror.gcr.io
     depends_on: []
 
   image-mpa-bun:
@@ -416,6 +422,7 @@ steps:
     when: *image_when
     commands:
       - executor --context "$$PWD" --dockerfile apps/mpa/dockerfile.bun --no-push
+        --registry-mirror mirror.gcr.io
     depends_on: []
 
 services:
