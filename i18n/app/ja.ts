@@ -1950,4 +1950,13 @@ export default {
   "Search.benchmarkDetail": "大きなグループがこのデバイスでどれだけ快適に動くかを測定",
   "Shortcuts.runBenchmark": "ベンチマークを実行",
   "Shortcuts.copyResults": "結果をコピー",
+  "NoteSpreadsheet.id": "ID",
+  "NoteSpreadsheet.title": "タイトル",
+  "NoteSpreadsheet.text": "本文",
+  "NoteSpreadsheet.tagIds": "タグID",
+  "NoteSpreadsheet.created": "作成日時",
+  "NoteSpreadsheet.updated": "最終更新日時",
+  "GroupSpreadsheets.readme":
+    "このグループのデータを表計算ファイルにしたものです。項目の種類ごとに1つのCSVファイルがあり、文字コードはUTF-8、1行目は見出しです。日時はISO 8601形式（UTC）です。グループを別のアプリに移すには、代わりにJSONファイルをダウンロードしてください。インポートできるのはJSONファイルだけです。",
+  "GroupSpreadsheets.notSpreadsheets": "表計算ファイルにないもの（JSONファイルに含まれます）：",
 } satisfies Catalog

@@ -88,14 +88,17 @@ export const OG_IMAGE_SIZE = { width: 1200, height: 630 } as const
 
 /**
  * The SPA's sign-in and sign-up pages, and `/try`, which starts a guest account: the
- * website has no session, the product signs people in. A link to `try` carries `rel="nofollow"`
+ * website has no session, the product signs people in. `/try` is the demo's when `DEMO_ORIGIN`
+ * puts the demo on a host of its own. A link to `try` carries `rel="nofollow"`
  * ({@link TRY_REL}), and the app's `robots.txt` keeps crawlers off it.
  */
-export function spaLinks(spaOrigin: string): { signIn: string; signUp: string; try: string } {
+export function spaLinks(
+  { spaOrigin, demoOrigin = spaOrigin }: Pick<State, "spaOrigin" | "demoOrigin">,
+): { signIn: string; signUp: string; try: string } {
   return {
     signIn: `${spaOrigin}${SCREEN_PATHS.signIn}`,
     signUp: `${spaOrigin}${SCREEN_PATHS.signUp}`,
-    try: `${spaOrigin}/try`,
+    try: `${demoOrigin}/try`,
   }
 }
 
@@ -259,7 +262,13 @@ export interface SiteFrameProps {
    */
   state: Pick<
     State,
-    "webAppOrigin" | "spaOrigin" | "newsletter" | "blog" | "blogLanguages" | "contactLinks"
+    | "webAppOrigin"
+    | "spaOrigin"
+    | "demoOrigin"
+    | "newsletter"
+    | "blog"
+    | "blogLanguages"
+    | "contactLinks"
   >
   /**
    * The page's path on this website in the default language, such as `/pricing`. The frame puts
@@ -304,7 +313,7 @@ export function SiteFrame(
   { state, path, head, footerNewsletter = true, children }: SiteFrameProps,
 ): JSX.Element {
   const { t, language, href } = useSite()
-  const spa = spaLinks(state.spaOrigin)
+  const spa = spaLinks(state)
   const og = head.og ?? `home`
   const blog = state.blog === true
   const origin = state.webAppOrigin

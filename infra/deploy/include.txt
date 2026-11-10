@@ -4,7 +4,8 @@ libs/***
 i18n/***
 infra/***
 # The MPA renders the API reference and the published guides from these files
-# (apps/mpa/api-docs.ts, PUBLISHED_DOCS in apps/mpa/docs-site.ts).
+# (apps/mpa/api-docs.ts, PUBLISHED_DOCS in apps/mpa/docs-list.ts). rsync copies a file only when
+# each folder above it is listed too: a guide in docs/<product>/ needs a docs/<product>/ line.
 docs/
 docs/token-api.md
 docs/get-started.md

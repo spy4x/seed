@@ -77,6 +77,7 @@ function AnalyticsScripts({ state, url }: { state: State; url: URL }): JSX.Eleme
         defer
         src="/analytics.js"
         data-spa-origin={state.spaOrigin}
+        data-demo-origin={state.demoOrigin}
         data-repository={REPOSITORY_URL}
       >
       </script>

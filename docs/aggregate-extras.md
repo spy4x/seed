@@ -2,8 +2,8 @@
 
 > Also on the website: [seedsaas.com/docs/aggregate-extras](https://seedsaas.com/docs/aggregate-extras).
 
-This page connects a feature to the rest of the app: group settings, the overview, the inbox, a
-new account's first minutes and the public demo. Each section copies what notes or groups already
+This page connects a feature to the rest of the app: group settings, the activity log, the
+overview, the inbox, a new account's first minutes and the public demo. Each section copies what notes or groups already
 do.
 
 You need:
@@ -48,6 +48,42 @@ A setting only your product has, such as a finance product's main currency, keep
 and command instead, so taking Seed's later changes never conflicts in the group files. Pass its
 section as `settings` to `GroupEditorScreen` in `apps/spa/src/views/GroupEditorView.tsx`: it shows
 under the General tab's details, for every role, and the section itself decides who may change it.
+
+## Add a kind to the activity log
+
+A change only your product has, such as a household's main currency, gets a line of its own in the
+group's activity panel and the admin audit log. Seed's own files stay untouched.
+
+1. **Write the event.** In the change's transaction, call `writeAuditEvent(tx, …)` from
+   `libs/server/groups/audit.ts` with your kind and the facts its sentence needs, as
+   `libs/server/groups/postgres-group-repository.ts` does. A kind is two lower-case words joined by a dot, each of at most 31 letters and
+   underscores, such as `household.base_currency_changed`; the admin audit filter accepts no other
+   shape. Details hold names and codes, never a body or an address.
+2. **Register the kind.** Replace `libs/domain/groups/product-activity.ts` with your own list, and
+   add that path to `.seed/skip`:
+
+   ```ts
+   import type { ProductActivityKind } from "./activity.ts"
+
+   export const PRODUCT_ACTIVITY_KINDS: readonly ProductActivityKind[] = [{
+     kind: `household.base_currency_changed`,
+     label: `AdminAuditEvent.baseCurrencyChanged`,
+     message: (details) => ({
+       key: `GroupActivity.baseCurrencyChanged`,
+       values: { from: details.from, to: details.to },
+     }),
+     describe: (who, { from, to }) => `${who} changed the main currency from ${from} to ${to}`,
+   }]
+   ```
+
+3. **Add the words.** Put `label`'s key in every `i18n/admin/*.ts` and `message`'s key in every
+   `i18n/app/*.ts`, as [Translating](../i18n/TRANSLATING.md) says. The panel fills in `{who}`; wrap
+   what members typed in `<value>…</value>`, as Seed's messages do:
+   `"<who>{who}</who> changed the main currency from <value>{from}</value> to <value>{to}</value>"`.
+
+The panel, `describeActivity` and the admin audit log, with its event filter, then name the event.
+A kind Seed already has keeps Seed's sentence, and a kind nobody registered reads "changed something
+in the group".
 
 ## Add a widget to the overview
 

@@ -107,6 +107,11 @@ Deno.test("the api container receives the sign-up mode", async () => {
   expect(await environmentOf("api")).toContain("SIGN_UP")
 })
 
+// Without it `NOTES=false` in `.env` would leave the notes API on: the API never sees it.
+Deno.test("the api container receives the notes switch", async () => {
+  expect(await environmentOf("api")).toContain("NOTES")
+})
+
 /** The check of every service that runs on Deno: `apps/healthcheck.ts`, before its optional path. */
 const DENO_HEALTHCHECK = [
   "CMD",

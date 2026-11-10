@@ -191,7 +191,7 @@ steps:
     # `main` and stays there more than a day, the full run goes back on pull requests.
     # A pull request runs it only when it changes a file the built website comes from (#821): the
     # MPA, what its module graph imports (libs/ui, libs/domain, four libs/server members, the
-    # catalogs, the guides docs-site.ts publishes), the two API files of its stand-in blog API, and
+    # catalogs, the guides docs-list.ts publishes), the two API files of its stand-in blog API, and
     # the manifests, the lockfile and this file. A push to `main` and a tag always run it. Woodpecker
     # applies `path` to pull requests and pushes only, and runs the step when the forge lists no
     # changed file.

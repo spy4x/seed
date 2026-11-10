@@ -33,6 +33,7 @@ import { PostgresGroupActivityRepository } from "@server/groups/postgres-activit
 import { PostgresGroupDataMover } from "@server/groups/postgres-group-data-mover.ts"
 import { type ChangesAggregate, readGroupChanges } from "@server/groups/group-changes.ts"
 import { noteChanges } from "@server/notes/note-changes.ts"
+import type { NotesSetup } from "@server/notes/setup.ts"
 import { tagChanges } from "@server/tags/tag-changes.ts"
 import { revokeAllInvitationsOf } from "@server/groups/invitation-revocation.ts"
 import type { MovableAggregate } from "@server/groups/movable.ts"
@@ -200,6 +201,15 @@ export const PORTABLE_AGGREGATES: readonly PortableAggregate[] = [tagPortable, n
  */
 export const CHANGES_AGGREGATES: readonly ChangesAggregate[] = [tagChanges, noteChanges]
 
+/** The aggregates the changes pull reads: with the notes off (`NOTES=false`), not notes or tags. */
+export function changesAggregatesOf(notes: NotesSetup): readonly ChangesAggregate[] {
+  return notes.on
+    ? CHANGES_AGGREGATES
+    : CHANGES_AGGREGATES.filter((aggregate) =>
+      aggregate !== tagChanges && aggregate !== noteChanges
+    )
+}
+
 /** A cache that stores nothing: every read goes to the database. */
 const noCache: RowCache<User> = {
   wrap: (_key, compute) => compute(),
@@ -215,6 +225,8 @@ export interface AppDbBaseOptions {
    * none. Nothing that decides authentication or a role reads it: see `user.findOne`.
    */
   userCache?: RowCache<User>
+  /** The aggregates the changes pull reads (`changesAggregatesOf`). Defaults to every one. */
+  changes?: readonly ChangesAggregate[]
 }
 
 /**
@@ -230,10 +242,13 @@ export class AppDbBase extends DbServiceBase {
    * `#private` field cannot be read through a clone's prototype chain.
    */
   private readonly userCache: RowCache<User>
+  /** Not `#private` either, for the same reason. */
+  private readonly changes: readonly ChangesAggregate[]
 
   constructor(options: AppDbBaseOptions) {
     super({ sql: options.sql })
     this.userCache = options.userCache ?? noCache
+    this.changes = options.changes ?? CHANGES_AGGREGATES
   }
 
   /**
@@ -296,9 +311,9 @@ export class AppDbBase extends DbServiceBase {
 
   /** Pages of a group's changes for the changes pull. Built per access, like `group`. */
   get groupChanges(): GroupChangesReader {
-    const sql = this.sql
+    const { sql, changes } = this
     return {
-      read: (groupId, after) => readGroupChanges(sql, CHANGES_AGGREGATES, groupId, after),
+      read: (groupId, after) => readGroupChanges(sql, changes, groupId, after),
     }
   }
 
