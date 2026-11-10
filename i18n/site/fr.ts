@@ -510,6 +510,19 @@ export default {
   "FeatureWorker.fact4":
     "Une tentative échouée est relancée avec des délais croissants ; les opérateurs voient chaque exécution dans l’espace d’administration",
   "FeatureWorker.code": "Lire docs/jobs.md",
+  "FeatureCatalog.nav": "Catalogue",
+  "FeatureCatalog.title": "Un catalogue pour une boutique, une carte ou de la location",
+  "FeatureCatalog.lead":
+    "Vos opérateurs ajoutent des articles avec photos, couleurs et tailles dans l’espace d’administration, et le site les affiche sur des pages que les moteurs de recherche comprennent, avec les ruptures de stock signalées.",
+  "FeatureCatalog.fact1":
+    "Désactivé tant que vous ne réglez pas CATALOG=true ; la devise et les langues sont deux réglages de plus",
+  "FeatureCatalog.fact2":
+    "Des prix dans la plus petite unité, des textes dans chaque langue que vous gérez, la rupture de stock par couleur et par taille",
+  "FeatureCatalog.fact3":
+    "Le worker convertit les photos en AVIF et WebP, et chaque modification dans l’espace d’administration va au journal d’audit",
+  "FeatureCatalog.fact4":
+    "Un lien de suivi par endroit où vous partagez un article, compté dans Umami : <guide>lire le guide du catalogue</guide>",
+  "FeatureCatalog.code": "Lire le code du catalogue",
   "FeatureYourFeature.nav": "Vos propres fonctionnalités",
   "FeatureYourFeature.title": "Ajoutez une fonctionnalité en en copiant une",
   "FeatureYourFeature.lead":

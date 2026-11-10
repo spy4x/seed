@@ -480,6 +480,19 @@ export default {
   "FeatureWorker.fact4":
     "A failed attempt is retried with growing waits; operators see every run in the admin",
   "FeatureWorker.code": "Read docs/jobs.md",
+  "FeatureCatalog.nav": "Catalog",
+  "FeatureCatalog.title": "A catalog for a shop, a menu or rentals",
+  "FeatureCatalog.lead":
+    "Your operators add items with photos, colours and sizes in the admin area, and the website shows them on pages search engines understand, with what is sold out marked.",
+  "FeatureCatalog.fact1":
+    "Off until you set CATALOG=true; the currency and the languages are two more settings",
+  "FeatureCatalog.fact2":
+    "Prices in the smallest unit, texts in each language you keep, sold out per colour and size",
+  "FeatureCatalog.fact3":
+    "The worker turns photos into AVIF and WebP, and every change in the admin area goes to the audit log",
+  "FeatureCatalog.fact4":
+    "One tracking link per place you share an item, counted in Umami: <guide>read the catalog guide</guide>",
+  "FeatureCatalog.code": "Read the catalog code",
   "FeatureYourFeature.nav": "Your own features",
   "FeatureYourFeature.title": "Add a feature by copying one",
   "FeatureYourFeature.lead":

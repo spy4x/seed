@@ -479,6 +479,18 @@ export default {
   "FeatureWorker.fact4":
     "失敗した試行は間隔を広げながら再試行。オペレーターは管理画面ですべての実行を確認できます",
   "FeatureWorker.code": "docs/jobs.mdを読む",
+  "FeatureCatalog.nav": "カタログ",
+  "FeatureCatalog.title": "ショップ、メニュー、レンタル向けのカタログ",
+  "FeatureCatalog.lead":
+    "オペレーターが管理画面で写真・カラー・サイズ付きの商品を登録すると、サイトが検索エンジンにも伝わるページで表示し、売り切れも示します。",
+  "FeatureCatalog.fact1": "CATALOG=trueを設定するまではオフです。通貨と言語も設定できます",
+  "FeatureCatalog.fact2":
+    "価格は最小通貨単位、テキストは対応する言語ごと、売り切れはカラーとサイズごとに管理",
+  "FeatureCatalog.fact3":
+    "ワーカーが写真をAVIFとWebPに変換し、管理画面での変更はすべて監査ログに残ります",
+  "FeatureCatalog.fact4":
+    "商品をシェアする場所ごとにトラッキングリンクを作り、Umamiで集計：<guide>カタログのガイドを読む</guide>",
+  "FeatureCatalog.code": "カタログのコードを読む",
   "FeatureYourFeature.nav": "独自の機能",
   "FeatureYourFeature.title": "既存の機能をコピーして、新しい機能を追加",
   "FeatureYourFeature.lead":

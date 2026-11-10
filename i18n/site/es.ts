@@ -497,6 +497,19 @@ export default {
   "FeatureWorker.fact4":
     "Un intento fallido se reintenta con esperas cada vez más largas; los operadores ven cada ejecución en el área de administración",
   "FeatureWorker.code": "Leer docs/jobs.md",
+  "FeatureCatalog.nav": "Catálogo",
+  "FeatureCatalog.title": "Un catálogo para una tienda, una carta o alquileres",
+  "FeatureCatalog.lead":
+    "Tus operadores añaden artículos con fotos, colores y tallas en el área de administración, y la web los muestra en páginas que los buscadores entienden, con lo agotado marcado.",
+  "FeatureCatalog.fact1":
+    "Desactivado hasta que pongas CATALOG=true; la moneda y los idiomas son dos ajustes más",
+  "FeatureCatalog.fact2":
+    "Precios en la unidad más pequeña, textos en cada idioma que mantengas, agotado por color y talla",
+  "FeatureCatalog.fact3":
+    "El worker convierte las fotos a AVIF y WebP, y cada cambio en el área de administración queda en el registro de auditoría",
+  "FeatureCatalog.fact4":
+    "Un enlace de seguimiento por cada sitio donde compartes un artículo, contado en Umami: <guide>lee la guía del catálogo</guide>",
+  "FeatureCatalog.code": "Leer el código del catálogo",
   "FeatureYourFeature.nav": "Tus propias funciones",
   "FeatureYourFeature.title": "Añade una función copiando otra",
   "FeatureYourFeature.lead":

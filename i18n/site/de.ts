@@ -500,6 +500,19 @@ export default {
   "FeatureWorker.fact4":
     "Ein fehlgeschlagener Versuch wird mit wachsenden Pausen wiederholt; Operatoren sehen jeden Lauf im Adminbereich",
   "FeatureWorker.code": "docs/jobs.md lesen",
+  "FeatureCatalog.nav": "Katalog",
+  "FeatureCatalog.title": "Ein Katalog für Shop, Speisekarte oder Verleih",
+  "FeatureCatalog.lead":
+    "Deine Operatoren legen im Adminbereich Artikel mit Fotos, Farben und Größen an, und die Website zeigt sie auf Seiten, die Suchmaschinen verstehen – Ausverkauftes ist markiert.",
+  "FeatureCatalog.fact1":
+    "Aus, bis du CATALOG=true setzt; Währung und Sprachen sind zwei weitere Einstellungen",
+  "FeatureCatalog.fact2":
+    "Preise in der kleinsten Einheit, Texte in jeder Sprache, die du pflegst, ausverkauft je Farbe und Größe",
+  "FeatureCatalog.fact3":
+    "Der Worker macht aus Fotos AVIF und WebP, und jede Änderung im Adminbereich landet im Protokoll",
+  "FeatureCatalog.fact4":
+    "Ein Tracking-Link für jeden Ort, an dem du einen Artikel teilst, gezählt in Umami: <guide>zur Katalog-Anleitung</guide>",
+  "FeatureCatalog.code": "Katalog-Code lesen",
   "FeatureYourFeature.nav": "Deine eigenen Funktionen",
   "FeatureYourFeature.title": "Eine Funktion hinzufügen, indem du eine kopierst",
   "FeatureYourFeature.lead":

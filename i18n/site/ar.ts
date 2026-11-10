@@ -470,6 +470,18 @@ export default {
   "FeatureWorker.fact4":
     "المحاولة الفاشلة تُعاد بفترات انتظار متزايدة، ويرى المشغّلون كل تشغيل في لوحة الإدارة",
   "FeatureWorker.code": "اقرأ docs/jobs.md",
+  "FeatureCatalog.nav": "الكتالوج",
+  "FeatureCatalog.title": "كتالوج لمتجر أو قائمة طعام أو تأجير",
+  "FeatureCatalog.lead":
+    "يضيف المشغّلون المنتجات بصورها وألوانها ومقاساتها من لوحة الإدارة، ويعرضها الموقع في صفحات تفهمها محركات البحث، مع تمييز ما نفد منها.",
+  "FeatureCatalog.fact1": "متوقف حتى تضبط CATALOG=true، والعملة واللغات إعدادان آخران",
+  "FeatureCatalog.fact2":
+    "الأسعار بأصغر وحدة للعملة، والنصوص بكل لغة تعتمدها، والنفاد لكل لون ومقاس",
+  "FeatureCatalog.fact3":
+    "يحوّل العامل الصور إلى AVIF وWebP، وكل تعديل في لوحة الإدارة يُسجَّل في سجل التدقيق",
+  "FeatureCatalog.fact4":
+    "رابط تتبّع لكل مكان تشارك فيه منتجًا، يُحصى في Umami: <guide>اقرأ دليل الكتالوج</guide>",
+  "FeatureCatalog.code": "اقرأ شيفرة الكتالوج",
   "FeatureYourFeature.nav": "ميزاتك الخاصة",
   "FeatureYourFeature.title": "أضف ميزة بنسخ ميزة موجودة",
   "FeatureYourFeature.lead":
