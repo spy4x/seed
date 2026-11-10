@@ -14,6 +14,7 @@ import type { AppDbBase } from "../../api/services/db-base.ts"
 import type { ServerFiles } from "@server/files/files.ts"
 import { attachmentObjectKey } from "@domain/notes"
 import { NOTES_ON, type NotesSetup } from "@server/notes/setup.ts"
+import { ImportStatus } from "@domain/imports"
 import { sampleFile } from "./sample-files.ts"
 import { createSignIn } from "../../api/services/sign-in.ts"
 import {
@@ -237,11 +238,40 @@ export async function createAdmin(
 }
 
 /**
+ * One saved notes import, as the flow leaves it (docs/imports.md): its file gone, its batch the
+ * notes it made, read and saved a minute after the upload.
+ */
+async function seedImport(
+  sql: postgres.Sql,
+  groupId: string,
+  userId: number,
+  noteIds: readonly string[],
+  savedAt: Date,
+): Promise<void> {
+  const id = uuidV7()
+  const uploadedAt = new Date(savedAt.getTime() - 60_000)
+  await sql`
+    INSERT INTO imports (
+      id, group_id, user_id, kind, status, file_name, file_size, columns, sample, mapping,
+      row_count, saved_count, error_count, created_at, read_at, commit_requested_at, committed_at
+    ) VALUES (
+      ${id}, ${groupId}, ${userId}, 'notes', ${ImportStatus.COMMITTED}, 'notes.csv',
+      ${noteIds.length * 120}, ${sql.json([`title`, `body`])}, ${sql.json([])},
+      ${sql.json({ title: 0, body: 1 })}, ${noteIds.length}, ${noteIds.length}, 0,
+      ${uploadedAt}, ${uploadedAt}, ${savedAt}, ${savedAt}
+    )
+  `
+  await sql`
+    INSERT INTO import_records ${sql(noteIds.map((recordId) => ({ importId: id, recordId })))}
+  `
+}
+
+/**
  * Groups, their members, tags, notes, promotions and pending invitations, each at its time; with
- * `notes` off, no tags, notes or attachments, and an imported group's import counts none. `idOf`
- * answers `null` for someone without an account: such a member is left out, a row they wrote goes
- * to a stand-in ({@link withStandIns}), and a group with such an owner is skipped. Answers each group's id,
- * or `null` for a skipped one.
+ * `notes` off, no tags, notes, attachments or notes import, and an imported group's import counts
+ * none. `idOf` answers `null` for someone without an account: such a member is left out, a row
+ * they wrote goes to a stand-in ({@link withStandIns}), and a group with such an owner is skipped.
+ * Answers each group's id, or `null` for a skipped one.
  *
  * Every row is written by the app's own repositories, then given its time, with its audit row.
  * With `backdateGroups`, the group itself moves to its creation time too. A new account's sample
@@ -336,8 +366,10 @@ async function seedGroups(
       await dateAudit(sql, id, when)
       tagIds.set(tag.name, id)
     }
+    const fromFile: string[] = []
     for (const note of notes.on ? content.notes : []) {
       const id = uuidV7()
+      if (note.fromFile) fromFile.push(id)
       const when = at(note.createdAgo)
       const author = writer(note.author)
       await db.note.create(
@@ -381,6 +413,10 @@ async function seedGroups(
         await sql`UPDATE note_attachments SET created_at = ${when} WHERE id = ${fileId}`
       }
       await dateAudit(sql, id, when)
+    }
+    const imported = notes.on ? content.notes.find((note) => note.fromFile) : undefined
+    if (imported) {
+      await seedImport(sql, groupId, writer(imported.author), fromFile, at(imported.createdAgo))
     }
     for (const invitation of content.invitations) {
       const made = await invitations.create(

@@ -1,5 +1,6 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
+import { ImportStatus } from "@domain/imports"
 import { type Context, Hono } from "hono"
 import postgres from "postgres"
 import { GroupRole } from "@domain/groups"
@@ -329,6 +330,26 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
     expect([...imported]).toEqual([{
       name: data.groups.find((group) => group.imported)!.name,
       kinds: [`group.imported`],
+    }])
+    // The notes the fake data marks as from a file are one saved import's batch, its file gone.
+    const fromFile = data.groups.flatMap((group) => group.notes.filter((note) => note.fromFile))
+    expect(fromFile.length).toBeGreaterThan(0)
+    const imports = await sql<
+      { status: number; hasFile: boolean; records: number; live: number }[]
+    >`
+      SELECT i.status, i.file IS NOT NULL AS "hasFile", COUNT(r.record_id)::int AS records,
+        COUNT(n.id)::int AS live
+      FROM imports i
+      JOIN import_records r ON r.import_id = i.id
+      LEFT JOIN notes n ON n.id = r.record_id AND n.group_id = i.group_id
+        AND n.created_by_user_id = i.user_id AND n.deleted_at IS NULL
+      GROUP BY i.id
+    `
+    expect([...imports]).toEqual([{
+      status: ImportStatus.COMMITTED,
+      hasFile: false,
+      records: fromFile.length,
+      live: fromFile.length,
     }])
     expect(counts.subscribers).toBe(FAKE_COUNTS.subscribers)
     expect(counts.activeSessions).toBe(
@@ -1007,16 +1028,24 @@ Deno.test("a visitor's sample groups have notes by several people on different d
   })
 })
 
-/** The rows of the notes example: notes, tags, their links and attachments, and their audit rows. */
+/** The rows of the notes example: notes, tags, their links, attachments and imports, and audits. */
 async function notesRows(sql: postgres.Sql) {
   const [row] = await sql<
-    { notes: number; tags: number; noteTags: number; attachments: number; audits: number }[]
+    {
+      notes: number
+      tags: number
+      noteTags: number
+      attachments: number
+      imports: number
+      audits: number
+    }[]
   >`
     SELECT
       (SELECT COUNT(*)::int FROM notes) AS notes,
       (SELECT COUNT(*)::int FROM tags) AS tags,
       (SELECT COUNT(*)::int FROM note_tags) AS note_tags,
       (SELECT COUNT(*)::int FROM note_attachments) AS attachments,
+      (SELECT COUNT(*)::int FROM imports) AS imports,
       (SELECT COUNT(*)::int FROM audit_events
         WHERE event_kind LIKE 'note.%' OR event_kind LIKE 'tag.%')
         AS audits
@@ -1024,7 +1053,7 @@ async function notesRows(sql: postgres.Sql) {
   return row
 }
 
-const NO_NOTES = { notes: 0, tags: 0, noteTags: 0, attachments: 0, audits: 0 }
+const NO_NOTES = { notes: 0, tags: 0, noteTags: 0, attachments: 0, imports: 0, audits: 0 }
 
 Deno.test("with notes off, the demo seed writes every person and group but no notes, tags or attachments", async () => {
   await withSchema(async (sql) => {

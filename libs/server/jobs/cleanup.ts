@@ -23,6 +23,7 @@ import { removeStaleTelegramMessages } from "./telegram-notification.ts"
 import { OUTBOX_RETENTION_DAYS } from "./jobs.ts"
 import type { ServerFiles } from "../files/files.ts"
 import { removeExpiredDataExports } from "./data-export.ts"
+import { deleteStaleImports } from "../imports/import-jobs.ts"
 
 /**
  * The parts of the nightly cleanup, in the order they run. Each removes only what is due, so one
@@ -55,6 +56,10 @@ export function cleanupSteps(
     ["remove unsent Telegram messages", async () => {
       const messages = await removeStaleTelegramMessages(sql)
       if (messages > 0) console.log(`Removed ${messages} unsent Telegram message(s)`)
+    }],
+    ["remove imports left unsaved", async () => {
+      const imports = await deleteStaleImports(sql)
+      if (imports > 0) console.log(`Removed ${imports} import(s) left unsaved for a day`)
     }],
     ["remove expired sign-ups", async () => {
       const signUps = await removeExpiredSignUps(sql)

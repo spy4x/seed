@@ -42,8 +42,9 @@ start. Sign-in and sign-up links stay on the production app.
 
 **A product without notes.** With `NOTES=false` ([Start a product](start-a-product.md#settings)),
 the population and the sample groups get no notes, tags or attachments: no group's notes, nobody's
-own notes, no welcome note for the fake people and no sample files. The groups, members,
-invitations, billing and newsletter stay, and the nightly wipe runs as before. The tables stay too.
+own notes, no welcome note for the fake people, no notes import and no sample files. The groups,
+members, invitations, billing and newsletter stay, and the nightly wipe runs as before. The tables
+stay too.
 
 **Why a job, not sign-up itself.** Every sign-up (password, Google, GitHub, a guest) already queues the
 starter-data job in its own transaction, and the worker runs it within a second. While the demo is
@@ -146,6 +147,9 @@ updates the demo in the same PR:
   `billing_*`, `subscriber*`, `user_totp`, `backup_status`); fix it there. The seed dates rows after
   writing them, so it then renumbers the `audit_events` and `auth_audits` rows written since it
   started to follow their times (`orderIdsByTime`), because feeds sort by id.
+- **Imports** (`imports`, `import_records`, [imports.md](imports.md)) are demo data: the wipe
+  empties both, and the seed writes one saved notes import in the first themed group, whose
+  batch is a few of its owner's notes (`fromFile` in `fake-data.ts`, `seedImport` in `seed.ts`).
 - **Data exports** need no change: the wipe empties `data_exports`, the seed writes none (a ready
   row would have no file behind it), and the nightly clean-up deletes the files the wipe left in
   the file store. A new table that holds a person's data adds a section to the export instead
