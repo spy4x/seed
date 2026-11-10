@@ -67,6 +67,9 @@ import {
 import { SIGN_IN_METHOD_MAIL_JOB, signInMethodMailJob } from "./sign-in-method-mail.ts"
 import { SIGN_UP_CODE_MAIL_JOB, signUpCodeMailJob } from "./sign-up-code-mail.ts"
 import { SIGN_IN_CODE_MAIL_JOB, signInCodeMailJob } from "./sign-in-code-mail.ts"
+import { IMPORT_KINDS } from "../imports/registry.ts"
+import { importCommitJob, importReadJob } from "../imports/import-jobs.ts"
+import { IMPORT_COMMIT_JOB, IMPORT_READ_JOB } from "../imports/postgres-import-repository.ts"
 import { STARTER_DATA_JOB, starterDataJob, type StarterDataPlan } from "./starter-data.ts"
 import {
   TELEGRAM_NOTIFICATION_JOB,
@@ -427,6 +430,25 @@ export const JOBS: readonly JobDefinition[] = [
     repeat: { cron: `17 * * * *` },
     handler: ({ sql, mail, shareResults }) =>
       blogShareResultsJob({ sql, setup: shareResults, log: mail.log }),
+  }),
+  // Both run only on an import in the step they finish, so a rerun changes nothing.
+  defineJob({
+    kind: IMPORT_READ_JOB,
+    label: `Read an imported file`,
+    about: { userIn: `imports` },
+    handler: ({ sql }) => importReadJob(sql, IMPORT_KINDS),
+  }),
+  defineJob({
+    kind: IMPORT_COMMIT_JOB,
+    label: `Save an import`,
+    about: { userIn: `imports` },
+    handler: ({ sql, provider, graceDays, plans }) =>
+      importCommitJob(sql, {
+        kinds: IMPORT_KINDS,
+        billingEnabled: provider !== null,
+        graceDays,
+        plans,
+      }),
   }),
 ]
 
