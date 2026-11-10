@@ -23,6 +23,7 @@ import { createGroupsRoute } from "./routes/groups.ts"
 import { createGroupFilesRoute } from "./routes/group-files.ts"
 import { createGroupFileRateLimits } from "./features/groups/file-rate-limits.ts"
 import { createNotesRoute } from "./routes/notes.ts"
+import { createImportsRoute } from "./routes/imports.ts"
 import { createTagsRoute } from "./routes/tags.ts"
 import { createApiTokensRoute } from "./routes/api-tokens.ts"
 import { createDataExportRoute } from "./routes/data-export.ts"
@@ -367,6 +368,18 @@ app.route(
     list: (query) => queryBus.execute(query),
     get: (query) => queryBus.execute(query),
     cursor: noteListCursor,
+    expectedOrigin,
+  }),
+)
+app.route(
+  "/groups/:groupId/imports",
+  createImportsRoute({
+    create: (command) => commandBus.execute(command),
+    list: (query) => queryBus.execute(query),
+    get: (query) => queryBus.execute(query),
+    check: (query) => queryBus.execute(query),
+    commit: (command) => commandBus.execute(command),
+    undo: (command) => commandBus.execute(command),
     expectedOrigin,
   }),
 )

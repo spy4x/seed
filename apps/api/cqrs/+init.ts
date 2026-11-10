@@ -155,6 +155,24 @@ import {
   TagListQuery,
   TagUpdateCommand,
 } from "@domain/tags"
+import {
+  ImportCheckQuery,
+  ImportCommitCommand,
+  ImportCreateCommand,
+  ImportGetQuery,
+  ImportListQuery,
+  ImportUndoCommand,
+} from "@domain/imports"
+import {
+  importCommitHandler,
+  importCreateHandler,
+  importUndoHandler,
+} from "@api/cqrs/command-handlers/imports.ts"
+import {
+  importCheckHandler,
+  importGetHandler,
+  importListHandler,
+} from "@api/cqrs/query-handlers/imports.ts"
 import { tagCreateHandler } from "@api/cqrs/command-handlers/tag-create.ts"
 import { tagUpdateHandler } from "@api/cqrs/command-handlers/tag-update.ts"
 import { tagDeleteHandler } from "@api/cqrs/command-handlers/tag-delete.ts"
@@ -288,6 +306,9 @@ commandBus.register(PictureCancelCommand, createPictureCancelHandler(pictureDepe
 commandBus.register(PictureRemoveCommand, createPictureRemoveHandler(pictureDependencies))
 commandBus.register(TagUpdateCommand, tagUpdateHandler)
 commandBus.register(TagDeleteCommand, tagDeleteHandler)
+commandBus.register(ImportCreateCommand, importCreateHandler)
+commandBus.register(ImportCommitCommand, importCommitHandler)
+commandBus.register(ImportUndoCommand, importUndoHandler)
 commandBus.register(BillingCheckoutCommand, billingCheckoutHandler)
 commandBus.register(BillingPortalCommand, billingPortalHandler)
 queryBus.register(UserProfileGetQuery, userProfileGetHandler)
@@ -316,6 +337,9 @@ queryBus.register(TagListQuery, tagListHandler)
 queryBus.register(AttachmentListQuery, createAttachmentListHandler(attachmentDependencies))
 queryBus.register(AttachmentDownloadQuery, createAttachmentDownloadHandler(attachmentDependencies))
 queryBus.register(TagGetQuery, tagGetHandler)
+queryBus.register(ImportGetQuery, importGetHandler)
+queryBus.register(ImportListQuery, importListHandler)
+queryBus.register(ImportCheckQuery, importCheckHandler)
 queryBus.register(BillingGetQuery, billingGetHandler)
 queryBus.register(BillingTrialQuery, billingTrialHandler)
 queryBus.register(NotificationListQuery, notificationListHandler)
