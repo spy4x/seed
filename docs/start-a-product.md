@@ -89,7 +89,7 @@ shared ones. Delete those of pages the product deleted, and point the rest at th
 - `/features/sign-in`, `/features/realtime` and `/features/shortcuts`: the product's own feature
   slugs from `features-data.tsx`;
 - `/docs/api`, `/docs/get-started` and `/docs/capacity`: guides listed in the product's
-  `PUBLISHED_DOCS`.
+  `docs-list.ts`.
 
 A pull request measures only `QUICK_PATHS` in `lighthouse/quick.ts` (the home page, `/pricing`,
 the fixture blog post and `/docs`); each must stay in `lighthouserc.json`, or the check fails.
@@ -99,8 +99,30 @@ the fixture blog post and `/docs`); each must stay in `lighthouserc.json`, or th
 in, so `/changelog` lists only the changes after it, and empty `CHANGELOG_OVERRIDES`, whose
 numbers are Seed's pull requests. The file is the product's own now:
 list `apps/mpa/changelog-overrides.ts` in `.seed/skip`, so Seed's later wording never reaches it.
-Set `PUBLISHED_DOCS` and `DOCS_SITE_ORIGIN` in `docs-site.ts`. Replace the "built by one
-developer" line in `[[lang]]/changelog.tsx`.
+Replace the "built by one developer" line in `[[lang]]/changelog.tsx`.
+
+**The product's own guides.** `/docs` publishes the guides listed in `docs-list.ts`, which holds
+nothing else: each guide's import, file, address and line on the index, in groups, and
+`DOCS_SITE_ORIGIN`, the address the guides' pointer lines name. `docs-site.ts` draws them and stays
+Seed's, so the product keeps taking its fixes.
+
+1. Write the product's guides. They may live in a folder of their own, such as
+   `docs/<product>/install.md`; a relative link resolves from the guide's folder, and a link to
+   another listed guide opens its page.
+2. Replace `docs-list.ts` with the product's guides and its own `DOCS_SITE_ORIGIN`, and list
+   `apps/mpa/docs-list.ts` in `.seed/skip`.
+3. Start each guide with its pointer line (`pointerLine` in `docs-site.ts`).
+4. Replace the `!docs/…` lines in `/.dockerignore` and the `docs/…` lines in
+   `/infra/deploy/include.txt` with the product's files; keep `docs/token-api.md` in both. For a
+   guide in a folder, `include.txt` also needs a line for the folder, such as `docs/<product>/`,
+   since rsync skips a file whose folder it was not told to enter. A sync that changes these two
+   lists may conflict; keep the product's lines.
+5. In `/.woodpecker/ci.yml`, add the folder, such as `docs/<product>/*.md`, to the Lighthouse
+   step's `path` list next to `docs/*.md`, so a pull request that changes a guide measures the
+   site.
+
+`apps/mpa/docs-site.test.ts` and `tests/dockerignore.test.ts` check each listed guide: its import,
+its pointer line and its lines in both deploy lists.
 
 **The newsletter keys** are `NewsletterPage.lead`, `NewsletterPage.subscribeDescription`,
 `HomeNewsletter.lead` and `NewsletterOff.lead`. Replace the Releases on GitHub button too. Their
