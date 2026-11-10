@@ -40,6 +40,9 @@ The ZIP has three kinds of file:
 - one CSV per section, in UTF-8 with a byte order mark, so spreadsheets read accents;
 - `README.txt`, which explains the files.
 
+A group's owner downloads the group's own spreadsheets apart from this, from the group: one CSV per
+aggregate, written the same way ([Make it exportable](aggregate-lifecycle.md#make-it-exportable)).
+
 It holds only what is about the person or made by them, never another person's data or a secret:
 
 - their profile, with the id of their picture but never its bytes;
