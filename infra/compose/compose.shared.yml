@@ -953,6 +953,7 @@ services:
       # IndexNow (docs/blog.md, docs/catalog.md): with MPA_DOMAIN, a blog post's or catalog item's
       # change is announced. Unset → off. An item is named by the API's item address and languages.
       - INDEXNOW_KEY=${INDEXNOW_KEY:-}
+      - CATALOG=${CATALOG:-}
       - CATALOG_ITEM_PATH=${CATALOG_ITEM_PATH:-}
       - CATALOG_LANGUAGES=${CATALOG_LANGUAGES:-}
       # Dev.to (docs/blog.md): with MPA_DOMAIN, a live post is cross-posted once. Unset → off.

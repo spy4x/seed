@@ -196,7 +196,7 @@ says how. Without the key nothing is sent.
   nothing; a hidden one is sent, so the engines find its page gone.
 - **The addresses.** The item address (`CATALOG_ITEM_PATH`), without a language prefix and in each
   other language both the website and the catalog keep (`CATALOG_LANGUAGES`), as the sitemap lists
-  them. The worker reads both settings. A slug or category change sends the new address only.
+  them. The worker reads both settings, and `CATALOG`, which they need. A slug or category change sends the new address only.
 - **Fail-open.** A refused or failed ping is logged once, without the key, and the job still
   succeeds: it is not retried and never touches the item.
 
