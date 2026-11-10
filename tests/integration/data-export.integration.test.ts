@@ -219,7 +219,9 @@ Deno.test("data export: lists the imports the person started, never the file or 
 
     const files = unzip(await buildDataExport(sql, editor, new Date()))
 
-    expect(JSON.parse(files[`data.json`]).sections.imports).toEqual([expect.objectContaining({
+    const { imports } = JSON.parse(files[`data.json`]).sections
+    expect(imports[0]).not.toHaveProperty(`file`)
+    expect(imports).toEqual([expect.objectContaining({
       id: mine,
       groupId,
       kind: `notes`,
