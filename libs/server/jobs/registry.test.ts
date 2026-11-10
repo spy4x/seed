@@ -9,6 +9,7 @@ import {
   BLOG_PUBLISH_JOB,
   BLOG_SHARE_RESULTS_JOB,
 } from "@domain/blog"
+import { CATALOG_INDEXNOW_JOB } from "@domain/catalog"
 import { BILLING_NOTICE_JOBS } from "../billing/billing-notices.ts"
 import { SEAT_SYNC_JOB } from "../billing/seat-sync.ts"
 import {
@@ -65,6 +66,7 @@ const QUEUED_KINDS = [
   SUBSCRIBER_SEND_ISSUE_JOB,
   BLOG_PUBLISH_JOB,
   BLOG_INDEXNOW_JOB,
+  CATALOG_INDEXNOW_JOB,
   BLOG_CROSSPOST_JOB,
   BLOG_SHARE_RESULTS_JOB,
   ...Object.values(BLOG_POST_JOBS),

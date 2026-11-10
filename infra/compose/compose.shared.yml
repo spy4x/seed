@@ -950,8 +950,11 @@ services:
       - SUBSCRIBERS_PREVIOUS_SECRETS=${SUBSCRIBERS_PREVIOUS_SECRETS:-}
       # The website's host, when it is deployed: the mailed confirm and unsubscribe links open there.
       - MPA_DOMAIN=${MPA_DOMAIN:-}
-      # IndexNow (docs/blog.md): with MPA_DOMAIN, a blog post's change is announced. Unset → off.
+      # IndexNow (docs/blog.md, docs/catalog.md): with MPA_DOMAIN, a blog post's or catalog item's
+      # change is announced. Unset → off. An item is named by the API's item address and languages.
       - INDEXNOW_KEY=${INDEXNOW_KEY:-}
+      - CATALOG_ITEM_PATH=${CATALOG_ITEM_PATH:-}
+      - CATALOG_LANGUAGES=${CATALOG_LANGUAGES:-}
       # Dev.to (docs/blog.md): with MPA_DOMAIN, a live post is cross-posted once. Unset → off.
       - DEVTO_API_KEY=${DEVTO_API_KEY:-}
       # Automatic posts (docs/blog.md): with MPA_DOMAIN, a live post goes by itself to each channel

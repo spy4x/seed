@@ -28,6 +28,7 @@ import {
   CatalogVersionConflictError,
 } from "@domain/catalog"
 import { queueImage } from "../files/images.ts"
+import { itemPageChanged, queueCatalogIndexNow } from "./catalog-indexnow-job.ts"
 
 /** The operator behind a write, for its audit row. */
 export interface CatalogActor {
@@ -319,7 +320,11 @@ export class PostgresCatalog {
     })
   }
 
-  /** Saves every field of the item at `version`: its texts, price, colours, sizes and stock. */
+  /**
+   * Saves every field of the item at `version`: its texts, price, colours, sizes and stock. A
+   * published item whose price, sold-out combinations, slug or category changed gets its
+   * `catalog.indexnow` job.
+   */
   async updateItem(
     id: string,
     version: number,
@@ -328,6 +333,7 @@ export class PostgresCatalog {
   ): Promise<CatalogItem> {
     return await this.write(async (tx) => {
       const row = await currentItem(tx, id, version)
+      const before = row.status === `published` ? await readCatalogItem(tx, id) : null
       await checkCategory(tx, fields.categoryId)
       if (row.status === `published` && fields.categoryId === null) {
         throw new CatalogError(
@@ -348,13 +354,16 @@ export class PostgresCatalog {
       await audit(tx, actor, CATALOG_AUDIT_KINDS.itemUpdated, CATALOG_ITEM_ENTITY, id, {
         slug: fields.slug,
       })
-      return (await readCatalogItem(tx, id))!
+      const after = (await readCatalogItem(tx, id))!
+      if (before && itemPageChanged(before, after)) await queueCatalogIndexNow(tx, id)
+      return after
     })
   }
 
   /**
    * Publishes the item at `version`, or hides it. Publishing needs a category; the first publish
-   * sets `published_at`, which never moves again. Only a published item can be hidden.
+   * sets `published_at`, which never moves again. Only a published item can be hidden. A change
+   * of status gets the item's `catalog.indexnow` job.
    */
   async setStatus(
     id: string,
@@ -385,6 +394,7 @@ export class PostgresCatalog {
           ? CATALOG_AUDIT_KINDS.itemPublished
           : CATALOG_AUDIT_KINDS.itemHidden
         await audit(tx, actor, kind, CATALOG_ITEM_ENTITY, id, { slug: row.slug })
+        await queueCatalogIndexNow(tx, id)
       }
       return (await readCatalogItem(tx, id))!
     })
