@@ -2258,5 +2258,5 @@ export default {
   "NoteSpreadsheet.updated": "Изменена",
   "GroupSpreadsheets.readme":
     "Данные группы в виде таблиц: по одному CSV-файлу на каждый вид записей, в кодировке UTF-8, с заголовками в первой строке. Даты и время указаны в формате ISO 8601, по UTC. Чтобы перенести группу в другое приложение, скачайте JSON-файл: импортировать можно только его.",
-  "GroupSpreadsheets.notSpreadsheets": "Нет в виде таблицы (есть в JSON-файле):",
+  "GroupSpreadsheets.notSpreadsheets": "Нет в таблицах, но есть в JSON-файле:",
 } satisfies Catalog

@@ -41,7 +41,8 @@ The ZIP has three kinds of file:
 - `README.txt`, which explains the files.
 
 A group's owner downloads the group's own spreadsheets apart from this, from the group: one CSV per
-aggregate, written the same way ([Make it exportable](aggregate-lifecycle.md#make-it-exportable)).
+aggregate, also in UTF-8 with a byte order mark, its headings in the person's language
+([Make it exportable](aggregate-lifecycle.md#make-it-exportable)).
 
 It holds only what is about the person or made by them, never another person's data or a secret:
 

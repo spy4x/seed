@@ -1789,5 +1789,5 @@ export default {
   "NoteSpreadsheet.updated": "最后修改",
   "GroupSpreadsheets.readme":
     "此群组的数据，以电子表格形式提供：每类条目一个 CSV 文件，UTF-8 编码，首行为表头。日期和时间采用 ISO 8601 格式（UTC）。如需将群组迁移到其他应用，请改为下载 JSON 文件：只有 JSON 文件可以导入。",
-  "GroupSpreadsheets.notSpreadsheets": "未提供电子表格（JSON 文件中包含）：",
+  "GroupSpreadsheets.notSpreadsheets": "以下内容没有电子表格（可在 JSON 文件中找到）：",
 } satisfies Catalog
