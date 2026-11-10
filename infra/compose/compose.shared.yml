@@ -765,6 +765,8 @@ services:
       # The SPA (docs/apps.md, "Without the SPA"): `false` closes sign-up and every other
       # account route on every host but the admin host. On unless `false`.
       - SPA=${SPA:-}
+      # The notes example (docs/start-a-product.md): `false` turns its API off. On unless `false`.
+      - NOTES=${NOTES:-}
       # The hourly upload budget of note attachments (docs/files.md): empty for the defaults.
       - ATTACHMENT_UPLOAD_FILES_PER_HOUR=${ATTACHMENT_UPLOAD_FILES_PER_HOUR:-}
       - ATTACHMENT_UPLOAD_BYTES_PER_HOUR=${ATTACHMENT_UPLOAD_BYTES_PER_HOUR:-}
