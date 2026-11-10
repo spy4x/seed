@@ -246,6 +246,8 @@ export interface OAuthInternals {
   waitingForCode(userId: number): Promise<User | null>
   /** Whether `error` means "this user may not sign in" rather than a fault. */
   isRefusal(error: unknown): boolean
+  /** Throws `SignUpClosedError` unless a new account for `email` may be made (`sign-up-gate.ts`). */
+  assertSignUpAllowed(invitation: string | null | undefined, email: string | null): Promise<void>
   /** A guest's provider link keeps the account, or, when that provider account is taken, offers to switch. */
   guests?: GuestKeeper
 }
@@ -295,13 +297,16 @@ export interface OAuthOperations {
   /**
    * Creates the account the waiting sign-up asks for and signs it in, in one transaction, and
    * clears the sign-up cookie. `null` when nothing waits, or the token is used or expired. The
-   * session the browser had before (`current`) ends: the device is the new account's now.
+   * session the browser had before (`current`) ends: the device is the new account's now. Where
+   * sign-up is by invitation, `invitation` must admit the provider's verified address, else it
+   * throws `SignUpClosedError` and nothing is created; the held profile is spent either way.
    *
    * @param firstGroupId The id of the person's first group. Defaults to a new UUID.
    */
   confirmSignUp(
     c: Context,
     current: AppAuthState | null,
+    invitation?: string | null,
     firstGroupId?: string,
   ): Promise<SignedIn | null>
   /**
@@ -735,7 +740,7 @@ export function createOAuthOperations(
       }
     },
 
-    async confirmSignUp(c, current, firstGroupId = uuidV7()) {
+    async confirmSignUp(c, current, invitation = null, firstGroupId = uuidV7()) {
       const waiting = await readSignUp(c)
       deleteCookie(c, SIGN_UP_COOKIE, cookieOptions)
       if (!waiting) return null
@@ -751,6 +756,13 @@ export function createOAuthOperations(
           }).confirmSignUp(waiting.token, own.deviceOf(c))
           let user: User | undefined
           if (result.outcome === OAuthOutcome.SignedUp) {
+            // Asked here, not before, so a confirm that signs an existing user in is never
+            // refused; throwing undoes the auth user and key the package just wrote. Only an
+            // address the provider verified can match an invitation tied to one.
+            await own.assertSignUpAllowed(
+              invitation,
+              result.key.provenAt ? result.key.email : null,
+            )
             user = await tx.user.createForAuthUser(result.user.id, {
               firstName: "",
               lastName: "",
