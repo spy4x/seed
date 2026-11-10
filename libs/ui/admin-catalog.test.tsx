@@ -585,6 +585,7 @@ describe("the item editor's share links", () => {
     await mount(<ItemEditor calls={calls} item={ITEM_SAVED} shareLinks={share(calls, { stats })} />)
     expect(find("[data-e2e=catalog-item-stats]").textContent)
       .toBe("Last 30 days: 120 views · 1 order click")
+    expect(find("[data-e2e=catalog-item-stats]").getAttribute("role")).toBe("status")
     const [zalo, friends] = rows()
     expect(zalo.querySelector("[data-e2e=catalog-item-link-stats]")!.textContent)
       .toBe("34 visits · 3 order clicks")

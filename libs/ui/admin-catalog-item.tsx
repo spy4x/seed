@@ -651,7 +651,7 @@ function ShareLinks(
             <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <p
                 class="text-sm text-muted"
-                role={state.stats === `loading` ? `status` : undefined}
+                role="status"
                 data-e2e="catalog-item-stats"
               >
                 {statsSummary(state.stats, t)}
@@ -660,7 +660,7 @@ function ShareLinks(
                 href={ADMIN_STATS_PATH}
                 navigate={navigate}
                 variant="ghost"
-                class="min-h-11 sm:min-h-9"
+                class="ms-auto min-h-11 sm:min-h-9"
                 data-e2e="catalog-item-see-stats"
               >
                 {t.t(`AdminCatalogItem.seeInStats`)}
