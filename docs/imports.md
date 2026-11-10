@@ -100,7 +100,7 @@ aggregate's table. Its rows go when the import goes; the records stay.
      `context.changeSequence`, checks the plan's cap from `context.allowances`, and answers the new
      ids;
    - `undo(tx, ids, context)`: removes them through the aggregate's own delete.
-2. List it in `IMPORT_KINDS` (`libs/server/imports/registry.ts`).
+2. List it in `importKinds` (`libs/server/imports/registry.ts`).
 3. Test its `read` with an awkward file (another encoding, a file past its limits, formula and
    HTML cells, which stay text).
 
@@ -111,3 +111,6 @@ UTF-8, UTF-16 with its byte-order mark, or a single-byte encoding (read as Windo
 delimiter is guessed. A first row that names a field (`title`, `name`, `subject`, `heading`) is the
 header. A file that is not text, such as a picture renamed `.csv`, fails with "The file is not a
 text file." A row needs a title; its body is optional. Undo moves the batch's notes to the trash.
+
+With `NOTES=false` (docs/start-a-product.md) the API and the worker leave this kind out: an upload
+of `kind=notes` is refused, and a notes import made before the switch fails when its job runs.

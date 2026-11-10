@@ -26,7 +26,9 @@ import {
   importReadJob,
 } from "@server/imports/import-jobs.ts"
 import { PostgresImportRepository } from "@server/imports/postgres-import-repository.ts"
+import { importKinds } from "@server/imports/registry.ts"
 import { noteImportKind } from "@server/notes/note-import.ts"
+import { NOTES_OFF } from "@server/notes/setup.ts"
 import {
   createImportCheckHandler,
   createImportCommitHandler,
@@ -190,6 +192,36 @@ Deno.test("imports: a binary file fails in words instead of staying in reading, 
     expect(read.status).toBe(ImportStatus.FAILED)
     expect(read.failure).toBe(`The file is not a text file.`)
     expect((await stored(sql, read.id)).hasFile).toBe(false)
+  })
+})
+
+Deno.test("imports: with the notes off, notes are neither accepted for upload nor read by the job", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const off = importKinds(NOTES_OFF)
+    const upload = async () =>
+      new ImportCreateCommand({
+        actor: actor(editor),
+        groupId,
+        kind: `notes`,
+        fileName: `notes.csv`,
+        file: await importUpload(csv(`Nope`)),
+      })
+
+    expect(await codeOf(async () => handlers(sql, off).create(await upload()))).toBe(
+      `INVALID_REQUEST`,
+    )
+    const [{ count }] = await sql`SELECT count(*)::int FROM imports`
+    expect(count).toBe(0)
+
+    // One uploaded while the notes were on fails once its job runs with them off.
+    const before = await handlers(sql).create(await upload())
+    await importReadJob(sql, off)(job(before.id))
+    expect(await stored(sql, before.id)).toMatchObject({
+      status: ImportStatus.FAILED,
+      hasFile: false,
+    })
+    expect(await liveTitles(sql, groupId)).toEqual([])
   })
 })
 

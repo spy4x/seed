@@ -43,7 +43,7 @@ export interface ImportContext {
  * An import kind: what one kind of file becomes in a group (`docs/imports.md`). The flow owns the
  * upload, the jobs, the records, who may see what, the preview, the save and the undo; a kind says
  * only which files it takes, the fields a row maps to, and how a row is read, checked, written and
- * removed. A product adds one by writing it and listing it in `IMPORT_KINDS` (`./registry.ts`).
+ * removed. A product adds one by writing it and listing it in `importKinds` (`./registry.ts`).
  *
  * `V` is one checked row, as `commit` writes it.
  */
