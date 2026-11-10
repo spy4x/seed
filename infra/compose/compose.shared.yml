@@ -762,6 +762,7 @@ services:
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
       # Guest accounts, "Try it now" (docs/guests.md): on unless `false`.
       - GUEST_MODE=${GUEST_MODE:-}
+      - SIGN_UP=${SIGN_UP:-}
       # The SPA (docs/apps.md, "Without the SPA"): `false` closes sign-up and every other
       # account route on every host but the admin host. On unless `false`.
       - SPA=${SPA:-}

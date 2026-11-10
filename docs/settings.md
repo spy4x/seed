@@ -162,6 +162,7 @@ no default, so keep them in the env file.
 | `DEMO_MODE`                              | `true` runs the public demo: a nightly wipe and sample data. Never with real users.               | empty            | [The public demo](demo.md)                |
 | `DEMO_ADMIN_PASSWORD`                    | With `DEMO_MODE=true`, the password of `admin@example.com` after every reset. Unset: no operator. | empty            | [The public demo](demo.md)                |
 | `GUEST_MODE`                             | "Try it now" without signing up. On unless `false`.                                               | empty            | [Guests](guests.md)                       |
+| `SIGN_UP`                                | `open`: anyone may make an account. `invite`: only invited people; also turns guests off.          | empty            | [Deploy](deploy.md#who-may-sign-up)       |
 | `SPA`                                    | The signed-in app. On unless `false`, which also closes sign-up.                                  | empty            | [The three apps](apps.md#without-the-spa) |
 | `ATTACHMENT_UPLOAD_FILES_PER_HOUR`       | Files one person may upload per hour. Empty: 50.                                                  | empty            | [Files](files.md)                         |
 | `ATTACHMENT_UPLOAD_BYTES_PER_HOUR`       | Bytes one person may upload per hour. Empty: 52428800 (50 MiB).                                   | empty            | [Files](files.md)                         |
