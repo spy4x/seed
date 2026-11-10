@@ -131,3 +131,34 @@ export function websiteStatsPeriod(value: string | null | undefined): WebsiteSta
     ? days as WebsiteStatsPeriod
     : WEBSITE_STATS_DEFAULT_PERIOD
 }
+
+/** The days the item page's "Share links" card counts: it has no period picker. */
+export const WEBSITE_ITEM_STATS_DAYS: WebsiteStatsPeriod = 30
+
+/** One source's numbers on one item's page. */
+export interface WebsiteItemStatsSource {
+  /** The source's `utm_source`. */
+  slug: string
+  /** Visits to the item's page through the source's links. */
+  visits: number
+  /** Order clicks on the item's page during those visits. */
+  orderClicks: number
+}
+
+/**
+ * The answer of `GET /api/admin/website-stats/items/:id`: one item's numbers over the last
+ * {@link WEBSITE_ITEM_STATS_DAYS} days, for its "Share links" card. `failed` means Umami refused or
+ * did not answer and no earlier copy is kept, so the card shows no number rather than a zero.
+ */
+export type WebsiteItemStatsResponse =
+  | { state: `off`; missing: string[] }
+  | { state: `failed` }
+  | {
+    state: `ready`
+    /** Visitors who opened the item's page, each counted once. */
+    views: number
+    /** Order clicks on the item's page. */
+    orderClicks: number
+    /** One row per defined source, in the sources' order. */
+    sources: WebsiteItemStatsSource[]
+  }
