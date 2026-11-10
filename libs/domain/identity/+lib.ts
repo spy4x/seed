@@ -139,8 +139,27 @@ export type AuthPassword = typeof authPasswordSchema.infer
  */
 const mailLanguageSchema = type({ "language?": "string <= 35" })
 
+/**
+ * The refusal of a step that would make an account on a server where sign-up is by invitation
+ * (`SIGN_UP=invite`) when the request carries no invitation that admits its address.
+ */
+export const SIGN_UP_CLOSED = "SIGN_UP_CLOSED"
+
+/** The English sentence of {@link SIGN_UP_CLOSED}. */
+export const SIGN_UP_CLOSED_MESSAGE = "Sign-up is by invitation on this server."
+
+/**
+ * The invitation a step that may make an account carries: the token of its link. Optional; it
+ * matters only where sign-up is by invitation. Any short string, since it is looked up by its hash.
+ */
+export const signUpInvitationSchema = type({ "invitation?": "string <= 64" })
+export type SignUpInvitation = typeof signUpInvitationSchema.infer
+
 /** The body of sign-up. */
-export const authSignUpSchema = authEmailSchema.and(authPasswordSchema).and(mailLanguageSchema)
+export const authSignUpSchema = authEmailSchema
+  .and(authPasswordSchema)
+  .and(mailLanguageSchema)
+  .and(signUpInvitationSchema)
 export type AuthSignUp = typeof authSignUpSchema.infer
 
 /** The body of sign-in. */
@@ -166,6 +185,10 @@ export const authEmailCodeSchema = type({
   code: "string <= 64",
 })
 export type AuthEmailCode = typeof authEmailCodeSchema.infer
+
+/** The body of a code that may make an account: the code, and the invitation that admits it. */
+export const authSignUpCodeSchema = authEmailCodeSchema.and(signUpInvitationSchema)
+export type AuthSignUpCode = typeof authSignUpCodeSchema.infer
 
 /**
  * The body of an address change: the new address and the current password. An account with no

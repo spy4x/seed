@@ -196,6 +196,8 @@ export default {
   "Reason.SEAT_PRICE_NOT_ACCEPTED":
     "Confirmez que chaque nouveau membre s’ajoute à la facture du groupe.",
   "Reason.SHARE_NOT_FOUND": "Ce partage n’existe plus.",
+  "Reason.SIGN_UP_CLOSED":
+    "Sur ce serveur, on ne peut créer un compte que sur invitation. Demandez une invitation à un membre.",
   "Reason.SLUG_LOCKED":
     "L’adresse est verrouillée une fois l’article publié. Utilisez « Changer l’URL » pour la changer.",
   "Reason.SLUG_TAKEN": "Cette adresse est déjà prise. Choisissez-en une autre.",
