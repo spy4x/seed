@@ -3,7 +3,7 @@ import { expect } from "@std/expect"
 import type postgres from "postgres"
 import type { OutboxEvent } from "@spy4x/server/outbox"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
-import { type GroupRole } from "@domain/groups"
+import { GroupRole } from "@domain/groups"
 import type { Actor } from "@domain/identity"
 import {
   ImportCheckQuery,
@@ -274,6 +274,25 @@ Deno.test("imports: a viewer cannot upload notes", async () => {
     )
     const [{ count }] = await sql`SELECT count(*)::int FROM imports`
     expect(count).toBe(0)
+  })
+})
+
+Deno.test("imports: an uploader demoted to viewer can no longer check the import", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const read = await uploaded(sql, groupId, editor, csv(`One`))
+    await sql`
+      UPDATE group_members SET role = ${GroupRole.VIEWER}
+      WHERE group_id = ${groupId} AND user_id = ${editor}
+    `
+    const check = new ImportCheckQuery({
+      actor: actor(editor),
+      groupId,
+      importId: read.id,
+      mapping: { title: 0 },
+    })
+
+    expect(await codeOf(() => handlers(sql).check(check))).toBe(`ROLE_INSUFFICIENT`)
   })
 })
 
