@@ -953,6 +953,19 @@ Deno.test("with SIGN_UP=invite an invitation for another address is refused and 
   }, "invite")
 })
 
+Deno.test("with SIGN_UP=invite a used-up invitation refuses the password sign-up before any code is mailed", async () => {
+  await withFixture(async (fixture) => {
+    const invitation = await invitationFor(fixture, "ada@example.com")
+    await fixture.sql`UPDATE group_invitations SET uses = max_uses`
+
+    const asked = await askSignUp(fixture.browser(), "ada@example.com", invitation)
+
+    expect(asked).toMatchObject(closed)
+    expect(await fixture.count("sign_up_requests")).toBe(0)
+    expect(fixture.sender.sent).toHaveLength(0)
+  }, "invite")
+})
+
 Deno.test("with SIGN_UP=invite an invitation used up while the code was on its way makes no account", async () => {
   await withFixture(async (fixture) => {
     const invitation = await invitationFor(fixture, "ada@example.com")
