@@ -7,7 +7,7 @@ import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.t
 import { TelegramClient } from "@spy4x/integrations/telegram"
 import { readTelegramSetup } from "@server/telegram/setup.ts"
 import { queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
-import { readIndexNowSetup } from "@server/blog/blog-indexnow-job.ts"
+import { readIndexNowSetup } from "@server/jobs/indexnow.ts"
 import { readCrosspostSetup } from "@server/blog/blog-crosspost-job.ts"
 import { readShareResultsSetup } from "@server/blog/blog-share-results-job.ts"
 import type { AutoPostSetup } from "@server/blog/auto-post.ts"

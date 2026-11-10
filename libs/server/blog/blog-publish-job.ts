@@ -12,7 +12,7 @@ import {
 } from "../jobs/subscriber-issue.ts"
 import { enqueueJob, JOB_AGGREGATE, type JobHandler } from "../jobs/jobs.ts"
 import type { BlogPostRow } from "./postgres-blog-repository.ts"
-import { queueIndexNow } from "./blog-indexnow-job.ts"
+import { queueBlogIndexNow } from "./blog-indexnow-job.ts"
 import type { BlogCrosspostSetup } from "./blog-crosspost-job.ts"
 import { autoPostTargets, queueAutoPosts } from "./auto-post.ts"
 
@@ -176,7 +176,7 @@ export function blogPublishJob(deps: BlogPublishJobDeps): JobHandler {
             updated_at = now(), version = version + 1
           WHERE id = ${post.id}
         `
-        await queueIndexNow(tx, post.id)
+        await queueBlogIndexNow(tx, post.id)
         return post
       }
       return post.status === `published` ? post : null

@@ -22,7 +22,8 @@ import {
   blogPublishJob,
   queueDueBlogJobs,
 } from "@server/blog/blog-publish-job.ts"
-import { blogIndexNowJob, type IndexNowSetup } from "@server/blog/blog-indexnow-job.ts"
+import { blogIndexNowJob } from "@server/blog/blog-indexnow-job.ts"
+import type { IndexNowSetup } from "@server/jobs/indexnow.ts"
 import {
   createPublicFeed,
   listPublicFeed,
