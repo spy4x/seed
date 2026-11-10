@@ -92,7 +92,9 @@ aggregate's table. Its rows go when the import goes; the records stay.
    - `canCreate(role)`: whether a role may create these records;
    - `read(bytes)`: the header or `null`, every row as text cells and a guessed mapping, or why
      the file cannot be read, in words. Read CSV with `@spy4x/platform/universal/csv`
-     (`decodeTextFile`, `sniffCsv`, `parseCsv` with limits), never by hand;
+     (`decodeTextFile`, `sniffCsv`, `parseCsv` with limits), never by hand, and refuse text that
+     `hasUnstorableTextCharacters` (`@spy4x/platform/universal/text`) finds, such as the NUL bytes
+     of a binary file, which Postgres cannot store;
    - `check(row, mapping)`: the value to write, or each problem in words;
    - `commit(tx, values, context)`: writes every value in the flow's transaction, stamped with
      `context.changeSequence`, checks the plan's cap from `context.allowances`, and answers the new
@@ -107,4 +109,5 @@ aggregate's table. Its rows go when the import goes; the records stay.
 Notes from a `.csv` or `.txt` file of at most 2 MiB, 5,000 rows and 50 columns. The file may be
 UTF-8, UTF-16 with its byte-order mark, or a single-byte encoding (read as Windows-1252). The
 delimiter is guessed. A first row that names a field (`title`, `name`, `subject`, `heading`) is the
-header. A row needs a title; its body is optional. Undo moves the batch's notes to the trash.
+header. A file that is not text, such as a picture renamed `.csv`, fails with "The file is not a
+text file." A row needs a title; its body is optional. Undo moves the batch's notes to the trash.

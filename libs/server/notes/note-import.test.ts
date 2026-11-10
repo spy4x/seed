@@ -67,6 +67,11 @@ describe("reading a notes file", () => {
     expect(await noteImportKind.read(utf8(`title\n"open\n`)))
       .toEqual({ ok: false, error: expect.stringContaining(`never closed`) })
   })
+
+  it("refuses a binary file named as a CSV, whose NUL bytes Postgres cannot store", async () => {
+    expect(await noteImportKind.read(utf8(`title,body\nA\0B,x\n`)))
+      .toEqual({ ok: false, error: `The file is not a text file.` })
+  })
 })
 
 describe("checking a note row", () => {

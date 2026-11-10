@@ -9,6 +9,7 @@ import {
   sniffCsv,
 } from "@spy4x/platform/universal/csv"
 import { err, ok } from "@spy4x/platform/universal/result"
+import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { cellOf, importKind } from "@server/imports/import-kind.ts"
 import {
   insertNoteRows,
@@ -55,6 +56,8 @@ export const noteImportKind = importKind<{ title: string; body: string }>({
   canCreate: canMutateNotes,
   read(bytes) {
     const { text } = decodeTextFile(bytes)
+    // A binary file named `.csv` decodes to text with NUL bytes, which Postgres cannot store.
+    if (hasUnstorableTextCharacters(text)) return err(`The file is not a text file.`)
     const { delimiter, header } = sniffCsv(text)
     const parsed = parseCsv(text, {
       delimiter,

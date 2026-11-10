@@ -177,6 +177,22 @@ Deno.test("imports: a file that cannot be read fails in words and its bytes are 
   })
 })
 
+Deno.test("imports: a binary file fails in words instead of staying in reading, and its bytes are dropped", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const read = await uploaded(
+      sql,
+      groupId,
+      editor,
+      new TextEncoder().encode(`title,body\nA\0B,x\n`),
+    )
+
+    expect(read.status).toBe(ImportStatus.FAILED)
+    expect(read.failure).toBe(`The file is not a text file.`)
+    expect((await stored(sql, read.id)).hasFile).toBe(false)
+  })
+})
+
 Deno.test("imports: a member of another group can neither read, check, save nor undo an import", async () => {
   await withSchema(async (sql) => {
     const { groupId, editor, stranger } = await team(sql)
