@@ -277,6 +277,31 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
       ORDER BY created_at, id`,
   },
   {
+    // The imports the person started, in groups they still belong to: never the file's bytes or
+    // its rows, only what the import was and what it did (docs/imports.md).
+    name: `imports`,
+    columns: [
+      `id`,
+      `groupId`,
+      `kind`,
+      `fileName`,
+      `fileSize`,
+      `rowCount`,
+      `savedCount`,
+      `errorCount`,
+      `failure`,
+      `createdAt`,
+      `committedAt`,
+      `undoneAt`,
+    ],
+    rows: (sql, userId) =>
+      sql`SELECT id, group_id, kind, file_name, file_size, row_count, saved_count, error_count,
+        failure, created_at, committed_at, undone_at
+      FROM imports
+      WHERE user_id = ${userId} AND group_id IN (${memberOf(sql, userId)})
+      ORDER BY created_at, id`,
+  },
+  {
     name: `data_exports`,
     columns: [`id`, `requestedAt`, `readyAt`, `expiresAt`],
     rows: (sql, userId) =>
