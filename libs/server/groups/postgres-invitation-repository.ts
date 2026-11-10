@@ -308,7 +308,8 @@ export class PostgresInvitationRepository {
    * they never accepted it before (a removed member cannot rejoin through the same link), that the
    * plan allows its role and that the group has room. It adds the membership with the invitation's
    * role, records who accepted, counts the use, writes the audit row, records the group's change
-   * and makes the group the person's selected one.
+   * and makes the group the person's selected one. Built over a transaction (a sign-up by
+   * invitation, `apps/api/services/sign-up-gate.ts`), it runs in a savepoint of it.
    */
   async accept(
     ref: InvitationLookup,
@@ -316,7 +317,7 @@ export class PostgresInvitationRepository {
     plan: InvitationPlan,
     requestId?: string,
   ): Promise<GroupInvitationAcceptResult> {
-    return await this.sql.begin(async (tx: postgres.TransactionSql) => {
+    const run = async (tx: postgres.TransactionSql): Promise<GroupInvitationAcceptResult> => {
       const [user] = await tx`
         SELECT id FROM users WHERE id = ${userId} AND deleted_at IS NULL FOR NO KEY UPDATE
       `
@@ -374,7 +375,10 @@ export class PostgresInvitationRepository {
       await recordAccessChange(tx, invitation.groupId, userId, INVITATION_EVENTS.memberJoined, [])
       const selected = await storeSelection(tx, userId, invitation.groupId)
       return { groupId: invitation.groupId, role: invitation.role, selected }
-    })
+    }
+    return "savepoint" in this.sql
+      ? await (this.sql as postgres.TransactionSql).savepoint(run)
+      : await this.sql.begin(run)
   }
 
   /**
