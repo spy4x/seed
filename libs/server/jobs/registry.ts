@@ -32,7 +32,11 @@ import {
 import { BILLING_NOTICE_JOBS } from "../billing/billing-notices.ts"
 import { SEAT_SYNC_JOB, seatSyncJob } from "../billing/seat-sync.ts"
 import { blogPublishJob } from "../blog/blog-publish-job.ts"
-import { blogIndexNowJob, type IndexNowSetup } from "../blog/blog-indexnow-job.ts"
+import { blogIndexNowJob } from "../blog/blog-indexnow-job.ts"
+import type { IndexNowSetup } from "./indexnow.ts"
+import { CATALOG_DEFAULT_SETTINGS, CATALOG_INDEXNOW_JOB } from "@domain/catalog"
+import { catalogIndexNowJob, type CatalogPages } from "../catalog/catalog-indexnow-job.ts"
+import { DEFAULT_ITEM_PATH } from "../catalog/tracking.ts"
 import { blogCrosspostJob, type BlogCrosspostSetup } from "../blog/blog-crosspost-job.ts"
 import { blogShareResultsJob, type ShareResultsSetup } from "../blog/blog-share-results-job.ts"
 import { autoPostJob, type AutoPostSetup } from "../blog/auto-post.ts"
@@ -106,6 +110,11 @@ export interface JobDeps {
   imageScratch: ImageScratch | null
   /** IndexNow's key and the website's origin, or `null` while IndexNow is off. */
   indexNow: IndexNowSetup | null
+  /**
+   * How the website names an item's pages, for the `catalog.indexnow` job; the defaults
+   * (`/{category}/{slug}`, English) when left out.
+   */
+  catalogPages?: CatalogPages
   /** The website's origin and a Dev.to client, or `null` while the cross-post is off. */
   crosspost: BlogCrosspostSetup | null
   /** The readers of each channel's numbers, or `null` to read none (tests of other jobs). */
@@ -425,6 +434,19 @@ export const JOBS: readonly JobDefinition[] = [
     kind: BLOG_INDEXNOW_JOB,
     label: `Tell search engines a blog post changed`,
     handler: ({ sql, mail, indexNow }) => blogIndexNowJob({ sql, setup: indexNow, log: mail.log }),
+  }),
+  // Monitoring-grade, as above.
+  defineJob({
+    kind: CATALOG_INDEXNOW_JOB,
+    label: `Tell search engines a catalog item changed`,
+    handler: ({ sql, mail, indexNow, catalogPages }) =>
+      catalogIndexNowJob({
+        sql,
+        setup: indexNow,
+        pages: catalogPages ??
+          { itemPath: DEFAULT_ITEM_PATH, languages: CATALOG_DEFAULT_SETTINGS.languages },
+        log: mail.log,
+      }),
   }),
   // Reads only: a run that is repeated or retried stores one more reading, never a second post.
   defineJob({

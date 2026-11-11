@@ -77,6 +77,16 @@ for (const service of ["worker", "mpa"]) {
   })
 }
 
+// Without them the worker would tell IndexNow about other addresses than the ones the website and
+// the tracking links use (docs/catalog.md#indexnow).
+Deno.test("the worker container receives the catalog's switch, item address and languages", async () => {
+  const names = await environmentOf("worker")
+  // Without CATALOG=true the worker reads the catalog as off, so English only.
+  expect(names).toContain("CATALOG")
+  expect(names).toContain("CATALOG_ITEM_PATH")
+  expect(names).toContain("CATALOG_LANGUAGES")
+})
+
 Deno.test("the api container receives the error tracker's DSN", async () => {
   expect(await environmentOf("api")).toContain("ERROR_REPORT_DSN")
 })

@@ -29,6 +29,22 @@ export interface TrackingSetup {
 }
 
 /**
+ * The website's item address from `CATALOG_ITEM_PATH` (default {@link DEFAULT_ITEM_PATH}), which
+ * tracking links lead to and the worker tells IndexNow about.
+ *
+ * @throws Error when it does not start with `/` or lacks `{slug}`.
+ */
+export function readCatalogItemPath(env: { get(name: string): string | undefined }): string {
+  const itemPath = env.get(`CATALOG_ITEM_PATH`)?.trim() || DEFAULT_ITEM_PATH
+  if (!itemPath.startsWith(`/`) || itemPath.startsWith(`//`) || !itemPath.includes(`{slug}`)) {
+    throw new Error(
+      `CATALOG_ITEM_PATH must start with / and hold {slug}, such as /{category}/{slug}`,
+    )
+  }
+  return itemPath
+}
+
+/**
  * Reads how tracking links are made: `CATALOG_ITEM_PATH` (default {@link DEFAULT_ITEM_PATH}),
  * and the pair `UMAMI_API_URL` and `UMAMI_API_TOKEN`. Answers `null` while the website has no
  * address (`siteUrl`, from `MPA_DOMAIN`): a link needs one. Throws, so the API stops at start, on a
@@ -39,12 +55,7 @@ export function readTrackingSetup(
   env: { get(name: string): string | undefined },
   siteUrl: string | null,
 ): TrackingSetup | null {
-  const itemPath = env.get(`CATALOG_ITEM_PATH`)?.trim() || DEFAULT_ITEM_PATH
-  if (!itemPath.startsWith(`/`) || itemPath.startsWith(`//`) || !itemPath.includes(`{slug}`)) {
-    throw new Error(
-      `CATALOG_ITEM_PATH must start with / and hold {slug}, such as /{category}/{slug}`,
-    )
-  }
+  const itemPath = readCatalogItemPath(env)
   const url = env.get(`UMAMI_API_URL`)?.trim() ?? ``
   const token = env.get(`UMAMI_API_TOKEN`)?.trim() ?? ``
   if ((url === ``) !== (token === ``)) {

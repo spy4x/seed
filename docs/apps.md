@@ -54,7 +54,7 @@ Optional settings go with the website. `MPA_REDIRECT_RULE` sends other hosts, su
 ([Redirect other hosts](certificates.md#redirect-other-hosts-to-the-website)).
 `MPA_UMAMI_ORIGIN` and `MPA_UMAMI_WEBSITE_ID` turn on visitor statistics ([Analytics](analytics.md)).
 `DEMO_ORIGIN` sends every try link to a demo on its own host
-([A demo on its own host](demo.md#a-demo-on-its-own-host)). `INDEXNOW_KEY`, which the worker reads too, tells search engines when a blog post changes
+([A demo on its own host](demo.md#a-demo-on-its-own-host)). `INDEXNOW_KEY`, which the worker reads too, tells search engines when a blog post or a catalog item changes
 ([IndexNow](blog.md#indexnow)). `DEVTO_API_KEY`, read by the worker, copies each live post to
 Dev.to once ([the Dev.to cross-post](blog.md#the-devto-cross-post)); the Mastodon, Bluesky,
 Hashnode and LinkedIn keys post it there ([automatic posts](blog.md#automatic-posts)).

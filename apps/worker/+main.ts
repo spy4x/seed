@@ -7,7 +7,9 @@ import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.t
 import { TelegramClient } from "@spy4x/integrations/telegram"
 import { readTelegramSetup } from "@server/telegram/setup.ts"
 import { queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
-import { readIndexNowSetup } from "@server/blog/blog-indexnow-job.ts"
+import { readIndexNowSetup } from "@server/jobs/indexnow.ts"
+import { readCatalogSetup } from "@server/catalog/setup.ts"
+import { readCatalogItemPath } from "@server/catalog/tracking.ts"
 import { readCrosspostSetup } from "@server/blog/blog-crosspost-job.ts"
 import { readShareResultsSetup } from "@server/blog/blog-share-results-job.ts"
 import { readNotesSetup } from "@server/notes/setup.ts"
@@ -133,6 +135,13 @@ const indexNow = readIndexNowSetup(processEnv, processEnv.get("ENV") === "dev" ?
 if (!indexNow && processEnv.get("INDEXNOW_KEY")?.trim()) {
   console.warn("IndexNow is off: INDEXNOW_KEY is set, but MPA_DOMAIN is not")
 }
+// A catalog item is announced at the addresses the website and the tracking links use
+// (docs/catalog.md#indexnow): `CATALOG_ITEM_PATH` in each of `CATALOG_LANGUAGES`. A bad one stops
+// the worker, as it stops the API.
+const catalogPages = {
+  itemPath: readCatalogItemPath(processEnv),
+  languages: readCatalogSetup(processEnv).settings.languages,
+}
 
 // The Dev.to cross-post (docs/blog.md): with `DEVTO_API_KEY` and `MPA_DOMAIN`, a live post
 // is posted to Dev.to once ever, with its canonical address on the website. The key stays in the
@@ -213,6 +222,7 @@ const processor = createOutboxProcessor(
   undefined,
   shareResults,
   autoPost,
+  catalogPages,
   // The API reads the same switch: with the notes off, no import job creates a note.
   readNotesSetup(processEnv),
 )

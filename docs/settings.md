@@ -26,7 +26,7 @@ default, never a value to keep for a secret.
 | `MPA_REDIRECT_RULE`    | Production only: a Traefik rule for hosts redirected to `MPA_DOMAIN`. Empty matches nothing.                 | empty              | [Certificates](certificates.md)                |
 | `MPA_UMAMI_ORIGIN`     | The website's self-hosted Umami. Set both Umami values or neither.                                           | empty              | [Analytics](analytics.md)                      |
 | `MPA_UMAMI_WEBSITE_ID` | The website's id in that Umami. It is public.                                                                | empty              | [Analytics](analytics.md)                      |
-| `INDEXNOW_KEY`         | The website's IndexNow key, 8 to 128 letters, digits and dashes. Public. Empty turns IndexNow off.           | empty              | [Blog](blog.md#indexnow)                       |
+| `INDEXNOW_KEY`         | The website's IndexNow key, 8 to 128 letters, digits and dashes. Public. Empty turns IndexNow off.           | empty              | [Blog](blog.md#indexnow), [Catalog](catalog.md#indexnow) |
 | `DEMO_ORIGIN` | A demo on its own host, an `https://` origin. Every try link goes to its `/try`. Empty keeps them on the app. | empty | [The public demo](demo.md#a-demo-on-its-own-host) |
 | `DEVTO_API_KEY`        | A Dev.to API key, read by the worker. Secret. Set, it copies each live post to Dev.to once. Empty turns it off. | empty              | [Blog](blog.md#the-devto-cross-post)           |
 | `MASTODON_ACCESS_TOKEN` | A Mastodon access token (`write:statuses`), read by the worker. Secret. Empty keeps Mastodon manual. | empty | [Blog](blog.md#automatic-posts) |
@@ -218,7 +218,7 @@ Use Stripe's test-mode keys outside production.
 | `CATALOG`           | `true` turns the catalog on.                                                                                | empty   | [Catalog](catalog.md)     |
 | `CATALOG_CURRENCY`  | The ISO 4217 code of every price. Empty: `USD`.                                                             | empty   | [Catalog](catalog.md)     |
 | `CATALOG_LANGUAGES` | The languages of its texts, comma-separated, the default first. Empty: `en`.                                | empty   | [Catalog](catalog.md)     |
-| `CATALOG_ITEM_PATH` | The website's item address for tracking links, with `{category}` and `{slug}`. Empty: `/{category}/{slug}`. | empty   | [Catalog](catalog.md)     |
+| `CATALOG_ITEM_PATH` | The website's item address for tracking links and IndexNow, with `{category}` and `{slug}`. Empty: `/{category}/{slug}`. | empty   | [Catalog](catalog.md)     |
 | `UMAMI_API_URL`     | Your self-hosted Umami's address, for click counts and the admin app's Stats page.                          | empty   | [Analytics](analytics.md) |
 | `UMAMI_API_TOKEN`   | A token from that Umami's `POST /api/auth/login`. Set both or neither. Never logged.                        | empty   | [Analytics](analytics.md) |
 
