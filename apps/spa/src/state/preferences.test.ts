@@ -370,8 +370,8 @@ describe(`the region format "Automatic"`, () => {
     expect(laptop.state.format.value.date(DAY, `medium`)).toBe(`29.10.2026`)
   })
 
-  it(`follows the device's own region for its language`, async () => {
-    const laptop = device(server(), US, [`en-US`])
+  it(`follows the device's own region format for its language`, async () => {
+    const laptop = device(server(), US)
     await open(laptop)
 
     expect(laptop.state.format.value.date(DAY, `medium`)).toBe(`Oct 29, 2026`)
