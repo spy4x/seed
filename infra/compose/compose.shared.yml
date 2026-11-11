@@ -386,6 +386,7 @@ services:
   postgres-prometheus-exporter:
     container_name: ${PROJECT}-postgres-prometheus-exporter
     image: quay.io/prometheuscommunity/postgres-exporter:v0.20.1
+    restart: unless-stopped
     environment:
       DATA_SOURCE_NAME: 'postgresql://${DB_USER}:${DB_PASS}@db:5432/${DB_NAME}?sslmode=disable'
     deploy:
