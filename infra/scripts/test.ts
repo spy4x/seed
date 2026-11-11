@@ -8,7 +8,10 @@
  * - `CI=true` or `--verbose`: every group's whole output, as `deno test` prints it.
  * - File or folder paths (`deno task test apps/api/routes/auth.test.ts --filter=429`): runs them
  *   with their group's permissions and prints everything. Other `-` arguments go to `deno test`.
+ * - A full run first fails, naming each one, when a test file in the repository is in no group.
  */
+
+import { walk } from "@std/fs/walk"
 
 /** One `deno test` run: its permission flags and the files and folders it tests. */
 export interface TestGroup {
@@ -212,6 +215,28 @@ export function groupOf(path: string): TestGroup | undefined {
   )
 }
 
+/** Test files that tasks of their own run: `test:integration` and `test:files`. */
+const ELSEWHERE = [`tests/integration`, `tests/files`]
+
+/** The files among `files` that no group tests and no other task runs. */
+export function ungrouped(files: string[]): string[] {
+  return files.filter((file) =>
+    !groupOf(file) && !ELSEWHERE.some((root) => covers(root, file.replace(/^\.\//, ``)))
+  )
+}
+
+/** Every `*.test.ts` and `*.test.tsx` file in the repository, outside `node_modules` and `.git`. */
+async function testFiles(): Promise<string[]> {
+  const files: string[] = []
+  const entries = walk(`.`, {
+    includeDirs: false,
+    match: [/\.test\.tsx?$/],
+    skip: [/(^|\/)(node_modules|\.git)$/],
+  })
+  for await (const { path } of entries) files.push(path)
+  return files
+}
+
 /** Test and step counts read from `deno test` summary lines. */
 export interface Totals {
   passed: number
@@ -331,6 +356,12 @@ async function runPaths(paths: string[], extra: string[]): Promise<number> {
 
 /** Runs every group, a few at a time, and prints failures and one summary line, or everything. */
 async function runAll(extra: string[], verbose: boolean): Promise<number> {
+  const missing = ungrouped(await testFiles())
+  if (missing.length) {
+    console.error(`No test group covers these files; add each to a group in infra/scripts/test.ts:`)
+    for (const file of missing.sort()) console.error(`  ${file}`)
+    return 2
+  }
   const started = performance.now()
   const run = (group: TestGroup) => () => capture(testArgs(group, group.paths, extra))
   const parallel = GROUPS.filter((group) => !group.serial)

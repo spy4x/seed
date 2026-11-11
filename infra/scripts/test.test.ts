@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
-import { failuresOf, groupOf, GROUPS, testArgs, totalsOf } from "./test.ts"
+import { failuresOf, groupOf, GROUPS, testArgs, totalsOf, ungrouped } from "./test.ts"
 
 Deno.test("runs a file with the permissions of the group that tests it", () => {
   const changelog = groupOf(`apps/mpa/changelog-start.test.ts`)!
@@ -15,6 +15,16 @@ Deno.test("runs a file with the permissions of the group that tests it", () => {
   // A folder that only starts like a group's folder is not in it.
   expect(groupOf(`apps/mpa-old/x.test.ts`)).toBeUndefined()
   expect(groupOf(`docs/x.test.ts`)).toBeUndefined()
+})
+
+Deno.test("names the test files no group runs, but not those another task runs", () => {
+  expect(ungrouped([
+    `./tests/x.test.ts`,
+    `./libs/ui/notes.test.tsx`,
+    `./tests/integration/notes.test.ts`,
+    `./tests/files/store.test.ts`,
+    `./docs/y.test.tsx`,
+  ])).toEqual([`./tests/x.test.ts`, `./docs/y.test.tsx`])
 })
 
 Deno.test("runs every group in parallel but the serial one, with its ignored files left out", () => {
