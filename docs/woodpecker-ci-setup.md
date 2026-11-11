@@ -40,6 +40,15 @@ in the shared checkout are therefore commands of one step, `browser`, which runs
 performance falls when another step shares the CPU.
 
 - `check` runs `deno task check`: format, lint, type check and unit tests.
+- `secrets` scans commits for secrets with gitleaks, beside `check`, on every event. A pull request
+  scans its own commits since it left the target branch, so a key added and then removed in the
+  same pull request still fails it; a push to `main` and a tag scan the whole history. The log
+  shows each finding with its value redacted. Run it locally with `gitleaks git . --redact` (every
+  branch) or `gitleaks git . --redact --log-opts=origin/main..HEAD` (your branch, as CI does). To
+  allow a false positive, end its line with a `gitleaks:allow` comment; a finding in a commit that
+  is already pushed goes into `.gitleaksignore` instead, as the fingerprint gitleaks prints, under
+  a `#` comment that says why it is no secret. A real secret is revoked first: removing it from
+  the history does not help once it is public.
 - `integration` runs `deno task test:integration --parallel`, four test files at a time, against a throw-away `postgres:18.6-alpine`
   service (user `tester`, password `ci-throwaway`, database `template_test`, reachable as host
   `postgres`) and a `valkey/valkey:8.1` service (password `ci-throwaway`, host `valkey`). It waits
@@ -111,8 +120,8 @@ it, because nothing reads them.
 2. Leave the repository's **Pipeline path** empty. Woodpecker then uses `.woodpecker/`. Setting it
    to another path (for example `infra/configs/`) hides the pipeline from every copy of the
    template.
-3. Check that a pull request shows the `check`, `integration`, `backup-restore`, `alert-rules`,
-   `browser` and `e2e-smoke` results (`gh pr checks <number>`).
+3. Check that a pull request shows the `check`, `secrets`, `integration`, `backup-restore`,
+   `alert-rules`, `browser` and `e2e-smoke` results (`gh pr checks <number>`).
 
 ## Releases
 
@@ -142,6 +151,8 @@ equal to `DENO_VERSION` in `infra/envs/.env.example` and `Dockerfile.base`.
 deno task check
 deno task test:integration
 deno task e2e:local --smoke
+# The secrets scan of your branch
+gitleaks git . --redact --log-opts=origin/main..HEAD
 ```
 
 ## Additional Resources
