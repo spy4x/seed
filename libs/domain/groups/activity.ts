@@ -2,7 +2,7 @@ import type { Query } from "@spy4x/platform/cqrs"
 import { pluralize } from "@spy4x/platform/universal/text"
 import type { Actor } from "@domain/identity"
 import { GroupError, GroupRole } from "./+lib.ts"
-import { PRODUCT_ACTIVITY_KINDS } from "./product-activity.ts"
+import { PRODUCT_ACTIVITY_KINDS, type ProductEntityType } from "./product-activity.ts"
 
 /**
  * How long the worker keeps a group's activity: events older than this many days are deleted. A
@@ -14,8 +14,11 @@ export const AUDIT_RETENTION_DAYS = 365
 export const ACTIVITY_PAGE_MAX = 100
 export const ACTIVITY_PAGE_DEFAULT = 50
 
-/** What an audit event can point at besides a member: the thing the event is about. */
-export type AuditEntityType = "note" | "invitation" | "tag"
+/**
+ * What an audit event can point at besides a member: the thing the event is about. A product adds
+ * its own things through `ProductEntityType` (`product-activity.ts`).
+ */
+export type AuditEntityType = "note" | "invitation" | "tag" | ProductEntityType
 
 /** Short facts an event keeps for its sentence: names, roles, a count. Never a body or an address. */
 export type AuditDetails = Record<string, string | number>
