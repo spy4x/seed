@@ -3,8 +3,10 @@
  * Holds which browser tests CI runs. A merge is allowed on the pull-request check alone, so that
  * check must run the smoke set (`SMOKE_SPECS` of `infra/scripts/e2e-local-plan.ts`), and the set
  * must keep the sign-in and the notes specs: without either, a pull request that breaks that
- * screen shows green again. The one exception is a pull request that changes only Markdown no app
- * loads (`markdown_only` in the workflow): it cannot break a screen, so it runs `check` alone. The whole suite runs after the merge, on `main`, where a red run is
+ * screen shows green again. The one exception is a pull request that changes only Markdown
+ * outside the product (`markdown_only` and `internal_markdown` in the workflow): it skips the
+ * steps that start the stack, and runs `browser` only when it changes a published guide. The whole
+ * suite runs after the merge, on `main`, where a red run is
  * seen but blocks nobody. `docs/browser-tests.md` and `docs/woodpecker-ci-setup.md` name the specs
  * of the set. Lighthouse measures in a stage of its own, with no other step of the pipeline beside
  * it. A pull request runs it only when it changes a file the website is built from (#821); a push
@@ -349,7 +351,7 @@ Deno.test("the browser-test guide and the CI guide name every spec of the smoke 
   }
 })
 
-/** Markdown files that no app, image or test loads. */
+/** Markdown files that no app, image or test reads, apart from `check`. */
 const MARKDOWN_ONLY = [
   `README.md`,
   `AGENTS.md`,
@@ -387,9 +389,9 @@ Deno.test("a pull request that changes Markdown and any other file, a push to ma
   }
 })
 
-Deno.test("a pull request that changes only a published guide runs Lighthouse after check", async () => {
+Deno.test("a pull request that changes only a published guide runs the browser tests and Lighthouse", async () => {
   const ci = await workflow()
-  const order = stages(ci, `pull_request`, `main`, [`docs/billing.md`])
+  const order = stages(ci, `pull_request`, `main`, [`docs/capacity.md`])
   expect(stageOf(order, `lighthouse`)).toBeGreaterThan(stageOf(order, `check`))
-  expect(order.flat().filter((name) => STACK.includes(name))).toEqual([])
+  expect(order.flat().filter((name) => STACK.includes(name))).toEqual([`browser`])
 })

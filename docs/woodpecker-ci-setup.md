@@ -25,11 +25,13 @@ check ──┬── integration      (Postgres and Valkey services) ──┐
 A pull request that changes no file of the website skips `lighthouse`; `e2e-smoke` then starts
 right after `browser`'s stage.
 
-A pull request that changes only Markdown that no app loads (the root `*.md` files, any
+A pull request that changes only Markdown outside the product (the root `*.md` files, any
 `README.md`, `docs/**/*.md`, `i18n/*.md`, `.github/` and `.claude/`: `markdown_only` under
-`variables` in `ci.yml`) runs `check` alone, plus `lighthouse` and the images when their own lists
-name a changed file. It skips `integration`, `backup-restore`, `alert-rules`, `browser`,
-`runtimes` and `e2e-smoke`, which cannot fail over such a change and took about 20 minutes.
+`variables` in `ci.yml`) skips `integration`, `backup-restore`, `alert-rules`, `runtimes` and
+`e2e-smoke`, which cannot fail over such a change and took about 20 minutes. `check` still runs,
+and so do `lighthouse` and the images when their own lists name a changed file. `browser` runs
+only when a guide in `docs/*.md` changed (`internal_markdown`), because the website renders the
+guides and `e2e/mpa/docs.mpa.ts` tests them.
 
 Woodpecker runs steps in stages: a step starts only when the whole stage before it has ended, so
 the wall time is the slowest step of each stage, added up. Checks that must run one after another

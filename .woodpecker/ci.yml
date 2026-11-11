@@ -20,12 +20,12 @@ when:
   - event: tag
 
 variables:
-  # Markdown files that no app, image or test loads. A pull request that changes only these skips
-  # the steps that start the stack (integration, backup-restore, alert-rules, browser, runtimes,
-  # e2e-smoke): they cannot fail over them, and they took about 20 minutes (homelab#131). `check`
-  # still runs, and so do Lighthouse and the images when their own lists name a changed file (the
-  # guides in docs/*.md are part of the website). Woodpecker skips a step with an `exclude` list
-  # only when every changed file matches it.
+  # Markdown that only `check`, Lighthouse and the browser tests read. A pull request that
+  # changes only these skips the steps that start the stack (integration, backup-restore,
+  # alert-rules, runtimes, e2e-smoke): they cannot fail over them, and they took about 20 minutes
+  # (homelab#131). `check` still runs, and so do Lighthouse and the images when their own lists
+  # name a changed file. Woodpecker skips a step with an `exclude` list only when every changed
+  # file matches it.
   - &markdown_only
     - "*.md"
     - "**/README.md"
@@ -33,10 +33,26 @@ variables:
     - i18n/*.md
     - .github/**
     - .claude/**
+  # The same without the guides in docs/*.md, for `browser`: the website renders them and
+  # e2e/mpa/docs.mpa.ts tests them (a phone-width table, headings, links, code blocks).
+  - &internal_markdown
+    - "*.md"
+    - "**/README.md"
+    - docs/*/**/*.md
+    - i18n/*.md
+    - .github/**
+    - .claude/**
   - &stack_when
     - event: pull_request
       path:
         exclude: *markdown_only
+    - event: push
+      branch: main
+    - event: tag
+  - &browser_when
+    - event: pull_request
+      path:
+        exclude: *internal_markdown
     - event: push
       branch: main
     - event: tag
@@ -154,7 +170,7 @@ steps:
     # scripts keep the API's vapid.json in the repository root while they run; and each starts a
     # worker on the one Valkey service, where a worker would take another stack's jobs.
     image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
-    when: *stack_when
+    when: *browser_when
     environment:
       DB_HOST: postgres
       DB_PORT: "5432"
@@ -277,8 +293,8 @@ steps:
     # the Postgres and Valkey services below instead of starting containers, in a database of its
     # own (`template_e2e_app`); it waits for both itself. It starts the API, the worker, the Vite
     # dev server and a proxy that serves them at http://app.localhost:<port>. A tag runs the set
-    # too, because release.yml waits for this workflow. A pull request that changes only Markdown
-    # no app loads skips it, as `markdown_only` at the top says.
+    # too, because release.yml waits for this workflow. A pull request that changes only the Markdown
+    # in `markdown_only` at the top skips it: the smoke set opens no guide.
     image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
     when:
       - event: pull_request
