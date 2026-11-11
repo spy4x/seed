@@ -886,7 +886,7 @@ describe("the public website", () => {
     expect(html).toContain(`<title>${PRICING_HEAD.title}</title>`)
     for (const card of ["way-use", "way-run", "way-hire"]) expect(html).toContain(`id="${card}"`)
     expect(html).toContain(">$0</span>")
-    expect(html).toContain(">From $8,000</span>")
+    expect(html).toContain(">From US$8,000</span>")
     // It leaves the site, so its name says where it goes.
     expect(hrefOf(linkNamed(html, "See how it works (opens antonshubin.com)"))).toBe(
       HIRE_PAGE_URL.replaceAll("&", "&amp;"),

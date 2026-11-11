@@ -1,6 +1,6 @@
 import type { JSX } from "preact"
 import type { PublicCatalogResponse } from "@domain/catalog"
-import { formatMoney } from "@spy4x/platform/universal/money-core"
+import { formatMoney, type MoneyOptions } from "@spy4x/platform/universal/money-core"
 import type { ResponsiveImageVariant } from "@spy4x/platform/universal/srcset"
 import { IconCheck } from "@spy4x/preact-icons"
 import { badgeClasses } from "@spy4x/preact-ui/badge"
@@ -43,8 +43,13 @@ export function Swatch({ color, class: className }: { color: string; class: stri
  * A price in the catalog's currency, as the page's language writes it: `$19.99`, `250.000 ₫`.
  * English is British English, like the rest of the site.
  */
-export function catalogPrice(price: number, currency: string, language: string): string {
-  return formatMoney(price, currency, language === `en` ? `en-GB` : language)
+export function catalogPrice(
+  price: number,
+  currency: string,
+  language: string,
+  options?: MoneyOptions,
+): string {
+  return formatMoney(price, currency, language === `en` ? `en-GB` : language, options)
 }
 
 /**
