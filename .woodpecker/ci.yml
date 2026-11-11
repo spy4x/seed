@@ -87,6 +87,44 @@ steps:
       - deno install --frozen
       - deno task check
 
+  secrets:
+    # Scans the commits for secrets with gitleaks (#494), beside `check`. A pull request scans its
+    # own commits, from where it left the target branch, so a key added in one commit and removed
+    # in a later one still fails it. A push to main and a tag scan the whole history of the commit
+    # (about 600 commits, seconds): that needs no previous commit, which a first push or a
+    # force-push lacks. `--redact` keeps the values out of the log; reviewed findings are in
+    # .gitleaksignore. The image is on ghcr.io, out of Docker Hub's pull limit (#923), and ships
+    # git.
+    #
+    # Woodpecker clones one commit without its trees (`--depth=1 --filter=tree:0`), except on a
+    # tag. Scanning that clone would fetch each missing tree and file with a request of its own
+    # (40 s for the history even from a local disk), so the history is fetched whole first, with
+    # the filter dropped.
+    image: ghcr.io/gitleaks/gitleaks:v8.30.0@sha256:691af3c7c5a48b16f187ce3446d5f194838f91238f27270ed36eef6359a574d9
+    depends_on: []
+    commands:
+      - |
+          set -eu
+          deep=""
+          if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+            git config --unset-all remote.origin.partialclonefilter || true
+            deep="--unshallow --refetch"
+          fi
+          if [ "$${CI_PIPELINE_EVENT}" = pull_request ]; then
+            target="refs/remotes/origin/$${CI_COMMIT_TARGET_BRANCH}"
+            git fetch --no-tags $${deep} origin "+refs/heads/$${CI_COMMIT_TARGET_BRANCH}:$${target}"
+            base="$(git merge-base "$${target}" HEAD)" || {
+              echo "HEAD shares no commit with $${target}: nothing to scan from." >&2
+              exit 1
+            }
+            range="$${base}..HEAD"
+          else
+            if [ -n "$${deep}" ]; then git fetch --no-tags $${deep} origin "$${CI_COMMIT_SHA}"; fi
+            range=HEAD
+          fi
+          echo "Scanning $${range}"
+          gitleaks git --redact --verbose --no-banner --log-opts="$${range}" .
+
   integration:
     image: denoland/deno:2.9.7
     when: *stack_when
