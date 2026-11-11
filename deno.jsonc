@@ -294,7 +294,7 @@
       "description": "Type check; prints only errors"
     },
     "test": {
-      "command": "deno run --allow-run=deno --allow-env=CI infra/scripts/test.ts",
+      "command": "deno run --allow-run=deno,git --allow-env=CI infra/scripts/test.ts",
       "description": "Unit tests in parallel; prints failures and one summary line. Paths run only those files; CI=true or --verbose prints everything"
     },
     "test:integration": {

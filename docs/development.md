@@ -68,7 +68,8 @@ To run the stack for the first time, follow [Run the local stack](local-stack.md
 `deno task test` prints the failures and one summary line. Give it files or folders to run only
 those, with their permissions and all their output: `deno task test apps/api/routes/auth.test.ts
 --filter=429`. `--verbose`, or `CI=true` as in CI, prints the whole output of every run. The test
-groups and their permissions are in `infra/scripts/test.ts`.
+groups and their permissions are in `infra/scripts/test.ts`. A full run fails at once, naming the
+file, when a test file is in no group, so a new test never skips silently.
 
 Each app also has tasks of its own, in its `deno.json`. Run one from the root with
 `deno task --cwd apps/<app> <task>`. The website's `screenshots` and `loops` tasks record its
