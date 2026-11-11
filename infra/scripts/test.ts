@@ -11,8 +11,6 @@
  * - A full run first fails, naming each one, when a test file in the repository is in no group.
  */
 
-import { walk } from "@std/fs/walk"
-
 /** One `deno test` run: its permission flags and the files and folders it tests. */
 export interface TestGroup {
   flags: string[]
@@ -225,16 +223,16 @@ export function ungrouped(files: string[]): string[] {
   )
 }
 
-/** Every `*.test.ts` and `*.test.tsx` file in the repository, outside `node_modules` and `.git`. */
+/**
+ * Every `*.test.ts` and `*.test.tsx` file git tracks or would track: new files count, and ignored
+ * folders (`node_modules`, `.volumes`, build output) do not.
+ */
 async function testFiles(): Promise<string[]> {
-  const files: string[] = []
-  const entries = walk(`.`, {
-    includeDirs: false,
-    match: [/\.test\.tsx?$/],
-    skip: [/(^|\/)(node_modules|\.git)$/],
-  })
-  for await (const { path } of entries) files.push(path)
-  return files
+  const { success, stdout, stderr } = await new Deno.Command(`git`, {
+    args: [`ls-files`, `-z`, `-co`, `--exclude-standard`, `*.test.ts`, `*.test.tsx`],
+  }).output()
+  if (!success) throw new Error(`git ls-files failed: ${new TextDecoder().decode(stderr)}`)
+  return new TextDecoder().decode(stdout).split(`\0`).filter(Boolean)
 }
 
 /** Test and step counts read from `deno test` summary lines. */
