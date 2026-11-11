@@ -308,7 +308,9 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
           </Fact>
           <Fact label={t.t(`AdminGroup.files`)}>
             {NUMBER.format(counts.files)}
-            <span class="font-normal text-muted">{` · ${formatBytes(counts.fileBytes)}`}</span>
+            <span class="font-normal text-muted">
+              {` · ${formatBytes(counts.fileBytes, format.locale)}`}
+            </span>
           </Fact>
           <Fact label={t.t(`AdminGroup.owner`)}>
             <Link
@@ -630,15 +632,19 @@ function Invitations(
 }
 
 /** "37 of 100 files · 41 MB of 200 MB", or without "of" for a cap the plan does not set. */
-function filesUsage(t: Translator<string>, usage: AdminGroupFiles["usage"]): string {
+function filesUsage(
+  t: Translator<string>,
+  usage: AdminGroupFiles["usage"],
+  locale: string,
+): string {
   const files = usage.maxFiles === null
     ? t.t(`AdminGroup.usageFiles`, { count: usage.files })
     : t.t(`AdminGroup.usageFilesOf`, { files: usage.files, count: usage.maxFiles })
   const bytes = usage.maxBytes === null
-    ? formatBytes(usage.bytes)
+    ? formatBytes(usage.bytes, locale)
     : t.t(`AdminGroup.usageBytesOf`, {
-      used: formatBytes(usage.bytes),
-      max: formatBytes(usage.maxBytes),
+      used: formatBytes(usage.bytes, locale),
+      max: formatBytes(usage.maxBytes, locale),
     })
   return `${files} · ${bytes}`
 }
@@ -865,7 +871,7 @@ function Files(
       )}
       {files && (
         <p class="text-sm text-muted" data-e2e="admin-group-files-usage">
-          {filesUsage(t, files.usage)}
+          {filesUsage(t, files.usage, format.locale)}
         </p>
       )}
     </Stack>

@@ -7,6 +7,8 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createFormatters } from "@spy4x/time/format"
 import {
   PICTURE_BUTTON_ID,
   PictureErrorState,
@@ -87,6 +89,16 @@ describe("profile picture row", () => {
     expect(find("[data-e2e=profile-picture-row]").textContent).toContain(
       "JPEG, PNG, WebP or HEIC, up to 10 MB.",
     )
+  })
+
+  it("writes the file's rule in the person's region format", async () => {
+    const russian = createFormatters({ locale: `ru-RU`, timeZone: `UTC` })
+    await mount(
+      <FormatContext.Provider value={russian}>
+        <PictureRow {...row()} />
+      </FormatContext.Provider>,
+    )
+    expect(find("[data-e2e=profile-picture-row]").textContent).toContain("10 МБ")
   })
 
   it("says the new picture is being prepared, visibly and in its status region", async () => {
