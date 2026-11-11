@@ -7,7 +7,9 @@ import type {
   VersionedSettings,
 } from "@spy4x/platform/universal/settings"
 import { createFormatters, type DeviceFormat, deviceFormat } from "@spy4x/time/format"
-import { type Preferences, preferencesDefinition } from "@domain/identity"
+import { isLanguage, type Preferences, preferencesDefinition } from "@domain/identity"
+import type { KeptLanguage } from "@platform/i18n.ts"
+import { kept as keptLanguage } from "../i18n.ts"
 import { callCommand, callQuery } from "../modules.ts"
 import { themeStore } from "./theme.ts"
 
@@ -33,6 +35,8 @@ export interface PreferencesDependencies {
   command<T>(name: string, payload: unknown): Promise<T>
   /** The page's theme store; the stored theme follows the person to every device through it. */
   theme: ThemeStore
+  /** The language this device kept from before sign-in; a record never saved takes it. */
+  language: Pick<KeptLanguage, `read`>
   /** This device's region format and zone, read again on every refresh (a traveller's moves). */
   device(): DeviceFormat
   /**
@@ -59,7 +63,18 @@ export function createPreferencesState(dependencies: PreferencesDependencies) {
     save: (request) =>
       dependencies.command<SettingsSaveResult<unknown>>(`preferences.save`, request),
   })
-  syncThemeWithSettings(dependencies.theme, store, `theme`)
+  /** The device's language as a patch while the record was never saved; else `{}`. */
+  const firstLanguage = (): Partial<Preferences> => {
+    const language = dependencies.language.read()
+    return store.record.peek().version === 0 && isLanguage(language) ? { language } : {}
+  }
+  // The theme's save to a record never saved carries this device's language too, in one request.
+  // Sign-in loads the page again right after the first save leaves: a language save queued behind
+  // the theme's would be lost, and the next page would find a saved record without a language.
+  syncThemeWithSettings(dependencies.theme, {
+    ...store,
+    save: (patch) => store.save({ ...firstLanguage(), ...patch }),
+  }, `theme`)
 
   const device = signal<DeviceFormat>(dependencies.device())
   const kept = signal<string | null>(dependencies.keptZone.read())
@@ -284,6 +299,7 @@ export const preferencesState = createPreferencesState({
   query: (name) => callQuery(name),
   command: (name, payload) => callCommand(name, payload),
   theme: themeStore,
+  language: keptLanguage,
   device: deviceFormat,
   keptZone: browserKeptZone,
   online: () => globalThis.navigator?.onLine !== false,

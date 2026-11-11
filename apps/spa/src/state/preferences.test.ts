@@ -82,6 +82,7 @@ function device(backend: ReturnType<typeof server>, here: DeviceFormat = BERLIN)
     query: (name) => reach(name),
     command: (name, payload) => reach(name, payload),
     theme,
+    language: { read: () => null },
     device: () => here,
     keptZone: { read: () => kept, write: (zone) => void (kept = zone) },
     online: () => online.value,
