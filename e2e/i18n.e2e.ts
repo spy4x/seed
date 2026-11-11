@@ -54,13 +54,22 @@ test.describe("the interface language", () => {
       })
       expect(promoted.ok(), await promoted.text()).toBe(true)
 
-      // An English browser whose person picked German on this device before signing in.
+      // An English browser whose person picked German and a dark theme on this device before
+      // signing in. Set once: every signed-out start wipes the device but the choices it keeps,
+      // and sign-in loads the page again right after the record's first save.
       const laptop = await browser.newContext({ locale: "en-GB" })
       devices.push(laptop)
-      await laptop.addInitScript(() => localStorage.setItem("language", "de"))
       const page = await laptop.newPage()
+      await page.goto(`${appBase}/sign-in`)
+      await page.evaluate(() => {
+        localStorage.setItem("language", "de")
+        localStorage.setItem("theme", "dark")
+      })
       await signIn(page, email, password)
       await expect(page.locator("html")).toHaveAttribute("lang", "de")
+      await expect(page.getByRole("link", { name: "Notizen" }).first()).toBeVisible()
+      // The device still keeps German after its saves: a reload opens in it too.
+      await page.reload()
       await expect(page.getByRole("link", { name: "Notizen" }).first()).toBeVisible()
 
       // A new English device follows the account's language once it signs in.
