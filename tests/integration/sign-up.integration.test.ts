@@ -561,6 +561,8 @@ Deno.test("a sign-up code issued before the address's total is spent still verif
     const code = await fixture.codeFor("ann@example.com")
 
     const { strangers, refusal } = await spendAddressTotal(app, "ann@example.com")
+    // The worker mails every stranger's code too, as it does in production.
+    await fixture.codeFor("ann@example.com")
 
     // Four networks: three spend their whole share, which with the owner's code is the address's
     // total, and the fourth's first request finds it spent.
@@ -589,6 +591,7 @@ Deno.test("four clients spending the address's total and guessing leave the owne
     const code = await fixture.codeFor("ann@example.com")
 
     const { strangers, refused, refusal } = await spendAddressTotal(app, "ann@example.com")
+    await fixture.codeFor("ann@example.com")
     const guesses = []
     for (const stranger of strangers) {
       // A wrong code, and the owner's own: neither works on a stranger's sign-up.
