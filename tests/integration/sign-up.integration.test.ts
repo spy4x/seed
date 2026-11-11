@@ -19,6 +19,20 @@ import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { expectVersion7Ids } from "./ids.ts"
+import { createAuthRoute } from "../../apps/api/routes/auth.ts"
+import { SIGN_UP_CODES_TOO_MANY } from "../../apps/api/routes/auth-sign-up.ts"
+import {
+  createAuthRateLimits,
+  SIGN_UP_CODE_MAILS_PER_ADDRESS,
+  SIGN_UP_CODE_MAILS_PER_CLIENT,
+} from "../../apps/api/middlewares/auth-rate-limits.ts"
+import { fakeTotpFailures, generousLimits } from "../../apps/api/_testing/auth-routes.ts"
+import { checkedError } from "../../apps/api/_testing/api-error.ts"
+import {
+  API_URL,
+  sameOriginWithoutCookieHeaders,
+  testMutationGuards,
+} from "../../apps/api/_testing/mutation-requests.ts"
 
 /**
  * Sign-up that proves the address first (#142), through the exact `createSignIn`, `AppDbBase` and
@@ -139,18 +153,25 @@ function browser(signIn: SignIn) {
     return c.json({ ok: (await signIn.signIn(c, login, password)) !== null })
   })
   app.get("/me", signIn.auth.isAuthenticated2FA, (c) => c.json(c.get("auth")!.user))
+  return cookieJar(app, `http://local`)
+}
 
+/**
+ * A client of `app` with its own cookie jar: sends back the cookies the answers set, on top of
+ * `headers`, at `base` plus the path.
+ */
+function cookieJar(app: Hono<APIContext>, base: string, headers: Record<string, string> = {}) {
   const cookies = new Map<string, string>()
   return {
     cookies,
     async call(method: string, path: string, body?: unknown) {
-      const headers = new Headers({ "content-type": "application/json" })
+      const sent = new Headers({ ...headers, "content-type": "application/json" })
       if (cookies.size) {
-        headers.set("cookie", [...cookies].map(([name, value]) => `${name}=${value}`).join("; "))
+        sent.set("cookie", [...cookies].map(([name, value]) => `${name}=${value}`).join("; "))
       }
-      const response = await app.request(`http://local${path}`, {
+      const response = await app.request(`${base}${path}`, {
         method,
-        headers,
+        headers: sent,
         body: body === undefined ? undefined : JSON.stringify(body),
       })
       const setCookies = response.headers.getSetCookie()
@@ -168,6 +189,40 @@ function browser(signIn: SignIn) {
       }
     },
   }
+}
+
+/**
+ * The app's `/auth` routes over the real sign-in and the real auth rate limits, in memory, as
+ * `index.ts` mounts them, plus `/me` behind the session guard. The strict per-address limit is
+ * generous, so the sign-up code budgets are the only limits a test reaches.
+ */
+function authApp(signIn: SignIn): Hono<APIContext> {
+  const app = new Hono<APIContext>().basePath("/api")
+  app.use("*", async (c, next) => {
+    c.set("requestId", uuidV7())
+    await next()
+  })
+  app.use("*", signIn.auth.parseAuth)
+  app.route(
+    "/auth",
+    createAuthRoute({
+      signIn,
+      emit: () => {},
+      mutationGuards: testMutationGuards,
+      rateLimits: createAuthRateLimits(generousLimits),
+      totpFailures: fakeTotpFailures([]),
+      passwordFailures: fakeTotpFailures([]),
+      emailCodeFailures: fakeTotpFailures([]),
+      requestEmailCode: () => Promise.resolve(),
+    }),
+  )
+  app.get("/me", signIn.auth.isAuthenticated2FA, (c) => c.json(c.get("auth")!.user))
+  return app
+}
+
+/** A browser on the network address `ip`, on the app's own page, calling {@link authApp}. */
+function browserAt(app: Hono<APIContext>, ip: string) {
+  return cookieJar(app, API_URL, { ...sameOriginWithoutCookieHeaders, "x-real-ip": ip })
 }
 
 interface Fixture {
@@ -458,5 +513,116 @@ Deno.test("of two sign-ups of one address, the second right code finds the accou
       account: { userId: created.userId, password: true, providers: [] },
     })
     expect(await fixture.count("auth_users")).toBe(1)
+  })
+})
+
+// The address's sign-up total (#321): strangers on other networks can spend the address's
+// `SIGN_UP_CODE_MAILS_PER_ADDRESS` codes an hour, but each sign-up is its own row named by its
+// browser's cookie, so the code its owner already holds keeps working.
+
+const OWNER_IP = "198.51.100.7"
+
+/**
+ * Strangers on networks of their own (`192.0.2.<n>`) ask for sign-ups of `email`, each until its
+ * client's share is spent, until a stranger's first request is refused: the address's total is
+ * spent then, not that client's share. Answers the browsers of the strangers who got a sign-up,
+ * and the refused stranger's browser and answer.
+ */
+async function spendAddressTotal(app: Hono<APIContext>, email: string) {
+  const strangers: ReturnType<typeof browserAt>[] = []
+  for (let network = 1; network <= SIGN_UP_CODE_MAILS_PER_ADDRESS; network++) {
+    const stranger = browserAt(app, `192.0.2.${network}`)
+    for (let mail = 0; mail < SIGN_UP_CODE_MAILS_PER_CLIENT; mail++) {
+      const answer = await stranger.call("POST", "/auth/password/sign-up", {
+        email,
+        password: "Stranger-pass1",
+      })
+      if (answer.status === 429) {
+        if (mail === 0) return { strangers, refused: stranger, refusal: answer }
+        break
+      }
+      expect(answer.status).toBe(200)
+      if (mail === 0) strangers.push(stranger)
+    }
+  }
+  throw new Error(`the address's sign-up total was never spent`)
+}
+
+Deno.test("a sign-up code issued before the address's total is spent still verifies after it is spent", async () => {
+  await withFixture(async (fixture) => {
+    const app = authApp(fixture.signIn)
+    const owner = browserAt(app, OWNER_IP)
+    expect(
+      (await owner.call("POST", "/auth/password/sign-up", {
+        email: "ann@example.com",
+        password: PASSWORD,
+      })).status,
+    ).toBe(200)
+    const code = await fixture.codeFor("ann@example.com")
+
+    const { strangers, refusal } = await spendAddressTotal(app, "ann@example.com")
+    // The worker mails every stranger's code too, as it does in production.
+    await fixture.codeFor("ann@example.com")
+
+    // Four networks: three spend their whole share, which with the owner's code is the address's
+    // total, and the fourth's first request finds it spent.
+    expect(strangers).toHaveLength(3)
+    expect(refusal.status).toBe(429)
+    expect(checkedError(JSON.parse(refusal.text)).message).toBe(SIGN_UP_CODES_TOO_MANY)
+    const verified = await owner.call("POST", "/auth/password/sign-up/verify", { code })
+    expect(verified.status).toBe(200)
+    const [key] = await fixture.sql<{ userId: number }[]>`
+      SELECT user_id AS "userId" FROM auth_keys WHERE subject = 'ann@example.com'
+    `
+    expect(JSON.parse(verified.text).id).toBe(key.userId)
+    expect((await owner.call("GET", "/me")).status).toBe(200)
+    expect(await fixture.count("auth_users")).toBe(1)
+  })
+})
+
+Deno.test("four clients spending the address's total and guessing leave the owner's earlier code the one that works", async () => {
+  await withFixture(async (fixture) => {
+    const app = authApp(fixture.signIn)
+    const owner = browserAt(app, OWNER_IP)
+    await owner.call("POST", "/auth/password/sign-up", {
+      email: "ann@example.com",
+      password: PASSWORD,
+    })
+    const code = await fixture.codeFor("ann@example.com")
+
+    const { strangers, refused, refusal } = await spendAddressTotal(app, "ann@example.com")
+    await fixture.codeFor("ann@example.com")
+    const guesses = []
+    for (const stranger of strangers) {
+      // A wrong code, and the owner's own: neither works on a stranger's sign-up.
+      for (const guess of ["wrong-00", code]) {
+        guesses.push(
+          (await stranger.call("POST", "/auth/password/sign-up/verify", { code: guess })).status,
+        )
+      }
+    }
+
+    // The refused stranger has no sign-up to guess at.
+    const refusedGuess = await refused.call("POST", "/auth/password/sign-up/verify", { code })
+
+    expect(refusal.status).toBe(429)
+    expect(strangers).toHaveLength(3)
+    expect(guesses).toEqual(Array(strangers.length * 2).fill(400))
+    expect(refusedGuess.status).toBe(410)
+    expect(await fixture.count("auth_users")).toBe(0)
+    const verified = await owner.call("POST", "/auth/password/sign-up/verify", { code })
+    expect(verified.status).toBe(200)
+    expect((await owner.call("GET", "/me")).status).toBe(200)
+    const [key] = await fixture.sql<{ provenAt: Date | null }[]>`
+      SELECT proven_at AS "provenAt" FROM auth_keys WHERE subject = 'ann@example.com'
+    `
+    expect(key.provenAt).not.toBe(null)
+    // The account signs in with the owner's password, not a stranger's.
+    expect(JSON.parse(
+      (await browser(fixture.signIn).call("POST", "/sign-in", {
+        login: "ann@example.com",
+        password: PASSWORD,
+      })).text,
+    )).toEqual({ ok: true })
   })
 })
