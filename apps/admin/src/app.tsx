@@ -22,6 +22,7 @@ import { type AdminStore, hasAdminAccess, operatorName, readOperatorEmail } from
 import { ADMIN_MODULES, adminPersonTabs, shownModules } from "./modules/registry.ts"
 import type { AdminContext, AdminModule } from "./modules/types.ts"
 import { FormatContext } from "@spy4x/preact-ui/format"
+import { deviceFormat } from "@spy4x/time/format"
 import { I18nContext, useT } from "@spy4x/preact-ui/i18n"
 import { isLanguage, LANGUAGES } from "@domain/identity"
 import { languageSetting, pickLanguage } from "@platform/i18n.ts"
@@ -79,7 +80,11 @@ function Operator(
     languages = pageLanguages,
   }: AppProps,
 ): JSX.Element {
-  const own = useMemo(() => operatorFormat ?? createOperatorFormat(store.request), [store])
+  const own = useMemo(() =>
+    operatorFormat ?? createOperatorFormat(store.request, {
+      language: () => languages.translator.value.language,
+      deviceLocales: () => [deviceFormat().locale, ...(globalThis.navigator?.languages ?? [])],
+    }), [store])
   const session = store.session.value
   const [path, navigate] = useLocation()
   // Shortcuts, the sidebar and modules navigate through this one, so a page with unsaved changes

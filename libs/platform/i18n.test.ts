@@ -1,6 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import {
+  automaticLocale,
   createLanguages,
   keptLanguage,
   LANGUAGE_STORAGE_KEY,
@@ -23,6 +24,28 @@ describe(`pickLanguage`, () => {
     for (const value of [`../../etc/passwd`, `__proto__`, `constructor`, `DE`, `de-DE`, ``]) {
       expect(pickLanguage(LANGUAGES, value, value, [])).toBe(`en`)
     }
+  })
+})
+
+describe(`automaticLocale`, () => {
+  it(`takes the first device locale in the chosen language`, () => {
+    expect(automaticLocale(`de`, [`en-US`, `de-AT`, `de-DE`])).toBe(`de-AT`)
+    expect(automaticLocale(`en`, [`ru-RU`, `en-US`])).toBe(`en-US`)
+    expect(automaticLocale(`pt-BR`, [`pt-PT`])).toBe(`pt-PT`)
+  })
+
+  it(`skips a device locale without a region`, () => {
+    expect(automaticLocale(`de`, [`en-US`, `de`, `de-CH`])).toBe(`de-CH`)
+  })
+
+  it(`falls back to the language's own region when no device locale matches`, () => {
+    expect(automaticLocale(`de`, [`en-US`])).toBe(`de-DE`)
+    expect(automaticLocale(`ar`, [`en-US`, `ar`])).toBe(`ar-EG`)
+    expect(automaticLocale(`pt-BR`, [])).toBe(`pt-BR`)
+  })
+
+  it(`writes English as en-GB, like the public website, when the device has no English`, () => {
+    expect(automaticLocale(`en`, [`ru-RU`, `en`])).toBe(`en-GB`)
   })
 })
 

@@ -204,3 +204,35 @@ export function languageSetting<Language extends string>(
     },
   }
 }
+
+/**
+ * The region format "Automatic" means for a person who reads `language`: the first of the
+ * device's locales in that language, else the language's own region ("de-DE" for German,
+ * "ar-EG" for Arabic). English without an English device locale is `en-GB`, as the public
+ * website writes it. Only a tag with a region counts, so a bare "de" in `navigator.languages`
+ * never hides the "de-AT" the device lists after it.
+ */
+export function automaticLocale(language: string, deviceLocales: readonly string[]): string {
+  const regional = deviceLocales.filter((tag) => regionOf(tag) !== null)
+  const own = language === `en` ? `en-GB` : regionOf(language) ? language : withRegion(language)
+  return negotiateLanguage(language, regional, own)
+}
+
+/** The region subtag of `tag`, or `null` when it has none or is no valid tag. */
+function regionOf(tag: string): string | null {
+  try {
+    return new Intl.Locale(tag).region ?? null
+  } catch {
+    return null
+  }
+}
+
+/** `language` with its likely region: "de" → "de-DE". An invalid tag stays as it is. */
+function withRegion(language: string): string {
+  try {
+    const likely = new Intl.Locale(language).maximize()
+    return likely.region ? `${likely.language}-${likely.region}` : language
+  } catch {
+    return language
+  }
+}

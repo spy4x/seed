@@ -7,8 +7,8 @@ import type {
   VersionedSettings,
 } from "@spy4x/platform/universal/settings"
 import { createFormatters, type DeviceFormat, deviceFormat } from "@spy4x/time/format"
-import { isLanguage, type Preferences, preferencesDefinition } from "@domain/identity"
-import type { KeptLanguage } from "@platform/i18n.ts"
+import { isLanguage, LANGUAGES, type Preferences, preferencesDefinition } from "@domain/identity"
+import { automaticLocale, type KeptLanguage, pickLanguage } from "@platform/i18n.ts"
 import { kept as keptLanguage } from "../i18n.ts"
 import { callCommand, callQuery } from "../modules.ts"
 import { themeStore } from "./theme.ts"
@@ -39,6 +39,8 @@ export interface PreferencesDependencies {
   language: Pick<KeptLanguage, `read`>
   /** This device's region format and zone, read again on every refresh (a traveller's moves). */
   device(): DeviceFormat
+  /** The browser's languages, most preferred first (`navigator.languages`). */
+  requested(): readonly string[]
   /**
    * The device zone the person chose to ignore ("Keep Berlin time"), so the row stops offering it
    * until the device moves to yet another zone. Kept on this device only, and cleared on sign-out.
@@ -111,8 +113,28 @@ export function createPreferencesState(dependencies: PreferencesDependencies) {
     draft.value ? { ...store.value.value, ...draft.value } : store.value.value
   )
 
+  /**
+   * The region format "Automatic" means now: the device's own locale or one of the browser's in
+   * the interface language, else that language's own region, so a German page on an English
+   * device still writes German dates. The language is the one the language sync shows.
+   */
+  const automatic = computed(() => {
+    const requested = dependencies.requested()
+    const language = pickLanguage(
+      LANGUAGES,
+      shown.value.language,
+      dependencies.language.read(),
+      requested,
+    )
+    return automaticLocale(language, [device.value.locale, ...requested])
+  })
+
   /** Every date and time on screen, in the person's settings. */
-  const format = computed(() => createFormatters(shown.value, { device: device.value }))
+  const format = computed(() =>
+    createFormatters({ ...shown.value, locale: shown.value.locale ?? automatic.value }, {
+      device: device.value,
+    })
+  )
 
   /**
    * This device's zone when the person pinned another one and has not chosen to keep it: the Time
@@ -258,6 +280,8 @@ export function createPreferencesState(dependencies: PreferencesDependencies) {
       store.dismissConflict()
     },
     device,
+    /** The region format "Automatic" stands for in the person's language. */
+    automatic,
     otherZone,
     format,
     announcement,
@@ -301,6 +325,7 @@ export const preferencesState = createPreferencesState({
   theme: themeStore,
   language: keptLanguage,
   device: deviceFormat,
+  requested: () => globalThis.navigator?.languages ?? [],
   keptZone: browserKeptZone,
   online: () => globalThis.navigator?.onLine !== false,
 })
