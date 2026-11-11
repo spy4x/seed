@@ -20,6 +20,42 @@ when:
   - event: tag
 
 variables:
+  # Markdown that only `check`, Lighthouse and the browser tests read. A pull request that
+  # changes only these skips the steps that start the stack (integration, backup-restore,
+  # alert-rules, runtimes, e2e-smoke): they cannot fail over them, and they took about 20 minutes
+  # (homelab#131). `check` still runs, and so do Lighthouse and the images when their own lists
+  # name a changed file. Woodpecker skips a step with an `exclude` list only when every changed
+  # file matches it.
+  - &markdown_only
+    - "*.md"
+    - "**/README.md"
+    - docs/**/*.md
+    - i18n/*.md
+    - .github/**
+    - .claude/**
+  # The same without the guides in docs/*.md, for `browser`: the website renders them and
+  # e2e/mpa/docs.mpa.ts tests them (a phone-width table, headings, links, code blocks).
+  - &internal_markdown
+    - "*.md"
+    - "**/README.md"
+    - docs/*/**/*.md
+    - i18n/*.md
+    - .github/**
+    - .claude/**
+  - &stack_when
+    - event: pull_request
+      path:
+        exclude: *markdown_only
+    - event: push
+      branch: main
+    - event: tag
+  - &browser_when
+    - event: pull_request
+      path:
+        exclude: *internal_markdown
+    - event: push
+      branch: main
+    - event: tag
   # When the four image steps run: see image-node.
   - &image_when
     - event: pull_request
@@ -53,6 +89,7 @@ steps:
 
   integration:
     image: denoland/deno:2.9.7
+    when: *stack_when
     environment:
       DB_HOST: postgres
       DB_PORT: "5432"
@@ -94,6 +131,7 @@ steps:
     # own pg_dump, in databases it creates and drops. The image has no restic; Debian's package is
     # of the same 0.18 line as the one in the backup image (infra/backup/Dockerfile).
     image: postgres:18.6
+    when: *stack_when
     environment:
       PGHOST: postgres
       PGUSER: tester
@@ -107,6 +145,7 @@ steps:
     # The unit tests of the alert rules (infra/configs/alerts.test.yml), run by vmalert-tool of the
     # vmalert version in infra/compose/compose.shared.yml.
     image: victoriametrics/vmalert-tool:v1.146.0@sha256:4360dc66ac7e758d15a9704a3ab2348f8f3f47bbc0798642985d7945973a34ff
+    when: *stack_when
     commands:
       - /vmalert-tool-prod unittest --files=infra/configs/alerts.test.yml
     depends_on: [check]
@@ -131,6 +170,7 @@ steps:
     # scripts keep the API's vapid.json in the repository root while they run; and each starts a
     # worker on the one Valkey service, where a worker would take another stack's jobs.
     image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
+    when: *browser_when
     environment:
       DB_HOST: postgres
       DB_PORT: "5432"
@@ -232,7 +272,19 @@ steps:
       # The commands share one shell, so the variable reaches the next one.
       - if [ "$${CI_PIPELINE_EVENT}" = pull_request ]; then export LIGHTHOUSE_PAGES=quick; fi
       - deno task lighthouse
-    depends_on: [integration, backup-restore, alert-rules, browser]
+    # The four after `check` are optional: a pull request that changes only Markdown skips them,
+    # and Lighthouse still runs, after `check` and alone, when a changed guide is part of the
+    # website.
+    depends_on:
+      - check
+      - name: integration
+        optional: true
+      - name: backup-restore
+        optional: true
+      - name: alert-rules
+        optional: true
+      - name: browser
+        optional: true
 
   e2e-smoke:
     # The product's browser tests a pull request must pass: the smoke set, `SMOKE_SPECS` in
@@ -241,10 +293,14 @@ steps:
     # the Postgres and Valkey services below instead of starting containers, in a database of its
     # own (`template_e2e_app`); it waits for both itself. It starts the API, the worker, the Vite
     # dev server and a proxy that serves them at http://app.localhost:<port>. A tag runs the set
-    # too, because release.yml waits for this workflow.
+    # too, because release.yml waits for this workflow. A pull request that changes only the Markdown
+    # in `markdown_only` at the top skips it: the smoke set opens no guide.
     image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
     when:
-      - event: [pull_request, tag]
+      - event: pull_request
+        path:
+          exclude: *markdown_only
+      - event: tag
     environment:
       DB_HOST: postgres
       DB_PORT: "5432"
@@ -276,7 +332,8 @@ steps:
     # cannot change the website skips it, and Woodpecker drops an optional dependency on a skipped
     # step instead of failing the pipeline over it.
     depends_on:
-      - browser
+      - name: browser
+        optional: true
       - name: lighthouse
         optional: true
 
@@ -335,6 +392,7 @@ steps:
     # checked against their SHA-256. The script works in its own copy of the checkout, so it runs
     # beside `browser` and `lighthouse` without sharing their builds or vapid.json.
     image: docker.io/library/node:26.13.0-bookworm@sha256:fa52d1669505e29b58c042875b1d65c229e0787a3610fd52869b22b68e480853
+    when: *stack_when
     environment:
       DB_HOST: postgres
       DB_PORT: "5432"

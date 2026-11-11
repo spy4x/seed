@@ -25,6 +25,14 @@ check ──┬── integration      (Postgres and Valkey services) ──┐
 A pull request that changes no file of the website skips `lighthouse`; `e2e-smoke` then starts
 right after `browser`'s stage.
 
+A pull request that changes only Markdown outside the product (the root `*.md` files, any
+`README.md`, `docs/**/*.md`, `i18n/*.md`, `.github/` and `.claude/`: `markdown_only` under
+`variables` in `ci.yml`) skips `integration`, `backup-restore`, `alert-rules`, `runtimes` and
+`e2e-smoke`, which cannot fail over such a change and took about 20 minutes. `check` still runs,
+and so do `lighthouse` and the images when their own lists name a changed file. `browser` runs
+only when a guide in `docs/*.md` changed (`internal_markdown`), because the website renders the
+guides and `e2e/mpa/docs.mpa.ts` tests them.
+
 Woodpecker runs steps in stages: a step starts only when the whole stage before it has ended, so
 the wall time is the slowest step of each stage, added up. Checks that must run one after another
 in the shared checkout are therefore commands of one step, `browser`, which runs beside
@@ -60,7 +68,8 @@ performance falls when another step shares the CPU.
   the API and the website with kaniko, pushing nothing. A push to `main` and a tag always build them;
   a pull request only when it changes a file that goes into an image: the `path` list under
   `variables` in `ci.yml`, which follows `.dockerignore`.
-- `e2e-smoke` runs the product's smoke set on every pull request and tag:
+- `e2e-smoke` runs the product's smoke set on every pull request (except one that changes only
+  Markdown, above) and tag:
   `deno task e2e:local --smoke --max-failures=3`, the script a developer runs, against the Postgres
   and Valkey services (`E2E_SERVICES=environment`). The set is `SMOKE_SPECS` in
   `infra/scripts/e2e-local-plan.ts`: `auth-profile-ws-push.e2e.ts`, `sign-in-next.e2e.ts`,
