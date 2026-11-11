@@ -15,10 +15,19 @@ import {
   DEFAULT_PREFERENCES,
   type GuestSwitchResponse,
   SIGN_IN_LINK_METHOD,
+  SIGN_UP_CLOSED,
   UserMFAStatus,
 } from "@domain/identity"
+import { GroupRole } from "@domain/groups"
+import { sha256Hex } from "@spy4x/platform/tokens"
+import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
+import {
+  newInvitationToken,
+  PostgresInvitationRepository,
+} from "@server/groups/postgres-invitation-repository.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
+import type { SignUpMode } from "../../apps/api/services/sign-up-gate.ts"
 import { createGuestRoute } from "../../apps/api/routes/auth-guest.ts"
 import { createOAuthRoute } from "../../apps/api/routes/auth-oauth.ts"
 import { MAILED_CODE_DEAD, MAILED_CODE_WRONG } from "../../apps/api/routes/auth-answers.ts"
@@ -146,8 +155,14 @@ interface Fixture {
   count(table: string): Promise<number>
 }
 
-/** The auth and guest routes as `index.ts` mounts them, with the worker's mail jobs. */
-async function withFixture(body: (fixture: Fixture) => Promise<void>): Promise<void> {
+/**
+ * The auth and guest routes as `index.ts` mounts them, with the worker's mail jobs. `signUp` is
+ * who may make an account (`SIGN_UP`), `open` unless given.
+ */
+async function withFixture(
+  body: (fixture: Fixture) => Promise<void>,
+  signUp: SignUpMode = "open",
+): Promise<void> {
   await withSchema(async (sql) => {
     const signIn = createSignIn({
       db: new AppDbBase({ sql }),
@@ -156,6 +171,8 @@ async function withFixture(body: (fixture: Fixture) => Promise<void>): Promise<v
       secureCookie: false,
       sessionMinutes: 60,
       totpIssuer: "example.test",
+      signUp,
+      invitationPlan: () => Promise.resolve({ maxMembers: null, memberRoles: true }),
     })
     const mutationGuards = createMutationGuards(WEB_APP_URL)
     const app = new Hono<APIContext>().basePath("/api")
@@ -820,4 +837,243 @@ Deno.test("a reset for an unknown address answers and counts guesses as for a kn
         .toMatchObject(dead)
     }
   })
+})
+
+// Sign-up by invitation (`SIGN_UP=invite`, #704): every step that would make an account asks for
+// an invitation that admits its address; one that already has an account signs in as before.
+
+const closed = { status: 403, body: { error: { code: "forbidden", reason: SIGN_UP_CLOSED } } }
+
+/**
+ * A working invitation to a group of a new member, tied to `email` or, for `null`, a link anyone
+ * may use. Answers its token.
+ */
+async function invitationFor(fixture: Fixture, email: string | null): Promise<string> {
+  const owner = await fixture.account(`owner-${uuidV7()}@example.com`)
+  const groupId = uuidV7()
+  await new PostgresGroupRepository(fixture.sql).ensureFirst({ id: groupId, name: "Home" }, owner)
+  const token = newInvitationToken()
+  const created = await new PostgresInvitationRepository(fixture.sql).create(
+    {
+      groupId,
+      role: GroupRole.VIEWER,
+      expiresInDays: 7,
+      maxUses: 1,
+      email,
+      tokenHash: await sha256Hex(token),
+    },
+    owner,
+    { maxMembers: null, memberRoles: true },
+  )
+  if (!created) throw new Error("the invitation was not created")
+  return token
+}
+
+/** Asks for a password sign-up of `email` from `browser`, carrying `invitation` when given. */
+function askSignUp(browser: Browser, email: string, invitation?: string) {
+  return browser.call("POST", "/auth/password/sign-up", { email, password: PASSWORD, invitation })
+}
+
+/** How often the one invitation was used, and how many people its group has, its owner included. */
+async function invitationUse(sql: postgres.Sql): Promise<{ uses: number; members: number }> {
+  const [row] = await sql`
+    SELECT group_invitations.uses, count(group_members.user_id)::int AS members
+    FROM group_invitations INNER JOIN group_members USING (group_id)
+    GROUP BY group_invitations.id`
+  return { uses: row.uses, members: row.members }
+}
+
+Deno.test("with SIGN_UP=invite a one-use link admits one password sign-up, who joins its group, and refuses the next", async () => {
+  await withFixture(async (fixture) => {
+    const invitation = await invitationFor(fixture, null)
+    const users = await fixture.count("users")
+    // Both ask before either finishes, so only the use counted at completion tells them apart.
+    const ada = fixture.browser()
+    const eve = fixture.browser()
+    expect((await askSignUp(ada, "ada@example.com", invitation)).status).toBe(200)
+    expect((await askSignUp(eve, "eve@example.com", invitation)).status).toBe(200)
+    const adaCode = await fixture.mailedCode("ada@example.com")
+    const eveCode = await fixture.mailedCode("eve@example.com")
+
+    const first = await ada.call("POST", "/auth/password/sign-up/verify", {
+      code: adaCode,
+      invitation,
+    })
+    const second = await eve.call("POST", "/auth/password/sign-up/verify", {
+      code: eveCode,
+      invitation,
+    })
+
+    expect(first.status).toBe(200)
+    expect(second).toMatchObject(closed)
+    expect(await fixture.count("users")).toBe(users + 1)
+    expect(await invitationUse(fixture.sql)).toEqual({ uses: 1, members: 2 })
+  }, "invite")
+})
+
+Deno.test("with SIGN_UP=invite a password sign-up without an invitation gets SIGN_UP_CLOSED and writes nothing", async () => {
+  await withFixture(async (fixture) => {
+    const asked = await askSignUp(fixture.browser(), "eve@example.com")
+
+    expect(asked).toMatchObject(closed)
+    expect(await fixture.count("users")).toBe(0)
+    expect(await fixture.count("sign_up_requests")).toBe(0)
+    expect(fixture.sender.sent).toHaveLength(0)
+  }, "invite")
+})
+
+Deno.test("with SIGN_UP=invite an invitation for the address lets the password sign-up make the account", async () => {
+  await withFixture(async (fixture) => {
+    const invitation = await invitationFor(fixture, "ada@example.com")
+    const users = await fixture.count("users")
+    const browser = fixture.browser()
+
+    expect((await askSignUp(browser, "Ada@Example.com", invitation)).status).toBe(200)
+    const code = await fixture.mailedCode("ada@example.com")
+    const verified = await browser.call("POST", "/auth/password/sign-up/verify", {
+      code,
+      invitation,
+    })
+
+    expect(verified.status).toBe(200)
+    expect(await fixture.count("users")).toBe(users + 1)
+  }, "invite")
+})
+
+Deno.test("with SIGN_UP=invite an invitation for another address is refused and writes nothing", async () => {
+  await withFixture(async (fixture) => {
+    const invitation = await invitationFor(fixture, "ada@example.com")
+    const users = await fixture.count("users")
+
+    const asked = await askSignUp(fixture.browser(), "eve@example.com", invitation)
+
+    expect(asked).toMatchObject(closed)
+    expect(await fixture.count("users")).toBe(users)
+    expect(await fixture.count("sign_up_requests")).toBe(0)
+  }, "invite")
+})
+
+Deno.test("with SIGN_UP=invite a used-up invitation refuses the password sign-up before any code is mailed", async () => {
+  await withFixture(async (fixture) => {
+    const invitation = await invitationFor(fixture, "ada@example.com")
+    await fixture.sql`UPDATE group_invitations SET uses = max_uses`
+
+    const asked = await askSignUp(fixture.browser(), "ada@example.com", invitation)
+
+    expect(asked).toMatchObject(closed)
+    expect(await fixture.count("sign_up_requests")).toBe(0)
+    expect(fixture.sender.sent).toHaveLength(0)
+  }, "invite")
+})
+
+Deno.test("with SIGN_UP=invite an invitation used up while the code was on its way makes no account", async () => {
+  await withFixture(async (fixture) => {
+    const invitation = await invitationFor(fixture, "ada@example.com")
+    const users = await fixture.count("users")
+    const browser = fixture.browser()
+    expect((await askSignUp(browser, "ada@example.com", invitation)).status).toBe(200)
+    const code = await fixture.mailedCode("ada@example.com")
+    await fixture.sql`UPDATE group_invitations SET uses = max_uses`
+
+    const verified = await browser.call("POST", "/auth/password/sign-up/verify", {
+      code,
+      invitation,
+    })
+
+    expect(verified).toMatchObject(closed)
+    expect(await fixture.count("users")).toBe(users)
+    // The sign-up is over: the person starts again with a working invitation.
+    expect(await fixture.count("sign_up_requests")).toBe(0)
+  }, "invite")
+})
+
+Deno.test("with SIGN_UP=invite a link invitation admits any address", async () => {
+  await withFixture(async (fixture) => {
+    const invitation = await invitationFor(fixture, null)
+    const users = await fixture.count("users")
+    const browser = fixture.browser()
+
+    expect((await askSignUp(browser, "anyone@example.com", invitation)).status).toBe(200)
+    const code = await fixture.mailedCode("anyone@example.com")
+    const verified = await browser.call("POST", "/auth/password/sign-up/verify", {
+      code,
+      invitation,
+    })
+
+    expect(verified.status).toBe(200)
+    expect(await fixture.count("users")).toBe(users + 1)
+  }, "invite")
+})
+
+Deno.test("with SIGN_UP=invite a sign-in code that would make an account gets SIGN_UP_CLOSED and writes none", async () => {
+  await withFixture(async (fixture) => {
+    const browser = fixture.browser()
+    const code = await fixture.codeFor(browser, "eve@example.com")
+
+    const verified = await browser.call("POST", "/auth/code/verify", { code })
+
+    expect(verified).toMatchObject(closed)
+    expect(await fixture.count("users")).toBe(0)
+    expect(await fixture.count("auth_users")).toBe(0)
+  }, "invite")
+})
+
+Deno.test("with SIGN_UP=invite a sign-in code with an invitation for the address makes the account", async () => {
+  await withFixture(async (fixture) => {
+    const invitation = await invitationFor(fixture, "ada@example.com")
+    const users = await fixture.count("users")
+    const browser = fixture.browser()
+    const code = await fixture.codeFor(browser, "ada@example.com")
+
+    const verified = await browser.call("POST", "/auth/code/verify", { code, invitation })
+
+    expect(verified).toMatchObject({ status: 200, body: { created: true } })
+    expect(await fixture.count("users")).toBe(users + 1)
+  }, "invite")
+})
+
+Deno.test("with SIGN_UP=invite a one-use link admits one account by sign-in code, who joins its group, and refuses the next", async () => {
+  await withFixture(async (fixture) => {
+    const invitation = await invitationFor(fixture, null)
+    const users = await fixture.count("users")
+    const ada = fixture.browser()
+    const eve = fixture.browser()
+
+    const first = await ada.call("POST", "/auth/code/verify", {
+      code: await fixture.codeFor(ada, "ada@example.com"),
+      invitation,
+    })
+    const second = await eve.call("POST", "/auth/code/verify", {
+      code: await fixture.codeFor(eve, "eve@example.com"),
+      invitation,
+    })
+
+    expect(first).toMatchObject({ status: 200, body: { created: true } })
+    expect(second).toMatchObject(closed)
+    expect(await fixture.count("users")).toBe(users + 1)
+    expect(await invitationUse(fixture.sql)).toEqual({ uses: 1, members: 2 })
+  }, "invite")
+})
+
+Deno.test("with SIGN_UP=invite a sign-in code of an existing account still signs in", async () => {
+  await withFixture(async (fixture) => {
+    await fixture.account("ada@example.com")
+    const browser = fixture.browser()
+    const code = await fixture.codeFor(browser, "ada@example.com")
+
+    const verified = await browser.call("POST", "/auth/code/verify", { code })
+
+    expect(verified).toMatchObject({ status: 200, body: { created: false } })
+    expect(await fixture.count("users")).toBe(1)
+  }, "invite")
+})
+
+Deno.test("with SIGN_UP=invite the guest route refuses a guest and writes no account", async () => {
+  await withFixture(async (fixture) => {
+    const started = await fixture.browser().call("POST", "/auth/guest")
+
+    expect(started.status).toBe(404)
+    expect(await fixture.count("users")).toBe(0)
+    expect(await fixture.count("auth_users")).toBe(0)
+  }, "invite")
 })

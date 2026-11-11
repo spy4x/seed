@@ -180,6 +180,8 @@ export default {
   "Reason.SEAT_PRICE_NOT_ACCEPTED":
     "メンバーを追加するたびにグループの請求額が増えることを確認してください。",
   "Reason.SHARE_NOT_FOUND": "この共有の記録はもう存在しません。",
+  "Reason.SIGN_UP_CLOSED":
+    "このサーバーでは招待がないと新規登録できません。メンバーに招待を依頼してください。",
   "Reason.SLUG_LOCKED":
     "記事を公開するとアドレスは固定されます。変更するには「URLを変更」を使ってください。",
   "Reason.SLUG_TAKEN": "このアドレスはすでに使われています。別のものを選んでください。",

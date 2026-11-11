@@ -191,6 +191,8 @@ export default {
   "Reason.SEARCH_RATE_LIMITED": "Demasiadas búsquedas. Espera un minuto y vuelve a intentarlo.",
   "Reason.SEAT_PRICE_NOT_ACCEPTED": "Confirma que cada miembro nuevo aumenta la factura del grupo.",
   "Reason.SHARE_NOT_FOUND": "Esta entrada ya no está compartida en ese canal.",
+  "Reason.SIGN_UP_CLOSED":
+    "En este servidor solo puedes registrarte con una invitación. Pide una a un miembro.",
   "Reason.SLUG_LOCKED":
     "La dirección ya no se puede editar una vez publicada la entrada. Usa «Cambiar URL» para cambiarla.",
   "Reason.SLUG_TAKEN": "Esta dirección ya está en uso. Elige otra.",

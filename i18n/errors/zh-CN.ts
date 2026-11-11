@@ -164,6 +164,7 @@ export default {
   "Reason.SEARCH_RATE_LIMITED": "搜索次数过多，请一分钟后再试。",
   "Reason.SEAT_PRICE_NOT_ACCEPTED": "请确认每增加一位新成员，群组的费用都会相应增加。",
   "Reason.SHARE_NOT_FOUND": "这条分享记录已不存在。",
+  "Reason.SIGN_UP_CLOSED": "此服务器仅限受邀注册。请向成员索取邀请。",
   "Reason.SLUG_LOCKED": "文章发布后地址就会锁定。如需修改，请使用“更改 URL”。",
   "Reason.SLUG_TAKEN": "这个地址已被占用，请换一个。",
   "Reason.SLUG_UNCHANGED": "地址已经是这个了。",

@@ -102,6 +102,11 @@ Deno.test("the api container receives the guest mode switch", async () => {
   expect(await environmentOf("api")).toContain("GUEST_MODE")
 })
 
+// Without it `SIGN_UP=invite` in `.env` would leave sign-up open to anyone: the API never sees it.
+Deno.test("the api container receives the sign-up mode", async () => {
+  expect(await environmentOf("api")).toContain("SIGN_UP")
+})
+
 // Without it `NOTES=false` in `.env` would leave the notes API on: the API never sees it.
 Deno.test("the api container receives the notes switch", async () => {
   expect(await environmentOf("api")).toContain("NOTES")

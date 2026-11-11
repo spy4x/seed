@@ -94,6 +94,7 @@ const REASONS: Record<ErrorReason, true> = {
   SEARCH_RATE_LIMITED: true,
   SEAT_PRICE_NOT_ACCEPTED: true,
   SHARE_NOT_FOUND: true,
+  SIGN_UP_CLOSED: true,
   SLUG_LOCKED: true,
   TRANSLATION_INVALID: true,
   SLUG_TAKEN: true,

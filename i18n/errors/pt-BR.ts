@@ -186,6 +186,8 @@ export default {
   "Reason.SEARCH_RATE_LIMITED": "Muitas buscas. Espere um minuto e tente de novo.",
   "Reason.SEAT_PRICE_NOT_ACCEPTED": "Confirme que cada novo membro aumenta a conta do grupo.",
   "Reason.SHARE_NOT_FOUND": "Esta divulgação não existe mais.",
+  "Reason.SIGN_UP_CLOSED":
+    "Neste servidor, só é possível criar conta com um convite. Peça um convite a um membro.",
   "Reason.SLUG_LOCKED":
     "O endereço fica travado depois que o post é publicado. Use Alterar URL para mudá-lo.",
   "Reason.SLUG_TAKEN": "Este endereço já está em uso. Escolha outro.",

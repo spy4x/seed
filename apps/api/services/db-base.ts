@@ -27,6 +27,7 @@ import {
   type UserRole,
 } from "@domain/identity"
 import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
+import { PostgresInvitationRepository } from "@server/groups/postgres-invitation-repository.ts"
 import { PostgresNotificationRepository } from "@server/notifications/postgres-notification-repository.ts"
 import { PostgresGroupActivityRepository } from "@server/groups/postgres-activity-repository.ts"
 import { PostgresGroupDataMover } from "@server/groups/postgres-group-data-mover.ts"
@@ -266,6 +267,11 @@ export class AppDbBase extends DbServiceBase {
    */
   get group(): PostgresGroupRepository {
     return new PostgresGroupRepository(this.sql)
+  }
+
+  /** Group invitations; here for the sign-up gate (`sign-up-gate.ts`). Built per access, like `group`. */
+  get invitations(): PostgresInvitationRepository {
+    return new PostgresInvitationRepository(this.sql)
   }
 
   /** Revokes every pending invitation a person made. Built per access, like `group`. */
