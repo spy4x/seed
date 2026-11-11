@@ -32,6 +32,7 @@ import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
 import { seedSampleSharing } from "@server/blog/sample-sharing.ts"
 import { readSeedPosts, upsertSeedPosts } from "@server/blog/seed-posts.ts"
 import { seedSampleContactLinks } from "@server/contact-links/sample-links.ts"
+import { readNotesSetup } from "@server/notes/setup.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { readSeedOptions, type SeedOptions } from "../../apps/worker/demo/options.ts"
 import { seedDemo, SeedRefusedError } from "../../apps/worker/demo/seed.ts"
@@ -65,6 +66,7 @@ async function main(): Promise<void> {
       adminPassword: dev ? options.password : null,
       dataSeed: DEV_DATA_SEED,
       subscribers,
+      notes: readNotesSetup(Deno.env),
     })
     // Seed's own posts: the seed runs only in development or the demo (`readSeedOptions`).
     await upsertSeedPosts(sql, await readSeedPosts(denoFileSystem))

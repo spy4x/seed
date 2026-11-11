@@ -13,6 +13,7 @@ import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { AppDbBase } from "../../api/services/db-base.ts"
 import type { ServerFiles } from "@server/files/files.ts"
 import { attachmentObjectKey } from "@domain/notes"
+import { NOTES_ON, type NotesSetup } from "@server/notes/setup.ts"
 import { ImportStatus } from "@domain/imports"
 import { sampleFile } from "./sample-files.ts"
 import { createSignIn } from "../../api/services/sign-in.ts"
@@ -54,6 +55,8 @@ export interface DemoSeedOptions {
   subscribers: SubscribersSetup | null
   /** The moment every time of the fake data counts back from; the current time by default. */
   now?: Date
+  /** Off (`NOTES=false`), the seed writes no notes, tags or attachments; on by default. */
+  notes?: NotesSetup
 }
 
 /**
@@ -87,7 +90,8 @@ export function populationMarker(dataSeed: number): string {
  * counted back from `options.now`. Every person is created through the API's own sign-up, so their
  * rows are what a real sign-up writes, then moved to the day they joined. With `adminPassword`
  * (development), the administrator is created first, or put right when it exists, and the seed
- * adds what an operator did and a finished backup.
+ * adds what an operator did and a finished backup. With `notes` off, nobody gets notes, tags or
+ * attachments.
  *
  * `false` when the population exists already ({@link populationMarker}): then nothing else is
  * written, so a second run adds no second copy.
@@ -100,6 +104,7 @@ export async function seedDemo(
   options: DemoSeedOptions,
 ): Promise<boolean> {
   const now = options.now ?? new Date()
+  const notes = options.notes ?? NOTES_ON
   const at: At = (ago) => new Date(now.getTime() - ago * 60_000)
   const firstAudit = await lastId(sql, `audit_events`)
   const firstSignInAudit = await lastId(sql, `auth_audits`)
@@ -120,7 +125,7 @@ export async function seedDemo(
     await setName(sql, id, user.firstName, user.lastName)
     userIds.push(id)
   }
-  await writePeople(sql, data.users, userIds, at, now)
+  await writePeople(sql, data.users, userIds, at, now, notes)
   const groupIds = await seedGroups(
     db,
     sql,
@@ -128,13 +133,14 @@ export async function seedDemo(
     (member) => member === `you` ? null : userIds[member],
     at,
     true,
+    notes,
   )
   const subscriptions = await writeBilling(sql, data, groupIds, at)
   if (options.subscribers) await writeNewsletter(sql, data, options.subscribers, at)
   // The shop's sample items, for a product that turns the catalog on (docs/catalog.md).
   await seedSampleCatalog(sql, at(0))
   if (admin) {
-    await writeOperator(sql, admin.id, admin.created, data, userIds, subscriptions, at)
+    await writeOperator(sql, admin.id, admin.created, data, userIds, subscriptions, at, notes)
     await writeDevelopmentBackup(sql, at)
   }
   await orderIdsByTime(sql, `audit_events`, firstAudit)
@@ -149,7 +155,8 @@ export async function seedDemo(
  * and a group whose owner has none is skipped.
  *
  * Runs once per account: one that is in any group besides its first has its sample groups
- * already, or the part a failed try wrote, and gets nothing more. A fake person gets none.
+ * already, or the part a failed try wrote, and gets nothing more. A fake person gets none. With
+ * `notes` off, the groups get no notes, tags or attachments, and `files` stores nothing.
  */
 export async function seedWorkspace(
   db: AppDbBase,
@@ -158,6 +165,7 @@ export async function seedWorkspace(
   dataSeed: number,
   now = new Date(),
   files: Pick<ServerFiles, "put"> | null = null,
+  notes: NotesSetup = NOTES_ON,
 ): Promise<void> {
   const [{ groups }] = await sql<{ groups: number }[]>`
     SELECT COUNT(*)::int AS groups FROM group_members WHERE user_id = ${userId}
@@ -174,7 +182,16 @@ export async function seedWorkspace(
   const idOf = (member: FakeMember) => member === `you` ? userId : ids.get(people[member]) ?? null
   const at: At = (ago) => new Date(now.getTime() - ago * 60_000)
   const firstAudit = await lastId(sql, `audit_events`)
-  const groupIds = await seedGroups(db, sql, fakeWorkspace(dataSeed), idOf, at, false, files)
+  const groupIds = await seedGroups(
+    db,
+    sql,
+    fakeWorkspace(dataSeed),
+    idOf,
+    at,
+    false,
+    notes,
+    files,
+  )
   await orderIdsByTime(
     sql,
     `audit_events`,
@@ -221,19 +238,6 @@ export async function createAdmin(
 }
 
 /**
- * Groups, their members, tags, notes, promotions and pending invitations, each at its time. `idOf`
- * answers `null` for someone without an account: such a member is left out, a row they wrote goes
- * to a stand-in ({@link withStandIns}), and a group with such an owner is skipped. Answers each group's id,
- * or `null` for a skipped one.
- *
- * Every row is written by the app's own repositories, then given its time, with its audit row.
- * With `backdateGroups`, the group itself moves to its creation time too. A new account's sample
- * groups keep theirs: the starter-data job puts the welcome note in the account's oldest group.
- *
- * The content of the group `you` own is written by its made-up members, never by `you`: the
- * "Get started" checklist counts the notes and invitations a person made.
- */
-/**
  * One saved notes import, as the flow leaves it (docs/imports.md): its file gone, its batch the
  * notes it made, read and saved a minute after the upload.
  */
@@ -262,6 +266,20 @@ async function seedImport(
   `
 }
 
+/**
+ * Groups, their members, tags, notes, promotions and pending invitations, each at its time; with
+ * `notes` off, no tags, notes, attachments or notes import, and an imported group's import counts
+ * none. `idOf` answers `null` for someone without an account: such a member is left out, a row
+ * they wrote goes to a stand-in ({@link withStandIns}), and a group with such an owner is skipped.
+ * Answers each group's id, or `null` for a skipped one.
+ *
+ * Every row is written by the app's own repositories, then given its time, with its audit row.
+ * With `backdateGroups`, the group itself moves to its creation time too. A new account's sample
+ * groups keep theirs: the starter-data job puts the welcome note in the account's oldest group.
+ *
+ * The content of the group `you` own is written by its made-up members, never by `you`: the
+ * "Get started" checklist counts the notes and invitations a person made.
+ */
 async function seedGroups(
   db: AppDbBase,
   sql: postgres.Sql,
@@ -269,6 +287,7 @@ async function seedGroups(
   idOf: (member: FakeMember) => number | null,
   at: At,
   backdateGroups: boolean,
+  notes: NotesSetup,
   files: Pick<ServerFiles, "put"> | null = null,
 ): Promise<(string | null)[]> {
   const invitations = new PostgresInvitationRepository(sql)
@@ -289,7 +308,9 @@ async function seedGroups(
     `
     // An imported group's log starts with the import, as a real one does.
     if (group.imported) {
-      const items = { notes: group.notes.length, tags: group.tags.length }
+      const items = notes.on
+        ? { notes: group.notes.length, tags: group.tags.length }
+        : { notes: 0, tags: 0 }
       await sql`UPDATE groups SET imported_at = ${created} WHERE id = ${groupId}`
       await sql`
         UPDATE audit_events SET event_kind = ${GROUP_FILE_EVENTS.imported},
@@ -337,7 +358,7 @@ async function seedGroups(
     if (content === null) continue
     const writer = (member: FakeMember) => idOf(member)!
     const tagIds = new Map<string, string>()
-    for (const tag of content.tags) {
+    for (const tag of notes.on ? content.tags : []) {
       const id = uuidV7()
       const when = at(tag.createdAgo)
       await db.tag.create({ id, groupId, name: tag.name, color: tag.color }, writer(tag.author))
@@ -346,7 +367,7 @@ async function seedGroups(
       tagIds.set(tag.name, id)
     }
     const fromFile: string[] = []
-    for (const note of content.notes) {
+    for (const note of notes.on ? content.notes : []) {
       const id = uuidV7()
       if (note.fromFile) fromFile.push(id)
       const when = at(note.createdAgo)
@@ -393,7 +414,7 @@ async function seedGroups(
       }
       await dateAudit(sql, id, when)
     }
-    const imported = content.notes.find((note) => note.fromFile)
+    const imported = notes.on ? content.notes.find((note) => note.fromFile) : undefined
     if (imported) {
       await seedImport(sql, groupId, writer(imported.author), fromFile, at(imported.createdAgo))
     }

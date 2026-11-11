@@ -23,6 +23,7 @@ import { isExampleAddress } from "@spy4x/email/address"
 import { BACKUP_TARGET_DATABASE } from "@server/jobs/admin-system.ts"
 import { WELCOME_NOTE_BODY, WELCOME_NOTE_TITLE } from "@server/jobs/starter-data.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
+import type { NotesSetup } from "@server/notes/setup.ts"
 import { createListCrypto, type SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import { operatorIdentifier } from "../../api/services/admin.ts"
 import { DAY, type FakeDemoData, type FakeUser, HOUR } from "./fake-data.ts"
@@ -89,23 +90,24 @@ export interface Joined {
 /**
  * Moves new accounts' sign-ups to when they joined: each account, its keys, its sign-up row, its
  * first group with that group's audit rows, and its starter data. The welcome note the starter-data
- * job would write is written here first, under the job's own id, then dated with the rest; the
- * request is closed, so the job adds nothing later. One statement per table for all of them. Run
- * before the accounts are in any other group.
+ * job would write is written here first, under the job's own id, then dated with the rest; with
+ * `notes` off it is left out. Either way the request is closed, so the job adds nothing later. One
+ * statement per table for all of them. Run before the accounts are in any other group.
  */
 export async function backdateAccounts(
   sql: postgres.Sql,
   accounts: readonly Joined[],
+  notes: NotesSetup,
 ): Promise<void> {
   const requests = await sql<{ id: string; userId: number; groupId: string }[]>`
     SELECT r.id, r.user_id, m.group_id FROM starter_data_requests r
     JOIN group_members m ON m.user_id = r.user_id
     WHERE r.done_at IS NULL AND r.user_id IN ${sql(accounts.map((a) => a.userId))}
   `
-  const notes = new PostgresNoteRepository(sql)
-  for (const request of requests) {
+  const repository = new PostgresNoteRepository(sql)
+  for (const request of notes.on ? requests : []) {
     const welcome = { id: request.id, groupId: request.groupId }
-    await notes.create(
+    await repository.create(
       { ...welcome, title: WELCOME_NOTE_TITLE, body: WELCOME_NOTE_BODY },
       request.userId,
       null,
@@ -159,8 +161,8 @@ export async function backdateAccounts(
 
 /**
  * Each person's past: sign-up time, sign-ins with their browsers and addresses, open sessions, a
- * Google or GitHub key, a second factor, a block, a changed name, and when they were last seen.
- * `ids` are the people's user ids, in the order of `users`.
+ * Google or GitHub key, a second factor, a block, a changed name, when they were last seen, and,
+ * with `notes` on, the notes they keep. `ids` are the people's user ids, in the order of `users`.
  */
 export async function writePeople(
   sql: postgres.Sql,
@@ -168,6 +170,7 @@ export async function writePeople(
   ids: readonly number[],
   at: At,
   now: Date,
+  notes: NotesSetup,
 ): Promise<void> {
   await backdateAccounts(
     sql,
@@ -176,6 +179,7 @@ export async function writePeople(
       joined: at(user.joinedAgo),
       device: user.devices[0],
     })),
+    notes,
   )
   const keys = await sql<{ userId: number; id: number }[]>`
     SELECT user_id, id FROM auth_keys WHERE method = ${PASSWORD_METHOD} AND user_id IN ${sql(ids)}
@@ -331,7 +335,7 @@ export async function writePeople(
     JOIN group_members m ON m.user_id = v.id
     WHERE g.id = m.group_id AND v.first_group_name IS NOT NULL
   `
-  await writeOwnNotes(sql, users, ids, at)
+  if (notes.on) await writeOwnNotes(sql, users, ids, at)
   if (providerKeys.length > 0) await sql`INSERT INTO auth_keys ${sql(providerKeys)}`
   await writePasskeys(sql, passkeys)
   if (factors.length > 0) await sql`INSERT INTO user_totp ${sql(factors)}`
@@ -525,7 +529,7 @@ export async function writeNewsletter(
  * What the development administrator did: their own sign-ins, the people they blocked, a reset
  * mail, ended sessions, a refund, time given, and two exports, each on the trail the admin app
  * writes it to. Their account moves to `data.operator.joinedAgo` when `created` says the seed just
- * made it.
+ * made it, with the welcome note only when `notes` are on.
  */
 export async function writeOperator(
   sql: postgres.Sql,
@@ -535,6 +539,7 @@ export async function writeOperator(
   userIds: readonly number[],
   subscriptions: readonly (SeededSubscription | null)[],
   at: At,
+  notes: NotesSetup,
 ): Promise<void> {
   const desk = { userAgent: DESK_BROWSER, ip: `198.51.100.24` }
   if (created) {
@@ -542,7 +547,7 @@ export async function writeOperator(
       userId: operatorId,
       joined: at(data.operator.joinedAgo),
       device: desk,
-    }])
+    }], notes)
     // The seed made them the administrator a minute after they signed up.
     await sql`
       UPDATE auth_audits SET created_at = ${at(data.operator.joinedAgo - 1)},
