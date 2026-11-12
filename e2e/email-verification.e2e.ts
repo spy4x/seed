@@ -73,6 +73,7 @@ test("a new account proves its address with the mailed code before it exists, th
     // A change moves the dialog on to the code mailed to the new address; until the code is
     // entered the account keeps the old one.
     await page.locator("[data-e2e=email-change-open]").click()
+    await expect(page.locator("[data-e2e=email-new]")).toBeFocused()
     await page.locator("[data-e2e=email-new]").fill(next)
     await page.locator("[data-e2e=email-password]").fill(password)
     await page.locator("[data-e2e=email-change]").click()
@@ -129,5 +130,39 @@ test("a new code's notice is in the page's language, not the server's English", 
   } finally {
     await cleanup(request, email, true)
     await cleanup(request, next, true)
+  }
+})
+
+test("a link to the address dialog opens it once, focused on the new address, and a reload leaves it shut", async ({ page, request }) => {
+  const id = uuidV7().slice(-8)
+  const email = `e2e-ask-${id}@example.com`
+  try {
+    const signUp = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
+      headers: { origin: apiBase, "sec-fetch-site": "same-origin" },
+      data: { email, password },
+    })
+    expect(signUp.ok(), await signUp.text()).toBe(true)
+    await signIn(page, email, password)
+    const dialog = page.locator("dialog[data-e2e=email-change-dialog]")
+    await gotoApp(page, "/profile/account?email", dialog)
+
+    await expect(page.locator("[data-e2e=email-new]")).toBeFocused()
+    await expect(page).toHaveURL("/profile/account")
+    await gotoApp(page, "/profile/account", page.locator("[data-e2e=email-change-open]"))
+    await expect(dialog).toBeHidden()
+
+    // The same for the code a link asks for, once a new address waits for one.
+    await page.locator("[data-e2e=email-change-open]").click()
+    await page.locator("[data-e2e=email-new]").fill(`e2e-ask-next-${id}@example.com`)
+    await page.locator("[data-e2e=email-password]").fill(password)
+    await page.locator("[data-e2e=email-change]").click()
+    await expect(page.locator("[data-e2e=email-code]")).toBeFocused()
+    await gotoApp(page, "/profile/account?verify", dialog)
+    await expect(page.locator("[data-e2e=email-code]")).toBeFocused()
+    await expect(page).toHaveURL("/profile/account")
+    await gotoApp(page, "/profile/account", page.locator("[data-e2e=email-change-open]"))
+    await expect(dialog).toBeHidden()
+  } finally {
+    await cleanup(request, email, true)
   }
 })
