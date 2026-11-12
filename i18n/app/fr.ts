@@ -427,7 +427,7 @@ export default {
   "GroupInvitations.verifyEmail": "Vérifier l’adresse e-mail",
   "GroupInvitations.notForYou":
     "Cette invitation a été envoyée à une autre adresse e-mail. Si c’est la vôtre, confirmez-la d’abord dans votre <link>profil</link>, ou connectez-vous avec le compte qui l’utilise.",
-  "GroupInvitations.somethingWrong": "Un problème est survenu. Réessayez.",
+  "GroupInvitations.somethingWrong": "Impossible de traiter l’invitation. Réessayez.",
   "GroupInvitations.unreachable": "Impossible de joindre le serveur. Réessayez.",
   "GroupMembers.unnamed": "Membre sans nom",
   "GroupMembers.title": "Membres",
@@ -499,7 +499,7 @@ export default {
   "GroupTransfer.unreachable": "Impossible de joindre le serveur. Réessayez.",
   "GroupTransfer.tooManyAttempts":
     "Trop de tentatives. Patientez quelques minutes, puis réessayez.",
-  "GroupTransfer.somethingWrong": "Un problème est survenu. Réessayez.",
+  "GroupTransfer.somethingWrong": "Impossible de transférer la propriété. Réessayez.",
   "Groups.title": "Groupes",
   "Groups.new": "Nouveau groupe",
   "Groups.import": "Importer un groupe…",
@@ -570,7 +570,7 @@ export default {
   "GroupBillingPanel.paymentFailedFree":
     "Un paiement a échoué : le groupe est donc passé au forfait Gratuit. Mettez à jour votre carte avec « Changer de carte » pour retrouver {plan}.",
   "GroupBillingPanel.offline": "Impossible de joindre le serveur. Réessayez.",
-  "GroupBillingPanel.unreadable": "Impossible de charger le forfait.",
+  "GroupBillingPanel.unreadable": "Impossible de charger le forfait",
   "GroupBillingPanel.unsafePage":
     "Le prestataire de paiement a renvoyé une adresse que cette application refuse d’ouvrir.",
   "GroupBillingPanel.checkoutUnreachable":
@@ -698,10 +698,10 @@ export default {
   "GroupBillingView.trialUntil": "« {group} » bénéficie de {plan} jusqu’au {date}.",
   "GroupBillingView.paid": "Vous êtes passé à {plan}",
   "GroupBillingView.paidText": "Stripe a confirmé le paiement pour « {group} ».",
-  "NotificationsScreen.loadFailed": "Impossible de charger les notifications.",
-  "NotificationsScreen.loadMoreFailed": "Impossible de charger plus de notifications.",
-  "NotificationsScreen.readFailed": "Impossible de la marquer comme lue.",
-  "NotificationsScreen.readAllFailed": "Impossible de les marquer comme lues.",
+  "NotificationsScreen.loadFailed": "Impossible de charger les notifications",
+  "NotificationsScreen.loadMoreFailed": "Impossible de charger plus de notifications",
+  "NotificationsScreen.readFailed": "Impossible de la marquer comme lue",
+  "NotificationsScreen.readAllFailed": "Impossible de les marquer comme lues",
   "NotificationsScreen.invitedViewer":
     "Vous êtes invité à rejoindre « <group>{group}</group> » en tant que lecteur.",
   "NotificationsScreen.invitedEditor":
@@ -1011,7 +1011,7 @@ export default {
   "GuestScreens.signOutAnyway": "Se déconnecter quand même",
   "GuestScreens.signOutText":
     "Ce compte n’a aucune méthode de connexion : vous ne pourrez pas vous reconnecter. Vous perdrez tout son contenu.",
-  "GuestScreens.offline": "Vous êtes hors ligne. Connectez-vous à Internet et réessayez.",
+  "GuestScreens.offline": "Impossible de joindre le serveur. Réessayez.",
   "GuestScreens.providerFailed":
     "{provider} n’a pas abouti. Votre compte n’a pas été modifié. Réessayez ou choisissez une autre méthode.",
   "GuestScreens.noPasskey":
@@ -1712,7 +1712,7 @@ export default {
   "SignInMethods.passkeyNotSaved": "Impossible d’enregistrer la clé d’accès. Réessayez.",
   "SignInMethods.passkeyOnDevice": "Cet appareil possède déjà une clé d’accès pour votre compte.",
   "SignUpCodeScreen.checkFailed": "Impossible de vérifier le code",
-  "SignUpCodeScreen.offline": "Vous êtes hors ligne. Connectez-vous à Internet et réessayez.",
+  "SignUpCodeScreen.offline": "Impossible de joindre le serveur. Réessayez.",
   "SignUpCodeScreen.title": "Consultez votre boîte de réception",
   "SignUpCodeScreen.loading": "Chargement…",
   "SignUpCodeScreen.code": "Code",
@@ -1988,7 +1988,7 @@ export default {
   "ApiTokenNewView.discardMessage": "Vous n’avez pas encore créé ce jeton.",
   "ApiTokenNewView.discard": "Abandonner les modifications",
   "ApiTokenNewView.keepEditing": "Continuer à modifier",
-  "ApiTokens.failed": "Un problème est survenu avec vos jetons d’API.",
+  "ApiTokens.failed": "Impossible de charger ou de révoquer vos jetons d’API. Réessayez.",
   "ApiTokens.savedCopyTitle": "Copie enregistrée de vos jetons d’API",
   "ApiTokens.savedCopyBody":
     "Impossible de joindre le serveur. Voici la liste enregistrée sur cet appareil : {time}. Les jetons créés ou révoqués depuis n’y figurent pas.",
@@ -2114,7 +2114,7 @@ export default {
   "EmailScreen.verifyFailed": "Impossible de vérifier le code",
   "EmailScreen.sendFailed": "Impossible d’envoyer un nouveau code",
   "EmailScreen.changeFailed": "Impossible de modifier votre adresse e-mail",
-  "EmailScreen.loadFailed": "Impossible de charger votre adresse e-mail.",
+  "EmailScreen.loadFailed": "Impossible de charger votre adresse e-mail",
   "EmailScreen.enterCode": "Saisir le code",
   "EmailScreen.banner": "Confirmez <email>{email}</email> avec le code que nous y envoyons.",
   "EmailScreen.tryAgain": "Réessayer",

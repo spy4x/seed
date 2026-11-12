@@ -403,7 +403,8 @@ export default {
   "GroupInvitations.verifyEmail": "Confirmar e-mail",
   "GroupInvitations.notForYou":
     "Este convite foi enviado para outro e-mail. Se ele for seu, confirme-o primeiro no seu <link>perfil</link> ou entre com a conta que usa esse e-mail.",
-  "GroupInvitations.somethingWrong": "Algo deu errado. Tente de novo.",
+  "GroupInvitations.somethingWrong":
+    "Não foi possível concluir a solicitação do convite. Tente de novo.",
   "GroupInvitations.unreachable": "Não foi possível falar com o servidor. Tente de novo.",
   "GroupMembers.unnamed": "Membro sem nome",
   "GroupMembers.title": "Membros",
@@ -474,7 +475,7 @@ export default {
   "GroupTransfer.failed": "Não foi possível transferir o grupo",
   "GroupTransfer.unreachable": "Não foi possível falar com o servidor. Tente de novo.",
   "GroupTransfer.tooManyAttempts": "Muitas tentativas. Espere alguns minutos e tente de novo.",
-  "GroupTransfer.somethingWrong": "Algo deu errado. Tente de novo.",
+  "GroupTransfer.somethingWrong": "Não foi possível transferir a propriedade. Tente de novo.",
   "Groups.title": "Grupos",
   "Groups.new": "Novo grupo",
   "Groups.import": "Importar um grupo…",
@@ -544,7 +545,7 @@ export default {
   "GroupBillingPanel.paymentFailedFree":
     "Um pagamento não foi aprovado, e o grupo voltou para o plano gratuito. Atualize seu cartão em Trocar cartão para voltar ao {plan}.",
   "GroupBillingPanel.offline": "Não foi possível falar com o servidor. Tente de novo.",
-  "GroupBillingPanel.unreadable": "Não foi possível carregar o plano.",
+  "GroupBillingPanel.unreadable": "Não foi possível carregar o plano",
   "GroupBillingPanel.unsafePage":
     "O serviço de pagamento devolveu um endereço que este app não vai abrir.",
   "GroupBillingPanel.checkoutUnreachable":
@@ -669,10 +670,10 @@ export default {
   "GroupBillingView.trialUntil": "“{group}” está no {plan} até {date}.",
   "GroupBillingView.paid": "Você está no {plan}",
   "GroupBillingView.paidText": "O Stripe confirmou o pagamento de “{group}”.",
-  "NotificationsScreen.loadFailed": "Não foi possível carregar as notificações.",
-  "NotificationsScreen.loadMoreFailed": "Não foi possível carregar mais notificações.",
-  "NotificationsScreen.readFailed": "Não foi possível marcar como lida.",
-  "NotificationsScreen.readAllFailed": "Não foi possível marcar como lidas.",
+  "NotificationsScreen.loadFailed": "Não foi possível carregar as notificações",
+  "NotificationsScreen.loadMoreFailed": "Não foi possível carregar mais notificações",
+  "NotificationsScreen.readFailed": "Não foi possível marcar como lida",
+  "NotificationsScreen.readAllFailed": "Não foi possível marcar como lidas",
   "NotificationsScreen.invitedViewer":
     "Você foi convidado para o grupo “<group>{group}</group>” como leitor.",
   "NotificationsScreen.invitedEditor":
@@ -976,7 +977,7 @@ export default {
   "GuestScreens.signOutAnyway": "Sair mesmo assim",
   "GuestScreens.signOutText":
     "Esta conta não tem forma de entrar, então você não vai conseguir voltar a ela. Tudo o que há nela será perdido.",
-  "GuestScreens.offline": "Você está offline. Conecte-se e tente de novo.",
+  "GuestScreens.offline": "Não foi possível falar com o servidor. Tente de novo.",
   "GuestScreens.providerFailed":
     "O {provider} não concluiu. Sua conta não mudou. Tente de novo ou escolha outra forma.",
   "GuestScreens.noPasskey":
@@ -1648,7 +1649,7 @@ export default {
   "SignInMethods.passkeyNotSaved": "Não foi possível salvar a chave de acesso. Tente de novo.",
   "SignInMethods.passkeyOnDevice": "Este dispositivo já tem uma chave de acesso para sua conta.",
   "SignUpCodeScreen.checkFailed": "Não foi possível verificar o código",
-  "SignUpCodeScreen.offline": "Você está offline. Conecte-se e tente de novo.",
+  "SignUpCodeScreen.offline": "Não foi possível falar com o servidor. Tente de novo.",
   "SignUpCodeScreen.title": "Confira seu e-mail",
   "SignUpCodeScreen.loading": "Carregando…",
   "SignUpCodeScreen.code": "Código",
@@ -1919,7 +1920,7 @@ export default {
   "ApiTokenNewView.discardMessage": "Você ainda não criou este token.",
   "ApiTokenNewView.discard": "Descartar",
   "ApiTokenNewView.keepEditing": "Continuar editando",
-  "ApiTokens.failed": "Algo deu errado com seus tokens de API.",
+  "ApiTokens.failed": "Não foi possível carregar ou revogar seus tokens de API. Tente de novo.",
   "ApiTokens.savedCopyTitle": "Cópia salva dos seus tokens de API",
   "ApiTokens.savedCopyBody":
     "Não foi possível falar com o servidor. Mostrando a lista salva neste dispositivo: {time}. Tokens criados ou revogados depois disso não aparecem.",
@@ -2040,7 +2041,7 @@ export default {
   "EmailScreen.verifyFailed": "Não foi possível verificar o código",
   "EmailScreen.sendFailed": "Não foi possível enviar um novo código",
   "EmailScreen.changeFailed": "Não foi possível alterar seu e-mail",
-  "EmailScreen.loadFailed": "Não foi possível carregar seu e-mail.",
+  "EmailScreen.loadFailed": "Não foi possível carregar seu e-mail",
   "EmailScreen.enterCode": "Digitar o código",
   "EmailScreen.banner": "Confirme <email>{email}</email> com o código que vamos enviar para lá.",
   "EmailScreen.tryAgain": "Tentar de novo",

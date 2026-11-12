@@ -353,7 +353,7 @@ export default {
   "GroupInvitations.verifyEmail": "メールアドレスを確認",
   "GroupInvitations.notForYou":
     "この招待は別のメールアドレス宛てに送られています。ご自身のアドレスであれば、先に<link>プロフィール</link>で確認するか、そのアドレスを使っているアカウントでログインしてください。",
-  "GroupInvitations.somethingWrong": "問題が発生しました。もう一度お試しください。",
+  "GroupInvitations.somethingWrong": "招待の操作を完了できませんでした。もう一度お試しください。",
   "GroupInvitations.unreachable": "サーバーに接続できません。もう一度お試しください。",
   "GroupMembers.unnamed": "名前のないメンバー",
   "GroupMembers.title": "メンバー",
@@ -418,7 +418,7 @@ export default {
   "GroupTransfer.failed": "グループを譲渡できませんでした",
   "GroupTransfer.unreachable": "サーバーに接続できません。もう一度お試しください。",
   "GroupTransfer.tooManyAttempts": "試行回数が多すぎます。数分待ってから、もう一度お試しください。",
-  "GroupTransfer.somethingWrong": "問題が発生しました。もう一度お試しください。",
+  "GroupTransfer.somethingWrong": "オーナー権限を譲渡できませんでした。もう一度お試しください。",
   "Groups.title": "グループ",
   "Groups.new": "新しいグループ",
   "Groups.import": "グループをインポート…",
@@ -477,7 +477,7 @@ export default {
   "GroupBillingPanel.paymentFailedFree":
     "支払いに失敗したため、グループは無料プランに切り替わりました。{plan}に戻すには、「カードを変更」からカード情報を更新してください。",
   "GroupBillingPanel.offline": "サーバーに接続できません。もう一度お試しください。",
-  "GroupBillingPanel.unreadable": "プランを読み込めませんでした。",
+  "GroupBillingPanel.unreadable": "プランを読み込めませんでした",
   "GroupBillingPanel.unsafePage":
     "決済サービスから、このアプリでは開けないアドレスが返されました。",
   "GroupBillingPanel.checkoutUnreachable":
@@ -584,10 +584,10 @@ export default {
   "GroupBillingView.trialUntil": "「{group}」は{date}まで{plan}を利用できます。",
   "GroupBillingView.paid": "{plan}をご利用中です",
   "GroupBillingView.paidText": "Stripeが「{group}」のお支払いを確認しました。",
-  "NotificationsScreen.loadFailed": "通知を読み込めませんでした。",
-  "NotificationsScreen.loadMoreFailed": "これ以上通知を読み込めませんでした。",
-  "NotificationsScreen.readFailed": "既読にできませんでした。",
-  "NotificationsScreen.readAllFailed": "既読にできませんでした。",
+  "NotificationsScreen.loadFailed": "通知を読み込めませんでした",
+  "NotificationsScreen.loadMoreFailed": "続きの通知を読み込めませんでした",
+  "NotificationsScreen.readFailed": "既読にできませんでした",
+  "NotificationsScreen.readAllFailed": "すべて既読にできませんでした",
   "NotificationsScreen.invitedViewer": "「<group>{group}</group>」に閲覧者として招待されました。",
   "NotificationsScreen.invitedEditor": "「<group>{group}</group>」に編集者として招待されました。",
   "NotificationsScreen.invitedAdmin": "「<group>{group}</group>」に管理者として招待されました。",
@@ -860,7 +860,7 @@ export default {
   "GuestScreens.signOutAnyway": "ログアウトする",
   "GuestScreens.signOutText":
     "このアカウントにはログイン方法がないため、再びログインすることはできません。中のデータはすべて失われます。",
-  "GuestScreens.offline": "オフラインです。接続してから、もう一度お試しください。",
+  "GuestScreens.offline": "サーバーに接続できません。もう一度お試しください。",
   "GuestScreens.providerFailed":
     "{provider}での手続きが完了しませんでした。アカウントは変更されていません。もう一度試すか、別の方法を選んでください。",
   "GuestScreens.noPasskey":
@@ -1481,7 +1481,7 @@ export default {
   "SignInMethods.passkeyNotSaved": "パスキーを保存できませんでした。もう一度お試しください。",
   "SignInMethods.passkeyOnDevice": "このデバイスには、このアカウントのパスキーがすでにあります。",
   "SignUpCodeScreen.checkFailed": "コードを確認できませんでした",
-  "SignUpCodeScreen.offline": "オフラインです。接続してから、もう一度お試しください。",
+  "SignUpCodeScreen.offline": "サーバーに接続できません。もう一度お試しください。",
   "SignUpCodeScreen.title": "受信トレイを確認してください",
   "SignUpCodeScreen.loading": "読み込んでいます…",
   "SignUpCodeScreen.code": "コード",
@@ -1726,7 +1726,7 @@ export default {
   "ApiTokenNewView.discardMessage": "このトークンはまだ作成されていません。",
   "ApiTokenNewView.discard": "変更を破棄",
   "ApiTokenNewView.keepEditing": "編集を続ける",
-  "ApiTokens.failed": "APIトークンで問題が発生しました。",
+  "ApiTokens.failed": "APIトークンを読み込めないか、取り消せませんでした。もう一度お試しください。",
   "ApiTokens.savedCopyTitle": "保存されたAPIトークン一覧",
   "ApiTokens.savedCopyBody":
     "サーバーに接続できません。このデバイスに保存された一覧（{time}時点）を表示しています。それ以降に作成または取り消したトークンは含まれていません。",
@@ -1838,7 +1838,7 @@ export default {
   "EmailScreen.verifyFailed": "コードを確認できませんでした",
   "EmailScreen.sendFailed": "新しいコードを送信できませんでした",
   "EmailScreen.changeFailed": "メールアドレスを変更できませんでした",
-  "EmailScreen.loadFailed": "メールアドレスを読み込めませんでした。",
+  "EmailScreen.loadFailed": "メールアドレスを読み込めませんでした",
   "EmailScreen.enterCode": "コードを入力",
   "EmailScreen.banner":
     "<email>{email}</email>に送ったコードで、メールアドレスを確認してください。",

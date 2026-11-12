@@ -426,7 +426,7 @@ describe("SearchPalette", () => {
 
     await type("plan")
 
-    expect(status()).toBe("Couldn't search. Change your search to try again.")
+    expect(status()).toBe("Could not search. Change your search to try again.")
   })
 
   it("asks the app to open a picked note of another group in that group, and a picked group's page", async () => {

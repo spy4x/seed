@@ -227,7 +227,7 @@ describe(`DataExportRow`, () => {
   it(`says a file failed and offers Try again`, async () => {
     const { node } = row({ exportState: view(DataExportStatus.Failed) })
     await mount(node)
-    expect(text(`[data-e2e=data-export-state]`)).toBe(`We couldn't prepare your file. Try again.`)
+    expect(text(`[data-e2e=data-export-state]`)).toBe(`We could not prepare your file. Try again.`)
     expect(text(`[data-e2e=data-export-request]`)).toBe(`Try again`)
   })
 })
@@ -252,7 +252,7 @@ describe(`DataExportErrorState`, () => {
   it(`names a failed request`, async () => {
     const element = await shown({ kind: `network` })
     expect(element?.textContent).toBe(
-      `Couldn't request your file. Check your connection and try again.`,
+      `Could not request your file. Check your connection and try again.`,
     )
   })
 

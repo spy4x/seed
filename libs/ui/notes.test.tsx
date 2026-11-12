@@ -1046,7 +1046,7 @@ describe("NoteEditorScreen", () => {
     const html = renderToString(<NoteEditorScreen {...editorDefaults} notFound />)
 
     expect(html).toContain("This note does not exist.")
-    expect(html).toContain("We couldn't find this note in <bdi>Team</bdi>")
+    expect(html).toContain("We could not find this note in <bdi>Team</bdi>")
     expect(html).toContain(`href="${NOTE_PATHS.list}"`)
     expect(html).not.toContain("<form")
   })
@@ -1077,7 +1077,7 @@ describe("NoteEditorScreen", () => {
   it("keeps the plain not-found page when no other group holds the note", () => {
     const html = renderToString(<NoteEditorScreen {...editorDefaults} notFound elsewhere={null} />)
 
-    expect(html).toContain("We couldn't find this note in <bdi>Team</bdi>")
+    expect(html).toContain("We could not find this note in <bdi>Team</bdi>")
     expect(html).not.toContain("note-switch-group")
   })
 
@@ -1087,7 +1087,7 @@ describe("NoteEditorScreen", () => {
     )
 
     expect(html).toContain("Offline")
-    expect(html).not.toContain("We couldn't find this note")
+    expect(html).not.toContain("We could not find this note")
   })
 
   it("shows the owner the note cap with a link to the group's Billing tab", () => {
