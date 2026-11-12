@@ -1419,7 +1419,7 @@ export default {
     "other": "تعذّر حفظ وسم أنشأته دون اتصال، لذا أزلناه من {count} ملاحظة. حُفظت الملاحظات من دونه.",
   },
   "OfflineStatus.theirs": "نسخة الخادم",
-  "OfflineStatus.theirsUnknown": "نسخة الخادم غير متاحة.",
+  "OfflineStatus.theirsUnknown": "غير متاحة حاليًا.",
   "OfflineStatus.untitledNote": "ملاحظة بلا عنوان",
   "OfflineStatus.useServers": "استخدام نسخة الخادم",
   "OfflineStatus.youDeletedNote": "لقد حذفت هذه الملاحظة.",

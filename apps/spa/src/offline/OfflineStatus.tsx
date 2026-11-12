@@ -35,6 +35,8 @@ interface ConflictView {
   message: Message | null
   mine: string
   theirs: string
+  /** The server's copy is not known (an edit it refused, or one saved by an older version). */
+  theirsUnknown: boolean
   canKeepMine: boolean
 }
 
@@ -68,6 +70,7 @@ function noteView(t: Translator<string>, entry: NoteEntry): ConflictView {
     theirs: server
       ? `${server.title}\n${server.body}`.trim()
       : theirsUnknown(t, entry.conflict?.reason, `OfflineStatus.noteGone`),
+    theirsUnknown: !server && entry.conflict?.reason !== "gone",
     // A server that no longer has the note has nothing to keep mine against.
     canKeepMine: Boolean(server),
   }
@@ -91,6 +94,7 @@ function tagView(t: Translator<string>, entry: TagEntry): ConflictView {
     theirs: server
       ? `${server.name} (${colorName(server.color)})`
       : theirsUnknown(t, entry.conflict?.reason, `OfflineStatus.tagGone`),
+    theirsUnknown: !server && entry.conflict?.reason !== "gone",
     canKeepMine: Boolean(server),
   }
 }
@@ -115,15 +119,20 @@ function Sides({ view }: { view: ConflictView }) {
       </div>
       <div>
         <h3 class="text-sm font-semibold">{t.t(`OfflineStatus.theirs`)}</h3>
-        <p class="whitespace-pre-wrap text-sm" data-e2e="conflict-theirs" translate={false}>
+        <p
+          class={`whitespace-pre-wrap text-sm${view.theirsUnknown ? " text-muted" : ""}`}
+          data-e2e="conflict-theirs"
+          translate={false}
+        >
           {view.theirs}
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-3 sm:col-span-2">
         <Button
           type="button"
-          size="sm"
-          variant="ghost"
+          variant="outline"
+          // The chooser's own button look and size, and 44 px tall on a phone: the touch target.
+          class="max-sm:min-h-11"
           data-e2e="conflict-copy"
           onClick={async () => {
             try {
@@ -210,7 +219,9 @@ export function OfflineStatus(
   const items: ConflictItem[] = conflicts.map((view) => ({
     id: `${view.kind}:${view.seq}`,
     label: view.label,
-    reason: view.reason,
+    // A version conflict with no server copy has nothing to "use": the chooser's `rejected` reason
+    // labels that button "Discard mine", which is what it does. `Sides` replaces the explanation.
+    reason: view.reason === "version" && view.theirsUnknown ? "rejected" : view.reason,
     message: <Sides view={view} />,
     canKeepMine: view.canKeepMine,
   }))

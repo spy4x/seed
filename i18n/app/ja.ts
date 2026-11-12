@@ -1138,7 +1138,7 @@ export default {
       "オフラインで作成したタグを保存できなかったため、メモ{count}件からそのタグを外しました。メモはタグなしで保存されています。",
   },
   "OfflineStatus.theirs": "サーバーのバージョン",
-  "OfflineStatus.theirsUnknown": "サーバーのバージョンを取得できません。",
+  "OfflineStatus.theirsUnknown": "現在は取得できません。",
   "OfflineStatus.untitledNote": "無題のメモ",
   "OfflineStatus.useServers": "サーバーの内容を使う",
   "OfflineStatus.youDeletedNote": "このメモは自分で削除しました。",

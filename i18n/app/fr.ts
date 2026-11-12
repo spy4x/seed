@@ -1340,7 +1340,7 @@ export default {
       "Une étiquette créée hors ligne n’a pas pu être enregistrée : nous l’avons donc retirée de {count} notes. Les notes sont enregistrées sans elle.",
   },
   "OfflineStatus.theirs": "Version du serveur",
-  "OfflineStatus.theirsUnknown": "La version du serveur n’est pas disponible.",
+  "OfflineStatus.theirsUnknown": "Indisponible pour le moment.",
   "OfflineStatus.untitledNote": "Note sans titre",
   "OfflineStatus.useServers": "Utiliser celle du serveur",
   "OfflineStatus.youDeletedNote": "Vous avez supprimé cette note.",

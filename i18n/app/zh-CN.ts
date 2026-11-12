@@ -1042,7 +1042,7 @@ export default {
       "你离线时创建的一个标签无法保存，因此我们把它从 {count} 条笔记中移除了。这些笔记已保存，只是不带这个标签。",
   },
   "OfflineStatus.theirs": "服务器上的版本",
-  "OfflineStatus.theirsUnknown": "无法获取服务器上的版本。",
+  "OfflineStatus.theirsUnknown": "暂时无法获取。",
   "OfflineStatus.untitledNote": "无标题笔记",
   "OfflineStatus.useServers": "使用服务器版本",
   "OfflineStatus.youDeletedNote": "你删除了这条笔记。",
