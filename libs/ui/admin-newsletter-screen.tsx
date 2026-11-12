@@ -38,11 +38,10 @@ import type {
 import { changeTone, countAxisTop, statChange } from "./admin-dashboard-screen.tsx"
 import { ScreenForm } from "./progressive.tsx"
 import { OnDay, useFormat, When } from "@spy4x/preact-ui/format"
+import type { Formatters } from "@spy4x/time/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
-
-const NUMBER = new Intl.NumberFormat("en")
 
 /** Both tables keep the server's order: newest first. */
 const NO_SORT: never[] = []
@@ -189,7 +188,8 @@ function StatsSection(
   },
 ): JSX.Element {
   // The server counts each day in UTC, so its label is that UTC day, in the operator's format.
-  const day = useFormat().utc()
+  const format = useFormat()
+  const day = format.utc()
   const t = useAdminText()
   if (stats === null) {
     return error
@@ -215,25 +215,25 @@ function StatsSection(
         <KpiGrid minWidth="11rem">
           <Kpi
             label={t.t(`AdminNewsletter.subscribers`)}
-            value={NUMBER.format(stats.confirmed)}
+            value={format.number(stats.confirmed)}
             sub={t.t(`AdminNewsletter.confirmedHint`)}
             tone="accent"
           />
           <Kpi
             label={t.t(`AdminNewsletter.pending`)}
-            value={NUMBER.format(stats.pending)}
+            value={format.number(stats.pending)}
             sub={t.t(`AdminNewsletter.pendingHint`)}
             tone="neutral"
           />
           <Kpi
             label={t.t(`AdminNewsletter.joined`, { count: ADMIN_STATS_DAYS })}
-            value={NUMBER.format(stats.joined.current)}
-            sub={statChange(t, stats.joined, ADMIN_STATS_DAYS)}
+            value={format.number(stats.joined.current)}
+            sub={statChange(t, stats.joined, ADMIN_STATS_DAYS, format.locale)}
             tone={changeTone(stats.joined)}
           />
           <Kpi
             label={t.t(`AdminNewsletter.issuesSent`)}
-            value={NUMBER.format(stats.issues)}
+            value={format.number(stats.issues)}
             tone="neutral"
           />
         </KpiGrid>
@@ -254,7 +254,7 @@ function StatsSection(
             yDomain={[0, countAxisTop(days.map((day) => day.count))]}
             yTicks={5}
             xFormat={(x) => day.dayMonth(typeof x === "string" ? `${x}T00:00:00Z` : x)}
-            yFormat={(value) => NUMBER.format(value)}
+            yFormat={(value) => format.number(value)}
             ariaLabel={t.t(`AdminNewsletter.chartLabel`, { count: days.length })}
             emptyLabel={t.t(`AdminNewsletter.nothingYet`)}
           />
@@ -521,6 +521,7 @@ function SendsTab(
   { sends, error }: { sends: readonly AdminNewsletterSend[] | null; error: string | null },
 ): JSX.Element {
   const t = useAdminText()
+  const format = useFormat()
   if (sends === null) {
     return error
       ? <ErrorState message={error} dataE2E="admin-newsletter-sends-error" />
@@ -535,7 +536,7 @@ function SendsTab(
       <DataTable
         mode="server"
         class="[&>div:first-child]:min-h-0"
-        columns={sendColumns(t)}
+        columns={sendColumns(t, format)}
         rows={sends}
         sort={NO_SORT}
         onSortChange={noSort}
@@ -555,12 +556,15 @@ function SendsTab(
 }
 
 /** The sent issues' columns, in the operator's language. */
-function sendColumns(t: Translator<string>): DataTableColumn<AdminNewsletterSend, never>[] {
+function sendColumns(
+  t: Translator<string>,
+  format: Pick<Formatters, "number">,
+): DataTableColumn<AdminNewsletterSend, never>[] {
   // A count, or a dash when the send log has none.
   const count = (value: number | null) =>
     value === null
       ? <span class="text-muted" aria-label={t.t(`AdminNewsletter.notRecorded`)}>—</span>
-      : <span class="tabular-nums">{NUMBER.format(value)}</span>
+      : <span class="tabular-nums">{format.number(value)}</span>
   return [
     {
       id: "subject",
@@ -588,7 +592,7 @@ function sendColumns(t: Translator<string>): DataTableColumn<AdminNewsletterSend
       header: t.t(`AdminNewsletter.failed`),
       render: ({ failed }) =>
         failed !== null && failed > 0
-          ? <Badge text={NUMBER.format(failed)} color="red" />
+          ? <Badge text={format.number(failed)} color="red" />
           : count(failed),
     },
     {
