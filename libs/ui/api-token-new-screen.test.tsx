@@ -169,6 +169,58 @@ describe("ApiTokenNewScreen", () => {
     expect(find("[data-e2e=api-token-create]").textContent).toBe("Create token")
   })
 
+  it("draws the group, access and expiry as choice chips, and sends each pick as its value", async () => {
+    const calls: unknown[][] = []
+    const other = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111003"
+    await mount(
+      <ApiTokenNewScreen
+        {...pageProps(calls, {
+          groups: [{ id: groupId, name: "Personal" }, { id: other, name: "Acme" }],
+        })}
+      />,
+    )
+    const groups = { group: "groupId", access: "access", expiry: "expiresInDays" }
+    for (const [hook, name] of Object.entries(groups)) {
+      const box = find(`[data-e2e=api-token-${hook}]`)
+      // RadioChips hides each radio inside its chip; a plain radio group shows the browser's radio.
+      const radios = [...box.querySelectorAll<HTMLInputElement>("input[type=radio]")]
+      expect(radios.length).toBeGreaterThan(1)
+      expect(radios.every((radio) => radio.className === "sr-only" && radio.name === name))
+        .toBe(true)
+      expect(
+        [...box.querySelectorAll("label")].every((label) => label.className.includes("min-h-11")),
+      )
+        .toBe(true)
+    }
+    expect(
+      [...document.querySelectorAll<HTMLInputElement>("[name=access]")].map((r) => r.checked),
+    ).toEqual([true, false])
+
+    await act(() => find<HTMLInputElement>(`[name=groupId][value='${other}']`).click())
+    await act(() => find<HTMLInputElement>("[name=access][value='2']").click())
+    await act(() => find<HTMLInputElement>("[name=expiresInDays][value=never]").click())
+    await act(() => find<HTMLInputElement>("[name=expiresInDays][value='30']").click())
+    expect(calls).toEqual([
+      ["value", "groupId", other],
+      ["value", "access", ApiTokenAccess.WRITE],
+      ["value", "expiresInDays", null],
+      ["value", "expiresInDays", 30],
+    ])
+  })
+
+  it("caps a long group name's chip at its row's width and truncates the name inside it", async () => {
+    const long = "A".repeat(100)
+    await mount(<ApiTokenNewScreen {...pageProps([], { groups: [{ id: groupId, name: long }] })} />)
+    const label = find("[data-e2e=api-token-group] label")
+    // A chip does not wrap; capped at its row's width, the name inside it truncates instead.
+    expect(label.parentElement!.className).toContain("[&>label]:max-w-full")
+    expect(label.closest("fieldset")!.className.split(" ")).toContain("min-w-0")
+    const name = label.querySelector("bdi")!
+    expect(name.className.split(" ")).toEqual(expect.arrayContaining(["min-w-0", "truncate"]))
+    expect(name.getAttribute("title")).toBe(long)
+    expect(name.textContent).toBe(long)
+  })
+
   it("leaves through Cancel to API tokens without creating anything", async () => {
     const calls: unknown[][] = []
     await mount(<ApiTokenNewScreen {...pageProps(calls)} />)

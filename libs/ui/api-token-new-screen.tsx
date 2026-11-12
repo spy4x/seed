@@ -11,7 +11,7 @@ import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
-import { RadioGroup } from "@spy4x/preact-ui/radio"
+import { RadioChips } from "@spy4x/preact-ui/radio-chips"
 import { API_TOKEN_EXPIRY_DAYS, type ApiToken, ApiTokenAccess } from "@domain/api-tokens"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { API_TOKEN_MESSAGES, ApiDocsLink, tokenMessage } from "./api-tokens.tsx"
@@ -183,46 +183,62 @@ function CreateForm(
                 required
               />
             </Field>
-            <RadioGroup
-              legend={t.t(`ApiTokenNewScreen.group`)}
-              name="groupId"
-              data-e2e="api-token-group"
-              options={groups.map((group) => ({ value: group.id, label: group.name }))}
-              value={values.groupId}
-              onChange={(value) => onValueChange("groupId", value)}
-            />
-            <RadioGroup
-              legend={t.t(`ApiTokenNewScreen.access`)}
-              name="access"
-              data-e2e="api-token-access"
-              options={[
-                { value: ApiTokenAccess.READ, label: t.t(`ApiTokens.readOnly`) },
-                { value: ApiTokenAccess.WRITE, label: t.t(`ApiTokens.readWrite`) },
-              ]}
-              value={values.access}
-              onChange={(value) =>
-                onValueChange(
-                  "access",
-                  Number(value) === ApiTokenAccess.WRITE
-                    ? ApiTokenAccess.WRITE
-                    : ApiTokenAccess.READ,
-                )}
-            />
-            <RadioGroup
-              legend={t.t(`ApiTokenNewScreen.expiresAfter`)}
-              name="expiresInDays"
-              data-e2e="api-token-expiry"
-              options={[
-                ...API_TOKEN_EXPIRY_DAYS.map((count) => ({
-                  value: String(count),
-                  label: t.t(`ApiTokenNewScreen.days`, { count }),
-                })),
-                { value: NEVER, label: t.t(`ApiTokenNewScreen.never`) },
-              ]}
-              value={values.expiresInDays === null ? NEVER : String(values.expiresInDays)}
-              onChange={(value) =>
-                onValueChange("expiresInDays", value === NEVER ? null : Number(value))}
-            />
+            {/* `RadioChips` takes no attributes of its own, so each hook sits on a wrapper. */}
+            <div data-e2e="api-token-group">
+              <RadioChips
+                legend={t.t(`ApiTokenNewScreen.group`)}
+                name="groupId"
+                // A group name runs to 100 characters and a chip does not wrap, so a long one
+                // shrinks to the row and ends in an ellipsis rather than scroll the page sideways.
+                // A fieldset is as wide as its content by default; `min-w-0` lets it shrink.
+                class="min-w-0"
+                optionsClass="[&>label]:max-w-full"
+                options={groups.map((group) => ({
+                  value: group.id,
+                  label: (
+                    <bdi class="min-w-0 truncate" title={group.name}>
+                      {group.name}
+                    </bdi>
+                  ),
+                }))}
+                value={values.groupId}
+                onChange={(value) => onValueChange("groupId", value)}
+              />
+            </div>
+            <div data-e2e="api-token-access">
+              <RadioChips
+                legend={t.t(`ApiTokenNewScreen.access`)}
+                name="access"
+                options={[
+                  { value: String(ApiTokenAccess.READ), label: t.t(`ApiTokens.readOnly`) },
+                  { value: String(ApiTokenAccess.WRITE), label: t.t(`ApiTokens.readWrite`) },
+                ]}
+                value={String(values.access)}
+                onChange={(value) =>
+                  onValueChange(
+                    "access",
+                    Number(value) === ApiTokenAccess.WRITE
+                      ? ApiTokenAccess.WRITE
+                      : ApiTokenAccess.READ,
+                  )}
+              />
+            </div>
+            <div data-e2e="api-token-expiry">
+              <RadioChips
+                legend={t.t(`ApiTokenNewScreen.expiresAfter`)}
+                name="expiresInDays"
+                options={[
+                  ...API_TOKEN_EXPIRY_DAYS.map((count) => ({
+                    value: String(count),
+                    label: t.t(`ApiTokenNewScreen.days`, { count }),
+                  })),
+                  { value: NEVER, label: t.t(`ApiTokenNewScreen.never`) },
+                ]}
+                value={values.expiresInDays === null ? NEVER : String(values.expiresInDays)}
+                onChange={(value) =>
+                  onValueChange("expiresInDays", value === NEVER ? null : Number(value))}
+              />
+            </div>
             <Field
               id="api-token-password"
               label={t.t(`ApiTokenNewScreen.password`)}

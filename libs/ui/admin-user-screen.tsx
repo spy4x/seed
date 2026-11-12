@@ -14,7 +14,7 @@ import { Link } from "@spy4x/preact-ui/link"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
-import { RadioGroup } from "@spy4x/preact-ui/radio"
+import { RadioChips } from "@spy4x/preact-ui/radio-chips"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { Tabs } from "@spy4x/preact-ui/tabs"
@@ -956,19 +956,21 @@ function ActionDialog(
       <ScreenForm pending={pending} onSubmit={() => onAction(action, { role })}>
         <Stack>
           <p class="text-sm text-muted">{t.t(copy.text)}</p>
-          <RadioGroup
-            legend={t.t(`AdminUser.role`)}
-            name="role"
-            data-e2e="admin-role-picker"
-            options={roles.map((one) => ({
-              value: String(one),
-              label: one === detail.user.role
-                ? t.t(`AdminUser.roleNow`, { role: roleLabel(t, one) })
-                : roleLabel(t, one),
-            }))}
-            value={String(role)}
-            onChange={(value) => setRole(Number(value) as UserRole)}
-          />
+          {/* `RadioChips` takes no attributes of its own, so the hook sits on a wrapper. */}
+          <div data-e2e="admin-role-picker">
+            <RadioChips
+              legend={t.t(`AdminUser.role`)}
+              name="role"
+              options={roles.map((one) => ({
+                value: String(one),
+                label: one === detail.user.role
+                  ? t.t(`AdminUser.roleNow`, { role: roleLabel(t, one) })
+                  : roleLabel(t, one),
+              }))}
+              value={String(role)}
+              onChange={(value) => setRole(Number(value) as UserRole)}
+            />
+          </div>
           <ErrorState message={actionError} />
           <DialogActions>
             <Button type="button" variant="ghost" onClick={onCloseDialog}>

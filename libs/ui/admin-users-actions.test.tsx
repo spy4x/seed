@@ -235,7 +235,7 @@ describe("one person in the admin app, with the people actions", () => {
     expect(calls).toEqual([["open", "change-role"]])
   })
 
-  it("picks only a role below the administrator's own, and sends the one picked", async () => {
+  it("offers as choice chips only the roles below the administrator's own, and sends the one picked", async () => {
     const calls: unknown[][] = []
     await mount(
       <AdminUserScreen
@@ -243,6 +243,12 @@ describe("one person in the admin app, with the people actions", () => {
       />,
     )
     const radios = [...document.querySelectorAll<HTMLInputElement>("[name=role]")]
+    // Drawn as choice chips: each radio hides inside a chip a thumb can hit.
+    expect(radios.map((radio) => radio.className)).toEqual(["sr-only", "sr-only", "sr-only"])
+    expect(
+      [...find("[data-e2e=admin-role-picker]").querySelectorAll("label")]
+        .every((label) => label.className.includes("min-h-11")),
+    ).toBe(true)
     expect(radios.map((radio) => [radio.value, radio.checked])).toEqual([
       [String(UserRole.VIEWER), true],
       [String(UserRole.OPERATOR), false],
