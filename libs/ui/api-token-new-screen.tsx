@@ -190,6 +190,8 @@ function CreateForm(
                 name="groupId"
                 // A group name runs to 100 characters and a chip does not wrap, so a long one
                 // shrinks to the row and ends in an ellipsis rather than scroll the page sideways.
+                // A fieldset is as wide as its content by default; `min-w-0` lets it shrink.
+                class="min-w-0"
                 optionsClass="[&>label]:max-w-full"
                 options={groups.map((group) => ({
                   value: group.id,

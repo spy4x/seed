@@ -214,6 +214,7 @@ describe("ApiTokenNewScreen", () => {
     const label = find("[data-e2e=api-token-group] label")
     // A chip does not wrap; capped at its row's width, the name inside it truncates instead.
     expect(label.parentElement!.className).toContain("[&>label]:max-w-full")
+    expect(label.closest("fieldset")!.className.split(" ")).toContain("min-w-0")
     const name = label.querySelector("bdi")!
     expect(name.className.split(" ")).toEqual(expect.arrayContaining(["min-w-0", "truncate"]))
     expect(name.getAttribute("title")).toBe(long)
