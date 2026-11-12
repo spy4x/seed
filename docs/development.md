@@ -32,7 +32,7 @@ To run the stack for the first time, follow [Run the local stack](local-stack.md
 | `fmt:check`, `fmt:fix`       | Check the format, or format                                                                     |
 | `ts:check`                   | Type check                                                                                      |
 | `test`                       | Unit tests, in parallel; one file or folder too (below the table)                               |
-| `test:integration`           | Integration tests against your Postgres and Valkey                                              |
+| `test:integration`           | Integration tests (Postgres, Valkey); one file or folder too                                    |
 | `test:backup`                | Backs a database up and restores it, in containers of its own                                   |
 | `test:files`                 | The file store against a Garage container of its own                                            |
 | `e2e`                        | Browser tests against the stack `dev` started ([guide](browser-tests.md))                       |

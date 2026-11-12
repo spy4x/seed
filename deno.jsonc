@@ -334,8 +334,8 @@
       "description": "Unit tests in parallel; prints failures and one summary line. Paths run only those files; CI=true or --verbose prints everything"
     },
     "test:integration": {
-      "command": "ENV=test deno test --no-prompt -E -N -R=./libs/server/db/migrations,./libs/server/db/schema.sql,./libs/server/blog/seed-posts tests/integration",
-      "description": "Integration tests against your Postgres and Valkey"
+      "command": "deno run --allow-run=deno infra/scripts/test-integration.ts",
+      "description": "Integration tests against your Postgres and Valkey. Paths run only those files; none runs tests/integration"
     },
     "e2e": {
       "command": "PLAYWRIGHT_HTML_OUTPUT_DIR=./e2e/report deno run -A --node-modules-dir npm:playwright@1.57.0 test",
