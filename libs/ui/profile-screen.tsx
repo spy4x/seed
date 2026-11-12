@@ -148,6 +148,8 @@ export interface ProfileScreenProps {
   openEmailCode?: boolean
   /** Opens the e-mail dialog at its address step, whenever this turns true (`?email`). */
   openEmailAddress?: boolean
+  /** The e-mail dialog opened for `openEmailCode` or `openEmailAddress`: the app drops the ask. */
+  onEmailOpened?: () => void
   /** Given only when the address could not be read: Account shows the failure and a retry. */
   onRetryEmail?: () => void
   onChangePassword?: () => void
@@ -391,6 +393,7 @@ function ProfileSection(
           emailChange={props.emailChange}
           openEmailCode={props.openEmailCode}
           openEmailAddress={props.openEmailAddress}
+          onEmailOpened={props.onEmailOpened}
           onRetryEmail={props.onRetryEmail}
           providerProof={providerProof}
           guestRow={props.guest && <GuestAccountRow navigate={props.navigate} />}

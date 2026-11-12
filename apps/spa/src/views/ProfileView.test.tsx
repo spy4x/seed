@@ -22,6 +22,7 @@ import {
 import { emailStore } from "../state/email.ts"
 import { onboardingStore } from "../state/onboarding.ts"
 import { sessionState } from "../state/session.ts"
+import { toasts } from "../state/toasts.ts"
 import { ProfileView } from "./ProfileView.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -110,6 +111,7 @@ afterEach(async () => {
   root?.remove()
   root = null
   emailStore.reset()
+  toasts.clear()
 })
 
 /** The view at `path`, with a router that records where the app went and can move it. */
@@ -129,10 +131,69 @@ const ROUTED = (
 )
 
 /** The API's refusal of a first password on an account with no address. */
-const PASSWORD_NEEDS_ADDRESS = `Add an e-mail address first: you sign in with it.`
+const PASSWORD_NEEDS_ADDRESS = `Add an email address first: you sign in with it.`
 
 /** Lets the page's refused reads settle. */
 const settle = () => act(() => new Promise((done) => setTimeout(done, 0)))
+
+/** Types `value` into the field with this `data-e2e` hook, as a person would. */
+const typeInto = (hook: string, value: string) =>
+  act(() => {
+    const input = root!.querySelector<HTMLInputElement>(`[data-e2e=${hook}]`)!
+    input.value = value
+    input.dispatchEvent(new window.Event("input", { bubbles: true }) as unknown as Event)
+  })
+
+/** Submits the form holding this hook; happy-dom sends no submit for a button's click. */
+const submitAt = (hook: string) =>
+  act(() => {
+    root!.querySelector(`[data-e2e=${hook}]`)!.closest("form")!.dispatchEvent(
+      new window.SubmitEvent("submit", { bubbles: true, cancelable: true }) as unknown as Event,
+    )
+  })
+
+/** The sign-in methods of an account kept with a passkey, signed in with it a moment ago. */
+const PASSKEY_ONLY: SignInMethodsResponse = {
+  methods: [{ id: 7, kind: "passkey", email: null, current: true, canUnlink: false }],
+  available: [],
+  providerProofUntil: new Date(Date.now() + 4 * 60_000).toISOString(),
+  emailLink: false,
+}
+
+/**
+ * Answers the reads and calls this test names, by the end of their path, and refuses the rest as
+ * the suite does. Returns the old `fetch`, for the test to put back.
+ */
+function answer(routes: Record<string, () => Response>): typeof fetch {
+  const refuse = globalThis.fetch
+  globalThis.fetch = (input, init) => {
+    const url = String(input)
+    const route = Object.keys(routes).find((path) => url.endsWith(path))
+    return route ? Promise.resolve(routes[route]()) : refuse(input, init)
+  }
+  return refuse
+}
+
+/** Opens `/profile/account?verify` and confirms the mailed code, with `routes` answering. */
+async function confirmCode(routes: Record<string, () => Response>) {
+  emailStore.status.value = { email: "ada@example.com", proven: false, pending: null }
+  const refuse = answer({
+    "/api/auth/email/verify": () => Response.json({ message: "ok" }),
+    "/api/auth/email": () =>
+      Response.json({ email: "ada@example.com", proven: true, pending: null }),
+    ...routes,
+  })
+  try {
+    const opened = await open("/profile/account?verify", ROUTED)
+    await settle()
+    await typeInto("email-code", "Ab3_x-9Q")
+    await submitAt("email-code")
+    await settle()
+    return opened
+  } finally {
+    globalThis.fetch = refuse
+  }
+}
 
 describe("ProfileView", () => {
   it("opens the section its address names, alone, and shows no first-steps card", async () => {
@@ -166,6 +227,65 @@ describe("ProfileView", () => {
 
     expect(dialog()?.open).toBe(true)
     expect(root!.querySelector("[data-e2e=email-code]")).not.toBe(null)
+  })
+
+  it("drops ?verify from the address, replacing it, once the code dialog has opened", async () => {
+    emailStore.status.value = { email: "ada@example.com", proven: false, pending: null }
+    const { history } = await open("/profile/account?verify", ROUTED)
+
+    expect(root!.querySelector<HTMLDialogElement>("dialog[data-e2e=email-change-dialog]")?.open)
+      .toBe(true)
+    expect(history).toEqual(["/profile/account"])
+  })
+
+  it("keeps ?verify while the address is unread, and drops it once the dialog opens", async () => {
+    const { history } = await open("/profile/account?verify", ROUTED)
+    expect(history).toEqual(["/profile/account?verify"])
+
+    await act(() => {
+      emailStore.status.value = { email: "ada@example.com", proven: false, pending: null }
+    })
+
+    expect(root!.querySelector<HTMLDialogElement>("dialog[data-e2e=email-change-dialog]")?.open)
+      .toBe(true)
+    expect(history).toEqual(["/profile/account"])
+  })
+
+  it("leaves the address alone and the dialog shut when no link asks for it", async () => {
+    const unproven = { email: "ada@example.com", proven: false, pending: null }
+    emailStore.status.value = unproven
+    const refuse = answer({ "/api/auth/email": () => Response.json(unproven) })
+    try {
+      const { history } = await open("/profile/account", ROUTED)
+      await settle()
+
+      // The row is drawn, so the dialog could open; it is not there while it is shut.
+      expect(root!.querySelector("[data-e2e=email-code-open]")).not.toBe(null)
+      const dialog = root!.querySelector<HTMLDialogElement>("dialog[data-e2e=email-change-dialog]")
+      expect(dialog?.open ?? false).toBe(false)
+      expect(history).toEqual(["/profile/account"])
+    } finally {
+      globalThis.fetch = refuse
+    }
+  })
+
+  it("offers Set password on the confirmed-email toast of an account with no password, back on Sign-in and security", async () => {
+    const { history } = await confirmCode({
+      "/api/auth/methods": () => Response.json(PASSKEY_ONLY),
+    })
+
+    const toast = toasts.list.value.find((entry) => entry.dataE2E === "email-verified")
+    expect(toast?.action?.label).toBe("Set password")
+    await act(() => toast!.action!.onAction())
+    expect(history.at(-1)).toBe("/profile/security")
+  })
+
+  it("offers nothing more on the confirmed-email toast of an account with a password", async () => {
+    await confirmCode({})
+
+    const toast = toasts.list.value.find((entry) => entry.dataE2E === "email-verified")
+    expect(toast).not.toBe(undefined)
+    expect(toast?.action).toBe(undefined)
   })
 
   it("shows why the address is missing, with a retry, when it could not be read", async () => {
@@ -314,9 +434,44 @@ describe("ProfileView", () => {
       await act(() => root!.querySelector<HTMLElement>("[data-e2e=password-add-email]")!.click())
       await settle()
 
-      expect(history.at(-1)).toBe("/profile/account?email")
+      // The ask is dropped once the dialog is open, so a reload does not open it again.
+      expect(history).toEqual(["/profile/security", "/profile/account"])
       expect(root!.querySelector<HTMLDialogElement>("dialog[data-e2e=email-change-dialog]")?.open)
         .toBe(true)
+    } finally {
+      globalThis.fetch = refuse
+    }
+  })
+
+  it("shows why the other devices could not be signed out, above the list it keeps", async () => {
+    const device = {
+      id: 7,
+      deviceName: "Firefox on Linux",
+      ipHint: "203.0.113.*",
+      createdAt: "2026-10-01T08:00:00.000Z",
+      lastUsedAt: "2026-10-04T08:00:00.000Z",
+      current: true,
+    }
+    const phone = { ...device, id: 9, deviceName: "Safari on iPhone", current: false }
+    const refuse = answer({
+      "/api/auth/sessions": () => Response.json({ sessions: [device, phone] }),
+      "/api/auth/sessions/others": () =>
+        Response.json({ error: { code: "NO", message: "Try again later" } }, { status: 503 }),
+    })
+    try {
+      await open("/profile/security", <ProfileView section="security" />)
+      await settle()
+      await act(() => root!.querySelector<HTMLElement>("[data-e2e=sessions-end-others]")!.click())
+      const confirm = [
+        ...root!.querySelectorAll<HTMLElement>("[data-e2e=sessions-end-others-confirm] button"),
+      ].find((button) => button.textContent === "Sign out")!
+      await act(() => confirm.click())
+      await settle()
+
+      const section = root!.querySelector("[data-e2e=sessions]")!
+      expect(section.querySelector("[role=alert]")?.textContent).toBe("Try again later")
+      expect(section.textContent).toContain("Safari on iPhone")
+      expect(toasts.list.value.some((toast) => toast.dataE2E === "sessions-ended")).toBe(false)
     } finally {
       globalThis.fetch = refuse
     }
