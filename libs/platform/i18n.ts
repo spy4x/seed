@@ -232,12 +232,10 @@ export function automaticLocale(
  */
 export function seedAutomaticLocale(language: string, deviceLocales: readonly string[]): string {
   const locale = automaticLocale(language, deviceLocales, language === `en` ? `en-GB` : undefined)
-  if (language !== `ar`) return locale
-  try {
-    return new Intl.Locale(locale, { numberingSystem: `latn` }).toString()
-  } catch {
-    return locale
-  }
+  // Only a valid tag gets here: a device tag passed `regionOf`, and the fallback is `ar`'s own.
+  return language === `ar`
+    ? new Intl.Locale(locale, { numberingSystem: `latn` }).toString()
+    : locale
 }
 
 /** The region subtag of `tag`, or `null` when it has none or is no valid tag. */

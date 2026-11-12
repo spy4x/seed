@@ -29,7 +29,8 @@ export function createOperatorFormat(request: AdminFetch, locale: OperatorLocale
   const format = computed(() =>
     createFormatters({
       ...settings.value,
-      locale: settings.value?.locale ?? seedAutomaticLocale(locale.language(), locale.deviceLocales()),
+      locale: settings.value?.locale ??
+        seedAutomaticLocale(locale.language(), locale.deviceLocales()),
     })
   )
   const language = signal<Language | null>(null)
