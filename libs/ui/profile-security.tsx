@@ -303,7 +303,10 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                   <Rich
                     parts={t.parts(`ProfileSecurity.setNeedsCode`, { email: needsEmail.pending })}
                     tags={{
-                      email: (text) => <span class="wrap-anywhere" translate={false}>{text}</span>,
+                      // An address reads left to right, also inside Arabic text.
+                      email: (text) => (
+                        <bdi dir="ltr" class="wrap-anywhere" translate={false}>{text}</bdi>
+                      ),
                     }}
                   />
                 )}
