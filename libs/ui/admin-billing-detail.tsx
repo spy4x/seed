@@ -15,6 +15,7 @@ import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
+import { RadioChips } from "@spy4x/preact-ui/radio-chips"
 import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
 import {
   ADMIN_BILLING_NOTE_MAX_LENGTH,
@@ -671,18 +672,19 @@ function ActionDialog(
       }
       body = (
         <>
-          <RadioGroup
-            legend={t.t(`AdminBillingCustomer.howLong`)}
-            name="length"
-            required
-            value={length}
-            onChange={(value) => setLength(value as AdminBillingTimeLength)}
-            data-e2e="admin-billing-length"
-            options={ADMIN_BILLING_TIME_LENGTHS.map((value) => ({
-              value,
-              label: t.t(TIME_LABELS[value]),
-            }))}
-          />
+          {/* `RadioChips` takes no attributes of its own, so the hook sits on a wrapper. */}
+          <div data-e2e="admin-billing-length">
+            <RadioChips
+              legend={t.t(`AdminBillingCustomer.howLong`)}
+              name="length"
+              value={length}
+              onChange={(value) => setLength(value as AdminBillingTimeLength)}
+              options={ADMIN_BILLING_TIME_LENGTHS.map((value) => ({
+                value,
+                label: t.t(TIME_LABELS[value]),
+              }))}
+            />
+          </div>
           <p class="text-sm text-muted" aria-live="polite" data-e2e="admin-billing-until">
             <Rich
               parts={t.parts(
@@ -709,6 +711,7 @@ function ActionDialog(
         danger: true,
       }
       body = (
+        // Not chips: each choice carries a line of help, or why it is unavailable, under its title.
         <RadioGroup
           legend={t.t(`AdminBillingCustomer.when`)}
           name="when"

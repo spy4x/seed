@@ -123,6 +123,7 @@ function Versions(
   const someone = t.t(`AdminBlogHistory.someone`)
   return (
     <div class="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
+      {/* Not chips: a scrolling list whose every version shows a title and who saved it when. */}
       <RadioGroup
         legend={t.t(`AdminBlogHistory.versions`)}
         name="blog-history-version"

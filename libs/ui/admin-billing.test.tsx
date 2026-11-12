@@ -574,13 +574,24 @@ describe(`one customer in the admin app`, () => {
     expect(dialog).not.toContain(`keeps Pro`)
   })
 
-  it(`shows the new end as the length changes, and sends the picked length`, async () => {
+  it(`offers the lengths as choice chips, shows the new end as one changes, and sends it`, async () => {
     const calls: unknown[][] = []
     await mount(<AdminBillingCustomerScreen {...customerProps(calls, { dialog: `time` })} />)
     // Active until Nov 12: the time at no charge starts after the paid period.
     expect(find(`[data-e2e=admin-billing-until]`).textContent).toContain(
       `until ${day(`2026-12-12T12:00:00.000Z`)}`,
     )
+    // Drawn as choice chips that share one name: each radio hides inside a chip a thumb can hit.
+    const lengths = [
+      ...find(`[data-e2e=admin-billing-length]`).querySelectorAll<HTMLInputElement>(`input`),
+    ]
+    expect(lengths.length).toBeGreaterThan(1)
+    expect(lengths.every((radio) => radio.className === `sr-only` && radio.name === `length`))
+      .toBe(true)
+    expect(
+      [...find(`[data-e2e=admin-billing-length]`).querySelectorAll(`label`)]
+        .every((label) => label.className.includes(`min-h-11`)),
+    ).toBe(true)
     const week = find<HTMLInputElement>(`[data-e2e=admin-billing-dialog] input[value='7d']`)
     await act(() => {
       week.checked = true
