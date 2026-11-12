@@ -21,7 +21,7 @@ export function lockedSpy4xPackages(lock: string): string[] {
   const names = (section: Record<string, unknown>, scope: string, prefix: string) =>
     Object.keys(section)
       .filter((key) => key.startsWith(scope))
-      .map((key) => `${prefix}${key.slice(0, key.lastIndexOf(`@`))}`)
+      .map((key) => `${prefix}${key.slice(0, key.indexOf(`@`, 1))}`)
   return [...new Set([...names(jsr, `@spy4x/`, `jsr:`), ...names(npm, `@jsr/spy4x__`, `npm:`)])]
     .sort()
 }
@@ -44,7 +44,12 @@ const config = (exclude: string[]) =>
   JSON.stringify({ minimumDependencyAge: { age: `1440`, exclude } })
 const lock = JSON.stringify({
   jsr: { "@spy4x/time@1.95.0": {}, "@spy4x/time@1.125.0": {}, "@std/path@1.1.6": {} },
-  npm: { "@jsr/spy4x__time@1.125.0": {}, "preact@10.27.0": {} },
+  npm: {
+    "@jsr/spy4x__time@1.125.0": {},
+    // A peer dependency after the version: the name still ends at its own version.
+    "@jsr/spy4x__time@1.125.0_preact@10.27.0": {},
+    "preact@10.27.0": {},
+  },
 })
 
 Deno.test(`the age exclude names every @spy4x package in deno.lock exactly`, async () => {
