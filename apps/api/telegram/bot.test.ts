@@ -7,6 +7,7 @@ import type { TelegramAccountLabel } from "@server/auth/telegram.ts"
 import { botText, createSeedBot, menuCommands, type TelegramLinkService } from "./bot.ts"
 import { createTelegramProduct } from "./commands.ts"
 import { NOTES_OFF } from "@server/notes/setup.ts"
+import deApp from "@i18n/app/de.ts"
 import type { TelegramProduct } from "./extension.ts"
 import { callbackUpdate, fakeTelegram, TELEGRAM_USER_ID, textUpdate } from "./fake-telegram.ts"
 
@@ -160,6 +161,34 @@ describe(`Seed's Telegram bot`, () => {
     await handle(`/link`, undefined, `it`)
 
     expect(sent()).toEqual([BOT_TEXT.howToLink(`https://app.example.com/profile/notifications`)])
+  })
+
+  it(`answers in English when Telegram reports no language`, async () => {
+    const { handle, sent } = bot()
+
+    await handle(`/link`)
+
+    expect(sent()).toEqual([
+      `To link your account, open ${
+        iso(`https://app.example.com/profile/notifications`)
+      }, choose "Link Telegram" and send me the code it shows.`,
+    ])
+  })
+
+  it(`names the app's Link Telegram button as the app shows it in the Telegram user's language`, async () => {
+    const { handle, sent } = bot()
+
+    await handle(`/link`, undefined, `de`)
+
+    expect(sent()[0]).toContain(`„${deApp[`ProfileTelegram.link`]}“`)
+  })
+
+  it(`isolates the settings address, so it reads left to right inside Arabic`, async () => {
+    const { handle, sent } = bot()
+
+    await handle(`/link`, undefined, `ar`)
+
+    expect(sent()[0]).toContain(`افتح ${iso(`https://app.example.com/profile/notifications`)}،`)
   })
 
   it(`answers a used Link button as a stale button, not as a mistyped code, and links nothing more`, async () => {

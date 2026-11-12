@@ -1864,11 +1864,11 @@ export default {
   },
   "TelegramBot.stale": {
     "one":
-      "Este botón ya no funciona. Ya se usó, otro más reciente lo reemplazó o tiene más de {count} minuto. Para vincular este chat, genera un código nuevo en la app.",
+      "Este botón ya no funciona: ya se usó, otro más reciente lo reemplazó, tiene más de {count} minuto, se restableció o cambió la contraseña de la cuenta, o la cuenta se eliminó o se bloqueó. Para vincular este chat, genera un código nuevo en la app.",
     "many":
-      "Este botón ya no funciona. Ya se usó, otro más reciente lo reemplazó o tiene más de {count} minutos. Para vincular este chat, genera un código nuevo en la app.",
+      "Este botón ya no funciona: ya se usó, otro más reciente lo reemplazó, tiene más de {count} minutos, se restableció o cambió la contraseña de la cuenta, o la cuenta se eliminó o se bloqueó. Para vincular este chat, genera un código nuevo en la app.",
     "other":
-      "Este botón ya no funciona. Ya se usó, otro más reciente lo reemplazó o tiene más de {count} minutos. Para vincular este chat, genera un código nuevo en la app.",
+      "Este botón ya no funciona: ya se usó, otro más reciente lo reemplazó, tiene más de {count} minutos, se restableció o cambió la contraseña de la cuenta, o la cuenta se eliminó o se bloqueó. Para vincular este chat, genera un código nuevo en la app.",
   },
   "TelegramBot.privateOnly": "Envíamelo en un chat privado.",
   "TelegramBot.codeSpent":

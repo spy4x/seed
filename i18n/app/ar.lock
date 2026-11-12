@@ -1525,7 +1525,7 @@ TelegramBot.linkButton	a6a32dbc5618ea39
 TelegramBot.linked	472c0c007c2096d5
 TelegramBot.notLinked	b5bfcb21f06fceac
 TelegramBot.privateOnly	e67c655e17978e07
-TelegramBot.stale	d70f257e7c6ab3b8
+TelegramBot.stale	66b0d3ceccdfbbc7
 TelegramBot.taken	5c7ceaa7f03ca2a3
 TelegramBot.unlinked	f7ec5c4f9b4b8d50
 TelegramNotification.open	ed077f3d8125d60d

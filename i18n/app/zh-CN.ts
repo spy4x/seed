@@ -1518,7 +1518,7 @@ export default {
   },
   "TelegramBot.stale": {
     "other":
-      "这个按钮已失效。它可能已经用过、被更新的按钮取代，或者已超过 {count} 分钟。如需关联这个聊天，请在应用中重新生成关联码。",
+      "这个按钮已失效。它可能已经用过、被更新的按钮取代、已超过 {count} 分钟，也可能账号密码已被重置或修改，或者账号已被删除或封禁。如需关联这个聊天，请在应用中重新生成关联码。",
   },
   "TelegramBot.privateOnly": "请在私聊中发给我。",
   "TelegramBot.codeSpent":

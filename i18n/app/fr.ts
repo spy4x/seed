@@ -1916,11 +1916,11 @@ export default {
   },
   "TelegramBot.stale": {
     "one":
-      "Ce bouton ne fonctionne plus. Il a déjà été utilisé, un plus récent l’a remplacé, ou il date de plus de {count} minute. Pour associer cette conversation, créez un nouveau code dans l’application.",
+      "Ce bouton ne fonctionne plus : il a déjà été utilisé, un plus récent l’a remplacé, il date de plus de {count} minute, le mot de passe du compte a été réinitialisé ou modifié, ou le compte a été supprimé ou bloqué. Pour associer cette conversation, créez un nouveau code dans l’application.",
     "many":
-      "Ce bouton ne fonctionne plus. Il a déjà été utilisé, un plus récent l’a remplacé, ou il date de plus de {count} minutes. Pour associer cette conversation, créez un nouveau code dans l’application.",
+      "Ce bouton ne fonctionne plus : il a déjà été utilisé, un plus récent l’a remplacé, il date de plus de {count} minutes, le mot de passe du compte a été réinitialisé ou modifié, ou le compte a été supprimé ou bloqué. Pour associer cette conversation, créez un nouveau code dans l’application.",
     "other":
-      "Ce bouton ne fonctionne plus. Il a déjà été utilisé, un plus récent l’a remplacé, ou il date de plus de {count} minutes. Pour associer cette conversation, créez un nouveau code dans l’application.",
+      "Ce bouton ne fonctionne plus : il a déjà été utilisé, un plus récent l’a remplacé, il date de plus de {count} minutes, le mot de passe du compte a été réinitialisé ou modifié, ou le compte a été supprimé ou bloqué. Pour associer cette conversation, créez un nouveau code dans l’application.",
   },
   "TelegramBot.privateOnly": "Envoyez-moi cela dans une conversation privée.",
   "TelegramBot.codeSpent":

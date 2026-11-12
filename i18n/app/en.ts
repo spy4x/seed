@@ -1716,9 +1716,9 @@ export default {
   },
   "TelegramBot.stale": {
     "one":
-      "This button no longer works. It was used already, a newer one replaced it, or it is older than {count} minute. To link this chat, make a new code in the app.",
+      "This button no longer works: it was used already, a newer one replaced it, it is older than {count} minute, the account's password was reset or changed, or the account was deleted or blocked. To link this chat, make a new code in the app.",
     "other":
-      "This button no longer works. It was used already, a newer one replaced it, or it is older than {count} minutes. To link this chat, make a new code in the app.",
+      "This button no longer works: it was used already, a newer one replaced it, it is older than {count} minutes, the account's password was reset or changed, or the account was deleted or blocked. To link this chat, make a new code in the app.",
   },
   "TelegramBot.privateOnly": "Send me that in a private chat.",
   "TelegramBot.codeSpent":
