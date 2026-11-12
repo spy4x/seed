@@ -2110,7 +2110,7 @@ export default {
   "AdminUser.changing": "Wird geändert …",
   "AdminUser.resetTitle": "{name} eine E-Mail zum Zurücksetzen des Passworts senden",
   "AdminUser.resetText":
-    "Die Person bekommt eine E-Mail, die erklärt, wie sie ihr Passwort über „Passwort vergessen“ mit einem Code zurücksetzt. Bis dahin funktioniert ihr bisheriges Passwort weiter.",
+    "Die Person bekommt eine E-Mail, die erklärt, wie sie ihr Passwort über „Passwort vergessen?“ mit einem Code zurücksetzt. Bis dahin funktioniert ihr bisheriges Passwort weiter.",
   "AdminUser.sendLink": "E-Mail senden",
   "AdminUser.sending": "Wird gesendet …",
   "AdminUser.deleteGuestTitle": "Gastkonto {name} löschen",

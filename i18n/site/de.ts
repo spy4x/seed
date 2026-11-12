@@ -968,12 +968,12 @@ export default {
   "FeaturePageSignIn.name": "Anmeldung",
   "FeaturePageSignIn.title": "Login für dein SaaS, ohne externen Auth-Dienst",
   "FeaturePageSignIn.description":
-    "Passkeys, Anmeldecodes per E-Mail, Google, GitHub und 2FA, geprüft von deiner eigenen API, ohne Auth-Dienst und Gebühr pro Nutzer. Kostenlos, MIT-Lizenz.",
+    "Passkeys, Anmeldecodes per E-Mail, Google, GitHub und Zwei-Faktor-Schutz, geprüft von deiner eigenen API, ohne Auth-Dienst und Gebühr pro Nutzer. Kostenlos, MIT-Lizenz.",
   "FeaturePageSignIn.h1": "Passkeys und Login für dein SaaS, ohne externen Auth-Dienst",
   "FeaturePageSignIn.answer":
     "Seed meldet Leute mit Passkeys, Anmeldecodes per E-Mail, Google und GitHub an, geprüft von der eigenen API auf deinem Server, ohne fremden Auth-Dienst. Passwörter, Passkeys und Anmeldecodes funktionieren direkt nach dem Deployment, ohne Gebühr pro Nutzer; Google und GitHub brauchen je zwei Schlüssel in der Env-Datei.",
   "FeaturePageSignIn.summary":
-    "Passkeys, Anmeldecodes per E-Mail, Google, GitHub und 2FA, ohne Auth-Dienst.",
+    "Passkeys, Anmeldecodes per E-Mail, Google, GitHub und Zwei-Faktor-Schutz, ohne Auth-Dienst.",
   "FeaturePageSignIn.how1":
     "Die API prüft jede Anmeldung selbst und antwortet mit einem signierten Sitzungs-Cookie. Ein Passkey nutzt das eingebaute WebAuthn des Browsers: Der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal. Ein Anmeldecode per E-Mail meldet an oder registriert, gilt nur einmal, 10 Minuten lang und nur im Browser, der ihn angefordert hat, und wird nur als Hash gespeichert.",
   "FeaturePageSignIn.how2":
