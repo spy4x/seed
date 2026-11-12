@@ -443,6 +443,40 @@ describe("ProfileView", () => {
     }
   })
 
+  it("shows why the other devices could not be signed out, above the list it keeps", async () => {
+    const device = {
+      id: 7,
+      deviceName: "Firefox on Linux",
+      ipHint: "203.0.113.*",
+      createdAt: "2026-10-01T08:00:00.000Z",
+      lastUsedAt: "2026-10-04T08:00:00.000Z",
+      current: true,
+    }
+    const phone = { ...device, id: 9, deviceName: "Safari on iPhone", current: false }
+    const refuse = answer({
+      "/api/auth/sessions": () => Response.json({ sessions: [device, phone] }),
+      "/api/auth/sessions/others": () =>
+        Response.json({ error: { code: "NO", message: "Try again later" } }, { status: 503 }),
+    })
+    try {
+      await open("/profile/security", <ProfileView section="security" />)
+      await settle()
+      await act(() => root!.querySelector<HTMLElement>("[data-e2e=sessions-end-others]")!.click())
+      const confirm = [
+        ...root!.querySelectorAll<HTMLElement>("[data-e2e=sessions-end-others-confirm] button"),
+      ].find((button) => button.textContent === "Sign out")!
+      await act(() => confirm.click())
+      await settle()
+
+      const section = root!.querySelector("[data-e2e=sessions]")!
+      expect(section.querySelector("[role=alert]")?.textContent).toBe("Try again later")
+      expect(section.textContent).toContain("Safari on iPhone")
+      expect(toasts.list.value.some((toast) => toast.dataE2E === "sessions-ended")).toBe(false)
+    } finally {
+      globalThis.fetch = refuse
+    }
+  })
+
   it("sends an address with no such section back to /profile", async () => {
     const { history } = await open("/profile/billing", <ProfileView section="billing" />)
 
