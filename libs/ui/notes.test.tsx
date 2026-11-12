@@ -388,6 +388,18 @@ describe("NotesScreen", () => {
 describe("NotesScreen in the browser", () => {
   const row = (note: { id: string }) => `[data-e2e=note-${note.id}]`
 
+  it("rings the whole summary when the title link takes focus, with no browser outline", async () => {
+    await mount(<NotesScreen {...listDefaults} />)
+    const link = find(`${row(trip)} [data-e2e=note-item-title] a`)
+    expect(link.className.split(" ")).toEqual(expect.arrayContaining([
+      "after:absolute",
+      "after:inset-0",
+      "focus-visible:outline-hidden",
+      "focus-visible:after:ring-2",
+      "focus-visible:after:ring-focus",
+    ]))
+  })
+
   it("orders a row's menu Open, Move to group…, Copy link, then Delete after a divider", async () => {
     await mount(<NotesScreen {...listDefaults} onCopyLink={() => {}} />)
     await click(`${row(trip)} [data-e2e=note-menu]`)

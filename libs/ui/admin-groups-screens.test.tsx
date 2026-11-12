@@ -727,6 +727,10 @@ describe(`one group in the admin app`, () => {
     expect(focused?.querySelector(`[data-e2e=admin-group-files]`)?.textContent).toContain(
       `No files yet.`,
     )
+    // The house ring, so the browser's default outline never shows.
+    expect(focused?.className.split(` `)).toEqual(
+      expect.arrayContaining([`focus-visible:outline-hidden`, `focus-visible:ring-focus`]),
+    )
   })
 
   it(`keeps the search while the files load, and offers a retry when they fail`, async () => {
