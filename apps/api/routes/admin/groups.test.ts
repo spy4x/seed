@@ -137,6 +137,7 @@ function buildApp(
   } = {},
 ) {
   const calls: unknown[][] = []
+  const requestIds: (string | null)[] = []
   const groups: AdminGroupsService = {
     list: (
       filter,
@@ -166,8 +167,9 @@ function buildApp(
         Promise.resolve(groupId === GROUP_ID ? STORED[fileId] ?? null : null)
     ),
     readFile: (key) => (calls.push([`readFile`, key]), Promise.resolve(stored ? BYTES : null)),
-    recordFileAccess: (actor, groupId, file, access) => {
+    recordFileAccess: (actor, groupId, file, access, requestId) => {
       calls.push([`audit`, actor, groupId, file.id, access])
+      requestIds.push(requestId)
       return auditFails ? Promise.reject(new Error(`the database is down`)) : Promise.resolve()
     },
     removeFile: (actor, groupId, fileId) => (
@@ -184,7 +186,7 @@ function buildApp(
       notes,
     })],
   })
-  return { app: mountRoute(`/admin`, route, auth), calls }
+  return { app: mountRoute(`/admin`, route, auth), calls, requestIds }
 }
 
 interface Route {
@@ -543,6 +545,35 @@ describe(`operator area group routes`, () => {
         id,
         `download`,
       ])
+    }
+  })
+
+  it(`names an open's or a download's audit row with the UUID its address carries`, async () => {
+    for (const [access, id] of [[`open`, IMAGE_ID], [`download`, FILE_ID]]) {
+      const { app, requestIds } = buildApp()
+      const named = `0199c3a0-1234-7000-8000-0000000000aa`
+      const path = `/admin/groups/${GROUP_ID}/files/${id}/${access}?requestId=${named}`
+      expect((await send(app, { method: `GET`, path })).status).toBe(200)
+      expect(requestIds).toEqual([named])
+    }
+  })
+
+  it(`names the audit row with the request's own id when the address carries no UUID`, async () => {
+    const malformed = [
+      null,
+      ``,
+      `again`,
+      `0199C3A0-1234-7000-8000-0000000000AA`,
+      `0199c3a0-1234-7000-8000-0000000000aa0`,
+      `0199c3a0-1234-7000-8000-0000000000aa' OR '1'='1`,
+      `a`.repeat(200),
+    ]
+    for (const value of malformed) {
+      const { app, requestIds } = buildApp()
+      const query = value === null ? `` : `?${new URLSearchParams({ requestId: value })}`
+      const path = `/admin/groups/${GROUP_ID}/files/${FILE_ID}/download${query}`
+      expect((await send(app, { method: `GET`, path })).status).toBe(200)
+      expect(requestIds).toEqual([`req-test-1`])
     }
   })
 

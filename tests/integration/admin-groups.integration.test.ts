@@ -11,6 +11,7 @@ import {
   UserRole,
 } from "@domain/identity"
 import { listAdminAudit } from "@server/auth/admin-audit.ts"
+import { writeAuditEvent } from "@server/groups/audit.ts"
 import { PostgresGroupActivityRepository } from "@server/groups/postgres-activity-repository.ts"
 import { apiTokenRows } from "@server/api-tokens/api-tokens.ts"
 import {
@@ -491,8 +492,8 @@ Deno.test(`a file is found only through its own group, and an operator's open or
     })
 
     const before = (await rows.find(groupId))!
-    await rows.recordFileAccess(operator, groupId, file!, `open`)
-    await rows.recordFileAccess(operator, groupId, file!, `download`)
+    await rows.recordFileAccess(operator, groupId, file!, `open`, uuidV7())
+    await rows.recordFileAccess(operator, groupId, file!, `download`, uuidV7())
 
     const audits = await sql<
       { kind: string; actorUserId: number; details: Record<string, unknown> }[]
@@ -520,5 +521,70 @@ Deno.test(`a file is found only through its own group, and an operator's open or
     const members = await new PostgresGroupActivityRepository(sql).list(groupId, { limit: 50 })
     expect(members.events.map((event) => event.kind)).not.toContain(ADMIN_FILE_OPENED_KIND)
     expect(members.events.map((event) => event.kind)).not.toContain(ADMIN_FILE_DOWNLOADED_KIND)
+  })
+})
+
+Deno.test(`an operator's repeated file read under one request id writes one audit row`, async () => {
+  await withSchema(async (sql) => {
+    const { groupId, owner } = await team(sql)
+    const operator = { id: await operatorUser(sql, UserRole.OPERATOR), role: UserRole.OPERATOR }
+    const other = { id: await operatorUser(sql, UserRole.OPERATOR), role: UserRole.OPERATOR }
+    const noteId = uuidV7()
+    await sql`
+      INSERT INTO notes (id, group_id, title, body, change_sequence)
+      VALUES (${noteId}, ${groupId}, 'Trip', '', 1)
+    `
+    const files = []
+    for (const name of [`a.png`, `b.png`]) {
+      const id = uuidV7()
+      await sql`
+        INSERT INTO note_attachments (
+          id, note_id, object_key, name, content_type, size_bytes, created_by_user_id
+        ) VALUES (${id}, ${noteId}, ${`attachments/${id}`}, ${name}, 'image/png', 300, ${owner})
+      `
+      files.push((await adminGroupRows(sql).file(groupId, id))!)
+    }
+    const [a, b] = files
+    const rows = adminGroupRows(sql)
+    const once = uuidV7()
+    const count = async (kind: string) =>
+      (await sql`SELECT 1 FROM audit_events WHERE group_id = ${groupId} AND event_kind = ${kind}`)
+        .length
+
+    // The same download arriving twice, as Chromium sends it, and even at the same moment.
+    await rows.recordFileAccess(operator, groupId, a, `download`, once)
+    await Promise.all([
+      rows.recordFileAccess(operator, groupId, a, `download`, once),
+      rows.recordFileAccess(operator, groupId, a, `download`, once),
+    ])
+    expect(await count(ADMIN_FILE_DOWNLOADED_KIND)).toBe(1)
+
+    // A new id is a new download; so is the same id for an open, another file or another operator.
+    await rows.recordFileAccess(operator, groupId, a, `download`, uuidV7())
+    expect(await count(ADMIN_FILE_DOWNLOADED_KIND)).toBe(2)
+    await rows.recordFileAccess(operator, groupId, a, `open`, once)
+    expect(await count(ADMIN_FILE_OPENED_KIND)).toBe(1)
+    await rows.recordFileAccess(operator, groupId, b, `download`, once)
+    await rows.recordFileAccess(other, groupId, a, `download`, once)
+    expect(await count(ADMIN_FILE_DOWNLOADED_KIND)).toBe(4)
+
+    // Without an id nothing counts as a repeat.
+    await rows.recordFileAccess(operator, groupId, a, `download`, null)
+    await rows.recordFileAccess(operator, groupId, a, `download`, null)
+    expect(await count(ADMIN_FILE_DOWNLOADED_KIND)).toBe(6)
+
+    // Any other audit kind keeps every row, whatever request id it carries.
+    for (let i = 0; i < 2; i++) {
+      await writeAuditEvent(sql, {
+        eventKind: `note.attachment.removed`,
+        actorId: operator.id,
+        groupId,
+        requestId: once,
+        entityType: `note`,
+        entityId: noteId,
+        details: { name: `a.png`, [OPERATOR_DETAIL]: 1 },
+      })
+    }
+    expect(await count(`note.attachment.removed`)).toBe(2)
   })
 })

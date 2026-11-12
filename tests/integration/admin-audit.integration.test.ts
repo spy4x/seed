@@ -18,7 +18,7 @@ import { exportIdentifier, operatorIdentifier } from "../../apps/api/services/ad
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
-import { applyMigrations } from "./migrations.ts"
+import { applyMigrations, migrationNames } from "./migrations.ts"
 
 /**
  * The operator area's audit log (#429) against a real Postgres with every migration applied: both
@@ -29,7 +29,10 @@ import { applyMigrations } from "./migrations.ts"
  * they are missing rather than skipping.
  */
 
-async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
+async function withSchema(
+  body: (sql: postgres.Sql) => Promise<void>,
+  migrations: readonly string[] = migrationNames(),
+): Promise<void> {
   const settings = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...settings, max: 1, onnotice: () => {} })
   const schema = `admin_audit_test_${uuidV7().replaceAll("-", "")}`
@@ -42,7 +45,7 @@ async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<v
   })
   try {
     await admin`CREATE SCHEMA ${admin(schema)}`
-    await applyMigrations(sql)
+    await applyMigrations(sql, migrations)
     await body(sql)
   } finally {
     await sql.end({ timeout: 5 })
@@ -371,4 +374,52 @@ Deno.test("audit log: lists the operators for the filter, and records an export"
     `
     expect(row).toEqual({ actorUserId: op, requestId: "req-1", details: { rows: 5 } })
   })
+})
+
+const FILE_ACCESS_ONCE = "2026_12_16_0004_audit_file_access_once.sql"
+
+Deno.test("the file-read index builds over older repeated rows, twice, and refuses a repeat", async () => {
+  await withSchema(async (sql) => {
+    const op = await person(sql, "Grace", "grace@example.com", UserRole.OPERATOR)
+    // What one Download wrote before: two identical rows without a request id.
+    const note = uuidV7()
+    const group = uuidV7()
+    await sql`INSERT INTO groups (id, name, owner_user_id) VALUES (${group}, 'Family', ${op})`
+    for (let i = 0; i < 2; i++) {
+      await sql`
+        INSERT INTO audit_events (
+          event_kind, actor_user_id, group_id, entity_type, entity_id, details
+        ) VALUES (
+          'operator.file_downloaded', ${op}, ${group}, 'note', ${note}, ${
+        sql.json({ name: "a.png" })
+      }
+        )
+      `
+    }
+    await applyMigrations(sql, [FILE_ACCESS_ONCE])
+    await applyMigrations(sql, [FILE_ACCESS_ONCE])
+
+    const insert = (kind: string, requestId: string) =>
+      sql`
+        INSERT INTO audit_events (
+          event_kind, actor_user_id, group_id, request_id, entity_type, entity_id, details
+        ) VALUES (
+          ${kind}, ${op}, ${group}, ${requestId}, 'note', ${note}, ${sql.json({ name: "a.png" })}
+        )
+      `
+    await insert("operator.file_downloaded", "req-1")
+    await expect(insert("operator.file_downloaded", "req-1")).rejects.toThrow(/unique/)
+    await insert("note.attachment.removed", "req-1")
+    await insert("note.attachment.removed", "req-1")
+    const kinds = await sql<
+      { eventKind: string }[]
+    >`SELECT event_kind FROM audit_events ORDER BY id`
+    expect(kinds.map((k) => k.eventKind)).toEqual([
+      "operator.file_downloaded",
+      "operator.file_downloaded",
+      "operator.file_downloaded",
+      "note.attachment.removed",
+      "note.attachment.removed",
+    ])
+  }, migrationNames().filter((name) => name < FILE_ACCESS_ONCE))
 })
