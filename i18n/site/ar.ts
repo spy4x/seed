@@ -34,7 +34,7 @@ export default {
   "SiteFooter.terms": "الشروط",
   "FooterNewsletter.title": "النشرة البريدية",
   "FooterNewsletter.lead":
-    "رسالة قصيرة كلما تغيّر {site}. تؤكد اشتراكك مرة واحدة عبر البريد، وتلغيه بنقرة واحدة.",
+    "رسالة بريد إلكتروني قصيرة كلما تغيّر {site}. تؤكد اشتراكك مرة واحدة عبر البريد الإلكتروني، وتلغيه بنقرة واحدة.",
   "NewsletterForm.email": "البريد الإلكتروني",
   "NewsletterForm.placeholder": "you@example.com",
   "NewsletterForm.submit": "اشترك",
@@ -94,9 +94,9 @@ export default {
   "NewsletterPage.description": "أكّد اشتراكك في النشرة البريدية لـ{site} أو ألغِه.",
   "NewsletterPage.subscribeTitle": "النشرة البريدية لـ{site}: أخبار قصيرة عبر البريد",
   "NewsletterPage.subscribeDescription":
-    "رسالة قصيرة كلما تغيّر {site}: ما أُطلق، وما تعطّل، وما تعلّمته أثناء بنائه. تأكيد مزدوج للاشتراك، وإلغاؤه بنقرة واحدة.",
+    "رسالة بريد إلكتروني قصيرة كلما تغيّر {site}: ما أُطلق، وما تعطّل، وما تعلّمته أثناء بنائه. تأكيد مزدوج للاشتراك، وإلغاؤه بنقرة واحدة.",
   "NewsletterPage.about": "عن النشرة البريدية",
-  "NewsletterPage.heading": "تلقَّ رسالة قصيرة كلما جدّ جديد في {site}",
+  "NewsletterPage.heading": "تلقَّ رسالة بريد إلكتروني قصيرة كلما جدّ جديد في {site}",
   "NewsletterPage.lead": "ما أُطلق، وما تعطّل، وما تعلّمته أثناء البناء، بقلمي. ولا شيء غير ذلك.",
   "NewsletterPage.promiseConfirm": "تؤكد اشتراكك أولًا عبر رابط، فلا يستطيع أحد غيرك أن يشركك.",
   "NewsletterPage.promiseUnsubscribe": "في كل رسالة رابط يلغي اشتراكك بنقرة واحدة.",
@@ -248,7 +248,7 @@ export default {
   "HomeWho.about": "عني",
   "HomeWho.upwork": "ملفي على Upwork",
   "HomeWho.issues": "المشكلات على GitHub",
-  "HomeNewsletter.title": "تلقَّ رسالة قصيرة كلما جدّ جديد في {site}",
+  "HomeNewsletter.title": "تلقَّ رسالة بريد إلكتروني قصيرة كلما جدّ جديد في {site}",
   "HomeNewsletter.lead":
     "ما أُطلق، وما تعطّل، وما تعلّمته أثناء البناء. لا رسائل غير ذلك، ويمكنك إلغاء الاشتراك بنقرة واحدة.",
   "HomeNewsletter.hint": "ستؤكد اشتراكك عبر البريد أولًا.",
@@ -862,7 +862,7 @@ export default {
   },
   "Blog.newsTitle": "تلقَّ المقال التالي عبر البريد",
   "Blog.newsLead":
-    "رسالة قصيرة حين يُنشر مقال جديد أو يُطلق شيء جديد. تؤكد اشتراكك مرة واحدة عبر البريد، وتلغيه بنقرة واحدة.",
+    "رسالة بريد إلكتروني قصيرة حين يُنشر مقال جديد أو يُطلق شيء جديد. تؤكد اشتراكك مرة واحدة عبر البريد الإلكتروني، وتلغيه بنقرة واحدة.",
   "Blog.readNext": "اقرأ أيضًا",
   "Blog.morePosts": "مقالات أخرى",
   "Blog.breadcrumb": "مسار التنقل",
