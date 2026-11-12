@@ -39,7 +39,43 @@
   ],
   "nodeModulesDir": "auto",
   "allowScripts": ["npm:@tailwindcss/oxide@4.1.12"],
-  "minimumDependencyAge": { "age": "1440", "exclude": ["jsr:@spy4x/*", "npm:@jsr/spy4x__*"] },
+  // `@deno/loader` 0.5.0, which the Vite dev servers resolve through, ignores the globs and matches
+  // only exact names, so every @spy4x package in deno.lock is listed too.
+  // tests/dependency-age.test.ts fails when one is missing.
+  "minimumDependencyAge": {
+    "age": "1440",
+    "exclude": [
+      "jsr:@spy4x/*",
+      "npm:@jsr/spy4x__*",
+      "jsr:@spy4x/billing",
+      "jsr:@spy4x/email",
+      "jsr:@spy4x/integrations",
+      "jsr:@spy4x/net",
+      "jsr:@spy4x/platform",
+      "jsr:@spy4x/preact-charts",
+      "jsr:@spy4x/preact-cn",
+      "jsr:@spy4x/preact-icons",
+      "jsr:@spy4x/preact-server",
+      "jsr:@spy4x/preact-signals",
+      "jsr:@spy4x/preact-system",
+      "jsr:@spy4x/preact-theme",
+      "jsr:@spy4x/preact-ui",
+      "jsr:@spy4x/realtime",
+      "jsr:@spy4x/server",
+      "jsr:@spy4x/time",
+      "jsr:@spy4x/validation",
+      "npm:@jsr/spy4x__email",
+      "npm:@jsr/spy4x__net",
+      "npm:@jsr/spy4x__platform",
+      "npm:@jsr/spy4x__preact-cn",
+      "npm:@jsr/spy4x__preact-icons",
+      "npm:@jsr/spy4x__preact-system",
+      "npm:@jsr/spy4x__preact-theme",
+      "npm:@jsr/spy4x__preact-ui",
+      "npm:@jsr/spy4x__time",
+      "npm:@jsr/spy4x__validation"
+    ]
+  },
   "tasks": {
     "init": {
       "command": "deno run -R=. -W=infra/envs/.env,infra/envs/.env.tmp,infra/configs/vapid.json,infra/configs/vapid.json.tmp,.seed --allow-run=docker,podman,git ./infra/scripts/init.ts",
