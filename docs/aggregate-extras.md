@@ -58,12 +58,16 @@ group's activity panel and the admin audit log. Seed's own files stay untouched.
    `libs/server/groups/audit.ts` with your kind and the facts its sentence needs, as
    `libs/server/groups/postgres-group-repository.ts` does. A kind is two lower-case words joined by a dot, each of at most 31 letters and
    underscores, such as `household.base_currency_changed`; the admin audit filter accepts no other
-   shape. Details hold names and codes, never a body or an address.
+   shape. Details hold names and codes, never a body or an address. An event about one of your own
+   things passes its `entityType` and `entityId`, such as `"account"` and the account's id.
 2. **Register the kind.** Replace `libs/domain/groups/product-activity.ts` with your own list, and
-   add that path to `.seed/skip`:
+   add that path to `.seed/skip`. `ProductEntityType` names the `entityType` values your events
+   use, or stays `never`:
 
    ```ts
    import type { ProductActivityKind } from "./activity.ts"
+
+   export type ProductEntityType = "account"
 
    export const PRODUCT_ACTIVITY_KINDS: readonly ProductActivityKind[] = [{
      kind: `household.base_currency_changed`,
