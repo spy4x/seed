@@ -1110,3 +1110,45 @@ Deno.test("with notes off, the reset wipes yesterday's notes and seeds the demo 
     expect((await count(sql)).users).toBe(FAKE_COUNTS.users)
   })
 })
+
+Deno.test("a group's first log row is dated when the group was made: hours or weeks back in the demo, now for a visitor's sample groups", async () => {
+  await withSchema(async (sql) => {
+    await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
+    const userId = await signUpVisitor(sql, "visitor@example.net")
+    await drainJobs(sql)
+
+    /** Each group's creation time, import time and its creation or import log row's time. */
+    const firstRows = (where: postgres.PendingQuery<postgres.Row[]>) =>
+      sql<{ name: string; created: Date; imported: Date | null; logged: Date }[]>`
+        SELECT g.name, g.created_at AS created, g.imported_at AS imported, a.created_at AS logged
+        FROM groups g JOIN audit_events a ON a.group_id = g.id
+          AND a.event_kind IN ('group.created', 'group.imported')
+        WHERE ${where}
+      `
+    // The fake data makes every demo group at least two hours ago.
+    const hour = 60 * 60_000
+    const demo = await firstRows(
+      sql`g.name IN ${sql(fakeDemoData(OPTIONS.dataSeed, NOW).groups.map((g) => g.name))}
+        AND g.id NOT IN (SELECT group_id FROM group_members WHERE user_id = ${userId})`,
+    )
+    expect(demo.length).toBeGreaterThan(0)
+    expect(demo.some((group) => group.imported !== null)).toBe(true)
+    for (const group of demo) {
+      expect(group.logged).toEqual(group.created)
+      if (group.imported) expect(group.imported).toEqual(group.created)
+      expect(Date.now() - group.created.valueOf()).toBeGreaterThan(hour)
+    }
+    const sample = await firstRows(sql`g.name <> 'Personal' AND g.id IN (
+      SELECT group_id FROM group_members WHERE user_id = ${userId}
+    )`)
+    expect(sample).toHaveLength(fakeWorkspace(OPTIONS.dataSeed).length)
+    for (const group of sample) {
+      expect({
+        name: group.name,
+        apart: Math.abs(group.logged.valueOf() - group.created.valueOf()) < 1_000,
+      })
+        .toEqual({ name: group.name, apart: true })
+      expect(Date.now() - group.created.valueOf()).toBeLessThan(60_000)
+    }
+  })
+})
