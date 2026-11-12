@@ -28,7 +28,8 @@ import {
 import { GroupMark } from "./group-appearance.tsx"
 import { nextSort } from "./admin-users-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
-import { OnDay, When } from "@spy4x/preact-ui/format"
+import { OnDay, useFormat, When } from "@spy4x/preact-ui/format"
+import type { Formatters } from "@spy4x/time/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
@@ -67,8 +68,6 @@ const TABLE_CLASS = [
   `max-sm:[&_:is(th,td):nth-child(2)]:hidden`,
   `max-sm:[&_:is(th,td):nth-child(n+4)]:hidden`,
 ].join(` `)
-
-const NUMBER = new Intl.NumberFormat(`en`)
 
 /** A group role as a person reads it, in the operator's language: `Owner`. */
 export function groupRoleLabel(t: Translator<string>, role: GroupRole): string {
@@ -134,6 +133,7 @@ export function AdminGroupsListScreen(
 ): JSX.Element {
   const heading = useRef<HTMLHeadingElement>(null)
   const t = useAdminText()
+  const format = useFormat()
 
   // After a page change the list is new: the reader starts again at its heading.
   const page = list?.page
@@ -235,7 +235,7 @@ export function AdminGroupsListScreen(
             <DataTable
               mode="server"
               class={TABLE_CLASS}
-              columns={groupColumns(t, navigate)}
+              columns={groupColumns(t, format, navigate)}
               rows={rows}
               sort={filter.sort}
               onSortChange={(sort) =>
@@ -271,6 +271,7 @@ export function AdminGroupsListScreen(
 /** The table's columns. The name, member count, last activity and creation sort, on the server. */
 function groupColumns(
   t: Translator<string>,
+  format: Pick<Formatters, "number">,
   navigate?: Navigate,
 ): DataTableColumn<GroupTableRow, AdminGroupSortKey>[] {
   return [
@@ -310,13 +311,13 @@ function groupColumns(
       key: `memberCount`,
       header: t.t(`AdminGroups.members`),
       sortable: true,
-      render: ({ memberCount }) => <span class="tabular-nums">{NUMBER.format(memberCount)}</span>,
+      render: ({ memberCount }) => <span class="tabular-nums">{format.number(memberCount)}</span>,
     },
     {
       id: `notes`,
       header: t.t(`AdminGroups.notes`),
       render: ({ group }) => (
-        <span class="tabular-nums text-muted">{NUMBER.format(group.noteCount)}</span>
+        <span class="tabular-nums text-muted">{format.number(group.noteCount)}</span>
       ),
     },
     {

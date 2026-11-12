@@ -252,7 +252,7 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
 
   const { customer } = detail
   const view = adminBillingStatus(customer, props.now, detail.graceDays)
-  const yearly = perMonth(t, customer, props.plans)?.yearly ?? null
+  const yearly = perMonth(t, customer, format, props.plans)?.yearly ?? null
   const entries = billingMenu(detail, props.payment, props.operator)
   const owner = adminGroupPersonName(t, customer.owner)
   const stripe = detail.providerUrl && (
@@ -329,7 +329,9 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
           </Fact>
         )}
         <Fact label={t.t(`AdminBillingCustomer.perMonth`)}>
-          <span data-e2e="admin-billing-per-month">{perMonthLine(t, customer, props.plans)}</span>
+          <span data-e2e="admin-billing-per-month">
+            {perMonthLine(t, customer, format, props.plans)}
+          </span>
           {yearly && (
             <span class="block text-sm text-muted" data-e2e="admin-billing-billed-yearly">
               {yearly}
@@ -430,9 +432,10 @@ function planLine(
 function perMonthLine(
   t: Translator<string>,
   customer: AdminBillingCustomer,
+  format: Pick<Formatters, "number">,
   plans?: readonly Plan[],
 ): string {
-  const amount = perMonth(t, customer, plans)
+  const amount = perMonth(t, customer, format, plans)
   if (amount === null) return t.t(`AdminBillingCustomer.unknownPrice`)
   if (amount.detail === null) return amount.amount
   return t.t(

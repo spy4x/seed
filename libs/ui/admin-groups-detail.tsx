@@ -81,8 +81,6 @@ export type AdminGroupAction =
 /** The group page's tabs, in order. */
 export const ADMIN_GROUP_TABS = [`members`, `invitations`, `files`, `activity`] as const
 
-const NUMBER = new Intl.NumberFormat(`en`)
-
 /** Each subscription state's word, by catalog key. */
 const BILLING_STATUS: Record<number, string> = {
   [BillingStatus.Trialing]: `AdminGroup.statusTrialing`,
@@ -294,20 +292,20 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
         </div>
         {/* The counts are facts like the dates: no card inside the header card. */}
         <dl class="grid grid-cols-2 gap-4 sm:grid-cols-4" data-e2e="admin-group-counts">
-          <Fact label={t.t(`AdminGroup.members`)}>{NUMBER.format(detail.members.length)}</Fact>
+          <Fact label={t.t(`AdminGroup.members`)}>{format.number(detail.members.length)}</Fact>
           <Fact label={t.t(`AdminGroup.notes`)}>
-            {NUMBER.format(counts.notes)}
+            {format.number(counts.notes)}
             <span class="font-normal text-muted">
               {` · `}
               {t.t(`AdminGroup.notesInTrash`, { count: counts.deletedNotes })}
             </span>
           </Fact>
-          <Fact label={t.t(`AdminGroup.tags`)}>{NUMBER.format(counts.tags)}</Fact>
+          <Fact label={t.t(`AdminGroup.tags`)}>{format.number(counts.tags)}</Fact>
           <Fact label={t.t(`AdminGroup.openInvitations`)}>
-            {NUMBER.format(counts.pendingInvitations)}
+            {format.number(counts.pendingInvitations)}
           </Fact>
           <Fact label={t.t(`AdminGroup.files`)}>
-            {NUMBER.format(counts.files)}
+            {format.number(counts.files)}
             <span class="font-normal text-muted">{` · ${formatBytes(counts.fileBytes)}`}</span>
           </Fact>
           <Fact label={t.t(`AdminGroup.owner`)}>
