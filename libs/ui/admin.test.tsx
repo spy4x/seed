@@ -304,9 +304,23 @@ describe("the admin user list", () => {
     await type("[data-e2e=admin-users-search]", "ada")
     find("[data-e2e=admin-users-search]").focus()
     await submit("[data-e2e=admin-users-submit]")
-    await mount(<AdminUsersScreen {...listProps(calls)} />)
+    await mount(
+      <AdminUsersScreen {...listProps(calls, { filter: { ...ADMIN_NO_FILTER, query: "ada" } })} />,
+    )
     expect(calls[0]?.[0]).toBe("search")
     expect(focused()).toBe("admin-users-search")
+  })
+
+  it("shows the address's search in the field when history goes back to it", async () => {
+    await mount(
+      <AdminUsersScreen {...listProps([], { filter: { ...ADMIN_NO_FILTER, query: "ada" } })} />,
+    )
+    // A half-typed query makes the field dirty, so its default value no longer shows.
+    await type("[data-e2e=admin-users-search]", "half-typed")
+    await mount(
+      <AdminUsersScreen {...listProps([], { filter: { ...ADMIN_NO_FILTER, query: "grace" } })} />,
+    )
+    expect(find<HTMLInputElement>("[data-e2e=admin-users-search]").value).toBe("grace")
   })
 
   it("keeps the search field usable while a search is pending, so focus stays in it", async () => {

@@ -132,6 +132,12 @@ export function AdminGroupsListScreen(
   { filter, list, pending, error, onSearch, onPage, navigate }: AdminGroupsListScreenProps,
 ): JSX.Element {
   const heading = useRef<HTMLHeadingElement>(null)
+  // The search field is not rebuilt when the query changes, since that would drop focus out of it
+  // after every search; going back in history sets its text instead.
+  const query = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (query.current && query.current.value !== filter.query) query.current.value = filter.query
+  }, [filter.query])
   const t = useAdminText()
   const format = useFormat()
 
@@ -174,11 +180,11 @@ export function AdminGroupsListScreen(
           onSubmit={(data) =>
             onSearch({ ...filter, query: String(data.get(`q`) ?? ``).trim(), page: 1 })}
         >
-          {/* Keyed by the query, so going back in history shows the search that page had. */}
-          <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
+          <div class="flex flex-wrap items-end gap-3" role="search">
             <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
               <Field id="admin-groups-q" label={t.t(`AdminGroups.search`)}>
                 <Input
+                  ref={query}
                   name="q"
                   type="search"
                   data-e2e="admin-groups-search"

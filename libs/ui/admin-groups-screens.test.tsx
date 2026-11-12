@@ -292,9 +292,29 @@ describe(`the admin group list`, () => {
     find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value = `ada`
     find(`[data-e2e=admin-groups-search]`).focus()
     await submit(`[data-e2e=admin-groups-submit]`)
-    await mount(<AdminGroupsListScreen {...listProps(calls)} />)
+    await mount(
+      <AdminGroupsListScreen
+        {...listProps(calls, { filter: { ...ADMIN_GROUP_NO_FILTER, query: `ada` } })}
+      />,
+    )
     expect(calls[0]?.[0]).toBe(`search`)
     expect(focused()).toBe(`admin-groups-search`)
+  })
+
+  it(`shows the address's search in the field when history goes back to it`, async () => {
+    await mount(
+      <AdminGroupsListScreen
+        {...listProps([], { filter: { ...ADMIN_GROUP_NO_FILTER, query: `ada` } })}
+      />,
+    )
+    // A half-typed query makes the field dirty, so its default value no longer shows.
+    find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value = `half-typed`
+    await mount(
+      <AdminGroupsListScreen
+        {...listProps([], { filter: { ...ADMIN_GROUP_NO_FILTER, query: `family` } })}
+      />,
+    )
+    expect(find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value).toBe(`family`)
   })
 
   it(`keeps the search field usable while a search is pending, so focus stays in it`, async () => {

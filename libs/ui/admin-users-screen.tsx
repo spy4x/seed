@@ -134,6 +134,12 @@ export function AdminUsersScreen(
     AdminUsersScreenProps,
 ): JSX.Element {
   const heading = useRef<HTMLHeadingElement>(null)
+  // The search field is not rebuilt when the query changes, since that would drop focus out of it
+  // after every search; going back in history sets its text instead.
+  const query = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (query.current && query.current.value !== filter.query) query.current.value = filter.query
+  }, [filter.query])
   const t = useAdminText()
 
   // When the person turns the page, the reader starts again at the list's heading once that page
@@ -187,11 +193,11 @@ export function AdminUsersScreen(
           onSubmit={(data) =>
             onSearch({ ...filter, query: String(data.get("q") ?? "").trim(), page: 1 })}
         >
-          {/* Keyed by the query, so going back in history shows the search that page had. */}
-          <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
+          <div class="flex flex-wrap items-end gap-3" role="search">
             <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
               <Field id="admin-users-q" label={t.t(`AdminUsers.search`)}>
                 <Input
+                  ref={query}
                   name="q"
                   type="search"
                   data-e2e="admin-users-search"
