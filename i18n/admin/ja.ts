@@ -1917,6 +1917,8 @@ export default {
   "AdminUser.tabs": "このユーザーについて",
   "AdminUser.account": "アカウント",
   "AdminUser.picture": "プロフィール写真",
+  "AdminUser.picturePreparing": "写真を準備しています…",
+  "AdminUser.pictureRefused": "この写真は使用できませんでした。",
   "AdminUser.none": "なし",
   "AdminUser.address": "メールアドレス",
   "AdminUser.role": "ロール",
