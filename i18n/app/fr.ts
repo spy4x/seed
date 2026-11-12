@@ -1028,6 +1028,7 @@ export default {
   "OAuthNotice.guestTaken": "Cette méthode de connexion appartient à un autre compte.",
   "PasswordResetScreen.forgotFailed": "Impossible d’envoyer le code",
   "PasswordResetScreen.resetFailed": "Impossible de changer le mot de passe",
+  "PasswordResetScreen.sentTitle": "Saisissez le code de réinitialisation",
   "PasswordResetScreen.sent":
     "Si un compte utilise <email>{email}</email>, nous avons envoyé un code à cette adresse.",
   "PasswordResetScreen.forgotDescription": {

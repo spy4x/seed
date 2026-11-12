@@ -1090,6 +1090,7 @@ export default {
   "OAuthNotice.guestTaken": "طريقة تسجيل الدخول هذه تخص حسابًا آخر.",
   "PasswordResetScreen.forgotFailed": "تعذّر إرسال الرمز",
   "PasswordResetScreen.resetFailed": "تعذّر تغيير كلمة المرور",
+  "PasswordResetScreen.sentTitle": "أدخل رمز إعادة تعيين كلمة المرور",
   "PasswordResetScreen.sent":
     "إن كان هناك حساب يستخدم <email>{email}</email>، فقد أرسلنا إليه رمزًا.",
   "PasswordResetScreen.forgotDescription": {

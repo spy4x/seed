@@ -794,6 +794,7 @@ export default {
   "OAuthNotice.guestTaken": "这种登录方式属于另一个账号。",
   "PasswordResetScreen.forgotFailed": "无法发送验证码",
   "PasswordResetScreen.resetFailed": "无法修改密码",
+  "PasswordResetScreen.sentTitle": "输入重置密码的验证码",
   "PasswordResetScreen.sent":
     "如果 <email>{email}</email> 注册过账号，我们已向这个邮箱发送验证码。",
   "PasswordResetScreen.forgotDescription": {

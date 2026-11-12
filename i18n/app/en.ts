@@ -915,6 +915,7 @@ export default {
   "OAuthNotice.guestTaken": "That sign-in method belongs to another account.",
   "PasswordResetScreen.forgotFailed": "Couldn't send the code",
   "PasswordResetScreen.resetFailed": "Could not change the password",
+  "PasswordResetScreen.sentTitle": "Enter your reset code",
   "PasswordResetScreen.sent": "If an account uses <email>{email}</email>, we sent it a code.",
   "PasswordResetScreen.forgotDescription": {
     "one":

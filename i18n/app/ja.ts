@@ -877,6 +877,7 @@ export default {
   "OAuthNotice.guestTaken": "そのログイン方法は別のアカウントのものです。",
   "PasswordResetScreen.forgotFailed": "コードを送信できませんでした",
   "PasswordResetScreen.resetFailed": "パスワードを変更できませんでした",
+  "PasswordResetScreen.sentTitle": "パスワード再設定コードを入力",
   "PasswordResetScreen.sent":
     "<email>{email}</email>で登録されたアカウントがあれば、そのアドレスにコードを送信しました。",
   "PasswordResetScreen.forgotDescription": {

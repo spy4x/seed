@@ -996,6 +996,7 @@ export default {
   "OAuthNotice.guestTaken": "Ese método de inicio de sesión pertenece a otra cuenta.",
   "PasswordResetScreen.forgotFailed": "No se pudo enviar el código",
   "PasswordResetScreen.resetFailed": "No se pudo cambiar la contraseña",
+  "PasswordResetScreen.sentTitle": "Escribe el código para restablecer tu contraseña",
   "PasswordResetScreen.sent":
     "Si hay una cuenta con <email>{email}</email>, te enviamos un código.",
   "PasswordResetScreen.forgotDescription": {

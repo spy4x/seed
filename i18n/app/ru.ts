@@ -1046,6 +1046,7 @@ export default {
   "OAuthNotice.guestTaken": "Этот способ входа уже привязан к другому аккаунту.",
   "PasswordResetScreen.forgotFailed": "Не удалось отправить код",
   "PasswordResetScreen.resetFailed": "Не удалось сменить пароль",
+  "PasswordResetScreen.sentTitle": "Введите код для сброса пароля",
   "PasswordResetScreen.sent":
     "Если к <email>{email}</email> привязан аккаунт, мы отправили туда код.",
   "PasswordResetScreen.forgotDescription": {

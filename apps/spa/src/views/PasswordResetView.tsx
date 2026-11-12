@@ -134,6 +134,7 @@ export function ForgotPasswordView() {
       <CodeStep
         email={email.trim()}
         sentence={`PasswordResetScreen.sent`}
+        title={`PasswordResetScreen.sentTitle`}
         minutes={PASSWORD_RESET_CODE_MINUTES}
         checking={pending}
         error={error}

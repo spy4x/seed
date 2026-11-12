@@ -969,6 +969,7 @@ export default {
   "OAuthNotice.guestTaken": "Diese Anmeldemethode gehört zu einem anderen Konto.",
   "PasswordResetScreen.forgotFailed": "Der Code konnte nicht gesendet werden",
   "PasswordResetScreen.resetFailed": "Das Passwort konnte nicht geändert werden",
+  "PasswordResetScreen.sentTitle": "Gib den Code zum Zurücksetzen ein",
   "PasswordResetScreen.sent":
     "Falls es ein Konto mit <email>{email}</email> gibt, haben wir einen Code dorthin geschickt.",
   "PasswordResetScreen.forgotDescription": {

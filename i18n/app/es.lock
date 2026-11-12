@@ -1088,6 +1088,7 @@ PasswordResetScreen.save	1a145dd7125ddedc
 PasswordResetScreen.saving	23e39291d6135814
 PasswordResetScreen.send	8e54425be4b3b7ae
 PasswordResetScreen.sent	225b7ba3d7bef4ea
+PasswordResetScreen.sentTitle	0ab4509b2fc919f5
 PasswordResetScreen.signIn	bfd402b2f6f38125
 PasswordResetScreen.tookTooLong	289c3c83398240fb
 PlanRefusalNotice.askOwner	dbd4d76b2b8a597d
