@@ -216,9 +216,9 @@ export default {
     "other": "{count} membres",
   },
   "GroupEditor.memberCountLink": {
-    "one": "{count} membre : ouvrir l’onglet Facturation",
-    "many": "{count} de membres : ouvrir l’onglet Facturation",
-    "other": "{count} membres : ouvrir l’onglet Facturation",
+    "one": "{count} membre : ouvrir l’onglet Facturation",
+    "many": "{count} de membres : ouvrir l’onglet Facturation",
+    "other": "{count} membres : ouvrir l’onglet Facturation",
   },
   "GroupEditor.tabGeneral": "Général",
   "GroupEditor.tabMembers": "Membres",
@@ -1028,6 +1028,7 @@ export default {
   "OAuthNotice.guestTaken": "Cette méthode de connexion appartient à un autre compte.",
   "PasswordResetScreen.forgotFailed": "Impossible d’envoyer le code",
   "PasswordResetScreen.resetFailed": "Impossible de changer le mot de passe",
+  "PasswordResetScreen.sentTitle": "Saisissez le code de réinitialisation",
   "PasswordResetScreen.sent":
     "Si un compte utilise <email>{email}</email>, nous avons envoyé un code à cette adresse.",
   "PasswordResetScreen.forgotDescription": {
@@ -1385,7 +1386,7 @@ export default {
   "SeatPriceConfirm.hint":
     "Chaque nouveau membre ajoute {price} par mois : un membre de plus fait passer le groupe de {now} à {next}. La différence pour le reste de la période sera facturée sur la prochaine facture.",
   "SeatPriceConfirm.hintYear":
-    "Chaque nouveau membre ajoute {price} par an : un membre de plus fait passer le groupe de {now} à {next}. La différence pour le reste de la période sera facturée sur la prochaine facture.",
+    "Chaque nouveau membre ajoute {price} par an : un membre de plus fait passer le groupe de {now} à {next}. La différence pour le reste de la période sera facturée sur la prochaine facture.",
   "SeatPriceConfirm.accept":
     "J’accepte le prix plus élevé pour chaque personne qui rejoint le groupe",
   "ProfileAccount.name": "Nom",
@@ -1916,11 +1917,11 @@ export default {
   },
   "TelegramBot.stale": {
     "one":
-      "Ce bouton ne fonctionne plus. Il a déjà été utilisé, un plus récent l’a remplacé, ou il date de plus de {count} minute. Pour associer cette conversation, créez un nouveau code dans l’application.",
+      "Ce bouton ne fonctionne plus : il a déjà été utilisé, un plus récent l’a remplacé, il date de plus de {count} minute, le mot de passe du compte a été réinitialisé ou modifié, ou le compte a été supprimé ou bloqué. Pour associer cette conversation, créez un nouveau code dans l’application.",
     "many":
-      "Ce bouton ne fonctionne plus. Il a déjà été utilisé, un plus récent l’a remplacé, ou il date de plus de {count} minutes. Pour associer cette conversation, créez un nouveau code dans l’application.",
+      "Ce bouton ne fonctionne plus : il a déjà été utilisé, un plus récent l’a remplacé, il date de plus de {count} minutes, le mot de passe du compte a été réinitialisé ou modifié, ou le compte a été supprimé ou bloqué. Pour associer cette conversation, créez un nouveau code dans l’application.",
     "other":
-      "Ce bouton ne fonctionne plus. Il a déjà été utilisé, un plus récent l’a remplacé, ou il date de plus de {count} minutes. Pour associer cette conversation, créez un nouveau code dans l’application.",
+      "Ce bouton ne fonctionne plus : il a déjà été utilisé, un plus récent l’a remplacé, il date de plus de {count} minutes, le mot de passe du compte a été réinitialisé ou modifié, ou le compte a été supprimé ou bloqué. Pour associer cette conversation, créez un nouveau code dans l’application.",
   },
   "TelegramBot.privateOnly": "Envoyez-moi cela dans une conversation privée.",
   "TelegramBot.codeSpent":

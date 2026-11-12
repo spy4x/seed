@@ -12,7 +12,7 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { useEffect } from "preact/hooks"
 import { AuthScreen, type AuthScreenProps } from "./auth-screen.tsx"
-import { SignInCodeScreen, type SignInCodeScreenProps } from "./sign-in-code-screen.tsx"
+import { CodeStep, SignInCodeScreen, type SignInCodeScreenProps } from "./sign-in-code-screen.tsx"
 import { ProviderProofNotice, providerProofOf } from "./provider-proof.tsx"
 import { providerOnlyNames } from "./profile-screen.tsx"
 
@@ -284,6 +284,28 @@ describe("SignInCodeScreen's code step in the browser", () => {
 
     expect(different.calls).toHaveLength(1)
     expect(back.calls).toHaveLength(1)
+  })
+})
+
+describe("the password reset's code step in the browser", () => {
+  it('heads the step with the reset\'s own title, not the shared "Check your inbox"', async () => {
+    const nothing = () => {}
+    await mount(
+      <CodeStep
+        email="ada@example.com"
+        sentence="PasswordResetScreen.sent"
+        heading="PasswordResetScreen.sentTitle"
+        minutes={15}
+        checking={false}
+        error={null}
+        onCode={nothing}
+        resending={false}
+        onResend={nothing}
+        onDifferentAddress={nothing}
+      />,
+    )
+
+    expect(find("h1").textContent).toBe("Enter your reset code")
   })
 })
 

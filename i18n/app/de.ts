@@ -970,6 +970,7 @@ export default {
   "OAuthNotice.guestTaken": "Diese Anmeldemethode gehört zu einem anderen Konto.",
   "PasswordResetScreen.forgotFailed": "Der Code konnte nicht gesendet werden",
   "PasswordResetScreen.resetFailed": "Das Passwort konnte nicht geändert werden",
+  "PasswordResetScreen.sentTitle": "Gib den Code zum Zurücksetzen ein",
   "PasswordResetScreen.sent":
     "Falls es ein Konto mit <email>{email}</email> gibt, haben wir einen Code dorthin geschickt.",
   "PasswordResetScreen.forgotDescription": {
@@ -1814,9 +1815,9 @@ export default {
   },
   "TelegramBot.stale": {
     "one":
-      "Dieser Button funktioniert nicht mehr. Er wurde schon benutzt, durch einen neueren ersetzt oder ist älter als {count} Minute. Um diesen Chat zu verknüpfen, erstelle in der App einen neuen Code.",
+      "Dieser Button funktioniert nicht mehr: Er wurde schon benutzt, ein neuerer hat ihn ersetzt, er ist älter als {count} Minute, das Passwort des Kontos wurde zurückgesetzt oder geändert, oder das Konto wurde gelöscht oder gesperrt. Um diesen Chat zu verknüpfen, erstelle in der App einen neuen Code.",
     "other":
-      "Dieser Button funktioniert nicht mehr. Er wurde schon benutzt, durch einen neueren ersetzt oder ist älter als {count} Minuten. Um diesen Chat zu verknüpfen, erstelle in der App einen neuen Code.",
+      "Dieser Button funktioniert nicht mehr: Er wurde schon benutzt, ein neuerer hat ihn ersetzt, er ist älter als {count} Minuten, das Passwort des Kontos wurde zurückgesetzt oder geändert, oder das Konto wurde gelöscht oder gesperrt. Um diesen Chat zu verknüpfen, erstelle in der App einen neuen Code.",
   },
   "TelegramBot.privateOnly": "Schick mir das in einem privaten Chat.",
   "TelegramBot.codeSpent":

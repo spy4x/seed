@@ -877,6 +877,7 @@ export default {
   "OAuthNotice.guestTaken": "そのログイン方法は別のアカウントのものです。",
   "PasswordResetScreen.forgotFailed": "コードを送信できませんでした",
   "PasswordResetScreen.resetFailed": "パスワードを変更できませんでした",
+  "PasswordResetScreen.sentTitle": "パスワード再設定コードを入力",
   "PasswordResetScreen.sent":
     "<email>{email}</email>で登録されたアカウントがあれば、そのアドレスにコードを送信しました。",
   "PasswordResetScreen.forgotDescription": {
@@ -1660,7 +1661,7 @@ export default {
   },
   "TelegramBot.stale": {
     "other":
-      "このボタンはもう使えません。すでに使用されたか、新しいボタンに置き換えられたか、発行から{count}分以上経っています。このチャットを連携するには、アプリで新しいコードを作成してください。",
+      "このボタンはもう使えません。すでに使用された、新しいボタンに置き換えられた、発行から{count}分以上経った、アカウントのパスワードがリセットまたは変更された、またはアカウントが削除またはブロックされた可能性があります。このチャットを連携するには、アプリで新しいコードを作成してください。",
   },
   "TelegramBot.privateOnly": "それは個別チャットで送ってください。",
   "TelegramBot.codeSpent":
