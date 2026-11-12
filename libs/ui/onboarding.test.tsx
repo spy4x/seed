@@ -252,10 +252,10 @@ describe("first-steps card", () => {
     const { update } = await mount()
     expect(all("[data-e2e=onboarding-error]").length).toBe(0)
 
-    await update({ error: "Could not save that. Try again." })
+    await update({ error: "Couldn't save that. Try again." })
 
     expect(document.querySelector("[data-e2e=onboarding-error]")?.textContent).toContain(
-      "Could not save that. Try again.",
+      "Couldn't save that. Try again.",
     )
   })
 })
