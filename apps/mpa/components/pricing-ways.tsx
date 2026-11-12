@@ -64,7 +64,7 @@ export function PricingWays(): JSX.Element {
           <WayCard
             id="way-use"
             title={t.t(`PricingWays.useTitle`)}
-            price="$0"
+            price={hirePrice(0, language)}
             unit={t.t(`PricingWays.useUnit`)}
             action={
               <Button

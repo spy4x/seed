@@ -4,7 +4,8 @@ import { catalogPrice } from "./components/catalog.tsx"
 
 /**
  * What hiring Anton costs, as antonshubin.com lists it (checked on 2026-10-16). Amounts are
- * US cents; `/pricing` writes them with {@link hirePrice}, so a change of price is one edit here and one on antonshubin.com.
+ * US cents; `/pricing` writes them with {@link hirePrice}, so a change of price is one edit here
+ * and one on antonshubin.com.
  */
 export const HIRE_PRICES = {
   mvpFrom: 800_000,
@@ -20,7 +21,8 @@ export const HIRE_CURRENCY = `USD`
 
 /**
  * A hire price in US cents as the page's language writes it, in whole dollars: `US$8,000` in
- * English (British, like the rest of the site), `8.000 $` in German. A price with cents throws, since it would show rounded.
+ * English (British, like the rest of the site), `8.000 $` in German. A price with cents throws,
+ * since it would show rounded.
  */
 export function hirePrice(cents: number, language: string): string {
   // `decimals: 0` reads the amount as whole dollars, so no `.00` follows a round price.
