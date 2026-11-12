@@ -197,7 +197,7 @@ describe("OfflineStatus", () => {
     }
   })
 
-  it("keeps a section gap between itself and the page header under it", async () => {
+  it("brings no margin of its own, so the page's gap spaces it under the page header", async () => {
     const storage = createMemoryStorage()
     await storage.of(7).tagsQueue.putEntry({
       key: "tag-key",
@@ -212,7 +212,8 @@ describe("OfflineStatus", () => {
 
     await mountStrip(storage)
 
-    expect(root!.querySelector("[data-e2e=offline-status]")!.classList.contains("mb-8")).toBe(true)
+    const classes = [...root!.querySelector("[data-e2e=offline-status]")!.classList]
+    expect(classes.filter((name) => /^-?m[trblxy]?-/.test(name))).toEqual([])
   })
 
   it("tells the person a tag was taken off their notes, until they dismiss it", async () => {
