@@ -302,6 +302,35 @@ describe("OfflineStatus", () => {
     )
   })
 
+  /** The labels of the chooser's buttons for the one conflict shown, "mine" first. */
+  const choices = () =>
+    [...root!.querySelectorAll("[data-conflict-choice]")].map((button) => button.textContent)
+
+  it("offers Discard mine, not the server's version, for a version conflict without a server copy", async () => {
+    const storage = createMemoryStorage()
+    // As an entry saved by an older version can hold it: the reason, and no server copy.
+    await storage.of(7).tagsQueue.putEntry({
+      ...TAG_CONFLICT,
+      conflict: { reason: "version", message: `TagSync.version`, server: null },
+    })
+
+    await mountStrip(storage)
+
+    expect(choices()).toEqual(["Discard mine"])
+  })
+
+  it("offers Keep mine and Use the server's for a version conflict with a server copy", async () => {
+    const storage = createMemoryStorage()
+    await storage.of(7).tagsQueue.putEntry({
+      ...TAG_CONFLICT,
+      conflict: { reason: "version", message: `TagSync.version`, server: SERVER_TAG },
+    })
+
+    await mountStrip(storage)
+
+    expect(choices()).toEqual(["Keep mine", "Use the server's"])
+  })
+
   it("says in the person's language that a tag was taken off notes, and dismisses it", async () => {
     const layer = await mountStrip(createMemoryStorage(), RU)
 
