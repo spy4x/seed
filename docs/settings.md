@@ -175,7 +175,7 @@ no default, so keep them in the env file.
 | `TIMEZONE`                               | An IANA time zone name. The API refuses to start without it.                                      | `Asia/Singapore` |                                           |
 | `RATE_LIMITER_WINDOW_MS`                 | The rate limits' window, in milliseconds.                                                         | `60000`          | [Load tests](load-tests.md)               |
 | `RATE_LIMITER_STRICT_LIMIT`              | Requests per window to the strict account routes, such as sign-in, per person or client address.  | `30`             | [Load tests](load-tests.md)               |
-| `RATE_LIMITER_LIMIT`                     | Requests per window to the other account routes, per person or client address.                    | `100`            | [Load tests](load-tests.md)               |
+| `RATE_LIMITER_LIMIT`                     | Requests per window to the other account routes, per person or client address. Admin thumbnails: ten times as many, apart.                    | `100`            | [Load tests](load-tests.md)               |
 | `RATE_LIMITER_OTP_WINDOW_MS`             | The one-time-code window, in milliseconds.                                                        | `900000`         |                                           |
 | `RATE_LIMITER_OTP_LIMIT`                 | One-time-code checks per user per window.                                                         | `5`              |                                           |
 
