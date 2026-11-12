@@ -1,6 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { MiddlewareHandler } from "hono"
+import type { RateLimitStore } from "@spy4x/platform/rate-limit"
 import { NOTES_OFF, type NotesSetup } from "@server/notes/setup.ts"
 import {
   ADMIN_GROUP_NO_FILTER,
@@ -592,21 +593,27 @@ describe(`operator area group routes`, () => {
 })
 
 describe(`admin group thumbnails: their own budget (#536)`, () => {
-  /** The shipped defaults: 100 requests a minute per operator. */
-  const settings = {
-    windowMs: 60_000,
-    strictLimit: 10,
-    limit: 100,
-    otpWindowMs: 900_000,
-    otpLimit: 5,
-    store: memoryStore,
-    onStoreError: () => {},
+  /**
+   * The shipped defaults, 100 requests a minute per operator, over one in-process store per name,
+   * as Valkey keeps one key space per prefix: two limiters on the same name share their budgets.
+   */
+  const settings = () => {
+    const stores = new Map<string, RateLimitStore>()
+    return {
+      windowMs: 60_000,
+      strictLimit: 30,
+      limit: 100,
+      otpWindowMs: 900_000,
+      otpLimit: 5,
+      store: (name: string) => stores.get(name) ?? stores.set(name, memoryStore()).get(name)!,
+      onStoreError: () => {},
+    }
   }
   const thumbnail = ROUTES[9]
   const otherCalls = [ROUTES[0], ROUTES[1], ROUTES[5], ROUTES[10], ROUTES[11]]
 
   it(`refuses nothing while an operator pages through five pages of tiles and acts in one minute`, async () => {
-    const { app } = buildApp(operator(), { rateLimits: createAuthRateLimits(settings) })
+    const { app } = buildApp(operator(), { rateLimits: createAuthRateLimits(settings()) })
     for (let page = 0; page < 5; page++) {
       for (const route of otherCalls) expect((await send(app, route)).status).toBe(200)
       for (let tile = 0; tile < 25; tile++) expect((await send(app, thumbnail)).status).toBe(200)
@@ -618,8 +625,8 @@ describe(`admin group thumbnails: their own budget (#536)`, () => {
   })
 
   it(`refuses a tile past its own budget and still answers the other admin routes`, async () => {
-    const { app } = buildApp(operator(), { rateLimits: createAuthRateLimits(settings) })
-    const budget = settings.limit * THUMBNAIL_LIMIT_FACTOR
+    const { app } = buildApp(operator(), { rateLimits: createAuthRateLimits(settings()) })
+    const budget = 100 * THUMBNAIL_LIMIT_FACTOR
     for (let tile = 0; tile < budget; tile++) expect((await send(app, thumbnail)).status).toBe(200)
 
     const refused = await send(app, thumbnail)
@@ -631,7 +638,7 @@ describe(`admin group thumbnails: their own budget (#536)`, () => {
   it(`serves a tile and reports the error while the thumbnail budget's store is down`, async () => {
     const errors: unknown[] = []
     const rateLimits = createAuthRateLimits({
-      ...settings,
+      ...settings(),
       store: brokenStore,
       onStoreError: (error) => errors.push(error),
     })
