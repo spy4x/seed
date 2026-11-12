@@ -119,7 +119,11 @@ test.describe("the people actions of the admin app", () => {
       await ops.locator("[data-e2e=admin-change-role-open]").click()
       const dialog = ops.locator("[data-e2e=admin-action-dialog]")
       await expect(dialog.getByRole("radio")).toHaveCount(3)
-      await dialog.getByRole("radio", { name: "Supervisor" }).check()
+      // A choice chip hides its radio, so the chip's label takes the click. The inner locator of
+      // `has` is matched inside each label, so it starts from the page, not from the dialog.
+      const supervisor = dialog.getByRole("radio", { name: "Supervisor" })
+      await dialog.locator("label", { has: ops.getByRole("radio", { name: "Supervisor" }) }).click()
+      await expect(supervisor).toBeChecked()
       await ops.locator("[data-e2e=admin-action-submit]").click()
       await expect(ops.locator("[data-e2e=toasts]")).toContainText("is now a supervisor")
       await expect(ops.locator("[data-e2e=admin-user-card]")).toContainText("Supervisor")
