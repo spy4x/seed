@@ -792,8 +792,17 @@ describe("the admin dashboard", () => {
   })
 
   it("groups the stat cards' digits and changes in the operator's region format", async () => {
-    const grown = { ...stats, newThisWeek: { current: 2400, previous: 1200 } }
+    const grown = {
+      ...stats,
+      newThisWeek: { current: 2400, previous: 1200 },
+      signUpsPerDay: days((index) => index === 0 ? 1300 : 0),
+      activePerDay: days((index) => index === 0 ? 1500 : 0),
+    }
     const cards = () => find("[data-e2e=admin-dashboard-stats]").textContent
+    const charts = () =>
+      `${find("[data-e2e=admin-chart-sign-ups]").textContent} ${
+        find("[data-e2e=admin-chart-active]").textContent
+      }`
 
     await mount(
       inRegion(`de-DE`, <AdminDashboardScreen stats={grown} error={null} onRetry={() => {}} />),
@@ -801,6 +810,7 @@ describe("the admin dashboard", () => {
     for (const text of ["1.234", "5.678", "2.400", "+1.200 vs previous 7 days"]) {
       expect(cards()).toContain(text)
     }
+    for (const text of ["1.300 in 30 days", "Busiest day: 1.500"]) expect(charts()).toContain(text)
 
     await mount(
       inRegion(`en-US`, <AdminDashboardScreen stats={grown} error={null} onRetry={() => {}} />),
@@ -808,6 +818,7 @@ describe("the admin dashboard", () => {
     for (const text of ["1,234", "5,678", "2,400", "+1,200 vs previous 7 days"]) {
       expect(cards()).toContain(text)
     }
+    for (const text of ["1,300 in 30 days", "Busiest day: 1,500"]) expect(charts()).toContain(text)
   })
 
   it("shows a loading state, then the API's message with a Try again that reads again", async () => {
