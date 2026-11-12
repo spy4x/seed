@@ -1664,6 +1664,8 @@ AdminUser.passkeyAdded	7856adadaf5db11f
 AdminUser.passkeyNamed	2a73db8e8a8f93b6
 AdminUser.passkeyRenamed	9da76f3cb6cb4261
 AdminUser.picture	a7acc4ebae2c0014
+AdminUser.picturePreparing	d148433547172843
+AdminUser.pictureRefused	687c782c1c14e80e
 AdminUser.proven	4f7838402f37674e
 AdminUser.removePicture	68d41d6091d0eb52
 AdminUser.removePictureSubmit	1bc6f23b53041b45

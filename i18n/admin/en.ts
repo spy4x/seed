@@ -1982,6 +1982,8 @@ export default {
   "AdminUser.tabs": "About this person",
   "AdminUser.account": "Account",
   "AdminUser.picture": "Profile picture",
+  "AdminUser.picturePreparing": "Preparing the picture…",
+  "AdminUser.pictureRefused": "This picture could not be used.",
   "AdminUser.none": "None",
   "AdminUser.address": "Email",
   "AdminUser.role": "Role",

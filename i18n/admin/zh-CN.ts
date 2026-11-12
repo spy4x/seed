@@ -1840,6 +1840,8 @@ export default {
   "AdminUser.tabs": "用户信息",
   "AdminUser.account": "账号",
   "AdminUser.picture": "头像",
+  "AdminUser.picturePreparing": "正在准备头像…",
+  "AdminUser.pictureRefused": "无法使用这张图片。",
   "AdminUser.none": "无",
   "AdminUser.address": "邮箱",
   "AdminUser.role": "角色",

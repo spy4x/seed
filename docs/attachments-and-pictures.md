@@ -125,6 +125,9 @@ person has open then reads the profile again.
 - The group's members list leaves it out until then.
 - The profile says "Preparing your picture…" meanwhile, and "We could not use that picture. Choose
   another." after a refusal.
+- In the admin app, the user list and the person's page show the initials meanwhile. The page's
+  "Profile picture" row says "Preparing the picture…", or "This picture could not be used." after a
+  refusal, and the operator can still remove it.
 - A new picture has a new id, so nothing stale shows.
 
 ## Next

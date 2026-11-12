@@ -25,6 +25,7 @@ import {
   type AdminUserRow,
   type AdminUserSortKey,
   pictureUrl,
+  shownPictureId,
   USER_ROLE_NAMES,
   UserRole,
 } from "@domain/identity"
@@ -412,7 +413,7 @@ function PersonCell(
     <div class="flex items-center gap-3 sm:min-w-48">
       <Avatar
         name={name}
-        src={pictureUrl(user.pictureId, ADMIN_PICTURE_PATH)}
+        src={pictureUrl(shownPictureId(user), ADMIN_PICTURE_PATH)}
         size="sm"
       />
       <div class="flex min-w-0 flex-col">
