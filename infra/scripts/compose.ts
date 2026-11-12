@@ -19,11 +19,15 @@ import {
 import { ensureProxyNetwork, runContainerCli } from "./proxy-network.ts";
 
 const envFilePath = `./infra/envs/.env`;
+/** The web push keys the API and the backup bind-mount; a start without them cannot succeed. */
+const vapidPath = `./infra/configs/vapid.json`;
 
 /** What `deno task compose` touches outside itself, replaceable so the order is tested. */
 export interface ComposeHost {
   readEnv(path: string): Promise<Record<string, string>>;
   facts(): Promise<PostgresDataFacts>;
+  /** Whether a file exists at that path. */
+  exists(path: string): Promise<boolean>;
   /** Creates the shared `proxy` network when it is missing; resolves true when it did. */
   ensureProxyNetwork(plan: ComposePlan): Promise<boolean>;
   /** Runs the engine with its output on the terminal and resolves with its exit code. */
@@ -75,6 +79,13 @@ export async function runCompose(args: string[], host: ComposeHost): Promise<num
   const refusal = postgresUpgradeRefusal(args, await host.facts());
   if (refusal) {
     host.error(refusal);
+    return 1;
+  }
+
+  // Without the file, a start of the whole project waited about 20 minutes on a fresh worktree
+  // before it failed (spy4x/seed#184).
+  if (startsWholeProject(args) && !await host.exists(vapidPath)) {
+    host.error(`${vapidPath} is missing. Create it with: deno task vapid-key:create`);
     return 1;
   }
 
@@ -204,6 +215,14 @@ if (import.meta.main) {
   const code = await runCompose(Deno.args, {
     readEnv: readEnvFile,
     facts: () => readPostgresDataFacts(),
+    exists: async (path) => {
+      try {
+        return (await Deno.stat(path)).isFile;
+      } catch (error) {
+        if (error instanceof Deno.errors.NotFound) return false;
+        throw error;
+      }
+    },
     ensureProxyNetwork: (plan) => ensureProxyNetwork(plan.engine, runContainerCli),
     // stdin too, so `exec -T worker … < file` and an interactive prompt reach the container.
     run: async (engine, args) =>
