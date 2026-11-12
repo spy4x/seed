@@ -8,6 +8,7 @@ import {
   IconCopy,
   IconEllipsisVertical,
   IconGlobe,
+  IconLens,
   IconPlus,
   IconTrashBin,
 } from "@spy4x/preact-icons"
@@ -1243,9 +1244,18 @@ function Availability({ props, edit }: { props: AdminCatalogItemScreenProps; edi
   )
 }
 
-/** The cover's thumbnail ring, in the colour of its "Cover" badge. */
+/** The cover's thumbnail ring, in the colour of its "Cover" badge, outside the picture. */
 const COVER_RING =
   `ring-2 ring-[var(--color-selected,var(--color-accent-900))] ring-offset-2 ring-offset-surface`
+
+/**
+ * A thumbnail's focus ring: the library's outline for a zoomable image, drawn just inside the
+ * picture's edge, in the buttons' focus colour (ink's light neutral, else the accent). It differs
+ * from the cover's ring in place and colour, so in dark mode it never reads as a second cover,
+ * and a focused cover shows both.
+ */
+const PHOTO_FOCUS_RING =
+  `focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[color:var(--color-focus-ring,var(--color-ring))]`
 
 /** What a photo not shown yet says instead of its description: a key of the `admin` catalog. */
 const PHOTO_STATE_WORDS: Record<CatalogPhoto[`state`], string | null> = {
@@ -1338,7 +1348,7 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
                         ? (
                           <button
                             type="button"
-                            class={`shrink-0 cursor-zoom-in rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
+                            class={`relative shrink-0 cursor-zoom-in rounded-md ${PHOTO_FOCUS_RING} ${
                               cover ? COVER_RING : ``
                             }`}
                             aria-label={t.t(`AdminCatalogItem.openPhoto`, {
@@ -1348,6 +1358,14 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
                             onClick={() => setViewing(shown.indexOf(photo))}
                           >
                             <CatalogThumbnail photoId={photo.id} size="size-16" />
+                            {/* Says it opens full size where no zoom cursor shows: on a phone. */}
+                            <span
+                              class="absolute end-1 bottom-1 inline-flex rounded-full bg-scrim p-1 text-scrim-foreground"
+                              aria-hidden="true"
+                              data-e2e="catalog-item-photo-zoom"
+                            >
+                              <IconLens class="size-3" />
+                            </span>
                           </button>
                         )
                         : (
