@@ -274,8 +274,9 @@ async function seedImport(
  * Answers each group's id, or `null` for a skipped one.
  *
  * Every row is written by the app's own repositories, then given its time, with its audit row.
- * With `backdateGroups`, the group itself moves to its creation time too. A new account's sample
- * groups keep theirs: the starter-data job puts the welcome note in the account's oldest group.
+ * With `backdateGroups`, the group, its creation or import log row and its import time move to its
+ * creation time. A new account's sample groups keep the real time for all three: the starter-data
+ * job puts the welcome note in the account's oldest group.
  *
  * The content of the group `you` own is written by its made-up members, never by `you`: the
  * "Get started" checklist counts the notes and invitations a person made.
@@ -300,8 +301,11 @@ async function seedGroups(
     }
     const groupId = uuidV7()
     ids.push(groupId)
-    const created = at(group.createdAgo)
     await db.group.create({ id: groupId, name: group.name, timeZone: group.timeZone }, ownerId)
+    // A new account's sample group keeps its real creation time, so its first log row does too.
+    const created = backdateGroups ? at(group.createdAgo) : (await sql<{ createdAt: Date }[]>`
+      SELECT created_at FROM groups WHERE id = ${groupId}
+    `)[0].createdAt
     await sql`
       UPDATE audit_events SET created_at = ${created}
       WHERE group_id = ${groupId} AND event_kind = ${GROUP_CREATED}
