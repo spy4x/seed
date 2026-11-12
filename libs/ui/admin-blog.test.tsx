@@ -627,6 +627,24 @@ describe("the blog editor", () => {
       .toEqual(["Now", "Schedule"])
   })
 
+  it("draws the times to publish as choice chips, and shows the date only for Schedule", async () => {
+    await mount(<AdminBlogEditorScreen {...editorProps([], { dialog: "publish" })} />)
+    const when = find("[data-e2e=admin-blog-when]")
+    // RadioChips hides each radio inside its chip; a plain radio group shows the browser's radio.
+    const radios = [...when.querySelectorAll<HTMLInputElement>("input[type=radio]")]
+    expect(radios.map((radio) => radio.className)).toEqual(["sr-only", "sr-only"])
+    expect(radios.every((radio) => radio.name === "blog-publish-when")).toBe(true)
+    expect(
+      [...when.querySelectorAll("label")].every((label) => label.className.includes("min-h-11")),
+    )
+      .toBe(true)
+    expect(has("#blog-publish-at")).toBe(false)
+    await clickOn(radios[1])
+    expect(has("#blog-publish-at")).toBe(true)
+    await clickOn(find("[data-e2e=admin-blog-when] input[value=now]"))
+    expect(has("#blog-publish-at")).toBe(false)
+  })
+
   it("publishes a draft now without email until the box is ticked", async () => {
     const calls: unknown[][] = []
     await mount(<AdminBlogEditorScreen {...editorProps(calls, { dialog: "publish" })} />)
