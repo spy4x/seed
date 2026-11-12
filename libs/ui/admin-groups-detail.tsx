@@ -305,15 +305,10 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
             {format.number(counts.pendingInvitations)}
           </Fact>
           <Fact label={t.t(`AdminGroup.files`)}>
-<<<<<<< HEAD
             {format.number(counts.files)}
-            <span class="font-normal text-muted">{` · ${formatBytes(counts.fileBytes)}`}</span>
-=======
-            {NUMBER.format(counts.files)}
             <span class="font-normal text-muted">
               {` · ${formatBytes(counts.fileBytes, format.locale)}`}
             </span>
->>>>>>> origin/main
           </Fact>
           <Fact label={t.t(`AdminGroup.owner`)}>
             <Link
