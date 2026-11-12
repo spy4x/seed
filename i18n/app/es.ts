@@ -407,7 +407,7 @@ export default {
   "GroupInvitations.verifyEmail": "Verificar correo",
   "GroupInvitations.notForYou":
     "Esta invitación se envió a otro correo. Si es tuyo, confírmalo primero en tu <link>perfil</link> o inicia sesión con la cuenta que lo usa.",
-  "GroupInvitations.somethingWrong": "Algo salió mal. Vuelve a intentarlo.",
+  "GroupInvitations.somethingWrong": "No se pudo procesar la invitación. Vuelve a intentarlo.",
   "GroupInvitations.unreachable": "No se puede conectar con el servidor. Vuelve a intentarlo.",
   "GroupMembers.unnamed": "Miembro sin nombre",
   "GroupMembers.title": "Miembros",
@@ -479,7 +479,7 @@ export default {
   "GroupTransfer.unreachable": "No se puede conectar con el servidor. Vuelve a intentarlo.",
   "GroupTransfer.tooManyAttempts":
     "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
-  "GroupTransfer.somethingWrong": "Algo salió mal. Vuelve a intentarlo.",
+  "GroupTransfer.somethingWrong": "No se pudo transferir la propiedad. Vuelve a intentarlo.",
   "Groups.title": "Grupos",
   "Groups.new": "Nuevo grupo",
   "Groups.import": "Importar un grupo…",
@@ -549,7 +549,7 @@ export default {
   "GroupBillingPanel.paymentFailedFree":
     "Falló un pago, así que el grupo pasó al plan gratuito. Actualiza tu tarjeta con «Cambiar tarjeta» para recuperar {plan}.",
   "GroupBillingPanel.offline": "No se puede conectar con el servidor. Vuelve a intentarlo.",
-  "GroupBillingPanel.unreadable": "No se pudo cargar el plan.",
+  "GroupBillingPanel.unreadable": "No se pudo cargar el plan",
   "GroupBillingPanel.unsafePage":
     "El proveedor de pagos devolvió una dirección que esta app no abrirá.",
   "GroupBillingPanel.checkoutUnreachable":
@@ -674,10 +674,10 @@ export default {
   "GroupBillingView.trialUntil": "«{group}» tiene {plan} hasta el {date}.",
   "GroupBillingView.paid": "Ya tienes {plan}",
   "GroupBillingView.paidText": "Stripe confirmó el pago de «{group}».",
-  "NotificationsScreen.loadFailed": "No se pudieron cargar las notificaciones.",
-  "NotificationsScreen.loadMoreFailed": "No se pudieron cargar más notificaciones.",
-  "NotificationsScreen.readFailed": "No se pudo marcar como leída.",
-  "NotificationsScreen.readAllFailed": "No se pudieron marcar como leídas.",
+  "NotificationsScreen.loadFailed": "No se pudieron cargar las notificaciones",
+  "NotificationsScreen.loadMoreFailed": "No se pudieron cargar más notificaciones",
+  "NotificationsScreen.readFailed": "No se pudo marcar como leída",
+  "NotificationsScreen.readAllFailed": "No se pudieron marcar como leídas",
   "NotificationsScreen.invitedViewer":
     "Te invitaron a unirte a «<group>{group}</group>» con el rol de lector.",
   "NotificationsScreen.invitedEditor":
@@ -980,7 +980,7 @@ export default {
   "GuestScreens.signOutAnyway": "Cerrar sesión igualmente",
   "GuestScreens.signOutText":
     "Esta cuenta no tiene ningún método de inicio de sesión, así que no podrás volver a entrar. Perderás todo lo que contiene.",
-  "GuestScreens.offline": "Estás sin conexión. Conéctate y vuelve a intentarlo.",
+  "GuestScreens.offline": "No se puede conectar con el servidor. Vuelve a intentarlo.",
   "GuestScreens.providerFailed":
     "{provider} no terminó. Tu cuenta no cambió. Vuelve a intentarlo o elige otro método.",
   "GuestScreens.noPasskey":
@@ -1661,7 +1661,7 @@ export default {
   "SignInMethods.passkeyNotSaved": "No se pudo guardar la llave de acceso. Vuelve a intentarlo.",
   "SignInMethods.passkeyOnDevice": "Este dispositivo ya tiene una llave de acceso para tu cuenta.",
   "SignUpCodeScreen.checkFailed": "No se pudo comprobar el código",
-  "SignUpCodeScreen.offline": "Estás sin conexión. Conéctate y vuelve a intentarlo.",
+  "SignUpCodeScreen.offline": "No se puede conectar con el servidor. Vuelve a intentarlo.",
   "SignUpCodeScreen.title": "Revisa tu bandeja de entrada",
   "SignUpCodeScreen.loading": "Cargando…",
   "SignUpCodeScreen.code": "Código",
@@ -1934,7 +1934,7 @@ export default {
   "ApiTokenNewView.discardMessage": "Todavía no has creado este token.",
   "ApiTokenNewView.discard": "Descartar cambios",
   "ApiTokenNewView.keepEditing": "Seguir editando",
-  "ApiTokens.failed": "Algo salió mal con tus tokens de API.",
+  "ApiTokens.failed": "No se pudieron cargar o revocar tus tokens de API. Vuelve a intentarlo.",
   "ApiTokens.savedCopyTitle": "Copia guardada de tus tokens de API",
   "ApiTokens.savedCopyBody":
     "No se puede conectar con el servidor. Se muestra la lista guardada en este dispositivo: {time}. Faltan los tokens creados o revocados después.",
@@ -2059,7 +2059,7 @@ export default {
   "EmailScreen.verifyFailed": "No se pudo comprobar el código",
   "EmailScreen.sendFailed": "No se pudo enviar un código nuevo",
   "EmailScreen.changeFailed": "No se pudo cambiar tu correo",
-  "EmailScreen.loadFailed": "No se pudo cargar tu correo.",
+  "EmailScreen.loadFailed": "No se pudo cargar tu correo",
   "EmailScreen.enterCode": "Introducir el código",
   "EmailScreen.banner": "Confirma <email>{email}</email> con el código que te enviaremos allí.",
   "EmailScreen.tryAgain": "Reintentar",

@@ -399,7 +399,8 @@ export default {
   "GroupInvitations.verifyEmail": "E-Mail-Adresse bestätigen",
   "GroupInvitations.notForYou":
     "Diese Einladung ging an eine andere E-Mail-Adresse. Wenn es deine ist, bestätige sie zuerst in deinem <link>Profil</link>, oder melde dich mit dem Konto an, das sie verwendet.",
-  "GroupInvitations.somethingWrong": "Etwas ist schiefgelaufen. Versuche es noch einmal.",
+  "GroupInvitations.somethingWrong":
+    "Die Einladung konnte nicht verarbeitet werden. Versuche es noch einmal.",
   "GroupInvitations.unreachable": "Der Server ist nicht erreichbar. Versuche es noch einmal.",
   "GroupMembers.unnamed": "Mitglied ohne Namen",
   "GroupMembers.title": "Mitglieder",
@@ -468,7 +469,8 @@ export default {
   "GroupTransfer.unreachable": "Der Server ist nicht erreichbar. Versuche es noch einmal.",
   "GroupTransfer.tooManyAttempts":
     "Zu viele Versuche. Warte ein paar Minuten und versuche es dann noch einmal.",
-  "GroupTransfer.somethingWrong": "Etwas ist schiefgelaufen. Versuche es noch einmal.",
+  "GroupTransfer.somethingWrong":
+    "Die Inhaberschaft konnte nicht übertragen werden. Versuche es noch einmal.",
   "Groups.title": "Gruppen",
   "Groups.new": "Neue Gruppe",
   "Groups.import": "Gruppe importieren …",
@@ -533,7 +535,7 @@ export default {
   "GroupBillingPanel.paymentFailedFree":
     "Eine Zahlung ist fehlgeschlagen, deshalb ist die Gruppe jetzt im kostenlosen Tarif. Aktualisiere deine Karte über „Karte ändern“, um {plan} zurückzubekommen.",
   "GroupBillingPanel.offline": "Der Server ist nicht erreichbar. Versuche es noch einmal.",
-  "GroupBillingPanel.unreadable": "Der Tarif konnte nicht geladen werden.",
+  "GroupBillingPanel.unreadable": "Der Tarif konnte nicht geladen werden",
   "GroupBillingPanel.unsafePage":
     "Der Zahlungsanbieter hat eine Adresse zurückgeschickt, die diese App nicht öffnet.",
   "GroupBillingPanel.checkoutUnreachable":
@@ -653,12 +655,11 @@ export default {
   "GroupBillingView.trialUntil": "„{group}“ hat {plan} bis zum {date}.",
   "GroupBillingView.paid": "Du hast jetzt {plan}",
   "GroupBillingView.paidText": "Stripe hat die Zahlung für „{group}“ bestätigt.",
-  "NotificationsScreen.loadFailed": "Die Benachrichtigungen konnten nicht geladen werden.",
-  "NotificationsScreen.loadMoreFailed": "Weitere Benachrichtigungen konnten nicht geladen werden.",
-  "NotificationsScreen.readFailed":
-    "Die Benachrichtigung konnte nicht als gelesen markiert werden.",
+  "NotificationsScreen.loadFailed": "Die Benachrichtigungen konnten nicht geladen werden",
+  "NotificationsScreen.loadMoreFailed": "Weitere Benachrichtigungen konnten nicht geladen werden",
+  "NotificationsScreen.readFailed": "Die Benachrichtigung konnte nicht als gelesen markiert werden",
   "NotificationsScreen.readAllFailed":
-    "Die Benachrichtigungen konnten nicht als gelesen markiert werden.",
+    "Die Benachrichtigungen konnten nicht als gelesen markiert werden",
   "NotificationsScreen.invitedViewer":
     "Du wurdest als Betrachter in „<group>{group}</group>“ eingeladen.",
   "NotificationsScreen.invitedEditor":
@@ -952,7 +953,7 @@ export default {
   "GuestScreens.signOutAnyway": "Trotzdem abmelden",
   "GuestScreens.signOutText":
     "Dieses Konto hat keine Anmeldemethode, du kannst dich also nicht wieder anmelden. Alles darin geht verloren.",
-  "GuestScreens.offline": "Du bist offline. Stell eine Verbindung her und versuche es noch einmal.",
+  "GuestScreens.offline": "Der Server ist nicht erreichbar. Versuche es noch einmal.",
   "GuestScreens.providerFailed":
     "{provider} wurde nicht abgeschlossen. Dein Konto bleibt unverändert. Versuche es noch einmal oder wähle eine andere Methode.",
   "GuestScreens.noPasskey":
@@ -1620,8 +1621,7 @@ export default {
     "Der Passkey konnte nicht gespeichert werden. Versuche es noch einmal.",
   "SignInMethods.passkeyOnDevice": "Dieses Gerät hat schon einen Passkey für dein Konto.",
   "SignUpCodeScreen.checkFailed": "Der Code konnte nicht geprüft werden",
-  "SignUpCodeScreen.offline":
-    "Du bist offline. Stell eine Verbindung her und versuche es noch einmal.",
+  "SignUpCodeScreen.offline": "Der Server ist nicht erreichbar. Versuche es noch einmal.",
   "SignUpCodeScreen.title": "Schau in dein Postfach",
   "SignUpCodeScreen.loading": "Wird geladen …",
   "SignUpCodeScreen.code": "Code",
@@ -1883,7 +1883,8 @@ export default {
   "ApiTokenNewView.discardMessage": "Du hast dieses Token noch nicht erstellt.",
   "ApiTokenNewView.discard": "Änderungen verwerfen",
   "ApiTokenNewView.keepEditing": "Weiter bearbeiten",
-  "ApiTokens.failed": "Bei deinen API-Tokens ist etwas schiefgelaufen.",
+  "ApiTokens.failed":
+    "Deine API-Tokens konnten nicht geladen oder widerrufen werden. Versuche es noch einmal.",
   "ApiTokens.savedCopyTitle": "Gespeicherte Kopie deiner API-Tokens",
   "ApiTokens.savedCopyBody":
     "Der Server ist nicht erreichbar. Du siehst die auf diesem Gerät gespeicherte Liste vom {time}. Tokens, die seitdem erstellt oder widerrufen wurden, fehlen.",
@@ -2007,7 +2008,7 @@ export default {
   "EmailScreen.verifyFailed": "Der Code konnte nicht geprüft werden",
   "EmailScreen.sendFailed": "Es konnte kein neuer Code gesendet werden",
   "EmailScreen.changeFailed": "Deine E-Mail-Adresse konnte nicht geändert werden",
-  "EmailScreen.loadFailed": "Deine E-Mail-Adresse konnte nicht geladen werden.",
+  "EmailScreen.loadFailed": "Deine E-Mail-Adresse konnte nicht geladen werden",
   "EmailScreen.enterCode": "Code eingeben",
   "EmailScreen.banner": "Bestätige <email>{email}</email> mit dem Code, den wir dorthin schicken.",
   "EmailScreen.tryAgain": "Erneut versuchen",

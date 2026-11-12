@@ -432,7 +432,7 @@ export default {
   "GroupInvitations.verifyEmail": "Подтвердить почту",
   "GroupInvitations.notForYou":
     "Это приглашение отправлено на другую почту. Если это ваш адрес, сначала подтвердите его в <link>профиле</link> или войдите в аккаунт с этой почтой.",
-  "GroupInvitations.somethingWrong": "Что-то пошло не так. Попробуйте ещё раз.",
+  "GroupInvitations.somethingWrong": "Не удалось обработать приглашение. Попробуйте ещё раз.",
   "GroupInvitations.unreachable": "Сервер недоступен. Попробуйте ещё раз.",
   "GroupMembers.unnamed": "Участник без имени",
   "GroupMembers.title": "Участники",
@@ -507,7 +507,7 @@ export default {
   "GroupTransfer.unreachable": "Сервер недоступен. Попробуйте ещё раз.",
   "GroupTransfer.tooManyAttempts":
     "Слишком много попыток. Подождите несколько минут и попробуйте снова.",
-  "GroupTransfer.somethingWrong": "Что-то пошло не так. Попробуйте ещё раз.",
+  "GroupTransfer.somethingWrong": "Не удалось передать группу. Попробуйте ещё раз.",
   "Groups.title": "Группы",
   "Groups.new": "Новая группа",
   "Groups.import": "Импортировать группу…",
@@ -581,7 +581,7 @@ export default {
   "GroupBillingPanel.paymentFailedFree":
     "Платёж не прошёл, и группа перешла на бесплатный тариф. Чтобы вернуть {plan}, обновите карту кнопкой «Сменить карту».",
   "GroupBillingPanel.offline": "Сервер недоступен. Попробуйте ещё раз.",
-  "GroupBillingPanel.unreadable": "Не удалось загрузить тариф.",
+  "GroupBillingPanel.unreadable": "Не удалось загрузить тариф",
   "GroupBillingPanel.unsafePage":
     "Платёжный сервис вернул адрес, который приложение не станет открывать.",
   "GroupBillingPanel.checkoutUnreachable":
@@ -715,10 +715,10 @@ export default {
   "GroupBillingView.trialUntil": "Группа «{group}» на тарифе {plan} до {date}.",
   "GroupBillingView.paid": "Тариф {plan} подключён",
   "GroupBillingView.paidText": "Stripe подтвердил оплату для группы «{group}».",
-  "NotificationsScreen.loadFailed": "Не удалось загрузить уведомления.",
-  "NotificationsScreen.loadMoreFailed": "Не удалось загрузить ещё.",
-  "NotificationsScreen.readFailed": "Не удалось отметить как прочитанное.",
-  "NotificationsScreen.readAllFailed": "Не удалось отметить все как прочитанные.",
+  "NotificationsScreen.loadFailed": "Не удалось загрузить уведомления",
+  "NotificationsScreen.loadMoreFailed": "Не удалось загрузить остальные уведомления",
+  "NotificationsScreen.readFailed": "Не удалось отметить как прочитанное",
+  "NotificationsScreen.readAllFailed": "Не удалось отметить все как прочитанные",
   "NotificationsScreen.invitedViewer":
     "Вас пригласили в группу «<group>{group}</group>» в роли читателя.",
   "NotificationsScreen.invitedEditor":
@@ -1032,7 +1032,7 @@ export default {
   "GuestScreens.signOutAnyway": "Всё равно выйти",
   "GuestScreens.signOutText":
     "У этого аккаунта нет способа входа, поэтому вернуться в него не получится. Всё, что в нём есть, пропадёт.",
-  "GuestScreens.offline": "Нет сети. Подключитесь к интернету и попробуйте ещё раз.",
+  "GuestScreens.offline": "Сервер недоступен. Попробуйте ещё раз.",
   "GuestScreens.providerFailed":
     "Вход через {provider} не завершился. Аккаунт не изменился. Попробуйте ещё раз или выберите другой способ.",
   "GuestScreens.noPasskey": "Ключ доступа не добавлен. Аккаунт по-прежнему гостевой.",
@@ -1723,7 +1723,7 @@ export default {
   "SignInMethods.passkeyNotSaved": "Не удалось сохранить ключ доступа. Попробуйте ещё раз.",
   "SignInMethods.passkeyOnDevice": "На этом устройстве уже есть ключ доступа к вашему аккаунту.",
   "SignUpCodeScreen.checkFailed": "Не удалось проверить код",
-  "SignUpCodeScreen.offline": "Нет сети. Подключитесь к интернету и попробуйте ещё раз.",
+  "SignUpCodeScreen.offline": "Сервер недоступен. Попробуйте ещё раз.",
   "SignUpCodeScreen.title": "Проверьте почту",
   "SignUpCodeScreen.loading": "Загрузка…",
   "SignUpCodeScreen.code": "Код",
@@ -2010,7 +2010,7 @@ export default {
   "ApiTokenNewView.discardMessage": "Токен ещё не создан.",
   "ApiTokenNewView.discard": "Не сохранять",
   "ApiTokenNewView.keepEditing": "Продолжить редактирование",
-  "ApiTokens.failed": "С API-токенами что-то пошло не так.",
+  "ApiTokens.failed": "Не удалось загрузить или отозвать API-токены. Попробуйте ещё раз.",
   "ApiTokens.savedCopyTitle": "Сохранённый список API-токенов",
   "ApiTokens.savedCopyBody":
     "Сервер недоступен. Показываем список, сохранённый на этом устройстве: {time}. Токенов, созданных или отозванных после этого, в нём нет.",
@@ -2131,7 +2131,7 @@ export default {
   "EmailScreen.verifyFailed": "Не удалось проверить код",
   "EmailScreen.sendFailed": "Не удалось отправить новый код",
   "EmailScreen.changeFailed": "Не удалось сменить почту",
-  "EmailScreen.loadFailed": "Не удалось загрузить почту.",
+  "EmailScreen.loadFailed": "Не удалось загрузить почту",
   "EmailScreen.enterCode": "Ввести код",
   "EmailScreen.banner": "Подтвердите <email>{email}</email> кодом из письма.",
   "EmailScreen.tryAgain": "Повторить",
