@@ -115,7 +115,10 @@ test("an operator writes, previews, schedules, publishes, moves and deletes a po
 
     // Scheduled for a time ahead.
     await ops.locator("[data-e2e=admin-blog-publish]").click()
-    await ops.getByRole("radio", { name: "Schedule" }).check()
+    // A choice chip hides its radio, so the chip's label takes the click.
+    const schedule = ops.getByRole("radio", { name: "Schedule" })
+    await ops.locator("label", { has: schedule }).click()
+    await expect(schedule).toBeChecked()
     await ops.getByLabel("Date and time").fill("2031-03-04T10:00")
     await ops.getByRole("button", { name: "Schedule" }).click()
     await expect(ops.locator("[data-e2e=toasts]")).toContainText("Scheduled for")
