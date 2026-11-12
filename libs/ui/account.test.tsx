@@ -1809,6 +1809,17 @@ describe("the e-mail address on the Account section", () => {
       .toContain("You'll keep signing in with a passkey.")
   })
 
+  it("starts the address step in the New email field, opened by a link or by the row's button", async () => {
+    await mount(
+      account({ status: { email: null, proven: false, pending: null }, openEmailAddress: true }),
+    )
+    expect(focused()).toBe("email-new")
+    await clickInDialog("email-change-dialog", "Cancel")
+
+    await click("[data-e2e=email-change-open]")
+    expect(focused()).toBe("email-new")
+  })
+
   it("sends an account with no password to Google before a change when the sign-in is not recent", async () => {
     await mount(
       account({ status: proven, providerProof: { providers: ["google", "github"], fresh: false } }),

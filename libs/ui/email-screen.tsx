@@ -187,8 +187,10 @@ export function EmailDialog(
   useSucceeded(pending.verify, Boolean(errors.verify), () => {
     if (step === "code") close()
   })
+  // Each step starts in its first field; the dialog itself would focus its close button.
   useEffect(() => {
     if (step === "code") codeField.current?.focus()
+    if (step === "address") emailField.current?.focus()
   }, [step])
 
   const hasEmail = status.email !== null
