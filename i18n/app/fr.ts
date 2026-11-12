@@ -216,9 +216,9 @@ export default {
     "other": "{count} membres",
   },
   "GroupEditor.memberCountLink": {
-    "one": "{count} membre : ouvrir l’onglet Facturation",
-    "many": "{count} de membres : ouvrir l’onglet Facturation",
-    "other": "{count} membres : ouvrir l’onglet Facturation",
+    "one": "{count} membre : ouvrir l’onglet Facturation",
+    "many": "{count} de membres : ouvrir l’onglet Facturation",
+    "other": "{count} membres : ouvrir l’onglet Facturation",
   },
   "GroupEditor.tabGeneral": "Général",
   "GroupEditor.tabMembers": "Membres",
@@ -1386,7 +1386,7 @@ export default {
   "SeatPriceConfirm.hint":
     "Chaque nouveau membre ajoute {price} par mois : un membre de plus fait passer le groupe de {now} à {next}. La différence pour le reste de la période sera facturée sur la prochaine facture.",
   "SeatPriceConfirm.hintYear":
-    "Chaque nouveau membre ajoute {price} par an : un membre de plus fait passer le groupe de {now} à {next}. La différence pour le reste de la période sera facturée sur la prochaine facture.",
+    "Chaque nouveau membre ajoute {price} par an : un membre de plus fait passer le groupe de {now} à {next}. La différence pour le reste de la période sera facturée sur la prochaine facture.",
   "SeatPriceConfirm.accept":
     "J’accepte le prix plus élevé pour chaque personne qui rejoint le groupe",
   "ProfileAccount.name": "Nom",

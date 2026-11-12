@@ -65,6 +65,22 @@ Deno.test(`i18n ru: no screen puts a full stop right after a date`, async () => 
   expect(doubled).toEqual([])
 })
 
+// French puts a non-breaking space before `: ; ! ?` (TRANSLATING.md), so the mark never wraps onto
+// a line of its own.
+Deno.test(`i18n fr: every space before : ; ! ? is a non-breaking one`, async () => {
+  const breaking: string[] = []
+  for (const namespace of NAMESPACES) {
+    const { languages } = await readCatalogs(new URL(`${namespace}/`, import.meta.url))
+    const catalog = languages.fr
+    if (!catalog) throw new Error(`i18n/${namespace} has no fr catalog.`)
+    for (const [key, message] of Object.entries(catalog)) {
+      const text = typeof message === `string` ? message : Object.values(message).join(`\n`)
+      if (/ [:;!?]/.test(text)) breaking.push(`${namespace}: ${key}`)
+    }
+  }
+  expect(breaking).toEqual([])
+})
+
 Deno.test(`i18n: every English key is named somewhere in the code`, async () => {
   const texts = await sourceTexts()
   const unused: string[] = []
