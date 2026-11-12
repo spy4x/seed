@@ -73,3 +73,8 @@ Deno.test("the dev admin's Vite server gets a limit of its own, and production k
   expect(shared.admin?.deploy?.resources?.limits?.memory).toBe("${ADMIN_MEM_LIMIT:-128M}")
   expect(dev.admin?.deploy?.resources?.limits?.memory).toBe("${ADMIN_DEV_MEM_LIMIT:-1G}")
 })
+
+Deno.test("the dev admin keeps the base image's dependency cache instead of an empty DENO_DIR", async () => {
+  const { admin } = await services("compose.dev.yml")
+  expect(admin?.environment?.filter((entry) => entry.startsWith("DENO_DIR="))).toEqual([])
+})
