@@ -135,13 +135,18 @@ export function AdminGroupsListScreen(
   const t = useAdminText()
   const format = useFormat()
 
-  // After a page change the list is new: the reader starts again at its heading.
+  // When the person turns the page, the reader starts again at the list's heading once that page
+  // arrives. A search or a filter also lands on page 1, but focus stays in the field they used.
   const page = list?.page
-  const shown = useRef<number | undefined>(undefined)
+  const turned = useRef<number | null>(null)
+  const turn = (next: number) => {
+    turned.current = next
+    onPage(next)
+  }
   useEffect(() => {
-    if (page === undefined) return
-    if (shown.current !== undefined && shown.current !== page) heading.current?.focus()
-    shown.current = page
+    if (page === undefined || page !== turned.current) return
+    turned.current = null
+    heading.current?.focus()
   }, [page])
 
   const rows: GroupTableRow[] = (list?.groups ?? []).map((group) => ({
@@ -221,7 +226,12 @@ export function AdminGroupsListScreen(
 
       <ErrorState message={error} />
 
-      <h2 ref={heading} tabIndex={-1} class="text-sm text-muted" data-e2e="admin-groups-count">
+      <h2
+        ref={heading}
+        tabIndex={-1}
+        class="rounded-sm text-sm text-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+        data-e2e="admin-groups-count"
+      >
         {list ? t.t(`AdminGroups.count`, { count: list.total }) : t.t(`AdminGroups.loading`)}
       </h2>
       {list === null
@@ -258,7 +268,7 @@ export function AdminGroupsListScreen(
                 page: list.page,
                 pageSize: list.pageSize,
                 total: list.total,
-                onChange: onPage,
+                onChange: turn,
                 label: t.t(`AdminGroups.pages`),
               }}
             />

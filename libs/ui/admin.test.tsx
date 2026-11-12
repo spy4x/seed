@@ -297,6 +297,25 @@ describe("the admin user list", () => {
     expect(focused()).toBe("admin-users-search")
   })
 
+  it("keeps focus in the search field when a search from page 2 brings back page 1", async () => {
+    const calls: unknown[][] = []
+    const onPage2 = { list: { users: [ada], total: 30, page: 2, pageSize: 25 } }
+    await mount(<AdminUsersScreen {...listProps(calls, onPage2)} />)
+    await type("[data-e2e=admin-users-search]", "ada")
+    find("[data-e2e=admin-users-search]").focus()
+    await submit("[data-e2e=admin-users-submit]")
+    await mount(<AdminUsersScreen {...listProps(calls)} />)
+    expect(calls[0]?.[0]).toBe("search")
+    expect(focused()).toBe("admin-users-search")
+  })
+
+  it("gives the list's count the house focus ring", async () => {
+    await mount(<AdminUsersScreen {...listProps([])} />)
+    expect(find("[data-e2e=admin-users-count]").className.split(" ")).toEqual(
+      expect.arrayContaining(["focus-visible:ring-2", "focus-visible:ring-focus"]),
+    )
+  })
+
   it("says so when nobody matches, without a dashed box", async () => {
     await mount(
       <AdminUsersScreen

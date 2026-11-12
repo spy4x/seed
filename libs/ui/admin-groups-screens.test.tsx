@@ -275,12 +275,33 @@ describe(`the admin group list`, () => {
     const calls: unknown[][] = []
     await mount(<AdminGroupsListScreen {...listProps(calls)} />)
     expect(focused()).not.toBe(`admin-groups-count`)
+    await press(`nav`, `2`)
+    expect(calls).toEqual([[`page`, 2]])
     await mount(
       <AdminGroupsListScreen
         {...listProps(calls, { list: { groups: [family], total: 30, page: 2, pageSize: 25 } })}
       />,
     )
     expect(focused()).toBe(`admin-groups-count`)
+  })
+
+  it(`keeps focus in the search field when a search from page 2 brings back page 1`, async () => {
+    const calls: unknown[][] = []
+    const onPage2 = { list: { groups: [family], total: 30, page: 2, pageSize: 25 } }
+    await mount(<AdminGroupsListScreen {...listProps(calls, onPage2)} />)
+    find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value = `ada`
+    find(`[data-e2e=admin-groups-search]`).focus()
+    await submit(`[data-e2e=admin-groups-submit]`)
+    await mount(<AdminGroupsListScreen {...listProps(calls)} />)
+    expect(calls[0]?.[0]).toBe(`search`)
+    expect(focused()).toBe(`admin-groups-search`)
+  })
+
+  it(`gives the list's count the house focus ring`, async () => {
+    await mount(<AdminGroupsListScreen {...listProps([])} />)
+    expect(find(`[data-e2e=admin-groups-count]`).className.split(` `)).toEqual(
+      expect.arrayContaining([`focus-visible:ring-2`, `focus-visible:ring-focus`]),
+    )
   })
 
   it(`shows a loading state, the API's message when it fails, and an empty one`, async () => {

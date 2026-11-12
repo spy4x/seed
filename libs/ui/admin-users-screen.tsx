@@ -135,14 +135,18 @@ export function AdminUsersScreen(
   const heading = useRef<HTMLHeadingElement>(null)
   const t = useAdminText()
 
-  // After a page change the list is new: the reader starts again at its heading. The first page
-  // that arrives is no change, so focus stays where it was.
+  // When the person turns the page, the reader starts again at the list's heading once that page
+  // arrives. A search or a filter also lands on page 1, but focus stays in the field they used.
   const page = list?.page
-  const shown = useRef<number | undefined>(undefined)
+  const turned = useRef<number | null>(null)
+  const turn = (next: number) => {
+    turned.current = next
+    onPage(next)
+  }
   useEffect(() => {
-    if (page === undefined) return
-    if (shown.current !== undefined && shown.current !== page) heading.current?.focus()
-    shown.current = page
+    if (page === undefined || page !== turned.current) return
+    turned.current = null
+    heading.current?.focus()
   }, [page])
 
   const rows: UserTableRow[] = (list?.users ?? []).map((user) => ({
@@ -272,7 +276,12 @@ export function AdminUsersScreen(
 
       <ErrorState message={error} />
 
-      <h2 ref={heading} tabIndex={-1} class="text-sm text-muted" data-e2e="admin-users-count">
+      <h2
+        ref={heading}
+        tabIndex={-1}
+        class="rounded-sm text-sm text-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+        data-e2e="admin-users-count"
+      >
         {list ? t.t(`AdminUsers.count`, { count: list.total }) : t.t(`AdminUsers.loading`)}
       </h2>
       {list === null
@@ -307,7 +316,7 @@ export function AdminUsersScreen(
                 page: list.page,
                 pageSize: list.pageSize,
                 total: list.total,
-                onChange: onPage,
+                onChange: turn,
                 label: t.t(`AdminUsers.pages`),
               }}
             />
