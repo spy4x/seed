@@ -257,6 +257,32 @@ describe("UnsubscribeScreen without JavaScript", () => {
   })
 })
 
+describe("the newsletter's result pages", () => {
+  const link = { list: "news", token: "token-from-the-link", error: null, pending: false }
+
+  it("open with focus on their result sentence, so a screen reader reads it first", () => {
+    const results = [
+      <SubscribeForm
+        key="sent"
+        email=""
+        onEmailChange={() => {}}
+        list="news"
+        sent
+        error={null}
+        pending={false}
+      />,
+      <SubscriptionConfirmScreen key="confirmed" {...link} state="done" />,
+      <SubscriptionConfirmScreen key="expired" {...link} state="expired" />,
+      <UnsubscribeScreen key="unsubscribed" {...link} state="done" />,
+      <UnsubscribeScreen key="not-recognised" {...link} state="not-recognised" />,
+    ]
+    for (const result of results) {
+      const status = renderToString(result).match(/<p\b[^>]*role="status"[^>]*>/)?.[0]
+      expect(status).toMatch(/\sautofocus(\s|=|>)/)
+    }
+  })
+})
+
 describe("signed-out cards' layout", () => {
   const forms = {
     "sign-in": <AuthScreen {...authDefaults} />,
@@ -283,6 +309,7 @@ describe("signed-out cards' layout", () => {
     ),
     "subscribe": (
       <SubscribeForm
+        key="sent"
         email=""
         onEmailChange={() => {}}
         list="news"
@@ -313,6 +340,7 @@ describe("signed-out cards' layout", () => {
     }
     const sent = renderToString(
       <SubscribeForm
+        key="sent"
         email=""
         onEmailChange={() => {}}
         list="news"
