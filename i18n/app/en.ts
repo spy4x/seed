@@ -503,7 +503,7 @@ export default {
   "GroupBillingPanel.paymentFailedFree":
     "A payment failed, so the group moved to the free plan. Update your card with Change card to get {plan} back.",
   "GroupBillingPanel.offline": "Can't reach the server. Try again.",
-  "GroupBillingPanel.unreadable": "Could not load the plan.",
+  "GroupBillingPanel.unreadable": "Could not load the plan",
   "GroupBillingPanel.unsafePage": "The payment provider sent back an address this app won't open.",
   "GroupBillingPanel.checkoutUnreachable":
     "Could not open Stripe's checkout. Check your connection and try again.",
@@ -1894,7 +1894,7 @@ export default {
   "EmailScreen.verifyFailed": "Could not check the code",
   "EmailScreen.sendFailed": "Could not send a new code",
   "EmailScreen.changeFailed": "Could not change your email",
-  "EmailScreen.loadFailed": "Could not load your email.",
+  "EmailScreen.loadFailed": "Could not load your email",
   "EmailScreen.enterCode": "Enter the code",
   "EmailScreen.banner": "Confirm <email>{email}</email> with the code we send there.",
   "EmailScreen.tryAgain": "Try again",
