@@ -179,8 +179,11 @@ export function AdminUsersScreen(
         )}
       />
       <div class="flex flex-col gap-4 rounded-xl border border-subtle bg-surface p-4">
+        {
+          /* No `pending` here: a pending form disables its fieldset, which drops focus out of the
+            search field. The busy submit button already refuses a second search. */
+        }
         <ScreenForm
-          pending={pending}
           onSubmit={(data) =>
             onSearch({ ...filter, query: String(data.get("q") ?? "").trim(), page: 1 })}
         >

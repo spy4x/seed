@@ -309,10 +309,21 @@ describe("the admin user list", () => {
     expect(focused()).toBe("admin-users-search")
   })
 
+  it("keeps the search field usable while a search is pending, so focus stays in it", async () => {
+    await mount(<AdminUsersScreen {...listProps([], { pending: true })} />)
+    const field = find<HTMLInputElement>("[data-e2e=admin-users-search]")
+    expect(field.closest("fieldset")?.disabled ?? false).toBe(false)
+    expect(field.matches(":disabled")).toBe(false)
+  })
+
   it("gives the list's count the house focus ring", async () => {
     await mount(<AdminUsersScreen {...listProps([])} />)
     expect(find("[data-e2e=admin-users-count]").className.split(" ")).toEqual(
-      expect.arrayContaining(["focus-visible:ring-2", "focus-visible:ring-focus"]),
+      expect.arrayContaining([
+        "focus-visible:outline-hidden",
+        "focus-visible:ring-2",
+        "focus-visible:ring-focus",
+      ]),
     )
   })
 

@@ -297,10 +297,21 @@ describe(`the admin group list`, () => {
     expect(focused()).toBe(`admin-groups-search`)
   })
 
+  it(`keeps the search field usable while a search is pending, so focus stays in it`, async () => {
+    await mount(<AdminGroupsListScreen {...listProps([], { pending: true })} />)
+    const field = find<HTMLInputElement>(`[data-e2e=admin-groups-search]`)
+    expect(field.closest(`fieldset`)?.disabled ?? false).toBe(false)
+    expect(field.matches(`:disabled`)).toBe(false)
+  })
+
   it(`gives the list's count the house focus ring`, async () => {
     await mount(<AdminGroupsListScreen {...listProps([])} />)
     expect(find(`[data-e2e=admin-groups-count]`).className.split(` `)).toEqual(
-      expect.arrayContaining([`focus-visible:ring-2`, `focus-visible:ring-focus`]),
+      expect.arrayContaining([
+        `focus-visible:outline-hidden`,
+        `focus-visible:ring-2`,
+        `focus-visible:ring-focus`,
+      ]),
     )
   })
 
@@ -729,7 +740,11 @@ describe(`one group in the admin app`, () => {
     )
     // The house ring, so the browser's default outline never shows.
     expect(focused?.className.split(` `)).toEqual(
-      expect.arrayContaining([`focus-visible:outline-hidden`, `focus-visible:ring-focus`]),
+      expect.arrayContaining([
+        `focus-visible:outline-hidden`,
+        `focus-visible:ring-2`,
+        `focus-visible:ring-focus`,
+      ]),
     )
   })
 
