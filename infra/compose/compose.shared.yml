@@ -712,7 +712,6 @@ services:
     user: "1000:1000"
     environment:
       - HOME=/home/deno
-      - DENO_DIR=/tmp/deno-cache
       - DENO_LOG=${DENO_LOG}
       # Postgres itself, not PgBouncer: the runner's advisory lock is held by one session for the
       # whole run, which transaction pooling would not keep.
@@ -784,7 +783,6 @@ services:
       - TELEGRAM_WEBHOOK_SECRET=${TELEGRAM_WEBHOOK_SECRET:-}
       - TELEGRAM_POLLING=${TELEGRAM_POLLING:-}
       - TELEGRAM_API_URL=${TELEGRAM_API_URL:-}
-      - DENO_DIR=/tmp/deno-cache
       # The port apps/healthcheck.ts probes.
       - HEALTHCHECK_PORT=${API_PORT}
       - DENO_LOG=${DENO_LOG}
@@ -926,7 +924,6 @@ services:
       - HOME=/home/deno
       - ENV=${ENV}
       - DOMAIN=${DOMAIN}
-      - DENO_DIR=/tmp/deno-cache
       - DENO_LOG=${DENO_LOG}
       # Through PgBouncer: the worker sends NOTIFY, which works in a transaction, and LISTENs to
       # nothing.
@@ -1027,7 +1024,6 @@ services:
         - DENO_VERSION=${DENO_VERSION}
         - BASE_IMAGE=${PROJECT}/deno-base:${DENO_VERSION}
     environment:
-      - DENO_DIR=/tmp/deno-cache
       - DENO_LOG=${DENO_LOG}
       - VITE_ENV=prod
       # Read at container start into /config.json (apps/spa/public-env.allow lists them all).

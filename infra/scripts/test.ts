@@ -104,6 +104,7 @@ export const GROUPS: TestGroup[] = [
       `tests/compose-exposure.test.ts`,
       `tests/compose-admin.test.ts`,
       `tests/compose-runtime.test.ts`,
+      `tests/compose-deno-dir.test.ts`,
     ],
   },
   {
