@@ -371,7 +371,7 @@ export default {
   "GroupInvitations.verifyEmail": "Verify email",
   "GroupInvitations.notForYou":
     "This invitation was sent to a different email. If it's yours, confirm it in your <link>profile</link> first, or sign in with the account that uses it.",
-  "GroupInvitations.somethingWrong": "Something went wrong. Try again.",
+  "GroupInvitations.somethingWrong": "Could not complete the invitation request. Try again.",
   "GroupInvitations.unreachable": "Can't reach the server. Try again.",
   "GroupMembers.unnamed": "Unnamed member",
   "GroupMembers.title": "Members",
@@ -439,7 +439,7 @@ export default {
   "GroupTransfer.failed": "Could not transfer the group",
   "GroupTransfer.unreachable": "Can't reach the server. Try again.",
   "GroupTransfer.tooManyAttempts": "Too many attempts. Wait a few minutes, then try again.",
-  "GroupTransfer.somethingWrong": "Something went wrong. Try again.",
+  "GroupTransfer.somethingWrong": "Could not transfer ownership. Try again.",
   "Groups.title": "Groups",
   "Groups.new": "New group",
   "Groups.import": "Import a group…",
@@ -1782,7 +1782,7 @@ export default {
   "ApiTokenNewView.discardMessage": "You haven't created this token yet.",
   "ApiTokenNewView.discard": "Discard changes",
   "ApiTokenNewView.keepEditing": "Keep editing",
-  "ApiTokens.failed": "Something went wrong with your API tokens.",
+  "ApiTokens.failed": "Could not load or revoke your API tokens. Try again.",
   "ApiTokens.savedCopyTitle": "Saved copy of your API tokens",
   "ApiTokens.savedCopyBody":
     "Can't reach the server. Showing the list saved on this device: {time}. Tokens created or revoked since then are missing.",
