@@ -257,6 +257,31 @@ describe("UnsubscribeScreen without JavaScript", () => {
   })
 })
 
+describe("the newsletter's result pages", () => {
+  const link = { list: "news", token: "token-from-the-link", error: null, pending: false }
+
+  it("open with focus on their result sentence, so a screen reader reads it first", () => {
+    const results = [
+      <SubscribeForm
+        email=""
+        onEmailChange={() => {}}
+        list="news"
+        sent
+        error={null}
+        pending={false}
+      />,
+      <SubscriptionConfirmScreen {...link} state="done" />,
+      <SubscriptionConfirmScreen {...link} state="expired" />,
+      <UnsubscribeScreen {...link} state="done" />,
+      <UnsubscribeScreen {...link} state="not-recognised" />,
+    ]
+    for (const result of results) {
+      const status = renderToString(result).match(/<p\b[^>]*role="status"[^>]*>/)?.[0]
+      expect(status).toMatch(/\sautofocus(\s|=|>)/)
+    }
+  })
+})
+
 describe("signed-out cards' layout", () => {
   const forms = {
     "sign-in": <AuthScreen {...authDefaults} />,
