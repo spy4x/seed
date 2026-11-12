@@ -282,6 +282,7 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
         <Card data-e2e="admin-billing-off">
           <EmptyState
             inset
+            headingLevel={2}
             icon={<IconCreditCard class="size-8" aria-hidden="true" />}
             // What the module says while billing is off.
             title={t.t(`AdminBilling.off`)}
@@ -311,6 +312,7 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
           <Card data-e2e="admin-billing-none">
             <EmptyState
               inset
+              headingLevel={2}
               icon={<IconCreditCard class="size-8" aria-hidden="true" />}
               title={t.t(`AdminBilling.noneYet`)}
               description={t.t(`AdminBilling.noneHint`)}
