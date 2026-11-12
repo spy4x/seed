@@ -208,7 +208,7 @@ describe("ApiTokenNewScreen", () => {
     ])
   })
 
-  it("shrinks a long group name's chip to the row with an ellipsis, so the page never scrolls sideways", async () => {
+  it("caps a long group name's chip at its row's width and truncates the name inside it", async () => {
     const long = "A".repeat(100)
     await mount(<ApiTokenNewScreen {...pageProps([], { groups: [{ id: groupId, name: long }] })} />)
     const label = find("[data-e2e=api-token-group] label")
