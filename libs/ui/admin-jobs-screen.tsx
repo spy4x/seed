@@ -118,6 +118,12 @@ export function jobWaits(state: AdminJobState): boolean {
     state === AdminJobState.Retrying
 }
 
+/** A run that will not run again: done, given up or cancelled. It is due no more. */
+function jobFinished(state: AdminJobState): boolean {
+  return state === AdminJobState.Done || state === AdminJobState.Failed ||
+    state === AdminJobState.Cancelled
+}
+
 /** `4 of 20`. */
 function attemptsLine(
   t: Translator<string>,
@@ -872,7 +878,9 @@ export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
               { label: t.t(`AdminJobs.status`), value: <JobStateBadge state={job.state} /> },
               { label: t.t(`AdminJobs.repeats`), value: job.repeats ?? t.t(`AdminJobs.no`) },
               { label: t.t(`AdminJobs.created`), value: <Time at={job.createdAt} /> },
-              { label: t.t(`AdminJobs.dueAt`), value: <Time at={job.dueAt} /> },
+              ...(jobFinished(job.state)
+                ? []
+                : [{ label: t.t(`AdminJobs.dueAt`), value: <Time at={job.dueAt} /> }]),
               { label: t.t(`AdminJobs.started`), value: <Time at={job.startedAt} /> },
               { label: t.t(`AdminJobs.finished`), value: <Time at={job.finishedAt} /> },
               { label: t.t(`AdminJobs.attemptsHeader`), value: attemptsLine(t, job) },
