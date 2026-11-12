@@ -88,6 +88,8 @@ export interface AdminGroupsService {
 export interface AdminGroupsRouteDependencies {
   /** The normal per-user budget the session routes spend too. */
   limit: MiddlewareHandler<APIContext>
+  /** The image tiles' own, larger budget, so paging through pictures leaves `limit` alone. */
+  thumbnailLimit: MiddlewareHandler<APIContext>
   groups: AdminGroupsService
   /** The notes' switch; off, the widget and file routes, which read notes, are not mounted. */
   notes?: NotesSetup
@@ -215,7 +217,7 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
 export function createAdminGroupsRoutes(
   dependencies: AdminGroupsRouteDependencies,
 ): Hono<APIContext> {
-  const { groups, limit, notes = NOTES_ON } = dependencies
+  const { groups, limit, thumbnailLimit, notes = NOTES_ON } = dependencies
 
   /** The answer after an action: the group as it reads now, or the refusal. */
   async function answer(c: Context<APIContext>, groupId: string, outcome: AdminGroupActOutcome) {
@@ -286,7 +288,7 @@ export function createAdminGroupsRoutes(
         if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
         return c.json(files)
       })
-      .get(`/groups/:id/files/:fileId/thumbnail`, limit, (c) => serveFile(c, `thumbnail`))
+      .get(`/groups/:id/files/:fileId/thumbnail`, thumbnailLimit, (c) => serveFile(c, `thumbnail`))
       .get(`/groups/:id/files/:fileId/open`, limit, (c) => serveFile(c, `open`))
       .get(`/groups/:id/files/:fileId/download`, limit, (c) => serveFile(c, `download`))
       .post(`/groups/:id/files/:fileId/remove`, limit, async (c) => {
@@ -439,7 +441,7 @@ export function createAdminGroups(
 /** The groups module: the list, one group and the operator's actions on it. */
 export const groupsAdminModule: AdminApiModule = {
   id: `groups`,
-  routes: ({ db, limit, billing, readFile, notes }) => {
+  routes: ({ db, limit, thumbnailLimit, billing, readFile, notes }) => {
     // Read on the first call: the routes are built before any database is reached.
     const fileCaps: AdminFileCaps = async (groupId) => {
       const plan = await createPlanOf(db.billing, billing)(groupId)
@@ -448,6 +450,7 @@ export const groupsAdminModule: AdminApiModule = {
     }
     return createAdminGroupsRoutes({
       limit,
+      thumbnailLimit,
       groups: createAdminGroups(db, ADMIN_GROUPS_PAGE_SIZE, fileCaps, readFile, ADMIN_WIDGETS),
       notes,
     })

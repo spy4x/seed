@@ -144,6 +144,13 @@ export const EMAIL_CHANGE_MAILS_PER_ADDRESS = 3
 /** The window of {@link EMAIL_CHANGE_MAILS_PER_ADDRESS}: one hour. */
 export const EMAIL_CHANGE_ADDRESS_WINDOW_MS = 60 * 60_000
 
+/**
+ * How many times `settings.limit` one operator's thumbnail budget holds. A page of a group's files
+ * asks for up to 25 tiles at once, so paging through images would run the normal budget out and
+ * refuse every other admin action for the rest of the window.
+ */
+export const THUMBNAIL_LIMIT_FACTOR = 10
+
 /** The rate limits the auth routes mount. Each one answers 429 with `Retry-After` when spent. */
 export interface AuthRateLimits {
   /**
@@ -172,6 +179,12 @@ export interface AuthRateLimits {
   guestStart(c: Context<APIContext>): Promise<RateLimitDecision>
   /** Normal limit per signed-in user, else per client IP, for every other auth route. */
   normal: MiddlewareHandler<APIContext>
+  /**
+   * The admin Files tab's image tiles: a budget per user of its own, {@link THUMBNAIL_LIMIT_FACTOR}
+   * times the normal one, so tiles never spend the normal budget. Lets a request through when its
+   * store fails, as `normal` does.
+   */
+  thumbnail: MiddlewareHandler<APIContext>
   /**
    * Spends one of the address's {@link RESET_MAILS_PER_ADDRESS} reset codes, whatever the IP, and
    * says whether it was allowed. Called by the route once it has read the address from the body.
@@ -223,7 +236,7 @@ export interface AuthRateLimitSettings {
    * Builds the store one limiter keeps its budgets in. `name` is that limiter's own key prefix:
    * `ratelimit-strict`, `ratelimit-otp`, `ratelimit-reset`, `ratelimit-email-code`,
    * `ratelimit-sign-up-code`, `ratelimit-email-change`, `ratelimit-email-change-address`,
-   * `ratelimit-guest` or `ratelimit-normal`. Production passes `createRedisRateLimitStore` over Valkey; tests pass an
+   * `ratelimit-guest`, `ratelimit-normal` or `ratelimit-thumbnail`. Production passes `createRedisRateLimitStore` over Valkey; tests pass an
    * in-process store.
    */
   store: (name: string) => RateLimitStore
@@ -251,7 +264,7 @@ export interface AuthRateLimitSettings {
  * attack they exist to stop. The normal
  * limit lets the request through and reports the error through `settings.onStoreError`, so sign-out
  * and `/me` keep working while Valkey is down, as the rest of the signed-in API does. The normal
- * limit uses `failOpenLimiter` for that; the others must never be wrapped in it. A correct
+ * and thumbnail limits use `failOpenLimiter` for that; the others must never be wrapped in it. A correct
  * one-time code whose slot cannot be given back keeps its response (the session cookie included),
  * and the slot stays spent; that error is reported through `settings.onStoreError` too.
  *
@@ -360,6 +373,11 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
     createStoreLimiter(store("ratelimit-normal"), { windowMs, limit: settings.limit, clock }),
     { limit: settings.limit, onError: settings.onStoreError },
   )
+  const thumbnailLimit = settings.limit * THUMBNAIL_LIMIT_FACTOR
+  const thumbnail = failOpenLimiter(
+    createStoreLimiter(store("ratelimit-thumbnail"), { windowMs, limit: thumbnailLimit, clock }),
+    { limit: thumbnailLimit, onError: settings.onStoreError },
+  )
   const userId = (_: Request, context: RateLimitContext<APIContext>) =>
     (context.get?.("auth") as AppAuthState | null | undefined)?.user.id?.toString()
   const noUser = () => undefined
@@ -388,6 +406,11 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
       remoteAddr: serveRemoteAddr,
       keyResolver: byUser,
       keyPrefix: "auth:",
+    }),
+    thumbnail: createRateLimitMiddleware(thumbnail, {
+      remoteAddr: serveRemoteAddr,
+      keyResolver: byUser,
+      keyPrefix: "auth-thumbnail:",
     }),
     resetByAddress: async (email) => await reset.check(`auth-reset:${await sha256Hex(email)}`),
     emailCodeByAddress: async (email) => await emailCode.check(await emailCodeBudgetKey(email)),
