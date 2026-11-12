@@ -199,6 +199,12 @@ describe("the blog list", () => {
     const none = { posts: [], counts: { all: 0, draft: 0, scheduled: 0, published: 0 } }
     await mount(<AdminBlogListScreen {...listProps([], { list: none })} />)
     expect(find("[data-e2e=admin-blog-none]").textContent).toContain("No posts yet")
+    // The page's h1 is the only heading above it, so the empty state is an h2.
+    expect([...document.querySelectorAll("h1, h2, h3, h4")].map((h) => h.tagName)).toEqual([
+      "H1",
+      "H2",
+    ])
+    expect(find("[data-e2e=admin-blog-none] h2").textContent).toBe("No posts yet")
     await mount(
       <AdminBlogListScreen
         {...listProps([], { list: none, filter: { status: null, query: "x" } })}

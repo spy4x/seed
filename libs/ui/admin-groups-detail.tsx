@@ -765,7 +765,11 @@ function Files(
     }
     if (none) {
       return (
-        <div ref={empty} tabIndex={-1} class="rounded-xl">
+        <div
+          ref={empty}
+          tabIndex={-1}
+          class="rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+        >
           <Card data-e2e="admin-group-files">
             <EmptyState inset description={t.t(`AdminGroup.noFilesYet`)} />
           </Card>

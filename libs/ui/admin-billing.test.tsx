@@ -270,6 +270,12 @@ describe(`the admin billing list`, () => {
   it(`says billing is off instead of showing an empty table`, async () => {
     await mount(<AdminBillingListScreen {...listProps([], { list: { enabled: false } })} />)
     expect(find(`[data-e2e=admin-billing-off]`).textContent).toContain(`Billing is off`)
+    // The page's h1 is the only heading above it, so the empty state is an h2.
+    expect([...document.querySelectorAll(`h1, h2, h3, h4`)].map((h) => h.tagName)).toEqual([
+      `H1`,
+      `H2`,
+    ])
+    expect(has(`[data-e2e=admin-billing-off] h2`)).toBe(true)
     const setup = find(`[data-e2e=admin-billing-setup]`)
     expect(setup.getAttribute(`href`)).toBe(ADMIN_BILLING_SETUP_URL)
     expect(setup.getAttribute(`target`)).toBe(`_blank`)
@@ -281,6 +287,11 @@ describe(`the admin billing list`, () => {
     const none = { ...page([]), counts: { ...counts, paying: 0, all: 0 } }
     await mount(<AdminBillingListScreen {...listProps([], { list: none })} />)
     expect(find(`[data-e2e=admin-billing-none]`).textContent).toContain(`No paid groups yet`)
+    expect([...document.querySelectorAll(`h1, h2, h3, h4`)].map((h) => h.tagName)).toEqual([
+      `H1`,
+      `H2`,
+    ])
+    expect(has(`[data-e2e=admin-billing-none] h2`)).toBe(true)
     expect(has(`[data-e2e=admin-billing-search]`)).toBe(false)
     const pricing = find(`[data-e2e=admin-billing-pricing]`)
     expect(pricing.getAttribute(`href`)).toBe(`https://www.example.com/pricing`)

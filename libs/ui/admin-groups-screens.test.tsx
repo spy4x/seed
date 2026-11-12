@@ -275,12 +275,64 @@ describe(`the admin group list`, () => {
     const calls: unknown[][] = []
     await mount(<AdminGroupsListScreen {...listProps(calls)} />)
     expect(focused()).not.toBe(`admin-groups-count`)
+    await press(`nav`, `2`)
+    expect(calls).toEqual([[`page`, 2]])
     await mount(
       <AdminGroupsListScreen
         {...listProps(calls, { list: { groups: [family], total: 30, page: 2, pageSize: 25 } })}
       />,
     )
     expect(focused()).toBe(`admin-groups-count`)
+  })
+
+  it(`keeps focus in the search field when a search from page 2 brings back page 1`, async () => {
+    const calls: unknown[][] = []
+    const onPage2 = { list: { groups: [family], total: 30, page: 2, pageSize: 25 } }
+    await mount(<AdminGroupsListScreen {...listProps(calls, onPage2)} />)
+    find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value = `ada`
+    find(`[data-e2e=admin-groups-search]`).focus()
+    await submit(`[data-e2e=admin-groups-submit]`)
+    await mount(
+      <AdminGroupsListScreen
+        {...listProps(calls, { filter: { ...ADMIN_GROUP_NO_FILTER, query: `ada` } })}
+      />,
+    )
+    expect(calls[0]?.[0]).toBe(`search`)
+    expect(focused()).toBe(`admin-groups-search`)
+  })
+
+  it(`shows the address's search in the field when history goes back to it`, async () => {
+    await mount(
+      <AdminGroupsListScreen
+        {...listProps([], { filter: { ...ADMIN_GROUP_NO_FILTER, query: `ada` } })}
+      />,
+    )
+    // A half-typed query makes the field dirty, so its default value no longer shows.
+    find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value = `half-typed`
+    await mount(
+      <AdminGroupsListScreen
+        {...listProps([], { filter: { ...ADMIN_GROUP_NO_FILTER, query: `family` } })}
+      />,
+    )
+    expect(find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value).toBe(`family`)
+  })
+
+  it(`keeps the search field usable while a search is pending, so focus stays in it`, async () => {
+    await mount(<AdminGroupsListScreen {...listProps([], { pending: true })} />)
+    const field = find<HTMLInputElement>(`[data-e2e=admin-groups-search]`)
+    expect(field.closest(`fieldset`)?.disabled ?? false).toBe(false)
+    expect(field.matches(`:disabled`)).toBe(false)
+  })
+
+  it(`gives the list's count the house focus ring`, async () => {
+    await mount(<AdminGroupsListScreen {...listProps([])} />)
+    expect(find(`[data-e2e=admin-groups-count]`).className.split(` `)).toEqual(
+      expect.arrayContaining([
+        `focus-visible:outline-hidden`,
+        `focus-visible:ring-2`,
+        `focus-visible:ring-focus`,
+      ]),
+    )
   })
 
   it(`shows a loading state, the API's message when it fails, and an empty one`, async () => {
@@ -705,6 +757,14 @@ describe(`one group in the admin app`, () => {
     expect(focused?.getAttribute(`tabindex`)).toBe(`-1`)
     expect(focused?.querySelector(`[data-e2e=admin-group-files]`)?.textContent).toContain(
       `No files yet.`,
+    )
+    // The house ring, so the browser's default outline never shows.
+    expect(focused?.className.split(` `)).toEqual(
+      expect.arrayContaining([
+        `focus-visible:outline-hidden`,
+        `focus-visible:ring-2`,
+        `focus-visible:ring-focus`,
+      ]),
     )
   })
 

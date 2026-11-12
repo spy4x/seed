@@ -297,6 +297,50 @@ describe("the admin user list", () => {
     expect(focused()).toBe("admin-users-search")
   })
 
+  it("keeps focus in the search field when a search from page 2 brings back page 1", async () => {
+    const calls: unknown[][] = []
+    const onPage2 = { list: { users: [ada], total: 30, page: 2, pageSize: 25 } }
+    await mount(<AdminUsersScreen {...listProps(calls, onPage2)} />)
+    await type("[data-e2e=admin-users-search]", "ada")
+    find("[data-e2e=admin-users-search]").focus()
+    await submit("[data-e2e=admin-users-submit]")
+    await mount(
+      <AdminUsersScreen {...listProps(calls, { filter: { ...ADMIN_NO_FILTER, query: "ada" } })} />,
+    )
+    expect(calls[0]?.[0]).toBe("search")
+    expect(focused()).toBe("admin-users-search")
+  })
+
+  it("shows the address's search in the field when history goes back to it", async () => {
+    await mount(
+      <AdminUsersScreen {...listProps([], { filter: { ...ADMIN_NO_FILTER, query: "ada" } })} />,
+    )
+    // A half-typed query makes the field dirty, so its default value no longer shows.
+    await type("[data-e2e=admin-users-search]", "half-typed")
+    await mount(
+      <AdminUsersScreen {...listProps([], { filter: { ...ADMIN_NO_FILTER, query: "grace" } })} />,
+    )
+    expect(find<HTMLInputElement>("[data-e2e=admin-users-search]").value).toBe("grace")
+  })
+
+  it("keeps the search field usable while a search is pending, so focus stays in it", async () => {
+    await mount(<AdminUsersScreen {...listProps([], { pending: true })} />)
+    const field = find<HTMLInputElement>("[data-e2e=admin-users-search]")
+    expect(field.closest("fieldset")?.disabled ?? false).toBe(false)
+    expect(field.matches(":disabled")).toBe(false)
+  })
+
+  it("gives the list's count the house focus ring", async () => {
+    await mount(<AdminUsersScreen {...listProps([])} />)
+    expect(find("[data-e2e=admin-users-count]").className.split(" ")).toEqual(
+      expect.arrayContaining([
+        "focus-visible:outline-hidden",
+        "focus-visible:ring-2",
+        "focus-visible:ring-focus",
+      ]),
+    )
+  })
+
   it("says so when nobody matches, without a dashed box", async () => {
     await mount(
       <AdminUsersScreen
