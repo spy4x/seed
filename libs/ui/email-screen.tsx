@@ -187,7 +187,9 @@ export function EmailDialog(
   useSucceeded(pending.verify, Boolean(errors.verify), () => {
     if (step === "code") close()
   })
-  // Each step starts in its first field; the dialog itself would focus its close button.
+  // Each step starts in its first field, not on the dialog's close button. `autofocus` covers the
+  // dialog's opening: the app may draw again before this effect runs, and then the dialog opens
+  // after it. The effect covers a step change inside an open dialog.
   useEffect(() => {
     if (step === "code") codeField.current?.focus()
     if (step === "address") emailField.current?.focus()
@@ -237,6 +239,7 @@ export function EmailDialog(
                 >
                   <Input
                     ref={codeField}
+                    autofocus
                     data-e2e="email-code"
                     name="code"
                     autocomplete="one-time-code"
@@ -327,6 +330,7 @@ export function EmailDialog(
               <Field id="email-new" label={t.t(`EmailScreen.newAddress`)} required>
                 <Input
                   ref={emailField}
+                  autofocus
                   data-e2e="email-new"
                   name="email"
                   type="email"
