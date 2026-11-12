@@ -607,6 +607,14 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
               title: t.t(`ProfileView.emailVerified`),
               body: t.t(`ProfileView.emailVerifiedBody`),
               dataE2E: "email-verified",
+              // An account with no password came here from Set a password, which says to come back.
+              action: providerProof
+                ? {
+                  label: t.t(`ProfileSecurity.setButton`),
+                  onAction: () => navigate(profilePath("security")),
+                  dataE2E: "email-verified-set-password",
+                }
+                : undefined,
             })
           }),
         onSend: () =>
@@ -641,6 +649,8 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       }}
       openEmailCode={new URLSearchParams(search).has("verify")}
       openEmailAddress={new URLSearchParams(search).has("email")}
+      // The ask has done its job once the dialog is open: a reload must not open it again.
+      onEmailOpened={() => navigate(path, { replace: true })}
       onSetPassword={submitFirstPassword}
       passwordNeedsEmail={passwordNeedsEmail}
       onAddEmail={() => navigate(`${profilePath("account")}?email`)}
