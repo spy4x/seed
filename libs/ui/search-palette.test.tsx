@@ -8,6 +8,8 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render } from "preact"
 import { act } from "preact/test-utils"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createFormatters, type Formatters } from "@spy4x/time/format"
 import { GroupRole } from "@domain/groups"
 import {
   emptyLabel,
@@ -73,24 +75,28 @@ async function mount(
     notes: [PLAN, SKETCH],
     onDevice: false,
   }),
+  format?: Formatters,
 ) {
   const asked: string[] = []
   const picked: SearchChoice[] = []
   root = document.createElement("div")
   document.body.append(root)
+  const palette = (
+    <SearchPalette
+      searchNotes={(query) => {
+        asked.push(query)
+        return Promise.resolve(answer(query))
+      }}
+      groups={[HOME, STUDIO]}
+      currentGroup={{ id: HOME.id, name: HOME.name, canWrite: true }}
+      online
+      onSelect={(choice) => void picked.push(choice)}
+      {...overrides}
+    />
+  )
   await act(() =>
     render(
-      <SearchPalette
-        searchNotes={(query) => {
-          asked.push(query)
-          return Promise.resolve(answer(query))
-        }}
-        groups={[HOME, STUDIO]}
-        currentGroup={{ id: HOME.id, name: HOME.name, canWrite: true }}
-        online
-        onSelect={(choice) => void picked.push(choice)}
-        {...overrides}
-      />,
+      format ? <FormatContext.Provider value={format}>{palette}</FormatContext.Provider> : palette,
       root!,
     )
   )
@@ -383,6 +389,15 @@ describe("SearchPalette", () => {
     expect(picked).toEqual(
       Array(3).fill({ kind: "page", href: "/profile/account#profile-picture-choose" }),
     )
+  })
+
+  it("writes the picture rule's size in the person's region format", async () => {
+    await mount({}, undefined, createFormatters({ locale: `ru-RU`, timeZone: `UTC` }))
+    await open()
+    await type("avatar")
+    const row = [...document.querySelectorAll("[role=option]")]
+      .find((candidate) => text(candidate).startsWith("Change profile picture"))
+    expect(text(row!)).toContain("10 МБ")
   })
 
   it("finds Download my data by the words a person would try, and opens the Account section's row", async () => {

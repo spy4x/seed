@@ -9,7 +9,7 @@ import { CtaBand } from "../../components/cta-band.tsx"
 import { PricingDemoPlans } from "../../components/pricing-demo-plans.tsx"
 import { PricingWays } from "../../components/pricing-ways.tsx"
 import { SectionIntro } from "../../components/section-intro.tsx"
-import { HIRE_PAGE_URL, HIRE_PRICES } from "../../hire.ts"
+import { HIRE_PAGE_URL, HIRE_PRICES, hirePrice } from "../../hire.ts"
 import {
   PERSON_JSON_LD,
   REPOSITORY_URL,
@@ -54,7 +54,7 @@ const FAQ = [
 function faqItems(t: Translator<string>) {
   return FAQ.map(({ id, question, answer }) => ({
     id,
-    question: t.t(question, { price: HIRE_PRICES.mvpFrom }),
+    question: t.t(question, { price: hirePrice(HIRE_PRICES.mvpFrom, t.language) }),
     answerText: t.t(answer),
   }))
 }

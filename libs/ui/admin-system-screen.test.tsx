@@ -7,6 +7,8 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createFormatters } from "@spy4x/time/format"
 import { AdminHealth, type AdminSystemSnapshot } from "@domain/identity"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import { AdminSystemScreen, type AdminSystemScreenProps } from "./admin-system-screen.tsx"
@@ -139,6 +141,17 @@ describe("system screen", () => {
     expect(state("admin-system-migrations")).toBe("ok")
     expect(find("[data-e2e=admin-system-cache]").textContent).toContain("Error")
     expect(find("[data-e2e=admin-system-summary]").textContent).toContain("Something is broken")
+  })
+
+  it("writes the database's size in the operator's region format", async () => {
+    const russian = createFormatters({ locale: `ru-RU`, timeZone: `UTC` })
+    await mount(
+      <FormatContext.Provider value={russian}>
+        <AdminSystemScreen {...props([])} />
+      </FormatContext.Provider>,
+    )
+
+    expect(find("[data-e2e=admin-system-database]").textContent).toContain("9 МБ")
   })
 
   it("shows the database's size, the newest migration and the build", async () => {

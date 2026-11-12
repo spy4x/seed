@@ -11,6 +11,7 @@ import {
 import { callCommand } from "../modules.ts"
 import type { KeyedMessage } from "@ui/message.ts"
 import { putWithProgress } from "./attachments.ts"
+import { preferencesState } from "./preferences.ts"
 import { sessionState } from "./session.ts"
 
 /** What the picture store needs from the outside. Injected so tests need no socket or store. */
@@ -28,6 +29,8 @@ export interface PictureDependencies {
   release(url: string): void
   /** The person the server answered; the session takes it, so every avatar follows at once. */
   setUser(user: User): void
+  /** The locale sizes are written in: the one the person's dates follow. */
+  locale(): string
 }
 
 const NETWORK: KeyedMessage = { key: `ProfilePicture.network` }
@@ -46,15 +49,19 @@ function typeError(name: string): KeyedMessage {
   return { key: `ProfilePicture.type`, values: { name: isolated(name) } }
 }
 
-function sizeError(name: string, size: number): KeyedMessage {
+function sizeError(name: string, size: number, locale: string): KeyedMessage {
   return {
     key: `ProfilePicture.size`,
-    values: { name: isolated(name), size: formatBytes(size), max: formatBytes(PICTURE_MAX_BYTES) },
+    values: {
+      name: isolated(name),
+      size: formatBytes(size, locale),
+      max: formatBytes(PICTURE_MAX_BYTES, locale),
+    },
   }
 }
 
 /** The server's refusal of `file`, in the row's words, by their key in `app`. */
-function refusalOf(error: unknown, file: File): KeyedMessage {
+function refusalOf(error: unknown, file: File, locale: string): KeyedMessage {
   const code = error instanceof RealtimeRequestError
     ? (error.details as { code?: unknown } | undefined)?.code
     : undefined
@@ -62,7 +69,7 @@ function refusalOf(error: unknown, file: File): KeyedMessage {
     case `FILE_TYPE`:
       return typeError(file.name)
     case `FILE_TOO_LARGE`:
-      return sizeError(file.name, file.size)
+      return sizeError(file.name, file.size, locale)
     case `FILE_CONTENT`:
       return { key: `ProfilePicture.content`, values: { name: isolated(file.name) } }
     case `UPLOADS_PENDING`:
@@ -109,7 +116,7 @@ export function createPictureStore(dependencies: PictureDependencies) {
       dependencies.setUser(user)
       announcement.value = { key: `ProfilePicture.saved` }
     } catch (cause) {
-      refuse(refusalOf(cause, file))
+      refuse(refusalOf(cause, file, dependencies.locale()))
     } finally {
       // Its failure only leaves the upload waiting until it expires.
       if (signed) await dependencies.cancel({ id: signed.id }).catch(() => {})
@@ -123,7 +130,9 @@ export function createPictureStore(dependencies: PictureDependencies) {
   function reject(rejection: FileRejection): void {
     const { file } = rejection
     refuse(
-      rejection.reason === `too-large` ? sizeError(file.name, file.size) : typeError(file.name),
+      rejection.reason === `too-large`
+        ? sizeError(file.name, file.size, dependencies.locale())
+        : typeError(file.name),
     )
   }
 
@@ -159,4 +168,5 @@ export const pictureCalls: PictureDependencies = {
   preview: (file) => URL.createObjectURL(file),
   release: (url) => URL.revokeObjectURL(url),
   setUser: (user) => sessionState.value = { ...sessionState.value, user },
+  locale: () => preferencesState.format.peek().locale,
 }

@@ -19,7 +19,7 @@ import {
   AdminHealth,
   type AdminSystemSnapshot,
 } from "@domain/identity"
-import { When } from "@spy4x/preact-ui/format"
+import { useFormat, When } from "@spy4x/preact-ui/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAdminText } from "./i18n.ts"
 import { ADMIN_JOB_PATHS } from "./admin-jobs-screen.tsx"
@@ -137,6 +137,7 @@ function SystemBody(
 ): JSX.Element {
   const { database, cache, fileStore, queue, backup, migrations, build } = snapshot
   const t = useAdminText()
+  const { locale } = useFormat()
   const summary = SUMMARY[snapshot.health] ?? SUMMARY[AdminHealth.ERROR]
   const reachable = (ms: number, ok: boolean) =>
     ok ? t.t(`AdminSystem.reachableIn`, { ms }) : t.t(`AdminSystem.noAnswer`)
@@ -165,7 +166,7 @@ function SystemBody(
             value: reachable(database.latencyMs, database.reachable),
           }, {
             label: t.t(`AdminSystem.size`),
-            value: database.sizeBytes === null ? unknown : formatBytes(database.sizeBytes),
+            value: database.sizeBytes === null ? unknown : formatBytes(database.sizeBytes, locale),
           }, {
             label: t.t(`AdminSystem.version`),
             value: database.version ? `Postgres ${database.version}` : unknown,
