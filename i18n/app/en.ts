@@ -616,10 +616,10 @@ export default {
   "GroupBillingView.trialUntil": "“{group}” is on {plan} until {date}.",
   "GroupBillingView.paid": "You’re on {plan}",
   "GroupBillingView.paidText": "Stripe confirmed the payment for “{group}”.",
-  "NotificationsScreen.loadFailed": "Could not load the notifications.",
-  "NotificationsScreen.loadMoreFailed": "Could not load more notifications.",
-  "NotificationsScreen.readFailed": "Could not mark it as read.",
-  "NotificationsScreen.readAllFailed": "Could not mark them as read.",
+  "NotificationsScreen.loadFailed": "Could not load the notifications",
+  "NotificationsScreen.loadMoreFailed": "Could not load more notifications",
+  "NotificationsScreen.readFailed": "Could not mark it as read",
+  "NotificationsScreen.readAllFailed": "Could not mark them as read",
   "NotificationsScreen.invitedViewer":
     "You were invited to join “<group>{group}</group>” as a viewer.",
   "NotificationsScreen.invitedEditor":
