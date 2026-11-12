@@ -196,8 +196,9 @@ export function createGroupsState(
     /**
      * Saves one file to the device: the bytes come through the admin API, which writes the audit
      * row. The address names this download with a fresh id, so the API writes one row however
-     * often the browser fetches that address (Chromium fetches it twice). A file someone removed shows a notice above the list and the list is read again; the
-     * admin app never navigates to an error page.
+     * often the browser fetches that address (Chromium fetches it twice). A file someone removed
+     * shows a notice above the list and the list is read again; the admin app never navigates to
+     * an error page.
      */
     async downloadFile(groupId: string, file: AdminGroupFile): Promise<void> {
       files.value = { ...files.value, notice: null }
