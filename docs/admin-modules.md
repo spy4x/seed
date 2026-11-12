@@ -112,7 +112,9 @@ and answer 404, since every file sits on a note and every widget counts notes.
 | `/thumbnail`                                      | no        |
 
 The thumbnail route serves the whole original image; the 40 px tile only scales it down. So an
-operator who opens the thumbnail's address sees the full image without an audit row.
+operator who opens the thumbnail's address sees the full image without an audit row. Thumbnails
+spend a per-operator budget of their own, ten times the normal one (`THUMBNAIL_LIMIT_FACTOR`), so a
+page of 25 tiles leaves the operator's other admin calls alone.
 
 ## Next
 

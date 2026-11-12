@@ -1,6 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { MiddlewareHandler } from "hono"
+import type { RateLimitStore } from "@spy4x/platform/rate-limit"
 import { NOTES_OFF, type NotesSetup } from "@server/notes/setup.ts"
 import {
   ADMIN_GROUP_NO_FILTER,
@@ -33,6 +34,12 @@ import {
 } from "./groups.ts"
 import type { AppDbBase } from "@api/services/db-base.ts"
 import { apiError } from "../../_testing/api-error.ts"
+import { brokenStore, memoryStore } from "../../_testing/auth-routes.ts"
+import {
+  type AuthRateLimits,
+  createAuthRateLimits,
+  THUMBNAIL_LIMIT_FACTOR,
+} from "../../middlewares/auth-rate-limits.ts"
 
 const GROUP_ID = `0199c3a0-0000-7000-8000-000000000001`
 const INVITATION_ID = `0199c3a0-0000-7000-8000-000000000002`
@@ -120,11 +127,13 @@ function buildApp(
     stored = true,
     auditFails = false,
     notes,
+    rateLimits,
   }: {
     outcome?: AdminGroupActOutcome
     stored?: boolean
     auditFails?: boolean
     notes?: NotesSetup
+    rateLimits?: AuthRateLimits
   } = {},
 ) {
   const calls: unknown[][] = []
@@ -168,7 +177,12 @@ function buildApp(
   const route = createAdminRoute({
     auth: testSessionGuards(),
     mutationGuards: testMutationGuards,
-    modules: [createAdminGroupsRoutes({ limit: passThrough, groups, notes })],
+    modules: [createAdminGroupsRoutes({
+      limit: rateLimits?.normal ?? passThrough,
+      thumbnailLimit: rateLimits?.thumbnail ?? passThrough,
+      groups,
+      notes,
+    })],
   })
   return { app: mountRoute(`/admin`, route, auth), calls }
 }
@@ -578,6 +592,63 @@ describe(`operator area group routes`, () => {
   })
 })
 
+describe(`admin group thumbnails: their own budget (#536)`, () => {
+  /**
+   * The shipped defaults, 100 requests a minute per operator, over one in-process store per name,
+   * as Valkey keeps one key space per prefix: two limiters on the same name share their budgets.
+   */
+  const settings = () => {
+    const stores = new Map<string, RateLimitStore>()
+    return {
+      windowMs: 60_000,
+      strictLimit: 30,
+      limit: 100,
+      otpWindowMs: 900_000,
+      otpLimit: 5,
+      store: (name: string) => stores.get(name) ?? stores.set(name, memoryStore()).get(name)!,
+      onStoreError: () => {},
+    }
+  }
+  const thumbnail = ROUTES[9]
+  const otherCalls = [ROUTES[0], ROUTES[1], ROUTES[5], ROUTES[10], ROUTES[11]]
+
+  it(`refuses nothing while an operator pages through five pages of tiles and acts in one minute`, async () => {
+    const { app } = buildApp(operator(), { rateLimits: createAuthRateLimits(settings()) })
+    for (let page = 0; page < 5; page++) {
+      for (const route of otherCalls) expect((await send(app, route)).status).toBe(200)
+      for (let tile = 0; tile < 25; tile++) expect((await send(app, thumbnail)).status).toBe(200)
+    }
+    // 125 tiles spent none of the normal budget: 25 other calls leave 75 of it.
+    for (let call = 0; call < 75; call++) expect((await send(app, ROUTES[1])).status).toBe(200)
+    expect((await send(app, ROUTES[1])).status).toBe(429)
+    expect((await send(app, thumbnail)).status).toBe(200)
+  })
+
+  it(`refuses a tile past its own budget and still answers the other admin routes`, async () => {
+    const { app } = buildApp(operator(), { rateLimits: createAuthRateLimits(settings()) })
+    const budget = 100 * THUMBNAIL_LIMIT_FACTOR
+    for (let tile = 0; tile < budget; tile++) expect((await send(app, thumbnail)).status).toBe(200)
+
+    const refused = await send(app, thumbnail)
+    expect(refused.status).toBe(429)
+    expect(refused.headers.get(`retry-after`)).not.toBeNull()
+    expect((await send(app, ROUTES[1])).status).toBe(200)
+  })
+
+  it(`serves a tile and reports the error while the thumbnail budget's store is down`, async () => {
+    const errors: unknown[] = []
+    const rateLimits = createAuthRateLimits({
+      ...settings(),
+      store: brokenStore,
+      onStoreError: (error) => errors.push(error),
+    })
+    const { app } = buildApp(operator(), { rateLimits })
+
+    expect((await send(app, thumbnail)).status).toBe(200)
+    expect(errors.map((error) => (error as Error).message)).toEqual([`valkey is down`])
+  })
+})
+
 describe(`admin group widgets: what the operator may read`, () => {
   const widget = (
     id: string,
@@ -612,7 +683,9 @@ describe(`admin group widgets: what the operator may read`, () => {
     const route = createAdminRoute({
       auth: testSessionGuards(),
       mutationGuards: testMutationGuards,
-      modules: [createAdminGroupsRoutes({ limit: passThrough, groups })],
+      modules: [
+        createAdminGroupsRoutes({ limit: passThrough, thumbnailLimit: passThrough, groups }),
+      ],
     })
     return { app: mountRoute(`/admin`, route, operator()), reads }
   }

@@ -98,6 +98,7 @@ const openAuthLimits: AuthRateLimits = {
   otpByUser: passThrough,
   guestStart: notCalled,
   normal: passThrough,
+  thumbnail: passThrough,
   resetByAddress: notCalled,
   emailCodeByAddress: notCalled,
   signUpCode: notCalled,
