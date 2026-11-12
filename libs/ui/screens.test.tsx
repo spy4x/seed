@@ -263,6 +263,7 @@ describe("the newsletter's result pages", () => {
   it("open with focus on their result sentence, so a screen reader reads it first", () => {
     const results = [
       <SubscribeForm
+        key="sent"
         email=""
         onEmailChange={() => {}}
         list="news"
@@ -270,10 +271,10 @@ describe("the newsletter's result pages", () => {
         error={null}
         pending={false}
       />,
-      <SubscriptionConfirmScreen {...link} state="done" />,
-      <SubscriptionConfirmScreen {...link} state="expired" />,
-      <UnsubscribeScreen {...link} state="done" />,
-      <UnsubscribeScreen {...link} state="not-recognised" />,
+      <SubscriptionConfirmScreen key="confirmed" {...link} state="done" />,
+      <SubscriptionConfirmScreen key="expired" {...link} state="expired" />,
+      <UnsubscribeScreen key="unsubscribed" {...link} state="done" />,
+      <UnsubscribeScreen key="not-recognised" {...link} state="not-recognised" />,
     ]
     for (const result of results) {
       const status = renderToString(result).match(/<p\b[^>]*role="status"[^>]*>/)?.[0]
@@ -308,6 +309,7 @@ describe("signed-out cards' layout", () => {
     ),
     "subscribe": (
       <SubscribeForm
+        key="sent"
         email=""
         onEmailChange={() => {}}
         list="news"
@@ -338,6 +340,7 @@ describe("signed-out cards' layout", () => {
     }
     const sent = renderToString(
       <SubscribeForm
+        key="sent"
         email=""
         onEmailChange={() => {}}
         list="news"

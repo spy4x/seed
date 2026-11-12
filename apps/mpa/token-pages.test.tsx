@@ -47,7 +47,7 @@ function fakeFrame(props: TokenScreenProps = {}) {
     },
     off(ctx, page, init) {
       offs.push(page)
-      return ctx.render(<p data-e2e="product-off">Off</p>, init)
+      return ctx.render(<p data-e2e="product-off" />, init)
     },
   }
   return { frame, drawn, offs }
