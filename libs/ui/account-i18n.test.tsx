@@ -415,7 +415,7 @@ const screens: Record<string, VNode> = {
     <CodeStep
       email="ada@example.com"
       sentence="PasswordResetScreen.sent"
-      title="PasswordResetScreen.sentTitle"
+      heading="PasswordResetScreen.sentTitle"
       minutes={15}
       checking={false}
       error={null}

@@ -288,13 +288,13 @@ describe("SignInCodeScreen's code step in the browser", () => {
 })
 
 describe("the password reset's code step in the browser", () => {
-  it("heads the step with the reset's own title, not the shared \"Check your inbox\"", async () => {
+  it('heads the step with the reset\'s own title, not the shared "Check your inbox"', async () => {
     const nothing = () => {}
     await mount(
       <CodeStep
         email="ada@example.com"
         sentence="PasswordResetScreen.sent"
-        title="PasswordResetScreen.sentTitle"
+        heading="PasswordResetScreen.sentTitle"
         minutes={15}
         checking={false}
         error={null}
