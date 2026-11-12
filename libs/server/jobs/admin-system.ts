@@ -87,13 +87,20 @@ export async function readLastBackup(sql: postgres.Sql): Promise<Date | null> {
   return row?.succeededAt ?? null
 }
 
-/** How many migrations ran, and the newest one's name and time. */
+/**
+ * How many migrations ran, and the newest one's name and time.
+ *
+ * The migration runner stores `created_at` as a `timestamp` without a zone, the wall time in the
+ * database session's zone. It is read back in that zone, so the time is right whatever zone this
+ * process runs in.
+ */
 export async function readMigrations(
   sql: postgres.Sql,
 ): Promise<{ applied: number; latest: string | null; latestAt: Date | null }> {
   const [count] = await sql<{ applied: number }[]>`SELECT count(*)::int AS applied FROM migrations`
   const [latest] = await sql<{ name: string; createdAt: Date }[]>`
-    SELECT name, created_at FROM migrations ORDER BY id DESC LIMIT 1
+    SELECT name, created_at AT TIME ZONE current_setting('TimeZone') AS created_at
+    FROM migrations ORDER BY id DESC LIMIT 1
   `
   return {
     applied: count.applied,

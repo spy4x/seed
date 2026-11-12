@@ -21,7 +21,10 @@ import { applyMigrations } from "./migrations.ts"
  * they are missing rather than skipping.
  */
 
-async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
+async function withSchema(
+  body: (sql: postgres.Sql) => Promise<void>,
+  connection: Record<string, string> = {},
+): Promise<void> {
   const settings = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...settings, max: 1, onnotice: () => {} })
   const schema = `admin_system_test_${uuidV7().replaceAll("-", "")}`
@@ -29,7 +32,7 @@ async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<v
     ...settings,
     max: 4,
     transform: postgres.camel,
-    connection: { options: `-c search_path=${schema}` },
+    connection: { options: `-c search_path=${schema}`, ...connection },
     onnotice: () => {},
   })
   try {
@@ -112,16 +115,20 @@ Deno.test("system: reads the last backup the backup service recorded", async () 
   })
 })
 
+/** The `migrations` table as the migration runner makes it, which `schema.sql` shows. */
+async function createMigrations(sql: postgres.Sql): Promise<void> {
+  await sql`
+    CREATE TABLE migrations (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      created_at TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL
+    )
+  `
+}
+
 Deno.test("system: describes the database and its newest migration", async () => {
   await withSchema(async (sql) => {
-    // The migration runner makes this table itself, as `schema.sql` shows it.
-    await sql`
-      CREATE TABLE migrations (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        created_at TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL
-      )
-    `
+    await createMigrations(sql)
     await sql`
       INSERT INTO migrations (name) VALUES
         ('2026_11_09_0001_admin_stats_indexes.sql'), ('2026_11_14_0001_backup_status.sql')
@@ -136,4 +143,21 @@ Deno.test("system: describes the database and its newest migration", async () =>
       latest: "2026_11_14_0001_backup_status",
     })
   })
+})
+
+Deno.test("system: tells when the newest migration ran, in this process's time zone or another", async () => {
+  const here = Intl.DateTimeFormat().resolvedOptions().timeZone
+  // UTC+14 all year, so it differs from this process's zone: the case that was hours off.
+  const elsewhere = "Pacific/Kiritimati"
+  expect(new Date().getTimezoneOffset()).not.toBe(-14 * 60)
+  for (const zone of [here, elsewhere]) {
+    await withSchema(async (sql) => {
+      await createMigrations(sql)
+      await sql`INSERT INTO migrations (name) VALUES ('2026_11_14_0001_backup_status.sql')`
+      const { latestAt } = await readMigrations(sql)
+
+      expect({ zone, off: Math.abs(latestAt!.valueOf() - Date.now()) < 5_000 })
+        .toEqual({ zone, off: true })
+    }, { TimeZone: zone })
+  }
 })
