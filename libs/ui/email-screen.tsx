@@ -14,8 +14,7 @@ import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { useFocusOnError } from "@spy4x/preact-ui/use-focus-on-error"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
-import { OAUTH_PROVIDER_NAMES } from "@domain/identity"
-import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
+import { proofMethods, type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAppText } from "./i18n.ts"
 
@@ -193,8 +192,7 @@ export function EmailDialog(
   }, [step])
 
   const hasEmail = status.email !== null
-  const providerNames = new Intl.ListFormat(t.language, { type: `disjunction` })
-    .format(providerProof?.providers.map((provider) => OAUTH_PROVIDER_NAMES[provider]) ?? [])
+  const providerNames = providerProof ? proofMethods(providerProof, t) : ``
   const title = t.t(
     step === "code"
       ? `EmailScreen.enterCode`
