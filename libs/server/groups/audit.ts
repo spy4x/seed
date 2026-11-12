@@ -19,8 +19,15 @@ export interface AuditEventInput {
  * Writes one audit row in the caller's transaction, so the row exists exactly when the change it
  * records does. Every group event goes through here, which is what keeps the log's columns in one
  * shape.
+ *
+ * With `ignoreRepeat`, a row a unique index refuses is skipped instead of failing: the operator's
+ * file reads use it, whose index makes a repeated request write one row.
  */
-export async function writeAuditEvent(sql: postgres.Sql, event: AuditEventInput): Promise<void> {
+export async function writeAuditEvent(
+  sql: postgres.Sql,
+  event: AuditEventInput,
+  options: { ignoreRepeat?: boolean } = {},
+): Promise<void> {
   await sql`
     INSERT INTO audit_events (
       event_kind, actor_user_id, group_id, request_id,
@@ -30,5 +37,6 @@ export async function writeAuditEvent(sql: postgres.Sql, event: AuditEventInput)
       ${event.targetUserId ?? null}, ${event.entityType ?? null}, ${event.entityId ?? null},
       ${sql.json(event.details ?? {})}
     )
+    ${options.ignoreRepeat ? sql`ON CONFLICT DO NOTHING` : sql``}
   `
 }
