@@ -1489,7 +1489,7 @@ describe("the Your data row on the Account section", () => {
       />,
     )
     expect(find("[data-e2e=data-export-error]").textContent).toContain(
-      "Couldn't request your file.",
+      "Could not request your file.",
     )
   })
 })
