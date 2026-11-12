@@ -35,7 +35,8 @@ Deno.test("every Playwright configuration of the repository is checked", async (
     const entry of walk(ROOT, {
       match: [/playwright\.config\.[cm]?[jt]s$/],
       // .volumes holds the development stack's data, which its containers own and often hide.
-      skip: [/(^|\/)(\.git|node_modules|\.volumes)$/],
+      // e2e/results holds e2e-local.sh's temporary copy of a configuration while a run lasts.
+      skip: [/(^|\/)(\.git|node_modules|\.volumes)$/, /(^|\/)e2e\/(results|report)$/],
     })
   ) found.push(relative(ROOT, entry.path))
   expect(found.sort()).toEqual(Object.keys(await loadConfigs()).sort())
