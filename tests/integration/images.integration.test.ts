@@ -303,7 +303,10 @@ Deno.test("a picture replaced while the last job finishes waits on the person, n
       await sql.begin((tx) => tx`SELECT 1 FROM images WHERE id = ${id} FOR UPDATE NOWAIT`)
     } finally {
       release.resolve()
+      // Lets a failure above be reported, not a dangling deadlock error.
+      await Promise.allSettled([replacement, job])
     }
+    // Neither side was chosen as a deadlock victim.
     await replacement
     await job
 
