@@ -8,7 +8,7 @@ import type {
 } from "@spy4x/platform/universal/settings"
 import { createFormatters, type DeviceFormat, deviceFormat } from "@spy4x/time/format"
 import { isLanguage, LANGUAGES, type Preferences, preferencesDefinition } from "@domain/identity"
-import { automaticLocale, type KeptLanguage, pickLanguage } from "@platform/i18n.ts"
+import { type KeptLanguage, pickLanguage, seedAutomaticLocale } from "@platform/i18n.ts"
 import { kept as keptLanguage } from "../i18n.ts"
 import { callCommand, callQuery } from "../modules.ts"
 import { themeStore } from "./theme.ts"
@@ -126,7 +126,7 @@ export function createPreferencesState(dependencies: PreferencesDependencies) {
       dependencies.language.read(),
       requested,
     )
-    return automaticLocale(language, [device.value.locale, ...requested])
+    return seedAutomaticLocale(language, [device.value.locale, ...requested])
   })
 
   /** Every date and time on screen, in the person's settings. */

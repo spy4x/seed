@@ -205,17 +205,39 @@ export function languageSetting<Language extends string>(
   }
 }
 
+/** The most device locales {@link automaticLocale} reads, as the library caps them. */
+const MAX_REQUESTED = 32
+
+// TODO(spy4x/ts-libs#921): import from @spy4x/platform/universal/i18n once released
 /**
- * The region format "Automatic" means for a person who reads `language`: the first of the
- * device's locales in that language, else the language's own region ("de-DE" for German,
- * "ar-EG" for Arabic). English without an English device locale is `en-GB`, as the public
- * website writes it. Only a tag with a region counts, so a bare "de" in `navigator.languages`
- * never hides the "de-AT" the device lists after it.
+ * The locale an "Automatic" region format means for a person who reads `language`: the first of
+ * `deviceLocales` (`navigator.languages`) in that language, else `fallback`, which defaults to the
+ * language with its likely region (`de` → `de-DE`). Only a device tag with a region counts, so a
+ * bare `de` never hides the `de-AT` listed after it.
  */
-export function automaticLocale(language: string, deviceLocales: readonly string[]): string {
-  const regional = deviceLocales.filter((tag) => regionOf(tag) !== null)
-  const own = language === `en` ? `en-GB` : regionOf(language) ? language : withRegion(language)
-  return negotiateLanguage(language, regional, own)
+export function automaticLocale(
+  language: string,
+  deviceLocales: readonly string[],
+  fallback: string = withRegion(language),
+): string {
+  const regional = deviceLocales.slice(0, MAX_REQUESTED).filter((tag) => regionOf(tag) !== null)
+  return negotiateLanguage(language, regional, fallback)
+}
+
+/**
+ * Seed's "Automatic" region format: {@link automaticLocale}, with English as `en-GB` when the
+ * device has no English locale, and Arabic with Latin digits (`ar-EG-u-nu-latn`), as the public
+ * website writes both. So an Arabic sentence never mixes `٣٧` from the region format with `41`
+ * from the text language. A region format the person pins is never passed through here.
+ */
+export function seedAutomaticLocale(language: string, deviceLocales: readonly string[]): string {
+  const locale = automaticLocale(language, deviceLocales, language === `en` ? `en-GB` : undefined)
+  if (language !== `ar`) return locale
+  try {
+    return new Intl.Locale(locale, { numberingSystem: `latn` }).toString()
+  } catch {
+    return locale
+  }
 }
 
 /** The region subtag of `tag`, or `null` when it has none or is no valid tag. */

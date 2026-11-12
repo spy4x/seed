@@ -113,10 +113,21 @@ function regions(language: string): LocaleOption[] {
 
 /**
  * A region format's name in `language` (English by default), `German (Germany)`, or the tag when
- * the list lacks it.
+ * the list lacks it. Extensions do not change the name: Automatic Arabic, `ar-EG-u-nu-latn`, is
+ * named as `ar-EG`.
  */
 export function regionName(locale: string, language = `en`): string {
-  return regions(language).find((option) => option.value === locale)?.name ?? locale
+  const base = baseLocale(locale)
+  return regions(language).find((option) => option.value === base)?.name ?? locale
+}
+
+/** `tag` without its extensions (`ar-EG-u-nu-latn` → `ar-EG`); an invalid tag stays as it is. */
+function baseLocale(tag: string): string {
+  try {
+    return new Intl.Locale(tag).baseName
+  } catch {
+    return tag
+  }
 }
 
 /** A clock as a person reads it. */

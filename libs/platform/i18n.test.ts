@@ -7,6 +7,7 @@ import {
   LANGUAGE_STORAGE_KEY,
   languageSetting,
   pickLanguage,
+  seedAutomaticLocale,
 } from "./i18n.ts"
 
 const LANGUAGES = [`en`, `ru`, `de`, `ar`] as const
@@ -27,25 +28,48 @@ describe(`pickLanguage`, () => {
   })
 })
 
+// Ported from ts-libs' `automaticLocale` tests (spy4x/ts-libs#921), with Seed's quotes.
 describe(`automaticLocale`, () => {
   it(`takes the first device locale in the chosen language`, () => {
     expect(automaticLocale(`de`, [`en-US`, `de-AT`, `de-DE`])).toBe(`de-AT`)
     expect(automaticLocale(`en`, [`ru-RU`, `en-US`])).toBe(`en-US`)
-    expect(automaticLocale(`pt-BR`, [`pt-PT`])).toBe(`pt-PT`)
   })
 
-  it(`skips a device locale without a region`, () => {
-    expect(automaticLocale(`de`, [`en-US`, `de`, `de-CH`])).toBe(`de-CH`)
+  it(`skips a device locale without a region, and an invalid one`, () => {
+    expect(automaticLocale(`de`, [`en-US`, `de`, `not a tag`, `de-CH`])).toBe(`de-CH`)
   })
 
-  it(`falls back to the language's own region when no device locale matches`, () => {
+  it(`falls back to the language with its likely region when nothing matches`, () => {
     expect(automaticLocale(`de`, [`en-US`])).toBe(`de-DE`)
     expect(automaticLocale(`ar`, [`en-US`, `ar`])).toBe(`ar-EG`)
     expect(automaticLocale(`pt-BR`, [])).toBe(`pt-BR`)
   })
 
+  it(`keeps an invalid language as its own fallback`, () => {
+    expect(automaticLocale(`not a tag`, [`en-US`])).toBe(`not a tag`)
+  })
+
+  it(`uses the caller's fallback when nothing matches`, () => {
+    expect(automaticLocale(`en`, [`ru-RU`, `en`], `en-GB`)).toBe(`en-GB`)
+    expect(automaticLocale(`en`, [`en-US`], `en-GB`)).toBe(`en-US`)
+  })
+})
+
+describe(`seedAutomaticLocale`, () => {
   it(`writes English as en-GB, like the public website, when the device has no English`, () => {
-    expect(automaticLocale(`en`, [`ru-RU`, `en`])).toBe(`en-GB`)
+    expect(seedAutomaticLocale(`en`, [`ru-RU`, `en`])).toBe(`en-GB`)
+    expect(seedAutomaticLocale(`en`, [`en-US`])).toBe(`en-US`)
+  })
+
+  it(`writes Automatic Arabic with Latin digits, from a device match or the fallback`, () => {
+    expect(seedAutomaticLocale(`ar`, [`en-US`])).toBe(`ar-EG-u-nu-latn`)
+    expect(seedAutomaticLocale(`ar`, [`ar-SA`])).toBe(`ar-SA-u-nu-latn`)
+    expect(new Intl.NumberFormat(seedAutomaticLocale(`ar`, [])).format(37)).toBe(`37`)
+  })
+
+  it(`leaves every other language's locale as the library picks it`, () => {
+    expect(seedAutomaticLocale(`de`, [`en-US`, `de-AT`])).toBe(`de-AT`)
+    expect(seedAutomaticLocale(`ru`, [])).toBe(`ru-RU`)
   })
 })
 

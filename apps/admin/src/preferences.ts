@@ -2,7 +2,7 @@ import { computed, signal } from "@preact/signals"
 import type { StoredSettings } from "@spy4x/platform/universal/settings"
 import { type Language, type Preferences, preferencesDefinition } from "@domain/identity"
 import { createFormatters } from "@spy4x/time/format"
-import { automaticLocale } from "@platform/i18n.ts"
+import { seedAutomaticLocale } from "@platform/i18n.ts"
 import type { AdminFetch } from "./state.ts"
 
 /** What "Automatic" region format is read from. Injected so tests need no browser. */
@@ -29,7 +29,7 @@ export function createOperatorFormat(request: AdminFetch, locale: OperatorLocale
   const format = computed(() =>
     createFormatters({
       ...settings.value,
-      locale: settings.value?.locale ?? automaticLocale(locale.language(), locale.deviceLocales()),
+      locale: settings.value?.locale ?? seedAutomaticLocale(locale.language(), locale.deviceLocales()),
     })
   )
   const language = signal<Language | null>(null)
