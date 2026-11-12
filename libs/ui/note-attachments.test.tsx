@@ -19,6 +19,8 @@ import { createTranslator } from "@spy4x/platform/universal/i18n"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import app from "@i18n/app/en.ts"
 import appRu from "@i18n/app/ru.ts"
+import appAr from "@i18n/app/ar.ts"
+import { seedAutomaticLocale } from "@platform/i18n.ts"
 
 /** The `app` catalog's English, as a screen without a provider reads it. */
 const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
@@ -293,6 +295,19 @@ describe(`quota line`, () => {
       `Family uses 37 of 100 files and 41 MB of 200 MB.`,
     )
     expect(warn).toBe(false)
+  })
+
+  it(`writes one kind of digit in Arabic with an Automatic region format`, () => {
+    const arabic = createTranslator({
+      language: `ar`,
+      catalogs: [{ source: app, translation: appAr }],
+      numberLocale: seedAutomaticLocale(`ar`, [`en-US`]),
+    })
+    const { message } = quotaLine(`Family`, base.usage!, arabic.language)
+    const line = arabic.t(message.key, message.values)
+    expect(line).toContain(`37`)
+    expect(line).toContain(`41`)
+    expect(line).not.toMatch(/[\u0660-\u0669\u06F0-\u06F9]/)
   })
 
   it(`turns to the warning tone from 90 % of either cap`, () => {

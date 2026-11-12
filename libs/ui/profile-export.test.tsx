@@ -42,11 +42,14 @@ afterEach(async () => {
 /** One region format for every date, whatever the host's locale: "30 Oct 2026". */
 const FORMAT = createFormatters({ locale: `en-GB`, timeZone: `UTC`, hourCycle: null })
 
-async function mount(node: VNode): Promise<HTMLElement> {
+/** A Russian region format, whose sizes read "2,3 МБ". */
+const RUSSIAN = createFormatters({ locale: `ru-RU`, timeZone: `UTC`, hourCycle: null })
+
+async function mount(node: VNode, format = FORMAT): Promise<HTMLElement> {
   root = document.createElement(`div`)
   document.body.append(root)
   await act(() =>
-    render(<FormatContext.Provider value={FORMAT}>{node}</FormatContext.Provider>, root!)
+    render(<FormatContext.Provider value={format}>{node}</FormatContext.Provider>, root!)
   )
   return root
 }
@@ -184,6 +187,11 @@ describe(`DataExportRow`, () => {
     expect(document.querySelectorAll(`[data-e2e=data-export-request]`)).toHaveLength(0)
   })
 
+  it(`writes a ready file's size in the person's region format`, async () => {
+    await mount(row({ exportState: view(DataExportStatus.Ready) }).node, RUSSIAN)
+    expect(text(`[data-e2e=data-export-state]`)).toContain(`2,3 МБ`)
+  })
+
   it(`links a ready file to the download address with its size and last day`, async () => {
     const { node } = row({ exportState: view(DataExportStatus.Ready) })
     await mount(node)
@@ -276,6 +284,12 @@ describe(`AdminPersonDataExportsPanel`, () => {
     )
     expect(text(`[data-e2e=admin-person-data-export-a]`)).toMatch(/^Requested .+Preparing$/)
     expect(document.querySelectorAll(`[data-e2e=admin-person-data-exports] a`)).toHaveLength(0)
+  })
+
+  it(`writes each size in the operator's region format`, async () => {
+    const big = { ...json(DataExportStatus.Ready, `b`), sizeBytes: 2_400_000 }
+    await mount(<AdminPersonDataExportsPanel exports={[big]} error={null} />, RUSSIAN)
+    expect(text(`[data-e2e=admin-person-data-export-b]`)).toContain(`2,3 МБ`)
   })
 
   it(`says when the person never asked for one`, async () => {

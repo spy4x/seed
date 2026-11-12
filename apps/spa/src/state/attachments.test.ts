@@ -91,6 +91,7 @@ function fakeCalls(overrides: Partial<AttachmentDependencies> = {}) {
       return Promise.resolve({ url: `https://files.test/get/${id}` })
     },
     canCall: () => online,
+    locale: () => `en-GB`,
     ...overrides,
   }
   return { dependencies, calls, setOnline: (value: boolean) => (online = value) }
@@ -168,6 +169,17 @@ describe(`note attachments store`, () => {
     expect(calls).toContain(`download ${row.fileId}`)
     expect(calls).toContain(`remove ${row.fileId}`)
     expect(store.rows.value).toEqual([])
+  })
+
+  it(`writes the sizes of a refusal in the person's locale`, async () => {
+    const { dependencies } = fakeCalls({ locale: () => `de-DE` })
+    const store = createAttachmentsStore(dependencies)
+    await store.open(GROUP, NOTE)
+
+    store.add([file(`big.pdf`, `application/pdf`, 2.5 * MB)])
+    await settle()
+
+    expect(store.refusals.value).toMatchObject([{ values: { size: `2,5 MB`, max: `2 MB` } }])
   })
 
   it(`refuses a type, a size and a full note before anything is sent, naming each file`, async () => {

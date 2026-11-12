@@ -1,5 +1,6 @@
 import type { JSX } from "preact"
 import { useRef, useState } from "preact/hooks"
+import { useFormat } from "@spy4x/preact-ui/format"
 import {
   CommandPalette,
   type CommandPaletteLabels,
@@ -19,7 +20,7 @@ import {
   TAG_PATHS,
 } from "./progressive.tsx"
 import { DATA_EXPORT_ANCHOR } from "./profile-export.tsx"
-import { PICTURE_BUTTON_ID, PICTURE_RULE } from "./profile-picture.tsx"
+import { PICTURE_BUTTON_ID, pictureRule } from "./profile-picture.tsx"
 import { useAppText } from "./i18n.ts"
 import { englishText, type KeyedMessage, messageText } from "./message.ts"
 
@@ -188,6 +189,9 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
   latest.current = props
   const words = useRef(t)
   words.current = t
+  // Sizes in an action's detail follow the person's region format, as their dates do.
+  const region = useRef(``)
+  region.current = useFormat().locale
 
   const search = async (query: string, signal: AbortSignal): Promise<SearchOption[]> => {
     const { groups, currentGroup, online, guest = false, pageCommands = [], benchmark = false } =
@@ -225,7 +229,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     // Actions match their aliases too (their English label among them, so English words find
     // them in every language), in any word order, with a typo or in the other layout.
     const actions = matchOptions(
-      actionOptions(t, currentGroup, online, pageCommands, guest, benchmark),
+      actionOptions(t, region.current, currentGroup, online, pageCommands, guest, benchmark),
       text,
     )
     // A stale answer is dropped by the palette; its words must not replace the current ones.
@@ -272,6 +276,7 @@ function noteDetail(note: SearchNote, groupName: string | undefined): string | u
 /** The actions a person can take now, in the order the palette lists them. */
 function actionOptions(
   t: Translator<string>,
+  locale: string,
   currentGroup: SearchPaletteProps["currentGroup"],
   online: boolean,
   pageCommands: readonly PageCommand[],
@@ -350,7 +355,7 @@ function actionOptions(
       "change-picture",
       `Search.changePicture`,
       `${profilePath("account")}#${PICTURE_BUTTON_ID}`,
-      PICTURE_RULE,
+      pictureRule(locale),
       [`avatar`, `photo`, `upload picture`, `фото`, `аватар`],
     ),
     ...(benchmark

@@ -1,7 +1,7 @@
 import type { JSX } from "preact"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
-import { OnDay, When } from "@spy4x/preact-ui/format"
+import { OnDay, useFormat, When } from "@spy4x/preact-ui/format"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
 import { type DataExportJson, DataExportStatus } from "@domain/identity"
@@ -35,6 +35,7 @@ export function AdminPersonDataExportsPanel(
   { exports, error }: AdminPersonDataExportsPanelProps,
 ): JSX.Element {
   const t = useAdminText()
+  const { locale } = useFormat()
   if (error) return <ErrorState message={error} />
   if (exports === null) {
     return (
@@ -62,7 +63,7 @@ export function AdminPersonDataExportsPanel(
               type={badge.outline ? `outline` : undefined}
             />
             {item.sizeBytes !== null && (
-              <span class="text-sm text-muted">{formatBytes(item.sizeBytes)}</span>
+              <span class="text-sm text-muted">{formatBytes(item.sizeBytes, locale)}</span>
             )}
             {item.expiresAt && (
               <span class="ms-auto text-sm text-muted">

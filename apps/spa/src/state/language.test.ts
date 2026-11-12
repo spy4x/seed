@@ -200,6 +200,7 @@ function tab(
     theme,
     language: kept,
     device: () => ({ locale: `en-GB`, timeZone: `Europe/Berlin` }),
+    requested: () => [],
     keptZone: { read: () => null, write: () => {} },
     online: () => true,
   })

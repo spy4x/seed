@@ -164,7 +164,9 @@ function SystemBody(
             value: reachable(database.latencyMs, database.reachable),
           }, {
             label: t.t(`AdminSystem.size`),
-            value: database.sizeBytes === null ? unknown : formatBytes(database.sizeBytes),
+            value: database.sizeBytes === null
+              ? unknown
+              : formatBytes(database.sizeBytes, format.locale),
           }, {
             label: t.t(`AdminSystem.version`),
             value: database.version ? `Postgres ${database.version}` : unknown,

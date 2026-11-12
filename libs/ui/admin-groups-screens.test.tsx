@@ -10,6 +10,7 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { createFormatters } from "@spy4x/time/format"
+import { seedAutomaticLocale } from "@platform/i18n.ts"
 import {
   ADMIN_GROUP_NO_FILTER,
   type AdminGroupDetail,
@@ -63,13 +64,13 @@ afterEach(async () => {
 /** The operator's format, pinned, so dates read the same whatever the machine's locale. */
 const FORMAT = createFormatters({ locale: `en-GB`, timeZone: `UTC`, hourCycle: null })
 
-async function mount(node: VNode): Promise<HTMLElement> {
+async function mount(node: VNode, format = FORMAT): Promise<HTMLElement> {
   if (!root) {
     root = document.createElement(`div`)
     document.body.append(root)
   }
   await act(() =>
-    render(<FormatContext.Provider value={FORMAT}>{node}</FormatContext.Provider>, root!)
+    render(<FormatContext.Provider value={format}>{node}</FormatContext.Provider>, root!)
   )
   return root
 }
@@ -551,6 +552,24 @@ describe(`one group in the admin app`, () => {
       `2 of 100 files · 2.4 MB of 200 MB`,
     )
     expect(find(`[data-e2e=admin-group-counts]`).textContent).toContain(`Files2 · 2.4 MB`)
+  })
+
+  it(`writes the group's file sizes in the operator's region format`, async () => {
+    const russian = createFormatters({ locale: `ru-RU`, timeZone: `UTC`, hourCycle: null })
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files` })} />, russian)
+    expect(find(`[data-e2e=admin-group-files-usage]`).textContent).toBe(
+      `2 of 100 files · 2,4 МБ of 200 МБ`,
+    )
+    expect(find(`[data-e2e=admin-group-counts]`).textContent).toContain(`Files2 · 2,4 МБ`)
+  })
+
+  it(`writes one kind of digit in the group's counts for Automatic Arabic`, async () => {
+    const locale = seedAutomaticLocale(`ar`, [`en-US`])
+    const arabic = createFormatters({ locale, timeZone: `UTC`, hourCycle: null })
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files` })} />, arabic)
+    const counts = find(`[data-e2e=admin-group-counts]`).textContent ?? ``
+    expect(counts).toContain(`2 · 2.4`)
+    expect(counts).not.toMatch(/[\u0660-\u0669\u06F0-\u06F9]/)
   })
 
   it(`searches by the typed name, trimmed, on page 1`, async () => {
