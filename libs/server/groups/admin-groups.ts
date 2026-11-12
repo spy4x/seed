@@ -816,7 +816,9 @@ export async function findAdminGroupFile(
 /**
  * Writes the audit row of an operator opening (`open`) or downloading (`download`) one of the
  * group's files: the group's, marked as the operator's, naming the file. The group's own activity
- * log and its last activity leave these rows out.
+ * log and its last activity leave these rows out. A repeat of the same access to the same file by
+ * the same operator under the same `requestId` writes no second row (the partial unique index
+ * `idx_audit_events_file_access_once`); a `null` id never counts as a repeat.
  */
 export async function recordFileAccessAsOperator(
   sql: postgres.Sql,
@@ -824,15 +826,17 @@ export async function recordFileAccessAsOperator(
   groupId: string,
   file: Pick<AdminGroupStoredFile, "name" | "noteId">,
   access: "open" | "download",
+  requestId: string | null,
 ): Promise<void> {
   await writeAuditEvent(sql, {
     eventKind: access === `open` ? ADMIN_FILE_OPENED_KIND : ADMIN_FILE_DOWNLOADED_KIND,
     actorId: operator.id,
     groupId,
+    requestId: requestId ?? undefined,
     entityType: `note`,
     entityId: file.noteId,
     details: { name: file.name.slice(0, 100), [OPERATOR_DETAIL]: 1 },
-  })
+  }, { ignoreRepeat: true })
 }
 
 /**
@@ -874,7 +878,8 @@ export function adminGroupRows(sql: postgres.Sql) {
       groupId: string,
       file: Pick<AdminGroupStoredFile, "name" | "noteId">,
       access: "open" | "download",
-    ) => recordFileAccessAsOperator(sql, operator, groupId, file, access),
+      requestId: string | null,
+    ) => recordFileAccessAsOperator(sql, operator, groupId, file, access, requestId),
     removeFile: (operator: AdminGroupOperator, groupId: string, fileId: string) =>
       removeFileAsOperator(sql, operator, groupId, fileId),
   }
