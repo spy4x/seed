@@ -2185,6 +2185,8 @@ export default {
   "AdminUser.tabs": "О пользователе",
   "AdminUser.account": "Аккаунт",
   "AdminUser.picture": "Фото профиля",
+  "AdminUser.picturePreparing": "Готовим фото…",
+  "AdminUser.pictureRefused": "Это фото не подошло.",
   "AdminUser.none": "Нет",
   "AdminUser.address": "E-mail",
   "AdminUser.role": "Роль",

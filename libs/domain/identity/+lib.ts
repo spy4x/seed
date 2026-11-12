@@ -7,6 +7,7 @@ import {
 } from "@spy4x/platform/universal/text"
 import type { AdminUserPreferences } from "./preferences.ts"
 import type { GuestStats } from "./guests.ts"
+import type { PictureState } from "./profile-picture.ts"
 import { parseSort, serializeSort, type SortRule } from "@spy4x/platform/universal/sort"
 
 // Not in @spy4x/platform/model: too template-specific (a user's name length limit) to belong in a
@@ -1010,6 +1011,8 @@ export interface AdminUserRow {
   guestSince?: string | null
   /** Their profile picture; `null` or absent for none. */
   pictureId?: string | null
+  /** Where that picture stands; `null` or absent for none. Show it through `shownPictureId`. */
+  pictureState?: PictureState | null
 }
 
 /** The answer of `GET /api/admin/users`. */

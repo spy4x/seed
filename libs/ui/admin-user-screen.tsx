@@ -24,10 +24,13 @@ import {
   ADMIN_PICTURE_PATH,
   adminGrantableRoles,
   type AdminUserDetail,
+  type AdminUserRow,
   AuthAuditEventType,
   canChangeRoles,
   PICTURE_AUDIT,
+  PictureState,
   pictureUrl,
+  shownPictureId,
   SIGN_IN_LINK_METHOD,
   TELEGRAM_METHOD,
   type UserRole,
@@ -409,7 +412,13 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
       <PageHeader
         title={name}
         subtitle={adminUserSubtitle(user) ?? undefined}
-        mark={<Avatar name={name} src={pictureUrl(user.pictureId, ADMIN_PICTURE_PATH)} size="md" />}
+        mark={
+          <Avatar
+            name={name}
+            src={pictureUrl(shownPictureId(user), ADMIN_PICTURE_PATH)}
+            size="md"
+          />
+        }
         back={back}
         navigate={navigate}
         menu={menu || undefined}
@@ -528,6 +537,36 @@ function Fact({ label, children }: { label: string; children: ComponentChildren 
   )
 }
 
+/**
+ * The "Profile picture" row's value: the picture once it is ready, else the initials, with a line
+ * saying it is still being prepared or could not be used. No picture is asked for until it is ready.
+ */
+function PictureValue({ user }: { user: AdminUserRow }): JSX.Element {
+  const t = useAdminText()
+  const state = user.pictureState
+  return (
+    <span class="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
+      <Avatar
+        name={adminUserName(user, t)}
+        src={pictureUrl(shownPictureId(user), ADMIN_PICTURE_PATH)}
+        size="lg"
+        alt=""
+        class="shrink-0"
+      />
+      {state === PictureState.Preparing && (
+        <span class="text-sm font-medium" data-e2e="admin-user-picture-state">
+          {t.t(`AdminUser.picturePreparing`)}
+        </span>
+      )}
+      {state === PictureState.Refused && (
+        <span class="text-sm font-medium text-danger" data-e2e="admin-user-picture-state">
+          {t.t(`AdminUser.pictureRefused`)}
+        </span>
+      )}
+    </span>
+  )
+}
+
 function Overview({ detail, now }: { detail: AdminUserDetail; now: Date }): JSX.Element {
   const { user } = detail
   const t = useAdminText()
@@ -539,16 +578,7 @@ function Overview({ detail, now }: { detail: AdminUserDetail; now: Date }): JSX.
           <SettingRow
             label={t.t(`AdminUser.picture`)}
             dataE2E="admin-user-picture"
-            value={user.pictureId
-              ? (
-                <Avatar
-                  name={adminUserName(user, t)}
-                  src={pictureUrl(user.pictureId, ADMIN_PICTURE_PATH)}
-                  size="lg"
-                  alt=""
-                />
-              )
-              : t.t(`AdminUser.none`)}
+            value={user.pictureId ? <PictureValue user={user} /> : t.t(`AdminUser.none`)}
           />
           <SettingRow
             label={t.t(`AdminUser.address`)}

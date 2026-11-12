@@ -2278,6 +2278,8 @@ export default {
   "AdminUser.tabs": "عن هذا الشخص",
   "AdminUser.account": "الحساب",
   "AdminUser.picture": "صورة الملف الشخصي",
+  "AdminUser.picturePreparing": "جارٍ تجهيز الصورة…",
+  "AdminUser.pictureRefused": "تعذّر استخدام هذه الصورة.",
   "AdminUser.none": "لا يوجد",
   "AdminUser.address": "البريد الإلكتروني",
   "AdminUser.role": "الدور",
