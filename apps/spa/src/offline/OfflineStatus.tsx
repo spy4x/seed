@@ -119,7 +119,11 @@ function Sides({ view }: { view: ConflictView }) {
       </div>
       <div>
         <h3 class="text-sm font-semibold">{t.t(`OfflineStatus.theirs`)}</h3>
-        <p class="whitespace-pre-wrap text-sm" data-e2e="conflict-theirs" translate={false}>
+        <p
+          class={`whitespace-pre-wrap text-sm${view.theirsUnknown ? " text-muted" : ""}`}
+          data-e2e="conflict-theirs"
+          translate={false}
+        >
           {view.theirs}
         </p>
       </div>

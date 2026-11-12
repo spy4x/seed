@@ -1189,7 +1189,7 @@ export default {
       "A tag you created offline couldn't be saved, so we removed it from {count} notes. The notes are saved without it.",
   },
   "OfflineStatus.theirs": "Server's version",
-  "OfflineStatus.theirsUnknown": "The server's version isn't available.",
+  "OfflineStatus.theirsUnknown": "Not available right now.",
   "OfflineStatus.untitledNote": "Untitled note",
   "OfflineStatus.useServers": "Use the server's",
   "OfflineStatus.youDeletedNote": "You deleted this note.",
