@@ -1360,11 +1360,11 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
                             <CatalogThumbnail photoId={photo.id} size="size-16" />
                             {/* Says it opens full size where no zoom cursor shows: on a phone. */}
                             <span
-                              class="absolute end-1 bottom-1 inline-flex rounded-full bg-black/60 p-0.5 text-white"
+                              class="absolute end-1 bottom-1 inline-flex rounded-full bg-black/60 p-1 text-white"
                               aria-hidden="true"
                               data-e2e="catalog-item-photo-zoom"
                             >
-                              <IconLens class="size-3.5" />
+                              <IconLens class="size-3" />
                             </span>
                           </button>
                         )
