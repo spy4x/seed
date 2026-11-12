@@ -385,6 +385,23 @@ describe("admin job page", () => {
     expect(due.getAttribute("title")).toContain("2030")
   })
 
+  it("shows no due time on a finished run, and keeps it on one still to run", async () => {
+    const labels = () =>
+      [...document.querySelectorAll(`[data-e2e="admin-job-facts"] dt`)].map((dt) => dt.textContent)
+    const finished = [AdminJobState.Done, AdminJobState.Failed, AdminJobState.Cancelled]
+    const unfinished = [
+      AdminJobState.Scheduled,
+      AdminJobState.Due,
+      AdminJobState.Running,
+      AdminJobState.Retrying,
+    ]
+    for (const state of [...finished, ...unfinished]) {
+      await mount(jobPage({ job: { ...failedJob, state } }).node)
+      expect({ state, due: labels().includes("Due at") })
+        .toEqual({ state, due: unfinished.includes(state) })
+    }
+  })
+
   it("says the UTC clock time a waiting run was due at when asked to run it now", async () => {
     const waiting = {
       ...failedJob,
