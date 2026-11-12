@@ -165,6 +165,30 @@ describe(`the admin group list`, () => {
     expect(calls).toEqual([[`search`, { ...filter, query: `ada`, page: 1 }]])
   })
 
+  it(`groups the member and note counts in the operator's region format`, async () => {
+    const big = { ...family, memberCount: 1234, noteCount: 5678 }
+    const list = { groups: [big], total: 1, page: 1, pageSize: 25 }
+    const region = (locale: string) =>
+      createFormatters({ locale, timeZone: `UTC`, hourCycle: null })
+    const table = () => find(`[data-e2e=admin-groups-list]`).textContent
+
+    await mount(
+      <FormatContext.Provider value={region(`de-DE`)}>
+        <AdminGroupsListScreen {...listProps([], { list })} />
+      </FormatContext.Provider>,
+    )
+    expect(table()).toContain(`1.234`)
+    expect(table()).toContain(`5.678`)
+
+    await mount(
+      <FormatContext.Provider value={region(`en-US`)}>
+        <AdminGroupsListScreen {...listProps([], { list })} />
+      </FormatContext.Provider>,
+    )
+    expect(table()).toContain(`1,234`)
+    expect(table()).toContain(`5,678`)
+  })
+
   it(`filters by a pressed status chip at once and drops it when pressed again`, async () => {
     const calls: unknown[][] = []
     await mount(<AdminGroupsListScreen {...listProps(calls)} />)
