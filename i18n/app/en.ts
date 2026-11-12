@@ -901,7 +901,7 @@ export default {
   "GuestScreens.signOutAnyway": "Sign out anyway",
   "GuestScreens.signOutText":
     "This account has no sign-in method, so you won't be able to sign back in. You'll lose everything in it.",
-  "GuestScreens.offline": "You're offline. Connect and try again.",
+  "GuestScreens.offline": "Can't reach the server. Try again.",
   "GuestScreens.providerFailed":
     "{provider} didn't finish. Your account wasn't changed. Try again or choose another method.",
   "GuestScreens.noPasskey": "No passkey was added. Your account is still a guest account.",
@@ -1528,7 +1528,7 @@ export default {
   "SignInMethods.passkeyNotSaved": "Could not save the passkey. Try again.",
   "SignInMethods.passkeyOnDevice": "This device already has a passkey for your account.",
   "SignUpCodeScreen.checkFailed": "Could not check the code",
-  "SignUpCodeScreen.offline": "You're offline. Connect and try again.",
+  "SignUpCodeScreen.offline": "Can't reach the server. Try again.",
   "SignUpCodeScreen.title": "Check your inbox",
   "SignUpCodeScreen.loading": "Loading…",
   "SignUpCodeScreen.code": "Code",
