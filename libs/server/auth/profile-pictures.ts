@@ -52,6 +52,8 @@ export async function setUserPicture(
   userId: number,
   picture: StoredPicture | null,
 ): Promise<{ user: User; previous: string | null } | null> {
+  // `users` before `images`: the trigger below deletes the replaced image, and the image job
+  // locks in the same order, so the two cannot deadlock.
   const [before] = await sql<User[]>`
     SELECT * FROM users WHERE id = ${userId} AND deleted_at IS NULL FOR UPDATE
   `

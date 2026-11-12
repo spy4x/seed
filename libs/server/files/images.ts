@@ -143,6 +143,9 @@ function imageJob(
 
     const finish = !first || refused !== null
     const gone = await deps.sql.begin(async (tx) => {
+      // `users` before `images`, as `setUserPicture` and account deletion take them (their trigger
+      // deletes the replaced image): the opposite order deadlocks with them.
+      await tx`SELECT id FROM users WHERE picture_id = ${id} ORDER BY id FOR UPDATE`
       const [row] = await tx<{ processedAt: Date | null }[]>`
         SELECT processed_at FROM images WHERE id = ${id} FOR UPDATE
       `
