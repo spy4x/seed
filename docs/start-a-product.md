@@ -128,6 +128,26 @@ its pointer line and its lines in both deploy lists.
 `HomeNewsletter.lead` and `NewsletterOff.lead`. Replace the Releases on GitHub button too. Their
 uses in `subscribers.tsx` and `routes/index.tsx` are marked.
 
+**A website frame of its own.** A product that replaces `SiteFrame` keeps Seed's newsletter
+confirm and unsubscribe pages, the ones a mailed link opens, without copying their token flow.
+`apps/mpa/token-pages.tsx` builds their handlers from a frame the product passes: how to draw a
+page, the screens' `localize`, `onward` and `language`, and its "newsletter off" page. The flow
+itself (the API calls, the statuses, `Retry-After`, `Referrer-Policy`, the redirect after a
+finished step) stays Seed's, so a sync brings its fixes:
+
+```tsx
+const frame: TokenPageFrame = {
+  screen: () => ({ localize, onward: { href: `/`, label: `Back to the shop` } }),
+  render: (ctx, page, init) => ctx.render(<ShopFrame path={page.path}>{page.screen}</ShopFrame>, init),
+  off: (ctx, page, init) => ctx.render(<ShopFrame path={page.path}><Off /></ShopFrame>, init),
+}
+export const confirmHandlers = createSubscriptionConfirmHandlers(frame)
+export const unsubscribeHandlers = createUnsubscribeHandlers(frame)
+```
+
+The screens read their words through `I18nContext`, so `render` can wrap `page.screen` in a
+provider with the product's translator.
+
 ## Pictures and videos
 
 | What                     | Where                                     | Recorded by                                  |
