@@ -131,7 +131,7 @@ const ROUTED = (
 )
 
 /** The API's refusal of a first password on an account with no address. */
-const PASSWORD_NEEDS_ADDRESS = `Add an e-mail address first: you sign in with it.`
+const PASSWORD_NEEDS_ADDRESS = `Add an email address first: you sign in with it.`
 
 /** Lets the page's refused reads settle. */
 const settle = () => act(() => new Promise((done) => setTimeout(done, 0)))
