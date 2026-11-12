@@ -337,6 +337,22 @@ describe("OfflineStatus", () => {
     expect(theirs?.classList.contains("text-muted")).toBe(false)
   })
 
+  it("draws Copy my text with the look and size of the chooser's button, 44 px tall on a phone", async () => {
+    const storage = createMemoryStorage()
+    await storage.of(7).tagsQueue.putEntry({
+      ...TAG_CONFLICT,
+      conflict: { reason: "version", message: `TagSync.version`, server: SERVER_TAG },
+    })
+
+    await mountStrip(storage)
+
+    const copy = root!.querySelector("[data-e2e=conflict-copy]")!
+    const chooser = root!.querySelector("[data-conflict-choice=theirs]")!
+    expect(copy.textContent).toBe("Copy my text")
+    expect([...chooser.classList].filter((name) => !copy.classList.contains(name))).toEqual([])
+    expect(copy.classList.contains("max-sm:min-h-11")).toBe(true)
+  })
+
   it("says in the person's language that a tag was taken off notes, and dismisses it", async () => {
     const layer = await mountStrip(createMemoryStorage(), RU)
 

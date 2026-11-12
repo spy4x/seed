@@ -130,8 +130,9 @@ function Sides({ view }: { view: ConflictView }) {
       <div class="flex flex-wrap items-center gap-3 sm:col-span-2">
         <Button
           type="button"
-          size="sm"
-          variant="ghost"
+          variant="outline"
+          // The chooser's own button look and size, and 44 px tall on a phone: the touch target.
+          class="max-sm:min-h-11"
           data-e2e="conflict-copy"
           onClick={async () => {
             try {
