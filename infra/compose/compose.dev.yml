@@ -72,6 +72,11 @@ services:
       dockerfile: apps/admin/dockerfile.dev
       args:
         - DENO_VERSION=${DENO_VERSION}
+    deploy:
+      resources:
+        limits:
+          # Vite needs more than the production nginx image's 128M (ADMIN_MEM_LIMIT).
+          memory: "${ADMIN_DEV_MEM_LIMIT:-1G}"
     volumes:
       - ../../apps:/app/apps:z
       - ../../libs:/app/libs:z
