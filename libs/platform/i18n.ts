@@ -12,6 +12,7 @@
 
 import { signal } from "@preact/signals"
 import {
+  automaticLocale,
   type Catalog,
   createTranslator,
   negotiateLanguage,
@@ -205,25 +206,6 @@ export function languageSetting<Language extends string>(
   }
 }
 
-/** The most device locales {@link automaticLocale} reads, as the library caps them. */
-const MAX_REQUESTED = 32
-
-// TODO(spy4x/ts-libs#921): import from @spy4x/platform/universal/i18n once released
-/**
- * The locale an "Automatic" region format means for a person who reads `language`: the first of
- * `deviceLocales` (`navigator.languages`) in that language, else `fallback`, which defaults to the
- * language with its likely region (`de` → `de-DE`). Only a device tag with a region counts, so a
- * bare `de` never hides the `de-AT` listed after it.
- */
-export function automaticLocale(
-  language: string,
-  deviceLocales: readonly string[],
-  fallback: string = withRegion(language),
-): string {
-  const regional = deviceLocales.slice(0, MAX_REQUESTED).filter((tag) => regionOf(tag) !== null)
-  return negotiateLanguage(language, regional, fallback)
-}
-
 /**
  * Seed's "Automatic" region format: {@link automaticLocale}, with English as `en-GB` when the
  * device has no English locale, and Arabic with Latin digits (`ar-EG-u-nu-latn`), as the public
@@ -232,27 +214,9 @@ export function automaticLocale(
  */
 export function seedAutomaticLocale(language: string, deviceLocales: readonly string[]): string {
   const locale = automaticLocale(language, deviceLocales, language === `en` ? `en-GB` : undefined)
-  // Only a valid tag gets here: a device tag passed `regionOf`, and the fallback is `ar`'s own.
+  // Only a valid tag gets here: the library keeps only device tags with a region, and the
+  // fallback is `ar`'s own.
   return language === `ar`
     ? new Intl.Locale(locale, { numberingSystem: `latn` }).toString()
     : locale
-}
-
-/** The region subtag of `tag`, or `null` when it has none or is no valid tag. */
-function regionOf(tag: string): string | null {
-  try {
-    return new Intl.Locale(tag).region ?? null
-  } catch {
-    return null
-  }
-}
-
-/** `language` with its likely region: "de" → "de-DE". An invalid tag stays as it is. */
-function withRegion(language: string): string {
-  try {
-    const likely = new Intl.Locale(language).maximize()
-    return likely.region ? `${likely.language}-${likely.region}` : language
-  } catch {
-    return language
-  }
 }
