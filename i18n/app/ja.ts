@@ -902,7 +902,6 @@ export default {
   "MoveNote.title": "グループに移動",
   "MoveNote.cancel": "キャンセル",
   "MoveNote.hint": "移動先のグループの全員に表示されます。",
-  "MoveNote.to": "グループ",
   "MoveNote.move": "移動",
   "NewNote.title": "新しいメモ",
   "NewNote.close": "閉じる",

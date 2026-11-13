@@ -1021,7 +1021,6 @@ export default {
   "MoveNote.title": "Mover para outro grupo",
   "MoveNote.cancel": "Cancelar",
   "MoveNote.hint": "Todos do grupo escolhido vão poder vê-la.",
-  "MoveNote.to": "Grupo",
   "MoveNote.move": "Mover",
   "NewNote.title": "Nova nota",
   "NewNote.close": "Fechar",

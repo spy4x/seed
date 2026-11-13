@@ -1076,7 +1076,6 @@ export default {
   "MoveNote.title": "Перенести в группу",
   "MoveNote.cancel": "Отмена",
   "MoveNote.hint": "Заметку увидят все участники выбранной группы.",
-  "MoveNote.to": "Группа",
   "MoveNote.move": "Перенести",
   "NewNote.title": "Новая заметка",
   "NewNote.close": "Закрыть",

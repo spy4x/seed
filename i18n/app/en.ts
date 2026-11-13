@@ -940,7 +940,6 @@ export default {
   "MoveNote.title": "Move to group",
   "MoveNote.cancel": "Cancel",
   "MoveNote.hint": "Everyone in the group you choose will see it.",
-  "MoveNote.to": "Group",
   "MoveNote.move": "Move",
   "NewNote.title": "New note",
   "NewNote.close": "Close",

@@ -997,7 +997,6 @@ export default {
   "MoveNote.title": "In Gruppe verschieben",
   "MoveNote.cancel": "Abbrechen",
   "MoveNote.hint": "Alle in der gewählten Gruppe sehen die Notiz dann.",
-  "MoveNote.to": "Gruppe",
   "MoveNote.move": "Verschieben",
   "NewNote.title": "Neue Notiz",
   "NewNote.close": "Schließen",

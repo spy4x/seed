@@ -816,7 +816,6 @@ export default {
   "MoveNote.title": "移到群组",
   "MoveNote.cancel": "取消",
   "MoveNote.hint": "你选择的群组里的所有人都会看到它。",
-  "MoveNote.to": "群组",
   "MoveNote.move": "移动",
   "NewNote.title": "新建笔记",
   "NewNote.close": "关闭",

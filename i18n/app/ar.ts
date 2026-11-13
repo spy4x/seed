@@ -1123,7 +1123,6 @@ export default {
   "MoveNote.title": "نقل إلى مجموعة",
   "MoveNote.cancel": "إلغاء",
   "MoveNote.hint": "سيراها كل أعضاء المجموعة التي تختارها.",
-  "MoveNote.to": "المجموعة",
   "MoveNote.move": "نقل",
   "NewNote.title": "ملاحظة جديدة",
   "NewNote.close": "إغلاق",
