@@ -189,7 +189,7 @@ async function offline(
   }
 }
 
-/** Ctrl+K, then three searches that each find "Open profile": a typo, Cyrillic, the wrong layout. */
+/** Ctrl+K, then three searches that each find Go to "Profile": a typo, Cyrillic, the wrong layout. */
 async function shortcuts(
   browser: Browser,
   contexts: BrowserContext[],
@@ -208,7 +208,7 @@ async function shortcuts(
   const palette = page.locator("[data-e2e=search]")
   const field = palette.getByRole("combobox")
   await field.waitFor()
-  const action = palette.getByRole("option").filter({ hasText: "Open profile" })
+  const action = palette.getByRole("option").filter({ hasText: /^Profile/ })
   for (const [index, query] of ["proflie", "профиль", "зкщашду"].entries()) {
     if (index) await page.keyboard.press("Control+a")
     await page.keyboard.type(query, { delay: 85 })

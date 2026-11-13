@@ -116,7 +116,7 @@ function answers(buildId: string, path: string): boolean {
 }
 
 const DEV_MODULES = [
-  `/@id/__x00__deno::TSX::https://jsr.io/@spy4x/preact-ui/13.11.1/combobox.tsx`,
+  `/@id/__x00__deno::TSX::https://jsr.io/@spy4x/preact-ui/14.4.0/combobox.tsx`,
   `/@fs/home/me/seed/libs/domain/notes/+lib.ts`,
   `/@vite/client`,
   `/src/main.tsx`,
