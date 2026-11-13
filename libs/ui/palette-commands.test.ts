@@ -82,6 +82,18 @@ describe(`the palette's commands`, () => {
     ) expect(hrefs).toContain(`/profile/${section}`)
   })
 
+  it(`find Theme and every profile section by settings and настройки`, () => {
+    for (const query of [`settings`, `настройки`]) {
+      const found = matchOptions(paletteCommands(context(), () => {}), query).map((option) =>
+        option.id
+      )
+      expect(found, query).toContain(`action-theme`)
+      for (const section of [`account`, `security`, `region`, `appearance`, `danger-zone`]) {
+        expect(found, `${query} ${section}`).toContain(`action-settings-${section}`)
+      }
+    }
+  })
+
   it(`offer Activity only while the rail shows it, and opens that group's`, () => {
     expect(labels()).not.toContain(`Activity`)
     const activity = paletteCommands(context({ activityGroupId: HOME.id }), () => {})

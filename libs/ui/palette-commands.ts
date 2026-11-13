@@ -152,6 +152,9 @@ const GO_TO: readonly {
   },
 ]
 
+/** The words a first-time person tries for Theme and the profile sections, all under Settings. */
+const SETTINGS_ALIASES: readonly string[] = [`settings`, `настройки`]
+
 /** Extra words for each profile section, beyond its English name and description. */
 const SECTION_ALIASES: Record<ProfileSectionId, readonly string[]> = {
   account: [`name`, `email`, `e-mail`, `аккаунт`, `имя`, `почта`],
@@ -351,6 +354,7 @@ export function paletteCommands(
         `тёмная тема`,
         `светлая тема`,
         `ночной режим`,
+        ...SETTINGS_ALIASES,
       ],
       get state() {
         return themeName(t, current())
@@ -366,7 +370,7 @@ export function paletteCommands(
         page(profilePath(section)),
         {
           detail: { key: PROFILE_SECTION_TEXT[section].description },
-          aliases: SECTION_ALIASES[section],
+          aliases: [...SECTION_ALIASES[section], ...SETTINGS_ALIASES],
         },
       )
     ),
