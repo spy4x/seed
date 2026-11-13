@@ -1772,7 +1772,7 @@ export default {
     "many": "Saisissez au moins {count} caractères pour rechercher des notes.",
     "other": "Saisissez au moins {count} caractères pour rechercher des notes.",
   },
-  "Search.empty": "Aucune note ni aucun groupe ne correspond à « {query} ».",
+  "Search.empty": "Rien ne correspond à « {query} ».",
   "Search.emptyOnDevice":
     "Rien sur cet appareil ne correspond à « {query} ». Relancez la recherche une fois de retour en ligne.",
   "Search.notes": "Notes",

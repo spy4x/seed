@@ -1677,7 +1677,7 @@ export default {
     "one": "Gib mindestens {count} Zeichen ein, um Notizen zu durchsuchen.",
     "other": "Gib mindestens {count} Zeichen ein, um Notizen zu durchsuchen.",
   },
-  "Search.empty": "Keine Notizen oder Gruppen zu „{query}“.",
+  "Search.empty": "Nichts passt zu „{query}“.",
   "Search.emptyOnDevice":
     "Auf diesem Gerät passt nichts zu „{query}“. Suche noch einmal, wenn du wieder online bist.",
   "Search.notes": "Notizen",

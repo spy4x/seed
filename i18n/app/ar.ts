@@ -1834,7 +1834,7 @@ export default {
     "many": "اكتب {count} حرفًا على الأقل للبحث في الملاحظات.",
     "other": "اكتب {count} حرف على الأقل للبحث في الملاحظات.",
   },
-  "Search.empty": "لا ملاحظات أو مجموعات تطابق «{query}».",
+  "Search.empty": "لا شيء يطابق «{query}».",
   "Search.emptyOnDevice": "لا شيء على هذا الجهاز يطابق «{query}». ابحث مجددًا حين تعود متصلًا.",
   "Search.notes": "الملاحظات",
   "Search.notesOnDevice": "الملاحظات على هذا الجهاز",

@@ -1530,7 +1530,7 @@ export default {
   "Search.tooShort": {
     "other": "メモを検索するには{count}文字以上入力してください。",
   },
-  "Search.empty": "「{query}」に一致するメモやグループはありません。",
+  "Search.empty": "「{query}」に一致する項目はありません。",
   "Search.emptyOnDevice":
     "このデバイスには「{query}」に一致するものはありません。オンラインに戻ってから、もう一度検索してください。",
   "Search.notes": "メモ",

@@ -1583,7 +1583,7 @@ export default {
     "one": "Type at least {count} character to search notes.",
     "other": "Type at least {count} characters to search notes.",
   },
-  "Search.empty": "No notes or groups match “{query}”.",
+  "Search.empty": "Nothing matches “{query}”.",
   "Search.emptyOnDevice":
     "Nothing on this device matches “{query}”. Search again when you're back online.",
   "Search.notes": "Notes",

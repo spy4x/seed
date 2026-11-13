@@ -358,8 +358,8 @@ describe("SearchPalette", () => {
 
     await type(`${"x".repeat(45)}`)
 
-    expect(status()).toBe(`No notes or groups match “${"x".repeat(40)}…”.`)
-    expect(emptyLabel(EN, "  ab  ", false)).toBe("No notes or groups match “ab”.")
+    expect(status()).toBe(`Nothing matches “${"x".repeat(40)}…”.`)
+    expect(emptyLabel(EN, "  ab  ", false)).toBe("Nothing matches “ab”.")
   })
 
   it("does not search notes for a single character, but still matches groups", async () => {
