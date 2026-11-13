@@ -75,6 +75,11 @@ function find<T extends Element = HTMLElement>(selector: string): T {
   return element as unknown as T
 }
 
+/** Whether the page draws the app's intro (`<section data-e2e="intro">`) right after its header. */
+function introFollowsHeader(): boolean {
+  return find("[data-e2e=page-header]").nextElementSibling === find("[data-e2e=intro]")
+}
+
 /** How many elements `selector` finds in the page. */
 function count(selector: string): number {
   return document.querySelectorAll(selector).length
@@ -192,6 +197,20 @@ const editorDefaults: NoteEditorScreenProps = {
 }
 
 describe("TagsScreen", () => {
+  it("draws its intro right under the page header, while loading and with the tags", async () => {
+    const intro = <section data-e2e="intro" />
+    await mount(<div />)
+    const states: Record<string, VNode> = {
+      "loading": <TagsScreen {...tagsDefaults} group={null} loading intro={intro} />,
+      "the tags": <TagsScreen {...tagsDefaults} intro={intro} />,
+    }
+    for (const [state, node] of Object.entries(states)) {
+      // A key of its own per state, so each one mounts afresh instead of updating the last.
+      await rerender(<div key={state}>{node}</div>)
+      expect(introFollowsHeader(), state).toBe(true)
+    }
+  })
+
   it("heads the page as a main destination, with no back arrow to the notes", async () => {
     await mount(<TagsScreen {...tagsDefaults} />)
     expect(find("h1").textContent).toBe("Tags")
@@ -417,6 +436,22 @@ const editHome: TagEditorScreenProps = {
 }
 
 describe("TagEditorScreen", () => {
+  it("draws its intro right under the page header in every state of the page", async () => {
+    const intro = <section data-e2e="intro" />
+    await mount(<div />)
+    const states: Record<string, VNode> = {
+      "no group": <TagEditorScreen {...tagEditorDefaults} group={null} intro={intro} />,
+      "not found": <TagEditorScreen {...editHome} tag={null} notFound intro={intro} />,
+      "loading": <TagEditorScreen {...editHome} tag={null} loading intro={intro} />,
+      "the form": <TagEditorScreen {...editHome} intro={intro} />,
+    }
+    for (const [state, node] of Object.entries(states)) {
+      // A key of its own per state, so each one mounts afresh instead of updating the last.
+      await rerender(<div key={state}>{node}</div>)
+      expect(introFollowsHeader(), state).toBe(true)
+    }
+  })
+
   it("titles the create page New tag, with Create tag and a Cancel that leads back to the tags", async () => {
     const navigate = spy<[string]>()
     await mount(<TagEditorScreen {...tagEditorDefaults} navigate={navigate.fn} />)

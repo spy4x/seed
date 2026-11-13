@@ -33,6 +33,8 @@ export interface TagsScreenProps {
   /** Deletes a tag from its row's menu, after the person confirms. Left out, rows offer no delete. */
   onDelete?: (id: string) => void
   navigate?: Navigate
+  /** Drawn right under the page header, in every state of the page: the app's offline status. */
+  intro?: ComponentChildren
 }
 
 /**
@@ -65,6 +67,7 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
     return (
       <TagsPage>
         <PageHeader title={t.t(`Tags.title`)} />
+        {props.intro}
         <NoGroup loading={props.loading} navigate={navigate} />
       </TagsPage>
     )
@@ -86,6 +89,7 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
           />
         )}
       />
+      {props.intro}
       <Stack>
         {!canWrite && (
           <p class="text-sm text-muted" data-e2e="tags-read-only">
