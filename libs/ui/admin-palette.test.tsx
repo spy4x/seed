@@ -210,6 +210,13 @@ describe("AdminSearchPalette", () => {
     ])
   })
 
+  it('shows no "> for commands" hint, since every row is a command', async () => {
+    await mountPalette()
+    await pressCtrlK()
+
+    expect(dialog().textContent).not.toContain("for commands")
+  })
+
   it("adds Search this list with its / key on a list page", async () => {
     await mountPalette({ listFilter: true })
     await pressCtrlK()

@@ -80,7 +80,8 @@ export function AdminSearchPalette(props: AdminSearchPaletteProps): JSX.Element 
         onSelect={(option) => option.choice && props.onSelect(option.choice)}
         // Bound above, so they work while the trigger is hidden.
         hotkeys={[]}
-        labels={paletteLabels(t)}
+        // Every admin row is a command, so "> for commands" would hide most of them: no hint.
+        labels={{ ...paletteLabels(t), commandsHint: `` }}
         dataE2E="search"
         class="hidden"
       />
