@@ -34,22 +34,45 @@ delays or fails a sign-up, and a failed job is retried. An account that is in an
 its first one has its sample groups already and gets nothing more, so a retry or a second sign-in
 adds nothing. The population's fake people get none.
 
-**The admin panel is not part of the demo.** Its host still runs, but the demo gives visitors no
-operator account, so nobody outside can sign in to it. A public operator account would show every
-visitor's address, IP address and devices to anyone, and each admin action would need its own demo
-rule. The admin panel is shown in a video on the website instead. The owner decided this on
-2026-10-20: "My decision is admin panel, not for a demo, but we need a good video about it."
+**Visitors try the admin panel too.** Every reset creates a public administrator,
+`demo-admin@example.com` with the password `try-the-admin-panel` (`PUBLIC_DEMO_ADMIN` in
+`libs/server/auth/demo-accounts.ts`). The admin app's sign-in page shows both and signs in with
+them in one click; the website's `/admin` page publishes them with a link to the admin host. The
+API learns of the demo from `DEMO_MODE`, and the admin app asks it through `GET /api/auth/demo`,
+which answers the account only while the demo is on. Visitors see everything an administrator
+sees, other visitors' addresses, IP addresses and devices included. The owner decided this on
+2026-11-04, reversing the decision of 2026-10-20: "Previously, we thought that people can see what
+other people do in the app, like IP addresses and email addresses, but I don't care anymore. Let
+them see everything."
 
-The owner keeps a private administrator there: set `DEMO_ADMIN_PASSWORD` (8 to 50 characters) in
-the server's env file, which is encrypted, and deploy. Every reset then creates `admin@example.com`
-with that password first, hashed with the API's `AUTH_PEPPER` (the worker receives both), and it
-signs in to the admin app. A changed password takes effect at the next reset. The worker refuses
-to start when the password breaks the rule or the pepper is missing. This administrator is the one
-operator the reset tolerates: any other makes the worker wipe and seed again within a minute, and
-so does the administrator missing while the setting is on. The reset seeds no operator history
-or backup for it, so the admin panel shows the demo as it is. Unset, the demo has no operator.
+The account is shared, so the API keeps visitors from taking it over or reaching past the demo:
 
-Its Stats page says "Stats are off" and names `UMAMI_API_URL` and `UMAMI_API_TOKEN`: the demo's
+- It signs in on the admin host only. The SPA's host refuses it, and the admin host has no route
+  that changes an account, so nobody can change its password, address or second factor.
+- A wrong password never locks it, so one visitor cannot lock the others out.
+- `apps/api/routes/admin/demo-guard.ts` refuses it the actions that outlive the nightly wipe or
+  reach real people: blog posts and contact links (seedsaas.com's own content), the newsletter's
+  remove and resend, background jobs, role changes and password-reset mail. Blocking people,
+  ending sessions, refunds, free time, groups and the catalog work on the demo's fake data.
+- The newsletter's list and export show it only the subscribers on example domains (RFC 2606),
+  so the real subscribers of seedsaas.com stay hidden.
+- It cannot act on the owner's private administrator below, and the reverse: the admin panel
+  refuses an action on an equal or higher role.
+
+The worker treats a missing or demoted public administrator like any other surprise and wipes and
+seeds again within a minute.
+
+The owner also keeps a private administrator there: set `DEMO_ADMIN_PASSWORD` (8 to 50 characters)
+in the server's env file, which is encrypted, and deploy. Every reset then creates
+`admin@example.com` with that password after the public one, both hashed with the API's
+`AUTH_PEPPER` (the worker receives it), and it signs in to the admin app with no demo limits. A
+changed password takes effect at the next reset. The worker refuses to start when the password
+breaks the rule or the pepper is missing. These two administrators are the only operators the
+reset tolerates: any other makes the worker wipe and seed again within a minute, and so does the
+private one missing while the setting is on. The reset seeds no operator history or backup, so
+the admin panel shows the demo as it is.
+
+The admin panel's Stats page says "Stats are off" and names `UMAMI_API_URL` and `UMAMI_API_TOKEN`: the demo's
 server sets only the website's tracker (`MPA_UMAMI_ORIGIN`, `MPA_UMAMI_WEBSITE_ID`), and the demo
 has no fake Umami to read ([analytics.md](analytics.md#stats-in-the-admin-app)). Stats adds no
 table, so the wipe and the seed are unchanged.
