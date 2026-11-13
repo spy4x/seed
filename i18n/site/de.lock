@@ -200,7 +200,7 @@ CompareRow.groupsNote	b298e5135f3e0f23
 CompareRow.i18n	9200fcd747ef4182
 CompareRow.i18nNote	df441715df7fbe34
 CompareRow.instant	e29b1e460f56889b
-CompareRow.instantNote	9acd9a5a433830d3
+CompareRow.instantNote	7e6a886da4e646c8
 CompareRow.jobs	0ec1d8fb869125d1
 CompareRow.magicLinks	7af240e93b8910a1
 CompareRow.makerkitLite	3049f4a97cdfb64e
@@ -297,12 +297,12 @@ FeatureExport.fact4	332f5f8778761636
 FeatureExport.lead	036e491b4b3f4e3a
 FeatureExport.nav	d9eb6fc6e185ea1c
 FeatureExport.title	2803704286b5afc2
-FeatureFast.code	3399e6a364f87eda
+FeatureFast.code	488e3e5e66ada5e5
 FeatureFast.fact1	3caf964def937133
 FeatureFast.fact2	04bf82649f999c41
-FeatureFast.fact3	4e5bdd15fca96a2c
+FeatureFast.fact3	ddc0b083a45c2e49
 FeatureFast.fact4	94ba3de28aa9c9b1
-FeatureFast.lead	ba503a97fcf93500
+FeatureFast.lead	e7070f1e9479b4b1
 FeatureFast.nav	39add1202e571c6c
 FeatureFast.title	e865de134d06bb11
 FeatureLanguages.code	cf2efaf06efc7511
@@ -587,7 +587,7 @@ Home.title	f0ef6f7d1d04d12f
 HomeFaq.clientAnswer	3acb10b7e1699b78
 HomeFaq.clientQuestion	20c7396c23da96d3
 HomeFaq.eyebrow	9a72221a27476f3e
-HomeFaq.fastAnswer	00a6550c117e0ba7
+HomeFaq.fastAnswer	7cbe55bc99b3d45c
 HomeFaq.fastQuestion	baf29575582c3085
 HomeFaq.freeAnswer	c11ed1d5d5d811e0
 HomeFaq.freeQuestion	3ea839b1d506555b
@@ -650,7 +650,7 @@ HomeServer.title	7d0e88beb0b856b7
 HomeSpeed.demo	27e1f24bc7c561f5
 HomeSpeed.eyebrow	39add1202e571c6c
 HomeSpeed.how	9c870aa6e5e93270
-HomeSpeed.text	9d6acde1812f5eb5
+HomeSpeed.text	89a5eb8b89562ad2
 HomeSpeed.title	94793c73285e350b
 HomeStatus.account	46066626f2468d77
 HomeStatus.admin	6d2bfaf94b3b8c7f

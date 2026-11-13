@@ -179,7 +179,7 @@ export default {
     "Oui. « Essayer la démo en ligne » ouvre l’application dans un compte invité avec des données d’exemple, sans adresse e-mail ni mot de passe. Vous pouvez ajouter une méthode de connexion, mais la démo est quand même effacée chaque nuit. Seed lui-même ne demande aucun compte : clonez-le depuis GitHub.",
   "HomeFaq.fastQuestion": "Pourquoi une application Seed paraît-elle si rapide ?",
   "HomeFaq.fastAnswer":
-    "Elle n’attend pas le serveur pour vous montrer ce que vous avez déjà vu. L’application garde une copie de chaque liste sur l’appareil, affiche un écran à partir d’elle tout de suite, puis la remplace par la réponse du serveur dès qu’elle arrive. La recherche et les filtres de la liste des notes tournent sur l’appareil. La première visite télécharge les données, et la connexion comme l’enregistrement d’une modification attendent toujours le serveur.",
+    "Une fois ouverte, elle n’attend pas le serveur pour vous montrer ce que vous avez déjà vu. L’application garde une copie de chaque liste sur l’appareil, affiche un écran à partir d’elle tout de suite, puis la remplace par la réponse du serveur dès qu’elle arrive. La recherche et les filtres de la liste des notes tournent sur l’appareil. À l’ouverture, l’application vérifie d’abord votre session auprès du serveur, la première visite télécharge les données, et l’enregistrement d’une modification attend le serveur.",
   "HomeFaq.freeQuestion": "Seed est-il vraiment gratuit ?",
   "HomeFaq.freeAnswer":
     "Oui. Il est sous licence MIT : utilisez-le pour autant de produits que vous voulez, commerciaux ou non, publiez votre fork, sans aucun compte. Vous ne payez que le serveur que vous louez et les services que vous activez, comme Stripe ou un fournisseur d’e-mail.",
@@ -243,7 +243,7 @@ export default {
   "HomeSpeed.eyebrow": "Rapide d’emblée",
   "HomeSpeed.title": "Pas d’écran de chargement entre deux clics",
   "HomeSpeed.text":
-    "La plupart des applications web redemandent au serveur après chaque clic, et vous attendez. Une application Seed garde sur votre appareil ce que vous avez déjà ouvert : ces écrans s’ouvrent tout de suite, et la recherche et les filtres de la liste des notes répondent pendant que vous tapez. La copie la plus récente du serveur remplace celle de l’appareil un instant plus tard, en arrière-plan.",
+    "La plupart des applications web redemandent au serveur après chaque clic, et vous attendez. Une fois une application Seed ouverte, un écran déjà visité s’ouvre tout de suite à partir de la copie sur votre appareil, et la recherche et les filtres de la liste des notes répondent pendant que vous tapez. La copie la plus récente du serveur remplace celle de l’appareil un instant plus tard, en arrière-plan.",
   "HomeSpeed.demo": "Essayez : cliquez dans la démo",
   "HomeSpeed.how": "Comment ça marche",
   "HomeServer.eyebrow": "Tourne sur un seul serveur que vous louez",
@@ -473,16 +473,16 @@ export default {
   "FeatureFast.nav": "Rapide d’emblée",
   "FeatureFast.title": "Les écrans s’ouvrent depuis l’appareil, puis se mettent à jour",
   "FeatureFast.lead":
-    "Chaque liste que l’application a déjà affichée, sauf les notes et les groupes supprimés, reste sur l’appareil. Un écran affiche cette copie tout de suite et la remplace par la réponse du serveur à son arrivée : naviguer n’attend donc pas un aller-retour avec le serveur. La première visite télécharge quand même les données, et quelques écrans interrogent toujours le serveur.",
+    "Chaque liste que l’application a déjà affichée, sauf les notes et les groupes supprimés, reste sur l’appareil. Un écran affiche cette copie tout de suite et la remplace par la réponse du serveur à son arrivée : naviguer dans l’application ouverte n’attend donc pas un aller-retour avec le serveur. À l’ouverture, l’application vérifie d’abord la session auprès du serveur, la première visite télécharge les données, et quelques écrans interrogent toujours le serveur.",
   "FeatureFast.fact1":
     "La copie de l’appareil s’affiche d’abord, puis la réponse du serveur la remplace (cachedRead sur IndexedDB)",
   "FeatureFast.fact2":
     "La recherche et les filtres de la liste des notes parcourent la liste de l’appareil, sans requête à chaque frappe",
   "FeatureFast.fact3":
-    "Attendent toujours le serveur : la connexion, les notes et les groupes supprimés, et chaque enregistrement, comme changer de forfait ou envoyer une invitation",
+    "Attendent toujours le serveur : la vérification de la session à l’ouverture de l’application, les notes et les groupes supprimés, et chaque enregistrement, comme changer de forfait ou envoyer une invitation",
   "FeatureFast.fact4":
     "Sans réseau, une modification de note ou d’étiquette attend dans une file jusqu’au retour du réseau",
-  "FeatureFast.code": "Lire docs/offline-data.md",
+  "FeatureFast.code": "Lire comment fonctionne la copie sur l’appareil",
   "FeatureOffline.nav": "Application hors ligne",
   "FeatureOffline.title": "Une application qui s’ouvre sans réseau",
   "FeatureOffline.lead":
@@ -821,7 +821,7 @@ export default {
   "CompareRow.audit": "Journal d’audit",
   "CompareRow.realtime": "Mises à jour en temps réel",
   "CompareRow.instant": "Écrans ouverts depuis l’appareil",
-  "CompareRow.instantNote": "Pas de chargement sur un écran déjà ouvert",
+  "CompareRow.instantNote": "Une copie de chaque liste gardée sur l’appareil",
   "CompareRow.offline": "Application hors ligne",
   "CompareRow.offlineNote": "Met en file d’attente les écritures faites hors ligne",
   "CompareRow.ops": "Supervision et sauvegardes",

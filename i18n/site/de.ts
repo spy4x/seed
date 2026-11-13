@@ -178,7 +178,7 @@ export default {
     "Ja. „Live-Demo ausprobieren“ öffnet die App in einem Gastkonto mit Beispieldaten, ganz ohne E-Mail-Adresse oder Passwort. Du kannst eine Anmeldemethode hinzufügen, die Demo wird aber trotzdem jede Nacht zurückgesetzt. Seed selbst braucht überhaupt kein Konto: Klone es einfach von GitHub.",
   "HomeFaq.fastQuestion": "Warum fühlt sich eine Seed-App so schnell an?",
   "HomeFaq.fastAnswer":
-    "Sie wartet nicht auf den Server, um dir zu zeigen, was du schon gesehen hast. Die App behält eine Kopie jeder Liste auf dem Gerät, zeigt eine Ansicht sofort daraus und tauscht die Kopie gegen die Antwort des Servers, sobald sie da ist. Suche und Filter der Notizliste laufen auf dem Gerät. Beim ersten Besuch werden die Daten geladen, und Anmeldung und Speichern warten weiterhin auf den Server.",
+    "Ist sie einmal offen, wartet sie nicht auf den Server, um dir zu zeigen, was du schon gesehen hast. Die App behält eine Kopie jeder Liste auf dem Gerät, zeigt eine Ansicht sofort daraus und tauscht die Kopie gegen die Antwort des Servers, sobald sie da ist. Suche und Filter der Notizliste laufen auf dem Gerät. Beim Öffnen prüft die App zuerst deine Anmeldung beim Server, beim ersten Besuch werden die Daten geladen, und Speichern wartet auf den Server.",
   "HomeFaq.freeQuestion": "Ist Seed wirklich kostenlos?",
   "HomeFaq.freeAnswer":
     "Ja. Seed steht unter der MIT-Lizenz: Nutze es für beliebig viele Produkte, kommerziell oder nicht, veröffentliche deinen Fork, ganz ohne Konto. Du zahlst nur für einen gemieteten Server und für Dienste, die du einschaltest, etwa Stripe oder einen E-Mail-Anbieter.",
@@ -242,7 +242,7 @@ export default {
   "HomeSpeed.eyebrow": "Schnell ab Werk",
   "HomeSpeed.title": "Kein Ladekreisel zwischen den Klicks",
   "HomeSpeed.text":
-    "Die meisten Web-Apps fragen nach jedem Klick erneut beim Server nach, und du wartest. Eine Seed-App behält auf deinem Gerät, was du schon geöffnet hast. Diese Ansichten öffnen sofort, und Suche und Filter der Notizliste antworten, während du tippst. Die neueste Fassung vom Server ersetzt die Kopie auf dem Gerät einen Moment später im Hintergrund.",
+    "Die meisten Web-Apps fragen nach jedem Klick erneut beim Server nach, und du wartest. Ist eine Seed-App einmal offen, öffnet eine Ansicht, die du schon besucht hast, sofort aus der Kopie auf deinem Gerät, und Suche und Filter der Notizliste antworten, während du tippst. Die neueste Fassung vom Server ersetzt die Kopie auf dem Gerät einen Moment später im Hintergrund.",
   "HomeSpeed.demo": "Probier es aus: klick dich durch die Demo",
   "HomeSpeed.how": "So funktioniert es",
   "HomeServer.eyebrow": "Läuft auf einem gemieteten Server",
@@ -466,16 +466,16 @@ export default {
   "FeatureFast.nav": "Schnell ab Werk",
   "FeatureFast.title": "Ansichten öffnen vom Gerät und holen dann auf",
   "FeatureFast.lead":
-    "Jede Liste, die die App schon gezeigt hat, bleibt auf dem Gerät, außer gelöschten Notizen und Gruppen. Eine Ansicht zeigt diese Kopie sofort und tauscht sie gegen die Antwort des Servers, sobald sie ankommt. So wartet kein Wechsel auf eine Runde zum Server. Der erste Besuch lädt die Daten trotzdem herunter, und einige Ansichten fragen immer den Server.",
+    "Jede Liste, die die App schon gezeigt hat, bleibt auf dem Gerät, außer gelöschten Notizen und Gruppen. Eine Ansicht zeigt diese Kopie sofort und tauscht sie gegen die Antwort des Servers, sobald sie ankommt. So wartet kein Wechsel in der offenen App auf eine Runde zum Server. Beim Öffnen prüft die App zuerst die Anmeldung beim Server, der erste Besuch lädt die Daten herunter, und einige Ansichten fragen immer den Server.",
   "FeatureFast.fact1":
     "Zuerst erscheint die Kopie vom Gerät, dann ersetzt sie die Antwort des Servers (cachedRead über IndexedDB)",
   "FeatureFast.fact2":
     "Suche und Filter der Notizliste laufen über die Liste auf dem Gerät, ohne Anfrage pro Tastendruck",
   "FeatureFast.fact3":
-    "Warten weiterhin auf den Server: die Anmeldung, gelöschte Notizen und Gruppen und jedes Speichern, etwa ein Tarifwechsel oder eine Einladung",
+    "Warten weiterhin auf den Server: die Prüfung der Anmeldung beim Öffnen der App, gelöschte Notizen und Gruppen und jedes Speichern, etwa ein Tarifwechsel oder eine Einladung",
   "FeatureFast.fact4":
     "Ohne Netz wartet eine Änderung an einer Notiz oder einem Tag in einer Warteschlange, bis das Netz zurück ist",
-  "FeatureFast.code": "docs/offline-data.md lesen",
+  "FeatureFast.code": "Lies, wie die Kopie auf dem Gerät funktioniert",
   "FeatureOffline.nav": "Offline-App",
   "FeatureOffline.title": "Eine App, die ohne Netz startet",
   "FeatureOffline.lead":
@@ -793,7 +793,7 @@ export default {
   "CompareRow.audit": "Audit-Log",
   "CompareRow.realtime": "Echtzeit-Updates",
   "CompareRow.instant": "Ansichten öffnen vom Gerät",
-  "CompareRow.instantNote": "Kein Ladekreisel in einer schon geöffneten Ansicht",
+  "CompareRow.instantNote": "Eine Kopie jeder Liste auf dem Gerät",
   "CompareRow.offline": "Offline-App",
   "CompareRow.offlineNote": "Merkt sich offline gemachte Änderungen",
   "CompareRow.ops": "Monitoring und Backups",

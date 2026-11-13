@@ -797,7 +797,7 @@ describe("the public website", () => {
     expect(hrefOf(linkNamed(band, "Probier es aus: klick dich durch die Demo"))).toBe(`${spa}/try`)
   })
 
-  it("explains on /features why the app is fast, right before the offline section, linking the offline reads doc", async () => {
+  it("explains on /features why the app is fast with all four facts, right before the offline section, linking the offline reads doc", async () => {
     const { html } = await page("/features")
     const start = html.indexOf(`<section id="fast"`)
     const section = html.slice(start, html.indexOf(`</section>`, start))
@@ -808,7 +808,16 @@ describe("the public website", () => {
       `<section id=`,
     )
     expect(section).toContain(`>Screens open from the device, then catch up</h3>`)
-    expect(section).toContain(`Still waits on the server: sign-in`)
+    const facts = [
+      `FeatureFast.fact1`,
+      `FeatureFast.fact2`,
+      `FeatureFast.fact3`,
+      `FeatureFast.fact4`,
+    ] as const
+    for (const fact of facts) {
+      expect(section).toContain(`<span class="text-pretty">${siteTranslator(`en`).t(fact)}</span>`)
+    }
+    expect(section).toContain(`Still waits on the server: the sign-in check when the app opens`)
     expect(section).toContain(`href="${REPOSITORY_URL}/blob/main/docs/offline-data.md"`)
     expect(html).toContain(`href="#fast"`)
   })
@@ -831,7 +840,7 @@ describe("the public website", () => {
     expect(rows[at + 1].capability).toBe("Offline app")
     expect(rows[at]).toEqual({
       capability: "Screens open from the device",
-      note: "No spinner on a screen you have opened before",
+      note: "A copy of each list kept on the device",
       values: rows[at + 1].values,
     })
   })

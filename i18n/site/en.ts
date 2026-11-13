@@ -167,7 +167,7 @@ export default {
     "Yes. “Try the live demo” opens the app in a guest account with demo data, no email or password needed. You can add a sign-in method, but the demo is still wiped every night. Seed itself needs no account at all: clone it from GitHub.",
   "HomeFaq.fastQuestion": "Why does a Seed app feel fast?",
   "HomeFaq.fastAnswer":
-    "It does not wait on the server to show what you have already seen. The app keeps a copy of each list on the device, paints a screen from it at once and replaces it with the server's answer when that arrives. The notes list's search and filters run on the device. The first visit downloads the data, and sign-in and saving a change still wait on the server.",
+    "Once it is open, it does not wait on the server to show what you have already seen. The app keeps a copy of each list on the device, paints a screen from it at once and replaces it with the server's answer when that arrives. The notes list's search and filters run on the device. Opening the app checks your sign-in with the server first, the first visit downloads the data, and saving a change waits on the server.",
   "HomeFaq.freeQuestion": "Is Seed really free?",
   "HomeFaq.freeAnswer":
     "Yes. It is MIT-licensed: use it for any number of products, commercial or not, publish your fork, no account needed. You pay only for one server you rent and for services you turn on, such as Stripe or an email provider.",
@@ -230,7 +230,7 @@ export default {
   "HomeSpeed.eyebrow": "Fast by default",
   "HomeSpeed.title": "No spinner between clicks",
   "HomeSpeed.text":
-    "Most web apps ask the server again after every click, and you wait. A Seed app keeps what you have already opened on your device, so those screens open at once, and the notes list's search and filters answer as you type. The server's latest copy replaces the device's a moment later, in the background.",
+    "Most web apps ask the server again after every click, and you wait. Once a Seed app is open, a screen you have already visited opens at once from the copy on your device, and the notes list's search and filters answer as you type. The server's latest copy replaces the device's a moment later, in the background.",
   "HomeSpeed.demo": "Try it: click around the demo",
   "HomeSpeed.how": "How it works",
   "HomeServer.eyebrow": "Runs on one server you rent",
@@ -450,16 +450,16 @@ export default {
   "FeatureFast.nav": "Fast by default",
   "FeatureFast.title": "Screens open from the device, then catch up",
   "FeatureFast.lead":
-    "Every list the app has shown, except the deleted notes and groups, is kept on the device. A screen paints that copy at once and swaps in the server's answer when it arrives, so moving around does not wait on a round trip. The first visit still downloads the data, and a few screens always ask the server.",
+    "Every list the app has shown, except the deleted notes and groups, is kept on the device. A screen paints that copy at once and swaps in the server's answer when it arrives, so moving around the open app does not wait on a round trip. Opening the app checks the sign-in with the server first, the first visit downloads the data, and a few screens always ask the server.",
   "FeatureFast.fact1":
     "The device copy paints first, then the server's answer replaces it (cachedRead over IndexedDB)",
   "FeatureFast.fact2":
     "The notes list's search and filters run over the list on the device, with no request per keystroke",
   "FeatureFast.fact3":
-    "Still waits on the server: sign-in, the deleted notes and groups, and every save, such as changing the plan or sending an invitation",
+    "Still waits on the server: the sign-in check when the app opens, the deleted notes and groups, and every save, such as changing the plan or sending an invitation",
   "FeatureFast.fact4":
     "With no network, a note or tag change waits in a queue until the network returns",
-  "FeatureFast.code": "Read docs/offline-data.md",
+  "FeatureFast.code": "Read how the device copy works",
   "FeatureOffline.nav": "Offline app",
   "FeatureOffline.title": "An app that opens with no network",
   "FeatureOffline.lead":
@@ -767,7 +767,7 @@ export default {
   "CompareRow.audit": "Audit log",
   "CompareRow.realtime": "Realtime updates",
   "CompareRow.instant": "Screens open from the device",
-  "CompareRow.instantNote": "No spinner on a screen you have opened before",
+  "CompareRow.instantNote": "A copy of each list kept on the device",
   "CompareRow.offline": "Offline app",
   "CompareRow.offlineNote": "Queues writes made offline",
   "CompareRow.ops": "Monitoring and backups",
