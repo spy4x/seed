@@ -11,6 +11,7 @@ import { SHORTCUT_GROUPS } from "@ui/shortcuts.tsx"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import app from "@i18n/app/en.ts"
 import appRu from "@i18n/app/ru.ts"
+import { paletteCommands, type PaletteOption } from "@ui/palette-commands.ts"
 import { pageCommands, spaShortcutRows } from "./shortcuts.ts"
 
 function rows(activityGroupId: string | null, onOverview = false) {
@@ -83,20 +84,82 @@ const RU = createTranslator({ language: `ru`, catalogs: [{ source: app, translat
 
 describe("the open page's commands in the search palette", () => {
   it("label the overview's commands in the person's language and keep their English as aliases", () => {
-    expect(pageCommands(RU, { overview: true, noteEditor: false })).toEqual([
-      { id: "overview-range", label: RU.t(`Shortcuts.dateRange`), aliases: ["Change date range"] },
+    expect(pageCommands(RU, { overview: true, benchmark: false, noteEditor: false }, [])).toEqual([
+      {
+        id: "overview-range",
+        label: RU.t(`Shortcuts.dateRange`),
+        aliases: ["Change date range"],
+        kbd: undefined,
+      },
       {
         id: "overview-customise",
         label: RU.t(`Shortcuts.customise`),
         aliases: ["Customise overview"],
+        kbd: undefined,
       },
     ])
     expect(RU.t(`Shortcuts.dateRange`)).not.toBe("Change date range")
   })
 
   it("offer the note page's attach command, and nothing on another page", () => {
-    expect(pageCommands(RU, { overview: false, noteEditor: true })?.map((c) => c.aliases))
-      .toEqual([["Attach files to this note"]])
-    expect(pageCommands(RU, { overview: false, noteEditor: false })).toBeUndefined()
+    expect(
+      pageCommands(RU, { overview: false, benchmark: false, noteEditor: true }, [])
+        ?.map((c) => c.aliases),
+    ).toEqual([["Attach files to this note"]])
+    expect(pageCommands(RU, { overview: false, benchmark: false, noteEditor: false }, []))
+      .toBeUndefined()
+  })
+})
+
+const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
+
+/** The palette's commands, with every submenu's rows, for the shortcut rows of one page. */
+function commandsFor(page: "none" | "overview" | "benchmark") {
+  const navigated: string[] = []
+  const list = spaShortcutRows({
+    navigate: (href) => void navigated.push(href),
+    openShortcuts: () => {},
+    openNewNote: () => {},
+    activityGroupId: "0190a000-0000-7000-8000-000000000001",
+    overviewPage: page === "overview" ? { openRange: () => {}, openCustomise: () => {} } : null,
+    benchmarkPage: page === "benchmark" ? { run: () => {}, copy: () => {} } : null,
+  })
+  const open = { overview: page === "overview", benchmark: page === "benchmark", noteEditor: false }
+  const commands = paletteCommands({
+    t: EN,
+    locale: `en`,
+    currentGroup: { id: "0190a000-0000-7000-8000-000000000001", name: "Home", canWrite: true },
+    online: true,
+    theme: () => `system`,
+    shortcuts: list,
+    activityGroupId: "0190a000-0000-7000-8000-000000000001",
+    pageCommands: pageCommands(EN, open, list) ?? [],
+    guest: false,
+    benchmark: true,
+    canInstall: false,
+  }, () => {})
+  const flat = (options: readonly PaletteOption[]): PaletteOption[] =>
+    options.flatMap((option) => [option, ...flat(option.children ?? [])])
+  return { list, navigated, commands: flat(commands) }
+}
+
+describe("the palette and the keyboard shortcuts", () => {
+  for (const page of ["none", "overview", "benchmark"] as const) {
+    it(`has a command showing the keys of every shortcut that acts (page: ${page})`, () => {
+      const { list, commands } = commandsFor(page)
+      const missing = list.filter((row) => row.run)
+        .filter((row) => !commands.some((command) => command.kbd === row.keys))
+        .map((row) => `${row.keys} (${row.description})`)
+      expect(missing).toEqual([])
+    })
+  }
+
+  it("opens the same page from each Go to command as from its g shortcut", () => {
+    const { list, navigated, commands } = commandsFor("none")
+    for (const row of list.filter((row) => row.keys.startsWith("g "))) {
+      row.run!()
+      const command = commands.find((command) => command.kbd === row.keys)
+      expect(command?.choice, row.keys).toEqual({ kind: "page", href: navigated.at(-1) })
+    }
   })
 })

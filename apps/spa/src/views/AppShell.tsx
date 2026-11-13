@@ -43,6 +43,8 @@ import { benchmarkOpen, benchmarkPageActions, demoMode } from "../state/demo.ts"
 import { guestRefusal } from "../state/guest-refusal.ts"
 import { GuestRefusalDialog } from "@ui/guest-profile.tsx"
 import { overviewPageActions } from "./OverviewView.tsx"
+import { themeStore } from "../state/theme.ts"
+import { install } from "../install.ts"
 import { noteEditorPageActions } from "./NoteEditorView.tsx"
 import { useAppText } from "@ui/i18n.ts"
 
@@ -52,6 +54,8 @@ function runPageCommand(id: string): void {
   if (id === "overview-range") actions?.openRange()
   if (id === "overview-customise") actions?.openCustomise()
   if (id === "note-attach") noteEditorPageActions.value?.attach()
+  if (id === "benchmark-run") benchmarkPageActions.value?.run()
+  if (id === "benchmark-copy") benchmarkPageActions.value?.copy()
 }
 
 /**
@@ -224,20 +228,35 @@ export function AppShell(
   const groups = groupsStore.groups.value
   const current = groups.find((group) => group.id === selectionStore.groupId.value)
   const shortcutsOpen = useSignal(false)
+  const activityGroupId = current && canViewActivity(current.role) ? current.id : null
   const rows = spaShortcutRows({
     navigate,
     openShortcuts: () => shortcutsOpen.value = true,
     openNewNote: newNoteStore.show,
-    activityGroupId: current && canViewActivity(current.role) ? current.id : null,
+    activityGroupId,
     overviewPage: overviewPageActions.value,
     benchmarkPage: benchmarkPageActions.value,
   })
   useShortcuts(rows, singleKeys.on.value)
+  const switchGroup = (groupId: string) => {
+    void selectionStore.select(groupId)
+    // An open note belongs to the group just left.
+    if (location.startsWith(`${NOTE_PATHS.list}/`)) navigate(NOTE_PATHS.list)
+  }
+  // Each choice runs through the same function as its button or shortcut.
   const open = async (choice: SearchChoice) => {
     if (choice.kind === "page") return navigate(choice.href)
     if (choice.kind === "new-note") return newNoteStore.show()
     if (choice.kind === "command") return runPageCommand(choice.id)
-    if (choice.kind === "group") return navigate(GROUP_PATHS.settings(choice.groupId))
+    if (choice.kind === "switch-group") return switchGroup(choice.groupId)
+    if (choice.kind === "group-settings") return navigate(GROUP_PATHS.settings(choice.groupId))
+    if (choice.kind === "theme") {
+      // The profile's Appearance section sets it the same way.
+      return themeStore.set(choice.theme as Parameters<typeof themeStore.set>[0])
+    }
+    if (choice.kind === "shortcuts") return shortcutsOpen.value = true
+    if (choice.kind === "sign-out") return onSignOut()
+    if (choice.kind === "install") return void install.install()
     // Straight to the note: never the editor's "Note in another group" page in between.
     if (choice.groupId !== selectionStore.groupId.value) {
       await selectionStore.select(choice.groupId)
@@ -256,9 +275,14 @@ export function AppShell(
           online={wsStatus === "open"}
           pageCommands={pageCommands(t, {
             overview: Boolean(overviewPageActions.value),
+            benchmark: Boolean(benchmarkPageActions.value),
             noteEditor: Boolean(noteEditorPageActions.value),
-          })}
+          }, rows)}
           onSelect={(choice) => void open(choice)}
+          theme={themeStore.preference.value}
+          shortcuts={rows}
+          activityGroupId={activityGroupId}
+          canInstall={install.mode.value === "prompt"}
           slashKey={singleKeys.on.value}
           guest={guest}
           benchmark={benchmarkOpen()}
@@ -276,11 +300,7 @@ export function AppShell(
       groupPicker={{
         groups: groupsStore.groups.value,
         selectedId: selectionStore.groupId.value,
-        onSelect: (groupId) => {
-          void selectionStore.select(groupId)
-          // An open note belongs to the group just left.
-          if (location.startsWith(`${NOTE_PATHS.list}/`)) navigate(NOTE_PATHS.list)
-        },
+        onSelect: switchGroup,
       }}
       user={{
         // With no name and no address the menu would read "User"; a guest is named for what it is.
