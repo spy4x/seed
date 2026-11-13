@@ -368,6 +368,8 @@ function actionOptions(
           `benchmark`,
           `performance`,
           `speed`,
+          `speed test`,
+          `speedtest`,
           `load test`,
           `measure`,
           `device test`,
