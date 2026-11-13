@@ -469,7 +469,9 @@ export default {
   "FeatureFast.fact2":
     "A busca e os filtros da lista de notas percorrem a lista no dispositivo, sem uma requisição por tecla",
   "FeatureFast.fact3":
-    "Ainda esperam o servidor: entrar na conta, as notas e os grupos excluídos e todo salvamento, como trocar de plano ou enviar um convite. Sem internet, uma alteração em nota ou etiqueta espera numa fila",
+    "Ainda esperam o servidor: entrar na conta, as notas e os grupos excluídos e todo salvamento, como trocar de plano ou enviar um convite",
+  "FeatureFast.fact4":
+    "Sem internet, uma alteração em nota ou etiqueta espera numa fila até a conexão voltar",
   "FeatureFast.code": "Ler docs/offline-data.md",
   "FeatureOffline.nav": "App offline",
   "FeatureOffline.title": "Um app que abre sem internet",

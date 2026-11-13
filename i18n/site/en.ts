@@ -456,7 +456,9 @@ export default {
   "FeatureFast.fact2":
     "The notes list's search and filters run over the list on the device, with no request per keystroke",
   "FeatureFast.fact3":
-    "Still waits on the server: sign-in, the deleted notes and groups, and every save, such as changing the plan or sending an invitation. With no network, a note or tag change waits in a queue instead",
+    "Still waits on the server: sign-in, the deleted notes and groups, and every save, such as changing the plan or sending an invitation",
+  "FeatureFast.fact4":
+    "With no network, a note or tag change waits in a queue until the network returns",
   "FeatureFast.code": "Read docs/offline-data.md",
   "FeatureOffline.nav": "Offline app",
   "FeatureOffline.title": "An app that opens with no network",

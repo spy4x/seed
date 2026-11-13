@@ -245,6 +245,7 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
             t.t(`FeatureFast.fact1`),
             t.t(`FeatureFast.fact2`),
             t.t(`FeatureFast.fact3`),
+            t.t(`FeatureFast.fact4`),
           ],
           code: { label: t.t(`FeatureFast.code`), href: source(`docs/offline-data.md`) },
         },

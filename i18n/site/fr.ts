@@ -479,7 +479,9 @@ export default {
   "FeatureFast.fact2":
     "La recherche et les filtres de la liste des notes parcourent la liste de l’appareil, sans requête à chaque frappe",
   "FeatureFast.fact3":
-    "Attendent toujours le serveur : la connexion, les notes et les groupes supprimés, et chaque enregistrement, comme changer de forfait ou envoyer une invitation. Sans réseau, une modification de note ou d’étiquette attend dans une file",
+    "Attendent toujours le serveur : la connexion, les notes et les groupes supprimés, et chaque enregistrement, comme changer de forfait ou envoyer une invitation",
+  "FeatureFast.fact4":
+    "Sans réseau, une modification de note ou d’étiquette attend dans une file jusqu’au retour du réseau",
   "FeatureFast.code": "Lire docs/offline-data.md",
   "FeatureOffline.nav": "Application hors ligne",
   "FeatureOffline.title": "Une application qui s’ouvre sans réseau",

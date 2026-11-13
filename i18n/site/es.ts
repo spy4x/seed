@@ -470,7 +470,9 @@ export default {
   "FeatureFast.fact2":
     "La búsqueda y los filtros de la lista de notas recorren la lista del dispositivo, sin una petición por cada tecla",
   "FeatureFast.fact3":
-    "Siguen esperando al servidor: el inicio de sesión, las notas y los grupos eliminados y cada guardado, como cambiar de plan o enviar una invitación. Sin red, un cambio en una nota o etiqueta espera en una cola",
+    "Siguen esperando al servidor: el inicio de sesión, las notas y los grupos eliminados y cada guardado, como cambiar de plan o enviar una invitación",
+  "FeatureFast.fact4":
+    "Sin red, un cambio en una nota o etiqueta espera en una cola hasta que vuelve la conexión",
   "FeatureFast.code": "Leer docs/offline-data.md",
   "FeatureOffline.nav": "App sin conexión",
   "FeatureOffline.title": "Una aplicación que abre sin red",

@@ -420,7 +420,8 @@ export default {
   "FeatureFast.fact1": "先显示设备上的副本，再用服务器的回应替换（基于 IndexedDB 的 cachedRead）",
   "FeatureFast.fact2": "笔记列表的搜索和筛选在设备上的列表中进行，不会每按一个键就发一次请求",
   "FeatureFast.fact3":
-    "仍要等服务器的：登录、已删除的笔记和群组，以及每次保存，比如更换套餐或发送邀请。没有网络时，笔记或标签的更改会在队列中等待",
+    "仍要等服务器的：登录、已删除的笔记和群组，以及每次保存，比如更换套餐或发送邀请",
+  "FeatureFast.fact4": "没有网络时，笔记或标签的更改会在队列中等待，直到网络恢复",
   "FeatureFast.code": "阅读 docs/offline-data.md",
   "FeatureOffline.nav": "离线应用",
   "FeatureOffline.title": "没有网络也能打开的应用",

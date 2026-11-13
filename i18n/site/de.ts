@@ -472,7 +472,9 @@ export default {
   "FeatureFast.fact2":
     "Suche und Filter der Notizliste laufen über die Liste auf dem Gerät, ohne Anfrage pro Tastendruck",
   "FeatureFast.fact3":
-    "Warten weiterhin auf den Server: die Anmeldung, gelöschte Notizen und Gruppen und jedes Speichern, etwa ein Tarifwechsel oder eine Einladung. Ohne Netz wartet eine Änderung an einer Notiz oder einem Tag in einer Warteschlange",
+    "Warten weiterhin auf den Server: die Anmeldung, gelöschte Notizen und Gruppen und jedes Speichern, etwa ein Tarifwechsel oder eine Einladung",
+  "FeatureFast.fact4":
+    "Ohne Netz wartet eine Änderung an einer Notiz oder einem Tag in einer Warteschlange, bis das Netz zurück ist",
   "FeatureFast.code": "docs/offline-data.md lesen",
   "FeatureOffline.nav": "Offline-App",
   "FeatureOffline.title": "Eine App, die ohne Netz startet",
