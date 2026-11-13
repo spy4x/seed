@@ -146,7 +146,7 @@ export default {
     "Como as peças do Seed se encaixam: o app web e o site chamam a API, a API grava cada alteração e seus eventos no Postgres, e o worker envia e-mails e notificações push a partir desses eventos. Tudo roda num só servidor.",
   "Home.title": "Seed: o starter kit de SaaS gratuito com padrões da web",
   "Home.description":
-    "Starter kit de SaaS gratuito, com licença MIT, feito com padrões da web: login com 2FA, grupos com funções, cobrança no Stripe. Roda em Deno, Node e Bun.",
+    "Starter kit de SaaS gratuito, MIT, feito com padrões da web: 2FA, grupos, Stripe, tempo real, offline, telas que abrem direto do dispositivo. Deno, Node e Bun.",
   "HomeProof.tests": "arquivos de teste nos apps e nas bibliotecas, todos rodando no CI",
   "HomeProof.licence": "licença: sem conta, sem paywall",
   "HomeStatus.signIn":
@@ -172,6 +172,9 @@ export default {
   "HomeFaq.tryQuestion": "Dá para testar sem criar conta?",
   "HomeFaq.tryAnswer":
     "Dá. “Experimente a demo” abre o app numa conta de visitante com dados de exemplo, sem e-mail nem senha. Você pode adicionar uma forma de entrar, mas a demo continua sendo apagada toda noite. Já o Seed em si não pede conta nenhuma: é só clonar do GitHub.",
+  "HomeFaq.fastQuestion": "Por que um app feito com Seed é tão rápido?",
+  "HomeFaq.fastAnswer":
+    "Depois de aberto, ele não espera o servidor para mostrar o que você já viu. O app guarda uma cópia de cada lista no dispositivo, monta a tela com ela na hora e troca pela resposta do servidor quando ela chega. A busca e os filtros da lista de notas rodam no dispositivo. Ao abrir, o app primeiro confere seu login com o servidor, a primeira visita baixa os dados, e salvar uma alteração espera o servidor.",
   "HomeFaq.freeQuestion": "O Seed é gratuito mesmo?",
   "HomeFaq.freeAnswer":
     "É. A licença é MIT: use em quantos produtos quiser, comerciais ou não, publique seu fork, sem precisar de conta. Você só paga o servidor que alugar e os serviços que ativar, como o Stripe ou um provedor de e-mail.",
@@ -232,6 +235,12 @@ export default {
   "HomeFeatures.websiteText":
     "Este site: renderizado no servidor, funciona com o JavaScript desligado, em nove idiomas, com preços vindos do seu catálogo de planos, páginas legais e uma newsletter com confirmação por e-mail.",
   "HomeFeatures.all": "Todos os recursos, com capturas de tela e status",
+  "HomeSpeed.eyebrow": "Rápido de fábrica",
+  "HomeSpeed.title": "Nada de “carregando” entre um clique e outro",
+  "HomeSpeed.text":
+    "A maioria dos apps web consulta o servidor de novo a cada clique, e você espera. Com um app feito com Seed já aberto, uma tela que você já visitou abre na hora a partir da cópia no seu dispositivo, e a busca e os filtros da lista de notas respondem enquanto você digita. A cópia mais recente do servidor substitui a do dispositivo um instante depois, em segundo plano.",
+  "HomeSpeed.demo": "Experimente: navegue pela demo",
+  "HomeSpeed.how": "Como funciona",
   "HomeServer.eyebrow": "Roda num servidor que você aluga",
   "HomeServer.title": "Um servidor, um <code>docker compose</code>, nenhuma conta surpresa.",
   "HomeServer.text":
@@ -451,6 +460,19 @@ export default {
   "FeatureRealtime.fact3":
     "O tempo real pode ser desligado: aí o app consulta o servidor de tempos em tempos e funciona igual",
   "FeatureRealtime.code": "Ler o design do tempo real",
+  "FeatureFast.nav": "Rápido de fábrica",
+  "FeatureFast.title": "As telas abrem do dispositivo e depois se atualizam",
+  "FeatureFast.lead":
+    "Toda lista que o app já mostrou, exceto as notas e os grupos excluídos, fica guardada no dispositivo. A tela mostra essa cópia na hora e troca pela resposta do servidor quando ela chega, então navegar pelo app aberto não espera uma ida e volta ao servidor. Ao abrir, o app primeiro confere o login com o servidor, a primeira visita baixa os dados, e algumas telas sempre consultam o servidor.",
+  "FeatureFast.fact1":
+    "A cópia do dispositivo aparece primeiro, e a resposta do servidor a substitui (cachedRead sobre IndexedDB)",
+  "FeatureFast.fact2":
+    "A busca e os filtros da lista de notas percorrem a lista no dispositivo, sem uma requisição por tecla",
+  "FeatureFast.fact3":
+    "Ainda esperam o servidor: a conferência do login ao abrir o app, as notas e os grupos excluídos e todo salvamento, como trocar de plano ou enviar um convite",
+  "FeatureFast.fact4":
+    "Sem internet, uma alteração em nota ou etiqueta espera numa fila até a conexão voltar",
+  "FeatureFast.code": "Ler como funciona a cópia no dispositivo",
   "FeatureOffline.nav": "App offline",
   "FeatureOffline.title": "Um app que abre sem internet",
   "FeatureOffline.lead":
@@ -768,6 +790,8 @@ export default {
   "CompareRow.blog": "Blog",
   "CompareRow.audit": "Log de auditoria",
   "CompareRow.realtime": "Atualizações em tempo real",
+  "CompareRow.instant": "Dados no dispositivo",
+  "CompareRow.instantNote": "Uma cópia de cada lista guardada no dispositivo",
   "CompareRow.offline": "App offline",
   "CompareRow.offlineNote": "Guarda numa fila o que é feito offline",
   "CompareRow.ops": "Monitoramento e backups",
