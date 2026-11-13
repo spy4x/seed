@@ -1,9 +1,9 @@
 import { type } from "arktype"
 import {
-  CONTACT_KIND_NAMES,
   contactHref,
   contactJsonLd,
   contactKind,
+  contactText,
   contactValueProblem,
 } from "@spy4x/platform/universal/contact"
 import type { PublicContactLink } from "@domain/contact-links"
@@ -26,21 +26,6 @@ export function readContactLinks(body: unknown): PublicContactLink[] | undefined
   return answer.links.filter((link) => contactValueProblem(link.kind, link.value) === null)
 }
 
-/**
- * The words a link shows: its label, else its channel and value. A handle reads `Telegram @my_shop`
- * (its value is stored without the `@`), a number on a messenger `Zalo: 0912345678`; a phone number
- * or an email address is its value, and a web address its host.
- */
-export function contactLinkText(link: PublicContactLink): string {
-  if (link.label) return link.label
-  if (link.kind === `phone` || link.kind === `email`) return link.value
-  if (link.kind === `url`) return new URL(link.value).host
-  if (link.kind === `telegram` || link.kind === `instagram`) {
-    return `${CONTACT_KIND_NAMES[link.kind]} @${link.value}`
-  }
-  return `${CONTACT_KIND_NAMES[link.kind]}: ${link.value}`
-}
-
 /** One footer link of each contact link, in order; a web link opens as an outside page. */
 export function contactFooterLinks(
   links: readonly PublicContactLink[],
@@ -48,7 +33,7 @@ export function contactFooterLinks(
   return links.map((link) => {
     const href = contactHref(link.kind, link.value)
     return {
-      label: contactLinkText(link),
+      label: contactText(link.kind, link.value, link.label),
       href,
       ...(href.startsWith(`https:`) && { external: true }),
     }
