@@ -1,4 +1,4 @@
-/** `copyNoteLink`, `duplicateTitle` and `duplicateNote`: the note commands the palette runs. */
+/** The note page's palette commands: which are offered, and what Copy link and Duplicate do. */
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
@@ -6,7 +6,7 @@ import { NOTE_TITLE_MAX_LENGTH } from "@domain/notes"
 import { NOTE_PATHS } from "@ui/progressive.tsx"
 import app from "@i18n/app/en.ts"
 import type { NoteItem } from "../state/notes.ts"
-import { copyNoteLink, duplicateNote, duplicateTitle } from "./note-actions.ts"
+import { copyNoteLink, duplicateNote, duplicateTitle, offeredNoteActions } from "./note-actions.ts"
 
 /** The `app` catalog's English, as a screen without a provider reads it. */
 const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
@@ -41,6 +41,33 @@ function item(input: { groupId: string; id: string; title: string }): NoteItem {
     updatedAt: "2026-10-02T00:00:00.000Z",
   }
 }
+
+describe("offeredNoteActions", () => {
+  const noop = () => {}
+  const run = { attach: noop, copyLink: noop, duplicate: noop, move: noop, delete: noop }
+  const offered = (page: { canWrite: boolean; noteOpen: boolean; canMove: boolean }) =>
+    Object.keys(offeredNoteActions(page, run))
+
+  it("offers an editor of an open note every command, Move only with another group to go to", () => {
+    expect(offered({ canWrite: true, noteOpen: true, canMove: true })).toEqual([
+      "attach",
+      "duplicate",
+      "move",
+      "copyLink",
+      "delete",
+    ])
+    expect(offered({ canWrite: true, noteOpen: true, canMove: false })).not.toContain("move")
+  })
+
+  it("offers a reader of a note only Copy link, never Delete, Duplicate or Move", () => {
+    expect(offered({ canWrite: false, noteOpen: true, canMove: true })).toEqual(["copyLink"])
+  })
+
+  it("offers only Attach until a note is open, and nothing to a reader", () => {
+    expect(offered({ canWrite: true, noteOpen: false, canMove: true })).toEqual(["attach"])
+    expect(offered({ canWrite: false, noteOpen: false, canMove: false })).toEqual([])
+  })
+})
 
 describe("copyNoteLink", () => {
   it("copies the note's full address and says only the group's people can open it", async () => {

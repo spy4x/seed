@@ -5,6 +5,23 @@ import { NOTE_PATHS } from "@ui/progressive.tsx"
 import { messageText } from "@ui/message.ts"
 import type { toasts } from "../state/toasts.ts"
 import { type FormErrors, NOTE_MESSAGES, type NoteItem } from "../state/notes.ts"
+import type { NotePageActions } from "./shortcuts.ts"
+
+/**
+ * The note page's palette commands the person may use now, as the page's own menu offers them:
+ * Attach wherever an editor writes (the create page too), Copy link on any open note, readers
+ * included, and Duplicate, Delete and, with another group to go to, Move on an open note an editor
+ * can change.
+ */
+export function offeredNoteActions(
+  page: { canWrite: boolean; noteOpen: boolean; canMove: boolean },
+  run: Required<NotePageActions>,
+): NotePageActions {
+  const { attach, copyLink, duplicate, move } = run
+  if (!page.noteOpen) return page.canWrite ? { attach } : {}
+  if (!page.canWrite) return { copyLink }
+  return { attach, duplicate, ...page.canMove ? { move } : {}, copyLink, delete: run.delete }
+}
 
 /** The toasts a note action shows. */
 type Toasts = Pick<typeof toasts, "success" | "error">

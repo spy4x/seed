@@ -21,7 +21,7 @@ import { isSpaPath } from "./spa-paths.ts"
 import { personName } from "./note-people.ts"
 import { movedToast } from "./note-toasts.ts"
 import { afterPalette, clickAfterPalette } from "./palette-attach.ts"
-import { copyNoteLink, duplicateNote } from "./note-actions.ts"
+import { copyNoteLink, duplicateNote, offeredNoteActions } from "./note-actions.ts"
 import type { NotePageActions } from "./shortcuts.ts"
 import { copyToClipboard } from "@spy4x/platform/browser/clipboard"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
@@ -106,32 +106,29 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
   const shownId = editing?.id ?? null
   const canMove = moveTargets.length > 0
   useEffect(() => {
-    const actions: NotePageActions = {}
-    if (canWrite) {
+    noteEditorPageActions.value = offeredNoteActions({
+      canWrite,
+      noteOpen: shownId !== null && saved !== undefined,
+      canMove,
+    }, {
       // Focus lands on the button too, so the person is there once the chooser closes.
-      actions.attach = () => clickAfterPalette(document, document.getElementById(ATTACH_BUTTON_ID))
-    }
-    if (shownId && saved) {
-      const note = saved
-      actions.copyLink = () =>
-        void copyNoteLink(t, { id: note.id, groupName: membership?.name }, {
+      attach: () => clickAfterPalette(document, document.getElementById(ATTACH_BUTTON_ID)),
+      copyLink: () =>
+        saved && void copyNoteLink(t, { id: saved.id, groupName: membership?.name }, {
           base: location.href,
           copy: copyToClipboard,
           toasts,
-        })
-      if (canWrite) {
-        actions.duplicate = () =>
-          void duplicateNote(t, note, {
-            create: store.quickCreate,
-            newId: uuidV7,
-            navigate,
-            toasts,
-          })
-        actions.delete = () => openDialog(`delete`)
-        if (canMove) actions.move = () => openDialog(`move`)
-      }
-    }
-    noteEditorPageActions.value = actions
+        }),
+      duplicate: () =>
+        saved && void duplicateNote(t, saved, {
+          create: store.quickCreate,
+          newId: uuidV7,
+          navigate,
+          toasts,
+        }),
+      delete: () => openDialog(`delete`),
+      move: () => openDialog(`move`),
+    })
     return () => noteEditorPageActions.value = null
   }, [canWrite, canMove, shownId, saved, membership?.name, t])
   // A route change focuses the loading page's heading, which the note's own heading then replaces,
