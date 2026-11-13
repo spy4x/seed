@@ -157,4 +157,55 @@ test.describe("the admin app", () => {
       await cleanup(request, operatorEmail)
     }
   })
+
+  test("an operator finds a person from the Ctrl K palette by part of their address", async ({ browser, request }) => {
+    const operatorEmail = address("ops")
+    const targetEmail = address("eve")
+    let admin: BrowserContext | null = null
+    try {
+      await signUp(request, operatorEmail)
+      await signUp(request, targetEmail)
+      const promoted = await request.post(`${appBase}/api/test/set-role`, {
+        data: { login: operatorEmail, role: OPERATOR },
+      })
+      expect(promoted.ok(), await promoted.text()).toBe(true)
+
+      admin = await browser.newContext({ baseURL: adminBase })
+      const ops = await admin.newPage()
+      await ops.goto(`${adminBase}/sign-in`)
+      await ops.locator("[data-e2e=auth-form-login]").fill(operatorEmail)
+      await ops.locator("[data-e2e=auth-form-password]").fill(password)
+      await ops.locator("[data-e2e=auth-form-submit]").click()
+      await expect(ops.locator("[data-e2e=admin-dashboard-title]")).toBeVisible()
+
+      // The rail's Search entry opens the palette with focus in its field; Escape closes it and
+      // gives focus back to the entry.
+      const palette = ops.locator("dialog[data-e2e=search]")
+      const entry = ops.locator("[data-e2e=shell-search-rail] button")
+      await expect(entry).toHaveAttribute("aria-keyshortcuts", "Control+K")
+      await entry.click()
+      await expect(palette).toBeVisible()
+      await expect(palette.getByRole("combobox")).toBeFocused()
+      await ops.keyboard.press("Escape")
+      await expect(palette).toBeHidden()
+      await expect(entry).toBeFocused()
+
+      // Ctrl K opens it from the page; part of the address offers Find user, which opens the
+      // users list filtered by it.
+      await ops.keyboard.press("ControlOrMeta+k")
+      await expect(palette).toBeVisible()
+      const part = targetEmail.slice(0, targetEmail.indexOf("@") + 4)
+      await palette.getByRole("combobox").fill(part)
+      await palette.getByRole("option", { name: /Find user/ }).click()
+      await expect(palette).toBeHidden()
+      await expect(ops).toHaveURL(`${adminBase}/users?q=${encodeURIComponent(part)}`)
+      const row = ops.locator("[data-e2e=admin-users-list] a")
+      await expect(row).toHaveCount(1)
+      await expect(row).toContainText(targetEmail)
+    } finally {
+      await admin?.close()
+      await cleanup(request, targetEmail)
+      await cleanup(request, operatorEmail)
+    }
+  })
 })

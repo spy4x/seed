@@ -1461,6 +1461,11 @@ AdminPreferences.timeZone	b9fe1464783e1c0d
 AdminPreferences.title	4f9555cd54eade38
 AdminPreferences.zoneNow	b0286af0cc38bdfa
 AdminPreferences.zoneSignedUp	02823cafa830bcf6
+AdminSearch.find	97de19ef66ae136c
+AdminSearch.findGroup	db9bb44e7f27025a
+AdminSearch.findUser	432bb2d5a8396821
+AdminSearch.off	ca7981b46ecf2c17
+AdminSearch.on	130011756125313c
 AdminShortcuts.addCategory	aafdf428fd0256ea
 AdminShortcuts.addChannel	a19c0adaf6a623f1
 AdminShortcuts.addItem	d1a0b329a72b8f16
