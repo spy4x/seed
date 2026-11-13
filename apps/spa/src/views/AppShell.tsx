@@ -1,7 +1,7 @@
 import type { ComponentChildren } from "preact"
 import { useEffect, useMemo, useRef } from "preact/hooks"
 import { useSignal } from "@preact/signals"
-import { useLocation, useSearch } from "wouter-preact"
+import { matchRoute, useLocation, useRouter, useSearch } from "wouter-preact"
 import { canMutateNotes, canViewActivity } from "@domain/groups"
 import { pictureUrl, shownPictureId } from "@domain/identity"
 import { GROUP_PATHS, NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
@@ -18,6 +18,7 @@ import { createNoteSearch } from "../state/search.ts"
 import { selectionStore } from "../state/selection.ts"
 import { newNoteStore } from "../state/new-note.ts"
 import { pageCommands, spaShortcutRows } from "./shortcuts.ts"
+import { SPA_ROUTE_PATHS } from "./spa-paths.ts"
 import { hasFinePointer, singleKeys, useShortcuts } from "@platform/shortcuts.ts"
 import type { SessionUser } from "../state/session.ts"
 import {
@@ -216,6 +217,10 @@ export function AppShell(
   },
 ) {
   const [location, navigate] = useLocation()
+  // An address no route answers shows the not-found page, which belongs to no section, so the rail
+  // marks no entry there (`/notes/x/y` is not inside the notes).
+  const { parser } = useRouter()
+  const routed = SPA_ROUTE_PATHS.some((path) => matchRoute(parser, path, location)[0])
   const t = useAppText()
   const guest = isGuestSession(user)
   const { onSignOut, dialog } = useSignOut(guest)
@@ -309,7 +314,7 @@ export function AppShell(
         : <EmailBanner status={emailStore.status.value} navigate={navigate} />}
       connection={wsStatus}
       unreadCount={notificationsStore.unreadCount.value}
-      currentPath={location}
+      currentPath={routed ? location : undefined}
       navigate={navigate}
       onSignOut={onSignOut}
       language={languageChoice()}

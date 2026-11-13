@@ -88,8 +88,11 @@ export interface AdminNavItem {
 export function AdminShell(
   { navItems, currentPath, operator, theme, onSignOut, navigate, shortcuts, language, children }: {
     navItems: readonly AdminNavItem[]
-    /** The address of the page shown; the entry whose page it is, or is under, is marked. */
-    currentPath: string
+    /**
+     * The address of the page shown; the entry whose page it is, or is under, is marked. Left out,
+     * as on the not-found page, no entry is.
+     */
+    currentPath?: string
     operator: AdminShellOperator
     /** The theme store; left out, the operator's menu offers no theme. */
     theme?: FrameTheme
