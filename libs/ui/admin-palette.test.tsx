@@ -302,6 +302,9 @@ describe("AdminSearchPalette", () => {
   })
 })
 
+/** A stand-in for a page's content: data to the shell, so never translated. */
+const PAGE = `page`
+
 describe("AdminShell's Search entry", () => {
   const shell = (search?: VNode) => (
     <AdminShell
@@ -314,7 +317,7 @@ describe("AdminShell's Search entry", () => {
       onSignOut={() => {}}
       search={search}
     >
-      <p>page</p>
+      <p>{PAGE}</p>
     </AdminShell>
   )
 
