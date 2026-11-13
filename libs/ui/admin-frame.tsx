@@ -355,6 +355,7 @@ export function AdminSignInScreen(
           </dl>
           <div>
             <Button
+              variant="secondary"
               disabled={busy}
               onClick={() => onSignIn({ login: demoAdmin.email, password: demoAdmin.password })}
               data-e2e="admin-demo-sign-in"
