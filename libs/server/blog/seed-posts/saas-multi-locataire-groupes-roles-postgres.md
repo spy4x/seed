@@ -157,7 +157,7 @@ groupe. La facturation par siège et ses webhooks ont
 ## Pourquoi pas la row-level security de Postgres ?
 
 Je l’ai envisagée et j’ai consigné le compromis dans la
-[conception de la synchronisation des groupes](https://github.com/spy4x/seed/blob/main/docs/design/group-sync.md#9-tradeoffs).
+[conception de la synchronisation des groupes](https://github.com/spy4x/seed/blob/main/docs/archive/group-sync.md#9-tradeoffs).
 La row-level security mettrait une seconde copie des règles de droits dans la base, en politiques
 SQL, à côté de la copie dont les gestionnaires ont de toute façon besoin pour répondre « vous êtes
 viewer » avec une erreur utile. Deux copies d’une règle finissent par diverger. Il faudrait en plus

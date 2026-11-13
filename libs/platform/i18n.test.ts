@@ -6,6 +6,7 @@ import {
   LANGUAGE_STORAGE_KEY,
   languageSetting,
   pickLanguage,
+  seedAutomaticLocale,
 } from "./i18n.ts"
 
 const LANGUAGES = [`en`, `ru`, `de`, `ar`] as const
@@ -23,6 +24,24 @@ describe(`pickLanguage`, () => {
     for (const value of [`../../etc/passwd`, `__proto__`, `constructor`, `DE`, `de-DE`, ``]) {
       expect(pickLanguage(LANGUAGES, value, value, [])).toBe(`en`)
     }
+  })
+})
+
+describe(`seedAutomaticLocale`, () => {
+  it(`writes English as en-GB, like the public website, when the device has no English`, () => {
+    expect(seedAutomaticLocale(`en`, [`ru-RU`, `en`])).toBe(`en-GB`)
+    expect(seedAutomaticLocale(`en`, [`en-US`])).toBe(`en-US`)
+  })
+
+  it(`writes Automatic Arabic with Latin digits, from a device match or the fallback`, () => {
+    expect(seedAutomaticLocale(`ar`, [`en-US`])).toBe(`ar-EG-u-nu-latn`)
+    expect(seedAutomaticLocale(`ar`, [`ar-SA`])).toBe(`ar-SA-u-nu-latn`)
+    expect(new Intl.NumberFormat(seedAutomaticLocale(`ar`, [])).format(37)).toBe(`37`)
+  })
+
+  it(`leaves every other language's locale as the library picks it`, () => {
+    expect(seedAutomaticLocale(`de`, [`en-US`, `de-AT`])).toBe(`de-AT`)
+    expect(seedAutomaticLocale(`ru`, [])).toBe(`ru-RU`)
   })
 })
 

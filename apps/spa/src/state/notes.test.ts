@@ -125,6 +125,53 @@ describe("notes store", () => {
     expect(store.notes.value.map((note) => note.id)).toEqual(["fresh"])
   })
 
+  // Picking a note of another group in the search selects that group, so the notes list opens it
+  // before the note's page does; the list's read can answer after the note's.
+  it("keeps a note opened while the group's list was still being read", async () => {
+    let answer: (page: NotePage) => void = () => {}
+    const store = createNotesStore({
+      fetchPage: () => new Promise<NotePage>((resolve) => (answer = resolve)),
+      get: (_group, id) => Promise.resolve({ note: item(id, 1, `Garden notes`) }),
+      create: () => Promise.reject(new Error("unused")),
+      update: () => Promise.reject(new Error("unused")),
+      delete: () => Promise.reject(new Error("unused")),
+      restore: () => Promise.reject(new Error("unused")),
+      move: () => Promise.reject(new Error("unused")),
+      newId: () => "id",
+    })
+
+    const list = store.open(groupId, null)
+    await store.open(groupId, "garden")
+    expect(store.editing.value?.title).toBe(`Garden notes`)
+
+    answer({ notes: [item("garden", 1, `Garden notes`)], nextCursor: null })
+    await list
+    expect(store.editing.value?.title).toBe(`Garden notes`)
+  })
+
+  it("drops a late read of a note the person has left for another", async () => {
+    let answerX: (value: { note: NoteItem }) => void = () => {}
+    const store = createNotesStore({
+      fetchPage: () => Promise.resolve({ notes: [item("a", 1, `A`)], nextCursor: null }),
+      get: () => new Promise((resolve) => (answerX = resolve)),
+      create: () => Promise.reject(new Error("unused")),
+      update: () => Promise.reject(new Error("unused")),
+      delete: () => Promise.reject(new Error("unused")),
+      restore: () => Promise.reject(new Error("unused")),
+      move: () => Promise.reject(new Error("unused")),
+      newId: () => "id",
+    })
+
+    await store.open(groupId, null)
+    const leaving = store.open(groupId, "x")
+    await store.open(groupId, "a")
+    expect(store.editing.value?.title).toBe(`A`)
+
+    answerX({ note: item("x", 1, `X`) })
+    await leaving
+    expect(store.editing.value?.title).toBe(`A`)
+  })
+
   it("reads every page of the group it opens", async () => {
     const { store, reads } = harness({
       pages: [

@@ -9,10 +9,11 @@ import { NoteCreateCommand } from "@domain/notes"
 import { useCommandMiddleware } from "./command-middleware.ts"
 import { createEntitlementGate } from "./entitlement-gate.ts"
 import { ENTITLEMENT_NEEDS } from "./entitlement-needs.ts"
+import { TEST_FREE_PLAN, TEST_PLANS, testUsage } from "../../../libs/domain/billing/test-plans.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111003"
-const FREE_NOTES = 10
+const FREE_NOTES = TEST_FREE_PLAN.entitlements.limits.maxNotes!
 
 /** The API's command middleware on a free group that counts its notes in memory. */
 function bus(notes: number) {
@@ -24,10 +25,8 @@ function bus(notes: number) {
       billingEnabled: true,
       planOf: () => Promise.resolve(FREE_PLAN_ID),
       roleOf: () => Promise.resolve(GroupRole.OWNER),
-      usage: {
-        maxNotes: () => Promise.resolve(group.notes),
-        maxMembers: () => Promise.reject(new Error("not part of this test")),
-      },
+      usage: testUsage({ maxNotes: () => Promise.resolve(group.notes) }),
+      plans: TEST_PLANS,
     }, ENTITLEMENT_NEEDS),
   })
   commands.register(NoteCreateCommand, (command) => {

@@ -2,7 +2,9 @@
 # The Lighthouse check of the public website (`deno task lighthouse`): every page in
 # lighthouserc.json must score, in Lighthouse mobile, at least 95 for performance and 100 for
 # accessibility, best practices and SEO, the median of three runs ("Design gate" in the global
-# agent rules). Starts the blog API stand-in (blog-api.ts) on 48412, the built MPA (`deno task
+# agent rules). `LIGHTHOUSE_PAGES=quick`, which pull requests set (.woodpecker/ci.yml), measures
+# only the pages in quick.ts, one run each, against the same scores; `all`, the default, measures
+# every page. Starts the blog API stand-in (blog-api.ts) on 48412, the built MPA (`deno task
 # mpa:build` first) on port 48410, nginx with gzip in
 # front of it on 48411 (nginx.conf), and Lighthouse CI. Reports land in .lighthouseci/.
 # CI runs this script (.woodpecker/ci.yml); run it the same way on a machine, from the repository
@@ -10,6 +12,11 @@
 set -euo pipefail
 
 HERE=apps/mpa/lighthouse
+PAGES=${LIGHTHOUSE_PAGES:-all}
+case "$PAGES" in
+  all | quick) ;;
+  *) echo "LIGHTHOUSE_PAGES must be all or quick, not $PAGES"; exit 1 ;;
+esac
 [ -f apps/mpa/dist/server.js ] || { echo "no MPA build: run deno task mpa:build first"; exit 1; }
 
 if [ -z "${CHROME_PATH:-}" ]; then
@@ -67,7 +74,13 @@ timeout -k 5 2400 nginx -p "$SCRATCH" -e stderr -c "$PWD/$HERE/nginx.conf" -g 'd
 PIDS+=($!)
 wait_for nginx "${PIDS[-1]}" http://127.0.0.1:48411/health
 
+CONFIG="$HERE/lighthouserc.json"
+if [ "$PAGES" = quick ]; then
+  CONFIG="$SCRATCH/lighthouserc.json"
+  deno run --allow-read="$HERE" --allow-write="$CONFIG" "$HERE/quick.ts" "$HERE/lighthouserc.json" "$CONFIG"
+fi
+
 # Outside deno.lock: Lighthouse CI's own dependencies include the npm `uuid` package, which
 # tests/no-uuid-v4.test.ts refuses in any tracked file. The version is pinned here, and the
 # repository's minimum dependency age still holds for everything it pulls in.
-deno run -A --no-lock npm:@lhci/cli@0.15.1 autorun --config="$HERE/lighthouserc.json"
+deno run -A --no-lock npm:@lhci/cli@0.15.1 autorun --config="$CONFIG"

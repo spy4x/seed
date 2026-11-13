@@ -89,7 +89,11 @@ a hidden or draft item, or of a deleted source, answers 404.
 
 Set `UMAMI_API_URL` and `UMAMI_API_TOKEN` together or not at all. The admin app's Stats page reads
 each source's visits and order clicks back from Umami
-([analytics.md](analytics.md#stats-in-the-admin-app)).
+([analytics.md](analytics.md#stats-in-the-admin-app)). With Stats on, the item's **Share links**
+card shows the last 30 days too: the item's views and order clicks in its header, with a **See in
+Stats** button, and each source's visits and order clicks on the item's page under its link. The
+numbers load after the item, and the links and **Copy link** work while they load, while Stats is
+off and while Umami does not answer.
 
 ### Order buttons
 
@@ -106,12 +110,18 @@ visits:
 The admin routes are under `/api/admin/catalog`, for operators only, and every write is audited.
 The public routes need no session:
 
-| Route                               | What it answers                                                                          |
-| ----------------------------------- | ---------------------------------------------------------------------------------------- |
-| `GET /api/catalog`                  | The settings, categories with a published item, and every published item with its cover. |
-| `GET /api/catalog/items/:slug`      | One published item with its texts, colours, sizes, size chart, sold-out list and photos. |
-| `GET /api/catalog/photos/:id/:file` | One width of a published photo, such as `960.webp`.                                      |
-| `GET /api/catalog/links/:code`      | `{ location }`: where the website's `/s/<code>` sends the visitor.                       |
+| Route                               | What it answers                                                                                             |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `GET /api/catalog`                  | The settings, categories with a published item, and every published item with its cover, sizes and colours. |
+| `GET /api/catalog/items/:slug`      | One published item with its texts, colours, sizes, size chart, sold-out list and photos.                    |
+| `GET /api/catalog/photos/:id/:file` | One width of a published photo, such as `960.webp`.                                                         |
+| `GET /api/catalog/links/:code`      | `{ location }`: where the website's `/s/<code>` sends the visitor.                                          |
+
+In the list, each item carries its sizes and colours in the item's order, without ids, the size
+chart or the other photos: `"sizes": [{ "label": "S", "soldOut": true }]` and
+`"colours": [{ "name": { "en": "Red" }, "swatch": "#aa0000", "soldOut": false }]`. A size or a
+colour is sold out when every combination holding it is. The item's page has the same `soldOut` on
+each of its colours and sizes. The list takes five queries, whatever the number of items.
 
 Photos are JPEG, PNG, WebP or HEIC, up to 20 MB. A category can be deleted only when empty. Item
 and source ids are UUID version 7, made by the client. `apps/api/routes/admin/catalog.ts` holds the
@@ -119,21 +129,76 @@ admin routes.
 
 ## Where the code lives
 
-| Where                                     | What                                                            |
-| ----------------------------------------- | --------------------------------------------------------------- |
-| `libs/domain/catalog/+lib.ts`             | Shapes, limits, request schemas, field checks, `recommendSize`. |
-| `libs/server/catalog/setup.ts`            | The switch and the settings.                                    |
-| `libs/server/catalog/postgres-catalog.ts` | The admin's reads and writes, each write with its audit row.    |
-| `libs/server/catalog/public-catalog.ts`   | The website's reads: published items only.                      |
-| `libs/server/catalog/sample-catalog.ts`   | Sample items for development and the demo.                      |
-| `libs/server/catalog/tracking.ts`         | Tracking links: the settings, Umami, where `/s/<code>` leads.   |
-| `apps/admin/src/modules/catalog/`         | The admin pages.                                                |
-| `apps/mpa/routes/s/[code].ts`             | The website's `/s/<code>` redirect.                             |
+| Where                                         | What                                                            |
+| --------------------------------------------- | --------------------------------------------------------------- |
+| `libs/domain/catalog/+lib.ts`                 | Shapes, limits, request schemas, field checks, `recommendSize`. |
+| `libs/server/catalog/setup.ts`                | The switch and the settings.                                    |
+| `libs/server/catalog/postgres-catalog.ts`     | The admin's reads and writes, each write with its audit row.    |
+| `libs/server/catalog/public-catalog.ts`       | The website's reads: published items only.                      |
+| `libs/server/catalog/sample-catalog.ts`       | Sample items for development and the demo.                      |
+| `libs/server/catalog/tracking.ts`             | Tracking links: the settings, Umami, where `/s/<code>` leads.   |
+| `libs/server/catalog/catalog-indexnow-job.ts` | The `catalog.indexnow` job ([IndexNow](#indexnow)).             |
+| `apps/admin/src/modules/catalog/`             | The admin pages.                                                |
+| `apps/mpa/routes/s/[code].ts`                 | The website's `/s/<code>` redirect.                             |
+| `apps/mpa/catalog.ts`                         | The website's reads, addresses, texts and sitemap entries.      |
+| `apps/mpa/components/catalog.tsx`             | The tiles, the category links and the price.                    |
+| `apps/mpa/routes/[[lang]]/catalog/`           | The catalog and category pages.                                 |
+| `apps/mpa/routes/[[lang]]/[category]/`        | The item page.                                                  |
+| `apps/mpa/routes/catalog/photos/`             | The photos, served from the website's host.                     |
 
-## Not built yet
+## The website's pages
 
-The website's shop pages need builders that `ts-libs` does not have yet: Product and ItemList
-JSON-LD, images in a sitemap entry, and an IndexNow client. They come first in `ts-libs`, then here.
+While the catalog is on, the website (`apps/mpa`) shows it. The pages are rendered on the server and
+work without JavaScript.
+
+| Address               | What it shows                                                                                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/catalog`            | Every published item as a tile: the cover, the name, the price, the sizes and colours, and "Sold out". Links to each category.                                |
+| `/catalog/<category>` | That category's items. A category with no published item is the 404 page.                                                                                     |
+| `/<category>/<slug>`  | One item: its photos, cover first, the price, the colours and sizes with the sold-out ones marked, the description, material, fit and care, and a breadcrumb. |
+
+- **The item's address** is `CATALOG_ITEM_PATH`'s default, `/{category}/{slug}`, where tracking
+  links lead. Every other page of the website wins over it, so a category whose slug is the name of
+  a page (`blog`, `docs`, `features`, `pricing`, `catalog`, `s`, `video`) or a language code (`de`) is never
+  reached at that address. Pick category slugs that are none of these.
+- **Colours and sizes** are links (`?colour=<id>&size=<id>`). Once both are picked, the page says
+  whether that choice is in stock. The canonical address stays the item's.
+- **Languages.** The address without a language prefix always exists; `/de/catalog` and the like
+  exist only for languages both the website and the catalog keep. A text missing in the page's
+  language is shown in the catalog's default language.
+- **Prices** are formatted for the page's language in the catalog's currency.
+- **Photos** are served from the website's own host, at `/catalog/photos/<id>/<width>.<avif|webp>`,
+  read from the API's photo address. An item without a ready photo shows a neutral placeholder.
+- **Structured data.** The catalog and category pages publish an `ItemList` of their items, and
+  every catalog page a `BreadcrumbList`. An item with photos publishes a `Product` with one
+  `Offer`, or a `ProductGroup` with one variant per colour and size, each `InStock` or `OutOfStock`.
+  Google's product result needs a photo, so an item without one publishes none.
+- **Sitemap and `llms.txt`.** The sitemap lists the catalog, category and item pages, each item with
+  its cover as an image entry. `llms.txt` has a Catalog section with the catalog and each category.
+
+While the catalog is off (`/api/catalog` answers 404), every one of these addresses is the 404
+page, and neither the sitemap nor `llms.txt` names the catalog. The website has no menu link to the
+catalog: a product adds its own.
+
+## IndexNow
+
+With `INDEXNOW_KEY` and `MPA_DOMAIN` set, Seed tells [IndexNow](https://www.indexnow.org/) when an
+item's page changes, so Bing and the other engines that share it look again within minutes instead
+of at their next crawl. The website serves the key file; [the blog's IndexNow](blog.md#indexnow)
+says how. Without the key nothing is sent.
+
+- **When.** An item is sent when it is published or hidden, and when a save of a published item
+  changes its price, its sold-out sizes, its slug or its category. A save that changes only texts,
+  colours or sizes queues nothing, nor does creating an item (it starts as a draft). Deleting an
+  item sends nothing either; nor does changing a category's slug, although its items move.
+- **Its own job.** The write queues a `catalog.indexnow` job in its own transaction; one waits per
+  item at a time, and it reads the item when it runs. An item that was never published sends
+  nothing; a hidden one is sent, so the engines find its page gone.
+- **The addresses.** The item address (`CATALOG_ITEM_PATH`), without a language prefix and in each
+  other language both the website and the catalog keep (`CATALOG_LANGUAGES`), as the sitemap lists
+  them. The worker reads both settings, and `CATALOG`, which they need. A slug or category change sends the new address only.
+- **Fail-open.** A refused or failed ping is logged once, without the key, and the job still
+  succeeds: it is not retried and never touches the item.
 
 ## Next
 

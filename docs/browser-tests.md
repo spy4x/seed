@@ -32,20 +32,24 @@ reads, and the process cap to allow when you run it under one.
 
 ## The two passes
 
-Three specs start the app with no network: `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts` and
-`e2e/search-offline.e2e.ts`. They run against the built SPA, the image a deploy serves. Every
-other spec runs against the dev server. [The app shell](offline-app-shell.md#offline-tests-run-against-the-built-spa) says why.
+Five specs start the app with no network: `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts`,
+`e2e/search-offline.e2e.ts`, `e2e/tags-offline.e2e.ts` and `e2e/notes-restore-offline.e2e.ts`.
+They run against the built SPA, the image a deploy serves. Every other spec runs against the dev
+server. [The app shell](offline-app-shell.md#offline-tests-run-against-the-built-spa) says why.
 
 A run that needs both makes two passes: the dev server first, then the built SPA in its place.
 
 - The run fails when either pass fails. Its last lines give the counts of each pass.
 - The second pass's report is in `e2e/report/offline`. `e2e:report` does not open it.
+- The traces of a pass's failed tests stay in `results/` of its report folder, whatever the
+  reporter: open one with `deno run -A npm:playwright@1.57.0 show-trace <trace.zip>`.
 - `E2E_SPA=dev` or `E2E_SPA=built` puts every spec on that one server.
 
 ## What CI runs
 
-A merge needs the pull-request check, so that check runs a smoke set. The whole suite runs after
-the merge. Every step of the pipeline is in [the CI guide](woodpecker-ci-setup.md).
+A merge needs the pull-request check, so that check runs a smoke set, unless the pull request
+changes only Markdown outside the product. The whole suite runs after the merge. Every step of the
+pipeline is in [the CI guide](woodpecker-ci-setup.md).
 
 | When                    | Step         | Specs                                                    |
 | ----------------------- | ------------ | -------------------------------------------------------- |
@@ -53,7 +57,10 @@ the merge. Every step of the pipeline is in [the CI guide](woodpecker-ci-setup.m
 | Push to `main`          | `e2e-full`   | Every `e2e/*.e2e.ts` (`deno task e2e:local`)             |
 | All three               | `browser`    | The website's `e2e/mpa/*.mpa.ts`                         |
 | All three               | `browser`    | `e2e/spa/*.spa.ts`, on the SPA behind nginx              |
-| All three               | `lighthouse` | The website's Lighthouse budget (`deno task lighthouse`) |
+| All three, see below    | `lighthouse` | The website's Lighthouse budget (`deno task lighthouse`) |
+
+A pull request runs `lighthouse` only when it changes a file the website is built from; a push to
+`main` and a tag always run it. The file list is in [the CI guide](woodpecker-ci-setup.md).
 
 The smoke set is `SMOKE_SPECS` in
 [`infra/scripts/e2e-local-plan.ts`](../infra/scripts/e2e-local-plan.ts):
@@ -78,8 +85,11 @@ pass. A red step may list only some failures, so run the specs on your machine f
 1. Run it ten times in a row on a healthy branch:
 
    ```sh
-   deno task e2e:local e2e/<spec> --repeat-each=10
+   E2E_LOCAL_TIMEOUT=3600 deno task e2e:local e2e/<spec> --repeat-each=10 --workers=1
    ```
+
+   Ten runs take ten times as long as one. `E2E_LOCAL_TIMEOUT` is the deadline of one pass, 1500 s
+   by default, which ten runs of a long spec such as `e2e/notes.e2e.ts` outgrow on a busy machine.
 
 2. Add it to `SMOKE_SPECS` only when every run passed. A spec that fails once blocks every pull
    request.

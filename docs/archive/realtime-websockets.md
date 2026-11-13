@@ -1,3 +1,6 @@
+> **Archived.** Replaced by [ADR 002](../decisions/002-realtime-transport-and-sync.md), which took
+> its recommendation.
+
 # Realtime transport and sync-on-reconnect
 
 - Status: superseded by [ADR 002](../decisions/002-realtime-transport-and-sync.md).

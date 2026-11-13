@@ -14,6 +14,7 @@ interface ComposeService {
   profiles?: string[]
   labels?: string[]
   environment?: string[]
+  deploy?: { resources?: { limits?: { memory?: string } } }
 }
 
 async function services(file: string): Promise<Record<string, ComposeService>> {
@@ -64,4 +65,16 @@ Deno.test("in production both admin routers are HTTPS only, and plain HTTP redir
   expect(label(admin, `${redirect}.rule`)).toBe("Host(`${ADMIN_DOMAIN:-}`)")
   expect(label(admin, `${redirect}.entrypoints`)).toBe("web")
   expect(label(admin, `${redirect}.middlewares`)).toBe("https-redirect-${PROJECT}")
+})
+
+Deno.test("the dev admin's Vite server gets a limit of its own, and production keeps 128M", async () => {
+  const shared = await services("compose.shared.yml")
+  const dev = await services("compose.dev.yml")
+  expect(shared.admin?.deploy?.resources?.limits?.memory).toBe("${ADMIN_MEM_LIMIT:-128M}")
+  expect(dev.admin?.deploy?.resources?.limits?.memory).toBe("${ADMIN_DEV_MEM_LIMIT:-1G}")
+})
+
+Deno.test("the dev admin keeps the base image's dependency cache instead of an empty DENO_DIR", async () => {
+  const { admin } = await services("compose.dev.yml")
+  expect(admin?.environment?.filter((entry) => entry.startsWith("DENO_DIR="))).toEqual([])
 })

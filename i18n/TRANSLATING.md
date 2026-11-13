@@ -29,16 +29,20 @@ language.
 
 ## The loop
 
+A code change does steps 1 and 2 and stops there. The translation pass (step 5 of "How to
+translate") does steps 3 to 5, one language per agent or person. The test fails until it is done.
+
 1. Change the English in `en.ts`, and name the key in the code.
 2. Run `deno task test`. `i18n/i18n.test.ts` lists every message that is missing, extra, empty, or
    out of date because its English changed, every one whose placeholders, tags or plural forms
    differ from the English, and every English key no code names.
-3. Translate what it lists, in every language.
+3. Translate what it lists in the pass's language.
 4. Run `deno task i18n:stamp`. It records in `<language>.lock` which English each translation was
    made from.
 5. Run `deno task test` again. It passes once every language matches the English.
 
 Stamp only after the translation is done: a stamp tells the test that the translation is current.
+`rg` skips the translations and the `.lock` stamps (`.ignore`); `rg --no-ignore-dot` searches them.
 
 ## How to translate
 
@@ -57,9 +61,9 @@ like a machine made it, so:
 5. A translation is done by an agent or person whose only task is that language, never as a side
    task of a code change. A change that adds or edits English leaves the other languages to that
    pass.
-6. A second reader checks every new translation: the owner for Russian, and for the other
-   languages a separate agent that translates it back to English and compares the meaning with
-   the source.
+6. A second reader checks every new translation, Russian included: a separate agent that
+   translates it back to English and compares the meaning with the source. Never ask the owner to
+   read a translation; the owner reports one that reads badly.
 
 ## Glossary
 

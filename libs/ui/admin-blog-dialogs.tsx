@@ -9,7 +9,7 @@ import { DateTimeField } from "@spy4x/preact-ui/date-time-field"
 import { Input, Select } from "@spy4x/preact-ui/input"
 import { languageName } from "@spy4x/preact-ui/language-picker"
 import { Stack } from "@spy4x/preact-ui/layout"
-import { RadioGroup } from "@spy4x/preact-ui/radio"
+import { RadioChips } from "@spy4x/preact-ui/radio-chips"
 import {
   BLOG_SLUG_MAX_LENGTH,
   BLOG_SLUG_PATTERN,
@@ -311,17 +311,19 @@ function PublishDialog(props: DialogsProps & { title: string }): JSX.Element {
           </Notice>
         )}
         {dialog === `publish` && (
-          <RadioGroup
-            legend={t.t(`AdminBlogDialogs.when`)}
-            name="blog-publish-when"
-            data-e2e="admin-blog-when"
-            options={[
-              { value: `now`, label: t.t(`AdminBlogDialogs.now`) },
-              { value: `schedule`, label: t.t(`AdminBlogDialogs.whenSchedule`) },
-            ]}
-            value={when}
-            onChange={(next) => setWhen(next === `schedule` ? `schedule` : `now`)}
-          />
+          // `RadioChips` takes no attributes of its own, so the hook sits on a wrapper.
+          <div data-e2e="admin-blog-when">
+            <RadioChips
+              legend={t.t(`AdminBlogDialogs.when`)}
+              name="blog-publish-when"
+              options={[
+                { value: `now`, label: t.t(`AdminBlogDialogs.now`) },
+                { value: `schedule`, label: t.t(`AdminBlogDialogs.whenSchedule`) },
+              ]}
+              value={when}
+              onChange={(next) => setWhen(next === `schedule` ? `schedule` : `now`)}
+            />
+          </div>
         )}
         {scheduling
           ? (

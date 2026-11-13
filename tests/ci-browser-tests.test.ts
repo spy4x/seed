@@ -3,14 +3,20 @@
  * Holds which browser tests CI runs. A merge is allowed on the pull-request check alone, so that
  * check must run the smoke set (`SMOKE_SPECS` of `infra/scripts/e2e-local-plan.ts`), and the set
  * must keep the sign-in and the notes specs: without either, a pull request that breaks that
- * screen shows green again. The whole suite runs after the merge, on `main`, where a red run is
+ * screen shows green again. The one exception is a pull request that changes only Markdown
+ * outside the product (`markdown_only` and `internal_markdown` in the workflow): it skips the
+ * steps that start the stack, and runs `browser` only when it changes a published guide. The whole
+ * suite runs after the merge, on `main`, where a red run is
  * seen but blocks nobody. `docs/browser-tests.md` and `docs/woodpecker-ci-setup.md` name the specs
  * of the set. Lighthouse measures in a stage of its own, with no other step of the pipeline beside
- * it.
+ * it. A pull request runs it only when it changes a file the website is built from (#821); a push
+ * to `main` and a tag always run it, and the e2e steps run whether it ran or not. A pull request
+ * measures only the quick pages (#876). The four image builds follow the same pattern: a pull
+ * request builds them only when it changes a file that goes into an image.
  */
 
 import { expect } from "@std/expect"
-import { fromFileUrl } from "@std/path"
+import { fromFileUrl, globToRegExp } from "@std/path"
 import { parse } from "@std/yaml"
 import { SMOKE_FLAG, SMOKE_SPECS } from "../infra/scripts/e2e-local-plan.ts"
 
@@ -23,36 +29,73 @@ const CI = ".woodpecker/ci.yml"
 const SUITE = "deno task e2e:local --max-failures=10"
 const SMOKE = `deno task e2e:local ${SMOKE_FLAG} --max-failures=3`
 
+/** A `path` condition: the list form holds include patterns only. */
+type PathCondition = string | string[] | {
+  include?: string | string[]
+  exclude?: string | string[]
+}
+
 /** One condition of a Woodpecker `when`. */
 interface Condition {
   event?: string | string[]
   branch?: string | string[]
+  path?: PathCondition
 }
+
+/** A `depends_on` entry: a step's name, or an object that may mark the dependency optional. */
+type Dependency = string | { name: string; optional?: boolean }
 
 /** The parts of a Woodpecker step, or of the workflow itself, that these tests read. */
 export interface Step {
   when?: Condition | Condition[]
   commands?: string[]
   failure?: string
-  depends_on?: string[]
+  depends_on?: Dependency | Dependency[]
 }
 
 const list = <T>(value: T | T[] | undefined): T[] =>
   value === undefined ? [] : Array.isArray(value) ? value : [value]
 
 /**
- * Whether `step` runs for `event` on `branch`. A step without `when` runs for every event, and a
- * condition without `branch` holds on every branch. Branch patterns are compared as plain names:
- * this pipeline uses no glob.
+ * Whether a `path` condition holds for the `changed` files, as Woodpecker 3's `Path.Match` decides:
+ * no changed file (`on_empty` defaults to true) holds; it fails when every changed file matches an
+ * exclude pattern, or when include patterns are given and no changed file matches one. `**`
+ * crosses folders and `*` does not.
  */
-export function runsFor(step: Step, event: string, branch: string): boolean {
+function pathHolds(path: PathCondition | undefined, changed: string[]): boolean {
+  if (changed.length === 0) return true
+  const form = typeof path === `object` && !Array.isArray(path) ? path : { include: path }
+  const matcher = (patterns: string[]) => {
+    const globs = patterns.map((pattern) => globToRegExp(pattern, { globstar: true }))
+    return (file: string) => globs.some((glob) => glob.test(file))
+  }
+  const exclude = list(form.exclude)
+  if (exclude.length > 0 && changed.every(matcher(exclude))) return false
+  const include = list(form.include)
+  return include.length === 0 || changed.some(matcher(include))
+}
+
+/**
+ * Whether `step` runs for `event` on `branch` when the commit or pull request changes the files
+ * `changed`. A step without `when` runs for every event, and a condition without `branch` holds on
+ * every branch. Branch patterns are compared as plain names: this pipeline uses no glob. As in
+ * Woodpecker, `path` counts on a pull request and a push only, never on a tag.
+ */
+export function runsFor(
+  step: Step,
+  event: string,
+  branch: string,
+  changed: string[] = [],
+): boolean {
   const conditions = list(step.when)
   if (conditions.length === 0) return true
   return conditions.some((condition) => {
     const events = list(condition.event)
     const branches = list(condition.branch)
+    const pathCounts = event === `pull_request` || event === `push`
     return (events.length === 0 || events.includes(event)) &&
-      (branches.length === 0 || branches.includes(branch))
+      (branches.length === 0 || branches.includes(branch)) &&
+      (!pathCounts || pathHolds(condition.path, changed))
   })
 }
 
@@ -67,34 +110,43 @@ export function blockingSteps(
   command: string,
   event: string,
   branch: string,
+  changed: string[] = [],
 ): string[] {
-  if (!runsFor(workflow, event, branch)) return []
+  if (!runsFor(workflow, event, branch, changed)) return []
   return Object.entries(workflow.steps ?? {})
     .filter(([, step]) =>
-      runs(step, command) && runsFor(step, event, branch) && step.failure !== "ignore"
+      runs(step, command) && runsFor(step, event, branch, changed) && step.failure !== "ignore"
     )
     .map(([name]) => name)
 }
 
 /**
- * The stages Woodpecker runs for `event` on `branch`, as lists of step names. A step's stage is one
- * past the latest stage of the steps it depends on that run, and a stage starts only when the one
- * before it has ended (the top of `.woodpecker/ci.yml`).
+ * The stages Woodpecker runs for `event` on `branch` when `changed` files changed, as lists of step
+ * names. A step's stage is one past the latest stage of the steps it depends on, and a stage starts
+ * only when the one before it has ended (the top of `.woodpecker/ci.yml`). As in Woodpecker 3, a
+ * dependency on a step that does not run is dropped when it is optional, and fails the whole
+ * pipeline otherwise: this throws then.
  */
 export function stages(
   workflow: Step & { steps?: Record<string, Step> },
   event: string,
   branch: string,
+  changed: string[] = [],
 ): string[][] {
   const steps = Object.entries(workflow.steps ?? {}).filter(([, step]) =>
-    runsFor(step, event, branch)
+    runsFor(step, event, branch, changed)
   )
   const names = new Set(steps.map(([name]) => name))
   const levels = new Map<string, number>()
   const level = (name: string): number => {
     const known = levels.get(name)
     if (known !== undefined) return known
-    const deps = list(workflow.steps?.[name]?.depends_on).filter((dep) => names.has(dep))
+    const deps = list(workflow.steps?.[name]?.depends_on).flatMap((dep) => {
+      const { name: on, optional = false } = typeof dep === `string` ? { name: dep } : dep
+      if (names.has(on)) return [on]
+      if (optional) return []
+      throw new Error(`${name} depends on ${on}, which does not run`)
+    })
     const value = deps.length === 0 ? 0 : 1 + Math.max(...deps.map(level))
     levels.set(name, value)
     return value
@@ -139,13 +191,126 @@ Deno.test("a step's stage comes after the latest stage of its dependencies, and 
   expect(stages({ steps }, `pull_request`, `main`)).toEqual([[`a`], [`b`, `c`], [`d`]])
 })
 
-Deno.test("Lighthouse measures in a stage of its own on every event", async () => {
+Deno.test("a dependency on a step that does not run is dropped when optional and fails the pipeline otherwise", () => {
+  const off = { when: { event: `push` } }
+  const optional = {
+    steps: { a: {}, off, e: { depends_on: [`a`, { name: `off`, optional: true }] } },
+  }
+  expect(stages(optional, `pull_request`, `main`)).toEqual([[`a`], [`e`]])
+  const required = { steps: { a: {}, off, e: { depends_on: [`a`, `off`] } } }
+  expect(() => stages(required, `pull_request`, `main`)).toThrow(`e depends on off`)
+})
+
+Deno.test("a path condition needs one changed file to match on a pull request or a push, and counts on no tag", () => {
+  const step = { when: { path: [`apps/mpa/**`, `docs/*.md`, `deno.lock`] } }
+  expect(runsFor(step, `pull_request`, `x`, [`apps/mpa/routes/deep/index.tsx`])).toBe(true)
+  expect(runsFor(step, `pull_request`, `x`, [`apps/api/x.ts`, `docs/billing.md`])).toBe(true)
+  expect(runsFor(step, `push`, `main`, [`deno.lock`])).toBe(true)
+  expect(runsFor(step, `pull_request`, `x`, [`apps/api/x.ts`])).toBe(false)
+  expect(runsFor(step, `pull_request`, `x`, [`docs/screenshots/a.png`])).toBe(false)
+  expect(runsFor(step, `push`, `main`, [`apps/mpa-other/x.ts`])).toBe(false)
+  // No changed file listed: Woodpecker's `on_empty` defaults to running the step.
+  expect(runsFor(step, `pull_request`, `x`, [])).toBe(true)
+  expect(runsFor(step, `tag`, `x`, [`apps/api/x.ts`])).toBe(true)
+})
+
+Deno.test("an exclude condition fails only when every changed file matches it", () => {
+  const step = { when: { path: { exclude: [`*.md`, `docs/**/*.md`] } } }
+  expect(runsFor(step, `pull_request`, `x`, [`README.md`, `docs/a/b.md`])).toBe(false)
+  expect(runsFor(step, `pull_request`, `x`, [`README.md`, `apps/api/x.ts`])).toBe(true)
+  expect(runsFor(step, `pull_request`, `x`, [`apps/README.md`])).toBe(true)
+  expect(runsFor(step, `pull_request`, `x`, [])).toBe(true)
+  expect(runsFor(step, `tag`, `x`, [`README.md`])).toBe(true)
+})
+
+/** The stage of `name` in `list`, or -1 when it does not run. */
+const stageOf = (list: string[][], name: string) => list.findIndex((names) => names.includes(name))
+
+Deno.test("Lighthouse measures in a stage of its own on every event that runs it", async () => {
   // Lab performance falls when another step shares the CPU, and the budget then fails on noise.
   const ci = await workflow()
+  const website = [`apps/mpa/routes/index.tsx`]
   for (const event of [`pull_request`, `push`, `tag`]) {
-    const [step] = blockingSteps(ci, `deno task lighthouse`, event, `main`)
-    const stage = stages(ci, event, `main`).find((names) => names.includes(step))
+    const [step] = blockingSteps(ci, `deno task lighthouse`, event, `main`, website)
+    const stage = stages(ci, event, `main`, website).find((names) => names.includes(step))
     expect({ event, stage }).toEqual({ event, stage: [`lighthouse`] })
+  }
+})
+
+Deno.test("a pull request that changes only the API runs no Lighthouse and still runs the smoke set after browser", async () => {
+  const ci = await workflow()
+  const changed = [`apps/api/x.ts`]
+  expect(blockingSteps(ci, `deno task lighthouse`, `pull_request`, `main`, changed)).toEqual([])
+  expect(blockingSteps(ci, SMOKE, `pull_request`, `main`, changed)).toEqual([`e2e-smoke`])
+  const order = stages(ci, `pull_request`, `main`, changed)
+  expect(stageOf(order, `e2e-smoke`)).toBeGreaterThan(stageOf(order, `browser`))
+  // e2e-smoke shares its stage with no other step, as it did after Lighthouse.
+  expect(order[stageOf(order, `e2e-smoke`)]).toEqual([`e2e-smoke`])
+})
+
+Deno.test("a pull request that changes the website, a published guide or the lockfile runs Lighthouse", async () => {
+  const ci = await workflow()
+  for (const file of [`apps/mpa/routes/index.tsx`, `docs/billing.md`, `deno.lock`]) {
+    const steps = blockingSteps(ci, `deno task lighthouse`, `pull_request`, `main`, [file])
+    expect({ file, steps }).toEqual({ file, steps: [`lighthouse`] })
+  }
+})
+
+Deno.test("a push to main and a tag run Lighthouse whatever they change", async () => {
+  const ci = await workflow()
+  for (const event of [`push`, `tag`]) {
+    const steps = blockingSteps(ci, `deno task lighthouse`, event, `main`, [`apps/api/x.ts`])
+    expect({ event, steps }).toEqual({ event, steps: [`lighthouse`] })
+  }
+})
+
+Deno.test("a pull request measures the quick pages, and a push to main and a tag every page", async () => {
+  // run.sh measures every page unless LIGHTHOUSE_PAGES=quick; only a pull request may set it.
+  const commands = list((await workflow()).steps?.lighthouse?.commands).map((line) => line.trim())
+  const at = commands.indexOf(`deno task lighthouse`)
+  expect(commands.slice(at - 1, at)).toEqual([
+    `if [ "$\${CI_PIPELINE_EVENT}" = pull_request ]; then export LIGHTHOUSE_PAGES=quick; fi`,
+  ])
+  expect(commands.filter((line) => line.includes(`LIGHTHOUSE_PAGES`))).toHaveLength(1)
+})
+
+const IMAGES = [`image-node`, `image-bun`, `image-mpa-node`, `image-mpa-bun`]
+
+/** The image steps that run for `event` on `main` when `changed` files changed. */
+const imagesFor = async (event: string, changed: string[]) => {
+  const steps = (await workflow()).steps ?? {}
+  return IMAGES.filter((name) => steps[name] && runsFor(steps[name], event, `main`, changed))
+}
+
+Deno.test("a pull request that changes no file of an image builds none, and a push to main and a tag build all four", async () => {
+  for (const file of [`docs/screenshots/a.png`, `README.md`, `tests/x.test.ts`, `.claude/x.md`]) {
+    expect({ file, images: await imagesFor(`pull_request`, [file]) }).toEqual({ file, images: [] })
+  }
+  for (const event of [`push`, `tag`]) {
+    expect({ event, images: await imagesFor(event, [`README.md`]) }).toEqual({
+      event,
+      images: IMAGES,
+    })
+  }
+})
+
+Deno.test("a pull request that changes an app, a library, a Dockerfile or the lockfile builds all four images", async () => {
+  const files = [
+    `apps/api/dockerfile.node`,
+    `apps/mpa/routes/index.tsx`,
+    `libs/server/db/x.ts`,
+    `i18n/de.json`,
+    `docs/billing.md`,
+    `media/demo/demo.webm`,
+    `deno.lock`,
+    `deno.jsonc`,
+    `.dockerignore`,
+  ]
+  for (const file of files) {
+    expect({ file, images: await imagesFor(`pull_request`, [file]) }).toEqual({
+      file,
+      images: IMAGES,
+    })
   }
 })
 
@@ -184,4 +349,49 @@ Deno.test("the browser-test guide and the CI guide name every spec of the smoke 
     const missing = SMOKE_SPECS.filter((name) => !text.includes(name))
     expect({ path, missing }).toEqual({ path, missing: [] })
   }
+})
+
+/** Markdown files that no app, image or test reads, apart from `check`. */
+const MARKDOWN_ONLY = [
+  `README.md`,
+  `AGENTS.md`,
+  `i18n/TRANSLATING.md`,
+  `docs/decisions/a.md`,
+  `libs/domain/README.md`,
+  `.github/ISSUE_TEMPLATE/a.md`,
+]
+const STACK = [`integration`, `backup-restore`, `alert-rules`, `browser`, `runtimes`, `e2e-smoke`]
+
+Deno.test("a pull request that changes only Markdown no app loads runs check and none of the stack's steps", async () => {
+  const ci = await workflow()
+  for (const file of MARKDOWN_ONLY) {
+    const ran = stages(ci, `pull_request`, `main`, [file]).flat()
+    expect({ file, ran: ran.filter((name) => STACK.includes(name)) }).toEqual({ file, ran: [] })
+    expect({ file, check: ran.includes(`check`) }).toEqual({ file, check: true })
+  }
+  expect(blockingSteps(ci, SMOKE, `pull_request`, `main`, MARKDOWN_ONLY)).toEqual([])
+})
+
+Deno.test("a pull request that changes Markdown and any other file, a push to main and a tag run the stack and the smoke set", async () => {
+  const ci = await workflow()
+  const cases: [string, string[]][] = [
+    [`pull_request`, [`README.md`, `apps/api/x.ts`]],
+    [`pull_request`, [`libs/server/blog/seed-posts/a.md`]],
+    [`pull_request`, [`apps/mpa/lighthouse/posts/a.md`]],
+    [`push`, [`README.md`]],
+    [`tag`, [`README.md`]],
+  ]
+  for (const [event, changed] of cases) {
+    const ran = stages(ci, event, `main`, changed).flat()
+    const stack = STACK.filter((name) => name !== `e2e-smoke` || event !== `push`)
+    expect({ event, changed, missing: stack.filter((name) => !ran.includes(name)) })
+      .toEqual({ event, changed, missing: [] })
+  }
+})
+
+Deno.test("a pull request that changes only a published guide runs the browser tests and Lighthouse", async () => {
+  const ci = await workflow()
+  const order = stages(ci, `pull_request`, `main`, [`docs/capacity.md`])
+  expect(stageOf(order, `lighthouse`)).toBeGreaterThan(stageOf(order, `check`))
+  expect(order.flat().filter((name) => STACK.includes(name))).toEqual([`browser`])
 })

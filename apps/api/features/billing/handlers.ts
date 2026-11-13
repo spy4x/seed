@@ -10,12 +10,13 @@ import {
   BillingPortalCommand,
   type BillingRepository,
   BillingTrialQuery,
+  FREE_PLAN_ID,
   type GroupRoleLookup,
   handoverTrialDays,
   hasLiveSubscription,
-  LONGEST_TRIAL_DAYS,
-  PAID_PLANS,
+  longestTrialDays,
   type Plan,
+  PLANS,
   priceOf,
   type StoredSubscription,
   toGroupBilling,
@@ -37,7 +38,10 @@ export interface BillingHandlerDependencies {
   trialRequiresCard: boolean
   /** The current time; tests pass a fixed one. */
   now: () => Date
-  /** The plans a checkout may name: {@link PAID_PLANS} unless a test passes its own. */
+  /**
+   * The plan catalog, free plan first: {@link PLANS} unless a test passes its own. A checkout may
+   * name any plan of it but the free one.
+   */
   plans?: readonly Plan[]
 }
 
@@ -47,7 +51,7 @@ export interface BillingHandlerDependencies {
  * call, never from a cache.
  */
 export function createBillingGetHandler(
-  { billing, groups, provider, graceDays, now }: BillingHandlerDependencies,
+  { billing, groups, provider, graceDays, now, plans }: BillingHandlerDependencies,
 ): QueryHandler<BillingGetQuery> {
   return async ({ data }) => {
     const role = await groups.roleOf(data.groupId, data.actor.userId)
@@ -70,6 +74,7 @@ export function createBillingGetHandler(
         graceDays,
         members,
         handedOver,
+        plans,
       ),
     }
   }
@@ -80,8 +85,8 @@ export function createBillingCheckoutHandler(
 ): CommandHandler<BillingCheckoutCommand> {
   return async ({ data }) => {
     const provider = await authorize(dependencies, data.groupId, data.actor.userId)
-    const plan = (dependencies.plans ?? PAID_PLANS).find((candidate) =>
-      candidate.id === data.planId
+    const plan = (dependencies.plans ?? PLANS).find((candidate) =>
+      candidate.id === data.planId && candidate.id !== FREE_PLAN_ID
     )
     if (!plan) throw new BillingError("UNKNOWN_PLAN", "No such plan")
     // The catalog decides which periods a plan is sold for. What the subscription then bills is
@@ -147,7 +152,7 @@ export function createBillingCheckoutHandler(
  * person may ask about their own; nobody can ask about anyone else's.
  */
 export function createBillingTrialHandler(
-  { billing, provider }: BillingHandlerDependencies,
+  { billing, provider, plans }: BillingHandlerDependencies,
 ): QueryHandler<BillingTrialQuery> {
   return async ({ data }) => {
     const groupId = provider === null ? null : await billing.trialGroupOf(data.actor.userId)
@@ -156,7 +161,7 @@ export function createBillingTrialHandler(
         enabled: provider !== null,
         used: groupId !== null,
         groupId,
-        days: provider === null ? 0 : LONGEST_TRIAL_DAYS,
+        days: provider === null ? 0 : longestTrialDays(plans),
       },
     }
   }

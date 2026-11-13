@@ -1,7 +1,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 /**
@@ -39,6 +39,7 @@ async function groupOnDevice(page: Page, name: string, title: string, body: stri
     data: { id: groupId, name },
   })
   expect(group.status(), await group.text()).toBe(201)
+  await payForGroup(page.request, apiBase, groupId)
   const note = await page.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
     headers,
     data: { id: uuidV7(), title, body },
@@ -85,7 +86,7 @@ test.describe("search with no network", () => {
       await expect(palette.getByRole("option").filter({ hasText: "Packing list" })).toBeVisible()
 
       await field.fill("snorkel")
-      await expect(palette.getByRole("status")).toHaveText(
+      await expect(palette.locator("[data-e2e=search-status]")).toHaveText(
         "Nothing on this device matches “snorkel”. Search again when you're back online.",
       )
     } finally {

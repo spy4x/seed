@@ -94,6 +94,14 @@ export interface NoteEditorScreenProps {
   moving?: boolean
   /** The refusal of the last move, shown under the form. */
   moveError?: Message | null
+  /**
+   * Opens one of the page menu's dialogs from outside the page, such as the command palette:
+   * `delete` opens the delete confirmation (it never deletes), `move` the group picker. A dialog
+   * the menu does not offer stays closed. The page then calls `onDialogRequested`, so the app
+   * clears the request and the next one opens the dialog again.
+   */
+  requestDialog?: NoteDialog | null
+  onDialogRequested?: () => void
   /** The group's tags, offered as a picker under the text. Left out or empty, there is none. */
   tags?: readonly TagRow[]
   /** Who made the note and changed it last, shown under the title. Left out on the create page. */
@@ -104,7 +112,12 @@ export interface NoteEditorScreenProps {
    */
   attachments?: NoteAttachmentsSlot | null
   navigate?: Navigate
+  /** Drawn right under the page header, in every state of the page: the app's offline status. */
+  intro?: ComponentChildren
 }
+
+/** A dialog of the note page's menu that the app may open: see `requestDialog`. */
+export type NoteDialog = "delete" | "move"
 
 /** What the page passes on to {@link NoteAttachments}; the group and the mode come from the page. */
 export type NoteAttachmentsSlot = Omit<
@@ -127,6 +140,7 @@ export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
     return (
       <EditorPage>
         <PageHeader back={back} navigate={navigate} title={t.t(`NoteEditor.title`)} />
+        {props.intro}
         <NoGroup loading={props.loading} navigate={navigate} />
       </EditorPage>
     )
@@ -135,6 +149,7 @@ export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
     return (
       <EditorPage>
         <PageHeader back={back} navigate={navigate} title={t.t(`NoteEditor.elsewhereTitle`)} />
+        {props.intro}
         <Stack gap="md">
           <p class="text-sm text-muted" data-e2e="note-elsewhere">
             <Rich
@@ -169,6 +184,7 @@ export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
     return (
       <EditorPage>
         <PageHeader back={back} navigate={navigate} title={t.t(`NoteEditor.notFoundTitle`)} />
+        {props.intro}
         {props.errors.form
           ? <ErrorState message={messageText(t, props.errors.form)} />
           : (
@@ -186,6 +202,7 @@ export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
     return (
       <EditorPage>
         <PageHeader back={back} navigate={navigate} title={t.t(`NoteEditor.title`)} />
+        {props.intro}
         <ListEmpty title={t.t(`NoteEditor.loading`)} />
       </EditorPage>
     )
@@ -243,7 +260,7 @@ function AuthorshipLine({ authorship }: { authorship: NoteAuthorship }): JSX.Ele
 
 /** A viewer's page: the note as text, with nothing to change. */
 function ReadOnlyNote(
-  { note, value, group, navigate, tags, authorship, attachments }: NoteEditorScreenProps,
+  { note, value, group, navigate, tags, authorship, attachments, intro }: NoteEditorScreenProps,
 ): JSX.Element {
   const t = useAppText()
   return (
@@ -256,6 +273,7 @@ function ReadOnlyNote(
         subtitleDataE2E="notes-group"
         titleDataE2E="note-read-title"
       />
+      {intro}
       {note && authorship && <AuthorshipLine authorship={authorship} />}
       <p class="text-sm text-muted" data-e2e="note-read-only">
         {note ? t.t(`NoteEditor.readOnly`) : t.t(`NoteEditor.readOnlyNew`)}
@@ -296,6 +314,16 @@ function Editor(props: WithGroup): JSX.Element {
   useEffect(() => {
     if (errors.title) title.current?.focus()
   }, [errors.title])
+  // The same checks as the menu items: a dialog opens only where the menu would offer it.
+  const request = props.requestDialog
+  useEffect(() => {
+    if (!request) return
+    if (request === "delete" && note && props.onDelete && !props.deleting) setAsking(true)
+    if (request === "move" && note && moveTargets.length > 0 && !props.moving) {
+      setChoosingGroup(true)
+    }
+    props.onDialogRequested?.()
+  }, [request])
   return (
     <ScreenForm
       pending={saving}
@@ -322,8 +350,10 @@ function Editor(props: WithGroup): JSX.Element {
               maxLength={NOTE_TITLE_MAX_LENGTH}
               value={value.title}
               // A title is one line that wraps: Enter saves, as it would in a one-line field.
+              // Enter that confirms an input method's composition (CJK) is not a save; Safari
+              // reports it as keyCode 229 after compositionend.
               onKeyDown={(e) => {
-                if (e.key !== "Enter") return
+                if (e.key !== "Enter" || e.isComposing || e.keyCode === 229) return
                 e.preventDefault()
                 e.currentTarget.form?.requestSubmit()
               }}
@@ -359,6 +389,7 @@ function Editor(props: WithGroup): JSX.Element {
             </>
           )}
         />
+        {props.intro}
         <Stack>
           {note && props.authorship && <AuthorshipLine authorship={props.authorship} />}
           {errors.title && (

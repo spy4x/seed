@@ -27,8 +27,11 @@ describe("personName", () => {
     expect(personName(EN, 9, 1, members)).toBe("Leo Park")
   })
 
-  it("names a member who set no name Unnamed member, as the members list does", () => {
+  it("names a member who set no name by their e-mail, and Unnamed member when it is not sent", () => {
+    expect(personName(EN, 5, 1, [{ userId: 5, name: " ", email: "dev@example.com" }]))
+      .toBe("dev@example.com")
     expect(personName(EN, 5, 1, members)).toBe("Unnamed member")
+    expect(personName(EN, 5, 1, [{ userId: 5, name: "", email: null }])).toBe("Unnamed member")
   })
 
   it("names an account that left the group or is gone Former member", () => {

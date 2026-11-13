@@ -1,4 +1,9 @@
-import { type BlogPostFields, blogPostPath } from "@domain/blog"
+import {
+  type BlogChannelKind,
+  type BlogPostFields,
+  blogPostPath,
+  withUtmSource,
+} from "@domain/blog"
 
 /**
  * The texts the owner pastes into LinkedIn, Telegram and X when a post goes live, built
@@ -20,12 +25,22 @@ export interface SocialTexts {
   x: string
 }
 
-/** The texts for `post`, whose address is on `origin` (such as `https://seedsaas.com`). */
+/** What a post's texts are built from. */
+export type SocialPost = Pick<
+  BlogPostFields,
+  `title` | `slug` | `language` | `description` | `intro` | `tldr`
+>
+
+/**
+ * The texts for `post`, whose address is on `origin` (such as `https://seedsaas.com`). With
+ * `utmSource`, the address carries it, so the website's stats count the visits it brings.
+ */
 export function socialTexts(
-  post: Pick<BlogPostFields, `title` | `slug` | `language` | `description` | `intro` | `tldr`>,
+  post: SocialPost,
   origin: string,
+  utmSource: string | null = null,
 ): SocialTexts {
-  const url = `${origin}${blogPostPath(post)}`
+  const url = withUtmSource(`${origin}${blogPostPath(post)}`, utmSource)
   const opening = post.intro ?? post.description
   return {
     linkedin: [post.title, opening, post.tldr.map((point) => `→ ${point}`).join(`\n`), url]
@@ -46,4 +61,24 @@ function xText(title: string, opening: string, url: string): string {
   if (fits(short)) return `${short}${url}`
   const room = X_MAX - X_LINK_LENGTH - 3
   return `${Array.from(title).slice(0, room).join(``)}…\n\n${url}`
+}
+
+/**
+ * The text a sharing channel of `kind` gets, or `null` for a kind that takes no pasted text:
+ * Dev.to and Hashnode copy the whole post, and Reddit and Hacker News take a title and a link.
+ * Mastodon and Bluesky take X's short text; a newsletter and any other channel, LinkedIn's.
+ */
+export function channelText(
+  kind: BlogChannelKind,
+  post: SocialPost,
+  origin: string,
+  utmSource: string | null,
+): string | null {
+  if (kind === `devto` || kind === `hashnode` || kind === `reddit` || kind === `hackernews`) {
+    return null
+  }
+  const texts = socialTexts(post, origin, utmSource)
+  if (kind === `telegram`) return texts.telegram
+  if (kind === `x` || kind === `mastodon` || kind === `bluesky`) return texts.x
+  return texts.linkedin
 }

@@ -1,11 +1,16 @@
+> **Archived.** Superseded in part by [ADR 002](../decisions/002-realtime-transport-and-sync.md);
+> [ADR 003](../decisions/003-swappable-transport-and-local-data.md) is the latest transport decision.
+> Its change log, cursor, idempotency and conflict rules still describe the code; its "WebSocket is
+> optional" framing does not.
+
 # Group Sync Technical Design
 
 > **Group kinds were dropped (spy4x/template#129).** Wherever this document says `GroupKind`, `PERSONAL`,
 > `SHARED`, `createPersonal`, `createShared` or `PERSONAL_GROUP_IMMUTABLE`, read an ordinary group:
 > there is no `kind` column and no personal-group invariant. Sign-up creates a group named
-> "Personal". `docs/handoff.md` ("How a group call travels", items 9 and 10) is current.
+> "Personal". `docs/how-calls-travel.md` ("How a group call travels", items 9 and 10) is current.
 > Group renames, deletes and restores write audit rows that outlive the group: `audit_events.group_id`
-> is nullable with `ON DELETE SET NULL` (`docs/handoff.md`, item 10).
+> is nullable with `ON DELETE SET NULL` (`docs/how-calls-travel.md`, item 10).
 
 > **Status: superseded in part by [ADR 002](../decisions/002-realtime-transport-and-sync.md).**
 >
@@ -24,7 +29,7 @@
 - Status: approved for implementation
 - Owner: designer
 - Effort: M
-- PRD: `docs/prd/group-sync-platform.md`
+- PRD: `docs/archive/group-sync-platform.md`
 - ADR: `docs/decisions/001-deno-platform-template.md`
 - Scope: v1 Git template
 

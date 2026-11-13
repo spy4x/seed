@@ -298,6 +298,8 @@ export function createNotesStore(dependencies: NotesDependencies) {
       openId = noteId
       void showLocal(nextGroupId)
       await load()
+      // A later open (a note's page after its list) took over while the read ran.
+      if (openId !== noteId) return
     } else openId = noteId
     if (noteId === null) {
       editing.value = null
@@ -336,6 +338,7 @@ export function createNotesStore(dependencies: NotesDependencies) {
     const stale = () => groupId.value !== forGroup || openId !== noteId
     try {
       const { note } = await dependencies.get(forGroup, noteId)
+      if (stale()) return
       editing.value = toEdit(note)
       editErrors.value = NO_ERRORS
       notes.value = notes.value.map((existing) => existing.id === note.id ? note : existing)
@@ -393,15 +396,16 @@ export function createNotesStore(dependencies: NotesDependencies) {
    * does from any page. It takes the same call as {@link create}, so it gets the same errors, plan
    * refusal and offline queue, and leaves the editor's draft alone. `id` is the caller's: kept for
    * a retry of the same note, so a create the server already took is not made twice. A note made
-   * in the open group joins its list.
+   * in the open group joins its list. A body and tags, when given, go with it: the note page's
+   * Duplicate copies a note this way.
    */
   async function quickCreate(
-    input: { groupId: string; id: string; title: string },
+    input: { groupId: string; id: string; title: string; body?: string; tagIds?: string[] },
   ): Promise<{ note: NoteItem } | { errors: FormErrors }> {
     const title = input.title.trim()
     if (!title) return { errors: { title: NOTE_MESSAGES.titleRequired, form: null } }
     try {
-      const { note } = await dependencies.create({ ...input, title, body: "", tagIds: [] })
+      const { note } = await dependencies.create({ body: "", tagIds: [], ...input, title })
       if (groupId.value === input.groupId) {
         notes.value = [note, ...notes.value.filter((existing) => existing.id !== note.id)]
       }

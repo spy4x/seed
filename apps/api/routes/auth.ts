@@ -19,7 +19,8 @@ import { passwordFailureSubject } from "@api/services/password-failures.ts"
 import { PasswordLockedError, passwordLockedMessage } from "@api/services/password-locked.ts"
 import { errorResponse, validationResponse } from "../services/error-response.ts"
 import { authSignInSchema } from "@domain/identity"
-import { signInAnswer, tooMany } from "./auth-answers.ts"
+import { signInAnswer, signUpClosed, tooMany } from "./auth-answers.ts"
+import { SignUpClosedError } from "@api/services/sign-up-gate.ts"
 import { createSignUpRoutes } from "./auth-sign-up.ts"
 import { createPasswordResetRoutes } from "./auth-password-reset.ts"
 import { createSignInCodeRoutes } from "./auth-sign-in-codes.ts"
@@ -55,9 +56,10 @@ export function createAuthRoute(deps: AuthRouteDependencies): Hono<APIContext> {
   const { signIn, emit, mutationGuards, rateLimits, passwordFailures } = deps
   const { isAuthenticated1FA, isAuthenticated2FA } = signIn.auth
   return new Hono<APIContext>()
-    // A password check of a signed-in step while the account is locked. Every other error
-    // goes on to the app's handler.
+    // A password check of a signed-in step while the account is locked, and a step that would
+    // make an account the sign-up gate refused. Every other error goes on to the app's handler.
     .onError((error, c) => {
+      if (error instanceof SignUpClosedError) return signUpClosed(c)
       if (!(error instanceof PasswordLockedError)) throw error
       return tooMany(c, error.retryAfterMs, passwordLockedMessage(error.retryAfterMs))
     })

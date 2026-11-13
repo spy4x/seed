@@ -49,6 +49,13 @@ export async function gotoApp(
       networkChanged = true
     }
   }
+  // The service worker's own fetches reach only the context's listeners. When the worker answered a
+  // module request with a fetch that failed, the page sees `net::ERR_FAILED`; this line has the
+  // real error.
+  const onWorkerFailed = (request: Request) => {
+    if (!request.serviceWorker()) return
+    failed.push(`${request.url()} ${request.failure()?.errorText} (fetched by the service worker)`)
+  }
   const onConsole = (message: ConsoleMessage) => {
     consoleLines.push(`${message.type()}: ${message.text()}`)
   }
@@ -57,6 +64,7 @@ export async function gotoApp(
   page.on("request", onRequest)
   page.on("requestfinished", onFinished)
   page.on("requestfailed", onFailed)
+  page.context().on("requestfailed", onWorkerFailed)
   page.on("console", onConsole)
   page.on("pageerror", onPageError)
   try {
@@ -91,6 +99,7 @@ export async function gotoApp(
     page.off("request", onRequest)
     page.off("requestfinished", onFinished)
     page.off("requestfailed", onFailed)
+    page.context().off("requestfailed", onWorkerFailed)
     page.off("console", onConsole)
     page.off("pageerror", onPageError)
   }
@@ -107,12 +116,21 @@ export async function submitAuthForm(page: Page, url: string, ready: Locator): P
   })
 }
 
-/** Signs `email` in through the form and waits until the app has booted on the notes list. */
+/**
+ * Where sign-in and sign-up land: the notes list, or the group's Billing tab for the owner of a
+ * group that never paid when the catalog's free plan allows nothing.
+ */
+export const SIGNED_IN_LANDING = /\/(notes|groups\/[0-9a-f-]{36}\/billing)$/
+
+/** Signs `email` in through the form and waits until the app has booted where sign-in lands. */
 export async function signIn(page: Page, email: string, password: string): Promise<void> {
   await gotoApp(page, "/sign-in", page.locator("[data-e2e=auth-form-login]"))
   await page.locator("[data-e2e=auth-form-login]").fill(email)
   await page.locator("[data-e2e=auth-form-password]").fill(password)
-  await submitAuthForm(page, "/notes", page.locator("[data-e2e=shell-ws-status]"))
+  await gotoApp(page, "/notes", page.locator("[data-e2e=shell-ws-status]"), async () => {
+    await page.locator("[data-e2e=auth-form-submit]").click()
+    await page.waitForURL(SIGNED_IN_LANDING)
+  })
 }
 
 /**

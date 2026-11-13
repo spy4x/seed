@@ -14,9 +14,7 @@ import {
   BillingStatus,
   FREE_PLAN_ID,
   type GroupBilling,
-  PAID_PLANS,
   type Plan,
-  PLANS,
   PRO_PLAN_ID,
 } from "@domain/billing"
 import { FormatContext } from "@spy4x/preact-ui/format"
@@ -32,6 +30,12 @@ import {
   type GroupBillingPanelProps,
   SeatPriceConfirm,
 } from "./billing-screen.tsx"
+import {
+  TEST_FREE_PLAN,
+  TEST_PLANS,
+  TEST_PRO_PLAN,
+  testLimits,
+} from "../domain/billing/test-plans.ts"
 
 const NOW = new Date("2026-10-21T12:00:00Z")
 
@@ -152,8 +156,8 @@ function calls() {
   }
 }
 
-/** Seed's Pro with a yearly price: €4.00 a member a month or €40.00 a year, €8.00 less. */
-const YEARLY_PRO: Plan = { ...PAID_PLANS[0], amount: 400, yearlyAmount: 4000 }
+/** The test catalog's Pro with a yearly price: €4.00 a member a month or €40.00 a year, €8.00 less. */
+const YEARLY_PRO: Plan = { ...TEST_PRO_PLAN, amount: 400, yearlyAmount: 4000 }
 
 const YEARLY_OWNER: GroupBilling = {
   ...PRO_OWNER,
@@ -163,23 +167,23 @@ const YEARLY_OWNER: GroupBilling = {
 
 /** A plan priced for the whole group, as a household product sells it: €4.00 a month for up to 6. */
 const FLAT_PRO: Plan = {
-  ...PAID_PLANS[0],
+  ...TEST_PRO_PLAN,
   amount: 400,
   perSeat: false,
   trialDays: 0,
   entitlements: {
-    ...PAID_PLANS[0].entitlements,
-    limits: { ...PAID_PLANS[0].entitlements.limits, maxMembers: 6 },
+    ...TEST_PRO_PLAN.entitlements,
+    limits: { ...TEST_PRO_PLAN.entitlements.limits, maxMembers: 6 },
   },
 }
 
 /** A catalog whose free plan allows nothing, so a new owner starts by paying for {@link FLAT_PRO}. */
 const PAID_FROM_SIGN_UP: Plan[] = [
   {
-    ...PLANS[0],
+    ...TEST_FREE_PLAN,
     entitlements: {
-      ...PLANS[0].entitlements,
-      limits: { maxMembers: 1, maxNotes: 0, maxAttachments: 0, storageBytes: 0 },
+      ...TEST_FREE_PLAN.entitlements,
+      limits: testLimits(0, { maxMembers: 1 }),
     },
   },
   FLAT_PRO,
@@ -198,6 +202,8 @@ function panel(billing: GroupBilling | null, props: Partial<GroupBillingPanelPro
       ownerName="Maya Chen"
       trial={{ enabled: true, used: false, groupId: null, days: 14 }}
       now={NOW}
+      plan={TEST_PRO_PLAN}
+      plans={TEST_PLANS}
       {...props}
     />
   )
@@ -292,8 +298,8 @@ describe("GroupBillingPanel", () => {
     expect(find("[data-e2e=billing-checkout]").textContent).toBe("Upgrade to Pro (opens Stripe)")
   })
 
-  it("draws the ordinary free card with Seed's own plans, whose free plan allows something", async () => {
-    await mount(panel(FREE_OWNER, { plan: FLAT_PRO, plans: PLANS }))
+  it("draws the ordinary free card when the free plan allows something", async () => {
+    await mount(panel(FREE_OWNER, { plan: FLAT_PRO, plans: TEST_PLANS }))
     expect(find("h3").textContent?.trim()).toBe("Free plan")
     expect(has("[data-e2e=billing-amount]")).toBe(false)
     expect(has("[data-e2e=billing-join-instead]")).toBe(false)
@@ -506,6 +512,17 @@ describe("GroupBillingPanel", () => {
     expect(has("[data-e2e=billing-checkout]")).toBe(false)
   })
 
+  it("names the paid plan as the product's catalog names it, not Pro", async () => {
+    const household = { ...TEST_PRO_PLAN, name: "Household" }
+    await mount(panel(FREE_OWNER, { plan: household }))
+    expect(find("[data-e2e=billing-fine-print]").textContent).toBe(
+      "Billed monthly per member. Cancel anytime and keep Household until the period ends.",
+    )
+    await mount(panel(ENDING_OWNER, { plan: household }))
+    expect(find("[data-e2e=billing-plan-name]").textContent).toBe("Household")
+    expect(text()).not.toContain("Pro")
+  })
+
   it("tells the owner of a cancelled plan when Pro ends and renews it in Stripe, with no Cancel plan", async () => {
     const app = calls()
     await mount(panel(ENDING_OWNER, app.props))
@@ -664,8 +681,9 @@ describe("GroupBillingPanel", () => {
       </I18nContext.Provider>,
     )
 
-    // Data: the group's and the owner's names, money and dates.
-    expect(englishLeft(document.body, ["Team", "Maya Chen", "October", "November"])).toEqual([])
+    // Data: the group's and the owner's names, the paid plan's brand name, money and dates.
+    expect(englishLeft(document.body, ["Team", "Maya Chen", "Pro", "October", "November"]))
+      .toEqual([])
     // The render reached every state: each one's pseudo-text is on the page.
     const page = document.body.textContent ?? ""
     for (

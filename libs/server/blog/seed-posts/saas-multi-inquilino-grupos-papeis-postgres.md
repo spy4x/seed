@@ -155,7 +155,7 @@ seus webhooks têm [um texto próprio](/pt-BR/blog/cobranca-por-usuario-stripe-w
 ## Por que não row-level security do Postgres?
 
 Eu considerei e deixei o trade-off escrito no
-[design da sincronização de grupos](https://github.com/spy4x/seed/blob/main/docs/design/group-sync.md#9-tradeoffs).
+[design da sincronização de grupos](https://github.com/spy4x/seed/blob/main/docs/archive/group-sync.md#9-tradeoffs).
 A row-level security colocaria uma segunda cópia das regras de permissão no banco, em políticas SQL,
 ao lado da cópia que os handlers precisam de qualquer jeito para responder "você é viewer" com um
 erro útil. Duas cópias de uma regra acabam divergindo. Além disso, cada conexão teria de carregar a

@@ -1,6 +1,7 @@
 import type postgres from "postgres"
 import { type JobStep, PostgresOutboxRepository } from "@spy4x/server/outbox"
 import type { BillingProvider } from "@spy4x/billing"
+import type { Plan } from "@domain/billing"
 import { cleanUpAttachments } from "../notes/attachment-cleanup.ts"
 import { queueSeatDrift } from "../billing/seat-sync.ts"
 import { purgeDeadInvitations } from "../groups/purge-dead-invitations.ts"
@@ -22,6 +23,7 @@ import { removeStaleTelegramMessages } from "./telegram-notification.ts"
 import { OUTBOX_RETENTION_DAYS } from "./jobs.ts"
 import type { ServerFiles } from "../files/files.ts"
 import { removeExpiredDataExports } from "./data-export.ts"
+import { deleteStaleImports } from "../imports/import-jobs.ts"
 
 /**
  * The parts of the nightly cleanup, in the order they run. Each removes only what is due, so one
@@ -32,6 +34,7 @@ export function cleanupSteps(
   provider: BillingProvider | null,
   log: (line: string) => void,
   files: ServerFiles | null = null,
+  plans?: readonly Plan[],
 ): JobStep[] {
   return [
     ["remove old processed outbox rows", async () => {
@@ -53,6 +56,10 @@ export function cleanupSteps(
     ["remove unsent Telegram messages", async () => {
       const messages = await removeStaleTelegramMessages(sql)
       if (messages > 0) console.log(`Removed ${messages} unsent Telegram message(s)`)
+    }],
+    ["remove imports left unsaved", async () => {
+      const imports = await deleteStaleImports(sql)
+      if (imports > 0) console.log(`Removed ${imports} import(s) left unsaved for a day`)
     }],
     ["remove expired sign-ups", async () => {
       const signUps = await removeExpiredSignUps(sql)
@@ -135,7 +142,7 @@ export function cleanupSteps(
     }],
     ["queue seat syncs for drifted groups", async () => {
       if (!provider) return
-      const drifted = await queueSeatDrift(sql)
+      const drifted = await queueSeatDrift(sql, undefined, plans)
       if (drifted > 0) console.log(`Queued a seat sync for ${drifted} group(s)`)
     }],
   ]

@@ -35,6 +35,39 @@ Stripe price, keep the old price in the settings until no subscription bills it.
 4. Pass it to the `api` and `worker` services in `infra/compose/compose.shared.yml`.
 5. Create the price in Stripe and set the variable.
 
+## Replace the catalog in a product
+
+A product sells its own plans: edit `PLANS` and its price variables, as above, and Seed's tests keep
+passing. They do not read `PLANS`:
+
+- Unit and integration tests run on a fixed catalog of their own, `TEST_PLANS` in
+  `libs/domain/billing/test-plans.ts`, a copy of Seed's Free and Pro. A function that reads the
+  catalog takes it as its last parameter, `PLANS` by default, and the tests pass `TEST_PLANS`.
+  Production code never imports that file; `tests/test-catalog-boundary.test.ts` fails if it does.
+  The worker's billing jobs take the catalog as `JobDeps.plans`.
+- A test spells out only the caps it is about: `testLimits` in the same file fills in every other
+  limit key, and `testUsage` gives the entitlement gate a count for every key that fails the test if
+  read. A limit key the product adds needs no edit in Seed's tests, and the test plans give it no
+  cap.
+- The website's tests and the demo seed's test read `PLANS` itself: they check what the site and the
+  demo show.
+- The browser tests read what the running stack answers: the trial from `GET /api/billing/trial`,
+  the note cap from the API's refusal and the seat price from the group's billing. When the free
+  plan allows nothing (the development route `GET /api/test/free-plan` says so), the fixtures put
+  every new group on the paid plan through the development provider's webhook, so the specs run on
+  any catalog: the sign-up fixture (`e2e/fixtures/sign-up.ts`) pays for the group sign-up made,
+  `createGroup` (`e2e/fixtures/groups.ts`) for a group made on its page, and a spec that creates a
+  group through the API calls `payForGroup` after it. A spec about the free plan itself opts out
+  with `{ keepFree: true }`, as `e2e/plan-limits.e2e.ts` and `e2e/billing.e2e.ts` do. In that mode:
+  - sign-up waits for the worker to finish the starter data first (`POST /api/test/starter-data`),
+    so a new account has no welcome note, every run the same;
+  - a paid group bills per seat, so a spec that invites through the API sends
+    `acceptSeatPrice: true`;
+  - an imported group starts on the free plan, so the import is refused.
+
+Keep the ids `free` and `pro` (`FREE_PLAN_ID` and `PRO_PLAN_ID`): the code names the free plan and
+the development provider maps its prices to `pro`. To rename the paid plan, change its `name`.
+
 ## Per-member pricing
 
 Pro is billed per member (`perSeat` on the plan). The subscription's quantity is the group's member
@@ -117,13 +150,17 @@ owner.
 
 1. Add the key to `FeatureKey` or `LimitKey` in `libs/domain/billing/+lib.ts`. TypeScript then asks
    for it in every plan and in `UNLIMITED`.
-2. Add its wording to `REFUSAL_KEYS` in `libs/ui/plan-refusal.tsx`, and the keys to the app's
-   catalogs in `i18n/app/`.
+2. Give it a refusal message: its wording in `REFUSAL_KEYS` (`libs/ui/plan-refusal.tsx`), and
+   those keys in the app's catalogs in `i18n/app/`. TypeScript asks for the entry; without it the
+   app cannot say why the plan refused.
 3. List each command that needs it in `ENTITLEMENT_NEEDS` (`apps/api/cqrs/entitlement-needs.ts`),
    with `needsFeature` or `needsRoom`.
 4. For a limit, add a usage count to `usage` in `apps/api/cqrs/entitlements.ts`. The gate refuses
    to start without one.
 5. For a limit, count again inside the write's transaction, as the note repository does.
+6. For a limit on an aggregate that "move all of a group's data" moves, its `MovableAggregate`
+   counts what it moves against `context.allowances.<key>`, every cap of the target's plan, which
+   the gate fills in (`docs/aggregate-lifecycle.md`).
 
 Step 5 closes a race: the gate counts before the handler runs, so two requests can both pass it for
 the last free slot. The gate passes the cap to the handler (`allowance` on the command). The

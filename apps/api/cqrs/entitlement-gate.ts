@@ -6,12 +6,19 @@ import {
   entitlementsOf,
   type FeatureKey,
   type LimitKey,
+  type Plan,
+  UNLIMITED,
 } from "@domain/billing"
 import type { GroupRole } from "@domain/groups"
 
 /** A command that counts against a cap: the gate tells its handler the cap it found. */
 export interface MeteredCommand {
   allowance?: number | null
+  /**
+   * Every cap of the group's plan, the product's own included, for a command that adds to more
+   * than one count at once (moving all of a group's data). `null` is no cap.
+   */
+  allowances?: Readonly<Record<LimitKey, number | null>>
 }
 
 /** What one command needs from its group's plan, and who the gate judges. */
@@ -73,6 +80,8 @@ export interface EntitlementGateDependencies {
   roleOf(groupId: string, userId: number): Promise<GroupRole | null>
   /** How much of each capped count the group uses now. A cap a command names must be here. */
   usage: Partial<Record<LimitKey, (groupId: string) => Promise<number>>>
+  /** The plan catalog the caps are read from: `PLANS` unless a test passes its own. */
+  plans?: readonly Plan[]
 }
 
 function actorIdOf(command: AnyCommand): number | null {
@@ -104,7 +113,10 @@ export function createEntitlementGate(
     if (!entry) return await next()
     const command = message as AnyCommand & MeteredCommand
     if (!dependencies.billingEnabled) {
-      if ("limit" in entry.need) command.allowance = null
+      if ("limit" in entry.need) {
+        command.allowance = null
+        command.allowances = UNLIMITED.limits
+      }
       return await next()
     }
     const groupId = entry.groupOf(command)
@@ -117,10 +129,15 @@ export function createEntitlementGate(
         (userId) => dependencies.roleOf(groupId, userId),
         dependencies.roleOf,
       )
-    const entitlements = entitlementsOf(await dependencies.planOf(groupId), true)
+    const entitlements = entitlementsOf(
+      await dependencies.planOf(groupId),
+      true,
+      dependencies.plans,
+    )
     if ("limit" in entry.need) {
       const max = entitlements.limits[entry.need.limit]
       command.allowance = max
+      command.allowances = entitlements.limits
       if (role === null || !judged || max === null) return await next()
       const count = dependencies.usage[entry.need.limit] as (groupId: string) => Promise<number>
       assertRoomFor(entry.need.limit, max, await count(groupId), role)

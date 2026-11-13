@@ -13,7 +13,7 @@ import { readApiJson } from "@api/services/json-body.ts"
 import { errorResponse, validationResponse } from "../services/error-response.ts"
 import type { AuthRouteDependencies } from "./auth.ts"
 import {
-  authEmailCodeSchema,
+  authSignUpCodeSchema,
   authSignUpSchema,
   type SignUpAccountExistsResponse,
   type SignUpGuestTakenResponse,
@@ -64,8 +64,10 @@ export function createSignUpRoutes(
       // A guest's sign-up keeps the guest account instead of making a new one.
       const state = c.get("auth")
       const guestUserId = state?.user.guestSince ? state.user.id : null
-      const { password, language = null } = validationResult.data
-      if (!(await signIn.requestSignUp(c, email, password, guestUserId, language))) {
+      const { password, language = null, invitation = null } = validationResult.data
+      // Where sign-up is by invitation, a refusal throws `SignUpClosedError` (`createAuthRoute`
+      // answers it), the same for every address: it depends on the invitation alone.
+      if (!(await signIn.requestSignUp(c, email, password, guestUserId, language, invitation))) {
         return errorResponse(c, `bad_request`, {
           message: "This password cannot be used. Try another one.",
         })
@@ -85,11 +87,12 @@ export function createSignUpRoutes(
       rateLimits.strictByIp,
       async (c) => {
         const body = await readApiJson(c)
-        const validationResult = validate(authEmailCodeSchema, body)
+        const validationResult = validate(authSignUpCodeSchema, body)
         if (validationResult.error) {
           return validationResponse(c, validationResult.error.details)
         }
-        const result = await signIn.completeSignUp(c, validationResult.data.code)
+        const { code, invitation = null } = validationResult.data
+        const result = await signIn.completeSignUp(c, code, invitation)
         switch (result.outcome) {
           case SignUpOutcome.GuestKept:
             // Every guest session ended with the keep: their sockets close.

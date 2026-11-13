@@ -180,6 +180,34 @@ A second member is seeded, not invited: an e2e spec calls `POST /api/test/add-me
 Give the aggregate its operator view: one folder in `apps/admin/src/modules/` and one file in
 `apps/api/routes/admin/`. [Admin modules](admin-modules.md) has the steps.
 
+## Add a field to an existing aggregate
+
+A new column on notes, such as a colour, touches these files, in this order. To list the files an
+existing field touches, run `git grep -c -w tagIds`; the group time zone (#785) is a recent
+example of a whole field change.
+
+1. **Migration.** A new file in `libs/server/db/migrations/` ("Naming a migration" above), the
+   same column in `libs/server/db/schema.sql`, and the file's name appended to `ON_MAIN` in
+   `tests/migration-names.test.ts`.
+2. **Domain.** The field on `Note` and in the payload schemas (`noteCreatePayloadSchema`,
+   `noteUpdatePayloadSchema`) in `libs/domain/notes/+lib.ts`.
+3. **Repository.** The reads and writes in `libs/server/notes/postgres-note-repository.ts`, and
+   the in-memory twin the API tests use, `apps/api/_testing/memory-notes.ts`.
+4. **Handlers.** The command's fields in `apps/api/features/notes/handlers.ts`. The token API
+   (`apps/api/routes/token-api.ts`) only when it should show the field.
+5. **Export, import and move.** `libs/server/notes/note-portable.ts`,
+   `libs/domain/groups/export-import.ts` and the person's data export,
+   `libs/server/jobs/data-export-sections.ts`.
+6. **SPA.** The store (`apps/spa/src/state/notes.ts`) and the device's copy and queue
+   (`apps/spa/src/offline/notes-collection.ts`, `notes-cache.ts`, `device-copy.ts`).
+7. **Screens and words.** `libs/ui/note-editor-screen.tsx` and `libs/ui/notes-screen.tsx`; each new
+   message in `i18n/app/en.ts` ([i18n/TRANSLATING.md](../i18n/TRANSLATING.md), "The loop").
+8. **Admin and demo.** The admin counterpart when the aggregate has one, and the demo's sample data
+   (`apps/worker/demo/seed.ts`, `fake-data.ts`; [the demo](demo.md#when-the-database-changes)).
+9. **Tests.** The tests next to each file above, `tests/integration/notes.integration.test.ts` for
+   the column, and the privacy page when the field is something new about a person ("The rules
+   every aggregate follows").
+
 ## More for an aggregate
 
 | Section                                      | Page                                                                                  |

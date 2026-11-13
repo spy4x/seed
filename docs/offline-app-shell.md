@@ -16,6 +16,9 @@ style and image the page names. Then:
 - **Every other request** goes to the network first, and to the cache only when the network fails.
   A deploy shows at once. Every route is the same page, so any page load is stored under `/`.
 - **`/api` and `/ws`** are never touched. An e2e test checks that no cached URL starts with either.
+- **On the dev server**, Vite's modules (`/@id`, `/@fs`, `/@vite`, `/src`, `/node_modules`) are
+  never touched either. When the worker's own fetch of one failed, the page saw `net::ERR_FAILED`
+  and never booted (spy4x/seed#893).
 
 `/config.json` holds the runtime settings the app reads before it renders, so it is cached on
 install too, and the app starts offline.
@@ -39,9 +42,10 @@ The worker installs on the first, online, visit. The app can start offline from 
 
 ## Offline tests run against the built SPA
 
-Three e2e specs start the app with no network: `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts` and
-`e2e/search-offline.e2e.ts`. `deno task e2e:local` runs them against the image of
-`apps/spa/dockerfile.prod`, in a Playwright pass of their own (`OFFLINE_SPECS` in
+Five e2e specs start the app with no network: `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts`,
+`e2e/search-offline.e2e.ts`, `e2e/tags-offline.e2e.ts` and `e2e/notes-restore-offline.e2e.ts`.
+`deno task e2e:local` runs them against the image of `apps/spa/dockerfile.prod`, in a Playwright
+pass of their own (`OFFLINE_SPECS` in
 `infra/scripts/e2e-local-plan.ts`). Every other spec runs against the dev server.
 
 The built app is what a person runs offline: a few files named by hash. The dev server serves

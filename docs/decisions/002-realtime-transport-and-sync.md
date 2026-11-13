@@ -8,7 +8,7 @@
 - Location: `docs/decisions/002-realtime-transport-and-sync.md`
 - Supersedes: the transport and sync rules in
   [ADR 001](001-deno-platform-template.md); the recommendation in
-  [realtime design](../design/realtime-websockets.md)
+  [realtime design](../archive/realtime-websockets.md)
 
 ## Context
 

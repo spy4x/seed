@@ -26,8 +26,19 @@ default, never a value to keep for a secret.
 | `MPA_REDIRECT_RULE`    | Production only: a Traefik rule for hosts redirected to `MPA_DOMAIN`. Empty matches nothing.                 | empty              | [Certificates](certificates.md)                |
 | `MPA_UMAMI_ORIGIN`     | The website's self-hosted Umami. Set both Umami values or neither.                                           | empty              | [Analytics](analytics.md)                      |
 | `MPA_UMAMI_WEBSITE_ID` | The website's id in that Umami. It is public.                                                                | empty              | [Analytics](analytics.md)                      |
-| `INDEXNOW_KEY`         | The website's IndexNow key, 8 to 128 letters, digits and dashes. Public. Empty turns IndexNow off.           | empty              | [Blog](blog.md#indexnow)                       |
+| `INDEXNOW_KEY`         | The website's IndexNow key, 8 to 128 letters, digits and dashes. Public. Empty turns IndexNow off.           | empty              | [Blog](blog.md#indexnow), [Catalog](catalog.md#indexnow) |
+| `DEMO_ORIGIN` | A demo on its own host, an `https://` origin. Every try link goes to its `/try`. Empty keeps them on the app. | empty | [The public demo](demo.md#a-demo-on-its-own-host) |
 | `DEVTO_API_KEY`        | A Dev.to API key, read by the worker. Secret. Set, it copies each live post to Dev.to once. Empty turns it off. | empty              | [Blog](blog.md#the-devto-cross-post)           |
+| `MASTODON_ACCESS_TOKEN` | A Mastodon access token (`write:statuses`), read by the worker. Secret. Empty keeps Mastodon manual. | empty | [Blog](blog.md#automatic-posts) |
+| `MASTODON_INSTANCE_URL` | The `https` address of the token's Mastodon server; the token is sent only there. Empty keeps Mastodon manual. | empty | [Blog](blog.md#automatic-posts) |
+| `BLUESKY_IDENTIFIER` | The Bluesky handle the worker posts as. Set it with the app password. | empty | [Blog](blog.md#automatic-posts) |
+| `BLUESKY_APP_PASSWORD` | A Bluesky app password, read by the worker. Secret. Empty keeps Bluesky manual. | empty | [Blog](blog.md#automatic-posts) |
+| `BLUESKY_SERVICE` | Another Bluesky server than `https://bsky.social`. | empty | [Blog](blog.md#automatic-posts) |
+| `HASHNODE_TOKEN` | A Hashnode personal access token, read by the worker. Secret. Empty keeps Hashnode manual. | empty | [Blog](blog.md#automatic-posts) |
+| `HASHNODE_PUBLICATION_ID` | The Hashnode publication the worker publishes to. | empty | [Blog](blog.md#automatic-posts) |
+| `LINKEDIN_ACCESS_TOKEN` | From `deno task linkedin:sign-in`, read by the worker. Secret. Empty keeps LinkedIn manual. | empty | [Blog](blog.md#linkedin) |
+| `LINKEDIN_MEMBER_ID` | From `deno task linkedin:sign-in`: the profile the worker posts on. | empty | [Blog](blog.md#linkedin) |
+| `LINKEDIN_TOKEN_EXPIRES_AT` | From `deno task linkedin:sign-in`: when the sign-in runs out (ISO 8601). The admin warns 14 days before. | empty | [Blog](blog.md#linkedin) |
 | `ADMIN_DOMAIN`         | The admin app's host, with the `admin` profile. Empty turns the operator area off.                           | `admin.localhost`  | [The three apps](apps.md#deploy-the-admin-app) |
 
 | Profile           | What it starts                                                                   | Guide                                   |
@@ -152,7 +163,9 @@ no default, so keep them in the env file.
 | `DEMO_MODE`                              | `true` runs the public demo: a nightly wipe and sample data. Never with real users.               | empty            | [The public demo](demo.md)                |
 | `DEMO_ADMIN_PASSWORD`                    | With `DEMO_MODE=true`, the password of `admin@example.com` after every reset. Unset: no operator. | empty            | [The public demo](demo.md)                |
 | `GUEST_MODE`                             | "Try it now" without signing up. On unless `false`.                                               | empty            | [Guests](guests.md)                       |
+| `SIGN_UP`                                | `open`: anyone may make an account. `invite`: only invited people; also turns guests off.          | empty            | [Deploy](deploy.md#who-may-sign-up)       |
 | `SPA`                                    | The signed-in app. On unless `false`, which also closes sign-up.                                  | empty            | [The three apps](apps.md#without-the-spa) |
+| `NOTES`                                  | Notes, tags, attachments. On unless `false`, which turns their API, move and welcome note off.    | empty            | [Start a product](start-a-product.md#settings) |
 | `ATTACHMENT_UPLOAD_FILES_PER_HOUR`       | Files one person may upload per hour. Empty: 50.                                                  | empty            | [Files](files.md)                         |
 | `ATTACHMENT_UPLOAD_BYTES_PER_HOUR`       | Bytes one person may upload per hour. Empty: 52428800 (50 MiB).                                   | empty            | [Files](files.md)                         |
 | `OPERATION_COMMANDS_PER_MINUTE`          | Writes one signed-in person may make per minute. Empty: 120.                                      | empty            | [Architecture](architecture.md)           |
@@ -162,7 +175,7 @@ no default, so keep them in the env file.
 | `TIMEZONE`                               | An IANA time zone name. The API refuses to start without it.                                      | `Asia/Singapore` |                                           |
 | `RATE_LIMITER_WINDOW_MS`                 | The rate limits' window, in milliseconds.                                                         | `60000`          | [Load tests](load-tests.md)               |
 | `RATE_LIMITER_STRICT_LIMIT`              | Requests per window to the strict account routes, such as sign-in, per person or client address.  | `30`             | [Load tests](load-tests.md)               |
-| `RATE_LIMITER_LIMIT`                     | Requests per window to the other account routes, per person or client address.                    | `100`            | [Load tests](load-tests.md)               |
+| `RATE_LIMITER_LIMIT`                     | Requests per window to the other routes, per person or address; admin thumbnails get 10 times.    | `100`            | [Load tests](load-tests.md)               |
 | `RATE_LIMITER_OTP_WINDOW_MS`             | The one-time-code window, in milliseconds.                                                        | `900000`         |                                           |
 | `RATE_LIMITER_OTP_LIMIT`                 | One-time-code checks per user per window.                                                         | `5`              |                                           |
 
@@ -205,7 +218,7 @@ Use Stripe's test-mode keys outside production.
 | `CATALOG`           | `true` turns the catalog on.                                                                                | empty   | [Catalog](catalog.md)     |
 | `CATALOG_CURRENCY`  | The ISO 4217 code of every price. Empty: `USD`.                                                             | empty   | [Catalog](catalog.md)     |
 | `CATALOG_LANGUAGES` | The languages of its texts, comma-separated, the default first. Empty: `en`.                                | empty   | [Catalog](catalog.md)     |
-| `CATALOG_ITEM_PATH` | The website's item address for tracking links, with `{category}` and `{slug}`. Empty: `/{category}/{slug}`. | empty   | [Catalog](catalog.md)     |
+| `CATALOG_ITEM_PATH` | The website's item address for tracking links and IndexNow, with `{category}` and `{slug}`. Empty: `/{category}/{slug}`. | empty   | [Catalog](catalog.md)     |
 | `UMAMI_API_URL`     | Your self-hosted Umami's address, for click counts and the admin app's Stats page.                          | empty   | [Analytics](analytics.md) |
 | `UMAMI_API_TOKEN`   | A token from that Umami's `POST /api/auth/login`. Set both or neither. Never logged.                        | empty   | [Analytics](analytics.md) |
 
@@ -253,6 +266,7 @@ routes answer 404. Register `https://<DOMAIN>/api/auth/google/callback`, or `/gi
 | `SPA_REALTIME`                   | `false` or `0` turns the WebSocket off: the page uses HTTP and checks for changes every 30 seconds. | [Offline](offline.md)                |
 | `SPA_OFFLINE`                    | `false` or `0` turns the offline layer off: no device copy and no queue of writes.                  | [Offline](offline.md)                |
 | `SPA_CPU_LIMIT`, `SPA_MEM_LIMIT` | The SPA container's limits. Example: `4`, `4G`, which the development Vite server needs.            |                                      |
+| `ADMIN_DEV_MEM_LIMIT` | The development admin container's memory limit, for its Vite server. `1G` when empty. |  |
 
 ## Backups
 

@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "Adjuntar archivos a esta nota",
+  "AppShell.copyNoteLink": "Copiar el enlace a esta nota",
+  "AppShell.deleteNote": "Eliminar esta nota",
+  "AppShell.duplicateNote": "Duplicar esta nota",
+  "AppShell.moveNote": "Mover esta nota a otro grupo",
   "AttachmentMessages.load": "No se pudieron cargar los archivos",
   "AttachmentMessages.type":
     "No se puede adjuntar {name}. Solo se admiten imágenes JPEG, PNG, WebP y GIF, y archivos PDF.",
@@ -407,7 +411,7 @@ export default {
   "GroupInvitations.verifyEmail": "Verificar correo",
   "GroupInvitations.notForYou":
     "Esta invitación se envió a otro correo. Si es tuyo, confírmalo primero en tu <link>perfil</link> o inicia sesión con la cuenta que lo usa.",
-  "GroupInvitations.somethingWrong": "Algo salió mal. Vuelve a intentarlo.",
+  "GroupInvitations.somethingWrong": "No se pudo procesar la invitación. Vuelve a intentarlo.",
   "GroupInvitations.unreachable": "No se puede conectar con el servidor. Vuelve a intentarlo.",
   "GroupMembers.unnamed": "Miembro sin nombre",
   "GroupMembers.title": "Miembros",
@@ -479,7 +483,7 @@ export default {
   "GroupTransfer.unreachable": "No se puede conectar con el servidor. Vuelve a intentarlo.",
   "GroupTransfer.tooManyAttempts":
     "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
-  "GroupTransfer.somethingWrong": "Algo salió mal. Vuelve a intentarlo.",
+  "GroupTransfer.somethingWrong": "No se pudo transferir la propiedad. Vuelve a intentarlo.",
   "Groups.title": "Grupos",
   "Groups.new": "Nuevo grupo",
   "Groups.import": "Importar un grupo…",
@@ -538,7 +542,6 @@ export default {
   "InvitationNew.discardLeave": "Descartar cambios",
   "InvitationNew.discardStay": "Seguir editando",
   "GroupBillingPanel.planFree": "Gratis",
-  "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
     "one":
       "Falló un pago. Para conservar {plan}, actualiza tu tarjeta con «Cambiar tarjeta» en {count} día como máximo, antes del {date}.",
@@ -550,7 +553,7 @@ export default {
   "GroupBillingPanel.paymentFailedFree":
     "Falló un pago, así que el grupo pasó al plan gratuito. Actualiza tu tarjeta con «Cambiar tarjeta» para recuperar {plan}.",
   "GroupBillingPanel.offline": "No se puede conectar con el servidor. Vuelve a intentarlo.",
-  "GroupBillingPanel.unreadable": "No se pudo cargar el plan.",
+  "GroupBillingPanel.unreadable": "No se pudo cargar el plan",
   "GroupBillingPanel.unsafePage":
     "El proveedor de pagos devolvió una dirección que esta app no abrirá.",
   "GroupBillingPanel.checkoutUnreachable":
@@ -675,10 +678,10 @@ export default {
   "GroupBillingView.trialUntil": "«{group}» tiene {plan} hasta el {date}.",
   "GroupBillingView.paid": "Ya tienes {plan}",
   "GroupBillingView.paidText": "Stripe confirmó el pago de «{group}».",
-  "NotificationsScreen.loadFailed": "No se pudieron cargar las notificaciones.",
-  "NotificationsScreen.loadMoreFailed": "No se pudieron cargar más notificaciones.",
-  "NotificationsScreen.readFailed": "No se pudo marcar como leída.",
-  "NotificationsScreen.readAllFailed": "No se pudieron marcar como leídas.",
+  "NotificationsScreen.loadFailed": "No se pudieron cargar las notificaciones",
+  "NotificationsScreen.loadMoreFailed": "No se pudieron cargar más notificaciones",
+  "NotificationsScreen.readFailed": "No se pudo marcar como leída",
+  "NotificationsScreen.readAllFailed": "No se pudieron marcar como leídas",
   "NotificationsScreen.invitedViewer":
     "Te invitaron a unirte a «<group>{group}</group>» con el rol de lector.",
   "NotificationsScreen.invitedEditor":
@@ -981,7 +984,7 @@ export default {
   "GuestScreens.signOutAnyway": "Cerrar sesión igualmente",
   "GuestScreens.signOutText":
     "Esta cuenta no tiene ningún método de inicio de sesión, así que no podrás volver a entrar. Perderás todo lo que contiene.",
-  "GuestScreens.offline": "Estás sin conexión. Conéctate y vuelve a intentarlo.",
+  "GuestScreens.offline": "No se puede conectar con el servidor. Vuelve a intentarlo.",
   "GuestScreens.providerFailed":
     "{provider} no terminó. Tu cuenta no cambió. Vuelve a intentarlo o elige otro método.",
   "GuestScreens.noPasskey":
@@ -997,6 +1000,7 @@ export default {
   "OAuthNotice.guestTaken": "Ese método de inicio de sesión pertenece a otra cuenta.",
   "PasswordResetScreen.forgotFailed": "No se pudo enviar el código",
   "PasswordResetScreen.resetFailed": "No se pudo cambiar la contraseña",
+  "PasswordResetScreen.sentTitle": "Escribe el código para restablecer tu contraseña",
   "PasswordResetScreen.sent":
     "Si hay una cuenta con <email>{email}</email>, te enviamos un código.",
   "PasswordResetScreen.forgotDescription": {
@@ -1024,8 +1028,8 @@ export default {
   "PasswordResetScreen.save": "Guardar contraseña",
   "MoveNote.title": "Mover a un grupo",
   "MoveNote.cancel": "Cancelar",
-  "MoveNote.question":
-    "Elige adónde mover «<title>{title}</title>». Todos los miembros de ese grupo la verán.",
+  "MoveNote.hint": "Todos los miembros del grupo que elijas la verán.",
+  "MoveNote.move": "Mover",
   "NewNote.title": "Nueva nota",
   "NewNote.close": "Cerrar",
   "NewNote.titleLabel": "Título",
@@ -1110,6 +1114,8 @@ export default {
   "NoteEditor.tags": "Etiquetas",
   "NoteEditorView.createdTitle": "Nota añadida",
   "NoteEditorView.created": "Se creó «{title}».",
+  "NoteEditorView.copyTitle": "{title} (copia)",
+  "NoteEditorView.duplicateFailed": "No se pudo duplicar la nota",
   "NoteEditorView.savedTitle": "Nota guardada",
   "NoteEditorView.saved": "Se guardó «{title}».",
   "NoteEditorView.unsaved": "Tienes cambios sin guardar. Si sales ahora, los perderás.",
@@ -1187,7 +1193,7 @@ export default {
     "other": "{count} seleccionadas",
   },
   "Notes.cancelSelect": "Cancelar",
-  "Notes.moveTo": "Mover a un grupo",
+  "Notes.moveTo": "Al grupo",
   "Notes.moving": "Moviendo…",
   "Notes.move": "Mover",
   "Notes.updated": "Editada: <date>{date}</date>",
@@ -1205,7 +1211,6 @@ export default {
   "NotesFilter.allTags": "Todas estas etiquetas",
   "NotesFilter.author": "Autor",
   "NotesFilter.anyone": "Cualquiera",
-  "NotesFilter.you": "Tú",
   "NotesFilter.search": "Buscar notas",
   "NotesFilter.mine": "Creadas por mí",
   "NotesFilter.sortUpdated": "Última edición",
@@ -1299,7 +1304,7 @@ export default {
       "No se pudo guardar una etiqueta que creaste sin conexión, así que la quitamos de {count} notas. Las notas se guardaron sin ella.",
   },
   "OfflineStatus.theirs": "Versión del servidor",
-  "OfflineStatus.theirsUnknown": "La versión del servidor no está disponible.",
+  "OfflineStatus.theirsUnknown": "No disponible por ahora.",
   "OfflineStatus.untitledNote": "Nota sin título",
   "OfflineStatus.useServers": "Usar la del servidor",
   "OfflineStatus.youDeletedNote": "Eliminaste esta nota.",
@@ -1662,7 +1667,7 @@ export default {
   "SignInMethods.passkeyNotSaved": "No se pudo guardar la llave de acceso. Vuelve a intentarlo.",
   "SignInMethods.passkeyOnDevice": "Este dispositivo ya tiene una llave de acceso para tu cuenta.",
   "SignUpCodeScreen.checkFailed": "No se pudo comprobar el código",
-  "SignUpCodeScreen.offline": "Estás sin conexión. Conéctate y vuelve a intentarlo.",
+  "SignUpCodeScreen.offline": "No se puede conectar con el servidor. Vuelve a intentarlo.",
   "SignUpCodeScreen.title": "Revisa tu bandeja de entrada",
   "SignUpCodeScreen.loading": "Cargando…",
   "SignUpCodeScreen.code": "Código",
@@ -1713,7 +1718,7 @@ export default {
   "SignedInDevices.lastActive": "Última actividad <when></when>",
   "SignedInDevices.ip": "<label>Dirección IP</label> <ip>{ip}</ip>",
   "Search.search": "Buscar",
-  "Search.placeholder": "Busca notas y grupos",
+  "Search.placeholder": "Busca o ejecuta un comando",
   "Search.close": "Cerrar la búsqueda",
   "Search.loading": "Buscando…",
   "Search.error": "No se pudo buscar. Cambia la búsqueda para volver a intentarlo.",
@@ -1722,13 +1727,18 @@ export default {
     "many": "Escribe al menos {count} caracteres para buscar notas.",
     "other": "Escribe al menos {count} caracteres para buscar notas.",
   },
-  "Search.empty": "Ninguna nota ni grupo coincide con «{query}».",
+  "Search.empty": "Nada coincide con «{query}».",
   "Search.emptyOnDevice":
     "Nada en este dispositivo coincide con «{query}». Vuelve a buscar cuando tengas conexión.",
   "Search.notes": "Notas",
   "Search.notesOnDevice": "Notas en este dispositivo",
   "Search.groups": "Grupos",
-  "Search.actions": "Acciones",
+  "Search.create": "Crear",
+  "Search.settings": "Ajustes",
+  "Search.account": "Cuenta",
+  "Search.switchTo": "Cambiar a {group}",
+  "Search.installApp": "Instalar la app",
+  "Search.needsConnection": "Necesita conexión",
   "Search.untitled": "Nota sin título",
   "Search.current": "Actual",
   "Search.inGroup": "En {group}",
@@ -1741,7 +1751,6 @@ export default {
   "Search.openOverview": "Abrir el resumen",
   "Search.openNotifications": "Abrir las notificaciones",
   "Search.openProfile": "Abrir el perfil",
-  "Search.profileDetail": "Nombre, correo electrónico, contraseña, verificación en dos pasos",
   "Search.downloadData": "Descargar mis datos",
   "Search.downloadDetail": "Un ZIP con tu perfil, tus grupos y tus notas",
   "Search.changePicture": "Cambiar la foto de perfil",
@@ -1754,7 +1763,7 @@ export default {
   "Shortcuts.switchLabel": "Atajos de una sola tecla",
   "Shortcuts.inFields": "Los atajos no funcionan mientras escribes en un campo.",
   "Shortcuts.off": "Los atajos de una sola tecla están desactivados en este dispositivo.",
-  "Shortcuts.search": "Buscar notas y grupos",
+  "Shortcuts.search": "Buscar o ejecutar un comando",
   "Shortcuts.newNoteRow": "Nueva nota",
   "Shortcuts.undo": "Deshacer la eliminación de una nota, mientras se ve su mensaje",
   "Shortcuts.notifications": "Notificaciones",
@@ -1865,11 +1874,11 @@ export default {
   },
   "TelegramBot.stale": {
     "one":
-      "Este botón ya no funciona. Ya se usó, otro más reciente lo reemplazó o tiene más de {count} minuto. Para vincular este chat, genera un código nuevo en la app.",
+      "Este botón ya no funciona: ya se usó, otro más reciente lo reemplazó, tiene más de {count} minuto, se restableció o cambió la contraseña de la cuenta, o la cuenta se eliminó o se bloqueó. Para vincular este chat, genera un código nuevo en la app.",
     "many":
-      "Este botón ya no funciona. Ya se usó, otro más reciente lo reemplazó o tiene más de {count} minutos. Para vincular este chat, genera un código nuevo en la app.",
+      "Este botón ya no funciona: ya se usó, otro más reciente lo reemplazó, tiene más de {count} minutos, se restableció o cambió la contraseña de la cuenta, o la cuenta se eliminó o se bloqueó. Para vincular este chat, genera un código nuevo en la app.",
     "other":
-      "Este botón ya no funciona. Ya se usó, otro más reciente lo reemplazó o tiene más de {count} minutos. Para vincular este chat, genera un código nuevo en la app.",
+      "Este botón ya no funciona: ya se usó, otro más reciente lo reemplazó, tiene más de {count} minutos, se restableció o cambió la contraseña de la cuenta, o la cuenta se eliminó o se bloqueó. Para vincular este chat, genera un código nuevo en la app.",
   },
   "TelegramBot.privateOnly": "Envíamelo en un chat privado.",
   "TelegramBot.codeSpent":
@@ -1935,7 +1944,7 @@ export default {
   "ApiTokenNewView.discardMessage": "Todavía no has creado este token.",
   "ApiTokenNewView.discard": "Descartar cambios",
   "ApiTokenNewView.keepEditing": "Seguir editando",
-  "ApiTokens.failed": "Algo salió mal con tus tokens de API.",
+  "ApiTokens.failed": "No se pudieron cargar o revocar tus tokens de API. Vuelve a intentarlo.",
   "ApiTokens.savedCopyTitle": "Copia guardada de tus tokens de API",
   "ApiTokens.savedCopyBody":
     "No se puede conectar con el servidor. Se muestra la lista guardada en este dispositivo: {time}. Faltan los tokens creados o revocados después.",
@@ -2060,7 +2069,7 @@ export default {
   "EmailScreen.verifyFailed": "No se pudo comprobar el código",
   "EmailScreen.sendFailed": "No se pudo enviar un código nuevo",
   "EmailScreen.changeFailed": "No se pudo cambiar tu correo",
-  "EmailScreen.loadFailed": "No se pudo cargar tu correo.",
+  "EmailScreen.loadFailed": "No se pudo cargar tu correo",
   "EmailScreen.enterCode": "Introducir el código",
   "EmailScreen.banner": "Confirma <email>{email}</email> con el código que te enviaremos allí.",
   "EmailScreen.tryAgain": "Reintentar",
@@ -2180,4 +2189,14 @@ export default {
   "Search.benchmarkDetail": "Medir cómo rinde un grupo grande en este dispositivo",
   "Shortcuts.runBenchmark": "Ejecutar el benchmark",
   "Shortcuts.copyResults": "Copiar los resultados",
+  "NoteSpreadsheet.id": "ID",
+  "NoteSpreadsheet.title": "Título",
+  "NoteSpreadsheet.text": "Texto",
+  "NoteSpreadsheet.tagIds": "ID de etiquetas",
+  "NoteSpreadsheet.created": "Creada",
+  "NoteSpreadsheet.updated": "Último cambio",
+  "GroupSpreadsheets.readme":
+    "Los datos del grupo en hojas de cálculo: un archivo CSV por cada tipo de elemento, en UTF-8 y con una fila de encabezados. Las fechas y horas están en formato ISO 8601, en UTC. Para llevar el grupo a otra app, descarga el archivo JSON: solo ese archivo se puede importar.",
+  "GroupSpreadsheets.notSpreadsheets":
+    "No disponible como hoja de cálculo (está en el archivo JSON):",
 } satisfies Catalog

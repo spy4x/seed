@@ -97,11 +97,17 @@ export interface SignInCodeOperations {
    * still owes its code. A guest who asked keeps their account with the address, or is offered the
    * switch when another account owns it; any other guest is refused and keeps their session. A full
    * account's session the browser held before is replaced. The right code ends every request and
-   * code of the address.
+   * code of the address. Where sign-up is by invitation, a code that would make a new account
+   * throws `SignUpClosedError` unless `invitation` admits the address; the request is spent.
    *
    * @param firstGroupId The id of a new account's first group. Defaults to a random UUID.
    */
-  completeSignInCode(c: Context, code: string, firstGroupId?: string): Promise<SignInCodeRedemption>
+  completeSignInCode(
+    c: Context,
+    code: string,
+    invitation?: string | null,
+    firstGroupId?: string,
+  ): Promise<SignInCodeRedemption>
 }
 
 /** Builds the sign-in code operations over the sign-in's own parts. */
@@ -116,6 +122,7 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
     restoreIfWaiting,
     guests,
     createProfile,
+    joinInvitedGroup,
     replaceSession,
     auditRow,
     deviceOf,
@@ -162,7 +169,8 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
    * - **A password key that claims the address without having proven it** is left alone: the code
    *   proves the mailbox, not that account, whose password may be someone else's.
    * - **Nobody** has the address: a new account is made with a code key that carries it, proven;
-   *   a guest keeps theirs with that key instead.
+   *   a guest keeps theirs with that key instead. Where sign-up is by invitation, the new account
+   *   accepts `invitation` in the same transaction (`joinInvitedGroup`).
    *
    * When someone proves the address between the read and the write, the write fails and this runs
    * once more, then finds that owner.
@@ -171,6 +179,7 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
     c: Context,
     request: SignInCodeRequest,
     now: Date,
+    invitation: string | null,
     firstGroupId: string,
     retried = false,
   ): Promise<SignInCodeRedemption> {
@@ -223,6 +232,7 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
             SIGN_IN_LINK_METHOD,
             firstGroupId,
           )
+          await joinInvitedGroup(tx, invitation, user.id)
           return { user, ...started }
         })
         await replaceSession(c, state, created)
@@ -234,7 +244,7 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
         }
       } catch (error) {
         if (error instanceof AuthConflictError && !retried) {
-          return await signInByCode(c, request, now, firstGroupId, true)
+          return await signInByCode(c, request, now, invitation, firstGroupId, true)
         }
         throw error
       }
@@ -327,7 +337,7 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
       signInCodeCookie.clear(c)
     },
 
-    async completeSignInCode(c, code, firstGroupId = uuidV7()) {
+    async completeSignInCode(c, code, invitation = null, firstGroupId = uuidV7()) {
       const now = new Date()
       const request = await waitingSignInRequest(c, now)
       const end = async (): Promise<SignInCodeRedemption> => {
@@ -347,7 +357,7 @@ export function createSignInCodeOperations(own: SignInParts): SignInCodeOperatio
       await SIGN_IN_CODES.forget(db.authStore, request.email)
       await db.signInCode.removeFor(request.email)
       signInCodeCookie.clear(c)
-      return await signInByCode(c, request, now, firstGroupId)
+      return await signInByCode(c, request, now, invitation, firstGroupId)
     },
   }
 }

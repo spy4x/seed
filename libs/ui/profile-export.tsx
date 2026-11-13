@@ -48,6 +48,7 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
   const { exportState, pending } = props
   const now = props.now ?? Date.now()
   const t = useAppText()
+  const format = useFormat()
   const status = useRef<HTMLDivElement>(null)
   const askButton = useRef<HTMLButtonElement>(null)
   // When a render removes the focused control (the row's button, or "Prepare a new file." inside
@@ -97,7 +98,7 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
             <span>
               <Rich
                 parts={t.parts(`ProfileExport.ready`, {
-                  size: formatBytes(exportState.sizeBytes ?? 0),
+                  size: formatBytes(exportState.sizeBytes ?? 0, format.locale),
                 })}
                 tags={{
                   hidden: (text) => <span class="sr-only">{text}</span>,

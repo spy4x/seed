@@ -18,7 +18,7 @@
 import { fromFileUrl } from "@std/path"
 import { CHANGELOG_START } from "./changelog-overrides.ts"
 import { type ChangelogData, type ChangelogEntry, parseSubject } from "./changelog.ts"
-import { DOC_SLUGS } from "./docs-site.ts"
+import { PUBLISHED_GUIDES } from "./docs-site.ts"
 
 /** Runs `git` with `args` in the repository's root; its output, or an error naming the command. */
 export type Git = (args: string[]) => Promise<string>
@@ -83,10 +83,9 @@ export async function readChangelog(
     )
   }
   const docs: Record<string, string> = {}
-  for (const slug of DOC_SLUGS) {
-    const path = `docs/${slug}.md`
-    const date = (await git([`log`, `-1`, `--format=%cI`, `HEAD`, `--`, path])).trim()
-    if (date) docs[path] = new Date(date).toISOString()
+  for (const { file } of PUBLISHED_GUIDES) {
+    const date = (await git([`log`, `-1`, `--format=%cI`, `HEAD`, `--`, file])).trim()
+    if (date) docs[file] = new Date(date).toISOString()
   }
   return { commit, entries, docs }
 }

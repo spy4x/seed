@@ -14,6 +14,7 @@ import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import {
   CONTACT_KIND_NAMES,
   contactHref,
+  contactText,
   contactValueProblem,
   normalizeContactValue,
 } from "@spy4x/platform/universal/contact"
@@ -58,11 +59,6 @@ const LABEL_HINTS: Partial<Record<ContactKind, string>> = {
 /** A value inside a sentence: code-like, isolated, never machine-translated. */
 function literal(text: string): JSX.Element {
   return <bdi translate={false}>{text}</bdi>
-}
-
-/** The words a link shows: its label, else its value. */
-export function contactLinkText(link: Pick<ContactLinkRecord, `value` | `label`>): string {
-  return link.label ?? link.value
 }
 
 export interface AdminContactLinksScreenProps {
@@ -163,7 +159,7 @@ export function AdminContactLinksScreen(props: AdminContactLinksScreenProps): JS
                       translate={false}
                       data-e2e="contact-link-edit"
                     >
-                      {contactLinkText(link)}
+                      {contactText(link.kind, link.value, link.label)}
                     </Link>
                     <span class="text-sm text-muted wrap-anywhere">
                       {CONTACT_KIND_NAMES[link.kind]}
@@ -174,7 +170,7 @@ export function AdminContactLinksScreen(props: AdminContactLinksScreenProps): JS
                     <Dropdown
                       trigger={<IconEllipsisVertical class="size-5" />}
                       triggerLabel={t.t(`AdminContactLinks.actionsFor`, {
-                        name: contactLinkText(link),
+                        name: contactText(link.kind, link.value, link.label),
                       })}
                       triggerClasses={MENU_TRIGGER_CLASSES}
                       triggerDataE2E="contact-link-menu"
@@ -252,7 +248,7 @@ function RemoveDialog(
       title={
         <Isolated
           message={(name) => t.t(`AdminContactLinks.removeTitle`, { name })}
-          value={contactLinkText(link)}
+          value={contactText(link.kind, link.value, link.label)}
         />
       }
       message={t.t(`AdminContactLinks.removeText`)}
@@ -356,7 +352,9 @@ export function AdminContactLinkEditorScreen(
       <PageHeader
         back={back}
         navigate={navigate}
-        title={link ? contactLinkText(link) : t.t(`AdminContactLinks.newLink`)}
+        title={link
+          ? contactText(link.kind, link.value, link.label)
+          : t.t(`AdminContactLinks.newLink`)}
         titleDataE2E="contact-link-title"
         menu={link && (
           <DropdownItem

@@ -11,7 +11,8 @@ import { SHORTCUT_GROUPS } from "@ui/shortcuts.tsx"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import app from "@i18n/app/en.ts"
 import appRu from "@i18n/app/ru.ts"
-import { pageCommands, spaShortcutRows } from "./shortcuts.ts"
+import { paletteCommands, type PaletteOption } from "@ui/palette-commands.ts"
+import { pageCommands, runNoteCommand, spaShortcutRows } from "./shortcuts.ts"
 
 function rows(activityGroupId: string | null, onOverview = false) {
   const seen = { navigated: [] as string[], newNote: 0, shortcuts: 0, range: 0, customise: 0 }
@@ -83,20 +84,142 @@ const RU = createTranslator({ language: `ru`, catalogs: [{ source: app, translat
 
 describe("the open page's commands in the search palette", () => {
   it("label the overview's commands in the person's language and keep their English as aliases", () => {
-    expect(pageCommands(RU, { overview: true, noteEditor: false })).toEqual([
-      { id: "overview-range", label: RU.t(`Shortcuts.dateRange`), aliases: ["Change date range"] },
+    expect(pageCommands(RU, { overview: true, benchmark: false, noteEditor: null }, [])).toEqual([
+      {
+        id: "overview-range",
+        label: RU.t(`Shortcuts.dateRange`),
+        aliases: ["Change date range"],
+        kbd: undefined,
+      },
       {
         id: "overview-customise",
         label: RU.t(`Shortcuts.customise`),
         aliases: ["Customise overview"],
+        kbd: undefined,
       },
     ])
     expect(RU.t(`Shortcuts.dateRange`)).not.toBe("Change date range")
   })
 
-  it("offer the note page's attach command, and nothing on another page", () => {
-    expect(pageCommands(RU, { overview: false, noteEditor: true })?.map((c) => c.aliases))
-      .toEqual([["Attach files to this note"]])
-    expect(pageCommands(RU, { overview: false, noteEditor: false })).toBeUndefined()
+  it("offer nothing of a note on another page", () => {
+    expect(pageCommands(RU, { overview: false, benchmark: false, noteEditor: null }, []))
+      .toBeUndefined()
+  })
+
+  it("offer a writer of a note every note command, Delete last, found by English and Russian words", () => {
+    const commands = pageCommands(RU, { overview: false, benchmark: false, noteEditor: all }, [])
+    expect(commands?.map((c) => c.id)).toEqual([
+      "note-attach",
+      "note-duplicate",
+      "note-move",
+      "note-copy-link",
+      "note-delete",
+    ])
+    const del = commands?.find((c) => c.id === "note-delete")
+    expect(del?.label).toBe(RU.t(`AppShell.deleteNote`))
+    expect(del?.aliases).toEqual(["Delete this note", "remove note", "trash", "удалить заметку"])
+    expect(commands?.find((c) => c.id === "note-duplicate")?.aliases).toContain("дублировать")
+    expect(commands?.find((c) => c.id === "note-copy-link")?.aliases).toContain("ссылка")
+  })
+
+  it("offer a reader of a note only Copy link", () => {
+    expect(
+      pageCommands(RU, { overview: false, benchmark: false, noteEditor: { copyLink: noop } }, [])
+        ?.map((c) => c.id),
+    ).toEqual(["note-copy-link"])
+  })
+
+  it("leave Move out when the person has no other group to move the note to", () => {
+    const { move: _, ...noMove } = all
+    expect(
+      pageCommands(RU, { overview: false, benchmark: false, noteEditor: noMove }, [])
+        ?.map((c) => c.id),
+    ).not.toContain("note-move")
+  })
+})
+
+const noop = () => {}
+const all = { attach: noop, duplicate: noop, move: noop, copyLink: noop, delete: noop }
+
+describe("runNoteCommand", () => {
+  it("runs the note page's action its command names, once", () => {
+    const ran: string[] = []
+    const actions = {
+      duplicate: () => void ran.push("duplicate"),
+      delete: () => void ran.push("delete"),
+    }
+    runNoteCommand("note-delete", actions)
+    runNoteCommand("note-duplicate", actions)
+    expect(ran).toEqual(["delete", "duplicate"])
+  })
+
+  it("does nothing for a command the page does not offer now, or off a note page", () => {
+    const ran: string[] = []
+    runNoteCommand("note-delete", { copyLink: () => void ran.push("copy") })
+    runNoteCommand("note-copy-link", null)
+    runNoteCommand("overview-range", { copyLink: () => void ran.push("copy") })
+    expect(ran).toEqual([])
+  })
+})
+
+const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
+
+/** The palette's commands, with every submenu's rows, for the shortcut rows of one page. */
+function commandsFor(page: "none" | "overview" | "benchmark") {
+  const navigated: string[] = []
+  const list = spaShortcutRows({
+    navigate: (href) => void navigated.push(href),
+    openShortcuts: () => {},
+    openNewNote: () => {},
+    activityGroupId: "0190a000-0000-7000-8000-000000000001",
+    overviewPage: page === "overview" ? { openRange: () => {}, openCustomise: () => {} } : null,
+    benchmarkPage: page === "benchmark" ? { run: () => {}, copy: () => {} } : null,
+  })
+  const open = { overview: page === "overview", benchmark: page === "benchmark", noteEditor: null }
+  const commands = paletteCommands({
+    t: EN,
+    locale: `en`,
+    currentGroup: { id: "0190a000-0000-7000-8000-000000000001", name: "Home", canWrite: true },
+    online: true,
+    theme: () => `system`,
+    shortcuts: list,
+    activityGroupId: "0190a000-0000-7000-8000-000000000001",
+    pageCommands: pageCommands(EN, open, list) ?? [],
+    guest: false,
+    benchmark: true,
+    canInstall: false,
+  }, () => {})
+  const flat = (options: readonly PaletteOption[]): PaletteOption[] =>
+    options.flatMap((option) => [option, ...flat(option.children ?? [])])
+  return { list, navigated, commands: flat(commands) }
+}
+
+describe("the palette and the keyboard shortcuts", () => {
+  for (const page of ["none", "overview", "benchmark"] as const) {
+    it(`has a command for the keys of every shortcut that acts (page: ${page})`, () => {
+      const { list, commands } = commandsFor(page)
+      const missing = list.filter((row) => row.run)
+        .filter((row) => !commands.some((command) => command.shortcut === row.keys))
+        .map((row) => `${row.keys} (${row.description})`)
+      expect(missing).toEqual([])
+    })
+  }
+
+  it("shows a single key press on its command and keeps a g sequence off it", () => {
+    const { commands } = commandsFor("none")
+    const keysOf = (label: string) => {
+      const command = commands.find((command) => command.label === label)
+      return [command?.kbd, command?.shortcut]
+    }
+    expect([keysOf("New note"), keysOf("Notes")]).toEqual([["n", "n"], [undefined, "g n"]])
+  })
+
+  it("opens the same page from each Go to command as from its g shortcut", () => {
+    const { list, navigated, commands } = commandsFor("none")
+    for (const row of list.filter((row) => row.keys.startsWith("g "))) {
+      row.run!()
+      const command = commands.find((command) => command.shortcut === row.keys)
+      expect(command?.choice, row.keys).toEqual({ kind: "page", href: navigated.at(-1) })
+    }
   })
 })

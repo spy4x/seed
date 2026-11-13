@@ -42,8 +42,9 @@
 # first pass's that is not 0. One exception: of two passes, one in which Playwright found no test
 # (a `-g` that matches tests of the other pass only) does not fail the run; it fails when neither
 # pass found one. The last lines give the counts of each pass, when the reporter prints them. The
-# report of the second of two passes is in `e2e/report/offline`. With `E2E_SPA` set, every spec
-# asked for runs in one pass against that server.
+# report of the second of two passes is in `e2e/report/offline`. Each pass's test output, with the
+# traces of its failed tests, is kept in `results/` of its report folder, whatever the reporter.
+# With `E2E_SPA` set, every spec asked for runs in one pass against that server.
 #
 # CI runs this script too (.woodpecker/ci.yml), in a container that is thrown away afterwards and
 # has no container tool. Two variables stand in for the containers there:
@@ -456,7 +457,7 @@ getent hosts app.localhost >/dev/null 2>&1 ||
 mkdir -p "$COPY_DIR"
 cp -r e2e/fixtures "$COPY_DIR/fixtures"
 LAUNCH=""
-[ -n "${E2E_CHROMIUM:-}" ] && LAUNCH="use: { launchOptions: { executablePath: \"$E2E_CHROMIUM\" } },"
+[ -n "${E2E_CHROMIUM:-}" ] && LAUNCH="launchOptions: { executablePath: \"$E2E_CHROMIUM\" },"
 cat >"$COPY_DIR/playwright.config.ts" <<CONFIG
 import { defineConfig, devices } from "@playwright/test"
 import { playwrightBaseConfig } from "@jsr/spy4x__preact-system/playwright"
@@ -466,16 +467,22 @@ export default defineConfig({
     baseURL: "http://app.localhost:$FRONT_PORT",
     ci: !!Deno.env.get("CI"),
     chromium: devices["Desktop Chrome"],
-    $LAUNCH
+    use: { actionTimeout: 30_000, navigationTimeout: 30_000, $LAUNCH },
   }),
   testDir: "$COPY_DIR",
   outputDir: "$COPY_DIR/results",
+  // The same limits as the root playwright.config.ts: a loaded machine fails healthy specs at the
+  // base 30 s per test, 5 s per assertion and 10 s per action or navigation (\`use\` above).
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
 })
 CONFIG
 
 OFFLINE_SPECS=" $(deno eval 'import { OFFLINE_SPECS } from "./infra/scripts/e2e-local-plan.ts"; console.log(OFFLINE_SPECS.join(" "))') "
 
 # Leaves in the copy the specs pass <specs> may see: `all`, `offline`, or `other` (the rest).
+# The copy sits two folders below `e2e/`, so an import of a file outside `e2e/` (`from "../`)
+# gets two more `../` to reach the same file.
 copy_specs() { # <all|offline|other>
   local spec name kind
   find "$COPY_DIR" -maxdepth 1 -name '*.e2e.ts' -delete
@@ -485,6 +492,7 @@ copy_specs() { # <all|offline|other>
     [[ "$OFFLINE_SPECS" == *" $name "* ]] && kind=offline
     [ "$1" = all ] || [ "$1" = "$kind" ] || continue
     sed -e "s#http://app.localhost\"#http://app.localhost:$FRONT_PORT\"#g" \
+      -e 's#from "\.\./#from "../../../#' \
       -e "s#http://admin.localhost\"#http://admin.localhost:$ADMIN_FRONT_PORT\"#g" "$spec" \
       >"$COPY_DIR/$name"
   done
@@ -533,6 +541,14 @@ for i in "${!PASS_SERVER[@]}"; do
     [ "$PASSES" = 1 ] || PASS_STATUS=0
   fi
   SUMMARY+=("pass $((i + 1)), $server: ${COUNTS:+$COUNTS }(exit $SHOWN)")
+  # The cleanup deletes the copy, and the next pass's Playwright empties its output folder, so the
+  # traces of this pass's failed tests are copied next to its report, in place of older ones.
+  find "$REPORT/results" -delete 2>/dev/null || true
+  if [ -n "$(ls -A "$COPY_DIR/results" 2>/dev/null)" ]; then
+    mkdir -p "$REPORT"
+    cp -r "$COPY_DIR/results" "$REPORT/results"
+    [ "$SHOWN" = 0 ] || log "pass $((i + 1)): the traces of its failed tests are in ${REPORT#"$ROOT/"}/results"
+  fi
   [ "$STATUS" != 0 ] || STATUS=$PASS_STATUS
 done
 for line in "${SUMMARY[@]}"; do log "$line"; done

@@ -1,9 +1,21 @@
 # AGENTS.md — Seed
 
-Read `README.md` and `CONTRIBUTING.md` first. The global agent instructions own Git Flow, review
-and cleanup; this file adds what is specific to this repo.
+The global agent instructions own Git Flow, review and cleanup; this file adds what is specific
+to this repo. Every doc is listed in [docs/README.md](docs/README.md).
 
 In Seed's own repository, also read `AGENTS.seed.md`. A product deletes that file and this line.
+
+## Commands
+
+```sh
+deno task check                       # lint, fmt, types and every unit test
+deno task fix                         # lint and fmt fixes
+deno task dev                         # the development stack in compose
+deno task e2e:local e2e/notes.e2e.ts  # one browser spec, on a stack of its own
+deno task test libs/ui/notes.test.tsx # one test file, with its group's grants
+```
+
+[docs/development.md](docs/development.md) lists every task.
 
 ## Three layers of UI
 
@@ -41,7 +53,9 @@ says what is missing. Do not copy the gap into a new screen.
   (`@spy4x/preact-system/boundary`) over every module, with this repository's app aliases.
 - **Built on preact-components' forms.** A form here is `ScreenForm` (`libs/ui/progressive.tsx`):
   `EnhancedForm` with its status taken from the screen's `pending` prop, so a pending form is
-  disabled and refuses a second submit. A form takes its submit over with `onSubmit`; only the
+  disabled and refuses a second submit. The exception is a list's search form (admin Users and
+  Groups): it leaves `pending` out, because a disabled fieldset drops focus out of the field, and
+  its busy submit button refuses a second search instead. A form takes its submit over with `onSubmit`; only the
   newsletter's pass `action` too. A screen whose whole form the library already has draws that
   instead: the sign-in screens (`AuthScreen`, `AdminSignInScreen`) use preact-system's `AuthForm`,
   and the billing screens use `PlanCard`'s and `PricingTable`'s forms and a `<form>`, each inside a
@@ -84,11 +98,12 @@ The public website (`apps/mpa`, seedsaas.com) describes the product's features: 
 feature cards, `/features`, `/pricing` and `/compare`, and the components they render
 (`apps/mpa/components/`). A change that adds, modifies or removes a feature updates every page that
 names it in the same PR, so the site never lists a feature the product lacks and never leaves out
-one it has. The owner asked for this on 2026-10-19: "create the rule".
+one it has.
 
 `deno task lighthouse` (CI step `lighthouse`) measures the website against the Lighthouse budget
-of the global agent rules. The pages it measures are listed in
-`apps/mpa/lighthouse/lighthouserc.json`.
+in the global `design` skill. The pages it measures are listed in
+`apps/mpa/lighthouse/lighthouserc.json`; a pull request measures only those in
+`apps/mpa/lighthouse/quick.ts`.
 
 ## The public demo
 
@@ -97,9 +112,7 @@ sample data for every new account and a nightly wipe, turned on by `DEMO_MODE=tr
 [docs/demo.md](docs/demo.md).
 A change that adds, edits or removes a table, a column or anything else in the database structure
 updates the demo's wipe and seed in the same PR, as that doc's "When the database changes" says,
-so the demo keeps working and shows the new feature. The owner asked for this on 2026-10-19: "a local AGENTS.md instruction (or a
-reference to a separate doc) about how it works and that we should update wipe/seed script when we
-add/edit/remove tables or schema or db structure overall."
+so the demo keeps working and shows the new feature.
 
 ## Blog
 

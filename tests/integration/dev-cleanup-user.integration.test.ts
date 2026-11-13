@@ -90,6 +90,7 @@ function buildApp(sql: postgres.Sql, isDev: boolean) {
       sql,
       closeSockets: () => 0,
       forgetCodeBudget: (email) => Promise.resolve(void forgotten.push(email)),
+      freePlanAllowsNothing: false,
     }),
   )
   const post = (path: string, body: unknown) =>
@@ -395,6 +396,51 @@ Deno.test("dev last-mail route", async (t) => {
       const response = await buildApp(sql, false).post("/test/last-mail", {
         email: "ann@example.com",
       })
+
+      expect(response.status).toBe(403)
+    })
+  })
+})
+
+Deno.test("dev starter-data route", async (t) => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, true)
+    const userId = await signUp(app, "starter")
+    const login = "starter@example.com"
+    // Sign-up queues the user's one request; no worker runs here, so it stays pending.
+    const queued = await sql<CountRow[]>`
+      SELECT COUNT(*)::int AS count FROM starter_data_requests
+      WHERE user_id = ${userId} AND done_at IS NULL
+    `
+    expect(queued[0].count).toBe(1)
+
+    await t.step(
+      "answers not done while the worker has not handled the user's request",
+      async () => {
+        const response = await app.post("/test/starter-data", { login })
+
+        expect(response.status).toBe(200)
+        expect(await response.json()).toEqual({ done: false })
+      },
+    )
+
+    await t.step("answers done once the worker has handled it", async () => {
+      await sql`UPDATE starter_data_requests SET done_at = now() WHERE user_id = ${userId}`
+
+      const response = await app.post("/test/starter-data", { login })
+
+      expect(response.status).toBe(200)
+      expect(await response.json()).toEqual({ done: true })
+    })
+
+    await t.step("answers 404 for a user that does not exist", async () => {
+      const response = await app.post("/test/starter-data", { login: "nobody@example.com" })
+
+      expect(response.status).toBe(404)
+    })
+
+    await t.step("refuses with 403 outside development", async () => {
+      const response = await buildApp(sql, false).post("/test/starter-data", { login })
 
       expect(response.status).toBe(403)
     })

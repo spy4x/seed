@@ -188,3 +188,43 @@ Every error carries a `requestId`. Quote it when you ask for help.
 - The API covers notes only.
 - There is no OpenAPI file.
 - A token cannot be edited after it is created: revoke it and create a new one.
+
+## How the server keeps tokens
+
+For whoever changes the token code: what creating a token asks, what ends one, and what is kept.
+
+Creating a token asks for the
+account's current password (`signIn.verifyPassword`, behind the strict per-user limit), so a
+stolen session cannot mint one; an account with no password cannot create tokens and is told so.
+The password is checked inside the create's transaction, under the lock on the person's `users` row
+(`lockUser`), and counted around it (`signIn.countPasswordCheck`, the count of wrong passwords per
+account): the count needs a pool connection of its own, which it must not wait for while the
+transaction holds one. A password change and a reset take that lock too, after the password key's,
+and write the password and revoke the tokens in one transaction: both happen or neither, and a token
+made with the old password never outlives the change. The create queues the `api-token.created-mail`
+job, which mails the owner's proven address. A token's name is one line: line breaks and control
+characters are refused (`hasUnsafeTextCharacters`), since the name goes into that mail as plain
+text.
+
+A token is revoked by its owner, by a password change or reset (every token of the person; "sign
+out other devices" alone leaves them), when its owner leaves or is removed from its group, and when
+its group is deleted. A restored group or a member added back does not get the tokens back. Revoking
+sets `api_tokens.revoked_at` and keeps the row, so the next request with that token can still be
+tied to its owner and audited. A revoked or expired token is refused and hidden from that moment.
+A token of a soft-deleted account is not revoked: it works again if the account is restored.
+The migration that added `revoked_at` also revoked the tokens the older code had left asleep: those
+of people no longer in the token's group and of groups in the trash, each with its audit row.
+
+The nightly `outbox.cleanup` job runs `purgeExpiredApiTokens`, which deletes a row
+`API_TOKEN_PURGE_GRACE_DAYS` (30) days after it expired or was revoked, by the database clock, so a
+row may live up to a day longer. A token that never expires stays until it is revoked.
+
+Every token row in `auth_audits` (created 8, used 9, revoked 10, purged 11, refused 12) names the
+token in `identifier`: `<id> group=<group id> access=<read|write>[ reason=<why>] name=<name>`,
+built in SQL by `apiTokenAuditIdentifier`, so a row still says which token after the token's row is
+gone. No hash or part of a token is written. A revoke's reason is `owner`, `password-change`,
+`password-reset`, `membership-ended` or `group-deleted`. A refused request (reason `revoked`,
+`expired` or `scope`) writes at most one row per token and reason in five minutes
+(`REFUSAL_AUDIT_WINDOW_MS`); while Valkey is down it writes none. A token nobody holds has no owner
+and leaves no row. The purge writes one row per expired token; a revoked one already has its
+revoke row.

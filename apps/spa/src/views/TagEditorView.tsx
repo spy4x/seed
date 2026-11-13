@@ -61,13 +61,13 @@ export function TagEditorView({ tagId = null }: { tagId?: string | null }) {
     : null
   return (
     <>
-      {groupId && (
-        <OfflineStatus
-          groupId={groupId}
-          onResolved={() => void store.refresh().catch(() => {})}
-        />
-      )}
       <TagEditorScreen
+        intro={groupId && (
+          <OfflineStatus
+            groupId={groupId}
+            onResolved={() => void store.refresh().catch(() => {})}
+          />
+        )}
         group={membership ? { id: membership.id, name: membership.name, canWrite } : null}
         loading={groupLoading || (tagId !== null && !tag && listLoading)}
         notFound={tagId !== null && !tag && !listLoading && !groupLoading}

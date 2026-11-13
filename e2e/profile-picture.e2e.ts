@@ -196,9 +196,10 @@ test.describe("the profile picture", () => {
       await ops.goto(`${adminBase}/users?q=${encodeURIComponent(email)}`)
       await ops.locator("[data-e2e=admin-users-list] tbody tr a").first().click()
       await expect(ops.locator("[data-e2e=admin-user-title]")).toHaveText(email)
-      // The page names a picture; its bytes answer 404 until the worker has made the WebP, so the
-      // avatar shows initials meanwhile.
-      await expect(ops.locator("[data-e2e=admin-user-picture]")).not.toContainText("None")
+      // The worker has not made the WebP yet, so the page says so and shows the initials.
+      await expect(ops.locator("[data-e2e=admin-user-picture-state]")).toHaveText(
+        "Preparing the picture…",
+      )
 
       await ops.locator("[data-e2e=admin-user-menu]").click()
       await ops.locator("[data-e2e=admin-remove-picture-open]").click()

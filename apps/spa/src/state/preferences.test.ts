@@ -64,7 +64,11 @@ function server({ lateHints = false, racingHints = false } = {}) {
 }
 
 /** One device of the person: its own theme store and storage, on the shared server. */
-function device(backend: ReturnType<typeof server>, here: DeviceFormat = BERLIN) {
+function device(
+  backend: ReturnType<typeof server>,
+  here: DeviceFormat = BERLIN,
+  requested: readonly string[] = [],
+) {
   const stored = new Map<string, string>()
   const theme = createThemeStore({
     storage: {
@@ -82,7 +86,9 @@ function device(backend: ReturnType<typeof server>, here: DeviceFormat = BERLIN)
     query: (name) => reach(name),
     command: (name, payload) => reach(name, payload),
     theme,
+    language: { read: () => null },
     device: () => here,
+    requested: () => requested,
     keptZone: { read: () => kept, write: (zone) => void (kept = zone) },
     online: () => online.value,
   })
@@ -331,6 +337,52 @@ describe(`the device's own zone`, () => {
 
     expect(backend.row?.value).toEqual({ ...DEFAULT_PREFERENCES, timeZone: `Asia/Bangkok` })
     expect(traveller.state.otherZone.value).toBeNull()
+  })
+})
+
+describe(`the region format "Automatic"`, () => {
+  const US = { locale: `en-US`, timeZone: `UTC` }
+  const DAY = Date.UTC(2026, 9, 29)
+
+  it(`keeps a pinned region format, whatever the language`, async () => {
+    const laptop = device(server(), US)
+    await open(laptop)
+    await laptop.state.save({ language: `de`, locale: `it-IT` })
+
+    expect(laptop.state.format.value.locale).toBe(`it-IT`)
+  })
+
+  it(`takes a browser locale in the person's language over the device's own`, async () => {
+    const laptop = device(server(), US, [`en-US`, `de-AT`])
+    await open(laptop)
+    await laptop.state.save({ language: `de` })
+
+    expect(laptop.state.automatic.value).toBe(`de-AT`)
+    expect(laptop.state.format.value.locale).toBe(`de-AT`)
+  })
+
+  it(`writes German dates for German on an English device`, async () => {
+    const laptop = device(server(), US, [`en-US`])
+    await open(laptop)
+    await laptop.state.save({ language: `de` })
+
+    expect(laptop.state.format.value.locale).toBe(`de-DE`)
+    expect(laptop.state.format.value.date(DAY, `medium`)).toBe(`29.10.2026`)
+  })
+
+  it(`follows the device's own region format for its language`, async () => {
+    const laptop = device(server(), US)
+    await open(laptop)
+
+    expect(laptop.state.format.value.date(DAY, `medium`)).toBe(`Oct 29, 2026`)
+  })
+
+  it(`writes English as en-GB when the device has no English locale`, async () => {
+    const laptop = device(server(), { locale: `ru-RU`, timeZone: `UTC` }, [`ru-RU`])
+    await open(laptop)
+    await laptop.state.save({ language: `en` })
+
+    expect(laptop.state.format.value.locale).toBe(`en-GB`)
   })
 })
 

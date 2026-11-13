@@ -154,7 +154,7 @@ webhooks have [a post of their own](/blog/per-seat-billing-stripe-webhooks-retri
 ## Why not Postgres row-level security?
 
 I considered it, and wrote the trade-off down in the
-[group sync design](https://github.com/spy4x/seed/blob/main/docs/design/group-sync.md#9-tradeoffs).
+[group sync design](https://github.com/spy4x/seed/blob/main/docs/archive/group-sync.md#9-tradeoffs).
 Row-level security would put a second copy of the permission rules in the database, in SQL
 policies, next to the copy the handlers need anyway to answer "you're a viewer" with a useful
 error. Two copies of one rule drift apart. It also makes every connection carry the current

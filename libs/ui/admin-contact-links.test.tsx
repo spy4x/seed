@@ -151,11 +151,11 @@ async function openMenu(index: number): Promise<string[]> {
 }
 
 describe("the contact links list", () => {
-  it("shows each link's label or value with its channel, in order", async () => {
+  it("shows each link's label, else its channel and value, with its channel under it, in order", async () => {
     await mount(<AdminContactLinksScreen {...listProps([])} />)
     const rows = [...document.querySelectorAll("[data-e2e=contact-link-row] > div:first-child")]
     expect(rows.map((text) => text.textContent)).toEqual([
-      "my_shopTelegram",
+      "Telegram @my_shopTelegram",
       "Call usPhone · +84912345678",
     ])
   })
@@ -178,6 +178,15 @@ describe("the contact links list", () => {
     expect(calls).toEqual([])
     await clickOn(button("Remove link"))
     expect(calls).toEqual([["remove", LINKS[1].id]])
+  })
+
+  it("names the channel of a link without a label in its menu and its remove dialog", async () => {
+    await mount(<AdminContactLinksScreen {...listProps([])} />)
+    const trigger = row(0).querySelector("[data-e2e=contact-link-menu]")!
+    expect(trigger.getAttribute("aria-label")).toContain("Telegram @my_shop")
+    await openMenu(0)
+    await clickOn(row(0).querySelector("[data-e2e=contact-link-remove]")!)
+    expect(document.querySelector("dialog")?.textContent).toContain(`Remove "Telegram @my_shop"?`)
   })
 
   it("says there are no links yet under an icon tile", async () => {
@@ -226,6 +235,13 @@ describe("the contact link editor", () => {
       ["change", { kind: "telegram", value: "@my_shop", label: "" }],
       ["save"],
     ])
+  })
+
+  it("titles a saved link by its label, else by its channel and value", async () => {
+    for (const [link, title] of [[LINKS[0], "Telegram @my_shop"], [LINKS[1], "Call us"]] as const) {
+      await mount(<AdminContactLinkEditorScreen {...editorProps([], { link })} />)
+      expect(find("[data-e2e=contact-link-title]").textContent).toBe(title)
+    }
   })
 
   it("names the link a valid value opens, and an example until then", async () => {

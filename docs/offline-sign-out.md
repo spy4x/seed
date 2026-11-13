@@ -39,7 +39,7 @@ the server, and an account deletion. A write still in the queue is lost, so the 
 | `offline:owed-deletion`             | A person whose copies the device has not deleted yet.               |
 | `offline:kept-queue`                | The person whose queue a server-ended session kept.                 |
 | `offline:signed-out`                | Marks a chosen sign-out, which another tab respects.                |
-| `theme`, `install-prompt-dismissed` | The device's own answers.                                           |
+| `theme`, `language`, `install-prompt-dismissed` | The device's own answers.                                           |
 | `last-sign-in`                      | The masked hint the sign-in page shows. "Not you? Forget" drops it. |
 
 **Deletion takes a moment.** Before it starts, the person's id goes into `offline:owed-deletion`.

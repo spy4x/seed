@@ -308,9 +308,16 @@ describe(`the notes, tags, search and shortcuts screens in en-XA`, () => {
     })
     await settle()
     expect(english()).toEqual([])
-    expectReached([`Search.notesOnDevice`, `Search.actions`, [`ProfilePicture.rule`, {
-      max: `10 MB`,
-    }]])
+    expectReached([
+      `Search.notesOnDevice`,
+      `Shortcuts.goTo`,
+      `Search.create`,
+      `Search.settings`,
+      `Search.account`,
+      [`ProfilePicture.rule`, {
+        max: `10 MB`,
+      }],
+    ])
     // A query lists the groups too, each with the person's role in it.
     const field = document.querySelector<HTMLInputElement>(`[data-e2e=search] input`)!
     field.value = team.name

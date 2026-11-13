@@ -197,6 +197,8 @@ export interface GroupEditorScreenProps {
   activity?: ComponentChildren
   /** The pending invitations (`PendingInvitations`), drawn under the members. */
   pendingInvitations?: ComponentChildren
+  /** A product's own group settings, drawn under the General tab's details for every role. */
+  settings?: ComponentChildren
   /**
    * The body of the "Transfer ownership" dialog (`GroupTransferForm`), given the function that
    * closes it. The menu offers it to the owner of a group with someone to hand it to.
@@ -334,6 +336,7 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
     billing,
     activity,
     pendingInvitations,
+    settings,
     transfer,
     moveTargets = [],
     onMoveAll,
@@ -497,12 +500,15 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
   ].map((item) => ({
     id: `group-tab-${item.id}`,
     label: item.label,
-    content: item.id !== tab
-      ? null
-      : item.id === GroupTab.GENERAL
-      ? (canRename(group.role)
-        ? <GroupForm {...props} />
-        : <GroupDetailsText group={group} now={props.now} />)
+    content: item.id !== tab ? null : item.id === GroupTab.GENERAL
+      ? (
+        <>
+          {canRename(group.role)
+            ? <GroupForm {...props} />
+            : <GroupDetailsText group={group} now={props.now} />}
+          {settings}
+        </>
+      )
       : item.id === GroupTab.MEMBERS
       ? (
         <GroupMembersSection

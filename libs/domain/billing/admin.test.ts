@@ -21,10 +21,10 @@ import {
   noChargeUntil,
   parseAdminBillingFilter,
   type Plan,
-  PLANS,
   PRO_PLAN_ID,
   readBillingAuditIdentifier,
 } from "./+lib.ts"
+import { TEST_PLANS, TEST_PRO_PLAN } from "./test-plans.ts"
 import { type } from "arktype"
 
 const NOW = new Date(`2026-10-17T12:00:00.000Z`)
@@ -101,12 +101,11 @@ describe(`monthly revenue`, () => {
         period: BillingPeriod.Monthly,
       },
       { planId: null, quantity: 9, status: BillingStatus.Active, period: null },
-    ])
-    expect(revenue).toEqual([{ amount: 900 * 4, currency: `EUR` }])
+    ], TEST_PLANS)
+    expect(revenue).toEqual([{ amount: TEST_PRO_PLAN.amount * 4, currency: `EUR` }])
   })
 
-  const pro = PLANS.find((plan) => plan.id === PRO_PLAN_ID)!
-  const yearly: Plan[] = [{ ...pro, perSeat: false, yearlyAmount: 9006 }]
+  const yearly: Plan[] = [{ ...TEST_PRO_PLAN, perSeat: false, yearlyAmount: 9006 }]
   const year = { planId: PRO_PLAN_ID, quantity: 1, period: BillingPeriod.Yearly }
 
   it(`counts a yearly subscription as its yearly price divided by twelve, rounded`, () => {
@@ -117,8 +116,8 @@ describe(`monthly revenue`, () => {
   })
 
   it(`prices nothing for a yearly subscription of a plan sold monthly only`, () => {
-    expect(billedPriceOf(year)).toBeNull()
-    expect(monthlyRevenue([{ ...year, status: BillingStatus.Active }])).toEqual([])
+    expect(billedPriceOf(year, TEST_PLANS)).toBeNull()
+    expect(monthlyRevenue([{ ...year, status: BillingStatus.Active }], TEST_PLANS)).toEqual([])
   })
 })
 

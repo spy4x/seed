@@ -1,8 +1,9 @@
-import type { APIRequestContext, BrowserContext } from "@playwright/test"
+import type { APIRequestContext, BrowserContext, Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { PRODUCT_NAME } from "../libs/ui/brand.ts"
 
 /**
  * An address no page answers shows "Page not found" with one link back, in the SPA signed
@@ -25,6 +26,11 @@ async function cleanup(request: APIRequestContext, email: string) {
     data: { login: email },
   })
   expect.soft(response.status(), await response.text()).toBe(200)
+}
+
+/** The rail entries marked as the current page or section; the not-found page has none. */
+function marked(page: Page) {
+  return page.locator(`nav :is([aria-current=page], [aria-current=true])`)
 }
 
 /** Creates `email`'s account over the API and signs that request out again. */
@@ -54,8 +60,15 @@ test.describe("an unknown address", () => {
       await page.goto(`${appBase}/no-such-page`)
       const screen = page.locator("[data-e2e=not-found]")
       await expect(screen.getByRole("heading", { level: 1 })).toHaveText("Page not found")
+      await expect(marked(page)).toHaveCount(0)
+
+      // An unknown address under a real section belongs to no section either.
+      await page.goto(`${appBase}/notes/x/y`)
+      await expect(screen.getByRole("heading", { level: 1 })).toHaveText("Page not found")
+      await expect(marked(page)).toHaveCount(0)
       await page.locator("[data-e2e=not-found-link]").click()
       await expect(page).toHaveURL(`${appBase}/notes`)
+      await expect(marked(page)).not.toHaveCount(0)
     } finally {
       await cleanup(request, email)
     }
@@ -84,7 +97,13 @@ test.describe("an unknown address", () => {
       const screen = ops.locator("[data-e2e=not-found]")
       await expect(screen.getByRole("heading", { level: 1 })).toHaveText("Page not found")
       await expect(ops).toHaveURL(`${adminBase}/no-such-page`)
-      await expect(ops).toHaveTitle("Page not found · Admin · Seed")
+      await expect(ops).toHaveTitle(`Page not found · Admin · ${PRODUCT_NAME}`)
+      await expect(marked(ops)).toHaveCount(0)
+
+      // An unknown address under a real section marks no rail entry either.
+      await ops.goto(`${adminBase}/users/x/y`)
+      await expect(screen.getByRole("heading", { level: 1 })).toHaveText("Page not found")
+      await expect(marked(ops)).toHaveCount(0)
       await ops.locator("[data-e2e=not-found-link]").click()
       await expect(ops).toHaveURL(`${adminBase}/`)
       await expect(ops.locator("[data-e2e=admin-dashboard-title]")).toBeVisible()

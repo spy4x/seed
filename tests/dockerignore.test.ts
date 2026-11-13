@@ -7,7 +7,7 @@
 
 import { expect } from "@std/expect"
 import { fromFileUrl } from "@std/path"
-import { DOC_SLUGS } from "../apps/mpa/docs-site.ts"
+import { PUBLISHED_GUIDES } from "../apps/mpa/docs-site.ts"
 
 const ROOT = fromFileUrl(new URL("../", import.meta.url))
 
@@ -177,15 +177,21 @@ Deno.test("deploys every folder the image builds from", async () => {
 })
 
 Deno.test("sends exactly the published guides of docs/, and deploys each one", async () => {
-  // The website renders these (PUBLISHED_DOCS); the internal docs, such as the handoff, stay out.
+  // The website renders these (PUBLISHED_DOCS in apps/mpa/docs-list.ts); the internal docs, such
+  // as the handoff, stay out.
   const rules = await Deno.readTextFile(`${ROOT}.dockerignore`)
   const include = (await Deno.readTextFile(`${ROOT}infra/deploy/include.txt`)).split("\n")
-  const sent = [...rules.matchAll(/^!docs\/(.+)$/gm)].map((match) => match[1]).sort()
-  expect(sent).toEqual([...DOC_SLUGS.map((slug) => `${slug}.md`), "token-api.md"].sort())
-  for (const slug of DOC_SLUGS) {
-    const path = `docs/${slug}.md`
+  const sent = [...rules.matchAll(/^!(docs\/.+)$/gm)].map((match) => match[1]).sort()
+  const files = PUBLISHED_GUIDES.map(({ file }) => file)
+  expect(sent).toEqual([...files, "docs/token-api.md"].sort())
+  for (const path of files) {
     expect({ path, ignored: isIgnored(rules, path) }).toEqual({ path, ignored: false })
-    expect({ path, deployed: include.includes(path) }).toEqual({ path, deployed: true })
+    // rsync copies a file only when the include list names each folder above it too.
+    const folders = path.split("/").slice(0, -1).map((_, i, parts) =>
+      `${parts.slice(0, i + 1).join("/")}/`
+    )
+    const deployed = [...folders, path].every((line) => include.includes(line))
+    expect({ path, deployed }).toEqual({ path, deployed: true })
   }
   for (const path of ["docs/handoff.md", "docs/design/ui-layout.md", "docs/README.md"]) {
     expect({ path, ignored: isIgnored(rules, path) }).toEqual({ path, ignored: true })

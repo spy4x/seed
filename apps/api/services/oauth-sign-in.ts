@@ -246,6 +246,12 @@ export interface OAuthInternals {
   waitingForCode(userId: number): Promise<User | null>
   /** Whether `error` means "this user may not sign in" rather than a fault. */
   isRefusal(error: unknown): boolean
+  /** Accepts `invitation` for the new account inside `tx`, or throws `SignUpClosedError`. */
+  joinInvitedGroup(
+    tx: AppDbBase,
+    invitation: string | null | undefined,
+    userId: number,
+  ): Promise<void>
   /** A guest's provider link keeps the account, or, when that provider account is taken, offers to switch. */
   guests?: GuestKeeper
 }
@@ -295,13 +301,16 @@ export interface OAuthOperations {
   /**
    * Creates the account the waiting sign-up asks for and signs it in, in one transaction, and
    * clears the sign-up cookie. `null` when nothing waits, or the token is used or expired. The
-   * session the browser had before (`current`) ends: the device is the new account's now.
+   * session the browser had before (`current`) ends: the device is the new account's now. Where
+   * sign-up is by invitation, `invitation` must admit the provider's verified address, else it
+   * throws `SignUpClosedError` and nothing is created; the held profile is spent either way.
    *
    * @param firstGroupId The id of the person's first group. Defaults to a new UUID.
    */
   confirmSignUp(
     c: Context,
     current: AppAuthState | null,
+    invitation?: string | null,
     firstGroupId?: string,
   ): Promise<SignedIn | null>
   /**
@@ -735,7 +744,7 @@ export function createOAuthOperations(
       }
     },
 
-    async confirmSignUp(c, current, firstGroupId = uuidV7()) {
+    async confirmSignUp(c, current, invitation = null, firstGroupId = uuidV7()) {
       const waiting = await readSignUp(c)
       deleteCookie(c, SIGN_UP_COOKIE, cookieOptions)
       if (!waiting) return null
@@ -759,6 +768,10 @@ export function createOAuthOperations(
               lastLoginAt: new Date(),
             })
             await tx.group.createFirst({ id: firstGroupId, name: "Personal" }, user.id)
+            // Here, not before, so a confirm that signs an existing user in is never refused;
+            // throwing undoes the auth user and key the package just wrote. The key keeps only an
+            // address the provider verified, so no other can match an address-bound invitation.
+            await own.joinInvitedGroup(tx, invitation, user.id)
             await tx.starterData.queue(user.id)
             await tx.authAudit.insert(
               own.auditRow(

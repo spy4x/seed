@@ -306,9 +306,9 @@ export function createGroupMoveAllHandler(
   mover: GroupDataMover,
 ): CommandHandler<GroupMoveAllCommand> {
   return async (command) => {
-    const { data, allowance } = command
-    // The gate sets it on every move it lets through; without it the target's cap goes unchecked.
-    if (allowance === undefined) {
+    const { data, allowances } = command
+    // The gate sets them on every move it lets through; without them the target's caps go unchecked.
+    if (allowances === undefined) {
       throw new Error("GroupMoveAllCommand reached its handler without the entitlement gate")
     }
     const actorId = data.actor.userId
@@ -317,7 +317,7 @@ export function createGroupMoveAllHandler(
     return await mover.moveAll(
       { fromGroupId: data.groupId, toGroupId: data.toGroupId, requestId: data.requestId },
       actorId,
-      { maxNotes: allowance },
+      allowances,
     )
   }
 }

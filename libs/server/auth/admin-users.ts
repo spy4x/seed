@@ -21,6 +21,7 @@ import {
   type AdminUserRow,
   type AdminUserSortKey,
   AuthAuditEventType,
+  type PictureState,
   SIGN_IN_LINK_METHOD,
   USER_ROLE_NAMES,
   type UserRole,
@@ -43,6 +44,7 @@ interface UserRowRaw {
   lastSeenAt: Date | null
   guestSince: Date | null
   pictureId: string | null
+  pictureState: PictureState | null
 }
 
 /**
@@ -53,7 +55,7 @@ interface UserRowRaw {
 function userColumns(sql: postgres.Sql) {
   return sql`
     u.id, u.first_name, u.last_name, u.role, u.blocked_at, u.created_at, u.last_seen_at,
-    u.guest_since, u.picture_id,
+    u.guest_since, u.picture_id, u.picture_state,
     (
       SELECT COALESCE(k.email, CASE WHEN k.method = ${PASSWORD_METHOD} THEN k.subject END)
       FROM auth_keys k
@@ -76,6 +78,7 @@ function toRow(row: UserRowRaw): AdminUserRow {
     lastSeenAt: row.lastSeenAt?.toISOString() ?? null,
     guestSince: row.guestSince?.toISOString() ?? null,
     pictureId: row.pictureId,
+    pictureState: row.pictureState,
   }
 }
 

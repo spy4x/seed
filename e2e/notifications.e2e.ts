@@ -2,7 +2,7 @@ import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -47,6 +47,7 @@ test.describe("notifications inbox", () => {
         data: { id: groupId, name: "Team" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(ownerApi, apiBase, groupId)
       await signUp(request, member)
       const added = await request.post(`${apiBase}/api/test/add-member`, {
         data: { login: member, groupId, role: EDITOR },

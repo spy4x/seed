@@ -2,7 +2,7 @@ import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * The benchmark page on a small group: choose it, run every measure, and read the results
@@ -28,6 +28,7 @@ async function smallGroup(page: Page, name: string, count: number): Promise<stri
     data: { id, name },
   })
   expect(created.status(), await created.text()).toBe(201)
+  await payForGroup(page.request, apiBase, id)
   for (let index = 1; index <= count; index++) {
     const note = await page.request.post(`${apiBase}/api/groups/${id}/notes`, {
       headers,

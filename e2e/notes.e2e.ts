@@ -4,13 +4,17 @@ import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { openNotes } from "./fixtures/groups.ts"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
 const password = "Passw0rd!"
 
 const VIEWER = 1
+
+// Several tests here sign in two people or check two widths. On a busy dev server they run past
+// the config's 60 s per test, so the file allows two minutes.
+test.describe.configure({ timeout: 120_000 })
 
 /** The WCAG A and AA rules axe-core checks a page against. */
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]
@@ -48,6 +52,7 @@ async function sharedGroup(
     data: { id: groupId, name },
   })
   expect(created.status(), await created.text()).toBe(201)
+  await payForGroup(owner.request, apiBase, groupId)
   const added = await request.post(`${apiBase}/api/test/add-member`, {
     data: { login: member, groupId, role: VIEWER },
   })
@@ -105,10 +110,10 @@ test.describe("notes in a shared group", () => {
       const notePath = new URL(ownerPage.url()).pathname
       await ownerPage.locator("[data-e2e=page-back]").click()
       await expect(ownerTitles).toHaveText(["Groceries"])
-      await expect(memberTitles).toHaveText(["Groceries"], { timeout: 5_000 })
+      await expect(memberTitles).toHaveText(["Groceries"])
       // Each row names who wrote it: "You" for the author, the author's name for everyone else.
       await expect(ownerPage.locator("[data-e2e=note-author]")).toHaveText(["You"])
-      await expect(memberPage.locator("[data-e2e=note-author]")).toHaveCount(1, { timeout: 5_000 })
+      await expect(memberPage.locator("[data-e2e=note-author]")).toHaveCount(1)
       await expect(memberPage.locator("[data-e2e=note-author]")).not.toHaveText(["You"])
 
       // The create went over the socket, as a command with an idempotency key.
@@ -124,7 +129,7 @@ test.describe("notes in a shared group", () => {
       await ownerPage.locator("[data-e2e=note-save]").click()
       await expect(ownerPage).toHaveURL("/notes")
       await expect(ownerTitles).toHaveText(["Groceries for Friday"])
-      await expect(memberTitles).toHaveText(["Groceries for Friday"], { timeout: 5_000 })
+      await expect(memberTitles).toHaveText(["Groceries for Friday"])
 
       // Delete asks first: keeping the note leaves it, confirming deletes it.
       await ownerPage.getByRole("link", { name: "Groceries for Friday" }).click()
@@ -140,7 +145,7 @@ test.describe("notes in a shared group", () => {
       await dialog.getByRole("button", { name: "Delete note", exact: true }).click()
       await expect(ownerPage).toHaveURL("/notes")
       await expect(ownerTitles).toHaveCount(0)
-      await expect(memberTitles).toHaveCount(0, { timeout: 5_000 })
+      await expect(memberTitles).toHaveCount(0)
       await expect(memberPage.getByText("No notes yet")).toBeVisible()
 
       expect({ memberSockets, memberLoads }).toEqual(settled)
@@ -256,6 +261,7 @@ test.describe("notes in a shared group", () => {
         data: { id: otherGroup, name: "Other team" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(page.request, apiBase, otherGroup)
       const noteId = uuidV7()
       const note = await page.request.post(`${apiBase}/api/groups/${otherGroup}/notes`, {
         headers,
@@ -303,6 +309,7 @@ test.describe("notes in a shared group", () => {
         data: { id: theirGroup, name: "Their secret group" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(strangerPage.request, apiBase, theirGroup)
       const theirNote = uuidV7()
       const note = await strangerPage.request.post(`${apiBase}/api/groups/${theirGroup}/notes`, {
         headers,
@@ -404,6 +411,7 @@ test.describe("notes in a shared group", () => {
         data: { id: groupId, name: "Focus team" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(request, apiBase, groupId)
       const page = await context.newPage()
       await signInOnline(page, owner)
       await openNotes(page, "Focus team")
@@ -434,6 +442,52 @@ test.describe("notes in a shared group", () => {
       await palette.getByRole("option").filter({ hasText: "Attach files to this note" }).click()
       await chooser
       await expect(attach).toBeFocused()
+    } finally {
+      await context.close()
+      await cleanup(request, owner)
+    }
+  })
+
+  test("the palette's Delete only asks, with focus in the confirmation, and its Duplicate opens the copy", async ({ browser, request }) => {
+    const owner = "e2e_notes_palette@example.com"
+    await cleanup(request, owner)
+    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    try {
+      await signUp(request, owner)
+      const page = await context.newPage()
+      await signInOnline(page, owner)
+      const { groupId } = await (await page.request.get(`${apiBase}/api/groups/selected`)).json()
+      const noteId = uuidV7()
+      const created = await page.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
+        headers,
+        data: { id: noteId, title: "Packing list", body: "Socks" },
+      })
+      expect(created.status(), await created.text()).toBe(201)
+      await gotoApp(page, `/notes/${noteId}`, page.locator("[data-e2e=shell-ws-status]"))
+      await expect(page.locator("[data-e2e=note-title]")).toHaveValue("Packing list")
+      const palette = page.locator("[data-e2e=search]")
+      const pick = async (words: string, label: string) => {
+        await page.keyboard.press("Control+k")
+        await palette.getByRole("combobox").fill(words)
+        await palette.getByRole("option").filter({ hasText: label }).click()
+      }
+
+      await pick("trash", "Delete this note")
+      const confirm = page.locator("[data-e2e=note-delete-dialog]")
+      await expect(confirm).toBeVisible()
+      await expect.poll(() => confirm.evaluate((dialog) => dialog.contains(document.activeElement)))
+        .toBe(true)
+      await page.keyboard.press("Escape")
+      await expect(confirm).toBeHidden()
+      await expect(page).toHaveURL(`/notes/${noteId}`)
+      const kept = await page.request.get(`${apiBase}/api/groups/${groupId}/notes/${noteId}`)
+      expect(kept.status(), await kept.text()).toBe(200)
+
+      await pick("clone", "Duplicate this note")
+      await expect(page).not.toHaveURL(`/notes/${noteId}`)
+      await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+      await expect(page.locator("[data-e2e=note-title]")).toHaveValue("Packing list (copy)")
+      await expect(page.locator("[data-e2e=note-body]")).toHaveValue("Socks")
     } finally {
       await context.close()
       await cleanup(request, owner)
@@ -489,21 +543,23 @@ test.describe("the notes list", () => {
     const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
     try {
       await signUp(request, owner)
-      const page = await context.newPage()
-      await signInOnline(page, owner)
-      const { groupId } = await (await page.request.get(`${apiBase}/api/groups/selected`)).json()
+      // The notes exist before the browser first reads the list, so the device's copy holds them
+      // and the page's later loads show them at once, with no wait for a sync to bring them.
+      const { groupId } = await (await request.get(`${apiBase}/api/groups/selected`)).json()
       const titles = [
         "Quarterly planning notes for the team offsite, with every open question in one place",
         "Groceries",
         "Trip",
       ]
       for (const title of titles) {
-        const note = await page.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
+        const note = await request.post(`${apiBase}/api/groups/${groupId}/notes`, {
           headers,
           data: { id: uuidV7(), title, body: "" },
         })
         expect(note.status(), await note.text()).toBe(201)
       }
+      const page = await context.newPage()
+      await signInOnline(page, owner)
 
       const rows = page.locator("[data-e2e=note-list] > li")
       // Tall enough that no row sits under the phone's fixed tab bar: axe-core's target-size

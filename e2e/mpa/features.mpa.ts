@@ -5,7 +5,7 @@ const REPOSITORY = `https://github.com/spy4x/seed`
 /** The repository root, where each code link's path must exist. */
 const ROOT = new URL(`../../`, import.meta.url)
 /** The home page links to these sections of `/features`. */
-const HOME_ANCHORS = [`sign-in`, `billing`, `realtime`, `teams`, `website`] as const
+const HOME_ANCHORS = [`sign-in`, `billing`, `realtime`, `fast`, `teams`, `website`] as const
 
 /** Runs axe-core over the whole page and returns each violation's rule and the elements it hit. */
 async function violations(page: Page): Promise<string[]> {

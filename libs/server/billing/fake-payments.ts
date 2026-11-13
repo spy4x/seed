@@ -4,6 +4,7 @@ import {
   BillingPeriod,
   BillingStatus,
   findPlan,
+  type Plan,
   priceOf,
 } from "@domain/billing"
 
@@ -18,6 +19,16 @@ export interface FakePayment {
 
 /** The last payment of the subscription with this provider id, or `null` when it paid nothing. */
 export type FakePayments = (subscriptionId: string) => Promise<FakePayment | null>
+
+/**
+ * What one `period` of `plan` costs a subscription of `seats` members, in the plan's currency's
+ * smallest unit: the price once per member on a per-member plan, once otherwise. `null` when the
+ * plan is not sold for that period.
+ */
+export function periodCharge(plan: Plan, period: BillingPeriod, seats: number): number | null {
+  const price = priceOf(plan, period)
+  return price === null ? null : price * (plan.perSeat ? seats : 1)
+}
 
 /** How long each billing period lasts in the development provider. */
 const PERIOD_MS: Record<BillingPeriod, number> = {
@@ -59,11 +70,11 @@ export function postgresFakePayments(sql: postgres.Sql): FakePayments {
     const plan = row?.planId ? findPlan(row.planId) : null
     if (!row || !plan || !row.everActive || row.status === BillingStatus.Trialing) return null
     const period = row.billingPeriod ?? BillingPeriod.Monthly
-    const price = priceOf(plan, period)
-    if (price === null) return null
+    const amount = periodCharge(plan, period, row.quantity ?? 1)
+    if (amount === null) return null
     const due = row.status === BillingStatus.PastDue ? row.pastDueSince : row.currentPeriodEnd
     return {
-      amount: price * (plan.perSeat ? row.quantity ?? 1 : 1),
+      amount,
       paidAt: due ? new Date(due.getTime() - PERIOD_MS[period]) : row.providerEventAt,
       refunded: row.refunded,
     }

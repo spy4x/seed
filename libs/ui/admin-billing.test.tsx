@@ -19,7 +19,6 @@ import {
   BILLING_AUDIT_EVENTS,
   BillingPeriod,
   BillingStatus,
-  PLANS,
   PRO_PLAN_ID,
 } from "@domain/billing"
 import { UserRole } from "@domain/identity"
@@ -39,6 +38,7 @@ import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
 const day = (at: string) => createFormatters().date(at)
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { TEST_PLANS } from "../domain/billing/test-plans.ts"
 const window = new Window({ url: `http://admin.localhost/` })
 const own = {
   document: globalThis.document,
@@ -141,8 +141,8 @@ function customer(overrides: Partial<AdminBillingCustomer> = {}): AdminBillingCu
   }
 }
 
-/** Seed's catalog with Pro sold yearly too, at €90.00 a member a year against €9.00 a month. */
-const YEARLY_PLANS = PLANS.map((plan) =>
+/** The test catalog with Pro sold yearly too, at €90.00 a member a year against €9.00 a month. */
+const YEARLY_PLANS = TEST_PLANS.map((plan) =>
   plan.id === PRO_PLAN_ID ? { ...plan, yearlyAmount: 9000 } : plan
 )
 
@@ -185,6 +185,7 @@ function listProps(calls: unknown[][], props: Partial<AdminBillingListScreenProp
     onSearch: (filter) => void calls.push([`search`, filter]),
     onPage: (page) => void calls.push([`page`, page]),
     onRetry: () => void calls.push([`retry`]),
+    plans: TEST_PLANS,
     ...props,
   } satisfies AdminBillingListScreenProps
 }
@@ -269,6 +270,12 @@ describe(`the admin billing list`, () => {
   it(`says billing is off instead of showing an empty table`, async () => {
     await mount(<AdminBillingListScreen {...listProps([], { list: { enabled: false } })} />)
     expect(find(`[data-e2e=admin-billing-off]`).textContent).toContain(`Billing is off`)
+    // The page's h1 is the only heading above it, so the empty state is an h2.
+    expect([...document.querySelectorAll(`h1, h2, h3, h4`)].map((h) => h.tagName)).toEqual([
+      `H1`,
+      `H2`,
+    ])
+    expect(has(`[data-e2e=admin-billing-off] h2`)).toBe(true)
     const setup = find(`[data-e2e=admin-billing-setup]`)
     expect(setup.getAttribute(`href`)).toBe(ADMIN_BILLING_SETUP_URL)
     expect(setup.getAttribute(`target`)).toBe(`_blank`)
@@ -280,6 +287,11 @@ describe(`the admin billing list`, () => {
     const none = { ...page([]), counts: { ...counts, paying: 0, all: 0 } }
     await mount(<AdminBillingListScreen {...listProps([], { list: none })} />)
     expect(find(`[data-e2e=admin-billing-none]`).textContent).toContain(`No paid groups yet`)
+    expect([...document.querySelectorAll(`h1, h2, h3, h4`)].map((h) => h.tagName)).toEqual([
+      `H1`,
+      `H2`,
+    ])
+    expect(has(`[data-e2e=admin-billing-none] h2`)).toBe(true)
     expect(has(`[data-e2e=admin-billing-search]`)).toBe(false)
     const pricing = find(`[data-e2e=admin-billing-pricing]`)
     expect(pricing.getAttribute(`href`)).toBe(`https://www.example.com/pricing`)
@@ -398,6 +410,7 @@ function customerProps(
     actionError: null,
     pending: false,
     onAction: (action) => void calls.push([`action`, action]),
+    plans: TEST_PLANS,
     waiting: null,
     navigate: undefined,
     ...props,
@@ -572,13 +585,24 @@ describe(`one customer in the admin app`, () => {
     expect(dialog).not.toContain(`keeps Pro`)
   })
 
-  it(`shows the new end as the length changes, and sends the picked length`, async () => {
+  it(`offers the lengths as choice chips, shows the new end as one changes, and sends it`, async () => {
     const calls: unknown[][] = []
     await mount(<AdminBillingCustomerScreen {...customerProps(calls, { dialog: `time` })} />)
     // Active until Nov 12: the time at no charge starts after the paid period.
     expect(find(`[data-e2e=admin-billing-until]`).textContent).toContain(
       `until ${day(`2026-12-12T12:00:00.000Z`)}`,
     )
+    // Drawn as choice chips that share one name: each radio hides inside a chip a thumb can hit.
+    const lengths = [
+      ...find(`[data-e2e=admin-billing-length]`).querySelectorAll<HTMLInputElement>(`input`),
+    ]
+    expect(lengths.length).toBeGreaterThan(1)
+    expect(lengths.every((radio) => radio.className === `sr-only` && radio.name === `length`))
+      .toBe(true)
+    expect(
+      [...find(`[data-e2e=admin-billing-length]`).querySelectorAll(`label`)]
+        .every((label) => label.className.includes(`min-h-11`)),
+    ).toBe(true)
     const week = find<HTMLInputElement>(`[data-e2e=admin-billing-dialog] input[value='7d']`)
     await act(() => {
       week.checked = true

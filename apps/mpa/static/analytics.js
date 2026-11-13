@@ -4,6 +4,7 @@
 ;(() => {
   const script = document.currentScript
   const spaOrigin = script?.dataset.spaOrigin ?? ""
+  const demoOrigin = script?.dataset.demoOrigin ?? spaOrigin
   const repository = script?.dataset.repository ?? ""
   const track = (name, data) => {
     try {
@@ -48,7 +49,7 @@
     if (url.origin === location.origin) {
       track("internal-link", { to: `${url.pathname}${url.hash}`, from: place })
     } else if (repository && url.href.startsWith(repository)) track("github", { from: place })
-    else if (url.origin === spaOrigin) {
+    else if (url.origin === spaOrigin || url.origin === demoOrigin) {
       track(url.pathname === "/sign-in" ? "sign-in" : "try-demo", { from: place })
     } else track("outbound-link", { url: url.href, from: place })
   }, true)

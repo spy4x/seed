@@ -16,6 +16,19 @@ server holds real people's data.
 Set `DEMO_MODE=true` in the server's env file (`infra/envs/.env.prod`, which `deno task deploy`
 copies). The worker and the SPA read it (`infra/compose/compose.shared.yml`); the API does not.
 
+## A demo on its own host
+
+A product with real users keeps guests off its production app and runs the demo as a deployment
+of its own, with its own database. The website's try links then go to that demo:
+
+| Deployment | Env file lines                                                                          |
+| ---------- | --------------------------------------------------------------------------------------- |
+| Production | `DEMO_ORIGIN=https://demo.example.com`, `GUEST_MODE=false`, and `DEMO_MODE` left unset |
+| The demo   | `DEMO_MODE=true`, `DOMAIN=demo.example.com`, and its own database                       |
+
+`DEMO_ORIGIN` must be an `https://` origin with no path; anything else stops the website at
+start. Sign-in and sign-up links stay on the production app.
+
 ## What it does
 
 | Part | Where | What |
@@ -24,8 +37,14 @@ copies). The worker and the SPA read it (`infra/compose/compose.shared.yml`); th
 | Sample groups | `fake-data.ts` (`fakeWorkspace`), `seed.ts` (`seedWorkspace`), started by the starter-data job (`libs/server/jobs/starter-data.ts`) | Every new account gets three themed groups, with the population's people as members, tags, notes, invitations and a few attached images and PDFs (`sample-files.ts`, put in the file store by the worker), and opens the one it owns. |
 | Get-started checklist | `apps/spa/src/views/OnboardingView.tsx` | The Notes page's "Get started" checklist starts with "Invite someone to your group" already done, because every sample group already has members. |
 | Sign-in and sign-up pages | `libs/ui/auth-screen.tsx` (`DEMO_NOTE`, `DEMO_GUEST_NOTE`), `apps/spa/src/state/demo.ts` | One line above the form: the demo is public, wiped every night, and every new account, guest or not, starts with sample data. A guest's banner gives the wipe's time in the visitor's own time zone. The SPA reads `demo` from its `/config.json` (`SPA_DEMO` in `apps/spa/public-env.allow`, which compose sets from `DEMO_MODE`). |
-| Wipe | `apps/worker/demo/wipe.ts` | Empties every table except `KEPT_TABLES` (the migration history, the backup status, the blog's posts, the contact links, the newsletter's subscribers, unsubscribes and send log, and the queue of file deletions) in one transaction. It first queues every attached file's object and every profile picture, which the worker's nightly clean-up then deletes from the file store. Ids are not restarted, so nothing cached under an old id describes a new row. |
+| Wipe | `apps/worker/demo/wipe.ts` | Empties every table except `KEPT_TABLES` (the migration history, the backup status, the blog's posts and where they were shared, the contact links, the newsletter's subscribers, unsubscribes and send log, and the queue of file deletions) in one transaction. It first queues every attached file's object and every profile picture, which the worker's nightly clean-up then deletes from the file store. Ids are not restarted, so nothing cached under an old id describes a new row. |
 | Nightly reset | `apps/worker/demo/reset.ts`, `run.ts`, started in `apps/worker/+main.ts` | Checks every minute. When the date in `America/Los_Angeles` changes, it wipes, seeds the population and schedules the nightly cleanup again. After a deploy it seeds at once only when the day's population is missing, an operator account other than the private administrator exists, or `DEMO_ADMIN_PASSWORD` is set and that administrator is missing. A visitor cannot make it fail by taking a seeded address between the wipe and the seed: every way to claim an address (a password sign-up, a sign-in code, an address change, Google or GitHub) waits for a code mailed there, or for the provider to vouch for it, and `example.com` takes no mail. A failed reset is tried again a minute later; a worker that restarts in between keeps the half-seeded demo until the next midnight. |
+
+**A product without notes.** With `NOTES=false` ([Start a product](start-a-product.md#settings)),
+the population and the sample groups get no notes, tags or attachments: no group's notes, nobody's
+own notes, no welcome note for the fake people, no notes import and no sample files. The groups,
+members, invitations, billing and newsletter stay, and the nightly wipe runs as before. The tables
+stay too.
 
 **Why a job, not sign-up itself.** Every sign-up (password, Google, GitHub, a guest) already queues the
 starter-data job in its own transaction, and the worker runs it within a second. While the demo is
@@ -51,7 +70,8 @@ or backup for it, so the admin panel shows the demo as it is. Unset, the demo ha
 
 Its Stats page says "Stats are off" and names `UMAMI_API_URL` and `UMAMI_API_TOKEN`: the demo's
 server sets only the website's tracker (`MPA_UMAMI_ORIGIN`, `MPA_UMAMI_WEBSITE_ID`), and the demo
-has no fake Umami to read ([analytics.md](analytics.md#stats-in-the-admin-app)). Stats adds no
+has no fake Umami to read ([analytics.md](analytics.md#stats-in-the-admin-app)). For the same
+reason, an item's "Share links" card says "Turn on stats to see visits per link." Stats adds no
 table, so the wipe and the seed are unchanged.
 
 In development, `deno task db:seed` adds `admin@example.com`, an administrator, so the admin app
@@ -89,6 +109,15 @@ updates the demo in the same PR:
   with it too (#733); a revision keeps its `intro` and `related_feature`. The seed writes none of
   them: Seed's post files set them. Seed's own posts come
   from files ([below](#seeds-own-blog-posts)).
+- **Where the posts were shared survives the wipe** for the same reason: `blog_channels`,
+  `blog_post_shares` and `blog_share_results` record where the website's real posts went, and
+  reference only `blog_posts`. A share's last failed read (`read_error`, `read_failed_at`) stays
+  with it; the results job writes it, and the seed writes none. A channel's "Post automatically" switch (`auto_post`)
+  and a share's mark for an automatic post that may have landed (`post_attempted_at`) stay with
+  them too (#839); the jobs write the mark, and the sample channels are manual, so a development
+  seed never posts anywhere. The demo seeds none of them; `deno task db:seed` in development
+  adds four sample channels, one post shared on one and skipped on another, and plainly fake
+  numbers (`libs/server/blog/sample-sharing.ts`).
 - **The contact links survive the wipe** for the same reason: `contact_links` holds the
   website's real contact channels, and the demo seeds none. `deno task db:seed` in development
   adds three sample links (`libs/server/contact-links/sample-links.ts`).
@@ -118,6 +147,9 @@ updates the demo in the same PR:
   `billing_*`, `subscriber*`, `user_totp`, `backup_status`); fix it there. The seed dates rows after
   writing them, so it then renumbers the `audit_events` and `auth_audits` rows written since it
   started to follow their times (`orderIdsByTime`), because feeds sort by id.
+- **Imports** (`imports`, `import_records`, [imports.md](imports.md)) are demo data: the wipe
+  empties both, and the seed writes one saved notes import in the first themed group, whose
+  batch is a few of its owner's notes (`fromFile` in `fake-data.ts`, `seedImport` in `seed.ts`).
 - **Data exports** need no change: the wipe empties `data_exports`, the seed writes none (a ready
   row would have no file behind it), and the nightly clean-up deletes the files the wipe left in
   the file store. A new table that holds a person's data adds a section to the export instead
@@ -156,5 +188,6 @@ They are reviewed in pull requests like code, and a product built on Seed delete
 - **Translations** name their original's slug in `translationOf`, and are linked through
   `translation_of`.
 - **Cross-posted only when asked.** `devto: true` copies an original to Dev.to once it is live,
-  when the server has `DEVTO_API_KEY` ([blog.md](blog.md#the-devto-cross-post)); without it, or with
-  `devto: false`, the post is settled as never cross-posted.
+  when the server has `DEVTO_API_KEY` and a Dev.to channel with "Post automatically" on
+  ([blog.md](blog.md#the-devto-cross-post)); without them, or with `devto: false`, the post is
+  settled as never cross-posted.

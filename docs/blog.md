@@ -12,6 +12,8 @@ Operators write posts in the admin app; the public website shows the published o
 | `libs/server/blog/public-blog.ts`          | The website's reads: live posts only.                                                 |
 | `libs/server/blog/blog-publish-job.ts`     | The `blog.publish` job (registered in `JOBS`), and `queueDueBlogJobs` for lost jobs. |
 | `libs/server/blog/blog-crosspost-job.ts`   | The `blog.crosspost` job, which copies a live post to Dev.to once ([below](#the-devto-cross-post)). |
+| `libs/domain/blog/sharing.ts`, `libs/server/blog/postgres-sharing-repository.ts` | Sharing channels, each post's checklist and its results ([below](#sharing-channels)). |
+| `libs/server/blog/blog-share-results-job.ts` | The hourly `blog.share-results` job, which reads each posted copy's numbers ([below](#sharing-results)). |
 | `libs/server/blog/social-texts.ts`         | The LinkedIn, Telegram and X texts of a post, printed by `deno task blog:social` ([below](#channel-texts)). |
 | `apps/mpa/blog-covers.ts`, `apps/mpa/screenshots/blog-og.ts` | Covers as the pages draw them, and the link-preview cards of Seed's own posts ([below](#covers-and-link-previews)). |
 | `libs/server/blog/blog-indexnow-job.ts`    | The `blog.indexnow` job, which tells search engines about a post ([below](#indexnow)). |
@@ -21,7 +23,7 @@ Operators write posts in the admin app; the public website shows the published o
 | `apps/mpa/post-figures.tsx`                | The folder's registry, and a body's figures resolved for the page, the feed and the admin. |
 | `libs/server/blog/seed-posts.ts`, `seed-posts/` | Seed's own posts as Markdown files, loaded only in demo mode and by `deno task db:seed` ([demo.md](demo.md#seeds-own-blog-posts)). |
 | `apps/api/routes/admin/blog.ts`            | `/api/admin/blog/*`, behind the operator gate.                                        |
-| `apps/admin/src/modules/blog/`             | The admin pages: the list (`/blog`) and the editor (`/blog/new`, `/blog/:id`).        |
+| `apps/admin/src/modules/blog/`             | The admin pages: the list (`/blog`), the editor (`/blog/new`, `/blog/:id`), the channels (`/blog/channels`) and a post's sharing page (`/blog/:id/sharing`). |
 | `libs/ui/admin-blog-*.tsx`                 | Their screens: the list, the editor and its dialogs.                                  |
 | `apps/api/routes/blog.ts`                  | `/api/blog/*`, public: `posts?topic=`, `posts/:slug`, `topics`, `feed`.               |
 | `apps/mpa/routes/[[lang]]/blog/`, `apps/mpa/blog.ts` | The public pages, below.                                                             |
@@ -153,8 +155,9 @@ scheduled post's list and says that the post will not be emailed.
 
 ## The Dev.to cross-post
 
-With `DEVTO_API_KEY` set (a Dev.to API key, from Settings → Extensions on Dev.to) and `MPA_DOMAIN`
-set, a post that goes live is copied to Dev.to once, as the `blog.crosspost` job. The copy names
+With `DEVTO_API_KEY` set (a Dev.to API key, from Settings → Extensions on Dev.to), `MPA_DOMAIN`
+set and an active Dev.to channel with "Post automatically" on, a post that goes live is copied to
+Dev.to once, as the `blog.crosspost` job. The copy names
 the post's own address as its `canonical_url`, so search engines credit the website and not
 Dev.to. It carries the intro, the body (an interactive figure becomes a link to the original), the
 topic as its tag, the cover, and an "Originally published at" line.
@@ -169,14 +172,143 @@ topic as its tag, the cover, and an "Originally published at" line.
 - **Off without the key.** Each post that goes live is settled as never cross-posted, with one log
   line, so setting the key later copies only the posts that go live after that. The same holds for
   a translation, which is never cross-posted: Dev.to gets the original once.
+- **It fills the checklist.** A copy that lands, or an article found, also marks the post posted
+  on the active Dev.to channel with the article's address, and a missing key or a refusal is kept
+  on that row, so the sharing page says why nothing was posted.
 - **Seed's own posts** are cross-posted only when their file says `devto: true`. Posts that were
   live before the cross-post existed are settled by its migration and never copied.
+
+## Automatic posts
+
+A channel of a kind Seed can post to (Dev.to, Telegram, Mastodon, Bluesky, Hashnode and LinkedIn)
+has a "Post automatically" switch, on for a new channel. With it on, a post that goes live goes to
+the channel by itself: `blog.publish` gives each such channel that has the post to do an automatic
+"to do" row and queues its kind's job (`blog.post-telegram`, `blog.post-mastodon`,
+`blog.post-bluesky`, `blog.post-hashnode`, `blog.post-linkedin`; Dev.to keeps its
+[cross-post](#the-devto-cross-post)). A row the operator already marked posted, suggested or
+skipped is left alone, and a translation never goes where its original was posted or suggested.
+With the switch off, the row is a to-do the operator posts by hand.
+
+| Kind     | What it posts                                              | Keys (worker)                                                     |
+| -------- | ---------------------------------------------------------- | ----------------------------------------------------------------- |
+| Telegram | The Telegram text and the cover, by the bot, to `@name`    | `TELEGRAM_BOT_TOKEN`; the bot must be an admin of the channel     |
+| Mastodon | The short text with the link, which makes the link card     | `MASTODON_ACCESS_TOKEN` (scope `write:statuses`), `MASTODON_INSTANCE_URL` |
+| Bluesky  | The short text with the link and a link card               | `BLUESKY_IDENTIFIER`, `BLUESKY_APP_PASSWORD`, `BLUESKY_SERVICE`   |
+| Hashnode | The whole article, naming the post as its canonical address | `HASHNODE_TOKEN`, `HASHNODE_PUBLICATION_ID`                       |
+| LinkedIn | The LinkedIn text on the owner's profile, with a link card | `LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_MEMBER_ID`, `LINKEDIN_TOKEN_EXPIRES_AT` |
+
+The channel's address says where: `https://t.me/name` for Telegram, `@you@instance` for Mastodon.
+The Mastodon token goes only to the server `MASTODON_INSTANCE_URL` names: a channel on another
+server is refused with that reason and no request, so an operator who edits a channel's address
+cannot send the token elsewhere.
+Bluesky, Hashnode and LinkedIn post to the account the keys belong to. Telegram sends the text as
+the photo's caption, or, over Telegram's 1,024 characters, as a message with the post's own preview
+above it. A Hashnode translation's address ends in `-<language>`.
+
+- **A copy that lands** marks the row posted with its address, the date and "automatic", so
+  [Sharing results](#sharing-results) reads its numbers. The checklist shows "Posting…" while the
+  job waits or runs, and reads itself again every 5 seconds until it is done.
+- **A second copy is avoided, not ruled out.** A posted row is done. Each kind guards against a
+  second copy after a run that may have posted, whether it failed unsure, died, or ran past its
+  job lease. Mastodon sends the row's id as its idempotency key, so a repeat returns the first
+  status; Mastodon keeps that key for about an hour, so a copy that landed while every retry in
+  that hour failed in transport can be posted again. Bluesky, Hashnode, Telegram and LinkedIn mark
+  the row before the post. A marked Bluesky or Hashnode row looks the copy up before it posts
+  again, Bluesky after a 5-second wait for its search to catch up; a copy its search has not shown
+  yet can still be posted twice. A marked Telegram or LinkedIn row is never posted again by itself:
+  they have no lookup, so it keeps "Couldn't post: {reason}" and the operator checks the channel.
+- **A clear refusal is retried** by the job system and the row shows the reason meanwhile.
+  "Try again" on the row asks once more (`POST /api/admin/blog/posts/:id/shares/:channelId/retry`,
+  operators only, written to the audit log) and clears the mark, so use it only once the channel
+  shows no copy.
+- **Without its keys** a kind stays manual: the row says which key is missing and the worker logs
+  one line. Setting the key later posts nothing by itself; "Try again" does. Keys stay in the
+  env, never in the database or the admin panel, and a stored reason has every key replaced by
+  `<REDACTED:TOKEN>`.
+
+### LinkedIn
+
+LinkedIn has no lasting key: the owner signs in once and the token lasts 60 days.
+
+1. Create an app at linkedin.com/developers with the "Share on LinkedIn" and "Sign In with LinkedIn
+   using OpenID Connect" products, and add `http://localhost:8789/callback` to its redirect URLs.
+2. Run `LINKEDIN_CLIENT_ID=… LINKEDIN_CLIENT_SECRET=… deno task linkedin:sign-in` on your own
+   computer, open the address it prints and sign in. Keep the client secret out of the env file.
+3. Paste the three lines it prints (`LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_TOKEN_EXPIRES_AT`,
+   `LINKEDIN_MEMBER_ID`) into the server's env file and deploy.
+
+The channels list and the LinkedIn row show when the sign-in runs out and warn 14 days before; the
+API sends the admin only that date. Past it, the channel stays manual until you sign in again
+(`LINKEDIN_REDIRECT_PORT` picks another port than 8789).
+
+## Sharing channels
+
+The channels page (`/blog/channels`) lists the places posts go: Dev.to, Telegram, Mastodon,
+Bluesky, Hashnode, LinkedIn, X, Reddit, Hacker News, a newsletter or anything else. Each channel
+takes one or more languages and either every live post or only those from the day it was added.
+A channel with shares is archived, never deleted; one without can be deleted after a confirmation.
+
+Each live post has a checklist (`/blog/:id/sharing`), reached from the blog list's Sharing column,
+its "Needs sharing" chip (`?sharing=todo`) and the editor's summary. A channel is **to do** for a
+post when the post is live, the channel is active and takes the post's language, the post went
+live on or after the channel's start, and the channel has no row for it or its row is to do. A
+row can also be suggested, posted (with its link) or skipped (with an optional reason); every
+change takes effect at once and offers Undo. A translation shows a channel the original was
+already shared on as covered. Keys `j` and `k` move between rows, `t` copies its text, `o` opens
+the channel's own page, `p` moves to the link field (Enter there marks the row posted), `s` skips it
+and `e` enters its numbers.
+
+- **`utm_source` on links.** Every link the page hands out (the copied text, the submit form, the
+  shown address) carries the channel's source tag unless its "Add utm_source to links" is off.
+  The post's canonical address and the Dev.to `canonical_url` stay clean.
+- **Results are counts only:** views, reactions, comments and score, read by a job
+  ([below](#sharing-results)) or typed in by hand. Each reading is a new row and the latest one
+  shows, with when it was read and whether by hand; an unknown number shows as "–".
+- **Visits** come from Umami, by the link's `utm_source`, through Stats' five-minute copy, so they
+  show only when `UMAMI_API_URL`, `UMAMI_API_TOKEN` and `UMAMI_WEBSITE_ID` are set. The token
+  stays on the server.
+
+## Sharing results
+
+The `blog.share-results` job runs every hour, at minute 17 (UTC). It reads the numbers of each copy
+that is marked posted with a link, on an active channel of a kind that reports them, and stores
+each reading as a new row (`source = 'job'`). A number the channel does not report stays empty
+("–"), never 0.
+
+| Kind        | Numbers                       | Needs                                                              |
+| ----------- | ----------------------------- | ------------------------------------------------------------------ |
+| Dev.to      | views, reactions, comments    | `DEVTO_API_KEY` (the cross-post's key) and `MPA_DOMAIN`           |
+| Reddit      | score, comments               | `MPA_DOMAIN`, named in the `User-Agent` Reddit asks for            |
+| Hacker News | score, comments               | nothing: Algolia's public search                                   |
+| Mastodon    | reactions (favourites), replies | nothing: a public or unlisted status                             |
+| Bluesky     | reactions (likes), replies    | nothing: the public AppView                                        |
+| Hashnode    | views, reactions, comments    | nothing, but Hashnode answers only for a publication on its Pro plan |
+
+- **When.** A copy is read for its first 90 days after it was shared, then never again: daily
+  while it is under 14 days old, weekly after that. "Daily" means at least 23 hours since the last
+  read, and "weekly" 6 days and 23 hours: the hour of slack keeps an hourly job from drifting a
+  day later each time. A run reads at most 50 copies, those read longest ago first.
+- **Which copy.** The id comes from the copy's link, checked strictly: a Dev.to article
+  (`https://dev.to/you/post`, read by the post's canonical address, as the cross-post set it), a
+  Reddit post (`/r/name/comments/id/…` or `redd.it/id`), a Hacker News item (`item?id=`), a
+  Mastodon status on the channel's own instance (`https://instance/@you/id`), a Bluesky post page
+  that names the account's `did:` (a link with a handle is refused, as reading it would need a
+  lookup the reader does not do), and a Hashnode post (`https://host/slug`). Only Mastodon's
+  request goes to a host taken from the database, and only to the instance in the channel's address.
+- **A failed read is kept on the copy** (`read_error`, `read_failed_at`), and the checklist says
+  "Couldn't read new numbers from {channel}. Showing numbers from {time}." with the reason. The
+  copy then waits as long as after a good read, so a refusal, such as Reddit's `403` to
+  unauthenticated reads from some hosts, is not retried every hour. One copy's failure never
+  stops the others. A good read, or a new link from the operator, clears it.
+- **Off without its setting.** A kind whose setting is missing is skipped, with one log line per
+  run. Keys stay in the env, never in the database or the admin panel, and never in a log line.
 
 ## Channel texts
 
 `deno task blog:social <slug>` prints the texts the owner pastes into LinkedIn, Telegram and X
 for one of Seed's own posts once it is live: the title, the intro, the key points and the address,
-in the post's language. The X text keeps to 280 characters: it drops the intro first, then cuts
+in the post's language, with a clean address; the sharing page's copies of the same texts carry
+each channel's `utm_source`. The X text keeps to 280 characters: it drops the intro first, then cuts
 the title. Nothing is posted for you.
 
 ## Covers and link previews
@@ -304,7 +436,7 @@ is the example to copy, and `apps/mpa/post-figures.test.tsx` checks every file i
 
 ## Demo and development
 
-The public demo's nightly wipe keeps `blog_posts` and `blog_slug_redirects` ([demo.md](demo.md)); the
-demo seeds no posts.
+The public demo's nightly wipe keeps `blog_posts`, `blog_slug_redirects` and the sharing tables
+([demo.md](demo.md)); the demo seeds no posts and no channels.
 In development, `deno task db:seed` adds a published, a scheduled and a draft post by
-`admin@example.com`.
+`admin@example.com`, and four sample channels (`libs/server/blog/sample-sharing.ts`).

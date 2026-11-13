@@ -9,6 +9,7 @@ import {
   GroupImportError,
   type GroupImportResult,
   type GroupImportSummary,
+  parseGroupExportQuery,
   parseGroupId,
   parseGroupImportBody,
 } from "@domain/groups"
@@ -35,7 +36,9 @@ export interface GroupFilesRouteDependencies {
  * A group's export file and the import of one, under `/api/groups`. HTTP only, never the
  * socket: a file is a download or an upload.
  *
- * - `GET /:groupId/export` streams the owner's file as an attachment.
+ * - `GET /:groupId/export` streams the owner's file as an attachment: the JSON file an import reads
+ *   back, or with `?format=csv` a ZIP of one spreadsheet per aggregate (`&language=` names the
+ *   page's language for its headings). Any other `format` is 400 `INVALID_REQUEST`.
  * - `POST /import/check` takes the file as the body and answers what it holds; it writes nothing.
  * - `POST /import` takes `{ name, file }` and creates the new group; 201 with it.
  *
@@ -63,28 +66,36 @@ export function createGroupFilesRoute(dependencies: GroupFilesRouteDependencies)
       dependencies.rateLimits.exportByUser,
       async (c) => {
         const groupId = parseGroupId(c.req.param("groupId"))
+        const { format, language } = parseGroupExportQuery({
+          format: c.req.query("format"),
+          language: c.req.query("language"),
+        })
         const file = await dependencies.exportGroup(
           new GroupExportCommand({
             actor: actorFromAuth(c.get("auth")!),
             groupId,
+            format,
+            language,
             requestId: c.get("requestId"),
           }),
         )
         const encoder = new TextEncoder()
+        const bytes = (piece: string | Uint8Array) =>
+          typeof piece === "string" ? encoder.encode(piece) : piece
         const iterator = file.chunks[Symbol.asyncIterator]()
         // The first piece is read before the answer starts: a read that fails at once is a 500, not
         // a 200 with half a file. A failure after it can only cut the download short, and a file cut
-        // short is not valid JSON, so an import refuses it.
+        // short is not valid JSON, so an import refuses it, and a ZIP cut short has no directory.
         const first = await iterator.next()
         const body = new ReadableStream<Uint8Array>({
           start(controller) {
             if (first.done) controller.close()
-            else controller.enqueue(encoder.encode(first.value))
+            else controller.enqueue(bytes(first.value))
           },
           async pull(controller) {
             const next = await iterator.next()
             if (next.done) controller.close()
-            else controller.enqueue(encoder.encode(next.value))
+            else controller.enqueue(bytes(next.value))
           },
           // The person stopped the download: the cursor closes.
           async cancel() {
@@ -92,7 +103,7 @@ export function createGroupFilesRoute(dependencies: GroupFilesRouteDependencies)
           },
         })
         return c.body(body, 200, {
-          "content-type": "application/json; charset=utf-8",
+          "content-type": file.contentType,
           "content-disposition": `attachment; filename="${file.fileName}"`,
           "cache-control": "no-store",
         })

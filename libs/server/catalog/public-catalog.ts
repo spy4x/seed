@@ -3,15 +3,18 @@ import type {
   CatalogColour,
   CatalogCombination,
   CatalogSettings,
+  CatalogSize,
   CatalogText,
   PublicCatalogCategory,
+  PublicCatalogColour,
   PublicCatalogItem,
   PublicCatalogItemSummary,
   PublicCatalogPhoto,
   PublicCatalogResponse,
+  PublicCatalogSize,
 } from "@domain/catalog"
 import { catalogPhotoObjectKey } from "@domain/catalog"
-import { readCatalogSizes, STOCK_COUNTS, stockOf } from "./postgres-catalog.ts"
+import { STOCK_COUNTS, stockOf } from "./postgres-catalog.ts"
 
 /**
  * The website's reads of the catalog: published items only, in categories, with the photos
@@ -99,7 +102,62 @@ async function readPhotos(
   return byItem
 }
 
-function summaryOf(row: SummaryRow, cover: PublicCatalogPhoto | null): PublicCatalogItemSummary {
+/** Groups rows by their `itemId`, keeping their order, and drops that field. */
+function byItem<T extends { itemId: string }>(rows: T[]): Map<string, Omit<T, `itemId`>[]> {
+  const grouped = new Map<string, Omit<T, `itemId`>[]>()
+  for (const { itemId, ...row } of rows) grouped.set(itemId, [...grouped.get(itemId) ?? [], row])
+  return grouped
+}
+
+/**
+ * The sizes of the items `itemIds`, in each item's order, with their size chart. A size is sold
+ * out when every combination holding it is: as many sold-out rows as the item has colours, or one.
+ */
+async function readSizes(
+  sql: postgres.Sql,
+  itemIds: readonly string[],
+): Promise<Map<string, (CatalogSize & PublicCatalogSize)[]>> {
+  return byItem(
+    await sql<({ itemId: string } & CatalogSize & PublicCatalogSize)[]>`
+      SELECT s.item_id, s.id, s.label,
+        CASE WHEN s.height_min_cm IS NULL THEN NULL
+          ELSE jsonb_build_object('min', s.height_min_cm, 'max', s.height_max_cm) END AS height_cm,
+        CASE WHEN s.weight_min_kg IS NULL THEN NULL
+          ELSE jsonb_build_object('min', s.weight_min_kg, 'max', s.weight_max_kg) END AS weight_kg,
+        (SELECT count(*) FROM catalog_sold_out o WHERE o.size_id = s.id)
+          >= GREATEST((SELECT count(*) FROM catalog_item_colours c WHERE c.item_id = s.item_id), 1)
+          AS sold_out
+      FROM catalog_item_sizes s
+      WHERE s.item_id = ANY(${sql.array([...itemIds])}::uuid[])
+      ORDER BY s.item_id, s.position
+    `,
+  )
+}
+
+/** The colours of the items `itemIds`, in each item's order; sold out as {@link readSizes} says. */
+async function readColours(
+  sql: postgres.Sql,
+  itemIds: readonly string[],
+): Promise<Map<string, (CatalogColour & PublicCatalogColour)[]>> {
+  return byItem(
+    await sql<({ itemId: string } & CatalogColour & PublicCatalogColour)[]>`
+      SELECT c.item_id, c.id, c.name, c.swatch,
+        (SELECT count(*) FROM catalog_sold_out o WHERE o.colour_id = c.id)
+          >= GREATEST((SELECT count(*) FROM catalog_item_sizes s WHERE s.item_id = c.item_id), 1)
+          AS sold_out
+      FROM catalog_item_colours c
+      WHERE c.item_id = ANY(${sql.array([...itemIds])}::uuid[])
+      ORDER BY c.item_id, c.position
+    `,
+  )
+}
+
+function summaryOf(
+  row: SummaryRow,
+  cover: PublicCatalogPhoto | null,
+  sizes: readonly PublicCatalogSize[],
+  colours: readonly PublicCatalogColour[],
+): PublicCatalogItemSummary {
   return {
     slug: row.slug,
     categorySlug: row.categorySlug,
@@ -107,6 +165,8 @@ function summaryOf(row: SummaryRow, cover: PublicCatalogPhoto | null): PublicCat
     price: Number(row.price),
     stock: stockOf(Number(row.combinations), row.soldOutCount),
     cover,
+    sizes: sizes.map(({ label, soldOut }) => ({ label, soldOut })),
+    colours: colours.map(({ name, swatch, soldOut }) => ({ name, swatch, soldOut })),
     publishedAt: row.publishedAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
@@ -114,14 +174,17 @@ function summaryOf(row: SummaryRow, cover: PublicCatalogPhoto | null): PublicCat
 
 /**
  * The website's catalog: its settings, the categories that hold a published item, and every
- * published item with its cover.
+ * published item with its cover, sizes and colours. Five queries, whatever the number of items.
  */
 export async function readPublicCatalog(
   sql: postgres.Sql,
   settings: CatalogSettings,
 ): Promise<PublicCatalogResponse> {
   const rows = await readSummaries(sql)
-  const photos = await readPhotos(sql, rows.map((row) => row.id), true)
+  const ids = rows.map((row) => row.id)
+  const photos = await readPhotos(sql, ids, true)
+  const sizes = await readSizes(sql, ids)
+  const colours = await readColours(sql, ids)
   const categories = await sql<PublicCatalogCategory[]>`
     SELECT c.slug, c.name FROM catalog_categories c
     WHERE EXISTS (
@@ -132,7 +195,14 @@ export async function readPublicCatalog(
   return {
     settings,
     categories: categories.map(({ slug, name }) => ({ slug, name })),
-    items: rows.map((row) => summaryOf(row, photos.get(row.id)?.[0] ?? null)),
+    items: rows.map((row) =>
+      summaryOf(
+        row,
+        photos.get(row.id)?.[0] ?? null,
+        sizes.get(row.id) ?? [],
+        colours.get(row.id) ?? [],
+      )
+    ),
   }
 }
 
@@ -148,21 +218,19 @@ export async function readPublicItem(
   >`
     SELECT description, material, fit, care FROM catalog_items WHERE id = ${row.id}
   `
-  const colours = await sql<CatalogColour[]>`
-    SELECT id, name, swatch FROM catalog_item_colours WHERE item_id = ${row.id} ORDER BY position
-  `
-  const sizes = await readCatalogSizes(sql, row.id)
+  const colours = (await readColours(sql, [row.id])).get(row.id) ?? []
+  const sizes = (await readSizes(sql, [row.id])).get(row.id) ?? []
   const soldOut = await sql<CatalogCombination[]>`
     SELECT colour_id, size_id FROM catalog_sold_out WHERE item_id = ${row.id}
   `
   const photos = (await readPhotos(sql, [row.id])).get(row.id) ?? []
   return {
-    ...summaryOf(row, photos[0] ?? null),
+    ...summaryOf(row, photos[0] ?? null, sizes, colours),
     description: texts.description,
     material: texts.material,
     fit: texts.fit,
     care: texts.care,
-    colours: colours.map(({ id, name, swatch }) => ({ id, name, swatch })),
+    colours,
     sizes,
     soldOut: soldOut.map(({ colourId, sizeId }) => ({ colourId, sizeId })),
     photos,

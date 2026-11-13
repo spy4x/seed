@@ -7,6 +7,7 @@ import {
 } from "@spy4x/platform/universal/text"
 import type { AdminUserPreferences } from "./preferences.ts"
 import type { GuestStats } from "./guests.ts"
+import type { PictureState } from "./profile-picture.ts"
 import { parseSort, serializeSort, type SortRule } from "@spy4x/platform/universal/sort"
 
 // Not in @spy4x/platform/model: too template-specific (a user's name length limit) to belong in a
@@ -139,8 +140,27 @@ export type AuthPassword = typeof authPasswordSchema.infer
  */
 const mailLanguageSchema = type({ "language?": "string <= 35" })
 
+/**
+ * The refusal of a step that would make an account on a server where sign-up is by invitation
+ * (`SIGN_UP=invite`) when the request carries no invitation that admits its address.
+ */
+export const SIGN_UP_CLOSED = "SIGN_UP_CLOSED"
+
+/** The English sentence of {@link SIGN_UP_CLOSED}. */
+export const SIGN_UP_CLOSED_MESSAGE = "Sign-up is by invitation on this server."
+
+/**
+ * The invitation a step that may make an account carries: the token of its link. Optional; it
+ * matters only where sign-up is by invitation. Any short string, since it is looked up by its hash.
+ */
+export const signUpInvitationSchema = type({ "invitation?": "string <= 64" })
+export type SignUpInvitation = typeof signUpInvitationSchema.infer
+
 /** The body of sign-up. */
-export const authSignUpSchema = authEmailSchema.and(authPasswordSchema).and(mailLanguageSchema)
+export const authSignUpSchema = authEmailSchema
+  .and(authPasswordSchema)
+  .and(mailLanguageSchema)
+  .and(signUpInvitationSchema)
 export type AuthSignUp = typeof authSignUpSchema.infer
 
 /** The body of sign-in. */
@@ -166,6 +186,10 @@ export const authEmailCodeSchema = type({
   code: "string <= 64",
 })
 export type AuthEmailCode = typeof authEmailCodeSchema.infer
+
+/** The body of a code that may make an account: the code, and the invitation that admits it. */
+export const authSignUpCodeSchema = authEmailCodeSchema.and(signUpInvitationSchema)
+export type AuthSignUpCode = typeof authSignUpCodeSchema.infer
 
 /**
  * The body of an address change: the new address and the current password. An account with no
@@ -987,6 +1011,8 @@ export interface AdminUserRow {
   guestSince?: string | null
   /** Their profile picture; `null` or absent for none. */
   pictureId?: string | null
+  /** Where that picture stands; `null` or absent for none. Show it through `shownPictureId`. */
+  pictureState?: PictureState | null
 }
 
 /** The answer of `GET /api/admin/users`. */

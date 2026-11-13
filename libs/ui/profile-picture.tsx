@@ -10,6 +10,7 @@ import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingRow } from "@spy4x/preact-ui/setting-row"
 import { useFocusFallback } from "@spy4x/preact-ui/use-focus-after-removal"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
+import { useFormat } from "@spy4x/preact-ui/format"
 import { PICTURE_MAX_BYTES, PICTURE_TYPES } from "@domain/identity"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { type KeyedMessage, say } from "./message.ts"
@@ -24,10 +25,12 @@ export const PICTURE_BUTTON_ID = "profile-picture-choose"
  */
 export const PICTURE_ACCEPT = [...PICTURE_TYPES, ".heic", ".heif"].join(",")
 
-/** The rule for the file, which the row and the search palette's "Change picture" action say. */
-export const PICTURE_RULE: KeyedMessage = {
-  key: `ProfilePicture.rule`,
-  values: { max: formatBytes(PICTURE_MAX_BYTES) },
+/**
+ * The rule for the file, which the row and the search palette's "Change picture" action say, its
+ * size in `locale`: the person's region format, as their dates.
+ */
+export function pictureRule(locale: string): KeyedMessage {
+  return { key: `ProfilePicture.rule`, values: { max: formatBytes(PICTURE_MAX_BYTES, locale) } }
 }
 
 /** What the "Profile picture" row takes. */
@@ -63,6 +66,7 @@ export interface PictureRowProps {
 export function PictureRow(props: PictureRowProps): JSX.Element {
   const { name, src, hasPicture, status, announcement, state = null } = props
   const t = useAppText()
+  const rule = pictureRule(useFormat().locale)
   const hidden = (text: string) => <span class="sr-only">{text}</span>
   const note = state === "preparing"
     ? t.t(`ProfilePicture.preparing`)
@@ -85,7 +89,7 @@ export function PictureRow(props: PictureRowProps): JSX.Element {
           <Avatar name={name} src={src} size="lg" alt="" class="shrink-0" />
           <span class="flex flex-col gap-1">
             <span class="text-sm text-muted">
-              {t.t(PICTURE_RULE.key, PICTURE_RULE.values)}
+              {t.t(rule.key, rule.values)}
             </span>
             {
               /* The state is visible and read out; the store's announcements are read out only. */

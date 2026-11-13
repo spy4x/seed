@@ -28,7 +28,8 @@ import {
 import { GroupMark } from "./group-appearance.tsx"
 import { nextSort } from "./admin-users-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
-import { OnDay, When } from "@spy4x/preact-ui/format"
+import { OnDay, useFormat, When } from "@spy4x/preact-ui/format"
+import type { Formatters } from "@spy4x/time/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
@@ -67,8 +68,6 @@ const TABLE_CLASS = [
   `max-sm:[&_:is(th,td):nth-child(2)]:hidden`,
   `max-sm:[&_:is(th,td):nth-child(n+4)]:hidden`,
 ].join(` `)
-
-const NUMBER = new Intl.NumberFormat(`en`)
 
 /** A group role as a person reads it, in the operator's language: `Owner`. */
 export function groupRoleLabel(t: Translator<string>, role: GroupRole): string {
@@ -133,15 +132,27 @@ export function AdminGroupsListScreen(
   { filter, list, pending, error, onSearch, onPage, navigate }: AdminGroupsListScreenProps,
 ): JSX.Element {
   const heading = useRef<HTMLHeadingElement>(null)
-  const t = useAdminText()
-
-  // After a page change the list is new: the reader starts again at its heading.
-  const page = list?.page
-  const shown = useRef<number | undefined>(undefined)
+  // The search field is not rebuilt when the query changes, since that would drop focus out of it
+  // after every search; going back in history sets its text instead.
+  const query = useRef<HTMLInputElement>(null)
   useEffect(() => {
-    if (page === undefined) return
-    if (shown.current !== undefined && shown.current !== page) heading.current?.focus()
-    shown.current = page
+    if (query.current && query.current.value !== filter.query) query.current.value = filter.query
+  }, [filter.query])
+  const t = useAdminText()
+  const format = useFormat()
+
+  // When the person turns the page, the reader starts again at the list's heading once that page
+  // arrives. A search or a filter also lands on page 1, but focus stays in the field they used.
+  const page = list?.page
+  const turned = useRef<number | null>(null)
+  const turn = (next: number) => {
+    turned.current = next
+    onPage(next)
+  }
+  useEffect(() => {
+    if (page === undefined || page !== turned.current) return
+    turned.current = null
+    heading.current?.focus()
   }, [page])
 
   const rows: GroupTableRow[] = (list?.groups ?? []).map((group) => ({
@@ -161,16 +172,19 @@ export function AdminGroupsListScreen(
         titleDataE2E="admin-groups-title"
       />
       <div class="flex flex-col gap-4 rounded-xl border border-subtle bg-surface p-4">
+        {
+          /* No `pending` here: a pending form disables its fieldset, which drops focus out of the
+            search field. The busy submit button already refuses a second search. */
+        }
         <ScreenForm
-          pending={pending}
           onSubmit={(data) =>
             onSearch({ ...filter, query: String(data.get(`q`) ?? ``).trim(), page: 1 })}
         >
-          {/* Keyed by the query, so going back in history shows the search that page had. */}
-          <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
+          <div class="flex flex-wrap items-end gap-3" role="search">
             <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
               <Field id="admin-groups-q" label={t.t(`AdminGroups.search`)}>
                 <Input
+                  ref={query}
                   name="q"
                   type="search"
                   data-e2e="admin-groups-search"
@@ -221,7 +235,12 @@ export function AdminGroupsListScreen(
 
       <ErrorState message={error} />
 
-      <h2 ref={heading} tabIndex={-1} class="text-sm text-muted" data-e2e="admin-groups-count">
+      <h2
+        ref={heading}
+        tabIndex={-1}
+        class="rounded-sm text-sm text-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+        data-e2e="admin-groups-count"
+      >
         {list ? t.t(`AdminGroups.count`, { count: list.total }) : t.t(`AdminGroups.loading`)}
       </h2>
       {list === null
@@ -235,7 +254,7 @@ export function AdminGroupsListScreen(
             <DataTable
               mode="server"
               class={TABLE_CLASS}
-              columns={groupColumns(t, navigate)}
+              columns={groupColumns(t, format, navigate)}
               rows={rows}
               sort={filter.sort}
               onSortChange={(sort) =>
@@ -258,7 +277,7 @@ export function AdminGroupsListScreen(
                 page: list.page,
                 pageSize: list.pageSize,
                 total: list.total,
-                onChange: onPage,
+                onChange: turn,
                 label: t.t(`AdminGroups.pages`),
               }}
             />
@@ -271,6 +290,7 @@ export function AdminGroupsListScreen(
 /** The table's columns. The name, member count, last activity and creation sort, on the server. */
 function groupColumns(
   t: Translator<string>,
+  format: Pick<Formatters, "number">,
   navigate?: Navigate,
 ): DataTableColumn<GroupTableRow, AdminGroupSortKey>[] {
   return [
@@ -310,13 +330,13 @@ function groupColumns(
       key: `memberCount`,
       header: t.t(`AdminGroups.members`),
       sortable: true,
-      render: ({ memberCount }) => <span class="tabular-nums">{NUMBER.format(memberCount)}</span>,
+      render: ({ memberCount }) => <span class="tabular-nums">{format.number(memberCount)}</span>,
     },
     {
       id: `notes`,
       header: t.t(`AdminGroups.notes`),
       render: ({ group }) => (
-        <span class="tabular-nums text-muted">{NUMBER.format(group.noteCount)}</span>
+        <span class="tabular-nums text-muted">{format.number(group.noteCount)}</span>
       ),
     },
     {

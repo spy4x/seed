@@ -25,6 +25,7 @@ import {
   type AdminUserRow,
   type AdminUserSortKey,
   pictureUrl,
+  shownPictureId,
   USER_ROLE_NAMES,
   UserRole,
 } from "@domain/identity"
@@ -133,16 +134,26 @@ export function AdminUsersScreen(
     AdminUsersScreenProps,
 ): JSX.Element {
   const heading = useRef<HTMLHeadingElement>(null)
+  // The search field is not rebuilt when the query changes, since that would drop focus out of it
+  // after every search; going back in history sets its text instead.
+  const query = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (query.current && query.current.value !== filter.query) query.current.value = filter.query
+  }, [filter.query])
   const t = useAdminText()
 
-  // After a page change the list is new: the reader starts again at its heading. The first page
-  // that arrives is no change, so focus stays where it was.
+  // When the person turns the page, the reader starts again at the list's heading once that page
+  // arrives. A search or a filter also lands on page 1, but focus stays in the field they used.
   const page = list?.page
-  const shown = useRef<number | undefined>(undefined)
+  const turned = useRef<number | null>(null)
+  const turn = (next: number) => {
+    turned.current = next
+    onPage(next)
+  }
   useEffect(() => {
-    if (page === undefined) return
-    if (shown.current !== undefined && shown.current !== page) heading.current?.focus()
-    shown.current = page
+    if (page === undefined || page !== turned.current) return
+    turned.current = null
+    heading.current?.focus()
   }, [page])
 
   const rows: UserTableRow[] = (list?.users ?? []).map((user) => ({
@@ -174,16 +185,19 @@ export function AdminUsersScreen(
         )}
       />
       <div class="flex flex-col gap-4 rounded-xl border border-subtle bg-surface p-4">
+        {
+          /* No `pending` here: a pending form disables its fieldset, which drops focus out of the
+            search field. The busy submit button already refuses a second search. */
+        }
         <ScreenForm
-          pending={pending}
           onSubmit={(data) =>
             onSearch({ ...filter, query: String(data.get("q") ?? "").trim(), page: 1 })}
         >
-          {/* Keyed by the query, so going back in history shows the search that page had. */}
-          <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
+          <div class="flex flex-wrap items-end gap-3" role="search">
             <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
               <Field id="admin-users-q" label={t.t(`AdminUsers.search`)}>
                 <Input
+                  ref={query}
                   name="q"
                   type="search"
                   data-e2e="admin-users-search"
@@ -272,7 +286,12 @@ export function AdminUsersScreen(
 
       <ErrorState message={error} />
 
-      <h2 ref={heading} tabIndex={-1} class="text-sm text-muted" data-e2e="admin-users-count">
+      <h2
+        ref={heading}
+        tabIndex={-1}
+        class="rounded-sm text-sm text-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+        data-e2e="admin-users-count"
+      >
         {list ? t.t(`AdminUsers.count`, { count: list.total }) : t.t(`AdminUsers.loading`)}
       </h2>
       {list === null
@@ -307,7 +326,7 @@ export function AdminUsersScreen(
                 page: list.page,
                 pageSize: list.pageSize,
                 total: list.total,
-                onChange: onPage,
+                onChange: turn,
                 label: t.t(`AdminUsers.pages`),
               }}
             />
@@ -403,7 +422,7 @@ function PersonCell(
     <div class="flex items-center gap-3 sm:min-w-48">
       <Avatar
         name={name}
-        src={pictureUrl(user.pictureId, ADMIN_PICTURE_PATH)}
+        src={pictureUrl(shownPictureId(user), ADMIN_PICTURE_PATH)}
         size="sm"
       />
       <div class="flex min-w-0 flex-col">

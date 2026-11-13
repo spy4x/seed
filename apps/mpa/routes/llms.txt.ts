@@ -2,6 +2,8 @@ import { FORM_ACTIONS } from "@ui/progressive.tsx"
 import { llmsTxt } from "@spy4x/platform/universal/seo"
 import { REPOSITORY_URL, SITE_NAME } from "../brand.ts"
 import { blogPages } from "../blog.ts"
+import { CATALOG_HEAD, catalogPages } from "../catalog.ts"
+import { siteEnglishText } from "@ui/site-text.ts"
 import { API_DOCS_PATH } from "../api-docs.ts"
 import { DOCS_PATH } from "../docs-site.ts"
 import { SITE_PAGES, type SitePage } from "../pages.ts"
@@ -12,11 +14,15 @@ import { HOME_HEAD } from "./index.tsx"
  * The website for AI assistants (llmstxt.org): what Seed is, then every public page with its
  * description, on this website's own origin. The newsletter page is left out while subscriptions
  * are off. The published guides follow in a Docs section. The blog's live posts follow in a section of their own, which is left out while no post
- * is live or the API cannot answer.
+ * is live or the API cannot answer. A Catalog section names the catalog's page and each category's,
+ * and is left out while the catalog is off, has no published item, or the API cannot answer.
  */
 export const handler = define.handlers({
   async GET(ctx) {
-    const blog = await blogPages(ctx.state.api)
+    const [blog, catalog] = await Promise.all([
+      blogPages(ctx.state.api),
+      catalogPages(ctx.state.api),
+    ])
     const link = ({ path, title, description }: SitePage) => ({
       title,
       url: `${ctx.state.webAppOrigin}${path}`,
@@ -45,6 +51,16 @@ export const handler = define.handlers({
             title,
             url: `${ctx.state.webAppOrigin}${path}`,
             description,
+          })),
+        }]),
+        ...(catalog.length === 0 ? [] : [{
+          title: CATALOG_HEAD.title,
+          links: catalog.filter(({ kind }) => kind !== `item`).map(({ path, title, kind }) => ({
+            title,
+            url: `${ctx.state.webAppOrigin}${path}`,
+            description: kind === `catalog`
+              ? CATALOG_HEAD.description
+              : siteEnglishText().t(`Catalog.categoryIntro`, { category: title }),
           })),
         }]),
         {

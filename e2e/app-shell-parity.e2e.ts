@@ -3,6 +3,7 @@ import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { PRODUCT_NAME } from "../libs/ui/brand.ts"
 
 /**
  * The SPA and the admin draw the same frame, the library's `AppShell`: at 1440 px the same
@@ -224,7 +225,7 @@ test.describe("one frame for the SPA and the admin", () => {
       await ops.locator("[data-e2e=auth-form-password]").fill(password)
       await ops.locator("[data-e2e=auth-form-submit]").click()
       await expect(ops.locator("[data-e2e=admin-dashboard-title]")).toBeVisible()
-      await expect(ops).toHaveTitle("Dashboard · Admin · Seed")
+      await expect(ops).toHaveTitle(`Dashboard · Admin · ${PRODUCT_NAME}`)
       // A verified person sees no banner, so nothing may push the product's page below the admin's.
       expect(product).toEqual(await expectSharedFrame(ops))
     } finally {

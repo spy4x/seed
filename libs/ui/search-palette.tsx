@@ -1,27 +1,28 @@
 import type { JSX } from "preact"
 import { useRef, useState } from "preact/hooks"
+import { useFormat } from "@spy4x/preact-ui/format"
 import {
   CommandPalette,
   type CommandPaletteLabels,
-  type CommandPaletteOption,
   matchOptions,
-  rankOptions,
 } from "@spy4x/preact-ui/command-palette"
 import { hotkeyClickBinding, useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { type GroupRole } from "@domain/groups"
+import type { ThemePreference } from "@domain/identity"
 import { roleName } from "./groups-screen.tsx"
+import type { ShortcutRow } from "./shortcuts.tsx"
 import {
-  GROUP_PATHS,
-  OVERVIEW_PATHS,
-  profilePath,
-  SCREEN_PATHS,
-  TAG_PATHS,
-} from "./progressive.tsx"
-import { DATA_EXPORT_ANCHOR } from "./profile-export.tsx"
-import { PICTURE_BUTTON_ID, PICTURE_RULE } from "./profile-picture.tsx"
+  groupRow,
+  type PageCommand,
+  paletteCommands,
+  type PaletteOption,
+  pickedChoice,
+  type SearchChoice,
+} from "./palette-commands.ts"
 import { useAppText } from "./i18n.ts"
-import { englishText, type KeyedMessage, messageText } from "./message.ts"
+
+export type { PageCommand, SearchChoice } from "./palette-commands.ts"
 
 /** One note a search found, as the palette lists it. */
 export interface SearchNote {
@@ -46,28 +47,6 @@ export interface SearchGroup {
   role: GroupRole
 }
 
-/** What a picked result asks the app to do. */
-export type SearchChoice =
-  /** Open the note, switching to its group first when it is another one. */
-  | { kind: "note"; noteId: string; groupId: string }
-  /** Open the group's page. */
-  | { kind: "group"; groupId: string }
-  /** Go to a page of the app. */
-  | { kind: "page"; href: string }
-  /** Open the New note dialog, which adds a note without leaving the page. */
-  | { kind: "new-note" }
-  /** Run one of the open page's own commands, by its id. */
-  | { kind: "command"; id: string }
-
-/** A command of the open page that the palette lists, such as "Change date range". */
-export interface PageCommand {
-  id: string
-  /** What the palette lists, in the person's language. */
-  label: string
-  /** Other words that find it, such as its English label. */
-  aliases?: readonly string[]
-}
-
 /** Props of {@link SearchPalette}. */
 export interface SearchPaletteProps {
   /**
@@ -82,10 +61,21 @@ export interface SearchPaletteProps {
   currentGroup: { id: string; name: string; canWrite: boolean } | null
   /** Whether the server can be reached: "New group" needs it. */
   online: boolean
-  /** The open page's own commands, listed first among the actions. */
+  /** The open page's own commands, listed first among the commands. */
   pageCommands?: readonly PageCommand[]
-  /** Called with what the person picked, after the palette has closed. */
+  /**
+   * Called with what the person picked: after the palette has closed, or with it still open for a
+   * theme picked in the Theme submenu.
+   */
   onSelect: (choice: SearchChoice) => void
+  /** The theme chosen now, shown on the Theme command. Defaults to `"system"`. */
+  theme?: ThemePreference
+  /** The app's keyboard shortcuts: a command shows the keys of its row. */
+  shortcuts?: readonly ShortcutRow[]
+  /** The group whose Activity the rail shows, or `null` (the default) while it shows none. */
+  activityGroupId?: string | null
+  /** Whether the browser offers to install the app now: "Install app" is listed only then. */
+  canInstall?: boolean
   /**
    * Whether `/` opens the palette too. Defaults to `true`; `false` while the person turned the
    * single-key shortcuts off on this device. Ctrl K (⌘K) always does.
@@ -120,13 +110,10 @@ export const RECENT_NOTES = 5
 /** The most characters of the query the no-results line repeats. */
 const QUOTED_MAX = 40
 
-/** A row of the palette, carrying what picking it does. */
-interface SearchOption extends CommandPaletteOption {
-  choice: SearchChoice
-}
-
-/** The palette's fixed words; the no-results line is set per answer. */
-function labels(t: Translator<string>): Omit<CommandPaletteLabels, "empty"> {
+/** The palette's fixed words, the admin's too; the no-results line is set per answer. */
+export function paletteLabels(
+  t: Translator<string>,
+): Pick<CommandPaletteLabels, "search" | "placeholder" | "close" | "loading" | "error"> {
   return {
     search: t.t(`Search.search`),
     placeholder: t.t(`Search.placeholder`),
@@ -167,12 +154,14 @@ export function emptyLabel(t: Translator<string>, query: string, onDevice: boole
  * always drawn, as what has to be on screen (`clickByHotkey`'s `shown`). One palette, so one
  * binding and one dialog at every width.
  *
- * Before anything is typed it lists the current group's most recent notes, then the actions. A
- * query lists the notes that match (from `searchNotes`), then the person's groups whose name
- * matches, then the matching actions. When the notes come from the device, their heading and the
- * no-results line say so. "New note" asks for the New note dialog rather than a page. An action
- * the person cannot take now is not listed: "New note" and "New tag" need a group they may write
- * to, and "New group" needs the server.
+ * Before anything is typed it lists the current group's most recent notes, then the commands of
+ * {@link paletteCommands}. A query lists the notes that match (from `searchNotes`), then the
+ * person's groups and the commands that match, ranked together as the palette ranks a submenu
+ * (`matchOptions`: aliases, word order, one typo, the other keyboard layout and alphabet), so the
+ * strongest match is the first row after the notes and its heading comes first.
+ * When the notes come from the device, their heading and the no-results line say so. Enter on a
+ * group makes it the current one, and Ctrl Enter (⌘Enter) opens its settings. Theme opens a
+ * submenu whose rows change the theme at once and keep the palette open.
  */
 export function SearchPalette(props: SearchPaletteProps): JSX.Element {
   const root = useRef<HTMLDivElement>(null)
@@ -188,10 +177,12 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
   latest.current = props
   const words = useRef(t)
   words.current = t
+  // Sizes in an action's detail follow the person's region format, as their dates do.
+  const region = useRef(``)
+  region.current = useFormat().locale
 
-  const search = async (query: string, signal: AbortSignal): Promise<SearchOption[]> => {
-    const { groups, currentGroup, online, guest = false, pageCommands = [], benchmark = false } =
-      latest.current
+  const search = async (query: string, signal: AbortSignal): Promise<PaletteOption[]> => {
+    const { groups, currentGroup } = latest.current
     const t = words.current
     const text = query.trim()
     const asksNotes = text === "" || Array.from(text).length >= NOTE_QUERY_MIN
@@ -204,45 +195,57 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     const notesHeading = answer.onDevice ? t.t(`Search.notesOnDevice`) : t.t(`Search.notes`)
     const notes = answer.notes.slice(0, text === "" ? RECENT_NOTES : undefined).map((
       note,
-    ): SearchOption => ({
+    ): PaletteOption => ({
       id: `note-${note.id}`,
       label: note.title.trim() || t.t(`Search.untitled`),
       detail: noteDetail(note, namesGroup ? groupName.get(note.groupId) : undefined),
       group: notesHeading,
       choice: { kind: "note", noteId: note.id, groupId: note.groupId },
     }))
-    const groupRows = text === "" ? [] : rankOptions(
-      groups.map((group) => ({ label: group.name, group })),
-      text,
-    ).map(({ group }): SearchOption => ({
-      id: `group-${group.id}`,
-      label: group.name,
-      detail: roleName(t, group.role),
-      hint: group.id === currentGroup?.id ? t.t(`Search.current`) : undefined,
-      group: t.t(`Search.groups`),
-      choice: { kind: "group", groupId: group.id },
-    }))
-    // Actions match their aliases too (their English label among them, so English words find
-    // them in every language), in any word order, with a typo or in the other layout.
-    const actions = matchOptions(
-      actionOptions(t, currentGroup, online, pageCommands, guest, benchmark),
-      text,
-    )
+    const groupRows = text === ""
+      ? []
+      : groups.map((group) =>
+        groupRow(t, group, roleName(t, group.role), group.id === currentGroup?.id)
+      )
+    // Groups and commands are ranked together, so the strongest match of either is highlighted
+    // first; the palette lists each heading where its first row falls.
+    const rows = [...groupRows, ...paletteCommands(context(t), select)]
+    const matched = matchOptions(rows, text, rows.length)
     // A stale answer is dropped by the palette; its words must not replace the current ones.
     if (!signal.aborted) {
       setEmpty(asksNotes ? emptyLabel(t, text, answer.onDevice) : shortQueryLabel(t))
     }
-    return [...notes, ...groupRows, ...actions]
+    return [...notes, ...matched]
+  }
+  /** A pick made inside a submenu, with the palette still open. */
+  const select = (choice: SearchChoice) => latest.current.onSelect(choice)
+  /** What the registry reads, from the latest props. */
+  const context = (t: Translator<string>) => {
+    const props = latest.current
+    return {
+      t,
+      locale: region.current,
+      currentGroup: props.currentGroup,
+      online: props.online,
+      theme: () => latest.current.theme ?? `system`,
+      shortcuts: props.shortcuts ?? [],
+      activityGroupId: props.activityGroupId ?? null,
+      pageCommands: props.pageCommands ?? [],
+      guest: props.guest ?? false,
+      benchmark: props.benchmark ?? false,
+      canInstall: props.canInstall ?? false,
+    }
   }
 
   return (
     <div ref={root} data-e2e="search-root">
-      <CommandPalette<SearchOption>
+      <CommandPalette<PaletteOption>
         search={search}
-        onSelect={(option) => props.onSelect(option.choice)}
+        onSelect={(option, details) =>
+          option.choice && props.onSelect(pickedChoice(option.choice, details.alternative))}
         // Bound above, so they work while the trigger is hidden.
         hotkeys={[]}
-        labels={{ ...labels(t), empty }}
+        labels={{ ...paletteLabels(t), empty }}
         dataE2E="search"
         class="hidden"
       />
@@ -267,111 +270,4 @@ export function openSearch(container: Element | null): void {
 function noteDetail(note: SearchNote, groupName: string | undefined): string | undefined {
   const parts = [groupName, note.snippet].filter((part) => part !== undefined && part !== "")
   return parts.length > 0 ? parts.join(" · ") : undefined
-}
-
-/** The actions a person can take now, in the order the palette lists them. */
-function actionOptions(
-  t: Translator<string>,
-  currentGroup: SearchPaletteProps["currentGroup"],
-  online: boolean,
-  pageCommands: readonly PageCommand[],
-  guest = false,
-  benchmark = false,
-): SearchOption[] {
-  // An action is found by its label and its detail in English too, so a person who types the
-  // English word ("password", "ZIP") finds it in every language. A detail given as text (another
-  // screen's words) is matched as it is.
-  const page = (
-    id: string,
-    key: string,
-    href: string,
-    detail?: KeyedMessage | string,
-    aliases: readonly string[] = [],
-  ): SearchOption => ({
-    id: `action-${id}`,
-    label: t.t(key),
-    detail: typeof detail === `string` ? detail : messageText(t, detail) ?? undefined,
-    aliases: [
-      englishText(key),
-      ...(detail && typeof detail !== `string` ? [englishText(detail.key, detail.values)] : []),
-      ...aliases,
-    ],
-    group: t.t(`Search.actions`),
-    choice: { kind: "page", href },
-  })
-  const inGroup: KeyedMessage | null = currentGroup?.canWrite
-    ? { key: `Search.inGroup`, values: { group: currentGroup.name } }
-    : null
-  return [
-    ...(guest
-      ? [page(
-        "keep",
-        `Search.keep`,
-        "/keep",
-        { key: `Search.keepDetail` },
-      )]
-      : []),
-    ...pageCommands.map((command): SearchOption => ({
-      id: `command-${command.id}`,
-      label: command.label,
-      aliases: command.aliases,
-      group: t.t(`Search.actions`),
-      choice: { kind: "command", id: command.id },
-    })),
-    // The same dialog as `n`: the note is added without leaving the page.
-    ...(inGroup
-      ? [{
-        id: "action-new-note",
-        label: t.t(`Search.newNote`),
-        aliases: [englishText(`Search.newNote`), englishText(inGroup.key, inGroup.values)],
-        detail: messageText(t, inGroup) ?? undefined,
-        group: t.t(`Search.actions`),
-        choice: { kind: "new-note" } as const,
-      }]
-      : []),
-    ...(inGroup ? [page("new-tag", `Search.newTag`, TAG_PATHS.new, inGroup)] : []),
-    ...(online ? [page("new-group", `Search.newGroup`, GROUP_PATHS.new)] : []),
-    ...(currentGroup ? [page("overview", `Search.openOverview`, OVERVIEW_PATHS.root)] : []),
-    page("notifications", `Search.openNotifications`, SCREEN_PATHS.notifications),
-    page(
-      "profile",
-      `Search.openProfile`,
-      SCREEN_PATHS.profile,
-      { key: `Search.profileDetail` },
-    ),
-    page(
-      "download-data",
-      `Search.downloadData`,
-      `${profilePath("account")}#${DATA_EXPORT_ANCHOR}`,
-      { key: `Search.downloadDetail` },
-      [`export my data`, `GDPR`, `archive`, `takeout`, `скачать данные`, `экспорт данных`],
-    ),
-    page(
-      "change-picture",
-      `Search.changePicture`,
-      `${profilePath("account")}#${PICTURE_BUTTON_ID}`,
-      PICTURE_RULE,
-      [`avatar`, `photo`, `upload picture`, `фото`, `аватар`],
-    ),
-    ...(benchmark
-      ? [page(
-        "benchmark",
-        `Search.openBenchmark`,
-        SCREEN_PATHS.benchmark,
-        { key: `Search.benchmarkDetail` },
-        [
-          `benchmark`,
-          `performance`,
-          `speed`,
-          `load test`,
-          `measure`,
-          `device test`,
-          `perf`,
-          `бенчмарк`,
-          `производительность`,
-          `тест скорости`,
-        ],
-      )]
-      : []),
-  ]
 }

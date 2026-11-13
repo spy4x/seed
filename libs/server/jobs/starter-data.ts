@@ -83,7 +83,12 @@ export function starterDataJob(sql: postgres.Sql, plan: StarterDataPlan = {}): J
         // The cap the API's gate would apply: none while billing is off.
         const allowance = plan.billingEnabled
           ? entitlementsOf(
-            effectivePlanId(await billing.get(group.id), new Date(), plan.graceDays ?? 0),
+            effectivePlanId(
+              await billing.get(group.id),
+              new Date(),
+              plan.graceDays ?? 0,
+              plan.plans,
+            ),
             true,
             plan.plans,
           ).limits.maxNotes

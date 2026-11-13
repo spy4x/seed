@@ -42,8 +42,13 @@ export const envSchema = type({
   S3_SECRET_ACCESS_KEY: "string > 0",
   /** `https://<key>@<host>/<project>` of an error tracker; unset or empty turns reporting off. */
   "ERROR_REPORT_DSN?": "string",
-  /** Guest accounts (docs/guests.md): on unless `false`. */
+  /** Guest accounts (docs/guests.md): on unless `false`, and off whenever `SIGN_UP=invite`. */
   "GUEST_MODE?": "string",
+  /**
+   * Who may make an account (docs/deploy.md, "Who may sign up"): `open`, anyone, or `invite`, only
+   * people a member invited. Unset or empty: `open`. Anything else stops the API at start.
+   */
+  "SIGN_UP?": "'open' | 'invite'",
   /** The SPA (docs/apps.md, "Without the SPA"): on unless `false`. */
   "SPA?": "string",
   /**

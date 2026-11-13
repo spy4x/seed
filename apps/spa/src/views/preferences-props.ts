@@ -17,7 +17,8 @@ export function usePreferencesProps(): PreferencesProps {
 
   return {
     value: state.value.value,
-    device: state.device.value,
+    // "Automatic" names the region format really used: the device's in the person's language.
+    device: { ...state.device.value, locale: state.automatic.value },
     systemTheme: themeStore.system.value,
     otherZone: state.otherZone.value,
     conflict: state.conflict.value,
