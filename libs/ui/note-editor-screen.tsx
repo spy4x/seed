@@ -329,8 +329,10 @@ function Editor(props: WithGroup): JSX.Element {
               maxLength={NOTE_TITLE_MAX_LENGTH}
               value={value.title}
               // A title is one line that wraps: Enter saves, as it would in a one-line field.
+              // Enter that confirms an input method's composition (CJK) is not a save; Safari
+              // reports it as keyCode 229 after compositionend.
               onKeyDown={(e) => {
-                if (e.key !== "Enter") return
+                if (e.key !== "Enter" || e.isComposing || e.keyCode === 229) return
                 e.preventDefault()
                 e.currentTarget.form?.requestSubmit()
               }}

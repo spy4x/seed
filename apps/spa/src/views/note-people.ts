@@ -5,6 +5,8 @@ import { type PictureState, pictureUrl, shownPictureId } from "@domain/identity"
 export interface NotePerson {
   userId: number
   name: string
+  /** Sent only to the group's owner and admins. */
+  email?: string | null
   pictureId?: string | null
 }
 
@@ -24,8 +26,8 @@ export function personPicture(
 
 /**
  * How the notes screens name the member with `userId`: "You" for the person themselves, the
- * member's name ("Unnamed member" when they set none), or "Former member" for an account that is
- * gone or no longer in the group.
+ * member's name, their e-mail when they set no name ("Unnamed member" when the person may not see
+ * it), or "Former member" for an account that is gone or no longer in the group.
  * `undefined` while the members are not read yet (`members` is `null`), so a screen shows no name
  * rather than a wrong one.
  *
@@ -45,5 +47,5 @@ export function personName(
   const member = members.find((candidate) => candidate.userId === userId)
   if (!member) return t.t(`NotePeople.former`)
   // The same words as the group's members list for a member who set no name.
-  return member.name.trim() || t.t(`NotePeople.unnamed`)
+  return member.name.trim() || member.email?.trim() || t.t(`NotePeople.unnamed`)
 }
