@@ -15,7 +15,7 @@ intro: "Seed ne dépend plus d'un seul runtime. Ses serveurs démarrent sans mod
 coverAlt: "Une pousse violette dans un pot au sommet d'une colline, vers laquelle montent trois chemins : en pas japonais, en planches de bois et en gravier."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
-publishAt: 2026-11-10T09:00:00Z
+publishAt: 2026-11-14T09:00:00Z
 newsletter: true
 ---
 

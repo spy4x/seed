@@ -15,7 +15,7 @@ cover: covers/seed-runs-on-deno-node-and-bun.webp
 coverAlt: "A violet seedling in a pot on top of a hill, with three paths leading up to it: stepping stones, wooden planks and gravel."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
-publishAt: 2026-11-10T09:00:00Z
+publishAt: 2026-11-14T09:00:00Z
 newsletter: true
 ---
 

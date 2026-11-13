@@ -15,7 +15,7 @@ intro: "Seed 不再绑定单一运行时。它的服务器无需改代码就能�
 coverAlt: "山丘顶上一盆紫色的嫩芽，三条小路通向它：一条是踏脚石，一条是木板，一条是碎石。"
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
-publishAt: 2026-11-10T09:00:00Z
+publishAt: 2026-11-14T09:00:00Z
 newsletter: true
 ---
 

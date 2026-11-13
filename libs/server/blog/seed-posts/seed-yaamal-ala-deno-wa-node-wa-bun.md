@@ -15,7 +15,7 @@ intro: "لم يعد Seed مربوطًا ببيئة تشغيل واحدة. خوا
 coverAlt: "برعم بنفسجي في أصيص على قمة تل، تصعد إليه ثلاثة ممرات: من حجارة مسطحة، ومن ألواح خشبية، ومن الحصى."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
-publishAt: 2026-11-10T09:00:00Z
+publishAt: 2026-11-14T09:00:00Z
 newsletter: true
 ---
 

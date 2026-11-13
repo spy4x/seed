@@ -15,7 +15,7 @@ intro: "Seed ya no depende de un solo runtime. Sus servidores arrancan sin cambi
 coverAlt: "Un brote violeta en una maceta en lo alto de una colina, con tres caminos que suben hasta él: de losas, de tablones de madera y de grava."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
-publishAt: 2026-11-10T09:00:00Z
+publishAt: 2026-11-14T09:00:00Z
 newsletter: true
 ---
 

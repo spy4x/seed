@@ -15,7 +15,7 @@ intro: "O Seed não depende mais de um runtime só. Os servidores sobem sem muda
 coverAlt: "Um broto violeta num vaso no alto de uma colina, com três caminhos subindo até ele: de pedras, de tábuas de madeira e de cascalho."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
-publishAt: 2026-11-10T09:00:00Z
+publishAt: 2026-11-14T09:00:00Z
 newsletter: true
 ---
 

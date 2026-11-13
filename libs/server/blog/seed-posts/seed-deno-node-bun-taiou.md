@@ -15,7 +15,7 @@ intro: "Seed はひとつのランタイムに縛られなくなりました。�
 coverAlt: "丘の上の鉢に植わった紫の芽と、そこへ続く3本の道。飛び石の道、木の板の道、砂利の道。"
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
-publishAt: 2026-11-10T09:00:00Z
+publishAt: 2026-11-14T09:00:00Z
 newsletter: true
 ---
 

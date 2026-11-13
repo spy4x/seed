@@ -15,7 +15,7 @@ intro: "Seed hängt nicht mehr an einer Runtime. Die Server starten unverändert
 coverAlt: "Ein violetter Keimling im Topf auf einer Hügelkuppe, zu dem drei Wege hinaufführen: aus Trittsteinen, aus Holzplanken und aus Kies."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
-publishAt: 2026-11-10T09:00:00Z
+publishAt: 2026-11-14T09:00:00Z
 newsletter: true
 ---
 

@@ -15,7 +15,7 @@ intro: "Seed больше не привязан к одному рантайму
 coverAlt: "Фиолетовый росток в горшке на вершине холма, к нему ведут три дорожки: из плоских камней, из досок и из гравия."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
-publishAt: 2026-11-10T09:00:00Z
+publishAt: 2026-11-14T09:00:00Z
 newsletter: true
 ---
 
