@@ -44,6 +44,8 @@ export const envSchema = type({
   "ERROR_REPORT_DSN?": "string",
   /** Guest accounts (#224, docs/guests.md): on unless `false`. */
   "GUEST_MODE?": "string",
+  /** The public demo (docs/demo.md): on only when `true`. */
+  "DEMO_MODE?": "string",
   /** The SPA (docs/deploy.md, "Without the SPA"): on unless `false`. */
   "SPA?": "string",
   /**

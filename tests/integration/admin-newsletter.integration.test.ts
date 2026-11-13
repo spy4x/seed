@@ -17,7 +17,7 @@ import {
   SUBSCRIBER_WELCOME_MAIL_JOB,
 } from "@server/jobs/subscriber-mail.ts"
 import { createListCrypto, type SubscribersSetup } from "@server/subscribers/subscribers.ts"
-import { listAdminSubscribers } from "@server/subscribers/admin-newsletter.ts"
+import { allAdminSubscribers, listAdminSubscribers } from "@server/subscribers/admin-newsletter.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import type { APIContext } from "../../apps/api/_types.ts"
 import { buildAuthData } from "../../apps/api/_testing/fake-auth.ts"
@@ -326,5 +326,32 @@ Deno.test(`operator area: the newsletter module on a real database`, async (t) =
       // No audit row keeps a whole address.
       for (const row of await audits()) expect(row.identifier).not.toMatch(/^news:[a-z]{2,}@/)
     })
+
+    await t.step(
+      `shows the public demo's admin only the addresses on example domains`,
+      async () => {
+        const at = new Date(NOW.getTime() - DAY_MS)
+        // Real-looking addresses, and ones that only end like an example domain.
+        for (
+          const email of [
+            `zoe@mail.example.net`,
+            `yan@shop.example`,
+            `real@gmail.com`,
+            `fake@example.com.evil.io`,
+            `sly@notexample.com`,
+          ]
+        ) await subscribe(email, at)
+        const emails = (rows: { email: string }[]) => rows.map((row) => row.email).sort()
+        const page = (examplesOnly: boolean) =>
+          listAdminSubscribers(sql, `news`, ADMIN_SUBSCRIBERS_NO_FILTER, 25, examplesOnly)
+        const shown = [`ann@example.com`, `yan@shop.example`, `zoe@mail.example.net`]
+
+        expect(emails((await page(true)).subscribers)).toEqual(shown)
+        expect((await page(true)).total).toBe(3)
+        expect((await page(false)).total).toBe(6)
+        expect(emails(await allAdminSubscribers(sql, `news`, true))).toEqual(shown)
+        expect(await allAdminSubscribers(sql, `news`)).toHaveLength(6)
+      },
+    )
   })
 })

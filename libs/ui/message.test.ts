@@ -27,6 +27,8 @@ const REASONS: Record<ErrorReason, true> = {
   CATEGORY_NOT_EMPTY: true,
   CATEGORY_NOT_FOUND: true,
   CATEGORY_REQUIRED: true,
+  DEMO_ADMIN_ELSEWHERE: true,
+  DEMO_REFUSED: true,
   expired: true,
   FILE_CONTENT: true,
   FILE_MISSING: true,

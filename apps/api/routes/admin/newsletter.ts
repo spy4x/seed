@@ -70,11 +70,15 @@ export interface AdminNewsletterService {
   /** False when mail subscriptions are off: the list still reads, the actions answer 503. */
   enabled: boolean
   stats(): Promise<AdminNewsletterStats>
-  list(filter: AdminSubscriberFilter): Promise<AdminSubscriberListResponse>
+  /**
+   * One page of addresses. `examplesOnly` keeps those on domains reserved for examples: the
+   * public demo's fake subscribers, for its public admin account (docs/demo.md).
+   */
+  list(filter: AdminSubscriberFilter, examplesOnly: boolean): Promise<AdminSubscriberListResponse>
   sends(): Promise<AdminNewsletterSendsResponse>
   find(email: string): Promise<AdminSubscriberRow | null>
-  /** Every address, for the CSV. */
-  all(): Promise<AdminSubscriberRow[]>
+  /** Every address, for the CSV. `examplesOnly` as in {@link list}. */
+  all(examplesOnly: boolean): Promise<AdminSubscriberRow[]>
   /** Takes the address off the list and records its unsubscribe. */
   remove(email: string): Promise<void>
   /** Queues a new confirm mail to the address. */
@@ -142,7 +146,7 @@ export function createAdminNewsletterRoutes(
       }
       const { q = ``, status = ``, language = ``, page = `` } = checked.data
       const filter = parseAdminSubscriberFilter(new URLSearchParams({ q, status, language, page }))
-      return c.json(await newsletter.list(filter))
+      return c.json(await newsletter.list(filter, c.get(`publicDemoAdmin`) === true))
     })
     .get(`/newsletter/sends`, limit, async (c) => c.json(await newsletter.sends()))
     .post(`/newsletter/subscribers/remove`, limit, async (c) => {
@@ -186,7 +190,7 @@ export function createAdminNewsletterRoutes(
       return c.json({}, 202)
     })
     .post(`/newsletter/subscribers/export`, limit, async (c) => {
-      const rows = await newsletter.all()
+      const rows = await newsletter.all(c.get(`publicDemoAdmin`) === true)
       await audit(c, AuthAuditEventType.NEWSLETTER_SUBSCRIBERS_EXPORTED, String(rows.length))
       const day = now().toISOString().slice(0, 10)
       return new Response(adminSubscribersCsv(rows), {
@@ -212,15 +216,21 @@ export function createAdminNewsletter(
   return {
     enabled: setup !== null,
     stats: () => readAdminNewsletterStats(sql, list, now()),
-    async list(filter) {
-      const page = await listAdminSubscribers(sql, list, filter, ADMIN_SUBSCRIBERS_PAGE_SIZE)
+    async list(filter, examplesOnly) {
+      const page = await listAdminSubscribers(
+        sql,
+        list,
+        filter,
+        ADMIN_SUBSCRIBERS_PAGE_SIZE,
+        examplesOnly,
+      )
       return { ...page, page: filter.page, pageSize: ADMIN_SUBSCRIBERS_PAGE_SIZE }
     },
     sends: async () => ({
       sends: await listAdminNewsletterSends(sql, list, ADMIN_NEWSLETTER_SENDS_LIMIT),
     }),
     find: (email) => findAdminSubscriber(sql, list, email),
-    all: () => allAdminSubscribers(sql, list),
+    all: (examplesOnly) => allAdminSubscribers(sql, list, examplesOnly),
     async remove(email) {
       if (!setup) throw new Error(`mail subscriptions are off`)
       await removeAdminSubscriber({ sql, setup, list, email, now: now() })

@@ -20,7 +20,7 @@ async function statusOf(app: Hono<APIContext>, url: string, method = "GET") {
 }
 
 describe("admin host gate", () => {
-  it("lets the admin host reach the operator area, sign-in, sign-out, session and address", async () => {
+  it("lets the admin host reach the operator area, sign-in, sign-out, session, address and demo account", async () => {
     const app = buildApp()
     for (
       const path of [
@@ -31,6 +31,7 @@ describe("admin host gate", () => {
         "/api/auth/password/check",
         "/api/auth/totp/check",
         "/api/auth/sign-out",
+        "/api/auth/demo",
       ]
     ) {
       expect({ path, status: await statusOf(app, `http://${ADMIN_HOST}${path}`) })

@@ -33,6 +33,8 @@ import {
   requestDataExport,
 } from "@server/auth/data-export.ts"
 import { createAdminRoute } from "./routes/admin/+routes.ts"
+import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
+import { PUBLIC_DEMO_ADMIN } from "@server/auth/demo-accounts.ts"
 import { adminModuleRoutes } from "./routes/admin/registry.ts"
 import { createAdminOwnPreferencesRoute } from "./routes/admin/own-preferences.ts"
 import { preferencesDefinition } from "@domain/identity"
@@ -203,6 +205,7 @@ app.route(
       enqueueSignInLinkMail(sql, email, next, requestedBy, language),
     emailCodeFailures: createEmailCodeFailures({ sql }),
     requestEmailCode: (userId, email) => enqueueEmailCodeMail(sql, userId, email),
+    demo: config.demo ? { adminHost: config.adminDomain } : null,
   }),
 )
 app.route(
@@ -312,6 +315,12 @@ app.route(
           preferencesDefinition.resolve(await db.preferences.store.read(String(userId))),
       }),
     ),
+    // The public demo's admin account (docs/demo.md) is found by its address on each request: the
+    // nightly reset gives it a new id.
+    isPublicDemoAdmin: config.demo
+      ? async (userId) =>
+        (await db.authStore.findKey(PASSWORD_METHOD, PUBLIC_DEMO_ADMIN.email))?.userId === userId
+      : undefined,
   }),
 )
 // The only routes that accept a token, and they accept nothing else.

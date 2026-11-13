@@ -51,6 +51,7 @@ import {
   ACCOUNT_DELETE_BLOCKED,
   ACCOUNT_DELETE_CODE_REQUIRED,
   createAuthRoute,
+  DEMO_ADMIN_ELSEWHERE,
   EMAIL_ALREADY_CARRIED,
   EMAIL_CHANGE_TOO_MANY,
   EMAIL_CODE_REFUSED,
@@ -74,6 +75,7 @@ import {
   TOTP_DISCONNECT_PROOF_REQUIRED,
 } from "./auth.ts"
 import { apiError } from "../_testing/api-error.ts"
+import { PUBLIC_DEMO_ADMIN } from "@server/auth/demo-accounts.ts"
 
 /** When the fake sign-in's waiting sign-up stops working. */
 const WAITING_UNTIL = new Date("2026-10-17T10:10:00.000Z")
@@ -244,7 +246,10 @@ function buildApp(
     passwordLockedForMs,
     passwordFailures,
     signIn: overrides = {},
+    demo,
   }: {
+    /** The public demo's setting, as `index.ts` passes it; left out means the demo is off. */
+    demo?: { adminHost: string | null } | null
     rateLimits?: AuthRateLimits
     /** How long the failure counter says the user is locked; 0 or left out means not locked. */
     lockedForMs?: number
@@ -291,6 +296,7 @@ function buildApp(
     ),
     emailCodeFailures: fakeTotpFailures(codeFailureCalls, codeLockedForMs),
     requestEmailCode: (_userId, email) => (mailed.push(email), Promise.resolve()),
+    demo,
   })
   return {
     app: mountRoute("/auth", route, auth),
@@ -2509,5 +2515,71 @@ describe("signed-in devices", () => {
 
     expect(response.status).toBe(400)
     expect(calls).toEqual([])
+  })
+})
+
+describe("auth routes on the public demo (docs/demo.md)", () => {
+  /** The request's own host, so the test's same-origin headers still pass the mutation guard. */
+  const HERE = new URL(API_URL).host
+  const demoLogin = { login: ` Demo-Admin@Example.com `, password: PUBLIC_DEMO_ADMIN.password }
+  const checkPassword = (app: ReturnType<typeof buildApp>["app"], body: unknown) =>
+    app.request(`${API_URL}/auth/password/check`, {
+      method: "POST",
+      headers: { ...sameOriginWithoutCookieHeaders, "content-type": "application/json" },
+      body: JSON.stringify(body),
+    })
+
+  it("publishes the public admin account only while the demo is on", async () => {
+    const off = buildApp(null).app
+    const on = buildApp(null, { demo: { adminHost: HERE } }).app
+
+    expect(await (await off.request(`${API_URL}/auth/demo`)).json()).toEqual({ admin: null })
+    expect(await (await on.request(`${API_URL}/auth/demo`)).json()).toEqual({
+      admin: { email: PUBLIC_DEMO_ADMIN.email, password: PUBLIC_DEMO_ADMIN.password },
+    })
+  })
+
+  it("refuses the public admin account's sign-in outside the admin host, password unchecked", async () => {
+    for (const adminHost of [`admin.example.com`, null]) {
+      const { app, calls } = buildApp(null, { demo: { adminHost } })
+      const response = await checkPassword(app, demoLogin)
+
+      expect(response.status).toBe(403)
+      expect(await apiError(response)).toMatchObject({
+        message: DEMO_ADMIN_ELSEWHERE,
+        reason: "DEMO_ADMIN_ELSEWHERE",
+      })
+      expect(calls).toEqual([])
+    }
+  })
+
+  it("signs the public admin account in on the admin host, with no lock on its name", async () => {
+    const { app, passwordFailureCalls } = buildApp(null, {
+      demo: { adminHost: HERE },
+      passwordLockedForMs: 60_000,
+    })
+
+    expect((await checkPassword(app, demoLogin)).status).toBe(200)
+    expect(passwordFailureCalls).toEqual([])
+  })
+
+  it("answers a wrong password for the public admin account with 401 and counts nothing", async () => {
+    const { app, passwordFailureCalls } = buildApp(null, {
+      demo: { adminHost: HERE },
+      succeed: false,
+    })
+
+    expect((await checkPassword(app, demoLogin)).status).toBe(401)
+    expect(passwordFailureCalls).toEqual([])
+  })
+
+  it("treats the address as any other outside the demo, and other names as usual on it", async () => {
+    const off = buildApp(null)
+    expect((await checkPassword(off.app, demoLogin)).status).toBe(200)
+    expect(off.passwordFailureCalls).toEqual([`begin`, `refund`])
+
+    const other = buildApp(null, { demo: { adminHost: `admin.example.com` } })
+    expect((await checkPassword(other.app, credentials)).status).toBe(200)
+    expect(other.passwordFailureCalls).toEqual([`begin`, `refund`])
   })
 })
