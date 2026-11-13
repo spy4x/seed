@@ -190,7 +190,10 @@ function duration(t: Translator<string>, format: Formatters, ms: number): string
     })
 }
 
-/** `48 MB`, in the region's own unit words. */
+/**
+ * `5.8 GB` from a gigabyte up, `48 MB` under it, and `0.3 MB` under one megabyte, in the
+ * region's own unit words.
+ */
 function size(format: Formatters, bytes: number): string {
   const megabytes = bytes / 1_000_000
   return megabytes >= 1_000
@@ -199,7 +202,11 @@ function size(format: Formatters, bytes: number): string {
       unit: "gigabyte",
       maximumFractionDigits: 1,
     })
-    : format.number(megabytes, { style: "unit", unit: "megabyte", maximumFractionDigits: 0 })
+    : format.number(megabytes, {
+      style: "unit",
+      unit: "megabyte",
+      maximumFractionDigits: megabytes < 1 ? 1 : 0,
+    })
 }
 
 /** A done step's result as the row shows it. */

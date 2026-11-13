@@ -251,6 +251,21 @@ describe("BenchmarkScreen", () => {
     expect(count("[data-e2e=benchmark-no-large-group]")).toBe(0)
   })
 
+  it("shows a size under one megabyte with one decimal, and whole megabytes from one up", async () => {
+    const sized = done.map((step) =>
+      step.id === "storage"
+        ? { ...step, value: 300_000, quota: 5_800_000_000 }
+        : step.id === "memory"
+        ? { ...step, value: 48_400_000 }
+        : step
+    )
+    await mount(screen({ state: "done", steps: sized, json }))
+    const steps = find("[data-e2e=benchmark-steps]").textContent
+    expect(steps).toContain("0.3 MB of 5.8 GB")
+    expect(steps).toContain("48 MB")
+    expect(steps).not.toContain("48.4 MB")
+  })
+
   it("waits for every group's count before saying no group is large", async () => {
     await mount(screen({ groups: [groups[0], { ...groups[1], notes: null }] }))
     expect(count("[data-e2e=benchmark-no-large-group]")).toBe(0)
