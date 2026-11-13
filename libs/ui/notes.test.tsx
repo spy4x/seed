@@ -1384,6 +1384,71 @@ describe("NoteEditorScreen in the browser", () => {
     expect(navigate.calls).toEqual([[GROUP_PATHS.billing(groupId)]])
   })
 
+  it("opens the delete confirmation when the app asks, and deletes only when the person confirms", async () => {
+    const remove = spy<[]>()
+    const requested = spy<[]>()
+    await mount(<NoteEditorScreen {...editing} onDelete={remove.fn} />)
+
+    await rerender(
+      <NoteEditorScreen
+        {...editing}
+        onDelete={remove.fn}
+        requestDialog="delete"
+        onDialogRequested={requested.fn}
+      />,
+    )
+
+    expect(find("[data-e2e=note-delete-dialog]").textContent).toContain("Delete this note?")
+    expect(remove.calls).toEqual([])
+    expect(requested.calls).toHaveLength(1)
+    await clickText("Cancel", "[data-e2e=note-delete-dialog]")
+    expect(remove.calls).toEqual([])
+
+    // The app clears its request, and the next one opens the confirmation again.
+    await rerender(<NoteEditorScreen {...editing} onDelete={remove.fn} requestDialog={null} />)
+    await rerender(<NoteEditorScreen {...editing} onDelete={remove.fn} requestDialog="delete" />)
+    await clickText("Delete note", "[data-e2e=note-delete-dialog]")
+    expect(remove.calls).toHaveLength(1)
+  })
+
+  it("opens the move dialog when the app asks, and moves only when the person presses Move", async () => {
+    const move = spy<[string]>()
+    await mount(<NoteEditorScreen {...editing} onMove={move.fn} />)
+
+    await rerender(<NoteEditorScreen {...editing} onMove={move.fn} requestDialog="move" />)
+
+    expect(count("[data-e2e=note-move-dialog]")).toBe(1)
+    expect(move.calls).toEqual([])
+    await click("[data-e2e=note-move-submit]")
+    expect(move.calls).toEqual([[targets[0].id]])
+  })
+
+  it("opens no dialog the page's menu does not offer, and still clears the request", async () => {
+    const requested = spy<[]>()
+    await mount(
+      <NoteEditorScreen
+        {...editing}
+        onDelete={undefined}
+        moveTargets={[]}
+        requestDialog="delete"
+        onDialogRequested={requested.fn}
+      />,
+    )
+    await rerender(
+      <NoteEditorScreen
+        {...editing}
+        onDelete={undefined}
+        moveTargets={[]}
+        requestDialog="move"
+        onDialogRequested={requested.fn}
+      />,
+    )
+
+    expect(count("[data-e2e=note-delete-dialog]")).toBe(0)
+    expect(count("[data-e2e=note-move-dialog]")).toBe(0)
+    expect(requested.calls).toHaveLength(2)
+  })
+
   it("disables Delete in the page's menu while a delete is pending", async () => {
     await mount(<NoteEditorScreen {...editing} deleting />)
 

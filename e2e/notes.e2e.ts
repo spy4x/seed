@@ -448,6 +448,52 @@ test.describe("notes in a shared group", () => {
     }
   })
 
+  test("the palette's Delete only asks, with focus in the confirmation, and its Duplicate opens the copy", async ({ browser, request }) => {
+    const owner = "e2e_notes_palette@example.com"
+    await cleanup(request, owner)
+    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    try {
+      await signUp(request, owner)
+      const page = await context.newPage()
+      await signInOnline(page, owner)
+      const { groupId } = await (await page.request.get(`${apiBase}/api/groups/selected`)).json()
+      const noteId = uuidV7()
+      const created = await page.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
+        headers,
+        data: { id: noteId, title: "Packing list", body: "Socks" },
+      })
+      expect(created.status(), await created.text()).toBe(201)
+      await gotoApp(page, `/notes/${noteId}`, page.locator("[data-e2e=shell-ws-status]"))
+      await expect(page.locator("[data-e2e=note-title]")).toHaveValue("Packing list")
+      const palette = page.locator("[data-e2e=search]")
+      const pick = async (words: string, label: string) => {
+        await page.keyboard.press("Control+k")
+        await palette.getByRole("combobox").fill(words)
+        await palette.getByRole("option").filter({ hasText: label }).click()
+      }
+
+      await pick("trash", "Delete this note")
+      const confirm = page.locator("[data-e2e=note-delete-dialog]")
+      await expect(confirm).toBeVisible()
+      await expect.poll(() => confirm.evaluate((dialog) => dialog.contains(document.activeElement)))
+        .toBe(true)
+      await page.keyboard.press("Escape")
+      await expect(confirm).toBeHidden()
+      await expect(page).toHaveURL(`/notes/${noteId}`)
+      const kept = await page.request.get(`${apiBase}/api/groups/${groupId}/notes/${noteId}`)
+      expect(kept.status(), await kept.text()).toBe(200)
+
+      await pick("clone", "Duplicate this note")
+      await expect(page).not.toHaveURL(`/notes/${noteId}`)
+      await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+      await expect(page.locator("[data-e2e=note-title]")).toHaveValue("Packing list (copy)")
+      await expect(page.locator("[data-e2e=note-body]")).toHaveValue("Socks")
+    } finally {
+      await context.close()
+      await cleanup(request, owner)
+    }
+  })
+
   test('after a refused save, "Load the latest version" loads the server\'s text instead of asking to leave', async ({ browser, request }) => {
     const owner = "e2e_notes_conflict@example.com"
     await cleanup(request, owner)
