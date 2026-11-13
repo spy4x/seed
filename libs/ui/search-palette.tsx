@@ -127,7 +127,9 @@ interface SearchOption extends CommandPaletteOption {
 }
 
 /** The palette's fixed words; the no-results line is set per answer. */
-function labels(t: Translator<string>): Omit<CommandPaletteLabels, "empty"> {
+function labels(
+  t: Translator<string>,
+): Pick<CommandPaletteLabels, "search" | "placeholder" | "close" | "loading" | "error"> {
   return {
     search: t.t(`Search.search`),
     placeholder: t.t(`Search.placeholder`),
