@@ -915,7 +915,10 @@ function NoteItem(
         </div>
       </div>
       <div class="hidden shrink-0 flex-col items-end gap-1 text-end text-sm text-muted sm:flex">
-        {note.updatedAt && <Stamp kind="updated" at={note.updatedAt} />}
+        {
+          // "Updated" only once the note changed, as on a phone: an untouched note shows "Created".
+        }
+        {edited && <Stamp kind="updated" at={note.updatedAt!} />}
         {note.createdAt && <Stamp kind="created" at={note.createdAt} day />}
       </div>
     </div>

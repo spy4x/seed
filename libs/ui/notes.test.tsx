@@ -246,7 +246,7 @@ describe("NotesScreen", () => {
     expect(html).toContain(`aria-label="Actions for Groceries"`)
   })
 
-  it("says Created on a phone for a note nobody changed since it was made", async () => {
+  it("says only Created, on a phone and from sm up, for a note nobody changed since it was made", async () => {
     const fresh = { ...groceries, createdAt: groceries.updatedAt }
     await mount(<NotesScreen {...listDefaults} notes={[fresh]} />)
 
@@ -254,6 +254,9 @@ describe("NotesScreen", () => {
       .map((element) => element.textContent).join(" ")
     expect(phone).toContain("Created")
     expect(phone).not.toContain("Updated")
+    const wide = find(`[data-e2e=note-${fresh.id}] .sm\\:flex`).textContent
+    expect(wide).toContain("Created")
+    expect(wide).not.toContain("Updated")
   })
 
   it("tells a screen reader the exact moment, not only how long ago", () => {
