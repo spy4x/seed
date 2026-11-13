@@ -470,6 +470,22 @@ describe("SearchPalette", () => {
     expect(status()).toBe("Could not search. Change your search to try again.")
   })
 
+  it("draws the app's shortcut keys, a g sequence among them, without failing", async () => {
+    await mount({
+      shortcuts: [
+        { keys: "n", description: "Shortcuts.newNoteRow", group: "General" },
+        { keys: "g n", description: "Frame.notes", group: "Go to" },
+      ],
+    })
+    await open()
+    const keys = (label: string) =>
+      [...document.querySelectorAll("[role=option]")]
+        .find((candidate) => text(candidate).startsWith(label))
+        ?.getAttribute("aria-keyshortcuts")
+
+    expect([keys("New note"), keys("Notes")]).toEqual(["N", null])
+  })
+
   it("switches to a group on Enter and opens its settings on Ctrl Enter", async () => {
     const { picked } = await mount({}, () => ({ notes: [], onDevice: false }))
     for (const ctrlKey of [false, true]) {

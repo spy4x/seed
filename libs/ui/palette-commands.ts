@@ -62,6 +62,8 @@ export interface PageCommand {
 /** One row of the palette, carrying what picking it does; a submenu's rows run themselves. */
 export interface PaletteOption extends CommandPaletteOption {
   choice?: SearchChoice
+  /** The keys of the app's shortcut that does the same, a sequence such as `g n` included. */
+  shortcut?: string
 }
 
 /** What the registry reads of the app's state. */
@@ -196,6 +198,14 @@ function kbdOf(shortcuts: readonly ShortcutRow[], key: string): string | undefin
 }
 
 /**
+ * The keys a row shows: the palette (preact-ui 14.4.0) draws one key press and throws on a
+ * sequence such as `g n`, so a sequence is kept in `shortcut` only.
+ */
+function shortcutKeys(keys: string | undefined): Pick<PaletteOption, "kbd" | "shortcut"> {
+  return { kbd: keys?.includes(` `) ? undefined : keys, shortcut: keys }
+}
+
+/**
  * Every command the person can take now, under their headings in the order the palette lists
  * them: This page, Go to, Create, Settings, Account. Go to comes before Create, so a typo that
  * fits both ("notse") finds the page first. A command the person cannot take is left out
@@ -240,7 +250,7 @@ export function paletteCommands(
         : []),
       ...(extra.aliases ?? []),
     ],
-    kbd: extra.kbd ?? kbdOf(shortcuts, key),
+    ...shortcutKeys(extra.kbd ?? kbdOf(shortcuts, key)),
     group,
     choice,
   })
@@ -253,7 +263,7 @@ export function paletteCommands(
     id: `command-${pageCommand.id}`,
     label: pageCommand.label,
     aliases: pageCommand.aliases,
-    kbd: pageCommand.kbd,
+    ...shortcutKeys(pageCommand.kbd),
     group: heading.page,
     choice: { kind: "command", id: pageCommand.id },
   }))

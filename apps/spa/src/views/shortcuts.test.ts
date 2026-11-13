@@ -145,20 +145,29 @@ function commandsFor(page: "none" | "overview" | "benchmark") {
 
 describe("the palette and the keyboard shortcuts", () => {
   for (const page of ["none", "overview", "benchmark"] as const) {
-    it(`has a command showing the keys of every shortcut that acts (page: ${page})`, () => {
+    it(`has a command for the keys of every shortcut that acts (page: ${page})`, () => {
       const { list, commands } = commandsFor(page)
       const missing = list.filter((row) => row.run)
-        .filter((row) => !commands.some((command) => command.kbd === row.keys))
+        .filter((row) => !commands.some((command) => command.shortcut === row.keys))
         .map((row) => `${row.keys} (${row.description})`)
       expect(missing).toEqual([])
     })
   }
 
+  it("shows a single key press on its command and keeps a g sequence off it", () => {
+    const { commands } = commandsFor("none")
+    const keysOf = (label: string) => {
+      const command = commands.find((command) => command.label === label)
+      return [command?.kbd, command?.shortcut]
+    }
+    expect([keysOf("New note"), keysOf("Notes")]).toEqual([["n", "n"], [undefined, "g n"]])
+  })
+
   it("opens the same page from each Go to command as from its g shortcut", () => {
     const { list, navigated, commands } = commandsFor("none")
     for (const row of list.filter((row) => row.keys.startsWith("g "))) {
       row.run!()
-      const command = commands.find((command) => command.kbd === row.keys)
+      const command = commands.find((command) => command.shortcut === row.keys)
       expect(command?.choice, row.keys).toEqual({ kind: "page", href: navigated.at(-1) })
     }
   })
