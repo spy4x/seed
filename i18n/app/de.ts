@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "Dateien an diese Notiz anhängen",
+  "AppShell.copyNoteLink": "Link zu dieser Notiz kopieren",
+  "AppShell.deleteNote": "Diese Notiz löschen",
+  "AppShell.duplicateNote": "Diese Notiz duplizieren",
+  "AppShell.moveNote": "Diese Notiz in eine andere Gruppe verschieben",
   "AttachmentMessages.load": "Die Dateien konnten nicht geladen werden",
   "AttachmentMessages.type":
     "{name} kann nicht angehängt werden. Erlaubt sind nur Bilder (JPEG, PNG, WebP, GIF) und PDF-Dateien.",
@@ -1078,6 +1082,8 @@ export default {
   "NoteEditor.tags": "Tags",
   "NoteEditorView.createdTitle": "Notiz hinzugefügt",
   "NoteEditorView.created": "„{title}“ wurde erstellt.",
+  "NoteEditorView.copyTitle": "{title} (Kopie)",
+  "NoteEditorView.duplicateFailed": "Die Notiz konnte nicht dupliziert werden",
   "NoteEditorView.savedTitle": "Notiz gespeichert",
   "NoteEditorView.saved": "„{title}“ wurde gespeichert.",
   "NoteEditorView.unsaved": "Du hast ungespeicherte Änderungen. Wenn du jetzt gehst, sind sie weg.",

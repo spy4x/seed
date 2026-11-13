@@ -17,7 +17,7 @@ import { notificationsStore } from "../state/notifications.ts"
 import { createNoteSearch } from "../state/search.ts"
 import { selectionStore } from "../state/selection.ts"
 import { newNoteStore } from "../state/new-note.ts"
-import { pageCommands, spaShortcutRows } from "./shortcuts.ts"
+import { pageCommands, runNoteCommand, spaShortcutRows } from "./shortcuts.ts"
 import { SPA_ROUTE_PATHS } from "./spa-paths.ts"
 import { runChoice } from "./palette-choice.ts"
 import { hasFinePointer, singleKeys, useShortcuts } from "@platform/shortcuts.ts"
@@ -55,7 +55,7 @@ function runPageCommand(id: string): void {
   const actions = overviewPageActions.value
   if (id === "overview-range") actions?.openRange()
   if (id === "overview-customise") actions?.openCustomise()
-  if (id === "note-attach") noteEditorPageActions.value?.attach()
+  runNoteCommand(id, noteEditorPageActions.value)
   if (id === "benchmark-run") benchmarkPageActions.value?.run()
   if (id === "benchmark-copy") benchmarkPageActions.value?.copy()
 }
@@ -276,7 +276,7 @@ export function AppShell(
           pageCommands={pageCommands(t, {
             overview: Boolean(overviewPageActions.value),
             benchmark: Boolean(benchmarkPageActions.value),
-            noteEditor: Boolean(noteEditorPageActions.value),
+            noteEditor: noteEditorPageActions.value,
           }, rows)}
           onSelect={(choice) => void open(choice)}
           theme={themeStore.preference.value}

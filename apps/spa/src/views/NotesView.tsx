@@ -6,7 +6,6 @@ import { useLocation, useSearch } from "wouter-preact"
 import { canMutateNotes } from "@domain/groups"
 import { moveTargetsOf, NotesScreen } from "@ui/notes-screen.tsx"
 import { defaultDirection, NOTE_SORTS, type NoteFilters, type NoteSort } from "@ui/notes-filter.ts"
-import { NOTE_PATHS } from "@ui/progressive.tsx"
 import { groupsStore } from "../state/groups.ts"
 import { membersStore } from "../state/members.ts"
 import { notesStore } from "../state/notes.ts"
@@ -17,6 +16,7 @@ import { toasts } from "../state/toasts.ts"
 import { useUndoToast } from "./use-undo-toast.ts"
 import { personName, personPicture } from "./note-people.ts"
 import { movedToast } from "./note-toasts.ts"
+import { copyNoteLink } from "./note-actions.ts"
 import { OfflineStatus } from "../modules.ts"
 import { OnboardingView } from "./OnboardingView.tsx"
 import { useAppText } from "@ui/i18n.ts"
@@ -187,25 +187,12 @@ export function NotesView() {
       moving={store.moving.value}
       moveError={store.moveError.value}
       onDelete={(note) => void store.remove(note)}
-      onCopyLink={async (note) => {
-        const copied = await copyToClipboard(
-          new URL(NOTE_PATHS.note(note.id), location.href).href,
-        )
-        if (copied) {
-          toasts.success({
-            title: t.t(`NotesView.linkCopied`),
-            body: membership
-              ? t.t(`NotesView.linkCopiedGroup`, { group: isolate(membership.name) })
-              : t.t(`NotesView.linkCopiedThisGroup`),
-            dataE2E: "note-link-copied",
-          })
-        } else {
-          toasts.error({
-            title: t.t(`NotesView.copyFailed`),
-            body: t.t(`NotesView.copyFailedHint`),
-          })
-        }
-      }}
+      onCopyLink={(note) =>
+        copyNoteLink(t, { id: note.id, groupName: membership?.name }, {
+          base: location.href,
+          copy: copyToClipboard,
+          toasts,
+        })}
       showDeleted={store.showDeleted.value}
       onShowDeletedChange={(on) => void store.setShowDeleted(on)}
       deletedNotes={store.deletedNotes.value}

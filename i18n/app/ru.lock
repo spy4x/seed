@@ -72,6 +72,10 @@ ApiTokens.revokeTitle	164842b2611fd646
 ApiTokens.savedCopyBody	351c5337745efb5d
 ApiTokens.savedCopyTitle	f4d763c76743f235
 AppShell.attachFiles	7a16f72089c90420
+AppShell.copyNoteLink	b52a6072203d1af5
+AppShell.deleteNote	26bb0172956f0597
+AppShell.duplicateNote	6711dc91b58f162d
+AppShell.moveNote	bed1a194780fa3ac
 AttachmentMessages.budget	c18c4cf9e9615a66
 AttachmentMessages.linkExpired	f53bd3c01f1a7194
 AttachmentMessages.load	77da0092e28eaf94
@@ -824,8 +828,10 @@ NoteEditor.title	d8da2c49df39d91d
 NoteEditor.titleLabel	7e8cd2056da73a7f
 NoteEditor.updated	c9a15a91d3ffd8d4
 NoteEditor.updatedBy	e7d339a259810500
+NoteEditorView.copyTitle	edae16dbfb17a147
 NoteEditorView.created	078d333283f423c4
 NoteEditorView.createdTitle	a7886ebc4ffd61a5
+NoteEditorView.duplicateFailed	13cce7293b900ede
 NoteEditorView.saved	2fe43e7999c83942
 NoteEditorView.savedTitle	123e3c0af8009d67
 NoteEditorView.unsaved	f758e11fe9502cb8

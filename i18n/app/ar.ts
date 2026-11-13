@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "إرفاق ملفات بهذه الملاحظة",
+  "AppShell.copyNoteLink": "نسخ رابط هذه الملاحظة",
+  "AppShell.deleteNote": "حذف هذه الملاحظة",
+  "AppShell.duplicateNote": "تكرار هذه الملاحظة",
+  "AppShell.moveNote": "نقل هذه الملاحظة إلى مجموعة أخرى",
   "AttachmentMessages.load": "تعذّر تحميل الملفات",
   "AttachmentMessages.type":
     "لا يمكن إرفاق {name}. المسموح به فقط صور JPEG وPNG وWebP وGIF وملفات PDF.",
@@ -1218,6 +1222,8 @@ export default {
   "NoteEditor.tags": "الوسوم",
   "NoteEditorView.createdTitle": "تمت إضافة الملاحظة",
   "NoteEditorView.created": "أُنشئت «{title}».",
+  "NoteEditorView.copyTitle": "{title} (نسخة)",
+  "NoteEditorView.duplicateFailed": "تعذّر تكرار الملاحظة",
   "NoteEditorView.savedTitle": "تم حفظ الملاحظة",
   "NoteEditorView.saved": "حُفظت «{title}».",
   "NoteEditorView.unsaved": "لديك تغييرات غير محفوظة. إن غادرت الآن فستفقدها.",

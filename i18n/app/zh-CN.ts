@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "为这条笔记添加文件",
+  "AppShell.copyNoteLink": "复制这条笔记的链接",
+  "AppShell.deleteNote": "删除这条笔记",
+  "AppShell.duplicateNote": "复制这条笔记",
+  "AppShell.moveNote": "将这条笔记移到其他群组",
   "AttachmentMessages.load": "无法加载文件",
   "AttachmentMessages.type": "无法添加{name}。只支持 JPEG、PNG、WebP、GIF 图片和 PDF 文件。",
   "AttachmentMessages.size": "{name}大小为 {size}，每个文件最大 {max}。",
@@ -891,6 +895,8 @@ export default {
   "NoteEditor.tags": "标签",
   "NoteEditorView.createdTitle": "笔记已添加",
   "NoteEditorView.created": "“{title}”已创建。",
+  "NoteEditorView.copyTitle": "{title}（副本）",
+  "NoteEditorView.duplicateFailed": "无法复制笔记",
   "NoteEditorView.savedTitle": "笔记已保存",
   "NoteEditorView.saved": "“{title}”已保存。",
   "NoteEditorView.unsaved": "你有未保存的修改。现在离开，这些修改就会丢失。",

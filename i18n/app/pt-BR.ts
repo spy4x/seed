@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "Anexar arquivos a esta nota",
+  "AppShell.copyNoteLink": "Copiar o link desta nota",
+  "AppShell.deleteNote": "Excluir esta nota",
+  "AppShell.duplicateNote": "Duplicar esta nota",
+  "AppShell.moveNote": "Mover esta nota para outro grupo",
   "AttachmentMessages.load": "Não foi possível carregar os arquivos",
   "AttachmentMessages.type":
     "Não dá para anexar {name}. Só são aceitas imagens JPEG, PNG, WebP e GIF e arquivos PDF.",
@@ -1105,6 +1109,8 @@ export default {
   "NoteEditor.tags": "Etiquetas",
   "NoteEditorView.createdTitle": "Nota criada",
   "NoteEditorView.created": "“{title}” foi criada.",
+  "NoteEditorView.copyTitle": "{title} (cópia)",
+  "NoteEditorView.duplicateFailed": "Não foi possível duplicar a nota",
   "NoteEditorView.savedTitle": "Nota salva",
   "NoteEditorView.saved": "“{title}” foi salva.",
   "NoteEditorView.unsaved": "Você tem alterações não salvas. Se sair agora, vai perdê-las.",

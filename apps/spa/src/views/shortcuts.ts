@@ -103,29 +103,82 @@ const BENCHMARK_COMMANDS = [
   { id: "benchmark-copy", label: `Shortcuts.copyResults` },
 ] as const
 
-/** The note page's command in the palette, while a note an editor can change is open. */
-const NOTE_COMMANDS = [{ id: "note-attach", label: `AppShell.attachFiles` }] as const
+/** What the open note page lets the palette do; see {@link NotePageActions}. */
+export type NoteAction = "attach" | "duplicate" | "move" | "copyLink" | "delete"
+
+/**
+ * The open note page's commands that the palette may run: only those the page offers now are
+ * present (a reader gets `copyLink` alone). `delete` opens the page's confirmation, never deletes.
+ */
+export type NotePageActions = Partial<Record<NoteAction, () => void>>
+
+/**
+ * The note page's commands in the palette, in the order listed, each shown only while the page
+ * offers its action. Besides its English label, each is found by the words in `aliases`.
+ */
+const NOTE_COMMANDS: readonly {
+  id: string
+  action: NoteAction
+  label: string
+  aliases: readonly string[]
+}[] = [
+  { id: "note-attach", action: "attach", label: `AppShell.attachFiles`, aliases: [] },
+  {
+    id: "note-duplicate",
+    action: "duplicate",
+    label: `AppShell.duplicateNote`,
+    aliases: [`copy note`, `clone`, `дублировать`, `копия заметки`],
+  },
+  {
+    id: "note-move",
+    action: "move",
+    label: `AppShell.moveNote`,
+    aliases: [`move to group`, `перенести заметку`, `переместить`],
+  },
+  {
+    id: "note-copy-link",
+    action: "copyLink",
+    label: `AppShell.copyNoteLink`,
+    aliases: [`share link`, `url`, `ссылка`],
+  },
+  {
+    id: "note-delete",
+    action: "delete",
+    label: `AppShell.deleteNote`,
+    aliases: [`remove note`, `trash`, `удалить заметку`],
+  },
+]
+
+/** Runs the note page's command `id`, if the open note page offers it now. */
+export function runNoteCommand(id: string, actions: NotePageActions | null): void {
+  const command = NOTE_COMMANDS.find((candidate) => candidate.id === id)
+  if (command) actions?.[command.action]?.()
+}
 
 /**
  * The open page's commands in the palette, if it has any: labelled in the translator's language,
- * found by their English label too, and showing the keys of the shortcut row with the same label.
+ * found by their English label and their aliases too, and showing the keys of the shortcut row
+ * with the same label. On a note page, only the commands `noteEditor` offers.
  */
 export function pageCommands(
   t: Translator<string>,
-  open: { overview: boolean; benchmark: boolean; noteEditor: boolean },
+  open: { overview: boolean; benchmark: boolean; noteEditor: NotePageActions | null },
   rows: readonly ShortcutRow[],
 ): PageCommand[] | undefined {
-  const commands = open.overview
-    ? OVERVIEW_COMMANDS
-    : open.benchmark
-    ? BENCHMARK_COMMANDS
-    : open.noteEditor
-    ? NOTE_COMMANDS
-    : undefined
+  const note = open.noteEditor
+  const commands:
+    | readonly { id: string; label: string; aliases?: readonly string[] }[]
+    | undefined = open.overview
+      ? OVERVIEW_COMMANDS
+      : open.benchmark
+      ? BENCHMARK_COMMANDS
+      : note
+      ? NOTE_COMMANDS.filter((command) => note[command.action])
+      : undefined
   return commands?.map((command) => ({
     id: command.id,
     label: t.t(command.label),
-    aliases: [englishText(command.label)],
+    aliases: [englishText(command.label), ...command.aliases ?? []],
     kbd: rows.find((row) => row.description === command.label)?.keys,
   }))
 }
