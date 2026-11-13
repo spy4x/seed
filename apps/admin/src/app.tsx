@@ -246,7 +246,8 @@ function Operator(
     <FormatContext.Provider value={own.format.value}>
       <AdminShell
         navItems={navItems}
-        currentPath={path}
+        // The not-found page belongs to no section: `/users/x/y` marks no rail entry.
+        currentPath={found ? path : undefined}
         operator={{ name: operatorName(user, email), email }}
         theme={theme}
         language={language}

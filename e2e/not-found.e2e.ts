@@ -55,8 +55,15 @@ test.describe("an unknown address", () => {
       await page.goto(`${appBase}/no-such-page`)
       const screen = page.locator("[data-e2e=not-found]")
       await expect(screen.getByRole("heading", { level: 1 })).toHaveText("Page not found")
+      await expect(page.locator("[aria-current]")).toHaveCount(0)
+
+      // An unknown address under a real section belongs to no section either.
+      await page.goto(`${appBase}/notes/x/y`)
+      await expect(screen.getByRole("heading", { level: 1 })).toHaveText("Page not found")
+      await expect(page.locator("[aria-current]")).toHaveCount(0)
       await page.locator("[data-e2e=not-found-link]").click()
       await expect(page).toHaveURL(`${appBase}/notes`)
+      await expect(page.locator("[aria-current]")).not.toHaveCount(0)
     } finally {
       await cleanup(request, email)
     }
@@ -86,6 +93,12 @@ test.describe("an unknown address", () => {
       await expect(screen.getByRole("heading", { level: 1 })).toHaveText("Page not found")
       await expect(ops).toHaveURL(`${adminBase}/no-such-page`)
       await expect(ops).toHaveTitle(`Page not found · Admin · ${PRODUCT_NAME}`)
+      await expect(ops.locator("[aria-current]")).toHaveCount(0)
+
+      // An unknown address under a real section marks no rail entry either.
+      await ops.goto(`${adminBase}/users/x/y`)
+      await expect(screen.getByRole("heading", { level: 1 })).toHaveText("Page not found")
+      await expect(ops.locator("[aria-current]")).toHaveCount(0)
       await ops.locator("[data-e2e=not-found-link]").click()
       await expect(ops).toHaveURL(`${adminBase}/`)
       await expect(ops.locator("[data-e2e=admin-dashboard-title]")).toBeVisible()
