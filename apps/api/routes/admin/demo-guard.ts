@@ -8,16 +8,26 @@ export const DEMO_REFUSED = `Not available in the public demo`
 
 /**
  * The operator area's actions that reach past the demo's own data, which the nightly reset puts
- * back (docs/demo.md), as paths under the area. The blog and the contact links are the real
- * website; the newsletter's actions mail or drop real subscribers; a job retried or run now can
- * send mail; a password-reset mail reaches a real visitor's inbox; and a new operator makes the
- * worker wipe the demo.
+ * back (docs/demo.md), as paths under the area:
+ *
+ * - the blog (posts, channels and shares) and the contact links are the real website, kept by the
+ *   wipe, and a share posts to a real social network;
+ * - the catalog's published items, photos and tracking links show on the public website, and a
+ *   tracking link redirects from it to any address;
+ * - billing's refund, free time and cancel act through the provider, which on a production server
+ *   is Stripe or off, never the fake one (`BILLING_PROVIDER=fake` stops a production API);
+ * - the newsletter's remove and resend drop or mail real subscribers;
+ * - a job retried, run now or cancelled can send mail;
+ * - a password-reset mail reaches a real visitor's inbox, and a new operator makes the worker wipe
+ *   the demo.
  */
 const REFUSED_PATHS: readonly RegExp[] = [
-  /^\/blog\/posts(\/|$)/,
+  /^\/blog(\/|$)/,
   /^\/contact-links(\/|$)/,
+  /^\/catalog(\/|$)/,
+  /^\/billing(\/|$)/,
   /^\/newsletter\/subscribers\/(remove|resend)$/,
-  /^\/jobs\//,
+  /^\/jobs(\/|$)/,
   /^\/users\/[^/]+\/(role|password-reset)$/,
 ]
 
