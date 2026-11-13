@@ -156,8 +156,9 @@ export function emptyLabel(t: Translator<string>, query: string, onDevice: boole
  *
  * Before anything is typed it lists the current group's most recent notes, then the commands of
  * {@link paletteCommands}. A query lists the notes that match (from `searchNotes`), then the
- * person's groups whose name matches, then the matching commands, ranked as the palette ranks a
- * submenu (`matchOptions`: aliases, word order, one typo, the other keyboard layout and alphabet).
+ * person's groups and the commands that match, ranked together as the palette ranks a submenu
+ * (`matchOptions`: aliases, word order, one typo, the other keyboard layout and alphabet), so the
+ * strongest match is the first row after the notes and its heading comes first.
  * When the notes come from the device, their heading and the no-results line say so. Enter on a
  * group makes it the current one, and Ctrl Enter (⌘Enter) opens its settings. Theme opens a
  * submenu whose rows change the theme at once and keep the palette open.
@@ -201,18 +202,20 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
       group: notesHeading,
       choice: { kind: "note", noteId: note.id, groupId: note.groupId },
     }))
-    const groupRows = text === "" ? [] : matchOptions(
-      groups.map((group) =>
+    const groupRows = text === ""
+      ? []
+      : groups.map((group) =>
         groupRow(t, group, roleName(t, group.role), group.id === currentGroup?.id)
-      ),
-      text,
-    )
-    const commands = matchOptions(paletteCommands(context(t), select), text)
+      )
+    // Groups and commands are ranked together, so the strongest match of either is highlighted
+    // first; the palette lists each heading where its first row falls.
+    const rows = [...groupRows, ...paletteCommands(context(t), select)]
+    const matched = matchOptions(rows, text, rows.length)
     // A stale answer is dropped by the palette; its words must not replace the current ones.
     if (!signal.aborted) {
       setEmpty(asksNotes ? emptyLabel(t, text, answer.onDevice) : shortQueryLabel(t))
     }
-    return [...notes, ...groupRows, ...commands]
+    return [...notes, ...matched]
   }
   /** A pick made inside a submenu, with the palette still open. */
   const select = (choice: SearchChoice) => latest.current.onSelect(choice)

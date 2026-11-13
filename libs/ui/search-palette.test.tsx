@@ -289,7 +289,7 @@ describe("SearchPalette", () => {
     expect(listed()).not.toContain("Overview")
   })
 
-  it("lists matching notes with their group, then groups, then commands, with the role and the current group", async () => {
+  it("lists matching notes with their group above the groups and commands, with the role and the current group", async () => {
     await mount()
     await open()
 
@@ -303,6 +303,27 @@ describe("SearchPalette", () => {
       "Home | Owner | Current",
     ])
     expect(listed()).toContain("New note | In Home")
+  })
+
+  it("highlights the strongest match first across groups and commands", async () => {
+    const TEAM = { id: "group-team", name: "Acme design team", role: GroupRole.EDITOR }
+    const PARK = { id: "group-park", name: "Park rangers", role: GroupRole.EDITOR }
+    await mount({ groups: [HOME, TEAM, PARK] }, () => ({ notes: [], onDevice: false }))
+    await open()
+    const highlighted = () => text(find("[data-e2e=search] [role=option][aria-selected=true]"))
+
+    for (const query of ["тема", "ntvf"]) {
+      await type(query)
+      expect(highlighted()).toMatch(/^Theme \|/)
+      expect(listed()).toContain("Acme design team | Editor")
+    }
+
+    await type("dark")
+    expect(highlighted()).toMatch(/^Theme \|/)
+    expect(listed()).toContain("Park rangers | Editor")
+
+    await type("design team")
+    expect(highlighted()).toBe("Acme design team | Editor")
   })
 
   it("names no group in a found note's row when the person has one group", async () => {
