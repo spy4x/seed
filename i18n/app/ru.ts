@@ -1243,7 +1243,7 @@ export default {
     "other": "Выбрано: {count}",
   },
   "Notes.cancelSelect": "Отмена",
-  "Notes.moveTo": "Перенести в группу",
+  "Notes.moveTo": "В группу",
   "Notes.moving": "Переносим…",
   "Notes.move": "Перенести",
   "Notes.updated": "Изменена <date>{date}</date>",

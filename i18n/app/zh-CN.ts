@@ -954,7 +954,7 @@ export default {
     "other": "已选择 {count} 条",
   },
   "Notes.cancelSelect": "取消",
-  "Notes.moveTo": "移到群组",
+  "Notes.moveTo": "目标群组",
   "Notes.moving": "正在移动…",
   "Notes.move": "移动",
   "Notes.updated": "更新于<date>{date}</date>",

@@ -1297,7 +1297,7 @@ export default {
     "other": "{count} ملاحظة محددة",
   },
   "Notes.cancelSelect": "إلغاء",
-  "Notes.moveTo": "نقل إلى مجموعة",
+  "Notes.moveTo": "إلى المجموعة",
   "Notes.moving": "جارٍ النقل…",
   "Notes.move": "نقل",
   "Notes.updated": "حُدّثت <date>{date}</date>",

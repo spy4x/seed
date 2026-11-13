@@ -1152,7 +1152,7 @@ export default {
     "other": "{count} ausgewählt",
   },
   "Notes.cancelSelect": "Abbrechen",
-  "Notes.moveTo": "In Gruppe verschieben",
+  "Notes.moveTo": "In die Gruppe",
   "Notes.moving": "Wird verschoben …",
   "Notes.move": "Verschieben",
   "Notes.updated": "Geändert <date>{date}</date>",

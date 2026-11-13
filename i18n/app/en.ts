@@ -1089,7 +1089,7 @@ export default {
     "other": "{count} selected",
   },
   "Notes.cancelSelect": "Cancel",
-  "Notes.moveTo": "Move to group",
+  "Notes.moveTo": "To group",
   "Notes.moving": "Moving…",
   "Notes.move": "Move",
   "Notes.updated": "Updated <date>{date}</date>",

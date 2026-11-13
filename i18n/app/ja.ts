@@ -1044,7 +1044,7 @@ export default {
     "other": "{count}件選択中",
   },
   "Notes.cancelSelect": "キャンセル",
-  "Notes.moveTo": "グループに移動",
+  "Notes.moveTo": "移動先のグループ",
   "Notes.moving": "移動しています…",
   "Notes.move": "移動",
   "Notes.updated": "<date>{date}</date>に更新",

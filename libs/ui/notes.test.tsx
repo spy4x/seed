@@ -454,7 +454,7 @@ describe("NotesScreen in the browser", () => {
     expect(find("[data-e2e=note-move-note]").textContent).toBe("Groceries")
     const select = find<HTMLSelectElement>("[data-e2e=note-move-to]")
     expect([...select.options].map((option) => option.textContent)).toEqual(["Family", "Work"])
-    expect(find("label[for=note-move-to]").textContent).toBe("Move to group")
+    expect(find("label[for=note-move-to]").textContent).toBe("To group")
 
     select.value = targets[1].id
     await click("[data-e2e=note-move-submit]")
@@ -514,7 +514,7 @@ describe("NotesScreen in the browser", () => {
     await tick(`${row(trip)} [data-e2e=note-select]`)
     expect(find("[data-e2e=notes-move]").textContent).toContain("1 selected")
     const select = find<HTMLSelectElement>("[data-e2e=notes-move-to]")
-    expect(find("label[for=notes-move-to]").textContent).toBe("Move to group")
+    expect(find("label[for=notes-move-to]").textContent).toBe("To group")
     select.value = targets[1].id
     await act(() => {
       select.dispatchEvent(new window.Event("change", { bubbles: true }) as unknown as Event)
