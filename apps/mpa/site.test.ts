@@ -9,6 +9,7 @@ import { demoPlans, demoSavings } from "./components/pricing-demo-plans.tsx"
 import AppWrapper from "./routes/_app.tsx"
 import Layout from "./routes/_layout.tsx"
 import Admin, { ADMIN_HEAD } from "./routes/[[lang]]/admin.tsx"
+import { PUBLIC_DEMO_ADMIN } from "@server/auth/demo-accounts.ts"
 import Compare from "./routes/[[lang]]/compare.tsx"
 import Features from "./routes/[[lang]]/features.tsx"
 import { handler as featurePage } from "./routes/[[lang]]/features/[slug].tsx"
@@ -406,6 +407,20 @@ describe("the public website", () => {
     const { html } = await page("/admin")
 
     expect(html).toContain(`<title>${ADMIN_HEAD.title} · Seed</title>`)
+  })
+
+  it("shows the demo's admin account on /admin only while the demo is on", async () => {
+    const origin = `https://admin.example.com`
+    const demo = siteWith(() => true, { ...config, demoAdminOrigin: origin })
+    const on = (await page("/admin", demo)).html
+    const off = (await page("/admin")).html
+
+    expect(on).toContain(`data-e2e="admin-demo-account"`)
+    expect(on).toContain(PUBLIC_DEMO_ADMIN.email)
+    expect(on).toContain(PUBLIC_DEMO_ADMIN.password)
+    expect(on.match(/<a [^>]*data-e2e="admin-demo-open"[^>]*>/)?.[0]).toContain(`href="${origin}"`)
+    expect(off).not.toContain(`admin-demo-account`)
+    expect(off).not.toContain(PUBLIC_DEMO_ADMIN.password)
   })
 
   it("keeps every title within 60 characters and naming Seed once, and every description within 155", async () => {
