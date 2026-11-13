@@ -113,13 +113,13 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
   }, [loading])
   return (
     <>
-      {groupId && (
-        <OfflineStatus
-          groupId={groupId}
-          onResolved={() => void store.refresh().catch(() => {})}
-        />
-      )}
       <NoteEditorScreen
+        intro={groupId && (
+          <OfflineStatus
+            groupId={groupId}
+            onResolved={() => void store.refresh().catch(() => {})}
+          />
+        )}
         group={membership
           ? { id: membership.id, name: membership.name, canWrite: canMutateNotes(membership.role) }
           : null}

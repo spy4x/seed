@@ -28,23 +28,21 @@ export function TagsView() {
     : undefined
   const canWrite = membership ? canMutateNotes(membership.role) : false
   return (
-    <>
-      {groupId && (
+    <TagsScreen
+      intro={groupId && (
         <OfflineStatus
           groupId={groupId}
           onResolved={() => void store.refresh().catch(() => {})}
         />
       )}
-      <TagsScreen
-        group={membership ? { id: membership.id, name: membership.name, canWrite } : null}
-        tags={store.tags.value}
-        loading={store.loading.value || groupsStore.loading.value || groupId === null}
-        listError={store.listError.value}
-        onDelete={canWrite
-          ? (id) => void deleteAndAnnounce(t, store, id, notesStore, toasts)
-          : undefined}
-        navigate={navigate}
-      />
-    </>
+      group={membership ? { id: membership.id, name: membership.name, canWrite } : null}
+      tags={store.tags.value}
+      loading={store.loading.value || groupsStore.loading.value || groupId === null}
+      listError={store.listError.value}
+      onDelete={canWrite
+        ? (id) => void deleteAndAnnounce(t, store, id, notesStore, toasts)
+        : undefined}
+      navigate={navigate}
+    />
   )
 }

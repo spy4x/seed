@@ -69,6 +69,11 @@ function find<T extends Element = HTMLElement>(selector: string): T {
   return element as unknown as T
 }
 
+/** Whether the page draws the app's intro (`<section data-e2e="intro">`) right after its header. */
+function introFollowsHeader(): boolean {
+  return find("[data-e2e=page-header]").nextElementSibling === find("[data-e2e=intro]")
+}
+
 /** How many elements `selector` finds in the page. */
 function count(selector: string): number {
   return document.querySelectorAll(selector).length
@@ -971,6 +976,31 @@ const editing: NoteEditorScreenProps = {
 }
 
 describe("NoteEditorScreen", () => {
+  it("draws its intro right under the page header in every state of the page", async () => {
+    const intro = <section data-e2e="intro" />
+    await mount(<div />)
+    const states: Record<string, VNode> = {
+      "no group": <NoteEditorScreen {...editorDefaults} group={null} intro={intro} />,
+      "in another group": (
+        <NoteEditorScreen
+          {...editorDefaults}
+          notFound
+          elsewhere={{ name: "Family" }}
+          intro={intro}
+        />
+      ),
+      "not found": <NoteEditorScreen {...editorDefaults} notFound intro={intro} />,
+      "loading": <NoteEditorScreen {...editing} loading intro={intro} />,
+      "read-only": <NoteEditorScreen {...editing} group={viewerOfTeam} intro={intro} />,
+      "the form": <NoteEditorScreen {...editing} intro={intro} />,
+    }
+    for (const [state, node] of Object.entries(states)) {
+      // A key of its own per state, so each one mounts afresh instead of updating the last.
+      await rerender(<div key={state}>{node}</div>)
+      expect(introFollowsHeader(), state).toBe(true)
+    }
+  })
+
   it("heads the page with a back button to the list and the group's name, and has no menu when creating", () => {
     const html = renderToString(
       <NoteEditorScreen

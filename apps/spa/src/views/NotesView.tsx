@@ -127,7 +127,6 @@ export function NotesView() {
             <OfflineStatus
               groupId={groupId}
               onResolved={() => void store.refresh().catch(() => {})}
-              underHeader
             />
           )}
           <OnboardingView />
