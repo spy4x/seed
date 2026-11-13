@@ -784,7 +784,7 @@ export default {
   "CompareRow.blog": "Блог",
   "CompareRow.audit": "Журнал аудита",
   "CompareRow.realtime": "Обновления в реальном времени",
-  "CompareRow.instant": "Экраны открываются с устройства",
+  "CompareRow.instant": "Данные на устройстве",
   "CompareRow.instantNote": "Копия каждого списка хранится на устройстве",
   "CompareRow.offline": "Офлайн-приложение",
   "CompareRow.offlineNote": "Копит изменения, сделанные офлайн",

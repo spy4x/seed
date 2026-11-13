@@ -757,7 +757,7 @@ export default {
   "CompareRow.blog": "ブログ",
   "CompareRow.audit": "監査ログ",
   "CompareRow.realtime": "リアルタイム更新",
-  "CompareRow.instant": "デバイスから開く画面",
+  "CompareRow.instant": "デバイス上のデータ",
   "CompareRow.instantNote": "各リストのコピーをデバイスに保存",
   "CompareRow.offline": "オフラインアプリ",
   "CompareRow.offlineNote": "オフライン中の書き込みをキューにためる",

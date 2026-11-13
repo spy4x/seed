@@ -766,7 +766,7 @@ export default {
   "CompareRow.blog": "Blog",
   "CompareRow.audit": "Audit log",
   "CompareRow.realtime": "Realtime updates",
-  "CompareRow.instant": "Screens open from the device",
+  "CompareRow.instant": "On-device data",
   "CompareRow.instantNote": "A copy of each list kept on the device",
   "CompareRow.offline": "Offline app",
   "CompareRow.offlineNote": "Queues writes made offline",

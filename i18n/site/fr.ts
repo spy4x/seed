@@ -820,7 +820,7 @@ export default {
   "CompareRow.blog": "Blog",
   "CompareRow.audit": "Journal d’audit",
   "CompareRow.realtime": "Mises à jour en temps réel",
-  "CompareRow.instant": "Écrans ouverts depuis l’appareil",
+  "CompareRow.instant": "Données sur l’appareil",
   "CompareRow.instantNote": "Une copie de chaque liste gardée sur l’appareil",
   "CompareRow.offline": "Application hors ligne",
   "CompareRow.offlineNote": "Met en file d’attente les écritures faites hors ligne",

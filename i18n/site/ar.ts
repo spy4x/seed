@@ -761,7 +761,7 @@ export default {
   "CompareRow.blog": "مدونة",
   "CompareRow.audit": "سجل التدقيق",
   "CompareRow.realtime": "تحديثات فورية",
-  "CompareRow.instant": "شاشات تُفتح من الجهاز",
+  "CompareRow.instant": "بيانات على الجهاز",
   "CompareRow.instantNote": "نسخة من كل قائمة محفوظة على الجهاز",
   "CompareRow.offline": "تطبيق يعمل دون اتصال",
   "CompareRow.offlineNote": "يحفظ التعديلات دون اتصال في قائمة انتظار",

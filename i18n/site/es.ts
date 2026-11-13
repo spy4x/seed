@@ -793,7 +793,7 @@ export default {
   "CompareRow.blog": "Blog",
   "CompareRow.audit": "Registro de auditoría",
   "CompareRow.realtime": "Actualizaciones en tiempo real",
-  "CompareRow.instant": "Pantallas que abren desde el dispositivo",
+  "CompareRow.instant": "Datos en el dispositivo",
   "CompareRow.instantNote": "Una copia de cada lista guardada en el dispositivo",
   "CompareRow.offline": "Aplicación sin conexión",
   "CompareRow.offlineNote": "Pone en cola lo que se escribe sin conexión",

@@ -832,14 +832,14 @@ describe("the public website", () => {
     expect(html.indexOf(`id="faq-fast"`)).toBeLessThan(html.indexOf(`id="faq-free"`))
   })
 
-  it("adds Screens open from the device to /compare, right before Offline app and with its values", async () => {
+  it("adds On-device data to /compare, right before Offline app and with its values", async () => {
     const { rows } = comparisonTable((await page("/compare")).html)
-    const at = rows.findIndex((row) => row.capability === "Screens open from the device")
+    const at = rows.findIndex((row) => row.capability === "On-device data")
 
     expect(at).toBeGreaterThan(-1)
     expect(rows[at + 1].capability).toBe("Offline app")
     expect(rows[at]).toEqual({
-      capability: "Screens open from the device",
+      capability: "On-device data",
       note: "A copy of each list kept on the device",
       values: rows[at + 1].values,
     })

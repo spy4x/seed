@@ -700,7 +700,7 @@ export default {
   "CompareRow.blog": "博客",
   "CompareRow.audit": "审计日志",
   "CompareRow.realtime": "实时更新",
-  "CompareRow.instant": "直接从设备打开的页面",
+  "CompareRow.instant": "设备上的数据",
   "CompareRow.instantNote": "每个列表的副本都保存在设备上",
   "CompareRow.offline": "离线应用",
   "CompareRow.offlineNote": "离线写入会排队等待",
