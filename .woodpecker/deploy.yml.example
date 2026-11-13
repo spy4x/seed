@@ -1,107 +1,46 @@
-# Production build and deploy, kept out of the active pipeline.
+# Deploys `main` to the server after every push that passes `ci.yml`.
 #
-# Woodpecker reads only `*.yml` and `*.yaml` in this folder, so this file does nothing. To turn
-# deploys on, rename it to `deploy.yml` and fix the known problems first:
-#   1. `pre-deploy-build` runs `deno task compose ... build` inside the Deno image, which has no
-#      Docker client. Never give a step the Docker socket, `volumes` or `privileged`: that hands
-#      every pull request root on the agent host. `deno task deploy` builds the images on the
-#      server already, so the step can go; a check that the images build belongs in kaniko with
-#      `--no-push`, as `release.yml` does it.
-#   2. It should wait for `ci.yml`: add a top-level `depends_on: [ci]` to the workflow.
-# The branch is `main`, the default branch of this repository.
+# Woodpecker reads only `*.yml` and `*.yaml` in this folder, so this file does nothing until a
+# product copies it to `.woodpecker/deploy.yml`. docs/woodpecker-ci-setup.md, "Deploy on every
+# push to main", lists the four repository secrets it needs. Seed itself keeps it off.
 #
-# Images are not built here for releases: release.yml publishes `<IMAGE_PREFIX>-api`, `-spa` and
-# `-mpa` for every version tag. A deploy that runs a released version should pull those images,
-# which also removes problem 1 above (no Docker client needed to build).
+# The step runs `deno task deploy`, as a developer would: it decrypts the env files with the
+# repository's age key, copies the files to the server over SSH and starts them there, where the
+# images are built. It holds the age key and an SSH key that can run Docker on the server, which
+# is as good as root there, so the secrets are enabled for the push event only: a pull request,
+# from a fork or not, never sees them. Only people who may push to the repository can reach them,
+# and only reviewed code on `main` runs the deploy. The repository stays untrusted: no volume, no
+# Docker socket, no privileged step.
+#
+# Every runtime variable is written `$$`, so Woodpecker leaves it for the shell. The image is
+# pinned by digest.
+
+depends_on: [ci]
 
 when:
-  event: push
-  branch: main
+  - event: push
+    branch: main
 
 steps:
-  # ============================================================================
-  # Step 2: Build Docker Images (Production)
-  # ============================================================================
-  pre-deploy-build:
-    image: denoland/deno:2.9.7
-    environment:
-      ENV: prod
-      DENO_VERSION:
-        from_secret: deno_version
-      DB_HOST:
-        from_secret: db_host
-      DB_PORT:
-        from_secret: db_port
-      DB_NAME:
-        from_secret: db_name
-      DB_USER:
-        from_secret: db_user
-      DB_PASS:
-        from_secret: db_pass
-      KV_HOSTNAME:
-        from_secret: kv_hostname
-      KV_PORT:
-        from_secret: kv_port
-      KV_PASSWORD:
-        from_secret: kv_password
-      API_PORT:
-        from_secret: api_port
-      DOMAIN:
-        from_secret: domain
-      TRAEFIK_ACME_EMAIL:
-        from_secret: traefik_acme_email
-      SSH_TO_SERVER:
-        from_secret: ssh_to_server
-      PATH_ON_SERVER:
-        from_secret: path_on_server
-    commands:
-      - echo "Creating production environment file..."
-      # Create the .env.prod file from environment variables
-      - |
-        cat > ./infra/envs/.env.prod << EOF
-        ENV=prod
-        DENO_VERSION=${DENO_VERSION}
-        DB_HOST=${DB_HOST}
-        DB_PORT=${DB_PORT}
-        DB_NAME=${DB_NAME}
-        DB_USER=${DB_USER}
-        DB_PASS=${DB_PASS}
-        KV_HOSTNAME=${KV_HOSTNAME}
-        KV_PORT=${KV_PORT}
-        KV_PASSWORD=${KV_PASSWORD}
-        API_PORT=${API_PORT}
-        DOMAIN=${DOMAIN}
-        TRAEFIK_ACME_EMAIL=${TRAEFIK_ACME_EMAIL}
-        SSH_TO_SERVER=${SSH_TO_SERVER}
-        PATH_ON_SERVER=${PATH_ON_SERVER}
-        EOF
-      - echo "Building Docker images..."
-      - deno task compose --env-file=./infra/envs/.env.prod build
-    depends_on: []
-
-  # ============================================================================
-  # Step 3: Deploy to Production
-  # ============================================================================
   deploy:
-    image: denoland/deno:2.9.7
+    image: denoland/deno:2.9.7@sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
     environment:
-      SSH_TO_SERVER:
-        from_secret: ssh_to_server
-      PATH_ON_SERVER:
-        from_secret: path_on_server
-      SSH_PRIVATE_KEY:
-        from_secret: ssh_private_key
+      DEPLOY_ENV_KEY:
+        from_secret: deploy_env_key
+      DEPLOY_SSH_KEY:
+        from_secret: deploy_ssh_key
+      DEPLOY_SSH_CONFIG:
+        from_secret: deploy_ssh_config
+      DEPLOY_KNOWN_HOSTS:
+        from_secret: deploy_known_hosts
     commands:
-      - echo "Setting up SSH..."
-      # Install rsync and ssh client
-      - apt-get update && apt-get install -y rsync openssh-client
-      # Setup SSH key
-      - mkdir -p ~/.ssh
-      - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-      - chmod 600 ~/.ssh/id_rsa
-      # Add server to known hosts (adjust hostname as needed)
-      - ssh-keyscan -H $(echo $SSH_TO_SERVER | cut -d'@' -f2) >> ~/.ssh/known_hosts
-      - echo "Deploying to production..."
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends rsync openssh-client git
+      - umask 077
+      - mkdir -p ~/.ssh .age
+      - printf '%s\n' "$${DEPLOY_SSH_KEY}" > ~/.ssh/deploy_key
+      - printf '%s\nIdentityFile ~/.ssh/deploy_key\nIdentitiesOnly yes\n' "$${DEPLOY_SSH_CONFIG}" > ~/.ssh/config
+      - printf '%s\n' "$${DEPLOY_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+      - printf '%s\n' "$${DEPLOY_ENV_KEY}" > .age/key.txt
+      - deno install --frozen
+      - deno task env:decrypt
       - deno task deploy
-    depends_on:
-      - pre-deploy-build

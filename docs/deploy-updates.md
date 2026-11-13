@@ -7,6 +7,9 @@ deployed with an older Seed.
 
 **You need** a server deployed once as [Deploy to a server](deploy.md) says.
 
+To deploy every push to `main` from CI instead of by hand, see
+[Deploy on every push to main](woodpecker-ci-setup.md#deploy-on-every-push-to-main).
+
 ## Deploy
 
 1. Commit or stash your changes. The deploy stops when the working tree has uncommitted changes,
