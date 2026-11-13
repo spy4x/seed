@@ -764,6 +764,84 @@ describe("the public website", () => {
     }
   })
 
+  it("puts the speed band right after the feature cards, with real links to the demo and to /features#fast (#441)", async () => {
+    const { html } = await page("/")
+    const start = html.indexOf(`<section id="speed"`)
+    const band = html.slice(start, html.indexOf(`</section>`, start))
+
+    expect(start).toBeGreaterThan(html.indexOf(`<section id="features"`))
+    expect(start).toBeLessThan(html.indexOf(`<section id="one-server"`))
+    expect(band).toContain(`<h2 id="speed-title"`)
+    expect(band).toContain(`>No spinner between clicks</h2>`)
+    const demo = linkNamed(band, "Try it: click around the demo")
+    expect(hrefOf(demo)).toBe(`${spa}/try`)
+    expect(demo).toContain(`rel="nofollow"`)
+    expect(demo).toContain(`data-umami-event="try-demo"`)
+    expect(demo).toContain(`data-umami-event-from="speed"`)
+    expect(hrefOf(linkNamed(band, "How it works"))).toBe(`/features#fast`)
+  })
+
+  it("links the speed band to /features#fast in the home page's language", async () => {
+    const localized = new App<State>()
+      .use(pageMiddleware(config, neverCalled, () => true))
+      .appWrapper(view(AppWrapper))
+      .layout("*", view(Layout))
+      .route("/:lang", { component: view(Home) })
+      .handler()
+    const { html } = await page("/de", localized)
+    const start = html.indexOf(`<section id="speed"`)
+    const band = html.slice(start, html.indexOf(`</section>`, start))
+
+    expect(band).toContain(`>Kein Ladekreisel zwischen den Klicks</h2>`)
+    expect(hrefOf(linkNamed(band, "So funktioniert es"))).toBe(`/de/features#fast`)
+    expect(hrefOf(linkNamed(band, "Probier es aus: klick dich durch die Demo"))).toBe(`${spa}/try`)
+  })
+
+  it("explains on /features why the app is fast, right before the offline section, linking the offline reads doc", async () => {
+    const { html } = await page("/features")
+    const start = html.indexOf(`<section id="fast"`)
+    const section = html.slice(start, html.indexOf(`</section>`, start))
+
+    expect(start).toBeGreaterThan(html.indexOf(`<section id="realtime"`))
+    expect(start).toBeLessThan(html.indexOf(`<section id="offline"`))
+    expect(html.slice(start + 1, html.indexOf(`<section id="offline"`))).not.toContain(`<section id=`)
+    expect(section).toContain(`>Screens open from the device, then catch up</h3>`)
+    expect(section).toContain(`Still waits on the server: sign-in`)
+    expect(section).toContain(`href="${REPOSITORY_URL}/blob/main/docs/offline-data.md"`)
+    expect(html).toContain(`href="#fast"`)
+  })
+
+  it("asks why a Seed app feels fast second among the home questions, and in their structured data", async () => {
+    const { html } = await page("/")
+    const faq = jsonLdGraph(html).find((entity) => entity["@type"] === "FAQPage")!
+    const questions = (faq.mainEntity as { name: string }[]).map((question) => question.name)
+
+    expect(questions[1]).toBe(`Why does a Seed app feel fast?`)
+    expect(html.indexOf(`id="faq-fast"`)).toBeGreaterThan(html.indexOf(`id="faq-try"`))
+    expect(html.indexOf(`id="faq-fast"`)).toBeLessThan(html.indexOf(`id="faq-free"`))
+  })
+
+  it("adds Screens open from the device to /compare, right before Offline app and with its values", async () => {
+    const { rows } = comparisonTable((await page("/compare")).html)
+    const at = rows.findIndex((row) => row.capability === "Screens open from the device")
+
+    expect(at).toBeGreaterThan(-1)
+    expect(rows[at + 1].capability).toBe("Offline app")
+    expect(rows[at]).toEqual({
+      capability: "Screens open from the device",
+      note: "No spinner on a screen you have opened before",
+      values: rows[at + 1].values,
+    })
+  })
+
+  it("says screens open from the device in the home page's description and in llms.txt", async () => {
+    const { html } = await page("/")
+    const text = await (await handler(new Request(`${site}/llms.txt`), info)).text()
+
+    expect(metaContent(html, "description")).toContain(`screens that open from the device`)
+    expect(text).toContain(`screens that open from the device`)
+  })
+
   it("ends /features with its questions, listed under On this page and in its structured data", async () => {
     const { html } = await page("/features")
     const graph = jsonLdGraph(html)
@@ -1312,14 +1390,14 @@ describe("the public website", () => {
 
     // Every language of a page carries the English page's date: the translation says the same.
     expect(lastmods["/de/pricing"]).toBe("2026-10-21T00:00:00.000Z")
-    expect(lastmods["/ar"]).toBe("2026-11-02T00:00:00.000Z")
+    expect(lastmods["/ar"]).toBe("2026-11-13T00:00:00.000Z")
     expect(Object.values(lastmods)).not.toContain(undefined)
     const english = Object.fromEntries(
       Object.entries(lastmods).filter(([path]) => pathLanguage(path).language === "en"),
     )
     expect(english).toEqual({
-      "/": "2026-11-02T00:00:00.000Z",
-      "/features": "2026-11-02T00:00:00.000Z",
+      "/": "2026-11-13T00:00:00.000Z",
+      "/features": "2026-11-13T00:00:00.000Z",
       "/features/sign-in": "2026-11-02T00:00:00.000Z",
       "/features/groups": "2026-11-01T00:00:00.000Z",
       "/features/billing": "2026-11-01T00:00:00.000Z",
