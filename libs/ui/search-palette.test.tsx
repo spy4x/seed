@@ -417,6 +417,28 @@ describe("SearchPalette", () => {
     )
   })
 
+  it("finds Open benchmark by speed test, speedtest and тест скорости, only when it is offered", async () => {
+    const queries = ["speed test", "speedtest", "тест скорости"]
+    const { picked } = await mount({ benchmark: true })
+    for (const query of queries) {
+      await open()
+      await type(query)
+      const row = [...document.querySelectorAll("[role=option]")]
+        .find((candidate) => text(candidate).startsWith("Open benchmark"))
+      expect(row, query).toBeDefined()
+      await act(() => {
+        row!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }) as unknown as Event)
+      })
+    }
+    expect(picked).toEqual(Array(3).fill({ kind: "page", href: "/benchmark" }))
+
+    await act(() => render(null, root!))
+    await mount()
+    await open()
+    await type("speed test")
+    expect(listed().some((row) => row.startsWith("Open benchmark"))).toBe(false)
+  })
+
   it("shows the error line when the search fails", async () => {
     await mount(
       {},
