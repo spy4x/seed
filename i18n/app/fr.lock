@@ -755,8 +755,10 @@ InvitationNew.offlineTitle	050be7950a638d06
 InvitationNew.stay	08fd1de4b04df4a2
 InvitationNew.title	df4e0259e0a9a083
 MoveNote.cancel	19766ed6ccb2f4a3
-MoveNote.question	1c888a61a48cd9b0
+MoveNote.hint	eeaab952559a5aed
+MoveNote.move	6ecc3df6bffdd06c
 MoveNote.title	f1c038660cfb46e0
+MoveNote.to	34ca0e76608842ff
 NewNote.add	63565c0485fec4f7
 NewNote.added	ce9cdf50fd4bb875
 NewNote.adding	c6de6f45c827f464
@@ -933,7 +935,6 @@ NotesFilter.sortTitle	7e8cd2056da73a7f
 NotesFilter.sortUpdated	382ac5f308f76c24
 NotesFilter.tag	1503916a2ab2b0fd
 NotesFilter.tags	1331275bc537b4c2
-NotesFilter.you	08b041935798fbf6
 NotesFilter.zToA	5a5261ed154703e0
 NotesView.copyFailed	b156f6c7963c25eb
 NotesView.copyFailedHint	eaf833105aaba8d8
