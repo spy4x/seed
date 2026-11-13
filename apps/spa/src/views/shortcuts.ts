@@ -97,21 +97,35 @@ const OVERVIEW_COMMANDS = [
   { id: "overview-customise", label: `Shortcuts.customise` },
 ] as const
 
+/** The benchmark page's commands in the palette, while it is open. */
+const BENCHMARK_COMMANDS = [
+  { id: "benchmark-run", label: `Shortcuts.runBenchmark` },
+  { id: "benchmark-copy", label: `Shortcuts.copyResults` },
+] as const
+
 /** The note page's command in the palette, while a note an editor can change is open. */
 const NOTE_COMMANDS = [{ id: "note-attach", label: `AppShell.attachFiles` }] as const
 
 /**
  * The open page's commands in the palette, if it has any: labelled in the translator's language,
- * and found by their English label too.
+ * found by their English label too, and showing the keys of the shortcut row with the same label.
  */
 export function pageCommands(
   t: Translator<string>,
-  open: { overview: boolean; noteEditor: boolean },
+  open: { overview: boolean; benchmark: boolean; noteEditor: boolean },
+  rows: readonly ShortcutRow[],
 ): PageCommand[] | undefined {
-  const commands = open.overview ? OVERVIEW_COMMANDS : open.noteEditor ? NOTE_COMMANDS : undefined
+  const commands = open.overview
+    ? OVERVIEW_COMMANDS
+    : open.benchmark
+    ? BENCHMARK_COMMANDS
+    : open.noteEditor
+    ? NOTE_COMMANDS
+    : undefined
   return commands?.map((command) => ({
     id: command.id,
     label: t.t(command.label),
     aliases: [englishText(command.label)],
+    kbd: rows.find((row) => row.description === command.label)?.keys,
   }))
 }

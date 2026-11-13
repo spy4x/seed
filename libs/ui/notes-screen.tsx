@@ -794,6 +794,7 @@ function SelectionBar(
               id="notes-move-to"
               name="toGroupId"
               data-e2e="notes-move-to"
+              translate={false}
               class="min-w-0 flex-1 sm:w-auto sm:flex-none"
               options={moveTargets.map((target) => ({ value: target.id, label: target.name }))}
             />
@@ -1041,10 +1042,11 @@ export function MoveNoteDialog(
             </p>
             <p id="note-move-hint" class="text-sm text-muted">{t.t(`MoveNote.hint`)}</p>
           </div>
-          <Field id="note-move-to" label={t.t(`MoveNote.to`)}>
+          <Field id="note-move-to" label={t.t(`Notes.moveTo`)}>
             <Select
               name="toGroupId"
               data-e2e="note-move-to"
+              translate={false}
               autofocus
               options={moveTargets.map((target) => ({ value: target.id, label: target.name }))}
             />
