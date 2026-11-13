@@ -106,13 +106,32 @@ Woodpecker, because the repository requires approval for forks.
 Every Deno step runs `deno install --frozen` first, so a `deno.lock` that does not match
 `deno.jsonc` fails the pipeline instead of being rewritten.
 
-## Deploy is not wired up
+## Deploy on every push to main
 
 Deploys run from a developer's machine with `deno task deploy` ([Deploy an
-update](deploy-updates.md)). `.woodpecker/deploy.yml.example` holds an old build and
-deploy pipeline. Woodpecker ignores it because of the extension, and its steps have never run:
-its header lists what would have to change first. This guide documents no secrets or SSH keys for
-it, because nothing reads them.
+update](deploy-updates.md)) until a product turns on `.woodpecker/deploy.yml.example`. Then every
+push to the default branch that passes `ci.yml` deploys itself the same way. Seed keeps it off.
+
+1. Copy the file: `cp .woodpecker/deploy.yml.example .woodpecker/deploy.yml`. Change `main` in its
+   `when` when the default branch has another name.
+2. Make an SSH key for the pipeline alone: `ssh-keygen -t ed25519 -N '' -f deploy_key`. Add
+   `deploy_key.pub` to the deploy user's `~/.ssh/authorized_keys` on the server.
+3. In Woodpecker, open the repository's secrets and add four, each for the **push** event only:
+
+   | Secret | Value |
+   | --- | --- |
+   | `deploy_ssh_key` | The private key, `deploy_key`. |
+   | `deploy_ssh_config` | An SSH `Host` block named as `SSH_TO_SERVER`, with `HostName`, `Port` and `User`. |
+   | `deploy_known_hosts` | `ssh-keyscan -p <port> <host>`, checked against the server's own keys. |
+   | `deploy_env_key` | The contents of `.age/key.txt`, the key that decrypts the env files. |
+
+4. Delete the local copies of `deploy_key` and `deploy_key.pub`, then merge the copy to the
+   default branch. Its push pipeline is the first deploy. `gh pr checks` does not show it; the
+   Woodpecker page of that push does.
+
+The step holds the age key and an SSH key that can run Docker on the server, so its secrets are
+limited to the push event: a pull request never sees them. Only code that reached the default
+branch runs the deploy. A failed deploy turns that push pipeline red; fix it before the next merge.
 
 ## Activating a repository
 
