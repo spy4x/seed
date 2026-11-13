@@ -33,12 +33,14 @@ import {
  * A group's export file and the import of one, over the registered aggregates
  * (`PORTABLE_AGGREGATES` in `apps/api/services/db-base.ts`). The handlers check who may do what
  * first; this checks the file, counts it against a new group's plan and writes the import in one
- * transaction.
+ * transaction. A part of a file whose kind is in `ignored` (an aggregate switched off, such as the
+ * notes with `NOTES=false`) is neither checked, counted nor written.
  */
 export class PostgresGroupPorter implements GroupFilePorter {
   constructor(
     private readonly sql: postgres.Sql,
     private readonly aggregates: readonly PortableAggregate[],
+    private readonly ignored: readonly string[] = [],
     private readonly now: () => Date = () => new Date(),
   ) {}
 
@@ -138,7 +140,7 @@ export class PostgresGroupPorter implements GroupFilePorter {
    * plan whose caps `allowances` holds, and the importer would be its owner.
    */
   private parse(file: unknown, allowances: MoveAllAllowances): ParsedGroupFile {
-    const parsed = parseGroupFile(file, this.aggregates)
+    const parsed = parseGroupFile(file, this.aggregates, this.ignored)
     for (const aggregate of this.aggregates) {
       if (!aggregate.limit) continue
       const count = parsed.entries.get(aggregate.kind)?.length ?? 0

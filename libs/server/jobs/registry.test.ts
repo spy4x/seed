@@ -40,6 +40,7 @@ import {
 } from "./subscriber-mail.ts"
 import { defineJob, describeRepeat, jobLabel, JOBS } from "./registry.ts"
 import { createOutboxProcessor, repeatSchedules } from "./wiring.ts"
+import { NOTES_OFF, NOTES_ON, type NotesSetup } from "../notes/setup.ts"
 
 /** Every kind the product queues today; a new job adds its kind here and an entry to `JOBS`. */
 const QUEUED_KINDS = [
@@ -152,5 +153,31 @@ describe(`createOutboxProcessor`, () => {
     const mail = { store: {} as never, sender: null, brand: { webAppUrl: `` }, log: () => {} }
     expect(() => createOutboxProcessor(sql, mail, null, null, 0, true, null, [job, job]))
       .toThrow(`Two jobs share a kind: reports.daily`)
+  })
+
+  it(`hands every job the notes switch it was given, and the notes on when left out`, () => {
+    const seen: (NotesSetup | undefined)[] = []
+    const job = defineJob({
+      kind: `reports.daily`,
+      label: `Daily report`,
+      handler: ({ notes }) => (seen.push(notes), async () => {}),
+    })
+    const sql = {} as postgres.Sql
+    const mail = { store: {} as never, sender: null, brand: { webAppUrl: `` }, log: () => {} }
+    const off = [
+      null,
+      null,
+      null,
+      null,
+      null,
+      undefined,
+      null,
+      undefined,
+      undefined,
+      NOTES_OFF,
+    ] as const
+    createOutboxProcessor(sql, mail, null, null, 0, true, null, [job])
+    createOutboxProcessor(sql, mail, null, null, 0, true, null, [job], ...off)
+    expect(seen).toEqual([NOTES_ON, NOTES_OFF])
   })
 })

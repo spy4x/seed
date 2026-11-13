@@ -971,6 +971,9 @@ services:
       - LINKEDIN_ACCESS_TOKEN=${LINKEDIN_ACCESS_TOKEN:-}
       - LINKEDIN_MEMBER_ID=${LINKEDIN_MEMBER_ID:-}
       - LINKEDIN_TOKEN_EXPIRES_AT=${LINKEDIN_TOKEN_EXPIRES_AT:-}
+      # The notes example (docs/data-export.md): `false` leaves notes out of a data export. On
+      # unless `false`.
+      - NOTES=${NOTES:-}
       # The public demo (docs/demo.md): `true` wipes and seeds the database every night and gives
       # every new account sample groups. Unset → off.
       - DEMO_MODE=${DEMO_MODE:-}

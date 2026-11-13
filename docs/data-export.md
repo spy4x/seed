@@ -68,6 +68,11 @@ It holds only what is about the person or made by them, never another person's d
 Notes in a group they left stay out, because they can no longer read them in the app either.
 Attached files stay in the file store and open from the note.
 
+A product that turns the notes example off (`NOTES=false` in the worker's environment,
+[Start a product](start-a-product.md#settings)) gets a file without the `notes`,
+`note_attachments` and `tags` sections, and a `README.txt` that does not mention them. The group's
+own spreadsheets leave them out too.
+
 ## Add a table to the export
 
 A new table that holds a person's data adds a section to the export.

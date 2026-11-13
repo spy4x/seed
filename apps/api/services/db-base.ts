@@ -195,16 +195,24 @@ export const MOVABLE_AGGREGATES: readonly MovableAggregate[] = [tagMovable, note
  */
 export const PORTABLE_AGGREGATES: readonly PortableAggregate[] = [tagPortable, notePortable]
 
+/** `aggregates` as the notes switch leaves them: with the notes off, without `notesOwn`. */
+function switched<T>(notes: NotesSetup, aggregates: readonly T[], notesOwn: readonly T[]) {
+  return notes.on ? aggregates : aggregates.filter((aggregate) => !notesOwn.includes(aggregate))
+}
+
+/**
+ * The aggregates a group's export file holds and an import writes: with the notes off
+ * (`NOTES=false`), not notes or tags. An import skips the parts of the ones left out.
+ */
+export function portableAggregatesOf(notes: NotesSetup): readonly PortableAggregate[] {
+  return switched(notes, PORTABLE_AGGREGATES, [tagPortable, notePortable])
+}
+
 /**
  * The aggregates a device pulls the changes of, by group (`docs/aggregate-offline.md`, "Take part
  * in the changes pull"). Their `kind`s are the keys of the answer's `upserts`.
  */
 export const CHANGES_AGGREGATES: readonly ChangesAggregate[] = [tagChanges, noteChanges]
-
-/** `aggregates` as the notes switch leaves them: with the notes off, without `notesOwn`. */
-function switched<T>(notes: NotesSetup, aggregates: readonly T[], notesOwn: readonly T[]) {
-  return notes.on ? aggregates : aggregates.filter((aggregate) => !notesOwn.includes(aggregate))
-}
 
 /** The aggregates the changes pull reads: with the notes off (`NOTES=false`), not notes or tags. */
 export function changesAggregatesOf(notes: NotesSetup): readonly ChangesAggregate[] {
@@ -232,8 +240,8 @@ export interface AppDbBaseOptions {
    */
   userCache?: RowCache<User>
   /**
-   * The notes switch (`NOTES`). Off, the changes pull and the group data move leave notes and
-   * tags out, and sign-up queues no starter data. Defaults to on.
+   * The notes switch (`NOTES`). Off, the changes pull, the group data move and a group's export
+   * and import leave notes and tags out, and sign-up queues no starter data. Defaults to on.
    */
   notes?: NotesSetup
 }
@@ -329,7 +337,10 @@ export class AppDbBase extends DbServiceBase {
 
   /** A group's export file and the import of one. Built per access, like `group`. */
   get groupFiles(): PostgresGroupPorter {
-    return new PostgresGroupPorter(this.sql, PORTABLE_AGGREGATES)
+    // The registered aggregates switched off: an import skips their parts instead of refusing them.
+    const portable = portableAggregatesOf(this.notes)
+    const ignored = PORTABLE_AGGREGATES.filter((aggregate) => !portable.includes(aggregate))
+    return new PostgresGroupPorter(this.sql, portable, ignored.map(({ kind }) => kind))
   }
 
   /** The notes repository. Built per access, like `group`, so inside `begin()` it uses the transaction. */

@@ -226,7 +226,8 @@ const processor = createOutboxProcessor(
   shareResults,
   autoPost,
   catalogPages,
-  // The API reads the same switch: with the notes off, no import job creates a note.
+  // The API reads the same switch: with the notes off, no import job creates a note, and a data
+  // export holds no notes.
   readNotesSetup(processEnv),
 )
 

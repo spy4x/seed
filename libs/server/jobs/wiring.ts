@@ -17,6 +17,7 @@ import { JOB_RETRY } from "./job-failures.ts"
 import { JOB_AGGREGATE, JOB_AGGREGATE_ID, LEGACY_JOB_AGGREGATE_ID } from "./jobs.ts"
 import { type JobDefinition, type JobDeps, JOBS } from "./registry.ts"
 import type { ServerFiles } from "../files/files.ts"
+import { NOTES_ON } from "../notes/setup.ts"
 
 /**
  * The worker's outbox processor: group changes go to the notifier, and jobs to the handlers of
@@ -54,7 +55,8 @@ import type { ServerFiles } from "../files/files.ts"
  * `crosspost`, a live post is cross-posted to Dev.to once; without it, it is skipped.
  * `fetcher` is how `blog.publish` asks the website whether a post is live; tests pass a fake.
  * With `shareResults`, the hourly `blog.share-results` job reads each posted copy's numbers;
- * without it, that job reads nothing.
+ * without it, that job reads nothing. With `notes` off (`NOTES=false`), a data export holds no
+ * notes, attachments or tags.
  *
  * @throws Error when two jobs share a kind: one handler would silently replace the other.
  */
@@ -76,7 +78,7 @@ export function createOutboxProcessor(
   shareResults: JobDeps["shareResults"] = null,
   autoPost: JobDeps["autoPost"] = undefined,
   catalogPages: JobDeps["catalogPages"] = undefined,
-  notes: JobDeps["notes"] = undefined,
+  notes: JobDeps["notes"] = NOTES_ON,
 ): OutboxProcessor {
   const notifier = new GroupChangeNotifier(sql)
   const deps: JobDeps = {

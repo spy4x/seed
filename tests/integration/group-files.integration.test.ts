@@ -18,7 +18,8 @@ import { GroupExportCommand, type GroupExportOptions } from "@domain/groups"
 import { unzipSync } from "fflate"
 import { parseCsv } from "@spy4x/platform/universal/csv"
 import { createGroupExportHandler } from "../../apps/api/features/groups/files.ts"
-import { PORTABLE_AGGREGATES } from "../../apps/api/services/db-base.ts"
+import { AppDbBase, PORTABLE_AGGREGATES } from "../../apps/api/services/db-base.ts"
+import { NOTES_OFF } from "@server/notes/setup.ts"
 import { insertUser, withSchema } from "./group-team.ts"
 
 /**
@@ -484,5 +485,60 @@ Deno.test("a former owner who handed the group over and was removed cannot expor
       )
     expect(await codeOf(source.owner)).toBe("GROUP_NOT_FOUND")
     expect(await codeOf(heir)).toBe("exported")
+  })
+})
+
+/** The group files of an API that runs with `NOTES=false`, as its database service builds them. */
+const notesOffPorter = (sql: postgres.Sql) => new AppDbBase({ sql, notes: NOTES_OFF }).groupFiles
+
+Deno.test("with the notes off, a group's export file and spreadsheets hold no note or tag", async () => {
+  await withSchema(async (sql) => {
+    const { owner, groupId } = await seed(sql)
+    const porter = notesOffPorter(sql)
+
+    let text = ""
+    for await (const piece of (await porter.exportGroup(groupId, owner)).chunks) text += piece
+    const file = JSON.parse(text)
+    expect(file.group.name).toBe("Family")
+    expect(file.aggregates).toEqual({})
+
+    const sheets = await porter.exportGroup(groupId, owner, undefined, { format: "csv" })
+    const pieces: BlobPart[] = []
+    for await (const piece of sheets.chunks) pieces.push(piece as BlobPart)
+    const zip = unzipSync(new Uint8Array(await new Blob(pieces).arrayBuffer()))
+    expect(Object.keys(zip)).toEqual(["README.txt"])
+  })
+})
+
+Deno.test("with the notes off, an import skips a file's notes and tags: it writes the group, no note or tag, and lists no part", async () => {
+  await withSchema(async (sql) => {
+    const source = await seed(sql)
+    const file = await exportAs(sql, source.groupId, source.owner)
+    const before = await counts(sql)
+    const porter = notesOffPorter(sql)
+
+    expect(porter.check(file, NO_CAP)).toEqual({ name: "Family", parts: [] })
+    const importer = await insertUser(sql)
+    const result = await porter.importGroup(
+      { file, name: null, requestId: "req-import" },
+      importer,
+      NO_CAP,
+    )
+
+    expect(result.parts).toEqual([])
+    expect(await counts(sql)).toEqual({ ...before, groups: before.groups + 1 })
+    expect(await contents(sql, result.group.id)).toEqual({ notes: [], tags: [] })
+  })
+})
+
+Deno.test("with the notes off, an import still refuses a part this app has never known", async () => {
+  await withSchema(async (sql) => {
+    const source = await seed(sql)
+    const file = await exportAs(sql, source.groupId, source.owner) as {
+      aggregates: Record<string, unknown>
+    }
+    file.aggregates.invoices = []
+
+    expect(() => notesOffPorter(sql).check(file, NO_CAP)).toThrow(GroupImportError)
   })
 })

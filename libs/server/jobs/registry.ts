@@ -41,6 +41,7 @@ import { blogCrosspostJob, type BlogCrosspostSetup } from "../blog/blog-crosspos
 import { blogShareResultsJob, type ShareResultsSetup } from "../blog/blog-share-results-job.ts"
 import { autoPostJob, type AutoPostSetup } from "../blog/auto-post.ts"
 import type { SubscribersSetup } from "../subscribers/subscribers.ts"
+import { dataExportSectionsOf } from "./data-export-sections.ts"
 import {
   ACCOUNT_DELETION_MAIL_JOB,
   ACCOUNT_HARD_DELETE_JOB,
@@ -125,7 +126,10 @@ export interface JobDeps {
   fetch: typeof fetch
   /** The plan catalog the billing jobs read, `PLANS` unless a test passes its own. */
   plans?: readonly Plan[]
-  /** Whether the notes are on (`readNotesSetup`), which decides the import kinds; left out, on. */
+  /**
+   * The notes example's switch (`readNotesSetup`), left out on. Off, a data export holds no notes,
+   * and the imports offer no notes kind.
+   */
   notes?: NotesSetup
 }
 
@@ -327,7 +331,8 @@ export const JOBS: readonly JobDefinition[] = [
     kind: DATA_EXPORT_BUILD_JOB,
     label: `Data export`,
     about: { userIn: `data_exports` },
-    handler: ({ sql, files }) => dataExportBuildJob({ sql, files }),
+    handler: ({ sql, files, notes = NOTES_ON }) =>
+      dataExportBuildJob({ sql, files, sections: dataExportSectionsOf(notes) }),
   }),
   defineJob({
     kind: DATA_EXPORT_MAIL_JOB,
