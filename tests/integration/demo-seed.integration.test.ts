@@ -15,6 +15,8 @@ import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { createListCrypto, DEV_SUBSCRIBERS_SECRET } from "@server/subscribers/subscribers.ts"
 import { createPostgresSubscriberStore } from "@spy4x/server/subscribers/postgres"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
+import { createApiApp } from "../../apps/api/app.ts"
+import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import { type AppAuthState, createSignIn } from "../../apps/api/services/sign-in.ts"
 import { EmailChangeOutcome } from "../../apps/api/services/email-change.ts"
 import {
@@ -759,6 +761,70 @@ Deno.test("the reset seeds the visitors' administrator with its published passwo
       "test",
     )
     expect(await isDemoSeeded(sql, DAY, wanted)).toBe(false)
+  })
+})
+
+Deno.test("the visitors' administrator's session cookie works on the admin host only", async () => {
+  await withSchema(async (sql) => {
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admins: DEMO_ADMINS }, DAY)
+    await signUpVisitor(sql, "visitor@example.net")
+    const store = createPostgresAuthStore(sql)
+    const signIn = createSignIn({
+      db: new AppDbBase({ sql }),
+      pepper: PEPPER,
+      cookieSecret: COOKIE_SECRET,
+      secureCookie: false,
+      sessionMinutes: 60,
+      totpIssuer: "example.test",
+    })
+    // The API's own app and session parsing, as `index.ts` builds them on the demo, with the
+    // account routes a visitor would take the shared account over by.
+    const app = await createApiApp({
+      write: () => {},
+      parseAuth: signIn.auth.parseAuth,
+      adminHost: "admin.example.com",
+      isPublicDemoAdmin: async (userId) =>
+        (await store.findKey(PASSWORD_METHOD, PUBLIC_DEMO_ADMIN.email))?.userId === userId,
+      isProxyPeer: () => Promise.resolve(false),
+    })
+    const signedIn = (c: Context) => c.json({ userId: c.get("auth")?.user.id ?? null })
+    app.post("/auth/password/check", async (c) => {
+      const { login, password } = await c.req.json()
+      await signIn.signIn(c, login, password)
+      return c.json({})
+    })
+    app.get("/auth/me", signedIn)
+    for (
+      const path of ["/auth/password/change", "/auth/totp/connect/start", "/auth/account/delete"]
+    ) {
+      app.post(path, signedIn)
+    }
+    const cookieOf = async (host: string, login: string) => {
+      const response = await app.request(`http://${host}/api/auth/password/check`, {
+        method: "POST",
+        body: JSON.stringify({
+          login,
+          password: login === PUBLIC_DEMO_ADMIN.email ? PUBLIC_DEMO_ADMIN.password : PASSWORD,
+        }),
+      })
+      return response.headers.get("set-cookie")!.split(";")[0]
+    }
+    const send = (url: string, cookie: string, method = "POST") =>
+      app.request(url, { method, headers: { cookie } })
+
+    const demoAdmin = await cookieOf("admin.example.com", PUBLIC_DEMO_ADMIN.email)
+    expect((await send("http://admin.example.com/api/auth/me", demoAdmin, "GET")).status).toBe(200)
+    const visitor = await cookieOf("app.example.com", "visitor@example.net")
+    for (
+      const path of ["/auth/password/change", "/auth/totp/connect/start", "/auth/account/delete"]
+    ) {
+      const replayed = await send(`http://app.example.com/api${path}`, demoAdmin)
+      expect({ path, status: replayed.status, reason: (await replayed.json()).error?.reason })
+        .toEqual({ path, status: 401, reason: "DEMO_ADMIN_ELSEWHERE" })
+      // The same route answers a visitor of the web app, signed in there.
+      expect({ path, status: (await send(`http://app.example.com/api${path}`, visitor)).status })
+        .toEqual({ path, status: 200 })
+    }
   })
 })
 

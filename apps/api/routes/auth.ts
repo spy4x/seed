@@ -18,7 +18,7 @@ import { readApiJson } from "@api/services/json-body.ts"
 import { passwordFailureSubject } from "@api/services/password-failures.ts"
 import { PasswordLockedError, passwordLockedMessage } from "@api/services/password-locked.ts"
 import { errorResponse, validationResponse } from "../services/error-response.ts"
-import { isAdminHost } from "../middlewares/admin-host.ts"
+import { DEMO_ADMIN_ELSEWHERE, isAdminHost } from "../middlewares/admin-host.ts"
 import { isPublicDemoAdminLogin, PUBLIC_DEMO_ADMIN } from "@server/auth/demo-accounts.ts"
 import { authSignInSchema } from "@domain/identity"
 import { signInAnswer, signUpClosed, tooMany } from "./auth-answers.ts"
@@ -54,7 +54,7 @@ export interface AuthRouteDependencies {
   /**
    * The public demo (docs/demo.md), or `null` when it is off: the admin app's host, where the
    * public admin account ({@link PUBLIC_DEMO_ADMIN}) signs in. Elsewhere its sign-in is refused,
-   * so nobody changes the shared account's password, address or second factor on the web app.
+   * and the admin host gate (`createAdminHostGate`) answers its session 401 on any other host.
    */
   demo?: { adminHost: string | null } | null
 }
@@ -67,9 +67,6 @@ const DEMO_ADMIN_CREDENTIALS = {
   email: PUBLIC_DEMO_ADMIN.email,
   password: PUBLIC_DEMO_ADMIN.password,
 }
-
-/** The web app's answer to the public admin account's sign-in: it works on the admin app only. */
-export const DEMO_ADMIN_ELSEWHERE = `This account signs in to the admin panel only`
 
 /** The `/auth` routes of the password sign-in, each flow mounted in the order its gate needs. */
 export function createAuthRoute(deps: AuthRouteDependencies): Hono<APIContext> {

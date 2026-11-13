@@ -67,8 +67,11 @@ them see everything."
 
 The account is shared, so the API keeps visitors from taking it over or reaching past the demo:
 
-- It signs in on the admin host only. The SPA's host refuses it, and the admin host has no route
-  that changes an account, so nobody can change its password, address or second factor.
+- It works on the admin host only. The SPA's host refuses its sign-in, and the admin host has no
+  route that changes an account. A browser keeps its session cookie to the admin host, but a
+  script can send that cookie anywhere, so the API's admin host gate
+  (`apps/api/middlewares/admin-host.ts`) answers 401 and `DEMO_ADMIN_ELSEWHERE` to its session on
+  every other host. Nobody can change its password, address or second factor, or delete it.
 - A wrong password never locks it, so one visitor cannot lock the others out. The sign-in's
   limit per network address still holds.
 - `apps/api/routes/admin/demo-guard.ts` refuses it the actions that outlive the nightly wipe or

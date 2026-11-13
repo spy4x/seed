@@ -132,6 +132,12 @@ const errorReporter = createErrorReporter({
   maxPerSession: 100,
   windowMs: 60 * 60 * 1000,
 })
+// The public demo's admin account (docs/demo.md) is found by its address on each request: the
+// nightly reset gives it a new id. Off the demo nothing is looked up.
+const isPublicDemoAdmin = config.demo
+  ? async (userId: number) =>
+    (await db.authStore.findKey(PASSWORD_METHOD, PUBLIC_DEMO_ADMIN.email))?.userId === userId
+  : undefined
 // Every route stands behind the security headers, the base middleware and the page-user check
 // (`./app.ts`).
 const app = await createApiApp({
@@ -141,6 +147,7 @@ const app = await createApiApp({
   reportError: (error, context) => void errorReporter.report(error, context),
   adminHost: config.adminDomain,
   spa: config.spa,
+  isPublicDemoAdmin,
   isProxyPeer: createProxyPeers({
     hosts: config.proxyHosts.length > 0 ? config.proxyHosts : DEFAULT_PROXY_HOSTS,
     onError: (host, error) => log(`error: could not look up the proxy ${host}`, error),
@@ -314,12 +321,7 @@ app.route(
           preferencesDefinition.resolve(await db.preferences.store.read(String(userId))),
       }),
     ),
-    // The public demo's admin account (docs/demo.md) is found by its address on each request: the
-    // nightly reset gives it a new id.
-    isPublicDemoAdmin: config.demo
-      ? async (userId) =>
-        (await db.authStore.findKey(PASSWORD_METHOD, PUBLIC_DEMO_ADMIN.email))?.userId === userId
-      : undefined,
+    isPublicDemoAdmin,
   }),
 )
 // Awaited here so a missing VAPID keys file stops the API at start-up, not at the first push call.
