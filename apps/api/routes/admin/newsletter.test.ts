@@ -375,6 +375,23 @@ describe(`operator area: newsletter routes`, () => {
     ])
   })
 
+  it(`answers the public demo's admin account the same for a listed and an unlisted address`, async () => {
+    for (const action of [`remove`, `resend`]) {
+      const answers: unknown[] = []
+      for (const email of [pending.email, confirmed.email, `stranger@example.net`]) {
+        const { app, calls, audits } = buildApp(operator(), { publicDemoAdmin: true })
+        const response = await post(app, action, { email })
+        answers.push({ status: response.status, body: await response.json() })
+        // The guard answers before the address is looked up, so nothing can tell them apart.
+        expect(calls, `${action} ${email}`).toEqual([])
+        expect(audits, `${action} ${email}`).toEqual([])
+      }
+      expect(answers[0]).toMatchObject({ status: 403, body: { error: { reason: `DEMO_REFUSED` } } })
+      expect(answers[1], action).toEqual(answers[0])
+      expect(answers[2], action).toEqual(answers[0])
+    }
+  })
+
   it(`lists and exports only the example addresses to the public demo's admin account`, async () => {
     for (const publicDemoAdmin of [false, true]) {
       const { app, examplesOnly } = buildApp(operator(), { publicDemoAdmin })
