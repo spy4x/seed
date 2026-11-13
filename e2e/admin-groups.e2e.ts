@@ -316,12 +316,15 @@ test.describe(`the admin app's groups`, () => {
       await expect(log).toContainText(`File downloaded by an operator`)
       await expect(log).toContainText(`abusive-${id}.png`)
       // One Download is one row: Chromium fetches the download's address a second time, and the
-      // request id in that address keeps the repeat out of the log.
-      const downloads = await ops.request.get(
-        `${adminBase}/api/admin/audit?event=activity%3Aoperator.file_downloaded`,
-      )
-      expect(downloads.status()).toBe(200)
-      const { entries } = await downloads.json() as { entries: { fileName: string | null }[] }
+      // request id in that address keeps the repeat out of the log. The request goes from the
+      // admin page: the browser resolves `admin.localhost`, but the CI container's Node resolver
+      // does not.
+      const downloads = await ops.evaluate(async () => {
+        const response = await fetch(`/api/admin/audit?event=activity%3Aoperator.file_downloaded`)
+        return { status: response.status, body: await response.json() }
+      })
+      expect(downloads.status).toBe(200)
+      const { entries } = downloads.body as { entries: { fileName: string | null }[] }
       expect(entries.filter((entry) => entry.fileName === `abusive-${id}.png`)).toHaveLength(1)
     } finally {
       await admin?.close()
