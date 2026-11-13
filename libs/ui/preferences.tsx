@@ -87,7 +87,7 @@ const FAILURE_KEYS: Record<PreferencesFailure, string> = {
 }
 
 /** Each theme in one word, by its key in the `app` catalog. */
-const THEME_KEYS: Record<ThemePreference, string> = {
+export const THEME_KEYS: Record<ThemePreference, string> = {
   system: `Preferences.themeSystem`,
   light: `Preferences.themeLight`,
   dark: `Preferences.themeDark`,
