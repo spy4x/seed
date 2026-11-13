@@ -110,8 +110,8 @@ export const RECENT_NOTES = 5
 /** The most characters of the query the no-results line repeats. */
 const QUOTED_MAX = 40
 
-/** The palette's fixed words; the no-results line is set per answer. */
-function labels(
+/** The palette's fixed words, the admin's too; the no-results line is set per answer. */
+export function paletteLabels(
   t: Translator<string>,
 ): Pick<CommandPaletteLabels, "search" | "placeholder" | "close" | "loading" | "error"> {
   return {
@@ -245,7 +245,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
           option.choice && props.onSelect(pickedChoice(option.choice, details.alternative))}
         // Bound above, so they work while the trigger is hidden.
         hotkeys={[]}
-        labels={{ ...labels(t), empty }}
+        labels={{ ...paletteLabels(t), empty }}
         dataE2E="search"
         class="hidden"
       />

@@ -28,7 +28,8 @@ import { isLanguage, LANGUAGES } from "@domain/identity"
 import { languageSetting, pickLanguage } from "@platform/i18n.ts"
 import { kept, languages as pageLanguages } from "./i18n.ts"
 import { createOperatorFormat, type OperatorFormat } from "./preferences.ts"
-import { adminShortcutRows, focusListFilter } from "./shortcuts.ts"
+import { adminGoTo, adminShortcutRows, focusListFilter, onListPage } from "./shortcuts.ts"
+import { type AdminSearchChoice, AdminSearchPalette } from "@ui/admin-palette.tsx"
 import { guardNavigate } from "./leave.ts"
 import {
   type createSingleKeysSetting,
@@ -202,6 +203,17 @@ function Operator(
   })
   // Bound only in the signed-in shell, which draws the list too.
   useShortcuts(user && hasAdminAccess(user) ? shortcutRows : [], singleKeys.on.value)
+  // A palette pick runs what its shortcut, menu entry or switch runs.
+  const pick = (choice: AdminSearchChoice) => {
+    if (choice.kind === "page") leave(choice.href)
+    // The account menu's Theme sets it the same way.
+    else if (choice.kind === "theme") theme.set(choice.theme as Parameters<typeof theme.set>[0])
+    else if (choice.kind === "single-keys") singleKeys.set(choice.on)
+    else if (choice.kind === "shortcuts") setShortcutsOpen(true)
+    else if (choice.kind === "list-filter") focusListFilter()
+    // The account menu's Sign out runs the same.
+    else if (choice.kind === "sign-out") store.signOut()
+  }
   const toastr = <Toastr toasts={toasts.list.value} onDismiss={toasts.remove} dataE2E="toasts" />
 
   if (session.step === "loading") {
@@ -253,6 +265,15 @@ function Operator(
         language={language}
         onSignOut={store.signOut}
         navigate={leave}
+        search={
+          <AdminSearchPalette
+            goTo={adminGoTo(modules)}
+            listFilter={onListPage(modules, path)}
+            theme={theme.preference.value}
+            singleKeys={singleKeys.on.value}
+            onSelect={pick}
+          />
+        }
         shortcuts={{
           rows: shortcutRows,
           open: shortcutsOpen,
