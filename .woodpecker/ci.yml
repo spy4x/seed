@@ -1,8 +1,8 @@
 # Continuous integration: runs on every pull request, every push to main and every tag (release.yml
 # waits for it).
 #
-# Woodpecker reads every `*.yml` in this folder as its own workflow. Deploys are not wired up: see
-# `deploy.yml.example` and docs/woodpecker-ci-setup.md.
+# Woodpecker reads every `*.yml` in this folder as its own workflow. A product turns on deploys on
+# every push to main by copying `deploy.yml.example` (docs/woodpecker-ci-setup.md).
 #
 # Deno 2.9.7 is the version the repository uses (`DENO_VERSION` in infra/envs/.env.example and
 # Dockerfile.base). Playwright 1.57.0 is the version `deno task e2e` runs (deno.jsonc); the e2e

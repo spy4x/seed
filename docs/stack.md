@@ -370,7 +370,7 @@ vertical, through per-service resource limits.
 
 CI is Woodpecker: `.woodpecker/ci.yml` on every pull request, push to `main` and version tag. Its
 steps are listed once, in [woodpecker-ci-setup.md](woodpecker-ci-setup.md). A `v*` tag also
-publishes the images (`.woodpecker/release.yml`). Deploys are not wired up
+publishes the images (`.woodpecker/release.yml`). A product can deploy every push to `main`
 (`.woodpecker/deploy.yml.example`).
 
 ## Conventions worth keeping

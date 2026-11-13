@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "このメモにファイルを添付",
+  "AppShell.copyNoteLink": "このメモのリンクをコピー",
+  "AppShell.deleteNote": "このメモを削除",
+  "AppShell.duplicateNote": "このメモを複製",
+  "AppShell.moveNote": "このメモを別のグループに移動",
   "AttachmentMessages.load": "ファイルを読み込めませんでした",
   "AttachmentMessages.type":
     "{name}は添付できません。添付できるのはJPEG、PNG、WebP、GIFの画像とPDFファイルのみです。",
@@ -978,6 +982,8 @@ export default {
   "NoteEditor.tags": "タグ",
   "NoteEditorView.createdTitle": "メモを追加しました",
   "NoteEditorView.created": "「{title}」を作成しました。",
+  "NoteEditorView.copyTitle": "{title}（コピー）",
+  "NoteEditorView.duplicateFailed": "メモを複製できませんでした",
   "NoteEditorView.savedTitle": "メモを保存しました",
   "NoteEditorView.saved": "「{title}」を保存しました。",
   "NoteEditorView.unsaved": "保存していない変更があります。今移動すると、変更は失われます。",

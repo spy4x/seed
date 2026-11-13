@@ -12,7 +12,7 @@ import { createTranslator } from "@spy4x/platform/universal/i18n"
 import app from "@i18n/app/en.ts"
 import appRu from "@i18n/app/ru.ts"
 import { paletteCommands, type PaletteOption } from "@ui/palette-commands.ts"
-import { pageCommands, spaShortcutRows } from "./shortcuts.ts"
+import { pageCommands, runNoteCommand, spaShortcutRows } from "./shortcuts.ts"
 
 function rows(activityGroupId: string | null, onOverview = false) {
   const seen = { navigated: [] as string[], newNote: 0, shortcuts: 0, range: 0, customise: 0 }
@@ -84,7 +84,7 @@ const RU = createTranslator({ language: `ru`, catalogs: [{ source: app, translat
 
 describe("the open page's commands in the search palette", () => {
   it("label the overview's commands in the person's language and keep their English as aliases", () => {
-    expect(pageCommands(RU, { overview: true, benchmark: false, noteEditor: false }, [])).toEqual([
+    expect(pageCommands(RU, { overview: true, benchmark: false, noteEditor: null }, [])).toEqual([
       {
         id: "overview-range",
         label: RU.t(`Shortcuts.dateRange`),
@@ -101,13 +101,64 @@ describe("the open page's commands in the search palette", () => {
     expect(RU.t(`Shortcuts.dateRange`)).not.toBe("Change date range")
   })
 
-  it("offer the note page's attach command, and nothing on another page", () => {
-    expect(
-      pageCommands(RU, { overview: false, benchmark: false, noteEditor: true }, [])
-        ?.map((c) => c.aliases),
-    ).toEqual([["Attach files to this note"]])
-    expect(pageCommands(RU, { overview: false, benchmark: false, noteEditor: false }, []))
+  it("offer nothing of a note on another page", () => {
+    expect(pageCommands(RU, { overview: false, benchmark: false, noteEditor: null }, []))
       .toBeUndefined()
+  })
+
+  it("offer a writer of a note every note command, Delete last, found by English and Russian words", () => {
+    const commands = pageCommands(RU, { overview: false, benchmark: false, noteEditor: all }, [])
+    expect(commands?.map((c) => c.id)).toEqual([
+      "note-attach",
+      "note-duplicate",
+      "note-move",
+      "note-copy-link",
+      "note-delete",
+    ])
+    const del = commands?.find((c) => c.id === "note-delete")
+    expect(del?.label).toBe(RU.t(`AppShell.deleteNote`))
+    expect(del?.aliases).toEqual(["Delete this note", "remove note", "trash", "удалить заметку"])
+    expect(commands?.find((c) => c.id === "note-duplicate")?.aliases).toContain("дублировать")
+    expect(commands?.find((c) => c.id === "note-copy-link")?.aliases).toContain("ссылка")
+  })
+
+  it("offer a reader of a note only Copy link", () => {
+    expect(
+      pageCommands(RU, { overview: false, benchmark: false, noteEditor: { copyLink: noop } }, [])
+        ?.map((c) => c.id),
+    ).toEqual(["note-copy-link"])
+  })
+
+  it("leave Move out when the person has no other group to move the note to", () => {
+    const { move: _, ...noMove } = all
+    expect(
+      pageCommands(RU, { overview: false, benchmark: false, noteEditor: noMove }, [])
+        ?.map((c) => c.id),
+    ).not.toContain("note-move")
+  })
+})
+
+const noop = () => {}
+const all = { attach: noop, duplicate: noop, move: noop, copyLink: noop, delete: noop }
+
+describe("runNoteCommand", () => {
+  it("runs the note page's action its command names, once", () => {
+    const ran: string[] = []
+    const actions = {
+      duplicate: () => void ran.push("duplicate"),
+      delete: () => void ran.push("delete"),
+    }
+    runNoteCommand("note-delete", actions)
+    runNoteCommand("note-duplicate", actions)
+    expect(ran).toEqual(["delete", "duplicate"])
+  })
+
+  it("does nothing for a command the page does not offer now, or off a note page", () => {
+    const ran: string[] = []
+    runNoteCommand("note-delete", { copyLink: () => void ran.push("copy") })
+    runNoteCommand("note-copy-link", null)
+    runNoteCommand("overview-range", { copyLink: () => void ran.push("copy") })
+    expect(ran).toEqual([])
   })
 })
 
@@ -124,7 +175,7 @@ function commandsFor(page: "none" | "overview" | "benchmark") {
     overviewPage: page === "overview" ? { openRange: () => {}, openCustomise: () => {} } : null,
     benchmarkPage: page === "benchmark" ? { run: () => {}, copy: () => {} } : null,
   })
-  const open = { overview: page === "overview", benchmark: page === "benchmark", noteEditor: false }
+  const open = { overview: page === "overview", benchmark: page === "benchmark", noteEditor: null }
   const commands = paletteCommands({
     t: EN,
     locale: `en`,

@@ -94,6 +94,14 @@ export interface NoteEditorScreenProps {
   moving?: boolean
   /** The refusal of the last move, shown under the form. */
   moveError?: Message | null
+  /**
+   * Opens one of the page menu's dialogs from outside the page, such as the command palette:
+   * `delete` opens the delete confirmation (it never deletes), `move` the group picker. A dialog
+   * the menu does not offer stays closed. The page then calls `onDialogRequested`, so the app
+   * clears the request and the next one opens the dialog again.
+   */
+  requestDialog?: NoteDialog | null
+  onDialogRequested?: () => void
   /** The group's tags, offered as a picker under the text. Left out or empty, there is none. */
   tags?: readonly TagRow[]
   /** Who made the note and changed it last, shown under the title. Left out on the create page. */
@@ -107,6 +115,9 @@ export interface NoteEditorScreenProps {
   /** Drawn right under the page header, in every state of the page: the app's offline status. */
   intro?: ComponentChildren
 }
+
+/** A dialog of the note page's menu that the app may open: see `requestDialog`. */
+export type NoteDialog = "delete" | "move"
 
 /** What the page passes on to {@link NoteAttachments}; the group and the mode come from the page. */
 export type NoteAttachmentsSlot = Omit<
@@ -303,6 +314,16 @@ function Editor(props: WithGroup): JSX.Element {
   useEffect(() => {
     if (errors.title) title.current?.focus()
   }, [errors.title])
+  // The same checks as the menu items: a dialog opens only where the menu would offer it.
+  const request = props.requestDialog
+  useEffect(() => {
+    if (!request) return
+    if (request === "delete" && note && props.onDelete && !props.deleting) setAsking(true)
+    if (request === "move" && note && moveTargets.length > 0 && !props.moving) {
+      setChoosingGroup(true)
+    }
+    props.onDialogRequested?.()
+  }, [request])
   return (
     <ScreenForm
       pending={saving}

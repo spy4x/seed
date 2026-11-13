@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "Прикрепить файлы к заметке",
+  "AppShell.copyNoteLink": "Скопировать ссылку на заметку",
+  "AppShell.deleteNote": "Удалить заметку",
+  "AppShell.duplicateNote": "Дублировать заметку",
+  "AppShell.moveNote": "Перенести заметку в другую группу",
   "AttachmentMessages.load": "Не удалось загрузить файлы",
   "AttachmentMessages.type":
     "Файл {name} нельзя прикрепить: подходят только изображения JPEG, PNG, WebP, GIF и файлы PDF.",
@@ -1167,6 +1171,8 @@ export default {
   "NoteEditor.tags": "Метки",
   "NoteEditorView.createdTitle": "Заметка добавлена",
   "NoteEditorView.created": "«{title}» теперь в списке заметок.",
+  "NoteEditorView.copyTitle": "{title} (копия)",
+  "NoteEditorView.duplicateFailed": "Не удалось дублировать заметку",
   "NoteEditorView.savedTitle": "Заметка сохранена",
   "NoteEditorView.saved": "Изменения в «{title}» сохранены.",
   "NoteEditorView.unsaved": "Есть несохранённые изменения. Если уйти сейчас, они пропадут.",

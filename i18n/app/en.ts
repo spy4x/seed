@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "Attach files to this note",
+  "AppShell.copyNoteLink": "Copy link to this note",
+  "AppShell.deleteNote": "Delete this note",
+  "AppShell.duplicateNote": "Duplicate this note",
+  "AppShell.moveNote": "Move this note to another group",
   "AttachmentMessages.load": "Could not load the files",
   "AttachmentMessages.type":
     "{name} can't be attached. Only JPEG, PNG, WebP and GIF images and PDF files are allowed.",
@@ -1020,6 +1024,8 @@ export default {
   "NoteEditor.tags": "Tags",
   "NoteEditorView.createdTitle": "Note added",
   "NoteEditorView.created": '"{title}" was created.',
+  "NoteEditorView.copyTitle": "{title} (copy)",
+  "NoteEditorView.duplicateFailed": "Could not duplicate the note",
   "NoteEditorView.savedTitle": "Note saved",
   "NoteEditorView.saved": '"{title}" was saved.',
   "NoteEditorView.unsaved": "You have unsaved changes. If you leave now, you'll lose them.",
