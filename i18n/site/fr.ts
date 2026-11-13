@@ -788,7 +788,7 @@ export default {
     "L’application d’administration se trouve dans le même dépôt que le produit, tourne sur son propre hôte et est gratuite sous licence MIT.",
   "AdminTour.tryTitle": "Essayez le panneau d’administration vous-même",
   "AdminTour.tryLead":
-    "Connectez-vous au panneau d’administration de la démo en ligne avec le compte ci-dessous. Les personnes qui s’y trouvent sont fictives, et tout est réinitialisé chaque nuit. Les modifications du site web et les e-mails aux vrais abonnés sont désactivés.",
+    "Connectez-vous au panneau d’administration de la démo en ligne avec ce compte. Vous verrez les personnes fictives et tous ceux qui se sont inscrits à la démo, avec leurs adresses e-mail et leurs adresses IP. Tout est réinitialisé chaque nuit. Les modifications du site web et les e-mails aux vrais abonnés sont désactivés.",
   "AdminTour.tryEmail": "Adresse e-mail",
   "AdminTour.tryPassword": "Mot de passe",
   "AdminTour.tryOpen": "Ouvrir le panneau d’administration",

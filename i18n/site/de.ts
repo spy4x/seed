@@ -761,7 +761,7 @@ export default {
     "Die Admin-App liegt im selben Repository wie das Produkt, läuft auf einem eigenen Host und ist kostenlos unter der MIT-Lizenz.",
   "AdminTour.tryTitle": "Probier den Adminbereich selbst aus",
   "AdminTour.tryLead":
-    "Melde dich mit dem Konto unten im Adminbereich der Live-Demo an. Die Personen darin sind erfunden, und jede Nacht wird alles zurückgesetzt. Änderungen an der Website und E-Mails an echte Abonnenten sind ausgeschaltet.",
+    "Melde dich mit diesem Konto im Adminbereich der Live-Demo an. Du siehst die erfundenen Personen und alle, die sich in der Demo registriert haben, mit ihren Adressen und IP-Adressen. Jede Nacht wird alles zurückgesetzt. Änderungen an der Website und E-Mails an echte Abonnenten sind ausgeschaltet.",
   "AdminTour.tryEmail": "E-Mail-Adresse",
   "AdminTour.tryPassword": "Passwort",
   "AdminTour.tryOpen": "Adminbereich öffnen",

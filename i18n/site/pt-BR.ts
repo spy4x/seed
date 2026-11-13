@@ -759,7 +759,7 @@ export default {
     "O painel de administração fica no mesmo repositório do produto, roda num host próprio e é gratuito sob a licença MIT.",
   "AdminTour.tryTitle": "Experimente o painel de administração",
   "AdminTour.tryLead":
-    "Entre no painel de administração da demo com a conta abaixo. As pessoas que aparecem lá são inventadas, e tudo é zerado toda noite. Não dá para mudar o site nem mandar e-mails para inscritos de verdade.",
+    "Entre no painel de administração da demo com esta conta. Você vai ver as pessoas inventadas e todo mundo que se cadastrou na demo, com seus e-mails e endereços IP. Tudo é zerado toda noite. Não dá para mudar o site nem mandar e-mails para inscritos de verdade.",
   "AdminTour.tryEmail": "E-mail",
   "AdminTour.tryPassword": "Senha",
   "AdminTour.tryOpen": "Abrir o painel de administração",
