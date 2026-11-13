@@ -1,7 +1,13 @@
 /** `filterNotes`: what the notes list keeps and in which order, from the notes it holds. */
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { defaultDirection, filterNotes, NO_NOTE_FILTERS, type NoteFilters } from "./notes-filter.ts"
+import {
+  defaultDirection,
+  filterNotes,
+  NO_NOTE_FILTERS,
+  type NoteFilters,
+  withOneAuthor,
+} from "./notes-filter.ts"
 
 const design = "tag-design"
 const plans = "tag-plans"
@@ -118,6 +124,17 @@ describe("filterNotes", () => {
     expect(titles({ author: "7" })).toEqual(["Q4 planning: hiring and budget"])
     expect(titles({ mine: true })).toEqual(["Welcome"])
     expect(titles({ mine: true }, null)).toEqual([])
+  })
+
+  it("turns an author filter naming the person into Created by me, which drops any other author", () => {
+    expect(withOneAuthor({ ...NO_NOTE_FILTERS, author: "1" }, "1"))
+      .toEqual({ ...NO_NOTE_FILTERS, mine: true })
+    expect(withOneAuthor({ ...NO_NOTE_FILTERS, author: "7", mine: true }, "1"))
+      .toEqual({ ...NO_NOTE_FILTERS, mine: true })
+    expect(withOneAuthor({ ...NO_NOTE_FILTERS, author: "7" }, "1"))
+      .toEqual({ ...NO_NOTE_FILTERS, author: "7" })
+    expect(withOneAuthor({ ...NO_NOTE_FILTERS, author: "1" }, null))
+      .toEqual({ ...NO_NOTE_FILTERS, author: "1" })
   })
 
   it("leaves the notes it was given as they were", () => {
