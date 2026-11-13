@@ -804,7 +804,9 @@ describe("the public website", () => {
 
     expect(start).toBeGreaterThan(html.indexOf(`<section id="realtime"`))
     expect(start).toBeLessThan(html.indexOf(`<section id="offline"`))
-    expect(html.slice(start + 1, html.indexOf(`<section id="offline"`))).not.toContain(`<section id=`)
+    expect(html.slice(start + 1, html.indexOf(`<section id="offline"`))).not.toContain(
+      `<section id=`,
+    )
     expect(section).toContain(`>Screens open from the device, then catch up</h3>`)
     expect(section).toContain(`Still waits on the server: sign-in`)
     expect(section).toContain(`href="${REPOSITORY_URL}/blob/main/docs/offline-data.md"`)
