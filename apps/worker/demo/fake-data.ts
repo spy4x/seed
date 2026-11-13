@@ -84,6 +84,8 @@ export interface FakeNote {
   edit: { by: FakeMember; ago: number } | null
   /** Files on the note, attached by its author when it was written. Only sample groups have any. */
   files?: { name: string; kind: `png` | `pdf` }[]
+  /** Its author brought it in from a CSV file, with the group's other such notes (docs/imports.md). */
+  fromFile?: boolean
 }
 
 export interface FakeGroup {
@@ -768,12 +770,35 @@ export function fakeDemoData(seed: number, now: Date): FakeDemoData {
       true,
     ),
   })
+  // The first group's owner brought a few notes in from a CSV file, as one saved import.
+  groups[0] = withImportedNotes(groups[0])
   // The newest small group came from an export file: its owner moved it over from elsewhere.
   small[small.length - 1].imported = true
   const newsletter = fakeNewsletter(tools, now, users, taken)
   const operator = fakeOperator(tools, now, users, subscriptions)
   addPasskeys(randomTools(seed + PASSKEY_SEED_OFFSET), users)
   return { users, groups: [...groups, ...small], subscriptions, ...newsletter, operator }
+}
+
+/** How many of a group's owner's notes {@link withImportedNotes} marks. */
+export const IMPORTED_NOTES = 3
+
+/**
+ * Marks up to {@link IMPORTED_NOTES} of the owner's notes as brought in from one CSV file, all
+ * written the moment the oldest of them was; an edit since stays after it.
+ */
+function withImportedNotes(group: FakeGroup): FakeGroup {
+  const picked = group.notes
+    .map((note, index) => ({ note, index }))
+    .filter(({ note }) => note.author === group.owner)
+    .slice(0, IMPORTED_NOTES)
+  if (picked.length === 0) return group
+  const createdAgo = Math.max(...picked.map(({ note }) => note.createdAgo))
+  const indexes = new Set(picked.map(({ index }) => index))
+  const notes = group.notes.map((note, index) =>
+    indexes.has(index) ? { ...note, createdAgo, fromFile: true } : note
+  )
+  return { ...group, notes }
 }
 
 /** Passkeys draw from a stream of their own, so adding them moved no other fake row. */

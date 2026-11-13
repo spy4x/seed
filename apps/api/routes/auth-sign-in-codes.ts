@@ -15,8 +15,8 @@ import { readApiJson } from "@api/services/json-body.ts"
 import { errorResponse, validationResponse } from "../services/error-response.ts"
 import type { AuthRouteDependencies } from "./auth.ts"
 import {
-  authEmailCodeSchema,
   authSignInCodeSchema,
+  authSignUpCodeSchema,
   type SignInCodeAnswer,
   type SignUpGuestTakenResponse,
   type WaitingCodeResponse,
@@ -89,11 +89,14 @@ export function createSignInCodeRoutes(
     })
     .post(`/code/verify`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
       const body = await readApiJson(c)
-      const validationResult = validate(authEmailCodeSchema, body)
+      const validationResult = validate(authSignUpCodeSchema, body)
       if (validationResult.error) {
         return validationResponse(c, validationResult.error.details)
       }
-      const result = await signIn.completeSignInCode(c, validationResult.data.code)
+      // A code that would make an account the sign-up gate refuses throws `SignUpClosedError`,
+      // which `createAuthRoute` answers.
+      const { code, invitation = null } = validationResult.data
+      const result = await signIn.completeSignInCode(c, code, invitation)
       switch (result.outcome) {
         case SignInCodeOutcome.SignedIn:
         case SignInCodeOutcome.Created:

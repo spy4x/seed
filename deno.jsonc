@@ -13,6 +13,7 @@
     "./libs/domain/blog",
     "./libs/domain/contact-links",
     "./libs/domain/catalog",
+    "./libs/domain/imports",
     "./libs/domain/notes",
     "./libs/domain/tags",
     "./libs/domain/notifications",
@@ -28,6 +29,7 @@
     "./libs/server/blog",
     "./libs/server/contact-links",
     "./libs/server/catalog",
+    "./libs/server/imports",
     "./libs/server/notes",
     "./libs/server/tags",
     "./libs/server/notifications",
@@ -37,7 +39,43 @@
   ],
   "nodeModulesDir": "auto",
   "allowScripts": ["npm:@tailwindcss/oxide@4.1.12"],
-  "minimumDependencyAge": { "age": "1440", "exclude": ["jsr:@spy4x/*", "npm:@jsr/spy4x__*"] },
+  // `@deno/loader` 0.5.0, which the Vite dev servers resolve through, ignores the globs and matches
+  // only exact names, so every @spy4x package in deno.lock is listed too.
+  // tests/dependency-age.test.ts fails when one is missing.
+  "minimumDependencyAge": {
+    "age": "1440",
+    "exclude": [
+      "jsr:@spy4x/*",
+      "npm:@jsr/spy4x__*",
+      "jsr:@spy4x/billing",
+      "jsr:@spy4x/email",
+      "jsr:@spy4x/integrations",
+      "jsr:@spy4x/net",
+      "jsr:@spy4x/platform",
+      "jsr:@spy4x/preact-charts",
+      "jsr:@spy4x/preact-cn",
+      "jsr:@spy4x/preact-icons",
+      "jsr:@spy4x/preact-server",
+      "jsr:@spy4x/preact-signals",
+      "jsr:@spy4x/preact-system",
+      "jsr:@spy4x/preact-theme",
+      "jsr:@spy4x/preact-ui",
+      "jsr:@spy4x/realtime",
+      "jsr:@spy4x/server",
+      "jsr:@spy4x/time",
+      "jsr:@spy4x/validation",
+      "npm:@jsr/spy4x__email",
+      "npm:@jsr/spy4x__net",
+      "npm:@jsr/spy4x__platform",
+      "npm:@jsr/spy4x__preact-cn",
+      "npm:@jsr/spy4x__preact-icons",
+      "npm:@jsr/spy4x__preact-system",
+      "npm:@jsr/spy4x__preact-theme",
+      "npm:@jsr/spy4x__preact-ui",
+      "npm:@jsr/spy4x__time",
+      "npm:@jsr/spy4x__validation"
+    ]
+  },
   "tasks": {
     "init": {
       "command": "deno run -R=. -W=infra/envs/.env,infra/envs/.env.tmp,infra/configs/vapid.json,infra/configs/vapid.json.tmp,.seed --allow-run=docker,podman,git ./infra/scripts/init.ts",
@@ -292,12 +330,12 @@
       "description": "Type check; prints only errors"
     },
     "test": {
-      "command": "deno run --allow-run=deno --allow-env=CI infra/scripts/test.ts",
+      "command": "deno run --allow-run=deno,git --allow-env=CI infra/scripts/test.ts",
       "description": "Unit tests in parallel; prints failures and one summary line. Paths run only those files; CI=true or --verbose prints everything"
     },
     "test:integration": {
-      "command": "ENV=test deno test --no-prompt -E -N -R=./libs/server/db/migrations,./libs/server/db/schema.sql,./libs/server/blog/seed-posts tests/integration",
-      "description": "Integration tests against your Postgres and Valkey"
+      "command": "deno run --allow-run=deno infra/scripts/test-integration.ts",
+      "description": "Integration tests against your Postgres and Valkey. Paths run only those files; none runs tests/integration"
     },
     "e2e": {
       "command": "PLAYWRIGHT_HTML_OUTPUT_DIR=./e2e/report deno run -A --node-modules-dir npm:playwright@1.57.0 test",
@@ -365,6 +403,7 @@
     "@domain/blog": "./libs/domain/blog/+lib.ts",
     "@domain/contact-links": "./libs/domain/contact-links/+lib.ts",
     "@domain/catalog": "./libs/domain/catalog/+lib.ts",
+    "@domain/imports": "./libs/domain/imports/+lib.ts",
     "@domain/notes": "./libs/domain/notes/+lib.ts",
     "@domain/tags": "./libs/domain/tags/+lib.ts",
     "@domain/notifications": "./libs/domain/notifications/+lib.ts",
@@ -380,6 +419,7 @@
     "@server/blog/": "./libs/server/blog/",
     "@server/contact-links/": "./libs/server/contact-links/",
     "@server/catalog/": "./libs/server/catalog/",
+    "@server/imports/": "./libs/server/imports/",
     "@server/notes/": "./libs/server/notes/",
     "@server/tags/": "./libs/server/tags/",
     "@server/notifications/": "./libs/server/notifications/",
@@ -390,25 +430,31 @@
     // #endregion Aliases
 
     // #region Dependencies
-    // spy4x/ts-libs 1.114.0 (cron schedules, passkeys, idempotency, keyset cursor, lockout, offline
+    // spy4x/ts-libs 1.126.0 (cron schedules, passkeys, idempotency, keyset cursor, lockout, offline
     // outbox, e-mail proof, the redirect-path check of sign-in's `next`, the password check without
     // a session, billing, the provider's name and picture, the healthcheck's HTTP mode, a key
     // giving up its address, safe Markdown and reading time, copying an object inside the S3
-    // store, an error's reason and per-field codes, contact channels, HEIC by its bytes, image
-    // processing, translator-aware formats, the changes pull of a group, process adapters for Node
-    // and Bun, signals, the port-only healthcheck, and the default environment, `runCommand` and
-    // file storage on Node and Bun, serving HTTP and WebSockets, Redis and DNS on Node and Bun, a
-    // billing period per plan price).
+    // store, an error's reason and per-field codes, contact channels and the words of a contact
+    // link, HEIC by its bytes, image processing, translator-aware formats, the changes pull of a
+    // group, process adapters for Node and Bun, signals, the port-only healthcheck, and the default
+    // environment, `runCommand` and file storage on Node and Bun, serving HTTP and WebSockets,
+    // Redis and DNS on Node and Bun, a billing period per plan price, the locale an "Automatic"
+    // region format means).
     // hono, postgres and arktype below must stay on the exact versions these packages were
     // published with, or two copies load and their types stop matching.
-    "@spy4x/validation": "jsr:@spy4x/validation@1.116.0",
-    "@spy4x/platform": "jsr:@spy4x/platform@1.116.0",
-    "@spy4x/server": "jsr:@spy4x/server@1.116.0",
-    "@spy4x/realtime": "jsr:@spy4x/realtime@1.116.0",
-    "@spy4x/integrations": "jsr:@spy4x/integrations@1.117.0",
-    "@spy4x/email": "jsr:@spy4x/email@1.116.0",
-    "@spy4x/net": "jsr:@spy4x/net@1.116.0",
-    "@spy4x/billing": "jsr:@spy4x/billing@1.116.0",
+    "@spy4x/validation": "jsr:@spy4x/validation@1.126.0",
+    "@spy4x/platform": "jsr:@spy4x/platform@1.126.0",
+    "@spy4x/server": "jsr:@spy4x/server@1.126.0",
+    "@spy4x/realtime": "jsr:@spy4x/realtime@1.126.0",
+    "@spy4x/integrations": "jsr:@spy4x/integrations@1.126.0",
+    "@spy4x/email": "jsr:@spy4x/email@1.126.0",
+    "@spy4x/net": "jsr:@spy4x/net@1.126.0",
+    "@spy4x/billing": "jsr:@spy4x/billing@1.126.0",
+    // The version preact-components 14.4.0 imports, so Seed's own imports and theirs share one copy
+    // and the screens' `Formatters` match theirs: 1.126.0 adds `month`, which their formatters lack.
+    // A second copy, 1.126.0 (date.ts, tz.ts, formatter-cache.ts), still loads: the ts-libs
+    // packages above import `^1.126.0`, and the `@spy4x/platform` 1.116.0 that preact-components
+    // brings imports `^1.116.0`, which resolves to 1.126.0. It moves with preact-components.
     "@spy4x/time": "jsr:@spy4x/time@1.116.0",
 
     // apps/api
@@ -419,18 +465,18 @@
     // apps/tgbot
 
     // client
-    // spy4x/preact-components 13.11.1. Every package is published at one version together, so all
+    // spy4x/preact-components 14.4.0. Every package is published at one version together, so all
     // seven move in one change, and so does the npm copy of `@spy4x/preact-system` further down
     // (the Playwright config imports it under that name). They take preact and the signals
     // packages as caret ranges, so the versions below are the one copy that loads. wouter-preact
     // must stay on the version they pin, or two copies load.
-    "@spy4x/preact-charts": "jsr:@spy4x/preact-charts@13.11.1",
-    "@spy4x/preact-icons": "jsr:@spy4x/preact-icons@13.11.1",
-    "@spy4x/preact-server": "jsr:@spy4x/preact-server@13.11.1",
-    "@spy4x/preact-signals": "jsr:@spy4x/preact-signals@13.11.1",
-    "@spy4x/preact-system": "jsr:@spy4x/preact-system@13.11.1",
-    "@spy4x/preact-theme": "jsr:@spy4x/preact-theme@13.11.1",
-    "@spy4x/preact-ui": "jsr:@spy4x/preact-ui@13.11.1",
+    "@spy4x/preact-charts": "jsr:@spy4x/preact-charts@14.4.0",
+    "@spy4x/preact-icons": "jsr:@spy4x/preact-icons@14.4.0",
+    "@spy4x/preact-server": "jsr:@spy4x/preact-server@14.4.0",
+    "@spy4x/preact-signals": "jsr:@spy4x/preact-signals@14.4.0",
+    "@spy4x/preact-system": "jsr:@spy4x/preact-system@14.4.0",
+    "@spy4x/preact-theme": "jsr:@spy4x/preact-theme@14.4.0",
+    "@spy4x/preact-ui": "jsr:@spy4x/preact-ui@14.4.0",
     "preact": "npm:preact@10.29.8",
     "wouter-preact": "npm:wouter-preact@3.9.0",
     "@preact/signals": "npm:@preact/signals@2.5.1",
@@ -455,10 +501,10 @@
     // The website's browser tests check each page with axe-core (e2e/mpa).
     "@axe-core/playwright": "npm:@axe-core/playwright@4.13.0",
     // The npm name of `@spy4x/preact-system` above, for Playwright's loader; it moves with the seven.
-    "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@13.11.1",
+    "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@14.4.0",
     // The npm name of `@spy4x/platform` above, for the same reason: every e2e spec takes `uuidV7`
     // from it. It moves with the `@spy4x/*` packages.
-    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.116.0",
+    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.126.0",
 
     // shared/types — 2.2.3 matches spy4x/ts-libs and spy4x/preact-components
     // (spy4x/preact-components#121)

@@ -12,7 +12,7 @@ import { APIContext } from "../_types.ts"
 import type { Lockout } from "@spy4x/server/lockout"
 import { errorResponse } from "../services/error-response.ts"
 import type { AuthRouteDependencies } from "./auth.ts"
-import type { User } from "@domain/identity"
+import { SIGN_UP_CLOSED, SIGN_UP_CLOSED_MESSAGE, type User } from "@domain/identity"
 
 /** The answer to a wrong code, while the request still takes guesses. */
 export const MAILED_CODE_WRONG = "That code isn't right. Check the latest email and try again."
@@ -32,6 +32,14 @@ export const EMAIL_CODE_REFUSED = "This code is wrong or has expired. Ask for a 
  */
 export const PROVIDER_PROOF_REQUIRED =
   "Sign in with Google or GitHub again, then repeat this within a few minutes."
+
+/**
+ * The answer to a step that would make an account where sign-up is by invitation and the request
+ * carries no invitation that admits its address: 403 with reason `SIGN_UP_CLOSED`.
+ */
+export function signUpClosed(c: Context): Response {
+  return errorResponse(c, `forbidden`, { message: SIGN_UP_CLOSED_MESSAGE, reason: SIGN_UP_CLOSED })
+}
 
 /** Sets `Retry-After` and answers 429 with `error`. */
 export function tooMany(c: Context<APIContext>, retryAfterMs: number, error: string): Response {

@@ -180,6 +180,8 @@ export default {
   "Reason.SEARCH_RATE_LIMITED": "Too many searches. Wait a minute and try again.",
   "Reason.SEAT_PRICE_NOT_ACCEPTED": "Confirm that each new member adds to the group's bill.",
   "Reason.SHARE_NOT_FOUND": "This share no longer exists.",
+  "Reason.SIGN_UP_CLOSED":
+    "New accounts on this server are by invitation. Ask a member to invite you.",
   "Reason.SLUG_LOCKED":
     "The address is locked once a post is published. Use Change URL to change it.",
   "Reason.SLUG_TAKEN": "This address is taken. Pick a different one.",

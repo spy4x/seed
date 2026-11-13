@@ -65,13 +65,19 @@ services:
     user: "0:0"  # Run as root in dev mode for Podman compatibility
     environment:
       - VITE_ENV=dev
-      - DENO_DIR=/tmp/deno-cache
       # The port apps/healthcheck.ts probes: Vite's.
       - HEALTHCHECK_PORT=5174
+    # No DENO_DIR: the base image's own cache already holds every dependency (Dockerfile.base), so
+    # a new container starts Vite without downloading them again.
     build:
       dockerfile: apps/admin/dockerfile.dev
       args:
         - DENO_VERSION=${DENO_VERSION}
+    deploy:
+      resources:
+        limits:
+          # Vite needs more than the production nginx image's 128M (ADMIN_MEM_LIMIT).
+          memory: "${ADMIN_DEV_MEM_LIMIT:-1G}"
     volumes:
       - ../../apps:/app/apps:z
       - ../../libs:/app/libs:z

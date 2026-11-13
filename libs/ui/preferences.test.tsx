@@ -113,6 +113,12 @@ describe(`RegionSection`, () => {
     expect($(`[data-e2e="preferences-example"]`)?.textContent).toContain(`14:05`)
   })
 
+  it(`names an Automatic region with Latin digits by its region alone`, async () => {
+    await mount(setup({ device: { ...BERLIN, locale: `ar-EG-u-nu-latn` } }).region)
+
+    expect(input(`#preferences-formats`).value).toBe(`Automatic: Arabic (Egypt)`)
+  })
+
   it(`saves a picked clock at once, with no Save button`, async () => {
     const { region, calls } = setup()
     await mount(region)

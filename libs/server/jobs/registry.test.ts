@@ -9,6 +9,7 @@ import {
   BLOG_PUBLISH_JOB,
   BLOG_SHARE_RESULTS_JOB,
 } from "@domain/blog"
+import { CATALOG_INDEXNOW_JOB } from "@domain/catalog"
 import { BILLING_NOTICE_JOBS } from "../billing/billing-notices.ts"
 import { SEAT_SYNC_JOB } from "../billing/seat-sync.ts"
 import {
@@ -31,6 +32,7 @@ import { SIGN_IN_CODE_MAIL_JOB } from "./sign-in-code-mail.ts"
 import { STARTER_DATA_JOB } from "./starter-data.ts"
 import { IMAGE_PROCESS_JOB, IMAGE_WIDTHS_JOB } from "../files/images.ts"
 import { TELEGRAM_NOTIFICATION_JOB } from "./telegram-notification.ts"
+import { IMPORT_COMMIT_JOB, IMPORT_READ_JOB } from "../imports/postgres-import-repository.ts"
 import {
   SUBSCRIBER_CONFIRM_MAIL_JOB,
   SUBSCRIBER_SEND_ISSUE_JOB,
@@ -66,9 +68,12 @@ const QUEUED_KINDS = [
   SUBSCRIBER_SEND_ISSUE_JOB,
   BLOG_PUBLISH_JOB,
   BLOG_INDEXNOW_JOB,
+  CATALOG_INDEXNOW_JOB,
   BLOG_CROSSPOST_JOB,
   BLOG_SHARE_RESULTS_JOB,
   ...Object.values(BLOG_POST_JOBS),
+  IMPORT_READ_JOB,
+  IMPORT_COMMIT_JOB,
 ]
 
 const noop = () => async () => {}
@@ -151,7 +156,7 @@ describe(`createOutboxProcessor`, () => {
   })
 
   it(`hands every job the notes switch it was given, and the notes on when left out`, () => {
-    const seen: NotesSetup[] = []
+    const seen: (NotesSetup | undefined)[] = []
     const job = defineJob({
       kind: `reports.daily`,
       label: `Daily report`,
@@ -159,7 +164,18 @@ describe(`createOutboxProcessor`, () => {
     })
     const sql = {} as postgres.Sql
     const mail = { store: {} as never, sender: null, brand: { webAppUrl: `` }, log: () => {} }
-    const off = [null, null, null, null, null, undefined, null, undefined, NOTES_OFF] as const
+    const off = [
+      null,
+      null,
+      null,
+      null,
+      null,
+      undefined,
+      null,
+      undefined,
+      undefined,
+      NOTES_OFF,
+    ] as const
     createOutboxProcessor(sql, mail, null, null, 0, true, null, [job])
     createOutboxProcessor(sql, mail, null, null, 0, true, null, [job], ...off)
     expect(seen).toEqual([NOTES_ON, NOTES_OFF])

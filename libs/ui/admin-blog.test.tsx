@@ -199,6 +199,12 @@ describe("the blog list", () => {
     const none = { posts: [], counts: { all: 0, draft: 0, scheduled: 0, published: 0 } }
     await mount(<AdminBlogListScreen {...listProps([], { list: none })} />)
     expect(find("[data-e2e=admin-blog-none]").textContent).toContain("No posts yet")
+    // The page's h1 is the only heading above it, so the empty state is an h2.
+    expect([...document.querySelectorAll("h1, h2, h3, h4")].map((h) => h.tagName)).toEqual([
+      "H1",
+      "H2",
+    ])
+    expect(find("[data-e2e=admin-blog-none] h2").textContent).toBe("No posts yet")
     await mount(
       <AdminBlogListScreen
         {...listProps([], { list: none, filter: { status: null, query: "x" } })}
@@ -625,6 +631,24 @@ describe("the blog editor", () => {
     expect(when.querySelector("legend")?.textContent).toBe("When")
     expect([...when.querySelectorAll("label")].map((label) => label.textContent?.trim()))
       .toEqual(["Now", "Schedule"])
+  })
+
+  it("draws the times to publish as choice chips, and shows the date only for Schedule", async () => {
+    await mount(<AdminBlogEditorScreen {...editorProps([], { dialog: "publish" })} />)
+    const when = find("[data-e2e=admin-blog-when]")
+    // RadioChips hides each radio inside its chip; a plain radio group shows the browser's radio.
+    const radios = [...when.querySelectorAll<HTMLInputElement>("input[type=radio]")]
+    expect(radios.map((radio) => radio.className)).toEqual(["sr-only", "sr-only"])
+    expect(radios.every((radio) => radio.name === "blog-publish-when")).toBe(true)
+    expect(
+      [...when.querySelectorAll("label")].every((label) => label.className.includes("min-h-11")),
+    )
+      .toBe(true)
+    expect(has("#blog-publish-at")).toBe(false)
+    await clickOn(radios[1])
+    expect(has("#blog-publish-at")).toBe(true)
+    await clickOn(find("[data-e2e=admin-blog-when] input[value=now]"))
+    expect(has("#blog-publish-at")).toBe(false)
   })
 
   it("publishes a draft now without email until the box is ticked", async () => {

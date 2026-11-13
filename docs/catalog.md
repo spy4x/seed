@@ -129,21 +129,22 @@ admin routes.
 
 ## Where the code lives
 
-| Where                                     | What                                                            |
-| ----------------------------------------- | --------------------------------------------------------------- |
-| `libs/domain/catalog/+lib.ts`             | Shapes, limits, request schemas, field checks, `recommendSize`. |
-| `libs/server/catalog/setup.ts`            | The switch and the settings.                                    |
-| `libs/server/catalog/postgres-catalog.ts` | The admin's reads and writes, each write with its audit row.    |
-| `libs/server/catalog/public-catalog.ts`   | The website's reads: published items only.                      |
-| `libs/server/catalog/sample-catalog.ts`   | Sample items for development and the demo.                      |
-| `libs/server/catalog/tracking.ts`         | Tracking links: the settings, Umami, where `/s/<code>` leads.   |
-| `apps/admin/src/modules/catalog/`         | The admin pages.                                                |
-| `apps/mpa/routes/s/[code].ts`             | The website's `/s/<code>` redirect.                             |
-| `apps/mpa/catalog.ts`                     | The website's reads, addresses, texts and sitemap entries.      |
-| `apps/mpa/components/catalog.tsx`         | The tiles, the category links and the price.                    |
-| `apps/mpa/routes/[[lang]]/catalog/`       | The catalog and category pages.                                 |
-| `apps/mpa/routes/[[lang]]/[category]/`    | The item page.                                                  |
-| `apps/mpa/routes/catalog/photos/`         | The photos, served from the website's host.                     |
+| Where                                         | What                                                            |
+| --------------------------------------------- | --------------------------------------------------------------- |
+| `libs/domain/catalog/+lib.ts`                 | Shapes, limits, request schemas, field checks, `recommendSize`. |
+| `libs/server/catalog/setup.ts`                | The switch and the settings.                                    |
+| `libs/server/catalog/postgres-catalog.ts`     | The admin's reads and writes, each write with its audit row.    |
+| `libs/server/catalog/public-catalog.ts`       | The website's reads: published items only.                      |
+| `libs/server/catalog/sample-catalog.ts`       | Sample items for development and the demo.                      |
+| `libs/server/catalog/tracking.ts`             | Tracking links: the settings, Umami, where `/s/<code>` leads.   |
+| `libs/server/catalog/catalog-indexnow-job.ts` | The `catalog.indexnow` job ([IndexNow](#indexnow)).             |
+| `apps/admin/src/modules/catalog/`             | The admin pages.                                                |
+| `apps/mpa/routes/s/[code].ts`                 | The website's `/s/<code>` redirect.                             |
+| `apps/mpa/catalog.ts`                         | The website's reads, addresses, texts and sitemap entries.      |
+| `apps/mpa/components/catalog.tsx`             | The tiles, the category links and the price.                    |
+| `apps/mpa/routes/[[lang]]/catalog/`           | The catalog and category pages.                                 |
+| `apps/mpa/routes/[[lang]]/[category]/`        | The item page.                                                  |
+| `apps/mpa/routes/catalog/photos/`             | The photos, served from the website's host.                     |
 
 ## The website's pages
 
@@ -178,6 +179,26 @@ work without JavaScript.
 While the catalog is off (`/api/catalog` answers 404), every one of these addresses is the 404
 page, and neither the sitemap nor `llms.txt` names the catalog. The website has no menu link to the
 catalog: a product adds its own.
+
+## IndexNow
+
+With `INDEXNOW_KEY` and `MPA_DOMAIN` set, Seed tells [IndexNow](https://www.indexnow.org/) when an
+item's page changes, so Bing and the other engines that share it look again within minutes instead
+of at their next crawl. The website serves the key file; [the blog's IndexNow](blog.md#indexnow)
+says how. Without the key nothing is sent.
+
+- **When.** An item is sent when it is published or hidden, and when a save of a published item
+  changes its price, its sold-out sizes, its slug or its category. A save that changes only texts,
+  colours or sizes queues nothing, nor does creating an item (it starts as a draft). Deleting an
+  item sends nothing either; nor does changing a category's slug, although its items move.
+- **Its own job.** The write queues a `catalog.indexnow` job in its own transaction; one waits per
+  item at a time, and it reads the item when it runs. An item that was never published sends
+  nothing; a hidden one is sent, so the engines find its page gone.
+- **The addresses.** The item address (`CATALOG_ITEM_PATH`), without a language prefix and in each
+  other language both the website and the catalog keep (`CATALOG_LANGUAGES`), as the sitemap lists
+  them. The worker reads both settings, and `CATALOG`, which they need. A slug or category change sends the new address only.
+- **Fail-open.** A refused or failed ping is logged once, without the key, and the job still
+  succeeds: it is not retried and never touches the item.
 
 ## Next
 

@@ -4,8 +4,10 @@ import postgres from "postgres"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import type { OutboxEvent } from "@spy4x/server/outbox"
 import {
   CATALOG_AUDIT_KINDS,
+  CATALOG_INDEXNOW_JOB,
   CATALOG_PHOTOS_MAX,
   CatalogError,
   type CatalogItemFields,
@@ -20,7 +22,9 @@ import {
   readTrackingTarget,
 } from "@server/catalog/public-catalog.ts"
 import { SAMPLE_CATALOG_SOURCES, seedSampleCatalog } from "@server/catalog/sample-catalog.ts"
-import type { UmamiLinks } from "@server/catalog/tracking.ts"
+import { DEFAULT_ITEM_PATH, type UmamiLinks } from "@server/catalog/tracking.ts"
+import { catalogIndexNowJob } from "@server/catalog/catalog-indexnow-job.ts"
+import type { IndexNowSetup } from "@server/jobs/indexnow.ts"
 import { IMAGE_PROCESS_JOB } from "@server/files/images.ts"
 import { createAdminCatalog } from "../../apps/api/routes/admin/catalog.ts"
 import { applyMigrations } from "./migrations.ts"
@@ -731,5 +735,170 @@ Deno.test(`a link leads only to a published item, by the item's own slug`, async
     expect(await readTrackingTarget(sql, `ZZZZZZZZZZZ`)).toBeNull()
     await catalog.setStatus(item.id, published.version, `hidden`, actor)
     expect(await readTrackingTarget(sql, code)).toBeNull()
+  })
+})
+
+const INDEXNOW: IndexNowSetup = {
+  key: `indexnow-test-key-0123`,
+  siteUrl: `https://www.example.com`,
+}
+
+/**
+ * A fake IndexNow that answers `status` (or throws when it is `null`) and records the addresses of
+ * every submission.
+ */
+function fakeIndexNow(status: number | null = 200) {
+  const sent: string[][] = []
+  const fetch = async (_input: string | URL | Request, init?: RequestInit) => {
+    sent.push(JSON.parse(String(init?.body)).urlList)
+    if (status === null) throw new TypeError(`connection refused`)
+    return new Response(null, { status })
+  }
+  return { sent, fetch: fetch as typeof globalThis.fetch }
+}
+
+/**
+ * Runs the `catalog.indexnow` rows of item `id` that wait, as the worker would, and closes them.
+ * Answers how many ran.
+ */
+async function runIndexNow(
+  sql: postgres.Sql,
+  id: string,
+  deps: Omit<Parameters<typeof catalogIndexNowJob>[0], `sql` | `pages`>,
+): Promise<number> {
+  const rows = await sql<{ id: string }[]>`
+    SELECT id FROM outbox_events
+    WHERE event_kind = ${CATALOG_INDEXNOW_JOB} AND aggregate_id = ${id} AND processed_at IS NULL
+  `
+  const job = catalogIndexNowJob({
+    sql,
+    pages: { itemPath: DEFAULT_ITEM_PATH, languages: [`en`, `de`] },
+    ...deps,
+  })
+  for (const row of rows) {
+    await job({ id: row.id, aggregateId: id, eventKind: CATALOG_INDEXNOW_JOB } as OutboxEvent)
+    await sql`UPDATE outbox_events SET processed_at = now() WHERE id = ${row.id}`
+  }
+  return rows.length
+}
+
+/** A published jacket in the `jackets` category, with no IndexNow job left waiting. */
+async function publishedJacket(sql: postgres.Sql, actor: CatalogActor) {
+  const catalog = new PostgresCatalog(sql)
+  const category = uuidV7()
+  await catalog.createCategory(category, { slug: `jackets`, name: { en: `Jackets` } }, actor)
+  const parts = jacket({ categoryId: category })
+  const item = await catalog.createItem(uuidV7(), parts.fields, actor)
+  const published = await catalog.setStatus(item.id, item.version, `published`, actor)
+  await runIndexNow(sql, item.id, { setup: null, log: () => {} })
+  return { catalog, item: published, ...parts }
+}
+
+const JACKET_PAGES = [
+  `https://www.example.com/jackets/zip-jacket`,
+  `https://www.example.com/de/jackets/zip-jacket`,
+]
+
+Deno.test(`IndexNow hears an item's page once when it is published, and again when it is hidden (#898)`, async () => {
+  await withSchema(async (sql) => {
+    const actor = await operator(sql)
+    const catalog = new PostgresCatalog(sql)
+    const category = uuidV7()
+    await catalog.createCategory(category, { slug: `jackets`, name: { en: `Jackets` } }, actor)
+    const item = await catalog.createItem(uuidV7(), jacket({ categoryId: category }).fields, actor)
+    const indexNow = fakeIndexNow()
+    const run = () =>
+      runIndexNow(sql, item.id, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch })
+    expect(await run()).toBe(0)
+
+    const published = await catalog.setStatus(item.id, item.version, `published`, actor)
+    expect(await catalog.setStatus(item.id, published.version, `published`, actor)).toEqual(
+      published,
+    )
+    expect(await run()).toBe(1)
+    expect(indexNow.sent).toEqual([JACKET_PAGES])
+
+    await catalog.setStatus(item.id, published.version, `hidden`, actor)
+    expect(await run()).toBe(1)
+    expect(indexNow.sent).toEqual([JACKET_PAGES, JACKET_PAGES])
+  })
+})
+
+Deno.test(`a published item's price or sold-out change is sent to IndexNow, a text-only edit is not (#898)`, async () => {
+  await withSchema(async (sql) => {
+    const actor = await operator(sql)
+    const { catalog, item, fields, blue, medium } = await publishedJacket(sql, actor)
+    const indexNow = fakeIndexNow()
+    const run = () =>
+      runIndexNow(sql, item.id, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch })
+
+    const described = await catalog.updateItem(item.id, item.version, {
+      ...fields,
+      description: { en: `Warmer than ever.` },
+      name: { en: `Zip jacket, warm` },
+    }, actor)
+    expect(await run()).toBe(0)
+
+    const repriced = await catalog.updateItem(item.id, described.version, {
+      ...fields,
+      price: 400_000,
+    }, actor)
+    expect(await run()).toBe(1)
+
+    await catalog.updateItem(item.id, repriced.version, {
+      ...fields,
+      price: 400_000,
+      soldOut: [...fields.soldOut, { colourId: blue, sizeId: medium }],
+    }, actor)
+    expect(await run()).toBe(1)
+    expect(indexNow.sent).toEqual([JACKET_PAGES, JACKET_PAGES])
+  })
+})
+
+Deno.test(`two changes before the worker runs queue one IndexNow job (#898)`, async () => {
+  await withSchema(async (sql) => {
+    const actor = await operator(sql)
+    const { catalog, item, fields } = await publishedJacket(sql, actor)
+    const first = await catalog.updateItem(item.id, item.version, { ...fields, price: 1 }, actor)
+    await catalog.updateItem(item.id, first.version, { ...fields, price: 2 }, actor)
+    expect(await runIndexNow(sql, item.id, { setup: null, log: () => {} })).toBe(1)
+  })
+})
+
+Deno.test(`with IndexNow off a published item sends nothing (#898)`, async () => {
+  await withSchema(async (sql) => {
+    const actor = await operator(sql)
+    const catalog = new PostgresCatalog(sql)
+    const category = uuidV7()
+    await catalog.createCategory(category, { slug: `jackets`, name: { en: `Jackets` } }, actor)
+    const item = await catalog.createItem(uuidV7(), jacket({ categoryId: category }).fields, actor)
+    await catalog.setStatus(item.id, item.version, `published`, actor)
+    const indexNow = fakeIndexNow()
+    expect(await runIndexNow(sql, item.id, { setup: null, log: () => {}, fetch: indexNow.fetch }))
+      .toBe(1)
+    expect(indexNow.sent).toEqual([])
+  })
+})
+
+Deno.test(`a failing IndexNow is logged once without the key, and the item stays published (#898)`, async () => {
+  await withSchema(async (sql) => {
+    const actor = await operator(sql)
+    const { catalog, item, fields } = await publishedJacket(sql, actor)
+    let version = item.version
+    for (const [price, status] of [[1, 403], [2, null]] as const) {
+      version = (await catalog.updateItem(item.id, version, { ...fields, price }, actor)).version
+      const lines: string[] = []
+      const indexNow = fakeIndexNow(status)
+      await runIndexNow(sql, item.id, {
+        setup: INDEXNOW,
+        log: (line) => lines.push(line),
+        fetch: indexNow.fetch,
+      })
+      expect(indexNow.sent).toHaveLength(1)
+      expect(lines).toHaveLength(1)
+      expect(lines[0]).toContain(`IndexNow was not told about catalog item ${item.id}`)
+      expect(lines[0]).not.toContain(INDEXNOW.key)
+      expect((await catalog.getItem(item.id))!.status).toBe(`published`)
+    }
   })
 })

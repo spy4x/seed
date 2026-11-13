@@ -80,8 +80,8 @@ export const LINK_CALLBACK = `tglink`
 export const TELEGRAM_SETTINGS_PATH = `/profile/notifications`
 
 /**
- * The bot's own words in `language`, from the `app` catalog, so a test can name them. A name or an
- * address inside a message is isolated, so it reads in its own direction inside Arabic.
+ * The bot's own words in `language`, from the `app` catalog, so a test can name them. A name, an
+ * address or a URL inside a message is isolated, so it reads in its own direction inside Arabic.
  */
 export function botText(language: Language) {
   const t = translatorFor(language)
@@ -114,8 +114,15 @@ export function botText(language: Language) {
     },
     unlinked: t.t(`TelegramBot.unlinked`),
     notLinked: t.t(`TelegramBot.notLinked`),
+    /**
+     * Where to make a link code. The bot knows only Telegram's language, not the app's, so the
+     * button is named in that language from the app's own catalog key.
+     */
     howToLink: (settingsUrl: string) =>
-      t.t(`TelegramBot.howToLink`, { url: settingsUrl, action: t.t(`ProfileTelegram.link`) }),
+      t.t(`TelegramBot.howToLink`, {
+        url: isolate(settingsUrl),
+        action: t.t(`ProfileTelegram.link`),
+      }),
     hello: (name: string) =>
       name ? t.t(`TelegramBot.helloName`, { name: isolate(name) }) : t.t(`TelegramBot.hello`),
   }

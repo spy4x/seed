@@ -27,6 +27,8 @@ export interface AdminModuleContext {
   subscribers: SubscribersSetup | null
   /** The normal per-user budget the session routes spend too. Every module route spends it. */
   limit: MiddlewareHandler<APIContext>
+  /** The groups module's image tiles' own per-user budget (`createAuthRateLimits().thumbnail`). */
+  thumbnailLimit: MiddlewareHandler<APIContext>
   /**
    * Spends one of an address's reset links, from the budget "Forgot password" spends too
    * (`createAuthRateLimits().resetByAddress`). Throws when its store fails.

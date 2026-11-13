@@ -185,7 +185,7 @@ describe("invitations store", () => {
 
     expect(store.revokeError.value).toEqual({
       invitationId: "i-1",
-      message: "Something went wrong. Try again.",
+      message: "Could not complete the invitation request. Try again.",
     })
   })
 

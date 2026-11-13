@@ -48,6 +48,7 @@ function setUp(overrides: Partial<PictureDependencies> = {}) {
     preview: () => `blob:preview`,
     release: (url) => calls.push(`release ${url}`),
     setUser: (user) => users.push(user),
+    locale: () => `en-GB`,
     ...overrides,
   }
   return { store: createPictureStore(dependencies), calls, users }
@@ -127,6 +128,12 @@ describe(`profile picture store`, () => {
     expect(read(store.error.value)).toBe(
       `\u2068photo.jpg\u2069 is 12.4 MB. Choose an image of 10 MB or less.`,
     )
+  })
+
+  it(`writes the sizes of a refusal in the person's locale`, () => {
+    const { store } = setUp({ locale: () => `de-DE` })
+    store.reject({ file: file(`photo.jpg`, `image/jpeg`, 12.4 * 1024 * 1024), reason: `too-large` })
+    expect(store.error.value).toMatchObject({ values: { size: `12,4 MB`, max: `10 MB` } })
   })
 
   it(`removes the picture and says so, or says the removal failed`, async () => {

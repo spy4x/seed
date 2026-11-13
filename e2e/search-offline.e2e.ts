@@ -86,7 +86,7 @@ test.describe("search with no network", () => {
       await expect(palette.getByRole("option").filter({ hasText: "Packing list" })).toBeVisible()
 
       await field.fill("snorkel")
-      await expect(palette.getByRole("status")).toHaveText(
+      await expect(palette.locator("[data-e2e=search-status]")).toHaveText(
         "Nothing on this device matches “snorkel”. Search again when you're back online.",
       )
     } finally {

@@ -857,6 +857,12 @@ export function parseCatalogSourceFields(
   return { name, slug }
 }
 
+/**
+ * The job that tells IndexNow an item's page changed: it was published or hidden, or its price,
+ * sold-out sizes, slug or category changed while published (docs/catalog.md#indexnow).
+ */
+export const CATALOG_INDEXNOW_JOB = `catalog.indexnow`
+
 /** A tracking link's code: the random, public part of `/s/<code>`. */
 export const CATALOG_LINK_CODE_PATTERN = /^[A-Za-z0-9_-]{8,32}$/
 

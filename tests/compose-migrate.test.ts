@@ -3,7 +3,8 @@
  * Holds `infra/compose/compose.shared.yml` to the deploy's migration order: the one-shot `migrate`
  * service applies pending migrations, and every other service built from the API's Dockerfile
  * (the API, the worker) starts only after it exits with 0. Without that order a deploy with a new
- * migration serves traffic on the old schema (spy4x/template#113). Only this file is read: an
+ * migration serves traffic on the old schema (spy4x/template#113). It also holds every
+ * long-running service to a restart policy, so a reboot brings it back. Only this file is read: an
  * override file that changes these services with `!reset` or `!override` is not covered.
  */
 
@@ -19,6 +20,7 @@ interface ComposeService {
   build?: { dockerfile?: string }
   command?: string[]
   restart?: string
+  profiles?: string[]
   depends_on?: Record<string, { condition?: string }>
 }
 
@@ -55,4 +57,17 @@ Deno.test("the database counts as healthy only once it accepts TCP connections",
   // shuts down, so a migrate that starts on that answer fails (docs/handoff.md trap 3).
   const test = (await services()).db?.healthcheck?.test
   expect(test?.slice(0, 4)).toEqual(["CMD", "pg_isready", "-h", "127.0.0.1"])
+})
+
+Deno.test("every long-running service starts again after a reboot", async () => {
+  // A service without a restart policy stays Exited after a host reboot or a Docker restart, as
+  // the Postgres exporter did (spy4x/seed#560). The one-shot migrate and the never-started base
+  // image are the only exceptions.
+  const missing = Object.entries(await services())
+    .filter(([name, service]) =>
+      name !== "migrate" && !service.profiles?.includes(`donotstart`) &&
+      service.restart !== `unless-stopped`
+    )
+    .map(([name]) => name)
+  expect(missing).toEqual([])
 })

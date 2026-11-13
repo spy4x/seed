@@ -251,6 +251,32 @@ describe("BenchmarkScreen", () => {
     expect(count("[data-e2e=benchmark-no-large-group]")).toBe(0)
   })
 
+  it("shows a size under one megabyte with one decimal, and whole megabytes from one up", async () => {
+    const sized = done.map((step) =>
+      step.id === "storage"
+        ? { ...step, value: 300_000, quota: 5_800_000_000 }
+        : step.id === "memory"
+        ? { ...step, value: 48_400_000 }
+        : step
+    )
+    await mount(screen({ state: "done", steps: sized, json }))
+    const steps = find("[data-e2e=benchmark-steps]").textContent
+    expect(steps).toContain("0.3 MB of 5.8 GB")
+    expect(steps).toContain("48 MB")
+    expect(steps).not.toContain("48.4 MB")
+  })
+
+  it("heads Measurements and This device with the shared section heading, each naming its section", async () => {
+    await mount(screen())
+    const headings = [...document.querySelectorAll("h2.pc-h2")]
+    expect(headings.map((heading) => heading.textContent)).toEqual(["Measurements", "This device"])
+    for (const heading of headings) {
+      const section = heading.closest("section")!
+      expect(heading.id).not.toBe("")
+      expect(section.getAttribute("aria-labelledby")).toBe(heading.id)
+    }
+  })
+
   it("waits for every group's count before saying no group is large", async () => {
     await mount(screen({ groups: [groups[0], { ...groups[1], notes: null }] }))
     expect(count("[data-e2e=benchmark-no-large-group]")).toBe(0)

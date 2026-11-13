@@ -4,9 +4,11 @@ import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Button, buttonClasses } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
 import { Checkbox } from "@spy4x/preact-ui/checkbox"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
+import { Field } from "@spy4x/preact-ui/field"
 import { FilterBar, type FilterBarMenu } from "@spy4x/preact-ui/filter-bar"
 import { OnDay, useFormat, When } from "@spy4x/preact-ui/format"
 import { Select } from "@spy4x/preact-ui/input"
@@ -32,6 +34,7 @@ import {
   NOTE_SORTS,
   type NoteFilters,
   type NoteSort,
+  withOneAuthor,
 } from "./notes-filter.ts"
 import { isolate } from "@spy4x/preact-ui/bdi"
 
@@ -232,7 +235,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
   const t = useAppText()
   const allNotes = props.notes
   const tags = props.tags ?? []
-  const filters = props.filters ?? NO_NOTE_FILTERS
+  const filters = withOneAuthor(props.filters ?? NO_NOTE_FILTERS, props.youId ?? null)
   const notes = filterNotes(allNotes, filters, {
     youId: props.youId ?? null,
     knownTagIds: tags.map((tag) => tag.id),
@@ -645,21 +648,18 @@ function NotesFilterBar(
       ),
     })
   }
-  const you = authors.find((author) => author.isYou)
+  // The person's own notes are "Created by me" alone (`withOneAuthor`): the menu lists the others.
   const others = authors
     .filter((author) => !author.isYou)
     .sort((a, b) => a.name.localeCompare(b.name))
-  if (authors.length > 0) {
+  if (others.length > 0) {
     menus.push({
       id: "author",
       label: t.t(`NotesFilter.author`),
       anyLabel: t.t(`NotesFilter.anyone`),
-      options: [
-        ...(you ? [{ value: you.id, label: t.t(`NotesFilter.you`) }] : []),
-        ...others.map((author) => ({ value: author.id, label: author.name })),
-      ],
+      options: others.map((author) => ({ value: author.id, label: author.name })),
       value: filters.author,
-      onChange: (author) => onChange({ author }),
+      onChange: (author) => onChange({ author, mine: false }),
     })
   }
   return (
@@ -675,7 +675,7 @@ function NotesFilterBar(
           id: "mine",
           label: t.t(`NotesFilter.mine`),
           pressed: filters.mine,
-          onChange: (mine) => onChange({ mine }),
+          onChange: (mine) => onChange({ mine, author: null }),
         }]}
         sort={{
           options: noteSorts(t),
@@ -794,6 +794,7 @@ function SelectionBar(
               id="notes-move-to"
               name="toGroupId"
               data-e2e="notes-move-to"
+              translate={false}
               class="min-w-0 flex-1 sm:w-auto sm:flex-none"
               options={moveTargets.map((target) => ({ value: target.id, label: target.name }))}
             />
@@ -915,7 +916,10 @@ function NoteItem(
         </div>
       </div>
       <div class="hidden shrink-0 flex-col items-end gap-1 text-end text-sm text-muted sm:flex">
-        {note.updatedAt && <Stamp kind="updated" at={note.updatedAt} />}
+        {
+          // "Updated" only once the note changed, as on a phone: an untouched note shows "Created".
+        }
+        {edited && <Stamp kind="updated" at={note.updatedAt!} />}
         {note.createdAt && <Stamp kind="created" at={note.createdAt} day />}
       </div>
     </div>
@@ -1008,8 +1012,9 @@ function NoteRowMenu(
 }
 
 /**
- * Asks which group a note moves to: one button per group the person may write in. A press moves
- * the note at once; Cancel, Escape or the backdrop keeps it where it is.
+ * Asks which group a note moves to, as bulk move does: the note's title on its own line, a select
+ * of the groups the person may write in and a Move button. Move moves the note at once; Cancel,
+ * Escape or the backdrop keeps it where it is.
  */
 export function MoveNoteDialog(
   { note, moveTargets, onMove, onCancel }: {
@@ -1026,37 +1031,34 @@ export function MoveNoteDialog(
       title={t.t(`MoveNote.title`)}
       cancelLabel={t.t(`MoveNote.cancel`)}
       onClose={onCancel}
-      ariaDescribedBy="note-move-question"
+      ariaDescribedBy="note-move-hint"
       dataE2E="note-move-dialog"
-      footer={
-        <Button type="button" variant="ghost" onClick={onCancel} data-e2e="note-move-cancel">
-          {t.t(`MoveNote.cancel`)}
-        </Button>
-      }
     >
-      <Stack gap="md">
-        <p id="note-move-question" class="text-sm text-muted">
-          <Rich
-            parts={t.parts(`MoveNote.question`, { title: note.title })}
-            tags={{ title: userValue }}
-          />
-        </p>
-        <ul class="flex flex-col gap-2">
-          {moveTargets.map((target) => (
-            <li key={target.id}>
-              <Button
-                type="button"
-                variant="outline"
-                class="min-h-11 w-full justify-start sm:min-h-9"
-                onClick={() => onMove(target.id)}
-                data-e2e="note-move-target"
-              >
-                <span translate={false}>{target.name}</span>
-              </Button>
-            </li>
-          ))}
-        </ul>
-      </Stack>
+      <ScreenForm onSubmit={(data) => onMove(String(data.get("toGroupId") ?? ""))}>
+        <Stack>
+          <div>
+            <p class="font-medium break-words text-foreground" data-e2e="note-move-note">
+              {userValue(note.title)}
+            </p>
+            <p id="note-move-hint" class="text-sm text-muted">{t.t(`MoveNote.hint`)}</p>
+          </div>
+          <Field id="note-move-to" label={t.t(`Notes.moveTo`)}>
+            <Select
+              name="toGroupId"
+              data-e2e="note-move-to"
+              translate={false}
+              autofocus
+              options={moveTargets.map((target) => ({ value: target.id, label: target.name }))}
+            />
+          </Field>
+          <DialogActions>
+            <Button type="button" variant="ghost" onClick={onCancel} data-e2e="note-move-cancel">
+              {t.t(`MoveNote.cancel`)}
+            </Button>
+            <Button type="submit" data-e2e="note-move-submit">{t.t(`MoveNote.move`)}</Button>
+          </DialogActions>
+        </Stack>
+      </ScreenForm>
     </Modal>
   )
 }

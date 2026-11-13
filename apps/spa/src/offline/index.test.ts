@@ -398,6 +398,7 @@ describe("what the device keeps", () => {
       "auth:sign-out-owed": "1",
       "offline:owed-deletion": "[7]",
       "theme": "dark",
+      "language": "de",
       "install-prompt-dismissed": "1",
       "last-sign-in": `{"method":"password","email":"a***@example.com"}`,
     })
@@ -417,6 +418,7 @@ describe("what the device keeps", () => {
     expect([...local.entries.keys()].sort()).toEqual([
       "auth:sign-out-owed",
       "install-prompt-dismissed",
+      "language",
       "last-sign-in",
       // The choice, until the next sign-in: another tab's session end must not keep the queue.
       "offline:signed-out",

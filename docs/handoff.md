@@ -243,7 +243,7 @@ production):
 ```bash
 NAME="template-test-$$"
 PASS=$(openssl rand -hex 24)
-trap 'docker rm -f "$NAME" "$NAME-kv" >/dev/null' EXIT
+trap 'docker rm -fv "$NAME" "$NAME-kv" >/dev/null' EXIT
 docker run -d --name "$NAME" -e POSTGRES_USER=tester -e POSTGRES_PASSWORD="$PASS" \
   -e POSTGRES_DB=template_test -p 127.0.0.1::5432 postgres:18.6-alpine
 docker run -d --name "$NAME-kv" -e REDISCLI_AUTH="$PASS" -p 127.0.0.1::6379 valkey/valkey:8.1 \

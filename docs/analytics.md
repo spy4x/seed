@@ -50,7 +50,7 @@ Event names are kebab-case. Umami stores the page of every event, so a name neve
 
 | Event                     | Properties                    | When                                                                                 |
 | ------------------------- | ----------------------------- | ------------------------------------------------------------------------------------ |
-| `try-demo`                | `from`                        | A link to the demo's sign-up: header, hero, closing band, 404 page, footer           |
+| `try-demo`                | `from`                        | A link to the demo's sign-up: header, hero, speed band, closing band, 404 page, footer |
 | `sign-in`                 | `from`                        | The footer's link to the demo's sign-in                                              |
 | `github`                  | `from`                        | A link into the GitHub repository that names no other event                          |
 | `read-code`               | `from`                        | A link to a part of the code or its docs ("Read the code", the deploy guide)         |

@@ -56,6 +56,13 @@ import {
   type PasswordSignInOptions,
 } from "@spy4x/server/auth/password"
 import { requestInfoFromContext } from "@spy4x/platform/request-info"
+import {
+  joinInvitedGroup,
+  signUpAllowed,
+  SignUpClosedError,
+  type SignUpMode,
+} from "./sign-up-gate.ts"
+import type { InvitationPlan } from "@server/groups/postgres-invitation-repository.ts"
 import { ipHint } from "@spy4x/net/ip"
 import { deviceName } from "@spy4x/net/user-agent"
 import { GroupError } from "@domain/groups"
@@ -120,8 +127,18 @@ export interface SignInOptions {
   oauth?: OAuthOptions
   /** Sign-in with passkeys (`passkey-sign-in.ts`). Left out, passkeys are off. */
   passkeys?: PasskeyOptions
-  /** Guest accounts (`guest-sign-in.ts`): one click into the app. Left out, on. */
+  /** Guest accounts (`guest-sign-in.ts`): one click into the app. Left out, on; off with `invite`. */
   guests?: boolean
+  /**
+   * Who may make an account (`sign-up-gate.ts`). Left out, `open`: the operator command line and
+   * the demo seed build their sign-in so, and never meet the gate.
+   */
+  signUp?: SignUpMode
+  /**
+   * What the plan of an invitation's group allows (its member cap and roles), read as the accept
+   * route reads it. Required with `signUp: invite`, whose sign-up accepts the invitation.
+   */
+  invitationPlan?: (groupId: string) => Promise<InvitationPlan>
 }
 
 /** The sign-in operations the routes call. */
@@ -228,6 +245,20 @@ function deviceOf(c: Context): SessionDevice {
 /** Builds the app's sign-in over the package building blocks. */
 export function createSignIn(options: SignInOptions): SignIn {
   const { db } = options
+  const signUpMode = options.signUp ?? `open`
+  /** Throws `SignUpClosedError` unless a new account for `email` may be made (`signUpAllowed`). */
+  async function assertSignUpAllowed(
+    invitation: string | null | undefined,
+    email: string | null,
+  ): Promise<void> {
+    if (!(await signUpAllowed(signUpMode, db.invitations, invitation, email))) {
+      throw new SignUpClosedError()
+    }
+  }
+  const { invitationPlan } = options
+  if (signUpMode === `invite` && !invitationPlan) {
+    throw new Error(`SIGN_UP=invite needs invitationPlan, to accept an invitation at sign-up`)
+  }
   const sessionsOver = (store: SessionStore<AuthSessionRecord>, minutes = options.sessionMinutes) =>
     new SessionManager<AuthSessionRecord>({
       store,
@@ -427,7 +458,8 @@ export function createSignIn(options: SignInOptions): SignIn {
   // only on requests, long after `api` below is assigned.
   const guests = createGuestOperations({
     db,
-    enabled: options.guests ?? true,
+    // A guest is an account nobody invited, so a server closed to strangers makes none.
+    enabled: (options.guests ?? true) && signUpMode === `open`,
     sessionsOver,
     cookie,
     auditRow,
@@ -462,6 +494,8 @@ export function createSignIn(options: SignInOptions): SignIn {
     ),
     waitingForCode,
     isRefusal: (error) => error instanceof MissingProfileError,
+    joinInvitedGroup: (tx, invitation, userId) =>
+      joinInvitedGroup(signUpMode, tx.invitations, invitationPlan!, invitation, userId),
   })
 
   const passkeys = createPasskeyOperations(options.passkeys, {
@@ -544,6 +578,9 @@ export function createSignIn(options: SignInOptions): SignIn {
     guests,
     oauth,
     createProfile,
+    assertSignUpAllowed,
+    joinInvitedGroup: (tx, invitation, userId) =>
+      joinInvitedGroup(signUpMode, tx.invitations, invitationPlan!, invitation, userId),
     replaceSession,
     auditRow,
     deviceOf,

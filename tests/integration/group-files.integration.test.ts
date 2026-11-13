@@ -18,11 +18,7 @@ import { GroupExportCommand, type GroupExportOptions } from "@domain/groups"
 import { unzipSync } from "fflate"
 import { parseCsv } from "@spy4x/platform/universal/csv"
 import { createGroupExportHandler } from "../../apps/api/features/groups/files.ts"
-import {
-  AppDbBase,
-  PORTABLE_AGGREGATES,
-  portableAggregatesOf,
-} from "../../apps/api/services/db-base.ts"
+import { AppDbBase, PORTABLE_AGGREGATES } from "../../apps/api/services/db-base.ts"
 import { NOTES_OFF } from "@server/notes/setup.ts"
 import { insertUser, withSchema } from "./group-team.ts"
 
@@ -493,8 +489,7 @@ Deno.test("a former owner who handed the group over and was removed cannot expor
 })
 
 /** The group files of an API that runs with `NOTES=false`, as its database service builds them. */
-const notesOffPorter = (sql: postgres.Sql) =>
-  new AppDbBase({ sql, portable: portableAggregatesOf(NOTES_OFF) }).groupFiles
+const notesOffPorter = (sql: postgres.Sql) => new AppDbBase({ sql, notes: NOTES_OFF }).groupFiles
 
 Deno.test("with the notes off, a group's export file and spreadsheets hold no note or tag", async () => {
   await withSchema(async (sql) => {

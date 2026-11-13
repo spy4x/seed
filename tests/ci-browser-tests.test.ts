@@ -3,7 +3,10 @@
  * Holds which browser tests CI runs. A merge is allowed on the pull-request check alone, so that
  * check must run the smoke set (`SMOKE_SPECS` of `infra/scripts/e2e-local-plan.ts`), and the set
  * must keep the sign-in and the notes specs: without either, a pull request that breaks that
- * screen shows green again. The whole suite runs after the merge, on `main`, where a red run is
+ * screen shows green again. The one exception is a pull request that changes only Markdown
+ * outside the product (`markdown_only` and `internal_markdown` in the workflow): it skips the
+ * steps that start the stack, and runs `browser` only when it changes a published guide. The whole
+ * suite runs after the merge, on `main`, where a red run is
  * seen but blocks nobody. `docs/browser-tests.md` and `docs/woodpecker-ci-setup.md` name the specs
  * of the set. Lighthouse measures in a stage of its own, with no other step of the pipeline beside
  * it. A pull request runs it only when it changes a file the website is built from (#821); a push
@@ -26,11 +29,17 @@ const CI = ".woodpecker/ci.yml"
 const SUITE = "deno task e2e:local --max-failures=10"
 const SMOKE = `deno task e2e:local ${SMOKE_FLAG} --max-failures=3`
 
-/** One condition of a Woodpecker `when`. `path` is the list form: include patterns only. */
+/** A `path` condition: the list form holds include patterns only. */
+type PathCondition = string | string[] | {
+  include?: string | string[]
+  exclude?: string | string[]
+}
+
+/** One condition of a Woodpecker `when`. */
 interface Condition {
   event?: string | string[]
   branch?: string | string[]
-  path?: string | string[]
+  path?: PathCondition
 }
 
 /** A `depends_on` entry: a step's name, or an object that may mark the dependency optional. */
@@ -49,13 +58,21 @@ const list = <T>(value: T | T[] | undefined): T[] =>
 
 /**
  * Whether a `path` condition holds for the `changed` files, as Woodpecker 3's `Path.Match` decides:
- * no pattern, or no changed file (`on_empty` defaults to true), holds; otherwise one changed file
- * must match one pattern, `**` crossing folders and `*` not.
+ * no changed file (`on_empty` defaults to true) holds; it fails when every changed file matches an
+ * exclude pattern, or when include patterns are given and no changed file matches one. `**`
+ * crosses folders and `*` does not.
  */
-function pathHolds(patterns: string[], changed: string[]): boolean {
-  if (patterns.length === 0 || changed.length === 0) return true
-  const globs = patterns.map((pattern) => globToRegExp(pattern, { globstar: true }))
-  return changed.some((file) => globs.some((glob) => glob.test(file)))
+function pathHolds(path: PathCondition | undefined, changed: string[]): boolean {
+  if (changed.length === 0) return true
+  const form = typeof path === `object` && !Array.isArray(path) ? path : { include: path }
+  const matcher = (patterns: string[]) => {
+    const globs = patterns.map((pattern) => globToRegExp(pattern, { globstar: true }))
+    return (file: string) => globs.some((glob) => glob.test(file))
+  }
+  const exclude = list(form.exclude)
+  if (exclude.length > 0 && changed.every(matcher(exclude))) return false
+  const include = list(form.include)
+  return include.length === 0 || changed.some(matcher(include))
 }
 
 /**
@@ -78,7 +95,7 @@ export function runsFor(
     const pathCounts = event === `pull_request` || event === `push`
     return (events.length === 0 || events.includes(event)) &&
       (branches.length === 0 || branches.includes(branch)) &&
-      (!pathCounts || pathHolds(list(condition.path), changed))
+      (!pathCounts || pathHolds(condition.path, changed))
   })
 }
 
@@ -195,6 +212,15 @@ Deno.test("a path condition needs one changed file to match on a pull request or
   // No changed file listed: Woodpecker's `on_empty` defaults to running the step.
   expect(runsFor(step, `pull_request`, `x`, [])).toBe(true)
   expect(runsFor(step, `tag`, `x`, [`apps/api/x.ts`])).toBe(true)
+})
+
+Deno.test("an exclude condition fails only when every changed file matches it", () => {
+  const step = { when: { path: { exclude: [`*.md`, `docs/**/*.md`] } } }
+  expect(runsFor(step, `pull_request`, `x`, [`README.md`, `docs/a/b.md`])).toBe(false)
+  expect(runsFor(step, `pull_request`, `x`, [`README.md`, `apps/api/x.ts`])).toBe(true)
+  expect(runsFor(step, `pull_request`, `x`, [`apps/README.md`])).toBe(true)
+  expect(runsFor(step, `pull_request`, `x`, [])).toBe(true)
+  expect(runsFor(step, `tag`, `x`, [`README.md`])).toBe(true)
 })
 
 /** The stage of `name` in `list`, or -1 when it does not run. */
@@ -323,4 +349,49 @@ Deno.test("the browser-test guide and the CI guide name every spec of the smoke 
     const missing = SMOKE_SPECS.filter((name) => !text.includes(name))
     expect({ path, missing }).toEqual({ path, missing: [] })
   }
+})
+
+/** Markdown files that no app, image or test reads, apart from `check`. */
+const MARKDOWN_ONLY = [
+  `README.md`,
+  `AGENTS.md`,
+  `i18n/TRANSLATING.md`,
+  `docs/decisions/a.md`,
+  `libs/domain/README.md`,
+  `.github/ISSUE_TEMPLATE/a.md`,
+]
+const STACK = [`integration`, `backup-restore`, `alert-rules`, `browser`, `runtimes`, `e2e-smoke`]
+
+Deno.test("a pull request that changes only Markdown no app loads runs check and none of the stack's steps", async () => {
+  const ci = await workflow()
+  for (const file of MARKDOWN_ONLY) {
+    const ran = stages(ci, `pull_request`, `main`, [file]).flat()
+    expect({ file, ran: ran.filter((name) => STACK.includes(name)) }).toEqual({ file, ran: [] })
+    expect({ file, check: ran.includes(`check`) }).toEqual({ file, check: true })
+  }
+  expect(blockingSteps(ci, SMOKE, `pull_request`, `main`, MARKDOWN_ONLY)).toEqual([])
+})
+
+Deno.test("a pull request that changes Markdown and any other file, a push to main and a tag run the stack and the smoke set", async () => {
+  const ci = await workflow()
+  const cases: [string, string[]][] = [
+    [`pull_request`, [`README.md`, `apps/api/x.ts`]],
+    [`pull_request`, [`libs/server/blog/seed-posts/a.md`]],
+    [`pull_request`, [`apps/mpa/lighthouse/posts/a.md`]],
+    [`push`, [`README.md`]],
+    [`tag`, [`README.md`]],
+  ]
+  for (const [event, changed] of cases) {
+    const ran = stages(ci, event, `main`, changed).flat()
+    const stack = STACK.filter((name) => name !== `e2e-smoke` || event !== `push`)
+    expect({ event, changed, missing: stack.filter((name) => !ran.includes(name)) })
+      .toEqual({ event, changed, missing: [] })
+  }
+})
+
+Deno.test("a pull request that changes only a published guide runs the browser tests and Lighthouse", async () => {
+  const ci = await workflow()
+  const order = stages(ci, `pull_request`, `main`, [`docs/capacity.md`])
+  expect(stageOf(order, `lighthouse`)).toBeGreaterThan(stageOf(order, `check`))
+  expect(order.flat().filter((name) => STACK.includes(name))).toEqual([`browser`])
 })

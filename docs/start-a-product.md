@@ -128,6 +128,26 @@ its pointer line and its lines in both deploy lists.
 `HomeNewsletter.lead` and `NewsletterOff.lead`. Replace the Releases on GitHub button too. Their
 uses in `subscribers.tsx` and `routes/index.tsx` are marked.
 
+**A website frame of its own.** A product that replaces `SiteFrame` keeps Seed's newsletter
+confirm and unsubscribe pages, the ones a mailed link opens, without copying their token flow.
+`apps/mpa/token-pages.tsx` builds their handlers from a frame the product passes: how to draw a
+page, the screens' `localize`, `onward` and `language`, and its "newsletter off" page. The flow
+itself (the API calls, the statuses, `Retry-After`, `Referrer-Policy`, the redirect after a
+finished step) stays Seed's, so a sync brings its fixes:
+
+```tsx
+const frame: TokenPageFrame = {
+  screen: () => ({ localize, onward: { href: `/`, label: `Back to the shop` } }),
+  render: (ctx, page, init) => ctx.render(<ShopFrame path={page.path}>{page.screen}</ShopFrame>, init),
+  off: (ctx, page, init) => ctx.render(<ShopFrame path={page.path}><Off /></ShopFrame>, init),
+}
+export const confirmHandlers = createSubscriptionConfirmHandlers(frame)
+export const unsubscribeHandlers = createUnsubscribeHandlers(frame)
+```
+
+The screens read their words through `I18nContext`, so `render` can wrap `page.screen` in a
+provider with the product's translator.
+
 ## Pictures and videos
 
 | What                     | Where                                     | Recorded by                                  |
@@ -188,10 +208,11 @@ there.
 merge cleanly. The API then answers 404 to every note, tag and attachment route and to the
 personal-token API (`/api/v1`), which serves notes only, and refuses their operations over the
 socket and `/api/call` as unknown ones. The changes pull, the admin app's group widgets and files
-and the Telegram bot's `/notes` leave them out too. The tables and migrations stay, as the
-catalog's do. A person's data export, a group's export file and spreadsheets leave them out, and
-a group import skips them (the worker reads `NOTES` too, for the data export). Unset or anything
-but `false` keeps the notes on. The app's screens and the demo still show notes for now.
+and the Telegram bot's `/notes` leave them out too; moving a group's data leaves notes and tags
+where they are, and a new account gets no welcome note. A person's data export, a group's export
+file and spreadsheets leave them out, and a group import skips them (the worker reads `NOTES` too,
+for the data export). The tables and migrations stay, as the catalog's do. Unset or anything but
+`false` keeps the notes on. The app's screens and the demo still show notes for now.
 
 Create the first operator on the server; it needs no mail
 ([The first operator](operator-access.md#the-first-operator)):

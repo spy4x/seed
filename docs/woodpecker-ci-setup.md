@@ -25,6 +25,14 @@ check ──┬── integration      (Postgres and Valkey services) ──┐
 A pull request that changes no file of the website skips `lighthouse`; `e2e-smoke` then starts
 right after `browser`'s stage.
 
+A pull request that changes only Markdown outside the product (the root `*.md` files, any
+`README.md`, `docs/**/*.md`, `i18n/*.md`, `.github/` and `.claude/`: `markdown_only` under
+`variables` in `ci.yml`) skips `integration`, `backup-restore`, `alert-rules`, `runtimes` and
+`e2e-smoke`, which cannot fail over such a change and took about 20 minutes. `check` still runs,
+and so do `lighthouse` and the images when their own lists name a changed file. `browser` runs
+only when a guide in `docs/*.md` changed (`internal_markdown`), because the website renders the
+guides and `e2e/mpa/docs.mpa.ts` tests them.
+
 Woodpecker runs steps in stages: a step starts only when the whole stage before it has ended, so
 the wall time is the slowest step of each stage, added up. Checks that must run one after another
 in the shared checkout are therefore commands of one step, `browser`, which runs beside
@@ -32,6 +40,15 @@ in the shared checkout are therefore commands of one step, `browser`, which runs
 performance falls when another step shares the CPU.
 
 - `check` runs `deno task check`: format, lint, type check and unit tests.
+- `secrets` scans commits for secrets with gitleaks, beside `check`, on every event. A pull request
+  scans its own commits since it left the target branch, so a key added and then removed in the
+  same pull request still fails it; a push to `main` and a tag scan the whole history. The log
+  shows each finding with its value redacted. Run it locally with `gitleaks git . --redact` (every
+  branch) or `gitleaks git . --redact --log-opts=origin/main..HEAD` (your branch, as CI does). To
+  allow a false positive, end its line with a `gitleaks:allow` comment; a finding in a commit that
+  is already pushed goes into `.gitleaksignore` instead, as the fingerprint gitleaks prints, under
+  a `#` comment that says why it is no secret. A real secret is revoked first: removing it from
+  the history does not help once it is public.
 - `integration` runs `deno task test:integration --parallel`, four test files at a time, against a throw-away `postgres:18.6-alpine`
   service (user `tester`, password `ci-throwaway`, database `template_test`, reachable as host
   `postgres`) and a `valkey/valkey:8.1` service (password `ci-throwaway`, host `valkey`). It waits
@@ -60,7 +77,8 @@ performance falls when another step shares the CPU.
   the API and the website with kaniko, pushing nothing. A push to `main` and a tag always build them;
   a pull request only when it changes a file that goes into an image: the `path` list under
   `variables` in `ci.yml`, which follows `.dockerignore`.
-- `e2e-smoke` runs the product's smoke set on every pull request and tag:
+- `e2e-smoke` runs the product's smoke set on every pull request (except one that changes only
+  Markdown, above) and tag:
   `deno task e2e:local --smoke --max-failures=3`, the script a developer runs, against the Postgres
   and Valkey services (`E2E_SERVICES=environment`). The set is `SMOKE_SPECS` in
   `infra/scripts/e2e-local-plan.ts`: `auth-profile-ws-push.e2e.ts`, `sign-in-next.e2e.ts`,
@@ -88,13 +106,32 @@ Woodpecker, because the repository requires approval for forks.
 Every Deno step runs `deno install --frozen` first, so a `deno.lock` that does not match
 `deno.jsonc` fails the pipeline instead of being rewritten.
 
-## Deploy is not wired up
+## Deploy on every push to main
 
 Deploys run from a developer's machine with `deno task deploy` ([Deploy an
-update](deploy-updates.md)). `.woodpecker/deploy.yml.example` holds an old build and
-deploy pipeline. Woodpecker ignores it because of the extension, and its steps have never run:
-its header lists what would have to change first. This guide documents no secrets or SSH keys for
-it, because nothing reads them.
+update](deploy-updates.md)) until a product turns on `.woodpecker/deploy.yml.example`. Then every
+push to the default branch that passes `ci.yml` deploys itself the same way. Seed keeps it off.
+
+1. Copy the file: `cp .woodpecker/deploy.yml.example .woodpecker/deploy.yml`. Change `main` in its
+   `when` when the default branch has another name.
+2. Make an SSH key for the pipeline alone: `ssh-keygen -t ed25519 -N '' -f deploy_key`. Add
+   `deploy_key.pub` to the deploy user's `~/.ssh/authorized_keys` on the server.
+3. In Woodpecker, open the repository's secrets and add four, each for the **push** event only:
+
+   | Secret | Value |
+   | --- | --- |
+   | `deploy_ssh_key` | The private key, `deploy_key`. |
+   | `deploy_ssh_config` | An SSH `Host` block named as `SSH_TO_SERVER`, with `HostName`, `Port` and `User`. |
+   | `deploy_known_hosts` | `ssh-keyscan -p <port> <host>`, checked against the server's own keys. |
+   | `deploy_env_key` | The contents of `.age/key.txt`, the key that decrypts the env files. |
+
+4. Delete the local copies of `deploy_key` and `deploy_key.pub`, then merge the copy to the
+   default branch. Its push pipeline is the first deploy. `gh pr checks` does not show it; the
+   Woodpecker page of that push does.
+
+The step holds the age key and an SSH key that can run Docker on the server, so its secrets are
+limited to the push event: a pull request never sees them. Only code that reached the default
+branch runs the deploy. A failed deploy turns that push pipeline red; fix it before the next merge.
 
 ## Activating a repository
 
@@ -102,8 +139,8 @@ it, because nothing reads them.
 2. Leave the repository's **Pipeline path** empty. Woodpecker then uses `.woodpecker/`. Setting it
    to another path (for example `infra/configs/`) hides the pipeline from every copy of the
    template.
-3. Check that a pull request shows the `check`, `integration`, `backup-restore`, `alert-rules`,
-   `browser` and `e2e-smoke` results (`gh pr checks <number>`).
+3. Check that a pull request shows the `check`, `secrets`, `integration`, `backup-restore`,
+   `alert-rules`, `browser` and `e2e-smoke` results (`gh pr checks <number>`).
 
 ## Releases
 
@@ -133,6 +170,8 @@ equal to `DENO_VERSION` in `infra/envs/.env.example` and `Dockerfile.base`.
 deno task check
 deno task test:integration
 deno task e2e:local --smoke
+# The secrets scan of your branch
+gitleaks git . --redact --log-opts=origin/main..HEAD
 ```
 
 ## Additional Resources

@@ -722,6 +722,11 @@ describe("the item editor", () => {
     expect(rows[0].querySelector("[data-e2e=catalog-item-photo-cover-badge]")!.textContent)
       .toBe("Cover")
     expect(open.map((one) => one.className.includes("--color-selected"))).toEqual([true, false])
+    // Focus is an outline inside the picture, never a second ring like the cover's.
+    for (const one of open) {
+      expect(one.className).toContain("focus-visible:-outline-offset-2")
+      expect(one.className).not.toMatch(/focus-visible:ring/)
+    }
   })
 
   it("opens a photo full size, moves with the arrow keys, and closes back to the photo", async () => {
@@ -757,7 +762,7 @@ describe("the item editor", () => {
       .toBe(`/api/admin/catalog/photos/${PHOTOS[0]}/full`)
   })
 
-  it("opens no lightbox for a photo still being prepared", async () => {
+  it("shows a zoom glyph on a photo that opens, and no lightbox or glyph on one being prepared", async () => {
     const preparing = { ...ITEM_SAVED.photos[1], state: "preparing" as const }
     await mount(
       <ItemEditor calls={[]} item={{ ...ITEM_SAVED, photos: [ITEM_SAVED.photos[0], preparing] }} />,
@@ -766,6 +771,11 @@ describe("the item editor", () => {
     expect(rows.map((row) => row.querySelector("[data-e2e=catalog-item-photo-open]") !== null))
       .toEqual([true, false])
     expect(rows[1].textContent).toContain("Preparing")
+    // The zoom glyph says "opens full size" on a phone too, so only a photo that opens wears it.
+    expect(rows.map((row) => row.querySelector("[data-e2e=catalog-item-photo-zoom]") !== null))
+      .toEqual([true, false])
+    expect(rows[0].querySelector("[data-e2e=catalog-item-photo-zoom]")!.getAttribute("aria-hidden"))
+      .toBe("true")
   })
 
   it("gives the stock boxes and the small buttons a 44px tap area on a phone", async () => {

@@ -149,7 +149,7 @@ export default {
     "So hängt Seed zusammen: Die Web-App und die Website rufen die API auf, die API schreibt jede Änderung samt ihren Events in Postgres, und der Worker verschickt daraus Mails und Push-Nachrichten. Alles läuft auf einem Server.",
   "Home.title": "Seed: der kostenlose SaaS-Starter auf Webstandards",
   "Home.description":
-    "Kostenloser SaaS-Starter unter MIT-Lizenz, gebaut auf Webstandards: 2FA-Anmeldung, Gruppen mit Rollen, Stripe-Abrechnung. Läuft auf Deno, Node und Bun.",
+    "Kostenloser SaaS-Starter unter MIT-Lizenz auf Webstandards: 2FA, Gruppen, Stripe, Echtzeit, offline, Ansichten direkt vom Gerät. Deno, Node und Bun.",
   "HomeProof.tests": "Testdateien in den Apps und Bibliotheken, alle laufen in der CI",
   "HomeProof.licence": "Lizenz: kein Konto, keine Paywall",
   "HomeStatus.signIn":
@@ -176,6 +176,9 @@ export default {
   "HomeFaq.tryQuestion": "Kann ich es ohne Konto ausprobieren?",
   "HomeFaq.tryAnswer":
     "Ja. „Live-Demo ausprobieren“ öffnet die App in einem Gastkonto mit Beispieldaten, ganz ohne E-Mail-Adresse oder Passwort. Du kannst eine Anmeldemethode hinzufügen, die Demo wird aber trotzdem jede Nacht zurückgesetzt. Seed selbst braucht überhaupt kein Konto: Klone es einfach von GitHub.",
+  "HomeFaq.fastQuestion": "Warum fühlt sich eine Seed-App so schnell an?",
+  "HomeFaq.fastAnswer":
+    "Ist sie einmal offen, wartet sie nicht auf den Server, um dir zu zeigen, was du schon gesehen hast. Die App behält eine Kopie jeder Liste auf dem Gerät, zeigt eine Ansicht sofort daraus und tauscht die Kopie gegen die Antwort des Servers, sobald sie da ist. Suche und Filter der Notizliste laufen auf dem Gerät. Beim Öffnen prüft die App zuerst deine Anmeldung beim Server, beim ersten Besuch werden die Daten geladen, und Speichern wartet auf den Server.",
   "HomeFaq.freeQuestion": "Ist Seed wirklich kostenlos?",
   "HomeFaq.freeAnswer":
     "Ja. Seed steht unter der MIT-Lizenz: Nutze es für beliebig viele Produkte, kommerziell oder nicht, veröffentliche deinen Fork, ganz ohne Konto. Du zahlst nur für einen gemieteten Server und für Dienste, die du einschaltest, etwa Stripe oder einen E-Mail-Anbieter.",
@@ -236,6 +239,12 @@ export default {
   "HomeFeatures.websiteText":
     "Diese Website: auf dem Server gerendert, funktioniert auch ohne JavaScript, in neun Sprachen, mit Preisen direkt aus deinem Tarifkatalog, Rechtsseiten und einem Newsletter mit Double-Opt-in.",
   "HomeFeatures.all": "Alle Funktionen, mit Screenshots und Status",
+  "HomeSpeed.eyebrow": "Schnell ab Werk",
+  "HomeSpeed.title": "Kein Ladekreisel zwischen den Klicks",
+  "HomeSpeed.text":
+    "Die meisten Web-Apps fragen nach jedem Klick erneut beim Server nach, und du wartest. Ist eine Seed-App einmal offen, öffnet eine Ansicht, die du schon besucht hast, sofort aus der Kopie auf deinem Gerät, und Suche und Filter der Notizliste antworten, während du tippst. Die neueste Fassung vom Server ersetzt die Kopie auf dem Gerät einen Moment später im Hintergrund.",
+  "HomeSpeed.demo": "Probier es aus: klick dich durch die Demo",
+  "HomeSpeed.how": "So funktioniert es",
   "HomeServer.eyebrow": "Läuft auf einem gemieteten Server",
   "HomeServer.title":
     "Ein Server, ein <code>docker compose</code>, keine bösen Überraschungen auf der Rechnung.",
@@ -454,6 +463,19 @@ export default {
   "FeatureRealtime.fact3":
     "Echtzeit lässt sich abschalten: Die App fragt dann in festen Abständen nach und funktioniert genauso",
   "FeatureRealtime.code": "Echtzeit-Design lesen",
+  "FeatureFast.nav": "Schnell ab Werk",
+  "FeatureFast.title": "Ansichten öffnen vom Gerät und holen dann auf",
+  "FeatureFast.lead":
+    "Jede Liste, die die App schon gezeigt hat, bleibt auf dem Gerät, außer gelöschten Notizen und Gruppen. Eine Ansicht zeigt diese Kopie sofort und tauscht sie gegen die Antwort des Servers, sobald sie ankommt. So wartet kein Wechsel in der offenen App auf eine Runde zum Server. Beim Öffnen prüft die App zuerst die Anmeldung beim Server, der erste Besuch lädt die Daten herunter, und einige Ansichten fragen immer den Server.",
+  "FeatureFast.fact1":
+    "Zuerst erscheint die Kopie vom Gerät, dann ersetzt sie die Antwort des Servers (cachedRead über IndexedDB)",
+  "FeatureFast.fact2":
+    "Suche und Filter der Notizliste laufen über die Liste auf dem Gerät, ohne Anfrage pro Tastendruck",
+  "FeatureFast.fact3":
+    "Warten weiterhin auf den Server: die Prüfung der Anmeldung beim Öffnen der App, gelöschte Notizen und Gruppen und jedes Speichern, etwa ein Tarifwechsel oder eine Einladung",
+  "FeatureFast.fact4":
+    "Ohne Netz wartet eine Änderung an einer Notiz oder einem Tag in einer Warteschlange, bis das Netz zurück ist",
+  "FeatureFast.code": "Lies, wie die Kopie auf dem Gerät funktioniert",
   "FeatureOffline.nav": "Offline-App",
   "FeatureOffline.title": "Eine App, die ohne Netz startet",
   "FeatureOffline.lead":
@@ -770,6 +792,8 @@ export default {
   "CompareRow.blog": "Blog",
   "CompareRow.audit": "Audit-Log",
   "CompareRow.realtime": "Echtzeit-Updates",
+  "CompareRow.instant": "Daten auf dem Gerät",
+  "CompareRow.instantNote": "Eine Kopie jeder Liste auf dem Gerät",
   "CompareRow.offline": "Offline-App",
   "CompareRow.offlineNote": "Merkt sich offline gemachte Änderungen",
   "CompareRow.ops": "Monitoring und Backups",
@@ -968,12 +992,12 @@ export default {
   "FeaturePageSignIn.name": "Anmeldung",
   "FeaturePageSignIn.title": "Login für dein SaaS, ohne externen Auth-Dienst",
   "FeaturePageSignIn.description":
-    "Passkeys, Anmeldecodes per E-Mail, Google, GitHub und 2FA, geprüft von deiner eigenen API, ohne Auth-Dienst und Gebühr pro Nutzer. Kostenlos, MIT-Lizenz.",
+    "Passkeys, Anmeldecodes per E-Mail, Google, GitHub und Zwei-Faktor-Schutz, geprüft von deiner eigenen API, ohne Auth-Dienst und Gebühr pro Nutzer. Kostenlos, MIT-Lizenz.",
   "FeaturePageSignIn.h1": "Passkeys und Login für dein SaaS, ohne externen Auth-Dienst",
   "FeaturePageSignIn.answer":
     "Seed meldet Leute mit Passkeys, Anmeldecodes per E-Mail, Google und GitHub an, geprüft von der eigenen API auf deinem Server, ohne fremden Auth-Dienst. Passwörter, Passkeys und Anmeldecodes funktionieren direkt nach dem Deployment, ohne Gebühr pro Nutzer; Google und GitHub brauchen je zwei Schlüssel in der Env-Datei.",
   "FeaturePageSignIn.summary":
-    "Passkeys, Anmeldecodes per E-Mail, Google, GitHub und 2FA, ohne Auth-Dienst.",
+    "Passkeys, Anmeldecodes per E-Mail, Google, GitHub und Zwei-Faktor-Schutz, ohne Auth-Dienst.",
   "FeaturePageSignIn.how1":
     "Die API prüft jede Anmeldung selbst und antwortet mit einem signierten Sitzungs-Cookie. Ein Passkey nutzt das eingebaute WebAuthn des Browsers: Der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal. Ein Anmeldecode per E-Mail meldet an oder registriert, gilt nur einmal, 10 Minuten lang und nur im Browser, der ihn angefordert hat, und wird nur als Hash gespeichert.",
   "FeaturePageSignIn.how2":

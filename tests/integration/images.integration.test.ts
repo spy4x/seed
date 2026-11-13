@@ -258,6 +258,66 @@ Deno.test("a picture replaced while it is processed leaves no copy behind", asyn
   })
 })
 
+Deno.test("a picture replaced while the last job finishes waits on the person, not the image, and never deadlocks", async () => {
+  await withSchema(async (sql) => {
+    const { files, stored } = memoryFiles()
+    const { scratch, written } = memoryScratch()
+    const { userId, id, event } = await personWithPicture(sql, stored)
+    const held = Promise.withResolvers<number>()
+    const release = Promise.withResolvers<void>()
+    let replacement: Promise<void> = Promise.resolve()
+    // A replacement that has locked the person's row, as `setUserPicture` does, and goes on to
+    // delete the image only once released.
+    const lockPerson = () => {
+      replacement = sql.begin(async (tx) => {
+        await tx`SELECT 1 FROM users WHERE id = ${userId} FOR UPDATE`
+        const [{ pid }] = await tx<{ pid: number }[]>`SELECT pg_backend_pid() AS pid`
+        held.resolve(pid)
+        await release.promise
+        await setUserPicture(tx, userId, null)
+      }).then(() => {})
+      return held.promise.then(() => {})
+    }
+
+    await imageProcessJob({ sql, files, scratch, process: fakeProcess(written) })(event)
+    // The second job is the one that marks the person's picture ready.
+    const job = imageWidthsJob({
+      sql,
+      files,
+      scratch,
+      process: fakeProcess(written, null, lockPerson),
+    })(event)
+    try {
+      const pid = await held.promise
+      // Wait until the job's finishing transaction is blocked by the replacement.
+      for (let tries = 0;; tries++) {
+        const [{ blocked }] = await sql<{ blocked: number }[]>`
+          SELECT count(*)::int AS blocked FROM pg_stat_activity
+          WHERE ${pid}::int = ANY(pg_blocking_pids(pid))
+        `
+        if (blocked > 0) break
+        if (tries >= 250) throw new Error(`the job never waited on the replacement`)
+        await new Promise((resolve) => setTimeout(resolve, 20))
+      }
+      // The job waits on the person's row and holds no lock on the image yet.
+      await sql.begin((tx) => tx`SELECT 1 FROM images WHERE id = ${id} FOR UPDATE NOWAIT`)
+    } finally {
+      release.resolve()
+      // Lets a failure above be reported, not a dangling deadlock error.
+      await Promise.allSettled([replacement, job])
+    }
+    // Neither side was chosen as a deadlock victim.
+    await replacement
+    await job
+
+    // The job took the "replaced meanwhile" path: it kept none of the widths it made.
+    expect([...stored.keys()].filter((key) => key.includes(`/960.`))).toEqual([])
+    expect(stored.has(`pictures/${id}`)).toBe(false)
+    const [image] = await sql`SELECT 1 FROM images WHERE id = ${id}`
+    expect(image).toBeUndefined()
+  })
+})
+
 Deno.test("a picture is served as its narrowest WebP once processed, never as its original", async () => {
   await withSchema(async (sql) => {
     const { files, stored } = memoryFiles()

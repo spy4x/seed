@@ -225,12 +225,14 @@ it(`keeps the files' own message when they fail to load`, async () => {
 function filePorts(response: () => Response) {
   const fetched: string[] = []
   const saved: string[] = []
+  let ids = 0
   const ports: GroupsFilePorts = {
     fetch: (path, init) => {
       fetched.push(`${path} ${init.credentials}`)
       return Promise.resolve(response())
     },
     save: (_response, filename) => (saved.push(filename), Promise.resolve()),
+    newId: () => `id-${++ids}`,
   }
   return { ports, fetched, saved }
 }
@@ -239,9 +241,22 @@ it(`saves a downloaded file under its own name through the admin API`, async () 
   const { ports, fetched, saved } = filePorts(() => new Response(`%PDF`))
   const state = createGroupsState(fakeRequest().request, createToastStore(), stayed, ports)
   await state.downloadFile(GROUP_ID, file)
-  expect(fetched).toEqual([`/api/admin/groups/${GROUP_ID}/files/${FILE_ID}/download same-origin`])
+  expect(fetched).toEqual([
+    `/api/admin/groups/${GROUP_ID}/files/${FILE_ID}/download?requestId=id-1 same-origin`,
+  ])
   expect(saved).toEqual([`receipt.pdf`])
   expect(state.files.value.notice).toBe(null)
+})
+
+it(`names each download with a fresh request id in its address`, async () => {
+  const { ports, fetched } = filePorts(() => new Response(`%PDF`))
+  const state = createGroupsState(fakeRequest().request, createToastStore(), stayed, ports)
+  await state.downloadFile(GROUP_ID, file)
+  await state.downloadFile(GROUP_ID, file)
+  expect(
+    fetched.map((line) => new URL(line.split(` `)[0], `http://x`).searchParams.get(`requestId`)),
+  )
+    .toEqual([`id-1`, `id-2`])
 })
 
 it(`says a file is gone and reads the list again when its download answers 404`, async () => {

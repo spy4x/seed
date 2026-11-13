@@ -12,6 +12,7 @@ import {
 } from "@domain/notes"
 import type { KeyedMessage, Message } from "@ui/message.ts"
 import { callCommand, callQuery, canCall } from "../modules.ts"
+import { preferencesState } from "./preferences.ts"
 
 /** Where a row stands: the same words as preact-ui's `AttachmentList`. */
 export type AttachmentRowStatus = "uploading" | "waiting" | "checking" | "failed" | "ready"
@@ -64,6 +65,8 @@ export interface AttachmentDependencies {
   download(input: { groupId: string; id: string }): Promise<{ url: string }>
   /** Whether a call made now reaches the server. */
   canCall(): boolean
+  /** The locale sizes are written in: the one the person's dates follow. */
+  locale(): string
 }
 
 /** The rules a browser checks before anything is sent; the server checks them again. */
@@ -90,7 +93,7 @@ const UPLOAD_FAILED = `AttachmentMessages.uploadFailed`
 const LINK_EXPIRED = `AttachmentMessages.linkExpired`
 
 /** The sentence the screen shows for a file the server refused, by the API's code. */
-function refusalOf(error: unknown, name: string, size: number): Message {
+function refusalOf(error: unknown, name: string, size: number, locale: string): Message {
   const details = error instanceof RealtimeRequestError
     ? error.details as { code?: unknown; limit?: unknown } | undefined
     : undefined
@@ -99,7 +102,7 @@ function refusalOf(error: unknown, name: string, size: number): Message {
     case `FILE_TYPE`:
       return typeError(name)
     case `FILE_TOO_LARGE`:
-      return sizeError(name, size, limit ?? DEFAULT_RULES.maxFileBytes)
+      return sizeError(name, size, limit ?? DEFAULT_RULES.maxFileBytes, locale)
     case `NOTE_FULL`:
       return {
         key: `AttachmentMessages.noteFull`,
@@ -117,10 +120,10 @@ function typeError(name: string): KeyedMessage {
   return { key: `AttachmentMessages.type`, values: { name } }
 }
 
-function sizeError(name: string, size: number, max: number): KeyedMessage {
+function sizeError(name: string, size: number, max: number, locale: string): KeyedMessage {
   return {
     key: `AttachmentMessages.size`,
-    values: { name, size: formatBytes(size), max: formatBytes(max) },
+    values: { name, size: formatBytes(size, locale), max: formatBytes(max, locale) },
   }
 }
 
@@ -273,7 +276,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
     for (const file of chosen) {
       if (!TYPES.includes(file.type)) problems.push(typeError(file.name))
       else if (file.size > rules.maxFileBytes || file.size < 1) {
-        problems.push(sizeError(file.name, file.size, rules.maxFileBytes))
+        problems.push(sizeError(file.name, file.size, rules.maxFileBytes, dependencies.locale()))
       } else if (places <= 0) overflow.push(file.name)
       else {
         places--
@@ -381,7 +384,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
         status: `failed`,
         progress: undefined,
         error: cause instanceof RealtimeRequestError
-          ? refusalOf(cause, file.name, file.size)
+          ? refusalOf(cause, file.name, file.size, dependencies.locale())
           : undefined,
       })
     }
@@ -502,6 +505,7 @@ export const attachmentsCalls: AttachmentDependencies = {
   remove: (input) => callCommand(`attachment.remove`, input),
   download: (input) => callQuery(`attachment.download`, input),
   canCall,
+  locale: () => preferencesState.format.peek().locale,
 }
 
 /** The files of the note the page shows. */

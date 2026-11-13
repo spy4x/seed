@@ -481,6 +481,7 @@ test.describe("what a device keeps", () => {
             "auth:sign-out-owed",
             "offline:signed-out",
             "theme",
+            "language",
             "install-prompt-dismissed",
             "last-sign-in",
           ].includes(key)

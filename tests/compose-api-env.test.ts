@@ -91,6 +91,16 @@ for (const service of ["worker", "mpa"]) {
   })
 }
 
+// Without them the worker would tell IndexNow about other addresses than the ones the website and
+// the tracking links use (docs/catalog.md#indexnow).
+Deno.test("the worker container receives the catalog's switch, item address and languages", async () => {
+  const names = await environmentOf("worker")
+  // Without CATALOG=true the worker reads the catalog as off, so English only.
+  expect(names).toContain("CATALOG")
+  expect(names).toContain("CATALOG_ITEM_PATH")
+  expect(names).toContain("CATALOG_LANGUAGES")
+})
+
 Deno.test("the api container receives the error tracker's DSN", async () => {
   expect(await environmentOf("api")).toContain("ERROR_REPORT_DSN")
 })
@@ -114,6 +124,11 @@ Deno.test("the api container receives each sign-in provider's client id and secr
 // Without it `GUEST_MODE=false` in `.env` would leave guest accounts on: the API never sees it.
 Deno.test("the api container receives the guest mode switch", async () => {
   expect(await environmentOf("api")).toContain("GUEST_MODE")
+})
+
+// Without it `SIGN_UP=invite` in `.env` would leave sign-up open to anyone: the API never sees it.
+Deno.test("the api container receives the sign-up mode", async () => {
+  expect(await environmentOf("api")).toContain("SIGN_UP")
 })
 
 // Without it `NOTES=false` in `.env` would leave the notes API on: the API never sees it.

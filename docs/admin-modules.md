@@ -52,7 +52,10 @@ not mounted and `GET /api/admin/modules` leaves it out. The catalog is the one o
 | `apps/api/routes/admin/<id>.ts`          | The `AdminApiModule`: `id` and `routes(context)`, a Hono app       |
 | `libs/server/<area>/admin-<id>.ts`       | The SQL, when the module reads anything                            |
 
-`nav` holds the rail entry's name, first page and icon.
+`nav` holds the rail entry's name, first page and icon. A module with a key in `ADMIN_GO_KEYS`
+(`apps/admin/src/shortcuts.ts`) gets a `g` sequence and a Go to command in the Ctrl K palette;
+the other words that find the command, in English and Russian, are its entry in `GO_TO_ALIASES`
+(`libs/ui/admin-palette-commands.ts`).
 
 Each page is a view that gets the `AdminContext`:
 
@@ -112,7 +115,9 @@ and answer 404, since every file sits on a note and every widget counts notes.
 | `/thumbnail`                                      | no        |
 
 The thumbnail route serves the whole original image; the 40 px tile only scales it down. So an
-operator who opens the thumbnail's address sees the full image without an audit row.
+operator who opens the thumbnail's address sees the full image without an audit row. Thumbnails
+spend a per-operator budget of their own, ten times the normal one (`THUMBNAIL_LIMIT_FACTOR`), so a
+page of 25 tiles leaves the operator's other admin calls alone.
 
 ## Next
 

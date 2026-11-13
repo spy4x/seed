@@ -732,7 +732,7 @@ export default {
   "AdminBlogDialogs.changeUrlTitle": "Changer l’URL de cet article ?",
   "AdminBlogDialogs.changeUrl": "Changer l’URL",
   "AdminBlogDialogs.linksRedirect":
-    "Les liens vers <path>{path}</path> continuent de fonctionner : ils redirigent vers la nouvelle URL.",
+    "Les liens vers <path>{path}</path> continuent de fonctionner : ils redirigent vers la nouvelle URL.",
   "AdminBlogDialogs.newSlug": "Nouveau slug",
   "AdminBlogDialogs.slugHint": "Minuscules, chiffres et tirets.",
   "AdminBlogDialogs.futureTime": "Choisissez une date dans le futur.",
@@ -769,28 +769,28 @@ export default {
   "AdminBlogDialogs.mailingList": "Liste de diffusion",
   "AdminBlogDialogs.alsoEmail": {
     "one":
-      "Envoyer aussi cet article par e-mail à {count} abonné confirmé (langue : <language>{language}</language>)",
+      "Envoyer aussi cet article par e-mail à {count} abonné confirmé (langue : <language>{language}</language>)",
     "many":
-      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés (langue : <language>{language}</language>)",
+      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés (langue : <language>{language}</language>)",
     "other":
-      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés (langue : <language>{language}</language>)",
+      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés (langue : <language>{language}</language>)",
   },
   "AdminBlogDialogs.alsoEmailList": {
     "one":
-      "Envoyer aussi cet article par e-mail à {count} abonné confirmé de <list>{list}</list> (langue : <language>{language}</language>)",
+      "Envoyer aussi cet article par e-mail à {count} abonné confirmé de <list>{list}</list> (langue : <language>{language}</language>)",
     "many":
-      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés de <list>{list}</list> (langue : <language>{language}</language>)",
+      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés de <list>{list}</list> (langue : <language>{language}</language>)",
     "other":
-      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés de <list>{list}</list> (langue : <language>{language}</language>)",
+      "Envoyer aussi cet article par e-mail à {count} abonnés confirmés de <list>{list}</list> (langue : <language>{language}</language>)",
   },
   "AdminBlogDialogs.sentOnce":
     "Envoyé une seule fois, à la mise en ligne de l’article. Impossible d’annuler l’envoi.",
   "AdminBlogDialogs.newsletterOff":
-    "La newsletter est désactivée : cet article ne sera pas envoyé à la liste <list>{list}</list>.",
+    "La newsletter est désactivée : cet article ne sera pas envoyé à la liste <list>{list}</list>.",
   "AdminBlogDialogs.postLanguageOnly":
     "Seuls les abonnés inscrits dans la langue de l’article le reçoivent.",
   "AdminBlogDialogs.noReaders":
-    "Aucun abonné confirmé en <language>{language}</language> pour l’instant : cet article ne peut pas être envoyé par e-mail.",
+    "Aucun abonné confirmé en <language>{language}</language> pour l’instant : cet article ne peut pas être envoyé par e-mail.",
   "AdminBlogEditor.leaveMessage": "Vos modifications de cet article seront perdues.",
   "AdminBlogEditor.doneScheduled": "Programmé pour le {at}.",
   "AdminBlogEditor.donePublished": "Publié.",
@@ -851,7 +851,7 @@ export default {
   "AdminBlogEditor.bodyLabel": "Article, en Markdown",
   "AdminBlogEditor.bodyHint": "Rédigé en Markdown.",
   "AdminBlogEditor.bodyHintFigures":
-    "Rédigé en Markdown. Pour ajouter une figure interactive, placez sa balise seule sur une ligne : <code>{example}</code>",
+    "Rédigé en Markdown. Pour ajouter une figure interactive, placez sa balise seule sur une ligne : <code>{example}</code>",
   "AdminBlogEditor.problemsTitle": {
     "one": "{count} problème dans cet article",
     "many": "{count} problèmes dans cet article",
@@ -867,13 +867,13 @@ export default {
   "AdminBlogEditor.problemsNone": "Plus aucun problème",
   "AdminBlogEditor.problemLine": "Ligne {line}",
   "AdminBlogEditor.problemUnknown":
-    "Aucun composant ne s’appelle {tag}. Vouliez-vous dire {suggestion} ?",
+    "Aucun composant ne s’appelle {tag}. Vouliez-vous dire {suggestion} ?",
   "AdminBlogEditor.problemUnknownNone":
-    "Aucun composant ne s’appelle {tag}. Disponibles : {names}.",
-  "AdminBlogEditor.problemProps": "{tag} n’accepte pas ces propriétés : <detail>{detail}</detail>",
+    "Aucun composant ne s’appelle {tag}. Disponibles : {names}.",
+  "AdminBlogEditor.problemProps": "{tag} n’accepte pas ces propriétés : <detail>{detail}</detail>",
   "AdminBlogEditor.problemNested":
     "{tag} se trouve dans une liste ou une citation. Placez-le seul sur une ligne, en dehors.",
-  "AdminBlogEditor.problemSyntax": "La balise de {tag} est illisible : <detail>{detail}</detail>",
+  "AdminBlogEditor.problemSyntax": "La balise de {tag} est illisible : <detail>{detail}</detail>",
   "AdminBlogEditor.figureHidden": "Cette figure ne s’affichera pas",
   "AdminBlogEditor.goToLine": "Aller à la ligne {line}",
   "AdminBlogEditor.preview": "Aperçu",
@@ -889,7 +889,7 @@ export default {
   "AdminBlogEditor.settings": "Paramètres de l’article",
   "AdminBlogEditor.slug": "Slug",
   "AdminBlogEditor.slugLocked":
-    "Verrouillé après publication. Utilisez « Changer l’URL… » pour le modifier ; les anciens liens redirigent vers la nouvelle.",
+    "Verrouillé après publication. Utilisez « Changer l’URL… » pour le modifier ; les anciens liens redirigent vers la nouvelle.",
   "AdminBlogEditor.slugHint":
     "L’URL de l’article : <path>{path}</path>. Minuscules, chiffres et tirets.",
   "AdminBlogEditor.slugHintEmpty": "Rempli à partir du titre. Minuscules, chiffres et tirets.",
@@ -924,7 +924,7 @@ export default {
   "AdminBlogEditor.groupSummary": "Résumé",
   "AdminBlogEditor.groupCover": "Couverture",
   "AdminBlogEditor.groupLinks": "Liens",
-  "AdminBlogEditor.coverOf": "Utilise la couverture de : {title}",
+  "AdminBlogEditor.coverOf": "Utilise la couverture de : {title}",
   "AdminBlogEditor.coverBroken": "Cette image ne s’est pas chargée.",
   "AdminBlogEditor.coverPrivacy":
     "Une image hébergée sur un autre site permet à ce site de voir l’adresse IP de vos lecteurs.",
@@ -1104,7 +1104,7 @@ export default {
   "AdminCatalogItem.linksOpenLater": "Les liens fonctionnent dès que le produit est sur le site.",
   "AdminCatalogItem.addSource": "Ajouter une source",
   "AdminCatalogItem.noLinkYet": "Pas encore de lien",
-  "AdminCatalogItem.statsSummary": "30 derniers jours : {views} · {clicks}",
+  "AdminCatalogItem.statsSummary": "30 derniers jours : {views} · {clicks}",
   "AdminCatalogItem.views": {
     "one": "{count} vue",
     "many": "{count} vues",
@@ -1215,7 +1215,7 @@ export default {
     "L’endroit où vous partagez, comme le groupe Zalo A. Seuls les opérateurs le voient.",
   "AdminCatalogSource.slug": "Étiquette de source",
   "AdminCatalogSource.slugHint":
-    "Les statistiques s’en servent pour distinguer vos sources : minuscules, chiffres et tirets. Elle suit le nom tant que vous ne la modifiez pas.",
+    "Les statistiques s’en servent pour distinguer vos sources : minuscules, chiffres et tirets. Elle suit le nom tant que vous ne la modifiez pas.",
   "AdminCatalogSource.linksNote": {
     "one": "Son lien reste le même ; la nouvelle étiquette compte dès la prochaine visite.",
     "many":
@@ -2005,6 +2005,11 @@ export default {
   "AdminPreferences.clock24": "24 heures",
   "AdminPreferences.changed": "Modifié",
   "AdminPreferences.never": "Jamais",
+  "AdminSearch.find": "Recherche rapide",
+  "AdminSearch.findUser": "Chercher l’utilisateur « {query} »",
+  "AdminSearch.findGroup": "Chercher le groupe « {query} »",
+  "AdminSearch.on": "Activés",
+  "AdminSearch.off": "Désactivés",
   "AdminShortcuts.newPost": "Nouvel article",
   "AdminShortcuts.sharingChannels": "Aller aux canaux de partage",
   "AdminShortcuts.addChannel": "Ajouter un canal de partage",
@@ -2133,6 +2138,8 @@ export default {
   "AdminUser.tabs": "À propos de cette personne",
   "AdminUser.account": "Compte",
   "AdminUser.picture": "Photo de profil",
+  "AdminUser.picturePreparing": "Préparation de la photo…",
+  "AdminUser.pictureRefused": "Impossible d’utiliser cette photo.",
   "AdminUser.none": "Aucune",
   "AdminUser.address": "Adresse e-mail",
   "AdminUser.role": "Rôle",

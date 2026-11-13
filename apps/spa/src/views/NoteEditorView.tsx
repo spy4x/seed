@@ -1,8 +1,8 @@
-import { signal } from "@preact/signals"
+import { signal, useSignal } from "@preact/signals"
 import { useEffect, useRef } from "preact/hooks"
 import { useLocation } from "wouter-preact"
 import { canMutateNotes } from "@domain/groups"
-import { NoteEditorScreen } from "@ui/note-editor-screen.tsx"
+import { type NoteDialog, NoteEditorScreen } from "@ui/note-editor-screen.tsx"
 import { ATTACH_BUTTON_ID } from "@ui/note-attachments.tsx"
 import { attachmentsStore } from "../state/attachments.ts"
 import { moveTargetsOf } from "@ui/notes-screen.tsx"
@@ -20,13 +20,17 @@ import { pageHeading } from "@spy4x/preact-system/route-announcer"
 import { isSpaPath } from "./spa-paths.ts"
 import { personName } from "./note-people.ts"
 import { movedToast } from "./note-toasts.ts"
-import { clickAfterPalette } from "./palette-attach.ts"
+import { afterPalette, clickAfterPalette } from "./palette-attach.ts"
+import { copyNoteLink, duplicateNote, offeredNoteActions } from "./note-actions.ts"
+import type { NotePageActions } from "./shortcuts.ts"
+import { copyToClipboard } from "@spy4x/platform/browser/clipboard"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { useAppText } from "@ui/i18n.ts"
 import { messageText } from "@ui/message.ts"
 import { isolate } from "@spy4x/preact-ui/bdi"
 
-/** The palette's "Attach files to this note" while a note page an editor can change is open. */
-export const noteEditorPageActions = signal<{ attach(): void } | null>(null)
+/** The palette's commands of the open note page, those it offers now; `null` on any other page. */
+export const noteEditorPageActions = signal<NotePageActions | null>(null)
 
 /** Downloads `url`: an image opens in a new tab (it is served inline), any other file saves. */
 function openDownload(url: string, type: string): void {
@@ -90,18 +94,43 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
   const youId = sessionState.value.user?.id ?? null
   const members = membersStore.groupId.value === groupId ? membersStore.members.value : null
   const canWrite = membership !== undefined && canMutateNotes(membership.role)
-  useEffect(() => {
-    if (!canWrite) return
-    noteEditorPageActions.value = {
-      // Focus lands on the button too, so the person is there once the chooser closes.
-      attach: () => clickAfterPalette(document, document.getElementById(ATTACH_BUTTON_ID)),
-    }
-    return () => noteEditorPageActions.value = null
-  }, [canWrite])
   const attachments = attachmentsStore.groupId.value === groupId ? attachmentsStore : null
   const moveTargets = membership && canMutateNotes(membership.role)
     ? moveTargetsOf(groupsStore.groups.value, membership.id)
     : []
+  // The palette opens the page menu's dialogs through the screen, once the palette has closed.
+  const requestDialog = useSignal<NoteDialog | null>(null)
+  const openDialog = (dialog: NoteDialog) =>
+    afterPalette(document, () => requestDialog.value = dialog)
+  // The palette offers what the page offers: a reader of a note can only copy its link.
+  const shownId = editing?.id ?? null
+  const canMove = moveTargets.length > 0
+  useEffect(() => {
+    noteEditorPageActions.value = offeredNoteActions({
+      canWrite,
+      noteOpen: shownId !== null && saved !== undefined,
+      canMove,
+    }, {
+      // Focus lands on the button too, so the person is there once the chooser closes.
+      attach: () => clickAfterPalette(document, document.getElementById(ATTACH_BUTTON_ID)),
+      copyLink: () =>
+        saved && void copyNoteLink(t, { id: saved.id, groupName: membership?.name }, {
+          base: location.href,
+          copy: copyToClipboard,
+          toasts,
+        }),
+      duplicate: () =>
+        saved && void duplicateNote(t, saved, {
+          create: store.quickCreate,
+          newId: uuidV7,
+          navigate,
+          toasts,
+        }),
+      delete: () => openDialog(`delete`),
+      move: () => openDialog(`move`),
+    })
+    return () => noteEditorPageActions.value = null
+  }, [canWrite, canMove, shownId, saved, membership?.name, t])
   // A route change focuses the loading page's heading, which the note's own heading then replaces,
   // leaving focus on the page body. Once the note shows, lost focus goes to its heading.
   const wasLoading = useRef(loading)
@@ -113,13 +142,13 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
   }, [loading])
   return (
     <>
-      {groupId && (
-        <OfflineStatus
-          groupId={groupId}
-          onResolved={() => void store.refresh().catch(() => {})}
-        />
-      )}
       <NoteEditorScreen
+        intro={groupId && (
+          <OfflineStatus
+            groupId={groupId}
+            onResolved={() => void store.refresh().catch(() => {})}
+          />
+        )}
         group={membership
           ? { id: membership.id, name: membership.name, canWrite: canMutateNotes(membership.role) }
           : null}
@@ -215,6 +244,8 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
         }}
         moving={store.moving.value}
         moveError={store.moveError.value}
+        requestDialog={requestDialog.value}
+        onDialogRequested={() => requestDialog.value = null}
         navigate={navigate}
       />
       <UnsavedGuard

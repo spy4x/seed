@@ -151,6 +151,7 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
           <Card data-e2e="admin-blog-none">
             <EmptyState
               inset
+              headingLevel={2}
               icon={<IconPencilSquare class="size-8" aria-hidden="true" />}
               title={t.t(`AdminBlog.noPosts`)}
               description={t.t(`AdminBlog.noPostsHint`)}

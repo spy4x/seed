@@ -49,6 +49,8 @@ export interface CodeStepProps {
   email: string
   /** The catalog key of the sentence under the heading, given `{email}`. */
   sentence: string
+  /** The catalog key of the heading; the library's "Check your inbox" when left out. */
+  heading?: string
   /** How many minutes a code works. */
   minutes: number
   /** The code is being checked. */
@@ -77,6 +79,7 @@ export function CodeStep(
   {
     email,
     sentence,
+    heading,
     minutes,
     checking,
     error,
@@ -109,7 +112,7 @@ export function CodeStep(
         busy={checking}
         error={error}
         pattern={MAILED_CODE_PATTERN}
-        labels={{ invalid: t.t(`CodeStep.invalid`) }}
+        labels={{ invalid: t.t(`CodeStep.invalid`), ...(heading ? { title: t.t(heading) } : {}) }}
         readyAt={readyAt}
         resending={resending}
         headingLevel={1}

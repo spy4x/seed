@@ -1,7 +1,8 @@
 /**
  * The people actions on the admin screens, driven in a browser DOM (happy-dom): the "You"
- * row, a person without a name shown once, the CSV export link, the role picker, the reset link
- * and ending one session from the Sessions tab.
+ * row, a person without a name shown once, the CSV export link, the role picker, the reset link,
+ * ending one session from the Sessions tab, and which profile pictures are asked for and what an
+ * unready one says.
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
@@ -10,10 +11,12 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import {
   ADMIN_NO_FILTER,
+  ADMIN_PICTURE_PATH,
   type AdminUserDetail,
   type AdminUserRow,
   AuthAuditEventType,
   DEFAULT_PREFERENCES,
+  PictureState,
   UserRole,
 } from "@domain/identity"
 import { AdminUsersScreen, type AdminUsersScreenProps } from "./admin-users-screen.tsx"
@@ -56,6 +59,28 @@ async function mount(node: VNode): Promise<HTMLElement> {
   }
   await act(() => render(node, root!))
   return root
+}
+
+/**
+ * Mounts `node` and returns the `src` of every `<img>` it made, in order: the pictures a browser
+ * would ask for. happy-dom loads no image, so an `Avatar` swaps its `<img>` for the initials at
+ * once; the elements are kept from their creation, so a swapped one still counts.
+ */
+async function mountAsking(node: VNode): Promise<string[]> {
+  const images: Element[] = []
+  // Preact makes every element with `createElementNS`.
+  const create = document.createElementNS
+  document.createElementNS = ((namespace: string | null, tag: string, options?: unknown) => {
+    const element = create.call(document, namespace, tag, options as ElementCreationOptions)
+    if (tag.toLowerCase() === "img") images.push(element)
+    return element
+  }) as typeof document.createElementNS
+  try {
+    await mount(node)
+  } finally {
+    document.createElementNS = create
+  }
+  return images.map((image) => image.getAttribute("src") ?? "")
 }
 
 function find<T extends Element = HTMLElement>(selector: string): T {
@@ -102,6 +127,7 @@ const ada: AdminUserRow = {
   lastSeenAt: null,
 }
 const nameless: AdminUserRow = { ...ada, id: 44, firstName: "", lastName: "", email: "x@a.test" }
+const PICTURE = "0190a000-0000-7000-8000-0000000000a1"
 const me: AdminUserRow = { ...ada, id: 7, firstName: "Olga", lastName: "Ops", email: "o@a.test" }
 
 function listProps(props: Partial<AdminUsersScreenProps> = {}) {
@@ -124,6 +150,18 @@ describe("the admin user list, with the people actions", () => {
     expect(occurrences("[data-e2e=admin-users-list]", "x@a.test")).toBe(1)
     expect(occurrences("[data-e2e=admin-users-list]", "ada@example.com")).toBe(1)
     expect(find("[data-e2e=admin-user-42]").textContent).toBe("Ada Lovelace")
+  })
+
+  it("asks only for the pictures that are ready, so the others show initials", async () => {
+    const users = [
+      { ...ada, pictureId: PICTURE, pictureState: PictureState.Ready },
+      { ...nameless, pictureId: `${PICTURE.slice(0, -1)}2`, pictureState: PictureState.Preparing },
+      { ...me, pictureId: `${PICTURE.slice(0, -1)}3`, pictureState: PictureState.Refused },
+    ]
+    const asked = await mountAsking(
+      <AdminUsersScreen {...listProps({ list: { users, total: 3, page: 1, pageSize: 25 } })} />,
+    )
+    expect(asked).toEqual([`${ADMIN_PICTURE_PATH}/${PICTURE}`])
   })
 
   it("marks the operator's own row as You, and no other row", async () => {
@@ -235,7 +273,7 @@ describe("one person in the admin app, with the people actions", () => {
     expect(calls).toEqual([["open", "change-role"]])
   })
 
-  it("picks only a role below the administrator's own, and sends the one picked", async () => {
+  it("offers as choice chips only the roles below the administrator's own, and sends the one picked", async () => {
     const calls: unknown[][] = []
     await mount(
       <AdminUserScreen
@@ -243,6 +281,12 @@ describe("one person in the admin app, with the people actions", () => {
       />,
     )
     const radios = [...document.querySelectorAll<HTMLInputElement>("[name=role]")]
+    // Drawn as choice chips: each radio hides inside a chip a thumb can hit.
+    expect(radios.map((radio) => radio.className)).toEqual(["sr-only", "sr-only", "sr-only"])
+    expect(
+      [...find("[data-e2e=admin-role-picker]").querySelectorAll("label")]
+        .every((label) => label.className.includes("min-h-11")),
+    ).toBe(true)
     expect(radios.map((radio) => [radio.value, radio.checked])).toEqual([
       [String(UserRole.VIEWER), true],
       [String(UserRole.OPERATOR), false],
@@ -295,6 +339,35 @@ describe("one person in the admin app, with the people actions", () => {
     expect(dialog).toContain("Their initials show instead, everywhere. They can upload a new one.")
     await click("[data-e2e=admin-action-submit]")
     expect(calls.at(-1)).toEqual(["action", "remove-picture", undefined])
+  })
+
+  for (
+    const [label, pictureState, shown, words] of [
+      ["ready", PictureState.Ready, true, null],
+      ["still being prepared", PictureState.Preparing, false, "Preparing the picture…"],
+      ["refused", PictureState.Refused, false, "This picture could not be used."],
+    ] as const
+  ) {
+    it(`a picture ${label}: the page asks for it only once ready, names its state and offers its removal`, async () => {
+      const user = { ...ada, pictureId: PICTURE, pictureState }
+      const asked = await mountAsking(
+        <AdminUserScreen {...userProps([], { detail: { ...detail, user } })} />,
+      )
+
+      // The header's mark and the row's avatar both ask for it, or neither does.
+      expect(asked).toEqual(
+        shown ? [`${ADMIN_PICTURE_PATH}/${PICTURE}`, `${ADMIN_PICTURE_PATH}/${PICTURE}`] : [],
+      )
+      const state = document.querySelector("[data-e2e=admin-user-picture-state]")
+      expect(state?.textContent ?? null).toBe(words)
+      expect(find("[data-e2e=admin-user-picture]").textContent).not.toContain("None")
+      expect(has("[data-e2e=admin-remove-picture-open]")).toBe(true)
+    })
+  }
+
+  it("asks for no picture and names no state for a person without one", async () => {
+    expect(await mountAsking(<AdminUserScreen {...userProps([])} />)).toEqual([])
+    expect(has("[data-e2e=admin-user-picture-state]")).toBe(false)
   })
 
   it("disables the reset link, saying why, for a person with no password address", async () => {

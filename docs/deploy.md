@@ -131,6 +131,31 @@ The file stays on your machine. Every deploy copies it to `infra/envs/.env` on t
 replaces what is there, so edit it here, never on the server. It holds the only copy of the secrets
 and the file store's key, and the backup does not hold it ([env files](development.md#env-files)).
 
+## Who may sign up
+
+Anyone may make an account by default. To let in only people a member invited, set:
+
+```sh
+SIGN_UP=invite
+```
+
+Then every way of making an account asks for an invitation to a group: a password sign-up, a
+sign-in code to an address with no account, and a first Google or GitHub sign-in. An invitation
+tied to an address admits only that address; a link invitation admits anyone who has the link.
+Without one, the API answers 403 with the reason `SIGN_UP_CLOSED`, and no account is made. People
+who already have an account sign in as before. Guest accounts are off, as with `GUEST_MODE=false`.
+The operator command and the demo seed still make accounts.
+
+Signing up uses the invitation up, as accepting it does: the new person joins its group, and a
+one-use invitation admits one account only. An invitation that is used up, revoked or expired, or
+whose group is full, makes no account and answers `SIGN_UP_CLOSED`.
+
+Until [#913](https://github.com/spy4x/seed/issues/913) ships, the sign-up screens send no
+invitation. So for now `invite` closes sign-up to everyone; only the operator command line makes
+accounts.
+
+Any value other than `open` or `invite` stops the API at start-up with a message naming `SIGN_UP`.
+
 ## The first deploy
 
 1. Create the app's directory on the server:

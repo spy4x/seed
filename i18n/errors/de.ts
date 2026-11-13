@@ -196,6 +196,8 @@ export default {
   "Reason.SEAT_PRICE_NOT_ACCEPTED":
     "Bestätige, dass jedes neue Mitglied die Rechnung der Gruppe erhöht.",
   "Reason.SHARE_NOT_FOUND": "Diesen geteilten Eintrag gibt es nicht mehr.",
+  "Reason.SIGN_UP_CLOSED":
+    "Auf diesem Server kannst du dich nur mit einer Einladung registrieren. Bitte ein Mitglied um eine Einladung.",
   "Reason.SLUG_LOCKED":
     "Nach dem Veröffentlichen ist die Adresse gesperrt. Ändere sie über „URL ändern“.",
   "Reason.SLUG_TAKEN": "Diese Adresse ist schon vergeben. Nimm bitte eine andere.",

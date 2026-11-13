@@ -32,12 +32,15 @@ import {
 import { BILLING_NOTICE_JOBS } from "../billing/billing-notices.ts"
 import { SEAT_SYNC_JOB, seatSyncJob } from "../billing/seat-sync.ts"
 import { blogPublishJob } from "../blog/blog-publish-job.ts"
-import { blogIndexNowJob, type IndexNowSetup } from "../blog/blog-indexnow-job.ts"
+import { blogIndexNowJob } from "../blog/blog-indexnow-job.ts"
+import type { IndexNowSetup } from "./indexnow.ts"
+import { CATALOG_DEFAULT_SETTINGS, CATALOG_INDEXNOW_JOB } from "@domain/catalog"
+import { catalogIndexNowJob, type CatalogPages } from "../catalog/catalog-indexnow-job.ts"
+import { DEFAULT_ITEM_PATH } from "../catalog/tracking.ts"
 import { blogCrosspostJob, type BlogCrosspostSetup } from "../blog/blog-crosspost-job.ts"
 import { blogShareResultsJob, type ShareResultsSetup } from "../blog/blog-share-results-job.ts"
 import { autoPostJob, type AutoPostSetup } from "../blog/auto-post.ts"
 import type { SubscribersSetup } from "../subscribers/subscribers.ts"
-import type { NotesSetup } from "../notes/setup.ts"
 import { dataExportSectionsOf } from "./data-export-sections.ts"
 import {
   ACCOUNT_DELETION_MAIL_JOB,
@@ -69,6 +72,10 @@ import {
 import { SIGN_IN_METHOD_MAIL_JOB, signInMethodMailJob } from "./sign-in-method-mail.ts"
 import { SIGN_UP_CODE_MAIL_JOB, signUpCodeMailJob } from "./sign-up-code-mail.ts"
 import { SIGN_IN_CODE_MAIL_JOB, signInCodeMailJob } from "./sign-in-code-mail.ts"
+import { importKinds } from "../imports/registry.ts"
+import { NOTES_ON, type NotesSetup } from "../notes/setup.ts"
+import { importCommitJob, importReadJob } from "../imports/import-jobs.ts"
+import { IMPORT_COMMIT_JOB, IMPORT_READ_JOB } from "../imports/postgres-import-repository.ts"
 import { STARTER_DATA_JOB, starterDataJob, type StarterDataPlan } from "./starter-data.ts"
 import {
   TELEGRAM_NOTIFICATION_JOB,
@@ -104,6 +111,11 @@ export interface JobDeps {
   imageScratch: ImageScratch | null
   /** IndexNow's key and the website's origin, or `null` while IndexNow is off. */
   indexNow: IndexNowSetup | null
+  /**
+   * How the website names an item's pages, for the `catalog.indexnow` job; the defaults
+   * (`/{category}/{slug}`, English) when left out.
+   */
+  catalogPages?: CatalogPages
   /** The website's origin and a Dev.to client, or `null` while the cross-post is off. */
   crosspost: BlogCrosspostSetup | null
   /** The readers of each channel's numbers, or `null` to read none (tests of other jobs). */
@@ -114,8 +126,11 @@ export interface JobDeps {
   fetch: typeof fetch
   /** The plan catalog the billing jobs read, `PLANS` unless a test passes its own. */
   plans?: readonly Plan[]
-  /** The notes example's switch (`readNotesSetup`): off, a data export holds no notes. */
-  notes: NotesSetup
+  /**
+   * The notes example's switch (`readNotesSetup`), left out on. Off, a data export holds no notes,
+   * and the imports offer no notes kind.
+   */
+  notes?: NotesSetup
 }
 
 /**
@@ -316,7 +331,7 @@ export const JOBS: readonly JobDefinition[] = [
     kind: DATA_EXPORT_BUILD_JOB,
     label: `Data export`,
     about: { userIn: `data_exports` },
-    handler: ({ sql, files, notes }) =>
+    handler: ({ sql, files, notes = NOTES_ON }) =>
       dataExportBuildJob({ sql, files, sections: dataExportSectionsOf(notes) }),
   }),
   defineJob({
@@ -425,6 +440,19 @@ export const JOBS: readonly JobDefinition[] = [
     label: `Tell search engines a blog post changed`,
     handler: ({ sql, mail, indexNow }) => blogIndexNowJob({ sql, setup: indexNow, log: mail.log }),
   }),
+  // Monitoring-grade, as above.
+  defineJob({
+    kind: CATALOG_INDEXNOW_JOB,
+    label: `Tell search engines a catalog item changed`,
+    handler: ({ sql, mail, indexNow, catalogPages }) =>
+      catalogIndexNowJob({
+        sql,
+        setup: indexNow,
+        pages: catalogPages ??
+          { itemPath: DEFAULT_ITEM_PATH, languages: CATALOG_DEFAULT_SETTINGS.languages },
+        log: mail.log,
+      }),
+  }),
   // Reads only: a run that is repeated or retried stores one more reading, never a second post.
   defineJob({
     kind: BLOG_SHARE_RESULTS_JOB,
@@ -432,6 +460,25 @@ export const JOBS: readonly JobDefinition[] = [
     repeat: { cron: `17 * * * *` },
     handler: ({ sql, mail, shareResults }) =>
       blogShareResultsJob({ sql, setup: shareResults, log: mail.log }),
+  }),
+  // Both run only on an import in the step they finish, so a rerun changes nothing.
+  defineJob({
+    kind: IMPORT_READ_JOB,
+    label: `Read an imported file`,
+    about: { userIn: `imports` },
+    handler: ({ sql, notes = NOTES_ON }) => importReadJob(sql, importKinds(notes)),
+  }),
+  defineJob({
+    kind: IMPORT_COMMIT_JOB,
+    label: `Save an import`,
+    about: { userIn: `imports` },
+    handler: ({ sql, provider, graceDays, plans, notes = NOTES_ON }) =>
+      importCommitJob(sql, {
+        kinds: importKinds(notes),
+        billingEnabled: provider !== null,
+        graceDays,
+        plans,
+      }),
   }),
 ]
 

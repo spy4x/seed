@@ -12,6 +12,7 @@
 
 import { signal } from "@preact/signals"
 import {
+  automaticLocale,
   type Catalog,
   createTranslator,
   negotiateLanguage,
@@ -203,4 +204,19 @@ export function languageSetting<Language extends string>(
       if (listed) choose(listed)
     },
   }
+}
+
+/**
+ * Seed's "Automatic" region format: {@link automaticLocale}, with English as `en-GB` when the
+ * device has no English locale, and Arabic with Latin digits (`ar-EG-u-nu-latn`), as the public
+ * website writes both. So an Arabic sentence never mixes `٣٧` from the region format with `41`
+ * from the text language. A region format the person pins is never passed through here.
+ */
+export function seedAutomaticLocale(language: string, deviceLocales: readonly string[]): string {
+  const locale = automaticLocale(language, deviceLocales, language === `en` ? `en-GB` : undefined)
+  // Only a valid tag gets here: the library keeps only device tags with a region, and the
+  // fallback is `ar`'s own.
+  return language === `ar`
+    ? new Intl.Locale(locale, { numberingSystem: `latn` }).toString()
+    : locale
 }

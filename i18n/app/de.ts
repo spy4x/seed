@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "Dateien an diese Notiz anhängen",
+  "AppShell.copyNoteLink": "Link zu dieser Notiz kopieren",
+  "AppShell.deleteNote": "Diese Notiz löschen",
+  "AppShell.duplicateNote": "Diese Notiz duplizieren",
+  "AppShell.moveNote": "Diese Notiz in eine andere Gruppe verschieben",
   "AttachmentMessages.load": "Die Dateien konnten nicht geladen werden",
   "AttachmentMessages.type":
     "{name} kann nicht angehängt werden. Erlaubt sind nur Bilder (JPEG, PNG, WebP, GIF) und PDF-Dateien.",
@@ -399,7 +403,8 @@ export default {
   "GroupInvitations.verifyEmail": "E-Mail-Adresse bestätigen",
   "GroupInvitations.notForYou":
     "Diese Einladung ging an eine andere E-Mail-Adresse. Wenn es deine ist, bestätige sie zuerst in deinem <link>Profil</link>, oder melde dich mit dem Konto an, das sie verwendet.",
-  "GroupInvitations.somethingWrong": "Etwas ist schiefgelaufen. Versuche es noch einmal.",
+  "GroupInvitations.somethingWrong":
+    "Die Einladung konnte nicht verarbeitet werden. Versuche es noch einmal.",
   "GroupInvitations.unreachable": "Der Server ist nicht erreichbar. Versuche es noch einmal.",
   "GroupMembers.unnamed": "Mitglied ohne Namen",
   "GroupMembers.title": "Mitglieder",
@@ -468,7 +473,8 @@ export default {
   "GroupTransfer.unreachable": "Der Server ist nicht erreichbar. Versuche es noch einmal.",
   "GroupTransfer.tooManyAttempts":
     "Zu viele Versuche. Warte ein paar Minuten und versuche es dann noch einmal.",
-  "GroupTransfer.somethingWrong": "Etwas ist schiefgelaufen. Versuche es noch einmal.",
+  "GroupTransfer.somethingWrong":
+    "Die Inhaberschaft konnte nicht übertragen werden. Versuche es noch einmal.",
   "Groups.title": "Gruppen",
   "Groups.new": "Neue Gruppe",
   "Groups.import": "Gruppe importieren …",
@@ -533,7 +539,7 @@ export default {
   "GroupBillingPanel.paymentFailedFree":
     "Eine Zahlung ist fehlgeschlagen, deshalb ist die Gruppe jetzt im kostenlosen Tarif. Aktualisiere deine Karte über „Karte ändern“, um {plan} zurückzubekommen.",
   "GroupBillingPanel.offline": "Der Server ist nicht erreichbar. Versuche es noch einmal.",
-  "GroupBillingPanel.unreadable": "Der Tarif konnte nicht geladen werden.",
+  "GroupBillingPanel.unreadable": "Der Tarif konnte nicht geladen werden",
   "GroupBillingPanel.unsafePage":
     "Der Zahlungsanbieter hat eine Adresse zurückgeschickt, die diese App nicht öffnet.",
   "GroupBillingPanel.checkoutUnreachable":
@@ -653,12 +659,11 @@ export default {
   "GroupBillingView.trialUntil": "„{group}“ hat {plan} bis zum {date}.",
   "GroupBillingView.paid": "Du hast jetzt {plan}",
   "GroupBillingView.paidText": "Stripe hat die Zahlung für „{group}“ bestätigt.",
-  "NotificationsScreen.loadFailed": "Die Benachrichtigungen konnten nicht geladen werden.",
-  "NotificationsScreen.loadMoreFailed": "Weitere Benachrichtigungen konnten nicht geladen werden.",
-  "NotificationsScreen.readFailed":
-    "Die Benachrichtigung konnte nicht als gelesen markiert werden.",
+  "NotificationsScreen.loadFailed": "Die Benachrichtigungen konnten nicht geladen werden",
+  "NotificationsScreen.loadMoreFailed": "Weitere Benachrichtigungen konnten nicht geladen werden",
+  "NotificationsScreen.readFailed": "Die Benachrichtigung konnte nicht als gelesen markiert werden",
   "NotificationsScreen.readAllFailed":
-    "Die Benachrichtigungen konnten nicht als gelesen markiert werden.",
+    "Die Benachrichtigungen konnten nicht als gelesen markiert werden",
   "NotificationsScreen.invitedViewer":
     "Du wurdest als Betrachter in „<group>{group}</group>“ eingeladen.",
   "NotificationsScreen.invitedEditor":
@@ -952,7 +957,7 @@ export default {
   "GuestScreens.signOutAnyway": "Trotzdem abmelden",
   "GuestScreens.signOutText":
     "Dieses Konto hat keine Anmeldemethode, du kannst dich also nicht wieder anmelden. Alles darin geht verloren.",
-  "GuestScreens.offline": "Du bist offline. Stell eine Verbindung her und versuche es noch einmal.",
+  "GuestScreens.offline": "Der Server ist nicht erreichbar. Versuche es noch einmal.",
   "GuestScreens.providerFailed":
     "{provider} wurde nicht abgeschlossen. Dein Konto bleibt unverändert. Versuche es noch einmal oder wähle eine andere Methode.",
   "GuestScreens.noPasskey":
@@ -969,6 +974,7 @@ export default {
   "OAuthNotice.guestTaken": "Diese Anmeldemethode gehört zu einem anderen Konto.",
   "PasswordResetScreen.forgotFailed": "Der Code konnte nicht gesendet werden",
   "PasswordResetScreen.resetFailed": "Das Passwort konnte nicht geändert werden",
+  "PasswordResetScreen.sentTitle": "Gib den Code zum Zurücksetzen ein",
   "PasswordResetScreen.sent":
     "Falls es ein Konto mit <email>{email}</email> gibt, haben wir einen Code dorthin geschickt.",
   "PasswordResetScreen.forgotDescription": {
@@ -994,8 +1000,8 @@ export default {
   "PasswordResetScreen.save": "Neues Passwort speichern",
   "MoveNote.title": "In Gruppe verschieben",
   "MoveNote.cancel": "Abbrechen",
-  "MoveNote.question":
-    "Wähle, wohin „<title>{title}</title>“ verschoben werden soll. Alle in dieser Gruppe sehen die Notiz dann.",
+  "MoveNote.hint": "Alle in der gewählten Gruppe sehen die Notiz dann.",
+  "MoveNote.move": "Verschieben",
   "NewNote.title": "Neue Notiz",
   "NewNote.close": "Schließen",
   "NewNote.titleLabel": "Titel",
@@ -1076,6 +1082,8 @@ export default {
   "NoteEditor.tags": "Tags",
   "NoteEditorView.createdTitle": "Notiz hinzugefügt",
   "NoteEditorView.created": "„{title}“ wurde erstellt.",
+  "NoteEditorView.copyTitle": "{title} (Kopie)",
+  "NoteEditorView.duplicateFailed": "Die Notiz konnte nicht dupliziert werden",
   "NoteEditorView.savedTitle": "Notiz gespeichert",
   "NoteEditorView.saved": "„{title}“ wurde gespeichert.",
   "NoteEditorView.unsaved": "Du hast ungespeicherte Änderungen. Wenn du jetzt gehst, sind sie weg.",
@@ -1150,7 +1158,7 @@ export default {
     "other": "{count} ausgewählt",
   },
   "Notes.cancelSelect": "Abbrechen",
-  "Notes.moveTo": "In Gruppe verschieben",
+  "Notes.moveTo": "In die Gruppe",
   "Notes.moving": "Wird verschoben …",
   "Notes.move": "Verschieben",
   "Notes.updated": "Geändert <date>{date}</date>",
@@ -1168,7 +1176,6 @@ export default {
   "NotesFilter.allTags": "Allen diesen Tags",
   "NotesFilter.author": "Autor",
   "NotesFilter.anyone": "Alle",
-  "NotesFilter.you": "Du",
   "NotesFilter.search": "Notizen durchsuchen",
   "NotesFilter.mine": "Von mir erstellt",
   "NotesFilter.sortUpdated": "Zuletzt geändert",
@@ -1255,7 +1262,7 @@ export default {
       "Ein Tag, den du offline erstellt hast, konnte nicht gespeichert werden. Wir haben ihn deshalb von {count} Notizen entfernt. Die Notizen sind ohne ihn gespeichert.",
   },
   "OfflineStatus.theirs": "Version auf dem Server",
-  "OfflineStatus.theirsUnknown": "Die Version auf dem Server ist nicht verfügbar.",
+  "OfflineStatus.theirsUnknown": "Gerade nicht verfügbar.",
   "OfflineStatus.untitledNote": "Notiz ohne Titel",
   "OfflineStatus.useServers": "Server-Version nehmen",
   "OfflineStatus.youDeletedNote": "Du hast diese Notiz gelöscht.",
@@ -1620,8 +1627,7 @@ export default {
     "Der Passkey konnte nicht gespeichert werden. Versuche es noch einmal.",
   "SignInMethods.passkeyOnDevice": "Dieses Gerät hat schon einen Passkey für dein Konto.",
   "SignUpCodeScreen.checkFailed": "Der Code konnte nicht geprüft werden",
-  "SignUpCodeScreen.offline":
-    "Du bist offline. Stell eine Verbindung her und versuche es noch einmal.",
+  "SignUpCodeScreen.offline": "Der Server ist nicht erreichbar. Versuche es noch einmal.",
   "SignUpCodeScreen.title": "Schau in dein Postfach",
   "SignUpCodeScreen.loading": "Wird geladen …",
   "SignUpCodeScreen.code": "Code",
@@ -1667,7 +1673,7 @@ export default {
   "SignedInDevices.lastActive": "Zuletzt aktiv <when></when>",
   "SignedInDevices.ip": "<label>IP-Adresse</label> <ip>{ip}</ip>",
   "Search.search": "Suche",
-  "Search.placeholder": "Notizen und Gruppen durchsuchen",
+  "Search.placeholder": "Suchen oder Befehl ausführen",
   "Search.close": "Suche schließen",
   "Search.loading": "Wird gesucht …",
   "Search.error":
@@ -1676,13 +1682,18 @@ export default {
     "one": "Gib mindestens {count} Zeichen ein, um Notizen zu durchsuchen.",
     "other": "Gib mindestens {count} Zeichen ein, um Notizen zu durchsuchen.",
   },
-  "Search.empty": "Keine Notizen oder Gruppen zu „{query}“.",
+  "Search.empty": "Nichts passt zu „{query}“.",
   "Search.emptyOnDevice":
     "Auf diesem Gerät passt nichts zu „{query}“. Suche noch einmal, wenn du wieder online bist.",
   "Search.notes": "Notizen",
   "Search.notesOnDevice": "Notizen auf diesem Gerät",
   "Search.groups": "Gruppen",
-  "Search.actions": "Aktionen",
+  "Search.create": "Erstellen",
+  "Search.settings": "Einstellungen",
+  "Search.account": "Konto",
+  "Search.switchTo": "Zu {group} wechseln",
+  "Search.installApp": "App installieren",
+  "Search.needsConnection": "Nur online verfügbar",
   "Search.untitled": "Notiz ohne Titel",
   "Search.current": "Aktuell",
   "Search.inGroup": "In {group}",
@@ -1695,7 +1706,6 @@ export default {
   "Search.openOverview": "Übersicht öffnen",
   "Search.openNotifications": "Benachrichtigungen öffnen",
   "Search.openProfile": "Profil öffnen",
-  "Search.profileDetail": "Name, E-Mail-Adresse, Passwort, Zwei-Faktor-Schutz",
   "Search.downloadData": "Meine Daten herunterladen",
   "Search.downloadDetail": "Eine ZIP-Datei mit deinem Profil, deinen Gruppen und Notizen",
   "Search.changePicture": "Profilbild ändern",
@@ -1708,7 +1718,7 @@ export default {
   "Shortcuts.switchLabel": "Kürzel mit einer Taste",
   "Shortcuts.inFields": "Kürzel funktionieren nicht, während du in ein Feld tippst.",
   "Shortcuts.off": "Kürzel mit einer Taste sind auf diesem Gerät ausgeschaltet.",
-  "Shortcuts.search": "Notizen und Gruppen durchsuchen",
+  "Shortcuts.search": "Suchen oder Befehl ausführen",
   "Shortcuts.newNoteRow": "Neue Notiz",
   "Shortcuts.undo": "Löschen einer Notiz rückgängig machen, solange die Meldung zu sehen ist",
   "Shortcuts.notifications": "Benachrichtigungen",
@@ -1814,9 +1824,9 @@ export default {
   },
   "TelegramBot.stale": {
     "one":
-      "Dieser Button funktioniert nicht mehr. Er wurde schon benutzt, durch einen neueren ersetzt oder ist älter als {count} Minute. Um diesen Chat zu verknüpfen, erstelle in der App einen neuen Code.",
+      "Dieser Button funktioniert nicht mehr: Er wurde schon benutzt, ein neuerer hat ihn ersetzt, er ist älter als {count} Minute, das Passwort des Kontos wurde zurückgesetzt oder geändert, oder das Konto wurde gelöscht oder gesperrt. Um diesen Chat zu verknüpfen, erstelle in der App einen neuen Code.",
     "other":
-      "Dieser Button funktioniert nicht mehr. Er wurde schon benutzt, durch einen neueren ersetzt oder ist älter als {count} Minuten. Um diesen Chat zu verknüpfen, erstelle in der App einen neuen Code.",
+      "Dieser Button funktioniert nicht mehr: Er wurde schon benutzt, ein neuerer hat ihn ersetzt, er ist älter als {count} Minuten, das Passwort des Kontos wurde zurückgesetzt oder geändert, oder das Konto wurde gelöscht oder gesperrt. Um diesen Chat zu verknüpfen, erstelle in der App einen neuen Code.",
   },
   "TelegramBot.privateOnly": "Schick mir das in einem privaten Chat.",
   "TelegramBot.codeSpent":
@@ -1883,7 +1893,8 @@ export default {
   "ApiTokenNewView.discardMessage": "Du hast dieses Token noch nicht erstellt.",
   "ApiTokenNewView.discard": "Änderungen verwerfen",
   "ApiTokenNewView.keepEditing": "Weiter bearbeiten",
-  "ApiTokens.failed": "Bei deinen API-Tokens ist etwas schiefgelaufen.",
+  "ApiTokens.failed":
+    "Deine API-Tokens konnten nicht geladen oder widerrufen werden. Versuche es noch einmal.",
   "ApiTokens.savedCopyTitle": "Gespeicherte Kopie deiner API-Tokens",
   "ApiTokens.savedCopyBody":
     "Der Server ist nicht erreichbar. Du siehst die auf diesem Gerät gespeicherte Liste vom {time}. Tokens, die seitdem erstellt oder widerrufen wurden, fehlen.",
@@ -2007,7 +2018,7 @@ export default {
   "EmailScreen.verifyFailed": "Der Code konnte nicht geprüft werden",
   "EmailScreen.sendFailed": "Es konnte kein neuer Code gesendet werden",
   "EmailScreen.changeFailed": "Deine E-Mail-Adresse konnte nicht geändert werden",
-  "EmailScreen.loadFailed": "Deine E-Mail-Adresse konnte nicht geladen werden.",
+  "EmailScreen.loadFailed": "Deine E-Mail-Adresse konnte nicht geladen werden",
   "EmailScreen.enterCode": "Code eingeben",
   "EmailScreen.banner": "Bestätige <email>{email}</email> mit dem Code, den wir dorthin schicken.",
   "EmailScreen.tryAgain": "Erneut versuchen",

@@ -61,6 +61,8 @@ It holds only what is about the person or made by them, never another person's d
 - their notifications, and their API tokens without the token or its hash;
 - the subscriptions of groups they own;
 - their newsletter subscriptions, without the unsubscribe key;
+- the imports they started in groups they still belong to: the file's name and size and what
+  the import saved, never the file or its rows;
 - their blog posts and their earlier exports.
 
 Notes in a group they left stay out, because they can no longer read them in the app either.

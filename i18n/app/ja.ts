@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "このメモにファイルを添付",
+  "AppShell.copyNoteLink": "このメモのリンクをコピー",
+  "AppShell.deleteNote": "このメモを削除",
+  "AppShell.duplicateNote": "このメモを複製",
+  "AppShell.moveNote": "このメモを別のグループに移動",
   "AttachmentMessages.load": "ファイルを読み込めませんでした",
   "AttachmentMessages.type":
     "{name}は添付できません。添付できるのはJPEG、PNG、WebP、GIFの画像とPDFファイルのみです。",
@@ -353,7 +357,7 @@ export default {
   "GroupInvitations.verifyEmail": "メールアドレスを確認",
   "GroupInvitations.notForYou":
     "この招待は別のメールアドレス宛てに送られています。ご自身のアドレスであれば、先に<link>プロフィール</link>で確認するか、そのアドレスを使っているアカウントでログインしてください。",
-  "GroupInvitations.somethingWrong": "問題が発生しました。もう一度お試しください。",
+  "GroupInvitations.somethingWrong": "招待の操作を完了できませんでした。もう一度お試しください。",
   "GroupInvitations.unreachable": "サーバーに接続できません。もう一度お試しください。",
   "GroupMembers.unnamed": "名前のないメンバー",
   "GroupMembers.title": "メンバー",
@@ -418,7 +422,7 @@ export default {
   "GroupTransfer.failed": "グループを譲渡できませんでした",
   "GroupTransfer.unreachable": "サーバーに接続できません。もう一度お試しください。",
   "GroupTransfer.tooManyAttempts": "試行回数が多すぎます。数分待ってから、もう一度お試しください。",
-  "GroupTransfer.somethingWrong": "問題が発生しました。もう一度お試しください。",
+  "GroupTransfer.somethingWrong": "オーナー権限を譲渡できませんでした。もう一度お試しください。",
   "Groups.title": "グループ",
   "Groups.new": "新しいグループ",
   "Groups.import": "グループをインポート…",
@@ -477,7 +481,7 @@ export default {
   "GroupBillingPanel.paymentFailedFree":
     "支払いに失敗したため、グループは無料プランに切り替わりました。{plan}に戻すには、「カードを変更」からカード情報を更新してください。",
   "GroupBillingPanel.offline": "サーバーに接続できません。もう一度お試しください。",
-  "GroupBillingPanel.unreadable": "プランを読み込めませんでした。",
+  "GroupBillingPanel.unreadable": "プランを読み込めませんでした",
   "GroupBillingPanel.unsafePage":
     "決済サービスから、このアプリでは開けないアドレスが返されました。",
   "GroupBillingPanel.checkoutUnreachable":
@@ -584,10 +588,10 @@ export default {
   "GroupBillingView.trialUntil": "「{group}」は{date}まで{plan}を利用できます。",
   "GroupBillingView.paid": "{plan}をご利用中です",
   "GroupBillingView.paidText": "Stripeが「{group}」のお支払いを確認しました。",
-  "NotificationsScreen.loadFailed": "通知を読み込めませんでした。",
-  "NotificationsScreen.loadMoreFailed": "これ以上通知を読み込めませんでした。",
-  "NotificationsScreen.readFailed": "既読にできませんでした。",
-  "NotificationsScreen.readAllFailed": "既読にできませんでした。",
+  "NotificationsScreen.loadFailed": "通知を読み込めませんでした",
+  "NotificationsScreen.loadMoreFailed": "続きの通知を読み込めませんでした",
+  "NotificationsScreen.readFailed": "既読にできませんでした",
+  "NotificationsScreen.readAllFailed": "すべて既読にできませんでした",
   "NotificationsScreen.invitedViewer": "「<group>{group}</group>」に閲覧者として招待されました。",
   "NotificationsScreen.invitedEditor": "「<group>{group}</group>」に編集者として招待されました。",
   "NotificationsScreen.invitedAdmin": "「<group>{group}</group>」に管理者として招待されました。",
@@ -860,7 +864,7 @@ export default {
   "GuestScreens.signOutAnyway": "ログアウトする",
   "GuestScreens.signOutText":
     "このアカウントにはログイン方法がないため、再びログインすることはできません。中のデータはすべて失われます。",
-  "GuestScreens.offline": "オフラインです。接続してから、もう一度お試しください。",
+  "GuestScreens.offline": "サーバーに接続できません。もう一度お試しください。",
   "GuestScreens.providerFailed":
     "{provider}での手続きが完了しませんでした。アカウントは変更されていません。もう一度試すか、別の方法を選んでください。",
   "GuestScreens.noPasskey":
@@ -877,6 +881,7 @@ export default {
   "OAuthNotice.guestTaken": "そのログイン方法は別のアカウントのものです。",
   "PasswordResetScreen.forgotFailed": "コードを送信できませんでした",
   "PasswordResetScreen.resetFailed": "パスワードを変更できませんでした",
+  "PasswordResetScreen.sentTitle": "パスワード再設定コードを入力",
   "PasswordResetScreen.sent":
     "<email>{email}</email>で登録されたアカウントがあれば、そのアドレスにコードを送信しました。",
   "PasswordResetScreen.forgotDescription": {
@@ -900,8 +905,8 @@ export default {
   "PasswordResetScreen.save": "新しいパスワードを保存",
   "MoveNote.title": "グループに移動",
   "MoveNote.cancel": "キャンセル",
-  "MoveNote.question":
-    "「<title>{title}</title>」の移動先を選んでください。そのグループの全員に表示されます。",
+  "MoveNote.hint": "移動先のグループの全員に表示されます。",
+  "MoveNote.move": "移動",
   "NewNote.title": "新しいメモ",
   "NewNote.close": "閉じる",
   "NewNote.titleLabel": "タイトル",
@@ -977,6 +982,8 @@ export default {
   "NoteEditor.tags": "タグ",
   "NoteEditorView.createdTitle": "メモを追加しました",
   "NoteEditorView.created": "「{title}」を作成しました。",
+  "NoteEditorView.copyTitle": "{title}（コピー）",
+  "NoteEditorView.duplicateFailed": "メモを複製できませんでした",
   "NoteEditorView.savedTitle": "メモを保存しました",
   "NoteEditorView.saved": "「{title}」を保存しました。",
   "NoteEditorView.unsaved": "保存していない変更があります。今移動すると、変更は失われます。",
@@ -1043,7 +1050,7 @@ export default {
     "other": "{count}件選択中",
   },
   "Notes.cancelSelect": "キャンセル",
-  "Notes.moveTo": "グループに移動",
+  "Notes.moveTo": "移動先のグループ",
   "Notes.moving": "移動しています…",
   "Notes.move": "移動",
   "Notes.updated": "<date>{date}</date>に更新",
@@ -1061,7 +1068,6 @@ export default {
   "NotesFilter.allTags": "すべてのタグを含む",
   "NotesFilter.author": "作成者",
   "NotesFilter.anyone": "全員",
-  "NotesFilter.you": "自分",
   "NotesFilter.search": "メモを検索",
   "NotesFilter.mine": "自分が作成",
   "NotesFilter.sortUpdated": "最終更新日",
@@ -1138,7 +1144,7 @@ export default {
       "オフラインで作成したタグを保存できなかったため、メモ{count}件からそのタグを外しました。メモはタグなしで保存されています。",
   },
   "OfflineStatus.theirs": "サーバーのバージョン",
-  "OfflineStatus.theirsUnknown": "サーバーのバージョンを取得できません。",
+  "OfflineStatus.theirsUnknown": "現在は取得できません。",
   "OfflineStatus.untitledNote": "無題のメモ",
   "OfflineStatus.useServers": "サーバーの内容を使う",
   "OfflineStatus.youDeletedNote": "このメモは自分で削除しました。",
@@ -1481,7 +1487,7 @@ export default {
   "SignInMethods.passkeyNotSaved": "パスキーを保存できませんでした。もう一度お試しください。",
   "SignInMethods.passkeyOnDevice": "このデバイスには、このアカウントのパスキーがすでにあります。",
   "SignUpCodeScreen.checkFailed": "コードを確認できませんでした",
-  "SignUpCodeScreen.offline": "オフラインです。接続してから、もう一度お試しください。",
+  "SignUpCodeScreen.offline": "サーバーに接続できません。もう一度お試しください。",
   "SignUpCodeScreen.title": "受信トレイを確認してください",
   "SignUpCodeScreen.loading": "読み込んでいます…",
   "SignUpCodeScreen.code": "コード",
@@ -1522,20 +1528,25 @@ export default {
   "SignedInDevices.lastActive": "最終アクティブ<when></when>",
   "SignedInDevices.ip": "<label>IPアドレス</label> <ip>{ip}</ip>",
   "Search.search": "検索",
-  "Search.placeholder": "メモとグループを検索",
+  "Search.placeholder": "検索またはコマンドを実行",
   "Search.close": "検索を閉じる",
   "Search.loading": "検索しています…",
   "Search.error": "検索できませんでした。検索語を変えてもう一度お試しください。",
   "Search.tooShort": {
     "other": "メモを検索するには{count}文字以上入力してください。",
   },
-  "Search.empty": "「{query}」に一致するメモやグループはありません。",
+  "Search.empty": "「{query}」に一致する項目はありません。",
   "Search.emptyOnDevice":
     "このデバイスには「{query}」に一致するものはありません。オンラインに戻ってから、もう一度検索してください。",
   "Search.notes": "メモ",
   "Search.notesOnDevice": "このデバイス上のメモ",
   "Search.groups": "グループ",
-  "Search.actions": "操作",
+  "Search.create": "作成",
+  "Search.settings": "設定",
+  "Search.account": "アカウント",
+  "Search.switchTo": "{group} に切り替える",
+  "Search.installApp": "アプリをインストール",
+  "Search.needsConnection": "接続が必要です",
   "Search.untitled": "無題のメモ",
   "Search.current": "現在",
   "Search.inGroup": "{group}内",
@@ -1548,7 +1559,6 @@ export default {
   "Search.openOverview": "概要を開く",
   "Search.openNotifications": "通知を開く",
   "Search.openProfile": "プロフィールを開く",
-  "Search.profileDetail": "名前、メールアドレス、パスワード、2段階認証",
   "Search.downloadData": "データをダウンロード",
   "Search.downloadDetail": "プロフィール、グループ、メモをまとめたZIP",
   "Search.changePicture": "プロフィール写真を変更",
@@ -1561,7 +1571,7 @@ export default {
   "Shortcuts.switchLabel": "1キーショートカット",
   "Shortcuts.inFields": "入力欄で入力している間は、ショートカットは使えません。",
   "Shortcuts.off": "このデバイスでは1キーショートカットがオフになっています。",
-  "Shortcuts.search": "メモとグループを検索",
+  "Shortcuts.search": "検索またはコマンドを実行",
   "Shortcuts.newNoteRow": "新しいメモ",
   "Shortcuts.undo": "メモの削除を元に戻す（メッセージの表示中）",
   "Shortcuts.notifications": "通知",
@@ -1660,7 +1670,7 @@ export default {
   },
   "TelegramBot.stale": {
     "other":
-      "このボタンはもう使えません。すでに使用されたか、新しいボタンに置き換えられたか、発行から{count}分以上経っています。このチャットを連携するには、アプリで新しいコードを作成してください。",
+      "このボタンはもう使えません。すでに使用された、新しいボタンに置き換えられた、発行から{count}分以上経った、アカウントのパスワードがリセットまたは変更された、またはアカウントが削除またはブロックされた可能性があります。このチャットを連携するには、アプリで新しいコードを作成してください。",
   },
   "TelegramBot.privateOnly": "それは個別チャットで送ってください。",
   "TelegramBot.codeSpent":
@@ -1726,7 +1736,7 @@ export default {
   "ApiTokenNewView.discardMessage": "このトークンはまだ作成されていません。",
   "ApiTokenNewView.discard": "変更を破棄",
   "ApiTokenNewView.keepEditing": "編集を続ける",
-  "ApiTokens.failed": "APIトークンで問題が発生しました。",
+  "ApiTokens.failed": "APIトークンを読み込めないか、取り消せませんでした。もう一度お試しください。",
   "ApiTokens.savedCopyTitle": "保存されたAPIトークン一覧",
   "ApiTokens.savedCopyBody":
     "サーバーに接続できません。このデバイスに保存された一覧（{time}時点）を表示しています。それ以降に作成または取り消したトークンは含まれていません。",
@@ -1838,7 +1848,7 @@ export default {
   "EmailScreen.verifyFailed": "コードを確認できませんでした",
   "EmailScreen.sendFailed": "新しいコードを送信できませんでした",
   "EmailScreen.changeFailed": "メールアドレスを変更できませんでした",
-  "EmailScreen.loadFailed": "メールアドレスを読み込めませんでした。",
+  "EmailScreen.loadFailed": "メールアドレスを読み込めませんでした",
   "EmailScreen.enterCode": "コードを入力",
   "EmailScreen.banner":
     "<email>{email}</email>に送ったコードで、メールアドレスを確認してください。",

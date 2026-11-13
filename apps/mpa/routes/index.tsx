@@ -64,7 +64,7 @@ export function homeHead(t: Translator<string>): { title: string; description: s
 }
 
 /** The day the home page's content last changed: the sitemap's `lastmod`. Change it with it. */
-export const HOME_UPDATED = `2026-11-02`
+export const HOME_UPDATED = `2026-11-13`
 
 /** The home page's head in English, for the page list and `llms.txt`. */
 export const HOME_HEAD = homeHead(siteEnglishText())
@@ -135,6 +135,7 @@ const NOT_BUILT = [`HomeStatus.notBuiltAndroid`, `HomeStatus.notBuiltDesktop`] a
 /** The questions by their catalog keys, each written out so the catalog test finds it. */
 const FAQ = [
   { id: `faq-try`, question: `HomeFaq.tryQuestion`, answer: `HomeFaq.tryAnswer` },
+  { id: `faq-fast`, question: `HomeFaq.fastQuestion`, answer: `HomeFaq.fastAnswer` },
   { id: `faq-free`, question: `HomeFaq.freeQuestion`, answer: `HomeFaq.freeAnswer` },
   { id: `faq-stack`, question: `HomeFaq.stackQuestion`, answer: `HomeFaq.stackAnswer` },
   { id: `faq-client-work`, question: `HomeFaq.clientQuestion`, answer: `HomeFaq.clientAnswer` },
@@ -431,6 +432,47 @@ function Features(): JSX.Element {
   )
 }
 
+/**
+ * Why the app feels fast: screens open from the copy on the device. Right under the feature cards,
+ * with the demo to feel it and `/features#fast` to read how it works.
+ */
+function Speed({ demoHref }: { demoHref: string }): JSX.Element {
+  const { t, href } = useSite()
+  return (
+    <Band tone="accent" id="speed" labelledBy="speed-title">
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex max-w-3xl flex-col gap-3">
+          <p class="font-mono text-sm font-medium text-primary">{t.t(`HomeSpeed.eyebrow`)}</p>
+          <h2 id="speed-title" class="text-2xl font-semibold tracking-tight text-balance">
+            {t.t(`HomeSpeed.title`)}
+          </h2>
+          <p class="text-muted text-pretty">{t.t(`HomeSpeed.text`)}</p>
+        </div>
+        <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-6 lg:flex-col lg:items-start lg:gap-2">
+          <Button
+            href={demoHref}
+            rel={TRY_REL}
+            variant="secondary"
+            size="lg"
+            data-e2e="home-speed-demo"
+            data-umami-event="try-demo"
+            data-umami-event-from="speed"
+          >
+            {t.t(`HomeSpeed.demo`)}
+          </Button>
+          <a
+            href={href(`/features#fast`)}
+            class="inline-flex min-h-11 items-center gap-1 font-medium text-primary hover:underline sm:min-h-9"
+            data-e2e="home-speed-how"
+          >
+            {t.t(`HomeSpeed.how`)} <IconArrowRight class="size-4" aria-hidden="true" />
+          </a>
+        </div>
+      </div>
+    </Band>
+  )
+}
+
 function OneServer(): JSX.Element {
   const { t, rich } = useSite()
   return (
@@ -715,6 +757,7 @@ export default define.page(function Home({ state }) {
       <Hero demoHref={spa.try} />
       <ProofStrip facts={PROOF.map((fact) => ({ value: fact.value, label: t.t(fact.label) }))} />
       <Features />
+      <Speed demoHref={spa.try} />
       <OneServer />
       <QuickStart />
       <Status />

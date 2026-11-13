@@ -148,7 +148,7 @@ export default {
     "Comment Seed s’articule : l’application web et le site web appellent l’API, l’API écrit chaque modification et ses événements dans Postgres, et le worker envoie les e-mails et les notifications push à partir de ces événements. Tout tourne sur un seul serveur.",
   "Home.title": "Seed : le starter SaaS gratuit bâti sur les standards du web",
   "Home.description":
-    "Starter SaaS gratuit sous licence MIT, bâti sur les standards du web : connexion 2FA, groupes avec rôles, facturation Stripe. Tourne sur Deno, Node et Bun.",
+    "Starter SaaS gratuit sous MIT, bâti sur les standards du web : 2FA, groupes, Stripe, temps réel, hors ligne, écrans ouverts depuis l’appareil. Deno, Node, Bun.",
   "HomeProof.tests":
     "fichiers de tests dans les applications et les bibliothèques, tous exécutés en CI",
   "HomeProof.licence": "licence : ni compte, ni paywall",
@@ -177,6 +177,9 @@ export default {
   "HomeFaq.tryQuestion": "Puis-je l’essayer sans compte ?",
   "HomeFaq.tryAnswer":
     "Oui. « Essayer la démo en ligne » ouvre l’application dans un compte invité avec des données d’exemple, sans adresse e-mail ni mot de passe. Vous pouvez ajouter une méthode de connexion, mais la démo est quand même effacée chaque nuit. Seed lui-même ne demande aucun compte : clonez-le depuis GitHub.",
+  "HomeFaq.fastQuestion": "Pourquoi une application Seed paraît-elle si rapide ?",
+  "HomeFaq.fastAnswer":
+    "Une fois ouverte, elle n’attend pas le serveur pour vous montrer ce que vous avez déjà vu. L’application garde une copie de chaque liste sur l’appareil, affiche un écran à partir d’elle tout de suite, puis la remplace par la réponse du serveur dès qu’elle arrive. La recherche et les filtres de la liste des notes tournent sur l’appareil. À l’ouverture, l’application vérifie d’abord votre session auprès du serveur, la première visite télécharge les données, et l’enregistrement d’une modification attend le serveur.",
   "HomeFaq.freeQuestion": "Seed est-il vraiment gratuit ?",
   "HomeFaq.freeAnswer":
     "Oui. Il est sous licence MIT : utilisez-le pour autant de produits que vous voulez, commerciaux ou non, publiez votre fork, sans aucun compte. Vous ne payez que le serveur que vous louez et les services que vous activez, comme Stripe ou un fournisseur d’e-mail.",
@@ -195,11 +198,11 @@ export default {
     "Seed est le starter SaaS gratuit bâti sur les standards du web : connexion et double authentification (2FA), groupes avec rôles, facturation Stripe par membre, temps réel, une application hors ligne et un espace d’administration. Il est sous licence MIT, tourne sur Deno, Node et Bun, et se déploie avec Docker Compose sur un seul serveur Linux que vous louez.",
   "HomeHero.github": "Voir sur GitHub",
   "HomeHero.status":
-    "Seed est utilisable dès aujourd’hui, développé en public : <status>voir ce qui fonctionne</status>.",
+    "Seed est utilisable dès aujourd’hui, développé en public : <status>voir ce qui fonctionne</status>.",
   "HomeHero.quickStart": "Démarrage rapide",
   "HomeHero.demoTitle": "Seed en une minute, de git clone au panneau d’administration",
   "HomeHero.demoCaption":
-    "Démo d’une minute avec sous-titres et musique : cloner, lancer, écrire une note, ouvrir le panneau d’administration.",
+    "Démo d’une minute avec sous-titres et musique : cloner, lancer, écrire une note, ouvrir le panneau d’administration.",
   "HomeHero.aiPrompt":
     "Crée mon nouveau produit « Acme » à partir de https://github.com/spy4x/seed et lance-le en local",
   "HomeFeatures.billingAlt":
@@ -237,6 +240,12 @@ export default {
   "HomeFeatures.websiteText":
     "Ce site : rendu côté serveur, fonctionnel sans JavaScript, en neuf langues, avec des tarifs tirés de votre catalogue de forfaits, des pages légales et une newsletter à double confirmation.",
   "HomeFeatures.all": "Toutes les fonctionnalités, avec captures d’écran et état",
+  "HomeSpeed.eyebrow": "Rapide d’emblée",
+  "HomeSpeed.title": "Pas d’écran de chargement entre deux clics",
+  "HomeSpeed.text":
+    "La plupart des applications web redemandent au serveur après chaque clic, et vous attendez. Une fois une application Seed ouverte, un écran déjà visité s’ouvre tout de suite à partir de la copie sur votre appareil, et la recherche et les filtres de la liste des notes répondent pendant que vous tapez. La copie la plus récente du serveur remplace celle de l’appareil un instant plus tard, en arrière-plan.",
+  "HomeSpeed.demo": "Essayez : cliquez dans la démo",
+  "HomeSpeed.how": "Comment ça marche",
   "HomeServer.eyebrow": "Tourne sur un seul serveur que vous louez",
   "HomeServer.title": "Un serveur, un <code>docker compose</code>, aucune facture surprise.",
   "HomeServer.text":
@@ -461,6 +470,19 @@ export default {
   "FeatureRealtime.fact3":
     "Le temps réel peut être désactivé : l’application interroge alors le serveur à intervalles réguliers et fonctionne de la même façon",
   "FeatureRealtime.code": "Lire la conception du temps réel",
+  "FeatureFast.nav": "Rapide d’emblée",
+  "FeatureFast.title": "Les écrans s’ouvrent depuis l’appareil, puis se mettent à jour",
+  "FeatureFast.lead":
+    "Chaque liste que l’application a déjà affichée, sauf les notes et les groupes supprimés, reste sur l’appareil. Un écran affiche cette copie tout de suite et la remplace par la réponse du serveur à son arrivée : naviguer dans l’application ouverte n’attend donc pas un aller-retour avec le serveur. À l’ouverture, l’application vérifie d’abord la session auprès du serveur, la première visite télécharge les données, et quelques écrans interrogent toujours le serveur.",
+  "FeatureFast.fact1":
+    "La copie de l’appareil s’affiche d’abord, puis la réponse du serveur la remplace (cachedRead sur IndexedDB)",
+  "FeatureFast.fact2":
+    "La recherche et les filtres de la liste des notes parcourent la liste de l’appareil, sans requête à chaque frappe",
+  "FeatureFast.fact3":
+    "Attendent toujours le serveur : la vérification de la session à l’ouverture de l’application, les notes et les groupes supprimés, et chaque enregistrement, comme changer de forfait ou envoyer une invitation",
+  "FeatureFast.fact4":
+    "Sans réseau, une modification de note ou d’étiquette attend dans une file jusqu’au retour du réseau",
+  "FeatureFast.code": "Lire comment fonctionne la copie sur l’appareil",
   "FeatureOffline.nav": "Application hors ligne",
   "FeatureOffline.title": "Une application qui s’ouvre sans réseau",
   "FeatureOffline.lead":
@@ -479,7 +501,7 @@ export default {
     "Appuyez sur ? pour voir tous les raccourcis. N ajoute une note depuis n’importe quelle page sans la quitter, et G suivi d’une lettre ouvre une section. Les raccourcis se font oublier pendant que vous tapez dans un champ.",
   "FeatureShortcuts.fact1": "Ctrl K (⌘K sur Mac) ou / ouvre la recherche",
   "FeatureShortcuts.fact2":
-    "Une seule liste par application associe les touches et remplit la fenêtre d’aide ouverte par ?, qui n’affiche donc jamais une touche sans effet",
+    "Une seule liste par application associe les touches et remplit la fenêtre d’aide ouverte par ?, qui n’affiche donc jamais une touche sans effet",
   "FeatureShortcuts.fact3":
     "Les raccourcis à une touche peuvent être désactivés sur un appareil ; Ctrl K et Esc continuent de fonctionner",
   "FeatureShortcuts.fact4":
@@ -515,13 +537,13 @@ export default {
   "FeatureCatalog.lead":
     "Vos opérateurs ajoutent des articles avec photos, couleurs et tailles dans l’espace d’administration, et le site les affiche sur des pages que les moteurs de recherche comprennent, avec les ruptures de stock signalées.",
   "FeatureCatalog.fact1":
-    "Désactivé tant que vous ne réglez pas CATALOG=true ; la devise et les langues sont deux réglages de plus",
+    "Désactivé tant que vous ne réglez pas CATALOG=true ; la devise et les langues sont deux réglages de plus",
   "FeatureCatalog.fact2":
     "Des prix dans la plus petite unité, des textes dans chaque langue que vous gérez, la rupture de stock par couleur et par taille",
   "FeatureCatalog.fact3":
     "Le worker convertit les photos en AVIF et WebP, et chaque modification dans l’espace d’administration va au journal d’audit",
   "FeatureCatalog.fact4":
-    "Un lien de suivi par endroit où vous partagez un article, compté dans Umami : <guide>lire le guide du catalogue</guide>",
+    "Un lien de suivi par endroit où vous partagez un article, compté dans Umami : <guide>lire le guide du catalogue</guide>",
   "FeatureCatalog.code": "Lire le code du catalogue",
   "FeatureYourFeature.nav": "Vos propres fonctionnalités",
   "FeatureYourFeature.title": "Ajoutez une fonctionnalité en en copiant une",
@@ -579,7 +601,7 @@ export default {
   "FeatureWebsite.lead":
     "Ce site : rapide, rendu côté serveur et utilisable sans JavaScript, avec tarifs, pages légales, blog et newsletter.",
   "FeatureWebsite.fact1":
-    "Preact côté serveur, construit avec Vite ; chaque action est un vrai lien ou un vrai formulaire",
+    "Preact côté serveur, construit avec Vite ; chaque action est un vrai lien ou un vrai formulaire",
   "FeatureWebsite.fact2": "Des tarifs lus depuis le catalogue de forfaits de l’application",
   "FeatureWebsite.fact3":
     "Une newsletter à double confirmation, désabonnement en un clic et e-mails dans la langue du lecteur",
@@ -627,7 +649,7 @@ export default {
   "FeatureTeams.alt":
     "Le journal d’activité d’un groupe : qui a ajouté quelle note ou quelle étiquette, et quand, avec un lien pour ouvrir chaque note.",
   "FeatureBilling.alt":
-    "L’onglet Facturation d’un groupe d’exemple, aux prix d’exemple de la démo : forfait Pro avec sa date de renouvellement, 36,00 € par mois, pour 4 membres à 9,00 € chacun, propriétaire compris, avec des boutons pour changer de carte, voir les factures et résilier le forfait.",
+    "L’onglet Facturation d’un groupe d’exemple, aux prix d’exemple de la démo : forfait Pro avec sa date de renouvellement, 36,00 € par mois, pour 4 membres à 9,00 € chacun, propriétaire compris, avec des boutons pour changer de carte, voir les factures et résilier le forfait.",
   "FeaturePush.alt":
     "La page des notifications : trois avis non lus sur un nouveau propriétaire de groupe, un changement de rôle et une invitation, chaque ligne ouvrant l’élément concerné.",
   "FeatureBilling.catalog":
@@ -798,6 +820,8 @@ export default {
   "CompareRow.blog": "Blog",
   "CompareRow.audit": "Journal d’audit",
   "CompareRow.realtime": "Mises à jour en temps réel",
+  "CompareRow.instant": "Données sur l’appareil",
+  "CompareRow.instantNote": "Une copie de chaque liste gardée sur l’appareil",
   "CompareRow.offline": "Application hors ligne",
   "CompareRow.offlineNote": "Met en file d’attente les écritures faites hors ligne",
   "CompareRow.ops": "Supervision et sauvegardes",
@@ -912,8 +936,8 @@ export default {
   "Blog.ctaTitle": "Voyez {site} fonctionner en une minute",
   "Blog.published": "Publié le <time>{date}</time>",
   "Blog.updated": "· Mis à jour le <time>{date}</time>",
-  "Blog.alsoIn": "Aussi disponible en : <links></links>",
-  "Blog.relatedFeature": "Fonctionnalité de Seed : {name} →",
+  "Blog.alsoIn": "Aussi disponible en : <links></links>",
+  "Blog.relatedFeature": "Fonctionnalité de Seed : {name} →",
   "Blog.minutes": {
     "one": "· {count} min de lecture",
     "many": "· {count} min de lecture",
@@ -927,7 +951,7 @@ export default {
   "Blog.breadcrumb": "Fil d’Ariane",
   "PostFigure.noScript":
     "Affiché avec les chiffres de l’article. Activez JavaScript pour essayer les vôtres.",
-  "PostFigure.rssLink": "Essayez-le sur le site : {link}",
+  "PostFigure.rssLink": "Essayez-le sur le site : {link}",
   "PostFigure.OfflineSyncDemo.title": "Écrire une note sans réseau",
   "PostFigure.OfflineSyncDemo.lead": "Écrivez une note hors ligne, puis rallumez le réseau.",
   "PostFigure.OfflineSyncDemo.network": "Réseau",
@@ -954,12 +978,12 @@ export default {
   "PostFigure.CostCalculator.perMember": "Par membre, par mois",
   "PostFigure.CostCalculator.caption": "Prix des offres de la démo, hors taxes.",
   "PostFigure.CostCalculator.fallback":
-    "Membres de l’équipe : {members}. Avec l’offre Pro de la démo, ils paient {total} par mois, soit {price} par membre.",
+    "Membres de l’équipe : {members}. Avec l’offre Pro de la démo, ils paient {total} par mois, soit {price} par membre.",
   "PostFigure.HostingCost.title": "Seed sur un serveur face à une stack managée",
   "PostFigure.HostingCost.lead":
     "Choisissez un serveur Hetzner et le nombre de développeurs qui ont besoin d’un siège Vercel.",
   "PostFigure.HostingCost.server": "Serveur Hetzner",
-  "PostFigure.HostingCost.serverOption": "{name} : {cores} vCPU, {memory} Go",
+  "PostFigure.HostingCost.serverOption": "{name} : {cores} vCPU, {memory} Go",
   "PostFigure.HostingCost.developers": "Développeurs avec un siège Vercel",
   "PostFigure.HostingCost.seed": "Seed chez Hetzner, par mois",
   "PostFigure.HostingCost.managed": "Vercel Pro et Supabase Pro, par mois",
@@ -972,9 +996,9 @@ export default {
   "PostFigure.HostingCost.managedVerdict":
     "La stack managée fait économiser {month} par mois, {year} par an.",
   "PostFigure.HostingCost.caption":
-    "Prix catalogue hors taxes, relevés le 3 novembre 2026. Seed : le serveur, son adresse IPv4 et Object Storage pour les sauvegardes. Managé : les offres de base, hors usage. Dollars convertis en euros au taux de la BCE du 2 novembre 2026.",
+    "Prix catalogue hors taxes, relevés le 3 novembre 2026. Seed : le serveur, son adresse IPv4 et Object Storage pour les sauvegardes. Managé : les offres de base, hors usage. Dollars convertis en euros au taux de la BCE du 2 novembre 2026.",
   "PostFigure.HostingCost.fallback":
-    "Sur un serveur Hetzner {server}, Seed coûte {seed} par mois avec son adresse IPv4 et le stockage des sauvegardes. Vercel Pro et Supabase Pro coûtent {managed} par mois, environ {managedEuro}. Développeurs avec un siège Vercel : {developers}.",
+    "Sur un serveur Hetzner {server}, Seed coûte {seed} par mois avec son adresse IPv4 et le stockage des sauvegardes. Vercel Pro et Supabase Pro coûtent {managed} par mois, environ {managedEuro}. Développeurs avec un siège Vercel : {developers}.",
   "FeaturePage.what": "Ce que vous obtenez",
   "FeaturePage.how": "Comment ça marche",
   "FeaturePage.limits": "Limites",
@@ -1178,12 +1202,12 @@ export default {
   "Catalog.all": "Tout",
   "Catalog.empty": "Rien en vente pour le moment",
   "Catalog.emptyLead": "Les nouveaux articles apparaissent ici dès qu’ils sont prêts.",
-  "Catalog.categoryIntro": "{category} : prix, tailles et couleurs.",
-  "CatalogItem.intro": "{item} : prix, tailles et couleurs.",
+  "Catalog.categoryIntro": "{category} : prix, tailles et couleurs.",
+  "CatalogItem.intro": "{item} : prix, tailles et couleurs.",
   "CatalogItem.photos": "Photos",
   "CatalogItem.material": "Matière",
   "CatalogItem.fit": "Coupe",
   "CatalogItem.care": "Entretien",
-  "CatalogItem.inStock": "{choice} : en stock",
-  "CatalogItem.soldOut": "{choice} : épuisé",
+  "CatalogItem.inStock": "{choice} : en stock",
+  "CatalogItem.soldOut": "{choice} : épuisé",
 } satisfies Catalog

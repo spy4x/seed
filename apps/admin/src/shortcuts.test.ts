@@ -1,7 +1,10 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { ADMIN_MODULES } from "./modules/registry.ts"
-import { adminShortcutRows } from "./shortcuts.ts"
+import { adminPaletteCommands, type AdminPaletteOption } from "@ui/admin-palette-commands.ts"
+import { SHORTCUT_GROUPS } from "@ui/shortcuts.tsx"
+import { ADMIN_MODULES, shownModules } from "./modules/registry.ts"
+import type { AdminModule } from "./modules/types.ts"
+import { ADMIN_PAGE_ACTIONS, adminGoTo, adminShortcutRows, onListPage } from "./shortcuts.ts"
 import { adminText } from "./i18n.ts"
 
 /** The blog's own pages' `g` sequences, next to the modules'. */
@@ -107,5 +110,74 @@ describe("admin keyboard shortcuts", () => {
     expect(listed("/blog/0195f0b4-3c1e-7a00-8000-000000000001")).toBe(2)
     expect(listed("/blog")).toBe(0)
     expect(listed("/catalog/0195f0b4-3c1e-7a00-8000-000000000001")).toBe(0)
+  })
+
+  it("lists Ctrl K, which the palette binds itself", () => {
+    const row = rows("/").list.find((row) => row.keys === "mod+k")
+    expect([row?.description, row?.run]).toEqual([`Shortcuts.search`, undefined])
+  })
+})
+
+/** The palette's commands, with every submenu's rows, for the shortcut rows of one page. */
+function commandsFor(path: string, modules: readonly AdminModule[] = ADMIN_MODULES) {
+  const { list, seen } = rows(path, modules)
+  const commands = adminPaletteCommands({
+    t: adminText(),
+    goTo: adminGoTo(modules),
+    listFilter: onListPage(modules, path),
+    theme: () => `system`,
+    singleKeys: () => true,
+  }, () => {})
+  const flat = (options: readonly AdminPaletteOption[]): AdminPaletteOption[] =>
+    options.flatMap((option) => [option, ...flat(option.children ?? [])])
+  return { list, seen, commands: flat(commands) }
+}
+
+describe("the admin palette and the keyboard shortcuts", () => {
+  // The open page's own actions (`c`: New post, Add link…) get their commands in spy4x/seed#1000.
+  const pageActions = new Set(
+    Object.values(ADMIN_PAGE_ACTIONS).flat().map((action) => adminText().t(action.description)),
+  )
+  for (const path of ["/", "/users", "/blog", "/blog/channels", "/catalog", "/users/7"]) {
+    it(`has a command for the keys of every shortcut that acts (page: ${path})`, () => {
+      const { list, commands } = commandsFor(path)
+      const missing = list.filter((row) => row.run)
+        .filter((row) => !(row.group === SHORTCUT_GROUPS.page && pageActions.has(row.description)))
+        .filter((row) => !commands.some((command) => command.shortcut === row.keys))
+        .map((row) => `${row.keys} (${row.description})`)
+      expect(missing).toEqual([])
+    })
+  }
+
+  it("opens the same page from each Go to command as from its g shortcut", () => {
+    const { list, seen, commands } = commandsFor("/")
+    const goTo = list.filter((row) => row.keys.startsWith("g "))
+    expect(goTo.length).toBe(ADMIN_MODULES.length + BLOG_PAGE_KEYS.size)
+    for (const row of goTo) {
+      row.run!()
+      const command = commands.find((command) => command.shortcut === row.keys)
+      expect(command?.choice, row.keys).toEqual({ kind: "page", href: seen.navigated.at(-1) })
+    }
+  })
+
+  it("has no command for an optional module that is off, nor for the blog's pages without it", () => {
+    const ids = (modules: readonly AdminModule[]) =>
+      commandsFor("/", modules).commands.map((command) => command.id)
+    const off = shownModules(ADMIN_MODULES, new Set())
+    expect(ids(off)).not.toContain(`action-go-catalog`)
+    expect(ids(shownModules(ADMIN_MODULES, new Set([`catalog`])))).toContain(`action-go-catalog`)
+    const noBlog = ADMIN_MODULES.filter((module) => module.id !== `blog`)
+    expect(ids(noBlog).filter((id) => id.startsWith(`action-go-blog`))).toEqual([])
+  })
+
+  it("offers Search this list only where / focuses a list's search field", () => {
+    const has = (path: string) =>
+      commandsFor(path).commands.some((command) => command.choice?.kind === `list-filter`)
+    expect([has("/users"), has("/blog"), has("/"), has("/users/7")]).toEqual([
+      true,
+      true,
+      false,
+      false,
+    ])
   })
 })

@@ -386,6 +386,7 @@ services:
   postgres-prometheus-exporter:
     container_name: ${PROJECT}-postgres-prometheus-exporter
     image: quay.io/prometheuscommunity/postgres-exporter:v0.20.1
+    restart: unless-stopped
     environment:
       DATA_SOURCE_NAME: 'postgresql://${DB_USER}:${DB_PASS}@db:5432/${DB_NAME}?sslmode=disable'
     deploy:
@@ -711,7 +712,6 @@ services:
     user: "1000:1000"
     environment:
       - HOME=/home/deno
-      - DENO_DIR=/tmp/deno-cache
       - DENO_LOG=${DENO_LOG}
       # Postgres itself, not PgBouncer: the runner's advisory lock is held by one session for the
       # whole run, which transaction pooling would not keep.
@@ -762,6 +762,7 @@ services:
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
       # Guest accounts, "Try it now" (docs/guests.md): on unless `false`.
       - GUEST_MODE=${GUEST_MODE:-}
+      - SIGN_UP=${SIGN_UP:-}
       # The SPA (docs/apps.md, "Without the SPA"): `false` closes sign-up and every other
       # account route on every host but the admin host. On unless `false`.
       - SPA=${SPA:-}
@@ -782,7 +783,6 @@ services:
       - TELEGRAM_WEBHOOK_SECRET=${TELEGRAM_WEBHOOK_SECRET:-}
       - TELEGRAM_POLLING=${TELEGRAM_POLLING:-}
       - TELEGRAM_API_URL=${TELEGRAM_API_URL:-}
-      - DENO_DIR=/tmp/deno-cache
       # The port apps/healthcheck.ts probes.
       - HEALTHCHECK_PORT=${API_PORT}
       - DENO_LOG=${DENO_LOG}
@@ -924,7 +924,6 @@ services:
       - HOME=/home/deno
       - ENV=${ENV}
       - DOMAIN=${DOMAIN}
-      - DENO_DIR=/tmp/deno-cache
       - DENO_LOG=${DENO_LOG}
       # Through PgBouncer: the worker sends NOTIFY, which works in a transaction, and LISTENs to
       # nothing.
@@ -952,8 +951,12 @@ services:
       - SUBSCRIBERS_PREVIOUS_SECRETS=${SUBSCRIBERS_PREVIOUS_SECRETS:-}
       # The website's host, when it is deployed: the mailed confirm and unsubscribe links open there.
       - MPA_DOMAIN=${MPA_DOMAIN:-}
-      # IndexNow (docs/blog.md): with MPA_DOMAIN, a blog post's change is announced. Unset → off.
+      # IndexNow (docs/blog.md, docs/catalog.md): with MPA_DOMAIN, a blog post's or catalog item's
+      # change is announced. Unset → off. An item is named by the API's item address and languages.
       - INDEXNOW_KEY=${INDEXNOW_KEY:-}
+      - CATALOG=${CATALOG:-}
+      - CATALOG_ITEM_PATH=${CATALOG_ITEM_PATH:-}
+      - CATALOG_LANGUAGES=${CATALOG_LANGUAGES:-}
       # Dev.to (docs/blog.md): with MPA_DOMAIN, a live post is cross-posted once. Unset → off.
       - DEVTO_API_KEY=${DEVTO_API_KEY:-}
       # Automatic posts (docs/blog.md): with MPA_DOMAIN, a live post goes by itself to each channel
@@ -974,6 +977,9 @@ services:
       # The public demo (docs/demo.md): `true` wipes and seeds the database every night and gives
       # every new account sample groups. Unset → off.
       - DEMO_MODE=${DEMO_MODE:-}
+      # The notes example (docs/start-a-product.md): `false` leaves the notes kind out of the import
+      # jobs, as the API leaves it out of the import routes. On unless `false`.
+      - NOTES=${NOTES:-}
       # The demo's private administrator (docs/demo.md): the reset seeds admin@example.com with
       # this password, hashed with the API's pepper so the API accepts it. Unset → none.
       - DEMO_ADMIN_PASSWORD=${DEMO_ADMIN_PASSWORD:-}
@@ -1021,7 +1027,6 @@ services:
         - DENO_VERSION=${DENO_VERSION}
         - BASE_IMAGE=${PROJECT}/deno-base:${DENO_VERSION}
     environment:
-      - DENO_DIR=/tmp/deno-cache
       - DENO_LOG=${DENO_LOG}
       - VITE_ENV=prod
       # Read at container start into /config.json (apps/spa/public-env.allow lists them all).

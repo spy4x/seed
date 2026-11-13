@@ -3,6 +3,7 @@ import type { MiddlewareHandler } from "hono"
 import { type } from "arktype"
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import {
+  ADMIN_GROUP_FILE_REQUEST_PARAM,
   ADMIN_GROUP_FILES_PAGE_SIZE,
   ADMIN_GROUPS_PAGE_SIZE,
   type AdminGroupDetail,
@@ -71,12 +72,16 @@ export interface AdminGroupsService {
   file(groupId: string, fileId: string): Promise<AdminGroupStoredFile | null>
   /** The bytes of a stored file, or `null` when the store no longer has it. */
   readFile(objectKey: string): Promise<Uint8Array | null>
-  /** Writes the audit row of an operator opening or downloading the file. */
+  /**
+   * Writes the audit row of an operator opening or downloading the file, under `requestId`. A
+   * second write of the same access, file and operator under the same id writes nothing.
+   */
   recordFileAccess(
     operator: AdminGroupOperator,
     groupId: string,
     file: AdminGroupStoredFile,
     access: `open` | `download`,
+    requestId: string | null,
   ): Promise<void>
   removeFile(
     operator: AdminGroupOperator,
@@ -88,6 +93,8 @@ export interface AdminGroupsService {
 export interface AdminGroupsRouteDependencies {
   /** The normal per-user budget the session routes spend too. */
   limit: MiddlewareHandler<APIContext>
+  /** The image tiles' own, larger budget, so paging through pictures leaves `limit` alone. */
+  thumbnailLimit: MiddlewareHandler<APIContext>
   groups: AdminGroupsService
   /** The notes' switch; off, the widget and file routes, which read notes, are not mounted. */
   notes?: NotesSetup
@@ -215,7 +222,7 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
 export function createAdminGroupsRoutes(
   dependencies: AdminGroupsRouteDependencies,
 ): Hono<APIContext> {
-  const { groups, limit, notes = NOTES_ON } = dependencies
+  const { groups, limit, thumbnailLimit, notes = NOTES_ON } = dependencies
 
   /** The answer after an action: the group as it reads now, or the refusal. */
   async function answer(c: Context<APIContext>, groupId: string, outcome: AdminGroupActOutcome) {
@@ -251,7 +258,11 @@ export function createAdminGroupsRoutes(
       return errorResponse(c, `not_found`, { message: ADMIN_GROUP_FILE_NOT_FOUND })
     }
     if (access === `thumbnail`) return fileBody(file, bytes, `inline`, `private, max-age=86400`)
-    await groups.recordFileAccess(operatorOf(c), groupId, file, access)
+    // The admin app names each Download in the address, which a repeat of the request keeps; any
+    // value but a UUID is ignored and the row takes this request's own id.
+    const named = c.req.query(ADMIN_GROUP_FILE_REQUEST_PARAM)
+    const requestId = isUuid(named) ? named : c.get(`requestId`) ?? null
+    await groups.recordFileAccess(operatorOf(c), groupId, file, access, requestId)
     const disposition = access === `open` && shown ? `inline` : `attachment`
     return fileBody(file, bytes, disposition, `no-store`)
   }
@@ -286,7 +297,7 @@ export function createAdminGroupsRoutes(
         if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
         return c.json(files)
       })
-      .get(`/groups/:id/files/:fileId/thumbnail`, limit, (c) => serveFile(c, `thumbnail`))
+      .get(`/groups/:id/files/:fileId/thumbnail`, thumbnailLimit, (c) => serveFile(c, `thumbnail`))
       .get(`/groups/:id/files/:fileId/open`, limit, (c) => serveFile(c, `open`))
       .get(`/groups/:id/files/:fileId/download`, limit, (c) => serveFile(c, `download`))
       .post(`/groups/:id/files/:fileId/remove`, limit, async (c) => {
@@ -419,8 +430,8 @@ export function createAdminGroups(
     },
     file: (groupId, fileId) => db.adminGroups.file(groupId, fileId),
     readFile,
-    recordFileAccess: (operator, groupId, file, access) =>
-      db.adminGroups.recordFileAccess(operator, groupId, file, access),
+    recordFileAccess: (operator, groupId, file, access, requestId) =>
+      db.adminGroups.recordFileAccess(operator, groupId, file, access, requestId),
     removeFile: (operator, groupId, fileId) => db.adminGroups.removeFile(operator, groupId, fileId),
     async widget(groupId, widgetId, request) {
       // Only a `counts` widget is read: a `never` one, or one without a definition, reads nothing,
@@ -439,7 +450,7 @@ export function createAdminGroups(
 /** The groups module: the list, one group and the operator's actions on it. */
 export const groupsAdminModule: AdminApiModule = {
   id: `groups`,
-  routes: ({ db, limit, billing, readFile, notes }) => {
+  routes: ({ db, limit, thumbnailLimit, billing, readFile, notes }) => {
     // Read on the first call: the routes are built before any database is reached.
     const fileCaps: AdminFileCaps = async (groupId) => {
       const plan = await createPlanOf(db.billing, billing)(groupId)
@@ -448,6 +459,7 @@ export const groupsAdminModule: AdminApiModule = {
     }
     return createAdminGroupsRoutes({
       limit,
+      thumbnailLimit,
       groups: createAdminGroups(db, ADMIN_GROUPS_PAGE_SIZE, fileCaps, readFile, ADMIN_WIDGETS),
       notes,
     })

@@ -1,5 +1,6 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
+import { ImportStatus } from "@domain/imports"
 import { type Context, Hono } from "hono"
 import postgres from "postgres"
 import { GroupRole } from "@domain/groups"
@@ -61,6 +62,7 @@ import {
   readAdminNewsletterStats,
 } from "@server/subscribers/admin-newsletter.ts"
 import { SAMPLE_CATALOG_ITEMS, SAMPLE_CATALOG_SOURCES } from "@server/catalog/sample-catalog.ts"
+import { NOTES_OFF, NOTES_ON } from "@server/notes/setup.ts"
 
 /**
  * The public demo's seed, sample groups, wipe and reset (docs/demo.md) against a real Postgres with every
@@ -328,6 +330,26 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
     expect([...imported]).toEqual([{
       name: data.groups.find((group) => group.imported)!.name,
       kinds: [`group.imported`],
+    }])
+    // The notes the fake data marks as from a file are one saved import's batch, its file gone.
+    const fromFile = data.groups.flatMap((group) => group.notes.filter((note) => note.fromFile))
+    expect(fromFile.length).toBeGreaterThan(0)
+    const imports = await sql<
+      { status: number; hasFile: boolean; records: number; live: number }[]
+    >`
+      SELECT i.status, i.file IS NOT NULL AS "hasFile", COUNT(r.record_id)::int AS records,
+        COUNT(n.id)::int AS live
+      FROM imports i
+      JOIN import_records r ON r.import_id = i.id
+      LEFT JOIN notes n ON n.id = r.record_id AND n.group_id = i.group_id
+        AND n.created_by_user_id = i.user_id AND n.deleted_at IS NULL
+      GROUP BY i.id
+    `
+    expect([...imports]).toEqual([{
+      status: ImportStatus.COMMITTED,
+      hasFile: false,
+      records: fromFile.length,
+      live: fromFile.length,
     }])
     expect(counts.subscribers).toBe(FAKE_COUNTS.subscribers)
     expect(counts.activeSessions).toBe(
@@ -1002,6 +1024,131 @@ Deno.test("a visitor's sample groups have notes by several people on different d
     for (const group of groups) {
       expect(group.authors).toBeGreaterThanOrEqual(2)
       expect(group.days).toBeGreaterThan(1)
+    }
+  })
+})
+
+/** The rows of the notes example: notes, tags, their links, attachments and imports, and audits. */
+async function notesRows(sql: postgres.Sql) {
+  const [row] = await sql<
+    {
+      notes: number
+      tags: number
+      noteTags: number
+      attachments: number
+      imports: number
+      audits: number
+    }[]
+  >`
+    SELECT
+      (SELECT COUNT(*)::int FROM notes) AS notes,
+      (SELECT COUNT(*)::int FROM tags) AS tags,
+      (SELECT COUNT(*)::int FROM note_tags) AS note_tags,
+      (SELECT COUNT(*)::int FROM note_attachments) AS attachments,
+      (SELECT COUNT(*)::int FROM imports) AS imports,
+      (SELECT COUNT(*)::int FROM audit_events
+        WHERE event_kind LIKE 'note.%' OR event_kind LIKE 'tag.%')
+        AS audits
+  `
+  return row
+}
+
+const NO_NOTES = { notes: 0, tags: 0, noteTags: 0, attachments: 0, imports: 0, audits: 0 }
+
+Deno.test("with notes off, the demo seed writes every person and group but no notes, tags or attachments", async () => {
+  await withSchema(async (sql) => {
+    expect(await seedDemo(new AppDbBase({ sql }), sql, { ...DEV_OPTIONS, notes: NOTES_OFF }))
+      .toBe(true)
+
+    expect(await notesRows(sql)).toEqual(NO_NOTES)
+    const counts = await count(sql)
+    // The fake people and the administrator.
+    expect(counts.users).toBe(FAKE_COUNTS.users + 1)
+    expect(counts.groups).toBeGreaterThan(FAKE_COUNTS.users)
+    expect(counts.invitations).toBeGreaterThan(0)
+    // Every starter-data request is closed, so the job writes no welcome note later.
+    expect(await sql`SELECT 1 FROM starter_data_requests WHERE done_at IS NULL`).toHaveLength(0)
+    // The imported group's import counts nothing it does not hold.
+    const [imported] = await sql<{ details: { notes: number; tags: number; count: number } }[]>`
+      SELECT details FROM audit_events WHERE event_kind = 'group.imported'
+    `
+    expect(imported.details).toEqual({ notes: 0, tags: 0, count: 0 })
+  })
+})
+
+Deno.test("with notes off, a visitor's sample groups have members but no notes, tags or files", async () => {
+  await withSchema(async (sql) => {
+    const db = new AppDbBase({ sql })
+    await seedDemo(db, sql, { ...OPTIONS, notes: NOTES_OFF })
+    const userId = await signUpVisitor(sql, "visitor@example.net")
+    const files = fakeFiles()
+
+    await seedWorkspace(db, sql, userId, OPTIONS.dataSeed, new Date(), files, NOTES_OFF)
+
+    const { groups } = await workspaceOf(sql, userId)
+    // The visitor's own first group and the three sample groups.
+    expect(groups).toHaveLength(fakeWorkspace(OPTIONS.dataSeed).length + 1)
+    const [{ members }] = await sql<{ members: number }[]>`
+      SELECT COUNT(*)::int AS members FROM group_members
+      WHERE group_id IN (SELECT group_id FROM group_members WHERE user_id = ${userId})
+    `
+    expect(members).toBeGreaterThan(groups.length)
+    expect(await notesRows(sql)).toEqual(NO_NOTES)
+    expect(files.stored.size).toBe(0)
+  })
+})
+
+Deno.test("with notes off, the reset wipes yesterday's notes and seeds the demo without any", async () => {
+  await withSchema(async (sql) => {
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null, notes: NOTES_ON }, DAY)
+    expect((await notesRows(sql)).notes).toBeGreaterThan(0)
+
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null, notes: NOTES_OFF }, DAY)
+
+    expect(await isDemoSeeded(sql, DAY)).toBe(true)
+    expect(await notesRows(sql)).toEqual(NO_NOTES)
+    expect((await count(sql)).users).toBe(FAKE_COUNTS.users)
+  })
+})
+
+Deno.test("a group's first log row is dated when the group was made: hours or weeks back in the demo, now for a visitor's sample groups", async () => {
+  await withSchema(async (sql) => {
+    await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
+    const userId = await signUpVisitor(sql, "visitor@example.net")
+    await drainJobs(sql)
+
+    /** Each group's creation time, import time and its creation or import log row's time. */
+    const firstRows = (where: postgres.PendingQuery<postgres.Row[]>) =>
+      sql<{ name: string; created: Date; imported: Date | null; logged: Date }[]>`
+        SELECT g.name, g.created_at AS created, g.imported_at AS imported, a.created_at AS logged
+        FROM groups g JOIN audit_events a ON a.group_id = g.id
+          AND a.event_kind IN ('group.created', 'group.imported')
+        WHERE ${where}
+      `
+    // The fake data makes every demo group at least two hours ago.
+    const hour = 60 * 60_000
+    const demo = await firstRows(
+      sql`g.name IN ${sql(fakeDemoData(OPTIONS.dataSeed, NOW).groups.map((g) => g.name))}
+        AND g.id NOT IN (SELECT group_id FROM group_members WHERE user_id = ${userId})`,
+    )
+    expect(demo.length).toBeGreaterThan(0)
+    expect(demo.some((group) => group.imported !== null)).toBe(true)
+    for (const group of demo) {
+      expect(group.logged).toEqual(group.created)
+      if (group.imported) expect(group.imported).toEqual(group.created)
+      expect(Date.now() - group.created.valueOf()).toBeGreaterThan(hour)
+    }
+    const sample = await firstRows(sql`g.name <> 'Personal' AND g.id IN (
+      SELECT group_id FROM group_members WHERE user_id = ${userId}
+    )`)
+    expect(sample).toHaveLength(fakeWorkspace(OPTIONS.dataSeed).length)
+    for (const group of sample) {
+      expect({
+        name: group.name,
+        apart: Math.abs(group.logged.valueOf() - group.created.valueOf()) < 1_000,
+      })
+        .toEqual({ name: group.name, apart: true })
+      expect(Date.now() - group.created.valueOf()).toBeLessThan(60_000)
     }
   })
 })

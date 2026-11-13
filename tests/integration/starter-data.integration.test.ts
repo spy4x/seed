@@ -17,6 +17,8 @@ import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { expectVersion7Ids } from "./ids.ts"
 import { TEST_FREE_PLAN, TEST_PLANS, testLimits } from "../../libs/domain/billing/test-plans.ts"
+import { AppDbBase } from "../../apps/api/services/db-base.ts"
+import { NOTES_OFF } from "@server/notes/setup.ts"
 
 /** Runs `body` on a fresh schema built from schema.sql. */
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
@@ -278,5 +280,33 @@ Deno.test("the welcome note is written after the sample data, so the page hears 
     })(eventOf(requestId))
     expect(notesWhenSampled).toEqual([0])
     expect((await notesOf(sql, groupId)).map((note) => note.title)).toEqual([WELCOME_NOTE_TITLE])
+  })
+})
+
+Deno.test("with the notes off, sign-up queues no starter data, so no welcome note is made", async () => {
+  await withSchema(async (sql) => {
+    const { userId, groupId } = await signedUpPerson(sql)
+
+    await new AppDbBase({ sql, notes: NOTES_OFF }).begin((tx) => tx.starterData.queue(userId))
+    const result = await createOutboxProcessor(sql, mailOff(sql)).drainOnce()
+
+    expect(result.failed).toBe(0)
+    expect(await sql`SELECT 1 FROM starter_data_requests`).toHaveLength(0)
+    expect(await sql`SELECT 1 FROM outbox_events WHERE aggregate_type = ${JOB_AGGREGATE}`)
+      .toHaveLength(0)
+    expect(await notesOf(sql, groupId)).toEqual([])
+  })
+})
+
+Deno.test("with the notes on by default, sign-up's queue writes the request and its job", async () => {
+  await withSchema(async (sql) => {
+    const { userId } = await signedUpPerson(sql)
+
+    await new AppDbBase({ sql }).begin((tx) => tx.starterData.queue(userId))
+
+    expect(await sql`SELECT 1 FROM starter_data_requests WHERE user_id = ${userId}`)
+      .toHaveLength(1)
+    expect(await sql`SELECT 1 FROM outbox_events WHERE aggregate_type = ${JOB_AGGREGATE}`)
+      .toHaveLength(1)
   })
 })

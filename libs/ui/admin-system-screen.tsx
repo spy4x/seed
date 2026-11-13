@@ -19,13 +19,11 @@ import {
   AdminHealth,
   type AdminSystemSnapshot,
 } from "@domain/identity"
-import { When } from "@spy4x/preact-ui/format"
+import { useFormat, When } from "@spy4x/preact-ui/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAdminText } from "./i18n.ts"
 import { ADMIN_JOB_PATHS } from "./admin-jobs-screen.tsx"
 import type { Navigate } from "./progressive.tsx"
-
-const NUMBER = new Intl.NumberFormat("en")
 
 /**
  * Each state's word and colour. The word always shows, so the colour is never the only sign.
@@ -137,6 +135,7 @@ function SystemBody(
 ): JSX.Element {
   const { database, cache, fileStore, queue, backup, migrations, build } = snapshot
   const t = useAdminText()
+  const format = useFormat()
   const summary = SUMMARY[snapshot.health] ?? SUMMARY[AdminHealth.ERROR]
   const reachable = (ms: number, ok: boolean) =>
     ok ? t.t(`AdminSystem.reachableIn`, { ms }) : t.t(`AdminSystem.noAnswer`)
@@ -165,7 +164,9 @@ function SystemBody(
             value: reachable(database.latencyMs, database.reachable),
           }, {
             label: t.t(`AdminSystem.size`),
-            value: database.sizeBytes === null ? unknown : formatBytes(database.sizeBytes),
+            value: database.sizeBytes === null
+              ? unknown
+              : formatBytes(database.sizeBytes, format.locale),
           }, {
             label: t.t(`AdminSystem.version`),
             value: database.version ? `Postgres ${database.version}` : unknown,
@@ -212,7 +213,7 @@ function SystemBody(
               label: t.t(`AdminSystem.dueNow`),
               value: (
                 <>
-                  {NUMBER.format(queue.due)}
+                  {format.number(queue.due)}
                   {queue.oldestDueAt && (
                     <span class="ms-1 text-muted">
                       <Rich
@@ -224,12 +225,12 @@ function SystemBody(
                 </>
               ),
             },
-            { label: t.t(`AdminSystem.running`), value: NUMBER.format(queue.running) },
-            { label: t.t(`AdminSystem.retrying`), value: NUMBER.format(queue.retrying) },
-            { label: t.t(`AdminSystem.scheduled`), value: NUMBER.format(queue.scheduled) },
+            { label: t.t(`AdminSystem.running`), value: format.number(queue.running) },
+            { label: t.t(`AdminSystem.retrying`), value: format.number(queue.retrying) },
+            { label: t.t(`AdminSystem.scheduled`), value: format.number(queue.scheduled) },
             {
               label: t.t(`AdminSystem.failedDays`, { count: ADMIN_FAILED_JOBS_DAYS }),
-              value: NUMBER.format(queue.failed),
+              value: format.number(queue.failed),
             },
           ]}
         />
@@ -276,7 +277,7 @@ function SystemBody(
           health={migrations.health}
           dataE2E="admin-system-migrations"
           class="lg:col-span-2"
-          facts={[{ label: t.t(`AdminSystem.applied`), value: NUMBER.format(migrations.applied) }, {
+          facts={[{ label: t.t(`AdminSystem.applied`), value: format.number(migrations.applied) }, {
             label: t.t(`AdminSystem.newest`),
             value: (
               <span class="font-mono text-xs">

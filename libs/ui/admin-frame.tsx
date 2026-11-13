@@ -11,10 +11,15 @@ import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { AuthCard } from "./auth-screen.tsx"
-import { type FrameShortcuts, type FrameTheme, shortcutsMenuItems } from "./frame.tsx"
+import {
+  type FrameShortcuts,
+  type FrameTheme,
+  shortcutsMenuItems,
+  useSearchEntries,
+} from "./frame.tsx"
 import { ShortcutsList } from "./shortcuts.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
-import { useAdminText } from "./i18n.ts"
+import { useAdminText, useAppText } from "./i18n.ts"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { PRODUCT_NAME } from "./brand.ts"
 
@@ -75,21 +80,39 @@ export interface AdminNavItem {
  * The signed-in admin app's frame: the library's `AppShell`, the same shell as
  * the product's, so the two look made by one person.
  *
- * - The rail's top zone is empty: there is no group switcher, because operators work across every
- *   group, and no brand, which would repeat the Dashboard entry.
+ * - The rail's top zone holds only "Search", an icon cell with its tooltip that opens `search`, as
+ *   the product's rail does under its group switcher. There is no group switcher, because
+ *   operators work across every group, and no brand, which would repeat the Dashboard entry.
  * - The middle is one entry per module, Dashboard first.
  * - The bottom is the operator's account menu (the theme and Sign out), with a neutral "Admin"
  *   badge under the avatar, so the cell an operator checks says where they are signed in.
  *
- * On a phone the first four modules are tabs and the last tab, "Admin", opens a sheet with the rest
- * and the operator's menu. The page sits in the wide column of 64 rem, the width the design
- * language and `docs/design/ui-layout.md` rule 6 give a page of tables and dashboards.
+ * On a phone the first four modules are tabs and the last tab, "Admin", opens a sheet with
+ * "Search", the rest and the operator's menu. The page sits in the wide column of 64 rem, the width
+ * the design language and `docs/design/ui-layout.md` rule 6 give a page of tables and dashboards.
+ *
+ * `search` is drawn once, at the end of the page's column, with no trigger of its own (such as
+ * `AdminSearchPalette`, which binds Ctrl K itself); both "Search" entries open it.
  */
 export function AdminShell(
-  { navItems, currentPath, operator, theme, onSignOut, navigate, shortcuts, language, children }: {
+  {
+    navItems,
+    currentPath,
+    operator,
+    theme,
+    onSignOut,
+    navigate,
+    shortcuts,
+    language,
+    search,
+    children,
+  }: {
     navItems: readonly AdminNavItem[]
-    /** The address of the page shown; the entry whose page it is, or is under, is marked. */
-    currentPath: string
+    /**
+     * The address of the page shown; the entry whose page it is, or is under, is marked. Left out,
+     * as on the not-found page, no entry is.
+     */
+    currentPath?: string
     operator: AdminShellOperator
     /** The theme store; left out, the operator's menu offers no theme. */
     theme?: FrameTheme
@@ -99,15 +122,27 @@ export function AdminShell(
     shortcuts?: FrameShortcuts
     /** The interface language and its switch: the operator's menu's "Language" entry. */
     language?: AccountMenuLanguage
+    /** The search palette, drawn once. Left out, the shell has no search. */
+    search?: ComponentChildren
     children: ComponentChildren
   },
 ): JSX.Element {
   const t = useAdminText()
+  // `/` focuses a list's own search field here, so only Ctrl K (⌘K) opens the palette.
+  const entries = useSearchEntries(false, useAppText().t("Frame.search"))
+  const hasSearch = search !== undefined
   return (
     <AppShell
       items={navItems.map(({ name, href, Icon }) => ({ key: href, label: name, href, Icon }))}
       currentPath={currentPath}
       navigate={navigate}
+      // The same places and wrappers as the product's frame, so the cell sits where it does there.
+      switcher={hasSearch
+        ? ((place) =>
+          place === "sheet"
+            ? <div class="flex flex-col gap-2">{entries.sheet}</div>
+            : <div class="flex flex-col items-center gap-1">{entries.rail}</div>)
+        : undefined}
       account={{
         // An operator known only by the address would read it twice.
         user: {
@@ -125,6 +160,7 @@ export function AdminShell(
       labels={{ nav: t.t("AdminFrame.sections") }}
     >
       {children}
+      {hasSearch && <div ref={entries.root}>{search}</div>}
       {shortcuts && <ShortcutsList {...shortcuts} />}
     </AppShell>
   )
