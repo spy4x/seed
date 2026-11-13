@@ -237,6 +237,18 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
           visual: <FeatureLoop loop="realtime" />,
         },
         {
+          id: `fast`,
+          nav: t.t(`FeatureFast.nav`),
+          title: t.t(`FeatureFast.title`),
+          lead: t.t(`FeatureFast.lead`),
+          facts: [
+            t.t(`FeatureFast.fact1`),
+            t.t(`FeatureFast.fact2`),
+            t.t(`FeatureFast.fact3`),
+          ],
+          code: { label: t.t(`FeatureFast.code`), href: source(`docs/offline-data.md`) },
+        },
+        {
           id: `offline`,
           nav: t.t(`FeatureOffline.nav`),
           title: t.t(`FeatureOffline.title`),

@@ -133,7 +133,7 @@ export default {
     "Seed 的整体结构：Web 应用和网站调用 API，API 把每一次更改及其事件写入 Postgres，Worker 根据这些事件发送邮件和推送。所有服务都运行在一台服务器上。",
   "Home.title": "Seed：基于 Web 标准的免费 SaaS 启动模板",
   "Home.description":
-    "基于 Web 标准、免费且 MIT 许可的 SaaS 启动模板：支持双重验证的登录、带角色的群组、按成员计费的 Stripe 订阅、实时同步、离线使用。可运行在 Deno、Node 和 Bun 上。",
+    "基于 Web 标准、免费且 MIT 许可的 SaaS 启动模板：双重验证、群组、Stripe 订阅、实时同步、离线使用、直接从设备打开的页面。可运行在 Deno、Node 和 Bun 上。",
   "HomeProof.tests": "测试文件，覆盖各个应用和库，全部在 CI 中运行",
   "HomeProof.licence": "许可证：无需账号，没有付费墙",
   "HomeStatus.signIn":
@@ -155,6 +155,9 @@ export default {
   "HomeFaq.tryQuestion": "不注册账号能试用吗？",
   "HomeFaq.tryAnswer":
     "可以。点击“体验在线演示”，就会用一个带示例数据的访客账号打开应用，不需要邮箱或密码。你可以添加登录方式，但演示数据仍然每晚清空。使用 Seed 本身完全不需要账号：直接从 GitHub 克隆即可。",
+  "HomeFaq.fastQuestion": "为什么基于 Seed 的应用用起来这么快？",
+  "HomeFaq.fastAnswer":
+    "因为它不必等服务器，就能显示你已经看过的内容。应用会在设备上保存每个列表的副本，立即用它显示页面，等服务器的回应到达后再替换。笔记列表的搜索和筛选都在设备上进行。首次访问仍会下载数据，登录和保存更改也仍要等服务器。",
   "HomeFaq.freeQuestion": "Seed 真的免费吗？",
   "HomeFaq.freeAnswer":
     "是的。它采用 MIT 许可证：可以用于任意数量的产品，商用或非商用都行，也可以公开你的分支，无需任何账号。你只需为租用的一台服务器，以及你开启的服务（例如 Stripe 或邮件服务商）付费。",
@@ -212,6 +215,12 @@ export default {
   "HomeFeatures.websiteText":
     "就是本站：服务端渲染，关闭 JavaScript 也能正常使用，支持九种语言，价格来自你的套餐目录，还有法律页面和双重确认订阅的邮件简报。",
   "HomeFeatures.all": "全部功能，附截图和状态",
+  "HomeSpeed.eyebrow": "天生就快",
+  "HomeSpeed.title": "点击之间不再转圈等待",
+  "HomeSpeed.text":
+    "大多数 Web 应用每次点击都要重新问一遍服务器，你只能等着。基于 Seed 的应用会把你打开过的内容保存在设备上，所以这些页面能立即打开，笔记列表的搜索和筛选也随输随出。片刻之后，服务器的最新副本会在后台替换设备上的副本。",
+  "HomeSpeed.demo": "试试看：在演示里随便点点",
+  "HomeSpeed.how": "了解原理",
   "HomeServer.eyebrow": "运行在你租用的一台服务器上",
   "HomeServer.title": "一台服务器，一条 <code>docker compose</code>，没有意外账单。",
   "HomeServer.text":
@@ -404,6 +413,15 @@ export default {
   "FeatureRealtime.fact2": "从休眠中唤醒的标签页会重新连接，并拉取错过的内容",
   "FeatureRealtime.fact3": "实时同步可以关闭：应用会改为定时轮询，使用体验不变",
   "FeatureRealtime.code": "阅读实时同步设计",
+  "FeatureFast.nav": "天生就快",
+  "FeatureFast.title": "页面先从设备打开，再与服务器同步",
+  "FeatureFast.lead":
+    "应用显示过的每个列表都会保存在设备上，已删除的笔记和群组除外。页面会立即显示这份副本，等服务器的回应到达后再换上，所以切换页面不用等一次服务器往返。首次访问仍会下载数据，少数页面始终要询问服务器。",
+  "FeatureFast.fact1": "先显示设备上的副本，再用服务器的回应替换（基于 IndexedDB 的 cachedRead）",
+  "FeatureFast.fact2": "笔记列表的搜索和筛选在设备上的列表中进行，不会每按一个键就发一次请求",
+  "FeatureFast.fact3":
+    "仍要等服务器的：登录、已删除的笔记和群组，以及每次保存，比如更换套餐或发送邀请。没有网络时，笔记或标签的更改会在队列中等待",
+  "FeatureFast.code": "阅读 docs/offline-data.md",
   "FeatureOffline.nav": "离线应用",
   "FeatureOffline.title": "没有网络也能打开的应用",
   "FeatureOffline.lead":
@@ -681,6 +699,8 @@ export default {
   "CompareRow.blog": "博客",
   "CompareRow.audit": "审计日志",
   "CompareRow.realtime": "实时更新",
+  "CompareRow.instant": "直接从设备打开的页面",
+  "CompareRow.instantNote": "打开过的页面不再转圈等待",
   "CompareRow.offline": "离线应用",
   "CompareRow.offlineNote": "离线写入会排队等待",
   "CompareRow.ops": "监控和备份",
