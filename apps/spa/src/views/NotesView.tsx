@@ -2,7 +2,7 @@ import { batch, useSignal } from "@preact/signals"
 import { useEffect } from "preact/hooks"
 import { useUrlFilters } from "@spy4x/preact-signals/use-url-filters"
 import { copyToClipboard } from "@spy4x/platform/browser/clipboard"
-import { useLocation, useSearchParams } from "wouter-preact"
+import { useLocation, useSearch } from "wouter-preact"
 import { canMutateNotes } from "@domain/groups"
 import { moveTargetsOf, NotesScreen } from "@ui/notes-screen.tsx"
 import { defaultDirection, NOTE_SORTS, type NoteFilters, type NoteSort } from "@ui/notes-filter.ts"
@@ -34,7 +34,7 @@ const FILTER_PARAMS = ["tag", "match", "author", "mine"]
  * own direction. Writing happens on a note's own page, see `NoteEditorView`.
  */
 export function NotesView() {
-  const [, navigate] = useLocation()
+  const [path, navigate] = useLocation()
   const t = useAppText()
   const store = notesStore
   useUndoToast(store)
@@ -80,7 +80,14 @@ export function NotesView() {
       parser: (v) => v === "asc" || v === "desc" ? v : "",
     },
   })
-  const [params, setParams] = useSearchParams()
+  const params = new URLSearchParams(useSearch())
+  // The router's `setParams` leaves a bare "?" once the last parameter goes (`/notes?`): this
+  // writes the address itself, with no "?" when nothing is left.
+  const editParams = (edit: (next: URLSearchParams) => void) => {
+    const next = new URLSearchParams(params)
+    edit(next)
+    navigate(next.size > 0 ? `${path}?${next}` : path)
+  }
   const filters: NoteFilters = {
     q: String(q.value ?? ""),
     tagIds: params.getAll("tag"),
@@ -93,11 +100,9 @@ export function NotesView() {
       : defaultDirection((sort.value ?? "updated") as NoteSort),
   }
   const setTags = (ids: readonly string[]) =>
-    setParams((previous) => {
-      const next = new URLSearchParams(previous)
+    editParams((next) => {
       next.delete("tag")
       for (const id of ids) next.append("tag", id)
-      return next
     })
 
   // An Undo that ends while the list is not on screen must not move focus when it returns.
@@ -140,8 +145,9 @@ export function NotesView() {
         authorId: note.createdByUserId === null ? null : String(note.createdByUserId),
         authorName: personName(t, note.createdByUserId, youId, members),
         authorPictureUrl: personPicture(note.createdByUserId, members, sessionState.value.user),
+        // "You" would draw a "Y": the person's own avatar takes their name, or their e-mail.
         authorAvatarName: note.createdByUserId === youId
-          ? members?.find((member) => member.userId === youId)?.name.trim() || undefined
+          ? personName(t, youId, null, members)
           : undefined,
       }))}
       tags={tagsStore.tags.value}
@@ -158,10 +164,8 @@ export function NotesView() {
         })
       }}
       onClearFilters={() =>
-        setParams((previous) => {
-          const next = new URLSearchParams(previous)
+        editParams((next) => {
           for (const name of FILTER_PARAMS) next.delete(name)
-          return next
         })}
       authors={(members ?? []).map((member) => ({
         id: String(member.userId),

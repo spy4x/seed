@@ -69,7 +69,13 @@ test.describe("tags", () => {
       await expect(notes.titles).toHaveText(["Groceries"])
       await page.locator("[data-e2e=filter-clear]").click()
       await expect(notes.titles).toHaveCount(3)
-      await expect(page).not.toHaveURL(/tag=|match=/)
+      // Nothing left in the address: no bare "?" after Clear filters, nor after the last tag goes.
+      await expect(page).toHaveURL("/notes")
+      await notes.toggleTagFilter("Home")
+      await expect(page).toHaveURL(/[?&]tag=/)
+      await notes.toggleTagFilter("Home")
+      await expect(notes.titles).toHaveCount(3)
+      await expect(page).toHaveURL("/notes")
 
       // Each tag's row counts its notes, and the count opens the notes list filtered by the tag.
       const before = await serverNotes(page, groupId)

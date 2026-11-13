@@ -165,11 +165,13 @@ const groceries = {
   version: 3,
   updatedAt: "2026-10-01T10:00:00.000Z",
 }
-/** Opens a row's menu, chooses "Move to group…" and picks `groupName` in the dialog. */
+/** Opens a row's menu, chooses "Move to group…", selects `groupName` and presses Move. */
 async function moveFromRow(selector: string, groupName: string): Promise<void> {
   await click(`${selector} [data-e2e=note-menu]`)
   await click(`${selector} [data-e2e=note-move]`)
-  await clickText(groupName, "[data-e2e=note-move-dialog]")
+  const select = find<HTMLSelectElement>("[data-e2e=note-move-to]")
+  select.value = [...select.options].find((option) => option.textContent === groupName)!.value
+  await click("[data-e2e=note-move-submit]")
 }
 const trip = { ...groceries, id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111005", title: "Trip", body: "" }
 const plan = { ...groceries, id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111006", title: "Plan", body: "" }
@@ -244,7 +246,7 @@ describe("NotesScreen", () => {
     expect(html).toContain(`aria-label="Actions for Groceries"`)
   })
 
-  it("says Created on a phone for a note nobody changed since it was made", async () => {
+  it("says only Created, on a phone and from sm up, for a note nobody changed since it was made", async () => {
     const fresh = { ...groceries, createdAt: groceries.updatedAt }
     await mount(<NotesScreen {...listDefaults} notes={[fresh]} />)
 
@@ -252,6 +254,9 @@ describe("NotesScreen", () => {
       .map((element) => element.textContent).join(" ")
     expect(phone).toContain("Created")
     expect(phone).not.toContain("Updated")
+    const wide = find(`[data-e2e=note-${fresh.id}] .sm\\:flex`).textContent
+    expect(wide).toContain("Created")
+    expect(wide).not.toContain("Updated")
   })
 
   it("tells a screen reader the exact moment, not only how long ago", () => {
@@ -439,19 +444,20 @@ describe("NotesScreen in the browser", () => {
     expect(copy.calls.map(([note]) => note.id)).toEqual([trip.id])
   })
 
-  it("moves one note from its row's menu to the group the person picks in the dialog", async () => {
+  it("moves one note from its row's menu to the group the person picks in the dialog's select", async () => {
     const move = spy<[{ toGroupId: string; noteIds: string[] }]>()
     await mount(<NotesScreen {...listDefaults} onMove={move.fn} />)
 
     await click(`${row(groceries)} [data-e2e=note-menu]`)
     await click(`${row(groceries)} [data-e2e=note-move]`)
     expect(move.calls).toEqual([])
-    const dialog = find("[data-e2e=note-move-dialog]")
-    expect(dialog.textContent).toContain(`Choose where to move "Groceries".`)
-    expect([...dialog.querySelectorAll("[data-e2e=note-move-target]")].map((b) => b.textContent))
-      .toEqual(["Family", "Work"])
+    expect(find("[data-e2e=note-move-note]").textContent).toBe("Groceries")
+    const select = find<HTMLSelectElement>("[data-e2e=note-move-to]")
+    expect([...select.options].map((option) => option.textContent)).toEqual(["Family", "Work"])
+    expect(find("label[for=note-move-to]").textContent).toBe("Group")
 
-    await clickText("Work", "[data-e2e=note-move-dialog]")
+    select.value = targets[1].id
+    await click("[data-e2e=note-move-submit]")
     expect(move.calls).toEqual([[{ toGroupId: targets[1].id, noteIds: [groceries.id] }]])
     expect(count("[data-e2e=note-move-dialog]")).toBe(0)
   })
@@ -683,21 +689,57 @@ describe("NotesScreen filter bar", () => {
     expect(find("[data-e2e=notes-count]").textContent).toBe("1 note")
   })
 
-  it("lists Anyone, then You, then the other members from A to Z in the Author menu", async () => {
+  it("lists Anyone, then the other members from A to Z in the Author menu, leaving the person to Created by me", async () => {
     const change = spy<[NoteFilters]>()
-    await mount(<NotesScreen {...filtered} onFiltersChange={change.fn} />)
+    await mount(
+      <NotesScreen
+        {...filtered}
+        filters={{ ...NO_NOTE_FILTERS, mine: true }}
+        onFiltersChange={change.fn}
+      />,
+    )
     await click("[data-e2e=filter-author]")
 
     const menu = find("[data-e2e=filter-author]").parentElement!
     const items = [...menu.querySelectorAll("[role=menuitemradio]")]
-    expect(items.map((item) => item.textContent)).toEqual([
-      "Anyone",
-      "You",
-      "Maya Chen",
-      "Zoe Park",
-    ])
-    await clickOn(items[2])
-    expect(last(change)?.author).toBe("7")
+    expect(items.map((item) => item.textContent)).toEqual(["Anyone", "Maya Chen", "Zoe Park"])
+    // Another author replaces Created by me, which no note of theirs could pass.
+    await clickOn(items[1])
+    expect(last(change)).toMatchObject({ author: "7", mine: false })
+  })
+
+  it("leaves out the Author menu when the person is the group's only member", async () => {
+    await mount(
+      <NotesScreen {...filtered} authors={[{ id: "1", name: "Anna Bell", isYou: true }]} />,
+    )
+    expect(count("[data-e2e=filter-author]")).toBe(0)
+  })
+
+  it("shows one chip for the person's own notes, also when the address names them as the author", async () => {
+    const change = spy<[NoteFilters]>()
+    await mount(
+      <NotesScreen
+        {...filtered}
+        filters={{ ...NO_NOTE_FILTERS, author: "1" }}
+        onFiltersChange={change.fn}
+      />,
+    )
+    const chips = () =>
+      [...find("[data-e2e=notes-filter-bar]").querySelectorAll("[aria-label^=Remove]")]
+        .map((chip) => chip.getAttribute("aria-label"))
+    expect(chips()).toEqual(["Remove the Created by me filter"])
+    expect(count(`[data-e2e=note-${mine.id}]`)).toBe(1)
+
+    // Pressing Created by me while another author is chosen drops that author.
+    await rerender(
+      <NotesScreen
+        {...filtered}
+        filters={{ ...NO_NOTE_FILTERS, author: "7" }}
+        onFiltersChange={change.fn}
+      />,
+    )
+    await clickText("Created by me", "[data-e2e=notes-filter-bar]")
+    expect(last(change)).toMatchObject({ author: null, mine: true })
   })
 
   it("shows only the chosen author's notes, and the person's own for Created by me", async () => {
@@ -1249,6 +1291,28 @@ describe("NoteEditorScreen in the browser", () => {
     expect(save.calls).toHaveLength(1)
   })
 
+  it("does not save on the Enter that confirms an input method's composition, in any browser", async () => {
+    const save = spy<[]>()
+    await mount(<NoteEditorScreen {...editorDefaults} onSave={save.fn} />)
+    await type("[data-e2e=note-title]", "東京")
+
+    // Chrome and Firefox mark the Enter as composing; Safari sends keyCode 229 instead.
+    for (const init of [{ isComposing: true }, { keyCode: 229 }]) {
+      const enter = new window.KeyboardEvent("keydown", {
+        key: "Enter",
+        bubbles: true,
+        cancelable: true,
+        ...init,
+      })
+      await act(async () => {
+        find("[data-e2e=note-title]").dispatchEvent(enter as unknown as Event)
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+      expect(enter.defaultPrevented).toBe(false)
+    }
+    expect(save.calls).toHaveLength(0)
+  })
+
   it("asks before deleting from the page's menu, and deletes only when the person confirms", async () => {
     const remove = spy<[]>()
     await mount(<NoteEditorScreen {...editing} onDelete={remove.fn} />)
@@ -1274,14 +1338,14 @@ describe("NoteEditorScreen in the browser", () => {
     expect(count("[data-e2e=note-delete-dialog]")).toBe(0)
   })
 
-  it("moves the note to the group the person picks in the page's menu", async () => {
+  it("moves the note to the group selected in the dialog when the person presses Move", async () => {
     const move = spy<[string]>()
     await mount(<NoteEditorScreen {...editing} onMove={move.fn} />)
 
     await click("[data-e2e=note-menu]")
     await click("[data-e2e=note-move]")
     expect(move.calls).toEqual([])
-    await clickText("Family", "[data-e2e=note-move-dialog]")
+    await click("[data-e2e=note-move-submit]")
 
     expect(move.calls).toEqual([[targets[0].id]])
   })
