@@ -686,7 +686,13 @@ export default {
   "AdminTour.download": "動画をダウンロード（MP4、{size}）",
   "AdminTour.ctaTitle": "コードを読んで、自分のものに",
   "AdminTour.ctaLead":
-    "管理画面アプリはプロダクトと同じリポジトリにあり、専用のホストで動き、MITライセンスで無料です。公開デモには含まれていません。デモで公開すると、オペレーターに実際の登録者が見えてしまうためです。",
+    "管理画面アプリはプロダクトと同じリポジトリにあり、専用のホストで動き、MITライセンスで無料です。",
+  "AdminTour.tryTitle": "管理画面を実際に試す",
+  "AdminTour.tryLead":
+    "下のアカウントで、ライブデモの管理画面にログインできます。登場する人物はすべて架空で、内容は毎晩リセットされます。Webサイトの変更と、実際の購読者へのメール送信はオフになっています。",
+  "AdminTour.tryEmail": "メールアドレス",
+  "AdminTour.tryPassword": "パスワード",
+  "AdminTour.tryOpen": "管理画面を開く",
   "AdminVideo.soundLine": "音楽あり、ナレーションなし",
   "AdminVideo.soundLabel": "音楽付き、ナレーションなし",
   "AdminVideo.soundTranscript": "動画には音楽が流れます。ナレーションはありません。",

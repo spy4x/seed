@@ -746,7 +746,13 @@ export default {
   "AdminTour.download": "Télécharger la vidéo (MP4, {size})",
   "AdminTour.ctaTitle": "Lisez le code, puis faites-le vôtre",
   "AdminTour.ctaLead":
-    "L’application d’administration se trouve dans le même dépôt que le produit, tourne sur son propre hôte et est gratuite sous licence MIT. Elle ne fait pas partie de la démo publique, car les opérateurs y verraient de vraies inscriptions.",
+    "L’application d’administration se trouve dans le même dépôt que le produit, tourne sur son propre hôte et est gratuite sous licence MIT.",
+  "AdminTour.tryTitle": "Essayez le panneau d’administration vous-même",
+  "AdminTour.tryLead":
+    "Connectez-vous au panneau d’administration de la démo en ligne avec le compte ci-dessous. Les personnes qui s’y trouvent sont fictives, et tout est réinitialisé chaque nuit. Les modifications du site web et les e-mails aux vrais abonnés sont désactivés.",
+  "AdminTour.tryEmail": "Adresse e-mail",
+  "AdminTour.tryPassword": "Mot de passe",
+  "AdminTour.tryOpen": "Ouvrir le panneau d’administration",
   "AdminVideo.soundLine": "Musique, sans voix",
   "AdminVideo.soundLabel": "avec musique et sans voix",
   "AdminVideo.soundTranscript": "Une musique accompagne la vidéo. Il n’y a pas de voix.",

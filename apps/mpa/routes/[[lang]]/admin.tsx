@@ -1,6 +1,7 @@
 // Seed's own site: see docs/start-a-product.md
 import type { JSX } from "preact"
 import { IconArrowDown, IconArrowRight, IconCheck } from "@spy4x/preact-icons"
+import { Button } from "@spy4x/preact-ui/button"
 import { FeatureCard } from "@spy4x/preact-ui/feature-card"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
 import { ADMIN_TOUR_MODULES } from "../../admin-modules.ts"
@@ -22,6 +23,7 @@ import { DEFAULT_LANGUAGE, siteTranslator } from "../../languages.ts"
 import { useSite } from "../../use-site.tsx"
 import { siteEnglishText } from "@ui/site-text.ts"
 import type { Language } from "@domain/identity"
+import { PUBLIC_DEMO_ADMIN } from "@server/auth/demo-accounts.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 
 /** The page's title and description, as search results and social previews show them. */
@@ -150,6 +152,43 @@ function Hero(): JSX.Element {
   )
 }
 
+/** The public demo's admin account (docs/demo.md), published so a visitor can sign in. */
+function TryIt({ origin }: { origin: string }): JSX.Element {
+  const { t } = useSite()
+  return (
+    <Band labelledBy="try-title" class="border-t border-subtle">
+      <div class="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+        <SectionIntro
+          id="try-title"
+          title={t.t(`AdminTour.tryTitle`)}
+          lead={t.t(`AdminTour.tryLead`)}
+        />
+        <div class="flex flex-col gap-4 md:min-w-80">
+          <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2" data-e2e="admin-demo-account">
+            <dt class="text-muted">{t.t(`AdminTour.tryEmail`)}</dt>
+            <dd>
+              <code>{PUBLIC_DEMO_ADMIN.email}</code>
+            </dd>
+            <dt class="text-muted">{t.t(`AdminTour.tryPassword`)}</dt>
+            <dd>
+              <code>{PUBLIC_DEMO_ADMIN.password}</code>
+            </dd>
+          </dl>
+          <Button
+            href={origin}
+            size="lg"
+            data-e2e="admin-demo-open"
+            data-umami-event="try-admin"
+            data-umami-event-from="admin"
+          >
+            {t.t(`AdminTour.tryOpen`)}
+          </Button>
+        </div>
+      </div>
+    </Band>
+  )
+}
+
 function Modules(): JSX.Element {
   const { t, rich } = useSite()
   return (
@@ -260,7 +299,8 @@ function Transcript(): JSX.Element {
 
 /**
  * `/admin`: the admin panel video as the page's main content, then its modules, the roles rule
- * and the video's transcript. One ask: the code on GitHub, since the public demo has no admin.
+ * and the video's transcript. On the public demo, the demo's admin account and a link to the admin
+ * app follow the video. The closing ask: the code on GitHub.
  */
 export default define.page(function Admin({ state }) {
   const t = siteTranslator(state.language)
@@ -272,6 +312,7 @@ export default define.page(function Admin({ state }) {
   return (
     <SiteFrame state={state} path="/admin" head={head}>
       <Hero />
+      {state.demoAdminOrigin && <TryIt origin={state.demoAdminOrigin} />}
       <Modules />
       <Roles />
       <Transcript />
