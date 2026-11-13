@@ -34,7 +34,7 @@ const FILTER_PARAMS = ["tag", "match", "author", "mine"]
  * own direction. Writing happens on a note's own page, see `NoteEditorView`.
  */
 export function NotesView() {
-  const [location, navigate] = useLocation()
+  const [path, navigate] = useLocation()
   const t = useAppText()
   const store = notesStore
   useUndoToast(store)
@@ -86,7 +86,7 @@ export function NotesView() {
   const editParams = (edit: (next: URLSearchParams) => void) => {
     const next = new URLSearchParams(params)
     edit(next)
-    navigate(next.size > 0 ? `${location}?${next}` : location)
+    navigate(next.size > 0 ? `${path}?${next}` : path)
   }
   const filters: NoteFilters = {
     q: String(q.value ?? ""),
