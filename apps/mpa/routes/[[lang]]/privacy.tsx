@@ -21,7 +21,7 @@ export const PRIVACY_HEAD = {
   title: `Privacy: what Seed's demo and site keep`,
   description: `What seedsaas.com and the Seed demo store about you, why, for how long, and ` +
     `how to delete it. No ads, no tracking cookies, no data sold.`,
-  updated: `2026-10-23`,
+  updated: `2026-11-06`,
 } as const
 
 /**
@@ -36,7 +36,7 @@ export default define.page(function Privacy({ state }) {
       title="Privacy"
       headTitle={PRIVACY_HEAD.title}
       description={PRIVACY_HEAD.description}
-      updated="23 October 2026"
+      updated="6 November 2026"
       sections={PRIVACY_SECTIONS}
     >
       <p>
@@ -53,6 +53,10 @@ export default define.page(function Privacy({ state }) {
       <p>
         The blog and its RSS feed work the same way and keep nothing more. A post's pictures may
         load from another site, which then sees your IP address, as any site you visit does.
+      </p>
+      <p>
+        The SaaS launch checklist keeps your ticks in your own browser's storage. They are never
+        sent to the server, and clearing your browser's site data removes them.
       </p>
       <h2 id="statistics">Visitor statistics</h2>
       {state.analytics

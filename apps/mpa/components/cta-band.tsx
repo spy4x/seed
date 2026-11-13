@@ -10,6 +10,8 @@ import { SectionIntro } from "./section-intro.tsx"
 interface CtaBandText {
   title?: string
   lead?: string
+  /** The page the click came from, in Umami's `from` property. */
+  from?: string
 }
 
 /** The demo first, GitHub second: for a page about what the product does. */
@@ -31,7 +33,7 @@ export type CtaBandProps = DemoAsk | CodeAsk
 /** The closing call to action of a developer page: try the demo, or read the code. */
 export function CtaBand(props: CtaBandProps): JSX.Element {
   const { t } = useSite()
-  const { title = t.t(`CtaBand.title`), lead = t.t(`CtaBand.lead`) } = props
+  const { title = t.t(`CtaBand.title`), lead = t.t(`CtaBand.lead`), from = `cta` } = props
   const github = (variant: "primary" | "outline") => (
     <Button
       href={REPOSITORY_URL}
@@ -39,7 +41,7 @@ export function CtaBand(props: CtaBandProps): JSX.Element {
       size="lg"
       data-e2e="cta-github"
       data-umami-event="github"
-      data-umami-event-from="cta"
+      data-umami-event-from={from}
     >
       <IconGitHub class="size-5" aria-hidden="true" /> {t.t(`HomeHero.github`)}
     </Button>
@@ -57,7 +59,7 @@ export function CtaBand(props: CtaBandProps): JSX.Element {
                 class="inline-flex min-h-11 items-center gap-1 font-medium text-primary hover:underline"
                 data-e2e="cta-code"
                 data-umami-event="read-code"
-                data-umami-event-from="cta"
+                data-umami-event-from={from}
               >
                 {props.code.label} <IconArrowRight class="size-4" aria-hidden="true" />
               </a>
@@ -70,7 +72,7 @@ export function CtaBand(props: CtaBandProps): JSX.Element {
                 rel={TRY_REL}
                 size="lg"
                 data-umami-event="try-demo"
-                data-umami-event-from="cta"
+                data-umami-event-from={from}
               >
                 {t.t(TRY_ENTRY.label)}
               </Button>

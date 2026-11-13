@@ -1121,6 +1121,235 @@ export default {
   "FeaturePageDeploy.backupQuestion": "バックアップはありますか？",
   "FeaturePageDeploy.backupAnswer":
     "はい。オプトインで、データベースの暗号化resticバックアップを毎日取れます。復元手順も文書化されています。",
+  "SiteFooter.checklist": "リリース前チェックリスト",
+  "LaunchChecklist.seoTitle": {
+    "other": "SaaSリリース前チェックリスト：公開前に確認する{count}項目",
+  },
+  "LaunchChecklist.description": {
+    "other":
+      "SaaSのローンチ前に確認したい{count}項目。セキュリティ、課金、バックアップ、法務、検索対策をチェックできます。無料・登録不要。うち{covered}項目はSeedが対応済みです。",
+  },
+  "LaunchChecklist.eyebrow": "チェックリスト",
+  "LaunchChecklist.title": "SaaSリリース前チェックリスト",
+  "LaunchChecklist.crumb": "リリース前チェックリスト",
+  "LaunchChecklist.lead": {
+    "other":
+      "SaaSのリリース前チェックリストとは、実際のユーザーと支払いが来る前に確認しておくことの一覧です。ここには{sections}つのセクションに{count}項目があり、アカウントなしでこのページでチェックできます。",
+  },
+  "LaunchChecklist.coverage":
+    "{count}項目のうち{covered}項目はSeedに最初から入っており、下に印を付けています。残りはあなたの担当です。",
+  "LaunchChecklist.disclaimer":
+    "実務向けのチェックリストであり、法律・税務・セキュリティの助言ではありません。お住まいの国で何が適用されるか確認してください。",
+  "LaunchChecklist.legend":
+    "「Seedに組み込み済み」の項目はSeedに含まれています。リンク先で仕組みと、ご自身で設定する部分を確認できます。",
+  "LaunchChecklist.copyLink": "リンクをコピー",
+  "LaunchChecklist.linkCopied": "リンクをコピーしました。",
+  "LaunchChecklist.copyFailed":
+    "リンクをコピーできませんでした。アドレスバーからコピーしてください。",
+  "LaunchChecklist.print": "チェックリストを印刷",
+  "LaunchChecklist.printLine": "SaaSリリース前チェックリスト、{address}",
+  "LaunchChecklist.printed": "{date}に印刷",
+  "LaunchChecklist.noScript": "チェックはこのページを離れるまで残ります。",
+  "LaunchChecklist.static": {
+    "other": "{sections}セクション・{count}項目",
+  },
+  "LaunchChecklist.progress": {
+    "other": "{count}項目中{done}項目チェック済み",
+  },
+  "LaunchChecklist.progressLabel": "チェックリストの進捗",
+  "LaunchChecklist.sectionItems": {
+    "other": "{count}項目",
+  },
+  "LaunchChecklist.sectionProgress": {
+    "other": "{count}項目中{done}項目チェック済み",
+  },
+  "LaunchChecklist.storageOk":
+    "チェックはこのブラウザにだけ保存されます。こちらには何も送信されません。",
+  "LaunchChecklist.storageBlocked":
+    "このブラウザではチェックを保存できないため、このページを離れるまでしか残りません。",
+  "LaunchChecklist.empty":
+    "まだ何もチェックしていません。法務とプライバシーから始めるか、好きなセクションに移動してください。",
+  "LaunchChecklist.allChecked": {
+    "other":
+      "{count}項目すべてチェックしました。次のリリースのためにこのページを保存するか、チームと共有してください。",
+  },
+  "LaunchChecklist.clear": "チェックを外す",
+  "LaunchChecklist.cleared": "チェックを外しました。",
+  "LaunchChecklist.undo": "元に戻す",
+  "LaunchChecklist.restored": "チェックを元に戻しました。",
+  "LaunchChecklist.builtIn": "Seedに組み込み済み",
+  "LaunchChecklist.partly": "一部Seedに組み込み済み",
+  "LaunchChecklist.builtInLabel": "Seedに組み込み済み：{doc}",
+  "LaunchChecklist.partlyLabel": "一部Seedに組み込み済み：{doc}",
+  "LaunchChecklist.itemLink": "この項目へのリンク：{title}",
+  "LaunchChecklist.source": "公式情報：",
+  "LaunchChecklist.ctaTitle": "このリストの一部が済んだ状態で、次のSaaSを始めましょう",
+  "LaunchChecklist.ctaLead":
+    "SeedはMITライセンスの無料SaaSスターターです。「Seedに組み込み済み」の項目は最初から入っているので、チェックする項目が少ない状態で始められます。",
+  "LaunchChecklist.getStarted": "Seedを始める",
+  "LaunchChecklistSource.gdpr": "EUR-LexのGDPR",
+  "LaunchChecklistSource.eprivacy": "EUR-Lexのeプライバシー指令",
+  "LaunchChecklistSource.vat": "EUのVATワンストップショップ",
+  "LaunchChecklistSection.legal": "法務とプライバシー",
+  "LaunchChecklistSection.billing": "課金",
+  "LaunchChecklistSection.security": "セキュリティ",
+  "LaunchChecklistSection.backups": "データとバックアップ",
+  "LaunchChecklistSection.monitoring": "監視",
+  "LaunchChecklistSection.email": "メール",
+  "LaunchChecklistSection.search": "検索とシェア",
+  "LaunchChecklistSection.analytics": "アクセス解析",
+  "LaunchChecklistSection.support": "サポートと運用",
+  "LaunchChecklistItem.legalPrivacyPolicy":
+    "収集するデータに合ったプライバシーポリシーを公開する。",
+  "LaunchChecklistItem.legalPrivacyPolicyWhy":
+    "ユーザーも規制当局も、製品が実際に何をしているかと照らし合わせて読むので、コピーしたポリシーはないより悪い結果になります。",
+  "LaunchChecklistItem.legalPrivacyPolicyLeft":
+    "ページはあります。自分のデータとサービスに合わせて書き直すのはあなたです。",
+  "LaunchChecklistItem.legalTerms": "利用規約を公開する。",
+  "LaunchChecklistItem.legalTermsWhy":
+    "規約があれば、顧客に対して負う責任と負わない責任を、最初のトラブルより先に決めておけます。",
+  "LaunchChecklistItem.legalTermsLeft": "ページはあります。規約の中身はあなたが決めます。",
+  "LaunchChecklistItem.legalCookieBanner":
+    "必須ではないCookieを使う場合にだけ、同意バナーを表示する。",
+  "LaunchChecklistItem.legalCookieBannerWhy":
+    "不要なバナーは登録を減らし、必要なバナーがなければ違反になります。",
+  "LaunchChecklistItem.legalDataExport": "ユーザーが自分のデータをエクスポートできるようにする。",
+  "LaunchChecklistItem.legalDataExportWhy":
+    "ユーザーには自分のデータのコピーを受け取る権利があり、ボタンひとつで数秒で応えられます。",
+  "LaunchChecklistItem.legalAccountDeletion":
+    "アカウントを削除できるようにし、データが本当に消える時期を把握する。",
+  "LaunchChecklistItem.legalAccountDeletionWhy":
+    "削除したはずのアカウントのデータが残っていれば、知らないうちに約束を破っていることになります。",
+  "LaunchChecklistItem.legalAccountDeletionLeft":
+    "バックアップには期限切れまでデータが残ります。その期間をポリシーに書いてください。",
+  "LaunchChecklistItem.legalProcessors":
+    "ユーザーデータを預ける外部サービスを一覧にし、それぞれとデータ処理契約を結ぶ。",
+  "LaunchChecklistItem.legalProcessorsWhy":
+    "プライバシーポリシーにはそれらを明記する必要があり、データの扱いの責任はあなたにあります。",
+  "LaunchChecklistItem.legalEntityContact": "法務ページに運営する法人名と連絡先を記載する。",
+  "LaunchChecklistItem.legalEntityContactWhy":
+    "顧客、決済代行会社、規制当局は、誰がサービスを運営し、どう連絡すればよいかを知る必要があります。",
+  "LaunchChecklistItem.billingTestLive": "テストモードで決済を一通り試し、本番でも一度試す。",
+  "LaunchChecklistItem.billingTestLiveWhy":
+    "本番のキー、Webhook、税設定はテストモードと違うので、最初の実際の顧客にそれを見つけさせてはいけません。",
+  "LaunchChecklistItem.billingPricingMatches": "料金ページの金額と決済画面の請求額を一致させる。",
+  "LaunchChecklistItem.billingPricingMatchesWhy":
+    "ページと決済画面で価格が変わると、売上も信頼も失います。",
+  "LaunchChecklistItem.billingFailedPayments": "決済の失敗と再試行に対応する。",
+  "LaunchChecklistItem.billingFailedPaymentsWhy":
+    "カードは毎月期限切れになり、再試行と猶予期間がなければ、払うつもりだった顧客を失います。",
+  "LaunchChecklistItem.billingCancelRefund": "解約と返金の流れを決める。",
+  "LaunchChecklistItem.billingCancelRefundWhy":
+    "簡単に解約できる顧客は穏やかに去り、解約できない顧客はチャージバックを申し立てます。",
+  "LaunchChecklistItem.billingTax": "消費税・付加価値税（VAT）の扱いを決める。",
+  "LaunchChecklistItem.billingTaxWhy":
+    "海外に販売すると、最初の販売から顧客の国で納税義務が生じることがあります。",
+  "LaunchChecklistItem.billingTaxLeft":
+    "課金ガイドでStripeの価格の税設定を説明しています。登録と申告はあなたの担当です。",
+  "LaunchChecklistItem.billingReceipts": "支払いごとに領収書と請求書を送る。",
+  "LaunchChecklistItem.billingReceiptsWhy":
+    "法人の顧客は請求書がないと経費にできないので、必ず求められます。",
+  "LaunchChecklistItem.securityHttpsHsts": "すべてのページをHTTPSで配信し、HSTSを有効にする。",
+  "LaunchChecklistItem.securityHttpsHstsWhy":
+    "HSTSはブラウザに暗号化なしのHTTPを使わせないので、ネットワーク上の誰も暗号化を外せません。",
+  "LaunchChecklistItem.securityHeadersCsp":
+    "セキュリティヘッダーとコンテンツセキュリティポリシー（CSP）を送る。",
+  "LaunchChecklistItem.securityHeadersCspWhy":
+    "CSPがあれば、バグで注入されたスクリプトがあっても、ほとんどは実行されません。",
+  "LaunchChecklistItem.securityTwoFactorPasskeys":
+    "二要素認証とパスキーによるサインインを提供する。",
+  "LaunchChecklistItem.securityTwoFactorPasskeysWhy":
+    "使い回しのパスワードはアカウント乗っ取りの最も多い入り口で、第二要素がそれを塞ぎます。",
+  "LaunchChecklistItem.securityRateLimits":
+    "サインインと悪用されうるすべてのルートにレート制限をかける。",
+  "LaunchChecklistItem.securityRateLimitsWhy":
+    "制限がなければ、スクリプトが一晩でパスワードを総当たりしたり、メールの送信枠を使い切ったりします。",
+  "LaunchChecklistItem.securitySecrets": "強いシークレットを使い、gitに入れない。",
+  "LaunchChecklistItem.securitySecretsWhy":
+    "リポジトリの履歴に入ったシークレットは、コピーを手にした誰にでも読まれ続けます。",
+  "LaunchChecklistItem.securitySecretsLeft":
+    "デプロイはenvファイルからシークレットを読みます。作成と管理はあなたの担当です。",
+  "LaunchChecklistItem.securityAuditLog": "オペレーターの操作を監査ログに記録する。",
+  "LaunchChecklistItem.securityAuditLogWhy":
+    "顧客に誰がアカウントを変更したか聞かれたとき、推測ではなくログで答えられます。",
+  "LaunchChecklistItem.securityDependencies":
+    "依存パッケージを最新に保ち、脆弱性のアラートを受け取る。",
+  "LaunchChecklistItem.securityDependenciesWhy":
+    "攻撃の多くは、修正済みなのに誰も入れていないバージョンの欠陥を突きます。",
+  "LaunchChecklistItem.securityDependenciesLeft":
+    "Seedは古くなったパッケージを一覧にします。脆弱性アラートの設定はあなたの担当です。",
+  "LaunchChecklistItem.backupsAutomated": "自動・暗号化・別拠点のバックアップを取る。",
+  "LaunchChecklistItem.backupsAutomatedWhy":
+    "同じサーバー上のバックアップはサーバーと一緒に消え、手動のバックアップは必要な週に限って忘れられます。",
+  "LaunchChecklistItem.backupsAutomatedLeft": "有効にするまでオフです。",
+  "LaunchChecklistItem.backupsRestoreTested": "新しいサーバーで一度バックアップを復元してみる。",
+  "LaunchChecklistItem.backupsRestoreTestedWhy":
+    "実際に復元するまで、バックアップが使えるのか、どれだけ時間がかかるのかはわかりません。",
+  "LaunchChecklistItem.backupsMissingAlert": "バックアップが取れていないときにアラートを受け取る。",
+  "LaunchChecklistItem.backupsMissingAlertWhy":
+    "バックアップは黙って失敗し、気づくのは必要になった日です。",
+  "LaunchChecklistItem.monitoringErrors": "サーバーとブラウザのエラーを追跡する。",
+  "LaunchChecklistItem.monitoringErrorsWhy":
+    "エラーに遭遇した人のほとんどは、何も言わずに去っていきます。",
+  "LaunchChecklistItem.monitoringAlerts":
+    "メトリクスとログを集め、アラートをスマートフォンに届ける。",
+  "LaunchChecklistItem.monitoringAlertsWhy":
+    "ディスクの満杯やキューの詰まりは、顧客より先にあなたを起こすべきです。",
+  "LaunchChecklistItem.monitoringUptimeStatus":
+    "外部から稼働を監視し、ステータスページを公開する。",
+  "LaunchChecklistItem.monitoringUptimeStatusWhy":
+    "落ちたサーバーは自分が落ちたことを伝えられず、ステータスページがあれば同じ問い合わせが百通来るのを防げます。",
+  "LaunchChecklistItem.monitoringLoadTest": "想定するトラフィックで負荷テストをする。",
+  "LaunchChecklistItem.monitoringLoadTestWhy":
+    "ローンチ当日はトラフィックが一気に来るので、限界は事前に知っておきたいところです。",
+  "LaunchChecklistItem.emailTransactional":
+    "トランザクションメールを本物のメールサーバーから送る。",
+  "LaunchChecklistItem.emailTransactionalWhy":
+    "サインインリンクや領収書が迷惑メールに入ると、ユーザーは製品を使えなくなります。",
+  "LaunchChecklistItem.emailDomainAuth": "送信ドメインにSPF、DKIM、DMARCを設定する。",
+  "LaunchChecklistItem.emailDomainAuthWhy":
+    "大手のメールサービスは、これらのないドメインからのメールを拒否するか埋もれさせます。",
+  "LaunchChecklistItem.emailReplySender": "返信できるアドレスから送る。",
+  "LaunchChecklistItem.emailReplySenderWhy":
+    "返信が最初のサポート依頼になることは多く、no-replyアドレスはそれを捨ててしまいます。",
+  "LaunchChecklistItem.emailReplySenderLeft":
+    "送信者は設定で変えられます。誰かが読むメールボックスを用意するのはあなたです。",
+  "LaunchChecklistItem.emailNewsletter": "ニュースレターはダブルオプトインと配信停止に対応する。",
+  "LaunchChecklistItem.emailNewsletterWhy":
+    "確認済みの購読者は送信ドメインの信頼を保ち、機能する配信停止は多くの国で法律上の義務です。",
+  "LaunchChecklistItem.searchBasics":
+    "サイトマップ、robots.txt、llms.txt、リンクプレビュー用カードを公開する。",
+  "LaunchChecklistItem.searchBasicsWhy":
+    "検索エンジン、AIアシスタント、チャットアプリはまずこれらを読み、カードのない共有リンクはクリックされにくくなります。",
+  "LaunchChecklistItem.searchHreflang": "各言語版をhreflangで示す。",
+  "LaunchChecklistItem.searchHreflangWhy":
+    "hreflangがないと、検索エンジンが違う言語のページを表示したり、翻訳を重複とみなしたりします。",
+  "LaunchChecklistItem.searchLighthouseConsole":
+    "CIでLighthouseの予算を守り、Search Consoleでサイトの所有権を確認する。",
+  "LaunchChecklistItem.searchLighthouseConsoleWhy":
+    "予算があれば遅いページの公開を止められ、Search Consoleはインデックスできないページを教えてくれます。",
+  "LaunchChecklistItem.searchLighthouseConsoleLeft":
+    "予算のチェックはCIで動きます。Search Consoleでの確認はあなたの担当です。",
+  "LaunchChecklistItem.analyticsGoals":
+    "プライバシーに配慮したアクセス解析で、主要なアクションまでのゴールとファネルを設定する。",
+  "LaunchChecklistItem.analyticsGoalsWhy":
+    "ページビューは人が来たことしか示しません。ファネルなら登録や支払いの手前でどこで離脱したかがわかります。",
+  "LaunchChecklistItem.analyticsGoalsLeft":
+    "イベントは送信されます。ゴールの選択とファネルの作成はあなたの担当です。",
+  "LaunchChecklistItem.supportContact": "人間に連絡できる手段を用意する。",
+  "LaunchChecklistItem.supportContactWhy":
+    "誰にも連絡がつかない顧客は、代わりにレビューを書くかチャージバックを申し立てます。",
+  "LaunchChecklistItem.supportContactLeft":
+    "連絡先リンクは設定で変えられます。返信するのはあなたです。",
+  "LaunchChecklistItem.supportAdminLookup": "顧客を検索できる管理画面を用意する。",
+  "LaunchChecklistItem.supportAdminLookupWhy":
+    "管理画面がなければ、サポートのたびにデータベースを手で調べることになり、リスクも伴います。",
+  "LaunchChecklistItem.supportErrorPages": "役に立つ404ページと500ページを表示する。",
+  "LaunchChecklistItem.supportErrorPagesWhy":
+    "素っ気ないエラーページは製品が壊れているように見え、役に立つページなら作業に戻ってもらえます。",
+  "LaunchChecklistItem.supportDeployRollback": "デプロイとロールバックの手順を書き残す。",
+  "LaunchChecklistItem.supportDeployRollbackWhy":
+    "ロールバックの方法を考えるのに最悪のタイミングは、失敗したデプロイの最中です。",
   "Catalog.title": "カタログ",
   "Catalog.intro": "販売中のすべての商品を、価格・サイズ・カラーとあわせて掲載しています。",
   "Catalog.categories": "カテゴリ",

@@ -1043,6 +1043,201 @@ export default {
   "FeaturePageDeploy.backupQuestion": "有备份吗？",
   "FeaturePageDeploy.backupAnswer":
     "有。可选开启的每日加密 restic 数据库备份，并附有书面恢复步骤。",
+  "SiteFooter.checklist": "上线检查清单",
+  "LaunchChecklist.seoTitle": {
+    "other": "SaaS 上线检查清单：上线前要确认的 {count} 项",
+  },
+  "LaunchChecklist.description": {
+    "other":
+      "SaaS 上线前逐项确认 {count} 个要点：安全、计费、备份、法务和搜索。免费，无需注册。其中 {covered} 项 Seed 已经内置。",
+  },
+  "LaunchChecklist.eyebrow": "检查清单",
+  "LaunchChecklist.title": "SaaS 上线检查清单",
+  "LaunchChecklist.crumb": "上线检查清单",
+  "LaunchChecklist.lead": {
+    "other":
+      "SaaS 上线检查清单列出了在真实用户和付款到来之前需要确认的事项。这份清单分 {sections} 个部分，共 {count} 项，无需账号即可在本页勾选。",
+  },
+  "LaunchChecklist.coverage":
+    "{count} 项中有 {covered} 项 Seed 开箱即有，已在下方标出。其余的需要你自己完成。",
+  "LaunchChecklist.disclaimer":
+    "这是一份实用清单，不构成法律、税务或安全建议。请确认你所在国家的适用规定。",
+  "LaunchChecklist.legend":
+    "标有“Seed 已内置”的事项随 Seed 提供。链接说明了实现方式，以及你还需要自己设置的部分。",
+  "LaunchChecklist.copyLink": "复制链接",
+  "LaunchChecklist.linkCopied": "链接已复制。",
+  "LaunchChecklist.copyFailed": "无法复制链接。请从地址栏复制。",
+  "LaunchChecklist.print": "打印清单",
+  "LaunchChecklist.printLine": "SaaS 上线检查清单，{address}",
+  "LaunchChecklist.printed": "打印于 {date}",
+  "LaunchChecklist.noScript": "勾选会保留到你离开本页为止。",
+  "LaunchChecklist.static": {
+    "other": "{sections} 个部分，共 {count} 项",
+  },
+  "LaunchChecklist.progress": {
+    "other": "已勾选 {done}/{count} 项",
+  },
+  "LaunchChecklist.progressLabel": "清单进度",
+  "LaunchChecklist.sectionItems": {
+    "other": "{count} 项",
+  },
+  "LaunchChecklist.sectionProgress": {
+    "other": "已勾选 {done}/{count} 项",
+  },
+  "LaunchChecklist.storageOk": "你的勾选只保存在此浏览器中，不会发送给我们。",
+  "LaunchChecklist.storageBlocked": "此浏览器不允许本页保存勾选，所以勾选只保留到你离开本页为止。",
+  "LaunchChecklist.empty": "还没有勾选任何事项。可以从法务与隐私开始，或跳到任意部分。",
+  "LaunchChecklist.allChecked": {
+    "other": "全部 {count} 项已勾选。保存本页留作下次上线使用，或分享给你的团队。",
+  },
+  "LaunchChecklist.clear": "清除勾选",
+  "LaunchChecklist.cleared": "勾选已清除。",
+  "LaunchChecklist.undo": "撤销",
+  "LaunchChecklist.restored": "勾选已恢复。",
+  "LaunchChecklist.builtIn": "Seed 已内置",
+  "LaunchChecklist.partly": "Seed 已部分内置",
+  "LaunchChecklist.builtInLabel": "Seed 已内置：{doc}",
+  "LaunchChecklist.partlyLabel": "Seed 已部分内置：{doc}",
+  "LaunchChecklist.itemLink": "此项的链接：{title}",
+  "LaunchChecklist.source": "官方来源：",
+  "LaunchChecklist.ctaTitle": "用 Seed 开始你的下一个 SaaS，清单的一部分已经完成",
+  "LaunchChecklist.ctaLead":
+    "Seed 是一个免费的 SaaS 启动模板，采用 MIT 许可证。标有“Seed 已内置”的事项随它一起提供，你要勾选的项目会更少。",
+  "LaunchChecklist.getStarted": "开始使用 Seed",
+  "LaunchChecklistSource.gdpr": "EUR-Lex 上的 GDPR 原文",
+  "LaunchChecklistSource.eprivacy": "EUR-Lex 上的电子隐私指令",
+  "LaunchChecklistSource.vat": "欧盟增值税一站式服务（OSS）",
+  "LaunchChecklistSection.legal": "法务与隐私",
+  "LaunchChecklistSection.billing": "计费",
+  "LaunchChecklistSection.security": "安全",
+  "LaunchChecklistSection.backups": "数据与备份",
+  "LaunchChecklistSection.monitoring": "监控",
+  "LaunchChecklistSection.email": "邮件",
+  "LaunchChecklistSection.search": "搜索与分享",
+  "LaunchChecklistSection.analytics": "数据分析",
+  "LaunchChecklistSection.support": "支持与运维",
+  "LaunchChecklistItem.legalPrivacyPolicy": "发布与你实际收集的数据相符的隐私政策。",
+  "LaunchChecklistItem.legalPrivacyPolicyWhy":
+    "用户和监管机构会拿它对照产品的实际行为，照抄的隐私政策比没有还糟。",
+  "LaunchChecklistItem.legalPrivacyPolicyLeft": "页面已经有了；内容需要你按自己的数据和服务重写。",
+  "LaunchChecklistItem.legalTerms": "发布服务条款。",
+  "LaunchChecklistItem.legalTermsWhy":
+    "条款写明你对客户负有和不负有的责任，免得由第一次纠纷来决定。",
+  "LaunchChecklistItem.legalTermsLeft": "页面已经有了；条款内容由你来定。",
+  "LaunchChecklistItem.legalCookieBanner": "只有在使用非必要 Cookie 时才显示同意横幅。",
+  "LaunchChecklistItem.legalCookieBannerWhy":
+    "多余的横幅会让注册变少，而该有却没有的横幅就是违规。",
+  "LaunchChecklistItem.legalDataExport": "让用户能导出自己的数据。",
+  "LaunchChecklistItem.legalDataExportWhy":
+    "用户有权获得自己数据的副本，一个按钮几秒钟就能满足这项请求。",
+  "LaunchChecklistItem.legalAccountDeletion": "让用户能删除账号，并清楚数据何时真正被清除。",
+  "LaunchChecklistItem.legalAccountDeletionWhy": "账号删了数据却还在，等于在不知情中违背了承诺。",
+  "LaunchChecklistItem.legalAccountDeletionLeft":
+    "备份会保留数据直到过期；请在隐私政策中写明期限。",
+  "LaunchChecklistItem.legalProcessors": "列出保存用户数据的外部服务，并与每一家签订数据处理协议。",
+  "LaunchChecklistItem.legalProcessorsWhy":
+    "隐私政策必须写明这些服务，而它们如何处理数据由你负责。",
+  "LaunchChecklistItem.legalEntityContact": "在法务页面写明运营主体和联系地址。",
+  "LaunchChecklistItem.legalEntityContactWhy":
+    "客户、支付服务商和监管机构都需要知道谁在运营这项服务，以及如何联系你。",
+  "LaunchChecklistItem.billingTestLive": "先在测试模式下完整走一遍付款流程，再在正式环境试一次。",
+  "LaunchChecklistItem.billingTestLiveWhy":
+    "正式环境的密钥、Webhook 和税务设置都与测试模式不同，不该让第一位真实客户替你发现问题。",
+  "LaunchChecklistItem.billingPricingMatches": "确保定价页与结账时的实际收费一致。",
+  "LaunchChecklistItem.billingPricingMatchesWhy":
+    "价格在页面和结账之间变了，会同时丢掉订单和信任。",
+  "LaunchChecklistItem.billingFailedPayments": "处理扣款失败和重试。",
+  "LaunchChecklistItem.billingFailedPaymentsWhy":
+    "每个月都有银行卡过期，没有重试和宽限期，你会失去本来愿意付款的客户。",
+  "LaunchChecklistItem.billingCancelRefund": "确定取消订阅和退款的规则。",
+  "LaunchChecklistItem.billingCancelRefundWhy":
+    "能轻松取消的客户会平静离开，取消不了的客户会发起拒付。",
+  "LaunchChecklistItem.billingTax": "确定如何处理销售税和增值税。",
+  "LaunchChecklistItem.billingTaxWhy": "面向海外销售，可能从第一笔订单起就要在客户所在国纳税。",
+  "LaunchChecklistItem.billingTaxLeft":
+    "计费指南说明了 Stripe 中价格的含税设置；税务登记和申报由你负责。",
+  "LaunchChecklistItem.billingReceipts": "为每笔付款发送收据和发票。",
+  "LaunchChecklistItem.billingReceiptsWhy": "企业客户没有发票就无法报销，他们一定会来要。",
+  "LaunchChecklistItem.securityHttpsHsts": "所有页面都通过 HTTPS 提供，并启用 HSTS。",
+  "LaunchChecklistItem.securityHttpsHstsWhy":
+    "HSTS 让浏览器永远不尝试明文 HTTP，网络上的任何人都无法剥掉加密。",
+  "LaunchChecklistItem.securityHeadersCsp": "发送安全响应头和内容安全策略（CSP）。",
+  "LaunchChecklistItem.securityHeadersCspWhy":
+    "即使某个漏洞让脚本注入进来，CSP 也能阻止大多数注入的脚本运行。",
+  "LaunchChecklistItem.securityTwoFactorPasskeys": "提供双因素登录和通行密钥（Passkey）。",
+  "LaunchChecklistItem.securityTwoFactorPasskeysWhy":
+    "重复使用的密码是账号被盗最常见的入口，第二重验证能把它堵上。",
+  "LaunchChecklistItem.securityRateLimits": "为登录和所有可能被滥用的接口设置频率限制。",
+  "LaunchChecklistItem.securityRateLimitsWhy":
+    "没有限制，脚本一夜之间就能猜出密码或耗尽你的邮件额度。",
+  "LaunchChecklistItem.securitySecrets": "使用高强度密钥，并且不要放进 git。",
+  "LaunchChecklistItem.securitySecretsWhy": "进入仓库历史的密钥，任何拿到副本的人都能读到。",
+  "LaunchChecklistItem.securitySecretsLeft": "部署会从 env 文件读取密钥；生成和保管它们由你负责。",
+  "LaunchChecklistItem.securityAuditLog": "把运营人员的操作记入审计日志。",
+  "LaunchChecklistItem.securityAuditLogWhy": "客户问是谁改了他的账号时，由日志来回答，而不是靠猜。",
+  "LaunchChecklistItem.securityDependencies": "及时更新依赖，并接收漏洞告警。",
+  "LaunchChecklistItem.securityDependenciesWhy":
+    "大多数攻击利用的是早已修复、却没人升级的版本中的漏洞。",
+  "LaunchChecklistItem.securityDependenciesLeft": "Seed 会列出过时的包；漏洞告警需要你自己开启。",
+  "LaunchChecklistItem.backupsAutomated": "做自动、加密、异地的备份。",
+  "LaunchChecklistItem.backupsAutomatedWhy":
+    "放在同一台服务器上的备份会和服务器一起丢失，手动备份偏偏会在你最需要的那一周被漏掉。",
+  "LaunchChecklistItem.backupsAutomatedLeft": "默认关闭，需要你手动开启。",
+  "LaunchChecklistItem.backupsRestoreTested": "在一台全新的服务器上恢复一次备份。",
+  "LaunchChecklistItem.backupsRestoreTestedWhy":
+    "没真正恢复过备份，就不知道它能不能用、要花多长时间。",
+  "LaunchChecklistItem.backupsMissingAlert": "备份缺失时收到告警。",
+  "LaunchChecklistItem.backupsMissingAlertWhy":
+    "备份会悄无声息地失败，等你发现时往往正是需要它的那天。",
+  "LaunchChecklistItem.monitoringErrors": "追踪服务器和浏览器中的错误。",
+  "LaunchChecklistItem.monitoringErrorsWhy": "大多数遇到错误的人会直接离开，不会告诉你。",
+  "LaunchChecklistItem.monitoringAlerts": "收集指标和日志，并把告警推送到手机。",
+  "LaunchChecklistItem.monitoringAlertsWhy": "磁盘写满或队列卡住，应该先叫醒你，而不是先惊动客户。",
+  "LaunchChecklistItem.monitoringUptimeStatus": "从外部检查可用性，并公开状态页。",
+  "LaunchChecklistItem.monitoringUptimeStatusWhy":
+    "宕机的服务器没法报告自己宕机了，状态页能帮你省掉上百封相同的邮件。",
+  "LaunchChecklistItem.monitoringLoadTest": "按预期流量做压力测试。",
+  "LaunchChecklistItem.monitoringLoadTestWhy": "上线当天流量会集中涌来，最好提前知道系统的极限。",
+  "LaunchChecklistItem.emailTransactional": "通过正规的邮件服务器发送事务邮件。",
+  "LaunchChecklistItem.emailTransactionalWhy":
+    "登录链接和收据一旦进了垃圾邮件，用户就进不了你的产品。",
+  "LaunchChecklistItem.emailDomainAuth": "为发信域名配置 SPF、DKIM 和 DMARC。",
+  "LaunchChecklistItem.emailDomainAuthWhy":
+    "大型邮箱服务商会拒收或埋没没有这些记录的域名发来的邮件。",
+  "LaunchChecklistItem.emailReplySender": "用可以回复的地址发信。",
+  "LaunchChecklistItem.emailReplySenderWhy":
+    "一封回信往往就是第一个支持请求，no-reply 地址会把它直接丢掉。",
+  "LaunchChecklistItem.emailReplySenderLeft": "发件人是一项设置；有人查看的收件箱需要你来准备。",
+  "LaunchChecklistItem.emailNewsletter": "邮件订阅采用双重确认，并提供退订。",
+  "LaunchChecklistItem.emailNewsletterWhy":
+    "确认过的订阅者能维护发信域名的信誉，而可用的退订在许多国家是法律要求。",
+  "LaunchChecklistItem.searchBasics": "提供 sitemap、robots.txt、llms.txt 和链接预览卡片。",
+  "LaunchChecklistItem.searchBasicsWhy":
+    "搜索引擎、AI 助手和聊天应用最先读取这些文件，没有预览卡片的分享链接点击更少。",
+  "LaunchChecklistItem.searchHreflang": "用 hreflang 标注每个语言版本。",
+  "LaunchChecklistItem.searchHreflangWhy":
+    "没有它，搜索引擎会给用户展示错误的语言，或把译文当成重复内容。",
+  "LaunchChecklistItem.searchLighthouseConsole":
+    "在 CI 中设置 Lighthouse 预算，并在 Search Console 中验证网站。",
+  "LaunchChecklistItem.searchLighthouseConsoleWhy":
+    "预算能拦住慢页面上线，Search Console 会告诉你搜索引擎无法收录哪些页面。",
+  "LaunchChecklistItem.searchLighthouseConsoleLeft":
+    "预算检查在 CI 中运行；在 Search Console 中验证网站由你负责。",
+  "LaunchChecklistItem.analyticsGoals": "使用注重隐私的分析工具，为关键操作设置目标和漏斗。",
+  "LaunchChecklistItem.analyticsGoalsWhy":
+    "浏览量只说明有人来过；漏斗能看出他们在注册或付款前停在了哪一步。",
+  "LaunchChecklistItem.analyticsGoalsLeft": "事件已经在发送；目标和漏斗由你来设定。",
+  "LaunchChecklistItem.supportContact": "给用户一个能联系到真人的方式。",
+  "LaunchChecklistItem.supportContactWhy": "联系不上任何人的客户，会转而写差评或发起拒付。",
+  "LaunchChecklistItem.supportContactLeft": "联系方式链接是一项设置；回复由你来做。",
+  "LaunchChecklistItem.supportAdminLookup": "准备一个能查找客户的管理后台。",
+  "LaunchChecklistItem.supportAdminLookupWhy": "没有后台，做支持就得手动查数据库，风险随之而来。",
+  "LaunchChecklistItem.supportErrorPages": "提供有帮助的 404 和 500 页面。",
+  "LaunchChecklistItem.supportErrorPagesWhy":
+    "简陋的错误页会让产品看起来坏了，有帮助的错误页能把用户带回正轨。",
+  "LaunchChecklistItem.supportDeployRollback": "写下部署和回滚的步骤。",
+  "LaunchChecklistItem.supportDeployRollbackWhy":
+    "最不适合琢磨怎么回滚的时刻，就是部署出问题的时候。",
   "Catalog.title": "商品目录",
   "Catalog.intro": "在售的全部商品，附价格、尺码和颜色。",
   "Catalog.categories": "分类",

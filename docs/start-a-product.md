@@ -51,6 +51,7 @@ The paths below are under `apps/mpa/` unless they say otherwise. `[[lang]]/` sta
 | Do      | What                                   | Where                                                    |
 | ------- | -------------------------------------- | -------------------------------------------------------- |
 | Delete  | `/compare`, named competitors' prices  | `[[lang]]/compare.tsx`, `components/compare-alternatives.tsx` |
+| Delete  | `/saas-launch-checklist`, with its footer link and privacy line | `[[lang]]/saas-launch-checklist.tsx`, `launch-checklist.ts`, `islands/launch-checklist.tsx`, `islands/checklist-actions.tsx`, `LaunchChecklist*` keys in `i18n/site/` |
 | Delete  | Seed's blog posts, except `README.md`  | `libs/server/blog/seed-posts/`                           |
 | Delete  | The link cards of Seed's posts         | `libs/server/blog/seed-posts/og/`, drawn by `screenshots/blog-og.ts` and `screenshots/blog-og.html` |
 | Replace | Home, features, admin and pricing copy | `routes/index.tsx`, `[[lang]]/features.tsx`, `[[lang]]/admin.tsx`, `[[lang]]/pricing.tsx` |

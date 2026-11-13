@@ -162,6 +162,16 @@ export function figureCatalog(language: Language): Catalog {
 }
 
 /**
+ * The website's messages for `keys` in `language`, as the catalog holds them (plurals intact), with
+ * English where a key is missing: what an island needs to build its own translator.
+ */
+export function siteCatalogSubset(language: Language, keys: readonly string[]): Catalog {
+  const [, , site] = CATALOGS[language]
+  const [, , siteEn] = CATALOGS.en
+  return Object.fromEntries(keys.map((key) => [key, site[key] ?? siteEn[key]]))
+}
+
+/**
  * Every served language by its name in `language`, as one list: "English, Russian, Spanish, German,
  * Brazilian Portuguese, Arabic, French, Japanese and Simplified Chinese" in English. `zh-CN` is named
  * by its script, as readers know it, not as "Chinese (China)".

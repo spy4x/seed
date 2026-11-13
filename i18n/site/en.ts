@@ -1125,6 +1125,238 @@ export default {
   "FeaturePageDeploy.backupQuestion": "Is there a backup?",
   "FeaturePageDeploy.backupAnswer":
     "Yes. An opt-in daily encrypted restic backup of the database, with a written restore.",
+  "SiteFooter.checklist": "Launch checklist",
+  "LaunchChecklist.seoTitle": {
+    "one": "SaaS launch checklist: {count} check before you go live",
+    "other": "SaaS launch checklist: {count} checks before you go live",
+  },
+  "LaunchChecklist.description": {
+    "one":
+      "Tick through {count} check before you launch a SaaS: security, billing, backups, legal, search. Free, no sign-up. Seed covers {covered} of them.",
+    "other":
+      "Tick through {count} checks before you launch a SaaS: security, billing, backups, legal, search. Free, no sign-up. Seed covers {covered} of them.",
+  },
+  "LaunchChecklist.eyebrow": "Checklist",
+  "LaunchChecklist.title": "The SaaS launch checklist",
+  "LaunchChecklist.crumb": "Launch checklist",
+  "LaunchChecklist.lead": {
+    "one":
+      "A SaaS launch checklist is what to verify before real users and payments arrive. This one has {count} check in {sections} sections, and you can tick them here without an account.",
+    "other":
+      "A SaaS launch checklist is what to verify before real users and payments arrive. This one has {count} checks in {sections} sections, and you can tick them here without an account.",
+  },
+  "LaunchChecklist.coverage":
+    "Seed covers {covered} of {count} out of the box, marked below. The rest are yours.",
+  "LaunchChecklist.disclaimer":
+    "A practical checklist, not legal, tax or security advice. Check what applies in your country.",
+  "LaunchChecklist.legend":
+    "Items marked “Built into Seed” come with Seed. The link shows how, and what you still set up yourself.",
+  "LaunchChecklist.copyLink": "Copy link",
+  "LaunchChecklist.linkCopied": "Link copied.",
+  "LaunchChecklist.copyFailed": "Couldn't copy the link. Copy it from the address bar.",
+  "LaunchChecklist.print": "Print checklist",
+  "LaunchChecklist.printLine": "SaaS launch checklist, {address}",
+  "LaunchChecklist.printed": "printed {date}",
+  "LaunchChecklist.noScript": "Ticks last until you leave this page.",
+  "LaunchChecklist.static": {
+    "one": "{count} item in {sections} sections",
+    "other": "{count} items in {sections} sections",
+  },
+  "LaunchChecklist.progress": {
+    "one": "{done} of {count} checked",
+    "other": "{done} of {count} checked",
+  },
+  "LaunchChecklist.progressLabel": "Checklist progress",
+  "LaunchChecklist.sectionItems": {
+    "one": "{count} item",
+    "other": "{count} items",
+  },
+  "LaunchChecklist.sectionProgress": {
+    "one": "{done} of {count} checked",
+    "other": "{done} of {count} checked",
+  },
+  "LaunchChecklist.storageOk": "Your ticks are saved in this browser only. Nothing is sent to us.",
+  "LaunchChecklist.storageBlocked":
+    "This browser isn't letting the page save your ticks, so they last until you leave this page.",
+  "LaunchChecklist.empty":
+    "Nothing checked yet. Start with legal and privacy, or jump to any section.",
+  "LaunchChecklist.allChecked": {
+    "one": "All {count} checked. Keep this page for your next launch, or share it with your team.",
+    "other":
+      "All {count} checked. Keep this page for your next launch, or share it with your team.",
+  },
+  "LaunchChecklist.clear": "Clear ticks",
+  "LaunchChecklist.cleared": "Ticks cleared.",
+  "LaunchChecklist.undo": "Undo",
+  "LaunchChecklist.restored": "Ticks restored.",
+  "LaunchChecklist.builtIn": "Built into Seed",
+  "LaunchChecklist.partly": "Partly built into Seed",
+  "LaunchChecklist.builtInLabel": "Built into Seed: {doc}",
+  "LaunchChecklist.partlyLabel": "Partly built into Seed: {doc}",
+  "LaunchChecklist.itemLink": "Link to this item: {title}",
+  "LaunchChecklist.source": "Official source:",
+  "LaunchChecklist.ctaTitle": "Start your next SaaS with part of this list done",
+  "LaunchChecklist.ctaLead":
+    "Seed is a free, MIT-licensed SaaS starter. The items marked “Built into Seed” come with it, so you start with fewer boxes to tick.",
+  "LaunchChecklist.getStarted": "Get started with Seed",
+  "LaunchChecklistSource.gdpr": "the GDPR on EUR-Lex",
+  "LaunchChecklistSource.eprivacy": "the ePrivacy Directive on EUR-Lex",
+  "LaunchChecklistSource.vat": "the EU VAT One Stop Shop",
+  "LaunchChecklistSection.legal": "Legal and privacy",
+  "LaunchChecklistSection.billing": "Billing",
+  "LaunchChecklistSection.security": "Security",
+  "LaunchChecklistSection.backups": "Data and backups",
+  "LaunchChecklistSection.monitoring": "Monitoring",
+  "LaunchChecklistSection.email": "Email",
+  "LaunchChecklistSection.search": "Search and sharing",
+  "LaunchChecklistSection.analytics": "Analytics",
+  "LaunchChecklistSection.support": "Support and operations",
+  "LaunchChecklistItem.legalPrivacyPolicy":
+    "Publish a privacy policy that matches what you collect.",
+  "LaunchChecklistItem.legalPrivacyPolicyWhy":
+    "People and regulators read it against what your product really does, so a copied policy is worse than none.",
+  "LaunchChecklistItem.legalPrivacyPolicyLeft":
+    "The page is there; you rewrite it for your own data and services.",
+  "LaunchChecklistItem.legalTerms": "Publish terms of service.",
+  "LaunchChecklistItem.legalTermsWhy":
+    "Terms set what you owe a customer and what you don't, before the first dispute does.",
+  "LaunchChecklistItem.legalTermsLeft": "The page is there; the terms themselves are yours.",
+  "LaunchChecklistItem.legalCookieBanner":
+    "Show a consent banner only if you set cookies that aren't essential.",
+  "LaunchChecklistItem.legalCookieBannerWhy":
+    "A banner you don't need costs sign-ups, and one you need but skip is a breach.",
+  "LaunchChecklistItem.legalDataExport": "Let people export their data.",
+  "LaunchChecklistItem.legalDataExportWhy":
+    "People have a right to a copy of their data, and a button answers that request in seconds.",
+  "LaunchChecklistItem.legalAccountDeletion":
+    "Let people delete their account, and know when their data is really erased.",
+  "LaunchChecklistItem.legalAccountDeletionWhy":
+    "A deleted account whose data lives on is a promise you broke without knowing it.",
+  "LaunchChecklistItem.legalAccountDeletionLeft":
+    "Backups still hold the data until they expire; say how long in your policy.",
+  "LaunchChecklistItem.legalProcessors":
+    "List the outside services that hold your users' data, with a data processing agreement for each.",
+  "LaunchChecklistItem.legalProcessorsWhy":
+    "Your privacy policy must name them, and you answer for what they do with the data.",
+  "LaunchChecklistItem.legalEntityContact":
+    "Name your legal entity and a contact address in the legal pages.",
+  "LaunchChecklistItem.legalEntityContactWhy":
+    "Customers, payment providers and regulators need to know who runs the service and how to reach you.",
+  "LaunchChecklistItem.billingTestLive": "Test payments end to end in test mode, then once live.",
+  "LaunchChecklistItem.billingTestLiveWhy":
+    "Live keys, webhooks and tax settings differ from test mode, and the first real customer shouldn't find out for you.",
+  "LaunchChecklistItem.billingPricingMatches": "Make the pricing page match what checkout charges.",
+  "LaunchChecklistItem.billingPricingMatchesWhy":
+    "A price that changes between the page and checkout loses the sale and the trust.",
+  "LaunchChecklistItem.billingFailedPayments": "Handle failed payments and retries.",
+  "LaunchChecklistItem.billingFailedPaymentsWhy":
+    "Cards expire every month, and without retries and a grace period you lose customers who meant to pay.",
+  "LaunchChecklistItem.billingCancelRefund": "Decide how cancelling and refunds work.",
+  "LaunchChecklistItem.billingCancelRefundWhy":
+    "A customer who can cancel easily leaves calmly; one who can't files a chargeback.",
+  "LaunchChecklistItem.billingTax": "Decide how you handle sales tax and VAT.",
+  "LaunchChecklistItem.billingTaxWhy":
+    "Selling abroad can make you liable for tax in your customers' countries from the first sale.",
+  "LaunchChecklistItem.billingTaxLeft":
+    "The billing guide covers a price's tax behaviour in Stripe; registering and filing are yours.",
+  "LaunchChecklistItem.billingReceipts": "Send receipts and invoices for every payment.",
+  "LaunchChecklistItem.billingReceiptsWhy":
+    "Business customers can't expense a payment without an invoice, and they will ask.",
+  "LaunchChecklistItem.securityHttpsHsts": "Serve every page over HTTPS, with HSTS.",
+  "LaunchChecklistItem.securityHttpsHstsWhy":
+    "HSTS tells browsers never to try plain HTTP, so no one on the network can strip the encryption.",
+  "LaunchChecklistItem.securityHeadersCsp": "Send security headers and a content security policy.",
+  "LaunchChecklistItem.securityHeadersCspWhy":
+    "A content security policy stops most injected scripts from running, even when a bug lets one in.",
+  "LaunchChecklistItem.securityTwoFactorPasskeys": "Offer two-factor sign-in and passkeys.",
+  "LaunchChecklistItem.securityTwoFactorPasskeysWhy":
+    "A reused password is the most common way into an account, and two-factor authentication (2FA) closes it.",
+  "LaunchChecklistItem.securityRateLimits": "Rate-limit sign-in and any route that can be abused.",
+  "LaunchChecklistItem.securityRateLimitsWhy":
+    "Without limits, a script can guess passwords or send your mail quota away overnight.",
+  "LaunchChecklistItem.securitySecrets": "Use strong secrets and keep them out of git.",
+  "LaunchChecklistItem.securitySecretsWhy":
+    "A secret in a repository's history stays readable to anyone who ever gets a copy.",
+  "LaunchChecklistItem.securitySecretsLeft":
+    "The deploy reads secrets from an env file; making and guarding them is yours.",
+  "LaunchChecklistItem.securityAuditLog": "Record operator actions in an audit log.",
+  "LaunchChecklistItem.securityAuditLogWhy":
+    "When a customer asks who changed their account, the log answers instead of a guess.",
+  "LaunchChecklistItem.securityDependencies":
+    "Keep dependencies updated and get alerts about vulnerabilities.",
+  "LaunchChecklistItem.securityDependenciesWhy":
+    "Most attacks use flaws already fixed upstream, in a version nobody installed.",
+  "LaunchChecklistItem.securityDependenciesLeft":
+    "Seed lists outdated packages; vulnerability alerts are yours to switch on.",
+  "LaunchChecklistItem.backupsAutomated": "Run automated, encrypted, off-site backups.",
+  "LaunchChecklistItem.backupsAutomatedWhy":
+    "A backup on the same server is gone with the server, and one you run by hand is skipped the week you need it.",
+  "LaunchChecklistItem.backupsAutomatedLeft": "It's off until you turn it on.",
+  "LaunchChecklistItem.backupsRestoreTested": "Restore a backup once, on a fresh server.",
+  "LaunchChecklistItem.backupsRestoreTestedWhy":
+    "Until you have restored a backup, you don't know it works or how long it takes.",
+  "LaunchChecklistItem.backupsMissingAlert": "Get an alert when a backup is missing.",
+  "LaunchChecklistItem.backupsMissingAlertWhy":
+    "Backups fail quietly, and you find out on the day you need one.",
+  "LaunchChecklistItem.monitoringErrors": "Track errors in the server and the browser.",
+  "LaunchChecklistItem.monitoringErrorsWhy":
+    "Most people who hit an error leave without telling you.",
+  "LaunchChecklistItem.monitoringAlerts": "Collect metrics and logs, with alerts to your phone.",
+  "LaunchChecklistItem.monitoringAlertsWhy":
+    "A full disk or a stuck queue should wake you before it wakes your customers.",
+  "LaunchChecklistItem.monitoringUptimeStatus":
+    "Check uptime from outside, and publish a status page.",
+  "LaunchChecklistItem.monitoringUptimeStatusWhy":
+    "A server can't report that it's down, and a status page saves you a hundred identical emails.",
+  "LaunchChecklistItem.monitoringLoadTest": "Load-test for the traffic you expect.",
+  "LaunchChecklistItem.monitoringLoadTestWhy":
+    "A launch day sends traffic in one burst, and you want to know the limit before it does.",
+  "LaunchChecklistItem.emailTransactional": "Send transactional mail through a real mail server.",
+  "LaunchChecklistItem.emailTransactionalWhy":
+    "Sign-in links and receipts that land in spam lock people out of your product.",
+  "LaunchChecklistItem.emailDomainAuth": "Set up SPF, DKIM and DMARC on the sending domain.",
+  "LaunchChecklistItem.emailDomainAuthWhy":
+    "Large mailbox providers reject or bury mail from domains without them.",
+  "LaunchChecklistItem.emailReplySender": "Send from an address people can reply to.",
+  "LaunchChecklistItem.emailReplySenderWhy":
+    "A reply is often the first support request, and a no-reply address throws it away.",
+  "LaunchChecklistItem.emailReplySenderLeft":
+    "The sender is a setting; a mailbox that someone reads is yours.",
+  "LaunchChecklistItem.emailNewsletter": "Run the newsletter with double opt-in and unsubscribe.",
+  "LaunchChecklistItem.emailNewsletterWhy":
+    "Confirmed subscribers keep your sending domain trusted, and a working unsubscribe is the law in many countries.",
+  "LaunchChecklistItem.searchBasics":
+    "Publish a sitemap, robots.txt, llms.txt and link-preview cards.",
+  "LaunchChecklistItem.searchBasicsWhy":
+    "Search engines, AI assistants and chat apps read these first, and a shared link without a card gets fewer clicks.",
+  "LaunchChecklistItem.searchHreflang": "Mark every language version with hreflang.",
+  "LaunchChecklistItem.searchHreflangWhy":
+    "Without it, search engines show people the wrong language or treat translations as copies.",
+  "LaunchChecklistItem.searchLighthouseConsole":
+    "Keep a Lighthouse budget in CI, and verify the site in Search Console.",
+  "LaunchChecklistItem.searchLighthouseConsoleWhy":
+    "A budget stops a slow page from shipping, and Search Console tells you what search engines can't index.",
+  "LaunchChecklistItem.searchLighthouseConsoleLeft":
+    "The budget runs in CI; verifying the site in Search Console is yours.",
+  "LaunchChecklistItem.analyticsGoals":
+    "Use privacy-friendly analytics with a goal and a funnel to your key action.",
+  "LaunchChecklistItem.analyticsGoalsWhy":
+    "Page views say people came; a funnel shows where they stop before signing up or paying.",
+  "LaunchChecklistItem.analyticsGoalsLeft":
+    "The events are sent; you choose the goal and build the funnel.",
+  "LaunchChecklistItem.supportContact": "Give people a way to reach a human.",
+  "LaunchChecklistItem.supportContactWhy":
+    "A customer who can't reach anyone writes a review or a chargeback instead.",
+  "LaunchChecklistItem.supportContactLeft": "The contact links are a setting; answering is yours.",
+  "LaunchChecklistItem.supportAdminLookup": "Have an admin panel to look up a customer.",
+  "LaunchChecklistItem.supportAdminLookupWhy":
+    "Support without one means reading the database by hand, with all the risk that brings.",
+  "LaunchChecklistItem.supportErrorPages": "Show helpful 404 and 500 pages.",
+  "LaunchChecklistItem.supportErrorPagesWhy":
+    "A bare error page looks like the product is broken, and a helpful one sends people back to work.",
+  "LaunchChecklistItem.supportDeployRollback": "Write down how you deploy and how you roll back.",
+  "LaunchChecklistItem.supportDeployRollbackWhy":
+    "The worst moment to work out a rollback is during a bad deploy.",
   "Catalog.title": "Catalog",
   "Catalog.intro": "Everything for sale, with prices, sizes and colours.",
   "Catalog.categories": "Categories",

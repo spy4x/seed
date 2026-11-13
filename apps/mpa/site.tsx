@@ -24,6 +24,7 @@ import { BLOG_PATH, RSS_PATH } from "./blog.ts"
 import { AUTHOR_URL, REPOSITORY_URL, SITE_ICON, SITE_NAME, TRY_ENTRY } from "./brand.ts"
 import { API_DOCS_PATH } from "./api-docs.ts"
 import { CHANGELOG_PATH } from "./changelog.ts"
+import { CHECKLIST_PATH } from "./launch-checklist.ts"
 import { DOCS_PATH } from "./docs-site.ts"
 import { contactFooterLinks } from "./contact-links.ts"
 import { HIRE_PAGE_URL } from "./hire.ts"
@@ -602,6 +603,7 @@ function footerGroups(
         { label: t.t(`SiteFooter.docs`), href: href(DOCS_PATH) },
         { label: t.t(`SiteFooter.apiDocs`), href: href(API_DOCS_PATH) },
         { label: t.t(`SiteFooter.changelog`), href: href(CHANGELOG_PATH) },
+        { label: t.t(`SiteFooter.checklist`), href: href(CHECKLIST_PATH) },
         { label: t.t(`SiteFooter.status`), href: href(`/#status`) },
       ],
     },
