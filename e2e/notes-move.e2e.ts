@@ -34,7 +34,7 @@ async function signInOnline(page: Page, email: string): Promise<void> {
 /** In the open "Move to group" dialog, selects `group` and presses Move. */
 async function moveInDialog(page: Page, group: string): Promise<void> {
   const dialog = page.locator("[data-e2e=note-move-dialog]")
-  // One label for both move selects, and group names a translator leaves alone (#980).
+  // One label for both move selects, and group names a translator leaves alone.
   await expect(dialog.getByLabel("Move to group")).toHaveAttribute("translate", "no")
   await dialog.locator("[data-e2e=note-move-to]").selectOption({ label: group })
   await dialog.locator("[data-e2e=note-move-submit]").click()
